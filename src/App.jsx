@@ -9,8 +9,6 @@ import React, {
 import * as sdk from "matrix-js-sdk";
 import "./App.css";
 
-window.global = window;
-
 const ClientContext = createContext();
 
 export default function App() {
