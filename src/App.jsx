@@ -14,18 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  createContext,
-  useContext,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import * as sdk from "matrix-js-sdk";
 import "./App.css";
-
-const ClientContext = createContext();
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  useHistory,
+  useParams,
+  Link,
+  Redirect,
+} from "react-router-dom";
 
 export default function App() {
   const { protocol, host } = window.location;
@@ -33,33 +33,54 @@ export default function App() {
   const homeserverUrl = `${protocol}//${host}`;
   const { loading, authenticated, error, client, login, register } =
     useClient(homeserverUrl);
-  const [roomId, setRoomId] = useState();
 
   return (
-    <ClientContext.Provider value={client}>
+    <Router>
       <div className="App">
         {error && <p>{error.message}</p>}
         {loading ? (
           <p>Loading...</p>
         ) : (
-          <>
-            {!authenticated && <Register onRegister={register} />}
-            {!authenticated && <Login onLogin={login} />}
-            {authenticated && !roomId && (
-              <JoinOrCreateRoom onSetRoomId={setRoomId} />
-            )}
-            {authenticated && roomId && <Room roomId={roomId} />}
-          </>
+          <Switch>
+            <Route exact path="/">
+              {authenticated ? (
+                <JoinOrCreateRoom client={client} />
+              ) : (
+                <>
+                  <Register onRegister={register} />
+                  <Login onLogin={login} />
+                </>
+              )}
+            </Route>
+            <Route path="/room/:roomId">
+              {!authenticated ? <Redirect to="/" /> : <Room client={client} />}
+            </Route>
+          </Switch>
         )}
       </div>
-    </ClientContext.Provider>
+    </Router>
   );
 }
 
+function waitForSync(client) {
+  return new Promise((resolve, reject) => {
+    const onSync = (state) => {
+      if (state === "PREPARED") {
+        resolve();
+        client.removeListener("sync", onSync);
+      }
+    };
+    client.on("sync", onSync);
+  });
+}
+
 function useClient(homeserverUrl) {
-  const [authenticated, setAuthenticated] = useState(false);
-  const [client, setClient] = useState();
-  const [error, setError] = useState();
+  const [{ loading, authenticated, client, error }, setState] = useState({
+    loading: true,
+    authenticated: false,
+    client: undefined,
+    error: undefined,
+  });
 
   useEffect(() => {
     async function restoreClient() {
@@ -78,14 +99,31 @@ function useClient(homeserverUrl) {
 
           await client.startClient();
 
-          setAuthenticated(true);
-          setClient(client);
+          await waitForSync(client);
+
+          setState({
+            client,
+            loading: false,
+            authenticated: true,
+            error: undefined,
+          });
+        } else {
+          setState({
+            client: undefined,
+            loading: false,
+            authenticated: false,
+            error: undefined,
+          });
         }
       } catch (err) {
         console.error(err);
         localStorage.removeItem("matrix-auth-store");
-        setAuthenticated(false);
-        setError(err);
+        setState({
+          client: undefined,
+          loading: false,
+          authenticated: false,
+          error: err,
+        });
       }
     }
 
@@ -94,7 +132,11 @@ function useClient(homeserverUrl) {
 
   const login = useCallback(async (username, password) => {
     try {
-      setError(undefined);
+      setState((prevState) => ({
+        ...prevState,
+        authenticated: false,
+        error: undefined,
+      }));
 
       const registrationClient = sdk.createClient(homeserverUrl);
 
@@ -114,53 +156,70 @@ function useClient(homeserverUrl) {
         "matrix-auth-store",
         JSON.stringify({ user_id, device_id, access_token })
       );
-      setAuthenticated(true);
-      setClient(client);
+      setState({
+        client,
+        loading: false,
+        authenticated: true,
+        error: undefined,
+      });
     } catch (err) {
       console.error(err);
       localStorage.removeItem("matrix-auth-store");
-      setAuthenticated(false);
-      setError(err);
+      setState({
+        client: undefined,
+        loading: false,
+        authenticated: false,
+        error: err,
+      });
     }
   }, []);
 
-  const register = useCallback(
-    async (username, password) => {
-      try {
-        setError(undefined);
+  const register = useCallback(async (username, password) => {
+    try {
+      setState((prevState) => ({
+        ...prevState,
+        authenticated: false,
+        error: undefined,
+      }));
 
-        const registrationClient = sdk.createClient(homeserverUrl);
+      const registrationClient = sdk.createClient(homeserverUrl);
 
-        const { user_id, device_id, access_token } =
-          await registrationClient.register(username, password, null, {
-            type: "m.login.dummy",
-          });
-
-        const client = sdk.createClient({
-          baseUrl: homeserverUrl,
-          accessToken: access_token,
-          userId: user_id,
-          deviceId: device_id,
+      const { user_id, device_id, access_token } =
+        await registrationClient.register(username, password, null, {
+          type: "m.login.dummy",
         });
 
-        await client.startClient();
+      const client = sdk.createClient({
+        baseUrl: homeserverUrl,
+        accessToken: access_token,
+        userId: user_id,
+        deviceId: device_id,
+      });
 
-        localStorage.setItem(
-          "matrix-auth-store",
-          JSON.stringify({ user_id, device_id, access_token })
-        );
-        setAuthenticated(true);
-        setClient(client);
-      } catch (err) {
-        localStorage.removeItem("matrix-auth-store");
-        setAuthenticated(false);
-        setError(err);
-      }
-    },
-    [client, homeserverUrl]
-  );
+      await client.startClient();
 
-  return { authenticated, client, error, login, register };
+      localStorage.setItem(
+        "matrix-auth-store",
+        JSON.stringify({ user_id, device_id, access_token })
+      );
+      setState({
+        client,
+        loading: false,
+        authenticated: true,
+        error: undefined,
+      });
+    } catch (err) {
+      localStorage.removeItem("matrix-auth-store");
+      setState({
+        client: undefined,
+        loading: false,
+        authenticated: false,
+        error: err,
+      });
+    }
+  }, []);
+
+  return { loading, authenticated, client, error, login, register };
 }
 
 function Register({ onRegister }) {
@@ -199,12 +258,27 @@ function Login({ onLogin }) {
   );
 }
 
-function JoinOrCreateRoom({ onSetRoomId }) {
-  const client = useContext(ClientContext);
+function JoinOrCreateRoom({ client }) {
+  const history = useHistory();
   const roomNameRef = useRef();
   const roomIdRef = useRef();
   const [createRoomError, setCreateRoomError] = useState();
   const [joinRoomError, setJoinRoomError] = useState();
+  const [rooms, setRooms] = useState([]);
+
+  useEffect(() => {
+    function updateRooms() {
+      setRooms(client.getRooms());
+    }
+
+    updateRooms();
+
+    client.on("Room", updateRooms);
+
+    return () => {
+      client.removeListener("Room", updateRooms);
+    };
+  }, []);
 
   const onCreateRoom = useCallback(
     (e) => {
@@ -214,10 +288,11 @@ function JoinOrCreateRoom({ onSetRoomId }) {
       client
         .createRoom({
           visibility: "private",
+          preset: "public_chat",
           name: roomNameRef.current.value,
         })
         .then(({ room_id }) => {
-          onSetRoomId(room_id);
+          history.push(`/rooms/${room_id}`);
         })
         .catch(setCreateRoomError);
     },
@@ -232,7 +307,7 @@ function JoinOrCreateRoom({ onSetRoomId }) {
       client
         .joinRoom(roomIdRef.current.value)
         .then(({ roomId }) => {
-          onSetRoomId(roomId);
+          history.push(`/rooms/${roomId}`);
         })
         .catch(setJoinRoomError);
     },
@@ -242,7 +317,7 @@ function JoinOrCreateRoom({ onSetRoomId }) {
   return (
     <div>
       <form onSubmit={onCreateRoom}>
-        <p>Create New Room</p>
+        <h3>Create New Room</h3>
         <input
           id="roomName"
           name="roomName"
@@ -256,7 +331,7 @@ function JoinOrCreateRoom({ onSetRoomId }) {
         <button type="submit">Create Room</button>
       </form>
       <form onSubmit={onJoinRoom}>
-        <p>Join Existing Room</p>
+        <h3>Join Existing Room</h3>
         <input
           id="roomId"
           name="roomId"
@@ -269,23 +344,34 @@ function JoinOrCreateRoom({ onSetRoomId }) {
         {joinRoomError && <p>{joinRoomError.message}</p>}
         <button type="submit">Join Room</button>
       </form>
+      <h3>Rooms:</h3>
+      <ul>
+        {rooms.map((room) => (
+          <li key={room.roomId}>
+            <Link to={`/room/${room.roomId}`}>{room.name}</Link>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
 
-function useVideoRoom(roomId, timeout = 5000) {
-  const client = useContext(ClientContext);
-
-  const [room, setRoom] = useState();
-  const [error, setError] = useState();
+function useVideoRoom(client, roomId, timeout = 5000) {
+  const [{ loading, room, error }, setState] = useState({
+    loading: true,
+    room: undefined,
+    error: undefined,
+  });
 
   useEffect(() => {
-    setRoom(undefined);
+    setState({ loading: true, room: undefined, error: undefined });
+
+    client.joinRoom(roomId).catch(console.error);
 
     let initialRoom = client.getRoom(roomId);
 
     if (initialRoom) {
-      setRoom(initialRoom);
+      setState({ loading: false, room: initialRoom, error: undefined });
       return;
     }
 
@@ -295,14 +381,18 @@ function useVideoRoom(roomId, timeout = 5000) {
       if (room && room.roomId === roomId) {
         clearTimeout(timeoutId);
         client.removeListener("Room", roomCallback);
-        setRoom(room);
+        setState({ loading: false, room, error: undefined });
       }
     }
 
     client.on("Room", roomCallback);
 
     timeoutId = setTimeout(() => {
-      setError(new Error("Room could not be found."));
+      setState({
+        loading: false,
+        room: undefined,
+        error: new Error("Room could not be found."),
+      });
       client.removeListener("Room", roomCallback);
     }, timeout);
 
@@ -312,23 +402,33 @@ function useVideoRoom(roomId, timeout = 5000) {
     };
   }, [roomId]);
 
-  return { room, error };
+  const joinCall = useCallback(() => {
+    console.log("join call");
+  });
+
+  return { loading, room, error, joinCall };
 }
 
-function Room({ roomId }) {
-  const { room, error } = useVideoRoom(roomId);
-
-  useEffect(() => {
-    if (room) {
-      console.log(room);
-    }
-  }, [room]);
+function Room({ client }) {
+  const { roomId } = useParams();
+  const { loading, room, error, joinCall } = useVideoRoom(client, roomId);
 
   return (
     <div>
       <p>{roomId}</p>
-      {!error && !room && <p>Loading room...</p>}
+      {loading && <p>Loading room...</p>}
       {error && <p>{error.message}</p>}
+      {!loading && room && (
+        <>
+          <h3>Members:</h3>
+          <ul>
+            {room.getMembers().map((member) => (
+              <li key={member.userId}>{member.name}</li>
+            ))}
+          </ul>
+          <button onClick={joinCall}>Join Call</button>
+        </>
+      )}
     </div>
   );
 }
