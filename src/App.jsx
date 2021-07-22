@@ -26,6 +26,7 @@ import {
   Link,
   Redirect,
 } from "react-router-dom";
+import { ConferenceCall } from "./ConferenceCall";
 
 export default function App() {
   const { protocol, host } = window.location;
@@ -357,21 +358,35 @@ function JoinOrCreateRoom({ client }) {
 }
 
 function useVideoRoom(client, roomId, timeout = 5000) {
-  const [{ loading, room, error }, setState] = useState({
+  const [{ loading, joined, room, participants, error }, setState] = useState({
     loading: true,
+    joined: false,
     room: undefined,
+    participants: [],
     error: undefined,
   });
 
   useEffect(() => {
-    setState({ loading: true, room: undefined, error: undefined });
+    setState((prevState) => ({
+      ...prevState,
+      loading: true,
+      room: undefined,
+      error: undefined,
+    }));
 
-    client.joinRoom(roomId).catch(console.error);
+    client.joinRoom(roomId).catch((err) => {
+      setState((prevState) => ({ ...prevState, loading: false, error: err }));
+    });
 
     let initialRoom = client.getRoom(roomId);
 
     if (initialRoom) {
-      setState({ loading: false, room: initialRoom, error: undefined });
+      setState((prevState) => ({
+        ...prevState,
+        loading: false,
+        room: initialRoom,
+        error: undefined,
+      }));
       return;
     }
 
@@ -381,18 +396,24 @@ function useVideoRoom(client, roomId, timeout = 5000) {
       if (room && room.roomId === roomId) {
         clearTimeout(timeoutId);
         client.removeListener("Room", roomCallback);
-        setState({ loading: false, room, error: undefined });
+        setState((prevState) => ({
+          ...prevState,
+          loading: false,
+          room,
+          error: undefined,
+        }));
       }
     }
 
     client.on("Room", roomCallback);
 
     timeoutId = setTimeout(() => {
-      setState({
+      setState((prevState) => ({
+        ...prevState,
         loading: false,
         room: undefined,
         error: new Error("Room could not be found."),
-      });
+      }));
       client.removeListener("Room", roomCallback);
     }, timeout);
 
@@ -403,15 +424,53 @@ function useVideoRoom(client, roomId, timeout = 5000) {
   }, [roomId]);
 
   const joinCall = useCallback(() => {
-    console.log("join call");
-  });
+    const conferenceCall = new ConferenceCall(client, roomId);
 
-  return { loading, room, error, joinCall };
+    const onJoined = () => {
+      setState((prevState) => ({
+        ...prevState,
+        joined: true,
+      }));
+    };
+
+    conferenceCall.on("joined", onJoined);
+
+    const onParticipantsChanged = () => {
+      setState((prevState) => ({
+        ...prevState,
+        participants: conferenceCall.participants,
+      }));
+    };
+
+    conferenceCall.on("participants_changed", onParticipantsChanged);
+
+    conferenceCall.join();
+
+    return () => {
+      conferenceCall.removeListener("joined", onJoined);
+      conferenceCall.removeListener(
+        "participants_changed",
+        onParticipantsChanged
+      );
+      conferenceCall.leave();
+
+      setState((prevState) => ({
+        ...prevState,
+        joined: false,
+        participants: [],
+      }));
+    };
+  }, [client, roomId]);
+
+  return { loading, joined, room, participants, error, joinCall };
 }
 
 function Room({ client }) {
   const { roomId } = useParams();
-  const { loading, room, error, joinCall } = useVideoRoom(client, roomId);
+  const { loading, joined, room, participants, error, joinCall } = useVideoRoom(
+    client,
+    roomId
+  );
 
   return (
     <div>
@@ -426,9 +485,32 @@ function Room({ client }) {
               <li key={member.userId}>{member.name}</li>
             ))}
           </ul>
-          <button onClick={joinCall}>Join Call</button>
+          {joined ? (
+            participants.map((participant) => (
+              <Participant key={participant.userId} participant={participant} />
+            ))
+          ) : (
+            <button onClick={joinCall}>Join Call</button>
+          )}
         </>
       )}
     </div>
   );
+}
+
+function Participant({ participant }) {
+  const videoRef = useRef();
+
+  useEffect(() => {
+    if (participant.feed) {
+      if (participant.muted) {
+        videoRef.current.muted = true;
+      }
+
+      videoRef.current.srcObject = participant.feed.stream;
+      videoRef.current.play();
+    }
+  }, [participant.feed]);
+
+  return <video ref={videoRef}></video>;
 }
