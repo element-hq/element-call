@@ -18,26 +18,31 @@ export class ConferenceCall extends EventEmitter {
       muted: true,
     };
     this.participants = [this.localParticipant];
+
+    client.on("Room.timeline", function (event, room, toStartOfTimeline) {
+      console.debug(event.event);
+    });
   }
 
   join() {
+    this.client.on("RoomState.members", this._onMemberChanged);
+    this.client.on("Call.incoming", this._onIncomingCall);
+
+    this.emit("joined");
+
     const activeConf = this.room.currentState
       .getStateEvents(CONF_ROOM, "")
       ?.getContent()?.active;
 
     if (!activeConf) {
       this.client.sendStateEvent(this.roomId, CONF_ROOM, { active: true }, "");
+    } else {
+      this.room
+        .getMembers()
+        .forEach((member) => this._processMember(member.userId));
     }
 
     this._updateParticipantState();
-
-    this.client.on("RoomState.members", this._onMemberChanged);
-    this.client.on("Call.incoming", this._onIncomingCall);
-    this.room
-      .getMembers()
-      .forEach((member) => this._processMember(member.userId));
-
-    this.emit("joined");
   }
 
   _updateParticipantState = () => {
@@ -97,7 +102,7 @@ export class ConferenceCall extends EventEmitter {
   }
 
   _onIncomingCall = (call) => {
-    console.debug("onIncomingCall", call);
+    console.debug("_onIncomingCall", call);
     this._addCall(call);
     call.answer();
   };
@@ -111,15 +116,30 @@ export class ConferenceCall extends EventEmitter {
   };
 
   _addCall(call, userId) {
+    const existingCall = this.participants.find(
+      (p) => p.call && p.call.callId === call.callId
+    );
+
+    if (existingCall) {
+      console.debug("found existing call");
+      return;
+    }
+
     this.participants.push({
-      userId: userId || call.getOpponentMember().userId,
+      userId,
       feed: null,
       call,
     });
 
     call.on("feeds_changed", () => this._onCallFeedsChanged(call));
     call.on("hangup", () => this._onCallHangup(call));
-    call.on("replaced", (newCall) => this._onCallReplaced(call, newCall));
+
+    const onReplaced = (newCall) => {
+      this._onCallReplaced(call, newCall);
+      call.removeListener("replaced", onReplaced);
+    };
+
+    call.on("replaced", onReplaced);
     this._onCallFeedsChanged(call);
 
     this.emit("participants_changed");
@@ -150,7 +170,10 @@ export class ConferenceCall extends EventEmitter {
   };
 
   _onCallHangup = (call) => {
+    console.debug("_onCallHangup", call);
+
     if (call.hangupReason === "replaced") {
+      console.debug("replaced");
       return;
     }
 
@@ -168,7 +191,7 @@ export class ConferenceCall extends EventEmitter {
   };
 
   _onCallReplaced = (call, newCall) => {
-    console.debug("onCallReplaced", call, newCall);
+    console.debug("_onCallReplaced", call, newCall);
 
     const remoteParticipant = this.participants.find((p) => p.call === call);
 

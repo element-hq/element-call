@@ -512,5 +512,10 @@ function Participant({ participant }) {
     }
   }, [participant.feed]);
 
-  return <video ref={videoRef}></video>;
+  return (
+    <div>
+      {participant.userId}
+      <video ref={videoRef}></video>
+    </div>
+  );
 }
