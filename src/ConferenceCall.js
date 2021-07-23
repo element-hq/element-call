@@ -26,6 +26,11 @@ export class ConferenceCall extends EventEmitter {
   }
 
   join() {
+    console.debug(
+      "join",
+      `Local user ${this.client.getUserId()} joining room ${this.roomId}`
+    );
+
     this.joined = true;
 
     const activeConf = this.room.currentState
@@ -67,22 +72,41 @@ export class ConferenceCall extends EventEmitter {
   };
 
   _onMemberChanged = (_event, _state, member) => {
-    if (!this.joined) {
-      console.debug("_onMemberChanged", member, "not joined");
-      return;
-    }
-
     this._processMember(member.userId);
   };
 
   _processMember(userId) {
     const localUserId = this.client.getUserId();
 
-    if (userId === localUserId || userId < localUserId) {
+    if (userId === localUserId) {
+      return;
+    }
+
+    // Don't process members until we've joined
+    if (!this.joined) {
+      console.debug(
+        "_processMember",
+        `Ignored ${userId}. Local user has not joined conference yet.`
+      );
+      return;
+    }
+
+    // Only initiate a call with a user who has a userId that is lexicographically
+    // less than your own. Otherwise, that user will call you.
+    if (userId < localUserId) {
+      console.debug(
+        "_processMember",
+        `Ignored ${userId}. Local user will answer call instead.`
+      );
       return;
     }
 
     const participant = this.participants.find((p) => p.userId === userId);
+
+    if (participant) {
+      // Member has already been processed
+      return;
+    }
 
     const memberStateEvent = this.room.currentState.getStateEvents(
       "m.room.member",
@@ -90,48 +114,54 @@ export class ConferenceCall extends EventEmitter {
     );
     const participantTimeout = memberStateEvent.getContent()[CONF_PARTICIPANT];
 
-    console.debug(
-      "_processMember",
-      new Date().getTime() - participantTimeout > PARTICIPANT_TIMEOUT
-    );
-
     if (
       typeof participantTimeout === "number" &&
       new Date().getTime() - participantTimeout > PARTICIPANT_TIMEOUT
     ) {
-      // if (participant && participant.call) {
-      //   participant.call.hangup("user_hangup");
-      // }
-
+      // Member is inactive so don't call them.
+      console.debug(
+        "_processMember",
+        `Ignored ${userId}. User is not active in conference.`
+      );
       return;
     }
 
-    if (!participant) {
-      this._callUser(userId);
-    }
+    const call = this.client.createCall(this.roomId, userId);
+    this._addCall(call, userId);
+    console.debug(
+      "_processMember",
+      `Placing video call ${call.callId} to ${userId}.`
+    );
+    call.placeVideoCall();
   }
 
   _onIncomingCall = (call) => {
     if (!this.joined) {
       console.debug(
         "_onIncomingCall",
-        "Member hasn't joined yet. Not answering."
+        "Local user hasn't joined yet. Not answering."
       );
-      //call.hangup();
       return;
     }
 
-    console.debug("_onIncomingCall", call);
-    this._addCall(call);
-    call.answer();
-  };
+    // HACK: Horrible hack only necessary because Call.incoming sets opponentMember
+    // inside an async function.
+    const pollOpponentMember = () => {
+      if (call.opponentMember) {
+        const userId = call.opponentMember.userId;
+        this._addCall(call, userId);
+        console.debug(
+          "_onIncomingCall",
+          `Answering incoming call ${call.callId} from ${userId}`
+        );
+        call.answer();
+        return;
+      }
 
-  _callUser = (userId) => {
-    const call = this.client.createCall(this.roomId, userId);
-    console.debug("_callUser", call, userId);
-    // TODO: Handle errors
-    this._addCall(call, userId);
-    call.placeVideoCall();
+      setTimeout(pollOpponentMember, 100);
+    };
+
+    pollOpponentMember();
   };
 
   _addCall(call, userId) {
@@ -140,7 +170,10 @@ export class ConferenceCall extends EventEmitter {
     );
 
     if (existingCall) {
-      console.debug("found existing call");
+      console.debug(
+        "_addCall",
+        `Found existing call ${call.callId}. Ignoring.`
+      );
       return;
     }
 
@@ -150,6 +183,8 @@ export class ConferenceCall extends EventEmitter {
       call,
       calls: [call],
     });
+
+    console.debug("_addCall", `Added new participant ${userId}`);
 
     call.on("feeds_changed", () => this._onCallFeedsChanged(call));
     call.on("hangup", () => this._onCallHangup(call));
@@ -166,7 +201,6 @@ export class ConferenceCall extends EventEmitter {
   }
 
   _onCallFeedsChanged = (call) => {
-    console.debug("_onCallFeedsChanged", call);
     const localFeeds = call.getLocalFeeds();
 
     let participantsChanged = false;
@@ -190,10 +224,9 @@ export class ConferenceCall extends EventEmitter {
   };
 
   _onCallHangup = (call) => {
-    console.debug("_onCallHangup", call);
+    console.debug("_onCallHangup", `Hangup reason ${call.hangupReason}`);
 
     if (call.hangupReason === "replaced") {
-      console.debug("replaced");
       return;
     }
 
@@ -211,7 +244,10 @@ export class ConferenceCall extends EventEmitter {
   };
 
   _onCallReplaced = (call, newCall) => {
-    console.debug("_onCallReplaced", call, newCall);
+    console.debug(
+      "_onCallReplaced",
+      `Call ${call.callId} replaced with ${newCall.callId}`
+    );
 
     const remoteParticipant = this.participants.find((p) => p.call === call);
 
