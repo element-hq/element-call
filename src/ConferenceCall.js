@@ -144,8 +144,8 @@ export class ConferenceCall extends EventEmitter {
       return;
     }
 
-    // HACK: Horrible hack only necessary because Call.incoming sets opponentMember
-    // inside an async function.
+    // HACK: Horrible hack necessary because callHandler sets opponentMember
+    // asynchronously before emitting the Call.incoming event.
     const pollOpponentMember = () => {
       if (call.opponentMember) {
         const userId = call.opponentMember.userId;
