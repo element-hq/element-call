@@ -358,17 +358,24 @@ function JoinOrCreateRoom({ client }) {
 }
 
 function useVideoRoom(client, roomId, timeout = 5000) {
-  const [{ loading, joined, room, participants, error }, setState] = useState({
+  const [
+    { loading, joined, room, conferenceCall, participants, error },
+    setState,
+  ] = useState({
     loading: true,
     joined: false,
     room: undefined,
     participants: [],
     error: undefined,
+    conferenceCall: null,
   });
 
   useEffect(() => {
+    const conferenceCall = new ConferenceCall(client, roomId);
+
     setState((prevState) => ({
       ...prevState,
+      conferenceCall,
       loading: true,
       room: undefined,
       error: undefined,
@@ -424,17 +431,6 @@ function useVideoRoom(client, roomId, timeout = 5000) {
   }, [roomId]);
 
   const joinCall = useCallback(() => {
-    const conferenceCall = new ConferenceCall(client, roomId);
-
-    const onJoined = () => {
-      setState((prevState) => ({
-        ...prevState,
-        joined: true,
-      }));
-    };
-
-    conferenceCall.on("joined", onJoined);
-
     const onParticipantsChanged = () => {
       setState((prevState) => ({
         ...prevState,
@@ -446,13 +442,16 @@ function useVideoRoom(client, roomId, timeout = 5000) {
 
     conferenceCall.join();
 
+    setState((prevState) => ({
+      ...prevState,
+      joined: true,
+    }));
+
     return () => {
-      conferenceCall.removeListener("joined", onJoined);
       conferenceCall.removeListener(
         "participants_changed",
         onParticipantsChanged
       );
-      conferenceCall.leave();
 
       setState((prevState) => ({
         ...prevState,
@@ -460,7 +459,7 @@ function useVideoRoom(client, roomId, timeout = 5000) {
         participants: [],
       }));
     };
-  }, [client, roomId]);
+  }, [client, conferenceCall, roomId]);
 
   return { loading, joined, room, participants, error, joinCall };
 }
@@ -513,9 +512,26 @@ function Participant({ participant }) {
   }, [participant.feed]);
 
   return (
-    <div>
-      {participant.userId}
+    <li>
+      <h3>
+        User ID:{participant.userId} {participant.local && "(Local)"}
+      </h3>
+      {!participant.local && (
+        <>
+          <h3>Calls:</h3>
+          <ul>
+            {participant.calls.map((call) => (
+              <li key={call.callId}>
+                <p>Call ID: {call.callId}</p>
+                <p>Direction: {call.direction}</p>
+                <p>State: {call.state}</p>
+                <p>Hangup Reason: {call.hangupReason}</p>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
       <video ref={videoRef}></video>
-    </div>
+    </li>
   );
 }

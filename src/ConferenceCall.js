@@ -2,33 +2,31 @@ import EventEmitter from "events";
 
 const CONF_ROOM = "me.robertlong.conf";
 const CONF_PARTICIPANT = "me.robertlong.conf.participant";
-const PARTICIPANT_TIMEOUT = 1000 * 30;
+const PARTICIPANT_TIMEOUT = 1000 * 5;
 
 export class ConferenceCall extends EventEmitter {
   constructor(client, roomId) {
     super();
     this.client = client;
     this.roomId = roomId;
-    this.confId = null;
+    this.joined = false;
     this.room = client.getRoom(roomId);
     this.localParticipant = {
+      local: true,
       userId: client.getUserId(),
       feed: null,
       call: null,
       muted: true,
+      calls: [],
     };
     this.participants = [this.localParticipant];
 
-    client.on("Room.timeline", function (event, room, toStartOfTimeline) {
-      console.debug(event.event);
-    });
+    this.client.on("RoomState.members", this._onMemberChanged);
+    this.client.on("Call.incoming", this._onIncomingCall);
   }
 
   join() {
-    this.client.on("RoomState.members", this._onMemberChanged);
-    this.client.on("Call.incoming", this._onIncomingCall);
-
-    this.emit("joined");
+    this.joined = true;
 
     const activeConf = this.room.currentState
       .getStateEvents(CONF_ROOM, "")
@@ -69,11 +67,18 @@ export class ConferenceCall extends EventEmitter {
   };
 
   _onMemberChanged = (_event, _state, member) => {
+    if (!this.joined) {
+      console.debug("_onMemberChanged", member, "not joined");
+      return;
+    }
+
     this._processMember(member.userId);
   };
 
   _processMember(userId) {
-    if (userId === this.client.getUserId()) {
+    const localUserId = this.client.getUserId();
+
+    if (userId === localUserId || userId < localUserId) {
       return;
     }
 
@@ -85,13 +90,18 @@ export class ConferenceCall extends EventEmitter {
     );
     const participantTimeout = memberStateEvent.getContent()[CONF_PARTICIPANT];
 
+    console.debug(
+      "_processMember",
+      new Date().getTime() - participantTimeout > PARTICIPANT_TIMEOUT
+    );
+
     if (
       typeof participantTimeout === "number" &&
-      new Date().getTime() - participantTimeout > PARTICIPANT_TIMEOUT * 1.5
+      new Date().getTime() - participantTimeout > PARTICIPANT_TIMEOUT
     ) {
-      if (participant && participant.call) {
-        participant.call.hangup("user_hangup");
-      }
+      // if (participant && participant.call) {
+      //   participant.call.hangup("user_hangup");
+      // }
 
       return;
     }
@@ -102,6 +112,15 @@ export class ConferenceCall extends EventEmitter {
   }
 
   _onIncomingCall = (call) => {
+    if (!this.joined) {
+      console.debug(
+        "_onIncomingCall",
+        "Member hasn't joined yet. Not answering."
+      );
+      //call.hangup();
+      return;
+    }
+
     console.debug("_onIncomingCall", call);
     this._addCall(call);
     call.answer();
@@ -129,6 +148,7 @@ export class ConferenceCall extends EventEmitter {
       userId,
       feed: null,
       call,
+      calls: [call],
     });
 
     call.on("feeds_changed", () => this._onCallFeedsChanged(call));
@@ -196,6 +216,7 @@ export class ConferenceCall extends EventEmitter {
     const remoteParticipant = this.participants.find((p) => p.call === call);
 
     remoteParticipant.call = newCall;
+    remoteParticipant.calls.push(newCall);
 
     newCall.on("feeds_changed", () => this._onCallFeedsChanged(newCall));
     newCall.on("hangup", () => this._onCallHangup(newCall));
