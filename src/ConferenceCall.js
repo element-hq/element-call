@@ -34,11 +34,11 @@ export class ConferenceCall extends EventEmitter {
 
     if (!activeConf) {
       this.client.sendStateEvent(this.roomId, CONF_ROOM, { active: true }, "");
-    } else {
-      this.room
-        .getMembers()
-        .forEach((member) => this._processMember(member.userId));
     }
+
+    this.room
+      .getMembers()
+      .forEach((member) => this._processMember(member.userId));
 
     this._updateParticipantState();
   }
