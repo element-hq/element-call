@@ -473,7 +473,8 @@ function Room({ client }) {
 
   return (
     <div>
-      <p>{roomId}</p>
+      <p>User ID:{client.getUserId()}</p>
+      <p>Room ID:{roomId}</p>
       {loading && <p>Loading room...</p>}
       {error && <p>{error.message}</p>}
       {!loading && room && (
