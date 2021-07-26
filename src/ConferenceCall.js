@@ -144,24 +144,16 @@ export class ConferenceCall extends EventEmitter {
       return;
     }
 
-    // HACK: Horrible hack necessary because callHandler sets opponentMember
-    // asynchronously before emitting the Call.incoming event.
-    const pollOpponentMember = () => {
-      if (call.opponentMember) {
-        const userId = call.opponentMember.userId;
-        this._addCall(call, userId);
-        console.debug(
-          "_onIncomingCall",
-          `Answering incoming call ${call.callId} from ${userId}`
-        );
-        call.answer();
-        return;
-      }
-
-      setTimeout(pollOpponentMember, 100);
-    };
-
-    pollOpponentMember();
+    if (call.opponentMember) {
+      const userId = call.opponentMember.userId;
+      this._addCall(call, userId);
+      console.debug(
+        "_onIncomingCall",
+        `Answering incoming call ${call.callId} from ${userId}`
+      );
+      call.answer();
+      return;
+    }
   };
 
   _addCall(call, userId) {
