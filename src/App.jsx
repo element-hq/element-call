@@ -292,7 +292,7 @@ function JoinOrCreateRoom({ client }) {
           name: roomNameRef.current.value,
         })
         .then(({ room_id }) => {
-          history.push(`/rooms/${room_id}`);
+          history.push(`/room/${room_id}`);
         })
         .catch(setCreateRoomError);
     },
@@ -307,7 +307,7 @@ function JoinOrCreateRoom({ client }) {
       client
         .joinRoom(roomIdRef.current.value)
         .then(({ roomId }) => {
-          history.push(`/rooms/${roomId}`);
+          history.push(`/room/${roomId}`);
         })
         .catch(setJoinRoomError);
     },
