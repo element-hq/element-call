@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import * as sdk from "matrix-js-sdk";
 import "./App.css";
 import {
   BrowserRouter as Router,
@@ -91,7 +90,7 @@ function useClient(homeserverUrl) {
         if (authStore) {
           const { user_id, device_id, access_token } = JSON.parse(authStore);
 
-          const client = sdk.createClient({
+          const client = matrixcs.createClient({
             baseUrl: homeserverUrl,
             accessToken: access_token,
             userId: user_id,
@@ -139,12 +138,12 @@ function useClient(homeserverUrl) {
         error: undefined,
       }));
 
-      const registrationClient = sdk.createClient(homeserverUrl);
+      const registrationClient = matrixcs.createClient(homeserverUrl);
 
       const { user_id, device_id, access_token } =
         await registrationClient.loginWithPassword(username, password);
 
-      const client = sdk.createClient({
+      const client = matrixcs.createClient({
         baseUrl: homeserverUrl,
         accessToken: access_token,
         userId: user_id,
@@ -183,14 +182,14 @@ function useClient(homeserverUrl) {
         error: undefined,
       }));
 
-      const registrationClient = sdk.createClient(homeserverUrl);
+      const registrationClient = matrixcs.createClient(homeserverUrl);
 
       const { user_id, device_id, access_token } =
         await registrationClient.register(username, password, null, {
           type: "m.login.dummy",
         });
 
-      const client = sdk.createClient({
+      const client = matrixcs.createClient({
         baseUrl: homeserverUrl,
         accessToken: access_token,
         userId: user_id,
