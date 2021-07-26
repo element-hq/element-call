@@ -2,7 +2,6 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "dev-server": "node ./server.js",
     "build": "vite build",
     "serve": "vite preview"
   },
