@@ -4,7 +4,7 @@ Testbed for full mesh video chat.
 
 ## Getting Started
 
-You must first run a local Synapse server on port 8080
+You must first run a local Synapse server on port 8008
 
 Then install the dependencies:
 
