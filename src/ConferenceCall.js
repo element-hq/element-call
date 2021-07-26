@@ -10,7 +10,7 @@ export class ConferenceCall extends EventEmitter {
     this.client = client;
     this.roomId = roomId;
     this.joined = false;
-    this.room = client.getRoom(roomId);
+    this.room = null;
     this.localParticipant = {
       local: true,
       userId: client.getUserId(),
@@ -32,6 +32,8 @@ export class ConferenceCall extends EventEmitter {
     );
 
     this.joined = true;
+
+    this.room = this.client.getRoom(this.roomId);
 
     const activeConf = this.room.currentState
       .getStateEvents(CONF_ROOM, "")
