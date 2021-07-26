@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import "./App.css";
+import styles from "./App.module.css";
 import {
   BrowserRouter as Router,
   Switch,
@@ -36,7 +36,7 @@ export default function App() {
 
   return (
     <Router>
-      <div className="App">
+      <div className={styles.app}>
         {error && <p>{error.message}</p>}
         {loading ? (
           <p>Loading...</p>
@@ -47,8 +47,11 @@ export default function App() {
                 <JoinOrCreateRoom client={client} />
               ) : (
                 <>
-                  <Register onRegister={register} />
-                  <Login onLogin={login} />
+                  <div className={styles.page}>
+                    <h1>Matrix Video Chat</h1>
+                    <Register onRegister={register} />
+                    <Login onLogin={login} />
+                  </div>
                 </>
               )}
             </Route>
@@ -232,11 +235,14 @@ function Register({ onRegister }) {
   });
 
   return (
-    <form onSubmit={onSubmit}>
-      <input type="text" ref={usernameRef} placeholder="Username"></input>
-      <input type="password" ref={passwordRef} placeholder="Password"></input>
-      <button type="submit">Register</button>
-    </form>
+    <>
+      <h2>Register</h2>
+      <form onSubmit={onSubmit}>
+        <input type="text" ref={usernameRef} placeholder="Username"></input>
+        <input type="password" ref={passwordRef} placeholder="Password"></input>
+        <button type="submit">Register</button>
+      </form>
+    </>
   );
 }
 
@@ -250,11 +256,14 @@ function Login({ onLogin }) {
   });
 
   return (
-    <form onSubmit={onSubmit}>
-      <input type="text" ref={usernameRef} placeholder="Username"></input>
-      <input type="password" ref={passwordRef} placeholder="Password"></input>
-      <button type="submit">Login</button>
-    </form>
+    <>
+      <h2>Login</h2>
+      <form onSubmit={onSubmit}>
+        <input type="text" ref={usernameRef} placeholder="Username"></input>
+        <input type="password" ref={passwordRef} placeholder="Password"></input>
+        <button type="submit">Login</button>
+      </form>
+    </>
   );
 }
 
@@ -315,9 +324,10 @@ function JoinOrCreateRoom({ client }) {
   );
 
   return (
-    <div>
+    <div className={styles.page}>
+      <h1>Matrix Video Chat</h1>
       <form onSubmit={onCreateRoom}>
-        <h3>Create New Room</h3>
+        <h2>Create New Room</h2>
         <input
           id="roomName"
           name="roomName"
@@ -331,7 +341,7 @@ function JoinOrCreateRoom({ client }) {
         <button type="submit">Create Room</button>
       </form>
       <form onSubmit={onJoinRoom}>
-        <h3>Join Existing Room</h3>
+        <h2>Join Existing Room</h2>
         <input
           id="roomId"
           name="roomId"
@@ -344,7 +354,7 @@ function JoinOrCreateRoom({ client }) {
         {joinRoomError && <p>{joinRoomError.message}</p>}
         <button type="submit">Join Room</button>
       </form>
-      <h3>Rooms:</h3>
+      <h2>Rooms:</h2>
       <ul>
         {rooms.map((room) => (
           <li key={room.roomId}>
@@ -471,27 +481,40 @@ function Room({ client }) {
   );
 
   return (
-    <div>
-      <p>User ID:{client.getUserId()}</p>
-      <p>Room ID:{roomId}</p>
-      {loading && <p>Loading room...</p>}
-      {error && <p>{error.message}</p>}
+    <div className={styles.room}>
       {!loading && room && (
-        <>
+        <div className={styles.header}>
+          <h3>{room.name}</h3>
+        </div>
+      )}
+      {loading && (
+        <div className={styles.centerMessage}>
+          <p>Loading room...</p>
+        </div>
+      )}
+      {error && <div className={styles.centerMessage}>{error.message}</div>}
+      {!loading && room && !joined && (
+        <div className={styles.joinRoom}>
           <h3>Members:</h3>
           <ul>
             {room.getMembers().map((member) => (
               <li key={member.userId}>{member.name}</li>
             ))}
           </ul>
-          {joined ? (
-            participants.map((participant) => (
-              <Participant key={participant.userId} participant={participant} />
-            ))
-          ) : (
-            <button onClick={joinCall}>Join Call</button>
-          )}
-        </>
+          <button onClick={joinCall}>Join Call</button>
+        </div>
+      )}
+      {!loading && room && joined && participants.length === 0 && (
+        <div className={styles.centerMessage}>
+          <p>Waiting for other participants...</p>
+        </div>
+      )}
+      {!loading && room && joined && participants.length > 0 && (
+        <div className={styles.roomContainer}>
+          {participants.map((participant) => (
+            <Participant key={participant.userId} participant={participant} />
+          ))}
+        </div>
       )}
     </div>
   );
@@ -512,26 +535,13 @@ function Participant({ participant }) {
   }, [participant.feed]);
 
   return (
-    <li>
-      <h3>
-        User ID:{participant.userId} {participant.local && "(Local)"}
-      </h3>
-      {!participant.local && (
-        <>
-          <h3>Calls:</h3>
-          <ul>
-            {participant.calls.map((call) => (
-              <li key={call.callId}>
-                <p>Call ID: {call.callId}</p>
-                <p>Direction: {call.direction}</p>
-                <p>State: {call.state}</p>
-                <p>Hangup Reason: {call.hangupReason}</p>
-              </li>
-            ))}
-          </ul>
-        </>
-      )}
+    <div className={styles.participant}>
       <video ref={videoRef}></video>
-    </li>
+      <div className={styles.participantLabel}>
+        <p>
+          {participant.userId} {participant.local && "(You)"}
+        </p>
+      </div>
+    </div>
   );
 }

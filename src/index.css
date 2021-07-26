@@ -1,8 +1,34 @@
 body {
+  background-color: #333;
+  color: #fff;
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+button {
+  border: none;
+  background: #ccc;
+  color: black;
+  font-size: 16px;
+  font-weight: bold;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+button:hover, button:active {
+  background: #888;
+}
+
+a {
+  color: rgb(102, 180, 233);
+  font-weight: bold;
+}
+
+a:hover, a:active {
+  color: rgb(76, 134, 173);
 }
