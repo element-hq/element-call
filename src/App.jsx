@@ -38,7 +38,7 @@ export default function App() {
   return (
     <Router>
       <div className="App">
-        <div className="user_id">{client.getUserId()}</div>
+        {client && <div className="user_id">{client.getUserId()}</div>}
         {error && <p>{error.message}</p>}
         {loading ? (
           <p>Loading...</p>
