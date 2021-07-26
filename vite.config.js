@@ -22,7 +22,7 @@ export default defineConfig({
   plugins: [reactRefresh()],
   server: {
     proxy: {
-      "/_matrix": "http://localhost:8080",
+      "/_matrix": "http://localhost:8008",
     },
   },
 });
