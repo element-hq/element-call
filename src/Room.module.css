@@ -107,6 +107,14 @@ limitations under the License.
   background: rgba(0, 0, 0, 0.2);
 }
 
+.footer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 64px;
+}
+
 @media(min-width: 800px) {
   .roomContainer {
     flex-direction: row;

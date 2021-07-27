@@ -201,7 +201,17 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
     };
   }, [manager, roomId]);
 
-  return { loading, joined, room, participants, error, joinCall };
+  const leaveCall = useCallback(() => {
+    manager.leaveCall();
+
+    setState((prevState) => ({
+      ...prevState,
+      participants: manager.participants,
+      joined: false,
+    }));
+  }, [manager]);
+
+  return { loading, joined, room, participants, error, joinCall, leaveCall };
 }
 
 export function useRooms(manager) {

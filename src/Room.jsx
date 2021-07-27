@@ -21,10 +21,8 @@ import { useVideoRoom } from "./ConferenceCallManagerHooks";
 
 export function Room({ manager }) {
   const { roomId } = useParams();
-  const { loading, joined, room, participants, error, joinCall } = useVideoRoom(
-    manager,
-    roomId
-  );
+  const { loading, joined, room, participants, error, joinCall, leaveCall } =
+    useVideoRoom(manager, roomId);
 
   return (
     <div className={styles.room}>
@@ -61,34 +59,43 @@ export function Room({ manager }) {
       {!loading && room && joined && participants.length > 0 && (
         <div className={styles.roomContainer}>
           {participants.map((participant) => (
-            <Participant key={participant.userId} participant={participant} />
+            <Participant key={participant.userId} {...participant} />
           ))}
+        </div>
+      )}
+      {!loading && room && joined && (
+        <div className={styles.footer}>
+          <button className={styles.leaveButton} onClick={leaveCall}>
+            Leave Call
+          </button>
         </div>
       )}
     </div>
   );
 }
 
-function Participant({ participant }) {
+function Participant({ userId, feed, muted, local }) {
   const videoRef = useRef();
 
   useEffect(() => {
-    if (participant.feed) {
-      if (participant.muted) {
+    if (feed) {
+      if (muted) {
         videoRef.current.muted = true;
       }
 
-      videoRef.current.srcObject = participant.feed.stream;
+      videoRef.current.srcObject = feed.stream;
       videoRef.current.play();
+    } else {
+      videoRef.current.srcObject = null;
     }
-  }, [participant.feed]);
+  }, [feed]);
 
   return (
     <div className={styles.participant}>
       <video ref={videoRef}></video>
       <div className={styles.participantLabel}>
         <p>
-          {participant.userId} {participant.local && "(You)"}
+          {userId} {local && "(You)"}
         </p>
       </div>
     </div>

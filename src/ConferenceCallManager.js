@@ -140,7 +140,6 @@ export class ConferenceCallManager extends EventEmitter {
       feed: null,
       call: null,
       muted: true,
-      calls: [],
     };
     this.participants = [this.localParticipant];
 
@@ -284,7 +283,7 @@ export class ConferenceCallManager extends EventEmitter {
 
   _addCall(call, userId) {
     const existingCall = this.participants.find(
-      (p) => p.call && p.call.callId === call.callId
+      (p) => !p.local && p.call && p.call.callId === call.callId
     );
 
     if (existingCall) {
@@ -299,7 +298,6 @@ export class ConferenceCallManager extends EventEmitter {
       userId,
       feed: null,
       call,
-      calls: [call],
     });
 
     console.debug("_addCall", `Added new participant ${userId}`);
@@ -324,12 +322,15 @@ export class ConferenceCallManager extends EventEmitter {
     let participantsChanged = false;
 
     if (!this.localParticipant.feed && localFeeds.length > 0) {
+      this.localParticipant.call = call;
       this.localParticipant.feed = localFeeds[0];
       participantsChanged = true;
     }
 
     const remoteFeeds = call.getRemoteFeeds();
-    const remoteParticipant = this.participants.find((p) => p.call === call);
+    const remoteParticipant = this.participants.find(
+      (p) => !p.local && p.call === call
+    );
 
     if (remoteFeeds.length > 0 && remoteParticipant.feed !== remoteFeeds[0]) {
       remoteParticipant.feed = remoteFeeds[0];
@@ -349,7 +350,7 @@ export class ConferenceCallManager extends EventEmitter {
     }
 
     const participantIndex = this.participants.findIndex(
-      (p) => p.call === call
+      (p) => !p.local && p.call === call
     );
 
     if (participantIndex === -1) {
@@ -357,6 +358,27 @@ export class ConferenceCallManager extends EventEmitter {
     }
 
     this.participants.splice(participantIndex, 1);
+
+    if (this.localParticipant.call === call) {
+      const newLocalCallParticipant = this.participants.find(
+        (p) => !p.local && p.call
+      );
+
+      if (newLocalCallParticipant) {
+        const localFeeds = call.getLocalFeeds();
+
+        if (localFeeds.length > 0) {
+          this.localParticipant.call = call;
+          this.localParticipant.feed = localFeeds[0];
+        } else {
+          this.localParticipant.call = null;
+          this.localParticipant.feed = null;
+        }
+      } else {
+        this.localParticipant.call = null;
+        this.localParticipant.feed = null;
+      }
+    }
 
     this.emit("participants_changed");
   };
@@ -367,10 +389,11 @@ export class ConferenceCallManager extends EventEmitter {
       `Call ${call.callId} replaced with ${newCall.callId}`
     );
 
-    const remoteParticipant = this.participants.find((p) => p.call === call);
+    const remoteParticipant = this.participants.find(
+      (p) => !p.local && p.call === call
+    );
 
     remoteParticipant.call = newCall;
-    remoteParticipant.calls.push(newCall);
 
     newCall.on("feeds_changed", () => this._onCallFeedsChanged(newCall));
     newCall.on("hangup", () => this._onCallHangup(newCall));
@@ -381,4 +404,18 @@ export class ConferenceCallManager extends EventEmitter {
 
     this.emit("participants_changed");
   };
+
+  leaveCall() {
+    for (const participant of this.participants) {
+      if (!participant.local && participant.call) {
+        participant.call.hangup("user_hangup", false);
+      }
+    }
+
+    this.joined = false;
+    this.participants = [this.localParticipant];
+    this.localParticipant.feed = null;
+    this.localParticipant.call = null;
+    this.emit("participants_changed");
+  }
 }
