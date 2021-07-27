@@ -24,12 +24,15 @@ export function LoginOrRegister({ onRegister, onLogin }) {
 
   const onSubmitRegisterForm = useCallback((e) => {
     e.preventDefault();
-    onRegister(usernameRef.current.value, passwordRef.current.value);
+    onRegister(
+      registerUsernameRef.current.value,
+      registerPasswordRef.current.value
+    );
   });
 
   const onSubmitLoginForm = useCallback((e) => {
     e.preventDefault();
-    onLogin(usernameRef.current.value, passwordRef.current.value);
+    onLogin(loginUsernameRef.current.value, loginPasswordRef.current.value);
   });
 
   return (
