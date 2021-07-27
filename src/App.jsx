@@ -28,6 +28,7 @@ import {
 import {
   useConferenceCallManager,
   useVideoRoom,
+  useRooms,
 } from "./ConferenceCallManagerHooks";
 
 export default function App() {
@@ -49,13 +50,7 @@ export default function App() {
               {authenticated ? (
                 <JoinOrCreateRoom manager={manager} />
               ) : (
-                <>
-                  <div className={styles.page}>
-                    <h1>Matrix Video Chat</h1>
-                    <Register onRegister={register} />
-                    <Login onLogin={login} />
-                  </div>
-                </>
+                <LoginOrRegister onRegister={register} onLogin={login} />
               )}
             </Route>
             <Route path="/room/:roomId">
@@ -72,45 +67,54 @@ export default function App() {
   );
 }
 
-function Register({ onRegister }) {
-  const usernameRef = useRef();
-  const passwordRef = useRef();
+function LoginOrRegister({ onRegister, onLogin }) {
+  const registerUsernameRef = useRef();
+  const registerPasswordRef = useRef();
+  const loginUsernameRef = useRef();
+  const loginPasswordRef = useRef();
 
-  const onSubmit = useCallback((e) => {
+  const onSubmitRegisterForm = useCallback((e) => {
     e.preventDefault();
     onRegister(usernameRef.current.value, passwordRef.current.value);
   });
 
-  return (
-    <>
-      <h2>Register</h2>
-      <form onSubmit={onSubmit}>
-        <input type="text" ref={usernameRef} placeholder="Username"></input>
-        <input type="password" ref={passwordRef} placeholder="Password"></input>
-        <button type="submit">Register</button>
-      </form>
-    </>
-  );
-}
-
-function Login({ onLogin }) {
-  const usernameRef = useRef();
-  const passwordRef = useRef();
-
-  const onSubmit = useCallback((e) => {
+  const onSubmitLoginForm = useCallback((e) => {
     e.preventDefault();
     onLogin(usernameRef.current.value, passwordRef.current.value);
   });
 
   return (
-    <>
+    <div className={styles.page}>
+      <h1>Matrix Video Chat</h1>
+      <h2>Register</h2>
+      <form onSubmit={onSubmitRegisterForm}>
+        <input
+          type="text"
+          ref={registerUsernameRef}
+          placeholder="Username"
+        ></input>
+        <input
+          type="password"
+          ref={registerPasswordRef}
+          placeholder="Password"
+        ></input>
+        <button type="submit">Register</button>
+      </form>
       <h2>Login</h2>
-      <form onSubmit={onSubmit}>
-        <input type="text" ref={usernameRef} placeholder="Username"></input>
-        <input type="password" ref={passwordRef} placeholder="Password"></input>
+      <form onSubmit={onSubmitLoginForm}>
+        <input
+          type="text"
+          ref={loginUsernameRef}
+          placeholder="Username"
+        ></input>
+        <input
+          type="password"
+          ref={loginPasswordRef}
+          placeholder="Password"
+        ></input>
         <button type="submit">Login</button>
       </form>
-    </>
+    </div>
   );
 }
 
@@ -120,21 +124,7 @@ function JoinOrCreateRoom({ manager }) {
   const roomIdRef = useRef();
   const [createRoomError, setCreateRoomError] = useState();
   const [joinRoomError, setJoinRoomError] = useState();
-  const [rooms, setRooms] = useState([]);
-
-  useEffect(() => {
-    function updateRooms() {
-      setRooms(manager.client.getRooms());
-    }
-
-    updateRooms();
-
-    manager.client.on("Room", updateRooms);
-
-    return () => {
-      manager.client.removeListener("Room", updateRooms);
-    };
-  }, []);
+  const rooms = useRooms(manager);
 
   const onCreateRoom = useCallback(
     (e) => {

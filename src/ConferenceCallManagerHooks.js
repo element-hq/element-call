@@ -187,3 +187,23 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
 
   return { loading, joined, room, participants, error, joinCall };
 }
+
+export function useRooms(manager) {
+  const [rooms, setRooms] = useState([]);
+
+  useEffect(() => {
+    function updateRooms() {
+      setRooms(manager.client.getRooms());
+    }
+
+    updateRooms();
+
+    manager.client.on("Room", updateRooms);
+
+    return () => {
+      manager.client.removeListener("Room", updateRooms);
+    };
+  }, []);
+
+  return rooms;
+}
