@@ -406,6 +406,22 @@ export class ConferenceCallManager extends EventEmitter {
   };
 
   leaveCall() {
+    const userId = this.client.getUserId();
+    const currentMemberState = this.room.currentState.getStateEvents(
+      "m.room.member",
+      userId
+    );
+
+    this.client.sendStateEvent(
+      this.roomId,
+      "m.room.member",
+      {
+        ...currentMemberState.getContent(),
+        [CONF_PARTICIPANT]: null,
+      },
+      userId
+    );
+
     for (const participant of this.participants) {
       if (!participant.local && participant.call) {
         participant.call.hangup("user_hangup", false);
@@ -416,6 +432,7 @@ export class ConferenceCallManager extends EventEmitter {
     this.participants = [this.localParticipant];
     this.localParticipant.feed = null;
     this.localParticipant.call = null;
+
     this.emit("participants_changed");
   }
 }

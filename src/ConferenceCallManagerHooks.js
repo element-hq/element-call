@@ -117,6 +117,18 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
   });
 
   useEffect(() => {
+    function onBeforeUnload(event) {
+      manager.leaveCall();
+    }
+
+    window.addEventListener("beforeunload", onBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", onBeforeUnload);
+    };
+  }, [manager]);
+
+  useEffect(() => {
     setState((prevState) => ({
       ...prevState,
       loading: true,
@@ -169,6 +181,7 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
 
     return () => {
       manager.client.removeListener("Room", roomCallback);
+      manager.leaveCall();
       clearTimeout(timeoutId);
     };
   }, [roomId]);
