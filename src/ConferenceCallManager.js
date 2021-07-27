@@ -143,6 +143,8 @@ export class ConferenceCallManager extends EventEmitter {
     };
     this.participants = [this.localParticipant];
 
+    this.pendingCalls = [];
+
     this.client.on("RoomState.members", this._onMemberChanged);
     this.client.on("Call.incoming", this._onIncomingCall);
   }
@@ -169,6 +171,16 @@ export class ConferenceCallManager extends EventEmitter {
     this.room
       .getMembers()
       .forEach((member) => this._processMember(member.userId));
+
+    for (const { call, onHangup, onReplaced } of this.pendingCalls) {
+      call.removeListener("hangup", onHangup);
+      call.removeListener("replaced", onReplaced);
+      const userId = call.opponentMember.userId;
+      this._addCall(call, userId);
+      call.answer();
+    }
+
+    this.pendingCalls = [];
 
     this._updateParticipantState();
   }
@@ -262,10 +274,34 @@ export class ConferenceCallManager extends EventEmitter {
 
   _onIncomingCall = (call) => {
     if (!this.joined) {
-      console.debug(
-        "_onIncomingCall",
-        "Local user hasn't joined yet. Not answering."
-      );
+      const onHangup = (call) => {
+        const index = this.pendingCalls.findIndex((p) => p.call === call);
+
+        if (index !== -1) {
+          this.pendingCalls.splice(index, 1);
+        }
+      };
+
+      const onReplaced = (call, newCall) => {
+        const index = this.pendingCalls.findIndex((p) => p.call === call);
+
+        if (index !== -1) {
+          this.pendingCalls.splice(index, 1, {
+            call: newCall,
+            onHangup: () => onHangup(newCall),
+            onReplaced: (nextCall) => onReplaced(newCall, nextCall),
+          });
+        }
+      };
+
+      this.pendingCalls.push({
+        call,
+        onHangup: () => onHangup(call),
+        onReplaced: (newCall) => onReplaced(call, newCall),
+      });
+      call.on("hangup", onHangup);
+      call.on("replaced", onReplaced);
+
       return;
     }
 
@@ -282,6 +318,10 @@ export class ConferenceCallManager extends EventEmitter {
   };
 
   _addCall(call, userId) {
+    if (call.state === "ended") {
+      return;
+    }
+
     const existingCall = this.participants.find(
       (p) => !p.local && p.call && p.call.callId === call.callId
     );
