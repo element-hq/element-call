@@ -43,11 +43,17 @@ limitations under the License.
 }
 
 .header {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
   height: 64px;
+}
 
+.userNav {
+  position: absolute;
+  right: 0;
+  padding: 0 8px;
 }
 
 .joinRoom {

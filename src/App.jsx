@@ -485,6 +485,9 @@ function Room({ client }) {
       {!loading && room && (
         <div className={styles.header}>
           <h3>{room.name}</h3>
+          <div className={styles.userNav}>
+            <h5>{client.getUserId()}</h5>
+          </div>
         </div>
       )}
       {loading && (
