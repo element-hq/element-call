@@ -14,25 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.page {
-  margin: 0 auto;
-  max-width: 960px;
-  display: flex;
-  flex-direction: column;
-  padding: 0 20px;
-}
-
-.page input {
-  padding: 8px 4px;
-  font-size: 16px;
-  border-radius: 4px;
-  border: 1px solid #888;
-}
-
-.page input, .page button {
-  display: block;
-  margin-top: 16px;
-}
 
 .room {
   position: fixed;
