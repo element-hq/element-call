@@ -4,11 +4,118 @@ const CONF_ROOM = "me.robertlong.conf";
 const CONF_PARTICIPANT = "me.robertlong.conf.participant";
 const PARTICIPANT_TIMEOUT = 1000 * 5;
 
-export class ConferenceCall extends EventEmitter {
-  constructor(client, roomId) {
+function waitForSync(client) {
+  return new Promise((resolve, reject) => {
+    const onSync = (state) => {
+      if (state === "PREPARED") {
+        resolve();
+        client.removeListener("sync", onSync);
+      }
+    };
+    client.on("sync", onSync);
+  });
+}
+
+export class ConferenceCallManager extends EventEmitter {
+  static async restore(homeserverUrl) {
+    try {
+      const authStore = localStorage.getItem("matrix-auth-store");
+
+      if (authStore) {
+        const { user_id, device_id, access_token } = JSON.parse(authStore);
+
+        const client = matrixcs.createClient({
+          baseUrl: homeserverUrl,
+          accessToken: access_token,
+          userId: user_id,
+          deviceId: device_id,
+        });
+
+        const manager = new ConferenceCallManager(client);
+
+        await client.startClient();
+
+        await waitForSync(client);
+
+        return manager;
+      }
+    } catch (err) {
+      localStorage.removeItem("matrix-auth-store");
+      throw err;
+    }
+  }
+
+  static async login(homeserverUrl, username, password) {
+    try {
+      const registrationClient = matrixcs.createClient(homeserverUrl);
+
+      const { user_id, device_id, access_token } =
+        await registrationClient.loginWithPassword(username, password);
+
+      const client = matrixcs.createClient({
+        baseUrl: homeserverUrl,
+        accessToken: access_token,
+        userId: user_id,
+        deviceId: device_id,
+      });
+
+      localStorage.setItem(
+        "matrix-auth-store",
+        JSON.stringify({ user_id, device_id, access_token })
+      );
+
+      const manager = new ConferenceCallManager(client);
+
+      await client.startClient();
+
+      await waitForSync(client);
+
+      return manager;
+    } catch (err) {
+      localStorage.removeItem("matrix-auth-store");
+
+      throw err;
+    }
+  }
+
+  static async register(homeserverUrl, username, password) {
+    try {
+      const registrationClient = matrixcs.createClient(homeserverUrl);
+
+      const { user_id, device_id, access_token } =
+        await registrationClient.register(username, password, null, {
+          type: "m.login.dummy",
+        });
+
+      const client = matrixcs.createClient({
+        baseUrl: homeserverUrl,
+        accessToken: access_token,
+        userId: user_id,
+        deviceId: device_id,
+      });
+
+      localStorage.setItem(
+        "matrix-auth-store",
+        JSON.stringify({ user_id, device_id, access_token })
+      );
+
+      const manager = new ConferenceCallManager(client);
+
+      await client.startClient();
+
+      await waitForSync(client);
+
+      return manager;
+    } catch (err) {
+      localStorage.removeItem("matrix-auth-store");
+
+      throw err;
+    }
+  }
+
+  constructor(client) {
     super();
     this.client = client;
-    this.roomId = roomId;
     this.joined = false;
     this.room = null;
     this.localParticipant = {
@@ -25,7 +132,7 @@ export class ConferenceCall extends EventEmitter {
     this.client.on("Call.incoming", this._onIncomingCall);
   }
 
-  join() {
+  join(roomId) {
     console.debug(
       "join",
       `Local user ${this.client.getUserId()} joining room ${this.roomId}`
@@ -33,6 +140,7 @@ export class ConferenceCall extends EventEmitter {
 
     this.joined = true;
 
+    this.roomId = roomId;
     this.room = this.client.getRoom(this.roomId);
 
     const activeConf = this.room.currentState

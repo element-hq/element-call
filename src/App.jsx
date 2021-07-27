@@ -25,14 +25,17 @@ import {
   Link,
   Redirect,
 } from "react-router-dom";
-import { ConferenceCall } from "./ConferenceCall";
+import {
+  useConferenceCallManager,
+  useVideoRoom,
+} from "./ConferenceCallManagerHooks";
 
 export default function App() {
   const { protocol, host } = window.location;
   // Assume homeserver is hosted on same domain (proxied in development by vite)
   const homeserverUrl = `${protocol}//${host}`;
-  const { loading, authenticated, error, client, login, register } =
-    useClient(homeserverUrl);
+  const { loading, authenticated, error, manager, login, register } =
+    useConferenceCallManager(homeserverUrl);
 
   return (
     <Router>
@@ -44,7 +47,7 @@ export default function App() {
           <Switch>
             <Route exact path="/">
               {authenticated ? (
-                <JoinOrCreateRoom client={client} />
+                <JoinOrCreateRoom manager={manager} />
               ) : (
                 <>
                   <div className={styles.page}>
@@ -56,173 +59,17 @@ export default function App() {
               )}
             </Route>
             <Route path="/room/:roomId">
-              {!authenticated ? <Redirect to="/" /> : <Room client={client} />}
+              {!authenticated ? (
+                <Redirect to="/" />
+              ) : (
+                <Room manager={manager} />
+              )}
             </Route>
           </Switch>
         )}
       </div>
     </Router>
   );
-}
-
-function waitForSync(client) {
-  return new Promise((resolve, reject) => {
-    const onSync = (state) => {
-      if (state === "PREPARED") {
-        resolve();
-        client.removeListener("sync", onSync);
-      }
-    };
-    client.on("sync", onSync);
-  });
-}
-
-function useClient(homeserverUrl) {
-  const [{ loading, authenticated, client, error }, setState] = useState({
-    loading: true,
-    authenticated: false,
-    client: undefined,
-    error: undefined,
-  });
-
-  useEffect(() => {
-    async function restoreClient() {
-      try {
-        const authStore = localStorage.getItem("matrix-auth-store");
-
-        if (authStore) {
-          const { user_id, device_id, access_token } = JSON.parse(authStore);
-
-          const client = matrixcs.createClient({
-            baseUrl: homeserverUrl,
-            accessToken: access_token,
-            userId: user_id,
-            deviceId: device_id,
-          });
-
-          await client.startClient();
-
-          await waitForSync(client);
-
-          setState({
-            client,
-            loading: false,
-            authenticated: true,
-            error: undefined,
-          });
-        } else {
-          setState({
-            client: undefined,
-            loading: false,
-            authenticated: false,
-            error: undefined,
-          });
-        }
-      } catch (err) {
-        console.error(err);
-        localStorage.removeItem("matrix-auth-store");
-        setState({
-          client: undefined,
-          loading: false,
-          authenticated: false,
-          error: err,
-        });
-      }
-    }
-
-    restoreClient();
-  }, []);
-
-  const login = useCallback(async (username, password) => {
-    try {
-      setState((prevState) => ({
-        ...prevState,
-        authenticated: false,
-        error: undefined,
-      }));
-
-      const registrationClient = matrixcs.createClient(homeserverUrl);
-
-      const { user_id, device_id, access_token } =
-        await registrationClient.loginWithPassword(username, password);
-
-      const client = matrixcs.createClient({
-        baseUrl: homeserverUrl,
-        accessToken: access_token,
-        userId: user_id,
-        deviceId: device_id,
-      });
-
-      await client.startClient();
-
-      localStorage.setItem(
-        "matrix-auth-store",
-        JSON.stringify({ user_id, device_id, access_token })
-      );
-      setState({
-        client,
-        loading: false,
-        authenticated: true,
-        error: undefined,
-      });
-    } catch (err) {
-      console.error(err);
-      localStorage.removeItem("matrix-auth-store");
-      setState({
-        client: undefined,
-        loading: false,
-        authenticated: false,
-        error: err,
-      });
-    }
-  }, []);
-
-  const register = useCallback(async (username, password) => {
-    try {
-      setState((prevState) => ({
-        ...prevState,
-        authenticated: false,
-        error: undefined,
-      }));
-
-      const registrationClient = matrixcs.createClient(homeserverUrl);
-
-      const { user_id, device_id, access_token } =
-        await registrationClient.register(username, password, null, {
-          type: "m.login.dummy",
-        });
-
-      const client = matrixcs.createClient({
-        baseUrl: homeserverUrl,
-        accessToken: access_token,
-        userId: user_id,
-        deviceId: device_id,
-      });
-
-      await client.startClient();
-
-      localStorage.setItem(
-        "matrix-auth-store",
-        JSON.stringify({ user_id, device_id, access_token })
-      );
-      setState({
-        client,
-        loading: false,
-        authenticated: true,
-        error: undefined,
-      });
-    } catch (err) {
-      localStorage.removeItem("matrix-auth-store");
-      setState({
-        client: undefined,
-        loading: false,
-        authenticated: false,
-        error: err,
-      });
-    }
-  }, []);
-
-  return { loading, authenticated, client, error, login, register };
 }
 
 function Register({ onRegister }) {
@@ -267,7 +114,7 @@ function Login({ onLogin }) {
   );
 }
 
-function JoinOrCreateRoom({ client }) {
+function JoinOrCreateRoom({ manager }) {
   const history = useHistory();
   const roomNameRef = useRef();
   const roomIdRef = useRef();
@@ -277,15 +124,15 @@ function JoinOrCreateRoom({ client }) {
 
   useEffect(() => {
     function updateRooms() {
-      setRooms(client.getRooms());
+      setRooms(manager.client.getRooms());
     }
 
     updateRooms();
 
-    client.on("Room", updateRooms);
+    manager.client.on("Room", updateRooms);
 
     return () => {
-      client.removeListener("Room", updateRooms);
+      manager.client.removeListener("Room", updateRooms);
     };
   }, []);
 
@@ -294,7 +141,7 @@ function JoinOrCreateRoom({ client }) {
       e.preventDefault();
       setCreateRoomError(undefined);
 
-      client
+      manager.client
         .createRoom({
           visibility: "private",
           preset: "public_chat",
@@ -305,7 +152,7 @@ function JoinOrCreateRoom({ client }) {
         })
         .catch(setCreateRoomError);
     },
-    [client]
+    [manager]
   );
 
   const onJoinRoom = useCallback(
@@ -313,14 +160,14 @@ function JoinOrCreateRoom({ client }) {
       e.preventDefault();
       setJoinRoomError(undefined);
 
-      client
+      manager.client
         .joinRoom(roomIdRef.current.value)
         .then(({ roomId }) => {
           history.push(`/room/${roomId}`);
         })
         .catch(setJoinRoomError);
     },
-    [client]
+    [manager]
   );
 
   return (
@@ -366,117 +213,10 @@ function JoinOrCreateRoom({ client }) {
   );
 }
 
-function useVideoRoom(client, roomId, timeout = 5000) {
-  const [
-    { loading, joined, room, conferenceCall, participants, error },
-    setState,
-  ] = useState({
-    loading: true,
-    joined: false,
-    room: undefined,
-    participants: [],
-    error: undefined,
-    conferenceCall: null,
-  });
-
-  useEffect(() => {
-    const conferenceCall = new ConferenceCall(client, roomId);
-
-    setState((prevState) => ({
-      ...prevState,
-      conferenceCall,
-      loading: true,
-      room: undefined,
-      error: undefined,
-    }));
-
-    client.joinRoom(roomId).catch((err) => {
-      setState((prevState) => ({ ...prevState, loading: false, error: err }));
-    });
-
-    let initialRoom = client.getRoom(roomId);
-
-    if (initialRoom) {
-      setState((prevState) => ({
-        ...prevState,
-        loading: false,
-        room: initialRoom,
-        error: undefined,
-      }));
-      return;
-    }
-
-    let timeoutId;
-
-    function roomCallback(room) {
-      if (room && room.roomId === roomId) {
-        clearTimeout(timeoutId);
-        client.removeListener("Room", roomCallback);
-        setState((prevState) => ({
-          ...prevState,
-          loading: false,
-          room,
-          error: undefined,
-        }));
-      }
-    }
-
-    client.on("Room", roomCallback);
-
-    timeoutId = setTimeout(() => {
-      setState((prevState) => ({
-        ...prevState,
-        loading: false,
-        room: undefined,
-        error: new Error("Room could not be found."),
-      }));
-      client.removeListener("Room", roomCallback);
-    }, timeout);
-
-    return () => {
-      client.removeListener("Room", roomCallback);
-      clearTimeout(timeoutId);
-    };
-  }, [roomId]);
-
-  const joinCall = useCallback(() => {
-    const onParticipantsChanged = () => {
-      setState((prevState) => ({
-        ...prevState,
-        participants: conferenceCall.participants,
-      }));
-    };
-
-    conferenceCall.on("participants_changed", onParticipantsChanged);
-
-    conferenceCall.join();
-
-    setState((prevState) => ({
-      ...prevState,
-      joined: true,
-    }));
-
-    return () => {
-      conferenceCall.removeListener(
-        "participants_changed",
-        onParticipantsChanged
-      );
-
-      setState((prevState) => ({
-        ...prevState,
-        joined: false,
-        participants: [],
-      }));
-    };
-  }, [client, conferenceCall, roomId]);
-
-  return { loading, joined, room, participants, error, joinCall };
-}
-
-function Room({ client }) {
+function Room({ manager }) {
   const { roomId } = useParams();
   const { loading, joined, room, participants, error, joinCall } = useVideoRoom(
-    client,
+    manager,
     roomId
   );
 
@@ -486,7 +226,7 @@ function Room({ client }) {
         <div className={styles.header}>
           <h3>{room.name}</h3>
           <div className={styles.userNav}>
-            <h5>{client.getUserId()}</h5>
+            <h5>{manager.client.getUserId()}</h5>
           </div>
         </div>
       )}
