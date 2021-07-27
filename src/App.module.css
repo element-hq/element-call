@@ -19,6 +19,7 @@ limitations under the License.
   max-width: 960px;
   display: flex;
   flex-direction: column;
+  padding: 0 20px;
 }
 
 .page input {
@@ -93,19 +94,28 @@ limitations under the License.
 }
 
 .roomContainer {
+  overflow: hidden;
   display: flex;
   flex: 1;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .participant {
   display: flex;
   position: relative;
   flex: 1;
+  flex-shrink: 1;
+  min-height: 0;
+  background-color: black;
 }
 
 .participant video {
-  width: 100%;
-  height: 100%;
+  max-height: 100%;
+  z-index: 0;
+  display: block;
+  margin: auto;
+  max-width: 100%;
 }
 
 .participantLabel {
@@ -114,4 +124,10 @@ limitations under the License.
   right: 0;
   padding: 8px 16px;
   background: rgba(0, 0, 0, 0.2);
+}
+
+@media(min-width: 800px) {
+  .roomContainer {
+    flex-direction: row;
+  }
 }
