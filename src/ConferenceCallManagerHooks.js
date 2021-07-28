@@ -28,7 +28,6 @@ export function useConferenceCallManager(homeserverUrl) {
   useEffect(() => {
     ConferenceCallManager.restore(homeserverUrl)
       .then((manager) => {
-        console.log(manager);
         setState({
           manager,
           loading: false,

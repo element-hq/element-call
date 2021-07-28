@@ -14,15 +14,40 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./Room.module.css";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useVideoRoom } from "./ConferenceCallManagerHooks";
+import { DevTools } from "./DevTools";
+
+function useQuery() {
+  const location = useLocation();
+  return useMemo(() => new URLSearchParams(location.search), [location.search]);
+}
 
 export function Room({ manager }) {
   const { roomId } = useParams();
+  const query = useQuery();
   const { loading, joined, room, participants, error, joinCall, leaveCall } =
     useVideoRoom(manager, roomId);
+  const [debug, setDebug] = useState(!!query.get("debug"));
+
+  useEffect(() => {
+    function onKeyDown(event) {
+      if (
+        document.activeElement.tagName !== "input" &&
+        event.code === "Backquote"
+      ) {
+        setDebug((prevDebug) => !prevDebug);
+      }
+    }
+
+    window.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+    };
+  }, []);
 
   return (
     <div className={styles.room}>
@@ -70,6 +95,7 @@ export function Room({ manager }) {
           </button>
         </div>
       )}
+      {debug && <DevTools manager={manager} />}
     </div>
   );
 }

@@ -1,0 +1,70 @@
+.devTools {
+  display: flex;
+  height: 250px;
+  border-top: 2px solid #111;
+  gap: 2px;
+  background-color: #111;
+  overflow-x: auto;
+}
+
+.user {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  background-color: #555;
+  min-width: 320px;
+}
+
+.userId {
+  font-size: 14px;
+  font-weight: bold;
+  padding: 12px;
+}
+
+.userId > * {
+  margin-right: 4px;
+}
+
+.userId > :last-child {
+  margin-right: 0;
+}
+
+.events {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: auto;
+  background-color: #222;
+}
+
+.event {
+  display: flex;
+  font-family: monospace;
+  padding: 4px 12px;
+  background-color: #333;
+}
+
+.event:nth-child(even) {
+  background-color: #444;
+}
+
+.event > * {
+  margin-right: 4px;
+}
+
+.event > :last-child {
+  margin-right: 0;
+}
+
+.eventType, .eventDetails {
+  font-size: 12px;
+}
+
+.eventType {
+  font-weight: bold;
+}
+
+.eventDetails {
+  font-weight: 200;
+  word-break: break-all;
+}
