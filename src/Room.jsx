@@ -30,7 +30,8 @@ export function Room({ manager }) {
   const query = useQuery();
   const { loading, joined, room, participants, error, joinCall, leaveCall } =
     useVideoRoom(manager, roomId);
-  const [debug, setDebug] = useState(!!query.get("debug"));
+  const debugStr = query.get("debug");
+  const [debug, setDebug] = useState(debugStr === "" || debugStr === "true");
 
   useEffect(() => {
     function onKeyDown(event) {
