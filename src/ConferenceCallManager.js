@@ -188,7 +188,7 @@ export class ConferenceCallManager extends EventEmitter {
 
     if (type.startsWith("m.call.") || type.startsWith("me.robertlong.conf")) {
       const content = event.getContent();
-      const details = {};
+      const details = { content };
 
       switch (type) {
         case "m.call.invite":

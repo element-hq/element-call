@@ -68,3 +68,22 @@
   font-weight: 200;
   word-break: break-all;
 }
+
+.eventViewer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  min-width: 320px;
+  max-width: 80%;
+  border-radius: 8px;
+  border: 1px solid black;
+  background-color: #222;
+  padding: 20px;
+  margin: 20px;
+}
+
+.eventViewer .content {
+  max-height: 200px;
+  overflow: auto;
+}

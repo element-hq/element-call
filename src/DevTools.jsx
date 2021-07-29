@@ -4,6 +4,16 @@ import styles from "./DevTools.module.css";
 
 const colorHash = new ColorHash({ lightness: 0.8 });
 
+function UserId({ userId, ...rest }) {
+  const shortUserId = userId.split(":")[0];
+  const color = colorHash.hex(shortUserId);
+  return (
+    <span style={{ color }} {...rest}>
+      {shortUserId}
+    </span>
+  );
+}
+
 function CallId({ callId, ...rest }) {
   const shortId = callId.substr(callId.length - 16);
   const color = colorHash.hex(shortId);
@@ -17,6 +27,7 @@ function CallId({ callId, ...rest }) {
 
 export function DevTools({ manager }) {
   const [debugState, setDebugState] = useState(manager.debugState);
+  const [selectedEvent, setSelectedEvent] = useState();
 
   useEffect(() => {
     function onRoomDebug() {
@@ -33,13 +44,24 @@ export function DevTools({ manager }) {
   return (
     <div className={styles.devTools}>
       {Array.from(debugState.entries()).map(([userId, props]) => (
-        <UserState key={userId} userId={userId} {...props} />
+        <UserState
+          key={userId}
+          onSelectEvent={setSelectedEvent}
+          userId={userId}
+          {...props}
+        />
       ))}
+      {selectedEvent && (
+        <EventViewer
+          event={selectedEvent}
+          onClose={() => setSelectedEvent(null)}
+        />
+      )}
     </div>
   );
 }
 
-function UserState({ userId, state, callId, events }) {
+function UserState({ userId, state, callId, events, onSelectEvent }) {
   const eventsRef = useRef();
   const [autoScroll, setAutoScroll] = useState(true);
 
@@ -50,7 +72,7 @@ function UserState({ userId, state, callId, events }) {
     }
   });
 
-  const onScroll = useCallback((event) => {
+  const onScroll = useCallback(() => {
     const el = eventsRef.current;
 
     if (el.scrollHeight - el.scrollTop === el.clientHeight) {
@@ -63,13 +85,17 @@ function UserState({ userId, state, callId, events }) {
   return (
     <div className={styles.user}>
       <div className={styles.userId}>
-        <span>{userId}</span>
-        {callId && <CallId callId={callId} />}
+        <UserId userId={userId} />
         <span>{`(${state})`}</span>
+        {callId && <CallId callId={callId} />}
       </div>
       <div ref={eventsRef} className={styles.events} onScroll={onScroll}>
         {events.map((event, idx) => (
-          <div className={styles.event} key={idx}>
+          <div
+            className={styles.event}
+            key={idx}
+            onClick={() => onSelectEvent(event)}
+          >
             <span className={styles.eventType}>{event.type}</span>
             {event.callId && (
               <CallId className={styles.eventDetails} callId={event.callId} />
@@ -84,7 +110,7 @@ function UserState({ userId, state, callId, events }) {
               </>
             )}
             {event.to && (
-              <span className={styles.eventDetails}>{event.to}</span>
+              <UserId className={styles.eventDetails} userId={event.to} />
             )}
             {event.reason && (
               <span className={styles.eventDetails}>{event.reason}</span>
@@ -92,6 +118,44 @@ function UserState({ userId, state, callId, events }) {
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+function EventViewer({ event, onClose }) {
+  return (
+    <div className={styles.eventViewer}>
+      <p>Event Type: {event.type}</p>
+      {event.callId && (
+        <p>
+          Call Id: <CallId callId={event.callId} />
+        </p>
+      )}
+      {event.newCallId && (
+        <p>
+          New Call Id:
+          <CallId callId={event.newCallId} />
+        </p>
+      )}
+      {event.to && (
+        <p>
+          To: <UserId userId={event.to} />
+        </p>
+      )}
+      {event.reason && (
+        <p>
+          Reason: <span>{event.reason}</span>
+        </p>
+      )}
+      {event.content && (
+        <>
+          <p>Content:</p>
+          <pre className={styles.content}>
+            {JSON.stringify(event.content, undefined, 2)}
+          </pre>
+        </>
+      )}
+      <button onClick={onClose}>Close</button>
     </div>
   );
 }
