@@ -319,14 +319,11 @@ export class ConferenceCallManager extends EventEmitter {
       return;
     }
 
-    if (call.opponentMember) {
-      const userId = call.opponentMember.userId;
-      this._addCall(call, userId);
-      this._setDebugState(userId, "answered");
-      this._addDebugEvent(userId, "answer", { callId: call.callId });
-      call.answer();
-      return;
-    }
+    const userId = call.opponentMember.userId;
+    this._addCall(call, userId);
+    this._setDebugState(userId, "answered");
+    this._addDebugEvent(userId, "answer", { callId: call.callId });
+    call.answer();
   };
 
   _addCall(call, userId) {
