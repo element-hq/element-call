@@ -94,10 +94,6 @@ export class ConferenceCallManager extends EventEmitter {
     }
   }
 
-  static logout() {
-    localStorage.removeItem("matrix-auth-store");
-  }
-
   static async register(homeserverUrl, username, password) {
     try {
       const registrationClient = matrixcs.createClient(homeserverUrl);
@@ -551,5 +547,9 @@ export class ConferenceCallManager extends EventEmitter {
     }
 
     this.emit("debug");
+  }
+
+  logout() {
+    localStorage.removeItem("matrix-auth-store");
   }
 }

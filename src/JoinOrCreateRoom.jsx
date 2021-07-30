@@ -64,7 +64,7 @@ export function JoinOrCreateRoom({ manager }) {
     (e) => {
       e.preventDefault();
       manager.logout();
-      history.push("/");
+      location.reload();
     },
     [manager]
   );
