@@ -41,6 +41,10 @@ export function DevTools({ manager }) {
     };
   }, [manager]);
 
+  if (!manager.joined) {
+    return <div className={styles.devTools} />;
+  }
+
   return (
     <div className={styles.devTools}>
       {Array.from(debugState.entries()).map(([userId, props]) => (

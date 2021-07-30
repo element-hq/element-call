@@ -167,9 +167,17 @@ export class ConferenceCallManager extends EventEmitter {
       this.client.sendStateEvent(this.roomId, CONF_ROOM, { active: true }, "");
     }
 
-    this.room
-      .getMembers()
-      .forEach((member) => this._processMember(member.userId));
+    const roomMemberIds = this.room.getMembers().map(({ userId }) => userId);
+
+    for (const userId of this.debugState.keys()) {
+      if (roomMemberIds.indexOf(userId) === -1) {
+        this.debugState.delete(userId);
+      }
+    }
+
+    roomMemberIds.forEach((userId) => {
+      this._processMember(userId);
+    });
 
     for (const { call, onHangup, onReplaced } of this.pendingCalls) {
       if (call.roomId !== roomId) {
