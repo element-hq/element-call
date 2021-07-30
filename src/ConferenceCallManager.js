@@ -172,6 +172,10 @@ export class ConferenceCallManager extends EventEmitter {
       .forEach((member) => this._processMember(member.userId));
 
     for (const { call, onHangup, onReplaced } of this.pendingCalls) {
+      if (call.roomId !== roomId) {
+        continue;
+      }
+
       call.removeListener("hangup", onHangup);
       call.removeListener("replaced", onReplaced);
       const userId = call.opponentMember.userId;
@@ -237,6 +241,10 @@ export class ConferenceCallManager extends EventEmitter {
   };
 
   _onMemberChanged = (_event, _state, member) => {
+    if (member.roomId !== this.roomId) {
+      return;
+    }
+
     this._processMember(member.userId);
   };
 
@@ -317,6 +325,10 @@ export class ConferenceCallManager extends EventEmitter {
       call.on("hangup", onHangup);
       call.on("replaced", onReplaced);
 
+      return;
+    }
+
+    if (call.roomId !== this.roomId) {
       return;
     }
 
