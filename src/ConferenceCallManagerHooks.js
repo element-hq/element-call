@@ -136,6 +136,8 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
       error: undefined,
     }));
 
+    manager.setRoom(roomId);
+
     manager.client.joinRoom(roomId).catch((err) => {
       setState((prevState) => ({ ...prevState, loading: false, error: err }));
     });
@@ -196,7 +198,7 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
 
     manager.on("participants_changed", onParticipantsChanged);
 
-    manager.join(roomId);
+    manager.join();
 
     setState((prevState) => ({
       ...prevState,

@@ -134,9 +134,10 @@ export class ConferenceCallManager extends EventEmitter {
     this.client = client;
     this.joined = false;
     this.room = null;
+    const localUserId = client.getUserId();
     this.localParticipant = {
       local: true,
-      userId: client.getUserId(),
+      userId: localUserId,
       feed: null,
       call: null,
       muted: true,
@@ -144,20 +145,24 @@ export class ConferenceCallManager extends EventEmitter {
     this.participants = [this.localParticipant];
     this.pendingCalls = [];
     this.callUserMap = new Map();
-    this.debugState = new Map();
-    this._setDebugState(client.getUserId(), "you");
+    this.debugState = {
+      users: new Map(),
+      calls: new Map(),
+    };
     this.client.on("event", this._onEvent);
     this.client.on("RoomState.members", this._onMemberChanged);
     this.client.on("Call.incoming", this._onIncomingCall);
   }
 
-  join(roomId) {
-    this.joined = true;
-
-    this._addDebugEvent(this.client.getUserId(), "joined call");
-
+  setRoom(roomId) {
     this.roomId = roomId;
     this.room = this.client.getRoom(this.roomId);
+  }
+
+  join() {
+    this.joined = true;
+
+    this._setDebugState(this.client.getUserId(), null, "you");
 
     const activeConf = this.room.currentState
       .getStateEvents(CONF_ROOM, "")
@@ -169,18 +174,12 @@ export class ConferenceCallManager extends EventEmitter {
 
     const roomMemberIds = this.room.getMembers().map(({ userId }) => userId);
 
-    for (const userId of this.debugState.keys()) {
-      if (roomMemberIds.indexOf(userId) === -1) {
-        this.debugState.delete(userId);
-      }
-    }
-
     roomMemberIds.forEach((userId) => {
       this._processMember(userId);
     });
 
     for (const { call, onHangup, onReplaced } of this.pendingCalls) {
-      if (call.roomId !== roomId) {
+      if (call.roomId !== this.roomId) {
         continue;
       }
 
@@ -200,30 +199,65 @@ export class ConferenceCallManager extends EventEmitter {
     const roomId = event.getRoomId();
     const type = event.getType();
 
-    if (type.startsWith("m.call.") || type.startsWith("me.robertlong.conf")) {
-      const content = event.getContent();
-      const details = { content: event.toJSON(), roomId };
+    if (roomId === this.roomId && type.startsWith("m.call.")) {
+      const sender = event.getSender();
+      const { call_id } = event.getContent();
 
-      if (content.invitee && content.call_id) {
-        this.callUserMap.set(content.call_id, content.invitee);
-        details.to = content.invitee;
-      } else if (content.call_id) {
-        details.to = this.callUserMap.get(content.call_id);
+      if (call_id) {
+        if (this.debugState.calls.has(call_id)) {
+          const callState = this.debugState.calls.get(call_id);
+          callState.events.push(event);
+        } else {
+          this.debugState.calls.set(call_id, {
+            state: "unknown",
+            events: [event],
+          });
+        }
       }
 
-      switch (type) {
-        case "m.call.invite":
-        case "m.call.candidates":
-        case "m.call.answer":
-        case "m.call.hangup":
-        case "m.call.select_answer":
-          details.callId = content.call_id;
-          break;
+      if (this.debugState.users.has(sender)) {
+        const userState = this.debugState.users.get(sender);
+        userState.events.push(event);
+      } else {
+        this.debugState.users.set(sender, {
+          state: "unknown",
+          events: [event],
+        });
       }
 
-      this._addDebugEvent(event.getSender(), type, details);
+      this.emit("debug");
     }
   };
+
+  _setDebugState(userId, callId, state) {
+    if (userId) {
+      const userState = this.debugState.users.get(userId);
+
+      if (userState) {
+        userState.state = state;
+      } else {
+        this.debugState.users.set(userId, {
+          state,
+          events: [],
+        });
+      }
+    }
+
+    if (callId) {
+      const callState = this.debugState.calls.get(callId);
+
+      if (callState) {
+        callState.state = state;
+      } else {
+        this.debugState.calls.set(callId, {
+          state,
+          events: [],
+        });
+      }
+    }
+
+    this.emit("debug");
+  }
 
   _updateParticipantState = () => {
     const userId = this.client.getUserId();
@@ -286,20 +320,19 @@ export class ConferenceCallManager extends EventEmitter {
       new Date().getTime() - participantTimeout > PARTICIPANT_TIMEOUT
     ) {
       // Member is inactive so don't call them.
-      this._setDebugState(userId, "inactive");
+      this._setDebugState(userId, null, "inactive");
       return;
     }
 
     // Only initiate a call with a user who has a userId that is lexicographically
     // less than your own. Otherwise, that user will call you.
     if (userId < localUserId) {
-      this._setDebugState(userId, "waiting for invite");
+      this._setDebugState(userId, null, "waiting for invite");
       return;
     }
 
     const call = this.client.createCall(this.roomId, userId);
     this._addCall(call, userId);
-    this._setDebugState(userId, "calling");
     call.placeVideoCall();
   }
 
@@ -342,7 +375,6 @@ export class ConferenceCallManager extends EventEmitter {
 
     const userId = call.opponentMember.userId;
     this._addCall(call, userId);
-    this._setDebugState(userId, "answered");
     call.answer();
   };
 
@@ -365,8 +397,9 @@ export class ConferenceCallManager extends EventEmitter {
       call,
     });
 
-    this._setDebugCallId(userId, call.callId);
-
+    call.on("state", (state) =>
+      this._setDebugState(userId, call.callId, state)
+    );
     call.on("feeds_changed", () => this._onCallFeedsChanged(call));
     call.on("hangup", () => this._onCallHangup(call));
 
@@ -388,7 +421,6 @@ export class ConferenceCallManager extends EventEmitter {
 
     if (!this.localParticipant.feed && localFeeds.length > 0) {
       this.localParticipant.call = call;
-      this._setDebugCallId(this.localParticipant.userId, call.callId);
       this.localParticipant.feed = localFeeds[0];
       participantsChanged = true;
     }
@@ -400,7 +432,6 @@ export class ConferenceCallManager extends EventEmitter {
 
     if (remoteFeeds.length > 0 && remoteParticipant.feed !== remoteFeeds[0]) {
       remoteParticipant.feed = remoteFeeds[0];
-      this._setDebugState(call.opponentMember.userId, "streaming");
       participantsChanged = true;
     }
 
@@ -410,15 +441,13 @@ export class ConferenceCallManager extends EventEmitter {
   };
 
   _onCallHangup = (call) => {
-    if (call.hangupReason === "replaced") {
-      return;
-    }
-
-    this._setDebugState(call.opponentMember.userId, "hungup");
-
     const participantIndex = this.participants.findIndex(
       (p) => !p.local && p.call === call
     );
+
+    if (call.hangupReason === "replaced") {
+      return;
+    }
 
     if (participantIndex === -1) {
       return;
@@ -436,16 +465,13 @@ export class ConferenceCallManager extends EventEmitter {
 
         if (localFeeds.length > 0) {
           this.localParticipant.call = call;
-          this._setDebugCallId(this.localParticipant.userId, call.callId);
           this.localParticipant.feed = localFeeds[0];
         } else {
           this.localParticipant.call = null;
-          this._setDebugCallId(this.localParticipant.userId, null);
           this.localParticipant.feed = null;
         }
       } else {
         this.localParticipant.call = null;
-        this._setDebugCallId(this.localParticipant.userId, null);
         this.localParticipant.feed = null;
       }
     }
@@ -454,17 +480,11 @@ export class ConferenceCallManager extends EventEmitter {
   };
 
   _onCallReplaced = (call, newCall) => {
-    this._addDebugEvent(call.opponentMember.userId, "replaced", {
-      callId: call.callId,
-      newCallId: newCall.callId,
-    });
-
     const remoteParticipant = this.participants.find(
       (p) => !p.local && p.call === call
     );
 
     remoteParticipant.call = newCall;
-    this._setDebugCallId(remoteParticipant.userId, newCall.callId);
 
     newCall.on("feeds_changed", () => this._onCallFeedsChanged(newCall));
     newCall.on("hangup", () => this._onCallHangup(newCall));
@@ -507,46 +527,8 @@ export class ConferenceCallManager extends EventEmitter {
     this.participants = [this.localParticipant];
     this.localParticipant.feed = null;
     this.localParticipant.call = null;
-    this._setDebugCallId(this.localParticipant.userId, null);
 
     this.emit("participants_changed");
-  }
-
-  _addDebugEvent(sender, type, content) {
-    if (!this.debugState.has(sender)) {
-      this.debugState.set(sender, {
-        callId: null,
-        state: "unknown",
-        events: [{ type, ...content }],
-      });
-    } else {
-      const { events } = this.debugState.get(sender);
-      events.push({ type, roomId: this.roomId, ...content });
-    }
-
-    this.emit("debug");
-  }
-
-  _setDebugState(userId, state) {
-    if (!this.debugState.has(userId)) {
-      this.debugState.set(userId, { state, callId: null, events: [] });
-    } else {
-      const userState = this.debugState.get(userId);
-      userState.state = state;
-    }
-
-    this.emit("debug");
-  }
-
-  _setDebugCallId(userId, callId) {
-    if (!this.debugState.has(userId)) {
-      this.debugState.set(userId, { state: "unknown", callId, events: [] });
-    } else {
-      const userState = this.debugState.get(userId);
-      userState.callId = callId;
-    }
-
-    this.emit("debug");
   }
 
   logout() {

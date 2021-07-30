@@ -1,9 +1,31 @@
 .devTools {
   display: flex;
-  height: 250px;
+  flex-direction: column;
   border-top: 2px solid #111;
-  gap: 2px;
   background-color: #111;
+}
+
+.toolbar {
+  display: flex;
+  background-color: #222;
+}
+
+.tab {
+  vertical-align: middle;
+  padding: 4px 8px;
+  background-color: #444;
+  margin: 0 2px;
+  cursor: pointer;
+}
+
+.activeTab {
+  background-color: #666;
+}
+
+.devToolsContainer {
+  display: flex;
+  height: 250px;
+  gap: 2px;
   overflow-x: auto;
 }
 
