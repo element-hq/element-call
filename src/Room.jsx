@@ -119,7 +119,7 @@ function Participant({ userId, feed, muted, local }) {
 
   return (
     <div className={styles.participant}>
-      <video ref={videoRef}></video>
+      <video ref={videoRef} playsInline></video>
       <div className={styles.participantLabel}>
         <p>
           {userId} {local && "(You)"}
