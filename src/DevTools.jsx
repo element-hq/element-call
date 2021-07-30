@@ -46,6 +46,7 @@ export function DevTools({ manager }) {
       {Array.from(debugState.entries()).map(([userId, props]) => (
         <UserState
           key={userId}
+          roomId={manager.roomId}
           onSelectEvent={setSelectedEvent}
           userId={userId}
           {...props}
@@ -61,7 +62,7 @@ export function DevTools({ manager }) {
   );
 }
 
-function UserState({ userId, state, callId, events, onSelectEvent }) {
+function UserState({ roomId, userId, state, callId, events, onSelectEvent }) {
   const eventsRef = useRef();
   const [autoScroll, setAutoScroll] = useState(true);
 
@@ -90,33 +91,35 @@ function UserState({ userId, state, callId, events, onSelectEvent }) {
         {callId && <CallId callId={callId} />}
       </div>
       <div ref={eventsRef} className={styles.events} onScroll={onScroll}>
-        {events.map((event, idx) => (
-          <div
-            className={styles.event}
-            key={idx}
-            onClick={() => onSelectEvent(event)}
-          >
-            <span className={styles.eventType}>{event.type}</span>
-            {event.callId && (
-              <CallId className={styles.eventDetails} callId={event.callId} />
-            )}
-            {event.newCallId && (
-              <>
-                <span className={styles.eventDetails}>{"->"}</span>
-                <CallId
-                  className={styles.eventDetails}
-                  callId={event.newCallId}
-                />
-              </>
-            )}
-            {event.to && (
-              <UserId className={styles.eventDetails} userId={event.to} />
-            )}
-            {event.reason && (
-              <span className={styles.eventDetails}>{event.reason}</span>
-            )}
-          </div>
-        ))}
+        {events
+          .filter((e) => e.roomId === roomId)
+          .map((event, idx) => (
+            <div
+              className={styles.event}
+              key={idx}
+              onClick={() => onSelectEvent(event)}
+            >
+              <span className={styles.eventType}>{event.type}</span>
+              {event.callId && (
+                <CallId className={styles.eventDetails} callId={event.callId} />
+              )}
+              {event.newCallId && (
+                <>
+                  <span className={styles.eventDetails}>{"->"}</span>
+                  <CallId
+                    className={styles.eventDetails}
+                    callId={event.newCallId}
+                  />
+                </>
+              )}
+              {event.to && (
+                <UserId className={styles.eventDetails} userId={event.to} />
+              )}
+              {event.reason && (
+                <span className={styles.eventDetails}>{event.reason}</span>
+              )}
+            </div>
+          ))}
       </div>
     </div>
   );
