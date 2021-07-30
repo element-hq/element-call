@@ -124,6 +124,7 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
 
     return () => {
       window.removeEventListener("beforeunload", onBeforeUnload);
+      manager.leaveCall();
     };
   }, [manager]);
 

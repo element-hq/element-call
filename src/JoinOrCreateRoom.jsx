@@ -60,6 +60,15 @@ export function JoinOrCreateRoom({ manager }) {
     [manager]
   );
 
+  const onLogout = useCallback(
+    (e) => {
+      e.preventDefault();
+      manager.logout();
+      history.push("/");
+    },
+    [manager]
+  );
+
   return (
     <div className="page">
       <h1>Matrix Video Chat</h1>
@@ -99,6 +108,9 @@ export function JoinOrCreateRoom({ manager }) {
           </li>
         ))}
       </ul>
+      <button type="button" onClick={onLogout}>
+        Log Out
+      </button>
     </div>
   );
 }

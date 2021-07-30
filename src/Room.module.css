@@ -32,6 +32,12 @@ limitations under the License.
   height: 64px;
 }
 
+.backNav {
+  position: absolute;
+  left: 0;
+  padding: 0 8px;
+}
+
 .userNav {
   position: absolute;
   right: 0;

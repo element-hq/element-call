@@ -16,7 +16,7 @@ limitations under the License.
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import styles from "./Room.module.css";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, Link } from "react-router-dom";
 import { useVideoRoom } from "./ConferenceCallManagerHooks";
 import { DevTools } from "./DevTools";
 
@@ -54,6 +54,9 @@ export function Room({ manager }) {
     <div className={styles.room}>
       {!loading && room && (
         <div className={styles.header}>
+          <div className={styles.backNav}>
+            <Link to="/">Back</Link>
+          </div>
           <h3>{room.name}</h3>
           <div className={styles.userNav}>
             <h5>{manager.client.getUserId()}</h5>
