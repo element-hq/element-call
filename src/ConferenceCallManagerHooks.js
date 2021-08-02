@@ -103,6 +103,14 @@ export function useConferenceCallManager(homeserverUrl) {
       });
   }, []);
 
+  useEffect(() => {
+    window.confManager = manager;
+
+    return () => {
+      window.confManager = undefined;
+    };
+  }, [manager]);
+
   return { loading, authenticated, manager, error, login, register };
 }
 
