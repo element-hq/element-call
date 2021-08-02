@@ -155,7 +155,7 @@ function EventContainer({ title, state, events, ...rest }) {
 function EventItem({ event, showCallId, showSender, onSelect }) {
   const type = event.getType();
   const sender = event.getSender();
-  const { call_id, invitee } = event.getContent();
+  const { call_id, invitee, reason } = event.getContent();
 
   return (
     <div className={styles.event} onClick={() => onSelect(event)}>
@@ -167,6 +167,7 @@ function EventItem({ event, showCallId, showSender, onSelect }) {
         <CallId className={styles.eventDetails} callId={call_id} />
       )}
       {invitee && <UserId className={styles.eventDetails} userId={invitee} />}
+      {reason && <span className={styles.eventDetails}>{reason}</span>}
     </div>
   );
 }
