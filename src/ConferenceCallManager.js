@@ -593,6 +593,11 @@ export class ConferenceCallManager extends EventEmitter {
     let statsTimeout;
 
     const sendStats = () => {
+      if (call.state === "ended") {
+        clearTimeout(statsTimeout);
+        return;
+      }
+
       sendWebRTCInfoEvent("stats");
       statsTimeout = setTimeout(sendStats, 30 * 1000);
     };
@@ -626,10 +631,6 @@ export class ConferenceCallManager extends EventEmitter {
     );
     peerConnection.addEventListener("signalingstatechange", () => {
       sendWebRTCInfoEvent("signalingstatechange");
-
-      if (peerConnection.signalingState === "closed") {
-        clearTimeout(statsTimeout);
-      }
     });
   }
 
