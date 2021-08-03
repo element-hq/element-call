@@ -155,19 +155,33 @@ function EventContainer({ title, state, events, ...rest }) {
 function EventItem({ event, showCallId, showSender, onSelect }) {
   const type = event.getType();
   const sender = event.getSender();
-  const { call_id, invitee, reason } = event.getContent();
+  const { call_id, invitee, reason, eventType, ...rest } = event.getContent();
+
+  let eventValue;
+
+  if (eventType === "icegatheringstatechange") {
+    eventValue = rest.iceGatheringState;
+  } else if (eventType === "iceconnectionstatechange") {
+    eventValue = rest.iceConnectionState;
+  } else if (eventType === "signalingstatechange") {
+    eventValue = rest.signalingState;
+  }
 
   return (
     <div className={styles.event} onClick={() => onSelect(event)}>
       {showSender && sender && (
         <UserId className={styles.eventDetails} userId={sender} />
       )}
-      <span className={styles.eventType}>{type}</span>
+      <span className={styles.eventType}>
+        {type.replace("me.robertlong.", "x.")}
+      </span>
       {showCallId && call_id && (
         <CallId className={styles.eventDetails} callId={call_id} />
       )}
       {invitee && <UserId className={styles.eventDetails} userId={invitee} />}
       {reason && <span className={styles.eventDetails}>{reason}</span>}
+      {eventType && <span className={styles.eventDetails}>{eventType}</span>}
+      {eventValue && <span className={styles.eventDetails}>{eventValue}</span>}
     </div>
   );
 }

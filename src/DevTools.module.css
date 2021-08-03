@@ -34,7 +34,7 @@
   flex-direction: column;
   flex: 1;
   background-color: #555;
-  min-width: 320px;
+  min-width: 512px;
 }
 
 .userId {
@@ -64,10 +64,15 @@
   font-family: monospace;
   padding: 4px 12px;
   background-color: #333;
+  cursor: pointer;
 }
 
 .event:nth-child(even) {
   background-color: #444;
+}
+
+.event:hover {
+  background-color: #555;
 }
 
 .event > * {
