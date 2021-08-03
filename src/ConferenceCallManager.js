@@ -593,7 +593,10 @@ export class ConferenceCallManager extends EventEmitter {
     let statsTimeout;
 
     const sendStats = () => {
-      if (call.state === "ended") {
+      if (
+        call.state === "ended" ||
+        peerConnection.connectionState === "closed"
+      ) {
         clearTimeout(statsTimeout);
         return;
       }
