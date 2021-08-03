@@ -404,7 +404,9 @@ export class ConferenceCallManager extends EventEmitter {
         // https://www.w3.org/TR/webrtc-stats/#sotd
         return {
           protocol: candidateStats.protocol,
-          address: candidateStats.address || candidateStats.ip,
+          address: !!candidateStats.address
+            ? candidateStats.address
+            : candidateStats.ip,
           port: candidateStats.port,
           url: candidateStats.url,
           relayProtocol: candidateStats.relayProtocol,
