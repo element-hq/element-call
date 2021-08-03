@@ -763,10 +763,11 @@ export class ConferenceCallManager extends EventEmitter {
       );
 
       if (newLocalCallParticipant) {
-        const localFeeds = call.getLocalFeeds();
+        const newCall = newLocalCallParticipant.call;
+        const localFeeds = newCall.getLocalFeeds();
 
         if (localFeeds.length > 0) {
-          this.localParticipant.call = call;
+          this.localParticipant.call = newCall;
           this.localParticipant.feed = localFeeds[0];
         } else {
           this.localParticipant.call = null;
