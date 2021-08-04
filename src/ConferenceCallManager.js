@@ -403,6 +403,7 @@ export class ConferenceCallManager extends EventEmitter {
         // networkType property excluded for privacy reasons:
         // https://www.w3.org/TR/webrtc-stats/#sotd
         return {
+          candidateType: candidateStats.candidateType,
           protocol: candidateStats.protocol,
           address: !!candidateStats.address
             ? candidateStats.address
