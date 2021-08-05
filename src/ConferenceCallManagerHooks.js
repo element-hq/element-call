@@ -144,8 +144,6 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
       error: undefined,
     }));
 
-    manager.setRoom(roomId);
-
     manager.client.joinRoom(roomId).catch((err) => {
       setState((prevState) => ({ ...prevState, loading: false, error: err }));
     });
@@ -153,6 +151,7 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
     let initialRoom = manager.client.getRoom(roomId);
 
     if (initialRoom) {
+      manager.setRoom(roomId);
       setState((prevState) => ({
         ...prevState,
         loading: false,
@@ -168,6 +167,7 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
       if (room && room.roomId === roomId) {
         clearTimeout(timeoutId);
         manager.client.removeListener("Room", roomCallback);
+        manager.setRoom(roomId);
         setState((prevState) => ({
           ...prevState,
           loading: false,
