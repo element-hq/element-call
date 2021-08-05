@@ -16,7 +16,7 @@ limitations under the License.
 
 
 .room {
-  position: fixed;
+  position: relative;
   display: flex;
   flex-direction: column;
   width: 100vw;
@@ -30,6 +30,12 @@ limitations under the License.
   justify-content: center;
   align-items: center;
   height: 64px;
+  max-width: 30%;
+}
+
+.header h5 {
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .backNav {
@@ -88,6 +94,7 @@ limitations under the License.
   flex: 1;
   flex-direction: column;
   gap: 2px;
+  min-height: 0;
 }
 
 .participant {
@@ -124,6 +131,10 @@ limitations under the License.
 }
 
 @media(min-width: 800px) {
+  .room {
+    position: fixed;
+  }
+
   .roomContainer {
     flex-direction: row;
   }
