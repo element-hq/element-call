@@ -17,6 +17,22 @@ limitations under the License.
 import { useCallback, useEffect, useState } from "react";
 import { ConferenceCallManager } from "./ConferenceCallManager";
 
+// https://stackoverflow.com/a/9039885
+function isIOS() {
+  return (
+    [
+      "iPad Simulator",
+      "iPhone Simulator",
+      "iPod Simulator",
+      "iPad",
+      "iPhone",
+      "iPod",
+    ].includes(navigator.platform) ||
+    // iPad on iOS 13 detection
+    (navigator.userAgent.includes("Mac") && "ontouchend" in document)
+  );
+}
+
 export function useConferenceCallManager(homeserverUrl) {
   const [{ loading, authenticated, manager, error }, setState] = useState({
     loading: true,
@@ -128,10 +144,13 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
       manager.leaveCall();
     }
 
-    window.addEventListener("beforeunload", onBeforeUnload);
+    // iOS doesn't fire beforeunload event, so leave the call when you hide the page.
+    const unloadEvent = isIOS() ? "pagehide" : "beforeunload";
+
+    window.addEventListener(unloadEvent, onBeforeUnload);
 
     return () => {
-      window.removeEventListener("beforeunload", onBeforeUnload);
+      window.removeEventListener(unloadEvent, onBeforeUnload);
       manager.leaveCall();
     };
   }, [manager]);
