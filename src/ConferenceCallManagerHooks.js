@@ -225,12 +225,21 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
 
     manager.on("participants_changed", onParticipantsChanged);
 
-    manager.join();
-
-    setState((prevState) => ({
-      ...prevState,
-      joined: true,
-    }));
+    manager
+      .join()
+      .then(() => {
+        setState((prevState) => ({
+          ...prevState,
+          joined: true,
+        }));
+      })
+      .catch((error) => {
+        setState((prevState) => ({
+          ...prevState,
+          joined: false,
+          error,
+        }));
+      });
 
     return () => {
       manager.removeListener("participants_changed", onParticipantsChanged);

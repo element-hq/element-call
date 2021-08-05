@@ -138,7 +138,7 @@ export class ConferenceCallManager extends EventEmitter {
     this.localParticipant = {
       local: true,
       userId: localUserId,
-      feed: null,
+      stream: null,
       call: null,
       muted: true,
     };
@@ -159,7 +159,11 @@ export class ConferenceCallManager extends EventEmitter {
     this.room = this.client.getRoom(this.roomId);
   }
 
-  join() {
+  async join() {
+    const mediaStream = await this.client.getLocalVideoStream();
+
+    this.localParticipant.stream = mediaStream;
+
     this.joined = true;
 
     this._setDebugState(this.client.getUserId(), null, "you");
@@ -698,7 +702,7 @@ export class ConferenceCallManager extends EventEmitter {
 
     this.participants.push({
       userId,
-      feed: null,
+      stream: null,
       call,
     });
 
@@ -720,28 +724,20 @@ export class ConferenceCallManager extends EventEmitter {
   }
 
   _onCallFeedsChanged = (call) => {
-    const localFeeds = call.getLocalFeeds();
+    for (const participant of this.participants) {
+      if (participant.local || participant.call !== call) {
+        continue;
+      }
 
-    let participantsChanged = false;
+      const remoteFeeds = call.getRemoteFeeds();
 
-    if (!this.localParticipant.feed && localFeeds.length > 0) {
-      this.localParticipant.call = call;
-      this.localParticipant.feed = localFeeds[0];
-      participantsChanged = true;
-    }
-
-    const remoteFeeds = call.getRemoteFeeds();
-    const remoteParticipant = this.participants.find(
-      (p) => !p.local && p.call === call
-    );
-
-    if (remoteFeeds.length > 0 && remoteParticipant.feed !== remoteFeeds[0]) {
-      remoteParticipant.feed = remoteFeeds[0];
-      participantsChanged = true;
-    }
-
-    if (participantsChanged) {
-      this.emit("participants_changed");
+      if (
+        remoteFeeds.length > 0 &&
+        participant.stream !== remoteFeeds[0].stream
+      ) {
+        participant.stream = remoteFeeds[0].stream;
+        this.emit("participants_changed");
+      }
     }
   };
 
@@ -759,28 +755,6 @@ export class ConferenceCallManager extends EventEmitter {
     }
 
     this.participants.splice(participantIndex, 1);
-
-    if (this.localParticipant.call === call) {
-      const newLocalCallParticipant = this.participants.find(
-        (p) => !p.local && p.call
-      );
-
-      if (newLocalCallParticipant) {
-        const newCall = newLocalCallParticipant.call;
-        const localFeeds = newCall.getLocalFeeds();
-
-        if (localFeeds.length > 0) {
-          this.localParticipant.call = newCall;
-          this.localParticipant.feed = localFeeds[0];
-        } else {
-          this.localParticipant.call = null;
-          this.localParticipant.feed = null;
-        }
-      } else {
-        this.localParticipant.call = null;
-        this.localParticipant.feed = null;
-      }
-    }
 
     this.emit("participants_changed");
   };
@@ -832,7 +806,7 @@ export class ConferenceCallManager extends EventEmitter {
 
     this.joined = false;
     this.participants = [this.localParticipant];
-    this.localParticipant.feed = null;
+    this.localParticipant.stream = null;
     this.localParticipant.call = null;
 
     this.emit("participants_changed");

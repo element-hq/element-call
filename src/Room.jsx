@@ -104,21 +104,21 @@ export function Room({ manager }) {
   );
 }
 
-function Participant({ userId, feed, muted, local }) {
+function Participant({ userId, stream, muted, local }) {
   const videoRef = useRef();
 
   useEffect(() => {
-    if (feed) {
+    if (stream) {
       if (muted) {
         videoRef.current.muted = true;
       }
 
-      videoRef.current.srcObject = feed.stream;
+      videoRef.current.srcObject = stream;
       videoRef.current.play();
     } else {
       videoRef.current.srcObject = null;
     }
-  }, [feed]);
+  }, [stream]);
 
   return (
     <div className={styles.participant}>
