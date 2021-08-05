@@ -804,6 +804,8 @@ export class ConferenceCallManager extends EventEmitter {
       }
     }
 
+    this.client.stopLocalMediaStream();
+
     this.joined = false;
     this.participants = [this.localParticipant];
     this.localParticipant.stream = null;
