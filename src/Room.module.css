@@ -30,7 +30,6 @@ limitations under the License.
   justify-content: center;
   align-items: center;
   height: 64px;
-  max-width: 30%;
 }
 
 .header h5 {
@@ -48,6 +47,7 @@ limitations under the License.
   position: absolute;
   right: 0;
   padding: 0 8px;
+  max-width: 30%;
 }
 
 .joinRoom {
