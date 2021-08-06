@@ -1,3 +1,19 @@
+/*
+Copyright 2021 New Vector Ltd
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 import EventEmitter from "events";
 
 export class ConferenceCallDebugger extends EventEmitter {
@@ -11,17 +27,34 @@ export class ConferenceCallDebugger extends EventEmitter {
       calls: new Map(),
     };
 
+    this.bufferedEvents = [];
+
     this.manager.on("call", this._onCall);
     this.manager.on("debugstate", this._onDebugStateChanged);
     this.manager.client.on("event", this._onEvent);
+    this.manager.on("entered", this._onEntered);
   }
 
+  _onEntered = () => {
+    const eventCount = this.bufferedEvents.length;
+
+    for (let i = 0; i < eventCount; i++) {
+      const event = this.bufferedEvents.pop();
+      this._onEvent(event);
+    }
+  };
+
   _onEvent = (event) => {
+    if (!this.manager.entered) {
+      this.bufferedEvents.push(event);
+      return;
+    }
+
     const roomId = event.getRoomId();
     const type = event.getType();
 
     if (
-      roomId === this.manager.roomId &&
+      roomId === this.manager.room.roomId &&
       (type.startsWith("m.call.") || type === "me.robertlong.call.info")
     ) {
       const sender = event.getSender();
@@ -332,7 +365,7 @@ export class ConferenceCallDebugger extends EventEmitter {
         .map(processRemoteOutboundRTPStats);
 
       this.manager.client.sendEvent(
-        this.manager.roomId,
+        this.manager.room.roomId,
         "me.robertlong.call.info",
         event
       );
@@ -373,7 +406,7 @@ export class ConferenceCallDebugger extends EventEmitter {
       "icecandidateerror",
       ({ errorCode, url, errorText }) => {
         this.manager.client.sendEvent(
-          this.manager.roomId,
+          this.manager.room.roomId,
           "me.robertlong.call.ice_error",
           {
             call_id: call.callId,

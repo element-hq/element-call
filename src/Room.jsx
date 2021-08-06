@@ -104,12 +104,12 @@ export function Room({ manager }) {
   );
 }
 
-function Participant({ userId, stream, muted, local }) {
+function Participant({ userId, stream, local }) {
   const videoRef = useRef();
 
   useEffect(() => {
     if (stream) {
-      if (muted) {
+      if (local) {
         videoRef.current.muted = true;
       }
 
