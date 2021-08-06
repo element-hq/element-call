@@ -276,6 +276,7 @@ export class ConferenceCallManager extends EventEmitter {
     this.participants = [this.localParticipant];
     this.localParticipant.stream = null;
     this.localParticipant.call = null;
+    clearTimeout(this._memberParticipantStateTimeout);
 
     this.emit("participants_changed");
   }
