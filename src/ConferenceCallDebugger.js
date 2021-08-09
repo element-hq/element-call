@@ -55,7 +55,9 @@ export class ConferenceCallDebugger extends EventEmitter {
 
     if (
       roomId === this.manager.room.roomId &&
-      (type.startsWith("m.call.") || type === "me.robertlong.call.info")
+      (type.startsWith("m.call.") ||
+        type === "me.robertlong.call.info" ||
+        type === "m.room.member")
     ) {
       const sender = event.getSender();
       const { call_id } = event.getContent();
