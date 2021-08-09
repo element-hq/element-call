@@ -20,7 +20,7 @@ import { randomString } from "./randomstring";
 
 const CONF_ROOM = "me.robertlong.conf";
 const CONF_PARTICIPANT = "me.robertlong.conf.participant";
-const PARTICIPANT_TIMEOUT = 1000 * 5;
+const PARTICIPANT_TIMEOUT = 1000 * 15;
 
 function waitForSync(client) {
   return new Promise((resolve, reject) => {
