@@ -273,7 +273,7 @@ export class ConferenceCallManager extends EventEmitter {
     this.client.stopLocalMediaStream();
 
     this.entered = false;
-    this.participants = [this.localParticipant];
+    this.participants = [];
     this.localParticipant.stream = null;
     this.localParticipant.call = null;
     clearTimeout(this._memberParticipantStateTimeout);
@@ -324,6 +324,7 @@ export class ConferenceCallManager extends EventEmitter {
 
       if (
         !participantInfo ||
+        typeof participantInfo !== "object" ||
         (participantInfo.expiresAt && participantInfo.expiresAt < now)
       ) {
         this.emit("debugstate", participant.userId, null, "inactive");
@@ -449,7 +450,7 @@ export class ConferenceCallManager extends EventEmitter {
     );
     const participantInfo = memberStateEvent.getContent()[CONF_PARTICIPANT];
 
-    if (!participantInfo) {
+    if (!participantInfo || typeof participantInfo !== "object") {
       return;
     }
 
