@@ -107,6 +107,12 @@ export function Room({ manager }) {
           <button className={styles.leaveButton} onClick={leaveCall}>
             Leave Call
           </button>
+          <button
+            className={styles.leaveButton}
+            onClick={() => setDebug((debug) => !debug)}
+          >
+            Toggle Debugger
+          </button>
         </div>
       )}
       {debug && <DevTools manager={manager} />}
