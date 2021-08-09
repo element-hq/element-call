@@ -191,8 +191,6 @@ export class ConferenceCallManager extends EventEmitter {
       this.client.on("Room", roomCallback);
     });
 
-    this.room = room;
-
     // Ensure that this room is marked as a conference room so clients can react appropriately
     const activeConf = room.currentState
       .getStateEvents(CONF_ROOM, "")
@@ -205,6 +203,16 @@ export class ConferenceCallManager extends EventEmitter {
     // Request permissions and get the user's webcam/mic stream if we haven't yet.
     const userId = this.client.getUserId();
     const stream = await this.client.getLocalVideoStream();
+
+    // It's possible to navigate to another page while the microphone permission prompt is
+    // open, so check to see that we're still in the call.
+    // Only set class variables below this check so that leaveRoom properly handles
+    // state cleanup.
+    if (!this.entered) {
+      return;
+    }
+
+    this.room = room;
 
     this.localParticipant = {
       local: true,
@@ -272,6 +280,7 @@ export class ConferenceCallManager extends EventEmitter {
 
     this.client.stopLocalMediaStream();
 
+    this.room = null;
     this.entered = false;
     this.participants = [];
     this.localParticipant.stream = null;
@@ -497,6 +506,10 @@ export class ConferenceCallManager extends EventEmitter {
         call,
         stream: null,
       };
+      // TODO: Should we wait until the call has been answered to push the participant?
+      // Or do we hide the participant until their stream is live?
+      // Does hiding a participant without a stream present a privacy problem because
+      // a participant without a stream can still listen in on other user's streams?
       this.participants.push(participant);
     }
 
