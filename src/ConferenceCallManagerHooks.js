@@ -131,15 +131,24 @@ export function useConferenceCallManager(homeserverUrl) {
 }
 
 export function useVideoRoom(manager, roomId, timeout = 5000) {
-  const [{ loading, joined, room, participants, error }, setState] = useState({
-    loading: true,
-    joined: false,
-    room: undefined,
-    participants: [],
-    error: undefined,
-  });
+  const [{ loading, joined, joining, room, participants, error }, setState] =
+    useState({
+      loading: true,
+      joining: false,
+      joined: false,
+      room: undefined,
+      participants: [],
+      error: undefined,
+    });
 
   useEffect(() => {
+    setState((prevState) => ({
+      ...prevState,
+      loading: true,
+      room: undefined,
+      error: undefined,
+    }));
+
     function onBeforeUnload(event) {
       manager.leaveCall();
     }
@@ -149,19 +158,14 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
 
     window.addEventListener(unloadEvent, onBeforeUnload);
 
-    return () => {
-      window.removeEventListener(unloadEvent, onBeforeUnload);
-      manager.leaveCall();
+    const onParticipantsChanged = () => {
+      setState((prevState) => ({
+        ...prevState,
+        participants: manager.participants,
+      }));
     };
-  }, [manager]);
 
-  useEffect(() => {
-    setState((prevState) => ({
-      ...prevState,
-      loading: true,
-      room: undefined,
-      error: undefined,
-    }));
+    manager.on("participants_changed", onParticipantsChanged);
 
     manager.client.joinRoom(roomId).catch((err) => {
       setState((prevState) => ({ ...prevState, loading: false, error: err }));
@@ -208,47 +212,41 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
 
     return () => {
       manager.client.removeListener("Room", roomCallback);
-      manager.leaveCall();
+      manager.removeListener("participants_changed", onParticipantsChanged);
+      window.removeEventListener(unloadEvent, onBeforeUnload);
       clearTimeout(timeoutId);
+      manager.leaveCall();
     };
-  }, [roomId]);
+  }, [manager, roomId]);
 
   const joinCall = useCallback(() => {
-    const onParticipantsChanged = () => {
-      setState((prevState) => ({
-        ...prevState,
-        participants: manager.participants,
-      }));
-    };
+    if (joining || joined) {
+      return;
+    }
 
-    manager.on("participants_changed", onParticipantsChanged);
+    setState((prevState) => ({
+      ...prevState,
+      joining: true,
+    }));
 
     manager
       .enter(roomId)
       .then(() => {
         setState((prevState) => ({
           ...prevState,
+          joining: false,
           joined: true,
         }));
       })
       .catch((error) => {
         setState((prevState) => ({
           ...prevState,
+          joining: false,
           joined: false,
           error,
         }));
       });
-
-    return () => {
-      manager.removeListener("participants_changed", onParticipantsChanged);
-
-      setState((prevState) => ({
-        ...prevState,
-        joined: false,
-        participants: [],
-      }));
-    };
-  }, [manager, roomId]);
+  }, [manager, roomId, joining, joined]);
 
   const leaveCall = useCallback(() => {
     manager.leaveCall();
@@ -257,10 +255,20 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
       ...prevState,
       participants: manager.participants,
       joined: false,
+      joining: false,
     }));
   }, [manager]);
 
-  return { loading, joined, room, participants, error, joinCall, leaveCall };
+  return {
+    loading,
+    joined,
+    joining,
+    room,
+    participants,
+    error,
+    joinCall,
+    leaveCall,
+  };
 }
 
 export function useRooms(manager) {

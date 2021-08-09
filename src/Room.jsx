@@ -28,8 +28,16 @@ function useQuery() {
 export function Room({ manager }) {
   const { roomId } = useParams();
   const query = useQuery();
-  const { loading, joined, room, participants, error, joinCall, leaveCall } =
-    useVideoRoom(manager, roomId);
+  const {
+    loading,
+    joined,
+    joining,
+    room,
+    participants,
+    error,
+    joinCall,
+    leaveCall,
+  } = useVideoRoom(manager, roomId);
   const debugStr = query.get("debug");
   const [debug, setDebug] = useState(debugStr === "" || debugStr === "true");
 
@@ -77,7 +85,9 @@ export function Room({ manager }) {
               <li key={member.userId}>{member.name}</li>
             ))}
           </ul>
-          <button onClick={joinCall}>Join Call</button>
+          <button disabled={joining} onClick={joinCall}>
+            Join Call
+          </button>
         </div>
       )}
       {!loading && room && joined && participants.length === 0 && (
