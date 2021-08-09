@@ -334,8 +334,6 @@ export class ConferenceCallManager extends EventEmitter {
           // since matrix-js-sdk awaits a promise before firing user_hangup
           participant.call.hangup("user_hangup", false);
         }
-
-        return;
       }
     }
 
