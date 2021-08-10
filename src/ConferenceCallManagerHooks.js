@@ -161,9 +161,12 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
     }
 
     // iOS doesn't fire beforeunload event, so leave the call when you hide the page.
-    const unloadEvent = isIOS() ? "visibilitychange" : "beforeunload";
+    if (isIOS()) {
+      window.addEventListener("pagehide", onBeforeUnload);
+      document.addEventListener("visibilitychange", onBeforeUnload);
+    }
 
-    window.addEventListener(unloadEvent, onBeforeUnload);
+    window.addEventListener("beforeunload", onBeforeUnload);
 
     const onParticipantsChanged = () => {
       setState((prevState) => ({
@@ -219,7 +222,9 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
     return () => {
       manager.client.removeListener("Room", roomCallback);
       manager.removeListener("participants_changed", onParticipantsChanged);
-      window.removeEventListener(unloadEvent, onBeforeUnload);
+      window.removeEventListener("pagehide", onBeforeUnload);
+      document.removeEventListener("visibilitychange", onBeforeUnload);
+      window.removeEventListener("beforeunload", onBeforeUnload);
       clearTimeout(timeoutId);
       manager.leaveCall();
     };
