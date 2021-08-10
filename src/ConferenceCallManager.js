@@ -147,6 +147,8 @@ export class ConferenceCallManager extends EventEmitter {
     // Whether or not we have entered the conference call.
     this.entered = false;
 
+    this._left = false;
+
     // The MatrixCalls that were picked up by the Call.incoming listener,
     // before the user entered the conference call.
     this._incomingCallQueue = [];
@@ -163,6 +165,8 @@ export class ConferenceCallManager extends EventEmitter {
   }
 
   async enter(roomId, timeout = 30000) {
+    this._left = false;
+
     // Ensure that we have joined the provided room.
     await this.client.joinRoom(roomId);
 
@@ -205,10 +209,10 @@ export class ConferenceCallManager extends EventEmitter {
     const stream = await this.client.getLocalVideoStream();
 
     // It's possible to navigate to another page while the microphone permission prompt is
-    // open, so check to see that we're still in the call.
+    // open, so check to see if we've left the call.
     // Only set class variables below this check so that leaveRoom properly handles
     // state cleanup.
-    if (!this.entered) {
+    if (this._left) {
       return;
     }
 
@@ -282,6 +286,7 @@ export class ConferenceCallManager extends EventEmitter {
 
     this.room = null;
     this.entered = false;
+    this._left = true;
     this.participants = [];
     this.localParticipant.stream = null;
     this.localParticipant.call = null;
