@@ -288,6 +288,7 @@ export class ConferenceCallManager extends EventEmitter {
     clearTimeout(this._memberParticipantStateTimeout);
 
     this.emit("participants_changed");
+    this.emit("left");
   }
 
   logout() {

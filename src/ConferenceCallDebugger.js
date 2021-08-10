@@ -33,6 +33,7 @@ export class ConferenceCallDebugger extends EventEmitter {
     this.manager.on("debugstate", this._onDebugStateChanged);
     this.manager.client.on("event", this._onEvent);
     this.manager.on("entered", this._onEntered);
+    this.manager.on("left", this._onLeft);
   }
 
   _onEntered = () => {
@@ -42,6 +43,15 @@ export class ConferenceCallDebugger extends EventEmitter {
       const event = this.bufferedEvents.pop();
       this._onEvent(event);
     }
+  };
+
+  _onLeft = () => {
+    this.bufferedEvents = [];
+    this.debugState = {
+      users: new Map(),
+      calls: new Map(),
+    };
+    this.emit("debug");
   };
 
   _onEvent = (event) => {
