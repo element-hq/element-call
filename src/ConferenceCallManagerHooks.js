@@ -171,18 +171,6 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
       setState((prevState) => ({ ...prevState, loading: false, error: err }));
     });
 
-    let initialRoom = manager.client.getRoom(roomId);
-
-    if (initialRoom) {
-      setState((prevState) => ({
-        ...prevState,
-        loading: false,
-        room: initialRoom,
-        error: undefined,
-      }));
-      return;
-    }
-
     let timeoutId;
 
     function roomCallback(room) {
@@ -198,17 +186,28 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
       }
     }
 
-    manager.client.on("Room", roomCallback);
+    let initialRoom = manager.client.getRoom(roomId);
 
-    timeoutId = setTimeout(() => {
+    if (initialRoom) {
       setState((prevState) => ({
         ...prevState,
         loading: false,
-        room: undefined,
-        error: new Error("Room could not be found."),
+        room: initialRoom,
+        error: undefined,
       }));
-      manager.client.removeListener("Room", roomCallback);
-    }, timeout);
+    } else {
+      manager.client.on("Room", roomCallback);
+
+      timeoutId = setTimeout(() => {
+        setState((prevState) => ({
+          ...prevState,
+          loading: false,
+          room: undefined,
+          error: new Error("Room could not be found."),
+        }));
+        manager.client.removeListener("Room", roomCallback);
+      }, timeout);
+    }
 
     return () => {
       manager.client.removeListener("Room", roomCallback);
