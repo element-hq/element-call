@@ -15,25 +15,47 @@ limitations under the License.
 */
 
 import React, { useCallback, useRef } from "react";
+import { useHistory, useLocation } from "react-router-dom";
 
 export function LoginOrRegister({ onRegister, onLogin }) {
   const registerUsernameRef = useRef();
   const registerPasswordRef = useRef();
   const loginUsernameRef = useRef();
   const loginPasswordRef = useRef();
+  const history = useHistory();
+  const location = useLocation();
 
-  const onSubmitRegisterForm = useCallback((e) => {
-    e.preventDefault();
-    onRegister(
-      registerUsernameRef.current.value,
-      registerPasswordRef.current.value
-    );
-  });
+  const onSubmitRegisterForm = useCallback(
+    (e) => {
+      e.preventDefault();
+      onRegister(
+        registerUsernameRef.current.value,
+        registerPasswordRef.current.value,
+        () => {
+          if (location.state && location.state.from) {
+            history.replace(location.state.from);
+          }
+        }
+      );
+    },
+    [onRegister, location, history]
+  );
 
-  const onSubmitLoginForm = useCallback((e) => {
-    e.preventDefault();
-    onLogin(loginUsernameRef.current.value, loginPasswordRef.current.value);
-  });
+  const onSubmitLoginForm = useCallback(
+    (e) => {
+      e.preventDefault();
+      onLogin(
+        loginUsernameRef.current.value,
+        loginPasswordRef.current.value,
+        () => {
+          if (location.state && location.state.from) {
+            history.replace(location.state.from);
+          }
+        }
+      );
+    },
+    [onLogin, location, history]
+  );
 
   return (
     <div className="page">

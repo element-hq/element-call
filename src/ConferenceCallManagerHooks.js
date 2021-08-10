@@ -63,7 +63,7 @@ export function useConferenceCallManager(homeserverUrl) {
       });
   }, []);
 
-  const login = useCallback(async (username, password) => {
+  const login = useCallback(async (username, password, cb) => {
     setState((prevState) => ({
       ...prevState,
       authenticated: false,
@@ -78,6 +78,10 @@ export function useConferenceCallManager(homeserverUrl) {
           authenticated: true,
           error: undefined,
         });
+
+        if (cb) {
+          cb();
+        }
       })
       .catch((err) => {
         console.error(err);
@@ -91,7 +95,7 @@ export function useConferenceCallManager(homeserverUrl) {
       });
   }, []);
 
-  const register = useCallback(async (username, password) => {
+  const register = useCallback(async (username, password, cb) => {
     setState((prevState) => ({
       ...prevState,
       authenticated: false,
@@ -106,6 +110,10 @@ export function useConferenceCallManager(homeserverUrl) {
           authenticated: true,
           error: undefined,
         });
+
+        if (cb) {
+          cb();
+        }
       })
       .catch((err) => {
         console.error(err);

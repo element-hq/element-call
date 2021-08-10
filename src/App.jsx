@@ -20,6 +20,7 @@ import {
   Switch,
   Route,
   Redirect,
+  useLocation,
 } from "react-router-dom";
 import { useConferenceCallManager } from "./ConferenceCallManagerHooks";
 import { JoinOrCreateRoom } from "./JoinOrCreateRoom";
@@ -48,16 +49,34 @@ export default function App() {
                 <LoginOrRegister onRegister={register} onLogin={login} />
               )}
             </Route>
-            <Route path="/room/:roomId">
-              {!authenticated ? (
-                <Redirect to="/" />
-              ) : (
-                <Room manager={manager} />
-              )}
-            </Route>
+            <AuthenticatedRoute
+              authenticated={authenticated}
+              path="/room/:roomId"
+            >
+              <Room manager={manager} />
+            </AuthenticatedRoute>
           </Switch>
         )}
       </div>
     </Router>
+  );
+}
+
+function AuthenticatedRoute({ authenticated, children, ...rest }) {
+  const location = useLocation();
+
+  return (
+    <Route {...rest}>
+      {authenticated ? (
+        children
+      ) : (
+        <Redirect
+          to={{
+            pathname: "/",
+            state: { from: location },
+          }}
+        />
+      )}
+    </Route>
   );
 }
