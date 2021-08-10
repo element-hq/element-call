@@ -149,25 +149,6 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
       error: undefined,
     }));
 
-    function onBeforeUnload(event) {
-      if (
-        event.type === "visibilitychange" &&
-        document.visibilityState === "visible"
-      ) {
-        return;
-      }
-
-      manager.leaveCall();
-    }
-
-    // iOS doesn't fire beforeunload event, so leave the call when you hide the page.
-    if (isIOS()) {
-      window.addEventListener("pagehide", onBeforeUnload);
-      document.addEventListener("visibilitychange", onBeforeUnload);
-    }
-
-    window.addEventListener("beforeunload", onBeforeUnload);
-
     const onParticipantsChanged = () => {
       setState((prevState) => ({
         ...prevState,
@@ -222,9 +203,6 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
     return () => {
       manager.client.removeListener("Room", roomCallback);
       manager.removeListener("participants_changed", onParticipantsChanged);
-      window.removeEventListener("pagehide", onBeforeUnload);
-      document.removeEventListener("visibilitychange", onBeforeUnload);
-      window.removeEventListener("beforeunload", onBeforeUnload);
       clearTimeout(timeoutId);
       manager.leaveCall();
     };
@@ -268,6 +246,55 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
       joined: false,
       joining: false,
     }));
+  }, [manager]);
+
+  useEffect(() => {
+    let pageVisibilityTimeout;
+
+    function onBeforeUnload(event) {
+      if (event.type === "visibilitychange") {
+        if (document.visibilityState === "visible") {
+          clearTimeout(pageVisibilityTimeout);
+        } else {
+          // Wait 5 seconds before closing the page to avoid accidentally leaving
+          // TODO: Make this configurable?
+          pageVisibilityTimeout = setTimeout(() => {
+            manager.leaveCall();
+
+            setState((prevState) => ({
+              ...prevState,
+              participants: manager.participants,
+              joined: false,
+              joining: false,
+            }));
+          }, 5000);
+        }
+      } else {
+        manager.leaveCall();
+
+        setState((prevState) => ({
+          ...prevState,
+          participants: manager.participants,
+          joined: false,
+          joining: false,
+        }));
+      }
+    }
+
+    // iOS doesn't fire beforeunload event, so leave the call when you hide the page.
+    if (isIOS()) {
+      window.addEventListener("pagehide", onBeforeUnload);
+      document.addEventListener("visibilitychange", onBeforeUnload);
+    }
+
+    window.addEventListener("beforeunload", onBeforeUnload);
+
+    return () => {
+      window.removeEventListener("pagehide", onBeforeUnload);
+      document.removeEventListener("visibilitychange", onBeforeUnload);
+      window.removeEventListener("beforeunload", onBeforeUnload);
+      clearTimeout(pageVisibilityTimeout);
+    };
   }, [manager]);
 
   return {
