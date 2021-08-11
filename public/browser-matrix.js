@@ -10,21 +10,24 @@ function _arrayLikeToArray(arr, len) {
 }
 
 module.exports = _arrayLikeToArray;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
 },{}],2:[function(require,module,exports){
 function _arrayWithHoles(arr) {
   if (Array.isArray(arr)) return arr;
 }
 
 module.exports = _arrayWithHoles;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
 },{}],3:[function(require,module,exports){
-var arrayLikeToArray = require("./arrayLikeToArray");
+var arrayLikeToArray = require("./arrayLikeToArray.js");
 
 function _arrayWithoutHoles(arr) {
   if (Array.isArray(arr)) return arrayLikeToArray(arr);
 }
 
 module.exports = _arrayWithoutHoles;
-},{"./arrayLikeToArray":1}],4:[function(require,module,exports){
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{"./arrayLikeToArray.js":1}],4:[function(require,module,exports){
 function _assertThisInitialized(self) {
   if (self === void 0) {
     throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
@@ -34,6 +37,7 @@ function _assertThisInitialized(self) {
 }
 
 module.exports = _assertThisInitialized;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
 },{}],5:[function(require,module,exports){
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
   try {
@@ -72,6 +76,7 @@ function _asyncToGenerator(fn) {
 }
 
 module.exports = _asyncToGenerator;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
 },{}],6:[function(require,module,exports){
 function _classCallCheck(instance, Constructor) {
   if (!(instance instanceof Constructor)) {
@@ -80,14 +85,16 @@ function _classCallCheck(instance, Constructor) {
 }
 
 module.exports = _classCallCheck;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
 },{}],7:[function(require,module,exports){
-var setPrototypeOf = require("./setPrototypeOf");
+var setPrototypeOf = require("./setPrototypeOf.js");
 
-var isNativeReflectConstruct = require("./isNativeReflectConstruct");
+var isNativeReflectConstruct = require("./isNativeReflectConstruct.js");
 
 function _construct(Parent, args, Class) {
   if (isNativeReflectConstruct()) {
     module.exports = _construct = Reflect.construct;
+    module.exports["default"] = module.exports, module.exports.__esModule = true;
   } else {
     module.exports = _construct = function _construct(Parent, args, Class) {
       var a = [null];
@@ -97,13 +104,16 @@ function _construct(Parent, args, Class) {
       if (Class) setPrototypeOf(instance, Class.prototype);
       return instance;
     };
+
+    module.exports["default"] = module.exports, module.exports.__esModule = true;
   }
 
   return _construct.apply(null, arguments);
 }
 
 module.exports = _construct;
-},{"./isNativeReflectConstruct":15,"./setPrototypeOf":21}],8:[function(require,module,exports){
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{"./isNativeReflectConstruct.js":14,"./setPrototypeOf.js":20}],8:[function(require,module,exports){
 function _defineProperties(target, props) {
   for (var i = 0; i < props.length; i++) {
     var descriptor = props[i];
@@ -121,6 +131,7 @@ function _createClass(Constructor, protoProps, staticProps) {
 }
 
 module.exports = _createClass;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
 },{}],9:[function(require,module,exports){
 function _defineProperty(obj, key, value) {
   if (key in obj) {
@@ -138,17 +149,20 @@ function _defineProperty(obj, key, value) {
 }
 
 module.exports = _defineProperty;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
 },{}],10:[function(require,module,exports){
 function _getPrototypeOf(o) {
   module.exports = _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) {
     return o.__proto__ || Object.getPrototypeOf(o);
   };
+  module.exports["default"] = module.exports, module.exports.__esModule = true;
   return _getPrototypeOf(o);
 }
 
 module.exports = _getPrototypeOf;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
 },{}],11:[function(require,module,exports){
-var setPrototypeOf = require("./setPrototypeOf");
+var setPrototypeOf = require("./setPrototypeOf.js");
 
 function _inherits(subClass, superClass) {
   if (typeof superClass !== "function" && superClass !== null) {
@@ -166,7 +180,8 @@ function _inherits(subClass, superClass) {
 }
 
 module.exports = _inherits;
-},{"./setPrototypeOf":21}],12:[function(require,module,exports){
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{"./setPrototypeOf.js":20}],12:[function(require,module,exports){
 function _interopRequireDefault(obj) {
   return obj && obj.__esModule ? obj : {
     "default": obj
@@ -174,76 +189,22 @@ function _interopRequireDefault(obj) {
 }
 
 module.exports = _interopRequireDefault;
+module.exports["default"] = module.exports, module.exports.__esModule = true;
 },{}],13:[function(require,module,exports){
-var _typeof = require("@babel/runtime/helpers/typeof");
-
-function _getRequireWildcardCache() {
-  if (typeof WeakMap !== "function") return null;
-  var cache = new WeakMap();
-
-  _getRequireWildcardCache = function _getRequireWildcardCache() {
-    return cache;
-  };
-
-  return cache;
-}
-
-function _interopRequireWildcard(obj) {
-  if (obj && obj.__esModule) {
-    return obj;
-  }
-
-  if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") {
-    return {
-      "default": obj
-    };
-  }
-
-  var cache = _getRequireWildcardCache();
-
-  if (cache && cache.has(obj)) {
-    return cache.get(obj);
-  }
-
-  var newObj = {};
-  var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor;
-
-  for (var key in obj) {
-    if (Object.prototype.hasOwnProperty.call(obj, key)) {
-      var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null;
-
-      if (desc && (desc.get || desc.set)) {
-        Object.defineProperty(newObj, key, desc);
-      } else {
-        newObj[key] = obj[key];
-      }
-    }
-  }
-
-  newObj["default"] = obj;
-
-  if (cache) {
-    cache.set(obj, newObj);
-  }
-
-  return newObj;
-}
-
-module.exports = _interopRequireWildcard;
-},{"@babel/runtime/helpers/typeof":24}],14:[function(require,module,exports){
 function _isNativeFunction(fn) {
   return Function.toString.call(fn).indexOf("[native code]") !== -1;
 }
 
 module.exports = _isNativeFunction;
-},{}],15:[function(require,module,exports){
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{}],14:[function(require,module,exports){
 function _isNativeReflectConstruct() {
   if (typeof Reflect === "undefined" || !Reflect.construct) return false;
   if (Reflect.construct.sham) return false;
   if (typeof Proxy === "function") return true;
 
   try {
-    Date.prototype.toString.call(Reflect.construct(Date, [], function () {}));
+    Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {}));
     return true;
   } catch (e) {
     return false;
@@ -251,22 +212,27 @@ function _isNativeReflectConstruct() {
 }
 
 module.exports = _isNativeReflectConstruct;
-},{}],16:[function(require,module,exports){
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{}],15:[function(require,module,exports){
 function _iterableToArray(iter) {
-  if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
+  if (typeof Symbol !== "undefined" && iter[Symbol.iterator] != null || iter["@@iterator"] != null) return Array.from(iter);
 }
 
 module.exports = _iterableToArray;
-},{}],17:[function(require,module,exports){
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{}],16:[function(require,module,exports){
 function _iterableToArrayLimit(arr, i) {
-  if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
+  var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"];
+
+  if (_i == null) return;
   var _arr = [];
   var _n = true;
   var _d = false;
-  var _e = undefined;
+
+  var _s, _e;
 
   try {
-    for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) {
+    for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) {
       _arr.push(_s.value);
 
       if (i && _arr.length === i) break;
@@ -286,22 +252,25 @@ function _iterableToArrayLimit(arr, i) {
 }
 
 module.exports = _iterableToArrayLimit;
-},{}],18:[function(require,module,exports){
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{}],17:[function(require,module,exports){
 function _nonIterableRest() {
   throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 
 module.exports = _nonIterableRest;
-},{}],19:[function(require,module,exports){
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{}],18:[function(require,module,exports){
 function _nonIterableSpread() {
   throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 
 module.exports = _nonIterableSpread;
-},{}],20:[function(require,module,exports){
-var _typeof = require("@babel/runtime/helpers/typeof");
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{}],19:[function(require,module,exports){
+var _typeof = require("@babel/runtime/helpers/typeof")["default"];
 
-var assertThisInitialized = require("./assertThisInitialized");
+var assertThisInitialized = require("./assertThisInitialized.js");
 
 function _possibleConstructorReturn(self, call) {
   if (call && (_typeof(call) === "object" || typeof call === "function")) {
@@ -312,46 +281,51 @@ function _possibleConstructorReturn(self, call) {
 }
 
 module.exports = _possibleConstructorReturn;
-},{"./assertThisInitialized":4,"@babel/runtime/helpers/typeof":24}],21:[function(require,module,exports){
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{"./assertThisInitialized.js":4,"@babel/runtime/helpers/typeof":23}],20:[function(require,module,exports){
 function _setPrototypeOf(o, p) {
   module.exports = _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) {
     o.__proto__ = p;
     return o;
   };
 
+  module.exports["default"] = module.exports, module.exports.__esModule = true;
   return _setPrototypeOf(o, p);
 }
 
 module.exports = _setPrototypeOf;
-},{}],22:[function(require,module,exports){
-var arrayWithHoles = require("./arrayWithHoles");
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{}],21:[function(require,module,exports){
+var arrayWithHoles = require("./arrayWithHoles.js");
 
-var iterableToArrayLimit = require("./iterableToArrayLimit");
+var iterableToArrayLimit = require("./iterableToArrayLimit.js");
 
-var unsupportedIterableToArray = require("./unsupportedIterableToArray");
+var unsupportedIterableToArray = require("./unsupportedIterableToArray.js");
 
-var nonIterableRest = require("./nonIterableRest");
+var nonIterableRest = require("./nonIterableRest.js");
 
 function _slicedToArray(arr, i) {
   return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
 }
 
 module.exports = _slicedToArray;
-},{"./arrayWithHoles":2,"./iterableToArrayLimit":17,"./nonIterableRest":18,"./unsupportedIterableToArray":25}],23:[function(require,module,exports){
-var arrayWithoutHoles = require("./arrayWithoutHoles");
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{"./arrayWithHoles.js":2,"./iterableToArrayLimit.js":16,"./nonIterableRest.js":17,"./unsupportedIterableToArray.js":24}],22:[function(require,module,exports){
+var arrayWithoutHoles = require("./arrayWithoutHoles.js");
 
-var iterableToArray = require("./iterableToArray");
+var iterableToArray = require("./iterableToArray.js");
 
-var unsupportedIterableToArray = require("./unsupportedIterableToArray");
+var unsupportedIterableToArray = require("./unsupportedIterableToArray.js");
 
-var nonIterableSpread = require("./nonIterableSpread");
+var nonIterableSpread = require("./nonIterableSpread.js");
 
 function _toConsumableArray(arr) {
   return arrayWithoutHoles(arr) || iterableToArray(arr) || unsupportedIterableToArray(arr) || nonIterableSpread();
 }
 
 module.exports = _toConsumableArray;
-},{"./arrayWithoutHoles":3,"./iterableToArray":16,"./nonIterableSpread":19,"./unsupportedIterableToArray":25}],24:[function(require,module,exports){
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{"./arrayWithoutHoles.js":3,"./iterableToArray.js":15,"./nonIterableSpread.js":18,"./unsupportedIterableToArray.js":24}],23:[function(require,module,exports){
 function _typeof(obj) {
   "@babel/helpers - typeof";
 
@@ -359,18 +333,23 @@ function _typeof(obj) {
     module.exports = _typeof = function _typeof(obj) {
       return typeof obj;
     };
+
+    module.exports["default"] = module.exports, module.exports.__esModule = true;
   } else {
     module.exports = _typeof = function _typeof(obj) {
       return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
     };
+
+    module.exports["default"] = module.exports, module.exports.__esModule = true;
   }
 
   return _typeof(obj);
 }
 
 module.exports = _typeof;
-},{}],25:[function(require,module,exports){
-var arrayLikeToArray = require("./arrayLikeToArray");
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{}],24:[function(require,module,exports){
+var arrayLikeToArray = require("./arrayLikeToArray.js");
 
 function _unsupportedIterableToArray(o, minLen) {
   if (!o) return;
@@ -382,14 +361,15 @@ function _unsupportedIterableToArray(o, minLen) {
 }
 
 module.exports = _unsupportedIterableToArray;
-},{"./arrayLikeToArray":1}],26:[function(require,module,exports){
-var getPrototypeOf = require("./getPrototypeOf");
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{"./arrayLikeToArray.js":1}],25:[function(require,module,exports){
+var getPrototypeOf = require("./getPrototypeOf.js");
 
-var setPrototypeOf = require("./setPrototypeOf");
+var setPrototypeOf = require("./setPrototypeOf.js");
 
-var isNativeFunction = require("./isNativeFunction");
+var isNativeFunction = require("./isNativeFunction.js");
 
-var construct = require("./construct");
+var construct = require("./construct.js");
 
 function _wrapNativeSuper(Class) {
   var _cache = typeof Map === "function" ? new Map() : undefined;
@@ -422,14 +402,16 @@ function _wrapNativeSuper(Class) {
     return setPrototypeOf(Wrapper, Class);
   };
 
+  module.exports["default"] = module.exports, module.exports.__esModule = true;
   return _wrapNativeSuper(Class);
 }
 
 module.exports = _wrapNativeSuper;
-},{"./construct":7,"./getPrototypeOf":10,"./isNativeFunction":14,"./setPrototypeOf":21}],27:[function(require,module,exports){
+module.exports["default"] = module.exports, module.exports.__esModule = true;
+},{"./construct.js":7,"./getPrototypeOf.js":10,"./isNativeFunction.js":13,"./setPrototypeOf.js":20}],26:[function(require,module,exports){
 module.exports = require("regenerator-runtime");
 
-},{"regenerator-runtime":49}],28:[function(require,module,exports){
+},{"regenerator-runtime":58}],27:[function(require,module,exports){
 /* Copyright 2015 Mark Haines
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -524,7 +506,7 @@ function stringifyObject(object) {
 /** */
 module.exports = {stringify: stringify};
 
-},{}],29:[function(require,module,exports){
+},{}],28:[function(require,module,exports){
 'use strict'
 // base-x encoding / decoding
 // Copyright (c) 2018 base-x contributors
@@ -649,7 +631,7 @@ function base (ALPHABET) {
 }
 module.exports = base
 
-},{"safe-buffer":53}],30:[function(require,module,exports){
+},{"safe-buffer":62}],29:[function(require,module,exports){
 'use strict'
 
 exports.byteLength = byteLength
@@ -801,7 +783,7 @@ function fromByteArray (uint8) {
   return parts.join('')
 }
 
-},{}],31:[function(require,module,exports){
+},{}],30:[function(require,module,exports){
 // Browser Request
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -1296,6 +1278,8 @@ function b64_enc (data) {
 //UMD FOOTER START
 }));
 //UMD FOOTER END
+
+},{}],31:[function(require,module,exports){
 
 },{}],32:[function(require,module,exports){
 (function (global){(function (){
@@ -1841,7 +1825,7 @@ var ALPHABET = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
 module.exports = basex(ALPHABET)
 
-},{"base-x":29}],34:[function(require,module,exports){
+},{"base-x":28}],34:[function(require,module,exports){
 (function (Buffer){(function (){
 /*!
  * The buffer module from node.js, for the browser.
@@ -3623,7 +3607,73 @@ function numberIsNaN (obj) {
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"base64-js":30,"buffer":34,"ieee754":37}],35:[function(require,module,exports){
+},{"base64-js":29,"buffer":34,"ieee754":45}],35:[function(require,module,exports){
+'use strict';
+
+var GetIntrinsic = require('get-intrinsic');
+
+var callBind = require('./');
+
+var $indexOf = callBind(GetIntrinsic('String.prototype.indexOf'));
+
+module.exports = function callBoundIntrinsic(name, allowMissing) {
+	var intrinsic = GetIntrinsic(name, !!allowMissing);
+	if (typeof intrinsic === 'function' && $indexOf(name, '.prototype.') > -1) {
+		return callBind(intrinsic);
+	}
+	return intrinsic;
+};
+
+},{"./":36,"get-intrinsic":41}],36:[function(require,module,exports){
+'use strict';
+
+var bind = require('function-bind');
+var GetIntrinsic = require('get-intrinsic');
+
+var $apply = GetIntrinsic('%Function.prototype.apply%');
+var $call = GetIntrinsic('%Function.prototype.call%');
+var $reflectApply = GetIntrinsic('%Reflect.apply%', true) || bind.call($call, $apply);
+
+var $gOPD = GetIntrinsic('%Object.getOwnPropertyDescriptor%', true);
+var $defineProperty = GetIntrinsic('%Object.defineProperty%', true);
+var $max = GetIntrinsic('%Math.max%');
+
+if ($defineProperty) {
+	try {
+		$defineProperty({}, 'a', { value: 1 });
+	} catch (e) {
+		// IE 8 has a broken defineProperty
+		$defineProperty = null;
+	}
+}
+
+module.exports = function callBind(originalFunction) {
+	var func = $reflectApply(bind, $call, arguments);
+	if ($gOPD && $defineProperty) {
+		var desc = $gOPD(func, 'length');
+		if (desc.configurable) {
+			// original length, plus the receiver, minus any additional arguments (after the receiver)
+			$defineProperty(
+				func,
+				'length',
+				{ value: 1 + $max(0, originalFunction.length - (arguments.length - 1)) }
+			);
+		}
+	}
+	return func;
+};
+
+var applyBind = function applyBind() {
+	return $reflectApply(bind, $apply, arguments);
+};
+
+if ($defineProperty) {
+	$defineProperty(module.exports, 'apply', { value: applyBind });
+} else {
+	module.exports.apply = applyBind;
+}
+
+},{"function-bind":40,"get-intrinsic":41}],37:[function(require,module,exports){
 /*!
  * content-type
  * Copyright(c) 2015 Douglas Christopher Wilson
@@ -3847,7 +3897,7 @@ function ContentType (type) {
   this.type = type
 }
 
-},{}],36:[function(require,module,exports){
+},{}],38:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -4298,34 +4348,514 @@ function unwrapListeners(arr) {
 
 function once(emitter, name) {
   return new Promise(function (resolve, reject) {
-    function eventListener() {
-      if (errorListener !== undefined) {
+    function errorListener(err) {
+      emitter.removeListener(name, resolver);
+      reject(err);
+    }
+
+    function resolver() {
+      if (typeof emitter.removeListener === 'function') {
         emitter.removeListener('error', errorListener);
       }
       resolve([].slice.call(arguments));
     };
-    var errorListener;
 
-    // Adding an error listener is not optional because
-    // if an error is thrown on an event emitter we cannot
-    // guarantee that the actual event we are waiting will
-    // be fired. The result could be a silent way to create
-    // memory or file descriptor leaks, which is something
-    // we should avoid.
+    eventTargetAgnosticAddListener(emitter, name, resolver, { once: true });
     if (name !== 'error') {
-      errorListener = function errorListener(err) {
-        emitter.removeListener(name, eventListener);
-        reject(err);
-      };
-
-      emitter.once('error', errorListener);
+      addErrorHandlerIfEventEmitter(emitter, errorListener, { once: true });
     }
-
-    emitter.once(name, eventListener);
   });
 }
 
-},{}],37:[function(require,module,exports){
+function addErrorHandlerIfEventEmitter(emitter, handler, flags) {
+  if (typeof emitter.on === 'function') {
+    eventTargetAgnosticAddListener(emitter, 'error', handler, flags);
+  }
+}
+
+function eventTargetAgnosticAddListener(emitter, name, listener, flags) {
+  if (typeof emitter.on === 'function') {
+    if (flags.once) {
+      emitter.once(name, listener);
+    } else {
+      emitter.on(name, listener);
+    }
+  } else if (typeof emitter.addEventListener === 'function') {
+    // EventTarget does not have `error` event semantics like Node
+    // EventEmitters, we do not listen for `error` events here.
+    emitter.addEventListener(name, function wrapListener(arg) {
+      // IE does not have builtin `{ once: true }` support so we
+      // have to do it manually.
+      if (flags.once) {
+        emitter.removeEventListener(name, wrapListener);
+      }
+      listener(arg);
+    });
+  } else {
+    throw new TypeError('The "emitter" argument must be of type EventEmitter. Received type ' + typeof emitter);
+  }
+}
+
+},{}],39:[function(require,module,exports){
+'use strict';
+
+/* eslint no-invalid-this: 1 */
+
+var ERROR_MESSAGE = 'Function.prototype.bind called on incompatible ';
+var slice = Array.prototype.slice;
+var toStr = Object.prototype.toString;
+var funcType = '[object Function]';
+
+module.exports = function bind(that) {
+    var target = this;
+    if (typeof target !== 'function' || toStr.call(target) !== funcType) {
+        throw new TypeError(ERROR_MESSAGE + target);
+    }
+    var args = slice.call(arguments, 1);
+
+    var bound;
+    var binder = function () {
+        if (this instanceof bound) {
+            var result = target.apply(
+                this,
+                args.concat(slice.call(arguments))
+            );
+            if (Object(result) === result) {
+                return result;
+            }
+            return this;
+        } else {
+            return target.apply(
+                that,
+                args.concat(slice.call(arguments))
+            );
+        }
+    };
+
+    var boundLength = Math.max(0, target.length - args.length);
+    var boundArgs = [];
+    for (var i = 0; i < boundLength; i++) {
+        boundArgs.push('$' + i);
+    }
+
+    bound = Function('binder', 'return function (' + boundArgs.join(',') + '){ return binder.apply(this,arguments); }')(binder);
+
+    if (target.prototype) {
+        var Empty = function Empty() {};
+        Empty.prototype = target.prototype;
+        bound.prototype = new Empty();
+        Empty.prototype = null;
+    }
+
+    return bound;
+};
+
+},{}],40:[function(require,module,exports){
+'use strict';
+
+var implementation = require('./implementation');
+
+module.exports = Function.prototype.bind || implementation;
+
+},{"./implementation":39}],41:[function(require,module,exports){
+'use strict';
+
+var undefined;
+
+var $SyntaxError = SyntaxError;
+var $Function = Function;
+var $TypeError = TypeError;
+
+// eslint-disable-next-line consistent-return
+var getEvalledConstructor = function (expressionSyntax) {
+	try {
+		return $Function('"use strict"; return (' + expressionSyntax + ').constructor;')();
+	} catch (e) {}
+};
+
+var $gOPD = Object.getOwnPropertyDescriptor;
+if ($gOPD) {
+	try {
+		$gOPD({}, '');
+	} catch (e) {
+		$gOPD = null; // this is IE 8, which has a broken gOPD
+	}
+}
+
+var throwTypeError = function () {
+	throw new $TypeError();
+};
+var ThrowTypeError = $gOPD
+	? (function () {
+		try {
+			// eslint-disable-next-line no-unused-expressions, no-caller, no-restricted-properties
+			arguments.callee; // IE 8 does not throw here
+			return throwTypeError;
+		} catch (calleeThrows) {
+			try {
+				// IE 8 throws on Object.getOwnPropertyDescriptor(arguments, '')
+				return $gOPD(arguments, 'callee').get;
+			} catch (gOPDthrows) {
+				return throwTypeError;
+			}
+		}
+	}())
+	: throwTypeError;
+
+var hasSymbols = require('has-symbols')();
+
+var getProto = Object.getPrototypeOf || function (x) { return x.__proto__; }; // eslint-disable-line no-proto
+
+var needsEval = {};
+
+var TypedArray = typeof Uint8Array === 'undefined' ? undefined : getProto(Uint8Array);
+
+var INTRINSICS = {
+	'%AggregateError%': typeof AggregateError === 'undefined' ? undefined : AggregateError,
+	'%Array%': Array,
+	'%ArrayBuffer%': typeof ArrayBuffer === 'undefined' ? undefined : ArrayBuffer,
+	'%ArrayIteratorPrototype%': hasSymbols ? getProto([][Symbol.iterator]()) : undefined,
+	'%AsyncFromSyncIteratorPrototype%': undefined,
+	'%AsyncFunction%': needsEval,
+	'%AsyncGenerator%': needsEval,
+	'%AsyncGeneratorFunction%': needsEval,
+	'%AsyncIteratorPrototype%': needsEval,
+	'%Atomics%': typeof Atomics === 'undefined' ? undefined : Atomics,
+	'%BigInt%': typeof BigInt === 'undefined' ? undefined : BigInt,
+	'%Boolean%': Boolean,
+	'%DataView%': typeof DataView === 'undefined' ? undefined : DataView,
+	'%Date%': Date,
+	'%decodeURI%': decodeURI,
+	'%decodeURIComponent%': decodeURIComponent,
+	'%encodeURI%': encodeURI,
+	'%encodeURIComponent%': encodeURIComponent,
+	'%Error%': Error,
+	'%eval%': eval, // eslint-disable-line no-eval
+	'%EvalError%': EvalError,
+	'%Float32Array%': typeof Float32Array === 'undefined' ? undefined : Float32Array,
+	'%Float64Array%': typeof Float64Array === 'undefined' ? undefined : Float64Array,
+	'%FinalizationRegistry%': typeof FinalizationRegistry === 'undefined' ? undefined : FinalizationRegistry,
+	'%Function%': $Function,
+	'%GeneratorFunction%': needsEval,
+	'%Int8Array%': typeof Int8Array === 'undefined' ? undefined : Int8Array,
+	'%Int16Array%': typeof Int16Array === 'undefined' ? undefined : Int16Array,
+	'%Int32Array%': typeof Int32Array === 'undefined' ? undefined : Int32Array,
+	'%isFinite%': isFinite,
+	'%isNaN%': isNaN,
+	'%IteratorPrototype%': hasSymbols ? getProto(getProto([][Symbol.iterator]())) : undefined,
+	'%JSON%': typeof JSON === 'object' ? JSON : undefined,
+	'%Map%': typeof Map === 'undefined' ? undefined : Map,
+	'%MapIteratorPrototype%': typeof Map === 'undefined' || !hasSymbols ? undefined : getProto(new Map()[Symbol.iterator]()),
+	'%Math%': Math,
+	'%Number%': Number,
+	'%Object%': Object,
+	'%parseFloat%': parseFloat,
+	'%parseInt%': parseInt,
+	'%Promise%': typeof Promise === 'undefined' ? undefined : Promise,
+	'%Proxy%': typeof Proxy === 'undefined' ? undefined : Proxy,
+	'%RangeError%': RangeError,
+	'%ReferenceError%': ReferenceError,
+	'%Reflect%': typeof Reflect === 'undefined' ? undefined : Reflect,
+	'%RegExp%': RegExp,
+	'%Set%': typeof Set === 'undefined' ? undefined : Set,
+	'%SetIteratorPrototype%': typeof Set === 'undefined' || !hasSymbols ? undefined : getProto(new Set()[Symbol.iterator]()),
+	'%SharedArrayBuffer%': typeof SharedArrayBuffer === 'undefined' ? undefined : SharedArrayBuffer,
+	'%String%': String,
+	'%StringIteratorPrototype%': hasSymbols ? getProto(''[Symbol.iterator]()) : undefined,
+	'%Symbol%': hasSymbols ? Symbol : undefined,
+	'%SyntaxError%': $SyntaxError,
+	'%ThrowTypeError%': ThrowTypeError,
+	'%TypedArray%': TypedArray,
+	'%TypeError%': $TypeError,
+	'%Uint8Array%': typeof Uint8Array === 'undefined' ? undefined : Uint8Array,
+	'%Uint8ClampedArray%': typeof Uint8ClampedArray === 'undefined' ? undefined : Uint8ClampedArray,
+	'%Uint16Array%': typeof Uint16Array === 'undefined' ? undefined : Uint16Array,
+	'%Uint32Array%': typeof Uint32Array === 'undefined' ? undefined : Uint32Array,
+	'%URIError%': URIError,
+	'%WeakMap%': typeof WeakMap === 'undefined' ? undefined : WeakMap,
+	'%WeakRef%': typeof WeakRef === 'undefined' ? undefined : WeakRef,
+	'%WeakSet%': typeof WeakSet === 'undefined' ? undefined : WeakSet
+};
+
+var doEval = function doEval(name) {
+	var value;
+	if (name === '%AsyncFunction%') {
+		value = getEvalledConstructor('async function () {}');
+	} else if (name === '%GeneratorFunction%') {
+		value = getEvalledConstructor('function* () {}');
+	} else if (name === '%AsyncGeneratorFunction%') {
+		value = getEvalledConstructor('async function* () {}');
+	} else if (name === '%AsyncGenerator%') {
+		var fn = doEval('%AsyncGeneratorFunction%');
+		if (fn) {
+			value = fn.prototype;
+		}
+	} else if (name === '%AsyncIteratorPrototype%') {
+		var gen = doEval('%AsyncGenerator%');
+		if (gen) {
+			value = getProto(gen.prototype);
+		}
+	}
+
+	INTRINSICS[name] = value;
+
+	return value;
+};
+
+var LEGACY_ALIASES = {
+	'%ArrayBufferPrototype%': ['ArrayBuffer', 'prototype'],
+	'%ArrayPrototype%': ['Array', 'prototype'],
+	'%ArrayProto_entries%': ['Array', 'prototype', 'entries'],
+	'%ArrayProto_forEach%': ['Array', 'prototype', 'forEach'],
+	'%ArrayProto_keys%': ['Array', 'prototype', 'keys'],
+	'%ArrayProto_values%': ['Array', 'prototype', 'values'],
+	'%AsyncFunctionPrototype%': ['AsyncFunction', 'prototype'],
+	'%AsyncGenerator%': ['AsyncGeneratorFunction', 'prototype'],
+	'%AsyncGeneratorPrototype%': ['AsyncGeneratorFunction', 'prototype', 'prototype'],
+	'%BooleanPrototype%': ['Boolean', 'prototype'],
+	'%DataViewPrototype%': ['DataView', 'prototype'],
+	'%DatePrototype%': ['Date', 'prototype'],
+	'%ErrorPrototype%': ['Error', 'prototype'],
+	'%EvalErrorPrototype%': ['EvalError', 'prototype'],
+	'%Float32ArrayPrototype%': ['Float32Array', 'prototype'],
+	'%Float64ArrayPrototype%': ['Float64Array', 'prototype'],
+	'%FunctionPrototype%': ['Function', 'prototype'],
+	'%Generator%': ['GeneratorFunction', 'prototype'],
+	'%GeneratorPrototype%': ['GeneratorFunction', 'prototype', 'prototype'],
+	'%Int8ArrayPrototype%': ['Int8Array', 'prototype'],
+	'%Int16ArrayPrototype%': ['Int16Array', 'prototype'],
+	'%Int32ArrayPrototype%': ['Int32Array', 'prototype'],
+	'%JSONParse%': ['JSON', 'parse'],
+	'%JSONStringify%': ['JSON', 'stringify'],
+	'%MapPrototype%': ['Map', 'prototype'],
+	'%NumberPrototype%': ['Number', 'prototype'],
+	'%ObjectPrototype%': ['Object', 'prototype'],
+	'%ObjProto_toString%': ['Object', 'prototype', 'toString'],
+	'%ObjProto_valueOf%': ['Object', 'prototype', 'valueOf'],
+	'%PromisePrototype%': ['Promise', 'prototype'],
+	'%PromiseProto_then%': ['Promise', 'prototype', 'then'],
+	'%Promise_all%': ['Promise', 'all'],
+	'%Promise_reject%': ['Promise', 'reject'],
+	'%Promise_resolve%': ['Promise', 'resolve'],
+	'%RangeErrorPrototype%': ['RangeError', 'prototype'],
+	'%ReferenceErrorPrototype%': ['ReferenceError', 'prototype'],
+	'%RegExpPrototype%': ['RegExp', 'prototype'],
+	'%SetPrototype%': ['Set', 'prototype'],
+	'%SharedArrayBufferPrototype%': ['SharedArrayBuffer', 'prototype'],
+	'%StringPrototype%': ['String', 'prototype'],
+	'%SymbolPrototype%': ['Symbol', 'prototype'],
+	'%SyntaxErrorPrototype%': ['SyntaxError', 'prototype'],
+	'%TypedArrayPrototype%': ['TypedArray', 'prototype'],
+	'%TypeErrorPrototype%': ['TypeError', 'prototype'],
+	'%Uint8ArrayPrototype%': ['Uint8Array', 'prototype'],
+	'%Uint8ClampedArrayPrototype%': ['Uint8ClampedArray', 'prototype'],
+	'%Uint16ArrayPrototype%': ['Uint16Array', 'prototype'],
+	'%Uint32ArrayPrototype%': ['Uint32Array', 'prototype'],
+	'%URIErrorPrototype%': ['URIError', 'prototype'],
+	'%WeakMapPrototype%': ['WeakMap', 'prototype'],
+	'%WeakSetPrototype%': ['WeakSet', 'prototype']
+};
+
+var bind = require('function-bind');
+var hasOwn = require('has');
+var $concat = bind.call(Function.call, Array.prototype.concat);
+var $spliceApply = bind.call(Function.apply, Array.prototype.splice);
+var $replace = bind.call(Function.call, String.prototype.replace);
+var $strSlice = bind.call(Function.call, String.prototype.slice);
+
+/* adapted from https://github.com/lodash/lodash/blob/4.17.15/dist/lodash.js#L6735-L6744 */
+var rePropName = /[^%.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|%$))/g;
+var reEscapeChar = /\\(\\)?/g; /** Used to match backslashes in property paths. */
+var stringToPath = function stringToPath(string) {
+	var first = $strSlice(string, 0, 1);
+	var last = $strSlice(string, -1);
+	if (first === '%' && last !== '%') {
+		throw new $SyntaxError('invalid intrinsic syntax, expected closing `%`');
+	} else if (last === '%' && first !== '%') {
+		throw new $SyntaxError('invalid intrinsic syntax, expected opening `%`');
+	}
+	var result = [];
+	$replace(string, rePropName, function (match, number, quote, subString) {
+		result[result.length] = quote ? $replace(subString, reEscapeChar, '$1') : number || match;
+	});
+	return result;
+};
+/* end adaptation */
+
+var getBaseIntrinsic = function getBaseIntrinsic(name, allowMissing) {
+	var intrinsicName = name;
+	var alias;
+	if (hasOwn(LEGACY_ALIASES, intrinsicName)) {
+		alias = LEGACY_ALIASES[intrinsicName];
+		intrinsicName = '%' + alias[0] + '%';
+	}
+
+	if (hasOwn(INTRINSICS, intrinsicName)) {
+		var value = INTRINSICS[intrinsicName];
+		if (value === needsEval) {
+			value = doEval(intrinsicName);
+		}
+		if (typeof value === 'undefined' && !allowMissing) {
+			throw new $TypeError('intrinsic ' + name + ' exists, but is not available. Please file an issue!');
+		}
+
+		return {
+			alias: alias,
+			name: intrinsicName,
+			value: value
+		};
+	}
+
+	throw new $SyntaxError('intrinsic ' + name + ' does not exist!');
+};
+
+module.exports = function GetIntrinsic(name, allowMissing) {
+	if (typeof name !== 'string' || name.length === 0) {
+		throw new $TypeError('intrinsic name must be a non-empty string');
+	}
+	if (arguments.length > 1 && typeof allowMissing !== 'boolean') {
+		throw new $TypeError('"allowMissing" argument must be a boolean');
+	}
+
+	var parts = stringToPath(name);
+	var intrinsicBaseName = parts.length > 0 ? parts[0] : '';
+
+	var intrinsic = getBaseIntrinsic('%' + intrinsicBaseName + '%', allowMissing);
+	var intrinsicRealName = intrinsic.name;
+	var value = intrinsic.value;
+	var skipFurtherCaching = false;
+
+	var alias = intrinsic.alias;
+	if (alias) {
+		intrinsicBaseName = alias[0];
+		$spliceApply(parts, $concat([0, 1], alias));
+	}
+
+	for (var i = 1, isOwn = true; i < parts.length; i += 1) {
+		var part = parts[i];
+		var first = $strSlice(part, 0, 1);
+		var last = $strSlice(part, -1);
+		if (
+			(
+				(first === '"' || first === "'" || first === '`')
+				|| (last === '"' || last === "'" || last === '`')
+			)
+			&& first !== last
+		) {
+			throw new $SyntaxError('property names with quotes must have matching quotes');
+		}
+		if (part === 'constructor' || !isOwn) {
+			skipFurtherCaching = true;
+		}
+
+		intrinsicBaseName += '.' + part;
+		intrinsicRealName = '%' + intrinsicBaseName + '%';
+
+		if (hasOwn(INTRINSICS, intrinsicRealName)) {
+			value = INTRINSICS[intrinsicRealName];
+		} else if (value != null) {
+			if (!(part in value)) {
+				if (!allowMissing) {
+					throw new $TypeError('base intrinsic for ' + name + ' exists, but the property is not available.');
+				}
+				return void undefined;
+			}
+			if ($gOPD && (i + 1) >= parts.length) {
+				var desc = $gOPD(value, part);
+				isOwn = !!desc;
+
+				// By convention, when a data property is converted to an accessor
+				// property to emulate a data property that does not suffer from
+				// the override mistake, that accessor's getter is marked with
+				// an `originalValue` property. Here, when we detect this, we
+				// uphold the illusion by pretending to see that original data
+				// property, i.e., returning the value rather than the getter
+				// itself.
+				if (isOwn && 'get' in desc && !('originalValue' in desc.get)) {
+					value = desc.get;
+				} else {
+					value = value[part];
+				}
+			} else {
+				isOwn = hasOwn(value, part);
+				value = value[part];
+			}
+
+			if (isOwn && !skipFurtherCaching) {
+				INTRINSICS[intrinsicRealName] = value;
+			}
+		}
+	}
+	return value;
+};
+
+},{"function-bind":40,"has":44,"has-symbols":42}],42:[function(require,module,exports){
+'use strict';
+
+var origSymbol = typeof Symbol !== 'undefined' && Symbol;
+var hasSymbolSham = require('./shams');
+
+module.exports = function hasNativeSymbols() {
+	if (typeof origSymbol !== 'function') { return false; }
+	if (typeof Symbol !== 'function') { return false; }
+	if (typeof origSymbol('foo') !== 'symbol') { return false; }
+	if (typeof Symbol('bar') !== 'symbol') { return false; }
+
+	return hasSymbolSham();
+};
+
+},{"./shams":43}],43:[function(require,module,exports){
+'use strict';
+
+/* eslint complexity: [2, 18], max-statements: [2, 33] */
+module.exports = function hasSymbols() {
+	if (typeof Symbol !== 'function' || typeof Object.getOwnPropertySymbols !== 'function') { return false; }
+	if (typeof Symbol.iterator === 'symbol') { return true; }
+
+	var obj = {};
+	var sym = Symbol('test');
+	var symObj = Object(sym);
+	if (typeof sym === 'string') { return false; }
+
+	if (Object.prototype.toString.call(sym) !== '[object Symbol]') { return false; }
+	if (Object.prototype.toString.call(symObj) !== '[object Symbol]') { return false; }
+
+	// temp disabled per https://github.com/ljharb/object.assign/issues/17
+	// if (sym instanceof Symbol) { return false; }
+	// temp disabled per https://github.com/WebReflection/get-own-property-symbols/issues/4
+	// if (!(symObj instanceof Symbol)) { return false; }
+
+	// if (typeof Symbol.prototype.toString !== 'function') { return false; }
+	// if (String(sym) !== Symbol.prototype.toString.call(sym)) { return false; }
+
+	var symVal = 42;
+	obj[sym] = symVal;
+	for (sym in obj) { return false; } // eslint-disable-line no-restricted-syntax, no-unreachable-loop
+	if (typeof Object.keys === 'function' && Object.keys(obj).length !== 0) { return false; }
+
+	if (typeof Object.getOwnPropertyNames === 'function' && Object.getOwnPropertyNames(obj).length !== 0) { return false; }
+
+	var syms = Object.getOwnPropertySymbols(obj);
+	if (syms.length !== 1 || syms[0] !== sym) { return false; }
+
+	if (!Object.prototype.propertyIsEnumerable.call(obj, sym)) { return false; }
+
+	if (typeof Object.getOwnPropertyDescriptor === 'function') {
+		var descriptor = Object.getOwnPropertyDescriptor(obj, sym);
+		if (descriptor.value !== symVal || descriptor.enumerable !== true) { return false; }
+	}
+
+	return true;
+};
+
+},{}],44:[function(require,module,exports){
+'use strict';
+
+var bind = require('function-bind');
+
+module.exports = bind.call(Function.call, Object.prototype.hasOwnProperty);
+
+},{"function-bind":40}],45:[function(require,module,exports){
 /*! ieee754. BSD-3-Clause License. Feross Aboukhadijeh <https://feross.org/opensource> */
 exports.read = function (buffer, offset, isLE, mLen, nBytes) {
   var e, m
@@ -4412,7 +4942,7 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
   buffer[offset + i - d] |= s * 128
 }
 
-},{}],38:[function(require,module,exports){
+},{}],46:[function(require,module,exports){
 /*
 * loglevel - https://github.com/pimterry/loglevel
 *
@@ -4688,14 +5218,484 @@ exports.write = function (buffer, value, offset, isLE, mLen, nBytes) {
     return defaultLogger;
 }));
 
-},{}],39:[function(require,module,exports){
+},{}],47:[function(require,module,exports){
+var hasMap = typeof Map === 'function' && Map.prototype;
+var mapSizeDescriptor = Object.getOwnPropertyDescriptor && hasMap ? Object.getOwnPropertyDescriptor(Map.prototype, 'size') : null;
+var mapSize = hasMap && mapSizeDescriptor && typeof mapSizeDescriptor.get === 'function' ? mapSizeDescriptor.get : null;
+var mapForEach = hasMap && Map.prototype.forEach;
+var hasSet = typeof Set === 'function' && Set.prototype;
+var setSizeDescriptor = Object.getOwnPropertyDescriptor && hasSet ? Object.getOwnPropertyDescriptor(Set.prototype, 'size') : null;
+var setSize = hasSet && setSizeDescriptor && typeof setSizeDescriptor.get === 'function' ? setSizeDescriptor.get : null;
+var setForEach = hasSet && Set.prototype.forEach;
+var hasWeakMap = typeof WeakMap === 'function' && WeakMap.prototype;
+var weakMapHas = hasWeakMap ? WeakMap.prototype.has : null;
+var hasWeakSet = typeof WeakSet === 'function' && WeakSet.prototype;
+var weakSetHas = hasWeakSet ? WeakSet.prototype.has : null;
+var hasWeakRef = typeof WeakRef === 'function' && WeakRef.prototype;
+var weakRefDeref = hasWeakRef ? WeakRef.prototype.deref : null;
+var booleanValueOf = Boolean.prototype.valueOf;
+var objectToString = Object.prototype.toString;
+var functionToString = Function.prototype.toString;
+var match = String.prototype.match;
+var bigIntValueOf = typeof BigInt === 'function' ? BigInt.prototype.valueOf : null;
+var gOPS = Object.getOwnPropertySymbols;
+var symToString = typeof Symbol === 'function' && typeof Symbol.iterator === 'symbol' ? Symbol.prototype.toString : null;
+var hasShammedSymbols = typeof Symbol === 'function' && typeof Symbol.iterator === 'object';
+var isEnumerable = Object.prototype.propertyIsEnumerable;
+
+var gPO = (typeof Reflect === 'function' ? Reflect.getPrototypeOf : Object.getPrototypeOf) || (
+    [].__proto__ === Array.prototype // eslint-disable-line no-proto
+        ? function (O) {
+            return O.__proto__; // eslint-disable-line no-proto
+        }
+        : null
+);
+
+var inspectCustom = require('./util.inspect').custom;
+var inspectSymbol = inspectCustom && isSymbol(inspectCustom) ? inspectCustom : null;
+var toStringTag = typeof Symbol === 'function' && typeof Symbol.toStringTag !== 'undefined' ? Symbol.toStringTag : null;
+
+module.exports = function inspect_(obj, options, depth, seen) {
+    var opts = options || {};
+
+    if (has(opts, 'quoteStyle') && (opts.quoteStyle !== 'single' && opts.quoteStyle !== 'double')) {
+        throw new TypeError('option "quoteStyle" must be "single" or "double"');
+    }
+    if (
+        has(opts, 'maxStringLength') && (typeof opts.maxStringLength === 'number'
+            ? opts.maxStringLength < 0 && opts.maxStringLength !== Infinity
+            : opts.maxStringLength !== null
+        )
+    ) {
+        throw new TypeError('option "maxStringLength", if provided, must be a positive integer, Infinity, or `null`');
+    }
+    var customInspect = has(opts, 'customInspect') ? opts.customInspect : true;
+    if (typeof customInspect !== 'boolean' && customInspect !== 'symbol') {
+        throw new TypeError('option "customInspect", if provided, must be `true`, `false`, or `\'symbol\'`');
+    }
+
+    if (
+        has(opts, 'indent')
+        && opts.indent !== null
+        && opts.indent !== '\t'
+        && !(parseInt(opts.indent, 10) === opts.indent && opts.indent > 0)
+    ) {
+        throw new TypeError('options "indent" must be "\\t", an integer > 0, or `null`');
+    }
+
+    if (typeof obj === 'undefined') {
+        return 'undefined';
+    }
+    if (obj === null) {
+        return 'null';
+    }
+    if (typeof obj === 'boolean') {
+        return obj ? 'true' : 'false';
+    }
+
+    if (typeof obj === 'string') {
+        return inspectString(obj, opts);
+    }
+    if (typeof obj === 'number') {
+        if (obj === 0) {
+            return Infinity / obj > 0 ? '0' : '-0';
+        }
+        return String(obj);
+    }
+    if (typeof obj === 'bigint') {
+        return String(obj) + 'n';
+    }
+
+    var maxDepth = typeof opts.depth === 'undefined' ? 5 : opts.depth;
+    if (typeof depth === 'undefined') { depth = 0; }
+    if (depth >= maxDepth && maxDepth > 0 && typeof obj === 'object') {
+        return isArray(obj) ? '[Array]' : '[Object]';
+    }
+
+    var indent = getIndent(opts, depth);
+
+    if (typeof seen === 'undefined') {
+        seen = [];
+    } else if (indexOf(seen, obj) >= 0) {
+        return '[Circular]';
+    }
+
+    function inspect(value, from, noIndent) {
+        if (from) {
+            seen = seen.slice();
+            seen.push(from);
+        }
+        if (noIndent) {
+            var newOpts = {
+                depth: opts.depth
+            };
+            if (has(opts, 'quoteStyle')) {
+                newOpts.quoteStyle = opts.quoteStyle;
+            }
+            return inspect_(value, newOpts, depth + 1, seen);
+        }
+        return inspect_(value, opts, depth + 1, seen);
+    }
+
+    if (typeof obj === 'function') {
+        var name = nameOf(obj);
+        var keys = arrObjKeys(obj, inspect);
+        return '[Function' + (name ? ': ' + name : ' (anonymous)') + ']' + (keys.length > 0 ? ' { ' + keys.join(', ') + ' }' : '');
+    }
+    if (isSymbol(obj)) {
+        var symString = hasShammedSymbols ? String(obj).replace(/^(Symbol\(.*\))_[^)]*$/, '$1') : symToString.call(obj);
+        return typeof obj === 'object' && !hasShammedSymbols ? markBoxed(symString) : symString;
+    }
+    if (isElement(obj)) {
+        var s = '<' + String(obj.nodeName).toLowerCase();
+        var attrs = obj.attributes || [];
+        for (var i = 0; i < attrs.length; i++) {
+            s += ' ' + attrs[i].name + '=' + wrapQuotes(quote(attrs[i].value), 'double', opts);
+        }
+        s += '>';
+        if (obj.childNodes && obj.childNodes.length) { s += '...'; }
+        s += '</' + String(obj.nodeName).toLowerCase() + '>';
+        return s;
+    }
+    if (isArray(obj)) {
+        if (obj.length === 0) { return '[]'; }
+        var xs = arrObjKeys(obj, inspect);
+        if (indent && !singleLineValues(xs)) {
+            return '[' + indentedJoin(xs, indent) + ']';
+        }
+        return '[ ' + xs.join(', ') + ' ]';
+    }
+    if (isError(obj)) {
+        var parts = arrObjKeys(obj, inspect);
+        if (parts.length === 0) { return '[' + String(obj) + ']'; }
+        return '{ [' + String(obj) + '] ' + parts.join(', ') + ' }';
+    }
+    if (typeof obj === 'object' && customInspect) {
+        if (inspectSymbol && typeof obj[inspectSymbol] === 'function') {
+            return obj[inspectSymbol]();
+        } else if (customInspect !== 'symbol' && typeof obj.inspect === 'function') {
+            return obj.inspect();
+        }
+    }
+    if (isMap(obj)) {
+        var mapParts = [];
+        mapForEach.call(obj, function (value, key) {
+            mapParts.push(inspect(key, obj, true) + ' => ' + inspect(value, obj));
+        });
+        return collectionOf('Map', mapSize.call(obj), mapParts, indent);
+    }
+    if (isSet(obj)) {
+        var setParts = [];
+        setForEach.call(obj, function (value) {
+            setParts.push(inspect(value, obj));
+        });
+        return collectionOf('Set', setSize.call(obj), setParts, indent);
+    }
+    if (isWeakMap(obj)) {
+        return weakCollectionOf('WeakMap');
+    }
+    if (isWeakSet(obj)) {
+        return weakCollectionOf('WeakSet');
+    }
+    if (isWeakRef(obj)) {
+        return weakCollectionOf('WeakRef');
+    }
+    if (isNumber(obj)) {
+        return markBoxed(inspect(Number(obj)));
+    }
+    if (isBigInt(obj)) {
+        return markBoxed(inspect(bigIntValueOf.call(obj)));
+    }
+    if (isBoolean(obj)) {
+        return markBoxed(booleanValueOf.call(obj));
+    }
+    if (isString(obj)) {
+        return markBoxed(inspect(String(obj)));
+    }
+    if (!isDate(obj) && !isRegExp(obj)) {
+        var ys = arrObjKeys(obj, inspect);
+        var isPlainObject = gPO ? gPO(obj) === Object.prototype : obj instanceof Object || obj.constructor === Object;
+        var protoTag = obj instanceof Object ? '' : 'null prototype';
+        var stringTag = !isPlainObject && toStringTag && Object(obj) === obj && toStringTag in obj ? toStr(obj).slice(8, -1) : protoTag ? 'Object' : '';
+        var constructorTag = isPlainObject || typeof obj.constructor !== 'function' ? '' : obj.constructor.name ? obj.constructor.name + ' ' : '';
+        var tag = constructorTag + (stringTag || protoTag ? '[' + [].concat(stringTag || [], protoTag || []).join(': ') + '] ' : '');
+        if (ys.length === 0) { return tag + '{}'; }
+        if (indent) {
+            return tag + '{' + indentedJoin(ys, indent) + '}';
+        }
+        return tag + '{ ' + ys.join(', ') + ' }';
+    }
+    return String(obj);
+};
+
+function wrapQuotes(s, defaultStyle, opts) {
+    var quoteChar = (opts.quoteStyle || defaultStyle) === 'double' ? '"' : "'";
+    return quoteChar + s + quoteChar;
+}
+
+function quote(s) {
+    return String(s).replace(/"/g, '&quot;');
+}
+
+function isArray(obj) { return toStr(obj) === '[object Array]' && (!toStringTag || !(typeof obj === 'object' && toStringTag in obj)); }
+function isDate(obj) { return toStr(obj) === '[object Date]' && (!toStringTag || !(typeof obj === 'object' && toStringTag in obj)); }
+function isRegExp(obj) { return toStr(obj) === '[object RegExp]' && (!toStringTag || !(typeof obj === 'object' && toStringTag in obj)); }
+function isError(obj) { return toStr(obj) === '[object Error]' && (!toStringTag || !(typeof obj === 'object' && toStringTag in obj)); }
+function isString(obj) { return toStr(obj) === '[object String]' && (!toStringTag || !(typeof obj === 'object' && toStringTag in obj)); }
+function isNumber(obj) { return toStr(obj) === '[object Number]' && (!toStringTag || !(typeof obj === 'object' && toStringTag in obj)); }
+function isBoolean(obj) { return toStr(obj) === '[object Boolean]' && (!toStringTag || !(typeof obj === 'object' && toStringTag in obj)); }
+
+// Symbol and BigInt do have Symbol.toStringTag by spec, so that can't be used to eliminate false positives
+function isSymbol(obj) {
+    if (hasShammedSymbols) {
+        return obj && typeof obj === 'object' && obj instanceof Symbol;
+    }
+    if (typeof obj === 'symbol') {
+        return true;
+    }
+    if (!obj || typeof obj !== 'object' || !symToString) {
+        return false;
+    }
+    try {
+        symToString.call(obj);
+        return true;
+    } catch (e) {}
+    return false;
+}
+
+function isBigInt(obj) {
+    if (!obj || typeof obj !== 'object' || !bigIntValueOf) {
+        return false;
+    }
+    try {
+        bigIntValueOf.call(obj);
+        return true;
+    } catch (e) {}
+    return false;
+}
+
+var hasOwn = Object.prototype.hasOwnProperty || function (key) { return key in this; };
+function has(obj, key) {
+    return hasOwn.call(obj, key);
+}
+
+function toStr(obj) {
+    return objectToString.call(obj);
+}
+
+function nameOf(f) {
+    if (f.name) { return f.name; }
+    var m = match.call(functionToString.call(f), /^function\s*([\w$]+)/);
+    if (m) { return m[1]; }
+    return null;
+}
+
+function indexOf(xs, x) {
+    if (xs.indexOf) { return xs.indexOf(x); }
+    for (var i = 0, l = xs.length; i < l; i++) {
+        if (xs[i] === x) { return i; }
+    }
+    return -1;
+}
+
+function isMap(x) {
+    if (!mapSize || !x || typeof x !== 'object') {
+        return false;
+    }
+    try {
+        mapSize.call(x);
+        try {
+            setSize.call(x);
+        } catch (s) {
+            return true;
+        }
+        return x instanceof Map; // core-js workaround, pre-v2.5.0
+    } catch (e) {}
+    return false;
+}
+
+function isWeakMap(x) {
+    if (!weakMapHas || !x || typeof x !== 'object') {
+        return false;
+    }
+    try {
+        weakMapHas.call(x, weakMapHas);
+        try {
+            weakSetHas.call(x, weakSetHas);
+        } catch (s) {
+            return true;
+        }
+        return x instanceof WeakMap; // core-js workaround, pre-v2.5.0
+    } catch (e) {}
+    return false;
+}
+
+function isWeakRef(x) {
+    if (!weakRefDeref || !x || typeof x !== 'object') {
+        return false;
+    }
+    try {
+        weakRefDeref.call(x);
+        return true;
+    } catch (e) {}
+    return false;
+}
+
+function isSet(x) {
+    if (!setSize || !x || typeof x !== 'object') {
+        return false;
+    }
+    try {
+        setSize.call(x);
+        try {
+            mapSize.call(x);
+        } catch (m) {
+            return true;
+        }
+        return x instanceof Set; // core-js workaround, pre-v2.5.0
+    } catch (e) {}
+    return false;
+}
+
+function isWeakSet(x) {
+    if (!weakSetHas || !x || typeof x !== 'object') {
+        return false;
+    }
+    try {
+        weakSetHas.call(x, weakSetHas);
+        try {
+            weakMapHas.call(x, weakMapHas);
+        } catch (s) {
+            return true;
+        }
+        return x instanceof WeakSet; // core-js workaround, pre-v2.5.0
+    } catch (e) {}
+    return false;
+}
+
+function isElement(x) {
+    if (!x || typeof x !== 'object') { return false; }
+    if (typeof HTMLElement !== 'undefined' && x instanceof HTMLElement) {
+        return true;
+    }
+    return typeof x.nodeName === 'string' && typeof x.getAttribute === 'function';
+}
+
+function inspectString(str, opts) {
+    if (str.length > opts.maxStringLength) {
+        var remaining = str.length - opts.maxStringLength;
+        var trailer = '... ' + remaining + ' more character' + (remaining > 1 ? 's' : '');
+        return inspectString(str.slice(0, opts.maxStringLength), opts) + trailer;
+    }
+    // eslint-disable-next-line no-control-regex
+    var s = str.replace(/(['\\])/g, '\\$1').replace(/[\x00-\x1f]/g, lowbyte);
+    return wrapQuotes(s, 'single', opts);
+}
+
+function lowbyte(c) {
+    var n = c.charCodeAt(0);
+    var x = {
+        8: 'b',
+        9: 't',
+        10: 'n',
+        12: 'f',
+        13: 'r'
+    }[n];
+    if (x) { return '\\' + x; }
+    return '\\x' + (n < 0x10 ? '0' : '') + n.toString(16).toUpperCase();
+}
+
+function markBoxed(str) {
+    return 'Object(' + str + ')';
+}
+
+function weakCollectionOf(type) {
+    return type + ' { ? }';
+}
+
+function collectionOf(type, size, entries, indent) {
+    var joinedEntries = indent ? indentedJoin(entries, indent) : entries.join(', ');
+    return type + ' (' + size + ') {' + joinedEntries + '}';
+}
+
+function singleLineValues(xs) {
+    for (var i = 0; i < xs.length; i++) {
+        if (indexOf(xs[i], '\n') >= 0) {
+            return false;
+        }
+    }
+    return true;
+}
+
+function getIndent(opts, depth) {
+    var baseIndent;
+    if (opts.indent === '\t') {
+        baseIndent = '\t';
+    } else if (typeof opts.indent === 'number' && opts.indent > 0) {
+        baseIndent = Array(opts.indent + 1).join(' ');
+    } else {
+        return null;
+    }
+    return {
+        base: baseIndent,
+        prev: Array(depth + 1).join(baseIndent)
+    };
+}
+
+function indentedJoin(xs, indent) {
+    if (xs.length === 0) { return ''; }
+    var lineJoiner = '\n' + indent.prev + indent.base;
+    return lineJoiner + xs.join(',' + lineJoiner) + '\n' + indent.prev;
+}
+
+function arrObjKeys(obj, inspect) {
+    var isArr = isArray(obj);
+    var xs = [];
+    if (isArr) {
+        xs.length = obj.length;
+        for (var i = 0; i < obj.length; i++) {
+            xs[i] = has(obj, i) ? inspect(obj[i], obj) : '';
+        }
+    }
+    var syms = typeof gOPS === 'function' ? gOPS(obj) : [];
+    var symMap;
+    if (hasShammedSymbols) {
+        symMap = {};
+        for (var k = 0; k < syms.length; k++) {
+            symMap['$' + syms[k]] = syms[k];
+        }
+    }
+
+    for (var key in obj) { // eslint-disable-line no-restricted-syntax
+        if (!has(obj, key)) { continue; } // eslint-disable-line no-restricted-syntax, no-continue
+        if (isArr && String(Number(key)) === key && key < obj.length) { continue; } // eslint-disable-line no-restricted-syntax, no-continue
+        if (hasShammedSymbols && symMap['$' + key] instanceof Symbol) {
+            // this is to prevent shammed Symbols, which are stored as strings, from being included in the string key section
+            continue; // eslint-disable-line no-restricted-syntax, no-continue
+        } else if ((/[^\w$]/).test(key)) {
+            xs.push(inspect(key, obj) + ': ' + inspect(obj[key], obj));
+        } else {
+            xs.push(key + ': ' + inspect(obj[key], obj));
+        }
+    }
+    if (typeof gOPS === 'function') {
+        for (var j = 0; j < syms.length; j++) {
+            if (isEnumerable.call(obj, syms[j])) {
+                xs.push('[' + inspect(syms[j]) + ']: ' + inspect(obj[syms[j]], obj));
+            }
+        }
+    }
+    return xs;
+}
+
+},{"./util.inspect":31}],48:[function(require,module,exports){
 'use strict';
 const retry = require('retry');
 
 const networkErrorMsgs = [
 	'Failed to fetch', // Chrome
-	'NetworkError when attempting to fetch resource', // Firefox
-	'The Internet connection appears to be offline', // Safari
+	'NetworkError when attempting to fetch resource.', // Firefox
+	'The Internet connection appears to be offline.', // Safari
 	'Network request failed' // `cross-fetch`
 ];
 
@@ -4775,7 +5775,7 @@ module.exports.default = pRetry;
 
 module.exports.AbortError = AbortError;
 
-},{"retry":50}],40:[function(require,module,exports){
+},{"retry":59}],49:[function(require,module,exports){
 // shim for using process in browser
 var process = module.exports = {};
 
@@ -4961,7 +5961,7 @@ process.chdir = function (dir) {
 };
 process.umask = function() { return 0; };
 
-},{}],41:[function(require,module,exports){
+},{}],50:[function(require,module,exports){
 'use strict';
 
 var replace = String.prototype.replace;
@@ -4986,7 +5986,7 @@ module.exports = {
     RFC3986: Format.RFC3986
 };
 
-},{}],42:[function(require,module,exports){
+},{}],51:[function(require,module,exports){
 'use strict';
 
 var stringify = require('./stringify');
@@ -4999,7 +5999,7 @@ module.exports = {
     stringify: stringify
 };
 
-},{"./formats":41,"./parse":43,"./stringify":44}],43:[function(require,module,exports){
+},{"./formats":50,"./parse":52,"./stringify":53}],52:[function(require,module,exports){
 'use strict';
 
 var utils = require('./utils');
@@ -5010,6 +6010,7 @@ var isArray = Array.isArray;
 var defaults = {
     allowDots: false,
     allowPrototypes: false,
+    allowSparse: false,
     arrayLimit: 20,
     charset: 'utf-8',
     charsetSentinel: false,
@@ -5219,6 +6220,7 @@ var normalizeParseOptions = function normalizeParseOptions(opts) {
     return {
         allowDots: typeof opts.allowDots === 'undefined' ? defaults.allowDots : !!opts.allowDots,
         allowPrototypes: typeof opts.allowPrototypes === 'boolean' ? opts.allowPrototypes : defaults.allowPrototypes,
+        allowSparse: typeof opts.allowSparse === 'boolean' ? opts.allowSparse : defaults.allowSparse,
         arrayLimit: typeof opts.arrayLimit === 'number' ? opts.arrayLimit : defaults.arrayLimit,
         charset: charset,
         charsetSentinel: typeof opts.charsetSentinel === 'boolean' ? opts.charsetSentinel : defaults.charsetSentinel,
@@ -5255,12 +6257,17 @@ module.exports = function (str, opts) {
         obj = utils.merge(obj, newObj, options);
     }
 
+    if (options.allowSparse === true) {
+        return obj;
+    }
+
     return utils.compact(obj);
 };
 
-},{"./utils":45}],44:[function(require,module,exports){
+},{"./utils":54}],53:[function(require,module,exports){
 'use strict';
 
+var getSideChannel = require('side-channel');
 var utils = require('./utils');
 var formats = require('./formats');
 var has = Object.prototype.hasOwnProperty;
@@ -5329,9 +6336,15 @@ var stringify = function stringify(
     format,
     formatter,
     encodeValuesOnly,
-    charset
+    charset,
+    sideChannel
 ) {
     var obj = object;
+
+    if (sideChannel.has(object)) {
+        throw new RangeError('Cyclic object value');
+    }
+
     if (typeof filter === 'function') {
         obj = filter(prefix, obj);
     } else if (obj instanceof Date) {
@@ -5390,6 +6403,8 @@ var stringify = function stringify(
             ? typeof generateArrayPrefix === 'function' ? generateArrayPrefix(prefix, key) : prefix
             : prefix + (allowDots ? '.' + key : '[' + key + ']');
 
+        sideChannel.set(object, true);
+        var valueSideChannel = getSideChannel();
         pushToArray(values, stringify(
             value,
             keyPrefix,
@@ -5404,7 +6419,8 @@ var stringify = function stringify(
             format,
             formatter,
             encodeValuesOnly,
-            charset
+            charset,
+            valueSideChannel
         ));
     }
 
@@ -5498,6 +6514,7 @@ module.exports = function (object, opts) {
         objKeys.sort(options.sort);
     }
 
+    var sideChannel = getSideChannel();
     for (var i = 0; i < objKeys.length; ++i) {
         var key = objKeys[i];
 
@@ -5518,7 +6535,8 @@ module.exports = function (object, opts) {
             options.format,
             options.formatter,
             options.encodeValuesOnly,
-            options.charset
+            options.charset,
+            sideChannel
         ));
     }
 
@@ -5538,7 +6556,7 @@ module.exports = function (object, opts) {
     return joined.length > 0 ? prefix + joined : '';
 };
 
-},{"./formats":41,"./utils":45}],45:[function(require,module,exports){
+},{"./formats":50,"./utils":54,"side-channel":63}],54:[function(require,module,exports){
 'use strict';
 
 var formats = require('./formats');
@@ -5791,7 +6809,7 @@ module.exports = {
     merge: merge
 };
 
-},{"./formats":41}],46:[function(require,module,exports){
+},{"./formats":50}],55:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5877,7 +6895,7 @@ var isArray = Array.isArray || function (xs) {
   return Object.prototype.toString.call(xs) === '[object Array]';
 };
 
-},{}],47:[function(require,module,exports){
+},{}],56:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -5964,13 +6982,13 @@ var objectKeys = Object.keys || function (obj) {
   return res;
 };
 
-},{}],48:[function(require,module,exports){
+},{}],57:[function(require,module,exports){
 'use strict';
 
 exports.decode = exports.parse = require('./decode');
 exports.encode = exports.stringify = require('./encode');
 
-},{"./decode":46,"./encode":47}],49:[function(require,module,exports){
+},{"./decode":55,"./encode":56}],58:[function(require,module,exports){
 /**
  * Copyright (c) 2014-present, Facebook, Inc.
  *
@@ -6720,15 +7738,15 @@ try {
   Function("r", "regeneratorRuntime = r")(runtime);
 }
 
-},{}],50:[function(require,module,exports){
+},{}],59:[function(require,module,exports){
 module.exports = require('./lib/retry');
-},{"./lib/retry":51}],51:[function(require,module,exports){
+},{"./lib/retry":60}],60:[function(require,module,exports){
 var RetryOperation = require('./retry_operation');
 
 exports.operation = function(options) {
   var timeouts = exports.timeouts(options);
   return new RetryOperation(timeouts, {
-      forever: options && options.forever,
+      forever: options && (options.forever || options.retries === Infinity),
       unref: options && options.unref,
       maxRetryTime: options && options.maxRetryTime
   });
@@ -6776,7 +7794,7 @@ exports.createTimeout = function(attempt, opts) {
     ? (Math.random() + 1)
     : 1;
 
-  var timeout = Math.round(random * opts.minTimeout * Math.pow(opts.factor, attempt));
+  var timeout = Math.round(random * Math.max(opts.minTimeout, 1) * Math.pow(opts.factor, attempt));
   timeout = Math.min(timeout, opts.maxTimeout);
 
   return timeout;
@@ -6824,7 +7842,7 @@ exports.wrap = function(obj, options, methods) {
   }
 };
 
-},{"./retry_operation":52}],52:[function(require,module,exports){
+},{"./retry_operation":61}],61:[function(require,module,exports){
 function RetryOperation(timeouts, options) {
   // Compatibility for the old (timeouts, retryForever) signature
   if (typeof options === 'boolean') {
@@ -6842,6 +7860,7 @@ function RetryOperation(timeouts, options) {
   this._operationTimeoutCb = null;
   this._timeout = null;
   this._operationStart = null;
+  this._timer = null;
 
   if (this._options.forever) {
     this._cachedTimeouts = this._timeouts.slice(0);
@@ -6851,12 +7870,15 @@ module.exports = RetryOperation;
 
 RetryOperation.prototype.reset = function() {
   this._attempts = 1;
-  this._timeouts = this._originalTimeouts;
+  this._timeouts = this._originalTimeouts.slice(0);
 }
 
 RetryOperation.prototype.stop = function() {
   if (this._timeout) {
     clearTimeout(this._timeout);
+  }
+  if (this._timer) {
+    clearTimeout(this._timer);
   }
 
   this._timeouts       = [];
@@ -6873,6 +7895,7 @@ RetryOperation.prototype.retry = function(err) {
   }
   var currentTime = new Date().getTime();
   if (err && currentTime - this._operationStart >= this._maxRetryTime) {
+    this._errors.push(err);
     this._errors.unshift(new Error('RetryOperation timeout occurred'));
     return false;
   }
@@ -6883,16 +7906,15 @@ RetryOperation.prototype.retry = function(err) {
   if (timeout === undefined) {
     if (this._cachedTimeouts) {
       // retry forever, only keep last error
-      this._errors.splice(this._errors.length - 1, this._errors.length);
-      this._timeouts = this._cachedTimeouts.slice(0);
-      timeout = this._timeouts.shift();
+      this._errors.splice(0, this._errors.length - 1);
+      timeout = this._cachedTimeouts.slice(-1);
     } else {
       return false;
     }
   }
 
   var self = this;
-  var timer = setTimeout(function() {
+  this._timer = setTimeout(function() {
     self._attempts++;
 
     if (self._operationTimeoutCb) {
@@ -6909,7 +7931,7 @@ RetryOperation.prototype.retry = function(err) {
   }, timeout);
 
   if (this._options.unref) {
-      timer.unref();
+      this._timer.unref();
   }
 
   return true;
@@ -6984,7 +8006,7 @@ RetryOperation.prototype.mainError = function() {
   return mainError;
 };
 
-},{}],53:[function(require,module,exports){
+},{}],62:[function(require,module,exports){
 /*! safe-buffer. MIT License. Feross Aboukhadijeh <https://feross.org/opensource> */
 /* eslint-disable node/no-deprecated-api */
 var buffer = require('buffer')
@@ -7051,7 +8073,133 @@ SafeBuffer.allocUnsafeSlow = function (size) {
   return buffer.SlowBuffer(size)
 }
 
-},{"buffer":34}],54:[function(require,module,exports){
+},{"buffer":34}],63:[function(require,module,exports){
+'use strict';
+
+var GetIntrinsic = require('get-intrinsic');
+var callBound = require('call-bind/callBound');
+var inspect = require('object-inspect');
+
+var $TypeError = GetIntrinsic('%TypeError%');
+var $WeakMap = GetIntrinsic('%WeakMap%', true);
+var $Map = GetIntrinsic('%Map%', true);
+
+var $weakMapGet = callBound('WeakMap.prototype.get', true);
+var $weakMapSet = callBound('WeakMap.prototype.set', true);
+var $weakMapHas = callBound('WeakMap.prototype.has', true);
+var $mapGet = callBound('Map.prototype.get', true);
+var $mapSet = callBound('Map.prototype.set', true);
+var $mapHas = callBound('Map.prototype.has', true);
+
+/*
+ * This function traverses the list returning the node corresponding to the
+ * given key.
+ *
+ * That node is also moved to the head of the list, so that if it's accessed
+ * again we don't need to traverse the whole list. By doing so, all the recently
+ * used nodes can be accessed relatively quickly.
+ */
+var listGetNode = function (list, key) { // eslint-disable-line consistent-return
+	for (var prev = list, curr; (curr = prev.next) !== null; prev = curr) {
+		if (curr.key === key) {
+			prev.next = curr.next;
+			curr.next = list.next;
+			list.next = curr; // eslint-disable-line no-param-reassign
+			return curr;
+		}
+	}
+};
+
+var listGet = function (objects, key) {
+	var node = listGetNode(objects, key);
+	return node && node.value;
+};
+var listSet = function (objects, key, value) {
+	var node = listGetNode(objects, key);
+	if (node) {
+		node.value = value;
+	} else {
+		// Prepend the new node to the beginning of the list
+		objects.next = { // eslint-disable-line no-param-reassign
+			key: key,
+			next: objects.next,
+			value: value
+		};
+	}
+};
+var listHas = function (objects, key) {
+	return !!listGetNode(objects, key);
+};
+
+module.exports = function getSideChannel() {
+	var $wm;
+	var $m;
+	var $o;
+	var channel = {
+		assert: function (key) {
+			if (!channel.has(key)) {
+				throw new $TypeError('Side channel does not contain ' + inspect(key));
+			}
+		},
+		get: function (key) { // eslint-disable-line consistent-return
+			if ($WeakMap && key && (typeof key === 'object' || typeof key === 'function')) {
+				if ($wm) {
+					return $weakMapGet($wm, key);
+				}
+			} else if ($Map) {
+				if ($m) {
+					return $mapGet($m, key);
+				}
+			} else {
+				if ($o) { // eslint-disable-line no-lonely-if
+					return listGet($o, key);
+				}
+			}
+		},
+		has: function (key) {
+			if ($WeakMap && key && (typeof key === 'object' || typeof key === 'function')) {
+				if ($wm) {
+					return $weakMapHas($wm, key);
+				}
+			} else if ($Map) {
+				if ($m) {
+					return $mapHas($m, key);
+				}
+			} else {
+				if ($o) { // eslint-disable-line no-lonely-if
+					return listHas($o, key);
+				}
+			}
+			return false;
+		},
+		set: function (key, value) {
+			if ($WeakMap && key && (typeof key === 'object' || typeof key === 'function')) {
+				if (!$wm) {
+					$wm = new $WeakMap();
+				}
+				$weakMapSet($wm, key, value);
+			} else if ($Map) {
+				if (!$m) {
+					$m = new $Map();
+				}
+				$mapSet($m, key, value);
+			} else {
+				if (!$o) {
+					/*
+					 * Initialize the linked list as an empty node, so that we don't have
+					 * to special-case handling of the first node: we can always refer to
+					 * it as (previous node).next, instead of something like (list).head
+					 */
+					$o = { key: {}, next: null };
+				}
+				listSet($o, key, value);
+			}
+		}
+	};
+	return channel;
+};
+
+},{"call-bind/callBound":35,"get-intrinsic":41,"object-inspect":47}],64:[function(require,module,exports){
 module.exports={
   "0": "O",
   "1": "l",
@@ -12587,7 +13735,7 @@ module.exports={
   "⽒": "氏",
   "⺠": "民",
   "⽓": "气",
-  "⽔": "水",
+  "���": "水",
   "⺡": "氵",
   "⺢": "氺",
   "汎": "汎",
@@ -13365,7 +14513,7 @@ module.exports={
   "⻳": "龟",
   "⿕": "龠"
 }
-},{}],55:[function(require,module,exports){
+},{}],65:[function(require,module,exports){
 'use strict';
 
 
@@ -13387,7 +14535,7 @@ function unhomoglyph(str) {
 
 module.exports = unhomoglyph;
 
-},{"./data.json":54}],56:[function(require,module,exports){
+},{"./data.json":64}],66:[function(require,module,exports){
 // Copyright Joyent, Inc. and other Node contributors.
 //
 // Permission is hereby granted, free of charge, to any person obtaining a
@@ -14121,7 +15269,7 @@ Url.prototype.parseHost = function() {
   if (host) this.hostname = host;
 };
 
-},{"./util":57,"punycode":32,"querystring":48}],57:[function(require,module,exports){
+},{"./util":67,"punycode":32,"querystring":57}],67:[function(require,module,exports){
 'use strict';
 
 module.exports = {
@@ -14139,7 +15287,85 @@ module.exports = {
   }
 };
 
-},{}],58:[function(require,module,exports){
+},{}],68:[function(require,module,exports){
+"use strict";
+/*
+Copyright 2021 The Matrix.org Foundation C.I.C.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RuleId = exports.PushRuleKind = exports.ConditionKind = exports.isDmMemberCountCondition = exports.DMMemberCountCondition = exports.ConditionOperator = exports.TweakName = exports.PushRuleActionName = void 0;
+// allow camelcase as these are things that go onto the wire
+/* eslint-disable camelcase */
+var PushRuleActionName;
+(function (PushRuleActionName) {
+    PushRuleActionName["DontNotify"] = "dont_notify";
+    PushRuleActionName["Notify"] = "notify";
+    PushRuleActionName["Coalesce"] = "coalesce";
+})(PushRuleActionName = exports.PushRuleActionName || (exports.PushRuleActionName = {}));
+var TweakName;
+(function (TweakName) {
+    TweakName["Highlight"] = "highlight";
+    TweakName["Sound"] = "sound";
+})(TweakName = exports.TweakName || (exports.TweakName = {}));
+var ConditionOperator;
+(function (ConditionOperator) {
+    ConditionOperator["ExactEquals"] = "==";
+    ConditionOperator["LessThan"] = "<";
+    ConditionOperator["GreaterThan"] = ">";
+    ConditionOperator["GreaterThanOrEqual"] = ">=";
+    ConditionOperator["LessThanOrEqual"] = "<=";
+})(ConditionOperator = exports.ConditionOperator || (exports.ConditionOperator = {}));
+exports.DMMemberCountCondition = "2";
+function isDmMemberCountCondition(condition) {
+    return condition === "==2" || condition === "2";
+}
+exports.isDmMemberCountCondition = isDmMemberCountCondition;
+var ConditionKind;
+(function (ConditionKind) {
+    ConditionKind["EventMatch"] = "event_match";
+    ConditionKind["ContainsDisplayName"] = "contains_display_name";
+    ConditionKind["RoomMemberCount"] = "room_member_count";
+    ConditionKind["SenderNotificationPermission"] = "sender_notification_permission";
+})(ConditionKind = exports.ConditionKind || (exports.ConditionKind = {}));
+var PushRuleKind;
+(function (PushRuleKind) {
+    PushRuleKind["Override"] = "override";
+    PushRuleKind["ContentSpecific"] = "content";
+    PushRuleKind["RoomSpecific"] = "room";
+    PushRuleKind["SenderSpecific"] = "sender";
+    PushRuleKind["Underride"] = "underride";
+})(PushRuleKind = exports.PushRuleKind || (exports.PushRuleKind = {}));
+var RuleId;
+(function (RuleId) {
+    RuleId["Master"] = ".m.rule.master";
+    RuleId["ContainsDisplayName"] = ".m.rule.contains_display_name";
+    RuleId["ContainsUserName"] = ".m.rule.contains_user_name";
+    RuleId["AtRoomNotification"] = ".m.rule.roomnotif";
+    RuleId["DM"] = ".m.rule.room_one_to_one";
+    RuleId["EncryptedDM"] = ".m.rule.encrypted_room_one_to_one";
+    RuleId["Message"] = ".m.rule.message";
+    RuleId["EncryptedMessage"] = ".m.rule.encrypted";
+    RuleId["InviteToSelf"] = ".m.rule.invite_for_me";
+    RuleId["MemberEvent"] = ".m.rule.member_event";
+    RuleId["IncomingCall"] = ".m.rule.call";
+    RuleId["SuppressNotices"] = ".m.rule.suppress_notices";
+    RuleId["Tombstone"] = ".m.rule.tombstone";
+})(RuleId = exports.RuleId || (exports.RuleId = {}));
+/* eslint-enable camelcase */
+
+},{}],69:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2020 The Matrix.org Foundation C.I.C.
@@ -14157,7 +15383,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UNSTABLE_MSC3089_BRANCH = exports.UNSTABLE_MSC3089_LEAF = exports.UNSTABLE_MSC3089_TREE_SUBTYPE = exports.UNSTABLE_MSC3088_ENABLED = exports.UNSTABLE_MSC3088_PURPOSE = exports.RoomType = exports.RoomCreateTypeField = exports.MsgType = exports.RelationType = exports.EventType = void 0;
+exports.UNSTABLE_ELEMENT_FUNCTIONAL_USERS = exports.UNSTABLE_MSC3089_BRANCH = exports.UNSTABLE_MSC3089_LEAF = exports.UNSTABLE_MSC3089_TREE_SUBTYPE = exports.UNSTABLE_MSC3088_ENABLED = exports.UNSTABLE_MSC3088_PURPOSE = exports.RoomType = exports.RoomCreateTypeField = exports.MsgType = exports.RelationType = exports.EventType = void 0;
 const NamespacedValue_1 = require("../NamespacedValue");
 var EventType;
 (function (EventType) {
@@ -14195,6 +15421,8 @@ var EventType;
     EventType["CallReject"] = "m.call.reject";
     EventType["CallSelectAnswer"] = "m.call.select_answer";
     EventType["CallNegotiate"] = "m.call.negotiate";
+    EventType["CallSDPStreamMetadataChanged"] = "m.call.sdp_stream_metadata_changed";
+    EventType["CallSDPStreamMetadataChangedPrefix"] = "org.matrix.call.sdp_stream_metadata_changed";
     EventType["CallReplaces"] = "m.call.replaces";
     EventType["CallAssertedIdentity"] = "m.call.asserted_identity";
     EventType["CallAssertedIdentityPrefix"] = "org.matrix.call.asserted_identity";
@@ -14275,8 +15503,27 @@ exports.UNSTABLE_MSC3089_LEAF = new NamespacedValue_1.UnstableValue("m.leaf", "o
  * UNSTABLE and subject to breaking changes, including its eventual removal.
  */
 exports.UNSTABLE_MSC3089_BRANCH = new NamespacedValue_1.UnstableValue("m.branch", "org.matrix.msc3089.branch");
+/**
+ * Functional members type for declaring a purpose of room members (e.g. helpful bots).
+ * Note that this reference is UNSTABLE and subject to breaking changes, including its
+ * eventual removal.
+ *
+ * Schema (TypeScript):
+ * {
+ *   service_members?: string[]
+ * }
+ *
+ * Example:
+ * {
+ *   "service_members": [
+ *     "@helperbot:localhost",
+ *     "@reminderbot:alice.tdl"
+ *   ]
+ * }
+ */
+exports.UNSTABLE_ELEMENT_FUNCTIONAL_USERS = new NamespacedValue_1.UnstableValue("io.element.functional_members", "io.element.functional_members");
 
-},{"../NamespacedValue":60}],59:[function(require,module,exports){
+},{"../NamespacedValue":72}],70:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 The Matrix.org Foundation C.I.C.
@@ -14294,7 +15541,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Preset = exports.Visibility = void 0;
+exports.HistoryVisibility = exports.GuestAccess = exports.RestrictedAllowType = exports.JoinRule = exports.Preset = exports.Visibility = void 0;
 var Visibility;
 (function (Visibility) {
     Visibility["Public"] = "public";
@@ -14306,8 +15553,67 @@ var Preset;
     Preset["TrustedPrivateChat"] = "trusted_private_chat";
     Preset["PublicChat"] = "public_chat";
 })(Preset = exports.Preset || (exports.Preset = {}));
+// Knock and private are reserved keywords which are not yet implemented.
+var JoinRule;
+(function (JoinRule) {
+    JoinRule["Public"] = "public";
+    JoinRule["Invite"] = "invite";
+    /**
+     * @deprecated Reserved keyword. Should not be used. Not yet implemented.
+     */
+    JoinRule["Private"] = "private";
+    JoinRule["Knock"] = "knock";
+    JoinRule["Restricted"] = "restricted";
+})(JoinRule = exports.JoinRule || (exports.JoinRule = {}));
+var RestrictedAllowType;
+(function (RestrictedAllowType) {
+    RestrictedAllowType["RoomMembership"] = "m.room_membership";
+})(RestrictedAllowType = exports.RestrictedAllowType || (exports.RestrictedAllowType = {}));
+var GuestAccess;
+(function (GuestAccess) {
+    GuestAccess["CanJoin"] = "can_join";
+    GuestAccess["Forbidden"] = "forbidden";
+})(GuestAccess = exports.GuestAccess || (exports.GuestAccess = {}));
+var HistoryVisibility;
+(function (HistoryVisibility) {
+    HistoryVisibility["Invited"] = "invited";
+    HistoryVisibility["Joined"] = "joined";
+    HistoryVisibility["Shared"] = "shared";
+    HistoryVisibility["WorldReadable"] = "world_readable";
+})(HistoryVisibility = exports.HistoryVisibility || (exports.HistoryVisibility = {}));
 
-},{}],60:[function(require,module,exports){
+},{}],71:[function(require,module,exports){
+"use strict";
+/*
+Copyright 2021 The Matrix.org Foundation C.I.C.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SearchOrderBy = void 0;
+var GroupKey;
+(function (GroupKey) {
+    GroupKey["RoomId"] = "room_id";
+    GroupKey["Sender"] = "sender";
+})(GroupKey || (GroupKey = {}));
+var SearchOrderBy;
+(function (SearchOrderBy) {
+    SearchOrderBy["Recent"] = "recent";
+    SearchOrderBy["Rank"] = "rank";
+})(SearchOrderBy = exports.SearchOrderBy || (exports.SearchOrderBy = {}));
+/* eslint-enable camelcase */
+
+},{}],72:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 The Matrix.org Foundation C.I.C.
@@ -14400,7 +15706,7 @@ class UnstableValue extends NamespacedValue {
 }
 exports.UnstableValue = UnstableValue;
 
-},{}],61:[function(require,module,exports){
+},{}],73:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015, 2016 OpenMarket Ltd
@@ -14451,7 +15757,7 @@ class ReEmitter {
 }
 exports.ReEmitter = ReEmitter;
 
-},{}],62:[function(require,module,exports){
+},{}],74:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -14574,8 +15880,110 @@ var AutoDiscovery = /*#__PURE__*/function () {
   }
 
   (0, _createClass2["default"])(AutoDiscovery, null, [{
-    key: "fromDiscoveryConfig",
+    key: "ERROR_INVALID",
+    get: // Dev note: the constants defined here are related to but not
+    // exactly the same as those in the spec. This is to hopefully
+    // translate the meaning of the states in the spec, but also
+    // support our own if needed.
+    function get() {
+      return "Invalid homeserver discovery response";
+    }
+  }, {
+    key: "ERROR_GENERIC_FAILURE",
+    get: function get() {
+      return "Failed to get autodiscovery configuration from server";
+    }
+  }, {
+    key: "ERROR_INVALID_HS_BASE_URL",
+    get: function get() {
+      return "Invalid base_url for m.homeserver";
+    }
+  }, {
+    key: "ERROR_INVALID_HOMESERVER",
+    get: function get() {
+      return "Homeserver URL does not appear to be a valid Matrix homeserver";
+    }
+  }, {
+    key: "ERROR_INVALID_IS_BASE_URL",
+    get: function get() {
+      return "Invalid base_url for m.identity_server";
+    }
+  }, {
+    key: "ERROR_INVALID_IDENTITY_SERVER",
+    get: function get() {
+      return "Identity server URL does not appear to be a valid identity server";
+    }
+  }, {
+    key: "ERROR_INVALID_IS",
+    get: function get() {
+      return "Invalid identity server discovery response";
+    }
+  }, {
+    key: "ERROR_MISSING_WELLKNOWN",
+    get: function get() {
+      return "No .well-known JSON file found";
+    }
+  }, {
+    key: "ERROR_INVALID_JSON",
+    get: function get() {
+      return "Invalid JSON";
+    }
+  }, {
+    key: "ALL_ERRORS",
+    get: function get() {
+      return [AutoDiscovery.ERROR_INVALID, AutoDiscovery.ERROR_GENERIC_FAILURE, AutoDiscovery.ERROR_INVALID_HS_BASE_URL, AutoDiscovery.ERROR_INVALID_HOMESERVER, AutoDiscovery.ERROR_INVALID_IS_BASE_URL, AutoDiscovery.ERROR_INVALID_IDENTITY_SERVER, AutoDiscovery.ERROR_INVALID_IS, AutoDiscovery.ERROR_MISSING_WELLKNOWN, AutoDiscovery.ERROR_INVALID_JSON];
+    }
+    /**
+     * The auto discovery failed. The client is expected to communicate
+     * the error to the user and refuse logging in.
+     * @return {string}
+     * @constructor
+     */
 
+  }, {
+    key: "FAIL_ERROR",
+    get: function get() {
+      return "FAIL_ERROR";
+    }
+    /**
+     * The auto discovery failed, however the client may still recover
+     * from the problem. The client is recommended to that the same
+     * action it would for PROMPT while also warning the user about
+     * what went wrong. The client may also treat this the same as
+     * a FAIL_ERROR state.
+     * @return {string}
+     * @constructor
+     */
+
+  }, {
+    key: "FAIL_PROMPT",
+    get: function get() {
+      return "FAIL_PROMPT";
+    }
+    /**
+     * The auto discovery didn't fail but did not find anything of
+     * interest. The client is expected to prompt the user for more
+     * information, or fail if it prefers.
+     * @return {string}
+     * @constructor
+     */
+
+  }, {
+    key: "PROMPT",
+    get: function get() {
+      return "PROMPT";
+    }
+    /**
+     * The auto discovery was successful.
+     * @return {string}
+     * @constructor
+     */
+
+  }, {
+    key: "SUCCESS",
+    get: function get() {
+      return "SUCCESS";
+    }
     /**
      * Validates and verifies client configuration information for purposes
      * of logging in. Such information includes the homeserver URL
@@ -14588,6 +15996,9 @@ var AutoDiscovery = /*#__PURE__*/function () {
      * configuration, which may include error states. Rejects on unexpected
      * failure, not when verification fails.
      */
+
+  }, {
+    key: "fromDiscoveryConfig",
     value: function () {
       var _fromDiscoveryConfig = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(wellknown) {
         var clientConfig, hsUrl, hsVersions, isUrl, failingClientConfig, isResponse;
@@ -15070,124 +16481,19 @@ var AutoDiscovery = /*#__PURE__*/function () {
 
       return _fetchWellKnownObject;
     }()
-  }, {
-    key: "ERROR_INVALID",
-    // Dev note: the constants defined here are related to but not
-    // exactly the same as those in the spec. This is to hopefully
-    // translate the meaning of the states in the spec, but also
-    // support our own if needed.
-    get: function get() {
-      return "Invalid homeserver discovery response";
-    }
-  }, {
-    key: "ERROR_GENERIC_FAILURE",
-    get: function get() {
-      return "Failed to get autodiscovery configuration from server";
-    }
-  }, {
-    key: "ERROR_INVALID_HS_BASE_URL",
-    get: function get() {
-      return "Invalid base_url for m.homeserver";
-    }
-  }, {
-    key: "ERROR_INVALID_HOMESERVER",
-    get: function get() {
-      return "Homeserver URL does not appear to be a valid Matrix homeserver";
-    }
-  }, {
-    key: "ERROR_INVALID_IS_BASE_URL",
-    get: function get() {
-      return "Invalid base_url for m.identity_server";
-    }
-  }, {
-    key: "ERROR_INVALID_IDENTITY_SERVER",
-    get: function get() {
-      return "Identity server URL does not appear to be a valid identity server";
-    }
-  }, {
-    key: "ERROR_INVALID_IS",
-    get: function get() {
-      return "Invalid identity server discovery response";
-    }
-  }, {
-    key: "ERROR_MISSING_WELLKNOWN",
-    get: function get() {
-      return "No .well-known JSON file found";
-    }
-  }, {
-    key: "ERROR_INVALID_JSON",
-    get: function get() {
-      return "Invalid JSON";
-    }
-  }, {
-    key: "ALL_ERRORS",
-    get: function get() {
-      return [AutoDiscovery.ERROR_INVALID, AutoDiscovery.ERROR_GENERIC_FAILURE, AutoDiscovery.ERROR_INVALID_HS_BASE_URL, AutoDiscovery.ERROR_INVALID_HOMESERVER, AutoDiscovery.ERROR_INVALID_IS_BASE_URL, AutoDiscovery.ERROR_INVALID_IDENTITY_SERVER, AutoDiscovery.ERROR_INVALID_IS, AutoDiscovery.ERROR_MISSING_WELLKNOWN, AutoDiscovery.ERROR_INVALID_JSON];
-    }
-    /**
-     * The auto discovery failed. The client is expected to communicate
-     * the error to the user and refuse logging in.
-     * @return {string}
-     * @constructor
-     */
-
-  }, {
-    key: "FAIL_ERROR",
-    get: function get() {
-      return "FAIL_ERROR";
-    }
-    /**
-     * The auto discovery failed, however the client may still recover
-     * from the problem. The client is recommended to that the same
-     * action it would for PROMPT while also warning the user about
-     * what went wrong. The client may also treat this the same as
-     * a FAIL_ERROR state.
-     * @return {string}
-     * @constructor
-     */
-
-  }, {
-    key: "FAIL_PROMPT",
-    get: function get() {
-      return "FAIL_PROMPT";
-    }
-    /**
-     * The auto discovery didn't fail but did not find anything of
-     * interest. The client is expected to prompt the user for more
-     * information, or fail if it prefers.
-     * @return {string}
-     * @constructor
-     */
-
-  }, {
-    key: "PROMPT",
-    get: function get() {
-      return "PROMPT";
-    }
-    /**
-     * The auto discovery was successful.
-     * @return {string}
-     * @constructor
-     */
-
-  }, {
-    key: "SUCCESS",
-    get: function get() {
-      return "SUCCESS";
-    }
   }]);
   return AutoDiscovery;
 }();
 
 exports.AutoDiscovery = AutoDiscovery;
 
-},{"./logger":106,"./matrix":107,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/regenerator":27,"url":56}],63:[function(require,module,exports){
+},{"./logger":118,"./matrix":119,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/regenerator":26,"url":66}],75:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
 
-var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
+var _typeof = require("@babel/runtime/helpers/typeof");
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -15212,6 +16518,10 @@ Object.keys(matrixcs).forEach(function (key) {
 var _browserRequest = _interopRequireDefault(require("browser-request"));
 
 var _qs = _interopRequireDefault(require("qs"));
+
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 /*
 Copyright 2019 The Matrix.org Foundation C.I.C.
@@ -15262,7 +16572,7 @@ global.matrixcs = matrixcs;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./matrix":107,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/interopRequireWildcard":13,"browser-request":31,"qs":42}],64:[function(require,module,exports){
+},{"./matrix":119,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/typeof":23,"browser-request":30,"qs":51}],76:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 /*
@@ -15308,9 +16618,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MatrixClient = exports.RoomVersionStability = exports.PendingEventOrdering = exports.CRYPTO_ENABLED = void 0;
 /**
@@ -15344,16 +16651,17 @@ const content_repo_1 = require("./content-repo");
 const search_result_1 = require("./models/search-result");
 const dehydration_1 = require("./crypto/dehydration");
 const matrix_1 = require("./matrix");
+const api_1 = require("./crypto/api");
 const sync_api_1 = require("./sync.api");
 const ContentHelpers = __importStar(require("./content-helpers"));
-const api_1 = require("./crypto/api");
 const event_2 = require("./@types/event");
 const partials_1 = require("./@types/partials");
 const event_mapper_1 = require("./event-mapper");
-const url_1 = __importDefault(require("url"));
 const randomstring_1 = require("./randomstring");
 const backup_1 = require("./crypto/backup");
 const MSC3089TreeSpace_1 = require("./models/MSC3089TreeSpace");
+const search_1 = require("./@types/search");
+const PushRules_1 = require("./@types/PushRules");
 const SCROLLBACK_DELAY_MS = 3000;
 exports.CRYPTO_ENABLED = crypto_1.isCryptoAvailable();
 const CAPABILITIES_CACHE_MS = 21600000; // 6 hours - an arbitrary value
@@ -15374,6 +16682,7 @@ var CrossSigningKeyType;
     CrossSigningKeyType["SelfSigningKey"] = "self_signing_key";
     CrossSigningKeyType["UserSigningKey"] = "user_signing_key";
 })(CrossSigningKeyType || (CrossSigningKeyType = {}));
+/* eslint-enable camelcase */
 /**
  * Represents a Matrix Client. Only directly construct this if you want to use
  * custom modules. Normally, {@link createClient} should be used
@@ -15387,7 +16696,7 @@ class MatrixClient extends events_1.EventEmitter {
         this.usingExternalCrypto = false;
         this.clientRunning = false;
         this.timelineSupport = false;
-        this.urlPreviewCache = {}; // TODO: Types
+        this.urlPreviewCache = {};
         this.unstableClientRelationAggregation = false;
         this.supportsCallTransfer = false; // XXX: Intended private, used in code.
         this.forceTURN = false; // XXX: Intended private, used in code.
@@ -15397,13 +16706,13 @@ class MatrixClient extends events_1.EventEmitter {
         this.canSupportVoip = false;
         this.peekSync = null;
         this.isGuestAccount = false;
-        this.ongoingScrollbacks = {}; // TODO: Types
+        this.ongoingScrollbacks = {};
         this.notifTimelineSet = null;
         this.fallbackICEServerAllowed = false;
         this.syncedLeftRooms = false;
         // The pushprocessor caches useful things, so keep one and re-use it
         this.pushProcessor = new pushprocessor_1.PushProcessor(this);
-        this.turnServers = []; // TODO: Types
+        this.turnServers = [];
         this.turnServersExpiry = 0;
         this.txnCtr = 0;
         this.startCallEventHandler = () => {
@@ -15602,7 +16911,7 @@ class MatrixClient extends events_1.EventEmitter {
             if (this.canSupportVoip) {
                 this.checkTurnServersIntervalID = setInterval(() => {
                     this.checkTurnServers();
-                }, TURN_CHECK_INTERVAL); // XXX: Typecast because we know better
+                }, TURN_CHECK_INTERVAL);
                 // noinspection ES6MissingAwait
                 this.checkTurnServers();
             }
@@ -15612,7 +16921,7 @@ class MatrixClient extends events_1.EventEmitter {
                 this.syncApi.stop();
             }
             // shallow-copy the opts dict before modifying and storing it
-            this.clientOpts = Object.assign({}, opts); // XXX: Typecast because we're about to add the missing props
+            this.clientOpts = Object.assign({}, opts);
             this.clientOpts.crypto = this.crypto;
             this.clientOpts.canResetEntireTimeline = (roomId) => {
                 if (!this.canResetTimelineCallback) {
@@ -15623,11 +16932,9 @@ class MatrixClient extends events_1.EventEmitter {
             this.syncApi = new sync_1.SyncApi(this, this.clientOpts);
             this.syncApi.sync();
             if (this.clientOpts.clientWellKnownPollPeriod !== undefined) {
-                this.clientWellKnownIntervalID =
-                    // XXX: Typecast on timer ID because we know better
-                    setInterval(() => {
-                        this.fetchClientWellKnown();
-                    }, 1000 * this.clientOpts.clientWellKnownPollPeriod);
+                this.clientWellKnownIntervalID = setInterval(() => {
+                    this.fetchClientWellKnown();
+                }, 1000 * this.clientOpts.clientWellKnownPollPeriod);
                 this.fetchClientWellKnown();
             }
         });
@@ -16445,7 +17752,7 @@ class MatrixClient extends events_1.EventEmitter {
     /**
      * Check the copy of our cross-signing key that we have in the device list and
      * see if we can get the private key. If so, mark it as trusted.
-     * @param {Object} opts TODO
+     * @param {Object} opts ICheckOwnCrossSigningTrustOpts object
      */
     checkOwnCrossSigningTrust(opts) {
         if (!this.crypto) {
@@ -16730,7 +18037,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} name the name of the secret to request
      * @param {string[]} devices the devices to request the secret from
      *
-     * @return {string} the contents of the secret
+     * @return {ISecretRequest} the secret request object
      */
     requestSecret(name, devices) {
         if (!this.crypto) {
@@ -16850,7 +18157,7 @@ class MatrixClient extends events_1.EventEmitter {
         }
         // if there is an 'm.room.encryption' event in this room, it should be
         // encrypted (independently of whether we actually support encryption)
-        const ev = room.currentState.getStateEvents("m.room.encryption", "");
+        const ev = room.currentState.getStateEvents(event_2.EventType.RoomEncryption, "");
         if (ev) {
             return true;
         }
@@ -17105,11 +18412,8 @@ class MatrixClient extends events_1.EventEmitter {
         else {
             path = "/room_keys/keys";
         }
-        const queryData = version === undefined ? undefined : { version: version };
-        return {
-            path: path,
-            queryData: queryData,
-        };
+        const queryData = version === undefined ? undefined : { version };
+        return { path, queryData };
     }
     /**
      * Back up session keys to the homeserver.
@@ -17120,7 +18424,6 @@ class MatrixClient extends events_1.EventEmitter {
      * @return {Promise} a promise that will resolve when the keys
      * are uploaded
      */
-    // TODO: Verify types
     sendKeyBackup(roomId, sessionId, version, data) {
         if (!this.crypto) {
             throw new Error("End-to-end encryption disabled");
@@ -17436,7 +18739,7 @@ class MatrixClient extends events_1.EventEmitter {
         const allRooms = this.store.getRooms();
         const replacedRooms = new Set();
         for (const r of allRooms) {
-            const createEvent = r.currentState.getStateEvents('m.room.create', '');
+            const createEvent = r.currentState.getStateEvents(event_2.EventType.RoomCreate, '');
             // invites are included in this list and we don't know their create events yet
             if (createEvent) {
                 const predecessor = createEvent.getContent()['predecessor'];
@@ -17446,7 +18749,7 @@ class MatrixClient extends events_1.EventEmitter {
             }
         }
         return allRooms.filter((r) => {
-            const tombstone = r.currentState.getStateEvents('m.room.tombstone', '');
+            const tombstone = r.currentState.getStateEvents(event_2.EventType.RoomTombstone, '');
             if (tombstone && replacedRooms.has(r.roomId)) {
                 return false;
             }
@@ -17475,7 +18778,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} eventType The event type
      * @param {Object} content the contents object for the event
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: an empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     setAccountData(eventType, content, callback) {
@@ -17548,7 +18851,7 @@ class MatrixClient extends events_1.EventEmitter {
      * Sets the users that the current user should ignore.
      * @param {string[]} userIds the user IDs to ignore
      * @param {module:client.callback} [callback] Optional.
-     * @return {Promise} Resolves: Account data event
+     * @return {Promise} Resolves: an empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     setIgnoredUsers(userIds, callback) {
@@ -17602,10 +18905,9 @@ class MatrixClient extends events_1.EventEmitter {
             const reqOpts = { qsStringifyOptions: { arrayFormat: 'repeat' } };
             try {
                 const data = {};
-                // XXX: Explicit cast due to underlying types not existing
-                const signedInviteObj = (yield signPromise);
+                const signedInviteObj = yield signPromise;
                 if (signedInviteObj) {
-                    data['third_party_signed'] = signedInviteObj;
+                    data.third_party_signed = signedInviteObj;
                 }
                 const path = utils.encodeUri("/join/$roomid", { $roomid: roomIdOrAlias });
                 const res = yield this.http.authedRequest(undefined, "POST", path, queryString, data, reqOpts);
@@ -17630,7 +18932,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {MatrixEvent} event The event to resend.
      * @param {Room} room Optional. The room the event is in. Will update the
      * timeline entry if provided.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to an ISendEventResponse object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     resendEvent(event, room) {
@@ -17664,7 +18966,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     setRoomName(roomId, name, callback) {
-        return this.sendStateEvent(roomId, "m.room.name", { name: name }, undefined, callback);
+        return this.sendStateEvent(roomId, event_2.EventType.RoomName, { name: name }, undefined, callback);
     }
     /**
      * @param {string} roomId
@@ -17674,7 +18976,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     setRoomTopic(roomId, topic, callback) {
-        return this.sendStateEvent(roomId, "m.room.topic", { topic: topic }, undefined, callback);
+        return this.sendStateEvent(roomId, event_2.EventType.RoomTopic, { topic: topic }, undefined, callback);
     }
     /**
      * @param {string} roomId
@@ -17694,7 +18996,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} tagName name of room tag to be set
      * @param {object} metadata associated with that tag to be stored
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to an empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     setRoomTag(roomId, tagName, metadata, callback) {
@@ -17725,7 +19027,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} eventType event type to be set
      * @param {object} content event content
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to an empty object {}
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     setRoomAccountData(roomId, eventType, content, callback) {
@@ -17743,14 +19045,14 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {Number} powerLevel
      * @param {MatrixEvent} event
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to an ISendEventResponse object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     setPowerLevel(roomId, userId, powerLevel, event, callback) {
         let content = {
             users: {},
         };
-        if (event && event.getType() === "m.room.power_levels") {
+        if ((event === null || event === void 0 ? void 0 : event.getType()) === event_2.EventType.RoomPowerLevels) {
             // take a copy of the content to ensure we don't corrupt
             // existing client state with a failed power level change
             content = utils.deepCopy(event.getContent());
@@ -17767,7 +19069,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {Object} content
      * @param {string} txnId Optional.
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to an empty object {}
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendEvent(roomId, eventType, content, txnId, callback) {
@@ -17778,7 +19080,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {object} eventObject An object with the partial structure of an event, to which event_id, user_id, room_id and origin_server_ts will be added.
      * @param {string} txnId the txnId.
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to an empty object {}
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendCompleteEvent(roomId, eventObject, txnId, callback) {
@@ -18007,7 +19309,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {Object} content
      * @param {string} txnId Optional.
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to an ISendEventResponse object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendMessage(roomId, content, txnId, callback) {
@@ -18015,14 +19317,14 @@ class MatrixClient extends events_1.EventEmitter {
             callback = txnId; // for legacy
             txnId = undefined;
         }
-        return this.sendEvent(roomId, "m.room.message", content, txnId, callback);
+        return this.sendEvent(roomId, event_2.EventType.RoomMessage, content, txnId, callback);
     }
     /**
      * @param {string} roomId
      * @param {string} body
      * @param {string} txnId Optional.
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to an empty object {}
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendTextMessage(roomId, body, txnId, callback) {
@@ -18034,7 +19336,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} body
      * @param {string} txnId Optional.
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to a ISendEventResponse object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendNotice(roomId, body, txnId, callback) {
@@ -18046,7 +19348,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} body
      * @param {string} txnId Optional.
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to a ISendEventResponse object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendEmoteMessage(roomId, body, txnId, callback) {
@@ -18059,7 +19361,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {Object} info
      * @param {string} text
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to a ISendEventResponse object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendImageMessage(roomId, url, info, text = "Image", callback) {
@@ -18068,7 +19370,7 @@ class MatrixClient extends events_1.EventEmitter {
             text = undefined;
         }
         const content = {
-            msgtype: "m.image",
+            msgtype: event_2.MsgType.Image,
             url: url,
             info: info,
             body: text,
@@ -18081,7 +19383,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {Object} info
      * @param {string} text
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to a ISendEventResponse object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendStickerMessage(roomId, url, info, text = "Sticker", callback) {
@@ -18101,7 +19403,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} body
      * @param {string} htmlBody
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to a ISendEventResponse object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendHtmlMessage(roomId, body, htmlBody, callback) {
@@ -18113,7 +19415,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} body
      * @param {string} htmlBody
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to a ISendEventResponse object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendHtmlNotice(roomId, body, htmlBody, callback) {
@@ -18125,7 +19427,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} body
      * @param {string} htmlBody
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to a ISendEventResponse object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendHtmlEmote(roomId, body, htmlBody, callback) {
@@ -18136,9 +19438,9 @@ class MatrixClient extends events_1.EventEmitter {
      * Send a receipt.
      * @param {Event} event The event being acknowledged
      * @param {string} receiptType The kind of receipt e.g. "m.read"
-     * @param {object} opts Additional content to send alongside the receipt.
+     * @param {object} body Additional content to send alongside the receipt.
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to an empty object {}
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendReceipt(event, receiptType, body, callback) {
@@ -18169,7 +19471,7 @@ class MatrixClient extends events_1.EventEmitter {
      * other users and homeservers. Default false (send to everyone). <b>This
      * property is unstable and may change in the future.</b>
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to an empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendReadReceipt(event, opts, callback) {
@@ -18186,7 +19488,7 @@ class MatrixClient extends events_1.EventEmitter {
                 throw new Error(`Cannot set read receipt to a pending event (${eventId})`);
             }
             const addlContent = {
-                "m.hidden": Boolean(opts.hidden),
+                "org.matrix.msc2285.hidden": Boolean(opts.hidden),
             };
             return this.sendReceipt(event, "m.read", addlContent, callback);
         });
@@ -18272,7 +19574,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {boolean} isTyping
      * @param {Number} timeoutMs
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: to an empty object {}
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     sendTyping(roomId, isTyping, timeoutMs, callback) {
@@ -18311,7 +19613,7 @@ class MatrixClient extends events_1.EventEmitter {
             return [];
         const upgradeHistory = [currentRoom];
         // Work backwards first, looking at create events.
-        let createEvent = currentRoom.currentState.getStateEvents("m.room.create", "");
+        let createEvent = currentRoom.currentState.getStateEvents(event_2.EventType.RoomCreate, "");
         while (createEvent) {
             logger_1.logger.log(`Looking at ${createEvent.getId()}`);
             const predecessor = createEvent.getContent()['predecessor'];
@@ -18321,8 +19623,7 @@ class MatrixClient extends events_1.EventEmitter {
                 if (!refRoom)
                     break; // end of the chain
                 if (verifyLinks) {
-                    const tombstone = refRoom.currentState
-                        .getStateEvents("m.room.tombstone", "");
+                    const tombstone = refRoom.currentState.getStateEvents(event_2.EventType.RoomTombstone, "");
                     if (!tombstone
                         || tombstone.getContent()['replacement_room'] !== refRoom.roomId) {
                         break;
@@ -18330,7 +19631,7 @@ class MatrixClient extends events_1.EventEmitter {
                 }
                 // Insert at the front because we're working backwards from the currentRoom
                 upgradeHistory.splice(0, 0, refRoom);
-                createEvent = refRoom.currentState.getStateEvents("m.room.create", "");
+                createEvent = refRoom.currentState.getStateEvents(event_2.EventType.RoomCreate, "");
             }
             else {
                 // No further create events to look at
@@ -18338,7 +19639,7 @@ class MatrixClient extends events_1.EventEmitter {
             }
         }
         // Work forwards next, looking at tombstone events
-        let tombstoneEvent = currentRoom.currentState.getStateEvents("m.room.tombstone", "");
+        let tombstoneEvent = currentRoom.currentState.getStateEvents(event_2.EventType.RoomTombstone, "");
         while (tombstoneEvent) {
             const refRoom = this.getRoom(tombstoneEvent.getContent()['replacement_room']);
             if (!refRoom)
@@ -18346,7 +19647,7 @@ class MatrixClient extends events_1.EventEmitter {
             if (refRoom.roomId === currentRoom.roomId)
                 break; // Tombstone is referencing it's own room
             if (verifyLinks) {
-                createEvent = refRoom.currentState.getStateEvents("m.room.create", "");
+                createEvent = refRoom.currentState.getStateEvents(event_2.EventType.RoomCreate, "");
                 if (!createEvent || !createEvent.getContent()['predecessor'])
                     break;
                 const predecessor = createEvent.getContent()['predecessor'];
@@ -18363,7 +19664,7 @@ class MatrixClient extends events_1.EventEmitter {
             }
             // Set the current room to the reference room so we know where we're at
             currentRoom = refRoom;
-            tombstoneEvent = currentRoom.currentState.getStateEvents("m.room.tombstone", "");
+            tombstoneEvent = currentRoom.currentState.getStateEvents(event_2.EventType.RoomTombstone, "");
         }
         return upgradeHistory;
     }
@@ -18584,13 +19885,6 @@ class MatrixClient extends events_1.EventEmitter {
         }
         return event.getPushActions();
     }
-    /**
-     * @param {string} info The kind of info to set (e.g. 'avatar_url')
-     * @param {Object} data The JSON object to set.
-     * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
-     * @return {module:http-api.MatrixError} Rejects: with an error response.
-     */
     setProfileInfo(info, data, callback) {
         const path = utils.encodeUri("/profile/$userId/$info", {
             $userId: this.credentials.userId,
@@ -18659,21 +19953,17 @@ class MatrixClient extends events_1.EventEmitter {
      */
     _unstable_setStatusMessage(newMessage) {
         const type = "im.vector.user_status";
-        return Promise.all(this.getRooms().map((room) => {
+        return Promise.all(this.getRooms().map((room) => __awaiter(this, void 0, void 0, function* () {
             const isJoined = room.getMyMembership() === "join";
             const looksLikeDm = room.getInvitedAndJoinedMemberCount() === 2;
-            if (!isJoined || !looksLikeDm) {
-                return Promise.resolve();
-            }
+            if (!isJoined || !looksLikeDm)
+                return;
             // Check power level separately as it's a bit more expensive.
             const maySend = room.currentState.mayClientSendStateEvent(type, this);
-            if (!maySend) {
-                return Promise.resolve();
-            }
-            return this.sendStateEvent(room.roomId, type, {
-                status: newMessage,
-            }, this.getUserId());
-        })).then(); // .then to fix return type
+            if (!maySend)
+                return;
+            yield this.sendStateEvent(room.roomId, type, { status: newMessage }, this.getUserId());
+        }))).then(); // .then to fix return type
     }
     /**
      * @param {Object} opts Options to apply
@@ -18756,7 +20046,7 @@ class MatrixClient extends events_1.EventEmitter {
             // wait for a time before doing this request
             // (which may be 0 in order not to special case the code paths)
             utils_1.sleep(timeToWaitMs).then(() => {
-                return this.createMessagesRequest(room.roomId, room.oldState.paginationToken, limit, 'b');
+                return this.createMessagesRequest(room.roomId, room.oldState.paginationToken, limit, event_timeline_1.Direction.Backward);
             }).then((res) => {
                 const matrixEvents = res.chunk.map(this.getEventMapper());
                 if (res.state) {
@@ -18789,7 +20079,7 @@ class MatrixClient extends events_1.EventEmitter {
     }
     /**
      * @param {object} [options]
-     * @param {boolean} options.preventReEmit don't reemit events emitted on an event mapped by this mapper on the client
+     * @param {boolean} options.preventReEmit don't re-emit events emitted on an event mapped by this mapper on the client
      * @param {boolean} options.decrypt decrypt event proactively
      * @return {Function}
      */
@@ -19075,12 +20365,12 @@ class MatrixClient extends events_1.EventEmitter {
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     setGuestAccess(roomId, opts) {
-        const writePromise = this.sendStateEvent(roomId, "m.room.guest_access", {
+        const writePromise = this.sendStateEvent(roomId, event_2.EventType.RoomGuestAccess, {
             guest_access: opts.allowJoin ? "can_join" : "forbidden",
         }, "");
-        let readPromise = Promise.resolve();
+        let readPromise = Promise.resolve(undefined);
         if (opts.allowRead) {
-            readPromise = this.sendStateEvent(roomId, "m.room.history_visibility", {
+            readPromise = this.sendStateEvent(roomId, event_2.EventType.RoomHistoryVisibility, {
                 history_visibility: "world_readable",
             }, "");
         }
@@ -19140,7 +20430,7 @@ class MatrixClient extends events_1.EventEmitter {
      * If an account with the given email address already exists and is
      * associated with an account other than the one the user is authed as,
      * it will either send an email to the address informing them of this
-     * or return M_THREEPID_IN_USE (which one is up to the Home Server).
+     * or return M_THREEPID_IN_USE (which one is up to the homeserver).
      *
      * @param {string} email As requestEmailToken
      * @param {string} clientSecret As requestEmailToken
@@ -19159,7 +20449,7 @@ class MatrixClient extends events_1.EventEmitter {
     /**
      * Requests a text message verification token for the purposes of adding a
      * third party identifier to an account.
-     * This API proxies the Identity Server /validate/email/requestToken API,
+     * This API proxies the identity server /validate/email/requestToken API,
      * adding specific behaviour for the addition of phone numbers to an
      * account, as requestAdd3pidEmailToken.
      *
@@ -19182,13 +20472,13 @@ class MatrixClient extends events_1.EventEmitter {
     /**
      * Requests an email verification token for the purposes of resetting
      * the password on an account.
-     * This API proxies the Identity Server /validate/email/requestToken API,
+     * This API proxies the identity server /validate/email/requestToken API,
      * adding specific behaviour for the password resetting. Specifically,
      * if no account with the given email address exists, it may either
      * return M_THREEPID_NOT_FOUND or send an email
-     * to the address informing them of this (which one is up to the Home Server).
+     * to the address informing them of this (which one is up to the homeserver).
      *
-     * requestEmailToken calls the equivalent API directly on the ID server,
+     * requestEmailToken calls the equivalent API directly on the identity server,
      * therefore bypassing the password reset specific logic.
      *
      * @param {string} email As requestEmailToken
@@ -19209,7 +20499,7 @@ class MatrixClient extends events_1.EventEmitter {
     /**
      * Requests a text message verification token for the purposes of resetting
      * the password on an account.
-     * This API proxies the Identity Server /validate/email/requestToken API,
+     * This API proxies the identity server /validate/email/requestToken API,
      * adding specific behaviour for the password resetting, as requestPasswordEmailToken.
      *
      * @param {string} phoneCountry As requestRegisterMsisdnToken
@@ -19242,10 +20532,7 @@ class MatrixClient extends events_1.EventEmitter {
             // If the HS supports separate add and bind, then requestToken endpoints
             // don't need an IS as they are all validated by the HS directly.
             if (!(yield this.doesServerSupportSeparateAddAndBind()) && this.idBaseUrl) {
-                const idServerUrl = url_1.default.parse(this.idBaseUrl);
-                if (!idServerUrl.host) {
-                    throw new Error("Invalid ID server URL: " + this.idBaseUrl);
-                }
+                const idServerUrl = new URL(this.idBaseUrl);
                 postParams.id_server = idServerUrl.host;
                 if (this.identityServer &&
                     this.identityServer.getAccessToken &&
@@ -19285,7 +20572,7 @@ class MatrixClient extends events_1.EventEmitter {
      * The operation also updates MatrixClient.pushRules at the end.
      * @param {string} scope "global" or device-specific.
      * @param {string} roomId the id of the room.
-     * @param {string} mute the mute state.
+     * @param {boolean} mute the mute state.
      * @return {Promise} Resolves: result object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
@@ -19302,12 +20589,12 @@ class MatrixClient extends events_1.EventEmitter {
         if (!mute) {
             // Remove the rule only if it is a muting rule
             if (hasDontNotifyRule) {
-                deferred = this.deletePushRule(scope, "room", roomPushRule.rule_id);
+                deferred = this.deletePushRule(scope, PushRules_1.PushRuleKind.RoomSpecific, roomPushRule.rule_id);
             }
         }
         else {
             if (!roomPushRule) {
-                deferred = this.addPushRule(scope, "room", roomId, {
+                deferred = this.addPushRule(scope, PushRules_1.PushRuleKind.RoomSpecific, roomId, {
                     actions: ["dont_notify"],
                 });
             }
@@ -19315,9 +20602,9 @@ class MatrixClient extends events_1.EventEmitter {
                 // Remove the existing one before setting the mute push rule
                 // This is a workaround to SYN-590 (Push rule update fails)
                 deferred = utils.defer();
-                this.deletePushRule(scope, "room", roomPushRule.rule_id)
+                this.deletePushRule(scope, PushRules_1.PushRuleKind.RoomSpecific, roomPushRule.rule_id)
                     .then(() => {
-                    this.addPushRule(scope, "room", roomId, {
+                    this.addPushRule(scope, PushRules_1.PushRuleKind.RoomSpecific, roomId, {
                         actions: ["dont_notify"],
                     }).then(() => {
                         deferred.resolve();
@@ -19395,7 +20682,7 @@ class MatrixClient extends events_1.EventEmitter {
                 room_events: {
                     search_term: opts.term,
                     filter: opts.filter,
-                    order_by: "recent",
+                    order_by: search_1.SearchOrderBy.Recent,
                     event_context: {
                         before_limit: 1,
                         after_limit: 1,
@@ -19449,8 +20736,9 @@ class MatrixClient extends events_1.EventEmitter {
      * @return {Object} searchResults
      * @private
      */
+    // XXX: Intended private, used in code
     processRoomEventsSearch(searchResults, response) {
-        const roomEvents = response.search_categories.room_events; // eslint-disable-line camelcase
+        const roomEvents = response.search_categories.room_events;
         searchResults.count = roomEvents.count;
         searchResults.next_batch = roomEvents.next_batch;
         // combine the highlight list with our existing list; build an object
@@ -19520,7 +20808,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} filterId The filter ID to retrieve
      * @param {boolean} allowCached True to allow cached filters to be returned.
      * Default: True.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: a Filter object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     getFilter(userId, filterId, allowCached) {
@@ -19593,7 +20881,7 @@ class MatrixClient extends events_1.EventEmitter {
         });
     }
     /**
-     * Gets a bearer token from the Home Server that the user can
+     * Gets a bearer token from the homeserver that the user can
      * present to a third party in order to prove their ownership
      * of the Matrix account they are logged into.
      * @return {Promise} Resolves: Token object
@@ -19607,14 +20895,14 @@ class MatrixClient extends events_1.EventEmitter {
     }
     /**
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: ITurnServerResponse object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     turnServer(callback) {
         return this.http.authedRequest(callback, "GET", "/voip/turnServer");
     }
     /**
-     * Get the TURN servers for this home server.
+     * Get the TURN servers for this homeserver.
      * @return {Array<Object>} The servers or an empty list.
      */
     getTurnServers() {
@@ -19968,14 +21256,14 @@ class MatrixClient extends events_1.EventEmitter {
                 originalEvent = mapper(result.original_event);
             }
             let events = result.chunk.map(mapper);
-            if (fetchedEventType === "m.room.encrypted") {
+            if (fetchedEventType === event_2.EventType.RoomMessageEncrypted) {
                 const allEvents = originalEvent ? events.concat(originalEvent) : events;
                 yield Promise.all(allEvents.map(e => {
                     return new Promise(resolve => e.once("Event.decrypted", resolve));
                 }));
                 events = events.filter(e => e.getType() === eventType);
             }
-            if (originalEvent && relationType === "m.replace") {
+            if (originalEvent && relationType === event_2.RelationType.Replace) {
                 events = events.filter(e => e.getSender() === originalEvent.getSender());
             }
             return {
@@ -20040,9 +21328,9 @@ class MatrixClient extends events_1.EventEmitter {
         return this.baseUrl;
     }
     /**
-     * Get the Identity Server URL of this client
+     * Get the identity server URL of this client
      * @param {boolean} stripProto whether or not to strip the protocol from the URL
-     * @return {string} Identity Server URL of this client
+     * @return {string} Identity server URL of this client
      */
     getIdentityServerUrl(stripProto = false) {
         if (stripProto && (this.idBaseUrl.startsWith("http://") ||
@@ -20052,8 +21340,8 @@ class MatrixClient extends events_1.EventEmitter {
         return this.idBaseUrl;
     }
     /**
-     * Set the Identity Server URL of this client
-     * @param {string} url New Identity Server URL
+     * Set the identity server URL of this client
+     * @param {string} url New identity server URL
      */
     setIdentityServerUrl(url) {
         this.idBaseUrl = utils.ensureNoTrailingSlash(url);
@@ -20097,7 +21385,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} sessionId
      * @param {Object} auth
      * @param {Object} bindThreepids Set key 'email' to true to bind any email
-     *     threepid uses during registration in the ID server. Set 'msisdn' to
+     *     threepid uses during registration in the identity server. Set 'msisdn' to
      *     true to bind msisdn.
      * @param {string} guestAccessToken
      * @param {string} inhibitLogin
@@ -20348,8 +21636,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} options.name The name to give this room.
      * @param {string} options.topic The topic to give this room.
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: <code>{room_id: {string},
-     * room_alias: {string(opt)}}</code>
+     * @return {Promise} Resolves: <code>{room_id: {string}}</code>
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     createRoom(options, callback) {
@@ -20543,7 +21830,7 @@ class MatrixClient extends events_1.EventEmitter {
         const content = {
             "m.fully_read": rmEventId,
             "m.read": rrEventId,
-            "m.hidden": Boolean(opts ? opts.hidden : false),
+            "org.matrix.msc2285.hidden": Boolean(opts ? opts.hidden : false),
         };
         return this.http.authedRequest(undefined, "POST", path, undefined, content);
     }
@@ -20606,7 +21893,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} alias The room alias to create.
      * @param {string} roomId The room ID to link the alias to.
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO.
+     * @return {Promise} Resolves: an empty object {}
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     createAlias(alias, roomId, callback) {
@@ -20623,7 +21910,7 @@ class MatrixClient extends events_1.EventEmitter {
      * and you must have sufficient access to do this operation.
      * @param {string} alias The room alias to delete.
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO.
+     * @return {Promise} Resolves: an empty object.
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     deleteAlias(alias, callback) {
@@ -20660,9 +21947,10 @@ class MatrixClient extends events_1.EventEmitter {
     /**
      * @param {string} roomAlias
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: Object with room_id and servers.
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
+    // eslint-disable-next-line camelcase
     resolveRoomAlias(roomAlias, callback) {
         // TODO: deprecate this or getRoomIdForAlias
         const path = utils.encodeUri("/directory/room/$alias", { $alias: roomAlias });
@@ -20695,7 +21983,7 @@ class MatrixClient extends events_1.EventEmitter {
         const path = utils.encodeUri("/directory/list/room/$roomId", {
             $roomId: roomId,
         });
-        return this.http.authedRequest(callback, "PUT", path, undefined, { "visibility": visibility });
+        return this.http.authedRequest(callback, "PUT", path, undefined, { visibility });
     }
     /**
      * Set the visbility of a room bridged to a 3rd party network in
@@ -20735,7 +22023,7 @@ class MatrixClient extends events_1.EventEmitter {
         return this.http.authedRequest(undefined, "POST", "/user_directory/search", undefined, body);
     }
     /**
-     * Upload a file to the media repository on the home server.
+     * Upload a file to the media repository on the homeserver.
      *
      * @param {object} file The object to upload. On a browser, something that
      *   can be sent to XMLHttpRequest.send (typically a File).  Under node.js,
@@ -20816,7 +22104,7 @@ class MatrixClient extends events_1.EventEmitter {
     }
     /**
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves to a list of the user's threepids.
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     getThreePids(callback) {
@@ -20859,8 +22147,7 @@ class MatrixClient extends events_1.EventEmitter {
     addThreePidOnly(data) {
         return __awaiter(this, void 0, void 0, function* () {
             const path = "/account/3pid/add";
-            const prefix = (yield this.isVersionSupported("r0.6.0")) ?
-                http_api_1.PREFIX_R0 : http_api_1.PREFIX_UNSTABLE;
+            const prefix = (yield this.isVersionSupported("r0.6.0")) ? http_api_1.PREFIX_R0 : http_api_1.PREFIX_UNSTABLE;
             return this.http.authedRequest(undefined, "POST", path, null, data, { prefix });
         });
     }
@@ -20905,8 +22192,7 @@ class MatrixClient extends events_1.EventEmitter {
                 address,
                 id_server: this.getIdentityServerUrl(true),
             };
-            const prefix = (yield this.isVersionSupported("r0.6.0")) ?
-                http_api_1.PREFIX_R0 : http_api_1.PREFIX_UNSTABLE;
+            const prefix = (yield this.isVersionSupported("r0.6.0")) ? http_api_1.PREFIX_R0 : http_api_1.PREFIX_UNSTABLE;
             return this.http.authedRequest(undefined, "POST", path, null, data, { prefix });
         });
     }
@@ -20920,11 +22206,7 @@ class MatrixClient extends events_1.EventEmitter {
      */
     deleteThreePid(medium, address) {
         const path = "/account/3pid/delete";
-        const data = {
-            'medium': medium,
-            'address': address,
-        };
-        return this.http.authedRequest(undefined, "POST", path, null, data);
+        return this.http.authedRequest(undefined, "POST", path, null, { medium, address });
     }
     /**
      * Make a request to change your password.
@@ -20970,6 +22252,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @return {Promise} Resolves: result object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
+    // eslint-disable-next-line camelcase
     setDeviceDetails(deviceId, body) {
         const path = utils.encodeUri("/devices/$device_id", {
             $device_id: deviceId,
@@ -21024,7 +22307,7 @@ class MatrixClient extends events_1.EventEmitter {
     /**
      * Adds a new pusher or updates an existing pusher
      *
-     * @param {Object} pusher Object representing a pusher
+     * @param {IPusherRequest} pusher Object representing a pusher
      * @param {module:client.callback} callback Optional.
      * @return {Promise} Resolves: Empty json object on success
      * @return {module:http-api.MatrixError} Rejects: with an error response.
@@ -21034,8 +22317,9 @@ class MatrixClient extends events_1.EventEmitter {
         return this.http.authedRequest(callback, "POST", path, null, pusher);
     }
     /**
+     * Get the push rules for the account from the server.
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves to the push rules.
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     getPushRules(callback) {
@@ -21049,7 +22333,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} ruleId
      * @param {Object} body
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: an empty object {}
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     addPushRule(scope, kind, ruleId, body, callback) {
@@ -21065,7 +22349,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} kind
      * @param {string} ruleId
      * @param {module:client.callback} callback Optional.
-     * @return {Promise} Resolves: TODO
+     * @return {Promise} Resolves: an empty object {}
      * @return {module:http-api.MatrixError} Rejects: with an error response.
      */
     deletePushRule(scope, kind, ruleId, callback) {
@@ -21237,7 +22521,7 @@ class MatrixClient extends events_1.EventEmitter {
         });
     }
     /**
-     * Register with an Identity Server using the OpenID token from the user's
+     * Register with an identity server using the OpenID token from the user's
      * Homeserver, which can be retrieved via
      * {@link module:client~MatrixClient#getOpenIdToken}.
      *
@@ -21251,7 +22535,7 @@ class MatrixClient extends events_1.EventEmitter {
      */
     registerWithIdentityServer(hsOpenIdToken) {
         if (!this.idBaseUrl) {
-            throw new Error("No Identity Server base URL set");
+            throw new Error("No identity server base URL set");
         }
         const uri = this.idBaseUrl + http_api_1.PREFIX_IDENTITY_V2 + "/account/register";
         return this.http.requestOtherUrl(undefined, "POST", uri, null, hsOpenIdToken);
@@ -21334,7 +22618,7 @@ class MatrixClient extends events_1.EventEmitter {
      * Submits a MSISDN token to the identity server
      *
      * This is used when submitting the code sent by SMS to a phone number.
-     * The ID server has an equivalent API for email but the js-sdk does
+     * The identity server has an equivalent API for email but the js-sdk does
      * not expose this, since email is normally validated by the user clicking
      * a link rather than entering a code.
      *
@@ -21347,7 +22631,7 @@ class MatrixClient extends events_1.EventEmitter {
      *
      * @return {Promise} Resolves: Object, currently with no parameters.
      * @return {module:http-api.MatrixError} Rejects: with an error response.
-     * @throws Error if No ID server is set
+     * @throws Error if No identity server is set
      */
     submitMsisdnToken(sid, clientSecret, msisdnToken, identityAccessToken) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -21469,7 +22753,7 @@ class MatrixClient extends events_1.EventEmitter {
     }
     /**
      * Looks up the public Matrix ID mapping for a given 3rd party
-     * identifier from the Identity Server
+     * identifier from the identity server
      *
      * @param {string} medium The medium of the threepid, eg. 'email'
      * @param {string} address The textual address of the threepid
@@ -21498,6 +22782,11 @@ class MatrixClient extends events_1.EventEmitter {
                 address,
                 medium,
                 mxid: result.mxid,
+                // We can't reasonably fill these parameters:
+                // not_before
+                // not_after
+                // ts
+                // signatures
             };
             if (callback)
                 callback(null, mapping);
@@ -21539,7 +22828,7 @@ class MatrixClient extends events_1.EventEmitter {
         });
     }
     /**
-     * Get account info from the Identity Server. This is useful as a neutral check
+     * Get account info from the identity server. This is useful as a neutral check
      * to verify that other APIs are likely to approve access by testing that the
      * token is valid, terms have been agreed, etc.
      *
@@ -22318,7 +23607,7 @@ MatrixClient.RESTORE_BACKUP_ERROR_BAD_KEY = 'RESTORE_BACKUP_ERROR_BAD_KEY';
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./@types/event":58,"./@types/partials":59,"./ReEmitter":61,"./autodiscovery":62,"./content-helpers":65,"./content-repo":66,"./crypto":83,"./crypto/RoomList":72,"./crypto/api":79,"./crypto/backup":80,"./crypto/dehydration":81,"./crypto/key_passphrase":84,"./crypto/olmlib":85,"./crypto/recoverykey":86,"./event-mapper":100,"./filter":102,"./http-api":103,"./logger":106,"./matrix":107,"./models/MSC3089TreeSpace":109,"./models/event":113,"./models/event-timeline":112,"./models/search-result":120,"./models/user":121,"./pushprocessor":122,"./randomstring":123,"./service-types":126,"./store/stub":132,"./sync":135,"./sync.api":134,"./utils":137,"./webrtc/call":138,"./webrtc/callEventHandler":139,"events":36,"url":56}],65:[function(require,module,exports){
+},{"./@types/PushRules":68,"./@types/event":69,"./@types/partials":70,"./@types/search":71,"./ReEmitter":73,"./autodiscovery":74,"./content-helpers":77,"./content-repo":78,"./crypto":95,"./crypto/RoomList":84,"./crypto/api":91,"./crypto/backup":92,"./crypto/dehydration":93,"./crypto/key_passphrase":96,"./crypto/olmlib":97,"./crypto/recoverykey":98,"./event-mapper":112,"./filter":114,"./http-api":115,"./logger":118,"./matrix":119,"./models/MSC3089TreeSpace":121,"./models/event":125,"./models/event-timeline":124,"./models/search-result":132,"./models/user":133,"./pushprocessor":134,"./randomstring":135,"./service-types":138,"./store/stub":144,"./sync":147,"./sync.api":146,"./utils":149,"./webrtc/call":150,"./webrtc/callEventHandler":151,"events":38}],77:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2018 New Vector Ltd
@@ -22339,6 +23628,7 @@ limitations under the License.
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.makeEmoteMessage = exports.makeNotice = exports.makeTextMessage = exports.makeHtmlEmote = exports.makeHtmlNotice = exports.makeHtmlMessage = void 0;
 /** @module ContentHelpers */
+const event_1 = require("./@types/event");
 /**
  * Generates the content for a HTML Message event
  * @param {string} body the plaintext body of the message
@@ -22347,7 +23637,7 @@ exports.makeEmoteMessage = exports.makeNotice = exports.makeTextMessage = export
  */
 function makeHtmlMessage(body, htmlBody) {
     return {
-        msgtype: "m.text",
+        msgtype: event_1.MsgType.Text,
         format: "org.matrix.custom.html",
         body: body,
         formatted_body: htmlBody,
@@ -22362,7 +23652,7 @@ exports.makeHtmlMessage = makeHtmlMessage;
  */
 function makeHtmlNotice(body, htmlBody) {
     return {
-        msgtype: "m.notice",
+        msgtype: event_1.MsgType.Notice,
         format: "org.matrix.custom.html",
         body: body,
         formatted_body: htmlBody,
@@ -22377,7 +23667,7 @@ exports.makeHtmlNotice = makeHtmlNotice;
  */
 function makeHtmlEmote(body, htmlBody) {
     return {
-        msgtype: "m.emote",
+        msgtype: event_1.MsgType.Emote,
         format: "org.matrix.custom.html",
         body: body,
         formatted_body: htmlBody,
@@ -22391,7 +23681,7 @@ exports.makeHtmlEmote = makeHtmlEmote;
  */
 function makeTextMessage(body) {
     return {
-        msgtype: "m.text",
+        msgtype: event_1.MsgType.Text,
         body: body,
     };
 }
@@ -22403,7 +23693,7 @@ exports.makeTextMessage = makeTextMessage;
  */
 function makeNotice(body) {
     return {
-        msgtype: "m.notice",
+        msgtype: event_1.MsgType.Notice,
         body: body,
     };
 }
@@ -22415,13 +23705,13 @@ exports.makeNotice = makeNotice;
  */
 function makeEmoteMessage(body) {
     return {
-        msgtype: "m.emote",
+        msgtype: event_1.MsgType.Emote,
         body: body,
     };
 }
 exports.makeEmoteMessage = makeEmoteMessage;
 
-},{}],66:[function(require,module,exports){
+},{"./@types/event":69}],78:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -22517,7 +23807,7 @@ function getHttpUriForMxc(baseUrl, mxc, width, height, resizeMethod, allowDirect
 }
 exports.getHttpUriForMxc = getHttpUriForMxc;
 
-},{"./utils":137}],67:[function(require,module,exports){
+},{"./utils":149}],79:[function(require,module,exports){
 (function (global,Buffer){(function (){
 "use strict";
 /*
@@ -23263,7 +24553,7 @@ exports.requestKeysDuringVerification = requestKeysDuringVerification;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 
-},{"../crypto/store/indexeddb-crypto-store":88,"../logger":106,"./aes":74,"./olmlib":85,"buffer":34,"events":36}],68:[function(require,module,exports){
+},{"../crypto/store/indexeddb-crypto-store":100,"../logger":118,"./aes":86,"./olmlib":97,"buffer":34,"events":38}],80:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2017 - 2021 The Matrix.org Foundation C.I.C.
@@ -23309,7 +24599,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DeviceList = void 0;
+exports.DeviceList = exports.TrackingStatus = void 0;
 /**
  * @module crypto/DeviceList
  *
@@ -23348,7 +24638,7 @@ var TrackingStatus;
     TrackingStatus[TrackingStatus["PendingDownload"] = 1] = "PendingDownload";
     TrackingStatus[TrackingStatus["DownloadInProgress"] = 2] = "DownloadInProgress";
     TrackingStatus[TrackingStatus["UpToDate"] = 3] = "UpToDate";
-})(TrackingStatus || (TrackingStatus = {}));
+})(TrackingStatus = exports.TrackingStatus || (exports.TrackingStatus = {}));
 /**
  * @alias module:crypto/DeviceList
  */
@@ -23359,26 +24649,16 @@ class DeviceList extends events_1.EventEmitter {
         super();
         this.cryptoStore = cryptoStore;
         this.keyDownloadChunkSize = keyDownloadChunkSize;
-        // userId -> {
-        //     deviceId -> {
-        //         [device info]
-        //     }
-        // }
         this.devices = {};
-        // userId -> {
-        //     [key info]
-        // }
         this.crossSigningInfo = {};
         // map of identity keys to the user who owns it
         this.userByIdentityKey = {};
         // which users we are tracking device status for.
-        // userId -> TRACKING_STATUS_*
         this.deviceTrackingStatus = {}; // loaded from storage in load()
         // The 'next_batch' sync token at the point the data was written,
         // ie. a token representing the point immediately after the
         // moment represented by the snapshot in the db.
         this.syncToken = null;
-        // userId -> promise
         this.keyDownloadsInProgressByUser = {};
         // Set whenever changes are made other than setting the sync token
         this.dirty = false;
@@ -24152,8 +25432,23 @@ function storeDeviceKeys(olmDevice, userStore, deviceResult) {
     });
 }
 
-},{"../logger":106,"../utils":137,"./CrossSigning":67,"./deviceinfo":82,"./olmlib":85,"./store/indexeddb-crypto-store":88,"events":36}],69:[function(require,module,exports){
+},{"../logger":118,"../utils":149,"./CrossSigning":79,"./deviceinfo":94,"./olmlib":97,"./store/indexeddb-crypto-store":100,"events":38}],81:[function(require,module,exports){
 "use strict";
+/*
+Copyright 2021 The Matrix.org Foundation C.I.C.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -24250,7 +25545,9 @@ class EncryptionSetupBuilder {
      * @return {Promise}
      */
     setAccountData(type, content) {
-        return this.accountDataClientAdapter.setAccountData(type, content);
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.accountDataClientAdapter.setAccountData(type, content);
+        });
     }
     /**
      * builds the operation containing all the parts that have been added to the builder
@@ -24413,6 +25710,7 @@ class AccountDataClientAdapter extends events_1.EventEmitter {
         return Promise.resolve().then(() => {
             const event = new event_1.MatrixEvent({ type, content });
             this.emit("accountData", event, lastEvent);
+            return {};
         });
     }
 }
@@ -24481,13 +25779,13 @@ class SSSSCryptoCallbacks {
     }
 }
 
-},{"../http-api":103,"../logger":106,"../models/event":113,"./CrossSigning":67,"./store/indexeddb-crypto-store":88,"events":36}],70:[function(require,module,exports){
+},{"../http-api":115,"../logger":118,"../models/event":125,"./CrossSigning":79,"./store/indexeddb-crypto-store":100,"events":38}],82:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 
-var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
-
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+var _typeof = require("@babel/runtime/helpers/typeof");
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -24505,7 +25803,11 @@ var _indexeddbCryptoStore = require("./store/indexeddb-crypto-store");
 
 var algorithms = _interopRequireWildcard(require("./algorithms"));
 
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function (_e) { function e(_x63) { return _e.apply(this, arguments); } e.toString = function () { return _e.toString(); }; return e; }(function (e) { throw e; }), f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function (_e2) { function e(_x64) { return _e2.apply(this, arguments); } e.toString = function () { return _e2.toString(); }; return e; }(function (e) { didErr = true; err = e; }), f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -24841,6 +26143,9 @@ OlmDevice.prototype["export"] = /*#__PURE__*/(0, _asyncToGenerator2["default"])(
             // is not exactly the same thing you get in method _getSession
             // see documentation of IndexedDBCryptoStore.getAllEndToEndSessions
 
+            // Note that the pickledSession object we get in the callback
+            // is not exactly the same thing you get in method _getSession
+            // see documentation of IndexedDBCryptoStore.getAllEndToEndSessions
             _this2._cryptoStore.getAllEndToEndSessions(txn, function (pickledSession) {
               result.sessions.push(pickledSession);
             });
@@ -25813,7 +27118,7 @@ OlmDevice.prototype.getOutboundGroupSessionKey = function (sessionId) {
  * data stored in the session store about an inbound group session
  *
  * @typedef {Object} InboundGroupSessionData
- * @property {string} room_Id
+ * @property {string} room_id
  * @property {string} session   pickled Olm.InboundGroupSession
  * @property {Object<string, string>} keysClaimed
  * @property {Array<string>} forwardingCurve25519KeyChain  Devices involved in forwarding
@@ -26356,8 +27661,7 @@ OlmDevice.prototype.verifySignature = function (key, message, signature) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../logger":106,"./algorithms":76,"./store/indexeddb-crypto-store":88,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/interopRequireWildcard":13,"@babel/runtime/regenerator":27}],71:[function(require,module,exports){
-(function (global){(function (){
+},{"../logger":118,"./algorithms":88,"./store/indexeddb-crypto-store":100,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/typeof":23,"@babel/runtime/regenerator":26}],83:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2017 - 2021 The Matrix.org Foundation C.I.C.
@@ -26680,7 +27984,7 @@ class OutgoingRoomKeyRequestManager {
                 logger_1.logger.warn(`error in OutgoingRoomKeyRequestManager: ${e}`);
             });
         };
-        this.sendOutgoingRoomKeyRequestsTimer = global.setTimeout(startSendingOutgoingRoomKeyRequests, SEND_KEY_REQUESTS_DELAY_MS);
+        this.sendOutgoingRoomKeyRequestsTimer = setTimeout(startSendingOutgoingRoomKeyRequests, SEND_KEY_REQUESTS_DELAY_MS);
     }
     // look for and send any queued requests. Runs itself recursively until
     // there are no more requests, or there is an error (in which case, the
@@ -26779,9 +28083,7 @@ function stringifyRecipientList(recipients) {
         + ']';
 }
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-
-},{"../@types/event":58,"../logger":106}],72:[function(require,module,exports){
+},{"../@types/event":69,"../logger":118}],84:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2018 - 2021 The Matrix.org Foundation C.I.C.
@@ -26809,11 +28111,6 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.RoomList = void 0;
-/**
- * @module crypto/RoomList
- *
- * Manages the list of encrypted rooms
- */
 const indexeddb_crypto_store_1 = require("./store/indexeddb-crypto-store");
 /* eslint-enable camelcase */
 /**
@@ -26854,7 +28151,7 @@ class RoomList {
 }
 exports.RoomList = RoomList;
 
-},{"./store/indexeddb-crypto-store":88}],73:[function(require,module,exports){
+},{"./store/indexeddb-crypto-store":100}],85:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2019 - 2021 The Matrix.org Foundation C.I.C.
@@ -27391,7 +28688,7 @@ class SecretStorage {
 }
 exports.SecretStorage = SecretStorage;
 
-},{"../logger":106,"../randomstring":123,"./aes":74,"./olmlib":85}],74:[function(require,module,exports){
+},{"../logger":118,"../randomstring":135,"./aes":86,"./olmlib":97}],86:[function(require,module,exports){
 (function (Buffer){(function (){
 "use strict";
 /*
@@ -27446,11 +28743,11 @@ function encryptNode(data, key, name, ivStr) {
         }
         else {
             iv = crypto.randomBytes(16);
+            // clear bit 63 of the IV to stop us hitting the 64-bit counter boundary
+            // (which would mean we wouldn't be able to decrypt on Android). The loss
+            // of a single bit of iv is a price we have to pay.
+            iv[8] &= 0x7f;
         }
-        // clear bit 63 of the IV to stop us hitting the 64-bit counter boundary
-        // (which would mean we wouldn't be able to decrypt on Android). The loss
-        // of a single bit of iv is a price we have to pay.
-        iv[8] &= 0x7f;
         const [aesKey, hmacKey] = deriveKeysNode(key, name);
         const cipher = crypto.createCipheriv("aes-256-ctr", aesKey, iv);
         const ciphertext = Buffer.concat([
@@ -27522,11 +28819,11 @@ function encryptBrowser(data, key, name, ivStr) {
         else {
             iv = new Uint8Array(16);
             window.crypto.getRandomValues(iv);
+            // clear bit 63 of the IV to stop us hitting the 64-bit counter boundary
+            // (which would mean we wouldn't be able to decrypt on Android). The loss
+            // of a single bit of iv is a price we have to pay.
+            iv[8] &= 0x7f;
         }
-        // clear bit 63 of the IV to stop us hitting the 64-bit counter boundary
-        // (which would mean we wouldn't be able to decrypt on Android). The loss
-        // of a single bit of iv is a price we have to pay.
-        iv[8] &= 0x7f;
         const [aesKey, hmacKey] = yield deriveKeysBrowser(key, name);
         const encodedData = new TextEncoder().encode(data);
         const ciphertext = yield subtleCrypto.encrypt({
@@ -27612,7 +28909,7 @@ exports.calculateKeyCheck = calculateKeyCheck;
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../utils":137,"./olmlib":85,"buffer":34}],75:[function(require,module,exports){
+},{"../utils":149,"./olmlib":97,"buffer":34}],87:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2016 - 2021 The Matrix.org Foundation C.I.C.
@@ -27835,7 +29132,7 @@ function registerAlgorithm(algorithm, encryptor, decryptor) {
 }
 exports.registerAlgorithm = registerAlgorithm;
 
-},{}],76:[function(require,module,exports){
+},{}],88:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2016 - 2021 The Matrix.org Foundation C.I.C.
@@ -27870,7 +29167,7 @@ require("./olm");
 require("./megolm");
 __exportStar(require("./base"), exports);
 
-},{"./base":75,"./megolm":77,"./olm":78}],77:[function(require,module,exports){
+},{"./base":87,"./megolm":89,"./olm":90}],89:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -29318,7 +30615,7 @@ const PROBLEM_DESCRIPTIONS = {
 };
 base_1.registerAlgorithm(olmlib.MEGOLM_ALGORITHM, MegolmEncryption, MegolmDecryption);
 
-},{"../../logger":106,"../OlmDevice":70,"../olmlib":85,"./base":75}],78:[function(require,module,exports){
+},{"../../logger":118,"../OlmDevice":82,"../olmlib":97,"./base":87}],90:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2016 - 2021 The Matrix.org Foundation C.I.C.
@@ -29622,7 +30919,7 @@ class OlmDecryption extends base_1.DecryptionAlgorithm {
 }
 base_1.registerAlgorithm(olmlib.OLM_ALGORITHM, OlmEncryption, OlmDecryption);
 
-},{"../../logger":106,"../deviceinfo":82,"../olmlib":85,"./base":75}],79:[function(require,module,exports){
+},{"../../logger":118,"../deviceinfo":94,"../olmlib":97,"./base":87}],91:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 The Matrix.org Foundation C.I.C.
@@ -29649,7 +30946,7 @@ var CrossSigningKey;
     CrossSigningKey["UserSigning"] = "user_signing";
 })(CrossSigningKey = exports.CrossSigningKey || (exports.CrossSigningKey = {}));
 
-},{}],80:[function(require,module,exports){
+},{}],92:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 /*
@@ -30022,11 +31319,11 @@ class BackupManager {
             }
             let remaining = yield this.baseApis.crypto.cryptoStore.countSessionsNeedingBackup();
             this.baseApis.crypto.emit("crypto.keyBackupSessionsRemaining", remaining);
-            const data = {};
+            const rooms = {};
             for (const session of sessions) {
                 const roomId = session.sessionData.room_id;
-                if (data[roomId] === undefined) {
-                    data[roomId] = { sessions: {} };
+                if (rooms[roomId] === undefined) {
+                    rooms[roomId] = { sessions: {} };
                 }
                 const sessionData = yield this.baseApis.crypto.olmDevice.exportInboundGroupSession(session.senderKey, session.sessionId, session.sessionData);
                 sessionData.algorithm = olmlib_1.MEGOLM_ALGORITHM;
@@ -30034,14 +31331,14 @@ class BackupManager {
                 const userId = this.baseApis.crypto.deviceList.getUserByIdentityKey(olmlib_1.MEGOLM_ALGORITHM, session.senderKey);
                 const device = this.baseApis.crypto.deviceList.getDeviceByIdentityKey(olmlib_1.MEGOLM_ALGORITHM, session.senderKey);
                 const verified = this.baseApis.crypto.checkDeviceInfoTrust(userId, device).isVerified();
-                data[roomId]['sessions'][session.sessionId] = {
+                rooms[roomId]['sessions'][session.sessionId] = {
                     first_message_index: sessionData.first_known_index,
                     forwarded_count: forwardedCount,
                     is_verified: verified,
                     session_data: yield this.algorithm.encryptSession(sessionData),
                 };
             }
-            yield this.baseApis.sendKeyBackup(undefined, undefined, this.backupInfo.version, { rooms: data });
+            yield this.baseApis.sendKeyBackup(undefined, undefined, this.backupInfo.version, { rooms });
             yield this.baseApis.crypto.cryptoStore.unmarkSessionsNeedingBackup(sessions);
             remaining = yield this.baseApis.crypto.cryptoStore.countSessionsNeedingBackup();
             this.baseApis.crypto.emit("crypto.keyBackupSessionsRemaining", remaining);
@@ -30328,7 +31625,7 @@ exports.DefaultAlgorithm = Curve25519;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../NamespacedValue":60,"../client":64,"../logger":106,"../utils":137,"./aes":74,"./key_passphrase":84,"./olmlib":85,"./recoverykey":86,"./store/indexeddb-crypto-store":88}],81:[function(require,module,exports){
+},{"../NamespacedValue":72,"../client":76,"../logger":118,"../utils":149,"./aes":86,"./key_passphrase":96,"./olmlib":97,"./recoverykey":98,"./store/indexeddb-crypto-store":100}],93:[function(require,module,exports){
 (function (global,Buffer){(function (){
 "use strict";
 /*
@@ -30561,7 +31858,7 @@ exports.DehydrationManager = DehydrationManager;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 
-},{"../crypto/store/indexeddb-crypto-store":88,"../logger":106,"./aes":74,"./olmlib":85,"another-json":28,"buffer":34}],82:[function(require,module,exports){
+},{"../crypto/store/indexeddb-crypto-store":100,"../logger":118,"./aes":86,"./olmlib":97,"another-json":27,"buffer":34}],94:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2016 - 2021 The Matrix.org Foundation C.I.C.
@@ -30718,7 +32015,7 @@ DeviceInfo.DeviceVerification = {
     BLOCKED: DeviceVerification.Blocked,
 };
 
-},{}],83:[function(require,module,exports){
+},{}],95:[function(require,module,exports){
 (function (global,Buffer){(function (){
 "use strict";
 /*
@@ -30815,10 +32112,12 @@ const defaultVerificationMethods = {
 /**
  * verification method names
  */
-exports.verificationMethods = {
-    RECIPROCATE_QR_CODE: QRCode_1.ReciprocateQRCode.NAME,
-    SAS: SAS_1.SAS.NAME,
-};
+// legacy export identifier
+var verificationMethods;
+(function (verificationMethods) {
+    verificationMethods[verificationMethods["RECIPROCATE_QR_CODE"] = QRCode_1.ReciprocateQRCode.NAME] = "RECIPROCATE_QR_CODE";
+    verificationMethods[verificationMethods["SAS"] = SAS_1.SAS.NAME] = "SAS";
+})(verificationMethods = exports.verificationMethods || (exports.verificationMethods = {}));
 function isCryptoAvailable() {
     return Boolean(global.Olm);
 }
@@ -32763,8 +34062,7 @@ class Crypto extends events_1.EventEmitter {
      *   users in the room (for now). In case lazy loading is enabled,
      *   the device query is always inhibited as the members are not tracked.
      */
-    setRoomEncryption(roomId, config, // TODO types
-    inhibitDeviceQuery) {
+    setRoomEncryption(roomId, config, inhibitDeviceQuery) {
         return __awaiter(this, void 0, void 0, function* () {
             // ignore crypto events with no algorithm defined
             // This will happen if a crypto event is redacted before we fetch the room state
@@ -32816,8 +34114,8 @@ class Crypto extends events_1.EventEmitter {
                 crypto: this,
                 olmDevice: this.olmDevice,
                 baseApis: this.baseApis,
-                roomId: roomId,
-                config: config,
+                roomId,
+                config,
             });
             this.roomEncryptors[roomId] = alg;
             if (storeConfigPromise) {
@@ -33843,7 +35141,7 @@ class IncomingRoomKeyRequestCancellation {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 
-},{"../ReEmitter":61,"../errors":99,"../logger":106,"../models/event":113,"./CrossSigning":67,"./DeviceList":68,"./EncryptionSetup":69,"./OlmDevice":70,"./OutgoingRoomKeyRequestManager":71,"./SecretStorage":73,"./aes":74,"./algorithms":76,"./backup":80,"./dehydration":81,"./deviceinfo":82,"./key_passphrase":84,"./olmlib":85,"./recoverykey":86,"./store/indexeddb-crypto-store":88,"./verification/IllegalMethod":93,"./verification/QRCode":94,"./verification/SAS":95,"./verification/request/InRoomChannel":96,"./verification/request/ToDeviceChannel":97,"./verification/request/VerificationRequest":98,"another-json":28,"buffer":34,"events":36}],84:[function(require,module,exports){
+},{"../ReEmitter":73,"../errors":111,"../logger":118,"../models/event":125,"./CrossSigning":79,"./DeviceList":80,"./EncryptionSetup":81,"./OlmDevice":82,"./OutgoingRoomKeyRequestManager":83,"./SecretStorage":85,"./aes":86,"./algorithms":88,"./backup":92,"./dehydration":93,"./deviceinfo":94,"./key_passphrase":96,"./olmlib":97,"./recoverykey":98,"./store/indexeddb-crypto-store":100,"./verification/IllegalMethod":105,"./verification/QRCode":106,"./verification/SAS":107,"./verification/request/InRoomChannel":108,"./verification/request/ToDeviceChannel":109,"./verification/request/VerificationRequest":110,"another-json":27,"buffer":34,"events":38}],96:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 /*
@@ -33921,7 +35219,7 @@ exports.deriveKey = deriveKey;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../randomstring":123}],85:[function(require,module,exports){
+},{"../randomstring":135}],97:[function(require,module,exports){
 (function (global,Buffer){(function (){
 "use strict";
 /*
@@ -34450,7 +35748,7 @@ exports.decodeBase64 = decodeBase64;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 
-},{"../logger":106,"../utils":137,"another-json":28,"buffer":34}],86:[function(require,module,exports){
+},{"../logger":118,"../utils":149,"another-json":27,"buffer":34}],98:[function(require,module,exports){
 (function (global,Buffer){(function (){
 "use strict";
 /*
@@ -34514,1205 +35812,10 @@ exports.decodeRecoveryKey = decodeRecoveryKey;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 
-},{"bs58":33,"buffer":34}],87:[function(require,module,exports){
+},{"bs58":33,"buffer":34}],99:[function(require,module,exports){
 "use strict";
-
-var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
-
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.upgradeDatabase = upgradeDatabase;
-exports.Backend = exports.VERSION = void 0;
-
-var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
-
-var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
-
-var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
-
-var _createClass2 = _interopRequireDefault(require("@babel/runtime/helpers/createClass"));
-
-var _logger = require("../../logger");
-
-var utils = _interopRequireWildcard(require("../../utils"));
-
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-var VERSION = 10;
-exports.VERSION = VERSION;
-var PROFILE_TRANSACTIONS = false;
-/**
- * Implementation of a CryptoStore which is backed by an existing
- * IndexedDB connection. Generally you want IndexedDBCryptoStore
- * which connects to the database and defers to one of these.
- *
- * @implements {module:crypto/store/base~CryptoStore}
- */
-
-var Backend = /*#__PURE__*/function () {
-  /**
-   * @param {IDBDatabase} db
-   */
-  function Backend(db) {
-    var _this = this;
-
-    (0, _classCallCheck2["default"])(this, Backend);
-    this._db = db;
-    this._nextTxnId = 0; // make sure we close the db on `onversionchange` - otherwise
-    // attempts to delete the database will block (and subsequent
-    // attempts to re-create it will also block).
-
-    db.onversionchange = function (ev) {
-      _logger.logger.log("versionchange for indexeddb ".concat(_this._dbName, ": closing"));
-
-      db.close();
-    };
-  }
-  /**
-   * Look for an existing outgoing room key request, and if none is found,
-   * add a new one
-   *
-   * @param {module:crypto/store/base~OutgoingRoomKeyRequest} request
-   *
-   * @returns {Promise} resolves to
-   *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}: either the
-   *    same instance as passed in, or the existing one.
-   */
-
-
-  (0, _createClass2["default"])(Backend, [{
-    key: "getOrAddOutgoingRoomKeyRequest",
-    value: function getOrAddOutgoingRoomKeyRequest(request) {
-      var _this2 = this;
-
-      var requestBody = request.requestBody;
-      return new Promise(function (resolve, reject) {
-        var txn = _this2._db.transaction("outgoingRoomKeyRequests", "readwrite");
-
-        txn.onerror = reject; // first see if we already have an entry for this request.
-
-        _this2._getOutgoingRoomKeyRequest(txn, requestBody, function (existing) {
-          if (existing) {
-            // this entry matches the request - return it.
-            _logger.logger.log("already have key request outstanding for " + "".concat(requestBody.room_id, " / ").concat(requestBody.session_id, ": ") + "not sending another");
-
-            resolve(existing);
-            return;
-          } // we got to the end of the list without finding a match
-          // - add the new request.
-
-
-          _logger.logger.log("enqueueing key request for ".concat(requestBody.room_id, " / ") + requestBody.session_id);
-
-          txn.oncomplete = function () {
-            resolve(request);
-          };
-
-          var store = txn.objectStore("outgoingRoomKeyRequests");
-          store.add(request);
-        });
-      });
-    }
-    /**
-     * Look for an existing room key request
-     *
-     * @param {module:crypto~RoomKeyRequestBody} requestBody
-     *    existing request to look for
-     *
-     * @return {Promise} resolves to the matching
-     *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}, or null if
-     *    not found
-     */
-
-  }, {
-    key: "getOutgoingRoomKeyRequest",
-    value: function getOutgoingRoomKeyRequest(requestBody) {
-      var _this3 = this;
-
-      return new Promise(function (resolve, reject) {
-        var txn = _this3._db.transaction("outgoingRoomKeyRequests", "readonly");
-
-        txn.onerror = reject;
-
-        _this3._getOutgoingRoomKeyRequest(txn, requestBody, function (existing) {
-          resolve(existing);
-        });
-      });
-    }
-    /**
-     * look for an existing room key request in the db
-     *
-     * @private
-     * @param {IDBTransaction} txn  database transaction
-     * @param {module:crypto~RoomKeyRequestBody} requestBody
-     *    existing request to look for
-     * @param {Function} callback  function to call with the results of the
-     *    search. Either passed a matching
-     *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}, or null if
-     *    not found.
-     */
-
-  }, {
-    key: "_getOutgoingRoomKeyRequest",
-    value: function _getOutgoingRoomKeyRequest(txn, requestBody, callback) {
-      var store = txn.objectStore("outgoingRoomKeyRequests");
-      var idx = store.index("session");
-      var cursorReq = idx.openCursor([requestBody.room_id, requestBody.session_id]);
-
-      cursorReq.onsuccess = function (ev) {
-        var cursor = ev.target.result;
-
-        if (!cursor) {
-          // no match found
-          callback(null);
-          return;
-        }
-
-        var existing = cursor.value;
-
-        if (utils.deepCompare(existing.requestBody, requestBody)) {
-          // got a match
-          callback(existing);
-          return;
-        } // look at the next entry in the index
-
-
-        cursor["continue"]();
-      };
-    }
-    /**
-     * Look for room key requests by state
-     *
-     * @param {Array<Number>} wantedStates list of acceptable states
-     *
-     * @return {Promise} resolves to the a
-     *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}, or null if
-     *    there are no pending requests in those states. If there are multiple
-     *    requests in those states, an arbitrary one is chosen.
-     */
-
-  }, {
-    key: "getOutgoingRoomKeyRequestByState",
-    value: function getOutgoingRoomKeyRequestByState(wantedStates) {
-      if (wantedStates.length === 0) {
-        return Promise.resolve(null);
-      } // this is a bit tortuous because we need to make sure we do the lookup
-      // in a single transaction, to avoid having a race with the insertion
-      // code.
-      // index into the wantedStates array
-
-
-      var stateIndex = 0;
-      var result;
-
-      function onsuccess(ev) {
-        var cursor = ev.target.result;
-
-        if (cursor) {
-          // got a match
-          result = cursor.value;
-          return;
-        } // try the next state in the list
-
-
-        stateIndex++;
-
-        if (stateIndex >= wantedStates.length) {
-          // no matches
-          return;
-        }
-
-        var wantedState = wantedStates[stateIndex];
-        var cursorReq = ev.target.source.openCursor(wantedState);
-        cursorReq.onsuccess = onsuccess;
-      }
-
-      var txn = this._db.transaction("outgoingRoomKeyRequests", "readonly");
-
-      var store = txn.objectStore("outgoingRoomKeyRequests");
-      var wantedState = wantedStates[stateIndex];
-      var cursorReq = store.index("state").openCursor(wantedState);
-      cursorReq.onsuccess = onsuccess;
-      return promiseifyTxn(txn).then(function () {
-        return result;
-      });
-    }
-    /**
-     *
-     * @param {Number} wantedState
-     * @return {Promise<Array<*>>} All elements in a given state
-     */
-
-  }, {
-    key: "getAllOutgoingRoomKeyRequestsByState",
-    value: function getAllOutgoingRoomKeyRequestsByState(wantedState) {
-      var _this4 = this;
-
-      return new Promise(function (resolve, reject) {
-        var txn = _this4._db.transaction("outgoingRoomKeyRequests", "readonly");
-
-        var store = txn.objectStore("outgoingRoomKeyRequests");
-        var index = store.index("state");
-        var request = index.getAll(wantedState);
-
-        request.onsuccess = function (ev) {
-          return resolve(ev.target.result);
-        };
-
-        request.onerror = function (ev) {
-          return reject(ev.target.error);
-        };
-      });
-    }
-  }, {
-    key: "getOutgoingRoomKeyRequestsByTarget",
-    value: function getOutgoingRoomKeyRequestsByTarget(userId, deviceId, wantedStates) {
-      var stateIndex = 0;
-      var results = [];
-
-      function onsuccess(ev) {
-        var cursor = ev.target.result;
-
-        if (cursor) {
-          var keyReq = cursor.value;
-
-          if (keyReq.recipients.includes({
-            userId: userId,
-            deviceId: deviceId
-          })) {
-            results.push(keyReq);
-          }
-
-          cursor["continue"]();
-        } else {
-          // try the next state in the list
-          stateIndex++;
-
-          if (stateIndex >= wantedStates.length) {
-            // no matches
-            return;
-          }
-
-          var _wantedState = wantedStates[stateIndex];
-
-          var _cursorReq = ev.target.source.openCursor(_wantedState);
-
-          _cursorReq.onsuccess = onsuccess;
-        }
-      }
-
-      var txn = this._db.transaction("outgoingRoomKeyRequests", "readonly");
-
-      var store = txn.objectStore("outgoingRoomKeyRequests");
-      var wantedState = wantedStates[stateIndex];
-      var cursorReq = store.index("state").openCursor(wantedState);
-      cursorReq.onsuccess = onsuccess;
-      return promiseifyTxn(txn).then(function () {
-        return results;
-      });
-    }
-    /**
-     * Look for an existing room key request by id and state, and update it if
-     * found
-     *
-     * @param {string} requestId      ID of request to update
-     * @param {number} expectedState  state we expect to find the request in
-     * @param {Object} updates        name/value map of updates to apply
-     *
-     * @returns {Promise} resolves to
-     *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}
-     *    updated request, or null if no matching row was found
-     */
-
-  }, {
-    key: "updateOutgoingRoomKeyRequest",
-    value: function updateOutgoingRoomKeyRequest(requestId, expectedState, updates) {
-      var result = null;
-
-      function onsuccess(ev) {
-        var cursor = ev.target.result;
-
-        if (!cursor) {
-          return;
-        }
-
-        var data = cursor.value;
-
-        if (data.state != expectedState) {
-          _logger.logger.warn("Cannot update room key request from ".concat(expectedState, " ") + "as it was already updated to ".concat(data.state));
-
-          return;
-        }
-
-        Object.assign(data, updates);
-        cursor.update(data);
-        result = data;
-      }
-
-      var txn = this._db.transaction("outgoingRoomKeyRequests", "readwrite");
-
-      var cursorReq = txn.objectStore("outgoingRoomKeyRequests").openCursor(requestId);
-      cursorReq.onsuccess = onsuccess;
-      return promiseifyTxn(txn).then(function () {
-        return result;
-      });
-    }
-    /**
-     * Look for an existing room key request by id and state, and delete it if
-     * found
-     *
-     * @param {string} requestId      ID of request to update
-     * @param {number} expectedState  state we expect to find the request in
-     *
-     * @returns {Promise} resolves once the operation is completed
-     */
-
-  }, {
-    key: "deleteOutgoingRoomKeyRequest",
-    value: function deleteOutgoingRoomKeyRequest(requestId, expectedState) {
-      var txn = this._db.transaction("outgoingRoomKeyRequests", "readwrite");
-
-      var cursorReq = txn.objectStore("outgoingRoomKeyRequests").openCursor(requestId);
-
-      cursorReq.onsuccess = function (ev) {
-        var cursor = ev.target.result;
-
-        if (!cursor) {
-          return;
-        }
-
-        var data = cursor.value;
-
-        if (data.state != expectedState) {
-          _logger.logger.warn("Cannot delete room key request in state ".concat(data.state, " ") + "(expected ".concat(expectedState, ")"));
-
-          return;
-        }
-
-        cursor["delete"]();
-      };
-
-      return promiseifyTxn(txn);
-    } // Olm Account
-
-  }, {
-    key: "getAccount",
-    value: function getAccount(txn, func) {
-      var objectStore = txn.objectStore("account");
-      var getReq = objectStore.get("-");
-
-      getReq.onsuccess = function () {
-        try {
-          func(getReq.result || null);
-        } catch (e) {
-          abortWithException(txn, e);
-        }
-      };
-    }
-  }, {
-    key: "storeAccount",
-    value: function storeAccount(txn, newData) {
-      var objectStore = txn.objectStore("account");
-      objectStore.put(newData, "-");
-    }
-  }, {
-    key: "getCrossSigningKeys",
-    value: function getCrossSigningKeys(txn, func) {
-      var objectStore = txn.objectStore("account");
-      var getReq = objectStore.get("crossSigningKeys");
-
-      getReq.onsuccess = function () {
-        try {
-          func(getReq.result || null);
-        } catch (e) {
-          abortWithException(txn, e);
-        }
-      };
-    }
-  }, {
-    key: "getSecretStorePrivateKey",
-    value: function getSecretStorePrivateKey(txn, func, type) {
-      var objectStore = txn.objectStore("account");
-      var getReq = objectStore.get("ssss_cache:".concat(type));
-
-      getReq.onsuccess = function () {
-        try {
-          func(getReq.result || null);
-        } catch (e) {
-          abortWithException(txn, e);
-        }
-      };
-    }
-  }, {
-    key: "storeCrossSigningKeys",
-    value: function storeCrossSigningKeys(txn, keys) {
-      var objectStore = txn.objectStore("account");
-      objectStore.put(keys, "crossSigningKeys");
-    }
-  }, {
-    key: "storeSecretStorePrivateKey",
-    value: function storeSecretStorePrivateKey(txn, type, key) {
-      var objectStore = txn.objectStore("account");
-      objectStore.put(key, "ssss_cache:".concat(type));
-    } // Olm Sessions
-
-  }, {
-    key: "countEndToEndSessions",
-    value: function countEndToEndSessions(txn, func) {
-      var objectStore = txn.objectStore("sessions");
-      var countReq = objectStore.count();
-
-      countReq.onsuccess = function () {
-        try {
-          func(countReq.result);
-        } catch (e) {
-          abortWithException(txn, e);
-        }
-      };
-    }
-  }, {
-    key: "getEndToEndSessions",
-    value: function getEndToEndSessions(deviceKey, txn, func) {
-      var objectStore = txn.objectStore("sessions");
-      var idx = objectStore.index("deviceKey");
-      var getReq = idx.openCursor(deviceKey);
-      var results = {};
-
-      getReq.onsuccess = function () {
-        var cursor = getReq.result;
-
-        if (cursor) {
-          results[cursor.value.sessionId] = {
-            session: cursor.value.session,
-            lastReceivedMessageTs: cursor.value.lastReceivedMessageTs
-          };
-          cursor["continue"]();
-        } else {
-          try {
-            func(results);
-          } catch (e) {
-            abortWithException(txn, e);
-          }
-        }
-      };
-    }
-  }, {
-    key: "getEndToEndSession",
-    value: function getEndToEndSession(deviceKey, sessionId, txn, func) {
-      var objectStore = txn.objectStore("sessions");
-      var getReq = objectStore.get([deviceKey, sessionId]);
-
-      getReq.onsuccess = function () {
-        try {
-          if (getReq.result) {
-            func({
-              session: getReq.result.session,
-              lastReceivedMessageTs: getReq.result.lastReceivedMessageTs
-            });
-          } else {
-            func(null);
-          }
-        } catch (e) {
-          abortWithException(txn, e);
-        }
-      };
-    }
-  }, {
-    key: "getAllEndToEndSessions",
-    value: function getAllEndToEndSessions(txn, func) {
-      var objectStore = txn.objectStore("sessions");
-      var getReq = objectStore.openCursor();
-
-      getReq.onsuccess = function () {
-        try {
-          var cursor = getReq.result;
-
-          if (cursor) {
-            func(cursor.value);
-            cursor["continue"]();
-          } else {
-            func(null);
-          }
-        } catch (e) {
-          abortWithException(txn, e);
-        }
-      };
-    }
-  }, {
-    key: "storeEndToEndSession",
-    value: function storeEndToEndSession(deviceKey, sessionId, sessionInfo, txn) {
-      var objectStore = txn.objectStore("sessions");
-      objectStore.put({
-        deviceKey: deviceKey,
-        sessionId: sessionId,
-        session: sessionInfo.session,
-        lastReceivedMessageTs: sessionInfo.lastReceivedMessageTs
-      });
-    }
-  }, {
-    key: "storeEndToEndSessionProblem",
-    value: function () {
-      var _storeEndToEndSessionProblem = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(deviceKey, type, fixed) {
-        var txn, objectStore;
-        return _regenerator["default"].wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                txn = this._db.transaction("session_problems", "readwrite");
-                objectStore = txn.objectStore("session_problems");
-                objectStore.put({
-                  deviceKey: deviceKey,
-                  type: type,
-                  fixed: fixed,
-                  time: Date.now()
-                });
-                return _context.abrupt("return", promiseifyTxn(txn));
-
-              case 4:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
-
-      function storeEndToEndSessionProblem(_x, _x2, _x3) {
-        return _storeEndToEndSessionProblem.apply(this, arguments);
-      }
-
-      return storeEndToEndSessionProblem;
-    }()
-  }, {
-    key: "getEndToEndSessionProblem",
-    value: function () {
-      var _getEndToEndSessionProblem = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(deviceKey, timestamp) {
-        var result, txn, objectStore, index, req;
-        return _regenerator["default"].wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                txn = this._db.transaction("session_problems", "readwrite");
-                objectStore = txn.objectStore("session_problems");
-                index = objectStore.index("deviceKey");
-                req = index.getAll(deviceKey);
-
-                req.onsuccess = function (event) {
-                  var problems = req.result;
-
-                  if (!problems.length) {
-                    result = null;
-                    return;
-                  }
-
-                  problems.sort(function (a, b) {
-                    return a.time - b.time;
-                  });
-                  var lastProblem = problems[problems.length - 1];
-
-                  var _iterator = _createForOfIteratorHelper(problems),
-                      _step;
-
-                  try {
-                    for (_iterator.s(); !(_step = _iterator.n()).done;) {
-                      var problem = _step.value;
-
-                      if (problem.time > timestamp) {
-                        result = Object.assign({}, problem, {
-                          fixed: lastProblem.fixed
-                        });
-                        return;
-                      }
-                    }
-                  } catch (err) {
-                    _iterator.e(err);
-                  } finally {
-                    _iterator.f();
-                  }
-
-                  if (lastProblem.fixed) {
-                    result = null;
-                  } else {
-                    result = lastProblem;
-                  }
-                };
-
-                _context2.next = 7;
-                return promiseifyTxn(txn);
-
-              case 7:
-                return _context2.abrupt("return", result);
-
-              case 8:
-              case "end":
-                return _context2.stop();
-            }
-          }
-        }, _callee2, this);
-      }));
-
-      function getEndToEndSessionProblem(_x4, _x5) {
-        return _getEndToEndSessionProblem.apply(this, arguments);
-      }
-
-      return getEndToEndSessionProblem;
-    }() // FIXME: we should probably prune this when devices get deleted
-
-  }, {
-    key: "filterOutNotifiedErrorDevices",
-    value: function () {
-      var _filterOutNotifiedErrorDevices = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(devices) {
-        var txn, objectStore, ret;
-        return _regenerator["default"].wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                txn = this._db.transaction("notified_error_devices", "readwrite");
-                objectStore = txn.objectStore("notified_error_devices");
-                ret = [];
-                _context3.next = 5;
-                return Promise.all(devices.map(function (device) {
-                  return new Promise(function (resolve) {
-                    var userId = device.userId,
-                        deviceInfo = device.deviceInfo;
-                    var getReq = objectStore.get([userId, deviceInfo.deviceId]);
-
-                    getReq.onsuccess = function () {
-                      if (!getReq.result) {
-                        objectStore.put({
-                          userId: userId,
-                          deviceId: deviceInfo.deviceId
-                        });
-                        ret.push(device);
-                      }
-
-                      resolve();
-                    };
-                  });
-                }));
-
-              case 5:
-                return _context3.abrupt("return", ret);
-
-              case 6:
-              case "end":
-                return _context3.stop();
-            }
-          }
-        }, _callee3, this);
-      }));
-
-      function filterOutNotifiedErrorDevices(_x6) {
-        return _filterOutNotifiedErrorDevices.apply(this, arguments);
-      }
-
-      return filterOutNotifiedErrorDevices;
-    }() // Inbound group sessions
-
-  }, {
-    key: "getEndToEndInboundGroupSession",
-    value: function getEndToEndInboundGroupSession(senderCurve25519Key, sessionId, txn, func) {
-      var session = false;
-      var withheld = false;
-      var objectStore = txn.objectStore("inbound_group_sessions");
-      var getReq = objectStore.get([senderCurve25519Key, sessionId]);
-
-      getReq.onsuccess = function () {
-        try {
-          if (getReq.result) {
-            session = getReq.result.session;
-          } else {
-            session = null;
-          }
-
-          if (withheld !== false) {
-            func(session, withheld);
-          }
-        } catch (e) {
-          abortWithException(txn, e);
-        }
-      };
-
-      var withheldObjectStore = txn.objectStore("inbound_group_sessions_withheld");
-      var withheldGetReq = withheldObjectStore.get([senderCurve25519Key, sessionId]);
-
-      withheldGetReq.onsuccess = function () {
-        try {
-          if (withheldGetReq.result) {
-            withheld = withheldGetReq.result.session;
-          } else {
-            withheld = null;
-          }
-
-          if (session !== false) {
-            func(session, withheld);
-          }
-        } catch (e) {
-          abortWithException(txn, e);
-        }
-      };
-    }
-  }, {
-    key: "getAllEndToEndInboundGroupSessions",
-    value: function getAllEndToEndInboundGroupSessions(txn, func) {
-      var objectStore = txn.objectStore("inbound_group_sessions");
-      var getReq = objectStore.openCursor();
-
-      getReq.onsuccess = function () {
-        var cursor = getReq.result;
-
-        if (cursor) {
-          try {
-            func({
-              senderKey: cursor.value.senderCurve25519Key,
-              sessionId: cursor.value.sessionId,
-              sessionData: cursor.value.session
-            });
-          } catch (e) {
-            abortWithException(txn, e);
-          }
-
-          cursor["continue"]();
-        } else {
-          try {
-            func(null);
-          } catch (e) {
-            abortWithException(txn, e);
-          }
-        }
-      };
-    }
-  }, {
-    key: "addEndToEndInboundGroupSession",
-    value: function addEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
-      var objectStore = txn.objectStore("inbound_group_sessions");
-      var addReq = objectStore.add({
-        senderCurve25519Key: senderCurve25519Key,
-        sessionId: sessionId,
-        session: sessionData
-      });
-
-      addReq.onerror = function (ev) {
-        if (addReq.error.name === 'ConstraintError') {
-          // This stops the error from triggering the txn's onerror
-          ev.stopPropagation(); // ...and this stops it from aborting the transaction
-
-          ev.preventDefault();
-
-          _logger.logger.log("Ignoring duplicate inbound group session: " + senderCurve25519Key + " / " + sessionId);
-        } else {
-          abortWithException(txn, new Error("Failed to add inbound group session: " + addReq.error));
-        }
-      };
-    }
-  }, {
-    key: "storeEndToEndInboundGroupSession",
-    value: function storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
-      var objectStore = txn.objectStore("inbound_group_sessions");
-      objectStore.put({
-        senderCurve25519Key: senderCurve25519Key,
-        sessionId: sessionId,
-        session: sessionData
-      });
-    }
-  }, {
-    key: "storeEndToEndInboundGroupSessionWithheld",
-    value: function storeEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId, sessionData, txn) {
-      var objectStore = txn.objectStore("inbound_group_sessions_withheld");
-      objectStore.put({
-        senderCurve25519Key: senderCurve25519Key,
-        sessionId: sessionId,
-        session: sessionData
-      });
-    }
-  }, {
-    key: "getEndToEndDeviceData",
-    value: function getEndToEndDeviceData(txn, func) {
-      var objectStore = txn.objectStore("device_data");
-      var getReq = objectStore.get("-");
-
-      getReq.onsuccess = function () {
-        try {
-          func(getReq.result || null);
-        } catch (e) {
-          abortWithException(txn, e);
-        }
-      };
-    }
-  }, {
-    key: "storeEndToEndDeviceData",
-    value: function storeEndToEndDeviceData(deviceData, txn) {
-      var objectStore = txn.objectStore("device_data");
-      objectStore.put(deviceData, "-");
-    }
-  }, {
-    key: "storeEndToEndRoom",
-    value: function storeEndToEndRoom(roomId, roomInfo, txn) {
-      var objectStore = txn.objectStore("rooms");
-      objectStore.put(roomInfo, roomId);
-    }
-  }, {
-    key: "getEndToEndRooms",
-    value: function getEndToEndRooms(txn, func) {
-      var rooms = {};
-      var objectStore = txn.objectStore("rooms");
-      var getReq = objectStore.openCursor();
-
-      getReq.onsuccess = function () {
-        var cursor = getReq.result;
-
-        if (cursor) {
-          rooms[cursor.key] = cursor.value;
-          cursor["continue"]();
-        } else {
-          try {
-            func(rooms);
-          } catch (e) {
-            abortWithException(txn, e);
-          }
-        }
-      };
-    } // session backups
-
-  }, {
-    key: "getSessionsNeedingBackup",
-    value: function getSessionsNeedingBackup(limit) {
-      var _this5 = this;
-
-      return new Promise(function (resolve, reject) {
-        var sessions = [];
-
-        var txn = _this5._db.transaction(["sessions_needing_backup", "inbound_group_sessions"], "readonly");
-
-        txn.onerror = reject;
-
-        txn.oncomplete = function () {
-          resolve(sessions);
-        };
-
-        var objectStore = txn.objectStore("sessions_needing_backup");
-        var sessionStore = txn.objectStore("inbound_group_sessions");
-        var getReq = objectStore.openCursor();
-
-        getReq.onsuccess = function () {
-          var cursor = getReq.result;
-
-          if (cursor) {
-            var sessionGetReq = sessionStore.get(cursor.key);
-
-            sessionGetReq.onsuccess = function () {
-              sessions.push({
-                senderKey: sessionGetReq.result.senderCurve25519Key,
-                sessionId: sessionGetReq.result.sessionId,
-                sessionData: sessionGetReq.result.session
-              });
-            };
-
-            if (!limit || sessions.length < limit) {
-              cursor["continue"]();
-            }
-          }
-        };
-      });
-    }
-  }, {
-    key: "countSessionsNeedingBackup",
-    value: function countSessionsNeedingBackup(txn) {
-      if (!txn) {
-        txn = this._db.transaction("sessions_needing_backup", "readonly");
-      }
-
-      var objectStore = txn.objectStore("sessions_needing_backup");
-      return new Promise(function (resolve, reject) {
-        var req = objectStore.count();
-        req.onerror = reject;
-
-        req.onsuccess = function () {
-          return resolve(req.result);
-        };
-      });
-    }
-  }, {
-    key: "unmarkSessionsNeedingBackup",
-    value: function unmarkSessionsNeedingBackup(sessions, txn) {
-      if (!txn) {
-        txn = this._db.transaction("sessions_needing_backup", "readwrite");
-      }
-
-      var objectStore = txn.objectStore("sessions_needing_backup");
-      return Promise.all(sessions.map(function (session) {
-        return new Promise(function (resolve, reject) {
-          var req = objectStore["delete"]([session.senderKey, session.sessionId]);
-          req.onsuccess = resolve;
-          req.onerror = reject;
-        });
-      }));
-    }
-  }, {
-    key: "markSessionsNeedingBackup",
-    value: function markSessionsNeedingBackup(sessions, txn) {
-      if (!txn) {
-        txn = this._db.transaction("sessions_needing_backup", "readwrite");
-      }
-
-      var objectStore = txn.objectStore("sessions_needing_backup");
-      return Promise.all(sessions.map(function (session) {
-        return new Promise(function (resolve, reject) {
-          var req = objectStore.put({
-            senderCurve25519Key: session.senderKey,
-            sessionId: session.sessionId
-          });
-          req.onsuccess = resolve;
-          req.onerror = reject;
-        });
-      }));
-    }
-  }, {
-    key: "addSharedHistoryInboundGroupSession",
-    value: function addSharedHistoryInboundGroupSession(roomId, senderKey, sessionId, txn) {
-      if (!txn) {
-        txn = this._db.transaction("shared_history_inbound_group_sessions", "readwrite");
-      }
-
-      var objectStore = txn.objectStore("shared_history_inbound_group_sessions");
-      var req = objectStore.get([roomId]);
-
-      req.onsuccess = function () {
-        var _ref = req.result || {
-          sessions: []
-        },
-            sessions = _ref.sessions;
-
-        sessions.push([senderKey, sessionId]);
-        objectStore.put({
-          roomId: roomId,
-          sessions: sessions
-        });
-      };
-    }
-  }, {
-    key: "getSharedHistoryInboundGroupSessions",
-    value: function getSharedHistoryInboundGroupSessions(roomId, txn) {
-      if (!txn) {
-        txn = this._db.transaction("shared_history_inbound_group_sessions", "readonly");
-      }
-
-      var objectStore = txn.objectStore("shared_history_inbound_group_sessions");
-      var req = objectStore.get([roomId]);
-      return new Promise(function (resolve, reject) {
-        req.onsuccess = function () {
-          var _ref2 = req.result || {
-            sessions: []
-          },
-              sessions = _ref2.sessions;
-
-          resolve(sessions);
-        };
-
-        req.onerror = reject;
-      });
-    }
-  }, {
-    key: "doTxn",
-    value: function doTxn(mode, stores, func) {
-      var log = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : _logger.logger;
-      var startTime;
-      var description;
-
-      if (PROFILE_TRANSACTIONS) {
-        var txnId = this._nextTxnId++;
-        startTime = Date.now();
-        description = "".concat(mode, " crypto store transaction ").concat(txnId, " in ").concat(stores);
-        log.debug("Starting ".concat(description));
-      }
-
-      var txn = this._db.transaction(stores, mode);
-
-      var promise = promiseifyTxn(txn);
-      var result = func(txn);
-
-      if (PROFILE_TRANSACTIONS) {
-        promise.then(function () {
-          var elapsedTime = Date.now() - startTime;
-          log.debug("Finished ".concat(description, ", took ").concat(elapsedTime, " ms"));
-        }, function () {
-          var elapsedTime = Date.now() - startTime;
-          log.error("Failed ".concat(description, ", took ").concat(elapsedTime, " ms"));
-        });
-      }
-
-      return promise.then(function () {
-        return result;
-      });
-    }
-  }]);
-  return Backend;
-}();
-
-exports.Backend = Backend;
-
-function upgradeDatabase(db, oldVersion) {
-  _logger.logger.log("Upgrading IndexedDBCryptoStore from version ".concat(oldVersion) + " to ".concat(VERSION));
-
-  if (oldVersion < 1) {
-    // The database did not previously exist.
-    createDatabase(db);
-  }
-
-  if (oldVersion < 2) {
-    db.createObjectStore("account");
-  }
-
-  if (oldVersion < 3) {
-    var sessionsStore = db.createObjectStore("sessions", {
-      keyPath: ["deviceKey", "sessionId"]
-    });
-    sessionsStore.createIndex("deviceKey", "deviceKey");
-  }
-
-  if (oldVersion < 4) {
-    db.createObjectStore("inbound_group_sessions", {
-      keyPath: ["senderCurve25519Key", "sessionId"]
-    });
-  }
-
-  if (oldVersion < 5) {
-    db.createObjectStore("device_data");
-  }
-
-  if (oldVersion < 6) {
-    db.createObjectStore("rooms");
-  }
-
-  if (oldVersion < 7) {
-    db.createObjectStore("sessions_needing_backup", {
-      keyPath: ["senderCurve25519Key", "sessionId"]
-    });
-  }
-
-  if (oldVersion < 8) {
-    db.createObjectStore("inbound_group_sessions_withheld", {
-      keyPath: ["senderCurve25519Key", "sessionId"]
-    });
-  }
-
-  if (oldVersion < 9) {
-    var problemsStore = db.createObjectStore("session_problems", {
-      keyPath: ["deviceKey", "time"]
-    });
-    problemsStore.createIndex("deviceKey", "deviceKey");
-    db.createObjectStore("notified_error_devices", {
-      keyPath: ["userId", "deviceId"]
-    });
-  }
-
-  if (oldVersion < 10) {
-    db.createObjectStore("shared_history_inbound_group_sessions", {
-      keyPath: ["roomId"]
-    });
-  } // Expand as needed.
-
-}
-
-function createDatabase(db) {
-  var outgoingRoomKeyRequestsStore = db.createObjectStore("outgoingRoomKeyRequests", {
-    keyPath: "requestId"
-  }); // we assume that the RoomKeyRequestBody will have room_id and session_id
-  // properties, to make the index efficient.
-
-  outgoingRoomKeyRequestsStore.createIndex("session", ["requestBody.room_id", "requestBody.session_id"]);
-  outgoingRoomKeyRequestsStore.createIndex("state", "state");
-}
 /*
- * Aborts a transaction with a given exception
- * The transaction promise will be rejected with this exception.
- */
-
-
-function abortWithException(txn, e) {
-  // We cheekily stick our exception onto the transaction object here
-  // We could alternatively make the thing we pass back to the app
-  // an object containing the transaction and exception.
-  txn._mx_abortexception = e;
-
-  try {
-    txn.abort();
-  } catch (e) {// sometimes we won't be able to abort the transaction
-    // (ie. if it's aborted or completed)
-  }
-}
-
-function promiseifyTxn(txn) {
-  return new Promise(function (resolve, reject) {
-    txn.oncomplete = function () {
-      if (txn._mx_abortexception !== undefined) {
-        reject(txn._mx_abortexception);
-      }
-
-      resolve();
-    };
-
-    txn.onerror = function (event) {
-      if (txn._mx_abortexception !== undefined) {
-        reject(txn._mx_abortexception);
-      } else {
-        _logger.logger.log("Error performing indexeddb txn", event);
-
-        reject(event.target.error);
-      }
-    };
-
-    txn.onabort = function (event) {
-      if (txn._mx_abortexception !== undefined) {
-        reject(txn._mx_abortexception);
-      } else {
-        _logger.logger.log("Error performing indexeddb txn", event);
-
-        reject(event.target.error);
-      }
-    };
-  });
-}
-
-},{"../../logger":106,"../../utils":137,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/interopRequireWildcard":13,"@babel/runtime/regenerator":27}],88:[function(require,module,exports){
-(function (global){(function (){
-"use strict";
-
-var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
-
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.IndexedDBCryptoStore = void 0;
-
-var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
-
-var _createClass2 = _interopRequireDefault(require("@babel/runtime/helpers/createClass"));
-
-var _logger = require("../../logger");
-
-var _localStorageCryptoStore = require("./localStorage-crypto-store");
-
-var _memoryCryptoStore = require("./memory-crypto-store");
-
-var IndexedDBCryptoStoreBackend = _interopRequireWildcard(require("./indexeddb-crypto-store-backend"));
-
-var _errors = require("../../errors");
-
-var IndexedDBHelpers = _interopRequireWildcard(require("../../indexeddb-helpers"));
-
-/*
-Copyright 2017 Vector Creations Ltd
-Copyright 2018 New Vector Ltd
-Copyright 2020 The Matrix.org Foundation C.I.C.
+Copyright 2017 - 2021 The Matrix.org Foundation C.I.C.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35726,160 +35829,73 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.upgradeDatabase = exports.Backend = exports.VERSION = void 0;
+const logger_1 = require("../../logger");
+const utils = __importStar(require("../../utils"));
+exports.VERSION = 10;
+const PROFILE_TRANSACTIONS = false;
 /**
- * Internal module. indexeddb storage for e2e.
- *
- * @module
- */
-
-/**
- * An implementation of CryptoStore, which is normally backed by an indexeddb,
- * but with fallback to MemoryCryptoStore.
+ * Implementation of a CryptoStore which is backed by an existing
+ * IndexedDB connection. Generally you want IndexedDBCryptoStore
+ * which connects to the database and defers to one of these.
  *
  * @implements {module:crypto/store/base~CryptoStore}
  */
-var IndexedDBCryptoStore = /*#__PURE__*/function () {
-  /**
-   * Create a new IndexedDBCryptoStore
-   *
-   * @param {IDBFactory} indexedDB  global indexedDB instance
-   * @param {string} dbName   name of db to connect to
-   */
-  function IndexedDBCryptoStore(indexedDB, dbName) {
-    (0, _classCallCheck2["default"])(this, IndexedDBCryptoStore);
-    this._indexedDB = indexedDB;
-    this._dbName = dbName;
-    this._backendPromise = null;
-    this._backend = null;
-  }
-
-  (0, _createClass2["default"])(IndexedDBCryptoStore, [{
-    key: "startup",
-
+class Backend {
     /**
-     * Ensure the database exists and is up-to-date, or fall back to
-     * a local storage or in-memory store.
-     *
-     * This must be called before the store can be used.
-     *
-     * @return {Promise} resolves to either an IndexedDBCryptoStoreBackend.Backend,
-     * or a MemoryCryptoStore
+     * @param {IDBDatabase} db
      */
-    value: function startup() {
-      var _this = this;
-
-      if (this._backendPromise) {
-        return this._backendPromise;
-      }
-
-      this._backendPromise = new Promise(function (resolve, reject) {
-        if (!_this._indexedDB) {
-          reject(new Error('no indexeddb support available'));
-          return;
-        }
-
-        _logger.logger.log("connecting to indexeddb ".concat(_this._dbName));
-
-        var req = _this._indexedDB.open(_this._dbName, IndexedDBCryptoStoreBackend.VERSION);
-
-        req.onupgradeneeded = function (ev) {
-          var db = ev.target.result;
-          var oldVersion = ev.oldVersion;
-          IndexedDBCryptoStoreBackend.upgradeDatabase(db, oldVersion);
+    constructor(db) {
+        this.db = db;
+        this.nextTxnId = 0;
+        // make sure we close the db on `onversionchange` - otherwise
+        // attempts to delete the database will block (and subsequent
+        // attempts to re-create it will also block).
+        db.onversionchange = () => {
+            logger_1.logger.log(`versionchange for indexeddb ${this.db.name}: closing`);
+            db.close();
         };
-
-        req.onblocked = function () {
-          _logger.logger.log("can't yet open IndexedDBCryptoStore because it is open elsewhere");
-        };
-
-        req.onerror = function (ev) {
-          _logger.logger.log("Error connecting to indexeddb", ev);
-
-          reject(ev.target.error);
-        };
-
-        req.onsuccess = function (r) {
-          var db = r.target.result;
-
-          _logger.logger.log("connected to indexeddb ".concat(_this._dbName));
-
-          resolve(new IndexedDBCryptoStoreBackend.Backend(db));
-        };
-      }).then(function (backend) {
-        // Edge has IndexedDB but doesn't support compund keys which we use fairly extensively.
-        // Try a dummy query which will fail if the browser doesn't support compund keys, so
-        // we can fall back to a different backend.
-        return backend.doTxn('readonly', [IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS, IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD], function (txn) {
-          backend.getEndToEndInboundGroupSession('', '', txn, function () {});
-        }).then(function () {
-          return backend;
-        });
-      })["catch"](function (e) {
-        if (e.name === 'VersionError') {
-          _logger.logger.warn("Crypto DB is too new for us to use!", e); // don't fall back to a different store: the user has crypto data
-          // in this db so we should use it or nothing at all.
-
-
-          throw new _errors.InvalidCryptoStoreError(_errors.InvalidCryptoStoreError.TOO_NEW);
-        }
-
-        _logger.logger.warn("unable to connect to indexeddb ".concat(_this._dbName) + ": falling back to localStorage store: ".concat(e));
-
-        try {
-          return new _localStorageCryptoStore.LocalStorageCryptoStore(global.localStorage);
-        } catch (e) {
-          _logger.logger.warn("unable to open localStorage: falling back to in-memory store: ".concat(e));
-
-          return new _memoryCryptoStore.MemoryCryptoStore();
-        }
-      }).then(function (backend) {
-        _this._backend = backend;
-      });
-      return this._backendPromise;
     }
-    /**
-     * Delete all data from this store.
-     *
-     * @returns {Promise} resolves when the store has been cleared.
-     */
-
-  }, {
-    key: "deleteAllData",
-    value: function deleteAllData() {
-      var _this2 = this;
-
-      return new Promise(function (resolve, reject) {
-        if (!_this2._indexedDB) {
-          reject(new Error('no indexeddb support available'));
-          return;
-        }
-
-        _logger.logger.log("Removing indexeddb instance: ".concat(_this2._dbName));
-
-        var req = _this2._indexedDB.deleteDatabase(_this2._dbName);
-
-        req.onblocked = function () {
-          _logger.logger.log("can't yet delete IndexedDBCryptoStore because it is open elsewhere");
-        };
-
-        req.onerror = function (ev) {
-          _logger.logger.log("Error deleting data from indexeddb", ev);
-
-          reject(ev.target.error);
-        };
-
-        req.onsuccess = function () {
-          _logger.logger.log("Removed indexeddb instance: ".concat(_this2._dbName));
-
-          resolve();
-        };
-      })["catch"](function (e) {
-        // in firefox, with indexedDB disabled, this fails with a
-        // DOMError. We treat this as non-fatal, so that people can
-        // still use the app.
-        _logger.logger.warn("unable to delete IndexedDBCryptoStore: ".concat(e));
-      });
+    startup() {
+        return __awaiter(this, void 0, void 0, function* () {
+            // No work to do, as the startup is done by the caller (e.g IndexedDBCryptoStore)
+            // by passing us a ready IDBDatabase instance
+            return this;
+        });
+    }
+    deleteAllData() {
+        return __awaiter(this, void 0, void 0, function* () {
+            throw Error("This is not implemented, call IDBFactory::deleteDatabase(dbName) instead.");
+        });
     }
     /**
      * Look for an existing outgoing room key request, and if none is found,
@@ -35891,11 +35907,30 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}: either the
      *    same instance as passed in, or the existing one.
      */
-
-  }, {
-    key: "getOrAddOutgoingRoomKeyRequest",
-    value: function getOrAddOutgoingRoomKeyRequest(request) {
-      return this._backend.getOrAddOutgoingRoomKeyRequest(request);
+    getOrAddOutgoingRoomKeyRequest(request) {
+        const requestBody = request.requestBody;
+        return new Promise((resolve, reject) => {
+            const txn = this.db.transaction("outgoingRoomKeyRequests", "readwrite");
+            txn.onerror = reject;
+            // first see if we already have an entry for this request.
+            this._getOutgoingRoomKeyRequest(txn, requestBody, (existing) => {
+                if (existing) {
+                    // this entry matches the request - return it.
+                    logger_1.logger.log(`already have key request outstanding for ` +
+                        `${requestBody.room_id} / ${requestBody.session_id}: ` +
+                        `not sending another`);
+                    resolve(existing);
+                    return;
+                }
+                // we got to the end of the list without finding a match
+                // - add the new request.
+                logger_1.logger.log(`enqueueing key request for ${requestBody.room_id} / ` +
+                    requestBody.session_id);
+                txn.oncomplete = () => { resolve(request); };
+                const store = txn.objectStore("outgoingRoomKeyRequests");
+                store.add(request);
+            });
+        });
     }
     /**
      * Look for an existing room key request
@@ -35907,11 +35942,51 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}, or null if
      *    not found
      */
-
-  }, {
-    key: "getOutgoingRoomKeyRequest",
-    value: function getOutgoingRoomKeyRequest(requestBody) {
-      return this._backend.getOutgoingRoomKeyRequest(requestBody);
+    getOutgoingRoomKeyRequest(requestBody) {
+        return new Promise((resolve, reject) => {
+            const txn = this.db.transaction("outgoingRoomKeyRequests", "readonly");
+            txn.onerror = reject;
+            this._getOutgoingRoomKeyRequest(txn, requestBody, (existing) => {
+                resolve(existing);
+            });
+        });
+    }
+    /**
+     * look for an existing room key request in the db
+     *
+     * @private
+     * @param {IDBTransaction} txn  database transaction
+     * @param {module:crypto~RoomKeyRequestBody} requestBody
+     *    existing request to look for
+     * @param {Function} callback  function to call with the results of the
+     *    search. Either passed a matching
+     *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}, or null if
+     *    not found.
+     */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    _getOutgoingRoomKeyRequest(txn, requestBody, callback) {
+        const store = txn.objectStore("outgoingRoomKeyRequests");
+        const idx = store.index("session");
+        const cursorReq = idx.openCursor([
+            requestBody.room_id,
+            requestBody.session_id,
+        ]);
+        cursorReq.onsuccess = () => {
+            const cursor = cursorReq.result;
+            if (!cursor) {
+                // no match found
+                callback(null);
+                return;
+            }
+            const existing = cursor.value;
+            if (utils.deepCompare(existing.requestBody, requestBody)) {
+                // got a match
+                callback(existing);
+                return;
+            }
+            // look at the next entry in the index
+            cursor.continue();
+        };
     }
     /**
      * Look for room key requests by state
@@ -35923,40 +35998,85 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      *    there are no pending requests in those states. If there are multiple
      *    requests in those states, an arbitrary one is chosen.
      */
-
-  }, {
-    key: "getOutgoingRoomKeyRequestByState",
-    value: function getOutgoingRoomKeyRequestByState(wantedStates) {
-      return this._backend.getOutgoingRoomKeyRequestByState(wantedStates);
+    getOutgoingRoomKeyRequestByState(wantedStates) {
+        if (wantedStates.length === 0) {
+            return Promise.resolve(null);
+        }
+        // this is a bit tortuous because we need to make sure we do the lookup
+        // in a single transaction, to avoid having a race with the insertion
+        // code.
+        // index into the wantedStates array
+        let stateIndex = 0;
+        let result;
+        function onsuccess(ev) {
+            const cursor = ev.target.result;
+            if (cursor) {
+                // got a match
+                result = cursor.value;
+                return;
+            }
+            // try the next state in the list
+            stateIndex++;
+            if (stateIndex >= wantedStates.length) {
+                // no matches
+                return;
+            }
+            const wantedState = wantedStates[stateIndex];
+            const cursorReq = ev.target.source.openCursor(wantedState);
+            cursorReq.onsuccess = onsuccess;
+        }
+        const txn = this.db.transaction("outgoingRoomKeyRequests", "readonly");
+        const store = txn.objectStore("outgoingRoomKeyRequests");
+        const wantedState = wantedStates[stateIndex];
+        const cursorReq = store.index("state").openCursor(wantedState);
+        cursorReq.onsuccess = onsuccess;
+        return promiseifyTxn(txn).then(() => result);
     }
     /**
-     * Look for room key requests by state –
-     * unlike above, return a list of all entries in one state.
      *
      * @param {Number} wantedState
-     * @return {Promise<Array<*>>} Returns an array of requests in the given state
+     * @return {Promise<Array<*>>} All elements in a given state
      */
-
-  }, {
-    key: "getAllOutgoingRoomKeyRequestsByState",
-    value: function getAllOutgoingRoomKeyRequestsByState(wantedState) {
-      return this._backend.getAllOutgoingRoomKeyRequestsByState(wantedState);
+    getAllOutgoingRoomKeyRequestsByState(wantedState) {
+        return new Promise((resolve, reject) => {
+            const txn = this.db.transaction("outgoingRoomKeyRequests", "readonly");
+            const store = txn.objectStore("outgoingRoomKeyRequests");
+            const index = store.index("state");
+            const request = index.getAll(wantedState);
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
     }
-    /**
-     * Look for room key requests by target device and state
-     *
-     * @param {string} userId Target user ID
-     * @param {string} deviceId Target device ID
-     * @param {Array<Number>} wantedStates list of acceptable states
-     *
-     * @return {Promise} resolves to a list of all the
-     *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}
-     */
-
-  }, {
-    key: "getOutgoingRoomKeyRequestsByTarget",
-    value: function getOutgoingRoomKeyRequestsByTarget(userId, deviceId, wantedStates) {
-      return this._backend.getOutgoingRoomKeyRequestsByTarget(userId, deviceId, wantedStates);
+    getOutgoingRoomKeyRequestsByTarget(userId, deviceId, wantedStates) {
+        let stateIndex = 0;
+        const results = [];
+        function onsuccess(ev) {
+            const cursor = ev.target.result;
+            if (cursor) {
+                const keyReq = cursor.value;
+                if (keyReq.recipients.includes({ userId, deviceId })) {
+                    results.push(keyReq);
+                }
+                cursor.continue();
+            }
+            else {
+                // try the next state in the list
+                stateIndex++;
+                if (stateIndex >= wantedStates.length) {
+                    // no matches
+                    return;
+                }
+                const wantedState = wantedStates[stateIndex];
+                const cursorReq = ev.target.source.openCursor(wantedState);
+                cursorReq.onsuccess = onsuccess;
+            }
+        }
+        const txn = this.db.transaction("outgoingRoomKeyRequests", "readonly");
+        const store = txn.objectStore("outgoingRoomKeyRequests");
+        const wantedState = wantedStates[stateIndex];
+        const cursorReq = store.index("state").openCursor(wantedState);
+        cursorReq.onsuccess = onsuccess;
+        return promiseifyTxn(txn).then(() => results);
     }
     /**
      * Look for an existing room key request by id and state, and update it if
@@ -35970,11 +36090,27 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}
      *    updated request, or null if no matching row was found
      */
-
-  }, {
-    key: "updateOutgoingRoomKeyRequest",
-    value: function updateOutgoingRoomKeyRequest(requestId, expectedState, updates) {
-      return this._backend.updateOutgoingRoomKeyRequest(requestId, expectedState, updates);
+    updateOutgoingRoomKeyRequest(requestId, expectedState, updates) {
+        let result = null;
+        function onsuccess(ev) {
+            const cursor = ev.target.result;
+            if (!cursor) {
+                return;
+            }
+            const data = cursor.value;
+            if (data.state != expectedState) {
+                logger_1.logger.warn(`Cannot update room key request from ${expectedState} ` +
+                    `as it was already updated to ${data.state}`);
+                return;
+            }
+            Object.assign(data, updates);
+            cursor.update(data);
+            result = data;
+        }
+        const txn = this.db.transaction("outgoingRoomKeyRequests", "readwrite");
+        const cursorReq = txn.objectStore("outgoingRoomKeyRequests").openCursor(requestId);
+        cursorReq.onsuccess = onsuccess;
+        return promiseifyTxn(txn).then(() => result);
     }
     /**
      * Look for an existing room key request by id and state, and delete it if
@@ -35985,13 +36121,862 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      *
      * @returns {Promise} resolves once the operation is completed
      */
+    deleteOutgoingRoomKeyRequest(requestId, expectedState) {
+        const txn = this.db.transaction("outgoingRoomKeyRequests", "readwrite");
+        const cursorReq = txn.objectStore("outgoingRoomKeyRequests").openCursor(requestId);
+        cursorReq.onsuccess = () => {
+            const cursor = cursorReq.result;
+            if (!cursor) {
+                return;
+            }
+            const data = cursor.value;
+            if (data.state != expectedState) {
+                logger_1.logger.warn(`Cannot delete room key request in state ${data.state} `
+                    + `(expected ${expectedState})`);
+                return;
+            }
+            cursor.delete();
+        };
+        return promiseifyTxn(txn);
+    }
+    // Olm Account
+    getAccount(txn, func) {
+        const objectStore = txn.objectStore("account");
+        const getReq = objectStore.get("-");
+        getReq.onsuccess = function () {
+            try {
+                func(getReq.result || null);
+            }
+            catch (e) {
+                abortWithException(txn, e);
+            }
+        };
+    }
+    storeAccount(txn, accountPickle) {
+        const objectStore = txn.objectStore("account");
+        objectStore.put(accountPickle, "-");
+    }
+    getCrossSigningKeys(txn, func) {
+        const objectStore = txn.objectStore("account");
+        const getReq = objectStore.get("crossSigningKeys");
+        getReq.onsuccess = function () {
+            try {
+                func(getReq.result || null);
+            }
+            catch (e) {
+                abortWithException(txn, e);
+            }
+        };
+    }
+    getSecretStorePrivateKey(txn, func, type) {
+        const objectStore = txn.objectStore("account");
+        const getReq = objectStore.get(`ssss_cache:${type}`);
+        getReq.onsuccess = function () {
+            try {
+                func(getReq.result || null);
+            }
+            catch (e) {
+                abortWithException(txn, e);
+            }
+        };
+    }
+    storeCrossSigningKeys(txn, keys) {
+        const objectStore = txn.objectStore("account");
+        objectStore.put(keys, "crossSigningKeys");
+    }
+    storeSecretStorePrivateKey(txn, type, key) {
+        const objectStore = txn.objectStore("account");
+        objectStore.put(key, `ssss_cache:${type}`);
+    }
+    // Olm Sessions
+    countEndToEndSessions(txn, func) {
+        const objectStore = txn.objectStore("sessions");
+        const countReq = objectStore.count();
+        countReq.onsuccess = function () {
+            try {
+                func(countReq.result);
+            }
+            catch (e) {
+                abortWithException(txn, e);
+            }
+        };
+    }
+    getEndToEndSessions(deviceKey, txn, func) {
+        const objectStore = txn.objectStore("sessions");
+        const idx = objectStore.index("deviceKey");
+        const getReq = idx.openCursor(deviceKey);
+        const results = {};
+        getReq.onsuccess = function () {
+            const cursor = getReq.result;
+            if (cursor) {
+                results[cursor.value.sessionId] = {
+                    session: cursor.value.session,
+                    lastReceivedMessageTs: cursor.value.lastReceivedMessageTs,
+                };
+                cursor.continue();
+            }
+            else {
+                try {
+                    func(results);
+                }
+                catch (e) {
+                    abortWithException(txn, e);
+                }
+            }
+        };
+    }
+    getEndToEndSession(deviceKey, sessionId, txn, func) {
+        const objectStore = txn.objectStore("sessions");
+        const getReq = objectStore.get([deviceKey, sessionId]);
+        getReq.onsuccess = function () {
+            try {
+                if (getReq.result) {
+                    func({
+                        session: getReq.result.session,
+                        lastReceivedMessageTs: getReq.result.lastReceivedMessageTs,
+                    });
+                }
+                else {
+                    func(null);
+                }
+            }
+            catch (e) {
+                abortWithException(txn, e);
+            }
+        };
+    }
+    getAllEndToEndSessions(txn, func) {
+        const objectStore = txn.objectStore("sessions");
+        const getReq = objectStore.openCursor();
+        getReq.onsuccess = function () {
+            try {
+                const cursor = getReq.result;
+                if (cursor) {
+                    func(cursor.value);
+                    cursor.continue();
+                }
+                else {
+                    func(null);
+                }
+            }
+            catch (e) {
+                abortWithException(txn, e);
+            }
+        };
+    }
+    storeEndToEndSession(deviceKey, sessionId, sessionInfo, txn) {
+        const objectStore = txn.objectStore("sessions");
+        objectStore.put({
+            deviceKey,
+            sessionId,
+            session: sessionInfo.session,
+            lastReceivedMessageTs: sessionInfo.lastReceivedMessageTs,
+        });
+    }
+    storeEndToEndSessionProblem(deviceKey, type, fixed) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const txn = this.db.transaction("session_problems", "readwrite");
+            const objectStore = txn.objectStore("session_problems");
+            objectStore.put({
+                deviceKey,
+                type,
+                fixed,
+                time: Date.now(),
+            });
+            return promiseifyTxn(txn);
+        });
+    }
+    getEndToEndSessionProblem(deviceKey, timestamp) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let result;
+            const txn = this.db.transaction("session_problems", "readwrite");
+            const objectStore = txn.objectStore("session_problems");
+            const index = objectStore.index("deviceKey");
+            const req = index.getAll(deviceKey);
+            req.onsuccess = () => {
+                const problems = req.result;
+                if (!problems.length) {
+                    result = null;
+                    return;
+                }
+                problems.sort((a, b) => {
+                    return a.time - b.time;
+                });
+                const lastProblem = problems[problems.length - 1];
+                for (const problem of problems) {
+                    if (problem.time > timestamp) {
+                        result = Object.assign({}, problem, { fixed: lastProblem.fixed });
+                        return;
+                    }
+                }
+                if (lastProblem.fixed) {
+                    result = null;
+                }
+                else {
+                    result = lastProblem;
+                }
+            };
+            yield promiseifyTxn(txn);
+            return result;
+        });
+    }
+    // FIXME: we should probably prune this when devices get deleted
+    filterOutNotifiedErrorDevices(devices) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const txn = this.db.transaction("notified_error_devices", "readwrite");
+            const objectStore = txn.objectStore("notified_error_devices");
+            const ret = [];
+            yield Promise.all(devices.map((device) => {
+                return new Promise((resolve) => {
+                    const { userId, deviceInfo } = device;
+                    const getReq = objectStore.get([userId, deviceInfo.deviceId]);
+                    getReq.onsuccess = function () {
+                        if (!getReq.result) {
+                            objectStore.put({ userId, deviceId: deviceInfo.deviceId });
+                            ret.push(device);
+                        }
+                        resolve();
+                    };
+                });
+            }));
+            return ret;
+        });
+    }
+    // Inbound group sessions
+    getEndToEndInboundGroupSession(senderCurve25519Key, sessionId, txn, func) {
+        let session = false;
+        let withheld = false;
+        const objectStore = txn.objectStore("inbound_group_sessions");
+        const getReq = objectStore.get([senderCurve25519Key, sessionId]);
+        getReq.onsuccess = function () {
+            try {
+                if (getReq.result) {
+                    session = getReq.result.session;
+                }
+                else {
+                    session = null;
+                }
+                if (withheld !== false) {
+                    func(session, withheld);
+                }
+            }
+            catch (e) {
+                abortWithException(txn, e);
+            }
+        };
+        const withheldObjectStore = txn.objectStore("inbound_group_sessions_withheld");
+        const withheldGetReq = withheldObjectStore.get([senderCurve25519Key, sessionId]);
+        withheldGetReq.onsuccess = function () {
+            try {
+                if (withheldGetReq.result) {
+                    withheld = withheldGetReq.result.session;
+                }
+                else {
+                    withheld = null;
+                }
+                if (session !== false) {
+                    func(session, withheld);
+                }
+            }
+            catch (e) {
+                abortWithException(txn, e);
+            }
+        };
+    }
+    getAllEndToEndInboundGroupSessions(txn, func) {
+        const objectStore = txn.objectStore("inbound_group_sessions");
+        const getReq = objectStore.openCursor();
+        getReq.onsuccess = function () {
+            const cursor = getReq.result;
+            if (cursor) {
+                try {
+                    func({
+                        senderKey: cursor.value.senderCurve25519Key,
+                        sessionId: cursor.value.sessionId,
+                        sessionData: cursor.value.session,
+                    });
+                }
+                catch (e) {
+                    abortWithException(txn, e);
+                }
+                cursor.continue();
+            }
+            else {
+                try {
+                    func(null);
+                }
+                catch (e) {
+                    abortWithException(txn, e);
+                }
+            }
+        };
+    }
+    addEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
+        const objectStore = txn.objectStore("inbound_group_sessions");
+        const addReq = objectStore.add({
+            senderCurve25519Key, sessionId, session: sessionData,
+        });
+        addReq.onerror = (ev) => {
+            if (addReq.error.name === 'ConstraintError') {
+                // This stops the error from triggering the txn's onerror
+                ev.stopPropagation();
+                // ...and this stops it from aborting the transaction
+                ev.preventDefault();
+                logger_1.logger.log("Ignoring duplicate inbound group session: " +
+                    senderCurve25519Key + " / " + sessionId);
+            }
+            else {
+                abortWithException(txn, new Error("Failed to add inbound group session: " + addReq.error));
+            }
+        };
+    }
+    storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
+        const objectStore = txn.objectStore("inbound_group_sessions");
+        objectStore.put({
+            senderCurve25519Key, sessionId, session: sessionData,
+        });
+    }
+    storeEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId, sessionData, txn) {
+        const objectStore = txn.objectStore("inbound_group_sessions_withheld");
+        objectStore.put({
+            senderCurve25519Key, sessionId, session: sessionData,
+        });
+    }
+    getEndToEndDeviceData(txn, func) {
+        const objectStore = txn.objectStore("device_data");
+        const getReq = objectStore.get("-");
+        getReq.onsuccess = function () {
+            try {
+                func(getReq.result || null);
+            }
+            catch (e) {
+                abortWithException(txn, e);
+            }
+        };
+    }
+    storeEndToEndDeviceData(deviceData, txn) {
+        const objectStore = txn.objectStore("device_data");
+        objectStore.put(deviceData, "-");
+    }
+    storeEndToEndRoom(roomId, roomInfo, txn) {
+        const objectStore = txn.objectStore("rooms");
+        objectStore.put(roomInfo, roomId);
+    }
+    getEndToEndRooms(txn, func) {
+        const rooms = {};
+        const objectStore = txn.objectStore("rooms");
+        const getReq = objectStore.openCursor();
+        getReq.onsuccess = function () {
+            const cursor = getReq.result;
+            if (cursor) {
+                rooms[cursor.key] = cursor.value;
+                cursor.continue();
+            }
+            else {
+                try {
+                    func(rooms);
+                }
+                catch (e) {
+                    abortWithException(txn, e);
+                }
+            }
+        };
+    }
+    // session backups
+    getSessionsNeedingBackup(limit) {
+        return new Promise((resolve, reject) => {
+            const sessions = [];
+            const txn = this.db.transaction(["sessions_needing_backup", "inbound_group_sessions"], "readonly");
+            txn.onerror = reject;
+            txn.oncomplete = function () {
+                resolve(sessions);
+            };
+            const objectStore = txn.objectStore("sessions_needing_backup");
+            const sessionStore = txn.objectStore("inbound_group_sessions");
+            const getReq = objectStore.openCursor();
+            getReq.onsuccess = function () {
+                const cursor = getReq.result;
+                if (cursor) {
+                    const sessionGetReq = sessionStore.get(cursor.key);
+                    sessionGetReq.onsuccess = function () {
+                        sessions.push({
+                            senderKey: sessionGetReq.result.senderCurve25519Key,
+                            sessionId: sessionGetReq.result.sessionId,
+                            sessionData: sessionGetReq.result.session,
+                        });
+                    };
+                    if (!limit || sessions.length < limit) {
+                        cursor.continue();
+                    }
+                }
+            };
+        });
+    }
+    countSessionsNeedingBackup(txn) {
+        if (!txn) {
+            txn = this.db.transaction("sessions_needing_backup", "readonly");
+        }
+        const objectStore = txn.objectStore("sessions_needing_backup");
+        return new Promise((resolve, reject) => {
+            const req = objectStore.count();
+            req.onerror = reject;
+            req.onsuccess = () => resolve(req.result);
+        });
+    }
+    unmarkSessionsNeedingBackup(sessions, txn) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!txn) {
+                txn = this.db.transaction("sessions_needing_backup", "readwrite");
+            }
+            const objectStore = txn.objectStore("sessions_needing_backup");
+            yield Promise.all(sessions.map((session) => {
+                return new Promise((resolve, reject) => {
+                    const req = objectStore.delete([session.senderKey, session.sessionId]);
+                    req.onsuccess = resolve;
+                    req.onerror = reject;
+                });
+            }));
+        });
+    }
+    markSessionsNeedingBackup(sessions, txn) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!txn) {
+                txn = this.db.transaction("sessions_needing_backup", "readwrite");
+            }
+            const objectStore = txn.objectStore("sessions_needing_backup");
+            yield Promise.all(sessions.map((session) => {
+                return new Promise((resolve, reject) => {
+                    const req = objectStore.put({
+                        senderCurve25519Key: session.senderKey,
+                        sessionId: session.sessionId,
+                    });
+                    req.onsuccess = resolve;
+                    req.onerror = reject;
+                });
+            }));
+        });
+    }
+    addSharedHistoryInboundGroupSession(roomId, senderKey, sessionId, txn) {
+        if (!txn) {
+            txn = this.db.transaction("shared_history_inbound_group_sessions", "readwrite");
+        }
+        const objectStore = txn.objectStore("shared_history_inbound_group_sessions");
+        const req = objectStore.get([roomId]);
+        req.onsuccess = () => {
+            const { sessions } = req.result || { sessions: [] };
+            sessions.push([senderKey, sessionId]);
+            objectStore.put({ roomId, sessions });
+        };
+    }
+    getSharedHistoryInboundGroupSessions(roomId, txn) {
+        if (!txn) {
+            txn = this.db.transaction("shared_history_inbound_group_sessions", "readonly");
+        }
+        const objectStore = txn.objectStore("shared_history_inbound_group_sessions");
+        const req = objectStore.get([roomId]);
+        return new Promise((resolve, reject) => {
+            req.onsuccess = () => {
+                const { sessions } = req.result || { sessions: [] };
+                resolve(sessions);
+            };
+            req.onerror = reject;
+        });
+    }
+    doTxn(mode, stores, func, log = logger_1.logger) {
+        let startTime;
+        let description;
+        if (PROFILE_TRANSACTIONS) {
+            const txnId = this.nextTxnId++;
+            startTime = Date.now();
+            description = `${mode} crypto store transaction ${txnId} in ${stores}`;
+            log.debug(`Starting ${description}`);
+        }
+        const txn = this.db.transaction(stores, mode);
+        const promise = promiseifyTxn(txn);
+        const result = func(txn);
+        if (PROFILE_TRANSACTIONS) {
+            promise.then(() => {
+                const elapsedTime = Date.now() - startTime;
+                log.debug(`Finished ${description}, took ${elapsedTime} ms`);
+            }, () => {
+                const elapsedTime = Date.now() - startTime;
+                log.error(`Failed ${description}, took ${elapsedTime} ms`);
+            });
+        }
+        return promise.then(() => {
+            return result;
+        });
+    }
+}
+exports.Backend = Backend;
+function upgradeDatabase(db, oldVersion) {
+    logger_1.logger.log(`Upgrading IndexedDBCryptoStore from version ${oldVersion}`
+        + ` to ${exports.VERSION}`);
+    if (oldVersion < 1) { // The database did not previously exist.
+        createDatabase(db);
+    }
+    if (oldVersion < 2) {
+        db.createObjectStore("account");
+    }
+    if (oldVersion < 3) {
+        const sessionsStore = db.createObjectStore("sessions", {
+            keyPath: ["deviceKey", "sessionId"],
+        });
+        sessionsStore.createIndex("deviceKey", "deviceKey");
+    }
+    if (oldVersion < 4) {
+        db.createObjectStore("inbound_group_sessions", {
+            keyPath: ["senderCurve25519Key", "sessionId"],
+        });
+    }
+    if (oldVersion < 5) {
+        db.createObjectStore("device_data");
+    }
+    if (oldVersion < 6) {
+        db.createObjectStore("rooms");
+    }
+    if (oldVersion < 7) {
+        db.createObjectStore("sessions_needing_backup", {
+            keyPath: ["senderCurve25519Key", "sessionId"],
+        });
+    }
+    if (oldVersion < 8) {
+        db.createObjectStore("inbound_group_sessions_withheld", {
+            keyPath: ["senderCurve25519Key", "sessionId"],
+        });
+    }
+    if (oldVersion < 9) {
+        const problemsStore = db.createObjectStore("session_problems", {
+            keyPath: ["deviceKey", "time"],
+        });
+        problemsStore.createIndex("deviceKey", "deviceKey");
+        db.createObjectStore("notified_error_devices", {
+            keyPath: ["userId", "deviceId"],
+        });
+    }
+    if (oldVersion < 10) {
+        db.createObjectStore("shared_history_inbound_group_sessions", {
+            keyPath: ["roomId"],
+        });
+    }
+    // Expand as needed.
+}
+exports.upgradeDatabase = upgradeDatabase;
+function createDatabase(db) {
+    const outgoingRoomKeyRequestsStore = db.createObjectStore("outgoingRoomKeyRequests", { keyPath: "requestId" });
+    // we assume that the RoomKeyRequestBody will have room_id and session_id
+    // properties, to make the index efficient.
+    outgoingRoomKeyRequestsStore.createIndex("session", ["requestBody.room_id", "requestBody.session_id"]);
+    outgoingRoomKeyRequestsStore.createIndex("state", "state");
+}
+/*
+ * Aborts a transaction with a given exception
+ * The transaction promise will be rejected with this exception.
+ */
+function abortWithException(txn, e) {
+    // We cheekily stick our exception onto the transaction object here
+    // We could alternatively make the thing we pass back to the app
+    // an object containing the transaction and exception.
+    txn._mx_abortexception = e;
+    try {
+        txn.abort();
+    }
+    catch (e) {
+        // sometimes we won't be able to abort the transaction
+        // (ie. if it's aborted or completed)
+    }
+}
+function promiseifyTxn(txn) {
+    return new Promise((resolve, reject) => {
+        txn.oncomplete = () => {
+            if (txn._mx_abortexception !== undefined) {
+                reject(txn._mx_abortexception);
+            }
+            resolve(null);
+        };
+        txn.onerror = (event) => {
+            if (txn._mx_abortexception !== undefined) {
+                reject(txn._mx_abortexception);
+            }
+            else {
+                logger_1.logger.log("Error performing indexeddb txn", event);
+                reject(txn.error);
+            }
+        };
+        txn.onabort = (event) => {
+            if (txn._mx_abortexception !== undefined) {
+                reject(txn._mx_abortexception);
+            }
+            else {
+                logger_1.logger.log("Error performing indexeddb txn", event);
+                reject(txn.error);
+            }
+        };
+    });
+}
 
-  }, {
-    key: "deleteOutgoingRoomKeyRequest",
-    value: function deleteOutgoingRoomKeyRequest(requestId, expectedState) {
-      return this._backend.deleteOutgoingRoomKeyRequest(requestId, expectedState);
-    } // Olm Account
+},{"../../logger":118,"../../utils":149}],100:[function(require,module,exports){
+(function (global){(function (){
+"use strict";
+/*
+Copyright 2017 - 2021 The Matrix.org Foundation C.I.C.
 
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.IndexedDBCryptoStore = void 0;
+const logger_1 = require("../../logger");
+const localStorage_crypto_store_1 = require("./localStorage-crypto-store");
+const memory_crypto_store_1 = require("./memory-crypto-store");
+const IndexedDBCryptoStoreBackend = __importStar(require("./indexeddb-crypto-store-backend"));
+const errors_1 = require("../../errors");
+const IndexedDBHelpers = __importStar(require("../../indexeddb-helpers"));
+/**
+ * Internal module. indexeddb storage for e2e.
+ *
+ * @module
+ */
+/**
+ * An implementation of CryptoStore, which is normally backed by an indexeddb,
+ * but with fallback to MemoryCryptoStore.
+ *
+ * @implements {module:crypto/store/base~CryptoStore}
+ */
+class IndexedDBCryptoStore {
+    /**
+     * Create a new IndexedDBCryptoStore
+     *
+     * @param {IDBFactory} indexedDB  global indexedDB instance
+     * @param {string} dbName   name of db to connect to
+     */
+    constructor(indexedDB, dbName) {
+        this.indexedDB = indexedDB;
+        this.dbName = dbName;
+        this.backendPromise = null;
+        this.backend = null;
+    }
+    static exists(indexedDB, dbName) {
+        return IndexedDBHelpers.exists(indexedDB, dbName);
+    }
+    /**
+     * Ensure the database exists and is up-to-date, or fall back to
+     * a local storage or in-memory store.
+     *
+     * This must be called before the store can be used.
+     *
+     * @return {Promise} resolves to either an IndexedDBCryptoStoreBackend.Backend,
+     * or a MemoryCryptoStore
+     */
+    startup() {
+        if (this.backendPromise) {
+            return this.backendPromise;
+        }
+        this.backendPromise = new Promise((resolve, reject) => {
+            if (!this.indexedDB) {
+                reject(new Error('no indexeddb support available'));
+                return;
+            }
+            logger_1.logger.log(`connecting to indexeddb ${this.dbName}`);
+            const req = this.indexedDB.open(this.dbName, IndexedDBCryptoStoreBackend.VERSION);
+            req.onupgradeneeded = (ev) => {
+                const db = req.result;
+                const oldVersion = ev.oldVersion;
+                IndexedDBCryptoStoreBackend.upgradeDatabase(db, oldVersion);
+            };
+            req.onblocked = () => {
+                logger_1.logger.log(`can't yet open IndexedDBCryptoStore because it is open elsewhere`);
+            };
+            req.onerror = (ev) => {
+                logger_1.logger.log("Error connecting to indexeddb", ev);
+                reject(req.error);
+            };
+            req.onsuccess = () => {
+                const db = req.result;
+                logger_1.logger.log(`connected to indexeddb ${this.dbName}`);
+                resolve(new IndexedDBCryptoStoreBackend.Backend(db));
+            };
+        }).then((backend) => {
+            // Edge has IndexedDB but doesn't support compund keys which we use fairly extensively.
+            // Try a dummy query which will fail if the browser doesn't support compund keys, so
+            // we can fall back to a different backend.
+            return backend.doTxn('readonly', [
+                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS,
+                IndexedDBCryptoStore.STORE_INBOUND_GROUP_SESSIONS_WITHHELD,
+            ], (txn) => {
+                backend.getEndToEndInboundGroupSession('', '', txn, () => { });
+            }).then(() => backend);
+        }).catch((e) => {
+            if (e.name === 'VersionError') {
+                logger_1.logger.warn("Crypto DB is too new for us to use!", e);
+                // don't fall back to a different store: the user has crypto data
+                // in this db so we should use it or nothing at all.
+                throw new errors_1.InvalidCryptoStoreError(errors_1.InvalidCryptoStoreError.TOO_NEW);
+            }
+            logger_1.logger.warn(`unable to connect to indexeddb ${this.dbName}` +
+                `: falling back to localStorage store: ${e}`);
+            try {
+                return new localStorage_crypto_store_1.LocalStorageCryptoStore(global.localStorage);
+            }
+            catch (e) {
+                logger_1.logger.warn(`unable to open localStorage: falling back to in-memory store: ${e}`);
+                return new memory_crypto_store_1.MemoryCryptoStore();
+            }
+        }).then(backend => {
+            this.backend = backend;
+            return backend;
+        });
+        return this.backendPromise;
+    }
+    /**
+     * Delete all data from this store.
+     *
+     * @returns {Promise} resolves when the store has been cleared.
+     */
+    deleteAllData() {
+        return new Promise((resolve, reject) => {
+            if (!this.indexedDB) {
+                reject(new Error('no indexeddb support available'));
+                return;
+            }
+            logger_1.logger.log(`Removing indexeddb instance: ${this.dbName}`);
+            const req = this.indexedDB.deleteDatabase(this.dbName);
+            req.onblocked = () => {
+                logger_1.logger.log(`can't yet delete IndexedDBCryptoStore because it is open elsewhere`);
+            };
+            req.onerror = (ev) => {
+                logger_1.logger.log("Error deleting data from indexeddb", ev);
+                reject(req.error);
+            };
+            req.onsuccess = () => {
+                logger_1.logger.log(`Removed indexeddb instance: ${this.dbName}`);
+                resolve();
+            };
+        }).catch((e) => {
+            // in firefox, with indexedDB disabled, this fails with a
+            // DOMError. We treat this as non-fatal, so that people can
+            // still use the app.
+            logger_1.logger.warn(`unable to delete IndexedDBCryptoStore: ${e}`);
+        });
+    }
+    /**
+     * Look for an existing outgoing room key request, and if none is found,
+     * add a new one
+     *
+     * @param {module:crypto/store/base~OutgoingRoomKeyRequest} request
+     *
+     * @returns {Promise} resolves to
+     *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}: either the
+     *    same instance as passed in, or the existing one.
+     */
+    getOrAddOutgoingRoomKeyRequest(request) {
+        return this.backend.getOrAddOutgoingRoomKeyRequest(request);
+    }
+    /**
+     * Look for an existing room key request
+     *
+     * @param {module:crypto~RoomKeyRequestBody} requestBody
+     *    existing request to look for
+     *
+     * @return {Promise} resolves to the matching
+     *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}, or null if
+     *    not found
+     */
+    getOutgoingRoomKeyRequest(requestBody) {
+        return this.backend.getOutgoingRoomKeyRequest(requestBody);
+    }
+    /**
+     * Look for room key requests by state
+     *
+     * @param {Array<Number>} wantedStates list of acceptable states
+     *
+     * @return {Promise} resolves to the a
+     *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}, or null if
+     *    there are no pending requests in those states. If there are multiple
+     *    requests in those states, an arbitrary one is chosen.
+     */
+    getOutgoingRoomKeyRequestByState(wantedStates) {
+        return this.backend.getOutgoingRoomKeyRequestByState(wantedStates);
+    }
+    /**
+     * Look for room key requests by state –
+     * unlike above, return a list of all entries in one state.
+     *
+     * @param {Number} wantedState
+     * @return {Promise<Array<*>>} Returns an array of requests in the given state
+     */
+    getAllOutgoingRoomKeyRequestsByState(wantedState) {
+        return this.backend.getAllOutgoingRoomKeyRequestsByState(wantedState);
+    }
+    /**
+     * Look for room key requests by target device and state
+     *
+     * @param {string} userId Target user ID
+     * @param {string} deviceId Target device ID
+     * @param {Array<Number>} wantedStates list of acceptable states
+     *
+     * @return {Promise} resolves to a list of all the
+     *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}
+     */
+    getOutgoingRoomKeyRequestsByTarget(userId, deviceId, wantedStates) {
+        return this.backend.getOutgoingRoomKeyRequestsByTarget(userId, deviceId, wantedStates);
+    }
+    /**
+     * Look for an existing room key request by id and state, and update it if
+     * found
+     *
+     * @param {string} requestId      ID of request to update
+     * @param {number} expectedState  state we expect to find the request in
+     * @param {Object} updates        name/value map of updates to apply
+     *
+     * @returns {Promise} resolves to
+     *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}
+     *    updated request, or null if no matching row was found
+     */
+    updateOutgoingRoomKeyRequest(requestId, expectedState, updates) {
+        return this.backend.updateOutgoingRoomKeyRequest(requestId, expectedState, updates);
+    }
+    /**
+     * Look for an existing room key request by id and state, and delete it if
+     * found
+     *
+     * @param {string} requestId      ID of request to update
+     * @param {number} expectedState  state we expect to find the request in
+     *
+     * @returns {Promise} resolves once the operation is completed
+     */
+    deleteOutgoingRoomKeyRequest(requestId, expectedState) {
+        return this.backend.deleteOutgoingRoomKeyRequest(requestId, expectedState);
+    }
+    // Olm Account
     /*
      * Get the account pickle from the store.
      * This requires an active transaction. See doTxn().
@@ -35999,24 +36984,18 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {*} txn An active transaction. See doTxn().
      * @param {function(string)} func Called with the account pickle
      */
-
-  }, {
-    key: "getAccount",
-    value: function getAccount(txn, func) {
-      this._backend.getAccount(txn, func);
+    getAccount(txn, func) {
+        this.backend.getAccount(txn, func);
     }
     /**
      * Write the account pickle to the store.
      * This requires an active transaction. See doTxn().
      *
      * @param {*} txn An active transaction. See doTxn().
-     * @param {string} newData The new account pickle to store.
+     * @param {string} accountPickle The new account pickle to store.
      */
-
-  }, {
-    key: "storeAccount",
-    value: function storeAccount(txn, newData) {
-      this._backend.storeAccount(txn, newData);
+    storeAccount(txn, accountPickle) {
+        this.backend.storeAccount(txn, accountPickle);
     }
     /**
      * Get the public part of the cross-signing keys (eg. self-signing key,
@@ -36026,22 +37005,16 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {function(string)} func Called with the account keys object:
      *        { key_type: base64 encoded seed } where key type = user_signing_key_seed or self_signing_key_seed
      */
-
-  }, {
-    key: "getCrossSigningKeys",
-    value: function getCrossSigningKeys(txn, func) {
-      this._backend.getCrossSigningKeys(txn, func);
+    getCrossSigningKeys(txn, func) {
+        this.backend.getCrossSigningKeys(txn, func);
     }
     /**
      * @param {*} txn An active transaction. See doTxn().
      * @param {function(string)} func Called with the private key
      * @param {string} type A key type
      */
-
-  }, {
-    key: "getSecretStorePrivateKey",
-    value: function getSecretStorePrivateKey(txn, func, type) {
-      this._backend.getSecretStorePrivateKey(txn, func, type);
+    getSecretStorePrivateKey(txn, func, type) {
+        this.backend.getSecretStorePrivateKey(txn, func, type);
     }
     /**
      * Write the cross-signing keys back to the store
@@ -36049,11 +37022,8 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {*} txn An active transaction. See doTxn().
      * @param {string} keys keys object as getCrossSigningKeys()
      */
-
-  }, {
-    key: "storeCrossSigningKeys",
-    value: function storeCrossSigningKeys(txn, keys) {
-      this._backend.storeCrossSigningKeys(txn, keys);
+    storeCrossSigningKeys(txn, keys) {
+        this.backend.storeCrossSigningKeys(txn, keys);
     }
     /**
      * Write the cross-signing private keys back to the store
@@ -36062,23 +37032,17 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {string} type The type of cross-signing private key to store
      * @param {string} key keys object as getCrossSigningKeys()
      */
-
-  }, {
-    key: "storeSecretStorePrivateKey",
-    value: function storeSecretStorePrivateKey(txn, type, key) {
-      this._backend.storeSecretStorePrivateKey(txn, type, key);
-    } // Olm sessions
-
+    storeSecretStorePrivateKey(txn, type, key) {
+        this.backend.storeSecretStorePrivateKey(txn, type, key);
+    }
+    // Olm sessions
     /**
      * Returns the number of end-to-end sessions in the store
      * @param {*} txn An active transaction. See doTxn().
      * @param {function(int)} func Called with the count of sessions
      */
-
-  }, {
-    key: "countEndToEndSessions",
-    value: function countEndToEndSessions(txn, func) {
-      this._backend.countEndToEndSessions(txn, func);
+    countEndToEndSessions(txn, func) {
+        this.backend.countEndToEndSessions(txn, func);
     }
     /**
      * Retrieve a specific end-to-end session between the logged-in user
@@ -36092,11 +37056,8 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      *     timestamp in milliseconds at which the session last received
      *     a message.
      */
-
-  }, {
-    key: "getEndToEndSession",
-    value: function getEndToEndSession(deviceKey, sessionId, txn, func) {
-      this._backend.getEndToEndSession(deviceKey, sessionId, txn, func);
+    getEndToEndSession(deviceKey, sessionId, txn, func) {
+        this.backend.getEndToEndSession(deviceKey, sessionId, txn, func);
     }
     /**
      * Retrieve the end-to-end sessions between the logged-in user and another
@@ -36109,11 +37070,8 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      *     timestamp in milliseconds at which the session last received
      *     a message.
      */
-
-  }, {
-    key: "getEndToEndSessions",
-    value: function getEndToEndSessions(deviceKey, txn, func) {
-      this._backend.getEndToEndSessions(deviceKey, txn, func);
+    getEndToEndSessions(deviceKey, txn, func) {
+        this.backend.getEndToEndSessions(deviceKey, txn, func);
     }
     /**
      * Retrieve all end-to-end sessions
@@ -36122,11 +37080,8 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      *     an object with, deviceKey, lastReceivedMessageTs, sessionId
      *     and session keys.
      */
-
-  }, {
-    key: "getAllEndToEndSessions",
-    value: function getAllEndToEndSessions(txn, func) {
-      this._backend.getAllEndToEndSessions(txn, func);
+    getAllEndToEndSessions(txn, func) {
+        this.backend.getAllEndToEndSessions(txn, func);
     }
     /**
      * Store a session between the logged-in user and another device
@@ -36135,28 +37090,19 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {string} sessionInfo Session information object
      * @param {*} txn An active transaction. See doTxn().
      */
-
-  }, {
-    key: "storeEndToEndSession",
-    value: function storeEndToEndSession(deviceKey, sessionId, sessionInfo, txn) {
-      this._backend.storeEndToEndSession(deviceKey, sessionId, sessionInfo, txn);
+    storeEndToEndSession(deviceKey, sessionId, sessionInfo, txn) {
+        this.backend.storeEndToEndSession(deviceKey, sessionId, sessionInfo, txn);
     }
-  }, {
-    key: "storeEndToEndSessionProblem",
-    value: function storeEndToEndSessionProblem(deviceKey, type, fixed) {
-      return this._backend.storeEndToEndSessionProblem(deviceKey, type, fixed);
+    storeEndToEndSessionProblem(deviceKey, type, fixed) {
+        return this.backend.storeEndToEndSessionProblem(deviceKey, type, fixed);
     }
-  }, {
-    key: "getEndToEndSessionProblem",
-    value: function getEndToEndSessionProblem(deviceKey, timestamp) {
-      return this._backend.getEndToEndSessionProblem(deviceKey, timestamp);
+    getEndToEndSessionProblem(deviceKey, timestamp) {
+        return this.backend.getEndToEndSessionProblem(deviceKey, timestamp);
     }
-  }, {
-    key: "filterOutNotifiedErrorDevices",
-    value: function filterOutNotifiedErrorDevices(devices) {
-      return this._backend.filterOutNotifiedErrorDevices(devices);
-    } // Inbound group sessions
-
+    filterOutNotifiedErrorDevices(devices) {
+        return this.backend.filterOutNotifiedErrorDevices(devices);
+    }
+    // Inbound group sessions
     /**
      * Retrieve the end-to-end inbound group session for a given
      * server key and session ID
@@ -36166,11 +37112,8 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {function(object)} func Called with A map from sessionId
      *     to Base64 end-to-end session.
      */
-
-  }, {
-    key: "getEndToEndInboundGroupSession",
-    value: function getEndToEndInboundGroupSession(senderCurve25519Key, sessionId, txn, func) {
-      this._backend.getEndToEndInboundGroupSession(senderCurve25519Key, sessionId, txn, func);
+    getEndToEndInboundGroupSession(senderCurve25519Key, sessionId, txn, func) {
+        this.backend.getEndToEndInboundGroupSession(senderCurve25519Key, sessionId, txn, func);
     }
     /**
      * Fetches all inbound group sessions in the store
@@ -36179,11 +37122,8 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      *     in the store with an object having keys {senderKey, sessionId,
      *     sessionData}, then once with null to indicate the end of the list.
      */
-
-  }, {
-    key: "getAllEndToEndInboundGroupSessions",
-    value: function getAllEndToEndInboundGroupSessions(txn, func) {
-      this._backend.getAllEndToEndInboundGroupSessions(txn, func);
+    getAllEndToEndInboundGroupSessions(txn, func) {
+        this.backend.getAllEndToEndInboundGroupSessions(txn, func);
     }
     /**
      * Adds an end-to-end inbound group session to the store.
@@ -36194,11 +37134,8 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {object} sessionData The session data structure
      * @param {*} txn An active transaction. See doTxn().
      */
-
-  }, {
-    key: "addEndToEndInboundGroupSession",
-    value: function addEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
-      this._backend.addEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn);
+    addEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
+        this.backend.addEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn);
     }
     /**
      * Writes an end-to-end inbound group session to the store.
@@ -36209,18 +37146,13 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {object} sessionData The session data structure
      * @param {*} txn An active transaction. See doTxn().
      */
-
-  }, {
-    key: "storeEndToEndInboundGroupSession",
-    value: function storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
-      this._backend.storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn);
+    storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
+        this.backend.storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn);
     }
-  }, {
-    key: "storeEndToEndInboundGroupSessionWithheld",
-    value: function storeEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId, sessionData, txn) {
-      this._backend.storeEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId, sessionData, txn);
-    } // End-to-end device tracking
-
+    storeEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId, sessionData, txn) {
+        this.backend.storeEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId, sessionData, txn);
+    }
+    // End-to-end device tracking
     /**
      * Store the state of all tracked devices
      * This contains devices for each user, a tracking state for each user
@@ -36231,11 +37163,8 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {Object} deviceData
      * @param {*} txn An active transaction. See doTxn().
      */
-
-  }, {
-    key: "storeEndToEndDeviceData",
-    value: function storeEndToEndDeviceData(deviceData, txn) {
-      this._backend.storeEndToEndDeviceData(deviceData, txn);
+    storeEndToEndDeviceData(deviceData, txn) {
+        this.backend.storeEndToEndDeviceData(deviceData, txn);
     }
     /**
      * Get the state of all tracked devices
@@ -36244,59 +37173,44 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {function(Object)} func Function called with the
      *     device data
      */
-
-  }, {
-    key: "getEndToEndDeviceData",
-    value: function getEndToEndDeviceData(txn, func) {
-      this._backend.getEndToEndDeviceData(txn, func);
-    } // End to End Rooms
-
+    getEndToEndDeviceData(txn, func) {
+        this.backend.getEndToEndDeviceData(txn, func);
+    }
+    // End to End Rooms
     /**
      * Store the end-to-end state for a room.
      * @param {string} roomId The room's ID.
      * @param {object} roomInfo The end-to-end info for the room.
      * @param {*} txn An active transaction. See doTxn().
      */
-
-  }, {
-    key: "storeEndToEndRoom",
-    value: function storeEndToEndRoom(roomId, roomInfo, txn) {
-      this._backend.storeEndToEndRoom(roomId, roomInfo, txn);
+    storeEndToEndRoom(roomId, roomInfo, txn) {
+        this.backend.storeEndToEndRoom(roomId, roomInfo, txn);
     }
     /**
      * Get an object of roomId->roomInfo for all e2e rooms in the store
      * @param {*} txn An active transaction. See doTxn().
      * @param {function(Object)} func Function called with the end to end encrypted rooms
      */
-
-  }, {
-    key: "getEndToEndRooms",
-    value: function getEndToEndRooms(txn, func) {
-      this._backend.getEndToEndRooms(txn, func);
-    } // session backups
-
+    getEndToEndRooms(txn, func) {
+        this.backend.getEndToEndRooms(txn, func);
+    }
+    // session backups
     /**
      * Get the inbound group sessions that need to be backed up.
-     * @param {integer} limit The maximum number of sessions to retrieve.  0
+     * @param {number} limit The maximum number of sessions to retrieve.  0
      * for no limit.
      * @returns {Promise} resolves to an array of inbound group sessions
      */
-
-  }, {
-    key: "getSessionsNeedingBackup",
-    value: function getSessionsNeedingBackup(limit) {
-      return this._backend.getSessionsNeedingBackup(limit);
+    getSessionsNeedingBackup(limit) {
+        return this.backend.getSessionsNeedingBackup(limit);
     }
     /**
      * Count the inbound group sessions that need to be backed up.
      * @param {*} txn An active transaction. See doTxn(). (optional)
      * @returns {Promise} resolves to the number of sessions
      */
-
-  }, {
-    key: "countSessionsNeedingBackup",
-    value: function countSessionsNeedingBackup(txn) {
-      return this._backend.countSessionsNeedingBackup(txn);
+    countSessionsNeedingBackup(txn) {
+        return this.backend.countSessionsNeedingBackup(txn);
     }
     /**
      * Unmark sessions as needing to be backed up.
@@ -36304,11 +37218,8 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {*} txn An active transaction. See doTxn(). (optional)
      * @returns {Promise} resolves when the sessions are unmarked
      */
-
-  }, {
-    key: "unmarkSessionsNeedingBackup",
-    value: function unmarkSessionsNeedingBackup(sessions, txn) {
-      return this._backend.unmarkSessionsNeedingBackup(sessions, txn);
+    unmarkSessionsNeedingBackup(sessions, txn) {
+        return this.backend.unmarkSessionsNeedingBackup(sessions, txn);
     }
     /**
      * Mark sessions as needing to be backed up.
@@ -36316,11 +37227,8 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {*} txn An active transaction. See doTxn(). (optional)
      * @returns {Promise} resolves when the sessions are marked
      */
-
-  }, {
-    key: "markSessionsNeedingBackup",
-    value: function markSessionsNeedingBackup(sessions, txn) {
-      return this._backend.markSessionsNeedingBackup(sessions, txn);
+    markSessionsNeedingBackup(sessions, txn) {
+        return this.backend.markSessionsNeedingBackup(sessions, txn);
     }
     /**
      * Add a shared-history group session for a room.
@@ -36329,11 +37237,8 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {string} sessionId The ID of the session
      * @param {*} txn An active transaction. See doTxn(). (optional)
      */
-
-  }, {
-    key: "addSharedHistoryInboundGroupSession",
-    value: function addSharedHistoryInboundGroupSession(roomId, senderKey, sessionId, txn) {
-      this._backend.addSharedHistoryInboundGroupSession(roomId, senderKey, sessionId, txn);
+    addSharedHistoryInboundGroupSession(roomId, senderKey, sessionId, txn) {
+        this.backend.addSharedHistoryInboundGroupSession(roomId, senderKey, sessionId, txn);
     }
     /**
      * Get the shared-history group session for a room.
@@ -36341,11 +37246,8 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      * @param {*} txn An active transaction. See doTxn(). (optional)
      * @returns {Promise} Resolves to an array of [senderKey, sessionId]
      */
-
-  }, {
-    key: "getSharedHistoryInboundGroupSessions",
-    value: function getSharedHistoryInboundGroupSessions(roomId, txn) {
-      return this._backend.getSharedHistoryInboundGroupSessions(roomId, txn);
+    getSharedHistoryInboundGroupSessions(roomId, txn) {
+        return this.backend.getSharedHistoryInboundGroupSessions(roomId, txn);
     }
     /**
      * Perform a transaction on the crypto store. Any store methods
@@ -36369,21 +37271,10 @@ var IndexedDBCryptoStore = /*#__PURE__*/function () {
      *     reject with that exception. On synchronous backends, the
      *     exception will propagate to the caller of the getFoo method.
      */
-
-  }, {
-    key: "doTxn",
-    value: function doTxn(mode, stores, func, log) {
-      return this._backend.doTxn(mode, stores, func, log);
+    doTxn(mode, stores, func, log) {
+        return this.backend.doTxn(mode, stores, func, log);
     }
-  }], [{
-    key: "exists",
-    value: function exists(indexedDB, dbName) {
-      return IndexedDBHelpers.exists(indexedDB, dbName);
-    }
-  }]);
-  return IndexedDBCryptoStore;
-}();
-
+}
 exports.IndexedDBCryptoStore = IndexedDBCryptoStore;
 IndexedDBCryptoStore.STORE_ACCOUNT = 'account';
 IndexedDBCryptoStore.STORE_SESSIONS = 'sessions';
@@ -36396,48 +37287,36 @@ IndexedDBCryptoStore.STORE_BACKUP = 'sessions_needing_backup';
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../../errors":99,"../../indexeddb-helpers":104,"../../logger":106,"./indexeddb-crypto-store-backend":87,"./localStorage-crypto-store":89,"./memory-crypto-store":90,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/interopRequireWildcard":13}],89:[function(require,module,exports){
+},{"../../errors":111,"../../indexeddb-helpers":116,"../../logger":118,"./indexeddb-crypto-store-backend":99,"./localStorage-crypto-store":101,"./memory-crypto-store":102}],101:[function(require,module,exports){
 "use strict";
+/*
+Copyright 2017 - 2021 The Matrix.org Foundation C.I.C.
 
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.LocalStorageCryptoStore = void 0;
-
-var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
-
-var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
-
-var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
-
-var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
-
-var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
-
-var _createClass2 = _interopRequireDefault(require("@babel/runtime/helpers/createClass"));
-
-var _inherits2 = _interopRequireDefault(require("@babel/runtime/helpers/inherits"));
-
-var _possibleConstructorReturn2 = _interopRequireDefault(require("@babel/runtime/helpers/possibleConstructorReturn"));
-
-var _getPrototypeOf2 = _interopRequireDefault(require("@babel/runtime/helpers/getPrototypeOf"));
-
-var _logger = require("../../logger");
-
-var _memoryCryptoStore = require("./memory-crypto-store");
-
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
-
-function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
-
+const logger_1 = require("../../logger");
+const memory_crypto_store_1 = require("./memory-crypto-store");
 /**
  * Internal module. Partial localStorage backed storage for e2e.
  * This is not a full crypto store, just the in-memory store with
@@ -36447,664 +37326,390 @@ function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Re
  *
  * @module
  */
-var E2E_PREFIX = "crypto.";
-var KEY_END_TO_END_ACCOUNT = E2E_PREFIX + "account";
-var KEY_CROSS_SIGNING_KEYS = E2E_PREFIX + "cross_signing_keys";
-var KEY_NOTIFIED_ERROR_DEVICES = E2E_PREFIX + "notified_error_devices";
-var KEY_DEVICE_DATA = E2E_PREFIX + "device_data";
-var KEY_INBOUND_SESSION_PREFIX = E2E_PREFIX + "inboundgroupsessions/";
-var KEY_INBOUND_SESSION_WITHHELD_PREFIX = E2E_PREFIX + "inboundgroupsessions.withheld/";
-var KEY_ROOMS_PREFIX = E2E_PREFIX + "rooms/";
-var KEY_SESSIONS_NEEDING_BACKUP = E2E_PREFIX + "sessionsneedingbackup";
-
+const E2E_PREFIX = "crypto.";
+const KEY_END_TO_END_ACCOUNT = E2E_PREFIX + "account";
+const KEY_CROSS_SIGNING_KEYS = E2E_PREFIX + "cross_signing_keys";
+const KEY_NOTIFIED_ERROR_DEVICES = E2E_PREFIX + "notified_error_devices";
+const KEY_DEVICE_DATA = E2E_PREFIX + "device_data";
+const KEY_INBOUND_SESSION_PREFIX = E2E_PREFIX + "inboundgroupsessions/";
+const KEY_INBOUND_SESSION_WITHHELD_PREFIX = E2E_PREFIX + "inboundgroupsessions.withheld/";
+const KEY_ROOMS_PREFIX = E2E_PREFIX + "rooms/";
+const KEY_SESSIONS_NEEDING_BACKUP = E2E_PREFIX + "sessionsneedingbackup";
 function keyEndToEndSessions(deviceKey) {
-  return E2E_PREFIX + "sessions/" + deviceKey;
+    return E2E_PREFIX + "sessions/" + deviceKey;
 }
-
 function keyEndToEndSessionProblems(deviceKey) {
-  return E2E_PREFIX + "session.problems/" + deviceKey;
+    return E2E_PREFIX + "session.problems/" + deviceKey;
 }
-
 function keyEndToEndInboundGroupSession(senderKey, sessionId) {
-  return KEY_INBOUND_SESSION_PREFIX + senderKey + "/" + sessionId;
+    return KEY_INBOUND_SESSION_PREFIX + senderKey + "/" + sessionId;
 }
-
 function keyEndToEndInboundGroupSessionWithheld(senderKey, sessionId) {
-  return KEY_INBOUND_SESSION_WITHHELD_PREFIX + senderKey + "/" + sessionId;
+    return KEY_INBOUND_SESSION_WITHHELD_PREFIX + senderKey + "/" + sessionId;
 }
-
 function keyEndToEndRoomsPrefix(roomId) {
-  return KEY_ROOMS_PREFIX + roomId;
+    return KEY_ROOMS_PREFIX + roomId;
 }
 /**
  * @implements {module:crypto/store/base~CryptoStore}
  */
-
-
-var LocalStorageCryptoStore = /*#__PURE__*/function (_MemoryCryptoStore) {
-  (0, _inherits2["default"])(LocalStorageCryptoStore, _MemoryCryptoStore);
-
-  var _super = _createSuper(LocalStorageCryptoStore);
-
-  function LocalStorageCryptoStore(webStore) {
-    var _this;
-
-    (0, _classCallCheck2["default"])(this, LocalStorageCryptoStore);
-    _this = _super.call(this);
-    _this.store = webStore;
-    return _this;
-  }
-
-  (0, _createClass2["default"])(LocalStorageCryptoStore, [{
-    key: "countEndToEndSessions",
+class LocalStorageCryptoStore extends memory_crypto_store_1.MemoryCryptoStore {
+    constructor(store) {
+        super();
+        this.store = store;
+    }
+    static exists(store) {
+        const length = store.length;
+        for (let i = 0; i < length; i++) {
+            if (store.key(i).startsWith(E2E_PREFIX)) {
+                return true;
+            }
+        }
+        return false;
+    }
     // Olm Sessions
-    value: function countEndToEndSessions(txn, func) {
-      var count = 0;
-
-      for (var i = 0; i < this.store.length; ++i) {
-        if (this.store.key(i).startsWith(keyEndToEndSessions(''))) ++count;
-      }
-
-      func(count);
-    }
-  }, {
-    key: "_getEndToEndSessions",
-    value: function _getEndToEndSessions(deviceKey, txn, func) {
-      var sessions = getJsonItem(this.store, keyEndToEndSessions(deviceKey));
-      var fixedSessions = {}; // fix up any old sessions to be objects rather than just the base64 pickle
-
-      for (var _i = 0, _Object$entries = Object.entries(sessions || {}); _i < _Object$entries.length; _i++) {
-        var _Object$entries$_i = (0, _slicedToArray2["default"])(_Object$entries[_i], 2),
-            sid = _Object$entries$_i[0],
-            val = _Object$entries$_i[1];
-
-        if (typeof val === 'string') {
-          fixedSessions[sid] = {
-            session: val
-          };
-        } else {
-          fixedSessions[sid] = val;
+    countEndToEndSessions(txn, func) {
+        let count = 0;
+        for (let i = 0; i < this.store.length; ++i) {
+            if (this.store.key(i).startsWith(keyEndToEndSessions('')))
+                ++count;
         }
-      }
-
-      return fixedSessions;
+        func(count);
     }
-  }, {
-    key: "getEndToEndSession",
-    value: function getEndToEndSession(deviceKey, sessionId, txn, func) {
-      var sessions = this._getEndToEndSessions(deviceKey);
-
-      func(sessions[sessionId] || {});
-    }
-  }, {
-    key: "getEndToEndSessions",
-    value: function getEndToEndSessions(deviceKey, txn, func) {
-      func(this._getEndToEndSessions(deviceKey) || {});
-    }
-  }, {
-    key: "getAllEndToEndSessions",
-    value: function getAllEndToEndSessions(txn, func) {
-      for (var i = 0; i < this.store.length; ++i) {
-        if (this.store.key(i).startsWith(keyEndToEndSessions(''))) {
-          var deviceKey = this.store.key(i).split('/')[1];
-
-          for (var _i2 = 0, _Object$values = Object.values(this._getEndToEndSessions(deviceKey)); _i2 < _Object$values.length; _i2++) {
-            var sess = _Object$values[_i2];
-            func(sess);
-          }
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    _getEndToEndSessions(deviceKey) {
+        const sessions = getJsonItem(this.store, keyEndToEndSessions(deviceKey));
+        const fixedSessions = {};
+        // fix up any old sessions to be objects rather than just the base64 pickle
+        for (const [sid, val] of Object.entries(sessions || {})) {
+            if (typeof val === 'string') {
+                fixedSessions[sid] = {
+                    session: val,
+                };
+            }
+            else {
+                fixedSessions[sid] = val;
+            }
         }
-      }
+        return fixedSessions;
     }
-  }, {
-    key: "storeEndToEndSession",
-    value: function storeEndToEndSession(deviceKey, sessionId, sessionInfo, txn) {
-      var sessions = this._getEndToEndSessions(deviceKey) || {};
-      sessions[sessionId] = sessionInfo;
-      setJsonItem(this.store, keyEndToEndSessions(deviceKey), sessions);
+    getEndToEndSession(deviceKey, sessionId, txn, func) {
+        const sessions = this._getEndToEndSessions(deviceKey);
+        func(sessions[sessionId] || {});
     }
-  }, {
-    key: "storeEndToEndSessionProblem",
-    value: function () {
-      var _storeEndToEndSessionProblem = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(deviceKey, type, fixed) {
-        var key, problems;
-        return _regenerator["default"].wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                key = keyEndToEndSessionProblems(deviceKey);
-                problems = getJsonItem(this.store, key) || [];
-                problems.push({
-                  type: type,
-                  fixed: fixed,
-                  time: Date.now()
-                });
-                problems.sort(function (a, b) {
-                  return a.time - b.time;
-                });
-                setJsonItem(this.store, key, problems);
-
-              case 5:
-              case "end":
-                return _context.stop();
+    getEndToEndSessions(deviceKey, txn, func) {
+        func(this._getEndToEndSessions(deviceKey) || {});
+    }
+    getAllEndToEndSessions(txn, func) {
+        for (let i = 0; i < this.store.length; ++i) {
+            if (this.store.key(i).startsWith(keyEndToEndSessions(''))) {
+                const deviceKey = this.store.key(i).split('/')[1];
+                for (const sess of Object.values(this._getEndToEndSessions(deviceKey))) {
+                    func(sess);
+                }
             }
-          }
-        }, _callee, this);
-      }));
-
-      function storeEndToEndSessionProblem(_x, _x2, _x3) {
-        return _storeEndToEndSessionProblem.apply(this, arguments);
-      }
-
-      return storeEndToEndSessionProblem;
-    }()
-  }, {
-    key: "getEndToEndSessionProblem",
-    value: function () {
-      var _getEndToEndSessionProblem = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(deviceKey, timestamp) {
-        var key, problems, lastProblem, _iterator, _step, problem;
-
-        return _regenerator["default"].wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                key = keyEndToEndSessionProblems(deviceKey);
-                problems = getJsonItem(this.store, key) || [];
-
-                if (problems.length) {
-                  _context2.next = 4;
-                  break;
-                }
-
-                return _context2.abrupt("return", null);
-
-              case 4:
-                lastProblem = problems[problems.length - 1];
-                _iterator = _createForOfIteratorHelper(problems);
-                _context2.prev = 6;
-
-                _iterator.s();
-
-              case 8:
-                if ((_step = _iterator.n()).done) {
-                  _context2.next = 14;
-                  break;
-                }
-
-                problem = _step.value;
-
-                if (!(problem.time > timestamp)) {
-                  _context2.next = 12;
-                  break;
-                }
-
-                return _context2.abrupt("return", Object.assign({}, problem, {
-                  fixed: lastProblem.fixed
-                }));
-
-              case 12:
-                _context2.next = 8;
-                break;
-
-              case 14:
-                _context2.next = 19;
-                break;
-
-              case 16:
-                _context2.prev = 16;
-                _context2.t0 = _context2["catch"](6);
-
-                _iterator.e(_context2.t0);
-
-              case 19:
-                _context2.prev = 19;
-
-                _iterator.f();
-
-                return _context2.finish(19);
-
-              case 22:
-                if (!lastProblem.fixed) {
-                  _context2.next = 26;
-                  break;
-                }
-
-                return _context2.abrupt("return", null);
-
-              case 26:
-                return _context2.abrupt("return", lastProblem);
-
-              case 27:
-              case "end":
-                return _context2.stop();
+        }
+    }
+    storeEndToEndSession(deviceKey, sessionId, sessionInfo, txn) {
+        const sessions = this._getEndToEndSessions(deviceKey) || {};
+        sessions[sessionId] = sessionInfo;
+        setJsonItem(this.store, keyEndToEndSessions(deviceKey), sessions);
+    }
+    storeEndToEndSessionProblem(deviceKey, type, fixed) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const key = keyEndToEndSessionProblems(deviceKey);
+            const problems = getJsonItem(this.store, key) || [];
+            problems.push({ type, fixed, time: Date.now() });
+            problems.sort((a, b) => {
+                return a.time - b.time;
+            });
+            setJsonItem(this.store, key, problems);
+        });
+    }
+    getEndToEndSessionProblem(deviceKey, timestamp) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const key = keyEndToEndSessionProblems(deviceKey);
+            const problems = getJsonItem(this.store, key) || [];
+            if (!problems.length) {
+                return null;
             }
-          }
-        }, _callee2, this, [[6, 16, 19, 22]]);
-      }));
-
-      function getEndToEndSessionProblem(_x4, _x5) {
-        return _getEndToEndSessionProblem.apply(this, arguments);
-      }
-
-      return getEndToEndSessionProblem;
-    }()
-  }, {
-    key: "filterOutNotifiedErrorDevices",
-    value: function () {
-      var _filterOutNotifiedErrorDevices = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(devices) {
-        var notifiedErrorDevices, ret, _iterator2, _step2, device, userId, deviceInfo;
-
-        return _regenerator["default"].wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                notifiedErrorDevices = getJsonItem(this.store, KEY_NOTIFIED_ERROR_DEVICES) || {};
-                ret = [];
-                _iterator2 = _createForOfIteratorHelper(devices);
-
-                try {
-                  for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-                    device = _step2.value;
-                    userId = device.userId, deviceInfo = device.deviceInfo;
-
-                    if (userId in notifiedErrorDevices) {
-                      if (!(deviceInfo.deviceId in notifiedErrorDevices[userId])) {
+            const lastProblem = problems[problems.length - 1];
+            for (const problem of problems) {
+                if (problem.time > timestamp) {
+                    return Object.assign({}, problem, { fixed: lastProblem.fixed });
+                }
+            }
+            if (lastProblem.fixed) {
+                return null;
+            }
+            else {
+                return lastProblem;
+            }
+        });
+    }
+    filterOutNotifiedErrorDevices(devices) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const notifiedErrorDevices = getJsonItem(this.store, KEY_NOTIFIED_ERROR_DEVICES) || {};
+            const ret = [];
+            for (const device of devices) {
+                const { userId, deviceInfo } = device;
+                if (userId in notifiedErrorDevices) {
+                    if (!(deviceInfo.deviceId in notifiedErrorDevices[userId])) {
                         ret.push(device);
                         notifiedErrorDevices[userId][deviceInfo.deviceId] = true;
-                      }
-                    } else {
-                      ret.push(device);
-                      notifiedErrorDevices[userId] = (0, _defineProperty2["default"])({}, deviceInfo.deviceId, true);
                     }
-                  }
-                } catch (err) {
-                  _iterator2.e(err);
-                } finally {
-                  _iterator2.f();
                 }
-
-                setJsonItem(this.store, KEY_NOTIFIED_ERROR_DEVICES, notifiedErrorDevices);
-                return _context3.abrupt("return", ret);
-
-              case 6:
-              case "end":
-                return _context3.stop();
+                else {
+                    ret.push(device);
+                    notifiedErrorDevices[userId] = { [deviceInfo.deviceId]: true };
+                }
             }
-          }
-        }, _callee3, this);
-      }));
-
-      function filterOutNotifiedErrorDevices(_x6) {
-        return _filterOutNotifiedErrorDevices.apply(this, arguments);
-      }
-
-      return filterOutNotifiedErrorDevices;
-    }() // Inbound Group Sessions
-
-  }, {
-    key: "getEndToEndInboundGroupSession",
-    value: function getEndToEndInboundGroupSession(senderCurve25519Key, sessionId, txn, func) {
-      func(getJsonItem(this.store, keyEndToEndInboundGroupSession(senderCurve25519Key, sessionId)), getJsonItem(this.store, keyEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId)));
+            setJsonItem(this.store, KEY_NOTIFIED_ERROR_DEVICES, notifiedErrorDevices);
+            return ret;
+        });
     }
-  }, {
-    key: "getAllEndToEndInboundGroupSessions",
-    value: function getAllEndToEndInboundGroupSessions(txn, func) {
-      for (var i = 0; i < this.store.length; ++i) {
-        var key = this.store.key(i);
-
-        if (key.startsWith(KEY_INBOUND_SESSION_PREFIX)) {
-          // we can't use split, as the components we are trying to split out
-          // might themselves contain '/' characters. We rely on the
-          // senderKey being a (32-byte) curve25519 key, base64-encoded
-          // (hence 43 characters long).
-          func({
-            senderKey: key.substr(KEY_INBOUND_SESSION_PREFIX.length, 43),
-            sessionId: key.substr(KEY_INBOUND_SESSION_PREFIX.length + 44),
-            sessionData: getJsonItem(this.store, key)
-          });
-        }
-      }
-
-      func(null);
+    // Inbound Group Sessions
+    getEndToEndInboundGroupSession(senderCurve25519Key, sessionId, txn, func) {
+        func(getJsonItem(this.store, keyEndToEndInboundGroupSession(senderCurve25519Key, sessionId)), getJsonItem(this.store, keyEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId)));
     }
-  }, {
-    key: "addEndToEndInboundGroupSession",
-    value: function addEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
-      var existing = getJsonItem(this.store, keyEndToEndInboundGroupSession(senderCurve25519Key, sessionId));
-
-      if (!existing) {
-        this.storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn);
-      }
-    }
-  }, {
-    key: "storeEndToEndInboundGroupSession",
-    value: function storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
-      setJsonItem(this.store, keyEndToEndInboundGroupSession(senderCurve25519Key, sessionId), sessionData);
-    }
-  }, {
-    key: "storeEndToEndInboundGroupSessionWithheld",
-    value: function storeEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId, sessionData, txn) {
-      setJsonItem(this.store, keyEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId), sessionData);
-    }
-  }, {
-    key: "getEndToEndDeviceData",
-    value: function getEndToEndDeviceData(txn, func) {
-      func(getJsonItem(this.store, KEY_DEVICE_DATA));
-    }
-  }, {
-    key: "storeEndToEndDeviceData",
-    value: function storeEndToEndDeviceData(deviceData, txn) {
-      setJsonItem(this.store, KEY_DEVICE_DATA, deviceData);
-    }
-  }, {
-    key: "storeEndToEndRoom",
-    value: function storeEndToEndRoom(roomId, roomInfo, txn) {
-      setJsonItem(this.store, keyEndToEndRoomsPrefix(roomId), roomInfo);
-    }
-  }, {
-    key: "getEndToEndRooms",
-    value: function getEndToEndRooms(txn, func) {
-      var result = {};
-      var prefix = keyEndToEndRoomsPrefix('');
-
-      for (var i = 0; i < this.store.length; ++i) {
-        var key = this.store.key(i);
-
-        if (key.startsWith(prefix)) {
-          var roomId = key.substr(prefix.length);
-          result[roomId] = getJsonItem(this.store, key);
-        }
-      }
-
-      func(result);
-    }
-  }, {
-    key: "getSessionsNeedingBackup",
-    value: function getSessionsNeedingBackup(limit) {
-      var _this2 = this;
-
-      var sessionsNeedingBackup = getJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP) || {};
-      var sessions = [];
-
-      for (var session in sessionsNeedingBackup) {
-        if (Object.prototype.hasOwnProperty.call(sessionsNeedingBackup, session)) {
-          var _ret = function () {
-            // see getAllEndToEndInboundGroupSessions for the magic number explanations
-            var senderKey = session.substr(0, 43);
-            var sessionId = session.substr(44);
-
-            _this2.getEndToEndInboundGroupSession(senderKey, sessionId, null, function (sessionData) {
-              sessions.push({
-                senderKey: senderKey,
-                sessionId: sessionId,
-                sessionData: sessionData
-              });
-            });
-
-            if (limit && session.length >= limit) {
-              return "break";
+    getAllEndToEndInboundGroupSessions(txn, func) {
+        for (let i = 0; i < this.store.length; ++i) {
+            const key = this.store.key(i);
+            if (key.startsWith(KEY_INBOUND_SESSION_PREFIX)) {
+                // we can't use split, as the components we are trying to split out
+                // might themselves contain '/' characters. We rely on the
+                // senderKey being a (32-byte) curve25519 key, base64-encoded
+                // (hence 43 characters long).
+                func({
+                    senderKey: key.substr(KEY_INBOUND_SESSION_PREFIX.length, 43),
+                    sessionId: key.substr(KEY_INBOUND_SESSION_PREFIX.length + 44),
+                    sessionData: getJsonItem(this.store, key),
+                });
             }
-          }();
-
-          if (_ret === "break") break;
         }
-      }
-
-      return Promise.resolve(sessions);
+        func(null);
     }
-  }, {
-    key: "countSessionsNeedingBackup",
-    value: function countSessionsNeedingBackup() {
-      var sessionsNeedingBackup = getJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP) || {};
-      return Promise.resolve(Object.keys(sessionsNeedingBackup).length);
-    }
-  }, {
-    key: "unmarkSessionsNeedingBackup",
-    value: function unmarkSessionsNeedingBackup(sessions) {
-      var sessionsNeedingBackup = getJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP) || {};
-
-      var _iterator3 = _createForOfIteratorHelper(sessions),
-          _step3;
-
-      try {
-        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-          var session = _step3.value;
-          delete sessionsNeedingBackup[session.senderKey + '/' + session.sessionId];
+    addEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
+        const existing = getJsonItem(this.store, keyEndToEndInboundGroupSession(senderCurve25519Key, sessionId));
+        if (!existing) {
+            this.storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn);
         }
-      } catch (err) {
-        _iterator3.e(err);
-      } finally {
-        _iterator3.f();
-      }
-
-      setJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP, sessionsNeedingBackup);
-      return Promise.resolve();
     }
-  }, {
-    key: "markSessionsNeedingBackup",
-    value: function markSessionsNeedingBackup(sessions) {
-      var sessionsNeedingBackup = getJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP) || {};
-
-      var _iterator4 = _createForOfIteratorHelper(sessions),
-          _step4;
-
-      try {
-        for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
-          var session = _step4.value;
-          sessionsNeedingBackup[session.senderKey + '/' + session.sessionId] = true;
+    storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
+        setJsonItem(this.store, keyEndToEndInboundGroupSession(senderCurve25519Key, sessionId), sessionData);
+    }
+    storeEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId, sessionData, txn) {
+        setJsonItem(this.store, keyEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId), sessionData);
+    }
+    getEndToEndDeviceData(txn, func) {
+        func(getJsonItem(this.store, KEY_DEVICE_DATA));
+    }
+    storeEndToEndDeviceData(deviceData, txn) {
+        setJsonItem(this.store, KEY_DEVICE_DATA, deviceData);
+    }
+    storeEndToEndRoom(roomId, roomInfo, txn) {
+        setJsonItem(this.store, keyEndToEndRoomsPrefix(roomId), roomInfo);
+    }
+    getEndToEndRooms(txn, func) {
+        const result = {};
+        const prefix = keyEndToEndRoomsPrefix('');
+        for (let i = 0; i < this.store.length; ++i) {
+            const key = this.store.key(i);
+            if (key.startsWith(prefix)) {
+                const roomId = key.substr(prefix.length);
+                result[roomId] = getJsonItem(this.store, key);
+            }
         }
-      } catch (err) {
-        _iterator4.e(err);
-      } finally {
-        _iterator4.f();
-      }
-
-      setJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP, sessionsNeedingBackup);
-      return Promise.resolve();
+        func(result);
+    }
+    getSessionsNeedingBackup(limit) {
+        const sessionsNeedingBackup = getJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP) || {};
+        const sessions = [];
+        for (const session in sessionsNeedingBackup) {
+            if (Object.prototype.hasOwnProperty.call(sessionsNeedingBackup, session)) {
+                // see getAllEndToEndInboundGroupSessions for the magic number explanations
+                const senderKey = session.substr(0, 43);
+                const sessionId = session.substr(44);
+                this.getEndToEndInboundGroupSession(senderKey, sessionId, null, (sessionData) => {
+                    sessions.push({
+                        senderKey: senderKey,
+                        sessionId: sessionId,
+                        sessionData: sessionData,
+                    });
+                });
+                if (limit && session.length >= limit) {
+                    break;
+                }
+            }
+        }
+        return Promise.resolve(sessions);
+    }
+    countSessionsNeedingBackup() {
+        const sessionsNeedingBackup = getJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP) || {};
+        return Promise.resolve(Object.keys(sessionsNeedingBackup).length);
+    }
+    unmarkSessionsNeedingBackup(sessions) {
+        const sessionsNeedingBackup = getJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP) || {};
+        for (const session of sessions) {
+            delete sessionsNeedingBackup[session.senderKey + '/' + session.sessionId];
+        }
+        setJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP, sessionsNeedingBackup);
+        return Promise.resolve();
+    }
+    markSessionsNeedingBackup(sessions) {
+        const sessionsNeedingBackup = getJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP) || {};
+        for (const session of sessions) {
+            sessionsNeedingBackup[session.senderKey + '/' + session.sessionId] = true;
+        }
+        setJsonItem(this.store, KEY_SESSIONS_NEEDING_BACKUP, sessionsNeedingBackup);
+        return Promise.resolve();
     }
     /**
      * Delete all data from this store.
      *
      * @returns {Promise} Promise which resolves when the store has been cleared.
      */
-
-  }, {
-    key: "deleteAllData",
-    value: function deleteAllData() {
-      this.store.removeItem(KEY_END_TO_END_ACCOUNT);
-      return Promise.resolve();
-    } // Olm account
-
-  }, {
-    key: "getAccount",
-    value: function getAccount(txn, func) {
-      var account = getJsonItem(this.store, KEY_END_TO_END_ACCOUNT);
-      func(account);
+    deleteAllData() {
+        this.store.removeItem(KEY_END_TO_END_ACCOUNT);
+        return Promise.resolve();
     }
-  }, {
-    key: "storeAccount",
-    value: function storeAccount(txn, newData) {
-      setJsonItem(this.store, KEY_END_TO_END_ACCOUNT, newData);
+    // Olm account
+    getAccount(txn, func) {
+        const accountPickle = getJsonItem(this.store, KEY_END_TO_END_ACCOUNT);
+        func(accountPickle);
     }
-  }, {
-    key: "getCrossSigningKeys",
-    value: function getCrossSigningKeys(txn, func) {
-      var keys = getJsonItem(this.store, KEY_CROSS_SIGNING_KEYS);
-      func(keys);
+    storeAccount(txn, accountPickle) {
+        setJsonItem(this.store, KEY_END_TO_END_ACCOUNT, accountPickle);
     }
-  }, {
-    key: "getSecretStorePrivateKey",
-    value: function getSecretStorePrivateKey(txn, func, type) {
-      var key = getJsonItem(this.store, E2E_PREFIX + "ssss_cache.".concat(type));
-      func(key);
+    getCrossSigningKeys(txn, func) {
+        const keys = getJsonItem(this.store, KEY_CROSS_SIGNING_KEYS);
+        func(keys);
     }
-  }, {
-    key: "storeCrossSigningKeys",
-    value: function storeCrossSigningKeys(txn, keys) {
-      setJsonItem(this.store, KEY_CROSS_SIGNING_KEYS, keys);
+    getSecretStorePrivateKey(txn, func, type) {
+        const key = getJsonItem(this.store, E2E_PREFIX + `ssss_cache.${type}`);
+        func(key);
     }
-  }, {
-    key: "storeSecretStorePrivateKey",
-    value: function storeSecretStorePrivateKey(txn, type, key) {
-      setJsonItem(this.store, E2E_PREFIX + "ssss_cache.".concat(type), key);
+    storeCrossSigningKeys(txn, keys) {
+        setJsonItem(this.store, KEY_CROSS_SIGNING_KEYS, keys);
     }
-  }, {
-    key: "doTxn",
-    value: function doTxn(mode, stores, func) {
-      return Promise.resolve(func(null));
+    storeSecretStorePrivateKey(txn, type, key) {
+        setJsonItem(this.store, E2E_PREFIX + `ssss_cache.${type}`, key);
     }
-  }], [{
-    key: "exists",
-    value: function exists(webStore) {
-      var length = webStore.length;
-
-      for (var i = 0; i < length; i++) {
-        if (webStore.key(i).startsWith(E2E_PREFIX)) {
-          return true;
-        }
-      }
-
-      return false;
+    doTxn(mode, stores, func) {
+        return Promise.resolve(func(null));
     }
-  }]);
-  return LocalStorageCryptoStore;
-}(_memoryCryptoStore.MemoryCryptoStore);
-
+}
 exports.LocalStorageCryptoStore = LocalStorageCryptoStore;
-
 function getJsonItem(store, key) {
-  try {
-    // if the key is absent, store.getItem() returns null, and
-    // JSON.parse(null) === null, so this returns null.
-    return JSON.parse(store.getItem(key));
-  } catch (e) {
-    _logger.logger.log("Error: Failed to get key %s: %s", key, e.stack || e);
-
-    _logger.logger.log(e.stack);
-  }
-
-  return null;
+    try {
+        // if the key is absent, store.getItem() returns null, and
+        // JSON.parse(null) === null, so this returns null.
+        return JSON.parse(store.getItem(key));
+    }
+    catch (e) {
+        logger_1.logger.log("Error: Failed to get key %s: %s", key, e.stack || e);
+        logger_1.logger.log(e.stack);
+    }
+    return null;
 }
-
 function setJsonItem(store, key, val) {
-  store.setItem(key, JSON.stringify(val));
+    store.setItem(key, JSON.stringify(val));
 }
 
-},{"../../logger":106,"./memory-crypto-store":90,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":20,"@babel/runtime/helpers/slicedToArray":22,"@babel/runtime/regenerator":27}],90:[function(require,module,exports){
+},{"../../logger":118,"./memory-crypto-store":102}],102:[function(require,module,exports){
 "use strict";
+/*
+Copyright 2017 - 2021 The Matrix.org Foundation C.I.C.
 
-var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+    http://www.apache.org/licenses/LICENSE-2.0
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
 });
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
 exports.MemoryCryptoStore = void 0;
-
-var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
-
-var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
-
-var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
-
-var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
-
-var _classCallCheck2 = _interopRequireDefault(require("@babel/runtime/helpers/classCallCheck"));
-
-var _createClass2 = _interopRequireDefault(require("@babel/runtime/helpers/createClass"));
-
-var _logger = require("../../logger");
-
-var utils = _interopRequireWildcard(require("../../utils"));
-
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
-
-function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { (0, _defineProperty2["default"])(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
-
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
+const logger_1 = require("../../logger");
+const utils = __importStar(require("../../utils"));
 /**
  * Internal module. in-memory storage for e2e.
  *
  * @module
  */
-
 /**
  * @implements {module:crypto/store/base~CryptoStore}
  */
-var MemoryCryptoStore = /*#__PURE__*/function () {
-  function MemoryCryptoStore() {
-    (0, _classCallCheck2["default"])(this, MemoryCryptoStore);
-    this._outgoingRoomKeyRequests = [];
-    this._account = null;
-    this._crossSigningKeys = null;
-    this._privateKeys = {};
-    this._backupKeys = {}; // Map of {devicekey -> {sessionId -> session pickle}}
-
-    this._sessions = {}; // Map of {devicekey -> array of problems}
-
-    this._sessionProblems = {}; // Map of {userId -> deviceId -> true}
-
-    this._notifiedErrorDevices = {}; // Map of {senderCurve25519Key+'/'+sessionId -> session data object}
-
-    this._inboundGroupSessions = {};
-    this._inboundGroupSessionsWithheld = {}; // Opaque device data object
-
-    this._deviceData = null; // roomId -> Opaque roomInfo object
-
-    this._rooms = {}; // Set of {senderCurve25519Key+'/'+sessionId}
-
-    this._sessionsNeedingBackup = {}; // roomId -> array of [senderKey, sessionId]
-
-    this._sharedHistoryInboundGroupSessions = {};
-  }
-  /**
-   * Ensure the database exists and is up-to-date.
-   *
-   * This must be called before the store can be used.
-   *
-   * @return {Promise} resolves to the store.
-   */
-
-
-  (0, _createClass2["default"])(MemoryCryptoStore, [{
-    key: "startup",
-    value: function () {
-      var _startup = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee() {
-        return _regenerator["default"].wrap(function _callee$(_context) {
-          while (1) {
-            switch (_context.prev = _context.next) {
-              case 0:
-                return _context.abrupt("return", this);
-
-              case 1:
-              case "end":
-                return _context.stop();
-            }
-          }
-        }, _callee, this);
-      }));
-
-      function startup() {
-        return _startup.apply(this, arguments);
-      }
-
-      return startup;
-    }()
+class MemoryCryptoStore {
+    constructor() {
+        this.outgoingRoomKeyRequests = [];
+        this.account = null;
+        this.crossSigningKeys = null;
+        this.privateKeys = {};
+        this.sessions = {};
+        this.sessionProblems = {};
+        this.notifiedErrorDevices = {};
+        this.inboundGroupSessions = {};
+        this.inboundGroupSessionsWithheld = {};
+        // Opaque device data object
+        this.deviceData = null;
+        this.rooms = {};
+        this.sessionsNeedingBackup = {};
+        this.sharedHistoryInboundGroupSessions = {};
+    }
+    /**
+     * Ensure the database exists and is up-to-date.
+     *
+     * This must be called before the store can be used.
+     *
+     * @return {Promise} resolves to the store.
+     */
+    startup() {
+        return __awaiter(this, void 0, void 0, function* () {
+            // No startup work to do for the memory store.
+            return this;
+        });
+    }
     /**
      * Delete all data from this store.
      *
      * @returns {Promise} Promise which resolves when the store has been cleared.
      */
-
-  }, {
-    key: "deleteAllData",
-    value: function deleteAllData() {
-      return Promise.resolve();
+    deleteAllData() {
+        return Promise.resolve();
     }
     /**
      * Look for an existing outgoing room key request, and if none is found,
@@ -37116,32 +37721,25 @@ var MemoryCryptoStore = /*#__PURE__*/function () {
      *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}: either the
      *    same instance as passed in, or the existing one.
      */
-
-  }, {
-    key: "getOrAddOutgoingRoomKeyRequest",
-    value: function getOrAddOutgoingRoomKeyRequest(request) {
-      var _this = this;
-
-      var requestBody = request.requestBody;
-      return utils.promiseTry(function () {
-        // first see if we already have an entry for this request.
-        var existing = _this._getOutgoingRoomKeyRequest(requestBody);
-
-        if (existing) {
-          // this entry matches the request - return it.
-          _logger.logger.log("already have key request outstanding for " + "".concat(requestBody.room_id, " / ").concat(requestBody.session_id, ": ") + "not sending another");
-
-          return existing;
-        } // we got to the end of the list without finding a match
-        // - add the new request.
-
-
-        _logger.logger.log("enqueueing key request for ".concat(requestBody.room_id, " / ") + requestBody.session_id);
-
-        _this._outgoingRoomKeyRequests.push(request);
-
-        return request;
-      });
+    getOrAddOutgoingRoomKeyRequest(request) {
+        const requestBody = request.requestBody;
+        return utils.promiseTry(() => {
+            // first see if we already have an entry for this request.
+            const existing = this._getOutgoingRoomKeyRequest(requestBody);
+            if (existing) {
+                // this entry matches the request - return it.
+                logger_1.logger.log(`already have key request outstanding for ` +
+                    `${requestBody.room_id} / ${requestBody.session_id}: ` +
+                    `not sending another`);
+                return existing;
+            }
+            // we got to the end of the list without finding a match
+            // - add the new request.
+            logger_1.logger.log(`enqueueing key request for ${requestBody.room_id} / ` +
+                requestBody.session_id);
+            this.outgoingRoomKeyRequests.push(request);
+            return request;
+        });
     }
     /**
      * Look for an existing room key request
@@ -37153,11 +37751,8 @@ var MemoryCryptoStore = /*#__PURE__*/function () {
      *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}, or null if
      *    not found
      */
-
-  }, {
-    key: "getOutgoingRoomKeyRequest",
-    value: function getOutgoingRoomKeyRequest(requestBody) {
-      return Promise.resolve(this._getOutgoingRoomKeyRequest(requestBody));
+    getOutgoingRoomKeyRequest(requestBody) {
+        return Promise.resolve(this._getOutgoingRoomKeyRequest(requestBody));
     }
     /**
      * Looks for existing room key request, and returns the result synchronously.
@@ -37170,28 +37765,14 @@ var MemoryCryptoStore = /*#__PURE__*/function () {
      * @return {module:crypto/store/base~OutgoingRoomKeyRequest?}
      *    the matching request, or null if not found
      */
-
-  }, {
-    key: "_getOutgoingRoomKeyRequest",
-    value: function _getOutgoingRoomKeyRequest(requestBody) {
-      var _iterator = _createForOfIteratorHelper(this._outgoingRoomKeyRequests),
-          _step;
-
-      try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var existing = _step.value;
-
-          if (utils.deepCompare(existing.requestBody, requestBody)) {
-            return existing;
-          }
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    _getOutgoingRoomKeyRequest(requestBody) {
+        for (const existing of this.outgoingRoomKeyRequests) {
+            if (utils.deepCompare(existing.requestBody, requestBody)) {
+                return existing;
+            }
         }
-      } catch (err) {
-        _iterator.e(err);
-      } finally {
-        _iterator.f();
-      }
-
-      return null;
+        return null;
     }
     /**
      * Look for room key requests by state
@@ -37202,94 +37783,34 @@ var MemoryCryptoStore = /*#__PURE__*/function () {
      *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}, or null if
      *    there are no pending requests in those states
      */
-
-  }, {
-    key: "getOutgoingRoomKeyRequestByState",
-    value: function getOutgoingRoomKeyRequestByState(wantedStates) {
-      var _iterator2 = _createForOfIteratorHelper(this._outgoingRoomKeyRequests),
-          _step2;
-
-      try {
-        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-          var req = _step2.value;
-
-          var _iterator3 = _createForOfIteratorHelper(wantedStates),
-              _step3;
-
-          try {
-            for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-              var state = _step3.value;
-
-              if (req.state === state) {
-                return Promise.resolve(req);
-              }
+    getOutgoingRoomKeyRequestByState(wantedStates) {
+        for (const req of this.outgoingRoomKeyRequests) {
+            for (const state of wantedStates) {
+                if (req.state === state) {
+                    return Promise.resolve(req);
+                }
             }
-          } catch (err) {
-            _iterator3.e(err);
-          } finally {
-            _iterator3.f();
-          }
         }
-      } catch (err) {
-        _iterator2.e(err);
-      } finally {
-        _iterator2.f();
-      }
-
-      return Promise.resolve(null);
+        return Promise.resolve(null);
     }
     /**
      *
      * @param {Number} wantedState
      * @return {Promise<Array<*>>} All OutgoingRoomKeyRequests in state
      */
-
-  }, {
-    key: "getAllOutgoingRoomKeyRequestsByState",
-    value: function getAllOutgoingRoomKeyRequestsByState(wantedState) {
-      return Promise.resolve(this._outgoingRoomKeyRequests.filter(function (r) {
-        return r.state == wantedState;
-      }));
+    getAllOutgoingRoomKeyRequestsByState(wantedState) {
+        return Promise.resolve(this.outgoingRoomKeyRequests.filter((r) => r.state == wantedState));
     }
-  }, {
-    key: "getOutgoingRoomKeyRequestsByTarget",
-    value: function getOutgoingRoomKeyRequestsByTarget(userId, deviceId, wantedStates) {
-      var results = [];
-
-      var _iterator4 = _createForOfIteratorHelper(this._outgoingRoomKeyRequests),
-          _step4;
-
-      try {
-        for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
-          var req = _step4.value;
-
-          var _iterator5 = _createForOfIteratorHelper(wantedStates),
-              _step5;
-
-          try {
-            for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
-              var state = _step5.value;
-
-              if (req.state === state && req.recipients.includes({
-                userId: userId,
-                deviceId: deviceId
-              })) {
-                results.push(req);
-              }
+    getOutgoingRoomKeyRequestsByTarget(userId, deviceId, wantedStates) {
+        const results = [];
+        for (const req of this.outgoingRoomKeyRequests) {
+            for (const state of wantedStates) {
+                if (req.state === state && req.recipients.includes({ userId, deviceId })) {
+                    results.push(req);
+                }
             }
-          } catch (err) {
-            _iterator5.e(err);
-          } finally {
-            _iterator5.f();
-          }
         }
-      } catch (err) {
-        _iterator4.e(err);
-      } finally {
-        _iterator4.f();
-      }
-
-      return Promise.resolve(results);
+        return Promise.resolve(results);
     }
     /**
      * Look for an existing room key request by id and state, and update it if
@@ -37303,37 +37824,20 @@ var MemoryCryptoStore = /*#__PURE__*/function () {
      *    {@link module:crypto/store/base~OutgoingRoomKeyRequest}
      *    updated request, or null if no matching row was found
      */
-
-  }, {
-    key: "updateOutgoingRoomKeyRequest",
-    value: function updateOutgoingRoomKeyRequest(requestId, expectedState, updates) {
-      var _iterator6 = _createForOfIteratorHelper(this._outgoingRoomKeyRequests),
-          _step6;
-
-      try {
-        for (_iterator6.s(); !(_step6 = _iterator6.n()).done;) {
-          var req = _step6.value;
-
-          if (req.requestId !== requestId) {
-            continue;
-          }
-
-          if (req.state != expectedState) {
-            _logger.logger.warn("Cannot update room key request from ".concat(expectedState, " ") + "as it was already updated to ".concat(req.state));
-
-            return Promise.resolve(null);
-          }
-
-          Object.assign(req, updates);
-          return Promise.resolve(req);
+    updateOutgoingRoomKeyRequest(requestId, expectedState, updates) {
+        for (const req of this.outgoingRoomKeyRequests) {
+            if (req.requestId !== requestId) {
+                continue;
+            }
+            if (req.state !== expectedState) {
+                logger_1.logger.warn(`Cannot update room key request from ${expectedState} ` +
+                    `as it was already updated to ${req.state}`);
+                return Promise.resolve(null);
+            }
+            Object.assign(req, updates);
+            return Promise.resolve(req);
         }
-      } catch (err) {
-        _iterator6.e(err);
-      } finally {
-        _iterator6.f();
-      }
-
-      return Promise.resolve(null);
+        return Promise.resolve(null);
     }
     /**
      * Look for an existing room key request by id and state, and delete it if
@@ -37344,442 +37848,213 @@ var MemoryCryptoStore = /*#__PURE__*/function () {
      *
      * @returns {Promise} resolves once the operation is completed
      */
-
-  }, {
-    key: "deleteOutgoingRoomKeyRequest",
-    value: function deleteOutgoingRoomKeyRequest(requestId, expectedState) {
-      for (var i = 0; i < this._outgoingRoomKeyRequests.length; i++) {
-        var req = this._outgoingRoomKeyRequests[i];
-
-        if (req.requestId !== requestId) {
-          continue;
+    deleteOutgoingRoomKeyRequest(requestId, expectedState) {
+        for (let i = 0; i < this.outgoingRoomKeyRequests.length; i++) {
+            const req = this.outgoingRoomKeyRequests[i];
+            if (req.requestId !== requestId) {
+                continue;
+            }
+            if (req.state != expectedState) {
+                logger_1.logger.warn(`Cannot delete room key request in state ${req.state} `
+                    + `(expected ${expectedState})`);
+                return Promise.resolve(null);
+            }
+            this.outgoingRoomKeyRequests.splice(i, 1);
+            return Promise.resolve(req);
         }
-
-        if (req.state != expectedState) {
-          _logger.logger.warn("Cannot delete room key request in state ".concat(req.state, " ") + "(expected ".concat(expectedState, ")"));
-
-          return Promise.resolve(null);
-        }
-
-        this._outgoingRoomKeyRequests.splice(i, 1);
-
-        return Promise.resolve(req);
-      }
-
-      return Promise.resolve(null);
-    } // Olm Account
-
-  }, {
-    key: "getAccount",
-    value: function getAccount(txn, func) {
-      func(this._account);
+        return Promise.resolve(null);
     }
-  }, {
-    key: "storeAccount",
-    value: function storeAccount(txn, newData) {
-      this._account = newData;
+    // Olm Account
+    getAccount(txn, func) {
+        func(this.account);
     }
-  }, {
-    key: "getCrossSigningKeys",
-    value: function getCrossSigningKeys(txn, func) {
-      func(this._crossSigningKeys);
+    storeAccount(txn, accountPickle) {
+        this.account = accountPickle;
     }
-  }, {
-    key: "getSecretStorePrivateKey",
-    value: function getSecretStorePrivateKey(txn, func, type) {
-      var result = this._privateKeys[type];
-      return func(result || null);
+    getCrossSigningKeys(txn, func) {
+        func(this.crossSigningKeys);
     }
-  }, {
-    key: "storeCrossSigningKeys",
-    value: function storeCrossSigningKeys(txn, keys) {
-      this._crossSigningKeys = keys;
+    getSecretStorePrivateKey(txn, func, type) {
+        const result = this.privateKeys[type];
+        func(result || null);
     }
-  }, {
-    key: "storeSecretStorePrivateKey",
-    value: function storeSecretStorePrivateKey(txn, type, key) {
-      this._privateKeys[type] = key;
-    } // Olm Sessions
-
-  }, {
-    key: "countEndToEndSessions",
-    value: function countEndToEndSessions(txn, func) {
-      return Object.keys(this._sessions).length;
+    storeCrossSigningKeys(txn, keys) {
+        this.crossSigningKeys = keys;
     }
-  }, {
-    key: "getEndToEndSession",
-    value: function getEndToEndSession(deviceKey, sessionId, txn, func) {
-      var deviceSessions = this._sessions[deviceKey] || {};
-      func(deviceSessions[sessionId] || null);
+    storeSecretStorePrivateKey(txn, type, key) {
+        this.privateKeys[type] = key;
     }
-  }, {
-    key: "getEndToEndSessions",
-    value: function getEndToEndSessions(deviceKey, txn, func) {
-      func(this._sessions[deviceKey] || {});
+    // Olm Sessions
+    countEndToEndSessions(txn, func) {
+        func(Object.keys(this.sessions).length);
     }
-  }, {
-    key: "getAllEndToEndSessions",
-    value: function getAllEndToEndSessions(txn, func) {
-      Object.entries(this._sessions).forEach(function (_ref) {
-        var _ref2 = (0, _slicedToArray2["default"])(_ref, 2),
-            deviceKey = _ref2[0],
-            deviceSessions = _ref2[1];
-
-        Object.entries(deviceSessions).forEach(function (_ref3) {
-          var _ref4 = (0, _slicedToArray2["default"])(_ref3, 2),
-              sessionId = _ref4[0],
-              session = _ref4[1];
-
-          func(_objectSpread(_objectSpread({}, session), {}, {
-            deviceKey: deviceKey,
-            sessionId: sessionId
-          }));
+    getEndToEndSession(deviceKey, sessionId, txn, func) {
+        const deviceSessions = this.sessions[deviceKey] || {};
+        func(deviceSessions[sessionId] || null);
+    }
+    getEndToEndSessions(deviceKey, txn, func) {
+        func(this.sessions[deviceKey] || {});
+    }
+    getAllEndToEndSessions(txn, func) {
+        Object.entries(this.sessions).forEach(([deviceKey, deviceSessions]) => {
+            Object.entries(deviceSessions).forEach(([sessionId, session]) => {
+                func(Object.assign(Object.assign({}, session), { deviceKey,
+                    sessionId }));
+            });
         });
-      });
     }
-  }, {
-    key: "storeEndToEndSession",
-    value: function storeEndToEndSession(deviceKey, sessionId, sessionInfo, txn) {
-      var deviceSessions = this._sessions[deviceKey];
-
-      if (deviceSessions === undefined) {
-        deviceSessions = {};
-        this._sessions[deviceKey] = deviceSessions;
-      }
-
-      deviceSessions[sessionId] = sessionInfo;
+    storeEndToEndSession(deviceKey, sessionId, sessionInfo, txn) {
+        let deviceSessions = this.sessions[deviceKey];
+        if (deviceSessions === undefined) {
+            deviceSessions = {};
+            this.sessions[deviceKey] = deviceSessions;
+        }
+        deviceSessions[sessionId] = sessionInfo;
     }
-  }, {
-    key: "storeEndToEndSessionProblem",
-    value: function () {
-      var _storeEndToEndSessionProblem = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(deviceKey, type, fixed) {
-        var problems;
-        return _regenerator["default"].wrap(function _callee2$(_context2) {
-          while (1) {
-            switch (_context2.prev = _context2.next) {
-              case 0:
-                problems = this._sessionProblems[deviceKey] = this._sessionProblems[deviceKey] || [];
-                problems.push({
-                  type: type,
-                  fixed: fixed,
-                  time: Date.now()
-                });
-                problems.sort(function (a, b) {
-                  return a.time - b.time;
-                });
-
-              case 3:
-              case "end":
-                return _context2.stop();
+    storeEndToEndSessionProblem(deviceKey, type, fixed) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const problems = this.sessionProblems[deviceKey] = this.sessionProblems[deviceKey] || [];
+            problems.push({ type, fixed, time: Date.now() });
+            problems.sort((a, b) => {
+                return a.time - b.time;
+            });
+        });
+    }
+    getEndToEndSessionProblem(deviceKey, timestamp) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const problems = this.sessionProblems[deviceKey] || [];
+            if (!problems.length) {
+                return null;
             }
-          }
-        }, _callee2, this);
-      }));
-
-      function storeEndToEndSessionProblem(_x, _x2, _x3) {
-        return _storeEndToEndSessionProblem.apply(this, arguments);
-      }
-
-      return storeEndToEndSessionProblem;
-    }()
-  }, {
-    key: "getEndToEndSessionProblem",
-    value: function () {
-      var _getEndToEndSessionProblem = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(deviceKey, timestamp) {
-        var problems, lastProblem, _iterator7, _step7, problem;
-
-        return _regenerator["default"].wrap(function _callee3$(_context3) {
-          while (1) {
-            switch (_context3.prev = _context3.next) {
-              case 0:
-                problems = this._sessionProblems[deviceKey] || [];
-
-                if (problems.length) {
-                  _context3.next = 3;
-                  break;
+            const lastProblem = problems[problems.length - 1];
+            for (const problem of problems) {
+                if (problem.time > timestamp) {
+                    return Object.assign({}, problem, { fixed: lastProblem.fixed });
                 }
-
-                return _context3.abrupt("return", null);
-
-              case 3:
-                lastProblem = problems[problems.length - 1];
-                _iterator7 = _createForOfIteratorHelper(problems);
-                _context3.prev = 5;
-
-                _iterator7.s();
-
-              case 7:
-                if ((_step7 = _iterator7.n()).done) {
-                  _context3.next = 13;
-                  break;
-                }
-
-                problem = _step7.value;
-
-                if (!(problem.time > timestamp)) {
-                  _context3.next = 11;
-                  break;
-                }
-
-                return _context3.abrupt("return", Object.assign({}, problem, {
-                  fixed: lastProblem.fixed
-                }));
-
-              case 11:
-                _context3.next = 7;
-                break;
-
-              case 13:
-                _context3.next = 18;
-                break;
-
-              case 15:
-                _context3.prev = 15;
-                _context3.t0 = _context3["catch"](5);
-
-                _iterator7.e(_context3.t0);
-
-              case 18:
-                _context3.prev = 18;
-
-                _iterator7.f();
-
-                return _context3.finish(18);
-
-              case 21:
-                if (!lastProblem.fixed) {
-                  _context3.next = 25;
-                  break;
-                }
-
-                return _context3.abrupt("return", null);
-
-              case 25:
-                return _context3.abrupt("return", lastProblem);
-
-              case 26:
-              case "end":
-                return _context3.stop();
             }
-          }
-        }, _callee3, this, [[5, 15, 18, 21]]);
-      }));
-
-      function getEndToEndSessionProblem(_x4, _x5) {
-        return _getEndToEndSessionProblem.apply(this, arguments);
-      }
-
-      return getEndToEndSessionProblem;
-    }()
-  }, {
-    key: "filterOutNotifiedErrorDevices",
-    value: function () {
-      var _filterOutNotifiedErrorDevices = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee4(devices) {
-        var notifiedErrorDevices, ret, _iterator8, _step8, device, userId, deviceInfo;
-
-        return _regenerator["default"].wrap(function _callee4$(_context4) {
-          while (1) {
-            switch (_context4.prev = _context4.next) {
-              case 0:
-                notifiedErrorDevices = this._notifiedErrorDevices;
-                ret = [];
-                _iterator8 = _createForOfIteratorHelper(devices);
-
-                try {
-                  for (_iterator8.s(); !(_step8 = _iterator8.n()).done;) {
-                    device = _step8.value;
-                    userId = device.userId, deviceInfo = device.deviceInfo;
-
-                    if (userId in notifiedErrorDevices) {
-                      if (!(deviceInfo.deviceId in notifiedErrorDevices[userId])) {
+            if (lastProblem.fixed) {
+                return null;
+            }
+            else {
+                return lastProblem;
+            }
+        });
+    }
+    filterOutNotifiedErrorDevices(devices) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const notifiedErrorDevices = this.notifiedErrorDevices;
+            const ret = [];
+            for (const device of devices) {
+                const { userId, deviceInfo } = device;
+                if (userId in notifiedErrorDevices) {
+                    if (!(deviceInfo.deviceId in notifiedErrorDevices[userId])) {
                         ret.push(device);
                         notifiedErrorDevices[userId][deviceInfo.deviceId] = true;
-                      }
-                    } else {
-                      ret.push(device);
-                      notifiedErrorDevices[userId] = (0, _defineProperty2["default"])({}, deviceInfo.deviceId, true);
                     }
-                  }
-                } catch (err) {
-                  _iterator8.e(err);
-                } finally {
-                  _iterator8.f();
                 }
-
-                return _context4.abrupt("return", ret);
-
-              case 5:
-              case "end":
-                return _context4.stop();
+                else {
+                    ret.push(device);
+                    notifiedErrorDevices[userId] = { [deviceInfo.deviceId]: true };
+                }
             }
-          }
-        }, _callee4, this);
-      }));
-
-      function filterOutNotifiedErrorDevices(_x6) {
-        return _filterOutNotifiedErrorDevices.apply(this, arguments);
-      }
-
-      return filterOutNotifiedErrorDevices;
-    }() // Inbound Group Sessions
-
-  }, {
-    key: "getEndToEndInboundGroupSession",
-    value: function getEndToEndInboundGroupSession(senderCurve25519Key, sessionId, txn, func) {
-      var k = senderCurve25519Key + '/' + sessionId;
-      func(this._inboundGroupSessions[k] || null, this._inboundGroupSessionsWithheld[k] || null);
-    }
-  }, {
-    key: "getAllEndToEndInboundGroupSessions",
-    value: function getAllEndToEndInboundGroupSessions(txn, func) {
-      for (var _i = 0, _Object$keys = Object.keys(this._inboundGroupSessions); _i < _Object$keys.length; _i++) {
-        var key = _Object$keys[_i];
-        // we can't use split, as the components we are trying to split out
-        // might themselves contain '/' characters. We rely on the
-        // senderKey being a (32-byte) curve25519 key, base64-encoded
-        // (hence 43 characters long).
-        func({
-          senderKey: key.substr(0, 43),
-          sessionId: key.substr(44),
-          sessionData: this._inboundGroupSessions[key]
+            return ret;
         });
-      }
-
-      func(null);
     }
-  }, {
-    key: "addEndToEndInboundGroupSession",
-    value: function addEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
-      var k = senderCurve25519Key + '/' + sessionId;
-
-      if (this._inboundGroupSessions[k] === undefined) {
-        this._inboundGroupSessions[k] = sessionData;
-      }
+    // Inbound Group Sessions
+    getEndToEndInboundGroupSession(senderCurve25519Key, sessionId, txn, func) {
+        const k = senderCurve25519Key + '/' + sessionId;
+        func(this.inboundGroupSessions[k] || null, this.inboundGroupSessionsWithheld[k] || null);
     }
-  }, {
-    key: "storeEndToEndInboundGroupSession",
-    value: function storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
-      this._inboundGroupSessions[senderCurve25519Key + '/' + sessionId] = sessionData;
-    }
-  }, {
-    key: "storeEndToEndInboundGroupSessionWithheld",
-    value: function storeEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId, sessionData, txn) {
-      var k = senderCurve25519Key + '/' + sessionId;
-      this._inboundGroupSessionsWithheld[k] = sessionData;
-    } // Device Data
-
-  }, {
-    key: "getEndToEndDeviceData",
-    value: function getEndToEndDeviceData(txn, func) {
-      func(this._deviceData);
-    }
-  }, {
-    key: "storeEndToEndDeviceData",
-    value: function storeEndToEndDeviceData(deviceData, txn) {
-      this._deviceData = deviceData;
-    } // E2E rooms
-
-  }, {
-    key: "storeEndToEndRoom",
-    value: function storeEndToEndRoom(roomId, roomInfo, txn) {
-      this._rooms[roomId] = roomInfo;
-    }
-  }, {
-    key: "getEndToEndRooms",
-    value: function getEndToEndRooms(txn, func) {
-      func(this._rooms);
-    }
-  }, {
-    key: "getSessionsNeedingBackup",
-    value: function getSessionsNeedingBackup(limit) {
-      var sessions = [];
-
-      for (var session in this._sessionsNeedingBackup) {
-        if (this._inboundGroupSessions[session]) {
-          sessions.push({
-            senderKey: session.substr(0, 43),
-            sessionId: session.substr(44),
-            sessionData: this._inboundGroupSessions[session]
-          });
-
-          if (limit && session.length >= limit) {
-            break;
-          }
+    getAllEndToEndInboundGroupSessions(txn, func) {
+        for (const key of Object.keys(this.inboundGroupSessions)) {
+            // we can't use split, as the components we are trying to split out
+            // might themselves contain '/' characters. We rely on the
+            // senderKey being a (32-byte) curve25519 key, base64-encoded
+            // (hence 43 characters long).
+            func({
+                senderKey: key.substr(0, 43),
+                sessionId: key.substr(44),
+                sessionData: this.inboundGroupSessions[key],
+            });
         }
-      }
-
-      return Promise.resolve(sessions);
+        func(null);
     }
-  }, {
-    key: "countSessionsNeedingBackup",
-    value: function countSessionsNeedingBackup() {
-      return Promise.resolve(Object.keys(this._sessionsNeedingBackup).length);
-    }
-  }, {
-    key: "unmarkSessionsNeedingBackup",
-    value: function unmarkSessionsNeedingBackup(sessions) {
-      var _iterator9 = _createForOfIteratorHelper(sessions),
-          _step9;
-
-      try {
-        for (_iterator9.s(); !(_step9 = _iterator9.n()).done;) {
-          var session = _step9.value;
-          var sessionKey = session.senderKey + '/' + session.sessionId;
-          delete this._sessionsNeedingBackup[sessionKey];
+    addEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
+        const k = senderCurve25519Key + '/' + sessionId;
+        if (this.inboundGroupSessions[k] === undefined) {
+            this.inboundGroupSessions[k] = sessionData;
         }
-      } catch (err) {
-        _iterator9.e(err);
-      } finally {
-        _iterator9.f();
-      }
-
-      return Promise.resolve();
     }
-  }, {
-    key: "markSessionsNeedingBackup",
-    value: function markSessionsNeedingBackup(sessions) {
-      var _iterator10 = _createForOfIteratorHelper(sessions),
-          _step10;
-
-      try {
-        for (_iterator10.s(); !(_step10 = _iterator10.n()).done;) {
-          var session = _step10.value;
-          var sessionKey = session.senderKey + '/' + session.sessionId;
-          this._sessionsNeedingBackup[sessionKey] = true;
+    storeEndToEndInboundGroupSession(senderCurve25519Key, sessionId, sessionData, txn) {
+        this.inboundGroupSessions[senderCurve25519Key + '/' + sessionId] = sessionData;
+    }
+    storeEndToEndInboundGroupSessionWithheld(senderCurve25519Key, sessionId, sessionData, txn) {
+        const k = senderCurve25519Key + '/' + sessionId;
+        this.inboundGroupSessionsWithheld[k] = sessionData;
+    }
+    // Device Data
+    getEndToEndDeviceData(txn, func) {
+        func(this.deviceData);
+    }
+    storeEndToEndDeviceData(deviceData, txn) {
+        this.deviceData = deviceData;
+    }
+    // E2E rooms
+    storeEndToEndRoom(roomId, roomInfo, txn) {
+        this.rooms[roomId] = roomInfo;
+    }
+    getEndToEndRooms(txn, func) {
+        func(this.rooms);
+    }
+    getSessionsNeedingBackup(limit) {
+        const sessions = [];
+        for (const session in this.sessionsNeedingBackup) {
+            if (this.inboundGroupSessions[session]) {
+                sessions.push({
+                    senderKey: session.substr(0, 43),
+                    sessionId: session.substr(44),
+                    sessionData: this.inboundGroupSessions[session],
+                });
+                if (limit && session.length >= limit) {
+                    break;
+                }
+            }
         }
-      } catch (err) {
-        _iterator10.e(err);
-      } finally {
-        _iterator10.f();
-      }
-
-      return Promise.resolve();
+        return Promise.resolve(sessions);
     }
-  }, {
-    key: "addSharedHistoryInboundGroupSession",
-    value: function addSharedHistoryInboundGroupSession(roomId, senderKey, sessionId) {
-      var sessions = this._sharedHistoryInboundGroupSessions[roomId] || [];
-      sessions.push([senderKey, sessionId]);
-      this._sharedHistoryInboundGroupSessions[roomId] = sessions;
+    countSessionsNeedingBackup() {
+        return Promise.resolve(Object.keys(this.sessionsNeedingBackup).length);
     }
-  }, {
-    key: "getSharedHistoryInboundGroupSessions",
-    value: function getSharedHistoryInboundGroupSessions(roomId) {
-      return Promise.resolve(this._sharedHistoryInboundGroupSessions[roomId] || []);
-    } // Session key backups
-
-  }, {
-    key: "doTxn",
-    value: function doTxn(mode, stores, func) {
-      return Promise.resolve(func(null));
+    unmarkSessionsNeedingBackup(sessions) {
+        for (const session of sessions) {
+            const sessionKey = session.senderKey + '/' + session.sessionId;
+            delete this.sessionsNeedingBackup[sessionKey];
+        }
+        return Promise.resolve();
     }
-  }]);
-  return MemoryCryptoStore;
-}();
-
+    markSessionsNeedingBackup(sessions) {
+        for (const session of sessions) {
+            const sessionKey = session.senderKey + '/' + session.sessionId;
+            this.sessionsNeedingBackup[sessionKey] = true;
+        }
+        return Promise.resolve();
+    }
+    addSharedHistoryInboundGroupSession(roomId, senderKey, sessionId) {
+        const sessions = this.sharedHistoryInboundGroupSessions[roomId] || [];
+        sessions.push([senderKey, sessionId]);
+        this.sharedHistoryInboundGroupSessions[roomId] = sessions;
+    }
+    getSharedHistoryInboundGroupSessions(roomId) {
+        return Promise.resolve(this.sharedHistoryInboundGroupSessions[roomId] || []);
+    }
+    // Session key backups
+    doTxn(mode, stores, func) {
+        return Promise.resolve(func(null));
+    }
+}
 exports.MemoryCryptoStore = MemoryCryptoStore;
 
-},{"../../logger":106,"../../utils":137,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/interopRequireWildcard":13,"@babel/runtime/helpers/slicedToArray":22,"@babel/runtime/regenerator":27}],91:[function(require,module,exports){
+},{"../../logger":118,"../../utils":149}],103:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -37823,7 +38098,7 @@ var _CrossSigning = require("../CrossSigning");
 
 function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
 
-function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
 
 var timeoutException = new Error("Verification timed out");
 
@@ -37897,6 +38172,20 @@ var VerificationBase = /*#__PURE__*/function (_EventEmitter) {
   }
 
   (0, _createClass2["default"])(VerificationBase, [{
+    key: "initiatedByMe",
+    get: function get() {
+      // if there is no start event yet,
+      // we probably want to send it,
+      // which happens if we initiate
+      if (!this.startEvent) {
+        return true;
+      }
+
+      var sender = this.startEvent.getSender();
+      var content = this.startEvent.getContent();
+      return sender === this._baseApis.getUserId() && content.from_device === this._baseApis.getDeviceId();
+    }
+  }, {
     key: "_resetTimer",
     value: function _resetTimer() {
       var _this3 = this;
@@ -38239,27 +38528,13 @@ var VerificationBase = /*#__PURE__*/function (_EventEmitter) {
 
       return _verifyKeys;
     }()
-  }, {
-    key: "initiatedByMe",
-    get: function get() {
-      // if there is no start event yet,
-      // we probably want to send it,
-      // which happens if we initiate
-      if (!this.startEvent) {
-        return true;
-      }
-
-      var sender = this.startEvent.getSender();
-      var content = this.startEvent.getContent();
-      return sender === this._baseApis.getUserId() && content.from_device === this._baseApis.getDeviceId();
-    }
   }]);
   return VerificationBase;
 }(_events.EventEmitter);
 
 exports.VerificationBase = VerificationBase;
 
-},{"../../logger":106,"../../models/event":113,"../CrossSigning":67,"../deviceinfo":82,"./Error":92,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":20,"@babel/runtime/helpers/slicedToArray":22,"@babel/runtime/helpers/wrapNativeSuper":26,"@babel/runtime/regenerator":27,"events":36}],92:[function(require,module,exports){
+},{"../../logger":118,"../../models/event":125,"../CrossSigning":79,"../deviceinfo":94,"./Error":104,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":19,"@babel/runtime/helpers/slicedToArray":21,"@babel/runtime/helpers/wrapNativeSuper":25,"@babel/runtime/regenerator":26,"events":38}],104:[function(require,module,exports){
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -38377,7 +38652,7 @@ function errorFromEvent(event) {
   }
 }
 
-},{"../../models/event":113}],93:[function(require,module,exports){
+},{"../../models/event":125}],105:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -38387,9 +38662,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.IllegalMethod = void 0;
 
-var _construct2 = _interopRequireDefault(require("@babel/runtime/helpers/construct"));
-
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
+
+var _construct2 = _interopRequireDefault(require("@babel/runtime/helpers/construct"));
 
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
@@ -38407,7 +38682,7 @@ var _Base2 = require("./Base");
 
 function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
 
-function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
 
 /**
  * @class crypto/verification/IllegalMethod/IllegalMethod
@@ -38469,7 +38744,7 @@ var IllegalMethod = /*#__PURE__*/function (_Base) {
 
 exports.IllegalMethod = IllegalMethod;
 
-},{"./Base":91,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/construct":7,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":20,"@babel/runtime/regenerator":27}],94:[function(require,module,exports){
+},{"./Base":103,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/construct":7,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":19,"@babel/runtime/regenerator":26}],106:[function(require,module,exports){
 (function (global,Buffer){(function (){
 "use strict";
 
@@ -38480,9 +38755,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.QRCodeData = exports.ReciprocateQRCode = exports.SCAN_QR_CODE_METHOD = exports.SHOW_QR_CODE_METHOD = void 0;
 
-var _construct2 = _interopRequireDefault(require("@babel/runtime/helpers/construct"));
-
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
+
+var _construct2 = _interopRequireDefault(require("@babel/runtime/helpers/construct"));
 
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
@@ -38506,7 +38781,7 @@ var _logger = require("../../logger");
 
 function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
 
-function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
 
 var SHOW_QR_CODE_METHOD = "m.qr_code.show.v1";
 exports.SHOW_QR_CODE_METHOD = SHOW_QR_CODE_METHOD;
@@ -38936,7 +39211,7 @@ exports.QRCodeData = QRCodeData;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 
-},{"../../logger":106,"../olmlib":85,"./Base":91,"./Error":92,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/construct":7,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":20,"@babel/runtime/regenerator":27,"buffer":34}],95:[function(require,module,exports){
+},{"../../logger":118,"../olmlib":97,"./Base":103,"./Error":104,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/construct":7,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":19,"@babel/runtime/regenerator":26,"buffer":34}],107:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 
@@ -38947,9 +39222,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.SAS = void 0;
 
-var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
-
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
+
+var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
 
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
@@ -38973,9 +39248,9 @@ var _logger = require("../../logger");
 
 function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
 
-function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
 
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -39172,6 +39447,11 @@ var SAS = /*#__PURE__*/function (_Base) {
   }
 
   (0, _createClass2["default"])(SAS, [{
+    key: "events",
+    get: function get() {
+      return EVENTS;
+    }
+  }, {
     key: "_doVerification",
     value: function () {
       var _doVerification2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee() {
@@ -39702,11 +39982,6 @@ var SAS = /*#__PURE__*/function (_Base) {
 
       return _checkMAC;
     }()
-  }, {
-    key: "events",
-    get: function get() {
-      return EVENTS;
-    }
   }], [{
     key: "NAME",
     get: function get() {
@@ -39720,7 +39995,7 @@ exports.SAS = SAS;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../../logger":106,"./Base":91,"./Error":92,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":20,"@babel/runtime/helpers/slicedToArray":22,"@babel/runtime/regenerator":27,"another-json":28}],96:[function(require,module,exports){
+},{"../../logger":118,"./Base":103,"./Error":104,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":19,"@babel/runtime/helpers/slicedToArray":21,"@babel/runtime/regenerator":26,"another-json":27}],108:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -39742,7 +40017,7 @@ var _VerificationRequest = require("./VerificationRequest");
 
 var _logger = require("../../../logger");
 
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -39772,13 +40047,30 @@ var InRoomChannel = /*#__PURE__*/function () {
   }
 
   (0, _createClass2["default"])(InRoomChannel, [{
-    key: "getTimestamp",
+    key: "receiveStartFromOtherDevices",
+    get: function get() {
+      return true;
+    }
+  }, {
+    key: "roomId",
+    get: function get() {
+      return this._roomId;
+    }
+    /** The transaction id generated/used by this verification channel */
 
+  }, {
+    key: "transactionId",
+    get: function get() {
+      return this._requestEventId;
+    }
+  }, {
+    key: "getTimestamp",
+    value:
     /**
      * @param {MatrixEvent} event the event to get the timestamp of
      * @return {number} the timestamp when the event was sent
      */
-    value: function getTimestamp(event) {
+    function getTimestamp(event) {
       return event.getTs();
     }
     /**
@@ -39789,7 +40081,7 @@ var InRoomChannel = /*#__PURE__*/function () {
 
   }, {
     key: "handleEvent",
-
+    value:
     /**
      * Changes the state of the channel, request, and verifier in response to a key verification event.
      * @param {MatrixEvent} event to handle
@@ -39797,7 +40089,7 @@ var InRoomChannel = /*#__PURE__*/function () {
      * @param {bool} isLiveEvent whether this is an even received through sync or not
      * @returns {Promise} a promise that resolves when any requests as an anwser to the passed-in event are sent.
      */
-    value: function () {
+    function () {
       var _handleEvent = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(event, request, isLiveEvent) {
         var type, userId, ownUserId, sender, isRemoteEcho, isSentByUs;
         return _regenerator["default"].wrap(function _callee$(_context) {
@@ -39991,23 +40283,6 @@ var InRoomChannel = /*#__PURE__*/function () {
 
       return sendCompleted;
     }()
-  }, {
-    key: "receiveStartFromOtherDevices",
-    get: function get() {
-      return true;
-    }
-  }, {
-    key: "roomId",
-    get: function get() {
-      return this._roomId;
-    }
-    /** The transaction id generated/used by this verification channel */
-
-  }, {
-    key: "transactionId",
-    get: function get() {
-      return this._requestEventId;
-    }
   }], [{
     key: "getOtherPartyUserId",
     value: function getOtherPartyUserId(event, client) {
@@ -40224,7 +40499,7 @@ var InRoomRequests = /*#__PURE__*/function () {
 
 exports.InRoomRequests = InRoomRequests;
 
-},{"../../../logger":106,"./VerificationRequest":98,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/regenerator":27}],97:[function(require,module,exports){
+},{"../../../logger":118,"./VerificationRequest":110,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/regenerator":26}],109:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -40234,9 +40509,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.ToDeviceRequests = exports.ToDeviceChannel = void 0;
 
-var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
-
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
+
+var _defineProperty2 = _interopRequireDefault(require("@babel/runtime/helpers/defineProperty"));
 
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
@@ -40256,7 +40531,7 @@ var _Error = require("../Error");
 
 var _event = require("../../../models/event");
 
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -40320,13 +40595,18 @@ var ToDeviceChannel = /*#__PURE__*/function () {
       }
     }
   }, {
+    key: "deviceId",
+    get: function get() {
+      return this._deviceId;
+    }
+  }, {
     key: "getTimestamp",
-
+    value:
     /**
      * @param {MatrixEvent} event the event to get the timestamp of
      * @return {number} the timestamp when the event was sent
      */
-    value: function getTimestamp(event) {
+    function getTimestamp(event) {
       var content = event.getContent();
       return content && content.timestamp;
     }
@@ -40584,11 +40864,6 @@ var ToDeviceChannel = /*#__PURE__*/function () {
      * @returns {string} the transaction id
      */
 
-  }, {
-    key: "deviceId",
-    get: function get() {
-      return this._deviceId;
-    }
   }], [{
     key: "getEventType",
     value: function getEventType(event) {
@@ -40787,7 +41062,7 @@ var ToDeviceRequests = /*#__PURE__*/function () {
 
 exports.ToDeviceRequests = ToDeviceRequests;
 
-},{"../../../logger":106,"../../../models/event":113,"../../../randomstring":123,"../Error":92,"./VerificationRequest":98,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/typeof":24,"@babel/runtime/regenerator":27}],98:[function(require,module,exports){
+},{"../../../logger":118,"../../../models/event":125,"../../../randomstring":135,"../Error":104,"./VerificationRequest":110,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/typeof":23,"@babel/runtime/regenerator":26}],110:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -40797,9 +41072,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.VerificationRequest = exports.PHASE_DONE = exports.PHASE_CANCELLED = exports.PHASE_STARTED = exports.PHASE_READY = exports.PHASE_REQUESTED = exports.PHASE_UNSENT = exports.READY_TYPE = exports.DONE_TYPE = exports.CANCEL_TYPE = exports.START_TYPE = exports.REQUEST_TYPE = exports.EVENT_PREFIX = void 0;
 
-var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
-
 var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
+
+var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
 
 var _toConsumableArray2 = _interopRequireDefault(require("@babel/runtime/helpers/toConsumableArray"));
 
@@ -40827,7 +41102,7 @@ var _Error = require("../Error");
 
 var _QRCode = require("../QRCode");
 
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -40835,7 +41110,7 @@ function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len 
 
 function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
 
-function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
 
 // How long after the event's timestamp that the request times out
 var TIMEOUT_FROM_EVENT_TS = 10 * 60 * 1000; // 10 minutes
@@ -40945,6 +41220,60 @@ var VerificationRequest = /*#__PURE__*/function (_EventEmitter) {
 
 
   (0, _createClass2["default"])(VerificationRequest, [{
+    key: "invalid",
+    get: function get() {
+      return this.phase === PHASE_UNSENT;
+    }
+    /** returns whether the phase is PHASE_REQUESTED */
+
+  }, {
+    key: "requested",
+    get: function get() {
+      return this.phase === PHASE_REQUESTED;
+    }
+    /** returns whether the phase is PHASE_CANCELLED */
+
+  }, {
+    key: "cancelled",
+    get: function get() {
+      return this.phase === PHASE_CANCELLED;
+    }
+    /** returns whether the phase is PHASE_READY */
+
+  }, {
+    key: "ready",
+    get: function get() {
+      return this.phase === PHASE_READY;
+    }
+    /** returns whether the phase is PHASE_STARTED */
+
+  }, {
+    key: "started",
+    get: function get() {
+      return this.phase === PHASE_STARTED;
+    }
+    /** returns whether the phase is PHASE_DONE */
+
+  }, {
+    key: "done",
+    get: function get() {
+      return this.phase === PHASE_DONE;
+    }
+    /** once the phase is PHASE_STARTED (and !initiatedByMe) or PHASE_READY: common methods supported by both sides */
+
+  }, {
+    key: "methods",
+    get: function get() {
+      return this._commonMethods;
+    }
+    /** the method picked in the .start event */
+
+  }, {
+    key: "chosenMethod",
+    get: function get() {
+      return this._chosenMethod;
+    }
+  }, {
     key: "calculateEventTimeout",
     value: function calculateEventTimeout(event) {
       var effectiveExpiresAt = this.channel.getTimestamp(event) + TIMEOUT_FROM_EVENT_TS;
@@ -40959,8 +41288,69 @@ var VerificationRequest = /*#__PURE__*/function (_EventEmitter) {
     /** The current remaining amount of ms before the request should be automatically cancelled */
 
   }, {
-    key: "otherPartySupportsMethod",
+    key: "timeout",
+    get: function get() {
+      var requestEvent = this._getEventByEither(REQUEST_TYPE);
 
+      if (requestEvent) {
+        return this.calculateEventTimeout(requestEvent);
+      }
+
+      return 0;
+    }
+    /**
+     * The key verification request event.
+     * @returns {MatrixEvent} The request event, or falsey if not found.
+     */
+
+  }, {
+    key: "requestEvent",
+    get: function get() {
+      return this._getEventByEither(REQUEST_TYPE);
+    }
+    /** current phase of the request. Some properties might only be defined in a current phase. */
+
+  }, {
+    key: "phase",
+    get: function get() {
+      return this._phase;
+    }
+    /** The verifier to do the actual verification, once the method has been established. Only defined when the `phase` is PHASE_STARTED. */
+
+  }, {
+    key: "verifier",
+    get: function get() {
+      return this._verifier;
+    }
+  }, {
+    key: "canAccept",
+    get: function get() {
+      return this.phase < PHASE_READY && !this._accepting && !this._declining;
+    }
+  }, {
+    key: "accepting",
+    get: function get() {
+      return this._accepting;
+    }
+  }, {
+    key: "declining",
+    get: function get() {
+      return this._declining;
+    }
+    /** whether this request has sent it's initial event and needs more events to complete */
+
+  }, {
+    key: "pending",
+    get: function get() {
+      return !this.observeOnly && this._phase !== PHASE_DONE && this._phase !== PHASE_CANCELLED;
+    }
+    /** Only set after a .ready if the other party can scan a QR code */
+
+  }, {
+    key: "qrCodeData",
+    get: function get() {
+      return this._qrCodeData;
+    }
     /** Checks whether the other party supports a given verification method.
      *  This is useful when setting up the QR code UI, as it is somewhat asymmetrical:
      *  if the other party supports SCAN_QR, we should show a QR code in the UI, and vice versa.
@@ -40968,6 +41358,9 @@ var VerificationRequest = /*#__PURE__*/function (_EventEmitter) {
      *  @param {string} method the method to check
      *  @param {boolean} force to check even if the phase is not ready or started yet, internal usage
      *  @return {bool} whether or not the other party said the supported the method */
+
+  }, {
+    key: "otherPartySupportsMethod",
     value: function otherPartySupportsMethod(method) {
       var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
 
@@ -41013,8 +41406,129 @@ var VerificationRequest = /*#__PURE__*/function (_EventEmitter) {
      */
 
   }, {
-    key: "beginKeyVerification",
+    key: "initiatedByMe",
+    get: function get() {
+      // event created by us but no remote echo has been received yet
+      var noEventsYet = this._eventsByUs.size + this._eventsByThem.size === 0;
 
+      if (this._phase === PHASE_UNSENT && noEventsYet) {
+        return true;
+      }
+
+      var hasMyRequest = this._eventsByUs.has(REQUEST_TYPE);
+
+      var hasTheirRequest = this._eventsByThem.has(REQUEST_TYPE);
+
+      if (hasMyRequest && !hasTheirRequest) {
+        return true;
+      }
+
+      if (!hasMyRequest && hasTheirRequest) {
+        return false;
+      }
+
+      var hasMyStart = this._eventsByUs.has(START_TYPE);
+
+      var hasTheirStart = this._eventsByThem.has(START_TYPE);
+
+      if (hasMyStart && !hasTheirStart) {
+        return true;
+      }
+
+      return false;
+    }
+    /** The id of the user that initiated the request */
+
+  }, {
+    key: "requestingUserId",
+    get: function get() {
+      if (this.initiatedByMe) {
+        return this._client.getUserId();
+      } else {
+        return this.otherUserId;
+      }
+    }
+    /** The id of the user that (will) receive(d) the request */
+
+  }, {
+    key: "receivingUserId",
+    get: function get() {
+      if (this.initiatedByMe) {
+        return this.otherUserId;
+      } else {
+        return this._client.getUserId();
+      }
+    }
+    /** The user id of the other party in this request */
+
+  }, {
+    key: "otherUserId",
+    get: function get() {
+      return this.channel.userId;
+    }
+  }, {
+    key: "isSelfVerification",
+    get: function get() {
+      return this._client.getUserId() === this.otherUserId;
+    }
+    /**
+     * The id of the user that cancelled the request,
+     * only defined when phase is PHASE_CANCELLED
+     */
+
+  }, {
+    key: "cancellingUserId",
+    get: function get() {
+      var myCancel = this._eventsByUs.get(CANCEL_TYPE);
+
+      var theirCancel = this._eventsByThem.get(CANCEL_TYPE);
+
+      if (myCancel && (!theirCancel || myCancel.getId() < theirCancel.getId())) {
+        return myCancel.getSender();
+      }
+
+      if (theirCancel) {
+        return theirCancel.getSender();
+      }
+
+      return undefined;
+    }
+    /**
+     * The cancellation code e.g m.user which is responsible for cancelling this verification
+     */
+
+  }, {
+    key: "cancellationCode",
+    get: function get() {
+      var ev = this._getEventByEither(CANCEL_TYPE);
+
+      return ev ? ev.getContent().code : null;
+    }
+  }, {
+    key: "observeOnly",
+    get: function get() {
+      return this._observeOnly;
+    }
+    /**
+     * Gets which device the verification should be started with
+     * given the events sent so far in the verification. This is the
+     * same algorithm used to determine which device to send the
+     * verification to when no specific device is specified.
+     * @returns {{userId: *, deviceId: *}} The device information
+     */
+
+  }, {
+    key: "targetDevice",
+    get: function get() {
+      var theirFirstEvent = this._eventsByThem.get(REQUEST_TYPE) || this._eventsByThem.get(READY_TYPE) || this._eventsByThem.get(START_TYPE);
+
+      var theirFirstContent = theirFirstEvent.getContent();
+      var fromDevice = theirFirstContent.from_device;
+      return {
+        userId: this.otherUserId,
+        deviceId: fromDevice
+      };
+    }
     /* Start the key verification, creating a verifier and sending a .start event.
      * If no previous events have been sent, pass in `targetDevice` to set who to direct this request to.
      * @param {string} method the name of the verification method to use.
@@ -41022,6 +41536,9 @@ var VerificationRequest = /*#__PURE__*/function (_EventEmitter) {
      * @param {string?} targetDevice.deviceId the id of the device to direct this request to
      * @returns {VerifierBase} the verifier of the given method
      */
+
+  }, {
+    key: "beginKeyVerification",
     value: function beginKeyVerification(method) {
       var targetDevice = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
 
@@ -41842,248 +42359,6 @@ var VerificationRequest = /*#__PURE__*/function (_EventEmitter) {
     value: function getEventFromOtherParty(type) {
       return this._eventsByThem.get(type);
     }
-  }, {
-    key: "invalid",
-    get: function get() {
-      return this.phase === PHASE_UNSENT;
-    }
-    /** returns whether the phase is PHASE_REQUESTED */
-
-  }, {
-    key: "requested",
-    get: function get() {
-      return this.phase === PHASE_REQUESTED;
-    }
-    /** returns whether the phase is PHASE_CANCELLED */
-
-  }, {
-    key: "cancelled",
-    get: function get() {
-      return this.phase === PHASE_CANCELLED;
-    }
-    /** returns whether the phase is PHASE_READY */
-
-  }, {
-    key: "ready",
-    get: function get() {
-      return this.phase === PHASE_READY;
-    }
-    /** returns whether the phase is PHASE_STARTED */
-
-  }, {
-    key: "started",
-    get: function get() {
-      return this.phase === PHASE_STARTED;
-    }
-    /** returns whether the phase is PHASE_DONE */
-
-  }, {
-    key: "done",
-    get: function get() {
-      return this.phase === PHASE_DONE;
-    }
-    /** once the phase is PHASE_STARTED (and !initiatedByMe) or PHASE_READY: common methods supported by both sides */
-
-  }, {
-    key: "methods",
-    get: function get() {
-      return this._commonMethods;
-    }
-    /** the method picked in the .start event */
-
-  }, {
-    key: "chosenMethod",
-    get: function get() {
-      return this._chosenMethod;
-    }
-  }, {
-    key: "timeout",
-    get: function get() {
-      var requestEvent = this._getEventByEither(REQUEST_TYPE);
-
-      if (requestEvent) {
-        return this.calculateEventTimeout(requestEvent);
-      }
-
-      return 0;
-    }
-    /**
-     * The key verification request event.
-     * @returns {MatrixEvent} The request event, or falsey if not found.
-     */
-
-  }, {
-    key: "requestEvent",
-    get: function get() {
-      return this._getEventByEither(REQUEST_TYPE);
-    }
-    /** current phase of the request. Some properties might only be defined in a current phase. */
-
-  }, {
-    key: "phase",
-    get: function get() {
-      return this._phase;
-    }
-    /** The verifier to do the actual verification, once the method has been established. Only defined when the `phase` is PHASE_STARTED. */
-
-  }, {
-    key: "verifier",
-    get: function get() {
-      return this._verifier;
-    }
-  }, {
-    key: "canAccept",
-    get: function get() {
-      return this.phase < PHASE_READY && !this._accepting && !this._declining;
-    }
-  }, {
-    key: "accepting",
-    get: function get() {
-      return this._accepting;
-    }
-  }, {
-    key: "declining",
-    get: function get() {
-      return this._declining;
-    }
-    /** whether this request has sent it's initial event and needs more events to complete */
-
-  }, {
-    key: "pending",
-    get: function get() {
-      return !this.observeOnly && this._phase !== PHASE_DONE && this._phase !== PHASE_CANCELLED;
-    }
-    /** Only set after a .ready if the other party can scan a QR code */
-
-  }, {
-    key: "qrCodeData",
-    get: function get() {
-      return this._qrCodeData;
-    }
-  }, {
-    key: "initiatedByMe",
-    get: function get() {
-      // event created by us but no remote echo has been received yet
-      var noEventsYet = this._eventsByUs.size + this._eventsByThem.size === 0;
-
-      if (this._phase === PHASE_UNSENT && noEventsYet) {
-        return true;
-      }
-
-      var hasMyRequest = this._eventsByUs.has(REQUEST_TYPE);
-
-      var hasTheirRequest = this._eventsByThem.has(REQUEST_TYPE);
-
-      if (hasMyRequest && !hasTheirRequest) {
-        return true;
-      }
-
-      if (!hasMyRequest && hasTheirRequest) {
-        return false;
-      }
-
-      var hasMyStart = this._eventsByUs.has(START_TYPE);
-
-      var hasTheirStart = this._eventsByThem.has(START_TYPE);
-
-      if (hasMyStart && !hasTheirStart) {
-        return true;
-      }
-
-      return false;
-    }
-    /** The id of the user that initiated the request */
-
-  }, {
-    key: "requestingUserId",
-    get: function get() {
-      if (this.initiatedByMe) {
-        return this._client.getUserId();
-      } else {
-        return this.otherUserId;
-      }
-    }
-    /** The id of the user that (will) receive(d) the request */
-
-  }, {
-    key: "receivingUserId",
-    get: function get() {
-      if (this.initiatedByMe) {
-        return this.otherUserId;
-      } else {
-        return this._client.getUserId();
-      }
-    }
-    /** The user id of the other party in this request */
-
-  }, {
-    key: "otherUserId",
-    get: function get() {
-      return this.channel.userId;
-    }
-  }, {
-    key: "isSelfVerification",
-    get: function get() {
-      return this._client.getUserId() === this.otherUserId;
-    }
-    /**
-     * The id of the user that cancelled the request,
-     * only defined when phase is PHASE_CANCELLED
-     */
-
-  }, {
-    key: "cancellingUserId",
-    get: function get() {
-      var myCancel = this._eventsByUs.get(CANCEL_TYPE);
-
-      var theirCancel = this._eventsByThem.get(CANCEL_TYPE);
-
-      if (myCancel && (!theirCancel || myCancel.getId() < theirCancel.getId())) {
-        return myCancel.getSender();
-      }
-
-      if (theirCancel) {
-        return theirCancel.getSender();
-      }
-
-      return undefined;
-    }
-    /**
-     * The cancellation code e.g m.user which is responsible for cancelling this verification
-     */
-
-  }, {
-    key: "cancellationCode",
-    get: function get() {
-      var ev = this._getEventByEither(CANCEL_TYPE);
-
-      return ev ? ev.getContent().code : null;
-    }
-  }, {
-    key: "observeOnly",
-    get: function get() {
-      return this._observeOnly;
-    }
-    /**
-     * Gets which device the verification should be started with
-     * given the events sent so far in the verification. This is the
-     * same algorithm used to determine which device to send the
-     * verification to when no specific device is specified.
-     * @returns {{userId: *, deviceId: *}} The device information
-     */
-
-  }, {
-    key: "targetDevice",
-    get: function get() {
-      var theirFirstEvent = this._eventsByThem.get(REQUEST_TYPE) || this._eventsByThem.get(READY_TYPE) || this._eventsByThem.get(START_TYPE);
-
-      var theirFirstContent = theirFirstEvent.getContent();
-      var fromDevice = theirFirstContent.from_device;
-      return {
-        userId: this.otherUserId,
-        deviceId: fromDevice
-      };
-    }
   }], [{
     key: "validateEvent",
     value: function validateEvent(type, event, client) {
@@ -42125,7 +42400,7 @@ var VerificationRequest = /*#__PURE__*/function (_EventEmitter) {
 
 exports.VerificationRequest = VerificationRequest;
 
-},{"../../../logger":106,"../Error":92,"../QRCode":94,"@babel/runtime/helpers/assertThisInitialized":4,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":20,"@babel/runtime/helpers/slicedToArray":22,"@babel/runtime/helpers/toConsumableArray":23,"@babel/runtime/regenerator":27,"events":36}],99:[function(require,module,exports){
+},{"../../../logger":118,"../Error":104,"../QRCode":106,"@babel/runtime/helpers/assertThisInitialized":4,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":19,"@babel/runtime/helpers/slicedToArray":21,"@babel/runtime/helpers/toConsumableArray":22,"@babel/runtime/regenerator":26,"events":38}],111:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -42149,7 +42424,7 @@ var _wrapNativeSuper2 = _interopRequireDefault(require("@babel/runtime/helpers/w
 
 function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
 
-function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
 
 // can't just do InvalidStoreError extends Error
 // because of http://babeljs.io/docs/usage/caveats/#classes
@@ -42212,7 +42487,7 @@ var KeySignatureUploadError = /*#__PURE__*/function (_Error) {
 
 exports.KeySignatureUploadError = KeySignatureUploadError;
 
-},{"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":20,"@babel/runtime/helpers/wrapNativeSuper":26}],100:[function(require,module,exports){
+},{"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":19,"@babel/runtime/helpers/wrapNativeSuper":25}],112:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 The Matrix.org Foundation C.I.C.
@@ -42256,7 +42531,7 @@ function eventMapperFor(client, options) {
 }
 exports.eventMapperFor = eventMapperFor;
 
-},{"./models/event":113}],101:[function(require,module,exports){
+},{"./models/event":125}],113:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2016 - 2021 The Matrix.org Foundation C.I.C.
@@ -42390,7 +42665,7 @@ class FilterComponent {
 }
 exports.FilterComponent = FilterComponent;
 
-},{}],102:[function(require,module,exports){
+},{}],114:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 Matrix.org Foundation C.I.C.
@@ -42573,13 +42848,13 @@ Filter.LAZY_LOADING_MESSAGES_FILTER = {
     lazy_load_members: true,
 };
 
-},{"./filter-component":101}],103:[function(require,module,exports){
+},{"./filter-component":113}],115:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 
-var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
-
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+var _typeof3 = require("@babel/runtime/helpers/typeof");
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -42616,11 +42891,15 @@ var _logger = require("./logger");
 
 var callbacks = _interopRequireWildcard(require("./realtime-callbacks"));
 
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || _typeof3(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
 function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = (0, _getPrototypeOf2["default"])(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = (0, _getPrototypeOf2["default"])(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return (0, _possibleConstructorReturn2["default"])(this, result); }; }
 
-function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Boolean.prototype.valueOf.call(Reflect.construct(Boolean, [], function () {})); return true; } catch (e) { return false; } }
 
-function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) { symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); } keys.push.apply(keys, symbols); } return keys; }
 
 function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { (0, _defineProperty2["default"])(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
 
@@ -42722,7 +43001,7 @@ MatrixHttpApi.prototype = {
   },
 
   /**
-   * Upload content to the Home Server
+   * Upload content to the homeserver
    *
    * @param {object} file The object to upload. On a browser, something that
    *   can be sent to XMLHttpRequest.send (typically a File).  Under node.js,
@@ -42983,7 +43262,7 @@ MatrixHttpApi.prototype = {
   },
   idServerRequest: function idServerRequest(callback, method, path, params, prefix, accessToken) {
     if (!this.opts.idBaseUrl) {
-      throw new Error("No Identity Server base URL set");
+      throw new Error("No identity server base URL set");
     }
 
     var fullUri = this.opts.idBaseUrl + prefix + path;
@@ -43669,14 +43948,8 @@ function _retryNetworkOperation() {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./logger":106,"./realtime-callbacks":124,"./utils":137,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/interopRequireWildcard":13,"@babel/runtime/helpers/possibleConstructorReturn":20,"@babel/runtime/helpers/typeof":24,"@babel/runtime/helpers/wrapNativeSuper":26,"@babel/runtime/regenerator":27,"content-type":35}],104:[function(require,module,exports){
+},{"./logger":118,"./realtime-callbacks":136,"./utils":149,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":19,"@babel/runtime/helpers/typeof":23,"@babel/runtime/helpers/wrapNativeSuper":25,"@babel/runtime/regenerator":26,"content-type":37}],116:[function(require,module,exports){
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.exists = exists;
-
 /*
 Copyright 2019 New Vector Ltd
 
@@ -43692,7 +43965,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.exists = void 0;
 /**
  * Check if an IndexedDB database exists. The only way to do so is to try opening it, so
  * we do that and then delete it did not exist before.
@@ -43702,48 +43976,39 @@ limitations under the License.
  * @returns {boolean} Whether the database exists
  */
 function exists(indexedDB, dbName) {
-  return new Promise(function (resolve, reject) {
-    var exists = true;
-    var req = indexedDB.open(dbName);
-
-    req.onupgradeneeded = function () {
-      // Since we did not provide an explicit version when opening, this event
-      // should only fire if the DB did not exist before at any version.
-      exists = false;
-    };
-
-    req.onblocked = function () {
-      return reject();
-    };
-
-    req.onsuccess = function () {
-      var db = req.result;
-      db.close();
-
-      if (!exists) {
-        // The DB did not exist before, but has been created as part of this
-        // existence check. Delete it now to restore previous state. Delete can
-        // actually take a while to complete in some browsers, so don't wait for
-        // it. This won't block future open calls that a store might issue next to
-        // properly set up the DB.
-        indexedDB.deleteDatabase(dbName);
-      }
-
-      resolve(exists);
-    };
-
-    req.onerror = function (ev) {
-      return reject(ev.target.error);
-    };
-  });
+    return new Promise((resolve, reject) => {
+        let exists = true;
+        const req = indexedDB.open(dbName);
+        req.onupgradeneeded = () => {
+            // Since we did not provide an explicit version when opening, this event
+            // should only fire if the DB did not exist before at any version.
+            exists = false;
+        };
+        req.onblocked = () => reject(req.error);
+        req.onsuccess = () => {
+            const db = req.result;
+            db.close();
+            if (!exists) {
+                // The DB did not exist before, but has been created as part of this
+                // existence check. Delete it now to restore previous state. Delete can
+                // actually take a while to complete in some browsers, so don't wait for
+                // it. This won't block future open calls that a store might issue next to
+                // properly set up the DB.
+                indexedDB.deleteDatabase(dbName);
+            }
+            resolve(exists);
+        };
+        req.onerror = ev => reject(req.error);
+    });
 }
+exports.exists = exists;
 
-},{}],105:[function(require,module,exports){
+},{}],117:[function(require,module,exports){
 "use strict";
 
-var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
-
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+
+var _typeof = require("@babel/runtime/helpers/typeof");
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -43754,13 +44019,15 @@ var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"))
 
 var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
 
-var _url = _interopRequireDefault(require("url"));
-
 var utils = _interopRequireWildcard(require("./utils"));
 
 var _logger = require("./logger");
 
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -43968,7 +44235,7 @@ InteractiveAuth.prototype = {
                 break;
               }
 
-              idServerParsedUrl = _url["default"].parse(this._matrixClient.getIdentityServerUrl());
+              idServerParsedUrl = new URL(this._matrixClient.getIdentityServerUrl());
               creds.id_server = idServerParsedUrl.host;
 
             case 15:
@@ -44010,7 +44277,7 @@ InteractiveAuth.prototype = {
 
   /**
    * get the client secret used for validation sessions
-   * with the ID server.
+   * with the identity server.
    *
    * @return {string} client secret
    */
@@ -44445,7 +44712,7 @@ InteractiveAuth.prototype = {
   }
 };
 
-},{"./logger":106,"./utils":137,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/interopRequireWildcard":13,"@babel/runtime/regenerator":27,"url":56}],106:[function(require,module,exports){
+},{"./logger":118,"./utils":149,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/typeof":23,"@babel/runtime/regenerator":26}],118:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2018 André Jaenisch
@@ -44529,7 +44796,7 @@ function getPrefixedLogger(prefix) {
     return prefixLogger;
 }
 
-},{"loglevel":38}],107:[function(require,module,exports){
+},{"loglevel":46}],119:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 /*
@@ -44726,7 +44993,7 @@ exports.createClient = createClient;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./autodiscovery":62,"./client":64,"./content-helpers":65,"./content-repo":66,"./crypto/store/indexeddb-crypto-store":88,"./crypto/store/memory-crypto-store":90,"./errors":99,"./filter":102,"./http-api":103,"./interactive-auth":105,"./models/event":113,"./models/event-timeline":112,"./models/event-timeline-set":111,"./models/group":114,"./models/room":119,"./models/room-member":116,"./models/room-state":117,"./models/user":121,"./scheduler":125,"./service-types":126,"./store/indexeddb":129,"./store/memory":130,"./store/session/webstorage":131,"./sync-accumulator":133,"./timeline-window":136,"./webrtc/call":138}],108:[function(require,module,exports){
+},{"./autodiscovery":74,"./client":76,"./content-helpers":77,"./content-repo":78,"./crypto/store/indexeddb-crypto-store":100,"./crypto/store/memory-crypto-store":102,"./errors":111,"./filter":114,"./http-api":115,"./interactive-auth":117,"./models/event":125,"./models/event-timeline":124,"./models/event-timeline-set":123,"./models/group":126,"./models/room":131,"./models/room-member":128,"./models/room-state":129,"./models/user":133,"./scheduler":137,"./service-types":138,"./store/indexeddb":141,"./store/memory":142,"./store/session/webstorage":143,"./sync-accumulator":145,"./timeline-window":148,"./webrtc/call":150}],120:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 The Matrix.org Foundation C.I.C.
@@ -44805,13 +45072,27 @@ class MSC3089Branch {
      * @returns {Promise<void>} Resolves when complete.
      */
     setName(name) {
-        return this.client.sendStateEvent(this.roomId, event_1.UNSTABLE_MSC3089_BRANCH.name, Object.assign(Object.assign({}, this.indexEvent.getContent()), { name: name }), this.id);
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.client.sendStateEvent(this.roomId, event_1.UNSTABLE_MSC3089_BRANCH.name, Object.assign(Object.assign({}, this.indexEvent.getContent()), { name: name }), this.id);
+        });
     }
     /**
      * Gets information about the file needed to download it.
      * @returns {Promise<{info: IEncryptedFile, httpUrl: string}>} Information about the file.
      */
     getFileInfo() {
+        return __awaiter(this, void 0, void 0, function* () {
+            const event = yield this.getFileEvent();
+            const file = event.getContent()['file'];
+            const httpUrl = this.client.mxcUrlToHttp(file['url']);
+            return { info: file, httpUrl: httpUrl };
+        });
+    }
+    /**
+     * Gets the event the file points to.
+     * @returns {Promise<MatrixEvent>} Resolves to the file's event.
+     */
+    getFileEvent() {
         return __awaiter(this, void 0, void 0, function* () {
             const room = this.client.getRoom(this.roomId);
             if (!room)
@@ -44824,15 +45105,13 @@ class MSC3089Branch {
                 throw new Error("Failed to find event");
             // Sometimes the event context doesn't decrypt for us, so do that.
             yield this.client.decryptEventIfNeeded(event, { emit: false, isRetry: false });
-            const file = event.getContent()['file'];
-            const httpUrl = this.client.mxcUrlToHttp(file['url']);
-            return { info: file, httpUrl: httpUrl };
+            return event;
         });
     }
 }
 exports.MSC3089Branch = MSC3089Branch;
 
-},{"../@types/event":58}],109:[function(require,module,exports){
+},{"../@types/event":69}],121:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 The Matrix.org Foundation C.I.C.
@@ -44895,7 +45174,7 @@ exports.DEFAULT_TREE_POWER_LEVELS_TEMPLATE = {
         [event_1.EventType.RoomMessageEncrypted]: 50,
         [event_1.EventType.Sticker]: 50,
     },
-    users: {},
+    users: {}, // defined by calling code
 };
 /**
  * Ease-of-use representation for power levels represented as simple roles.
@@ -44943,7 +45222,9 @@ class MSC3089TreeSpace {
      * @returns {Promise<void>} Resolves when complete.
      */
     setName(name) {
-        return this.client.sendStateEvent(this.roomId, event_1.EventType.RoomName, { name }, "");
+        return __awaiter(this, void 0, void 0, function* () {
+            yield this.client.sendStateEvent(this.roomId, event_1.EventType.RoomName, { name }, "");
+        });
     }
     /**
      * Invites a user to the tree space. They will be given the default Viewer
@@ -45020,8 +45301,31 @@ class MSC3089TreeSpace {
                     throw new Error("Invalid role: " + role);
             }
             pls['users'] = users;
-            return this.client.sendStateEvent(this.roomId, event_1.EventType.RoomPowerLevels, pls, "");
+            yield this.client.sendStateEvent(this.roomId, event_1.EventType.RoomPowerLevels, pls, "");
         });
+    }
+    /**
+     * Gets the current permissions of a user. Note that any users missing explicit permissions (or not
+     * in the space) will be considered Viewers. Appropriate membership checks need to be performed
+     * elsewhere.
+     * @param {string} userId The user ID to check permissions of.
+     * @returns {TreePermissions} The permissions for the user, defaulting to Viewer.
+     */
+    getPermissions(userId) {
+        var _a, _b;
+        const currentPls = this.room.currentState.getStateEvents(event_1.EventType.RoomPowerLevels, "");
+        if (Array.isArray(currentPls))
+            throw new Error("Unexpected return type for power levels");
+        const pls = currentPls.getContent() || {};
+        const viewLevel = pls['users_default'] || 0;
+        const editLevel = pls['events_default'] || 50;
+        const adminLevel = ((_a = pls['events']) === null || _a === void 0 ? void 0 : _a[event_1.EventType.RoomPowerLevels]) || 100;
+        const userLevel = ((_b = pls['users']) === null || _b === void 0 ? void 0 : _b[userId]) || viewLevel;
+        if (userLevel >= adminLevel)
+            return TreePermissions.Owner;
+        if (userLevel >= editLevel)
+            return TreePermissions.Editor;
+        return TreePermissions.Viewer;
     }
     /**
      * Creates a directory under this tree space, represented as another tree space.
@@ -45296,7 +45600,7 @@ class MSC3089TreeSpace {
 }
 exports.MSC3089TreeSpace = MSC3089TreeSpace;
 
-},{"../@types/event":58,"../crypto/algorithms/megolm":77,"../logger":106,"../utils":137,"./MSC3089Branch":108,"p-retry":39}],110:[function(require,module,exports){
+},{"../@types/event":69,"../crypto/algorithms/megolm":89,"../logger":118,"../utils":149,"./MSC3089Branch":120,"p-retry":48}],122:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -45410,7 +45714,7 @@ class EventContext {
 }
 exports.EventContext = EventContext;
 
-},{"./event-timeline":112}],111:[function(require,module,exports){
+},{"./event-timeline":124}],123:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2016 - 2021 The Matrix.org Foundation C.I.C.
@@ -46159,7 +46463,7 @@ exports.EventTimelineSet = EventTimelineSet;
  * @param {boolean} resetAllTimelines True if all timelines were reset.
  */
 
-},{"../logger":106,"./event":113,"./event-timeline":112,"./relations":115,"events":36}],112:[function(require,module,exports){
+},{"../logger":118,"./event":125,"./event-timeline":124,"./relations":127,"events":38}],124:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2016 - 2021 The Matrix.org Foundation C.I.C.
@@ -46237,13 +46541,16 @@ class EventTimeline {
      * @param {boolean} toStartOfTimeline  if true the event's forwardLooking flag is set false
      */
     static setEventMetadata(event, stateContext, toStartOfTimeline) {
-        // We always check if the event doesn't already have the property. We do
-        // this to avoid overriding non-sentinel members by sentinel ones when
-        // adding the event to a filtered timeline
-        if (!event.sender) {
+        var _a, _b, _c, _d;
+        // When we try to generate a sentinel member before we have that member
+        // in the members object, we still generate a sentinel but it doesn't
+        // have a membership event, so test to see if events.member is set. We
+        // check this to avoid overriding non-sentinel members by sentinel ones
+        // when adding the event to a filtered timeline
+        if (!((_b = (_a = event.sender) === null || _a === void 0 ? void 0 : _a.events) === null || _b === void 0 ? void 0 : _b.member)) {
             event.sender = stateContext.getSentinelMember(event.getSender());
         }
-        if (!event.target && event.getType() === event_1.EventType.RoomMember) {
+        if (!((_d = (_c = event.target) === null || _c === void 0 ? void 0 : _c.events) === null || _d === void 0 ? void 0 : _d.member) && event.getType() === event_1.EventType.RoomMember) {
             event.target = stateContext.getSentinelMember(event.getStateKey());
         }
         if (event.isState()) {
@@ -46546,7 +46853,7 @@ EventTimeline.BACKWARDS = Direction.Backward;
  */
 EventTimeline.FORWARDS = Direction.Forward;
 
-},{"../@types/event":58,"./room-state":117}],113:[function(require,module,exports){
+},{"../@types/event":69,"./room-state":129}],125:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -46641,7 +46948,6 @@ class MatrixEvent extends events_1.EventEmitter {
         this._replacingEvent = null;
         this._localRedactionEvent = null;
         this._isCancelled = false;
-        this.clearEvent = {};
         /* curve25519 key which we believe belongs to the sender of the event. See
          * getSenderKey()
          */
@@ -46709,6 +47015,15 @@ class MatrixEvent extends events_1.EventEmitter {
         this.localTimestamp = Date.now() - this.getAge();
     }
     /**
+     * Gets the event as though it would appear unencrypted. If the event is already not
+     * encrypted, it is simply returned as-is.
+     * @returns {IEvent} The event in wire format.
+     */
+    getEffectiveEvent() {
+        // clearEvent doesn't have all the fields, so we'll copy what we can from this.event
+        return Object.assign({}, this.event, this.clearEvent);
+    }
+    /**
      * Get the event_id for this event.
      * @return {string} The event ID, e.g. <code>$143350589368169JsLZx:localhost
      * </code>
@@ -46729,7 +47044,10 @@ class MatrixEvent extends events_1.EventEmitter {
      * @return {string} The event type, e.g. <code>m.room.message</code>
      */
     getType() {
-        return this.clearEvent.type || this.event.type;
+        if (this.clearEvent) {
+            return this.clearEvent.type;
+        }
+        return this.event.type;
     }
     /**
      * Get the (possibly encrypted) type of the event that will be sent to the
@@ -46773,7 +47091,10 @@ class MatrixEvent extends events_1.EventEmitter {
         if (this._localRedactionEvent) {
             return {};
         }
-        return (this.clearEvent.content || this.event.content || {});
+        if (this.clearEvent) {
+            return (this.clearEvent.content || {});
+        }
+        return (this.event.content || {});
     }
     /**
      * Get the (decrypted, if necessary) event content JSON,
@@ -46910,7 +47231,7 @@ class MatrixEvent extends events_1.EventEmitter {
         return ((_b = (_a = this.clearEvent) === null || _a === void 0 ? void 0 : _a.content) === null || _b === void 0 ? void 0 : _b.msgtype) === "m.bad.encrypted";
     }
     shouldAttemptDecryption() {
-        return this.isEncrypted() && !this.isBeingDecrypted() && this.getClearContent() === null;
+        return this.isEncrypted() && !this.isBeingDecrypted() && !this.clearEvent;
     }
     /**
      * Start the process of trying to decrypt this event.
@@ -46940,8 +47261,7 @@ class MatrixEvent extends events_1.EventEmitter {
             if (!this.isEncrypted()) {
                 throw new Error("Attempt to decrypt event which isn't encrypted");
             }
-            if (this.clearEvent && this.clearEvent.content &&
-                this.clearEvent.content.msgtype !== "m.bad.encrypted") {
+            if (this.clearEvent && !this.isDecryptionFailure()) {
                 // we may want to just ignore this? let's start with rejecting it.
                 throw new Error("Attempt to decrypt event which has already been decrypted");
             }
@@ -47126,8 +47446,7 @@ class MatrixEvent extends events_1.EventEmitter {
      * @returns {Object} The cleartext (decrypted) content for the event
      */
     getClearContent() {
-        const ev = this.clearEvent;
-        return ev && ev.content ? ev.content : null;
+        return this.clearEvent ? this.clearEvent.content : null;
     }
     /**
      * Check if the event is encrypted.
@@ -47299,10 +47618,11 @@ class MatrixEvent extends events_1.EventEmitter {
      * @returns {object} The redaction event JSON, or an empty object
      */
     getRedactionEvent() {
+        var _a, _b;
         if (!this.isRedacted())
             return null;
-        if (this.clearEvent.unsigned) {
-            return this.clearEvent.unsigned.redacted_because;
+        if ((_a = this.clearEvent) === null || _a === void 0 ? void 0 : _a.unsigned) {
+            return (_b = this.clearEvent) === null || _b === void 0 ? void 0 : _b.unsigned.redacted_because;
         }
         else if (this.event.unsigned.redacted_because) {
             return this.event.unsigned.redacted_because;
@@ -47596,19 +47916,7 @@ class MatrixEvent extends events_1.EventEmitter {
      * @return {Object}
      */
     toJSON() {
-        const event = {
-            type: this.getType(),
-            sender: this.getSender(),
-            content: this.getContent(),
-            event_id: this.getId(),
-            origin_server_ts: this.getTs(),
-            unsigned: this.getUnsigned(),
-            room_id: this.getRoomId(),
-        };
-        // if this is a redaction then attach the redacts key
-        if (this.isRedaction()) {
-            event.redacts = this.event.redacts;
-        }
+        const event = this.getEffectiveEvent();
         if (!this.isEncrypted()) {
             return event;
         }
@@ -47665,10 +47973,10 @@ const REDACT_KEEP_CONTENT_MAP = {
  *    error occurred.
  */
 
-},{"../@types/event":58,"../logger":106,"../utils":137,"events":36}],114:[function(require,module,exports){
+},{"../@types/event":69,"../logger":118,"../utils":149,"events":38}],126:[function(require,module,exports){
 "use strict";
 
-var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
+var _typeof = require("@babel/runtime/helpers/typeof");
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -47678,6 +47986,10 @@ exports.Group = Group;
 var utils = _interopRequireWildcard(require("../utils"));
 
 var _events = require("events");
+
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 /*
 Copyright 2017 New Vector Ltd
@@ -47768,7 +48080,7 @@ Group.prototype.setInviter = function (inviter) {
  * });
  */
 
-},{"../utils":137,"@babel/runtime/helpers/interopRequireWildcard":13,"events":36}],115:[function(require,module,exports){
+},{"../utils":149,"@babel/runtime/helpers/typeof":23,"events":38}],127:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2019, 2021 The Matrix.org Foundation C.I.C.
@@ -48125,7 +48437,7 @@ class Relations extends events_1.EventEmitter {
 }
 exports.Relations = Relations;
 
-},{"../@types/event":58,"../logger":106,"./event":113,"events":36}],116:[function(require,module,exports){
+},{"../@types/event":69,"../logger":118,"./event":125,"events":38}],128:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -48248,7 +48560,10 @@ class RoomMember extends events_1.EventEmitter {
         this.disambiguate = shouldDisambiguate(this.userId, displayName, roomState);
         const oldName = this.name;
         this.name = calculateDisplayName(this.userId, displayName, roomState, this.disambiguate);
-        this.rawDisplayName = event.getDirectionalContent().displayname || this.userId;
+        this.rawDisplayName = event.getDirectionalContent().displayname;
+        if (!this.rawDisplayName || !utils.removeHiddenChars(this.rawDisplayName)) {
+            this.rawDisplayName = this.userId;
+        }
         if (oldMembership !== this.membership) {
             this.updateModifiedTime();
             this.emit("RoomMember.membership", event, this, oldMembership);
@@ -48496,7 +48811,7 @@ function calculateDisplayName(selfUserId, displayName, roomState, disambiguate) 
  * });
  */
 
-},{"../content-repo":66,"../utils":137,"events":36}],117:[function(require,module,exports){
+},{"../content-repo":78,"../utils":149,"events":38}],129:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -49254,7 +49569,7 @@ exports.RoomState = RoomState;
  * });
  */
 
-},{"../@types/event":58,"../logger":106,"../utils":137,"./room-member":116,"events":36}],118:[function(require,module,exports){
+},{"../@types/event":69,"../logger":118,"../utils":149,"./room-member":128,"events":38}],130:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -49293,7 +49608,7 @@ class RoomSummary {
 }
 exports.RoomSummary = RoomSummary;
 
-},{}],119:[function(require,module,exports){
+},{}],131:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -49479,7 +49794,7 @@ class Room extends events_1.EventEmitter {
         // common to have quite a few more than the default limit.
         this.setMaxListeners(100);
         this.reEmitter = new ReEmitter_1.ReEmitter(this);
-        opts.pendingEventOrdering = opts.pendingEventOrdering || "chronological";
+        opts.pendingEventOrdering = opts.pendingEventOrdering || client_1.PendingEventOrdering.Chronological;
         if (["chronological", "detached"].indexOf(opts.pendingEventOrdering) === -1) {
             throw new Error("opts.pendingEventOrdering MUST be either 'chronological' or " +
                 "'detached'. Got: '" + opts.pendingEventOrdering + "'");
@@ -50798,7 +51113,7 @@ class Room extends events_1.EventEmitter {
                             content: strippedEvent.content,
                             event_id: "$fake" + Date.now(),
                             room_id: this.roomId,
-                            user_id: this.myUserId,
+                            user_id: this.myUserId, // technically a lie
                         })]);
                 }
             });
@@ -51096,15 +51411,27 @@ class Room extends events_1.EventEmitter {
         const joinedMemberCount = this.currentState.getJoinedMemberCount();
         const invitedMemberCount = this.currentState.getInvitedMemberCount();
         // -1 because these numbers include the syncing user
-        const inviteJoinCount = joinedMemberCount + invitedMemberCount - 1;
+        let inviteJoinCount = joinedMemberCount + invitedMemberCount - 1;
+        // get service members (e.g. helper bots) for exclusion
+        let excludedUserIds = [];
+        const mFunctionalMembers = this.currentState.getStateEvents(event_2.UNSTABLE_ELEMENT_FUNCTIONAL_USERS.name, "");
+        if (Array.isArray(mFunctionalMembers === null || mFunctionalMembers === void 0 ? void 0 : mFunctionalMembers.getContent().service_members)) {
+            excludedUserIds = mFunctionalMembers.getContent().service_members;
+        }
         // get members that are NOT ourselves and are actually in the room.
         let otherNames = null;
         if (this.summaryHeroes) {
             // if we have a summary, the member state events
             // should be in the room state
-            otherNames = this.summaryHeroes.map((userId) => {
+            otherNames = [];
+            this.summaryHeroes.forEach((userId) => {
+                // filter service members
+                if (excludedUserIds.includes(userId)) {
+                    inviteJoinCount--;
+                    return;
+                }
                 const member = this.getMember(userId);
-                return member ? member.name : userId;
+                otherNames.push(member ? member.name : userId);
             });
         }
         else {
@@ -51112,8 +51439,16 @@ class Room extends events_1.EventEmitter {
                 return m.userId !== userId &&
                     (m.membership === "invite" || m.membership === "join");
             });
+            otherMembers = otherMembers.filter(({ userId }) => {
+                // filter service members
+                if (excludedUserIds.includes(userId)) {
+                    inviteJoinCount--;
+                    return false;
+                }
+                return true;
+            });
             // make sure members have stable order
-            otherMembers.sort((a, b) => a.userId.localeCompare(b.userId));
+            otherMembers.sort((a, b) => utils.compare(a.userId, b.userId));
             // only 5 first members, immitate summaryHeroes
             otherMembers = otherMembers.slice(0, 5);
             otherNames = otherMembers.map((m) => m.name);
@@ -51122,7 +51457,7 @@ class Room extends events_1.EventEmitter {
             return memberNamesToRoomName(otherNames, inviteJoinCount);
         }
         const myMembership = this.getMyMembership();
-        // if I have created a room and invited people throuh
+        // if I have created a room and invited people through
         // 3rd party invites
         if (myMembership == 'join') {
             const thirdPartyInvites = this.currentState.getStateEvents(event_2.EventType.RoomThirdPartyInvite);
@@ -51309,19 +51644,10 @@ function memberNamesToRoomName(names, count = (names.length + 1)) {
  * @param {string} prevMembership The previous membership value
  */
 
-},{"../@types/event":58,"../ReEmitter":61,"../client":64,"../content-repo":66,"../logger":106,"../utils":137,"./event":113,"./event-timeline":112,"./event-timeline-set":111,"./room-member":116,"./room-summary":118,"events":36}],120:[function(require,module,exports){
+},{"../@types/event":69,"../ReEmitter":73,"../client":76,"../content-repo":78,"../logger":118,"../utils":149,"./event":125,"./event-timeline":124,"./event-timeline-set":123,"./room-member":128,"./room-summary":130,"events":38}],132:[function(require,module,exports){
 "use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.SearchResult = SearchResult;
-
-var _eventContext = require("./event-context");
-
 /*
-Copyright 2015, 2016 OpenMarket Ltd
-Copyright 2019 The Matrix.org Foundation C.I.C.
+Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -51335,46 +51661,48 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.SearchResult = void 0;
 /**
  * @module models/search-result
  */
-
-/**
- * Construct a new SearchResult
- *
- * @param {number} rank   where this SearchResult ranks in the results
- * @param {event-context.EventContext} eventContext  the matching event and its
- *    context
- *
- * @constructor
- */
-function SearchResult(rank, eventContext) {
-  this.rank = rank;
-  this.context = eventContext;
+const event_context_1 = require("./event-context");
+class SearchResult {
+    /**
+     * Construct a new SearchResult
+     *
+     * @param {number} rank   where this SearchResult ranks in the results
+     * @param {event-context.EventContext} context  the matching event and its
+     *    context
+     *
+     * @constructor
+     */
+    constructor(rank, context) {
+        this.rank = rank;
+        this.context = context;
+    }
+    /**
+     * Create a SearchResponse from the response to /search
+     * @static
+     * @param {Object} jsonObj
+     * @param {function} eventMapper
+     * @return {SearchResult}
+     */
+    static fromJson(jsonObj, eventMapper) {
+        const jsonContext = jsonObj.context || {};
+        const eventsBefore = jsonContext.events_before || [];
+        const eventsAfter = jsonContext.events_after || [];
+        const context = new event_context_1.EventContext(eventMapper(jsonObj.result));
+        context.setPaginateToken(jsonContext.start, true);
+        context.addEvents(eventsBefore.map(eventMapper), true);
+        context.addEvents(eventsAfter.map(eventMapper), false);
+        context.setPaginateToken(jsonContext.end, false);
+        return new SearchResult(jsonObj.rank, context);
+    }
 }
-/**
- * Create a SearchResponse from the response to /search
- * @static
- * @param {Object} jsonObj
- * @param {function} eventMapper
- * @return {SearchResult}
- */
+exports.SearchResult = SearchResult;
 
-
-SearchResult.fromJson = function (jsonObj, eventMapper) {
-  var jsonContext = jsonObj.context || {};
-  var events_before = jsonContext.events_before || [];
-  var events_after = jsonContext.events_after || [];
-  var context = new _eventContext.EventContext(eventMapper(jsonObj.result));
-  context.setPaginateToken(jsonContext.start, true);
-  context.addEvents(events_before.map(eventMapper), true);
-  context.addEvents(events_after.map(eventMapper), false);
-  context.setPaginateToken(jsonContext.end, false);
-  return new SearchResult(jsonObj.rank, context);
-};
-
-},{"./event-context":110}],121:[function(require,module,exports){
+},{"./event-context":122}],133:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -51562,7 +51890,7 @@ class User extends events_1.EventEmitter {
      * @param {MatrixEvent} event The <code>im.vector.user_status</code> event.
      * @fires module:client~MatrixClient#event:"User.unstable_statusMessage"
      */
-    // eslint-disable-next-line camelcase
+    // eslint-disable-next-line
     unstable_updateStatusMessage(event) {
         if (!event.getContent())
             this.unstable_statusMessage = "";
@@ -51625,7 +51953,7 @@ exports.User = User;
  * });
  */
 
-},{"events":36}],122:[function(require,module,exports){
+},{"events":38}],134:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -51641,7 +51969,7 @@ var _utils = require("./utils");
 
 var _logger = require("./logger");
 
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -52160,7 +52488,7 @@ PushProcessor.rewriteDefaultRules = function (incomingRules) {
  * noise.
  */
 
-},{"./logger":106,"./utils":137,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/typeof":24}],123:[function(require,module,exports){
+},{"./logger":118,"./utils":149,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/typeof":23}],135:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2018 New Vector Ltd
@@ -52203,7 +52531,7 @@ function randomStringFrom(len, chars) {
     return ret;
 }
 
-},{}],124:[function(require,module,exports){
+},{}],136:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 
@@ -52427,10 +52755,10 @@ function binarySearch(array, func) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./logger":106}],125:[function(require,module,exports){
+},{"./logger":118}],137:[function(require,module,exports){
 "use strict";
 
-var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
+var _typeof = require("@babel/runtime/helpers/typeof");
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -52440,6 +52768,10 @@ exports.MatrixScheduler = MatrixScheduler;
 var utils = _interopRequireWildcard(require("./utils"));
 
 var _logger = require("./logger");
+
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
 
 /*
 Copyright 2015, 2016 OpenMarket Ltd
@@ -52787,7 +53119,7 @@ function debuglog() {
 * @return {Promise} Resolved/rejected depending on the outcome of the request.
 */
 
-},{"./logger":106,"./utils":137,"@babel/runtime/helpers/interopRequireWildcard":13}],126:[function(require,module,exports){
+},{"./logger":118,"./utils":149,"@babel/runtime/helpers/typeof":23}],138:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2019 - 2021 The Matrix.org Foundation C.I.C.
@@ -52812,726 +53144,10 @@ var SERVICE_TYPES;
     SERVICE_TYPES["IM"] = "SERVICE_TYPE_IM";
 })(SERVICE_TYPES = exports.SERVICE_TYPES || (exports.SERVICE_TYPES = {}));
 
-},{}],127:[function(require,module,exports){
+},{}],139:[function(require,module,exports){
 "use strict";
-
-var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
-
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.LocalIndexedDBStoreBackend = LocalIndexedDBStoreBackend;
-
-var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
-
-var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
-
-var _slicedToArray2 = _interopRequireDefault(require("@babel/runtime/helpers/slicedToArray"));
-
-var _syncAccumulator = require("../sync-accumulator");
-
-var utils = _interopRequireWildcard(require("../utils"));
-
-var IndexedDBHelpers = _interopRequireWildcard(require("../indexeddb-helpers"));
-
-var _logger = require("../logger");
-
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-var VERSION = 3;
-
-function createDatabase(db) {
-  // Make user store, clobber based on user ID. (userId property of User objects)
-  db.createObjectStore("users", {
-    keyPath: ["userId"]
-  }); // Make account data store, clobber based on event type.
-  // (event.type property of MatrixEvent objects)
-
-  db.createObjectStore("accountData", {
-    keyPath: ["type"]
-  }); // Make /sync store (sync tokens, room data, etc), always clobber (const key).
-
-  db.createObjectStore("sync", {
-    keyPath: ["clobber"]
-  });
-}
-
-function upgradeSchemaV2(db) {
-  var oobMembersStore = db.createObjectStore("oob_membership_events", {
-    keyPath: ["room_id", "state_key"]
-  });
-  oobMembersStore.createIndex("room", "room_id");
-}
-
-function upgradeSchemaV3(db) {
-  db.createObjectStore("client_options", {
-    keyPath: ["clobber"]
-  });
-}
-/**
- * Helper method to collect results from a Cursor and promiseify it.
- * @param {ObjectStore|Index} store The store to perform openCursor on.
- * @param {IDBKeyRange=} keyRange Optional key range to apply on the cursor.
- * @param {Function} resultMapper A function which is repeatedly called with a
- * Cursor.
- * Return the data you want to keep.
- * @return {Promise<T[]>} Resolves to an array of whatever you returned from
- * resultMapper.
- */
-
-
-function selectQuery(store, keyRange, resultMapper) {
-  var query = store.openCursor(keyRange);
-  return new Promise(function (resolve, reject) {
-    var results = [];
-
-    query.onerror = function (event) {
-      reject(new Error("Query failed: " + event.target.errorCode));
-    }; // collect results
-
-
-    query.onsuccess = function (event) {
-      var cursor = event.target.result;
-
-      if (!cursor) {
-        resolve(results);
-        return; // end of results
-      }
-
-      results.push(resultMapper(cursor));
-      cursor["continue"]();
-    };
-  });
-}
-
-function txnAsPromise(txn) {
-  return new Promise(function (resolve, reject) {
-    txn.oncomplete = function (event) {
-      resolve(event);
-    };
-
-    txn.onerror = function (event) {
-      reject(event.target.error);
-    };
-  });
-}
-
-function reqAsEventPromise(req) {
-  return new Promise(function (resolve, reject) {
-    req.onsuccess = function (event) {
-      resolve(event);
-    };
-
-    req.onerror = function (event) {
-      reject(event.target.error);
-    };
-  });
-}
-
-function reqAsPromise(req) {
-  return new Promise(function (resolve, reject) {
-    req.onsuccess = function () {
-      return resolve(req);
-    };
-
-    req.onerror = function (err) {
-      return reject(err);
-    };
-  });
-}
-
-function reqAsCursorPromise(req) {
-  return reqAsEventPromise(req).then(function (event) {
-    return event.target.result;
-  });
-}
-/**
- * Does the actual reading from and writing to the indexeddb
- *
- * Construct a new Indexed Database store backend. This requires a call to
- * <code>connect()</code> before this store can be used.
- * @constructor
- * @param {Object} indexedDBInterface The Indexed DB interface e.g
- * <code>window.indexedDB</code>
- * @param {string=} dbName Optional database name. The same name must be used
- * to open the same database.
- */
-
-
-function LocalIndexedDBStoreBackend(indexedDBInterface, dbName) {
-  this.indexedDB = indexedDBInterface;
-  this._dbName = "matrix-js-sdk:" + (dbName || "default");
-  this.db = null;
-  this._disconnected = true;
-  this._syncAccumulator = new _syncAccumulator.SyncAccumulator();
-  this._isNewlyCreated = false;
-}
-
-LocalIndexedDBStoreBackend.exists = function (indexedDB, dbName) {
-  dbName = "matrix-js-sdk:" + (dbName || "default");
-  return IndexedDBHelpers.exists(indexedDB, dbName);
-};
-
-LocalIndexedDBStoreBackend.prototype = {
-  /**
-   * Attempt to connect to the database. This can fail if the user does not
-   * grant permission.
-   * @return {Promise} Resolves if successfully connected.
-   */
-  connect: function connect() {
-    var _this = this;
-
-    if (!this._disconnected) {
-      _logger.logger.log("LocalIndexedDBStoreBackend.connect: already connected or connecting");
-
-      return Promise.resolve();
-    }
-
-    this._disconnected = false;
-
-    _logger.logger.log("LocalIndexedDBStoreBackend.connect: connecting...");
-
-    var req = this.indexedDB.open(this._dbName, VERSION);
-
-    req.onupgradeneeded = function (ev) {
-      var db = ev.target.result;
-      var oldVersion = ev.oldVersion;
-
-      _logger.logger.log("LocalIndexedDBStoreBackend.connect: upgrading from ".concat(oldVersion));
-
-      if (oldVersion < 1) {
-        // The database did not previously exist.
-        _this._isNewlyCreated = true;
-        createDatabase(db);
-      }
-
-      if (oldVersion < 2) {
-        upgradeSchemaV2(db);
-      }
-
-      if (oldVersion < 3) {
-        upgradeSchemaV3(db);
-      } // Expand as needed.
-
-    };
-
-    req.onblocked = function () {
-      _logger.logger.log("can't yet open LocalIndexedDBStoreBackend because it is open elsewhere");
-    };
-
-    _logger.logger.log("LocalIndexedDBStoreBackend.connect: awaiting connection...");
-
-    return reqAsEventPromise(req).then(function (ev) {
-      _logger.logger.log("LocalIndexedDBStoreBackend.connect: connected");
-
-      _this.db = ev.target.result; // add a poorly-named listener for when deleteDatabase is called
-      // so we can close our db connections.
-
-      _this.db.onversionchange = function () {
-        _this.db.close();
-      };
-
-      return _this._init();
-    });
-  },
-
-  /** @return {bool} whether or not the database was newly created in this session. */
-  isNewlyCreated: function isNewlyCreated() {
-    return Promise.resolve(this._isNewlyCreated);
-  },
-
-  /**
-   * Having connected, load initial data from the database and prepare for use
-   * @return {Promise} Resolves on success
-   */
-  _init: function _init() {
-    var _this2 = this;
-
-    return Promise.all([this._loadAccountData(), this._loadSyncData()]).then(function (_ref) {
-      var _ref2 = (0, _slicedToArray2["default"])(_ref, 2),
-          accountData = _ref2[0],
-          syncData = _ref2[1];
-
-      _logger.logger.log("LocalIndexedDBStoreBackend: loaded initial data");
-
-      _this2._syncAccumulator.accumulate({
-        next_batch: syncData.nextBatch,
-        rooms: syncData.roomsData,
-        groups: syncData.groupsData,
-        account_data: {
-          events: accountData
-        }
-      }, true);
-    });
-  },
-
-  /**
-   * Returns the out-of-band membership events for this room that
-   * were previously loaded.
-   * @param {string} roomId
-   * @returns {Promise<event[]>} the events, potentially an empty array if OOB loading didn't yield any new members
-   * @returns {null} in case the members for this room haven't been stored yet
-   */
-  getOutOfBandMembers: function getOutOfBandMembers(roomId) {
-    var _this3 = this;
-
-    return new Promise(function (resolve, reject) {
-      var tx = _this3.db.transaction(["oob_membership_events"], "readonly");
-
-      var store = tx.objectStore("oob_membership_events");
-      var roomIndex = store.index("room");
-      var range = IDBKeyRange.only(roomId);
-      var request = roomIndex.openCursor(range);
-      var membershipEvents = []; // did we encounter the oob_written marker object
-      // amongst the results? That means OOB member
-      // loading already happened for this room
-      // but there were no members to persist as they
-      // were all known already
-
-      var oobWritten = false;
-
-      request.onsuccess = function (event) {
-        var cursor = event.target.result;
-
-        if (!cursor) {
-          // Unknown room
-          if (!membershipEvents.length && !oobWritten) {
-            return resolve(null);
-          }
-
-          return resolve(membershipEvents);
-        }
-
-        var record = cursor.value;
-
-        if (record.oob_written) {
-          oobWritten = true;
-        } else {
-          membershipEvents.push(record);
-        }
-
-        cursor["continue"]();
-      };
-
-      request.onerror = function (err) {
-        reject(err);
-      };
-    }).then(function (events) {
-      _logger.logger.log("LL: got ".concat(events && events.length) + " membershipEvents from storage for room ".concat(roomId, " ..."));
-
-      return events;
-    });
-  },
-
-  /**
-   * Stores the out-of-band membership events for this room. Note that
-   * it still makes sense to store an empty array as the OOB status for the room is
-   * marked as fetched, and getOutOfBandMembers will return an empty array instead of null
-   * @param {string} roomId
-   * @param {event[]} membershipEvents the membership events to store
-   */
-  setOutOfBandMembers: function () {
-    var _setOutOfBandMembers = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee(roomId, membershipEvents) {
-      var tx, store, markerObject;
-      return _regenerator["default"].wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              _logger.logger.log("LL: backend about to store ".concat(membershipEvents.length) + " members for ".concat(roomId));
-
-              tx = this.db.transaction(["oob_membership_events"], "readwrite");
-              store = tx.objectStore("oob_membership_events");
-              membershipEvents.forEach(function (e) {
-                store.put(e);
-              }); // aside from all the events, we also write a marker object to the store
-              // to mark the fact that OOB members have been written for this room.
-              // It's possible that 0 members need to be written as all where previously know
-              // but we still need to know whether to return null or [] from getOutOfBandMembers
-              // where null means out of band members haven't been stored yet for this room
-
-              markerObject = {
-                room_id: roomId,
-                oob_written: true,
-                state_key: 0
-              };
-              store.put(markerObject);
-              _context.next = 8;
-              return txnAsPromise(tx);
-
-            case 8:
-              _logger.logger.log("LL: backend done storing for ".concat(roomId, "!"));
-
-            case 9:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee, this);
-    }));
-
-    function setOutOfBandMembers(_x, _x2) {
-      return _setOutOfBandMembers.apply(this, arguments);
-    }
-
-    return setOutOfBandMembers;
-  }(),
-  clearOutOfBandMembers: function () {
-    var _clearOutOfBandMembers = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(roomId) {
-      var readTx, store, roomIndex, roomRange, minStateKeyProm, maxStateKeyProm, _yield$Promise$all, _yield$Promise$all2, minStateKey, maxStateKey, writeTx, writeStore, membersKeyRange;
-
-      return _regenerator["default"].wrap(function _callee2$(_context2) {
-        while (1) {
-          switch (_context2.prev = _context2.next) {
-            case 0:
-              // the approach to delete all members for a room
-              // is to get the min and max state key from the index
-              // for that room, and then delete between those
-              // keys in the store.
-              // this should be way faster than deleting every member
-              // individually for a large room.
-              readTx = this.db.transaction(["oob_membership_events"], "readonly");
-              store = readTx.objectStore("oob_membership_events");
-              roomIndex = store.index("room");
-              roomRange = IDBKeyRange.only(roomId);
-              minStateKeyProm = reqAsCursorPromise(roomIndex.openKeyCursor(roomRange, "next")).then(function (cursor) {
-                return cursor && cursor.primaryKey[1];
-              });
-              maxStateKeyProm = reqAsCursorPromise(roomIndex.openKeyCursor(roomRange, "prev")).then(function (cursor) {
-                return cursor && cursor.primaryKey[1];
-              });
-              _context2.next = 8;
-              return Promise.all([minStateKeyProm, maxStateKeyProm]);
-
-            case 8:
-              _yield$Promise$all = _context2.sent;
-              _yield$Promise$all2 = (0, _slicedToArray2["default"])(_yield$Promise$all, 2);
-              minStateKey = _yield$Promise$all2[0];
-              maxStateKey = _yield$Promise$all2[1];
-              writeTx = this.db.transaction(["oob_membership_events"], "readwrite");
-              writeStore = writeTx.objectStore("oob_membership_events");
-              membersKeyRange = IDBKeyRange.bound([roomId, minStateKey], [roomId, maxStateKey]);
-
-              _logger.logger.log("LL: Deleting all users + marker in storage for " + "room ".concat(roomId, ", with key range:"), [roomId, minStateKey], [roomId, maxStateKey]);
-
-              _context2.next = 18;
-              return reqAsPromise(writeStore["delete"](membersKeyRange));
-
-            case 18:
-            case "end":
-              return _context2.stop();
-          }
-        }
-      }, _callee2, this);
-    }));
-
-    function clearOutOfBandMembers(_x3) {
-      return _clearOutOfBandMembers.apply(this, arguments);
-    }
-
-    return clearOutOfBandMembers;
-  }(),
-
-  /**
-   * Clear the entire database. This should be used when logging out of a client
-   * to prevent mixing data between accounts.
-   * @return {Promise} Resolved when the database is cleared.
-   */
-  clearDatabase: function clearDatabase() {
-    var _this4 = this;
-
-    return new Promise(function (resolve, reject) {
-      _logger.logger.log("Removing indexeddb instance: ".concat(_this4._dbName));
-
-      var req = _this4.indexedDB.deleteDatabase(_this4._dbName);
-
-      req.onblocked = function () {
-        _logger.logger.log("can't yet delete indexeddb ".concat(_this4._dbName) + " because it is open elsewhere");
-      };
-
-      req.onerror = function (ev) {
-        // in firefox, with indexedDB disabled, this fails with a
-        // DOMError. We treat this as non-fatal, so that we can still
-        // use the app.
-        _logger.logger.warn("unable to delete js-sdk store indexeddb: ".concat(ev.target.error));
-
-        resolve();
-      };
-
-      req.onsuccess = function () {
-        _logger.logger.log("Removed indexeddb instance: ".concat(_this4._dbName));
-
-        resolve();
-      };
-    });
-  },
-
-  /**
-   * @param {boolean=} copy If false, the data returned is from internal
-   * buffers and must not be mutated. Otherwise, a copy is made before
-   * returning such that the data can be safely mutated. Default: true.
-   *
-   * @return {Promise} Resolves with a sync response to restore the
-   * client state to where it was at the last save, or null if there
-   * is no saved sync data.
-   */
-  getSavedSync: function getSavedSync(copy) {
-    if (copy === undefined) copy = true;
-
-    var data = this._syncAccumulator.getJSON();
-
-    if (!data.nextBatch) return Promise.resolve(null);
-
-    if (copy) {
-      // We must deep copy the stored data so that the /sync processing code doesn't
-      // corrupt the internal state of the sync accumulator (it adds non-clonable keys)
-      return Promise.resolve(utils.deepCopy(data));
-    } else {
-      return Promise.resolve(data);
-    }
-  },
-  getNextBatchToken: function getNextBatchToken() {
-    return Promise.resolve(this._syncAccumulator.getNextBatchToken());
-  },
-  setSyncData: function setSyncData(syncData) {
-    var _this5 = this;
-
-    return Promise.resolve().then(function () {
-      _this5._syncAccumulator.accumulate(syncData);
-    });
-  },
-  syncToDatabase: function syncToDatabase(userTuples) {
-    var syncData = this._syncAccumulator.getJSON(true);
-
-    return Promise.all([this._persistUserPresenceEvents(userTuples), this._persistAccountData(syncData.accountData), this._persistSyncData(syncData.nextBatch, syncData.roomsData, syncData.groupsData)]);
-  },
-
-  /**
-   * Persist rooms /sync data along with the next batch token.
-   * @param {string} nextBatch The next_batch /sync value.
-   * @param {Object} roomsData The 'rooms' /sync data from a SyncAccumulator
-   * @param {Object} groupsData The 'groups' /sync data from a SyncAccumulator
-   * @return {Promise} Resolves if the data was persisted.
-   */
-  _persistSyncData: function _persistSyncData(nextBatch, roomsData, groupsData) {
-    var _this6 = this;
-
-    _logger.logger.log("Persisting sync data up to", nextBatch);
-
-    return utils.promiseTry(function () {
-      var txn = _this6.db.transaction(["sync"], "readwrite");
-
-      var store = txn.objectStore("sync");
-      store.put({
-        clobber: "-",
-        // constant key so will always clobber
-        nextBatch: nextBatch,
-        roomsData: roomsData,
-        groupsData: groupsData
-      }); // put == UPSERT
-
-      return txnAsPromise(txn);
-    });
-  },
-
-  /**
-   * Persist a list of account data events. Events with the same 'type' will
-   * be replaced.
-   * @param {Object[]} accountData An array of raw user-scoped account data events
-   * @return {Promise} Resolves if the events were persisted.
-   */
-  _persistAccountData: function _persistAccountData(accountData) {
-    var _this7 = this;
-
-    return utils.promiseTry(function () {
-      var txn = _this7.db.transaction(["accountData"], "readwrite");
-
-      var store = txn.objectStore("accountData");
-
-      for (var i = 0; i < accountData.length; i++) {
-        store.put(accountData[i]); // put == UPSERT
-      }
-
-      return txnAsPromise(txn);
-    });
-  },
-
-  /**
-   * Persist a list of [user id, presence event] they are for.
-   * Users with the same 'userId' will be replaced.
-   * Presence events should be the event in its raw form (not the Event
-   * object)
-   * @param {Object[]} tuples An array of [userid, event] tuples
-   * @return {Promise} Resolves if the users were persisted.
-   */
-  _persistUserPresenceEvents: function _persistUserPresenceEvents(tuples) {
-    var _this8 = this;
-
-    return utils.promiseTry(function () {
-      var txn = _this8.db.transaction(["users"], "readwrite");
-
-      var store = txn.objectStore("users");
-
-      var _iterator = _createForOfIteratorHelper(tuples),
-          _step;
-
-      try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var tuple = _step.value;
-          store.put({
-            userId: tuple[0],
-            event: tuple[1]
-          }); // put == UPSERT
-        }
-      } catch (err) {
-        _iterator.e(err);
-      } finally {
-        _iterator.f();
-      }
-
-      return txnAsPromise(txn);
-    });
-  },
-
-  /**
-   * Load all user presence events from the database. This is not cached.
-   * FIXME: It would probably be more sensible to store the events in the
-   * sync.
-   * @return {Promise<Object[]>} A list of presence events in their raw form.
-   */
-  getUserPresenceEvents: function getUserPresenceEvents() {
-    var _this9 = this;
-
-    return utils.promiseTry(function () {
-      var txn = _this9.db.transaction(["users"], "readonly");
-
-      var store = txn.objectStore("users");
-      return selectQuery(store, undefined, function (cursor) {
-        return [cursor.value.userId, cursor.value.event];
-      });
-    });
-  },
-
-  /**
-   * Load all the account data events from the database. This is not cached.
-   * @return {Promise<Object[]>} A list of raw global account events.
-   */
-  _loadAccountData: function _loadAccountData() {
-    var _this10 = this;
-
-    _logger.logger.log("LocalIndexedDBStoreBackend: loading account data...");
-
-    return utils.promiseTry(function () {
-      var txn = _this10.db.transaction(["accountData"], "readonly");
-
-      var store = txn.objectStore("accountData");
-      return selectQuery(store, undefined, function (cursor) {
-        return cursor.value;
-      }).then(function (result) {
-        _logger.logger.log("LocalIndexedDBStoreBackend: loaded account data");
-
-        return result;
-      });
-    });
-  },
-
-  /**
-   * Load the sync data from the database.
-   * @return {Promise<Object>} An object with "roomsData" and "nextBatch" keys.
-   */
-  _loadSyncData: function _loadSyncData() {
-    var _this11 = this;
-
-    _logger.logger.log("LocalIndexedDBStoreBackend: loading sync data...");
-
-    return utils.promiseTry(function () {
-      var txn = _this11.db.transaction(["sync"], "readonly");
-
-      var store = txn.objectStore("sync");
-      return selectQuery(store, undefined, function (cursor) {
-        return cursor.value;
-      }).then(function (results) {
-        _logger.logger.log("LocalIndexedDBStoreBackend: loaded sync data");
-
-        if (results.length > 1) {
-          _logger.logger.warn("loadSyncData: More than 1 sync row found.");
-        }
-
-        return results.length > 0 ? results[0] : {};
-      });
-    });
-  },
-  getClientOptions: function getClientOptions() {
-    var _this12 = this;
-
-    return Promise.resolve().then(function () {
-      var txn = _this12.db.transaction(["client_options"], "readonly");
-
-      var store = txn.objectStore("client_options");
-      return selectQuery(store, undefined, function (cursor) {
-        if (cursor.value && cursor.value && cursor.value.options) {
-          return cursor.value.options;
-        }
-      }).then(function (results) {
-        return results[0];
-      });
-    });
-  },
-  storeClientOptions: function () {
-    var _storeClientOptions = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(options) {
-      var txn, store;
-      return _regenerator["default"].wrap(function _callee3$(_context3) {
-        while (1) {
-          switch (_context3.prev = _context3.next) {
-            case 0:
-              txn = this.db.transaction(["client_options"], "readwrite");
-              store = txn.objectStore("client_options");
-              store.put({
-                clobber: "-",
-                // constant key so will always clobber
-                options: options
-              }); // put == UPSERT
-
-              _context3.next = 5;
-              return txnAsPromise(txn);
-
-            case 5:
-            case "end":
-              return _context3.stop();
-          }
-        }
-      }, _callee3, this);
-    }));
-
-    function storeClientOptions(_x4) {
-      return _storeClientOptions.apply(this, arguments);
-    }
-
-    return storeClientOptions;
-  }()
-};
-
-},{"../indexeddb-helpers":104,"../logger":106,"../sync-accumulator":133,"../utils":137,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/interopRequireWildcard":13,"@babel/runtime/helpers/slicedToArray":22,"@babel/runtime/regenerator":27}],128:[function(require,module,exports){
-"use strict";
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.RemoteIndexedDBStoreBackend = RemoteIndexedDBStoreBackend;
-
-var _logger = require("../logger");
-
-var _utils = require("../utils");
-
 /*
-Copyright 2017 Vector Creations Ltd
-Copyright 2018 New Vector Ltd
-Copyright 2019 The Matrix.org Foundation C.I.C.
+Copyright 2017 - 2021 The Matrix.org Foundation C.I.C.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -53545,188 +53161,678 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
-/**
- * An IndexedDB store backend where the actual backend sits in a web
- * worker.
- *
- * Construct a new Indexed Database store backend. This requires a call to
- * <code>connect()</code> before this store can be used.
- * @constructor
- * @param {string} workerScript URL to the worker script
- * @param {string=} dbName Optional database name. The same name must be used
- * to open the same database.
- * @param {Object} workerApi The web worker compatible interface object
- */
-function RemoteIndexedDBStoreBackend(workerScript, dbName, workerApi) {
-  this._workerScript = workerScript;
-  this._dbName = dbName;
-  this._workerApi = workerApi;
-  this._worker = null;
-  this._nextSeq = 0; // The currently in-flight requests to the actual backend
-
-  this._inFlight = {// seq: promise,
-  }; // Once we start connecting, we keep the promise and re-use it
-  // if we try to connect again
-
-  this._startPromise = null;
-}
-
-RemoteIndexedDBStoreBackend.prototype = {
-  /**
-   * Attempt to connect to the database. This can fail if the user does not
-   * grant permission.
-   * @return {Promise} Resolves if successfully connected.
-   */
-  connect: function connect() {
-    var _this = this;
-
-    return this._ensureStarted().then(function () {
-      return _this._doCmd('connect');
-    });
-  },
-
-  /**
-   * Clear the entire database. This should be used when logging out of a client
-   * to prevent mixing data between accounts.
-   * @return {Promise} Resolved when the database is cleared.
-   */
-  clearDatabase: function clearDatabase() {
-    var _this2 = this;
-
-    return this._ensureStarted().then(function () {
-      return _this2._doCmd('clearDatabase');
-    });
-  },
-
-  /** @return {Promise<bool>} whether or not the database was newly created in this session. */
-  isNewlyCreated: function isNewlyCreated() {
-    return this._doCmd('isNewlyCreated');
-  },
-
-  /**
-   * @return {Promise} Resolves with a sync response to restore the
-   * client state to where it was at the last save, or null if there
-   * is no saved sync data.
-   */
-  getSavedSync: function getSavedSync() {
-    return this._doCmd('getSavedSync');
-  },
-  getNextBatchToken: function getNextBatchToken() {
-    return this._doCmd('getNextBatchToken');
-  },
-  setSyncData: function setSyncData(syncData) {
-    return this._doCmd('setSyncData', [syncData]);
-  },
-  syncToDatabase: function syncToDatabase(users) {
-    return this._doCmd('syncToDatabase', [users]);
-  },
-
-  /**
-   * Returns the out-of-band membership events for this room that
-   * were previously loaded.
-   * @param {string} roomId
-   * @returns {event[]} the events, potentially an empty array if OOB loading didn't yield any new members
-   * @returns {null} in case the members for this room haven't been stored yet
-   */
-  getOutOfBandMembers: function getOutOfBandMembers(roomId) {
-    return this._doCmd('getOutOfBandMembers', [roomId]);
-  },
-
-  /**
-   * Stores the out-of-band membership events for this room. Note that
-   * it still makes sense to store an empty array as the OOB status for the room is
-   * marked as fetched, and getOutOfBandMembers will return an empty array instead of null
-   * @param {string} roomId
-   * @param {event[]} membershipEvents the membership events to store
-   * @returns {Promise} when all members have been stored
-   */
-  setOutOfBandMembers: function setOutOfBandMembers(roomId, membershipEvents) {
-    return this._doCmd('setOutOfBandMembers', [roomId, membershipEvents]);
-  },
-  clearOutOfBandMembers: function clearOutOfBandMembers(roomId) {
-    return this._doCmd('clearOutOfBandMembers', [roomId]);
-  },
-  getClientOptions: function getClientOptions() {
-    return this._doCmd('getClientOptions');
-  },
-  storeClientOptions: function storeClientOptions(options) {
-    return this._doCmd('storeClientOptions', [options]);
-  },
-
-  /**
-   * Load all user presence events from the database. This is not cached.
-   * @return {Promise<Object[]>} A list of presence events in their raw form.
-   */
-  getUserPresenceEvents: function getUserPresenceEvents() {
-    return this._doCmd('getUserPresenceEvents');
-  },
-  _ensureStarted: function _ensureStarted() {
-    if (this._startPromise === null) {
-      this._worker = new this._workerApi(this._workerScript);
-      this._worker.onmessage = this._onWorkerMessage.bind(this); // tell the worker the db name.
-
-      this._startPromise = this._doCmd('_setupWorker', [this._dbName]).then(function () {
-        _logger.logger.log("IndexedDB worker is ready");
-      });
-    }
-
-    return this._startPromise;
-  },
-  _doCmd: function _doCmd(cmd, args) {
-    var _this3 = this;
-
-    // wrap in a q so if the postMessage throws,
-    // the promise automatically gets rejected
-    return Promise.resolve().then(function () {
-      var seq = _this3._nextSeq++;
-      var def = (0, _utils.defer)();
-      _this3._inFlight[seq] = def;
-
-      _this3._worker.postMessage({
-        command: cmd,
-        seq: seq,
-        args: args
-      });
-
-      return def.promise;
-    });
-  },
-  _onWorkerMessage: function _onWorkerMessage(ev) {
-    var msg = ev.data;
-
-    if (msg.command == 'cmd_success' || msg.command == 'cmd_fail') {
-      if (msg.seq === undefined) {
-        _logger.logger.error("Got reply from worker with no seq");
-
-        return;
-      }
-
-      var def = this._inFlight[msg.seq];
-
-      if (def === undefined) {
-        _logger.logger.error("Got reply for unknown seq " + msg.seq);
-
-        return;
-      }
-
-      delete this._inFlight[msg.seq];
-
-      if (msg.command == 'cmd_success') {
-        def.resolve(msg.result);
-      } else {
-        var error = new Error(msg.error.message);
-        error.name = msg.error.name;
-        def.reject(error);
-      }
-    } else {
-      _logger.logger.warn("Unrecognised message from worker: " + msg);
-    }
-  }
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
 };
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.LocalIndexedDBStoreBackend = void 0;
+const sync_accumulator_1 = require("../sync-accumulator");
+const utils = __importStar(require("../utils"));
+const IndexedDBHelpers = __importStar(require("../indexeddb-helpers"));
+const logger_1 = require("../logger");
+const VERSION = 3;
+function createDatabase(db) {
+    // Make user store, clobber based on user ID. (userId property of User objects)
+    db.createObjectStore("users", { keyPath: ["userId"] });
+    // Make account data store, clobber based on event type.
+    // (event.type property of MatrixEvent objects)
+    db.createObjectStore("accountData", { keyPath: ["type"] });
+    // Make /sync store (sync tokens, room data, etc), always clobber (const key).
+    db.createObjectStore("sync", { keyPath: ["clobber"] });
+}
+function upgradeSchemaV2(db) {
+    const oobMembersStore = db.createObjectStore("oob_membership_events", {
+        keyPath: ["room_id", "state_key"],
+    });
+    oobMembersStore.createIndex("room", "room_id");
+}
+function upgradeSchemaV3(db) {
+    db.createObjectStore("client_options", { keyPath: ["clobber"] });
+}
+/**
+ * Helper method to collect results from a Cursor and promiseify it.
+ * @param {ObjectStore|Index} store The store to perform openCursor on.
+ * @param {IDBKeyRange=} keyRange Optional key range to apply on the cursor.
+ * @param {Function} resultMapper A function which is repeatedly called with a
+ * Cursor.
+ * Return the data you want to keep.
+ * @return {Promise<T[]>} Resolves to an array of whatever you returned from
+ * resultMapper.
+ */
+function selectQuery(store, keyRange, resultMapper) {
+    const query = store.openCursor(keyRange);
+    return new Promise((resolve, reject) => {
+        const results = [];
+        query.onerror = () => {
+            reject(new Error("Query failed: " + query.error));
+        };
+        // collect results
+        query.onsuccess = () => {
+            const cursor = query.result;
+            if (!cursor) {
+                resolve(results);
+                return; // end of results
+            }
+            results.push(resultMapper(cursor));
+            cursor.continue();
+        };
+    });
+}
+function txnAsPromise(txn) {
+    return new Promise((resolve, reject) => {
+        txn.oncomplete = function (event) {
+            resolve(event);
+        };
+        txn.onerror = function () {
+            reject(txn.error);
+        };
+    });
+}
+function reqAsEventPromise(req) {
+    return new Promise((resolve, reject) => {
+        req.onsuccess = function (event) {
+            resolve(event);
+        };
+        req.onerror = function () {
+            reject(req.error);
+        };
+    });
+}
+function reqAsPromise(req) {
+    return new Promise((resolve, reject) => {
+        req.onsuccess = () => resolve(req);
+        req.onerror = (err) => reject(err);
+    });
+}
+function reqAsCursorPromise(req) {
+    return reqAsEventPromise(req).then((event) => req.result);
+}
+class LocalIndexedDBStoreBackend {
+    /**
+     * Does the actual reading from and writing to the indexeddb
+     *
+     * Construct a new Indexed Database store backend. This requires a call to
+     * <code>connect()</code> before this store can be used.
+     * @constructor
+     * @param {Object} indexedDB The Indexed DB interface e.g
+     * <code>window.indexedDB</code>
+     * @param {string=} dbName Optional database name. The same name must be used
+     * to open the same database.
+     */
+    constructor(indexedDB, dbName) {
+        this.indexedDB = indexedDB;
+        this.db = null;
+        this.disconnected = true;
+        this._isNewlyCreated = false;
+        this.dbName = "matrix-js-sdk:" + (dbName || "default");
+        this.syncAccumulator = new sync_accumulator_1.SyncAccumulator();
+    }
+    static exists(indexedDB, dbName) {
+        dbName = "matrix-js-sdk:" + (dbName || "default");
+        return IndexedDBHelpers.exists(indexedDB, dbName);
+    }
+    /**
+     * Attempt to connect to the database. This can fail if the user does not
+     * grant permission.
+     * @return {Promise} Resolves if successfully connected.
+     */
+    connect() {
+        if (!this.disconnected) {
+            logger_1.logger.log(`LocalIndexedDBStoreBackend.connect: already connected or connecting`);
+            return Promise.resolve();
+        }
+        this.disconnected = false;
+        logger_1.logger.log(`LocalIndexedDBStoreBackend.connect: connecting...`);
+        const req = this.indexedDB.open(this.dbName, VERSION);
+        req.onupgradeneeded = (ev) => {
+            const db = req.result;
+            const oldVersion = ev.oldVersion;
+            logger_1.logger.log(`LocalIndexedDBStoreBackend.connect: upgrading from ${oldVersion}`);
+            if (oldVersion < 1) { // The database did not previously exist.
+                this._isNewlyCreated = true;
+                createDatabase(db);
+            }
+            if (oldVersion < 2) {
+                upgradeSchemaV2(db);
+            }
+            if (oldVersion < 3) {
+                upgradeSchemaV3(db);
+            }
+            // Expand as needed.
+        };
+        req.onblocked = () => {
+            logger_1.logger.log(`can't yet open LocalIndexedDBStoreBackend because it is open elsewhere`);
+        };
+        logger_1.logger.log(`LocalIndexedDBStoreBackend.connect: awaiting connection...`);
+        return reqAsEventPromise(req).then(() => {
+            logger_1.logger.log(`LocalIndexedDBStoreBackend.connect: connected`);
+            this.db = req.result;
+            // add a poorly-named listener for when deleteDatabase is called
+            // so we can close our db connections.
+            this.db.onversionchange = () => {
+                this.db.close();
+            };
+            return this.init();
+        });
+    }
+    /** @return {boolean} whether or not the database was newly created in this session. */
+    isNewlyCreated() {
+        return Promise.resolve(this._isNewlyCreated);
+    }
+    /**
+     * Having connected, load initial data from the database and prepare for use
+     * @return {Promise} Resolves on success
+     */
+    init() {
+        return Promise.all([
+            this.loadAccountData(),
+            this.loadSyncData(),
+        ]).then(([accountData, syncData]) => {
+            logger_1.logger.log(`LocalIndexedDBStoreBackend: loaded initial data`);
+            this.syncAccumulator.accumulate({
+                next_batch: syncData.nextBatch,
+                rooms: syncData.roomsData,
+                groups: syncData.groupsData,
+                account_data: {
+                    events: accountData,
+                },
+            }, true);
+        });
+    }
+    /**
+     * Returns the out-of-band membership events for this room that
+     * were previously loaded.
+     * @param {string} roomId
+     * @returns {Promise<event[]>} the events, potentially an empty array if OOB loading didn't yield any new members
+     * @returns {null} in case the members for this room haven't been stored yet
+     */
+    getOutOfBandMembers(roomId) {
+        return new Promise((resolve, reject) => {
+            const tx = this.db.transaction(["oob_membership_events"], "readonly");
+            const store = tx.objectStore("oob_membership_events");
+            const roomIndex = store.index("room");
+            const range = IDBKeyRange.only(roomId);
+            const request = roomIndex.openCursor(range);
+            const membershipEvents = [];
+            // did we encounter the oob_written marker object
+            // amongst the results? That means OOB member
+            // loading already happened for this room
+            // but there were no members to persist as they
+            // were all known already
+            let oobWritten = false;
+            request.onsuccess = () => {
+                const cursor = request.result;
+                if (!cursor) {
+                    // Unknown room
+                    if (!membershipEvents.length && !oobWritten) {
+                        return resolve(null);
+                    }
+                    return resolve(membershipEvents);
+                }
+                const record = cursor.value;
+                if (record.oob_written) {
+                    oobWritten = true;
+                }
+                else {
+                    membershipEvents.push(record);
+                }
+                cursor.continue();
+            };
+            request.onerror = (err) => {
+                reject(err);
+            };
+        }).then((events) => {
+            logger_1.logger.log(`LL: got ${events && events.length} membershipEvents from storage for room ${roomId} ...`);
+            return events;
+        });
+    }
+    /**
+     * Stores the out-of-band membership events for this room. Note that
+     * it still makes sense to store an empty array as the OOB status for the room is
+     * marked as fetched, and getOutOfBandMembers will return an empty array instead of null
+     * @param {string} roomId
+     * @param {event[]} membershipEvents the membership events to store
+     */
+    setOutOfBandMembers(roomId, membershipEvents) {
+        return __awaiter(this, void 0, void 0, function* () {
+            logger_1.logger.log(`LL: backend about to store ${membershipEvents.length}` +
+                ` members for ${roomId}`);
+            const tx = this.db.transaction(["oob_membership_events"], "readwrite");
+            const store = tx.objectStore("oob_membership_events");
+            membershipEvents.forEach((e) => {
+                store.put(e);
+            });
+            // aside from all the events, we also write a marker object to the store
+            // to mark the fact that OOB members have been written for this room.
+            // It's possible that 0 members need to be written as all where previously know
+            // but we still need to know whether to return null or [] from getOutOfBandMembers
+            // where null means out of band members haven't been stored yet for this room
+            const markerObject = {
+                room_id: roomId,
+                oob_written: true,
+                state_key: 0,
+            };
+            store.put(markerObject);
+            yield txnAsPromise(tx);
+            logger_1.logger.log(`LL: backend done storing for ${roomId}!`);
+        });
+    }
+    clearOutOfBandMembers(roomId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // the approach to delete all members for a room
+            // is to get the min and max state key from the index
+            // for that room, and then delete between those
+            // keys in the store.
+            // this should be way faster than deleting every member
+            // individually for a large room.
+            const readTx = this.db.transaction(["oob_membership_events"], "readonly");
+            const store = readTx.objectStore("oob_membership_events");
+            const roomIndex = store.index("room");
+            const roomRange = IDBKeyRange.only(roomId);
+            const minStateKeyProm = reqAsCursorPromise(roomIndex.openKeyCursor(roomRange, "next")).then((cursor) => cursor && cursor.primaryKey[1]);
+            const maxStateKeyProm = reqAsCursorPromise(roomIndex.openKeyCursor(roomRange, "prev")).then((cursor) => cursor && cursor.primaryKey[1]);
+            const [minStateKey, maxStateKey] = yield Promise.all([minStateKeyProm, maxStateKeyProm]);
+            const writeTx = this.db.transaction(["oob_membership_events"], "readwrite");
+            const writeStore = writeTx.objectStore("oob_membership_events");
+            const membersKeyRange = IDBKeyRange.bound([roomId, minStateKey], [roomId, maxStateKey]);
+            logger_1.logger.log(`LL: Deleting all users + marker in storage for room ${roomId}, with key range:`, [roomId, minStateKey], [roomId, maxStateKey]);
+            yield reqAsPromise(writeStore.delete(membersKeyRange));
+        });
+    }
+    /**
+     * Clear the entire database. This should be used when logging out of a client
+     * to prevent mixing data between accounts.
+     * @return {Promise} Resolved when the database is cleared.
+     */
+    clearDatabase() {
+        return new Promise((resolve) => {
+            logger_1.logger.log(`Removing indexeddb instance: ${this.dbName}`);
+            const req = this.indexedDB.deleteDatabase(this.dbName);
+            req.onblocked = () => {
+                logger_1.logger.log(`can't yet delete indexeddb ${this.dbName} because it is open elsewhere`);
+            };
+            req.onerror = () => {
+                // in firefox, with indexedDB disabled, this fails with a
+                // DOMError. We treat this as non-fatal, so that we can still
+                // use the app.
+                logger_1.logger.warn(`unable to delete js-sdk store indexeddb: ${req.error}`);
+                resolve();
+            };
+            req.onsuccess = () => {
+                logger_1.logger.log(`Removed indexeddb instance: ${this.dbName}`);
+                resolve();
+            };
+        });
+    }
+    /**
+     * @param {boolean=} copy If false, the data returned is from internal
+     * buffers and must not be mutated. Otherwise, a copy is made before
+     * returning such that the data can be safely mutated. Default: true.
+     *
+     * @return {Promise} Resolves with a sync response to restore the
+     * client state to where it was at the last save, or null if there
+     * is no saved sync data.
+     */
+    getSavedSync(copy = true) {
+        const data = this.syncAccumulator.getJSON();
+        if (!data.nextBatch)
+            return Promise.resolve(null);
+        if (copy) {
+            // We must deep copy the stored data so that the /sync processing code doesn't
+            // corrupt the internal state of the sync accumulator (it adds non-clonable keys)
+            return Promise.resolve(utils.deepCopy(data));
+        }
+        else {
+            return Promise.resolve(data);
+        }
+    }
+    getNextBatchToken() {
+        return Promise.resolve(this.syncAccumulator.getNextBatchToken());
+    }
+    setSyncData(syncData) {
+        return Promise.resolve().then(() => {
+            this.syncAccumulator.accumulate(syncData);
+        });
+    }
+    syncToDatabase(userTuples) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const syncData = this.syncAccumulator.getJSON(true);
+            yield Promise.all([
+                this.persistUserPresenceEvents(userTuples),
+                this.persistAccountData(syncData.accountData),
+                this.persistSyncData(syncData.nextBatch, syncData.roomsData, syncData.groupsData),
+            ]);
+        });
+    }
+    /**
+     * Persist rooms /sync data along with the next batch token.
+     * @param {string} nextBatch The next_batch /sync value.
+     * @param {Object} roomsData The 'rooms' /sync data from a SyncAccumulator
+     * @param {Object} groupsData The 'groups' /sync data from a SyncAccumulator
+     * @return {Promise} Resolves if the data was persisted.
+     */
+    persistSyncData(nextBatch, roomsData, groupsData) {
+        logger_1.logger.log("Persisting sync data up to", nextBatch);
+        return utils.promiseTry(() => {
+            const txn = this.db.transaction(["sync"], "readwrite");
+            const store = txn.objectStore("sync");
+            store.put({
+                clobber: "-",
+                nextBatch,
+                roomsData,
+                groupsData,
+            }); // put == UPSERT
+            return txnAsPromise(txn).then();
+        });
+    }
+    /**
+     * Persist a list of account data events. Events with the same 'type' will
+     * be replaced.
+     * @param {Object[]} accountData An array of raw user-scoped account data events
+     * @return {Promise} Resolves if the events were persisted.
+     */
+    persistAccountData(accountData) {
+        return utils.promiseTry(() => {
+            const txn = this.db.transaction(["accountData"], "readwrite");
+            const store = txn.objectStore("accountData");
+            for (let i = 0; i < accountData.length; i++) {
+                store.put(accountData[i]); // put == UPSERT
+            }
+            return txnAsPromise(txn).then();
+        });
+    }
+    /**
+     * Persist a list of [user id, presence event] they are for.
+     * Users with the same 'userId' will be replaced.
+     * Presence events should be the event in its raw form (not the Event
+     * object)
+     * @param {Object[]} tuples An array of [userid, event] tuples
+     * @return {Promise} Resolves if the users were persisted.
+     */
+    persistUserPresenceEvents(tuples) {
+        return utils.promiseTry(() => {
+            const txn = this.db.transaction(["users"], "readwrite");
+            const store = txn.objectStore("users");
+            for (const tuple of tuples) {
+                store.put({
+                    userId: tuple[0],
+                    event: tuple[1],
+                }); // put == UPSERT
+            }
+            return txnAsPromise(txn).then();
+        });
+    }
+    /**
+     * Load all user presence events from the database. This is not cached.
+     * FIXME: It would probably be more sensible to store the events in the
+     * sync.
+     * @return {Promise<Object[]>} A list of presence events in their raw form.
+     */
+    getUserPresenceEvents() {
+        return utils.promiseTry(() => {
+            const txn = this.db.transaction(["users"], "readonly");
+            const store = txn.objectStore("users");
+            return selectQuery(store, undefined, (cursor) => {
+                return [cursor.value.userId, cursor.value.event];
+            });
+        });
+    }
+    /**
+     * Load all the account data events from the database. This is not cached.
+     * @return {Promise<Object[]>} A list of raw global account events.
+     */
+    loadAccountData() {
+        logger_1.logger.log(`LocalIndexedDBStoreBackend: loading account data...`);
+        return utils.promiseTry(() => {
+            const txn = this.db.transaction(["accountData"], "readonly");
+            const store = txn.objectStore("accountData");
+            return selectQuery(store, undefined, (cursor) => {
+                return cursor.value;
+            }).then((result) => {
+                logger_1.logger.log(`LocalIndexedDBStoreBackend: loaded account data`);
+                return result;
+            });
+        });
+    }
+    /**
+     * Load the sync data from the database.
+     * @return {Promise<Object>} An object with "roomsData" and "nextBatch" keys.
+     */
+    loadSyncData() {
+        logger_1.logger.log(`LocalIndexedDBStoreBackend: loading sync data...`);
+        return utils.promiseTry(() => {
+            const txn = this.db.transaction(["sync"], "readonly");
+            const store = txn.objectStore("sync");
+            return selectQuery(store, undefined, (cursor) => {
+                return cursor.value;
+            }).then((results) => {
+                logger_1.logger.log(`LocalIndexedDBStoreBackend: loaded sync data`);
+                if (results.length > 1) {
+                    logger_1.logger.warn("loadSyncData: More than 1 sync row found.");
+                }
+                return results.length > 0 ? results[0] : {};
+            });
+        });
+    }
+    getClientOptions() {
+        return Promise.resolve().then(() => {
+            const txn = this.db.transaction(["client_options"], "readonly");
+            const store = txn.objectStore("client_options");
+            return selectQuery(store, undefined, (cursor) => {
+                if (cursor.value && cursor.value && cursor.value.options) {
+                    return cursor.value.options;
+                }
+            }).then((results) => results[0]);
+        });
+    }
+    storeClientOptions(options) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const txn = this.db.transaction(["client_options"], "readwrite");
+            const store = txn.objectStore("client_options");
+            store.put({
+                clobber: "-",
+                options: options,
+            }); // put == UPSERT
+            yield txnAsPromise(txn);
+        });
+    }
+}
+exports.LocalIndexedDBStoreBackend = LocalIndexedDBStoreBackend;
 
-},{"../logger":106,"../utils":137}],129:[function(require,module,exports){
-(function (global){(function (){
+},{"../indexeddb-helpers":116,"../logger":118,"../sync-accumulator":145,"../utils":149}],140:[function(require,module,exports){
+"use strict";
+/*
+Copyright 2017 - 2021 The Matrix.org Foundation C.I.C.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.RemoteIndexedDBStoreBackend = void 0;
+const logger_1 = require("../logger");
+const utils_1 = require("../utils");
+class RemoteIndexedDBStoreBackend {
+    /**
+     * An IndexedDB store backend where the actual backend sits in a web
+     * worker.
+     *
+     * Construct a new Indexed Database store backend. This requires a call to
+     * <code>connect()</code> before this store can be used.
+     * @constructor
+     * @param {Function} workerFactory Factory which produces a Worker
+     * @param {string=} dbName Optional database name. The same name must be used
+     * to open the same database.
+     */
+    constructor(workerFactory, dbName) {
+        this.workerFactory = workerFactory;
+        this.dbName = dbName;
+        this.nextSeq = 0;
+        // The currently in-flight requests to the actual backend
+        this.inFlight = {}; // seq: promise
+        // Once we start connecting, we keep the promise and re-use it
+        // if we try to connect again
+        this.startPromise = null;
+        this.onWorkerMessage = (ev) => {
+            const msg = ev.data;
+            if (msg.command == 'cmd_success' || msg.command == 'cmd_fail') {
+                if (msg.seq === undefined) {
+                    logger_1.logger.error("Got reply from worker with no seq");
+                    return;
+                }
+                const def = this.inFlight[msg.seq];
+                if (def === undefined) {
+                    logger_1.logger.error("Got reply for unknown seq " + msg.seq);
+                    return;
+                }
+                delete this.inFlight[msg.seq];
+                if (msg.command == 'cmd_success') {
+                    def.resolve(msg.result);
+                }
+                else {
+                    const error = new Error(msg.error.message);
+                    error.name = msg.error.name;
+                    def.reject(error);
+                }
+            }
+            else {
+                logger_1.logger.warn("Unrecognised message from worker: ", msg);
+            }
+        };
+    }
+    /**
+     * Attempt to connect to the database. This can fail if the user does not
+     * grant permission.
+     * @return {Promise} Resolves if successfully connected.
+     */
+    connect() {
+        return this.ensureStarted().then(() => this.doCmd('connect'));
+    }
+    /**
+     * Clear the entire database. This should be used when logging out of a client
+     * to prevent mixing data between accounts.
+     * @return {Promise} Resolved when the database is cleared.
+     */
+    clearDatabase() {
+        return this.ensureStarted().then(() => this.doCmd('clearDatabase'));
+    }
+    /** @return {Promise<boolean>} whether or not the database was newly created in this session. */
+    isNewlyCreated() {
+        return this.doCmd('isNewlyCreated');
+    }
+    /**
+     * @return {Promise} Resolves with a sync response to restore the
+     * client state to where it was at the last save, or null if there
+     * is no saved sync data.
+     */
+    getSavedSync() {
+        return this.doCmd('getSavedSync');
+    }
+    getNextBatchToken() {
+        return this.doCmd('getNextBatchToken');
+    }
+    setSyncData(syncData) {
+        return this.doCmd('setSyncData', [syncData]);
+    }
+    syncToDatabase(userTuples) {
+        return this.doCmd('syncToDatabase', [userTuples]);
+    }
+    /**
+     * Returns the out-of-band membership events for this room that
+     * were previously loaded.
+     * @param {string} roomId
+     * @returns {event[]} the events, potentially an empty array if OOB loading didn't yield any new members
+     * @returns {null} in case the members for this room haven't been stored yet
+     */
+    getOutOfBandMembers(roomId) {
+        return this.doCmd('getOutOfBandMembers', [roomId]);
+    }
+    /**
+     * Stores the out-of-band membership events for this room. Note that
+     * it still makes sense to store an empty array as the OOB status for the room is
+     * marked as fetched, and getOutOfBandMembers will return an empty array instead of null
+     * @param {string} roomId
+     * @param {event[]} membershipEvents the membership events to store
+     * @returns {Promise} when all members have been stored
+     */
+    setOutOfBandMembers(roomId, membershipEvents) {
+        return this.doCmd('setOutOfBandMembers', [roomId, membershipEvents]);
+    }
+    clearOutOfBandMembers(roomId) {
+        return this.doCmd('clearOutOfBandMembers', [roomId]);
+    }
+    getClientOptions() {
+        return this.doCmd('getClientOptions');
+    }
+    storeClientOptions(options) {
+        return this.doCmd('storeClientOptions', [options]);
+    }
+    /**
+     * Load all user presence events from the database. This is not cached.
+     * @return {Promise<Object[]>} A list of presence events in their raw form.
+     */
+    getUserPresenceEvents() {
+        return this.doCmd('getUserPresenceEvents');
+    }
+    ensureStarted() {
+        if (this.startPromise === null) {
+            this.worker = this.workerFactory();
+            this.worker.onmessage = this.onWorkerMessage;
+            // tell the worker the db name.
+            this.startPromise = this.doCmd('_setupWorker', [this.dbName]).then(() => {
+                logger_1.logger.log("IndexedDB worker is ready");
+            });
+        }
+        return this.startPromise;
+    }
+    doCmd(command, args) {
+        // wrap in a q so if the postMessage throws,
+        // the promise automatically gets rejected
+        return Promise.resolve().then(() => {
+            const seq = this.nextSeq++;
+            const def = utils_1.defer();
+            this.inFlight[seq] = def;
+            this.worker.postMessage({ command, seq, args });
+            return def.promise;
+        });
+    }
+}
+exports.RemoteIndexedDBStoreBackend = RemoteIndexedDBStoreBackend;
+
+},{"../logger":118,"../utils":149}],141:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2017 - 2021 Vector Creations Ltd
@@ -53757,8 +53863,8 @@ exports.IndexedDBStore = void 0;
 /* eslint-disable @babel/no-invalid-this */
 const events_1 = require("events");
 const memory_1 = require("./memory");
-const indexeddb_local_backend_js_1 = require("./indexeddb-local-backend.js");
-const indexeddb_remote_backend_js_1 = require("./indexeddb-remote-backend.js");
+const indexeddb_local_backend_1 = require("./indexeddb-local-backend");
+const indexeddb_remote_backend_1 = require("./indexeddb-remote-backend");
 const user_1 = require("../models/user");
 const event_1 = require("../models/event");
 const logger_1 = require("../logger");
@@ -53912,21 +54018,15 @@ class IndexedDBStore extends memory_1.MemoryStore {
         if (!opts.indexedDB) {
             throw new Error('Missing required option: indexedDB');
         }
-        if (opts.workerScript) {
-            // try & find a webworker-compatible API
-            let workerApi = opts.workerApi;
-            if (!workerApi) {
-                // default to the global Worker object (which is where it in a browser)
-                workerApi = global.Worker;
-            }
-            this.backend = new indexeddb_remote_backend_js_1.RemoteIndexedDBStoreBackend(opts.workerScript, opts.dbName, workerApi);
+        if (opts.workerFactory) {
+            this.backend = new indexeddb_remote_backend_1.RemoteIndexedDBStoreBackend(opts.workerFactory, opts.dbName);
         }
         else {
-            this.backend = new indexeddb_local_backend_js_1.LocalIndexedDBStoreBackend(opts.indexedDB, opts.dbName);
+            this.backend = new indexeddb_local_backend_1.LocalIndexedDBStoreBackend(opts.indexedDB, opts.dbName);
         }
     }
     static exists(indexedDB, dbName) {
-        return indexeddb_local_backend_js_1.LocalIndexedDBStoreBackend.exists(indexedDB, dbName);
+        return indexeddb_local_backend_1.LocalIndexedDBStoreBackend.exists(indexedDB, dbName);
     }
     /**
      * @return {Promise} Resolved when loaded from indexed db.
@@ -54027,9 +54127,7 @@ class IndexedDBStore extends memory_1.MemoryStore {
 }
 exports.IndexedDBStore = IndexedDBStore;
 
-}).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
-
-},{"../logger":106,"../models/event":113,"../models/user":121,"./indexeddb-local-backend.js":127,"./indexeddb-remote-backend.js":128,"./memory":130,"events":36}],130:[function(require,module,exports){
+},{"../logger":118,"../models/event":125,"../models/user":133,"./indexeddb-local-backend":139,"./indexeddb-remote-backend":140,"./memory":142,"events":38}],142:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -54424,10 +54522,10 @@ class MemoryStore {
 }
 exports.MemoryStore = MemoryStore;
 
-},{"../models/user":121}],131:[function(require,module,exports){
+},{"../models/user":133}],143:[function(require,module,exports){
 "use strict";
 
-var _interopRequireWildcard = require("@babel/runtime/helpers/interopRequireWildcard");
+var _typeof = require("@babel/runtime/helpers/typeof");
 
 Object.defineProperty(exports, "__esModule", {
   value: true
@@ -54438,7 +54536,11 @@ var utils = _interopRequireWildcard(require("../../utils"));
 
 var _logger = require("../../logger");
 
-function _createForOfIteratorHelper(o, allowArrayLike) { var it; if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
+
+function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
+
+function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
 
@@ -54705,7 +54807,7 @@ function debuglog() {
   }
 }
 
-},{"../../logger":106,"../../utils":137,"@babel/runtime/helpers/interopRequireWildcard":13}],132:[function(require,module,exports){
+},{"../../logger":118,"../../utils":149,"@babel/runtime/helpers/typeof":23}],144:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -54730,9 +54832,10 @@ exports.StubStore = void 0;
  */
 class StubStore {
     constructor() {
+        this.accountData = {}; // stub
         this.fromToken = null;
     }
-    /** @return {Promise<bool>} whether or not the database was newly created in this session. */
+    /** @return {Promise<boolean>} whether or not the database was newly created in this session. */
     isNewlyCreated() {
         return Promise.resolve(true);
     }
@@ -54950,7 +55053,7 @@ class StubStore {
 }
 exports.StubStore = StubStore;
 
-},{}],133:[function(require,module,exports){
+},{}],145:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2017 - 2021 The Matrix.org Foundation C.I.C.
@@ -55483,7 +55586,7 @@ function setState(eventMap, event) {
     eventMap[event.type][event.state_key] = event;
 }
 
-},{"./logger":106,"./utils":137}],134:[function(require,module,exports){
+},{"./logger":118,"./utils":149}],146:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 The Matrix.org Foundation C.I.C.
@@ -55513,7 +55616,7 @@ var SyncState;
     SyncState["Reconnecting"] = "RECONNECTING";
 })(SyncState = exports.SyncState || (exports.SyncState = {}));
 
-},{}],135:[function(require,module,exports){
+},{}],147:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 /*
@@ -55735,7 +55838,7 @@ class SyncApi {
         filter.setIncludeLeaveRooms(true);
         const localTimeoutMs = this.opts.pollTimeout + BUFFER_PERIOD_MS;
         const qps = {
-            timeout: 0,
+            timeout: 0, // don't want to block since this is a single isolated req
         };
         return client.getOrCreateFilter(getFilterName(client.credentials.userId, "LEFT_ROOMS"), filter).then(function (filterId) {
             qps.filter = filterId;
@@ -55790,7 +55893,7 @@ class SyncApi {
         this._peekRoom = this.createRoom(roomId);
         return this.client.roomInitialSync(roomId, 20).then((response) => {
             // make sure things are init'd
-            response.messages = response.messages || {};
+            response.messages = response.messages || { chunk: [] };
             response.messages.chunk = response.messages.chunk || [];
             response.state = response.state || [];
             // FIXME: Mostly duplicated from processRoomEvents but not entirely
@@ -55799,8 +55902,7 @@ class SyncApi {
                 .map(client.getEventMapper());
             const stateEvents = response.state.map(client.getEventMapper());
             const messages = response.messages.chunk.map(client.getEventMapper());
-            // XXX: copypasted from /sync until we kill off this
-            // minging v1 API stuff)
+            // XXX: copypasted from /sync until we kill off this minging v1 API stuff)
             // handle presence events (User objects)
             if (response.presence && Array.isArray(response.presence)) {
                 response.presence.map(client.getEventMapper()).forEach(function (presenceEvent) {
@@ -56092,11 +56194,11 @@ class SyncApi {
             // Now wait for the saved sync to finish...
             debuglog("Waiting for saved sync before starting sync processing...");
             yield savedSyncPromise;
-            this._sync({ filterId });
+            this.doSync({ filterId });
         });
         if (client.isGuest()) {
             // no push rules for guests, no access to POST filter for guests.
-            this._sync({});
+            this.doSync({});
         }
         else {
             // Pull the saved sync token out first, before the worker starts sending
@@ -56197,7 +56299,7 @@ class SyncApi {
      * @param {string} syncOptions.filterId
      * @param {boolean} syncOptions.hasSyncedBefore
      */
-    _sync(syncOptions) {
+    doSync(syncOptions) {
         return __awaiter(this, void 0, void 0, function* () {
             const client = this.client;
             if (!this.running) {
@@ -56280,7 +56382,7 @@ class SyncApi {
                 client.store.save();
             }
             // Begin next sync
-            this._sync(syncOptions);
+            this.doSync(syncOptions);
         });
     }
     doSyncRequest(syncOptions, syncToken) {
@@ -56370,7 +56472,7 @@ class SyncApi {
                     catchingUp: true,
                 });
             }
-            this._sync(syncOptions);
+            this.doSync(syncOptions);
         });
         this.currentSyncRequest = null;
         // Transition from RECONNECTING to ERROR after a given number of failed syncs
@@ -57051,7 +57153,7 @@ function createNewUser(client, userId) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./client":64,"./errors":99,"./filter":102,"./logger":106,"./models/event-timeline":112,"./models/group":114,"./models/room":119,"./models/user":121,"./pushprocessor":122,"./sync-accumulator":133,"./sync.api":134,"./utils":137}],136:[function(require,module,exports){
+},{"./client":76,"./errors":111,"./filter":114,"./logger":118,"./models/event-timeline":124,"./models/group":126,"./models/room":131,"./models/user":133,"./pushprocessor":134,"./sync-accumulator":145,"./sync.api":146,"./utils":149}],148:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2016 - 2021 The Matrix.org Foundation C.I.C.
@@ -57517,7 +57619,7 @@ class TimelineIndex {
 }
 exports.TimelineIndex = TimelineIndex;
 
-},{"./logger":106,"./models/event-timeline":112}],137:[function(require,module,exports){
+},{"./logger":118,"./models/event-timeline":124}],149:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015, 2016 OpenMarket Ltd
@@ -57548,7 +57650,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.lexicographicCompare = exports.prevString = exports.nextString = exports.averageBetweenStrings = exports.stringToBase = exports.baseToString = exports.alphabetPad = exports.DEFAULT_ALPHABET = exports.getCrypto = exports.setCrypto = exports.simpleRetryOperation = exports.chunkPromises = exports.promiseTry = exports.promiseMapSeries = exports.defer = exports.isNullOrUndefined = exports.sleep = exports.ensureNoTrailingSlash = exports.globToRegexp = exports.escapeRegExp = exports.normalize = exports.removeHiddenChars = exports.isNumber = exports.polyfillSuper = exports.inherits = exports.extend = exports.deepSortedObjectEntries = exports.deepCompare = exports.deepCopy = exports.checkObjectHasNoAdditionalKeys = exports.checkObjectHasKeys = exports.isFunction = exports.removeElement = exports.encodeUri = exports.encodeParams = void 0;
+exports.recursivelyAssign = exports.compare = exports.lexicographicCompare = exports.prevString = exports.nextString = exports.averageBetweenStrings = exports.stringToBase = exports.baseToString = exports.alphabetPad = exports.DEFAULT_ALPHABET = exports.getCrypto = exports.setCrypto = exports.simpleRetryOperation = exports.chunkPromises = exports.promiseTry = exports.promiseMapSeries = exports.defer = exports.isNullOrUndefined = exports.sleep = exports.ensureNoTrailingSlash = exports.globToRegexp = exports.escapeRegExp = exports.normalize = exports.removeHiddenChars = exports.isNumber = exports.polyfillSuper = exports.inherits = exports.extend = exports.deepSortedObjectEntries = exports.deepCompare = exports.deepCopy = exports.checkObjectHasNoAdditionalKeys = exports.checkObjectHasKeys = exports.isFunction = exports.removeElement = exports.encodeUri = exports.decodeParams = exports.encodeParams = void 0;
 /**
  * This is an internal module.
  * @module utils
@@ -57562,17 +57664,28 @@ const p_retry_1 = __importDefault(require("p-retry"));
  * @return {string} The encoded string e.g. foo=bar&baz=taz
  */
 function encodeParams(params) {
-    let qs = "";
-    for (const key in params) {
-        if (!params.hasOwnProperty(key)) {
-            continue;
-        }
-        qs += "&" + encodeURIComponent(key) + "=" +
-            encodeURIComponent(params[key]);
-    }
-    return qs.substring(1);
+    return new URLSearchParams(params).toString();
 }
 exports.encodeParams = encodeParams;
+/**
+ * Decode a query string in `application/x-www-form-urlencoded` format.
+ * @param {string} query A query string to decode e.g.
+ * foo=bar&via=server1&server2
+ * @return {Object} The decoded object, if any keys occurred multiple times
+ * then the value will be an array of strings, else it will be an array.
+ * This behaviour matches Node's qs.parse but is built on URLSearchParams
+ * for native web compatibility
+ */
+function decodeParams(query) {
+    const o = {};
+    const params = new URLSearchParams(query);
+    for (const key of params.keys()) {
+        const val = params.getAll(key);
+        o[key] = val.length === 1 ? val[0] : val;
+    }
+    return o;
+}
+exports.decodeParams = decodeParams;
 /**
  * Encodes a URI according to a set of template variables. Variables will be
  * passed through encodeURIComponent.
@@ -57641,10 +57754,10 @@ exports.isFunction = isFunction;
  * @throws If the object is missing keys.
  */
 // note using 'keys' here would shadow the 'keys' function defined above
-function checkObjectHasKeys(obj, keys_) {
-    for (let i = 0; i < keys_.length; i++) {
-        if (!obj.hasOwnProperty(keys_[i])) {
-            throw new Error("Missing required key: " + keys_[i]);
+function checkObjectHasKeys(obj, keys) {
+    for (let i = 0; i < keys.length; i++) {
+        if (!obj.hasOwnProperty(keys[i])) {
+            throw new Error("Missing required key: " + keys[i]);
         }
     }
 }
@@ -57904,10 +58017,11 @@ exports.normalize = normalize;
 // various width spaces U+2000 - U+200D
 // LTR and RTL marks U+200E and U+200F
 // LTR/RTL and other directional formatting marks U+202A - U+202F
+// Arabic Letter RTL mark U+061C
 // Combining characters U+0300 - U+036F
 // Zero width no-break space (BOM) U+FEFF
 // eslint-disable-next-line no-misleading-character-class
-const removeHiddenCharsRegex = /[\u2000-\u200F\u202A-\u202F\u0300-\u036f\uFEFF\s]/g;
+const removeHiddenCharsRegex = /[\u2000-\u200F\u202A-\u202F\u0300-\u036F\uFEFF\u061C\s]/g;
 function escapeRegExp(string) {
     return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -58001,7 +58115,7 @@ function simpleRetryOperation(promiseFn) {
         forever: true,
         factor: 2,
         minTimeout: 3000,
-        maxTimeout: 15000,
+        maxTimeout: 15000, // ms
     });
 }
 exports.simpleRetryOperation = simpleRetryOperation;
@@ -58167,8 +58281,40 @@ function lexicographicCompare(a, b) {
     return (a < b) ? -1 : ((a === b) ? 0 : 1);
 }
 exports.lexicographicCompare = lexicographicCompare;
+const collator = new Intl.Collator();
+/**
+ * Performant language-sensitive string comparison
+ * @param a the first string to compare
+ * @param b the second string to compare
+ */
+function compare(a, b) {
+    return collator.compare(a, b);
+}
+exports.compare = compare;
+/**
+ * This function is similar to Object.assign() but it assigns recursively and
+ * allows you to ignore nullish values from the source
+ *
+ * @param {Object} target
+ * @param {Object} source
+ * @returns the target object
+ */
+function recursivelyAssign(target, source, ignoreNullish = false) {
+    for (const [sourceKey, sourceValue] of Object.entries(source)) {
+        if (target[sourceKey] instanceof Object && sourceValue) {
+            recursivelyAssign(target[sourceKey], sourceValue);
+            continue;
+        }
+        if ((sourceValue !== null && sourceValue !== undefined) || !ignoreNullish) {
+            target[sourceKey] = sourceValue;
+            continue;
+        }
+    }
+    return target;
+}
+exports.recursivelyAssign = recursivelyAssign;
 
-},{"p-retry":39,"unhomoglyph":55}],138:[function(require,module,exports){
+},{"p-retry":48,"unhomoglyph":65}],150:[function(require,module,exports){
 (function (process){(function (){
 "use strict";
 /*
@@ -58289,7 +58435,7 @@ var CallErrorCode;
      */
     CallErrorCode["UnknownDevices"] = "unknown_devices";
     /**
-     * Error code usewd when we fail to send the invite
+     * Error code used when we fail to send the invite
      * for some reason other than there being unknown devices
      */
     CallErrorCode["SendInvite"] = "send_invite";
@@ -58298,7 +58444,7 @@ var CallErrorCode;
      */
     CallErrorCode["CreateAnswer"] = "create_answer";
     /**
-     * Error code usewd when we fail to send the answer
+     * Error code used when we fail to send the answer
      * for some reason other than there being unknown devices
      */
     CallErrorCode["SendAnswer"] = "send_answer";
@@ -58369,7 +58515,7 @@ function getDesktopCapturerSources() {
 exports.getDesktopCapturerSources = getDesktopCapturerSources;
 class CallError extends Error {
     constructor(code, msg, err) {
-        // Stil ldon't think there's any way to have proper nested errors
+        // Still don't think there's any way to have proper nested errors
         super(msg + ": " + err);
         this.code = code;
     }
@@ -58409,43 +58555,22 @@ class MatrixCall extends events_1.EventEmitter {
                 this.stopAllMedia();
                 return;
             }
-            this.localAVStream = stream;
-            logger_1.logger.info("Got local AV stream with id " + this.localAVStream.id);
+            this.pushLocalFeed(stream, callEventTypes_1.SDPStreamMetadataPurpose.Usermedia);
             this.setState(CallState.CreateOffer);
+            logger_1.logger.info("Got local AV stream with id " + this.localUsermediaStream.id);
             logger_1.logger.debug("gotUserMediaForInvite -> " + this.type);
-            if (this.screenSharingStream) {
-                logger_1.logger.debug("Setting screen sharing stream to the local video element");
-                this.pushNewFeed(this.screenSharingStream, this.client.getUserId(), callEventTypes_1.SDPStreamMetadataPurpose.Screenshare);
-            }
-            else {
-                this.pushNewFeed(stream, this.client.getUserId(), callEventTypes_1.SDPStreamMetadataPurpose.Usermedia);
-            }
-            // why do we enable audio (and only audio) tracks here? -- matthew
-            setTracksEnabled(stream.getAudioTracks(), true);
-            for (const audioTrack of stream.getAudioTracks()) {
-                logger_1.logger.info("Adding audio track with id " + audioTrack.id);
-                this.peerConn.addTrack(audioTrack, stream);
-            }
-            for (const videoTrack of (this.screenSharingStream || stream).getVideoTracks()) {
-                logger_1.logger.info("Adding video track with id " + videoTrack.id);
-                this.peerConn.addTrack(videoTrack, stream);
-            }
             // Now we wait for the negotiationneeded event
         });
         this.gotUserMediaForAnswer = (stream) => __awaiter(this, void 0, void 0, function* () {
             if (this.callHasEnded()) {
                 return;
             }
-            this.pushNewFeed(stream, this.client.getUserId(), callEventTypes_1.SDPStreamMetadataPurpose.Usermedia);
-            this.localAVStream = stream;
-            logger_1.logger.info("Got local AV stream with id " + this.localAVStream.id);
-            setTracksEnabled(stream.getAudioTracks(), true);
-            for (const track of stream.getTracks()) {
-                this.peerConn.addTrack(track, stream);
-            }
+            this.pushLocalFeed(stream, callEventTypes_1.SDPStreamMetadataPurpose.Usermedia);
+            logger_1.logger.info("Got local AV stream with id " + this.localUsermediaStream.id);
             this.setState(CallState.CreateAnswer);
             let myAnswer;
             try {
+                this.getRidOfRTXCodecs();
                 myAnswer = yield this.peerConn.createAnswer();
             }
             catch (err) {
@@ -58534,18 +58659,18 @@ class MatrixCall extends events_1.EventEmitter {
             if (eventType === event_1.EventType.CallInvite && this.invitee) {
                 content.invitee = this.invitee;
             }
-            // clunky because TypeScript can't folow the types through if we use an expression as the key
+            // clunky because TypeScript can't follow the types through if we use an expression as the key
             if (this.state === CallState.CreateOffer) {
                 content.offer = this.peerConn.localDescription;
             }
             else {
                 content.description = this.peerConn.localDescription;
             }
-            if (this.client.supportsCallTransfer) {
-                content.capabilities = {
-                    'm.call.transferee': true,
-                };
-            }
+            content.capabilities = {
+                'm.call.transferee': this.client.supportsCallTransfer,
+                'm.call.dtmf': false,
+            };
+            content[callEventTypes_1.SDPStreamMetadataKey] = this.getLocalSDPStreamMetadata();
             // Get rid of any candidates waiting to be sent: they'll be included in the local
             // description we just got and will send in the offer.
             logger_1.logger.info(`Discarding ${this.candidateSendQueue.length} candidates that will be sent in offer`);
@@ -58625,36 +58750,23 @@ class MatrixCall extends events_1.EventEmitter {
                 this.peerConn.signalingState);
         };
         this.onTrack = (ev) => {
-            var _a;
             if (ev.streams.length === 0) {
                 logger_1.logger.warn(`Streamless ${ev.track.kind} found: ignoring.`);
                 return;
             }
-            const oldRemoteStream = (_a = this.feeds.find((feed) => !feed.isLocal())) === null || _a === void 0 ? void 0 : _a.stream;
-            // If we already have a stream, check this track is from the same one
-            // Note that we check by ID and always set the remote stream: Chrome appears
-            // to make new stream objects when tranciever directionality is changed and the 'active'
-            // status of streams change - Dave
-            if (oldRemoteStream && ev.streams[0].id !== oldRemoteStream.id) {
-                logger_1.logger.warn(`Ignoring new stream ID ${ev.streams[0].id}: we already have stream ID ${oldRemoteStream.id}`);
-                return;
-            }
-            if (!oldRemoteStream) {
-                logger_1.logger.info("Got remote stream with id " + ev.streams[0].id);
-            }
-            const newRemoteStream = ev.streams[0];
-            logger_1.logger.debug(`Track id ${ev.track.id} of kind ${ev.track.kind} added`);
-            this.pushNewFeed(newRemoteStream, this.getOpponentMember().userId, callEventTypes_1.SDPStreamMetadataPurpose.Usermedia);
-            logger_1.logger.info("playing remote. stream active? " + newRemoteStream.active);
+            const stream = ev.streams[0];
+            this.pushRemoteFeed(stream);
+            stream.addEventListener("removetrack", () => this.deleteFeedByStream(stream));
         };
         this.onNegotiationNeeded = () => __awaiter(this, void 0, void 0, function* () {
-            logger_1.logger.info("Negotation is needed!");
+            logger_1.logger.info("Negotiation is needed!");
             if (this.state !== CallState.CreateOffer && this.opponentVersion === 0) {
                 logger_1.logger.info("Opponent does not support renegotiation: ignoring negotiationneeded event");
                 return;
             }
             this.makingOffer = true;
             try {
+                this.getRidOfRTXCodecs();
                 const myOffer = yield this.peerConn.createOffer();
                 yield this.gotLocalOffer(myOffer);
             }
@@ -58727,9 +58839,9 @@ class MatrixCall extends events_1.EventEmitter {
         this.inviteOrAnswerSent = false;
         this.makingOffer = false;
         this.remoteOnHold = false;
-        this.micMuted = false;
-        this.vidMuted = false;
         this.feeds = [];
+        this.usermediaSenders = [];
+        this.screensharingSenders = [];
     }
     /**
      * Place a voice call to this room.
@@ -58755,51 +58867,34 @@ class MatrixCall extends events_1.EventEmitter {
             yield this.placeCall(ConstraintsType.Video);
         });
     }
-    /**
-     * Place a screen-sharing call to this room. This includes audio.
-     * <b>This method is EXPERIMENTAL and subject to change without warning. It
-     * only works in Google Chrome and Firefox >= 44.</b>
-     * @throws If you have not specified a listener for 'error' events.
-     */
-    placeScreenSharingCall(selectDesktopCapturerSource) {
-        var _a;
-        return __awaiter(this, void 0, void 0, function* () {
-            logger_1.logger.debug("placeScreenSharingCall");
-            this.checkForErrorListener();
-            try {
-                const screenshareConstraints = yield getScreenshareContraints(selectDesktopCapturerSource);
-                if (!screenshareConstraints) {
-                    this.terminate(CallParty.Local, CallErrorCode.NoUserMedia, false);
-                    return;
-                }
-                if ((_a = window.electron) === null || _a === void 0 ? void 0 : _a.getDesktopCapturerSources) {
-                    // We are using Electron
-                    logger_1.logger.debug("Getting screen stream using getUserMedia()...");
-                    this.screenSharingStream = yield navigator.mediaDevices.getUserMedia(screenshareConstraints);
-                }
-                else {
-                    // We are not using Electron
-                    logger_1.logger.debug("Getting screen stream using getDisplayMedia()...");
-                    this.screenSharingStream = yield navigator.mediaDevices.getDisplayMedia(screenshareConstraints);
-                }
-                logger_1.logger.debug("Got screen stream, requesting audio stream...");
-                this.placeCall(ConstraintsType.Audio);
-            }
-            catch (err) {
-                this.emit(CallEvent.Error, new CallError(CallErrorCode.NoUserMedia, "Failed to get screen-sharing stream: ", err));
-                this.terminate(CallParty.Local, CallErrorCode.NoUserMedia, false);
-            }
-            this.type = CallType.Video;
-        });
-    }
     getOpponentMember() {
         return this.opponentMember;
     }
     opponentCanBeTransferred() {
         return Boolean(this.opponentCaps && this.opponentCaps["m.call.transferee"]);
     }
+    opponentSupportsDTMF() {
+        return Boolean(this.opponentCaps && this.opponentCaps["m.call.dtmf"]);
+    }
     getRemoteAssertedIdentity() {
         return this.remoteAssertedIdentity;
+    }
+    get localUsermediaFeed() {
+        return this.getLocalFeeds().find((feed) => feed.purpose === callEventTypes_1.SDPStreamMetadataPurpose.Usermedia);
+    }
+    get localScreensharingFeed() {
+        return this.getLocalFeeds().find((feed) => feed.purpose === callEventTypes_1.SDPStreamMetadataPurpose.Screenshare);
+    }
+    get localUsermediaStream() {
+        var _a;
+        return (_a = this.localUsermediaFeed) === null || _a === void 0 ? void 0 : _a.stream;
+    }
+    get localScreensharingStream() {
+        var _a;
+        return (_a = this.localScreensharingFeed) === null || _a === void 0 ? void 0 : _a.stream;
+    }
+    getFeedByStreamId(streamId) {
+        return this.getFeeds().find((feed) => feed.stream.id === streamId);
     }
     /**
      * Returns an array of all CallFeeds
@@ -58823,6 +58918,22 @@ class MatrixCall extends events_1.EventEmitter {
         return this.feeds.filter((feed) => !feed.isLocal());
     }
     /**
+     * Generates and returns localSDPStreamMetadata
+     * @returns {SDPStreamMetadata} localSDPStreamMetadata
+     */
+    getLocalSDPStreamMetadata() {
+        const metadata = {};
+        for (const localFeed of this.getLocalFeeds()) {
+            metadata[localFeed.stream.id] = {
+                purpose: localFeed.purpose,
+                audio_muted: localFeed.isAudioMuted(),
+                video_muted: localFeed.isVideoMuted(),
+            };
+        }
+        logger_1.logger.debug("Got local SDPStreamMetadata", metadata);
+        return metadata;
+    }
+    /**
      * Returns true if there are no incoming feeds,
      * otherwise returns false
      * @returns {boolean} no incoming feeds
@@ -58830,20 +58941,104 @@ class MatrixCall extends events_1.EventEmitter {
     noIncomingFeeds() {
         return !this.feeds.some((feed) => !feed.isLocal());
     }
-    pushNewFeed(stream, userId, purpose) {
+    pushRemoteFeed(stream) {
+        // Fallback to old behavior if the other side doesn't support SDPStreamMetadata
+        if (!this.opponentSupportsSDPStreamMetadata()) {
+            this.pushRemoteFeedWithoutMetadata(stream);
+            return;
+        }
+        const userId = this.getOpponentMember().userId;
+        const purpose = this.remoteSDPStreamMetadata[stream.id].purpose;
+        const audioMuted = this.remoteSDPStreamMetadata[stream.id].audio_muted;
+        const videoMuted = this.remoteSDPStreamMetadata[stream.id].video_muted;
+        if (!purpose) {
+            logger_1.logger.warn(`Ignoring stream with id ${stream.id} because we didn't get any metadata about it`);
+            return;
+        }
+        // Try to find a feed with the same purpose as the new stream,
+        // if we find it replace the old stream with the new one
+        const existingFeed = this.getRemoteFeeds().find((feed) => feed.purpose === purpose);
+        if (existingFeed) {
+            existingFeed.setNewStream(stream);
+        }
+        else {
+            this.feeds.push(new callFeed_1.CallFeed(stream, userId, purpose, this.client, this.roomId, audioMuted, videoMuted));
+            this.emit(CallEvent.FeedsChanged, this.feeds);
+        }
+        logger_1.logger.info(`Pushed remote stream (id="${stream.id}", active="${stream.active}", purpose=${purpose})`);
+    }
+    /**
+     * This method is used ONLY if the other client doesn't support sending SDPStreamMetadata
+     */
+    pushRemoteFeedWithoutMetadata(stream) {
+        var _a;
+        const userId = this.getOpponentMember().userId;
+        // We can guess the purpose here since the other client can only send one stream
+        const purpose = callEventTypes_1.SDPStreamMetadataPurpose.Usermedia;
+        const oldRemoteStream = (_a = this.feeds.find((feed) => !feed.isLocal())) === null || _a === void 0 ? void 0 : _a.stream;
+        // Note that we check by ID and always set the remote stream: Chrome appears
+        // to make new stream objects when transceiver directionality is changed and the 'active'
+        // status of streams change - Dave
+        // If we already have a stream, check this stream has the same id
+        if (oldRemoteStream && stream.id !== oldRemoteStream.id) {
+            logger_1.logger.warn(`Ignoring new stream ID ${stream.id}: we already have stream ID ${oldRemoteStream.id}`);
+            return;
+        }
         // Try to find a feed with the same stream id as the new stream,
         // if we find it replace the old stream with the new one
-        const feed = this.feeds.find((feed) => feed.stream.id === stream.id);
+        const feed = this.getFeedByStreamId(stream.id);
         if (feed) {
             feed.setNewStream(stream);
         }
         else {
-            this.feeds.push(new callFeed_1.CallFeed(stream, userId, purpose, this.client, this.roomId));
+            this.feeds.push(new callFeed_1.CallFeed(stream, userId, purpose, this.client, this.roomId, false, false));
             this.emit(CallEvent.FeedsChanged, this.feeds);
         }
+        logger_1.logger.info(`Pushed remote stream (id="${stream.id}", active="${stream.active}")`);
+    }
+    pushLocalFeed(stream, purpose, addToPeerConnection = true) {
+        const userId = this.client.getUserId();
+        // We try to replace an existing feed if there already is one with the same purpose
+        const existingFeed = this.getLocalFeeds().find((feed) => feed.purpose === purpose);
+        if (existingFeed) {
+            existingFeed.setNewStream(stream);
+        }
+        else {
+            this.feeds.push(new callFeed_1.CallFeed(stream, userId, purpose, this.client, this.roomId, false, false));
+            this.emit(CallEvent.FeedsChanged, this.feeds);
+        }
+        // why do we enable audio (and only audio) tracks here? -- matthew
+        setTracksEnabled(stream.getAudioTracks(), true);
+        if (addToPeerConnection) {
+            const senderArray = purpose === callEventTypes_1.SDPStreamMetadataPurpose.Usermedia ?
+                this.usermediaSenders : this.screensharingSenders;
+            // Empty the array
+            senderArray.splice(0, senderArray.length);
+            this.emit(CallEvent.FeedsChanged, this.feeds);
+            for (const track of stream.getTracks()) {
+                logger_1.logger.info(`Adding track (` +
+                    `id="${track.id}", ` +
+                    `kind="${track.kind}", ` +
+                    `streamId="${stream.id}", ` +
+                    `streamPurpose="${purpose}"` +
+                    `) to peer connection`);
+                senderArray.push(this.peerConn.addTrack(track, stream));
+            }
+        }
+        logger_1.logger.info(`Pushed local stream (id="${stream.id}", active="${stream.active}", purpose="${purpose}")`);
     }
     deleteAllFeeds() {
         this.feeds = [];
+        this.emit(CallEvent.FeedsChanged, this.feeds);
+    }
+    deleteFeedByStream(stream) {
+        logger_1.logger.debug(`Removing feed with stream id ${stream.id}`);
+        const feed = this.getFeedByStreamId(stream.id);
+        if (!feed) {
+            logger_1.logger.warn(`Didn't find the feed with stream id ${stream.id} to delete`);
+            return;
+        }
+        this.feeds.splice(this.feeds.indexOf(feed), 1);
         this.emit(CallEvent.FeedsChanged, this.feeds);
     }
     // The typescript definitions have this type as 'any' :(
@@ -58884,6 +59079,13 @@ class MatrixCall extends events_1.EventEmitter {
             if (!haveTurnCreds) {
                 logger_1.logger.warn("Failed to get TURN credentials! Proceeding with call anyway...");
             }
+            const sdpStreamMetadata = invite[callEventTypes_1.SDPStreamMetadataKey];
+            if (sdpStreamMetadata) {
+                this.updateRemoteSDPStreamMetadata(sdpStreamMetadata);
+            }
+            else {
+                logger_1.logger.debug("Did not get any SDPStreamMetadata! Can not send/receive multiple streams");
+            }
             this.peerConn = this.createPeerConnection();
             // we must set the party ID before await-ing on anything: the call event
             // handler will start giving us more call events (eg. candidates) so if
@@ -58900,7 +59102,7 @@ class MatrixCall extends events_1.EventEmitter {
             }
             const remoteStream = (_a = this.feeds.find((feed) => !feed.isLocal())) === null || _a === void 0 ? void 0 : _a.stream;
             // According to previous comments in this file, firefox at some point did not
-            // add streams until media started ariving on them. Testing latest firefox
+            // add streams until media started arriving on them. Testing latest firefox
             // (81 at time of writing), this is no longer a problem, so let's do it the correct way.
             if (!remoteStream || remoteStream.getTracks().length === 0) {
                 logger_1.logger.error("No remote stream or no tracks after setting remote description!");
@@ -58944,7 +59146,11 @@ class MatrixCall extends events_1.EventEmitter {
                 return;
             }
             logger_1.logger.debug(`Answering call ${this.callId} of type ${this.type}`);
-            if (!this.localAVStream && !this.waitForLocalAVStream) {
+            if (!this.localUsermediaStream && !this.waitForLocalAVStream) {
+                const constraints = getUserMediaContraints(this.type == CallType.Video ?
+                    ConstraintsType.Video :
+                    ConstraintsType.Audio);
+                logger_1.logger.log("Getting user media with constraints", constraints);
                 this.setState(CallState.WaitLocalMedia);
                 this.waitForLocalAVStream = true;
                 try {
@@ -58963,8 +59169,8 @@ class MatrixCall extends events_1.EventEmitter {
                     return;
                 }
             }
-            else if (this.localAVStream) {
-                this.gotUserMediaForAnswer(this.localAVStream);
+            else if (this.localUsermediaStream) {
+                this.gotUserMediaForAnswer(this.localUsermediaStream);
             }
             else if (this.waitForLocalAVStream) {
                 this.setState(CallState.WaitLocalMedia);
@@ -58984,13 +59190,11 @@ class MatrixCall extends events_1.EventEmitter {
         }
         else if (this.state === CallState.CreateOffer) {
             logger_1.logger.debug("Handing local stream to new call");
-            newCall.gotUserMediaForAnswer(this.localAVStream);
-            delete (this.localAVStream);
+            newCall.gotUserMediaForAnswer(this.localUsermediaStream);
         }
         else if (this.state === CallState.InviteSent) {
             logger_1.logger.debug("Handing local stream to new call");
-            newCall.gotUserMediaForAnswer(this.localAVStream);
-            delete (this.localAVStream);
+            newCall.gotUserMediaForAnswer(this.localUsermediaStream);
         }
         this.successor = newCall;
         this.emit(CallEvent.Replaced, newCall);
@@ -59010,10 +59214,10 @@ class MatrixCall extends events_1.EventEmitter {
         if (this.state === CallState.WaitLocalMedia)
             return;
         const content = {};
-        // Continue to send no reason for user hangups temporarily, until
-        // clients understand the user_hangup reason (voip v1)
-        if (reason !== CallErrorCode.UserHangup)
-            content['reason'] = reason;
+        // Don't send UserHangup reason to older clients
+        if ((this.opponentVersion && this.opponentVersion >= 1) || reason !== CallErrorCode.UserHangup) {
+            content["reason"] = reason;
+        }
         this.sendVoipEvent(event_1.EventType.CallHangup, content);
     }
     /**
@@ -59035,11 +59239,121 @@ class MatrixCall extends events_1.EventEmitter {
         this.sendVoipEvent(event_1.EventType.CallReject, {});
     }
     /**
+     * Returns true if this.remoteSDPStreamMetadata is defined, otherwise returns false
+     * @returns {boolean} can screenshare
+     */
+    opponentSupportsSDPStreamMetadata() {
+        return Boolean(this.remoteSDPStreamMetadata);
+    }
+    /**
+     * If there is a screensharing stream returns true, otherwise returns false
+     * @returns {boolean} is screensharing
+     */
+    isScreensharing() {
+        return Boolean(this.localScreensharingStream);
+    }
+    /**
+     * Starts/stops screensharing
+     * @param enabled the desired screensharing state
+     * @param selectDesktopCapturerSource callBack to select a screensharing stream on desktop
+     * @returns {boolean} new screensharing state
+     */
+    setScreensharingEnabled(enabled, selectDesktopCapturerSource) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Skip if there is nothing to do
+            if (enabled && this.isScreensharing()) {
+                logger_1.logger.warn(`There is already a screensharing stream - there is nothing to do!`);
+                return true;
+            }
+            else if (!enabled && !this.isScreensharing()) {
+                logger_1.logger.warn(`There already isn't a screensharing stream - there is nothing to do!`);
+                return false;
+            }
+            // Fallback to replaceTrack()
+            if (!this.opponentSupportsSDPStreamMetadata()) {
+                return yield this.setScreensharingEnabledWithoutMetadataSupport(enabled, selectDesktopCapturerSource);
+            }
+            logger_1.logger.debug(`Set screensharing enabled? ${enabled}`);
+            if (enabled) {
+                try {
+                    const stream = yield getScreensharingStream(selectDesktopCapturerSource);
+                    if (!stream)
+                        return false;
+                    this.pushLocalFeed(stream, callEventTypes_1.SDPStreamMetadataPurpose.Screenshare);
+                    return true;
+                }
+                catch (err) {
+                    this.emit(CallEvent.Error, new CallError(CallErrorCode.NoUserMedia, "Failed to get screen-sharing stream: ", err));
+                    return false;
+                }
+            }
+            else {
+                for (const sender of this.screensharingSenders) {
+                    this.peerConn.removeTrack(sender);
+                }
+                for (const track of this.localScreensharingStream.getTracks()) {
+                    track.stop();
+                }
+                this.deleteFeedByStream(this.localScreensharingStream);
+                return false;
+            }
+        });
+    }
+    /**
+     * Starts/stops screensharing
+     * Should be used ONLY if the opponent doesn't support SDPStreamMetadata
+     * @param enabled the desired screensharing state
+     * @param selectDesktopCapturerSource callBack to select a screensharing stream on desktop
+     * @returns {boolean} new screensharing state
+     */
+    setScreensharingEnabledWithoutMetadataSupport(enabled, selectDesktopCapturerSource) {
+        return __awaiter(this, void 0, void 0, function* () {
+            logger_1.logger.debug(`Set screensharing enabled? ${enabled} using replaceTrack()`);
+            if (enabled) {
+                try {
+                    const stream = yield getScreensharingStream(selectDesktopCapturerSource);
+                    if (!stream)
+                        return false;
+                    const track = stream.getTracks().find((track) => {
+                        return track.kind === "video";
+                    });
+                    const sender = this.usermediaSenders.find((sender) => {
+                        var _a;
+                        return ((_a = sender.track) === null || _a === void 0 ? void 0 : _a.kind) === "video";
+                    });
+                    sender.replaceTrack(track);
+                    this.pushLocalFeed(stream, callEventTypes_1.SDPStreamMetadataPurpose.Screenshare, false);
+                    return true;
+                }
+                catch (err) {
+                    this.emit(CallEvent.Error, new CallError(CallErrorCode.NoUserMedia, "Failed to get screen-sharing stream: ", err));
+                    return false;
+                }
+            }
+            else {
+                const track = this.localUsermediaStream.getTracks().find((track) => {
+                    return track.kind === "video";
+                });
+                const sender = this.usermediaSenders.find((sender) => {
+                    var _a;
+                    return ((_a = sender.track) === null || _a === void 0 ? void 0 : _a.kind) === "video";
+                });
+                sender.replaceTrack(track);
+                for (const track of this.localScreensharingStream.getTracks()) {
+                    track.stop();
+                }
+                this.deleteFeedByStream(this.localScreensharingStream);
+                return false;
+            }
+        });
+    }
+    /**
      * Set whether our outbound video should be muted or not.
      * @param {boolean} muted True to mute the outbound video.
      */
     setLocalVideoMuted(muted) {
-        this.vidMuted = muted;
+        var _a;
+        (_a = this.localUsermediaFeed) === null || _a === void 0 ? void 0 : _a.setVideoMuted(muted);
         this.updateMuteStatus();
     }
     /**
@@ -59052,14 +59366,16 @@ class MatrixCall extends events_1.EventEmitter {
      * (including if the call is not set up yet).
      */
     isLocalVideoMuted() {
-        return this.vidMuted;
+        var _a;
+        return (_a = this.localUsermediaFeed) === null || _a === void 0 ? void 0 : _a.isVideoMuted();
     }
     /**
      * Set whether the microphone should be muted or not.
      * @param {boolean} muted True to mute the mic.
      */
     setMicrophoneMuted(muted) {
-        this.micMuted = muted;
+        var _a;
+        (_a = this.localUsermediaFeed) === null || _a === void 0 ? void 0 : _a.setAudioMuted(muted);
         this.updateMuteStatus();
     }
     /**
@@ -59072,7 +59388,8 @@ class MatrixCall extends events_1.EventEmitter {
      * is not set up yet).
      */
     isMicrophoneMuted() {
-        return this.micMuted;
+        var _a;
+        return (_a = this.localUsermediaFeed) === null || _a === void 0 ? void 0 : _a.isAudioMuted();
     }
     /**
      * @returns true if we have put the party on the other side of the call on hold
@@ -59085,11 +59402,11 @@ class MatrixCall extends events_1.EventEmitter {
         if (this.isRemoteOnHold() === onHold)
             return;
         this.remoteOnHold = onHold;
-        for (const tranceiver of this.peerConn.getTransceivers()) {
+        for (const transceiver of this.peerConn.getTransceivers()) {
             // We don't send hold music or anything so we're not actually
             // sending anything, but sendrecv is fairly standard for hold and
             // it makes it a lot easier to figure out who's put who on hold.
-            tranceiver.direction = onHold ? 'sendonly' : 'sendrecv';
+            transceiver.direction = onHold ? 'sendonly' : 'sendrecv';
         }
         this.updateMuteStatus();
         this.emit(CallEvent.RemoteHoldUnhold, this.remoteOnHold);
@@ -59105,8 +59422,8 @@ class MatrixCall extends events_1.EventEmitter {
         let callOnHold = true;
         // We consider a call to be on hold only if *all* the tracks are on hold
         // (is this the right thing to do?)
-        for (const tranceiver of this.peerConn.getTransceivers()) {
-            const trackOnHold = ['inactive', 'recvonly'].includes(tranceiver.currentDirection);
+        for (const transceiver of this.peerConn.getTransceivers()) {
+            const trackOnHold = ['inactive', 'recvonly'].includes(transceiver.currentDirection);
             if (!trackOnHold)
                 callOnHold = false;
         }
@@ -59126,13 +59443,14 @@ class MatrixCall extends events_1.EventEmitter {
         throw new Error("Unable to find a track to send DTMF on");
     }
     updateMuteStatus() {
-        if (!this.localAVStream) {
-            return;
-        }
-        const micShouldBeMuted = this.micMuted || this.remoteOnHold;
-        setTracksEnabled(this.localAVStream.getAudioTracks(), !micShouldBeMuted);
-        const vidShouldBeMuted = this.vidMuted || this.remoteOnHold;
-        setTracksEnabled(this.localAVStream.getVideoTracks(), !vidShouldBeMuted);
+        var _a, _b;
+        this.sendVoipEvent(event_1.EventType.CallSDPStreamMetadataChangedPrefix, {
+            [callEventTypes_1.SDPStreamMetadataKey]: this.getLocalSDPStreamMetadata(),
+        });
+        const micShouldBeMuted = ((_a = this.localUsermediaFeed) === null || _a === void 0 ? void 0 : _a.isAudioMuted()) || this.remoteOnHold;
+        const vidShouldBeMuted = ((_b = this.localUsermediaFeed) === null || _b === void 0 ? void 0 : _b.isVideoMuted()) || this.remoteOnHold;
+        setTracksEnabled(this.localUsermediaStream.getAudioTracks(), !micShouldBeMuted);
+        setTracksEnabled(this.localUsermediaStream.getVideoTracks(), !vidShouldBeMuted);
     }
     sendAnswer() {
         return __awaiter(this, void 0, void 0, function* () {
@@ -59143,13 +59461,13 @@ class MatrixCall extends events_1.EventEmitter {
                     // required to still be sent for backwards compat
                     type: this.peerConn.localDescription.type,
                 },
+                [callEventTypes_1.SDPStreamMetadataKey]: this.getLocalSDPStreamMetadata(),
             };
-            if (this.client.supportsCallTransfer) {
-                answerContent.capabilities = {
-                    'm.call.transferee': true,
-                };
-            }
-            // We have just taken the local description from the peerconnection which will
+            answerContent.capabilities = {
+                'm.call.transferee': this.client.supportsCallTransfer,
+                'm.call.dtmf': false,
+            };
+            // We have just taken the local description from the peerConn which will
             // contain all the local candidates added so far, so we can discard any candidates
             // we had queued up because they'll be in the answer.
             logger_1.logger.info(`Discarding ${this.candidateSendQueue.length} candidates that will be sent in answer`);
@@ -59184,18 +59502,18 @@ class MatrixCall extends events_1.EventEmitter {
                 //debuglog("Ignoring remote ICE candidate because call has ended");
                 return;
             }
-            const cands = ev.getContent().candidates;
-            if (!cands) {
+            const candidates = ev.getContent().candidates;
+            if (!candidates) {
                 logger_1.logger.info("Ignoring candidates event with no candidates!");
                 return;
             }
             const fromPartyId = ev.getContent().version === 0 ? null : ev.getContent().party_id || null;
             if (this.opponentPartyId === undefined) {
                 // we haven't picked an opponent yet so save the candidates
-                logger_1.logger.info(`Bufferring ${cands.length} candidates until we pick an opponent`);
-                const bufferedCands = this.remoteCandidateBuffer.get(fromPartyId) || [];
-                bufferedCands.push(...cands);
-                this.remoteCandidateBuffer.set(fromPartyId, bufferedCands);
+                logger_1.logger.info(`Buffering ${candidates.length} candidates until we pick an opponent`);
+                const bufferedCandidates = this.remoteCandidateBuffer.get(fromPartyId) || [];
+                bufferedCandidates.push(...candidates);
+                this.remoteCandidateBuffer.set(fromPartyId, bufferedCandidates);
                 return;
             }
             if (!this.partyIdMatches(ev.getContent())) {
@@ -59203,7 +59521,7 @@ class MatrixCall extends events_1.EventEmitter {
                     `we have chosen party ID ${this.opponentPartyId}`);
                 return;
             }
-            yield this.addIceCandidates(cands);
+            yield this.addIceCandidates(candidates);
         });
     }
     /**
@@ -59225,6 +59543,13 @@ class MatrixCall extends events_1.EventEmitter {
             this.chooseOpponent(event);
             yield this.addBufferedIceCandidates();
             this.setState(CallState.Connecting);
+            const sdpStreamMetadata = event.getContent()[callEventTypes_1.SDPStreamMetadataKey];
+            if (sdpStreamMetadata) {
+                this.updateRemoteSDPStreamMetadata(sdpStreamMetadata);
+            }
+            else {
+                logger_1.logger.warn("Did not get any SDPStreamMetadata! Can not send/receive multiple streams");
+            }
             try {
                 yield this.peerConn.setRemoteDescription(event.getContent().answer);
             }
@@ -59289,13 +59614,22 @@ class MatrixCall extends events_1.EventEmitter {
                 return;
             }
             const prevLocalOnHold = this.isLocalOnHold();
+            const sdpStreamMetadata = event.getContent()[callEventTypes_1.SDPStreamMetadataKey];
+            if (sdpStreamMetadata) {
+                this.updateRemoteSDPStreamMetadata(sdpStreamMetadata);
+            }
+            else {
+                logger_1.logger.warn("Received negotiation event without SDPStreamMetadata!");
+            }
             try {
                 yield this.peerConn.setRemoteDescription(description);
                 if (description.type === 'offer') {
+                    this.getRidOfRTXCodecs();
                     const localDescription = yield this.peerConn.createAnswer();
                     yield this.peerConn.setLocalDescription(localDescription);
                     this.sendVoipEvent(event_1.EventType.CallNegotiate, {
                         description: this.peerConn.localDescription,
+                        [callEventTypes_1.SDPStreamMetadataKey]: this.getLocalSDPStreamMetadata(),
                     });
                 }
             }
@@ -59309,6 +59643,21 @@ class MatrixCall extends events_1.EventEmitter {
                 this.emit(CallEvent.HoldUnhold, newLocalOnHold);
             }
         });
+    }
+    updateRemoteSDPStreamMetadata(metadata) {
+        var _a, _b, _c;
+        this.remoteSDPStreamMetadata = utils.recursivelyAssign(this.remoteSDPStreamMetadata || {}, metadata, true);
+        for (const feed of this.getRemoteFeeds()) {
+            const streamId = feed.stream.id;
+            feed.setAudioMuted((_a = this.remoteSDPStreamMetadata[streamId]) === null || _a === void 0 ? void 0 : _a.audio_muted);
+            feed.setVideoMuted((_b = this.remoteSDPStreamMetadata[streamId]) === null || _b === void 0 ? void 0 : _b.video_muted);
+            feed.purpose = (_c = this.remoteSDPStreamMetadata[streamId]) === null || _c === void 0 ? void 0 : _c.purpose;
+        }
+    }
+    onSDPStreamMetadataChangedReceived(event) {
+        const content = event.getContent();
+        const metadata = content[callEventTypes_1.SDPStreamMetadataKey];
+        this.updateRemoteSDPStreamMetadata(metadata);
     }
     onAssertedIdentityReceived(event) {
         return __awaiter(this, void 0, void 0, function* () {
@@ -59326,6 +59675,41 @@ class MatrixCall extends events_1.EventEmitter {
         // when putting if (this.state === CallState.Ended) return; twice in the same
         // function, even though that function is async.
         return this.state === CallState.Ended;
+    }
+    /**
+     * This method removes all video/rtx codecs from screensharing video
+     * transceivers. This is necessary since they can cause problems. Without
+     * this the following steps should produce an error:
+     *   Chromium calls Firefox
+     *   Firefox answers
+     *   Firefox starts screen-sharing
+     *   Chromium starts screen-sharing
+     *   Call crashes for Chromium with:
+     *       [96685:23:0518/162603.933321:ERROR:webrtc_video_engine.cc(3296)] RTX codec (PT=97) mapped to PT=96 which is not in the codec list.
+     *       [96685:23:0518/162603.933377:ERROR:webrtc_video_engine.cc(1171)] GetChangedRecvParameters called without any video codecs.
+     *       [96685:23:0518/162603.933430:ERROR:sdp_offer_answer.cc(4302)] Failed to set local video description recv parameters for m-section with mid='2'. (INVALID_PARAMETER)
+     */
+    getRidOfRTXCodecs() {
+        var _a, _b;
+        // RTCRtpReceiver.getCapabilities and RTCRtpSender.getCapabilities don't seem to be supported on FF
+        if (!RTCRtpReceiver.getCapabilities || !RTCRtpSender.getCapabilities)
+            return;
+        const recvCodecs = RTCRtpReceiver.getCapabilities("video").codecs;
+        const sendCodecs = RTCRtpSender.getCapabilities("video").codecs;
+        const codecs = [...sendCodecs, ...recvCodecs];
+        for (const codec of codecs) {
+            if (codec.mimeType === "video/rtx") {
+                const rtxCodecIndex = codecs.indexOf(codec);
+                codecs.splice(rtxCodecIndex, 1);
+            }
+        }
+        for (const trans of this.peerConn.getTransceivers()) {
+            if (this.screensharingSenders.includes(trans.sender) &&
+                (((_a = trans.sender.track) === null || _a === void 0 ? void 0 : _a.kind) === "video" ||
+                    ((_b = trans.receiver.track) === null || _b === void 0 ? void 0 : _b.kind) === "video")) {
+                trans.setCodecPreferences(codecs);
+            }
+        }
     }
     setState(state) {
         const oldState = this.state;
@@ -59346,18 +59730,24 @@ class MatrixCall extends events_1.EventEmitter {
         }));
     }
     queueCandidate(content) {
-        // Sends candidates with are sent in a special way because we try to amalgamate
-        // them into one message
+        // We partially de-trickle candidates by waiting for `delay` before sending them
+        // amalgamated, in order to avoid sending too many m.call.candidates events and hitting
+        // rate limits in Matrix.
+        // In practice, it'd be better to remove rate limits for m.call.*
+        // N.B. this deliberately lets you queue and send blank candidates, which MSC2746
+        // currently proposes as the way to indicate that candidate gathering is complete.
+        // This will hopefully be changed to an explicit rather than implicit notification
+        // shortly.
         this.candidateSendQueue.push(content);
         // Don't send the ICE candidates yet if the call is in the ringing state: this
         // means we tried to pick (ie. started generating candidates) and then failed to
         // send the answer and went back to the ringing state. Queue up the candidates
-        // to send if we sucessfully send the answer.
+        // to send if we successfully send the answer.
         // Equally don't send if we haven't yet sent the answer because we can send the
         // first batch of candidates along with the answer
         if (this.state === CallState.Ringing || !this.inviteOrAnswerSent)
             return;
-        // MSC2746 reccomends these values (can be quite long when calling because the
+        // MSC2746 recommends these values (can be quite long when calling because the
         // callee will need a while to answer the call)
         const delay = this.direction === CallDirection.Inbound ? 500 : 2000;
         if (this.candidateSendTries === 0) {
@@ -59372,7 +59762,7 @@ class MatrixCall extends events_1.EventEmitter {
     transfer(targetUserId) {
         return __awaiter(this, void 0, void 0, function* () {
             // Fetch the target user's global profile info: their room avatar / displayname
-            // could be different in whatever room we shae with them.
+            // could be different in whatever room we share with them.
             const profileInfo = yield this.client.getProfileInfo(targetUserId);
             const replacementId = genCallID();
             const body = {
@@ -59449,7 +59839,7 @@ class MatrixCall extends events_1.EventEmitter {
         });
     }
     stopAllMedia() {
-        logger_1.logger.debug(`stopAllMedia (stream=${this.localAVStream})`);
+        logger_1.logger.debug(`stopAllMedia (stream=${this.localUsermediaStream})`);
         for (const feed of this.feeds) {
             if (!feed.isLocal()) {
                 for (const track of feed.stream.getTracks()) {
@@ -59468,15 +59858,18 @@ class MatrixCall extends events_1.EventEmitter {
             if (this.candidateSendQueue.length === 0) {
                 return;
             }
-            const cands = this.candidateSendQueue;
+            const candidates = this.candidateSendQueue;
             this.candidateSendQueue = [];
             ++this.candidateSendTries;
             const content = {
-                candidates: cands,
+                candidates: candidates,
             };
-            logger_1.logger.debug("Attempting to send " + cands.length + " candidates");
+            logger_1.logger.debug("Attempting to send " + candidates.length + " candidates");
             try {
                 yield this.sendVoipEvent(event_1.EventType.CallCandidates, content);
+                // reset our retry count if we have successfully sent our candidates
+                // otherwise queueCandidate() will refuse to try to flush the queue
+                this.candidateSendTries = 0;
             }
             catch (error) {
                 // don't retry this event: we'll send another one later as we might
@@ -59484,7 +59877,7 @@ class MatrixCall extends events_1.EventEmitter {
                 if (error.event)
                     this.client.cancelPendingEvent(error.event);
                 // put all the candidates we failed to send back in the queue
-                this.candidateSendQueue.push(...cands);
+                this.candidateSendQueue.push(...candidates);
                 if (this.candidateSendTries > 5) {
                     logger_1.logger.debug("Failed to send candidates on attempt " + this.candidateSendTries +
                         ". Giving up on this call.", error);
@@ -59580,25 +59973,25 @@ class MatrixCall extends events_1.EventEmitter {
     }
     addBufferedIceCandidates() {
         return __awaiter(this, void 0, void 0, function* () {
-            const bufferedCands = this.remoteCandidateBuffer.get(this.opponentPartyId);
-            if (bufferedCands) {
-                logger_1.logger.info(`Adding ${bufferedCands.length} buffered candidates for opponent ${this.opponentPartyId}`);
-                yield this.addIceCandidates(bufferedCands);
+            const bufferedCandidates = this.remoteCandidateBuffer.get(this.opponentPartyId);
+            if (bufferedCandidates) {
+                logger_1.logger.info(`Adding ${bufferedCandidates.length} buffered candidates for opponent ${this.opponentPartyId}`);
+                yield this.addIceCandidates(bufferedCandidates);
             }
             this.remoteCandidateBuffer = null;
         });
     }
-    addIceCandidates(cands) {
+    addIceCandidates(candidates) {
         return __awaiter(this, void 0, void 0, function* () {
-            for (const cand of cands) {
-                if ((cand.sdpMid === null || cand.sdpMid === undefined) &&
-                    (cand.sdpMLineIndex === null || cand.sdpMLineIndex === undefined)) {
+            for (const candidate of candidates) {
+                if ((candidate.sdpMid === null || candidate.sdpMid === undefined) &&
+                    (candidate.sdpMLineIndex === null || candidate.sdpMLineIndex === undefined)) {
                     logger_1.logger.debug("Ignoring remote ICE candidate with no sdpMid or sdpMLineIndex");
                     continue;
                 }
-                logger_1.logger.debug("Call " + this.callId + " got remote ICE " + cand.sdpMid + " candidate: " + cand.candidate);
+                logger_1.logger.debug("Call " + this.callId + " got remote ICE " + candidate.sdpMid + " candidate: " + candidate.candidate);
                 try {
-                    yield this.peerConn.addIceCandidate(cand);
+                    yield this.peerConn.addIceCandidate(candidate);
                 }
                 catch (err) {
                     if (!this.ignoreOffer) {
@@ -59610,6 +60003,24 @@ class MatrixCall extends events_1.EventEmitter {
     }
 }
 exports.MatrixCall = MatrixCall;
+function getScreensharingStream(selectDesktopCapturerSource) {
+    var _a;
+    return __awaiter(this, void 0, void 0, function* () {
+        const screenshareConstraints = yield getScreenshareContraints(selectDesktopCapturerSource);
+        if (!screenshareConstraints)
+            return null;
+        if ((_a = window.electron) === null || _a === void 0 ? void 0 : _a.getDesktopCapturerSources) {
+            // We are using Electron
+            logger_1.logger.debug("Getting screen stream using getUserMedia()...");
+            return yield navigator.mediaDevices.getUserMedia(screenshareConstraints);
+        }
+        else {
+            // We are not using Electron
+            logger_1.logger.debug("Getting screen stream using getDisplayMedia()...");
+            return yield navigator.mediaDevices.getDisplayMedia(screenshareConstraints);
+        }
+    });
+}
 function setTracksEnabled(tracks, enabled) {
     for (let i = 0; i < tracks.length; i++) {
         tracks[i].enabled = enabled;
@@ -59749,7 +60160,7 @@ exports.createNewMatrixCall = createNewMatrixCall;
 
 }).call(this)}).call(this,require('_process'))
 
-},{"../@types/event":58,"../logger":106,"../randomstring":123,"../utils":137,"./callEventTypes":140,"./callFeed":141,"_process":40,"events":36}],139:[function(require,module,exports){
+},{"../@types/event":69,"../logger":118,"../randomstring":135,"../utils":149,"./callEventTypes":152,"./callFeed":153,"_process":49,"events":38}],151:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2020 The Matrix.org Foundation C.I.C.
@@ -59816,7 +60227,7 @@ class CallEventHandler {
                 this.callEventBuffer = [];
             }
         });
-        this.onEvent = (event) => {
+        this.onRoomTimeline = (event) => {
             this.client.decryptEventIfNeeded(event);
             // any call events or ones that might be once they're decrypted
             if (this.eventIsACall(event) || event.isBeingDecrypted()) {
@@ -59861,11 +60272,11 @@ class CallEventHandler {
     }
     start() {
         this.client.on("sync", this.evaluateEventBuffer);
-        this.client.on("event", this.onEvent);
+        this.client.on("Room.timeline", this.onRoomTimeline);
     }
     stop() {
         this.client.removeListener("sync", this.evaluateEventBuffer);
-        this.client.removeListener("event", this.onEvent);
+        this.client.removeListener("Room.timeline", this.onRoomTimeline);
     }
     eventIsACall(event) {
         const type = event.getType();
@@ -59877,18 +60288,20 @@ class CallEventHandler {
     }
     handleCallEvent(event) {
         const content = event.getContent();
+        const type = event.getType();
+        const weSentTheEvent = event.getSender() === this.client.credentials.userId;
         let call = content.call_id ? this.calls.get(content.call_id) : undefined;
-        //console.info("RECV %s content=%s", event.getType(), JSON.stringify(content));
-        if (event.getType() === event_1.EventType.CallInvite) {
-            if (event.getSender() === this.client.credentials.userId) {
-                return; // ignore invites you send
-            }
-            if (event.getLocalAge() > content.lifetime - RING_GRACE_PERIOD) {
-                return; // expired call
-            }
-            if (call && call.state === call_1.CallState.Ended) {
-                return; // stale/old invite event
-            }
+        //console.info("RECV %s content=%s", type, JSON.stringify(content));
+        if (type === event_1.EventType.CallInvite) {
+            // ignore invites you send
+            if (weSentTheEvent)
+                return;
+            // expired call
+            if (event.getLocalAge() > content.lifetime - RING_GRACE_PERIOD)
+                return;
+            // stale/old invite event
+            if (call && call.state === call_1.CallState.Ended)
+                return;
             if (call) {
                 logger_1.logger.log(`WARN: Already have a MatrixCall with id ${content.call_id} but got an ` +
                     `invite. Clobbering.`);
@@ -59898,9 +60311,7 @@ class CallEventHandler {
             }
             const timeUntilTurnCresExpire = this.client.getTurnServersExpiry() - Date.now();
             logger_1.logger.info("Current turn creds expire in " + timeUntilTurnCresExpire + " ms");
-            call = call_1.createNewMatrixCall(this.client, event.getRoomId(), {
-                forceTURN: this.client.forceTURN,
-            });
+            call = call_1.createNewMatrixCall(this.client, event.getRoomId(), { forceTURN: this.client.forceTURN });
             if (!call) {
                 logger_1.logger.log("Incoming call ID " + content.call_id + " but this client " +
                     "doesn't support WebRTC");
@@ -59955,23 +60366,9 @@ class CallEventHandler {
                 });
             }
         }
-        else if (event.getType() === event_1.EventType.CallAnswer) {
-            if (!call) {
+        else if (type === event_1.EventType.CallCandidates) {
+            if (weSentTheEvent)
                 return;
-            }
-            if (event.getSender() === this.client.credentials.userId) {
-                if (call.state === call_1.CallState.Ringing) {
-                    call.onAnsweredElsewhere(content);
-                }
-            }
-            else {
-                call.onAnswerReceived(event);
-            }
-        }
-        else if (event.getType() === event_1.EventType.CallCandidates) {
-            if (event.getSender() === this.client.credentials.userId) {
-                return;
-            }
             if (!call) {
                 // store the candidates; we may get a call eventually.
                 if (!this.candidateEventsByCall.has(content.call_id)) {
@@ -59983,7 +60380,7 @@ class CallEventHandler {
                 call.onRemoteIceCandidatesReceived(event);
             }
         }
-        else if ([event_1.EventType.CallHangup, event_1.EventType.CallReject].includes(event.getType())) {
+        else if ([event_1.EventType.CallHangup, event_1.EventType.CallReject].includes(type)) {
             // Note that we also observe our own hangups here so we can see
             // if we've already rejected a call that would otherwise be valid
             if (!call) {
@@ -59999,7 +60396,7 @@ class CallEventHandler {
             }
             else {
                 if (call.state !== call_1.CallState.Ended) {
-                    if (event.getType() === event_1.EventType.CallHangup) {
+                    if (type === event_1.EventType.CallHangup) {
                         call.onHangupReceived(content);
                     }
                     else {
@@ -60009,44 +60406,50 @@ class CallEventHandler {
                 }
             }
         }
-        else if (event.getType() === event_1.EventType.CallSelectAnswer) {
-            if (!call)
-                return;
-            if (event.getContent().party_id === call.ourPartyId) {
-                // Ignore remote echo
-                return;
-            }
-            call.onSelectAnswerReceived(event);
-        }
-        else if (event.getType() === event_1.EventType.CallNegotiate) {
-            if (!call)
-                return;
-            if (event.getContent().party_id === call.ourPartyId) {
-                // Ignore remote echo
-                return;
-            }
-            call.onNegotiateReceived(event);
-        }
-        else if (event.getType() === event_1.EventType.CallAssertedIdentity ||
-            event.getType() === event_1.EventType.CallAssertedIdentityPrefix) {
-            if (!call)
-                return;
-            if (event.getContent().party_id === call.ourPartyId) {
-                // Ignore remote echo (not that we send asserted identity, but still...)
-                return;
-            }
-            call.onAssertedIdentityReceived(event);
+        // The following events need a call
+        if (!call)
+            return;
+        // Ignore remote echo
+        if (event.getContent().party_id === call.ourPartyId)
+            return;
+        switch (type) {
+            case event_1.EventType.CallAnswer:
+                if (weSentTheEvent) {
+                    if (call.state === call_1.CallState.Ringing) {
+                        call.onAnsweredElsewhere(content);
+                    }
+                }
+                else {
+                    call.onAnswerReceived(event);
+                }
+                break;
+            case event_1.EventType.CallSelectAnswer:
+                call.onSelectAnswerReceived(event);
+                break;
+            case event_1.EventType.CallNegotiate:
+                call.onNegotiateReceived(event);
+                break;
+            case event_1.EventType.CallAssertedIdentity:
+            case event_1.EventType.CallAssertedIdentityPrefix:
+                call.onAssertedIdentityReceived(event);
+                break;
+            case event_1.EventType.CallSDPStreamMetadataChanged:
+            case event_1.EventType.CallSDPStreamMetadataChangedPrefix:
+                call.onSDPStreamMetadataChangedReceived(event);
+                break;
         }
     }
 }
 exports.CallEventHandler = CallEventHandler;
 
-},{"../@types/event":58,"../logger":106,"./call":138}],140:[function(require,module,exports){
+},{"../@types/event":69,"../logger":118,"./call":150}],152:[function(require,module,exports){
 "use strict";
-// allow camelcase as these are events type that go onto the wire
+// allow non-camelcase as these are events type that go onto the wire
 /* eslint-disable camelcase */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SDPStreamMetadataPurpose = void 0;
+exports.SDPStreamMetadataPurpose = exports.SDPStreamMetadataKey = void 0;
+// TODO: Change to "sdp_stream_metadata" when MSC3077 is merged
+exports.SDPStreamMetadataKey = "org.matrix.msc3077.sdp_stream_metadata";
 var SDPStreamMetadataPurpose;
 (function (SDPStreamMetadataPurpose) {
     SDPStreamMetadataPurpose["Usermedia"] = "m.usermedia";
@@ -60054,7 +60457,7 @@ var SDPStreamMetadataPurpose;
 })(SDPStreamMetadataPurpose = exports.SDPStreamMetadataPurpose || (exports.SDPStreamMetadataPurpose = {}));
 /* eslint-enable camelcase */
 
-},{}],141:[function(require,module,exports){
+},{}],153:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 Šimon Brandner <simon.bra.ag@gmail.com>
@@ -60080,15 +60483,18 @@ const events_1 = __importDefault(require("events"));
 var CallFeedEvent;
 (function (CallFeedEvent) {
     CallFeedEvent["NewStream"] = "new_stream";
+    CallFeedEvent["MuteStateChanged"] = "mute_state_changed";
 })(CallFeedEvent = exports.CallFeedEvent || (exports.CallFeedEvent = {}));
 class CallFeed extends events_1.default {
-    constructor(stream, userId, purpose, client, roomId) {
+    constructor(stream, userId, purpose, client, roomId, audioMuted, videoMuted) {
         super();
         this.stream = stream;
         this.userId = userId;
         this.purpose = purpose;
         this.client = client;
         this.roomId = roomId;
+        this.audioMuted = audioMuted;
+        this.videoMuted = videoMuted;
     }
     /**
      * Returns callRoom member
@@ -60105,15 +60511,13 @@ class CallFeed extends events_1.default {
     isLocal() {
         return this.userId === this.client.getUserId();
     }
-    // TODO: The two following methods should be later replaced
-    // by something that will also check if the remote is muted
     /**
      * Returns true if audio is muted or if there are no audio
      * tracks, otherwise returns false
      * @returns {boolean} is audio muted?
      */
     isAudioMuted() {
-        return this.stream.getAudioTracks().length === 0;
+        return this.stream.getAudioTracks().length === 0 || this.audioMuted;
     }
     /**
      * Returns true video is muted or if there are no video
@@ -60122,7 +60526,7 @@ class CallFeed extends events_1.default {
      */
     isVideoMuted() {
         // We assume only one video track
-        return this.stream.getVideoTracks().length === 0;
+        return this.stream.getVideoTracks().length === 0 || this.videoMuted;
     }
     /**
      * Replaces the current MediaStream with a new one.
@@ -60133,8 +60537,16 @@ class CallFeed extends events_1.default {
         this.stream = newStream;
         this.emit(CallFeedEvent.NewStream, this.stream);
     }
+    setAudioMuted(muted) {
+        this.audioMuted = muted;
+        this.emit(CallFeedEvent.MuteStateChanged, this.audioMuted, this.videoMuted);
+    }
+    setVideoMuted(muted) {
+        this.videoMuted = muted;
+        this.emit(CallFeedEvent.MuteStateChanged, this.audioMuted, this.videoMuted);
+    }
 }
 exports.CallFeed = CallFeed;
 
-},{"events":36}]},{},[63])
+},{"events":38}]},{},[75])
 //# sourceMappingURL=browser-matrix.js.map
