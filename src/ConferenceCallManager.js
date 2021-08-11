@@ -88,7 +88,11 @@ export class ConferenceCallManager extends EventEmitter {
 
       const manager = new ConferenceCallManager(client);
 
-      await client.startClient();
+      await client.startClient({
+        // dirty hack to reduce chance of gappy syncs
+        // should be fixed by spotting gaps and backpaginating
+        initialSyncLimit: 50,
+      });
 
       await waitForSync(client);
 
@@ -123,7 +127,11 @@ export class ConferenceCallManager extends EventEmitter {
 
       const manager = new ConferenceCallManager(client);
 
-      await client.startClient();
+      await client.startClient({
+        // dirty hack to reduce chance of gappy syncs
+        // should be fixed by spotting gaps and backpaginating
+        initialSyncLimit: 50,
+      });
 
       await waitForSync(client);
 
