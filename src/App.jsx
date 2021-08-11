@@ -26,6 +26,7 @@ import { useConferenceCallManager } from "./ConferenceCallManagerHooks";
 import { JoinOrCreateRoom } from "./JoinOrCreateRoom";
 import { LoginOrRegister } from "./LoginOrRegister";
 import { Room } from "./Room";
+import { GridDemo } from "./GridDemo";
 
 export default function App() {
   const { protocol, host } = window.location;
@@ -55,6 +56,9 @@ export default function App() {
             >
               <Room manager={manager} />
             </AuthenticatedRoute>
+            <Route exact path="/grid">
+              <GridDemo />
+            </Route>
           </Switch>
         )}
       </div>
