@@ -619,7 +619,7 @@ export class ConferenceCallManager extends EventEmitter {
     content,
     stateKey,
     callback,
-    maxAttempts = 3
+    maxAttempts = 5
   ) {
     const sendStateEventWithRetry = async (attempt = 0) => {
       try {
@@ -635,9 +635,7 @@ export class ConferenceCallManager extends EventEmitter {
           throw error;
         }
 
-        await new Promise((resolve) =>
-          setTimeout(resolve(), Math.pow(2, attempt) * 5)
-        );
+        await new Promise((resolve) => setTimeout(resolve(), 5));
 
         return sendStateEventWithRetry(attempt + 1);
       }
