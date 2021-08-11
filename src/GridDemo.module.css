@@ -1,0 +1,32 @@
+.gridDemo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.grid {
+  position: relative;
+  overflow: hidden;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  grid-auto-flow: dense;
+  grid-gap: 8px;
+  justify-items: stretch;
+  padding: 8px;
+  flex: 1;
+}
+
+.participantTile {
+  will-change: transform, opacity;
+}
+
+.participantTile video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
