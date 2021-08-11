@@ -213,7 +213,12 @@ export class ConferenceCallManager extends EventEmitter {
       ?.getContent()?.active;
 
     if (!activeConf) {
-      this.client.sendStateEvent(room.roomId, CONF_ROOM, { active: true }, "");
+      this._sendStateEventWithRetry(
+        room.roomId,
+        CONF_ROOM,
+        { active: true },
+        ""
+      );
     }
 
     // Request permissions and get the user's webcam/mic stream if we haven't yet.
@@ -278,7 +283,7 @@ export class ConferenceCallManager extends EventEmitter {
       userId
     );
 
-    this.client.sendStateEvent(
+    this._sendStateEventWithRetry(
       this.room.roomId,
       "m.room.member",
       {
@@ -323,7 +328,7 @@ export class ConferenceCallManager extends EventEmitter {
       userId
     );
 
-    this.client.sendStateEvent(
+    this._sendStateEventWithRetry(
       this.room.roomId,
       "m.room.member",
       {
@@ -603,4 +608,41 @@ export class ConferenceCallManager extends EventEmitter {
 
     this.emit("participants_changed");
   };
+
+  /**
+   * Utils
+   */
+
+  _sendStateEventWithRetry(
+    roomId,
+    eventType,
+    content,
+    stateKey,
+    callback,
+    maxAttempts = 3
+  ) {
+    const sendStateEventWithRetry = async (attempt = 0) => {
+      try {
+        return await this.client.sendStateEvent(
+          roomId,
+          eventType,
+          content,
+          stateKey,
+          callback
+        );
+      } catch (error) {
+        if (attempt >= maxAttempts) {
+          throw error;
+        }
+
+        await new Promise((resolve) =>
+          setTimeout(resolve(), Math.pow(2, attempt) * 5)
+        );
+
+        return sendStateEventWithRetry(attempt + 1);
+      }
+    };
+
+    return sendStateEventWithRetry();
+  }
 }
