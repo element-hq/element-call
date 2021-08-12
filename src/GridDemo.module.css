@@ -12,17 +12,14 @@
 .grid {
   position: relative;
   overflow: hidden;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  grid-auto-flow: dense;
-  grid-gap: 8px;
-  justify-items: stretch;
-  padding: 8px;
   flex: 1;
 }
 
 .participantTile {
-  will-change: transform, opacity;
+  position: absolute;
+  will-change: transform, width, height, opacity;
+  border-radius: 24px;
+  overflow: hidden;
 }
 
 .participantTile video {
