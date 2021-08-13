@@ -132,7 +132,7 @@ export function GridDemo() {
   }, [stream, gridBounds]);
 
   const removeTile = useCallback(() => {
-    setTiles(({ tiles }) => {
+    setTileState(({ tiles }) => {
       const newTiles = [...tiles];
       newTiles.pop();
       const tilePositions = getTilePositions(newTiles, gridBounds);
