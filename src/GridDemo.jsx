@@ -1,9 +1,24 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import classNames from "classnames";
 import { useDrag } from "react-use-gesture";
-import { useSprings, useTransition, animated } from "@react-spring/web";
+import { useSprings, animated } from "@react-spring/web";
 import styles from "./GridDemo.module.css";
 import useMeasure from "react-use-measure";
+
+function isInside([x, y], dragTile, targetTile) {
+  const cursorX = dragTile.x + x;
+  const cursorY = dragTile.y + y;
+
+  const left = targetTile.x;
+  const top = targetTile.y;
+  const bottom = targetTile.y + targetTile.height;
+  const right = targetTile.x + targetTile.width;
+
+  if (cursorX < left || cursorX > right || cursorY < top || cursorY > bottom) {
+    return false;
+  }
+
+  return true;
+}
 
 export function GridDemo() {
   const tileKey = useRef(0);
@@ -13,6 +28,10 @@ export function GridDemo() {
     tilePositions: [],
   });
   const draggingTileRef = useRef(null);
+
+  // Contains tile indices
+  // Tiles are displayed in the order that they appear
+  const tileOrderRef = useRef([]);
 
   const [gridRef, gridBounds] = useMeasure();
 
@@ -111,6 +130,7 @@ export function GridDemo() {
   const startWebcam = useCallback(async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     setStream(stream);
+    tileOrderRef.current.push(tileOrderRef.current.length);
     setTileState(() => {
       const tiles = [{ stream, key: tileKey.current++ }];
       const tilePositions = getTilePositions(tiles, gridBounds);
@@ -120,6 +140,8 @@ export function GridDemo() {
 
   const addTile = useCallback(() => {
     const newStream = stream.clone();
+
+    tileOrderRef.current.push(tileOrderRef.current.length);
 
     setTileState(({ tiles }) => {
       const newTiles = [
@@ -132,6 +154,7 @@ export function GridDemo() {
   }, [stream, gridBounds]);
 
   const removeTile = useCallback(() => {
+    tileOrderRef.current.pop();
     setTileState(({ tiles }) => {
       const newTiles = [...tiles];
       newTiles.pop();
@@ -148,11 +171,12 @@ export function GridDemo() {
   }, [gridBounds]);
 
   const animate = useCallback(
-    (index) => {
-      const tilePosition = tilePositions[index];
+    (order) => (index) => {
+      const tileIndex = order[index];
+      const tilePosition = tilePositions[tileIndex];
       const draggingTile = draggingTileRef.current;
       const dragging =
-        draggingTileRef.current && index === draggingTileRef.current.index;
+        draggingTileRef.current && tileIndex === draggingTileRef.current.index;
 
       if (dragging) {
         return {
@@ -178,32 +202,65 @@ export function GridDemo() {
     [tilePositions]
   );
 
-  const [springs, api] = useSprings(tiles.length, animate, [tilePositions]);
+  const [springs, api] = useSprings(
+    tiles.length,
+    animate(tileOrderRef.current),
+    [tilePositions]
+  );
 
-  const bind = useDrag(({ args: [index], active, movement: [x, y] }) => {
+  const bind = useDrag(({ args: [index], active, movement }) => {
+    let order = tileOrderRef.current;
+    let dragIndex = index;
+
+    // const tileIndex = tileOrderRef.current[index];
+    // const tilePosition = tilePositions[tileIndex];
+
+    // for (let i = 0; i < tileOrderRef.current.length; i++) {
+    //   if (i === index) {
+    //     continue;
+    //   }
+
+    //   const hoverTileIndex = tileOrderRef.current[i];
+    //   const hoverTilePosition = tilePositions[hoverTileIndex];
+
+    //   if (isInside(movement, tilePosition, hoverTilePosition)) {
+    //     order = [...tileOrderRef.current];
+    //     const [toBeMoved] = order.splice(i, 1);
+    //     order.splice(index, 0, toBeMoved);
+    //     dragIndex = i;
+    //     break;
+    //   }
+    // }
+
     if (active) {
       draggingTileRef.current = {
-        index,
-        x,
-        y,
+        index: dragIndex,
+        x: movement[0],
+        y: movement[1],
       };
     } else {
       draggingTileRef.current = null;
+      //tileOrderRef.current = order;
     }
 
-    api.start(animate);
+    api.start(animate(order));
   });
 
   return (
     <div className={styles.gridDemo}>
       <div className={styles.buttons}>
         {!stream && <button onClick={startWebcam}>Start Webcam</button>}
-        {stream && <button onClick={addTile}>Add Tile</button>}
-        {stream && <button onClick={removeTile}>Remove Tile</button>}
+        {stream && tiles.length < 12 && (
+          <button onClick={addTile}>Add Tile</button>
+        )}
+        {stream && tiles.length > 0 && (
+          <button onClick={removeTile}>Remove Tile</button>
+        )}
       </div>
       <div className={styles.grid} ref={gridRef}>
         {springs.map(({ shadow, ...style }, i) => {
-          const tile = tiles[i];
+          const tileIndex = tileOrderRef.current[i];
+          const tile = tiles[tileIndex];
 
           return (
             <ParticipantTile
