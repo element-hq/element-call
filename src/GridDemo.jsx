@@ -202,14 +202,19 @@ export function GridDemo() {
         {stream && <button onClick={removeTile}>Remove Tile</button>}
       </div>
       <div className={styles.grid} ref={gridRef}>
-        {springs.map((style, i) => {
+        {springs.map(({ shadow, ...style }, i) => {
           const tile = tiles[i];
 
           return (
             <ParticipantTile
               {...bind(i)}
               key={tile.key}
-              style={style}
+              style={{
+                boxShadow: shadow.to(
+                  (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
+                ),
+                ...style,
+              }}
               {...tile}
             />
           );
