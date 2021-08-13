@@ -8,220 +8,148 @@ import useMeasure from "react-use-measure";
 export function GridDemo() {
   const tileKey = useRef(0);
   const [stream, setStream] = useState();
-  const [tiles, setTiles] = useState([]);
-  const tilePositionsRef = useRef([]);
+  const [{ tiles, tilePositions }, setTileState] = useState({
+    tiles: [],
+    tilePositions: [],
+  });
   const draggingTileRef = useRef(null);
+
+  const [gridRef, gridBounds] = useMeasure();
+
+  const getTilePositions = useCallback((tiles, gridBounds) => {
+    const newTilePositions = [];
+    const tileCount = tiles.length;
+    const { width: gridWidth, height: gridHeight } = gridBounds;
+    const gap = 8;
+
+    if (tileCount > 0) {
+      const aspectRatio = gridWidth / gridHeight;
+
+      let columnCount, rowCount;
+
+      if (aspectRatio < 1) {
+        if (tileCount <= 4) {
+          columnCount = 1;
+          rowCount = tileCount;
+        } else if (tileCount <= 12) {
+          columnCount = 2;
+          rowCount = Math.ceil(tileCount / 2);
+        }
+      } else {
+        if (tileCount === 1) {
+          columnCount = 1;
+          rowCount = 1;
+        } else if (tileCount === 2) {
+          columnCount = 2;
+          rowCount = 1;
+        } else if (tileCount <= 4) {
+          columnCount = 2;
+          rowCount = 2;
+        } else if (tileCount <= 6) {
+          columnCount = 3;
+          rowCount = 2;
+        } else if (tileCount <= 8) {
+          columnCount = 4;
+          rowCount = 2;
+        } else if (tileCount <= 10) {
+          columnCount = 5;
+          rowCount = 2;
+        } else if (tileCount <= 12) {
+          columnCount = 4;
+          rowCount = 3;
+        }
+      }
+
+      let tileHeight = Math.round(
+        (gridHeight - gap * (rowCount + 1)) / rowCount
+      );
+      let tileWidth = Math.round(
+        (gridWidth - gap * (columnCount + 1)) / columnCount
+      );
+
+      const tileAspectRatio = tileWidth / tileHeight;
+
+      if (tileAspectRatio > 16 / 9) {
+        tileWidth = (16 * tileHeight) / 9;
+      }
+
+      for (let i = 0; i < tiles.length; i++) {
+        const verticalIndex = Math.floor(i / columnCount);
+        const top = verticalIndex * tileHeight + (verticalIndex + 1) * gap;
+
+        let rowItemCount;
+
+        if (verticalIndex + 1 === rowCount && tileCount % rowCount !== 0) {
+          rowItemCount = Math.floor(tileCount / rowCount);
+        } else {
+          rowItemCount = Math.ceil(tileCount / rowCount);
+        }
+
+        const horizontalIndex = i % columnCount;
+        const totalRowGapWidth = (rowItemCount + 1) * gap;
+        const totalRowTileWidth = rowItemCount * tileWidth;
+        const rowLeftMargin = Math.round(
+          (gridWidth - (totalRowTileWidth + totalRowGapWidth)) / 2
+        );
+        const left =
+          tileWidth * horizontalIndex +
+          rowLeftMargin +
+          (horizontalIndex + 1) * gap;
+
+        newTilePositions.push({
+          width: tileWidth,
+          height: tileHeight,
+          x: left,
+          y: top,
+        });
+      }
+    }
+
+    return newTilePositions;
+  }, []);
 
   const startWebcam = useCallback(async () => {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     setStream(stream);
-    setTiles([{ stream, key: tileKey.current++ }]);
-  }, []);
+    setTileState(() => {
+      const tiles = [{ stream, key: tileKey.current++ }];
+      const tilePositions = getTilePositions(tiles, gridBounds);
+      return { tiles, tilePositions };
+    });
+  }, [gridBounds]);
 
   const addTile = useCallback(() => {
     const newStream = stream.clone();
-    setTiles((tiles) => [
-      ...tiles,
-      { stream: newStream, key: tileKey.current++ },
-    ]);
-  }, [stream]);
+
+    setTileState(({ tiles }) => {
+      const newTiles = [
+        ...tiles,
+        { stream: newStream, key: tileKey.current++ },
+      ];
+      const tilePositions = getTilePositions(newTiles, gridBounds);
+      return { tiles: newTiles, tilePositions };
+    });
+  }, [stream, gridBounds]);
 
   const removeTile = useCallback(() => {
-    setTiles((tiles) => {
-      const newArr = [...tiles];
-      newArr.pop();
-      return newArr;
+    setTiles(({ tiles }) => {
+      const newTiles = [...tiles];
+      newTiles.pop();
+      const tilePositions = getTilePositions(newTiles, gridBounds);
+      return { tiles: newTiles, tilePositions };
     });
-  }, []);
+  }, [gridBounds]);
 
-  const [gridRef, gridBounds] = useMeasure();
-
-  // useEffect(() => {
-  //   const newTilePositions = [];
-  //   const tileCount = tiles.length;
-  //   const { width: gridWidth, height: gridHeight } = gridBounds;
-  //   const gap = 8;
-
-  //   if (tileCount > 0) {
-  //     const aspectRatio = gridWidth / gridHeight;
-
-  //     let columnCount, rowCount;
-
-  //     if (aspectRatio < 1) {
-  //       if (tileCount <= 4) {
-  //         columnCount = 1;
-  //         rowCount = tileCount;
-  //       } else if (tileCount <= 12) {
-  //         columnCount = 2;
-  //         rowCount = Math.ceil(tileCount / 2);
-  //       }
-  //     } else {
-  //       if (tileCount === 1) {
-  //         columnCount = 1;
-  //         rowCount = 1;
-  //       } else if (tileCount === 2) {
-  //         columnCount = 2;
-  //         rowCount = 1;
-  //       } else if (tileCount <= 4) {
-  //         columnCount = 2;
-  //         rowCount = 2;
-  //       } else if (tileCount <= 6) {
-  //         columnCount = 3;
-  //         rowCount = 2;
-  //       } else if (tileCount <= 8) {
-  //         columnCount = 4;
-  //         rowCount = 2;
-  //       } else if (tileCount <= 10) {
-  //         columnCount = 5;
-  //         rowCount = 2;
-  //       } else if (tileCount <= 12) {
-  //         columnCount = 4;
-  //         rowCount = 3;
-  //       }
-  //     }
-
-  //     let tileHeight = Math.round(
-  //       (gridHeight - gap * (rowCount + 1)) / rowCount
-  //     );
-  //     let tileWidth = Math.round(
-  //       (gridWidth - gap * (columnCount + 1)) / columnCount
-  //     );
-
-  //     const tileAspectRatio = tileWidth / tileHeight;
-
-  //     if (tileAspectRatio > 16 / 9) {
-  //       tileWidth = (16 * tileHeight) / 9;
-  //     }
-
-  //     for (let i = 0; i < tiles.length; i++) {
-  //       const verticalIndex = Math.floor(i / columnCount);
-  //       const top = verticalIndex * tileHeight + (verticalIndex + 1) * gap;
-
-  //       let rowItemCount;
-
-  //       if (verticalIndex + 1 === rowCount && tileCount % rowCount !== 0) {
-  //         rowItemCount = Math.floor(tileCount / rowCount);
-  //       } else {
-  //         rowItemCount = Math.ceil(tileCount / rowCount);
-  //       }
-
-  //       const horizontalIndex = i % columnCount;
-  //       const totalRowGapWidth = (rowItemCount + 1) * gap;
-  //       const totalRowTileWidth = rowItemCount * tileWidth;
-  //       const rowLeftMargin = Math.round(
-  //         (gridWidth - (totalRowTileWidth + totalRowGapWidth)) / 2
-  //       );
-  //       const left =
-  //         tileWidth * horizontalIndex +
-  //         rowLeftMargin +
-  //         (horizontalIndex + 1) * gap;
-
-  //       newTilePositions.push({
-  //         width: tileWidth,
-  //         height: tileHeight,
-  //         x: left,
-  //         y: top,
-  //       });
-  //     }
-  //   }
-
-  //   tilePositionsRef.current = newTilePositions;
-
-  //   console.log("update tile positions", newTilePositions);
-  // }, [gridBounds, tiles]);
+  useEffect(() => {
+    setTileState(({ tiles }) => ({
+      tiles,
+      tilePositions: getTilePositions(tiles, gridBounds),
+    }));
+  }, [gridBounds]);
 
   const animate = useCallback(
     (index) => {
-      const newTilePositions = [];
-      const tileCount = tiles.length;
-      const { width: gridWidth, height: gridHeight } = gridBounds;
-      const gap = 8;
-
-      if (tileCount > 0) {
-        const aspectRatio = gridWidth / gridHeight;
-
-        let columnCount, rowCount;
-
-        if (aspectRatio < 1) {
-          if (tileCount <= 4) {
-            columnCount = 1;
-            rowCount = tileCount;
-          } else if (tileCount <= 12) {
-            columnCount = 2;
-            rowCount = Math.ceil(tileCount / 2);
-          }
-        } else {
-          if (tileCount === 1) {
-            columnCount = 1;
-            rowCount = 1;
-          } else if (tileCount === 2) {
-            columnCount = 2;
-            rowCount = 1;
-          } else if (tileCount <= 4) {
-            columnCount = 2;
-            rowCount = 2;
-          } else if (tileCount <= 6) {
-            columnCount = 3;
-            rowCount = 2;
-          } else if (tileCount <= 8) {
-            columnCount = 4;
-            rowCount = 2;
-          } else if (tileCount <= 10) {
-            columnCount = 5;
-            rowCount = 2;
-          } else if (tileCount <= 12) {
-            columnCount = 4;
-            rowCount = 3;
-          }
-        }
-
-        let tileHeight = Math.round(
-          (gridHeight - gap * (rowCount + 1)) / rowCount
-        );
-        let tileWidth = Math.round(
-          (gridWidth - gap * (columnCount + 1)) / columnCount
-        );
-
-        const tileAspectRatio = tileWidth / tileHeight;
-
-        if (tileAspectRatio > 16 / 9) {
-          tileWidth = (16 * tileHeight) / 9;
-        }
-
-        for (let i = 0; i < tiles.length; i++) {
-          const verticalIndex = Math.floor(i / columnCount);
-          const top = verticalIndex * tileHeight + (verticalIndex + 1) * gap;
-
-          let rowItemCount;
-
-          if (verticalIndex + 1 === rowCount && tileCount % rowCount !== 0) {
-            rowItemCount = Math.floor(tileCount / rowCount);
-          } else {
-            rowItemCount = Math.ceil(tileCount / rowCount);
-          }
-
-          const horizontalIndex = i % columnCount;
-          const totalRowGapWidth = (rowItemCount + 1) * gap;
-          const totalRowTileWidth = rowItemCount * tileWidth;
-          const rowLeftMargin = Math.round(
-            (gridWidth - (totalRowTileWidth + totalRowGapWidth)) / 2
-          );
-          const left =
-            tileWidth * horizontalIndex +
-            rowLeftMargin +
-            (horizontalIndex + 1) * gap;
-
-          newTilePositions.push({
-            width: tileWidth,
-            height: tileHeight,
-            x: left,
-            y: top,
-          });
-        }
-      }
-
-      tilePositionsRef.current = newTilePositions;
-      const tilePosition = tilePositionsRef.current[index];
+      const tilePosition = tilePositions[index];
       const draggingTile = draggingTileRef.current;
       const dragging =
         draggingTileRef.current && index === draggingTileRef.current.index;
@@ -247,10 +175,10 @@ export function GridDemo() {
         };
       }
     },
-    [tiles, gridBounds]
+    [tilePositions]
   );
 
-  const [springs, api] = useSprings(tiles.length, animate, [tiles, gridBounds]);
+  const [springs, api] = useSprings(tiles.length, animate, [tilePositions]);
 
   const bind = useDrag(({ args: [index], active, movement: [x, y] }) => {
     if (active) {
