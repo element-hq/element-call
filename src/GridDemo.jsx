@@ -4,16 +4,13 @@ import { useSprings, animated, useSpring } from "@react-spring/web";
 import styles from "./GridDemo.module.css";
 import useMeasure from "react-use-measure";
 
-function isInside([x, y], dragTile, targetTile) {
-  const cursorX = dragTile.x + x;
-  const cursorY = dragTile.y + y;
-
+function isInside([x, y], targetTile) {
   const left = targetTile.x;
   const top = targetTile.y;
   const bottom = targetTile.y + targetTile.height;
   const right = targetTile.x + targetTile.width;
 
-  if (cursorX < left || cursorX > right || cursorY < top || cursorY > bottom) {
+  if (x < left || x > right || y < top || y > bottom) {
     return false;
   }
 
@@ -148,8 +145,11 @@ export function GridDemo() {
         ...tiles,
         { stream: newStream, key: tileKey.current++, remove: false },
       ];
-      const tilePositions = getTilePositions(newTiles, gridBounds);
-      return { tiles: newTiles, tilePositions };
+
+      return {
+        tiles: newTiles,
+        tilePositions: getTilePositions(newTiles, gridBounds),
+      };
     });
   }, [stream, gridBounds]);
 
@@ -169,7 +169,12 @@ export function GridDemo() {
 
       setTimeout(() => {
         setTileState(({ tiles }) => {
-          const newTiles = tiles.filter((tile) => tile.key !== tileKey);
+          const tileIndex = tiles.findIndex((tile) => tile.key === tileKey);
+          const newTiles = [...tiles];
+          newTiles.splice(tileIndex, 1);
+          tileOrderRef.current = tileOrderRef.current.filter(
+            (index) => index !== tileIndex
+          );
           return {
             tiles: newTiles,
             tilePositions: getTilePositions(newTiles, gridBounds),
@@ -238,27 +243,29 @@ export function GridDemo() {
     [tilePositions, tiles]
   );
 
-  const bind = useDrag(({ args: [index], active, movement }) => {
+  const bind = useDrag(({ args: [index], active, xy, movement }) => {
     let order = tileOrderRef.current;
 
     const tileIndex = tileOrderRef.current[index];
-    const tilePosition = tilePositions[tileIndex];
     const tile = tiles[tileIndex];
 
-    // for (let i = 0; i < tileOrderRef.current.length; i++) {
-    //   if (i === index) {
-    //     continue;
-    //   }
+    const cursorPosition = [xy[0] - gridBounds.left, xy[1] - gridBounds.top];
 
-    //   const hoverTileIndex = tileOrderRef.current[i];
-    //   const hoverTilePosition = tilePositions[hoverTileIndex];
+    for (let i = 0; i < tileOrderRef.current.length; i++) {
+      if (i === index) {
+        continue;
+      }
 
-    //   if (isInside(movement, tilePosition, hoverTilePosition)) {
-    //     // const [toBeMoved] = order.splice(i, 1);
-    //     // order.splice(index, 0, toBeMoved);
-    //     break;
-    //   }
-    // }
+      const hoverTileIndex = tileOrderRef.current[i];
+      const hoverTilePosition = tilePositions[hoverTileIndex];
+
+      if (isInside(cursorPosition, hoverTilePosition)) {
+        // TODO: Figure out swapping
+        // order[i] = tileIndex;
+        // order[index] = i;
+        break;
+      }
+    }
 
     if (active) {
       draggingTileRef.current = {
