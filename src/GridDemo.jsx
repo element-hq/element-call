@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDrag } from "react-use-gesture";
-import { useSprings, animated } from "@react-spring/web";
+import { useSprings, animated, useSpring } from "@react-spring/web";
 import styles from "./GridDemo.module.css";
 import useMeasure from "react-use-measure";
 
@@ -132,7 +132,7 @@ export function GridDemo() {
     setStream(stream);
     tileOrderRef.current.push(tileOrderRef.current.length);
     setTileState(() => {
-      const tiles = [{ stream, key: tileKey.current++ }];
+      const tiles = [{ stream, key: tileKey.current++, remove: false }];
       const tilePositions = getTilePositions(tiles, gridBounds);
       return { tiles, tilePositions };
     });
@@ -146,22 +146,37 @@ export function GridDemo() {
     setTileState(({ tiles }) => {
       const newTiles = [
         ...tiles,
-        { stream: newStream, key: tileKey.current++ },
+        { stream: newStream, key: tileKey.current++, remove: false },
       ];
       const tilePositions = getTilePositions(newTiles, gridBounds);
       return { tiles: newTiles, tilePositions };
     });
   }, [stream, gridBounds]);
 
-  const removeTile = useCallback(() => {
-    tileOrderRef.current.pop();
-    setTileState(({ tiles }) => {
-      const newTiles = [...tiles];
-      newTiles.pop();
-      const tilePositions = getTilePositions(newTiles, gridBounds);
-      return { tiles: newTiles, tilePositions };
-    });
-  }, [gridBounds]);
+  const removeTile = useCallback(
+    (tile) => {
+      const tileKey = tile.key;
+
+      setTileState(({ tiles, tilePositions }) => {
+        return {
+          tiles: tiles.map((tile) => ({
+            ...tile,
+            remove: tile.key === tileKey,
+          })),
+          tilePositions,
+        };
+      });
+
+      setTimeout(() => {
+        setTileState(({ tiles }) => {
+          const newTiles = tiles.filter((t) => t.key !== tileKey);
+          const tilePositions = getTilePositions(newTiles, gridBounds);
+          return { tiles: newTiles, tilePositions };
+        });
+      }, 250);
+    },
+    [gridBounds]
+  );
 
   useEffect(() => {
     setTileState(({ tiles }) => ({
@@ -254,7 +269,9 @@ export function GridDemo() {
           <button onClick={addTile}>Add Tile</button>
         )}
         {stream && tiles.length > 0 && (
-          <button onClick={removeTile}>Remove Tile</button>
+          <button onClick={() => removeTile(tiles[tiles.length - 1])}>
+            Remove Tile
+          </button>
         )}
       </div>
       <div className={styles.grid} ref={gridRef}>
@@ -281,7 +298,14 @@ export function GridDemo() {
   );
 }
 
-function ParticipantTile({ style, stream, ...rest }) {
+function ParticipantTile({
+  style,
+  stream,
+  remove,
+  finishRemovingTile,
+  tileKey,
+  ...rest
+}) {
   const videoRef = useRef();
 
   useEffect(() => {
@@ -293,8 +317,35 @@ function ParticipantTile({ style, stream, ...rest }) {
     }
   }, [stream]);
 
+  const [springStyles, api] = useSpring(() => ({
+    from: {
+      scale: 0,
+      opacity: 0,
+    },
+    to: {
+      scale: 1,
+      opacity: 1,
+    },
+  }));
+
+  useEffect(() => {
+    if (remove) {
+      api.start({
+        scale: 0,
+        opacity: 0,
+      });
+    }
+  }, [remove]);
+
   return (
-    <animated.div className={styles.participantTile} style={style} {...rest}>
+    <animated.div
+      className={styles.participantTile}
+      style={{
+        ...style,
+        ...springStyles,
+      }}
+      {...rest}
+    >
       <video ref={videoRef} playsInline />
     </animated.div>
   );
