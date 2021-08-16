@@ -169,9 +169,11 @@ export function GridDemo() {
 
       setTimeout(() => {
         setTileState(({ tiles }) => {
-          const newTiles = tiles.filter((t) => t.key !== tileKey);
-          const tilePositions = getTilePositions(newTiles, gridBounds);
-          return { tiles: newTiles, tilePositions };
+          const newTiles = tiles.filter((tile) => tile.key !== tileKey);
+          return {
+            tiles: newTiles,
+            tilePositions: getTilePositions(newTiles, gridBounds),
+          };
         });
       }, 250);
     },
@@ -188,10 +190,11 @@ export function GridDemo() {
   const animate = useCallback(
     (order) => (index) => {
       const tileIndex = order[index];
+      const tile = tiles[tileIndex];
       const tilePosition = tilePositions[tileIndex];
       const draggingTile = draggingTileRef.current;
-      const dragging =
-        draggingTileRef.current && tileIndex === draggingTileRef.current.index;
+      const dragging = draggingTile && tile.key === draggingTile.key;
+      const remove = tile.remove;
 
       if (dragging) {
         return {
@@ -200,35 +203,47 @@ export function GridDemo() {
           x: tilePosition.x + draggingTile.x,
           y: tilePosition.y + draggingTile.y,
           scale: 1.1,
+          opacity: 1,
           zIndex: 1,
           shadow: 15,
           immediate: (key) => key === "zIndex" || key === "x" || key === "y",
+          from: {
+            scale: 0,
+            opacity: 0,
+          },
+          reset: false,
         };
       } else {
         return {
           ...tilePosition,
-          scale: 1,
+          scale: remove ? 0 : 1,
+          opacity: remove ? 0 : 1,
           zIndex: 0,
           shadow: 1,
           immediate: false,
+          from: {
+            scale: 0,
+            opacity: 0,
+          },
+          reset: false,
         };
       }
     },
-    [tilePositions]
+    [tiles, tilePositions]
   );
 
   const [springs, api] = useSprings(
     tiles.length,
     animate(tileOrderRef.current),
-    [tilePositions]
+    [tilePositions, tiles]
   );
 
   const bind = useDrag(({ args: [index], active, movement }) => {
     let order = tileOrderRef.current;
-    let dragIndex = index;
 
-    // const tileIndex = tileOrderRef.current[index];
-    // const tilePosition = tilePositions[tileIndex];
+    const tileIndex = tileOrderRef.current[index];
+    const tilePosition = tilePositions[tileIndex];
+    const tile = tiles[tileIndex];
 
     // for (let i = 0; i < tileOrderRef.current.length; i++) {
     //   if (i === index) {
@@ -239,23 +254,20 @@ export function GridDemo() {
     //   const hoverTilePosition = tilePositions[hoverTileIndex];
 
     //   if (isInside(movement, tilePosition, hoverTilePosition)) {
-    //     order = [...tileOrderRef.current];
-    //     const [toBeMoved] = order.splice(i, 1);
-    //     order.splice(index, 0, toBeMoved);
-    //     dragIndex = i;
+    //     // const [toBeMoved] = order.splice(i, 1);
+    //     // order.splice(index, 0, toBeMoved);
     //     break;
     //   }
     // }
 
     if (active) {
       draggingTileRef.current = {
-        index: dragIndex,
+        key: tile.key,
         x: movement[0],
         y: movement[1],
       };
     } else {
       draggingTileRef.current = null;
-      //tileOrderRef.current = order;
     }
 
     api.start(animate(order));
@@ -298,14 +310,7 @@ export function GridDemo() {
   );
 }
 
-function ParticipantTile({
-  style,
-  stream,
-  remove,
-  finishRemovingTile,
-  tileKey,
-  ...rest
-}) {
+function ParticipantTile({ style, stream, remove, tileKey, ...rest }) {
   const videoRef = useRef();
 
   useEffect(() => {
@@ -317,35 +322,8 @@ function ParticipantTile({
     }
   }, [stream]);
 
-  const [springStyles, api] = useSpring(() => ({
-    from: {
-      scale: 0,
-      opacity: 0,
-    },
-    to: {
-      scale: 1,
-      opacity: 1,
-    },
-  }));
-
-  useEffect(() => {
-    if (remove) {
-      api.start({
-        scale: 0,
-        opacity: 0,
-      });
-    }
-  }, [remove]);
-
   return (
-    <animated.div
-      className={styles.participantTile}
-      style={{
-        ...style,
-        ...springStyles,
-      }}
-      {...rest}
-    >
+    <animated.div className={styles.participantTile} style={style} {...rest}>
       <video ref={videoRef} playsInline />
     </animated.div>
   );
