@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDrag } from "react-use-gesture";
-import { useSprings, animated, useSpring } from "@react-spring/web";
+import { useSprings, animated } from "@react-spring/web";
 import styles from "./GridDemo.module.css";
 import useMeasure from "react-use-measure";
+import moveArrItem from "lodash-move";
 
 function isInside([x, y], targetTile) {
   const left = targetTile.x;
@@ -128,7 +129,9 @@ export function GridDemo() {
     const stream = await navigator.mediaDevices.getUserMedia({ video: true });
     setStream(stream);
     tileOrderRef.current.push(tileOrderRef.current.length);
+
     setTileState(() => {
+      console.log("startWebcam");
       const tiles = [{ stream, key: tileKey.current++, remove: false }];
       const tilePositions = getTilePositions(tiles, gridBounds);
       return { tiles, tilePositions };
@@ -141,6 +144,7 @@ export function GridDemo() {
     tileOrderRef.current.push(tileOrderRef.current.length);
 
     setTileState(({ tiles }) => {
+      console.log("addTile");
       const newTiles = [
         ...tiles,
         { stream: newStream, key: tileKey.current++, remove: false },
@@ -193,10 +197,11 @@ export function GridDemo() {
   }, [gridBounds]);
 
   const animate = useCallback(
-    (order) => (index) => {
-      const tileIndex = order[index];
+    (tileIndex) => {
+      const tileOrder = tileOrderRef.current;
+      const order = tileOrder.indexOf(tileIndex);
       const tile = tiles[tileIndex];
-      const tilePosition = tilePositions[tileIndex];
+      const tilePosition = tilePositions[order];
       const draggingTile = draggingTileRef.current;
       const dragging = draggingTile && tile.key === draggingTile.key;
       const remove = tile.remove;
@@ -205,8 +210,8 @@ export function GridDemo() {
         return {
           width: tilePosition.width,
           height: tilePosition.height,
-          x: tilePosition.x + draggingTile.x,
-          y: tilePosition.y + draggingTile.y,
+          x: draggingTile.offsetX + draggingTile.x,
+          y: draggingTile.offsetY + draggingTile.y,
           scale: 1.1,
           opacity: 1,
           zIndex: 1,
@@ -237,47 +242,62 @@ export function GridDemo() {
     [tiles, tilePositions]
   );
 
-  const [springs, api] = useSprings(
-    tiles.length,
-    animate(tileOrderRef.current),
-    [tilePositions, tiles]
-  );
+  const [springs, api] = useSprings(tiles.length, animate, [
+    tilePositions,
+    tiles,
+  ]);
 
-  const bind = useDrag(({ args: [index], active, xy, movement }) => {
-    let order = tileOrderRef.current;
+  const bind = useDrag(({ args: [key], active, xy, movement }) => {
+    const tileOrder = tileOrderRef.current;
 
-    const tileIndex = tileOrderRef.current[index];
-    const tile = tiles[tileIndex];
+    const dragTileIndex = tiles.findIndex((tile) => tile.key === key);
+    const dragTile = tiles[dragTileIndex];
+
+    const dragTileOrder = tileOrder.indexOf(dragTileIndex);
 
     const cursorPosition = [xy[0] - gridBounds.left, xy[1] - gridBounds.top];
 
-    for (let i = 0; i < tileOrderRef.current.length; i++) {
-      if (i === index) {
+    for (
+      let hoverTileIndex = 0;
+      hoverTileIndex < tiles.length;
+      hoverTileIndex++
+    ) {
+      const hoverTile = tiles[hoverTileIndex];
+      const hoverTileOrder = tileOrder.indexOf(hoverTileIndex);
+      const hoverTilePosition = tilePositions[hoverTileOrder];
+
+      if (hoverTile.key === key) {
         continue;
       }
 
-      const hoverTileIndex = tileOrderRef.current[i];
-      const hoverTilePosition = tilePositions[hoverTileIndex];
-
       if (isInside(cursorPosition, hoverTilePosition)) {
-        // TODO: Figure out swapping
-        // order[i] = tileIndex;
-        // order[index] = i;
+        tileOrderRef.current = moveArrItem(
+          tileOrder,
+          dragTileOrder,
+          hoverTileOrder
+        );
         break;
       }
     }
 
     if (active) {
-      draggingTileRef.current = {
-        key: tile.key,
-        x: movement[0],
-        y: movement[1],
-      };
+      if (!draggingTileRef.current) {
+        const tilePosition = tilePositions[dragTileOrder];
+
+        draggingTileRef.current = {
+          key: dragTile.key,
+          offsetX: tilePosition.x,
+          offsetY: tilePosition.y,
+        };
+      }
+
+      draggingTileRef.current.x = movement[0];
+      draggingTileRef.current.y = movement[1];
     } else {
       draggingTileRef.current = null;
     }
 
-    api.start(animate(order));
+    api.start(animate);
   });
 
   return (
@@ -300,7 +320,7 @@ export function GridDemo() {
 
           return (
             <ParticipantTile
-              {...bind(i)}
+              {...bind(tile.key)}
               key={tile.key}
               style={{
                 boxShadow: shadow.to(
@@ -308,6 +328,7 @@ export function GridDemo() {
                 ),
                 ...style,
               }}
+              tileKey={tile.key}
               {...tile}
             />
           );
@@ -331,6 +352,7 @@ function ParticipantTile({ style, stream, remove, tileKey, ...rest }) {
 
   return (
     <animated.div className={styles.participantTile} style={style} {...rest}>
+      <div className={styles.participantName}>{tileKey}</div>
       <video ref={videoRef} playsInline />
     </animated.div>
   );

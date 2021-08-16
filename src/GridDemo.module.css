@@ -27,3 +27,11 @@
   height: 100%;
   object-fit: cover;
 }
+
+.participantName {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.2);
+  padding: 8px 24px;
+}
