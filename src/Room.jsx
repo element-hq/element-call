@@ -19,7 +19,7 @@ import styles from "./Room.module.css";
 import { useParams, useLocation, Link } from "react-router-dom";
 import { useVideoRoom } from "./ConferenceCallManagerHooks";
 import { DevTools } from "./DevTools";
-import { VideoGrid } from "./GridDemo";
+import { VideoGrid } from "./VideoGrid";
 
 function useQuery() {
   const location = useLocation();
