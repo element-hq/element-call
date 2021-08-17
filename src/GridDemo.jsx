@@ -18,9 +18,96 @@ function isInside([x, y], targetTile) {
   return true;
 }
 
-export function GridDemo() {
-  const tileKey = useRef(0);
-  const [stream, setStream] = useState();
+function getTilePositions(tileCount, gridBounds) {
+  const newTilePositions = [];
+  const { width: gridWidth, height: gridHeight } = gridBounds;
+  const gap = 8;
+
+  if (tileCount > 0) {
+    const aspectRatio = gridWidth / gridHeight;
+
+    let columnCount, rowCount;
+
+    if (aspectRatio < 1) {
+      if (tileCount <= 4) {
+        columnCount = 1;
+        rowCount = tileCount;
+      } else if (tileCount <= 12) {
+        columnCount = 2;
+        rowCount = Math.ceil(tileCount / 2);
+      }
+    } else {
+      if (tileCount === 1) {
+        columnCount = 1;
+        rowCount = 1;
+      } else if (tileCount === 2) {
+        columnCount = 2;
+        rowCount = 1;
+      } else if (tileCount <= 4) {
+        columnCount = 2;
+        rowCount = 2;
+      } else if (tileCount <= 6) {
+        columnCount = 3;
+        rowCount = 2;
+      } else if (tileCount <= 8) {
+        columnCount = 4;
+        rowCount = 2;
+      } else if (tileCount <= 10) {
+        columnCount = 5;
+        rowCount = 2;
+      } else if (tileCount <= 12) {
+        columnCount = 4;
+        rowCount = 3;
+      }
+    }
+
+    let tileHeight = Math.round((gridHeight - gap * (rowCount + 1)) / rowCount);
+    let tileWidth = Math.round(
+      (gridWidth - gap * (columnCount + 1)) / columnCount
+    );
+
+    const tileAspectRatio = tileWidth / tileHeight;
+
+    if (tileAspectRatio > 16 / 9) {
+      tileWidth = (16 * tileHeight) / 9;
+    }
+
+    for (let i = 0; i < tileCount; i++) {
+      const verticalIndex = Math.floor(i / columnCount);
+      const top = verticalIndex * tileHeight + (verticalIndex + 1) * gap;
+
+      let rowItemCount;
+
+      if (verticalIndex + 1 === rowCount && tileCount % rowCount !== 0) {
+        rowItemCount = Math.floor(tileCount / rowCount);
+      } else {
+        rowItemCount = Math.ceil(tileCount / rowCount);
+      }
+
+      const horizontalIndex = i % columnCount;
+      const totalRowGapWidth = (rowItemCount + 1) * gap;
+      const totalRowTileWidth = rowItemCount * tileWidth;
+      const rowLeftMargin = Math.round(
+        (gridWidth - (totalRowTileWidth + totalRowGapWidth)) / 2
+      );
+      const left =
+        tileWidth * horizontalIndex +
+        rowLeftMargin +
+        (horizontalIndex + 1) * gap;
+
+      newTilePositions.push({
+        width: tileWidth,
+        height: tileHeight,
+        x: left,
+        y: top,
+      });
+    }
+  }
+
+  return newTilePositions;
+}
+
+export function VideoGrid({ participants }) {
   const [{ tiles, tilePositions }, setTileState] = useState({
     tiles: [],
     tilePositions: [],
@@ -33,168 +120,77 @@ export function GridDemo() {
 
   const [gridRef, gridBounds] = useMeasure();
 
-  const getTilePositions = useCallback((tiles, gridBounds) => {
-    const newTilePositions = [];
-    const tileCount = tiles.length;
-    const { width: gridWidth, height: gridHeight } = gridBounds;
-    const gap = 8;
-
-    if (tileCount > 0) {
-      const aspectRatio = gridWidth / gridHeight;
-
-      let columnCount, rowCount;
-
-      if (aspectRatio < 1) {
-        if (tileCount <= 4) {
-          columnCount = 1;
-          rowCount = tileCount;
-        } else if (tileCount <= 12) {
-          columnCount = 2;
-          rowCount = Math.ceil(tileCount / 2);
-        }
-      } else {
-        if (tileCount === 1) {
-          columnCount = 1;
-          rowCount = 1;
-        } else if (tileCount === 2) {
-          columnCount = 2;
-          rowCount = 1;
-        } else if (tileCount <= 4) {
-          columnCount = 2;
-          rowCount = 2;
-        } else if (tileCount <= 6) {
-          columnCount = 3;
-          rowCount = 2;
-        } else if (tileCount <= 8) {
-          columnCount = 4;
-          rowCount = 2;
-        } else if (tileCount <= 10) {
-          columnCount = 5;
-          rowCount = 2;
-        } else if (tileCount <= 12) {
-          columnCount = 4;
-          rowCount = 3;
-        }
-      }
-
-      let tileHeight = Math.round(
-        (gridHeight - gap * (rowCount + 1)) / rowCount
-      );
-      let tileWidth = Math.round(
-        (gridWidth - gap * (columnCount + 1)) / columnCount
-      );
-
-      const tileAspectRatio = tileWidth / tileHeight;
-
-      if (tileAspectRatio > 16 / 9) {
-        tileWidth = (16 * tileHeight) / 9;
-      }
-
-      for (let i = 0; i < tiles.length; i++) {
-        const verticalIndex = Math.floor(i / columnCount);
-        const top = verticalIndex * tileHeight + (verticalIndex + 1) * gap;
-
-        let rowItemCount;
-
-        if (verticalIndex + 1 === rowCount && tileCount % rowCount !== 0) {
-          rowItemCount = Math.floor(tileCount / rowCount);
-        } else {
-          rowItemCount = Math.ceil(tileCount / rowCount);
-        }
-
-        const horizontalIndex = i % columnCount;
-        const totalRowGapWidth = (rowItemCount + 1) * gap;
-        const totalRowTileWidth = rowItemCount * tileWidth;
-        const rowLeftMargin = Math.round(
-          (gridWidth - (totalRowTileWidth + totalRowGapWidth)) / 2
-        );
-        const left =
-          tileWidth * horizontalIndex +
-          rowLeftMargin +
-          (horizontalIndex + 1) * gap;
-
-        newTilePositions.push({
-          width: tileWidth,
-          height: tileHeight,
-          x: left,
-          y: top,
-        });
-      }
-    }
-
-    return newTilePositions;
-  }, []);
-
-  const startWebcam = useCallback(async () => {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    setStream(stream);
-    tileOrderRef.current.push(tileOrderRef.current.length);
-
-    setTileState(() => {
-      console.log("startWebcam");
-      const tiles = [{ stream, key: tileKey.current++, remove: false }];
-      const tilePositions = getTilePositions(tiles, gridBounds);
-      return { tiles, tilePositions };
-    });
-  }, [gridBounds]);
-
-  const addTile = useCallback(() => {
-    const newStream = stream.clone();
-
-    tileOrderRef.current.push(tileOrderRef.current.length);
-
+  useEffect(() => {
     setTileState(({ tiles }) => {
-      console.log("addTile");
-      const newTiles = [
-        ...tiles,
-        { stream: newStream, key: tileKey.current++, remove: false },
-      ];
+      const newTiles = [];
+      const removedTileKeys = [];
+
+      for (const tile of tiles) {
+        const participant = participants.find(
+          (participant) => participant.userId === tile.key
+        );
+
+        if (participant) {
+          // Existing tiles
+          newTiles.push({
+            key: participant.userId,
+            participant: participant,
+            remove: false,
+          });
+        } else {
+          // Removed tiles
+          removedTileKeys.push(tile.key);
+          newTiles.push({
+            key: tile.key,
+            participant: tile.participant,
+            remove: true,
+          });
+        }
+      }
+
+      for (const participant of participants) {
+        if (newTiles.some(({ key }) => participant.userId === key)) {
+          continue;
+        }
+
+        // Added tiles
+        newTiles.push({
+          key: participant.userId,
+          participant,
+          remove: false,
+        });
+
+        tileOrderRef.current.push(tileOrderRef.current.length);
+      }
+
+      if (removedTileKeys.length > 0) {
+        // TODO: There's a race condition in this nested set state when you quickly add/remove
+        setTimeout(() => {
+          setTileState(({ tiles }) => {
+            const newTiles = tiles.filter(
+              (tile) => !removedTileKeys.includes(tile.key)
+            );
+            const removedTileIndices = removedTileKeys.map((tileKey) =>
+              tiles.findIndex((tile) => tile.key === tileKey)
+            );
+            tileOrderRef.current = tileOrderRef.current.filter(
+              (index) => !removedTileIndices.includes(index)
+            );
+
+            return {
+              tiles: newTiles,
+              tilePositions: getTilePositions(newTiles, gridBounds),
+            };
+          });
+        }, 250);
+      }
 
       return {
         tiles: newTiles,
-        tilePositions: getTilePositions(newTiles, gridBounds),
+        tilePositions: getTilePositions(newTiles.length, gridBounds),
       };
     });
-  }, [stream, gridBounds]);
-
-  const removeTile = useCallback(
-    (tile) => {
-      const tileKey = tile.key;
-
-      setTileState(({ tiles, tilePositions }) => {
-        return {
-          tiles: tiles.map((tile) => ({
-            ...tile,
-            remove: tile.key === tileKey,
-          })),
-          tilePositions,
-        };
-      });
-
-      setTimeout(() => {
-        setTileState(({ tiles }) => {
-          const tileIndex = tiles.findIndex((tile) => tile.key === tileKey);
-          const newTiles = [...tiles];
-          newTiles.splice(tileIndex, 1);
-          tileOrderRef.current = tileOrderRef.current.filter(
-            (index) => index !== tileIndex
-          );
-          return {
-            tiles: newTiles,
-            tilePositions: getTilePositions(newTiles, gridBounds),
-          };
-        });
-      }, 250);
-    },
-    [gridBounds]
-  );
-
-  useEffect(() => {
-    setTileState(({ tiles }) => ({
-      tiles,
-      tilePositions: getTilePositions(tiles, gridBounds),
-    }));
-  }, [gridBounds]);
+  }, [participants, gridBounds]);
 
   const animate = useCallback(
     (tileIndex) => {
@@ -301,59 +297,91 @@ export function GridDemo() {
   });
 
   return (
-    <div className={styles.gridDemo}>
-      <div className={styles.buttons}>
-        {!stream && <button onClick={startWebcam}>Start Webcam</button>}
-        {stream && tiles.length < 12 && (
-          <button onClick={addTile}>Add Tile</button>
-        )}
-        {stream && tiles.length > 0 && (
-          <button onClick={() => removeTile(tiles[tiles.length - 1])}>
-            Remove Tile
-          </button>
-        )}
-      </div>
-      <div className={styles.grid} ref={gridRef}>
-        {springs.map(({ shadow, ...style }, i) => {
-          const tileIndex = tileOrderRef.current[i];
-          const tile = tiles[tileIndex];
+    <div className={styles.grid} ref={gridRef}>
+      {springs.map(({ shadow, ...style }, i) => {
+        const tileIndex = tileOrderRef.current[i];
+        const tile = tiles[tileIndex];
 
-          return (
-            <ParticipantTile
-              {...bind(tile.key)}
-              key={tile.key}
-              style={{
-                boxShadow: shadow.to(
-                  (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
-                ),
-                ...style,
-              }}
-              tileKey={tile.key}
-              {...tile}
-            />
-          );
-        })}
-      </div>
+        return (
+          <ParticipantTile
+            {...bind(tile.key)}
+            key={tile.key}
+            style={{
+              boxShadow: shadow.to(
+                (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
+              ),
+              ...style,
+            }}
+            {...tile}
+          />
+        );
+      })}
     </div>
   );
 }
 
-function ParticipantTile({ style, stream, remove, tileKey, ...rest }) {
+function ParticipantTile({ style, participant, remove, ...rest }) {
   const videoRef = useRef();
 
   useEffect(() => {
-    if (stream) {
-      videoRef.current.srcObject = stream;
+    if (participant.stream) {
+      videoRef.current.srcObject = participant.stream;
       videoRef.current.play();
     } else {
       videoRef.current.srcObject = null;
     }
-  }, [stream]);
+  }, [participant.stream]);
 
   return (
     <animated.div className={styles.participantTile} style={style} {...rest}>
-      <div className={styles.participantName}>{tileKey}</div>
+      <div className={styles.participantName}>{participant.userId}</div>
       <video ref={videoRef} playsInline />
     </animated.div>
+  );
+}
+
+export function GridDemo() {
+  const participantKey = useRef(0);
+  const [stream, setStream] = useState();
+  const [participants, setParticipants] = useState([]);
+
+  const startWebcam = useCallback(async () => {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    setStream(stream);
+    setParticipants([{ stream, userId: participantKey.current++ }]);
+  }, []);
+
+  const addParticipant = useCallback(() => {
+    setParticipants((participants) => [
+      ...participants,
+      { stream: stream.clone(), userId: participantKey.current++ },
+    ]);
+  }, [stream]);
+
+  const removeParticipant = useCallback((key) => {
+    setParticipants((participants) =>
+      participants.filter((participant) => participant.userId !== key)
+    );
+  }, []);
+
+  return (
+    <div className={styles.gridDemo}>
+      <div className={styles.buttons}>
+        {!stream && <button onClick={startWebcam}>Start Webcam</button>}
+        {stream && participants.length < 12 && (
+          <button onClick={addParticipant}>Add Tile</button>
+        )}
+        {stream && participants.length > 0 && (
+          <button
+            onClick={() =>
+              removeParticipant(participants[participants.length - 1].userId)
+            }
+          >
+            Remove Tile
+          </button>
+        )}
+      </div>
+      <VideoGrid participants={participants} />
+    </div>
   );
 }
