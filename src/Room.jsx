@@ -19,6 +19,7 @@ import styles from "./Room.module.css";
 import { useParams, useLocation, Link } from "react-router-dom";
 import { useVideoRoom } from "./ConferenceCallManagerHooks";
 import { DevTools } from "./DevTools";
+import { VideoGrid } from "./GridDemo";
 
 function useQuery() {
   const location = useLocation();
@@ -96,11 +97,7 @@ export function Room({ manager }) {
         </div>
       )}
       {!loading && room && joined && participants.length > 0 && (
-        <div className={styles.roomContainer}>
-          {participants.map((participant) => (
-            <Participant key={participant.userId} {...participant} />
-          ))}
-        </div>
+        <VideoGrid participants={participants} />
       )}
       {!loading && room && joined && (
         <div className={styles.footer}>

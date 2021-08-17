@@ -160,7 +160,7 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
     const onParticipantsChanged = () => {
       setState((prevState) => ({
         ...prevState,
-        participants: manager.participants,
+        participants: [...manager.participants],
       }));
     };
 
@@ -250,7 +250,7 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
 
     setState((prevState) => ({
       ...prevState,
-      participants: manager.participants,
+      participants: [...manager.participants],
       joined: false,
       joining: false,
     }));
@@ -271,7 +271,7 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
 
             setState((prevState) => ({
               ...prevState,
-              participants: manager.participants,
+              participants: [...manager.participants],
               joined: false,
               joining: false,
             }));
@@ -282,7 +282,7 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
 
         setState((prevState) => ({
           ...prevState,
-          participants: manager.participants,
+          participants: [...manager.participants],
           joined: false,
           joining: false,
         }));
