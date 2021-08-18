@@ -37,6 +37,10 @@ function getTilePositions(tileCount, gridBounds) {
   const { width: gridWidth, height: gridHeight } = gridBounds;
   const gap = 8;
 
+  if (tileCount > 12) {
+    console.warn("Over 12 tiles is not currently supported");
+  }
+
   if (tileCount > 0) {
     const aspectRatio = gridWidth / gridHeight;
 
@@ -48,6 +52,10 @@ function getTilePositions(tileCount, gridBounds) {
         rowCount = tileCount;
       } else if (tileCount <= 12) {
         columnCount = 2;
+        rowCount = Math.ceil(tileCount / 2);
+      } else {
+        // Unsupported
+        columnCount = 3;
         rowCount = Math.ceil(tileCount / 2);
       }
     } else {
@@ -72,6 +80,10 @@ function getTilePositions(tileCount, gridBounds) {
       } else if (tileCount <= 12) {
         columnCount = 4;
         rowCount = 3;
+      } else {
+        // Unsupported
+        columnCount = 4;
+        rowCount = 4;
       }
     }
 
