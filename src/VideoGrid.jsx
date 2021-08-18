@@ -1,4 +1,10 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { useDrag } from "react-use-gesture";
 import { useSprings, animated } from "@react-spring/web";
 import styles from "./GridDemo.module.css";
@@ -190,6 +196,10 @@ export function VideoGrid({ participants }) {
         tileOrderRef.current.push(tileOrderRef.current.length);
       }
 
+      if (newTiles.length !== tileOrderRef.current.length) {
+        debugger;
+      }
+
       if (removedTileKeys.length > 0) {
         // TODO: There's a race condition in this nested set state when you quickly add/remove
         setTimeout(() => {
@@ -198,15 +208,33 @@ export function VideoGrid({ participants }) {
           }
 
           setTileState(({ tiles }) => {
+            if (tiles.length !== tileOrderRef.current.length) {
+              debugger;
+            }
+
             const newTiles = tiles.filter(
               (tile) => !removedTileKeys.includes(tile.key)
             );
-            const removedTileIndices = removedTileKeys.map((tileKey) =>
-              tiles.findIndex((tile) => tile.key === tileKey)
+
+            const orderedTiles = tileOrderRef.current.map(
+              (index) => tiles[index]
             );
-            tileOrderRef.current = tileOrderRef.current.filter(
-              (index) => !removedTileIndices.includes(index)
+            const filteredTiles = orderedTiles.filter(
+              (tile) => !removedTileKeys.includes(tile.key)
             );
+            tileOrderRef.current = filteredTiles.map((tile) =>
+              newTiles.indexOf(tile)
+            );
+
+            if (newTiles.length !== tileOrderRef.current.length) {
+              debugger;
+            }
+
+            for (const index of tileOrderRef.current) {
+              if (index >= newTiles.length || index === -1) {
+                debugger;
+              }
+            }
 
             return {
               tiles: newTiles,
