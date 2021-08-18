@@ -179,7 +179,7 @@ export function VideoGrid({ participants }) {
 
             return {
               tiles: newTiles,
-              tilePositions: getTilePositions(newTiles, gridBounds),
+              tilePositions: getTilePositions(newTiles.length, gridBounds),
             };
           });
         }, 250);
