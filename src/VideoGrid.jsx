@@ -5,6 +5,20 @@ import styles from "./GridDemo.module.css";
 import useMeasure from "react-use-measure";
 import moveArrItem from "lodash-move";
 
+function useIsMounted() {
+  const isMountedRef = useRef(false);
+
+  useEffect(() => {
+    isMountedRef.current = true;
+
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  return isMountedRef;
+}
+
 function isInside([x, y], targetTile) {
   const left = targetTile.x;
   const top = targetTile.y;
@@ -113,6 +127,7 @@ export function VideoGrid({ participants }) {
     tilePositions: [],
   });
   const draggingTileRef = useRef(null);
+  const isMounted = useIsMounted();
 
   // Contains tile indices
   // Tiles are displayed in the order that they appear
@@ -166,6 +181,10 @@ export function VideoGrid({ participants }) {
       if (removedTileKeys.length > 0) {
         // TODO: There's a race condition in this nested set state when you quickly add/remove
         setTimeout(() => {
+          if (!isMounted.current) {
+            return;
+          }
+
           setTileState(({ tiles }) => {
             const newTiles = tiles.filter(
               (tile) => !removedTileKeys.includes(tile.key)
