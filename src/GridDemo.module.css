@@ -20,6 +20,7 @@
   will-change: transform, width, height, opacity, box-shadow;
   border-radius: 24px;
   overflow: hidden;
+  background-color: #444;
 }
 
 .participantTile video {
