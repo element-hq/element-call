@@ -28,7 +28,7 @@ limitations under the License.
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 64px;
+  height: 98px;
 }
 
 .header h5 {
@@ -38,14 +38,18 @@ limitations under the License.
 
 .backNav {
   position: absolute;
-  left: 0;
-  padding: 0 8px;
+  left: 20px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
 }
 
 .userNav {
   position: absolute;
-  right: 0;
-  padding: 0 8px;
+  right: 20px;
   max-width: 30%;
 }
 
@@ -96,37 +100,20 @@ limitations under the License.
   min-height: 0;
 }
 
-.participant {
-  display: flex;
-  position: relative;
-  flex: 1;
-  flex-shrink: 1;
-  min-height: 0;
-  background-color: black;
-}
-
-.participant video {
-  max-height: 100%;
-  z-index: 0;
-  display: block;
-  margin: auto;
-  max-width: 100%;
-}
-
-.participantLabel {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  padding: 8px 16px;
-  background: rgba(0, 0, 0, 0.2);
-}
-
 .footer {
   position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 64px;
+  height: 118px;
+}
+
+.footer > * {
+  margin-right: 30px;
+}
+
+.footer > :last-child {
+  margin-right: 0px;
 }
 
 @media(min-width: 800px) {

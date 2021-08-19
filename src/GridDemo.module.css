@@ -8,31 +8,3 @@
   display: flex;
   flex-direction: column;
 }
-
-.grid {
-  position: relative;
-  overflow: hidden;
-  flex: 1;
-}
-
-.participantTile {
-  position: absolute;
-  will-change: transform, width, height, opacity, box-shadow;
-  border-radius: 24px;
-  overflow: hidden;
-  background-color: #444;
-}
-
-.participantTile video {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.participantName {
-  position: absolute;
-  bottom: 0;
-  right: 0;
-  background-color: rgba(0, 0, 0, 0.2);
-  padding: 8px 24px;
-}
