@@ -1,10 +1,4 @@
-import React, {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDrag } from "react-use-gesture";
 import { useSprings, animated } from "@react-spring/web";
 import styles from "./GridDemo.module.css";
@@ -147,10 +141,6 @@ export function VideoGrid({ participants }) {
   const draggingTileRef = useRef(null);
   const isMounted = useIsMounted();
 
-  // Contains tile indices
-  // Tiles are displayed in the order that they appear
-  const tileOrderRef = useRef([]);
-
   const [gridRef, gridBounds] = useMeasure();
 
   useEffect(() => {
@@ -192,49 +182,18 @@ export function VideoGrid({ participants }) {
           participant,
           remove: false,
         });
-
-        tileOrderRef.current.push(tileOrderRef.current.length);
-      }
-
-      if (newTiles.length !== tileOrderRef.current.length) {
-        debugger;
       }
 
       if (removedTileKeys.length > 0) {
-        // TODO: There's a race condition in this nested set state when you quickly add/remove
         setTimeout(() => {
           if (!isMounted.current) {
             return;
           }
 
           setTileState(({ tiles }) => {
-            if (tiles.length !== tileOrderRef.current.length) {
-              debugger;
-            }
-
             const newTiles = tiles.filter(
               (tile) => !removedTileKeys.includes(tile.key)
             );
-
-            const orderedTiles = tileOrderRef.current.map(
-              (index) => tiles[index]
-            );
-            const filteredTiles = orderedTiles.filter(
-              (tile) => !removedTileKeys.includes(tile.key)
-            );
-            tileOrderRef.current = filteredTiles.map((tile) =>
-              newTiles.indexOf(tile)
-            );
-
-            if (newTiles.length !== tileOrderRef.current.length) {
-              debugger;
-            }
-
-            for (const index of tileOrderRef.current) {
-              if (index >= newTiles.length || index === -1) {
-                debugger;
-              }
-            }
 
             return {
               tiles: newTiles,
@@ -252,11 +211,9 @@ export function VideoGrid({ participants }) {
   }, [participants, gridBounds]);
 
   const animate = useCallback(
-    (tileIndex) => {
-      const tileOrder = tileOrderRef.current;
-      const order = tileOrder.indexOf(tileIndex);
+    (tiles) => (tileIndex) => {
       const tile = tiles[tileIndex];
-      const tilePosition = tilePositions[order];
+      const tilePosition = tilePositions[tileIndex];
       const draggingTile = draggingTileRef.current;
       const dragging = draggingTile && tile.key === draggingTile.key;
       const remove = tile.remove;
@@ -285,30 +242,29 @@ export function VideoGrid({ participants }) {
           opacity: remove ? 0 : 1,
           zIndex: 0,
           shadow: 1,
-          immediate: false,
           from: {
             scale: 0,
             opacity: 0,
           },
           reset: false,
+          immediate: (key) => key === "zIndex",
         };
       }
     },
     [tiles, tilePositions]
   );
 
-  const [springs, api] = useSprings(tiles.length, animate, [
+  const [springs, api] = useSprings(tiles.length, animate(tiles), [
     tilePositions,
     tiles,
   ]);
 
   const bind = useDrag(({ args: [key], active, xy, movement }) => {
-    const tileOrder = tileOrderRef.current;
-
     const dragTileIndex = tiles.findIndex((tile) => tile.key === key);
     const dragTile = tiles[dragTileIndex];
+    const dragTilePosition = tilePositions[dragTileIndex];
 
-    const dragTileOrder = tileOrder.indexOf(dragTileIndex);
+    let newTiles = tiles;
 
     const cursorPosition = [xy[0] - gridBounds.left, xy[1] - gridBounds.top];
 
@@ -318,31 +274,25 @@ export function VideoGrid({ participants }) {
       hoverTileIndex++
     ) {
       const hoverTile = tiles[hoverTileIndex];
-      const hoverTileOrder = tileOrder.indexOf(hoverTileIndex);
-      const hoverTilePosition = tilePositions[hoverTileOrder];
+      const hoverTilePosition = tilePositions[hoverTileIndex];
 
       if (hoverTile.key === key) {
         continue;
       }
 
       if (isInside(cursorPosition, hoverTilePosition)) {
-        tileOrderRef.current = moveArrItem(
-          tileOrder,
-          dragTileOrder,
-          hoverTileOrder
-        );
+        newTiles = moveArrItem(tiles, dragTileIndex, hoverTileIndex);
+        setTileState((state) => ({ ...state, tiles: newTiles }));
         break;
       }
     }
 
     if (active) {
       if (!draggingTileRef.current) {
-        const tilePosition = tilePositions[dragTileOrder];
-
         draggingTileRef.current = {
           key: dragTile.key,
-          offsetX: tilePosition.x,
-          offsetY: tilePosition.y,
+          offsetX: dragTilePosition.x,
+          offsetY: dragTilePosition.y,
         };
       }
 
@@ -352,14 +302,13 @@ export function VideoGrid({ participants }) {
       draggingTileRef.current = null;
     }
 
-    api.start(animate);
+    api.start(animate(newTiles));
   });
 
   return (
     <div className={styles.grid} ref={gridRef}>
       {springs.map(({ shadow, ...style }, i) => {
-        const tileIndex = tileOrderRef.current[i];
-        const tile = tiles[tileIndex];
+        const tile = tiles[i];
 
         return (
           <ParticipantTile
