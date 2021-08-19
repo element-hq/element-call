@@ -1,9 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDrag } from "react-use-gesture";
 import { useSprings, animated } from "@react-spring/web";
-import styles from "./GridDemo.module.css";
+import classNames from "classnames";
+import styles from "./VideoGrid.module.css";
 import useMeasure from "react-use-measure";
 import moveArrItem from "lodash-move";
+import { ReactComponent as MicIcon } from "./icons/Mic.svg";
 
 function useIsMounted() {
   const isMountedRef = useRef(false);
@@ -344,10 +346,20 @@ function ParticipantTile({ style, participant, remove, ...rest }) {
     }
   }, [participant.stream]);
 
+  // Firefox doesn't respect the disablePictureInPicture attribute
+  // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
+
   return (
     <animated.div className={styles.participantTile} style={style} {...rest}>
-      <div className={styles.participantName}>{participant.userId}</div>
-      <video ref={videoRef} playsInline />
+      <div
+        className={classNames(styles.participantName, {
+          [styles.speaking]: participant.speaking,
+        })}
+      >
+        {participant.speaking && <MicIcon />}
+        <span>{participant.userId}</span>
+      </div>
+      <video ref={videoRef} playsInline disablePictureInPicture />
     </animated.div>
   );
 }

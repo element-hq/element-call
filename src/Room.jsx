@@ -20,6 +20,13 @@ import { useParams, useLocation, Link } from "react-router-dom";
 import { useVideoRoom } from "./ConferenceCallManagerHooks";
 import { DevTools } from "./DevTools";
 import { VideoGrid } from "./VideoGrid";
+import {
+  HangupButton,
+  SettingsButton,
+  MicButton,
+  VideoButton,
+} from "./RoomButton";
+import { ReactComponent as Logo } from "./Logo.svg";
 
 function useQuery() {
   const location = useLocation();
@@ -64,11 +71,17 @@ export function Room({ manager }) {
       {!loading && room && (
         <div className={styles.header}>
           <div className={styles.backNav}>
-            <Link to="/">Back</Link>
+            <Link className={styles.logo} to="/">
+              <Logo width={32} height={32} />
+            </Link>
           </div>
           <h3>{room.name}</h3>
           <div className={styles.userNav}>
-            <h5>{manager.client.getUserId()}</h5>
+            <SettingsButton
+              title={debug ? "Disable DevTools" : "Enable DevTools"}
+              on={debug}
+              onClick={() => setDebug((debug) => !debug)}
+            />
           </div>
         </div>
       )}
@@ -101,46 +114,12 @@ export function Room({ manager }) {
       )}
       {!loading && room && joined && (
         <div className={styles.footer}>
-          <button className={styles.leaveButton} onClick={leaveCall}>
-            Leave Call
-          </button>
-          <button
-            className={styles.leaveButton}
-            onClick={() => setDebug((debug) => !debug)}
-          >
-            Toggle Debugger
-          </button>
+          <MicButton />
+          <VideoButton />
+          <HangupButton onClick={leaveCall} />
         </div>
       )}
       {debug && <DevTools manager={manager} />}
-    </div>
-  );
-}
-
-function Participant({ userId, stream, local }) {
-  const videoRef = useRef();
-
-  useEffect(() => {
-    if (stream) {
-      if (local) {
-        videoRef.current.muted = true;
-      }
-
-      videoRef.current.srcObject = stream;
-      videoRef.current.play();
-    } else {
-      videoRef.current.srcObject = null;
-    }
-  }, [stream]);
-
-  return (
-    <div className={styles.participant}>
-      <video ref={videoRef} playsInline></video>
-      <div className={styles.participantLabel}>
-        <p>
-          {userId} {local && "(You)"}
-        </p>
-      </div>
     </div>
   );
 }
