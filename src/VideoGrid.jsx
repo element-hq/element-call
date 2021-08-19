@@ -333,6 +333,10 @@ function ParticipantTile({ style, participant, remove, ...rest }) {
 
   useEffect(() => {
     if (participant.stream) {
+      if (participant.local) {
+        videoRef.current.muted = true;
+      }
+
       videoRef.current.srcObject = participant.stream;
       videoRef.current.play();
     } else {
@@ -343,7 +347,7 @@ function ParticipantTile({ style, participant, remove, ...rest }) {
   return (
     <animated.div className={styles.participantTile} style={style} {...rest}>
       <div className={styles.participantName}>{participant.userId}</div>
-      <video ref={videoRef} playsInline muted={participant.muted} />
+      <video ref={videoRef} playsInline />
     </animated.div>
   );
 }
