@@ -343,7 +343,7 @@ function ParticipantTile({ style, participant, remove, ...rest }) {
   return (
     <animated.div className={styles.participantTile} style={style} {...rest}>
       <div className={styles.participantName}>{participant.userId}</div>
-      <video ref={videoRef} playsInline />
+      <video ref={videoRef} playsInline muted={participant.muted} />
     </animated.div>
   );
 }
