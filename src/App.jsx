@@ -23,7 +23,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import { useConferenceCallManager } from "./ConferenceCallManagerHooks";
-import { JoinOrCreateRoom } from "./JoinOrCreateRoom";
+import { Home } from "./Home";
 import { LoginOrRegister } from "./LoginOrRegister";
 import { Room } from "./Room";
 import { GridDemo } from "./GridDemo";
@@ -37,7 +37,7 @@ export default function App() {
 
   return (
     <Router>
-      <div>
+      <>
         {error && <p>{error.message}</p>}
         {loading ? (
           <p>Loading...</p>
@@ -45,7 +45,7 @@ export default function App() {
           <Switch>
             <Route exact path="/">
               {authenticated ? (
-                <JoinOrCreateRoom manager={manager} />
+                <Home manager={manager} />
               ) : (
                 <LoginOrRegister onRegister={register} onLogin={login} />
               )}
@@ -61,7 +61,7 @@ export default function App() {
             </Route>
           </Switch>
         )}
-      </div>
+      </>
     </Router>
   );
 }

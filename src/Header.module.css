@@ -1,0 +1,25 @@
+.header {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 98px;
+  user-select: none;
+}
+
+.leftNav {
+  position: absolute;
+  left: 20px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.rightNav {
+  position: absolute;
+  right: 20px;
+  max-width: 30%;
+}

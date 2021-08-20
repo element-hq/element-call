@@ -23,37 +23,6 @@ limitations under the License.
   overflow: hidden;
 }
 
-.header {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 98px;
-  user-select: none;
-}
-
-.header h5 {
-  text-overflow: ellipsis;
-  overflow: hidden;
-}
-
-.backNav {
-  position: absolute;
-  left: 20px;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-}
-
-.userNav {
-  position: absolute;
-  right: 20px;
-  max-width: 30%;
-}
-
 .joinRoom {
   display: flex;
   flex-direction: column;
