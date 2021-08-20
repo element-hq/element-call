@@ -95,6 +95,7 @@
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
   text-align: center;
+  font-weight: 700;
 }
 
 .button:hover {
