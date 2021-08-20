@@ -11,7 +11,7 @@
   margin: 1em 0;
   border-radius: 4px;
   transition: border-color .25s;
-  border: 1px solid #e7e7e7;
+  border: 1px solid #394049;
 }
 
 .fieldRow.rightAlign {
@@ -36,8 +36,8 @@
   border: none;
   border-radius: 4px;
   padding: 8px 9px;
-  color: #2e2f32;
-  background-color: #fff;
+  color: white;
+  background-color: #21262c;
   flex: 1;
   min-width: 0;
 }
@@ -49,12 +49,12 @@
 
 .field input:placeholder-shown:focus::placeholder {
   transition: color .25s ease-in .1s;
-  color: #888;
+  color: #6f7882;
 }
 
 .field label {
   transition: font-size .25s ease-out .1s,color .25s ease-out .1s,top .25s ease-out .1s,background-color .25s ease-out .1s;
-  color: #2e2f32;
+  color: white;
   background-color: transparent;
   font-size: 14px;
   position: absolute;
@@ -70,7 +70,7 @@
 }
 
 .field:focus-within {
-  border-color: #238cf5;
+  border-color: #0086e6;
 }
 
 .field input:focus {
@@ -78,17 +78,16 @@
 }
 
 .field input:focus + label, .field input:not(:placeholder-shown) + label {
-  background-color: #fff;
+  background-color: #21262c;
   transition: font-size .25s ease-out 0s,color .25s ease-out 0s,top .25s ease-out 0s,background-color .25s ease-out 0s;
   font-size: 10px;
   top: -13px;
   padding: 0 2px;
-  background-color: #fff;
   pointer-events: auto;
 }
 
 .field input:focus + label {
-  color: #238cf5;
+  color: #0086e6;
 }
 
 .button {
@@ -120,6 +119,6 @@
 .errorMessage {
   margin: 0;
   font-size: 13px;
-  color: rgb(255, 75, 85);
+  color: #ff5b55;
   font-weight: 600;
 }

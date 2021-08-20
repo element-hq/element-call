@@ -14,7 +14,7 @@
   width: auto;
   max-width: none;
   padding: 12px;
-  background-color: rgba(33,38,44,.9);
+  background-color: #21262c;
   border-radius: 8px;
   margin-bottom: 20px;
 }
@@ -33,11 +33,11 @@
 }
 
 .modal {
-  color: #232f32;
+  color: white;
   border-radius: 8px;
   padding: 25px 60px;
   max-width: 400px;
-  background-color: white;
+  background-color: #21262c;
   flex: 1;
   margin-bottom: 20px;
 }
