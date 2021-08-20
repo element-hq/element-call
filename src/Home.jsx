@@ -69,7 +69,7 @@ export function Home({ manager }) {
           onLogout={onLogout}
         />
       </Header>
-      <Content>
+      <Content className={styles.content}>
         <Sidebar>
           <h5>Rooms:</h5>
           <div className={styles.roomList}>
