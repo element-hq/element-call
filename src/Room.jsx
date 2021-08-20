@@ -26,7 +26,7 @@ import {
   MicButton,
   VideoButton,
 } from "./RoomButton";
-import { ReactComponent as Logo } from "./Logo.svg";
+import { Header, LeftNav, RightNav } from "./Header";
 
 function useQuery() {
   const location = useLocation();
@@ -69,21 +69,19 @@ export function Room({ manager }) {
   return (
     <div className={styles.room}>
       {!loading && room && (
-        <div className={styles.header}>
-          <div className={styles.backNav}>
-            <Link className={styles.logo} to="/">
-              <Logo width={32} height={32} />
-            </Link>
-          </div>
-          <h3>{room.name}</h3>
-          <div className={styles.userNav}>
+        <Header>
+          <LeftNav />
+          <CenterNav>
+            <h3>{room.name}</h3>
+          </CenterNav>
+          <RightNav>
             <SettingsButton
               title={debug ? "Disable DevTools" : "Enable DevTools"}
               on={debug}
               onClick={() => setDebug((debug) => !debug)}
             />
-          </div>
-        </div>
+          </RightNav>
+        </Header>
       )}
       {loading && (
         <div className={styles.centerMessage}>
