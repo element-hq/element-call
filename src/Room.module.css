@@ -35,21 +35,6 @@ limitations under the License.
   padding-left: 0;
 }
 
-.joinRoom button {
-  border: none;
-  background: green;
-  color: white;
-  font-size: 16px;
-  font-weight: bold;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-}
-
-.joinRoom button:hover, .joinRoom button:active {
-  background: darkgreen;
-}
-
 .centerMessage {
   display: flex;
   flex: 1;

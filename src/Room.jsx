@@ -26,7 +26,8 @@ import {
   MicButton,
   VideoButton,
 } from "./RoomButton";
-import { Header, LeftNav, RightNav } from "./Header";
+import { Header, LeftNav, RightNav, CenterNav } from "./Header";
+import { Button } from "./Input";
 
 function useQuery() {
   const location = useLocation();
@@ -97,9 +98,9 @@ export function Room({ manager }) {
               <li key={member.userId}>{member.name}</li>
             ))}
           </ul>
-          <button disabled={joining} onClick={joinCall}>
+          <Button disabled={joining} onClick={joinCall}>
             Join Call
-          </button>
+          </Button>
         </div>
       )}
       {!loading && room && joined && participants.length === 0 && (

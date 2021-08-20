@@ -23,6 +23,7 @@ limitations under the License.
   justify-content: center;
   align-items: center;
   padding: 0;
+  border: none;
 }
 
 .roomButton:hover {
@@ -46,6 +47,7 @@ limitations under the License.
   background-color: transparent;
   border-radius: 32px;
   padding: 0;
+  border: none;
 }
 
 .headerButton:hover {
