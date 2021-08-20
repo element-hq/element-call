@@ -69,15 +69,26 @@
   max-width: calc(100% - 20px);
 }
 
-.field input:focus + label {
+.field:focus-within {
+  border-color: #238cf5;
+}
+
+.field input:focus {
+  outline: 0;
+}
+
+.field input:focus + label, .field input:not(:placeholder-shown) + label {
   background-color: #fff;
-  color: #238cf5;
   transition: font-size .25s ease-out 0s,color .25s ease-out 0s,top .25s ease-out 0s,background-color .25s ease-out 0s;
   font-size: 10px;
   top: -13px;
   padding: 0 2px;
   background-color: #fff;
   pointer-events: auto;
+}
+
+.field input:focus + label {
+  color: #238cf5;
 }
 
 .button {
@@ -104,4 +115,11 @@
 
 .button:active {
 
+}
+
+.errorMessage {
+  margin: 0;
+  font-size: 13px;
+  color: rgb(255, 75, 85);
+  font-weight: 600;
 }

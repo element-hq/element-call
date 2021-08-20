@@ -38,3 +38,18 @@ export function RightNav({ children, className, ...rest }) {
     </div>
   );
 }
+
+export function UserNav({ signedIn, userName, onLogout }) {
+  if (!signedIn) {
+    return null;
+  }
+
+  return (
+    <RightNav>
+      <span className={styles.userName}>{userName}</span>
+      <button className={styles.signOutButton} type="button" onClick={onLogout}>
+        Sign Out
+      </button>
+    </RightNav>
+  );
+}

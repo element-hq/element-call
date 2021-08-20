@@ -5,6 +5,7 @@
   align-items: center;
   height: 98px;
   user-select: none;
+  flex-shrink: 0;
 }
 
 .leftNav {
@@ -21,5 +22,24 @@
 .rightNav {
   position: absolute;
   right: 20px;
-  max-width: 30%;
+  max-width: 33%;
+  white-space: nowrap;
+  display: flex;
+}
+
+.userName {
+  font-weight: 600;
+  margin-right: 8px;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  flex-shrink: 1;
+}
+
+.signOutButton {
+  background: transparent;
+  border: none;
+  color: rgb(255, 75, 85);
+  cursor: pointer;
+  font-weight: 600;
+  flex-shrink: 0;
 }

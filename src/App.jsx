@@ -24,9 +24,10 @@ import {
 } from "react-router-dom";
 import { useConferenceCallManager } from "./ConferenceCallManagerHooks";
 import { Home } from "./Home";
-import { LoginOrRegister } from "./LoginOrRegister";
 import { Room } from "./Room";
 import { GridDemo } from "./GridDemo";
+import { RegisterPage } from "./RegisterPage";
+import { LoginPage } from "./LoginPage";
 
 export default function App() {
   const { protocol, host } = window.location;
@@ -38,23 +39,24 @@ export default function App() {
   return (
     <Router>
       <>
-        {error && <p>{error.message}</p>}
         {loading ? (
           <p>Loading...</p>
         ) : (
           <Switch>
-            <Route exact path="/">
-              {authenticated ? (
-                <Home manager={manager} />
-              ) : (
-                <LoginOrRegister onRegister={register} onLogin={login} />
-              )}
+            <AuthenticatedRoute authenticated={authenticated} exact path="/">
+              <Home manager={manager} error={error} />
+            </AuthenticatedRoute>
+            <Route exact path="/login">
+              <LoginPage onLogin={login} error={error} />
+            </Route>
+            <Route exact path="/register">
+              <RegisterPage onRegister={register} error={error} />
             </Route>
             <AuthenticatedRoute
               authenticated={authenticated}
               path="/room/:roomId"
             >
-              <Room manager={manager} />
+              <Room manager={manager} error={error} />
             </AuthenticatedRoute>
             <Route exact path="/grid">
               <GridDemo />
@@ -76,7 +78,7 @@ function AuthenticatedRoute({ authenticated, children, ...rest }) {
       ) : (
         <Redirect
           to={{
-            pathname: "/",
+            pathname: "/login",
             state: { from: location },
           }}
         />
