@@ -29,11 +29,11 @@ export class ConferenceCallDebugger extends EventEmitter {
 
     this.bufferedEvents = [];
 
-    this.manager.on("call", this._onCall);
-    this.manager.on("debugstate", this._onDebugStateChanged);
-    this.manager.client.on("event", this._onEvent);
-    this.manager.on("entered", this._onEntered);
-    this.manager.on("left", this._onLeft);
+    // this.manager.on("call", this._onCall);
+    // this.manager.on("debugstate", this._onDebugStateChanged);
+    // this.manager.client.on("event", this._onEvent);
+    // this.manager.on("entered", this._onEntered);
+    // this.manager.on("left", this._onLeft);
   }
 
   _onEntered = () => {
