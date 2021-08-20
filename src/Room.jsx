@@ -46,6 +46,10 @@ export function Room({ manager }) {
     error,
     joinCall,
     leaveCall,
+    toggleMuteVideo,
+    toggleMuteMic,
+    videoMuted,
+    micMuted,
   } = useVideoRoom(manager, roomId);
   const debugStr = query.get("debug");
   const [debug, setDebug] = useState(debugStr === "" || debugStr === "true");
@@ -113,8 +117,8 @@ export function Room({ manager }) {
       )}
       {!loading && room && joined && (
         <div className={styles.footer}>
-          <MicButton />
-          <VideoButton />
+          <MicButton muted={micMuted} onClick={toggleMuteMic} />
+          <VideoButton enabled={videoMuted} onClick={toggleMuteVideo} />
           <HangupButton onClick={leaveCall} />
         </div>
       )}

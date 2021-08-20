@@ -9287,7 +9287,7 @@ module.exports={
   "𝐴": "A",
   "𝑨": "A",
   "𝒜": "A",
-  "𝓐": "A",
+  "���": "A",
   "𝔄": "A",
   "𝔸": "A",
   "𝕬": "A",
@@ -13735,7 +13735,7 @@ module.exports={
   "⽒": "氏",
   "⺠": "民",
   "⽓": "气",
-  "���": "水",
+  "⽔": "水",
   "⺡": "氵",
   "⺢": "氺",
   "汎": "汎",
@@ -58557,7 +58557,6 @@ class MatrixCall extends events_1.EventEmitter {
             }
             this.pushLocalFeed(stream, callEventTypes_1.SDPStreamMetadataPurpose.Usermedia);
             this.setState(CallState.CreateOffer);
-            logger_1.logger.info("Got local AV stream with id " + this.localUsermediaStream.id);
             logger_1.logger.debug("gotUserMediaForInvite -> " + this.type);
             // Now we wait for the negotiationneeded event
         });
@@ -58566,7 +58565,6 @@ class MatrixCall extends events_1.EventEmitter {
                 return;
             }
             this.pushLocalFeed(stream, callEventTypes_1.SDPStreamMetadataPurpose.Usermedia);
-            logger_1.logger.info("Got local AV stream with id " + this.localUsermediaStream.id);
             this.setState(CallState.CreateAnswer);
             let myAnswer;
             try {
@@ -59007,6 +59005,7 @@ class MatrixCall extends events_1.EventEmitter {
             this.feeds.push(new callFeed_1.CallFeed(stream, userId, purpose, this.client, this.roomId, false, false));
             this.emit(CallEvent.FeedsChanged, this.feeds);
         }
+        // TODO: Find out what is going on here
         // why do we enable audio (and only audio) tracks here? -- matthew
         setTracksEnabled(stream.getAudioTracks(), true);
         if (addToPeerConnection) {
@@ -59169,9 +59168,6 @@ class MatrixCall extends events_1.EventEmitter {
                     return;
                 }
             }
-            else if (this.localUsermediaStream) {
-                this.gotUserMediaForAnswer(this.localUsermediaStream);
-            }
             else if (this.waitForLocalAVStream) {
                 this.setState(CallState.WaitLocalMedia);
             }
@@ -59183,16 +59179,11 @@ class MatrixCall extends events_1.EventEmitter {
      * @param {MatrixCall} newCall The new call.
      */
     replacedBy(newCall) {
-        logger_1.logger.debug(this.callId + " being replaced by " + newCall.callId);
         if (this.state === CallState.WaitLocalMedia) {
             logger_1.logger.debug("Telling new call to wait for local media");
             newCall.waitForLocalAVStream = true;
         }
-        else if (this.state === CallState.CreateOffer) {
-            logger_1.logger.debug("Handing local stream to new call");
-            newCall.gotUserMediaForAnswer(this.localUsermediaStream);
-        }
-        else if (this.state === CallState.InviteSent) {
+        else if ([CallState.CreateOffer, CallState.InviteSent].includes(this.state)) {
             logger_1.logger.debug("Handing local stream to new call");
             newCall.gotUserMediaForAnswer(this.localUsermediaStream);
         }
@@ -59841,10 +59832,8 @@ class MatrixCall extends events_1.EventEmitter {
     stopAllMedia() {
         logger_1.logger.debug(`stopAllMedia (stream=${this.localUsermediaStream})`);
         for (const feed of this.feeds) {
-            if (!feed.isLocal()) {
-                for (const track of feed.stream.getTracks()) {
-                    track.stop();
-                }
+            for (const track of feed.stream.getTracks()) {
+                track.stop();
             }
         }
     }
@@ -60287,157 +60276,161 @@ class CallEventHandler {
         return type.startsWith("m.call.") || type.startsWith("org.matrix.call.");
     }
     handleCallEvent(event) {
-        const content = event.getContent();
-        const type = event.getType();
-        const weSentTheEvent = event.getSender() === this.client.credentials.userId;
-        let call = content.call_id ? this.calls.get(content.call_id) : undefined;
-        //console.info("RECV %s content=%s", type, JSON.stringify(content));
-        if (type === event_1.EventType.CallInvite) {
-            // ignore invites you send
-            if (weSentTheEvent)
-                return;
-            // expired call
-            if (event.getLocalAge() > content.lifetime - RING_GRACE_PERIOD)
-                return;
-            // stale/old invite event
-            if (call && call.state === call_1.CallState.Ended)
-                return;
-            if (call) {
-                logger_1.logger.log(`WARN: Already have a MatrixCall with id ${content.call_id} but got an ` +
-                    `invite. Clobbering.`);
-            }
-            if (content.invitee && content.invitee !== this.client.getUserId()) {
-                return; // This invite was meant for another user in the room
-            }
-            const timeUntilTurnCresExpire = this.client.getTurnServersExpiry() - Date.now();
-            logger_1.logger.info("Current turn creds expire in " + timeUntilTurnCresExpire + " ms");
-            call = call_1.createNewMatrixCall(this.client, event.getRoomId(), { forceTURN: this.client.forceTURN });
-            if (!call) {
-                logger_1.logger.log("Incoming call ID " + content.call_id + " but this client " +
-                    "doesn't support WebRTC");
-                // don't hang up the call: there could be other clients
-                // connected that do support WebRTC and declining the
-                // the call on their behalf would be really annoying.
-                return;
-            }
-            call.callId = content.call_id;
-            const invitePromise = call.initWithInvite(event);
-            this.calls.set(call.callId, call);
-            // if we stashed candidate events for that call ID, play them back now
-            if (this.candidateEventsByCall.get(call.callId)) {
-                for (const ev of this.candidateEventsByCall.get(call.callId)) {
-                    call.onRemoteIceCandidatesReceived(ev);
-                }
-            }
-            // Were we trying to call that user (room)?
-            let existingCall;
-            for (const thisCall of this.calls.values()) {
-                const isCalling = [call_1.CallState.WaitLocalMedia, call_1.CallState.CreateOffer, call_1.CallState.InviteSent].includes(thisCall.state);
-                if (call.roomId === thisCall.roomId &&
-                    thisCall.direction === call_1.CallDirection.Outbound &&
-                    call.invitee === thisCall.invitee &&
-                    isCalling) {
-                    existingCall = thisCall;
-                    break;
-                }
-            }
-            if (existingCall) {
-                // If we've only got to wait_local_media or create_offer and
-                // we've got an invite, pick the incoming call because we know
-                // we haven't sent our invite yet otherwise, pick whichever
-                // call has the lowest call ID (by string comparison)
-                if (existingCall.state === call_1.CallState.WaitLocalMedia ||
-                    existingCall.state === call_1.CallState.CreateOffer ||
-                    existingCall.callId > call.callId) {
-                    logger_1.logger.log("Glare detected: answering incoming call " + call.callId +
-                        " and canceling outgoing call " + existingCall.callId);
-                    existingCall.replacedBy(call);
-                    call.answer();
-                }
-                else {
-                    logger_1.logger.log("Glare detected: rejecting incoming call " + call.callId +
-                        " and keeping outgoing call " + existingCall.callId);
-                    call.hangup(call_1.CallErrorCode.Replaced, true);
-                }
-            }
-            else {
-                invitePromise.then(() => {
-                    this.client.emit("Call.incoming", call);
-                });
-            }
-        }
-        else if (type === event_1.EventType.CallCandidates) {
-            if (weSentTheEvent)
-                return;
-            if (!call) {
-                // store the candidates; we may get a call eventually.
-                if (!this.candidateEventsByCall.has(content.call_id)) {
-                    this.candidateEventsByCall.set(content.call_id, []);
-                }
-                this.candidateEventsByCall.get(content.call_id).push(event);
-            }
-            else {
-                call.onRemoteIceCandidatesReceived(event);
-            }
-        }
-        else if ([event_1.EventType.CallHangup, event_1.EventType.CallReject].includes(type)) {
-            // Note that we also observe our own hangups here so we can see
-            // if we've already rejected a call that would otherwise be valid
-            if (!call) {
-                // if not live, store the fact that the call has ended because
-                // we're probably getting events backwards so
-                // the hangup will come before the invite
-                call = call_1.createNewMatrixCall(this.client, event.getRoomId());
+        return __awaiter(this, void 0, void 0, function* () {
+            const content = event.getContent();
+            const type = event.getType();
+            const weSentTheEvent = event.getSender() === this.client.credentials.userId;
+            let call = content.call_id ? this.calls.get(content.call_id) : undefined;
+            //console.info("RECV %s content=%s", type, JSON.stringify(content));
+            if (type === event_1.EventType.CallInvite) {
+                // ignore invites you send
+                if (weSentTheEvent)
+                    return;
+                // expired call
+                if (event.getLocalAge() > content.lifetime - RING_GRACE_PERIOD)
+                    return;
+                // stale/old invite event
+                if (call && call.state === call_1.CallState.Ended)
+                    return;
                 if (call) {
-                    call.callId = content.call_id;
-                    call.initWithHangup(event);
-                    this.calls.set(content.call_id, call);
+                    logger_1.logger.log(`WARN: Already have a MatrixCall with id ${content.call_id} but got an ` +
+                        `invite. Clobbering.`);
                 }
-            }
-            else {
-                if (call.state !== call_1.CallState.Ended) {
-                    if (type === event_1.EventType.CallHangup) {
-                        call.onHangupReceived(content);
+                if (content.invitee && content.invitee !== this.client.getUserId()) {
+                    return; // This invite was meant for another user in the room
+                }
+                const timeUntilTurnCresExpire = this.client.getTurnServersExpiry() - Date.now();
+                logger_1.logger.info("Current turn creds expire in " + timeUntilTurnCresExpire + " ms");
+                call = call_1.createNewMatrixCall(this.client, event.getRoomId(), { forceTURN: this.client.forceTURN });
+                if (!call) {
+                    logger_1.logger.log("Incoming call ID " + content.call_id + " but this client " +
+                        "doesn't support WebRTC");
+                    // don't hang up the call: there could be other clients
+                    // connected that do support WebRTC and declining the
+                    // the call on their behalf would be really annoying.
+                    return;
+                }
+                call.callId = content.call_id;
+                const initWithInvitePromise = call.initWithInvite(event);
+                this.calls.set(call.callId, call);
+                // if we stashed candidate events for that call ID, play them back now
+                if (this.candidateEventsByCall.get(call.callId)) {
+                    for (const ev of this.candidateEventsByCall.get(call.callId)) {
+                        call.onRemoteIceCandidatesReceived(ev);
+                    }
+                }
+                // Were we trying to call that user (room)?
+                let existingCall;
+                for (const thisCall of this.calls.values()) {
+                    const isCalling = [call_1.CallState.WaitLocalMedia, call_1.CallState.CreateOffer, call_1.CallState.InviteSent].includes(thisCall.state);
+                    if (call.roomId === thisCall.roomId &&
+                        thisCall.direction === call_1.CallDirection.Outbound &&
+                        call.invitee === thisCall.invitee &&
+                        isCalling) {
+                        existingCall = thisCall;
+                        break;
+                    }
+                }
+                if (existingCall) {
+                    // If we've only got to wait_local_media or create_offer and
+                    // we've got an invite, pick the incoming call because we know
+                    // we haven't sent our invite yet otherwise, pick whichever
+                    // call has the lowest call ID (by string comparison)
+                    if (existingCall.state === call_1.CallState.WaitLocalMedia ||
+                        existingCall.state === call_1.CallState.CreateOffer ||
+                        existingCall.callId > call.callId) {
+                        logger_1.logger.log("Glare detected: answering incoming call " + call.callId +
+                            " and canceling outgoing call " + existingCall.callId);
+                        // Await init with invite as we need a peerConn for the following methods
+                        yield initWithInvitePromise;
+                        existingCall.replacedBy(call);
+                        call.answer();
                     }
                     else {
-                        call.onRejectReceived(content);
-                    }
-                    this.calls.delete(content.call_id);
-                }
-            }
-        }
-        // The following events need a call
-        if (!call)
-            return;
-        // Ignore remote echo
-        if (event.getContent().party_id === call.ourPartyId)
-            return;
-        switch (type) {
-            case event_1.EventType.CallAnswer:
-                if (weSentTheEvent) {
-                    if (call.state === call_1.CallState.Ringing) {
-                        call.onAnsweredElsewhere(content);
+                        logger_1.logger.log("Glare detected: rejecting incoming call " + call.callId +
+                            " and keeping outgoing call " + existingCall.callId);
+                        call.hangup(call_1.CallErrorCode.Replaced, true);
                     }
                 }
                 else {
-                    call.onAnswerReceived(event);
+                    initWithInvitePromise.then(() => {
+                        this.client.emit("Call.incoming", call);
+                    });
                 }
-                break;
-            case event_1.EventType.CallSelectAnswer:
-                call.onSelectAnswerReceived(event);
-                break;
-            case event_1.EventType.CallNegotiate:
-                call.onNegotiateReceived(event);
-                break;
-            case event_1.EventType.CallAssertedIdentity:
-            case event_1.EventType.CallAssertedIdentityPrefix:
-                call.onAssertedIdentityReceived(event);
-                break;
-            case event_1.EventType.CallSDPStreamMetadataChanged:
-            case event_1.EventType.CallSDPStreamMetadataChangedPrefix:
-                call.onSDPStreamMetadataChangedReceived(event);
-                break;
-        }
+            }
+            else if (type === event_1.EventType.CallCandidates) {
+                if (weSentTheEvent)
+                    return;
+                if (!call) {
+                    // store the candidates; we may get a call eventually.
+                    if (!this.candidateEventsByCall.has(content.call_id)) {
+                        this.candidateEventsByCall.set(content.call_id, []);
+                    }
+                    this.candidateEventsByCall.get(content.call_id).push(event);
+                }
+                else {
+                    call.onRemoteIceCandidatesReceived(event);
+                }
+            }
+            else if ([event_1.EventType.CallHangup, event_1.EventType.CallReject].includes(type)) {
+                // Note that we also observe our own hangups here so we can see
+                // if we've already rejected a call that would otherwise be valid
+                if (!call) {
+                    // if not live, store the fact that the call has ended because
+                    // we're probably getting events backwards so
+                    // the hangup will come before the invite
+                    call = call_1.createNewMatrixCall(this.client, event.getRoomId());
+                    if (call) {
+                        call.callId = content.call_id;
+                        call.initWithHangup(event);
+                        this.calls.set(content.call_id, call);
+                    }
+                }
+                else {
+                    if (call.state !== call_1.CallState.Ended) {
+                        if (type === event_1.EventType.CallHangup) {
+                            call.onHangupReceived(content);
+                        }
+                        else {
+                            call.onRejectReceived(content);
+                        }
+                        this.calls.delete(content.call_id);
+                    }
+                }
+            }
+            // The following events need a call
+            if (!call)
+                return;
+            // Ignore remote echo
+            if (event.getContent().party_id === call.ourPartyId)
+                return;
+            switch (type) {
+                case event_1.EventType.CallAnswer:
+                    if (weSentTheEvent) {
+                        if (call.state === call_1.CallState.Ringing) {
+                            call.onAnsweredElsewhere(content);
+                        }
+                    }
+                    else {
+                        call.onAnswerReceived(event);
+                    }
+                    break;
+                case event_1.EventType.CallSelectAnswer:
+                    call.onSelectAnswerReceived(event);
+                    break;
+                case event_1.EventType.CallNegotiate:
+                    call.onNegotiateReceived(event);
+                    break;
+                case event_1.EventType.CallAssertedIdentity:
+                case event_1.EventType.CallAssertedIdentityPrefix:
+                    call.onAssertedIdentityReceived(event);
+                    break;
+                case event_1.EventType.CallSDPStreamMetadataChanged:
+                case event_1.EventType.CallSDPStreamMetadataChangedPrefix:
+                    call.onSDPStreamMetadataChangedReceived(event);
+                    break;
+            }
+        });
     }
 }
 exports.CallEventHandler = CallEventHandler;

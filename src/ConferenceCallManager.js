@@ -171,6 +171,9 @@ export class ConferenceCallManager extends EventEmitter {
 
     this.localParticipant = null;
 
+    this.micMuted = false;
+    this.videoMuted = false;
+
     this.client.on("RoomState.members", this._onRoomStateMembers);
     this.client.on("Call.incoming", this._onIncomingCall);
     this.callDebugger = new ConferenceCallDebugger(this);
@@ -307,10 +310,64 @@ export class ConferenceCallManager extends EventEmitter {
     this.participants = [];
     this.localParticipant.stream = null;
     this.localParticipant.call = null;
+    this.micMuted = false;
+    this.videoMuted = false;
     clearTimeout(this._memberParticipantStateTimeout);
 
     this.emit("participants_changed");
     this.emit("left");
+  }
+
+  setMicMuted(muted) {
+    this.micMuted = muted;
+
+    const localStream = this.client.localAVStream;
+
+    if (localStream) {
+      for (const track of localStream.getTracks()) {
+        if (track.kind === "audio") {
+          track.enabled = !this.micMuted;
+        }
+      }
+    }
+
+    for (let participant of this.participants) {
+      const call = participant.call;
+
+      if (
+        call &&
+        call.localUsermediaStream &&
+        call.isMicrophoneMuted() !== this.micMuted
+      ) {
+        call.setMicrophoneMuted(this.micMuted);
+      }
+    }
+  }
+
+  setVideoMuted(muted) {
+    this.videoMuted = muted;
+
+    const localStream = this.client.localAVStream;
+
+    if (localStream) {
+      for (const track of localStream.getTracks()) {
+        if (track.kind === "video") {
+          track.enabled = !this.videoMuted;
+        }
+      }
+    }
+
+    for (let participant of this.participants) {
+      const call = participant.call;
+
+      if (
+        call &&
+        call.localUsermediaStream &&
+        call.isLocalVideoMuted() !== this.videoMuted
+      ) {
+        call.setLocalVideoMuted(this.videoMuted);
+      }
+    }
   }
 
   logout() {
@@ -557,6 +614,20 @@ export class ConferenceCallManager extends EventEmitter {
    */
 
   _onCallStateChanged = (participant, call, state) => {
+    if (
+      call.localUsermediaStream &&
+      call.isMicrophoneMuted() !== this.micMuted
+    ) {
+      call.setMicrophoneMuted(this.micMuted);
+    }
+
+    if (
+      call.localUsermediaStream &&
+      call.isLocalVideoMuted() !== this.videoMuted
+    ) {
+      call.setLocalVideoMuted(this.videoMuted);
+    }
+
     this.emit("debugstate", participant.userId, call.callId, state);
   };
 
