@@ -139,15 +139,28 @@ export function useConferenceCallManager(homeserverUrl) {
 }
 
 export function useVideoRoom(manager, roomId, timeout = 5000) {
-  const [{ loading, joined, joining, room, participants, error }, setState] =
-    useState({
-      loading: true,
-      joining: false,
-      joined: false,
-      room: undefined,
-      participants: [],
-      error: undefined,
-    });
+  const [
+    {
+      loading,
+      joined,
+      joining,
+      room,
+      participants,
+      error,
+      videoMuted,
+      micMuted,
+    },
+    setState,
+  ] = useState({
+    loading: true,
+    joining: false,
+    joined: false,
+    room: undefined,
+    participants: [],
+    error: undefined,
+    videoMuted: false,
+    micMuted: false,
+  });
 
   useEffect(() => {
     setState((prevState) => ({
@@ -305,6 +318,16 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
     };
   }, [manager]);
 
+  const toggleMuteMic = useCallback(() => {
+    manager.setMicMuted(!manager.micMuted);
+    setState((prevState) => ({ ...prevState, micMuted: manager.micMuted }));
+  }, [manager]);
+
+  const toggleMuteVideo = useCallback(() => {
+    manager.setVideoMuted(!manager.videoMuted);
+    setState((prevState) => ({ ...prevState, videoMuted: manager.videoMuted }));
+  }, [manager]);
+
   return {
     loading,
     joined,
@@ -314,6 +337,10 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
     error,
     joinCall,
     leaveCall,
+    toggleMuteVideo,
+    toggleMuteMic,
+    videoMuted,
+    micMuted,
   };
 }
 
