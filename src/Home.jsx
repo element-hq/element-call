@@ -17,10 +17,11 @@ limitations under the License.
 import React, { useCallback, useRef, useState } from "react";
 import { useHistory, Link } from "react-router-dom";
 import { useRooms } from "./ConferenceCallManagerHooks";
-import { Header, LeftNav, RightNav } from "./Header";
+import { Header, LeftNav, UserNav } from "./Header";
 import ColorHash from "color-hash";
 import styles from "./Home.module.css";
-import { FieldRow, InputField, Button } from "./Input";
+import { FieldRow, InputField, Button, ErrorMessage } from "./Input";
+import { Center, Content, Sidebar, Modal } from "./Layout";
 
 const colorHash = new ColorHash({ lightness: 0.3 });
 
@@ -62,21 +63,14 @@ export function Home({ manager }) {
     <>
       <Header>
         <LeftNav />
-        <RightNav>
-          <span className={styles.userName}>
-            {manager.client && manager.client.getUserId()}
-          </span>
-          <button
-            className={styles.signOutButton}
-            type="button"
-            onClick={onLogout}
-          >
-            Sign Out
-          </button>
-        </RightNav>
+        <UserNav
+          signedIn={manager.client}
+          userName={manager.client.getUserId()}
+          onLogout={onLogout}
+        />
       </Header>
-      <div className={styles.content}>
-        <div className={styles.roomsSidebar}>
+      <Content>
+        <Sidebar>
           <h5>Rooms:</h5>
           <div className={styles.roomList}>
             {rooms.map((room) => (
@@ -95,29 +89,35 @@ export function Home({ manager }) {
               </Link>
             ))}
           </div>
-        </div>
-        <div className={styles.center}>
-          <form className={styles.createRoomContainer} onSubmit={onCreateRoom}>
-            <h2>Create New Room</h2>
-            <FieldRow>
-              <InputField
-                id="roomName"
-                name="roomName"
-                label="Room Name"
-                type="text"
-                required
-                autoComplete="off"
-                placeholder="Room Name"
-                ref={roomNameRef}
-              />
-            </FieldRow>
-            {createRoomError && <p>{createRoomError.message}</p>}
-            <FieldRow rightAlign>
-              <Button type="submit">Create Room</Button>
-            </FieldRow>
-          </form>
-        </div>
-      </div>
+        </Sidebar>
+        <Center>
+          <Modal>
+            <form onSubmit={onCreateRoom}>
+              <h2>Create New Room</h2>
+              <FieldRow>
+                <InputField
+                  id="roomName"
+                  name="roomName"
+                  label="Room Name"
+                  type="text"
+                  required
+                  autoComplete="off"
+                  placeholder="Room Name"
+                  ref={roomNameRef}
+                />
+              </FieldRow>
+              {createRoomError && (
+                <FieldRow>
+                  <ErrorMessage>{createRoomError.message}</ErrorMessage>
+                </FieldRow>
+              )}
+              <FieldRow rightAlign>
+                <Button type="submit">Create Room</Button>
+              </FieldRow>
+            </form>
+          </Modal>
+        </Center>
+      </Content>
     </>
   );
 }

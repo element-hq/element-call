@@ -25,7 +25,7 @@ export const InputField = forwardRef(
     return (
       <Field>
         <input id={id} {...rest} ref={ref} />
-        <label for={id}>{label}</label>
+        <label htmlFor={id}>{label}</label>
       </Field>
     );
   }
@@ -42,3 +42,7 @@ export const Button = forwardRef(({ className, children, ...rest }, ref) => {
     </button>
   );
 });
+
+export function ErrorMessage({ children }) {
+  return <p className={styles.errorMessage}>{children}</p>;
+}

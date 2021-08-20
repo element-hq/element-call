@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styles from "./Room.module.css";
-import { useParams, useLocation, Link } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import { useVideoRoom } from "./ConferenceCallManagerHooks";
 import { DevTools } from "./DevTools";
 import { VideoGrid } from "./VideoGrid";

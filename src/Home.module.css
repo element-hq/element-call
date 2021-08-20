@@ -1,23 +1,3 @@
-.content {
-  display: grid;
-  grid-template-columns: minmax(200px, 320px) 3fr;
-  gap: 20px;
-  margin: 0 20px;
-  flex: 1;
-}
-
-.roomsSidebar {
-  padding: 12px;
-  background-color: rgba(33,38,44,.9);
-  border-radius: 8px;
-}
-
-.roomsSidebar h5 {
-  color: rgb(142, 153, 164);
-  font-size: 13px;
-  margin: 0 0 8px 0;    
-}
-
 .roomList {
   
 }
@@ -64,36 +44,4 @@
   margin-left: 8px;
   font-size: 14px;
   line-height: 18px;
-}
-
-.center {
-  flex: 1;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.createRoomContainer {
-  color: #232f32;
-  border-radius: 8px;
-  padding: 25px 60px;
-  width: 400px;
-  background-color: white;
-}
-
-.createRoomContainer h2 {
-  margin: 0 0 20px 0;
-}
-
-.userName {
-  font-weight: 600;
-  margin-right: 8px;
-}
-
-.signOutButton {
-  background: transparent;
-  border: none;
-  color: rgb(255, 75, 85);
-  cursor: pointer;
-  font-weight: 600;
 }
