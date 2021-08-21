@@ -17,7 +17,7 @@ limitations under the License.
 import React, { useCallback, useRef } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
 import { Header, LeftNav } from "./Header";
-import { FieldRow, InputField, Button } from "./Input";
+import { FieldRow, InputField, Button, ErrorMessage } from "./Input";
 import { Center, Content, Info, Modal } from "./Layout";
 
 export function RegisterPage({ onRegister, error }) {
