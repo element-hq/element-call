@@ -221,11 +221,22 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
       }, timeout);
     }
 
+    function onLeaveCall() {
+      setState((prevState) => ({
+        ...prevState,
+        videoMuted: manager.videoMuted,
+        micMuted: manager.micMuted,
+      }));
+    }
+
+    manager.on("left", onLeaveCall);
+
     return () => {
       manager.client.removeListener("Room", roomCallback);
       manager.removeListener("participants_changed", onParticipantsChanged);
       clearTimeout(timeoutId);
       manager.leaveCall();
+      manager.removeListener("left", onLeaveCall);
     };
   }, [manager, roomId]);
 
