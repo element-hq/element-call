@@ -30,9 +30,45 @@ limitations under the License.
   flex: 1;
 }
 
-.joinRoom ul {
-  margin-top: 0;
-  padding-left: 0;
+.preview {
+  position: relative;
+  max-width: 400px;
+  border-radius: 24px;
+  overflow: hidden;
+  background-color: #444;
+  margin: 40px 20px 20px 20px;
+}
+
+.preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.webcamPermissions {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.previewButtons {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.previewButtons > * {
+  margin-right: 30px;
+}
+
+.previewButtons > :last-child {
+  margin-right: 0px;
 }
 
 .centerMessage {

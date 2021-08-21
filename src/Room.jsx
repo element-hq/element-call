@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useRef } from "react";
 import styles from "./Room.module.css";
 import { useParams, useLocation } from "react-router-dom";
 import { useVideoRoom } from "./ConferenceCallManagerHooks";
@@ -95,17 +95,15 @@ export function Room({ manager }) {
       )}
       {error && <div className={styles.centerMessage}>{error.message}</div>}
       {!loading && room && !joined && (
-        <div className={styles.joinRoom}>
-          <h3>Members:</h3>
-          <ul>
-            {room.getMembers().map((member) => (
-              <li key={member.userId}>{member.name}</li>
-            ))}
-          </ul>
-          <Button disabled={joining} onClick={joinCall}>
-            Join Call
-          </Button>
-        </div>
+        <JoinRoom
+          manager={manager}
+          joining={joining}
+          joinCall={joinCall}
+          toggleMuteVideo={toggleMuteVideo}
+          toggleMuteMic={toggleMuteMic}
+          videoMuted={videoMuted}
+          micMuted={micMuted}
+        />
       )}
       {!loading && room && joined && participants.length === 0 && (
         <div className={styles.centerMessage}>
@@ -123,6 +121,59 @@ export function Room({ manager }) {
         </div>
       )}
       {debug && <DevTools manager={manager} />}
+    </div>
+  );
+}
+
+function JoinRoom({
+  joining,
+  joinCall,
+  manager,
+  toggleMuteVideo,
+  toggleMuteMic,
+  videoMuted,
+  micMuted,
+}) {
+  const videoRef = useRef();
+  const [hasPermissions, setHasPermissions] = useState(false);
+  const [needsPermissions, setNeedsPermissions] = useState(false);
+
+  useEffect(() => {
+    manager.client
+      .getLocalVideoStream()
+      .then((stream) => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+          setHasPermissions(true);
+        }
+      })
+      .catch(() => {
+        if (videoRef.current) {
+          setNeedsPermissions(true);
+        }
+      });
+  }, [manager]);
+
+  return (
+    <div className={styles.joinRoom}>
+      <div className={styles.preview}>
+        {needsPermissions && (
+          <p className={styles.webcamPermissions}>
+            Webcam permissions needed to join the call.
+          </p>
+        )}
+        <video ref={videoRef} muted playsInline disablePictureInPicture />
+      </div>
+      {hasPermissions && (
+        <div className={styles.previewButtons}>
+          <MicButton muted={micMuted} onClick={toggleMuteMic} />
+          <VideoButton enabled={videoMuted} onClick={toggleMuteVideo} />
+        </div>
+      )}
+      <Button disabled={!hasPermissions || joining} onClick={joinCall}>
+        Join Call
+      </Button>
     </div>
   );
 }
