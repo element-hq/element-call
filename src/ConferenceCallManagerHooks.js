@@ -355,12 +355,63 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
   };
 }
 
+const tsCache = {};
+
+function getLastTs(client, r) {
+  if (tsCache[r.roomId]) {
+    return tsCache[r.roomId];
+  }
+
+  if (!r || !r.timeline) {
+    const ts = Number.MAX_SAFE_INTEGER;
+    tsCache[r.roomId] = ts;
+    return ts;
+  }
+
+  const myUserId = client.getUserId();
+
+  if (r.getMyMembership() !== "join") {
+    const membershipEvent = r.currentState.getStateEvents(
+      "m.room.member",
+      myUserId
+    );
+
+    if (membershipEvent && !Array.isArray(membershipEvent)) {
+      const ts = membershipEvent.getTs();
+      tsCache[r.roomId] = ts;
+      return ts;
+    }
+  }
+
+  for (let i = r.timeline.length - 1; i >= 0; --i) {
+    const ev = r.timeline[i];
+    const ts = ev.getTs();
+
+    if (ts) {
+      tsCache[r.roomId] = ts;
+      return ts;
+    }
+  }
+
+  const ts = Number.MAX_SAFE_INTEGER;
+  tsCache[r.roomId] = ts;
+  return ts;
+}
+
+function sortRooms(client, rooms) {
+  return rooms.sort((a, b) => {
+    return getLastTs(client, b) - getLastTs(client, a);
+  });
+}
+
 export function useRooms(manager) {
   const [rooms, setRooms] = useState([]);
 
   useEffect(() => {
     function updateRooms() {
-      setRooms(manager.client.getRooms());
+      const visibleRooms = manager.client.getVisibleRooms();
+      const sortedRooms = sortRooms(manager.client, visibleRooms);
+      setRooms(sortedRooms);
     }
 
     updateRooms();
