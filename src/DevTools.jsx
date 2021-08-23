@@ -18,6 +18,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import ColorHash from "color-hash";
 import classNames from "classnames";
 import styles from "./DevTools.module.css";
+import { Resizable } from "re-resizable";
 
 const colorHash = new ColorHash({ lightness: 0.8 });
 
@@ -77,7 +78,19 @@ export function DevTools({ manager }) {
   }
 
   return (
-    <div className={styles.devTools}>
+    <Resizable
+      enable={{
+        top: true,
+        right: false,
+        bottom: false,
+        left: false,
+        topRight: false,
+        bottomRight: false,
+        bottomLeft: false,
+        topLeft: false,
+      }}
+      className={styles.devTools}
+    >
       <div className={styles.toolbar}>
         <div
           className={classNames(styles.tab, {
@@ -128,7 +141,7 @@ export function DevTools({ manager }) {
           onClose={() => setSelectedEvent(null)}
         />
       )}
-    </div>
+    </Resizable>
   );
 }
 
