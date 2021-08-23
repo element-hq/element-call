@@ -6,6 +6,8 @@ import styles from "./VideoGrid.module.css";
 import useMeasure from "react-use-measure";
 import moveArrItem from "lodash-move";
 import { ReactComponent as MicIcon } from "./icons/Mic.svg";
+import { ReactComponent as MuteMicIcon } from "./icons/MuteMic.svg";
+import { ReactComponent as DisableVideoIcon } from "./icons/DisableVideo.svg";
 
 function useIsMounted() {
   const isMountedRef = useRef(false);
@@ -356,9 +358,20 @@ function ParticipantTile({ style, participant, remove, ...rest }) {
           [styles.speaking]: participant.speaking,
         })}
       >
-        {participant.speaking && <MicIcon />}
+        {participant.speaking ? (
+          <MicIcon />
+        ) : participant.audioMuted ? (
+          <MuteMicIcon className={styles.muteMicIcon} />
+        ) : null}
         <span>{participant.userId}</span>
       </div>
+      {participant.videoMuted && (
+        <DisableVideoIcon
+          className={styles.videoMuted}
+          width={48}
+          height={48}
+        />
+      )}
       <video ref={videoRef} playsInline disablePictureInPicture />
     </animated.div>
   );
