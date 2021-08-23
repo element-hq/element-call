@@ -60,6 +60,8 @@ export function RegisterPage({ onRegister, error }) {
                   ref={registerUsernameRef}
                   placeholder="Username"
                   label="Username"
+                  autocorrect="off"
+                  autocapitalize="none"
                 />
               </FieldRow>
               <FieldRow>
