@@ -22,7 +22,7 @@
 .rightNav {
   position: absolute;
   right: 20px;
-  max-width: 33%;
+  max-width: 40%;
   white-space: nowrap;
   display: flex;
 }
