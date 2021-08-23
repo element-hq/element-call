@@ -28,6 +28,7 @@ import { Room } from "./Room";
 import { GridDemo } from "./GridDemo";
 import { RegisterPage } from "./RegisterPage";
 import { LoginPage } from "./LoginPage";
+import { Center } from "./Layout";
 
 export default function App() {
   const { protocol, host } = window.location;
@@ -40,7 +41,9 @@ export default function App() {
     <Router>
       <>
         {loading ? (
-          <p>Loading...</p>
+          <Center>
+            <p>Loading...</p>
+          </Center>
         ) : (
           <Switch>
             <AuthenticatedRoute authenticated={authenticated} exact path="/">
