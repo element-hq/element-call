@@ -169,6 +169,7 @@ export class ConferenceCallManager extends EventEmitter {
     // that has entered the call.
     this.participants = [];
 
+    this.localVideoStream = null;
     this.localParticipant = null;
 
     this.micMuted = false;
@@ -226,7 +227,7 @@ export class ConferenceCallManager extends EventEmitter {
 
     // Request permissions and get the user's webcam/mic stream if we haven't yet.
     const userId = this.client.getUserId();
-    const stream = await this.client.getLocalVideoStream();
+    const stream = await this.getLocalVideoStream();
 
     // It's possible to navigate to another page while the microphone permission prompt is
     // open, so check to see if we've left the call.
@@ -303,6 +304,7 @@ export class ConferenceCallManager extends EventEmitter {
     }
 
     this.client.stopLocalMediaStream();
+    this.localVideoStream = null;
 
     this.room = null;
     this.entered = false;
@@ -318,10 +320,22 @@ export class ConferenceCallManager extends EventEmitter {
     this.emit("left");
   }
 
+  async getLocalVideoStream() {
+    if (this.localVideoStream) {
+      return this.localVideoStream;
+    }
+
+    const stream = await this.client.getLocalVideoStream();
+
+    this.localVideoStream = stream;
+
+    return stream;
+  }
+
   setMicMuted(muted) {
     this.micMuted = muted;
 
-    const localStream = this.client.localAVStream;
+    const localStream = this.localVideoStream;
 
     if (localStream) {
       for (const track of localStream.getTracks()) {
@@ -347,7 +361,7 @@ export class ConferenceCallManager extends EventEmitter {
   setVideoMuted(muted) {
     this.videoMuted = muted;
 
-    const localStream = this.client.localAVStream;
+    const localStream = this.localVideoStream;
 
     if (localStream) {
       for (const track of localStream.getTracks()) {
