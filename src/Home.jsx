@@ -69,52 +69,54 @@ export function Home({ manager }) {
           onLogout={onLogout}
         />
       </Header>
-      <Content className={styles.content}>
-        <Sidebar>
-          <h5>Rooms:</h5>
-          <div className={styles.roomList}>
-            {rooms.map((room) => (
-              <Link
-                className={styles.roomListItem}
-                key={room.roomId}
-                to={`/room/${room.roomId}`}
-              >
-                <div
-                  className={styles.roomAvatar}
-                  style={{ backgroundColor: colorHash.hex(room.name) }}
-                >
-                  <span>{room.name.slice(0, 1)}</span>
-                </div>
-                <div className={styles.roomName}>{room.name}</div>
-              </Link>
-            ))}
-          </div>
-        </Sidebar>
+      <Content>
         <Center>
           <Modal>
-            <form onSubmit={onCreateRoom}>
-              <h2>Create New Room</h2>
-              <FieldRow>
-                <InputField
-                  id="roomName"
-                  name="roomName"
-                  label="Room Name"
-                  type="text"
-                  required
-                  autoComplete="off"
-                  placeholder="Room Name"
-                  ref={roomNameRef}
-                />
-              </FieldRow>
-              {createRoomError && (
+            <section>
+              <form onSubmit={onCreateRoom}>
+                <h2>Create New Room</h2>
                 <FieldRow>
-                  <ErrorMessage>{createRoomError.message}</ErrorMessage>
+                  <InputField
+                    id="roomName"
+                    name="roomName"
+                    label="Room Name"
+                    type="text"
+                    required
+                    autoComplete="off"
+                    placeholder="Room Name"
+                    ref={roomNameRef}
+                  />
                 </FieldRow>
-              )}
-              <FieldRow rightAlign>
-                <Button type="submit">Create Room</Button>
-              </FieldRow>
-            </form>
+                {createRoomError && (
+                  <FieldRow>
+                    <ErrorMessage>{createRoomError.message}</ErrorMessage>
+                  </FieldRow>
+                )}
+                <FieldRow rightAlign>
+                  <Button type="submit">Create Room</Button>
+                </FieldRow>
+              </form>
+            </section>
+            <section>
+              <h3>Recent Rooms</h3>
+              <div className={styles.roomList}>
+                {rooms.map((room) => (
+                  <Link
+                    className={styles.roomListItem}
+                    key={room.roomId}
+                    to={`/room/${room.roomId}`}
+                  >
+                    <div
+                      className={styles.roomAvatar}
+                      style={{ backgroundColor: colorHash.hex(room.name) }}
+                    >
+                      <span>{room.name.slice(0, 1)}</span>
+                    </div>
+                    <div className={styles.roomName}>{room.name}</div>
+                  </Link>
+                ))}
+              </div>
+            </section>
           </Modal>
         </Center>
       </Content>
