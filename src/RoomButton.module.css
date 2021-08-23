@@ -14,16 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+.roomButton, .headerButton {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+  padding: 0;
+  border: none;
+  cursor: pointer;
+}
+
 .roomButton {
   width: 50px;
   height: 50px;
   border-radius: 50px;
   background-color: rgba(111, 120, 130, 0.3);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 0;
-  border: none;
 }
 
 .roomButton:hover {
@@ -41,13 +46,7 @@ limitations under the License.
 .headerButton {
   width: 32px;
   height: 32px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: transparent;
   border-radius: 32px;
-  padding: 0;
-  border: none;
 }
 
 .headerButton:hover {
