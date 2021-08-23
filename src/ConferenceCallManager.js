@@ -172,7 +172,7 @@ export class ConferenceCallManager extends EventEmitter {
     this.localVideoStream = null;
     this.localParticipant = null;
 
-    this.micMuted = false;
+    this.audioMuted = false;
     this.videoMuted = false;
 
     this.client.on("RoomState.members", this._onRoomStateMembers);
@@ -245,6 +245,8 @@ export class ConferenceCallManager extends EventEmitter {
       sessionId: this.sessionId,
       call: null,
       stream,
+      audioMuted: this.audioMuted,
+      videoMuted: this.videoMuted,
     };
 
     this.participants.push(this.localParticipant);
@@ -312,7 +314,9 @@ export class ConferenceCallManager extends EventEmitter {
     this.participants = [];
     this.localParticipant.stream = null;
     this.localParticipant.call = null;
-    this.micMuted = false;
+    this.localParticipant.audioMuted = false;
+    this.localParticipant.videoMuted = false;
+    this.audioMuted = false;
     this.videoMuted = false;
     clearTimeout(this._memberParticipantStateTimeout);
 
@@ -332,15 +336,19 @@ export class ConferenceCallManager extends EventEmitter {
     return stream;
   }
 
-  setMicMuted(muted) {
-    this.micMuted = muted;
+  setAudioMuted(muted) {
+    this.audioMuted = muted;
+
+    if (this.localParticipant) {
+      this.localParticipant.audioMuted = muted;
+    }
 
     const localStream = this.localVideoStream;
 
     if (localStream) {
       for (const track of localStream.getTracks()) {
         if (track.kind === "audio") {
-          track.enabled = !this.micMuted;
+          track.enabled = !this.audioMuted;
         }
       }
     }
@@ -351,15 +359,21 @@ export class ConferenceCallManager extends EventEmitter {
       if (
         call &&
         call.localUsermediaStream &&
-        call.isMicrophoneMuted() !== this.micMuted
+        call.isMicrophoneMuted() !== this.audioMuted
       ) {
-        call.setMicrophoneMuted(this.micMuted);
+        call.setMicrophoneMuted(this.audioMuted);
       }
     }
+
+    this.emit("participants_changed");
   }
 
   setVideoMuted(muted) {
     this.videoMuted = muted;
+
+    if (this.localParticipant) {
+      this.localParticipant.videoMuted = muted;
+    }
 
     const localStream = this.localVideoStream;
 
@@ -382,6 +396,8 @@ export class ConferenceCallManager extends EventEmitter {
         call.setLocalVideoMuted(this.videoMuted);
       }
     }
+
+    this.emit("participants_changed");
   }
 
   logout() {
@@ -473,7 +489,16 @@ export class ConferenceCallManager extends EventEmitter {
     }
 
     // Get the remote video stream if it exists.
-    const stream = call.getRemoteFeeds()[0]?.stream;
+    const remoteFeed = call.getRemoteFeeds()[0];
+    const stream = remoteFeed && remoteFeed.stream;
+    const audioMuted = remoteFeed ? remoteFeed.isAudioMuted() : false;
+    const videoMuted = remoteFeed ? remoteFeed.isVideoMuted() : false;
+
+    if (remoteFeed) {
+      remoteFeed.on("mute_state_changed", () =>
+        this._onCallFeedMuteStateChanged(participant, remoteFeed)
+      );
+    }
 
     const userId = call.opponentMember.userId;
 
@@ -496,6 +521,8 @@ export class ConferenceCallManager extends EventEmitter {
       existingParticipant.call.hangup("replaced", false);
       existingParticipant.call = call;
       existingParticipant.stream = stream;
+      existingParticipant.audioMuted = audioMuted;
+      existingParticipant.videoMuted = videoMuted;
       existingParticipant.sessionId = sessionId;
     } else {
       participant = {
@@ -504,6 +531,8 @@ export class ConferenceCallManager extends EventEmitter {
         sessionId,
         call,
         stream,
+        audioMuted,
+        videoMuted,
       };
       this.participants.push(participant);
     }
@@ -592,6 +621,8 @@ export class ConferenceCallManager extends EventEmitter {
       participant.sessionId = sessionId;
       participant.call = call;
       participant.stream = null;
+      participant.audioMuted = false;
+      participant.videoMuted = false;
     } else {
       participant = {
         local: false,
@@ -599,6 +630,8 @@ export class ConferenceCallManager extends EventEmitter {
         sessionId,
         call,
         stream: null,
+        audioMuted: false,
+        videoMuted: false,
       };
       // TODO: Should we wait until the call has been answered to push the participant?
       // Or do we hide the participant until their stream is live?
@@ -630,9 +663,9 @@ export class ConferenceCallManager extends EventEmitter {
   _onCallStateChanged = (participant, call, state) => {
     if (
       call.localUsermediaStream &&
-      call.isMicrophoneMuted() !== this.micMuted
+      call.isMicrophoneMuted() !== this.audioMuted
     ) {
-      call.setMicrophoneMuted(this.micMuted);
+      call.setMicrophoneMuted(this.audioMuted);
     }
 
     if (
@@ -646,12 +679,26 @@ export class ConferenceCallManager extends EventEmitter {
   };
 
   _onCallFeedsChanged = (participant, call) => {
-    const feeds = call.getRemoteFeeds();
+    const remoteFeed = call.getRemoteFeeds()[0];
+    const stream = remoteFeed && remoteFeed.stream;
+    const audioMuted = remoteFeed ? remoteFeed.isAudioMuted() : false;
+    const videoMuted = remoteFeed ? remoteFeed.isVideoMuted() : false;
 
-    if (feeds.length > 0 && participant.stream !== feeds[0].stream) {
-      participant.stream = feeds[0].stream;
-      this.emit("participants_changed");
+    if (remoteFeed && participant.stream !== stream) {
+      participant.stream = stream;
+      participant.audioMuted = audioMuted;
+      participant.videoMuted = videoMuted;
+      remoteFeed.on("mute_state_changed", () =>
+        this._onCallFeedMuteStateChanged(participant, remoteFeed)
+      );
+      this._onCallFeedMuteStateChanged(participant, remoteFeed);
     }
+  };
+
+  _onCallFeedMuteStateChanged = (participant, feed) => {
+    participant.audioMuted = feed.isAudioMuted();
+    participant.videoMuted = feed.isVideoMuted();
+    this.emit("participants_changed");
   };
 
   _onCallReplaced = (participant, call, newCall) => {
@@ -668,10 +715,15 @@ export class ConferenceCallManager extends EventEmitter {
     );
     newCall.on("hangup", () => this._onCallHangup(participant, newCall));
 
-    const feeds = newCall.getRemoteFeeds();
+    const remoteFeed = newCall.getRemoteFeeds()[0];
+    participant.stream = remoteFeed ? remoteFeed.stream : null;
+    participant.audioMuted = remoteFeed ? remoteFeed.isAudioMuted() : false;
+    participant.videoMuted = remoteFeed ? remoteFeed.isVideoMuted() : false;
 
-    if (feeds.length > 0) {
-      participant.stream = feeds[0].stream;
+    if (remoteFeed) {
+      remoteFeed.on("mute_state_changed", () =>
+        this._onCallFeedMuteStateChanged(participant, remoteFeed)
+      );
     }
 
     this.emit("call", newCall);

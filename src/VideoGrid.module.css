@@ -62,7 +62,17 @@ limitations under the License.
   line-height: 32px;
 }
 
+.muteMicIcon * {
+  fill:  #FF5B55;
+}
+
+.videoMuted {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 .participantTile:hover .participantName, .participantName.speaking {
   display: flex;
 }
-
