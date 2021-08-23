@@ -139,7 +139,7 @@ function JoinRoom({
   const [needsPermissions, setNeedsPermissions] = useState(false);
 
   useEffect(() => {
-    manager.client
+    manager
       .getLocalVideoStream()
       .then((stream) => {
         if (videoRef.current) {
