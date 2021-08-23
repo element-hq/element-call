@@ -21,7 +21,7 @@ import { Header, LeftNav, UserNav } from "./Header";
 import ColorHash from "color-hash";
 import styles from "./Home.module.css";
 import { FieldRow, InputField, Button, ErrorMessage } from "./Input";
-import { Center, Content, Sidebar, Modal } from "./Layout";
+import { Center, Content, Modal } from "./Layout";
 
 const colorHash = new ColorHash({ lightness: 0.3 });
 

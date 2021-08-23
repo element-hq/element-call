@@ -10,14 +10,6 @@ export function Content({ children, className, ...rest }) {
   );
 }
 
-export function Sidebar({ children, className, ...rest }) {
-  return (
-    <aside className={classNames(styles.sidebar, className)} {...rest}>
-      {children}
-    </aside>
-  );
-}
-
 export function Center({ children, className, ...rest }) {
   return (
     <div className={classNames(styles.center, className)} {...rest}>
