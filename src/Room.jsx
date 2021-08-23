@@ -47,9 +47,9 @@ export function Room({ manager }) {
     joinCall,
     leaveCall,
     toggleMuteVideo,
-    toggleMuteMic,
+    toggleMuteAudio,
     videoMuted,
-    micMuted,
+    audioMuted,
   } = useVideoRoom(manager, roomId);
   const debugStr = query.get("debug");
   const [debug, setDebug] = useState(debugStr === "" || debugStr === "true");
@@ -100,9 +100,9 @@ export function Room({ manager }) {
           joining={joining}
           joinCall={joinCall}
           toggleMuteVideo={toggleMuteVideo}
-          toggleMuteMic={toggleMuteMic}
+          toggleMuteAudio={toggleMuteAudio}
           videoMuted={videoMuted}
-          micMuted={micMuted}
+          audioMuted={audioMuted}
         />
       )}
       {!loading && room && joined && participants.length === 0 && (
@@ -115,7 +115,7 @@ export function Room({ manager }) {
       )}
       {!loading && room && joined && (
         <div className={styles.footer}>
-          <MicButton muted={micMuted} onClick={toggleMuteMic} />
+          <MicButton muted={audioMuted} onClick={toggleMuteAudio} />
           <VideoButton enabled={videoMuted} onClick={toggleMuteVideo} />
           <HangupButton onClick={leaveCall} />
         </div>
@@ -130,9 +130,9 @@ function JoinRoom({
   joinCall,
   manager,
   toggleMuteVideo,
-  toggleMuteMic,
+  toggleMuteAudio,
   videoMuted,
-  micMuted,
+  audioMuted,
 }) {
   const videoRef = useRef();
   const [hasPermissions, setHasPermissions] = useState(false);
@@ -167,7 +167,7 @@ function JoinRoom({
       </div>
       {hasPermissions && (
         <div className={styles.previewButtons}>
-          <MicButton muted={micMuted} onClick={toggleMuteMic} />
+          <MicButton muted={audioMuted} onClick={toggleMuteAudio} />
           <VideoButton enabled={videoMuted} onClick={toggleMuteVideo} />
         </div>
       )}
