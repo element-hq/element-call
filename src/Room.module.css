@@ -28,6 +28,8 @@ limitations under the License.
   flex-direction: column;
   align-items: center;
   flex: 1;
+  overflow: hidden;
+  margin-bottom: 20px;
 }
 
 .preview {
@@ -96,7 +98,7 @@ limitations under the License.
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 118px;
+  height: 64px;
 }
 
 .footer > * {
@@ -114,5 +116,9 @@ limitations under the License.
 
   .roomContainer {
     flex-direction: row;
+  }
+
+  .footer {
+    height: 118px;
   }
 }
