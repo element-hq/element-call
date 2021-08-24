@@ -384,6 +384,20 @@ export class ConferenceCallManager extends EventEmitter {
     }
   }
 
+  sendMessage(data, recipientId) {
+    for (const { userId, dataChannel } of this.participants) {
+      if (!recipientId || recipientId === userId) {
+        if (dataChannel && dataChannel.readyState === "open") {
+          dataChannel.send(data);
+        }
+
+        if (recipientId && recipientId === userId) {
+          break;
+        }
+      }
+    }
+  }
+
   logout() {
     localStorage.removeItem("matrix-auth-store");
   }
@@ -508,6 +522,10 @@ export class ConferenceCallManager extends EventEmitter {
       this.participants.push(participant);
     }
 
+    call.peerConn.addEventListener("datachannel", ({ channel }) => {
+      this._onAddDataChannel(participant, channel);
+    });
+
     call.on("state", (state) =>
       this._onCallStateChanged(participant, call, state)
     );
@@ -617,6 +635,8 @@ export class ConferenceCallManager extends EventEmitter {
     call.on("hangup", () => this._onCallHangup(participant, call));
 
     call.placeVideoCall().then(() => {
+      const dataChannel = call.peerConn.createDataChannel("data");
+      this._onAddDataChannel(participant, dataChannel);
       this.emit("call", call);
     });
 
@@ -693,6 +713,44 @@ export class ConferenceCallManager extends EventEmitter {
 
     this.emit("participants_changed");
   };
+
+  /**
+   * DataChannel Event Handlers
+   */
+
+  _onAddDataChannel(participant, dataChannel) {
+    dataChannel.addEventListener("open", (event) =>
+      this._onDataChannelOpen(participant, event)
+    );
+    dataChannel.addEventListener("close", (event) =>
+      this._onDataChannelClose(participant, event)
+    );
+    dataChannel.addEventListener("error", (event) =>
+      this._onDataChannelError(participant, event)
+    );
+    dataChannel.addEventListener("message", (event) =>
+      this._onDataChannelMessage(participant, event)
+    );
+    participant.dataChannel = dataChannel;
+    this.emit("participants_changed");
+  }
+
+  _onDataChannelOpen(participant, event) {
+    this.emit("participants_changed");
+  }
+
+  _onDataChannelClose(participant, event) {
+    this.emit("participants_changed");
+  }
+
+  _onDataChannelError(participant, event) {
+    console.error(event);
+    this.emit("participants_changed");
+  }
+
+  _onDataChannelMessage(participant, event) {
+    this.emit("message", participant, event.data);
+  }
 
   /**
    * Utils

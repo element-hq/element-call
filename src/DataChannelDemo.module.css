@@ -1,0 +1,17 @@
+.container {
+  background-color: #21262c;
+}
+
+.container h3 {
+  font-size: 16px;;
+  margin: 8px;
+}
+
+.messages {
+  height: 200px;
+  background-color: black;
+  overflow-y: auto;
+  font-size: 13px;
+  padding: 0 8px;
+  margin-bottom: 8px;
+}

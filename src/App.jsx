@@ -29,6 +29,7 @@ import { GridDemo } from "./GridDemo";
 import { RegisterPage } from "./RegisterPage";
 import { LoginPage } from "./LoginPage";
 import { Center } from "./Layout";
+import { DataChannelDemo } from "./DataChannelDemo";
 
 export default function App() {
   const { protocol, host } = window.location;
@@ -55,6 +56,14 @@ export default function App() {
             <Route exact path="/register">
               <RegisterPage onRegister={register} error={error} />
             </Route>
+            <AuthenticatedRoute
+              authenticated={authenticated}
+              path="/room/:roomId/datachannel"
+            >
+              <Room manager={manager} error={error}>
+                <DataChannelDemo manager={manager} />
+              </Room>
+            </AuthenticatedRoute>
             <AuthenticatedRoute
               authenticated={authenticated}
               path="/room/:roomId"

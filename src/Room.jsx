@@ -34,7 +34,7 @@ function useQuery() {
   return useMemo(() => new URLSearchParams(location.search), [location.search]);
 }
 
-export function Room({ manager }) {
+export function Room({ children, manager }) {
   const { roomId } = useParams();
   const query = useQuery();
   const {
@@ -113,6 +113,7 @@ export function Room({ manager }) {
       {!loading && room && joined && participants.length > 0 && (
         <VideoGrid participants={participants} />
       )}
+      {!loading && room && joined ? children : null}
       {!loading && room && joined && (
         <div className={styles.footer}>
           <MicButton muted={micMuted} onClick={toggleMuteMic} />
