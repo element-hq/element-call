@@ -38,6 +38,8 @@ function getTilePositions(tileCount, gridBounds) {
   const newTilePositions = [];
   const { width: gridWidth, height: gridHeight } = gridBounds;
   const gap = 8;
+  let paddingLeft = 8;
+  let paddingTop = 8;
 
   if (tileCount > 12) {
     console.warn("Over 12 tiles is not currently supported");
@@ -89,20 +91,54 @@ function getTilePositions(tileCount, gridBounds) {
       }
     }
 
-    let tileHeight = Math.round((gridHeight - gap * (rowCount + 1)) / rowCount);
-    let tileWidth = Math.round(
+    const maxTileHeight = Math.round(
+      (gridHeight - gap * (rowCount + 1)) / rowCount
+    );
+    const maxTileWidth = Math.round(
       (gridWidth - gap * (columnCount + 1)) / columnCount
     );
 
+    // TODO Constrain Aspect
+
+    let tileHeight = maxTileHeight;
+    let tileWidth = maxTileWidth;
+
     const tileAspectRatio = tileWidth / tileHeight;
 
-    if (tileAspectRatio > 16 / 9) {
-      tileWidth = (16 * tileHeight) / 9;
+    if (aspectRatio < 1) {
+      if (tileCount === 1) {
+        tileHeight = maxTileHeight;
+        tileWidth = maxTileWidth;
+      } else if (tileCount <= 4) {
+        tileHeight = Math.round((maxTileWidth * 9) / 16);
+      } else {
+        tileHeight = tileWidth;
+      }
+    } else {
     }
+
+    const totalHeight = tileHeight * rowCount + gap * (rowCount - 1);
+
+    if (totalHeight > gridHeight) {
+      const overflow = totalHeight - gridHeight;
+      tileHeight = Math.round(tileHeight - overflow / rowCount);
+    }
+
+    // if (tileAspectRatio > 16 / 9) {
+    //   tileWidth = (16 * tileHeight) / 9;
+    // }
+
+    paddingTop =
+      (gridHeight - tileHeight * rowCount - gap * (rowCount - 1)) / 2;
+
+    paddingLeft =
+      (gridWidth - tileWidth * columnCount - gap * (columnCount - 1)) / 2;
 
     for (let i = 0; i < tileCount; i++) {
       const verticalIndex = Math.floor(i / columnCount);
-      const top = verticalIndex * tileHeight + (verticalIndex + 1) * gap;
+      const top = verticalIndex * tileHeight + verticalIndex * gap + paddingTop;
+
+      console.log(top);
 
       let rowItemCount;
 
@@ -121,7 +157,8 @@ function getTilePositions(tileCount, gridBounds) {
       const left =
         tileWidth * horizontalIndex +
         rowLeftMargin +
-        (horizontalIndex + 1) * gap;
+        horizontalIndex * gap +
+        paddingLeft;
 
       newTilePositions.push({
         width: tileWidth,
