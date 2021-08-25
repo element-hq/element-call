@@ -46,23 +46,50 @@ function getTilePositions(tileCount, gridBounds) {
   }
 
   if (tileCount > 0) {
-    const aspectRatio = gridWidth / gridHeight;
+    const gridAspectRatio = gridWidth / gridHeight;
 
     let columnCount, rowCount;
+    let tileAspectRatio = 16 / 9;
 
-    if (aspectRatio < 1) {
-      if (tileCount <= 4) {
+    if (gridAspectRatio < 3 / 4) {
+      // Phone
+      if (tileCount === 1) {
+        columnCount = 1;
+        rowCount = 1;
+        tileAspectRatio = 0;
+      } else if (tileCount <= 4) {
         columnCount = 1;
         rowCount = tileCount;
       } else if (tileCount <= 12) {
         columnCount = 2;
-        rowCount = Math.ceil(tileCount / 2);
+        rowCount = Math.ceil(tileCount / columnCount);
+        tileAspectRatio = 0;
       } else {
         // Unsupported
         columnCount = 3;
-        rowCount = Math.ceil(tileCount / 2);
+        rowCount = Math.ceil(tileCount / columnCount);
+        tileAspectRatio = 1;
       }
-    } else {
+    } else if (gridAspectRatio < 1) {
+      // Tablet
+      if (tileCount === 1) {
+        columnCount = 1;
+        rowCount = 1;
+        tileAspectRatio = 0;
+      } else if (tileCount <= 4) {
+        columnCount = 1;
+        rowCount = tileCount;
+      } else if (tileCount <= 12) {
+        columnCount = 2;
+        rowCount = Math.ceil(tileCount / columnCount);
+      } else {
+        // Unsupported
+        columnCount = 3;
+        rowCount = Math.ceil(tileCount / columnCount);
+        tileAspectRatio = 1;
+      }
+    } else if (gridAspectRatio < 17 / 9) {
+      // Computer
       if (tileCount === 1) {
         columnCount = 1;
         rowCount = 1;
@@ -78,8 +105,32 @@ function getTilePositions(tileCount, gridBounds) {
       } else if (tileCount <= 8) {
         columnCount = 4;
         rowCount = 2;
-      } else if (tileCount <= 10) {
-        columnCount = 5;
+        tileAspectRatio = 1;
+      } else if (tileCount <= 12) {
+        columnCount = 4;
+        rowCount = 3;
+        tileAspectRatio = 1;
+      } else {
+        // Unsupported
+        columnCount = 4;
+        rowCount = 4;
+      }
+    } else if (gridAspectRatio <= 32 / 9) {
+      // Ultrawide
+      if (tileCount === 1) {
+        columnCount = 1;
+        rowCount = 1;
+      } else if (tileCount === 2) {
+        columnCount = 2;
+        rowCount = 1;
+      } else if (tileCount <= 4) {
+        columnCount = 2;
+        rowCount = 2;
+      } else if (tileCount <= 6) {
+        columnCount = 3;
+        rowCount = 2;
+      } else if (tileCount <= 8) {
+        columnCount = 4;
         rowCount = 2;
       } else if (tileCount <= 12) {
         columnCount = 4;
@@ -89,41 +140,78 @@ function getTilePositions(tileCount, gridBounds) {
         columnCount = 4;
         rowCount = 4;
       }
+    } else {
+      // Super Ultrawide
+      if (tileCount <= 6) {
+        columnCount = tileCount;
+        rowCount = 1;
+      } else {
+        columnCount = Math.ceil(tileCount / 2);
+        rowCount = 2;
+      }
     }
 
-    let tileHeight = Math.round((gridHeight - gap * (rowCount + 1)) / rowCount);
-    let tileWidth = Math.round(
+    const boxWidth = Math.round(
       (gridWidth - gap * (columnCount + 1)) / columnCount
     );
+    const boxHeight = Math.round(
+      (gridHeight - gap * (rowCount + 1)) / rowCount
+    );
 
-    const tileAspectRatio = tileWidth / tileHeight;
+    let tileWidth, tileHeight;
 
-    if (tileAspectRatio > 16 / 9) {
-      tileWidth = (16 * tileHeight) / 9;
+    if (tileAspectRatio) {
+      const boxAspectRatio = boxWidth / boxHeight;
+
+      if (boxAspectRatio > tileAspectRatio) {
+        tileWidth = boxHeight * tileAspectRatio;
+        tileHeight = boxHeight;
+      } else {
+        tileWidth = boxWidth;
+        tileHeight = boxWidth / tileAspectRatio;
+      }
+    } else {
+      tileWidth = boxWidth;
+      tileHeight = boxHeight;
     }
+
+    const paddingTop =
+      (gridHeight - tileHeight * rowCount - gap * (rowCount - 1)) / 2;
+
+    const paddingLeft =
+      (gridWidth - tileWidth * columnCount - gap * (columnCount - 1)) / 2;
 
     for (let i = 0; i < tileCount; i++) {
       const verticalIndex = Math.floor(i / columnCount);
-      const top = verticalIndex * tileHeight + (verticalIndex + 1) * gap;
+      const top = verticalIndex * tileHeight + verticalIndex * gap + paddingTop;
 
       let rowItemCount;
 
-      if (verticalIndex + 1 === rowCount && tileCount % rowCount !== 0) {
-        rowItemCount = Math.floor(tileCount / rowCount);
+      if (verticalIndex + 1 === rowCount && tileCount % columnCount !== 0) {
+        rowItemCount = tileCount % columnCount;
       } else {
-        rowItemCount = Math.ceil(tileCount / rowCount);
+        rowItemCount = columnCount;
       }
 
       const horizontalIndex = i % columnCount;
-      const totalRowGapWidth = (rowItemCount + 1) * gap;
-      const totalRowTileWidth = rowItemCount * tileWidth;
-      const rowLeftMargin = Math.round(
-        (gridWidth - (totalRowTileWidth + totalRowGapWidth)) / 2
-      );
+
+      let centeringPadding = 0;
+
+      if (rowItemCount < columnCount) {
+        centeringPadding = Math.round(
+          (gridWidth -
+            (tileWidth * rowItemCount +
+              (gap * rowItemCount - 1) +
+              paddingLeft * 2)) /
+            2
+        );
+      }
+
       const left =
-        tileWidth * horizontalIndex +
-        rowLeftMargin +
-        (horizontalIndex + 1) * gap;
+        paddingLeft +
+        centeringPadding +
+        gap * horizontalIndex +
+        tileWidth * horizontalIndex;
 
       newTilePositions.push({
         width: tileWidth,
