@@ -53,7 +53,7 @@ function getTilePositions(tileCount, gridBounds, presenterTileCount) {
   const gridHeight = gridBounds.height;
   const gridAspectRatio = gridWidth / gridHeight;
 
-  if (presenterTileCount) {
+  if (presenterTileCount && presenterTileCount !== tileCount) {
     const subGridTileCount = tileCount - presenterTileCount;
 
     let presenterGridWidth,
@@ -172,7 +172,7 @@ function getTilePositions(tileCount, gridBounds, presenterTileCount) {
       presenterGridHeight = gridHeight;
       presenterColumnCount = 1;
       presenterRowCount = presenterTileCount;
-      presenterTileAspectRatio = 0;
+      presenterTileAspectRatio = presenterTileCount === 1 ? 0 : 16 / 9;
 
       subGridWidth = gridWidth - presenterGridWidth;
       subGridHeight = gridHeight;
