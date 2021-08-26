@@ -20,19 +20,6 @@ export function GridDemo() {
     ]);
   }, [stream]);
 
-  const togglePresenter = useCallback((selectedParticipant) => {
-    setParticipants((participants) =>
-      participants.map((participant) =>
-        participant === selectedParticipant
-          ? {
-              ...participant,
-              presenter: !participant.presenter,
-            }
-          : participant
-      )
-    );
-  }, []);
-
   const removeParticipant = useCallback((key) => {
     setParticipants((participants) =>
       participants.filter((participant) => participant.userId !== key)
@@ -56,7 +43,7 @@ export function GridDemo() {
           </button>
         )}
       </div>
-      <VideoGrid participants={participants} onClickNameTag={togglePresenter} />
+      <VideoGrid participants={participants} />
     </div>
   );
 }

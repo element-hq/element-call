@@ -247,7 +247,6 @@ export class ConferenceCallManager extends EventEmitter {
       stream,
       audioMuted: this.audioMuted,
       videoMuted: this.videoMuted,
-      presenter: false,
     };
 
     this.participants.push(this.localParticipant);
@@ -401,17 +400,6 @@ export class ConferenceCallManager extends EventEmitter {
     this.emit("participants_changed");
   }
 
-  setPresenter(userId, presenter) {
-    const participant = this.participants.find(
-      (participant) => participant.userId === userId
-    );
-
-    if (participant) {
-      participant.presenter = presenter;
-      this.emit("participants_changed");
-    }
-  }
-
   logout() {
     localStorage.removeItem("matrix-auth-store");
   }
@@ -545,7 +533,6 @@ export class ConferenceCallManager extends EventEmitter {
         stream,
         audioMuted,
         videoMuted,
-        presenter: false,
       };
       this.participants.push(participant);
     }
@@ -645,7 +632,6 @@ export class ConferenceCallManager extends EventEmitter {
         stream: null,
         audioMuted: false,
         videoMuted: false,
-        presenter: false,
       };
       // TODO: Should we wait until the call has been answered to push the participant?
       // Or do we hide the participant until their stream is live?
