@@ -46,6 +46,7 @@ limitations under the License.
   justify-content: center;
   border-radius: 8px;
   user-select: none;
+  cursor: pointer;
 }
 
 .participantName > * {

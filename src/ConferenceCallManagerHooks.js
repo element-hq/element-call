@@ -339,6 +339,20 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
     setState((prevState) => ({ ...prevState, videoMuted: manager.videoMuted }));
   }, [manager]);
 
+  const togglePresenter = useCallback((selectedParticipant) => {
+    setState((prevState) => ({
+      ...prevState,
+      participants: prevState.participants.map((participant) =>
+        participant === selectedParticipant
+          ? {
+              ...participant,
+              presenter: !participant.presenter,
+            }
+          : participant
+      ),
+    }));
+  }, []);
+
   return {
     loading,
     joined,
@@ -350,6 +364,7 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
     leaveCall,
     toggleMuteVideo,
     toggleMuteAudio,
+    togglePresenter,
     videoMuted,
     audioMuted,
   };
