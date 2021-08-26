@@ -446,7 +446,7 @@ function getSubGridPositions(
   return newTilePositions;
 }
 
-export function VideoGrid({ participants, onClickNameTag }) {
+export function VideoGrid({ participants }) {
   const [{ tiles, tilePositions }, setTileState] = useState({
     tiles: [],
     tilePositions: [],
@@ -467,12 +467,17 @@ export function VideoGrid({ participants, onClickNameTag }) {
           (participant) => participant.userId === tile.key
         );
 
+        if (tile.presenter) {
+          presenterTileCount++;
+        }
+
         if (participant) {
           // Existing tiles
           newTiles.push({
             key: participant.userId,
             participant: participant,
             remove: false,
+            presenter: tile.presenter,
           });
         } else {
           // Removed tiles
@@ -481,15 +486,12 @@ export function VideoGrid({ participants, onClickNameTag }) {
             key: tile.key,
             participant: tile.participant,
             remove: true,
+            presenter: tile.presenter,
           });
         }
       }
 
       for (const participant of participants) {
-        if (participant.presenter) {
-          presenterTileCount++;
-        }
-
         if (newTiles.some(({ key }) => participant.userId === key)) {
           continue;
         }
@@ -499,13 +501,11 @@ export function VideoGrid({ participants, onClickNameTag }) {
           key: participant.userId,
           participant,
           remove: false,
+          presenter: false,
         });
       }
 
-      newTiles.sort(
-        (a, b) =>
-          (b.participant.presenter ? 1 : 0) - (a.participant.presenter ? 1 : 0)
-      );
+      newTiles.sort((a, b) => (b.presenter ? 1 : 0) - (a.presenter ? 1 : 0));
 
       if (removedTileKeys.length > 0) {
         setTimeout(() => {
@@ -613,6 +613,19 @@ export function VideoGrid({ participants, onClickNameTag }) {
 
       if (isInside(cursorPosition, hoverTilePosition)) {
         newTiles = moveArrItem(tiles, dragTileIndex, hoverTileIndex);
+
+        newTiles = newTiles.map((tile) => {
+          if (tile === hoverTile) {
+            return { ...tile, presenter: dragTile.presenter };
+          } else if (tile === dragTile) {
+            return { ...tile, presenter: hoverTile.presenter };
+          } else {
+            return tile;
+          }
+        });
+
+        newTiles.sort((a, b) => (b.presenter ? 1 : 0) - (a.presenter ? 1 : 0));
+
         setTileState((state) => ({ ...state, tiles: newTiles }));
         break;
       }
@@ -635,6 +648,43 @@ export function VideoGrid({ participants, onClickNameTag }) {
 
     api.start(animate(newTiles));
   });
+
+  const onClickNameTag = useCallback(
+    (participant) => {
+      setTileState((state) => {
+        let presenterTileCount = 0;
+
+        const newTiles = state.tiles.map((tile) => {
+          let newTile = tile;
+
+          if (tile.participant === participant) {
+            newTile = { ...tile, presenter: !tile.presenter };
+          }
+
+          if (newTile.presenter) {
+            presenterTileCount++;
+          }
+
+          return newTile;
+        });
+
+        newTiles.sort((a, b) => (b.presenter ? 1 : 0) - (a.presenter ? 1 : 0));
+
+        presenterTileCount;
+
+        return {
+          ...state,
+          tiles: newTiles,
+          tilePositions: getTilePositions(
+            newTiles.length,
+            gridBounds,
+            presenterTileCount
+          ),
+        };
+      });
+    },
+    [gridBounds]
+  );
 
   return (
     <div className={styles.grid} ref={gridRef}>
