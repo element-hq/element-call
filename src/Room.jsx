@@ -48,6 +48,7 @@ export function Room({ manager }) {
     leaveCall,
     toggleMuteVideo,
     toggleMuteAudio,
+    togglePresenter,
     videoMuted,
     audioMuted,
   } = useVideoRoom(manager, roomId);
@@ -111,7 +112,10 @@ export function Room({ manager }) {
         </div>
       )}
       {!loading && room && joined && participants.length > 0 && (
-        <VideoGrid participants={participants} />
+        <VideoGrid
+          participants={participants}
+          onClickNameTag={togglePresenter}
+        />
       )}
       {!loading && room && joined && (
         <div className={styles.footer}>
