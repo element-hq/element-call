@@ -340,16 +340,13 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
   }, [manager]);
 
   const togglePresenter = useCallback((selectedParticipant) => {
+    manager.setPresenter(
+      selectedParticipant.userId,
+      !selectedParticipant.presenter
+    );
     setState((prevState) => ({
       ...prevState,
-      participants: prevState.participants.map((participant) =>
-        participant === selectedParticipant
-          ? {
-              ...participant,
-              presenter: !participant.presenter,
-            }
-          : participant
-      ),
+      participants: [...manager.participants],
     }));
   }, []);
 
