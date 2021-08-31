@@ -36,7 +36,12 @@ function isInside([x, y], targetTile) {
   return true;
 }
 
-function getTilePositions(tileCount, gridBounds, presenterTileCount) {
+function getTilePositions(
+  tileCount,
+  presenterTileCount,
+  gridWidth,
+  gridHeight
+) {
   if (tileCount === 0) {
     return [];
   }
@@ -49,326 +54,287 @@ function getTilePositions(tileCount, gridBounds, presenterTileCount) {
     console.warn("Over 3 presenters is not currently supported");
   }
 
-  const gridWidth = gridBounds.width;
-  const gridHeight = gridBounds.height;
-  const gridAspectRatio = gridWidth / gridHeight;
+  const gap = 8;
 
-  if (presenterTileCount) {
-    const subGridTileCount = tileCount - presenterTileCount;
+  const { layoutDirection, participantGridRatio } = getGridLayout(
+    tileCount,
+    presenterTileCount,
+    gridWidth,
+    gridHeight
+  );
 
-    let presenterGridWidth,
-      presenterGridHeight,
-      presenterColumnCount,
-      presenterRowCount,
-      presenterTileAspectRatio;
+  let participantGridWidth, participantGridHeight;
 
-    let subGridWidth,
-      subGridHeight,
-      subGridOffsetLeft,
-      subGridOffsetTop,
-      subGridColumnCount,
-      subGridRowCount,
-      subGridTileAspectRatio;
-
-    if (gridAspectRatio < 3 / 4) {
-      // Phone
-      presenterGridWidth = gridWidth;
-      presenterColumnCount = 1;
-      presenterRowCount = presenterTileCount;
-      presenterTileAspectRatio = 16 / 9;
-      subGridTileAspectRatio = 16 / 9;
-
-      if (presenterTileCount > 2) {
-        presenterColumnCount = 2;
-        presenterRowCount = 2;
-        presenterTileAspectRatio = 0;
-      }
-
-      if (subGridTileCount < 3) {
-        if (presenterTileCount === 1) {
-        }
-        subGridColumnCount = presenterTileCount === 1 ? 1 : subGridTileCount;
-        subGridRowCount = presenterTileCount === 1 ? subGridTileCount : 1;
-        subGridTileAspectRatio = presenterTileCount === 1 ? 16 / 9 : 0;
-      } else if (subGridTileCount < 5) {
-        subGridColumnCount = 2;
-        subGridRowCount = 2;
-      } else if (subGridTileCount < 7) {
-        subGridColumnCount = 2;
-        subGridRowCount = 3;
-      } else if (subGridTileCount < 10) {
-        subGridColumnCount = 3;
-        subGridRowCount = 3;
-      } else {
-        subGridColumnCount = 4;
-        subGridRowCount = 3;
-      }
-
-      presenterGridHeight = Math.round(
-        gridHeight *
-          (1 -
-            1 /
-              Math.max(
-                presenterRowCount + 2 - Math.max(subGridRowCount - 1, 0),
-                2
-              ))
-      );
-
-      subGridWidth = gridWidth;
-      subGridHeight = gridHeight - presenterGridHeight;
-      subGridOffsetTop = presenterGridHeight;
-      subGridOffsetLeft = 0;
-    } else if (gridAspectRatio < 1) {
-      // Tablet
-      presenterGridWidth = gridWidth;
-      presenterColumnCount = 1;
-      presenterRowCount = presenterTileCount;
-      presenterTileAspectRatio = 16 / 9;
-      subGridTileAspectRatio = 16 / 9;
-
-      if (presenterTileCount > 2) {
-        presenterColumnCount = 2;
-        presenterRowCount = 2;
-        presenterTileAspectRatio = 0;
-      }
-
-      if (subGridTileCount < 3) {
-        if (presenterTileCount === 1) {
-        }
-        subGridColumnCount = presenterTileCount === 1 ? 1 : subGridTileCount;
-        subGridRowCount = presenterTileCount === 1 ? subGridTileCount : 1;
-        subGridTileAspectRatio = presenterTileCount === 1 ? 16 / 9 : 0;
-      } else if (subGridTileCount < 5) {
-        subGridColumnCount = 2;
-        subGridRowCount = 2;
-      } else if (subGridTileCount < 7) {
-        subGridColumnCount = 2;
-        subGridRowCount = 3;
-      } else if (subGridTileCount < 10) {
-        subGridColumnCount = 3;
-        subGridRowCount = 3;
-      } else {
-        subGridColumnCount = 4;
-        subGridRowCount = 3;
-      }
-
-      presenterGridHeight = Math.round(
-        gridHeight *
-          (1 -
-            1 /
-              Math.max(
-                presenterRowCount + 2 - Math.max(subGridRowCount - 1, 0),
-                2
-              ))
-      );
-
-      subGridWidth = gridWidth;
-      subGridHeight = gridHeight - presenterGridHeight;
-      subGridOffsetTop = presenterGridHeight;
-      subGridOffsetLeft = 0;
-    } else if (gridAspectRatio < 17 / 9) {
-      // Computer
-      presenterGridWidth = gridWidth * (2 / 3);
-      presenterGridHeight = gridHeight;
-      presenterColumnCount = 1;
-      presenterRowCount = presenterTileCount;
-      presenterTileAspectRatio = 0;
-
-      subGridWidth = gridWidth - presenterGridWidth;
-      subGridHeight = gridHeight;
-      subGridColumnCount = Math.ceil(subGridTileCount / 6);
-      subGridRowCount = Math.ceil(subGridTileCount / subGridColumnCount);
-      subGridOffsetTop = 0;
-      subGridOffsetLeft = presenterGridWidth;
-      subGridTileAspectRatio = 16 / 9;
-    } else if (gridAspectRatio <= 32 / 9) {
-      // Ultrawide
-      presenterGridWidth = gridWidth * (2 / 3);
-      presenterGridHeight = gridHeight;
-      presenterColumnCount = 1;
-      presenterRowCount = presenterTileCount;
-      presenterTileAspectRatio = 16 / 9;
-
-      subGridWidth = gridWidth - presenterGridWidth;
-      subGridHeight = gridHeight;
-      subGridColumnCount = Math.ceil(subGridTileCount / 4);
-      subGridRowCount = Math.ceil(subGridTileCount / subGridColumnCount);
-      subGridOffsetTop = 0;
-      subGridOffsetLeft = presenterGridWidth;
-      subGridTileAspectRatio = 16 / 9;
-    } else {
-      // Super Ultrawide
-      presenterGridWidth = gridWidth * (2 / 3);
-      presenterGridHeight = gridHeight;
-      presenterColumnCount = 1;
-      presenterRowCount = presenterTileCount;
-      presenterTileAspectRatio = 16 / 9;
-
-      subGridWidth = gridWidth - presenterGridWidth;
-      subGridHeight = gridHeight;
-      subGridColumnCount = Math.ceil(subGridTileCount / 3);
-      subGridRowCount = Math.ceil(subGridTileCount / subGridColumnCount);
-      subGridOffsetTop = 0;
-      subGridOffsetLeft = presenterGridWidth;
-      subGridTileAspectRatio = 16 / 9;
-    }
-
-    const presenterPositions = getSubGridPositions(
-      presenterTileCount,
-      presenterColumnCount,
-      presenterRowCount,
-      presenterTileAspectRatio,
-      {
-        width: presenterGridWidth,
-        height: presenterGridHeight,
-      }
-    );
-
-    const subGridPositions = getSubGridPositions(
-      subGridTileCount,
-      subGridColumnCount,
-      subGridRowCount,
-      subGridTileAspectRatio,
-      {
-        width: subGridWidth,
-        height: subGridHeight,
-        offsetTop: subGridOffsetTop,
-        offsetLeft: subGridOffsetLeft,
-      }
-    );
-
-    return [...presenterPositions, ...subGridPositions];
+  if (layoutDirection === "vertical") {
+    participantGridWidth = gridWidth;
+    participantGridHeight = Math.round(gridHeight * participantGridRatio);
   } else {
-    let columnCount, rowCount;
-    let tileAspectRatio = 16 / 9;
-
-    if (gridAspectRatio < 3 / 4) {
-      // Phone
-      if (tileCount === 1) {
-        columnCount = 1;
-        rowCount = 1;
-        tileAspectRatio = 0;
-      } else if (tileCount <= 4) {
-        columnCount = 1;
-        rowCount = tileCount;
-      } else if (tileCount <= 12) {
-        columnCount = 2;
-        rowCount = Math.ceil(tileCount / columnCount);
-        tileAspectRatio = 0;
-      } else {
-        // Unsupported
-        columnCount = 3;
-        rowCount = Math.ceil(tileCount / columnCount);
-        tileAspectRatio = 1;
-      }
-    } else if (gridAspectRatio < 1) {
-      // Tablet
-      if (tileCount === 1) {
-        columnCount = 1;
-        rowCount = 1;
-        tileAspectRatio = 0;
-      } else if (tileCount <= 4) {
-        columnCount = 1;
-        rowCount = tileCount;
-      } else if (tileCount <= 12) {
-        columnCount = 2;
-        rowCount = Math.ceil(tileCount / columnCount);
-      } else {
-        // Unsupported
-        columnCount = 3;
-        rowCount = Math.ceil(tileCount / columnCount);
-        tileAspectRatio = 1;
-      }
-    } else if (gridAspectRatio < 17 / 9) {
-      // Computer
-      if (tileCount === 1) {
-        columnCount = 1;
-        rowCount = 1;
-      } else if (tileCount === 2) {
-        columnCount = 2;
-        rowCount = 1;
-      } else if (tileCount <= 4) {
-        columnCount = 2;
-        rowCount = 2;
-      } else if (tileCount <= 6) {
-        columnCount = 3;
-        rowCount = 2;
-      } else if (tileCount <= 8) {
-        columnCount = 4;
-        rowCount = 2;
-        tileAspectRatio = 1;
-      } else if (tileCount <= 12) {
-        columnCount = 4;
-        rowCount = 3;
-        tileAspectRatio = 1;
-      } else {
-        // Unsupported
-        columnCount = 4;
-        rowCount = 4;
-      }
-    } else if (gridAspectRatio <= 32 / 9) {
-      // Ultrawide
-      if (tileCount === 1) {
-        columnCount = 1;
-        rowCount = 1;
-      } else if (tileCount === 2) {
-        columnCount = 2;
-        rowCount = 1;
-      } else if (tileCount <= 4) {
-        columnCount = 2;
-        rowCount = 2;
-      } else if (tileCount <= 6) {
-        columnCount = 3;
-        rowCount = 2;
-      } else if (tileCount <= 8) {
-        columnCount = 4;
-        rowCount = 2;
-      } else if (tileCount <= 12) {
-        columnCount = 4;
-        rowCount = 3;
-      } else {
-        // Unsupported
-        columnCount = 4;
-        rowCount = 4;
-      }
-    } else {
-      // Super Ultrawide
-      if (tileCount <= 6) {
-        columnCount = tileCount;
-        rowCount = 1;
-      } else {
-        columnCount = Math.ceil(tileCount / 2);
-        rowCount = 2;
-      }
-    }
-
-    return getSubGridPositions(
-      tileCount,
-      columnCount,
-      rowCount,
-      tileAspectRatio,
-      gridBounds
-    );
+    participantGridWidth = Math.round(gridWidth * participantGridRatio);
+    participantGridHeight = gridHeight;
   }
+
+  const participantGridPositions = getSubGridPositions(
+    tileCount - presenterTileCount,
+    participantGridWidth,
+    participantGridHeight,
+    gap
+  );
+  const participantGridBounds = getSubGridBoundingBox(participantGridPositions);
+
+  let presenterGridWidth, presenterGridHeight;
+
+  if (layoutDirection === "vertical") {
+    presenterGridWidth = gridWidth;
+    presenterGridHeight = gridHeight - participantGridBounds.height;
+  } else {
+    presenterGridWidth = gridWidth - participantGridBounds.width;
+    presenterGridHeight = gridHeight;
+  }
+
+  const presenterGridPositions = getSubGridPositions(
+    presenterTileCount,
+    presenterGridWidth,
+    presenterGridHeight,
+    gap
+  );
+  const presenterGridBounds = getSubGridBoundingBox(presenterGridPositions);
+
+  if (layoutDirection === "vertical") {
+    centerTiles(
+      participantGridPositions,
+      gridWidth,
+      presenterGridBounds.height
+    );
+    applyTileOffsets(
+      participantGridPositions,
+      0,
+      presenterGridBounds.height + gap
+    );
+    centerTiles(presenterGridPositions, gridWidth, presenterGridBounds.height);
+  } else {
+    applyTileOffsets(
+      participantGridPositions,
+      presenterGridBounds.width + gap,
+      0
+    );
+    centerTiles(presenterGridPositions, presenterGridBounds.width, gridHeight);
+  }
+
+  const tilePositions = [
+    ...presenterGridPositions,
+    ...participantGridPositions,
+  ];
+
+  centerTiles(tilePositions, gridWidth, gridHeight);
+
+  return tilePositions;
 }
 
-function getSubGridPositions(
-  tileCount,
-  columnCount,
-  rowCount,
-  tileAspectRatio,
-  gridBounds
-) {
+function getSubGridBoundingBox(positions) {
+  let left = 0,
+    right = 0,
+    top = 0,
+    bottom = 0;
+
+  for (let i = 0; i < positions.length; i++) {
+    const { x, y, width, height } = positions[i];
+
+    if (i === 0) {
+      left = x;
+      right = x + width;
+      top = y;
+      bottom = y + height;
+    } else {
+      if (x < left) {
+        left = x;
+      }
+
+      if (y < top) {
+        top = y;
+      }
+
+      if (x + width > right) {
+        right = x + width;
+      }
+
+      if (y + height > bottom) {
+        bottom = y + height;
+      }
+    }
+  }
+
+  return {
+    left,
+    right,
+    top,
+    bottom,
+    width: right - left,
+    height: bottom - top,
+  };
+}
+
+function getGridLayout(tileCount, presenterTileCount, gridWidth, gridHeight) {
+  let layoutDirection = "horizontal";
+  let participantGridRatio = 1;
+
+  if (presenterTileCount === 0) {
+    return { participantGridRatio, layoutDirection };
+  }
+
+  const gridAspectRatio = gridWidth / gridHeight;
+
+  if (gridAspectRatio < 1) {
+    layoutDirection = "vertical";
+    participantGridRatio = 1 / 3;
+  } else {
+    layoutDirection = "horizontal";
+    participantGridRatio = 1 / 3;
+  }
+
+  return { participantGridRatio, layoutDirection };
+}
+
+function centerTiles(positions, gridWidth, gridHeight) {
+  const bounds = getSubGridBoundingBox(positions);
+
+  const leftOffset = Math.round((gridWidth - bounds.width) / 2);
+  const topOffset = Math.round((gridHeight - bounds.height) / 2);
+
+  applyTileOffsets(positions, leftOffset, topOffset);
+
+  return positions;
+}
+
+function applyTileOffsets(positions, leftOffset, topOffset) {
+  for (const position of positions) {
+    position.x += leftOffset;
+    position.y += topOffset;
+  }
+
+  return positions;
+}
+
+function getSubGridLayout(tileCount, gridWidth, gridHeight) {
+  const gridAspectRatio = gridWidth / gridHeight;
+
+  let columnCount, rowCount;
+  let tileAspectRatio = 16 / 9;
+
+  if (gridAspectRatio < 3 / 4) {
+    // Phone
+    if (tileCount === 1) {
+      columnCount = 1;
+      rowCount = 1;
+      tileAspectRatio = 0;
+    } else if (tileCount <= 4) {
+      columnCount = 1;
+      rowCount = tileCount;
+    } else if (tileCount <= 12) {
+      columnCount = 2;
+      rowCount = Math.ceil(tileCount / columnCount);
+      tileAspectRatio = 0;
+    } else {
+      // Unsupported
+      columnCount = 3;
+      rowCount = Math.ceil(tileCount / columnCount);
+      tileAspectRatio = 1;
+    }
+  } else if (gridAspectRatio < 1) {
+    // Tablet
+    if (tileCount === 1) {
+      columnCount = 1;
+      rowCount = 1;
+      tileAspectRatio = 0;
+    } else if (tileCount <= 4) {
+      columnCount = 1;
+      rowCount = tileCount;
+    } else if (tileCount <= 12) {
+      columnCount = 2;
+      rowCount = Math.ceil(tileCount / columnCount);
+    } else {
+      // Unsupported
+      columnCount = 3;
+      rowCount = Math.ceil(tileCount / columnCount);
+      tileAspectRatio = 1;
+    }
+  } else if (gridAspectRatio < 17 / 9) {
+    // Computer
+    if (tileCount === 1) {
+      columnCount = 1;
+      rowCount = 1;
+    } else if (tileCount === 2) {
+      columnCount = 2;
+      rowCount = 1;
+    } else if (tileCount <= 4) {
+      columnCount = 2;
+      rowCount = 2;
+    } else if (tileCount <= 6) {
+      columnCount = 3;
+      rowCount = 2;
+    } else if (tileCount <= 8) {
+      columnCount = 4;
+      rowCount = 2;
+      tileAspectRatio = 1;
+    } else if (tileCount <= 12) {
+      columnCount = 4;
+      rowCount = 3;
+      tileAspectRatio = 1;
+    } else {
+      // Unsupported
+      columnCount = 4;
+      rowCount = 4;
+    }
+  } else if (gridAspectRatio <= 32 / 9) {
+    // Ultrawide
+    if (tileCount === 1) {
+      columnCount = 1;
+      rowCount = 1;
+    } else if (tileCount === 2) {
+      columnCount = 2;
+      rowCount = 1;
+    } else if (tileCount <= 4) {
+      columnCount = 2;
+      rowCount = 2;
+    } else if (tileCount <= 6) {
+      columnCount = 3;
+      rowCount = 2;
+    } else if (tileCount <= 8) {
+      columnCount = 4;
+      rowCount = 2;
+    } else if (tileCount <= 12) {
+      columnCount = 4;
+      rowCount = 3;
+    } else {
+      // Unsupported
+      columnCount = 4;
+      rowCount = 4;
+    }
+  } else {
+    // Super Ultrawide
+    if (tileCount <= 6) {
+      columnCount = tileCount;
+      rowCount = 1;
+    } else {
+      columnCount = Math.ceil(tileCount / 2);
+      rowCount = 2;
+    }
+  }
+
+  return { columnCount, rowCount, tileAspectRatio };
+}
+
+function getSubGridPositions(tileCount, gridWidth, gridHeight, gap) {
   if (tileCount === 0) {
     return [];
   }
 
+  const { columnCount, rowCount, tileAspectRatio } = getSubGridLayout(
+    tileCount,
+    gridWidth,
+    gridHeight
+  );
+
   const newTilePositions = [];
-  const gridWidth = gridBounds.width;
-  const gridHeight = gridBounds.height;
-  const gridOffsetLeft = gridBounds.offsetLeft || 0;
-  const gridOffsetTop = gridBounds.offsetTop || 0;
-  const gap = 8;
 
   const boxWidth = Math.round(
     (gridWidth - gap * (columnCount + 1)) / columnCount
@@ -392,19 +358,9 @@ function getSubGridPositions(
     tileHeight = boxHeight;
   }
 
-  const paddingTop =
-    (gridHeight - tileHeight * rowCount - gap * (rowCount - 1)) / 2;
-
-  const paddingLeft =
-    (gridWidth - tileWidth * columnCount - gap * (columnCount - 1)) / 2;
-
   for (let i = 0; i < tileCount; i++) {
     const verticalIndex = Math.floor(i / columnCount);
-    const top =
-      gridOffsetTop +
-      verticalIndex * tileHeight +
-      verticalIndex * gap +
-      paddingTop;
+    const top = verticalIndex * gap + verticalIndex * tileHeight;
 
     let rowItemCount;
 
@@ -419,21 +375,15 @@ function getSubGridPositions(
     let centeringPadding = 0;
 
     if (rowItemCount < columnCount) {
+      const subgridWidth = tileWidth * columnCount + (gap * columnCount - 1);
       centeringPadding = Math.round(
-        (gridWidth -
-          (tileWidth * rowItemCount +
-            (gap * rowItemCount - 1) +
-            paddingLeft * 2)) /
+        (subgridWidth - (tileWidth * rowItemCount + (gap * rowItemCount - 1))) /
           2
       );
     }
 
     const left =
-      gridOffsetLeft +
-      paddingLeft +
-      centeringPadding +
-      gap * horizontalIndex +
-      tileWidth * horizontalIndex;
+      centeringPadding + gap * horizontalIndex + tileWidth * horizontalIndex;
 
     newTilePositions.push({
       width: tileWidth,
@@ -522,8 +472,9 @@ export function VideoGrid({ participants }) {
               tiles: newTiles,
               tilePositions: getTilePositions(
                 newTiles.length,
-                gridBounds,
-                presenterTileCount
+                presenterTileCount,
+                gridBounds.width,
+                gridBounds.height
               ),
             };
           });
@@ -534,8 +485,9 @@ export function VideoGrid({ participants }) {
         tiles: newTiles,
         tilePositions: getTilePositions(
           newTiles.length,
-          gridBounds,
-          presenterTileCount
+          presenterTileCount,
+          gridBounds.width,
+          gridBounds.height
         ),
       };
     });
@@ -677,8 +629,9 @@ export function VideoGrid({ participants }) {
           tiles: newTiles,
           tilePositions: getTilePositions(
             newTiles.length,
-            gridBounds,
-            presenterTileCount
+            presenterTileCount,
+            gridBounds.width,
+            gridBounds.height
           ),
         };
       });
