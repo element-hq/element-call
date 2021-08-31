@@ -275,6 +275,8 @@ var assertThisInitialized = require("./assertThisInitialized.js");
 function _possibleConstructorReturn(self, call) {
   if (call && (_typeof(call) === "object" || typeof call === "function")) {
     return call;
+  } else if (call !== void 0) {
+    throw new TypeError("Derived constructors may only return object or undefined");
   }
 
   return assertThisInitialized(self);
@@ -7077,9 +7079,9 @@ var runtime = (function (exports) {
   // This is a polyfill for %IteratorPrototype% for environments that
   // don't natively support it.
   var IteratorPrototype = {};
-  IteratorPrototype[iteratorSymbol] = function () {
+  define(IteratorPrototype, iteratorSymbol, function () {
     return this;
-  };
+  });
 
   var getProto = Object.getPrototypeOf;
   var NativeIteratorPrototype = getProto && getProto(getProto(values([])));
@@ -7093,8 +7095,9 @@ var runtime = (function (exports) {
 
   var Gp = GeneratorFunctionPrototype.prototype =
     Generator.prototype = Object.create(IteratorPrototype);
-  GeneratorFunction.prototype = Gp.constructor = GeneratorFunctionPrototype;
-  GeneratorFunctionPrototype.constructor = GeneratorFunction;
+  GeneratorFunction.prototype = GeneratorFunctionPrototype;
+  define(Gp, "constructor", GeneratorFunctionPrototype);
+  define(GeneratorFunctionPrototype, "constructor", GeneratorFunction);
   GeneratorFunction.displayName = define(
     GeneratorFunctionPrototype,
     toStringTagSymbol,
@@ -7208,9 +7211,9 @@ var runtime = (function (exports) {
   }
 
   defineIteratorMethods(AsyncIterator.prototype);
-  AsyncIterator.prototype[asyncIteratorSymbol] = function () {
+  define(AsyncIterator.prototype, asyncIteratorSymbol, function () {
     return this;
-  };
+  });
   exports.AsyncIterator = AsyncIterator;
 
   // Note that simple async functions are implemented on top of
@@ -7403,13 +7406,13 @@ var runtime = (function (exports) {
   // iterator prototype chain incorrectly implement this, causing the Generator
   // object to not be returned from this call. This ensures that doesn't happen.
   // See https://github.com/facebook/regenerator/issues/274 for more details.
-  Gp[iteratorSymbol] = function() {
+  define(Gp, iteratorSymbol, function() {
     return this;
-  };
+  });
 
-  Gp.toString = function() {
+  define(Gp, "toString", function() {
     return "[object Generator]";
-  };
+  });
 
   function pushTryEntry(locs) {
     var entry = { tryLoc: locs[0] };
@@ -7728,14 +7731,19 @@ try {
 } catch (accidentalStrictMode) {
   // This module should not be running in strict mode, so the above
   // assignment should always work unless something is misconfigured. Just
-  // in case runtime.js accidentally runs in strict mode, we can escape
+  // in case runtime.js accidentally runs in strict mode, in modern engines
+  // we can explicitly access globalThis. In older engines we can escape
   // strict mode using a global Function call. This could conceivably fail
   // if a Content Security Policy forbids using Function, but in that case
   // the proper solution is to fix the accidental strict mode problem. If
   // you've misconfigured your bundler to force strict mode and applied a
   // CSP to forbid Function, and you're not willing to fix either of those
   // problems, please detail your unique predicament in a GitHub issue.
-  Function("r", "regeneratorRuntime = r")(runtime);
+  if (typeof globalThis === "object") {
+    globalThis.regeneratorRuntime = runtime;
+  } else {
+    Function("r", "regeneratorRuntime = r")(runtime);
+  }
 }
 
 },{}],59:[function(require,module,exports){
@@ -9287,7 +9295,7 @@ module.exports={
   "𝐴": "A",
   "𝑨": "A",
   "𝒜": "A",
-  "���": "A",
+  "𝓐": "A",
   "𝔄": "A",
   "𝔸": "A",
   "𝕬": "A",
@@ -18689,6 +18697,7 @@ class MatrixClient extends events_1.EventEmitter {
      * has been emitted.
      * @param {string} groupId The group ID
      * @return {Group} The Group or null if the group is not known or there is no data store.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getGroup(groupId) {
         return this.store.getGroup(groupId);
@@ -18696,6 +18705,7 @@ class MatrixClient extends events_1.EventEmitter {
     /**
      * Retrieve all known groups.
      * @return {Group[]} A list of groups, or an empty list if there is no data store.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getGroups() {
         return this.store.getGroups();
@@ -22935,14 +22945,15 @@ class MatrixClient extends events_1.EventEmitter {
         return this.http.authedRequest(undefined, "POST", path, null, { score, reason });
     }
     /**
-     * Fetches or paginates a summary of a space as defined by MSC2946
+     * Fetches or paginates a summary of a space as defined by an initial version of MSC2946
      * @param {string} roomId The ID of the space-room to use as the root of the summary.
      * @param {number?} maxRoomsPerSpace The maximum number of rooms to return per subspace.
      * @param {boolean?} suggestedOnly Whether to only return rooms with suggested=true.
      * @param {boolean?} autoJoinOnly Whether to only return rooms with auto_join=true.
      * @param {number?} limit The maximum number of rooms to return in total.
      * @param {string?} batch The opaque token to paginate a previous summary request.
-     * @returns {Promise} the response, with next_batch, rooms, events fields.
+     * @returns {Promise} the response, with next_token, rooms fields.
+     * @deprecated in favour of `getRoomHierarchy` due to the MSC changing paths.
      */
     getSpaceSummary(roomId, maxRoomsPerSpace, suggestedOnly, autoJoinOnly, limit, batch) {
         const path = utils.encodeUri("/rooms/$roomId/spaces", {
@@ -22956,6 +22967,48 @@ class MatrixClient extends events_1.EventEmitter {
             batch,
         }, {
             prefix: "/_matrix/client/unstable/org.matrix.msc2946",
+        });
+    }
+    /**
+     * Fetches or paginates a room hierarchy as defined by MSC2946.
+     * Falls back gracefully to sourcing its data from `getSpaceSummary` if this API is not yet supported by the server.
+     * @param {string} roomId The ID of the space-room to use as the root of the summary.
+     * @param {number?} limit The maximum number of rooms to return per page.
+     * @param {number?} maxDepth The maximum depth in the tree from the root room to return.
+     * @param {boolean?} suggestedOnly Whether to only return rooms with suggested=true.
+     * @param {string?} fromToken The opaque token to paginate a previous request.
+     * @returns {Promise} the response, with next_batch & rooms fields.
+     */
+    getRoomHierarchy(roomId, limit, maxDepth, suggestedOnly = false, fromToken) {
+        const path = utils.encodeUri("/rooms/$roomId/hierarchy", {
+            $roomId: roomId,
+        });
+        return this.http.authedRequest(undefined, "GET", path, {
+            suggested_only: suggestedOnly,
+            max_depth: maxDepth,
+            from: fromToken,
+            limit,
+        }, undefined, {
+            prefix: "/_matrix/client/unstable/org.matrix.msc2946",
+        }).catch(e => {
+            if (e.errcode === "M_UNRECOGNIZED") {
+                // fall back to the older space summary API as it exposes the same data just in a different shape.
+                return this.getSpaceSummary(roomId, undefined, suggestedOnly, undefined, limit)
+                    .then(({ rooms, events }) => {
+                    // Translate response from `/spaces` to that we expect in this API.
+                    const roomMap = new Map(rooms.map(r => {
+                        return [r.room_id, Object.assign(Object.assign({}, r), { children_state: [] })];
+                    }));
+                    events.forEach(e => {
+                        var _a;
+                        (_a = roomMap.get(e.room_id)) === null || _a === void 0 ? void 0 : _a.children_state.push(e);
+                    });
+                    return {
+                        rooms: Array.from(roomMap.values()),
+                    };
+                });
+            }
+            throw e;
         });
     }
     /**
@@ -23009,7 +23062,7 @@ class MatrixClient extends events_1.EventEmitter {
     unstableGetFileTreeSpace(roomId) {
         var _a, _b;
         const room = this.getRoom(roomId);
-        if (!room)
+        if ((room === null || room === void 0 ? void 0 : room.getMyMembership()) !== 'join')
             return null;
         const createEvent = room.currentState.getStateEvents(event_2.EventType.RoomCreate, "");
         const purposeEvent = room.currentState.getStateEvents(event_2.UNSTABLE_MSC3088_PURPOSE.name, event_2.UNSTABLE_MSC3089_TREE_SUBTYPE.name);
@@ -23030,6 +23083,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} groupId
      * @return {Promise} Resolves: Group summary object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getGroupSummary(groupId) {
         const path = utils.encodeUri("/groups/$groupId/summary", { $groupId: groupId });
@@ -23039,6 +23093,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} groupId
      * @return {Promise} Resolves: Group profile object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getGroupProfile(groupId) {
         const path = utils.encodeUri("/groups/$groupId/profile", { $groupId: groupId });
@@ -23053,6 +23108,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string=} profile.long_description A longer HTML description of the room
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     setGroupProfile(groupId, profile) {
         const path = utils.encodeUri("/groups/$groupId/profile", { $groupId: groupId });
@@ -23066,6 +23122,7 @@ class MatrixClient extends events_1.EventEmitter {
      *     required to join.
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     setGroupJoinPolicy(groupId, policy) {
         const path = utils.encodeUri("/groups/$groupId/settings/m.join_policy", { $groupId: groupId });
@@ -23077,6 +23134,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} groupId
      * @return {Promise} Resolves: Group users list object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getGroupUsers(groupId) {
         const path = utils.encodeUri("/groups/$groupId/users", { $groupId: groupId });
@@ -23086,6 +23144,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} groupId
      * @return {Promise} Resolves: Group users list object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getGroupInvitedUsers(groupId) {
         const path = utils.encodeUri("/groups/$groupId/invited_users", { $groupId: groupId });
@@ -23095,6 +23154,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} groupId
      * @return {Promise} Resolves: Group rooms list object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getGroupRooms(groupId) {
         const path = utils.encodeUri("/groups/$groupId/rooms", { $groupId: groupId });
@@ -23105,6 +23165,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} userId
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     inviteUserToGroup(groupId, userId) {
         const path = utils.encodeUri("/groups/$groupId/admin/users/invite/$userId", { $groupId: groupId, $userId: userId });
@@ -23115,6 +23176,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} userId
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     removeUserFromGroup(groupId, userId) {
         const path = utils.encodeUri("/groups/$groupId/admin/users/remove/$userId", { $groupId: groupId, $userId: userId });
@@ -23126,6 +23188,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} roleId Optional.
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     addUserToGroupSummary(groupId, userId, roleId) {
         const path = utils.encodeUri(roleId ?
@@ -23138,6 +23201,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} userId
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     removeUserFromGroupSummary(groupId, userId) {
         const path = utils.encodeUri("/groups/$groupId/summary/users/$userId", { $groupId: groupId, $userId: userId });
@@ -23149,6 +23213,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} categoryId Optional.
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     addRoomToGroupSummary(groupId, roomId, categoryId) {
         const path = utils.encodeUri(categoryId ?
@@ -23161,6 +23226,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} roomId
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     removeRoomFromGroupSummary(groupId, roomId) {
         const path = utils.encodeUri("/groups/$groupId/summary/rooms/$roomId", { $groupId: groupId, $roomId: roomId });
@@ -23172,6 +23238,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {boolean} isPublic Whether the room-group association is visible to non-members
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     addRoomToGroup(groupId, roomId, isPublic) {
         if (isPublic === undefined) {
@@ -23187,6 +23254,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {boolean} isPublic Whether the room-group association is visible to non-members
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     updateGroupRoomVisibility(groupId, roomId, isPublic) {
         // NB: The /config API is generic but there's not much point in exposing this yet as synapse
@@ -23200,6 +23268,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} roomId
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     removeRoomFromGroup(groupId, roomId) {
         const path = utils.encodeUri("/groups/$groupId/admin/rooms/$roomId", { $groupId: groupId, $roomId: roomId });
@@ -23210,6 +23279,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {Object} opts Additional options to send alongside the acceptance.
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     acceptGroupInvite(groupId, opts = null) {
         const path = utils.encodeUri("/groups/$groupId/self/accept_invite", { $groupId: groupId });
@@ -23219,6 +23289,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} groupId
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     joinGroup(groupId) {
         const path = utils.encodeUri("/groups/$groupId/self/join", { $groupId: groupId });
@@ -23228,6 +23299,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {string} groupId
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     leaveGroup(groupId) {
         const path = utils.encodeUri("/groups/$groupId/self/leave", { $groupId: groupId });
@@ -23236,6 +23308,7 @@ class MatrixClient extends events_1.EventEmitter {
     /**
      * @return {Promise} Resolves: The groups to which the user is joined
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getJoinedGroups() {
         const path = utils.encodeUri("/joined_groups", {});
@@ -23247,6 +23320,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {Object} content.profile Group profile object
      * @return {Promise} Resolves: Object with key group_id: id of the created group
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     createGroup(content) {
         const path = utils.encodeUri("/create_group", {});
@@ -23264,6 +23338,7 @@ class MatrixClient extends events_1.EventEmitter {
      *         }
      *     }
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getPublicisedGroups(userIds) {
         const path = utils.encodeUri("/publicised_groups", {});
@@ -23274,6 +23349,7 @@ class MatrixClient extends events_1.EventEmitter {
      * @param {boolean} isPublic Whether the user's membership of this group is made public
      * @return {Promise} Resolves: Empty object
      * @return {module:http-api.MatrixError} Rejects: with an error response.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     setGroupPublicity(groupId, isPublic) {
         const path = utils.encodeUri("/groups/$groupId/self/update_publicity", { $groupId: groupId });
@@ -23433,6 +23509,7 @@ MatrixClient.RESTORE_BACKUP_ERROR_BAD_KEY = 'RESTORE_BACKUP_ERROR_BAD_KEY';
  * is experimental and may change.</strong>
  * @event module:client~MatrixClient#"Group"
  * @param {Group} group The newly created, fully populated group.
+ * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
  * @example
  * matrixClient.on("Group", function(group){
  *   var groupId = group.groupId;
@@ -23607,7 +23684,7 @@ MatrixClient.RESTORE_BACKUP_ERROR_BAD_KEY = 'RESTORE_BACKUP_ERROR_BAD_KEY';
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./@types/PushRules":68,"./@types/event":69,"./@types/partials":70,"./@types/search":71,"./ReEmitter":73,"./autodiscovery":74,"./content-helpers":77,"./content-repo":78,"./crypto":95,"./crypto/RoomList":84,"./crypto/api":91,"./crypto/backup":92,"./crypto/dehydration":93,"./crypto/key_passphrase":96,"./crypto/olmlib":97,"./crypto/recoverykey":98,"./event-mapper":112,"./filter":114,"./http-api":115,"./logger":118,"./matrix":119,"./models/MSC3089TreeSpace":121,"./models/event":125,"./models/event-timeline":124,"./models/search-result":132,"./models/user":133,"./pushprocessor":134,"./randomstring":135,"./service-types":138,"./store/stub":144,"./sync":147,"./sync.api":146,"./utils":149,"./webrtc/call":150,"./webrtc/callEventHandler":151,"events":38}],77:[function(require,module,exports){
+},{"./@types/PushRules":68,"./@types/event":69,"./@types/partials":70,"./@types/search":71,"./ReEmitter":73,"./autodiscovery":74,"./content-helpers":77,"./content-repo":78,"./crypto":95,"./crypto/RoomList":84,"./crypto/api":91,"./crypto/backup":92,"./crypto/dehydration":93,"./crypto/key_passphrase":96,"./crypto/olmlib":97,"./crypto/recoverykey":98,"./event-mapper":112,"./filter":114,"./http-api":115,"./logger":118,"./matrix":119,"./models/MSC3089TreeSpace":121,"./models/event":125,"./models/event-timeline":124,"./models/search-result":132,"./models/user":134,"./pushprocessor":135,"./randomstring":136,"./service-types":139,"./store/stub":145,"./sync":148,"./sync.api":147,"./utils":150,"./webrtc/call":151,"./webrtc/callEventHandler":152,"events":38}],77:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2018 New Vector Ltd
@@ -23807,7 +23884,7 @@ function getHttpUriForMxc(baseUrl, mxc, width, height, resizeMethod, allowDirect
 }
 exports.getHttpUriForMxc = getHttpUriForMxc;
 
-},{"./utils":149}],79:[function(require,module,exports){
+},{"./utils":150}],79:[function(require,module,exports){
 (function (global,Buffer){(function (){
 "use strict";
 /*
@@ -25432,7 +25509,7 @@ function storeDeviceKeys(olmDevice, userStore, deviceResult) {
     });
 }
 
-},{"../logger":118,"../utils":149,"./CrossSigning":79,"./deviceinfo":94,"./olmlib":97,"./store/indexeddb-crypto-store":100,"events":38}],81:[function(require,module,exports){
+},{"../logger":118,"../utils":150,"./CrossSigning":79,"./deviceinfo":94,"./olmlib":97,"./store/indexeddb-crypto-store":100,"events":38}],81:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 The Matrix.org Foundation C.I.C.
@@ -25751,6 +25828,7 @@ class SSSSCryptoCallbacks {
         this.privateKeys = new Map();
     }
     getSecretStorageKey({ keys }, name) {
+        var _a;
         return __awaiter(this, void 0, void 0, function* () {
             for (const keyId of Object.keys(keys)) {
                 const privateKey = this.privateKeys.get(keyId);
@@ -25760,7 +25838,7 @@ class SSSSCryptoCallbacks {
             }
             // if we don't have the key cached yet, ask
             // for it to the general crypto callbacks and cache it
-            if (this.delegateCryptoCallbacks) {
+            if ((_a = this === null || this === void 0 ? void 0 : this.delegateCryptoCallbacks) === null || _a === void 0 ? void 0 : _a.getSecretStorageKey) {
                 const result = yield this.delegateCryptoCallbacks.
                     getSecretStorageKey({ keys }, name);
                 if (result) {
@@ -25769,6 +25847,7 @@ class SSSSCryptoCallbacks {
                 }
                 return result;
             }
+            return null;
         });
     }
     addPrivateKey(keyId, keyInfo, privKey) {
@@ -28688,7 +28767,7 @@ class SecretStorage {
 }
 exports.SecretStorage = SecretStorage;
 
-},{"../logger":118,"../randomstring":135,"./aes":86,"./olmlib":97}],86:[function(require,module,exports){
+},{"../logger":118,"../randomstring":136,"./aes":86,"./olmlib":97}],86:[function(require,module,exports){
 (function (Buffer){(function (){
 "use strict";
 /*
@@ -28909,7 +28988,7 @@ exports.calculateKeyCheck = calculateKeyCheck;
 
 }).call(this)}).call(this,require("buffer").Buffer)
 
-},{"../utils":149,"./olmlib":97,"buffer":34}],87:[function(require,module,exports){
+},{"../utils":150,"./olmlib":97,"buffer":34}],87:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2016 - 2021 The Matrix.org Foundation C.I.C.
@@ -31625,7 +31704,7 @@ exports.DefaultAlgorithm = Curve25519;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../NamespacedValue":72,"../client":76,"../logger":118,"../utils":149,"./aes":86,"./key_passphrase":96,"./olmlib":97,"./recoverykey":98,"./store/indexeddb-crypto-store":100}],93:[function(require,module,exports){
+},{"../NamespacedValue":72,"../client":76,"../logger":118,"../utils":150,"./aes":86,"./key_passphrase":96,"./olmlib":97,"./recoverykey":98,"./store/indexeddb-crypto-store":100}],93:[function(require,module,exports){
 (function (global,Buffer){(function (){
 "use strict";
 /*
@@ -35219,7 +35298,7 @@ exports.deriveKey = deriveKey;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"../randomstring":135}],97:[function(require,module,exports){
+},{"../randomstring":136}],97:[function(require,module,exports){
 (function (global,Buffer){(function (){
 "use strict";
 /*
@@ -35748,7 +35827,7 @@ exports.decodeBase64 = decodeBase64;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {},require("buffer").Buffer)
 
-},{"../logger":118,"../utils":149,"another-json":27,"buffer":34}],98:[function(require,module,exports){
+},{"../logger":118,"../utils":150,"another-json":27,"buffer":34}],98:[function(require,module,exports){
 (function (global,Buffer){(function (){
 "use strict";
 /*
@@ -36715,7 +36794,7 @@ function promiseifyTxn(txn) {
     });
 }
 
-},{"../../logger":118,"../../utils":149}],100:[function(require,module,exports){
+},{"../../logger":118,"../../utils":150}],100:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 /*
@@ -38054,7 +38133,7 @@ class MemoryCryptoStore {
 }
 exports.MemoryCryptoStore = MemoryCryptoStore;
 
-},{"../../logger":118,"../../utils":149}],103:[function(require,module,exports){
+},{"../../logger":118,"../../utils":150}],103:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -40780,7 +40859,7 @@ var ToDeviceChannel = /*#__PURE__*/function () {
           while (1) {
             switch (_context2.prev = _context2.next) {
               case 0:
-                if (!(type === _VerificationRequest.REQUEST_TYPE)) {
+                if (!(type === _VerificationRequest.REQUEST_TYPE || type === _VerificationRequest.CANCEL_TYPE && !this.__deviceId)) {
                   _context2.next = 6;
                   break;
                 }
@@ -41062,7 +41141,7 @@ var ToDeviceRequests = /*#__PURE__*/function () {
 
 exports.ToDeviceRequests = ToDeviceRequests;
 
-},{"../../../logger":118,"../../../models/event":125,"../../../randomstring":135,"../Error":104,"./VerificationRequest":110,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/typeof":23,"@babel/runtime/regenerator":26}],110:[function(require,module,exports){
+},{"../../../logger":118,"../../../models/event":125,"../../../randomstring":136,"../Error":104,"./VerificationRequest":110,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/typeof":23,"@babel/runtime/regenerator":26}],110:[function(require,module,exports){
 "use strict";
 
 var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
@@ -43948,7 +44027,7 @@ function _retryNetworkOperation() {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./logger":118,"./realtime-callbacks":136,"./utils":149,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":19,"@babel/runtime/helpers/typeof":23,"@babel/runtime/helpers/wrapNativeSuper":25,"@babel/runtime/regenerator":26,"content-type":37}],116:[function(require,module,exports){
+},{"./logger":118,"./realtime-callbacks":137,"./utils":150,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/classCallCheck":6,"@babel/runtime/helpers/createClass":8,"@babel/runtime/helpers/defineProperty":9,"@babel/runtime/helpers/getPrototypeOf":10,"@babel/runtime/helpers/inherits":11,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/possibleConstructorReturn":19,"@babel/runtime/helpers/typeof":23,"@babel/runtime/helpers/wrapNativeSuper":25,"@babel/runtime/regenerator":26,"content-type":37}],116:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2019 New Vector Ltd
@@ -44005,36 +44084,79 @@ exports.exists = exists;
 
 },{}],117:[function(require,module,exports){
 "use strict";
+/*
+Copyright 2016 OpenMarket Ltd
+Copyright 2017 Vector Creations Ltd
+Copyright 2019 The Matrix.org Foundation C.I.C.
 
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-var _typeof = require("@babel/runtime/helpers/typeof");
+    http://www.apache.org/licenses/LICENSE-2.0
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
 });
-exports.InteractiveAuth = InteractiveAuth;
-
-var _regenerator = _interopRequireDefault(require("@babel/runtime/regenerator"));
-
-var _asyncToGenerator2 = _interopRequireDefault(require("@babel/runtime/helpers/asyncToGenerator"));
-
-var utils = _interopRequireWildcard(require("./utils"));
-
-var _logger = require("./logger");
-
-function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
-
-function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-
-function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
-var EMAIL_STAGE_TYPE = "m.login.email.identity";
-var MSISDN_STAGE_TYPE = "m.login.msisdn";
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.InteractiveAuth = exports.AuthType = void 0;
+/** @module interactive-auth */
+const utils = __importStar(require("./utils"));
+const logger_1 = require("./logger");
+const utils_1 = require("./utils");
+const EMAIL_STAGE_TYPE = "m.login.email.identity";
+const MSISDN_STAGE_TYPE = "m.login.msisdn";
+var AuthType;
+(function (AuthType) {
+    AuthType["Password"] = "m.login.password";
+    AuthType["Recaptcha"] = "m.login.recaptcha";
+    AuthType["Terms"] = "m.login.terms";
+    AuthType["Email"] = "m.login.email.identity";
+    AuthType["Msisdn"] = "m.login.msisdn";
+    AuthType["Sso"] = "m.login.sso";
+    AuthType["SsoUnstable"] = "org.matrix.login.sso";
+    AuthType["Dummy"] = "m.login.dummy";
+})(AuthType = exports.AuthType || (exports.AuthType = {}));
+class NoAuthFlowFoundError extends Error {
+    // eslint-disable-next-line @typescript-eslint/naming-convention, camelcase
+    constructor(m, required_stages, flows) {
+        super(m);
+        this.required_stages = required_stages;
+        this.flows = flows;
+        this.name = "NoAuthFlowFoundError";
+    }
+}
 /**
  * Abstracts the logic used to drive the interactive auth process.
  *
@@ -44061,12 +44183,12 @@ var MSISDN_STAGE_TYPE = "m.login.msisdn";
  *     called with the new auth dict to submit the request. Also passes a
  *     second deprecated arg which is a flag set to true if this request
  *     is a background request. The busyChanged callback should be used
- *     instead of the backfround flag. Should return a promise which resolves
+ *     instead of the background flag. Should return a promise which resolves
  *     to the successful response or rejects with a MatrixError.
  *
- * @param {function(bool): Promise} opts.busyChanged
+ * @param {function(boolean): Promise} opts.busyChanged
  *     called whenever the interactive auth logic becomes busy submitting
- *     information provided by the user or finsihes. After this has been
+ *     information provided by the user or finishes. After this has been
  *     called with true the UI should indicate that a request is in progress
  *     until it is called again with false.
  *
@@ -44112,607 +44234,414 @@ var MSISDN_STAGE_TYPE = "m.login.msisdn";
  *     attemptAuth promise.
  *
  */
-
-function InteractiveAuth(opts) {
-  this._matrixClient = opts.matrixClient;
-  this._data = opts.authData || {};
-  this._requestCallback = opts.doRequest;
-  this._busyChangedCallback = opts.busyChanged; // startAuthStage included for backwards compat
-
-  this._stateUpdatedCallback = opts.stateUpdated || opts.startAuthStage;
-  this._resolveFunc = null;
-  this._rejectFunc = null;
-  this._inputs = opts.inputs || {};
-  this._requestEmailTokenCallback = opts.requestEmailToken;
-  if (opts.sessionId) this._data.session = opts.sessionId;
-  this._clientSecret = opts.clientSecret || this._matrixClient.generateClientSecret();
-  this._emailSid = opts.emailSid;
-  if (this._emailSid === undefined) this._emailSid = null;
-  this._requestingEmailToken = false;
-  this._chosenFlow = null;
-  this._currentStage = null; // if we are currently trying to submit an auth dict (which includes polling)
-  // the promise the will resolve/reject when it completes
-
-  this._submitPromise = null;
-}
-
-InteractiveAuth.prototype = {
-  /**
-   * begin the authentication process.
-   *
-   * @return {Promise} which resolves to the response on success,
-   * or rejects with the error on failure. Rejects with NoAuthFlowFoundError if
-   *     no suitable authentication flow can be found
-   */
-  attemptAuth: function attemptAuth() {
-    var _this = this;
-
-    // This promise will be quite long-lived and will resolve when the
-    // request is authenticated and completes successfully.
-    return new Promise(function (resolve, reject) {
-      _this._resolveFunc = resolve;
-      _this._rejectFunc = reject;
-      var hasFlows = _this._data && _this._data.flows; // if we have no flows, try a request to acquire the flows
-
-      if (!hasFlows) {
-        if (_this._busyChangedCallback) _this._busyChangedCallback(true); // use the existing sessionid, if one is present.
-
-        var auth = null;
-
-        if (_this._data.session) {
-          auth = {
-            session: _this._data.session
-          };
-        }
-
-        _this._doRequest(auth)["finally"](function () {
-          if (_this._busyChangedCallback) _this._busyChangedCallback(false);
-        });
-      } else {
-        _this._startNextAuthStage();
-      }
-    });
-  },
-
-  /**
-   * Poll to check if the auth session or current stage has been
-   * completed out-of-band. If so, the attemptAuth promise will
-   * be resolved.
-   */
-  poll: function () {
-    var _poll = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee() {
-      var authDict, creds, idServerParsedUrl;
-      return _regenerator["default"].wrap(function _callee$(_context) {
-        while (1) {
-          switch (_context.prev = _context.next) {
-            case 0:
-              if (this._data.session) {
-                _context.next = 2;
-                break;
-              }
-
-              return _context.abrupt("return");
-
-            case 2:
-              if (this._resolveFunc) {
-                _context.next = 4;
-                break;
-              }
-
-              return _context.abrupt("return");
-
-            case 4:
-              if (!this._submitPromise) {
-                _context.next = 6;
-                break;
-              }
-
-              return _context.abrupt("return");
-
-            case 6:
-              authDict = {};
-
-              if (!(this._currentStage == EMAIL_STAGE_TYPE)) {
-                _context.next = 16;
-                break;
-              }
-
-              if (!this._emailSid) {
-                _context.next = 16;
-                break;
-              }
-
-              creds = {
-                sid: this._emailSid,
-                client_secret: this._clientSecret
-              };
-              _context.next = 12;
-              return this._matrixClient.doesServerRequireIdServerParam();
-
-            case 12:
-              if (!_context.sent) {
-                _context.next = 15;
-                break;
-              }
-
-              idServerParsedUrl = new URL(this._matrixClient.getIdentityServerUrl());
-              creds.id_server = idServerParsedUrl.host;
-
-            case 15:
-              authDict = {
-                type: EMAIL_STAGE_TYPE,
-                // TODO: Remove `threepid_creds` once servers support proper UIA
-                // See https://github.com/matrix-org/synapse/issues/5665
-                // See https://github.com/matrix-org/matrix-doc/issues/2220
-                threepid_creds: creds,
-                threepidCreds: creds
-              };
-
-            case 16:
-              this.submitAuthDict(authDict, true);
-
-            case 17:
-            case "end":
-              return _context.stop();
-          }
-        }
-      }, _callee, this);
-    }));
-
-    function poll() {
-      return _poll.apply(this, arguments);
+class InteractiveAuth {
+    constructor(opts) {
+        var _a;
+        this.requestingEmailToken = false;
+        this.attemptAuthDeferred = null;
+        this.chosenFlow = null;
+        this.currentStage = null;
+        // if we are currently trying to submit an auth dict (which includes polling)
+        // the promise the will resolve/reject when it completes
+        this.submitPromise = null;
+        this.matrixClient = opts.matrixClient;
+        this.data = opts.authData || {};
+        this.requestCallback = opts.doRequest;
+        this.busyChangedCallback = opts.busyChanged;
+        // startAuthStage included for backwards compat
+        this.stateUpdatedCallback = opts.stateUpdated || opts.startAuthStage;
+        this.requestEmailTokenCallback = opts.requestEmailToken;
+        this.inputs = opts.inputs || {};
+        if (opts.sessionId)
+            this.data.session = opts.sessionId;
+        this.clientSecret = opts.clientSecret || this.matrixClient.generateClientSecret();
+        this.emailSid = (_a = opts.emailSid) !== null && _a !== void 0 ? _a : null;
     }
-
-    return poll;
-  }(),
-
-  /**
-   * get the auth session ID
-   *
-   * @return {string} session id
-   */
-  getSessionId: function getSessionId() {
-    return this._data ? this._data.session : undefined;
-  },
-
-  /**
-   * get the client secret used for validation sessions
-   * with the identity server.
-   *
-   * @return {string} client secret
-   */
-  getClientSecret: function getClientSecret() {
-    return this._clientSecret;
-  },
-
-  /**
-   * get the server params for a given stage
-   *
-   * @param {string} loginType login type for the stage
-   * @return {object?} any parameters from the server for this stage
-   */
-  getStageParams: function getStageParams(loginType) {
-    var params = {};
-
-    if (this._data && this._data.params) {
-      params = this._data.params;
-    }
-
-    return params[loginType];
-  },
-  getChosenFlow: function getChosenFlow() {
-    return this._chosenFlow;
-  },
-
-  /**
-   * submit a new auth dict and fire off the request. This will either
-   * make attemptAuth resolve/reject, or cause the startAuthStage callback
-   * to be called for a new stage.
-   *
-   * @param {object} authData new auth dict to send to the server. Should
-   *    include a `type` propterty denoting the login type, as well as any
-   *    other params for that stage.
-   * @param {bool} background If true, this request failing will not result
-   *    in the attemptAuth promise being rejected. This can be set to true
-   *    for requests that just poll to see if auth has been completed elsewhere.
-   */
-  submitAuthDict: function () {
-    var _submitAuthDict = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee2(authData, background) {
-      var auth;
-      return _regenerator["default"].wrap(function _callee2$(_context2) {
-        while (1) {
-          switch (_context2.prev = _context2.next) {
-            case 0:
-              if (this._resolveFunc) {
-                _context2.next = 2;
-                break;
-              }
-
-              throw new Error("submitAuthDict() called before attemptAuth()");
-
-            case 2:
-              if (!background && this._busyChangedCallback) {
-                this._busyChangedCallback(true);
-              } // if we're currently trying a request, wait for it to finish
-              // as otherwise we can get multiple 200 responses which can mean
-              // things like multiple logins for register requests.
-              // (but discard any expections as we only care when its done,
-              // not whether it worked or not)
-
-
-            case 3:
-              if (!this._submitPromise) {
-                _context2.next = 13;
-                break;
-              }
-
-              _context2.prev = 4;
-              _context2.next = 7;
-              return this._submitPromise;
-
-            case 7:
-              _context2.next = 11;
-              break;
-
-            case 9:
-              _context2.prev = 9;
-              _context2.t0 = _context2["catch"](4);
-
-            case 11:
-              _context2.next = 3;
-              break;
-
-            case 13:
-              if (this._data.session) {
+    /**
+     * begin the authentication process.
+     *
+     * @return {Promise} which resolves to the response on success,
+     * or rejects with the error on failure. Rejects with NoAuthFlowFoundError if
+     *     no suitable authentication flow can be found
+     */
+    attemptAuth() {
+        var _a, _b;
+        // This promise will be quite long-lived and will resolve when the
+        // request is authenticated and completes successfully.
+        this.attemptAuthDeferred = utils_1.defer();
+        // pluck the promise out now, as doRequest may clear before we return
+        const promise = this.attemptAuthDeferred.promise;
+        // if we have no flows, try a request to acquire the flows
+        if (!((_a = this.data) === null || _a === void 0 ? void 0 : _a.flows)) {
+            (_b = this.busyChangedCallback) === null || _b === void 0 ? void 0 : _b.call(this, true);
+            // use the existing sessionId, if one is present.
+            let auth = null;
+            if (this.data.session) {
                 auth = {
-                  session: this._data.session
+                    session: this.data.session,
+                };
+            }
+            this.doRequest(auth).finally(() => {
+                var _a;
+                (_a = this.busyChangedCallback) === null || _a === void 0 ? void 0 : _a.call(this, false);
+            });
+        }
+        else {
+            this.startNextAuthStage();
+        }
+        return promise;
+    }
+    /**
+     * Poll to check if the auth session or current stage has been
+     * completed out-of-band. If so, the attemptAuth promise will
+     * be resolved.
+     */
+    poll() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.data.session)
+                return;
+            // likewise don't poll if there is no auth session in progress
+            if (!this.attemptAuthDeferred)
+                return;
+            // if we currently have a request in flight, there's no point making
+            // another just to check what the status is
+            if (this.submitPromise)
+                return;
+            let authDict = {};
+            if (this.currentStage == EMAIL_STAGE_TYPE) {
+                // The email can be validated out-of-band, but we need to provide the
+                // creds so the HS can go & check it.
+                if (this.emailSid) {
+                    const creds = {
+                        sid: this.emailSid,
+                        client_secret: this.clientSecret,
+                    };
+                    if (yield this.matrixClient.doesServerRequireIdServerParam()) {
+                        const idServerParsedUrl = new URL(this.matrixClient.getIdentityServerUrl());
+                        creds.id_server = idServerParsedUrl.host;
+                    }
+                    authDict = {
+                        type: EMAIL_STAGE_TYPE,
+                        // TODO: Remove `threepid_creds` once servers support proper UIA
+                        // See https://github.com/matrix-org/synapse/issues/5665
+                        // See https://github.com/matrix-org/matrix-doc/issues/2220
+                        threepid_creds: creds,
+                        threepidCreds: creds,
+                    };
+                }
+            }
+            this.submitAuthDict(authDict, true);
+        });
+    }
+    /**
+     * get the auth session ID
+     *
+     * @return {string} session id
+     */
+    getSessionId() {
+        return this.data ? this.data.session : undefined;
+    }
+    /**
+     * get the client secret used for validation sessions
+     * with the identity server.
+     *
+     * @return {string} client secret
+     */
+    getClientSecret() {
+        return this.clientSecret;
+    }
+    /**
+     * get the server params for a given stage
+     *
+     * @param {string} loginType login type for the stage
+     * @return {object?} any parameters from the server for this stage
+     */
+    getStageParams(loginType) {
+        var _a;
+        return (_a = this.data.params) === null || _a === void 0 ? void 0 : _a[loginType];
+    }
+    getChosenFlow() {
+        return this.chosenFlow;
+    }
+    /**
+     * submit a new auth dict and fire off the request. This will either
+     * make attemptAuth resolve/reject, or cause the startAuthStage callback
+     * to be called for a new stage.
+     *
+     * @param {object} authData new auth dict to send to the server. Should
+     *    include a `type` property denoting the login type, as well as any
+     *    other params for that stage.
+     * @param {boolean} background If true, this request failing will not result
+     *    in the attemptAuth promise being rejected. This can be set to true
+     *    for requests that just poll to see if auth has been completed elsewhere.
+     */
+    submitAuthDict(authData, background = false) {
+        var _a, _b;
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.attemptAuthDeferred) {
+                throw new Error("submitAuthDict() called before attemptAuth()");
+            }
+            if (!background) {
+                (_a = this.busyChangedCallback) === null || _a === void 0 ? void 0 : _a.call(this, true);
+            }
+            // if we're currently trying a request, wait for it to finish
+            // as otherwise we can get multiple 200 responses which can mean
+            // things like multiple logins for register requests.
+            // (but discard any exceptions as we only care when its done,
+            // not whether it worked or not)
+            while (this.submitPromise) {
+                try {
+                    yield this.submitPromise;
+                }
+                catch (e) {
+                }
+            }
+            // use the sessionid from the last request, if one is present.
+            let auth;
+            if (this.data.session) {
+                auth = {
+                    session: this.data.session,
                 };
                 utils.extend(auth, authData);
-              } else {
-                auth = authData;
-              }
-
-              _context2.prev = 14;
-              // NB. the 'background' flag is deprecated by the busyChanged
-              // callback and is here for backwards compat
-              this._submitPromise = this._doRequest(auth, background);
-              _context2.next = 18;
-              return this._submitPromise;
-
-            case 18:
-              _context2.prev = 18;
-              this._submitPromise = null;
-
-              if (!background && this._busyChangedCallback) {
-                this._busyChangedCallback(false);
-              }
-
-              return _context2.finish(18);
-
-            case 22:
-            case "end":
-              return _context2.stop();
-          }
-        }
-      }, _callee2, this, [[4, 9], [14,, 18, 22]]);
-    }));
-
-    function submitAuthDict(_x, _x2) {
-      return _submitAuthDict.apply(this, arguments);
-    }
-
-    return submitAuthDict;
-  }(),
-
-  /**
-   * Gets the sid for the email validation session
-   * Specific to m.login.email.identity
-   *
-   * @returns {string} The sid of the email auth session
-   */
-  getEmailSid: function getEmailSid() {
-    return this._emailSid;
-  },
-
-  /**
-   * Sets the sid for the email validation session
-   * This must be set in order to successfully poll for completion
-   * of the email validation.
-   * Specific to m.login.email.identity
-   *
-   * @param {string} sid The sid for the email validation session
-   */
-  setEmailSid: function setEmailSid(sid) {
-    this._emailSid = sid;
-  },
-
-  /**
-   * Fire off a request, and either resolve the promise, or call
-   * startAuthStage.
-   *
-   * @private
-   * @param {object?} auth new auth dict, including session id
-   * @param {bool?} background If true, this request is a background poll, so it
-   *    failing will not result in the attemptAuth promise being rejected.
-   *    This can be set to true for requests that just poll to see if auth has
-   *    been completed elsewhere.
-   */
-  _doRequest: function () {
-    var _doRequest2 = (0, _asyncToGenerator2["default"])( /*#__PURE__*/_regenerator["default"].mark(function _callee3(auth, background) {
-      var result, errorFlows, haveFlows, requestTokenResult;
-      return _regenerator["default"].wrap(function _callee3$(_context3) {
-        while (1) {
-          switch (_context3.prev = _context3.next) {
-            case 0:
-              _context3.prev = 0;
-              _context3.next = 3;
-              return this._requestCallback(auth, background);
-
-            case 3:
-              result = _context3.sent;
-
-              this._resolveFunc(result);
-
-              this._resolveFunc = null;
-              this._rejectFunc = null;
-              _context3.next = 34;
-              break;
-
-            case 9:
-              _context3.prev = 9;
-              _context3.t0 = _context3["catch"](0);
-              // sometimes UI auth errors don't come with flows
-              errorFlows = _context3.t0.data ? _context3.t0.data.flows : null;
-              haveFlows = this._data.flows || Boolean(errorFlows);
-
-              if (_context3.t0.httpStatus !== 401 || !_context3.t0.data || !haveFlows) {
-                // doesn't look like an interactive-auth failure.
-                if (!background) {
-                  this._rejectFunc(_context3.t0);
-                } else {
-                  // We ignore all failures here (even non-UI auth related ones)
-                  // since we don't want to suddenly fail if the internet connection
-                  // had a blip whilst we were polling
-                  _logger.logger.log("Background poll request failed doing UI auth: ignoring", _context3.t0);
-                }
-              } // if the error didn't come with flows, completed flows or session ID,
-              // copy over the ones we have. Synapse sometimes sends responses without
-              // any UI auth data (eg. when polling for email validation, if the email
-              // has not yet been validated). This appears to be a Synapse bug, which
-              // we workaround here.
-
-
-              if (!_context3.t0.data.flows && !_context3.t0.data.completed && !_context3.t0.data.session) {
-                _context3.t0.data.flows = this._data.flows;
-                _context3.t0.data.completed = this._data.completed;
-                _context3.t0.data.session = this._data.session;
-              }
-
-              this._data = _context3.t0.data;
-
-              try {
-                this._startNextAuthStage();
-              } catch (e) {
-                this._rejectFunc(e);
-
-                this._resolveFunc = null;
-                this._rejectFunc = null;
-              }
-
-              if (!(!this._emailSid && !this._requestingEmailToken && this._chosenFlow.stages.includes('m.login.email.identity'))) {
-                _context3.next = 34;
-                break;
-              }
-
-              // If we've picked a flow with email auth, we send the email
-              // now because we want the request to fail as soon as possible
-              // if the email address is not valid (ie. already taken or not
-              // registered, depending on what the operation is).
-              this._requestingEmailToken = true;
-              _context3.prev = 19;
-              _context3.next = 22;
-              return this._requestEmailTokenCallback(this._inputs.emailAddress, this._clientSecret, 1, // TODO: Multiple send attempts?
-              this._data.session);
-
-            case 22:
-              requestTokenResult = _context3.sent;
-              this._emailSid = requestTokenResult.sid; // NB. promise is not resolved here - at some point, doRequest
-              // will be called again and if the user has jumped through all
-              // the hoops correctly, auth will be complete and the request
-              // will succeed.
-              // Also, we should expose the fact that this request has compledted
-              // so clients can know that the email has actually been sent.
-
-              _context3.next = 31;
-              break;
-
-            case 26:
-              _context3.prev = 26;
-              _context3.t1 = _context3["catch"](19);
-
-              // we failed to request an email token, so fail the request.
-              // This could be due to the email already beeing registered
-              // (or not being registered, depending on what we're trying
-              // to do) or it could be a network failure. Either way, pass
-              // the failure up as the user can't complete auth if we can't
-              // send the email, for whatever reason.
-              this._rejectFunc(_context3.t1);
-
-              this._resolveFunc = null;
-              this._rejectFunc = null;
-
-            case 31:
-              _context3.prev = 31;
-              this._requestingEmailToken = false;
-              return _context3.finish(31);
-
-            case 34:
-            case "end":
-              return _context3.stop();
-          }
-        }
-      }, _callee3, this, [[0, 9], [19, 26, 31, 34]]);
-    }));
-
-    function _doRequest(_x3, _x4) {
-      return _doRequest2.apply(this, arguments);
-    }
-
-    return _doRequest;
-  }(),
-
-  /**
-   * Pick the next stage and call the callback
-   *
-   * @private
-   * @throws {NoAuthFlowFoundError} If no suitable authentication flow can be found
-   */
-  _startNextAuthStage: function _startNextAuthStage() {
-    var nextStage = this._chooseStage();
-
-    if (!nextStage) {
-      throw new Error("No incomplete flows from the server");
-    }
-
-    this._currentStage = nextStage;
-
-    if (nextStage === 'm.login.dummy') {
-      this.submitAuthDict({
-        type: 'm.login.dummy'
-      });
-      return;
-    }
-
-    if (this._data && this._data.errcode || this._data.error) {
-      this._stateUpdatedCallback(nextStage, {
-        errcode: this._data.errcode || "",
-        error: this._data.error || ""
-      });
-
-      return;
-    }
-
-    var stageStatus = {};
-
-    if (nextStage == EMAIL_STAGE_TYPE) {
-      stageStatus.emailSid = this._emailSid;
-    }
-
-    this._stateUpdatedCallback(nextStage, stageStatus);
-  },
-
-  /**
-   * Pick the next auth stage
-   *
-   * @private
-   * @return {string?} login type
-   * @throws {NoAuthFlowFoundError} If no suitable authentication flow can be found
-   */
-  _chooseStage: function _chooseStage() {
-    if (this._chosenFlow === null) {
-      this._chosenFlow = this._chooseFlow();
-    }
-
-    _logger.logger.log("Active flow => %s", JSON.stringify(this._chosenFlow));
-
-    var nextStage = this._firstUncompletedStage(this._chosenFlow);
-
-    _logger.logger.log("Next stage: %s", nextStage);
-
-    return nextStage;
-  },
-
-  /**
-   * Pick one of the flows from the returned list
-   * If a flow using all of the inputs is found, it will
-   * be returned, otherwise, null will be returned.
-   *
-   * Only flows using all given inputs are chosen because it
-   * is likley to be surprising if the user provides a
-   * credential and it is not used. For example, for registration,
-   * this could result in the email not being used which would leave
-   * the account with no means to reset a password.
-   *
-   * @private
-   * @return {object} flow
-   * @throws {NoAuthFlowFoundError} If no suitable authentication flow can be found
-   */
-  _chooseFlow: function _chooseFlow() {
-    var flows = this._data.flows || []; // we've been given an email or we've already done an email part
-
-    var haveEmail = Boolean(this._inputs.emailAddress) || Boolean(this._emailSid);
-    var haveMsisdn = Boolean(this._inputs.phoneCountry) && Boolean(this._inputs.phoneNumber);
-
-    var _iterator = _createForOfIteratorHelper(flows),
-        _step;
-
-    try {
-      for (_iterator.s(); !(_step = _iterator.n()).done;) {
-        var flow = _step.value;
-        var flowHasEmail = false;
-        var flowHasMsisdn = false;
-
-        var _iterator2 = _createForOfIteratorHelper(flow.stages),
-            _step2;
-
-        try {
-          for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-            var stage = _step2.value;
-
-            if (stage === EMAIL_STAGE_TYPE) {
-              flowHasEmail = true;
-            } else if (stage == MSISDN_STAGE_TYPE) {
-              flowHasMsisdn = true;
             }
-          }
-        } catch (err) {
-          _iterator2.e(err);
-        } finally {
-          _iterator2.f();
-        }
-
-        if (flowHasEmail == haveEmail && flowHasMsisdn == haveMsisdn) {
-          return flow;
-        }
-      } // Throw an error with a fairly generic description, but with more
-      // information such that the app can give a better one if so desired.
-
-    } catch (err) {
-      _iterator.e(err);
-    } finally {
-      _iterator.f();
+            else {
+                auth = authData;
+            }
+            try {
+                // NB. the 'background' flag is deprecated by the busyChanged
+                // callback and is here for backwards compat
+                this.submitPromise = this.doRequest(auth, background);
+                yield this.submitPromise;
+            }
+            finally {
+                this.submitPromise = null;
+                if (!background) {
+                    (_b = this.busyChangedCallback) === null || _b === void 0 ? void 0 : _b.call(this, false);
+                }
+            }
+        });
     }
-
-    var err = new Error("No appropriate authentication flow found");
-    err.name = 'NoAuthFlowFoundError';
-    err.required_stages = [];
-    if (haveEmail) err.required_stages.push(EMAIL_STAGE_TYPE);
-    if (haveMsisdn) err.required_stages.push(MSISDN_STAGE_TYPE);
-    err.available_flows = flows;
-    throw err;
-  },
-
-  /**
-   * Get the first uncompleted stage in the given flow
-   *
-   * @private
-   * @param {object} flow
-   * @return {string} login type
-   */
-  _firstUncompletedStage: function _firstUncompletedStage(flow) {
-    var completed = (this._data || {}).completed || [];
-
-    for (var i = 0; i < flow.stages.length; ++i) {
-      var stageType = flow.stages[i];
-
-      if (completed.indexOf(stageType) === -1) {
-        return stageType;
-      }
+    /**
+     * Gets the sid for the email validation session
+     * Specific to m.login.email.identity
+     *
+     * @returns {string} The sid of the email auth session
+     */
+    getEmailSid() {
+        return this.emailSid;
     }
-  }
-};
+    /**
+     * Sets the sid for the email validation session
+     * This must be set in order to successfully poll for completion
+     * of the email validation.
+     * Specific to m.login.email.identity
+     *
+     * @param {string} sid The sid for the email validation session
+     */
+    setEmailSid(sid) {
+        this.emailSid = sid;
+    }
+    /**
+     * Fire off a request, and either resolve the promise, or call
+     * startAuthStage.
+     *
+     * @private
+     * @param {object?} auth new auth dict, including session id
+     * @param {boolean?} background If true, this request is a background poll, so it
+     *    failing will not result in the attemptAuth promise being rejected.
+     *    This can be set to true for requests that just poll to see if auth has
+     *    been completed elsewhere.
+     */
+    doRequest(auth, background = false) {
+        var _a, _b, _c;
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const result = yield this.requestCallback(auth, background);
+                this.attemptAuthDeferred.resolve(result);
+                this.attemptAuthDeferred = null;
+            }
+            catch (error) {
+                // sometimes UI auth errors don't come with flows
+                const errorFlows = (_b = (_a = error.data) === null || _a === void 0 ? void 0 : _a.flows) !== null && _b !== void 0 ? _b : null;
+                const haveFlows = this.data.flows || Boolean(errorFlows);
+                if (error.httpStatus !== 401 || !error.data || !haveFlows) {
+                    // doesn't look like an interactive-auth failure.
+                    if (!background) {
+                        (_c = this.attemptAuthDeferred) === null || _c === void 0 ? void 0 : _c.reject(error);
+                    }
+                    else {
+                        // We ignore all failures here (even non-UI auth related ones)
+                        // since we don't want to suddenly fail if the internet connection
+                        // had a blip whilst we were polling
+                        logger_1.logger.log("Background poll request failed doing UI auth: ignoring", error);
+                    }
+                }
+                // if the error didn't come with flows, completed flows or session ID,
+                // copy over the ones we have. Synapse sometimes sends responses without
+                // any UI auth data (eg. when polling for email validation, if the email
+                // has not yet been validated). This appears to be a Synapse bug, which
+                // we workaround here.
+                if (!error.data.flows && !error.data.completed && !error.data.session) {
+                    error.data.flows = this.data.flows;
+                    error.data.completed = this.data.completed;
+                    error.data.session = this.data.session;
+                }
+                this.data = error.data;
+                try {
+                    this.startNextAuthStage();
+                }
+                catch (e) {
+                    this.attemptAuthDeferred.reject(e);
+                    this.attemptAuthDeferred = null;
+                }
+                if (!this.emailSid &&
+                    !this.requestingEmailToken &&
+                    this.chosenFlow.stages.includes(AuthType.Email)) {
+                    // If we've picked a flow with email auth, we send the email
+                    // now because we want the request to fail as soon as possible
+                    // if the email address is not valid (ie. already taken or not
+                    // registered, depending on what the operation is).
+                    this.requestingEmailToken = true;
+                    try {
+                        const requestTokenResult = yield this.requestEmailTokenCallback(this.inputs.emailAddress, this.clientSecret, 1, // TODO: Multiple send attempts?
+                        this.data.session);
+                        this.emailSid = requestTokenResult.sid;
+                        // NB. promise is not resolved here - at some point, doRequest
+                        // will be called again and if the user has jumped through all
+                        // the hoops correctly, auth will be complete and the request
+                        // will succeed.
+                        // Also, we should expose the fact that this request has compledted
+                        // so clients can know that the email has actually been sent.
+                    }
+                    catch (e) {
+                        // we failed to request an email token, so fail the request.
+                        // This could be due to the email already beeing registered
+                        // (or not being registered, depending on what we're trying
+                        // to do) or it could be a network failure. Either way, pass
+                        // the failure up as the user can't complete auth if we can't
+                        // send the email, for whatever reason.
+                        this.attemptAuthDeferred.reject(e);
+                        this.attemptAuthDeferred = null;
+                    }
+                    finally {
+                        this.requestingEmailToken = false;
+                    }
+                }
+            }
+        });
+    }
+    /**
+     * Pick the next stage and call the callback
+     *
+     * @private
+     * @throws {NoAuthFlowFoundError} If no suitable authentication flow can be found
+     */
+    startNextAuthStage() {
+        const nextStage = this.chooseStage();
+        if (!nextStage) {
+            throw new Error("No incomplete flows from the server");
+        }
+        this.currentStage = nextStage;
+        if (nextStage === AuthType.Dummy) {
+            this.submitAuthDict({
+                type: 'm.login.dummy',
+            });
+            return;
+        }
+        if (this.data && this.data.errcode || this.data.error) {
+            this.stateUpdatedCallback(nextStage, {
+                errcode: this.data.errcode || "",
+                error: this.data.error || "",
+            });
+            return;
+        }
+        const stageStatus = {};
+        if (nextStage == EMAIL_STAGE_TYPE) {
+            stageStatus.emailSid = this.emailSid;
+        }
+        this.stateUpdatedCallback(nextStage, stageStatus);
+    }
+    /**
+     * Pick the next auth stage
+     *
+     * @private
+     * @return {string?} login type
+     * @throws {NoAuthFlowFoundError} If no suitable authentication flow can be found
+     */
+    chooseStage() {
+        if (this.chosenFlow === null) {
+            this.chosenFlow = this.chooseFlow();
+        }
+        logger_1.logger.log("Active flow => %s", JSON.stringify(this.chosenFlow));
+        const nextStage = this.firstUncompletedStage(this.chosenFlow);
+        logger_1.logger.log("Next stage: %s", nextStage);
+        return nextStage;
+    }
+    /**
+     * Pick one of the flows from the returned list
+     * If a flow using all of the inputs is found, it will
+     * be returned, otherwise, null will be returned.
+     *
+     * Only flows using all given inputs are chosen because it
+     * is likely to be surprising if the user provides a
+     * credential and it is not used. For example, for registration,
+     * this could result in the email not being used which would leave
+     * the account with no means to reset a password.
+     *
+     * @private
+     * @return {object} flow
+     * @throws {NoAuthFlowFoundError} If no suitable authentication flow can be found
+     */
+    chooseFlow() {
+        const flows = this.data.flows || [];
+        // we've been given an email or we've already done an email part
+        const haveEmail = Boolean(this.inputs.emailAddress) || Boolean(this.emailSid);
+        const haveMsisdn = (Boolean(this.inputs.phoneCountry) &&
+            Boolean(this.inputs.phoneNumber));
+        for (const flow of flows) {
+            let flowHasEmail = false;
+            let flowHasMsisdn = false;
+            for (const stage of flow.stages) {
+                if (stage === EMAIL_STAGE_TYPE) {
+                    flowHasEmail = true;
+                }
+                else if (stage == MSISDN_STAGE_TYPE) {
+                    flowHasMsisdn = true;
+                }
+            }
+            if (flowHasEmail == haveEmail && flowHasMsisdn == haveMsisdn) {
+                return flow;
+            }
+        }
+        const requiredStages = [];
+        if (haveEmail)
+            requiredStages.push(EMAIL_STAGE_TYPE);
+        if (haveMsisdn)
+            requiredStages.push(MSISDN_STAGE_TYPE);
+        // Throw an error with a fairly generic description, but with more
+        // information such that the app can give a better one if so desired.
+        throw new NoAuthFlowFoundError("No appropriate authentication flow found", requiredStages, flows);
+    }
+    /**
+     * Get the first uncompleted stage in the given flow
+     *
+     * @private
+     * @param {object} flow
+     * @return {string} login type
+     */
+    firstUncompletedStage(flow) {
+        const completed = this.data.completed || [];
+        for (let i = 0; i < flow.stages.length; ++i) {
+            const stageType = flow.stages[i];
+            if (completed.indexOf(stageType) === -1) {
+                return stageType;
+            }
+        }
+    }
+}
+exports.InteractiveAuth = InteractiveAuth;
 
-},{"./logger":118,"./utils":149,"@babel/runtime/helpers/asyncToGenerator":5,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/typeof":23,"@babel/runtime/regenerator":26}],118:[function(require,module,exports){
+},{"./logger":118,"./utils":150}],118:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2018 André Jaenisch
@@ -44993,7 +44922,7 @@ exports.createClient = createClient;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./autodiscovery":74,"./client":76,"./content-helpers":77,"./content-repo":78,"./crypto/store/indexeddb-crypto-store":100,"./crypto/store/memory-crypto-store":102,"./errors":111,"./filter":114,"./http-api":115,"./interactive-auth":117,"./models/event":125,"./models/event-timeline":124,"./models/event-timeline-set":123,"./models/group":126,"./models/room":131,"./models/room-member":128,"./models/room-state":129,"./models/user":133,"./scheduler":137,"./service-types":138,"./store/indexeddb":141,"./store/memory":142,"./store/session/webstorage":143,"./sync-accumulator":145,"./timeline-window":148,"./webrtc/call":150}],120:[function(require,module,exports){
+},{"./autodiscovery":74,"./client":76,"./content-helpers":77,"./content-repo":78,"./crypto/store/indexeddb-crypto-store":100,"./crypto/store/memory-crypto-store":102,"./errors":111,"./filter":114,"./http-api":115,"./interactive-auth":117,"./models/event":125,"./models/event-timeline":124,"./models/event-timeline-set":123,"./models/group":126,"./models/room":131,"./models/room-member":128,"./models/room-state":129,"./models/user":134,"./scheduler":138,"./service-types":139,"./store/indexeddb":142,"./store/memory":143,"./store/session/webstorage":144,"./sync-accumulator":146,"./timeline-window":149,"./webrtc/call":151}],120:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 The Matrix.org Foundation C.I.C.
@@ -45557,22 +45486,17 @@ class MSC3089TreeSpace {
      * @param {string} name The name of the file.
      * @param {ArrayBuffer} encryptedContents The encrypted contents.
      * @param {Partial<IEncryptedFile>} info The encrypted file information.
+     * @param {IContent} additionalContent Optional event content fields to include in the message.
      * @returns {Promise<void>} Resolves when uploaded.
      */
-    createFile(name, encryptedContents, info) {
+    createFile(name, encryptedContents, info, additionalContent) {
         return __awaiter(this, void 0, void 0, function* () {
             const mxc = yield this.client.uploadContent(new Blob([encryptedContents]), {
                 includeFilename: false,
                 onlyContentUri: true,
             });
             info.url = mxc;
-            const res = yield this.client.sendMessage(this.roomId, {
-                msgtype: event_1.MsgType.File,
-                body: name,
-                url: mxc,
-                file: info,
-                [event_1.UNSTABLE_MSC3089_LEAF.name]: {},
-            });
+            const res = yield this.client.sendMessage(this.roomId, Object.assign(Object.assign({}, (additionalContent !== null && additionalContent !== void 0 ? additionalContent : {})), { msgtype: event_1.MsgType.File, body: name, url: mxc, file: info, [event_1.UNSTABLE_MSC3089_LEAF.name]: {} }));
             yield this.client.sendStateEvent(this.roomId, event_1.UNSTABLE_MSC3089_BRANCH.name, {
                 active: true,
                 name: name,
@@ -45600,7 +45524,7 @@ class MSC3089TreeSpace {
 }
 exports.MSC3089TreeSpace = MSC3089TreeSpace;
 
-},{"../@types/event":69,"../crypto/algorithms/megolm":89,"../logger":118,"../utils":149,"./MSC3089Branch":120,"p-retry":48}],122:[function(require,module,exports){
+},{"../@types/event":69,"../crypto/algorithms/megolm":89,"../logger":118,"../utils":150,"./MSC3089Branch":120,"p-retry":48}],122:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -46890,6 +46814,7 @@ const events_1 = require("events");
 const logger_1 = require("../logger");
 const event_1 = require("../@types/event");
 const utils_1 = require("../utils");
+const ReEmitter_1 = require("../ReEmitter");
 /**
  * Enum for event statuses.
  * @readonly
@@ -46977,6 +46902,11 @@ class MatrixEvent extends events_1.EventEmitter {
          * allows for a unique ID which does not change when the event comes back down sync.
          */
         this.txnId = null;
+        /**
+         * @experimental
+         * A reference to the thread this event belongs to
+         */
+        this.thread = null;
         // XXX: these should be read-only
         this.sender = null;
         this.target = null;
@@ -47013,6 +46943,7 @@ class MatrixEvent extends events_1.EventEmitter {
         });
         this.txnId = event.txn_id || null;
         this.localTimestamp = Date.now() - this.getAge();
+        this.reEmitter = new ReEmitter_1.ReEmitter(this);
     }
     /**
      * Gets the event as though it would appear unencrypted. If the event is already not
@@ -47122,6 +47053,15 @@ class MatrixEvent extends events_1.EventEmitter {
      */
     getWireContent() {
         return this.event.content || {};
+    }
+    /**
+     * @experimental
+     * Get the event ID of the replied event
+     */
+    get replyEventId() {
+        var _a;
+        const relations = this.getWireContent()["m.relates_to"];
+        return (_a = relations === null || relations === void 0 ? void 0 : relations["m.in_reply_to"]) === null || _a === void 0 ? void 0 : _a["event_id"];
     }
     /**
      * Get the previous event content JSON. This will only return something for
@@ -47908,10 +47848,15 @@ class MatrixEvent extends events_1.EventEmitter {
         return JSON.stringify(myProps) === JSON.stringify(theirProps);
     }
     /**
-     * Summarise the event as JSON for debugging. If encrypted, include both the
-     * decrypted and encrypted view of the event. This is named `toJSON` for use
-     * with `JSON.stringify` which checks objects for functions named `toJSON`
-     * and will call them to customise the output if they are defined.
+     * Summarise the event as JSON. This is currently used by React SDK's view
+     * event source feature and Seshat's event indexing, so take care when
+     * adjusting the output here.
+     *
+     * If encrypted, include both the decrypted and encrypted view of the event.
+     *
+     * This is named `toJSON` for use with `JSON.stringify` which checks objects
+     * for functions named `toJSON` and will call them to customise the output
+     * if they are defined.
      *
      * @return {Object}
      */
@@ -47933,6 +47878,19 @@ class MatrixEvent extends events_1.EventEmitter {
     }
     getTxnId() {
         return this.txnId;
+    }
+    /**
+     * @experimental
+     */
+    setThread(thread) {
+        this.thread = thread;
+        this.reEmitter.reEmit(thread, ["Thread.ready", "Thread.update"]);
+    }
+    /**
+     * @experimental
+     */
+    getThread() {
+        return this.thread;
     }
 }
 exports.MatrixEvent = MatrixEvent;
@@ -47973,7 +47931,7 @@ const REDACT_KEEP_CONTENT_MAP = {
  *    error occurred.
  */
 
-},{"../@types/event":69,"../logger":118,"../utils":149,"events":38}],126:[function(require,module,exports){
+},{"../@types/event":69,"../ReEmitter":73,"../logger":118,"../utils":150,"events":38}],126:[function(require,module,exports){
 "use strict";
 
 var _typeof = require("@babel/runtime/helpers/typeof");
@@ -48010,6 +47968,7 @@ limitations under the License.
 
 /**
  * @module models/group
+ * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
  */
 
 /**
@@ -48024,6 +47983,7 @@ limitations under the License.
  * @prop {Object} inviter Infomation about the user who invited the logged in user
  *       to the group, if myMembership is 'invite'.
  * @prop {string} inviter.userId The user ID of the inviter
+ * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
  */
 function Group(groupId) {
   this.groupId = groupId;
@@ -48063,6 +48023,7 @@ Group.prototype.setInviter = function (inviter) {
  * This means the 'name' and 'avatarUrl' properties.
  * @event module:client~MatrixClient#"Group.profile"
  * @param {Group} group The group whose profile was updated.
+ * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
  * @example
  * matrixClient.on("Group.profile", function(group){
  *   var name = group.name;
@@ -48074,13 +48035,14 @@ Group.prototype.setInviter = function (inviter) {
  * the group is updated.
  * @event module:client~MatrixClient#"Group.myMembership"
  * @param {Group} group The group in which the user's membership changed
+ * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
  * @example
  * matrixClient.on("Group.myMembership", function(group){
  *   var myMembership = group.myMembership;
  * });
  */
 
-},{"../utils":149,"@babel/runtime/helpers/typeof":23,"events":38}],127:[function(require,module,exports){
+},{"../utils":150,"@babel/runtime/helpers/typeof":23,"events":38}],127:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2019, 2021 The Matrix.org Foundation C.I.C.
@@ -48811,7 +48773,7 @@ function calculateDisplayName(selfUserId, displayName, roomState, disambiguate) 
  * });
  */
 
-},{"../content-repo":78,"../utils":149,"events":38}],129:[function(require,module,exports){
+},{"../content-repo":78,"../utils":150,"events":38}],129:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -49569,7 +49531,7 @@ exports.RoomState = RoomState;
  * });
  */
 
-},{"../@types/event":69,"../logger":118,"../utils":149,"./room-member":128,"events":38}],130:[function(require,module,exports){
+},{"../@types/event":69,"../logger":118,"../utils":150,"./room-member":128,"events":38}],130:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -49671,6 +49633,7 @@ const logger_1 = require("../logger");
 const ReEmitter_1 = require("../ReEmitter");
 const event_2 = require("../@types/event");
 const client_1 = require("../client");
+const thread_1 = require("./thread");
 // These constants are used as sane defaults when the homeserver doesn't support
 // the m.room_versions capability. In practice, KNOWN_SAFE_ROOM_VERSION should be
 // the same as the common default room version whereas SAFE_ROOM_VERSIONS are the
@@ -49790,6 +49753,29 @@ class Room extends events_1.EventEmitter {
         this.tags = {}; // $tagName: { $metadata: $value }
         this.accountData = {}; // $eventType: $event
         this.summary = null;
+        /**
+         * @experimental
+         */
+        this.threads = new Set();
+        /**
+         * Two threads starting from a different child event can end up
+         * with the same event root. This method ensures that the duplicates
+         * are removed
+         * @experimental
+         */
+        this.dedupeThreads = (readyThread) => {
+            const threads = Array.from(this.threads);
+            if (threads.includes(readyThread)) {
+                this.threads = new Set(threads.filter(thread => {
+                    if (readyThread.id === thread.id && readyThread !== thread) {
+                        return false;
+                    }
+                    else {
+                        return true;
+                    }
+                }));
+            }
+        };
         // In some cases, we add listeners for every displayed Matrix event, so it's
         // common to have quite a few more than the default limit.
         this.setMaxListeners(100);
@@ -50375,13 +50361,26 @@ class Room extends events_1.EventEmitter {
         return this.getUnfilteredTimelineSet().addTimeline();
     }
     /**
-     * Get an event which is stored in our unfiltered timeline set
+     * Get an event which is stored in our unfiltered timeline set or in a thread
      *
      * @param {string} eventId  event ID to look for
      * @return {?module:models/event.MatrixEvent} the given event, or undefined if unknown
      */
     findEventById(eventId) {
-        return this.getUnfilteredTimelineSet().findEventById(eventId);
+        let event = this.getUnfilteredTimelineSet().findEventById(eventId);
+        if (event) {
+            return event;
+        }
+        else {
+            const threads = this.getThreads();
+            for (let i = 0; i < threads.length; i++) {
+                const thread = threads[i];
+                event = thread.findEventById(eventId);
+                if (event) {
+                    return event;
+                }
+            }
+        }
     }
     /**
      * Get one of the notification counts for this room
@@ -50542,6 +50541,32 @@ class Room extends events_1.EventEmitter {
         timeline.getTimelineSet().addEventsToTimeline(events, toStartOfTimeline, timeline, paginationToken);
     }
     /**
+     * @experimental
+     */
+    addThread(thread) {
+        this.threads.add(thread);
+        if (!thread.ready) {
+            thread.once("Thread.ready", this.dedupeThreads);
+            this.emit("Thread.update", thread);
+            this.reEmitter.reEmit(thread, ["Thread.update", "Thread.ready"]);
+        }
+        return this.threads;
+    }
+    /**
+     * @experimental
+     */
+    getThread(eventId) {
+        return this.getThreads().find(thread => {
+            return thread.id === eventId;
+        });
+    }
+    /**
+     * @experimental
+     */
+    getThreads() {
+        return Array.from(this.threads.values());
+    }
+    /**
      * Get a member from the current room state.
      * @param {string} userId The user ID of the member.
      * @return {RoomMember} The member or <code>null</code>.
@@ -50695,6 +50720,28 @@ class Room extends events_1.EventEmitter {
         const i = this.timelineSets.indexOf(timelineSet);
         if (i > -1) {
             this.timelineSets.splice(i, 1);
+        }
+    }
+    /**
+     * Add an event to a thread's timeline. Will fire "Thread.update"
+     * @experimental
+     */
+    addThreadedEvent(event) {
+        var _a;
+        if (event.getUnsigned().transaction_id) {
+            const existingEvent = this.txnToEvent[event.getUnsigned().transaction_id];
+            if (existingEvent) {
+                // remote echo of an event we sent earlier
+                this.handleRemoteEcho(event, existingEvent);
+            }
+        }
+        let thread = (_a = this.findEventById(event.replyEventId)) === null || _a === void 0 ? void 0 : _a.getThread();
+        if (thread) {
+            thread.addEvent(event);
+        }
+        else {
+            thread = new thread_1.Thread([event], this, this.client);
+            this.addThread(thread);
         }
     }
     /**
@@ -51644,7 +51691,7 @@ function memberNamesToRoomName(names, count = (names.length + 1)) {
  * @param {string} prevMembership The previous membership value
  */
 
-},{"../@types/event":69,"../ReEmitter":73,"../client":76,"../content-repo":78,"../logger":118,"../utils":149,"./event":125,"./event-timeline":124,"./event-timeline-set":123,"./room-member":128,"./room-summary":130,"events":38}],132:[function(require,module,exports){
+},{"../@types/event":69,"../ReEmitter":73,"../client":76,"../content-repo":78,"../logger":118,"../utils":150,"./event":125,"./event-timeline":124,"./event-timeline-set":123,"./room-member":128,"./room-summary":130,"./thread":133,"events":38}],132:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -51703,6 +51750,179 @@ class SearchResult {
 exports.SearchResult = SearchResult;
 
 },{"./event-context":122}],133:[function(require,module,exports){
+"use strict";
+/*
+Copyright 2021 The Matrix.org Foundation C.I.C.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Thread = void 0;
+const events_1 = require("events");
+const event_1 = require("./event");
+const event_timeline_set_1 = require("./event-timeline-set");
+/**
+ * @experimental
+ */
+class Thread extends events_1.EventEmitter {
+    constructor(events = [], room, client) {
+        super();
+        this.room = room;
+        this.client = client;
+        /**
+         * A reference to all the events ID at the bottom of the threads
+         */
+        this.tail = new Set();
+        this._timelineSet = new event_timeline_set_1.EventTimelineSet(room, {
+            unstableClientRelationAggregation: true,
+            timelineSupport: true,
+        });
+        events.forEach(event => this.addEvent(event));
+    }
+    /**
+     * Add an event to the thread and updates
+     * the tail/root references if needed
+     * Will fire "Thread.update"
+     * @param event The event to add
+     */
+    addEvent(event) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._timelineSet.findEventById(event.getId()) || event.status !== null) {
+                return;
+            }
+            if (this.tail.has(event.replyEventId)) {
+                this.tail.delete(event.replyEventId);
+            }
+            this.tail.add(event.getId());
+            if (!event.replyEventId || !this._timelineSet.findEventById(event.replyEventId)) {
+                this.root = event.getId();
+            }
+            event.setThread(this);
+            this._timelineSet.addLiveEvent(event);
+            if (this.ready) {
+                this.client.decryptEventIfNeeded(event, {});
+                this.emit("Thread.update", this);
+            }
+            else {
+                this.emit("Thread.update", this);
+            }
+        });
+    }
+    /**
+     * Completes the reply chain with all events
+     * missing from the current sync data
+     * Will fire "Thread.ready"
+     */
+    fetchReplyChain() {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (!this.ready) {
+                let mxEvent = this.room.findEventById(this.rootEvent.replyEventId);
+                if (!mxEvent) {
+                    mxEvent = yield this.fetchEventById(this.rootEvent.getRoomId(), this.rootEvent.replyEventId);
+                }
+                this.addEvent(mxEvent);
+                if (mxEvent.replyEventId) {
+                    yield this.fetchReplyChain();
+                }
+                else {
+                    yield this.decryptEvents();
+                    this.emit("Thread.ready", this);
+                }
+            }
+        });
+    }
+    decryptEvents() {
+        return __awaiter(this, void 0, void 0, function* () {
+            yield Promise.allSettled(Array.from(this._timelineSet.getLiveTimeline().getEvents()).map(event => {
+                return this.client.decryptEventIfNeeded(event, {});
+            }));
+        });
+    }
+    /**
+     * Fetches an event over the network
+     */
+    fetchEventById(roomId, eventId) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const response = yield this.client.http.authedRequest(undefined, "GET", `/rooms/${roomId}/event/${eventId}`);
+            return new event_1.MatrixEvent(response);
+        });
+    }
+    /**
+     * Finds an event by ID in the current thread
+     */
+    findEventById(eventId) {
+        return this._timelineSet.findEventById(eventId);
+    }
+    /**
+     * Determines thread's ready status
+     */
+    get ready() {
+        return this.rootEvent.replyEventId === undefined;
+    }
+    /**
+     * The thread ID, which is the same as the root event ID
+     */
+    get id() {
+        return this.root;
+    }
+    /**
+     * The thread root event
+     */
+    get rootEvent() {
+        return this.findEventById(this.root);
+    }
+    /**
+     * The number of messages in the thread
+     */
+    get length() {
+        return this._timelineSet.getLiveTimeline().getEvents().length;
+    }
+    /**
+     * A set of mxid participating to the thread
+     */
+    get participants() {
+        const participants = new Set();
+        this._timelineSet.getLiveTimeline().getEvents().forEach(event => {
+            participants.add(event.getSender());
+        });
+        return participants;
+    }
+    /**
+     * A read-only getter to access the timeline set
+     */
+    get timelineSet() {
+        return this._timelineSet;
+    }
+    /**
+     * A getter for the last event added to the thread
+     */
+    get replyToEvent() {
+        const events = this._timelineSet.getLiveTimeline().getEvents();
+        return events[events.length - 1];
+    }
+}
+exports.Thread = Thread;
+
+},{"./event":125,"./event-timeline-set":123,"events":38}],134:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -51953,530 +52173,432 @@ exports.User = User;
  * });
  */
 
-},{"events":38}],134:[function(require,module,exports){
+},{"events":38}],135:[function(require,module,exports){
 "use strict";
+/*
+Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
 
-var _interopRequireDefault = require("@babel/runtime/helpers/interopRequireDefault");
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.PushProcessor = PushProcessor;
+    http://www.apache.org/licenses/LICENSE-2.0
 
-var _typeof2 = _interopRequireDefault(require("@babel/runtime/helpers/typeof"));
-
-var _utils = require("./utils");
-
-var _logger = require("./logger");
-
-function _createForOfIteratorHelper(o, allowArrayLike) { var it = typeof Symbol !== "undefined" && o[Symbol.iterator] || o["@@iterator"]; if (!it) { if (Array.isArray(o) || (it = _unsupportedIterableToArray(o)) || allowArrayLike && o && typeof o.length === "number") { if (it) o = it; var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var normalCompletion = true, didErr = false, err; return { s: function s() { it = it.call(o); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
-
-function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(o); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
-
-function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
-
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PushProcessor = void 0;
+const utils_1 = require("./utils");
+const logger_1 = require("./logger");
+const PushRules_1 = require("./@types/PushRules");
 /**
  * @module pushprocessor
  */
-var RULEKINDS_IN_ORDER = ['override', 'content', 'room', 'sender', 'underride']; // The default override rules to apply to the push rules that arrive from the server.
+const RULEKINDS_IN_ORDER = [
+    PushRules_1.PushRuleKind.Override,
+    PushRules_1.PushRuleKind.ContentSpecific,
+    PushRules_1.PushRuleKind.RoomSpecific,
+    PushRules_1.PushRuleKind.SenderSpecific,
+    PushRules_1.PushRuleKind.Underride,
+];
+// The default override rules to apply to the push rules that arrive from the server.
 // We do this for two reasons:
 //   1. Synapse is unlikely to send us the push rule in an incremental sync - see
 //      https://github.com/matrix-org/synapse/pull/4867#issuecomment-481446072 for
 //      more details.
 //   2. We often want to start using push rules ahead of the server supporting them,
 //      and so we can put them here.
-
-var DEFAULT_OVERRIDE_RULES = [{
-  // For homeservers which don't support MSC1930 yet
-  rule_id: ".m.rule.tombstone",
-  "default": true,
-  enabled: true,
-  conditions: [{
-    kind: "event_match",
-    key: "type",
-    pattern: "m.room.tombstone"
-  }, {
-    kind: "event_match",
-    key: "state_key",
-    pattern: ""
-  }],
-  actions: ["notify", {
-    set_tweak: "highlight",
-    value: true
-  }]
-}, {
-  // For homeservers which don't support MSC2153 yet
-  rule_id: ".m.rule.reaction",
-  "default": true,
-  enabled: true,
-  conditions: [{
-    kind: "event_match",
-    key: "type",
-    pattern: "m.reaction"
-  }],
-  actions: ["dont_notify"]
-}];
-/**
- * Construct a Push Processor.
- * @constructor
- * @param {Object} client The Matrix client object to use
- */
-
-function PushProcessor(client) {
-  var _this = this;
-
-  var cachedGlobToRegex = {// $glob: RegExp,
-  };
-
-  var matchingRuleFromKindSet = function matchingRuleFromKindSet(ev, kindset) {
-    for (var ruleKindIndex = 0; ruleKindIndex < RULEKINDS_IN_ORDER.length; ++ruleKindIndex) {
-      var kind = RULEKINDS_IN_ORDER[ruleKindIndex];
-      var ruleset = kindset[kind];
-
-      if (!ruleset) {
-        continue;
-      }
-
-      for (var ruleIndex = 0; ruleIndex < ruleset.length; ++ruleIndex) {
-        var rule = ruleset[ruleIndex];
-
-        if (!rule.enabled) {
-          continue;
+const DEFAULT_OVERRIDE_RULES = [
+    {
+        // For homeservers which don't support MSC1930 yet
+        rule_id: ".m.rule.tombstone",
+        default: true,
+        enabled: true,
+        conditions: [
+            {
+                kind: PushRules_1.ConditionKind.EventMatch,
+                key: "type",
+                pattern: "m.room.tombstone",
+            },
+            {
+                kind: PushRules_1.ConditionKind.EventMatch,
+                key: "state_key",
+                pattern: "",
+            },
+        ],
+        actions: [
+            PushRules_1.PushRuleActionName.Notify,
+            {
+                set_tweak: PushRules_1.TweakName.Highlight,
+                value: true,
+            },
+        ],
+    },
+    {
+        // For homeservers which don't support MSC2153 yet
+        rule_id: ".m.rule.reaction",
+        default: true,
+        enabled: true,
+        conditions: [
+            {
+                kind: PushRules_1.ConditionKind.EventMatch,
+                key: "type",
+                pattern: "m.reaction",
+            },
+        ],
+        actions: [
+            PushRules_1.PushRuleActionName.DontNotify,
+        ],
+    },
+];
+class PushProcessor {
+    /**
+     * Construct a Push Processor.
+     * @constructor
+     * @param {Object} client The Matrix client object to use
+     */
+    constructor(client) {
+        this.client = client;
+    }
+    /**
+     * Convert a list of actions into a object with the actions as keys and their values
+     * eg. [ 'notify', { set_tweak: 'sound', value: 'default' } ]
+     *     becomes { notify: true, tweaks: { sound: 'default' } }
+     * @param {array} actionList The actions list
+     *
+     * @return {object} A object with key 'notify' (true or false) and an object of actions
+     */
+    static actionListToActionsObject(actionList) {
+        const actionObj = { notify: false, tweaks: {} };
+        for (let i = 0; i < actionList.length; ++i) {
+            const action = actionList[i];
+            if (action === PushRules_1.PushRuleActionName.Notify) {
+                actionObj.notify = true;
+            }
+            else if (typeof action === 'object') {
+                if (action.value === undefined) {
+                    action.value = true;
+                }
+                actionObj.tweaks[action.set_tweak] = action.value;
+            }
         }
-
-        var rawrule = templateRuleToRaw(kind, rule);
-
-        if (!rawrule) {
-          continue;
+        return actionObj;
+    }
+    /**
+     * Rewrites conditions on a client's push rules to match the defaults
+     * where applicable. Useful for upgrading push rules to more strict
+     * conditions when the server is falling behind on defaults.
+     * @param {object} incomingRules The client's existing push rules
+     * @returns {object} The rewritten rules
+     */
+    static rewriteDefaultRules(incomingRules) {
+        let newRules = JSON.parse(JSON.stringify(incomingRules)); // deep clone
+        // These lines are mostly to make the tests happy. We shouldn't run into these
+        // properties missing in practice.
+        if (!newRules)
+            newRules = {};
+        if (!newRules.global)
+            newRules.global = {};
+        if (!newRules.global.override)
+            newRules.global.override = [];
+        // Merge the client-level defaults with the ones from the server
+        const globalOverrides = newRules.global.override;
+        for (const override of DEFAULT_OVERRIDE_RULES) {
+            const existingRule = globalOverrides
+                .find((r) => r.rule_id === override.rule_id);
+            if (existingRule) {
+                // Copy over the actions, default, and conditions. Don't touch the user's
+                // preference.
+                existingRule.default = override.default;
+                existingRule.conditions = override.conditions;
+                existingRule.actions = override.actions;
+            }
+            else {
+                // Add the rule
+                const ruleId = override.rule_id;
+                logger_1.logger.warn(`Adding default global override for ${ruleId}`);
+                globalOverrides.push(override);
+            }
         }
-
-        if (_this.ruleMatchesEvent(rawrule, ev)) {
-          rule.kind = kind;
-          return rule;
+        return newRules;
+    }
+    matchingRuleFromKindSet(ev, kindset) {
+        for (let ruleKindIndex = 0; ruleKindIndex < RULEKINDS_IN_ORDER.length; ++ruleKindIndex) {
+            const kind = RULEKINDS_IN_ORDER[ruleKindIndex];
+            const ruleset = kindset[kind];
+            if (!ruleset) {
+                continue;
+            }
+            for (let ruleIndex = 0; ruleIndex < ruleset.length; ++ruleIndex) {
+                const rule = ruleset[ruleIndex];
+                if (!rule.enabled) {
+                    continue;
+                }
+                const rawrule = this.templateRuleToRaw(kind, rule);
+                if (!rawrule) {
+                    continue;
+                }
+                if (this.ruleMatchesEvent(rawrule, ev)) {
+                    return Object.assign(Object.assign({}, rule), { kind });
+                }
+            }
         }
-      }
+        return null;
     }
-
-    return null;
-  };
-
-  var templateRuleToRaw = function templateRuleToRaw(kind, tprule) {
-    var rawrule = {
-      'rule_id': tprule.rule_id,
-      'actions': tprule.actions,
-      'conditions': []
-    };
-
-    switch (kind) {
-      case 'underride':
-      case 'override':
-        rawrule.conditions = tprule.conditions;
-        break;
-
-      case 'room':
-        if (!tprule.rule_id) {
-          return null;
+    templateRuleToRaw(kind, tprule) {
+        const rawrule = {
+            'rule_id': tprule.rule_id,
+            'actions': tprule.actions,
+            'conditions': [],
+        };
+        switch (kind) {
+            case PushRules_1.PushRuleKind.Underride:
+            case PushRules_1.PushRuleKind.Override:
+                rawrule.conditions = tprule.conditions;
+                break;
+            case PushRules_1.PushRuleKind.RoomSpecific:
+                if (!tprule.rule_id) {
+                    return null;
+                }
+                rawrule.conditions.push({
+                    'kind': PushRules_1.ConditionKind.EventMatch,
+                    'key': 'room_id',
+                    'value': tprule.rule_id,
+                });
+                break;
+            case PushRules_1.PushRuleKind.SenderSpecific:
+                if (!tprule.rule_id) {
+                    return null;
+                }
+                rawrule.conditions.push({
+                    'kind': PushRules_1.ConditionKind.EventMatch,
+                    'key': 'user_id',
+                    'value': tprule.rule_id,
+                });
+                break;
+            case PushRules_1.PushRuleKind.ContentSpecific:
+                if (!tprule.pattern) {
+                    return null;
+                }
+                rawrule.conditions.push({
+                    'kind': PushRules_1.ConditionKind.EventMatch,
+                    'key': 'content.body',
+                    'pattern': tprule.pattern,
+                });
+                break;
         }
-
-        rawrule.conditions.push({
-          'kind': 'event_match',
-          'key': 'room_id',
-          'value': tprule.rule_id
-        });
-        break;
-
-      case 'sender':
-        if (!tprule.rule_id) {
-          return null;
+        return rawrule;
+    }
+    eventFulfillsCondition(cond, ev) {
+        switch (cond.kind) {
+            case PushRules_1.ConditionKind.EventMatch:
+                return this.eventFulfillsEventMatchCondition(cond, ev);
+            case PushRules_1.ConditionKind.ContainsDisplayName:
+                return this.eventFulfillsDisplayNameCondition(cond, ev);
+            case PushRules_1.ConditionKind.RoomMemberCount:
+                return this.eventFulfillsRoomMemberCountCondition(cond, ev);
+            case PushRules_1.ConditionKind.SenderNotificationPermission:
+                return this.eventFulfillsSenderNotifPermCondition(cond, ev);
         }
-
-        rawrule.conditions.push({
-          'kind': 'event_match',
-          'key': 'user_id',
-          'value': tprule.rule_id
-        });
-        break;
-
-      case 'content':
-        if (!tprule.pattern) {
-          return null;
-        }
-
-        rawrule.conditions.push({
-          'kind': 'event_match',
-          'key': 'content.body',
-          'pattern': tprule.pattern
-        });
-        break;
-    }
-
-    return rawrule;
-  };
-
-  var eventFulfillsCondition = function eventFulfillsCondition(cond, ev) {
-    var condition_functions = {
-      "event_match": eventFulfillsEventMatchCondition,
-      "contains_display_name": eventFulfillsDisplayNameCondition,
-      "room_member_count": eventFulfillsRoomMemberCountCondition,
-      "sender_notification_permission": eventFulfillsSenderNotifPermCondition
-    };
-
-    if (condition_functions[cond.kind]) {
-      return condition_functions[cond.kind](cond, ev);
-    } // unknown conditions: we previously matched all unknown conditions,
-    // but given that rules can be added to the base rules on a server,
-    // it's probably better to not match unknown conditions.
-
-
-    return false;
-  };
-
-  var eventFulfillsSenderNotifPermCondition = function eventFulfillsSenderNotifPermCondition(cond, ev) {
-    var notifLevelKey = cond['key'];
-
-    if (!notifLevelKey) {
-      return false;
-    }
-
-    var room = client.getRoom(ev.getRoomId());
-
-    if (!room || !room.currentState) {
-      return false;
-    } // Note that this should not be the current state of the room but the state at
-    // the point the event is in the DAG. Unfortunately the js-sdk does not store
-    // this.
-
-
-    return room.currentState.mayTriggerNotifOfType(notifLevelKey, ev.getSender());
-  };
-
-  var eventFulfillsRoomMemberCountCondition = function eventFulfillsRoomMemberCountCondition(cond, ev) {
-    if (!cond.is) {
-      return false;
-    }
-
-    var room = client.getRoom(ev.getRoomId());
-
-    if (!room || !room.currentState || !room.currentState.members) {
-      return false;
-    }
-
-    var memberCount = room.currentState.getJoinedMemberCount();
-    var m = cond.is.match(/^([=<>]*)([0-9]*)$/);
-
-    if (!m) {
-      return false;
-    }
-
-    var ineq = m[1];
-    var rhs = parseInt(m[2]);
-
-    if (isNaN(rhs)) {
-      return false;
-    }
-
-    switch (ineq) {
-      case '':
-      case '==':
-        return memberCount == rhs;
-
-      case '<':
-        return memberCount < rhs;
-
-      case '>':
-        return memberCount > rhs;
-
-      case '<=':
-        return memberCount <= rhs;
-
-      case '>=':
-        return memberCount >= rhs;
-
-      default:
+        // unknown conditions: we previously matched all unknown conditions,
+        // but given that rules can be added to the base rules on a server,
+        // it's probably better to not match unknown conditions.
         return false;
     }
-  };
-
-  var eventFulfillsDisplayNameCondition = function eventFulfillsDisplayNameCondition(cond, ev) {
-    var content = ev.getContent();
-
-    if (ev.isEncrypted() && ev.getClearContent()) {
-      content = ev.getClearContent();
-    }
-
-    if (!content || !content.body || typeof content.body != 'string') {
-      return false;
-    }
-
-    var room = client.getRoom(ev.getRoomId());
-
-    if (!room || !room.currentState || !room.currentState.members || !room.currentState.getMember(client.credentials.userId)) {
-      return false;
-    }
-
-    var displayName = room.currentState.getMember(client.credentials.userId).name; // N.B. we can't use \b as it chokes on unicode. however \W seems to be okay
-    // as shorthand for [^0-9A-Za-z_].
-
-    var pat = new RegExp("(^|\\W)" + (0, _utils.escapeRegExp)(displayName) + "(\\W|$)", 'i');
-    return content.body.search(pat) > -1;
-  };
-
-  var eventFulfillsEventMatchCondition = function eventFulfillsEventMatchCondition(cond, ev) {
-    if (!cond.key) {
-      return false;
-    }
-
-    var val = valueForDottedKey(cond.key, ev);
-
-    if (typeof val !== 'string') {
-      return false;
-    }
-
-    if (cond.value) {
-      return cond.value === val;
-    }
-
-    if (typeof cond.pattern !== 'string') {
-      return false;
-    }
-
-    var regex;
-
-    if (cond.key == 'content.body') {
-      regex = createCachedRegex('(^|\\W)', cond.pattern, '(\\W|$)');
-    } else {
-      regex = createCachedRegex('^', cond.pattern, '$');
-    }
-
-    return !!val.match(regex);
-  };
-
-  var createCachedRegex = function createCachedRegex(prefix, glob, suffix) {
-    if (cachedGlobToRegex[glob]) {
-      return cachedGlobToRegex[glob];
-    }
-
-    cachedGlobToRegex[glob] = new RegExp(prefix + (0, _utils.globToRegexp)(glob) + suffix, 'i');
-    return cachedGlobToRegex[glob];
-  };
-
-  var valueForDottedKey = function valueForDottedKey(key, ev) {
-    var parts = key.split('.');
-    var val; // special-case the first component to deal with encrypted messages
-
-    var firstPart = parts[0];
-
-    if (firstPart === 'content') {
-      val = ev.getContent();
-      parts.shift();
-    } else if (firstPart === 'type') {
-      val = ev.getType();
-      parts.shift();
-    } else {
-      // use the raw event for any other fields
-      val = ev.event;
-    }
-
-    while (parts.length > 0) {
-      var thisPart = parts.shift();
-
-      if ((0, _utils.isNullOrUndefined)(val[thisPart])) {
-        return null;
-      }
-
-      val = val[thisPart];
-    }
-
-    return val;
-  };
-
-  var matchingRuleForEventWithRulesets = function matchingRuleForEventWithRulesets(ev, rulesets) {
-    if (!rulesets) {
-      return null;
-    }
-
-    if (ev.getSender() === client.credentials.userId) {
-      return null;
-    }
-
-    return matchingRuleFromKindSet(ev, rulesets.global);
-  };
-
-  var pushActionsForEventAndRulesets = function pushActionsForEventAndRulesets(ev, rulesets) {
-    var rule = matchingRuleForEventWithRulesets(ev, rulesets);
-
-    if (!rule) {
-      return {};
-    }
-
-    var actionObj = PushProcessor.actionListToActionsObject(rule.actions); // Some actions are implicit in some situations: we add those here
-
-    if (actionObj.tweaks.highlight === undefined) {
-      // if it isn't specified, highlight if it's a content
-      // rule but otherwise not
-      actionObj.tweaks.highlight = rule.kind == 'content';
-    }
-
-    return actionObj;
-  };
-
-  this.ruleMatchesEvent = function (rule, ev) {
-    var ret = true;
-
-    for (var i = 0; i < rule.conditions.length; ++i) {
-      var cond = rule.conditions[i];
-      ret &= eventFulfillsCondition(cond, ev);
-    } //console.log("Rule "+rule.rule_id+(ret ? " matches" : " doesn't match"));
-
-
-    return ret;
-  };
-  /**
-   * Get the user's push actions for the given event
-   *
-   * @param {module:models/event.MatrixEvent} ev
-   *
-   * @return {PushAction}
-   */
-
-
-  this.actionsForEvent = function (ev) {
-    return pushActionsForEventAndRulesets(ev, client.pushRules);
-  };
-  /**
-   * Get one of the users push rules by its ID
-   *
-   * @param {string} ruleId The ID of the rule to search for
-   * @return {object} The push rule, or null if no such rule was found
-   */
-
-
-  this.getPushRuleById = function (ruleId) {
-    for (var _i = 0, _arr = ['global']; _i < _arr.length; _i++) {
-      var scope = _arr[_i];
-      if (client.pushRules[scope] === undefined) continue;
-
-      var _iterator = _createForOfIteratorHelper(RULEKINDS_IN_ORDER),
-          _step;
-
-      try {
-        for (_iterator.s(); !(_step = _iterator.n()).done;) {
-          var kind = _step.value;
-          if (client.pushRules[scope][kind] === undefined) continue;
-
-          var _iterator2 = _createForOfIteratorHelper(client.pushRules[scope][kind]),
-              _step2;
-
-          try {
-            for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
-              var rule = _step2.value;
-              if (rule.rule_id === ruleId) return rule;
-            }
-          } catch (err) {
-            _iterator2.e(err);
-          } finally {
-            _iterator2.f();
-          }
+    eventFulfillsSenderNotifPermCondition(cond, ev) {
+        const notifLevelKey = cond['key'];
+        if (!notifLevelKey) {
+            return false;
         }
-      } catch (err) {
-        _iterator.e(err);
-      } finally {
-        _iterator.f();
-      }
+        const room = this.client.getRoom(ev.getRoomId());
+        if (!(room === null || room === void 0 ? void 0 : room.currentState)) {
+            return false;
+        }
+        // Note that this should not be the current state of the room but the state at
+        // the point the event is in the DAG. Unfortunately the js-sdk does not store
+        // this.
+        return room.currentState.mayTriggerNotifOfType(notifLevelKey, ev.getSender());
     }
-
-    return null;
-  };
+    eventFulfillsRoomMemberCountCondition(cond, ev) {
+        if (!cond.is) {
+            return false;
+        }
+        const room = this.client.getRoom(ev.getRoomId());
+        if (!room || !room.currentState || !room.currentState.members) {
+            return false;
+        }
+        const memberCount = room.currentState.getJoinedMemberCount();
+        const m = cond.is.match(/^([=<>]*)([0-9]*)$/);
+        if (!m) {
+            return false;
+        }
+        const ineq = m[1];
+        const rhs = parseInt(m[2]);
+        if (isNaN(rhs)) {
+            return false;
+        }
+        switch (ineq) {
+            case '':
+            case '==':
+                return memberCount == rhs;
+            case '<':
+                return memberCount < rhs;
+            case '>':
+                return memberCount > rhs;
+            case '<=':
+                return memberCount <= rhs;
+            case '>=':
+                return memberCount >= rhs;
+            default:
+                return false;
+        }
+    }
+    eventFulfillsDisplayNameCondition(cond, ev) {
+        let content = ev.getContent();
+        if (ev.isEncrypted() && ev.getClearContent()) {
+            content = ev.getClearContent();
+        }
+        if (!content || !content.body || typeof content.body != 'string') {
+            return false;
+        }
+        const room = this.client.getRoom(ev.getRoomId());
+        if (!room || !room.currentState || !room.currentState.members ||
+            !room.currentState.getMember(this.client.credentials.userId)) {
+            return false;
+        }
+        const displayName = room.currentState.getMember(this.client.credentials.userId).name;
+        // N.B. we can't use \b as it chokes on unicode. however \W seems to be okay
+        // as shorthand for [^0-9A-Za-z_].
+        const pat = new RegExp("(^|\\W)" + utils_1.escapeRegExp(displayName) + "(\\W|$)", 'i');
+        return content.body.search(pat) > -1;
+    }
+    eventFulfillsEventMatchCondition(cond, ev) {
+        if (!cond.key) {
+            return false;
+        }
+        const val = this.valueForDottedKey(cond.key, ev);
+        if (typeof val !== 'string') {
+            return false;
+        }
+        if (cond.value) {
+            return cond.value === val;
+        }
+        if (typeof cond.pattern !== 'string') {
+            return false;
+        }
+        let regex;
+        if (cond.key == 'content.body') {
+            regex = this.createCachedRegex('(^|\\W)', cond.pattern, '(\\W|$)');
+        }
+        else {
+            regex = this.createCachedRegex('^', cond.pattern, '$');
+        }
+        return !!val.match(regex);
+    }
+    createCachedRegex(prefix, glob, suffix) {
+        if (PushProcessor.cachedGlobToRegex[glob]) {
+            return PushProcessor.cachedGlobToRegex[glob];
+        }
+        PushProcessor.cachedGlobToRegex[glob] = new RegExp(prefix + utils_1.globToRegexp(glob) + suffix, 'i');
+        return PushProcessor.cachedGlobToRegex[glob];
+    }
+    valueForDottedKey(key, ev) {
+        const parts = key.split('.');
+        let val;
+        // special-case the first component to deal with encrypted messages
+        const firstPart = parts[0];
+        if (firstPart === 'content') {
+            val = ev.getContent();
+            parts.shift();
+        }
+        else if (firstPart === 'type') {
+            val = ev.getType();
+            parts.shift();
+        }
+        else {
+            // use the raw event for any other fields
+            val = ev.event;
+        }
+        while (parts.length > 0) {
+            const thisPart = parts.shift();
+            if (utils_1.isNullOrUndefined(val[thisPart])) {
+                return null;
+            }
+            val = val[thisPart];
+        }
+        return val;
+    }
+    matchingRuleForEventWithRulesets(ev, rulesets) {
+        if (!rulesets) {
+            return null;
+        }
+        if (ev.getSender() === this.client.credentials.userId) {
+            return null;
+        }
+        return this.matchingRuleFromKindSet(ev, rulesets.global);
+    }
+    pushActionsForEventAndRulesets(ev, rulesets) {
+        const rule = this.matchingRuleForEventWithRulesets(ev, rulesets);
+        if (!rule) {
+            return {};
+        }
+        const actionObj = PushProcessor.actionListToActionsObject(rule.actions);
+        // Some actions are implicit in some situations: we add those here
+        if (actionObj.tweaks.highlight === undefined) {
+            // if it isn't specified, highlight if it's a content
+            // rule but otherwise not
+            actionObj.tweaks.highlight = (rule.kind == PushRules_1.PushRuleKind.ContentSpecific);
+        }
+        return actionObj;
+    }
+    ruleMatchesEvent(rule, ev) {
+        let ret = true;
+        for (let i = 0; i < rule.conditions.length; ++i) {
+            const cond = rule.conditions[i];
+            // @ts-ignore
+            ret &= this.eventFulfillsCondition(cond, ev);
+        }
+        //console.log("Rule "+rule.rule_id+(ret ? " matches" : " doesn't match"));
+        return ret;
+    }
+    /**
+     * Get the user's push actions for the given event
+     *
+     * @param {module:models/event.MatrixEvent} ev
+     *
+     * @return {PushAction}
+     */
+    actionsForEvent(ev) {
+        return this.pushActionsForEventAndRulesets(ev, this.client.pushRules);
+    }
+    /**
+     * Get one of the users push rules by its ID
+     *
+     * @param {string} ruleId The ID of the rule to search for
+     * @return {object} The push rule, or null if no such rule was found
+     */
+    getPushRuleById(ruleId) {
+        for (const scope of ['global']) {
+            if (this.client.pushRules[scope] === undefined)
+                continue;
+            for (const kind of RULEKINDS_IN_ORDER) {
+                if (this.client.pushRules[scope][kind] === undefined)
+                    continue;
+                for (const rule of this.client.pushRules[scope][kind]) {
+                    if (rule.rule_id === ruleId)
+                        return rule;
+                }
+            }
+        }
+        return null;
+    }
 }
-/**
- * Convert a list of actions into a object with the actions as keys and their values
- * eg. [ 'notify', { set_tweak: 'sound', value: 'default' } ]
- *     becomes { notify: true, tweaks: { sound: 'default' } }
- * @param {array} actionlist The actions list
- *
- * @return {object} A object with key 'notify' (true or false) and an object of actions
- */
-
-
-PushProcessor.actionListToActionsObject = function (actionlist) {
-  var actionobj = {
-    'notify': false,
-    'tweaks': {}
-  };
-
-  for (var i = 0; i < actionlist.length; ++i) {
-    var action = actionlist[i];
-
-    if (action === 'notify') {
-      actionobj.notify = true;
-    } else if ((0, _typeof2["default"])(action) === 'object') {
-      if (action.value === undefined) {
-        action.value = true;
-      }
-
-      actionobj.tweaks[action.set_tweak] = action.value;
-    }
-  }
-
-  return actionobj;
-};
-/**
- * Rewrites conditions on a client's push rules to match the defaults
- * where applicable. Useful for upgrading push rules to more strict
- * conditions when the server is falling behind on defaults.
- * @param {object} incomingRules The client's existing push rules
- * @returns {object} The rewritten rules
- */
-
-
-PushProcessor.rewriteDefaultRules = function (incomingRules) {
-  var newRules = JSON.parse(JSON.stringify(incomingRules)); // deep clone
-  // These lines are mostly to make the tests happy. We shouldn't run into these
-  // properties missing in practice.
-
-  if (!newRules) newRules = {};
-  if (!newRules.global) newRules.global = {};
-  if (!newRules.global.override) newRules.global.override = []; // Merge the client-level defaults with the ones from the server
-
-  var globalOverrides = newRules.global.override;
-
-  var _iterator3 = _createForOfIteratorHelper(DEFAULT_OVERRIDE_RULES),
-      _step3;
-
-  try {
-    var _loop = function _loop() {
-      var override = _step3.value;
-      var existingRule = globalOverrides.find(function (r) {
-        return r.rule_id === override.rule_id;
-      });
-
-      if (existingRule) {
-        // Copy over the actions, default, and conditions. Don't touch the user's
-        // preference.
-        existingRule["default"] = override["default"];
-        existingRule.conditions = override.conditions;
-        existingRule.actions = override.actions;
-      } else {
-        // Add the rule
-        var ruleId = override.rule_id;
-
-        _logger.logger.warn("Adding default global override for ".concat(ruleId));
-
-        globalOverrides.push(override);
-      }
-    };
-
-    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
-      _loop();
-    }
-  } catch (err) {
-    _iterator3.e(err);
-  } finally {
-    _iterator3.f();
-  }
-
-  return newRules;
-};
+exports.PushProcessor = PushProcessor;
+PushProcessor.cachedGlobToRegex = {}; // $glob: RegExp
 /**
  * @typedef {Object} PushAction
  * @type {Object}
@@ -52488,7 +52610,7 @@ PushProcessor.rewriteDefaultRules = function (incomingRules) {
  * noise.
  */
 
-},{"./logger":118,"./utils":149,"@babel/runtime/helpers/interopRequireDefault":12,"@babel/runtime/helpers/typeof":23}],135:[function(require,module,exports){
+},{"./@types/PushRules":68,"./logger":118,"./utils":150}],136:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2018 New Vector Ltd
@@ -52531,7 +52653,7 @@ function randomStringFrom(len, chars) {
     return ret;
 }
 
-},{}],136:[function(require,module,exports){
+},{}],137:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 
@@ -52755,27 +52877,10 @@ function binarySearch(array, func) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./logger":118}],137:[function(require,module,exports){
+},{"./logger":118}],138:[function(require,module,exports){
 "use strict";
-
-var _typeof = require("@babel/runtime/helpers/typeof");
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-exports.MatrixScheduler = MatrixScheduler;
-
-var utils = _interopRequireWildcard(require("./utils"));
-
-var _logger = require("./logger");
-
-function _getRequireWildcardCache(nodeInterop) { if (typeof WeakMap !== "function") return null; var cacheBabelInterop = new WeakMap(); var cacheNodeInterop = new WeakMap(); return (_getRequireWildcardCache = function _getRequireWildcardCache(nodeInterop) { return nodeInterop ? cacheNodeInterop : cacheBabelInterop; })(nodeInterop); }
-
-function _interopRequireWildcard(obj, nodeInterop) { if (!nodeInterop && obj && obj.__esModule) { return obj; } if (obj === null || _typeof(obj) !== "object" && typeof obj !== "function") { return { "default": obj }; } var cache = _getRequireWildcardCache(nodeInterop); if (cache && cache.has(obj)) { return cache.get(obj); } var newObj = {}; var hasPropertyDescriptor = Object.defineProperty && Object.getOwnPropertyDescriptor; for (var key in obj) { if (key !== "default" && Object.prototype.hasOwnProperty.call(obj, key)) { var desc = hasPropertyDescriptor ? Object.getOwnPropertyDescriptor(obj, key) : null; if (desc && (desc.get || desc.set)) { Object.defineProperty(newObj, key, desc); } else { newObj[key] = obj[key]; } } } newObj["default"] = obj; if (cache) { cache.set(obj, newObj); } return newObj; }
-
 /*
-Copyright 2015, 2016 OpenMarket Ltd
-Copyright 2019 The Matrix.org Foundation C.I.C.
+Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -52789,14 +52894,36 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    Object.defineProperty(o, k2, { enumerable: true, get: function() { return m[k]; } });
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.MatrixScheduler = void 0;
 /**
  * This is an internal module which manages queuing, scheduling and retrying
  * of requests.
  * @module scheduler
  */
-var DEBUG = false; // set true to enable console logging.
-
+const utils = __importStar(require("./utils"));
+const logger_1 = require("./logger");
+const event_1 = require("./@types/event");
+const DEBUG = false; // set true to enable console logging.
 /**
  * Construct a scheduler for Matrix. Requires
  * {@link module:scheduler~MatrixScheduler#setProcessFunction} to be provided
@@ -52809,278 +52936,233 @@ var DEBUG = false; // set true to enable console logging.
  * algorithm to apply when determining which events should be sent before the
  * given event. Defaults to {@link module:scheduler~MatrixScheduler.QUEUE_MESSAGES}.
  */
-
-function MatrixScheduler(retryAlgorithm, queueAlgorithm) {
-  this.retryAlgorithm = retryAlgorithm || MatrixScheduler.RETRY_BACKOFF_RATELIMIT;
-  this.queueAlgorithm = queueAlgorithm || MatrixScheduler.QUEUE_MESSAGES;
-  this._queues = {// queueName: [{
-    //  event: MatrixEvent,  // event to send
-    //  defer: Deferred,  // defer to resolve/reject at the END of the retries
-    //  attempts: Number  // number of times we've called processFn
-    // }, ...]
-  };
-  this._activeQueues = [];
-  this._procFn = null;
-}
-/**
- * Retrieve a queue based on an event. The event provided does not need to be in
- * the queue.
- * @param {MatrixEvent} event An event to get the queue for.
- * @return {?Array<MatrixEvent>} A shallow copy of events in the queue or null.
- * Modifying this array will not modify the list itself. Modifying events in
- * this array <i>will</i> modify the underlying event in the queue.
- * @see MatrixScheduler.removeEventFromQueue To remove an event from the queue.
- */
-
-
-MatrixScheduler.prototype.getQueueForEvent = function (event) {
-  var name = this.queueAlgorithm(event);
-
-  if (!name || !this._queues[name]) {
-    return null;
-  }
-
-  return this._queues[name].map(function (obj) {
-    return obj.event;
-  });
-};
-/**
- * Remove this event from the queue. The event is equal to another event if they
- * have the same ID returned from event.getId().
- * @param {MatrixEvent} event The event to remove.
- * @return {boolean} True if this event was removed.
- */
-
-
-MatrixScheduler.prototype.removeEventFromQueue = function (event) {
-  var name = this.queueAlgorithm(event);
-
-  if (!name || !this._queues[name]) {
-    return false;
-  }
-
-  var removed = false;
-  utils.removeElement(this._queues[name], function (element) {
-    if (element.event.getId() === event.getId()) {
-      // XXX we should probably reject the promise?
-      // https://github.com/matrix-org/matrix-js-sdk/issues/496
-      removed = true;
-      return true;
+// eslint-disable-next-line camelcase
+class MatrixScheduler {
+    constructor(retryAlgorithm = MatrixScheduler.RETRY_BACKOFF_RATELIMIT, queueAlgorithm = MatrixScheduler.QUEUE_MESSAGES) {
+        this.retryAlgorithm = retryAlgorithm;
+        this.queueAlgorithm = queueAlgorithm;
+        // queueName: [{
+        //  event: MatrixEvent,  // event to send
+        //  defer: Deferred,  // defer to resolve/reject at the END of the retries
+        //  attempts: Number  // number of times we've called processFn
+        // }, ...]
+        this.queues = {};
+        this.activeQueues = [];
+        this.procFn = null;
+        this.processQueue = (queueName) => {
+            // get head of queue
+            const obj = this.peekNextEvent(queueName);
+            if (!obj) {
+                // queue is empty. Mark as inactive and stop recursing.
+                const index = this.activeQueues.indexOf(queueName);
+                if (index >= 0) {
+                    this.activeQueues.splice(index, 1);
+                }
+                debuglog("Stopping queue '%s' as it is now empty", queueName);
+                return;
+            }
+            debuglog("Queue '%s' has %s pending events", queueName, this.queues[queueName].length);
+            // fire the process function and if it resolves, resolve the deferred. Else
+            // invoke the retry algorithm.
+            // First wait for a resolved promise, so the resolve handlers for
+            // the deferred of the previously sent event can run.
+            // This way enqueued relations/redactions to enqueued events can receive
+            // the remove id of their target before being sent.
+            Promise.resolve().then(() => {
+                return this.procFn(obj.event);
+            }).then((res) => {
+                // remove this from the queue
+                this.removeNextEvent(queueName);
+                debuglog("Queue '%s' sent event %s", queueName, obj.event.getId());
+                obj.defer.resolve(res);
+                // keep processing
+                this.processQueue(queueName);
+            }, (err) => {
+                obj.attempts += 1;
+                // ask the retry algorithm when/if we should try again
+                const waitTimeMs = this.retryAlgorithm(obj.event, obj.attempts, err);
+                debuglog("retry(%s) err=%s event_id=%s waitTime=%s", obj.attempts, err, obj.event.getId(), waitTimeMs);
+                if (waitTimeMs === -1) { // give up (you quitter!)
+                    debuglog("Queue '%s' giving up on event %s", queueName, obj.event.getId());
+                    // remove this from the queue
+                    this.removeNextEvent(queueName);
+                    obj.defer.reject(err);
+                    // process next event
+                    this.processQueue(queueName);
+                }
+                else {
+                    setTimeout(this.processQueue, waitTimeMs, queueName);
+                }
+            });
+        };
     }
-  });
-  return removed;
-};
-/**
- * Set the process function. Required for events in the queue to be processed.
- * If set after events have been added to the queue, this will immediately start
- * processing them.
- * @param {module:scheduler~processFn} fn The function that can process events
- * in the queue.
- */
-
-
-MatrixScheduler.prototype.setProcessFunction = function (fn) {
-  this._procFn = fn;
-
-  _startProcessingQueues(this);
-};
-/**
- * Queue an event if it is required and start processing queues.
- * @param {MatrixEvent} event The event that may be queued.
- * @return {?Promise} A promise if the event was queued, which will be
- * resolved or rejected in due time, else null.
- */
-
-
-MatrixScheduler.prototype.queueEvent = function (event) {
-  var queueName = this.queueAlgorithm(event);
-
-  if (!queueName) {
-    return null;
-  } // add the event to the queue and make a deferred for it.
-
-
-  if (!this._queues[queueName]) {
-    this._queues[queueName] = [];
-  }
-
-  var defer = utils.defer();
-
-  this._queues[queueName].push({
-    event: event,
-    defer: defer,
-    attempts: 0
-  });
-
-  debuglog("Queue algorithm dumped event %s into queue '%s'", event.getId(), queueName);
-
-  _startProcessingQueues(this);
-
-  return defer.promise;
-};
-/**
- * Retries events up to 4 times using exponential backoff. This produces wait
- * times of 2, 4, 8, and 16 seconds (30s total) after which we give up. If the
- * failure was due to a rate limited request, the time specified in the error is
- * waited before being retried.
- * @param {MatrixEvent} event
- * @param {Number} attempts
- * @param {MatrixError} err
- * @return {Number}
- * @see module:scheduler~retryAlgorithm
- */
-
-
-MatrixScheduler.RETRY_BACKOFF_RATELIMIT = function (event, attempts, err) {
-  if (err.httpStatus === 400 || err.httpStatus === 403 || err.httpStatus === 401) {
-    // client error; no amount of retrying with save you now.
-    return -1;
-  } // we ship with browser-request which returns { cors: rejected } when trying
-  // with no connection, so if we match that, give up since they have no conn.
-
-
-  if (err.cors === "rejected") {
-    return -1;
-  } // if event that we are trying to send is too large in any way then retrying won't help
-
-
-  if (err.name === "M_TOO_LARGE") {
-    return -1;
-  }
-
-  if (err.name === "M_LIMIT_EXCEEDED") {
-    var waitTime = err.data.retry_after_ms;
-
-    if (waitTime > 0) {
-      return waitTime;
+    /**
+     * Retries events up to 4 times using exponential backoff. This produces wait
+     * times of 2, 4, 8, and 16 seconds (30s total) after which we give up. If the
+     * failure was due to a rate limited request, the time specified in the error is
+     * waited before being retried.
+     * @param {MatrixEvent} event
+     * @param {Number} attempts
+     * @param {MatrixError} err
+     * @return {Number}
+     * @see module:scheduler~retryAlgorithm
+     */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    static RETRY_BACKOFF_RATELIMIT(event, attempts, err) {
+        if (err.httpStatus === 400 || err.httpStatus === 403 || err.httpStatus === 401) {
+            // client error; no amount of retrying with save you now.
+            return -1;
+        }
+        // we ship with browser-request which returns { cors: rejected } when trying
+        // with no connection, so if we match that, give up since they have no conn.
+        if (err.cors === "rejected") {
+            return -1;
+        }
+        // if event that we are trying to send is too large in any way then retrying won't help
+        if (err.name === "M_TOO_LARGE") {
+            return -1;
+        }
+        if (err.name === "M_LIMIT_EXCEEDED") {
+            const waitTime = err.data.retry_after_ms;
+            if (waitTime > 0) {
+                return waitTime;
+            }
+        }
+        if (attempts > 4) {
+            return -1; // give up
+        }
+        return (1000 * Math.pow(2, attempts));
     }
-  }
-
-  if (attempts > 4) {
-    return -1; // give up
-  }
-
-  return 1000 * Math.pow(2, attempts);
-};
-/**
- * Queues <code>m.room.message</code> events and lets other events continue
- * concurrently.
- * @param {MatrixEvent} event
- * @return {string}
- * @see module:scheduler~queueAlgorithm
- */
-
-
-MatrixScheduler.QUEUE_MESSAGES = function (event) {
-  // enqueue messages or events that associate with another event (redactions and relations)
-  if (event.getType() === "m.room.message" || event.hasAssocation()) {
-    // put these events in the 'message' queue.
-    return "message";
-  } // allow all other events continue concurrently.
-
-
-  return null;
-};
-
-function _startProcessingQueues(scheduler) {
-  if (!scheduler._procFn) {
-    return;
-  } // for each inactive queue with events in them
-
-
-  Object.keys(scheduler._queues).filter(function (queueName) {
-    return scheduler._activeQueues.indexOf(queueName) === -1 && scheduler._queues[queueName].length > 0;
-  }).forEach(function (queueName) {
-    // mark the queue as active
-    scheduler._activeQueues.push(queueName); // begin processing the head of the queue
-
-
-    debuglog("Spinning up queue: '%s'", queueName);
-
-    _processQueue(scheduler, queueName);
-  });
-}
-
-function _processQueue(scheduler, queueName) {
-  // get head of queue
-  var obj = _peekNextEvent(scheduler, queueName);
-
-  if (!obj) {
-    // queue is empty. Mark as inactive and stop recursing.
-    var index = scheduler._activeQueues.indexOf(queueName);
-
-    if (index >= 0) {
-      scheduler._activeQueues.splice(index, 1);
+    /**
+     * Queues <code>m.room.message</code> events and lets other events continue
+     * concurrently.
+     * @param {MatrixEvent} event
+     * @return {string}
+     * @see module:scheduler~queueAlgorithm
+     */
+    // eslint-disable-next-line @typescript-eslint/naming-convention
+    static QUEUE_MESSAGES(event) {
+        // enqueue messages or events that associate with another event (redactions and relations)
+        if (event.getType() === event_1.EventType.RoomMessage || event.hasAssocation()) {
+            // put these events in the 'message' queue.
+            return "message";
+        }
+        // allow all other events continue concurrently.
+        return null;
     }
-
-    debuglog("Stopping queue '%s' as it is now empty", queueName);
-    return;
-  }
-
-  debuglog("Queue '%s' has %s pending events", queueName, scheduler._queues[queueName].length); // fire the process function and if it resolves, resolve the deferred. Else
-  // invoke the retry algorithm.
-  // First wait for a resolved promise, so the resolve handlers for
-  // the deferred of the previously sent event can run.
-  // This way enqueued relations/redactions to enqueued events can receive
-  // the remove id of their target before being sent.
-
-  Promise.resolve().then(function () {
-    return scheduler._procFn(obj.event);
-  }).then(function (res) {
-    // remove this from the queue
-    _removeNextEvent(scheduler, queueName);
-
-    debuglog("Queue '%s' sent event %s", queueName, obj.event.getId());
-    obj.defer.resolve(res); // keep processing
-
-    _processQueue(scheduler, queueName);
-  }, function (err) {
-    obj.attempts += 1; // ask the retry algorithm when/if we should try again
-
-    var waitTimeMs = scheduler.retryAlgorithm(obj.event, obj.attempts, err);
-    debuglog("retry(%s) err=%s event_id=%s waitTime=%s", obj.attempts, err, obj.event.getId(), waitTimeMs);
-
-    if (waitTimeMs === -1) {
-      // give up (you quitter!)
-      debuglog("Queue '%s' giving up on event %s", queueName, obj.event.getId()); // remove this from the queue
-
-      _removeNextEvent(scheduler, queueName);
-
-      obj.defer.reject(err); // process next event
-
-      _processQueue(scheduler, queueName);
-    } else {
-      setTimeout(function () {
-        _processQueue(scheduler, queueName);
-      }, waitTimeMs);
+    /**
+     * Retrieve a queue based on an event. The event provided does not need to be in
+     * the queue.
+     * @param {MatrixEvent} event An event to get the queue for.
+     * @return {?Array<MatrixEvent>} A shallow copy of events in the queue or null.
+     * Modifying this array will not modify the list itself. Modifying events in
+     * this array <i>will</i> modify the underlying event in the queue.
+     * @see MatrixScheduler.removeEventFromQueue To remove an event from the queue.
+     */
+    getQueueForEvent(event) {
+        const name = this.queueAlgorithm(event);
+        if (!name || !this.queues[name]) {
+            return null;
+        }
+        return this.queues[name].map(function (obj) {
+            return obj.event;
+        });
     }
-  });
+    /**
+     * Remove this event from the queue. The event is equal to another event if they
+     * have the same ID returned from event.getId().
+     * @param {MatrixEvent} event The event to remove.
+     * @return {boolean} True if this event was removed.
+     */
+    removeEventFromQueue(event) {
+        const name = this.queueAlgorithm(event);
+        if (!name || !this.queues[name]) {
+            return false;
+        }
+        let removed = false;
+        utils.removeElement(this.queues[name], (element) => {
+            if (element.event.getId() === event.getId()) {
+                // XXX we should probably reject the promise?
+                // https://github.com/matrix-org/matrix-js-sdk/issues/496
+                removed = true;
+                return true;
+            }
+        });
+        return removed;
+    }
+    /**
+     * Set the process function. Required for events in the queue to be processed.
+     * If set after events have been added to the queue, this will immediately start
+     * processing them.
+     * @param {module:scheduler~processFn} fn The function that can process events
+     * in the queue.
+     */
+    setProcessFunction(fn) {
+        this.procFn = fn;
+        this.startProcessingQueues();
+    }
+    /**
+     * Queue an event if it is required and start processing queues.
+     * @param {MatrixEvent} event The event that may be queued.
+     * @return {?Promise} A promise if the event was queued, which will be
+     * resolved or rejected in due time, else null.
+     */
+    queueEvent(event) {
+        const queueName = this.queueAlgorithm(event);
+        if (!queueName) {
+            return null;
+        }
+        // add the event to the queue and make a deferred for it.
+        if (!this.queues[queueName]) {
+            this.queues[queueName] = [];
+        }
+        const defer = utils.defer();
+        this.queues[queueName].push({
+            event: event,
+            defer: defer,
+            attempts: 0,
+        });
+        debuglog("Queue algorithm dumped event %s into queue '%s'", event.getId(), queueName);
+        this.startProcessingQueues();
+        return defer.promise;
+    }
+    startProcessingQueues() {
+        if (!this.procFn)
+            return;
+        // for each inactive queue with events in them
+        Object.keys(this.queues)
+            .filter((queueName) => {
+            return this.activeQueues.indexOf(queueName) === -1 &&
+                this.queues[queueName].length > 0;
+        })
+            .forEach((queueName) => {
+            // mark the queue as active
+            this.activeQueues.push(queueName);
+            // begin processing the head of the queue
+            debuglog("Spinning up queue: '%s'", queueName);
+            this.processQueue(queueName);
+        });
+    }
+    peekNextEvent(queueName) {
+        const queue = this.queues[queueName];
+        if (!Array.isArray(queue)) {
+            return null;
+        }
+        return queue[0];
+    }
+    removeNextEvent(queueName) {
+        const queue = this.queues[queueName];
+        if (!Array.isArray(queue)) {
+            return null;
+        }
+        return queue.shift();
+    }
 }
-
-function _peekNextEvent(scheduler, queueName) {
-  var queue = scheduler._queues[queueName];
-
-  if (!Array.isArray(queue)) {
-    return null;
-  }
-
-  return queue[0];
-}
-
-function _removeNextEvent(scheduler, queueName) {
-  var queue = scheduler._queues[queueName];
-
-  if (!Array.isArray(queue)) {
-    return null;
-  }
-
-  return queue.shift();
-}
-
-function debuglog() {
-  if (DEBUG) {
-    _logger.logger.log.apply(_logger.logger, arguments);
-  }
+exports.MatrixScheduler = MatrixScheduler;
+function debuglog(...args) {
+    if (DEBUG) {
+        logger_1.logger.log(...args);
+    }
 }
 /**
  * The retry algorithm to apply when retrying events. To stop retrying, return
@@ -53097,7 +53179,6 @@ function debuglog() {
  * <code>-1</code>, the event will be marked as
  * {@link module:models/event.EventStatus.NOT_SENT} and will not be retried.
  */
-
 /**
  * The queuing algorithm to apply to events. This function must be idempotent as
  * it may be called multiple times with the same event. All queues created are
@@ -53111,15 +53192,14 @@ function debuglog() {
  * this name does not exist, it will be created. If this is <code>null</code>,
  * the event is not put into a queue and will be sent concurrently.
  */
-
 /**
-* The function to invoke to process (send) events in the queue.
-* @callback processFn
-* @param {MatrixEvent} event The event to send.
-* @return {Promise} Resolved/rejected depending on the outcome of the request.
-*/
+ * The function to invoke to process (send) events in the queue.
+ * @callback processFn
+ * @param {MatrixEvent} event The event to send.
+ * @return {Promise} Resolved/rejected depending on the outcome of the request.
+ */
 
-},{"./logger":118,"./utils":149,"@babel/runtime/helpers/typeof":23}],138:[function(require,module,exports){
+},{"./@types/event":69,"./logger":118,"./utils":150}],139:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2019 - 2021 The Matrix.org Foundation C.I.C.
@@ -53144,7 +53224,7 @@ var SERVICE_TYPES;
     SERVICE_TYPES["IM"] = "SERVICE_TYPE_IM";
 })(SERVICE_TYPES = exports.SERVICE_TYPES || (exports.SERVICE_TYPES = {}));
 
-},{}],139:[function(require,module,exports){
+},{}],140:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2017 - 2021 The Matrix.org Foundation C.I.C.
@@ -53664,7 +53744,7 @@ class LocalIndexedDBStoreBackend {
 }
 exports.LocalIndexedDBStoreBackend = LocalIndexedDBStoreBackend;
 
-},{"../indexeddb-helpers":116,"../logger":118,"../sync-accumulator":145,"../utils":149}],140:[function(require,module,exports){
+},{"../indexeddb-helpers":116,"../logger":118,"../sync-accumulator":146,"../utils":150}],141:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2017 - 2021 The Matrix.org Foundation C.I.C.
@@ -53832,7 +53912,7 @@ class RemoteIndexedDBStoreBackend {
 }
 exports.RemoteIndexedDBStoreBackend = RemoteIndexedDBStoreBackend;
 
-},{"../logger":118,"../utils":149}],141:[function(require,module,exports){
+},{"../logger":118,"../utils":150}],142:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2017 - 2021 Vector Creations Ltd
@@ -54127,7 +54207,7 @@ class IndexedDBStore extends memory_1.MemoryStore {
 }
 exports.IndexedDBStore = IndexedDBStore;
 
-},{"../logger":118,"../models/event":125,"../models/user":133,"./indexeddb-local-backend":139,"./indexeddb-remote-backend":140,"./memory":142,"events":38}],142:[function(require,module,exports){
+},{"../logger":118,"../models/event":125,"../models/user":134,"./indexeddb-local-backend":140,"./indexeddb-remote-backend":141,"./memory":143,"events":38}],143:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -54222,6 +54302,7 @@ class MemoryStore {
     /**
      * Store the given room.
      * @param {Group} group The group to be stored
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     storeGroup(group) {
         this.groups[group.groupId] = group;
@@ -54230,6 +54311,7 @@ class MemoryStore {
      * Retrieve a group by its group ID.
      * @param {string} groupId The group ID.
      * @return {Group} The group or null.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getGroup(groupId) {
         return this.groups[groupId] || null;
@@ -54237,6 +54319,7 @@ class MemoryStore {
     /**
      * Retrieve all known groups.
      * @return {Group[]} A list of groups, which may be empty.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getGroups() {
         return Object.values(this.groups);
@@ -54522,7 +54605,7 @@ class MemoryStore {
 }
 exports.MemoryStore = MemoryStore;
 
-},{"../models/user":133}],143:[function(require,module,exports){
+},{"../models/user":134}],144:[function(require,module,exports){
 "use strict";
 
 var _typeof = require("@babel/runtime/helpers/typeof");
@@ -54807,7 +54890,7 @@ function debuglog() {
   }
 }
 
-},{"../../logger":118,"../../utils":149,"@babel/runtime/helpers/typeof":23}],144:[function(require,module,exports){
+},{"../../logger":118,"../../utils":150,"@babel/runtime/helpers/typeof":23}],145:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015 - 2021 The Matrix.org Foundation C.I.C.
@@ -54856,12 +54939,14 @@ class StubStore {
     /**
      * No-op.
      * @param {Group} group
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     storeGroup(group) { }
     /**
      * No-op.
      * @param {string} groupId
      * @return {null}
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getGroup(groupId) {
         return null;
@@ -54869,6 +54954,7 @@ class StubStore {
     /**
      * No-op.
      * @return {Array} An empty array.
+     * @deprecated groups/communities never made it to the spec and support for them is being discontinued.
      */
     getGroups() {
         return [];
@@ -55053,7 +55139,7 @@ class StubStore {
 }
 exports.StubStore = StubStore;
 
-},{}],145:[function(require,module,exports){
+},{}],146:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2017 - 2021 The Matrix.org Foundation C.I.C.
@@ -55586,7 +55672,7 @@ function setState(eventMap, event) {
     eventMap[event.type][event.state_key] = event;
 }
 
-},{"./logger":118,"./utils":149}],146:[function(require,module,exports){
+},{"./logger":118,"./utils":150}],147:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 The Matrix.org Foundation C.I.C.
@@ -55616,7 +55702,7 @@ var SyncState;
     SyncState["Reconnecting"] = "RECONNECTING";
 })(SyncState = exports.SyncState || (exports.SyncState = {}));
 
-},{}],147:[function(require,module,exports){
+},{}],148:[function(require,module,exports){
 (function (global){(function (){
 "use strict";
 /*
@@ -55684,6 +55770,7 @@ const errors_1 = require("./errors");
 const client_1 = require("./client");
 const sync_api_1 = require("./sync.api");
 const sync_accumulator_1 = require("./sync-accumulator");
+const event_1 = require("./@types/event");
 const DEBUG = true;
 // /sync requests allow you to set a timeout= but the request may continue
 // beyond that and wedge forever, so we need to track how long we are willing
@@ -55750,6 +55837,7 @@ class SyncApi {
         this.opts.resolveInvitesToProfiles = this.opts.resolveInvitesToProfiles || false;
         this.opts.pollTimeout = this.opts.pollTimeout || (30 * 1000);
         this.opts.pendingEventOrdering = this.opts.pendingEventOrdering || client_1.PendingEventOrdering.Chronological;
+        this.opts.experimentalThreadSupport = this.opts.experimentalThreadSupport === true;
         if (!opts.canResetEntireTimeline) {
             opts.canResetEntireTimeline = (roomId) => {
                 return false;
@@ -55864,19 +55952,42 @@ class SyncApi {
                     return;
                 }
                 leaveObj.timeline = leaveObj.timeline || {};
-                const timelineEvents = this.mapSyncEventsFormat(leaveObj.timeline, room);
+                const events = this.mapSyncEventsFormat(leaveObj.timeline, room);
+                const [timelineEvents, threadedEvents] = this.partitionThreadedEvents(events);
                 const stateEvents = this.mapSyncEventsFormat(leaveObj.state, room);
                 // set the back-pagination token. Do this *before* adding any
                 // events so that clients can start back-paginating.
                 room.getLiveTimeline().setPaginationToken(leaveObj.timeline.prev_batch, event_timeline_1.EventTimeline.BACKWARDS);
                 this.processRoomEvents(room, stateEvents, timelineEvents);
+                this.processThreadEvents(room, threadedEvents);
                 room.recalculate();
                 client.store.storeRoom(room);
                 client.emit("Room", room);
-                this.processEventsForNotifs(room, timelineEvents);
+                this.processEventsForNotifs(room, events);
             });
             return rooms;
         });
+    }
+    /**
+     * Split events between the ones that will end up in the main
+     * room timeline versus the one that need to be processed in a thread
+     * @experimental
+     */
+    partitionThreadedEvents(events) {
+        if (this.opts.experimentalThreadSupport) {
+            return events.reduce((memo, event) => {
+                memo[event.replyEventId ? 1 : 0].push(event);
+                return memo;
+            }, [[], []]);
+        }
+        else {
+            // When `experimentalThreadSupport` is disabled
+            // treat all events as timelineEvents
+            return [
+                events,
+                [],
+            ];
+        }
     }
     /**
      * Peek into a room. This will result in the room in question being synced so it
@@ -56573,7 +56684,7 @@ class SyncApi {
                     // honour push rules that were previously cached. Base rules
                     // will be updated when we receive push rules via getPushRules
                     // (see sync) before syncing over the network.
-                    if (accountDataEvent.getType() === 'm.push_rules') {
+                    if (accountDataEvent.getType() === event_1.EventType.PushRules) {
                         const rules = accountDataEvent.getContent();
                         client.pushRules = pushprocessor_1.PushProcessor.rewriteDefaultRules(rules);
                     }
@@ -56679,7 +56790,7 @@ class SyncApi {
                 // this helps large account to speed up faster
                 // room::decryptCriticalEvent is in charge of decrypting all the events
                 // required for a client to function properly
-                const timelineEvents = this.mapSyncEventsFormat(joinObj.timeline, room, false);
+                const events = this.mapSyncEventsFormat(joinObj.timeline, room, false);
                 const ephemeralEvents = this.mapSyncEventsFormat(joinObj.ephemeral);
                 const accountDataEvents = this.mapSyncEventsFormat(joinObj.account_data);
                 const encrypted = client.isRoomEncrypted(room.roomId);
@@ -56715,8 +56826,8 @@ class SyncApi {
                     // which we'll try to paginate but not get any new events (which
                     // will stop us linking the empty timeline into the chain).
                     //
-                    for (let i = timelineEvents.length - 1; i >= 0; i--) {
-                        const eventId = timelineEvents[i].getId();
+                    for (let i = events.length - 1; i >= 0; i--) {
+                        const eventId = events[i].getId();
                         if (room.getTimelineForEvent(eventId)) {
                             debuglog("Already have event " + eventId + " in limited " +
                                 "sync - not resetting");
@@ -56724,7 +56835,7 @@ class SyncApi {
                             // we might still be missing some of the events before i;
                             // we don't want to be adding them to the end of the
                             // timeline because that would put them out of order.
-                            timelineEvents.splice(0, i);
+                            events.splice(0, i);
                             // XXX: there's a problem here if the skipped part of the
                             // timeline modifies the state set in stateEvents, because
                             // we'll end up using the state from stateEvents rather
@@ -56745,7 +56856,9 @@ class SyncApi {
                         this.registerStateListeners(room);
                     }
                 }
+                const [timelineEvents, threadedEvents] = this.partitionThreadedEvents(events);
                 this.processRoomEvents(room, stateEvents, timelineEvents, syncEventData.fromCache);
+                this.processThreadEvents(room, threadedEvents);
                 // set summary after processing events,
                 // because it will trigger a name calculation
                 // which needs the room state to be up to date
@@ -56761,7 +56874,7 @@ class SyncApi {
                     client.store.storeRoom(room);
                     client.emit("Room", room);
                 }
-                this.processEventsForNotifs(room, timelineEvents);
+                this.processEventsForNotifs(room, events);
                 const processRoomEvent = (e) => __awaiter(this, void 0, void 0, function* () {
                     client.emit("event", e);
                     if (e.isState() && e.getType() == "m.room.encryption" && this.opts.crypto) {
@@ -56781,6 +56894,7 @@ class SyncApi {
                 });
                 yield utils.promiseMapSeries(stateEvents, processRoomEvent);
                 yield utils.promiseMapSeries(timelineEvents, processRoomEvent);
+                yield utils.promiseMapSeries(threadedEvents, processRoomEvent);
                 ephemeralEvents.forEach(function (e) {
                     client.emit("event", e);
                 });
@@ -56797,20 +56911,25 @@ class SyncApi {
             leaveRooms.forEach((leaveObj) => {
                 const room = leaveObj.room;
                 const stateEvents = this.mapSyncEventsFormat(leaveObj.state, room);
-                const timelineEvents = this.mapSyncEventsFormat(leaveObj.timeline, room);
+                const events = this.mapSyncEventsFormat(leaveObj.timeline, room);
                 const accountDataEvents = this.mapSyncEventsFormat(leaveObj.account_data);
+                const [timelineEvents, threadedEvents] = this.partitionThreadedEvents(events);
                 this.processRoomEvents(room, stateEvents, timelineEvents);
+                this.processThreadEvents(room, threadedEvents);
                 room.addAccountData(accountDataEvents);
                 room.recalculate();
                 if (leaveObj.isBrandNewRoom) {
                     client.store.storeRoom(room);
                     client.emit("Room", room);
                 }
-                this.processEventsForNotifs(room, timelineEvents);
+                this.processEventsForNotifs(room, events);
                 stateEvents.forEach(function (e) {
                     client.emit("event", e);
                 });
                 timelineEvents.forEach(function (e) {
+                    client.emit("event", e);
+                });
+                threadedEvents.forEach(function (e) {
                     client.emit("event", e);
                 });
                 accountDataEvents.forEach(function (e) {
@@ -57101,6 +57220,14 @@ class SyncApi {
         room.addLiveEvents(timelineEventList || [], null, fromCache);
     }
     /**
+     * @experimental
+     */
+    processThreadEvents(room, threadedEvents) {
+        threadedEvents.forEach(event => {
+            room.addThreadedEvent(event);
+        });
+    }
+    /**
      * Takes a list of timelineEvents and adds and adds to notifEvents
      * as appropriate.
      * This must be called after the room the events belong to has been stored.
@@ -57153,7 +57280,7 @@ function createNewUser(client, userId) {
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./client":76,"./errors":111,"./filter":114,"./logger":118,"./models/event-timeline":124,"./models/group":126,"./models/room":131,"./models/user":133,"./pushprocessor":134,"./sync-accumulator":145,"./sync.api":146,"./utils":149}],148:[function(require,module,exports){
+},{"./@types/event":69,"./client":76,"./errors":111,"./filter":114,"./logger":118,"./models/event-timeline":124,"./models/group":126,"./models/room":131,"./models/user":134,"./pushprocessor":135,"./sync-accumulator":146,"./sync.api":147,"./utils":150}],149:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2016 - 2021 The Matrix.org Foundation C.I.C.
@@ -57619,7 +57746,7 @@ class TimelineIndex {
 }
 exports.TimelineIndex = TimelineIndex;
 
-},{"./logger":118,"./models/event-timeline":124}],149:[function(require,module,exports){
+},{"./logger":118,"./models/event-timeline":124}],150:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2015, 2016 OpenMarket Ltd
@@ -58314,7 +58441,7 @@ function recursivelyAssign(target, source, ignoreNullish = false) {
 }
 exports.recursivelyAssign = recursivelyAssign;
 
-},{"p-retry":48,"unhomoglyph":65}],150:[function(require,module,exports){
+},{"p-retry":48,"unhomoglyph":65}],151:[function(require,module,exports){
 (function (process){(function (){
 "use strict";
 /*
@@ -58538,6 +58665,23 @@ function genCallID() {
 class MatrixCall extends events_1.EventEmitter {
     constructor(opts) {
         super();
+        this.type = null;
+        this.state = CallState.Fledgling;
+        // A queue for candidates waiting to go out.
+        // We try to amalgamate candidates into a single candidate message where
+        // possible
+        this.candidateSendQueue = [];
+        this.candidateSendTries = 0;
+        this.sentEndOfCandidates = false;
+        this.feeds = [];
+        this.usermediaSenders = [];
+        this.screensharingSenders = [];
+        this.inviteOrAnswerSent = false;
+        // The logic of when & if a call is on hold is nontrivial and explained in is*OnHold
+        // This flag represents whether we want the other party to be on hold
+        this.remoteOnHold = false;
+        // Perfect negotiation state: https://www.w3.org/TR/webrtc/#perfect-negotiation-example
+        this.makingOffer = false;
         // If candidates arrive before we've picked an opponent (which, in particular,
         // will happen if the opponent sends candidates eagerly before the user answers
         // the call) we buffer them up here so we can then add the ones from the party we pick
@@ -58813,7 +58957,6 @@ class MatrixCall extends events_1.EventEmitter {
         this.roomId = opts.roomId;
         this.invitee = opts.invitee;
         this.client = opts.client;
-        this.type = null;
         this.forceTURN = opts.forceTURN;
         this.ourPartyId = this.client.deviceId;
         // Array of Objects with urls, username, credential keys
@@ -58827,19 +58970,6 @@ class MatrixCall extends events_1.EventEmitter {
             utils.checkObjectHasKeys(server, ["urls"]);
         }
         this.callId = genCallID();
-        this.state = CallState.Fledgling;
-        // A queue for candidates waiting to go out.
-        // We try to amalgamate candidates into a single candidate message where
-        // possible
-        this.candidateSendQueue = [];
-        this.candidateSendTries = 0;
-        this.sentEndOfCandidates = false;
-        this.inviteOrAnswerSent = false;
-        this.makingOffer = false;
-        this.remoteOnHold = false;
-        this.feeds = [];
-        this.usermediaSenders = [];
-        this.screensharingSenders = [];
     }
     /**
      * Place a voice call to this room.
@@ -58850,7 +58980,7 @@ class MatrixCall extends events_1.EventEmitter {
             logger_1.logger.debug("placeVoiceCall");
             this.checkForErrorListener();
             this.type = CallType.Voice;
-            yield this.placeCall(ConstraintsType.Audio);
+            yield this.placeCallWithConstraints(ConstraintsType.Audio);
         });
     }
     /**
@@ -58862,7 +58992,7 @@ class MatrixCall extends events_1.EventEmitter {
             logger_1.logger.debug("placeVideoCall");
             this.checkForErrorListener();
             this.type = CallType.Video;
-            yield this.placeCall(ConstraintsType.Video);
+            yield this.placeCallWithConstraints(ConstraintsType.Video);
         });
     }
     getOpponentMember() {
@@ -59493,12 +59623,13 @@ class MatrixCall extends events_1.EventEmitter {
                 //debuglog("Ignoring remote ICE candidate because call has ended");
                 return;
             }
-            const candidates = ev.getContent().candidates;
+            const content = ev.getContent();
+            const candidates = content.candidates;
             if (!candidates) {
                 logger_1.logger.info("Ignoring candidates event with no candidates!");
                 return;
             }
-            const fromPartyId = ev.getContent().version === 0 ? null : ev.getContent().party_id || null;
+            const fromPartyId = content.version === 0 ? null : content.party_id || null;
             if (this.opponentPartyId === undefined) {
                 // we haven't picked an opponent yet so save the candidates
                 logger_1.logger.info(`Buffering ${candidates.length} candidates until we pick an opponent`);
@@ -59507,8 +59638,8 @@ class MatrixCall extends events_1.EventEmitter {
                 this.remoteCandidateBuffer.set(fromPartyId, bufferedCandidates);
                 return;
             }
-            if (!this.partyIdMatches(ev.getContent())) {
-                logger_1.logger.info(`Ignoring candidates from party ID ${ev.getContent().party_id}: ` +
+            if (!this.partyIdMatches(content)) {
+                logger_1.logger.info(`Ignoring candidates from party ID ${content.party_id}: ` +
                     `we have chosen party ID ${this.opponentPartyId}`);
                 return;
             }
@@ -59521,20 +59652,21 @@ class MatrixCall extends events_1.EventEmitter {
      */
     onAnswerReceived(event) {
         return __awaiter(this, void 0, void 0, function* () {
-            logger_1.logger.debug(`Got answer for call ID ${this.callId} from party ID ${event.getContent().party_id}`);
+            const content = event.getContent();
+            logger_1.logger.debug(`Got answer for call ID ${this.callId} from party ID ${content.party_id}`);
             if (this.callHasEnded()) {
                 logger_1.logger.debug(`Ignoring answer because call ID ${this.callId} has ended`);
                 return;
             }
             if (this.opponentPartyId !== undefined) {
-                logger_1.logger.info(`Ignoring answer from party ID ${event.getContent().party_id}: ` +
+                logger_1.logger.info(`Ignoring answer from party ID ${content.party_id}: ` +
                     `we already have an answer/reject from ${this.opponentPartyId}`);
                 return;
             }
             this.chooseOpponent(event);
             yield this.addBufferedIceCandidates();
             this.setState(CallState.Connecting);
-            const sdpStreamMetadata = event.getContent()[callEventTypes_1.SDPStreamMetadataKey];
+            const sdpStreamMetadata = content[callEventTypes_1.SDPStreamMetadataKey];
             if (sdpStreamMetadata) {
                 this.updateRemoteSDPStreamMetadata(sdpStreamMetadata);
             }
@@ -59542,7 +59674,7 @@ class MatrixCall extends events_1.EventEmitter {
                 logger_1.logger.warn("Did not get any SDPStreamMetadata! Can not send/receive multiple streams");
             }
             try {
-                yield this.peerConn.setRemoteDescription(event.getContent().answer);
+                yield this.peerConn.setRemoteDescription(content.answer);
             }
             catch (e) {
                 logger_1.logger.debug("Failed to set remote description", e);
@@ -59586,7 +59718,8 @@ class MatrixCall extends events_1.EventEmitter {
     }
     onNegotiateReceived(event) {
         return __awaiter(this, void 0, void 0, function* () {
-            const description = event.getContent().description;
+            const content = event.getContent();
+            const description = content.description;
             if (!description || !description.sdp || !description.type) {
                 logger_1.logger.info("Ignoring invalid m.call.negotiate event");
                 return;
@@ -59598,14 +59731,14 @@ class MatrixCall extends events_1.EventEmitter {
             // Here we follow the perfect negotiation logic from
             // https://developer.mozilla.org/en-US/docs/Web/API/WebRTC_API/Perfect_negotiation
             const offerCollision = ((description.type === 'offer') &&
-                (this.makingOffer || this.peerConn.signalingState != 'stable'));
+                (this.makingOffer || this.peerConn.signalingState !== 'stable'));
             this.ignoreOffer = !polite && offerCollision;
             if (this.ignoreOffer) {
                 logger_1.logger.info("Ignoring colliding negotiate event because we're impolite");
                 return;
             }
             const prevLocalOnHold = this.isLocalOnHold();
-            const sdpStreamMetadata = event.getContent()[callEventTypes_1.SDPStreamMetadataKey];
+            const sdpStreamMetadata = content[callEventTypes_1.SDPStreamMetadataKey];
             if (sdpStreamMetadata) {
                 this.updateRemoteSDPStreamMetadata(sdpStreamMetadata);
             }
@@ -59652,11 +59785,12 @@ class MatrixCall extends events_1.EventEmitter {
     }
     onAssertedIdentityReceived(event) {
         return __awaiter(this, void 0, void 0, function* () {
-            if (!event.getContent().asserted_identity)
+            const content = event.getContent();
+            if (!content.asserted_identity)
                 return;
             this.remoteAssertedIdentity = {
-                id: event.getContent().asserted_identity.id,
-                displayName: event.getContent().asserted_identity.display_name,
+                id: content.asserted_identity.id,
+                displayName: content.asserted_identity.display_name,
             };
             this.emit(CallEvent.AssertedIdentityChanged);
         });
@@ -59760,7 +59894,7 @@ class MatrixCall extends events_1.EventEmitter {
                 replacement_id: genCallID(),
                 target_user: {
                     id: targetUserId,
-                    display_name: profileInfo.display_name,
+                    display_name: profileInfo.displayname,
                     avatar_url: profileInfo.avatar_url,
                 },
                 create_call: replacementId,
@@ -59784,7 +59918,7 @@ class MatrixCall extends events_1.EventEmitter {
                 replacement_id: genCallID(),
                 target_user: {
                     id: this.getOpponentMember().userId,
-                    display_name: transfereeProfileInfo.display_name,
+                    display_name: transfereeProfileInfo.displayname,
                     avatar_url: transfereeProfileInfo.avatar_url,
                 },
                 await_call: newCallId,
@@ -59794,7 +59928,7 @@ class MatrixCall extends events_1.EventEmitter {
                 replacement_id: genCallID(),
                 target_user: {
                     id: transferTargetCall.getOpponentMember().userId,
-                    display_name: targetProfileInfo.display_name,
+                    display_name: targetProfileInfo.displayname,
                     avatar_url: targetProfileInfo.avatar_url,
                 },
                 create_call: newCallId,
@@ -59885,7 +60019,7 @@ class MatrixCall extends events_1.EventEmitter {
             }
         });
     }
-    placeCall(constraintsType) {
+    placeCallWithConstraints(constraintsType) {
         return __awaiter(this, void 0, void 0, function* () {
             // XXX Find a better way to do this
             this.client.callEventHandler.calls.set(this.callId, this);
@@ -59989,6 +60123,9 @@ class MatrixCall extends events_1.EventEmitter {
                 }
             }
         });
+    }
+    get hasPeerConnection() {
+        return Boolean(this.peerConn);
     }
 }
 exports.MatrixCall = MatrixCall;
@@ -60149,7 +60286,7 @@ exports.createNewMatrixCall = createNewMatrixCall;
 
 }).call(this)}).call(this,require('_process'))
 
-},{"../@types/event":69,"../logger":118,"../randomstring":135,"../utils":149,"./callEventTypes":152,"./callFeed":153,"_process":49,"events":38}],151:[function(require,module,exports){
+},{"../@types/event":69,"../logger":118,"../randomstring":136,"../utils":150,"./callEventTypes":153,"./callFeed":154,"_process":49,"events":38}],152:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2020 The Matrix.org Foundation C.I.C.
@@ -60207,7 +60344,7 @@ class CallEventHandler {
                         continue;
                     }
                     try {
-                        this.handleCallEvent(e);
+                        yield this.handleCallEvent(e);
                     }
                     catch (e) {
                         logger_1.logger.error("Caught exception handling call event", e);
@@ -60226,7 +60363,7 @@ class CallEventHandler {
             }
             if (event.isBeingDecrypted() || event.isDecryptionFailure()) {
                 // add an event listener for once the event is decrypted.
-                event.once("Event.decrypted", () => {
+                event.once("Event.decrypted", () => __awaiter(this, void 0, void 0, function* () {
                     if (!this.eventIsACall(event))
                         return;
                     if (this.callEventBuffer.includes(event)) {
@@ -60237,13 +60374,13 @@ class CallEventHandler {
                         // This one wasn't buffered so just run the event handler for it
                         // straight away
                         try {
-                            this.handleCallEvent(event);
+                            yield this.handleCallEvent(event);
                         }
                         catch (e) {
                             logger_1.logger.error("Caught exception handling call event", e);
                         }
                     }
-                });
+                }));
             }
         };
         this.client = client;
@@ -60311,7 +60448,7 @@ class CallEventHandler {
                     return;
                 }
                 call.callId = content.call_id;
-                const initWithInvitePromise = call.initWithInvite(event);
+                yield call.initWithInvite(event);
                 this.calls.set(call.callId, call);
                 // if we stashed candidate events for that call ID, play them back now
                 if (this.candidateEventsByCall.get(call.callId)) {
@@ -60341,8 +60478,6 @@ class CallEventHandler {
                         existingCall.callId > call.callId) {
                         logger_1.logger.log("Glare detected: answering incoming call " + call.callId +
                             " and canceling outgoing call " + existingCall.callId);
-                        // Await init with invite as we need a peerConn for the following methods
-                        yield initWithInvitePromise;
                         existingCall.replacedBy(call);
                         call.answer();
                     }
@@ -60353,10 +60488,9 @@ class CallEventHandler {
                     }
                 }
                 else {
-                    initWithInvitePromise.then(() => {
-                        this.client.emit("Call.incoming", call);
-                    });
+                    this.client.emit("Call.incoming", call);
                 }
+                return;
             }
             else if (type === event_1.EventType.CallCandidates) {
                 if (weSentTheEvent)
@@ -60371,6 +60505,7 @@ class CallEventHandler {
                 else {
                     call.onRemoteIceCandidatesReceived(event);
                 }
+                return;
             }
             else if ([event_1.EventType.CallHangup, event_1.EventType.CallReject].includes(type)) {
                 // Note that we also observe our own hangups here so we can see
@@ -60397,10 +60532,13 @@ class CallEventHandler {
                         this.calls.delete(content.call_id);
                     }
                 }
-            }
-            // The following events need a call
-            if (!call)
                 return;
+            }
+            // The following events need a call and a peer connection
+            if (!call || !call.hasPeerConnection) {
+                logger_1.logger.warn("Discarding an event, we don't have a call/peerConn", type);
+                return;
+            }
             // Ignore remote echo
             if (event.getContent().party_id === call.ourPartyId)
                 return;
@@ -60435,7 +60573,7 @@ class CallEventHandler {
 }
 exports.CallEventHandler = CallEventHandler;
 
-},{"../@types/event":69,"../logger":118,"./call":150}],152:[function(require,module,exports){
+},{"../@types/event":69,"../logger":118,"./call":151}],153:[function(require,module,exports){
 "use strict";
 // allow non-camelcase as these are events type that go onto the wire
 /* eslint-disable camelcase */
@@ -60450,7 +60588,7 @@ var SDPStreamMetadataPurpose;
 })(SDPStreamMetadataPurpose = exports.SDPStreamMetadataPurpose || (exports.SDPStreamMetadataPurpose = {}));
 /* eslint-enable camelcase */
 
-},{}],153:[function(require,module,exports){
+},{}],154:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 Šimon Brandner <simon.bra.ag@gmail.com>
@@ -60473,10 +60611,14 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CallFeed = exports.CallFeedEvent = void 0;
 const events_1 = __importDefault(require("events"));
+const POLLING_INTERVAL = 250; // ms
+const SPEAKING_THRESHOLD = -60; // dB
 var CallFeedEvent;
 (function (CallFeedEvent) {
     CallFeedEvent["NewStream"] = "new_stream";
     CallFeedEvent["MuteStateChanged"] = "mute_state_changed";
+    CallFeedEvent["VolumeChanged"] = "volume_changed";
+    CallFeedEvent["Speaking"] = "speaking";
 })(CallFeedEvent = exports.CallFeedEvent || (exports.CallFeedEvent = {}));
 class CallFeed extends events_1.default {
     constructor(stream, userId, purpose, client, roomId, audioMuted, videoMuted) {
@@ -60488,6 +60630,27 @@ class CallFeed extends events_1.default {
         this.roomId = roomId;
         this.audioMuted = audioMuted;
         this.videoMuted = videoMuted;
+        this.measuringVolumeActivity = false;
+        this.speakingThreshold = SPEAKING_THRESHOLD;
+        this.speaking = false;
+        if (this.hasAudioTrack) {
+            this.initVolumeMeasuring();
+        }
+    }
+    get hasAudioTrack() {
+        return this.stream.getAudioTracks().length > 0;
+    }
+    initVolumeMeasuring() {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (!this.hasAudioTrack || !AudioContext)
+            return;
+        this.audioContext = new AudioContext();
+        this.analyser = this.audioContext.createAnalyser();
+        this.analyser.fftSize = 512;
+        this.analyser.smoothingTimeConstant = 0.1;
+        const mediaStreamAudioSourceNode = this.audioContext.createMediaStreamSource(this.stream);
+        mediaStreamAudioSourceNode.connect(this.analyser);
+        this.frequencyBinCount = new Float32Array(this.analyser.frequencyBinCount);
     }
     /**
      * Returns callRoom member
@@ -60529,14 +60692,69 @@ class CallFeed extends events_1.default {
     setNewStream(newStream) {
         this.stream = newStream;
         this.emit(CallFeedEvent.NewStream, this.stream);
+        if (this.hasAudioTrack) {
+            this.initVolumeMeasuring();
+        }
+        else {
+            this.measureVolumeActivity(false);
+        }
     }
+    /**
+     * Set feed's internal audio mute state
+     * @param muted is the feed's audio muted?
+     */
     setAudioMuted(muted) {
         this.audioMuted = muted;
         this.emit(CallFeedEvent.MuteStateChanged, this.audioMuted, this.videoMuted);
     }
+    /**
+     * Set feed's internal video mute state
+     * @param muted is the feed's video muted?
+     */
     setVideoMuted(muted) {
         this.videoMuted = muted;
         this.emit(CallFeedEvent.MuteStateChanged, this.audioMuted, this.videoMuted);
+    }
+    /**
+     * Starts emitting volume_changed events where the emitter value is in decibels
+     * @param enabled emit volume changes
+     */
+    measureVolumeActivity(enabled) {
+        if (enabled) {
+            if (!this.audioContext || !this.analyser || !this.frequencyBinCount || !this.hasAudioTrack)
+                return;
+            this.measuringVolumeActivity = true;
+            this.volumeLooper();
+        }
+        else {
+            this.measuringVolumeActivity = false;
+            this.emit(CallFeedEvent.VolumeChanged, -Infinity);
+        }
+    }
+    setSpeakingThreshold(threshold) {
+        this.speakingThreshold = threshold;
+    }
+    volumeLooper() {
+        if (!this.analyser)
+            return;
+        setTimeout(() => {
+            if (!this.measuringVolumeActivity)
+                return;
+            this.analyser.getFloatFrequencyData(this.frequencyBinCount);
+            let maxVolume = -Infinity;
+            for (let i = 0; i < this.frequencyBinCount.length; i++) {
+                if (this.frequencyBinCount[i] > maxVolume) {
+                    maxVolume = this.frequencyBinCount[i];
+                }
+            }
+            this.emit(CallFeedEvent.VolumeChanged, maxVolume);
+            const newSpeaking = maxVolume > this.speakingThreshold;
+            if (this.speaking !== newSpeaking) {
+                this.speaking = newSpeaking;
+                this.emit(CallFeedEvent.Speaking, this.speaking);
+            }
+            this.volumeLooper();
+        }, POLLING_INTERVAL);
     }
 }
 exports.CallFeed = CallFeed;
