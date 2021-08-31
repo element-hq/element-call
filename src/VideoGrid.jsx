@@ -85,9 +85,9 @@ function getTilePositions(
 
   if (layoutDirection === "vertical") {
     presenterGridWidth = gridWidth;
-    presenterGridHeight = gridHeight - participantGridBounds.height;
+    presenterGridHeight = gridHeight - (participantGridBounds.height + gap);
   } else {
-    presenterGridWidth = gridWidth - participantGridBounds.width;
+    presenterGridWidth = gridWidth - (participantGridBounds.width + gap);
     presenterGridHeight = gridHeight;
   }
 
@@ -100,24 +100,17 @@ function getTilePositions(
   const presenterGridBounds = getSubGridBoundingBox(presenterGridPositions);
 
   if (layoutDirection === "vertical") {
-    centerTiles(
-      participantGridPositions,
-      gridWidth,
-      presenterGridBounds.height
-    );
     applyTileOffsets(
       participantGridPositions,
       0,
       presenterGridBounds.height + gap
     );
-    centerTiles(presenterGridPositions, gridWidth, presenterGridBounds.height);
   } else {
     applyTileOffsets(
       participantGridPositions,
       presenterGridBounds.width + gap,
       0
     );
-    centerTiles(presenterGridPositions, presenterGridBounds.width, gridHeight);
   }
 
   const tilePositions = [
@@ -667,6 +660,7 @@ function ParticipantTile({
   style,
   participant,
   remove,
+  presenter,
   onClickNameTag,
   ...rest
 }) {
