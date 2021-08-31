@@ -50,10 +50,6 @@ function getTilePositions(
     console.warn("Over 12 tiles is not currently supported");
   }
 
-  if (presenterTileCount > 3) {
-    console.warn("Over 3 presenters is not currently supported");
-  }
-
   const gap = 8;
 
   const { layoutDirection, participantGridRatio } = getGridLayout(
@@ -83,7 +79,10 @@ function getTilePositions(
 
   let presenterGridWidth, presenterGridHeight;
 
-  if (layoutDirection === "vertical") {
+  if (presenterTileCount === 0) {
+    presenterGridWidth = 0;
+    presenterGridHeight = 0;
+  } else if (layoutDirection === "vertical") {
     presenterGridWidth = gridWidth;
     presenterGridHeight = gridHeight - (participantGridBounds.height + gap * 2);
   } else {
