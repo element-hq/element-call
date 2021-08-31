@@ -85,9 +85,9 @@ function getTilePositions(
 
   if (layoutDirection === "vertical") {
     presenterGridWidth = gridWidth;
-    presenterGridHeight = gridHeight - (participantGridBounds.height + gap);
+    presenterGridHeight = gridHeight - (participantGridBounds.height + gap * 2);
   } else {
-    presenterGridWidth = gridWidth - (participantGridBounds.width + gap);
+    presenterGridWidth = gridWidth - (participantGridBounds.width + gap * 2);
     presenterGridHeight = gridHeight;
   }
 
@@ -97,28 +97,37 @@ function getTilePositions(
     presenterGridHeight,
     gap
   );
-  const presenterGridBounds = getSubGridBoundingBox(presenterGridPositions);
-
-  if (layoutDirection === "vertical") {
-    applyTileOffsets(
-      participantGridPositions,
-      0,
-      presenterGridBounds.height + gap
-    );
-  } else {
-    applyTileOffsets(
-      participantGridPositions,
-      presenterGridBounds.width + gap,
-      0
-    );
-  }
 
   const tilePositions = [
     ...presenterGridPositions,
     ...participantGridPositions,
   ];
 
-  centerTiles(tilePositions, gridWidth, gridHeight);
+  centerTiles(
+    presenterGridPositions,
+    presenterGridWidth,
+    presenterGridHeight,
+    0,
+    0
+  );
+
+  if (layoutDirection === "vertical") {
+    centerTiles(
+      participantGridPositions,
+      gridWidth,
+      gridHeight - presenterGridHeight,
+      0,
+      presenterGridHeight
+    );
+  } else {
+    centerTiles(
+      participantGridPositions,
+      gridWidth - presenterGridWidth,
+      gridHeight,
+      presenterGridWidth,
+      0
+    );
+  }
 
   return tilePositions;
 }
@@ -187,11 +196,11 @@ function getGridLayout(tileCount, presenterTileCount, gridWidth, gridHeight) {
   return { participantGridRatio, layoutDirection };
 }
 
-function centerTiles(positions, gridWidth, gridHeight) {
+function centerTiles(positions, gridWidth, gridHeight, offsetLeft, offsetTop) {
   const bounds = getSubGridBoundingBox(positions);
 
-  const leftOffset = Math.round((gridWidth - bounds.width) / 2);
-  const topOffset = Math.round((gridHeight - bounds.height) / 2);
+  const leftOffset = Math.round((gridWidth - bounds.width) / 2) + offsetLeft;
+  const topOffset = Math.round((gridHeight - bounds.height) / 2) + offsetTop;
 
   applyTileOffsets(positions, leftOffset, topOffset);
 
