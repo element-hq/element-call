@@ -28,6 +28,13 @@ limitations under the License.
   background-color: #444;
 }
 
+.participantTile * {
+  touch-action: none;
+  -moz-user-select: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
 .participantTile video {
   width: 100%;
   height: 100%;

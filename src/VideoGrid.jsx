@@ -600,7 +600,9 @@ export function VideoGrid({ participants }) {
   );
 
   const bind = useDrag(
-    ({ args: [key], active, xy, movement, tap }) => {
+    ({ args: [key], active, xy, movement, tap, event }) => {
+      event.preventDefault();
+
       if (tap) {
         onTap(key);
         return;
