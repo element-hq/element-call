@@ -548,12 +548,8 @@ export function VideoGrid({ participants }) {
     (tileKey) => {
       const lastTapped = lastTappedRef.current[tileKey];
 
-      if (!lastTapped) {
+      if (!lastTapped || Date.now() - lastTapped > 500) {
         lastTappedRef.current[tileKey] = Date.now();
-        return;
-      }
-
-      if (Date.now() - lastTapped > 500) {
         return;
       }
 
