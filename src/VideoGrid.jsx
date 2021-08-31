@@ -69,8 +69,10 @@ function getTilePositions(
     participantGridHeight = gridHeight;
   }
 
+  const participantTileCount = tileCount - presenterTileCount;
+
   const participantGridPositions = getSubGridPositions(
-    tileCount - presenterTileCount,
+    participantTileCount,
     participantGridWidth,
     participantGridHeight,
     gap
@@ -84,9 +86,13 @@ function getTilePositions(
     presenterGridHeight = 0;
   } else if (layoutDirection === "vertical") {
     presenterGridWidth = gridWidth;
-    presenterGridHeight = gridHeight - (participantGridBounds.height + gap * 2);
+    presenterGridHeight =
+      gridHeight -
+      (participantGridBounds.height + (participantTileCount ? gap * 2 : 0));
   } else {
-    presenterGridWidth = gridWidth - (participantGridBounds.width + gap * 2);
+    presenterGridWidth =
+      gridWidth -
+      (participantGridBounds.width + (participantTileCount ? gap * 2 : 0));
     presenterGridHeight = gridHeight;
   }
 
