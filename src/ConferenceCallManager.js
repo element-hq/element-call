@@ -21,6 +21,7 @@ import { randomString } from "./randomstring";
 const CONF_ROOM = "me.robertlong.conf";
 const CONF_PARTICIPANT = "me.robertlong.conf.participant";
 const PARTICIPANT_TIMEOUT = 1000 * 15;
+const SPEAKING_THRESHOLD = -80;
 
 function waitForSync(client) {
   return new Promise((resolve, reject) => {
@@ -247,6 +248,7 @@ export class ConferenceCallManager extends EventEmitter {
       stream,
       audioMuted: this.audioMuted,
       videoMuted: this.videoMuted,
+      speaking: false,
     };
 
     this.participants.push(this.localParticipant);
@@ -316,6 +318,7 @@ export class ConferenceCallManager extends EventEmitter {
     this.localParticipant.call = null;
     this.localParticipant.audioMuted = false;
     this.localParticipant.videoMuted = false;
+    this.localParticipant.speaking = false;
     this.audioMuted = false;
     this.videoMuted = false;
     clearTimeout(this._memberParticipantStateTimeout);
@@ -498,6 +501,11 @@ export class ConferenceCallManager extends EventEmitter {
       remoteFeed.on("mute_state_changed", () =>
         this._onCallFeedMuteStateChanged(participant, remoteFeed)
       );
+      remoteFeed.setSpeakingThreshold(SPEAKING_THRESHOLD);
+      remoteFeed.measureVolumeActivity(true);
+      remoteFeed.on("speaking", (speaking) => {
+        this._onCallFeedSpeaking(participant, speaking);
+      });
     }
 
     const userId = call.opponentMember.userId;
@@ -523,6 +531,7 @@ export class ConferenceCallManager extends EventEmitter {
       existingParticipant.stream = stream;
       existingParticipant.audioMuted = audioMuted;
       existingParticipant.videoMuted = videoMuted;
+      existingParticipant.speaking = false;
       existingParticipant.sessionId = sessionId;
     } else {
       participant = {
@@ -533,6 +542,7 @@ export class ConferenceCallManager extends EventEmitter {
         stream,
         audioMuted,
         videoMuted,
+        speaking: false,
       };
       this.participants.push(participant);
     }
@@ -623,6 +633,7 @@ export class ConferenceCallManager extends EventEmitter {
       participant.stream = null;
       participant.audioMuted = false;
       participant.videoMuted = false;
+      participant.speaking = false;
     } else {
       participant = {
         local: false,
@@ -632,6 +643,7 @@ export class ConferenceCallManager extends EventEmitter {
         stream: null,
         audioMuted: false,
         videoMuted: false,
+        speaking: false,
       };
       // TODO: Should we wait until the call has been answered to push the participant?
       // Or do we hide the participant until their stream is live?
@@ -691,6 +703,11 @@ export class ConferenceCallManager extends EventEmitter {
       remoteFeed.on("mute_state_changed", () =>
         this._onCallFeedMuteStateChanged(participant, remoteFeed)
       );
+      remoteFeed.setSpeakingThreshold(SPEAKING_THRESHOLD);
+      remoteFeed.measureVolumeActivity(true);
+      remoteFeed.on("speaking", (speaking) => {
+        this._onCallFeedSpeaking(participant, speaking);
+      });
       this._onCallFeedMuteStateChanged(participant, remoteFeed);
     }
   };
@@ -698,6 +715,11 @@ export class ConferenceCallManager extends EventEmitter {
   _onCallFeedMuteStateChanged = (participant, feed) => {
     participant.audioMuted = feed.isAudioMuted();
     participant.videoMuted = feed.isVideoMuted();
+    this.emit("participants_changed");
+  };
+
+  _onCallFeedSpeaking = (participant, speaking) => {
+    participant.speaking = speaking;
     this.emit("participants_changed");
   };
 
@@ -724,6 +746,11 @@ export class ConferenceCallManager extends EventEmitter {
       remoteFeed.on("mute_state_changed", () =>
         this._onCallFeedMuteStateChanged(participant, remoteFeed)
       );
+      remoteFeed.setSpeakingThreshold(SPEAKING_THRESHOLD);
+      remoteFeed.measureVolumeActivity(true);
+      remoteFeed.on("speaking", (speaking) => {
+        this._onCallFeedSpeaking(participant, speaking);
+      });
     }
 
     this.emit("call", newCall);
