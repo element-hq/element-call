@@ -403,6 +403,7 @@ export function VideoGrid({ participants }) {
     tilePositions: [],
   });
   const draggingTileRef = useRef(null);
+  const lastTappedRef = useRef({});
   const isMounted = useIsMounted();
 
   const [gridRef, gridBounds] = useMeasure();
@@ -543,67 +544,29 @@ export function VideoGrid({ participants }) {
     tiles,
   ]);
 
-  const bind = useDrag(({ args: [key], active, xy, movement }) => {
-    const dragTileIndex = tiles.findIndex((tile) => tile.key === key);
-    const dragTile = tiles[dragTileIndex];
-    const dragTilePosition = tilePositions[dragTileIndex];
+  const onTap = useCallback(
+    (tileKey) => {
+      const lastTapped = lastTappedRef.current[tileKey];
 
-    let newTiles = tiles;
-
-    const cursorPosition = [xy[0] - gridBounds.left, xy[1] - gridBounds.top];
-
-    for (
-      let hoverTileIndex = 0;
-      hoverTileIndex < tiles.length;
-      hoverTileIndex++
-    ) {
-      const hoverTile = tiles[hoverTileIndex];
-      const hoverTilePosition = tilePositions[hoverTileIndex];
-
-      if (hoverTile.key === key) {
-        continue;
+      if (!lastTapped) {
+        lastTappedRef.current[tileKey] = Date.now();
+        return;
       }
 
-      if (isInside(cursorPosition, hoverTilePosition)) {
-        newTiles = moveArrItem(tiles, dragTileIndex, hoverTileIndex);
-
-        newTiles = newTiles.map((tile) => {
-          if (tile === hoverTile) {
-            return { ...tile, presenter: dragTile.presenter };
-          } else if (tile === dragTile) {
-            return { ...tile, presenter: hoverTile.presenter };
-          } else {
-            return tile;
-          }
-        });
-
-        newTiles.sort((a, b) => (b.presenter ? 1 : 0) - (a.presenter ? 1 : 0));
-
-        setTileState((state) => ({ ...state, tiles: newTiles }));
-        break;
-      }
-    }
-
-    if (active) {
-      if (!draggingTileRef.current) {
-        draggingTileRef.current = {
-          key: dragTile.key,
-          offsetX: dragTilePosition.x,
-          offsetY: dragTilePosition.y,
-        };
+      if (Date.now() - lastTapped > 500) {
+        return;
       }
 
-      draggingTileRef.current.x = movement[0];
-      draggingTileRef.current.y = movement[1];
-    } else {
-      draggingTileRef.current = null;
-    }
+      lastTappedRef.current[tileKey] = 0;
 
-    api.start(animate(newTiles));
-  });
+      const tile = tiles.find((tile) => tile.key === tileKey);
 
-  const onClickNameTag = useCallback(
-    (participant) => {
+      if (!tile) {
+        return;
+      }
+
+      const participant = tile.participant;
+
       setTileState((state) => {
         let presenterTileCount = 0;
 
@@ -637,7 +600,76 @@ export function VideoGrid({ participants }) {
         };
       });
     },
-    [gridBounds]
+    [tiles, gridBounds]
+  );
+
+  const bind = useDrag(
+    ({ args: [key], active, xy, movement, tap }) => {
+      if (tap) {
+        onTap(key);
+        return;
+      }
+
+      const dragTileIndex = tiles.findIndex((tile) => tile.key === key);
+      const dragTile = tiles[dragTileIndex];
+      const dragTilePosition = tilePositions[dragTileIndex];
+
+      let newTiles = tiles;
+
+      const cursorPosition = [xy[0] - gridBounds.left, xy[1] - gridBounds.top];
+
+      for (
+        let hoverTileIndex = 0;
+        hoverTileIndex < tiles.length;
+        hoverTileIndex++
+      ) {
+        const hoverTile = tiles[hoverTileIndex];
+        const hoverTilePosition = tilePositions[hoverTileIndex];
+
+        if (hoverTile.key === key) {
+          continue;
+        }
+
+        if (isInside(cursorPosition, hoverTilePosition)) {
+          newTiles = moveArrItem(tiles, dragTileIndex, hoverTileIndex);
+
+          newTiles = newTiles.map((tile) => {
+            if (tile === hoverTile) {
+              return { ...tile, presenter: dragTile.presenter };
+            } else if (tile === dragTile) {
+              return { ...tile, presenter: hoverTile.presenter };
+            } else {
+              return tile;
+            }
+          });
+
+          newTiles.sort(
+            (a, b) => (b.presenter ? 1 : 0) - (a.presenter ? 1 : 0)
+          );
+
+          setTileState((state) => ({ ...state, tiles: newTiles }));
+          break;
+        }
+      }
+
+      if (active) {
+        if (!draggingTileRef.current) {
+          draggingTileRef.current = {
+            key: dragTile.key,
+            offsetX: dragTilePosition.x,
+            offsetY: dragTilePosition.y,
+          };
+        }
+
+        draggingTileRef.current.x = movement[0];
+        draggingTileRef.current.y = movement[1];
+      } else {
+        draggingTileRef.current = null;
+      }
+
+      api.start(animate(newTiles));
+    },
+    { filterTaps: true }
   );
 
   return (
@@ -656,7 +688,6 @@ export function VideoGrid({ participants }) {
               ...style,
             }}
             {...tile}
-            onClickNameTag={onClickNameTag}
           />
         );
       })}
@@ -664,14 +695,7 @@ export function VideoGrid({ participants }) {
   );
 }
 
-function ParticipantTile({
-  style,
-  participant,
-  remove,
-  presenter,
-  onClickNameTag,
-  ...rest
-}) {
+function ParticipantTile({ style, participant, remove, presenter, ...rest }) {
   const videoRef = useRef();
 
   useEffect(() => {
@@ -696,11 +720,6 @@ function ParticipantTile({
         className={classNames(styles.participantName, {
           [styles.speaking]: participant.speaking,
         })}
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onClickNameTag(participant);
-        }}
       >
         {participant.speaking ? (
           <MicIcon />
