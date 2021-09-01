@@ -14,7 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+  useRef,
+  useCallback,
+} from "react";
 import styles from "./Room.module.css";
 import { useParams, useLocation } from "react-router-dom";
 import { useVideoRoom } from "./ConferenceCallManagerHooks";
@@ -25,6 +31,7 @@ import {
   SettingsButton,
   MicButton,
   VideoButton,
+  LayoutToggleButton,
 } from "./RoomButton";
 import { Header, LeftNav, RightNav, CenterNav } from "./Header";
 import { Button } from "./Input";
@@ -71,6 +78,13 @@ export function Room({ manager }) {
     };
   }, []);
 
+  const [layout, setLayout] = useState("gallery");
+
+  const toggleLayout = useCallback(() => {
+    console.log(layout);
+    setLayout(layout === "spotlight" ? "gallery" : "spotlight");
+  }, [layout]);
+
   return (
     <div className={styles.room}>
       {!loading && room && (
@@ -80,6 +94,13 @@ export function Room({ manager }) {
             <h3>{room.name}</h3>
           </CenterNav>
           <RightNav>
+            {!loading && room && joined && (
+              <LayoutToggleButton
+                title={layout === "spotlight" ? "Spotlight" : "Gallery"}
+                layout={layout}
+                onClick={toggleLayout}
+              />
+            )}
             <SettingsButton
               title={debug ? "Disable DevTools" : "Enable DevTools"}
               on={debug}
@@ -111,7 +132,7 @@ export function Room({ manager }) {
         </div>
       )}
       {!loading && room && joined && participants.length > 0 && (
-        <VideoGrid participants={participants} />
+        <VideoGrid participants={participants} layout={layout} />
       )}
       {!loading && room && joined && (
         <div className={styles.footer}>
