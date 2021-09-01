@@ -403,13 +403,14 @@ function getSubGridPositions(tileCount, gridWidth, gridHeight, gap) {
   return newTilePositions;
 }
 
-export function VideoGrid({ participants }) {
+export function VideoGrid({ participants, layout }) {
   const [{ tiles, tilePositions }, setTileState] = useState({
     tiles: [],
     tilePositions: [],
   });
   const draggingTileRef = useRef(null);
   const lastTappedRef = useRef({});
+  const lastLayoutRef = useRef(layout);
   const isMounted = useIsMounted();
 
   const [gridRef, gridBounds] = useMeasure();
@@ -418,35 +419,34 @@ export function VideoGrid({ participants }) {
     setTileState(({ tiles }) => {
       const newTiles = [];
       const removedTileKeys = [];
-      let presenterTileCount = 0;
 
       for (const tile of tiles) {
-        const participant = participants.find(
+        let participant = participants.find(
           (participant) => participant.userId === tile.key
         );
 
-        if (tile.presenter) {
-          presenterTileCount++;
+        let remove = false;
+
+        if (!participant) {
+          remove = true;
+          participant = tile.participant;
+          removedTileKeys.push(tile.key);
         }
 
-        if (participant) {
-          // Existing tiles
-          newTiles.push({
-            key: participant.userId,
-            participant: participant,
-            remove: false,
-            presenter: tile.presenter,
-          });
+        let presenter;
+
+        if (layout === "spotlight") {
+          presenter = participant.activeSpeaker;
         } else {
-          // Removed tiles
-          removedTileKeys.push(tile.key);
-          newTiles.push({
-            key: tile.key,
-            participant: tile.participant,
-            remove: true,
-            presenter: tile.presenter,
-          });
+          presenter = layout === lastLayoutRef.current ? tile.presenter : false;
         }
+
+        newTiles.push({
+          key: participant.userId,
+          participant,
+          remove,
+          presenter,
+        });
       }
 
       for (const participant of participants) {
@@ -459,7 +459,7 @@ export function VideoGrid({ participants }) {
           key: participant.userId,
           participant,
           remove: false,
-          presenter: false,
+          presenter: layout === "spotlight" && participant.activeSpeaker,
         });
       }
 
@@ -476,6 +476,11 @@ export function VideoGrid({ participants }) {
               (tile) => !removedTileKeys.includes(tile.key)
             );
 
+            const presenterTileCount = newTiles.reduce(
+              (count, tile) => count + (tile.presenter ? 1 : 0),
+              0
+            );
+
             return {
               tiles: newTiles,
               tilePositions: getTilePositions(
@@ -489,6 +494,11 @@ export function VideoGrid({ participants }) {
         }, 250);
       }
 
+      const presenterTileCount = newTiles.reduce(
+        (count, tile) => count + (tile.presenter ? 1 : 0),
+        0
+      );
+
       return {
         tiles: newTiles,
         tilePositions: getTilePositions(
@@ -499,7 +509,7 @@ export function VideoGrid({ participants }) {
         ),
       };
     });
-  }, [participants, gridBounds]);
+  }, [participants, gridBounds, layout]);
 
   const animate = useCallback(
     (tiles) => (tileIndex) => {

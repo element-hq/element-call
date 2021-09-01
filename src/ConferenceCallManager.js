@@ -176,6 +176,10 @@ export class ConferenceCallManager extends EventEmitter {
     this.audioMuted = false;
     this.videoMuted = false;
 
+    this.activeSpeaker = null;
+    this._speakerMap = new Map();
+    this._activeSpeakerLoopTimeout = null;
+
     this.client.on("RoomState.members", this._onRoomStateMembers);
     this.client.on("Call.incoming", this._onIncomingCall);
     this.callDebugger = new ConferenceCallDebugger(this);
@@ -249,7 +253,10 @@ export class ConferenceCallManager extends EventEmitter {
       audioMuted: this.audioMuted,
       videoMuted: this.videoMuted,
       speaking: false,
+      activeSpeaker: true,
     };
+
+    this.activeSpeaker = this.localParticipant;
 
     this.participants.push(this.localParticipant);
     this.emit("debugstate", userId, null, "you");
@@ -278,6 +285,8 @@ export class ConferenceCallManager extends EventEmitter {
 
     this.emit("entered");
     this.emit("participants_changed");
+    console.log("enter");
+    this._onActiveSpeakerLoop();
   }
 
   leaveCall() {
@@ -314,14 +323,12 @@ export class ConferenceCallManager extends EventEmitter {
     this.entered = false;
     this._left = true;
     this.participants = [];
-    this.localParticipant.stream = null;
-    this.localParticipant.call = null;
-    this.localParticipant.audioMuted = false;
-    this.localParticipant.videoMuted = false;
-    this.localParticipant.speaking = false;
+    this.localParticipant = null;
+    this.activeSpeaker = null;
     this.audioMuted = false;
     this.videoMuted = false;
     clearTimeout(this._memberParticipantStateTimeout);
+    clearTimeout(this._activeSpeakerLoopTimeout);
 
     this.emit("participants_changed");
     this.emit("left");
@@ -506,6 +513,9 @@ export class ConferenceCallManager extends EventEmitter {
       remoteFeed.on("speaking", (speaking) => {
         this._onCallFeedSpeaking(participant, speaking);
       });
+      remoteFeed.on("volume_changed", (maxVolume) =>
+        this._onCallFeedVolumeChange(participant, maxVolume)
+      );
     }
 
     const userId = call.opponentMember.userId;
@@ -532,6 +542,7 @@ export class ConferenceCallManager extends EventEmitter {
       existingParticipant.audioMuted = audioMuted;
       existingParticipant.videoMuted = videoMuted;
       existingParticipant.speaking = false;
+      existingParticipant.activeSpeaker = false;
       existingParticipant.sessionId = sessionId;
     } else {
       participant = {
@@ -543,6 +554,7 @@ export class ConferenceCallManager extends EventEmitter {
         audioMuted,
         videoMuted,
         speaking: false,
+        activeSpeaker: false,
       };
       this.participants.push(participant);
     }
@@ -634,6 +646,7 @@ export class ConferenceCallManager extends EventEmitter {
       participant.audioMuted = false;
       participant.videoMuted = false;
       participant.speaking = false;
+      participant.activeSpeaker = false;
     } else {
       participant = {
         local: false,
@@ -644,6 +657,7 @@ export class ConferenceCallManager extends EventEmitter {
         audioMuted: false,
         videoMuted: false,
         speaking: false,
+        activeSpeaker: false,
       };
       // TODO: Should we wait until the call has been answered to push the participant?
       // Or do we hide the participant until their stream is live?
@@ -708,6 +722,9 @@ export class ConferenceCallManager extends EventEmitter {
       remoteFeed.on("speaking", (speaking) => {
         this._onCallFeedSpeaking(participant, speaking);
       });
+      remoteFeed.on("volume_changed", (maxVolume) =>
+        this._onCallFeedVolumeChange(participant, maxVolume)
+      );
       this._onCallFeedMuteStateChanged(participant, remoteFeed);
     }
   };
@@ -715,12 +732,77 @@ export class ConferenceCallManager extends EventEmitter {
   _onCallFeedMuteStateChanged = (participant, feed) => {
     participant.audioMuted = feed.isAudioMuted();
     participant.videoMuted = feed.isVideoMuted();
+
+    if (participant.audioMuted) {
+      this._speakerMap.set(participant.userId, [
+        -Infinity,
+        -Infinity,
+        -Infinity,
+        -Infinity,
+      ]);
+    }
+
     this.emit("participants_changed");
   };
 
   _onCallFeedSpeaking = (participant, speaking) => {
     participant.speaking = speaking;
     this.emit("participants_changed");
+  };
+
+  _onCallFeedVolumeChange = (participant, maxVolume) => {
+    if (!this._speakerMap.has(participant.userId)) {
+      this._speakerMap.set(participant.userId, [
+        -Infinity,
+        -Infinity,
+        -Infinity,
+        -Infinity,
+      ]);
+    }
+
+    const volumeArr = this._speakerMap.get(participant.userId);
+    volumeArr.shift();
+    volumeArr.push(maxVolume);
+  };
+
+  _onActiveSpeakerLoop = () => {
+    let topAvg;
+    let activeSpeakerId;
+
+    for (const [userId, volumeArr] of this._speakerMap) {
+      let total = 0;
+
+      for (let i = 0; i < volumeArr.length; i++) {
+        const volume = volumeArr[i];
+        total += Math.max(volume, SPEAKING_THRESHOLD);
+      }
+
+      const avg = total / 4;
+
+      if (!topAvg) {
+        topAvg = avg;
+        activeSpeakerId = userId;
+      } else if (avg > topAvg) {
+        topAvg = avg;
+        activeSpeakerId = userId;
+      }
+    }
+
+    if (activeSpeakerId) {
+      const nextActiveSpeaker = this.participants.find(
+        (p) => p.userId === activeSpeakerId
+      );
+
+      if (nextActiveSpeaker && this.activeSpeaker !== nextActiveSpeaker) {
+        this.activeSpeaker.activeSpeaker = false;
+        nextActiveSpeaker.activeSpeaker = true;
+        this.activeSpeaker = nextActiveSpeaker;
+        console.log("activeSpeakerChanged", this.activeSpeaker);
+        this.emit("participants_changed");
+      }
+    }
+
+    this._activeSpeakerLoopTimeout = setTimeout(this._onActiveSpeakerLoop, 250);
   };
 
   _onCallReplaced = (participant, call, newCall) => {
@@ -751,6 +833,9 @@ export class ConferenceCallManager extends EventEmitter {
       remoteFeed.on("speaking", (speaking) => {
         this._onCallFeedSpeaking(participant, speaking);
       });
+      remoteFeed.on("volume_changed", (maxVolume) =>
+        this._onCallFeedVolumeChange(participant, maxVolume)
+      );
     }
 
     this.emit("call", newCall);
@@ -769,6 +854,13 @@ export class ConferenceCallManager extends EventEmitter {
     }
 
     this.participants.splice(participantIndex, 1);
+
+    if (this.activeSpeaker === participant && this.participants.length > 0) {
+      this.activeSpeaker = this.participants[0];
+      this.activeSpeaker.activeSpeaker = true;
+    }
+
+    this._speakerMap.delete(participant.userId);
 
     this.emit("participants_changed");
   };
