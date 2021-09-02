@@ -81,7 +81,6 @@ export function Room({ manager }) {
   const [layout, setLayout] = useState("gallery");
 
   const toggleLayout = useCallback(() => {
-    console.log(layout);
     setLayout(layout === "spotlight" ? "gallery" : "spotlight");
   }, [layout]);
 

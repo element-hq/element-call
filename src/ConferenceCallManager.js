@@ -22,6 +22,8 @@ const CONF_ROOM = "me.robertlong.conf";
 const CONF_PARTICIPANT = "me.robertlong.conf.participant";
 const PARTICIPANT_TIMEOUT = 1000 * 15;
 const SPEAKING_THRESHOLD = -80;
+const ACTIVE_SPEAKER_INTERVAL = 1000;
+const ACTIVE_SPEAKER_SAMPLES = 8;
 
 function waitForSync(client) {
   return new Promise((resolve, reject) => {
@@ -172,6 +174,7 @@ export class ConferenceCallManager extends EventEmitter {
 
     this.localVideoStream = null;
     this.localParticipant = null;
+    this.localCallFeed = null;
 
     this.audioMuted = false;
     this.videoMuted = false;
@@ -261,6 +264,30 @@ export class ConferenceCallManager extends EventEmitter {
     this.participants.push(this.localParticipant);
     this.emit("debugstate", userId, null, "you");
 
+    this.localCallFeed = new matrixcs.CallFeed(
+      stream,
+      this.localParticipant.userId,
+      "m.usermedia",
+      this.client,
+      this.room.roomId,
+      this.audioMuted,
+      this.videoMuted
+    );
+    this.localCallFeed.on("mute_state_changed", () =>
+      this._onCallFeedMuteStateChanged(
+        this.localParticipant,
+        this.localCallFeed
+      )
+    );
+    this.localCallFeed.setSpeakingThreshold(SPEAKING_THRESHOLD);
+    this.localCallFeed.measureVolumeActivity(true);
+    this.localCallFeed.on("speaking", (speaking) => {
+      this._onCallFeedSpeaking(this.localParticipant, speaking);
+    });
+    this.localCallFeed.on("volume_changed", (maxVolume) =>
+      this._onCallFeedVolumeChange(this.localParticipant, maxVolume)
+    );
+
     // Announce to the other room members that we have entered the room.
     // Continue doing so every PARTICIPANT_TIMEOUT ms
     this._updateMemberParticipantState();
@@ -285,7 +312,6 @@ export class ConferenceCallManager extends EventEmitter {
 
     this.emit("entered");
     this.emit("participants_changed");
-    console.log("enter");
     this._onActiveSpeakerLoop();
   }
 
@@ -318,6 +344,8 @@ export class ConferenceCallManager extends EventEmitter {
 
     this.client.stopLocalMediaStream();
     this.localVideoStream = null;
+    this.localCallFeed.dispose();
+    this.localCallFeed = null;
 
     this.room = null;
     this.entered = false;
@@ -329,6 +357,7 @@ export class ConferenceCallManager extends EventEmitter {
     this.videoMuted = false;
     clearTimeout(this._memberParticipantStateTimeout);
     clearTimeout(this._activeSpeakerLoopTimeout);
+    this._speakerMap.clear();
 
     this.emit("participants_changed");
     this.emit("left");
@@ -349,8 +378,8 @@ export class ConferenceCallManager extends EventEmitter {
   setAudioMuted(muted) {
     this.audioMuted = muted;
 
-    if (this.localParticipant) {
-      this.localParticipant.audioMuted = muted;
+    if (this.localCallFeed) {
+      this.localCallFeed.setAudioMuted(muted);
     }
 
     const localStream = this.localVideoStream;
@@ -381,8 +410,8 @@ export class ConferenceCallManager extends EventEmitter {
   setVideoMuted(muted) {
     this.videoMuted = muted;
 
-    if (this.localParticipant) {
-      this.localParticipant.videoMuted = muted;
+    if (this.localCallFeed) {
+      this.localCallFeed.setVideoMuted(muted);
     }
 
     const localStream = this.localVideoStream;
@@ -734,12 +763,10 @@ export class ConferenceCallManager extends EventEmitter {
     participant.videoMuted = feed.isVideoMuted();
 
     if (participant.audioMuted) {
-      this._speakerMap.set(participant.userId, [
-        -Infinity,
-        -Infinity,
-        -Infinity,
-        -Infinity,
-      ]);
+      this._speakerMap.set(
+        participant.userId,
+        Array(ACTIVE_SPEAKER_SAMPLES).fill(-Infinity)
+      );
     }
 
     this.emit("participants_changed");
@@ -752,12 +779,10 @@ export class ConferenceCallManager extends EventEmitter {
 
   _onCallFeedVolumeChange = (participant, maxVolume) => {
     if (!this._speakerMap.has(participant.userId)) {
-      this._speakerMap.set(participant.userId, [
-        -Infinity,
-        -Infinity,
-        -Infinity,
-        -Infinity,
-      ]);
+      this._speakerMap.set(
+        participant.userId,
+        Array(ACTIVE_SPEAKER_SAMPLES).fill(-Infinity)
+      );
     }
 
     const volumeArr = this._speakerMap.get(participant.userId);
@@ -777,7 +802,7 @@ export class ConferenceCallManager extends EventEmitter {
         total += Math.max(volume, SPEAKING_THRESHOLD);
       }
 
-      const avg = total / 4;
+      const avg = total / ACTIVE_SPEAKER_SAMPLES;
 
       if (!topAvg) {
         topAvg = avg;
@@ -788,7 +813,7 @@ export class ConferenceCallManager extends EventEmitter {
       }
     }
 
-    if (activeSpeakerId) {
+    if (activeSpeakerId && topAvg > SPEAKING_THRESHOLD) {
       const nextActiveSpeaker = this.participants.find(
         (p) => p.userId === activeSpeakerId
       );
@@ -797,12 +822,14 @@ export class ConferenceCallManager extends EventEmitter {
         this.activeSpeaker.activeSpeaker = false;
         nextActiveSpeaker.activeSpeaker = true;
         this.activeSpeaker = nextActiveSpeaker;
-        console.log("activeSpeakerChanged", this.activeSpeaker);
         this.emit("participants_changed");
       }
     }
 
-    this._activeSpeakerLoopTimeout = setTimeout(this._onActiveSpeakerLoop, 250);
+    this._activeSpeakerLoopTimeout = setTimeout(
+      this._onActiveSpeakerLoop,
+      ACTIVE_SPEAKER_INTERVAL
+    );
   };
 
   _onCallReplaced = (participant, call, newCall) => {
