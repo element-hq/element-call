@@ -499,6 +499,8 @@ export function VideoGrid({ participants, layout }) {
         0
       );
 
+      lastLayoutRef.current = layout;
+
       return {
         tiles: newTiles,
         tilePositions: getTilePositions(
