@@ -44766,7 +44766,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createClient = exports.setCryptoStoreFactory = exports.wrapRequest = exports.getRequest = exports.request = exports.setMatrixCallVideoInput = exports.setMatrixCallAudioInput = exports.createNewMatrixCall = exports.ContentHelpers = void 0;
+exports.createClient = exports.setCryptoStoreFactory = exports.wrapRequest = exports.getRequest = exports.request = exports.CallFeed = exports.setMatrixCallVideoInput = exports.setMatrixCallAudioInput = exports.createNewMatrixCall = exports.ContentHelpers = void 0;
 const memory_crypto_store_1 = require("./crypto/store/memory-crypto-store");
 const memory_1 = require("./store/memory");
 const scheduler_1 = require("./scheduler");
@@ -44800,6 +44800,11 @@ var call_1 = require("./webrtc/call");
 Object.defineProperty(exports, "createNewMatrixCall", { enumerable: true, get: function () { return call_1.createNewMatrixCall; } });
 Object.defineProperty(exports, "setMatrixCallAudioInput", { enumerable: true, get: function () { return call_1.setAudioInput; } });
 Object.defineProperty(exports, "setMatrixCallVideoInput", { enumerable: true, get: function () { return call_1.setVideoInput; } });
+// TODO: This export is temporary and is only used for the local call feed for conference calls
+// Ideally conference calls will become a first-class concept and we will have a local call feed with
+// a lifecycle that matches the conference call, not individual calls to members.
+var callFeed_1 = require("./webrtc/callFeed");
+Object.defineProperty(exports, "CallFeed", { enumerable: true, get: function () { return callFeed_1.CallFeed; } });
 // expose the underlying request object so different environments can use
 // different request libs (e.g. request or browser-request)
 let requestInstance;
@@ -44922,7 +44927,7 @@ exports.createClient = createClient;
 
 }).call(this)}).call(this,typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : typeof window !== "undefined" ? window : {})
 
-},{"./autodiscovery":74,"./client":76,"./content-helpers":77,"./content-repo":78,"./crypto/store/indexeddb-crypto-store":100,"./crypto/store/memory-crypto-store":102,"./errors":111,"./filter":114,"./http-api":115,"./interactive-auth":117,"./models/event":125,"./models/event-timeline":124,"./models/event-timeline-set":123,"./models/group":126,"./models/room":131,"./models/room-member":128,"./models/room-state":129,"./models/user":134,"./scheduler":138,"./service-types":139,"./store/indexeddb":142,"./store/memory":143,"./store/session/webstorage":144,"./sync-accumulator":146,"./timeline-window":149,"./webrtc/call":151}],120:[function(require,module,exports){
+},{"./autodiscovery":74,"./client":76,"./content-helpers":77,"./content-repo":78,"./crypto/store/indexeddb-crypto-store":100,"./crypto/store/memory-crypto-store":102,"./errors":111,"./filter":114,"./http-api":115,"./interactive-auth":117,"./models/event":125,"./models/event-timeline":124,"./models/event-timeline-set":123,"./models/group":126,"./models/room":131,"./models/room-member":128,"./models/room-state":129,"./models/user":134,"./scheduler":138,"./service-types":139,"./store/indexeddb":142,"./store/memory":143,"./store/session/webstorage":144,"./sync-accumulator":146,"./timeline-window":149,"./webrtc/call":151,"./webrtc/callFeed":154}],120:[function(require,module,exports){
 "use strict";
 /*
 Copyright 2021 The Matrix.org Foundation C.I.C.
@@ -59157,6 +59162,9 @@ class MatrixCall extends events_1.EventEmitter {
         logger_1.logger.info(`Pushed local stream (id="${stream.id}", active="${stream.active}", purpose="${purpose}")`);
     }
     deleteAllFeeds() {
+        for (const feed of this.feeds) {
+            feed.dispose();
+        }
         this.feeds = [];
         this.emit(CallEvent.FeedsChanged, this.feeds);
     }
@@ -59167,6 +59175,7 @@ class MatrixCall extends events_1.EventEmitter {
             logger_1.logger.warn(`Didn't find the feed with stream id ${stream.id} to delete`);
             return;
         }
+        feed.dispose();
         this.feeds.splice(this.feeds.indexOf(feed), 1);
         this.emit(CallEvent.FeedsChanged, this.feeds);
     }
@@ -60737,7 +60746,7 @@ class CallFeed extends events_1.default {
     volumeLooper() {
         if (!this.analyser)
             return;
-        setTimeout(() => {
+        this.volumeLooperTimeout = setTimeout(() => {
             if (!this.measuringVolumeActivity)
                 return;
             this.analyser.getFloatFrequencyData(this.frequencyBinCount);
@@ -60755,6 +60764,9 @@ class CallFeed extends events_1.default {
             }
             this.volumeLooper();
         }, POLLING_INTERVAL);
+    }
+    dispose() {
+        clearTimeout(this.volumeLooperTimeout);
     }
 }
 exports.CallFeed = CallFeed;

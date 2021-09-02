@@ -49,6 +49,10 @@ limitations under the License.
   border-radius: 32px;
 }
 
+.headerButton svg * {
+  fill: #8E99A4;
+}
+
 .headerButton:hover {
   background-color: #8D97A5;
 }

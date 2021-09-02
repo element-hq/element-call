@@ -7,6 +7,8 @@ import { ReactComponent as VideoIcon } from "./icons/Video.svg";
 import { ReactComponent as DisableVideoIcon } from "./icons/DisableVideo.svg";
 import { ReactComponent as HangupIcon } from "./icons/Hangup.svg";
 import { ReactComponent as SettingsIcon } from "./icons/Settings.svg";
+import { ReactComponent as GridIcon } from "./icons/Grid.svg";
+import { ReactComponent as SpeakerIcon } from "./icons/Speaker.svg";
 
 export function RoomButton({ on, className, children, ...rest }) {
   return (
@@ -63,6 +65,18 @@ export function SettingsButton(props) {
   return (
     <HeaderButton {...props}>
       <SettingsIcon />
+    </HeaderButton>
+  );
+}
+
+export function LayoutToggleButton({ layout, ...rest }) {
+  return (
+    <HeaderButton {...rest}>
+      {layout === "spotlight" ? (
+        <SpeakerIcon width={20} height={20} />
+      ) : (
+        <GridIcon width={20} height={20} />
+      )}
     </HeaderButton>
   );
 }
