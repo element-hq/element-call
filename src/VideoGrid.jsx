@@ -683,7 +683,7 @@ export function VideoGrid({ participants, layout }) {
 
       api.start(animate(newTiles));
     },
-    { filterTaps: true }
+    { filterTaps: true, enabled: layout === "gallery" }
   );
 
   return (
@@ -708,6 +708,10 @@ export function VideoGrid({ participants, layout }) {
     </div>
   );
 }
+
+VideoGrid.defaultProps = {
+  layout: "gallery",
+};
 
 function ParticipantTile({ style, participant, remove, presenter, ...rest }) {
   const videoRef = useRef();
