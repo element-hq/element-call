@@ -28,6 +28,7 @@ const colorHash = new ColorHash({ lightness: 0.3 });
 export function Home({ manager }) {
   const history = useHistory();
   const roomNameRef = useRef();
+  const guestAccessRef = useRef();
   const [createRoomError, setCreateRoomError] = useState();
   const rooms = useRooms(manager);
 
@@ -36,16 +37,51 @@ export function Home({ manager }) {
       e.preventDefault();
       setCreateRoomError(undefined);
 
-      manager.client
-        .createRoom({
+      async function createRoom(name, guestAccess) {
+        const { room_id } = await manager.client.createRoom({
           visibility: "private",
           preset: "public_chat",
-          name: roomNameRef.current.value,
-        })
-        .then(({ room_id }) => {
-          history.push(`/room/${room_id}`);
-        })
-        .catch(setCreateRoomError);
+          name,
+          power_level_content_override: guestAccess
+            ? {
+                invite: 100,
+                kick: 100,
+                ban: 100,
+                redact: 50,
+                state_default: 0,
+                events_default: 0,
+                users_default: 0,
+                events: {
+                  "m.room.power_levels": 100,
+                  "m.room.history_visibility": 100,
+                  "m.room.tombstone": 100,
+                  "m.room.encryption": 100,
+                  "m.room.name": 50,
+                  "m.room.message": 0,
+                  "m.room.encrypted": 50,
+                  "m.sticker": 50,
+                },
+                users: {
+                  [manager.client.getUserId()]: 100,
+                },
+              }
+            : undefined,
+        });
+
+        if (guestAccess) {
+          await manager.client.setGuestAccess(room_id, {
+            allowJoin: true,
+            allowRead: true,
+          });
+        }
+
+        history.push(`/room/${room_id}`);
+      }
+
+      createRoom(
+        roomNameRef.current.value,
+        guestAccessRef.current.checked
+      ).catch(setCreateRoomError);
     },
     [manager]
   );
@@ -85,6 +121,15 @@ export function Home({ manager }) {
                     autoComplete="off"
                     placeholder="Room Name"
                     ref={roomNameRef}
+                  />
+                </FieldRow>
+                <FieldRow>
+                  <InputField
+                    id="guestAccess"
+                    name="guestAccess"
+                    label="Allow Guest Access"
+                    type="checkbox"
+                    ref={guestAccessRef}
                   />
                 </FieldRow>
                 {createRoomError && (
