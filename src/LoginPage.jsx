@@ -60,8 +60,8 @@ export function LoginPage({ onLogin, error }) {
                   ref={loginUsernameRef}
                   placeholder="Username"
                   label="Username"
-                  autocorrect="off"
-                  autocapitalize="none"
+                  autoCorrect="off"
+                  autoCapitalize="none"
                 />
               </FieldRow>
               <FieldRow>

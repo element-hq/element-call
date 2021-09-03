@@ -107,6 +107,36 @@ export class ConferenceCallManager extends EventEmitter {
     }
   }
 
+  static async loginAsGuest(homeserverUrl, displayName) {
+    const registrationClient = matrixcs.createClient(homeserverUrl);
+
+    const { user_id, device_id, access_token } =
+      await registrationClient.registerGuest();
+
+    const client = matrixcs.createClient({
+      baseUrl: homeserverUrl,
+      accessToken: access_token,
+      userId: user_id,
+      deviceId: device_id,
+    });
+
+    await client.setDisplayName(displayName);
+
+    client.setGuest(true);
+
+    const manager = new ConferenceCallManager(client);
+
+    await client.startClient({
+      // dirty hack to reduce chance of gappy syncs
+      // should be fixed by spotting gaps and backpaginating
+      initialSyncLimit: 50,
+    });
+
+    await waitForSync(client);
+
+    return manager;
+  }
+
   static async register(homeserverUrl, username, password) {
     try {
       const registrationClient = matrixcs.createClient(homeserverUrl);
@@ -250,6 +280,7 @@ export class ConferenceCallManager extends EventEmitter {
     this.localParticipant = {
       local: true,
       userId,
+      displayName: this.client.getUser(this.client.getUserId()).rawDisplayName,
       sessionId: this.sessionId,
       call: null,
       stream,
@@ -478,12 +509,15 @@ export class ConferenceCallManager extends EventEmitter {
         "m.room.member",
         participant.userId
       );
-      const participantInfo = memberStateEvent.getContent()[CONF_PARTICIPANT];
+
+      const memberStateContent = memberStateEvent.getContent();
 
       if (
-        !participantInfo ||
-        typeof participantInfo !== "object" ||
-        (participantInfo.expiresAt && participantInfo.expiresAt < now)
+        !memberStateContent ||
+        !memberStateContent[CONF_PARTICIPANT] ||
+        typeof memberStateContent[CONF_PARTICIPANT] !== "object" ||
+        (memberStateContent[CONF_PARTICIPANT].expiresAt &&
+          memberStateContent[CONF_PARTICIPANT].expiresAt < now)
       ) {
         this.emit("debugstate", participant.userId, null, "inactive");
 
@@ -533,27 +567,21 @@ export class ConferenceCallManager extends EventEmitter {
     const audioMuted = remoteFeed ? remoteFeed.isAudioMuted() : false;
     const videoMuted = remoteFeed ? remoteFeed.isVideoMuted() : false;
 
-    if (remoteFeed) {
-      remoteFeed.on("mute_state_changed", () =>
-        this._onCallFeedMuteStateChanged(participant, remoteFeed)
-      );
-      remoteFeed.setSpeakingThreshold(SPEAKING_THRESHOLD);
-      remoteFeed.measureVolumeActivity(true);
-      remoteFeed.on("speaking", (speaking) => {
-        this._onCallFeedSpeaking(participant, speaking);
-      });
-      remoteFeed.on("volume_changed", (maxVolume) =>
-        this._onCallFeedVolumeChange(participant, maxVolume)
-      );
-    }
-
     const userId = call.opponentMember.userId;
 
     const memberStateEvent = this.room.currentState.getStateEvents(
       "m.room.member",
       userId
     );
-    const { sessionId } = memberStateEvent.getContent()[CONF_PARTICIPANT];
+
+    const memberStateContent = memberStateEvent.getContent();
+
+    if (!memberStateContent || !memberStateContent[CONF_PARTICIPANT]) {
+      call.reject();
+      return;
+    }
+
+    const { sessionId } = memberStateContent[CONF_PARTICIPANT];
 
     // Check if the user calling has an existing participant and use this call instead.
     const existingParticipant = this.participants.find(
@@ -561,6 +589,8 @@ export class ConferenceCallManager extends EventEmitter {
     );
 
     let participant;
+
+    console.log(call.opponentMember);
 
     if (existingParticipant) {
       participant = existingParticipant;
@@ -577,6 +607,7 @@ export class ConferenceCallManager extends EventEmitter {
       participant = {
         local: false,
         userId,
+        displayName: call.opponentMember.rawDisplayName,
         sessionId,
         call,
         stream,
@@ -586,6 +617,20 @@ export class ConferenceCallManager extends EventEmitter {
         activeSpeaker: false,
       };
       this.participants.push(participant);
+    }
+
+    if (remoteFeed) {
+      remoteFeed.on("mute_state_changed", () =>
+        this._onCallFeedMuteStateChanged(participant, remoteFeed)
+      );
+      remoteFeed.setSpeakingThreshold(SPEAKING_THRESHOLD);
+      remoteFeed.measureVolumeActivity(true);
+      remoteFeed.on("speaking", (speaking) => {
+        this._onCallFeedSpeaking(participant, speaking);
+      });
+      remoteFeed.on("volume_changed", (maxVolume) =>
+        this._onCallFeedVolumeChange(participant, maxVolume)
+      );
     }
 
     call.on("state", (state) =>
@@ -629,7 +674,13 @@ export class ConferenceCallManager extends EventEmitter {
       "m.room.member",
       member.userId
     );
-    const participantInfo = memberStateEvent.getContent()[CONF_PARTICIPANT];
+    const memberStateContent = memberStateEvent.getContent();
+
+    if (!memberStateContent) {
+      return;
+    }
+
+    const participantInfo = memberStateContent[CONF_PARTICIPANT];
 
     if (!participantInfo || typeof participantInfo !== "object") {
       return;
@@ -680,6 +731,7 @@ export class ConferenceCallManager extends EventEmitter {
       participant = {
         local: false,
         userId: member.userId,
+        displayName: member.rawDisplayName,
         sessionId,
         call,
         stream: null,
