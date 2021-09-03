@@ -22,7 +22,7 @@ import React, {
   useCallback,
 } from "react";
 import styles from "./Room.module.css";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, useHistory, Link } from "react-router-dom";
 import { useVideoRoom } from "./ConferenceCallManagerHooks";
 import { DevTools } from "./DevTools";
 import { VideoGrid } from "./VideoGrid";
@@ -34,7 +34,8 @@ import {
   LayoutToggleButton,
 } from "./RoomButton";
 import { Header, LeftNav, RightNav, CenterNav } from "./Header";
-import { Button } from "./Input";
+import { Button, FieldRow, InputField, ErrorMessage } from "./Input";
+import { Center, Content, Info, Modal } from "./Layout";
 
 function useQuery() {
   const location = useLocation();
@@ -142,6 +143,74 @@ export function Room({ manager }) {
       )}
       {debug && <DevTools manager={manager} />}
     </div>
+  );
+}
+
+export function RoomAuth({ onLoginAsGuest, error }) {
+  const displayNameRef = useRef();
+  const history = useHistory();
+  const location = useLocation();
+
+  const onSubmitLoginForm = useCallback(
+    (e) => {
+      e.preventDefault();
+      onLoginAsGuest(displayNameRef.current.value);
+    },
+    [onLoginAsGuest, location, history]
+  );
+
+  return (
+    <>
+      <Header>
+        <LeftNav />
+      </Header>
+      <Content>
+        <Center>
+          <Modal>
+            <h2>Login As Guest</h2>
+            <form onSubmit={onSubmitLoginForm}>
+              <FieldRow>
+                <InputField
+                  type="text"
+                  ref={displayNameRef}
+                  placeholder="Display Name"
+                  label="Display Name"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                />
+              </FieldRow>
+              {error && (
+                <FieldRow>
+                  <ErrorMessage>{error.message}</ErrorMessage>
+                </FieldRow>
+              )}
+              <FieldRow rightAlign>
+                <Button type="submit">Login as guest</Button>
+              </FieldRow>
+            </form>
+            <Info>
+              <Link
+                to={{
+                  pathname: "/login",
+                  state: location.state,
+                }}
+              >
+                Sign in
+              </Link>
+              {" or "}
+              <Link
+                to={{
+                  pathname: "/register",
+                  state: location.state,
+                }}
+              >
+                Create account
+              </Link>
+            </Info>
+          </Modal>
+        </Center>
+      </Content>
+    </>
   );
 }
 

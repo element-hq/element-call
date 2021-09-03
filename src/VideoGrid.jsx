@@ -746,7 +746,7 @@ function ParticipantTile({ style, participant, remove, presenter, ...rest }) {
         ) : participant.audioMuted ? (
           <MuteMicIcon className={styles.muteMicIcon} />
         ) : null}
-        <span>{participant.userId}</span>
+        <span>{participant.displayName}</span>
       </div>
       {participant.videoMuted && (
         <DisableVideoIcon

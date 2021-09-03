@@ -95,6 +95,34 @@ export function useConferenceCallManager(homeserverUrl) {
       });
   }, []);
 
+  const loginAsGuest = useCallback(async (displayName) => {
+    setState((prevState) => ({
+      ...prevState,
+      authenticated: false,
+      error: undefined,
+    }));
+
+    ConferenceCallManager.loginAsGuest(homeserverUrl, displayName)
+      .then((manager) => {
+        setState({
+          manager,
+          loading: false,
+          authenticated: true,
+          error: undefined,
+        });
+      })
+      .catch((err) => {
+        console.error(err);
+
+        setState({
+          manager: undefined,
+          loading: false,
+          authenticated: false,
+          error: err,
+        });
+      });
+  }, []);
+
   const register = useCallback(async (username, password, cb) => {
     setState((prevState) => ({
       ...prevState,
@@ -135,7 +163,15 @@ export function useConferenceCallManager(homeserverUrl) {
     };
   }, [manager]);
 
-  return { loading, authenticated, manager, error, login, register };
+  return {
+    loading,
+    authenticated,
+    manager,
+    error,
+    login,
+    loginAsGuest,
+    register,
+  };
 }
 
 export function useVideoRoom(manager, roomId, timeout = 5000) {

@@ -24,7 +24,7 @@ import {
 } from "react-router-dom";
 import { useConferenceCallManager } from "./ConferenceCallManagerHooks";
 import { Home } from "./Home";
-import { Room } from "./Room";
+import { Room, RoomAuth } from "./Room";
 import { GridDemo } from "./GridDemo";
 import { RegisterPage } from "./RegisterPage";
 import { LoginPage } from "./LoginPage";
@@ -34,8 +34,15 @@ export default function App() {
   const { protocol, host } = window.location;
   // Assume homeserver is hosted on same domain (proxied in development by vite)
   const homeserverUrl = `${protocol}//${host}`;
-  const { loading, authenticated, error, manager, login, register } =
-    useConferenceCallManager(homeserverUrl);
+  const {
+    loading,
+    authenticated,
+    error,
+    manager,
+    login,
+    loginAsGuest,
+    register,
+  } = useConferenceCallManager(homeserverUrl);
 
   return (
     <Router>
@@ -55,12 +62,13 @@ export default function App() {
             <Route exact path="/register">
               <RegisterPage onRegister={register} error={error} />
             </Route>
-            <AuthenticatedRoute
-              authenticated={authenticated}
-              path="/room/:roomId"
-            >
-              <Room manager={manager} error={error} />
-            </AuthenticatedRoute>
+            <Route path="/room/:roomId">
+              {authenticated ? (
+                <Room manager={manager} error={error} />
+              ) : (
+                <RoomAuth error={error} onLoginAsGuest={loginAsGuest} />
+              )}
+            </Route>
             <Route exact path="/grid">
               <GridDemo />
             </Route>
