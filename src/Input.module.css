@@ -9,9 +9,6 @@
   min-width: 0;
   position: relative;
   margin: 1em 0;
-  border-radius: 4px;
-  transition: border-color .25s;
-  border: 1px solid #394049;
 }
 
 .fieldRow.rightAlign {
@@ -30,7 +27,13 @@
   margin-right: 0;
 }
 
-.field input {
+.inputField {
+  border-radius: 4px;
+  transition: border-color .25s;
+  border: 1px solid #394049;
+}
+
+.inputField input {
   font-weight: 400;
   font-size: 14px;
   border: none;
@@ -42,17 +45,17 @@
   min-width: 0;
 }
 
-.field input::placeholder {
+.inputField input::placeholder {
   transition: color 0.25s ease-in 0s;
   color: transparent;
 }
 
-.field input:placeholder-shown:focus::placeholder {
+.inputField input:placeholder-shown:focus::placeholder {
   transition: color .25s ease-in .1s;
   color: #6f7882;
 }
 
-.field label {
+.inputField label {
   transition: font-size .25s ease-out .1s,color .25s ease-out .1s,top .25s ease-out .1s,background-color .25s ease-out .1s;
   color: white;
   background-color: transparent;
@@ -69,15 +72,15 @@
   max-width: calc(100% - 20px);
 }
 
-.field:focus-within {
+.inputField:focus-within {
   border-color: #0086e6;
 }
 
-.field input:focus {
+.inputField input:focus {
   outline: 0;
 }
 
-.field input:focus + label, .field input:not(:placeholder-shown) + label {
+.inputField input:focus + label, .inputField input:not(:placeholder-shown) + label {
   background-color: #21262c;
   transition: font-size .25s ease-out 0s,color .25s ease-out 0s,top .25s ease-out 0s,background-color .25s ease-out 0s;
   font-size: 10px;
@@ -86,8 +89,57 @@
   pointer-events: auto;
 }
 
-.field input:focus + label {
+.inputField input:focus + label {
   color: #0086e6;
+}
+
+.checkboxField {
+  display: flex;
+  align-items: flex-start;
+}
+
+.checkboxField label {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  font-size: 13px;
+}
+
+.checkboxField input {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  flex-shrink: 0;
+  height: 16px;
+  width: 16px;
+  border: 1.5px solid rgba(185,190,198,.5);
+  box-sizing: border-box;
+  border-radius: 4px;
+  margin-right: 10px;
+}
+
+.checkbox svg {
+  display: none;
+}
+
+.checkbox svg * {
+  stroke: #FFF;
+}
+
+.checkboxField input[type="checkbox"]:checked + label > .checkbox {
+  background: #0dbd8b;
+  border-color: #0dbd8b;
+}
+
+.checkboxField input[type="checkbox"]:checked + label > .checkbox svg {
+  display: flex;
 }
 
 .button {
