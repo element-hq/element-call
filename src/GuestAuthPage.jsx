@@ -14,15 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useRef } from "react";
-import { useHistory, useLocation, Link } from "react-router-dom";
+import React, { useState, useRef, useCallback } from "react";
+import styles from "./GuestAuthPage.module.css";
+import { useLocation, useHistory, Link } from "react-router-dom";
 import { Header, LeftNav } from "./Header";
-import { FieldRow, InputField, Button, ErrorMessage } from "./Input";
+import { Button, FieldRow, InputField, ErrorMessage } from "./Input";
 import { Center, Content, Info, Modal } from "./Layout";
 
-export function LoginPage({ onLogin }) {
-  const loginUsernameRef = useRef();
-  const loginPasswordRef = useRef();
+export function GuestAuthPage({ onLoginAsGuest }) {
+  const displayNameRef = useRef();
   const history = useHistory();
   const location = useLocation();
   const [error, setError] = useState();
@@ -30,45 +30,29 @@ export function LoginPage({ onLogin }) {
   const onSubmitLoginForm = useCallback(
     (e) => {
       e.preventDefault();
-      onLogin(loginUsernameRef.current.value, loginPasswordRef.current.value)
-        .then(() => {
-          if (location.state && location.state.from) {
-            history.replace(location.state.from);
-          } else {
-            history.replace("/");
-          }
-        })
-        .catch(setError);
+      onLoginAsGuest(displayNameRef.current.value).catch(setError);
     },
-    [onLogin, location, history]
+    [onLoginAsGuest, location, history]
   );
 
   return (
-    <>
+    <div className={styles.guestAuthPage}>
       <Header>
         <LeftNav />
       </Header>
       <Content>
         <Center>
           <Modal>
-            <h2>Login</h2>
+            <h2>Login As Guest</h2>
             <form onSubmit={onSubmitLoginForm}>
               <FieldRow>
                 <InputField
                   type="text"
-                  ref={loginUsernameRef}
-                  placeholder="Username"
-                  label="Username"
+                  ref={displayNameRef}
+                  placeholder="Display Name"
+                  label="Display Name"
                   autoCorrect="off"
                   autoCapitalize="none"
-                />
-              </FieldRow>
-              <FieldRow>
-                <InputField
-                  type="password"
-                  ref={loginPasswordRef}
-                  placeholder="Password"
-                  label="Password"
                 />
               </FieldRow>
               {error && (
@@ -77,11 +61,19 @@ export function LoginPage({ onLogin }) {
                 </FieldRow>
               )}
               <FieldRow rightAlign>
-                <Button type="submit">Login</Button>
+                <Button type="submit">Login as guest</Button>
               </FieldRow>
             </form>
             <Info>
-              New?{" "}
+              <Link
+                to={{
+                  pathname: "/login",
+                  state: location.state,
+                }}
+              >
+                Sign in
+              </Link>
+              {" or "}
               <Link
                 to={{
                   pathname: "/register",
@@ -94,6 +86,6 @@ export function LoginPage({ onLogin }) {
           </Modal>
         </Center>
       </Content>
-    </>
+    </div>
   );
 }

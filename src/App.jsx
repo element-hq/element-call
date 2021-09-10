@@ -22,13 +22,14 @@ import {
   Redirect,
   useLocation,
 } from "react-router-dom";
-import { useConferenceCallManager } from "./ConferenceCallManagerHooks";
+import { useClient } from "./ConferenceCallManagerHooks";
 import { Home } from "./Home";
-import { Room, RoomAuth } from "./Room";
+import { Room } from "./Room";
 import { GridDemo } from "./GridDemo";
 import { RegisterPage } from "./RegisterPage";
 import { LoginPage } from "./LoginPage";
 import { Center } from "./Layout";
+import { GuestAuthPage } from "./GuestAuthPage";
 
 export default function App() {
   const { protocol, host } = window.location;
@@ -37,12 +38,12 @@ export default function App() {
   const {
     loading,
     authenticated,
-    error,
-    manager,
+    client,
     login,
-    loginAsGuest,
+    logout,
+    registerGuest,
     register,
-  } = useConferenceCallManager(homeserverUrl);
+  } = useClient(homeserverUrl);
 
   return (
     <Router>
@@ -54,19 +55,19 @@ export default function App() {
         ) : (
           <Switch>
             <AuthenticatedRoute authenticated={authenticated} exact path="/">
-              <Home manager={manager} error={error} />
+              <Home client={client} onLogout={logout} />
             </AuthenticatedRoute>
             <Route exact path="/login">
-              <LoginPage onLogin={login} error={error} />
+              <LoginPage onLogin={login} />
             </Route>
             <Route exact path="/register">
-              <RegisterPage onRegister={register} error={error} />
+              <RegisterPage onRegister={register} />
             </Route>
             <Route path="/room/:roomId">
               {authenticated ? (
-                <Room manager={manager} error={error} />
+                <Room client={client} />
               ) : (
-                <RoomAuth error={error} onLoginAsGuest={loginAsGuest} />
+                <GuestAuthPage onRegisterGuest={registerGuest} />
               )}
             </Route>
             <Route exact path="/grid">

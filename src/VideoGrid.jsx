@@ -422,7 +422,7 @@ export function VideoGrid({ participants, layout }) {
 
       for (const tile of tiles) {
         let participant = participants.find(
-          (participant) => participant.userId === tile.key
+          (participant) => participant.member.userId === tile.key
         );
 
         let remove = false;
@@ -442,7 +442,7 @@ export function VideoGrid({ participants, layout }) {
         }
 
         newTiles.push({
-          key: participant.userId,
+          key: participant.member.userId,
           participant,
           remove,
           presenter,
@@ -450,13 +450,13 @@ export function VideoGrid({ participants, layout }) {
       }
 
       for (const participant of participants) {
-        if (newTiles.some(({ key }) => participant.userId === key)) {
+        if (newTiles.some(({ key }) => participant.member.userId === key)) {
           continue;
         }
 
         // Added tiles
         newTiles.push({
-          key: participant.userId,
+          key: participant.member.userId,
           participant,
           remove: false,
           presenter: layout === "spotlight" && participant.activeSpeaker,
@@ -719,17 +719,19 @@ function ParticipantTile({ style, participant, remove, presenter, ...rest }) {
   const videoRef = useRef();
 
   useEffect(() => {
-    if (participant.stream) {
-      if (participant.local) {
+    if (participant.usermediaStream) {
+      // Mute the local video
+      // TODO: Should GroupCallParticipant have a local field?
+      if (!participant.call) {
         videoRef.current.muted = true;
       }
 
-      videoRef.current.srcObject = participant.stream;
+      videoRef.current.srcObject = participant.usermediaStream;
       videoRef.current.play();
     } else {
       videoRef.current.srcObject = null;
     }
-  }, [participant.stream]);
+  }, [participant.usermediaStream]);
 
   // Firefox doesn't respect the disablePictureInPicture attribute
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
@@ -738,15 +740,15 @@ function ParticipantTile({ style, participant, remove, presenter, ...rest }) {
     <animated.div className={styles.participantTile} style={style} {...rest}>
       <div
         className={classNames(styles.participantName, {
-          [styles.speaking]: participant.speaking,
+          [styles.speaking]: participant.usermediaStream?.speaking,
         })}
       >
-        {participant.speaking ? (
+        {participant.usermediaStream?.speaking ? (
           <MicIcon />
-        ) : participant.audioMuted ? (
+        ) : participant.isAudioMuted() ? (
           <MuteMicIcon className={styles.muteMicIcon} />
         ) : null}
-        <span>{participant.displayName}</span>
+        <span>{participant.member.rawDisplayName}</span>
       </div>
       {participant.videoMuted && (
         <DisableVideoIcon
