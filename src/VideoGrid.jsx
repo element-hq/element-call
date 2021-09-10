@@ -436,7 +436,7 @@ export function VideoGrid({ participants, layout }) {
         let presenter;
 
         if (layout === "spotlight") {
-          presenter = participant.activeSpeaker;
+          presenter = participant.isActiveSpeaker();
         } else {
           presenter = layout === lastLayoutRef.current ? tile.presenter : false;
         }
@@ -459,7 +459,7 @@ export function VideoGrid({ participants, layout }) {
           key: participant.member.userId,
           participant,
           remove: false,
-          presenter: layout === "spotlight" && participant.activeSpeaker,
+          presenter: layout === "spotlight" && participant.isActiveSpeaker(),
         });
       }
 
@@ -740,10 +740,10 @@ function ParticipantTile({ style, participant, remove, presenter, ...rest }) {
     <animated.div className={styles.participantTile} style={style} {...rest}>
       <div
         className={classNames(styles.participantName, {
-          [styles.speaking]: participant.usermediaStream?.speaking,
+          [styles.speaking]: participant.usermediaFeed?.isSpeaking(),
         })}
       >
-        {participant.usermediaStream?.speaking ? (
+        {participant.usermediaFeed?.isSpeaking() ? (
           <MicIcon />
         ) : participant.isAudioMuted() ? (
           <MuteMicIcon className={styles.muteMicIcon} />

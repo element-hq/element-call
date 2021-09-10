@@ -167,6 +167,10 @@ export function EnteringRoomView() {
 }
 
 export function LoadingErrorView({ error }) {
+  useEffect(() => {
+    console.error(error);
+  }, [error]);
+
   return (
     <>
       <div className={styles.centerMessage}>
@@ -190,7 +194,6 @@ function RoomSetupView({
   localVideoMuted,
   toggleLocalVideoMuted,
   toggleMicrophoneMuted,
-  groupCall,
 }) {
   const videoRef = useRef();
   const [permissionState, setPermissionState] = useState(
@@ -206,7 +209,9 @@ function RoomSetupView({
           setPermissionState(PermissionState.Granted);
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        console.error(error);
+
         if (videoRef.current) {
           setPermissionState(PermissionState.Denied);
         }
