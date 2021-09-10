@@ -25,12 +25,12 @@ import { Center, Content, Modal } from "./Layout";
 
 const colorHash = new ColorHash({ lightness: 0.3 });
 
-export function Home({ manager }) {
+export function Home({ client, onLogout }) {
   const history = useHistory();
   const roomNameRef = useRef();
   const guestAccessRef = useRef();
   const [createRoomError, setCreateRoomError] = useState();
-  const rooms = useRooms(manager);
+  const rooms = useRooms(client);
 
   const onCreateRoom = useCallback(
     (e) => {
@@ -38,7 +38,7 @@ export function Home({ manager }) {
       setCreateRoomError(undefined);
 
       async function createRoom(name, guestAccess) {
-        const { room_id } = await manager.client.createRoom({
+        const { room_id } = await client.createRoom({
           visibility: "private",
           preset: "public_chat",
           name,
@@ -62,14 +62,14 @@ export function Home({ manager }) {
                   "m.sticker": 50,
                 },
                 users: {
-                  [manager.client.getUserId()]: 100,
+                  [client.getUserId()]: 100,
                 },
               }
             : undefined,
         });
 
         if (guestAccess) {
-          await manager.client.setGuestAccess(room_id, {
+          await client.setGuestAccess(room_id, {
             allowJoin: true,
             allowRead: true,
           });
@@ -83,27 +83,14 @@ export function Home({ manager }) {
         guestAccessRef.current.checked
       ).catch(setCreateRoomError);
     },
-    [manager]
-  );
-
-  const onLogout = useCallback(
-    (e) => {
-      e.preventDefault();
-      manager.logout();
-      location.reload();
-    },
-    [manager]
+    [client]
   );
 
   return (
     <>
       <Header>
         <LeftNav />
-        <UserNav
-          signedIn={manager.client}
-          userName={manager.client.getUserId()}
-          onLogout={onLogout}
-        />
+        <UserNav signedIn userName={client.getUserId()} onLogout={onLogout} />
       </Header>
       <Content>
         <Center>

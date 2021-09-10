@@ -14,32 +14,34 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useRef } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
 import { Header, LeftNav } from "./Header";
 import { FieldRow, InputField, Button, ErrorMessage } from "./Input";
 import { Center, Content, Info, Modal } from "./Layout";
 
-export function RegisterPage({ onRegister, error }) {
+export function RegisterPage({ onRegister }) {
   const registerUsernameRef = useRef();
   const registerPasswordRef = useRef();
   const history = useHistory();
   const location = useLocation();
+  const [error, setError] = useState();
 
   const onSubmitRegisterForm = useCallback(
     (e) => {
       e.preventDefault();
       onRegister(
         registerUsernameRef.current.value,
-        registerPasswordRef.current.value,
-        () => {
+        registerPasswordRef.current.value
+      )
+        .then(() => {
           if (location.state && location.state.from) {
             history.replace(location.state.from);
           } else {
             history.replace("/");
           }
-        }
-      );
+        })
+        .catch(setError);
     },
     [onRegister, location, history]
   );
