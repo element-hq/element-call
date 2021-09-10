@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useEffect, useState } from "react";
-import { ConferenceCallManager } from "./ConferenceCallManager";
+import { useCallback, useEffect, useRef, useState } from "react";
+import matrix from "matrix-js-sdk";
 
 // https://stackoverflow.com/a/9039885
 function isIOS() {
@@ -33,289 +33,230 @@ function isIOS() {
   );
 }
 
-export function useConferenceCallManager(homeserverUrl) {
-  const [{ loading, authenticated, manager, error }, setState] = useState({
+function waitForSync(client) {
+  return new Promise((resolve, reject) => {
+    const onSync = (state) => {
+      if (state === "PREPARED") {
+        resolve();
+        client.removeListener("sync", onSync);
+      }
+    };
+    client.on("sync", onSync);
+  });
+}
+
+async function initClient(clientOptions, guest) {
+  const client = matrix.createClient(clientOptions);
+
+  if (guest) {
+    client.setGuest(true);
+  }
+
+  await client.startClient({
+    // dirty hack to reduce chance of gappy syncs
+    // should be fixed by spotting gaps and backpaginating
+    initialSyncLimit: 50,
+  });
+
+  await waitForSync(client);
+
+  return client;
+}
+
+export async function fetchRoom(client, roomId, join, timeout = 5000) {
+  let room = client.getRoom(roomId);
+
+  if (room) {
+    return room;
+  }
+
+  if (join) {
+    room = await client.joinRoom(roomId);
+
+    if (room) {
+      return room;
+    }
+  }
+
+  return new Promise((resolve, reject) => {
+    let timeoutId;
+
+    function onRoom(room) {
+      if (room && room.roomId === roomId) {
+        clearTimeout(timeoutId);
+        client.removeListener("Room", onRoom);
+        resolve(room);
+      }
+    }
+
+    const room = client.getRoom(roomId);
+
+    if (room) {
+      resolve(room);
+    }
+
+    client.on("Room", onRoom);
+
+    if (timeout) {
+      timeoutId = setTimeout(() => {
+        client.removeListener("Room", onRoom);
+        reject(new Error("Fetching room timed out."));
+      }, timeout);
+    }
+  });
+}
+
+export function useClient(homeserverUrl) {
+  const [{ loading, authenticated, client }, setState] = useState({
     loading: true,
     authenticated: false,
-    manager: undefined,
-    error: undefined,
+    client: undefined,
   });
 
   useEffect(() => {
-    ConferenceCallManager.restore(homeserverUrl)
-      .then((manager) => {
-        setState({
-          manager,
-          loading: false,
-          authenticated: !!manager,
-          error: undefined,
-        });
-      })
-      .catch((err) => {
-        console.error(err);
+    async function restore() {
+      try {
+        const authStore = localStorage.getItem("matrix-auth-store");
 
-        setState({
-          manager: undefined,
-          loading: false,
-          authenticated: false,
-          error: err,
-        });
-      });
-  }, []);
+        if (authStore) {
+          const { user_id, device_id, access_token } = JSON.parse(authStore);
 
-  const login = useCallback(async (username, password, cb) => {
-    setState((prevState) => ({
-      ...prevState,
-      authenticated: false,
-      error: undefined,
-    }));
+          const client = await initClient({
+            baseUrl: homeserverUrl,
+            accessToken: access_token,
+            userId: user_id,
+            deviceId: device_id,
+          });
 
-    ConferenceCallManager.login(homeserverUrl, username, password)
-      .then((manager) => {
-        setState({
-          manager,
-          loading: false,
-          authenticated: true,
-          error: undefined,
-        });
+          localStorage.setItem(
+            "matrix-auth-store",
+            JSON.stringify({ user_id, device_id, access_token })
+          );
 
-        if (cb) {
-          cb();
+          return client;
+        }
+      } catch (err) {
+        localStorage.removeItem("matrix-auth-store");
+        throw err;
+      }
+    }
+
+    restore()
+      .then((client) => {
+        if (client) {
+          setState({ client, loading: false, authenticated: true });
+        } else {
+          setState({ client: undefined, loading: false, authenticated: false });
         }
       })
-      .catch((err) => {
-        console.error(err);
-
-        setState({
-          manager: undefined,
-          loading: false,
-          authenticated: false,
-          error: err,
-        });
+      .catch(() => {
+        setState({ client: undefined, loading: false, authenticated: false });
       });
   }, []);
 
-  const loginAsGuest = useCallback(async (displayName) => {
-    setState((prevState) => ({
-      ...prevState,
-      authenticated: false,
-      error: undefined,
-    }));
+  const login = useCallback(async (username, password) => {
+    try {
+      const registrationClient = matrix.createClient(homeserverUrl);
 
-    ConferenceCallManager.loginAsGuest(homeserverUrl, displayName)
-      .then((manager) => {
-        setState({
-          manager,
-          loading: false,
-          authenticated: true,
-          error: undefined,
-        });
-      })
-      .catch((err) => {
-        console.error(err);
+      const { user_id, device_id, access_token } =
+        await registrationClient.loginWithPassword(username, password);
 
-        setState({
-          manager: undefined,
-          loading: false,
-          authenticated: false,
-          error: err,
-        });
+      const client = await initClient({
+        baseUrl: homeserverUrl,
+        accessToken: access_token,
+        userId: user_id,
+        deviceId: device_id,
       });
+
+      localStorage.setItem(
+        "matrix-auth-store",
+        JSON.stringify({ user_id, device_id, access_token })
+      );
+
+      setState({ client, loading: false, authenticated: true });
+    } catch (err) {
+      localStorage.removeItem("matrix-auth-store");
+      setState({ client: undefined, loading: false, authenticated: false });
+      throw err;
+    }
   }, []);
 
-  const register = useCallback(async (username, password, cb) => {
-    setState((prevState) => ({
-      ...prevState,
-      authenticated: false,
-      error: undefined,
-    }));
+  const registerGuest = useCallback(async (displayName) => {
+    try {
+      const registrationClient = matrix.createClient(homeserverUrl);
 
-    ConferenceCallManager.register(homeserverUrl, username, password)
-      .then((manager) => {
-        setState({
-          manager,
-          loading: false,
-          authenticated: true,
-          error: undefined,
-        });
+      const { user_id, device_id, access_token } =
+        await registrationClient.registerGuest({});
 
-        if (cb) {
-          cb();
-        }
-      })
-      .catch((err) => {
-        console.error(err);
+      const client = await initClient(
+        {
+          baseUrl: homeserverUrl,
+          accessToken: access_token,
+          userId: user_id,
+          deviceId: device_id,
+        },
+        true
+      );
 
-        setState({
-          manager: undefined,
-          loading: false,
-          authenticated: false,
-          error: err,
-        });
-      });
+      localStorage.setItem(
+        "matrix-auth-store",
+        JSON.stringify({ user_id, device_id, access_token })
+      );
+
+      setState({ client, loading: false, authenticated: true });
+    } catch (err) {
+      localStorage.removeItem("matrix-auth-store");
+      setState({ client: undefined, loading: false, authenticated: false });
+      throw err;
+    }
   }, []);
 
-  useEffect(() => {
-    window.confManager = manager;
+  const register = useCallback(async (username, password) => {
+    try {
+      const registrationClient = matrix.createClient(homeserverUrl);
 
-    return () => {
-      window.confManager = undefined;
-    };
-  }, [manager]);
+      const { user_id, device_id, access_token } =
+        await registrationClient.register(username, password, null, {
+          type: "m.login.dummy",
+        });
+
+      const client = await initClient({
+        baseUrl: homeserverUrl,
+        accessToken: access_token,
+        userId: user_id,
+        deviceId: device_id,
+      });
+
+      localStorage.setItem(
+        "matrix-auth-store",
+        JSON.stringify({ user_id, device_id, access_token })
+      );
+
+      setState({ client, loading: false, authenticated: true });
+    } catch (err) {
+      localStorage.removeItem("matrix-auth-store");
+      setState({ client: undefined, loading: false, authenticated: false });
+      throw err;
+    }
+  }, []);
+
+  const logout = useCallback(() => {
+    localStorage.removeItem("matrix-auth-store");
+    setState({ client: undefined, loading: false, authenticated: false });
+  }, []);
 
   return {
     loading,
     authenticated,
-    manager,
-    error,
+    client,
     login,
-    loginAsGuest,
+    registerGuest,
     register,
+    logout,
   };
 }
 
-export function useVideoRoom(manager, roomId, timeout = 5000) {
-  const [
-    {
-      loading,
-      joined,
-      joining,
-      room,
-      participants,
-      error,
-      videoMuted,
-      audioMuted,
-    },
-    setState,
-  ] = useState({
-    loading: true,
-    joining: false,
-    joined: false,
-    room: undefined,
-    participants: [],
-    error: undefined,
-    videoMuted: false,
-    audioMuted: false,
-  });
-
-  useEffect(() => {
-    setState((prevState) => ({
-      ...prevState,
-      loading: true,
-      room: undefined,
-      error: undefined,
-    }));
-
-    const onParticipantsChanged = () => {
-      setState((prevState) => ({
-        ...prevState,
-        participants: [...manager.participants],
-      }));
-    };
-
-    manager.on("participants_changed", onParticipantsChanged);
-
-    manager.client.joinRoom(roomId).catch((err) => {
-      setState((prevState) => ({ ...prevState, loading: false, error: err }));
-    });
-
-    let timeoutId;
-
-    function roomCallback(room) {
-      if (room && room.roomId === roomId) {
-        clearTimeout(timeoutId);
-        manager.client.removeListener("Room", roomCallback);
-        setState((prevState) => ({
-          ...prevState,
-          loading: false,
-          room,
-          error: undefined,
-        }));
-      }
-    }
-
-    let initialRoom = manager.client.getRoom(roomId);
-
-    if (initialRoom) {
-      setState((prevState) => ({
-        ...prevState,
-        loading: false,
-        room: initialRoom,
-        error: undefined,
-      }));
-    } else {
-      manager.client.on("Room", roomCallback);
-
-      timeoutId = setTimeout(() => {
-        setState((prevState) => ({
-          ...prevState,
-          loading: false,
-          room: undefined,
-          error: new Error("Room could not be found."),
-        }));
-        manager.client.removeListener("Room", roomCallback);
-      }, timeout);
-    }
-
-    function onLeaveCall() {
-      setState((prevState) => ({
-        ...prevState,
-        videoMuted: manager.videoMuted,
-        audioMuted: manager.audioMuted,
-      }));
-    }
-
-    manager.on("left", onLeaveCall);
-
-    return () => {
-      manager.client.removeListener("Room", roomCallback);
-      manager.removeListener("participants_changed", onParticipantsChanged);
-      clearTimeout(timeoutId);
-      manager.leaveCall();
-      manager.removeListener("left", onLeaveCall);
-    };
-  }, [manager, roomId]);
-
-  const joinCall = useCallback(() => {
-    if (joining || joined) {
-      return;
-    }
-
-    setState((prevState) => ({
-      ...prevState,
-      joining: true,
-    }));
-
-    manager
-      .enter(roomId)
-      .then(() => {
-        setState((prevState) => ({
-          ...prevState,
-          joining: false,
-          joined: true,
-        }));
-      })
-      .catch((error) => {
-        setState((prevState) => ({
-          ...prevState,
-          joining: false,
-          joined: false,
-          error,
-        }));
-      });
-  }, [manager, roomId, joining, joined]);
-
-  const leaveCall = useCallback(() => {
-    manager.leaveCall();
-
-    setState((prevState) => ({
-      ...prevState,
-      participants: [...manager.participants],
-      joined: false,
-      joining: false,
-    }));
-  }, [manager]);
-
+function usePageUnload(callback) {
   useEffect(() => {
     let pageVisibilityTimeout;
 
@@ -327,25 +268,11 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
           // Wait 5 seconds before closing the page to avoid accidentally leaving
           // TODO: Make this configurable?
           pageVisibilityTimeout = setTimeout(() => {
-            manager.leaveCall();
-
-            setState((prevState) => ({
-              ...prevState,
-              participants: [...manager.participants],
-              joined: false,
-              joining: false,
-            }));
+            callback();
           }, 5000);
         }
       } else {
-        manager.leaveCall();
-
-        setState((prevState) => ({
-          ...prevState,
-          participants: [...manager.participants],
-          joined: false,
-          joining: false,
-        }));
+        callback();
       }
     }
 
@@ -363,31 +290,174 @@ export function useVideoRoom(manager, roomId, timeout = 5000) {
       window.removeEventListener("beforeunload", onBeforeUnload);
       clearTimeout(pageVisibilityTimeout);
     };
-  }, [manager]);
+  }, []);
+}
 
-  const toggleMuteAudio = useCallback(() => {
-    manager.setAudioMuted(!manager.audioMuted);
-    setState((prevState) => ({ ...prevState, audioMuted: manager.audioMuted }));
-  }, [manager]);
+function getParticipants(groupCall) {
+  return [...groupCall.participants];
+}
 
-  const toggleMuteVideo = useCallback(() => {
-    manager.setVideoMuted(!manager.videoMuted);
-    setState((prevState) => ({ ...prevState, videoMuted: manager.videoMuted }));
-  }, [manager]);
+export function useGroupCall(client, roomId) {
+  const groupCallRef = useRef(null);
+
+  const [
+    {
+      loading,
+      entered,
+      entering,
+      room,
+      participants,
+      error,
+      microphoneMuted,
+      localVideoMuted,
+    },
+    setState,
+  ] = useState({
+    loading: true,
+    entered: false,
+    entering: false,
+    room: null,
+    participants: [],
+    error: null,
+    microphoneMuted: false,
+    localVideoMuted: false,
+  });
+
+  const updateState = (state) =>
+    setState((prevState) => ({ ...prevState, ...state }));
+
+  useEffect(() => {
+    function onParticipantsChanged(...args) {
+      console.log(...args);
+      updateState({ participants: getParticipants(groupCallRef.current) });
+    }
+
+    function onLocalMuteStateChanged(microphoneMuted, localVideoMuted) {
+      updateState({
+        microphoneMuted,
+        localVideoMuted,
+      });
+    }
+
+    async function init() {
+      const room = await fetchRoom(client, roomId, true);
+
+      const groupCall = client.createGroupCall(roomId, "video");
+      groupCallRef.current = groupCall;
+      groupCall.on("active_speaker_changed", onParticipantsChanged);
+      groupCall.on("participants_changed", onParticipantsChanged);
+      groupCall.on("speaking", onParticipantsChanged);
+      groupCall.on("mute_state_changed", onParticipantsChanged);
+      groupCall.on("participant_call_replaced", onParticipantsChanged);
+      groupCall.on("participant_call_feeds_changed", onParticipantsChanged);
+      groupCall.on("local_mute_state_changed", onLocalMuteStateChanged);
+
+      updateState({
+        room,
+        loading: false,
+      });
+    }
+
+    init().catch((error) => {
+      if (groupCallRef.current) {
+        const groupCall = groupCallRef.current;
+        groupCall.removeListener(
+          "active_speaker_changed",
+          onParticipantsChanged
+        );
+        groupCall.removeListener("participants_changed", onParticipantsChanged);
+        groupCall.removeListener("speaking", onParticipantsChanged);
+        groupCall.removeListener("mute_state_changed", onParticipantsChanged);
+        groupCall.removeListener(
+          "participant_call_replaced",
+          onParticipantsChanged
+        );
+        groupCall.removeListener(
+          "participant_call_feeds_changed",
+          onParticipantsChanged
+        );
+        groupCall.removeListener(
+          "local_mute_state_changed",
+          onLocalMuteStateChanged
+        );
+        groupCall.leave();
+      }
+
+      updateState({ error, loading: false });
+    });
+
+    return () => {
+      if (groupCallRef.current) {
+        groupCallRef.current.leave();
+      }
+    };
+  }, [client, roomId]);
+
+  usePageUnload(() => {
+    if (groupCallRef.current) {
+      groupCallRef.current.leave();
+    }
+  });
+
+  const initLocalParticipant = useCallback(
+    () => groupCallRef.current.initLocalParticipant(),
+    []
+  );
+
+  const enter = useCallback(() => {
+    updateState({ entering: true });
+
+    groupCallRef.current
+      .enter()
+      .then(() => {
+        updateState({
+          entered: true,
+          entering: false,
+          participants: getParticipants(groupCallRef.current),
+        });
+      })
+      .catch((error) => {
+        updateState({ error, entering: false });
+      });
+  }, []);
+
+  const leave = useCallback(() => {
+    groupCallRef.current.leave();
+    updateState({
+      entered: false,
+      participants: [],
+      microphoneMuted: false,
+      localVideoMuted: false,
+    });
+  }, []);
+
+  const toggleLocalVideoMuted = useCallback(() => {
+    groupCallRef.current.setLocalVideoMuted(
+      !groupCallRef.current.isLocalVideoMuted()
+    );
+  }, []);
+
+  const toggleMicrophoneMuted = useCallback(() => {
+    groupCallRef.current.setMicrophoneMuted(
+      !groupCallRef.current.isMicrophoneMuted()
+    );
+  }, []);
 
   return {
     loading,
-    joined,
-    joining,
-    room,
+    entered,
+    entering,
+    roomName: room ? room.name : null,
     participants,
+    groupCall: groupCallRef.current,
+    microphoneMuted,
+    localVideoMuted,
     error,
-    joinCall,
-    leaveCall,
-    toggleMuteVideo,
-    toggleMuteAudio,
-    videoMuted,
-    audioMuted,
+    initLocalParticipant,
+    enter,
+    leave,
+    toggleLocalVideoMuted,
+    toggleMicrophoneMuted,
   };
 }
 
@@ -440,22 +510,22 @@ function sortRooms(client, rooms) {
   });
 }
 
-export function useRooms(manager) {
+export function useRooms(client) {
   const [rooms, setRooms] = useState([]);
 
   useEffect(() => {
     function updateRooms() {
-      const visibleRooms = manager.client.getVisibleRooms();
-      const sortedRooms = sortRooms(manager.client, visibleRooms);
+      const visibleRooms = client.getVisibleRooms();
+      const sortedRooms = sortRooms(client, visibleRooms);
       setRooms(sortedRooms);
     }
 
     updateRooms();
 
-    manager.client.on("Room", updateRooms);
+    client.on("Room", updateRooms);
 
     return () => {
-      manager.client.removeListener("Room", updateRooms);
+      client.removeListener("Room", updateRooms);
     };
   }, []);
 
