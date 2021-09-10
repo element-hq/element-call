@@ -328,7 +328,6 @@ export function useGroupCall(client, roomId) {
 
   useEffect(() => {
     function onParticipantsChanged(...args) {
-      console.log(...args);
       updateState({ participants: getParticipants(groupCallRef.current) });
     }
 
@@ -348,8 +347,8 @@ export function useGroupCall(client, roomId) {
       groupCall.on("participants_changed", onParticipantsChanged);
       groupCall.on("speaking", onParticipantsChanged);
       groupCall.on("mute_state_changed", onParticipantsChanged);
-      groupCall.on("participant_call_replaced", onParticipantsChanged);
-      groupCall.on("participant_call_feeds_changed", onParticipantsChanged);
+      groupCall.on("call_replaced", onParticipantsChanged);
+      groupCall.on("call_feeds_changed", onParticipantsChanged);
       groupCall.on("local_mute_state_changed", onLocalMuteStateChanged);
 
       updateState({
@@ -368,14 +367,8 @@ export function useGroupCall(client, roomId) {
         groupCall.removeListener("participants_changed", onParticipantsChanged);
         groupCall.removeListener("speaking", onParticipantsChanged);
         groupCall.removeListener("mute_state_changed", onParticipantsChanged);
-        groupCall.removeListener(
-          "participant_call_replaced",
-          onParticipantsChanged
-        );
-        groupCall.removeListener(
-          "participant_call_feeds_changed",
-          onParticipantsChanged
-        );
+        groupCall.removeListener("call_replaced", onParticipantsChanged);
+        groupCall.removeListener("call_feeds_changed", onParticipantsChanged);
         groupCall.removeListener(
           "local_mute_state_changed",
           onLocalMuteStateChanged
