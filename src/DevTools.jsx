@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import ColorHash from "color-hash";
 import classNames from "classnames";
 import styles from "./DevTools.module.css";
@@ -221,7 +222,7 @@ function EventViewer({ event, onClose }) {
   const { call_id, invitee } = event.getContent();
   const json = event.toJSON();
 
-  return (
+  return createPortal(
     <div className={styles.eventViewer}>
       <p>Event Type: {type}</p>
       <p>Sender: {sender}</p>
@@ -238,6 +239,7 @@ function EventViewer({ event, onClose }) {
       <p>Raw Event:</p>
       <pre className={styles.content}>{JSON.stringify(json, undefined, 2)}</pre>
       <button onClick={onClose}>Close</button>
-    </div>
+    </div>,
+    document.body
   );
 }
