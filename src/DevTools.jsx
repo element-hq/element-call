@@ -56,24 +56,24 @@ function sortEntries(a, b) {
   }
 }
 
-export function DevTools({ manager }) {
-  const [debugState, setDebugState] = useState(manager.callDebugger.debugState);
+export function DevTools({ callDebugger }) {
+  const [debugState, setDebugState] = useState(callDebugger.debugState);
   const [selectedEvent, setSelectedEvent] = useState();
   const [activeTab, setActiveTab] = useState("users");
 
   useEffect(() => {
     function onRoomDebug() {
-      setDebugState({ ...manager.callDebugger.debugState });
+      setDebugState({ ...callDebugger.debugState });
     }
 
-    manager.callDebugger.on("debug", onRoomDebug);
+    callDebugger.on("debug", onRoomDebug);
 
     return () => {
-      manager.callDebugger.removeListener("debug", onRoomDebug);
+      callDebugger.removeListener("debug", onRoomDebug);
     };
-  }, [manager]);
+  }, [callDebugger]);
 
-  if (!manager.entered) {
+  if (!callDebugger.groupCall.entered) {
     return <div className={styles.devTools} />;
   }
 

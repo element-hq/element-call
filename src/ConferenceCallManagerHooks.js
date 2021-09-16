@@ -16,6 +16,7 @@ limitations under the License.
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import matrix from "matrix-js-sdk";
+import { ConferenceCallDebugger } from "./ConferenceCallDebugger";
 
 // https://stackoverflow.com/a/9039885
 function isIOS() {
@@ -63,20 +64,8 @@ async function initClient(clientOptions, guest) {
   return client;
 }
 
-export async function fetchRoom(client, roomId, join, timeout = 5000) {
-  let room = client.getRoom(roomId);
-
-  if (room) {
-    return room;
-  }
-
-  if (join) {
-    room = await client.joinRoom(roomId);
-
-    if (room) {
-      return room;
-    }
-  }
+export async function fetchRoom(client, roomIdOrAlias, timeout = 5000) {
+  const { roomId } = await client.joinRoom(roomIdOrAlias);
 
   return new Promise((resolve, reject) => {
     let timeoutId;
@@ -297,7 +286,7 @@ function getParticipants(groupCall) {
   return [...groupCall.participants];
 }
 
-export function useGroupCall(client, roomId) {
+export function useGroupCall(client, roomId, debug = false) {
   const groupCallRef = useRef(null);
 
   const [
@@ -310,6 +299,7 @@ export function useGroupCall(client, roomId) {
       error,
       microphoneMuted,
       localVideoMuted,
+      callDebugger,
     },
     setState,
   ] = useState({
@@ -321,6 +311,7 @@ export function useGroupCall(client, roomId) {
     error: null,
     microphoneMuted: false,
     localVideoMuted: false,
+    callDebugger: null,
   });
 
   const updateState = (state) =>
@@ -354,6 +345,9 @@ export function useGroupCall(client, roomId) {
       updateState({
         room,
         loading: false,
+        callDebugger: debug
+          ? new ConferenceCallDebugger(client, groupCall)
+          : null,
       });
     }
 
@@ -443,6 +437,7 @@ export function useGroupCall(client, roomId) {
     roomName: room ? room.name : null,
     participants,
     groupCall: groupCallRef.current,
+    callDebugger: callDebugger,
     microphoneMuted,
     localVideoMuted,
     error,

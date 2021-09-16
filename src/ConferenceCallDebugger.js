@@ -17,10 +17,11 @@ limitations under the License.
 import EventEmitter from "events";
 
 export class ConferenceCallDebugger extends EventEmitter {
-  constructor(manager) {
+  constructor(client, groupCall) {
     super();
 
-    this.manager = manager;
+    this.client = client;
+    this.groupCall = groupCall;
 
     this.debugState = {
       users: new Map(),
@@ -29,11 +30,11 @@ export class ConferenceCallDebugger extends EventEmitter {
 
     this.bufferedEvents = [];
 
-    // this.manager.on("call", this._onCall);
-    // this.manager.on("debugstate", this._onDebugStateChanged);
-    // this.manager.client.on("event", this._onEvent);
-    // this.manager.on("entered", this._onEntered);
-    // this.manager.on("left", this._onLeft);
+    client.on("event", this._onEvent);
+    groupCall.on("call", this._onCall);
+    groupCall.on("debugstate", this._onDebugStateChanged);
+    groupCall.on("entered", this._onEntered);
+    groupCall.on("left", this._onLeft);
   }
 
   _onEntered = () => {
@@ -55,7 +56,7 @@ export class ConferenceCallDebugger extends EventEmitter {
   };
 
   _onEvent = (event) => {
-    if (!this.manager.entered) {
+    if (!this.groupCall.entered) {
       this.bufferedEvents.push(event);
       return;
     }
@@ -64,7 +65,7 @@ export class ConferenceCallDebugger extends EventEmitter {
     const type = event.getType();
 
     if (
-      roomId === this.manager.room.roomId &&
+      roomId === this.groupCall.room.roomId &&
       (type.startsWith("m.call.") ||
         type === "me.robertlong.call.info" ||
         type === "m.room.member")
@@ -376,8 +377,8 @@ export class ConferenceCallDebugger extends EventEmitter {
         .filter((stat) => stat.type === "remote-outbound-rtp")
         .map(processRemoteOutboundRTPStats);
 
-      this.manager.client.sendEvent(
-        this.manager.room.roomId,
+      this.client.sendEvent(
+        this.groupCall.room.roomId,
         "me.robertlong.call.info",
         event
       );
@@ -417,8 +418,8 @@ export class ConferenceCallDebugger extends EventEmitter {
     peerConnection.addEventListener(
       "icecandidateerror",
       ({ errorCode, url, errorText }) => {
-        this.manager.client.sendEvent(
-          this.manager.room.roomId,
+        this.client.sendEvent(
+          this.groupCall.room.roomId,
           "me.robertlong.call.ice_error",
           {
             call_id: call.callId,

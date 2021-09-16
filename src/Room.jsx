@@ -45,6 +45,7 @@ function useQuery() {
 function useDebugMode() {
   const query = useQuery();
   const debugStr = query.get("debug");
+  const debugEnabled = query.has("debug");
   const [debugMode, setDebugMode] = useState(
     debugStr === "" || debugStr === "true"
   );
@@ -70,7 +71,7 @@ function useDebugMode() {
     };
   }, []);
 
-  return [debugMode, toggleDebugMode];
+  return { debugEnabled, debugMode, toggleDebugMode };
 }
 
 function useRoomLayout() {
@@ -84,6 +85,7 @@ function useRoomLayout() {
 }
 
 export function Room({ client }) {
+  const { debugEnabled, debugMode, toggleDebugMode } = useDebugMode();
   const { roomId } = useParams();
   const {
     loading,
@@ -100,7 +102,8 @@ export function Room({ client }) {
     leave,
     toggleLocalVideoMuted,
     toggleMicrophoneMuted,
-  } = useGroupCall(client, roomId);
+    callDebugger,
+  } = useGroupCall(client, roomId, debugEnabled);
 
   const content = () => {
     if (error) {
@@ -138,6 +141,10 @@ export function Room({ client }) {
           participants={participants}
           onLeave={leave}
           groupCall={groupCall}
+          debugEnabled={debugEnabled}
+          debugMode={debugMode}
+          toggleDebugMode={toggleDebugMode}
+          callDebugger={callDebugger}
         />
       );
     }
@@ -266,9 +273,11 @@ function InRoomView({
   toggleMicrophoneMuted,
   participants,
   onLeave,
-  groupCall,
+  debugEnabled,
+  debugMode,
+  toggleDebugMode,
+  callDebugger,
 }) {
-  const [debugMode, toggleDebugMode] = useDebugMode();
   const [roomLayout, toggleRoomLayout] = useRoomLayout();
 
   return (
@@ -284,10 +293,12 @@ function InRoomView({
             layout={roomLayout}
             onClick={toggleRoomLayout}
           />
-          <SettingsButton
-            title={debugMode ? "Disable DevTools" : "Enable DevTools"}
-            onClick={toggleDebugMode}
-          />
+          {debugEnabled && (
+            <SettingsButton
+              title={debugMode ? "Disable DevTools" : "Enable DevTools"}
+              onClick={toggleDebugMode}
+            />
+          )}
         </RightNav>
       </Header>
       {participants.length === 0 ? (
@@ -305,7 +316,9 @@ function InRoomView({
         />
         <HangupButton onClick={onLeave} />
       </div>
-      {debugMode && <DevTools groupCall={groupCall} />}
+      {debugEnabled && debugMode && callDebugger && (
+        <DevTools callDebugger={callDebugger} />
+      )}
     </>
   );
 }
