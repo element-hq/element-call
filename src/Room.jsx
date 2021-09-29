@@ -14,143 +14,138 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, {
-  useEffect,
-  useMemo,
-  useState,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import styles from "./Room.module.css";
-import { useParams, useLocation, useHistory, Link } from "react-router-dom";
-import { useGroupCall } from "./ConferenceCallManagerHooks";
-import { DevTools } from "./DevTools";
-import { VideoGrid } from "./VideoGrid";
+import { useParams } from "react-router-dom";
 import {
   HangupButton,
-  SettingsButton,
   MicButton,
   VideoButton,
   LayoutToggleButton,
 } from "./RoomButton";
 import { Header, LeftNav, RightNav, CenterNav } from "./Header";
-import { Button, FieldRow, InputField, ErrorMessage } from "./Input";
-import { Center, Content, Info, Modal } from "./Layout";
+import { Button, ErrorMessage } from "./Input";
+import {
+  GroupCallIntent,
+  GroupCallState,
+  GroupCallType,
+} from "matrix-js-sdk/src/webrtc/groupCall";
+import VideoGrid from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoGrid";
+import "matrix-react-sdk/res/css/views/voip/GroupCallView/_VideoGrid.scss";
+import { useGroupCall } from "matrix-react-sdk/src/hooks/useGroupCall";
+import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
+import { useMediaStream } from "matrix-react-sdk/src/hooks/useMediaStream";
+import { fetchRoom } from "./ConferenceCallManagerHooks";
 
-function useQuery() {
-  const location = useLocation();
-  return useMemo(() => new URLSearchParams(location.search), [location.search]);
-}
-
-function useDebugMode() {
-  const query = useQuery();
-  const debugStr = query.get("debug");
-  const debugEnabled = query.has("debug");
-  const [debugMode, setDebugMode] = useState(
-    debugStr === "" || debugStr === "true"
-  );
-
-  const toggleDebugMode = useCallback(() => {
-    setDebugMode((prevDebugMode) => !prevDebugMode);
-  }, []);
+function useLoadGroupCall(client, roomId) {
+  const [state, setState] = useState({
+    loading: true,
+    error: undefined,
+    groupCall: undefined,
+  });
 
   useEffect(() => {
-    function onKeyDown(event) {
-      if (
-        document.activeElement.tagName !== "input" &&
-        event.code === "Backquote"
-      ) {
-        toggleDebugMode();
+    async function load() {
+      await fetchRoom(client, roomId);
+
+      let groupCall = client.getGroupCallForRoom(roomId);
+
+      if (!groupCall) {
+        groupCall = await client.createGroupCall(
+          roomId,
+          GroupCallType.Video,
+          GroupCallIntent.Prompt
+        );
       }
+
+      return groupCall;
     }
 
-    window.addEventListener("keydown", onKeyDown);
+    setState({ loading: true });
 
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-    };
-  }, []);
+    load()
+      .then((groupCall) => setState({ loading: false, groupCall }))
+      .catch((error) => setState({ loading: false, error }));
+  }, [roomId]);
 
-  return { debugEnabled, debugMode, toggleDebugMode };
-}
-
-function useRoomLayout() {
-  const [layout, setLayout] = useState("gallery");
-
-  const toggleLayout = useCallback(() => {
-    setLayout(layout === "spotlight" ? "gallery" : "spotlight");
-  }, [layout]);
-
-  return [layout, toggleLayout];
+  return state;
 }
 
 export function Room({ client }) {
-  const { debugEnabled, debugMode, toggleDebugMode } = useDebugMode();
   const { roomId } = useParams();
+  const { loading, error, groupCall } = useLoadGroupCall(client, roomId);
+
+  if (loading) {
+    return (
+      <div className={styles.room}>
+        <LoadingRoomView />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.room}>
+        <LoadingErrorView error={error} />
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.room}>
+      <GroupCallView groupCall={groupCall} />
+    </div>
+  );
+}
+
+export function GroupCallView({ groupCall }) {
   const {
-    loading,
-    entered,
-    entering,
-    roomName,
-    participants,
-    groupCall,
+    state,
+    error,
+    activeSpeaker,
+    userMediaFeeds,
     microphoneMuted,
     localVideoMuted,
-    error,
-    initLocalParticipant,
+    localCallFeed,
+    initLocalCallFeed,
     enter,
     leave,
     toggleLocalVideoMuted,
     toggleMicrophoneMuted,
-    callDebugger,
-  } = useGroupCall(client, roomId, debugEnabled);
+  } = useGroupCall(groupCall);
 
-  const content = () => {
-    if (error) {
-      return <LoadingErrorView error={error} />;
-    }
-
-    if (loading) {
-      return <LoadingRoomView />;
-    }
-
-    if (entering) {
-      return <EnteringRoomView />;
-    }
-
-    if (!entered) {
-      return (
-        <RoomSetupView
-          roomName={roomName}
-          onInitLocalParticipant={initLocalParticipant}
-          onEnter={enter}
-          microphoneMuted={microphoneMuted}
-          localVideoMuted={localVideoMuted}
-          toggleLocalVideoMuted={toggleLocalVideoMuted}
-          toggleMicrophoneMuted={toggleMicrophoneMuted}
-        />
-      );
-    } else {
-      return (
-        <InRoomView
-          roomName={roomName}
-          microphoneMuted={microphoneMuted}
-          localVideoMuted={localVideoMuted}
-          toggleLocalVideoMuted={toggleLocalVideoMuted}
-          toggleMicrophoneMuted={toggleMicrophoneMuted}
-          participants={participants}
-          onLeave={leave}
-          groupCall={groupCall}
-          debugEnabled={debugEnabled}
-          debugMode={debugMode}
-          toggleDebugMode={toggleDebugMode}
-          callDebugger={callDebugger}
-        />
-      );
-    }
-  };
-
-  return <div className={styles.room}>{content()}</div>;
+  if (error) {
+    return <LoadingErrorView error={error} />;
+  } else if (state === GroupCallState.Entered) {
+    return (
+      <InRoomView
+        roomName={groupCall.room.name}
+        microphoneMuted={microphoneMuted}
+        localVideoMuted={localVideoMuted}
+        toggleLocalVideoMuted={toggleLocalVideoMuted}
+        toggleMicrophoneMuted={toggleMicrophoneMuted}
+        userMediaFeeds={userMediaFeeds}
+        activeSpeaker={activeSpeaker}
+        onLeave={leave}
+      />
+    );
+  } else if (state === GroupCallState.Entering) {
+    return <EnteringRoomView />;
+  } else {
+    return (
+      <RoomSetupView
+        roomName={groupCall.room.name}
+        state={state}
+        onInitLocalCallFeed={initLocalCallFeed}
+        localCallFeed={localCallFeed}
+        onEnter={enter}
+        microphoneMuted={microphoneMuted}
+        localVideoMuted={localVideoMuted}
+        toggleLocalVideoMuted={toggleLocalVideoMuted}
+        toggleMicrophoneMuted={toggleMicrophoneMuted}
+      />
+    );
+  }
 }
 
 export function LoadingRoomView() {
@@ -187,43 +182,23 @@ export function LoadingErrorView({ error }) {
   );
 }
 
-const PermissionState = {
-  Waiting: "waiting",
-  Granted: "granted",
-  Denied: "denied",
-};
-
 function RoomSetupView({
   roomName,
-  onInitLocalParticipant,
+  state,
+  onInitLocalCallFeed,
   onEnter,
+  localCallFeed,
   microphoneMuted,
   localVideoMuted,
   toggleLocalVideoMuted,
   toggleMicrophoneMuted,
 }) {
-  const videoRef = useRef();
-  const [permissionState, setPermissionState] = useState(
-    PermissionState.Waiting
-  );
+  const { stream } = useCallFeed(localCallFeed);
+  const videoRef = useMediaStream(stream, true);
 
   useEffect(() => {
-    onInitLocalParticipant()
-      .then((localParticipant) => {
-        if (videoRef.current) {
-          videoRef.current.srcObject = localParticipant.usermediaStream;
-          videoRef.current.play();
-          setPermissionState(PermissionState.Granted);
-        }
-      })
-      .catch((error) => {
-        console.error(error);
-
-        if (videoRef.current) {
-          setPermissionState(PermissionState.Denied);
-        }
-      });
-  }, [onInitLocalParticipant]);
+    onInitLocalCallFeed();
+  }, [onInitLocalCallFeed]);
 
   return (
     <>
@@ -235,14 +210,14 @@ function RoomSetupView({
       </Header>
       <div className={styles.joinRoom}>
         <div className={styles.preview}>
-          {permissionState === PermissionState.Denied && (
+          {state !== GroupCallState.LocalCallFeedInitialized && (
             <p className={styles.webcamPermissions}>
               Webcam permissions needed to join the call.
             </p>
           )}
           <video ref={videoRef} muted playsInline disablePictureInPicture />
         </div>
-        {permissionState === PermissionState.Granted && (
+        {state === GroupCallState.LocalCallFeedInitialized && (
           <div className={styles.previewButtons}>
             <MicButton
               muted={microphoneMuted}
@@ -255,7 +230,7 @@ function RoomSetupView({
           </div>
         )}
         <Button
-          disabled={permissionState !== PermissionState.Granted}
+          disabled={state !== GroupCallState.LocalCallFeedInitialized}
           onClick={onEnter}
         >
           Enter Call
@@ -271,14 +246,21 @@ function InRoomView({
   localVideoMuted,
   toggleLocalVideoMuted,
   toggleMicrophoneMuted,
-  participants,
+  userMediaFeeds,
+  activeSpeaker,
   onLeave,
-  debugEnabled,
-  debugMode,
-  toggleDebugMode,
-  callDebugger,
 }) {
-  const [roomLayout, toggleRoomLayout] = useRoomLayout();
+  const [layout, toggleLayout] = useVideoGridLayout();
+
+  const items = useMemo(
+    () =>
+      userMediaFeeds.map((callFeed) => ({
+        id: callFeed.userId,
+        callFeed,
+        isActiveSpeaker: callFeed.userId === activeSpeaker,
+      })),
+    [userMediaFeeds, activeSpeaker]
+  );
 
   return (
     <>
@@ -289,24 +271,18 @@ function InRoomView({
         </CenterNav>
         <RightNav>
           <LayoutToggleButton
-            title={roomLayout === "spotlight" ? "Spotlight" : "Gallery"}
-            layout={roomLayout}
-            onClick={toggleRoomLayout}
+            title={layout === "spotlight" ? "Spotlight" : "Gallery"}
+            layout={layout}
+            onClick={toggleLayout}
           />
-          {debugEnabled && (
-            <SettingsButton
-              title={debugMode ? "Disable DevTools" : "Enable DevTools"}
-              onClick={toggleDebugMode}
-            />
-          )}
         </RightNav>
       </Header>
-      {participants.length === 0 ? (
+      {items.length === 0 ? (
         <div className={styles.centerMessage}>
           <p>Waiting for other participants...</p>
         </div>
       ) : (
-        <VideoGrid participants={participants} layout={roomLayout} />
+        <VideoGrid items={items} layout={layout} />
       )}
       <div className={styles.footer}>
         <MicButton muted={microphoneMuted} onClick={toggleMicrophoneMuted} />
@@ -316,9 +292,6 @@ function InRoomView({
         />
         <HangupButton onClick={onLeave} />
       </div>
-      {debugEnabled && debugMode && callDebugger && (
-        <DevTools callDebugger={callDebugger} />
-      )}
     </>
   );
 }

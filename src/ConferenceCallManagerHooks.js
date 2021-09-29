@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import matrix from "matrix-js-sdk";
+import matrix from "matrix-js-sdk/src/index";
 import { ConferenceCallDebugger } from "./ConferenceCallDebugger";
 
 // https://stackoverflow.com/a/9039885
