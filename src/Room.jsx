@@ -30,7 +30,9 @@ import {
   GroupCallState,
   GroupCallType,
 } from "matrix-js-sdk/src/webrtc/groupCall";
-import VideoGrid from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoGrid";
+import VideoGrid, {
+  useVideoGridLayout,
+} from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoGrid";
 import "matrix-react-sdk/res/css/views/voip/GroupCallView/_VideoGrid.scss";
 import { useGroupCall } from "matrix-react-sdk/src/hooks/useGroupCall";
 import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
