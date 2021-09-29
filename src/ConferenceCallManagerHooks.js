@@ -47,32 +47,32 @@ async function initClient(clientOptions, guest) {
   return client;
 }
 
-export async function fetchRoom(client, roomIdOrAlias, timeout = 5000) {
+export async function fetchGroupCall(client, roomIdOrAlias, timeout = 5000) {
   const { roomId } = await client.joinRoom(roomIdOrAlias);
 
   return new Promise((resolve, reject) => {
     let timeoutId;
 
-    function onRoom(room) {
-      if (room && room.roomId === roomId) {
+    function onGroupCallIncoming(groupCall) {
+      if (groupCall && groupCall.room.roomId === roomId) {
         clearTimeout(timeoutId);
-        client.removeListener("Room", onRoom);
-        resolve(room);
+        client.removeListener("GroupCall.incoming", onGroupCallIncoming);
+        resolve(groupCall);
       }
     }
 
-    const room = client.getRoom(roomId);
+    const groupCall = client.getGroupCallForRoom(roomId);
 
-    if (room) {
-      resolve(room);
+    if (groupCall) {
+      resolve(groupCall);
     }
 
-    client.on("Room", onRoom);
+    client.on("GroupCall.incoming", onGroupCallIncoming);
 
     if (timeout) {
       timeoutId = setTimeout(() => {
-        client.removeListener("Room", onRoom);
-        reject(new Error("Fetching room timed out."));
+        client.removeListener("GroupCall.incoming", onGroupCallIncoming);
+        reject(new Error("Fetching group call timed out."));
       }, timeout);
     }
   });
