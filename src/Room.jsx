@@ -25,11 +25,7 @@ import {
 } from "./RoomButton";
 import { Header, LeftNav, RightNav, CenterNav } from "./Header";
 import { Button, ErrorMessage } from "./Input";
-import {
-  GroupCallIntent,
-  GroupCallState,
-  GroupCallType,
-} from "matrix-js-sdk/src/webrtc/groupCall";
+import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import VideoGrid, {
   useVideoGridLayout,
 } from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoGrid";
@@ -37,7 +33,7 @@ import "matrix-react-sdk/res/css/views/voip/GroupCallView/_VideoGrid.scss";
 import { useGroupCall } from "matrix-react-sdk/src/hooks/useGroupCall";
 import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
 import { useMediaStream } from "matrix-react-sdk/src/hooks/useMediaStream";
-import { fetchRoom } from "./ConferenceCallManagerHooks";
+import { fetchGroupCall } from "./ConferenceCallManagerHooks";
 
 function useLoadGroupCall(client, roomId) {
   const [state, setState] = useState({
@@ -47,25 +43,8 @@ function useLoadGroupCall(client, roomId) {
   });
 
   useEffect(() => {
-    async function load() {
-      await fetchRoom(client, roomId);
-
-      let groupCall = client.getGroupCallForRoom(roomId);
-
-      if (!groupCall) {
-        groupCall = await client.createGroupCall(
-          roomId,
-          GroupCallType.Video,
-          GroupCallIntent.Prompt
-        );
-      }
-
-      return groupCall;
-    }
-
     setState({ loading: true });
-
-    load()
+    fetchGroupCall(client, roomId, 30000)
       .then((groupCall) => setState({ loading: false, groupCall }))
       .catch((error) => setState({ loading: false, error }));
   }, [roomId]);

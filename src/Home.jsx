@@ -22,6 +22,10 @@ import ColorHash from "color-hash";
 import styles from "./Home.module.css";
 import { FieldRow, InputField, Button, ErrorMessage } from "./Input";
 import { Center, Content, Modal } from "./Layout";
+import {
+  GroupCallIntent,
+  GroupCallType,
+} from "matrix-js-sdk/src/browser-index";
 
 const colorHash = new ColorHash({ lightness: 0.3 });
 
@@ -74,6 +78,12 @@ export function Home({ client, onLogout }) {
             allowRead: true,
           });
         }
+
+        await client.createGroupCall(
+          room_id,
+          GroupCallType.Video,
+          GroupCallIntent.Prompt
+        );
 
         history.push(`/room/${room_id}`);
       }
