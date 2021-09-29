@@ -25,7 +25,6 @@ import {
 import { useClient } from "./ConferenceCallManagerHooks";
 import { Home } from "./Home";
 import { Room } from "./Room";
-import { GridDemo } from "./GridDemo";
 import { RegisterPage } from "./RegisterPage";
 import { LoginPage } from "./LoginPage";
 import { Center } from "./Layout";
@@ -69,9 +68,6 @@ export default function App() {
               ) : (
                 <GuestAuthPage onRegisterGuest={registerGuest} />
               )}
-            </Route>
-            <Route exact path="/grid">
-              <GridDemo />
             </Route>
           </Switch>
         )}
