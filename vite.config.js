@@ -16,6 +16,7 @@ limitations under the License.
 
 import { defineConfig } from "vite";
 import svgrPlugin from "vite-plugin-svgr";
+import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -24,5 +25,11 @@ export default defineConfig({
     proxy: {
       "/_matrix": "http://localhost:8008",
     },
+  },
+  resolve: {
+    alias: {
+      "$(res)": path.resolve(__dirname, "node_modules/matrix-react-sdk/res"),
+    },
+    dedupe: ["react", "react-dom"],
   },
 });
