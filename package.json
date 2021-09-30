@@ -21,8 +21,8 @@
     "react-use-measure": "^2.0.4"
   },
   "devDependencies": {
-    "vite-plugin-svgr": "^0.4.0",
     "sass": "^1.42.1",
-    "vite": "^2.4.2"
+    "vite": "^2.4.2",
+    "vite-plugin-svgr": "^0.4.0"
   }
 }
