@@ -30,6 +30,6 @@ export default defineConfig({
     alias: {
       "$(res)": path.resolve(__dirname, "node_modules/matrix-react-sdk/res"),
     },
-    dedupe: ["react", "react-dom"],
+    dedupe: ["react", "react-dom", "matrix-js-sdk"],
   },
 });
