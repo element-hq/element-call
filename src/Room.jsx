@@ -93,6 +93,10 @@ export function GroupCallView({ groupCall }) {
     leave,
     toggleLocalVideoMuted,
     toggleMicrophoneMuted,
+    toggleScreensharing,
+    isScreensharing,
+    localScreenshareFeed,
+    screenshareFeeds,
   } = useGroupCall(groupCall);
 
   if (error) {
@@ -108,6 +112,10 @@ export function GroupCallView({ groupCall }) {
         userMediaFeeds={userMediaFeeds}
         activeSpeaker={activeSpeaker}
         onLeave={leave}
+        toggleScreensharing={toggleScreensharing}
+        isScreensharing={isScreensharing}
+        localScreenshareFeed={localScreenshareFeed}
+        screenshareFeeds={screenshareFeeds}
       />
     );
   } else if (state === GroupCallState.Entering) {
@@ -235,18 +243,35 @@ function InRoomView({
   userMediaFeeds,
   activeSpeaker,
   onLeave,
+  toggleScreensharing,
+  isScreensharing,
+  screenshareFeeds,
 }) {
   const [layout, toggleLayout] = useVideoGridLayout();
 
-  const items = useMemo(
-    () =>
-      userMediaFeeds.map((callFeed) => ({
+  const items = useMemo(() => {
+    const participants = [];
+
+    for (const callFeed of userMediaFeeds) {
+      participants.push({
         id: callFeed.userId,
         callFeed,
         isActiveSpeaker: callFeed.userId === activeSpeaker,
-      })),
-    [userMediaFeeds, activeSpeaker]
-  );
+      });
+    }
+
+    for (const callFeed of screenshareFeeds) {
+      participants.push({
+        id: callFeed.userId + "-screenshare",
+        callFeed,
+        isActiveSpeaker: callFeed.userId === activeSpeaker,
+      });
+    }
+
+    console.log("items changed", participants);
+
+    return participants;
+  }, [userMediaFeeds, activeSpeaker, screenshareFeeds]);
 
   return (
     <>
@@ -276,6 +301,7 @@ function InRoomView({
           enabled={localVideoMuted}
           onClick={toggleLocalVideoMuted}
         />
+        <VideoButton enabled={isScreensharing} onClick={toggleScreensharing} />
         <HangupButton onClick={onLeave} />
       </div>
     </>
