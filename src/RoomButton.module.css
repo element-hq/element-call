@@ -14,7 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.roomButton, .headerButton {
+.roomButton,
+.headerButton {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -32,11 +33,10 @@ limitations under the License.
 }
 
 .roomButton:hover {
-  background-color: #8D97A5;
+  background-color: #8d97a5;
 }
 
 .roomButton:active {
-  
 }
 
 .roomButton.on {
@@ -50,11 +50,11 @@ limitations under the License.
 }
 
 .headerButton svg * {
-  fill: #8E99A4;
+  fill: #8e99a4;
 }
 
 .headerButton:hover {
-  background-color: #8D97A5;
+  background-color: #8d97a5;
 }
 
 .headerButton:hover svg * {
@@ -62,9 +62,14 @@ limitations under the License.
 }
 
 .headerButton.on svg * {
-  fill: #0DBD8B
+  fill: #0dbd8b;
 }
 
-.hangupButton, .hangupButton:hover {
-  background-color: #FF5B55;
+.hangupButton,
+.hangupButton:hover {
+  background-color: #ff5b55;
+}
+
+.screenshareButton.on svg * {
+  fill: #0dbd8b;
 }
