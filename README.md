@@ -39,3 +39,7 @@ yarn link matrix-js-sdk
 yarn link matrix-react-sdk
 yarn dev
 ```
+
+## Config
+
+Configuration options are documented in the `.env` file.
