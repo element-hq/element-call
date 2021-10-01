@@ -22,6 +22,7 @@ import {
   MicButton,
   VideoButton,
   LayoutToggleButton,
+  ScreenshareButton,
 } from "./RoomButton";
 import { Header, LeftNav, RightNav, CenterNav } from "./Header";
 import { Button, ErrorMessage } from "./Input";
@@ -301,7 +302,10 @@ function InRoomView({
           enabled={localVideoMuted}
           onClick={toggleLocalVideoMuted}
         />
-        <VideoButton enabled={isScreensharing} onClick={toggleScreensharing} />
+        <ScreenshareButton
+          enabled={isScreensharing}
+          onClick={toggleScreensharing}
+        />
         <HangupButton onClick={onLeave} />
       </div>
     </>
