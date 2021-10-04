@@ -5,7 +5,6 @@ import ColorHash from "color-hash";
 const colorHash = new ColorHash({ lightness: 0.3 });
 
 export function Facepile({ participants }) {
-  console.log(participants);
   return (
     <div
       className={styles.facepile}
