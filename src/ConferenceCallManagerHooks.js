@@ -285,15 +285,26 @@ export function useGroupCallRooms(client) {
       const groupCalls = client.groupCallEventHandler.groupCalls.values();
       const rooms = Array.from(groupCalls).map((groupCall) => groupCall.room);
       const sortedRooms = sortRooms(client, rooms);
-      setRooms(sortedRooms);
+      const items = sortedRooms.map((room) => {
+        const groupCall = client.getGroupCallForRoom(room.roomId);
+
+        return {
+          room,
+          groupCall,
+          participants: [...groupCall.participants],
+        };
+      });
+      setRooms(items);
     }
 
     updateRooms();
 
     client.on("GroupCall.incoming", updateRooms);
+    client.on("GroupCall.participants", updateRooms);
 
     return () => {
       client.removeListener("GroupCall.incoming", updateRooms);
+      client.removeListener("GroupCall.participants", updateRooms);
     };
   }, []);
 

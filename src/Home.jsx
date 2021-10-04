@@ -29,6 +29,7 @@ import {
   GroupCallIntent,
   GroupCallType,
 } from "matrix-js-sdk/src/browser-index";
+import { Facepile } from "./Facepile";
 
 const colorHash = new ColorHash({ lightness: 0.3 });
 
@@ -171,7 +172,7 @@ export function Home({ client, onLogout }) {
             <section>
               <h3>Recent Rooms</h3>
               <div className={styles.roomList}>
-                {rooms.map((room) => (
+                {rooms.map(({ room, participants }) => (
                   <Link
                     className={styles.roomListItem}
                     key={room.roomId}
@@ -184,6 +185,7 @@ export function Home({ client, onLogout }) {
                       <span>{room.name.slice(0, 1)}</span>
                     </div>
                     <div className={styles.roomName}>{room.name}</div>
+                    <Facepile participants={participants} />
                   </Link>
                 ))}
               </div>
