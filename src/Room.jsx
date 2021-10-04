@@ -269,8 +269,6 @@ function InRoomView({
       });
     }
 
-    console.log("items changed", participants);
-
     return participants;
   }, [userMediaFeeds, activeSpeaker, screenshareFeeds]);
 
