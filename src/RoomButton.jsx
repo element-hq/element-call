@@ -9,6 +9,7 @@ import { ReactComponent as HangupIcon } from "./icons/Hangup.svg";
 import { ReactComponent as SettingsIcon } from "./icons/Settings.svg";
 import { ReactComponent as GridIcon } from "./icons/Grid.svg";
 import { ReactComponent as SpeakerIcon } from "./icons/Speaker.svg";
+import { ReactComponent as ScreenshareIcon } from "./icons/Screenshare.svg";
 
 export function RoomButton({ on, className, children, ...rest }) {
   return (
@@ -33,6 +34,18 @@ export function VideoButton({ enabled, ...rest }) {
   return (
     <RoomButton {...rest} on={enabled}>
       {enabled ? <DisableVideoIcon /> : <VideoIcon />}
+    </RoomButton>
+  );
+}
+
+export function ScreenshareButton({ enabled, className, ...rest }) {
+  return (
+    <RoomButton
+      className={classNames(styles.screenshareButton, className)}
+      {...rest}
+      on={enabled}
+    >
+      <ScreenshareIcon />
     </RoomButton>
   );
 }
