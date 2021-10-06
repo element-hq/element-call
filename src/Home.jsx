@@ -16,7 +16,10 @@ limitations under the License.
 
 import React, { useCallback, useRef, useState } from "react";
 import { useHistory, Link } from "react-router-dom";
-import { useRooms } from "./ConferenceCallManagerHooks";
+import {
+  useGroupCallRooms,
+  usePublicRooms,
+} from "./ConferenceCallManagerHooks";
 import { Header, LeftNav, UserNav } from "./Header";
 import ColorHash from "color-hash";
 import styles from "./Home.module.css";
@@ -26,6 +29,7 @@ import {
   GroupCallIntent,
   GroupCallType,
 } from "matrix-js-sdk/src/browser-index";
+import { Facepile } from "./Facepile";
 
 const colorHash = new ColorHash({ lightness: 0.3 });
 
@@ -34,7 +38,11 @@ export function Home({ client, onLogout }) {
   const roomNameRef = useRef();
   const guestAccessRef = useRef();
   const [createRoomError, setCreateRoomError] = useState();
-  const rooms = useRooms(client);
+  const rooms = useGroupCallRooms(client);
+  const publicRooms = usePublicRooms(
+    client,
+    import.meta.env.VITE_PUBLIC_SPACE_ROOM_ID
+  );
 
   const onCreateRoom = useCallback(
     (e) => {
@@ -139,10 +147,32 @@ export function Home({ client, onLogout }) {
                 </FieldRow>
               </form>
             </section>
+            {publicRooms.length > 0 && (
+              <section>
+                <h3>Public Rooms</h3>
+                <div className={styles.roomList}>
+                  {publicRooms.map((room) => (
+                    <Link
+                      className={styles.roomListItem}
+                      key={room.room_id}
+                      to={`/room/${room.room_id}`}
+                    >
+                      <div
+                        className={styles.roomAvatar}
+                        style={{ backgroundColor: colorHash.hex(room.name) }}
+                      >
+                        <span>{room.name.slice(0, 1)}</span>
+                      </div>
+                      <div className={styles.roomName}>{room.name}</div>
+                    </Link>
+                  ))}
+                </div>
+              </section>
+            )}
             <section>
               <h3>Recent Rooms</h3>
               <div className={styles.roomList}>
-                {rooms.map((room) => (
+                {rooms.map(({ room, participants }) => (
                   <Link
                     className={styles.roomListItem}
                     key={room.roomId}
@@ -155,6 +185,7 @@ export function Home({ client, onLogout }) {
                       <span>{room.name.slice(0, 1)}</span>
                     </div>
                     <div className={styles.roomName}>{room.name}</div>
+                    <Facepile participants={participants} />
                   </Link>
                 ))}
               </div>

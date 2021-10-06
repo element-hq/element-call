@@ -277,24 +277,56 @@ function sortRooms(client, rooms) {
   });
 }
 
-export function useRooms(client) {
+export function useGroupCallRooms(client) {
   const [rooms, setRooms] = useState([]);
 
   useEffect(() => {
     function updateRooms() {
-      const visibleRooms = client.getVisibleRooms();
-      const sortedRooms = sortRooms(client, visibleRooms);
-      setRooms(sortedRooms);
+      const groupCalls = client.groupCallEventHandler.groupCalls.values();
+      const rooms = Array.from(groupCalls).map((groupCall) => groupCall.room);
+      const sortedRooms = sortRooms(client, rooms);
+      const items = sortedRooms.map((room) => {
+        const groupCall = client.getGroupCallForRoom(room.roomId);
+
+        return {
+          room,
+          groupCall,
+          participants: [...groupCall.participants],
+        };
+      });
+      setRooms(items);
     }
 
     updateRooms();
 
-    client.on("Room", updateRooms);
+    client.on("GroupCall.incoming", updateRooms);
+    client.on("GroupCall.participants", updateRooms);
 
     return () => {
-      client.removeListener("Room", updateRooms);
+      client.removeListener("GroupCall.incoming", updateRooms);
+      client.removeListener("GroupCall.participants", updateRooms);
     };
   }, []);
+
+  return rooms;
+}
+
+export function usePublicRooms(client, publicSpaceRoomId, maxRooms = 50) {
+  const [rooms, setRooms] = useState([]);
+
+  useEffect(() => {
+    if (publicSpaceRoomId) {
+      client.getRoomHierarchy(publicSpaceRoomId, maxRooms).then(({ rooms }) => {
+        const filteredRooms = rooms.filter(
+          (room) => room.room_type !== "m.space"
+        );
+
+        setRooms(filteredRooms);
+      });
+    } else {
+      setRooms([]);
+    }
+  }, [publicSpaceRoomId]);
 
   return rooms;
 }
