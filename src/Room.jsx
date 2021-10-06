@@ -16,7 +16,7 @@ limitations under the License.
 
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "./Room.module.css";
-import { useParams } from "react-router-dom";
+import { useLocation, useParams } from "react-router-dom";
 import {
   HangupButton,
   MicButton,
@@ -53,7 +53,9 @@ function useLoadGroupCall(client, roomId) {
 }
 
 export function Room({ client }) {
-  const { roomId } = useParams();
+  const { roomId: maybeRoomId } = useParams();
+  const { hash } = useLocation();
+  const roomId = maybeRoomId || hash;
   const { loading, error, groupCall } = useLoadGroupCall(client, roomId);
 
   if (loading) {
