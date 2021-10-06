@@ -91,18 +91,22 @@ export function useClient(homeserverUrl) {
         const authStore = localStorage.getItem("matrix-auth-store");
 
         if (authStore) {
-          const { user_id, device_id, access_token } = JSON.parse(authStore);
+          const { user_id, device_id, access_token, guest } =
+            JSON.parse(authStore);
 
-          const client = await initClient({
-            baseUrl: homeserverUrl,
-            accessToken: access_token,
-            userId: user_id,
-            deviceId: device_id,
-          });
+          const client = await initClient(
+            {
+              baseUrl: homeserverUrl,
+              accessToken: access_token,
+              userId: user_id,
+              deviceId: device_id,
+            },
+            guest
+          );
 
           localStorage.setItem(
             "matrix-auth-store",
-            JSON.stringify({ user_id, device_id, access_token })
+            JSON.stringify({ user_id, device_id, access_token, guest })
           );
 
           return client;
@@ -153,7 +157,7 @@ export function useClient(homeserverUrl) {
     }
   }, []);
 
-  const registerGuest = useCallback(async (displayName) => {
+  const registerGuest = useCallback(async () => {
     try {
       const registrationClient = matrix.createClient(homeserverUrl);
 
@@ -170,9 +174,13 @@ export function useClient(homeserverUrl) {
         true
       );
 
+      await client.setProfileInfo("displayname", {
+        displayname: `Guest ${client.getUserIdLocalpart()}`,
+      });
+
       localStorage.setItem(
         "matrix-auth-store",
-        JSON.stringify({ user_id, device_id, access_token })
+        JSON.stringify({ user_id, device_id, access_token, guest: true })
       );
 
       setState({ client, loading: false, authenticated: true });

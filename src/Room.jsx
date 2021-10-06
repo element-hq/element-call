@@ -25,7 +25,7 @@ import {
   ScreenshareButton,
 } from "./RoomButton";
 import { Header, LeftNav, RightNav, CenterNav } from "./Header";
-import { Button, ErrorMessage } from "./Input";
+import { Button } from "./Input";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import VideoGrid, {
   useVideoGridLayout,
@@ -35,6 +35,7 @@ import { useGroupCall } from "matrix-react-sdk/src/hooks/useGroupCall";
 import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
 import { useMediaStream } from "matrix-react-sdk/src/hooks/useMediaStream";
 import { fetchGroupCall } from "./ConferenceCallManagerHooks";
+import { ErrorModal } from "./ErrorModal";
 
 function useLoadGroupCall(client, roomId) {
   const [state, setState] = useState({
@@ -70,7 +71,7 @@ export function Room({ client }) {
   if (error) {
     return (
       <div className={styles.room}>
-        <LoadingErrorView error={error} />
+        <ErrorModal error={error} />
       </div>
     );
   }
@@ -155,20 +156,6 @@ export function EnteringRoomView() {
     <>
       <div className={styles.centerMessage}>
         <p>Entering room...</p>
-      </div>
-    </>
-  );
-}
-
-export function LoadingErrorView({ error }) {
-  useEffect(() => {
-    console.error(error);
-  }, [error]);
-
-  return (
-    <>
-      <div className={styles.centerMessage}>
-        <ErrorMessage>{error.message}</ErrorMessage>
       </div>
     </>
   );

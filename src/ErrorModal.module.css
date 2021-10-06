@@ -1,0 +1,9 @@
+.errorModalContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.errorModalContent p {
+  margin-bottom: 0;
+}
