@@ -69,7 +69,7 @@ export default function App() {
               {authenticated ? (
                 <Room client={client} />
               ) : (
-                <GuestAuthPage onRegisterGuest={registerGuest} />
+                <GuestAuthPage onLoginAsGuest={registerGuest} />
               )}
             </SentryRoute>
           </Switch>
