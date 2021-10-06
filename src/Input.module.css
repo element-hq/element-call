@@ -29,7 +29,7 @@
 
 .inputField {
   border-radius: 4px;
-  transition: border-color .25s;
+  transition: border-color 0.25s;
   border: 1px solid #394049;
 }
 
@@ -51,12 +51,13 @@
 }
 
 .inputField input:placeholder-shown:focus::placeholder {
-  transition: color .25s ease-in .1s;
+  transition: color 0.25s ease-in 0.1s;
   color: #6f7882;
 }
 
 .inputField label {
-  transition: font-size .25s ease-out .1s,color .25s ease-out .1s,top .25s ease-out .1s,background-color .25s ease-out .1s;
+  transition: font-size 0.25s ease-out 0.1s, color 0.25s ease-out 0.1s,
+    top 0.25s ease-out 0.1s, background-color 0.25s ease-out 0.1s;
   color: white;
   background-color: transparent;
   font-size: 14px;
@@ -80,9 +81,11 @@
   outline: 0;
 }
 
-.inputField input:focus + label, .inputField input:not(:placeholder-shown) + label {
+.inputField input:focus + label,
+.inputField input:not(:placeholder-shown) + label {
   background-color: #21262c;
-  transition: font-size .25s ease-out 0s,color .25s ease-out 0s,top .25s ease-out 0s,background-color .25s ease-out 0s;
+  transition: font-size 0.25s ease-out 0s, color 0.25s ease-out 0s,
+    top 0.25s ease-out 0s, background-color 0.25s ease-out 0s;
   font-size: 10px;
   top: -13px;
   padding: 0 2px;
@@ -107,6 +110,7 @@
 
 .checkboxField input {
   appearance: none;
+  -webkit-appearance: none;
   margin: 0;
   padding: 0;
 }
@@ -119,7 +123,7 @@
   flex-shrink: 0;
   height: 16px;
   width: 16px;
-  border: 1.5px solid rgba(185,190,198,.5);
+  border: 1.5px solid rgba(185, 190, 198, 0.5);
   box-sizing: border-box;
   border-radius: 4px;
   margin-right: 10px;
@@ -130,7 +134,7 @@
 }
 
 .checkbox svg * {
-  stroke: #FFF;
+  stroke: #fff;
 }
 
 .checkboxField input[type="checkbox"]:checked + label > .checkbox {
@@ -161,11 +165,9 @@
 }
 
 .button:hover {
-
 }
 
 .button:active {
-
 }
 
 .errorMessage {
