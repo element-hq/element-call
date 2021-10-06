@@ -14,26 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useEffect } from "react";
 import styles from "./GuestAuthPage.module.css";
-import { useLocation, useHistory, Link } from "react-router-dom";
+import { useLocation, useHistory } from "react-router-dom";
 import { Header, LeftNav } from "./Header";
-import { Button, FieldRow, InputField, ErrorMessage } from "./Input";
-import { Center, Content, Info, Modal } from "./Layout";
+import { Center, Content, Modal } from "./Layout";
+import { ErrorModal } from "./ErrorModal";
 
 export function GuestAuthPage({ onLoginAsGuest }) {
-  const displayNameRef = useRef();
   const history = useHistory();
   const location = useLocation();
   const [error, setError] = useState();
 
-  const onSubmitLoginForm = useCallback(
-    (e) => {
-      e.preventDefault();
-      onLoginAsGuest(displayNameRef.current.value).catch(setError);
-    },
-    [onLoginAsGuest, location, history]
-  );
+  useEffect(() => {
+    onLoginAsGuest("Guest " + Math.round(Math.random() * 999)).catch(setError);
+  }, [onLoginAsGuest, location, history]);
 
   return (
     <div className={styles.guestAuthPage}>
@@ -43,46 +38,7 @@ export function GuestAuthPage({ onLoginAsGuest }) {
       <Content>
         <Center>
           <Modal>
-            <h2>Login As Guest</h2>
-            <form onSubmit={onSubmitLoginForm}>
-              <FieldRow>
-                <InputField
-                  type="text"
-                  ref={displayNameRef}
-                  placeholder="Display Name"
-                  label="Display Name"
-                  autoCorrect="off"
-                  autoCapitalize="none"
-                />
-              </FieldRow>
-              {error && (
-                <FieldRow>
-                  <ErrorMessage>{error.message}</ErrorMessage>
-                </FieldRow>
-              )}
-              <FieldRow rightAlign>
-                <Button type="submit">Login as guest</Button>
-              </FieldRow>
-            </form>
-            <Info>
-              <Link
-                to={{
-                  pathname: "/login",
-                  state: location.state,
-                }}
-              >
-                Sign in
-              </Link>
-              {" or "}
-              <Link
-                to={{
-                  pathname: "/register",
-                  state: location.state,
-                }}
-              >
-                Create account
-              </Link>
-            </Info>
+            {error ? <ErrorModal error={error} /> : <div>Loading...</div>}
           </Modal>
         </Center>
       </Content>
