@@ -22,6 +22,7 @@ import {
   Redirect,
   useLocation,
 } from "react-router-dom";
+import * as Sentry from "@sentry/react";
 import { useClient } from "./ConferenceCallManagerHooks";
 import { Home } from "./Home";
 import { Room } from "./Room";
@@ -29,6 +30,8 @@ import { RegisterPage } from "./RegisterPage";
 import { LoginPage } from "./LoginPage";
 import { Center } from "./Layout";
 import { GuestAuthPage } from "./GuestAuthPage";
+
+const SentryRoute = Sentry.withSentryRouting(Route);
 
 export default function App() {
   const { protocol, host } = window.location;
@@ -56,19 +59,19 @@ export default function App() {
             <AuthenticatedRoute authenticated={authenticated} exact path="/">
               <Home client={client} onLogout={logout} />
             </AuthenticatedRoute>
-            <Route exact path="/login">
+            <SentryRoute exact path="/login">
               <LoginPage onLogin={login} />
-            </Route>
-            <Route exact path="/register">
+            </SentryRoute>
+            <SentryRoute exact path="/register">
               <RegisterPage onRegister={register} />
-            </Route>
-            <Route path="/room/:roomId">
+            </SentryRoute>
+            <SentryRoute path="/room/:roomId">
               {authenticated ? (
                 <Room client={client} />
               ) : (
                 <GuestAuthPage onRegisterGuest={registerGuest} />
               )}
-            </Route>
+            </SentryRoute>
           </Switch>
         )}
       </>
@@ -80,7 +83,7 @@ function AuthenticatedRoute({ authenticated, children, ...rest }) {
   const location = useLocation();
 
   return (
-    <Route {...rest}>
+    <SentryRoute {...rest}>
       {authenticated ? (
         children
       ) : (
@@ -91,6 +94,6 @@ function AuthenticatedRoute({ authenticated, children, ...rest }) {
           }}
         />
       )}
-    </Route>
+    </SentryRoute>
   );
 }

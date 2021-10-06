@@ -16,12 +16,29 @@ limitations under the License.
 
 import React from "react";
 import ReactDOM from "react-dom";
+import { createBrowserHistory } from "history";
 import "./index.css";
 import App from "./App";
+import * as Sentry from "@sentry/react";
+import { Integrations } from "@sentry/tracing";
+
+const history = createBrowserHistory();
+
+Sentry.init({
+  dsn: import.meta.env.VITE_SENTRY_DSN,
+  integrations: [
+    new Integrations.BrowserTracing({
+      routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),
+    }),
+  ],
+  tracesSampleRate: 1.0,
+});
 
 ReactDOM.render(
   <React.StrictMode>
-    <App />
+    <Sentry.ErrorBoundary fallback={<p>An error has occurred</p>}>
+      <App history={history} />
+    </Sentry.ErrorBoundary>
   </React.StrictMode>,
   document.getElementById("root")
 );
