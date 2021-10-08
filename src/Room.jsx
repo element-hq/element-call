@@ -78,7 +78,7 @@ export function Room({ client }) {
 
   return (
     <div className={styles.room}>
-      <GroupCallView groupCall={groupCall} />
+      <GroupCallView client={client} groupCall={groupCall} />
     </div>
   );
 }
@@ -224,6 +224,8 @@ function RoomSetupView({
   );
 }
 
+function useMediaManager() {}
+
 function InRoomView({
   roomName,
   microphoneMuted,
@@ -238,6 +240,15 @@ function InRoomView({
   screenshareFeeds,
 }) {
   const [layout, toggleLayout] = useVideoGridLayout();
+
+  const {
+    audioDeviceId,
+    audioDevices,
+    setAudioDevice,
+    videoDeviceId,
+    videoDevices,
+    setVideoDevice,
+  } = useMediaManager();
 
   const items = useMemo(() => {
     const participants = [];
@@ -284,10 +295,25 @@ function InRoomView({
         <VideoGrid items={items} layout={layout} />
       )}
       <div className={styles.footer}>
-        <MicButton muted={microphoneMuted} onClick={toggleMicrophoneMuted} />
+        <MicButton
+          muted={microphoneMuted}
+          onClick={toggleMicrophoneMuted}
+          value={audioDeviceId}
+          onChange={({ value }) => setAudioDevice(value)}
+          options={audioDevices.map(({ label, deviceId }) => ({
+            label,
+            value: deviceId,
+          }))}
+        />
         <VideoButton
           enabled={localVideoMuted}
           onClick={toggleLocalVideoMuted}
+          value={videoDeviceId}
+          onChange={({ value }) => setVideoDevice(value)}
+          options={videoDevices.map(({ label, deviceId }) => ({
+            label,
+            value: deviceId,
+          }))}
         />
         <ScreenshareButton
           enabled={isScreensharing}
