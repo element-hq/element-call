@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState, useEffect } from "react";
 import classNames from "classnames";
 import styles from "./RoomButton.module.css";
 import { ReactComponent as MicIcon } from "./icons/Mic.svg";
@@ -10,6 +10,7 @@ import { ReactComponent as SettingsIcon } from "./icons/Settings.svg";
 import { ReactComponent as GridIcon } from "./icons/Grid.svg";
 import { ReactComponent as SpeakerIcon } from "./icons/Speaker.svg";
 import { ReactComponent as ScreenshareIcon } from "./icons/Screenshare.svg";
+import { ReactComponent as ChevronIcon } from "./icons/Chevron.svg";
 
 export function RoomButton({ on, className, children, ...rest }) {
   return (
@@ -19,6 +20,55 @@ export function RoomButton({ on, className, children, ...rest }) {
     >
       {children}
     </button>
+  );
+}
+
+export function DropdownButton({ onChange, options, value, children }) {
+  const buttonRef = useRef();
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    function onClick() {
+      if (open) {
+        setOpen(false);
+      }
+    }
+
+    window.addEventListener("click", onClick);
+
+    return () => {
+      window.removeEventListener("click", onClick);
+    };
+  }, [open]);
+
+  return (
+    <div className={styles.dropdownButtonContainer}>
+      {children}
+      <button
+        ref={buttonRef}
+        className={styles.dropdownButton}
+        onClick={() => setOpen(true)}
+      >
+        <ChevronIcon />
+      </button>
+      {open && (
+        <div className={styles.dropdownContainer}>
+          <ul>
+            {options.map((item) => (
+              <li
+                key={item.value}
+                className={classNames({
+                  [styles.dropdownActiveItem]: item.value === value,
+                })}
+                onClick={() => onChange(item)}
+              >
+                {item.label}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+    </div>
   );
 }
 

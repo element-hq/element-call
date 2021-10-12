@@ -15,7 +15,8 @@ limitations under the License.
 */
 
 .roomButton,
-.headerButton {
+.headerButton,
+.dropdownButton {
   display: flex;
   justify-content: center;
   align-items: center;
@@ -29,7 +30,7 @@ limitations under the License.
   width: 50px;
   height: 50px;
   border-radius: 50px;
-  background-color: rgba(111, 120, 130, 0.3);
+  background-color: #394049;
 }
 
 .roomButton:hover {
@@ -72,4 +73,57 @@ limitations under the License.
 
 .screenshareButton.on svg * {
   fill: #0dbd8b;
+}
+
+.dropdownButtonContainer {
+  position: relative;
+}
+
+.dropdownButton {
+  width: 15px;
+  height: 15px;
+  border-radius: 15px;
+  background-color: #394049;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  cursor: pointer;
+}
+
+.dropdownButton:hover {
+  background-color: #8d97a5;
+}
+
+.dropdownButton:hover svg * {
+  fill: #8d97a5;
+}
+
+.dropdownContainer {
+  position: absolute;
+  left: 50%;
+  transform: translate(0, -100%);
+  top: -5px;
+  background-color: #394049;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.dropdownContainer ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dropdownContainer li {
+  padding: 12px;
+  width: 200px;
+  cursor: pointer;
+}
+
+.dropdownContainer li:hover {
+  background-color: #8d97a5;
+}
+
+.dropdownActiveItem {
+  color: #0dbd8b;
 }
