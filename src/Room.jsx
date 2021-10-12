@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./Room.module.css";
 import { useLocation, useParams } from "react-router-dom";
 import {
@@ -23,6 +23,7 @@ import {
   VideoButton,
   LayoutToggleButton,
   ScreenshareButton,
+  DropdownButton,
 } from "./RoomButton";
 import { Header, LeftNav, RightNav, CenterNav } from "./Header";
 import { Button } from "./Input";
@@ -83,7 +84,7 @@ export function Room({ client }) {
   );
 }
 
-export function GroupCallView({ groupCall }) {
+export function GroupCallView({ client, groupCall }) {
   const {
     state,
     error,
@@ -108,6 +109,7 @@ export function GroupCallView({ groupCall }) {
   } else if (state === GroupCallState.Entered) {
     return (
       <InRoomView
+        client={client}
         roomName={groupCall.room.name}
         microphoneMuted={microphoneMuted}
         localVideoMuted={localVideoMuted}
@@ -224,9 +226,70 @@ function RoomSetupView({
   );
 }
 
-function useMediaManager() {}
+function useMediaHandler(client) {
+  const [{ audioInput, videoInput, audioInputs, videoInputs }, setState] =
+    useState({
+      audioInput: null,
+      videoInput: null,
+      audioInputs: [],
+      videoInputs: [],
+    });
+
+  useEffect(() => {
+    function updateDevices() {
+      navigator.mediaDevices.enumerateDevices().then((devices) => {
+        const audioInputs = devices.filter(
+          (device) => device.kind === "audioinput"
+        );
+        const videoInputs = devices.filter(
+          (device) => device.kind === "videoinput"
+        );
+
+        setState((prevState) => ({
+          ...prevState,
+          audioInputs,
+          videoInputs,
+        }));
+      });
+    }
+
+    updateDevices();
+
+    navigator.mediaDevices.addEventListener("devicechange", updateDevices);
+
+    return () => {
+      navigator.mediaDevices.removeEventListener("devicechange", updateDevices);
+    };
+  }, []);
+
+  const setAudioInput = useCallback(
+    (deviceId) => {
+      setState((prevState) => ({ ...prevState, audioInput: deviceId }));
+      client.getMediaHandler().setAudioInput(deviceId);
+    },
+    [client]
+  );
+
+  const setVideoInput = useCallback(
+    (deviceId) => {
+      setState((prevState) => ({ ...prevState, videoInput: deviceId }));
+      client.getMediaHandler().setVideoInput(deviceId);
+    },
+    [client]
+  );
+
+  return {
+    audioInput,
+    audioInputs,
+    setAudioInput,
+    videoInput,
+    videoInputs,
+    setVideoInput,
+  };
+}
 
 function InRoomView({
+  client,
   roomName,
   microphoneMuted,
   localVideoMuted,
@@ -242,13 +305,13 @@ function InRoomView({
   const [layout, toggleLayout] = useVideoGridLayout();
 
   const {
-    audioDeviceId,
-    audioDevices,
-    setAudioDevice,
-    videoDeviceId,
-    videoDevices,
-    setVideoDevice,
-  } = useMediaManager();
+    audioInput,
+    audioInputs,
+    setAudioInput,
+    videoInput,
+    videoInputs,
+    setVideoInput,
+  } = useMediaHandler(client);
 
   const items = useMemo(() => {
     const participants = [];
@@ -295,26 +358,29 @@ function InRoomView({
         <VideoGrid items={items} layout={layout} />
       )}
       <div className={styles.footer}>
-        <MicButton
-          muted={microphoneMuted}
-          onClick={toggleMicrophoneMuted}
-          value={audioDeviceId}
-          onChange={({ value }) => setAudioDevice(value)}
-          options={audioDevices.map(({ label, deviceId }) => ({
+        <DropdownButton
+          value={audioInput}
+          onChange={({ value }) => setAudioInput(value)}
+          options={audioInputs.map(({ label, deviceId }) => ({
             label,
             value: deviceId,
           }))}
-        />
-        <VideoButton
-          enabled={localVideoMuted}
-          onClick={toggleLocalVideoMuted}
-          value={videoDeviceId}
-          onChange={({ value }) => setVideoDevice(value)}
-          options={videoDevices.map(({ label, deviceId }) => ({
+        >
+          <MicButton muted={microphoneMuted} onClick={toggleMicrophoneMuted} />
+        </DropdownButton>
+        <DropdownButton
+          value={videoInput}
+          onChange={({ value }) => setVideoInput(value)}
+          options={videoInputs.map(({ label, deviceId }) => ({
             label,
             value: deviceId,
           }))}
-        />
+        >
+          <VideoButton
+            enabled={localVideoMuted}
+            onClick={toggleLocalVideoMuted}
+          />
+        </DropdownButton>
         <ScreenshareButton
           enabled={isScreensharing}
           onClick={toggleScreensharing}
