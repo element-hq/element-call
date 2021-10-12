@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useRef, useState, useEffect } from "react";
 import classNames from "classnames";
 import styles from "./RoomButton.module.css";
 import { ReactComponent as MicIcon } from "./icons/Mic.svg";
@@ -11,7 +11,6 @@ import { ReactComponent as GridIcon } from "./icons/Grid.svg";
 import { ReactComponent as SpeakerIcon } from "./icons/Speaker.svg";
 import { ReactComponent as ScreenshareIcon } from "./icons/Screenshare.svg";
 import { ReactComponent as ChevronIcon } from "./icons/Chevron.svg";
-import { useEffect } from "react";
 
 export function RoomButton({ on, className, children, ...rest }) {
   return (
@@ -24,7 +23,7 @@ export function RoomButton({ on, className, children, ...rest }) {
   );
 }
 
-export function DropdownButton({ onChange, options, children }) {
+export function DropdownButton({ onChange, options, value, children }) {
   const buttonRef = useRef();
   const [open, setOpen] = useState(false);
 
@@ -43,7 +42,7 @@ export function DropdownButton({ onChange, options, children }) {
   }, [open]);
 
   return (
-    <div className={styles.dropDownButtonContainer}>
+    <div className={styles.dropdownButtonContainer}>
       {children}
       <button
         ref={buttonRef}
@@ -53,13 +52,13 @@ export function DropdownButton({ onChange, options, children }) {
         <ChevronIcon />
       </button>
       {open && (
-        <div className={styles.dropDownContainer}>
+        <div className={styles.dropdownContainer}>
           <ul>
             {options.map((item) => (
               <li
                 key={item.value}
                 className={classNames({
-                  [styles.dropDownActiveItem]: item.value === value,
+                  [styles.dropdownActiveItem]: item.value === value,
                 })}
                 onClick={() => onChange(item)}
               >
@@ -73,23 +72,19 @@ export function DropdownButton({ onChange, options, children }) {
   );
 }
 
-export function MicButton({ muted, onChange, value, options, ...rest }) {
+export function MicButton({ muted, ...rest }) {
   return (
-    <DropdownButton onChange={onChange} options={options} value={value}>
-      <RoomButton {...rest} on={muted}>
-        {muted ? <MuteMicIcon /> : <MicIcon />}
-      </RoomButton>
-    </DropdownButton>
+    <RoomButton {...rest} on={muted}>
+      {muted ? <MuteMicIcon /> : <MicIcon />}
+    </RoomButton>
   );
 }
 
-export function VideoButton({ enabled, onChange, value, ...rest }) {
+export function VideoButton({ enabled, ...rest }) {
   return (
-    <DropdownButton onChange={onChange} options={options} value={value}>
-      <RoomButton {...rest} on={enabled}>
-        {enabled ? <DisableVideoIcon /> : <VideoIcon />}
-      </RoomButton>
-    </DropdownButton>
+    <RoomButton {...rest} on={enabled}>
+      {enabled ? <DisableVideoIcon /> : <VideoIcon />}
+    </RoomButton>
   );
 }
 
