@@ -54,30 +54,29 @@ export function Home({ client, onLogout }) {
           visibility: "private",
           preset: "public_chat",
           name,
-          power_level_content_override: guestAccess
-            ? {
-                invite: 100,
-                kick: 100,
-                ban: 100,
-                redact: 50,
-                state_default: 0,
-                events_default: 0,
-                users_default: 0,
-                events: {
-                  "m.room.power_levels": 100,
-                  "m.room.history_visibility": 100,
-                  "m.room.tombstone": 100,
-                  "m.room.encryption": 100,
-                  "m.room.name": 50,
-                  "m.room.message": 0,
-                  "m.room.encrypted": 50,
-                  "m.sticker": 50,
-                },
-                users: {
-                  [client.getUserId()]: 100,
-                },
-              }
-            : undefined,
+          power_level_content_override: {
+            invite: 100,
+            kick: 100,
+            ban: 100,
+            redact: 50,
+            state_default: 0,
+            events_default: 0,
+            users_default: 0,
+            events: {
+              "m.room.power_levels": 100,
+              "m.room.history_visibility": 100,
+              "m.room.tombstone": 100,
+              "m.room.encryption": 100,
+              "m.room.name": 50,
+              "m.room.message": 0,
+              "m.room.encrypted": 50,
+              "m.sticker": 50,
+              "org.matrix.msc3401.call.member": 0,
+            },
+            users: {
+              [client.getUserId()]: 100,
+            },
+          },
         });
 
         if (guestAccess) {
