@@ -130,15 +130,34 @@ export function useClient(homeserverUrl) {
       });
   }, []);
 
-  const login = useCallback(async (username, password) => {
+  const login = useCallback(async (homeserver, username, password) => {
     try {
-      const registrationClient = matrix.createClient(homeserverUrl);
+      let loginHomeserverUrl = homeserver.trim();
+
+      if (!loginHomeserverUrl.includes("://")) {
+        loginHomeserverUrl = "https://" + loginHomeserverUrl;
+      }
+
+      try {
+        const wellKnownUrl = new URL(
+          "/.well-known/matrix/client",
+          window.location
+        );
+        const response = await fetch(wellKnownUrl);
+        const config = await response.json();
+
+        if (config["m.homeserver"]) {
+          loginHomeserverUrl = config["m.homeserver"];
+        }
+      } catch (error) {}
+
+      const registrationClient = matrix.createClient(loginHomeserverUrl);
 
       const { user_id, device_id, access_token } =
         await registrationClient.loginWithPassword(username, password);
 
       const client = await initClient({
-        baseUrl: homeserverUrl,
+        baseUrl: loginHomeserverUrl,
         accessToken: access_token,
         userId: user_id,
         deviceId: device_id,
