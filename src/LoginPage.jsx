@@ -21,7 +21,9 @@ import { FieldRow, InputField, Button, ErrorMessage } from "./Input";
 import { Center, Content, Info, Modal } from "./Layout";
 
 export function LoginPage({ onLogin }) {
-  const homeserverRef = useRef();
+  const [homeserver, setHomeServer] = useState(
+    `${window.location.protocol}//${window.location.host}`
+  );
   const usernameRef = useRef();
   const passwordRef = useRef();
   const history = useHistory();
@@ -31,11 +33,7 @@ export function LoginPage({ onLogin }) {
   const onSubmitLoginForm = useCallback(
     (e) => {
       e.preventDefault();
-      onLogin(
-        homeserverRef.current.value,
-        usernameRef.current.value,
-        passwordRef.current.value
-      )
+      onLogin(homeserver, usernameRef.current.value, passwordRef.current.value)
         .then(() => {
           if (location.state && location.state.from) {
             history.replace(location.state.from);
@@ -45,7 +43,7 @@ export function LoginPage({ onLogin }) {
         })
         .catch(setError);
     },
-    [onLogin, location, history]
+    [onLogin, location, history, homeserver]
   );
 
   return (
@@ -61,8 +59,8 @@ export function LoginPage({ onLogin }) {
               <FieldRow>
                 <InputField
                   type="text"
-                  ref={homeserverRef}
-                  value={`${window.location.protocol}//${window.location.host}`}
+                  value={homeserver}
+                  onChange={(e) => setHomeServer(e.target.value)}
                   placeholder="Homeserver"
                   label="Homeserver"
                   autoCorrect="off"
