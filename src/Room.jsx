@@ -335,6 +335,31 @@ function InRoomView({
     return participants;
   }, [userMediaFeeds, activeSpeaker, screenshareFeeds]);
 
+  const onFocusTile = useCallback(
+    (tiles, focusedTile) => {
+      if (layout === "gallery") {
+        return tiles.map((tile) => {
+          if (tile === focusedTile) {
+            return { ...tile, presenter: !tile.presenter };
+          }
+
+          return tile;
+        });
+      } else {
+        toggleLayout();
+
+        return tiles.map((tile) => {
+          if (tile === focusedTile) {
+            return { ...tile, presenter: true };
+          }
+
+          return { ...tile, presenter: false };
+        });
+      }
+    },
+    [layout, toggleLayout]
+  );
+
   return (
     <>
       <Header>
@@ -355,7 +380,7 @@ function InRoomView({
           <p>Waiting for other participants...</p>
         </div>
       ) : (
-        <VideoGrid items={items} layout={layout} />
+        <VideoGrid items={items} layout={layout} onFocusTile={onFocusTile} />
       )}
       <div className={styles.footer}>
         <DropdownButton
