@@ -24,6 +24,7 @@ import {
   LayoutToggleButton,
   ScreenshareButton,
   DropdownButton,
+  SettingsButton,
 } from "./RoomButton";
 import { Header, LeftNav, RightNav, CenterNav } from "./Header";
 import { Button } from "./Input";
@@ -37,6 +38,7 @@ import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
 import { useMediaStream } from "matrix-react-sdk/src/hooks/useMediaStream";
 import { fetchGroupCall } from "./ConferenceCallManagerHooks";
 import { ErrorModal } from "./ErrorModal";
+import { GroupCallInspector } from "./GroupCallInspector";
 
 function useLoadGroupCall(client, roomId) {
   const [state, setState] = useState({
@@ -109,6 +111,7 @@ export function GroupCallView({ client, groupCall }) {
   } else if (state === GroupCallState.Entered) {
     return (
       <InRoomView
+        groupCall={groupCall}
         client={client}
         roomName={groupCall.room.name}
         microphoneMuted={microphoneMuted}
@@ -290,6 +293,7 @@ function useMediaHandler(client) {
 
 function InRoomView({
   client,
+  groupCall,
   roomName,
   microphoneMuted,
   localVideoMuted,
@@ -302,6 +306,8 @@ function InRoomView({
   isScreensharing,
   screenshareFeeds,
 }) {
+  const [showInspector, setShowInspector] = useState(false);
+
   const [layout, toggleLayout] = useVideoGridLayout();
 
   const {
@@ -377,6 +383,11 @@ function InRoomView({
           <h3>{roomName}</h3>
         </CenterNav>
         <RightNav>
+          <SettingsButton
+            title={showInspector ? "Hide Inspector" : "Show Inspector"}
+            on={showInspector}
+            onClick={() => setShowInspector((prev) => !prev)}
+          />
           <LayoutToggleButton
             title={layout === "spotlight" ? "Spotlight" : "Gallery"}
             layout={layout}
@@ -421,6 +432,11 @@ function InRoomView({
         />
         <HangupButton onClick={onLeave} />
       </div>
+      <GroupCallInspector
+        client={client}
+        groupCall={groupCall}
+        show={showInspector}
+      />
     </>
   );
 }
