@@ -313,6 +313,12 @@ function InRoomView({
     setVideoInput,
   } = useMediaHandler(client);
 
+  useEffect(() => {
+    if (screenshareFeeds.length > 0 && layout === "gallery") {
+      toggleLayout();
+    }
+  }, [screenshareFeeds]);
+
   const items = useMemo(() => {
     const participants = [];
 
@@ -320,7 +326,10 @@ function InRoomView({
       participants.push({
         id: callFeed.userId,
         callFeed,
-        isActiveSpeaker: callFeed.userId === activeSpeaker,
+        isActiveSpeaker:
+          screenshareFeeds.length === 0
+            ? callFeed.userId === activeSpeaker
+            : false,
       });
     }
 
@@ -328,7 +337,7 @@ function InRoomView({
       participants.push({
         id: callFeed.userId + "-screenshare",
         callFeed,
-        isActiveSpeaker: callFeed.userId === activeSpeaker,
+        isActiveSpeaker: true,
       });
     }
 
