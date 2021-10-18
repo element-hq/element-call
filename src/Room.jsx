@@ -107,7 +107,7 @@ export function GroupCallView({ client, groupCall }) {
   } = useGroupCall(groupCall);
 
   if (error) {
-    return <LoadingErrorView error={error} />;
+    return <ErrorModal error={error} />;
   } else if (state === GroupCallState.Entered) {
     return (
       <InRoomView
