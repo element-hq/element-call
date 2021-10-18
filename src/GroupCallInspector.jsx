@@ -1,3 +1,4 @@
+import { Resizable } from "re-resizable";
 import React, { useEffect, useState, useMemo } from "react";
 import { useCallback } from "react";
 import ReactJson from "react-json-view";
@@ -120,7 +121,7 @@ export function GroupCallInspector({ client, groupCall, show }) {
   }, [toDeviceEvents]);
 
   return (
-    <div style={{ maxHeight: "25%", overflowY: "auto" }}>
+    <Resizable enable={{ top: true }} >
       {show && (
         <ReactJson
           theme="monokai"
@@ -136,8 +137,9 @@ export function GroupCallInspector({ client, groupCall, show }) {
           displayDataTypes={false}
           displayObjectSize={false}
           enableClipboard={false}
+          style={{ height: "100%", overflowY: "scroll" }}
         />
       )}
-    </div>
+    </Resizable>
   );
 }
