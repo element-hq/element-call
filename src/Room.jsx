@@ -104,6 +104,7 @@ export function GroupCallView({ client, groupCall }) {
     isScreensharing,
     localScreenshareFeed,
     screenshareFeeds,
+    hasLocalParticipant,
   } = useGroupCall(groupCall);
 
   if (error) {
@@ -132,6 +133,7 @@ export function GroupCallView({ client, groupCall }) {
   } else {
     return (
       <RoomSetupView
+        hasLocalParticipant={hasLocalParticipant}
         roomName={groupCall.room.name}
         state={state}
         onInitLocalCallFeed={initLocalCallFeed}
@@ -176,6 +178,7 @@ function RoomSetupView({
   localVideoMuted,
   toggleLocalVideoMuted,
   toggleMicrophoneMuted,
+  hasLocalParticipant,
 }) {
   const { stream } = useCallFeed(localCallFeed);
   const videoRef = useMediaStream(stream, true);
@@ -193,6 +196,9 @@ function RoomSetupView({
         </CenterNav>
       </Header>
       <div className={styles.joinRoom}>
+        {hasLocalParticipant && (
+          <p>Warning, you are signed into this call on another device.</p>
+        )}
         <div className={styles.preview}>
           {state === GroupCallState.LocalCallFeedUninitialized && (
             <p className={styles.webcamPermissions}>
