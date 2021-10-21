@@ -9,6 +9,7 @@ function getCallUserId(call) {
 
 function getCallState(call) {
   return {
+    id: call.callId,
     opponentMemberId: getCallUserId(call),
     state: call.state,
     direction: call.direction,
@@ -121,7 +122,7 @@ export function GroupCallInspector({ client, groupCall, show }) {
   }, [toDeviceEvents]);
 
   return (
-    <Resizable enable={{ top: true }} >
+    <Resizable enable={{ top: true }}>
       {show && (
         <ReactJson
           theme="monokai"
