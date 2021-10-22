@@ -12,6 +12,7 @@ export function Facepile({ participants }) {
     >
       {participants.map((member) => (
         <div
+          key={member.userId}
           className={styles.avatar}
           style={{ backgroundColor: colorHash.hex(member.name) }}
         >
