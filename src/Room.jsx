@@ -40,6 +40,8 @@ import { fetchGroupCall } from "./ConferenceCallManagerHooks";
 import { ErrorModal } from "./ErrorModal";
 import { GroupCallInspector } from "./GroupCallInspector";
 
+const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
+
 function useLoadGroupCall(client, roomId) {
   const [state, setState] = useState({
     loading: true,
@@ -432,10 +434,12 @@ function InRoomView({
             onClick={toggleLocalVideoMuted}
           />
         </DropdownButton>
-        <ScreenshareButton
-          enabled={isScreensharing}
-          onClick={toggleScreensharing}
-        />
+        {canScreenshare && (
+          <ScreenshareButton
+            enabled={isScreensharing}
+            onClick={toggleScreensharing}
+          />
+        )}
         <HangupButton onClick={onLeave} />
       </div>
       <GroupCallInspector
