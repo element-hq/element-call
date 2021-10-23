@@ -100,12 +100,20 @@ limitations under the License.
 
 .dropdownContainer {
   position: absolute;
-  left: 50%;
-  transform: translate(0, -100%);
-  top: -5px;
   background-color: #394049;
   border-radius: 8px;
   overflow: hidden;
+}
+
+.dropdownContainer_above {
+  transform: translate(0, -100%);
+  left: 50%;
+  top: -5px;
+}
+
+.dropdownContainer_left {
+  transform: translate(0, -50%);
+  right: 100%;
 }
 
 .dropdownContainer ul {

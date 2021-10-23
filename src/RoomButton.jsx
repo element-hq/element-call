@@ -31,8 +31,15 @@ export function useDropdown() {
 
   return [open, setOpen];
 }
+
+export function Dropdown({ onChange, options, value, position = "above" }) {
+  const classes = classNames(styles.dropdownContainer, {
+    [styles.dropdownContainer_left]: position === "left",
+    [styles.dropdownContainer_above]: position === "above",
+  })
+
   return (
-    <div className={styles.dropdownContainer} >
+    <div className={classes} >
       <ul>
         {options.map((item) => (
           <li
@@ -140,14 +147,24 @@ export function SettingsButton(props) {
   );
 }
 
-export function LayoutToggleButton({ layout, ...rest }) {
+export function LayoutButton({ layout, onChange, ...rest }) {
+  const [dropdownOpen, setDropdownOpen] = useDropdown();
+
   return (
-    <HeaderButton {...rest}>
-      {layout === "spotlight" ? (
-        <SpeakerIcon width={20} height={20} />
-      ) : (
-        <GridIcon width={20} height={20} />
-      )}
-    </HeaderButton>
+    <div>
+      <HeaderButton onClick={() => setDropdownOpen(true)} {...rest}>
+        {layout === "spotlight" ? (
+          <SpeakerIcon width={20} height={20} />
+        ) : (
+          <GridIcon width={20} height={20} />
+        )}
+      </HeaderButton>
+      {dropdownOpen && <Dropdown
+        position="left"
+        onChange={({ value }) => onChange(value)}
+        options={[{ value: "spotlight", label: "Spotlight" }, { value: "gallery", label: "Gallery" }]}
+        value={layout}
+      />}
+    </div>
   );
 }

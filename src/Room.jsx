@@ -21,7 +21,7 @@ import {
   HangupButton,
   MicButton,
   VideoButton,
-  LayoutToggleButton,
+  LayoutButton,
   ScreenshareButton,
   DropdownButton,
   SettingsButton,
@@ -29,9 +29,7 @@ import {
 import { Header, LeftNav, RightNav, CenterNav } from "./Header";
 import { Button } from "./Input";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
-import VideoGrid, {
-  useVideoGridLayout,
-} from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoGrid";
+import VideoGrid from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoGrid";
 import "matrix-react-sdk/res/css/views/voip/GroupCallView/_VideoGrid.scss";
 import { useGroupCall } from "matrix-react-sdk/src/hooks/useGroupCall";
 import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
@@ -315,8 +313,7 @@ function InRoomView({
   screenshareFeeds,
 }) {
   const [showInspector, setShowInspector] = useState(false);
-
-  const [layout, toggleLayout] = useVideoGridLayout();
+  const [layout, setLayout] = useState("gallery");
 
   const {
     audioInput,
@@ -329,7 +326,7 @@ function InRoomView({
 
   useEffect(() => {
     if (screenshareFeeds.length > 0 && layout === "gallery") {
-      toggleLayout();
+      setLayout("spotlight")
     }
   }, [screenshareFeeds]);
 
@@ -369,7 +366,7 @@ function InRoomView({
           return tile;
         });
       } else {
-        toggleLayout();
+        setLayout("gallery");
 
         return tiles.map((tile) => {
           if (tile === focusedTile) {
@@ -380,7 +377,7 @@ function InRoomView({
         });
       }
     },
-    [layout, toggleLayout]
+    [layout, setLayout]
   );
 
   return (
@@ -396,10 +393,10 @@ function InRoomView({
             on={showInspector}
             onClick={() => setShowInspector((prev) => !prev)}
           />
-          <LayoutToggleButton
+          <LayoutButton
             title={layout === "spotlight" ? "Spotlight" : "Gallery"}
             layout={layout}
-            onClick={toggleLayout}
+            onChange={(layout) => setLayout(layout)}
           />
         </RightNav>
       </Header>
