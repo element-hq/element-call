@@ -12,6 +12,26 @@ import { ReactComponent as SpeakerIcon } from "./icons/Speaker.svg";
 import { ReactComponent as ScreenshareIcon } from "./icons/Screenshare.svg";
 import { ReactComponent as ChevronIcon } from "./icons/Chevron.svg";
 
+export function Dropdown({ onChange, options, value }) {
+  return (
+    <div className={styles.dropdownContainer} >
+      <ul>
+        {options.map((item) => (
+          <li
+            key={item.value}
+            className={classNames({
+              [styles.dropdownActiveItem]: item.value === value,
+            })}
+            onClick={() => onChange(item)}
+          >
+            {item.label}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 export function RoomButton({ on, className, children, ...rest }) {
   return (
     <button
@@ -51,23 +71,7 @@ export function DropdownButton({ onChange, options, value, children }) {
       >
         <ChevronIcon />
       </button>
-      {open && (
-        <div className={styles.dropdownContainer}>
-          <ul>
-            {options.map((item) => (
-              <li
-                key={item.value}
-                className={classNames({
-                  [styles.dropdownActiveItem]: item.value === value,
-                })}
-                onClick={() => onChange(item)}
-              >
-                {item.label}
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
+      {open && <Dropdown onChange={onChange} options={options} value={value} />}
     </div>
   );
 }
