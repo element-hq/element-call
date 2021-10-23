@@ -12,7 +12,25 @@ import { ReactComponent as SpeakerIcon } from "./icons/Speaker.svg";
 import { ReactComponent as ScreenshareIcon } from "./icons/Screenshare.svg";
 import { ReactComponent as ChevronIcon } from "./icons/Chevron.svg";
 
-export function Dropdown({ onChange, options, value }) {
+export function useDropdown() {
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    function onClick() {
+      if (open) {
+        setOpen(false);
+      }
+    }
+
+    window.addEventListener("click", onClick);
+
+    return () => {
+      window.removeEventListener("click", onClick);
+    };
+  }, [open]);
+
+  return [open, setOpen];
+}
   return (
     <div className={styles.dropdownContainer} >
       <ul>
@@ -45,21 +63,7 @@ export function RoomButton({ on, className, children, ...rest }) {
 
 export function DropdownButton({ onChange, options, value, children }) {
   const buttonRef = useRef();
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    function onClick() {
-      if (open) {
-        setOpen(false);
-      }
-    }
-
-    window.addEventListener("click", onClick);
-
-    return () => {
-      window.removeEventListener("click", onClick);
-    };
-  }, [open]);
+  const [open, setOpen] = useDropdown();
 
   return (
     <div className={styles.dropdownButtonContainer}>
