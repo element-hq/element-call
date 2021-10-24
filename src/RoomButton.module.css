@@ -50,6 +50,11 @@ limitations under the License.
   border-radius: 32px;
 }
 
+.headerButton svg {
+  width: 22px;
+  height: 22px;
+}
+
 .headerButton svg * {
   fill: #8e99a4;
 }
