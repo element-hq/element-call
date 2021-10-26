@@ -41,6 +41,10 @@ import { ErrorModal } from "./ErrorModal";
 import { GroupCallInspector } from "./GroupCallInspector";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
+// There is currently a bug in Safari our our code with cloning and sending MediaStreams
+// or with getUsermedia and getDisplaymedia being used within the same session.
+// For now we can disable screensharing in Safari.
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 function useLoadGroupCall(client, roomId) {
   const [state, setState] = useState({
@@ -434,7 +438,7 @@ function InRoomView({
             onClick={toggleLocalVideoMuted}
           />
         </DropdownButton>
-        {canScreenshare && (
+        {canScreenshare && !isSafari && (
           <ScreenshareButton
             enabled={isScreensharing}
             onClick={toggleScreensharing}
