@@ -30,7 +30,10 @@ function waitForSync(client) {
 }
 
 async function initClient(clientOptions, guest) {
-  const client = matrix.createClient(clientOptions);
+  const sessionStore = new matrix.WebStorageSessionStore(localStorage);
+  const client = matrix.createClient({ ...clientOptions, sessionStore });
+
+  await client.initCrypto();
 
   if (guest) {
     client.setGuest(true);

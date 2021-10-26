@@ -2020,6 +2020,10 @@ object-inspect@^1.9.0:
   resolved "https://registry.yarnpkg.com/object-inspect/-/object-inspect-1.11.0.tgz#9dceb146cedd4148a0d9e51ab88d34cf509922b1"
   integrity sha512-jp7ikS6Sd3GxQfZJPyH3cjcbJF6GZPClgdV+EFygjFLQ5FmW/dRUnTd9PQ9k0JhoNDabWFbpF1yCdSWCC6gexg==
 
+"olm@https://packages.matrix.org/npm/olm/olm-3.2.1.tgz":
+  version "3.2.1"
+  resolved "https://packages.matrix.org/npm/olm/olm-3.2.1.tgz#d623d76f99c3518dde68be8c86618d68bc7b004a"
+
 opus-recorder@^8.0.3:
   version "8.0.4"
   resolved "https://registry.yarnpkg.com/opus-recorder/-/opus-recorder-8.0.4.tgz#c4cdbb8bb94d17aa406934b58dcf9caab6c79b09"
