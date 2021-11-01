@@ -106,7 +106,44 @@ export function GroupCallInspector({ client, groupCall, show }) {
     client.on("hangup", onCallHangup);
     client.on("toDeviceEvent", onToDeviceEvent);
 
+    let timeout;
+
+    async function updateCallStats() {
+      const callIds = groupCall.calls.map((call) => call.callId);
+      const stats = await Promise.all(
+        groupCall.calls.map((call) =>
+          call.peerConn
+            ? call.peerConn
+                .getStats(null)
+                .then((stats) =>
+                  Object.fromEntries(
+                    Array.from(stats).map(([_id, report], i) => [
+                      report.type + i,
+                      report,
+                    ])
+                  )
+                )
+            : Promise.resolve(null)
+        )
+      );
+
+      const callStats = {};
+
+      for (let i = 0; i < groupCall.calls.length; i++) {
+        callStats[callIds[i]] = stats[i];
+      }
+
+      updateState({ callStats });
+      timeout = setTimeout(updateCallStats, 1000);
+    }
+
+    updateCallStats();
+
     onUpdateRoomState();
+
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [client, groupCall]);
 
   const toDeviceEventsByCall = useMemo(() => {
@@ -122,12 +159,12 @@ export function GroupCallInspector({ client, groupCall, show }) {
   }, [toDeviceEvents]);
 
   return (
-    <Resizable enable={{ top: true }}>
+    <Resizable enable={{ top: true }} defaultSize={{ height: 200 }}>
       {show && (
         <ReactJson
           theme="monokai"
           src={{
-            state,
+            ...state,
             roomStateEvents,
             toDeviceEvents,
             toDeviceEventsByCall,

@@ -69,6 +69,10 @@ export function Room({ client }) {
   const roomId = maybeRoomId || hash;
   const { loading, error, groupCall } = useLoadGroupCall(client, roomId);
 
+  useEffect(() => {
+    window.groupCall = groupCall;
+  }, [groupCall]);
+
   if (loading) {
     return (
       <div className={styles.room}>
