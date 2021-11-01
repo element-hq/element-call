@@ -78,9 +78,12 @@ export function GroupCallInspector({ client, groupCall, show }) {
     function onCallHangup(call) {
       setState(({ hangupCalls, ...rest }) => ({
         ...rest,
-        hangupCalls: hangupCalls
-          ? [...hangupCalls, getHangupCallState(call)]
-          : [getHangupCallState(call)],
+        hangupCalls: {
+          ...hangupCalls,
+          [`${call.callId} (${
+            call.getOpponentMember()?.userId || call.sender
+          })`]: getHangupCallState(call),
+        },
       }));
     }
 
@@ -102,7 +105,10 @@ export function GroupCallInspector({ client, groupCall, show }) {
         return;
       }
 
-      setToDeviceEvents((prev) => [...prev, { eventType, content }]);
+      setToDeviceEvents((prev) => [
+        ...prev,
+        { eventType, content, sender: event.getSender() },
+      ]);
     }
 
     client.on("RoomState.events", onUpdateRoomState);
@@ -159,8 +165,9 @@ export function GroupCallInspector({ client, groupCall, show }) {
 
     for (const event of toDeviceEvents) {
       const callId = event.content.call_id;
-      result[callId] = result[callId] || [];
-      result[callId].push(event);
+      const key = `${callId} (${event.sender})`;
+      result[key] = result[key] || [];
+      result[key].push(event);
     }
 
     return result;
