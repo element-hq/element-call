@@ -158,26 +158,28 @@ export function GroupCallInspector({ client, groupCall, show }) {
     return result;
   }, [toDeviceEvents]);
 
+  if (!show) {
+    return null;
+  }
+
   return (
     <Resizable enable={{ top: true }} defaultSize={{ height: 200 }}>
-      {show && (
-        <ReactJson
-          theme="monokai"
-          src={{
-            ...state,
-            roomStateEvents,
-            toDeviceEvents,
-            toDeviceEventsByCall,
-          }}
-          name={null}
-          indentWidth={2}
-          collapsed={1}
-          displayDataTypes={false}
-          displayObjectSize={false}
-          enableClipboard={false}
-          style={{ height: "100%", overflowY: "scroll" }}
-        />
-      )}
+      <ReactJson
+        theme="monokai"
+        src={{
+          ...state,
+          roomStateEvents,
+          toDeviceEvents,
+          toDeviceEventsByCall,
+        }}
+        name={null}
+        indentWidth={2}
+        collapsed={1}
+        displayDataTypes={false}
+        displayObjectSize={false}
+        enableClipboard={false}
+        style={{ height: "100%", overflowY: "scroll" }}
+      />
     </Resizable>
   );
 }
