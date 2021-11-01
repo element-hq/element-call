@@ -65,7 +65,12 @@ export function GroupCallInspector({ client, groupCall, show }) {
     }
 
     function onCallsChanged() {
-      const calls = groupCall.calls.map(getCallState);
+      const calls = groupCall.calls.reduce((obj, call) => {
+        obj[
+          `${call.callId} (${call.getOpponentMember()?.userId || call.sender})`
+        ] = getCallState(call);
+        return obj;
+      }, {});
 
       updateState({ calls });
     }
@@ -109,7 +114,10 @@ export function GroupCallInspector({ client, groupCall, show }) {
     let timeout;
 
     async function updateCallStats() {
-      const callIds = groupCall.calls.map((call) => call.callId);
+      const callIds = groupCall.calls.map(
+        (call) =>
+          `${call.callId} (${call.getOpponentMember()?.userId || call.sender})`
+      );
       const stats = await Promise.all(
         groupCall.calls.map((call) =>
           call.peerConn
