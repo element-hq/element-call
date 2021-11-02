@@ -39,6 +39,7 @@ import { useMediaStream } from "matrix-react-sdk/src/hooks/useMediaStream";
 import { fetchGroupCall } from "./ConferenceCallManagerHooks";
 import { ErrorModal } from "./ErrorModal";
 import { GroupCallInspector } from "./GroupCallInspector";
+import * as Sentry from "@sentry/react";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -116,6 +117,24 @@ export function GroupCallView({ client, groupCall }) {
     screenshareFeeds,
     hasLocalParticipant,
   } = useGroupCall(groupCall);
+
+  useEffect(() => {
+    function onHangup(call) {
+      if (call.hangupReason === "ice_failed") {
+        Sentry.captureException(new Error("Call hangup due to ICE failure."));
+      }
+    }
+
+    if (groupCall) {
+      groupCall.on("hangup", onHangup);
+    }
+
+    return () => {
+      if (groupCall) {
+        groupCall.removeListener("hangup", onHangup);
+      }
+    };
+  }, [groupCall]);
 
   if (error) {
     return <ErrorModal error={error} />;
