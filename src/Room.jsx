@@ -365,7 +365,7 @@ function InRoomView({
 
     for (const callFeed of userMediaFeeds) {
       participants.push({
-        id: callFeed.userId,
+        id: callFeed.stream.id,
         callFeed,
         isActiveSpeaker:
           screenshareFeeds.length === 0
@@ -376,7 +376,7 @@ function InRoomView({
 
     for (const callFeed of screenshareFeeds) {
       participants.push({
-        id: callFeed.userId + "-screenshare",
+        id: callFeed.stream.id,
         callFeed,
         isActiveSpeaker: true,
       });
