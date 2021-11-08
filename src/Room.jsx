@@ -32,6 +32,7 @@ import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import VideoGrid, {
   useVideoGridLayout,
 } from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoGrid";
+import SimpleVideoGrid from "matrix-react-sdk/src/components/views/voip/GroupCallView/SimpleVideoGrid";
 import "matrix-react-sdk/res/css/views/voip/GroupCallView/_VideoGrid.scss";
 import { useGroupCall } from "matrix-react-sdk/src/hooks/useGroupCall";
 import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
@@ -66,9 +67,13 @@ function useLoadGroupCall(client, roomId) {
 
 export function Room({ client }) {
   const { roomId: maybeRoomId } = useParams();
-  const { hash } = useLocation();
+  const { hash, search } = useLocation();
   const roomId = maybeRoomId || hash;
   const { loading, error, groupCall } = useLoadGroupCall(client, roomId);
+  const simpleGrid = useMemo(
+    () => new URLSearchParams(search).has("simple"),
+    [search]
+  );
 
   useEffect(() => {
     window.groupCall = groupCall;
@@ -92,12 +97,16 @@ export function Room({ client }) {
 
   return (
     <div className={styles.room}>
-      <GroupCallView client={client} groupCall={groupCall} />
+      <GroupCallView
+        client={client}
+        groupCall={groupCall}
+        simpleGrid={simpleGrid}
+      />
     </div>
   );
 }
 
-export function GroupCallView({ client, groupCall }) {
+export function GroupCallView({ client, groupCall, simpleGrid }) {
   const {
     state,
     error,
@@ -155,6 +164,7 @@ export function GroupCallView({ client, groupCall }) {
         isScreensharing={isScreensharing}
         localScreenshareFeed={localScreenshareFeed}
         screenshareFeeds={screenshareFeeds}
+        simpleGrid={simpleGrid}
       />
     );
   } else if (state === GroupCallState.Entering) {
@@ -340,6 +350,7 @@ function InRoomView({
   toggleScreensharing,
   isScreensharing,
   screenshareFeeds,
+  simpleGrid,
 }) {
   const [showInspector, setShowInspector] = useState(false);
 
@@ -434,6 +445,8 @@ function InRoomView({
         <div className={styles.centerMessage}>
           <p>Waiting for other participants...</p>
         </div>
+      ) : simpleGrid ? (
+        <SimpleVideoGrid items={items} />
       ) : (
         <VideoGrid items={items} layout={layout} onFocusTile={onFocusTile} />
       )}
