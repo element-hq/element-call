@@ -117,6 +117,23 @@ export function GroupCallInspector({ client, groupCall, show }) {
     client.on("hangup", onCallHangup);
     client.on("toDeviceEvent", onToDeviceEvent);
 
+    onUpdateRoomState();
+  }, [client, groupCall]);
+
+  const toDeviceEventsByCall = useMemo(() => {
+    const result = {};
+
+    for (const event of toDeviceEvents) {
+      const callId = event.content.call_id;
+      const key = `${callId} (${event.sender})`;
+      result[key] = result[key] || [];
+      result[key].push(event);
+    }
+
+    return result;
+  }, [toDeviceEvents]);
+
+  useEffect(() => {
     let timeout;
 
     async function updateCallStats() {
@@ -151,27 +168,14 @@ export function GroupCallInspector({ client, groupCall, show }) {
       timeout = setTimeout(updateCallStats, 1000);
     }
 
-    updateCallStats();
-
-    onUpdateRoomState();
+    if (show) {
+      updateCallStats();
+    }
 
     return () => {
       clearTimeout(timeout);
     };
-  }, [client, groupCall]);
-
-  const toDeviceEventsByCall = useMemo(() => {
-    const result = {};
-
-    for (const event of toDeviceEvents) {
-      const callId = event.content.call_id;
-      const key = `${callId} (${event.sender})`;
-      result[key] = result[key] || [];
-      result[key].push(event);
-    }
-
-    return result;
-  }, [toDeviceEvents]);
+  }, [show]);
 
   if (!show) {
     return null;
