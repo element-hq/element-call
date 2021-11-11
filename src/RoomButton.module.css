@@ -44,22 +44,12 @@ limitations under the License.
   background-color: #ffffff;
 }
 
-.headerButton {
-  width: 32px;
-  height: 32px;
-  border-radius: 32px;
-}
-
 .headerButton svg * {
   fill: #8e99a4;
 }
 
-.headerButton:hover {
-  background-color: #8d97a5;
-}
-
 .headerButton:hover svg * {
-  fill: #394049;
+  fill: #8d97a5;
 }
 
 .headerButton.on svg * {

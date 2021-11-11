@@ -7,8 +7,8 @@ import { ReactComponent as VideoIcon } from "./icons/Video.svg";
 import { ReactComponent as DisableVideoIcon } from "./icons/DisableVideo.svg";
 import { ReactComponent as HangupIcon } from "./icons/Hangup.svg";
 import { ReactComponent as SettingsIcon } from "./icons/Settings.svg";
-import { ReactComponent as GridIcon } from "./icons/Grid.svg";
-import { ReactComponent as SpeakerIcon } from "./icons/Speaker.svg";
+import { ReactComponent as FreedomIcon } from "./icons/Freedom.svg";
+import { ReactComponent as SpotlightIcon } from "./icons/Spotlight.svg";
 import { ReactComponent as ScreenshareIcon } from "./icons/Screenshare.svg";
 import { ReactComponent as ChevronIcon } from "./icons/Chevron.svg";
 
@@ -127,7 +127,7 @@ export function HeaderButton({ on, className, children, ...rest }) {
 export function SettingsButton(props) {
   return (
     <HeaderButton {...props}>
-      <SettingsIcon />
+      <SettingsIcon width={20} height={20} />
     </HeaderButton>
   );
 }
@@ -136,9 +136,9 @@ export function LayoutToggleButton({ layout, ...rest }) {
   return (
     <HeaderButton {...rest}>
       {layout === "spotlight" ? (
-        <SpeakerIcon width={20} height={20} />
+        <SpotlightIcon width={24} height={24} />
       ) : (
-        <GridIcon width={20} height={20} />
+        <FreedomIcon width={24} height={24} />
       )}
     </HeaderButton>
   );
