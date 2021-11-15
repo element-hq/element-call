@@ -134,13 +134,20 @@ export function GroupCallView({ client, groupCall, simpleGrid }) {
       }
     }
 
+    function onError(error) {
+      Sentry.captureException(error);
+    }
+
+
     if (groupCall) {
       groupCall.on("hangup", onHangup);
+      groupCall.on("error", onError);
     }
 
     return () => {
       if (groupCall) {
         groupCall.removeListener("hangup", onHangup);
+        groupCall.removeListener("error", onError);
       }
     };
   }, [groupCall]);
