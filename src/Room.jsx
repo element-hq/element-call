@@ -448,7 +448,12 @@ function InRoomView({
       ) : simpleGrid ? (
         <SimpleVideoGrid items={items} />
       ) : (
-        <VideoGrid items={items} layout={layout} onFocusTile={onFocusTile} />
+        <VideoGrid
+          items={items}
+          layout={layout}
+          onFocusTile={onFocusTile}
+          disableAnimations={isSafari}
+        />
       )}
       <div className={styles.footer}>
         <DropdownButton
