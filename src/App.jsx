@@ -65,7 +65,7 @@ export default function App() {
             <SentryRoute exact path="/register">
               <RegisterPage onRegister={register} />
             </SentryRoute>
-            <SentryRoute path="/room/:roomId">
+            <SentryRoute path="/room/:roomId?">
               {authenticated ? (
                 <Room client={client} />
               ) : (
