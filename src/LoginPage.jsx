@@ -28,11 +28,14 @@ export function LoginPage({ onLogin }) {
   const passwordRef = useRef();
   const history = useHistory();
   const location = useLocation();
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
 
   const onSubmitLoginForm = useCallback(
     (e) => {
       e.preventDefault();
+      setLoading(true);
+
       onLogin(homeserver, usernameRef.current.value, passwordRef.current.value)
         .then(() => {
           if (location.state && location.state.from) {
@@ -41,7 +44,10 @@ export function LoginPage({ onLogin }) {
             history.replace("/");
           }
         })
-        .catch(setError);
+        .catch((error) => {
+          setError(error);
+          setLoading(false);
+        });
     },
     [onLogin, location, history, homeserver]
   );
@@ -53,59 +59,63 @@ export function LoginPage({ onLogin }) {
       </Header>
       <Content>
         <Center>
-          <Modal>
-            <h2>Login</h2>
-            <form onSubmit={onSubmitLoginForm}>
-              <FieldRow>
-                <InputField
-                  type="text"
-                  value={homeserver}
-                  onChange={(e) => setHomeServer(e.target.value)}
-                  placeholder="Homeserver"
-                  label="Homeserver"
-                  autoCorrect="off"
-                  autoCapitalize="none"
-                />
-              </FieldRow>
-              <FieldRow>
-                <InputField
-                  type="text"
-                  ref={usernameRef}
-                  placeholder="Username"
-                  label="Username"
-                  autoCorrect="off"
-                  autoCapitalize="none"
-                />
-              </FieldRow>
-              <FieldRow>
-                <InputField
-                  type="password"
-                  ref={passwordRef}
-                  placeholder="Password"
-                  label="Password"
-                />
-              </FieldRow>
-              {error && (
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
+            <Modal>
+              <h2>Login</h2>
+              <form onSubmit={onSubmitLoginForm}>
                 <FieldRow>
-                  <ErrorMessage>{error.message}</ErrorMessage>
+                  <InputField
+                    type="text"
+                    value={homeserver}
+                    onChange={(e) => setHomeServer(e.target.value)}
+                    placeholder="Homeserver"
+                    label="Homeserver"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                  />
                 </FieldRow>
-              )}
-              <FieldRow rightAlign>
-                <Button type="submit">Login</Button>
-              </FieldRow>
-            </form>
-            <Info>
-              New?{" "}
-              <Link
-                to={{
-                  pathname: "/register",
-                  state: location.state,
-                }}
-              >
-                Create account
-              </Link>
-            </Info>
-          </Modal>
+                <FieldRow>
+                  <InputField
+                    type="text"
+                    ref={usernameRef}
+                    placeholder="Username"
+                    label="Username"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                  />
+                </FieldRow>
+                <FieldRow>
+                  <InputField
+                    type="password"
+                    ref={passwordRef}
+                    placeholder="Password"
+                    label="Password"
+                  />
+                </FieldRow>
+                {error && (
+                  <FieldRow>
+                    <ErrorMessage>{error.message}</ErrorMessage>
+                  </FieldRow>
+                )}
+                <FieldRow rightAlign>
+                  <Button type="submit">Login</Button>
+                </FieldRow>
+              </form>
+              <Info>
+                New?{" "}
+                <Link
+                  to={{
+                    pathname: "/register",
+                    state: location.state,
+                  }}
+                >
+                  Create account
+                </Link>
+              </Info>
+            </Modal>
+          )}
         </Center>
       </Content>
     </>
