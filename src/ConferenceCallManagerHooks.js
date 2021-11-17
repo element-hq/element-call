@@ -19,10 +19,12 @@ import matrix from "matrix-js-sdk/src/browser-index";
 
 function waitForSync(client) {
   return new Promise((resolve, reject) => {
-    const onSync = (state) => {
+    const onSync = (state, _old, data) => {
       if (state === "PREPARED") {
         resolve();
         client.removeListener("sync", onSync);
+      } else if (state === "ERROR") {
+        reject(data?.error);
       }
     };
     client.on("sync", onSync);
