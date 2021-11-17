@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useHistory, Link } from "react-router-dom";
 import {
   useGroupCallRooms,
@@ -33,11 +33,21 @@ import { Facepile } from "./Facepile";
 
 const colorHash = new ColorHash({ lightness: 0.3 });
 
+function roomAliasFromRoomName(roomName) {
+  return roomName
+    .trim()
+    .replace(/\s/g, "-")
+    .replace(/[^\w-]/g, "")
+    .toLowerCase();
+}
+
 export function Home({ client, onLogout }) {
   const history = useHistory();
-  const roomNameRef = useRef();
-  const guestAccessRef = useRef();
+  const [roomName, setRoomName] = useState("");
+  const [roomAlias, setRoomAlias] = useState("");
+  const [guestAccess, setGuestAccess] = useState(false);
   const [createRoomError, setCreateRoomError] = useState();
+  const [showAdvanced, setShowAdvanced] = useState();
   const rooms = useGroupCallRooms(client);
   const publicRooms = usePublicRooms(
     client,
@@ -49,11 +59,12 @@ export function Home({ client, onLogout }) {
       e.preventDefault();
       setCreateRoomError(undefined);
 
-      async function createRoom(name, guestAccess) {
-        const { room_id } = await client.createRoom({
+      async function createRoom(name, roomAlias, guestAccess) {
+        const { room_id, room_alias } = await client.createRoom({
           visibility: "private",
           preset: "public_chat",
           name,
+          room_alias_name: roomAlias,
           power_level_content_override: {
             invite: 100,
             kick: 100,
@@ -92,13 +103,18 @@ export function Home({ client, onLogout }) {
           GroupCallIntent.Prompt
         );
 
-        history.push(`/room/${room_id}`);
+        history.push(`/room/${room_alias || room_id}`);
       }
 
-      createRoom(
-        roomNameRef.current.value,
-        guestAccessRef.current.checked
-      ).catch(setCreateRoomError);
+      const data = new FormData(e.target);
+      const roomName = data.get("roomName");
+      const roomAlias = data.get("roomAlias");
+      const guestAccess = data.get("guestAccess");
+
+      createRoom(roomName, roomAlias, guestAccess).catch((error) => {
+        setCreateRoomError(error);
+        setShowAdvanced(true);
+      });
     },
     [client]
   );
@@ -124,18 +140,35 @@ export function Home({ client, onLogout }) {
                     required
                     autoComplete="off"
                     placeholder="Room Name"
-                    ref={roomNameRef}
+                    value={roomName}
+                    onChange={(e) => setRoomName(e.target.value)}
                   />
                 </FieldRow>
-                <FieldRow>
-                  <InputField
-                    id="guestAccess"
-                    name="guestAccess"
-                    label="Allow Guest Access"
-                    type="checkbox"
-                    ref={guestAccessRef}
-                  />
-                </FieldRow>
+                <details open={showAdvanced}>
+                  <summary>Advanced</summary>
+                  <FieldRow>
+                    <InputField
+                      id="roomAlias"
+                      name="roomAlias"
+                      label="Room Alias"
+                      type="text"
+                      autoComplete="off"
+                      placeholder="Room Alias"
+                      value={roomAlias || roomAliasFromRoomName(roomName)}
+                      onChange={(e) => setRoomAlias(e.target.value)}
+                    />
+                  </FieldRow>
+                  <FieldRow>
+                    <InputField
+                      id="guestAccess"
+                      name="guestAccess"
+                      label="Allow Guest Access"
+                      type="checkbox"
+                      checked={guestAccess}
+                      onChange={(e) => setGuestAccess(e.target.checked)}
+                    />
+                  </FieldRow>
+                </details>
                 {createRoomError && (
                   <FieldRow>
                     <ErrorMessage>{createRoomError.message}</ErrorMessage>
@@ -175,7 +208,7 @@ export function Home({ client, onLogout }) {
                   <Link
                     className={styles.roomListItem}
                     key={room.roomId}
-                    to={`/room/${room.roomId}`}
+                    to={`/room/${room.getCanonicalAlias() || room.roomId}`}
                   >
                     <div
                       className={styles.roomAvatar}
