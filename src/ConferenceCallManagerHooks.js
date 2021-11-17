@@ -47,8 +47,13 @@ async function initClient(clientOptions, guest) {
   return client;
 }
 
-export async function fetchGroupCall(client, roomIdOrAlias, timeout = 5000) {
-  const { roomId } = await client.joinRoom(roomIdOrAlias);
+export async function fetchGroupCall(
+  client,
+  roomIdOrAlias,
+  viaServers = undefined,
+  timeout = 5000
+) {
+  const { roomId } = await client.joinRoom(roomIdOrAlias, { viaServers });
 
   return new Promise((resolve, reject) => {
     let timeoutId;

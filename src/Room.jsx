@@ -48,7 +48,7 @@ const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-function useLoadGroupCall(client, roomId) {
+function useLoadGroupCall(client, roomId, viaServers) {
   const [state, setState] = useState({
     loading: true,
     error: undefined,
@@ -57,7 +57,7 @@ function useLoadGroupCall(client, roomId) {
 
   useEffect(() => {
     setState({ loading: true });
-    fetchGroupCall(client, roomId, 30000)
+    fetchGroupCall(client, roomId, viaServers, 30000)
       .then((groupCall) => setState({ loading: false, groupCall }))
       .catch((error) => setState({ loading: false, error }));
   }, [roomId]);
@@ -68,11 +68,15 @@ function useLoadGroupCall(client, roomId) {
 export function Room({ client }) {
   const { roomId: maybeRoomId } = useParams();
   const { hash, search } = useLocation();
+  const [simpleGrid, viaServers] = useMemo(() => {
+    const params = new URLSearchParams(search);
+    return [params.has("simple"), params.getAll("via")];
+  }, [search]);
   const roomId = maybeRoomId || hash;
-  const { loading, error, groupCall } = useLoadGroupCall(client, roomId);
-  const simpleGrid = useMemo(
-    () => new URLSearchParams(search).has("simple"),
-    [search]
+  const { loading, error, groupCall } = useLoadGroupCall(
+    client,
+    roomId,
+    viaServers
   );
 
   useEffect(() => {
@@ -137,7 +141,6 @@ export function GroupCallView({ client, groupCall, simpleGrid }) {
     function onError(error) {
       Sentry.captureException(error);
     }
-
 
     if (groupCall) {
       groupCall.on("hangup", onHangup);
