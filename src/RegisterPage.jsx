@@ -25,11 +25,13 @@ export function RegisterPage({ onRegister }) {
   const registerPasswordRef = useRef();
   const history = useHistory();
   const location = useLocation();
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
 
   const onSubmitRegisterForm = useCallback(
     (e) => {
       e.preventDefault();
+      setLoading(true);
       onRegister(
         registerUsernameRef.current.value,
         registerPasswordRef.current.value
@@ -41,7 +43,10 @@ export function RegisterPage({ onRegister }) {
             history.replace("/");
           }
         })
-        .catch(setError);
+        .catch((error) => {
+          setError(error);
+          setLoading(false);
+        });
     },
     [onRegister, location, history]
   );
@@ -53,48 +58,52 @@ export function RegisterPage({ onRegister }) {
       </Header>
       <Content>
         <Center>
-          <Modal>
-            <h2>Register</h2>
-            <form onSubmit={onSubmitRegisterForm}>
-              <FieldRow>
-                <InputField
-                  type="text"
-                  ref={registerUsernameRef}
-                  placeholder="Username"
-                  label="Username"
-                  autoCorrect="off"
-                  autoCapitalize="none"
-                />
-              </FieldRow>
-              <FieldRow>
-                <InputField
-                  type="password"
-                  ref={registerPasswordRef}
-                  placeholder="Password"
-                  label="Password"
-                />
-              </FieldRow>
-              {error && (
+          {loading ? (
+            <div>Loading...</div>
+          ) : (
+            <Modal>
+              <h2>Register</h2>
+              <form onSubmit={onSubmitRegisterForm}>
                 <FieldRow>
-                  <ErrorMessage>{error.message}</ErrorMessage>
+                  <InputField
+                    type="text"
+                    ref={registerUsernameRef}
+                    placeholder="Username"
+                    label="Username"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                  />
                 </FieldRow>
-              )}
-              <FieldRow rightAlign>
-                <Button type="submit">Register</Button>
-              </FieldRow>
-            </form>
-            <Info>
-              Already have an account?{" "}
-              <Link
-                to={{
-                  pathname: "/login",
-                  state: location.state,
-                }}
-              >
-                Sign in here
-              </Link>
-            </Info>
-          </Modal>
+                <FieldRow>
+                  <InputField
+                    type="password"
+                    ref={registerPasswordRef}
+                    placeholder="Password"
+                    label="Password"
+                  />
+                </FieldRow>
+                {error && (
+                  <FieldRow>
+                    <ErrorMessage>{error.message}</ErrorMessage>
+                  </FieldRow>
+                )}
+                <FieldRow rightAlign>
+                  <Button type="submit">Register</Button>
+                </FieldRow>
+              </form>
+              <Info>
+                Already have an account?{" "}
+                <Link
+                  to={{
+                    pathname: "/login",
+                    state: location.state,
+                  }}
+                >
+                  Sign in here
+                </Link>
+              </Info>
+            </Modal>
+          )}
         </Center>
       </Content>
     </>
