@@ -30,7 +30,7 @@
 .inputField {
   border-radius: 4px;
   transition: border-color 0.25s;
-  border: 1px solid #394049;
+  border: 1px solid var(--inputBorderColor);
 }
 
 .inputField input {
@@ -52,7 +52,7 @@
 
 .inputField input:placeholder-shown:focus::placeholder {
   transition: color 0.25s ease-in 0.1s;
-  color: #6f7882;
+  color: var(--textColor2);
 }
 
 .inputField label {
@@ -74,7 +74,7 @@
 }
 
 .inputField:focus-within {
-  border-color: #0086e6;
+  border-color: var(--inputBorderColorFocused);
 }
 
 .inputField input:focus {
@@ -93,7 +93,7 @@
 }
 
 .inputField input:focus + label {
-  color: #0086e6;
+  color: var(--inputBorderColorFocused);
 }
 
 .checkboxField {

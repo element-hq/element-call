@@ -30,6 +30,9 @@ limitations under the License.
   --bgColor4: #394049;
   --bgColor5: #8d97a5;
   --textColor1: #fff;
+  --textColor2: #6f7882;
+  --inputBorderColor: #394049;
+  --inputBorderColorFocused: #0086e6;
 }
 
 @font-face {
