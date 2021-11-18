@@ -7,14 +7,14 @@
   display: flex;
   cursor: pointer;
   text-decoration: none;
-  color: white;
+  color: var(--textColor1);
   align-items: center;
 }
 
 .roomListItem:hover {
   background-color: rgba(141, 151, 165, 0.2);
   border-radius: 8px;
-  color: white;
+  color: var(--textColor1);
 }
 
 .roomAvatar {

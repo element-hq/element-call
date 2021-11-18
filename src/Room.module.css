@@ -38,7 +38,7 @@ limitations under the License.
   max-height: 225px;
   border-radius: 24px;
   overflow: hidden;
-  background-color: #444;
+  background-color: var(--bgColor3);
   margin: 40px 20px 20px 20px;
 }
 

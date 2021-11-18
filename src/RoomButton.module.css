@@ -93,7 +93,7 @@ limitations under the License.
   left: 50%;
   transform: translate(0, -100%);
   top: -5px;
-  background-color: #394049;
+  background-color: var(--bgColor4);
   border-radius: 8px;
   overflow: hidden;
 }
@@ -111,7 +111,7 @@ limitations under the License.
 }
 
 .dropdownContainer li:hover {
-  background-color: #8d97a5;
+  background-color: var(--bgColor5);
 }
 
 .dropdownActiveItem {
