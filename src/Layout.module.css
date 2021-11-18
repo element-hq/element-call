@@ -13,11 +13,11 @@
 }
 
 .modal {
-  color: white;
+  color: var(--textColor1);
   border-radius: 8px;
   padding: 25px 60px;
   max-width: 400px;
-  background-color: #21262c;
+  background-color: var(--bgColor2);
   flex: 1;
   margin-bottom: 20px;
 }

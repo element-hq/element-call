@@ -22,6 +22,16 @@ import App from "./App";
 import * as Sentry from "@sentry/react";
 import { Integrations } from "@sentry/tracing";
 
+if (import.meta.env.VITE_CUSTOM_THEME) {
+  const style = document.documentElement.style;
+  style.setProperty("--primaryColor", import.meta.env.VITE_PRIMARY_COLOR);
+  style.setProperty("--bgColor1", import.meta.env.VITE_BG_COLOR_1);
+  style.setProperty("--bgColor2", import.meta.env.VITE_BG_COLOR_2);
+  style.setProperty("--bgColor3", import.meta.env.VITE_BG_COLOR_3);
+  style.setProperty("--bgColor4", import.meta.env.VITE_BG_COLOR_4);
+  style.setProperty("--textColor1", import.meta.env.VITE_TEXT_COLOR_1);
+}
+
 const history = createBrowserHistory();
 
 Sentry.init({

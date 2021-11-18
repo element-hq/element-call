@@ -39,8 +39,8 @@
   border: none;
   border-radius: 4px;
   padding: 8px 9px;
-  color: white;
-  background-color: #21262c;
+  color: var(--textColor1);
+  background-color: var(--bgColor2);
   flex: 1;
   min-width: 0;
 }
@@ -58,7 +58,7 @@
 .inputField label {
   transition: font-size 0.25s ease-out 0.1s, color 0.25s ease-out 0.1s,
     top 0.25s ease-out 0.1s, background-color 0.25s ease-out 0.1s;
-  color: white;
+  color: var(--textColor1);
   background-color: transparent;
   font-size: 14px;
   position: absolute;
@@ -83,7 +83,7 @@
 
 .inputField input:focus + label,
 .inputField input:not(:placeholder-shown) + label {
-  background-color: #21262c;
+  background-color: var(--bgColor2);
   transition: font-size 0.25s ease-out 0s, color 0.25s ease-out 0s,
     top 0.25s ease-out 0s, background-color 0.25s ease-out 0s;
   font-size: 10px;
@@ -138,8 +138,8 @@
 }
 
 .checkboxField input[type="checkbox"]:checked + label > .checkbox {
-  background: #0dbd8b;
-  border-color: #0dbd8b;
+  background: var(--primaryColor);
+  border-color: var(--primaryColor);
 }
 
 .checkboxField input[type="checkbox"]:checked + label > .checkbox svg {
@@ -152,7 +152,7 @@
   border-radius: 8px;
   font-size: 14px;
   color: #fff;
-  background-color: #0dbd8b;
+  background-color: var(--primaryColor);
   width: auto;
   padding: 7px 15px;
   cursor: pointer;
