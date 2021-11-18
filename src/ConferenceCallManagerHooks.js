@@ -25,6 +25,7 @@ function waitForSync(client) {
         client.removeListener("sync", onSync);
       } else if (state === "ERROR") {
         reject(data?.error);
+        client.removeListener("sync", onSync);
       }
     };
     client.on("sync", onSync);
