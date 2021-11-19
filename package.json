@@ -18,6 +18,7 @@
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
     "react-json-view": "^1.21.3",
+    "react-router": "6",
     "react-router-dom": "^5.2.0"
   },
   "devDependencies": {
