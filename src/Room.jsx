@@ -286,11 +286,15 @@ function RoomSetupView({
 
 function useMediaHandler(client) {
   const [{ audioInput, videoInput, audioInputs, videoInputs }, setState] =
-    useState({
-      audioInput: null,
-      videoInput: null,
-      audioInputs: [],
-      videoInputs: [],
+    useState(() => {
+      const mediaHandler = client.getMediaHandler();
+
+      return {
+        audioInput: mediaHandler.audioInput,
+        videoInput: mediaHandler.videoInput,
+        audioInputs: [],
+        videoInputs: [],
+      };
     });
 
   useEffect(() => {
