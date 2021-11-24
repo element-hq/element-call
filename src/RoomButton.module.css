@@ -17,6 +17,7 @@ limitations under the License.
 .roomButton,
 .headerButton,
 .dropdownButton {
+  position: relative;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -116,4 +117,23 @@ limitations under the License.
 
 .dropdownActiveItem {
   color: #0dbd8b;
+}
+
+.buttonTooltip {
+  display: none;
+  background-color: var(--bgColor2);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 10px;
+  color: var(--textColor1);
+  border-radius: 8px;
+  max-width: 135px;
+  width: max-content;
+}
+
+.roomButton:hover .buttonTooltip {
+  display: flex;
 }

@@ -75,6 +75,9 @@ export function DropdownButton({ onChange, options, value, children }) {
 export function MicButton({ muted, ...rest }) {
   return (
     <RoomButton {...rest} on={muted}>
+      <ButtonTooltip>
+        {muted ? "Unmute microphone" : "Mute microphone"}
+      </ButtonTooltip>
       {muted ? <MuteMicIcon /> : <MicIcon />}
     </RoomButton>
   );
@@ -83,6 +86,9 @@ export function MicButton({ muted, ...rest }) {
 export function VideoButton({ enabled, ...rest }) {
   return (
     <RoomButton {...rest} on={enabled}>
+      <ButtonTooltip>
+        {enabled ? "Turn off camera" : "Turn on camera"}
+      </ButtonTooltip>
       {enabled ? <DisableVideoIcon /> : <VideoIcon />}
     </RoomButton>
   );
@@ -95,6 +101,9 @@ export function ScreenshareButton({ enabled, className, ...rest }) {
       {...rest}
       on={enabled}
     >
+      <ButtonTooltip>
+        {enabled ? "Stop sharing screen" : "Share screen"}
+      </ButtonTooltip>
       <ScreenshareIcon />
     </RoomButton>
   );
@@ -106,6 +115,7 @@ export function HangupButton({ className, ...rest }) {
       className={classNames(styles.hangupButton, className)}
       {...rest}
     >
+      <ButtonTooltip>Leave</ButtonTooltip>
       <HangupIcon />
     </RoomButton>
   );
@@ -142,4 +152,8 @@ export function LayoutToggleButton({ layout, ...rest }) {
       )}
     </HeaderButton>
   );
+}
+
+export function ButtonTooltip({ children }) {
+  return <div className={styles.buttonTooltip}>{children}</div>;
 }
