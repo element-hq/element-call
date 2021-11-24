@@ -137,6 +137,7 @@ export function HeaderButton({ on, className, children, ...rest }) {
 export function SettingsButton(props) {
   return (
     <HeaderButton {...props}>
+      <ButtonTooltip>Show Dev Tools</ButtonTooltip>
       <SettingsIcon width={20} height={20} />
     </HeaderButton>
   );
@@ -145,6 +146,7 @@ export function SettingsButton(props) {
 export function LayoutToggleButton({ layout, ...rest }) {
   return (
     <HeaderButton {...rest}>
+      <ButtonTooltip className={styles.bottomRight}>Layout Type</ButtonTooltip>
       {layout === "spotlight" ? (
         <SpotlightIcon width={24} height={24} />
       ) : (
@@ -154,6 +156,10 @@ export function LayoutToggleButton({ layout, ...rest }) {
   );
 }
 
-export function ButtonTooltip({ children }) {
-  return <div className={styles.buttonTooltip}>{children}</div>;
+export function ButtonTooltip({ className, children }) {
+  return (
+    <div className={classNames(styles.buttonTooltip, className)}>
+      {children}
+    </div>
+  );
 }

@@ -123,7 +123,6 @@ limitations under the License.
   display: none;
   background-color: var(--bgColor2);
   position: absolute;
-  bottom: calc(100% + 6px);
   flex-direction: row;
   justify-content: center;
   align-items: center;
@@ -132,8 +131,19 @@ limitations under the License.
   border-radius: 8px;
   max-width: 135px;
   width: max-content;
+  z-index: 1;
+}
+
+.buttonTooltip.bottomRight {
+  right: 0;
 }
 
 .roomButton:hover .buttonTooltip {
   display: flex;
+  bottom: calc(100% + 6px);
+}
+
+.headerButton:hover .buttonTooltip {
+  display: flex;
+  top: calc(100% + 6px);
 }
