@@ -349,14 +349,11 @@ function useMediaHandler(client) {
 
     updateDevices();
 
-    mediaHandler.on("MediaHandler.localStreamsChanged", updateDevices);
+    mediaHandler.on("local_streams_changed", updateDevices);
     navigator.mediaDevices.addEventListener("devicechange", updateDevices);
 
     return () => {
-      mediaHandler.removeListener(
-        "MediaHandler.localStreamsChanged",
-        updateDevices
-      );
+      mediaHandler.removeListener("local_streams_changed", updateDevices);
       navigator.mediaDevices.removeEventListener("devicechange", updateDevices);
     };
   }, []);
