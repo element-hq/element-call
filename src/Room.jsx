@@ -182,6 +182,7 @@ export function GroupCallView({ client, groupCall, simpleGrid }) {
   } else {
     return (
       <RoomSetupView
+        client={client}
         hasLocalParticipant={hasLocalParticipant}
         roomName={groupCall.room.name}
         state={state}
@@ -218,6 +219,7 @@ export function EnteringRoomView() {
 }
 
 function RoomSetupView({
+  client,
   roomName,
   state,
   onInitLocalCallFeed,
@@ -231,6 +233,15 @@ function RoomSetupView({
 }) {
   const { stream } = useCallFeed(localCallFeed);
   const videoRef = useMediaStream(stream, true);
+
+  const {
+    audioInput,
+    audioInputs,
+    setAudioInput,
+    videoInput,
+    videoInputs,
+    setVideoInput,
+  } = useMediaHandler(client);
 
   useEffect(() => {
     onInitLocalCallFeed();
@@ -263,14 +274,32 @@ function RoomSetupView({
         </div>
         {state === GroupCallState.LocalCallFeedInitialized && (
           <div className={styles.previewButtons}>
-            <MicButton
-              muted={microphoneMuted}
-              onClick={toggleMicrophoneMuted}
-            />
-            <VideoButton
-              enabled={localVideoMuted}
-              onClick={toggleLocalVideoMuted}
-            />
+            <DropdownButton
+              value={audioInput}
+              onChange={({ value }) => setAudioInput(value)}
+              options={audioInputs.map(({ label, deviceId }) => ({
+                label,
+                value: deviceId,
+              }))}
+            >
+              <MicButton
+                muted={microphoneMuted}
+                onClick={toggleMicrophoneMuted}
+              />
+            </DropdownButton>
+            <DropdownButton
+              value={videoInput}
+              onChange={({ value }) => setVideoInput(value)}
+              options={videoInputs.map(({ label, deviceId }) => ({
+                label,
+                value: deviceId,
+              }))}
+            >
+              <VideoButton
+                enabled={localVideoMuted}
+                onClick={toggleLocalVideoMuted}
+              />
+            </DropdownButton>
           </div>
         )}
         <Button
@@ -298,6 +327,8 @@ function useMediaHandler(client) {
     });
 
   useEffect(() => {
+    const mediaHandler = client.getMediaHandler();
+
     function updateDevices() {
       navigator.mediaDevices.enumerateDevices().then((devices) => {
         const audioInputs = devices.filter(
@@ -308,7 +339,8 @@ function useMediaHandler(client) {
         );
 
         setState((prevState) => ({
-          ...prevState,
+          audioInput: mediaHandler.audioInput,
+          videoInput: mediaHandler.videoInput,
           audioInputs,
           videoInputs,
         }));
@@ -317,9 +349,14 @@ function useMediaHandler(client) {
 
     updateDevices();
 
+    mediaHandler.on("MediaHandler.localStreamsChanged", updateDevices);
     navigator.mediaDevices.addEventListener("devicechange", updateDevices);
 
     return () => {
+      mediaHandler.removeListener(
+        "MediaHandler.localStreamsChanged",
+        updateDevices
+      );
       navigator.mediaDevices.removeEventListener("devicechange", updateDevices);
     };
   }, []);
