@@ -1,16 +1,18 @@
 .header {
   position: relative;
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   align-items: center;
   height: 64px;
   user-select: none;
   flex-shrink: 0;
 }
 
-.leftNav {
-  position: absolute;
-  left: 20px;
+.nav {
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  margin: 0 20px;
 }
 
 .logo {
@@ -19,19 +21,52 @@
   text-decoration: none;
 }
 
-.rightNav {
-  position: absolute;
-  right: 20px;
-  max-width: 40%;
-  white-space: nowrap;
-  display: flex;
+.leftNav > * {
+  margin-right: 12px;
 }
 
 .rightNav > * {
   margin-right: 24px;
 }
 
-.rightNav > :last-child {
+.nav > :last-child {
+  margin-right: 0;
+}
+
+.roomAvatar {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 36px;
+  background-color: #5c56f5;
+}
+
+.roomAvatar > * {
+  fill: white;
+  stroke: white;
+}
+
+.backButton {
+  background: transparent;
+  border: none;
+  display: flex;
+  color: var(--textColor1);
+  cursor: pointer;
+  align-items: center;
+}
+
+.backButton h3 {
+  margin: 0;
+}
+
+.backButton > * {
+  margin-right: 12px;
+}
+
+.backButton > :last-child {
   margin-right: 0;
 }
 
