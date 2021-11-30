@@ -26,7 +26,7 @@ import {
   DropdownButton,
   SettingsButton,
 } from "./RoomButton";
-import { Header, LeftNav, RightNav, CenterNav } from "./Header";
+import { Header, LeftNav, RoomHeader, RoomSetupHeader } from "./Header";
 import { Button } from "./Input";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import VideoGrid, {
@@ -249,12 +249,7 @@ function RoomSetupView({
 
   return (
     <>
-      <Header>
-        <LeftNav />
-        <CenterNav>
-          <h3>{roomName}</h3>
-        </CenterNav>
-      </Header>
+      <RoomSetupHeader roomName={roomName} />
       <div className={styles.joinRoom}>
         {hasLocalParticipant && (
           <p>Warning, you are signed into this call on another device.</p>
@@ -470,24 +465,18 @@ function InRoomView({
 
   return (
     <>
-      <Header>
-        <LeftNav />
-        <CenterNav>
-          <h3>{roomName}</h3>
-        </CenterNav>
-        <RightNav>
-          <SettingsButton
-            title={showInspector ? "Hide Inspector" : "Show Inspector"}
-            on={showInspector}
-            onClick={() => setShowInspector((prev) => !prev)}
-          />
-          <LayoutToggleButton
-            title={layout === "spotlight" ? "Spotlight" : "Gallery"}
-            layout={layout}
-            onClick={toggleLayout}
-          />
-        </RightNav>
-      </Header>
+      <RoomHeader roomName={roomName}>
+        <SettingsButton
+          title={showInspector ? "Hide Inspector" : "Show Inspector"}
+          on={showInspector}
+          onClick={() => setShowInspector((prev) => !prev)}
+        />
+        <LayoutToggleButton
+          title={layout === "spotlight" ? "Spotlight" : "Gallery"}
+          layout={layout}
+          onClick={toggleLayout}
+        />
+      </RoomHeader>
       {items.length === 0 ? (
         <div className={styles.centerMessage}>
           <p>Waiting for other participants...</p>

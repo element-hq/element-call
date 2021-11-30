@@ -1,8 +1,67 @@
 import classNames from "classnames";
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useHistory } from "react-router-dom";
 import styles from "./Header.module.css";
-import { ReactComponent as Logo } from "./Logo.svg";
+import { ReactComponent as LogoIcon } from "./Logo.svg";
+import { ReactComponent as VideoIcon } from "./icons/Video.svg";
+import { ReactComponent as ArrowLeftIcon } from "./icons/ArrowLeft.svg";
+
+export function RoomHeader({ roomName, children }) {
+  return (
+    <Header>
+      <LeftNav>
+        <div className={styles.roomAvatar}>
+          <VideoIcon width={16} height={16} />
+        </div>
+        <h3>{roomName}</h3>
+      </LeftNav>
+      <RightNav>{children}</RightNav>
+    </Header>
+  );
+}
+
+export function RoomSetupHeader({ roomName, children }) {
+  const history = useHistory();
+
+  return (
+    <Header>
+      <LeftNav>
+        <button className={styles.backButton} onClick={() => history.goBack()}>
+          <ArrowLeftIcon width={16} height={16} />
+          <div className={styles.roomAvatar}>
+            <VideoIcon width={16} height={16} />
+          </div>
+          <h3>{roomName}</h3>
+        </button>
+      </LeftNav>
+      <RightNav>{children}</RightNav>
+    </Header>
+  );
+}
+
+export function HomeHeader({ userName, signedIn, onLogout }) {
+  return (
+    <Header>
+      <LeftNav>
+        <Link className={styles.logo} to="/">
+          <LogoIcon width={32} height={32} />
+        </Link>
+      </LeftNav>
+      {signedIn && (
+        <RightNav>
+          <span className={styles.userName}>{userName}</span>
+          <button
+            className={styles.signOutButton}
+            type="button"
+            onClick={onLogout}
+          >
+            Sign Out
+          </button>
+        </RightNav>
+      )}
+    </Header>
+  );
+}
 
 export function Header({ children, className, ...rest }) {
   return (
@@ -14,18 +73,10 @@ export function Header({ children, className, ...rest }) {
 
 export function LeftNav({ children, className, ...rest }) {
   return (
-    <div className={classNames(styles.leftNav, className)} {...rest}>
-      <Link className={styles.logo} to="/">
-        <Logo width={32} height={32} />
-      </Link>
-      {children}
-    </div>
-  );
-}
-
-export function CenterNav({ children, className, ...rest }) {
-  return (
-    <div className={classNames(styles.centerNav, className)} {...rest}>
+    <div
+      className={classNames(styles.nav, styles.leftNav, className)}
+      {...rest}
+    >
       {children}
     </div>
   );
@@ -33,23 +84,11 @@ export function CenterNav({ children, className, ...rest }) {
 
 export function RightNav({ children, className, ...rest }) {
   return (
-    <div className={classNames(styles.rightNav, className)} {...rest}>
+    <div
+      className={classNames(styles.nav, styles.rightNav, className)}
+      {...rest}
+    >
       {children}
     </div>
-  );
-}
-
-export function UserNav({ signedIn, userName, onLogout }) {
-  if (!signedIn) {
-    return null;
-  }
-
-  return (
-    <RightNav>
-      <span className={styles.userName}>{userName}</span>
-      <button className={styles.signOutButton} type="button" onClick={onLogout}>
-        Sign Out
-      </button>
-    </RightNav>
   );
 }

@@ -20,7 +20,7 @@ import {
   useGroupCallRooms,
   usePublicRooms,
 } from "./ConferenceCallManagerHooks";
-import { Header, LeftNav, UserNav } from "./Header";
+import { HomeHeader } from "./Header";
 import ColorHash from "color-hash";
 import styles from "./Home.module.css";
 import { FieldRow, InputField, Button, ErrorMessage } from "./Input";
@@ -121,10 +121,7 @@ export function Home({ client, onLogout }) {
 
   return (
     <>
-      <Header>
-        <LeftNav />
-        <UserNav signedIn userName={client.getUserId()} onLogout={onLogout} />
-      </Header>
+      <HomeHeader signedIn userName={client.getUserId()} onLogout={onLogout} />
       <Content>
         <Center>
           <Modal>
