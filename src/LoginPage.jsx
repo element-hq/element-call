@@ -16,7 +16,7 @@ limitations under the License.
 
 import React, { useCallback, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
-import { Header, LeftNav } from "./Header";
+import { Header, HeaderLogo, LeftNav } from "./Header";
 import { FieldRow, InputField, Button, ErrorMessage } from "./Input";
 import { Center, Content, Info, Modal } from "./Layout";
 
@@ -55,7 +55,9 @@ export function LoginPage({ onLogin }) {
   return (
     <>
       <Header>
-        <LeftNav />
+        <LeftNav>
+          <HeaderLogo />
+        </LeftNav>
       </Header>
       <Content>
         <Center>

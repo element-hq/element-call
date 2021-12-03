@@ -16,7 +16,7 @@ limitations under the License.
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./Room.module.css";
-import { useLocation, useParams } from "react-router-dom";
+import { useLocation, useParams, useHistory } from "react-router-dom";
 import {
   HangupButton,
   MicButton,
@@ -26,7 +26,14 @@ import {
   DropdownButton,
   SettingsButton,
 } from "./RoomButton";
-import { Header, LeftNav, RoomHeader, RoomSetupHeader } from "./Header";
+import {
+  Header,
+  LeftNav,
+  RightNav,
+  RoomHeaderInfo,
+  RoomSetupHeaderInfo,
+  UserDropdownMenu,
+} from "./Header";
 import { Button } from "./Input";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import VideoGrid, {
@@ -65,7 +72,7 @@ function useLoadGroupCall(client, roomId, viaServers) {
   return state;
 }
 
-export function Room({ client }) {
+export function Room({ client, onLogout }) {
   const { roomId: maybeRoomId } = useParams();
   const { hash, search } = useLocation();
   const [simpleGrid, viaServers] = useMemo(() => {
@@ -94,6 +101,11 @@ export function Room({ client }) {
   if (error) {
     return (
       <div className={styles.room}>
+        <Header>
+          <LeftNav>
+            <HeaderLogo />
+          </LeftNav>
+        </Header>
         <ErrorModal error={error} />
       </div>
     );
@@ -102,6 +114,7 @@ export function Room({ client }) {
   return (
     <div className={styles.room}>
       <GroupCallView
+        onLogout={onLogout}
         client={client}
         groupCall={groupCall}
         simpleGrid={simpleGrid}
@@ -110,7 +123,7 @@ export function Room({ client }) {
   );
 }
 
-export function GroupCallView({ client, groupCall, simpleGrid }) {
+export function GroupCallView({ client, groupCall, simpleGrid, onLogout }) {
   const {
     state,
     error,
@@ -156,10 +169,20 @@ export function GroupCallView({ client, groupCall, simpleGrid }) {
   }, [groupCall]);
 
   if (error) {
-    return <ErrorModal error={error} />;
+    return (
+      <>
+        <Header>
+          <LeftNav>
+            <HeaderLogo />
+          </LeftNav>
+        </Header>
+        <ErrorModal error={error} />
+      </>
+    );
   } else if (state === GroupCallState.Entered) {
     return (
       <InRoomView
+        onLogout={onLogout}
         groupCall={groupCall}
         client={client}
         roomName={groupCall.room.name}
@@ -182,6 +205,7 @@ export function GroupCallView({ client, groupCall, simpleGrid }) {
   } else {
     return (
       <RoomSetupView
+        onLogout={onLogout}
         client={client}
         hasLocalParticipant={hasLocalParticipant}
         roomName={groupCall.room.name}
@@ -219,6 +243,7 @@ export function EnteringRoomView() {
 }
 
 function RoomSetupView({
+  onLogout,
   client,
   roomName,
   state,
@@ -231,6 +256,7 @@ function RoomSetupView({
   toggleMicrophoneMuted,
   hasLocalParticipant,
 }) {
+  const history = useHistory();
   const { stream } = useCallFeed(localCallFeed);
   const videoRef = useMediaStream(stream, true);
 
@@ -249,7 +275,21 @@ function RoomSetupView({
 
   return (
     <>
-      <RoomSetupHeader roomName={roomName} />
+      <Header>
+        <LeftNav>
+          <RoomSetupHeaderInfo
+            onBack={() => history.goBack()}
+            roomName={roomName}
+          />
+        </LeftNav>
+        <RightNav>
+          <UserDropdownMenu
+            userName={client.getUserIdLocalpart()}
+            signedIn
+            onLogout={onLogout}
+          />
+        </RightNav>
+      </Header>
       <div className={styles.joinRoom}>
         {hasLocalParticipant && (
           <p>Warning, you are signed into this call on another device.</p>
@@ -380,6 +420,7 @@ function useMediaHandler(client) {
 }
 
 function InRoomView({
+  onLogout,
   client,
   groupCall,
   roomName,
@@ -397,7 +438,7 @@ function InRoomView({
 }) {
   const [showInspector, setShowInspector] = useState(false);
 
-  const [layout, toggleLayout] = useVideoGridLayout();
+  const [layout, setLayout] = useVideoGridLayout();
 
   const {
     audioInput,
@@ -407,12 +448,6 @@ function InRoomView({
     videoInputs,
     setVideoInput,
   } = useMediaHandler(client);
-
-  useEffect(() => {
-    if (screenshareFeeds.length > 0 && layout === "gallery") {
-      toggleLayout();
-    }
-  }, [screenshareFeeds]);
 
   const items = useMemo(() => {
     const participants = [];
@@ -440,7 +475,7 @@ function InRoomView({
 
   const onFocusTile = useCallback(
     (tiles, focusedTile) => {
-      if (layout === "gallery") {
+      if (layout === "freedom") {
         return tiles.map((tile) => {
           if (tile === focusedTile) {
             return { ...tile, presenter: !tile.presenter };
@@ -449,7 +484,7 @@ function InRoomView({
           return tile;
         });
       } else {
-        toggleLayout();
+        setLayout("spotlight");
 
         return tiles.map((tile) => {
           if (tile === focusedTile) {
@@ -460,23 +495,33 @@ function InRoomView({
         });
       }
     },
-    [layout, toggleLayout]
+    [layout, setLayout]
   );
 
   return (
     <>
-      <RoomHeader roomName={roomName}>
-        <SettingsButton
-          title={showInspector ? "Hide Inspector" : "Show Inspector"}
-          on={showInspector}
-          onClick={() => setShowInspector((prev) => !prev)}
-        />
-        <LayoutToggleButton
-          title={layout === "spotlight" ? "Spotlight" : "Gallery"}
-          layout={layout}
-          onClick={toggleLayout}
-        />
-      </RoomHeader>
+      <Header>
+        <LeftNav>
+          <RoomHeaderInfo roomName={roomName} />
+        </LeftNav>
+        <RightNav>
+          <SettingsButton
+            title={showInspector ? "Hide Inspector" : "Show Inspector"}
+            on={showInspector}
+            onClick={() => setShowInspector((prev) => !prev)}
+          />
+          <LayoutToggleButton
+            title={layout === "spotlight" ? "Spotlight" : "Freedom"}
+            layout={layout}
+            setLayout={setLayout}
+          />
+          <UserDropdownMenu
+            userName={client.getUserIdLocalpart()}
+            signedIn
+            onLogout={onLogout}
+          />
+        </RightNav>
+      </Header>
       {items.length === 0 ? (
         <div className={styles.centerMessage}>
           <p>Waiting for other participants...</p>

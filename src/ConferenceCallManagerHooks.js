@@ -249,8 +249,8 @@ export function useClient(homeserverUrl) {
 
   const logout = useCallback(() => {
     localStorage.removeItem("matrix-auth-store");
-    setState({ client: undefined, loading: false, authenticated: false });
-  }, []);
+    window.location = "/";
+  }, [history]);
 
   return {
     loading,
