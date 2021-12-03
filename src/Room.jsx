@@ -24,7 +24,7 @@ import {
   LayoutToggleButton,
   ScreenshareButton,
   DropdownButton,
-  SettingsButton,
+  InviteButton,
 } from "./RoomButton";
 import {
   Header,
@@ -48,6 +48,8 @@ import { fetchGroupCall } from "./ConferenceCallManagerHooks";
 import { ErrorModal } from "./ErrorModal";
 import { GroupCallInspector } from "./GroupCallInspector";
 import * as Sentry from "@sentry/react";
+import { Overlay } from "./Overlay";
+import { InviteModal } from "./InviteModal";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -505,11 +507,12 @@ function InRoomView({
           <RoomHeaderInfo roomName={roomName} />
         </LeftNav>
         <RightNav>
-          <SettingsButton
-            title={showInspector ? "Hide Inspector" : "Show Inspector"}
-            on={showInspector}
-            onClick={() => setShowInspector((prev) => !prev)}
-          />
+          <Overlay>
+            <InviteButton />
+            {(props) => (
+              <InviteModal roomUrl="https://example.com" {...props} />
+            )}
+          </Overlay>
           <LayoutToggleButton
             title={layout === "spotlight" ? "Spotlight" : "Freedom"}
             layout={layout}
