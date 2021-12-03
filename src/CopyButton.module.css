@@ -1,0 +1,35 @@
+.copyButton {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: transparent;
+  padding: 0;
+  cursor: pointer;
+  border: 2px solid #0dbd8b;
+  border-radius: 8px;
+  color: #0dbd8b;
+  width: 100%;
+  transition: border-color 250ms, background-color 250ms;
+  height: 40px;
+}
+
+.copyButton span {
+  font-weight: 600;
+  font-size: 15px;
+  margin-right: 10px;
+}
+
+.copyButton:not(.copied) svg * {
+  fill: #0dbd8b;
+}
+
+.copyButton.copied {
+  border-color: transparent;
+  background-color: #0dbd8b;
+  color: white;
+}
+
+.copyButton.copied svg * {
+  stroke: white;
+}
