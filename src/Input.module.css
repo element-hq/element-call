@@ -109,6 +109,7 @@
 }
 
 .checkboxField input {
+  outline: 0;
   appearance: none;
   -webkit-appearance: none;
   margin: 0;
@@ -146,6 +147,10 @@
   display: flex;
 }
 
+.checkboxField:focus-within .checkbox {
+  border: 1.5px solid var(--inputBorderColorFocused) !important;
+}
+
 .button {
   vertical-align: middle;
   border: 0;
@@ -157,7 +162,6 @@
   padding: 7px 15px;
   cursor: pointer;
   display: inline-block;
-  outline: none;
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
   text-align: center;

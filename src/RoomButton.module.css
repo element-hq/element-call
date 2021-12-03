@@ -53,6 +53,10 @@ limitations under the License.
   fill: #8d97a5;
 }
 
+.headerButton:hover svg * {
+  fill: #8d97a5;
+}
+
 .headerButton.on svg * {
   fill: #0dbd8b;
 }
@@ -99,6 +103,21 @@ limitations under the License.
   overflow: hidden;
 }
 
+.headerDropdownContainer {
+  transform: translate(-100%, 36px);
+  left: 100%;
+  z-index: 1;
+}
+
+.checkIcon {
+  position: absolute;
+  right: 16px;
+}
+
+.checkIcon * {
+  stroke: var(--textColor1);
+}
+
 .dropdownContainer ul {
   list-style: none;
   margin: 0;
@@ -106,9 +125,21 @@ limitations under the License.
 }
 
 .dropdownContainer li {
+  position: relative;
   padding: 12px;
   width: 200px;
   cursor: pointer;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+}
+
+.dropdownContainer li > * {
+  margin-right: 5px;
+}
+
+.dropdownContainer li > :last-child {
+  margin-right: 0;
 }
 
 .dropdownContainer li:hover {
@@ -146,4 +177,32 @@ limitations under the License.
 .headerButton:hover .buttonTooltip {
   display: flex;
   top: calc(100% + 6px);
+}
+
+.userButton {
+  display: flex;
+  align-items: center;
+  color: var(--textColor1);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.userButton > * {
+  margin-right: 5px;
+}
+
+.userButton svg * {
+  fill: var(--textColor1) !important;
+}
+
+.headerButton:hover .userButton > * {
+  color: var(--textColor1);
+}
+
+.headerButton:hover .userButton svg * {
+  fill: var(--textColor1);
+}
+
+.userButton > :last-child {
+  margin-right: 0;
 }

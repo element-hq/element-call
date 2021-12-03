@@ -67,7 +67,7 @@ export default function App() {
             </SentryRoute>
             <SentryRoute path="/room/:roomId?">
               {authenticated ? (
-                <Room client={client} />
+                <Room client={client} onLogout={logout} />
               ) : (
                 <GuestAuthPage onLoginAsGuest={registerGuest} />
               )}

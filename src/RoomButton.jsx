@@ -11,6 +11,8 @@ import { ReactComponent as FreedomIcon } from "./icons/Freedom.svg";
 import { ReactComponent as SpotlightIcon } from "./icons/Spotlight.svg";
 import { ReactComponent as ScreenshareIcon } from "./icons/Screenshare.svg";
 import { ReactComponent as ChevronIcon } from "./icons/Chevron.svg";
+import { ReactComponent as UserIcon } from "./icons/User.svg";
+import { ReactComponent as CheckIcon } from "./icons/Check.svg";
 
 export function RoomButton({ on, className, children, ...rest }) {
   return (
@@ -134,6 +136,72 @@ export function HeaderButton({ on, className, children, ...rest }) {
   );
 }
 
+export function HeaderDropdownButton({ children, content }) {
+  const buttonRef = useRef();
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    function onClick() {
+      if (open) {
+        setOpen(false);
+      }
+    }
+
+    window.addEventListener("click", onClick);
+
+    return () => {
+      window.removeEventListener("click", onClick);
+    };
+  }, [open]);
+
+  return (
+    <div className={styles.dropdownButtonContainer}>
+      <button
+        ref={buttonRef}
+        className={classNames(styles.headerButton, { [styles.on]: open })}
+        onClick={() => setOpen(true)}
+      >
+        {children}
+      </button>
+      {open && (
+        <div
+          className={classNames(
+            styles.dropdownContainer,
+            styles.headerDropdownContainer
+          )}
+        >
+          <ul>{content}</ul>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function HeaderDropdownItem({ active, children, className, ...rest }) {
+  return (
+    <li
+      className={classNames(className, {
+        [styles.dropdownActiveItem]: active,
+      })}
+      {...rest}
+    >
+      {children}
+    </li>
+  );
+}
+
+export function UserMenu({ userName, children }) {
+  return (
+    <HeaderDropdownButton content={children}>
+      <ButtonTooltip>Profile</ButtonTooltip>
+      <div className={styles.userButton}>
+        <UserIcon />
+        <span>{userName}</span>
+      </div>
+    </HeaderDropdownButton>
+  );
+}
+
 export function SettingsButton(props) {
   return (
     <HeaderButton {...props}>
@@ -143,16 +211,30 @@ export function SettingsButton(props) {
   );
 }
 
-export function LayoutToggleButton({ layout, ...rest }) {
+export function LayoutToggleButton({ layout, setLayout, ...rest }) {
   return (
-    <HeaderButton {...rest}>
-      <ButtonTooltip className={styles.bottomRight}>Layout Type</ButtonTooltip>
-      {layout === "spotlight" ? (
-        <SpotlightIcon width={24} height={24} />
-      ) : (
-        <FreedomIcon width={24} height={24} />
-      )}
-    </HeaderButton>
+    <HeaderDropdownButton
+      {...rest}
+      content={
+        <>
+          <HeaderDropdownItem onClick={() => setLayout("freedom")}>
+            <FreedomIcon />
+            <span>Freedom</span>
+            {layout === "freedom" && <CheckIcon className={styles.checkIcon} />}
+          </HeaderDropdownItem>
+          <HeaderDropdownItem onClick={() => setLayout("spotlight")}>
+            <SpotlightIcon />
+            <span>Spotlight</span>
+            {layout === "spotlight" && (
+              <CheckIcon className={styles.checkIcon} />
+            )}
+          </HeaderDropdownItem>
+        </>
+      }
+    >
+      <ButtonTooltip>Layout Type</ButtonTooltip>
+      {layout === "spotlight" ? <SpotlightIcon /> : <FreedomIcon />}
+    </HeaderDropdownButton>
   );
 }
 

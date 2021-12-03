@@ -17,7 +17,7 @@ limitations under the License.
 import React, { useState, useEffect } from "react";
 import styles from "./GuestAuthPage.module.css";
 import { useLocation, useHistory } from "react-router-dom";
-import { Header, LeftNav } from "./Header";
+import { Header, LeftNav, HeaderLogo } from "./Header";
 import { Center, Content, Modal } from "./Layout";
 import { ErrorModal } from "./ErrorModal";
 
@@ -33,7 +33,9 @@ export function GuestAuthPage({ onLoginAsGuest }) {
   return (
     <div className={styles.guestAuthPage}>
       <Header>
-        <LeftNav />
+        <LeftNav>
+          <HeaderLogo />
+        </LeftNav>
       </Header>
       <Content>
         <Center>
