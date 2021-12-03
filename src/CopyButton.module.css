@@ -4,20 +4,28 @@
   justify-content: center;
   align-items: center;
   background-color: transparent;
-  padding: 0;
   cursor: pointer;
   border: 2px solid #0dbd8b;
   border-radius: 8px;
   color: #0dbd8b;
   width: 100%;
-  transition: border-color 250ms, background-color 250ms;
   height: 40px;
+  transition: border-color 250ms, background-color 250ms;
+  padding: 0 20px;
 }
 
 .copyButton span {
   font-weight: 600;
   font-size: 15px;
   margin-right: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.copyButton svg {
+  flex-shrink: 0;
 }
 
 .copyButton:not(.copied) svg * {
