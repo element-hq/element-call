@@ -21,7 +21,7 @@ export function Modal(props) {
   const { dialogProps, titleProps } = useDialog(props, modalRef);
   const closeButtonRef = useRef();
   const { buttonProps: closeButtonProps } = useButton({
-    onPress: () => props.close(),
+    onPress: () => props.onClose(),
   });
 
   return (

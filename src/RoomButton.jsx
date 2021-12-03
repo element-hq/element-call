@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState, useEffect, forwardRef } from "react";
 import classNames from "classnames";
 import styles from "./RoomButton.module.css";
 import { ReactComponent as MicIcon } from "./icons/Mic.svg";
@@ -12,19 +12,23 @@ import { ReactComponent as SpotlightIcon } from "./icons/Spotlight.svg";
 import { ReactComponent as ScreenshareIcon } from "./icons/Screenshare.svg";
 import { ReactComponent as ChevronIcon } from "./icons/Chevron.svg";
 import { ReactComponent as UserIcon } from "./icons/User.svg";
-import { ReactComponent as AddUserIcon } from "./icons/AddUser.svg";
 import { ReactComponent as CheckIcon } from "./icons/Check.svg";
 
-export function RoomButton({ on, className, children, ...rest }) {
-  return (
-    <button
-      className={classNames(styles.roomButton, className, { [styles.on]: on })}
-      {...rest}
-    >
-      {children}
-    </button>
-  );
-}
+export const RoomButton = forwardRef(
+  ({ on, className, children, ...rest }, ref) => {
+    return (
+      <button
+        className={classNames(styles.roomButton, className, {
+          [styles.on]: on,
+        })}
+        {...rest}
+        ref={ref}
+      >
+        {children}
+      </button>
+    );
+  }
+);
 
 export function DropdownButton({ onChange, options, value, children }) {
   const buttonRef = useRef();
@@ -124,18 +128,21 @@ export function HangupButton({ className, ...rest }) {
   );
 }
 
-export function HeaderButton({ on, className, children, ...rest }) {
-  return (
-    <button
-      className={classNames(styles.headerButton, className, {
-        [styles.on]: on,
-      })}
-      {...rest}
-    >
-      {children}
-    </button>
-  );
-}
+export const HeaderButton = forwardRef(
+  ({ on, className, children, ...rest }, ref) => {
+    return (
+      <button
+        className={classNames(styles.headerButton, className, {
+          [styles.on]: on,
+        })}
+        {...rest}
+        ref={ref}
+      >
+        {children}
+      </button>
+    );
+  }
+);
 
 export function HeaderDropdownButton({ children, content }) {
   const buttonRef = useRef();
@@ -208,15 +215,6 @@ export function SettingsButton(props) {
     <HeaderButton {...props}>
       <ButtonTooltip>Show Dev Tools</ButtonTooltip>
       <SettingsIcon width={20} height={20} />
-    </HeaderButton>
-  );
-}
-
-export function InviteButton(props) {
-  return (
-    <HeaderButton {...props}>
-      <ButtonTooltip>Add User</ButtonTooltip>
-      <AddUserIcon width={20} height={20} />
     </HeaderButton>
   );
 }

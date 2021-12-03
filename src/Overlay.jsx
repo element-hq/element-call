@@ -53,7 +53,8 @@ export function Overlay({ children }) {
         {...buttonProps}
         ref={buttonRef}
       />
-      {overlayState.isOpen && overlay({ ...overlayState })}
+      {overlayState.isOpen &&
+        overlay({ isOpen: overlayState.isOpen, onClose: overlayState.close })}
     </>
   );
 }
