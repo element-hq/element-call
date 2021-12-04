@@ -13,15 +13,17 @@ import { ReactComponent as ScreenshareIcon } from "./icons/Screenshare.svg";
 import { ReactComponent as ChevronIcon } from "./icons/Chevron.svg";
 import { ReactComponent as UserIcon } from "./icons/User.svg";
 import { ReactComponent as CheckIcon } from "./icons/Check.svg";
+import { useButton } from "@react-aria/button";
 
 export const RoomButton = forwardRef(
   ({ on, className, children, ...rest }, ref) => {
+    const { buttonProps } = useButton(rest, ref);
     return (
       <button
         className={classNames(styles.roomButton, className, {
           [styles.on]: on,
         })}
-        {...rest}
+        {...buttonProps}
         ref={ref}
       >
         {children}
@@ -130,12 +132,13 @@ export function HangupButton({ className, ...rest }) {
 
 export const HeaderButton = forwardRef(
   ({ on, className, children, ...rest }, ref) => {
+    const { buttonProps } = useButton(rest, ref);
     return (
       <button
         className={classNames(styles.headerButton, className, {
           [styles.on]: on,
         })}
-        {...rest}
+        {...buttonProps}
         ref={ref}
       >
         {children}

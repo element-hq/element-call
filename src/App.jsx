@@ -22,8 +22,6 @@ import {
   Redirect,
   useLocation,
 } from "react-router-dom";
-import styles from "./App.module.css";
-import { OverlayProvider } from "@react-aria/overlays";
 import * as Sentry from "@sentry/react";
 import { useClient } from "./ConferenceCallManagerHooks";
 import { Home } from "./Home";
@@ -50,36 +48,34 @@ export default function App() {
   } = useClient(homeserverUrl);
 
   return (
-    <OverlayProvider className={styles.overlayProvider}>
-      <Router>
-        <>
-          {loading ? (
-            <Center>
-              <p>Loading...</p>
-            </Center>
-          ) : (
-            <Switch>
-              <AuthenticatedRoute authenticated={authenticated} exact path="/">
-                <Home client={client} onLogout={logout} />
-              </AuthenticatedRoute>
-              <SentryRoute exact path="/login">
-                <LoginPage onLogin={login} />
-              </SentryRoute>
-              <SentryRoute exact path="/register">
-                <RegisterPage onRegister={register} />
-              </SentryRoute>
-              <SentryRoute path="/room/:roomId?">
-                {authenticated ? (
-                  <Room client={client} onLogout={logout} />
-                ) : (
-                  <GuestAuthPage onLoginAsGuest={registerGuest} />
-                )}
-              </SentryRoute>
-            </Switch>
-          )}
-        </>
-      </Router>
-    </OverlayProvider>
+    <Router>
+      <>
+        {loading ? (
+          <Center>
+            <p>Loading...</p>
+          </Center>
+        ) : (
+          <Switch>
+            <AuthenticatedRoute authenticated={authenticated} exact path="/">
+              <Home client={client} onLogout={logout} />
+            </AuthenticatedRoute>
+            <SentryRoute exact path="/login">
+              <LoginPage onLogin={login} />
+            </SentryRoute>
+            <SentryRoute exact path="/register">
+              <RegisterPage onRegister={register} />
+            </SentryRoute>
+            <SentryRoute path="/room/:roomId?">
+              {authenticated ? (
+                <Room client={client} onLogout={logout} />
+              ) : (
+                <GuestAuthPage onLoginAsGuest={registerGuest} />
+              )}
+            </SentryRoute>
+          </Switch>
+        )}
+      </>
+    </Router>
   );
 }
 
