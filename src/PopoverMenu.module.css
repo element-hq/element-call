@@ -1,0 +1,48 @@
+.popover {
+  display: flex;
+  flex-direction: column;
+  width: 194px;
+  background: var(--bgColor2);
+  box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+  border-radius: 8px;
+}
+
+.popoverMenu {
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.popoverMenuItem {
+  cursor: pointer;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+  color: var(--textColor1);
+}
+
+.popoverMenuItem > * {
+  margin-right: 10px;
+}
+
+.popoverMenuItem > :last-child {
+  margin-right: 0;
+}
+
+.popoverMenuItem.focused,
+.popoverMenuItem:hover {
+  background-color: var(--bgColor3);
+  outline: none;
+}
+
+.popoverMenuItem.focused:first-child,
+.popoverMenuItem:hover:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.popoverMenuItem.focused:last-child,
+.popoverMenuItem:hover:last-child {
+  border-radius: 0 0 8px 8px;
+}

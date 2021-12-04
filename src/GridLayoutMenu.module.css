@@ -1,0 +1,8 @@
+.checkIcon {
+  position: absolute;
+  right: 16px;
+}
+
+.checkIcon * {
+  stroke: var(--textColor1);
+}

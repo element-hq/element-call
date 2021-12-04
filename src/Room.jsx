@@ -48,6 +48,9 @@ import { ErrorModal } from "./ErrorModal";
 import { GroupCallInspector } from "./GroupCallInspector";
 import * as Sentry from "@sentry/react";
 import { InviteModalButton } from "./InviteModal";
+import { OverflowMenu } from "./OverflowMenu";
+import { GridLayoutMenu } from "./GridLayoutMenu";
+import { UserMenu } from "./UserMenu";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -505,15 +508,10 @@ function InRoomView({
           <RoomHeaderInfo roomName={roomName} />
         </LeftNav>
         <RightNav>
-          <InviteModalButton roomUrl={window.location.href} />
-          <LayoutToggleButton
-            title={layout === "spotlight" ? "Spotlight" : "Freedom"}
-            layout={layout}
-            setLayout={setLayout}
-          />
-          <UserDropdownMenu
-            userName={client.getUserIdLocalpart()}
+          <GridLayoutMenu layout={layout} setLayout={setLayout} />
+          <UserMenu
             signedIn
+            userName={client.getUserIdLocalpart()}
             onLogout={onLogout}
           />
         </RightNav>
@@ -533,36 +531,19 @@ function InRoomView({
         />
       )}
       <div className={styles.footer}>
-        <DropdownButton
-          value={audioInput}
-          onChange={({ value }) => setAudioInput(value)}
-          options={audioInputs.map(({ label, deviceId }) => ({
-            label,
-            value: deviceId,
-          }))}
-        >
-          <MicButton muted={microphoneMuted} onClick={toggleMicrophoneMuted} />
-        </DropdownButton>
-        <DropdownButton
-          value={videoInput}
-          onChange={({ value }) => setVideoInput(value)}
-          options={videoInputs.map(({ label, deviceId }) => ({
-            label,
-            value: deviceId,
-          }))}
-        >
-          <VideoButton
-            enabled={localVideoMuted}
-            onClick={toggleLocalVideoMuted}
-          />
-        </DropdownButton>
+        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
+        <VideoButton
+          enabled={localVideoMuted}
+          onPress={toggleLocalVideoMuted}
+        />
         {canScreenshare && !isSafari && (
           <ScreenshareButton
             enabled={isScreensharing}
-            onClick={toggleScreensharing}
+            onPress={toggleScreensharing}
           />
         )}
-        <HangupButton onClick={onLeave} />
+        <OverflowMenu roomUrl={window.location.href} />
+        <HangupButton onPress={onLeave} />
       </div>
       <GroupCallInspector
         client={client}
