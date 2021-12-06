@@ -334,7 +334,7 @@ function RoomSetupView({
               }))}
             >
               <VideoButton
-                enabled={localVideoMuted}
+                muted={localVideoMuted}
                 onClick={toggleLocalVideoMuted}
               />
             </DropdownButton>
@@ -532,10 +532,7 @@ function InRoomView({
       )}
       <div className={styles.footer}>
         <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
-        <VideoButton
-          enabled={localVideoMuted}
-          onPress={toggleLocalVideoMuted}
-        />
+        <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
         {canScreenshare && !isSafari && (
           <ScreenshareButton
             enabled={isScreensharing}

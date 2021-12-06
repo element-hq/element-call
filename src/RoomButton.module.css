@@ -41,7 +41,8 @@ limitations under the License.
 .roomButton:active {
 }
 
-.roomButton.on {
+.roomButton.on,
+.roomButton.off {
   background-color: #ffffff;
 }
 
@@ -66,8 +67,12 @@ limitations under the License.
   background-color: #ff5b55;
 }
 
-.screenshareButton.on svg * {
+.roomButton.on svg * {
   fill: #0dbd8b;
+}
+
+.roomButton.off svg * {
+  fill: #21262c;
 }
 
 .dropdownButtonContainer {
