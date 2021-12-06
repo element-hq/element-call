@@ -16,12 +16,13 @@ import { ReactComponent as CheckIcon } from "./icons/Check.svg";
 import { useButton } from "@react-aria/button";
 
 export const RoomButton = forwardRef(
-  ({ on, className, children, ...rest }, ref) => {
+  ({ on, off, className, children, ...rest }, ref) => {
     const { buttonProps } = useButton(rest, ref);
     return (
       <button
         className={classNames(styles.roomButton, className, {
           [styles.on]: on,
+          [styles.off]: off,
         })}
         {...buttonProps}
         ref={ref}
@@ -83,7 +84,7 @@ export function DropdownButton({ onChange, options, value, children }) {
 
 export function MicButton({ muted, ...rest }) {
   return (
-    <RoomButton {...rest} on={muted}>
+    <RoomButton {...rest} off={muted}>
       <ButtonTooltip>
         {muted ? "Unmute microphone" : "Mute microphone"}
       </ButtonTooltip>
@@ -92,24 +93,20 @@ export function MicButton({ muted, ...rest }) {
   );
 }
 
-export function VideoButton({ enabled, ...rest }) {
+export function VideoButton({ muted, ...rest }) {
   return (
-    <RoomButton {...rest} on={enabled}>
+    <RoomButton {...rest} off={muted}>
       <ButtonTooltip>
-        {enabled ? "Turn off camera" : "Turn on camera"}
+        {muted ? "Turn on camera" : "Turn off camera"}
       </ButtonTooltip>
-      {enabled ? <DisableVideoIcon /> : <VideoIcon />}
+      {muted ? <DisableVideoIcon /> : <VideoIcon />}
     </RoomButton>
   );
 }
 
 export function ScreenshareButton({ enabled, className, ...rest }) {
   return (
-    <RoomButton
-      className={classNames(styles.screenshareButton, className)}
-      {...rest}
-      on={enabled}
-    >
+    <RoomButton {...rest} on={enabled}>
       <ButtonTooltip>
         {enabled ? "Stop sharing screen" : "Share screen"}
       </ButtonTooltip>

@@ -52,6 +52,7 @@ export function PopoverMenu({ children, placement, ...rest }) {
       <popoverTrigger.type
         {...popoverTrigger.props}
         {...menuTriggerProps}
+        on={popoverMenuState.isOpen}
         ref={buttonRef}
       />
       {popoverMenuState.isOpen &&

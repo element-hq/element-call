@@ -47,12 +47,9 @@ export function UserMenu({ userName, signedIn, onLogin, onLogout }) {
 
   return (
     <PopoverMenu onAction={onAction} placement="bottom right">
-      <HeaderButton>
+      <HeaderButton className={styles.userButton}>
         <ButtonTooltip>Profile</ButtonTooltip>
-        <div className={styles.userButton}>
-          <UserIcon />
-          <span>{userName}</span>
-        </div>
+        <UserIcon />
       </HeaderButton>
       {(props) => (
         <Popover {...props} label="User menu">
