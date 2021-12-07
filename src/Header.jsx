@@ -2,7 +2,7 @@ import classNames from "classnames";
 import React, { useRef } from "react";
 import { Link } from "react-router-dom";
 import styles from "./Header.module.css";
-import { ReactComponent as LogoIcon } from "./Logo.svg";
+import { ReactComponent as Logo } from "./icons/Logo.svg";
 import { ReactComponent as VideoIcon } from "./icons/Video.svg";
 import { ReactComponent as ArrowLeftIcon } from "./icons/ArrowLeft.svg";
 import { useButton } from "@react-aria/button";
@@ -40,7 +40,7 @@ export function RightNav({ children, className, ...rest }) {
 export function HeaderLogo() {
   return (
     <Link className={styles.logo} to="/">
-      <LogoIcon width={32} height={32} />
+      <Logo />
     </Link>
   );
 }
