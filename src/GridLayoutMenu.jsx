@@ -1,5 +1,5 @@
-import React, { useCallback } from "react";
-import { ButtonTooltip, HeaderButton } from "./RoomButton";
+import React from "react";
+import { ButtonTooltip, Button } from "./button";
 import { PopoverMenuTrigger } from "./PopoverMenu";
 import { ReactComponent as SpotlightIcon } from "./icons/Spotlight.svg";
 import { ReactComponent as FreedomIcon } from "./icons/Freedom.svg";
@@ -11,10 +11,10 @@ import { Item } from "@react-stately/collections";
 export function GridLayoutMenu({ layout, setLayout }) {
   return (
     <PopoverMenuTrigger placement="bottom right">
-      <HeaderButton>
+      <Button variant="icon">
         <ButtonTooltip>Layout Type</ButtonTooltip>
         {layout === "spotlight" ? <SpotlightIcon /> : <FreedomIcon />}
-      </HeaderButton>
+      </Button>
       {(props) => (
         <Menu {...props} label="Grid layout menu" onAction={setLayout}>
           <Item key="freedom" textValue="Freedom">

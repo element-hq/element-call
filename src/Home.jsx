@@ -23,7 +23,7 @@ import {
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import ColorHash from "color-hash";
 import styles from "./Home.module.css";
-import { FieldRow, InputField, Button, ErrorMessage } from "./Input";
+import { FieldRow, InputField, ErrorMessage } from "./Input";
 import { Center, Content, Modal } from "./Layout";
 import {
   GroupCallIntent,
@@ -31,6 +31,7 @@ import {
 } from "matrix-js-sdk/src/browser-index";
 import { Facepile } from "./Facepile";
 import { UserMenu } from "./UserMenu";
+import { Button } from "./button";
 
 const colorHash = new ColorHash({ lightness: 0.3 });
 

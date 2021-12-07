@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { ButtonTooltip, RoomButton } from "./RoomButton";
+import { ButtonTooltip, Button } from "./button";
 import { Menu } from "./Menu";
 import { PopoverMenuTrigger } from "./PopoverMenu";
 import { Item } from "@react-stately/collections";
@@ -37,10 +37,10 @@ export function OverflowMenu({
   return (
     <>
       <PopoverMenuTrigger>
-        <RoomButton>
+        <Button variant="toolbar">
           <ButtonTooltip>More</ButtonTooltip>
           <OverflowIcon />
-        </RoomButton>
+        </Button>
         {(props) => (
           <Menu {...props} label="More menu" onAction={onAction}>
             <Item key="invite" textValue="Invite people">

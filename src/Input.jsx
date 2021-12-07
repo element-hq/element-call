@@ -44,18 +44,6 @@ export const InputField = forwardRef(
   }
 );
 
-export const Button = forwardRef(({ className, children, ...rest }, ref) => {
-  return (
-    <button
-      className={classNames(styles.button, className)}
-      ref={ref}
-      {...rest}
-    >
-      {children}
-    </button>
-  );
-});
-
 export function ErrorMessage({ children }) {
   return <p className={styles.errorMessage}>{children}</p>;
 }

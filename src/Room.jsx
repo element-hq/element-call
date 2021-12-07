@@ -18,11 +18,13 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./Room.module.css";
 import { useLocation, useParams, useHistory, Link } from "react-router-dom";
 import {
+  Button,
+  CopyButton,
   HangupButton,
   MicButton,
   VideoButton,
   ScreenshareButton,
-} from "./RoomButton";
+} from "./button";
 import {
   Header,
   LeftNav,
@@ -30,7 +32,6 @@ import {
   RoomHeaderInfo,
   RoomSetupHeaderInfo,
 } from "./Header";
-import { Button } from "./Input";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import VideoGrid, {
   useVideoGridLayout,
@@ -47,7 +48,6 @@ import * as Sentry from "@sentry/react";
 import { OverflowMenu } from "./OverflowMenu";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { UserMenu } from "./UserMenu";
-import { CopyButton } from "./CopyButton";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -276,7 +276,7 @@ function RoomSetupView({
       <Header>
         <LeftNav>
           <RoomSetupHeaderInfo
-            onBack={() => history.goBack()}
+            onPress={() => history.goBack()}
             roomName={roomName}
           />
         </LeftNav>
@@ -310,7 +310,7 @@ function RoomSetupView({
               <Button
                 className={styles.joinCallButton}
                 disabled={state !== GroupCallState.LocalCallFeedInitialized}
-                onClick={onEnter}
+                onPress={onEnter}
               >
                 Join call now
               </Button>

@@ -17,8 +17,9 @@ limitations under the License.
 import React, { useCallback, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
 import { Header, HeaderLogo, LeftNav } from "./Header";
-import { FieldRow, InputField, Button, ErrorMessage } from "./Input";
+import { FieldRow, InputField, ErrorMessage } from "./Input";
 import { Center, Content, Info, Modal } from "./Layout";
+import { Button } from "./button";
 
 export function LoginPage({ onLogin }) {
   const [homeserver, setHomeServer] = useState(

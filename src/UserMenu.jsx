@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from "react";
-import { ButtonTooltip, HeaderButton } from "./RoomButton";
+import { ButtonTooltip, Button } from "./button";
 import { PopoverMenuTrigger } from "./PopoverMenu";
 import { ReactComponent as UserIcon } from "./icons/User.svg";
 import { ReactComponent as LoginIcon } from "./icons/Login.svg";
@@ -48,13 +48,13 @@ export function UserMenu({ userName, signedIn, onLogin, onLogout }) {
   }, [signedIn, userName]);
 
   return (
-    <PopoverMenuTrigger onAction={onAction} placement="bottom right">
-      <HeaderButton className={styles.userButton}>
+    <PopoverMenuTrigger placement="bottom right">
+      <Button variant="icon" className={styles.userButton}>
         <ButtonTooltip>Profile</ButtonTooltip>
         <UserIcon />
-      </HeaderButton>
+      </Button>
       {(props) => (
-        <Menu {...props} label="User menu">
+        <Menu {...props} label="User menu" onAction={onAction}>
           {items.map(({ key, icon: Icon, label }) => (
             <Item key={key} textValue={label}>
               <Icon />
