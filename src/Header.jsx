@@ -1,11 +1,11 @@
 import classNames from "classnames";
-import React from "react";
+import React, { useRef } from "react";
 import { Link } from "react-router-dom";
 import styles from "./Header.module.css";
 import { ReactComponent as LogoIcon } from "./Logo.svg";
 import { ReactComponent as VideoIcon } from "./icons/Video.svg";
 import { ReactComponent as ArrowLeftIcon } from "./icons/ArrowLeft.svg";
-import { HeaderDropdownItem, UserMenu } from "./RoomButton";
+import { useButton } from "@react-aria/button";
 
 export function Header({ children, className, ...rest }) {
   return (
@@ -56,25 +56,13 @@ export function RoomHeaderInfo({ roomName }) {
   );
 }
 
-export function RoomSetupHeaderInfo({ onBack, roomName }) {
+export function RoomSetupHeaderInfo({ roomName, ...rest }) {
+  const ref = useRef();
+  const { buttonProps } = useButton(rest, ref);
   return (
-    <button className={styles.backButton} onClick={onBack}>
+    <button className={styles.backButton} ref={ref} {...buttonProps}>
       <ArrowLeftIcon width={16} height={16} />
       <RoomHeaderInfo roomName={roomName} />
     </button>
-  );
-}
-
-export function UserDropdownMenu({ userName, signedIn, onLogout }) {
-  if (!signedIn) {
-    return null;
-  }
-
-  return (
-    <UserMenu userName={userName}>
-      <HeaderDropdownItem onClick={onLogout} className={styles.signOutButton}>
-        Sign Out
-      </HeaderDropdownItem>
-    </UserMenu>
   );
 }

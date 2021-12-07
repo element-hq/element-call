@@ -1,6 +1,6 @@
 import React from "react";
 import { Modal, ModalContent } from "./Modal";
-import { CopyButton } from "./CopyButton";
+import { CopyButton } from "./button";
 
 export function InviteModal({ roomUrl, ...rest }) {
   return (

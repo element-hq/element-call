@@ -151,29 +151,6 @@
   border: 1.5px solid var(--inputBorderColorFocused) !important;
 }
 
-.button {
-  vertical-align: middle;
-  border: 0;
-  border-radius: 8px;
-  font-size: 14px;
-  color: #fff;
-  background-color: var(--primaryColor);
-  width: auto;
-  padding: 7px 15px;
-  cursor: pointer;
-  display: inline-block;
-  -webkit-box-sizing: border-box;
-  box-sizing: border-box;
-  text-align: center;
-  font-weight: 700;
-}
-
-.button:hover {
-}
-
-.button:active {
-}
-
 .errorMessage {
   margin: 0;
   font-size: 13px;
