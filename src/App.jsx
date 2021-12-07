@@ -30,6 +30,7 @@ import { RegisterPage } from "./RegisterPage";
 import { LoginPage } from "./LoginPage";
 import { Center } from "./Layout";
 import { GuestAuthPage } from "./GuestAuthPage";
+import { OverlayProvider } from "@react-aria/overlays";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -49,7 +50,7 @@ export default function App() {
 
   return (
     <Router>
-      <>
+      <OverlayProvider>
         {loading ? (
           <Center>
             <p>Loading...</p>
@@ -74,7 +75,7 @@ export default function App() {
             </SentryRoute>
           </Switch>
         )}
-      </>
+      </OverlayProvider>
     </Router>
   );
 }

@@ -21,7 +21,6 @@ import {
   HangupButton,
   MicButton,
   VideoButton,
-  LayoutToggleButton,
   ScreenshareButton,
   DropdownButton,
 } from "./RoomButton";
@@ -47,10 +46,10 @@ import { fetchGroupCall } from "./ConferenceCallManagerHooks";
 import { ErrorModal } from "./ErrorModal";
 import { GroupCallInspector } from "./GroupCallInspector";
 import * as Sentry from "@sentry/react";
-import { InviteModalButton } from "./InviteModal";
 import { OverflowMenu } from "./OverflowMenu";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { UserMenu } from "./UserMenu";
+import { useMediaHandler } from "./useMediaHandler";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -351,77 +350,6 @@ function RoomSetupView({
   );
 }
 
-function useMediaHandler(client) {
-  const [{ audioInput, videoInput, audioInputs, videoInputs }, setState] =
-    useState(() => {
-      const mediaHandler = client.getMediaHandler();
-
-      return {
-        audioInput: mediaHandler.audioInput,
-        videoInput: mediaHandler.videoInput,
-        audioInputs: [],
-        videoInputs: [],
-      };
-    });
-
-  useEffect(() => {
-    const mediaHandler = client.getMediaHandler();
-
-    function updateDevices() {
-      navigator.mediaDevices.enumerateDevices().then((devices) => {
-        const audioInputs = devices.filter(
-          (device) => device.kind === "audioinput"
-        );
-        const videoInputs = devices.filter(
-          (device) => device.kind === "videoinput"
-        );
-
-        setState((prevState) => ({
-          audioInput: mediaHandler.audioInput,
-          videoInput: mediaHandler.videoInput,
-          audioInputs,
-          videoInputs,
-        }));
-      });
-    }
-
-    updateDevices();
-
-    mediaHandler.on("local_streams_changed", updateDevices);
-    navigator.mediaDevices.addEventListener("devicechange", updateDevices);
-
-    return () => {
-      mediaHandler.removeListener("local_streams_changed", updateDevices);
-      navigator.mediaDevices.removeEventListener("devicechange", updateDevices);
-    };
-  }, []);
-
-  const setAudioInput = useCallback(
-    (deviceId) => {
-      setState((prevState) => ({ ...prevState, audioInput: deviceId }));
-      client.getMediaHandler().setAudioInput(deviceId);
-    },
-    [client]
-  );
-
-  const setVideoInput = useCallback(
-    (deviceId) => {
-      setState((prevState) => ({ ...prevState, videoInput: deviceId }));
-      client.getMediaHandler().setVideoInput(deviceId);
-    },
-    [client]
-  );
-
-  return {
-    audioInput,
-    audioInputs,
-    setAudioInput,
-    videoInput,
-    videoInputs,
-    setVideoInput,
-  };
-}
-
 function InRoomView({
   onLogout,
   client,
@@ -442,15 +370,6 @@ function InRoomView({
   const [showInspector, setShowInspector] = useState(false);
 
   const [layout, setLayout] = useVideoGridLayout();
-
-  const {
-    audioInput,
-    audioInputs,
-    setAudioInput,
-    videoInput,
-    videoInputs,
-    setVideoInput,
-  } = useMediaHandler(client);
 
   const items = useMemo(() => {
     const participants = [];
@@ -539,7 +458,12 @@ function InRoomView({
             onPress={toggleScreensharing}
           />
         )}
-        <OverflowMenu roomUrl={window.location.href} />
+        <OverflowMenu
+          roomUrl={window.location.href}
+          setShowInspector={setShowInspector}
+          showInspector={showInspector}
+          client={client}
+        />
         <HangupButton onPress={onLeave} />
       </div>
       <GroupCallInspector

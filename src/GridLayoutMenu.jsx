@@ -1,36 +1,36 @@
 import React, { useCallback } from "react";
 import { ButtonTooltip, HeaderButton } from "./RoomButton";
-import { Popover, PopoverMenu, PopoverMenuItem } from "./PopoverMenu";
+import { PopoverMenuTrigger } from "./PopoverMenu";
 import { ReactComponent as SpotlightIcon } from "./icons/Spotlight.svg";
 import { ReactComponent as FreedomIcon } from "./icons/Freedom.svg";
 import { ReactComponent as CheckIcon } from "./icons/Check.svg";
 import styles from "./GridLayoutMenu.module.css";
+import { Menu } from "./Menu";
+import { Item } from "@react-stately/collections";
 
 export function GridLayoutMenu({ layout, setLayout }) {
-  const onAction = useCallback((value) => setLayout(value));
-
   return (
-    <PopoverMenu onAction={onAction} placement="bottom right">
+    <PopoverMenuTrigger placement="bottom right">
       <HeaderButton>
         <ButtonTooltip>Layout Type</ButtonTooltip>
         {layout === "spotlight" ? <SpotlightIcon /> : <FreedomIcon />}
       </HeaderButton>
       {(props) => (
-        <Popover {...props} label="Grid layout menu">
-          <PopoverMenuItem key="freedom" textValue="Freedom">
+        <Menu {...props} label="Grid layout menu" onAction={setLayout}>
+          <Item key="freedom" textValue="Freedom">
             <FreedomIcon />
             <span>Freedom</span>
             {layout === "freedom" && <CheckIcon className={styles.checkIcon} />}
-          </PopoverMenuItem>
-          <PopoverMenuItem key="spotlight" textValue="Spotlight">
+          </Item>
+          <Item key="spotlight" textValue="Spotlight">
             <SpotlightIcon />
             <span>Spotlight</span>
             {layout === "spotlight" && (
               <CheckIcon className={styles.checkIcon} />
             )}
-          </PopoverMenuItem>
-        </Popover>
+          </Item>
+        </Menu>
       )}
-    </PopoverMenu>
+    </PopoverMenuTrigger>
   );
 }
