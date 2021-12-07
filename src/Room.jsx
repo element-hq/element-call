@@ -16,13 +16,12 @@ limitations under the License.
 
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import styles from "./Room.module.css";
-import { useLocation, useParams, useHistory } from "react-router-dom";
+import { useLocation, useParams, useHistory, Link } from "react-router-dom";
 import {
   HangupButton,
   MicButton,
   VideoButton,
   ScreenshareButton,
-  DropdownButton,
 } from "./RoomButton";
 import {
   Header,
@@ -30,7 +29,6 @@ import {
   RightNav,
   RoomHeaderInfo,
   RoomSetupHeaderInfo,
-  UserDropdownMenu,
 } from "./Header";
 import { Button } from "./Input";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
@@ -49,7 +47,7 @@ import * as Sentry from "@sentry/react";
 import { OverflowMenu } from "./OverflowMenu";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { UserMenu } from "./UserMenu";
-import { useMediaHandler } from "./useMediaHandler";
+import { CopyButton } from "./CopyButton";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -126,6 +124,7 @@ export function Room({ client, onLogout }) {
 }
 
 export function GroupCallView({ client, groupCall, simpleGrid, onLogout }) {
+  const [showInspector, setShowInspector] = useState(false);
   const {
     state,
     error,
@@ -200,6 +199,8 @@ export function GroupCallView({ client, groupCall, simpleGrid, onLogout }) {
         localScreenshareFeed={localScreenshareFeed}
         screenshareFeeds={screenshareFeeds}
         simpleGrid={simpleGrid}
+        setShowInspector={setShowInspector}
+        showInspector={showInspector}
       />
     );
   } else if (state === GroupCallState.Entering) {
@@ -219,6 +220,8 @@ export function GroupCallView({ client, groupCall, simpleGrid, onLogout }) {
         localVideoMuted={localVideoMuted}
         toggleLocalVideoMuted={toggleLocalVideoMuted}
         toggleMicrophoneMuted={toggleMicrophoneMuted}
+        setShowInspector={setShowInspector}
+        showInspector={showInspector}
       />
     );
   }
@@ -257,19 +260,12 @@ function RoomSetupView({
   toggleLocalVideoMuted,
   toggleMicrophoneMuted,
   hasLocalParticipant,
+  setShowInspector,
+  showInspector,
 }) {
   const history = useHistory();
   const { stream } = useCallFeed(localCallFeed);
   const videoRef = useMediaStream(stream, true);
-
-  const {
-    audioInput,
-    audioInputs,
-    setAudioInput,
-    videoInput,
-    videoInputs,
-    setVideoInput,
-  } = useMediaHandler(client);
 
   useEffect(() => {
     onInitLocalCallFeed();
@@ -285,14 +281,15 @@ function RoomSetupView({
           />
         </LeftNav>
         <RightNav>
-          <UserDropdownMenu
-            userName={client.getUserIdLocalpart()}
+          <UserMenu
             signedIn
+            userName={client.getUserIdLocalpart()}
             onLogout={onLogout}
           />
         </RightNav>
       </Header>
       <div className={styles.joinRoom}>
+        <h1>New Call</h1>
         {hasLocalParticipant && (
           <p>Warning, you are signed into this call on another device.</p>
         )}
@@ -308,43 +305,41 @@ function RoomSetupView({
             </p>
           )}
           <video ref={videoRef} muted playsInline disablePictureInPicture />
+          {state === GroupCallState.LocalCallFeedInitialized && (
+            <>
+              <Button
+                className={styles.joinCallButton}
+                disabled={state !== GroupCallState.LocalCallFeedInitialized}
+                onClick={onEnter}
+              >
+                Join call now
+              </Button>
+              <div className={styles.previewButtons}>
+                <MicButton
+                  muted={microphoneMuted}
+                  onPress={toggleMicrophoneMuted}
+                />
+                <VideoButton
+                  muted={localVideoMuted}
+                  onPress={toggleLocalVideoMuted}
+                />
+                <OverflowMenu
+                  roomUrl={window.location.href}
+                  setShowInspector={setShowInspector}
+                  showInspector={showInspector}
+                  client={client}
+                />
+              </div>
+            </>
+          )}
         </div>
-        {state === GroupCallState.LocalCallFeedInitialized && (
-          <div className={styles.previewButtons}>
-            <DropdownButton
-              value={audioInput}
-              onChange={({ value }) => setAudioInput(value)}
-              options={audioInputs.map(({ label, deviceId }) => ({
-                label,
-                value: deviceId,
-              }))}
-            >
-              <MicButton
-                muted={microphoneMuted}
-                onClick={toggleMicrophoneMuted}
-              />
-            </DropdownButton>
-            <DropdownButton
-              value={videoInput}
-              onChange={({ value }) => setVideoInput(value)}
-              options={videoInputs.map(({ label, deviceId }) => ({
-                label,
-                value: deviceId,
-              }))}
-            >
-              <VideoButton
-                muted={localVideoMuted}
-                onClick={toggleLocalVideoMuted}
-              />
-            </DropdownButton>
-          </div>
-        )}
-        <Button
-          disabled={state !== GroupCallState.LocalCallFeedInitialized}
-          onClick={onEnter}
-        >
-          Enter Call
-        </Button>
+        <p>Or</p>
+        <CopyButton value={window.location.href} className={styles.copyButton}>
+          Copy call link and join later
+        </CopyButton>
+        <Link className={styles.homeLink} to="/">
+          Take me Home
+        </Link>
       </div>
     </>
   );
@@ -366,9 +361,9 @@ function InRoomView({
   isScreensharing,
   screenshareFeeds,
   simpleGrid,
+  setShowInspector,
+  showInspector,
 }) {
-  const [showInspector, setShowInspector] = useState(false);
-
   const [layout, setLayout] = useVideoGridLayout();
 
   const items = useMemo(() => {

@@ -6,7 +6,7 @@ import { ReactComponent as CopyIcon } from "./icons/Copy.svg";
 import classNames from "classnames";
 import styles from "./CopyButton.module.css";
 
-export function CopyButton({ value, className, ...rest }) {
+export function CopyButton({ value, className, children, ...rest }) {
   const [isCopied, setCopied] = useClipboard(value, { successDuration: 3000 });
   const { buttonProps } = useButton({
     onPress: () => setCopied(),
@@ -28,7 +28,7 @@ export function CopyButton({ value, className, ...rest }) {
         </>
       ) : (
         <>
-          <span>{value}</span>
+          <span>{children || value}</span>
           <CopyIcon />
         </>
       )}
