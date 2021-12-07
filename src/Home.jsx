@@ -20,13 +20,7 @@ import {
   useGroupCallRooms,
   usePublicRooms,
 } from "./ConferenceCallManagerHooks";
-import {
-  Header,
-  HeaderLogo,
-  LeftNav,
-  RightNav,
-  UserDropdownMenu,
-} from "./Header";
+import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import ColorHash from "color-hash";
 import styles from "./Home.module.css";
 import { FieldRow, InputField, Button, ErrorMessage } from "./Input";
@@ -36,6 +30,7 @@ import {
   GroupCallType,
 } from "matrix-js-sdk/src/browser-index";
 import { Facepile } from "./Facepile";
+import { UserMenu } from "./UserMenu";
 
 const colorHash = new ColorHash({ lightness: 0.3 });
 
@@ -132,9 +127,9 @@ export function Home({ client, onLogout }) {
           <HeaderLogo />
         </LeftNav>
         <RightNav>
-          <UserDropdownMenu
-            userName={client.getUserIdLocalpart()}
+          <UserMenu
             signedIn
+            userName={client.getUserIdLocalpart()}
             onLogout={onLogout}
           />
         </RightNav>

@@ -32,10 +32,16 @@ limitations under the License.
   margin-bottom: 20px;
 }
 
+.homeLink {
+  margin-top: 50px;
+  color: #0dbd8b;
+  text-decoration: none;
+}
+
 .preview {
   position: relative;
-  max-width: 400px;
-  max-height: 225px;
+  width: 100%;
+  max-width: 816px;
   border-radius: 24px;
   overflow: hidden;
   background-color: var(--bgColor3);
@@ -45,7 +51,8 @@ limitations under the License.
 .preview video {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background-color: black;
 }
 
 .webcamPermissions {
@@ -60,11 +67,26 @@ limitations under the License.
 }
 
 .previewButtons {
-  position: relative;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 66px;
   display: flex;
   justify-content: center;
   align-items: center;
-  margin-bottom: 20px;
+  background-color: rgba(23, 25, 28, 0.9);
+}
+
+.joinCallButton {
+  position: absolute;
+  bottom: 86px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.copyButton {
+  width: auto !important;
 }
 
 .previewButtons > * {
