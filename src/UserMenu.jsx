@@ -1,10 +1,12 @@
 import React, { useCallback, useMemo } from "react";
 import { ButtonTooltip, HeaderButton } from "./RoomButton";
-import { Popover, PopoverMenu, PopoverMenuItem } from "./PopoverMenu";
+import { PopoverMenuTrigger } from "./PopoverMenu";
 import { ReactComponent as UserIcon } from "./icons/User.svg";
 import { ReactComponent as LoginIcon } from "./icons/Login.svg";
 import { ReactComponent as LogoutIcon } from "./icons/Logout.svg";
 import styles from "./UserMenu.module.css";
+import { Item } from "@react-stately/collections";
+import { Menu } from "./Menu";
 
 export function UserMenu({ userName, signedIn, onLogin, onLogout }) {
   const onAction = useCallback((value) => {
@@ -46,21 +48,21 @@ export function UserMenu({ userName, signedIn, onLogin, onLogout }) {
   }, [signedIn, userName]);
 
   return (
-    <PopoverMenu onAction={onAction} placement="bottom right">
+    <PopoverMenuTrigger onAction={onAction} placement="bottom right">
       <HeaderButton className={styles.userButton}>
         <ButtonTooltip>Profile</ButtonTooltip>
         <UserIcon />
       </HeaderButton>
       {(props) => (
-        <Popover {...props} label="User menu">
+        <Menu {...props} label="User menu">
           {items.map(({ key, icon: Icon, label }) => (
-            <PopoverMenuItem key={key} textValue={label}>
+            <Item key={key} textValue={label}>
               <Icon />
               <span>{label}</span>
-            </PopoverMenuItem>
+            </Item>
           ))}
-        </Popover>
+        </Menu>
       )}
-    </PopoverMenu>
+    </PopoverMenuTrigger>
   );
 }

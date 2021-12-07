@@ -1,0 +1,45 @@
+.selectInput {
+  position: relative;
+  display: inline-block;
+  margin-bottom: 28px;
+}
+
+.label {
+  font-weight: 600;
+  font-size: 18px;
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.selectTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 12px;
+  background-color: var(--bgColor1);
+  border-radius: 8px;
+  border: 1px solid var(--inputBorderColor);
+  font-size: 15px;
+  color: var(--textColor1);
+  height: 40px;
+  width: 320px;
+}
+
+.selectedItem {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-right: 20px;
+}
+
+.popover {
+  width: 320px;
+}
+
+.option:first-child {
+  border-radius: 8px 8px 0 0;
+}
+
+.option:last-child {
+  border-radius: 0 0 8px 8px;
+}
