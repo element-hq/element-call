@@ -52,20 +52,20 @@ limitations under the License.
   background-color: #ffffff;
 }
 
-.iconButton svg * {
+.iconButton:not(.stroke) svg * {
   fill: #8e99a4;
 }
 
-.iconButton:hover svg * {
+.iconButton:not(.stroke):hover svg * {
   fill: #8d97a5;
 }
 
-.iconButton:hover svg * {
-  fill: #8d97a5;
-}
-
-.iconButton.on svg * {
+.iconButton.on:not(.stroke) svg * {
   fill: #0dbd8b;
+}
+
+.iconButton.on.stroke svg * {
+  stroke: #0dbd8b;
 }
 
 .hangupButton,

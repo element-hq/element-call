@@ -31,6 +31,7 @@ import {
   RightNav,
   RoomHeaderInfo,
   RoomSetupHeaderInfo,
+  HeaderLogo,
 } from "./Header";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import VideoGrid, {

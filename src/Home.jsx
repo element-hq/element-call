@@ -15,25 +15,21 @@ limitations under the License.
 */
 
 import React, { useCallback, useState } from "react";
-import { useHistory, Link } from "react-router-dom";
+import { useHistory } from "react-router-dom";
 import {
   useGroupCallRooms,
   usePublicRooms,
 } from "./ConferenceCallManagerHooks";
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
-import ColorHash from "color-hash";
 import styles from "./Home.module.css";
 import { FieldRow, InputField, ErrorMessage } from "./Input";
-import { Center, Content, Modal } from "./Layout";
 import {
   GroupCallIntent,
   GroupCallType,
 } from "matrix-js-sdk/src/browser-index";
-import { Facepile } from "./Facepile";
 import { UserMenu } from "./UserMenu";
 import { Button } from "./button";
-
-const colorHash = new ColorHash({ lightness: 0.3 });
+import { CallTile } from "./CallTile";
 
 function roomAliasFromRoomName(roomName) {
   return roomName
@@ -46,10 +42,8 @@ function roomAliasFromRoomName(roomName) {
 export function Home({ client, onLogout }) {
   const history = useHistory();
   const [roomName, setRoomName] = useState("");
-  const [roomAlias, setRoomAlias] = useState("");
   const [guestAccess, setGuestAccess] = useState(false);
   const [createRoomError, setCreateRoomError] = useState();
-  const [showAdvanced, setShowAdvanced] = useState();
   const rooms = useGroupCallRooms(client);
   const publicRooms = usePublicRooms(
     client,
@@ -110,131 +104,142 @@ export function Home({ client, onLogout }) {
 
       const data = new FormData(e.target);
       const roomName = data.get("roomName");
-      const roomAlias = data.get("roomAlias");
       const guestAccess = data.get("guestAccess");
 
-      createRoom(roomName, roomAlias, guestAccess).catch((error) => {
-        setCreateRoomError(error);
-        setShowAdvanced(true);
-      });
+      createRoom(roomName, roomAliasFromRoomName(roomName), guestAccess).catch(
+        (error) => {
+          setCreateRoomError(error);
+          setShowAdvanced(true);
+        }
+      );
     },
     [client]
   );
 
+  const [roomId, setRoomId] = useState("");
+
+  const onJoinRoom = useCallback(
+    (e) => {
+      e.preventDefault();
+      const data = new FormData(e.target);
+      const roomId = data.get("roomId");
+      history.push(`/room/${roomId}`);
+    },
+    [history]
+  );
+
   return (
-    <>
-      <Header>
-        <LeftNav>
-          <HeaderLogo />
-        </LeftNav>
-        <RightNav>
-          <UserMenu
-            signedIn
-            userName={client.getUserIdLocalpart()}
-            onLogout={onLogout}
-          />
-        </RightNav>
-      </Header>
-      <Content>
-        <Center>
-          <Modal>
-            <section>
-              <form onSubmit={onCreateRoom}>
-                <h2>Create New Room</h2>
-                <FieldRow>
-                  <InputField
-                    id="roomName"
-                    name="roomName"
-                    label="Room Name"
-                    type="text"
-                    required
-                    autoComplete="off"
-                    placeholder="Room Name"
-                    value={roomName}
-                    onChange={(e) => setRoomName(e.target.value)}
-                  />
+    <div class={styles.home}>
+      <div className={styles.left}>
+        <Header>
+          <LeftNav>
+            <HeaderLogo />
+          </LeftNav>
+        </Header>
+        <div className={styles.content}>
+          <div className={styles.centered}>
+            <form onSubmit={onJoinRoom}>
+              <h1>Join a call</h1>
+              <FieldRow className={styles.fieldRow}>
+                <InputField
+                  id="roomId"
+                  name="roomId"
+                  label="Call ID"
+                  type="text"
+                  required
+                  autoComplete="off"
+                  placeholder="Call ID"
+                  value={roomId}
+                  onChange={(e) => setRoomId(e.target.value)}
+                />
+              </FieldRow>
+              <FieldRow className={styles.fieldRow}>
+                <Button className={styles.button} type="submit">
+                  Join call
+                </Button>
+              </FieldRow>
+            </form>
+            <hr />
+            <form onSubmit={onCreateRoom}>
+              <h1>Create a call</h1>
+              <FieldRow className={styles.fieldRow}>
+                <InputField
+                  id="roomName"
+                  name="roomName"
+                  label="Room Name"
+                  type="text"
+                  required
+                  autoComplete="off"
+                  placeholder="Room Name"
+                  value={roomName}
+                  onChange={(e) => setRoomName(e.target.value)}
+                />
+              </FieldRow>
+              <FieldRow>
+                <InputField
+                  id="guestAccess"
+                  name="guestAccess"
+                  label="Allow Guest Access"
+                  type="checkbox"
+                  checked={guestAccess}
+                  onChange={(e) => setGuestAccess(e.target.checked)}
+                />
+              </FieldRow>
+              {createRoomError && (
+                <FieldRow className={styles.fieldRow}>
+                  <ErrorMessage>{createRoomError.message}</ErrorMessage>
                 </FieldRow>
-                <details open={showAdvanced}>
-                  <summary>Advanced</summary>
-                  <FieldRow>
-                    <InputField
-                      id="roomAlias"
-                      name="roomAlias"
-                      label="Room Alias"
-                      type="text"
-                      autoComplete="off"
-                      placeholder="Room Alias"
-                      value={roomAlias || roomAliasFromRoomName(roomName)}
-                      onChange={(e) => setRoomAlias(e.target.value)}
-                    />
-                  </FieldRow>
-                  <FieldRow>
-                    <InputField
-                      id="guestAccess"
-                      name="guestAccess"
-                      label="Allow Guest Access"
-                      type="checkbox"
-                      checked={guestAccess}
-                      onChange={(e) => setGuestAccess(e.target.checked)}
-                    />
-                  </FieldRow>
-                </details>
-                {createRoomError && (
-                  <FieldRow>
-                    <ErrorMessage>{createRoomError.message}</ErrorMessage>
-                  </FieldRow>
-                )}
-                <FieldRow rightAlign>
-                  <Button type="submit">Create Room</Button>
-                </FieldRow>
-              </form>
-            </section>
-            {publicRooms.length > 0 && (
-              <section>
-                <h3>Public Rooms</h3>
-                <div className={styles.roomList}>
-                  {publicRooms.map((room) => (
-                    <Link
-                      className={styles.roomListItem}
-                      key={room.room_id}
-                      to={`/room/${room.room_id}`}
-                    >
-                      <div
-                        className={styles.roomAvatar}
-                        style={{ backgroundColor: colorHash.hex(room.name) }}
-                      >
-                        <span>{room.name.slice(0, 1)}</span>
-                      </div>
-                      <div className={styles.roomName}>{room.name}</div>
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            )}
-            <section>
-              <h3>Recent Rooms</h3>
+              )}
+              <FieldRow className={styles.fieldRow}>
+                <Button className={styles.button} type="submit">
+                  Create call
+                </Button>
+              </FieldRow>
+            </form>
+          </div>
+        </div>
+      </div>
+      <div className={styles.right}>
+        <Header>
+          <LeftNav />
+          <RightNav>
+            <UserMenu
+              signedIn
+              userName={client.getUserIdLocalpart()}
+              onLogout={onLogout}
+            />
+          </RightNav>
+        </Header>
+        <div className={styles.content}>
+          {publicRooms.length > 0 && (
+            <>
+              <h3>Public Calls</h3>
               <div className={styles.roomList}>
-                {rooms.map(({ room, participants }) => (
-                  <Link
-                    className={styles.roomListItem}
-                    key={room.roomId}
-                    to={`/room/${room.getCanonicalAlias() || room.roomId}`}
-                  >
-                    <div
-                      className={styles.roomAvatar}
-                      style={{ backgroundColor: colorHash.hex(room.name) }}
-                    >
-                      <span>{room.name.slice(0, 1)}</span>
-                    </div>
-                    <div className={styles.roomName}>{room.name}</div>
-                    <Facepile participants={participants} />
-                  </Link>
+                {publicRooms.map((room) => (
+                  <CallTile
+                    key={room.room_id}
+                    name={room.name}
+                    avatarUrl={null}
+                    roomUrl={`/room/${room.room_id}`}
+                  />
                 ))}
               </div>
-            </section>
-          </Modal>
-        </Center>
-      </Content>
-    </>
+            </>
+          )}
+          <h3>Recent Calls</h3>
+          <div className={styles.roomList}>
+            {rooms.map(({ room, participants }) => (
+              <CallTile
+                key={room.roomId}
+                name={room.name}
+                avatarUrl={null}
+                roomUrl={`/room/${room.getCanonicalAlias() || room.roomId}`}
+                participants={participants}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

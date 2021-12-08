@@ -1,0 +1,54 @@
+.callTile {
+  display: flex;
+  width: 329px;
+  height: 94px;
+  padding: 12px;
+  text-decoration: none;
+  background-color: var(--bgColor2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.avatar,
+.copyButton {
+  flex-shrink: 0;
+}
+
+.callInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 0 16px;
+  color: var(--textColor1);
+  min-width: 0;
+}
+
+.callInfo > * {
+  margin-top: 0;
+  margin-bottom: 8px;
+}
+
+.callInfo > :last-child {
+  margin-bottom: 0;
+}
+
+.callInfo h5 {
+  font-size: 15px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.callInfo p {
+  font-weight: 400;
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.copyButton {
+  width: 16px;
+  height: 16px;
+}
