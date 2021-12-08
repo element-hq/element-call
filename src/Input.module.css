@@ -35,12 +35,12 @@
 
 .inputField input {
   font-weight: 400;
-  font-size: 14px;
+  font-size: 15px;
   border: none;
   border-radius: 4px;
-  padding: 8px 9px;
+  padding: 11px 9px;
   color: var(--textColor1);
-  background-color: var(--bgColor2);
+  background-color: var(--bgColor1);
   flex: 1;
   min-width: 0;
 }
@@ -60,11 +60,11 @@
     top 0.25s ease-out 0.1s, background-color 0.25s ease-out 0.1s;
   color: var(--textColor1);
   background-color: transparent;
-  font-size: 14px;
+  font-size: 15px;
   position: absolute;
   left: 0;
   top: 0;
-  margin: 7px 8px;
+  margin: 9px 8px;
   padding: 2px;
   pointer-events: none;
   overflow: hidden;

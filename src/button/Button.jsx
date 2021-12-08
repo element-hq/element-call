@@ -18,7 +18,10 @@ const variantToClassName = {
 };
 
 export const Button = forwardRef(
-  ({ variant = "default", on, off, className, children, ...rest }, ref) => {
+  (
+    { variant = "default", on, off, iconStyle, className, children, ...rest },
+    ref
+  ) => {
     const buttonRef = useObjectRef(ref);
     const { buttonProps } = useButton(rest, buttonRef);
 
@@ -33,10 +36,15 @@ export const Button = forwardRef(
 
     return (
       <button
-        className={classNames(variantToClassName[variant], className, {
-          [styles.on]: on,
-          [styles.off]: off,
-        })}
+        className={classNames(
+          variantToClassName[variant],
+          styles[iconStyle],
+          className,
+          {
+            [styles.on]: on,
+            [styles.off]: off,
+          }
+        )}
         {...filteredButtonProps}
         ref={buttonRef}
       >

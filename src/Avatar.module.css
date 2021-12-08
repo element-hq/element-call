@@ -1,0 +1,46 @@
+.avatar {
+  position: relative;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-weight: 600;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.avatar svg * {
+  fill: #ffffff;
+}
+
+.sm {
+  width: 22px;
+  height: 22px;
+  border-radius: 22px;
+  font-size: 14px;
+}
+
+.md {
+  width: 36px;
+  height: 36px;
+  border-radius: 36px;
+  font-size: 20px;
+}
+
+.lg {
+  width: 42px;
+  height: 42px;
+  border-radius: 42px;
+  font-size: 36px;
+}
+
+.xl {
+  width: 90px;
+  height: 90px;
+  border-radius: 90px;
+}

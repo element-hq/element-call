@@ -1,32 +1,32 @@
 import React from "react";
 import styles from "./Facepile.module.css";
-import ColorHash from "color-hash";
 import classNames from "classnames";
+import { Avatar } from "./Avatar";
 
-const colorHash = new ColorHash({ lightness: 0.3 });
-
-export function Facepile({ participants }) {
+export function Facepile({ className, participants, ...rest }) {
   return (
     <div
-      className={styles.facepile}
+      className={classNames(styles.facepile, className)}
       title={participants.map((member) => member.name).join(", ")}
+      {...rest}
     >
-      {participants.slice(0, 3).map((member) => (
-        <div
+      {participants.slice(0, 3).map((member, i) => (
+        <Avatar
           key={member.userId}
+          size="sm"
+          fallback={member.name.slice(0, 1).toUpperCase()}
           className={styles.avatar}
-          style={{ backgroundColor: colorHash.hex(member.name) }}
-        >
-          <span>{member.name.slice(0, 1).toUpperCase()}</span>
-        </div>
+          style={{ left: i * 22 }}
+        />
       ))}
       {participants.length > 3 && (
-        <div
+        <Avatar
           key="additional"
-          className={classNames(styles.avatar, styles.additional)}
-        >
-          <span>{`+${participants.length - 3}`}</span>
-        </div>
+          size="sm"
+          fallback={`+${participants.length - 3}`}
+          className={styles.avatar}
+          style={{ left: 3 * 22 }}
+        />
       )}
     </div>
   );
