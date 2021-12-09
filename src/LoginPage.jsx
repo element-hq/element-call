@@ -20,8 +20,10 @@ import { Header, HeaderLogo, LeftNav } from "./Header";
 import { FieldRow, InputField, ErrorMessage } from "./Input";
 import { Center, Content, Info, Modal } from "./Layout";
 import { Button } from "./button";
+import { useClient } from "./ConferenceCallManagerHooks";
 
-export function LoginPage({ onLogin }) {
+export function LoginPage() {
+  const { login } = useClient();
   const [homeserver, setHomeServer] = useState(
     `${window.location.protocol}//${window.location.host}`
   );
@@ -32,17 +34,19 @@ export function LoginPage({ onLogin }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
 
+  // TODO: Handle hitting login page with authenticated client
+
   const onSubmitLoginForm = useCallback(
     (e) => {
       e.preventDefault();
       setLoading(true);
 
-      onLogin(homeserver, usernameRef.current.value, passwordRef.current.value)
+      login(homeserver, usernameRef.current.value, passwordRef.current.value)
         .then(() => {
           if (location.state && location.state.from) {
-            history.replace(location.state.from);
+            history.push(location.state.from);
           } else {
-            history.replace("/");
+            history.push("/");
           }
         })
         .catch((error) => {
@@ -50,7 +54,7 @@ export function LoginPage({ onLogin }) {
           setLoading(false);
         });
     },
-    [onLogin, location, history, homeserver]
+    [login, location, history, homeserver]
   );
 
   return (

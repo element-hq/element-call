@@ -14,8 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useEffect, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useState,
+  createContext,
+  useMemo,
+  useContext,
+} from "react";
 import matrix from "matrix-js-sdk/src/browser-index";
+import {
+  GroupCallIntent,
+  GroupCallType,
+} from "matrix-js-sdk/src/browser-index";
+import { useHistory } from "react-router-dom";
+import { randomString } from "matrix-js-sdk/src/randomstring";
+
+const ClientContext = createContext();
 
 function waitForSync(client) {
   return new Promise((resolve, reject) => {
@@ -86,12 +101,16 @@ export async function fetchGroupCall(
   });
 }
 
-export function useClient(homeserverUrl) {
-  const [{ loading, authenticated, client }, setState] = useState({
-    loading: true,
-    authenticated: false,
-    client: undefined,
-  });
+export function ClientProvider({ homeserverUrl, children }) {
+  const history = useHistory();
+  const [{ loading, isAuthenticated, isGuest, client, userName }, setState] =
+    useState({
+      loading: true,
+      isAuthenticated: false,
+      isGuest: false,
+      client: undefined,
+      userName: null,
+    });
 
   useEffect(() => {
     async function restore() {
@@ -117,8 +136,10 @@ export function useClient(homeserverUrl) {
             JSON.stringify({ user_id, device_id, access_token, guest })
           );
 
-          return client;
+          return { client, guest };
         }
+
+        return { client: undefined, guest: false };
       } catch (err) {
         localStorage.removeItem("matrix-auth-store");
         throw err;
@@ -126,15 +147,23 @@ export function useClient(homeserverUrl) {
     }
 
     restore()
-      .then((client) => {
-        if (client) {
-          setState({ client, loading: false, authenticated: true });
-        } else {
-          setState({ client: undefined, loading: false, authenticated: false });
-        }
+      .then(({ client, guest }) => {
+        setState({
+          client,
+          loading: false,
+          isAuthenticated: !!client,
+          isGuest: guest,
+          userName: client?.getUserIdLocalpart(),
+        });
       })
       .catch(() => {
-        setState({ client: undefined, loading: false, authenticated: false });
+        setState({
+          client: undefined,
+          loading: false,
+          isAuthenticated: false,
+          isGuest: false,
+          userName: null,
+        });
       });
   }, []);
 
@@ -176,10 +205,22 @@ export function useClient(homeserverUrl) {
         JSON.stringify({ user_id, device_id, access_token })
       );
 
-      setState({ client, loading: false, authenticated: true });
+      setState({
+        client,
+        loading: false,
+        isAuthenticated: true,
+        isGuest: false,
+        userName: client.getUserIdLocalpart(),
+      });
     } catch (err) {
       localStorage.removeItem("matrix-auth-store");
-      setState({ client: undefined, loading: false, authenticated: false });
+      setState({
+        client: undefined,
+        loading: false,
+        isAuthenticated: false,
+        isGuest: false,
+        userName: null,
+      });
       throw err;
     }
   }, []);
@@ -210,10 +251,22 @@ export function useClient(homeserverUrl) {
         JSON.stringify({ user_id, device_id, access_token, guest: true })
       );
 
-      setState({ client, loading: false, authenticated: true });
+      setState({
+        client,
+        loading: false,
+        isAuthenticated: true,
+        isGuest: true,
+        userName: client.getUserIdLocalpart(),
+      });
     } catch (err) {
       localStorage.removeItem("matrix-auth-store");
-      setState({ client: undefined, loading: false, authenticated: false });
+      setState({
+        client: undefined,
+        loading: false,
+        isAuthenticated: false,
+        isGuest: false,
+        userName: null,
+      });
       throw err;
     }
   }, []);
@@ -239,10 +292,25 @@ export function useClient(homeserverUrl) {
         JSON.stringify({ user_id, device_id, access_token })
       );
 
-      setState({ client, loading: false, authenticated: true });
+      setState({
+        client,
+        loading: false,
+        isGuest: false,
+        isAuthenticated: true,
+        isGuest: false,
+        userName: client.getUserIdLocalpart(),
+      });
+
+      return client;
     } catch (err) {
       localStorage.removeItem("matrix-auth-store");
-      setState({ client: undefined, loading: false, authenticated: false });
+      setState({
+        client: undefined,
+        loading: false,
+        isGuest: false,
+        isAuthenticated: false,
+        userName: null,
+      });
       throw err;
     }
   }, []);
@@ -252,15 +320,162 @@ export function useClient(homeserverUrl) {
     window.location = "/";
   }, [history]);
 
+  const context = useMemo(
+    () => ({
+      loading,
+      isAuthenticated,
+      isGuest,
+      client,
+      login,
+      registerGuest,
+      register,
+      logout,
+      userName,
+    }),
+    [
+      loading,
+      isAuthenticated,
+      isGuest,
+      client,
+      login,
+      registerGuest,
+      register,
+      logout,
+      userName,
+    ]
+  );
+
+  return (
+    <ClientContext.Provider value={context}>{children}</ClientContext.Provider>
+  );
+}
+
+export function useClient() {
+  return useContext(ClientContext);
+}
+
+function roomAliasFromRoomName(roomName) {
+  return roomName
+    .trim()
+    .replace(/\s/g, "-")
+    .replace(/[^\w-]/g, "")
+    .toLowerCase();
+}
+
+export async function createRoom(client, name) {
+  const { room_id, room_alias } = await client.createRoom({
+    visibility: "private",
+    preset: "public_chat",
+    name,
+    room_alias_name: roomAliasFromRoomName(name),
+    power_level_content_override: {
+      invite: 100,
+      kick: 100,
+      ban: 100,
+      redact: 50,
+      state_default: 0,
+      events_default: 0,
+      users_default: 0,
+      events: {
+        "m.room.power_levels": 100,
+        "m.room.history_visibility": 100,
+        "m.room.tombstone": 100,
+        "m.room.encryption": 100,
+        "m.room.name": 50,
+        "m.room.message": 0,
+        "m.room.encrypted": 50,
+        "m.sticker": 50,
+        "org.matrix.msc3401.call.member": 0,
+      },
+      users: {
+        [client.getUserId()]: 100,
+      },
+    },
+  });
+
+  await client.setGuestAccess(room_id, {
+    allowJoin: true,
+    allowRead: true,
+  });
+
+  await client.createGroupCall(
+    room_id,
+    GroupCallType.Video,
+    GroupCallIntent.Prompt
+  );
+
+  return room_alias || room_id;
+}
+
+export function useCreateRoom(client) {
+  const [creatingRoom, setCreatingRoom] = useState(false);
+  const [createRoomError, setCreateRoomError] = useState();
+
+  const onCreateRoom = useCallback(
+    (roomName) => {
+      setCreateRoomError(undefined);
+      setCreatingRoom(true);
+
+      return createRoom(client, roomName).catch((error) => {
+        setCreateRoomError(error);
+        setCreatingRoom(false);
+      });
+    },
+    [client]
+  );
+
   return {
-    loading,
-    authenticated,
-    client,
-    login,
-    registerGuest,
-    register,
-    logout,
+    creatingRoom,
+    createRoomError,
+    createRoom: onCreateRoom,
   };
+}
+
+export function useCreateRoomAsPasswordlessUser() {
+  const { register } = useClient();
+  const [creatingRoom, setCreatingRoom] = useState(false);
+  const [createRoomError, setCreateRoomError] = useState();
+
+  const onCreateRoom = useCallback(
+    (roomName, userName) => {
+      async function onCreateRoom(roomName, userName) {
+        const client = await register(userName, randomString(16));
+        return await createRoom(client, roomName);
+      }
+
+      setCreateRoomError(undefined);
+      setCreatingRoom(true);
+
+      return onCreateRoom(roomName, userName).catch((error) => {
+        setCreateRoomError(error);
+        setCreatingRoom(false);
+      });
+    },
+    [register]
+  );
+
+  return {
+    creatingRoom,
+    createRoomError,
+    createRoom: onCreateRoom,
+  };
+}
+
+export function useLoadGroupCall(client, roomId, viaServers) {
+  const [state, setState] = useState({
+    loading: true,
+    error: undefined,
+    groupCall: undefined,
+  });
+
+  useEffect(() => {
+    setState({ loading: true });
+    fetchGroupCall(client, roomId, viaServers, 30000)
+      .then((groupCall) => setState({ loading: false, groupCall }))
+      .catch((error) => setState({ loading: false, error }));
+  }, [client, roomId]);
+
+  return state;
 }
 
 const tsCache = {};
@@ -324,6 +539,10 @@ export function useGroupCallRooms(client) {
         const groupCall = client.getGroupCallForRoom(room.roomId);
 
         return {
+          roomId: room.roomId,
+          roomName: room.name,
+          avatarUrl: null,
+          roomUrl: `/room/${room.getCanonicalAlias() || room.roomId}`,
           room,
           groupCall,
           participants: [...groupCall.participants],
@@ -352,9 +571,16 @@ export function usePublicRooms(client, publicSpaceRoomId, maxRooms = 50) {
   useEffect(() => {
     if (publicSpaceRoomId) {
       client.getRoomHierarchy(publicSpaceRoomId, maxRooms).then(({ rooms }) => {
-        const filteredRooms = rooms.filter(
-          (room) => room.room_type !== "m.space"
-        );
+        const filteredRooms = rooms
+          .filter((room) => room.room_type !== "m.space")
+          .map((room) => ({
+            roomId: room.room_id,
+            roomName: room.name,
+            avatarUrl: null,
+            room,
+            roomUrl: `/room/${room.room_id}`,
+            participants: [],
+          }));
 
         setRooms(filteredRooms);
       });

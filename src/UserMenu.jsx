@@ -7,45 +7,67 @@ import { ReactComponent as LogoutIcon } from "./icons/Logout.svg";
 import styles from "./UserMenu.module.css";
 import { Item } from "@react-stately/collections";
 import { Menu } from "./Menu";
+import { useHistory, useLocation } from "react-router-dom";
+import { useClient } from "./ConferenceCallManagerHooks";
 
-export function UserMenu({ userName, signedIn, onLogin, onLogout }) {
-  const onAction = useCallback((value) => {
-    switch (value) {
-      case "user":
-        break;
-      case "logout":
-        onLogout();
-        break;
-      case "login":
-        onLogin();
-        break;
-    }
-  });
+export function UserMenu() {
+  const location = useLocation();
+  const history = useHistory();
+  const { isAuthenticated, isGuest, logout, userName } = useClient();
+
+  const onAction = useCallback(
+    (value) => {
+      switch (value) {
+        case "user":
+          break;
+        case "logout":
+          logout();
+          break;
+        case "login":
+          history.push("/login", { state: { from: location } });
+          break;
+        case "register":
+          history.push("/register", { state: { from: location } });
+          break;
+      }
+    },
+    [history, location, logout]
+  );
 
   const items = useMemo(() => {
-    if (signedIn) {
-      return [
-        {
-          key: "user",
-          icon: UserIcon,
-          label: userName,
-        },
-        {
-          key: "logout",
-          label: "Sign Out",
-          icon: LogoutIcon,
-        },
-      ];
-    } else {
-      return [
+    const arr = [];
+
+    if (isAuthenticated) {
+      arr.push({
+        key: "user",
+        icon: UserIcon,
+        label: userName,
+      });
+    }
+
+    if (!isAuthenticated || isGuest) {
+      arr.push(
         {
           key: "login",
           label: "Sign In",
           icon: LoginIcon,
         },
-      ];
+        {
+          key: "register",
+          label: "Register",
+          icon: LoginIcon,
+        }
+      );
+    } else {
+      arr.push({
+        key: "logout",
+        label: "Sign Out",
+        icon: LogoutIcon,
+      });
     }
-  }, [signedIn, userName]);
+
+    return arr;
+  }, [isAuthenticated, isGuest, userName]);
 
   return (
     <PopoverMenuTrigger placement="bottom right">
