@@ -42,7 +42,7 @@ import "matrix-react-sdk/res/css/views/voip/GroupCallView/_VideoGrid.scss";
 import { useGroupCall } from "matrix-react-sdk/src/hooks/useGroupCall";
 import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
 import { useMediaStream } from "matrix-react-sdk/src/hooks/useMediaStream";
-import { fetchGroupCall } from "./ConferenceCallManagerHooks";
+import { useClient, useLoadGroupCall } from "./ConferenceCallManagerHooks";
 import { ErrorModal } from "./ErrorModal";
 import { GroupCallInspector } from "./GroupCallInspector";
 import * as Sentry from "@sentry/react";
@@ -56,24 +56,39 @@ const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-function useLoadGroupCall(client, roomId, viaServers) {
-  const [state, setState] = useState({
-    loading: true,
-    error: undefined,
-    groupCall: undefined,
-  });
+export function Room() {
+  const [registeringGuest, setRegisteringGuest] = useState(false);
+  const [registrationError, setRegistrationError] = useState();
+  const { loading, isAuthenticated, error, client, registerGuest } =
+    useClient();
 
   useEffect(() => {
-    setState({ loading: true });
-    fetchGroupCall(client, roomId, viaServers, 30000)
-      .then((groupCall) => setState({ loading: false, groupCall }))
-      .catch((error) => setState({ loading: false, error }));
-  }, [roomId]);
+    if (!loading && !isAuthenticated) {
+      setRegisteringGuest(true);
 
-  return state;
+      registerGuest()
+        .then(() => {
+          setRegisteringGuest(false);
+        })
+        .catch((error) => {
+          setRegistrationError(error);
+          setRegisteringGuest(false);
+        });
+    }
+  }, [loading, isAuthenticated]);
+
+  if (loading || registeringGuest) {
+    return <div>Loading...</div>;
+  }
+
+  if (registrationError || error) {
+    return <ErrorModal error={registrationError || error} />;
+  }
+
+  return <GroupCall client={client} />;
 }
 
-export function Room({ client, onLogout }) {
+export function GroupCall({ client }) {
   const { roomId: maybeRoomId } = useParams();
   const { hash, search } = useLocation();
   const [simpleGrid, viaServers] = useMemo(() => {
@@ -115,7 +130,6 @@ export function Room({ client, onLogout }) {
   return (
     <div className={styles.room}>
       <GroupCallView
-        onLogout={onLogout}
         client={client}
         groupCall={groupCall}
         simpleGrid={simpleGrid}
@@ -124,7 +138,7 @@ export function Room({ client, onLogout }) {
   );
 }
 
-export function GroupCallView({ client, groupCall, simpleGrid, onLogout }) {
+export function GroupCallView({ client, groupCall, simpleGrid }) {
   const [showInspector, setShowInspector] = useState(false);
   const {
     state,
@@ -184,7 +198,6 @@ export function GroupCallView({ client, groupCall, simpleGrid, onLogout }) {
   } else if (state === GroupCallState.Entered) {
     return (
       <InRoomView
-        onLogout={onLogout}
         groupCall={groupCall}
         client={client}
         roomName={groupCall.room.name}
@@ -209,7 +222,6 @@ export function GroupCallView({ client, groupCall, simpleGrid, onLogout }) {
   } else {
     return (
       <RoomSetupView
-        onLogout={onLogout}
         client={client}
         hasLocalParticipant={hasLocalParticipant}
         roomName={groupCall.room.name}
@@ -249,7 +261,6 @@ export function EnteringRoomView() {
 }
 
 function RoomSetupView({
-  onLogout,
   client,
   roomName,
   state,
@@ -282,11 +293,7 @@ function RoomSetupView({
           />
         </LeftNav>
         <RightNav>
-          <UserMenu
-            signedIn
-            userName={client.getUserIdLocalpart()}
-            onLogout={onLogout}
-          />
+          <UserMenu />
         </RightNav>
       </Header>
       <div className={styles.joinRoom}>
@@ -347,7 +354,6 @@ function RoomSetupView({
 }
 
 function InRoomView({
-  onLogout,
   client,
   groupCall,
   roomName,
@@ -424,11 +430,7 @@ function InRoomView({
         </LeftNav>
         <RightNav>
           <GridLayoutMenu layout={layout} setLayout={setLayout} />
-          <UserMenu
-            signedIn
-            userName={client.getUserIdLocalpart()}
-            onLogout={onLogout}
-          />
+          <UserMenu />
         </RightNav>
       </Header>
       {items.length === 0 ? (

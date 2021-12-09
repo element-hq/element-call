@@ -4,9 +4,28 @@ import { CopyButton } from "./button";
 import { Facepile } from "./Facepile";
 import { Avatar } from "./Avatar";
 import { ReactComponent as VideoIcon } from "./icons/Video.svg";
-import styles from "./CallTile.module.css";
+import styles from "./CallList.module.css";
 
-export function CallTile({ name, avatarUrl, roomUrl, participants }) {
+export function CallList({ title, rooms }) {
+  return (
+    <>
+      <h3>{title}</h3>
+      <div className={styles.callList}>
+        {rooms.map(({ roomId, roomName, roomUrl, avatarUrl, participants }) => (
+          <CallTile
+            key={roomId}
+            name={roomName}
+            avatarUrl={avatarUrl}
+            roomUrl={roomUrl}
+            participants={participants}
+          />
+        ))}
+      </div>
+    </>
+  );
+}
+
+function CallTile({ name, avatarUrl, roomUrl, participants }) {
   return (
     <Link to={roomUrl} className={styles.callTile}>
       <Avatar

@@ -15,86 +15,42 @@ limitations under the License.
 */
 
 import React from "react";
-import {
-  BrowserRouter as Router,
-  Switch,
-  Route,
-  Redirect,
-  useLocation,
-} from "react-router-dom";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import * as Sentry from "@sentry/react";
-import { useClient } from "./ConferenceCallManagerHooks";
-import { Home } from "./Home";
-import { Room } from "./Room";
-import { RegisterPage } from "./RegisterPage";
-import { LoginPage } from "./LoginPage";
-import { Center } from "./Layout";
-import { GuestAuthPage } from "./GuestAuthPage";
 import { OverlayProvider } from "@react-aria/overlays";
+import { Home } from "./Home";
+import { LoginPage } from "./LoginPage";
+import { RegisterPage } from "./RegisterPage";
+import { Room } from "./Room";
+import { ClientProvider } from "./ConferenceCallManagerHooks";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
-export default function App() {
-  const { protocol, host } = window.location;
-  // Assume homeserver is hosted on same domain (proxied in development by vite)
-  const homeserverUrl = `${protocol}//${host}`;
-  const {
-    loading,
-    authenticated,
-    client,
-    login,
-    logout,
-    registerGuest,
-    register,
-  } = useClient(homeserverUrl);
+const { protocol, host } = window.location;
+// Assume homeserver is hosted on same domain (proxied in development by vite)
+const homeserverUrl = `${protocol}//${host}`;
 
+export default function App() {
   return (
     <Router>
-      <OverlayProvider>
-        {loading ? (
-          <Center>
-            <p>Loading...</p>
-          </Center>
-        ) : (
+      <ClientProvider homeserverUrl={homeserverUrl}>
+        <OverlayProvider>
           <Switch>
-            <AuthenticatedRoute authenticated={authenticated} exact path="/">
-              <Home client={client} onLogout={logout} />
-            </AuthenticatedRoute>
+            <SentryRoute exact path="/">
+              <Home />
+            </SentryRoute>
             <SentryRoute exact path="/login">
-              <LoginPage onLogin={login} />
+              <LoginPage />
             </SentryRoute>
             <SentryRoute exact path="/register">
-              <RegisterPage onRegister={register} />
+              <RegisterPage />
             </SentryRoute>
             <SentryRoute path="/room/:roomId?">
-              {authenticated ? (
-                <Room client={client} onLogout={logout} />
-              ) : (
-                <GuestAuthPage onLoginAsGuest={registerGuest} />
-              )}
+              <Room />
             </SentryRoute>
           </Switch>
-        )}
-      </OverlayProvider>
+        </OverlayProvider>
+      </ClientProvider>
     </Router>
-  );
-}
-
-function AuthenticatedRoute({ authenticated, children, ...rest }) {
-  const location = useLocation();
-
-  return (
-    <SentryRoute {...rest}>
-      {authenticated ? (
-        children
-      ) : (
-        <Redirect
-          to={{
-            pathname: "/login",
-            state: { from: location },
-          }}
-        />
-      )}
-    </SentryRoute>
   );
 }

@@ -15,6 +15,11 @@
   background-color: var(--bgColor2);
 }
 
+.fullWidth {
+  background-color: var(--bgColor1);
+  overflow-y: auto;
+}
+
 .centered {
   display: flex;
   flex-direction: column;
@@ -65,6 +70,10 @@
   top: -12px;
 }
 
+.fullWidth .content hr:after {
+  background-color: var(--bgColor1);
+}
+
 .left .content form {
   display: flex;
   flex-direction: column;
@@ -98,12 +107,4 @@
 
 .right .content h3:first-child {
   margin-top: 0;
-}
-
-.roomList {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
-  gap: 24px;
-  flex: 1;
 }

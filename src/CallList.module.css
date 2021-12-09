@@ -52,3 +52,11 @@
   width: 16px;
   height: 16px;
 }
+
+.callList {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+  gap: 24px;
+  flex: 1;
+}

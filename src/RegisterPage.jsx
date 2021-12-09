@@ -20,8 +20,11 @@ import { Header, LeftNav, HeaderLogo } from "./Header";
 import { FieldRow, InputField, ErrorMessage } from "./Input";
 import { Center, Content, Info, Modal } from "./Layout";
 import { Button } from "./button";
+import { useClient } from "./ConferenceCallManagerHooks";
 
-export function RegisterPage({ onRegister }) {
+export function RegisterPage() {
+  // TODO: Handle hitting login page with authenticated client
+  const { register } = useClient();
   const registerUsernameRef = useRef();
   const registerPasswordRef = useRef();
   const history = useHistory();
@@ -33,15 +36,15 @@ export function RegisterPage({ onRegister }) {
     (e) => {
       e.preventDefault();
       setLoading(true);
-      onRegister(
+      register(
         registerUsernameRef.current.value,
         registerPasswordRef.current.value
       )
         .then(() => {
           if (location.state && location.state.from) {
-            history.replace(location.state.from);
+            history.push(location.state.from);
           } else {
-            history.replace("/");
+            history.push("/");
           }
         })
         .catch((error) => {
@@ -49,7 +52,7 @@ export function RegisterPage({ onRegister }) {
           setLoading(false);
         });
     },
-    [onRegister, location, history]
+    [register, location, history]
   );
 
   return (
