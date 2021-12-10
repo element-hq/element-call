@@ -18,13 +18,14 @@ limitations under the License.
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  min-height: -webkit-fill-available;
   overflow: hidden;
+  min-height: 100%;
 }
 
 .inRoom {
-  width: 100vw;
+  position: fixed;
+  height: 100%;
+  width: 100%;
 }
 
 .joinRoom {
@@ -33,7 +34,18 @@ limitations under the License.
   align-items: center;
   flex: 1;
   overflow: hidden;
-  margin-bottom: 20px;
+  height: 100%;
+}
+
+.joinRoomContent {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.joinRoomFooter {
+  margin: 20px 0;
 }
 
 .homeLink {
@@ -139,10 +151,6 @@ limitations under the License.
 }
 
 @media (min-width: 800px) {
-  .room {
-    position: fixed;
-  }
-
   .roomContainer {
     flex-direction: row;
   }
