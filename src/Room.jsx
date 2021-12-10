@@ -49,6 +49,7 @@ import * as Sentry from "@sentry/react";
 import { OverflowMenu } from "./OverflowMenu";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { UserMenu } from "./UserMenu";
+import classNames from "classnames";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -128,14 +129,12 @@ export function GroupCall({ client }) {
   }
 
   return (
-    <div className={styles.room}>
-      <GroupCallView
-        client={client}
-        roomId={roomId}
-        groupCall={groupCall}
-        simpleGrid={simpleGrid}
-      />
-    </div>
+    <GroupCallView
+      client={client}
+      roomId={roomId}
+      groupCall={groupCall}
+      simpleGrid={simpleGrid}
+    />
   );
 }
 
@@ -187,14 +186,14 @@ export function GroupCallView({ client, roomId, groupCall, simpleGrid }) {
 
   if (error) {
     return (
-      <>
+      <div className={styles.room}>
         <Header>
           <LeftNav>
             <HeaderLogo />
           </LeftNav>
         </Header>
         <ErrorModal error={error} />
-      </>
+      </div>
     );
   } else if (state === GroupCallState.Entered) {
     return (
@@ -245,21 +244,21 @@ export function GroupCallView({ client, roomId, groupCall, simpleGrid }) {
 
 export function LoadingRoomView() {
   return (
-    <>
+    <div className={styles.room}>
       <div className={styles.centerMessage}>
         <p>Loading room...</p>
       </div>
-    </>
+    </div>
   );
 }
 
 export function EnteringRoomView() {
   return (
-    <>
+    <div className={styles.room}>
       <div className={styles.centerMessage}>
         <p>Entering room...</p>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -288,7 +287,7 @@ function RoomSetupView({
   }, [onInitLocalCallFeed]);
 
   return (
-    <>
+    <div className={styles.room}>
       <Header>
         <LeftNav>
           <RoomSetupHeaderInfo
@@ -353,7 +352,7 @@ function RoomSetupView({
           Take me Home
         </Link>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -428,7 +427,7 @@ function InRoomView({
   );
 
   return (
-    <>
+    <div className={classNames(styles.room, styles.inRoom)}>
       <Header>
         <LeftNav>
           <RoomHeaderInfo roomName={roomName} />
@@ -474,6 +473,6 @@ function InRoomView({
         groupCall={groupCall}
         show={showInspector}
       />
-    </>
+    </div>
   );
 }
