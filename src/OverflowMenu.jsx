@@ -11,7 +11,7 @@ import { SettingsModal } from "./SettingsModal";
 import { InviteModal } from "./InviteModal";
 
 export function OverflowMenu({
-  roomUrl,
+  roomId,
   setShowInspector,
   showInspector,
   client,
@@ -63,7 +63,7 @@ export function OverflowMenu({
         />
       )}
       {inviteModalState.isOpen && (
-        <InviteModal roomUrl={roomUrl} {...inviteModalProps} />
+        <InviteModal roomId={roomId} {...inviteModalProps} />
       )}
     </>
   );
