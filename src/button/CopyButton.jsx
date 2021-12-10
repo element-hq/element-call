@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback } from "react";
 import useClipboard from "react-use-clipboard";
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 import { ReactComponent as CopyIcon } from "../icons/Copy.svg";

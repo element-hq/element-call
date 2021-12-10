@@ -28,24 +28,27 @@ export function CallList({ title, rooms }) {
 
 function CallTile({ name, avatarUrl, roomId, participants }) {
   return (
-    <Link to={`/room/${roomId}`} className={styles.callTile}>
-      <Avatar
-        size="md"
-        bgKey={name}
-        src={avatarUrl}
-        fallback={<VideoIcon width={16} height={16} />}
-        className={styles.avatar}
-      />
-      <div className={styles.callInfo}>
-        <h5>{name}</h5>
-        <p>{roomId}</p>
-        {participants && <Facepile participants={participants} />}
-      </div>
+    <div className={styles.callTile}>
+      <Link to={`/room/${roomId}`} className={styles.callTileLink}>
+        <Avatar
+          size="md"
+          bgKey={name}
+          src={avatarUrl}
+          fallback={<VideoIcon width={16} height={16} />}
+          className={styles.avatar}
+        />
+        <div className={styles.callInfo}>
+          <h5>{name}</h5>
+          <p>{roomId}</p>
+          {participants && <Facepile participants={participants} />}
+        </div>
+        <div className={styles.copyButtonSpacer} />
+      </Link>
       <CopyButton
         className={styles.copyButton}
         variant="icon"
         value={getRoomUrl(roomId)}
       />
-    </Link>
+    </div>
   );
 }
