@@ -1,17 +1,23 @@
 .callTile {
-  display: flex;
   min-width: 240px;
   height: 94px;
   padding: 12px;
-  text-decoration: none;
   background-color: var(--bgColor2);
   border-radius: 8px;
   overflow: hidden;
   box-sizing: border-box;
+  position: relative;
+  user-select: none;
+}
+
+.callTileLink {
+  display: flex;
+  text-decoration: none;
+  width: 100%;
 }
 
 .avatar,
-.copyButton {
+.copyButtonSpacer {
   flex-shrink: 0;
 }
 
@@ -49,9 +55,16 @@
   white-space: nowrap;
 }
 
+.copyButtonSpacer,
 .copyButton {
   width: 16px;
   height: 16px;
+}
+
+.copyButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
 }
 
 .callList {
