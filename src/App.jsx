@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useEffect } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
@@ -23,6 +23,9 @@ import { LoginPage } from "./LoginPage";
 import { RegisterPage } from "./RegisterPage";
 import { Room } from "./Room";
 import { ClientProvider } from "./ConferenceCallManagerHooks";
+import { useFocusVisible } from "@react-aria/interactions";
+import classNames from "classnames";
+import styles from "./App.module.css";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -31,6 +34,23 @@ const { protocol, host } = window.location;
 const homeserverUrl = `${protocol}//${host}`;
 
 export default function App() {
+  const { isFocusVisible } = useFocusVisible();
+
+  useEffect(() => {
+    const classList = document.body.classList;
+    const hasClass = classList.contains(styles.hideFocus);
+
+    if (isFocusVisible && hasClass) {
+      classList.remove(styles.hideFocus);
+    } else if (!isFocusVisible && !hasClass) {
+      classList.add(styles.hideFocus);
+    }
+
+    return () => {
+      classList.remove(styles.hideFocus);
+    };
+  }, [isFocusVisible]);
+
   return (
     <Router>
       <ClientProvider homeserverUrl={homeserverUrl}>
