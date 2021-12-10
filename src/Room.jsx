@@ -300,57 +300,64 @@ function RoomSetupView({
         </RightNav>
       </Header>
       <div className={styles.joinRoom}>
-        <h1>New Call</h1>
-        {hasLocalParticipant && (
-          <p>Warning, you are signed into this call on another device.</p>
-        )}
-        <div className={styles.preview}>
-          {state === GroupCallState.LocalCallFeedUninitialized && (
-            <p className={styles.webcamPermissions}>
-              Webcam/microphone permissions needed to join the call.
-            </p>
+        <div className={styles.joinRoomContent}>
+          <h1>New Call</h1>
+          {hasLocalParticipant && (
+            <p>Warning, you are signed into this call on another device.</p>
           )}
-          {state === GroupCallState.InitializingLocalCallFeed && (
-            <p className={styles.webcamPermissions}>
-              Accept webcam/microphone permissions to join the call.
-            </p>
-          )}
-          <video ref={videoRef} muted playsInline disablePictureInPicture />
-          {state === GroupCallState.LocalCallFeedInitialized && (
-            <>
-              <Button
-                className={styles.joinCallButton}
-                disabled={state !== GroupCallState.LocalCallFeedInitialized}
-                onPress={onEnter}
-              >
-                Join call now
-              </Button>
-              <div className={styles.previewButtons}>
-                <MicButton
-                  muted={microphoneMuted}
-                  onPress={toggleMicrophoneMuted}
-                />
-                <VideoButton
-                  muted={localVideoMuted}
-                  onPress={toggleLocalVideoMuted}
-                />
-                <OverflowMenu
-                  roomId={roomId}
-                  setShowInspector={setShowInspector}
-                  showInspector={showInspector}
-                  client={client}
-                />
-              </div>
-            </>
-          )}
+          <div className={styles.preview}>
+            {state === GroupCallState.LocalCallFeedUninitialized && (
+              <p className={styles.webcamPermissions}>
+                Webcam/microphone permissions needed to join the call.
+              </p>
+            )}
+            {state === GroupCallState.InitializingLocalCallFeed && (
+              <p className={styles.webcamPermissions}>
+                Accept webcam/microphone permissions to join the call.
+              </p>
+            )}
+            <video ref={videoRef} muted playsInline disablePictureInPicture />
+            {state === GroupCallState.LocalCallFeedInitialized && (
+              <>
+                <Button
+                  className={styles.joinCallButton}
+                  disabled={state !== GroupCallState.LocalCallFeedInitialized}
+                  onPress={onEnter}
+                >
+                  Join call now
+                </Button>
+                <div className={styles.previewButtons}>
+                  <MicButton
+                    muted={microphoneMuted}
+                    onPress={toggleMicrophoneMuted}
+                  />
+                  <VideoButton
+                    muted={localVideoMuted}
+                    onPress={toggleLocalVideoMuted}
+                  />
+                  <OverflowMenu
+                    roomId={roomId}
+                    setShowInspector={setShowInspector}
+                    showInspector={showInspector}
+                    client={client}
+                  />
+                </div>
+              </>
+            )}
+          </div>
+          <p>Or</p>
+          <CopyButton
+            value={window.location.href}
+            className={styles.copyButton}
+          >
+            Copy call link and join later
+          </CopyButton>
         </div>
-        <p>Or</p>
-        <CopyButton value={window.location.href} className={styles.copyButton}>
-          Copy call link and join later
-        </CopyButton>
-        <Link className={styles.homeLink} to="/">
-          Take me Home
-        </Link>
+        <div className={styles.joinRoomFooter}>
+          <Link className={styles.homeLink} to="/">
+            Take me Home
+          </Link>
+        </div>
       </div>
     </div>
   );
