@@ -14,8 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect } from "react";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  useLocation,
+  useHistory,
+} from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
 import { Home } from "./Home";
@@ -24,8 +30,8 @@ import { RegisterPage } from "./RegisterPage";
 import { Room } from "./Room";
 import { ClientProvider } from "./ConferenceCallManagerHooks";
 import { useFocusVisible } from "@react-aria/interactions";
-import classNames from "classnames";
 import styles from "./App.module.css";
+import { ErrorModal } from "./ErrorModal";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -68,9 +74,63 @@ export default function App() {
             <SentryRoute path="/room/:roomId?">
               <Room />
             </SentryRoute>
+            <SentryRoute path="*">
+              <RoomRedirect />
+            </SentryRoute>
           </Switch>
         </OverlayProvider>
       </ClientProvider>
     </Router>
   );
+}
+
+function RoomRedirect() {
+  const { pathname } = useLocation();
+  const history = useHistory();
+  const [error, setError] = useState();
+
+  useEffect(() => {
+    async function redirect() {
+      let roomId = pathname;
+
+      if (pathname.startsWith("/")) {
+        roomId = roomId.substr(1, roomId.length);
+      }
+
+      if (!roomId.startsWith("#") && !roomId.startsWith("!")) {
+        let loginHomeserverUrl = homeserverUrl.trim();
+
+        if (!loginHomeserverUrl.includes("://")) {
+          loginHomeserverUrl = "https://" + loginHomeserverUrl;
+        }
+
+        try {
+          const wellKnownUrl = new URL(
+            "/.well-known/matrix/client",
+            window.location
+          );
+          const response = await fetch(wellKnownUrl);
+          const config = await response.json();
+
+          if (config["m.homeserver"]) {
+            loginHomeserverUrl = config["m.homeserver"];
+          }
+        } catch (error) {}
+
+        const { host } = new URL(loginHomeserverUrl);
+
+        roomId = `#${roomId}:${host}`;
+      }
+
+      history.replace(`/room/${roomId}`);
+    }
+
+    redirect().catch(setError);
+  }, [history, pathname]);
+
+  if (error) {
+    return <ErrorModal error={error} />;
+  }
+
+  return <div>Loading...</div>;
 }

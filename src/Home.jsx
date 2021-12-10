@@ -58,7 +58,7 @@ export function Home() {
       e.preventDefault();
       const data = new FormData(e.target);
       const roomId = data.get("roomId");
-      history.push(`/room/${roomId}`);
+      history.push(`/${roomId}`);
     },
     [history]
   );
