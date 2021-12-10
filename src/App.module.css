@@ -1,0 +1,3 @@
+.hideFocus * {
+  outline: none;
+}
