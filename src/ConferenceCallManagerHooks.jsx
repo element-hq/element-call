@@ -575,11 +575,11 @@ export function getRoomUrl(roomId) {
     const [localPart, host] = roomId.replace("#", "").split(":");
 
     if (host !== window.location.host) {
-      return `${window.location.host}/rooms/${roomId}`;
+      return `${window.location.host}/room/${roomId}`;
     } else {
       return `${window.location.host}/${localPart}`;
     }
   } else {
-    return `${window.location.host}/rooms/${roomId}`;
+    return `${window.location.host}/room/${roomId}`;
   }
 }
