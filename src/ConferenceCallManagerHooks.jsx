@@ -519,10 +519,9 @@ export function useGroupCallRooms(client) {
         const groupCall = client.getGroupCallForRoom(room.roomId);
 
         return {
-          roomId: room.roomId,
+          roomId: room.getCanonicalAlias() || room.roomId,
           roomName: room.name,
           avatarUrl: null,
-          roomUrl: `/room/${room.getCanonicalAlias() || room.roomId}`,
           room,
           groupCall,
           participants: [...groupCall.participants],
@@ -554,11 +553,10 @@ export function usePublicRooms(client, publicSpaceRoomId, maxRooms = 50) {
         const filteredRooms = rooms
           .filter((room) => room.room_type !== "m.space")
           .map((room) => ({
-            roomId: room.room_id,
+            roomId: room.room_alias || room.room_id,
             roomName: room.name,
             avatarUrl: null,
             room,
-            roomUrl: `/room/${room.room_id}`,
             participants: [],
           }));
 
@@ -570,4 +568,18 @@ export function usePublicRooms(client, publicSpaceRoomId, maxRooms = 50) {
   }, [publicSpaceRoomId]);
 
   return rooms;
+}
+
+export function getRoomUrl(roomId) {
+  if (roomId.startsWith("#")) {
+    const [localPart, host] = roomId.replace("#", "").split(":");
+
+    if (host !== window.location.host) {
+      return `${window.location.host}/rooms/${roomId}`;
+    } else {
+      return `${window.location.host}/${localPart}`;
+    }
+  } else {
+    return `${window.location.host}/rooms/${roomId}`;
+  }
 }

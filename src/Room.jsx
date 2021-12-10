@@ -131,6 +131,7 @@ export function GroupCall({ client }) {
     <div className={styles.room}>
       <GroupCallView
         client={client}
+        roomId={roomId}
         groupCall={groupCall}
         simpleGrid={simpleGrid}
       />
@@ -138,7 +139,7 @@ export function GroupCall({ client }) {
   );
 }
 
-export function GroupCallView({ client, groupCall, simpleGrid }) {
+export function GroupCallView({ client, roomId, groupCall, simpleGrid }) {
   const [showInspector, setShowInspector] = useState(false);
   const {
     state,
@@ -215,6 +216,7 @@ export function GroupCallView({ client, groupCall, simpleGrid }) {
         simpleGrid={simpleGrid}
         setShowInspector={setShowInspector}
         showInspector={showInspector}
+        roomId={roomId}
       />
     );
   } else if (state === GroupCallState.Entering) {
@@ -235,6 +237,7 @@ export function GroupCallView({ client, groupCall, simpleGrid }) {
         toggleMicrophoneMuted={toggleMicrophoneMuted}
         setShowInspector={setShowInspector}
         showInspector={showInspector}
+        roomId={roomId}
       />
     );
   }
@@ -274,6 +277,7 @@ function RoomSetupView({
   hasLocalParticipant,
   setShowInspector,
   showInspector,
+  roomId,
 }) {
   const history = useHistory();
   const { stream } = useCallFeed(localCallFeed);
@@ -332,7 +336,7 @@ function RoomSetupView({
                   onPress={toggleLocalVideoMuted}
                 />
                 <OverflowMenu
-                  roomUrl={window.location.href}
+                  roomId={roomId}
                   setShowInspector={setShowInspector}
                   showInspector={showInspector}
                   client={client}
@@ -370,6 +374,7 @@ function InRoomView({
   simpleGrid,
   setShowInspector,
   showInspector,
+  roomId,
 }) {
   const [layout, setLayout] = useVideoGridLayout();
 
@@ -457,7 +462,7 @@ function InRoomView({
           />
         )}
         <OverflowMenu
-          roomUrl={window.location.href}
+          roomId={roomId}
           setShowInspector={setShowInspector}
           showInspector={showInspector}
           client={client}
