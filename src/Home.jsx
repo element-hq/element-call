@@ -97,7 +97,7 @@ function UnregisteredView({
 }) {
   return (
     <div className={classNames(styles.home, styles.fullWidth)}>
-      <Header>
+      <Header className={styles.header}>
         <LeftNav>
           <HeaderLogo />
         </LeftNav>
@@ -197,8 +197,8 @@ function RegisteredView({
         [styles.fullWidth]: hideCallList,
       })}
     >
-      <Header>
-        <LeftNav>
+      <Header className={styles.header}>
+        <LeftNav className={styles.leftNav}>
           <HeaderLogo />
         </LeftNav>
         <RightNav>

@@ -22,6 +22,10 @@
   background-color: var(--bgColor1);
 }
 
+.fullWidth .header {
+  background-color: var(--bgColor1);
+}
+
 .centered {
   display: flex;
   flex-direction: column;
@@ -112,7 +116,7 @@
     background-color: var(--bgColor2);
   }
 
-  .leftNav:not(.fullWidth) {
+  .home:not(.fullWidth) .leftNav {
     background-color: var(--bgColor2);
   }
 
@@ -121,7 +125,8 @@
   }
 
   .fullWidth .content hr:after,
-  .left .content hr:after {
+  .left .content hr:after,
+  .fullWidth .header {
     background-color: var(--bgColor2);
   }
 }
