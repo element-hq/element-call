@@ -1,12 +1,13 @@
 .callTile {
   display: flex;
-  width: 329px;
+  min-width: 240px;
   height: 94px;
   padding: 12px;
   text-decoration: none;
   background-color: var(--bgColor2);
   border-radius: 8px;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .avatar,
@@ -54,9 +55,7 @@
 }
 
 .callList {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-start;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 24px;
-  flex: 1;
 }

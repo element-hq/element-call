@@ -29,6 +29,7 @@ export function SettingsModal({
     <Modal
       title="Settings"
       isDismissable
+      mobileFullScreen
       className={styles.settingsModal}
       {...rest}
     >

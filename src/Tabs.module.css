@@ -6,13 +6,14 @@
 .tabList {
   display: flex;
   flex-direction: column;
-  width: 190px;
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
 .tab {
+  max-width: 190px;
+  min-width: fit-content;
   height: 32px;
   border-radius: 8px;
   background-color: transparent;
@@ -56,4 +57,5 @@
   flex-direction: column;
   flex: 1;
   padding: 0 40px;
+  overflow-y: auto;
 }

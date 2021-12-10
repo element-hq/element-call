@@ -1,7 +1,14 @@
 .home {
   display: flex;
   flex: 1;
-  height: 100%;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.splitContainer {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
 }
 
 .left,
@@ -11,13 +18,8 @@
   flex: 1;
 }
 
-.left {
-  background-color: var(--bgColor2);
-}
-
 .fullWidth {
   background-color: var(--bgColor1);
-  overflow-y: auto;
 }
 
 .centered {
@@ -50,7 +52,7 @@
 }
 
 .left .content hr {
-  width: 100%;
+  width: calc(100% - 24px);
   border: none;
   border-top: 1px solid var(--bgColor4);
   color: var(--textColor2);
@@ -60,18 +62,15 @@
   font-weight: 600;
   font-size: 15px;
   line-height: 24px;
+  margin: 0 12px;
 }
 
 .left .content hr:after {
-  background-color: var(--bgColor2);
+  background-color: var(--bgColor1);
   content: "OR";
   padding: 0 12px;
   position: relative;
   top: -12px;
-}
-
-.fullWidth .content hr:after {
-  background-color: var(--bgColor1);
 }
 
 .left .content form {
@@ -97,14 +96,32 @@
 }
 
 .left .content form:last-child {
-  padding-bottom: 0;
+  padding-bottom: 40px;
 }
 
 .right .content {
   padding: 113px 40px 40px 40px;
-  overflow-y: auto;
 }
 
 .right .content h3:first-child {
   margin-top: 0;
+}
+
+@media (min-width: 800px) {
+  .left {
+    background-color: var(--bgColor2);
+  }
+
+  .leftNav:not(.fullWidth) {
+    background-color: var(--bgColor2);
+  }
+
+  .splitContainer {
+    flex-direction: row;
+  }
+
+  .fullWidth .content hr:after,
+  .left .content hr:after {
+    background-color: var(--bgColor2);
+  }
 }
