@@ -44,6 +44,10 @@ limitations under the License.
   flex: 1;
 }
 
+.joinRoomContent h1 {
+  display: none;
+}
+
 .joinRoomFooter {
   margin: 20px 0;
 }
@@ -57,6 +61,7 @@ limitations under the License.
 .preview {
   position: relative;
   max-width: 816px;
+  max-height: 75vh;
   border-radius: 24px;
   overflow: hidden;
   background-color: var(--bgColor3);
@@ -157,5 +162,9 @@ limitations under the License.
 
   .footer {
     height: 118px;
+  }
+
+  .joinRoomContent h1 {
+    display: block;
   }
 }
