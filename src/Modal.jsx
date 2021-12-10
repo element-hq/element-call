@@ -14,7 +14,7 @@ import styles from "./Modal.module.css";
 import classNames from "classnames";
 
 export function Modal(props) {
-  const { title, children, className } = props;
+  const { title, children, className, mobileFullScreen } = props;
   const modalRef = useRef();
   const { overlayProps, underlayProps } = useOverlay(props, modalRef);
   usePreventScroll();
@@ -34,7 +34,11 @@ export function Modal(props) {
             {...dialogProps}
             {...modalProps}
             ref={modalRef}
-            className={classNames(styles.modal, className)}
+            className={classNames(
+              styles.modal,
+              { [styles.mobileFullScreen]: mobileFullScreen },
+              className
+            )}
           >
             <div className={styles.modalHeader}>
               <h3 {...titleProps}>{title}</h3>

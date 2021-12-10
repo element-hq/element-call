@@ -21,7 +21,6 @@ import {
   useGroupCallRooms,
   usePublicRooms,
   useCreateRoom,
-  useCreateRoomAsPasswordlessUser,
 } from "./ConferenceCallManagerHooks";
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import styles from "./Home.module.css";
@@ -35,21 +34,8 @@ import { ErrorModal } from "./ErrorModal";
 export function Home() {
   const { isAuthenticated, isGuest, loading, error, client } = useClient();
 
-  if (loading) {
-    return <div>Loading...</div>;
-  } else if (error) {
-    return <ErrorModal error={error} />;
-  } else if (!isAuthenticated || isGuest) {
-    return <UnregisteredView />;
-  } else {
-    return <RegisteredView client={client} />;
-  }
-}
-
-function UnregisteredView() {
   const history = useHistory();
-  const { createRoomError, creatingRoom, createRoom } =
-    useCreateRoomAsPasswordlessUser();
+  const { createRoomError, creatingRoom, createRoom } = useCreateRoom();
 
   const onCreateRoom = useCallback(
     (e) => {
@@ -59,7 +45,9 @@ function UnregisteredView() {
       const userName = data.get("userName");
 
       createRoom(roomName, userName).then((roomIdOrAlias) => {
-        history.push(`/room/${roomIdOrAlias}`);
+        if (roomIdOrAlias) {
+          history.push(`/room/${roomIdOrAlias}`);
+        }
       });
     },
     [history]
@@ -75,78 +63,112 @@ function UnregisteredView() {
     [history]
   );
 
+  if (loading) {
+    return <div>Loading...</div>;
+  } else if (error) {
+    return <ErrorModal error={error} />;
+  } else if (!isAuthenticated || isGuest) {
+    return (
+      <UnregisteredView
+        onCreateRoom={onCreateRoom}
+        createRoomError={createRoomError}
+        creatingRoom={creatingRoom}
+        onJoinRoom={onJoinRoom}
+      />
+    );
+  } else {
+    return (
+      <RegisteredView
+        client={client}
+        onCreateRoom={onCreateRoom}
+        createRoomError={createRoomError}
+        creatingRoom={creatingRoom}
+        onJoinRoom={onJoinRoom}
+      />
+    );
+  }
+}
+
+function UnregisteredView({
+  onCreateRoom,
+  createRoomError,
+  creatingRoom,
+  onJoinRoom,
+}) {
   return (
-    <div className={styles.home}>
-      <div className={classNames(styles.left, styles.fullWidth)}>
-        <Header>
-          <LeftNav>
-            <HeaderLogo />
-          </LeftNav>
-          <RightNav>
-            <UserMenu />
-          </RightNav>
-        </Header>
-        <div className={styles.content}>
-          <div className={styles.centered}>
-            <form onSubmit={onJoinRoom}>
-              <h1>Join a call</h1>
-              <FieldRow className={styles.fieldRow}>
-                <InputField
-                  id="roomId"
-                  name="roomId"
-                  label="Call ID"
-                  type="text"
-                  required
-                  autoComplete="off"
-                  placeholder="Call ID"
-                />
-              </FieldRow>
-              <FieldRow className={styles.fieldRow}>
-                <Button className={styles.button} type="submit">
-                  Join call
-                </Button>
-              </FieldRow>
-            </form>
-            <hr />
-            <form onSubmit={onCreateRoom}>
-              <h1>Create a call</h1>
-              <FieldRow className={styles.fieldRow}>
-                <InputField
-                  id="userName"
-                  name="userName"
-                  label="Username"
-                  type="text"
-                  required
-                  autoComplete="off"
-                  placeholder="Username"
-                />
-              </FieldRow>
-              <FieldRow className={styles.fieldRow}>
-                <InputField
-                  id="roomName"
-                  name="roomName"
-                  label="Room Name"
-                  type="text"
-                  required
-                  autoComplete="off"
-                  placeholder="Room Name"
-                />
-              </FieldRow>
-              {createRoomError && (
+    <div className={classNames(styles.home, styles.fullWidth)}>
+      <Header>
+        <LeftNav>
+          <HeaderLogo />
+        </LeftNav>
+        <RightNav>
+          <UserMenu />
+        </RightNav>
+      </Header>
+      <div className={styles.splitContainer}>
+        <div className={styles.left}>
+          <div className={styles.content}>
+            <div className={styles.centered}>
+              <form onSubmit={onJoinRoom}>
+                <h1>Join a call</h1>
                 <FieldRow className={styles.fieldRow}>
-                  <ErrorMessage>{createRoomError.message}</ErrorMessage>
+                  <InputField
+                    id="roomId"
+                    name="roomId"
+                    label="Call ID"
+                    type="text"
+                    required
+                    autoComplete="off"
+                    placeholder="Call ID"
+                  />
                 </FieldRow>
-              )}
-              <FieldRow className={styles.fieldRow}>
-                <Button
-                  className={styles.button}
-                  type="submit"
-                  disabled={creatingRoom}
-                >
-                  {creatingRoom ? "Creating call..." : "Create call"}
-                </Button>
-              </FieldRow>
-            </form>
+                <FieldRow className={styles.fieldRow}>
+                  <Button className={styles.button} type="submit">
+                    Join call
+                  </Button>
+                </FieldRow>
+              </form>
+              <hr />
+              <form onSubmit={onCreateRoom}>
+                <h1>Create a call</h1>
+                <FieldRow className={styles.fieldRow}>
+                  <InputField
+                    id="userName"
+                    name="userName"
+                    label="Username"
+                    type="text"
+                    required
+                    autoComplete="off"
+                    placeholder="Username"
+                  />
+                </FieldRow>
+                <FieldRow className={styles.fieldRow}>
+                  <InputField
+                    id="roomName"
+                    name="roomName"
+                    label="Room Name"
+                    type="text"
+                    required
+                    autoComplete="off"
+                    placeholder="Room Name"
+                  />
+                </FieldRow>
+                {createRoomError && (
+                  <FieldRow className={styles.fieldRow}>
+                    <ErrorMessage>{createRoomError.message}</ErrorMessage>
+                  </FieldRow>
+                )}
+                <FieldRow className={styles.fieldRow}>
+                  <Button
+                    className={styles.button}
+                    type="submit"
+                    disabled={creatingRoom}
+                  >
+                    {creatingRoom ? "Creating call..." : "Create call"}
+                  </Button>
+                </FieldRow>
+              </form>
+            </div>
           </div>
         </div>
       </div>
@@ -154,32 +176,13 @@ function UnregisteredView() {
   );
 }
 
-function RegisteredView({ client }) {
-  const history = useHistory();
-  const { createRoomError, creatingRoom, createRoom } = useCreateRoom(client);
-
-  const onCreateRoom = useCallback(
-    (e) => {
-      e.preventDefault();
-      const data = new FormData(e.target);
-      const roomName = data.get("roomName");
-
-      createRoom(roomName).then((roomIdOrAlias) => {
-        history.push(`/room/${roomIdOrAlias}`);
-      });
-    },
-    [history]
-  );
-
-  const onJoinRoom = useCallback(
-    (e) => {
-      e.preventDefault();
-      const data = new FormData(e.target);
-      const roomId = data.get("roomId");
-      history.push(`/room/${roomId}`);
-    },
-    [history]
-  );
+function RegisteredView({
+  client,
+  onCreateRoom,
+  createRoomError,
+  creatingRoom,
+  onJoinRoom,
+}) {
   const publicRooms = usePublicRooms(
     client,
     import.meta.env.VITE_PUBLIC_SPACE_ROOM_ID
@@ -189,93 +192,87 @@ function RegisteredView({ client }) {
   const hideCallList = publicRooms.length === 0 && recentRooms.length === 0;
 
   return (
-    <div className={styles.home}>
-      <div
-        className={classNames(styles.left, {
-          [styles.fullWidth]: hideCallList,
-        })}
-      >
-        <Header>
-          <LeftNav>
-            <HeaderLogo />
-          </LeftNav>
-          {hideCallList && (
-            <RightNav>
-              <UserMenu />
-            </RightNav>
-          )}
-        </Header>
-        <div className={styles.content}>
-          <div className={styles.centered}>
-            <form onSubmit={onJoinRoom}>
-              <h1>Join a call</h1>
-              <FieldRow className={styles.fieldRow}>
-                <InputField
-                  id="roomId"
-                  name="roomId"
-                  label="Call ID"
-                  type="text"
-                  required
-                  autoComplete="off"
-                  placeholder="Call ID"
-                />
-              </FieldRow>
-              <FieldRow className={styles.fieldRow}>
-                <Button className={styles.button} type="submit">
-                  Join call
-                </Button>
-              </FieldRow>
-            </form>
-            <hr />
-            <form onSubmit={onCreateRoom}>
-              <h1>Create a call</h1>
-              <FieldRow className={styles.fieldRow}>
-                <InputField
-                  id="roomName"
-                  name="roomName"
-                  label="Room Name"
-                  type="text"
-                  required
-                  autoComplete="off"
-                  placeholder="Room Name"
-                />
-              </FieldRow>
-              {createRoomError && (
-                <FieldRow className={styles.fieldRow}>
-                  <ErrorMessage>{createRoomError.message}</ErrorMessage>
-                </FieldRow>
-              )}
-              <FieldRow className={styles.fieldRow}>
-                <Button
-                  className={styles.button}
-                  type="submit"
-                  disabled={creatingRoom}
-                >
-                  {creatingRoom ? "Creating call..." : "Create call"}
-                </Button>
-              </FieldRow>
-            </form>
-          </div>
-        </div>
-      </div>
-      {!hideCallList && (
-        <div className={styles.right}>
-          <Header>
-            <LeftNav />
-            <RightNav>
-              <UserMenu />
-            </RightNav>
-          </Header>
+    <div
+      className={classNames(styles.home, {
+        [styles.fullWidth]: hideCallList,
+      })}
+    >
+      <Header>
+        <LeftNav>
+          <HeaderLogo />
+        </LeftNav>
+        <RightNav>
+          <UserMenu />
+        </RightNav>
+      </Header>
+      <div className={styles.splitContainer}>
+        <div className={styles.left}>
           <div className={styles.content}>
-            {publicRooms.length > 0 && (
-              <CallList title="Public Calls" rooms={publicRooms} />
-            )}
-            {recentRooms.length > 0 && (
-              <CallList title="Recent Calls" rooms={recentRooms} />
-            )}
+            <div className={styles.centered}>
+              <form onSubmit={onJoinRoom}>
+                <h1>Join a call</h1>
+                <FieldRow className={styles.fieldRow}>
+                  <InputField
+                    id="roomId"
+                    name="roomId"
+                    label="Call ID"
+                    type="text"
+                    required
+                    autoComplete="off"
+                    placeholder="Call ID"
+                  />
+                </FieldRow>
+                <FieldRow className={styles.fieldRow}>
+                  <Button className={styles.button} type="submit">
+                    Join call
+                  </Button>
+                </FieldRow>
+              </form>
+              <hr />
+              <form onSubmit={onCreateRoom}>
+                <h1>Create a call</h1>
+                <FieldRow className={styles.fieldRow}>
+                  <InputField
+                    id="roomName"
+                    name="roomName"
+                    label="Room Name"
+                    type="text"
+                    required
+                    autoComplete="off"
+                    placeholder="Room Name"
+                  />
+                </FieldRow>
+                {createRoomError && (
+                  <FieldRow className={styles.fieldRow}>
+                    <ErrorMessage>{createRoomError.message}</ErrorMessage>
+                  </FieldRow>
+                )}
+                <FieldRow className={styles.fieldRow}>
+                  <Button
+                    className={styles.button}
+                    type="submit"
+                    disabled={creatingRoom}
+                  >
+                    {creatingRoom ? "Creating call..." : "Create call"}
+                  </Button>
+                </FieldRow>
+              </form>
+            </div>
           </div>
         </div>
-      )}
+        {!hideCallList && (
+          <div className={styles.right}>
+            <div className={styles.content}>
+              {publicRooms.length > 0 && (
+                <CallList title="Public Calls" rooms={publicRooms} />
+              )}
+              {recentRooms.length > 0 && (
+                <CallList title="Recent Calls" rooms={recentRooms} />
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

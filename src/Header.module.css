@@ -3,16 +3,17 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 64px;
   user-select: none;
   flex-shrink: 0;
 }
 
 .nav {
   display: flex;
+  flex: 1;
   align-items: center;
   white-space: nowrap;
-  margin: 0 20px;
+  padding: 0 20px;
+  height: 64px;
 }
 
 .logo {
@@ -23,6 +24,10 @@
 
 .leftNav > * {
   margin-right: 12px;
+}
+
+.rightNav {
+  justify-content: flex-end;
 }
 
 .rightNav > * {
@@ -88,7 +93,7 @@
 }
 
 @media (min-width: 800px) {
-  .header {
+  .nav {
     height: 98px;
   }
 }

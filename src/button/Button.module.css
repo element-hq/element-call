@@ -124,6 +124,7 @@ limitations under the License.
   height: 40px;
   transition: border-color 250ms, background-color 250ms;
   padding: 0 20px;
+  flex-shrink: 0;
 }
 
 .copyButton span {

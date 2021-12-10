@@ -159,10 +159,7 @@ details[open] > summary {
   margin-bottom: 16px;
 }
 
-*[data-overlay-container] {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+#root > [data-overlay-container] {
+  position: relative;
+  height: 100%;
 }

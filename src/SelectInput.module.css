@@ -22,7 +22,7 @@
   font-size: 15px;
   color: var(--textColor1);
   height: 40px;
-  width: 320px;
+  max-width: 100%;
 }
 
 .selectedItem {
@@ -33,7 +33,6 @@
 }
 
 .popover {
-  width: 320px;
 }
 
 .option:first-child {

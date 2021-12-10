@@ -297,7 +297,6 @@ export function ClientProvider({ homeserverUrl, children }) {
         loading: false,
         isGuest: false,
         isAuthenticated: true,
-        isGuest: false,
         userName: client.getUserIdLocalpart(),
       });
 
@@ -407,40 +406,21 @@ export async function createRoom(client, name) {
   return room_alias || room_id;
 }
 
-export function useCreateRoom(client) {
-  const [creatingRoom, setCreatingRoom] = useState(false);
-  const [createRoomError, setCreateRoomError] = useState();
-
-  const onCreateRoom = useCallback(
-    (roomName) => {
-      setCreateRoomError(undefined);
-      setCreatingRoom(true);
-
-      return createRoom(client, roomName).catch((error) => {
-        setCreateRoomError(error);
-        setCreatingRoom(false);
-      });
-    },
-    [client]
-  );
-
-  return {
-    creatingRoom,
-    createRoomError,
-    createRoom: onCreateRoom,
-  };
-}
-
-export function useCreateRoomAsPasswordlessUser() {
-  const { register } = useClient();
+export function useCreateRoom() {
+  const { register, client } = useClient();
   const [creatingRoom, setCreatingRoom] = useState(false);
   const [createRoomError, setCreateRoomError] = useState();
 
   const onCreateRoom = useCallback(
     (roomName, userName) => {
       async function onCreateRoom(roomName, userName) {
-        const client = await register(userName, randomString(16));
-        return await createRoom(client, roomName);
+        let _client = client;
+
+        if (!_client) {
+          _client = await register(userName, randomString(16));
+        }
+
+        return await createRoom(_client, roomName);
       }
 
       setCreateRoomError(undefined);
@@ -451,7 +431,7 @@ export function useCreateRoomAsPasswordlessUser() {
         setCreatingRoom(false);
       });
     },
-    [register]
+    [register, client]
   );
 
   return {
