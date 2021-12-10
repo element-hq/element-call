@@ -18,10 +18,13 @@ limitations under the License.
   position: relative;
   display: flex;
   flex-direction: column;
-  width: 100vw;
   min-height: 100vh;
   min-height: -webkit-fill-available;
   overflow: hidden;
+}
+
+.inRoom {
+  width: 100vw;
 }
 
 .joinRoom {
