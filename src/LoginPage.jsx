@@ -16,11 +16,11 @@ limitations under the License.
 
 import React, { useCallback, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
-import { Header, HeaderLogo, LeftNav } from "./Header";
+import { ReactComponent as Logo } from "./icons/LogoLarge.svg";
 import { FieldRow, InputField, ErrorMessage } from "./Input";
-import { Center, Content, Info, Modal } from "./Layout";
 import { Button } from "./button";
 import { useClient } from "./ConferenceCallManagerHooks";
+import styles from "./LoginPage.module.css";
 
 export function LoginPage() {
   const { login } = useClient();
@@ -59,72 +59,65 @@ export function LoginPage() {
 
   return (
     <>
-      <Header>
-        <LeftNav>
-          <HeaderLogo />
-        </LeftNav>
-      </Header>
-      <Content>
-        <Center>
-          {loading ? (
-            <div>Loading...</div>
-          ) : (
-            <Modal>
-              <h2>Login</h2>
-              <form onSubmit={onSubmitLoginForm}>
+      <div className={styles.container}>
+        <div className={styles.content}>
+          <div className={styles.formContainer}>
+            <Logo width="auto" height="auto" className={styles.logo} />
+
+            <h2>Log In</h2>
+            <h4>To continue to Element</h4>
+            <form onSubmit={onSubmitLoginForm}>
+              <FieldRow>
+                <InputField
+                  type="text"
+                  value={homeserver}
+                  onChange={(e) => setHomeServer(e.target.value)}
+                  placeholder="Homeserver"
+                  label="Homeserver"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                />
+              </FieldRow>
+              <FieldRow>
+                <InputField
+                  type="text"
+                  ref={usernameRef}
+                  placeholder="Username"
+                  label="Username"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                />
+              </FieldRow>
+              <FieldRow>
+                <InputField
+                  type="password"
+                  ref={passwordRef}
+                  placeholder="Password"
+                  label="Password"
+                />
+              </FieldRow>
+              {error && (
                 <FieldRow>
-                  <InputField
-                    type="text"
-                    value={homeserver}
-                    onChange={(e) => setHomeServer(e.target.value)}
-                    placeholder="Homeserver"
-                    label="Homeserver"
-                    autoCorrect="off"
-                    autoCapitalize="none"
-                  />
+                  <ErrorMessage>{error.message}</ErrorMessage>
                 </FieldRow>
-                <FieldRow>
-                  <InputField
-                    type="text"
-                    ref={usernameRef}
-                    placeholder="Username"
-                    label="Username"
-                    autoCorrect="off"
-                    autoCapitalize="none"
-                  />
-                </FieldRow>
-                <FieldRow>
-                  <InputField
-                    type="password"
-                    ref={passwordRef}
-                    placeholder="Password"
-                    label="Password"
-                  />
-                </FieldRow>
-                {error && (
-                  <FieldRow>
-                    <ErrorMessage>{error.message}</ErrorMessage>
-                  </FieldRow>
-                )}
-                <FieldRow rightAlign>
-                  <Button type="submit">Login</Button>
-                </FieldRow>
-              </form>
-              <Info>
-                New?{" "}
-                <Link
-                  to={{
-                    pathname: "/register",
-                    state: location.state,
-                  }}
-                >
-                  Create account
-                </Link>
-              </Info>
-            </Modal>
-          )}
-        </Center>
-      </Content>
+              )}
+              <FieldRow>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Logging in..." : "Login"}
+                </Button>
+              </FieldRow>
+            </form>
+          </div>
+          <div className={styles.authLinks}>
+            <p>Not registered yet?</p>
+            <p>
+              <Link to="/register">Create an account</Link>
+              {" Or "}
+              <Link to="/">Access as a guest</Link>
+            </p>
+          </div>
+        </div>
+      </div>
     </>
   );
 }

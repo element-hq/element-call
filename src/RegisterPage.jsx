@@ -16,11 +16,11 @@ limitations under the License.
 
 import React, { useCallback, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
-import { Header, LeftNav, HeaderLogo } from "./Header";
 import { FieldRow, InputField, ErrorMessage } from "./Input";
-import { Center, Content, Info, Modal } from "./Layout";
 import { Button } from "./button";
 import { useClient } from "./ConferenceCallManagerHooks";
+import styles from "./LoginPage.module.css";
+import { ReactComponent as Logo } from "./icons/LogoLarge.svg";
 
 export function RegisterPage() {
   // TODO: Handle hitting login page with authenticated client
@@ -57,61 +57,52 @@ export function RegisterPage() {
 
   return (
     <>
-      <Header>
-        <LeftNav>
-          <HeaderLogo />
-        </LeftNav>
-      </Header>
-      <Content>
-        <Center>
-          {loading ? (
-            <div>Loading...</div>
-          ) : (
-            <Modal>
-              <h2>Register</h2>
-              <form onSubmit={onSubmitRegisterForm}>
+      <div className={styles.container}>
+        <div className={styles.content}>
+          <div className={styles.formContainer}>
+            <Logo width="auto" height="auto" className={styles.logo} />
+            <h2>Create your account</h2>
+            <form onSubmit={onSubmitRegisterForm}>
+              <FieldRow>
+                <InputField
+                  type="text"
+                  ref={registerUsernameRef}
+                  placeholder="Username"
+                  label="Username"
+                  autoCorrect="off"
+                  autoCapitalize="none"
+                />
+              </FieldRow>
+              <FieldRow>
+                <InputField
+                  type="password"
+                  ref={registerPasswordRef}
+                  placeholder="Password"
+                  label="Password"
+                />
+              </FieldRow>
+              {error && (
                 <FieldRow>
-                  <InputField
-                    type="text"
-                    ref={registerUsernameRef}
-                    placeholder="Username"
-                    label="Username"
-                    autoCorrect="off"
-                    autoCapitalize="none"
-                  />
+                  <ErrorMessage>{error.message}</ErrorMessage>
                 </FieldRow>
-                <FieldRow>
-                  <InputField
-                    type="password"
-                    ref={registerPasswordRef}
-                    placeholder="Password"
-                    label="Password"
-                  />
-                </FieldRow>
-                {error && (
-                  <FieldRow>
-                    <ErrorMessage>{error.message}</ErrorMessage>
-                  </FieldRow>
-                )}
-                <FieldRow rightAlign>
-                  <Button type="submit">Register</Button>
-                </FieldRow>
-              </form>
-              <Info>
-                Already have an account?{" "}
-                <Link
-                  to={{
-                    pathname: "/login",
-                    state: location.state,
-                  }}
-                >
-                  Sign in here
-                </Link>
-              </Info>
-            </Modal>
-          )}
-        </Center>
-      </Content>
+              )}
+              <FieldRow>
+                <Button type="submit" disabled={loading}>
+                  {loading ? "Registering..." : "Register"}
+                </Button>
+              </FieldRow>
+            </form>
+          </div>
+          <div className={styles.authLinks}>
+            <p>Already have an account?</p>
+            <p>
+              <Link to="/login">Log in</Link>
+              {" Or "}
+              <Link to="/">Access as a guest</Link>
+            </p>
+          </div>
+        </div>
+      </div>
     </>
   );
 }
