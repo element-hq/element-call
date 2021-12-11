@@ -21,6 +21,7 @@ import "./index.css";
 import App from "./App";
 import * as Sentry from "@sentry/react";
 import { Integrations } from "@sentry/tracing";
+import { ErrorView } from "./FullScreenView";
 
 if (import.meta.env.VITE_CUSTOM_THEME) {
   const style = document.documentElement.style;
@@ -56,7 +57,7 @@ Sentry.init({
 
 ReactDOM.render(
   <React.StrictMode>
-    <Sentry.ErrorBoundary fallback={<p>An error has occurred</p>}>
+    <Sentry.ErrorBoundary fallback={ErrorView}>
       <App history={history} />
     </Sentry.ErrorBoundary>
   </React.StrictMode>,
