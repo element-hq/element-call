@@ -29,7 +29,7 @@ import { UserMenu } from "./UserMenu";
 import { Button } from "./button";
 import { CallList } from "./CallList";
 import classNames from "classnames";
-import { ErrorModal } from "./ErrorModal";
+import { ErrorView, LoadingView } from "./FullScreenView";
 
 export function Home() {
   const { isAuthenticated, isGuest, loading, error, client } = useClient();
@@ -64,9 +64,9 @@ export function Home() {
   );
 
   if (loading) {
-    return <div>Loading...</div>;
-  } else if (error) {
-    return <ErrorModal error={error} />;
+    return <LoadingView />;
+  } else if (error || createRoomError) {
+    return <ErrorView error={error || createRoomError} />;
   } else if (!isAuthenticated || isGuest) {
     return (
       <UnregisteredView

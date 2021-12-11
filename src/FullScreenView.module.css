@@ -1,3 +1,11 @@
+.page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 100%;
+}
+
 .header {
   padding: 76px 65px;
 }

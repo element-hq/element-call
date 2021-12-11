@@ -31,7 +31,7 @@ import { Room } from "./Room";
 import { ClientProvider } from "./ConferenceCallManagerHooks";
 import { useFocusVisible } from "@react-aria/interactions";
 import styles from "./App.module.css";
-import { ErrorModal } from "./ErrorModal";
+import { ErrorView, LoadingView } from "./FullScreenView";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -129,8 +129,8 @@ function RoomRedirect() {
   }, [history, pathname]);
 
   if (error) {
-    return <ErrorModal error={error} />;
+    return <ErrorView error={error} />;
   }
 
-  return <div>Loading...</div>;
+  return <LoadingView />;
 }

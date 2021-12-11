@@ -31,7 +31,6 @@ import {
   RightNav,
   RoomHeaderInfo,
   RoomSetupHeaderInfo,
-  HeaderLogo,
 } from "./Header";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import VideoGrid, {
@@ -43,7 +42,7 @@ import { useGroupCall } from "matrix-react-sdk/src/hooks/useGroupCall";
 import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
 import { useMediaStream } from "matrix-react-sdk/src/hooks/useMediaStream";
 import { useClient, useLoadGroupCall } from "./ConferenceCallManagerHooks";
-import { ErrorModal } from "./ErrorModal";
+import { ErrorView, LoadingView, FullScreenView } from "./FullScreenView";
 import { GroupCallInspector } from "./GroupCallInspector";
 import * as Sentry from "@sentry/react";
 import { OverflowMenu } from "./OverflowMenu";
@@ -79,15 +78,11 @@ export function Room() {
   }, [loading, isAuthenticated]);
 
   if (loading || registeringGuest) {
-    return <div>Loading...</div>;
+    return <LoadingView />;
   }
 
   if (registrationError || error) {
-    return (
-      <div className={styles.room}>
-        <ErrorModal error={registrationError || error} />
-      </div>
-    );
+    return <ErrorView error={registrationError || error} />;
   }
 
   return <GroupCall client={client} />;
@@ -116,16 +111,7 @@ export function GroupCall({ client }) {
   }
 
   if (error) {
-    return (
-      <div className={styles.room}>
-        <Header>
-          <LeftNav>
-            <HeaderLogo />
-          </LeftNav>
-        </Header>
-        <ErrorModal error={error} />
-      </div>
-    );
+    return <ErrorView error={error} />;
   }
 
   return (
@@ -185,16 +171,7 @@ export function GroupCallView({ client, roomId, groupCall, simpleGrid }) {
   }, [groupCall]);
 
   if (error) {
-    return (
-      <div className={styles.room}>
-        <Header>
-          <LeftNav>
-            <HeaderLogo />
-          </LeftNav>
-        </Header>
-        <ErrorModal error={error} />
-      </div>
-    );
+    return <ErrorView error={error} />;
   } else if (state === GroupCallState.Entered) {
     return (
       <InRoomView
@@ -244,21 +221,17 @@ export function GroupCallView({ client, roomId, groupCall, simpleGrid }) {
 
 export function LoadingRoomView() {
   return (
-    <div className={styles.room}>
-      <div className={styles.centerMessage}>
-        <p>Loading room...</p>
-      </div>
-    </div>
+    <FullScreenView>
+      <h1>Loading room...</h1>
+    </FullScreenView>
   );
 }
 
 export function EnteringRoomView() {
   return (
-    <div className={styles.room}>
-      <div className={styles.centerMessage}>
-        <p>Entering room...</p>
-      </div>
-    </div>
+    <FullScreenView>
+      <h1>Entering room...</h1>
+    </FullScreenView>
   );
 }
 
