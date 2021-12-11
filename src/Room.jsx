@@ -83,7 +83,11 @@ export function Room() {
   }
 
   if (registrationError || error) {
-    return <ErrorModal error={registrationError || error} />;
+    return (
+      <div className={styles.room}>
+        <ErrorModal error={registrationError || error} />
+      </div>
+    );
   }
 
   return <GroupCall client={client} />;
@@ -108,11 +112,7 @@ export function GroupCall({ client }) {
   }, [groupCall]);
 
   if (loading) {
-    return (
-      <div className={styles.room}>
-        <LoadingRoomView />
-      </div>
-    );
+    return <LoadingRoomView />;
   }
 
   if (error) {

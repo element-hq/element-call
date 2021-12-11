@@ -1,9 +1,43 @@
-.errorModalContent {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+.header {
+  padding: 76px 65px;
 }
 
-.errorModalContent p {
+.container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  max-width: 660px;
+  padding: 0 65px;
+}
+
+.content > * {
+  margin-top: 0;
+  margin-bottom: 32px;
+}
+
+.content > :last-child {
   margin-bottom: 0;
+}
+
+.homeLink {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 8px 136px;
+  color: #0dbd8b;
+  text-decoration: none;
+  background: #0dbd8b;
+  border-radius: 8px;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 15px;
 }
