@@ -48,11 +48,11 @@ limitations under the License.
   width: 50px;
   height: 50px;
   border-radius: 50px;
-  background-color: #394049;
+  background-color: var(--bgColor2);
 }
 
 .toolbarButton:hover {
-  background-color: #8d97a5;
+  background-color: var(--bgColor4);
 }
 
 .toolbarButton.on,
