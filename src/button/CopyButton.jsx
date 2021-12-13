@@ -4,14 +4,15 @@ import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 import { ReactComponent as CopyIcon } from "../icons/Copy.svg";
 import { Button } from "./Button";
 
-export function CopyButton({ value, children, variant, ...rest }) {
+export function CopyButton({ value, children, onClassName, variant, ...rest }) {
   const [isCopied, setCopied] = useClipboard(value, { successDuration: 3000 });
 
   return (
     <Button
       {...rest}
-      variant={variant || "copy"}
+      variant={variant === "icon" ? "iconCopy" : "copy"}
       on={isCopied}
+      onClassName={onClassName}
       onPress={setCopied}
       iconStyle={isCopied ? "stroke" : "fill"}
     >

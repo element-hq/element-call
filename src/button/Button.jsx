@@ -15,6 +15,7 @@ const variantToClassName = {
   toolbar: [styles.toolbarButton],
   icon: [styles.iconButton],
   copy: [styles.copyButton],
+  iconCopy: [styles.iconCopyButton],
 };
 
 export const Button = forwardRef(
