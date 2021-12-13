@@ -14,6 +14,7 @@ const variantToClassName = {
   default: [styles.button],
   toolbar: [styles.toolbarButton],
   icon: [styles.iconButton],
+  secondary: [styles.secondary],
   copy: [styles.copyButton],
   iconCopy: [styles.iconCopyButton],
 };
