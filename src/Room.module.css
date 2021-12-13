@@ -46,6 +46,7 @@ limitations under the License.
 
 .joinRoomContent h1 {
   display: none;
+  margin: 0;
 }
 
 .joinRoomFooter {
