@@ -103,14 +103,17 @@ export async function fetchGroupCall(
 
 export function ClientProvider({ homeserverUrl, children }) {
   const history = useHistory();
-  const [{ loading, isAuthenticated, isGuest, client, userName }, setState] =
-    useState({
-      loading: true,
-      isAuthenticated: false,
-      isGuest: false,
-      client: undefined,
-      userName: null,
-    });
+  const [
+    { loading, isAuthenticated, isPasswordlessUser, isGuest, client, userName },
+    setState,
+  ] = useState({
+    loading: true,
+    isAuthenticated: false,
+    isPasswordlessUser: false,
+    isGuest: false,
+    client: undefined,
+    userName: null,
+  });
 
   useEffect(() => {
     async function restore() {
@@ -118,7 +121,7 @@ export function ClientProvider({ homeserverUrl, children }) {
         const authStore = localStorage.getItem("matrix-auth-store");
 
         if (authStore) {
-          const { user_id, device_id, access_token, guest } =
+          const { user_id, device_id, access_token, guest, passwordlessUser } =
             JSON.parse(authStore);
 
           const client = await initClient(
@@ -133,10 +136,16 @@ export function ClientProvider({ homeserverUrl, children }) {
 
           localStorage.setItem(
             "matrix-auth-store",
-            JSON.stringify({ user_id, device_id, access_token, guest })
+            JSON.stringify({
+              user_id,
+              device_id,
+              access_token,
+              guest,
+              passwordlessUser,
+            })
           );
 
-          return { client, guest };
+          return { client, guest, passwordlessUser };
         }
 
         return { client: undefined, guest: false };
@@ -147,11 +156,12 @@ export function ClientProvider({ homeserverUrl, children }) {
     }
 
     restore()
-      .then(({ client, guest }) => {
+      .then(({ client, guest, passwordlessUser }) => {
         setState({
           client,
           loading: false,
           isAuthenticated: !!client,
+          isPasswordlessUser: !!passwordlessUser,
           isGuest: guest,
           userName: client?.getUserIdLocalpart(),
         });
@@ -161,6 +171,7 @@ export function ClientProvider({ homeserverUrl, children }) {
           client: undefined,
           loading: false,
           isAuthenticated: false,
+          isPasswordlessUser: false,
           isGuest: false,
           userName: null,
         });
@@ -209,6 +220,7 @@ export function ClientProvider({ homeserverUrl, children }) {
         client,
         loading: false,
         isAuthenticated: true,
+        isPasswordlessUser: false,
         isGuest: false,
         userName: client.getUserIdLocalpart(),
       });
@@ -218,6 +230,7 @@ export function ClientProvider({ homeserverUrl, children }) {
         client: undefined,
         loading: false,
         isAuthenticated: false,
+        isPasswordlessUser: false,
         isGuest: false,
         userName: null,
       });
@@ -256,6 +269,7 @@ export function ClientProvider({ homeserverUrl, children }) {
         loading: false,
         isAuthenticated: true,
         isGuest: true,
+        isPasswordlessUser: false,
         userName: client.getUserIdLocalpart(),
       });
     } catch (err) {
@@ -264,6 +278,7 @@ export function ClientProvider({ homeserverUrl, children }) {
         client: undefined,
         loading: false,
         isAuthenticated: false,
+        isPasswordlessUser: false,
         isGuest: false,
         userName: null,
       });
@@ -271,7 +286,7 @@ export function ClientProvider({ homeserverUrl, children }) {
     }
   }, []);
 
-  const register = useCallback(async (username, password) => {
+  const register = useCallback(async (username, password, passwordlessUser) => {
     try {
       const registrationClient = matrix.createClient(homeserverUrl);
 
@@ -289,7 +304,7 @@ export function ClientProvider({ homeserverUrl, children }) {
 
       localStorage.setItem(
         "matrix-auth-store",
-        JSON.stringify({ user_id, device_id, access_token })
+        JSON.stringify({ user_id, device_id, access_token, passwordlessUser })
       );
 
       setState({
@@ -297,6 +312,7 @@ export function ClientProvider({ homeserverUrl, children }) {
         loading: false,
         isGuest: false,
         isAuthenticated: true,
+        isPasswordlessUser: passwordlessUser,
         userName: client.getUserIdLocalpart(),
       });
 
@@ -308,6 +324,7 @@ export function ClientProvider({ homeserverUrl, children }) {
         loading: false,
         isGuest: false,
         isAuthenticated: false,
+        isPasswordlessUser: false,
         userName: null,
       });
       throw err;
@@ -323,6 +340,7 @@ export function ClientProvider({ homeserverUrl, children }) {
     () => ({
       loading,
       isAuthenticated,
+      isPasswordlessUser,
       isGuest,
       client,
       login,
@@ -334,6 +352,7 @@ export function ClientProvider({ homeserverUrl, children }) {
     [
       loading,
       isAuthenticated,
+      isPasswordlessUser,
       isGuest,
       client,
       login,
@@ -417,7 +436,7 @@ export function useCreateRoom() {
         let _client = client;
 
         if (!_client) {
-          _client = await register(userName, randomString(16));
+          _client = await register(userName, randomString(16), true);
         }
 
         return await createRoom(_client, roomName);

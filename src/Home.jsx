@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import React, { useCallback } from "react";
-import { useHistory } from "react-router-dom";
+import { useHistory, Link } from "react-router-dom";
 import {
   useClient,
   useGroupCallRooms,
@@ -32,7 +32,14 @@ import classNames from "classnames";
 import { ErrorView, LoadingView } from "./FullScreenView";
 
 export function Home() {
-  const { isAuthenticated, isGuest, loading, error, client } = useClient();
+  const {
+    isAuthenticated,
+    isGuest,
+    isPasswordlessUser,
+    loading,
+    error,
+    client,
+  } = useClient();
 
   const history = useHistory();
   const { createRoomError, creatingRoom, createRoom } = useCreateRoom();
@@ -80,6 +87,8 @@ export function Home() {
     return (
       <RegisteredView
         client={client}
+        isPasswordlessUser={isPasswordlessUser}
+        isGuest={isGuest}
         onCreateRoom={onCreateRoom}
         createRoomError={createRoomError}
         creatingRoom={creatingRoom}
@@ -168,6 +177,13 @@ function UnregisteredView({
                   </Button>
                 </FieldRow>
               </form>
+
+              <div className={styles.authLinks}>
+                <p>
+                  Not registered yet?{" "}
+                  <Link to="/register">Create an account</Link>
+                </p>
+              </div>
             </div>
           </div>
         </div>
@@ -178,6 +194,8 @@ function UnregisteredView({
 
 function RegisteredView({
   client,
+  isPasswordlessUser,
+  isGuest,
   onCreateRoom,
   createRoomError,
   creatingRoom,
@@ -257,6 +275,14 @@ function RegisteredView({
                   </Button>
                 </FieldRow>
               </form>
+              {(isPasswordlessUser || isGuest) && (
+                <div className={styles.authLinks}>
+                  <p>
+                    Not registered yet?{" "}
+                    <Link to="/register">Create an account</Link>
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
