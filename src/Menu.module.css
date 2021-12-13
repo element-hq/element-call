@@ -25,8 +25,7 @@
 
 .menuItem.focused,
 .menuItem:hover {
-  background-color: var(--bgColor3);
-  outline: none;
+  background-color: var(--bgColor4);
 }
 
 .menuItem.focused:first-child,
