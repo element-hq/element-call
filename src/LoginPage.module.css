@@ -63,11 +63,11 @@
 
 .authLinks {
   margin-bottom: 100px;
-  font-weight: normal;
   font-size: 15px;
 }
 
 .authLinks a {
   color: #0dbd8b;
   text-decoration: none;
+  font-weight: normal;
 }
