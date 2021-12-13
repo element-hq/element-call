@@ -73,6 +73,7 @@ limitations under the License.
   height: 100%;
   object-fit: contain;
   background-color: black;
+  transform: scaleX(-1);
 }
 
 .webcamPermissions {
