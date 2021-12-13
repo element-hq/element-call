@@ -53,11 +53,11 @@ limitations under the License.
 }
 
 .iconButton:not(.stroke) svg * {
-  fill: #8e99a4;
+  fill: #ffffff;
 }
 
 .iconButton:not(.stroke):hover svg * {
-  fill: #8d97a5;
+  fill: #0dbd8b;
 }
 
 .iconButton.on:not(.stroke) svg * {
