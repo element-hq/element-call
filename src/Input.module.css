@@ -58,7 +58,7 @@
 .inputField label {
   transition: font-size 0.25s ease-out 0.1s, color 0.25s ease-out 0.1s,
     top 0.25s ease-out 0.1s, background-color 0.25s ease-out 0.1s;
-  color: var(--textColor1);
+  color: var(--textColor3);
   background-color: transparent;
   font-size: 15px;
   position: absolute;

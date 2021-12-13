@@ -33,6 +33,7 @@ if (import.meta.env.VITE_CUSTOM_THEME) {
   style.setProperty("--bgColor5", import.meta.env.VITE_BG_COLOR_5);
   style.setProperty("--textColor1", import.meta.env.VITE_TEXT_COLOR_1);
   style.setProperty("--textColor2", import.meta.env.VITE_TEXT_COLOR_2);
+  style.setProperty("--textColor4", import.meta.env.VITE_TEXT_COLOR_4);
   style.setProperty(
     "--inputBorderColor",
     import.meta.env.VITE_INPUT_BORDER_COLOR
