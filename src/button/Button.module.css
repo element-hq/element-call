@@ -138,7 +138,6 @@ limitations under the License.
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
-  flex: 1;
 }
 
 .copyButton svg {
