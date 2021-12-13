@@ -10,6 +10,7 @@ export function PopoverMenuTrigger({
   children,
   placement,
   className,
+  disableOnState,
   ...rest
 }) {
   const popoverMenuState = useMenuTriggerState(rest);
@@ -47,7 +48,7 @@ export function PopoverMenuTrigger({
       <popoverTrigger.type
         {...popoverTrigger.props}
         {...menuTriggerProps}
-        on={popoverMenuState.isOpen}
+        on={!disableOnState && popoverMenuState.isOpen}
         ref={buttonRef}
       />
       {popoverMenuState.isOpen && (

@@ -36,7 +36,7 @@ export function OverflowMenu({
 
   return (
     <>
-      <PopoverMenuTrigger>
+      <PopoverMenuTrigger disableOnState>
         <Button variant="toolbar">
           <ButtonTooltip>More</ButtonTooltip>
           <OverflowIcon />
