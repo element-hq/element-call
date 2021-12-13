@@ -246,7 +246,6 @@ function RoomSetupView({
   localVideoMuted,
   toggleLocalVideoMuted,
   toggleMicrophoneMuted,
-  hasLocalParticipant,
   setShowInspector,
   showInspector,
   roomId,
@@ -263,10 +262,7 @@ function RoomSetupView({
     <div className={styles.room}>
       <Header>
         <LeftNav>
-          <RoomSetupHeaderInfo
-            onPress={() => history.goBack()}
-            roomName={roomName}
-          />
+          <RoomHeaderInfo roomName={roomName} />
         </LeftNav>
         <RightNav>
           <UserMenu />
@@ -275,9 +271,6 @@ function RoomSetupView({
       <div className={styles.joinRoom}>
         <div className={styles.joinRoomContent}>
           <h1>New Call</h1>
-          {hasLocalParticipant && (
-            <p>Warning, you are signed into this call on another device.</p>
-          )}
           <div className={styles.preview}>
             {state === GroupCallState.LocalCallFeedUninitialized && (
               <p className={styles.webcamPermissions}>
