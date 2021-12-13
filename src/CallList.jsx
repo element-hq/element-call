@@ -39,7 +39,7 @@ function CallTile({ name, avatarUrl, roomId, participants }) {
         />
         <div className={styles.callInfo}>
           <h5>{name}</h5>
-          <p>{roomId}</p>
+          <p>{getRoomUrl(roomId)}</p>
           {participants && <Facepile participants={participants} />}
         </div>
         <div className={styles.copyButtonSpacer} />
