@@ -114,6 +114,9 @@
 @media (min-width: 800px) {
   .left {
     background-color: var(--bgColor2);
+  }
+
+  .home:not(.fullWidth) .left {
     max-width: 50%;
   }
 
