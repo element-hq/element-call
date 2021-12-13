@@ -250,7 +250,6 @@ function RoomSetupView({
   showInspector,
   roomId,
 }) {
-  const history = useHistory();
   const { stream } = useCallFeed(localCallFeed);
   const videoRef = useMediaStream(stream, true);
 
@@ -270,7 +269,7 @@ function RoomSetupView({
       </Header>
       <div className={styles.joinRoom}>
         <div className={styles.joinRoomContent}>
-          <h1>New Call</h1>
+          <h1>{roomName}</h1>
           <div className={styles.preview}>
             {state === GroupCallState.LocalCallFeedUninitialized && (
               <p className={styles.webcamPermissions}>
