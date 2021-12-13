@@ -108,7 +108,7 @@ limitations under the License.
 }
 
 .copyButton {
-  width: auto !important;
+  width: 320px !important;
 }
 
 .previewButtons > * {

@@ -314,6 +314,7 @@ function RoomSetupView({
           <CopyButton
             value={window.location.href}
             className={styles.copyButton}
+            copiedMessage="Call link copied"
           >
             Copy call link and join later
           </CopyButton>
