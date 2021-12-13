@@ -42,7 +42,7 @@
 .left .content {
   display: flex;
   flex-direction: column;
-  padding-top: 113px;
+  padding-top: 40px;
   align-items: center;
 }
 
@@ -104,7 +104,7 @@
 }
 
 .right .content {
-  padding: 113px 40px 40px 40px;
+  padding: 40px;
 }
 
 .right .content h3:first-child {
@@ -114,6 +114,7 @@
 @media (min-width: 800px) {
   .left {
     background-color: var(--bgColor2);
+    max-width: 50%;
   }
 
   .home:not(.fullWidth) .leftNav {
