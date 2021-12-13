@@ -16,7 +16,8 @@ limitations under the License.
 
 .button,
 .toolbarButton,
-.iconButton {
+.iconButton,
+.iconCopyButton {
   position: relative;
   display: flex;
   justify-content: center;
@@ -153,4 +154,18 @@ limitations under the License.
 
 .copyButton.on svg * {
   stroke: white;
+}
+
+.iconCopyButton svg * {
+  fill: var(--textColor3);
+}
+
+.iconCopyButton:hover svg * {
+  fill: #0dbd8b;
+}
+
+.iconCopyButton.on svg *,
+.iconCopyButton.on:hover svg * {
+  fill: transparent;
+  stroke: #0dbd8b;
 }
