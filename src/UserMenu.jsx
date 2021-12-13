@@ -8,17 +8,22 @@ import styles from "./UserMenu.module.css";
 import { Item } from "@react-stately/collections";
 import { Menu } from "./Menu";
 import { useHistory, useLocation } from "react-router-dom";
-import { useClient } from "./ConferenceCallManagerHooks";
+import { useClient, useDisplayName } from "./ConferenceCallManagerHooks";
+import { useModalTriggerState } from "./Modal";
+import { ProfileModal } from "./ProfileModal";
 
 export function UserMenu() {
   const location = useLocation();
   const history = useHistory();
-  const { isAuthenticated, isGuest, logout, userName } = useClient();
+  const { isAuthenticated, isGuest, logout, userName, client } = useClient();
+  const { displayName } = useDisplayName(client);
+  const { modalState, modalProps } = useModalTriggerState();
 
   const onAction = useCallback(
     (value) => {
       switch (value) {
         case "user":
+          modalState.open();
           break;
         case "logout":
           logout();
@@ -31,7 +36,7 @@ export function UserMenu() {
           break;
       }
     },
-    [history, location, logout]
+    [history, location, logout, modalState]
   );
 
   const items = useMemo(() => {
@@ -41,7 +46,7 @@ export function UserMenu() {
       arr.push({
         key: "user",
         icon: UserIcon,
-        label: userName,
+        label: displayName || userName,
       });
     }
 
@@ -67,24 +72,27 @@ export function UserMenu() {
     }
 
     return arr;
-  }, [isAuthenticated, isGuest, userName]);
+  }, [isAuthenticated, isGuest, userName, displayName]);
 
   return (
-    <PopoverMenuTrigger placement="bottom right">
-      <Button variant="icon" className={styles.userButton}>
-        <ButtonTooltip>Profile</ButtonTooltip>
-        <UserIcon />
-      </Button>
-      {(props) => (
-        <Menu {...props} label="User menu" onAction={onAction}>
-          {items.map(({ key, icon: Icon, label }) => (
-            <Item key={key} textValue={label}>
-              <Icon />
-              <span>{label}</span>
-            </Item>
-          ))}
-        </Menu>
-      )}
-    </PopoverMenuTrigger>
+    <>
+      <PopoverMenuTrigger placement="bottom right">
+        <Button variant="icon" className={styles.userButton}>
+          <ButtonTooltip>Profile</ButtonTooltip>
+          <UserIcon />
+        </Button>
+        {(props) => (
+          <Menu {...props} label="User menu" onAction={onAction}>
+            {items.map(({ key, icon: Icon, label }) => (
+              <Item key={key} textValue={label}>
+                <Icon />
+                <span>{label}</span>
+              </Item>
+            ))}
+          </Menu>
+        )}
+      </PopoverMenuTrigger>
+      {modalState.isOpen && <ProfileModal client={client} {...modalProps} />}
+    </>
   );
 }

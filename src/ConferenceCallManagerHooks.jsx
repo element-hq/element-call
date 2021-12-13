@@ -104,7 +104,15 @@ export async function fetchGroupCall(
 export function ClientProvider({ homeserverUrl, children }) {
   const history = useHistory();
   const [
-    { loading, isAuthenticated, isPasswordlessUser, isGuest, client, userName },
+    {
+      loading,
+      isAuthenticated,
+      isPasswordlessUser,
+      isGuest,
+      client,
+      userName,
+      displayName,
+    },
     setState,
   ] = useState({
     loading: true,
@@ -113,6 +121,7 @@ export function ClientProvider({ homeserverUrl, children }) {
     isGuest: false,
     client: undefined,
     userName: null,
+    displayName: null,
   });
 
   useEffect(() => {
@@ -601,4 +610,70 @@ export function getRoomUrl(roomId) {
   } else {
     return `${window.location.host}/room/${roomId}`;
   }
+}
+
+export function useDisplayName(client) {
+  const [{ loading, displayName, error, success }, setState] = useState(() => ({
+    success: false,
+    loading: false,
+    displayName: client?.getUser(client.getUserId())?.displayName,
+    error: null,
+  }));
+
+  useEffect(() => {
+    const onChangeDisplayName = (_event, { displayName }) => {
+      setState({ success: false, loading: false, displayName, error: null });
+    };
+
+    let user;
+
+    if (client) {
+      const userId = client.getUserId();
+      user = client.getUser(userId);
+      user.on("User.displayName", onChangeDisplayName);
+    }
+
+    return () => {
+      if (user) {
+        user.removeListener("User.displayName", onChangeDisplayName);
+      }
+    };
+  }, [client]);
+
+  const setDisplayName = useCallback(
+    (displayName) => {
+      if (client) {
+        setState((prev) => ({
+          ...prev,
+          loading: true,
+          error: null,
+          success: false,
+        }));
+
+        client
+          .setDisplayName(displayName)
+          .then(() => {
+            setState((prev) => ({
+              ...prev,
+              displayName,
+              loading: false,
+              success: true,
+            }));
+          })
+          .catch((error) => {
+            setState((prev) => ({
+              ...prev,
+              loading: false,
+              error,
+              success: false,
+            }));
+          });
+      } else {
+        console.error("Client not initialized before calling setDisplayName");
+      }
+    },
+    [client]
+  );
+
+  return { loading, error, displayName, setDisplayName, success };
 }

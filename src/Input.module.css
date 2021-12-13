@@ -15,15 +15,11 @@
   justify-content: flex-end;
 }
 
-.fieldRow > .field {
-  margin: 0 5px;
+.fieldRow > * {
+  margin-right: 24px;
 }
 
-.fieldRow > .field:first-child {
-  margin-left: 0;
-}
-
-.fieldRow > .field:last-child {
+.fieldRow > :last-child {
   margin-right: 0;
 }
 
