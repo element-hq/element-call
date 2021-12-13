@@ -41,9 +41,6 @@
 
 .formContainer form {
   width: 100%;
-}
-
-.formContainer form > * {
   margin-top: 32px;
 }
 
