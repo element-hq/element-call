@@ -25,12 +25,12 @@
 }
 
 .tab > * {
-  color: var(--textColor2);
+  color: var(--textColor4);
   margin-right: 16px;
 }
 
 .tab svg * {
-  fill: var(--textColor2);
+  fill: var(--textColor4);
 }
 
 .tab > :last-child {
