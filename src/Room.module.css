@@ -57,6 +57,8 @@ limitations under the License.
   margin-top: 50px;
   color: #0dbd8b;
   text-decoration: none;
+  font-weight: normal;
+  font-size: 15px;
 }
 
 .preview {
