@@ -24,6 +24,7 @@ import {
   MicButton,
   VideoButton,
   ScreenshareButton,
+  LinkButton,
 } from "./button";
 import {
   Header,
@@ -59,8 +60,10 @@ const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 export function Room() {
   const [registeringGuest, setRegisteringGuest] = useState(false);
   const [registrationError, setRegistrationError] = useState();
-  const { loading, isAuthenticated, error, client, registerGuest } =
+  const { loading, isAuthenticated, error, client, registerGuest, isGuest } =
     useClient();
+
+  console.log({ isGuest });
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -85,10 +88,10 @@ export function Room() {
     return <ErrorView error={registrationError || error} />;
   }
 
-  return <GroupCall client={client} />;
+  return <GroupCall client={client} isGuest={isGuest} />;
 }
 
-export function GroupCall({ client }) {
+export function GroupCall({ client, isGuest }) {
   const { roomId: maybeRoomId } = useParams();
   const { hash, search } = useLocation();
   const [simpleGrid, viaServers] = useMemo(() => {
@@ -116,6 +119,7 @@ export function GroupCall({ client }) {
 
   return (
     <GroupCallView
+      isGuest={isGuest}
       client={client}
       roomId={roomId}
       groupCall={groupCall}
@@ -124,7 +128,13 @@ export function GroupCall({ client }) {
   );
 }
 
-export function GroupCallView({ client, roomId, groupCall, simpleGrid }) {
+export function GroupCallView({
+  client,
+  isGuest,
+  roomId,
+  groupCall,
+  simpleGrid,
+}) {
   const [showInspector, setShowInspector] = useState(false);
   const {
     state,
@@ -200,6 +210,7 @@ export function GroupCallView({ client, roomId, groupCall, simpleGrid }) {
   } else {
     return (
       <RoomSetupView
+        isGuest={isGuest}
         client={client}
         hasLocalParticipant={hasLocalParticipant}
         roomName={groupCall.room.name}
@@ -237,6 +248,7 @@ export function EnteringRoomView() {
 
 function RoomSetupView({
   client,
+  isGuest,
   roomName,
   state,
   onInitLocalCallFeed,
@@ -252,6 +264,7 @@ function RoomSetupView({
 }) {
   const { stream } = useCallFeed(localCallFeed);
   const videoRef = useMediaStream(stream, true);
+  const location = useLocation();
 
   useEffect(() => {
     onInitLocalCallFeed();
@@ -264,7 +277,13 @@ function RoomSetupView({
           <RoomHeaderInfo roomName={roomName} />
         </LeftNav>
         <RightNav>
-          <UserMenu />
+          {isGuest ? (
+            <LinkButton to={{ pathname: "/login", state: { from: location } }}>
+              Log in
+            </LinkButton>
+          ) : (
+            <UserMenu />
+          )}
         </RightNav>
       </Header>
       <div className={styles.joinRoom}>
