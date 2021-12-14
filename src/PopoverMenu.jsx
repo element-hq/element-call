@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import styles from "./PopoverMenu.module.css";
 import { useMenuTriggerState } from "@react-stately/menu";
 import { useMenuTrigger } from "@react-aria/menu";
-import { useOverlayPosition } from "@react-aria/overlays";
+import { OverlayContainer, useOverlayPosition } from "@react-aria/overlays";
 import classNames from "classnames";
 import { Popover } from "./Popover";
 
@@ -52,18 +52,20 @@ export function PopoverMenuTrigger({
         ref={buttonRef}
       />
       {popoverMenuState.isOpen && (
-        <Popover
-          {...overlayProps}
-          isOpen={popoverMenuState.isOpen}
-          onClose={popoverMenuState.close}
-          ref={popoverRef}
-        >
-          {popoverMenu({
-            ...menuProps,
-            autoFocus: popoverMenuState.focusStrategy,
-            onClose: popoverMenuState.close,
-          })}
-        </Popover>
+        <OverlayContainer>
+          <Popover
+            {...overlayProps}
+            isOpen={popoverMenuState.isOpen}
+            onClose={popoverMenuState.close}
+            ref={popoverRef}
+          >
+            {popoverMenu({
+              ...menuProps,
+              autoFocus: popoverMenuState.focusStrategy,
+              onClose: popoverMenuState.close,
+            })}
+          </Popover>
+        </OverlayContainer>
       )}
     </div>
   );

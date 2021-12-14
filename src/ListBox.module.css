@@ -5,6 +5,9 @@
   overflow-y: auto;
   list-style: none;
   background-color: transparent;
+  border: 1px solid var(--inputBorderColor);
+  background-color: var(--bgColor1);
+  border-radius: 8px;
 }
 
 .option {
@@ -25,7 +28,7 @@
 }
 
 .option.focused {
-  background-color: var(--bgColor3);
+  background-color: rgba(111, 120, 130, 0.2);
 }
 
 .option.disabled {
