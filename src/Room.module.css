@@ -104,8 +104,13 @@ limitations under the License.
 
 .joinCallButton {
   position: absolute;
+  width: 100%;
+  max-width: 222px;
+  height: 40px;
   bottom: 86px;
   left: 50%;
+  font-weight: 600;
+  font-size: 15px;
   transform: translateX(-50%);
 }
 
