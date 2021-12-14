@@ -17,6 +17,8 @@
   border-radius: 8px;
   max-width: 90vw;
   width: 600px;
+  display: flex;
+  flex-direction: column;
 }
 
 .modalHeader {
