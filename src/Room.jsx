@@ -301,8 +301,8 @@ function RoomSetupView({
       </Header>
       <div className={styles.joinRoom}>
         <div className={styles.joinRoomContent}>
-          <h1>{roomName}</h1>
           <div className={styles.preview}>
+            <video ref={videoRef} muted playsInline disablePictureInPicture />
             {state === GroupCallState.LocalCallFeedUninitialized && (
               <p className={styles.webcamPermissions}>
                 Webcam/microphone permissions needed to join the call.
@@ -313,7 +313,6 @@ function RoomSetupView({
                 Accept webcam/microphone permissions to join the call.
               </p>
             )}
-            <video ref={videoRef} muted playsInline disablePictureInPicture />
             {state === GroupCallState.LocalCallFeedInitialized && (
               <>
                 <Button
