@@ -13,7 +13,7 @@ import { useModalTriggerState } from "./Modal";
 import { ProfileModal } from "./ProfileModal";
 import { Tooltip, TooltipTrigger } from "./Tooltip";
 
-export function UserMenu() {
+export function UserMenu({ disableLogout }) {
   const location = useLocation();
   const history = useHistory();
   const { isAuthenticated, isGuest, logout, userName, client } = useClient();
@@ -64,7 +64,7 @@ export function UserMenu() {
           icon: LoginIcon,
         }
       );
-    } else {
+    } else if (!disableLogout) {
       arr.push({
         key: "logout",
         label: "Sign Out",

@@ -438,7 +438,7 @@ function InRoomView({
         </LeftNav>
         <RightNav>
           <GridLayoutMenu layout={layout} setLayout={setLayout} />
-          <UserMenu />
+          <UserMenu disableLogout />
         </RightNav>
       </Header>
       {items.length === 0 ? (
