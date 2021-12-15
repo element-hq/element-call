@@ -172,3 +172,7 @@ limitations under the License.
   fill: transparent;
   stroke: #0dbd8b;
 }
+
+.lg {
+  height: 40px;
+}

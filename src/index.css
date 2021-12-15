@@ -140,13 +140,27 @@ body,
 }
 
 a {
-  color: #0086e6;
-  font-weight: bold;
+  color: var(--primaryColor);
+  text-decoration: none;
 }
 
 a:hover,
 a:active {
   opacity: 0.8;
+}
+
+hr {
+  width: calc(100% - 24px);
+  border: none;
+  border-top: 1px solid var(--bgColor4);
+  color: var(--textColor2);
+  overflow: visible;
+  text-align: center;
+  height: 5px;
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 24px;
+  margin: 0 12px;
 }
 
 summary {

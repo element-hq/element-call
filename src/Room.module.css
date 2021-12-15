@@ -164,6 +164,30 @@ limitations under the License.
   margin-right: 0px;
 }
 
+.callEndedScreen h1 {
+  margin-bottom: 60px;
+}
+
+.callEndedScreen h2 {
+  font-size: 24px;
+  font-weight: 600;
+  margin-bottom: 32px;
+}
+
+.callEndedScreen p {
+  margin: 0 0 16px 0;
+}
+
+.callEndedScreen ul {
+  padding: 0;
+  margin-bottom: 40px;
+}
+
+.callEndedButton {
+  width: 100%;
+  max-width: 360px;
+}
+
 @media (min-width: 800px) {
   .roomContainer {
     flex-direction: row;
