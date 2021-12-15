@@ -1,11 +1,18 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import classNames from "classnames";
-import styles from "./Button.module.css";
+import { variantToClassName, sizeToClassName } from "./Button";
 
-export function LinkButton({ className, children, ...rest }) {
+export function LinkButton({ className, variant, size, children, ...rest }) {
   return (
-    <Link className={classNames(styles.secondary, className)} {...rest}>
+    <Link
+      className={classNames(
+        variantToClassName[variant || "secondary"],
+        sizeToClassName[size],
+        className
+      )}
+      {...rest}
+    >
       {children}
     </Link>
   );

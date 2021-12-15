@@ -3,10 +3,11 @@ import { Link, useLocation } from "react-router-dom";
 import { ErrorMessage } from "./Input";
 import styles from "./FullScreenView.module.css";
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
+import classNames from "classnames";
 
-export function FullScreenView({ children }) {
+export function FullScreenView({ className, children }) {
   return (
-    <div className={styles.page}>
+    <div className={classNames(styles.page, className)}>
       <Header>
         <LeftNav>
           <HeaderLogo />

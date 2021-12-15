@@ -10,7 +10,7 @@ import { ReactComponent as ScreenshareIcon } from "../icons/Screenshare.svg";
 import { useButton } from "@react-aria/button";
 import { useObjectRef } from "@react-aria/utils";
 
-const variantToClassName = {
+export const variantToClassName = {
   default: [styles.button],
   toolbar: [styles.toolbarButton],
   icon: [styles.iconButton],
@@ -19,9 +19,22 @@ const variantToClassName = {
   iconCopy: [styles.iconCopyButton],
 };
 
+export const sizeToClassName = {
+  lg: [styles.lg],
+};
+
 export const Button = forwardRef(
   (
-    { variant = "default", on, off, iconStyle, className, children, ...rest },
+    {
+      variant = "default",
+      size,
+      on,
+      off,
+      iconStyle,
+      className,
+      children,
+      ...rest
+    },
     ref
   ) => {
     const buttonRef = useObjectRef(ref);
@@ -40,6 +53,7 @@ export const Button = forwardRef(
       <button
         className={classNames(
           variantToClassName[variant],
+          sizeToClassName[size],
           styles[iconStyle],
           className,
           {

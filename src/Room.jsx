@@ -63,8 +63,6 @@ export function Room() {
   const { loading, isAuthenticated, error, client, registerGuest, isGuest } =
     useClient();
 
-  console.log({ isGuest });
-
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       setRegisteringGuest(true);
@@ -180,6 +178,19 @@ export function GroupCallView({
     };
   }, [groupCall]);
 
+  const [left, setLeft] = useState(false);
+  const history = useHistory();
+
+  const onLeave = useCallback(() => {
+    leave();
+
+    if (!isGuest) {
+      history.push("/");
+    } else {
+      setLeft(true);
+    }
+  }, [leave, history, isGuest]);
+
   if (error) {
     return <ErrorView error={error} />;
   } else if (state === GroupCallState.Entered) {
@@ -194,7 +205,7 @@ export function GroupCallView({
         toggleMicrophoneMuted={toggleMicrophoneMuted}
         userMediaFeeds={userMediaFeeds}
         activeSpeaker={activeSpeaker}
-        onLeave={leave}
+        onLeave={onLeave}
         toggleScreensharing={toggleScreensharing}
         isScreensharing={isScreensharing}
         localScreenshareFeed={localScreenshareFeed}
@@ -207,6 +218,8 @@ export function GroupCallView({
     );
   } else if (state === GroupCallState.Entering) {
     return <EnteringRoomView />;
+  } else if (left) {
+    return <CallEndedScreen />;
   } else {
     return (
       <RoomSetupView
@@ -466,5 +479,35 @@ function InRoomView({
         show={showInspector}
       />
     </div>
+  );
+}
+
+export function CallEndedScreen() {
+  return (
+    <FullScreenView className={styles.callEndedScreen}>
+      <h1>Your call is now ended</h1>
+      <hr />
+      <h2>Why not finish by creating an account?</h2>
+      <p>You'll be able to:</p>
+      <ul>
+        <li>Easily access all your previous call links</li>
+        <li>Set a username and avatar</li>
+        <li>
+          Get your own Matrix ID so you can log in to{" "}
+          <a href="https://element.io" target="_blank">
+            Element
+          </a>
+        </li>
+      </ul>
+      <LinkButton
+        className={styles.callEndedButton}
+        size="lg"
+        variant="default"
+        to="/login"
+      >
+        Create account
+      </LinkButton>
+      <Link to="/">Not now, return to home screen</Link>
+    </FullScreenView>
   );
 }
