@@ -32,14 +32,7 @@ import classNames from "classnames";
 import { ErrorView, LoadingView } from "./FullScreenView";
 
 export function Home() {
-  const {
-    isAuthenticated,
-    isGuest,
-    isPasswordlessUser,
-    loading,
-    error,
-    client,
-  } = useClient();
+  const { isGuest, isPasswordlessUser, loading, error, client } = useClient();
 
   const history = useHistory();
   const { createRoomError, creatingRoom, createRoom } = useCreateRoom();
@@ -74,7 +67,7 @@ export function Home() {
     return <LoadingView />;
   } else if (error || createRoomError) {
     return <ErrorView error={error || createRoomError} />;
-  } else if (!isAuthenticated || isGuest) {
+  } else if (isGuest) {
     return (
       <UnregisteredView
         onCreateRoom={onCreateRoom}

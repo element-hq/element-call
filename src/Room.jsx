@@ -58,32 +58,14 @@ const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 export function Room() {
-  const [registeringGuest, setRegisteringGuest] = useState(false);
-  const [registrationError, setRegistrationError] = useState();
-  const { loading, isAuthenticated, error, client, registerGuest, isGuest } =
-    useClient();
+  const { loading, error, client, isGuest } = useClient();
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      setRegisteringGuest(true);
-
-      registerGuest()
-        .then(() => {
-          setRegisteringGuest(false);
-        })
-        .catch((error) => {
-          setRegistrationError(error);
-          setRegisteringGuest(false);
-        });
-    }
-  }, [loading, isAuthenticated]);
-
-  if (loading || registeringGuest) {
+  if (loading) {
     return <LoadingView />;
   }
 
-  if (registrationError || error) {
-    return <ErrorView error={registrationError || error} />;
+  if (error) {
+    return <ErrorView error={error} />;
   }
 
   return <GroupCall client={client} isGuest={isGuest} />;

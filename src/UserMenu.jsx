@@ -15,7 +15,7 @@ import { ProfileModal } from "./ProfileModal";
 export function UserMenu() {
   const location = useLocation();
   const history = useHistory();
-  const { isAuthenticated, isGuest, logout, userName, client } = useClient();
+  const { isGuest, isPasswordlessUser, logout, userName, client } = useClient();
   const { displayName } = useDisplayName(client);
   const { modalState, modalProps } = useModalTriggerState();
 
@@ -40,30 +40,31 @@ export function UserMenu() {
   );
 
   const items = useMemo(() => {
-    const arr = [];
-
-    if (isAuthenticated) {
-      arr.push({
+    const arr = [
+      {
         key: "user",
         icon: UserIcon,
         label: displayName || userName,
+      },
+    ];
+
+    if (isGuest || isPasswordlessUser) {
+      arr.push({
+        key: "login",
+        label: "Sign In",
+        icon: LoginIcon,
       });
     }
 
-    if (!isAuthenticated || isGuest) {
-      arr.push(
-        {
-          key: "login",
-          label: "Sign In",
-          icon: LoginIcon,
-        },
-        {
-          key: "register",
-          label: "Register",
-          icon: LoginIcon,
-        }
-      );
-    } else {
+    if (isGuest) {
+      arr.push({
+        key: "register",
+        label: "Register",
+        icon: LoginIcon,
+      });
+    }
+
+    if (!isGuest) {
       arr.push({
         key: "logout",
         label: "Sign Out",
@@ -72,7 +73,7 @@ export function UserMenu() {
     }
 
     return arr;
-  }, [isAuthenticated, isGuest, userName, displayName]);
+  }, [isGuest, isPasswordlessUser, userName, displayName]);
 
   return (
     <>
