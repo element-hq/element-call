@@ -612,17 +612,35 @@ export function getRoomUrl(roomId) {
   }
 }
 
-export function useDisplayName(client) {
-  const [{ loading, displayName, error, success }, setState] = useState(() => ({
-    success: false,
-    loading: false,
-    displayName: client?.getUser(client.getUserId())?.displayName,
-    error: null,
-  }));
+function getAvatarUrl(client, mxcUrl, avatarSize = 96) {
+  const width = Math.floor(avatarSize * window.devicePixelRatio);
+  const height = Math.floor(avatarSize * window.devicePixelRatio);
+  return mxcUrl && client.mxcUrlToHttp(mxcUrl, width, height, "crop");
+}
+
+export function useProfile(client) {
+  const [{ loading, displayName, avatarUrl, error, success }, setState] =
+    useState(() => {
+      const user = client?.getUser(client.getUserId());
+
+      return {
+        success: false,
+        loading: false,
+        displayName: user?.displayName,
+        avatarUrl: user && client && getAvatarUrl(client, user.avatarUrl),
+        error: null,
+      };
+    });
 
   useEffect(() => {
-    const onChangeDisplayName = (_event, { displayName }) => {
-      setState({ success: false, loading: false, displayName, error: null });
+    const onChangeUser = (_event, { displayName, avatarUrl }) => {
+      setState({
+        success: false,
+        loading: false,
+        displayName,
+        avatarUrl: getAvatarUrl(client, avatarUrl),
+        error: null,
+      });
     };
 
     let user;
@@ -630,18 +648,20 @@ export function useDisplayName(client) {
     if (client) {
       const userId = client.getUserId();
       user = client.getUser(userId);
-      user.on("User.displayName", onChangeDisplayName);
+      user.on("User.displayName", onChangeUser);
+      user.on("User.avatarUrl", onChangeUser);
     }
 
     return () => {
       if (user) {
-        user.removeListener("User.displayName", onChangeDisplayName);
+        user.removeListener("User.displayName", onChangeUser);
+        user.removeListener("User.avatarUrl", onChangeUser);
       }
     };
   }, [client]);
 
-  const setDisplayName = useCallback(
-    (displayName) => {
+  const saveProfile = useCallback(
+    async ({ displayName, avatar }) => {
       if (client) {
         setState((prev) => ({
           ...prev,
@@ -650,30 +670,33 @@ export function useDisplayName(client) {
           success: false,
         }));
 
-        client
-          .setDisplayName(displayName)
-          .then(() => {
-            setState((prev) => ({
-              ...prev,
-              displayName,
-              loading: false,
-              success: true,
-            }));
-          })
-          .catch((error) => {
-            setState((prev) => ({
-              ...prev,
-              loading: false,
-              error,
-              success: false,
-            }));
-          });
+        try {
+          await client.setDisplayName(displayName);
+
+          const url = await client.uploadContent(avatar);
+          await client.setAvatarUrl(url);
+
+          setState((prev) => ({
+            ...prev,
+            displayName,
+            avatarUrl: getAvatarUrl(client, url),
+            loading: false,
+            success: true,
+          }));
+        } catch (error) {
+          setState((prev) => ({
+            ...prev,
+            loading: false,
+            error,
+            success: false,
+          }));
+        }
       } else {
-        console.error("Client not initialized before calling setDisplayName");
+        console.error("Client not initialized before calling saveProfile");
       }
     },
     [client]
   );
 
-  return { loading, error, displayName, setDisplayName, success };
+  return { loading, error, displayName, avatarUrl, saveProfile, success };
 }

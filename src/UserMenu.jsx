@@ -8,10 +8,11 @@ import styles from "./UserMenu.module.css";
 import { Item } from "@react-stately/collections";
 import { Menu } from "./Menu";
 import { useHistory, useLocation } from "react-router-dom";
-import { useClient, useDisplayName } from "./ConferenceCallManagerHooks";
+import { useClient, useProfile } from "./ConferenceCallManagerHooks";
 import { useModalTriggerState } from "./Modal";
 import { ProfileModal } from "./ProfileModal";
 import { Tooltip, TooltipTrigger } from "./Tooltip";
+import { Avatar } from "./Avatar";
 
 export function UserMenu({ disableLogout }) {
   const location = useLocation();
@@ -24,7 +25,7 @@ export function UserMenu({ disableLogout }) {
     userName,
     client,
   } = useClient();
-  const { displayName } = useDisplayName(client);
+  const { displayName, avatarUrl } = useProfile(client);
   const { modalState, modalProps } = useModalTriggerState();
 
   const onAction = useCallback(
@@ -87,7 +88,16 @@ export function UserMenu({ disableLogout }) {
       <PopoverMenuTrigger placement="bottom right">
         <TooltipTrigger>
           <Button variant="icon" className={styles.userButton}>
-            <UserIcon />
+            {isAuthenticated && !isGuest && !isPasswordlessUser ? (
+              <Avatar
+                size="sm"
+                src={avatarUrl}
+                fallback={(displayName || userName).slice(0, 1).toUpperCase()}
+                className={styles.avatar}
+              />
+            ) : (
+              <UserIcon />
+            )}
           </Button>
           {(props) => (
             <Tooltip position="bottomLeft" {...props}>
