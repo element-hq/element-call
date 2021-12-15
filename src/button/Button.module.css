@@ -29,6 +29,7 @@ limitations under the License.
   border: none;
   cursor: pointer;
   text-decoration: none;
+  box-sizing: border-box;
 }
 
 .secondary,
