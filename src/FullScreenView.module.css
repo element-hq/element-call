@@ -37,15 +37,5 @@
 }
 
 .homeLink {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 8px 136px;
-  color: #0dbd8b;
-  text-decoration: none;
-  background: #0dbd8b;
-  border-radius: 8px;
-  color: #ffffff;
-  font-weight: normal;
-  font-size: 15px;
+  width: 291px;
 }

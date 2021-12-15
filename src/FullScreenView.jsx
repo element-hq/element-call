@@ -1,9 +1,9 @@
-import React, { useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
-import { ErrorMessage } from "./Input";
+import React, { useCallback, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import styles from "./FullScreenView.module.css";
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import classNames from "classnames";
+import { LinkButton, Button } from "./button";
 
 export function FullScreenView({ className, children }) {
   return (
@@ -28,14 +28,32 @@ export function ErrorView({ error }) {
     console.error(error);
   }, [error]);
 
+  const onReload = useCallback(() => {
+    window.location = "/";
+  }, []);
+
   return (
     <FullScreenView>
       <h1>Error</h1>
-      <ErrorMessage>{error.message}</ErrorMessage>
-      {location.pathname !== "/" && (
-        <Link className={styles.homeLink} to="/">
+      <p>{error.message}</p>
+      {location.pathname === "/" ? (
+        <Button
+          size="lg"
+          variant="default"
+          className={styles.homeLink}
+          onPress={onReload}
+        >
           Return to home screen
-        </Link>
+        </Button>
+      ) : (
+        <LinkButton
+          size="lg"
+          variant="default"
+          className={styles.homeLink}
+          to="/"
+        >
+          Return to home screen
+        </LinkButton>
       )}
     </FullScreenView>
   );
