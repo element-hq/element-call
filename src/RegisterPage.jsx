@@ -71,6 +71,8 @@ export function RegisterPage() {
                   label="Username"
                   autoCorrect="off"
                   autoCapitalize="none"
+                  prefix="@"
+                  suffix={`:${window.location.host}`}
                 />
               </FieldRow>
               <FieldRow>

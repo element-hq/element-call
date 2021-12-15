@@ -40,6 +40,10 @@
   min-width: 0;
 }
 
+.inputField span {
+  padding: 11px 9px;
+}
+
 .inputField input::placeholder {
   transition: color 0.25s ease-in 0s;
   color: transparent;
@@ -77,7 +81,8 @@
 }
 
 .inputField input:focus + label,
-.inputField input:not(:placeholder-shown) + label {
+.inputField input:not(:placeholder-shown) + label,
+.inputField.prefix input + label {
   background-color: var(--bgColor2);
   transition: font-size 0.25s ease-out 0s, color 0.25s ease-out 0s,
     top 0.25s ease-out 0s, background-color 0.25s ease-out 0s;
