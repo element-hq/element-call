@@ -1,5 +1,5 @@
 import React, { useCallback } from "react";
-import { ButtonTooltip, Button } from "./button";
+import { Button } from "./button";
 import { Menu } from "./Menu";
 import { PopoverMenuTrigger } from "./PopoverMenu";
 import { Item } from "@react-stately/collections";
@@ -9,6 +9,7 @@ import { ReactComponent as OverflowIcon } from "./icons/Overflow.svg";
 import { useModalTriggerState } from "./Modal";
 import { SettingsModal } from "./SettingsModal";
 import { InviteModal } from "./InviteModal";
+import { Tooltip, TooltipTrigger } from "./Tooltip";
 
 export function OverflowMenu({
   roomId,
@@ -37,10 +38,16 @@ export function OverflowMenu({
   return (
     <>
       <PopoverMenuTrigger disableOnState>
-        <Button variant="toolbar">
-          <ButtonTooltip>More</ButtonTooltip>
-          <OverflowIcon />
-        </Button>
+        <TooltipTrigger>
+          <Button variant="toolbar">
+            <OverflowIcon />
+          </Button>
+          {(props) => (
+            <Tooltip position="top" {...props}>
+              More
+            </Tooltip>
+          )}
+        </TooltipTrigger>
         {(props) => (
           <Menu {...props} label="More menu" onAction={onAction}>
             <Item key="invite" textValue="Invite people">

@@ -8,7 +8,8 @@ import { ReactComponent as DisableVideoIcon } from "../icons/DisableVideo.svg";
 import { ReactComponent as HangupIcon } from "../icons/Hangup.svg";
 import { ReactComponent as ScreenshareIcon } from "../icons/Screenshare.svg";
 import { useButton } from "@react-aria/button";
-import { useObjectRef } from "@react-aria/utils";
+import { mergeProps, useObjectRef } from "@react-aria/utils";
+import { Tooltip, TooltipTrigger } from "../Tooltip";
 
 export const variantToClassName = {
   default: [styles.button],
@@ -61,7 +62,7 @@ export const Button = forwardRef(
             [styles.off]: off,
           }
         )}
-        {...filteredButtonProps}
+        {...mergeProps(filteredButtonProps, rest)}
         ref={buttonRef}
       >
         {children}
@@ -80,46 +81,64 @@ export function ButtonTooltip({ className, children }) {
 
 export function MicButton({ muted, ...rest }) {
   return (
-    <Button variant="toolbar" {...rest} off={muted}>
-      <ButtonTooltip>
-        {muted ? "Unmute microphone" : "Mute microphone"}
-      </ButtonTooltip>
-      {muted ? <MuteMicIcon /> : <MicIcon />}
-    </Button>
+    <TooltipTrigger>
+      <Button variant="toolbar" {...rest} off={muted}>
+        {muted ? <MuteMicIcon /> : <MicIcon />}
+      </Button>
+      {(props) => (
+        <Tooltip position="top" {...props}>
+          {muted ? "Unmute microphone" : "Mute microphone"}
+        </Tooltip>
+      )}
+    </TooltipTrigger>
   );
 }
 
 export function VideoButton({ muted, ...rest }) {
   return (
-    <Button variant="toolbar" {...rest} off={muted}>
-      <ButtonTooltip>
-        {muted ? "Turn on camera" : "Turn off camera"}
-      </ButtonTooltip>
-      {muted ? <DisableVideoIcon /> : <VideoIcon />}
-    </Button>
+    <TooltipTrigger>
+      <Button variant="toolbar" {...rest} off={muted}>
+        {muted ? <DisableVideoIcon /> : <VideoIcon />}
+      </Button>
+      {(props) => (
+        <Tooltip position="top" {...props}>
+          {muted ? "Turn on camera" : "Turn off camera"}
+        </Tooltip>
+      )}
+    </TooltipTrigger>
   );
 }
 
 export function ScreenshareButton({ enabled, className, ...rest }) {
   return (
-    <Button variant="toolbar" {...rest} on={enabled}>
-      <ButtonTooltip>
-        {enabled ? "Stop sharing screen" : "Share screen"}
-      </ButtonTooltip>
-      <ScreenshareIcon />
-    </Button>
+    <TooltipTrigger>
+      <Button variant="toolbar" {...rest} on={enabled}>
+        <ScreenshareIcon />
+      </Button>
+      {(props) => (
+        <Tooltip position="top" {...props}>
+          {enabled ? "Stop sharing screen" : "Share screen"}
+        </Tooltip>
+      )}
+    </TooltipTrigger>
   );
 }
 
 export function HangupButton({ className, ...rest }) {
   return (
-    <Button
-      variant="toolbar"
-      className={classNames(styles.hangupButton, className)}
-      {...rest}
-    >
-      <ButtonTooltip>Leave</ButtonTooltip>
-      <HangupIcon />
-    </Button>
+    <TooltipTrigger>
+      <Button
+        variant="toolbar"
+        className={classNames(styles.hangupButton, className)}
+        {...rest}
+      >
+        <HangupIcon />
+      </Button>
+      {(props) => (
+        <Tooltip position="top" {...props}>
+          Leave
+        </Tooltip>
+      )}
+    </TooltipTrigger>
   );
 }

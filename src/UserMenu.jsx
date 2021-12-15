@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from "react";
-import { ButtonTooltip, Button } from "./button";
+import { Button } from "./button";
 import { PopoverMenuTrigger } from "./PopoverMenu";
 import { ReactComponent as UserIcon } from "./icons/User.svg";
 import { ReactComponent as LoginIcon } from "./icons/Login.svg";
@@ -11,6 +11,7 @@ import { useHistory, useLocation } from "react-router-dom";
 import { useClient, useDisplayName } from "./ConferenceCallManagerHooks";
 import { useModalTriggerState } from "./Modal";
 import { ProfileModal } from "./ProfileModal";
+import { Tooltip, TooltipTrigger } from "./Tooltip";
 
 export function UserMenu() {
   const location = useLocation();
@@ -77,10 +78,16 @@ export function UserMenu() {
   return (
     <>
       <PopoverMenuTrigger placement="bottom right">
-        <Button variant="icon" className={styles.userButton}>
-          <ButtonTooltip>Profile</ButtonTooltip>
-          <UserIcon />
-        </Button>
+        <TooltipTrigger>
+          <Button variant="icon" className={styles.userButton}>
+            <UserIcon />
+          </Button>
+          {(props) => (
+            <Tooltip position="bottomLeft" {...props}>
+              Profile
+            </Tooltip>
+          )}
+        </TooltipTrigger>
         {(props) => (
           <Menu {...props} label="User menu" onAction={onAction}>
             {items.map(({ key, icon: Icon, label }) => (

@@ -1,5 +1,5 @@
 import React from "react";
-import { ButtonTooltip, Button } from "./button";
+import { Button } from "./button";
 import { PopoverMenuTrigger } from "./PopoverMenu";
 import { ReactComponent as SpotlightIcon } from "./icons/Spotlight.svg";
 import { ReactComponent as FreedomIcon } from "./icons/Freedom.svg";
@@ -7,14 +7,21 @@ import { ReactComponent as CheckIcon } from "./icons/Check.svg";
 import styles from "./GridLayoutMenu.module.css";
 import { Menu } from "./Menu";
 import { Item } from "@react-stately/collections";
+import { Tooltip, TooltipTrigger } from "./Tooltip";
 
 export function GridLayoutMenu({ layout, setLayout }) {
   return (
     <PopoverMenuTrigger placement="bottom right">
-      <Button variant="icon">
-        <ButtonTooltip>Layout Type</ButtonTooltip>
-        {layout === "spotlight" ? <SpotlightIcon /> : <FreedomIcon />}
-      </Button>
+      <TooltipTrigger>
+        <Button variant="icon">
+          {layout === "spotlight" ? <SpotlightIcon /> : <FreedomIcon />}
+        </Button>
+        {(props) => (
+          <Tooltip position="bottom" {...props}>
+            Layout Type
+          </Tooltip>
+        )}
+      </TooltipTrigger>
       {(props) => (
         <Menu {...props} label="Grid layout menu" onAction={setLayout}>
           <Item key="freedom" textValue="Freedom">
