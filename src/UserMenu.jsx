@@ -16,7 +16,14 @@ import { Tooltip, TooltipTrigger } from "./Tooltip";
 export function UserMenu({ disableLogout }) {
   const location = useLocation();
   const history = useHistory();
-  const { isAuthenticated, isGuest, logout, userName, client } = useClient();
+  const {
+    isAuthenticated,
+    isGuest,
+    isPasswordlessUser,
+    logout,
+    userName,
+    client,
+  } = useClient();
   const { displayName } = useDisplayName(client);
   const { modalState, modalProps } = useModalTriggerState();
 
@@ -51,7 +58,7 @@ export function UserMenu({ disableLogout }) {
       });
     }
 
-    if (!isAuthenticated || isGuest) {
+    if (!isAuthenticated || isGuest || isPasswordlessUser) {
       arr.push(
         {
           key: "login",
