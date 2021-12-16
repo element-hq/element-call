@@ -42,7 +42,6 @@
 .left .content {
   display: flex;
   flex-direction: column;
-  padding-top: 40px;
   align-items: center;
 }
 
@@ -90,7 +89,7 @@
 }
 
 .right .content {
-  padding: 40px;
+  padding: 0 40px 40px 40px;
 }
 
 .right .content h3:first-child {
