@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "./button";
-import { useDisplayName } from "./ConferenceCallManagerHooks";
+import { useProfile } from "./ConferenceCallManagerHooks";
 import { FieldRow, InputField, ErrorMessage } from "./Input";
 import { Modal, ModalContent } from "./Modal";
 
@@ -11,8 +11,8 @@ export function ProfileModal({ client, ...rest }) {
     error,
     loading,
     displayName: initialDisplayName,
-    setDisplayName: submitDisplayName,
-  } = useDisplayName(client);
+    saveProfile,
+  } = useProfile(client);
   const [displayName, setDisplayName] = useState(initialDisplayName || "");
 
   const onChangeDisplayName = useCallback(
@@ -27,10 +27,14 @@ export function ProfileModal({ client, ...rest }) {
       e.preventDefault();
       const data = new FormData(e.target);
       const displayName = data.get("displayName");
-      console.log(displayName);
-      submitDisplayName(displayName);
+      const avatar = data.get("avatar");
+
+      saveProfile({
+        displayName,
+        avatar,
+      });
     },
-    [setDisplayName]
+    [saveProfile]
   );
 
   useEffect(() => {
@@ -55,6 +59,9 @@ export function ProfileModal({ client, ...rest }) {
               value={displayName}
               onChange={onChangeDisplayName}
             />
+          </FieldRow>
+          <FieldRow>
+            <InputField type="file" id="avatar" name="avatar" label="Avatar" />
           </FieldRow>
           {error && (
             <FieldRow>

@@ -22,14 +22,16 @@ export function Field({ children, className, ...rest }) {
 }
 
 export const InputField = forwardRef(
-  ({ id, label, className, type, checked, ...rest }, ref) => {
+  ({ id, label, className, type, checked, prefix, suffix, ...rest }, ref) => {
     return (
       <Field
         className={classNames(
           type === "checkbox" ? styles.checkboxField : styles.inputField,
+          { [styles.prefix]: !!prefix },
           className
         )}
       >
+        {prefix && <span>{prefix}</span>}
         <input id={id} {...rest} ref={ref} type={type} checked={checked} />
         <label htmlFor={id}>
           {type === "checkbox" && (
@@ -39,6 +41,7 @@ export const InputField = forwardRef(
           )}
           {label}
         </label>
+        {suffix && <span>{suffix}</span>}
       </Field>
     );
   }
