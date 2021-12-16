@@ -400,7 +400,10 @@ function InRoomView({
       const participant = participants.find(
         (p) => p.usermediaCallFeed.userId === callFeed.userId
       );
-      participant.screenshareCallFeed = callFeed;
+
+      if (participant) {
+        participant.screenshareCallFeed = callFeed;
+      }
     }
 
     return participants;
