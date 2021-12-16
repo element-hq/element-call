@@ -70,22 +70,13 @@ export function LoginPage() {
               <FieldRow>
                 <InputField
                   type="text"
-                  value={homeserver}
-                  onChange={(e) => setHomeServer(e.target.value)}
-                  placeholder="Homeserver"
-                  label="Homeserver"
-                  autoCorrect="off"
-                  autoCapitalize="none"
-                />
-              </FieldRow>
-              <FieldRow>
-                <InputField
-                  type="text"
                   ref={usernameRef}
                   placeholder="Username"
                   label="Username"
                   autoCorrect="off"
                   autoCapitalize="none"
+                  prefix="@"
+                  suffix={`:${window.location.host}`}
                 />
               </FieldRow>
               <FieldRow>
