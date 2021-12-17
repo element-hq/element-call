@@ -7,7 +7,7 @@ import { Button } from "./Button";
 export function CopyButton({
   value,
   children,
-  onClassName,
+  className,
   variant,
   copiedMessage,
   ...rest
@@ -19,7 +19,7 @@ export function CopyButton({
       {...rest}
       variant={variant === "icon" ? "iconCopy" : "copy"}
       on={isCopied}
-      onClassName={onClassName}
+      className={className}
       onPress={setCopied}
       iconStyle={isCopied ? "stroke" : "fill"}
     >
