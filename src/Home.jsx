@@ -14,13 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { useHistory, Link } from "react-router-dom";
 import {
   useClient,
   useGroupCallRooms,
   usePublicRooms,
-  useCreateRoom,
+  createRoom,
+  roomAliasFromRoomName,
 } from "./ConferenceCallManagerHooks";
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import styles from "./Home.module.css";
@@ -30,6 +31,9 @@ import { Button } from "./button";
 import { CallList } from "./CallList";
 import classNames from "classnames";
 import { ErrorView, LoadingView } from "./FullScreenView";
+import { useModalTriggerState } from "./Modal";
+import { randomString } from "matrix-js-sdk/src/randomstring";
+import { JoinExistingCallModal } from "./JoinExistingCallModal";
 
 export function Home() {
   const {
@@ -39,10 +43,14 @@ export function Home() {
     loading,
     error,
     client,
+    register,
   } = useClient();
 
   const history = useHistory();
-  const { createRoomError, creatingRoom, createRoom } = useCreateRoom();
+  const [creatingRoom, setCreatingRoom] = useState(false);
+  const [createRoomError, setCreateRoomError] = useState();
+  const { modalState, modalProps } = useModalTriggerState();
+  const [existingRoomId, setExistingRoomId] = useState();
 
   const onCreateRoom = useCallback(
     (e) => {
@@ -51,13 +59,36 @@ export function Home() {
       const roomName = data.get("roomName");
       const userName = data.get("userName");
 
-      createRoom(roomName, userName).then((roomIdOrAlias) => {
+      async function onCreateRoom() {
+        let _client = client;
+
+        if (!_client) {
+          _client = await register(userName, randomString(16), true);
+        }
+
+        const roomIdOrAlias = await createRoom(_client, roomName);
+
         if (roomIdOrAlias) {
           history.push(`/room/${roomIdOrAlias}`);
         }
+      }
+
+      setCreateRoomError(undefined);
+      setCreatingRoom(true);
+
+      return onCreateRoom().catch((error) => {
+        if (error.errcode === "M_ROOM_IN_USE") {
+          setExistingRoomId(roomAliasFromRoomName(roomName));
+          setCreateRoomError(undefined);
+          modalState.open();
+        } else {
+          setCreateRoomError(error);
+        }
+
+        setCreatingRoom(false);
       });
     },
-    [history]
+    [client, history, register]
   );
 
   const onJoinRoom = useCallback(
@@ -70,30 +101,39 @@ export function Home() {
     [history]
   );
 
+  const onJoinExistingRoom = useCallback(() => {
+    history.push(`/${existingRoomId}`);
+  }, [history, existingRoomId]);
+
   if (loading) {
     return <LoadingView />;
-  } else if (error || createRoomError) {
-    return <ErrorView error={error || createRoomError} />;
-  } else if (!isAuthenticated || isGuest) {
-    return (
-      <UnregisteredView
-        onCreateRoom={onCreateRoom}
-        createRoomError={createRoomError}
-        creatingRoom={creatingRoom}
-        onJoinRoom={onJoinRoom}
-      />
-    );
+  } else if (error) {
+    return <ErrorView error={error} />;
   } else {
     return (
-      <RegisteredView
-        client={client}
-        isPasswordlessUser={isPasswordlessUser}
-        isGuest={isGuest}
-        onCreateRoom={onCreateRoom}
-        createRoomError={createRoomError}
-        creatingRoom={creatingRoom}
-        onJoinRoom={onJoinRoom}
-      />
+      <>
+        {!isAuthenticated || isGuest ? (
+          <UnregisteredView
+            onCreateRoom={onCreateRoom}
+            createRoomError={createRoomError}
+            creatingRoom={creatingRoom}
+            onJoinRoom={onJoinRoom}
+          />
+        ) : (
+          <RegisteredView
+            client={client}
+            isPasswordlessUser={isPasswordlessUser}
+            isGuest={isGuest}
+            onCreateRoom={onCreateRoom}
+            createRoomError={createRoomError}
+            creatingRoom={creatingRoom}
+            onJoinRoom={onJoinRoom}
+          />
+        )}
+        {modalState.isOpen && (
+          <JoinExistingCallModal onJoin={onJoinExistingRoom} {...modalProps} />
+        )}
+      </>
     );
   }
 }

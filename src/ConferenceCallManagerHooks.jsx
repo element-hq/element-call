@@ -28,7 +28,6 @@ import {
   GroupCallType,
 } from "matrix-js-sdk/src/browser-index";
 import { useHistory } from "react-router-dom";
-import { randomString } from "matrix-js-sdk/src/randomstring";
 
 const ClientContext = createContext();
 
@@ -432,7 +431,7 @@ export function useClient() {
   return useContext(ClientContext);
 }
 
-function roomAliasFromRoomName(roomName) {
+export function roomAliasFromRoomName(roomName) {
   return roomName
     .trim()
     .replace(/\s/g, "-")
@@ -483,41 +482,6 @@ export async function createRoom(client, name) {
   );
 
   return room_alias || room_id;
-}
-
-export function useCreateRoom() {
-  const { register, client } = useClient();
-  const [creatingRoom, setCreatingRoom] = useState(false);
-  const [createRoomError, setCreateRoomError] = useState();
-
-  const onCreateRoom = useCallback(
-    (roomName, userName) => {
-      async function onCreateRoom(roomName, userName) {
-        let _client = client;
-
-        if (!_client) {
-          _client = await register(userName, randomString(16), true);
-        }
-
-        return await createRoom(_client, roomName);
-      }
-
-      setCreateRoomError(undefined);
-      setCreatingRoom(true);
-
-      return onCreateRoom(roomName, userName).catch((error) => {
-        setCreateRoomError(error);
-        setCreatingRoom(false);
-      });
-    },
-    [register, client]
-  );
-
-  return {
-    creatingRoom,
-    createRoomError,
-    createRoom: onCreateRoom,
-  };
 }
 
 export function useLoadGroupCall(client, roomId, viaServers) {
