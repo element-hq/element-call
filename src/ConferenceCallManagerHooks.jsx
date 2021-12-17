@@ -724,13 +724,19 @@ export function useProfile(client) {
         try {
           await client.setDisplayName(displayName);
 
-          const url = await client.uploadContent(avatar);
-          await client.setAvatarUrl(url);
+          let mxcAvatarUrl;
+
+          if (avatar) {
+            mxcAvatarUrl = await client.uploadContent(avatar);
+            await client.setAvatarUrl(mxcAvatarUrl);
+          }
 
           setState((prev) => ({
             ...prev,
             displayName,
-            avatarUrl: getAvatarUrl(client, url),
+            avatarUrl: mxcAvatarUrl
+              ? getAvatarUrl(client, mxcAvatarUrl)
+              : prev.avatarUrl,
             loading: false,
             success: true,
           }));

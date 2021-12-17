@@ -108,7 +108,15 @@ export function UserMenu({ disableLogout }) {
           </Menu>
         )}
       </PopoverMenuTrigger>
-      {modalState.isOpen && <ProfileModal client={client} {...modalProps} />}
+      {modalState.isOpen && (
+        <ProfileModal
+          client={client}
+          isAuthenticated={isAuthenticated}
+          isGuest={isGuest}
+          isPasswordlessUser={isPasswordlessUser}
+          {...modalProps}
+        />
+      )}
     </>
   );
 }
