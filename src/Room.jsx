@@ -26,13 +26,7 @@ import {
   ScreenshareButton,
   LinkButton,
 } from "./button";
-import {
-  Header,
-  LeftNav,
-  RightNav,
-  RoomHeaderInfo,
-  RoomSetupHeaderInfo,
-} from "./Header";
+import { Header, LeftNav, RightNav, RoomHeaderInfo } from "./Header";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import VideoGrid, {
   useVideoGridLayout,
@@ -217,6 +211,7 @@ export function GroupCallView({
       <InRoomView
         groupCall={groupCall}
         client={client}
+        isGuest={isGuest}
         roomName={groupCall.room.name}
         microphoneMuted={microphoneMuted}
         localVideoMuted={localVideoMuted}
@@ -284,7 +279,6 @@ export function EnteringRoomView() {
 
 function RoomSetupView({
   client,
-  isGuest,
   roomName,
   state,
   onInitLocalCallFeed,
@@ -313,13 +307,7 @@ function RoomSetupView({
           <RoomHeaderInfo roomName={roomName} />
         </LeftNav>
         <RightNav>
-          {isGuest ? (
-            <LinkButton to={{ pathname: "/login", state: { from: location } }}>
-              Log in
-            </LinkButton>
-          ) : (
-            <UserMenu />
-          )}
+          <UserMenu />
         </RightNav>
       </Header>
       <div className={styles.joinRoom}>
@@ -385,6 +373,7 @@ function RoomSetupView({
 
 function InRoomView({
   client,
+  isGuest,
   groupCall,
   roomName,
   microphoneMuted,
@@ -464,7 +453,7 @@ function InRoomView({
         </LeftNav>
         <RightNav>
           <GridLayoutMenu layout={layout} setLayout={setLayout} />
-          <UserMenu disableLogout />
+          {!isGuest && <UserMenu disableLogout />}
         </RightNav>
       </Header>
       {items.length === 0 ? (

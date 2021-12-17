@@ -1,5 +1,5 @@
 import React, { useCallback, useMemo } from "react";
-import { Button } from "./button";
+import { Button, LinkButton } from "./button";
 import { PopoverMenuTrigger } from "./PopoverMenu";
 import { ReactComponent as UserIcon } from "./icons/User.svg";
 import { ReactComponent as LoginIcon } from "./icons/Login.svg";
@@ -48,32 +48,40 @@ export function UserMenu({ disableLogout }) {
   const items = useMemo(() => {
     const arr = [];
 
-    if (isAuthenticated) {
+    if (isAuthenticated && !isGuest) {
       arr.push({
         key: "user",
         icon: UserIcon,
         label: displayName || userName,
       });
-    }
 
-    if (!isAuthenticated || isGuest || isPasswordlessUser) {
-      arr.push({
-        key: "login",
-        label: "Sign In",
-        icon: LoginIcon,
-      });
-    }
+      if (isPasswordlessUser) {
+        arr.push({
+          key: "login",
+          label: "Sign In",
+          icon: LoginIcon,
+        });
+      }
 
-    if (isAuthenticated && !isGuest && !isPasswordlessUser && !disableLogout) {
-      arr.push({
-        key: "logout",
-        label: "Sign Out",
-        icon: LogoutIcon,
-      });
+      if (!isPasswordlessUser && !disableLogout) {
+        arr.push({
+          key: "logout",
+          label: "Sign Out",
+          icon: LogoutIcon,
+        });
+      }
     }
 
     return arr;
   }, [isAuthenticated, isGuest, userName, displayName]);
+
+  if (isGuest || !isAuthenticated) {
+    return (
+      <LinkButton to={{ pathname: "/login", state: { from: location } }}>
+        Log in
+      </LinkButton>
+    );
+  }
 
   return (
     <>
