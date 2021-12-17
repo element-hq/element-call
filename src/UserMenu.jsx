@@ -40,9 +40,6 @@ export function UserMenu({ disableLogout }) {
         case "login":
           history.push("/login", { state: { from: location } });
           break;
-        case "register":
-          history.push("/register", { state: { from: location } });
-          break;
       }
     },
     [history, location, logout, modalState]
@@ -60,19 +57,14 @@ export function UserMenu({ disableLogout }) {
     }
 
     if (!isAuthenticated || isGuest || isPasswordlessUser) {
-      arr.push(
-        {
-          key: "login",
-          label: "Sign In",
-          icon: LoginIcon,
-        },
-        {
-          key: "register",
-          label: "Register",
-          icon: LoginIcon,
-        }
-      );
-    } else if (!disableLogout) {
+      arr.push({
+        key: "login",
+        label: "Sign In",
+        icon: LoginIcon,
+      });
+    }
+
+    if (isAuthenticated && !isGuest && !isPasswordlessUser && !disableLogout) {
       arr.push({
         key: "logout",
         label: "Sign Out",
