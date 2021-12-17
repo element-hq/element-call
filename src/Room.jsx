@@ -60,8 +60,15 @@ const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 export function Room() {
   const [registeringGuest, setRegisteringGuest] = useState(false);
   const [registrationError, setRegistrationError] = useState();
-  const { loading, isAuthenticated, error, client, registerGuest, isGuest } =
-    useClient();
+  const {
+    loading,
+    isAuthenticated,
+    error,
+    client,
+    registerGuest,
+    isGuest,
+    isPasswordlessUser,
+  } = useClient();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -86,10 +93,16 @@ export function Room() {
     return <ErrorView error={registrationError || error} />;
   }
 
-  return <GroupCall client={client} isGuest={isGuest} />;
+  return (
+    <GroupCall
+      client={client}
+      isGuest={isGuest}
+      isPasswordlessUser={isPasswordlessUser}
+    />
+  );
 }
 
-export function GroupCall({ client, isGuest }) {
+export function GroupCall({ client, isGuest, isPasswordlessUser }) {
   const { roomId: maybeRoomId } = useParams();
   const { hash, search } = useLocation();
   const [simpleGrid, viaServers] = useMemo(() => {
@@ -118,6 +131,7 @@ export function GroupCall({ client, isGuest }) {
   return (
     <GroupCallView
       isGuest={isGuest}
+      isPasswordlessUser={isPasswordlessUser}
       client={client}
       roomId={roomId}
       groupCall={groupCall}
@@ -129,6 +143,7 @@ export function GroupCall({ client, isGuest }) {
 export function GroupCallView({
   client,
   isGuest,
+  isPasswordlessUser,
   roomId,
   groupCall,
   simpleGrid,
@@ -184,7 +199,7 @@ export function GroupCallView({
   const onLeave = useCallback(() => {
     leave();
 
-    if (!isGuest) {
+    if (!isGuest && !isPasswordlessUser) {
       history.push("/");
     } else {
       setLeft(true);
@@ -494,18 +509,12 @@ export function CallEndedScreen() {
       <ul>
         <li>Easily access all your previous call links</li>
         <li>Set a username and avatar</li>
-        <li>
-          Get your own Matrix ID so you can log in to{" "}
-          <a href="https://element.io" target="_blank">
-            Element
-          </a>
-        </li>
       </ul>
       <LinkButton
         className={styles.callEndedButton}
         size="lg"
         variant="default"
-        to="/login"
+        to="/register"
       >
         Create account
       </LinkButton>

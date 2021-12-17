@@ -33,15 +33,24 @@
   font-size: 15px;
   border: none;
   border-radius: 4px;
-  padding: 11px 9px;
+  padding: 12px 9px 10px 9px;
   color: var(--textColor1);
   background-color: var(--bgColor1);
   flex: 1;
   min-width: 0;
 }
 
+.inputField.disabled input,
+.inputField.disabled span {
+  color: var(--textColor2);
+}
+
 .inputField span {
   padding: 11px 9px;
+}
+
+.inputField span:first-child {
+  padding-right: 0;
 }
 
 .inputField input::placeholder {

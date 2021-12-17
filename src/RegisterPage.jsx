@@ -21,14 +21,21 @@ import { Button } from "./button";
 import { useClient } from "./ConferenceCallManagerHooks";
 import styles from "./LoginPage.module.css";
 import { ReactComponent as Logo } from "./icons/LogoLarge.svg";
+import { LoadingView } from "./FullScreenView";
 
 export function RegisterPage() {
-  const { register } = useClient();
-  const registerUsernameRef = useRef();
+  const {
+    loading,
+    client,
+    register,
+    changePassword,
+    isAuthenticated,
+    isPasswordlessUser,
+  } = useClient();
   const confirmPasswordRef = useRef();
   const history = useHistory();
   const location = useLocation();
-  const [loading, setLoading] = useState(false);
+  const [registering, setRegistering] = useState(false);
   const [error, setError] = useState();
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
@@ -36,33 +43,71 @@ export function RegisterPage() {
   const onSubmitRegisterForm = useCallback(
     (e) => {
       e.preventDefault();
-      setLoading(true);
-      register(
-        registerUsernameRef.current.value,
-        registerPasswordRef.current.value
-      )
-        .then(() => {
-          if (location.state && location.state.from) {
-            history.push(location.state.from);
-          } else {
-            history.push("/");
-          }
-        })
-        .catch((error) => {
-          setError(error);
-          setLoading(false);
-        });
+      const data = new FormData(e.target);
+      const userName = data.get("userName");
+      const password = data.get("password");
+      const passwordConfirmation = data.get("passwordConfirmation");
+
+      if (password !== passwordConfirmation) {
+        return;
+      }
+
+      setRegistering(true);
+
+      console.log(isPasswordlessUser);
+
+      if (isPasswordlessUser) {
+        changePassword(password)
+          .then(() => {
+            if (location.state && location.state.from) {
+              history.push(location.state.from);
+            } else {
+              history.push("/");
+            }
+          })
+          .catch((error) => {
+            setError(error);
+            setRegistering(false);
+          });
+      } else {
+        register(userName, password)
+          .then(() => {
+            if (location.state && location.state.from) {
+              history.push(location.state.from);
+            } else {
+              history.push("/");
+            }
+          })
+          .catch((error) => {
+            setError(error);
+            setRegistering(false);
+          });
+      }
     },
-    [register, location, history]
+    [register, changePassword, location, history, isPasswordlessUser]
   );
 
   useEffect(() => {
+    if (!confirmPasswordRef.current) {
+      return;
+    }
+
     if (password && passwordConfirmation && password !== passwordConfirmation) {
       confirmPasswordRef.current.setCustomValidity("Passwords must match");
     } else {
       confirmPasswordRef.current.setCustomValidity("");
     }
   }, [password, passwordConfirmation]);
+
+  useEffect(() => {
+    if (!loading && isAuthenticated && !isPasswordlessUser) {
+      history.push("/");
+    }
+  }, [history, isAuthenticated, isPasswordlessUser]);
+
+  if (loading) {
+    return <LoadingView />;
+  }
 
   return (
     <>
@@ -75,18 +120,26 @@ export function RegisterPage() {
               <FieldRow>
                 <InputField
                   type="text"
-                  ref={registerUsernameRef}
+                  name="userName"
                   placeholder="Username"
                   label="Username"
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
                   suffix={`:${window.location.host}`}
+                  value={
+                    isAuthenticated && isPasswordlessUser
+                      ? client.getUserIdLocalpart()
+                      : undefined
+                  }
+                  onChange={(e) => setUserName(e.target.value)}
+                  disabled={isAuthenticated && isPasswordlessUser}
                 />
               </FieldRow>
               <FieldRow>
                 <InputField
                   required
+                  name="password"
                   type="password"
                   onChange={(e) => setPassword(e.target.value)}
                   value={password}
@@ -98,6 +151,7 @@ export function RegisterPage() {
                 <InputField
                   required
                   type="password"
+                  name="passwordConfirmation"
                   onChange={(e) => setPasswordConfirmation(e.target.value)}
                   value={passwordConfirmation}
                   placeholder="Confirm Password"
@@ -111,8 +165,8 @@ export function RegisterPage() {
                 </FieldRow>
               )}
               <FieldRow>
-                <Button type="submit" disabled={loading}>
-                  {loading ? "Registering..." : "Register"}
+                <Button type="submit" disabled={registering}>
+                  {registering ? "Registering..." : "Register"}
                 </Button>
               </FieldRow>
             </form>
