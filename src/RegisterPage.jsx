@@ -132,7 +132,6 @@ export function RegisterPage() {
                       ? client.getUserIdLocalpart()
                       : undefined
                   }
-                  onChange={(e) => setUserName(e.target.value)}
                   disabled={isAuthenticated && isPasswordlessUser}
                 />
               </FieldRow>
