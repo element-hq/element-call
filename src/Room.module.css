@@ -165,6 +165,7 @@ limitations under the License.
 }
 
 .callEndedScreen h1 {
+  text-align: center;
   margin-bottom: 60px;
 }
 
@@ -181,10 +182,16 @@ limitations under the License.
 .callEndedScreen ul {
   padding: 0;
   margin-bottom: 40px;
+  text-align: initial;
+  padding-left: 20px;
 }
 
 .callEndedButton {
   width: 100%;
+}
+
+.callEndedContent {
+  text-align: center;
   max-width: 360px;
 }
 

@@ -42,7 +42,11 @@ import "matrix-react-sdk/res/css/views/voip/GroupCallView/_VideoGrid.scss";
 import { useGroupCall } from "matrix-react-sdk/src/hooks/useGroupCall";
 import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
 import { useMediaStream } from "matrix-react-sdk/src/hooks/useMediaStream";
-import { useClient, useLoadGroupCall } from "./ConferenceCallManagerHooks";
+import {
+  useClient,
+  useLoadGroupCall,
+  useProfile,
+} from "./ConferenceCallManagerHooks";
 import { ErrorView, LoadingView, FullScreenView } from "./FullScreenView";
 import { GroupCallInspector } from "./GroupCallInspector";
 import * as Sentry from "@sentry/react";
@@ -234,7 +238,11 @@ export function GroupCallView({
   } else if (state === GroupCallState.Entering) {
     return <EnteringRoomView />;
   } else if (left) {
-    return <CallEndedScreen />;
+    if (isPasswordlessUser) {
+      return <PasswordlessUserCallEndedScreen client={client} />;
+    } else {
+      return <GuestCallEndedScreen />;
+    }
   } else {
     return (
       <RoomSetupView
@@ -499,25 +507,52 @@ function InRoomView({
   );
 }
 
-export function CallEndedScreen() {
+export function GuestCallEndedScreen() {
   return (
     <FullScreenView className={styles.callEndedScreen}>
       <h1>Your call is now ended</h1>
-      <hr />
-      <h2>Why not finish by creating an account?</h2>
-      <p>You'll be able to:</p>
-      <ul>
-        <li>Easily access all your previous call links</li>
-        <li>Set a username and avatar</li>
-      </ul>
-      <LinkButton
-        className={styles.callEndedButton}
-        size="lg"
-        variant="default"
-        to="/register"
-      >
-        Create account
-      </LinkButton>
+      <div className={styles.callEndedContent}>
+        <p>Why not finish by creating an account?</p>
+        <p>You'll be able to:</p>
+        <ul>
+          <li>Easily access all your previous call links</li>
+          <li>Set a username and avatar</li>
+        </ul>
+        <LinkButton
+          className={styles.callEndedButton}
+          size="lg"
+          variant="default"
+          to="/register"
+        >
+          Create account
+        </LinkButton>
+      </div>
+      <Link to="/">Not now, return to home screen</Link>
+    </FullScreenView>
+  );
+}
+
+export function PasswordlessUserCallEndedScreen({ client }) {
+  const { displayName } = useProfile(client);
+
+  return (
+    <FullScreenView className={styles.callEndedScreen}>
+      <h1>{displayName}, your call is now ended</h1>
+      <div className={styles.callEndedContent}>
+        <p>Why not finish by setting up a password to keep your account?</p>
+        <p>
+          You'll be able to keep your name and set an avatar for use on future
+          calls
+        </p>
+        <LinkButton
+          className={styles.callEndedButton}
+          size="lg"
+          variant="default"
+          to="/register"
+        >
+          Create account
+        </LinkButton>
+      </div>
       <Link to="/">Not now, return to home screen</Link>
     </FullScreenView>
   );
