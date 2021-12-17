@@ -4,7 +4,13 @@ import { useProfile } from "./ConferenceCallManagerHooks";
 import { FieldRow, InputField, ErrorMessage } from "./Input";
 import { Modal, ModalContent } from "./Modal";
 
-export function ProfileModal({ client, ...rest }) {
+export function ProfileModal({
+  client,
+  isAuthenticated,
+  isPasswordlessUser,
+  isGuest,
+  ...rest
+}) {
   const { onClose } = rest;
   const {
     success,
@@ -60,9 +66,16 @@ export function ProfileModal({ client, ...rest }) {
               onChange={onChangeDisplayName}
             />
           </FieldRow>
-          <FieldRow>
-            <InputField type="file" id="avatar" name="avatar" label="Avatar" />
-          </FieldRow>
+          {isAuthenticated && !isGuest && !isPasswordlessUser && (
+            <FieldRow>
+              <InputField
+                type="file"
+                id="avatar"
+                name="avatar"
+                label="Avatar"
+              />
+            </FieldRow>
+          )}
           {error && (
             <FieldRow>
               <ErrorMessage>{error.message}</ErrorMessage>
