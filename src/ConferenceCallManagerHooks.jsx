@@ -130,8 +130,14 @@ export function ClientProvider({ homeserverUrl, children }) {
         const authStore = localStorage.getItem("matrix-auth-store");
 
         if (authStore) {
-          const { user_id, device_id, access_token, guest, passwordlessUser } =
-            JSON.parse(authStore);
+          const {
+            user_id,
+            device_id,
+            access_token,
+            guest,
+            passwordlessUser,
+            tempPassword,
+          } = JSON.parse(authStore);
 
           const client = await initClient(
             {
@@ -151,6 +157,7 @@ export function ClientProvider({ homeserverUrl, children }) {
               access_token,
               guest,
               passwordlessUser,
+              tempPassword,
             })
           );
 
@@ -311,10 +318,13 @@ export function ClientProvider({ homeserverUrl, children }) {
         deviceId: device_id,
       });
 
-      localStorage.setItem(
-        "matrix-auth-store",
-        JSON.stringify({ user_id, device_id, access_token, passwordlessUser })
-      );
+      const session = { user_id, device_id, access_token, passwordlessUser };
+
+      if (passwordlessUser) {
+        session.tempPassword = password;
+      }
+
+      localStorage.setItem("matrix-auth-store", JSON.stringify(session));
 
       setState({
         client,
@@ -340,6 +350,45 @@ export function ClientProvider({ homeserverUrl, children }) {
     }
   }, []);
 
+  const changePassword = useCallback(
+    async (password) => {
+      const { tempPassword, passwordlessUser, ...existingSession } = JSON.parse(
+        localStorage.getItem("matrix-auth-store")
+      );
+
+      await client.setPassword(
+        {
+          type: "m.login.password",
+          identifier: {
+            type: "m.id.user",
+            user: existingSession.user_id,
+          },
+          user: existingSession.user_id,
+          password: tempPassword,
+        },
+        password
+      );
+
+      localStorage.setItem(
+        "matrix-auth-store",
+        JSON.stringify({
+          ...existingSession,
+          passwordlessUser: false,
+        })
+      );
+
+      setState({
+        client,
+        loading: false,
+        isGuest: false,
+        isAuthenticated: true,
+        isPasswordlessUser: false,
+        userName: client.getUserIdLocalpart(),
+      });
+    },
+    [client]
+  );
+
   const logout = useCallback(() => {
     localStorage.removeItem("matrix-auth-store");
     window.location = "/";
@@ -355,6 +404,7 @@ export function ClientProvider({ homeserverUrl, children }) {
       login,
       registerGuest,
       register,
+      changePassword,
       logout,
       userName,
     }),
@@ -367,6 +417,7 @@ export function ClientProvider({ homeserverUrl, children }) {
       login,
       registerGuest,
       register,
+      changePassword,
       logout,
       userName,
     ]

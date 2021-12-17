@@ -22,17 +22,30 @@ export function Field({ children, className, ...rest }) {
 }
 
 export const InputField = forwardRef(
-  ({ id, label, className, type, checked, prefix, suffix, ...rest }, ref) => {
+  (
+    { id, label, className, type, checked, prefix, suffix, disabled, ...rest },
+    ref
+  ) => {
     return (
       <Field
         className={classNames(
           type === "checkbox" ? styles.checkboxField : styles.inputField,
-          { [styles.prefix]: !!prefix },
+          {
+            [styles.prefix]: !!prefix,
+            [styles.disabled]: disabled,
+          },
           className
         )}
       >
         {prefix && <span>{prefix}</span>}
-        <input id={id} {...rest} ref={ref} type={type} checked={checked} />
+        <input
+          id={id}
+          {...rest}
+          ref={ref}
+          type={type}
+          checked={checked}
+          disabled={disabled}
+        />
         <label htmlFor={id}>
           {type === "checkbox" && (
             <div className={styles.checkbox}>
