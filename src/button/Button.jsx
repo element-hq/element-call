@@ -62,7 +62,7 @@ export const Button = forwardRef(
             [styles.off]: off,
           }
         )}
-        {...mergeProps(filteredButtonProps, rest)}
+        {...filteredButtonProps}
         ref={buttonRef}
       >
         {children}
