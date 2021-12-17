@@ -6,6 +6,7 @@
   justify-content: center;
   pointer-events: none;
   font-weight: 600;
+  overflow: hidden;
 }
 
 .avatar img {
@@ -18,11 +19,22 @@
   fill: #ffffff;
 }
 
-.sm {
+.avatar span {
+  padding-top: 1px;
+}
+
+.xs {
   width: 22px;
   height: 22px;
   border-radius: 22px;
   font-size: 14px;
+}
+
+.sm {
+  width: 32px;
+  height: 32px;
+  border-radius: 32px;
+  font-size: 15px;
 }
 
 .md {

@@ -13,7 +13,7 @@ export function Facepile({ className, participants, ...rest }) {
       {participants.slice(0, 3).map((member, i) => (
         <Avatar
           key={member.userId}
-          size="sm"
+          size="xs"
           fallback={member.name.slice(0, 1).toUpperCase()}
           className={styles.avatar}
           style={{ left: i * 22 }}
@@ -22,7 +22,7 @@ export function Facepile({ className, participants, ...rest }) {
       {participants.length > 3 && (
         <Avatar
           key="additional"
-          size="sm"
+          size="xs"
           fallback={`+${participants.length - 3}`}
           className={styles.avatar}
           style={{ left: 3 * 22 }}
