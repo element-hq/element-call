@@ -62,7 +62,7 @@ export function Home() {
       async function onCreateRoom() {
         let _client = client;
 
-        if (!_client) {
+        if (!_client || isGuest) {
           _client = await register(userName, randomString(16), true);
         }
 
@@ -88,7 +88,7 @@ export function Home() {
         setCreatingRoom(false);
       });
     },
-    [client, history, register]
+    [client, history, register, isGuest]
   );
 
   const onJoinRoom = useCallback(

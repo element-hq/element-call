@@ -14,19 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useRef, useState, useMemo } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
 import { ReactComponent as Logo } from "./icons/LogoLarge.svg";
 import { FieldRow, InputField, ErrorMessage } from "./Input";
 import { Button } from "./button";
-import { useClient } from "./ConferenceCallManagerHooks";
+import {
+  useClient,
+  defaultHomeserver,
+  defaultHomeserverHost,
+} from "./ConferenceCallManagerHooks";
 import styles from "./LoginPage.module.css";
 
 export function LoginPage() {
   const { login } = useClient();
-  const [homeserver, setHomeServer] = useState(
-    `${window.location.protocol}//${window.location.host}`
-  );
+  const [homeserver, setHomeServer] = useState(defaultHomeserver);
   const usernameRef = useRef();
   const passwordRef = useRef();
   const history = useHistory();
@@ -57,6 +59,14 @@ export function LoginPage() {
     [login, location, history, homeserver]
   );
 
+  const homeserverHost = useMemo(() => {
+    try {
+      return new URL(homeserver).host;
+    } catch (_error) {
+      return defaultHomeserverHost;
+    }
+  }, [homeserver]);
+
   return (
     <>
       <div className={styles.container}>
@@ -76,7 +86,7 @@ export function LoginPage() {
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
-                  suffix={`:${window.location.host}`}
+                  suffix={`:${homeserverHost}`}
                 />
               </FieldRow>
               <FieldRow>

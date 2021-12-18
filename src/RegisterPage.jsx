@@ -18,7 +18,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
 import { FieldRow, InputField, ErrorMessage } from "./Input";
 import { Button } from "./button";
-import { useClient } from "./ConferenceCallManagerHooks";
+import { useClient, defaultHomeserverHost } from "./ConferenceCallManagerHooks";
 import styles from "./LoginPage.module.css";
 import { ReactComponent as Logo } from "./icons/LogoLarge.svg";
 import { LoadingView } from "./FullScreenView";
@@ -126,7 +126,7 @@ export function RegisterPage() {
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
-                  suffix={`:${window.location.host}`}
+                  suffix={`:${defaultHomeserverHost}`}
                   value={
                     isAuthenticated && isPasswordlessUser
                       ? client.getUserIdLocalpart()

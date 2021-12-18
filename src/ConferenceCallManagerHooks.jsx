@@ -29,6 +29,12 @@ import {
 } from "matrix-js-sdk/src/browser-index";
 import { useHistory } from "react-router-dom";
 
+export const defaultHomeserver =
+  import.meta.env.VITE_DEFAULT_HOMESERVER ||
+  `${window.location.protocol}//${window.location.host}`;
+
+export const defaultHomeserverHost = new URL(defaultHomeserver).host;
+
 const ClientContext = createContext();
 
 function waitForSync(client) {
@@ -100,18 +106,10 @@ export async function fetchGroupCall(
   });
 }
 
-export function ClientProvider({ homeserverUrl, children }) {
+export function ClientProvider({ children }) {
   const history = useHistory();
   const [
-    {
-      loading,
-      isAuthenticated,
-      isPasswordlessUser,
-      isGuest,
-      client,
-      userName,
-      displayName,
-    },
+    { loading, isAuthenticated, isPasswordlessUser, isGuest, client, userName },
     setState,
   ] = useState({
     loading: true,
@@ -120,7 +118,6 @@ export function ClientProvider({ homeserverUrl, children }) {
     isGuest: false,
     client: undefined,
     userName: null,
-    displayName: null,
   });
 
   useEffect(() => {
@@ -140,7 +137,7 @@ export function ClientProvider({ homeserverUrl, children }) {
 
           const client = await initClient(
             {
-              baseUrl: homeserverUrl,
+              baseUrl: defaultHomeserver,
               accessToken: access_token,
               userId: user_id,
               deviceId: device_id,
@@ -255,14 +252,14 @@ export function ClientProvider({ homeserverUrl, children }) {
 
   const registerGuest = useCallback(async () => {
     try {
-      const registrationClient = matrix.createClient(homeserverUrl);
+      const registrationClient = matrix.createClient(defaultHomeserver);
 
       const { user_id, device_id, access_token } =
         await registrationClient.registerGuest({});
 
       const client = await initClient(
         {
-          baseUrl: homeserverUrl,
+          baseUrl: defaultHomeserver,
           accessToken: access_token,
           userId: user_id,
           deviceId: device_id,
@@ -303,7 +300,7 @@ export function ClientProvider({ homeserverUrl, children }) {
 
   const register = useCallback(async (username, password, passwordlessUser) => {
     try {
-      const registrationClient = matrix.createClient(homeserverUrl);
+      const registrationClient = matrix.createClient(defaultHomeserver);
 
       const { user_id, device_id, access_token } =
         await registrationClient.register(username, password, null, {
@@ -311,7 +308,7 @@ export function ClientProvider({ homeserverUrl, children }) {
         });
 
       const client = await initClient({
-        baseUrl: homeserverUrl,
+        baseUrl: defaultHomeserver,
         accessToken: access_token,
         userId: user_id,
         deviceId: device_id,
@@ -617,7 +614,7 @@ export function getRoomUrl(roomId) {
   if (roomId.startsWith("#")) {
     const [localPart, host] = roomId.replace("#", "").split(":");
 
-    if (host !== window.location.host) {
+    if (host !== defaultHomeserverHost) {
       return `${window.location.host}/room/${roomId}`;
     } else {
       return `${window.location.host}/${localPart}`;

@@ -14,22 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import svgrPlugin from "vite-plugin-svgr";
 import path from "path";
 
 // https://vitejs.dev/config/
-export default defineConfig({
-  plugins: [svgrPlugin()],
-  server: {
-    proxy: {
-      "/_matrix": "http://localhost:8008",
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd());
+
+  return {
+    plugins: [svgrPlugin()],
+    server: {
+      proxy: {
+        "/_matrix": env.VITE_DEFAULT_HOMESERVER || "http://localhost:8008",
+      },
     },
-  },
-  resolve: {
-    alias: {
-      "$(res)": path.resolve(__dirname, "node_modules/matrix-react-sdk/res"),
+    resolve: {
+      alias: {
+        "$(res)": path.resolve(__dirname, "node_modules/matrix-react-sdk/res"),
+      },
+      dedupe: ["react", "react-dom", "matrix-js-sdk"],
     },
-    dedupe: ["react", "react-dom", "matrix-js-sdk"],
-  },
+  };
 });
