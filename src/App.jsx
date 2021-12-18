@@ -28,18 +28,17 @@ import { Home } from "./Home";
 import { LoginPage } from "./LoginPage";
 import { RegisterPage } from "./RegisterPage";
 import { Room } from "./Room";
-import { ClientProvider } from "./ConferenceCallManagerHooks";
+import {
+  ClientProvider,
+  defaultHomeserverHost,
+} from "./ConferenceCallManagerHooks";
 import { useFocusVisible } from "@react-aria/interactions";
 import styles from "./App.module.css";
-import { ErrorView, LoadingView } from "./FullScreenView";
+import { LoadingView } from "./FullScreenView";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
-const { protocol, host } = window.location;
-// Assume homeserver is hosted on same domain (proxied in development by vite)
-const homeserverUrl = `${protocol}//${host}`;
-
-export default function App() {
+export default function App({ history }) {
   const { isFocusVisible } = useFocusVisible();
 
   useEffect(() => {
@@ -58,8 +57,8 @@ export default function App() {
   }, [isFocusVisible]);
 
   return (
-    <Router>
-      <ClientProvider homeserverUrl={homeserverUrl}>
+    <Router history={history}>
+      <ClientProvider>
         <OverlayProvider>
           <Switch>
             <SentryRoute exact path="/">
@@ -87,50 +86,20 @@ export default function App() {
 function RoomRedirect() {
   const { pathname } = useLocation();
   const history = useHistory();
-  const [error, setError] = useState();
 
   useEffect(() => {
-    async function redirect() {
-      let roomId = pathname;
+    let roomId = pathname;
 
-      if (pathname.startsWith("/")) {
-        roomId = roomId.substr(1, roomId.length);
-      }
-
-      if (!roomId.startsWith("#") && !roomId.startsWith("!")) {
-        let loginHomeserverUrl = homeserverUrl.trim();
-
-        if (!loginHomeserverUrl.includes("://")) {
-          loginHomeserverUrl = "https://" + loginHomeserverUrl;
-        }
-
-        try {
-          const wellKnownUrl = new URL(
-            "/.well-known/matrix/client",
-            window.location
-          );
-          const response = await fetch(wellKnownUrl);
-          const config = await response.json();
-
-          if (config["m.homeserver"]) {
-            loginHomeserverUrl = config["m.homeserver"];
-          }
-        } catch (error) {}
-
-        const { host } = new URL(loginHomeserverUrl);
-
-        roomId = `#${roomId}:${host}`;
-      }
-
-      history.replace(`/room/${roomId}`);
+    if (pathname.startsWith("/")) {
+      roomId = roomId.substr(1, roomId.length);
     }
 
-    redirect().catch(setError);
-  }, [history, pathname]);
+    if (!roomId.startsWith("#") && !roomId.startsWith("!")) {
+      roomId = `#${roomId}:${defaultHomeserverHost}`;
+    }
 
-  if (error) {
-    return <ErrorView error={error} />;
-  }
+    history.replace(`/room/${roomId}`);
+  }, [pathname, history]);
 
   return <LoadingView />;
 }

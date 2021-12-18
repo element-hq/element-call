@@ -37,6 +37,7 @@ import { useGroupCall } from "matrix-react-sdk/src/hooks/useGroupCall";
 import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
 import { useMediaStream } from "matrix-react-sdk/src/hooks/useMediaStream";
 import {
+  getRoomUrl,
   useClient,
   useLoadGroupCall,
   useProfile,
@@ -294,7 +295,6 @@ function RoomSetupView({
 }) {
   const { stream } = useCallFeed(localCallFeed);
   const videoRef = useMediaStream(stream, true);
-  const location = useLocation();
 
   useEffect(() => {
     onInitLocalCallFeed();
@@ -354,7 +354,7 @@ function RoomSetupView({
           </div>
           <p>Or</p>
           <CopyButton
-            value={window.location.href}
+            value={getRoomUrl(roomId)}
             className={styles.copyButton}
             copiedMessage="Call link copied"
           >
