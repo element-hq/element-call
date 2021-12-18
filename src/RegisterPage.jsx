@@ -54,8 +54,6 @@ export function RegisterPage() {
 
       setRegistering(true);
 
-      console.log(isPasswordlessUser);
-
       if (isPasswordlessUser) {
         changePassword(password)
           .then(() => {
