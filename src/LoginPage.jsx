@@ -20,14 +20,14 @@ import { ReactComponent as Logo } from "./icons/LogoLarge.svg";
 import { FieldRow, InputField, ErrorMessage } from "./Input";
 import { Button } from "./button";
 import {
-  useClient,
   defaultHomeserver,
   defaultHomeserverHost,
+  useInteractiveLogin,
 } from "./ConferenceCallManagerHooks";
 import styles from "./LoginPage.module.css";
 
 export function LoginPage() {
-  const { login } = useClient();
+  const [_, login] = useInteractiveLogin();
   const [homeserver, setHomeServer] = useState(defaultHomeserver);
   const usernameRef = useRef();
   const passwordRef = useRef();

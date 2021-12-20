@@ -18,7 +18,11 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
 import { FieldRow, InputField, ErrorMessage } from "./Input";
 import { Button } from "./button";
-import { useClient, defaultHomeserverHost } from "./ConferenceCallManagerHooks";
+import {
+  useClient,
+  defaultHomeserverHost,
+  useInteractiveRegistration,
+} from "./ConferenceCallManagerHooks";
 import styles from "./LoginPage.module.css";
 import { ReactComponent as Logo } from "./icons/LogoLarge.svg";
 import { LoadingView } from "./FullScreenView";
@@ -27,18 +31,20 @@ export function RegisterPage() {
   const {
     loading,
     client,
-    register,
     changePassword,
     isAuthenticated,
     isPasswordlessUser,
   } = useClient();
   const confirmPasswordRef = useRef();
+  const acceptTermsRef = useRef();
   const history = useHistory();
   const location = useLocation();
   const [registering, setRegistering] = useState(false);
   const [error, setError] = useState();
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
+  const [{ privacyPolicyUrl }, register] = useInteractiveRegistration();
 
   const onSubmitRegisterForm = useCallback(
     (e) => {
@@ -47,8 +53,9 @@ export function RegisterPage() {
       const userName = data.get("userName");
       const password = data.get("password");
       const passwordConfirmation = data.get("passwordConfirmation");
+      const acceptTerms = data.get("acceptTerms");
 
-      if (password !== passwordConfirmation) {
+      if (password !== passwordConfirmation || !acceptTerms) {
         return;
       }
 
@@ -96,6 +103,20 @@ export function RegisterPage() {
       confirmPasswordRef.current.setCustomValidity("");
     }
   }, [password, passwordConfirmation]);
+
+  useEffect(() => {
+    if (!acceptTermsRef.current) {
+      return;
+    }
+
+    if (!acceptTerms) {
+      acceptTermsRef.current.setCustomValidity(
+        "You must accept the terms to continue."
+      );
+    } else {
+      acceptTermsRef.current.setCustomValidity("");
+    }
+  }, [acceptTerms]);
 
   useEffect(() => {
     if (!loading && isAuthenticated && !isPasswordlessUser) {
@@ -155,6 +176,20 @@ export function RegisterPage() {
                   label="Confirm Password"
                   ref={confirmPasswordRef}
                 />
+              </FieldRow>
+              <FieldRow>
+                <InputField
+                  id="acceptTerms"
+                  type="checkbox"
+                  name="acceptTerms"
+                  onChange={(e) => setAcceptTerms(e.target.checked)}
+                  checked={acceptTerms}
+                  label="Accept Privacy Policy"
+                  ref={acceptTermsRef}
+                />
+                <a target="_blank" href={privacyPolicyUrl}>
+                  Privacy Policy
+                </a>
               </FieldRow>
               {error && (
                 <FieldRow>

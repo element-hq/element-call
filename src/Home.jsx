@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useState, useRef, useEffect } from "react";
 import { useHistory, Link } from "react-router-dom";
 import {
   useClient,
@@ -22,6 +22,7 @@ import {
   usePublicRooms,
   createRoom,
   roomAliasFromRoomName,
+  useInteractiveRegistration,
 } from "./ConferenceCallManagerHooks";
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import styles from "./Home.module.css";
@@ -43,8 +44,9 @@ export function Home() {
     loading,
     error,
     client,
-    register,
   } = useClient();
+
+  const [{ privacyPolicyUrl }, register] = useInteractiveRegistration();
 
   const history = useHistory();
   const [creatingRoom, setCreatingRoom] = useState(false);
@@ -118,6 +120,7 @@ export function Home() {
             createRoomError={createRoomError}
             creatingRoom={creatingRoom}
             onJoinRoom={onJoinRoom}
+            privacyPolicyUrl={privacyPolicyUrl}
           />
         ) : (
           <RegisteredView
@@ -143,7 +146,25 @@ function UnregisteredView({
   createRoomError,
   creatingRoom,
   onJoinRoom,
+  privacyPolicyUrl,
 }) {
+  const acceptTermsRef = useRef();
+  const [acceptTerms, setAcceptTerms] = useState(false);
+
+  useEffect(() => {
+    if (!acceptTermsRef.current) {
+      return;
+    }
+
+    if (!acceptTerms) {
+      acceptTermsRef.current.setCustomValidity(
+        "You must accept the terms to continue."
+      );
+    } else {
+      acceptTermsRef.current.setCustomValidity("");
+    }
+  }, [acceptTerms]);
+
   return (
     <div className={classNames(styles.home, styles.fullWidth)}>
       <Header className={styles.header}>
@@ -201,6 +222,20 @@ function UnregisteredView({
                     autoComplete="off"
                     placeholder="Room Name"
                   />
+                </FieldRow>
+                <FieldRow>
+                  <InputField
+                    id="acceptTerms"
+                    type="checkbox"
+                    name="acceptTerms"
+                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    checked={acceptTerms}
+                    label="Accept Privacy Policy"
+                    ref={acceptTermsRef}
+                  />
+                  <a target="_blank" href={privacyPolicyUrl}>
+                    Privacy Policy
+                  </a>
                 </FieldRow>
                 {createRoomError && (
                   <FieldRow className={styles.fieldRow}>
