@@ -16,7 +16,7 @@ limitations under the License.
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
-import { FieldRow, InputField, ErrorMessage } from "./Input";
+import { FieldRow, InputField, ErrorMessage, Field } from "./Input";
 import { Button } from "./button";
 import {
   useClient,
@@ -26,6 +26,7 @@ import {
 import styles from "./LoginPage.module.css";
 import { ReactComponent as Logo } from "./icons/LogoLarge.svg";
 import { LoadingView } from "./FullScreenView";
+import { RecaptchaInput } from "./RecaptchaInput";
 
 export function RegisterPage() {
   const {
@@ -44,7 +45,9 @@ export function RegisterPage() {
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
-  const [{ privacyPolicyUrl }, register] = useInteractiveRegistration();
+  const [{ privacyPolicyUrl, recaptchaKey }, register] =
+    useInteractiveRegistration();
+  const [recaptchaResponse, setRecaptchaResponse] = useState();
 
   const onSubmitRegisterForm = useCallback(
     (e) => {
@@ -55,13 +58,13 @@ export function RegisterPage() {
       const passwordConfirmation = data.get("passwordConfirmation");
       const acceptTerms = data.get("acceptTerms");
 
-      if (password !== passwordConfirmation || !acceptTerms) {
-        return;
-      }
-
-      setRegistering(true);
-
       if (isPasswordlessUser) {
+        if (password !== passwordConfirmation) {
+          return;
+        }
+
+        setRegistering(true);
+
         changePassword(password)
           .then(() => {
             if (location.state && location.state.from) {
@@ -75,7 +78,17 @@ export function RegisterPage() {
             setRegistering(false);
           });
       } else {
-        register(userName, password)
+        if (
+          password !== passwordConfirmation ||
+          !acceptTerms ||
+          !recaptchaResponse
+        ) {
+          return;
+        }
+
+        setRegistering(true);
+
+        register(userName, password, recaptchaResponse)
           .then(() => {
             if (location.state && location.state.from) {
               history.push(location.state.from);
@@ -89,7 +102,14 @@ export function RegisterPage() {
           });
       }
     },
-    [register, changePassword, location, history, isPasswordlessUser]
+    [
+      register,
+      changePassword,
+      location,
+      history,
+      isPasswordlessUser,
+      recaptchaResponse,
+    ]
   );
 
   useEffect(() => {
@@ -177,20 +197,30 @@ export function RegisterPage() {
                   ref={confirmPasswordRef}
                 />
               </FieldRow>
-              <FieldRow>
-                <InputField
-                  id="acceptTerms"
-                  type="checkbox"
-                  name="acceptTerms"
-                  onChange={(e) => setAcceptTerms(e.target.checked)}
-                  checked={acceptTerms}
-                  label="Accept Privacy Policy"
-                  ref={acceptTermsRef}
-                />
-                <a target="_blank" href={privacyPolicyUrl}>
-                  Privacy Policy
-                </a>
-              </FieldRow>
+              {!isPasswordlessUser && (
+                <FieldRow>
+                  <InputField
+                    id="acceptTerms"
+                    type="checkbox"
+                    name="acceptTerms"
+                    onChange={(e) => setAcceptTerms(e.target.checked)}
+                    checked={acceptTerms}
+                    label="Accept Privacy Policy"
+                    ref={acceptTermsRef}
+                  />
+                  <a target="_blank" href={privacyPolicyUrl}>
+                    Privacy Policy
+                  </a>
+                </FieldRow>
+              )}
+              {!isPasswordlessUser && recaptchaKey && (
+                <FieldRow>
+                  <RecaptchaInput
+                    publicKey={recaptchaKey}
+                    onResponse={setRecaptchaResponse}
+                  />
+                </FieldRow>
+              )}
               {error && (
                 <FieldRow>
                   <ErrorMessage>{error.message}</ErrorMessage>
