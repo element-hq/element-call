@@ -2,8 +2,8 @@
 
 set -ex
 
-VITE_DEFAULT_HOMESERVER=https://call.ems.host
-VITE_SENTRY_DSN=https://b1e328d49be3402ba96101338989fb35@sentry.matrix.org/41
+export VITE_DEFAULT_HOMESERVER=https://call.ems.host
+export VITE_SENTRY_DSN=https://b1e328d49be3402ba96101338989fb35@sentry.matrix.org/41
 
 git clone https://github.com/matrix-org/matrix-js-sdk.git
 cd matrix-js-sdk
