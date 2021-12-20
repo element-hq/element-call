@@ -9,6 +9,10 @@ RUN matrix-video-chat/scripts/dockerbuild.sh
 FROM nginxinc/nginx-unprivileged:alpine
 
 COPY --from=builder /src/matrix-video-chat/dist /app
+COPY scripts/default.conf /etc/nginx/conf.d/
 
-RUN rm -rf /usr/share/nginx/html \
-  && ln -s /app /usr/share/nginx/html
+USER root
+
+RUN rm -rf /usr/share/nginx/html
+
+USER 101
