@@ -394,7 +394,7 @@ export function ClientProvider({ children }) {
         client,
         loading: false,
         isAuthenticated: true,
-        isPasswordlessUser: false,
+        isPasswordlessUser: !!session.passwordlessUser,
         isGuest: false,
         userName: client.getUserIdLocalpart(),
       });
@@ -805,46 +805,68 @@ export function useInteractiveRegistration() {
       const privacyPolicyUrl =
         error.data?.params["m.login.terms"]?.policies?.privacy_policy?.en?.url;
 
-      if (privacyPolicyUrl) {
-        setState((prev) => ({ ...prev, privacyPolicyUrl }));
+      const recaptchaKey = error.data?.params["m.login.recaptcha"]?.public_key;
+
+      if (privacyPolicyUrl || recaptchaKey) {
+        setState((prev) => ({ ...prev, privacyPolicyUrl, recaptchaKey }));
       }
     });
   }, []);
 
-  const register = useCallback(async (username, password) => {
-    const interactiveAuth = new InteractiveAuth({
-      matrixClient: authClientRef.current,
-      busyChanged(loading) {
-        setState((prev) => ({ ...prev, loading }));
-      },
-      async doRequest(auth, _background) {
-        return authClientRef.current.registerRequest({
-          username,
-          password,
-          auth: auth || undefined,
-        });
-      },
-      stateUpdated(nextStage, status) {
-        if (nextStage === "m.login.terms") {
-          interactiveAuth.submitAuthDict({ type: "m.login.terms" });
-        }
-      },
-    });
+  const register = useCallback(
+    async (username, password, recaptchaResponse, passwordlessUser) => {
+      const interactiveAuth = new InteractiveAuth({
+        matrixClient: authClientRef.current,
+        busyChanged(loading) {
+          setState((prev) => ({ ...prev, loading }));
+        },
+        async doRequest(auth, _background) {
+          return authClientRef.current.registerRequest({
+            username,
+            password,
+            auth: auth || undefined,
+          });
+        },
+        stateUpdated(nextStage, status) {
+          if (status.error) {
+            throw new Error(error);
+          }
 
-    const { user_id, access_token, device_id } =
-      await interactiveAuth.attemptAuth();
+          if (nextStage === "m.login.terms") {
+            interactiveAuth.submitAuthDict({
+              type: "m.login.terms",
+            });
+          } else if (nextStage === "m.login.recaptcha") {
+            interactiveAuth.submitAuthDict({
+              type: "m.login.recaptcha",
+              response: recaptchaResponse,
+            });
+          }
+        },
+      });
 
-    const client = await initClient({
-      baseUrl: defaultHomeserver,
-      accessToken: access_token,
-      userId: user_id,
-      deviceId: device_id,
-    });
+      const { user_id, access_token, device_id } =
+        await interactiveAuth.attemptAuth();
 
-    setClient(client, { user_id, access_token, device_id });
+      const client = await initClient({
+        baseUrl: defaultHomeserver,
+        accessToken: access_token,
+        userId: user_id,
+        deviceId: device_id,
+      });
 
-    return client;
-  }, []);
+      const session = { user_id, device_id, access_token, passwordlessUser };
+
+      if (passwordlessUser) {
+        session.tempPassword = password;
+      }
+
+      setClient(client, session);
+
+      return client;
+    },
+    []
+  );
 
   return [state, register];
 }

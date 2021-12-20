@@ -35,6 +35,7 @@ import { ErrorView, LoadingView } from "./FullScreenView";
 import { useModalTriggerState } from "./Modal";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
+import { RecaptchaInput } from "./RecaptchaInput";
 
 export function Home() {
   const {
@@ -46,7 +47,9 @@ export function Home() {
     client,
   } = useClient();
 
-  const [{ privacyPolicyUrl }, register] = useInteractiveRegistration();
+  const [{ privacyPolicyUrl, recaptchaKey }, register] =
+    useInteractiveRegistration();
+  const [recaptchaResponse, setRecaptchaResponse] = useState();
 
   const history = useHistory();
   const [creatingRoom, setCreatingRoom] = useState(false);
@@ -64,8 +67,17 @@ export function Home() {
       async function onCreateRoom() {
         let _client = client;
 
+        if (!recaptchaResponse) {
+          return;
+        }
+
         if (!_client || isGuest) {
-          _client = await register(userName, randomString(16), true);
+          _client = await register(
+            userName,
+            randomString(16),
+            recaptchaResponse,
+            true
+          );
         }
 
         const roomIdOrAlias = await createRoom(_client, roomName);
@@ -90,7 +102,7 @@ export function Home() {
         setCreatingRoom(false);
       });
     },
-    [client, history, register, isGuest]
+    [client, history, register, isGuest, recaptchaResponse]
   );
 
   const onJoinRoom = useCallback(
@@ -121,6 +133,8 @@ export function Home() {
             creatingRoom={creatingRoom}
             onJoinRoom={onJoinRoom}
             privacyPolicyUrl={privacyPolicyUrl}
+            recaptchaKey={recaptchaKey}
+            setRecaptchaResponse={setRecaptchaResponse}
           />
         ) : (
           <RegisteredView
@@ -147,6 +161,8 @@ function UnregisteredView({
   creatingRoom,
   onJoinRoom,
   privacyPolicyUrl,
+  recaptchaKey,
+  setRecaptchaResponse,
 }) {
   const acceptTermsRef = useRef();
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -237,6 +253,14 @@ function UnregisteredView({
                     Privacy Policy
                   </a>
                 </FieldRow>
+                {recaptchaKey && (
+                  <FieldRow>
+                    <RecaptchaInput
+                      publicKey={recaptchaKey}
+                      onResponse={setRecaptchaResponse}
+                    />
+                  </FieldRow>
+                )}
                 {createRoomError && (
                   <FieldRow className={styles.fieldRow}>
                     <ErrorMessage>{createRoomError.message}</ErrorMessage>
