@@ -6,7 +6,7 @@ COPY . /src/matrix-video-chat
 RUN matrix-video-chat/scripts/dockerbuild.sh
 
 # App
-FROM nginx:alpine
+FROM nginxinc/nginx-unprivileged:alpine
 
 COPY --from=builder /src/matrix-video-chat/dist /app
 
