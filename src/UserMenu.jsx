@@ -93,7 +93,6 @@ export function UserMenu({ disableLogout }) {
                 size="sm"
                 src={avatarUrl}
                 fallback={(displayName || userName).slice(0, 1).toUpperCase()}
-                className={styles.avatar}
               />
             ) : (
               <UserIcon />

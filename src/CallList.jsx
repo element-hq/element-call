@@ -7,7 +7,7 @@ import { ReactComponent as VideoIcon } from "./icons/Video.svg";
 import styles from "./CallList.module.css";
 import { getRoomUrl } from "./ConferenceCallManagerHooks";
 
-export function CallList({ title, rooms }) {
+export function CallList({ title, rooms, client }) {
   return (
     <>
       <h3>{title}</h3>
@@ -15,6 +15,7 @@ export function CallList({ title, rooms }) {
         {rooms.map(({ roomId, roomName, avatarUrl, participants }) => (
           <CallTile
             key={roomId}
+            client={client}
             name={roomName}
             avatarUrl={avatarUrl}
             roomId={roomId}
@@ -26,7 +27,7 @@ export function CallList({ title, rooms }) {
   );
 }
 
-function CallTile({ name, avatarUrl, roomId, participants }) {
+function CallTile({ name, avatarUrl, roomId, participants, client }) {
   return (
     <div className={styles.callTile}>
       <Link to={`/room/${roomId}`} className={styles.callTileLink}>
@@ -40,7 +41,9 @@ function CallTile({ name, avatarUrl, roomId, participants }) {
         <div className={styles.callInfo}>
           <h5>{name}</h5>
           <p>{getRoomUrl(roomId)}</p>
-          {participants && <Facepile participants={participants} />}
+          {participants && (
+            <Facepile client={client} participants={participants} />
+          )}
         </div>
         <div className={styles.copyButtonSpacer} />
       </Link>

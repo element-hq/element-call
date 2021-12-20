@@ -624,7 +624,7 @@ export function getRoomUrl(roomId) {
   }
 }
 
-function getAvatarUrl(client, mxcUrl, avatarSize = 96) {
+export function getAvatarUrl(client, mxcUrl, avatarSize = 96) {
   const width = Math.floor(avatarSize * window.devicePixelRatio);
   const height = Math.floor(avatarSize * window.devicePixelRatio);
   return mxcUrl && client.mxcUrlToHttp(mxcUrl, width, height, "crop");
