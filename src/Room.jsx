@@ -37,6 +37,7 @@ import { useGroupCall } from "matrix-react-sdk/src/hooks/useGroupCall";
 import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
 import { useMediaStream } from "matrix-react-sdk/src/hooks/useMediaStream";
 import {
+  getAvatarUrl,
   getRoomUrl,
   useClient,
   useLoadGroupCall,
@@ -49,6 +50,7 @@ import { OverflowMenu } from "./OverflowMenu";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { UserMenu } from "./UserMenu";
 import classNames from "classnames";
+import { Avatar } from "./Avatar";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -445,6 +447,29 @@ function InRoomView({
     [layout, setLayout]
   );
 
+  const renderAvatar = useCallback(
+    (roomMember, width, height) => {
+      const avatarUrl = roomMember.user?.avatarUrl;
+      const size = Math.round(Math.min(width, height) / 2);
+
+      return (
+        <Avatar
+          key={roomMember.userId}
+          style={{
+            width: size,
+            height: size,
+            borderRadius: size,
+            fontSize: Math.round(size / 2),
+          }}
+          src={avatarUrl && getAvatarUrl(client, avatarUrl, 96)}
+          fallback={roomMember.name.slice(0, 1).toUpperCase()}
+          className={styles.avatar}
+        />
+      );
+    },
+    [client]
+  );
+
   return (
     <div className={classNames(styles.room, styles.inRoom)}>
       <Header>
@@ -466,6 +491,7 @@ function InRoomView({
         <VideoGrid
           items={items}
           layout={layout}
+          getAvatar={renderAvatar}
           onFocusTile={onFocusTile}
           disableAnimations={isSafari}
         />

@@ -195,6 +195,13 @@ limitations under the License.
   max-width: 360px;
 }
 
+.avatar {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
 @media (min-width: 800px) {
   .roomContainer {
     flex-direction: row;

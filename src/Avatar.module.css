@@ -7,6 +7,7 @@
   pointer-events: none;
   font-weight: 600;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .avatar img {

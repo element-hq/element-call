@@ -330,10 +330,18 @@ function RegisteredView({
           <div className={styles.right}>
             <div className={styles.content}>
               {publicRooms.length > 0 && (
-                <CallList title="Public Calls" rooms={publicRooms} />
+                <CallList
+                  title="Public Calls"
+                  rooms={publicRooms}
+                  client={client}
+                />
               )}
               {recentRooms.length > 0 && (
-                <CallList title="Recent Calls" rooms={recentRooms} />
+                <CallList
+                  title="Recent Calls"
+                  rooms={recentRooms}
+                  client={client}
+                />
               )}
             </div>
           </div>
