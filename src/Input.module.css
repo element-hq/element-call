@@ -1,6 +1,7 @@
 .fieldRow {
   display: flex;
   margin-bottom: 32px;
+  align-items: center;
 }
 
 .field {

@@ -21,8 +21,9 @@ import React, {
   createContext,
   useMemo,
   useContext,
+  useRef,
 } from "react";
-import matrix from "matrix-js-sdk/src/browser-index";
+import matrix, { InteractiveAuth } from "matrix-js-sdk/src/browser-index";
 import {
   GroupCallIntent,
   GroupCallType,
@@ -385,6 +386,32 @@ export function ClientProvider({ children }) {
     [client]
   );
 
+  const setClient = useCallback((client, session) => {
+    if (client) {
+      localStorage.setItem("matrix-auth-store", JSON.stringify(session));
+
+      setState({
+        client,
+        loading: false,
+        isAuthenticated: true,
+        isPasswordlessUser: false,
+        isGuest: false,
+        userName: client.getUserIdLocalpart(),
+      });
+    } else {
+      localStorage.removeItem("matrix-auth-store");
+
+      setState({
+        client: undefined,
+        loading: false,
+        isAuthenticated: false,
+        isPasswordlessUser: false,
+        isGuest: false,
+        userName: null,
+      });
+    }
+  }, []);
+
   const logout = useCallback(() => {
     localStorage.removeItem("matrix-auth-store");
     window.location = "/";
@@ -403,6 +430,7 @@ export function ClientProvider({ children }) {
       changePassword,
       logout,
       userName,
+      setClient,
     }),
     [
       loading,
@@ -416,6 +444,7 @@ export function ClientProvider({ children }) {
       changePassword,
       logout,
       userName,
+      setClient,
     ]
   );
 
@@ -717,4 +746,105 @@ export function useProfile(client) {
   );
 
   return { loading, error, displayName, avatarUrl, saveProfile, success };
+}
+
+export function useInteractiveLogin() {
+  const { setClient } = useClient();
+  const [state, setState] = useState({ loading: false });
+
+  const auth = useCallback(async (homeserver, username, password) => {
+    const authClient = matrix.createClient(homeserver);
+
+    const interactiveAuth = new InteractiveAuth({
+      matrixClient: authClient,
+      busyChanged(loading) {
+        setState((prev) => ({ ...prev, loading }));
+      },
+      async doRequest(auth, _background) {
+        return authClient.login("m.login.password", {
+          identifier: {
+            type: "m.id.user",
+            user: username,
+          },
+          password,
+        });
+      },
+      stateUpdated(nextStage, status) {
+        console.log({ nextStage, status });
+      },
+    });
+
+    const { user_id, access_token, device_id } =
+      await interactiveAuth.attemptAuth();
+
+    const client = await initClient({
+      baseUrl: defaultHomeserver,
+      accessToken: access_token,
+      userId: user_id,
+      deviceId: device_id,
+    });
+
+    setClient(client, { user_id, access_token, device_id });
+
+    return client;
+  }, []);
+
+  return [state, auth];
+}
+
+export function useInteractiveRegistration() {
+  const { setClient } = useClient();
+  const [state, setState] = useState({ privacyPolicyUrl: "#", loading: false });
+
+  const authClientRef = useRef();
+
+  useEffect(() => {
+    authClientRef.current = matrix.createClient(defaultHomeserver);
+
+    authClientRef.current.registerRequest({}).catch((error) => {
+      const privacyPolicyUrl =
+        error.data?.params["m.login.terms"]?.policies?.privacy_policy?.en?.url;
+
+      if (privacyPolicyUrl) {
+        setState((prev) => ({ ...prev, privacyPolicyUrl }));
+      }
+    });
+  }, []);
+
+  const register = useCallback(async (username, password) => {
+    const interactiveAuth = new InteractiveAuth({
+      matrixClient: authClientRef.current,
+      busyChanged(loading) {
+        setState((prev) => ({ ...prev, loading }));
+      },
+      async doRequest(auth, _background) {
+        return authClientRef.current.registerRequest({
+          username,
+          password,
+          auth: auth || undefined,
+        });
+      },
+      stateUpdated(nextStage, status) {
+        if (nextStage === "m.login.terms") {
+          interactiveAuth.submitAuthDict({ type: "m.login.terms" });
+        }
+      },
+    });
+
+    const { user_id, access_token, device_id } =
+      await interactiveAuth.attemptAuth();
+
+    const client = await initClient({
+      baseUrl: defaultHomeserver,
+      accessToken: access_token,
+      userId: user_id,
+      deviceId: device_id,
+    });
+
+    setClient(client, { user_id, access_token, device_id });
+
+    return client;
+  }, []);
+
+  return [state, register];
 }
