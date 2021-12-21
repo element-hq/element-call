@@ -396,12 +396,12 @@ function InRoomView({
   const [layout, setLayout] = useVideoGridLayout();
 
   const items = useMemo(() => {
-    const participants = [];
+    const items = [];
 
     for (const callFeed of userMediaFeeds) {
-      participants.push({
+      items.push({
         id: callFeed.stream.id,
-        usermediaCallFeed: callFeed,
+        callFeed,
         isActiveSpeaker:
           screenshareFeeds.length === 0
             ? callFeed.userId === activeSpeaker
@@ -410,16 +410,14 @@ function InRoomView({
     }
 
     for (const callFeed of screenshareFeeds) {
-      const participant = participants.find(
-        (p) => p.usermediaCallFeed.userId === callFeed.userId
-      );
-
-      if (participant) {
-        participant.screenshareCallFeed = callFeed;
-      }
+      items.push({
+        id: callFeed.stream.id,
+        callFeed,
+        isActiveSpeaker: true,
+      });
     }
 
-    return participants;
+    return items;
   }, [userMediaFeeds, activeSpeaker, screenshareFeeds]);
 
   const onFocusTile = useCallback(
