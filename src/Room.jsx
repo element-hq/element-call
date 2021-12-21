@@ -433,15 +433,7 @@ function InRoomView({
           return tile;
         });
       } else {
-        setLayout("spotlight");
-
-        return tiles.map((tile) => {
-          if (tile === focusedTile) {
-            return { ...tile, presenter: true };
-          }
-
-          return { ...tile, presenter: false };
-        });
+        return tiles;
       }
     },
     [layout, setLayout]
