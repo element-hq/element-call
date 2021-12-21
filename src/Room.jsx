@@ -402,7 +402,7 @@ function InRoomView({
       items.push({
         id: callFeed.stream.id,
         callFeed,
-        isActiveSpeaker:
+        focused:
           screenshareFeeds.length === 0
             ? callFeed.userId === activeSpeaker
             : false,
@@ -410,10 +410,18 @@ function InRoomView({
     }
 
     for (const callFeed of screenshareFeeds) {
+      const userMediaItem = items.find(
+        (item) => item.callFeed.userId === callFeed.userId
+      );
+
+      if (userMediaItem) {
+        userMediaItem.presenter = true;
+      }
+
       items.push({
         id: callFeed.stream.id,
         callFeed,
-        isActiveSpeaker: true,
+        focused: true,
       });
     }
 
