@@ -3,7 +3,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "serve": "vite preview"
+    "serve": "vite preview",
+    "storybook": "start-storybook -p 6006",
+    "build-storybook": "build-storybook"
   },
   "dependencies": {
     "@react-aria/button": "^3.3.4",
@@ -37,7 +39,14 @@
     "react-use-clipboard": "^1.0.7"
   },
   "devDependencies": {
+    "@babel/core": "^7.16.5",
+    "@storybook/addon-actions": "^6.5.0-alpha.5",
+    "@storybook/addon-essentials": "^6.5.0-alpha.5",
+    "@storybook/addon-links": "^6.5.0-alpha.5",
+    "@storybook/react": "^6.5.0-alpha.5",
+    "babel-loader": "^8.2.3",
     "sass": "^1.42.1",
+    "storybook-builder-vite": "^0.1.12",
     "vite": "^2.4.2",
     "vite-plugin-svgr": "^0.4.0"
   }
