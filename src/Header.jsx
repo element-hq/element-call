@@ -15,10 +15,15 @@ export function Header({ children, className, ...rest }) {
   );
 }
 
-export function LeftNav({ children, className, ...rest }) {
+export function LeftNav({ children, className, hideMobile, ...rest }) {
   return (
     <div
-      className={classNames(styles.nav, styles.leftNav, className)}
+      className={classNames(
+        styles.nav,
+        styles.leftNav,
+        { [styles.hideMobile]: hideMobile },
+        className
+      )}
       {...rest}
     >
       {children}
@@ -39,7 +44,7 @@ export function RightNav({ children, className, ...rest }) {
 
 export function HeaderLogo() {
   return (
-    <Link className={styles.logo} to="/">
+    <Link className={styles.headerLogo} to="/">
       <Logo />
     </Link>
   );
