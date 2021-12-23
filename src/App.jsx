@@ -32,29 +32,12 @@ import {
   ClientProvider,
   defaultHomeserverHost,
 } from "./ConferenceCallManagerHooks";
-import { useFocusVisible } from "@react-aria/interactions";
-import styles from "./App.module.css";
 import { LoadingView } from "./FullScreenView";
-
+import { usePageFocusStyle } from "./usePageFocusStyle";
 const SentryRoute = Sentry.withSentryRouting(Route);
 
 export default function App({ history }) {
-  const { isFocusVisible } = useFocusVisible();
-
-  useEffect(() => {
-    const classList = document.body.classList;
-    const hasClass = classList.contains(styles.hideFocus);
-
-    if (isFocusVisible && hasClass) {
-      classList.remove(styles.hideFocus);
-    } else if (!isFocusVisible && !hasClass) {
-      classList.add(styles.hideFocus);
-    }
-
-    return () => {
-      classList.remove(styles.hideFocus);
-    };
-  }, [isFocusVisible]);
+  usePageFocusStyle();
 
   return (
     <Router history={history}>

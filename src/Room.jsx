@@ -51,6 +51,7 @@ import { GridLayoutMenu } from "./GridLayoutMenu";
 import { UserMenu } from "./UserMenu";
 import classNames from "classnames";
 import { Avatar } from "./Avatar";
+import { UserMenuContainer } from "./UserMenuContainer";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -309,7 +310,7 @@ function RoomSetupView({
           <RoomHeaderInfo roomName={roomName} />
         </LeftNav>
         <RightNav>
-          <UserMenu />
+          <UserMenuContainer />
         </RightNav>
       </Header>
       <div className={styles.joinRoom}>
@@ -470,7 +471,7 @@ function InRoomView({
         </LeftNav>
         <RightNav>
           <GridLayoutMenu layout={layout} setLayout={setLayout} />
-          {!isGuest && <UserMenu disableLogout />}
+          {!isGuest && <UserMenuContainer disableLogout />}
         </RightNav>
       </Header>
       {items.length === 0 ? (

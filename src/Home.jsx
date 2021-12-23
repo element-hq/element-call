@@ -36,6 +36,7 @@ import { useModalTriggerState } from "./Modal";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { RecaptchaInput } from "./RecaptchaInput";
+import { UserMenuContainer } from "./UserMenuContainer";
 
 export function Home() {
   const {
@@ -188,7 +189,7 @@ function UnregisteredView({
           <HeaderLogo />
         </LeftNav>
         <RightNav>
-          <UserMenu />
+          <UserMenuContainer />
         </RightNav>
       </Header>
       <div className={styles.splitContainer}>
@@ -319,7 +320,7 @@ function RegisteredView({
           <HeaderLogo />
         </LeftNav>
         <RightNav>
-          <UserMenu />
+          <UserMenuContainer />
         </RightNav>
       </Header>
       <div className={styles.splitContainer}>
