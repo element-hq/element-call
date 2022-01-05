@@ -9,6 +9,10 @@
   margin-bottom: 0;
 }
 
+.button {
+  padding: 0 24px;
+}
+
 .recentCallsTitle {
   margin-bottom: 32px;
 }
