@@ -1,5 +1,13 @@
+.callTileSpacer,
 .callTile {
   width: 329px;
+}
+
+.callTileSpacer {
+  height: 0;
+}
+
+.callTile {
   height: 95px;
   padding: 12px;
   background-color: var(--bgColor2);
@@ -51,8 +59,8 @@
 }
 
 .callList {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, 329px);
+  display: flex;
+  flex-wrap: wrap;
   max-width: calc((329px + 24px) * 3);
   width: calc(100% - 48px);
   gap: 24px;

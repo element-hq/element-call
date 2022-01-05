@@ -1,7 +1,8 @@
 .form {
   padding: 0 24px;
   justify-content: center;
-  width: 409px;
+  max-width: 409px;
+  width: calc(100% - 48px);
   margin-bottom: 72px;
 }
 
