@@ -1,16 +1,16 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { CopyButton } from "./button";
-import { Facepile } from "./Facepile";
-import { Avatar } from "./Avatar";
-import { ReactComponent as VideoIcon } from "./icons/Video.svg";
+import { CopyButton } from "../button";
+import { Facepile } from "../Facepile";
+import { Avatar } from "../Avatar";
+import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import styles from "./CallList.module.css";
-import { getRoomUrl } from "./ConferenceCallManagerHooks";
+import { getRoomUrl } from "../ConferenceCallManagerHooks";
+import { Body, Caption } from "../typography/Typography";
 
-export function CallList({ title, rooms, client }) {
+export function CallList({ rooms, client }) {
   return (
     <>
-      <h3>{title}</h3>
       <div className={styles.callList}>
         {rooms.map(({ roomId, roomName, avatarUrl, participants }) => (
           <CallTile
@@ -32,17 +32,23 @@ function CallTile({ name, avatarUrl, roomId, participants, client }) {
     <div className={styles.callTile}>
       <Link to={`/room/${roomId}`} className={styles.callTileLink}>
         <Avatar
-          size="md"
+          size="lg"
           bgKey={name}
           src={avatarUrl}
           fallback={<VideoIcon width={16} height={16} />}
           className={styles.avatar}
         />
         <div className={styles.callInfo}>
-          <h5>{name}</h5>
-          <p>{getRoomUrl(roomId)}</p>
+          <Body overflowEllipsis fontWeight="semiBold">
+            {name}
+          </Body>
+          <Caption overflowEllipsis>{getRoomUrl(roomId)}</Caption>
           {participants && (
-            <Facepile client={client} participants={participants} />
+            <Facepile
+              className={styles.facePile}
+              client={client}
+              participants={participants}
+            />
           )}
         </div>
         <div className={styles.copyButtonSpacer} />

@@ -1,0 +1,14 @@
+.form {
+  padding: 0 24px;
+  justify-content: center;
+  width: 409px;
+  margin-bottom: 72px;
+}
+
+.fieldRow {
+  margin-bottom: 0;
+}
+
+.recentCallsTitle {
+  margin-bottom: 32px;
+}

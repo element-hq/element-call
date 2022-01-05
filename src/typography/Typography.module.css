@@ -27,3 +27,9 @@
 .primary {
   color: var(--primaryColor);
 }
+
+.overflowEllipsis {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
