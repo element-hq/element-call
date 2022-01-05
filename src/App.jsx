@@ -14,26 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useState } from "react";
-import {
-  BrowserRouter as Router,
-  Switch,
-  Route,
-  useLocation,
-  useHistory,
-} from "react-router-dom";
+import React from "react";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./LoginPage";
 import { RegisterPage } from "./RegisterPage";
-import { Room } from "./Room";
-import {
-  ClientProvider,
-  defaultHomeserverHost,
-} from "./ConferenceCallManagerHooks";
-import { LoadingView } from "./FullScreenView";
+import { RoomPage } from "./room/RoomPage";
+import { RoomRedirect } from "./room/RoomRedirect";
+import { ClientProvider } from "./ConferenceCallManagerHooks";
 import { usePageFocusStyle } from "./usePageFocusStyle";
+
 const SentryRoute = Sentry.withSentryRouting(Route);
 
 export default function App({ history }) {
@@ -54,7 +46,7 @@ export default function App({ history }) {
               <RegisterPage />
             </SentryRoute>
             <SentryRoute path="/room/:roomId?">
-              <Room />
+              <RoomPage />
             </SentryRoute>
             <SentryRoute path="*">
               <RoomRedirect />
@@ -64,25 +56,4 @@ export default function App({ history }) {
       </ClientProvider>
     </Router>
   );
-}
-
-function RoomRedirect() {
-  const { pathname } = useLocation();
-  const history = useHistory();
-
-  useEffect(() => {
-    let roomId = pathname;
-
-    if (pathname.startsWith("/")) {
-      roomId = roomId.substr(1, roomId.length);
-    }
-
-    if (!roomId.startsWith("#") && !roomId.startsWith("!")) {
-      roomId = `#${roomId}:${defaultHomeserverHost}`;
-    }
-
-    history.replace(`/room/${roomId}`);
-  }, [pathname, history]);
-
-  return <LoadingView />;
 }
