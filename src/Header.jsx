@@ -6,6 +6,7 @@ import { ReactComponent as Logo } from "./icons/Logo.svg";
 import { ReactComponent as VideoIcon } from "./icons/Video.svg";
 import { ReactComponent as ArrowLeftIcon } from "./icons/ArrowLeft.svg";
 import { useButton } from "@react-aria/button";
+import { Subtitle } from "./typography/Typography";
 
 export function Header({ children, className, ...rest }) {
   return (
@@ -61,7 +62,7 @@ export function RoomHeaderInfo({ roomName }) {
       <div className={styles.roomAvatar}>
         <VideoIcon width={16} height={16} />
       </div>
-      <h3>{roomName}</h3>
+      <Subtitle fontWeight="semiBold">{roomName}</Subtitle>
     </>
   );
 }
