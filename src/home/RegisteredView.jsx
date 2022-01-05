@@ -24,7 +24,7 @@ export function RegisteredView({ client }) {
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
-      const roomName = data.get("roomName");
+      const roomName = data.get("callName");
 
       async function submit() {
         setError(undefined);
@@ -89,12 +89,17 @@ export function RegisteredView({ client }) {
                 required
                 autoComplete="off"
               />
-              <Button type="submit" size="lg" disabled={loading}>
+              <Button
+                type="submit"
+                size="lg"
+                className={styles.button}
+                disabled={loading}
+              >
                 {loading ? "Loading..." : "Go"}
               </Button>
             </FieldRow>
             {error && (
-              <FieldRow>
+              <FieldRow className={styles.fieldRow}>
                 <ErrorMessage>{error.message}</ErrorMessage>
               </FieldRow>
             )}
