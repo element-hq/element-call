@@ -4,11 +4,25 @@ import { Link as RouterLink } from "react-router-dom";
 import styles from "./Typography.module.css";
 
 export const Headline = forwardRef(
-  ({ as: Component = "h1", children, className, fontWeight, ...rest }, ref) => {
+  (
+    {
+      as: Component = "h1",
+      children,
+      className,
+      fontWeight,
+      overflowEllipsis,
+      ...rest
+    },
+    ref
+  ) => {
     return (
       <Component
         {...rest}
-        className={classNames(styles[fontWeight], className)}
+        className={classNames(
+          styles[fontWeight],
+          { [styles.overflowEllipsis]: overflowEllipsis },
+          className
+        )}
         ref={ref}
       >
         {children}
@@ -18,11 +32,25 @@ export const Headline = forwardRef(
 );
 
 export const Title = forwardRef(
-  ({ as: Component = "h2", children, className, fontWeight, ...rest }, ref) => {
+  (
+    {
+      as: Component = "h2",
+      children,
+      className,
+      fontWeight,
+      overflowEllipsis,
+      ...rest
+    },
+    ref
+  ) => {
     return (
       <Component
         {...rest}
-        className={classNames(styles[fontWeight], className)}
+        className={classNames(
+          styles[fontWeight],
+          { [styles.overflowEllipsis]: overflowEllipsis },
+          className
+        )}
         ref={ref}
       >
         {children}
@@ -32,11 +60,25 @@ export const Title = forwardRef(
 );
 
 export const Subtitle = forwardRef(
-  ({ as: Component = "h3", children, className, fontWeight, ...rest }, ref) => {
+  (
+    {
+      as: Component = "h3",
+      children,
+      className,
+      fontWeight,
+      overflowEllipsis,
+      ...rest
+    },
+    ref
+  ) => {
     return (
       <Component
         {...rest}
-        className={classNames(styles[fontWeight], className)}
+        className={classNames(
+          styles[fontWeight],
+          { [styles.overflowEllipsis]: overflowEllipsis },
+          className
+        )}
         ref={ref}
       >
         {children}
@@ -46,11 +88,25 @@ export const Subtitle = forwardRef(
 );
 
 export const Body = forwardRef(
-  ({ as: Component = "p", children, className, fontWeight, ...rest }, ref) => {
+  (
+    {
+      as: Component = "p",
+      children,
+      className,
+      fontWeight,
+      overflowEllipsis,
+      ...rest
+    },
+    ref
+  ) => {
     return (
       <Component
         {...rest}
-        className={classNames(styles[fontWeight], className)}
+        className={classNames(
+          styles[fontWeight],
+          { [styles.overflowEllipsis]: overflowEllipsis },
+          className
+        )}
         ref={ref}
       >
         {children}
@@ -60,11 +116,26 @@ export const Body = forwardRef(
 );
 
 export const Caption = forwardRef(
-  ({ as: Component = "p", children, className, fontWeight, ...rest }, ref) => {
+  (
+    {
+      as: Component = "p",
+      children,
+      className,
+      fontWeight,
+      overflowEllipsis,
+      ...rest
+    },
+    ref
+  ) => {
     return (
       <Component
         {...rest}
-        className={classNames(styles.caption, styles[fontWeight], className)}
+        className={classNames(
+          styles.caption,
+          styles[fontWeight],
+          { [styles.overflowEllipsis]: overflowEllipsis },
+          className
+        )}
         ref={ref}
       >
         {children}
@@ -74,11 +145,26 @@ export const Caption = forwardRef(
 );
 
 export const Micro = forwardRef(
-  ({ as: Component = "p", children, className, fontWeight, ...rest }, ref) => {
+  (
+    {
+      as: Component = "p",
+      children,
+      className,
+      fontWeight,
+      overflowEllipsis,
+      ...rest
+    },
+    ref
+  ) => {
     return (
       <Component
         {...rest}
-        className={classNames(styles.micro, styles[fontWeight], className)}
+        className={classNames(
+          styles.micro,
+          styles[fontWeight],
+          { [styles.overflowEllipsis]: overflowEllipsis },
+          className
+        )}
         ref={ref}
       >
         {children}
@@ -96,6 +182,7 @@ export const Link = forwardRef(
       color = "link",
       href,
       fontWeight,
+      overflowEllipsis,
       ...rest
     },
     ref
@@ -113,7 +200,12 @@ export const Link = forwardRef(
       <Component
         {...externalLinkProps}
         {...rest}
-        className={classNames(styles[color], styles[fontWeight], className)}
+        className={classNames(
+          styles[color],
+          styles[fontWeight],
+          { [styles.overflowEllipsis]: overflowEllipsis },
+          className
+        )}
         ref={ref}
       >
         {children}

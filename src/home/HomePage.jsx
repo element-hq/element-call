@@ -15,12 +15,12 @@ limitations under the License.
 */
 
 import React from "react";
-import { useClient } from "./ConferenceCallManagerHooks";
-import { ErrorView, LoadingView } from "./FullScreenView";
-import { UnauthenticatedView } from "./home/UnauthenticatedView";
-import { RegisteredView } from "./home/RegisteredView";
+import { useClient } from "../ConferenceCallManagerHooks";
+import { ErrorView, LoadingView } from "../FullScreenView";
+import { UnauthenticatedView } from "./UnauthenticatedView";
+import { RegisteredView } from "./RegisteredView";
 
-export function Home() {
+export function HomePage() {
   const { isAuthenticated, isPasswordlessUser, loading, error, client } =
     useClient();
 

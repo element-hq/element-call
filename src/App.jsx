@@ -24,7 +24,7 @@ import {
 } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
-import { Home } from "./Home";
+import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./LoginPage";
 import { RegisterPage } from "./RegisterPage";
 import { Room } from "./Room";
@@ -45,7 +45,7 @@ export default function App({ history }) {
         <OverlayProvider>
           <Switch>
             <SentryRoute exact path="/">
-              <Home />
+              <HomePage />
             </SentryRoute>
             <SentryRoute exact path="/login">
               <LoginPage />

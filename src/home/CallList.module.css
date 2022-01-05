@@ -1,6 +1,6 @@
 .callTile {
-  min-width: 240px;
-  height: 94px;
+  width: 329px;
+  height: 95px;
   padding: 12px;
   background-color: var(--bgColor2);
   border-radius: 8px;
@@ -31,28 +31,11 @@
 }
 
 .callInfo > * {
-  margin-top: 0;
-  margin-bottom: 8px;
-}
-
-.callInfo > :last-child {
   margin-bottom: 0;
 }
 
-.callInfo h5 {
-  font-size: 15px;
-  font-weight: 600;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.callInfo p {
-  font-weight: 400;
-  font-size: 12px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.facePile {
+  margin-top: 8px;
 }
 
 .copyButtonSpacer,
@@ -69,6 +52,11 @@
 
 .callList {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  grid-template-columns: repeat(auto-fill, 329px);
+  max-width: calc((329px + 24px) * 3);
+  width: calc(100% - 48px);
   gap: 24px;
+  padding: 0 24px;
+  justify-content: center;
+  margin-bottom: 24px;
 }

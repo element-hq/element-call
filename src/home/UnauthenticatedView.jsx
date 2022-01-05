@@ -8,13 +8,15 @@ import { randomString } from "matrix-js-sdk/src/randomstring";
 import {
   createRoom,
   useInteractiveRegistration,
+  roomAliasFromRoomName,
 } from "../ConferenceCallManagerHooks";
 import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "../JoinExistingCallModal";
 import { useRecaptcha } from "../useRecaptcha";
-import { Body, Caption, Title, Link, Headline } from "../typography/Typography";
+import { Body, Caption, Link, Headline } from "../typography/Typography";
 import { Form } from "../form/Form";
 import styles from "./UnauthenticatedView.module.css";
+import commonStyles from "./common.module.css";
 
 export function UnauthenticatedView() {
   const [loading, setLoading] = useState(false);
@@ -80,10 +82,12 @@ export function UnauthenticatedView() {
           <UserMenuContainer />
         </RightNav>
       </Header>
-      <div className={styles.container}>
-        <main className={styles.main}>
-          <HeaderLogo className={styles.logo} />
-          <Headline className={styles.headline}>Enter a call name</Headline>
+      <div className={commonStyles.container}>
+        <main className={commonStyles.main}>
+          <HeaderLogo className={commonStyles.logo} />
+          <Headline className={commonStyles.headline}>
+            Enter a call name
+          </Headline>
           <Form className={styles.form} onSubmit={onSubmit}>
             <FieldRow>
               <InputField

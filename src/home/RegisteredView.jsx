@@ -1,131 +1,117 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import React, { useState, useCallback } from "react";
 import {
+  createRoom,
   useGroupCallRooms,
-  usePublicRooms,
+  roomAliasFromRoomName,
 } from "../ConferenceCallManagerHooks";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
-import styles from "../Home.module.css";
+import commonStyles from "./common.module.css";
+import styles from "./RegisteredView.module.css";
 import { FieldRow, InputField, ErrorMessage } from "../Input";
 import { Button } from "../button";
-import { CallList } from "../CallList";
-import classNames from "classnames";
+import { CallList } from "./CallList";
 import { UserMenuContainer } from "../UserMenuContainer";
+import { useModalTriggerState } from "../Modal";
+import { JoinExistingCallModal } from "../JoinExistingCallModal";
+import { useHistory } from "react-router-dom";
+import { Headline, Title } from "../typography/Typography";
+import { Form } from "../form/Form";
 
-export function RegisteredView({
-  client,
-  isPasswordlessUser,
-  onCreateRoom,
-  createRoomError,
-  creatingRoom,
-  onJoinRoom,
-}) {
-  const publicRooms = usePublicRooms(
-    client,
-    import.meta.env.VITE_PUBLIC_SPACE_ROOM_ID
+export function RegisteredView({ client }) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState();
+  const onSubmit = useCallback(
+    (e) => {
+      e.preventDefault();
+      const data = new FormData(e.target);
+      const roomName = data.get("roomName");
+
+      async function submit() {
+        setError(undefined);
+        setLoading(true);
+
+        const roomIdOrAlias = await createRoom(client, roomName);
+
+        if (roomIdOrAlias) {
+          history.push(`/room/${roomIdOrAlias}`);
+        }
+      }
+
+      submit().catch((error) => {
+        if (error.errcode === "M_ROOM_IN_USE") {
+          setExistingRoomId(roomAliasFromRoomName(roomName));
+          setError(undefined);
+          modalState.open();
+        } else {
+          console.error(error);
+          setLoading(false);
+          setError(error);
+          reset();
+        }
+      });
+    },
+    [client]
   );
+
   const recentRooms = useGroupCallRooms(client);
 
-  const hideCallList = publicRooms.length === 0 && recentRooms.length === 0;
+  const { modalState, modalProps } = useModalTriggerState();
+  const [existingRoomId, setExistingRoomId] = useState();
+  const history = useHistory();
+  const onJoinExistingRoom = useCallback(() => {
+    history.push(`/${existingRoomId}`);
+  }, [history, existingRoomId]);
 
   return (
-    <div
-      className={classNames(styles.home, {
-        [styles.fullWidth]: hideCallList,
-      })}
-    >
-      <Header className={styles.header}>
-        <LeftNav className={styles.leftNav}>
+    <>
+      <Header>
+        <LeftNav>
           <HeaderLogo />
         </LeftNav>
         <RightNav>
           <UserMenuContainer />
         </RightNav>
       </Header>
-      <div className={styles.splitContainer}>
-        <div className={styles.left}>
-          <div className={styles.content}>
-            <div className={styles.centered}>
-              <form onSubmit={onJoinRoom}>
-                <h1>Join a call</h1>
-                <FieldRow className={styles.fieldRow}>
-                  <InputField
-                    id="roomId"
-                    name="roomId"
-                    label="Call ID"
-                    type="text"
-                    required
-                    autoComplete="off"
-                    placeholder="Call ID"
-                  />
-                </FieldRow>
-                <FieldRow className={styles.fieldRow}>
-                  <Button className={styles.button} type="submit">
-                    Join call
-                  </Button>
-                </FieldRow>
-              </form>
-              <hr />
-              <form onSubmit={onCreateRoom}>
-                <h1>Create a call</h1>
-                <FieldRow className={styles.fieldRow}>
-                  <InputField
-                    id="roomName"
-                    name="roomName"
-                    label="Room Name"
-                    type="text"
-                    required
-                    autoComplete="off"
-                    placeholder="Room Name"
-                  />
-                </FieldRow>
-                {createRoomError && (
-                  <FieldRow className={styles.fieldRow}>
-                    <ErrorMessage>{createRoomError.message}</ErrorMessage>
-                  </FieldRow>
-                )}
-                <FieldRow className={styles.fieldRow}>
-                  <Button
-                    className={styles.button}
-                    type="submit"
-                    disabled={creatingRoom}
-                  >
-                    {creatingRoom ? "Creating call..." : "Create call"}
-                  </Button>
-                </FieldRow>
-              </form>
-              {isPasswordlessUser && (
-                <div className={styles.authLinks}>
-                  <p>
-                    Not registered yet?{" "}
-                    <Link to="/register">Create an account</Link>
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-        {!hideCallList && (
-          <div className={styles.right}>
-            <div className={styles.content}>
-              {publicRooms.length > 0 && (
-                <CallList
-                  title="Public Calls"
-                  rooms={publicRooms}
-                  client={client}
-                />
-              )}
-              {recentRooms.length > 0 && (
-                <CallList
-                  title="Recent Calls"
-                  rooms={recentRooms}
-                  client={client}
-                />
-              )}
-            </div>
-          </div>
-        )}
+      <div className={commonStyles.container}>
+        <main className={commonStyles.main}>
+          <HeaderLogo className={commonStyles.logo} />
+          <Headline className={commonStyles.headline}>
+            Enter a call name
+          </Headline>
+          <Form className={styles.form} onSubmit={onSubmit}>
+            <FieldRow className={styles.fieldRow}>
+              <InputField
+                id="callName"
+                name="callName"
+                label="Call name"
+                placeholder="Call name"
+                type="text"
+                required
+                autoComplete="off"
+              />
+              <Button type="submit" size="lg" disabled={loading}>
+                {loading ? "Loading..." : "Go"}
+              </Button>
+            </FieldRow>
+            {error && (
+              <FieldRow>
+                <ErrorMessage>{error.message}</ErrorMessage>
+              </FieldRow>
+            )}
+          </Form>
+          {recentRooms.length > 0 && (
+            <>
+              <Title className={styles.recentCallsTitle}>
+                Your recent Calls
+              </Title>
+              <CallList rooms={recentRooms} client={client} />
+            </>
+          )}
+        </main>
       </div>
-    </div>
+      {modalState.isOpen && (
+        <JoinExistingCallModal onJoin={onJoinExistingRoom} {...modalProps} />
+      )}
+    </>
   );
 }
