@@ -1,0 +1,29 @@
+.caption {
+  font-size: 12px;
+  line-height: 15px;
+}
+
+.micro {
+  font-size: 10px;
+  line-height: 12px;
+}
+
+.regular {
+  font-weight: 400;
+}
+
+.semiBold {
+  font-weight: 600;
+}
+
+.bold {
+  font-weight: 700;
+}
+
+.link {
+  color: var(--linkColor);
+}
+
+.primary {
+  color: var(--primaryColor);
+}

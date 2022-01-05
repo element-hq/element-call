@@ -29,6 +29,7 @@
     "events": "^3.3.0",
     "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#robertlong/group-call",
     "matrix-react-sdk": "github:matrix-org/matrix-react-sdk#robertlong/group-call",
+    "normalize.css": "^8.0.1",
     "postcss-preset-env": "^6.7.0",
     "re-resizable": "^6.9.0",
     "react": "^17.0.0",

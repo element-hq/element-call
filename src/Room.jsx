@@ -60,34 +60,17 @@ const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 export function Room() {
-  const [registeringGuest, setRegisteringGuest] = useState(false);
   const [registrationError, setRegistrationError] = useState();
-  const {
-    loading,
-    isAuthenticated,
-    error,
-    client,
-    registerGuest,
-    isGuest,
-    isPasswordlessUser,
-  } = useClient();
+  const { loading, isAuthenticated, error, client, isPasswordlessUser } =
+    useClient();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      setRegisteringGuest(true);
-
-      registerGuest()
-        .then(() => {
-          setRegisteringGuest(false);
-        })
-        .catch((error) => {
-          setRegistrationError(error);
-          setRegisteringGuest(false);
-        });
+      setRegistrationError(new Error("Must be registered"));
     }
   }, [loading, isAuthenticated]);
 
-  if (loading || registeringGuest) {
+  if (loading) {
     return <LoadingView />;
   }
 
@@ -95,16 +78,10 @@ export function Room() {
     return <ErrorView error={registrationError || error} />;
   }
 
-  return (
-    <GroupCall
-      client={client}
-      isGuest={isGuest}
-      isPasswordlessUser={isPasswordlessUser}
-    />
-  );
+  return <GroupCall client={client} isPasswordlessUser={isPasswordlessUser} />;
 }
 
-export function GroupCall({ client, isGuest, isPasswordlessUser }) {
+export function GroupCall({ client, isPasswordlessUser }) {
   const { roomId: maybeRoomId } = useParams();
   const { hash, search } = useLocation();
   const [simpleGrid, viaServers] = useMemo(() => {
@@ -132,7 +109,6 @@ export function GroupCall({ client, isGuest, isPasswordlessUser }) {
 
   return (
     <GroupCallView
-      isGuest={isGuest}
       isPasswordlessUser={isPasswordlessUser}
       client={client}
       roomId={roomId}
@@ -144,7 +120,6 @@ export function GroupCall({ client, isGuest, isPasswordlessUser }) {
 
 export function GroupCallView({
   client,
-  isGuest,
   isPasswordlessUser,
   roomId,
   groupCall,
@@ -201,12 +176,12 @@ export function GroupCallView({
   const onLeave = useCallback(() => {
     leave();
 
-    if (!isGuest && !isPasswordlessUser) {
+    if (!isPasswordlessUser) {
       history.push("/");
     } else {
       setLeft(true);
     }
-  }, [leave, history, isGuest]);
+  }, [leave, history]);
 
   if (error) {
     return <ErrorView error={error} />;
@@ -215,7 +190,6 @@ export function GroupCallView({
       <InRoomView
         groupCall={groupCall}
         client={client}
-        isGuest={isGuest}
         roomName={groupCall.room.name}
         microphoneMuted={microphoneMuted}
         localVideoMuted={localVideoMuted}
@@ -245,7 +219,6 @@ export function GroupCallView({
   } else {
     return (
       <RoomSetupView
-        isGuest={isGuest}
         client={client}
         hasLocalParticipant={hasLocalParticipant}
         roomName={groupCall.room.name}
@@ -376,7 +349,6 @@ function RoomSetupView({
 
 function InRoomView({
   client,
-  isGuest,
   groupCall,
   roomName,
   microphoneMuted,
@@ -471,7 +443,7 @@ function InRoomView({
         </LeftNav>
         <RightNav>
           <GridLayoutMenu layout={layout} setLayout={setLayout} />
-          {!isGuest && <UserMenuContainer disableLogout />}
+          <UserMenuContainer disableLogout />
         </RightNav>
       </Header>
       {items.length === 0 ? (

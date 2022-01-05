@@ -8,14 +8,8 @@ import { UserMenu } from "./UserMenu";
 export function UserMenuContainer({ disableLogout }) {
   const location = useLocation();
   const history = useHistory();
-  const {
-    isAuthenticated,
-    isGuest,
-    isPasswordlessUser,
-    logout,
-    userName,
-    client,
-  } = useClient();
+  const { isAuthenticated, isPasswordlessUser, logout, userName, client } =
+    useClient();
   const { displayName, avatarUrl } = useProfile(client);
   const { modalState, modalProps } = useModalTriggerState();
 
@@ -52,7 +46,6 @@ export function UserMenuContainer({ disableLogout }) {
         <ProfileModal
           client={client}
           isAuthenticated={isAuthenticated}
-          isGuest={isGuest}
           isPasswordlessUser={isPasswordlessUser}
           {...modalProps}
         />

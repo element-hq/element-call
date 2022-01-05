@@ -8,7 +8,6 @@ export function ProfileModal({
   client,
   isAuthenticated,
   isPasswordlessUser,
-  isGuest,
   ...rest
 }) {
   const { onClose } = rest;
@@ -66,7 +65,7 @@ export function ProfileModal({
               onChange={onChangeDisplayName}
             />
           </FieldRow>
-          {isAuthenticated && !isGuest && !isPasswordlessUser && (
+          {isAuthenticated && !isPasswordlessUser && (
             <FieldRow>
               <InputField
                 type="file"
