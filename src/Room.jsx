@@ -52,6 +52,7 @@ import { UserMenu } from "./UserMenu";
 import classNames from "classnames";
 import { Avatar } from "./Avatar";
 import { UserMenuContainer } from "./UserMenuContainer";
+import { LobbyView } from "./room/LobbyView";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -218,7 +219,7 @@ export function GroupCallView({
     }
   } else {
     return (
-      <RoomSetupView
+      <LobbyView
         client={client}
         hasLocalParticipant={hasLocalParticipant}
         roomName={groupCall.room.name}
@@ -251,99 +252,6 @@ export function EnteringRoomView() {
     <FullScreenView>
       <h1>Entering room...</h1>
     </FullScreenView>
-  );
-}
-
-function RoomSetupView({
-  client,
-  roomName,
-  state,
-  onInitLocalCallFeed,
-  onEnter,
-  localCallFeed,
-  microphoneMuted,
-  localVideoMuted,
-  toggleLocalVideoMuted,
-  toggleMicrophoneMuted,
-  setShowInspector,
-  showInspector,
-  roomId,
-}) {
-  const { stream } = useCallFeed(localCallFeed);
-  const videoRef = useMediaStream(stream, true);
-
-  useEffect(() => {
-    onInitLocalCallFeed();
-  }, [onInitLocalCallFeed]);
-
-  return (
-    <div className={styles.room}>
-      <Header>
-        <LeftNav>
-          <RoomHeaderInfo roomName={roomName} />
-        </LeftNav>
-        <RightNav>
-          <UserMenuContainer />
-        </RightNav>
-      </Header>
-      <div className={styles.joinRoom}>
-        <div className={styles.joinRoomContent}>
-          <div className={styles.preview}>
-            <video ref={videoRef} muted playsInline disablePictureInPicture />
-            {state === GroupCallState.LocalCallFeedUninitialized && (
-              <p className={styles.webcamPermissions}>
-                Webcam/microphone permissions needed to join the call.
-              </p>
-            )}
-            {state === GroupCallState.InitializingLocalCallFeed && (
-              <p className={styles.webcamPermissions}>
-                Accept webcam/microphone permissions to join the call.
-              </p>
-            )}
-            {state === GroupCallState.LocalCallFeedInitialized && (
-              <>
-                <Button
-                  className={styles.joinCallButton}
-                  disabled={state !== GroupCallState.LocalCallFeedInitialized}
-                  onPress={onEnter}
-                >
-                  Join call now
-                </Button>
-                <div className={styles.previewButtons}>
-                  <MicButton
-                    muted={microphoneMuted}
-                    onPress={toggleMicrophoneMuted}
-                  />
-                  <VideoButton
-                    muted={localVideoMuted}
-                    onPress={toggleLocalVideoMuted}
-                  />
-                  <OverflowMenu
-                    roomId={roomId}
-                    setShowInspector={setShowInspector}
-                    showInspector={showInspector}
-                    client={client}
-                  />
-                </div>
-              </>
-            )}
-          </div>
-          <p>Or</p>
-          <CopyButton
-            value={getRoomUrl(roomId)}
-            className={styles.copyButton}
-            copiedMessage="Call link copied"
-          >
-            Copy call link and join later
-          </CopyButton>
-        </div>
-        <div className={styles.joinRoomFooter}>
-          <Link className={styles.homeLink} to="/">
-            Take me Home
-          </Link>
-        </div>
-      </div>
-    </div>
   );
 }
 
