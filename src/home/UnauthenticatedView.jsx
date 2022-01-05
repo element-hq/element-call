@@ -28,7 +28,7 @@ export function UnauthenticatedView() {
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
-      const roomName = data.get("roomName");
+      const roomName = data.get("callName");
       const userName = data.get("userName");
 
       async function submit() {

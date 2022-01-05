@@ -6,7 +6,7 @@ const RECAPTCHA_SCRIPT_URL =
 
 export function useRecaptcha(sitekey) {
   const [recaptchaId] = useState(() => randomString(16));
-  const resolvePromiseRef = useRef();
+  const promiseRef = useRef();
 
   useEffect(() => {
     if (!sitekey) {
@@ -22,8 +22,13 @@ export function useRecaptcha(sitekey) {
         sitekey,
         size: "invisible",
         callback: (response) => {
-          if (resolvePromiseRef.current) {
-            resolvePromiseRef.current(response);
+          if (promiseRef.current) {
+            promiseRef.current.resolve(response);
+          }
+        },
+        "error-callback": (error) => {
+          if (promiseRef.current) {
+            promiseRef.current.reject(error);
           }
         },
       });
@@ -51,9 +56,39 @@ export function useRecaptcha(sitekey) {
       return Promise.reject(new Error("Recaptcha not loaded"));
     }
 
-    return new Promise((resolve) => {
-      resolvePromiseRef.current = resolve;
+    return new Promise((resolve, reject) => {
+      const observer = new MutationObserver((mutationsList) => {
+        for (const item of mutationsList) {
+          if (item.target.style.visibility !== "visible") {
+            reject(new Error("Recaptcha dismissed"));
+            observer.disconnect();
+            return;
+          }
+        }
+      });
+
+      promiseRef.current = {
+        resolve: (value) => {
+          resolve(value);
+          observer.disconnect();
+        },
+        reject: (error) => {
+          reject(error);
+          observer.disconnect();
+        },
+      };
+
       window.grecaptcha.execute();
+
+      const iframe = document.querySelector(
+        'iframe[src*="recaptcha/api2/bframe"]'
+      );
+
+      if (iframe?.parentNode?.parentNode) {
+        observer.observe(iframe?.parentNode?.parentNode, {
+          attributes: true,
+        });
+      }
     });
   }, [recaptchaId]);
 
@@ -62,8 +97,6 @@ export function useRecaptcha(sitekey) {
       window.grecaptcha.reset();
     }
   }, [recaptchaId]);
-
-  console.log(recaptchaId);
 
   return { execute, reset, recaptchaId };
 }
