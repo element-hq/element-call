@@ -40,6 +40,7 @@ export function RegisteredView({ client }) {
       submit().catch((error) => {
         if (error.errcode === "M_ROOM_IN_USE") {
           setExistingRoomId(roomAliasFromRoomName(roomName));
+          setLoading(false);
           setError(undefined);
           modalState.open();
         } else {
