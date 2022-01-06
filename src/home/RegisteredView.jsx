@@ -1,9 +1,6 @@
 import React, { useState, useCallback } from "react";
-import {
-  createRoom,
-  useGroupCallRooms,
-  roomAliasFromRoomName,
-} from "../ConferenceCallManagerHooks";
+import { createRoom, roomAliasFromRoomName } from "../matrix-utils";
+import { useGroupCallRooms } from "./useGroupCallRooms";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import commonStyles from "./common.module.css";
 import styles from "./RegisteredView.module.css";

@@ -18,10 +18,8 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { FieldRow, InputField, ErrorMessage } from "../Input";
 import { Button } from "../button";
-import {
-  useClient,
-  defaultHomeserverHost,
-} from "../ConferenceCallManagerHooks";
+import { useClient } from "../ClientContext";
+import { defaultHomeserverHost } from "../matrix-utils";
 import { useInteractiveRegistration } from "./useInteractiveRegistration";
 import styles from "./LoginPage.module.css";
 import { ReactComponent as Logo } from "../icons/LogoLarge.svg";

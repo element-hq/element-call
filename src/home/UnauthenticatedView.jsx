@@ -5,10 +5,7 @@ import { useHistory } from "react-router-dom";
 import { FieldRow, InputField, ErrorMessage } from "../Input";
 import { Button } from "../button";
 import { randomString } from "matrix-js-sdk/src/randomstring";
-import {
-  createRoom,
-  roomAliasFromRoomName,
-} from "../ConferenceCallManagerHooks";
+import { createRoom, roomAliasFromRoomName } from "../matrix-utils";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";

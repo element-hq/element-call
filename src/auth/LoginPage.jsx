@@ -19,10 +19,7 @@ import { useHistory, useLocation, Link } from "react-router-dom";
 import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
 import { FieldRow, InputField, ErrorMessage } from "../Input";
 import { Button } from "../button";
-import {
-  defaultHomeserver,
-  defaultHomeserverHost,
-} from "../ConferenceCallManagerHooks";
+import { defaultHomeserver, defaultHomeserverHost } from "../matrix-utils";
 import styles from "./LoginPage.module.css";
 import { useInteractiveLogin } from "./useInteractiveLogin";
 

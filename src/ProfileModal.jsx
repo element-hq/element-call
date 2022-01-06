@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { Button } from "./button";
-import { useProfile } from "./ConferenceCallManagerHooks";
+import { useProfile } from "./useProfile";
 import { FieldRow, InputField, ErrorMessage } from "./Input";
 import { Modal, ModalContent } from "./Modal";
 
