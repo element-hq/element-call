@@ -1,7 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 
-let audioOutput;
-
 export function useMediaHandler(client) {
   const [{ audioInput, videoInput, audioInputs, videoInputs }, setState] =
     useState(() => {
@@ -27,7 +25,7 @@ export function useMediaHandler(client) {
           (device) => device.kind === "videoinput"
         );
 
-        setState((prevState) => ({
+        setState(() => ({
           audioInput: mediaHandler.audioInput,
           videoInput: mediaHandler.videoInput,
           audioInputs,
