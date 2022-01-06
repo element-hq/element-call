@@ -7,9 +7,9 @@ import { Button } from "../button";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import {
   createRoom,
-  useInteractiveRegistration,
   roomAliasFromRoomName,
 } from "../ConferenceCallManagerHooks";
+import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "../JoinExistingCallModal";
 import { useRecaptcha } from "../auth/useRecaptcha";

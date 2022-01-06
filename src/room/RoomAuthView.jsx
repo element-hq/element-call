@@ -7,7 +7,7 @@ import { useLocation } from "react-router-dom";
 import { useRecaptcha } from "../auth/useRecaptcha";
 import { FieldRow, InputField, ErrorMessage } from "../Input";
 import { randomString } from "matrix-js-sdk/src/randomstring";
-import { useInteractiveRegistration } from "../ConferenceCallManagerHooks";
+import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { Form } from "../form/Form";
 
 export function RoomAuthView() {

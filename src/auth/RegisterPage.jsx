@@ -21,8 +21,8 @@ import { Button } from "../button";
 import {
   useClient,
   defaultHomeserverHost,
-  useInteractiveRegistration,
 } from "../ConferenceCallManagerHooks";
+import { useInteractiveRegistration } from "./useInteractiveRegistration";
 import styles from "./LoginPage.module.css";
 import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
 import { LoadingView } from "../FullScreenView";

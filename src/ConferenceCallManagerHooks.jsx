@@ -21,9 +21,8 @@ import React, {
   createContext,
   useMemo,
   useContext,
-  useRef,
 } from "react";
-import matrix, { InteractiveAuth } from "matrix-js-sdk/src/browser-index";
+import matrix from "matrix-js-sdk/src/browser-index";
 import {
   GroupCallIntent,
   GroupCallType,
@@ -53,12 +52,8 @@ function waitForSync(client) {
   });
 }
 
-async function initClient(clientOptions, guest) {
+export async function initClient(clientOptions) {
   const client = matrix.createClient(clientOptions);
-
-  if (guest) {
-    client.setGuest(true);
-  }
 
   await client.startClient({
     // dirty hack to reduce chance of gappy syncs
@@ -110,13 +105,12 @@ export async function fetchGroupCall(
 export function ClientProvider({ children }) {
   const history = useHistory();
   const [
-    { loading, isAuthenticated, isPasswordlessUser, isGuest, client, userName },
+    { loading, isAuthenticated, isPasswordlessUser, client, userName },
     setState,
   ] = useState({
     loading: true,
     isAuthenticated: false,
     isPasswordlessUser: false,
-    isGuest: false,
     client: undefined,
     userName: null,
   });
@@ -131,20 +125,16 @@ export function ClientProvider({ children }) {
             user_id,
             device_id,
             access_token,
-            guest,
             passwordlessUser,
             tempPassword,
           } = JSON.parse(authStore);
 
-          const client = await initClient(
-            {
-              baseUrl: defaultHomeserver,
-              accessToken: access_token,
-              userId: user_id,
-              deviceId: device_id,
-            },
-            guest
-          );
+          const client = await initClient({
+            baseUrl: defaultHomeserver,
+            accessToken: access_token,
+            userId: user_id,
+            deviceId: device_id,
+          });
 
           localStorage.setItem(
             "matrix-auth-store",
@@ -152,16 +142,16 @@ export function ClientProvider({ children }) {
               user_id,
               device_id,
               access_token,
-              guest,
+
               passwordlessUser,
               tempPassword,
             })
           );
 
-          return { client, guest, passwordlessUser };
+          return { client, passwordlessUser };
         }
 
-        return { client: undefined, guest: false };
+        return { client: undefined };
       } catch (err) {
         localStorage.removeItem("matrix-auth-store");
         throw err;
@@ -169,13 +159,12 @@ export function ClientProvider({ children }) {
     }
 
     restore()
-      .then(({ client, guest, passwordlessUser }) => {
+      .then(({ client, passwordlessUser }) => {
         setState({
           client,
           loading: false,
           isAuthenticated: !!client,
           isPasswordlessUser: !!passwordlessUser,
-          isGuest: guest,
           userName: client?.getUserIdLocalpart(),
         });
       })
@@ -185,166 +174,9 @@ export function ClientProvider({ children }) {
           loading: false,
           isAuthenticated: false,
           isPasswordlessUser: false,
-          isGuest: false,
           userName: null,
         });
       });
-  }, []);
-
-  const login = useCallback(async (homeserver, username, password) => {
-    try {
-      let loginHomeserverUrl = homeserver.trim();
-
-      if (!loginHomeserverUrl.includes("://")) {
-        loginHomeserverUrl = "https://" + loginHomeserverUrl;
-      }
-
-      try {
-        const wellKnownUrl = new URL(
-          "/.well-known/matrix/client",
-          window.location
-        );
-        const response = await fetch(wellKnownUrl);
-        const config = await response.json();
-
-        if (config["m.homeserver"]) {
-          loginHomeserverUrl = config["m.homeserver"];
-        }
-      } catch (error) {}
-
-      const registrationClient = matrix.createClient(loginHomeserverUrl);
-
-      const { user_id, device_id, access_token } =
-        await registrationClient.loginWithPassword(username, password);
-
-      const client = await initClient({
-        baseUrl: loginHomeserverUrl,
-        accessToken: access_token,
-        userId: user_id,
-        deviceId: device_id,
-      });
-
-      localStorage.setItem(
-        "matrix-auth-store",
-        JSON.stringify({ user_id, device_id, access_token })
-      );
-
-      setState({
-        client,
-        loading: false,
-        isAuthenticated: true,
-        isPasswordlessUser: false,
-        isGuest: false,
-        userName: client.getUserIdLocalpart(),
-      });
-    } catch (err) {
-      localStorage.removeItem("matrix-auth-store");
-      setState({
-        client: undefined,
-        loading: false,
-        isAuthenticated: false,
-        isPasswordlessUser: false,
-        isGuest: false,
-        userName: null,
-      });
-      throw err;
-    }
-  }, []);
-
-  const registerGuest = useCallback(async () => {
-    try {
-      const registrationClient = matrix.createClient(defaultHomeserver);
-
-      const { user_id, device_id, access_token } =
-        await registrationClient.registerGuest({});
-
-      const client = await initClient(
-        {
-          baseUrl: defaultHomeserver,
-          accessToken: access_token,
-          userId: user_id,
-          deviceId: device_id,
-        },
-        true
-      );
-
-      await client.setProfileInfo("displayname", {
-        displayname: `Guest ${client.getUserIdLocalpart()}`,
-      });
-
-      localStorage.setItem(
-        "matrix-auth-store",
-        JSON.stringify({ user_id, device_id, access_token, guest: true })
-      );
-
-      setState({
-        client,
-        loading: false,
-        isAuthenticated: true,
-        isGuest: true,
-        isPasswordlessUser: false,
-        userName: client.getUserIdLocalpart(),
-      });
-    } catch (err) {
-      localStorage.removeItem("matrix-auth-store");
-      setState({
-        client: undefined,
-        loading: false,
-        isAuthenticated: false,
-        isPasswordlessUser: false,
-        isGuest: false,
-        userName: null,
-      });
-      throw err;
-    }
-  }, []);
-
-  const register = useCallback(async (username, password, passwordlessUser) => {
-    try {
-      const registrationClient = matrix.createClient(defaultHomeserver);
-
-      const { user_id, device_id, access_token } =
-        await registrationClient.register(username, password, null, {
-          type: "m.login.dummy",
-        });
-
-      const client = await initClient({
-        baseUrl: defaultHomeserver,
-        accessToken: access_token,
-        userId: user_id,
-        deviceId: device_id,
-      });
-
-      const session = { user_id, device_id, access_token, passwordlessUser };
-
-      if (passwordlessUser) {
-        session.tempPassword = password;
-      }
-
-      localStorage.setItem("matrix-auth-store", JSON.stringify(session));
-
-      setState({
-        client,
-        loading: false,
-        isGuest: false,
-        isAuthenticated: true,
-        isPasswordlessUser: passwordlessUser,
-        userName: client.getUserIdLocalpart(),
-      });
-
-      return client;
-    } catch (err) {
-      localStorage.removeItem("matrix-auth-store");
-      setState({
-        client: undefined,
-        loading: false,
-        isGuest: false,
-        isAuthenticated: false,
-        isPasswordlessUser: false,
-        userName: null,
-      });
-      throw err;
-    }
   }, []);
 
   const changePassword = useCallback(
@@ -377,7 +209,6 @@ export function ClientProvider({ children }) {
       setState({
         client,
         loading: false,
-        isGuest: false,
         isAuthenticated: true,
         isPasswordlessUser: false,
         userName: client.getUserIdLocalpart(),
@@ -395,7 +226,6 @@ export function ClientProvider({ children }) {
         loading: false,
         isAuthenticated: true,
         isPasswordlessUser: !!session.passwordlessUser,
-        isGuest: false,
         userName: client.getUserIdLocalpart(),
       });
     } else {
@@ -406,7 +236,6 @@ export function ClientProvider({ children }) {
         loading: false,
         isAuthenticated: false,
         isPasswordlessUser: false,
-        isGuest: false,
         userName: null,
       });
     }
@@ -422,11 +251,7 @@ export function ClientProvider({ children }) {
       loading,
       isAuthenticated,
       isPasswordlessUser,
-      isGuest,
       client,
-      login,
-      registerGuest,
-      register,
       changePassword,
       logout,
       userName,
@@ -436,11 +261,7 @@ export function ClientProvider({ children }) {
       loading,
       isAuthenticated,
       isPasswordlessUser,
-      isGuest,
       client,
-      login,
-      registerGuest,
-      register,
       changePassword,
       logout,
       userName,
@@ -494,11 +315,6 @@ export async function createRoom(client, name) {
         [client.getUserId()]: 100,
       },
     },
-  });
-
-  await client.setGuestAccess(room_id, {
-    allowJoin: true,
-    allowRead: true,
   });
 
   await client.createGroupCall(
@@ -746,127 +562,4 @@ export function useProfile(client) {
   );
 
   return { loading, error, displayName, avatarUrl, saveProfile, success };
-}
-
-export function useInteractiveLogin() {
-  const { setClient } = useClient();
-  const [state, setState] = useState({ loading: false });
-
-  const auth = useCallback(async (homeserver, username, password) => {
-    const authClient = matrix.createClient(homeserver);
-
-    const interactiveAuth = new InteractiveAuth({
-      matrixClient: authClient,
-      busyChanged(loading) {
-        setState((prev) => ({ ...prev, loading }));
-      },
-      async doRequest(auth, _background) {
-        return authClient.login("m.login.password", {
-          identifier: {
-            type: "m.id.user",
-            user: username,
-          },
-          password,
-        });
-      },
-      stateUpdated(nextStage, status) {
-        console.log({ nextStage, status });
-      },
-    });
-
-    const { user_id, access_token, device_id } =
-      await interactiveAuth.attemptAuth();
-
-    const client = await initClient({
-      baseUrl: defaultHomeserver,
-      accessToken: access_token,
-      userId: user_id,
-      deviceId: device_id,
-    });
-
-    setClient(client, { user_id, access_token, device_id });
-
-    return client;
-  }, []);
-
-  return [state, auth];
-}
-
-export function useInteractiveRegistration() {
-  const { setClient } = useClient();
-  const [state, setState] = useState({ privacyPolicyUrl: "#", loading: false });
-
-  const authClientRef = useRef();
-
-  useEffect(() => {
-    authClientRef.current = matrix.createClient(defaultHomeserver);
-
-    authClientRef.current.registerRequest({}).catch((error) => {
-      const privacyPolicyUrl =
-        error.data?.params["m.login.terms"]?.policies?.privacy_policy?.en?.url;
-
-      const recaptchaKey = error.data?.params["m.login.recaptcha"]?.public_key;
-
-      if (privacyPolicyUrl || recaptchaKey) {
-        setState((prev) => ({ ...prev, privacyPolicyUrl, recaptchaKey }));
-      }
-    });
-  }, []);
-
-  const register = useCallback(
-    async (username, password, recaptchaResponse, passwordlessUser) => {
-      const interactiveAuth = new InteractiveAuth({
-        matrixClient: authClientRef.current,
-        busyChanged(loading) {
-          setState((prev) => ({ ...prev, loading }));
-        },
-        async doRequest(auth, _background) {
-          return authClientRef.current.registerRequest({
-            username,
-            password,
-            auth: auth || undefined,
-          });
-        },
-        stateUpdated(nextStage, status) {
-          if (status.error) {
-            throw new Error(error);
-          }
-
-          if (nextStage === "m.login.terms") {
-            interactiveAuth.submitAuthDict({
-              type: "m.login.terms",
-            });
-          } else if (nextStage === "m.login.recaptcha") {
-            interactiveAuth.submitAuthDict({
-              type: "m.login.recaptcha",
-              response: recaptchaResponse,
-            });
-          }
-        },
-      });
-
-      const { user_id, access_token, device_id } =
-        await interactiveAuth.attemptAuth();
-
-      const client = await initClient({
-        baseUrl: defaultHomeserver,
-        accessToken: access_token,
-        userId: user_id,
-        deviceId: device_id,
-      });
-
-      const session = { user_id, device_id, access_token, passwordlessUser };
-
-      if (passwordlessUser) {
-        session.tempPassword = password;
-      }
-
-      setClient(client, session);
-
-      return client;
-    },
-    []
-  );
-
-  return [state, register];
 }
