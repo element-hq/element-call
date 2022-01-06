@@ -62,7 +62,7 @@ export function RegisterPage() {
         setRegistering(true);
 
         if (isPasswordlessUser) {
-          changePassword(password);
+          await changePassword(password);
         } else {
           const recaptchaResponse = await execute();
           await register(userName, password, recaptchaResponse);
