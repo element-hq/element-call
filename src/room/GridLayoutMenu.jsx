@@ -1,13 +1,13 @@
 import React from "react";
-import { Button } from "./button";
-import { PopoverMenuTrigger } from "./PopoverMenu";
-import { ReactComponent as SpotlightIcon } from "./icons/Spotlight.svg";
-import { ReactComponent as FreedomIcon } from "./icons/Freedom.svg";
-import { ReactComponent as CheckIcon } from "./icons/Check.svg";
+import { Button } from "../button";
+import { PopoverMenuTrigger } from "../PopoverMenu";
+import { ReactComponent as SpotlightIcon } from "../icons/Spotlight.svg";
+import { ReactComponent as FreedomIcon } from "../icons/Freedom.svg";
+import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 import styles from "./GridLayoutMenu.module.css";
-import { Menu } from "./Menu";
+import { Menu } from "../Menu";
 import { Item } from "@react-stately/collections";
-import { Tooltip, TooltipTrigger } from "./Tooltip";
+import { Tooltip, TooltipTrigger } from "../Tooltip";
 
 export function GridLayoutMenu({ layout, setLayout }) {
   return (

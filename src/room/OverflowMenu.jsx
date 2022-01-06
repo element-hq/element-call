@@ -8,7 +8,7 @@ import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
-import { InviteModal } from "../InviteModal";
+import { InviteModal } from "./InviteModal";
 import { Tooltip, TooltipTrigger } from "../Tooltip";
 
 export function OverflowMenu({

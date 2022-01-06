@@ -1,7 +1,7 @@
 import React from "react";
-import { Modal, ModalContent } from "./Modal";
-import { CopyButton } from "./button";
-import { getRoomUrl } from "./ConferenceCallManagerHooks";
+import { Modal, ModalContent } from "../Modal";
+import { CopyButton } from "../button";
+import { getRoomUrl } from "../ConferenceCallManagerHooks";
 import styles from "./InviteModal.module.css";
 
 export function InviteModal({ roomId, ...rest }) {
