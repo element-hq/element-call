@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect } from "react";
-import { getAvatarUrl } from "./matrix-utils";
+import { getAvatarUrl } from "../matrix-utils";
 
 export function useProfile(client) {
   const [{ loading, displayName, avatarUrl, error, success }, setState] =

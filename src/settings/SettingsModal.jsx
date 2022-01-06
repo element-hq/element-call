@@ -5,10 +5,10 @@ import { TabContainer, TabItem } from "../Tabs";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
-import { SelectInput } from "../SelectInput";
+import { SelectInput } from "../input/SelectInput";
 import { Item } from "@react-stately/collections";
 import { useMediaHandler } from "./useMediaHandler";
-import { FieldRow, InputField } from "../Input";
+import { FieldRow, InputField } from "../input/Input";
 
 export function SettingsModal({
   client,

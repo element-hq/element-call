@@ -1,7 +1,7 @@
 import React from "react";
 import styles from "./CallEndedView.module.css";
 import { LinkButton } from "../button";
-import { useProfile } from "../useProfile";
+import { useProfile } from "../profile/useProfile";
 import { Subtitle, Body, Link, Headline } from "../typography/Typography";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 

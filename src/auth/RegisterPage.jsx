@@ -16,7 +16,7 @@ limitations under the License.
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
-import { FieldRow, InputField, ErrorMessage } from "../Input";
+import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { useClient } from "../ClientContext";
 import { defaultHomeserverHost } from "../matrix-utils";

@@ -4,7 +4,7 @@ import { useGroupCallRooms } from "./useGroupCallRooms";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import commonStyles from "./common.module.css";
 import styles from "./RegisteredView.module.css";
-import { FieldRow, InputField, ErrorMessage } from "../Input";
+import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { CallList } from "./CallList";
 import { UserMenuContainer } from "../UserMenuContainer";

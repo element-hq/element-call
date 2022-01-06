@@ -1,9 +1,9 @@
 import React, { useCallback } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { useClient } from "./ClientContext";
-import { useProfile } from "./useProfile";
+import { useProfile } from "./profile/useProfile";
 import { useModalTriggerState } from "./Modal";
-import { ProfileModal } from "./ProfileModal";
+import { ProfileModal } from "./profile/ProfileModal";
 import { UserMenu } from "./UserMenu";
 
 export function UserMenuContainer({ disableLogout }) {

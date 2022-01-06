@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useHistory } from "react-router-dom";
-import { FieldRow, InputField, ErrorMessage } from "../Input";
+import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { createRoom, roomAliasFromRoomName } from "../matrix-utils";
