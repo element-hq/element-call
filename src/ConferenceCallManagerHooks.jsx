@@ -376,32 +376,6 @@ export function useGroupCallRooms(client) {
   return rooms;
 }
 
-export function usePublicRooms(client, publicSpaceRoomId, maxRooms = 50) {
-  const [rooms, setRooms] = useState([]);
-
-  useEffect(() => {
-    if (publicSpaceRoomId) {
-      client.getRoomHierarchy(publicSpaceRoomId, maxRooms).then(({ rooms }) => {
-        const filteredRooms = rooms
-          .filter((room) => room.room_type !== "m.space")
-          .map((room) => ({
-            roomId: room.room_alias || room.room_id,
-            roomName: room.name,
-            avatarUrl: null,
-            room,
-            participants: [],
-          }));
-
-        setRooms(filteredRooms);
-      });
-    } else {
-      setRooms([]);
-    }
-  }, [publicSpaceRoomId]);
-
-  return rooms;
-}
-
 export function getRoomUrl(roomId) {
   if (roomId.startsWith("#")) {
     const [localPart, host] = roomId.replace("#", "").split(":");
