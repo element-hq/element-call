@@ -9,6 +9,7 @@ import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { Form } from "../form/Form";
+import { UserMenuContainer } from "../UserMenuContainer";
 
 export function RoomAuthView() {
   const [loading, setLoading] = useState(false);
@@ -47,7 +48,9 @@ export function RoomAuthView() {
         <LeftNav>
           <HeaderLogo />
         </LeftNav>
-        <RightNav />
+        <RightNav>
+          <UserMenuContainer disableLogout />
+        </RightNav>
       </Header>
       <div className={styles.container}>
         <main className={styles.main}>
