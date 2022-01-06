@@ -5,7 +5,7 @@ import { Body, Caption, Link, Headline } from "../typography/Typography";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { useLocation } from "react-router-dom";
 import { useRecaptcha } from "../auth/useRecaptcha";
-import { FieldRow, InputField, ErrorMessage } from "../Input";
+import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { Form } from "../form/Form";

@@ -1,7 +1,7 @@
 import React, { forwardRef } from "react";
 import classNames from "classnames";
 import styles from "./Input.module.css";
-import { ReactComponent as CheckIcon } from "./icons/Check.svg";
+import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 
 export function FieldRow({ children, rightAlign, className, ...rest }) {
   return (
