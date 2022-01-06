@@ -1,15 +1,15 @@
 import React, { useCallback } from "react";
-import { Button } from "./button";
-import { Menu } from "./Menu";
-import { PopoverMenuTrigger } from "./PopoverMenu";
+import { Button } from "../button";
+import { Menu } from "../Menu";
+import { PopoverMenuTrigger } from "../PopoverMenu";
 import { Item } from "@react-stately/collections";
-import { ReactComponent as SettingsIcon } from "./icons/Settings.svg";
-import { ReactComponent as AddUserIcon } from "./icons/AddUser.svg";
-import { ReactComponent as OverflowIcon } from "./icons/Overflow.svg";
-import { useModalTriggerState } from "./Modal";
-import { SettingsModal } from "./settings/SettingsModal";
-import { InviteModal } from "./InviteModal";
-import { Tooltip, TooltipTrigger } from "./Tooltip";
+import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
+import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
+import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
+import { useModalTriggerState } from "../Modal";
+import { SettingsModal } from "../settings/SettingsModal";
+import { InviteModal } from "../InviteModal";
+import { Tooltip, TooltipTrigger } from "../Tooltip";
 
 export function OverflowMenu({
   roomId,

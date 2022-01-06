@@ -6,7 +6,7 @@ import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { useCallFeed } from "matrix-react-sdk/src/hooks/useCallFeed";
 import { useMediaStream } from "matrix-react-sdk/src/hooks/useMediaStream";
 import { getRoomUrl } from "../ConferenceCallManagerHooks";
-import { OverflowMenu } from "../OverflowMenu";
+import { OverflowMenu } from "./OverflowMenu";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { Body, Link } from "../typography/Typography";
 
