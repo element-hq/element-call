@@ -110,16 +110,6 @@ export function UnauthenticatedView() {
               />
             </FieldRow>
             <Caption>
-              This site is protected by ReCAPTCHA and the Google{" "}
-              <Link href="https://www.google.com/policies/privacy/">
-                Privacy Policy
-              </Link>{" "}
-              and{" "}
-              <Link href="https://policies.google.com/terms">
-                Terms of Service
-              </Link>{" "}
-              apply.
-              <br />
               By clicking "Go", you agree to our{" "}
               <Link href={privacyPolicyUrl}>Terms and conditions</Link>
             </Caption>
