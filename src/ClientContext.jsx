@@ -23,7 +23,7 @@ import React, {
   useContext,
 } from "react";
 import { useHistory } from "react-router-dom";
-import { initClient } from "./matrix-utils";
+import { initClient, defaultHomeserver } from "./matrix-utils";
 
 const ClientContext = createContext();
 
@@ -78,6 +78,7 @@ export function ClientProvider({ children }) {
 
         return { client: undefined };
       } catch (err) {
+        console.error(err);
         localStorage.removeItem("matrix-auth-store");
         throw err;
       }
