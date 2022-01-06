@@ -11,7 +11,7 @@ import {
 } from "../ConferenceCallManagerHooks";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { useModalTriggerState } from "../Modal";
-import { JoinExistingCallModal } from "../JoinExistingCallModal";
+import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { useRecaptcha } from "../auth/useRecaptcha";
 import { Body, Caption, Link, Headline } from "../typography/Typography";
 import { Form } from "../form/Form";
