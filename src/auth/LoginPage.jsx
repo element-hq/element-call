@@ -22,9 +22,9 @@ import { Button } from "../button";
 import {
   defaultHomeserver,
   defaultHomeserverHost,
-  useInteractiveLogin,
 } from "../ConferenceCallManagerHooks";
 import styles from "./LoginPage.module.css";
+import { useInteractiveLogin } from "./useInteractiveLogin";
 
 export function LoginPage() {
   const [_, login] = useInteractiveLogin();
