@@ -1,7 +1,7 @@
 import React from "react";
-import { Modal, ModalContent } from "./Modal";
-import { Button } from "./button";
-import { FieldRow } from "./Input";
+import { Modal, ModalContent } from "../Modal";
+import { Button } from "../button";
+import { FieldRow } from "../Input";
 import styles from "./JoinExistingCallModal.module.css";
 
 export function JoinExistingCallModal({ onJoin, ...rest }) {

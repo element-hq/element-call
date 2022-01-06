@@ -12,7 +12,7 @@ import { Button } from "../button";
 import { CallList } from "./CallList";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useModalTriggerState } from "../Modal";
-import { JoinExistingCallModal } from "../JoinExistingCallModal";
+import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { useHistory } from "react-router-dom";
 import { Headline, Title } from "../typography/Typography";
 import { Form } from "../form/Form";
