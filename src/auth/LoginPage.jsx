@@ -16,14 +16,14 @@ limitations under the License.
 
 import React, { useCallback, useRef, useState, useMemo } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
-import { ReactComponent as Logo } from "./icons/LogoLarge.svg";
-import { FieldRow, InputField, ErrorMessage } from "./Input";
-import { Button } from "./button";
+import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
+import { FieldRow, InputField, ErrorMessage } from "../Input";
+import { Button } from "../button";
 import {
   defaultHomeserver,
   defaultHomeserverHost,
   useInteractiveLogin,
-} from "./ConferenceCallManagerHooks";
+} from "../ConferenceCallManagerHooks";
 import styles from "./LoginPage.module.css";
 
 export function LoginPage() {
