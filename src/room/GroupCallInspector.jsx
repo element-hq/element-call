@@ -26,6 +26,7 @@ function getHangupCallState(call) {
 export function GroupCallInspector({ client, groupCall, show }) {
   const [roomStateEvents, setRoomStateEvents] = useState([]);
   const [toDeviceEvents, setToDeviceEvents] = useState([]);
+  const [sentVoipEvents, setSentVoipEvents] = useState([]);
   const [state, setState] = useState({
     userId: client.getUserId(),
   });
@@ -111,8 +112,13 @@ export function GroupCallInspector({ client, groupCall, show }) {
       ]);
     }
 
+    function onSendVoipEvent(event) {
+      setSentVoipEvents((prev) => [...prev, event]);
+    }
+
     client.on("RoomState.events", onUpdateRoomState);
     groupCall.on("calls_changed", onCallsChanged);
+    groupCall.on("send_voip_event", onSendVoipEvent);
     client.on("state", onCallsChanged);
     client.on("hangup", onCallHangup);
     client.on("toDeviceEvent", onToDeviceEvent);
@@ -132,6 +138,19 @@ export function GroupCallInspector({ client, groupCall, show }) {
 
     return result;
   }, [toDeviceEvents]);
+
+  const sentVoipEventsByCall = useMemo(() => {
+    const result = {};
+
+    for (const event of sentVoipEvents) {
+      const callId = event.content.call_id;
+      const key = `${callId} (${event.userId})`;
+      result[key] = result[key] || [];
+      result[key].push(event);
+    }
+
+    return result;
+  }, [sentVoipEvents]);
 
   useEffect(() => {
     let timeout;
@@ -190,6 +209,8 @@ export function GroupCallInspector({ client, groupCall, show }) {
           roomStateEvents,
           toDeviceEvents,
           toDeviceEventsByCall,
+          sentVoipEvents,
+          sentVoipEventsByCall,
         }}
         name={null}
         indentWidth={2}
