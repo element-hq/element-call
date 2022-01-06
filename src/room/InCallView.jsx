@@ -14,7 +14,7 @@ import SimpleVideoGrid from "matrix-react-sdk/src/components/views/voip/GroupCal
 import "matrix-react-sdk/res/css/views/voip/GroupCallView/_VideoGrid.scss";
 import { getAvatarUrl } from "../ConferenceCallManagerHooks";
 import { GroupCallInspector } from "../GroupCallInspector";
-import { OverflowMenu } from "../OverflowMenu";
+import { OverflowMenu } from "./OverflowMenu";
 import { GridLayoutMenu } from "../GridLayoutMenu";
 import { Avatar } from "../Avatar";
 import { UserMenuContainer } from "../UserMenuContainer";
