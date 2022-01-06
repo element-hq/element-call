@@ -22,8 +22,12 @@ export function CallList({ rooms, client }) {
             participants={participants}
           />
         ))}
-        <div className={styles.callTileSpacer} />
-        <div className={styles.callTileSpacer} />
+        {rooms.length > 3 && (
+          <>
+            <div className={styles.callTileSpacer} />
+            <div className={styles.callTileSpacer} />
+          </>
+        )}
       </div>
     </>
   );
