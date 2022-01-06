@@ -136,7 +136,7 @@ export function UnauthenticatedView() {
         </main>
         <footer className={styles.footer}>
           <Body className={styles.mobileLoginLink}>
-            <Link color="primary" to="/l;ogin">
+            <Link color="primary" to="/login">
               Login to your account
             </Link>
           </Body>
