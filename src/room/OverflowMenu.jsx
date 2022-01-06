@@ -1,7 +1,7 @@
 import React, { useCallback } from "react";
 import { Button } from "../button";
 import { Menu } from "../Menu";
-import { PopoverMenuTrigger } from "../PopoverMenu";
+import { PopoverMenuTrigger } from "../popover/PopoverMenu";
 import { Item } from "@react-stately/collections";
 import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";

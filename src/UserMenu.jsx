@@ -1,7 +1,7 @@
 import React, { useMemo } from "react";
 import { Item } from "@react-stately/collections";
 import { Button, LinkButton } from "./button";
-import { PopoverMenuTrigger } from "./PopoverMenu";
+import { PopoverMenuTrigger } from "./popover/PopoverMenu";
 import { Menu } from "./Menu";
 import { Tooltip, TooltipTrigger } from "./Tooltip";
 import { Avatar } from "./Avatar";
