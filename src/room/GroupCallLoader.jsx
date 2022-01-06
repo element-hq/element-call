@@ -1,5 +1,5 @@
 import React from "react";
-import { useLoadGroupCall } from "../ConferenceCallManagerHooks";
+import { useLoadGroupCall } from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 
 export function GroupCallLoader({ client, roomId, viaServers, children }) {
