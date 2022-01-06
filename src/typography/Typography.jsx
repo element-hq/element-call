@@ -176,17 +176,19 @@ export const Micro = forwardRef(
 export const Link = forwardRef(
   (
     {
-      as: Component = RouterLink,
+      as,
       children,
       className,
       color = "link",
       href,
+      to,
       fontWeight,
       overflowEllipsis,
       ...rest
     },
     ref
   ) => {
+    const Component = as || (to ? RouterLink : "a");
     let externalLinkProps;
 
     if (href) {
@@ -200,6 +202,7 @@ export const Link = forwardRef(
       <Component
         {...externalLinkProps}
         {...rest}
+        to={to}
         className={classNames(
           styles[color],
           styles[fontWeight],
