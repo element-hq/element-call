@@ -2,7 +2,7 @@ import React, { useRef } from "react";
 import { HiddenSelect, useSelect } from "@react-aria/select";
 import { useButton } from "@react-aria/button";
 import { useSelectState } from "@react-stately/select";
-import { Popover } from "./Popover";
+import { Popover } from "./popover/Popover";
 import { ListBox } from "./ListBox";
 import styles from "./SelectInput.module.css";
 import classNames from "classnames";

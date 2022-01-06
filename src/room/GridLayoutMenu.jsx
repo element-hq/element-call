@@ -1,6 +1,6 @@
 import React from "react";
 import { Button } from "../button";
-import { PopoverMenuTrigger } from "../PopoverMenu";
+import { PopoverMenuTrigger } from "../popover/PopoverMenu";
 import { ReactComponent as SpotlightIcon } from "../icons/Spotlight.svg";
 import { ReactComponent as FreedomIcon } from "../icons/Freedom.svg";
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
