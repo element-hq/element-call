@@ -2,7 +2,7 @@ import React from "react";
 import styles from "./Facepile.module.css";
 import classNames from "classnames";
 import { Avatar } from "./Avatar";
-import { getAvatarUrl } from "./ConferenceCallManagerHooks";
+import { getAvatarUrl } from "./matrix-utils";
 
 export function Facepile({ className, client, participants, ...rest }) {
   return (

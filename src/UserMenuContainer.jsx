@@ -1,6 +1,7 @@
 import React, { useCallback } from "react";
 import { useHistory, useLocation } from "react-router-dom";
-import { useClient, useProfile } from "./ConferenceCallManagerHooks";
+import { useClient } from "./ClientContext";
+import { useProfile } from "./useProfile";
 import { useModalTriggerState } from "./Modal";
 import { ProfileModal } from "./ProfileModal";
 import { UserMenu } from "./UserMenu";

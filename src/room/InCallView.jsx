@@ -12,7 +12,7 @@ import VideoGrid, {
 } from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoGrid";
 import SimpleVideoGrid from "matrix-react-sdk/src/components/views/voip/GroupCallView/SimpleVideoGrid";
 import "matrix-react-sdk/res/css/views/voip/GroupCallView/_VideoGrid.scss";
-import { getAvatarUrl } from "../ConferenceCallManagerHooks";
+import { getAvatarUrl } from "../matrix-utils";
 import { GroupCallInspector } from "./GroupCallInspector";
 import { OverflowMenu } from "./OverflowMenu";
 import { GridLayoutMenu } from "./GridLayoutMenu";

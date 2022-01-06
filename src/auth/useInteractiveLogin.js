@@ -1,10 +1,7 @@
 import matrix, { InteractiveAuth } from "matrix-js-sdk/src/browser-index";
 import { useState, useCallback } from "react";
-import {
-  useClient,
-  initClient,
-  defaultHomeserver,
-} from "../ConferenceCallManagerHooks";
+import { useClient } from "../ClientContext";
+import { initClient, defaultHomeserver } from "../matrix-utils";
 
 export function useInteractiveLogin() {
   const { setClient } = useClient();

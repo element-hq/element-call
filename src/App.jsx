@@ -23,7 +23,7 @@ import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
 import { RoomRedirect } from "./room/RoomRedirect";
-import { ClientProvider } from "./ConferenceCallManagerHooks";
+import { ClientProvider } from "./ClientContext";
 import { usePageFocusStyle } from "./usePageFocusStyle";
 
 const SentryRoute = Sentry.withSentryRouting(Route);

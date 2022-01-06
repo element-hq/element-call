@@ -16,7 +16,7 @@ limitations under the License.
 
 import React, { useMemo } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { useClient } from "../ConferenceCallManagerHooks";
+import { useClient } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
 import { GroupCallLoader } from "./GroupCallLoader";
