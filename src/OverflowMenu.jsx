@@ -7,7 +7,7 @@ import { ReactComponent as SettingsIcon } from "./icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "./icons/AddUser.svg";
 import { ReactComponent as OverflowIcon } from "./icons/Overflow.svg";
 import { useModalTriggerState } from "./Modal";
-import { SettingsModal } from "./SettingsModal";
+import { SettingsModal } from "./settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
 import { Tooltip, TooltipTrigger } from "./Tooltip";
 
