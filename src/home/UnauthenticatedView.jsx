@@ -12,7 +12,7 @@ import {
 } from "../ConferenceCallManagerHooks";
 import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "../JoinExistingCallModal";
-import { useRecaptcha } from "../useRecaptcha";
+import { useRecaptcha } from "../auth/useRecaptcha";
 import { Body, Caption, Link, Headline } from "../typography/Typography";
 import { Form } from "../form/Form";
 import styles from "./UnauthenticatedView.module.css";

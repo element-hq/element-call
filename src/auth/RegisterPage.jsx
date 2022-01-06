@@ -15,18 +15,19 @@ limitations under the License.
 */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useHistory, useLocation, Link } from "react-router-dom";
-import { FieldRow, InputField, ErrorMessage, Field } from "./Input";
-import { Button } from "./button";
+import { useHistory, useLocation } from "react-router-dom";
+import { FieldRow, InputField, ErrorMessage } from "../Input";
+import { Button } from "../button";
 import {
   useClient,
   defaultHomeserverHost,
   useInteractiveRegistration,
-} from "./ConferenceCallManagerHooks";
+} from "../ConferenceCallManagerHooks";
 import styles from "./LoginPage.module.css";
-import { ReactComponent as Logo } from "./icons/LogoLarge.svg";
-import { LoadingView } from "./FullScreenView";
-import { RecaptchaInput } from "./RecaptchaInput";
+import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
+import { LoadingView } from "../FullScreenView";
+import { useRecaptcha } from "./useRecaptcha";
+import { Caption, Link } from "../typography/Typography";
 
 export function RegisterPage() {
   const {
@@ -37,17 +38,15 @@ export function RegisterPage() {
     isPasswordlessUser,
   } = useClient();
   const confirmPasswordRef = useRef();
-  const acceptTermsRef = useRef();
   const history = useHistory();
   const location = useLocation();
   const [registering, setRegistering] = useState(false);
   const [error, setError] = useState();
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [acceptTerms, setAcceptTerms] = useState(false);
   const [{ privacyPolicyUrl, recaptchaKey }, register] =
     useInteractiveRegistration();
-  const [recaptchaResponse, setRecaptchaResponse] = useState();
+  const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const onSubmitRegisterForm = useCallback(
     (e) => {
@@ -56,51 +55,35 @@ export function RegisterPage() {
       const userName = data.get("userName");
       const password = data.get("password");
       const passwordConfirmation = data.get("passwordConfirmation");
-      const acceptTerms = data.get("acceptTerms");
 
-      if (isPasswordlessUser) {
-        if (password !== passwordConfirmation) {
-          return;
-        }
-
-        setRegistering(true);
-
-        changePassword(password)
-          .then(() => {
-            if (location.state && location.state.from) {
-              history.push(location.state.from);
-            } else {
-              history.push("/");
-            }
-          })
-          .catch((error) => {
-            setError(error);
-            setRegistering(false);
-          });
-      } else {
-        if (
-          password !== passwordConfirmation ||
-          !acceptTerms ||
-          !recaptchaResponse
-        ) {
-          return;
-        }
-
-        setRegistering(true);
-
-        register(userName, password, recaptchaResponse)
-          .then(() => {
-            if (location.state && location.state.from) {
-              history.push(location.state.from);
-            } else {
-              history.push("/");
-            }
-          })
-          .catch((error) => {
-            setError(error);
-            setRegistering(false);
-          });
+      if (password !== passwordConfirmation) {
+        return;
       }
+
+      async function submit() {
+        setRegistering(true);
+
+        if (isPasswordlessUser) {
+          changePassword(password);
+        } else {
+          const recaptchaResponse = await execute();
+          await register(userName, password, recaptchaResponse);
+        }
+      }
+
+      submit()
+        .then(() => {
+          if (location.state && location.state.from) {
+            history.push(location.state.from);
+          } else {
+            history.push("/");
+          }
+        })
+        .catch((error) => {
+          setError(error);
+          setRegistering(false);
+          reset();
+        });
     },
     [
       register,
@@ -108,7 +91,8 @@ export function RegisterPage() {
       location,
       history,
       isPasswordlessUser,
-      recaptchaResponse,
+      reset,
+      execute,
     ]
   );
 
@@ -123,20 +107,6 @@ export function RegisterPage() {
       confirmPasswordRef.current.setCustomValidity("");
     }
   }, [password, passwordConfirmation]);
-
-  useEffect(() => {
-    if (!acceptTermsRef.current) {
-      return;
-    }
-
-    if (!acceptTerms) {
-      acceptTermsRef.current.setCustomValidity(
-        "You must accept the terms to continue."
-      );
-    } else {
-      acceptTermsRef.current.setCustomValidity("");
-    }
-  }, [acceptTerms]);
 
   useEffect(() => {
     if (!loading && isAuthenticated && !isPasswordlessUser) {
@@ -198,28 +168,20 @@ export function RegisterPage() {
                 />
               </FieldRow>
               {!isPasswordlessUser && (
-                <FieldRow>
-                  <InputField
-                    id="acceptTerms"
-                    type="checkbox"
-                    name="acceptTerms"
-                    onChange={(e) => setAcceptTerms(e.target.checked)}
-                    checked={acceptTerms}
-                    label="Accept Privacy Policy"
-                    ref={acceptTermsRef}
-                  />
-                  <a target="_blank" href={privacyPolicyUrl}>
+                <Caption>
+                  This site is protected by ReCAPTCHA and the Google{" "}
+                  <Link href="https://www.google.com/policies/privacy/">
                     Privacy Policy
-                  </a>
-                </FieldRow>
-              )}
-              {!isPasswordlessUser && recaptchaKey && (
-                <FieldRow>
-                  <RecaptchaInput
-                    publicKey={recaptchaKey}
-                    onResponse={setRecaptchaResponse}
-                  />
-                </FieldRow>
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="https://policies.google.com/terms">
+                    Terms of Service
+                  </Link>{" "}
+                  apply.
+                  <br />
+                  By clicking "Go", you agree to our{" "}
+                  <Link href={privacyPolicyUrl}>Terms and conditions</Link>
+                </Caption>
               )}
               {error && (
                 <FieldRow>
@@ -231,6 +193,7 @@ export function RegisterPage() {
                   {registering ? "Registering..." : "Register"}
                 </Button>
               </FieldRow>
+              <div id={recaptchaId} />
             </form>
           </div>
           <div className={styles.authLinks}>
