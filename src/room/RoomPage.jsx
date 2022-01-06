@@ -47,7 +47,7 @@ export function RoomPage() {
   }
 
   return (
-    <GroupCallLoader roomId={roomId} viaServers={viaServers}>
+    <GroupCallLoader client={client} roomId={roomId} viaServers={viaServers}>
       {(groupCall) => (
         <GroupCallView
           client={client}

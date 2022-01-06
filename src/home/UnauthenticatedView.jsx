@@ -63,7 +63,7 @@ export function UnauthenticatedView() {
         }
       });
     },
-    [register]
+    [register, reset, execute]
   );
 
   const { modalState, modalProps } = useModalTriggerState();
