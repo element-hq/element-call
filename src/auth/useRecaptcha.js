@@ -52,6 +52,10 @@ export function useRecaptcha(sitekey) {
   }, [recaptchaId, sitekey]);
 
   const execute = useCallback(() => {
+    if (!sitekey) {
+      return Promise.resolve(null);
+    }
+
     if (!window.grecaptcha) {
       return Promise.reject(new Error("Recaptcha not loaded"));
     }
