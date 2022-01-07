@@ -1,0 +1,31 @@
+.footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px;
+}
+
+.footer p {
+  margin-bottom: 0;
+}
+
+.footer .mobileLoginLink {
+  display: flex;
+  margin-bottom: 24px;
+}
+
+.form {
+  padding: 0 24px;
+  justify-content: center;
+  max-width: 360px;
+}
+
+.form > * + * {
+  margin-bottom: 24px;
+}
+
+@media (min-width: 800px) {
+  .mobileLoginLink {
+    display: none;
+  }
+}

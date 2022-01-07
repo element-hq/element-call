@@ -1,3 +1,17 @@
 .userButton svg * {
   fill: var(--textColor1);
 }
+
+.avatar {
+  width: 24px;
+  height: 24px;
+  font-size: 12px;
+}
+
+@media (min-width: 800px) {
+  .avatar {
+    width: 32px;
+    height: 32px;
+    font-size: 15px;
+  }
+}

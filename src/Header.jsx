@@ -6,6 +6,7 @@ import { ReactComponent as Logo } from "./icons/Logo.svg";
 import { ReactComponent as VideoIcon } from "./icons/Video.svg";
 import { ReactComponent as ArrowLeftIcon } from "./icons/ArrowLeft.svg";
 import { useButton } from "@react-aria/button";
+import { Subtitle } from "./typography/Typography";
 
 export function Header({ children, className, ...rest }) {
   return (
@@ -15,10 +16,15 @@ export function Header({ children, className, ...rest }) {
   );
 }
 
-export function LeftNav({ children, className, ...rest }) {
+export function LeftNav({ children, className, hideMobile, ...rest }) {
   return (
     <div
-      className={classNames(styles.nav, styles.leftNav, className)}
+      className={classNames(
+        styles.nav,
+        styles.leftNav,
+        { [styles.hideMobile]: hideMobile },
+        className
+      )}
       {...rest}
     >
       {children}
@@ -26,10 +32,15 @@ export function LeftNav({ children, className, ...rest }) {
   );
 }
 
-export function RightNav({ children, className, ...rest }) {
+export function RightNav({ children, className, hideMobile, ...rest }) {
   return (
     <div
-      className={classNames(styles.nav, styles.rightNav, className)}
+      className={classNames(
+        styles.nav,
+        styles.rightNav,
+        { [styles.hideMobile]: hideMobile },
+        className
+      )}
       {...rest}
     >
       {children}
@@ -37,9 +48,9 @@ export function RightNav({ children, className, ...rest }) {
   );
 }
 
-export function HeaderLogo() {
+export function HeaderLogo({ className }) {
   return (
-    <Link className={styles.logo} to="/">
+    <Link className={classNames(styles.headerLogo, className)} to="/">
       <Logo />
     </Link>
   );
@@ -51,7 +62,7 @@ export function RoomHeaderInfo({ roomName }) {
       <div className={styles.roomAvatar}>
         <VideoIcon width={16} height={16} />
       </div>
-      <h3>{roomName}</h3>
+      <Subtitle fontWeight="semiBold">{roomName}</Subtitle>
     </>
   );
 }
