@@ -52,7 +52,7 @@ export function InCallView({
     for (const callFeed of userMediaFeeds) {
       participants.push({
         id: callFeed.stream.id,
-        usermediaCallFeed: callFeed,
+        callFeed,
         isActiveSpeaker:
           screenshareFeeds.length === 0
             ? callFeed.userId === activeSpeaker
@@ -61,13 +61,19 @@ export function InCallView({
     }
 
     for (const callFeed of screenshareFeeds) {
-      const participant = participants.find(
-        (p) => p.usermediaCallFeed.userId === callFeed.userId
+      const userMediaItem = items.find(
+        (item) => item.callFeed.userId === callFeed.userId
       );
 
-      if (participant) {
-        participant.screenshareCallFeed = callFeed;
+      if (userMediaItem) {
+        userMediaItem.presenter = true;
       }
+
+      items.push({
+        id: callFeed.stream.id,
+        callFeed,
+        focused: true,
+      });
     }
 
     return participants;
