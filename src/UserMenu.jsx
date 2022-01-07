@@ -1,58 +1,34 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useMemo } from "react";
+import { Item } from "@react-stately/collections";
 import { Button, LinkButton } from "./button";
-import { PopoverMenuTrigger } from "./PopoverMenu";
+import { PopoverMenuTrigger } from "./popover/PopoverMenu";
+import { Menu } from "./Menu";
+import { Tooltip, TooltipTrigger } from "./Tooltip";
+import { Avatar } from "./Avatar";
 import { ReactComponent as UserIcon } from "./icons/User.svg";
 import { ReactComponent as LoginIcon } from "./icons/Login.svg";
 import { ReactComponent as LogoutIcon } from "./icons/Logout.svg";
 import styles from "./UserMenu.module.css";
-import { Item } from "@react-stately/collections";
-import { Menu } from "./Menu";
-import { useHistory, useLocation } from "react-router-dom";
-import { useClient, useProfile } from "./ConferenceCallManagerHooks";
-import { useModalTriggerState } from "./Modal";
-import { ProfileModal } from "./ProfileModal";
-import { Tooltip, TooltipTrigger } from "./Tooltip";
-import { Avatar } from "./Avatar";
+import { useLocation } from "react-router-dom";
 
-export function UserMenu({ disableLogout }) {
+export function UserMenu({
+  disableLogout,
+  isAuthenticated,
+  isPasswordlessUser,
+  displayName,
+  avatarUrl,
+  onAction,
+}) {
   const location = useLocation();
-  const history = useHistory();
-  const {
-    isAuthenticated,
-    isGuest,
-    isPasswordlessUser,
-    logout,
-    userName,
-    client,
-  } = useClient();
-  const { displayName, avatarUrl } = useProfile(client);
-  const { modalState, modalProps } = useModalTriggerState();
-
-  const onAction = useCallback(
-    (value) => {
-      switch (value) {
-        case "user":
-          modalState.open();
-          break;
-        case "logout":
-          logout();
-          break;
-        case "login":
-          history.push("/login", { state: { from: location } });
-          break;
-      }
-    },
-    [history, location, logout, modalState]
-  );
 
   const items = useMemo(() => {
     const arr = [];
 
-    if (isAuthenticated && !isGuest) {
+    if (isAuthenticated) {
       arr.push({
         key: "user",
         icon: UserIcon,
-        label: displayName || userName,
+        label: displayName,
       });
 
       if (isPasswordlessUser) {
@@ -73,9 +49,9 @@ export function UserMenu({ disableLogout }) {
     }
 
     return arr;
-  }, [isAuthenticated, isGuest, userName, displayName]);
+  }, [isAuthenticated, isPasswordlessUser, displayName, disableLogout]);
 
-  if (isGuest || !isAuthenticated) {
+  if (!isAuthenticated) {
     return (
       <LinkButton to={{ pathname: "/login", state: { from: location } }}>
         Log in
@@ -84,46 +60,36 @@ export function UserMenu({ disableLogout }) {
   }
 
   return (
-    <>
-      <PopoverMenuTrigger placement="bottom right">
-        <TooltipTrigger>
-          <Button variant="icon" className={styles.userButton}>
-            {isAuthenticated && !isGuest && !isPasswordlessUser ? (
-              <Avatar
-                size="sm"
-                src={avatarUrl}
-                fallback={(displayName || userName).slice(0, 1).toUpperCase()}
-              />
-            ) : (
-              <UserIcon />
-            )}
-          </Button>
-          {(props) => (
-            <Tooltip position="bottomLeft" {...props}>
-              Profile
-            </Tooltip>
+    <PopoverMenuTrigger placement="bottom right">
+      <TooltipTrigger>
+        <Button variant="icon" className={styles.userButton}>
+          {isAuthenticated && !isPasswordlessUser ? (
+            <Avatar
+              size="sm"
+              className={styles.avatar}
+              src={avatarUrl}
+              fallback={displayName.slice(0, 1).toUpperCase()}
+            />
+          ) : (
+            <UserIcon />
           )}
-        </TooltipTrigger>
+        </Button>
         {(props) => (
-          <Menu {...props} label="User menu" onAction={onAction}>
-            {items.map(({ key, icon: Icon, label }) => (
-              <Item key={key} textValue={label}>
-                <Icon />
-                <span>{label}</span>
-              </Item>
-            ))}
-          </Menu>
+          <Tooltip position="bottomLeft" {...props}>
+            Profile
+          </Tooltip>
         )}
-      </PopoverMenuTrigger>
-      {modalState.isOpen && (
-        <ProfileModal
-          client={client}
-          isAuthenticated={isAuthenticated}
-          isGuest={isGuest}
-          isPasswordlessUser={isPasswordlessUser}
-          {...modalProps}
-        />
+      </TooltipTrigger>
+      {(props) => (
+        <Menu {...props} label="User menu" onAction={onAction}>
+          {items.map(({ key, icon: Icon, label }) => (
+            <Item key={key} textValue={label}>
+              <Icon />
+              <span>{label}</span>
+            </Item>
+          ))}
+        </Menu>
       )}
-    </>
+    </PopoverMenuTrigger>
   );
 }

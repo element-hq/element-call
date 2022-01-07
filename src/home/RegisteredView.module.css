@@ -1,0 +1,19 @@
+.form {
+  padding: 0 24px;
+  justify-content: center;
+  max-width: 409px;
+  width: calc(100% - 48px);
+  margin-bottom: 72px;
+}
+
+.fieldRow {
+  margin-bottom: 0;
+}
+
+.button {
+  padding: 0 24px;
+}
+
+.recentCallsTitle {
+  margin-bottom: 32px;
+}

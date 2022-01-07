@@ -16,14 +16,22 @@
   height: 64px;
 }
 
-.logo {
-  display: flex;
+.headerLogo {
+  display: none;
   align-items: center;
   text-decoration: none;
 }
 
+.leftNav.hideMobile {
+  display: none;
+}
+
 .leftNav > * {
   margin-right: 12px;
+}
+
+.leftNav h3 {
+  margin: 0;
 }
 
 .rightNav {
@@ -34,13 +42,17 @@
   margin-right: 24px;
 }
 
+.rightNav.hideMobile {
+  display: none;
+}
+
 .nav > :last-child {
   margin-right: 0;
 }
 
 .roomAvatar {
   position: relative;
-  display: flex;
+  display: none;
   justify-content: center;
   align-items: center;
   width: 36px;
@@ -93,7 +105,18 @@
 }
 
 @media (min-width: 800px) {
+  .headerLogo,
+  .roomAvatar,
+  .leftNav.hideMobile,
+  .rightNav.hideMobile {
+    display: flex;
+  }
+
+  .leftNav h3 {
+    font-size: 18px;
+  }
+
   .nav {
-    height: 98px;
+    height: 76px;
   }
 }

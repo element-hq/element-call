@@ -14,47 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useState } from "react";
-import {
-  BrowserRouter as Router,
-  Switch,
-  Route,
-  useLocation,
-  useHistory,
-} from "react-router-dom";
+import React from "react";
+import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
-import { Home } from "./Home";
-import { LoginPage } from "./LoginPage";
-import { RegisterPage } from "./RegisterPage";
-import { Room } from "./Room";
-import {
-  ClientProvider,
-  defaultHomeserverHost,
-} from "./ConferenceCallManagerHooks";
-import { useFocusVisible } from "@react-aria/interactions";
-import styles from "./App.module.css";
-import { LoadingView } from "./FullScreenView";
+import { HomePage } from "./home/HomePage";
+import { LoginPage } from "./auth/LoginPage";
+import { RegisterPage } from "./auth/RegisterPage";
+import { RoomPage } from "./room/RoomPage";
+import { RoomRedirect } from "./room/RoomRedirect";
+import { ClientProvider } from "./ClientContext";
+import { usePageFocusStyle } from "./usePageFocusStyle";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
 export default function App({ history }) {
-  const { isFocusVisible } = useFocusVisible();
-
-  useEffect(() => {
-    const classList = document.body.classList;
-    const hasClass = classList.contains(styles.hideFocus);
-
-    if (isFocusVisible && hasClass) {
-      classList.remove(styles.hideFocus);
-    } else if (!isFocusVisible && !hasClass) {
-      classList.add(styles.hideFocus);
-    }
-
-    return () => {
-      classList.remove(styles.hideFocus);
-    };
-  }, [isFocusVisible]);
+  usePageFocusStyle();
 
   return (
     <Router history={history}>
@@ -62,7 +37,7 @@ export default function App({ history }) {
         <OverlayProvider>
           <Switch>
             <SentryRoute exact path="/">
-              <Home />
+              <HomePage />
             </SentryRoute>
             <SentryRoute exact path="/login">
               <LoginPage />
@@ -71,7 +46,7 @@ export default function App({ history }) {
               <RegisterPage />
             </SentryRoute>
             <SentryRoute path="/room/:roomId?">
-              <Room />
+              <RoomPage />
             </SentryRoute>
             <SentryRoute path="*">
               <RoomRedirect />
@@ -81,25 +56,4 @@ export default function App({ history }) {
       </ClientProvider>
     </Router>
   );
-}
-
-function RoomRedirect() {
-  const { pathname } = useLocation();
-  const history = useHistory();
-
-  useEffect(() => {
-    let roomId = pathname;
-
-    if (pathname.startsWith("/")) {
-      roomId = roomId.substr(1, roomId.length);
-    }
-
-    if (!roomId.startsWith("#") && !roomId.startsWith("!")) {
-      roomId = `#${roomId}:${defaultHomeserverHost}`;
-    }
-
-    history.replace(`/room/${roomId}`);
-  }, [pathname, history]);
-
-  return <LoadingView />;
 }

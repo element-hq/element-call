@@ -1,7 +1,7 @@
-import React, { forwardRef, useRef } from "react";
+import React, { forwardRef } from "react";
 import { useTooltipTriggerState } from "@react-stately/tooltip";
 import { useTooltipTrigger, useTooltip } from "@react-aria/tooltip";
-import { mergeProps } from "@react-aria/utils";
+import { mergeProps, useObjectRef } from "@react-aria/utils";
 import styles from "./Tooltip.module.css";
 import classNames from "classnames";
 
@@ -20,8 +20,7 @@ export function Tooltip({ position, state, ...props }) {
 
 export const TooltipTrigger = forwardRef(({ children, ...rest }, ref) => {
   const tooltipState = useTooltipTriggerState(rest);
-  const fallbackRef = useRef();
-  const triggerRef = ref || fallbackRef;
+  const triggerRef = useObjectRef(ref);
   const { triggerProps, tooltipProps } = useTooltipTrigger(
     rest,
     tooltipState,

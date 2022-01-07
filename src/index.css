@@ -20,6 +20,8 @@ limitations under the License.
    Therefore we define a unicode-range to load which excludes the glyphs
    (to avoid having to maintain a fork of Inter). */
 
+@import "normalize.css/normalize.css";
+
 :root {
   --inter-unicode-range: U+0000-20e2, U+20e4-23ce, U+23d0-24c1, U+24c3-259f,
     U+25c2-2664, U+2666-2763, U+2765-2b05, U+2b07-2b1b, U+2b1d-10FFFF;
@@ -35,6 +37,7 @@ limitations under the License.
   --textColor4: #a9b2bc;
   --inputBorderColor: #394049;
   --inputBorderColorFocused: #0086e6;
+  --linkColor: #0086e6;
 }
 
 @font-face {
@@ -137,6 +140,44 @@ body,
 #root {
   display: flex;
   flex-direction: column;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+p,
+a {
+  margin-top: 0;
+}
+
+/* Headline Semi Bold */
+h1 {
+  font-weight: 600;
+  font-size: 32px;
+  line-height: 39px;
+}
+
+/* Title */
+h2 {
+  font-weight: 600;
+  font-size: 24px;
+  line-height: 29px;
+}
+
+/* Subtitle */
+h3 {
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 22px;
+}
+
+/* Body */
+p {
+  font-size: 15px;
+  line-height: 24px;
 }
 
 a {

@@ -1,0 +1,70 @@
+.callTileSpacer,
+.callTile {
+  width: 329px;
+}
+
+.callTileSpacer {
+  height: 0;
+}
+
+.callTile {
+  height: 95px;
+  padding: 12px;
+  background-color: var(--bgColor2);
+  border-radius: 8px;
+  overflow: hidden;
+  box-sizing: border-box;
+  position: relative;
+  user-select: none;
+}
+
+.callTileLink {
+  display: flex;
+  text-decoration: none;
+  width: 100%;
+}
+
+.avatar,
+.copyButtonSpacer {
+  flex-shrink: 0;
+}
+
+.callInfo {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 0 16px;
+  color: var(--textColor1);
+  min-width: 0;
+}
+
+.callInfo > * {
+  margin-bottom: 0;
+}
+
+.facePile {
+  margin-top: 8px;
+}
+
+.copyButtonSpacer,
+.copyButton {
+  width: 16px;
+  height: 16px;
+}
+
+.copyButton {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+}
+
+.callList {
+  display: flex;
+  flex-wrap: wrap;
+  max-width: calc((329px + 24px) * 3);
+  width: calc(100% - 48px);
+  gap: 24px;
+  padding: 0 24px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
