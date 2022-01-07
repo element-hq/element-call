@@ -26,7 +26,10 @@ function waitForSync(client) {
 }
 
 export async function initClient(clientOptions) {
-  const client = matrix.createClient(clientOptions);
+  const client = matrix.createClient({
+    ...clientOptions,
+    useAuthorizationHeader: true,
+  });
 
   await client.startClient({
     // dirty hack to reduce chance of gappy syncs
