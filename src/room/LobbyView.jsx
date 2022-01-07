@@ -29,6 +29,7 @@ export function LobbyView({
   const videoRef = useMediaStream(stream, true);
 
   useEffect(() => {
+    // TODO: Only init once
     onInitLocalCallFeed();
   }, [onInitLocalCallFeed]);
 
