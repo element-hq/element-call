@@ -10,6 +10,7 @@ import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import VideoGrid, {
   useVideoGridLayout,
 } from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoGrid";
+import { VideoTileContainer } from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoTileContainer";
 import SimpleVideoGrid from "matrix-react-sdk/src/components/views/voip/GroupCallView/SimpleVideoGrid";
 import "matrix-react-sdk/res/css/views/voip/GroupCallView/_VideoGrid.scss";
 import { getAvatarUrl } from "../matrix-utils";
@@ -140,10 +141,18 @@ export function InCallView({
         <VideoGrid
           items={items}
           layout={layout}
-          getAvatar={renderAvatar}
           onFocusTile={onFocusTile}
           disableAnimations={isSafari}
-        />
+        >
+          {({ item, ...rest }) => (
+            <VideoTileContainer
+              key={item.id}
+              callFeed={item.callFeed}
+              getAvatar={renderAvatar}
+              {...rest}
+            />
+          )}
+        </VideoGrid>
       )}
       <div className={styles.footer}>
         <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />

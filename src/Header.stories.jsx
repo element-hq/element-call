@@ -1,5 +1,5 @@
 import React from "react";
-import { GridLayoutMenu } from "./GridLayoutMenu";
+import { GridLayoutMenu } from "./room/GridLayoutMenu";
 import {
   Header,
   HeaderLogo,
