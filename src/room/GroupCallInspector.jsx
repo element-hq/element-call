@@ -23,6 +23,28 @@ function getHangupCallState(call) {
   };
 }
 
+const dateFormatter = new Intl.DateTimeFormat([], {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  fractionalSecondDigits: 2,
+});
+
+const defaultCollapsedFields = [
+  "org.matrix.msc3401.call",
+  "org.matrix.msc3401.call.member",
+  "calls",
+  "callStats",
+  "hangupCalls",
+  "toDeviceEvents",
+  "sentVoipEvents",
+  "content",
+];
+
+function shouldCollapse({ name, src, type, namespace }) {
+  return defaultCollapsedFields.includes(name);
+}
+
 export function GroupCallInspector({ client, groupCall, show }) {
   const [roomStateEvents, setRoomStateEvents] = useState([]);
   const [toDeviceEvents, setToDeviceEvents] = useState([]);
@@ -42,6 +64,7 @@ export function GroupCallInspector({ client, groupCall, show }) {
         setRoomStateEvents((prev) => [
           ...prev,
           {
+            timestamp: dateFormatter.format(new Date()),
             eventType: event.getType(),
             stateKey: event.getStateKey(),
             content: event.getContent(),
@@ -108,12 +131,20 @@ export function GroupCallInspector({ client, groupCall, show }) {
 
       setToDeviceEvents((prev) => [
         ...prev,
-        { eventType, content, sender: event.getSender() },
+        {
+          timestamp: dateFormatter.format(new Date()),
+          eventType,
+          content,
+          sender: event.getSender(),
+        },
       ]);
     }
 
     function onSendVoipEvent(event) {
-      setSentVoipEvents((prev) => [...prev, event]);
+      setSentVoipEvents((prev) => [
+        ...prev,
+        { timestamp: dateFormatter.format(new Date()), ...event },
+      ]);
     }
 
     client.on("RoomState.events", onUpdateRoomState);
@@ -214,10 +245,10 @@ export function GroupCallInspector({ client, groupCall, show }) {
         }}
         name={null}
         indentWidth={2}
-        collapsed={1}
+        shouldCollapse={shouldCollapse}
         displayDataTypes={false}
         displayObjectSize={false}
-        enableClipboard={false}
+        enableClipboard
         style={{ height: "100%", overflowY: "scroll" }}
       />
     </Resizable>
