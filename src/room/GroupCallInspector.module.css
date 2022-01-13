@@ -1,0 +1,25 @@
+.inspector {
+  background-color: var(--bgColor2);
+}
+
+.scrollContainer {
+  height: 100%;
+  overflow-y: auto;
+}
+
+.sequenceDiagramViewer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+.selectInput {
+  align-self: flex-start;
+}
+
+.sequenceDiagramViewer :global(.messageText) {
+  font-size: 12px;
+  fill: var(--textColor1) !important;
+  stroke: var(--textColor1) !important;
+}
