@@ -165,6 +165,11 @@ function reducer(state, action) {
       if (event) {
         const fromId = event.getStateKey();
 
+        remoteUserIds =
+          fromId === state.localUserId || eventsByUserId.has(fromId)
+            ? state.remoteUserIds
+            : [...state.remoteUserIds, fromId];
+
         eventsByUserId = new Map(state.eventsByUserId);
 
         if (event.getStateKey() === state.localUserId) {
@@ -194,11 +199,6 @@ function reducer(state, action) {
             },
           ]);
         }
-
-        remoteUserIds =
-          fromId === state.localUserId || eventsByUserId.has(fromId)
-            ? state.remoteUserIds
-            : [...state.remoteUserIds, fromId];
       }
 
       return {
