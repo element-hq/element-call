@@ -15,7 +15,19 @@ export function GroupCallView({
   groupCall,
   simpleGrid,
 }) {
-  const [showInspector, setShowInspector] = useState(false);
+  const [showInspector, setShowInspector] = useState(
+    () => !!localStorage.getItem("matrix-group-call-inspector")
+  );
+  const onChangeShowInspector = useCallback((show) => {
+    setShowInspector(show);
+
+    if (show) {
+      localStorage.setItem("matrix-group-call-inspector", "true");
+    } else {
+      localStorage.removeItem("matrix-group-call-inspector");
+    }
+  }, []);
+
   const {
     state,
     error,
@@ -75,7 +87,7 @@ export function GroupCallView({
         localScreenshareFeed={localScreenshareFeed}
         screenshareFeeds={screenshareFeeds}
         simpleGrid={simpleGrid}
-        setShowInspector={setShowInspector}
+        setShowInspector={onChangeShowInspector}
         showInspector={showInspector}
         roomId={roomId}
       />
@@ -102,7 +114,7 @@ export function GroupCallView({
         localVideoMuted={localVideoMuted}
         toggleLocalVideoMuted={toggleLocalVideoMuted}
         toggleMicrophoneMuted={toggleMicrophoneMuted}
-        setShowInspector={setShowInspector}
+        setShowInspector={onChangeShowInspector}
         showInspector={showInspector}
         roomId={roomId}
       />
