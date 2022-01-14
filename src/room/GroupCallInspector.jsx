@@ -55,26 +55,17 @@ function getUserName(userId) {
 }
 
 function formatContent(type, content) {
-  if (type === "m.call.invite") {
-    return `callId: ${content.call_id.slice(-4)} deviceId: ${
-      content.device_id
-    } sessionId: ${content.session_id}`;
-  } else if (type === "m.call.answer") {
-    return `callId: ${content.call_id.slice(-4)} deviceId: ${
-      content.device_id
-    } sessionId: ${content.session_id}`;
-  } else if (type === "m.call.select_answer") {
-    return `callId: ${content.call_id.slice(-4)} deviceId: ${
-      content.device_id
-    } sessionId: ${content.session_id}`;
-  } else if (type === "m.call.candidates") {
-    return `callId: ${content.call_id.slice(-4)} deviceId: ${
-      content.device_id
-    } sessionId: ${content.session_id}`;
-  } else if (type === "m.call.hangup") {
+  if (type === "m.call.hangup") {
     return `callId: ${content.call_id.slice(-4)} reason: ${
       content.reason
-    } deviceId: ${content.device_id} sessionId: ${content.session_id}`;
+    } senderSID: ${content.sender_session_id} destSID: ${
+      content.dest_session_id
+    }`;
+  }
+  if (type.startsWith("m.call.")) {
+    return `callId: ${content.call_id?.slice(-4)} senderSID: ${
+      content.sender_session_id
+    } destSID: ${content.dest_session_id}`;
   } else if (type === "org.matrix.msc3401.call.member") {
     const call =
       content["m.calls"] &&
@@ -85,9 +76,9 @@ function formatContent(type, content) {
       call["m.devices"] &&
       call["m.devices"].length > 0 &&
       call["m.devices"][0];
-    return `callId: ${call && call["m.call_id"].slice(-4)} deviceId: ${
-      device && device.device_id
-    } sessionId: ${device && device.session_id}`;
+    return `callId: ${call && call["m.call_id"].slice(-4)} sessionId: ${
+      device && device.session_id
+    }`;
   } else {
     return "";
   }
@@ -125,8 +116,8 @@ function SequenceDiagramViewer({
         events
           ? events
               .map(
-                ({ to, from, timestamp, type, content }) =>
-                  `${getUserName(from)} ->> ${getUserName(
+                ({ to, from, timestamp, type, content, ignored }) =>
+                  `${getUserName(from)} ${ignored ? "-x" : "->>"} ${getUserName(
                     to
                   )}: ${formatTimestamp(timestamp)} ${type} ${formatContent(
                     type,
@@ -186,6 +177,7 @@ function reducer(state, action) {
                 type: event.getType(),
                 content: event.getContent(),
                 timestamp: event.getTs() || Date.now(),
+                ignored: false,
               },
             ]);
           }
@@ -198,6 +190,7 @@ function reducer(state, action) {
               type: event.getType(),
               content: event.getContent(),
               timestamp: event.getTs() || Date.now(),
+              ignored: false,
             },
           ]);
         }
@@ -223,6 +216,7 @@ function reducer(state, action) {
       const eventsByUserId = new Map(state.eventsByUserId);
       const fromId = event.getSender();
       const toId = state.localUserId;
+      const content = event.getContent();
 
       const remoteUserIds = eventsByUserId.has(fromId)
         ? state.remoteUserIds
@@ -234,8 +228,9 @@ function reducer(state, action) {
           from: fromId,
           to: toId,
           type: event.getType(),
-          content: event.getContent(),
+          content,
           timestamp: event.getTs() || Date.now(),
+          ignored: state.localSessionId !== content.dest_session_id,
         },
       ]);
 
@@ -259,6 +254,7 @@ function reducer(state, action) {
           type: event.eventType,
           content: event.content,
           timestamp: Date.now(),
+          ignored: false,
         },
       ]);
 
@@ -271,8 +267,8 @@ function reducer(state, action) {
 
 function useGroupCallState(client, groupCall, pollCallStats) {
   const [state, dispatch] = useReducer(reducer, {
-    groupCall,
     localUserId: client.getUserId(),
+    localSessionId: client.getSessionId(),
     eventsByUserId: new Map(),
     remoteUserIds: [],
     callStateEvent: null,
@@ -397,7 +393,7 @@ function useGroupCallState(client, groupCall, pollCallStats) {
 }
 
 export function GroupCallInspector({ client, groupCall, show }) {
-  const [currentTab, setCurrentTab] = useState("inspector");
+  const [currentTab, setCurrentTab] = useState("sequence-diagrams");
   const [selectedUserId, setSelectedUserId] = useState();
   const state = useGroupCallState(client, groupCall, show);
 
@@ -412,10 +408,10 @@ export function GroupCallInspector({ client, groupCall, show }) {
       className={styles.inspector}
     >
       <div className={styles.toolbar}>
-        <button onClick={() => setCurrentTab("inspector")}>Inspector</button>
         <button onClick={() => setCurrentTab("sequence-diagrams")}>
           Sequence Diagrams
         </button>
+        <button onClick={() => setCurrentTab("inspector")}>Inspector</button>
       </div>
       {currentTab === "sequence-diagrams" && (
         <SequenceDiagramViewer
