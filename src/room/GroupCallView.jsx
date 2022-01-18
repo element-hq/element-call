@@ -58,12 +58,11 @@ export function GroupCallView({
   const history = useHistory();
 
   const onLeave = useCallback(() => {
+    setLeft(true);
     leave();
 
     if (!isPasswordlessUser) {
       history.push("/");
-    } else {
-      setLeft(true);
     }
   }, [leave, history]);
 

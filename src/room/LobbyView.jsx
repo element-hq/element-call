@@ -30,6 +30,7 @@ export function LobbyView({
 
   useEffect(() => {
     // TODO: Only init once
+    console.log("onInitLocalCallFeed");
     onInitLocalCallFeed();
   }, [onInitLocalCallFeed]);
 
