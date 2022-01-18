@@ -28,6 +28,11 @@ export default defineConfig(({ mode }) => {
       proxy: {
         "/_matrix": env.VITE_DEFAULT_HOMESERVER || "http://localhost:8008",
       },
+      fs: {
+        // Current we're bundling files linked in from matrix-react-sdk
+        // We should re-enable this if we plan to run Vite outside the dev server mode
+        strict: false,
+      },
     },
     resolve: {
       alias: {
