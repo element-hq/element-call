@@ -49,9 +49,11 @@ function shouldCollapse({ name, src, type, namespace }) {
 }
 
 function getUserName(userId) {
-  const match = userId.match("@(.+):");
+  const match = userId.match(/@([^\:]+):/);
 
-  return match && match.length > 0 ? match[1].replace("-", " ") : userId;
+  return match && match.length > 0
+    ? match[1].replace("-", " ").replace("W", "")
+    : userId.replace("W", "");
 }
 
 function formatContent(type, content) {
