@@ -100,7 +100,7 @@ export function useRecaptcha(sitekey) {
         });
       }
     });
-  }, [recaptchaId]);
+  }, [recaptchaId, sitekey]);
 
   const reset = useCallback(() => {
     if (window.grecaptcha) {
