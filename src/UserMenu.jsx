@@ -10,6 +10,7 @@ import { ReactComponent as LoginIcon } from "./icons/Login.svg";
 import { ReactComponent as LogoutIcon } from "./icons/Logout.svg";
 import styles from "./UserMenu.module.css";
 import { useLocation } from "react-router-dom";
+import { Body } from "./typography/Typography";
 
 export function UserMenu({
   disableLogout,
@@ -83,9 +84,9 @@ export function UserMenu({
       {(props) => (
         <Menu {...props} label="User menu" onAction={onAction}>
           {items.map(({ key, icon: Icon, label }) => (
-            <Item key={key} textValue={label}>
-              <Icon />
-              <span>{label}</span>
+            <Item key={key} textValue={label} className={styles.menuItem}>
+              <Icon width={24} height={24} className={styles.menuIcon} />
+              <Body overflowEllipsis>{label}</Body>
             </Item>
           ))}
         </Menu>
