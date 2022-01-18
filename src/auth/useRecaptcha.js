@@ -22,6 +22,7 @@ export function useRecaptcha(sitekey) {
         sitekey,
         size: "invisible",
         callback: (response) => {
+          console.log("callback", response);
           if (promiseRef.current) {
             promiseRef.current.resolve(response);
           }
@@ -53,10 +54,12 @@ export function useRecaptcha(sitekey) {
 
   const execute = useCallback(() => {
     if (!sitekey) {
+      console.log("no site key");
       return Promise.resolve(null);
     }
 
     if (!window.grecaptcha) {
+      console.log("Recaptcha not loaded");
       return Promise.reject(new Error("Recaptcha not loaded"));
     }
 
@@ -64,6 +67,7 @@ export function useRecaptcha(sitekey) {
       const observer = new MutationObserver((mutationsList) => {
         for (const item of mutationsList) {
           if (item.target.style?.visibility !== "visible") {
+            console.log("Recaptcha dismissed");
             reject(new Error("Recaptcha dismissed"));
             observer.disconnect();
             return;
@@ -73,10 +77,12 @@ export function useRecaptcha(sitekey) {
 
       promiseRef.current = {
         resolve: (value) => {
+          console.log("Recaptcha resolved", value);
           resolve(value);
           observer.disconnect();
         },
         reject: (error) => {
+          console.log("Recaptcha rejected", error);
           reject(error);
           observer.disconnect();
         },
@@ -98,6 +104,7 @@ export function useRecaptcha(sitekey) {
 
   const reset = useCallback(() => {
     if (window.grecaptcha) {
+      console.log("Recaptcha reset");
       window.grecaptcha.reset();
     }
   }, [recaptchaId]);
