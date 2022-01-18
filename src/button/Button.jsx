@@ -34,12 +34,17 @@ export const Button = forwardRef(
       iconStyle,
       className,
       children,
+      onPress,
+      onPressStart,
       ...rest
     },
     ref
   ) => {
     const buttonRef = useObjectRef(ref);
-    const { buttonProps } = useButton(rest, buttonRef);
+    const { buttonProps } = useButton(
+      { onPress, onPressStart, ...rest },
+      buttonRef
+    );
 
     // TODO: react-aria's useButton hook prevents form submission via keyboard
     // Remove the hack below after this is merged https://github.com/adobe/react-spectrum/pull/904
