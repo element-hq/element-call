@@ -64,9 +64,7 @@ export function RegisterPage() {
         if (isPasswordlessUser) {
           await changePassword(password);
         } else {
-          console.log("executing recaptcha");
           const recaptchaResponse = await execute();
-          console.log("recaptcha response", recaptchaResponse);
           await register(userName, password, recaptchaResponse);
         }
       }
