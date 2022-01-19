@@ -36,7 +36,6 @@ export const Button = forwardRef(
       children,
       onPress,
       onPressStart,
-      onClick, // Use onPress instead of onClick
       ...rest
     },
     ref
