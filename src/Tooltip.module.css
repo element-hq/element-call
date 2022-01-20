@@ -1,6 +1,5 @@
 .tooltip {
   background-color: var(--bgColor2);
-  position: absolute;
   flex-direction: row;
   justify-content: center;
   align-items: center;
@@ -9,25 +8,5 @@
   border-radius: 8px;
   max-width: 135px;
   width: max-content;
-  z-index: 1;
-  left: 50%;
-  transform: translateX(-50%);
   text-align: center;
-}
-
-.tooltip.top {
-  bottom: calc(100% + 6px);
-}
-
-.tooltip.bottom {
-  top: calc(100% + 6px);
-}
-
-.tooltip.bottomLeft {
-  top: calc(100% + 6px);
-  left: -25%;
-}
-
-.tooltipContainer {
-  position: relative;
 }

@@ -16,11 +16,7 @@ export function GridLayoutMenu({ layout, setLayout }) {
         <Button variant="icon">
           {layout === "spotlight" ? <SpotlightIcon /> : <FreedomIcon />}
         </Button>
-        {(props) => (
-          <Tooltip position="bottom" {...props}>
-            Layout Type
-          </Tooltip>
-        )}
+        {() => "Layout Type"}
       </TooltipTrigger>
       {(props) => (
         <Menu {...props} label="Grid layout menu" onAction={setLayout}>
