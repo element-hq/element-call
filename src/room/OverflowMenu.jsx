@@ -38,15 +38,11 @@ export function OverflowMenu({
   return (
     <>
       <PopoverMenuTrigger disableOnState>
-        <TooltipTrigger>
+        <TooltipTrigger placement="top">
           <Button variant="toolbar">
             <OverflowIcon />
           </Button>
-          {(props) => (
-            <Tooltip position="top" {...props}>
-              More
-            </Tooltip>
-          )}
+          {() => "More"}
         </TooltipTrigger>
         {(props) => (
           <Menu {...props} label="More menu" onAction={onAction}>

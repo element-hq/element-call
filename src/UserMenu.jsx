@@ -62,7 +62,7 @@ export function UserMenu({
 
   return (
     <PopoverMenuTrigger placement="bottom right">
-      <TooltipTrigger>
+      <TooltipTrigger placement="bottom left">
         <Button variant="icon" className={styles.userButton}>
           {isAuthenticated && !isPasswordlessUser ? (
             <Avatar
@@ -75,11 +75,7 @@ export function UserMenu({
             <UserIcon />
           )}
         </Button>
-        {(props) => (
-          <Tooltip position="bottomLeft" {...props}>
-            Profile
-          </Tooltip>
-        )}
+        {() => "Profile"}
       </TooltipTrigger>
       {(props) => (
         <Menu {...props} label="User menu" onAction={onAction}>
