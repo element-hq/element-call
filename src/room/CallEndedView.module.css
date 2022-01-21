@@ -46,7 +46,6 @@ limitations under the License.
   flex: 1;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
 }
 
 .logo {
@@ -69,5 +68,9 @@ limitations under the License.
 
   .container {
     min-height: calc(100% - 76px);
+  }
+
+  .main {
+    justify-content: center;
   }
 }
