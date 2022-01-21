@@ -23,10 +23,6 @@
   min-height: 32px;
 }
 
-.option.selected {
-  color: #0dbd8b;
-}
-
 .option.focused {
   background-color: rgba(111, 120, 130, 0.2);
 }
