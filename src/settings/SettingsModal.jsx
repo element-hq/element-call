@@ -1,7 +1,7 @@
 import React from "react";
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
-import { TabContainer, TabItem } from "../Tabs";
+import { TabContainer, TabItem } from "../tabs/Tabs";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
