@@ -12,6 +12,8 @@ import { Body, Link } from "../typography/Typography";
 import { Avatar } from "../Avatar";
 import { getAvatarUrl } from "../matrix-utils";
 import { useProfile } from "../profile/useProfile";
+import useMeasure from "react-use-measure";
+import { ResizeObserver } from "@juggle/resize-observer";
 
 export function LobbyView({
   client,
@@ -31,7 +33,8 @@ export function LobbyView({
   const { stream } = useCallFeed(localCallFeed);
   const videoRef = useMediaStream(stream, true);
   const { displayName, avatarUrl } = useProfile(client);
-  const avatarSize = 96;
+  const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
+  const avatarSize = (previewBounds.height - 66) / 2;
 
   useEffect(() => {
     onInitLocalCallFeed();
@@ -49,7 +52,7 @@ export function LobbyView({
       </Header>
       <div className={styles.joinRoom}>
         <div className={styles.joinRoomContent}>
-          <div className={styles.preview}>
+          <div className={styles.preview} ref={previewRef}>
             <video ref={videoRef} muted playsInline disablePictureInPicture />
             {state === GroupCallState.LocalCallFeedUninitialized && (
               <Body fontWeight="semiBold" className={styles.webcamPermissions}>

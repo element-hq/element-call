@@ -38,7 +38,13 @@ export default defineConfig(({ mode }) => {
       alias: {
         "$(res)": path.resolve(__dirname, "node_modules/matrix-react-sdk/res"),
       },
-      dedupe: ["react", "react-dom", "matrix-js-sdk"],
+      dedupe: [
+        "react",
+        "react-dom",
+        "matrix-js-sdk",
+        "react-use-measure",
+        "@juggle/resize-observer",
+      ],
     },
   };
 });
