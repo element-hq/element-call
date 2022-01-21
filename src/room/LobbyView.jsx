@@ -9,6 +9,9 @@ import { getRoomUrl } from "../matrix-utils";
 import { OverflowMenu } from "./OverflowMenu";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { Body, Link } from "../typography/Typography";
+import { Avatar } from "../Avatar";
+import { getAvatarUrl } from "../matrix-utils";
+import { useProfile } from "../profile/useProfile";
 
 export function LobbyView({
   client,
@@ -27,6 +30,8 @@ export function LobbyView({
 }) {
   const { stream } = useCallFeed(localCallFeed);
   const videoRef = useMediaStream(stream, true);
+  const { displayName, avatarUrl } = useProfile(client);
+  const avatarSize = 96;
 
   useEffect(() => {
     onInitLocalCallFeed();
@@ -58,6 +63,20 @@ export function LobbyView({
             )}
             {state === GroupCallState.LocalCallFeedInitialized && (
               <>
+                {localVideoMuted && (
+                  <div className={styles.avatarContainer}>
+                    <Avatar
+                      style={{
+                        width: avatarSize,
+                        height: avatarSize,
+                        borderRadius: avatarSize,
+                        fontSize: Math.round(avatarSize / 2),
+                      }}
+                      src={avatarUrl && getAvatarUrl(client, avatarUrl, 96)}
+                      fallback={displayName.slice(0, 1).toUpperCase()}
+                    />
+                  </div>
+                )}
                 <Button
                   className={styles.joinCallButton}
                   disabled={state !== GroupCallState.LocalCallFeedInitialized}

@@ -57,11 +57,24 @@ limitations under the License.
 }
 
 .preview video {
-  width: 100%;
+  width: calc(100% + 1px);
   height: 100%;
   object-fit: contain;
   background-color: black;
-  transform: scaleX(-1);
+  /* transform scale doesn't perfectly match width, so make -1.01 border issues */
+  transform: scaleX(-1.01);
+}
+
+.avatarContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 66px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bgColor3);
 }
 
 .webcamPermissions {
