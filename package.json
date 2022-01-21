@@ -44,9 +44,6 @@
   },
   "devDependencies": {
     "@babel/core": "^7.16.5",
-    "@storybook/addon-actions": "^6.5.0-alpha.5",
-    "@storybook/addon-essentials": "^6.5.0-alpha.5",
-    "@storybook/addon-links": "^6.5.0-alpha.5",
     "@storybook/react": "^6.5.0-alpha.5",
     "babel-loader": "^8.2.3",
     "sass": "^1.42.1",
