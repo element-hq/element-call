@@ -107,7 +107,7 @@ export function RegisteredView({ client }) {
               <Title className={styles.recentCallsTitle}>
                 Your recent Calls
               </Title>
-              <CallList rooms={recentRooms} client={client} />
+              <CallList rooms={recentRooms} client={client} disableFacepile />
             </>
           )}
         </main>
