@@ -54,6 +54,16 @@ export function ProfileModal({
         <form onSubmit={onSubmit}>
           <FieldRow>
             <InputField
+              id="userId"
+              name="userId"
+              label="User Id"
+              type="text"
+              disabled
+              value={client.getUserId()}
+            />
+          </FieldRow>
+          <FieldRow>
+            <InputField
               id="displayName"
               name="displayName"
               label="Display Name"
