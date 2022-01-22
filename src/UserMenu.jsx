@@ -64,7 +64,7 @@ export function UserMenu({
     <PopoverMenuTrigger placement="bottom right">
       <TooltipTrigger placement="bottom left">
         <Button variant="icon" className={styles.userButton}>
-          {isAuthenticated && !isPasswordlessUser ? (
+          {isAuthenticated && (!isPasswordlessUser || avatarUrl) ? (
             <Avatar
               size="sm"
               className={styles.avatar}

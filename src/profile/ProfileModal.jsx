@@ -36,7 +36,7 @@ export function ProfileModal({
 
       saveProfile({
         displayName,
-        avatar,
+        avatar: avatar && avatar.size > 0 ? avatar : undefined,
       });
     },
     [saveProfile]
@@ -65,7 +65,7 @@ export function ProfileModal({
               onChange={onChangeDisplayName}
             />
           </FieldRow>
-          {isAuthenticated && !isPasswordlessUser && (
+          {isAuthenticated && (
             <FieldRow>
               <InputField
                 type="file"
