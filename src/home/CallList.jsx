@@ -49,7 +49,7 @@ function CallTile({
           size="lg"
           bgKey={name}
           src={avatarUrl}
-          fallback={<VideoIcon width={16} height={16} />}
+          fallback={name.slice(0, 1).toUpperCase()}
           className={styles.avatar}
         />
         <div className={styles.callInfo}>
