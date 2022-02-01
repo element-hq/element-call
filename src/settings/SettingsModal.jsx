@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
 import { TabContainer, TabItem } from "../tabs/Tabs";
@@ -8,7 +8,7 @@ import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
 import { SelectInput } from "../input/SelectInput";
 import { Item } from "@react-stately/collections";
 import { useMediaHandler } from "./useMediaHandler";
-import { FieldRow, InputField } from "../input/Input";
+import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { useSubmitRageshake } from "./useSubmitRageshake";
 
@@ -27,7 +27,8 @@ export function SettingsModal({
     setVideoInput,
   } = useMediaHandler(client);
 
-  const { submitRageshake, downloadDebugLog } = useSubmitRageshake();
+  const { submitRageshake, sending, sent, error, downloadDebugLog } =
+    useSubmitRageshake();
 
   return (
     <Modal
@@ -93,8 +94,19 @@ export function SettingsModal({
             />
           </FieldRow>
           <FieldRow>
-            <Button onPress={submitRageshake}>Send Debug Logs</Button>
+            <Button onPress={submitRageshake}>
+              {sent
+                ? "Debug Logs Sent"
+                : sending
+                ? "Sending Debug Logs..."
+                : "Send Debug Logs"}
+            </Button>
           </FieldRow>
+          {error && (
+            <FieldRow>
+              <ErrorMessage>{error.message}</ErrorMessage>
+            </FieldRow>
+          )}
           <FieldRow>
             <Button onPress={downloadDebugLog}>Download Debug Logs</Button>
           </FieldRow>
