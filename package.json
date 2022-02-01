@@ -32,6 +32,7 @@
     "matrix-react-sdk": "github:matrix-org/matrix-react-sdk#robertlong/group-call",
     "mermaid": "^8.13.8",
     "normalize.css": "^8.0.1",
+    "pako": "^2.0.4",
     "postcss-preset-env": "^6.7.0",
     "re-resizable": "^6.9.0",
     "react": "^17.0.0",

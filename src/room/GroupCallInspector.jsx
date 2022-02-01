@@ -1,5 +1,12 @@
 import { Resizable } from "re-resizable";
-import React, { useEffect, useState, useReducer, useRef } from "react";
+import React, {
+  useEffect,
+  useState,
+  useReducer,
+  useRef,
+  createContext,
+  useContext,
+} from "react";
 import ReactJson from "react-json-view";
 import mermaid from "mermaid";
 import styles from "./GroupCallInspector.module.css";
@@ -90,7 +97,18 @@ function formatTimestamp(timestamp) {
   return dateFormatter.format(timestamp);
 }
 
-function SequenceDiagramViewer({
+export const InspectorContext = createContext();
+
+export function InspectorContextProvider({ children }) {
+  const context = useState({});
+  return (
+    <InspectorContext.Provider value={context}>
+      {children}
+    </InspectorContext.Provider>
+  );
+}
+
+export function SequenceDiagramViewer({
   localUserId,
   remoteUserIds,
   selectedUserId,
@@ -168,16 +186,16 @@ function reducer(state, action) {
         const fromId = event.getStateKey();
 
         remoteUserIds =
-          fromId === state.localUserId || eventsByUserId.has(fromId)
+          fromId === state.localUserId || eventsByUserId[fromId]
             ? state.remoteUserIds
             : [...state.remoteUserIds, fromId];
 
-        eventsByUserId = new Map(state.eventsByUserId);
+        eventsByUserId = { ...state.eventsByUserId };
 
         if (event.getStateKey() === state.localUserId) {
           for (const userId in eventsByUserId) {
-            eventsByUserId.set(userId, [
-              ...(eventsByUserId.get(userId) || []),
+            eventsByUserId[userId] = [
+              ...(eventsByUserId[userId] || []),
               {
                 from: fromId,
                 to: "Room",
@@ -186,11 +204,11 @@ function reducer(state, action) {
                 timestamp: event.getTs() || Date.now(),
                 ignored: false,
               },
-            ]);
+            ];
           }
         } else {
-          eventsByUserId.set(fromId, [
-            ...(eventsByUserId.get(fromId) || []),
+          eventsByUserId[fromId] = [
+            ...(eventsByUserId[fromId] || []),
             {
               from: fromId,
               to: "Room",
@@ -199,7 +217,7 @@ function reducer(state, action) {
               timestamp: event.getTs() || Date.now(),
               ignored: false,
             },
-          ]);
+          ];
         }
       }
 
@@ -215,17 +233,17 @@ function reducer(state, action) {
     }
     case "receive_to_device_event": {
       const event = action.event;
-      const eventsByUserId = new Map(state.eventsByUserId);
+      const eventsByUserId = { ...state.eventsByUserId };
       const fromId = event.getSender();
       const toId = state.localUserId;
       const content = event.getContent();
 
-      const remoteUserIds = eventsByUserId.has(fromId)
+      const remoteUserIds = eventsByUserId[fromId]
         ? state.remoteUserIds
         : [...state.remoteUserIds, fromId];
 
-      eventsByUserId.set(fromId, [
-        ...(eventsByUserId.get(fromId) || []),
+      eventsByUserId[fromId] = [
+        ...(eventsByUserId[fromId] || []),
         {
           from: fromId,
           to: toId,
@@ -234,22 +252,22 @@ function reducer(state, action) {
           timestamp: event.getTs() || Date.now(),
           ignored: state.localSessionId !== content.dest_session_id,
         },
-      ]);
+      ];
 
       return { ...state, eventsByUserId, remoteUserIds };
     }
     case "send_voip_event": {
       const event = action.event;
-      const eventsByUserId = new Map(state.eventsByUserId);
+      const eventsByUserId = { ...state.eventsByUserId };
       const fromId = state.localUserId;
       const toId = event.userId;
 
-      const remoteUserIds = eventsByUserId.has(toId)
+      const remoteUserIds = eventsByUserId[toId]
         ? state.remoteUserIds
         : [...state.remoteUserIds, toId];
 
-      eventsByUserId.set(toId, [
-        ...(eventsByUserId.get(toId) || []),
+      eventsByUserId[toId] = [
+        ...(eventsByUserId[toId] || []),
         {
           from: fromId,
           to: toId,
@@ -258,7 +276,7 @@ function reducer(state, action) {
           timestamp: Date.now(),
           ignored: false,
         },
-      ]);
+      ];
 
       return { ...state, eventsByUserId, remoteUserIds };
     }
@@ -271,7 +289,7 @@ function useGroupCallState(client, groupCall, pollCallStats) {
   const [state, dispatch] = useReducer(reducer, {
     localUserId: client.getUserId(),
     localSessionId: client.getSessionId(),
-    eventsByUserId: new Map(),
+    eventsByUserId: {},
     remoteUserIds: [],
     callStateEvent: null,
     memberStateEvents: {},
@@ -399,6 +417,12 @@ export function GroupCallInspector({ client, groupCall, show }) {
   const [selectedUserId, setSelectedUserId] = useState();
   const state = useGroupCallState(client, groupCall, show);
 
+  const [_, setState] = useContext(InspectorContext);
+
+  useEffect(() => {
+    setState({ json: state });
+  }, [setState, state]);
+
   if (!show) {
     return null;
   }
@@ -421,16 +445,13 @@ export function GroupCallInspector({ client, groupCall, show }) {
           selectedUserId={selectedUserId}
           onSelectUserId={setSelectedUserId}
           remoteUserIds={state.remoteUserIds}
-          events={state.eventsByUserId.get(selectedUserId)}
+          events={state.eventsByUserId[selectedUserId]}
         />
       )}
       {currentTab === "inspector" && (
         <ReactJson
           theme="monokai"
-          src={{
-            ...state,
-            eventsByUserId: Object.fromEntries(state.eventsByUserId),
-          }}
+          src={state}
           name={null}
           indentWidth={2}
           shouldCollapse={shouldCollapse}
