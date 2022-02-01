@@ -9,6 +9,8 @@ import { SelectInput } from "../input/SelectInput";
 import { Item } from "@react-stately/collections";
 import { useMediaHandler } from "./useMediaHandler";
 import { FieldRow, InputField } from "../input/Input";
+import { Button } from "../button";
+import { useSubmitRageshake } from "./useSubmitRageshake";
 
 export function SettingsModal({
   client,
@@ -24,6 +26,8 @@ export function SettingsModal({
     videoInputs,
     setVideoInput,
   } = useMediaHandler(client);
+
+  const { submitRageshake, downloadDebugLog } = useSubmitRageshake();
 
   return (
     <Modal
@@ -87,6 +91,12 @@ export function SettingsModal({
               checked={showInspector}
               onChange={(e) => setShowInspector(e.target.checked)}
             />
+          </FieldRow>
+          <FieldRow>
+            <Button onPress={submitRageshake}>Send Debug Logs</Button>
+          </FieldRow>
+          <FieldRow>
+            <Button onPress={downloadDebugLog}>Download Debug Logs</Button>
           </FieldRow>
         </TabItem>
       </TabContainer>

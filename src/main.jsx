@@ -22,6 +22,10 @@ import App from "./App";
 import * as Sentry from "@sentry/react";
 import { Integrations } from "@sentry/tracing";
 import { ErrorView } from "./FullScreenView";
+import * as rageshake from "matrix-react-sdk/src/rageshake/rageshake";
+import { InspectorContextProvider } from "./room/GroupCallInspector";
+
+rageshake.init();
 
 if (import.meta.env.VITE_CUSTOM_THEME) {
   const style = document.documentElement.style;
@@ -59,7 +63,9 @@ Sentry.init({
 ReactDOM.render(
   <React.StrictMode>
     <Sentry.ErrorBoundary fallback={ErrorView}>
-      <App history={history} />
+      <InspectorContextProvider>
+        <App history={history} />
+      </InspectorContextProvider>
     </Sentry.ErrorBoundary>
   </React.StrictMode>,
   document.getElementById("root")
