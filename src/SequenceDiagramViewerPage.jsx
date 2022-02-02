@@ -1,8 +1,11 @@
 import React, { useCallback, useState } from "react";
 import { SequenceDiagramViewer } from "./room/GroupCallInspector";
 import { FieldRow, InputField } from "./input/Input";
+import { usePageTitle } from "./usePageTitle";
 
 export function SequenceDiagramViewerPage() {
+  usePageTitle("Inspector");
+
   const [debugLog, setDebugLog] = useState();
   const [selectedUserId, setSelectedUserId] = useState();
   const onChangeDebugLog = useCallback((e) => {

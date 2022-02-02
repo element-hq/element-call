@@ -19,8 +19,11 @@ import { useClient } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
 import { UnauthenticatedView } from "./UnauthenticatedView";
 import { RegisteredView } from "./RegisteredView";
+import { usePageTitle } from "../usePageTitle";
 
 export function HomePage() {
+  usePageTitle("Home");
+
   const { isAuthenticated, isPasswordlessUser, loading, error, client } =
     useClient();
 

@@ -50,6 +50,7 @@
     "sass": "^1.42.1",
     "storybook-builder-vite": "^0.1.12",
     "vite": "^2.4.2",
+    "vite-plugin-html": "^3.0.3",
     "vite-plugin-svgr": "^0.4.0"
   }
 }
