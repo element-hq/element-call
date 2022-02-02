@@ -177,7 +177,7 @@ export function RegisterPage() {
                   </Link>{" "}
                   apply.
                   <br />
-                  By clicking "Go", you agree to our{" "}
+                  By clicking "Log in", you agree to our{" "}
                   <Link href={privacyPolicyUrl}>Terms and conditions</Link>
                 </Caption>
               )}
