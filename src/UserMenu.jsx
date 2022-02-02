@@ -13,7 +13,7 @@ import { useLocation } from "react-router-dom";
 import { Body } from "./typography/Typography";
 
 export function UserMenu({
-  disableLogout,
+  preventNavigation,
   isAuthenticated,
   isPasswordlessUser,
   displayName,
@@ -32,7 +32,7 @@ export function UserMenu({
         label: displayName,
       });
 
-      if (isPasswordlessUser) {
+      if (isPasswordlessUser && !preventNavigation) {
         arr.push({
           key: "login",
           label: "Sign In",
@@ -40,7 +40,7 @@ export function UserMenu({
         });
       }
 
-      if (!isPasswordlessUser && !disableLogout) {
+      if (!isPasswordlessUser && !preventNavigation) {
         arr.push({
           key: "logout",
           label: "Sign Out",
@@ -50,7 +50,7 @@ export function UserMenu({
     }
 
     return arr;
-  }, [isAuthenticated, isPasswordlessUser, displayName, disableLogout]);
+  }, [isAuthenticated, isPasswordlessUser, displayName, preventNavigation]);
 
   if (!isAuthenticated) {
     return (

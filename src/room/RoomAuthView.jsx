@@ -49,7 +49,7 @@ export function RoomAuthView() {
           <HeaderLogo />
         </LeftNav>
         <RightNav>
-          <UserMenuContainer disableLogout />
+          <UserMenuContainer preventNavigation />
         </RightNav>
       </Header>
       <div className={styles.container}>
