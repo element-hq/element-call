@@ -11,6 +11,7 @@ import { useMediaHandler } from "./useMediaHandler";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { useSubmitRageshake } from "./useSubmitRageshake";
+import { Subtitle } from "../typography/Typography";
 
 export function SettingsModal({
   client,
@@ -26,6 +27,8 @@ export function SettingsModal({
     videoInputs,
     setVideoInput,
   } = useMediaHandler(client);
+
+  const [description, setDescription] = useState("");
 
   const { submitRageshake, sending, sent, error, downloadDebugLog } =
     useSubmitRageshake();
@@ -93,8 +96,19 @@ export function SettingsModal({
               onChange={(e) => setShowInspector(e.target.checked)}
             />
           </FieldRow>
+          <Subtitle>Feedback</Subtitle>
           <FieldRow>
-            <Button onPress={submitRageshake}>
+            <InputField
+              id="description"
+              name="description"
+              label="Description"
+              type="text"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+          </FieldRow>
+          <FieldRow>
+            <Button onPress={() => submitRageshake({ description })}>
               {sent
                 ? "Debug Logs Sent"
                 : sending
