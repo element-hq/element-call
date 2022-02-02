@@ -46,6 +46,15 @@ limitations under the License.
   background-color: var(--primaryColor);
 }
 
+.button:focus,
+.toolbarButton:focus,
+.iconButton:focus,
+.iconCopyButton:focus,
+.secondary:focus,
+.copyButton:focus {
+  outline: auto;
+}
+
 .toolbarButton {
   width: 50px;
   height: 50px;
@@ -89,35 +98,6 @@ limitations under the License.
 
 .toolbarButton.off svg * {
   fill: #21262c;
-}
-
-.buttonTooltip {
-  display: none;
-  background-color: var(--bgColor2);
-  position: absolute;
-  flex-direction: row;
-  justify-content: center;
-  align-items: center;
-  padding: 8px 10px;
-  color: var(--textColor1);
-  border-radius: 8px;
-  max-width: 135px;
-  width: max-content;
-  z-index: 1;
-}
-
-.buttonTooltip.bottomRight {
-  right: 0;
-}
-
-.toolbarButton:hover .buttonTooltip {
-  display: flex;
-  bottom: calc(100% + 6px);
-}
-
-.iconButton:hover .buttonTooltip {
-  display: flex;
-  top: calc(100% + 6px);
 }
 
 .secondary,

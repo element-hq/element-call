@@ -25,6 +25,7 @@ import { RoomPage } from "./room/RoomPage";
 import { RoomRedirect } from "./room/RoomRedirect";
 import { ClientProvider } from "./ClientContext";
 import { usePageFocusStyle } from "./usePageFocusStyle";
+import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -47,6 +48,9 @@ export default function App({ history }) {
             </SentryRoute>
             <SentryRoute path="/room/:roomId?">
               <RoomPage />
+            </SentryRoute>
+            <SentryRoute path="/inspector">
+              <SequenceDiagramViewerPage />
             </SentryRoute>
             <SentryRoute path="*">
               <RoomRedirect />

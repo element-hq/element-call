@@ -34,12 +34,17 @@ export const Button = forwardRef(
       iconStyle,
       className,
       children,
+      onPress,
+      onPressStart,
       ...rest
     },
     ref
   ) => {
     const buttonRef = useObjectRef(ref);
-    const { buttonProps } = useButton(rest, buttonRef);
+    const { buttonProps } = useButton(
+      { onPress, onPressStart, ...rest },
+      buttonRef
+    );
 
     // TODO: react-aria's useButton hook prevents form submission via keyboard
     // Remove the hack below after this is merged https://github.com/adobe/react-spectrum/pull/904
@@ -71,25 +76,13 @@ export const Button = forwardRef(
   }
 );
 
-export function ButtonTooltip({ className, children }) {
-  return (
-    <div className={classNames(styles.buttonTooltip, className)}>
-      {children}
-    </div>
-  );
-}
-
 export function MicButton({ muted, ...rest }) {
   return (
     <TooltipTrigger>
       <Button variant="toolbar" {...rest} off={muted}>
         {muted ? <MuteMicIcon /> : <MicIcon />}
       </Button>
-      {(props) => (
-        <Tooltip position="top" {...props}>
-          {muted ? "Unmute microphone" : "Mute microphone"}
-        </Tooltip>
-      )}
+      {() => (muted ? "Unmute microphone" : "Mute microphone")}
     </TooltipTrigger>
   );
 }
@@ -100,11 +93,7 @@ export function VideoButton({ muted, ...rest }) {
       <Button variant="toolbar" {...rest} off={muted}>
         {muted ? <DisableVideoIcon /> : <VideoIcon />}
       </Button>
-      {(props) => (
-        <Tooltip position="top" {...props}>
-          {muted ? "Turn on camera" : "Turn off camera"}
-        </Tooltip>
-      )}
+      {() => (muted ? "Turn on camera" : "Turn off camera")}
     </TooltipTrigger>
   );
 }
@@ -115,11 +104,7 @@ export function ScreenshareButton({ enabled, className, ...rest }) {
       <Button variant="toolbar" {...rest} on={enabled}>
         <ScreenshareIcon />
       </Button>
-      {(props) => (
-        <Tooltip position="top" {...props}>
-          {enabled ? "Stop sharing screen" : "Share screen"}
-        </Tooltip>
-      )}
+      {() => (enabled ? "Stop sharing screen" : "Share screen")}
     </TooltipTrigger>
   );
 }
@@ -134,11 +119,7 @@ export function HangupButton({ className, ...rest }) {
       >
         <HangupIcon />
       </Button>
-      {(props) => (
-        <Tooltip position="top" {...props}>
-          Leave
-        </Tooltip>
-      )}
+      {() => "Leave"}
     </TooltipTrigger>
   );
 }

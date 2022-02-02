@@ -6,7 +6,7 @@ import { useModalTriggerState } from "./Modal";
 import { ProfileModal } from "./profile/ProfileModal";
 import { UserMenu } from "./UserMenu";
 
-export function UserMenuContainer({ disableLogout }) {
+export function UserMenuContainer({ preventNavigation }) {
   const location = useLocation();
   const history = useHistory();
   const { isAuthenticated, isPasswordlessUser, logout, userName, client } =
@@ -34,7 +34,7 @@ export function UserMenuContainer({ disableLogout }) {
   return (
     <>
       <UserMenu
-        disableLogout={disableLogout}
+        preventNavigation={preventNavigation}
         isAuthenticated={isAuthenticated}
         isPasswordlessUser={isPasswordlessUser}
         avatarUrl={avatarUrl}

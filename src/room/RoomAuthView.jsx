@@ -49,7 +49,7 @@ export function RoomAuthView() {
           <HeaderLogo />
         </LeftNav>
         <RightNav>
-          <UserMenuContainer disableLogout />
+          <UserMenuContainer preventNavigation />
         </RightNav>
       </Header>
       <div className={styles.container}>
@@ -60,15 +60,15 @@ export function RoomAuthView() {
               <InputField
                 id="userName"
                 name="userName"
-                label="Your name"
-                placeholder="Your name"
+                label="Username"
+                placeholder="Username"
                 type="text"
                 required
                 autoComplete="off"
               />
             </FieldRow>
             <Caption>
-              By clicking "Go", you agree to our{" "}
+              By clicking "Join call now", you agree to our{" "}
               <Link href={privacyPolicyUrl}>Terms and conditions</Link>
             </Caption>
             {error && (
