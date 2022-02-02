@@ -85,7 +85,7 @@ function formatContent(type, content) {
       call["m.devices"] &&
       call["m.devices"].length > 0 &&
       call["m.devices"][0];
-    return `callId: ${call && call["m.call_id"].slice(-4)} sessionId: ${
+    return `conf_id: ${call && call["m.call_id"].slice(-4)} sessionId: ${
       device && device.session_id
     }`;
   } else {
