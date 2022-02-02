@@ -68,7 +68,7 @@ export function RoomAuthView() {
               />
             </FieldRow>
             <Caption>
-              By clicking "Go", you agree to our{" "}
+              By clicking "Join call now", you agree to our{" "}
               <Link href={privacyPolicyUrl}>Terms and conditions</Link>
             </Caption>
             {error && (
