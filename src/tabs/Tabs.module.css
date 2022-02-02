@@ -1,15 +1,14 @@
 .tabContainer {
-  width: 100%;
   display: flex;
   flex: 1;
+  flex-direction: column;
 }
 
 .tabList {
   display: flex;
-  flex-direction: column;
   list-style: none;
   padding: 0;
-  margin: 0;
+  margin: 0 auto 24px auto;
 }
 
 .tab {
@@ -20,14 +19,14 @@
   background-color: transparent;
   display: flex;
   align-items: center;
-  padding: 0 16px;
+  padding: 0 8px;
   border: none;
   cursor: pointer;
 }
 
 .tab > * {
   color: var(--textColor4);
-  margin-right: 16px;
+  margin: 0 8px 0 0;
 }
 
 .tab svg * {
@@ -57,6 +56,31 @@
   display: flex;
   flex-direction: column;
   flex: 1;
-  padding: 0 40px;
+  padding: 0;
   overflow-y: auto;
+}
+
+@media (min-width: 800px) {
+  .tab {
+    padding: 0 16px;
+  }
+
+  .tab > * {
+    margin: 0 16px 0 0;
+  }
+
+  .tabContainer {
+    width: 100%;
+    flex-direction: row;
+    margin: 27px 16px;
+  }
+
+  .tabList {
+    flex-direction: column;
+    margin-bottom: 0;
+  }
+
+  .tabPanel {
+    padding: 0 40px;
+  }
 }

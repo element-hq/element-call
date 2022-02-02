@@ -26,8 +26,11 @@ import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
 import { LoadingView } from "../FullScreenView";
 import { useRecaptcha } from "./useRecaptcha";
 import { Caption, Link } from "../typography/Typography";
+import { usePageTitle } from "../usePageTitle";
 
 export function RegisterPage() {
+  usePageTitle("Register");
+
   const {
     loading,
     client,
@@ -177,7 +180,7 @@ export function RegisterPage() {
                   </Link>{" "}
                   apply.
                   <br />
-                  By clicking "Go", you agree to our{" "}
+                  By clicking "Log in", you agree to our{" "}
                   <Link href={privacyPolicyUrl}>Terms and conditions</Link>
                 </Caption>
               )}

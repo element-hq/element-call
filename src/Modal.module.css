@@ -52,6 +52,12 @@
 }
 
 @media (max-width: 799px) {
+  .modalHeader {
+    display: flex;
+    justify-content: space-between;
+    padding: 24px 24px 0 24px;
+  }
+
   .modal.mobileFullScreen {
     position: fixed;
     left: 0;

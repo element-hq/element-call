@@ -36,7 +36,7 @@ export function ProfileModal({
 
       saveProfile({
         displayName,
-        avatar,
+        avatar: avatar && avatar.size > 0 ? avatar : undefined,
       });
     },
     [saveProfile]
@@ -54,6 +54,16 @@ export function ProfileModal({
         <form onSubmit={onSubmit}>
           <FieldRow>
             <InputField
+              id="userId"
+              name="userId"
+              label="User Id"
+              type="text"
+              disabled
+              value={client.getUserId()}
+            />
+          </FieldRow>
+          <FieldRow>
+            <InputField
               id="displayName"
               name="displayName"
               label="Display Name"
@@ -65,7 +75,7 @@ export function ProfileModal({
               onChange={onChangeDisplayName}
             />
           </FieldRow>
-          {isAuthenticated && !isPasswordlessUser && (
+          {isAuthenticated && (
             <FieldRow>
               <InputField
                 type="file"

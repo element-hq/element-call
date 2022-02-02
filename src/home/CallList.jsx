@@ -8,7 +8,7 @@ import styles from "./CallList.module.css";
 import { getRoomUrl } from "../matrix-utils";
 import { Body, Caption } from "../typography/Typography";
 
-export function CallList({ rooms, client }) {
+export function CallList({ rooms, client, disableFacepile }) {
   return (
     <>
       <div className={styles.callList}>
@@ -20,6 +20,7 @@ export function CallList({ rooms, client }) {
             avatarUrl={avatarUrl}
             roomId={roomId}
             participants={participants}
+            disableFacepile={disableFacepile}
           />
         ))}
         {rooms.length > 3 && (
@@ -33,7 +34,14 @@ export function CallList({ rooms, client }) {
   );
 }
 
-function CallTile({ name, avatarUrl, roomId, participants, client }) {
+function CallTile({
+  name,
+  avatarUrl,
+  roomId,
+  participants,
+  client,
+  disableFacepile,
+}) {
   return (
     <div className={styles.callTile}>
       <Link to={`/room/${roomId}`} className={styles.callTileLink}>
@@ -41,7 +49,7 @@ function CallTile({ name, avatarUrl, roomId, participants, client }) {
           size="lg"
           bgKey={name}
           src={avatarUrl}
-          fallback={<VideoIcon width={16} height={16} />}
+          fallback={name.slice(0, 1).toUpperCase()}
           className={styles.avatar}
         />
         <div className={styles.callInfo}>
@@ -49,7 +57,7 @@ function CallTile({ name, avatarUrl, roomId, participants, client }) {
             {name}
           </Body>
           <Caption overflowEllipsis>{getRoomUrl(roomId)}</Caption>
-          {participants && (
+          {participants && !disableFacepile && (
             <Facepile
               className={styles.facePile}
               client={client}

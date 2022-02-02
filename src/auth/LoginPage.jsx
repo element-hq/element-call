@@ -22,8 +22,11 @@ import { Button } from "../button";
 import { defaultHomeserver, defaultHomeserverHost } from "../matrix-utils";
 import styles from "./LoginPage.module.css";
 import { useInteractiveLogin } from "./useInteractiveLogin";
+import { usePageTitle } from "../usePageTitle";
 
 export function LoginPage() {
+  usePageTitle("Login");
+
   const [_, login] = useInteractiveLogin();
   const [homeserver, setHomeServer] = useState(defaultHomeserver);
   const usernameRef = useRef();

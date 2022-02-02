@@ -57,6 +57,7 @@ export function useRecaptcha(sitekey) {
     }
 
     if (!window.grecaptcha) {
+      console.log("Recaptcha not loaded");
       return Promise.reject(new Error("Recaptcha not loaded"));
     }
 
@@ -94,7 +95,7 @@ export function useRecaptcha(sitekey) {
         });
       }
     });
-  }, [recaptchaId]);
+  }, [recaptchaId, sitekey]);
 
   const reset = useCallback(() => {
     if (window.grecaptcha) {

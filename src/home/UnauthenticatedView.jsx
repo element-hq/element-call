@@ -102,8 +102,8 @@ export function UnauthenticatedView() {
               <InputField
                 id="userName"
                 name="userName"
-                label="Your name"
-                placeholder="Your name"
+                label="Username"
+                placeholder="Username"
                 type="text"
                 required
                 autoComplete="off"

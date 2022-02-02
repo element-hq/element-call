@@ -10,9 +10,10 @@ import { ReactComponent as LoginIcon } from "./icons/Login.svg";
 import { ReactComponent as LogoutIcon } from "./icons/Logout.svg";
 import styles from "./UserMenu.module.css";
 import { useLocation } from "react-router-dom";
+import { Body } from "./typography/Typography";
 
 export function UserMenu({
-  disableLogout,
+  preventNavigation,
   isAuthenticated,
   isPasswordlessUser,
   displayName,
@@ -31,7 +32,7 @@ export function UserMenu({
         label: displayName,
       });
 
-      if (isPasswordlessUser) {
+      if (isPasswordlessUser && !preventNavigation) {
         arr.push({
           key: "login",
           label: "Sign In",
@@ -39,7 +40,7 @@ export function UserMenu({
         });
       }
 
-      if (!isPasswordlessUser && !disableLogout) {
+      if (!isPasswordlessUser && !preventNavigation) {
         arr.push({
           key: "logout",
           label: "Sign Out",
@@ -49,7 +50,7 @@ export function UserMenu({
     }
 
     return arr;
-  }, [isAuthenticated, isPasswordlessUser, displayName, disableLogout]);
+  }, [isAuthenticated, isPasswordlessUser, displayName, preventNavigation]);
 
   if (!isAuthenticated) {
     return (
@@ -61,9 +62,9 @@ export function UserMenu({
 
   return (
     <PopoverMenuTrigger placement="bottom right">
-      <TooltipTrigger>
+      <TooltipTrigger placement="bottom left">
         <Button variant="icon" className={styles.userButton}>
-          {isAuthenticated && !isPasswordlessUser ? (
+          {isAuthenticated && (!isPasswordlessUser || avatarUrl) ? (
             <Avatar
               size="sm"
               className={styles.avatar}
@@ -74,18 +75,14 @@ export function UserMenu({
             <UserIcon />
           )}
         </Button>
-        {(props) => (
-          <Tooltip position="bottomLeft" {...props}>
-            Profile
-          </Tooltip>
-        )}
+        {() => "Profile"}
       </TooltipTrigger>
       {(props) => (
         <Menu {...props} label="User menu" onAction={onAction}>
           {items.map(({ key, icon: Icon, label }) => (
-            <Item key={key} textValue={label}>
-              <Icon />
-              <span>{label}</span>
+            <Item key={key} textValue={label} className={styles.menuItem}>
+              <Icon width={24} height={24} className={styles.menuIcon} />
+              <Body overflowEllipsis>{label}</Body>
             </Item>
           ))}
         </Menu>

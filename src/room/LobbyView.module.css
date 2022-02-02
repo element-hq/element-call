@@ -53,15 +53,28 @@ limitations under the License.
   border-radius: 24px;
   overflow: hidden;
   background-color: var(--bgColor3);
-  margin: 40px 20px 20px 20px;
+  margin: 20px;
 }
 
 .preview video {
-  width: 100%;
+  width: calc(100% + 1px);
   height: 100%;
   object-fit: contain;
   background-color: black;
-  transform: scaleX(-1);
+  /* transform scale doesn't perfectly match width, so make -1.01 border issues */
+  transform: scaleX(-1.01);
+}
+
+.avatarContainer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 66px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--bgColor3);
 }
 
 .webcamPermissions {
@@ -107,4 +120,10 @@ limitations under the License.
 
 .previewButtons > :last-child {
   margin-right: 0px;
+}
+
+@media (min-width: 800px) {
+  .preview {
+    margin-top: 40px;
+  }
 }

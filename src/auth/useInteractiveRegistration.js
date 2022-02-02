@@ -66,6 +66,8 @@ export function useInteractiveRegistration() {
         deviceId: device_id,
       });
 
+      await client.setDisplayName(username);
+
       const session = { user_id, device_id, access_token, passwordlessUser };
 
       if (passwordlessUser) {

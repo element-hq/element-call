@@ -9,6 +9,11 @@ import { getRoomUrl } from "../matrix-utils";
 import { OverflowMenu } from "./OverflowMenu";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { Body, Link } from "../typography/Typography";
+import { Avatar } from "../Avatar";
+import { getAvatarUrl } from "../matrix-utils";
+import { useProfile } from "../profile/useProfile";
+import useMeasure from "react-use-measure";
+import { ResizeObserver } from "@juggle/resize-observer";
 
 export function LobbyView({
   client,
@@ -27,9 +32,11 @@ export function LobbyView({
 }) {
   const { stream } = useCallFeed(localCallFeed);
   const videoRef = useMediaStream(stream, true);
+  const { displayName, avatarUrl } = useProfile(client);
+  const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
+  const avatarSize = (previewBounds.height - 66) / 2;
 
   useEffect(() => {
-    // TODO: Only init once
     onInitLocalCallFeed();
   }, [onInitLocalCallFeed]);
 
@@ -45,7 +52,7 @@ export function LobbyView({
       </Header>
       <div className={styles.joinRoom}>
         <div className={styles.joinRoomContent}>
-          <div className={styles.preview}>
+          <div className={styles.preview} ref={previewRef}>
             <video ref={videoRef} muted playsInline disablePictureInPicture />
             {state === GroupCallState.LocalCallFeedUninitialized && (
               <Body fontWeight="semiBold" className={styles.webcamPermissions}>
@@ -59,6 +66,20 @@ export function LobbyView({
             )}
             {state === GroupCallState.LocalCallFeedInitialized && (
               <>
+                {localVideoMuted && (
+                  <div className={styles.avatarContainer}>
+                    <Avatar
+                      style={{
+                        width: avatarSize,
+                        height: avatarSize,
+                        borderRadius: avatarSize,
+                        fontSize: Math.round(avatarSize / 2),
+                      }}
+                      src={avatarUrl && getAvatarUrl(client, avatarUrl, 96)}
+                      fallback={displayName.slice(0, 1).toUpperCase()}
+                    />
+                  </div>
+                )}
                 <Button
                   className={styles.joinCallButton}
                   disabled={state !== GroupCallState.LocalCallFeedInitialized}

@@ -16,6 +16,7 @@ limitations under the License.
 
 import { defineConfig, loadEnv } from "vite";
 import svgrPlugin from "vite-plugin-svgr";
+import { createHtmlPlugin } from "vite-plugin-html";
 import path from "path";
 
 // https://vitejs.dev/config/
@@ -23,17 +24,37 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
 
   return {
-    plugins: [svgrPlugin()],
+    plugins: [
+      svgrPlugin(),
+      createHtmlPlugin({
+        inject: {
+          data: {
+            title: env.VITE_PRODUCT_NAME || "Matrix Video Chat",
+          },
+        },
+      }),
+    ],
     server: {
       proxy: {
         "/_matrix": env.VITE_DEFAULT_HOMESERVER || "http://localhost:8008",
+      },
+      fs: {
+        // Current we're bundling files linked in from matrix-react-sdk
+        // We should re-enable this if we plan to run Vite outside the dev server mode
+        strict: false,
       },
     },
     resolve: {
       alias: {
         "$(res)": path.resolve(__dirname, "node_modules/matrix-react-sdk/res"),
       },
-      dedupe: ["react", "react-dom", "matrix-js-sdk"],
+      dedupe: [
+        "react",
+        "react-dom",
+        "matrix-js-sdk",
+        "react-use-measure",
+        "@juggle/resize-observer",
+      ],
     },
   };
 });

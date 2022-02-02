@@ -1,31 +1,45 @@
-import React, { forwardRef } from "react";
+import React, { forwardRef, useRef } from "react";
 import { useTooltipTriggerState } from "@react-stately/tooltip";
+import { FocusableProvider } from "@react-aria/focus";
 import { useTooltipTrigger, useTooltip } from "@react-aria/tooltip";
 import { mergeProps, useObjectRef } from "@react-aria/utils";
 import styles from "./Tooltip.module.css";
 import classNames from "classnames";
+import { OverlayContainer, useOverlayPosition } from "@react-aria/overlays";
 
-export function Tooltip({ position, state, ...props }) {
-  let { tooltipProps } = useTooltip(props, state);
+export const Tooltip = forwardRef(
+  ({ position, state, className, ...props }, ref) => {
+    let { tooltipProps } = useTooltip(props, state);
 
-  return (
-    <div
-      className={classNames(styles.tooltip, styles[position || "bottom"])}
-      {...mergeProps(props, tooltipProps)}
-    >
-      {props.children}
-    </div>
-  );
-}
+    return (
+      <div
+        className={classNames(styles.tooltip, className)}
+        {...mergeProps(props, tooltipProps)}
+        ref={ref}
+      >
+        {props.children}
+      </div>
+    );
+  }
+);
 
 export const TooltipTrigger = forwardRef(({ children, ...rest }, ref) => {
   const tooltipState = useTooltipTriggerState(rest);
   const triggerRef = useObjectRef(ref);
+  const overlayRef = useRef();
   const { triggerProps, tooltipProps } = useTooltipTrigger(
     rest,
     tooltipState,
     triggerRef
   );
+
+  const { overlayProps } = useOverlayPosition({
+    placement: rest.placement || "top",
+    targetRef: triggerRef,
+    overlayRef,
+    isOpen: tooltipState.isOpen,
+    offset: 5,
+  });
 
   if (
     !Array.isArray(children) ||
@@ -40,13 +54,20 @@ export const TooltipTrigger = forwardRef(({ children, ...rest }, ref) => {
   const [tooltipTrigger, tooltip] = children;
 
   return (
-    <div className={styles.tooltipContainer}>
-      <tooltipTrigger.type
-        {...mergeProps(triggerProps, tooltipTrigger.props, rest)}
-        ref={triggerRef}
-      />
-      {tooltipState.isOpen && tooltip({ state: tooltipState, ...tooltipProps })}
-    </div>
+    <FocusableProvider ref={triggerRef} {...triggerProps}>
+      {<tooltipTrigger.type {...mergeProps(tooltipTrigger.props, rest)} />}
+      {tooltipState.isOpen && (
+        <OverlayContainer>
+          <Tooltip
+            state={tooltipState}
+            {...mergeProps(tooltipProps, overlayProps)}
+            ref={overlayRef}
+          >
+            {tooltip()}
+          </Tooltip>
+        </OverlayContainer>
+      )}
+    </FocusableProvider>
   );
 });
 
