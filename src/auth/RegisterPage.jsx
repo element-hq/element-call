@@ -26,8 +26,11 @@ import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
 import { LoadingView } from "../FullScreenView";
 import { useRecaptcha } from "./useRecaptcha";
 import { Caption, Link } from "../typography/Typography";
+import { usePageTitle } from "../usePageTitle";
 
 export function RegisterPage() {
+  usePageTitle("Register");
+
   const {
     loading,
     client,

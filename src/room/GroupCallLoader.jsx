@@ -1,6 +1,7 @@
 import React from "react";
 import { useLoadGroupCall } from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
+import { usePageTitle } from "../usePageTitle";
 
 export function GroupCallLoader({ client, roomId, viaServers, children }) {
   const { loading, error, groupCall } = useLoadGroupCall(
@@ -8,6 +9,8 @@ export function GroupCallLoader({ client, roomId, viaServers, children }) {
     roomId,
     viaServers
   );
+
+  usePageTitle(groupCall ? groupCall.room.name : "Loading...");
 
   if (loading) {
     return (
