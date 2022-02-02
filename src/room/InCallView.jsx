@@ -121,7 +121,7 @@ export function InCallView({
         </LeftNav>
         <RightNav>
           <GridLayoutMenu layout={layout} setLayout={setLayout} />
-          <UserMenuContainer disableLogout />
+          <UserMenuContainer preventNavigation />
         </RightNav>
       </Header>
       {items.length === 0 ? (
