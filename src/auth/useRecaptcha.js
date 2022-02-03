@@ -64,7 +64,7 @@ export function useRecaptcha(sitekey) {
     return new Promise((resolve, reject) => {
       const observer = new MutationObserver((mutationsList) => {
         for (const item of mutationsList) {
-          if (item.target.style?.visibility !== "visible") {
+          if (item.target?.style?.visibility !== "visible") {
             reject(new Error("Recaptcha dismissed"));
             observer.disconnect();
             return;
