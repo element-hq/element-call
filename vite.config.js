@@ -16,7 +16,7 @@ limitations under the License.
 
 import { defineConfig, loadEnv } from "vite";
 import svgrPlugin from "vite-plugin-svgr";
-import { createHtmlPlugin } from "vite-plugin-html";
+import htmlTemplate from "vite-plugin-html-template";
 import path from "path";
 
 // https://vitejs.dev/config/
@@ -26,11 +26,9 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       svgrPlugin(),
-      createHtmlPlugin({
-        inject: {
-          data: {
-            title: env.VITE_PRODUCT_NAME || "Matrix Video Chat",
-          },
+      htmlTemplate({
+        data: {
+          title: env.VITE_PRODUCT_NAME || "Matrix Video Chat",
         },
       }),
     ],
