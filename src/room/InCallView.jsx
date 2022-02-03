@@ -62,7 +62,7 @@ export function InCallView({
     }
 
     for (const callFeed of screenshareFeeds) {
-      const userMediaItem = items.find(
+      const userMediaItem = participants.find(
         (item) => item.callFeed.userId === callFeed.userId
       );
 
@@ -70,7 +70,7 @@ export function InCallView({
         userMediaItem.presenter = true;
       }
 
-      items.push({
+      participants.push({
         id: callFeed.stream.id,
         callFeed,
         focused: true,
@@ -147,7 +147,7 @@ export function InCallView({
           {({ item, ...rest }) => (
             <VideoTileContainer
               key={item.id}
-              callFeed={item.callFeed}
+              item={item}
               getAvatar={renderAvatar}
               {...rest}
             />
