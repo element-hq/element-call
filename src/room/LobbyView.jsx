@@ -14,6 +14,7 @@ import { getAvatarUrl } from "../matrix-utils";
 import { useProfile } from "../profile/useProfile";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
+import { useLocationNavigation } from "../useLocationNavigation";
 
 export function LobbyView({
   client,
@@ -39,6 +40,8 @@ export function LobbyView({
   useEffect(() => {
     onInitLocalCallFeed();
   }, [onInitLocalCallFeed]);
+
+  useLocationNavigation(state === GroupCallState.InitializingLocalCallFeed);
 
   return (
     <div className={styles.room}>
