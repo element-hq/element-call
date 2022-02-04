@@ -7,6 +7,7 @@ import { LobbyView } from "./LobbyView";
 import { InCallView } from "./InCallView";
 import { CallEndedView } from "./CallEndedView";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
+import { useLocationNavigation } from "../useLocationNavigation";
 
 export function GroupCallView({
   client,
@@ -42,6 +43,7 @@ export function GroupCallView({
     toggleLocalVideoMuted,
     toggleMicrophoneMuted,
     toggleScreensharing,
+    requestingScreenshare,
     isScreensharing,
     localScreenshareFeed,
     screenshareFeeds,
@@ -53,6 +55,8 @@ export function GroupCallView({
   }, [groupCall]);
 
   useSentryGroupCallHandler(groupCall);
+
+  useLocationNavigation(requestingScreenshare);
 
   const [left, setLeft] = useState(false);
   const history = useHistory();
