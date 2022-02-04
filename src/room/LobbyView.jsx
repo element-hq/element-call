@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import styles from "./LobbyView.module.css";
 import { Button, CopyButton, MicButton, VideoButton } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
@@ -42,6 +42,14 @@ export function LobbyView({
   }, [onInitLocalCallFeed]);
 
   useLocationNavigation(state === GroupCallState.InitializingLocalCallFeed);
+
+  const joinCallButtonRef = useRef();
+
+  useEffect(() => {
+    if (state === GroupCallState.LocalCallFeedInitialized) {
+      joinCallButtonRef.current.focus();
+    }
+  }, [state]);
 
   return (
     <div className={styles.room}>
@@ -103,6 +111,7 @@ export function LobbyView({
             )}
           </div>
           <Button
+            ref={joinCallButtonRef}
             className={styles.copyButton}
             size="lg"
             disabled={state !== GroupCallState.LocalCallFeedInitialized}
