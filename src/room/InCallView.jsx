@@ -54,7 +54,7 @@ export function InCallView({
       participants.push({
         id: callFeed.stream.id,
         callFeed,
-        isActiveSpeaker:
+        focused:
           screenshareFeeds.length === 0
             ? callFeed.userId === activeSpeaker
             : false,
