@@ -112,6 +112,11 @@ limitations under the License.
 
 .copyButton {
   width: 320px !important;
+  margin-bottom: 15px;
+}
+
+.copyButton:last-child {
+  margin-bottom: 0;
 }
 
 .previewButtons > * {

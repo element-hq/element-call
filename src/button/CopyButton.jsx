@@ -1,4 +1,4 @@
-import React, { useCallback } from "react";
+import React from "react";
 import useClipboard from "react-use-clipboard";
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 import { ReactComponent as CopyIcon } from "../icons/Copy.svg";
@@ -17,7 +17,7 @@ export function CopyButton({
   return (
     <Button
       {...rest}
-      variant={variant === "icon" ? "iconCopy" : "copy"}
+      variant={variant === "icon" ? "iconCopy" : variant || "copy"}
       on={isCopied}
       className={className}
       onPress={setCopied}

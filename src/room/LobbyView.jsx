@@ -83,13 +83,6 @@ export function LobbyView({
                     />
                   </div>
                 )}
-                <Button
-                  className={styles.joinCallButton}
-                  disabled={state !== GroupCallState.LocalCallFeedInitialized}
-                  onPress={onEnter}
-                >
-                  Join call now
-                </Button>
                 <div className={styles.previewButtons}>
                   <MicButton
                     muted={microphoneMuted}
@@ -109,8 +102,17 @@ export function LobbyView({
               </>
             )}
           </div>
+          <Button
+            className={styles.copyButton}
+            size="lg"
+            disabled={state !== GroupCallState.LocalCallFeedInitialized}
+            onPress={onEnter}
+          >
+            Join call now
+          </Button>
           <Body>Or</Body>
           <CopyButton
+            variant="secondaryCopy"
             value={getRoomUrl(roomId)}
             className={styles.copyButton}
             copiedMessage="Call link copied"
