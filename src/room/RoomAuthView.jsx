@@ -60,8 +60,8 @@ export function RoomAuthView() {
               <InputField
                 id="userName"
                 name="userName"
-                label="Username"
-                placeholder="Username"
+                label="Pick a user name"
+                placeholder="Pick a user name"
                 type="text"
                 required
                 autoComplete="off"
