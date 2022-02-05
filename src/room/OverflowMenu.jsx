@@ -9,17 +9,22 @@ import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
-import { Tooltip, TooltipTrigger } from "../Tooltip";
+import { TooltipTrigger } from "../Tooltip";
+import { FeedbackModal } from "./FeedbackModal";
 
 export function OverflowMenu({
   roomId,
   setShowInspector,
   showInspector,
   client,
+  inCall,
+  groupCall,
 }) {
   const { modalState: inviteModalState, modalProps: inviteModalProps } =
     useModalTriggerState();
   const { modalState: settingsModalState, modalProps: settingsModalProps } =
+    useModalTriggerState();
+  const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
     useModalTriggerState();
 
   // TODO: On closing modal, focus should be restored to the trigger button
@@ -31,6 +36,9 @@ export function OverflowMenu({
         break;
       case "settings":
         settingsModalState.open();
+        break;
+      case "feedback":
+        feedbackModalState.open();
         break;
     }
   });
@@ -54,6 +62,10 @@ export function OverflowMenu({
               <SettingsIcon />
               <span>Settings</span>
             </Item>
+            <Item key="feedback" textValue="Submit Feedback">
+              <SettingsIcon />
+              <span>Submit Feedback</span>
+            </Item>
           </Menu>
         )}
       </PopoverMenuTrigger>
@@ -67,6 +79,13 @@ export function OverflowMenu({
       )}
       {inviteModalState.isOpen && (
         <InviteModal roomId={roomId} {...inviteModalProps} />
+      )}
+      {feedbackModalState.isOpen && (
+        <FeedbackModal
+          {...feedbackModalProps}
+          roomId={groupCall?.room.roomId}
+          inCall={inCall}
+        />
       )}
     </>
   );
