@@ -1,8 +1,9 @@
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import * as rageshake from "matrix-react-sdk/src/rageshake/rageshake";
 import pako from "pako";
 import { useClient } from "../ClientContext";
 import { InspectorContext } from "../room/GroupCallInspector";
+import { useModalTriggerState } from "../Modal";
 
 export function useSubmitRageshake() {
   const { client } = useClient();
@@ -171,24 +172,26 @@ export function useSubmitRageshake() {
           } catch (e) {}
         }
 
-        const logs = await rageshake.getLogsForReport();
+        if (opts.sendLogs) {
+          const logs = await rageshake.getLogsForReport();
 
-        for (const entry of logs) {
-          // encode as UTF-8
-          let buf = new TextEncoder().encode(entry.lines);
+          for (const entry of logs) {
+            // encode as UTF-8
+            let buf = new TextEncoder().encode(entry.lines);
 
-          // compress
-          buf = pako.gzip(buf);
+            // compress
+            buf = pako.gzip(buf);
 
-          body.append("compressed-log", new Blob([buf]), entry.id);
-        }
+            body.append("compressed-log", new Blob([buf]), entry.id);
+          }
 
-        if (json) {
-          body.append(
-            "file",
-            new Blob([JSON.stringify(json)], { type: "text/plain" }),
-            "groupcall.txt"
-          );
+          if (json) {
+            body.append(
+              "file",
+              new Blob([JSON.stringify(json)], { type: "text/plain" }),
+              "groupcall.txt"
+            );
+          }
         }
 
         await fetch(
@@ -209,6 +212,17 @@ export function useSubmitRageshake() {
     [client]
   );
 
+  return {
+    submitRageshake,
+    sending,
+    sent,
+    error,
+  };
+}
+
+export function useDownloadDebugLog() {
+  const [{ json }] = useContext(InspectorContext);
+
   const downloadDebugLog = useCallback(() => {
     const blob = new Blob([JSON.stringify(json)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
@@ -222,7 +236,47 @@ export function useSubmitRageshake() {
       URL.revokeObjectURL(url);
       el.parentNode.removeChild(el);
     }, 0);
-  });
+  }, [json]);
 
-  return { submitRageshake, sending, sent, error, downloadDebugLog };
+  return downloadDebugLog;
+}
+
+export function useRageshakeRequest() {
+  const { client } = useClient();
+
+  const sendRageshakeRequest = useCallback(
+    (roomId) => {
+      client.sendEvent(roomId, "org.matrix.rageshake_request", {});
+    },
+    [client]
+  );
+
+  return sendRageshakeRequest;
+}
+
+export function useRageshakeRequestModal(roomId) {
+  const { modalState, modalProps } = useModalTriggerState();
+  const { client } = useClient();
+
+  useEffect(() => {
+    const onEvent = (event) => {
+      const type = event.getType();
+
+      if (
+        type === "org.matrix.rageshake_request" &&
+        roomId === event.getRoomId() &&
+        client.getUserId() !== event.getSender()
+      ) {
+        modalState.open();
+      }
+    };
+
+    client.on("event", onEvent);
+
+    return () => {
+      client.removeListener("event", onEvent);
+    };
+  }, [modalState.open, roomId]);
+
+  return { modalState, modalProps };
 }

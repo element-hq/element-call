@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
 import { TabContainer, TabItem } from "../tabs/Tabs";
@@ -8,10 +8,9 @@ import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
 import { SelectInput } from "../input/SelectInput";
 import { Item } from "@react-stately/collections";
 import { useMediaHandler } from "./useMediaHandler";
-import { FieldRow, InputField, ErrorMessage } from "../input/Input";
+import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
-import { useSubmitRageshake } from "./useSubmitRageshake";
-import { Subtitle } from "../typography/Typography";
+import { useDownloadDebugLog } from "./rageshake";
 
 export function SettingsModal({
   client,
@@ -28,10 +27,7 @@ export function SettingsModal({
     setVideoInput,
   } = useMediaHandler(client);
 
-  const [description, setDescription] = useState("");
-
-  const { submitRageshake, sending, sent, error, downloadDebugLog } =
-    useSubmitRageshake();
+  const downloadDebugLog = useDownloadDebugLog();
 
   return (
     <Modal
@@ -96,31 +92,6 @@ export function SettingsModal({
               onChange={(e) => setShowInspector(e.target.checked)}
             />
           </FieldRow>
-          <Subtitle>Feedback</Subtitle>
-          <FieldRow>
-            <InputField
-              id="description"
-              name="description"
-              label="Description"
-              type="text"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </FieldRow>
-          <FieldRow>
-            <Button onPress={() => submitRageshake({ description })}>
-              {sent
-                ? "Debug Logs Sent"
-                : sending
-                ? "Sending Debug Logs..."
-                : "Send Debug Logs"}
-            </Button>
-          </FieldRow>
-          {error && (
-            <FieldRow>
-              <ErrorMessage>{error.message}</ErrorMessage>
-            </FieldRow>
-          )}
           <FieldRow>
             <Button onPress={downloadDebugLog}>Download Debug Logs</Button>
           </FieldRow>

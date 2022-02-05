@@ -19,6 +19,8 @@ import { OverflowMenu } from "./OverflowMenu";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { Avatar } from "../Avatar";
 import { UserMenuContainer } from "../UserMenuContainer";
+import { useRageshakeRequestModal } from "../settings/rageshake";
+import { RageshakeRequestModal } from "./RageshakeRequestModal";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -120,6 +122,11 @@ export function InCallView({
     [client]
   );
 
+  const {
+    modalState: rageshakeRequestModalState,
+    modalProps: rageshakeRequestModalProps,
+  } = useRageshakeRequestModal(groupCall.room.roomId);
+
   return (
     <div className={styles.inRoom}>
       <Header>
@@ -164,10 +171,12 @@ export function InCallView({
           />
         )}
         <OverflowMenu
+          inCall
           roomId={roomId}
           setShowInspector={setShowInspector}
           showInspector={showInspector}
           client={client}
+          groupCall={groupCall}
         />
         <HangupButton onPress={onLeave} />
       </div>
@@ -176,6 +185,9 @@ export function InCallView({
         groupCall={groupCall}
         show={showInspector}
       />
+      {rageshakeRequestModalState.isOpen && (
+        <RageshakeRequestModal {...rageshakeRequestModalProps} />
+      )}
     </div>
   );
 }
