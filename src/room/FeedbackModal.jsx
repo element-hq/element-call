@@ -33,7 +33,7 @@ export function FeedbackModal({ inCall, roomId, ...rest }) {
   return (
     <Modal title="Submit Feedback" isDismissable {...rest}>
       <ModalContent>
-        <Body>Having trouble on this call? Help us fix it.</Body>
+        <Body>Having trouble? Help us fix it.</Body>
         <form onSubmit={onSubmitFeedback}>
           <FieldRow>
             <InputField
