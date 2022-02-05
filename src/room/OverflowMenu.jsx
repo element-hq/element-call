@@ -6,6 +6,7 @@ import { Item } from "@react-stately/collections";
 import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
+import { ReactComponent as FeedbackIcon } from "../icons/Feedback.svg";
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
@@ -63,7 +64,7 @@ export function OverflowMenu({
               <span>Settings</span>
             </Item>
             <Item key="feedback" textValue="Submit Feedback">
-              <SettingsIcon />
+              <FeedbackIcon />
               <span>Submit Feedback</span>
             </Item>
           </Menu>
