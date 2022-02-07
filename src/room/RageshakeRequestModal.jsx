@@ -5,17 +5,17 @@ import { FieldRow, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake } from "../settings/rageshake";
 import { Body } from "../typography/Typography";
 
-export function RageshakeRequestModal(props) {
+export function RageshakeRequestModal({ rageshakeRequestId, ...rest }) {
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
 
   useEffect(() => {
     if (sent) {
-      props.onClose();
+      rest.onClose();
     }
-  }, [sent, props.onClose]);
+  }, [sent, rest.onClose]);
 
   return (
-    <Modal title="Debug Log Request" isDismissable {...props}>
+    <Modal title="Debug Log Request" isDismissable {...rest}>
       <ModalContent>
         <Body>
           Another user on this call is having an issue. In order to better
@@ -23,7 +23,12 @@ export function RageshakeRequestModal(props) {
         </Body>
         <FieldRow>
           <Button
-            onPress={() => submitRageshake({ sendLogs: true })}
+            onPress={() =>
+              submitRageshake({
+                sendLogs: true,
+                rageshakeRequestId,
+              })
+            }
             disabled={sending}
           >
             {sending ? "Sending debug log..." : "Send debug log"}

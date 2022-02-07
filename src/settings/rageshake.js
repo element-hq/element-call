@@ -194,6 +194,13 @@ export function useSubmitRageshake() {
           }
         }
 
+        if (opts.rageshakeRequestId) {
+          body.append(
+            "group_call_rageshake_request_id",
+            opts.rageshakeRequestId
+          );
+        }
+
         await fetch(
           import.meta.env.VITE_RAGESHAKE_SUBMIT_URL ||
             "https://element.io/bugreports/submit",
@@ -245,8 +252,10 @@ export function useRageshakeRequest() {
   const { client } = useClient();
 
   const sendRageshakeRequest = useCallback(
-    (roomId) => {
-      client.sendEvent(roomId, "org.matrix.rageshake_request", {});
+    (roomId, rageshakeRequestId) => {
+      client.sendEvent(roomId, "org.matrix.rageshake_request", {
+        request_id: rageshakeRequestId,
+      });
     },
     [client]
   );
@@ -257,6 +266,7 @@ export function useRageshakeRequest() {
 export function useRageshakeRequestModal(roomId) {
   const { modalState, modalProps } = useModalTriggerState();
   const { client } = useClient();
+  const [rageshakeRequestId, setRageshakeRequestId] = useState();
 
   useEffect(() => {
     const onEvent = (event) => {
@@ -267,6 +277,7 @@ export function useRageshakeRequestModal(roomId) {
         roomId === event.getRoomId() &&
         client.getUserId() !== event.getSender()
       ) {
+        setRageshakeRequestId(event.getContent().request_id);
         modalState.open();
       }
     };
@@ -278,5 +289,5 @@ export function useRageshakeRequestModal(roomId) {
     };
   }, [modalState.open, roomId]);
 
-  return { modalState, modalProps };
+  return { modalState, modalProps: { ...modalProps, rageshakeRequestId } };
 }
