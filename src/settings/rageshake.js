@@ -189,7 +189,7 @@ export function useSubmitRageshake() {
             body.append(
               "file",
               new Blob([JSON.stringify(json)], { type: "text/plain" }),
-              "groupcall.json"
+              "groupcall.txt"
             );
           }
         }
