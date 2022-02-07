@@ -4,6 +4,7 @@ import { Button } from "../button";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake, useRageshakeRequest } from "../settings/rageshake";
 import { Body } from "../typography/Typography";
+import { randomString } from "matrix-js-sdk/src/randomstring";
 
 export function FeedbackModal({ inCall, roomId, ...rest }) {
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
@@ -15,10 +16,16 @@ export function FeedbackModal({ inCall, roomId, ...rest }) {
       const data = new FormData(e.target);
       const description = data.get("description");
       const sendLogs = data.get("sendLogs");
-      submitRageshake({ description, sendLogs });
+      const rageshakeRequestId = randomString(16);
+
+      submitRageshake({
+        description,
+        sendLogs,
+        rageshakeRequestId,
+      });
 
       if (inCall && sendLogs) {
-        sendRageshakeRequest(roomId);
+        sendRageshakeRequest(roomId, rageshakeRequestId);
       }
     },
     [inCall, submitRageshake, roomId, sendRageshakeRequest]
