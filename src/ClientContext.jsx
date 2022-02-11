@@ -23,6 +23,7 @@ import React, {
   useContext,
 } from "react";
 import { useHistory } from "react-router-dom";
+import { ErrorView } from "./FullScreenView";
 import { initClient, defaultHomeserver } from "./matrix-utils";
 
 const ClientContext = createContext();
@@ -30,7 +31,7 @@ const ClientContext = createContext();
 export function ClientProvider({ children }) {
   const history = useHistory();
   const [
-    { loading, isAuthenticated, isPasswordlessUser, client, userName },
+    { loading, isAuthenticated, isPasswordlessUser, client, userName, error },
     setState,
   ] = useState({
     loading: true,
@@ -38,6 +39,7 @@ export function ClientProvider({ children }) {
     isPasswordlessUser: false,
     client: undefined,
     userName: null,
+    error: undefined,
   });
 
   useEffect(() => {
@@ -172,6 +174,35 @@ export function ClientProvider({ children }) {
     window.location = "/";
   }, [history]);
 
+  useEffect(() => {
+    if ("BroadcastChannel" in window) {
+      const loadTime = Date.now();
+      const broadcastChannel = new BroadcastChannel("matrix-video-chat");
+
+      function onMessage({ data }) {
+        if (data.load !== undefined && data.load > loadTime) {
+          if (client) {
+            client.stopClient();
+          }
+
+          setState((prev) => ({
+            ...prev,
+            error: new Error(
+              "This application has been opened in another tab."
+            ),
+          }));
+        }
+      }
+
+      broadcastChannel.addEventListener("message", onMessage);
+      broadcastChannel.postMessage({ load: loadTime });
+
+      return () => {
+        broadcastChannel.removeEventListener("message", onMessage);
+      };
+    }
+  }, [client]);
+
   const context = useMemo(
     () => ({
       loading,
@@ -194,6 +225,10 @@ export function ClientProvider({ children }) {
       setClient,
     ]
   );
+
+  if (error) {
+    return <ErrorView error={error} />;
+  }
 
   return (
     <ClientContext.Provider value={context}>{children}</ClientContext.Provider>
