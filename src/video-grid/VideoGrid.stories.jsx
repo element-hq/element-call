@@ -60,7 +60,12 @@ export const ParticipantsTest = () => {
       >
         <VideoGrid layout={layout} items={items}>
           {({ item, ...rest }) => (
-            <VideoTile key={item.id} name={`User ${item.id}`} {...rest} />
+            <VideoTile
+              key={item.id}
+              name={`User ${item.id}`}
+              showName={items.length > 2 || item.focused}
+              {...rest}
+            />
           )}
         </VideoGrid>
       </div>
