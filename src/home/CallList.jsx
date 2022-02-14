@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import { CopyButton } from "../button";
 import { Facepile } from "../Facepile";
 import { Avatar } from "../Avatar";
-import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import styles from "./CallList.module.css";
 import { getRoomUrl } from "../matrix-utils";
 import { Body, Caption } from "../typography/Typography";
