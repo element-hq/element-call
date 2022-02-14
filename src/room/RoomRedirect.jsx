@@ -11,7 +11,7 @@ export function RoomRedirect() {
     let roomId = pathname;
 
     if (pathname.startsWith("/")) {
-      roomId = roomId.substr(1, roomId.length);
+      roomId = roomId.substring(1, roomId.length);
     }
 
     if (!roomId.startsWith("#") && !roomId.startsWith("!")) {
