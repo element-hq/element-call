@@ -87,7 +87,7 @@ export function InCallView({
       if (layout === "freedom") {
         return tiles.map((tile) => {
           if (tile === focusedTile) {
-            return { ...tile, presenter: !tile.presenter };
+            return { ...tile, focused: !tile.focused };
           }
 
           return tile;
