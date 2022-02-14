@@ -17,6 +17,7 @@ import { Form } from "../form/Form";
 export function RegisteredView({ client }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
+  const history = useHistory();
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
@@ -55,7 +56,6 @@ export function RegisteredView({ client }) {
 
   const { modalState, modalProps } = useModalTriggerState();
   const [existingRoomId, setExistingRoomId] = useState();
-  const history = useHistory();
   const onJoinExistingRoom = useCallback(() => {
     history.push(`/${existingRoomId}`);
   }, [history, existingRoomId]);

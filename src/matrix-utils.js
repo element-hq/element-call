@@ -50,6 +50,31 @@ export function roomAliasFromRoomName(roomName) {
     .toLowerCase();
 }
 
+export function roomNameFromRoomId(roomId) {
+  return roomId
+    .match(/([^:]+):.*$/)[1]
+    .substring(1)
+    .split("-")
+    .map((part) =>
+      part.length > 0 ? part.charAt(0).toUpperCase() + part.slice(1) : part
+    )
+    .join(" ");
+}
+
+export function isLocalRoomId(roomId) {
+  if (!roomId) {
+    return false;
+  }
+
+  const parts = roomId.match(/[^:]+:(.*)$/);
+
+  if (parts.length < 2) {
+    return false;
+  }
+
+  return parts[1] === defaultHomeserverHost;
+}
+
 export async function createRoom(client, name) {
   const { room_id, room_alias } = await client.createRoom({
     visibility: "private",
