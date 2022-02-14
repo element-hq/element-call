@@ -57,7 +57,7 @@ export function InCallView({
         id: callFeed.stream.id,
         callFeed,
         focused:
-          screenshareFeeds.length === 0
+          screenshareFeeds.length === 0 && layout === "spotlight"
             ? callFeed.userId === activeSpeaker
             : false,
       });
@@ -80,7 +80,7 @@ export function InCallView({
     }
 
     return participants;
-  }, [userMediaFeeds, activeSpeaker, screenshareFeeds]);
+  }, [userMediaFeeds, activeSpeaker, screenshareFeeds, layout]);
 
   const onFocusTile = useCallback(
     (tiles, focusedTile) => {
@@ -156,6 +156,7 @@ export function InCallView({
               key={item.id}
               item={item}
               getAvatar={renderAvatar}
+              showName={items.length > 2 || item.focused}
               {...rest}
             />
           )}
