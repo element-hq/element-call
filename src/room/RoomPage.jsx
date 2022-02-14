@@ -32,7 +32,7 @@ export function RoomPage() {
     const params = new URLSearchParams(search);
     return [params.has("simple"), params.getAll("via")];
   }, [search]);
-  const roomId = maybeRoomId || hash;
+  const roomId = (maybeRoomId || hash || "").toLowerCase();
 
   if (loading) {
     return <LoadingView />;
