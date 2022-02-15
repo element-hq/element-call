@@ -47,7 +47,7 @@ export function InCallView({
   showInspector,
   roomId,
 }) {
-  const [layout, setLayout] = useVideoGridLayout();
+  const [layout, setLayout] = useVideoGridLayout(screenshareFeeds.length > 0);
 
   const items = useMemo(() => {
     const participants = [];

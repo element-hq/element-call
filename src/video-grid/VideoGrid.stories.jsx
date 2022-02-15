@@ -15,7 +15,7 @@ export default {
 };
 
 export const ParticipantsTest = () => {
-  const [layout, setLayout] = useVideoGridLayout();
+  const [layout, setLayout] = useVideoGridLayout(false);
   const [participantCount, setParticipantCount] = useState(1);
 
   const items = useMemo(
