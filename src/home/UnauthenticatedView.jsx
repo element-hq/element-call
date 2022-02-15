@@ -14,6 +14,7 @@ import { Body, Caption, Link, Headline } from "../typography/Typography";
 import { Form } from "../form/Form";
 import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
+import { generateRandomName } from "../auth/generateRandomName";
 
 export function UnauthenticatedView() {
   const [loading, setLoading] = useState(false);
@@ -26,19 +27,20 @@ export function UnauthenticatedView() {
       e.preventDefault();
       const data = new FormData(e.target);
       const roomName = data.get("callName");
-      const userName = data.get("userName");
+      const displayName = data.get("displayName");
 
       async function submit() {
         setError(undefined);
         setLoading(true);
         const recaptchaResponse = await execute();
+        const userName = generateRandomName();
         const client = await register(
           userName,
           randomString(16),
+          displayName,
           recaptchaResponse,
           true
         );
-
         const roomIdOrAlias = await createRoom(client, roomName);
 
         if (roomIdOrAlias) {
@@ -100,10 +102,10 @@ export function UnauthenticatedView() {
             </FieldRow>
             <FieldRow>
               <InputField
-                id="userName"
-                name="userName"
-                label="Username"
-                placeholder="Username"
+                id="displayName"
+                name="displayName"
+                label="Display Name"
+                placeholder="Display Name"
                 type="text"
                 required
                 autoComplete="off"

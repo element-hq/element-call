@@ -10,6 +10,7 @@ import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { Form } from "../form/Form";
 import { UserMenuContainer } from "../UserMenuContainer";
+import { generateRandomName } from "../auth/generateRandomName";
 
 export function RoomAuthView() {
   const [loading, setLoading] = useState(false);
@@ -21,13 +22,20 @@ export function RoomAuthView() {
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
-      const userName = data.get("userName");
+      const displayName = data.get("displayName");
 
       async function submit() {
         setError(undefined);
         setLoading(true);
         const recaptchaResponse = await execute();
-        await register(userName, randomString(16), recaptchaResponse, true);
+        const userName = generateRandomName();
+        await register(
+          userName,
+          randomString(16),
+          displayName,
+          recaptchaResponse,
+          true
+        );
       }
 
       submit().catch((error) => {
@@ -58,10 +66,10 @@ export function RoomAuthView() {
           <Form className={styles.form} onSubmit={onSubmit}>
             <FieldRow>
               <InputField
-                id="userName"
-                name="userName"
-                label="Pick a user name"
-                placeholder="Pick a user name"
+                id="displayName"
+                name="displayName"
+                label="Display Name"
+                placeholder="Display Name"
                 type="text"
                 required
                 autoComplete="off"

@@ -25,7 +25,13 @@ export function useInteractiveRegistration() {
   }, []);
 
   const register = useCallback(
-    async (username, password, recaptchaResponse, passwordlessUser) => {
+    async (
+      username,
+      password,
+      displayName,
+      recaptchaResponse,
+      passwordlessUser
+    ) => {
       const interactiveAuth = new InteractiveAuth({
         matrixClient: authClientRef.current,
         busyChanged(loading) {
@@ -66,7 +72,7 @@ export function useInteractiveRegistration() {
         deviceId: device_id,
       });
 
-      await client.setDisplayName(username);
+      await client.setDisplayName(displayName);
 
       const session = { user_id, device_id, access_token, passwordlessUser };
 

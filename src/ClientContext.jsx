@@ -145,29 +145,36 @@ export function ClientProvider({ children }) {
     [client]
   );
 
-  const setClient = useCallback((client, session) => {
-    if (client) {
-      localStorage.setItem("matrix-auth-store", JSON.stringify(session));
+  const setClient = useCallback(
+    (newClient, session) => {
+      if (client && client !== newClient) {
+        client.stopClient();
+      }
 
-      setState({
-        client,
-        loading: false,
-        isAuthenticated: true,
-        isPasswordlessUser: !!session.passwordlessUser,
-        userName: client.getUserIdLocalpart(),
-      });
-    } else {
-      localStorage.removeItem("matrix-auth-store");
+      if (newClient) {
+        localStorage.setItem("matrix-auth-store", JSON.stringify(session));
 
-      setState({
-        client: undefined,
-        loading: false,
-        isAuthenticated: false,
-        isPasswordlessUser: false,
-        userName: null,
-      });
-    }
-  }, []);
+        setState({
+          client: newClient,
+          loading: false,
+          isAuthenticated: true,
+          isPasswordlessUser: !!session.passwordlessUser,
+          userName: newClient.getUserIdLocalpart(),
+        });
+      } else {
+        localStorage.removeItem("matrix-auth-store");
+
+        setState({
+          client: undefined,
+          loading: false,
+          isAuthenticated: false,
+          isPasswordlessUser: false,
+          userName: null,
+        });
+      }
+    },
+    [client]
+  );
 
   const logout = useCallback(() => {
     localStorage.removeItem("matrix-auth-store");
@@ -225,6 +232,10 @@ export function ClientProvider({ children }) {
       setClient,
     ]
   );
+
+  useEffect(() => {
+    window.matrixclient = client;
+  }, [client]);
 
   if (error) {
     return <ErrorView error={error} />;
