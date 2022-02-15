@@ -31,13 +31,7 @@ import { usePageTitle } from "../usePageTitle";
 export function RegisterPage() {
   usePageTitle("Register");
 
-  const {
-    loading,
-    client,
-    changePassword,
-    isAuthenticated,
-    isPasswordlessUser,
-  } = useClient();
+  const { loading, isAuthenticated, isPasswordlessUser, client } = useClient();
   const confirmPasswordRef = useRef();
   const history = useHistory();
   const location = useLocation();
@@ -64,11 +58,31 @@ export function RegisterPage() {
       async function submit() {
         setRegistering(true);
 
-        if (isPasswordlessUser) {
-          await changePassword(password);
-        } else {
-          const recaptchaResponse = await execute();
-          await register(userName, password, recaptchaResponse);
+        let roomIds;
+
+        if (client && isPasswordlessUser) {
+          const groupCalls = client.groupCallEventHandler.groupCalls.values();
+          roomIds = Array.from(groupCalls).map(
+            (groupCall) => groupCall.room.roomId
+          );
+        }
+
+        const recaptchaResponse = await execute();
+        const newClient = await register(
+          userName,
+          password,
+          userName,
+          recaptchaResponse
+        );
+
+        if (roomIds) {
+          for (const roomId of roomIds) {
+            try {
+              await newClient.joinRoom(roomId);
+            } catch (error) {
+              console.warn(`Couldn't join room ${roomId}`, error);
+            }
+          }
         }
       }
 
@@ -86,15 +100,7 @@ export function RegisterPage() {
           reset();
         });
     },
-    [
-      register,
-      changePassword,
-      location,
-      history,
-      isPasswordlessUser,
-      reset,
-      execute,
-    ]
+    [register, location, history, isPasswordlessUser, reset, execute, client]
   );
 
   useEffect(() => {
@@ -110,10 +116,10 @@ export function RegisterPage() {
   }, [password, passwordConfirmation]);
 
   useEffect(() => {
-    if (!loading && isAuthenticated && !isPasswordlessUser) {
+    if (!loading && isAuthenticated && !isPasswordlessUser && !registering) {
       history.push("/");
     }
-  }, [history, isAuthenticated, isPasswordlessUser]);
+  }, [history, isAuthenticated, isPasswordlessUser, registering]);
 
   if (loading) {
     return <LoadingView />;
@@ -137,12 +143,6 @@ export function RegisterPage() {
                   autoCapitalize="none"
                   prefix="@"
                   suffix={`:${defaultHomeserverHost}`}
-                  value={
-                    isAuthenticated && isPasswordlessUser
-                      ? client.getUserIdLocalpart()
-                      : undefined
-                  }
-                  disabled={isAuthenticated && isPasswordlessUser}
                 />
               </FieldRow>
               <FieldRow>
@@ -168,22 +168,20 @@ export function RegisterPage() {
                   ref={confirmPasswordRef}
                 />
               </FieldRow>
-              {!isPasswordlessUser && (
-                <Caption>
-                  This site is protected by ReCAPTCHA and the Google{" "}
-                  <Link href="https://www.google.com/policies/privacy/">
-                    Privacy Policy
-                  </Link>{" "}
-                  and{" "}
-                  <Link href="https://policies.google.com/terms">
-                    Terms of Service
-                  </Link>{" "}
-                  apply.
-                  <br />
-                  By clicking "Log in", you agree to our{" "}
-                  <Link href={privacyPolicyUrl}>Terms and conditions</Link>
-                </Caption>
-              )}
+              <Caption>
+                This site is protected by ReCAPTCHA and the Google{" "}
+                <Link href="https://www.google.com/policies/privacy/">
+                  Privacy Policy
+                </Link>{" "}
+                and{" "}
+                <Link href="https://policies.google.com/terms">
+                  Terms of Service
+                </Link>{" "}
+                apply.
+                <br />
+                By clicking "Register", you agree to our{" "}
+                <Link href={privacyPolicyUrl}>Terms and conditions</Link>
+              </Caption>
               {error && (
                 <FieldRow>
                   <ErrorMessage>{error.message}</ErrorMessage>
