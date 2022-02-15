@@ -14,6 +14,7 @@ import { TooltipTrigger } from "../Tooltip";
 export const variantToClassName = {
   default: [styles.button],
   toolbar: [styles.toolbarButton],
+  toolbarSecondary: [styles.toolbarButtonSecondary],
   icon: [styles.iconButton],
   secondary: [styles.secondary],
   copy: [styles.copyButton],
@@ -103,7 +104,7 @@ export function VideoButton({ muted, ...rest }) {
 export function ScreenshareButton({ enabled, className, ...rest }) {
   return (
     <TooltipTrigger>
-      <Button variant="toolbar" {...rest} on={enabled}>
+      <Button variant="toolbarSecondary" {...rest} on={enabled}>
         <ScreenshareIcon />
       </Button>
       {() => (enabled ? "Stop sharing screen" : "Share screen")}
