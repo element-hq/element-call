@@ -22,7 +22,13 @@ export function GroupCallLoader({ client, roomId, viaServers, children }) {
     );
   }
 
-  if (error && error.errcode === "M_UNKNOWN" && isLocalRoomId(roomId)) {
+  if (
+    error &&
+    (error.errcode === "M_NOT_FOUND" ||
+      (error.message &&
+        error.message.indexOf("Failed to fetch alias") !== -1)) &&
+    isLocalRoomId(roomId)
+  ) {
     return <RoomNotFoundView client={client} roomId={roomId} />;
   }
 
