@@ -16,6 +16,7 @@ limitations under the License.
 
 .button,
 .toolbarButton,
+.toolbarButtonSecondary,
 .iconButton,
 .iconCopyButton,
 .secondary,
@@ -48,6 +49,7 @@ limitations under the License.
 
 .button:focus,
 .toolbarButton:focus,
+.toolbarButtonSecondary:focus,
 .iconButton:focus,
 .iconCopyButton:focus,
 .secondary:focus,
@@ -55,20 +57,26 @@ limitations under the License.
   outline: auto;
 }
 
-.toolbarButton {
+.toolbarButton,
+.toolbarButtonSecondary {
   width: 50px;
   height: 50px;
   border-radius: 50px;
   background-color: var(--bgColor2);
 }
 
-.toolbarButton:hover {
+.toolbarButton:hover,
+.toolbarButtonSecondary:hover {
   background-color: var(--bgColor4);
 }
 
 .toolbarButton.on,
 .toolbarButton.off {
   background-color: #ffffff;
+}
+
+.toolbarButtonSecondary.on {
+  background-color: #0dbd8b;
 }
 
 .iconButton:not(.stroke) svg * {
@@ -98,6 +106,10 @@ limitations under the License.
 
 .toolbarButton.off svg * {
   fill: #21262c;
+}
+
+.toolbarButtonSecondary.on svg * {
+  fill: #ffffff;
 }
 
 .secondary,
