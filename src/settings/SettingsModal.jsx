@@ -11,6 +11,7 @@ import { useMediaHandler } from "./useMediaHandler";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
 import { useDownloadDebugLog } from "./rageshake";
+import { Body } from "../typography/Typography";
 
 export function SettingsModal({
   client,
@@ -82,6 +83,11 @@ export function SettingsModal({
             </>
           }
         >
+          <FieldRow>
+            <Body className={styles.fieldRowText}>
+              Version: {import.meta.env.VITE_APP_VERSION || "dev"}
+            </Body>
+          </FieldRow>
           <FieldRow>
             <InputField
               id="showInspector"

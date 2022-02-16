@@ -6,3 +6,7 @@
 .tabContainer {
   margin: 27px 16px;
 }
+
+.fieldRowText {
+  margin-bottom: 0;
+}
