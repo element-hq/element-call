@@ -21,6 +21,7 @@ import { Avatar } from "../Avatar";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useRageshakeRequestModal } from "../settings/rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
+import { usePreventScroll } from "@react-aria/overlays";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -47,6 +48,7 @@ export function InCallView({
   showInspector,
   roomId,
 }) {
+  usePreventScroll();
   const [layout, setLayout] = useVideoGridLayout(screenshareFeeds.length > 0);
 
   const items = useMemo(() => {
