@@ -82,7 +82,7 @@ export const Button = forwardRef(
 export function MicButton({ muted, ...rest }) {
   return (
     <TooltipTrigger>
-      <Button variant="toolbar" {...rest} off={muted}>
+      <Button variant="toolbar" {...rest} off={muted} id="microphoneButton">
         {muted ? <MuteMicIcon /> : <MicIcon />}
       </Button>
       {() => (muted ? "Unmute microphone" : "Mute microphone")}
@@ -93,7 +93,7 @@ export function MicButton({ muted, ...rest }) {
 export function VideoButton({ muted, ...rest }) {
   return (
     <TooltipTrigger>
-      <Button variant="toolbar" {...rest} off={muted}>
+      <Button variant="toolbar" {...rest} off={muted} id="cameraButton">
         {muted ? <DisableVideoIcon /> : <VideoIcon />}
       </Button>
       {() => (muted ? "Turn on camera" : "Turn off camera")}
