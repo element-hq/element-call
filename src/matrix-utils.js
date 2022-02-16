@@ -120,12 +120,12 @@ export function getRoomUrl(roomId) {
     const [localPart, host] = roomId.replace("#", "").split(":");
 
     if (host !== defaultHomeserverHost) {
-      return `${window.location.host}/room/${roomId}`;
+      return `${window.location.protocol}//${window.location.host}/room/${roomId}`;
     } else {
-      return `${window.location.host}/${localPart}`;
+      return `${window.location.protocol}//${window.location.host}/${localPart}`;
     }
   } else {
-    return `${window.location.host}/room/${roomId}`;
+    return `${window.location.protocol}//${window.location.host}/room/${roomId}`;
   }
 }
 
