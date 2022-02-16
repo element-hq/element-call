@@ -24,6 +24,9 @@ yarn link
 cd ..
 
 cd matrix-video-chat
+
+export VITE_APP_VERSION=$(git describe --tags --abbrev=0)
+
 yarn link matrix-js-sdk
 yarn link matrix-react-sdk
 yarn install

@@ -41,7 +41,7 @@ export function useSubmitRageshake() {
           opts.description || "User did not supply any additional text."
         );
         body.append("app", "matrix-video-chat");
-        body.append("version", "dev");
+        body.append("version", import.meta.env.VITE_APP_VERSION || "dev");
         body.append("user_agent", userAgent);
         body.append("installed_pwa", false);
         body.append("touch_input", touchInput);

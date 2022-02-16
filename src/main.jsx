@@ -27,6 +27,8 @@ import { InspectorContextProvider } from "./room/GroupCallInspector";
 
 rageshake.init();
 
+console.info(`matrix-video-chat ${import.meta.env.VITE_APP_VERSION || "dev"}`);
+
 if (import.meta.env.VITE_CUSTOM_THEME) {
   const style = document.documentElement.style;
   style.setProperty("--primaryColor", import.meta.env.VITE_PRIMARY_COLOR);
