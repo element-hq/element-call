@@ -59,8 +59,8 @@ function getUserName(userId) {
   const match = userId.match(/@([^\:]+):/);
 
   return match && match.length > 0
-    ? match[1].replace("-", " ").replace("W", "")
-    : userId.replace("W", "");
+    ? match[1].replace("-", " ").replace(/\W/g, "")
+    : userId.replace(/\W/g, "");
 }
 
 function formatContent(type, content) {
@@ -231,7 +231,7 @@ function reducer(state, action) {
         ),
       };
     }
-    case "receive_to_device_event": {
+    case "received_voip_event": {
       const event = action.event;
       const eventsByUserId = { ...state.eventsByUserId };
       const fromId = event.getSender();
@@ -338,8 +338,8 @@ function useGroupCallState(client, groupCall, pollCallStats) {
     //   dispatch({ type: "call_hangup", call });
     // }
 
-    function onToDeviceEvent(event) {
-      dispatch({ type: "receive_to_device_event", event });
+    function onReceivedVoipEvent(event) {
+      dispatch({ type: "received_voip_event", event });
     }
 
     function onSendVoipEvent(event) {
@@ -351,7 +351,7 @@ function useGroupCallState(client, groupCall, pollCallStats) {
     groupCall.on("send_voip_event", onSendVoipEvent);
     //client.on("state", onCallsChanged);
     //client.on("hangup", onCallHangup);
-    client.on("toDeviceEvent", onToDeviceEvent);
+    client.on("received_voip_event", onReceivedVoipEvent);
 
     onUpdateRoomState();
 
@@ -361,7 +361,7 @@ function useGroupCallState(client, groupCall, pollCallStats) {
       groupCall.removeListener("send_voip_event", onSendVoipEvent);
       //client.removeListener("state", onCallsChanged);
       //client.removeListener("hangup", onCallHangup);
-      client.removeListener("toDeviceEvent", onToDeviceEvent);
+      client.removeListener("received_voip_event", onReceivedVoipEvent);
     };
   }, [client, groupCall]);
 
