@@ -182,12 +182,21 @@ export function ClientProvider({ children }) {
   }, [history]);
 
   useEffect(() => {
-    if ("BroadcastChannel" in window) {
+    if (client) {
       const loadTime = Date.now();
-      const broadcastChannel = new BroadcastChannel("matrix-video-chat");
 
-      function onMessage({ data }) {
-        if (data.load !== undefined && data.load > loadTime) {
+      const onToDeviceEvent = (event) => {
+        if (event.getType() !== "org.matrix.call_duplicate_session") {
+          return;
+        }
+
+        const content = event.getContent();
+
+        if (content.session_id === client.getSessionId()) {
+          return;
+        }
+
+        if (content.timestamp > loadTime) {
           if (client) {
             client.stopClient();
           }
@@ -199,13 +208,18 @@ export function ClientProvider({ children }) {
             ),
           }));
         }
-      }
+      };
 
-      broadcastChannel.addEventListener("message", onMessage);
-      broadcastChannel.postMessage({ load: loadTime });
+      client.on("toDeviceEvent", onToDeviceEvent);
+
+      client.sendToDevice("org.matrix.call_duplicate_session", {
+        [client.getUserId()]: {
+          "*": { session_id: client.getSessionId(), timestamp: loadTime },
+        },
+      });
 
       return () => {
-        broadcastChannel.removeEventListener("message", onMessage);
+        client.removeListener("toDeviceEvent", onToDeviceEvent);
       };
     }
   }, [client]);
