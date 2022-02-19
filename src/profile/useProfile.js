@@ -44,7 +44,7 @@ export function useProfile(client) {
   }, [client]);
 
   const saveProfile = useCallback(
-    async ({ displayName, avatar }) => {
+    async ({ displayName, avatar, removeAvatar }) => {
       if (client) {
         setState((prev) => ({
           ...prev,
@@ -58,7 +58,9 @@ export function useProfile(client) {
 
           let mxcAvatarUrl;
 
-          if (avatar) {
+          if (removeAvatar) {
+            await client.setAvatarUrl("");
+          } else if (avatar) {
             mxcAvatarUrl = await client.uploadContent(avatar);
             await client.setAvatarUrl(mxcAvatarUrl);
           }
@@ -66,7 +68,9 @@ export function useProfile(client) {
           setState((prev) => ({
             ...prev,
             displayName,
-            avatarUrl: mxcAvatarUrl
+            avatarUrl: removeAvatar
+              ? null
+              : mxcAvatarUrl
               ? getAvatarUrl(client, mxcAvatarUrl)
               : prev.avatarUrl,
             loading: false,

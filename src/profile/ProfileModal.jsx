@@ -3,22 +3,25 @@ import { Button } from "../button";
 import { useProfile } from "./useProfile";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Modal, ModalContent } from "../Modal";
+import { AvatarInputField } from "../input/AvatarInputField";
+import styles from "./ProfileModal.module.css";
 
-export function ProfileModal({
-  client,
-  isAuthenticated,
-  isPasswordlessUser,
-  ...rest
-}) {
+export function ProfileModal({ client, ...rest }) {
   const { onClose } = rest;
   const {
     success,
     error,
     loading,
     displayName: initialDisplayName,
+    avatarUrl,
     saveProfile,
   } = useProfile(client);
   const [displayName, setDisplayName] = useState(initialDisplayName || "");
+  const [removeAvatar, setRemoveAvatar] = useState(false);
+
+  const onRemoveAvatar = useCallback(() => {
+    setRemoveAvatar(true);
+  }, []);
 
   const onChangeDisplayName = useCallback(
     (e) => {
@@ -37,9 +40,10 @@ export function ProfileModal({
       saveProfile({
         displayName,
         avatar: avatar && avatar.size > 0 ? avatar : undefined,
+        removeAvatar: removeAvatar && (!avatar || avatar.size === 0),
       });
     },
-    [saveProfile]
+    [saveProfile, removeAvatar]
   );
 
   useEffect(() => {
@@ -52,6 +56,16 @@ export function ProfileModal({
     <Modal title="Profile" isDismissable {...rest}>
       <ModalContent>
         <form onSubmit={onSubmit}>
+          <FieldRow className={styles.avatarFieldRow}>
+            <AvatarInputField
+              id="avatar"
+              name="avatar"
+              label="Avatar"
+              avatarUrl={avatarUrl}
+              displayName={displayName}
+              onRemoveAvatar={onRemoveAvatar}
+            />
+          </FieldRow>
           <FieldRow>
             <InputField
               id="userId"
@@ -75,16 +89,6 @@ export function ProfileModal({
               onChange={onChangeDisplayName}
             />
           </FieldRow>
-          {isAuthenticated && (
-            <FieldRow>
-              <InputField
-                type="file"
-                id="avatar"
-                name="avatar"
-                label="Avatar"
-              />
-            </FieldRow>
-          )}
           {error && (
             <FieldRow>
               <ErrorMessage>{error.message}</ErrorMessage>

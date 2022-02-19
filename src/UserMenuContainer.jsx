@@ -43,14 +43,7 @@ export function UserMenuContainer({ preventNavigation }) {
           displayName || (userName ? userName.replace("@", "") : undefined)
         }
       />
-      {modalState.isOpen && (
-        <ProfileModal
-          client={client}
-          isAuthenticated={isAuthenticated}
-          isPasswordlessUser={isPasswordlessUser}
-          {...modalProps}
-        />
-      )}
+      {modalState.isOpen && <ProfileModal client={client} {...modalProps} />}
     </>
   );
 }
