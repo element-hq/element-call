@@ -10,7 +10,6 @@ import { OverflowMenu } from "./OverflowMenu";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { Body, Link } from "../typography/Typography";
 import { Avatar } from "../Avatar";
-import { getAvatarUrl } from "../matrix-utils";
 import { useProfile } from "../profile/useProfile";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
@@ -86,7 +85,7 @@ export function LobbyView({
                         borderRadius: avatarSize,
                         fontSize: Math.round(avatarSize / 2),
                       }}
-                      src={avatarUrl && getAvatarUrl(client, avatarUrl, 96)}
+                      src={avatarUrl}
                       fallback={displayName.slice(0, 1).toUpperCase()}
                     />
                   </div>
