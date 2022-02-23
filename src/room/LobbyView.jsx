@@ -14,6 +14,7 @@ import { useProfile } from "../profile/useProfile";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { useLocationNavigation } from "../useLocationNavigation";
+import { useMediaHandler } from "../settings/useMediaHandler";
 
 export function LobbyView({
   client,
@@ -31,7 +32,8 @@ export function LobbyView({
   roomId,
 }) {
   const { stream } = useCallFeed(localCallFeed);
-  const videoRef = useMediaStream(stream, true);
+  const { audioOutput } = useMediaHandler();
+  const videoRef = useMediaStream(stream, audioOutput, true);
   const { displayName, avatarUrl } = useProfile(client);
   const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
   const avatarSize = (previewBounds.height - 66) / 2;

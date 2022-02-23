@@ -21,6 +21,7 @@ import { ErrorView, LoadingView } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
 import { GroupCallLoader } from "./GroupCallLoader";
 import { GroupCallView } from "./GroupCallView";
+import { MediaHandlerProvider } from "../settings/useMediaHandler";
 
 export function RoomPage() {
   const { loading, isAuthenticated, error, client, isPasswordlessUser } =
@@ -47,16 +48,18 @@ export function RoomPage() {
   }
 
   return (
-    <GroupCallLoader client={client} roomId={roomId} viaServers={viaServers}>
-      {(groupCall) => (
-        <GroupCallView
-          client={client}
-          roomId={roomId}
-          groupCall={groupCall}
-          isPasswordlessUser={isPasswordlessUser}
-          simpleGrid={simpleGrid}
-        />
-      )}
-    </GroupCallLoader>
+    <MediaHandlerProvider client={client}>
+      <GroupCallLoader client={client} roomId={roomId} viaServers={viaServers}>
+        {(groupCall) => (
+          <GroupCallView
+            client={client}
+            roomId={roomId}
+            groupCall={groupCall}
+            isPasswordlessUser={isPasswordlessUser}
+            simpleGrid={simpleGrid}
+          />
+        )}
+      </GroupCallLoader>
+    </MediaHandlerProvider>
   );
 }

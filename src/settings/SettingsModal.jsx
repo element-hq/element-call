@@ -13,12 +13,7 @@ import { Button } from "../button";
 import { useDownloadDebugLog } from "./rageshake";
 import { Body } from "../typography/Typography";
 
-export function SettingsModal({
-  client,
-  setShowInspector,
-  showInspector,
-  ...rest
-}) {
+export function SettingsModal({ setShowInspector, showInspector, ...rest }) {
   const {
     audioInput,
     audioInputs,
@@ -26,7 +21,10 @@ export function SettingsModal({
     videoInput,
     videoInputs,
     setVideoInput,
-  } = useMediaHandler(client);
+    audioOutput,
+    audioOutputs,
+    setAudioOutput,
+  } = useMediaHandler();
 
   const downloadDebugLog = useDownloadDebugLog();
 
@@ -56,6 +54,17 @@ export function SettingsModal({
               <Item key={deviceId}>{label}</Item>
             ))}
           </SelectInput>
+          {audioOutputs.length > 0 && (
+            <SelectInput
+              label="Speaker"
+              selectedKey={audioOutput}
+              onSelectionChange={setAudioOutput}
+            >
+              {audioOutputs.map(({ deviceId, label }) => (
+                <Item key={deviceId}>{label}</Item>
+              ))}
+            </SelectInput>
+          )}
         </TabItem>
         <TabItem
           title={

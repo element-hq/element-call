@@ -75,7 +75,6 @@ export function OverflowMenu({
           {...settingsModalProps}
           setShowInspector={setShowInspector}
           showInspector={showInspector}
-          client={client}
         />
       )}
       {inviteModalState.isOpen && (
