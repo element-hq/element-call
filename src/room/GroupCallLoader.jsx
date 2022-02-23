@@ -6,7 +6,7 @@ import { isLocalRoomId } from "../matrix-utils";
 import { RoomNotFoundView } from "./RoomNotFoundView";
 
 export function GroupCallLoader({ client, roomId, viaServers, children }) {
-  const { loading, error, groupCall } = useLoadGroupCall(
+  const { loading, error, groupCall, reload } = useLoadGroupCall(
     client,
     roomId,
     viaServers
@@ -29,7 +29,9 @@ export function GroupCallLoader({ client, roomId, viaServers, children }) {
         error.message.indexOf("Failed to fetch alias") !== -1)) &&
     isLocalRoomId(roomId)
   ) {
-    return <RoomNotFoundView client={client} roomId={roomId} />;
+    return (
+      <RoomNotFoundView client={client} roomId={roomId} onReload={reload} />
+    );
   }
 
   if (error) {
