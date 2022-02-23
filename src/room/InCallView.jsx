@@ -193,7 +193,10 @@ export function InCallView({
         show={showInspector}
       />
       {rageshakeRequestModalState.isOpen && (
-        <RageshakeRequestModal {...rageshakeRequestModalProps} />
+        <RageshakeRequestModal
+          {...rageshakeRequestModalProps}
+          roomId={roomId}
+        />
       )}
     </div>
   );
