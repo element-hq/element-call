@@ -17,7 +17,6 @@ export function OverflowMenu({
   roomId,
   setShowInspector,
   showInspector,
-  client,
   inCall,
   groupCall,
 }) {

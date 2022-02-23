@@ -22,6 +22,7 @@ export function FeedbackModal({ inCall, roomId, ...rest }) {
         description,
         sendLogs,
         rageshakeRequestId,
+        roomId,
       });
 
       if (inCall && sendLogs) {

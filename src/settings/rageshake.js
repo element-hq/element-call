@@ -47,8 +47,15 @@ export function useSubmitRageshake() {
         body.append("touch_input", touchInput);
 
         if (client) {
+          const userId = client.getUserId();
+          const user = client.getUser(userId);
+          body.append("display_name", user?.displayName);
           body.append("user_id", client.credentials.userId);
           body.append("device_id", client.deviceId);
+
+          if (opts.roomId) {
+            body.append("room_id", opts.roomId);
+          }
 
           if (client.isCryptoEnabled()) {
             const keys = [`ed25519:${client.getDeviceEd25519Key()}`];
