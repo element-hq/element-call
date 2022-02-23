@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 
 async function fetchGroupCall(
   client,
@@ -41,14 +41,23 @@ export function useLoadGroupCall(client, roomId, viaServers) {
     loading: true,
     error: undefined,
     groupCall: undefined,
+    reloadId: 0,
   });
 
   useEffect(() => {
     setState({ loading: true });
     fetchGroupCall(client, roomId, viaServers, 30000)
-      .then((groupCall) => setState({ loading: false, groupCall }))
-      .catch((error) => setState({ loading: false, error }));
-  }, [client, roomId]);
+      .then((groupCall) =>
+        setState((prevState) => ({ ...prevState, loading: false, groupCall }))
+      )
+      .catch((error) =>
+        setState((prevState) => ({ ...prevState, loading: false, error }))
+      );
+  }, [client, roomId, state.reloadId]);
 
-  return state;
+  const reload = useCallback(() => {
+    setState((prevState) => ({ ...prevState, reloadId: prevState.reloadId++ }));
+  }, []);
+
+  return { ...state, reload };
 }

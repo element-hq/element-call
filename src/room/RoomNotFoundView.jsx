@@ -8,7 +8,7 @@ import { Form } from "../form/Form";
 import { useHistory } from "react-router-dom";
 import styles from "./RoomNotFoundView.module.css";
 
-export function RoomNotFoundView({ client, roomId }) {
+export function RoomNotFoundView({ client, roomId, onReload }) {
   const history = useHistory();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
@@ -21,11 +21,9 @@ export function RoomNotFoundView({ client, roomId }) {
         setError(undefined);
         setLoading(true);
 
-        const roomIdOrAlias = await createRoom(client, roomName);
+        await createRoom(client, roomName);
 
-        if (roomIdOrAlias) {
-          history.push(`/room/${roomIdOrAlias}`);
-        }
+        onReload();
       }
 
       submit().catch((error) => {
