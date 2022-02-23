@@ -163,6 +163,7 @@ export function InCallView({
               getAvatar={renderAvatar}
               showName={items.length > 2 || item.focused}
               audioOutputDevice={audioOutput}
+              disableSpeakingIndicator={items.length < 3}
               {...rest}
             />
           )}
