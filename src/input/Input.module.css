@@ -97,7 +97,7 @@
 
 .inputField input:focus + label,
 .inputField input:not(:placeholder-shown) + label,
-.inputField.prefix textarea + label,
+.inputField.prefix input + label,
 .inputField textarea:focus + label,
 .inputField textarea:not(:placeholder-shown) + label,
 .inputField.prefix textarea + label {
