@@ -29,7 +29,8 @@
   border: 1px solid var(--inputBorderColor);
 }
 
-.inputField input {
+.inputField input,
+.inputField textarea {
   font-weight: 400;
   font-size: 15px;
   border: none;
@@ -42,6 +43,7 @@
 }
 
 .inputField.disabled input,
+.inputField.disabled textarea,
 .inputField.disabled span {
   color: var(--textColor2);
 }
@@ -54,12 +56,14 @@
   padding-right: 0;
 }
 
-.inputField input::placeholder {
+.inputField input::placeholder,
+.inputField textarea::placeholder {
   transition: color 0.25s ease-in 0s;
   color: transparent;
 }
 
-.inputField input:placeholder-shown:focus::placeholder {
+.inputField input:placeholder-shown:focus::placeholder,
+.inputField textarea:placeholder-shown:focus::placeholder {
   transition: color 0.25s ease-in 0.1s;
   color: var(--textColor2);
 }
@@ -86,13 +90,17 @@
   border-color: var(--inputBorderColorFocused);
 }
 
-.inputField input:focus {
+.inputField input:focus,
+.inputField textarea:focus {
   outline: 0;
 }
 
 .inputField input:focus + label,
 .inputField input:not(:placeholder-shown) + label,
-.inputField.prefix input + label {
+.inputField.prefix textarea + label,
+.inputField textarea:focus + label,
+.inputField textarea:not(:placeholder-shown) + label,
+.inputField.prefix textarea + label {
   background-color: var(--bgColor2);
   transition: font-size 0.25s ease-out 0s, color 0.25s ease-out 0s,
     top 0.25s ease-out 0s, background-color 0.25s ease-out 0s;
@@ -102,7 +110,8 @@
   pointer-events: auto;
 }
 
-.inputField input:focus + label {
+.inputField input:focus + label,
+.inputField textarea:focus + label {
   color: var(--inputBorderColorFocused);
 }
 

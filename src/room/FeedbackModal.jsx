@@ -48,7 +48,7 @@ export function FeedbackModal({ inCall, roomId, ...rest }) {
               id="description"
               name="description"
               label="Description (optional)"
-              type="text"
+              type="textarea"
             />
           </FieldRow>
           <FieldRow>
