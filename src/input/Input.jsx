@@ -38,14 +38,25 @@ export const InputField = forwardRef(
         )}
       >
         {prefix && <span>{prefix}</span>}
-        <input
-          id={id}
-          {...rest}
-          ref={ref}
-          type={type}
-          checked={checked}
-          disabled={disabled}
-        />
+        {type === "textarea" ? (
+          <textarea
+            id={id}
+            {...rest}
+            ref={ref}
+            type={type}
+            disabled={disabled}
+          />
+        ) : (
+          <input
+            id={id}
+            {...rest}
+            ref={ref}
+            type={type}
+            checked={checked}
+            disabled={disabled}
+          />
+        )}
+
         <label htmlFor={id}>
           {type === "checkbox" && (
             <div className={styles.checkbox}>
