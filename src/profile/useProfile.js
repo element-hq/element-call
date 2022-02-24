@@ -9,7 +9,7 @@ export function useProfile(client) {
       return {
         success: false,
         loading: false,
-        displayName: user?.displayName,
+        displayName: user?.rawDisplayName,
         avatarUrl: user && client && getAvatarUrl(client, user.avatarUrl),
         error: null,
       };
