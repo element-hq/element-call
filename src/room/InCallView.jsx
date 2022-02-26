@@ -65,6 +65,7 @@ export function InCallView({
           screenshareFeeds.length === 0 && layout === "spotlight"
             ? callFeed.userId === activeSpeaker
             : false,
+        isLocal: callFeed.isLocal(),
       });
     }
 
@@ -81,6 +82,7 @@ export function InCallView({
         id: callFeed.stream.id,
         callFeed,
         focused: true,
+        isLocal: callFeed.isLocal(),
       });
     }
 
