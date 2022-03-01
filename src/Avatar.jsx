@@ -34,7 +34,7 @@ export function Avatar({
 }) {
   const backgroundColor = useMemo(() => {
     const index = hashStringToArrIndex(
-      bgKey || fallback || src,
+      bgKey || fallback || src || "",
       backgroundColors.length
     );
     return backgroundColors[index];
