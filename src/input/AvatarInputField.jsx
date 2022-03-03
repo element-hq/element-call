@@ -65,13 +65,15 @@ export const AvatarInputField = forwardRef(
             <EditIcon />
           </label>
         </div>
-        <Button
-          className={styles.removeButton}
-          variant="icon"
-          onPress={onPressRemoveAvatar}
-        >
-          Remove
-        </Button>
+        {(avatarUrl || objUrl) && !removed && (
+          <Button
+            className={styles.removeButton}
+            variant="icon"
+            onPress={onPressRemoveAvatar}
+          >
+            Remove
+          </Button>
+        )}
       </div>
     );
   }
