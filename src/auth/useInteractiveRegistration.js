@@ -82,6 +82,11 @@ export function useInteractiveRegistration() {
 
       setClient(client, session);
 
+      const user = client.getUser(client.getUserId());
+
+      user.setRawDisplayName(displayName);
+      user.setDisplayName(displayName);
+
       return client;
     },
     []
