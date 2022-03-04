@@ -32,8 +32,8 @@ Next you'll also need [Synapse](https://matrix-org.github.io/synapse/latest/setu
 Finally we can set up this project.
 
 ```
-git clone https://github.com/vector-im/matrix-video-chat.git
-cd matrix-video-chat
+git clone https://github.com/vector-im/element-call.git
+cd element-call
 yarn
 yarn link matrix-js-sdk
 yarn link matrix-react-sdk
