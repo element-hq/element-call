@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
 
 async function fetchGroupCall(
   client,
@@ -36,17 +37,49 @@ async function fetchGroupCall(
   });
 }
 
-export function useLoadGroupCall(client, roomId, viaServers) {
+export function useLoadGroupCall(client, roomId, viaServers, createIfNotFound) {
   const [state, setState] = useState({
     loading: true,
     error: undefined,
     groupCall: undefined,
-    reloadId: 0,
   });
 
   useEffect(() => {
+    async function fetchOrCreateGroupCall() {
+      try {
+        const groupCall = await fetchGroupCall(
+          client,
+          roomId,
+          viaServers,
+          30000
+        );
+        return groupCall;
+      } catch (error) {
+        if (
+          createIfNotFound &&
+          (error.errcode === "M_NOT_FOUND" ||
+            (error.message &&
+              error.message.indexOf("Failed to fetch alias") !== -1)) &&
+          isLocalRoomId(roomId)
+        ) {
+          const roomName = roomNameFromRoomId(roomId);
+          await createRoom(client, roomName);
+          const groupCall = await fetchGroupCall(
+            client,
+            roomId,
+            viaServers,
+            30000
+          );
+          return groupCall;
+        }
+
+        throw error;
+      }
+    }
+
     setState({ loading: true });
-    fetchGroupCall(client, roomId, viaServers, 30000)
+
+    fetchOrCreateGroupCall()
       .then((groupCall) =>
         setState((prevState) => ({ ...prevState, loading: false, groupCall }))
       )
@@ -55,9 +88,5 @@ export function useLoadGroupCall(client, roomId, viaServers) {
       );
   }, [client, roomId, state.reloadId]);
 
-  const reload = useCallback(() => {
-    setState((prevState) => ({ ...prevState, reloadId: prevState.reloadId++ }));
-  }, []);
-
-  return { ...state, reload };
+  return state;
 }

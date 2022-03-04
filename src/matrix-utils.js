@@ -55,10 +55,8 @@ export function roomNameFromRoomId(roomId) {
     .match(/([^:]+):.*$/)[1]
     .substring(1)
     .split("-")
-    .map((part) =>
-      part.length > 0 ? part.charAt(0).toUpperCase() + part.slice(1) : part
-    )
-    .join(" ");
+    .join(" ")
+    .toLowerCase();
 }
 
 export function isLocalRoomId(roomId) {
