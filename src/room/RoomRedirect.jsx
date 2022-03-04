@@ -18,7 +18,7 @@ export function RoomRedirect() {
       roomId = `#${roomId}:${defaultHomeserverHost}`;
     }
 
-    history.replace(`/room/${roomId}`);
+    history.replace(`/room/${roomId.toLowerCase()}`);
   }, [pathname, history]);
 
   return <LoadingView />;
