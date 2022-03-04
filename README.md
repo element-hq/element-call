@@ -1,10 +1,10 @@
-# Matrix Video Chat
+# Element Call
 
-Testbed for full mesh video chat.
+Showcase for full mesh video chat.
 
 ## Getting Started
 
-`matrix-video-chat` is built against the `robertlong/group-call` branch of both [matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk/pull/1902) and [matrix-react-sdk](https://github.com/matrix-org/matrix-react-sdk/pull/6848). Because of how these packages are configured and Vite's requirements, you will need to clone them locally and use `yarn link` to stich things together.
+`element-call` is built against the `robertlong/group-call` branch of both [matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk/pull/1902) and [matrix-react-sdk](https://github.com/matrix-org/matrix-react-sdk/pull/6848). Because of how these packages are configured and Vite's requirements, you will need to clone them locally and use `yarn link` to stich things together.
 
 First clone, install, and link `matrix-js-sdk`
 
