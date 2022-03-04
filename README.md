@@ -1,6 +1,6 @@
 # Element Call
 
-Showcase for full mesh video chat.
+Showcase for full mesh video chat powered by Matrix, implementing [MSC3401](https://github.com/matrix-org/matrix-spec-proposals/blob/matthew/group-voip/proposals/3401-group-voip.md).
 
 ## Getting Started
 
