@@ -10,7 +10,7 @@ import { Item } from "@react-stately/collections";
 import { useMediaHandler } from "./useMediaHandler";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
-import { useDownloadDebugLog } from "./rageshake";
+import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
 
 export function SettingsModal({ setShowInspector, showInspector, ...rest }) {

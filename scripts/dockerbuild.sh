@@ -13,22 +13,11 @@ git checkout robertlong/group-call
 yarn install
 yarn run build
 yarn link
-cd ..
 
-git clone https://github.com/matrix-org/matrix-react-sdk.git
-cd matrix-react-sdk
-git checkout robertlong/group-call
-yarn link matrix-js-sdk
-yarn install
-yarn run build
-yarn link
-cd ..
-
-cd matrix-video-chat
+cd ../element-call
 
 export VITE_APP_VERSION=$(git describe --tags --abbrev=0)
 
 yarn link matrix-js-sdk
-yarn link matrix-react-sdk
 yarn install
 yarn run build

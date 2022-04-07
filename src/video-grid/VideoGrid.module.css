@@ -1,0 +1,7 @@
+.videoGrid {
+  position: relative;
+  overflow: hidden;
+  flex: 1;
+  touch-action: none;
+}
+

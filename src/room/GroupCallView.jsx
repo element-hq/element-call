@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
-import { useGroupCall } from "matrix-react-sdk/src/hooks/useGroupCall";
+import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { InCallView } from "./InCallView";
@@ -14,7 +14,6 @@ export function GroupCallView({
   isPasswordlessUser,
   roomId,
   groupCall,
-  simpleGrid,
 }) {
   const [showInspector, setShowInspector] = useState(
     () => !!localStorage.getItem("matrix-group-call-inspector")
@@ -89,7 +88,6 @@ export function GroupCallView({
         isScreensharing={isScreensharing}
         localScreenshareFeed={localScreenshareFeed}
         screenshareFeeds={screenshareFeeds}
-        simpleGrid={simpleGrid}
         setShowInspector={onChangeShowInspector}
         showInspector={showInspector}
         roomId={roomId}
