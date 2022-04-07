@@ -7,19 +7,15 @@ import {
   ScreenshareButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import VideoGrid, {
-  useVideoGridLayout,
-} from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoGrid";
-import { VideoTileContainer } from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoTileContainer";
-import SimpleVideoGrid from "matrix-react-sdk/src/components/views/voip/GroupCallView/SimpleVideoGrid";
-import "matrix-react-sdk/res/css/views/voip/GroupCallView/_VideoGrid.scss";
+import { VideoGrid, useVideoGridLayout } from "../video-grid/VideoGrid";
+import { VideoTileContainer } from "../video-grid/VideoTileContainer";
 import { getAvatarUrl } from "../matrix-utils";
 import { GroupCallInspector } from "./GroupCallInspector";
 import { OverflowMenu } from "./OverflowMenu";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { Avatar } from "../Avatar";
 import { UserMenuContainer } from "../UserMenuContainer";
-import { useRageshakeRequestModal } from "../settings/rageshake";
+import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { usePreventScroll } from "@react-aria/overlays";
 import { useMediaHandler } from "../settings/useMediaHandler";
@@ -44,7 +40,6 @@ export function InCallView({
   toggleScreensharing,
   isScreensharing,
   screenshareFeeds,
-  simpleGrid,
   setShowInspector,
   showInspector,
   roomId,
@@ -149,8 +144,6 @@ export function InCallView({
         <div className={styles.centerMessage}>
           <p>Waiting for other participants...</p>
         </div>
-      ) : simpleGrid ? (
-        <SimpleVideoGrid items={items} />
       ) : (
         <VideoGrid
           items={items}

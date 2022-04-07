@@ -22,10 +22,10 @@ import App from "./App";
 import * as Sentry from "@sentry/react";
 import { Integrations } from "@sentry/tracing";
 import { ErrorView } from "./FullScreenView";
-import * as rageshake from "matrix-react-sdk/src/rageshake/rageshake";
+import { init as initRageshake } from "./settings/rageshake";
 import { InspectorContextProvider } from "./room/GroupCallInspector";
 
-rageshake.init();
+initRageshake();
 
 console.info(`matrix-video-chat ${import.meta.env.VITE_APP_VERSION || "dev"}`);
 
