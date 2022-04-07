@@ -2,7 +2,7 @@ import React, { useEffect } from "react";
 import { Modal, ModalContent } from "../Modal";
 import { Button } from "../button";
 import { FieldRow, ErrorMessage } from "../input/Input";
-import { useSubmitRageshake } from "../settings/rageshake";
+import { useSubmitRageshake } from "../settings/submit-rageshake";
 import { Body } from "../typography/Typography";
 
 export function RageshakeRequestModal({ rageshakeRequestId, roomId, ...rest }) {

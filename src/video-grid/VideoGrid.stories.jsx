@@ -1,9 +1,6 @@
 import React, { useState } from "react";
-import VideoGrid, {
-  useVideoGridLayout,
-} from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoGrid";
-import VideoTile from "matrix-react-sdk/src/components/views/voip/GroupCallView/VideoTile";
-import "matrix-react-sdk/res/css/views/voip/GroupCallView/_VideoGrid.scss";
+import { VideoGrid, useVideoGridLayout } from "./VideoGrid";
+import { VideoTile } from "./VideoTile";
 import { useMemo } from "react";
 import { Button } from "../button";
 

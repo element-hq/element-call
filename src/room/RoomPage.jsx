@@ -29,9 +29,9 @@ export function RoomPage() {
 
   const { roomId: maybeRoomId } = useParams();
   const { hash, search } = useLocation();
-  const [simpleGrid, viaServers] = useMemo(() => {
+  const [viaServers] = useMemo(() => {
     const params = new URLSearchParams(search);
-    return [params.has("simple"), params.getAll("via")];
+    return [params.getAll("via")];
   }, [search]);
   const roomId = (maybeRoomId || hash || "").toLowerCase();
 
@@ -56,7 +56,6 @@ export function RoomPage() {
             roomId={roomId}
             groupCall={groupCall}
             isPasswordlessUser={isPasswordlessUser}
-            simpleGrid={simpleGrid}
           />
         )}
       </GroupCallLoader>

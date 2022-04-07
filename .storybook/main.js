@@ -18,11 +18,6 @@ module.exports = {
     );
     config.plugins.push(svgrPlugin());
     config.resolve = config.resolve || {};
-    config.resolve.alias = config.resolve.alias || {};
-    config.resolve.alias["$(res)"] = path.resolve(
-      __dirname,
-      "../node_modules/matrix-react-sdk/res"
-    );
     config.resolve.dedupe = config.resolve.dedupe || [];
     config.resolve.dedupe.push("react", "react-dom", "matrix-js-sdk");
     return config;
