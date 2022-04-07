@@ -2,7 +2,10 @@ import React, { useCallback, useEffect } from "react";
 import { Modal, ModalContent } from "../Modal";
 import { Button } from "../button";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { useSubmitRageshake, useRageshakeRequest } from "../settings/rageshake";
+import {
+  useSubmitRageshake,
+  useRageshakeRequest,
+} from "../settings/submit-rageshake";
 import { Body } from "../typography/Typography";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 
