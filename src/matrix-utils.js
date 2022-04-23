@@ -76,7 +76,7 @@ export function isLocalRoomId(roomId) {
   return parts[1] === defaultHomeserverHost;
 }
 
-export async function createRoom(client, name) {
+export async function createRoom(client, name, isPtt = false) {
   const { room_id, room_alias } = await client.createRoom({
     visibility: "private",
     preset: "public_chat",
@@ -107,9 +107,12 @@ export async function createRoom(client, name) {
     },
   });
 
+  console.log({ isPtt });
+
   await client.createGroupCall(
     room_id,
     GroupCallType.Video,
+    isPtt,
     GroupCallIntent.Prompt
   );
 

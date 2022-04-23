@@ -1,0 +1,40 @@
+.pttCallView {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 100%;
+  position: fixed;
+  height: 100%;
+  width: 100%;
+}
+
+.headerSeparator {
+  width: calc(100% - 40px);
+  height: 1px;
+  margin: 0 20px;
+  background-color: #21262C;
+}
+
+.center {
+  width: 100%;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.actionTip {
+  margin-top: 42px;
+  font-size: 17px;
+}
+
+.participants {
+  margin: 24px 20px 0 20px;
+}
+
+.participants > p {
+  color: #A9B2BC;
+  margin-bottom: 8px;
+}

@@ -7,6 +7,10 @@
 }
 
 .fieldRow {
+  margin-bottom: 24px;;
+}
+
+.fieldRow:last-child {
   margin-bottom: 0;
 }
 
