@@ -23,12 +23,13 @@ export function RegisteredView({ client }) {
       e.preventDefault();
       const data = new FormData(e.target);
       const roomName = data.get("callName");
+      const ptt = data.get("ptt") !== null;
 
       async function submit() {
         setError(undefined);
         setLoading(true);
 
-        const roomIdOrAlias = await createRoom(client, roomName);
+        const roomIdOrAlias = await createRoom(client, roomName, ptt);
 
         if (roomIdOrAlias) {
           history.push(`/room/${roomIdOrAlias}`);
@@ -87,6 +88,7 @@ export function RegisteredView({ client }) {
                 required
                 autoComplete="off"
               />
+
               <Button
                 type="submit"
                 size="lg"
@@ -95,6 +97,14 @@ export function RegisteredView({ client }) {
               >
                 {loading ? "Loading..." : "Go"}
               </Button>
+            </FieldRow>
+            <FieldRow className={styles.fieldRow}>
+              <InputField
+                id="ptt"
+                name="ptt"
+                label="Push to Talk"
+                type="checkbox"
+              />
             </FieldRow>
             {error && (
               <FieldRow className={styles.fieldRow}>

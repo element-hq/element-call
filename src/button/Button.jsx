@@ -20,6 +20,7 @@ export const variantToClassName = {
   copy: [styles.copyButton],
   iconCopy: [styles.iconCopyButton],
   secondaryCopy: [styles.copyButton],
+  secondaryHangup: [styles.secondaryHangup],
 };
 
 export const sizeToClassName = {

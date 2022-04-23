@@ -28,6 +28,7 @@ export function UnauthenticatedView() {
       const data = new FormData(e.target);
       const roomName = data.get("callName");
       const displayName = data.get("displayName");
+      const ptt = data.get("ptt") !== null;
 
       async function submit() {
         setError(undefined);
@@ -41,7 +42,7 @@ export function UnauthenticatedView() {
           recaptchaResponse,
           true
         );
-        const roomIdOrAlias = await createRoom(client, roomName);
+        const roomIdOrAlias = await createRoom(client, roomName, ptt);
 
         if (roomIdOrAlias) {
           history.push(`/room/${roomIdOrAlias}`);
@@ -109,6 +110,14 @@ export function UnauthenticatedView() {
                 type="text"
                 required
                 autoComplete="off"
+              />
+            </FieldRow>
+            <FieldRow>
+              <InputField
+                id="ptt"
+                name="ptt"
+                label="Push to Talk"
+                type="checkbox"
               />
             </FieldRow>
             <Caption>

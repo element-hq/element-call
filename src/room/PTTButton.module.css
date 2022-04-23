@@ -1,0 +1,11 @@
+.pttButton {
+  width: 100vw;
+  height: 100vh;
+  max-height: 232px;
+  max-width: 232px;
+  border-radius: 116px;
+  
+  color: ##fff;
+  border: 6px solid #0dbd8b;
+  background-color: #21262C;
+}
