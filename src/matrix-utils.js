@@ -3,6 +3,7 @@ import {
   GroupCallIntent,
   GroupCallType,
 } from "matrix-js-sdk/src/browser-index";
+import IndexedDBWorker from "./IndexedDBWorker?worker";
 
 export const defaultHomeserver =
   import.meta.env.VITE_DEFAULT_HOMESERVER ||
@@ -26,10 +27,54 @@ function waitForSync(client) {
 }
 
 export async function initClient(clientOptions) {
+  let indexedDB;
+
+  try {
+    indexedDB = window.indexedDB;
+  } catch (e) {}
+
+  const storeOpts = {};
+
+  if (indexedDB && localStorage && !import.meta.env.DEV) {
+    storeOpts.store = new matrix.IndexedDBStore({
+      indexedDB: window.indexedDB,
+      localStorage: window.localStorage,
+      dbName: "element-call-sync",
+      workerFactory: () => new IndexedDBWorker(),
+    });
+  }
+
+  if (localStorage) {
+    storeOpts.sessionStore = new matrix.WebStorageSessionStore(localStorage);
+  }
+
+  if (indexedDB) {
+    storeOpts.cryptoStore = new matrix.IndexedDBCryptoStore(
+      indexedDB,
+      "matrix-js-sdk:crypto"
+    );
+  }
+
   const client = matrix.createClient({
+    ...storeOpts,
     ...clientOptions,
     useAuthorizationHeader: true,
   });
+
+  try {
+    await client.store.startup();
+  } catch (error) {
+    console.error(
+      "Error starting matrix client store. Falling back to memory store.",
+      error
+    );
+    client.store = new matrix.MemoryStore({ localStorage });
+    await client.store.startup();
+  }
+
+  if (client.initCrypto) {
+    await client.initCrypto();
+  }
 
   await client.startClient({
     // dirty hack to reduce chance of gappy syncs
