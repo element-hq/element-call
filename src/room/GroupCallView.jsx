@@ -126,6 +126,7 @@ export function GroupCallView({
     return (
       <LobbyView
         client={client}
+        groupCall={groupCall}
         hasLocalParticipant={hasLocalParticipant}
         roomName={groupCall.room.name}
         state={state}
