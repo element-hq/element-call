@@ -2,6 +2,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  justify-content: center;
   overflow: hidden;
   min-height: 100%;
   position: fixed;
@@ -9,32 +10,62 @@
   width: 100%;
 }
 
-.headerSeparator {
-  width: calc(100% - 40px);
-  height: 1px;
-  margin: 0 20px;
-  background-color: #21262C;
-}
-
 .center {
   width: 100%;
   display: flex;
   flex: 1;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
+  margin-top: 48px;
 }
 
 .actionTip {
   margin-top: 42px;
+  margin-bottom: 45px;
   font-size: 17px;
 }
 
 .participants {
-  margin: 24px 20px 0 20px;
+  display: flex;
+  flex-direction: column;
+  margin: 20px;
+  margin-bottom: 67px;
 }
 
 .participants > p {
   color: #A9B2BC;
   margin-bottom: 8px;
+}
+
+.facepile {
+  align-self: center;
+}
+
+.talkingInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 38px;
+}
+
+.pttButtonContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.footer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 64px;
+}
+
+.footer > * {
+  margin-right: 30px;
+}
+
+.footer > :last-child {
+  margin-right: 0px;
 }

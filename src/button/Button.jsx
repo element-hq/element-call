@@ -7,6 +7,8 @@ import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DisableVideoIcon } from "../icons/DisableVideo.svg";
 import { ReactComponent as HangupIcon } from "../icons/Hangup.svg";
 import { ReactComponent as ScreenshareIcon } from "../icons/Screenshare.svg";
+import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
+import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { useButton } from "@react-aria/button";
 import { mergeProps, useObjectRef } from "@react-aria/utils";
 import { TooltipTrigger } from "../Tooltip";
@@ -124,6 +126,28 @@ export function HangupButton({ className, ...rest }) {
         <HangupIcon />
       </Button>
       {() => "Leave"}
+    </TooltipTrigger>
+  );
+}
+
+export function SettingsButton({ className, ...rest }) {
+  return (
+    <TooltipTrigger>
+      <Button variant="toolbar" {...rest}>
+        <SettingsIcon />
+      </Button>
+      {() => "Settings"}
+    </TooltipTrigger>
+  );
+}
+
+export function InviteButton({ className, ...rest }) {
+  return (
+    <TooltipTrigger>
+      <Button variant="toolbar" {...rest}>
+        <AddUserIcon />
+      </Button>
+      {() => "Invite"}
     </TooltipTrigger>
   );
 }

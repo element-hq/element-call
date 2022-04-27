@@ -4,8 +4,16 @@
   position: relative;
 }
 
+.facepile.md {
+  height: 36px;
+}
+
 .facepile .avatar {
   position: absolute;
   top: 0;
   border: 1px solid var(--bgColor2);
+}
+
+.facepile.md .avatar {
+  border: 2px solid var(--bgColor2);
 }
