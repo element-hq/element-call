@@ -29,6 +29,7 @@ function waitForSync(client) {
 }
 
 export async function initClient(clientOptions) {
+  // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
   window.OLM_OPTIONS = {};
   await Olm.init({ locateFile: () => olmWasmPath });
 
