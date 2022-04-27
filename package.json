@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@juggle/resize-observer": "^3.3.1",
+    "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.8.tgz",
     "@react-aria/button": "^3.3.4",
     "@react-aria/dialog": "^3.1.4",
     "@react-aria/focus": "^3.5.0",
@@ -34,7 +35,6 @@
     "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#robertlong/group-call",
     "mermaid": "^8.13.8",
     "normalize.css": "^8.0.1",
-    "olm": "https://packages.matrix.org/npm/olm/olm-3.2.1.tgz",
     "pako": "^2.0.4",
     "postcss-preset-env": "^6.7.0",
     "re-resizable": "^6.9.0",

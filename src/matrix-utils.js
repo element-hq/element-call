@@ -4,8 +4,8 @@ import {
   GroupCallType,
 } from "matrix-js-sdk/src/browser-index";
 import IndexedDBWorker from "./IndexedDBWorker?worker";
-import olmJsPath from "olm/olm.js?url";
-import olmWasmPath from "olm/olm.wasm?url";
+import Olm from "@matrix-org/olm";
+import olmWasmPath from "@matrix-org/olm/olm.wasm?url";
 
 export const defaultHomeserver =
   import.meta.env.VITE_DEFAULT_HOMESERVER ||
@@ -28,19 +28,9 @@ function waitForSync(client) {
   });
 }
 
-function addScript(src) {
-  return new Promise((resolve, reject) => {
-    const script = document.createElement("script");
-    script.setAttribute("src", src);
-    script.onload = resolve;
-    script.onerror = reject;
-    document.body.appendChild(script);
-  });
-}
-
 export async function initClient(clientOptions) {
-  await addScript(olmJsPath);
-  await window.Olm.init({ locateFile: () => olmWasmPath });
+  window.OLM_OPTIONS = {};
+  await Olm.init({ locateFile: () => olmWasmPath });
 
   let indexedDB;
 
