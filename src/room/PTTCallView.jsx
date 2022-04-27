@@ -2,7 +2,7 @@ import React from "react";
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
-import { Button } from "../button";
+import { Button, HangupButton, InviteButton, SettingsButton } from "../button";
 import { Header, LeftNav, RightNav, RoomSetupHeaderInfo } from "../Header";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
@@ -38,39 +38,45 @@ export function PTTCallView({
         <LeftNav>
           <RoomSetupHeaderInfo roomName={roomName} onPress={onLeave} />
         </LeftNav>
-        <RightNav>
-          <Button variant="secondaryHangup" onPress={onLeave}>
-            Leave
-          </Button>
-          <Button variant="icon" onPress={() => inviteModalState.open()}>
-            <AddUserIcon />
-          </Button>
-          <Button variant="icon" onPress={() => settingsModalState.open()}>
-            <SettingsIcon />
-          </Button>
-        </RightNav>
+        <RightNav />
       </Header>
-      <div className={styles.headerSeparator} />
-      <div className={styles.participants}>
-        <p>{`${participants.length} user${
-          participants.length > 1 ? "s" : ""
-        } connected`}</p>
-        <Facepile client={client} participants={participants} />
-      </div>
       <div className={styles.center}>
-        <PTTButton
-          client={client}
-          activeSpeaker={activeSpeaker}
-          groupCall={groupCall}
-        />
-        <p className={styles.actionTip}>Press and hold spacebar to talk</p>
-        {userMediaFeeds.map((callFeed) => (
-          <PTTFeed
-            key={callFeed.userId}
-            callFeed={callFeed}
-            audioOutputDevice={audioOutput}
+        <div className={styles.participants}>
+          <p>{`${participants.length} ${
+            participants.length > 1 ? "people" : "person"
+          } connected`}</p>
+          <Facepile
+            size="md"
+            max={8}
+            className={styles.facepile}
+            client={client}
+            participants={participants}
           />
-        ))}
+        </div>
+        <div className={styles.talkingInfo}>
+          <h2>Talking...</h2>
+          <p>00:01:24</p>
+        </div>
+        <div className={styles.pttButtonContainer}>
+          <PTTButton
+            client={client}
+            activeSpeaker={activeSpeaker}
+            groupCall={groupCall}
+          />
+          <p className={styles.actionTip}>Press and hold spacebar to talk</p>
+          {userMediaFeeds.map((callFeed) => (
+            <PTTFeed
+              key={callFeed.userId}
+              callFeed={callFeed}
+              audioOutputDevice={audioOutput}
+            />
+          ))}
+        </div>
+        <div className={styles.footer}>
+          <SettingsButton onPress={() => settingsModalState.open()} />
+          <HangupButton onPress={onLeave} />
+          <InviteButton onPress={() => inviteModalState.open()} />
+        </div>
       </div>
 
       {settingsModalState.isOpen && (
