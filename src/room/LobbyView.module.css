@@ -46,58 +46,6 @@ limitations under the License.
   margin-top: 50px;
 }
 
-.preview {
-  position: relative;
-  min-height: 280px;
-  height: 50vh;
-  border-radius: 24px;
-  overflow: hidden;
-  background-color: var(--bgColor3);
-  margin: 20px;
-}
-
-.preview video {
-  width: calc(100% + 1px);
-  height: 100%;
-  object-fit: contain;
-  background-color: black;
-  /* transform scale doesn't perfectly match width, so make -1.01 border issues */
-  transform: scaleX(-1.01);
-}
-
-.avatarContainer {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 66px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: var(--bgColor3);
-}
-
-.webcamPermissions {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  margin: 0;
-  text-align: center;
-}
-
-.previewButtons {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 66px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  background-color: rgba(23, 25, 28, 0.9);
-}
-
 .joinCallButton {
   position: absolute;
   width: 100%;
@@ -117,18 +65,4 @@ limitations under the License.
 
 .copyButton:last-child {
   margin-bottom: 0;
-}
-
-.previewButtons > * {
-  margin-right: 30px;
-}
-
-.previewButtons > :last-child {
-  margin-right: 0px;
-}
-
-@media (min-width: 800px) {
-  .preview {
-    margin-top: 40px;
-  }
 }
