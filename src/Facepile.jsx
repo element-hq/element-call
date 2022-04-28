@@ -4,6 +4,18 @@ import classNames from "classnames";
 import { Avatar } from "./Avatar";
 import { getAvatarUrl } from "./matrix-utils";
 
+const overlapMap = {
+  xs: 2,
+  sm: 4,
+  md: 8,
+};
+
+const sizeMap = {
+  xs: 24,
+  sm: 32,
+  md: 36,
+};
+
 export function Facepile({
   className,
   client,
@@ -12,18 +24,14 @@ export function Facepile({
   size,
   ...rest
 }) {
-  const _size = size === "md" ? 36 : 24;
-  const _overlap = size === "md" ? 8 : 2;
+  const _size = sizeMap[size];
+  const _overlap = overlapMap[size];
 
   return (
     <div
-      className={classNames(
-        styles.facepile,
-        { [styles.md]: size === "md" },
-        className
-      )}
+      className={classNames(styles.facepile, styles[size], className)}
       title={participants.map((member) => member.name).join(", ")}
-      style={{ width: participants.length * _size + _overlap }}
+      style={{ width: participants.length * (_size - _overlap) + _overlap }}
       {...rest}
     >
       {participants.slice(0, max).map((member, i) => {
