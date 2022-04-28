@@ -111,7 +111,7 @@ export async function createRoom(client, name, isPtt = false) {
 
   await client.createGroupCall(
     room_id,
-    GroupCallType.Video,
+    isPtt ? GroupCallType.Voice : GroupCallType.Video,
     isPtt,
     GroupCallIntent.Prompt
   );
