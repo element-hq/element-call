@@ -89,7 +89,7 @@
   }
 
   .pttButtonContainer {
-    flex: auto;
+    flex: 0;
     margin-bottom: 0;
     justify-content: flex-start;
   }
