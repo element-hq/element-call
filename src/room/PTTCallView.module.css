@@ -16,20 +16,12 @@
   flex: 1;
   flex-direction: column;
   align-items: center;
-  margin-top: 48px;
-}
-
-.actionTip {
-  margin-top: 42px;
-  margin-bottom: 45px;
-  font-size: 17px;
 }
 
 .participants {
   display: flex;
   flex-direction: column;
   margin: 20px;
-  margin-bottom: 67px;
 }
 
 .participants > p {
@@ -45,21 +37,29 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 38px;
+  margin-bottom: 20px;
 }
 
 .pttButtonContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex: 1;
+  justify-content: center;
+}
+
+.actionTip {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  font-size: 17px;
 }
 
 .footer {
   position: relative;
   display: flex;
   justify-content: center;
-  align-items: center;
   height: 64px;
+  margin-bottom: 20px;
 }
 
 .footer > * {
@@ -68,4 +68,34 @@
 
 .footer > :last-child {
   margin-right: 0px;
+}
+
+@media (min-width: 800px) {
+  .participants {
+    margin-bottom: 67px;
+  }
+
+  .talkingInfo {
+    margin-bottom: 38px;
+  }
+
+  .center {
+    margin-top: 48px;
+  }
+
+  .actionTip {
+    margin-top: 42px;
+    margin-bottom: 45px;
+  }
+
+  .pttButtonContainer {
+    flex: auto;
+    margin-bottom: 0;
+    justify-content: flex-start;
+  }
+
+  .footer {
+    flex: auto;
+    order: 4;
+  }
 }

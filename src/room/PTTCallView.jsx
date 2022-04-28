@@ -11,6 +11,8 @@ import { Facepile } from "../Facepile";
 import { PTTButton } from "./PTTButton";
 import { PTTFeed } from "./PTTFeed";
 import { useMediaHandler } from "../settings/useMediaHandler";
+import useMeasure from "react-use-measure";
+import { ResizeObserver } from "@juggle/resize-observer";
 
 export function PTTCallView({
   groupCall,
@@ -31,9 +33,11 @@ export function PTTCallView({
   const { modalState: settingsModalState, modalProps: settingsModalProps } =
     useModalTriggerState();
   const { audioOutput } = useMediaHandler();
+  const [containerRef, bounds] = useMeasure({ polyfill: ResizeObserver });
+  const facepileSize = bounds.width < 800 ? "sm" : "md";
 
   return (
-    <div className={styles.pttCallView}>
+    <div className={styles.pttCallView} ref={containerRef}>
       <Header className={styles.header}>
         <LeftNav>
           <RoomSetupHeaderInfo roomName={roomName} onPress={onLeave} />
@@ -46,18 +50,24 @@ export function PTTCallView({
             participants.length > 1 ? "people" : "person"
           } connected`}</p>
           <Facepile
-            size="md"
+            size={facepileSize}
             max={8}
             className={styles.facepile}
             client={client}
             participants={participants}
           />
         </div>
-        <div className={styles.talkingInfo}>
-          <h2>Talking...</h2>
-          <p>00:01:24</p>
+        <div className={styles.footer}>
+          <SettingsButton onPress={() => settingsModalState.open()} />
+          <HangupButton onPress={onLeave} />
+          <InviteButton onPress={() => inviteModalState.open()} />
         </div>
+
         <div className={styles.pttButtonContainer}>
+          <div className={styles.talkingInfo}>
+            <h2>Talking...</h2>
+            <p>00:01:24</p>
+          </div>
           <PTTButton
             client={client}
             activeSpeaker={activeSpeaker}
@@ -71,11 +81,6 @@ export function PTTCallView({
               audioOutputDevice={audioOutput}
             />
           ))}
-        </div>
-        <div className={styles.footer}>
-          <SettingsButton onPress={() => settingsModalState.open()} />
-          <HangupButton onPress={onLeave} />
-          <InviteButton onPress={() => inviteModalState.open()} />
         </div>
       </div>
 
