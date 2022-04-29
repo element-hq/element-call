@@ -77,18 +77,15 @@ export function GroupCallView({
     if (groupCall.isPtt) {
       return (
         <PTTCallView
+          client={client}
+          roomId={roomId}
+          roomName={groupCall.room.name}
           groupCall={groupCall}
           participants={participants}
-          client={client}
-          roomName={groupCall.room.name}
-          microphoneMuted={microphoneMuted}
-          toggleMicrophoneMuted={toggleMicrophoneMuted}
           userMediaFeeds={userMediaFeeds}
-          activeSpeaker={activeSpeaker}
           onLeave={onLeave}
           setShowInspector={onChangeShowInspector}
           showInspector={showInspector}
-          roomId={roomId}
         />
       );
     } else {
