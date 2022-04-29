@@ -38,6 +38,11 @@
   flex-direction: column;
   align-items: center;
   margin-bottom: 20px;
+  height: 88px;
+}
+
+.speakerIcon {
+  margin-right: 8px;
 }
 
 .pttButtonContainer {

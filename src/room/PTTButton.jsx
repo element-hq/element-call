@@ -1,41 +1,41 @@
-import classNames from "classnames";
 import React from "react";
+import classNames from "classnames";
 import styles from "./PTTButton.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { Avatar } from "../Avatar";
 
-export function PTTButton({ client, activeSpeaker }) {
-  const size = 232;
-
-  const isLocal = client.userId === activeSpeaker;
-  const avatarUrl = activeSpeaker?.user?.avatarUrl;
-
+export function PTTButton({
+  showTalkOverError,
+  activeSpeakerUserId,
+  activeSpeakerDisplayName,
+  activeSpeakerAvatarUrl,
+  activeSpeakerIsLocalUser,
+  size,
+}) {
   return (
     <button
       className={classNames(styles.pttButton, {
-        [styles.speaking]: !!activeSpeaker,
+        [styles.talking]: activeSpeakerUserId,
+        [styles.error]: showTalkOverError,
       })}
     >
-      {isLocal || !avatarUrl || !activeSpeaker ? (
+      {activeSpeakerIsLocalUser || !activeSpeakerUserId ? (
         <MicIcon
-          classNames={styles.micIcon}
+          className={styles.micIcon}
           width={size / 3}
           height={size / 3}
         />
       ) : (
         <Avatar
-          key={activeSpeaker.userId}
+          key={activeSpeakerUserId}
           style={{
-            width: size,
-            height: size,
-            borderRadius: size,
-            fontSize: Math.round(size / 2),
+            width: size - 12,
+            height: size - 12,
+            borderRadius: size - 12,
+            fontSize: Math.round((size - 12) / 2),
           }}
-          src={
-            activeSpeaker.user.avatarUrl &&
-            getAvatarUrl(client, activeSpeaker.user.avatarUrl, size)
-          }
-          fallback={activeSpeaker.name.slice(0, 1).toUpperCase()}
+          src={activeSpeakerAvatarUrl}
+          fallback={activeSpeakerDisplayName.slice(0, 1).toUpperCase()}
           className={styles.avatar}
         />
       )}

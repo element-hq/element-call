@@ -2,10 +2,8 @@ import React from "react";
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
-import { Button, HangupButton, InviteButton, SettingsButton } from "../button";
+import { HangupButton, InviteButton, SettingsButton } from "../button";
 import { Header, LeftNav, RightNav, RoomSetupHeaderInfo } from "../Header";
-import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
-import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import styles from "./PTTCallView.module.css";
 import { Facepile } from "../Facepile";
 import { PTTButton } from "./PTTButton";
@@ -13,28 +11,59 @@ import { PTTFeed } from "./PTTFeed";
 import { useMediaHandler } from "../settings/useMediaHandler";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
+import { usePTT } from "./usePTT";
+import { Timer } from "./Timer";
+import { Toggle } from "../input/Toggle";
+import { getAvatarUrl } from "../matrix-utils";
+import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 
 export function PTTCallView({
+  client,
+  roomId,
+  roomName,
   groupCall,
   participants,
-  client,
-  roomName,
-  microphoneMuted,
-  toggleMicrophoneMuted,
   userMediaFeeds,
-  activeSpeaker,
   onLeave,
   setShowInspector,
   showInspector,
-  roomId,
 }) {
   const { modalState: inviteModalState, modalProps: inviteModalProps } =
     useModalTriggerState();
   const { modalState: settingsModalState, modalProps: settingsModalProps } =
     useModalTriggerState();
-  const { audioOutput } = useMediaHandler();
   const [containerRef, bounds] = useMeasure({ polyfill: ResizeObserver });
   const facepileSize = bounds.width < 800 ? "sm" : "md";
+  const pttButtonSize = 232;
+  const pttBorderWidth = 6;
+
+  const { audioOutput } = useMediaHandler();
+
+  const {
+    pttButtonHeld,
+    isAdmin,
+    talkOverEnabled,
+    setTalkOverEnabled,
+    activeSpeakerUserId,
+  } = usePTT(client, groupCall, userMediaFeeds);
+
+  const activeSpeakerIsLocalUser =
+    activeSpeakerUserId && client.getUserId() === activeSpeakerUserId;
+  const showTalkOverError =
+    pttButtonHeld && !activeSpeakerIsLocalUser && !talkOverEnabled;
+  const activeSpeakerUser = activeSpeakerUserId
+    ? client.getUser(activeSpeakerUserId)
+    : null;
+  const activeSpeakerAvatarUrl = activeSpeakerUser
+    ? getAvatarUrl(
+        client,
+        activeSpeakerUser.avatarUrl,
+        pttButtonSize - pttBorderWidth * 2
+      )
+    : null;
+  const activeSpeakerDisplayName = activeSpeakerUser
+    ? activeSpeakerUser.displayName
+    : "";
 
   return (
     <div className={styles.pttCallView} ref={containerRef}>
@@ -64,16 +93,40 @@ export function PTTCallView({
         </div>
 
         <div className={styles.pttButtonContainer}>
-          <div className={styles.talkingInfo}>
-            <h2>Talking...</h2>
-            <p>00:01:24</p>
-          </div>
+          {activeSpeakerUserId ? (
+            <div className={styles.talkingInfo}>
+              <h2>
+                {!activeSpeakerIsLocalUser && (
+                  <AudioIcon className={styles.speakerIcon} />
+                )}
+                {activeSpeakerIsLocalUser
+                  ? "Talking..."
+                  : `${activeSpeakerDisplayName} is talking...`}
+              </h2>
+              <Timer value={activeSpeakerUserId} />
+            </div>
+          ) : (
+            <div className={styles.talkingInfo} />
+          )}
           <PTTButton
-            client={client}
-            activeSpeaker={activeSpeaker}
-            groupCall={groupCall}
+            showTalkOverError={showTalkOverError}
+            activeSpeakerUserId={activeSpeakerUserId}
+            activeSpeakerDisplayName={activeSpeakerDisplayName}
+            activeSpeakerAvatarUrl={activeSpeakerAvatarUrl}
+            activeSpeakerIsLocalUser={activeSpeakerIsLocalUser}
+            size={pttButtonSize}
           />
-          <p className={styles.actionTip}>Press and hold spacebar to talk</p>
+          <p className={styles.actionTip}>
+            {showTalkOverError
+              ? "You can't talk at the same time"
+              : pttButtonHeld
+              ? "Release spacebar key to stop"
+              : talkOverEnabled &&
+                activeSpeakerUserId &&
+                !activeSpeakerIsLocalUser
+              ? `Press and hold spacebar to talk over ${activeSpeakerDisplayName}`
+              : "Press and hold spacebar to talk"}
+          </p>
           {userMediaFeeds.map((callFeed) => (
             <PTTFeed
               key={callFeed.userId}
@@ -81,6 +134,14 @@ export function PTTCallView({
               audioOutputDevice={audioOutput}
             />
           ))}
+          {isAdmin && (
+            <Toggle
+              isSelected={talkOverEnabled}
+              onChange={setTalkOverEnabled}
+              label="Talk over speaker"
+              id="talkOverEnabled"
+            />
+          )}
         </div>
       </div>
 
