@@ -13,6 +13,7 @@ import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { useHistory } from "react-router-dom";
 import { Headline, Title } from "../typography/Typography";
 import { Form } from "../form/Form";
+import { shouldShowPtt } from "../shouldShowPtt";
 
 export function RegisteredView({ client }) {
   const [loading, setLoading] = useState(false);
@@ -98,14 +99,14 @@ export function RegisteredView({ client }) {
                 {loading ? "Loading..." : "Go"}
               </Button>
             </FieldRow>
-            <FieldRow className={styles.fieldRow}>
+            {shouldShowPtt() && <FieldRow className={styles.fieldRow}>
               <InputField
                 id="ptt"
                 name="ptt"
                 label="Push to Talk"
                 type="checkbox"
               />
-            </FieldRow>
+            </FieldRow>}
             {error && (
               <FieldRow className={styles.fieldRow}>
                 <ErrorMessage>{error.message}</ErrorMessage>

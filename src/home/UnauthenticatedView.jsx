@@ -15,6 +15,7 @@ import { Form } from "../form/Form";
 import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
+import { shouldShowPtt } from "../shouldShowPtt";
 
 export function UnauthenticatedView() {
   const [loading, setLoading] = useState(false);
@@ -112,14 +113,14 @@ export function UnauthenticatedView() {
                 autoComplete="off"
               />
             </FieldRow>
-            <FieldRow>
+            {shouldShowPtt() && <FieldRow>
               <InputField
                 id="ptt"
                 name="ptt"
                 label="Push to Talk"
                 type="checkbox"
               />
-            </FieldRow>
+            </FieldRow>}
             <Caption>
               By clicking "Go", you agree to our{" "}
               <Link href={privacyPolicyUrl}>Terms and conditions</Link>
