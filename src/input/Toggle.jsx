@@ -1,20 +1,21 @@
-import React, { useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import styles from "./Toggle.module.css";
 import { useToggleButton } from "@react-aria/button";
-import { useToggleState } from "@react-stately/toggle";
 import classNames from "classnames";
 import { Field } from "./Input";
 
-export function Toggle({ id, label, className, ...rest }) {
+export function Toggle({ id, label, className, onChange, isSelected }) {
   const buttonRef = useRef();
-  const state = useToggleState(rest);
-  const { buttonProps, isPressed } = useToggleButton(rest, state, buttonRef);
+  const toggle = useCallback(() => {
+    onChange(!isSelected);
+  });
+  const { buttonProps } = useToggleButton({ isSelected }, { toggle }, buttonRef);
 
   return (
     <Field
       className={classNames(
         styles.toggle,
-        { [styles.on]: isPressed },
+        { [styles.on]: isSelected },
         className
       )}
     >
@@ -23,7 +24,7 @@ export function Toggle({ id, label, className, ...rest }) {
         ref={buttonRef}
         id={id}
         className={classNames(styles.button, {
-          [styles.isPressed]: isPressed,
+          [styles.isPressed]: isSelected,
         })}
       >
         <div className={styles.ball} />
