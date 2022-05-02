@@ -47,18 +47,30 @@ export function usePTT(client, groupCall, userMediaFeeds) {
     };
   }, [userMediaFeeds]);
 
+  const startTalking = useCallback(() => {
+    if (!activeSpeakerUserId || isAdmin || talkOverEnabled) {
+      if (groupCall.isMicrophoneMuted()) {
+        groupCall.setMicrophoneMuted(false);
+      }
+
+      setState((prevState) => ({ ...prevState, pttButtonHeld: true }));
+    }
+  }, []);
+
+  const stopTalking = useCallback(() => {
+    if (!groupCall.isMicrophoneMuted()) {
+      groupCall.setMicrophoneMuted(true);
+    }
+
+    setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
+  }, []);
+
   useEffect(() => {
     function onKeyDown(event) {
       if (event.code === "Space") {
         event.preventDefault();
 
-        if (!activeSpeakerUserId || isAdmin || talkOverEnabled) {
-          if (groupCall.isMicrophoneMuted()) {
-            groupCall.setMicrophoneMuted(false);
-          }
-
-          setState((prevState) => ({ ...prevState, pttButtonHeld: true }));
-        }
+        startTalking();
       }
     }
 
@@ -66,11 +78,7 @@ export function usePTT(client, groupCall, userMediaFeeds) {
       if (event.code === "Space") {
         event.preventDefault();
 
-        if (!groupCall.isMicrophoneMuted()) {
-          groupCall.setMicrophoneMuted(true);
-        }
-
-        setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
+        stopTalking();
       }
     }
 
@@ -107,5 +115,7 @@ export function usePTT(client, groupCall, userMediaFeeds) {
     talkOverEnabled,
     setTalkOverEnabled,
     activeSpeakerUserId,
+    startTalking,
+    stopTalking,
   };
 }

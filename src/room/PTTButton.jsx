@@ -11,6 +11,8 @@ export function PTTButton({
   activeSpeakerAvatarUrl,
   activeSpeakerIsLocalUser,
   size,
+  startTalking,
+  stopTalking,
 }) {
   return (
     <button
@@ -18,6 +20,8 @@ export function PTTButton({
         [styles.talking]: activeSpeakerUserId,
         [styles.error]: showTalkOverError,
       })}
+      onMouseDown={startTalking}
+      onMouseUp={stopTalking}
     >
       {activeSpeakerIsLocalUser || !activeSpeakerUserId ? (
         <MicIcon

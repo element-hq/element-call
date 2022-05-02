@@ -45,6 +45,8 @@ export function PTTCallView({
     talkOverEnabled,
     setTalkOverEnabled,
     activeSpeakerUserId,
+    startTalking,
+    stopTalking,
   } = usePTT(client, groupCall, userMediaFeeds);
 
   const activeSpeakerIsLocalUser =
@@ -115,6 +117,8 @@ export function PTTCallView({
             activeSpeakerAvatarUrl={activeSpeakerAvatarUrl}
             activeSpeakerIsLocalUser={activeSpeakerIsLocalUser}
             size={pttButtonSize}
+            startTalking={startTalking}
+            stopTalking={stopTalking}
           />
           <p className={styles.actionTip}>
             {showTalkOverError
