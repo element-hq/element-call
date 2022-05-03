@@ -1,9 +1,9 @@
-name: Prettier
+name: Lint and format
 on:
   pull_request: {}
 jobs:
   prettier:
-    name: Prettier
+    name: Lint and format
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -14,5 +14,7 @@ jobs:
           cache: 'yarn'
       - name: Install dependencies
         run: "yarn install"
-      - name: Check code style
+      - name: Prettier
         run: "yarn run prettier:check"
+      - name: ESLint
+        run: "yarn run lint"
