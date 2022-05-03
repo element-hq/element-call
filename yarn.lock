@@ -8012,9 +8012,9 @@ markdown-to-jsx@^7.1.3:
   resolved "https://registry.yarnpkg.com/markdown-to-jsx/-/markdown-to-jsx-7.1.6.tgz#421487df2a66fe4231d94db653a34da033691e62"
   integrity sha512-1wrIGZYwIG2gR3yfRmbr4FlQmhaAKoKTpRo4wur4fp9p0njU1Hi7vR8fj0AUKKIcPduiJmPprzmCB5B/GvlC7g==
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#dbkr/ptt":
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#robertlong/group-call":
   version "15.1.0"
-  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/cc60492376f2622533b0523d87ed4626a2608e30"
+  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8d9cd0fcb37188f63a938f4dd16e1f4e967cf1b6"
   dependencies:
     "@babel/runtime" "^7.12.5"
     another-json "^0.2.0"
