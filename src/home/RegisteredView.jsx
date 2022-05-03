@@ -13,11 +13,13 @@ import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { useHistory } from "react-router-dom";
 import { Headline, Title } from "../typography/Typography";
 import { Form } from "../form/Form";
+import { useShouldShowPtt } from "../useShouldShowPtt";
 
 export function RegisteredView({ client }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const history = useHistory();
+  const shouldShowPtt = useShouldShowPtt();
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
@@ -98,14 +100,16 @@ export function RegisteredView({ client }) {
                 {loading ? "Loading..." : "Go"}
               </Button>
             </FieldRow>
-            <FieldRow className={styles.fieldRow}>
-              <InputField
-                id="ptt"
-                name="ptt"
-                label="Push to Talk"
-                type="checkbox"
-              />
-            </FieldRow>
+            {shouldShowPtt && (
+              <FieldRow className={styles.fieldRow}>
+                <InputField
+                  id="ptt"
+                  name="ptt"
+                  label="Push to Talk"
+                  type="checkbox"
+                />
+              </FieldRow>
+            )}
             {error && (
               <FieldRow className={styles.fieldRow}>
                 <ErrorMessage>{error.message}</ErrorMessage>
