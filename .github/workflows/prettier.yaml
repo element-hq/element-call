@@ -1,0 +1,18 @@
+name: Prettier
+on:
+  pull_request: {}
+jobs:
+  prettier:
+    name: Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Yarn cache
+        uses: actions/setup-node@v3
+        with:
+          cache: 'yarn'
+      - name: Install dependencies
+        run: "yarn install"
+      - name: Check code style
+        run: "yarn run prettier:check"
