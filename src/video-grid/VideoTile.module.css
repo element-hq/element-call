@@ -85,7 +85,7 @@
 .videoMutedOverlay {
   width: 100%;
   height: 100%;
-  background-color: #21262C;
+  background-color: #21262c;
 }
 
 .presenterLabel {
@@ -93,7 +93,7 @@
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #17191C;
+  background-color: #17191c;
   border-radius: 4px;
   display: flex;
   justify-content: center;
