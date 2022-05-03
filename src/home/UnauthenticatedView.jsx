@@ -15,8 +15,10 @@ import { Form } from "../form/Form";
 import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
+import { useShouldShowPtt } from "../useShouldShowPtt";
 
 export function UnauthenticatedView() {
+  const shouldShowPtt = useShouldShowPtt();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [{ privacyPolicyUrl, recaptchaKey }, register] =
@@ -112,14 +114,16 @@ export function UnauthenticatedView() {
                 autoComplete="off"
               />
             </FieldRow>
-            <FieldRow>
-              <InputField
-                id="ptt"
-                name="ptt"
-                label="Push to Talk"
-                type="checkbox"
-              />
-            </FieldRow>
+            {shouldShowPtt && (
+              <FieldRow>
+                <InputField
+                  id="ptt"
+                  name="ptt"
+                  label="Push to Talk"
+                  type="checkbox"
+                />
+              </FieldRow>
+            )}
             <Caption>
               By clicking "Go", you agree to our{" "}
               <Link href={privacyPolicyUrl}>Terms and conditions</Link>
