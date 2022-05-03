@@ -7,7 +7,8 @@
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
     "prettier:check": "prettier -c src",
-    "prettier:format": "prettier -w src"
+    "prettier:format": "prettier -w src",
+    "lint": "eslint --max-warnings 8 src"
   },
   "dependencies": {
     "@juggle/resize-observer": "^3.3.1",
@@ -52,6 +53,12 @@
     "@babel/core": "^7.16.5",
     "@storybook/react": "^6.5.0-alpha.5",
     "babel-loader": "^8.2.3",
+    "eslint": "^8.14.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-jsx-a11y": "^6.5.1",
+    "eslint-plugin-matrix-org": "^0.4.0",
+    "eslint-plugin-react": "^7.29.4",
+    "eslint-plugin-react-hooks": "^4.5.0",
     "prettier": "^2.6.2",
     "sass": "^1.42.1",
     "storybook-builder-vite": "^0.1.12",
