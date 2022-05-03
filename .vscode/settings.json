@@ -1,5 +1,5 @@
 {
-  "editor.formatOnSave": false,
+  "editor.formatOnSave": true,
   "editor.insertSpaces": true,
   "editor.tabSize": 2
 }
