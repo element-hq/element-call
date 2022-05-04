@@ -16,12 +16,7 @@ export function PTTButton({
 }) {
   const [isHeld, setHeld] = useState(false);
   const onDocumentMouseUp = useCallback(() => {
-    if (isHeld) stopTalking();
-    setHeld(false);
-  }, [isHeld, setHeld]);
-
-  const onWindowBlur = useCallback(() => {
-    if (isHeld) stopTalking();
+    //if (isHeld) stopTalking();
     setHeld(false);
   }, [isHeld, setHeld]);
 
@@ -32,13 +27,11 @@ export function PTTButton({
 
   useEffect(() => {
     window.addEventListener("mouseup", onDocumentMouseUp);
-    window.addEventListener("blur", onWindowBlur);
 
     return () => {
       window.removeEventListener("mouseup", onDocumentMouseUp);
-      window.removeEventListener("blur", onWindowBlur);
     };
-  }, [onDocumentMouseUp, onWindowBlur]);
+  }, [onDocumentMouseUp]);
 
   return (
     <button
