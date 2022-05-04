@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import classNames from "classnames";
 import styles from "./PTTButton.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
@@ -14,14 +14,39 @@ export function PTTButton({
   startTalking,
   stopTalking,
 }) {
+  const [isHeld, setHeld] = useState(false);
+  const onDocumentMouseUp = useCallback(() => {
+    if (isHeld) stopTalking();
+    setHeld(false);
+  }, [isHeld, setHeld]);
+
+  const onWindowBlur = useCallback(() => {
+    if (isHeld) stopTalking();
+    setHeld(false);
+  }, [isHeld, setHeld]);
+
+  const onButtonMouseDown = useCallback(() => {
+    setHeld(true);
+    startTalking();
+  }, [setHeld]);
+
+  useEffect(() => {
+    window.addEventListener("mouseup", onDocumentMouseUp);
+    window.addEventListener("blur", onWindowBlur);
+
+    return () => {
+      window.removeEventListener("mouseup", onDocumentMouseUp);
+      window.removeEventListener("blur", onWindowBlur);
+    };
+  }, [onDocumentMouseUp, onWindowBlur]);
+
   return (
     <button
       className={classNames(styles.pttButton, {
         [styles.talking]: activeSpeakerUserId,
         [styles.error]: showTalkOverError,
       })}
-      onMouseDown={startTalking}
-      onMouseUp={stopTalking}
+      onMouseDown={onButtonMouseDown}
     >
       {activeSpeakerIsLocalUser || !activeSpeakerUserId ? (
         <MicIcon
