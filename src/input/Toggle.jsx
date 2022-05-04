@@ -9,7 +9,11 @@ export function Toggle({ id, label, className, onChange, isSelected }) {
   const toggle = useCallback(() => {
     onChange(!isSelected);
   });
-  const { buttonProps } = useToggleButton({ isSelected }, { toggle }, buttonRef);
+  const { buttonProps } = useToggleButton(
+    { isSelected },
+    { toggle },
+    buttonRef
+  );
 
   return (
     <Field
