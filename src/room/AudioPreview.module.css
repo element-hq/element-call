@@ -1,0 +1,27 @@
+.preview {
+  margin: 20px 0;
+  padding: 24px 20px;
+  border-radius: 8px;
+  width: calc(100% - 40px);
+  max-width: 414px;
+}
+
+.inputField {
+  width: 100%;
+}
+
+.inputField:last-child {
+  margin-bottom: 0;
+}
+
+.microphonePermissions {
+  margin: 20px;
+  text-align: center;
+}
+
+@media (min-width: 800px) {
+  .preview {
+    margin-top: 40px;
+    background-color: #21262c;
+  }
+}
