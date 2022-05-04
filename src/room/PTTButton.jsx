@@ -16,7 +16,7 @@ export function PTTButton({
 }) {
   const [isHeld, setHeld] = useState(false);
   const onDocumentMouseUp = useCallback(() => {
-    //if (isHeld) stopTalking();
+    if (isHeld) stopTalking();
     setHeld(false);
   }, [isHeld, setHeld]);
 
