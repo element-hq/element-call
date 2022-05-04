@@ -1,11 +1,26 @@
 .facepile {
   width: 100%;
-  height: 24px;
   position: relative;
+}
+
+.facepile.xs {
+  height: 24px;
+}
+
+.facepile.sm {
+  height: 32px;
+}
+
+.facepile.md {
+  height: 36px;
 }
 
 .facepile .avatar {
   position: absolute;
   top: 0;
   border: 1px solid var(--bgColor2);
+}
+
+.facepile.md .avatar {
+  border-width: 2px;
 }

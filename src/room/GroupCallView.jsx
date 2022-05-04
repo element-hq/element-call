@@ -5,6 +5,7 @@ import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { InCallView } from "./InCallView";
+import { PTTCallView } from "./PTTCallView";
 import { CallEndedView } from "./CallEndedView";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
@@ -47,6 +48,7 @@ export function GroupCallView({
     localScreenshareFeed,
     screenshareFeeds,
     hasLocalParticipant,
+    participants,
   } = useGroupCall(groupCall);
 
   useEffect(() => {
@@ -72,27 +74,43 @@ export function GroupCallView({
   if (error) {
     return <ErrorView error={error} />;
   } else if (state === GroupCallState.Entered) {
-    return (
-      <InCallView
-        groupCall={groupCall}
-        client={client}
-        roomName={groupCall.room.name}
-        microphoneMuted={microphoneMuted}
-        localVideoMuted={localVideoMuted}
-        toggleLocalVideoMuted={toggleLocalVideoMuted}
-        toggleMicrophoneMuted={toggleMicrophoneMuted}
-        userMediaFeeds={userMediaFeeds}
-        activeSpeaker={activeSpeaker}
-        onLeave={onLeave}
-        toggleScreensharing={toggleScreensharing}
-        isScreensharing={isScreensharing}
-        localScreenshareFeed={localScreenshareFeed}
-        screenshareFeeds={screenshareFeeds}
-        setShowInspector={onChangeShowInspector}
-        showInspector={showInspector}
-        roomId={roomId}
-      />
-    );
+    if (groupCall.isPtt) {
+      return (
+        <PTTCallView
+          client={client}
+          roomId={roomId}
+          roomName={groupCall.room.name}
+          groupCall={groupCall}
+          participants={participants}
+          userMediaFeeds={userMediaFeeds}
+          onLeave={onLeave}
+          setShowInspector={onChangeShowInspector}
+          showInspector={showInspector}
+        />
+      );
+    } else {
+      return (
+        <InCallView
+          groupCall={groupCall}
+          client={client}
+          roomName={groupCall.room.name}
+          microphoneMuted={microphoneMuted}
+          localVideoMuted={localVideoMuted}
+          toggleLocalVideoMuted={toggleLocalVideoMuted}
+          toggleMicrophoneMuted={toggleMicrophoneMuted}
+          userMediaFeeds={userMediaFeeds}
+          activeSpeaker={activeSpeaker}
+          onLeave={onLeave}
+          toggleScreensharing={toggleScreensharing}
+          isScreensharing={isScreensharing}
+          localScreenshareFeed={localScreenshareFeed}
+          screenshareFeeds={screenshareFeeds}
+          setShowInspector={onChangeShowInspector}
+          showInspector={showInspector}
+          roomId={roomId}
+        />
+      );
+    }
   } else if (state === GroupCallState.Entering) {
     return (
       <FullScreenView>
@@ -105,6 +123,7 @@ export function GroupCallView({
     return (
       <LobbyView
         client={client}
+        groupCall={groupCall}
         hasLocalParticipant={hasLocalParticipant}
         roomName={groupCall.room.name}
         state={state}

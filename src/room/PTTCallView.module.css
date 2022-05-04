@@ -1,0 +1,106 @@
+.pttCallView {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  overflow: hidden;
+  min-height: 100%;
+  position: fixed;
+  height: 100%;
+  width: 100%;
+}
+
+.center {
+  width: 100%;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+}
+
+.participants {
+  display: flex;
+  flex-direction: column;
+  margin: 20px;
+}
+
+.participants > p {
+  color: #a9b2bc;
+  margin-bottom: 8px;
+}
+
+.facepile {
+  align-self: center;
+}
+
+.talkingInfo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 20px;
+  height: 88px;
+}
+
+.speakerIcon {
+  margin-right: 8px;
+}
+
+.pttButtonContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+}
+
+.actionTip {
+  margin-top: 20px;
+  margin-bottom: 20px;
+  font-size: 17px;
+}
+
+.footer {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  height: 64px;
+  margin-bottom: 20px;
+}
+
+.footer > * {
+  margin-right: 30px;
+}
+
+.footer > :last-child {
+  margin-right: 0px;
+}
+
+@media (min-width: 800px) {
+  .participants {
+    margin-bottom: 67px;
+  }
+
+  .talkingInfo {
+    margin-bottom: 38px;
+  }
+
+  .center {
+    margin-top: 48px;
+  }
+
+  .actionTip {
+    margin-top: 42px;
+    margin-bottom: 45px;
+  }
+
+  .pttButtonContainer {
+    flex: 0;
+    margin-bottom: 0;
+    justify-content: flex-start;
+  }
+
+  .footer {
+    flex: auto;
+    order: 4;
+  }
+}
