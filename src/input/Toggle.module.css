@@ -6,12 +6,12 @@
 .button {
   position: relative;
   padding: 0;
-  transition: background-color 0.20s ease-out 0.1s;
+  transition: background-color 0.2s ease-out 0.1s;
   width: 44px;
   height: 24px;
   border: none;
   border-radius: 21px;
-  background-color: #6F7882;
+  background-color: #6f7882;
   cursor: pointer;
   margin-right: 8px;
 }
@@ -22,7 +22,7 @@
   width: 20px;
   height: 20px;
   border-radius: 21px;
-  background-color: #15191E;
+  background-color: #15191e;
   left: 2px;
   top: 2px;
 }
@@ -30,11 +30,11 @@
 .label {
   padding: 10px 8px;
   line-height: 24px;
-  color: #6F7882;
+  color: #6f7882;
 }
 
 .toggle.on .button {
-  background-color: #0DBD8B;
+  background-color: #0dbd8b;
 }
 
 .toggle.on .ball {
