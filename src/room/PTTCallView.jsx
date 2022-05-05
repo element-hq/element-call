@@ -16,6 +16,7 @@ import { Timer } from "./Timer";
 import { Toggle } from "../input/Toggle";
 import { getAvatarUrl } from "../matrix-utils";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
+import { OtherUserSpeakingError } from "matrix-js-sdk/src/webrtc/groupCall";
 
 export function PTTCallView({
   client,
@@ -47,21 +48,22 @@ export function PTTCallView({
     activeSpeakerUserId,
     startTalking,
     stopTalking,
+    unmuteError,
   } = usePTT(client, groupCall, userMediaFeeds);
+
+  const showTalkOverError = pttButtonHeld && unmuteError instanceof OtherUserSpeakingError;
 
   const activeSpeakerIsLocalUser =
     activeSpeakerUserId && client.getUserId() === activeSpeakerUserId;
-  const showTalkOverError =
-    pttButtonHeld && !activeSpeakerIsLocalUser && !talkOverEnabled;
   const activeSpeakerUser = activeSpeakerUserId
     ? client.getUser(activeSpeakerUserId)
     : null;
   const activeSpeakerAvatarUrl = activeSpeakerUser
     ? getAvatarUrl(
-        client,
-        activeSpeakerUser.avatarUrl,
-        pttButtonSize - pttBorderWidth * 2
-      )
+      client,
+      activeSpeakerUser.avatarUrl,
+      pttButtonSize - pttBorderWidth * 2
+    )
     : null;
   const activeSpeakerDisplayName = activeSpeakerUser
     ? activeSpeakerUser.displayName
@@ -77,9 +79,8 @@ export function PTTCallView({
       </Header>
       <div className={styles.center}>
         <div className={styles.participants}>
-          <p>{`${participants.length} ${
-            participants.length > 1 ? "people" : "person"
-          } connected`}</p>
+          <p>{`${participants.length} ${participants.length > 1 ? "people" : "person"
+            } connected`}</p>
           <Facepile
             size={facepileSize}
             max={8}
@@ -123,13 +124,13 @@ export function PTTCallView({
           <p className={styles.actionTip}>
             {showTalkOverError
               ? "You can't talk at the same time"
-              : pttButtonHeld
-              ? "Release spacebar key to stop"
-              : talkOverEnabled &&
-                activeSpeakerUserId &&
-                !activeSpeakerIsLocalUser
-              ? `Press and hold spacebar to talk over ${activeSpeakerDisplayName}`
-              : "Press and hold spacebar to talk"}
+              : pttButtonHeld && activeSpeakerIsLocalUser
+                ? "Release spacebar key to stop"
+                : talkOverEnabled &&
+                  activeSpeakerUserId &&
+                  !activeSpeakerIsLocalUser
+                  ? `Press and hold spacebar to talk over ${activeSpeakerDisplayName}`
+                  : "Press and hold spacebar to talk"}
           </p>
           {userMediaFeeds.map((callFeed) => (
             <PTTFeed

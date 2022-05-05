@@ -17,6 +17,8 @@ export function usePTT(client, groupCall, userMediaFeeds) {
     };
   });
 
+  const [unmuteError, setUnmuteError] = useState(null);
+
   useEffect(() => {
     function onMuteStateChanged(...args) {
       const activeSpeakerFeed = userMediaFeeds.find((f) => !f.isAudioMuted());
@@ -47,28 +49,34 @@ export function usePTT(client, groupCall, userMediaFeeds) {
     };
   }, [userMediaFeeds]);
 
-  const startTalking = useCallback(() => {
+  const startTalking = useCallback(async () => {
+    setState((prevState) => ({ ...prevState, pttButtonHeld: true }));
+    setUnmuteError(null);
     if (!activeSpeakerUserId || isAdmin || talkOverEnabled) {
       if (groupCall.isMicrophoneMuted()) {
-        groupCall.setMicrophoneMuted(false);
+        try {
+          await groupCall.setMicrophoneMuted(false);
+        } catch (e) {
+          setUnmuteError(e);
+        }
       }
-
-      setState((prevState) => ({ ...prevState, pttButtonHeld: true }));
     }
-  }, []);
+  }, [setUnmuteError]);
 
   const stopTalking = useCallback(() => {
+    setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
+
     if (!groupCall.isMicrophoneMuted()) {
       groupCall.setMicrophoneMuted(true);
     }
-
-    setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
   }, []);
 
   useEffect(() => {
     function onKeyDown(event) {
       if (event.code === "Space") {
         event.preventDefault();
+
+        if (pttButtonHeld) return;
 
         startTalking();
       }
@@ -100,7 +108,7 @@ export function usePTT(client, groupCall, userMediaFeeds) {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
-  }, [activeSpeakerUserId, isAdmin, talkOverEnabled]);
+  }, [activeSpeakerUserId, isAdmin, talkOverEnabled, pttButtonHeld]);
 
   const setTalkOverEnabled = useCallback((talkOverEnabled) => {
     setState((prevState) => ({
@@ -117,5 +125,6 @@ export function usePTT(client, groupCall, userMediaFeeds) {
     activeSpeakerUserId,
     startTalking,
     stopTalking,
+    unmuteError,
   };
 }
