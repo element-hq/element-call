@@ -89,7 +89,7 @@ export function useInteractiveRegistration() {
 
       return client;
     },
-    []
+    [setClient]
   );
 
   return [state, register];
