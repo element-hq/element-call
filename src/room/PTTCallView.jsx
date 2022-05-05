@@ -51,7 +51,8 @@ export function PTTCallView({
     unmuteError,
   } = usePTT(client, groupCall, userMediaFeeds);
 
-  const showTalkOverError = pttButtonHeld && unmuteError instanceof OtherUserSpeakingError;
+  const showTalkOverError =
+    pttButtonHeld && unmuteError instanceof OtherUserSpeakingError;
 
   const activeSpeakerIsLocalUser =
     activeSpeakerUserId && client.getUserId() === activeSpeakerUserId;
@@ -60,10 +61,10 @@ export function PTTCallView({
     : null;
   const activeSpeakerAvatarUrl = activeSpeakerUser
     ? getAvatarUrl(
-      client,
-      activeSpeakerUser.avatarUrl,
-      pttButtonSize - pttBorderWidth * 2
-    )
+        client,
+        activeSpeakerUser.avatarUrl,
+        pttButtonSize - pttBorderWidth * 2
+      )
     : null;
   const activeSpeakerDisplayName = activeSpeakerUser
     ? activeSpeakerUser.displayName
@@ -79,8 +80,9 @@ export function PTTCallView({
       </Header>
       <div className={styles.center}>
         <div className={styles.participants}>
-          <p>{`${participants.length} ${participants.length > 1 ? "people" : "person"
-            } connected`}</p>
+          <p>{`${participants.length} ${
+            participants.length > 1 ? "people" : "person"
+          } connected`}</p>
           <Facepile
             size={facepileSize}
             max={8}
@@ -125,12 +127,12 @@ export function PTTCallView({
             {showTalkOverError
               ? "You can't talk at the same time"
               : pttButtonHeld && activeSpeakerIsLocalUser
-                ? "Release spacebar key to stop"
-                : talkOverEnabled &&
-                  activeSpeakerUserId &&
-                  !activeSpeakerIsLocalUser
-                  ? `Press and hold spacebar to talk over ${activeSpeakerDisplayName}`
-                  : "Press and hold spacebar to talk"}
+              ? "Release spacebar key to stop"
+              : talkOverEnabled &&
+                activeSpeakerUserId &&
+                !activeSpeakerIsLocalUser
+              ? `Press and hold spacebar to talk over ${activeSpeakerDisplayName}`
+              : "Press and hold spacebar to talk"}
           </p>
           {userMediaFeeds.map((callFeed) => (
             <PTTFeed
