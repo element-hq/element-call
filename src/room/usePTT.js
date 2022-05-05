@@ -55,7 +55,7 @@ export function usePTT(client, groupCall, userMediaFeeds) {
 
       setState((prevState) => ({ ...prevState, pttButtonHeld: true }));
     }
-  }, []);
+  }, [groupCall, activeSpeakerUserId, isAdmin, talkOverEnabled]);
 
   const stopTalking = useCallback(() => {
     if (!groupCall.isMicrophoneMuted()) {
@@ -63,7 +63,7 @@ export function usePTT(client, groupCall, userMediaFeeds) {
     }
 
     setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
-  }, []);
+  }, [groupCall]);
 
   useEffect(() => {
     function onKeyDown(event) {
@@ -100,7 +100,14 @@ export function usePTT(client, groupCall, userMediaFeeds) {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
-  }, [activeSpeakerUserId, isAdmin, talkOverEnabled]);
+  }, [
+    groupCall,
+    startTalking,
+    stopTalking,
+    activeSpeakerUserId,
+    isAdmin,
+    talkOverEnabled,
+  ]);
 
   const setTalkOverEnabled = useCallback((talkOverEnabled) => {
     setState((prevState) => ({

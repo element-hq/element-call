@@ -223,7 +223,7 @@ export function useSubmitRageshake() {
         console.error(error);
       }
     },
-    [client]
+    [client, json, sending]
   );
 
   return {
@@ -294,7 +294,7 @@ export function useRageshakeRequestModal(roomId) {
     return () => {
       client.removeListener("event", onEvent);
     };
-  }, [modalState.open, roomId]);
+  }, [modalState.open, roomId, client, modalState]);
 
   return { modalState, modalProps: { ...modalProps, rageshakeRequestId } };
 }
