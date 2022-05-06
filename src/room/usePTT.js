@@ -18,7 +18,13 @@ import { useCallback, useEffect, useState } from "react";
 
 export function usePTT(client, groupCall, userMediaFeeds) {
   const [
-    { pttButtonHeld, isAdmin, talkOverEnabled, activeSpeakerUserId },
+    {
+      pttButtonHeld,
+      isAdmin,
+      talkOverEnabled,
+      activeSpeakerUserId,
+      unmuteError,
+    },
     setState,
   ] = useState(() => {
     const roomMember = groupCall.room.getMember(client.getUserId());
@@ -30,6 +36,7 @@ export function usePTT(client, groupCall, userMediaFeeds) {
       talkOverEnabled: false,
       pttButtonHeld: false,
       activeSpeakerUserId: activeSpeakerFeed ? activeSpeakerFeed.userId : null,
+      unmuteError: null,
     };
   });
 
@@ -63,28 +70,37 @@ export function usePTT(client, groupCall, userMediaFeeds) {
     };
   }, [userMediaFeeds]);
 
-  const startTalking = useCallback(() => {
+  const startTalking = useCallback(async () => {
+    setState((prevState) => ({
+      ...prevState,
+      pttButtonHeld: true,
+      unmuteError: null,
+    }));
     if (!activeSpeakerUserId || isAdmin || talkOverEnabled) {
       if (groupCall.isMicrophoneMuted()) {
-        groupCall.setMicrophoneMuted(false);
+        try {
+          await groupCall.setMicrophoneMuted(false);
+        } catch (e) {
+          setState((prevState) => ({ ...prevState, unmuteError: null }));
+        }
       }
-
-      setState((prevState) => ({ ...prevState, pttButtonHeld: true }));
     }
-  }, []);
+  }, [setState]);
 
   const stopTalking = useCallback(() => {
+    setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
+
     if (!groupCall.isMicrophoneMuted()) {
       groupCall.setMicrophoneMuted(true);
     }
-
-    setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
   }, []);
 
   useEffect(() => {
     function onKeyDown(event) {
       if (event.code === "Space") {
         event.preventDefault();
+
+        if (pttButtonHeld) return;
 
         startTalking();
       }
@@ -116,7 +132,7 @@ export function usePTT(client, groupCall, userMediaFeeds) {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
-  }, [activeSpeakerUserId, isAdmin, talkOverEnabled]);
+  }, [activeSpeakerUserId, isAdmin, talkOverEnabled, pttButtonHeld]);
 
   const setTalkOverEnabled = useCallback((talkOverEnabled) => {
     setState((prevState) => ({
@@ -133,5 +149,6 @@ export function usePTT(client, groupCall, userMediaFeeds) {
     activeSpeakerUserId,
     startTalking,
     stopTalking,
+    unmuteError,
   };
 }

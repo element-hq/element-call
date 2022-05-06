@@ -32,6 +32,7 @@ import { Timer } from "./Timer";
 import { Toggle } from "../input/Toggle";
 import { getAvatarUrl } from "../matrix-utils";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
+import { OtherUserSpeakingError } from "matrix-js-sdk/src/webrtc/groupCall";
 
 export function PTTCallView({
   client,
@@ -63,12 +64,14 @@ export function PTTCallView({
     activeSpeakerUserId,
     startTalking,
     stopTalking,
+    unmuteError,
   } = usePTT(client, groupCall, userMediaFeeds);
+
+  const showTalkOverError =
+    pttButtonHeld && unmuteError instanceof OtherUserSpeakingError;
 
   const activeSpeakerIsLocalUser =
     activeSpeakerUserId && client.getUserId() === activeSpeakerUserId;
-  const showTalkOverError =
-    pttButtonHeld && !activeSpeakerIsLocalUser && !talkOverEnabled;
   const activeSpeakerUser = activeSpeakerUserId
     ? client.getUser(activeSpeakerUserId)
     : null;
@@ -139,7 +142,7 @@ export function PTTCallView({
           <p className={styles.actionTip}>
             {showTalkOverError
               ? "You can't talk at the same time"
-              : pttButtonHeld
+              : pttButtonHeld && activeSpeakerIsLocalUser
               ? "Release spacebar key to stop"
               : talkOverEnabled &&
                 activeSpeakerUserId &&
