@@ -1,3 +1,19 @@
+/*
+Copyright 2022 Matrix.org Foundation C.I.C.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 import React from "react";
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
@@ -16,6 +32,7 @@ import { Timer } from "./Timer";
 import { Toggle } from "../input/Toggle";
 import { getAvatarUrl } from "../matrix-utils";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
+import { OtherUserSpeakingError } from "matrix-js-sdk/src/webrtc/groupCall";
 
 export function PTTCallView({
   client,
@@ -47,12 +64,14 @@ export function PTTCallView({
     activeSpeakerUserId,
     startTalking,
     stopTalking,
+    unmuteError,
   } = usePTT(client, groupCall, userMediaFeeds);
+
+  const showTalkOverError =
+    pttButtonHeld && unmuteError instanceof OtherUserSpeakingError;
 
   const activeSpeakerIsLocalUser =
     activeSpeakerUserId && client.getUserId() === activeSpeakerUserId;
-  const showTalkOverError =
-    pttButtonHeld && !activeSpeakerIsLocalUser && !talkOverEnabled;
   const activeSpeakerUser = activeSpeakerUserId
     ? client.getUser(activeSpeakerUserId)
     : null;
@@ -123,7 +142,7 @@ export function PTTCallView({
           <p className={styles.actionTip}>
             {showTalkOverError
               ? "You can't talk at the same time"
-              : pttButtonHeld
+              : pttButtonHeld && activeSpeakerIsLocalUser
               ? "Release spacebar key to stop"
               : talkOverEnabled &&
                 activeSpeakerUserId &&
