@@ -1,16 +1,13 @@
 {
   "compilerOptions": {
-    "resolveJsonModule": true,
+    "target": "es2016",
     "esModuleInterop": true,
     "module": "commonjs",
     "moduleResolution": "node",
-    "target": "es2016",
+    "noEmit": true,
     "noImplicitAny": false,
     "noUnusedLocals": true,
-    "sourceMap": false,
-    "outDir": "./lib",
-    "declaration": true,
-    "jsx": "react",
+    "jsx": "preserve",
     "lib": [
       "es2020",
       "dom",
