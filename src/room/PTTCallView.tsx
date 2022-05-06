@@ -1,4 +1,7 @@
 import React from "react";
+import useMeasure from "react-use-measure";
+import { ResizeObserver } from "@juggle/resize-observer";
+
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
@@ -9,8 +12,6 @@ import { Facepile } from "../Facepile";
 import { PTTButton } from "./PTTButton";
 import { PTTFeed } from "./PTTFeed";
 import { useMediaHandler } from "../settings/useMediaHandler";
-import useMeasure from "react-use-measure";
-import { ResizeObserver } from "@juggle/resize-observer";
 import { usePTT } from "./usePTT";
 import { Timer } from "./Timer";
 import { Toggle } from "../input/Toggle";

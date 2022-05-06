@@ -1,6 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
+import { MatrixClient } from "matrix-js-sdk/src/client";
+import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
+import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
-export function usePTT(client, groupCall, userMediaFeeds) {
+export interface PTTState {
+  pttButtonHeld: boolean;
+  isAdmin: boolean;
+  talkOverEnabled: boolean;
+  setTalkOverEnabled: (boolean) => void;
+  activeSpeakerUserId: string;
+  startTalking: () => void;
+  stopTalking: () => void;
+}
+
+export const usePTT = (
+  client: MatrixClient,
+  groupCall: GroupCall,
+  userMediaFeeds: CallFeed[]
+): PTTState => {
   const [
     { pttButtonHeld, isAdmin, talkOverEnabled, activeSpeakerUserId },
     setState,
@@ -18,7 +35,7 @@ export function usePTT(client, groupCall, userMediaFeeds) {
   });
 
   useEffect(() => {
-    function onMuteStateChanged(...args) {
+    function onMuteStateChanged(...args): void {
       const activeSpeakerFeed = userMediaFeeds.find((f) => !f.isAudioMuted());
 
       setState((prevState) => ({
@@ -66,7 +83,7 @@ export function usePTT(client, groupCall, userMediaFeeds) {
   }, []);
 
   useEffect(() => {
-    function onKeyDown(event) {
+    function onKeyDown(event: KeyboardEvent): void {
       if (event.code === "Space") {
         event.preventDefault();
 
@@ -74,7 +91,7 @@ export function usePTT(client, groupCall, userMediaFeeds) {
       }
     }
 
-    function onKeyUp(event) {
+    function onKeyUp(event: KeyboardEvent): void {
       if (event.code === "Space") {
         event.preventDefault();
 
@@ -82,7 +99,7 @@ export function usePTT(client, groupCall, userMediaFeeds) {
       }
     }
 
-    function onBlur() {
+    function onBlur(): void {
       // TODO: We will need to disable this for a global PTT hotkey to work
       if (!groupCall.isMicrophoneMuted()) {
         groupCall.setMicrophoneMuted(true);
@@ -118,4 +135,4 @@ export function usePTT(client, groupCall, userMediaFeeds) {
     startTalking,
     stopTalking,
   };
-}
+};
