@@ -8,7 +8,8 @@
     "build-storybook": "build-storybook",
     "prettier:check": "prettier -c src",
     "prettier:format": "prettier -w src",
-    "lint": "eslint --max-warnings 2 src"
+    "lint:js": "eslint --max-warnings 2 src",
+    "lint:types": "tsc"
   },
   "dependencies": {
     "@juggle/resize-observer": "^3.3.1",
