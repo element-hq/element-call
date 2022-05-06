@@ -27,6 +27,7 @@ export interface PTTState {
   activeSpeakerUserId: string;
   startTalking: () => void;
   stopTalking: () => void;
+  unmuteError: Error;
 }
 
 export const usePTT = (

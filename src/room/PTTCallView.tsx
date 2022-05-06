@@ -17,6 +17,7 @@ limitations under the License.
 import React from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
+import { OtherUserSpeakingError } from "matrix-js-sdk/src/webrtc/groupCall";
 
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
@@ -33,7 +34,6 @@ import { Timer } from "./Timer";
 import { Toggle } from "../input/Toggle";
 import { getAvatarUrl } from "../matrix-utils";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
-import { OtherUserSpeakingError } from "matrix-js-sdk/src/webrtc/groupCall";
 
 export function PTTCallView({
   client,
