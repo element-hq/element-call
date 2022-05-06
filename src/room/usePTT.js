@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 
 export function usePTT(client, groupCall, userMediaFeeds) {
   const [
-    { pttButtonHeld, isAdmin, talkOverEnabled, activeSpeakerUserId },
+    { pttButtonHeld, isAdmin, talkOverEnabled, activeSpeakerUserId, unmuteError },
     setState,
   ] = useState(() => {
     const roomMember = groupCall.room.getMember(client.getUserId());
@@ -14,10 +14,9 @@ export function usePTT(client, groupCall, userMediaFeeds) {
       talkOverEnabled: false,
       pttButtonHeld: false,
       activeSpeakerUserId: activeSpeakerFeed ? activeSpeakerFeed.userId : null,
+      unmuteError: null,
     };
   });
-
-  const [unmuteError, setUnmuteError] = useState(null);
 
   useEffect(() => {
     function onMuteStateChanged(...args) {
@@ -50,18 +49,17 @@ export function usePTT(client, groupCall, userMediaFeeds) {
   }, [userMediaFeeds]);
 
   const startTalking = useCallback(async () => {
-    setState((prevState) => ({ ...prevState, pttButtonHeld: true }));
-    setUnmuteError(null);
+    setState((prevState) => ({ ...prevState, pttButtonHeld: true, unmuteError: null, }));
     if (!activeSpeakerUserId || isAdmin || talkOverEnabled) {
       if (groupCall.isMicrophoneMuted()) {
         try {
           await groupCall.setMicrophoneMuted(false);
         } catch (e) {
-          setUnmuteError(e);
+          setState((prevState) => ({ ...prevState, unmuteError: null, }));
         }
       }
     }
-  }, [setUnmuteError]);
+  }, [setState]);
 
   const stopTalking = useCallback(() => {
     setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
