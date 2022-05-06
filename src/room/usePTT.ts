@@ -1,3 +1,19 @@
+/*
+Copyright 2022 Matrix.org Foundation C.I.C.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 import { useCallback, useEffect, useState } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
@@ -19,7 +35,13 @@ export const usePTT = (
   userMediaFeeds: CallFeed[]
 ): PTTState => {
   const [
-    { pttButtonHeld, isAdmin, talkOverEnabled, activeSpeakerUserId },
+    {
+      pttButtonHeld,
+      isAdmin,
+      talkOverEnabled,
+      activeSpeakerUserId,
+      unmuteError,
+    },
     setState,
   ] = useState(() => {
     const roomMember = groupCall.room.getMember(client.getUserId());
@@ -31,6 +53,7 @@ export const usePTT = (
       talkOverEnabled: false,
       pttButtonHeld: false,
       activeSpeakerUserId: activeSpeakerFeed ? activeSpeakerFeed.userId : null,
+      unmuteError: null,
     };
   });
 
@@ -64,28 +87,39 @@ export const usePTT = (
     };
   }, [userMediaFeeds]);
 
-  const startTalking = useCallback(() => {
+  const startTalking = useCallback(async () => {
+    setState((prevState) => ({
+      ...prevState,
+      pttButtonHeld: true,
+      unmuteError: null,
+    }));
     if (!activeSpeakerUserId || isAdmin || talkOverEnabled) {
       if (groupCall.isMicrophoneMuted()) {
-        groupCall.setMicrophoneMuted(false);
+        try {
+          await groupCall.setMicrophoneMuted(false);
+        } catch (e) {
+          setState((prevState) => ({ ...prevState, unmuteError: null }));
+        }
       }
-
-      setState((prevState) => ({ ...prevState, pttButtonHeld: true }));
     }
-  }, []);
+  }, [groupCall, activeSpeakerUserId, isAdmin, talkOverEnabled, setState]);
 
   const stopTalking = useCallback(() => {
+    setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
+
     if (!groupCall.isMicrophoneMuted()) {
       groupCall.setMicrophoneMuted(true);
     }
 
     setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
-  }, []);
+  }, [groupCall]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.code === "Space") {
         event.preventDefault();
+
+        if (pttButtonHeld) return;
 
         startTalking();
       }
@@ -117,7 +151,15 @@ export const usePTT = (
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
-  }, [activeSpeakerUserId, isAdmin, talkOverEnabled]);
+  }, [
+    groupCall,
+    startTalking,
+    stopTalking,
+    activeSpeakerUserId,
+    isAdmin,
+    talkOverEnabled,
+    pttButtonHeld,
+  ]);
 
   const setTalkOverEnabled = useCallback((talkOverEnabled) => {
     setState((prevState) => ({
@@ -134,5 +176,6 @@ export const usePTT = (
     activeSpeakerUserId,
     startTalking,
     stopTalking,
+    unmuteError,
   };
 };
