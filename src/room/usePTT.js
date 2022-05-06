@@ -134,7 +134,7 @@ export function usePTT(client, groupCall, userMediaFeeds) {
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
     };
-  }, [activeSpeakerUserId, isAdmin, talkOverEnabled, pttButtonHeld]);
+  }, [groupCall, startTalking, stopTalking, activeSpeakerUserId, isAdmin, talkOverEnabled, pttButtonHeld]);
 
   const setTalkOverEnabled = useCallback((talkOverEnabled) => {
     setState((prevState) => ({
