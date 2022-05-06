@@ -97,7 +97,7 @@ export function useGroupCallRooms(client) {
       client.removeListener("GroupCall.incoming", updateRooms);
       client.removeListener("GroupCall.participants", updateRooms);
     };
-  }, []);
+  }, [client]);
 
   return rooms;
 }
