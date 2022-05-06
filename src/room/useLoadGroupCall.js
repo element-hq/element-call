@@ -102,7 +102,7 @@ export function useLoadGroupCall(client, roomId, viaServers, createIfNotFound) {
       .catch((error) =>
         setState((prevState) => ({ ...prevState, loading: false, error }))
       );
-  }, [client, roomId, state.reloadId]);
+  }, [client, roomId, state.reloadId, createIfNotFound, viaServers]);
 
   return state;
 }
