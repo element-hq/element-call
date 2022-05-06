@@ -50,6 +50,7 @@ export const Avatar: React.FC<Props> = ({
     return backgroundColors[index];
   }, [bgKey, src, fallback]);
 
+  /* eslint-disable jsx-a11y/alt-text */
   return (
     <div
       className={classNames(styles.avatar, styles[size || "md"], className)}
