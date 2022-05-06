@@ -2,7 +2,13 @@ import { useCallback, useEffect, useState } from "react";
 
 export function usePTT(client, groupCall, userMediaFeeds) {
   const [
-    { pttButtonHeld, isAdmin, talkOverEnabled, activeSpeakerUserId, unmuteError },
+    {
+      pttButtonHeld,
+      isAdmin,
+      talkOverEnabled,
+      activeSpeakerUserId,
+      unmuteError,
+    },
     setState,
   ] = useState(() => {
     const roomMember = groupCall.room.getMember(client.getUserId());
@@ -49,13 +55,17 @@ export function usePTT(client, groupCall, userMediaFeeds) {
   }, [userMediaFeeds]);
 
   const startTalking = useCallback(async () => {
-    setState((prevState) => ({ ...prevState, pttButtonHeld: true, unmuteError: null, }));
+    setState((prevState) => ({
+      ...prevState,
+      pttButtonHeld: true,
+      unmuteError: null,
+    }));
     if (!activeSpeakerUserId || isAdmin || talkOverEnabled) {
       if (groupCall.isMicrophoneMuted()) {
         try {
           await groupCall.setMicrophoneMuted(false);
         } catch (e) {
-          setState((prevState) => ({ ...prevState, unmuteError: null, }));
+          setState((prevState) => ({ ...prevState, unmuteError: null }));
         }
       }
     }
