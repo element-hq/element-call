@@ -6,7 +6,7 @@
     "moduleResolution": "node",
     "noEmit": true,
     "noImplicitAny": false,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "jsx": "preserve",
     "lib": [
       "es2020",

@@ -16,6 +16,9 @@ limitations under the License.
 
 import { useCallback, useEffect, useState } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
+// XXX: This must come after the other js-sdk import because of
+// https://github.com/matrix-org/matrix-js-sdk/issues/2351
+import "matrix-js-sdk/src/@types/global";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
