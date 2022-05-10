@@ -15,3 +15,4 @@ limitations under the License.
 */
 
 import "matrix-js-sdk/src/@types/global";
+import "matrix-js-sdk/src/@types/partials";
