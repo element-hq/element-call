@@ -2,6 +2,11 @@ name: Build
 on:
   push:
     branches: [main]
+env:
+  VITE_DEFAULT_HOMESERVER: "https://call.ems.host"
+  VITE_SENTRY_DSN: https://b1e328d49be3402ba96101338989fb35@sentry.matrix.org/41
+  VITE_SENTRY_ENVIRONMENT: main-branch-cd
+  VITE_RAGESHAKE_SUBMIT_URL: https://element.io/bugreports/submit
 jobs:
   build:
     name: Build
