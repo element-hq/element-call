@@ -1,0 +1,70 @@
+name: Netlify Main
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+    steps:
+      - name: Create Deployment
+        uses: bobheadxi/deployments@v1
+        id: deployment
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: Netlify
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+    - name: 'Download artifact'
+        uses: actions/github-script@v3.1.0
+        with:
+          script: |
+            const artifacts = await github.actions.listWorkflowRunArtifacts({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: ${{ github.event.workflow_run.id }},
+            });
+            const matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+                return artifact.name == "build"
+            })[0];
+            const download = await github.actions.downloadArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: matchArtifact.id,
+                archive_format: 'zip',
+            });
+            const fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/build.zip', Buffer.from(download.data));
+
+      - name: Extract Artifacts
+        run: unzip -d webapp build.zip && rm build.zip
+
+      - name: Deploy to Netlify
+        id: netlify
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: dist
+          deploy-message: "Deploy from GitHub Actions"
+          # These don't work because we're in workflow_run
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        timeout-minutes: 1
+
+      - name: Update deployment status
+        uses: bobheadxi/deployments@v1
+        if: always()
+        with:
+          step: finish
+          override: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env_url: ${{ steps.netlify.outputs.deploy-url }}

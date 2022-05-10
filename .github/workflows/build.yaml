@@ -1,0 +1,26 @@
+name: Build
+on:
+  push:
+    branches: [main]
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      - name: Yarn cache
+        uses: actions/setup-node@v3
+        with:
+          cache: 'yarn'
+      - name: Install dependencies
+        run: "yarn install"
+      - name: Build
+        run: "yarn run build"
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: build
+          path: element-call/dist
+          # We'll only use this in a triggered job, then we're done with it
+          retention-days: 1
