@@ -35,7 +35,7 @@
     "color-hash": "^2.0.1",
     "events": "^3.3.0",
     "lodash-move": "^1.1.1",
-    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#dbkr/group-call-merge",
+    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#acef1d7dd0b915368730efabee94deb42b2e4058",
     "mermaid": "^8.13.8",
     "normalize.css": "^8.0.1",
     "pako": "^2.0.4",
@@ -52,6 +52,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.16.5",
+    "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.8.tgz",
     "@storybook/react": "^6.5.0-alpha.5",
     "@typescript-eslint/eslint-plugin": "^5.22.0",
     "@typescript-eslint/parser": "^5.22.0",
