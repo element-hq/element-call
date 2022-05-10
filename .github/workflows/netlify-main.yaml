@@ -43,7 +43,7 @@ jobs:
             fs.writeFileSync('${{github.workspace}}/build.zip', Buffer.from(download.data));
 
       - name: Extract Artifacts
-        run: unzip -d webapp build.zip && rm build.zip
+        run: unzip -d dist build.zip && rm build.zip
 
       - name: Deploy to Netlify
         id: netlify
