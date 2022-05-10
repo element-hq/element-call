@@ -12,15 +12,6 @@ jobs:
       deployments: write
     if: github.event.workflow_run.conclusion == 'success'
     steps:
-      - name: Create Deployment
-        uses: bobheadxi/deployments@v1
-        id: deployment
-        with:
-          step: start
-          token: ${{ secrets.GITHUB_TOKEN }}
-          env: Netlify
-          ref: ${{ github.event.workflow_run.head_sha }}
-
       - name: 'Download artifact'
         uses: actions/github-script@v3.1.0
         with:
@@ -47,26 +38,17 @@ jobs:
 
       - name: Deploy to Netlify
         id: netlify
-        uses: nwtgck/actions-netlify@v1.2
+        uses: nwtgck/actions-netlify@v1.2.3
         with:
           publish-dir: dist
           deploy-message: "Deploy from GitHub Actions"
+          production-branch: main
+          production-deploy: true
           # These don't work because we're in workflow_run
           enable-pull-request-comment: false
           enable-commit-comment: false
+          github-deployment-environment: main
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         timeout-minutes: 1
-
-      - name: Update deployment status
-        uses: bobheadxi/deployments@v1
-        if: always()
-        with:
-          step: finish
-          override: false
-          token: ${{ secrets.GITHUB_TOKEN }}
-          status: ${{ job.status }}
-          env: ${{ steps.deployment.outputs.env }}
-          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
-          env_url: ${{ steps.netlify.outputs.deploy-url }}
