@@ -21,6 +21,6 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: build
-          path: element-call/dist
+          path: dist
           # We'll only use this in a triggered job, then we're done with it
           retention-days: 1
