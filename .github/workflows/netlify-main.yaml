@@ -12,6 +12,15 @@ jobs:
       deployments: write
     if: github.event.workflow_run.conclusion == 'success'
     steps:
+      - name: Create Deployment
+        uses: bobheadxi/deployments@v1
+        id: deployment
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: main-branch-cd
+          ref: ${{ github.event.workflow_run.head_sha }}
+
       - name: 'Download artifact'
         uses: actions/github-script@v3.1.0
         with:
@@ -52,3 +61,15 @@ jobs:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
         timeout-minutes: 1
+
+      - name: Update deployment status
+        uses: bobheadxi/deployments@v1
+        if: always()
+        with:
+          step: finish
+          override: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env_url: ${{ steps.netlify.outputs.deploy-url }}
