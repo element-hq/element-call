@@ -8561,9 +8561,14 @@ markdown-to-jsx@^7.1.3:
   resolved "https://registry.yarnpkg.com/markdown-to-jsx/-/markdown-to-jsx-7.1.6.tgz#421487df2a66fe4231d94db653a34da033691e62"
   integrity sha512-1wrIGZYwIG2gR3yfRmbr4FlQmhaAKoKTpRo4wur4fp9p0njU1Hi7vR8fj0AUKKIcPduiJmPprzmCB5B/GvlC7g==
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#robertlong/group-call":
-  version "15.1.0"
-  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8d9cd0fcb37188f63a938f4dd16e1f4e967cf1b6"
+matrix-events-sdk@^0.0.1-beta.7:
+  version "0.0.1-beta.7"
+  resolved "https://registry.yarnpkg.com/matrix-events-sdk/-/matrix-events-sdk-0.0.1-beta.7.tgz#5ffe45eba1f67cc8d7c2377736c728b322524934"
+  integrity sha512-9jl4wtWanUFSy2sr2lCjErN/oC8KTAtaeaozJtrgot1JiQcEI4Rda9OLgQ7nLKaqb4Z/QUx/fR3XpDzm5Jy1JA==
+
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#dbkr/group-call-merge":
+  version "17.2.0"
+  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/f4f05550ef602cc03a54de75db236afc62fb33ef"
   dependencies:
     "@babel/runtime" "^7.12.5"
     another-json "^0.2.0"
@@ -8571,6 +8576,7 @@ markdown-to-jsx@^7.1.3:
     bs58 "^4.0.1"
     content-type "^1.0.4"
     loglevel "^1.7.1"
+    matrix-events-sdk "^0.0.1-beta.7"
     p-retry "^4.5.0"
     qs "^6.9.6"
     request "^2.88.2"
