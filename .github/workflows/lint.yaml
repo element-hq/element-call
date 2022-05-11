@@ -1,9 +1,9 @@
-name: Lint and format
+name: Lint, format & type check
 on:
   pull_request: {}
 jobs:
   prettier:
-    name: Lint and format
+    name: Lint, format & type check
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -17,4 +17,6 @@ jobs:
       - name: Prettier
         run: "yarn run prettier:check"
       - name: ESLint
-        run: "yarn run lint"
+        run: "yarn run lint:js"
+      - name: Type check
+        run: "yarn run lint:types"
