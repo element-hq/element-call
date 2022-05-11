@@ -17,7 +17,6 @@ limitations under the License.
 import React from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
-import { OtherUserSpeakingError } from "matrix-js-sdk/src/webrtc/groupCall";
 
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
@@ -34,6 +33,8 @@ import { Timer } from "./Timer";
 import { Toggle } from "../input/Toggle";
 import { getAvatarUrl } from "../matrix-utils";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
+import { usePTTSounds } from "../sound/usePttSounds";
+import { PTTClips } from "../sound/PTTClips";
 
 export function PTTCallView({
   client,
@@ -57,6 +58,9 @@ export function PTTCallView({
 
   const { audioOutput } = useMediaHandler();
 
+  const { startTalkingLocalRef, startTalkingRemoteRef, blockedRef, playClip } =
+    usePTTSounds();
+
   const {
     pttButtonHeld,
     isAdmin,
@@ -65,11 +69,10 @@ export function PTTCallView({
     activeSpeakerUserId,
     startTalking,
     stopTalking,
-    unmuteError,
-  } = usePTT(client, groupCall, userMediaFeeds);
+    transmitBlocked,
+  } = usePTT(client, groupCall, userMediaFeeds, playClip);
 
-  const showTalkOverError =
-    pttButtonHeld && unmuteError instanceof OtherUserSpeakingError;
+  const showTalkOverError = pttButtonHeld && transmitBlocked;
 
   const activeSpeakerIsLocalUser =
     activeSpeakerUserId && client.getUserId() === activeSpeakerUserId;
@@ -89,6 +92,11 @@ export function PTTCallView({
 
   return (
     <div className={styles.pttCallView} ref={containerRef}>
+      <PTTClips
+        startTalkingLocalRef={startTalkingLocalRef}
+        startTalkingRemoteRef={startTalkingRemoteRef}
+        blockedRef={blockedRef}
+      />
       <Header className={styles.header}>
         <LeftNav>
           <RoomSetupHeaderInfo roomName={roomName} onPress={onLeave} />
