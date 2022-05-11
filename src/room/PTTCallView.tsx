@@ -17,6 +17,8 @@ limitations under the License.
 import React from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
+import { GroupCall, MatrixClient, RoomMember } from "matrix-js-sdk";
+import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
@@ -36,7 +38,19 @@ import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { usePTTSounds } from "../sound/usePttSounds";
 import { PTTClips } from "../sound/PTTClips";
 
-export function PTTCallView({
+interface Props {
+  client: MatrixClient;
+  roomId: string;
+  roomName: string;
+  groupCall: GroupCall;
+  participants: RoomMember[];
+  userMediaFeeds: CallFeed[];
+  onLeave: () => void;
+  setShowInspector: (boolean) => void;
+  showInspector: boolean;
+}
+
+export const PTTCallView: React.FC<Props> = ({
   client,
   roomId,
   roomName,
@@ -46,7 +60,7 @@ export function PTTCallView({
   onLeave,
   setShowInspector,
   showInspector,
-}) {
+}) => {
   const { modalState: inviteModalState, modalProps: inviteModalProps } =
     useModalTriggerState();
   const { modalState: settingsModalState, modalProps: settingsModalProps } =
@@ -189,4 +203,4 @@ export function PTTCallView({
       )}
     </div>
   );
-}
+};
