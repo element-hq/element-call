@@ -45,6 +45,9 @@ jobs:
       - name: Extract Artifacts
         run: unzip -d dist build.zip && rm build.zip
 
+      - name: Copy redirects file
+        run: cp config/netlify_redirects dist/_redirects
+
       - name: Deploy to Netlify
         id: netlify
         uses: nwtgck/actions-netlify@v1.2.3
