@@ -18,6 +18,9 @@ import { useCallback, useEffect, useState } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
+import { logger } from "matrix-js-sdk/src/logger";
+
+import { PlayClipFunction, PTTClipID } from "../sound/usePttSounds";
 
 export interface PTTState {
   pttButtonHeld: boolean;
@@ -27,13 +30,14 @@ export interface PTTState {
   activeSpeakerUserId: string;
   startTalking: () => void;
   stopTalking: () => void;
-  unmuteError: Error;
+  transmitBlocked: boolean;
 }
 
 export const usePTT = (
   client: MatrixClient,
   groupCall: GroupCall,
-  userMediaFeeds: CallFeed[]
+  userMediaFeeds: CallFeed[],
+  playClip: PlayClipFunction
 ): PTTState => {
   const [
     {
@@ -41,7 +45,7 @@ export const usePTT = (
       isAdmin,
       talkOverEnabled,
       activeSpeakerUserId,
-      unmuteError,
+      transmitBlocked,
     },
     setState,
   ] = useState(() => {
@@ -54,13 +58,28 @@ export const usePTT = (
       talkOverEnabled: false,
       pttButtonHeld: false,
       activeSpeakerUserId: activeSpeakerFeed ? activeSpeakerFeed.userId : null,
-      unmuteError: null,
+      transmitBlocked: false,
     };
   });
 
   useEffect(() => {
     function onMuteStateChanged(...args): void {
       const activeSpeakerFeed = userMediaFeeds.find((f) => !f.isAudioMuted());
+
+      if (activeSpeakerUserId === null && activeSpeakerFeed.userId !== null) {
+        if (activeSpeakerFeed.userId === client.getUserId()) {
+          playClip(PTTClipID.START_TALKING_LOCAL);
+        } else {
+          playClip(PTTClipID.START_TALKING_REMOTE);
+        }
+      } else if (
+        activeSpeakerFeed &&
+        activeSpeakerUserId === client.getUserId() &&
+        activeSpeakerFeed.userId !== client.getUserId()
+      ) {
+        // We were talking but we've been cut off
+        playClip(PTTClipID.BLOCKED);
+      }
 
       setState((prevState) => ({
         ...prevState,
@@ -89,33 +108,55 @@ export const usePTT = (
         );
       }
     };
-  }, [userMediaFeeds]);
+  }, [userMediaFeeds, activeSpeakerUserId, client, playClip]);
 
   const startTalking = useCallback(async () => {
-    setState((prevState) => ({
-      ...prevState,
-      pttButtonHeld: true,
-      unmuteError: null,
-    }));
-    if (!activeSpeakerUserId || isAdmin || talkOverEnabled) {
+    if (pttButtonHeld) return;
+
+    let blocked = false;
+    if (!activeSpeakerUserId || (isAdmin && talkOverEnabled)) {
       if (groupCall.isMicrophoneMuted()) {
         try {
           await groupCall.setMicrophoneMuted(false);
         } catch (e) {
-          setState((prevState) => ({ ...prevState, unmuteError: null }));
+          logger.error("Failed to unmute microphone", e);
         }
       }
+    } else {
+      playClip(PTTClipID.BLOCKED);
+      blocked = true;
     }
-  }, [groupCall, activeSpeakerUserId, isAdmin, talkOverEnabled, setState]);
+    setState((prevState) => ({
+      ...prevState,
+      pttButtonHeld: true,
+      transmitBlocked: blocked,
+    }));
+  }, [
+    pttButtonHeld,
+    groupCall,
+    activeSpeakerUserId,
+    isAdmin,
+    talkOverEnabled,
+    setState,
+    playClip,
+  ]);
 
   const stopTalking = useCallback(() => {
-    setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
+    setState((prevState) => ({
+      ...prevState,
+      pttButtonHeld: false,
+      unmuteError: null,
+    }));
 
     if (!groupCall.isMicrophoneMuted()) {
       groupCall.setMicrophoneMuted(true);
     }
 
-    setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
+    setState((prevState) => ({
+      ...prevState,
+      pttButtonHeld: false,
+      transmitBlocked: false,
+    }));
   }, [groupCall]);
 
   useEffect(() => {
@@ -147,8 +188,8 @@ export const usePTT = (
     }
 
     window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-    window.addEventListener("blur", onBlur);
+    //window.addEventListener("keyup", onKeyUp);
+    //window.addEventListener("blur", onBlur);
 
     return () => {
       window.removeEventListener("keydown", onKeyDown);
@@ -180,6 +221,6 @@ export const usePTT = (
     activeSpeakerUserId,
     startTalking,
     stopTalking,
-    unmuteError,
+    transmitBlocked,
   };
 };
