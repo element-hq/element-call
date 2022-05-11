@@ -1,2 +1,4 @@
-# Copied to the netlify deploy dir in the upload stage
+# This file is copied to the netlify deploy dir in the upload stage
+
+# Redirect any unknown path to index.html
 /*  /index.html 200
