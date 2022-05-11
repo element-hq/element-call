@@ -46,7 +46,7 @@ jobs:
         run: unzip -d dist build.zip && rm build.zip
 
       - name: Copy redirects file
-        run: cp scripts/netlify_redirects dist/_redirects
+        run: cp config/netlify_redirects dist/_redirects
 
       - name: Deploy to Netlify
         id: netlify
