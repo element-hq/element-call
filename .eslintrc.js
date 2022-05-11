@@ -25,6 +25,11 @@ module.exports = {
             files: [
                 "src/**/*.{ts,tsx}",
             ],
+            extends: [
+                "plugin:matrix-org/typescript",
+                "plugin:matrix-org/react",
+                "prettier",
+            ],
         },
     ],
     settings: {

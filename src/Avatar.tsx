@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import classNames from "classnames";
+
 import styles from "./Avatar.module.css";
 
 const backgroundColors = [
@@ -13,7 +14,7 @@ const backgroundColors = [
   "#74D12C",
 ];
 
-function hashStringToArrIndex(str, arrLength) {
+function hashStringToArrIndex(str: string, arrLength: number) {
   let sum = 0;
 
   for (let i = 0; i < str.length; i++) {
@@ -23,7 +24,16 @@ function hashStringToArrIndex(str, arrLength) {
   return sum % arrLength;
 }
 
-export function Avatar({
+interface Props extends React.HTMLAttributes<HTMLDivElement> {
+  bgKey?: string;
+  src: string;
+  fallback: string;
+  size?: number;
+  className: string;
+  style: React.CSSProperties;
+}
+
+export const Avatar: React.FC<Props> = ({
   bgKey,
   src,
   fallback,
@@ -31,7 +41,7 @@ export function Avatar({
   className,
   style,
   ...rest
-}) {
+}) => {
   const backgroundColor = useMemo(() => {
     const index = hashStringToArrIndex(
       bgKey || fallback || src || "",
@@ -40,6 +50,7 @@ export function Avatar({
     return backgroundColors[index];
   }, [bgKey, src, fallback]);
 
+  /* eslint-disable jsx-a11y/alt-text */
   return (
     <div
       className={classNames(styles.avatar, styles[size || "md"], className)}
@@ -55,4 +66,4 @@ export function Avatar({
       )}
     </div>
   );
-}
+};

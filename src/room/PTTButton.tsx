@@ -16,11 +16,23 @@ limitations under the License.
 
 import React, { useCallback, useEffect, useState } from "react";
 import classNames from "classnames";
+
 import styles from "./PTTButton.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { Avatar } from "../Avatar";
 
-export function PTTButton({
+interface Props {
+  showTalkOverError: boolean;
+  activeSpeakerUserId: string;
+  activeSpeakerDisplayName: string;
+  activeSpeakerAvatarUrl: string;
+  activeSpeakerIsLocalUser: boolean;
+  size: number;
+  startTalking: () => void;
+  stopTalking: () => void;
+}
+
+export const PTTButton: React.FC<Props> = ({
   showTalkOverError,
   activeSpeakerUserId,
   activeSpeakerDisplayName,
@@ -29,17 +41,17 @@ export function PTTButton({
   size,
   startTalking,
   stopTalking,
-}) {
+}) => {
   const [isHeld, setHeld] = useState(false);
   const onDocumentMouseUp = useCallback(() => {
     if (isHeld) stopTalking();
     setHeld(false);
-  }, [isHeld, setHeld]);
+  }, [isHeld, setHeld, stopTalking]);
 
   const onButtonMouseDown = useCallback(() => {
     setHeld(true);
     startTalking();
-  }, [setHeld]);
+  }, [setHeld, startTalking]);
 
   useEffect(() => {
     window.addEventListener("mouseup", onDocumentMouseUp);
@@ -48,7 +60,6 @@ export function PTTButton({
       window.removeEventListener("mouseup", onDocumentMouseUp);
     };
   }, [onDocumentMouseUp]);
-
   return (
     <button
       className={classNames(styles.pttButton, {
@@ -79,4 +90,4 @@ export function PTTButton({
       )}
     </button>
   );
-}
+};
