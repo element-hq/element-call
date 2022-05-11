@@ -45,8 +45,9 @@ jobs:
       - name: Extract Artifacts
         run: unzip -d dist build.zip && rm build.zip
 
-      - name: Copy redirects file
-        run: cp config/netlify_redirects dist/_redirects
+      - name: Add redirects file
+        # We fetch from github directly as we don't bother checking out the repo
+        run: curl -s https://raw.githubusercontent.com/vector-im/element-call/main/config/netlify_redirects > dist/_redirects
 
       - name: Deploy to Netlify
         id: netlify
