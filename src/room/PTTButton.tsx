@@ -43,23 +43,50 @@ export const PTTButton: React.FC<Props> = ({
   stopTalking,
 }) => {
   const [isHeld, setHeld] = useState(false);
-  const onDocumentMouseUp = useCallback(() => {
-    if (isHeld) stopTalking();
-    setHeld(false);
-  }, [isHeld, setHeld, stopTalking]);
+  const onWindowMouseUp = useCallback(
+    (e) => {
+      if (isHeld) stopTalking();
+      setHeld(false);
+    },
+    [isHeld, setHeld, stopTalking]
+  );
 
-  const onButtonMouseDown = useCallback(() => {
-    setHeld(true);
-    startTalking();
-  }, [setHeld, startTalking]);
+  const onWindowTouchEnd = useCallback(
+    (e: TouchEvent) => {
+      e.preventDefault();
+      if (isHeld) stopTalking();
+      setHeld(false);
+    },
+    [isHeld, setHeld, stopTalking]
+  );
+
+  const onButtonMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      setHeld(true);
+      startTalking();
+    },
+    [setHeld, startTalking]
+  );
+
+  const onButtonTouchStart = useCallback(
+    (e: React.TouchEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      setHeld(true);
+      startTalking();
+    },
+    [setHeld, startTalking]
+  );
 
   useEffect(() => {
-    window.addEventListener("mouseup", onDocumentMouseUp);
+    window.addEventListener("mouseup", onWindowMouseUp);
+    window.addEventListener("touchend", onWindowTouchEnd);
 
     return () => {
-      window.removeEventListener("mouseup", onDocumentMouseUp);
+      window.removeEventListener("mouseup", onWindowMouseUp);
+      window.removeEventListener("touchend", onWindowTouchEnd);
     };
-  }, [onDocumentMouseUp]);
+  }, [onWindowMouseUp, onWindowTouchEnd]);
   return (
     <button
       className={classNames(styles.pttButton, {
@@ -67,6 +94,7 @@ export const PTTButton: React.FC<Props> = ({
         [styles.error]: showTalkOverError,
       })}
       onMouseDown={onButtonMouseDown}
+      onTouchStart={onButtonTouchStart}
     >
       {activeSpeakerIsLocalUser || !activeSpeakerUserId ? (
         <MicIcon

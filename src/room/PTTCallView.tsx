@@ -38,6 +38,43 @@ import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { usePTTSounds } from "../sound/usePttSounds";
 import { PTTClips } from "../sound/PTTClips";
 
+function getPromptText(
+  showTalkOverError: boolean,
+  pttButtonHeld: boolean,
+  activeSpeakerIsLocalUser: boolean,
+  talkOverEnabled: boolean,
+  activeSpeakerUserId: string,
+  activeSpeakerDisplayName: string
+): string {
+  const isTouchScreen = Boolean(window.ontouchstart !== undefined);
+
+  if (showTalkOverError) {
+    return "You can't talk at the same time";
+  }
+
+  if (pttButtonHeld && activeSpeakerIsLocalUser) {
+    if (isTouchScreen) {
+      return "Release to stop";
+    } else {
+      return "Release spacebar key to stop";
+    }
+  }
+
+  if (talkOverEnabled && activeSpeakerUserId && !activeSpeakerIsLocalUser) {
+    if (isTouchScreen) {
+      return `Press and hold to talk over ${activeSpeakerDisplayName}`;
+    } else {
+      return `Press and hold spacebar to talk over ${activeSpeakerDisplayName}`;
+    }
+  }
+
+  if (isTouchScreen) {
+    return "Press and hold to talk";
+  } else {
+    return "Press and hold spacebar to talk";
+  }
+}
+
 interface Props {
   client: MatrixClient;
   roomId: string;
@@ -163,15 +200,14 @@ export const PTTCallView: React.FC<Props> = ({
             stopTalking={stopTalking}
           />
           <p className={styles.actionTip}>
-            {showTalkOverError
-              ? "You can't talk at the same time"
-              : pttButtonHeld && activeSpeakerIsLocalUser
-              ? "Release spacebar key to stop"
-              : talkOverEnabled &&
-                activeSpeakerUserId &&
-                !activeSpeakerIsLocalUser
-              ? `Press and hold spacebar to talk over ${activeSpeakerDisplayName}`
-              : "Press and hold spacebar to talk"}
+            {getPromptText(
+              showTalkOverError,
+              pttButtonHeld,
+              activeSpeakerIsLocalUser,
+              talkOverEnabled,
+              activeSpeakerUserId,
+              activeSpeakerDisplayName
+            )}
           </p>
           {userMediaFeeds.map((callFeed) => (
             <PTTFeed
