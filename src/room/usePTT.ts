@@ -73,9 +73,9 @@ export const usePTT = (
           playClip(PTTClipID.START_TALKING_REMOTE);
         }
       } else if (
-        activeSpeakerFeed &&
+        pttButtonHeld &&
         activeSpeakerUserId === client.getUserId() &&
-        activeSpeakerFeed.userId !== client.getUserId()
+        activeSpeakerFeed?.userId !== client.getUserId()
       ) {
         // We were talking but we've been cut off
         playClip(PTTClipID.BLOCKED);
@@ -108,7 +108,7 @@ export const usePTT = (
         );
       }
     };
-  }, [userMediaFeeds, activeSpeakerUserId, client, playClip]);
+  }, [userMediaFeeds, activeSpeakerUserId, client, playClip, pttButtonHeld]);
 
   const startTalking = useCallback(async () => {
     if (pttButtonHeld) return;
