@@ -188,8 +188,8 @@ export const usePTT = (
     }
 
     window.addEventListener("keydown", onKeyDown);
-    //window.addEventListener("keyup", onKeyUp);
-    //window.addEventListener("blur", onBlur);
+    window.addEventListener("keyup", onKeyUp);
+    window.addEventListener("blur", onBlur);
 
     return () => {
       window.removeEventListener("keydown", onKeyDown);
