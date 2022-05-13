@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState, createRef } from "react";
 import classNames from "classnames";
 
 import styles from "./PTTButton.module.css";
@@ -48,7 +48,7 @@ export const PTTButton: React.FC<Props> = ({
   startTalking,
   stopTalking,
 }) => {
-  const buttonRef = React.createRef<HTMLButtonElement>();
+  const buttonRef = createRef<HTMLButtonElement>();
 
   const [{ isHeld, activeTouchID }, setState] = useState<State>({
     isHeld: false,
