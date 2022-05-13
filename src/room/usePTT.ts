@@ -27,17 +27,14 @@ import { PlayClipFunction, PTTClipID } from "../sound/usePttSounds";
 function getActiveSpeakerFeed(
   feeds: CallFeed[],
   groupCall: GroupCall
-): CallFeed {
+): CallFeed | null {
   const activeSpeakerFeeds = feeds.filter((f) => !f.isAudioMuted());
 
-  let activeSpeakerFeed;
-  let highestPowerLevel;
+  let activeSpeakerFeed = null;
+  let highestPowerLevel = null;
   for (const feed of activeSpeakerFeeds) {
     const member = groupCall.room.getMember(feed.userId);
-    if (
-      highestPowerLevel === undefined ||
-      member.powerLevel > highestPowerLevel
-    ) {
+    if (highestPowerLevel === null || member.powerLevel > highestPowerLevel) {
       highestPowerLevel = member.powerLevel;
       activeSpeakerFeed = feed;
     }
@@ -110,12 +107,14 @@ export const usePTT = (
     const activeSpeakerFeed = getActiveSpeakerFeed(userMediaFeeds, groupCall);
 
     let blocked = false;
-    if (activeSpeakerUserId === null && activeSpeakerFeed.userId !== null) {
+    if (activeSpeakerUserId === null && activeSpeakerFeed !== null) {
       if (activeSpeakerFeed.userId === client.getUserId()) {
         playClip(PTTClipID.START_TALKING_LOCAL);
       } else {
         playClip(PTTClipID.START_TALKING_REMOTE);
       }
+    } else if (activeSpeakerUserId !== null && activeSpeakerFeed === null) {
+      playClip(PTTClipID.END_TALKING);
     } else if (
       pttButtonHeld &&
       activeSpeakerUserId === client.getUserId() &&
