@@ -32,6 +32,12 @@ interface Props {
   stopTalking: () => void;
 }
 
+interface State {
+  isHeld: boolean;
+  // If the button is being pressed by touch, the ID of that touch
+  activeTouchID: number | null;
+}
+
 export const PTTButton: React.FC<Props> = ({
   showTalkOverError,
   activeSpeakerUserId,
@@ -42,51 +48,88 @@ export const PTTButton: React.FC<Props> = ({
   startTalking,
   stopTalking,
 }) => {
-  const [isHeld, setHeld] = useState(false);
+  const buttonRef = React.createRef<HTMLButtonElement>();
+
+  const [{ isHeld, activeTouchID }, setState] = useState<State>({
+    isHeld: false,
+    activeTouchID: null,
+  });
   const onWindowMouseUp = useCallback(
     (e) => {
       if (isHeld) stopTalking();
-      setHeld(false);
+      setState({ isHeld: false, activeTouchID: null });
     },
-    [isHeld, setHeld, stopTalking]
+    [isHeld, setState, stopTalking]
   );
 
   const onWindowTouchEnd = useCallback(
     (e: TouchEvent) => {
+      // ignore any ended touches that weren't the one pressing the
+      // button (bafflingly the TouchList isn't an iterable so we
+      // have to do this a really old-school way).
+      let touchFound = false;
+      for (let i = 0; i < e.changedTouches.length; ++i) {
+        if (e.changedTouches.item(i).identifier === activeTouchID) {
+          touchFound = true;
+          break;
+        }
+      }
+      if (!touchFound) return;
+
       e.preventDefault();
       if (isHeld) stopTalking();
-      setHeld(false);
+      setState({ isHeld: false, activeTouchID: null });
     },
-    [isHeld, setHeld, stopTalking]
+    [isHeld, activeTouchID, setState, stopTalking]
   );
 
   const onButtonMouseDown = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
-      setHeld(true);
+      setState({ isHeld: true, activeTouchID: null });
       startTalking();
     },
-    [setHeld, startTalking]
+    [setState, startTalking]
   );
 
   const onButtonTouchStart = useCallback(
-    (e: React.TouchEvent<HTMLButtonElement>) => {
+    (e: TouchEvent) => {
       e.preventDefault();
-      setHeld(true);
+
+      if (isHeld) return;
+
+      setState({
+        isHeld: true,
+        activeTouchID: e.changedTouches.item(0).identifier,
+      });
       startTalking();
     },
-    [setHeld, startTalking]
+    [isHeld, setState, startTalking]
   );
 
   useEffect(() => {
+    const currentButtonElement = buttonRef.current;
+
+    // These listeners go on the window so even if the user's cursor / finger
+    // leaves the button while holding it, the button stays pushed until
+    // they stop clicking / tapping.
     window.addEventListener("mouseup", onWindowMouseUp);
     window.addEventListener("touchend", onWindowTouchEnd);
+    // This is a native DOM listener too because we want to preventDefault in it
+    // to stop also getting a click event, so we need it to be non-passive.
+    currentButtonElement.addEventListener("touchstart", onButtonTouchStart, {
+      passive: false,
+    });
 
     return () => {
       window.removeEventListener("mouseup", onWindowMouseUp);
       window.removeEventListener("touchend", onWindowTouchEnd);
+      currentButtonElement.removeEventListener(
+        "touchstart",
+        onButtonTouchStart
+      );
     };
-  }, [onWindowMouseUp, onWindowTouchEnd]);
+  }, [onWindowMouseUp, onWindowTouchEnd, onButtonTouchStart, buttonRef]);
   return (
     <button
       className={classNames(styles.pttButton, {
@@ -94,7 +137,7 @@ export const PTTButton: React.FC<Props> = ({
         [styles.error]: showTalkOverError,
       })}
       onMouseDown={onButtonMouseDown}
-      onTouchStart={onButtonTouchStart}
+      ref={buttonRef}
     >
       {activeSpeakerIsLocalUser || !activeSpeakerUserId ? (
         <MicIcon
