@@ -65,14 +65,16 @@ export const usePTT = (
 ): PTTState => {
   // Used to serialise all the mute calls so they don't race. It has
   // its own state as its always set separately from anything else.
-  const [mutePromise, setMutePromise] = useState(Promise.resolve());
+  const [mutePromise, setMutePromise] = useState(
+    Promise.resolve<boolean | void>(false)
+  );
 
   // Wrapper to serialise all the mute operations on the promise
   const setMicMuteWrapper = useCallback(
-    (muted) => {
+    (muted: boolean) => {
       setMutePromise(
         mutePromise.then(() => {
-          groupCall.setMicrophoneMuted(muted).catch((e) => {
+          return groupCall.setMicrophoneMuted(muted).catch((e) => {
             logger.error("Failed to unmute microphone", e);
           });
         })
