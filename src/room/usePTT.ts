@@ -119,7 +119,11 @@ export const usePTT = (
       activeSpeakerUserId === client.getUserId() &&
       activeSpeakerFeed?.userId !== client.getUserId()
     ) {
-      // We were talking but we've been cut off
+      // We were talking but we've been cut off: mute our own mic
+      // (this is the easier way of cutting other speakers off if an
+      // admin barges in: we could also mute the non-admin speaker
+      // on all receivers, but we'd have to make sure we unmuted them
+      // correctly.)
       setMicMuteWrapper(true);
       blocked = true;
       playClip(PTTClipID.BLOCKED);
