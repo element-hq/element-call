@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useCallback } from "react";
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
 import { TabContainer, TabItem } from "../tabs/Tabs";
@@ -29,7 +29,12 @@ import { Button } from "../button";
 import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
 
-export function SettingsModal({ setShowInspector, showInspector, ...rest }) {
+export function SettingsModal({
+  setShowInspector,
+  showInspector,
+  showFeedbackDialog,
+  ...rest
+}) {
   const {
     audioInput,
     audioInputs,
@@ -125,6 +130,7 @@ export function SettingsModal({ setShowInspector, showInspector, ...rest }) {
           </FieldRow>
           <FieldRow>
             <Button onPress={downloadDebugLog}>Download Debug Logs</Button>
+            <Button onPress={showFeedbackDialog}>Submit Feedback</Button>
           </FieldRow>
         </TabItem>
       </TabContainer>
