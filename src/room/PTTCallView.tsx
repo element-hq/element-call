@@ -109,8 +109,13 @@ export const PTTCallView: React.FC<Props> = ({
 
   const { audioOutput } = useMediaHandler();
 
-  const { startTalkingLocalRef, startTalkingRemoteRef, blockedRef, playClip } =
-    usePTTSounds();
+  const {
+    startTalkingLocalRef,
+    startTalkingRemoteRef,
+    blockedRef,
+    endTalkingRef,
+    playClip,
+  } = usePTTSounds();
 
   const {
     pttButtonHeld,
@@ -146,6 +151,7 @@ export const PTTCallView: React.FC<Props> = ({
       <PTTClips
         startTalkingLocalRef={startTalkingLocalRef}
         startTalkingRemoteRef={startTalkingRemoteRef}
+        endTalkingRef={endTalkingRef}
         blockedRef={blockedRef}
       />
       <Header className={styles.header}>
