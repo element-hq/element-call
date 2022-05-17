@@ -35,12 +35,13 @@ export function OverflowMenu({
   showInspector,
   inCall,
   groupCall,
+  showInvite,
+  feedbackModalState,
+  feedbackModalProps,
 }) {
   const { modalState: inviteModalState, modalProps: inviteModalProps } =
     useModalTriggerState();
   const { modalState: settingsModalState, modalProps: settingsModalProps } =
-    useModalTriggerState();
-  const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
     useModalTriggerState();
 
   // TODO: On closing modal, focus should be restored to the trigger button
@@ -70,10 +71,12 @@ export function OverflowMenu({
         </TooltipTrigger>
         {(props) => (
           <Menu {...props} label="More menu" onAction={onAction}>
-            <Item key="invite" textValue="Invite people">
-              <AddUserIcon />
-              <span>Invite people</span>
-            </Item>
+            {showInvite && (
+              <Item key="invite" textValue="Invite people">
+                <AddUserIcon />
+                <span>Invite people</span>
+              </Item>
+            )}
             <Item key="settings" textValue="Settings">
               <SettingsIcon />
               <span>Settings</span>

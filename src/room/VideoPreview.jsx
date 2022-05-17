@@ -25,6 +25,7 @@ import { ResizeObserver } from "@juggle/resize-observer";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import styles from "./VideoPreview.module.css";
 import { Body } from "../typography/Typography";
+import { useModalTriggerState } from "../Modal";
 
 export function VideoPreview({
   client,
@@ -43,6 +44,9 @@ export function VideoPreview({
   const { displayName, avatarUrl } = useProfile(client);
   const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
   const avatarSize = (previewBounds.height - 66) / 2;
+
+  const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
+    useModalTriggerState();
 
   return (
     <div className={styles.preview} ref={previewRef}>
@@ -87,6 +91,8 @@ export function VideoPreview({
               setShowInspector={setShowInspector}
               showInspector={showInspector}
               client={client}
+              feedbackModalState={feedbackModalState}
+              feedbackModalProps={feedbackModalProps}
             />
           </div>
         </>

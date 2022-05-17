@@ -37,7 +37,8 @@ export const usePTT = (
   client: MatrixClient,
   groupCall: GroupCall,
   userMediaFeeds: CallFeed[],
-  playClip: PlayClipFunction
+  playClip: PlayClipFunction,
+  enablePTTButton: boolean
 ): PTTState => {
   const [
     {
@@ -162,6 +163,8 @@ export const usePTT = (
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.code === "Space") {
+        if (!enablePTTButton) return;
+
         event.preventDefault();
 
         if (pttButtonHeld) return;
@@ -204,6 +207,7 @@ export const usePTT = (
     isAdmin,
     talkOverEnabled,
     pttButtonHeld,
+    enablePTTButton,
   ]);
 
   const setTalkOverEnabled = useCallback((talkOverEnabled) => {
