@@ -39,11 +39,6 @@ export default defineConfig(({ mode }) => {
       proxy: {
         "/_matrix": env.VITE_DEFAULT_HOMESERVER || "http://localhost:8008",
       },
-      strictPort: true,
-      hmr: {
-        port: 443,
-        protocol: 'wss',
-      },
     },
     resolve: {
       dedupe: [

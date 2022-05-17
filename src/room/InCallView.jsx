@@ -35,6 +35,7 @@ import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { usePreventScroll } from "@react-aria/overlays";
 import { useMediaHandler } from "../settings/useMediaHandler";
+import { useModalTriggerState } from "../Modal";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -64,6 +65,9 @@ export function InCallView({
   const [layout, setLayout] = useVideoGridLayout(screenshareFeeds.length > 0);
 
   const { audioOutput } = useMediaHandler();
+
+  const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
+    useModalTriggerState();
 
   const items = useMemo(() => {
     const participants = [];
@@ -196,6 +200,9 @@ export function InCallView({
           showInspector={showInspector}
           client={client}
           groupCall={groupCall}
+          showInvite={true}
+          feedbackModalState={feedbackModalState}
+          feedbackModalProps={feedbackModalProps}
         />
         <HangupButton onPress={onLeave} />
       </div>
