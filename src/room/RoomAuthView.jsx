@@ -16,6 +16,7 @@ limitations under the License.
 
 import React, { useCallback, useState } from "react";
 import styles from "./RoomAuthView.module.css";
+import { useClient } from "../ClientContext";
 import { Button } from "../button";
 import { Body, Caption, Link, Headline } from "../typography/Typography";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
@@ -29,11 +30,13 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { generateRandomName } from "../auth/generateRandomName";
 
 export function RoomAuthView() {
+  const { setClient } = useClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [{ privacyPolicyUrl, recaptchaKey }, register] =
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
+
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
@@ -45,13 +48,14 @@ export function RoomAuthView() {
         setLoading(true);
         const recaptchaResponse = await execute();
         const userName = generateRandomName();
-        await register(
+        const [client, session] = await register(
           userName,
           randomString(16),
           displayName,
           recaptchaResponse,
           true
         );
+        setClient(client, session);
       }
 
       submit().catch((error) => {
