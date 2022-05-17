@@ -19,7 +19,10 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { initClient, defaultHomeserver } from "../matrix-utils";
 
 export function useInteractiveRegistration() {
-  const [state, setState] = useState({ privacyPolicyUrl: "#", loading: false });
+  const [state, setState] = useState({
+    privacyPolicyUrl: null,
+    loading: false,
+  });
 
   const authClientRef = useRef();
 
