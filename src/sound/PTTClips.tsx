@@ -20,6 +20,8 @@ import startTalkLocalOggUrl from "./start_talk_local.ogg";
 import startTalkLocalMp3Url from "./start_talk_local.mp3";
 import startTalkRemoteOggUrl from "./start_talk_remote.ogg";
 import startTalkRemoteMp3Url from "./start_talk_remote.mp3";
+import endTalkOggUrl from "./end_talk.ogg";
+import endTalkMp3Url from "./end_talk.mp3";
 import blockedOggUrl from "./blocked.ogg";
 import blockedMp3Url from "./blocked.mp3";
 import styles from "./PTTClips.module.css";
@@ -27,12 +29,14 @@ import styles from "./PTTClips.module.css";
 interface Props {
   startTalkingLocalRef: React.RefObject<HTMLAudioElement>;
   startTalkingRemoteRef: React.RefObject<HTMLAudioElement>;
+  endTalkingRef: React.RefObject<HTMLAudioElement>;
   blockedRef: React.RefObject<HTMLAudioElement>;
 }
 
 export const PTTClips: React.FC<Props> = ({
   startTalkingLocalRef,
   startTalkingRemoteRef,
+  endTalkingRef,
   blockedRef,
 }) => {
   return (
@@ -52,6 +56,10 @@ export const PTTClips: React.FC<Props> = ({
       >
         <source type="audio/ogg" src={startTalkRemoteOggUrl} />
         <source type="audio/mpeg" src={startTalkRemoteMp3Url} />
+      </audio>
+      <audio preload="true" className={styles.pttClip} ref={endTalkingRef}>
+        <source type="audio/ogg" src={endTalkOggUrl} />
+        <source type="audio/mpeg" src={endTalkMp3Url} />
       </audio>
       <audio preload="true" className={styles.pttClip} ref={blockedRef}>
         <source type="audio/ogg" src={blockedOggUrl} />

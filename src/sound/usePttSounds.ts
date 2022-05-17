@@ -19,6 +19,7 @@ import React, { useCallback, useState } from "react";
 export enum PTTClipID {
   START_TALKING_LOCAL,
   START_TALKING_REMOTE,
+  END_TALKING,
   BLOCKED,
 }
 
@@ -27,6 +28,7 @@ export type PlayClipFunction = (clipID: PTTClipID) => void;
 interface PTTSounds {
   startTalkingLocalRef: React.RefObject<HTMLAudioElement>;
   startTalkingRemoteRef: React.RefObject<HTMLAudioElement>;
+  endTalkingRef: React.RefObject<HTMLAudioElement>;
   blockedRef: React.RefObject<HTMLAudioElement>;
   playClip: PlayClipFunction;
 }
@@ -34,6 +36,7 @@ interface PTTSounds {
 export const usePTTSounds = (): PTTSounds => {
   const [startTalkingLocalRef] = useState(React.createRef<HTMLAudioElement>());
   const [startTalkingRemoteRef] = useState(React.createRef<HTMLAudioElement>());
+  const [endTalkingRef] = useState(React.createRef<HTMLAudioElement>());
   const [blockedRef] = useState(React.createRef<HTMLAudioElement>());
 
   const playClip = useCallback(
@@ -47,6 +50,9 @@ export const usePTTSounds = (): PTTSounds => {
         case PTTClipID.START_TALKING_REMOTE:
           ref = startTalkingRemoteRef;
           break;
+        case PTTClipID.END_TALKING:
+          ref = endTalkingRef;
+          break;
         case PTTClipID.BLOCKED:
           ref = blockedRef;
           break;
@@ -58,12 +64,13 @@ export const usePTTSounds = (): PTTSounds => {
         console.log("No media element found");
       }
     },
-    [startTalkingLocalRef, startTalkingRemoteRef, blockedRef]
+    [startTalkingLocalRef, startTalkingRemoteRef, endTalkingRef, blockedRef]
   );
 
   return {
     startTalkingLocalRef,
     startTalkingRemoteRef,
+    endTalkingRef,
     blockedRef,
     playClip,
   };

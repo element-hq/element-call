@@ -22,6 +22,27 @@ import { logger } from "matrix-js-sdk/src/logger";
 
 import { PlayClipFunction, PTTClipID } from "../sound/usePttSounds";
 
+// Works out who the active speaker should be given what feeds are active and
+// the power level of each user.
+function getActiveSpeakerFeed(
+  feeds: CallFeed[],
+  groupCall: GroupCall
+): CallFeed | null {
+  const activeSpeakerFeeds = feeds.filter((f) => !f.isAudioMuted());
+
+  let activeSpeakerFeed = null;
+  let highestPowerLevel = null;
+  for (const feed of activeSpeakerFeeds) {
+    const member = groupCall.room.getMember(feed.userId);
+    if (highestPowerLevel === null || member.powerLevel > highestPowerLevel) {
+      highestPowerLevel = member.powerLevel;
+      activeSpeakerFeed = feed;
+    }
+  }
+
+  return activeSpeakerFeed;
+}
+
 export interface PTTState {
   pttButtonHeld: boolean;
   isAdmin: boolean;
@@ -40,6 +61,26 @@ export const usePTT = (
   playClip: PlayClipFunction,
   enablePTTButton: boolean
 ): PTTState => {
+  // Used to serialise all the mute calls so they don't race. It has
+  // its own state as its always set separately from anything else.
+  const [mutePromise, setMutePromise] = useState(
+    Promise.resolve<boolean | void>(false)
+  );
+
+  // Wrapper to serialise all the mute operations on the promise
+  const setMicMuteWrapper = useCallback(
+    (muted: boolean) => {
+      setMutePromise(
+        mutePromise.then(() => {
+          return groupCall.setMicrophoneMuted(muted).catch((e) => {
+            logger.error("Failed to unmute microphone", e);
+          });
+        })
+      );
+    },
+    [groupCall, mutePromise]
+  );
+
   const [
     {
       pttButtonHeld,
@@ -52,7 +93,7 @@ export const usePTT = (
   ] = useState(() => {
     const roomMember = groupCall.room.getMember(client.getUserId());
 
-    const activeSpeakerFeed = userMediaFeeds.find((f) => !f.isAudioMuted());
+    const activeSpeakerFeed = getActiveSpeakerFeed(userMediaFeeds, groupCall);
 
     return {
       isAdmin: roomMember.powerLevel >= 100,
@@ -63,38 +104,58 @@ export const usePTT = (
     };
   });
 
-  useEffect(() => {
-    function onMuteStateChanged(...args): void {
-      const activeSpeakerFeed = userMediaFeeds.find((f) => !f.isAudioMuted());
+  const onMuteStateChanged = useCallback(() => {
+    const activeSpeakerFeed = getActiveSpeakerFeed(userMediaFeeds, groupCall);
 
-      if (activeSpeakerUserId === null && activeSpeakerFeed.userId !== null) {
-        if (activeSpeakerFeed.userId === client.getUserId()) {
-          playClip(PTTClipID.START_TALKING_LOCAL);
-        } else {
-          playClip(PTTClipID.START_TALKING_REMOTE);
-        }
-      } else if (
-        pttButtonHeld &&
-        activeSpeakerUserId === client.getUserId() &&
-        activeSpeakerFeed?.userId !== client.getUserId()
-      ) {
-        // We were talking but we've been cut off
-        playClip(PTTClipID.BLOCKED);
+    let blocked = false;
+    if (activeSpeakerUserId === null && activeSpeakerFeed !== null) {
+      if (activeSpeakerFeed.userId === client.getUserId()) {
+        playClip(PTTClipID.START_TALKING_LOCAL);
+      } else {
+        playClip(PTTClipID.START_TALKING_REMOTE);
       }
+    } else if (activeSpeakerUserId !== null && activeSpeakerFeed === null) {
+      playClip(PTTClipID.END_TALKING);
+    } else if (
+      pttButtonHeld &&
+      activeSpeakerUserId === client.getUserId() &&
+      activeSpeakerFeed?.userId !== client.getUserId()
+    ) {
+      // We were talking but we've been cut off: mute our own mic
+      // (this is the easier way of cutting other speakers off if an
+      // admin barges in: we could also mute the non-admin speaker
+      // on all receivers, but we'd have to make sure we unmuted them
+      // correctly.)
+      setMicMuteWrapper(true);
+      blocked = true;
+      playClip(PTTClipID.BLOCKED);
+    }
 
-      setState((prevState) => ({
+    setState((prevState) => {
+      return {
         ...prevState,
         activeSpeakerUserId: activeSpeakerFeed
           ? activeSpeakerFeed.userId
           : null,
-      }));
-    }
+        transmitBlocked: blocked,
+      };
+    });
+  }, [
+    playClip,
+    groupCall,
+    pttButtonHeld,
+    activeSpeakerUserId,
+    client,
+    userMediaFeeds,
+    setMicMuteWrapper,
+  ]);
 
+  useEffect(() => {
     for (const callFeed of userMediaFeeds) {
       callFeed.addListener(CallFeedEvent.MuteStateChanged, onMuteStateChanged);
     }
 
-    const activeSpeakerFeed = userMediaFeeds.find((f) => !f.isAudioMuted());
+    const activeSpeakerFeed = getActiveSpeakerFeed(userMediaFeeds, groupCall);
 
     setState((prevState) => ({
       ...prevState,
@@ -109,29 +170,26 @@ export const usePTT = (
         );
       }
     };
-  }, [userMediaFeeds, activeSpeakerUserId, client, playClip, pttButtonHeld]);
+  }, [userMediaFeeds, onMuteStateChanged, groupCall]);
 
   const startTalking = useCallback(async () => {
     if (pttButtonHeld) return;
 
     let blocked = false;
-    if (!activeSpeakerUserId || (isAdmin && talkOverEnabled)) {
-      if (groupCall.isMicrophoneMuted()) {
-        try {
-          await groupCall.setMicrophoneMuted(false);
-        } catch (e) {
-          logger.error("Failed to unmute microphone", e);
-        }
-      }
-    } else {
+    if (activeSpeakerUserId && !(isAdmin && talkOverEnabled)) {
       playClip(PTTClipID.BLOCKED);
       blocked = true;
     }
+    // setstate before doing the async call to mute / unmute the mic
     setState((prevState) => ({
       ...prevState,
       pttButtonHeld: true,
       transmitBlocked: blocked,
     }));
+
+    if (!blocked && groupCall.isMicrophoneMuted()) {
+      setMicMuteWrapper(false);
+    }
   }, [
     pttButtonHeld,
     groupCall,
@@ -140,25 +198,18 @@ export const usePTT = (
     talkOverEnabled,
     setState,
     playClip,
+    setMicMuteWrapper,
   ]);
 
-  const stopTalking = useCallback(() => {
-    setState((prevState) => ({
-      ...prevState,
-      pttButtonHeld: false,
-      unmuteError: null,
-    }));
-
-    if (!groupCall.isMicrophoneMuted()) {
-      groupCall.setMicrophoneMuted(true);
-    }
-
+  const stopTalking = useCallback(async () => {
     setState((prevState) => ({
       ...prevState,
       pttButtonHeld: false,
       transmitBlocked: false,
     }));
-  }, [groupCall]);
+
+    setMicMuteWrapper(true);
+  }, [setMicMuteWrapper]);
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
@@ -184,7 +235,7 @@ export const usePTT = (
     function onBlur(): void {
       // TODO: We will need to disable this for a global PTT hotkey to work
       if (!groupCall.isMicrophoneMuted()) {
-        groupCall.setMicrophoneMuted(true);
+        setMicMuteWrapper(true);
       }
 
       setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
@@ -208,6 +259,7 @@ export const usePTT = (
     talkOverEnabled,
     pttButtonHeld,
     enablePTTButton,
+    setMicMuteWrapper,
   ]);
 
   const setTalkOverEnabled = useCallback((talkOverEnabled) => {
