@@ -31,7 +31,8 @@ import { usePageTitle } from "../usePageTitle";
 export function RegisterPage() {
   usePageTitle("Register");
 
-  const { loading, isAuthenticated, isPasswordlessUser, client } = useClient();
+  const { loading, isAuthenticated, isPasswordlessUser, client, setClient } =
+    useClient();
   const confirmPasswordRef = useRef();
   const history = useHistory();
   const location = useLocation();
@@ -68,7 +69,7 @@ export function RegisterPage() {
         }
 
         const recaptchaResponse = await execute();
-        const newClient = await register(
+        const [newClient, session] = await register(
           userName,
           password,
           userName,
@@ -84,6 +85,8 @@ export function RegisterPage() {
             }
           }
         }
+
+        setClient(newClient, session);
       }
 
       submit()

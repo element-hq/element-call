@@ -16,11 +16,9 @@ limitations under the License.
 
 import matrix, { InteractiveAuth } from "matrix-js-sdk/src/browser-index";
 import { useState, useEffect, useCallback, useRef } from "react";
-import { useClient } from "../ClientContext";
 import { initClient, defaultHomeserver } from "../matrix-utils";
 
 export function useInteractiveRegistration() {
-  const { setClient } = useClient();
   const [state, setState] = useState({ privacyPolicyUrl: "#", loading: false });
 
   const authClientRef = useRef();
@@ -96,16 +94,14 @@ export function useInteractiveRegistration() {
         session.tempPassword = password;
       }
 
-      setClient(client, session);
-
       const user = client.getUser(client.getUserId());
 
       user.setRawDisplayName(displayName);
       user.setDisplayName(displayName);
 
-      return client;
+      return [client, session];
     },
-    [setClient]
+    []
   );
 
   return [state, register];

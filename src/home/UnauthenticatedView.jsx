@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import React, { useCallback, useState } from "react";
+import { useClient } from "../ClientContext";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useHistory } from "react-router-dom";
@@ -34,12 +35,14 @@ import { generateRandomName } from "../auth/generateRandomName";
 import { useShouldShowPtt } from "../useShouldShowPtt";
 
 export function UnauthenticatedView() {
+  const { setClient } = useClient();
   const shouldShowPtt = useShouldShowPtt();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [{ privacyPolicyUrl, recaptchaKey }, register] =
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
+
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
@@ -53,7 +56,7 @@ export function UnauthenticatedView() {
         setLoading(true);
         const recaptchaResponse = await execute();
         const userName = generateRandomName();
-        const client = await register(
+        const [client, session] = await register(
           userName,
           randomString(16),
           displayName,
@@ -61,6 +64,9 @@ export function UnauthenticatedView() {
           true
         );
         const roomIdOrAlias = await createRoom(client, roomName, ptt);
+
+        // Only consider the registration successful if we managed to create the room, too
+        setClient(client, session);
 
         if (roomIdOrAlias) {
           history.push(`/room/${roomIdOrAlias}`);
