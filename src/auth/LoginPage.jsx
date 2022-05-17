@@ -17,6 +17,7 @@ limitations under the License.
 import React, { useCallback, useRef, useState, useMemo } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
 import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
+import { useClient } from "../ClientContext";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { defaultHomeserver, defaultHomeserverHost } from "../matrix-utils";
@@ -27,6 +28,7 @@ import { usePageTitle } from "../usePageTitle";
 export function LoginPage() {
   usePageTitle("Login");
 
+  const { setClient } = useClient();
   const [_, login] = useInteractiveLogin();
   const [homeserver, setHomeServer] = useState(defaultHomeserver);
   const usernameRef = useRef();
@@ -44,7 +46,9 @@ export function LoginPage() {
       setLoading(true);
 
       login(homeserver, usernameRef.current.value, passwordRef.current.value)
-        .then(() => {
+        .then(([client, session]) => {
+          setClient(client, session);
+
           if (location.state && location.state.from) {
             history.push(location.state.from);
           } else {
