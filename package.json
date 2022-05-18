@@ -36,7 +36,7 @@
     "color-hash": "^2.0.1",
     "events": "^3.3.0",
     "lodash-move": "^1.1.1",
-    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#acef1d7dd0b915368730efabee94deb42b2e4058",
+    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#942a28ddf69ec25e1af9075be53f355c222597b3",
     "mermaid": "^8.13.8",
     "normalize.css": "^8.0.1",
     "pako": "^2.0.4",
