@@ -209,6 +209,7 @@ export const Link = forwardRef(
 
     if (href) {
       externalLinkProps = {
+        href,
         target: "_blank",
         rel: "noreferrer noopener",
       };
