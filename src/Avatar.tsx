@@ -1,6 +1,9 @@
-import React, { useMemo } from "react";
+import React, { useMemo, CSSProperties } from "react";
 import classNames from "classnames";
+import { MatrixClient } from "matrix-js-sdk/src/client";
 
+import { getAvatarUrl } from "./matrix-utils";
+import { useClient } from "./ClientContext";
 import styles from "./Avatar.module.css";
 
 const backgroundColors = [
@@ -14,6 +17,22 @@ const backgroundColors = [
   "#74D12C",
 ];
 
+export enum Size {
+  XS = "xs",
+  SM = "sm",
+  MD = "md",
+  LG = "lg",
+  XL = "xl",
+}
+
+export const sizes = new Map([
+  [Size.XS, 22],
+  [Size.SM, 32],
+  [Size.MD, 36],
+  [Size.LG, 42],
+  [Size.XL, 90],
+]);
+
 function hashStringToArrIndex(str: string, arrLength: number) {
   let sum = 0;
 
@@ -24,24 +43,51 @@ function hashStringToArrIndex(str: string, arrLength: number) {
   return sum % arrLength;
 }
 
+const resolveAvatarSrc = (client: MatrixClient, src: string, size: number) =>
+  src?.startsWith("mxc://") ? client && getAvatarUrl(client, src, size) : src;
+
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   bgKey?: string;
   src: string;
   fallback: string;
-  size?: number;
+  size?: Size | number;
   className: string;
-  style: React.CSSProperties;
+  style?: CSSProperties;
 }
 
 export const Avatar: React.FC<Props> = ({
   bgKey,
   src,
   fallback,
-  size,
+  size = Size.MD,
   className,
-  style,
+  style = {},
   ...rest
 }) => {
+  const { client } = useClient();
+
+  const [sizeClass, sizePx, sizeStyle] = useMemo(
+    () =>
+      Object.values(Size).includes(size as Size)
+        ? [styles[size as string], sizes.get(size as Size), {}]
+        : [
+            null,
+            size as number,
+            {
+              width: size,
+              height: size,
+              borderRadius: size,
+              fontSize: Math.round((size as number) / 2),
+            },
+          ],
+    [size]
+  );
+
+  const resolvedSrc = useMemo(
+    () => resolveAvatarSrc(client, src, sizePx),
+    [client, src, sizePx]
+  );
+
   const backgroundColor = useMemo(() => {
     const index = hashStringToArrIndex(
       bgKey || fallback || src || "",
@@ -53,12 +99,12 @@ export const Avatar: React.FC<Props> = ({
   /* eslint-disable jsx-a11y/alt-text */
   return (
     <div
-      className={classNames(styles.avatar, styles[size || "md"], className)}
-      style={{ backgroundColor, ...style }}
+      className={classNames(styles.avatar, sizeClass, className)}
+      style={{ backgroundColor, ...sizeStyle, ...style }}
       {...rest}
     >
-      {src ? (
-        <img src={src} />
+      {resolvedSrc ? (
+        <img src={resolvedSrc} />
       ) : typeof fallback === "string" ? (
         <span>{fallback}</span>
       ) : (

@@ -148,12 +148,7 @@ export const PTTButton: React.FC<Props> = ({
       ) : (
         <Avatar
           key={activeSpeakerUserId}
-          style={{
-            width: size - 12,
-            height: size - 12,
-            borderRadius: size - 12,
-            fontSize: Math.round((size - 12) / 2),
-          }}
+          size={size - 12}
           src={activeSpeakerAvatarUrl}
           fallback={activeSpeakerDisplayName.slice(0, 1).toUpperCase()}
           className={styles.avatar}
