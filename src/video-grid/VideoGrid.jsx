@@ -52,6 +52,8 @@ export function useVideoGridLayout(hasScreenshareFeeds) {
   return [layoutRef.current, setLayout];
 }
 
+const GAP = 8;
+
 function useIsMounted() {
   const isMountedRef = useRef(false);
 
@@ -79,16 +81,25 @@ function isInside([x, y], targetTile) {
   return true;
 }
 
+const getPipGap = (gridAspectRatio) => (gridAspectRatio < 1 ? 12 : 24);
+
 function getTilePositions(
   tileCount,
   presenterTileCount,
   gridWidth,
   gridHeight,
+  pipXRatio,
+  pipYRatio,
   layout
 ) {
   if (layout === "freedom") {
     if (tileCount === 2 && presenterTileCount === 0) {
-      return getOneOnOneLayoutTilePositions(gridWidth, gridHeight);
+      return getOneOnOneLayoutTilePositions(
+        gridWidth,
+        gridHeight,
+        pipXRatio,
+        pipYRatio
+      );
     }
 
     return getFreedomLayoutTilePositions(
@@ -102,34 +113,43 @@ function getTilePositions(
   }
 }
 
-function getOneOnOneLayoutTilePositions(gridWidth, gridHeight) {
-  const gap = 8;
+function getOneOnOneLayoutTilePositions(
+  gridWidth,
+  gridHeight,
+  pipXRatio,
+  pipYRatio
+) {
   const gridAspectRatio = gridWidth / gridHeight;
 
   const pipWidth = gridAspectRatio < 1 ? 114 : 230;
   const pipHeight = gridAspectRatio < 1 ? 163 : 155;
-  const pipGap = gridAspectRatio < 1 ? 12 : 24;
+  const pipGap = getPipGap(gridAspectRatio);
+
+  const pipMinX = GAP + pipGap;
+  const pipMinY = GAP + pipGap;
+  const pipMaxX = gridWidth - pipWidth - GAP - pipGap;
+  const pipMaxY = gridHeight - pipHeight - GAP - pipGap;
 
   return [
     {
-      x: gridWidth - pipWidth - gap - pipGap,
-      y: gridHeight - pipHeight - gap - pipGap,
+      // Apply the PiP position as a proportion of the available space
+      x: pipMinX + pipXRatio * (pipMaxX - pipMinX),
+      y: pipMinY + pipYRatio * (pipMaxY - pipMinY),
       width: pipWidth,
       height: pipHeight,
       zIndex: 1,
     },
     {
-      x: gap,
-      y: gap,
-      width: gridWidth - gap * 2,
-      height: gridHeight - gap * 2,
+      x: GAP,
+      y: GAP,
+      width: gridWidth - GAP * 2,
+      height: gridHeight - GAP * 2,
       zIndex: 0,
     },
   ];
 }
 
 function getSpotlightLayoutTilePositions(tileCount, gridWidth, gridHeight) {
-  const gap = 8;
   const tilePositions = [];
 
   const gridAspectRatio = gridWidth / gridHeight;
@@ -137,25 +157,25 @@ function getSpotlightLayoutTilePositions(tileCount, gridWidth, gridHeight) {
   if (gridAspectRatio < 1) {
     // Vertical layout (mobile)
     const spotlightTileHeight =
-      tileCount > 1 ? (gridHeight - gap * 3) * (4 / 5) : gridHeight - gap * 2;
+      tileCount > 1 ? (gridHeight - GAP * 3) * (4 / 5) : gridHeight - GAP * 2;
     const spectatorTileSize =
-      tileCount > 1 ? gridHeight - gap * 3 - spotlightTileHeight : 0;
+      tileCount > 1 ? gridHeight - GAP * 3 - spotlightTileHeight : 0;
 
     for (let i = 0; i < tileCount; i++) {
       if (i === 0) {
         // Spotlight tile
         tilePositions.push({
-          x: gap,
-          y: gap,
-          width: gridWidth - gap * 2,
+          x: GAP,
+          y: GAP,
+          width: gridWidth - GAP * 2,
           height: spotlightTileHeight,
           zIndex: 0,
         });
       } else {
         // Spectator tile
         tilePositions.push({
-          x: (gap + spectatorTileSize) * (i - 1) + gap,
-          y: spotlightTileHeight + gap * 2,
+          x: (GAP + spectatorTileSize) * (i - 1) + GAP,
+          y: spotlightTileHeight + GAP * 2,
           width: spectatorTileSize,
           height: spectatorTileSize,
           zIndex: 0,
@@ -165,24 +185,24 @@ function getSpotlightLayoutTilePositions(tileCount, gridWidth, gridHeight) {
   } else {
     // Horizontal layout (desktop)
     const spotlightTileWidth =
-      tileCount > 1 ? ((gridWidth - gap * 3) * 4) / 5 : gridWidth - gap * 2;
+      tileCount > 1 ? ((gridWidth - GAP * 3) * 4) / 5 : gridWidth - GAP * 2;
     const spectatorTileWidth =
-      tileCount > 1 ? gridWidth - gap * 3 - spotlightTileWidth : 0;
+      tileCount > 1 ? gridWidth - GAP * 3 - spotlightTileWidth : 0;
     const spectatorTileHeight = spectatorTileWidth * (9 / 16);
 
     for (let i = 0; i < tileCount; i++) {
       if (i === 0) {
         tilePositions.push({
-          x: gap,
-          y: gap,
+          x: GAP,
+          y: GAP,
           width: spotlightTileWidth,
-          height: gridHeight - gap * 2,
+          height: gridHeight - GAP * 2,
           zIndex: 0,
         });
       } else {
         tilePositions.push({
-          x: gap * 2 + spotlightTileWidth,
-          y: (gap + spectatorTileHeight) * (i - 1) + gap,
+          x: GAP * 2 + spotlightTileWidth,
+          y: (GAP + spectatorTileHeight) * (i - 1) + GAP,
           width: spectatorTileWidth,
           height: spectatorTileHeight,
           zIndex: 0,
@@ -207,8 +227,6 @@ function getFreedomLayoutTilePositions(
   if (tileCount > 12) {
     console.warn("Over 12 tiles is not currently supported");
   }
-
-  const gap = 8;
 
   const { layoutDirection, itemGridRatio } = getGridLayout(
     tileCount,
@@ -242,8 +260,7 @@ function getFreedomLayoutTilePositions(
     itemRowCount,
     itemTileAspectRatio,
     itemGridWidth,
-    itemGridHeight,
-    gap
+    itemGridHeight
   );
   const itemGridBounds = getSubGridBoundingBox(itemGridPositions);
 
@@ -256,10 +273,10 @@ function getFreedomLayoutTilePositions(
   } else if (layoutDirection === "vertical") {
     presenterGridWidth = gridWidth;
     presenterGridHeight =
-      gridHeight - (itemGridBounds.height + (itemTileCount ? gap * 2 : 0));
+      gridHeight - (itemGridBounds.height + (itemTileCount ? GAP * 2 : 0));
   } else {
     presenterGridWidth =
-      gridWidth - (itemGridBounds.width + (itemTileCount ? gap * 2 : 0));
+      gridWidth - (itemGridBounds.width + (itemTileCount ? GAP * 2 : 0));
     presenterGridHeight = gridHeight;
   }
 
@@ -279,8 +296,7 @@ function getFreedomLayoutTilePositions(
     presenterRowCount,
     presenterTileAspectRatio,
     presenterGridWidth,
-    presenterGridHeight,
-    gap
+    presenterGridHeight
   );
 
   const tilePositions = [...presenterGridPositions, ...itemGridPositions];
@@ -517,8 +533,7 @@ function getSubGridPositions(
   rowCount,
   tileAspectRatio,
   gridWidth,
-  gridHeight,
-  gap
+  gridHeight
 ) {
   if (tileCount === 0) {
     return [];
@@ -527,9 +542,9 @@ function getSubGridPositions(
   const newTilePositions = [];
 
   const boxWidth = Math.round(
-    (gridWidth - gap * (columnCount + 1)) / columnCount
+    (gridWidth - GAP * (columnCount + 1)) / columnCount
   );
-  const boxHeight = Math.round((gridHeight - gap * (rowCount + 1)) / rowCount);
+  const boxHeight = Math.round((gridHeight - GAP * (rowCount + 1)) / rowCount);
 
   let tileWidth;
   let tileHeight;
@@ -551,7 +566,7 @@ function getSubGridPositions(
 
   for (let i = 0; i < tileCount; i++) {
     const verticalIndex = Math.floor(i / columnCount);
-    const top = verticalIndex * gap + verticalIndex * tileHeight;
+    const top = verticalIndex * GAP + verticalIndex * tileHeight;
 
     let rowItemCount;
 
@@ -566,15 +581,15 @@ function getSubGridPositions(
     let centeringPadding = 0;
 
     if (rowItemCount < columnCount) {
-      const subgridWidth = tileWidth * columnCount + (gap * columnCount - 1);
+      const subgridWidth = tileWidth * columnCount + (GAP * columnCount - 1);
       centeringPadding = Math.round(
-        (subgridWidth - (tileWidth * rowItemCount + (gap * rowItemCount - 1))) /
+        (subgridWidth - (tileWidth * rowItemCount + (GAP * rowItemCount - 1))) /
           2
       );
     }
 
     const left =
-      centeringPadding + gap * horizontalIndex + tileWidth * horizontalIndex;
+      centeringPadding + GAP * horizontalIndex + tileWidth * horizontalIndex;
 
     newTilePositions.push({
       width: tileWidth,
@@ -611,6 +626,10 @@ export function VideoGrid({
   disableAnimations,
   children,
 }) {
+  // Place the PiP in the bottom right corner by default
+  const [pipXRatio, setPipXRatio] = useState(1);
+  const [pipYRatio, setPipYRatio] = useState(1);
+
   const [{ tiles, tilePositions, scrollPosition }, setTileState] = useState({
     tiles: [],
     tilePositions: [],
@@ -716,6 +735,8 @@ export function VideoGrid({
                 presenterTileCount,
                 gridBounds.width,
                 gridBounds.height,
+                pipXRatio,
+                pipYRatio,
                 layout
               ),
             };
@@ -738,11 +759,13 @@ export function VideoGrid({
           presenterTileCount,
           gridBounds.width,
           gridBounds.height,
+          pipXRatio,
+          pipYRatio,
           layout
         ),
       };
     });
-  }, [items, gridBounds, layout, isMounted]);
+  }, [items, gridBounds, layout, isMounted, pipXRatio, pipYRatio]);
 
   const animate = useCallback(
     (tiles) => (tileIndex) => {
@@ -876,6 +899,8 @@ export function VideoGrid({
             presenterTileCount,
             gridBounds.width,
             gridBounds.height,
+            pipXRatio,
+            pipYRatio,
             layout
           ),
         };
@@ -885,7 +910,7 @@ export function VideoGrid({
   );
 
   const bindTile = useDrag(
-    ({ args: [key], active, xy, movement, tap, event }) => {
+    ({ args: [key], active, xy, movement, tap, last, event }) => {
       event.preventDefault();
 
       if (tap) {
@@ -893,13 +918,7 @@ export function VideoGrid({
         return;
       }
 
-      if (layout !== "freedom") {
-        return;
-      }
-
-      if (layout === "freedom" && tiles.length === 2) {
-        return;
-      }
+      if (layout !== "freedom") return;
 
       const dragTileIndex = tiles.findIndex((tile) => tile.key === key);
       const dragTile = tiles[dragTileIndex];
@@ -908,6 +927,30 @@ export function VideoGrid({
       let newTiles = tiles;
 
       const cursorPosition = [xy[0] - gridBounds.left, xy[1] - gridBounds.top];
+
+      if (layout === "freedom" && tiles.length === 2) {
+        // We're in 1:1 mode, so only the local tile should be draggable
+        if (dragTileIndex !== 0) return;
+
+        // Only update the position on the last event
+        if (last) {
+          const pipGap = getPipGap(gridBounds.width / gridBounds.height);
+          const pipMinX = GAP + pipGap;
+          const pipMinY = GAP + pipGap;
+          const pipMaxX =
+            gridBounds.width - dragTilePosition.width - GAP - pipGap;
+          const pipMaxY =
+            gridBounds.height - dragTilePosition.height - GAP - pipGap;
+
+          const newPipXRatio =
+            (dragTilePosition.x + movement[0] - pipMinX) / (pipMaxX - pipMinX);
+          const newPipYRatio =
+            (dragTilePosition.y + movement[1] - pipMinY) / (pipMaxY - pipMinY);
+
+          setPipXRatio(Math.max(0, Math.min(1, newPipXRatio)));
+          setPipYRatio(Math.max(0, Math.min(1, newPipYRatio)));
+        }
+      }
 
       for (
         let hoverTileIndex = 0;
@@ -981,8 +1024,8 @@ export function VideoGrid({
       if (tilePositions.length > 1) {
         const lastTile = tilePositions[tilePositions.length - 1];
         min = isMobile
-          ? gridBounds.width - lastTile.x - lastTile.width - 8
-          : gridBounds.height - lastTile.y - lastTile.height - 8;
+          ? gridBounds.width - lastTile.x - lastTile.width - GAP
+          : gridBounds.height - lastTile.y - lastTile.height - GAP;
       }
 
       setTileState((state) => ({
