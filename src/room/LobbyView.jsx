@@ -32,6 +32,7 @@ export function LobbyView({
   client,
   groupCall,
   roomName,
+  avatarUrl,
   state,
   onInitLocalCallFeed,
   onEnter,
@@ -72,7 +73,7 @@ export function LobbyView({
     <div className={styles.room}>
       <Header>
         <LeftNav>
-          <RoomHeaderInfo roomName={roomName} />
+          <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
         </LeftNav>
         <RightNav>
           <UserMenuContainer />
