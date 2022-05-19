@@ -58,7 +58,8 @@ export const usePTT = (
   client: MatrixClient,
   groupCall: GroupCall,
   userMediaFeeds: CallFeed[],
-  playClip: PlayClipFunction
+  playClip: PlayClipFunction,
+  enablePTTButton: boolean
 ): PTTState => {
   // Used to serialise all the mute calls so they don't race. It has
   // its own state as its always set separately from anything else.
@@ -213,6 +214,8 @@ export const usePTT = (
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.code === "Space") {
+        if (!enablePTTButton) return;
+
         event.preventDefault();
 
         if (pttButtonHeld) return;
@@ -255,6 +258,7 @@ export const usePTT = (
     isAdmin,
     talkOverEnabled,
     pttButtonHeld,
+    enablePTTButton,
     setMicMuteWrapper,
   ]);
 
