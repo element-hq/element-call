@@ -96,6 +96,7 @@ export function LobbyView({
             <VideoPreview
               state={state}
               client={client}
+              roomId={roomId}
               microphoneMuted={microphoneMuted}
               localVideoMuted={localVideoMuted}
               toggleLocalVideoMuted={toggleLocalVideoMuted}
