@@ -21,9 +21,8 @@ import { GroupCall, MatrixClient, RoomMember } from "matrix-js-sdk";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
 import { useModalTriggerState } from "../Modal";
-import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
-import { HangupButton, InviteButton, SettingsButton } from "../button";
+import { HangupButton, InviteButton } from "../button";
 import { Header, LeftNav, RightNav, RoomSetupHeaderInfo } from "../Header";
 import styles from "./PTTCallView.module.css";
 import { Facepile } from "../Facepile";
@@ -37,6 +36,8 @@ import { getAvatarUrl } from "../matrix-utils";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { usePTTSounds } from "../sound/usePttSounds";
 import { PTTClips } from "../sound/PTTClips";
+import { GroupCallInspector } from "./GroupCallInspector";
+import { OverflowMenu } from "./OverflowMenu";
 
 function getPromptText(
   showTalkOverError: boolean,
@@ -100,7 +101,7 @@ export const PTTCallView: React.FC<Props> = ({
 }) => {
   const { modalState: inviteModalState, modalProps: inviteModalProps } =
     useModalTriggerState();
-  const { modalState: settingsModalState, modalProps: settingsModalProps } =
+  const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
     useModalTriggerState();
   const [containerRef, bounds] = useMeasure({ polyfill: ResizeObserver });
   const facepileSize = bounds.width < 800 ? "sm" : "md";
@@ -126,7 +127,13 @@ export const PTTCallView: React.FC<Props> = ({
     startTalking,
     stopTalking,
     transmitBlocked,
-  } = usePTT(client, groupCall, userMediaFeeds, playClip);
+  } = usePTT(
+    client,
+    groupCall,
+    userMediaFeeds,
+    playClip,
+    !feedbackModalState.isOpen
+  );
 
   const showTalkOverError = pttButtonHeld && transmitBlocked;
 
@@ -154,6 +161,13 @@ export const PTTCallView: React.FC<Props> = ({
         endTalkingRef={endTalkingRef}
         blockedRef={blockedRef}
       />
+      <GroupCallInspector
+        client={client}
+        groupCall={groupCall}
+        // Never shown in PTT mode, but must be present to collect call state
+        // https://github.com/vector-im/element-call/issues/328
+        show={false}
+      />
       <Header className={styles.header}>
         <LeftNav>
           <RoomSetupHeaderInfo roomName={roomName} onPress={onLeave} />
@@ -174,7 +188,17 @@ export const PTTCallView: React.FC<Props> = ({
           />
         </div>
         <div className={styles.footer}>
-          <SettingsButton onPress={() => settingsModalState.open()} />
+          <OverflowMenu
+            inCall
+            roomId={roomId}
+            setShowInspector={setShowInspector}
+            showInspector={showInspector}
+            client={client}
+            groupCall={groupCall}
+            showInvite={false}
+            feedbackModalState={feedbackModalState}
+            feedbackModalProps={feedbackModalProps}
+          />
           <HangupButton onPress={onLeave} />
           <InviteButton onPress={() => inviteModalState.open()} />
         </div>
@@ -233,13 +257,6 @@ export const PTTCallView: React.FC<Props> = ({
         </div>
       </div>
 
-      {settingsModalState.isOpen && (
-        <SettingsModal
-          {...settingsModalProps}
-          setShowInspector={setShowInspector}
-          showInspector={showInspector}
-        />
-      )}
       {inviteModalState.isOpen && (
         <InviteModal roomId={roomId} {...inviteModalProps} />
       )}
