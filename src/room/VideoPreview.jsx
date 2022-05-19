@@ -66,12 +66,7 @@ export function VideoPreview({
           {localVideoMuted && (
             <div className={styles.avatarContainer}>
               <Avatar
-                style={{
-                  width: avatarSize,
-                  height: avatarSize,
-                  borderRadius: avatarSize,
-                  fontSize: Math.round(avatarSize / 2),
-                }}
+                size={avatarSize}
                 src={avatarUrl}
                 fallback={displayName.slice(0, 1).toUpperCase()}
               />

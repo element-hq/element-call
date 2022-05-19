@@ -23,6 +23,7 @@ import { LobbyView } from "./LobbyView";
 import { InCallView } from "./InCallView";
 import { PTTCallView } from "./PTTCallView";
 import { CallEndedView } from "./CallEndedView";
+import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
 
@@ -67,6 +68,8 @@ export function GroupCallView({
     participants,
   } = useGroupCall(groupCall);
 
+  const avatarUrl = useRoomAvatar(groupCall.room);
+
   useEffect(() => {
     window.groupCall = groupCall;
   }, [groupCall]);
@@ -96,6 +99,7 @@ export function GroupCallView({
           client={client}
           roomId={roomId}
           roomName={groupCall.room.name}
+          avatarUrl={avatarUrl}
           groupCall={groupCall}
           participants={participants}
           userMediaFeeds={userMediaFeeds}
@@ -110,6 +114,7 @@ export function GroupCallView({
           groupCall={groupCall}
           client={client}
           roomName={groupCall.room.name}
+          avatarUrl={avatarUrl}
           microphoneMuted={microphoneMuted}
           localVideoMuted={localVideoMuted}
           toggleLocalVideoMuted={toggleLocalVideoMuted}
@@ -142,6 +147,7 @@ export function GroupCallView({
         groupCall={groupCall}
         hasLocalParticipant={hasLocalParticipant}
         roomName={groupCall.room.name}
+        avatarUrl={avatarUrl}
         state={state}
         onInitLocalCallFeed={initLocalCallFeed}
         localCallFeed={localCallFeed}

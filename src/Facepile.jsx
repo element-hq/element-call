@@ -1,19 +1,12 @@
 import React from "react";
 import styles from "./Facepile.module.css";
 import classNames from "classnames";
-import { Avatar } from "./Avatar";
-import { getAvatarUrl } from "./matrix-utils";
+import { Avatar, sizes } from "./Avatar";
 
 const overlapMap = {
   xs: 2,
   sm: 4,
   md: 8,
-};
-
-const sizeMap = {
-  xs: 24,
-  sm: 32,
-  md: 36,
 };
 
 export function Facepile({
@@ -24,7 +17,7 @@ export function Facepile({
   size,
   ...rest
 }) {
-  const _size = sizeMap[size];
+  const _size = sizes.get(size);
   const _overlap = overlapMap[size];
 
   return (
@@ -40,7 +33,7 @@ export function Facepile({
           <Avatar
             key={member.userId}
             size={size}
-            src={avatarUrl && getAvatarUrl(client, avatarUrl, _size)}
+            src={avatarUrl}
             fallback={member.name.slice(0, 1).toUpperCase()}
             className={styles.avatar}
             style={{ left: i * (_size - _overlap) }}
