@@ -43,6 +43,10 @@ export function UnauthenticatedView() {
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
+  const { modalState, modalProps } = useModalTriggerState();
+  const [onFinished, setOnFinished] = useState();
+  const history = useHistory();
+
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
@@ -63,39 +67,41 @@ export function UnauthenticatedView() {
           recaptchaResponse,
           true
         );
-        const roomIdOrAlias = await createRoom(client, roomName, ptt);
+
+        let roomIdOrAlias;
+        try {
+          roomIdOrAlias = await createRoom(client, roomName, ptt);
+        } catch (error) {
+          if (error.errcode === "M_ROOM_IN_USE") {
+            setOnFinished(() => () => {
+              setClient(client, session);
+              const aliasLocalpart = roomAliasFromRoomName(roomName);
+              const [, serverName] = client.getUserId().split(":");
+              history.push(`/room/#${aliasLocalpart}:${serverName}`);
+            });
+
+            setLoading(false);
+            modalState.open();
+            return;
+          } else {
+            throw error;
+          }
+        }
 
         // Only consider the registration successful if we managed to create the room, too
         setClient(client, session);
-
-        if (roomIdOrAlias) {
-          history.push(`/room/${roomIdOrAlias}`);
-        }
+        history.push(`/room/${roomIdOrAlias}`);
       }
 
       submit().catch((error) => {
-        if (error.errcode === "M_ROOM_IN_USE") {
-          setExistingRoomId(roomAliasFromRoomName(roomName));
-          setLoading(false);
-          setError(undefined);
-          modalState.open();
-        } else {
-          console.error(error);
-          setLoading(false);
-          setError(error);
-          reset();
-        }
+        console.error(error);
+        setLoading(false);
+        setError(error);
+        reset();
       });
     },
-    [register, reset, execute]
+    [register, reset, execute, history]
   );
-
-  const { modalState, modalProps } = useModalTriggerState();
-  const [existingRoomId, setExistingRoomId] = useState();
-  const history = useHistory();
-  const onJoinExistingRoom = useCallback(() => {
-    history.push(`/${existingRoomId}`);
-  }, [history, existingRoomId]);
 
   return (
     <>
@@ -176,7 +182,7 @@ export function UnauthenticatedView() {
         </footer>
       </div>
       {modalState.isOpen && (
-        <JoinExistingCallModal onJoin={onJoinExistingRoom} {...modalProps} />
+        <JoinExistingCallModal onJoin={onFinished} {...modalProps} />
       )}
     </>
   );
