@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { useState, useCallback, useEffect } from "react";
-import { getAvatarUrl } from "../matrix-utils";
 
 export function useProfile(client) {
   const [{ loading, displayName, avatarUrl, error, success }, setState] =
@@ -26,7 +25,7 @@ export function useProfile(client) {
         success: false,
         loading: false,
         displayName: user?.rawDisplayName,
-        avatarUrl: user && client && getAvatarUrl(client, user.avatarUrl),
+        avatarUrl: user?.avatarUrl,
         error: null,
       };
     });
@@ -37,7 +36,7 @@ export function useProfile(client) {
         success: false,
         loading: false,
         displayName,
-        avatarUrl: getAvatarUrl(client, avatarUrl),
+        avatarUrl,
         error: null,
       });
     };
@@ -84,11 +83,7 @@ export function useProfile(client) {
           setState((prev) => ({
             ...prev,
             displayName,
-            avatarUrl: removeAvatar
-              ? null
-              : mxcAvatarUrl
-              ? getAvatarUrl(client, mxcAvatarUrl)
-              : prev.avatarUrl,
+            avatarUrl: removeAvatar ? null : mxcAvatarUrl ?? prev.avatarUrl,
             loading: false,
             success: true,
           }));

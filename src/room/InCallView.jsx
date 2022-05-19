@@ -25,7 +25,6 @@ import {
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { VideoGrid, useVideoGridLayout } from "../video-grid/VideoGrid";
 import { VideoTileContainer } from "../video-grid/VideoTileContainer";
-import { getAvatarUrl } from "../matrix-utils";
 import { GroupCallInspector } from "./GroupCallInspector";
 import { OverflowMenu } from "./OverflowMenu";
 import { GridLayoutMenu } from "./GridLayoutMenu";
@@ -47,6 +46,7 @@ export function InCallView({
   client,
   groupCall,
   roomName,
+  avatarUrl,
   microphoneMuted,
   localVideoMuted,
   toggleLocalVideoMuted,
@@ -129,13 +129,8 @@ export function InCallView({
       return (
         <Avatar
           key={roomMember.userId}
-          style={{
-            width: size,
-            height: size,
-            borderRadius: size,
-            fontSize: Math.round(size / 2),
-          }}
-          src={avatarUrl && getAvatarUrl(client, avatarUrl, 96)}
+          size={size}
+          src={avatarUrl}
           fallback={roomMember.name.slice(0, 1).toUpperCase()}
           className={styles.avatar}
         />
@@ -153,7 +148,7 @@ export function InCallView({
     <div className={styles.inRoom}>
       <Header>
         <LeftNav>
-          <RoomHeaderInfo roomName={roomName} />
+          <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
         </LeftNav>
         <RightNav>
           <GridLayoutMenu layout={layout} setLayout={setLayout} />

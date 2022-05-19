@@ -32,7 +32,6 @@ import { useMediaHandler } from "../settings/useMediaHandler";
 import { usePTT } from "./usePTT";
 import { Timer } from "./Timer";
 import { Toggle } from "../input/Toggle";
-import { getAvatarUrl } from "../matrix-utils";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { usePTTSounds } from "../sound/usePttSounds";
 import { PTTClips } from "../sound/PTTClips";
@@ -80,6 +79,7 @@ interface Props {
   client: MatrixClient;
   roomId: string;
   roomName: string;
+  avatarUrl: string;
   groupCall: GroupCall;
   participants: RoomMember[];
   userMediaFeeds: CallFeed[];
@@ -92,6 +92,7 @@ export const PTTCallView: React.FC<Props> = ({
   client,
   roomId,
   roomName,
+  avatarUrl,
   groupCall,
   participants,
   userMediaFeeds,
@@ -106,7 +107,6 @@ export const PTTCallView: React.FC<Props> = ({
   const [containerRef, bounds] = useMeasure({ polyfill: ResizeObserver });
   const facepileSize = bounds.width < 800 ? "sm" : "md";
   const pttButtonSize = 232;
-  const pttBorderWidth = 6;
 
   const { audioOutput } = useMediaHandler();
 
@@ -142,13 +142,7 @@ export const PTTCallView: React.FC<Props> = ({
   const activeSpeakerUser = activeSpeakerUserId
     ? client.getUser(activeSpeakerUserId)
     : null;
-  const activeSpeakerAvatarUrl = activeSpeakerUser
-    ? getAvatarUrl(
-        client,
-        activeSpeakerUser.avatarUrl,
-        pttButtonSize - pttBorderWidth * 2
-      )
-    : null;
+  const activeSpeakerAvatarUrl = activeSpeakerUser?.avatarUrl;
   const activeSpeakerDisplayName = activeSpeakerUser
     ? activeSpeakerUser.displayName
     : "";
@@ -170,7 +164,11 @@ export const PTTCallView: React.FC<Props> = ({
       />
       <Header className={styles.header}>
         <LeftNav>
-          <RoomSetupHeaderInfo roomName={roomName} onPress={onLeave} />
+          <RoomSetupHeaderInfo
+            roomName={roomName}
+            avatarUrl={avatarUrl}
+            onPress={onLeave}
+          />
         </LeftNav>
         <RightNav />
       </Header>

@@ -79,7 +79,7 @@ export function useGroupCallRooms(client) {
         return {
           roomId: room.getCanonicalAlias() || room.roomId,
           roomName: room.name,
-          avatarUrl: null,
+          avatarUrl: room.getMxcAvatarUrl(),
           room,
           groupCall,
           participants: [...groupCall.participants],
