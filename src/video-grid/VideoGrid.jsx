@@ -119,16 +119,23 @@ function getOneOnOneLayoutTilePositions(
   pipXRatio,
   pipYRatio
 ) {
+  const [remotePosition] = getFreedomLayoutTilePositions(
+    1,
+    0,
+    gridWidth,
+    gridHeight
+  );
+
   const gridAspectRatio = gridWidth / gridHeight;
 
   const pipWidth = gridAspectRatio < 1 ? 114 : 230;
   const pipHeight = gridAspectRatio < 1 ? 163 : 155;
   const pipGap = getPipGap(gridAspectRatio);
 
-  const pipMinX = GAP + pipGap;
-  const pipMinY = GAP + pipGap;
-  const pipMaxX = gridWidth - pipWidth - GAP - pipGap;
-  const pipMaxY = gridHeight - pipHeight - GAP - pipGap;
+  const pipMinX = remotePosition.x + pipGap;
+  const pipMinY = remotePosition.y + pipGap;
+  const pipMaxX = remotePosition.x + remotePosition.width - pipWidth - pipGap;
+  const pipMaxY = remotePosition.y + remotePosition.height - pipHeight - pipGap;
 
   return [
     {
@@ -139,13 +146,7 @@ function getOneOnOneLayoutTilePositions(
       height: pipHeight,
       zIndex: 1,
     },
-    {
-      x: GAP,
-      y: GAP,
-      width: gridWidth - GAP * 2,
-      height: gridHeight - GAP * 2,
-      zIndex: 0,
-    },
+    remotePosition,
   ];
 }
 
@@ -934,13 +935,21 @@ export function VideoGrid({
 
         // Only update the position on the last event
         if (last) {
+          const remotePosition = tilePositions[1];
+
           const pipGap = getPipGap(gridBounds.width / gridBounds.height);
-          const pipMinX = GAP + pipGap;
-          const pipMinY = GAP + pipGap;
+          const pipMinX = remotePosition.x + pipGap;
+          const pipMinY = remotePosition.y + pipGap;
           const pipMaxX =
-            gridBounds.width - dragTilePosition.width - GAP - pipGap;
+            remotePosition.x +
+            remotePosition.width -
+            dragTilePosition.width -
+            pipGap;
           const pipMaxY =
-            gridBounds.height - dragTilePosition.height - GAP - pipGap;
+            remotePosition.y +
+            remotePosition.height -
+            dragTilePosition.height -
+            pipGap;
 
           const newPipXRatio =
             (dragTilePosition.x + movement[0] - pipMinX) / (pipMaxX - pipMinX);
