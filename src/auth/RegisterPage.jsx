@@ -16,6 +16,8 @@ limitations under the License.
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
+import { captureException } from "@sentry/react";
+import { sleep } from "matrix-js-sdk/src/utils";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { useClient } from "../ClientContext";
@@ -81,7 +83,13 @@ export function RegisterPage() {
             try {
               await newClient.joinRoom(roomId);
             } catch (error) {
-              console.warn(`Couldn't join room ${roomId}`, error);
+              if (error.errcode === "M_LIMIT_EXCEEDED") {
+                await sleep(error.data.retry_after_ms);
+                await newClient.joinRoom(roomId);
+              } else {
+                captureException(error);
+                console.error(`Couldn't join room ${roomId}`, error);
+              }
             }
           }
         }
