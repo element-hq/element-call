@@ -27,10 +27,21 @@ export function useMediaStream(stream, audioOutputDevice, mute = false) {
     );
 
     if (mediaRef.current) {
+      const mediaEl = mediaRef.current;
+
       if (stream) {
-        mediaRef.current.muted = mute;
-        mediaRef.current.srcObject = stream;
-        mediaRef.current.play();
+        mediaEl.muted = mute;
+        mediaEl.srcObject = stream;
+        mediaEl.play();
+
+        // Unmuting the tab in Safari causes all video elements to be individually
+        // unmuted, so we need to reset the mute state here to prevent audio loops
+        const onVolumeChange = () => {
+          mediaEl.muted = mute;
+        };
+        mediaEl.addEventListener("volumechange", onVolumeChange);
+        return () =>
+          mediaEl.removeEventListener("volumechange", onVolumeChange);
       } else {
         mediaRef.current.srcObject = null;
       }
