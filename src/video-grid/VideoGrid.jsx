@@ -606,7 +606,7 @@ function getSubGridPositions(
 function reorderTiles(tiles, layout) {
   if (layout === "freedom" && tiles.length === 2) {
     // 1:1 layout
-    tiles.forEach((tile) => tile.order = tile.item.isLocal ? 0 : 1);
+    tiles.forEach((tile) => (tile.order = tile.item.isLocal ? 0 : 1));
   } else {
     const focusedTiles = [];
     const presenterTiles = [];
