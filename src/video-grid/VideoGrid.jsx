@@ -603,26 +603,31 @@ function getSubGridPositions(
   return newTilePositions;
 }
 
-function reorderTiles(tiles) {
-  const focusedTiles = [];
-  const presenterTiles = [];
-  const otherTiles = [];
+function reorderTiles(tiles, layout) {
+  if (layout === "freedom" && tiles.length === 2) {
+    // 1:1 layout
+    tiles.forEach((tile) => tile.order = tile.item.isLocal ? 0 : 1);
+  } else {
+    const focusedTiles = [];
+    const presenterTiles = [];
+    const otherTiles = [];
 
-  const orderedTiles = new Array(tiles.length);
-  tiles.forEach((tile) => (orderedTiles[tile.order] = tile));
+    const orderedTiles = new Array(tiles.length);
+    tiles.forEach((tile) => (orderedTiles[tile.order] = tile));
 
-  orderedTiles.forEach((tile) =>
-    (tile.focused
-      ? focusedTiles
-      : tile.presenter
-      ? presenterTiles
-      : otherTiles
-    ).push(tile)
-  );
+    orderedTiles.forEach((tile) =>
+      (tile.focused
+        ? focusedTiles
+        : tile.presenter
+        ? presenterTiles
+        : otherTiles
+      ).push(tile)
+    );
 
-  [...focusedTiles, ...presenterTiles, ...otherTiles].forEach(
-    (tile, i) => (tile.order = i)
-  );
+    [...focusedTiles, ...presenterTiles, ...otherTiles].forEach(
+      (tile, i) => (tile.order = i)
+    );
+  }
 }
 
 export function VideoGrid({ items, layout, disableAnimations, children }) {
@@ -707,7 +712,7 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
         }
       }
 
-      reorderTiles(newTiles);
+      reorderTiles(newTiles, layout);
 
       if (removedTileKeys.size > 0) {
         setTimeout(() => {
@@ -719,7 +724,7 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
             const newTiles = tiles
               .filter((tile) => !removedTileKeys.has(tile.key))
               .map((tile) => ({ ...tile })); // clone before reordering
-            reorderTiles(newTiles);
+            reorderTiles(newTiles, layout);
 
             const presenterTileCount = newTiles.reduce(
               (count, tile) => count + (tile.focused ? 1 : 0),
@@ -873,7 +878,7 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
           return newTile;
         });
 
-        reorderTiles(newTiles);
+        reorderTiles(newTiles, layout);
 
         return {
           ...state,
@@ -974,7 +979,7 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
             return { ...tile, order, focused };
           });
 
-          reorderTiles(newTiles);
+          reorderTiles(newTiles, layout);
 
           setTileState((state) => ({ ...state, tiles: newTiles }));
         }
