@@ -104,23 +104,6 @@ export function InCallView({
     return participants;
   }, [userMediaFeeds, activeSpeaker, screenshareFeeds, layout]);
 
-  const onFocusTile = useCallback(
-    (tiles, focusedTile) => {
-      if (layout === "freedom") {
-        return tiles.map((tile) => {
-          if (tile === focusedTile) {
-            return { ...tile, focused: !tile.focused };
-          }
-
-          return tile;
-        });
-      } else {
-        return tiles;
-      }
-    },
-    [layout, setLayout]
-  );
-
   const renderAvatar = useCallback(
     (roomMember, width, height) => {
       const avatarUrl = roomMember.user?.avatarUrl;
@@ -160,12 +143,7 @@ export function InCallView({
           <p>Waiting for other participants...</p>
         </div>
       ) : (
-        <VideoGrid
-          items={items}
-          layout={layout}
-          onFocusTile={onFocusTile}
-          disableAnimations={isSafari}
-        >
+        <VideoGrid items={items} layout={layout} disableAnimations={isSafari}>
           {({ item, ...rest }) => (
             <VideoTileContainer
               key={item.id}
