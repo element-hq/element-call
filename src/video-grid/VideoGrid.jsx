@@ -19,7 +19,6 @@ import { useDrag, useGesture } from "@use-gesture/react";
 import { useSprings } from "@react-spring/web";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
-import moveArrItem from "lodash-move";
 import styles from "./VideoGrid.module.css";
 
 export function useVideoGridLayout(hasScreenshareFeeds) {
@@ -604,38 +603,43 @@ function getSubGridPositions(
   return newTilePositions;
 }
 
-function sortTiles(layout, tiles) {
-  const is1on1Freedom = layout === "freedom" && tiles.length === 2;
+function reorderTiles(tiles, layout) {
+  if (layout === "freedom" && tiles.length === 2) {
+    // 1:1 layout
+    tiles.forEach((tile) => (tile.order = tile.item.isLocal ? 0 : 1));
+  } else {
+    const focusedTiles = [];
+    const presenterTiles = [];
+    const otherTiles = [];
 
-  tiles.sort((a, b) => {
-    if (is1on1Freedom && a.item.isLocal !== b.item.isLocal) {
-      return (b.item.isLocal ? 1 : 0) - (a.item.isLocal ? 1 : 0);
-    } else if (a.focused !== b.focused) {
-      return (b.focused ? 1 : 0) - (a.focused ? 1 : 0);
-    } else if (a.presenter !== b.presenter) {
-      return (b.presenter ? 1 : 0) - (a.presenter ? 1 : 0);
-    }
+    const orderedTiles = new Array(tiles.length);
+    tiles.forEach((tile) => (orderedTiles[tile.order] = tile));
 
-    return 0;
-  });
+    orderedTiles.forEach((tile) =>
+      (tile.focused
+        ? focusedTiles
+        : tile.presenter
+        ? presenterTiles
+        : otherTiles
+      ).push(tile)
+    );
+
+    [...focusedTiles, ...presenterTiles, ...otherTiles].forEach(
+      (tile, i) => (tile.order = i)
+    );
+  }
 }
 
-export function VideoGrid({
-  items,
-  layout,
-  onFocusTile,
-  disableAnimations,
-  children,
-}) {
+export function VideoGrid({ items, layout, disableAnimations, children }) {
   // Place the PiP in the bottom right corner by default
   const [pipXRatio, setPipXRatio] = useState(1);
   const [pipYRatio, setPipYRatio] = useState(1);
 
-  const [{ tiles, tilePositions, scrollPosition }, setTileState] = useState({
+  const [{ tiles, tilePositions }, setTileState] = useState({
     tiles: [],
     tilePositions: [],
-    scrollPosition: 0,
   });
+  const [scrollPosition, setScrollPosition] = useState(0);
   const draggingTileRef = useRef(null);
   const lastTappedRef = useRef({});
   const lastLayoutRef = useRef(layout);
@@ -646,7 +650,7 @@ export function VideoGrid({
   useEffect(() => {
     setTileState(({ tiles, ...rest }) => {
       const newTiles = [];
-      const removedTileKeys = [];
+      const removedTileKeys = new Set();
 
       for (const tile of tiles) {
         let item = items.find((item) => item.id === tile.key);
@@ -656,7 +660,7 @@ export function VideoGrid({
         if (!item) {
           remove = true;
           item = tile.item;
-          removedTileKeys.push(tile.key);
+          removedTileKeys.add(tile.key);
         }
 
         let focused;
@@ -671,6 +675,7 @@ export function VideoGrid({
 
         newTiles.push({
           key: item.id,
+          order: tile.order,
           item,
           remove,
           focused,
@@ -691,6 +696,7 @@ export function VideoGrid({
 
         const newTile = {
           key: item.id,
+          order: existingTile?.order ?? newTiles.length,
           item,
           remove: false,
           focused: layout === "spotlight" && item.focused,
@@ -706,22 +712,19 @@ export function VideoGrid({
         }
       }
 
-      sortTiles(layout, newTiles);
+      reorderTiles(newTiles, layout);
 
-      if (removedTileKeys.length > 0) {
+      if (removedTileKeys.size > 0) {
         setTimeout(() => {
           if (!isMounted.current) {
             return;
           }
 
           setTileState(({ tiles, ...rest }) => {
-            const newTiles = tiles.filter(
-              (tile) => !removedTileKeys.includes(tile.key)
-            );
-
-            // TODO: When we remove tiles, we reuse the order of the tiles vs calling sort on the
-            // items array. This can cause the local feed to display large in the room.
-            // To fix this we need to move to using a reducer and sorting the input items
+            const newTiles = tiles
+              .filter((tile) => !removedTileKeys.has(tile.key))
+              .map((tile) => ({ ...tile })); // clone before reordering
+            reorderTiles(newTiles, layout);
 
             const presenterTileCount = newTiles.reduce(
               (count, tile) => count + (tile.focused ? 1 : 0),
@@ -771,7 +774,7 @@ export function VideoGrid({
   const animate = useCallback(
     (tiles) => (tileIndex) => {
       const tile = tiles[tileIndex];
-      const tilePosition = tilePositions[tileIndex];
+      const tilePosition = tilePositions[tile.order];
       const draggingTile = draggingTileRef.current;
       const dragging = draggingTile && tile.key === draggingTile.key;
       const remove = tile.remove;
@@ -830,6 +833,9 @@ export function VideoGrid({
           reset: false,
           immediate: (key) =>
             disableAnimations || key === "zIndex" || key === "shadow",
+          // If we just stopped dragging a tile, give it time for its animation
+          // to settle before pushing its z-index back down
+          delay: (key) => (key === "zIndex" ? 500 : 0),
         };
       }
     },
@@ -854,43 +860,25 @@ export function VideoGrid({
       lastTappedRef.current[tileKey] = 0;
 
       const tile = tiles.find((tile) => tile.key === tileKey);
-
-      if (!tile) {
-        return;
-      }
-
+      if (!tile || layout !== "freedom") return;
       const item = tile.item;
 
-      setTileState((state) => {
+      setTileState(({ tiles, ...state }) => {
         let presenterTileCount = 0;
+        const newTiles = tiles.map((tile) => {
+          let newTile = { ...tile }; // clone before reordering
 
-        let newTiles;
-
-        if (onFocusTile) {
-          newTiles = onFocusTile(state.tiles, tile);
-
-          for (const tile of newTiles) {
-            if (tile.focused) {
-              presenterTileCount++;
-            }
+          if (tile.item === item) {
+            newTile.focused = !tile.focused;
           }
-        } else {
-          newTiles = state.tiles.map((tile) => {
-            let newTile = tile;
+          if (newTile.focused) {
+            presenterTileCount++;
+          }
 
-            if (tile.item === item) {
-              newTile = { ...tile, focused: !tile.focused };
-            }
+          return newTile;
+        });
 
-            if (newTile.focused) {
-              presenterTileCount++;
-            }
-
-            return newTile;
-          });
-        }
-
-        sortTiles(layout, newTiles);
+        reorderTiles(newTiles, layout);
 
         return {
           ...state,
@@ -907,7 +895,7 @@ export function VideoGrid({
         };
       });
     },
-    [tiles, gridBounds, onFocusTile, layout]
+    [tiles, gridBounds, layout]
   );
 
   const bindTile = useDrag(
@@ -923,17 +911,18 @@ export function VideoGrid({
 
       const dragTileIndex = tiles.findIndex((tile) => tile.key === key);
       const dragTile = tiles[dragTileIndex];
-      const dragTilePosition = tilePositions[dragTileIndex];
-
-      let newTiles = tiles;
+      const dragTilePosition = tilePositions[dragTile.order];
 
       const cursorPosition = [xy[0] - gridBounds.left, xy[1] - gridBounds.top];
 
-      if (layout === "freedom" && tiles.length === 2) {
-        // We're in 1:1 mode, so only the local tile should be draggable
-        if (dragTileIndex !== 0) return;
+      let newTiles = tiles;
 
-        // Only update the position on the last event
+      if (tiles.length === 2) {
+        // We're in 1:1 mode, so only the local tile should be draggable
+        if (!dragTile.item.isLocal) return;
+
+        // Position should only update on the very last event, to avoid
+        // compounding the offset on every drag event
         if (last) {
           const remotePosition = tilePositions[1];
 
@@ -959,37 +948,40 @@ export function VideoGrid({
           setPipXRatio(Math.max(0, Math.min(1, newPipXRatio)));
           setPipYRatio(Math.max(0, Math.min(1, newPipYRatio)));
         }
-      }
+      } else {
+        const hoverTile = tiles.find(
+          (tile) =>
+            tile.key !== key &&
+            isInside(cursorPosition, tilePositions[tile.order])
+        );
 
-      for (
-        let hoverTileIndex = 0;
-        hoverTileIndex < tiles.length;
-        hoverTileIndex++
-      ) {
-        const hoverTile = tiles[hoverTileIndex];
-        const hoverTilePosition = tilePositions[hoverTileIndex];
-
-        if (hoverTile.key === key) {
-          continue;
-        }
-
-        if (isInside(cursorPosition, hoverTilePosition)) {
-          newTiles = moveArrItem(tiles, dragTileIndex, hoverTileIndex);
-
+        if (hoverTile) {
+          // Shift the tiles into their new order
           newTiles = newTiles.map((tile) => {
-            if (tile === hoverTile) {
-              return { ...tile, focused: dragTile.focused };
-            } else if (tile === dragTile) {
-              return { ...tile, focused: hoverTile.focused };
+            let order = tile.order;
+            if (order < dragTile.order) {
+              if (order >= hoverTile.order) order++;
+            } else if (order > dragTile.order) {
+              if (order <= hoverTile.order) order--;
             } else {
-              return tile;
+              order = hoverTile.order;
             }
+
+            let focused;
+            if (tile === hoverTile) {
+              focused = dragTile.focused;
+            } else if (tile === dragTile) {
+              focused = hoverTile.focused;
+            } else {
+              focused = tile.focused;
+            }
+
+            return { ...tile, order, focused };
           });
 
-          sortTiles(layout, newTiles);
+          reorderTiles(newTiles, layout);
 
           setTileState((state) => ({ ...state, tiles: newTiles }));
-          break;
         }
       }
 
@@ -1037,13 +1029,9 @@ export function VideoGrid({
           : gridBounds.height - lastTile.y - lastTile.height - GAP;
       }
 
-      setTileState((state) => ({
-        ...state,
-        scrollPosition: Math.min(
-          Math.max(movement + state.scrollPosition, min),
-          0
-        ),
-      }));
+      setScrollPosition((scrollPosition) =>
+        Math.min(Math.max(movement + scrollPosition, min), 0)
+      );
     },
     [layout, gridBounds, tilePositions]
   );
@@ -1060,7 +1048,7 @@ export function VideoGrid({
     <div className={styles.videoGrid} ref={gridRef} {...bindGrid()}>
       {springs.map(({ shadow, ...style }, i) => {
         const tile = tiles[i];
-        const tilePosition = tilePositions[i];
+        const tilePosition = tilePositions[tile.order];
 
         return children({
           ...bindTile(tile.key),
