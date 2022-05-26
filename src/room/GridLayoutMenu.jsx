@@ -20,7 +20,7 @@ import { PopoverMenuTrigger } from "../popover/PopoverMenu";
 import { ReactComponent as SpotlightIcon } from "../icons/Spotlight.svg";
 import { ReactComponent as FreedomIcon } from "../icons/Freedom.svg";
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
-import styles from "./GridLayoutMenu.module.css";
+import menuStyles from "../Menu.module.css";
 import { Menu } from "../Menu";
 import { Item } from "@react-stately/collections";
 import { Tooltip, TooltipTrigger } from "../Tooltip";
@@ -39,13 +39,15 @@ export function GridLayoutMenu({ layout, setLayout }) {
           <Item key="freedom" textValue="Freedom">
             <FreedomIcon />
             <span>Freedom</span>
-            {layout === "freedom" && <CheckIcon className={styles.checkIcon} />}
+            {layout === "freedom" && (
+              <CheckIcon className={menuStyles.checkIcon} />
+            )}
           </Item>
           <Item key="spotlight" textValue="Spotlight">
             <SpotlightIcon />
             <span>Spotlight</span>
             {layout === "spotlight" && (
-              <CheckIcon className={styles.checkIcon} />
+              <CheckIcon className={menuStyles.checkIcon} />
             )}
           </Item>
         </Menu>
