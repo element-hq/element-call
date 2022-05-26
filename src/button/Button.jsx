@@ -25,6 +25,7 @@ import { ReactComponent as HangupIcon } from "../icons/Hangup.svg";
 import { ReactComponent as ScreenshareIcon } from "../icons/Screenshare.svg";
 import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
+import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
 import { useButton } from "@react-aria/button";
 import { mergeProps, useObjectRef } from "@react-aria/utils";
 import { TooltipTrigger } from "../Tooltip";
@@ -36,9 +37,11 @@ export const variantToClassName = {
   icon: [styles.iconButton],
   secondary: [styles.secondary],
   copy: [styles.copyButton],
+  secondaryCopy: [styles.secondaryCopy],
   iconCopy: [styles.iconCopyButton],
   secondaryCopy: [styles.copyButton],
   secondaryHangup: [styles.secondaryHangup],
+  dropdown: [styles.dropdownButton],
 };
 
 export const sizeToClassName = {
@@ -86,13 +89,13 @@ export const Button = forwardRef(
           {
             [styles.on]: on,
             [styles.off]: off,
-            [styles.secondaryCopy]: variant === "secondaryCopy",
           }
         )}
         {...mergeProps(rest, filteredButtonProps)}
         ref={buttonRef}
       >
         {children}
+        {variant === "dropdown" && <ArrowDownIcon />}
       </button>
     );
   }

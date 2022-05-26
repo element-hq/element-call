@@ -29,14 +29,14 @@ import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { useRecaptcha } from "../auth/useRecaptcha";
 import { Body, Caption, Link, Headline } from "../typography/Typography";
 import { Form } from "../form/Form";
+import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
 import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
-import { useShouldShowPtt } from "../useShouldShowPtt";
 
 export function UnauthenticatedView() {
   const { setClient } = useClient();
-  const shouldShowPtt = useShouldShowPtt();
+  const [callType, setCallType] = useState(CallType.Video);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
   const [{ privacyPolicyUrl, recaptchaKey }, register] =
@@ -53,7 +53,7 @@ export function UnauthenticatedView() {
       const data = new FormData(e.target);
       const roomName = data.get("callName");
       const displayName = data.get("displayName");
-      const ptt = data.get("ptt") !== null;
+      const ptt = callType === CallType.Radio;
 
       async function submit() {
         setError(undefined);
@@ -100,8 +100,11 @@ export function UnauthenticatedView() {
         reset();
       });
     },
-    [register, reset, execute, history]
+    [register, reset, execute, history, callType]
   );
+
+  const callNameLabel =
+    callType === CallType.Video ? "Video call name" : "Radio call name";
 
   return (
     <>
@@ -116,16 +119,14 @@ export function UnauthenticatedView() {
       <div className={commonStyles.container}>
         <main className={commonStyles.main}>
           <HeaderLogo className={commonStyles.logo} />
-          <Headline className={commonStyles.headline}>
-            Enter a call name
-          </Headline>
+          <CallTypeDropdown callType={callType} setCallType={setCallType} />
           <Form className={styles.form} onSubmit={onSubmit}>
             <FieldRow>
               <InputField
                 id="callName"
                 name="callName"
-                label="Call name"
-                placeholder="Call name"
+                label={callNameLabel}
+                placeholder={callNameLabel}
                 type="text"
                 required
                 autoComplete="off"
@@ -142,16 +143,6 @@ export function UnauthenticatedView() {
                 autoComplete="off"
               />
             </FieldRow>
-            {shouldShowPtt && (
-              <FieldRow>
-                <InputField
-                  id="ptt"
-                  name="ptt"
-                  label="Push to Talk"
-                  type="checkbox"
-                />
-              </FieldRow>
-            )}
             <Caption>
               By clicking "Go", you agree to our{" "}
               <Link href={privacyPolicyUrl}>Terms and conditions</Link>

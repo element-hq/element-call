@@ -21,7 +21,8 @@ limitations under the License.
 .iconCopyButton,
 .secondary,
 .secondaryHangup,
-.copyButton {
+.copyButton,
+.dropdownButton {
   position: relative;
   display: flex;
   justify-content: center;
@@ -182,6 +183,25 @@ limitations under the License.
 .iconCopyButton.on:hover svg * {
   fill: transparent;
   stroke: #0dbd8b;
+}
+
+.dropdownButton {
+  color: var(--textColor1);
+  padding: 2px 8px;
+  border-radius: 8px;
+}
+
+.dropdownButton:hover,
+.dropdownButton.on {
+  background-color: var(--bgColor4);
+}
+
+.dropdownButton svg {
+  margin-left: 8px;
+}
+
+.dropdownButton svg * {
+  fill: var(--textColor1);
 }
 
 .lg {

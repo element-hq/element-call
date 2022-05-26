@@ -39,3 +39,12 @@
   border-bottom-left-radius: 8px;
   border-bottom-right-radius: 8px;
 }
+
+.checkIcon {
+  position: absolute;
+  right: 16px;
+}
+
+.checkIcon * {
+  stroke: var(--textColor1);
+}
