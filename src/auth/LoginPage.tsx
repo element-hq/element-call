@@ -1,5 +1,5 @@
 /*
-Copyright 2021 New Vector Ltd
+Copyright 2021-2022 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,8 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useRef, useState, useMemo } from "react";
+import React, {
+  FC,
+  FormEvent,
+  useCallback,
+  useRef,
+  useState,
+  useMemo,
+} from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
+
 import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
 import { useClient } from "../ClientContext";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
@@ -25,23 +33,23 @@ import styles from "./LoginPage.module.css";
 import { useInteractiveLogin } from "./useInteractiveLogin";
 import { usePageTitle } from "../usePageTitle";
 
-export function LoginPage() {
+export const LoginPage: FC = () => {
   usePageTitle("Login");
 
   const { setClient } = useClient();
-  const [_, login] = useInteractiveLogin();
-  const [homeserver, setHomeServer] = useState(defaultHomeserver);
-  const usernameRef = useRef();
-  const passwordRef = useRef();
+  const [, login] = useInteractiveLogin();
+  const homeserver = defaultHomeserver; // TODO: Make this configurable
+  const usernameRef = useRef<HTMLInputElement>();
+  const passwordRef = useRef<HTMLInputElement>();
   const history = useHistory();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<Error>();
 
   // TODO: Handle hitting login page with authenticated client
 
   const onSubmitLoginForm = useCallback(
-    (e) => {
+    (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
       setLoading(true);
 
@@ -60,13 +68,13 @@ export function LoginPage() {
           setLoading(false);
         });
     },
-    [login, location, history, homeserver]
+    [login, location, history, homeserver, setClient]
   );
 
   const homeserverHost = useMemo(() => {
     try {
       return new URL(homeserver).host;
-    } catch (_error) {
+    } catch (error) {
       return defaultHomeserverHost;
     }
   }, [homeserver]);
@@ -125,4 +133,4 @@ export function LoginPage() {
       </div>
     </>
   );
-}
+};
