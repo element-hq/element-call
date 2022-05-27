@@ -14,56 +14,57 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { useState, useEffect, useCallback, useMemo } from "react";
 import matrix, { InteractiveAuth } from "matrix-js-sdk/src/browser-index";
-import { useState, useEffect, useCallback, useRef } from "react";
+import { MatrixClient } from "matrix-js-sdk/src/client";
+
 import { initClient, defaultHomeserver } from "../matrix-utils";
+import { Session } from "../ClientContext";
 
-export function useInteractiveRegistration() {
-  const [state, setState] = useState({
-    privacyPolicyUrl: null,
-    loading: false,
-  });
+export const useInteractiveRegistration = (): [
+  string,
+  string,
+  (
+    username: string,
+    password: string,
+    displayName: string,
+    recaptchaResponse: string,
+    passwordlessUser?: boolean
+  ) => Promise<[MatrixClient, Session]>
+] => {
+  const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState<string>();
+  const [recaptchaKey, setRecaptchaKey] = useState<string>();
 
-  const authClientRef = useRef();
+  const authClient = useMemo(() => matrix.createClient(defaultHomeserver), []);
 
   useEffect(() => {
-    authClientRef.current = matrix.createClient(defaultHomeserver);
-
-    authClientRef.current.registerRequest({}).catch((error) => {
-      const privacyPolicyUrl =
-        error.data?.params["m.login.terms"]?.policies?.privacy_policy?.en?.url;
-
-      const recaptchaKey = error.data?.params["m.login.recaptcha"]?.public_key;
-
-      if (privacyPolicyUrl || recaptchaKey) {
-        setState((prev) => ({ ...prev, privacyPolicyUrl, recaptchaKey }));
-      }
+    authClient.registerRequest({}).catch((error) => {
+      setPrivacyPolicyUrl(
+        error.data?.params["m.login.terms"]?.policies?.privacy_policy?.en?.url
+      );
+      setRecaptchaKey(error.data?.params["m.login.recaptcha"]?.public_key);
     });
-  }, []);
+  }, [authClient]);
 
   const register = useCallback(
     async (
-      username,
-      password,
-      displayName,
-      recaptchaResponse,
-      passwordlessUser
-    ) => {
+      username: string,
+      password: string,
+      displayName: string,
+      recaptchaResponse: string,
+      passwordlessUser?: boolean
+    ): Promise<[MatrixClient, Session]> => {
       const interactiveAuth = new InteractiveAuth({
-        matrixClient: authClientRef.current,
-        busyChanged(loading) {
-          setState((prev) => ({ ...prev, loading }));
-        },
-        async doRequest(auth, _background) {
-          return authClientRef.current.registerRequest({
+        matrixClient: authClient,
+        doRequest: (auth) =>
+          authClient.registerRequest({
             username,
             password,
             auth: auth || undefined,
-          });
-        },
-        stateUpdated(nextStage, status) {
+          }),
+        stateUpdated: (nextStage, status) => {
           if (status.error) {
-            throw new Error(error);
+            throw new Error(status.error);
           }
 
           if (nextStage === "m.login.terms") {
@@ -79,6 +80,7 @@ export function useInteractiveRegistration() {
         },
       });
 
+      /* eslint-disable camelcase */
       const { user_id, access_token, device_id } =
         await interactiveAuth.attemptAuth();
 
@@ -91,21 +93,26 @@ export function useInteractiveRegistration() {
 
       await client.setDisplayName(displayName);
 
-      const session = { user_id, device_id, access_token, passwordlessUser };
+      const session: Session = {
+        user_id,
+        device_id,
+        access_token,
+        passwordlessUser,
+      };
+      /* eslint-enable camelcase */
 
       if (passwordlessUser) {
         session.tempPassword = password;
       }
 
       const user = client.getUser(client.getUserId());
-
       user.setRawDisplayName(displayName);
       user.setDisplayName(displayName);
 
       return [client, session];
     },
-    []
+    [authClient]
   );
 
-  return [state, register];
-}
+  return [privacyPolicyUrl, recaptchaKey, register];
+};
