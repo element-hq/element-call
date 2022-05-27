@@ -42,7 +42,7 @@ export function RegisterPage() {
   const [error, setError] = useState();
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [{ privacyPolicyUrl, recaptchaKey }, register] =
+  const [privacyPolicyUrl, recaptchaKey, register] =
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
