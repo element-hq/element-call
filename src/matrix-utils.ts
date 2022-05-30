@@ -6,8 +6,10 @@ import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
 import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
 import { ICreateClientOpts } from "matrix-js-sdk/src/matrix";
+import { ClientEvent } from "matrix-js-sdk/src/client";
 import { Visibility, Preset, GroupCallIntent } from "matrix-js-sdk";
 import { GroupCallType } from "matrix-js-sdk";
+import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 
 import IndexedDBWorker from "./IndexedDBWorker?worker";
 
@@ -17,22 +19,28 @@ export const defaultHomeserver =
 
 export const defaultHomeserverHost = new URL(defaultHomeserver).host;
 
-function waitForSync(client) {
+function waitForSync(client: MatrixClient) {
   return new Promise<void>((resolve, reject) => {
-    const onSync = (state, _old, data) => {
+    const onSync = (
+      state: SyncState,
+      _old: SyncState,
+      data: ISyncStateData
+    ) => {
       if (state === "PREPARED") {
         resolve();
-        client.removeListener("sync", onSync);
+        client.removeListener(ClientEvent.Sync, onSync);
       } else if (state === "ERROR") {
         reject(data?.error);
-        client.removeListener("sync", onSync);
+        client.removeListener(ClientEvent.Sync, onSync);
       }
     };
-    client.on("sync", onSync);
+    client.on(ClientEvent.Sync, onSync);
   });
 }
 
-export async function initClient(clientOptions: ICreateClientOpts) {
+export async function initClient(
+  clientOptions: ICreateClientOpts
+): Promise<MatrixClient> {
   // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
   window.OLM_OPTIONS = {};
   await Olm.init({ locateFile: () => olmWasmPath });
@@ -97,7 +105,7 @@ export async function initClient(clientOptions: ICreateClientOpts) {
   return client;
 }
 
-export function roomAliasFromRoomName(roomName) {
+export function roomAliasFromRoomName(roomName: string): string {
   return roomName
     .trim()
     .replace(/\s/g, "-")
@@ -105,7 +113,7 @@ export function roomAliasFromRoomName(roomName) {
     .toLowerCase();
 }
 
-export function roomNameFromRoomId(roomId) {
+export function roomNameFromRoomId(roomId: string): string {
   return roomId
     .match(/([^:]+):.*$/)[1]
     .substring(1)
@@ -117,7 +125,7 @@ export function roomNameFromRoomId(roomId) {
     .toLowerCase();
 }
 
-export function isLocalRoomId(roomId) {
+export function isLocalRoomId(roomId: string): boolean {
   if (!roomId) {
     return false;
   }
@@ -131,7 +139,11 @@ export function isLocalRoomId(roomId) {
   return parts[1] === defaultHomeserverHost;
 }
 
-export async function createRoom(client: MatrixClient, name, isPtt = false) {
+export async function createRoom(
+  client: MatrixClient,
+  name: string,
+  isPtt = false
+): Promise<string> {
   const createRoomResult = await client.createRoom({
     visibility: Visibility.Private,
     preset: Preset.PublicChat,
@@ -174,7 +186,7 @@ export async function createRoom(client: MatrixClient, name, isPtt = false) {
   return createRoomResult.room_id;
 }
 
-export function getRoomUrl(roomId) {
+export function getRoomUrl(roomId: string): string {
   if (roomId.startsWith("#")) {
     const [localPart, host] = roomId.replace("#", "").split(":");
 
@@ -188,7 +200,11 @@ export function getRoomUrl(roomId) {
   }
 }
 
-export function getAvatarUrl(client, mxcUrl, avatarSize = 96) {
+export function getAvatarUrl(
+  client: MatrixClient,
+  mxcUrl: string,
+  avatarSize = 96
+): string {
   const width = Math.floor(avatarSize * window.devicePixelRatio);
   const height = Math.floor(avatarSize * window.devicePixelRatio);
   return mxcUrl && client.mxcUrlToHttp(mxcUrl, width, height, "crop");
