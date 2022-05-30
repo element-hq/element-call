@@ -1,20 +1,24 @@
-import matrix from "matrix-js-sdk/src/browser-index";
-import {
-  GroupCallIntent,
-  GroupCallType,
-} from "matrix-js-sdk/src/browser-index";
-import IndexedDBWorker from "./IndexedDBWorker?worker";
 import Olm from "@matrix-org/olm";
 import olmWasmPath from "@matrix-org/olm/olm.wasm?url";
+import { IndexedDBStore } from "matrix-js-sdk/src/store/indexeddb";
+import { WebStorageSessionStore } from "matrix-js-sdk/src/store/session/webstorage";
+import { MemoryStore } from "matrix-js-sdk/src/store/memory";
+import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
+import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
+import { ICreateClientOpts } from "matrix-js-sdk/src/matrix";
+import { Visibility, Preset, GroupCallIntent } from "matrix-js-sdk";
+import { GroupCallType } from "matrix-js-sdk";
+
+import IndexedDBWorker from "./IndexedDBWorker?worker";
 
 export const defaultHomeserver =
-  import.meta.env.VITE_DEFAULT_HOMESERVER ||
+  (import.meta.env.VITE_DEFAULT_HOMESERVER as string) ??
   `${window.location.protocol}//${window.location.host}`;
 
 export const defaultHomeserverHost = new URL(defaultHomeserver).host;
 
 function waitForSync(client) {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     const onSync = (state, _old, data) => {
       if (state === "PREPARED") {
         resolve();
@@ -28,7 +32,7 @@ function waitForSync(client) {
   });
 }
 
-export async function initClient(clientOptions) {
+export async function initClient(clientOptions: ICreateClientOpts) {
   // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
   window.OLM_OPTIONS = {};
   await Olm.init({ locateFile: () => olmWasmPath });
@@ -39,10 +43,10 @@ export async function initClient(clientOptions) {
     indexedDB = window.indexedDB;
   } catch (e) {}
 
-  const storeOpts = {};
+  const storeOpts = {} as ICreateClientOpts;
 
   if (indexedDB && localStorage && !import.meta.env.DEV) {
-    storeOpts.store = new matrix.IndexedDBStore({
+    storeOpts.store = new IndexedDBStore({
       indexedDB: window.indexedDB,
       localStorage: window.localStorage,
       dbName: "element-call-sync",
@@ -51,17 +55,17 @@ export async function initClient(clientOptions) {
   }
 
   if (localStorage) {
-    storeOpts.sessionStore = new matrix.WebStorageSessionStore(localStorage);
+    storeOpts.sessionStore = new WebStorageSessionStore(localStorage);
   }
 
   if (indexedDB) {
-    storeOpts.cryptoStore = new matrix.IndexedDBCryptoStore(
+    storeOpts.cryptoStore = new IndexedDBCryptoStore(
       indexedDB,
       "matrix-js-sdk:crypto"
     );
   }
 
-  const client = matrix.createClient({
+  const client = createClient({
     ...storeOpts,
     ...clientOptions,
     useAuthorizationHeader: true,
@@ -74,7 +78,7 @@ export async function initClient(clientOptions) {
       "Error starting matrix client store. Falling back to memory store.",
       error
     );
-    client.store = new matrix.MemoryStore({ localStorage });
+    client.store = new MemoryStore({ localStorage });
     await client.store.startup();
   }
 
@@ -127,10 +131,10 @@ export function isLocalRoomId(roomId) {
   return parts[1] === defaultHomeserverHost;
 }
 
-export async function createRoom(client, name, isPtt = false) {
-  const { room_id, room_alias } = await client.createRoom({
-    visibility: "private",
-    preset: "public_chat",
+export async function createRoom(client: MatrixClient, name, isPtt = false) {
+  const createRoomResult = await client.createRoom({
+    visibility: Visibility.Private,
+    preset: Preset.PublicChat,
     name,
     room_alias_name: roomAliasFromRoomName(name),
     power_level_content_override: {
@@ -161,13 +165,13 @@ export async function createRoom(client, name, isPtt = false) {
   console.log({ isPtt });
 
   await client.createGroupCall(
-    room_id,
+    createRoomResult.room_id,
     isPtt ? GroupCallType.Voice : GroupCallType.Video,
     isPtt,
     GroupCallIntent.Prompt
   );
 
-  return room_alias || room_id;
+  return createRoomResult.room_id;
 }
 
 export function getRoomUrl(roomId) {
