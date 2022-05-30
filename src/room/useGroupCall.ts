@@ -18,10 +18,33 @@ import { useCallback, useEffect, useState } from "react";
 import {
   GroupCallEvent,
   GroupCallState,
+  GroupCall,
 } from "matrix-js-sdk/src/webrtc/groupCall";
+import { MatrixCall } from "matrix-js-sdk/src/webrtc/call";
+import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
+import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+
 import { usePageUnload } from "./usePageUnload";
 
-export function useGroupCall(groupCall) {
+interface State {
+  state: GroupCallState;
+  calls: MatrixCall[];
+  localCallFeed: CallFeed;
+  activeSpeaker: string;
+  userMediaFeeds: CallFeed[];
+  error: Error;
+  microphoneMuted: boolean;
+  localVideoMuted: boolean;
+  screenshareFeeds: CallFeed[];
+  localScreenshareFeed: CallFeed;
+  localDesktopCapturerSourceId: string;
+  isScreensharing: boolean;
+  requestingScreenshare: boolean;
+  participants: RoomMember[];
+  hasLocalParticipant: boolean;
+}
+
+export function useGroupCall(groupCall: GroupCall) {
   const [
     {
       state,
@@ -41,20 +64,25 @@ export function useGroupCall(groupCall) {
       requestingScreenshare,
     },
     setState,
-  ] = useState({
+  ] = useState<State>({
     state: GroupCallState.LocalCallFeedUninitialized,
     calls: [],
+    localCallFeed: null,
+    activeSpeaker: null,
     userMediaFeeds: [],
+    error: null,
     microphoneMuted: false,
     localVideoMuted: false,
-    screenshareFeeds: [],
     isScreensharing: false,
+    screenshareFeeds: [],
+    localScreenshareFeed: null,
+    localDesktopCapturerSourceId: null,
     requestingScreenshare: false,
     participants: [],
     hasLocalParticipant: false,
   });
 
-  const updateState = (state) =>
+  const updateState = (state: Partial<State>) =>
     setState((prevState) => ({ ...prevState, ...state }));
 
   useEffect(() => {
@@ -75,25 +103,28 @@ export function useGroupCall(groupCall) {
       });
     }
 
-    function onUserMediaFeedsChanged(userMediaFeeds) {
+    function onUserMediaFeedsChanged(userMediaFeeds: CallFeed[]): void {
       updateState({
         userMediaFeeds: [...userMediaFeeds],
       });
     }
 
-    function onScreenshareFeedsChanged(screenshareFeeds) {
+    function onScreenshareFeedsChanged(screenshareFeeds: CallFeed[]): void {
       updateState({
         screenshareFeeds: [...screenshareFeeds],
       });
     }
 
-    function onActiveSpeakerChanged(activeSpeaker) {
+    function onActiveSpeakerChanged(activeSpeaker: string): void {
       updateState({
         activeSpeaker: activeSpeaker,
       });
     }
 
-    function onLocalMuteStateChanged(microphoneMuted, localVideoMuted) {
+    function onLocalMuteStateChanged(
+      microphoneMuted: boolean,
+      localVideoMuted: boolean
+    ): void {
       updateState({
         microphoneMuted,
         localVideoMuted,
@@ -101,10 +132,10 @@ export function useGroupCall(groupCall) {
     }
 
     function onLocalScreenshareStateChanged(
-      isScreensharing,
-      localScreenshareFeed,
-      localDesktopCapturerSourceId
-    ) {
+      isScreensharing: boolean,
+      localScreenshareFeed: CallFeed,
+      localDesktopCapturerSourceId: string
+    ): void {
       updateState({
         isScreensharing,
         localScreenshareFeed,
@@ -112,13 +143,13 @@ export function useGroupCall(groupCall) {
       });
     }
 
-    function onCallsChanged(calls) {
+    function onCallsChanged(calls: MatrixCall[]): void {
       updateState({
         calls: [...calls],
       });
     }
 
-    function onParticipantsChanged(participants) {
+    function onParticipantsChanged(participants: RoomMember[]): void {
       updateState({
         participants: [...participants],
         hasLocalParticipant: groupCall.hasLocalParticipant(),
