@@ -7,8 +7,11 @@ import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-c
 import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
 import { ICreateClientOpts } from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
-import { Visibility, Preset, GroupCallIntent } from "matrix-js-sdk";
-import { GroupCallType } from "matrix-js-sdk";
+import { Visibility, Preset } from "matrix-js-sdk/src/@types/partials";
+import {
+  GroupCallIntent,
+  GroupCallType,
+} from "matrix-js-sdk/src/webrtc/groupCall";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 
 import IndexedDBWorker from "./IndexedDBWorker?worker";
