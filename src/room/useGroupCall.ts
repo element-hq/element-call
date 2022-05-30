@@ -26,6 +26,30 @@ import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 
 import { usePageUnload } from "./usePageUnload";
 
+export interface UseGroupCallType {
+  state: GroupCallState;
+  calls: MatrixCall[];
+  localCallFeed: CallFeed;
+  activeSpeaker: string;
+  userMediaFeeds: CallFeed[];
+  microphoneMuted: boolean;
+  localVideoMuted: boolean;
+  error: Error;
+  initLocalCallFeed: () => void;
+  enter: () => void;
+  leave: () => void;
+  toggleLocalVideoMuted: () => void;
+  toggleMicrophoneMuted: () => void;
+  toggleScreensharing: () => void;
+  requestingScreenshare: boolean;
+  isScreensharing: boolean;
+  screenshareFeeds: CallFeed[];
+  localScreenshareFeed: CallFeed;
+  localDesktopCapturerSourceId: string;
+  participants: RoomMember[];
+  hasLocalParticipant: boolean;
+}
+
 interface State {
   state: GroupCallState;
   calls: MatrixCall[];
@@ -44,7 +68,7 @@ interface State {
   hasLocalParticipant: boolean;
 }
 
-export function useGroupCall(groupCall: GroupCall) {
+export function useGroupCall(groupCall: GroupCall): UseGroupCallType {
   const [
     {
       state,
