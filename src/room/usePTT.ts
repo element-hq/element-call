@@ -30,6 +30,17 @@ function getActiveSpeakerFeed(
 ): CallFeed | null {
   const activeSpeakerFeeds = feeds.filter((f) => !f.isAudioMuted());
 
+  // make sure the feeds are in a deterministic order so every client picks
+  // the same one as the active speaker
+  const collator = new Intl.Collator("en", {
+    sensitivity: "variant",
+    usage: "sort",
+    ignorePunctuation: false,
+  });
+  activeSpeakerFeeds.sort((a: CallFeed, b: CallFeed): number =>
+    collator.compare(a.userId, b.userId)
+  );
+
   let activeSpeakerFeed = null;
   let highestPowerLevel = null;
   for (const feed of activeSpeakerFeeds) {
