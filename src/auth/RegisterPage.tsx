@@ -1,5 +1,5 @@
 /*
-Copyright 2021 New Vector Ltd
+Copyright 2021-2022 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,10 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, {
+  FC,
+  FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 import { useHistory, useLocation } from "react-router-dom";
 import { captureException } from "@sentry/react";
 import { sleep } from "matrix-js-sdk/src/utils";
+
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { useClient } from "../ClientContext";
@@ -30,45 +38,34 @@ import { useRecaptcha } from "./useRecaptcha";
 import { Caption, Link } from "../typography/Typography";
 import { usePageTitle } from "../usePageTitle";
 
-export function RegisterPage() {
+export const RegisterPage: FC = () => {
   usePageTitle("Register");
 
   const { loading, isAuthenticated, isPasswordlessUser, client, setClient } =
     useClient();
-  const confirmPasswordRef = useRef();
+  const confirmPasswordRef = useRef<HTMLInputElement>();
   const history = useHistory();
   const location = useLocation();
   const [registering, setRegistering] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<Error>();
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [{ privacyPolicyUrl, recaptchaKey }, register] =
+  const [privacyPolicyUrl, recaptchaKey, register] =
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const onSubmitRegisterForm = useCallback(
-    (e) => {
+    (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
-      const data = new FormData(e.target);
-      const userName = data.get("userName");
-      const password = data.get("password");
-      const passwordConfirmation = data.get("passwordConfirmation");
+      const data = new FormData(e.target as HTMLFormElement);
+      const userName = data.get("userName") as string;
+      const password = data.get("password") as string;
+      const passwordConfirmation = data.get("passwordConfirmation") as string;
 
-      if (password !== passwordConfirmation) {
-        return;
-      }
+      if (password !== passwordConfirmation) return;
 
-      async function submit() {
+      const submit = async () => {
         setRegistering(true);
-
-        let roomIds;
-
-        if (client && isPasswordlessUser) {
-          const groupCalls = client.groupCallEventHandler.groupCalls.values();
-          roomIds = Array.from(groupCalls).map(
-            (groupCall) => groupCall.room.roomId
-          );
-        }
 
         const recaptchaResponse = await execute();
         const [newClient, session] = await register(
@@ -78,8 +75,11 @@ export function RegisterPage() {
           recaptchaResponse
         );
 
-        if (roomIds) {
-          for (const roomId of roomIds) {
+        if (client && isPasswordlessUser) {
+          // Migrate the user's rooms
+          for (const groupCall of client.groupCallEventHandler.groupCalls.values()) {
+            const roomId = groupCall.room.roomId;
+
             try {
               await newClient.joinRoom(roomId);
             } catch (error) {
@@ -95,11 +95,11 @@ export function RegisterPage() {
         }
 
         setClient(newClient, session);
-      }
+      };
 
       submit()
         .then(() => {
-          if (location.state && location.state.from) {
+          if (location.state?.from) {
             history.push(location.state.from);
           } else {
             history.push("/");
@@ -111,18 +111,23 @@ export function RegisterPage() {
           reset();
         });
     },
-    [register, location, history, isPasswordlessUser, reset, execute, client]
+    [
+      register,
+      location,
+      history,
+      isPasswordlessUser,
+      reset,
+      execute,
+      client,
+      setClient,
+    ]
   );
 
   useEffect(() => {
-    if (!confirmPasswordRef.current) {
-      return;
-    }
-
     if (password && passwordConfirmation && password !== passwordConfirmation) {
-      confirmPasswordRef.current.setCustomValidity("Passwords must match");
+      confirmPasswordRef.current?.setCustomValidity("Passwords must match");
     } else {
-      confirmPasswordRef.current.setCustomValidity("");
+      confirmPasswordRef.current?.setCustomValidity("");
     }
   }, [password, passwordConfirmation]);
 
@@ -130,7 +135,7 @@ export function RegisterPage() {
     if (!loading && isAuthenticated && !isPasswordlessUser && !registering) {
       history.push("/");
     }
-  }, [history, isAuthenticated, isPasswordlessUser, registering]);
+  }, [loading, history, isAuthenticated, isPasswordlessUser, registering]);
 
   if (loading) {
     return <LoadingView />;
@@ -218,4 +223,4 @@ export function RegisterPage() {
       </div>
     </>
   );
-}
+};
