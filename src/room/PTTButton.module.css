@@ -9,12 +9,14 @@
   background-color: #21262c;
   position: relative;
   padding: 0;
+  cursor: pointer;
 }
 
 .talking {
   background-color: #0dbd8b;
   box-shadow: 0px 0px 0px 17px rgba(13, 189, 139, 0.2),
     0px 0px 0px 34px rgba(13, 189, 139, 0.2);
+  cursor: unset;
 }
 
 .error {
