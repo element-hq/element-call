@@ -55,7 +55,8 @@ export function useMediaStream(stream, audioOutputDevice, mute = false) {
       mediaRef.current !== undefined
     ) {
       console.log(`useMediaStream setSinkId ${audioOutputDevice}`);
-      mediaRef.current.setSinkId(audioOutputDevice);
+      // Chrome for Android doesn't support this
+      mediaRef.current.setSinkId?.(audioOutputDevice);
     }
   }, [audioOutputDevice]);
 
