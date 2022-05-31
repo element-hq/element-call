@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import matrix, { InteractiveAuth } from "matrix-js-sdk/src/browser-index";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 
@@ -35,16 +35,19 @@ export const useInteractiveRegistration = (): [
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState<string>();
   const [recaptchaKey, setRecaptchaKey] = useState<string>();
 
-  const authClient = useMemo(() => matrix.createClient(defaultHomeserver), []);
+  const authClient = useRef<MatrixClient>();
+  if (!authClient.current) {
+    authClient.current = matrix.createClient(defaultHomeserver);
+  }
 
   useEffect(() => {
-    authClient.registerRequest({}).catch((error) => {
+    authClient.current.registerRequest({}).catch((error) => {
       setPrivacyPolicyUrl(
         error.data?.params["m.login.terms"]?.policies?.privacy_policy?.en?.url
       );
       setRecaptchaKey(error.data?.params["m.login.recaptcha"]?.public_key);
     });
-  }, [authClient]);
+  }, []);
 
   const register = useCallback(
     async (
@@ -55,9 +58,9 @@ export const useInteractiveRegistration = (): [
       passwordlessUser?: boolean
     ): Promise<[MatrixClient, Session]> => {
       const interactiveAuth = new InteractiveAuth({
-        matrixClient: authClient,
+        matrixClient: authClient.current,
         doRequest: (auth) =>
-          authClient.registerRequest({
+          authClient.current.registerRequest({
             username,
             password,
             auth: auth || undefined,
@@ -111,7 +114,7 @@ export const useInteractiveRegistration = (): [
 
       return [client, session];
     },
-    [authClient]
+    []
   );
 
   return [privacyPolicyUrl, recaptchaKey, register];
