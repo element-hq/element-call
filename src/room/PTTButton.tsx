@@ -16,6 +16,7 @@ limitations under the License.
 
 import React, { useCallback, useEffect, useState, createRef } from "react";
 import classNames from "classnames";
+import { useSpring, animated } from "@react-spring/web";
 
 import styles from "./PTTButton.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
@@ -27,6 +28,7 @@ interface Props {
   activeSpeakerDisplayName: string;
   activeSpeakerAvatarUrl: string;
   activeSpeakerIsLocalUser: boolean;
+  activeSpeakerVolume: number;
   size: number;
   startTalking: () => void;
   stopTalking: () => void;
@@ -44,6 +46,7 @@ export const PTTButton: React.FC<Props> = ({
   activeSpeakerDisplayName,
   activeSpeakerAvatarUrl,
   activeSpeakerIsLocalUser,
+  activeSpeakerVolume,
   size,
   startTalking,
   stopTalking,
@@ -130,12 +133,32 @@ export const PTTButton: React.FC<Props> = ({
       );
     };
   }, [onWindowMouseUp, onWindowTouchEnd, onButtonTouchStart, buttonRef]);
+
+  const { shadow } = useSpring({
+    shadow: (Math.max(activeSpeakerVolume, -70) + 70) * 0.7,
+    config: {
+      clamp: true,
+      tension: 300,
+    },
+  });
+  const shadowColor = showTalkOverError
+    ? "rgba(255, 91, 85, 0.2)"
+    : "rgba(13, 189, 139, 0.2)";
+
   return (
-    <button
+    <animated.button
       className={classNames(styles.pttButton, {
         [styles.talking]: activeSpeakerUserId,
         [styles.error]: showTalkOverError,
       })}
+      style={{
+        boxShadow: shadow.to(
+          (s) =>
+            `0px 0px 0px ${s}px ${shadowColor}, 0px 0px 0px ${
+              2 * s
+            }px ${shadowColor}`
+        ),
+      }}
       onMouseDown={onButtonMouseDown}
       ref={buttonRef}
     >
@@ -154,6 +177,6 @@ export const PTTButton: React.FC<Props> = ({
           className={styles.avatar}
         />
       )}
-    </button>
+    </animated.button>
   );
 };
