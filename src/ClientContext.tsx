@@ -1,5 +1,5 @@
 /*
-Copyright 2021 New Vector Ltd
+Copyright 2021-2022 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import React, {
+  FC,
   useCallback,
   useEffect,
   useState,
@@ -23,17 +24,59 @@ import React, {
   useContext,
 } from "react";
 import { useHistory } from "react-router-dom";
+import { MatrixClient, ClientEvent } from "matrix-js-sdk/src/client";
+import { MatrixEvent } from "matrix-js-sdk/src/models/event";
+
 import { ErrorView } from "./FullScreenView";
 import { initClient, defaultHomeserver } from "./matrix-utils";
 
-const ClientContext = createContext();
+declare global {
+  interface Window {
+    matrixclient: MatrixClient;
+  }
+}
 
-export function ClientProvider({ children }) {
+export interface Session {
+  user_id: string;
+  device_id: string;
+  access_token: string;
+  passwordlessUser: boolean;
+  tempPassword?: string;
+}
+
+const loadSession = (): Session => {
+  const data = localStorage.getItem("matrix-auth-store");
+  if (data) return JSON.parse(data);
+  return null;
+};
+const saveSession = (session: Session) =>
+  localStorage.setItem("matrix-auth-store", JSON.stringify(session));
+const clearSession = () => localStorage.removeItem("matrix-auth-store");
+
+interface ClientState {
+  loading: boolean;
+  isAuthenticated: boolean;
+  isPasswordlessUser: boolean;
+  client: MatrixClient;
+  userName: string;
+  changePassword: (password: string) => Promise<void>;
+  logout: () => void;
+  setClient: (client: MatrixClient, session: Session) => void;
+}
+
+const ClientContext = createContext<ClientState>(null);
+
+type ClientProviderState = Omit<
+  ClientState,
+  "changePassword" | "logout" | "setClient"
+> & { error?: Error };
+
+export const ClientProvider: FC = ({ children }) => {
   const history = useHistory();
   const [
     { loading, isAuthenticated, isPasswordlessUser, client, userName, error },
     setState,
-  ] = useState({
+  ] = useState<ClientProviderState>({
     loading: true,
     isAuthenticated: false,
     isPasswordlessUser: false,
@@ -43,18 +86,16 @@ export function ClientProvider({ children }) {
   });
 
   useEffect(() => {
-    async function restore() {
+    const restore = async (): Promise<
+      Pick<ClientProviderState, "client" | "isPasswordlessUser">
+    > => {
       try {
-        const authStore = localStorage.getItem("matrix-auth-store");
+        const session = loadSession();
 
-        if (authStore) {
-          const {
-            user_id,
-            device_id,
-            access_token,
-            passwordlessUser,
-            tempPassword,
-          } = JSON.parse(authStore);
+        if (session) {
+          /* eslint-disable camelcase */
+          const { user_id, device_id, access_token, passwordlessUser } =
+            session;
 
           const client = await initClient({
             baseUrl: defaultHomeserver,
@@ -62,37 +103,26 @@ export function ClientProvider({ children }) {
             userId: user_id,
             deviceId: device_id,
           });
+          /* eslint-enable camelcase */
 
-          localStorage.setItem(
-            "matrix-auth-store",
-            JSON.stringify({
-              user_id,
-              device_id,
-              access_token,
-
-              passwordlessUser,
-              tempPassword,
-            })
-          );
-
-          return { client, passwordlessUser };
+          return { client, isPasswordlessUser: passwordlessUser };
         }
 
-        return { client: undefined };
+        return { client: undefined, isPasswordlessUser: false };
       } catch (err) {
         console.error(err);
-        localStorage.removeItem("matrix-auth-store");
+        clearSession();
         throw err;
       }
-    }
+    };
 
     restore()
-      .then(({ client, passwordlessUser }) => {
+      .then(({ client, isPasswordlessUser }) => {
         setState({
           client,
           loading: false,
-          isAuthenticated: !!client,
-          isPasswordlessUser: !!passwordlessUser,
+          isAuthenticated: Boolean(client),
+          isPasswordlessUser,
           userName: client?.getUserIdLocalpart(),
         });
       })
@@ -108,31 +138,23 @@ export function ClientProvider({ children }) {
   }, []);
 
   const changePassword = useCallback(
-    async (password) => {
-      const { tempPassword, passwordlessUser, ...existingSession } = JSON.parse(
-        localStorage.getItem("matrix-auth-store")
-      );
+    async (password: string) => {
+      const { tempPassword, ...session } = loadSession();
 
       await client.setPassword(
         {
           type: "m.login.password",
           identifier: {
             type: "m.id.user",
-            user: existingSession.user_id,
+            user: session.user_id,
           },
-          user: existingSession.user_id,
+          user: session.user_id,
           password: tempPassword,
         },
         password
       );
 
-      localStorage.setItem(
-        "matrix-auth-store",
-        JSON.stringify({
-          ...existingSession,
-          passwordlessUser: false,
-        })
-      );
+      saveSession({ ...session, passwordlessUser: false });
 
       setState({
         client,
@@ -146,23 +168,23 @@ export function ClientProvider({ children }) {
   );
 
   const setClient = useCallback(
-    (newClient, session) => {
+    (newClient: MatrixClient, session: Session) => {
       if (client && client !== newClient) {
         client.stopClient();
       }
 
       if (newClient) {
-        localStorage.setItem("matrix-auth-store", JSON.stringify(session));
+        saveSession(session);
 
         setState({
           client: newClient,
           loading: false,
           isAuthenticated: true,
-          isPasswordlessUser: !!session.passwordlessUser,
+          isPasswordlessUser: session.passwordlessUser,
           userName: newClient.getUserIdLocalpart(),
         });
       } else {
-        localStorage.removeItem("matrix-auth-store");
+        clearSession();
 
         setState({
           client: undefined,
@@ -177,29 +199,23 @@ export function ClientProvider({ children }) {
   );
 
   const logout = useCallback(() => {
-    localStorage.removeItem("matrix-auth-store");
-    window.location = "/";
+    clearSession();
+    history.push("/");
   }, [history]);
 
   useEffect(() => {
     if (client) {
       const loadTime = Date.now();
 
-      const onToDeviceEvent = (event) => {
-        if (event.getType() !== "org.matrix.call_duplicate_session") {
-          return;
-        }
+      const onToDeviceEvent = (event: MatrixEvent) => {
+        if (event.getType() !== "org.matrix.call_duplicate_session") return;
 
         const content = event.getContent();
 
-        if (content.session_id === client.getSessionId()) {
-          return;
-        }
+        if (content.session_id === client.getSessionId()) return;
 
         if (content.timestamp > loadTime) {
-          if (client) {
-            client.stopClient();
-          }
+          client?.stopClient();
 
           setState((prev) => ({
             ...prev,
@@ -210,7 +226,7 @@ export function ClientProvider({ children }) {
         }
       };
 
-      client.on("toDeviceEvent", onToDeviceEvent);
+      client.on(ClientEvent.ToDeviceEvent, onToDeviceEvent);
 
       client.sendToDevice("org.matrix.call_duplicate_session", {
         [client.getUserId()]: {
@@ -219,12 +235,12 @@ export function ClientProvider({ children }) {
       });
 
       return () => {
-        client.removeListener("toDeviceEvent", onToDeviceEvent);
+        client?.removeListener(ClientEvent.ToDeviceEvent, onToDeviceEvent);
       };
     }
   }, [client]);
 
-  const context = useMemo(
+  const context = useMemo<ClientState>(
     () => ({
       loading,
       isAuthenticated,
@@ -258,8 +274,6 @@ export function ClientProvider({ children }) {
   return (
     <ClientContext.Provider value={context}>{children}</ClientContext.Provider>
   );
-}
+};
 
-export function useClient() {
-  return useContext(ClientContext);
-}
+export const useClient = () => useContext(ClientContext);
