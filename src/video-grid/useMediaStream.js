@@ -84,7 +84,7 @@ export const useSpatialMediaStream = (
 ) => {
   const tileRef = useRef();
   const [spatialAudio] = useSpatialAudio();
-  // If spatial audio is enabled, we handle mute state separately from the video element
+  // If spatial audio is enabled, we handle audio separately from the video element
   const mediaRef = useMediaStream(
     stream,
     audioOutputDevice,
@@ -95,15 +95,22 @@ export const useSpatialMediaStream = (
   if (!pannerNodeRef.current) {
     pannerNodeRef.current = new PannerNode(audioContext, {
       panningModel: "HRTF",
+      refDistance: 3,
     });
   }
 
+  const sourceRef = useRef();
+
   useEffect(() => {
-    if (spatialAudio && tileRef.current && mediaRef.current && !mute) {
+    if (spatialAudio && tileRef.current && !mute) {
+      if (!sourceRef.current) {
+        sourceRef.current = audioContext.createMediaStreamSource(stream);
+      }
+
       const tile = tileRef.current;
+      const source = sourceRef.current;
       const pannerNode = pannerNodeRef.current;
 
-      const source = audioContext.createMediaElementSource(mediaRef.current);
       const updatePosition = () => {
         const bounds = tile.getBoundingClientRect();
         const windowSize = Math.max(window.innerWidth, window.innerHeight);
@@ -116,6 +123,7 @@ export const useSpatialMediaStream = (
         pannerNodeRef.current.positionZ.value = -2;
       };
 
+      updatePosition();
       source.connect(pannerNode);
       pannerNode.connect(audioContext.destination);
       // HACK: We abuse the CSS transitionrun event to detect when the tile
@@ -129,7 +137,7 @@ export const useSpatialMediaStream = (
         pannerNode.disconnect();
       };
     }
-  }, [spatialAudio, audioContext, mediaRef, mute]);
+  }, [stream, spatialAudio, audioContext, mute]);
 
   return [tileRef, mediaRef];
 };
