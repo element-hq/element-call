@@ -15,10 +15,11 @@ limitations under the License.
 */
 
 import { useCallback, useEffect, useState } from "react";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { MatrixClient, ClientEvent } from "matrix-js-sdk/src/client";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
 import { logger } from "matrix-js-sdk/src/logger";
+import { SyncState } from "matrix-js-sdk/src/sync";
 
 import { PlayClipFunction, PTTClipID } from "../sound/usePttSounds";
 
@@ -29,6 +30,21 @@ function getActiveSpeakerFeed(
   groupCall: GroupCall
 ): CallFeed | null {
   const activeSpeakerFeeds = feeds.filter((f) => !f.isAudioMuted());
+
+  // make sure the feeds are in a deterministic order so every client picks
+  // the same one as the active speaker. The custom sort function sorts
+  // by user ID, so needs a collator of some kind to compare. We make a
+  // specific one to help ensure every client sorts the same way
+  // although of course user IDs shouldn't contain accented characters etc.
+  // anyway).
+  const collator = new Intl.Collator("en", {
+    sensitivity: "variant",
+    usage: "sort",
+    ignorePunctuation: false,
+  });
+  activeSpeakerFeeds.sort((a: CallFeed, b: CallFeed): number =>
+    collator.compare(a.userId, b.userId)
+  );
 
   let activeSpeakerFeed = null;
   let highestPowerLevel = null;
@@ -49,9 +65,15 @@ export interface PTTState {
   talkOverEnabled: boolean;
   setTalkOverEnabled: (boolean) => void;
   activeSpeakerUserId: string;
+  activeSpeakerVolume: number;
   startTalking: () => void;
   stopTalking: () => void;
   transmitBlocked: boolean;
+  // connected is actually an indication of whether we're connected to the HS
+  // (ie. the client's syncing state) rather than media connection, since
+  // it's peer to peer so we can't really say which peer is 'disconnected' if
+  // there's only one other person in the call and they've lost Internet.
+  connected: boolean;
 }
 
 export const usePTT = (
@@ -87,6 +109,7 @@ export const usePTT = (
       isAdmin,
       talkOverEnabled,
       activeSpeakerUserId,
+      activeSpeakerVolume,
       transmitBlocked,
     },
     setState,
@@ -100,6 +123,7 @@ export const usePTT = (
       talkOverEnabled: false,
       pttButtonHeld: false,
       activeSpeakerUserId: activeSpeakerFeed ? activeSpeakerFeed.userId : null,
+      activeSpeakerVolume: -Infinity,
       transmitBlocked: false,
     };
   });
@@ -131,15 +155,11 @@ export const usePTT = (
       playClip(PTTClipID.BLOCKED);
     }
 
-    setState((prevState) => {
-      return {
-        ...prevState,
-        activeSpeakerUserId: activeSpeakerFeed
-          ? activeSpeakerFeed.userId
-          : null,
-        transmitBlocked: blocked,
-      };
-    });
+    setState((prevState) => ({
+      ...prevState,
+      activeSpeakerUserId: activeSpeakerFeed ? activeSpeakerFeed.userId : null,
+      transmitBlocked: blocked,
+    }));
   }, [
     playClip,
     groupCall,
@@ -152,7 +172,7 @@ export const usePTT = (
 
   useEffect(() => {
     for (const callFeed of userMediaFeeds) {
-      callFeed.addListener(CallFeedEvent.MuteStateChanged, onMuteStateChanged);
+      callFeed.on(CallFeedEvent.MuteStateChanged, onMuteStateChanged);
     }
 
     const activeSpeakerFeed = getActiveSpeakerFeed(userMediaFeeds, groupCall);
@@ -164,13 +184,29 @@ export const usePTT = (
 
     return () => {
       for (const callFeed of userMediaFeeds) {
-        callFeed.removeListener(
-          CallFeedEvent.MuteStateChanged,
-          onMuteStateChanged
-        );
+        callFeed.off(CallFeedEvent.MuteStateChanged, onMuteStateChanged);
       }
     };
   }, [userMediaFeeds, onMuteStateChanged, groupCall]);
+
+  const onVolumeChanged = useCallback((volume: number) => {
+    setState((prevState) => ({
+      ...prevState,
+      activeSpeakerVolume: volume,
+    }));
+  }, []);
+
+  useEffect(() => {
+    const activeSpeakerFeed = getActiveSpeakerFeed(userMediaFeeds, groupCall);
+    activeSpeakerFeed?.on(CallFeedEvent.VolumeChanged, onVolumeChanged);
+    return () => {
+      activeSpeakerFeed?.off(CallFeedEvent.VolumeChanged, onVolumeChanged);
+      setState((prevState) => ({
+        ...prevState,
+        activeSpeakerVolume: -Infinity,
+      }));
+    };
+  }, [activeSpeakerUserId, onVolumeChanged, userMediaFeeds, groupCall]);
 
   const startTalking = useCallback(async () => {
     if (pttButtonHeld) return;
@@ -210,6 +246,17 @@ export const usePTT = (
 
     setMicMuteWrapper(true);
   }, [setMicMuteWrapper]);
+
+  // separate state for connected: we set it separately from other things
+  // in the client sync callback
+  const [connected, setConnected] = useState(true);
+
+  const onClientSync = useCallback(
+    (syncState: SyncState) => {
+      setConnected(syncState !== SyncState.Error);
+    },
+    [setConnected]
+  );
 
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
@@ -260,7 +307,17 @@ export const usePTT = (
     pttButtonHeld,
     enablePTTButton,
     setMicMuteWrapper,
+    client,
+    onClientSync,
   ]);
+
+  useEffect(() => {
+    client.on(ClientEvent.Sync, onClientSync);
+
+    return () => {
+      client.removeListener(ClientEvent.Sync, onClientSync);
+    };
+  }, [client, onClientSync]);
 
   const setTalkOverEnabled = useCallback((talkOverEnabled) => {
     setState((prevState) => ({
@@ -275,8 +332,10 @@ export const usePTT = (
     talkOverEnabled,
     setTalkOverEnabled,
     activeSpeakerUserId,
+    activeSpeakerVolume,
     startTalking,
     stopTalking,
     transmitBlocked,
+    connected,
   };
 };

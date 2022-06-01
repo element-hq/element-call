@@ -22,7 +22,7 @@ import { useHistory } from "react-router-dom";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { randomString } from "matrix-js-sdk/src/randomstring";
-import { createRoom, roomAliasFromRoomName } from "../matrix-utils";
+import { createRoom, roomAliasLocalpartFromRoomName } from "../matrix-utils";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
@@ -39,7 +39,7 @@ export function UnauthenticatedView() {
   const [callType, setCallType] = useState(CallType.Video);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
-  const [{ privacyPolicyUrl, recaptchaKey }, register] =
+  const [privacyPolicyUrl, recaptchaKey, register] =
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
@@ -75,7 +75,7 @@ export function UnauthenticatedView() {
           if (error.errcode === "M_ROOM_IN_USE") {
             setOnFinished(() => () => {
               setClient(client, session);
-              const aliasLocalpart = roomAliasFromRoomName(roomName);
+              const aliasLocalpart = roomAliasLocalpartFromRoomName(roomName);
               const [, serverName] = client.getUserId().split(":");
               history.push(`/room/#${aliasLocalpart}:${serverName}`);
             });

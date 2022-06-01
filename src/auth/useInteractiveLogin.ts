@@ -14,35 +14,44 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { useCallback } from "react";
 import matrix, { InteractiveAuth } from "matrix-js-sdk/src/browser-index";
-import { useState, useCallback } from "react";
+import { MatrixClient } from "matrix-js-sdk";
+
 import { initClient, defaultHomeserver } from "../matrix-utils";
+import { Session } from "../ClientContext";
 
-export function useInteractiveLogin() {
-  const [state, setState] = useState({ loading: false });
-
-  const auth = useCallback(async (homeserver, username, password) => {
+export const useInteractiveLogin = () =>
+  useCallback<
+    (
+      homeserver: string,
+      username: string,
+      password: string
+    ) => Promise<[MatrixClient, Session]>
+  >(async (homeserver: string, username: string, password: string) => {
     const authClient = matrix.createClient(homeserver);
 
     const interactiveAuth = new InteractiveAuth({
       matrixClient: authClient,
-      busyChanged(loading) {
-        setState((prev) => ({ ...prev, loading }));
-      },
-      async doRequest(_auth, _background) {
-        return authClient.login("m.login.password", {
+      doRequest: () =>
+        authClient.login("m.login.password", {
           identifier: {
             type: "m.id.user",
             user: username,
           },
           password,
-        });
-      },
+        }),
     });
 
+    /* eslint-disable camelcase */
     const { user_id, access_token, device_id } =
       await interactiveAuth.attemptAuth();
-    const session = { user_id, access_token, device_id };
+    const session = {
+      user_id,
+      access_token,
+      device_id,
+      passwordlessUser: false,
+    };
 
     const client = await initClient({
       baseUrl: defaultHomeserver,
@@ -50,9 +59,7 @@ export function useInteractiveLogin() {
       userId: user_id,
       deviceId: device_id,
     });
+    /* eslint-enable camelcase */
 
     return [client, session];
   }, []);
-
-  return [state, auth];
-}

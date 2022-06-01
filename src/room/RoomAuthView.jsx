@@ -33,7 +33,7 @@ export function RoomAuthView() {
   const { setClient } = useClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
-  const [{ privacyPolicyUrl, recaptchaKey }, register] =
+  const [privacyPolicyUrl, recaptchaKey, register] =
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 

@@ -35,8 +35,6 @@ export function VideoPreview({
   localVideoMuted,
   toggleLocalVideoMuted,
   toggleMicrophoneMuted,
-  setShowInspector,
-  showInspector,
   audioOutput,
   stream,
 }) {
@@ -83,8 +81,6 @@ export function VideoPreview({
             />
             <OverflowMenu
               roomId={roomId}
-              setShowInspector={setShowInspector}
-              showInspector={showInspector}
               client={client}
               feedbackModalState={feedbackModalState}
               feedbackModalProps={feedbackModalProps}

@@ -48,7 +48,7 @@ export async function initClient(
   window.OLM_OPTIONS = {};
   await Olm.init({ locateFile: () => olmWasmPath });
 
-  let indexedDB;
+  let indexedDB: IDBFactory;
 
   try {
     indexedDB = window.indexedDB;
@@ -111,12 +111,19 @@ export async function initClient(
   return client;
 }
 
-export function roomAliasFromRoomName(roomName: string): string {
+export function roomAliasLocalpartFromRoomName(roomName: string): string {
   return roomName
     .trim()
     .replace(/\s/g, "-")
     .replace(/[^\w-]/g, "")
     .toLowerCase();
+}
+
+export function fullAliasFromRoomName(
+  roomName: string,
+  client: MatrixClient
+): string {
+  return `#${roomAliasLocalpartFromRoomName(roomName)}:${client.getDomain()}`;
 }
 
 export function roomNameFromRoomId(roomId: string): string {
@@ -154,7 +161,7 @@ export async function createRoom(
     visibility: Visibility.Private,
     preset: Preset.PublicChat,
     name,
-    room_alias_name: roomAliasFromRoomName(name),
+    room_alias_name: roomAliasLocalpartFromRoomName(name),
     power_level_content_override: {
       invite: 100,
       kick: 100,
@@ -180,7 +187,7 @@ export async function createRoom(
     },
   });
 
-  console.log({ isPtt });
+  console.log(`Creating ${isPtt ? "PTT" : "video"} group call room`);
 
   await client.createGroupCall(
     createRoomResult.room_id,
@@ -189,7 +196,7 @@ export async function createRoom(
     GroupCallIntent.Prompt
   );
 
-  return createRoomResult.room_id;
+  return fullAliasFromRoomName(name, client);
 }
 
 export function getRoomUrl(roomId: string): string {
