@@ -86,7 +86,7 @@ export const useInteractiveRegistration = (): [
 
       // XXX: This claims to return an IAuthData which contains none of these
       // things - the js-sdk types may be wrong?
-      /* eslint-disable camelcase */
+      /* eslint-disable camelcase,@typescript-eslint/no-explicit-any */
       const { user_id, access_token, device_id } =
         (await interactiveAuth.attemptAuth()) as any;
 
