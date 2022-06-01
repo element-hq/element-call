@@ -1,10 +1,10 @@
 .tooltip {
-  background-color: var(--bgColor2);
+  background-color: var(--system);
   flex-direction: row;
   justify-content: center;
   align-items: center;
   padding: 8px 10px;
-  color: var(--textColor1);
+  color: var(--primary-content);
   border-radius: 8px;
   max-width: 135px;
   width: max-content;

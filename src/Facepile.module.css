@@ -18,7 +18,7 @@
 .facepile .avatar {
   position: absolute;
   top: 0;
-  border: 1px solid var(--bgColor2);
+  border: 1px solid var(--system);
 }
 
 .facepile.md .avatar {

@@ -4,8 +4,8 @@
   max-height: 232px;
   max-width: 232px;
   border-radius: 116px;
-  color: ##fff;
-  border: 6px solid #0dbd8b;
+  color: var(--primary-content);
+  border: 6px solid var(--accent);
   background-color: #21262c;
   position: relative;
   padding: 0;
@@ -13,11 +13,11 @@
 }
 
 .talking {
-  background-color: #0dbd8b;
+  background-color: var(--accent);
   cursor: unset;
 }
 
 .error {
-  background-color: #ff5b55;
-  border-color: #ff5b55;
+  background-color: var(--alert);
+  border-color: var(--alert);
 }
