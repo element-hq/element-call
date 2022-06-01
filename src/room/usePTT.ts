@@ -15,10 +15,11 @@ limitations under the License.
 */
 
 import { useCallback, useEffect, useState } from "react";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { MatrixClient, ClientEvent } from "matrix-js-sdk/src/client";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
 import { logger } from "matrix-js-sdk/src/logger";
+import { SyncState } from "matrix-js-sdk/src/sync";
 
 import { PlayClipFunction, PTTClipID } from "../sound/usePttSounds";
 
@@ -67,6 +68,11 @@ export interface PTTState {
   startTalking: () => void;
   stopTalking: () => void;
   transmitBlocked: boolean;
+  // connected is actually an indication of whether we're connected to the HS
+  // (ie. the client's syncing state) rather than media connection, since
+  // it's peer to peer so we can't really say which peer is 'disconnected' if
+  // there's only one other person in the call and they've lost Internet.
+  connected: boolean;
 }
 
 export const usePTT = (
@@ -226,6 +232,17 @@ export const usePTT = (
     setMicMuteWrapper(true);
   }, [setMicMuteWrapper]);
 
+  // separate state for connected: we set it separately from other things
+  // in the client sync callback
+  const [connected, setConnected] = useState(true);
+
+  const onClientSync = useCallback(
+    (syncState: SyncState) => {
+      setConnected(syncState !== SyncState.Error);
+    },
+    [setConnected]
+  );
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.code === "Space") {
@@ -275,7 +292,17 @@ export const usePTT = (
     pttButtonHeld,
     enablePTTButton,
     setMicMuteWrapper,
+    client,
+    onClientSync,
   ]);
+
+  useEffect(() => {
+    client.on(ClientEvent.Sync, onClientSync);
+
+    return () => {
+      client.removeListener(ClientEvent.Sync, onClientSync);
+    };
+  }, [client, onClientSync]);
 
   const setTalkOverEnabled = useCallback((talkOverEnabled) => {
     setState((prevState) => ({
@@ -293,5 +320,6 @@ export const usePTT = (
     startTalking,
     stopTalking,
     transmitBlocked,
+    connected,
   };
 };

@@ -44,8 +44,11 @@ function getPromptText(
   activeSpeakerIsLocalUser: boolean,
   talkOverEnabled: boolean,
   activeSpeakerUserId: string,
-  activeSpeakerDisplayName: string
+  activeSpeakerDisplayName: string,
+  connected: boolean
 ): string {
+  if (!connected) return "Connection Lost";
+
   const isTouchScreen = Boolean(window.ontouchstart !== undefined);
 
   if (showTalkOverError) {
@@ -127,6 +130,7 @@ export const PTTCallView: React.FC<Props> = ({
     startTalking,
     stopTalking,
     transmitBlocked,
+    connected,
   } = usePTT(
     client,
     groupCall,
@@ -234,7 +238,8 @@ export const PTTCallView: React.FC<Props> = ({
               activeSpeakerIsLocalUser,
               talkOverEnabled,
               activeSpeakerUserId,
-              activeSpeakerDisplayName
+              activeSpeakerDisplayName,
+              connected
             )}
           </p>
           {userMediaFeeds.map((callFeed) => (
