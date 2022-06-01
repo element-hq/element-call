@@ -80,6 +80,9 @@ export async function initClient(
     ...storeOpts,
     ...clientOptions,
     useAuthorizationHeader: true,
+    // Use a relatively low timeout for API calls: this is a realtime application
+    // so we don't want API calls taking ages, we'd rather they just fail.
+    localTimeoutMs: 5000,
   });
 
   try {
