@@ -44,8 +44,11 @@ function getPromptText(
   activeSpeakerIsLocalUser: boolean,
   talkOverEnabled: boolean,
   activeSpeakerUserId: string,
-  activeSpeakerDisplayName: string
+  activeSpeakerDisplayName: string,
+  connected: boolean
 ): string {
+  if (!connected) return "Connection Lost";
+
   const isTouchScreen = Boolean(window.ontouchstart !== undefined);
 
   if (showTalkOverError) {
@@ -84,8 +87,6 @@ interface Props {
   participants: RoomMember[];
   userMediaFeeds: CallFeed[];
   onLeave: () => void;
-  setShowInspector: (boolean) => void;
-  showInspector: boolean;
 }
 
 export const PTTCallView: React.FC<Props> = ({
@@ -97,8 +98,6 @@ export const PTTCallView: React.FC<Props> = ({
   participants,
   userMediaFeeds,
   onLeave,
-  setShowInspector,
-  showInspector,
 }) => {
   const { modalState: inviteModalState, modalProps: inviteModalProps } =
     useModalTriggerState();
@@ -128,6 +127,7 @@ export const PTTCallView: React.FC<Props> = ({
     startTalking,
     stopTalking,
     transmitBlocked,
+    connected,
   } = usePTT(
     client,
     groupCall,
@@ -190,8 +190,6 @@ export const PTTCallView: React.FC<Props> = ({
           <OverflowMenu
             inCall
             roomId={roomId}
-            setShowInspector={setShowInspector}
-            showInspector={showInspector}
             client={client}
             groupCall={groupCall}
             showInvite={false}
@@ -236,7 +234,8 @@ export const PTTCallView: React.FC<Props> = ({
               activeSpeakerIsLocalUser,
               talkOverEnabled,
               activeSpeakerUserId,
-              activeSpeakerDisplayName
+              activeSpeakerDisplayName,
+              connected
             )}
           </p>
           {userMediaFeeds.map((callFeed) => (

@@ -31,8 +31,6 @@ import { FeedbackModal } from "./FeedbackModal";
 
 export function OverflowMenu({
   roomId,
-  setShowInspector,
-  showInspector,
   inCall,
   groupCall,
   showInvite,
@@ -88,13 +86,7 @@ export function OverflowMenu({
           </Menu>
         )}
       </PopoverMenuTrigger>
-      {settingsModalState.isOpen && (
-        <SettingsModal
-          {...settingsModalProps}
-          setShowInspector={setShowInspector}
-          showInspector={showInspector}
-        />
-      )}
+      {settingsModalState.isOpen && <SettingsModal {...settingsModalProps} />}
       {inviteModalState.isOpen && (
         <InviteModal roomId={roomId} {...inviteModalProps} />
       )}
