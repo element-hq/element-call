@@ -37,7 +37,7 @@
   bottom: -1px;
   content: "";
   border-radius: 20px;
-  box-shadow: inset 0 0 0 4px #0dbd8b !important;
+  box-shadow: inset 0 0 0 4px var(--accent) !important;
 }
 
 .videoTile.screenshare > video {

@@ -10,7 +10,7 @@
 .callTile {
   height: 95px;
   padding: 12px;
-  background-color: var(--bgColor2);
+  background-color: var(--system);
   border-radius: 8px;
   overflow: hidden;
   box-sizing: border-box;
@@ -36,7 +36,7 @@
   flex-direction: column;
   flex: 1;
   padding: 0 16px;
-  color: var(--textColor1);
+  color: var(--primary-content);
   min-width: 0;
 }
 

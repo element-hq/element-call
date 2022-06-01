@@ -25,12 +25,12 @@
 }
 
 .tab > * {
-  color: var(--textColor4);
+  color: var(--secondary-content);
   margin: 0 8px 0 0;
 }
 
 .tab svg * {
-  fill: var(--textColor4);
+  fill: var(--secondary-content);
 }
 
 .tab > :last-child {
@@ -38,15 +38,15 @@
 }
 
 .tab.selected {
-  background-color: #0dbd8b;
+  background-color: var(--accent);
 }
 
 .tab.selected * {
-  color: #ffffff;
+  color: var(--primary-content);
 }
 
 .tab.selected svg * {
-  fill: #ffffff;
+  fill: var(--primary-content);
 }
 
 .tab.disabled {
