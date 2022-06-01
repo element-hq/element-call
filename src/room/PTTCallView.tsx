@@ -123,6 +123,7 @@ export const PTTCallView: React.FC<Props> = ({
     talkOverEnabled,
     setTalkOverEnabled,
     activeSpeakerUserId,
+    activeSpeakerVolume,
     startTalking,
     stopTalking,
     transmitBlocked,
@@ -221,6 +222,7 @@ export const PTTCallView: React.FC<Props> = ({
             activeSpeakerDisplayName={activeSpeakerDisplayName}
             activeSpeakerAvatarUrl={activeSpeakerAvatarUrl}
             activeSpeakerIsLocalUser={activeSpeakerIsLocalUser}
+            activeSpeakerVolume={activeSpeakerVolume}
             size={pttButtonSize}
             startTalking={startTalking}
             stopTalking={stopTalking}
