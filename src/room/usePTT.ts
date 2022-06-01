@@ -55,7 +55,7 @@ export interface PTTState {
   transmitBlocked: boolean;
   // connected is actually an indication of whether we're connected to the HS
   // (ie. the client's syncing state) rather than media connection, since
-  // it's peer to peer so we can't really say once peer is 'disconnected' if
+  // it's peer to peer so we can't really say which peer is 'disconnected' if
   // there's only one other person in the call and they've lost Internet.
   connected: boolean;
 }
