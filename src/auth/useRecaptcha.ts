@@ -14,52 +14,49 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useEffect, useCallback, useRef, useState } from "react";
+import { randomString } from "matrix-js-sdk/src/randomstring";
+
+declare global {
+  interface Window {
+    mxOnRecaptchaLoaded: () => void;
+  }
+}
 
 const RECAPTCHA_SCRIPT_URL =
   "https://www.recaptcha.net/recaptcha/api.js?onload=mxOnRecaptchaLoaded&render=explicit";
 
-export function useRecaptcha(sitekey) {
+interface RecaptchaPromiseRef {
+  resolve: (response: string) => void;
+  reject: (error: Error) => void;
+}
+
+export const useRecaptcha = (sitekey: string) => {
   const [recaptchaId] = useState(() => randomString(16));
-  const promiseRef = useRef();
+  const promiseRef = useRef<RecaptchaPromiseRef>();
 
   useEffect(() => {
-    if (!sitekey) {
-      return;
-    }
+    if (!sitekey) return;
 
     const onRecaptchaLoaded = () => {
-      if (!document.getElementById(recaptchaId)) {
-        return;
-      }
+      if (!document.getElementById(recaptchaId)) return;
 
       window.grecaptcha.render(recaptchaId, {
         sitekey,
         size: "invisible",
-        callback: (response) => {
-          if (promiseRef.current) {
-            promiseRef.current.resolve(response);
-          }
-        },
-        "error-callback": (error) => {
-          if (promiseRef.current) {
-            promiseRef.current.reject(error);
-          }
-        },
+        callback: (response: string) => promiseRef.current?.resolve(response),
+        // eslint-disable-next-line @typescript-eslint/naming-convention
+        "error-callback": () => promiseRef.current?.reject(new Error()),
       });
     };
 
-    if (
-      typeof window.grecaptcha !== "undefined" &&
-      typeof window.grecaptcha.render === "function"
-    ) {
+    if (typeof window.grecaptcha?.render === "function") {
       onRecaptchaLoaded();
     } else {
       window.mxOnRecaptchaLoaded = onRecaptchaLoaded;
 
       if (!document.querySelector(`script[src="${RECAPTCHA_SCRIPT_URL}"]`)) {
-        const scriptTag = document.createElement("script");
+        const scriptTag = document.createElement("script") as HTMLScriptElement;
         scriptTag.src = RECAPTCHA_SCRIPT_URL;
         scriptTag.async = true;
         document.body.appendChild(scriptTag);
@@ -80,7 +77,7 @@ export function useRecaptcha(sitekey) {
     return new Promise((resolve, reject) => {
       const observer = new MutationObserver((mutationsList) => {
         for (const item of mutationsList) {
-          if (item.target?.style?.visibility !== "visible") {
+          if ((item.target as HTMLElement)?.style?.visibility !== "visible") {
             reject(new Error("Recaptcha dismissed"));
             observer.disconnect();
             return;
@@ -101,7 +98,7 @@ export function useRecaptcha(sitekey) {
 
       window.grecaptcha.execute();
 
-      const iframe = document.querySelector(
+      const iframe = document.querySelector<HTMLIFrameElement>(
         'iframe[src*="recaptcha/api2/bframe"]'
       );
 
@@ -111,13 +108,11 @@ export function useRecaptcha(sitekey) {
         });
       }
     });
-  }, [recaptchaId, sitekey]);
+  }, [sitekey]);
 
   const reset = useCallback(() => {
-    if (window.grecaptcha) {
-      window.grecaptcha.reset();
-    }
-  }, [recaptchaId]);
+    window.grecaptcha?.reset();
+  }, []);
 
   return { execute, reset, recaptchaId };
-}
+};

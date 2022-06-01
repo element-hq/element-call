@@ -16,9 +16,6 @@ module.exports = {
         "sourceType": "module",
     },
     rules: {
-        // We break this rule in a few places: dial it back to a warning
-        // (and run with max warnings) to tolerate the existing code
-        "react-hooks/exhaustive-deps": ["warn"],
         "jsx-a11y/media-has-caption": ["off"],
     },
     overrides: [
