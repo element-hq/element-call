@@ -48,7 +48,7 @@ export async function initClient(
   window.OLM_OPTIONS = {};
   await Olm.init({ locateFile: () => olmWasmPath });
 
-  let indexedDB;
+  let indexedDB: IDBFactory;
 
   try {
     indexedDB = window.indexedDB;
