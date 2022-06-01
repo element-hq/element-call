@@ -135,7 +135,7 @@ export const PTTButton: React.FC<Props> = ({
   }, [onWindowMouseUp, onWindowTouchEnd, onButtonTouchStart, buttonRef]);
 
   const { shadow } = useSpring({
-    shadow: (Math.max(activeSpeakerVolume, -70) + 70) * 0.5,
+    shadow: (Math.max(activeSpeakerVolume, -70) + 70) * 0.6,
     config: {
       clamp: true,
       tension: 300,
