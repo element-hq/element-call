@@ -142,8 +142,8 @@ export const PTTButton: React.FC<Props> = ({
     },
   });
   const shadowColor = showTalkOverError
-    ? "rgba(255, 91, 85, 0.2)"
-    : "rgba(13, 189, 139, 0.2)";
+    ? "var(--alert-20)"
+    : "var(--primaryColor-20)";
 
   return (
     <animated.button
