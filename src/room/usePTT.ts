@@ -262,14 +262,10 @@ export const usePTT = (
     window.addEventListener("keyup", onKeyUp);
     window.addEventListener("blur", onBlur);
 
-    client.on(ClientEvent.Sync, onClientSync);
-
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("keyup", onKeyUp);
       window.removeEventListener("blur", onBlur);
-
-      client.removeListener(ClientEvent.Sync, onClientSync);
     };
   }, [
     groupCall,
@@ -284,6 +280,14 @@ export const usePTT = (
     client,
     onClientSync,
   ]);
+
+  useEffect(() => {
+    client.on(ClientEvent.Sync, onClientSync);
+
+    return () => {
+      client.removeListener(ClientEvent.Sync, onClientSync);
+    };
+  }, [client, onClientSync]);
 
   const setTalkOverEnabled = useCallback((talkOverEnabled) => {
     setState((prevState) => ({
