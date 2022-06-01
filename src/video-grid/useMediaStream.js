@@ -16,6 +16,8 @@ limitations under the License.
 
 import { useRef, useEffect } from "react";
 
+import { useSpatialAudio } from "../settings/useSetting";
+
 export function useMediaStream(stream, audioOutputDevice, mute = false) {
   const mediaRef = useRef();
 
@@ -74,3 +76,69 @@ export function useMediaStream(stream, audioOutputDevice, mute = false) {
 
   return mediaRef;
 }
+
+export const useSpatialMediaStream = (
+  stream,
+  audioOutputDevice,
+  audioContext,
+  mute = false
+) => {
+  const tileRef = useRef();
+  const [spatialAudio] = useSpatialAudio();
+  // If spatial audio is enabled, we handle audio separately from the video element
+  const mediaRef = useMediaStream(
+    stream,
+    audioOutputDevice,
+    spatialAudio || mute
+  );
+
+  const pannerNodeRef = useRef();
+  if (!pannerNodeRef.current) {
+    pannerNodeRef.current = new PannerNode(audioContext, {
+      panningModel: "HRTF",
+      refDistance: 3,
+    });
+  }
+
+  const sourceRef = useRef();
+
+  useEffect(() => {
+    if (spatialAudio && tileRef.current && !mute) {
+      if (!sourceRef.current) {
+        sourceRef.current = audioContext.createMediaStreamSource(stream);
+      }
+
+      const tile = tileRef.current;
+      const source = sourceRef.current;
+      const pannerNode = pannerNodeRef.current;
+
+      const updatePosition = () => {
+        const bounds = tile.getBoundingClientRect();
+        const windowSize = Math.max(window.innerWidth, window.innerHeight);
+        // Position the source relative to its placement in the window
+        pannerNodeRef.current.positionX.value =
+          (bounds.x + bounds.width / 2) / windowSize - 0.5;
+        pannerNodeRef.current.positionY.value =
+          (bounds.y + bounds.height / 2) / windowSize - 0.5;
+        // Put the source in front of the listener
+        pannerNodeRef.current.positionZ.value = -2;
+      };
+
+      updatePosition();
+      source.connect(pannerNode);
+      pannerNode.connect(audioContext.destination);
+      // HACK: We abuse the CSS transitionrun event to detect when the tile
+      // moves, because useMeasure, IntersectionObserver, etc. all have no
+      // ability to track changes in the CSS transform property
+      tile.addEventListener("transitionrun", updatePosition);
+
+      return () => {
+        tile.removeEventListener("transitionrun", updatePosition);
+        source.disconnect();
+        pannerNode.disconnect();
+      };
+    }
+  }, [stream, spatialAudio, audioContext, mute]);
+
+  return [tileRef, mediaRef];
+};

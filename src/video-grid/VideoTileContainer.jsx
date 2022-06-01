@@ -17,7 +17,7 @@ limitations under the License.
 import { SDPStreamMetadataPurpose } from "matrix-js-sdk/src/webrtc/callEventTypes";
 import React from "react";
 import { useCallFeed } from "./useCallFeed";
-import { useMediaStream } from "./useMediaStream";
+import { useSpatialMediaStream } from "./useMediaStream";
 import { useRoomMemberName } from "./useRoomMemberName";
 import { VideoTile } from "./VideoTile";
 
@@ -28,6 +28,7 @@ export function VideoTileContainer({
   getAvatar,
   showName,
   audioOutputDevice,
+  audioContext,
   disableSpeakingIndicator,
   ...rest
 }) {
@@ -42,7 +43,12 @@ export function VideoTileContainer({
     member,
   } = useCallFeed(item.callFeed);
   const { rawDisplayName } = useRoomMemberName(member);
-  const mediaRef = useMediaStream(stream, audioOutputDevice, isLocal);
+  const [tileRef, mediaRef] = useSpatialMediaStream(
+    stream,
+    audioOutputDevice,
+    audioContext,
+    isLocal
+  );
 
   // Firefox doesn't respect the disablePictureInPicture attribute
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
@@ -57,6 +63,7 @@ export function VideoTileContainer({
       screenshare={purpose === SDPStreamMetadataPurpose.Screenshare}
       name={rawDisplayName}
       showName={showName}
+      ref={tileRef}
       mediaRef={mediaRef}
       avatar={getAvatar && getAvatar(member, width, height)}
       {...rest}

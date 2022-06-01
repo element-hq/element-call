@@ -87,8 +87,6 @@ interface Props {
   participants: RoomMember[];
   userMediaFeeds: CallFeed[];
   onLeave: () => void;
-  setShowInspector: (boolean) => void;
-  showInspector: boolean;
 }
 
 export const PTTCallView: React.FC<Props> = ({
@@ -100,8 +98,6 @@ export const PTTCallView: React.FC<Props> = ({
   participants,
   userMediaFeeds,
   onLeave,
-  setShowInspector,
-  showInspector,
 }) => {
   const { modalState: inviteModalState, modalProps: inviteModalProps } =
     useModalTriggerState();
@@ -193,8 +189,6 @@ export const PTTCallView: React.FC<Props> = ({
           <OverflowMenu
             inCall
             roomId={roomId}
-            setShowInspector={setShowInspector}
-            showInspector={showInspector}
             client={client}
             groupCall={groupCall}
             showInvite={false}
