@@ -33,19 +33,6 @@ export function GroupCallView({
   roomId,
   groupCall,
 }) {
-  const [showInspector, setShowInspector] = useState(
-    () => !!localStorage.getItem("matrix-group-call-inspector")
-  );
-  const onChangeShowInspector = useCallback((show) => {
-    setShowInspector(show);
-
-    if (show) {
-      localStorage.setItem("matrix-group-call-inspector", "true");
-    } else {
-      localStorage.removeItem("matrix-group-call-inspector");
-    }
-  }, []);
-
   const {
     state,
     error,
@@ -104,8 +91,6 @@ export function GroupCallView({
           participants={participants}
           userMediaFeeds={userMediaFeeds}
           onLeave={onLeave}
-          setShowInspector={onChangeShowInspector}
-          showInspector={showInspector}
         />
       );
     } else {
@@ -126,8 +111,6 @@ export function GroupCallView({
           isScreensharing={isScreensharing}
           localScreenshareFeed={localScreenshareFeed}
           screenshareFeeds={screenshareFeeds}
-          setShowInspector={onChangeShowInspector}
-          showInspector={showInspector}
           roomId={roomId}
         />
       );
@@ -156,8 +139,6 @@ export function GroupCallView({
         localVideoMuted={localVideoMuted}
         toggleLocalVideoMuted={toggleLocalVideoMuted}
         toggleMicrophoneMuted={toggleMicrophoneMuted}
-        setShowInspector={onChangeShowInspector}
-        showInspector={showInspector}
         roomId={roomId}
       />
     );
