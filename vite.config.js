@@ -39,9 +39,6 @@ export default defineConfig(({ mode }) => {
       proxy: {
         "/_matrix": env.VITE_DEFAULT_HOMESERVER || "http://localhost:8008",
       },
-      hmr: {
-        clientPort: 443,
-      },
     },
     resolve: {
       dedupe: [
