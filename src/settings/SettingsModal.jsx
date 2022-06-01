@@ -24,12 +24,13 @@ import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
 import { SelectInput } from "../input/SelectInput";
 import { Item } from "@react-stately/collections";
 import { useMediaHandler } from "./useMediaHandler";
+import { useSpatialAudio, useShowInspector } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
 import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
 
-export function SettingsModal({ setShowInspector, showInspector, ...rest }) {
+export const SettingsModal = (props) => {
   const {
     audioInput,
     audioInputs,
@@ -41,6 +42,8 @@ export function SettingsModal({ setShowInspector, showInspector, ...rest }) {
     audioOutputs,
     setAudioOutput,
   } = useMediaHandler();
+  const [spatialAudio, setSpatialAudio] = useSpatialAudio();
+  const [showInspector, setShowInspector] = useShowInspector();
 
   const downloadDebugLog = useDownloadDebugLog();
 
@@ -50,7 +53,7 @@ export function SettingsModal({ setShowInspector, showInspector, ...rest }) {
       isDismissable
       mobileFullScreen
       className={styles.settingsModal}
-      {...rest}
+      {...props}
     >
       <TabContainer className={styles.tabContainer}>
         <TabItem
@@ -81,6 +84,15 @@ export function SettingsModal({ setShowInspector, showInspector, ...rest }) {
               ))}
             </SelectInput>
           )}
+          <FieldRow>
+            <InputField
+              id="spatialAudio"
+              label="Spatial audio (experimental)"
+              type="checkbox"
+              checked={spatialAudio}
+              onChange={(e) => setSpatialAudio(e.target.checked)}
+            />
+          </FieldRow>
         </TabItem>
         <TabItem
           title={
@@ -130,4 +142,4 @@ export function SettingsModal({ setShowInspector, showInspector, ...rest }) {
       </TabContainer>
     </Modal>
   );
-}
+};

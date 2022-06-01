@@ -41,8 +41,6 @@ export function LobbyView({
   localVideoMuted,
   toggleLocalVideoMuted,
   toggleMicrophoneMuted,
-  setShowInspector,
-  showInspector,
   roomId,
 }) {
   const { stream } = useCallFeed(localCallFeed);
@@ -101,8 +99,6 @@ export function LobbyView({
               localVideoMuted={localVideoMuted}
               toggleLocalVideoMuted={toggleLocalVideoMuted}
               toggleMicrophoneMuted={toggleMicrophoneMuted}
-              setShowInspector={setShowInspector}
-              showInspector={showInspector}
               stream={stream}
               audioOutput={audioOutput}
             />
