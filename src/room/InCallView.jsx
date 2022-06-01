@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import styles from "./InCallView.module.css";
 import {
   HangupButton,
@@ -34,6 +34,7 @@ import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { usePreventScroll } from "@react-aria/overlays";
 import { useMediaHandler } from "../settings/useMediaHandler";
+import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
@@ -57,14 +58,16 @@ export function InCallView({
   toggleScreensharing,
   isScreensharing,
   screenshareFeeds,
-  setShowInspector,
-  showInspector,
   roomId,
 }) {
   usePreventScroll();
   const [layout, setLayout] = useVideoGridLayout(screenshareFeeds.length > 0);
 
   const { audioOutput } = useMediaHandler();
+  const [showInspector] = useShowInspector();
+
+  const audioContext = useRef();
+  if (!audioContext.current) audioContext.current = new AudioContext();
 
   const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
     useModalTriggerState();
@@ -151,6 +154,7 @@ export function InCallView({
               getAvatar={renderAvatar}
               showName={items.length > 2 || item.focused}
               audioOutputDevice={audioOutput}
+              audioContext={audioContext.current}
               disableSpeakingIndicator={items.length < 3}
               {...rest}
             />
@@ -169,8 +173,6 @@ export function InCallView({
         <OverflowMenu
           inCall
           roomId={roomId}
-          setShowInspector={setShowInspector}
-          showInspector={showInspector}
           client={client}
           groupCall={groupCall}
           showInvite={true}
