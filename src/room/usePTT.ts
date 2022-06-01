@@ -65,6 +65,7 @@ export interface PTTState {
   talkOverEnabled: boolean;
   setTalkOverEnabled: (boolean) => void;
   activeSpeakerUserId: string;
+  activeSpeakerVolume: number;
   startTalking: () => void;
   stopTalking: () => void;
   transmitBlocked: boolean;
@@ -108,6 +109,7 @@ export const usePTT = (
       isAdmin,
       talkOverEnabled,
       activeSpeakerUserId,
+      activeSpeakerVolume,
       transmitBlocked,
     },
     setState,
@@ -121,6 +123,7 @@ export const usePTT = (
       talkOverEnabled: false,
       pttButtonHeld: false,
       activeSpeakerUserId: activeSpeakerFeed ? activeSpeakerFeed.userId : null,
+      activeSpeakerVolume: -Infinity,
       transmitBlocked: false,
     };
   });
@@ -152,15 +155,11 @@ export const usePTT = (
       playClip(PTTClipID.BLOCKED);
     }
 
-    setState((prevState) => {
-      return {
-        ...prevState,
-        activeSpeakerUserId: activeSpeakerFeed
-          ? activeSpeakerFeed.userId
-          : null,
-        transmitBlocked: blocked,
-      };
-    });
+    setState((prevState) => ({
+      ...prevState,
+      activeSpeakerUserId: activeSpeakerFeed ? activeSpeakerFeed.userId : null,
+      transmitBlocked: blocked,
+    }));
   }, [
     playClip,
     groupCall,
@@ -173,7 +172,7 @@ export const usePTT = (
 
   useEffect(() => {
     for (const callFeed of userMediaFeeds) {
-      callFeed.addListener(CallFeedEvent.MuteStateChanged, onMuteStateChanged);
+      callFeed.on(CallFeedEvent.MuteStateChanged, onMuteStateChanged);
     }
 
     const activeSpeakerFeed = getActiveSpeakerFeed(userMediaFeeds, groupCall);
@@ -185,13 +184,29 @@ export const usePTT = (
 
     return () => {
       for (const callFeed of userMediaFeeds) {
-        callFeed.removeListener(
-          CallFeedEvent.MuteStateChanged,
-          onMuteStateChanged
-        );
+        callFeed.off(CallFeedEvent.MuteStateChanged, onMuteStateChanged);
       }
     };
   }, [userMediaFeeds, onMuteStateChanged, groupCall]);
+
+  const onVolumeChanged = useCallback((volume: number) => {
+    setState((prevState) => ({
+      ...prevState,
+      activeSpeakerVolume: volume,
+    }));
+  }, []);
+
+  useEffect(() => {
+    const activeSpeakerFeed = getActiveSpeakerFeed(userMediaFeeds, groupCall);
+    activeSpeakerFeed?.on(CallFeedEvent.VolumeChanged, onVolumeChanged);
+    return () => {
+      activeSpeakerFeed?.off(CallFeedEvent.VolumeChanged, onVolumeChanged);
+      setState((prevState) => ({
+        ...prevState,
+        activeSpeakerVolume: -Infinity,
+      }));
+    };
+  }, [activeSpeakerUserId, onVolumeChanged, userMediaFeeds, groupCall]);
 
   const startTalking = useCallback(async () => {
     if (pttButtonHeld) return;
@@ -317,6 +332,7 @@ export const usePTT = (
     talkOverEnabled,
     setTalkOverEnabled,
     activeSpeakerUserId,
+    activeSpeakerVolume,
     startTalking,
     stopTalking,
     transmitBlocked,

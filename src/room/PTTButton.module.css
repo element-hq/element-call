@@ -14,14 +14,10 @@
 
 .talking {
   background-color: #0dbd8b;
-  box-shadow: 0px 0px 0px 17px rgba(13, 189, 139, 0.2),
-    0px 0px 0px 34px rgba(13, 189, 139, 0.2);
   cursor: unset;
 }
 
 .error {
   background-color: #ff5b55;
   border-color: #ff5b55;
-  box-shadow: 0px 0px 0px 17px rgba(255, 91, 85, 0.2),
-    0px 0px 0px 34px rgba(255, 91, 85, 0.2);
 }
