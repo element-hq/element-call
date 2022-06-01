@@ -31,7 +31,11 @@ function getActiveSpeakerFeed(
   const activeSpeakerFeeds = feeds.filter((f) => !f.isAudioMuted());
 
   // make sure the feeds are in a deterministic order so every client picks
-  // the same one as the active speaker
+  // the same one as the active speaker. The custom sort function sorts
+  // by user ID, so needs a collator of some kind to compare. We make a
+  // specific one to help ensure every client sorts the same way
+  // although of course user IDs shouldn't contain accented characters etc.
+  // anyway).
   const collator = new Intl.Collator("en", {
     sensitivity: "variant",
     usage: "sort",
