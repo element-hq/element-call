@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 import { useCallback } from "react";
-import matrix, { InteractiveAuth } from "matrix-js-sdk/src/browser-index";
-import { MatrixClient } from "matrix-js-sdk";
+import { InteractiveAuth } from "matrix-js-sdk/src/interactive-auth";
+import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
 
 import { initClient, defaultHomeserver } from "../matrix-utils";
 import { Session } from "../ClientContext";
@@ -29,7 +29,7 @@ export const useInteractiveLogin = () =>
       password: string
     ) => Promise<[MatrixClient, Session]>
   >(async (homeserver: string, username: string, password: string) => {
-    const authClient = matrix.createClient(homeserver);
+    const authClient = createClient(homeserver);
 
     const interactiveAuth = new InteractiveAuth({
       matrixClient: authClient,
@@ -41,11 +41,15 @@ export const useInteractiveLogin = () =>
           },
           password,
         }),
+      stateUpdated: null,
+      requestEmailToken: null,
     });
 
+    // XXX: This claims to return an IAuthData which contains none of these
+    // things - the js-sdk types may be wrong?
     /* eslint-disable camelcase */
     const { user_id, access_token, device_id } =
-      await interactiveAuth.attemptAuth();
+      (await interactiveAuth.attemptAuth()) as any;
     const session = {
       user_id,
       access_token,

@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import matrix, { InteractiveAuth } from "matrix-js-sdk/src/browser-index";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { InteractiveAuth } from "matrix-js-sdk/src/interactive-auth";
+import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
 
 import { initClient, defaultHomeserver } from "../matrix-utils";
 import { Session } from "../ClientContext";
@@ -37,7 +37,7 @@ export const useInteractiveRegistration = (): [
 
   const authClient = useRef<MatrixClient>();
   if (!authClient.current) {
-    authClient.current = matrix.createClient(defaultHomeserver);
+    authClient.current = createClient(defaultHomeserver);
   }
 
   useEffect(() => {
@@ -81,11 +81,14 @@ export const useInteractiveRegistration = (): [
             });
           }
         },
+        requestEmailToken: null,
       });
 
+      // XXX: This claims to return an IAuthData which contains none of these
+      // things - the js-sdk types may be wrong?
       /* eslint-disable camelcase */
       const { user_id, access_token, device_id } =
-        await interactiveAuth.attemptAuth();
+        (await interactiveAuth.attemptAuth()) as any;
 
       const client = await initClient({
         baseUrl: defaultHomeserver,
