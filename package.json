@@ -55,6 +55,7 @@
     "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.8.tgz",
     "@storybook/react": "^6.5.0-alpha.5",
     "@types/request": "^2.48.8",
+    "@types/web-bluetooth": "^0.0.14",
     "@typescript-eslint/eslint-plugin": "^5.22.0",
     "@typescript-eslint/parser": "^5.22.0",
     "babel-loader": "^8.2.3",

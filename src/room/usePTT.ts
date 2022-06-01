@@ -60,6 +60,10 @@ export interface PTTState {
   connected: boolean;
 }
 
+let btsetupdone = false;
+let characteristics;
+let globalButtonHeld;
+
 export const usePTT = (
   client: MatrixClient,
   groupCall: GroupCall,
@@ -228,6 +232,64 @@ export const usePTT = (
     [setConnected]
   );
 
+  const onCharatceristicChange = useCallback(async () => {
+    const val = await characteristics[0].value;
+    const strval = new TextDecoder("utf-8").decode(val);
+
+    if (globalButtonHeld && strval.startsWith("+PTT=R")) {
+      stopTalking();
+    } else if (!globalButtonHeld && strval.startsWith("+PTT=P")) {
+      startTalking();
+    }
+
+    //setTimeout(async () => {
+    //console.log(e);
+    //return;
+
+    //onCharatceristicChange();
+    //}, 200);
+  }, [startTalking, stopTalking]);
+
+  useEffect(() => {
+    if (btsetupdone) return;
+    btsetupdone = true;
+    async function doBluetooth() {
+      try {
+        const device = await navigator.bluetooth.requestDevice({
+          //filters: [{ services: ["00006666-0000-1000-8000-00805f9b34fb"] }],
+          filters: [{ services: [0x6666] }],
+          //optionalServices: [0x6666],
+          //acceptAllDevices: true,
+        });
+        console.log(device);
+        console.log("connecting ble");
+        const connectedServer = await device.gatt.connect();
+        console.log("connected", connectedServer);
+        const service = await connectedServer.getPrimaryService(
+          //"00006666-0000-1000-8000-00805f9b34fb"
+          0x6666
+        );
+        console.log(service);
+        characteristics = await service.getCharacteristics();
+        console.log("characteristics: ", characteristics);
+
+        //let readProm = Promise.resolve();
+
+        console.log("starting notifs");
+        await characteristics[0].startNotifications();
+        characteristics[0].oncharacteristicvaluechanged =
+          onCharatceristicChange;
+        console.log("listener added");
+
+        //setInterval(onCharatceristicChange, 5000);
+        //onCharatceristicChange();
+      } catch (e) {
+        console.log("error setting up ble ptt", e);
+      }
+    }
+    doBluetooth();
+  }, [pttButtonHeld, startTalking, stopTalking, onCharatceristicChange]);
+
   useEffect(() => {
     function onKeyDown(event: KeyboardEvent): void {
       if (event.code === "Space") {
@@ -291,6 +353,8 @@ export const usePTT = (
       talkOverEnabled,
     }));
   }, []);
+
+  globalButtonHeld = pttButtonHeld;
 
   return {
     pttButtonHeld,
