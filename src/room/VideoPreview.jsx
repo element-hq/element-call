@@ -50,13 +50,13 @@ export function VideoPreview({
     <div className={styles.preview} ref={previewRef}>
       <video ref={videoRef} muted playsInline disablePictureInPicture />
       {state === GroupCallState.LocalCallFeedUninitialized && (
-        <Body fontWeight="semiBold" className={styles.webcamPermissions}>
-          Webcam/microphone permissions needed to join the call.
+        <Body fontWeight="semiBold" className={styles.cameraPermissions}>
+          Camera/microphone permissions needed to join the call.
         </Body>
       )}
       {state === GroupCallState.InitializingLocalCallFeed && (
-        <Body fontWeight="semiBold" className={styles.webcamPermissions}>
-          Accept webcam/microphone permissions to join the call.
+        <Body fontWeight="semiBold" className={styles.cameraPermissions}>
+          Accept camera/microphone permissions to join the call.
         </Body>
       )}
       {state === GroupCallState.LocalCallFeedInitialized && (
