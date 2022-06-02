@@ -103,7 +103,7 @@ export const SettingsModal = (props) => {
           }
         >
           <SelectInput
-            label="Webcam"
+            label="Camera"
             selectedKey={videoInput}
             onSelectionChange={setVideoInput}
           >
