@@ -4,7 +4,7 @@
 }
 
 .userButton svg * {
-  fill: var(--textColor1);
+  fill: var(--primary-content);
 }
 
 .avatar {

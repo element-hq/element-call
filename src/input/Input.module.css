@@ -26,7 +26,7 @@
 .inputField {
   border-radius: 4px;
   transition: border-color 0.25s;
-  border: 1px solid var(--inputBorderColor);
+  border: 1px solid var(--quinary-content);
 }
 
 .inputField input,
@@ -36,8 +36,8 @@
   border: none;
   border-radius: 4px;
   padding: 12px 9px 10px 9px;
-  color: var(--textColor1);
-  background-color: var(--bgColor1);
+  color: var(--primary-content);
+  background-color: var(--background);
   flex: 1;
   min-width: 0;
 }
@@ -45,7 +45,7 @@
 .inputField.disabled input,
 .inputField.disabled textarea,
 .inputField.disabled span {
-  color: var(--textColor2);
+  color: var(--quaternary-content);
 }
 
 .inputField span {
@@ -65,13 +65,13 @@
 .inputField input:placeholder-shown:focus::placeholder,
 .inputField textarea:placeholder-shown:focus::placeholder {
   transition: color 0.25s ease-in 0.1s;
-  color: var(--textColor2);
+  color: var(--quaternary-content);
 }
 
 .inputField label {
   transition: font-size 0.25s ease-out 0.1s, color 0.25s ease-out 0.1s,
     top 0.25s ease-out 0.1s, background-color 0.25s ease-out 0.1s;
-  color: var(--textColor3);
+  color: var(--tertiary-content);
   background-color: transparent;
   font-size: 15px;
   position: absolute;
@@ -87,7 +87,7 @@
 }
 
 .inputField:focus-within {
-  border-color: var(--inputBorderColorFocused);
+  border-color: var(--links);
 }
 
 .inputField input:focus,
@@ -101,7 +101,7 @@
 .inputField textarea:focus + label,
 .inputField textarea:not(:placeholder-shown) + label,
 .inputField.prefix textarea + label {
-  background-color: var(--bgColor2);
+  background-color: var(--system);
   transition: font-size 0.25s ease-out 0s, color 0.25s ease-out 0s,
     top 0.25s ease-out 0s, background-color 0.25s ease-out 0s;
   font-size: 10px;
@@ -112,7 +112,7 @@
 
 .inputField input:focus + label,
 .inputField textarea:focus + label {
-  color: var(--inputBorderColorFocused);
+  color: var(--links);
 }
 
 .checkboxField {
@@ -154,12 +154,12 @@
 }
 
 .checkbox svg * {
-  stroke: #fff;
+  stroke: var(--primary-content);
 }
 
 .checkboxField input[type="checkbox"]:checked + label > .checkbox {
-  background: var(--primaryColor);
-  border-color: var(--primaryColor);
+  background: var(--accent);
+  border-color: var(--accent);
 }
 
 .checkboxField input[type="checkbox"]:checked + label > .checkbox svg {
@@ -167,12 +167,12 @@
 }
 
 .checkboxField:focus-within .checkbox {
-  border: 1.5px solid var(--inputBorderColorFocused) !important;
+  border: 1.5px solid var(--links) !important;
 }
 
 .errorMessage {
   margin: 0;
   font-size: 13px;
-  color: #ff5b55;
+  color: var(--alert);
   font-weight: 600;
 }

@@ -26,7 +26,7 @@
   position: absolute;
   bottom: 11px;
   right: -4px;
-  background-color: var(--bgColor4);
+  background-color: var(--quinary-content);
   width: 20px;
   height: 20px;
   border-radius: 10px;
@@ -37,5 +37,5 @@
 }
 
 .removeButton {
-  color: #0dbd8b;
+  color: var(--accent);
 }

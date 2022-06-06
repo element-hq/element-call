@@ -65,7 +65,7 @@
 }
 
 .authLinks a {
-  color: #0dbd8b;
+  color: var(--accent);
   text-decoration: none;
   font-weight: normal;
 }

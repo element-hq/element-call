@@ -11,7 +11,7 @@
   height: 24px;
   border: none;
   border-radius: 21px;
-  background-color: #6f7882;
+  background-color: var(--quaternary-content);
   cursor: pointer;
   margin-right: 8px;
 }
@@ -22,7 +22,7 @@
   width: 20px;
   height: 20px;
   border-radius: 21px;
-  background-color: #15191e;
+  background-color: var(--background);
   left: 2px;
   top: 2px;
 }
@@ -30,11 +30,11 @@
 .label {
   padding: 10px 8px;
   line-height: 24px;
-  color: #6f7882;
+  color: var(--quaternary-content);
 }
 
 .toggle.on .button {
-  background-color: #0dbd8b;
+  background-color: var(--accent);
 }
 
 .toggle.on .ball {
@@ -42,5 +42,5 @@
 }
 
 .toggle.on .label {
-  color: #ffffff;
+  color: var(--primary-content);
 }
