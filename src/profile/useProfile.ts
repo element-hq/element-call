@@ -14,9 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { MatrixClient, User } from "matrix-js-sdk";
 import { useState, useCallback, useEffect } from "react";
 
-export function useProfile(client) {
+interface ProfileResult {
+  loading: boolean;
+  error: Error;
+  displayName: string;
+  avatarUrl: string;
+  saveProfile: ({
+    displayName,
+    avatar,
+    removeAvatar,
+  }: {
+    displayName: string;
+    avatar: any;
+    removeAvatar: boolean;
+  }) => Promise<void>;
+  success: boolean;
+}
+export function useProfile(client: MatrixClient): ProfileResult {
   const [{ loading, displayName, avatarUrl, error, success }, setState] =
     useState(() => {
       const user = client?.getUser(client.getUserId());
@@ -31,7 +48,7 @@ export function useProfile(client) {
     });
 
   useEffect(() => {
-    const onChangeUser = (_event, { displayName, avatarUrl }) => {
+    const onChangeUser = (_event: any, { displayName, avatarUrl }: any) => {
       setState({
         success: false,
         loading: false,
@@ -41,7 +58,7 @@ export function useProfile(client) {
       });
     };
 
-    let user;
+    let user: User;
 
     if (client) {
       const userId = client.getUserId();
@@ -71,7 +88,7 @@ export function useProfile(client) {
         try {
           await client.setDisplayName(displayName);
 
-          let mxcAvatarUrl;
+          let mxcAvatarUrl: string;
 
           if (removeAvatar) {
             await client.setAvatarUrl("");
