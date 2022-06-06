@@ -11,7 +11,7 @@
   display: flex;
   align-items: center;
   padding: 0 12px;
-  color: var(--textColor1);
+  color: var(--primary-content);
   font-size: 14px;
 }
 
@@ -25,7 +25,7 @@
 
 .menuItem.focused,
 .menuItem:hover {
-  background-color: var(--bgColor4);
+  background-color: var(--quinary-content);
 }
 
 .menuItem.focused:first-child,
@@ -46,5 +46,5 @@
 }
 
 .checkIcon * {
-  stroke: var(--textColor1);
+  stroke: var(--primary-content);
 }

@@ -17,11 +17,11 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 12px;
-  background-color: var(--bgColor1);
+  background-color: var(--background);
   border-radius: 8px;
-  border: 1px solid var(--inputBorderColor);
+  border: 1px solid var(--quinary-content);
   font-size: 15px;
-  color: var(--textColor1);
+  color: var(--primary-content);
   height: 40px;
   max-width: 100%;
   width: 100%;

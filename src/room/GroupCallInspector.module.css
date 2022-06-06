@@ -1,5 +1,5 @@
 .inspector {
-  background-color: var(--bgColor2);
+  background-color: var(--system);
 }
 
 .scrollContainer {
@@ -20,6 +20,6 @@
 
 .sequenceDiagramViewer :global(.messageText) {
   font-size: 12px;
-  fill: var(--textColor1) !important;
-  stroke: var(--textColor1) !important;
+  fill: var(--primary-content) !important;
+  stroke: var(--primary-content) !important;
 }
