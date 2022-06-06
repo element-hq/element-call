@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import React, { useState, useCallback } from "react";
-import { createRoom, roomAliasFromRoomName } from "../matrix-utils";
+import { createRoom, roomAliasLocalpartFromRoomName } from "../matrix-utils";
 import { useGroupCallRooms } from "./useGroupCallRooms";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import commonStyles from "./common.module.css";
@@ -56,7 +56,7 @@ export function RegisteredView({ client }) {
 
       submit().catch((error) => {
         if (error.errcode === "M_ROOM_IN_USE") {
-          setExistingRoomId(roomAliasFromRoomName(roomName));
+          setExistingRoomId(roomAliasLocalpartFromRoomName(roomName));
           setLoading(false);
           setError(undefined);
           modalState.open();

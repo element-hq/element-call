@@ -15,41 +15,55 @@ limitations under the License.
 */
 
 import { useCallback } from "react";
-import matrix, { InteractiveAuth } from "matrix-js-sdk/src/browser-index";
+import { InteractiveAuth } from "matrix-js-sdk/src/interactive-auth";
+import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
 
 import { initClient, defaultHomeserver } from "../matrix-utils";
+import { Session } from "../ClientContext";
 
 export const useInteractiveLogin = () =>
-  useCallback(
-    async (homeserver: string, username: string, password: string) => {
-      const authClient = matrix.createClient(homeserver);
+  useCallback<
+    (
+      homeserver: string,
+      username: string,
+      password: string
+    ) => Promise<[MatrixClient, Session]>
+  >(async (homeserver: string, username: string, password: string) => {
+    const authClient = createClient(homeserver);
 
-      const interactiveAuth = new InteractiveAuth({
-        matrixClient: authClient,
-        doRequest: () =>
-          authClient.login("m.login.password", {
-            identifier: {
-              type: "m.id.user",
-              user: username,
-            },
-            password,
-          }),
-      });
+    const interactiveAuth = new InteractiveAuth({
+      matrixClient: authClient,
+      doRequest: () =>
+        authClient.login("m.login.password", {
+          identifier: {
+            type: "m.id.user",
+            user: username,
+          },
+          password,
+        }),
+      stateUpdated: null,
+      requestEmailToken: null,
+    });
 
-      /* eslint-disable camelcase */
-      const { user_id, access_token, device_id } =
-        await interactiveAuth.attemptAuth();
-      const session = { user_id, access_token, device_id };
+    // XXX: This claims to return an IAuthData which contains none of these
+    // things - the js-sdk types may be wrong?
+    /* eslint-disable camelcase,@typescript-eslint/no-explicit-any */
+    const { user_id, access_token, device_id } =
+      (await interactiveAuth.attemptAuth()) as any;
+    const session = {
+      user_id,
+      access_token,
+      device_id,
+      passwordlessUser: false,
+    };
 
-      const client = await initClient({
-        baseUrl: defaultHomeserver,
-        accessToken: access_token,
-        userId: user_id,
-        deviceId: device_id,
-      });
-      /* eslint-enable camelcase */
+    const client = await initClient({
+      baseUrl: defaultHomeserver,
+      accessToken: access_token,
+      userId: user_id,
+      deviceId: device_id,
+    });
+    /* eslint-enable camelcase */
 
-      return [client, session];
-    },
-    []
-  );
+    return [client, session];
+  }, []);

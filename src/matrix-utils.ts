@@ -1,48 +1,63 @@
-import matrix from "matrix-js-sdk/src/browser-index";
+import Olm from "@matrix-org/olm";
+import olmWasmPath from "@matrix-org/olm/olm.wasm?url";
+import { IndexedDBStore } from "matrix-js-sdk/src/store/indexeddb";
+import { WebStorageSessionStore } from "matrix-js-sdk/src/store/session/webstorage";
+import { MemoryStore } from "matrix-js-sdk/src/store/memory";
+import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
+import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
+import { ICreateClientOpts } from "matrix-js-sdk/src/matrix";
+import { ClientEvent } from "matrix-js-sdk/src/client";
+import { Visibility, Preset } from "matrix-js-sdk/src/@types/partials";
 import {
   GroupCallIntent,
   GroupCallType,
-} from "matrix-js-sdk/src/browser-index";
+} from "matrix-js-sdk/src/webrtc/groupCall";
+import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
+
 import IndexedDBWorker from "./IndexedDBWorker?worker";
-import Olm from "@matrix-org/olm";
-import olmWasmPath from "@matrix-org/olm/olm.wasm?url";
 
 export const defaultHomeserver =
-  import.meta.env.VITE_DEFAULT_HOMESERVER ||
+  (import.meta.env.VITE_DEFAULT_HOMESERVER as string) ??
   `${window.location.protocol}//${window.location.host}`;
 
 export const defaultHomeserverHost = new URL(defaultHomeserver).host;
 
-function waitForSync(client) {
-  return new Promise((resolve, reject) => {
-    const onSync = (state, _old, data) => {
+function waitForSync(client: MatrixClient) {
+  return new Promise<void>((resolve, reject) => {
+    const onSync = (
+      state: SyncState,
+      _old: SyncState,
+      data: ISyncStateData
+    ) => {
       if (state === "PREPARED") {
         resolve();
-        client.removeListener("sync", onSync);
+        client.removeListener(ClientEvent.Sync, onSync);
       } else if (state === "ERROR") {
         reject(data?.error);
-        client.removeListener("sync", onSync);
+        client.removeListener(ClientEvent.Sync, onSync);
       }
     };
-    client.on("sync", onSync);
+    client.on(ClientEvent.Sync, onSync);
   });
 }
 
-export async function initClient(clientOptions) {
+export async function initClient(
+  clientOptions: ICreateClientOpts
+): Promise<MatrixClient> {
   // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
   window.OLM_OPTIONS = {};
   await Olm.init({ locateFile: () => olmWasmPath });
 
-  let indexedDB;
+  let indexedDB: IDBFactory;
 
   try {
     indexedDB = window.indexedDB;
   } catch (e) {}
 
-  const storeOpts = {};
+  const storeOpts = {} as ICreateClientOpts;
 
   if (indexedDB && localStorage && !import.meta.env.DEV) {
-    storeOpts.store = new matrix.IndexedDBStore({
+    storeOpts.store = new IndexedDBStore({
       indexedDB: window.indexedDB,
       localStorage: window.localStorage,
       dbName: "element-call-sync",
@@ -51,20 +66,23 @@ export async function initClient(clientOptions) {
   }
 
   if (localStorage) {
-    storeOpts.sessionStore = new matrix.WebStorageSessionStore(localStorage);
+    storeOpts.sessionStore = new WebStorageSessionStore(localStorage);
   }
 
   if (indexedDB) {
-    storeOpts.cryptoStore = new matrix.IndexedDBCryptoStore(
+    storeOpts.cryptoStore = new IndexedDBCryptoStore(
       indexedDB,
       "matrix-js-sdk:crypto"
     );
   }
 
-  const client = matrix.createClient({
+  const client = createClient({
     ...storeOpts,
     ...clientOptions,
     useAuthorizationHeader: true,
+    // Use a relatively low timeout for API calls: this is a realtime application
+    // so we don't want API calls taking ages, we'd rather they just fail.
+    localTimeoutMs: 5000,
   });
 
   try {
@@ -74,7 +92,7 @@ export async function initClient(clientOptions) {
       "Error starting matrix client store. Falling back to memory store.",
       error
     );
-    client.store = new matrix.MemoryStore({ localStorage });
+    client.store = new MemoryStore({ localStorage });
     await client.store.startup();
   }
 
@@ -93,7 +111,7 @@ export async function initClient(clientOptions) {
   return client;
 }
 
-export function roomAliasFromRoomName(roomName) {
+export function roomAliasLocalpartFromRoomName(roomName: string): string {
   return roomName
     .trim()
     .replace(/\s/g, "-")
@@ -101,7 +119,14 @@ export function roomAliasFromRoomName(roomName) {
     .toLowerCase();
 }
 
-export function roomNameFromRoomId(roomId) {
+export function fullAliasFromRoomName(
+  roomName: string,
+  client: MatrixClient
+): string {
+  return `#${roomAliasLocalpartFromRoomName(roomName)}:${client.getDomain()}`;
+}
+
+export function roomNameFromRoomId(roomId: string): string {
   return roomId
     .match(/([^:]+):.*$/)[1]
     .substring(1)
@@ -113,7 +138,7 @@ export function roomNameFromRoomId(roomId) {
     .toLowerCase();
 }
 
-export function isLocalRoomId(roomId) {
+export function isLocalRoomId(roomId: string): boolean {
   if (!roomId) {
     return false;
   }
@@ -127,12 +152,16 @@ export function isLocalRoomId(roomId) {
   return parts[1] === defaultHomeserverHost;
 }
 
-export async function createRoom(client, name, isPtt = false) {
-  const { room_id, room_alias } = await client.createRoom({
-    visibility: "private",
-    preset: "public_chat",
+export async function createRoom(
+  client: MatrixClient,
+  name: string,
+  isPtt = false
+): Promise<string> {
+  const createRoomResult = await client.createRoom({
+    visibility: Visibility.Private,
+    preset: Preset.PublicChat,
     name,
-    room_alias_name: roomAliasFromRoomName(name),
+    room_alias_name: roomAliasLocalpartFromRoomName(name),
     power_level_content_override: {
       invite: 100,
       kick: 100,
@@ -158,19 +187,19 @@ export async function createRoom(client, name, isPtt = false) {
     },
   });
 
-  console.log({ isPtt });
+  console.log(`Creating ${isPtt ? "PTT" : "video"} group call room`);
 
   await client.createGroupCall(
-    room_id,
+    createRoomResult.room_id,
     isPtt ? GroupCallType.Voice : GroupCallType.Video,
     isPtt,
     GroupCallIntent.Prompt
   );
 
-  return room_alias || room_id;
+  return fullAliasFromRoomName(name, client);
 }
 
-export function getRoomUrl(roomId) {
+export function getRoomUrl(roomId: string): string {
   if (roomId.startsWith("#")) {
     const [localPart, host] = roomId.replace("#", "").split(":");
 
@@ -184,7 +213,11 @@ export function getRoomUrl(roomId) {
   }
 }
 
-export function getAvatarUrl(client, mxcUrl, avatarSize = 96) {
+export function getAvatarUrl(
+  client: MatrixClient,
+  mxcUrl: string,
+  avatarSize = 96
+): string {
   const width = Math.floor(avatarSize * window.devicePixelRatio);
   const height = Math.floor(avatarSize * window.devicePixelRatio);
   return mxcUrl && client.mxcUrlToHttp(mxcUrl, width, height, "crop");
