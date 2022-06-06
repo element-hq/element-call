@@ -14,6 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+// We need to import this somewhere, once, so that the correct 'request'
+// function gets set. It needs to be not in the same file as we use
+// createClient, or the typescript transpiler gets confused about
+// dependency references.
+import "matrix-js-sdk/src/browser-index";
+
 import React from "react";
 import ReactDOM from "react-dom";
 import { createBrowserHistory } from "history";
