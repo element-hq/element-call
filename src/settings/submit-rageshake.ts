@@ -15,14 +15,30 @@ limitations under the License.
 */
 
 import { useCallback, useContext, useEffect, useState } from "react";
-import { getLogsForReport } from "./rageshake";
 import pako from "pako";
+import { ClientEvent, MatrixClient, MatrixEvent } from "matrix-js-sdk";
+import { OverlayTriggerState } from "@react-stately/overlays";
+
+import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
 import { InspectorContext } from "../room/GroupCallInspector";
 import { useModalTriggerState } from "../Modal";
 
-export function useSubmitRageshake() {
-  const { client } = useClient();
+interface RageShakeSubmitOptions {
+  description: string;
+  roomId: string;
+  label: string;
+  sendLogs: boolean;
+  rageshakeRequestId: string;
+}
+
+export function useSubmitRageshake(): {
+  submitRageshake: (opts: RageShakeSubmitOptions) => Promise<void>;
+  sending: boolean;
+  sent: boolean;
+  error: Error;
+} {
+  const client: MatrixClient = useClient().client;
   const [{ json }] = useContext(InspectorContext);
 
   const [{ sending, sent, error }, setState] = useState({
@@ -57,9 +73,12 @@ export function useSubmitRageshake() {
           opts.description || "User did not supply any additional text."
         );
         body.append("app", "matrix-video-chat");
-        body.append("version", import.meta.env.VITE_APP_VERSION || "dev");
+        body.append(
+          "version",
+          (import.meta.env.VITE_APP_VERSION as string) || "dev"
+        );
         body.append("user_agent", userAgent);
-        body.append("installed_pwa", false);
+        body.append("installed_pwa", "false");
         body.append("touch_input", touchInput);
 
         if (client) {
@@ -181,7 +200,11 @@ export function useSubmitRageshake() {
 
         if (navigator.storage && navigator.storage.estimate) {
           try {
-            const estimate = await navigator.storage.estimate();
+            const estimate: {
+              quota?: number;
+              usage?: number;
+              usageDetails?: { [x: string]: unknown };
+            } = await navigator.storage.estimate();
             body.append("storageManager_quota", String(estimate.quota));
             body.append("storageManager_usage", String(estimate.usage));
             if (estimate.usageDetails) {
@@ -200,7 +223,11 @@ export function useSubmitRageshake() {
 
           for (const entry of logs) {
             // encode as UTF-8
-            let buf = new TextEncoder().encode(entry.lines);
+            let buf = new TextEncoder().encode(
+              typeof entry.lines == "string"
+                ? entry.lines
+                : entry.lines.join("\n")
+            );
 
             // compress
             buf = pako.gzip(buf);
@@ -225,7 +252,7 @@ export function useSubmitRageshake() {
         }
 
         await fetch(
-          import.meta.env.VITE_RAGESHAKE_SUBMIT_URL ||
+          (import.meta.env.VITE_RAGESHAKE_SUBMIT_URL as string) ||
             "https://element.io/bugreports/submit",
           {
             method: "POST",
@@ -250,7 +277,7 @@ export function useSubmitRageshake() {
   };
 }
 
-export function useDownloadDebugLog() {
+export function useDownloadDebugLog(): () => void {
   const [{ json }] = useContext(InspectorContext);
 
   const downloadDebugLog = useCallback(() => {
@@ -271,7 +298,10 @@ export function useDownloadDebugLog() {
   return downloadDebugLog;
 }
 
-export function useRageshakeRequest() {
+export function useRageshakeRequest(): (
+  roomId: string,
+  rageshakeRequestId: string
+) => void {
   const { client } = useClient();
 
   const sendRageshakeRequest = useCallback(
@@ -286,13 +316,16 @@ export function useRageshakeRequest() {
   return sendRageshakeRequest;
 }
 
-export function useRageshakeRequestModal(roomId) {
+export function useRageshakeRequestModal(roomId: string): {
+  modalState: OverlayTriggerState;
+  modalProps: any;
+} {
   const { modalState, modalProps } = useModalTriggerState();
-  const { client } = useClient();
+  const client: MatrixClient = useClient().client;
   const [rageshakeRequestId, setRageshakeRequestId] = useState();
 
   useEffect(() => {
-    const onEvent = (event) => {
+    const onEvent = (event: MatrixEvent) => {
       const type = event.getType();
 
       if (
@@ -305,10 +338,10 @@ export function useRageshakeRequestModal(roomId) {
       }
     };
 
-    client.on("event", onEvent);
+    client.on(ClientEvent.Event, onEvent);
 
     return () => {
-      client.removeListener("event", onEvent);
+      client.removeListener(ClientEvent.Event, onEvent);
     };
   }, [modalState.open, roomId, client, modalState]);
 
