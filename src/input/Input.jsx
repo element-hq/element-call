@@ -39,7 +39,18 @@ export function Field({ children, className, ...rest }) {
 
 export const InputField = forwardRef(
   (
-    { id, label, className, type, checked, prefix, suffix, disabled, ...rest },
+    {
+      id,
+      label,
+      className,
+      type,
+      checked,
+      prefix,
+      suffix,
+      description,
+      disabled,
+      ...rest
+    },
     ref
   ) => {
     return (
@@ -82,6 +93,7 @@ export const InputField = forwardRef(
           {label}
         </label>
         {suffix && <span>{suffix}</span>}
+        {description && <p className={styles.description}>{description}</p>}
       </Field>
     );
   }
