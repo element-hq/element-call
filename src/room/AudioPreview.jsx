@@ -33,7 +33,7 @@ export function AudioPreview({
 }) {
   return (
     <>
-      <h1>{`${roomName} - Radio Call`}</h1>
+      <h1>{`${roomName} - Walkie-talkie call`}</h1>
       <div className={styles.preview}>
         {state === GroupCallState.LocalCallFeedUninitialized && (
           <Body fontWeight="semiBold" className={styles.microphonePermissions}>
