@@ -118,13 +118,15 @@
 .checkboxField {
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
 }
 
 .checkboxField label {
   display: flex;
   align-items: center;
   flex-grow: 1;
-  font-size: 13px;
+  font-size: 15px;
+  line-height: 24px;
 }
 
 .checkboxField input {
@@ -175,4 +177,10 @@
   font-size: 13px;
   color: var(--alert);
   font-weight: 600;
+}
+
+.description {
+  color: var(--secondary-content);
+  margin-left: 26px;
+  width: 100%; /* Ensure that it breaks onto the next row */
 }
