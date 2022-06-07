@@ -43,7 +43,7 @@ export const CallTypeDropdown: FC<Props> = ({ callType, setCallType }) => {
     <PopoverMenuTrigger placement="bottom">
       <Button variant="dropdown" className={commonStyles.headline}>
         <Headline className={styles.label}>
-          {callType === CallType.Video ? "Video call" : "Radio call"}
+          {callType === CallType.Video ? "Video call" : "Walkie-talkie call"}
         </Headline>
       </Button>
       {(props) => (
@@ -55,9 +55,9 @@ export const CallTypeDropdown: FC<Props> = ({ callType, setCallType }) => {
               <CheckIcon className={menuStyles.checkIcon} />
             )}
           </Item>
-          <Item key={CallType.Radio} textValue="Radio call">
+          <Item key={CallType.Radio} textValue="Walkie-talkie call">
             <MicIcon />
-            <span>Radio call</span>
+            <span>Walkie-talkie call</span>
             {callType === CallType.Radio && (
               <CheckIcon className={menuStyles.checkIcon} />
             )}
