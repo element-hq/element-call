@@ -16,8 +16,10 @@ limitations under the License.
 
 import { useCallback, useContext, useEffect, useState } from "react";
 import pako from "pako";
-import { ClientEvent, MatrixClient, MatrixEvent } from "matrix-js-sdk";
+import { MatrixEvent } from "matrix-js-sdk";
 import { OverlayTriggerState } from "@react-stately/overlays";
+import { MatrixClient, ClientEvent } from "matrix-js-sdk/src/client";
+import { stringToBase } from "matrix-js-sdk/src/utils";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
@@ -223,12 +225,7 @@ export function useSubmitRageshake(): {
 
           for (const entry of logs) {
             // encode as UTF-8
-            let buf = new TextEncoder().encode(
-              typeof entry.lines == "string"
-                ? entry.lines
-                : entry.lines.join("\n")
-            );
-
+            let buf = new TextEncoder().encode(entry.lines);
             // compress
             buf = pako.gzip(buf);
 
@@ -315,14 +312,24 @@ export function useRageshakeRequest(): (
 
   return sendRageshakeRequest;
 }
+interface ModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+}
+interface ModalPropsWithId extends ModalProps {
+  rageshakeRequestId: string;
+}
 
 export function useRageshakeRequestModal(roomId: string): {
   modalState: OverlayTriggerState;
-  modalProps: any;
+  modalProps: ModalPropsWithId;
 } {
-  const { modalState, modalProps } = useModalTriggerState();
+  const { modalState, modalProps } = useModalTriggerState() as {
+    modalState: OverlayTriggerState;
+    modalProps: ModalProps;
+  };
   const client: MatrixClient = useClient().client;
-  const [rageshakeRequestId, setRageshakeRequestId] = useState();
+  const [rageshakeRequestId, setRageshakeRequestId] = useState<string>();
 
   useEffect(() => {
     const onEvent = (event: MatrixEvent) => {

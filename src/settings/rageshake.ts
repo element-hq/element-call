@@ -50,8 +50,8 @@ const MAX_LOG_SIZE = 1024 * 1024 * 5; // 5 MB
 
 interface LogEntry {
   id: string;
-  lines: Array<string>;
-  index: number;
+  lines: string;
+  index?: number;
 }
 
 interface Cursor {
@@ -59,9 +59,6 @@ interface Cursor {
   ts: number;
 }
 
-// interface CustomEventTarget extends EventTarget {
-//   result: Cursor;
-// }
 export class ConsoleLogger {
   logs = "";
 
@@ -86,6 +83,7 @@ export class ConsoleLogger {
       }
     );
   }
+
   // these functions get overwritten by the monkey patch
   error(...args: unknown[]): void {}
   warn(...args: unknown[]): void {}
@@ -203,7 +201,7 @@ export class IndexedDBLogStore {
         logObjStore.createIndex("id", "id", { unique: false });
 
         logObjStore.add(
-          this.generateLogEntry([new Date() + " ::: Log database was created."])
+          this.generateLogEntry(new Date() + " ::: Log database was created.")
         );
 
         const lastModifiedStore = db.createObjectStore("logslastmod", {
@@ -273,7 +271,7 @@ export class IndexedDBLogStore {
         // @ts-ignore
         reject(new Error("Failed to write logs: " + event.target.errorCode));
       };
-      objStore.add(this.generateLogEntry(lines.split("\n")));
+      objStore.add(this.generateLogEntry(lines));
       const lastModStore = txn.objectStore("logslastmod");
       lastModStore.put(this.generateLastModifiedTime());
     }).then(() => {
@@ -424,7 +422,7 @@ export class IndexedDBLogStore {
     return logs;
   }
 
-  generateLogEntry(lines: string[]): LogEntry {
+  generateLogEntry(lines: string): LogEntry {
     return {
       id: this.id,
       lines: lines,
@@ -432,7 +430,7 @@ export class IndexedDBLogStore {
     };
   }
 
-  generateLastModifiedTime() {
+  generateLastModifiedTime(): Cursor {
     return {
       id: this.id,
       ts: Date.now(),
@@ -539,7 +537,7 @@ export function tryInitStorage(): Promise<void> {
   return global.mx_rage_initStoragePromise;
 }
 
-export function flush() {
+export function flush(): Promise<void> {
   if (!global.mx_rage_store) {
     return;
   }
@@ -550,7 +548,7 @@ export function flush() {
  * Clean up old logs.
  * @return {Promise} Resolves if cleaned logs.
  */
-export async function cleanup() {
+export async function cleanup(): Promise<void> {
   if (!global.mx_rage_store) {
     return;
   }
@@ -560,9 +558,9 @@ export async function cleanup() {
 /**
  * Get a recent snapshot of the logs, ready for attaching to a bug report
  *
- * @return {Array<{lines: string, id, string}>}  list of log data
+ * @return {LogEntry[]}  list of log data
  */
-export async function getLogsForReport() {
+export async function getLogsForReport(): Promise<LogEntry[]> {
   if (!global.mx_rage_logger) {
     throw new Error("No console logger, did you forget to call init()?");
   }
@@ -571,13 +569,13 @@ export async function getLogsForReport() {
   if (global.mx_rage_store) {
     // flush most recent logs
     await global.mx_rage_store.flush();
-    return await global.mx_rage_store.consume();
+    return (await global.mx_rage_store.consume()) as LogEntry[];
   } else {
     return [
       {
         lines: global.mx_rage_logger.flush(true),
         id: "-",
       },
-    ];
+    ] as LogEntry[];
   }
 }
