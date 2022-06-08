@@ -1,4 +1,4 @@
-FROM node:16-buster as builder
+FROM --platform=$BUILDPLATFORM node:16-buster as builder
 
 WORKDIR /src
 

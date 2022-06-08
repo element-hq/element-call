@@ -31,7 +31,7 @@
 }
 
 .participants > p {
-  color: #a9b2bc;
+  color: var(--secondary-content);
   margin-bottom: 8px;
 }
 

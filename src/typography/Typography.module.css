@@ -21,11 +21,11 @@
 }
 
 .link {
-  color: var(--linkColor);
+  color: var(--links);
 }
 
 .primary {
-  color: var(--primaryColor);
+  color: var(--accent);
 }
 
 .overflowEllipsis {
