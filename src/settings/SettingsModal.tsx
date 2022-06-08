@@ -25,10 +25,7 @@ import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
 import { SelectInput } from "../input/SelectInput";
-import {
-  MediaHandlerContextInterface,
-  useMediaHandler,
-} from "./useMediaHandler";
+import { useMediaHandler } from "./useMediaHandler";
 import { useSpatialAudio, useShowInspector } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
