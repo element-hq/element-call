@@ -37,9 +37,8 @@ export const variantToClassName = {
   icon: [styles.iconButton],
   secondary: [styles.secondary],
   copy: [styles.copyButton],
-  secondaryCopy: [styles.secondaryCopy],
+  secondaryCopy: [styles.secondaryCopy, styles.copyButton],
   iconCopy: [styles.iconCopyButton],
-  secondaryCopy: [styles.copyButton],
   secondaryHangup: [styles.secondaryHangup],
   dropdown: [styles.dropdownButton],
 };

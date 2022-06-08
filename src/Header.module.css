@@ -70,7 +70,7 @@
   background: transparent;
   border: none;
   display: flex;
-  color: var(--textColor1);
+  color: var(--primary-content);
   cursor: pointer;
   align-items: center;
 }

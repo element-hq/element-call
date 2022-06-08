@@ -143,7 +143,7 @@ export const PTTButton: React.FC<Props> = ({
   });
   const shadowColor = showTalkOverError
     ? "var(--alert-20)"
-    : "var(--primaryColor-20)";
+    : "var(--accent-20)";
 
   return (
     <animated.button

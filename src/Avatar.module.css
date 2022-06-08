@@ -1,6 +1,6 @@
 .avatar {
   position: relative;
-  color: #ffffff;
+  color: var(--primary-content);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -17,7 +17,7 @@
 }
 
 .avatar svg * {
-  fill: #ffffff;
+  fill: var(--primary-content);
 }
 
 .avatar span {

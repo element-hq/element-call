@@ -1,5 +1,5 @@
 /*
-Copyright 2021 New Vector Ltd
+Copyright 2021-2022 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -23,10 +23,11 @@ import "matrix-js-sdk/src/browser-index";
 import React from "react";
 import ReactDOM from "react-dom";
 import { createBrowserHistory } from "history";
-import "./index.css";
-import App from "./App";
 import * as Sentry from "@sentry/react";
 import { Integrations } from "@sentry/tracing";
+
+import "./index.css";
+import App from "./App";
 import { ErrorView } from "./FullScreenView";
 import { init as initRageshake } from "./settings/rageshake";
 import { InspectorContextProvider } from "./room/GroupCallInspector";
@@ -37,30 +38,50 @@ console.info(`matrix-video-chat ${import.meta.env.VITE_APP_VERSION || "dev"}`);
 
 if (import.meta.env.VITE_CUSTOM_THEME) {
   const style = document.documentElement.style;
-  style.setProperty("--primaryColor", import.meta.env.VITE_PRIMARY_COLOR);
-  style.setProperty("--bgColor1", import.meta.env.VITE_BG_COLOR_1);
-  style.setProperty("--bgColor2", import.meta.env.VITE_BG_COLOR_2);
-  style.setProperty("--bgColor3", import.meta.env.VITE_BG_COLOR_3);
-  style.setProperty("--bgColor4", import.meta.env.VITE_BG_COLOR_4);
-  style.setProperty("--bgColor5", import.meta.env.VITE_BG_COLOR_5);
-  style.setProperty("--textColor1", import.meta.env.VITE_TEXT_COLOR_1);
-  style.setProperty("--textColor2", import.meta.env.VITE_TEXT_COLOR_2);
-  style.setProperty("--textColor4", import.meta.env.VITE_TEXT_COLOR_4);
+  style.setProperty("--accent", import.meta.env.VITE_THEME_ACCENT as string);
   style.setProperty(
-    "--inputBorderColor",
-    import.meta.env.VITE_INPUT_BORDER_COLOR
+    "--accent-20",
+    import.meta.env.VITE_THEME_ACCENT_20 as string
+  );
+  style.setProperty("--alert", import.meta.env.VITE_THEME_ALERT as string);
+  style.setProperty(
+    "--alert-20",
+    import.meta.env.VITE_THEME_ALERT_20 as string
+  );
+  style.setProperty("--links", import.meta.env.VITE_THEME_LINKS as string);
+  style.setProperty(
+    "--primary-content",
+    import.meta.env.VITE_THEME_PRIMARY_CONTENT as string
   );
   style.setProperty(
-    "--inputBorderColorFocused",
-    import.meta.env.VITE_INPUT_BORDER_COLOR_FOCUSED
+    "--secondary-content",
+    import.meta.env.VITE_THEME_SECONDARY_CONTENT as string
+  );
+  style.setProperty(
+    "--tertiary-content",
+    import.meta.env.VITE_THEME_TERTIARY_CONTENT as string
+  );
+  style.setProperty(
+    "--quaternary-content",
+    import.meta.env.VITE_THEME_QUATERNARY_CONTENT as string
+  );
+  style.setProperty(
+    "--quinary-content",
+    import.meta.env.VITE_THEME_QUINARY_CONTENT as string
+  );
+  style.setProperty("--system", import.meta.env.VITE_THEME_SYSTEM as string);
+  style.setProperty(
+    "--background",
+    import.meta.env.VITE_THEME_BACKGROUND as string
   );
 }
 
 const history = createBrowserHistory();
 
 Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN,
-  environment: import.meta.env.VITE_SENTRY_ENVIRONMENT ?? "production",
+  dsn: import.meta.env.VITE_SENTRY_DSN as string,
+  environment:
+    (import.meta.env.VITE_SENTRY_ENVIRONMENT as string) ?? "production",
   integrations: [
     new Integrations.BrowserTracing({
       routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),

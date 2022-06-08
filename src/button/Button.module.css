@@ -46,8 +46,8 @@ limitations under the License.
 }
 
 .button {
-  color: #fff;
-  background-color: var(--primaryColor);
+  color: var(--primary-content);
+  background-color: var(--accent);
 }
 
 .button:focus,
@@ -66,46 +66,46 @@ limitations under the License.
   width: 50px;
   height: 50px;
   border-radius: 50px;
-  background-color: var(--bgColor2);
+  background-color: var(--system);
 }
 
 .toolbarButton:hover,
 .toolbarButtonSecondary:hover {
-  background-color: var(--bgColor4);
+  background-color: var(--quinary-content);
 }
 
 .toolbarButton.on,
 .toolbarButton.off {
-  background-color: #ffffff;
+  background-color: var(--primary-content);
 }
 
 .toolbarButtonSecondary.on {
-  background-color: #0dbd8b;
+  background-color: var(--accent);
 }
 
 .iconButton:not(.stroke) svg * {
-  fill: #ffffff;
+  fill: var(--primary-content);
 }
 
 .iconButton:not(.stroke):hover svg * {
-  fill: #0dbd8b;
+  fill: var(--accent);
 }
 
 .iconButton.on:not(.stroke) svg * {
-  fill: #0dbd8b;
+  fill: var(--accent);
 }
 
 .iconButton.on.stroke svg * {
-  stroke: #0dbd8b;
+  stroke: var(--accent);
 }
 
 .hangupButton,
 .hangupButton:hover {
-  background-color: #ff5b55;
+  background-color: var(--alert);
 }
 
 .toolbarButton.on svg * {
-  fill: #0dbd8b;
+  fill: var(--accent);
 }
 
 .toolbarButton.off svg * {
@@ -113,25 +113,25 @@ limitations under the License.
 }
 
 .toolbarButtonSecondary.on svg * {
-  fill: #ffffff;
+  fill: var(--primary-content);
 }
 
 .secondary,
 .copyButton {
-  color: #0dbd8b;
-  border: 2px solid #0dbd8b;
+  color: var(--accent);
+  border: 2px solid var(--accent);
   background-color: transparent;
 }
 
 .secondaryHangup {
-  color: #ff5b55;
-  border: 2px solid #ff5b55;
+  color: var(--alert);
+  border: 2px solid var(--alert);
   background-color: transparent;
 }
 
 .copyButton.secondaryCopy {
-  color: var(--textColor1);
-  border-color: var(--textColor1);
+  color: var(--primary-content);
+  border-color: var(--primary-content);
 }
 
 .copyButton {
@@ -154,12 +154,12 @@ limitations under the License.
 }
 
 .copyButton:not(.on) svg * {
-  fill: #0dbd8b;
+  fill: var(--accent);
 }
 
 .copyButton.on {
   border-color: transparent;
-  background-color: #0dbd8b;
+  background-color: var(--accent);
   color: white;
 }
 
@@ -168,32 +168,32 @@ limitations under the License.
 }
 
 .copyButton.secondaryCopy:not(.on) svg * {
-  fill: var(--textColor1);
+  fill: var(--primary-content);
 }
 
 .iconCopyButton svg * {
-  fill: var(--textColor3);
+  fill: var(--tertiary-content);
 }
 
 .iconCopyButton:hover svg * {
-  fill: #0dbd8b;
+  fill: var(--accent);
 }
 
 .iconCopyButton.on svg *,
 .iconCopyButton.on:hover svg * {
   fill: transparent;
-  stroke: #0dbd8b;
+  stroke: var(--accent);
 }
 
 .dropdownButton {
-  color: var(--textColor1);
+  color: var(--primary-content);
   padding: 2px 8px;
   border-radius: 8px;
 }
 
 .dropdownButton:hover,
 .dropdownButton.on {
-  background-color: var(--bgColor4);
+  background-color: var(--quinary-content);
 }
 
 .dropdownButton svg {
@@ -201,7 +201,7 @@ limitations under the License.
 }
 
 .dropdownButton svg * {
-  fill: var(--textColor1);
+  fill: var(--primary-content);
 }
 
 .lg {

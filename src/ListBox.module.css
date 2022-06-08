@@ -5,8 +5,8 @@
   overflow-y: auto;
   list-style: none;
   background-color: transparent;
-  border: 1px solid var(--inputBorderColor);
-  background-color: var(--bgColor1);
+  border: 1px solid var(--quinary-content);
+  background-color: var(--background);
   border-radius: 8px;
 }
 
@@ -15,7 +15,7 @@
   align-items: center;
   justify-content: space-between;
   background-color: transparent;
-  color: var(--textColor1);
+  color: var(--primary-content);
   padding: 8px 16px;
   outline: none;
   cursor: pointer;
@@ -28,6 +28,6 @@
 }
 
 .option.disabled {
-  color: var(--textColor2);
+  color: var(--quaternary-content);
   background-color: var(--bgColor3);
 }

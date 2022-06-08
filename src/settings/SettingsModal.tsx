@@ -99,9 +99,10 @@ export const SettingsModal = (props: Props) => {
           <FieldRow>
             <InputField
               id="spatialAudio"
-              label="Spatial audio (experimental)"
+              label="Spatial audio"
               type="checkbox"
               checked={spatialAudio}
+              description="This will make a speaker's audio seem as if it is coming from where their tile is positioned on screen. (Experimental feature: this may impact the stability of audio.)"
               // @ts-ignore
               onChange={(event: Event) => setSpatialAudio(event.target.checked)}
             />
