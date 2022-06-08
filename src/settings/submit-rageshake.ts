@@ -19,7 +19,6 @@ import pako from "pako";
 import { MatrixEvent } from "matrix-js-sdk";
 import { OverlayTriggerState } from "@react-stately/overlays";
 import { MatrixClient, ClientEvent } from "matrix-js-sdk/src/client";
-import { stringToBase } from "matrix-js-sdk/src/utils";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
