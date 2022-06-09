@@ -207,3 +207,10 @@ limitations under the License.
 .lg {
   height: 40px;
 }
+
+.linkButton {
+  background-color: transparent;
+  border: none;
+  text-decoration: underline;
+  cursor: pointer;
+}
