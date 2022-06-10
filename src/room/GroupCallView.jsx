@@ -53,6 +53,7 @@ export function GroupCallView({
     screenshareFeeds,
     hasLocalParticipant,
     participants,
+    unencryptedEventsFromUsers,
   } = useGroupCall(groupCall);
 
   const avatarUrl = useRoomAvatar(groupCall.room);
@@ -112,6 +113,7 @@ export function GroupCallView({
           localScreenshareFeed={localScreenshareFeed}
           screenshareFeeds={screenshareFeeds}
           roomId={roomId}
+          unencryptedEventsFromUsers={unencryptedEventsFromUsers}
         />
       );
     }
