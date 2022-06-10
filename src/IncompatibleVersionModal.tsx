@@ -25,7 +25,7 @@ interface Props {
   room: Room;
 }
 
-export const IncompatibleversionModal: React.FC<Props> = ({
+export const IncompatibleVersionModal: React.FC<Props> = ({
   userIds,
   room,
   ...rest
