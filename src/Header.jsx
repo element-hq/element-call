@@ -8,7 +8,7 @@ import { ReactComponent as ArrowLeftIcon } from "./icons/ArrowLeft.svg";
 import { useButton } from "@react-aria/button";
 import { Subtitle } from "./typography/Typography";
 import { Avatar } from "./Avatar";
-import { IncompatibleversionModal } from "./IncompatibleversionModal";
+import { IncompatibleVersionModal } from "./IncompatibleVersionModal";
 import { useModalTriggerState } from "./Modal";
 import { Button } from "./button";
 
@@ -104,7 +104,7 @@ export function VersionMismatchWarning({ users, room }) {
         Details
       </Button>
       {modalState.isOpen && (
-        <IncompatibleversionModal userIds={users} room={room} {...modalProps} />
+        <IncompatibleVersionModal userIds={users} room={room} {...modalProps} />
       )}
     </span>
   );

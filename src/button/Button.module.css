@@ -211,6 +211,6 @@ limitations under the License.
 .linkButton {
   background-color: transparent;
   border: none;
-  text-decoration: underline;
+  color: var(--accent);
   cursor: pointer;
 }

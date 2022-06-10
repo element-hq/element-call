@@ -112,14 +112,14 @@
   content: "";
   display: inline-block;
   position: relative;
-  top: 2px;
+  top: 1px;
   width: 16px;
   height: 16px;
   mask-image: url("./icons/AlertTriangleFilled.svg");
   mask-repeat: no-repeat;
   mask-size: contain;
-  background-color: var(--warning);
-  padding-right: 3px;
+  background-color: var(--alert);
+  padding-right: 5px;
 }
 
 @media (min-width: 800px) {
