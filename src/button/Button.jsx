@@ -41,6 +41,7 @@ export const variantToClassName = {
   iconCopy: [styles.iconCopyButton],
   secondaryHangup: [styles.secondaryHangup],
   dropdown: [styles.dropdownButton],
+  link: [styles.linkButton],
 };
 
 export const sizeToClassName = {
