@@ -22,7 +22,13 @@ import {
   VideoButton,
   ScreenshareButton,
 } from "../button";
-import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
+import {
+  Header,
+  LeftNav,
+  RightNav,
+  RoomHeaderInfo,
+  VersionMismatchWarning,
+} from "../Header";
 import { VideoGrid, useVideoGridLayout } from "../video-grid/VideoGrid";
 import { VideoTileContainer } from "../video-grid/VideoTileContainer";
 import { GroupCallInspector } from "./GroupCallInspector";
@@ -59,6 +65,7 @@ export function InCallView({
   isScreensharing,
   screenshareFeeds,
   roomId,
+  unencryptedEventsFromUsers,
 }) {
   usePreventScroll();
   const [layout, setLayout] = useVideoGridLayout(screenshareFeeds.length > 0);
@@ -135,6 +142,10 @@ export function InCallView({
       <Header>
         <LeftNav>
           <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
+          <VersionMismatchWarning
+            users={unencryptedEventsFromUsers}
+            room={groupCall.room}
+          />
         </LeftNav>
         <RightNav>
           <GridLayoutMenu layout={layout} setLayout={setLayout} />

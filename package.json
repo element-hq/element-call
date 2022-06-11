@@ -8,6 +8,7 @@
     "build-storybook": "build-storybook",
     "prettier:check": "prettier -c src",
     "prettier:format": "prettier -w src",
+    "lint": "yarn lint:types && yarn lint:js",
     "lint:js": "eslint --max-warnings 0 src",
     "lint:types": "tsc"
   },
@@ -36,7 +37,7 @@
     "classnames": "^2.3.1",
     "color-hash": "^2.0.1",
     "events": "^3.3.0",
-    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#aa0d3bd1f5a006d151f826e6b8c5f286abb6e960",
+    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#404f8e130e44a78b0159c55902df1b129b3816d1",
     "mermaid": "^8.13.8",
     "normalize.css": "^8.0.1",
     "pako": "^2.0.4",

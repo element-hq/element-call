@@ -104,7 +104,7 @@ export function UnauthenticatedView() {
   );
 
   const callNameLabel =
-    callType === CallType.Video ? "Video call name" : "Radio call name";
+    callType === CallType.Video ? "Video call name" : "Walkie-talkie call name";
 
   return (
     <>
