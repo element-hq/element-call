@@ -57,10 +57,16 @@ export function ProfileModal({ client, ...rest }: Props) {
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
-      const displayName = data.get("displayName");
+      const displayNameDataEntry = data.get("displayName");
       const avatar: File | string = data.get("avatar");
+
       const avatarSize =
         typeof avatar == "string" ? avatar.length : avatar.size;
+      const displayName =
+        typeof displayNameDataEntry == "string"
+          ? displayNameDataEntry
+          : displayNameDataEntry.name;
+
       saveProfile({
         displayName,
         avatar: avatar && avatarSize > 0 ? avatar : undefined,
