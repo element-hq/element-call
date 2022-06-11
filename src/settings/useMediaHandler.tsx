@@ -16,6 +16,7 @@ limitations under the License.
 */
 
 import { MatrixClient } from "matrix-js-sdk";
+import { MediaHandlerEvent } from "matrix-js-sdk/src/webrtc/mediaHandler";
 import React, {
   useState,
   useEffect,
@@ -95,9 +96,9 @@ export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
     );
 
     return {
-      // @ts-ignore
+      // @ts-ignore, ignore that audioInput is a private members of mediaHandler
       audioInput: mediaHandler.audioInput,
-      // @ts-ignore
+      // @ts-ignore, ignore that videoInput is a private members of mediaHandler
       videoInput: mediaHandler.videoInput,
       audioOutput: undefined,
       audioInputs: [],
@@ -179,11 +180,14 @@ export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
     }
     updateDevices();
 
-    mediaHandler.on("local_streams_changed", updateDevices);
+    mediaHandler.on(MediaHandlerEvent.LocalStreamsChanged, updateDevices);
     navigator.mediaDevices.addEventListener("devicechange", updateDevices);
 
     return () => {
-      mediaHandler.removeListener("local_streams_changed", updateDevices);
+      mediaHandler.removeListener(
+        MediaHandlerEvent.LocalStreamsChanged,
+        updateDevices
+      );
       navigator.mediaDevices.removeEventListener("devicechange", updateDevices);
       mediaHandler.stopAllStreams();
     };
@@ -207,7 +211,7 @@ export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
     [client]
   );
 
-  const setAudioOutput: (deviceId: any) => void = useCallback((deviceId) => {
+  const setAudioOutput: (deviceId: string) => void = useCallback((deviceId) => {
     updateMediaPreferences({ audioOutput: deviceId });
     setState((prevState) => ({ ...prevState, audioOutput: deviceId }));
   }, []);
