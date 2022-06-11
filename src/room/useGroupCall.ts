@@ -14,11 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useReducer, useState } from "react";
 import {
   GroupCallEvent,
   GroupCallState,
   GroupCall,
+  GroupCallErrorCode,
+  GroupCallUnknownDeviceError,
+  GroupCallError,
 } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixCall } from "matrix-js-sdk/src/webrtc/call";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
@@ -48,6 +51,7 @@ export interface UseGroupCallType {
   localDesktopCapturerSourceId: string;
   participants: RoomMember[];
   hasLocalParticipant: boolean;
+  unencryptedEventsFromUsers: Set<string>;
 }
 
 interface State {
@@ -105,6 +109,13 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallType {
     participants: [],
     hasLocalParticipant: false,
   });
+
+  const [unencryptedEventsFromUsers, addUnencryptedEventUser] = useReducer(
+    (state: Set<string>, newVal: string) => {
+      return new Set(state).add(newVal);
+    },
+    new Set<string>()
+  );
 
   const updateState = (state: Partial<State>) =>
     setState((prevState) => ({ ...prevState, ...state }));
@@ -180,6 +191,13 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallType {
       });
     }
 
+    function onError(e: GroupCallError): void {
+      if (e.code === GroupCallErrorCode.UnknownDevice) {
+        const unknownDeviceError = e as GroupCallUnknownDeviceError;
+        addUnencryptedEventUser(unknownDeviceError.userId);
+      }
+    }
+
     groupCall.on(GroupCallEvent.GroupCallStateChanged, onGroupCallStateChanged);
     groupCall.on(GroupCallEvent.UserMediaFeedsChanged, onUserMediaFeedsChanged);
     groupCall.on(
@@ -194,6 +212,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallType {
     );
     groupCall.on(GroupCallEvent.CallsChanged, onCallsChanged);
     groupCall.on(GroupCallEvent.ParticipantsChanged, onParticipantsChanged);
+    groupCall.on(GroupCallEvent.Error, onError);
 
     updateState({
       error: null,
@@ -242,6 +261,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallType {
         GroupCallEvent.ParticipantsChanged,
         onParticipantsChanged
       );
+      groupCall.removeListener(GroupCallEvent.Error, onError);
       groupCall.leave();
     };
   }, [groupCall]);
@@ -319,5 +339,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallType {
     localDesktopCapturerSourceId,
     participants,
     hasLocalParticipant,
+    unencryptedEventsFromUsers,
   };
 }
