@@ -564,13 +564,17 @@ export async function getLogsForReport(): Promise<LogEntry[]> {
   }
 }
 
-type StringifyReplacer = (this: any, key: string, value: any) => any;
+type StringifyReplacer = (
+  this: unknown,
+  key: string,
+  value: unknown
+) => unknown;
 
 // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#circular_references
 // Injects `<$ cycle-trimmed $>` wherever it cuts a cyclical object relationship
 const getCircularReplacer = (): StringifyReplacer => {
   const seen = new WeakSet();
-  return (key: string, value: any): any => {
+  return (key: string, value: unknown): unknown => {
     if (typeof value === "object" && value !== null) {
       if (seen.has(value)) {
         return "<$ cycle-trimmed $>";
