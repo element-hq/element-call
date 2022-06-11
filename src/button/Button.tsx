@@ -13,9 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 import React, { forwardRef } from "react";
+import { PressEvent } from "@react-types/shared";
 import classNames from "classnames";
+import { useButton } from "@react-aria/button";
+import { mergeProps, useObjectRef } from "@react-aria/utils";
+
 import styles from "./Button.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { ReactComponent as MuteMicIcon } from "../icons/MuteMic.svg";
@@ -26,8 +29,6 @@ import { ReactComponent as ScreenshareIcon } from "../icons/Screenshare.svg";
 import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
-import { useButton } from "@react-aria/button";
-import { mergeProps, useObjectRef } from "@react-aria/utils";
 import { TooltipTrigger } from "../Tooltip";
 
 export const variantToClassName = {
@@ -47,8 +48,19 @@ export const variantToClassName = {
 export const sizeToClassName = {
   lg: [styles.lg],
 };
-
-export const Button = forwardRef(
+interface Props {
+  variant: string;
+  size: number;
+  on: () => void;
+  off: () => void;
+  iconStyle: string;
+  className: string;
+  children: Element[];
+  onPress: (e: PressEvent) => void;
+  onPressStart: (e: PressEvent) => void;
+  [index: string]: unknown;
+}
+export const Button = forwardRef<HTMLAnchorElement, Props>(
   (
     {
       variant = "default",
@@ -64,7 +76,7 @@ export const Button = forwardRef(
     },
     ref
   ) => {
-    const buttonRef = useObjectRef(ref);
+    const buttonRef = useObjectRef<HTMLAnchorElement>(ref);
     const { buttonProps } = useButton(
       { onPress, onPressStart, ...rest },
       buttonRef
@@ -75,7 +87,7 @@ export const Button = forwardRef(
     let filteredButtonProps = buttonProps;
 
     if (rest.type === "submit" && !rest.onPress) {
-      const { onKeyDown, onKeyUp, ...filtered } = buttonProps;
+      const { ...filtered } = buttonProps;
       filteredButtonProps = filtered;
     }
 
