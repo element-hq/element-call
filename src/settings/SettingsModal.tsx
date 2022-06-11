@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 /*
 Copyright 2022 Matrix.org Foundation C.I.C.
 
@@ -100,8 +99,9 @@ export const SettingsModal = (props: Props) => {
               type="checkbox"
               checked={spatialAudio}
               description="This will make a speaker's audio seem as if it is coming from where their tile is positioned on screen. (Experimental feature: this may impact the stability of audio.)"
-              // @ts-ignore
-              onChange={(event: Event) => setSpatialAudio(event.target.checked)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setSpatialAudio(event.target.checked)
+              }
             />
           </FieldRow>
         </TabItem>
@@ -143,8 +143,9 @@ export const SettingsModal = (props: Props) => {
               label="Show Call Inspector"
               type="checkbox"
               checked={showInspector}
-              // @ts-ignore
-              onChange={(e: Event) => setShowInspector(e.target.checked)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setShowInspector(e.target.checked)
+              }
             />
           </FieldRow>
           <FieldRow>
