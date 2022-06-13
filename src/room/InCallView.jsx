@@ -42,6 +42,7 @@ import { usePreventScroll } from "@react-aria/overlays";
 import { useMediaHandler } from "../settings/useMediaHandler";
 import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
+import { useAudioContext } from "../video-grid/useMediaStream";
 
 const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -70,11 +71,9 @@ export function InCallView({
   usePreventScroll();
   const [layout, setLayout] = useVideoGridLayout(screenshareFeeds.length > 0);
 
+  const [audioContext, audioDestination, audioRef] = useAudioContext();
   const { audioOutput } = useMediaHandler();
   const [showInspector] = useShowInspector();
-
-  const audioContext = useRef();
-  if (!audioContext.current) audioContext.current = new AudioContext();
 
   const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
     useModalTriggerState();
@@ -139,6 +138,7 @@ export function InCallView({
 
   return (
     <div className={styles.inRoom}>
+      <audio ref={audioRef} />
       <Header>
         <LeftNav>
           <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
@@ -165,7 +165,8 @@ export function InCallView({
               getAvatar={renderAvatar}
               showName={items.length > 2 || item.focused}
               audioOutputDevice={audioOutput}
-              audioContext={audioContext.current}
+              audioContext={audioContext}
+              audioDestination={audioDestination}
               disableSpeakingIndicator={items.length < 3}
               {...rest}
             />
