@@ -29,6 +29,7 @@ export function VideoTileContainer({
   showName,
   audioOutputDevice,
   audioContext,
+  audioDestination,
   disableSpeakingIndicator,
   ...rest
 }) {
@@ -47,6 +48,7 @@ export function VideoTileContainer({
     stream,
     audioOutputDevice,
     audioContext,
+    audioDestination,
     isLocal
   );
 
