@@ -96,7 +96,7 @@ const createLoopback = async (stream) => {
     if (candidate) conn.addIceCandidate(new RTCIceCandidate(candidate));
   });
   loopbackConn.addEventListener("track", ({ track }) =>
-    loopbackStream.addTrack(track),
+    loopbackStream.addTrack(track)
   );
 
   // Hook the connections together
@@ -113,8 +113,10 @@ const createLoopback = async (stream) => {
   const answer = await loopbackConn.createAnswer();
   // Rewrite SDP to be stereo and (variable) max bitrate
   const parsedSdp = parseSdp(answer.sdp);
-  parsedSdp.media.forEach((m) => m.fmtp.forEach((f) =>
-    f.config += `;stereo=1;cbr=0;maxaveragebitrate=510000;`),
+  parsedSdp.media.forEach((m) =>
+    m.fmtp.forEach(
+      (f) => (f.config += `;stereo=1;cbr=0;maxaveragebitrate=510000;`)
+    )
   );
   answer.sdp = writeSdp(parsedSdp);
 
@@ -142,7 +144,9 @@ export const useAudioContext = () => {
           audioEl.srcObject = await createLoopback(destination.current.stream);
           await audioEl.play();
         })();
-        return () => { audioEl.srcObject = null; };
+        return () => {
+          audioEl.srcObject = null;
+        };
       } else {
         destination.current = context.current.destination;
       }
