@@ -14,13 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, RefObject } from "react";
 import { parse as parseSdp, write as writeSdp } from "sdp-transform";
 
 import { useSpatialAudio } from "../settings/useSetting";
 
-export function useMediaStream(stream, audioOutputDevice, mute = false) {
-  const mediaRef = useRef();
+declare global {
+  interface Window {
+    // For detecting whether this browser is Chrome or not
+    chrome?: unknown;
+  }
+}
+
+// TypeScript doesn't know about the experimental setSinkId method, so we
+// declare it ourselves
+interface MediaElement extends HTMLMediaElement {
+  setSinkId: (id: string) => void;
+}
+
+export const useMediaStream = (
+  stream: MediaStream,
+  audioOutputDevice: string,
+  mute = false
+): RefObject<HTMLMediaElement> => {
+  const mediaRef = useRef<MediaElement>();
 
   useEffect(() => {
     console.log(
@@ -76,14 +93,14 @@ export function useMediaStream(stream, audioOutputDevice, mute = false) {
   }, []);
 
   return mediaRef;
-}
+};
 
 // Loops the given audio stream back through a local peer connection, to make
 // AEC work with Web Audio streams on Chrome. The resulting stream should be
 // played through an audio element.
 // This hack can be removed once the following bug is resolved:
 // https://bugs.chromium.org/p/chromium/issues/detail?id=687574
-const createLoopback = async (stream) => {
+const createLoopback = async (stream: MediaStream): Promise<MediaStream> => {
   // Prepare our local peer connections
   const conn = new RTCPeerConnection();
   const loopbackConn = new RTCPeerConnection();
@@ -102,8 +119,6 @@ const createLoopback = async (stream) => {
   // Hook the connections together
   stream.getTracks().forEach((track) => conn.addTrack(track));
   const offer = await conn.createOffer({
-    offerVideo: false,
-    offerAudio: true,
     offerToReceiveAudio: false,
     offerToReceiveVideo: false,
   });
@@ -126,10 +141,14 @@ const createLoopback = async (stream) => {
   return loopbackStream;
 };
 
-export const useAudioContext = () => {
-  const context = useRef();
-  const destination = useRef();
-  const audioRef = useRef();
+export const useAudioContext = (): [
+  AudioContext,
+  AudioNode,
+  RefObject<HTMLAudioElement>
+] => {
+  const context = useRef<AudioContext>();
+  const destination = useRef<AudioNode>();
+  const audioRef = useRef<HTMLAudioElement>();
 
   useEffect(() => {
     if (audioRef.current && !context.current) {
@@ -137,11 +156,12 @@ export const useAudioContext = () => {
 
       if (window.chrome) {
         // We're in Chrome, which needs a loopback hack applied to enable AEC
-        destination.current = context.current.createMediaStreamDestination();
+        const streamDest = context.current.createMediaStreamDestination();
+        destination.current = streamDest;
 
         const audioEl = audioRef.current;
         (async () => {
-          audioEl.srcObject = await createLoopback(destination.current.stream);
+          audioEl.srcObject = await createLoopback(streamDest.stream);
           await audioEl.play();
         })();
         return () => {
@@ -157,13 +177,13 @@ export const useAudioContext = () => {
 };
 
 export const useSpatialMediaStream = (
-  stream,
-  audioOutputDevice,
-  audioContext,
-  audioDestination,
+  stream: MediaStream,
+  audioOutputDevice: string,
+  audioContext: AudioContext,
+  audioDestination: AudioNode,
   mute = false
-) => {
-  const tileRef = useRef();
+): [RefObject<Element>, RefObject<HTMLMediaElement>] => {
+  const tileRef = useRef<Element>();
   const [spatialAudio] = useSpatialAudio();
   // If spatial audio is enabled, we handle audio separately from the video element
   const mediaRef = useMediaStream(
@@ -172,8 +192,8 @@ export const useSpatialMediaStream = (
     spatialAudio || mute
   );
 
-  const pannerNodeRef = useRef();
-  const sourceRef = useRef();
+  const pannerNodeRef = useRef<PannerNode>();
+  const sourceRef = useRef<MediaStreamAudioSourceNode>();
 
   useEffect(() => {
     if (spatialAudio && tileRef.current && !mute) {
@@ -204,8 +224,7 @@ export const useSpatialMediaStream = (
       };
 
       updatePosition();
-      source.connect(pannerNode);
-      pannerNode.connect(audioDestination);
+      source.connect(pannerNode).connect(audioDestination);
       // HACK: We abuse the CSS transitionrun event to detect when the tile
       // moves, because useMeasure, IntersectionObserver, etc. all have no
       // ability to track changes in the CSS transform property
