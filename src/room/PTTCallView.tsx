@@ -134,13 +134,7 @@ export const PTTCallView: React.FC<Props> = ({
     stopTalking,
     transmitBlocked,
     connected,
-  } = usePTT(
-    client,
-    groupCall,
-    userMediaFeeds,
-    playClip,
-    !feedbackModalState.isOpen
-  );
+  } = usePTT(client, groupCall, userMediaFeeds, playClip);
 
   const [talkingExpected, enqueueTalkingExpected, setTalkingExpected] =
     useDelayedState(false);
@@ -227,6 +221,7 @@ export const PTTCallView: React.FC<Props> = ({
             <div className={styles.talkingInfo} />
           )}
           <PTTButton
+            enabled={!feedbackModalState.isOpen}
             showTalkOverError={showTalkOverError}
             activeSpeakerUserId={activeSpeakerUserId}
             activeSpeakerDisplayName={activeSpeakerDisplayName}

@@ -14,15 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useEffect, useState, createRef } from "react";
+import React, { useCallback, useState, createRef } from "react";
 import classNames from "classnames";
 import { useSpring, animated } from "@react-spring/web";
 
 import styles from "./PTTButton.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
+import { useEventTarget } from "../useEvents";
 import { Avatar } from "../Avatar";
 
 interface Props {
+  enabled: boolean;
   showTalkOverError: boolean;
   activeSpeakerUserId: string;
   activeSpeakerDisplayName: string;
@@ -38,6 +40,7 @@ interface Props {
 }
 
 export const PTTButton: React.FC<Props> = ({
+  enabled,
   showTalkOverError,
   activeSpeakerUserId,
   activeSpeakerDisplayName,
@@ -53,94 +56,104 @@ export const PTTButton: React.FC<Props> = ({
 }) => {
   const buttonRef = createRef<HTMLButtonElement>();
 
-  const [held, setHeld] = useState(false);
   const [activeTouchId, setActiveTouchId] = useState<number | null>(null);
 
   const hold = useCallback(() => {
-    setHeld(true);
     // This update is delayed so the user only sees it if latency is significant
     enqueueNetworkWaiting(true, 100);
-  }, [setHeld, enqueueNetworkWaiting]);
+    startTalking();
+  }, [enqueueNetworkWaiting, startTalking]);
   const unhold = useCallback(() => {
-    setHeld(false);
     setNetworkWaiting(false);
-  }, [setHeld, setNetworkWaiting]);
-
-  const onWindowMouseUp = useCallback(
-    (e) => {
-      if (held) stopTalking();
-      unhold();
-    },
-    [held, unhold, stopTalking]
-  );
-
-  const onWindowTouchEnd = useCallback(
-    (e: TouchEvent) => {
-      // ignore any ended touches that weren't the one pressing the
-      // button (bafflingly the TouchList isn't an iterable so we
-      // have to do this a really old-school way).
-      let touchFound = false;
-      for (let i = 0; i < e.changedTouches.length; ++i) {
-        if (e.changedTouches.item(i).identifier === activeTouchId) {
-          touchFound = true;
-          break;
-        }
-      }
-      if (!touchFound) return;
-
-      e.preventDefault();
-      if (held) stopTalking();
-      unhold();
-      setActiveTouchId(null);
-    },
-    [held, activeTouchId, unhold, stopTalking]
-  );
+    stopTalking();
+  }, [setNetworkWaiting, stopTalking]);
 
   const onButtonMouseDown = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       hold();
-      startTalking();
     },
-    [hold, startTalking]
+    [hold]
   );
 
-  const onButtonTouchStart = useCallback(
-    (e: TouchEvent) => {
-      e.preventDefault();
+  // These listeners go on the window so even if the user's cursor / finger
+  // leaves the button while holding it, the button stays pushed until
+  // they stop clicking / tapping.
+  useEventTarget(window, "mouseup", unhold);
+  useEventTarget(
+    window,
+    "touchend",
+    useCallback(
+      (e: TouchEvent) => {
+        // ignore any ended touches that weren't the one pressing the
+        // button (bafflingly the TouchList isn't an iterable so we
+        // have to do this a really old-school way).
+        let touchFound = false;
+        for (let i = 0; i < e.changedTouches.length; ++i) {
+          if (e.changedTouches.item(i).identifier === activeTouchId) {
+            touchFound = true;
+            break;
+          }
+        }
+        if (!touchFound) return;
 
-      if (!held) {
+        e.preventDefault();
+        unhold();
+        setActiveTouchId(null);
+      },
+      [unhold, activeTouchId, setActiveTouchId]
+    )
+  );
+
+  // This is a native DOM listener too because we want to preventDefault in it
+  // to stop also getting a click event, so we need it to be non-passive.
+  useEventTarget(
+    buttonRef.current,
+    "touchstart",
+    useCallback(
+      (e: TouchEvent) => {
+        e.preventDefault();
+
         hold();
         setActiveTouchId(e.changedTouches.item(0).identifier);
-        startTalking();
-      }
-    },
-    [held, hold, startTalking]
+      },
+      [hold, setActiveTouchId]
+    ),
+    { passive: false }
   );
 
-  useEffect(() => {
-    const currentButtonElement = buttonRef.current;
+  useEventTarget(
+    window,
+    "keydown",
+    useCallback(
+      (e: KeyboardEvent) => {
+        if (e.code === "Space") {
+          if (!enabled) return;
+          e.preventDefault();
 
-    // These listeners go on the window so even if the user's cursor / finger
-    // leaves the button while holding it, the button stays pushed until
-    // they stop clicking / tapping.
-    window.addEventListener("mouseup", onWindowMouseUp);
-    window.addEventListener("touchend", onWindowTouchEnd);
-    // This is a native DOM listener too because we want to preventDefault in it
-    // to stop also getting a click event, so we need it to be non-passive.
-    currentButtonElement.addEventListener("touchstart", onButtonTouchStart, {
-      passive: false,
-    });
+          hold();
+        }
+      },
+      [enabled, hold]
+    )
+  );
+  useEventTarget(
+    window,
+    "keyup",
+    useCallback(
+      (e: KeyboardEvent) => {
+        if (e.code === "Space") {
+          e.preventDefault();
 
-    return () => {
-      window.removeEventListener("mouseup", onWindowMouseUp);
-      window.removeEventListener("touchend", onWindowTouchEnd);
-      currentButtonElement.removeEventListener(
-        "touchstart",
-        onButtonTouchStart
-      );
-    };
-  }, [onWindowMouseUp, onWindowTouchEnd, onButtonTouchStart, buttonRef]);
+          unhold();
+        }
+      },
+      [unhold]
+    )
+  );
+
+  // TODO: We will need to disable this for a global PTT hotkey to work
+  useEventTarget(window, "blur", unhold);
 
   const { shadow } = useSpring({
     shadow: (Math.max(activeSpeakerVolume, -70) + 70) * 0.6,
