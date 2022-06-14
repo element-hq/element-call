@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 
+// Like useState, except state updates can be enqueued with a configurable delay
 export const useDelayedState = <T>(
   initial?: T
 ): [T, (value: T, delay: number) => void, (value: T) => void] => {
@@ -37,8 +38,6 @@ export const useDelayedState = <T>(
 
     setState(value);
   };
-
-  useEffect(() => console.log("got", state), [state]);
 
   return [state, setStateDelayed, setStateImmediate];
 };
