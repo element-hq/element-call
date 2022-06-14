@@ -20,6 +20,7 @@ import { ResizeObserver } from "@juggle/resize-observer";
 import { GroupCall, MatrixClient, RoomMember } from "matrix-js-sdk";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
+import { useDelayedState } from "../useDelayedState";
 import { useModalTriggerState } from "../Modal";
 import { InviteModal } from "./InviteModal";
 import { HangupButton, InviteButton } from "../button";
@@ -39,6 +40,7 @@ import { GroupCallInspector } from "./GroupCallInspector";
 import { OverflowMenu } from "./OverflowMenu";
 
 function getPromptText(
+  networkWaiting: boolean,
   showTalkOverError: boolean,
   pttButtonHeld: boolean,
   activeSpeakerIsLocalUser: boolean,
@@ -47,9 +49,13 @@ function getPromptText(
   activeSpeakerDisplayName: string,
   connected: boolean
 ): string {
-  if (!connected) return "Connection Lost";
+  if (!connected) return "Connection lost";
 
   const isTouchScreen = Boolean(window.ontouchstart !== undefined);
+
+  if (networkWaiting) {
+    return "Waiting for network";
+  }
 
   if (showTalkOverError) {
     return "You can't talk at the same time";
@@ -136,7 +142,11 @@ export const PTTCallView: React.FC<Props> = ({
     !feedbackModalState.isOpen
   );
 
+  const [talkingExpected, enqueueTalkingExpected, setTalkingExpected] =
+    useDelayedState(false);
   const showTalkOverError = pttButtonHeld && transmitBlocked;
+  const networkWaiting =
+    talkingExpected && !activeSpeakerUserId && !showTalkOverError;
 
   const activeSpeakerIsLocalUser =
     activeSpeakerUserId && client.getUserId() === activeSpeakerUserId;
@@ -226,9 +236,13 @@ export const PTTCallView: React.FC<Props> = ({
             size={pttButtonSize}
             startTalking={startTalking}
             stopTalking={stopTalking}
+            networkWaiting={networkWaiting}
+            enqueueNetworkWaiting={enqueueTalkingExpected}
+            setNetworkWaiting={setTalkingExpected}
           />
           <p className={styles.actionTip}>
             {getPromptText(
+              networkWaiting,
               showTalkOverError,
               pttButtonHeld,
               activeSpeakerIsLocalUser,
