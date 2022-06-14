@@ -32,12 +32,9 @@ interface Props {
   size: number;
   startTalking: () => void;
   stopTalking: () => void;
-}
-
-interface State {
-  isHeld: boolean;
-  // If the button is being pressed by touch, the ID of that touch
-  activeTouchID: number | null;
+  networkWaiting: boolean;
+  enqueueNetworkWaiting: (value: boolean, delay: number) => void;
+  setNetworkWaiting: (value: boolean) => void;
 }
 
 export const PTTButton: React.FC<Props> = ({
@@ -50,19 +47,31 @@ export const PTTButton: React.FC<Props> = ({
   size,
   startTalking,
   stopTalking,
+  networkWaiting,
+  enqueueNetworkWaiting,
+  setNetworkWaiting,
 }) => {
   const buttonRef = createRef<HTMLButtonElement>();
 
-  const [{ isHeld, activeTouchID }, setState] = useState<State>({
-    isHeld: false,
-    activeTouchID: null,
-  });
+  const [held, setHeld] = useState(false);
+  const [activeTouchId, setActiveTouchId] = useState<number | null>(null);
+
+  const hold = useCallback(() => {
+    setHeld(true);
+    // This update is delayed so the user only sees it if latency is significant
+    enqueueNetworkWaiting(true, 100);
+  }, [setHeld, enqueueNetworkWaiting]);
+  const unhold = useCallback(() => {
+    setHeld(false);
+    setNetworkWaiting(false);
+  }, [setHeld, setNetworkWaiting]);
+
   const onWindowMouseUp = useCallback(
     (e) => {
-      if (isHeld) stopTalking();
-      setState({ isHeld: false, activeTouchID: null });
+      if (held) stopTalking();
+      unhold();
     },
-    [isHeld, setState, stopTalking]
+    [held, unhold, stopTalking]
   );
 
   const onWindowTouchEnd = useCallback(
@@ -72,7 +81,7 @@ export const PTTButton: React.FC<Props> = ({
       // have to do this a really old-school way).
       let touchFound = false;
       for (let i = 0; i < e.changedTouches.length; ++i) {
-        if (e.changedTouches.item(i).identifier === activeTouchID) {
+        if (e.changedTouches.item(i).identifier === activeTouchId) {
           touchFound = true;
           break;
         }
@@ -80,34 +89,33 @@ export const PTTButton: React.FC<Props> = ({
       if (!touchFound) return;
 
       e.preventDefault();
-      if (isHeld) stopTalking();
-      setState({ isHeld: false, activeTouchID: null });
+      if (held) stopTalking();
+      unhold();
+      setActiveTouchId(null);
     },
-    [isHeld, activeTouchID, setState, stopTalking]
+    [held, activeTouchId, unhold, stopTalking]
   );
 
   const onButtonMouseDown = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
-      setState({ isHeld: true, activeTouchID: null });
+      hold();
       startTalking();
     },
-    [setState, startTalking]
+    [hold, startTalking]
   );
 
   const onButtonTouchStart = useCallback(
     (e: TouchEvent) => {
       e.preventDefault();
 
-      if (isHeld) return;
-
-      setState({
-        isHeld: true,
-        activeTouchID: e.changedTouches.item(0).identifier,
-      });
-      startTalking();
+      if (!held) {
+        hold();
+        setActiveTouchId(e.changedTouches.item(0).identifier);
+        startTalking();
+      }
     },
-    [isHeld, setState, startTalking]
+    [held, hold, startTalking]
   );
 
   useEffect(() => {
@@ -143,12 +151,15 @@ export const PTTButton: React.FC<Props> = ({
   });
   const shadowColor = showTalkOverError
     ? "var(--alert-20)"
+    : networkWaiting
+    ? "var(--tertiary-content-20)"
     : "var(--accent-20)";
 
   return (
     <animated.button
       className={classNames(styles.pttButton, {
         [styles.talking]: activeSpeakerUserId,
+        [styles.networkWaiting]: networkWaiting,
         [styles.error]: showTalkOverError,
       })}
       style={{
