@@ -58,6 +58,7 @@ export const PTTButton: React.FC<Props> = ({
 
   const hold = useCallback(() => {
     setHeld(true);
+    // This update is delayed so the user only sees it if latency is significant
     enqueueNetworkWaiting(true, 100);
   }, [setHeld, enqueueNetworkWaiting]);
   const unhold = useCallback(() => {
