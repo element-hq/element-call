@@ -247,6 +247,26 @@ export const usePTT = (
     setMicMuteWrapper(true);
   }, [setMicMuteWrapper]);
 
+  const onMessage = useCallback(
+    (e) => {
+      console.log("got message", e);
+      if (e.data === "pttp") {
+        startTalking();
+      } else if (e.data === "pttr") {
+        stopTalking();
+      }
+    },
+    [startTalking, stopTalking]
+  );
+
+  useEffect(() => {
+    window.addEventListener("message", onMessage);
+
+    return () => {
+      window.removeEventListener("message", onMessage);
+    };
+  });
+
   // separate state for connected: we set it separately from other things
   // in the client sync callback
   const [connected, setConnected] = useState(true);
