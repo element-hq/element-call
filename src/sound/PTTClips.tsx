@@ -42,7 +42,7 @@ export const PTTClips: React.FC<Props> = ({
   return (
     <>
       <audio
-        preload="true"
+        preload="auto"
         className={styles.pttClip}
         ref={startTalkingLocalRef}
       >
@@ -50,18 +50,18 @@ export const PTTClips: React.FC<Props> = ({
         <source type="audio/mpeg" src={startTalkLocalMp3Url} />
       </audio>
       <audio
-        preload="true"
+        preload="auto"
         className={styles.pttClip}
         ref={startTalkingRemoteRef}
       >
         <source type="audio/ogg" src={startTalkRemoteOggUrl} />
         <source type="audio/mpeg" src={startTalkRemoteMp3Url} />
       </audio>
-      <audio preload="true" className={styles.pttClip} ref={endTalkingRef}>
+      <audio preload="auto" className={styles.pttClip} ref={endTalkingRef}>
         <source type="audio/ogg" src={endTalkOggUrl} />
         <source type="audio/mpeg" src={endTalkMp3Url} />
       </audio>
-      <audio preload="true" className={styles.pttClip} ref={blockedRef}>
+      <audio preload="auto" className={styles.pttClip} ref={blockedRef}>
         <source type="audio/ogg" src={blockedOggUrl} />
         <source type="audio/mpeg" src={blockedMp3Url} />
       </audio>
