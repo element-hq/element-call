@@ -68,7 +68,13 @@ export const useMediaStream = (
       audioOutputDevice &&
       mediaRef.current !== undefined
     ) {
-      console.log(`useMediaStream setSinkId ${audioOutputDevice}`);
+      if (mediaRef.current.setSinkId) {
+        console.log(
+          `useMediaStream setting output setSinkId ${audioOutputDevice}`
+        );
+      } else {
+        console.log("Can't set output - no setsinkid");
+      }
       // Chrome for Android doesn't support this
       mediaRef.current.setSinkId?.(audioOutputDevice);
     }
