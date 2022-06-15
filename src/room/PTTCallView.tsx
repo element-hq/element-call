@@ -158,6 +158,7 @@ export const PTTCallView: React.FC<Props> = ({
     ? activeSpeakerUser.displayName
     : "";
 
+  const isEmbedded = window.location.search.includes("embed");
   return (
     <div className={styles.pttCallView} ref={containerRef}>
       <PTTClips
@@ -206,7 +207,7 @@ export const PTTCallView: React.FC<Props> = ({
             feedbackModalState={feedbackModalState}
             feedbackModalProps={feedbackModalProps}
           />
-          <HangupButton onPress={onLeave} />
+          {!isEmbedded && <HangupButton onPress={onLeave} />}
           <InviteButton onPress={() => inviteModalState.open()} />
         </div>
 

@@ -80,6 +80,14 @@ export function RoomHeaderInfo({ roomName, avatarUrl }) {
 export function RoomSetupHeaderInfo({ roomName, avatarUrl, ...rest }) {
   const ref = useRef();
   const { buttonProps } = useButton(rest, ref);
+  const isEmbedded = window.location.search.includes("embed");
+  if (isEmbedded) {
+    return (
+      <div className={styles.backButton} ref={ref} {...buttonProps}>
+        <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
+      </div>
+    );
+  }
   return (
     <button className={styles.backButton} ref={ref} {...buttonProps}>
       <ArrowLeftIcon width={16} height={16} />
