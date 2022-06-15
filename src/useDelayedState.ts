@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 
 // Like useState, except state updates can be enqueued with a configurable delay
 export const useDelayedState = <T>(
@@ -24,20 +24,26 @@ export const useDelayedState = <T>(
   const timers = useRef<Set<ReturnType<typeof setTimeout>>>();
   if (!timers.current) timers.current = new Set();
 
-  const setStateDelayed = (value: T, delay: number) => {
-    const timer = setTimeout(() => {
-      setState(value);
-      timers.current.delete(timer);
-    }, delay);
-    timers.current.add(timer);
-  };
-  const setStateImmediate = (value: T) => {
-    // Clear all updates currently in the queue
-    for (const timer of timers.current) clearTimeout(timer);
-    timers.current.clear();
+  const setStateDelayed = useCallback(
+    (value: T, delay: number) => {
+      const timer = setTimeout(() => {
+        setState(value);
+        timers.current.delete(timer);
+      }, delay);
+      timers.current.add(timer);
+    },
+    [setState, timers]
+  );
+  const setStateImmediate = useCallback(
+    (value: T) => {
+      // Clear all updates currently in the queue
+      for (const timer of timers.current) clearTimeout(timer);
+      timers.current.clear();
 
-    setState(value);
-  };
+      setState(value);
+    },
+    [setState, timers]
+  );
 
   return [state, setStateDelayed, setStateImmediate];
 };
