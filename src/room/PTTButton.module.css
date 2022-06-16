@@ -17,6 +17,12 @@
   cursor: unset;
 }
 
+.networkWaiting {
+  background-color: var(--tertiary-content);
+  border-color: var(--tertiary-content);
+  cursor: unset;
+}
+
 .error {
   background-color: var(--alert);
   border-color: var(--alert);

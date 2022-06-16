@@ -14,12 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useEffect } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { GroupCall, MatrixClient, RoomMember } from "matrix-js-sdk";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
+import { useDelayedState } from "../useDelayedState";
 import { useModalTriggerState } from "../Modal";
 import { InviteModal } from "./InviteModal";
 import { HangupButton, InviteButton } from "../button";
@@ -39,6 +40,7 @@ import { GroupCallInspector } from "./GroupCallInspector";
 import { OverflowMenu } from "./OverflowMenu";
 
 function getPromptText(
+  networkWaiting: boolean,
   showTalkOverError: boolean,
   pttButtonHeld: boolean,
   activeSpeakerIsLocalUser: boolean,
@@ -47,9 +49,13 @@ function getPromptText(
   activeSpeakerDisplayName: string,
   connected: boolean
 ): string {
-  if (!connected) return "Connection Lost";
+  if (!connected) return "Connection lost";
 
   const isTouchScreen = Boolean(window.ontouchstart !== undefined);
+
+  if (networkWaiting) {
+    return "Waiting for network";
+  }
 
   if (showTalkOverError) {
     return "You can't talk at the same time";
@@ -128,18 +134,15 @@ export const PTTCallView: React.FC<Props> = ({
     stopTalking,
     transmitBlocked,
     connected,
-  } = usePTT(
-    client,
-    groupCall,
-    userMediaFeeds,
-    playClip,
-    !feedbackModalState.isOpen
-  );
+  } = usePTT(client, groupCall, userMediaFeeds, playClip);
 
+  const [talkingExpected, enqueueTalkingExpected, setTalkingExpected] =
+    useDelayedState(false);
   const showTalkOverError = pttButtonHeld && transmitBlocked;
+  const networkWaiting =
+    talkingExpected && !activeSpeakerUserId && !showTalkOverError;
 
-  const activeSpeakerIsLocalUser =
-    activeSpeakerUserId && client.getUserId() === activeSpeakerUserId;
+  const activeSpeakerIsLocalUser = activeSpeakerUserId === client.getUserId();
   const activeSpeakerUser = activeSpeakerUserId
     ? client.getUser(activeSpeakerUserId)
     : null;
@@ -147,6 +150,10 @@ export const PTTCallView: React.FC<Props> = ({
   const activeSpeakerDisplayName = activeSpeakerUser
     ? activeSpeakerUser.displayName
     : "";
+
+  useEffect(() => {
+    setTalkingExpected(activeSpeakerIsLocalUser);
+  }, [activeSpeakerIsLocalUser, setTalkingExpected]);
 
   return (
     <div className={styles.pttCallView} ref={containerRef}>
@@ -217,6 +224,7 @@ export const PTTCallView: React.FC<Props> = ({
             <div className={styles.talkingInfo} />
           )}
           <PTTButton
+            enabled={!feedbackModalState.isOpen}
             showTalkOverError={showTalkOverError}
             activeSpeakerUserId={activeSpeakerUserId}
             activeSpeakerDisplayName={activeSpeakerDisplayName}
@@ -226,9 +234,13 @@ export const PTTCallView: React.FC<Props> = ({
             size={pttButtonSize}
             startTalking={startTalking}
             stopTalking={stopTalking}
+            networkWaiting={networkWaiting}
+            enqueueNetworkWaiting={enqueueTalkingExpected}
+            setNetworkWaiting={setTalkingExpected}
           />
           <p className={styles.actionTip}>
             {getPromptText(
+              networkWaiting,
               showTalkOverError,
               pttButtonHeld,
               activeSpeakerIsLocalUser,
