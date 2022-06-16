@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useEffect } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { GroupCall, MatrixClient, RoomMember } from "matrix-js-sdk";
@@ -134,13 +134,7 @@ export const PTTCallView: React.FC<Props> = ({
     stopTalking,
     transmitBlocked,
     connected,
-  } = usePTT(
-    client,
-    groupCall,
-    userMediaFeeds,
-    playClip,
-    !feedbackModalState.isOpen
-  );
+  } = usePTT(client, groupCall, userMediaFeeds, playClip);
 
   const [talkingExpected, enqueueTalkingExpected, setTalkingExpected] =
     useDelayedState(false);
@@ -148,8 +142,7 @@ export const PTTCallView: React.FC<Props> = ({
   const networkWaiting =
     talkingExpected && !activeSpeakerUserId && !showTalkOverError;
 
-  const activeSpeakerIsLocalUser =
-    activeSpeakerUserId && client.getUserId() === activeSpeakerUserId;
+  const activeSpeakerIsLocalUser = activeSpeakerUserId === client.getUserId();
   const activeSpeakerUser = activeSpeakerUserId
     ? client.getUser(activeSpeakerUserId)
     : null;
@@ -157,6 +150,10 @@ export const PTTCallView: React.FC<Props> = ({
   const activeSpeakerDisplayName = activeSpeakerUser
     ? activeSpeakerUser.displayName
     : "";
+
+  useEffect(() => {
+    setTalkingExpected(activeSpeakerIsLocalUser);
+  }, [activeSpeakerIsLocalUser, setTalkingExpected]);
 
   return (
     <div className={styles.pttCallView} ref={containerRef}>
@@ -227,6 +224,7 @@ export const PTTCallView: React.FC<Props> = ({
             <div className={styles.talkingInfo} />
           )}
           <PTTButton
+            enabled={!feedbackModalState.isOpen}
             showTalkOverError={showTalkOverError}
             activeSpeakerUserId={activeSpeakerUserId}
             activeSpeakerDisplayName={activeSpeakerDisplayName}
