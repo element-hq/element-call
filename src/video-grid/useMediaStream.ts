@@ -26,17 +26,11 @@ declare global {
   }
 }
 
-// TypeScript doesn't know about the experimental setSinkId method, so we
-// declare it ourselves
-interface MediaElement extends HTMLMediaElement {
-  setSinkId: (id: string) => void;
-}
-
 export const useMediaStream = (
   stream: MediaStream,
   audioOutputDevice: string,
   mute = false
-): RefObject<HTMLMediaElement> => {
+): RefObject<MediaElement> => {
   const mediaRef = useRef<MediaElement>();
 
   useEffect(() => {
@@ -182,7 +176,7 @@ export const useSpatialMediaStream = (
   audioContext: AudioContext,
   audioDestination: AudioNode,
   mute = false
-): [RefObject<Element>, RefObject<HTMLMediaElement>] => {
+): [RefObject<Element>, RefObject<MediaElement>] => {
   const tileRef = useRef<Element>();
   const [spatialAudio] = useSpatialAudio();
   // If spatial audio is enabled, we handle audio separately from the video element
