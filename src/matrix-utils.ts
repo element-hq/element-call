@@ -1,9 +1,10 @@
 import Olm from "@matrix-org/olm";
 import olmWasmPath from "@matrix-org/olm/olm.wasm?url";
 import { IndexedDBStore } from "matrix-js-sdk/src/store/indexeddb";
-import { WebStorageSessionStore } from "matrix-js-sdk/src/store/session/webstorage";
 import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
+import { LocalStorageCryptoStore } from "matrix-js-sdk/src/crypto/store/localStorage-crypto-store";
+import { MemoryCryptoStore } from "matrix-js-sdk/src/crypto/store/memory-crypto-store";
 import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
 import { ICreateClientOpts } from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
@@ -59,14 +60,12 @@ export async function initClient(
   if (indexedDB && localStorage && !import.meta.env.DEV) {
     storeOpts.store = new IndexedDBStore({
       indexedDB: window.indexedDB,
-      localStorage: window.localStorage,
+      localStorage,
       dbName: "element-call-sync",
       workerFactory: () => new IndexedDBWorker(),
     });
-  }
-
-  if (localStorage) {
-    storeOpts.sessionStore = new WebStorageSessionStore(localStorage);
+  } else if (localStorage) {
+    storeOpts.store = new MemoryStore({ localStorage });
   }
 
   if (indexedDB) {
@@ -74,6 +73,10 @@ export async function initClient(
       indexedDB,
       "matrix-js-sdk:crypto"
     );
+  } else if (localStorage) {
+    storeOpts.cryptoStore = new LocalStorageCryptoStore(localStorage);
+  } else {
+    storeOpts.cryptoStore = new MemoryCryptoStore();
   }
 
   const client = createClient({
