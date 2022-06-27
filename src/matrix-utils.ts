@@ -5,15 +5,17 @@ import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
 import { LocalStorageCryptoStore } from "matrix-js-sdk/src/crypto/store/localStorage-crypto-store";
 import { MemoryCryptoStore } from "matrix-js-sdk/src/crypto/store/memory-crypto-store";
-import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
+import { createClient, createRoomWidgetClient, MatrixClient } from "matrix-js-sdk/src/matrix";
 import { ICreateClientOpts } from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
+import { EventType } from "matrix-js-sdk/src/@types/event";
 import { Visibility, Preset } from "matrix-js-sdk/src/@types/partials";
 import {
   GroupCallIntent,
   GroupCallType,
 } from "matrix-js-sdk/src/webrtc/groupCall";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
+import { WidgetApi } from "matrix-widget-api";
 
 import IndexedDBWorker from "./IndexedDBWorker?worker";
 
@@ -40,6 +42,63 @@ function waitForSync(client: MatrixClient) {
     };
     client.on(ClientEvent.Sync, onSync);
   });
+}
+
+// The event types that the app needs to be able to send/receive in Matroska
+// mode in order to function
+const SEND_RECV_STATE = [
+  { eventType: EventType.RoomMember },
+  { eventType: EventType.GroupCallPrefix },
+  { eventType: EventType.GroupCallMemberPrefix },
+];
+const SEND_RECV_TO_DEVICE = [
+  EventType.CallInvite,
+  EventType.CallCandidates,
+  EventType.CallAnswer,
+  EventType.CallHangup,
+  EventType.CallReject,
+  EventType.CallSelectAnswer,
+  EventType.CallNegotiate,
+  EventType.CallSDPStreamMetadataChanged,
+  EventType.CallSDPStreamMetadataChangedPrefix,
+  EventType.CallReplaces,
+  "org.matrix.call_duplicate_session",
+];
+
+export async function initMatroskaClient(
+  widgetId: string, parentUrl: string,
+): Promise<MatrixClient> {
+  // In this mode, we use a special client which routes all requests through
+  // the host application via the widget API
+
+  // The rest of the data we need is encoded in the fragment so as to avoid
+  // leaking it to the server
+  const fragmentQueryStart = window.location.hash.indexOf("?");
+  const roomId = window.location.hash.substring(0, fragmentQueryStart);
+  const fragmentQuery = new URLSearchParams(window.location.hash.substring(fragmentQueryStart));
+
+  // Since all data should be coming from the host application, there's no
+  // need to persist anything, and therefore we can use the default stores
+  // We don't even need to set up crypto!
+  const client = createRoomWidgetClient(
+    new WidgetApi(widgetId, new URL(parentUrl).origin),
+    {
+      sendState: SEND_RECV_STATE,
+      receiveState: SEND_RECV_STATE,
+      sendToDevice: SEND_RECV_TO_DEVICE,
+      receiveToDevice: SEND_RECV_TO_DEVICE,
+    },
+    roomId,
+    {
+      baseUrl: "",
+      userId: fragmentQuery.get("userId"),
+      deviceId: fragmentQuery.get("deviceId"),
+      timelineSupport: true,
+    },
+  );
+
+  await client.startClient();
+  return client;
 }
 
 export async function initClient(
@@ -83,7 +142,7 @@ export async function initClient(
     ...storeOpts,
     ...clientOptions,
     useAuthorizationHeader: true,
-    // Use a relatively low timeout for API calls: this is a realtime application
+    // Use a relatively low timeout for API calls: this is a realtime app
     // so we don't want API calls taking ages, we'd rather they just fail.
     localTimeoutMs: 5000,
   });
