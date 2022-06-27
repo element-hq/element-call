@@ -23,7 +23,8 @@ async function fetchGroupCall(
   viaServers = undefined,
   timeout = 5000
 ) {
-  const { roomId } = await client.joinRoom(roomIdOrAlias, { viaServers });
+  //const { roomId } = await client.joinRoom(roomIdOrAlias, { viaServers });
+  const roomId = roomIdOrAlias;
 
   return new Promise((resolve, reject) => {
     let timeoutId;
