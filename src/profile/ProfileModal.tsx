@@ -15,6 +15,8 @@ limitations under the License.
 */
 
 import React, { useCallback, useEffect, useState } from "react";
+import { MatrixClient } from "matrix-js-sdk";
+
 import { Button } from "../button";
 import { useProfile } from "./useProfile";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
@@ -22,7 +24,12 @@ import { Modal, ModalContent } from "../Modal";
 import { AvatarInputField } from "../input/AvatarInputField";
 import styles from "./ProfileModal.module.css";
 
-export function ProfileModal({ client, ...rest }) {
+interface Props {
+  client: MatrixClient;
+  onClose: () => {};
+  [rest: string]: unknown;
+}
+export function ProfileModal({ client, ...rest }: Props) {
   const { onClose } = rest;
   const {
     success,
@@ -50,13 +57,20 @@ export function ProfileModal({ client, ...rest }) {
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
-      const displayName = data.get("displayName");
-      const avatar = data.get("avatar");
+      const displayNameDataEntry = data.get("displayName");
+      const avatar: File | string = data.get("avatar");
+
+      const avatarSize =
+        typeof avatar == "string" ? avatar.length : avatar.size;
+      const displayName =
+        typeof displayNameDataEntry == "string"
+          ? displayNameDataEntry
+          : displayNameDataEntry.name;
 
       saveProfile({
         displayName,
-        avatar: avatar && avatar.size > 0 ? avatar : undefined,
-        removeAvatar: removeAvatar && (!avatar || avatar.size === 0),
+        avatar: avatar && avatarSize > 0 ? avatar : undefined,
+        removeAvatar: removeAvatar && (!avatar || avatarSize === 0),
       });
     },
     [saveProfile, removeAvatar]
