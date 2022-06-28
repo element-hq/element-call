@@ -14,11 +14,36 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import {
+  FileType,
+  MatrixClient,
+  MatrixEvent,
+  User,
+  UserEvent,
+} from "matrix-js-sdk";
 import { useState, useCallback, useEffect } from "react";
 
-export function useProfile(client) {
+interface ProfileLoadState {
+  success?: boolean;
+  loading?: boolean;
+  displayName: string;
+  avatarUrl: string;
+  error?: Error;
+}
+
+type ProfileSaveCallback = ({
+  displayName,
+  avatar,
+  removeAvatar,
+}: {
+  displayName: string;
+  avatar: FileType;
+  removeAvatar: boolean;
+}) => Promise<void>;
+
+export function useProfile(client: MatrixClient) {
   const [{ loading, displayName, avatarUrl, error, success }, setState] =
-    useState(() => {
+    useState<ProfileLoadState>(() => {
       const user = client?.getUser(client.getUserId());
 
       return {
@@ -31,7 +56,10 @@ export function useProfile(client) {
     });
 
   useEffect(() => {
-    const onChangeUser = (_event, { displayName, avatarUrl }) => {
+    const onChangeUser = (
+      _event: MatrixEvent,
+      { displayName, avatarUrl }: User
+    ) => {
       setState({
         success: false,
         loading: false,
@@ -41,24 +69,24 @@ export function useProfile(client) {
       });
     };
 
-    let user;
+    let user: User;
 
     if (client) {
       const userId = client.getUserId();
       user = client.getUser(userId);
-      user.on("User.displayName", onChangeUser);
-      user.on("User.avatarUrl", onChangeUser);
+      user.on(UserEvent.DisplayName, onChangeUser);
+      user.on(UserEvent.AvatarUrl, onChangeUser);
     }
 
     return () => {
       if (user) {
-        user.removeListener("User.displayName", onChangeUser);
-        user.removeListener("User.avatarUrl", onChangeUser);
+        user.removeListener(UserEvent.DisplayName, onChangeUser);
+        user.removeListener(UserEvent.AvatarUrl, onChangeUser);
       }
     };
   }, [client]);
 
-  const saveProfile = useCallback(
+  const saveProfile = useCallback<ProfileSaveCallback>(
     async ({ displayName, avatar, removeAvatar }) => {
       if (client) {
         setState((prev) => ({
@@ -71,7 +99,7 @@ export function useProfile(client) {
         try {
           await client.setDisplayName(displayName);
 
-          let mxcAvatarUrl;
+          let mxcAvatarUrl: string;
 
           if (removeAvatar) {
             await client.setAvatarUrl("");
@@ -87,11 +115,11 @@ export function useProfile(client) {
             loading: false,
             success: true,
           }));
-        } catch (error) {
+        } catch (error: unknown) {
           setState((prev) => ({
             ...prev,
             loading: false,
-            error,
+            error: error instanceof Error ? error : Error(error as string),
             success: false,
           }));
         }
@@ -102,5 +130,12 @@ export function useProfile(client) {
     [client]
   );
 
-  return { loading, error, displayName, avatarUrl, saveProfile, success };
+  return {
+    loading,
+    error,
+    displayName,
+    avatarUrl,
+    saveProfile,
+    success,
+  };
 }
