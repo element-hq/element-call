@@ -30,6 +30,7 @@ import { useLocationNavigation } from "../useLocationNavigation";
 export function GroupCallView({
   client,
   isPasswordlessUser,
+  isEmbedded,
   roomId,
   groupCall,
 }) {
@@ -92,6 +93,7 @@ export function GroupCallView({
           participants={participants}
           userMediaFeeds={userMediaFeeds}
           onLeave={onLeave}
+          isEmbedded={isEmbedded}
         />
       );
     } else {
