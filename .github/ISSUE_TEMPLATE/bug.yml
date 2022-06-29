@@ -1,0 +1,67 @@
+name: Bug report
+description: Create a report to help us improve
+labels: [T-Defect]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to fill out this bug report!
+
+        Please report security issues by email to security@matrix.org
+  - type: textarea
+    id: reproduction-steps
+    attributes:
+      label: Steps to reproduce
+      description: Please attach screenshots, videos or logs if you can.
+      placeholder: Tell us what you see!
+      value: |
+        1. Where are you starting? What can you see?
+        2. What do you click?
+        3. More steps…
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: Outcome
+      placeholder: Tell us what went wrong
+      value: |
+        #### What did you expect?
+
+        #### What happened instead?
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system
+      placeholder: Windows, macOS, Ubuntu, Android…
+    validations:
+      required: false
+  - type: input
+    id: browser
+    attributes:
+      label: Browser information
+      description: Which browser are you using? Which version? 
+      placeholder: e.g. Chromium Version 92.0.4515.131
+    validations:
+      required: false
+  - type: input
+    id: webapp-url
+    attributes:
+      label: URL for webapp
+      description: Which URL are you using to access the webapp? If a private server, tell us what version of Element Call you are using.
+      placeholder: e.g. call.element.io
+    validations:
+      required: false
+  - type: dropdown
+    id: rageshake
+    attributes:
+      label: Will you send logs?
+      description:  |
+        To send them, press the 'Submit Feedback' button and check 'Include Debug Logs'. Please link to this issue in the description field.
+      options:
+        - 'Yes'
+        - 'No'
+    validations:
+      required: true
