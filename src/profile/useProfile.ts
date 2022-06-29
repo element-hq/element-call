@@ -14,13 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {
-  FileType,
-  MatrixClient,
-  MatrixEvent,
-  User,
-  UserEvent,
-} from "matrix-js-sdk";
+import { MatrixClient } from "matrix-js-sdk/src/client";
+import { MatrixEvent } from "matrix-js-sdk/src/models/event";
+import { User, UserEvent } from "matrix-js-sdk/src/models/user";
+import { FileType } from "matrix-js-sdk/src/http-api";
 import { useState, useCallback, useEffect } from "react";
 
 interface ProfileLoadState {
