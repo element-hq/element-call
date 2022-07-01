@@ -31,7 +31,7 @@ export function RoomPage() {
   const { hash, search } = useLocation();
   const [viaServers, isEmbedded] = useMemo(() => {
     const params = new URLSearchParams(search);
-    return [params.getAll("via"), params.get("embed") !== null];
+    return [params.getAll("via"), params.has("embed")];
   }, [search]);
   const roomId = (maybeRoomId || hash || "").toLowerCase();
 
