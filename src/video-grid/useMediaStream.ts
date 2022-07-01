@@ -16,7 +16,10 @@ limitations under the License.
 
 import { useRef, useEffect, RefObject } from "react";
 import { parse as parseSdp, write as writeSdp } from "sdp-transform";
-import { acquireContext, releaseContext } from "matrix-js-sdk/src/webrtc/audioContext";
+import {
+  acquireContext,
+  releaseContext,
+} from "matrix-js-sdk/src/webrtc/audioContext";
 
 import { useSpatialAudio } from "../settings/useSetting";
 
