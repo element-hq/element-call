@@ -88,7 +88,7 @@ export function RoomSetupHeaderInfo({
 
   if (isEmbedded) {
     return (
-      <div className={styles.backButton} ref={ref} {...buttonProps}>
+      <div ref={ref}>
         <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
       </div>
     );
