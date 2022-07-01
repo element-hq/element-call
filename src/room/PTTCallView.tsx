@@ -93,6 +93,7 @@ interface Props {
   participants: RoomMember[];
   userMediaFeeds: CallFeed[];
   onLeave: () => void;
+  isEmbedded: boolean;
 }
 
 export const PTTCallView: React.FC<Props> = ({
@@ -104,6 +105,7 @@ export const PTTCallView: React.FC<Props> = ({
   participants,
   userMediaFeeds,
   onLeave,
+  isEmbedded,
 }) => {
   const { modalState: inviteModalState, modalProps: inviteModalProps } =
     useModalTriggerState();
@@ -176,6 +178,7 @@ export const PTTCallView: React.FC<Props> = ({
             roomName={roomName}
             avatarUrl={avatarUrl}
             onPress={onLeave}
+            isEmbedded={isEmbedded}
           />
         </LeftNav>
         <RightNav />
@@ -203,7 +206,7 @@ export const PTTCallView: React.FC<Props> = ({
             feedbackModalState={feedbackModalState}
             feedbackModalProps={feedbackModalProps}
           />
-          <HangupButton onPress={onLeave} />
+          {!isEmbedded && <HangupButton onPress={onLeave} />}
           <InviteButton onPress={() => inviteModalState.open()} />
         </div>
 
