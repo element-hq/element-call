@@ -16,6 +16,7 @@ limitations under the License.
 
 import { useRef, useEffect, RefObject } from "react";
 import { parse as parseSdp, write as writeSdp } from "sdp-transform";
+import { acquireContext, releaseContext } from "matrix-js-sdk/src/webrtc/audioContext";
 
 import { useSpatialAudio } from "../settings/useSetting";
 
@@ -152,7 +153,7 @@ export const useAudioContext = (): [
 
   useEffect(() => {
     if (audioRef.current && !context.current) {
-      context.current = new AudioContext();
+      context.current = acquireContext();
 
       if (window.chrome) {
         // We're in Chrome, which needs a loopback hack applied to enable AEC
@@ -166,9 +167,11 @@ export const useAudioContext = (): [
         })();
         return () => {
           audioEl.srcObject = null;
+          releaseContext();
         };
       } else {
         destination.current = context.current.destination;
+        return releaseContext;
       }
     }
   }, []);
