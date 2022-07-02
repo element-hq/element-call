@@ -77,9 +77,23 @@ export function RoomHeaderInfo({ roomName, avatarUrl }) {
   );
 }
 
-export function RoomSetupHeaderInfo({ roomName, avatarUrl, ...rest }) {
+export function RoomSetupHeaderInfo({
+  roomName,
+  avatarUrl,
+  isEmbedded,
+  ...rest
+}) {
   const ref = useRef();
   const { buttonProps } = useButton(rest, ref);
+
+  if (isEmbedded) {
+    return (
+      <div ref={ref}>
+        <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
+      </div>
+    );
+  }
+
   return (
     <button className={styles.backButton} ref={ref} {...buttonProps}>
       <ArrowLeftIcon width={16} height={16} />

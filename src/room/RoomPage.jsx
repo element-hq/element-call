@@ -29,9 +29,9 @@ export function RoomPage() {
 
   const { roomId: maybeRoomId } = useParams();
   const { hash, search } = useLocation();
-  const [viaServers] = useMemo(() => {
+  const [viaServers, isEmbedded] = useMemo(() => {
     const params = new URLSearchParams(search);
-    return [params.getAll("via")];
+    return [params.getAll("via"), params.has("embed")];
   }, [search]);
   const roomId = (maybeRoomId || hash || "").toLowerCase();
 
@@ -56,6 +56,7 @@ export function RoomPage() {
             roomId={roomId}
             groupCall={groupCall}
             isPasswordlessUser={isPasswordlessUser}
+            isEmbedded={isEmbedded}
           />
         )}
       </GroupCallLoader>

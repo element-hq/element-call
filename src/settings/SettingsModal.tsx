@@ -15,6 +15,8 @@ limitations under the License.
 */
 
 import React from "react";
+import { Item } from "@react-stately/collections";
+
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
 import { TabContainer, TabItem } from "../tabs/Tabs";
@@ -22,7 +24,6 @@ import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
 import { SelectInput } from "../input/SelectInput";
-import { Item } from "@react-stately/collections";
 import { useMediaHandler } from "./useMediaHandler";
 import { useSpatialAudio, useShowInspector } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
@@ -30,7 +31,13 @@ import { Button } from "../button";
 import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
 
-export const SettingsModal = (props) => {
+interface Props {
+  setShowInspector: boolean;
+  showInspector: boolean;
+  [rest: string]: unknown;
+}
+
+export const SettingsModal = (props: Props) => {
   const {
     audioInput,
     audioInputs,
@@ -42,6 +49,7 @@ export const SettingsModal = (props) => {
     audioOutputs,
     setAudioOutput,
   } = useMediaHandler();
+
   const [spatialAudio, setSpatialAudio] = useSpatialAudio();
   const [showInspector, setShowInspector] = useShowInspector();
 
@@ -91,7 +99,9 @@ export const SettingsModal = (props) => {
               type="checkbox"
               checked={spatialAudio}
               description="This will make a speaker's audio seem as if it is coming from where their tile is positioned on screen. (Experimental feature: this may impact the stability of audio.)"
-              onChange={(e) => setSpatialAudio(e.target.checked)}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setSpatialAudio(event.target.checked)
+              }
             />
           </FieldRow>
         </TabItem>
@@ -133,7 +143,9 @@ export const SettingsModal = (props) => {
               label="Show Call Inspector"
               type="checkbox"
               checked={showInspector}
-              onChange={(e) => setShowInspector(e.target.checked)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setShowInspector(e.target.checked)
+              }
             />
           </FieldRow>
           <FieldRow>
