@@ -80,8 +80,7 @@ export const usePTT = (
   client: MatrixClient,
   groupCall: GroupCall,
   userMediaFeeds: CallFeed[],
-  playClip: PlayClipFunction,
-  enablePTTButton: boolean
+  playClip: PlayClipFunction
 ): PTTState => {
   // Used to serialise all the mute calls so they don't race. It has
   // its own state as its always set separately from anything else.
@@ -257,59 +256,6 @@ export const usePTT = (
     },
     [setConnected]
   );
-
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent): void {
-      if (event.code === "Space") {
-        if (!enablePTTButton) return;
-
-        event.preventDefault();
-
-        if (pttButtonHeld) return;
-
-        startTalking();
-      }
-    }
-
-    function onKeyUp(event: KeyboardEvent): void {
-      if (event.code === "Space") {
-        event.preventDefault();
-
-        stopTalking();
-      }
-    }
-
-    function onBlur(): void {
-      // TODO: We will need to disable this for a global PTT hotkey to work
-      if (!groupCall.isMicrophoneMuted()) {
-        setMicMuteWrapper(true);
-      }
-
-      setState((prevState) => ({ ...prevState, pttButtonHeld: false }));
-    }
-
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-    window.addEventListener("blur", onBlur);
-
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-      window.removeEventListener("blur", onBlur);
-    };
-  }, [
-    groupCall,
-    startTalking,
-    stopTalking,
-    activeSpeakerUserId,
-    isAdmin,
-    talkOverEnabled,
-    pttButtonHeld,
-    enablePTTButton,
-    setMicMuteWrapper,
-    client,
-    onClientSync,
-  ]);
 
   useEffect(() => {
     client.on(ClientEvent.Sync, onClientSync);

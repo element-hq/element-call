@@ -62,6 +62,10 @@ if (import.meta.env.VITE_CUSTOM_THEME) {
     import.meta.env.VITE_THEME_TERTIARY_CONTENT as string
   );
   style.setProperty(
+    "--tertiary-content-20",
+    import.meta.env.VITE_THEME_TERTIARY_CONTENT_20 as string
+  );
+  style.setProperty(
     "--quaternary-content",
     import.meta.env.VITE_THEME_QUATERNARY_CONTENT as string
   );

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /*
 Copyright 2017 OpenMarket Ltd
 Copyright 2018 New Vector Ltd
@@ -37,19 +38,33 @@ limitations under the License.
 //    actually timestamps. We then purge the remaining logs. We also do this
 //    purge on startup to prevent logs from accumulating.
 
-// the frequency with which we flush to indexeddb
 import { logger } from "matrix-js-sdk/src/logger";
+import { randomString } from "matrix-js-sdk/src/randomstring";
 
+// the frequency with which we flush to indexeddb
 const FLUSH_RATE_MS = 30 * 1000;
 
 // the length of log data we keep in indexeddb (and include in the reports)
 const MAX_LOG_SIZE = 1024 * 1024 * 5; // 5 MB
 
-// A class which monkey-patches the global console and stores log lines.
-export class ConsoleLogger {
-  logs = "";
+type LogFunction = (
+  ...args: (Error | DOMException | object | string)[]
+) => void;
+type LogFunctionName = "log" | "info" | "warn" | "error";
 
-  monkeyPatch(consoleObj) {
+// A class which monkey-patches the global console and stores log lines.
+
+interface LogEntry {
+  id: string;
+  lines: string;
+  index?: number;
+}
+
+export class ConsoleLogger {
+  private logs = "";
+  private originalFunctions: { [key in LogFunctionName]?: LogFunction } = {};
+
+  public monkeyPatch(consoleObj: Console): void {
     // Monkey-patch console logging
     const consoleFunctionsToLevels = {
       log: "I",
@@ -60,6 +75,7 @@ export class ConsoleLogger {
     Object.keys(consoleFunctionsToLevels).forEach((fnName) => {
       const level = consoleFunctionsToLevels[fnName];
       const originalFn = consoleObj[fnName].bind(consoleObj);
+      this.originalFunctions[fnName] = originalFn;
       consoleObj[fnName] = (...args) => {
         this.log(level, ...args);
         originalFn(...args);
@@ -67,7 +83,17 @@ export class ConsoleLogger {
     });
   }
 
-  log(level, ...args) {
+  public bypassRageshake(
+    fnName: LogFunctionName,
+    ...args: (Error | DOMException | object | string)[]
+  ): void {
+    this.originalFunctions[fnName](...args);
+  }
+
+  public log(
+    level: string,
+    ...args: (Error | DOMException | object | string)[]
+  ): void {
     // We don't know what locale the user may be running so use ISO strings
     const ts = new Date().toISOString();
 
@@ -78,21 +104,7 @@ export class ConsoleLogger {
       } else if (arg instanceof Error) {
         return arg.message + (arg.stack ? `\n${arg.stack}` : "");
       } else if (typeof arg === "object") {
-        try {
-          return JSON.stringify(arg);
-        } catch (e) {
-          // In development, it can be useful to log complex cyclic
-          // objects to the console for inspection. This is fine for
-          // the console, but default `stringify` can't handle that.
-          // We workaround this by using a special replacer function
-          // to only log values of the root object and avoid cycles.
-          return JSON.stringify(arg, (key, value) => {
-            if (key && typeof value === "object") {
-              return "<object>";
-            }
-            return value;
-          });
-        }
+        return JSON.stringify(arg, getCircularReplacer());
       } else {
         return arg;
       }
@@ -116,7 +128,7 @@ export class ConsoleLogger {
    * @param {boolean} keepLogs True to not delete logs after flushing.
    * @return {string} \n delimited log lines to flush.
    */
-  flush(keepLogs) {
+  public flush(keepLogs?: boolean): string {
     // The ConsoleLogger doesn't care how these end up on disk, it just
     // flushes them to the caller.
     if (keepLogs) {
@@ -130,24 +142,23 @@ export class ConsoleLogger {
 
 // A class which stores log lines in an IndexedDB instance.
 export class IndexedDBLogStore {
-  index = 0;
-  db = null;
-  flushPromise = null;
-  flushAgainPromise = null;
+  private index = 0;
+  private db: IDBDatabase = null;
+  private flushPromise: Promise<void> = null;
+  private flushAgainPromise: Promise<void> = null;
+  private id: string;
 
-  constructor(indexedDB, logger) {
-    this.indexedDB = indexedDB;
-    this.logger = logger;
-    this.id = "instance-" + Math.random() + Date.now();
+  constructor(private indexedDB: IDBFactory, private logger: ConsoleLogger) {
+    this.id = "instance-" + randomString(16);
   }
 
   /**
    * @return {Promise} Resolves when the store is ready.
    */
-  connect() {
+  public connect(): Promise<void> {
     const req = this.indexedDB.open("logs");
     return new Promise((resolve, reject) => {
-      req.onsuccess = (event) => {
+      req.onsuccess = (event: Event) => {
         // @ts-ignore
         this.db = event.target.result;
         // Periodically flush logs to local storage / indexeddb
@@ -206,7 +217,7 @@ export class IndexedDBLogStore {
    *
    * @return {Promise} Resolved when the logs have been flushed.
    */
-  flush() {
+  public flush(): Promise<void> {
     // check if a flush() operation is ongoing
     if (this.flushPromise) {
       if (this.flushAgainPromise) {
@@ -225,7 +236,7 @@ export class IndexedDBLogStore {
     }
     // there is no flush promise or there was but it has finished, so do
     // a brand new one, destroying the chain which may have been built up.
-    this.flushPromise = new Promise((resolve, reject) => {
+    this.flushPromise = new Promise<void>((resolve, reject) => {
       if (!this.db) {
         // not connected yet or user rejected access for us to r/w to the db.
         reject(new Error("No connected database"));
@@ -243,6 +254,7 @@ export class IndexedDBLogStore {
       };
       txn.onerror = (event) => {
         logger.error("Failed to flush logs : ", event);
+        // @ts-ignore
         reject(new Error("Failed to write logs: " + event.target.errorCode));
       };
       objStore.add(this.generateLogEntry(lines));
@@ -264,12 +276,12 @@ export class IndexedDBLogStore {
    * log ID). The objects have said log ID in an "id" field and "lines" which
    * is a big string with all the new-line delimited logs.
    */
-  async consume() {
+  public async consume(): Promise<LogEntry[]> {
     const db = this.db;
 
     // Returns: a string representing the concatenated logs for this ID.
     // Stops adding log fragments when the size exceeds maxSize
-    function fetchLogs(id, maxSize) {
+    function fetchLogs(id: string, maxSize: number): Promise<string> {
       const objectStore = db
         .transaction("logs", "readonly")
         .objectStore("logs");
@@ -280,9 +292,11 @@ export class IndexedDBLogStore {
           .openCursor(IDBKeyRange.only(id), "prev");
         let lines = "";
         query.onerror = (event) => {
+          // @ts-ignore
           reject(new Error("Query failed: " + event.target.errorCode));
         };
         query.onsuccess = (event) => {
+          // @ts-ignore
           const cursor = event.target.result;
           if (!cursor) {
             resolve(lines);
@@ -299,12 +313,12 @@ export class IndexedDBLogStore {
     }
 
     // Returns: A sorted array of log IDs. (newest first)
-    function fetchLogIds() {
+    function fetchLogIds(): Promise<string[]> {
       // To gather all the log IDs, query for all records in logslastmod.
       const o = db
         .transaction("logslastmod", "readonly")
         .objectStore("logslastmod");
-      return selectQuery(o, undefined, (cursor) => {
+      return selectQuery<{ ts: number; id: string }>(o, undefined, (cursor) => {
         return {
           id: cursor.value.id,
           ts: cursor.value.ts,
@@ -319,13 +333,14 @@ export class IndexedDBLogStore {
       });
     }
 
-    function deleteLogs(id) {
-      return new Promise((resolve, reject) => {
+    function deleteLogs(id: number): Promise<void> {
+      return new Promise<void>((resolve, reject) => {
         const txn = db.transaction(["logs", "logslastmod"], "readwrite");
         const o = txn.objectStore("logs");
         // only load the key path, not the data which may be huge
         const query = o.index("id").openKeyCursor(IDBKeyRange.only(id));
         query.onsuccess = (event) => {
+          // @ts-ignore
           const cursor = event.target.result;
           if (!cursor) {
             return;
@@ -340,6 +355,7 @@ export class IndexedDBLogStore {
           reject(
             new Error(
               "Failed to delete logs for " +
+                // @ts-ignore
                 `'${id}' : ${event.target.errorCode}`
             )
           );
@@ -352,7 +368,7 @@ export class IndexedDBLogStore {
 
     const allLogIds = await fetchLogIds();
     let removeLogIds = [];
-    const logs = [];
+    const logs: LogEntry[] = [];
     let size = 0;
     for (let i = 0; i < allLogIds.length; i++) {
       const lines = await fetchLogs(allLogIds[i], MAX_LOG_SIZE - size);
@@ -390,7 +406,7 @@ export class IndexedDBLogStore {
     return logs;
   }
 
-  generateLogEntry(lines) {
+  private generateLogEntry(lines: string): LogEntry {
     return {
       id: this.id,
       lines: lines,
@@ -398,7 +414,7 @@ export class IndexedDBLogStore {
     };
   }
 
-  generateLastModifiedTime() {
+  private generateLastModifiedTime(): { id: string; ts: number } {
     return {
       id: this.id,
       ts: Date.now(),
@@ -416,7 +432,11 @@ export class IndexedDBLogStore {
  * @return {Promise<T[]>} Resolves to an array of whatever you returned from
  * resultMapper.
  */
-function selectQuery(store, keyRange, resultMapper) {
+function selectQuery<T>(
+  store: IDBObjectStore,
+  keyRange: IDBKeyRange,
+  resultMapper: (cursor: IDBCursorWithValue) => T
+): Promise<T[]> {
   const query = store.openCursor(keyRange);
   return new Promise((resolve, reject) => {
     const results = [];
@@ -437,6 +457,16 @@ function selectQuery(store, keyRange, resultMapper) {
     };
   });
 }
+declare global {
+  // eslint-disable-next-line no-var, camelcase
+  var mx_rage_store: IndexedDBLogStore;
+  // eslint-disable-next-line no-var, camelcase
+  var mx_rage_logger: ConsoleLogger;
+  // eslint-disable-next-line no-var, camelcase
+  var mx_rage_initPromise: Promise<void>;
+  // eslint-disable-next-line no-var, camelcase
+  var mx_rage_initStoragePromise: Promise<void>;
+}
 
 /**
  * Configure rage shaking support for sending bug reports.
@@ -445,7 +475,7 @@ function selectQuery(store, keyRange, resultMapper) {
  * be set up immediately for the logs.
  * @return {Promise} Resolves when set up.
  */
-export function init(setUpPersistence = true) {
+export function init(setUpPersistence = true): Promise<void> {
   if (global.mx_rage_initPromise) {
     return global.mx_rage_initPromise;
   }
@@ -465,7 +495,7 @@ export function init(setUpPersistence = true) {
  * then this no-ops.
  * @return {Promise} Resolves when complete.
  */
-export function tryInitStorage() {
+export function tryInitStorage(): Promise<void> {
   if (global.mx_rage_initStoragePromise) {
     return global.mx_rage_initStoragePromise;
   }
@@ -491,7 +521,7 @@ export function tryInitStorage() {
   return global.mx_rage_initStoragePromise;
 }
 
-export function flush() {
+export function flush(): Promise<void> {
   if (!global.mx_rage_store) {
     return;
   }
@@ -502,7 +532,7 @@ export function flush() {
  * Clean up old logs.
  * @return {Promise} Resolves if cleaned logs.
  */
-export async function cleanup() {
+export async function cleanup(): Promise<void> {
   if (!global.mx_rage_store) {
     return;
   }
@@ -512,9 +542,9 @@ export async function cleanup() {
 /**
  * Get a recent snapshot of the logs, ready for attaching to a bug report
  *
- * @return {Array<{lines: string, id, string}>}  list of log data
+ * @return {LogEntry[]}  list of log data
  */
-export async function getLogsForReport() {
+export async function getLogsForReport(): Promise<LogEntry[]> {
   if (!global.mx_rage_logger) {
     throw new Error("No console logger, did you forget to call init()?");
   }
@@ -523,7 +553,7 @@ export async function getLogsForReport() {
   if (global.mx_rage_store) {
     // flush most recent logs
     await global.mx_rage_store.flush();
-    return await global.mx_rage_store.consume();
+    return global.mx_rage_store.consume();
   } else {
     return [
       {
@@ -533,3 +563,24 @@ export async function getLogsForReport() {
     ];
   }
 }
+
+type StringifyReplacer = (
+  this: unknown,
+  key: string,
+  value: unknown
+) => unknown;
+
+// From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#circular_references
+// Injects `<$ cycle-trimmed $>` wherever it cuts a cyclical object relationship
+const getCircularReplacer = (): StringifyReplacer => {
+  const seen = new WeakSet();
+  return (key: string, value: unknown): unknown => {
+    if (typeof value === "object" && value !== null) {
+      if (seen.has(value)) {
+        return "<$ cycle-trimmed $>";
+      }
+      seen.add(value);
+    }
+    return value;
+  };
+};
