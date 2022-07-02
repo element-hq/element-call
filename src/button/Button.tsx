@@ -31,6 +31,19 @@ import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
 import { TooltipTrigger } from "../Tooltip";
 
+export type ButtonVariant =
+  | "default"
+  | "toolbar"
+  | "toolbarSecondary"
+  | "icon"
+  | "secondary"
+  | "copy"
+  | "secondaryCopy"
+  | "iconCopy"
+  | "secondaryHangup"
+  | "dropdown"
+  | "link";
+
 export const variantToClassName = {
   default: [styles.button],
   toolbar: [styles.toolbarButton],
@@ -45,12 +58,14 @@ export const variantToClassName = {
   link: [styles.linkButton],
 };
 
-export const sizeToClassName = {
+export type ButtonSize = "lg";
+
+export const sizeToClassName: { lg: string[] } = {
   lg: [styles.lg],
 };
 interface Props {
-  variant: string;
-  size: number;
+  variant: ButtonVariant;
+  size: ButtonSize;
   on: () => void;
   off: () => void;
   iconStyle: string;
@@ -113,7 +128,13 @@ export const Button = forwardRef<HTMLAnchorElement, Props>(
   }
 );
 
-export function MicButton({ muted, ...rest }) {
+export function MicButton({
+  muted,
+  ...rest
+}: {
+  muted: boolean;
+  [index: string]: unknown;
+}) {
   return (
     <TooltipTrigger>
       <Button variant="toolbar" {...rest} off={muted}>
@@ -124,7 +145,13 @@ export function MicButton({ muted, ...rest }) {
   );
 }
 
-export function VideoButton({ muted, ...rest }) {
+export function VideoButton({
+  muted,
+  ...rest
+}: {
+  muted: boolean;
+  [index: string]: unknown;
+}) {
   return (
     <TooltipTrigger>
       <Button variant="toolbar" {...rest} off={muted}>
@@ -135,7 +162,15 @@ export function VideoButton({ muted, ...rest }) {
   );
 }
 
-export function ScreenshareButton({ enabled, className, ...rest }) {
+export function ScreenshareButton({
+  enabled,
+  className,
+  ...rest
+}: {
+  enabled: boolean;
+  className: string;
+  [index: string]: unknown;
+}) {
   return (
     <TooltipTrigger>
       <Button variant="toolbarSecondary" {...rest} on={enabled}>
@@ -146,7 +181,13 @@ export function ScreenshareButton({ enabled, className, ...rest }) {
   );
 }
 
-export function HangupButton({ className, ...rest }) {
+export function HangupButton({
+  className,
+  ...rest
+}: {
+  className: string;
+  [index: string]: unknown;
+}) {
   return (
     <TooltipTrigger>
       <Button
@@ -161,7 +202,13 @@ export function HangupButton({ className, ...rest }) {
   );
 }
 
-export function SettingsButton({ className, ...rest }) {
+export function SettingsButton({
+  className,
+  ...rest
+}: {
+  className: string;
+  [index: string]: unknown;
+}) {
   return (
     <TooltipTrigger>
       <Button variant="toolbar" {...rest}>
@@ -172,7 +219,13 @@ export function SettingsButton({ className, ...rest }) {
   );
 }
 
-export function InviteButton({ className, ...rest }) {
+export function InviteButton({
+  className,
+  ...rest
+}: {
+  className: string;
+  [index: string]: unknown;
+}) {
   return (
     <TooltipTrigger>
       <Button variant="toolbar" {...rest}>
