@@ -168,7 +168,7 @@ export function ScreenshareButton({
   ...rest
 }: {
   enabled: boolean;
-  className: string;
+  className?: string;
   [index: string]: unknown;
 }) {
   return (
@@ -185,7 +185,7 @@ export function HangupButton({
   className,
   ...rest
 }: {
-  className: string;
+  className?: string;
   [index: string]: unknown;
 }) {
   return (
@@ -206,7 +206,7 @@ export function SettingsButton({
   className,
   ...rest
 }: {
-  className: string;
+  className?: string;
   [index: string]: unknown;
 }) {
   return (
@@ -223,7 +223,7 @@ export function InviteButton({
   className,
   ...rest
 }: {
-  className: string;
+  className?: string;
   [index: string]: unknown;
 }) {
   return (
