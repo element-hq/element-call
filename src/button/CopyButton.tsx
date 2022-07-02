@@ -19,13 +19,13 @@ import useClipboard from "react-use-clipboard";
 
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 import { ReactComponent as CopyIcon } from "../icons/Copy.svg";
-import { Button } from "./Button";
+import { Button, ButtonVariant } from "./Button";
 
 interface Props {
   value: string;
   children: JSX.Element;
   className: string;
-  variant: string;
+  variant: ButtonVariant;
   copiedMessage: string;
 }
 export function CopyButton({

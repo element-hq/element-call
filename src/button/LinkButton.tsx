@@ -18,11 +18,16 @@ import React from "react";
 import { Link } from "react-router-dom";
 import classNames from "classnames";
 
-import { variantToClassName, sizeToClassName } from "./Button";
+import {
+  variantToClassName,
+  sizeToClassName,
+  ButtonVariant,
+  ButtonSize,
+} from "./Button";
 interface Props {
   className: string;
-  variant: string;
-  size: number;
+  variant: ButtonVariant;
+  size: ButtonSize;
   children: JSX.Element;
   [index: string]: unknown;
 }
