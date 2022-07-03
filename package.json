@@ -33,6 +33,7 @@
     "@sentry/react": "^6.13.3",
     "@sentry/tracing": "^6.13.3",
     "@types/grecaptcha": "^3.0.4",
+    "@types/react-router-dom": "^5.3.3",
     "@types/sdp-transform": "^2.4.5",
     "@use-gesture/react": "^10.2.11",
     "classnames": "^2.3.1",
