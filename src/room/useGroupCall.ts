@@ -29,7 +29,7 @@ import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 
 import { usePageUnload } from "./usePageUnload";
 
-export interface UseGroupCallType {
+export interface UseGroupCallReturnType {
   state: GroupCallState;
   calls: MatrixCall[];
   localCallFeed: CallFeed;
@@ -72,7 +72,7 @@ interface State {
   hasLocalParticipant: boolean;
 }
 
-export function useGroupCall(groupCall: GroupCall): UseGroupCallType {
+export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
   const [
     {
       state,

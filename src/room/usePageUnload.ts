@@ -32,11 +32,11 @@ function isIOS() {
   );
 }
 
-export function usePageUnload(callback) {
+export function usePageUnload(callback: () => void) {
   useEffect(() => {
-    let pageVisibilityTimeout;
+    let pageVisibilityTimeout: NodeJS.Timeout;
 
-    function onBeforeUnload(event) {
+    function onBeforeUnload(event: PageTransitionEvent) {
       if (event.type === "visibilitychange") {
         if (document.visibilityState === "visible") {
           clearTimeout(pageVisibilityTimeout);

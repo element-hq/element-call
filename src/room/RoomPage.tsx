@@ -16,6 +16,7 @@ limitations under the License.
 
 import React, { useMemo } from "react";
 import { useLocation, useParams } from "react-router-dom";
+
 import { useClient } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
@@ -27,8 +28,8 @@ export function RoomPage() {
   const { loading, isAuthenticated, error, client, isPasswordlessUser } =
     useClient();
 
-  const { roomId: maybeRoomId } = useParams();
-  const { hash, search } = useLocation();
+  const { roomId: maybeRoomId }: { roomId: string } = useParams();
+  const { hash, search }: { hash: string; search: string } = useLocation();
   const [viaServers, isEmbedded] = useMemo(() => {
     const params = new URLSearchParams(search);
     return [params.getAll("via"), params.has("embed")];

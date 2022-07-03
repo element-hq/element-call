@@ -15,10 +15,13 @@ limitations under the License.
 */
 
 import React, { useCallback } from "react";
+import { Item } from "@react-stately/collections";
+import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
+import { OverlayTriggerState } from "@react-stately/overlays";
+
 import { Button } from "../button";
 import { Menu } from "../Menu";
 import { PopoverMenuTrigger } from "../popover/PopoverMenu";
-import { Item } from "@react-stately/collections";
 import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
@@ -28,7 +31,17 @@ import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
 import { TooltipTrigger } from "../Tooltip";
 import { FeedbackModal } from "./FeedbackModal";
-
+interface Props {
+  roomId: string;
+  inCall: boolean;
+  groupCall: GroupCall;
+  showInvite: boolean;
+  feedbackModalState: OverlayTriggerState;
+  feedbackModalProps: {
+    isOpen: boolean;
+    onClose: () => void;
+  };
+}
 export function OverflowMenu({
   roomId,
   inCall,
@@ -36,27 +49,46 @@ export function OverflowMenu({
   showInvite,
   feedbackModalState,
   feedbackModalProps,
-}) {
-  const { modalState: inviteModalState, modalProps: inviteModalProps } =
-    useModalTriggerState();
-  const { modalState: settingsModalState, modalProps: settingsModalProps } =
-    useModalTriggerState();
+}: Props) {
+  const {
+    modalState: inviteModalState,
+    modalProps: inviteModalProps,
+  }: {
+    modalState: OverlayTriggerState;
+    modalProps: {
+      isOpen: boolean;
+      onClose: () => void;
+    };
+  } = useModalTriggerState();
+  const {
+    modalState: settingsModalState,
+    modalProps: settingsModalProps,
+  }: {
+    modalState: OverlayTriggerState;
+    modalProps: {
+      isOpen: boolean;
+      onClose: () => void;
+    };
+  } = useModalTriggerState();
 
   // TODO: On closing modal, focus should be restored to the trigger button
   // https://github.com/adobe/react-spectrum/issues/2444
-  const onAction = useCallback((key) => {
-    switch (key) {
-      case "invite":
-        inviteModalState.open();
-        break;
-      case "settings":
-        settingsModalState.open();
-        break;
-      case "feedback":
-        feedbackModalState.open();
-        break;
-    }
-  });
+  const onAction = useCallback(
+    (key) => {
+      switch (key) {
+        case "invite":
+          inviteModalState.open();
+          break;
+        case "settings":
+          settingsModalState.open();
+          break;
+        case "feedback":
+          feedbackModalState.open();
+          break;
+      }
+    },
+    [feedbackModalState, inviteModalState, settingsModalState]
+  );
 
   return (
     <>
@@ -67,7 +99,7 @@ export function OverflowMenu({
           </Button>
           {() => "More"}
         </TooltipTrigger>
-        {(props) => (
+        {(props: JSX.IntrinsicAttributes) => (
           <Menu {...props} label="More menu" onAction={onAction}>
             {showInvite && (
               <Item key="invite" textValue="Invite people">

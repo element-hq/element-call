@@ -16,6 +16,7 @@ limitations under the License.
 
 import React, { useEffect } from "react";
 import { useLocation, useHistory } from "react-router-dom";
+
 import { defaultHomeserverHost } from "../matrix-utils";
 import { LoadingView } from "../FullScreenView";
 

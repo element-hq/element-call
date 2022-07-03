@@ -14,24 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import React from "react";
-import { Modal, ModalContent } from "../Modal";
-import { CopyButton } from "../button";
-import { getRoomUrl } from "../matrix-utils";
-import styles from "./InviteModal.module.css";
 
-export function InviteModal({ roomId, ...rest }) {
-  return (
-    <Modal
-      title="Invite People"
-      isDismissable
-      className={styles.inviteModal}
-      {...rest}
-    >
-      <ModalContent>
-        <p>Copy and share this meeting link</p>
-        <CopyButton className={styles.copyButton} value={getRoomUrl(roomId)} />
-      </ModalContent>
-    </Modal>
-  );
+import { useCallFeed } from "../video-grid/useCallFeed";
+import { useMediaStream } from "../video-grid/useMediaStream";
+import styles from "./PTTFeed.module.css";
+
+export function PTTFeed({
+  callFeed,
+  audioOutputDevice,
+}: {
+  callFeed: CallFeed;
+  audioOutputDevice: string;
+}) {
+  const { isLocal, stream } = useCallFeed(callFeed);
+  const mediaRef = useMediaStream(stream, audioOutputDevice, isLocal);
+  return <audio ref={mediaRef} className={styles.audioFeed} playsInline />;
 }

@@ -15,15 +15,16 @@ limitations under the License.
 */
 
 import React, { useCallback, useState } from "react";
+import { useLocation } from "react-router-dom";
+import { randomString } from "matrix-js-sdk/src/randomstring";
+
 import styles from "./RoomAuthView.module.css";
 import { useClient } from "../ClientContext";
 import { Button } from "../button";
 import { Body, Caption, Link, Headline } from "../typography/Typography";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
-import { useLocation } from "react-router-dom";
 import { useRecaptcha } from "../auth/useRecaptcha";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { Form } from "../form/Form";
 import { UserMenuContainer } from "../UserMenuContainer";
@@ -32,16 +33,22 @@ import { generateRandomName } from "../auth/generateRandomName";
 export function RoomAuthView() {
   const { setClient } = useClient();
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<Error>();
   const [privacyPolicyUrl, recaptchaKey, register] =
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
+  function isString(formData: FormDataEntryValue): formData is string {
+    return typeof formData === "string";
+  }
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
-      const displayName = data.get("displayName");
+      const dataForDisplayName = data.get("displayName");
+      const displayName = isString(dataForDisplayName)
+        ? dataForDisplayName
+        : "";
 
       async function submit() {
         setError(undefined);
@@ -65,7 +72,7 @@ export function RoomAuthView() {
         reset();
       });
     },
-    [register, reset, execute]
+    [execute, register, setClient, reset]
   );
 
   const location = useLocation();
