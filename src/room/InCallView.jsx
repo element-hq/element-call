@@ -44,7 +44,7 @@ import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { useAudioContext } from "../video-grid/useMediaStream";
 
-const canScreenshare = "getDisplayMedia" in navigator.mediaDevices;
+const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
 // or with getUsermedia and getDisplaymedia being used within the same session.
 // For now we can disable screensharing in Safari.
