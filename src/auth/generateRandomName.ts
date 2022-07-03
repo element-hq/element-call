@@ -143,7 +143,7 @@ const elements = [
   "oganesson",
 ];
 
-export function generateRandomName(config: Config): string {
+export function generateRandomName(config?: Config): string {
   return uniqueNamesGenerator({
     dictionaries: [colors, adjectives, animals, elements],
     style: "lowerCase",
