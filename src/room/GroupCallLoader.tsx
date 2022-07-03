@@ -15,11 +15,25 @@ limitations under the License.
 */
 
 import React from "react";
+import { MatrixClient } from "matrix-js-sdk";
+
 import { useLoadGroupCall } from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { usePageTitle } from "../usePageTitle";
 
-export function GroupCallLoader({ client, roomId, viaServers, children }) {
+interface Props {
+  client: MatrixClient;
+  roomId: string;
+  viaServers: any;
+  children: (groupCall: any) => React.ReactNode;
+}
+
+export function GroupCallLoader({
+  client,
+  roomId,
+  viaServers,
+  children,
+}: Props) {
   const { loading, error, groupCall } = useLoadGroupCall(
     client,
     roomId,

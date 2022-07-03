@@ -15,6 +15,8 @@ limitations under the License.
 */
 
 import React from "react";
+import { Item } from "@react-stately/collections";
+
 import { Button } from "../button";
 import { PopoverMenuTrigger } from "../popover/PopoverMenu";
 import { ReactComponent as SpotlightIcon } from "../icons/Spotlight.svg";
@@ -22,10 +24,14 @@ import { ReactComponent as FreedomIcon } from "../icons/Freedom.svg";
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 import menuStyles from "../Menu.module.css";
 import { Menu } from "../Menu";
-import { Item } from "@react-stately/collections";
 import { Tooltip, TooltipTrigger } from "../Tooltip";
 
-export function GridLayoutMenu({ layout, setLayout }) {
+type Layout = "freedom" | "spotlight";
+interface Props {
+  layout: Layout;
+  setLayout: (layout: Layout) => void;
+}
+export function GridLayoutMenu({ layout, setLayout }: Props) {
   return (
     <PopoverMenuTrigger placement="bottom right">
       <TooltipTrigger>
@@ -34,7 +40,7 @@ export function GridLayoutMenu({ layout, setLayout }) {
         </Button>
         {() => "Layout Type"}
       </TooltipTrigger>
-      {(props) => (
+      {(props: JSX.IntrinsicAttributes) => (
         <Menu {...props} label="Grid layout menu" onAction={setLayout}>
           <Item key="freedom" textValue="Freedom">
             <FreedomIcon />
