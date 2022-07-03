@@ -27,14 +27,9 @@ import React, {
 import ReactJson, { CollapsedFieldProps } from "react-json-view";
 import mermaid from "mermaid";
 import { Item } from "@react-stately/collections";
-import {
-  MatrixClient,
-  MatrixEvent,
-  GroupCall,
-  RoomStateEvent,
-  ClientEvent,
-  IContent,
-} from "matrix-js-sdk";
+import { MatrixEvent, GroupCall, IContent } from "matrix-js-sdk";
+import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
+import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
 import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
 
 import styles from "./GroupCallInspector.module.css";
