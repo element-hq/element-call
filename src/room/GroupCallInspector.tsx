@@ -384,7 +384,7 @@ function useGroupCallState(
       );
 
       dispatch({
-        type: undefined,
+        type: RoomStateEvent.Events,
         event,
         callStateEvent,
         memberStateEvents,
