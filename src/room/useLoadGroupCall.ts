@@ -16,6 +16,7 @@ limitations under the License.
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk";
 import { useState, useEffect } from "react";
+import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
 
 import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
 
@@ -35,7 +36,10 @@ async function fetchGroupCall(
     function onGroupCallIncoming(groupCall: GroupCall) {
       if (groupCall && groupCall.room.roomId === roomId) {
         clearTimeout(timeoutId);
-        client.removeListener("GroupCall.incoming", onGroupCallIncoming);
+        client.removeListener(
+          GroupCallEventHandlerEvent.Incoming,
+          onGroupCallIncoming
+        );
         resolve(groupCall);
       }
     }
@@ -46,11 +50,14 @@ async function fetchGroupCall(
       resolve(groupCall);
     }
 
-    client.on("GroupCall.incoming", onGroupCallIncoming);
+    client.on(GroupCallEventHandlerEvent.Incoming, onGroupCallIncoming);
 
     if (timeout) {
       timeoutId = setTimeout(() => {
-        client.removeListener("GroupCall.incoming", onGroupCallIncoming);
+        client.removeListener(
+          GroupCallEventHandlerEvent.Incoming,
+          onGroupCallIncoming
+        );
         reject(new Error("Fetching group call timed out."));
       }, timeout);
     }
