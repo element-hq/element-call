@@ -24,7 +24,7 @@ import { ReactComponent as FreedomIcon } from "../icons/Freedom.svg";
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 import menuStyles from "../Menu.module.css";
 import { Menu } from "../Menu";
-import { Tooltip, TooltipTrigger } from "../Tooltip";
+import { TooltipTrigger } from "../Tooltip";
 
 type Layout = "freedom" | "spotlight";
 interface Props {

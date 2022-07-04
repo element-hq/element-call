@@ -17,6 +17,7 @@ limitations under the License.
 import React, { useCallback, useMemo } from "react";
 import { usePreventScroll } from "@react-aria/overlays";
 import { GroupCall, MatrixClient } from "matrix-js-sdk";
+import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
 import styles from "./InCallView.module.css";
 import {
@@ -68,11 +69,11 @@ interface Props {
   isScreensharing: boolean;
   screenshareFeeds: CallFeed[];
   roomId: string;
-  unencryptedEventsFromUsers: any;
+  unencryptedEventsFromUsers: Set<string>;
 }
 interface Participant {
   id: string;
-  callFeed: any;
+  callFeed: CallFeed;
   focused: boolean;
   isLocal: boolean;
   presenter: boolean;
@@ -185,7 +186,7 @@ export function InCallView({
         </div>
       ) : (
         <VideoGrid items={items} layout={layout} disableAnimations={isSafari}>
-          {({ item, ...rest }) => (
+          {({ item, ...rest }: { item: Participant; [x: string]: unknown }) => (
             <VideoTileContainer
               key={item.id}
               item={item}
@@ -212,7 +213,6 @@ export function InCallView({
         <OverflowMenu
           inCall
           roomId={roomId}
-          client={client}
           groupCall={groupCall}
           showInvite={true}
           feedbackModalState={feedbackModalState}
