@@ -125,6 +125,7 @@ export const ClientProvider: FC = ({ children }) => {
           isAuthenticated: Boolean(client),
           isPasswordlessUser,
           userName: client?.getUserIdLocalpart(),
+          error: undefined,
         });
       })
       .catch(() => {
@@ -134,6 +135,7 @@ export const ClientProvider: FC = ({ children }) => {
           isAuthenticated: false,
           isPasswordlessUser: false,
           userName: null,
+          error: undefined,
         });
       });
   }, []);
@@ -163,6 +165,7 @@ export const ClientProvider: FC = ({ children }) => {
         isAuthenticated: true,
         isPasswordlessUser: false,
         userName: client.getUserIdLocalpart(),
+        error: undefined,
       });
     },
     [client]
@@ -183,6 +186,7 @@ export const ClientProvider: FC = ({ children }) => {
           isAuthenticated: true,
           isPasswordlessUser: session.passwordlessUser,
           userName: newClient.getUserIdLocalpart(),
+          error: undefined,
         });
       } else {
         clearSession();
@@ -193,6 +197,7 @@ export const ClientProvider: FC = ({ children }) => {
           isAuthenticated: false,
           isPasswordlessUser: false,
           userName: null,
+          error: undefined,
         });
       }
     },
@@ -251,6 +256,7 @@ export const ClientProvider: FC = ({ children }) => {
       logout,
       userName,
       setClient,
+      error: undefined,
     }),
     [
       loading,

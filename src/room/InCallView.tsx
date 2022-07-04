@@ -68,6 +68,7 @@ interface Props {
   onLeave: () => void;
   isScreensharing: boolean;
   screenshareFeeds: CallFeed[];
+  localScreenshareFeed: CallFeed;
   roomId: string;
   unencryptedEventsFromUsers: Set<string>;
 }
@@ -94,6 +95,7 @@ export function InCallView({
   toggleScreensharing,
   isScreensharing,
   screenshareFeeds,
+  localScreenshareFeed,
   roomId,
   unencryptedEventsFromUsers,
 }: Props) {
