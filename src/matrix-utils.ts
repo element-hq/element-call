@@ -87,7 +87,7 @@ export async function initClient(
   // them.
   const params = new URLSearchParams(window.location.search);
   // disable e2e only if enableE2e=false is given
-  const enableE2e = !(params.get("enableE2e") === "false");
+  const enableE2e = params.get("enableE2e") !== "false";
 
   if (!enableE2e) {
     logger.info("Disabling E2E: group call signalling will NOT be encrypted.");
