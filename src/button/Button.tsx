@@ -75,7 +75,7 @@ interface Props {
   onPressStart: (e: PressEvent) => void;
   [index: string]: unknown;
 }
-export const Button = forwardRef<HTMLAnchorElement, Props>(
+export const Button = forwardRef<HTMLButtonElement, Props>(
   (
     {
       variant = "default",
@@ -91,7 +91,7 @@ export const Button = forwardRef<HTMLAnchorElement, Props>(
     },
     ref
   ) => {
-    const buttonRef = useObjectRef<HTMLAnchorElement>(ref);
+    const buttonRef = useObjectRef<HTMLButtonElement>(ref);
     const { buttonProps } = useButton(
       { onPress, onPressStart, ...rest },
       buttonRef
