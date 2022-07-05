@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useState, createRef } from "react";
+import React, { useCallback, useState, useRef } from "react";
 import classNames from "classnames";
 import { useSpring, animated } from "@react-spring/web";
 
@@ -54,7 +54,7 @@ export const PTTButton: React.FC<Props> = ({
   enqueueNetworkWaiting,
   setNetworkWaiting,
 }) => {
-  const buttonRef = createRef<HTMLButtonElement>();
+  const buttonRef = useRef<HTMLButtonElement>();
 
   const [activeTouchId, setActiveTouchId] = useState<number | null>(null);
 
