@@ -1,8 +1,8 @@
 .pttButton {
-  height: 100vh;
+  width: 100vw;
   aspect-ratio: 1;
-  max-height: 232px;
-  max-width: 232px;
+  max-height: min(232px, calc(100vh - 16px));
+  max-width: min(232px, calc(100vw - 16px));
   border-radius: 116px;
   color: var(--primary-content);
   border: 6px solid var(--accent);
