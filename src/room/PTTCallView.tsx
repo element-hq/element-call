@@ -113,6 +113,7 @@ export const PTTCallView: React.FC<Props> = ({
     useModalTriggerState();
   const [containerRef, bounds] = useMeasure({ polyfill: ResizeObserver });
   const facepileSize = bounds.width < 800 ? "sm" : "md";
+  const showControls = bounds.height > 500;
   const pttButtonSize = 232;
 
   const { audioOutput } = useMediaHandler();
@@ -172,60 +173,67 @@ export const PTTCallView: React.FC<Props> = ({
         // https://github.com/vector-im/element-call/issues/328
         show={false}
       />
-      <Header className={styles.header}>
-        <LeftNav>
-          <RoomSetupHeaderInfo
-            roomName={roomName}
-            avatarUrl={avatarUrl}
-            onPress={onLeave}
-            isEmbedded={isEmbedded}
-          />
-        </LeftNav>
-        <RightNav />
-      </Header>
+      {showControls && (
+        <Header className={styles.header}>
+          <LeftNav>
+            <RoomSetupHeaderInfo
+              roomName={roomName}
+              avatarUrl={avatarUrl}
+              onPress={onLeave}
+              isEmbedded={isEmbedded}
+            />
+          </LeftNav>
+          <RightNav />
+        </Header>
+      )}
       <div className={styles.center}>
-        <div className={styles.participants}>
-          <p>{`${participants.length} ${
-            participants.length > 1 ? "people" : "person"
-          } connected`}</p>
-          <Facepile
-            size={facepileSize}
-            max={8}
-            className={styles.facepile}
-            client={client}
-            participants={participants}
-          />
-        </div>
-        <div className={styles.footer}>
-          <OverflowMenu
-            inCall
-            roomId={roomId}
-            client={client}
-            groupCall={groupCall}
-            showInvite={false}
-            feedbackModalState={feedbackModalState}
-            feedbackModalProps={feedbackModalProps}
-          />
-          {!isEmbedded && <HangupButton onPress={onLeave} />}
-          <InviteButton onPress={() => inviteModalState.open()} />
-        </div>
+        {showControls && (
+          <>
+            <div className={styles.participants}>
+              <p>{`${participants.length} ${
+                participants.length > 1 ? "people" : "person"
+              } connected`}</p>
+              <Facepile
+                size={facepileSize}
+                max={8}
+                className={styles.facepile}
+                client={client}
+                participants={participants}
+              />
+            </div>
+            <div className={styles.footer}>
+              <OverflowMenu
+                inCall
+                roomId={roomId}
+                client={client}
+                groupCall={groupCall}
+                showInvite={false}
+                feedbackModalState={feedbackModalState}
+                feedbackModalProps={feedbackModalProps}
+              />
+              {!isEmbedded && <HangupButton onPress={onLeave} />}
+              <InviteButton onPress={() => inviteModalState.open()} />
+            </div>
+          </>
+        )}
 
         <div className={styles.pttButtonContainer}>
-          {activeSpeakerUserId ? (
-            <div className={styles.talkingInfo}>
-              <h2>
-                {!activeSpeakerIsLocalUser && (
-                  <AudioIcon className={styles.speakerIcon} />
-                )}
-                {activeSpeakerIsLocalUser
-                  ? "Talking..."
-                  : `${activeSpeakerDisplayName} is talking...`}
-              </h2>
-              <Timer value={activeSpeakerUserId} />
-            </div>
-          ) : (
-            <div className={styles.talkingInfo} />
-          )}
+          {showControls &&
+            (activeSpeakerUserId ? (
+              <div className={styles.talkingInfo}>
+                <h2>
+                  {!activeSpeakerIsLocalUser && (
+                    <AudioIcon className={styles.speakerIcon} />
+                  )}
+                  {activeSpeakerIsLocalUser
+                    ? "Talking..."
+                    : `${activeSpeakerDisplayName} is talking...`}
+                </h2>
+                <Timer value={activeSpeakerUserId} />
+              </div>
+            ) : (
+              <div className={styles.talkingInfo} />
+            ))}
           <PTTButton
             enabled={!feedbackModalState.isOpen}
             showTalkOverError={showTalkOverError}
@@ -241,18 +249,20 @@ export const PTTCallView: React.FC<Props> = ({
             enqueueNetworkWaiting={enqueueTalkingExpected}
             setNetworkWaiting={setTalkingExpected}
           />
-          <p className={styles.actionTip}>
-            {getPromptText(
-              networkWaiting,
-              showTalkOverError,
-              pttButtonHeld,
-              activeSpeakerIsLocalUser,
-              talkOverEnabled,
-              activeSpeakerUserId,
-              activeSpeakerDisplayName,
-              connected
-            )}
-          </p>
+          {showControls && (
+            <p className={styles.actionTip}>
+              {getPromptText(
+                networkWaiting,
+                showTalkOverError,
+                pttButtonHeld,
+                activeSpeakerIsLocalUser,
+                talkOverEnabled,
+                activeSpeakerUserId,
+                activeSpeakerDisplayName,
+                connected
+              )}
+            </p>
+          )}
           {userMediaFeeds.map((callFeed) => (
             <PTTFeed
               key={callFeed.userId}
@@ -260,7 +270,7 @@ export const PTTCallView: React.FC<Props> = ({
               audioOutputDevice={audioOutput}
             />
           ))}
-          {isAdmin && (
+          {isAdmin && showControls && (
             <Toggle
               isSelected={talkOverEnabled}
               onChange={setTalkOverEnabled}
@@ -271,7 +281,7 @@ export const PTTCallView: React.FC<Props> = ({
         </div>
       </div>
 
-      {inviteModalState.isOpen && (
+      {inviteModalState.isOpen && showControls && (
         <InviteModal roomId={roomId} {...inviteModalProps} />
       )}
     </div>
