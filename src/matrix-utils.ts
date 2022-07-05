@@ -14,6 +14,7 @@ import {
   GroupCallType,
 } from "matrix-js-sdk/src/webrtc/groupCall";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import IndexedDBWorker from "./IndexedDBWorker?worker";
 
@@ -79,6 +80,19 @@ export async function initClient(
     storeOpts.cryptoStore = new MemoryCryptoStore();
   }
 
+  // XXX: we read from the URL search params in RoomPage too:
+  // it would be much better to read them in one place and pass
+  // the values around, but we initialise the matrix client in
+  // many different places so we'd have to pass it into all of
+  // them.
+  const params = new URLSearchParams(window.location.search);
+  // disable e2e only if enableE2e=false is given
+  const enableE2e = params.get("enableE2e") !== "false";
+
+  if (!enableE2e) {
+    logger.info("Disabling E2E: group call signalling will NOT be encrypted.");
+  }
+
   const client = createClient({
     ...storeOpts,
     ...clientOptions,
@@ -86,6 +100,7 @@ export async function initClient(
     // Use a relatively low timeout for API calls: this is a realtime application
     // so we don't want API calls taking ages, we'd rather they just fail.
     localTimeoutMs: 5000,
+    useE2eForGroupCall: enableE2e,
   });
 
   try {
