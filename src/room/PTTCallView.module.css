@@ -41,6 +41,7 @@
 
 .talkingInfo {
   display: flex;
+  flex-shrink: 0;
   flex-direction: column;
   align-items: center;
   margin-bottom: 20px;
