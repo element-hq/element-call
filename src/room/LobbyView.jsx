@@ -42,6 +42,7 @@ export function LobbyView({
   toggleLocalVideoMuted,
   toggleMicrophoneMuted,
   roomId,
+  isEmbedded,
 }) {
   const { stream } = useCallFeed(localCallFeed);
   const {
@@ -122,11 +123,13 @@ export function LobbyView({
             Copy call link and join later
           </CopyButton>
         </div>
-        <Body className={styles.joinRoomFooter}>
-          <Link color="primary" to="/">
-            Take me Home
-          </Link>
-        </Body>
+        {!isEmbedded && (
+          <Body className={styles.joinRoomFooter}>
+            <Link color="primary" to="/">
+              Take me Home
+            </Link>
+          </Body>
+        )}
       </div>
     </div>
   );
