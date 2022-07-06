@@ -19,8 +19,8 @@
 
 .avatar {
   /* Remove explicit size to allow avatar to scale with the button */
-  width: unset !important;
-  height: unset !important;
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .talking {
