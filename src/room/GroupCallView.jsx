@@ -144,6 +144,7 @@ export function GroupCallView({
         toggleLocalVideoMuted={toggleLocalVideoMuted}
         toggleMicrophoneMuted={toggleMicrophoneMuted}
         roomId={roomId}
+        isEmbedded={isEmbedded}
       />
     );
   }
