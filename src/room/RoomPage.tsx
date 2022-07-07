@@ -28,7 +28,7 @@ export function RoomPage() {
   const { loading, isAuthenticated, error, client, isPasswordlessUser } =
     useClient();
 
-  const { roomId: maybeRoomId }: { roomId: string } = useParams();
+  const { roomId: maybeRoomId } = useParams();
   const { hash, search }: { hash: string; search: string } = useLocation();
   const [viaServers, isEmbedded] = useMemo(() => {
     const params = new URLSearchParams(search);

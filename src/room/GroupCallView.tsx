@@ -65,7 +65,6 @@ export function GroupCallView({
     isScreensharing,
     localScreenshareFeed,
     screenshareFeeds,
-    hasLocalParticipant,
     participants,
     unencryptedEventsFromUsers,
   } = useGroupCall(groupCall);
@@ -145,7 +144,6 @@ export function GroupCallView({
       <LobbyView
         client={client}
         groupCall={groupCall}
-        hasLocalParticipant={hasLocalParticipant}
         roomName={groupCall.room.name}
         avatarUrl={avatarUrl}
         state={state}

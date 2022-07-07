@@ -39,8 +39,12 @@ export function FeedbackModal({ inCall, roomId, onClose, ...rest }: Props) {
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
-      const description = data.get("description");
-      const sendLogs = data.get("sendLogs");
+      const descriptionData = data.get("description");
+      const description =
+        typeof descriptionData === "string" ? descriptionData : "";
+      const sendLogsData = data.get("sendLogs");
+      const sendLogs =
+        typeof sendLogsData === "string" ? sendLogsData === "true" : false;
       const rageshakeRequestId = randomString(16);
 
       submitRageshake({

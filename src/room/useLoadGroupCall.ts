@@ -30,7 +30,7 @@ async function fetchGroupCall(
     viaServers,
   });
 
-  return new Promise((resolve, reject) => {
+  return new Promise<GroupCall>((resolve, reject) => {
     let timeoutId: number;
 
     function onGroupCallIncoming(groupCall: GroupCall) {

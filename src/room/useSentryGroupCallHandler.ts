@@ -17,7 +17,7 @@ limitations under the License.
 import { useEffect } from "react";
 import * as Sentry from "@sentry/react";
 import { GroupCall, GroupCallEvent } from "matrix-js-sdk/src/webrtc/groupCall";
-import { MatrixCall } from "matrix-js-sdk/src/webrtc/call";
+import { CallEvent, MatrixCall } from "matrix-js-sdk/src/webrtc/call";
 
 export function useSentryGroupCallHandler(groupCall: GroupCall) {
   useEffect(() => {
@@ -32,13 +32,15 @@ export function useSentryGroupCallHandler(groupCall: GroupCall) {
     }
 
     if (groupCall) {
-      groupCall.on("hangup", onHangup);
+      groupCall.calls.forEach((c) => c.on(CallEvent.Hangup, onHangup));
       groupCall.on(GroupCallEvent.Error, onError);
     }
 
     return () => {
       if (groupCall) {
-        groupCall.removeListener("hangup", onHangup);
+        groupCall.calls.forEach((c) =>
+          c.removeListener(CallEvent.Hangup, onHangup)
+        );
         groupCall.removeListener(GroupCallEvent.Error, onError);
       }
     };

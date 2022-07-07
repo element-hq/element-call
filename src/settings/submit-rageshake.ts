@@ -26,7 +26,7 @@ import { InspectorContext } from "../room/GroupCallInspector";
 import { useModalTriggerState } from "../Modal";
 
 interface RageShakeSubmitOptions {
-  description?: FormDataEntryValue;
+  description?: string;
   roomId: string;
   label?: string;
   sendLogs: boolean;

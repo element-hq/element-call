@@ -133,7 +133,7 @@ export const InspectorContext = createContext({} as State);
 export function InspectorContextProvider({
   children,
 }: {
-  children: JSX.Element[];
+  children: React.ReactNode;
 }) {
   // Review question: was this supposed to be useState
   const context = useContext(InspectorContext);
