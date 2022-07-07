@@ -53,8 +53,12 @@ export function AudioPreview({
               onSelectionChange={setAudioInput}
               className={styles.inputField}
             >
-              {audioInputs.map(({ deviceId, label }) => (
-                <Item key={deviceId}>{label}</Item>
+              {audioInputs.map(({ deviceId, label }, index) => (
+                <Item key={deviceId}>
+                  {!!label && label.trim().length > 0
+                    ? label
+                    : `Microphone ${index + 1}`}
+                </Item>
               ))}
             </SelectInput>
             {audioOutputs.length > 0 && (
@@ -64,8 +68,12 @@ export function AudioPreview({
                 onSelectionChange={setAudioOutput}
                 className={styles.inputField}
               >
-                {audioOutputs.map(({ deviceId, label }) => (
-                  <Item key={deviceId}>{label}</Item>
+                {audioOutputs.map(({ deviceId, label }, index) => (
+                  <Item key={deviceId}>
+                    {!!label && label.trim().length > 0
+                      ? label
+                      : `Speaker ${index + 1}`}
+                  </Item>
                 ))}
               </SelectInput>
             )}
