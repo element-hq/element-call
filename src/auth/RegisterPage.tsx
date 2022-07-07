@@ -99,8 +99,8 @@ export const RegisterPage: FC = () => {
 
       submit()
         .then(() => {
-          if ((location.state as { from: string })?.from) {
-            history.push((location.state as { from: string })?.from);
+          if (location.state?.from) {
+            history.push(location.state?.from);
           } else {
             history.push("/");
           }
