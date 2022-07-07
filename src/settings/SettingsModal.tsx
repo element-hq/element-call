@@ -78,7 +78,7 @@ export const SettingsModal = (props: Props) => {
             onSelectionChange={setAudioInput}
           >
             {audioInputs.map(({ deviceId, label }) => (
-              <Item key={deviceId}>{label}</Item>
+              <Item key={deviceId}>{!!label && label.trim().length > 0 ? label : "Default microphone"}</Item>
             ))}
           </SelectInput>
           {audioOutputs.length > 0 && (
@@ -88,7 +88,7 @@ export const SettingsModal = (props: Props) => {
               onSelectionChange={setAudioOutput}
             >
               {audioOutputs.map(({ deviceId, label }) => (
-                <Item key={deviceId}>{label}</Item>
+                <Item key={deviceId}>{!!label && label.trim().length > 0 ? label : "Default speaker"}</Item>
               ))}
             </SelectInput>
           )}
@@ -119,7 +119,7 @@ export const SettingsModal = (props: Props) => {
             onSelectionChange={setVideoInput}
           >
             {videoInputs.map(({ deviceId, label }) => (
-              <Item key={deviceId}>{label}</Item>
+              <Item key={deviceId}>{!!label && label.trim().length > 0 ? label : "Default camera"}</Item>
             ))}
           </SelectInput>
         </TabItem>
