@@ -57,8 +57,8 @@ export const LoginPage: FC = () => {
         .then(([client, session]) => {
           setClient(client, session);
 
-          if (location.state && location.state.from) {
-            history.push(location.state.from);
+          if (location.state && (location.state as { from: string }).from) {
+            history.push((location.state as { from: string }).from);
           } else {
             history.push("/");
           }
