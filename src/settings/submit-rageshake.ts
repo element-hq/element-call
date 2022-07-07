@@ -40,7 +40,7 @@ export function useSubmitRageshake(): {
   error: Error;
 } {
   const client: MatrixClient = useClient().client;
-  const [{ json }] = useContext(InspectorContext);
+  const json = useContext(InspectorContext);
 
   const [{ sending, sent, error }, setState] = useState({
     sending: false,
@@ -274,7 +274,7 @@ export function useSubmitRageshake(): {
 }
 
 export function useDownloadDebugLog(): () => void {
-  const [{ json }] = useContext(InspectorContext);
+  const json = useContext(InspectorContext);
 
   const downloadDebugLog = useCallback(() => {
     const blob = new Blob([JSON.stringify(json)], { type: "application/json" });
