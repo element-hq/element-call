@@ -13,9 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 import React, { forwardRef } from "react";
+import { PressEvent } from "@react-types/shared";
 import classNames from "classnames";
+import { useButton } from "@react-aria/button";
+import { mergeProps, useObjectRef } from "@react-aria/utils";
+
 import styles from "./Button.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { ReactComponent as MuteMicIcon } from "../icons/MuteMic.svg";
@@ -26,9 +29,20 @@ import { ReactComponent as ScreenshareIcon } from "../icons/Screenshare.svg";
 import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
-import { useButton } from "@react-aria/button";
-import { mergeProps, useObjectRef } from "@react-aria/utils";
 import { TooltipTrigger } from "../Tooltip";
+
+export type ButtonVariant =
+  | "default"
+  | "toolbar"
+  | "toolbarSecondary"
+  | "icon"
+  | "secondary"
+  | "copy"
+  | "secondaryCopy"
+  | "iconCopy"
+  | "secondaryHangup"
+  | "dropdown"
+  | "link";
 
 export const variantToClassName = {
   default: [styles.button],
@@ -44,11 +58,24 @@ export const variantToClassName = {
   link: [styles.linkButton],
 };
 
-export const sizeToClassName = {
+export type ButtonSize = "lg";
+
+export const sizeToClassName: { lg: string[] } = {
   lg: [styles.lg],
 };
-
-export const Button = forwardRef(
+interface Props {
+  variant: ButtonVariant;
+  size: ButtonSize;
+  on: () => void;
+  off: () => void;
+  iconStyle: string;
+  className: string;
+  children: Element[];
+  onPress: (e: PressEvent) => void;
+  onPressStart: (e: PressEvent) => void;
+  [index: string]: unknown;
+}
+export const Button = forwardRef<HTMLButtonElement, Props>(
   (
     {
       variant = "default",
@@ -64,7 +91,7 @@ export const Button = forwardRef(
     },
     ref
   ) => {
-    const buttonRef = useObjectRef(ref);
+    const buttonRef = useObjectRef<HTMLButtonElement>(ref);
     const { buttonProps } = useButton(
       { onPress, onPressStart, ...rest },
       buttonRef
@@ -75,7 +102,7 @@ export const Button = forwardRef(
     let filteredButtonProps = buttonProps;
 
     if (rest.type === "submit" && !rest.onPress) {
-      const { onKeyDown, onKeyUp, ...filtered } = buttonProps;
+      const { ...filtered } = buttonProps;
       filteredButtonProps = filtered;
     }
 
@@ -101,7 +128,13 @@ export const Button = forwardRef(
   }
 );
 
-export function MicButton({ muted, ...rest }) {
+export function MicButton({
+  muted,
+  ...rest
+}: {
+  muted: boolean;
+  [index: string]: unknown;
+}) {
   return (
     <TooltipTrigger>
       <Button variant="toolbar" {...rest} off={muted}>
@@ -112,7 +145,13 @@ export function MicButton({ muted, ...rest }) {
   );
 }
 
-export function VideoButton({ muted, ...rest }) {
+export function VideoButton({
+  muted,
+  ...rest
+}: {
+  muted: boolean;
+  [index: string]: unknown;
+}) {
   return (
     <TooltipTrigger>
       <Button variant="toolbar" {...rest} off={muted}>
@@ -123,7 +162,15 @@ export function VideoButton({ muted, ...rest }) {
   );
 }
 
-export function ScreenshareButton({ enabled, className, ...rest }) {
+export function ScreenshareButton({
+  enabled,
+  className,
+  ...rest
+}: {
+  enabled: boolean;
+  className?: string;
+  [index: string]: unknown;
+}) {
   return (
     <TooltipTrigger>
       <Button variant="toolbarSecondary" {...rest} on={enabled}>
@@ -134,7 +181,13 @@ export function ScreenshareButton({ enabled, className, ...rest }) {
   );
 }
 
-export function HangupButton({ className, ...rest }) {
+export function HangupButton({
+  className,
+  ...rest
+}: {
+  className?: string;
+  [index: string]: unknown;
+}) {
   return (
     <TooltipTrigger>
       <Button
@@ -149,7 +202,13 @@ export function HangupButton({ className, ...rest }) {
   );
 }
 
-export function SettingsButton({ className, ...rest }) {
+export function SettingsButton({
+  className,
+  ...rest
+}: {
+  className?: string;
+  [index: string]: unknown;
+}) {
   return (
     <TooltipTrigger>
       <Button variant="toolbar" {...rest}>
@@ -160,7 +219,13 @@ export function SettingsButton({ className, ...rest }) {
   );
 }
 
-export function InviteButton({ className, ...rest }) {
+export function InviteButton({
+  className,
+  ...rest
+}: {
+  className?: string;
+  [index: string]: unknown;
+}) {
   return (
     <TooltipTrigger>
       <Button variant="toolbar" {...rest}>

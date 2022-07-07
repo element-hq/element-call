@@ -16,10 +16,18 @@ limitations under the License.
 
 import React from "react";
 import useClipboard from "react-use-clipboard";
+
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 import { ReactComponent as CopyIcon } from "../icons/Copy.svg";
-import { Button } from "./Button";
+import { Button, ButtonVariant } from "./Button";
 
+interface Props {
+  value: string;
+  children: JSX.Element;
+  className: string;
+  variant: ButtonVariant;
+  copiedMessage: string;
+}
 export function CopyButton({
   value,
   children,
@@ -27,7 +35,7 @@ export function CopyButton({
   variant,
   copiedMessage,
   ...rest
-}) {
+}: Props) {
   const [isCopied, setCopied] = useClipboard(value, { successDuration: 3000 });
 
   return (
