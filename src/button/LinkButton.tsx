@@ -17,9 +17,28 @@ limitations under the License.
 import React from "react";
 import { Link } from "react-router-dom";
 import classNames from "classnames";
-import { variantToClassName, sizeToClassName } from "./Button";
 
-export function LinkButton({ className, variant, size, children, ...rest }) {
+import {
+  variantToClassName,
+  sizeToClassName,
+  ButtonVariant,
+  ButtonSize,
+} from "./Button";
+interface Props {
+  className: string;
+  variant: ButtonVariant;
+  size: ButtonSize;
+  children: JSX.Element;
+  [index: string]: unknown;
+}
+
+export function LinkButton({
+  className,
+  variant,
+  size,
+  children,
+  ...rest
+}: Props) {
   return (
     <Link
       className={classNames(
