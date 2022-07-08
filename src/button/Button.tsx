@@ -121,8 +121,10 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
         {...mergeProps(rest, filteredButtonProps)}
         ref={buttonRef}
       >
-        {children}
-        {variant === "dropdown" && <ArrowDownIcon />}
+        <>
+          {children}
+          {variant === "dropdown" && <ArrowDownIcon />}
+        </>
       </button>
     );
   }
