@@ -135,7 +135,7 @@ export function GroupCallView({
       return (
         <FullScreenView>
           <h1>Loading room...</h1>
-        </FullScreenView>,
+        </FullScreenView>
       );
     } else {
       return (
