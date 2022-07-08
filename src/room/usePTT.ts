@@ -130,7 +130,7 @@ export const usePTT = (
   const onMuteStateChanged = useCallback(() => {
     const activeSpeakerFeed = getActiveSpeakerFeed(userMediaFeeds, groupCall);
 
-    let blocked = false;
+    let blocked = transmitBlocked;
     if (activeSpeakerUserId === null && activeSpeakerFeed !== null) {
       if (activeSpeakerFeed.userId === client.getUserId()) {
         playClip(PTTClipID.START_TALKING_LOCAL);
@@ -141,8 +141,8 @@ export const usePTT = (
       playClip(PTTClipID.END_TALKING);
     } else if (
       pttButtonHeld &&
-      activeSpeakerUserId === client.getUserId() &&
-      activeSpeakerFeed?.userId !== client.getUserId()
+      activeSpeakerFeed?.userId !== client.getUserId() &&
+      !transmitBlocked
     ) {
       // We were talking but we've been cut off: mute our own mic
       // (this is the easier way of cutting other speakers off if an
@@ -167,6 +167,7 @@ export const usePTT = (
     client,
     userMediaFeeds,
     setMicMuteWrapper,
+    transmitBlocked,
   ]);
 
   useEffect(() => {
