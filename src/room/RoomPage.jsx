@@ -29,9 +29,13 @@ export function RoomPage() {
 
   const { roomId: maybeRoomId } = useParams();
   const { hash, search } = useLocation();
-  const [viaServers, isEmbedded] = useMemo(() => {
+  const [viaServers, isEmbedded, isPtt] = useMemo(() => {
     const params = new URLSearchParams(search);
-    return [params.getAll("via"), params.has("embed")];
+    return [
+      params.getAll("via"),
+      params.has("embed"),
+      params.get("ptt") === "true",
+    ];
   }, [search]);
   const roomId = (maybeRoomId || hash || "").toLowerCase();
 
@@ -49,7 +53,12 @@ export function RoomPage() {
 
   return (
     <MediaHandlerProvider client={client}>
-      <GroupCallLoader client={client} roomId={roomId} viaServers={viaServers}>
+      <GroupCallLoader
+        client={client}
+        roomId={roomId}
+        viaServers={viaServers}
+        createPtt={isPtt}
+      >
         {(groupCall) => (
           <GroupCallView
             client={client}
