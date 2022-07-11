@@ -19,12 +19,19 @@ import { useLoadGroupCall } from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { usePageTitle } from "../usePageTitle";
 
-export function GroupCallLoader({ client, roomId, viaServers, children }) {
+export function GroupCallLoader({
+  client,
+  roomId,
+  viaServers,
+  createPtt,
+  children,
+}) {
   const { loading, error, groupCall } = useLoadGroupCall(
     client,
     roomId,
     viaServers,
-    true
+    true,
+    createPtt
   );
 
   usePageTitle(groupCall ? groupCall.room.name : "Loading...");
