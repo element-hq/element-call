@@ -1,15 +1,26 @@
 .pttButton {
   width: 100vw;
-  height: 100vh;
-  max-height: 232px;
-  max-width: 232px;
+  aspect-ratio: 1;
+  max-height: min(232px, calc(100vh - 16px));
+  max-width: min(232px, calc(100vw - 16px));
   border-radius: 116px;
   color: var(--primary-content);
   border: 6px solid var(--accent);
   background-color: #21262c;
   position: relative;
   padding: 0;
+  margin: 4px;
   cursor: pointer;
+}
+
+.micIcon {
+  max-height: 50%;
+}
+
+.avatar {
+  /* Remove explicit size to allow avatar to scale with the button */
+  width: 100% !important;
+  height: 100% !important;
 }
 
 .talking {

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 /*
 Copyright 2022 Matrix.org Foundation C.I.C.
 
@@ -14,6 +15,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { MatrixClient } from "matrix-js-sdk";
+import { MediaHandlerEvent } from "matrix-js-sdk/src/webrtc/mediaHandler";
 import React, {
   useState,
   useEffect,
@@ -23,9 +26,27 @@ import React, {
   createContext,
 } from "react";
 
-const MediaHandlerContext = createContext();
+export interface MediaHandlerContextInterface {
+  audioInput: string;
+  audioInputs: MediaDeviceInfo[];
+  setAudioInput: (deviceId: string) => void;
+  videoInput: string;
+  videoInputs: MediaDeviceInfo[];
+  setVideoInput: (deviceId: string) => void;
+  audioOutput: string;
+  audioOutputs: MediaDeviceInfo[];
+  setAudioOutput: (deviceId: string) => void;
+}
 
-function getMediaPreferences() {
+const MediaHandlerContext =
+  createContext<MediaHandlerContextInterface>(undefined);
+
+interface MediaPreferences {
+  audioInput?: string;
+  videoInput?: string;
+  audioOutput?: string;
+}
+function getMediaPreferences(): MediaPreferences {
   const mediaPreferences = localStorage.getItem("matrix-media-preferences");
 
   if (mediaPreferences) {
@@ -39,8 +60,8 @@ function getMediaPreferences() {
   }
 }
 
-function updateMediaPreferences(newPreferences) {
-  const oldPreferences = getMediaPreferences(newPreferences);
+function updateMediaPreferences(newPreferences: MediaPreferences): void {
+  const oldPreferences = getMediaPreferences();
 
   localStorage.setItem(
     "matrix-media-preferences",
@@ -50,8 +71,11 @@ function updateMediaPreferences(newPreferences) {
     })
   );
 }
-
-export function MediaHandlerProvider({ client, children }) {
+interface Props {
+  client: MatrixClient;
+  children: JSX.Element[];
+}
+export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
   const [
     {
       audioInput,
@@ -72,7 +96,9 @@ export function MediaHandlerProvider({ client, children }) {
     );
 
     return {
+      // @ts-ignore, ignore that audioInput is a private members of mediaHandler
       audioInput: mediaHandler.audioInput,
+      // @ts-ignore, ignore that videoInput is a private members of mediaHandler
       videoInput: mediaHandler.videoInput,
       audioOutput: undefined,
       audioInputs: [],
@@ -84,7 +110,7 @@ export function MediaHandlerProvider({ client, children }) {
   useEffect(() => {
     const mediaHandler = client.getMediaHandler();
 
-    function updateDevices() {
+    function updateDevices(): void {
       navigator.mediaDevices.enumerateDevices().then((devices) => {
         const mediaPreferences = getMediaPreferences();
 
@@ -92,9 +118,10 @@ export function MediaHandlerProvider({ client, children }) {
           (device) => device.kind === "audioinput"
         );
         const audioConnected = audioInputs.some(
+          // @ts-ignore
           (device) => device.deviceId === mediaHandler.audioInput
         );
-
+        // @ts-ignore
         let audioInput = mediaHandler.audioInput;
 
         if (!audioConnected && audioInputs.length > 0) {
@@ -105,9 +132,11 @@ export function MediaHandlerProvider({ client, children }) {
           (device) => device.kind === "videoinput"
         );
         const videoConnected = videoInputs.some(
+          // @ts-ignore
           (device) => device.deviceId === mediaHandler.videoInput
         );
 
+        // @ts-ignore
         let videoInput = mediaHandler.videoInput;
 
         if (!videoConnected && videoInputs.length > 0) {
@@ -129,7 +158,9 @@ export function MediaHandlerProvider({ client, children }) {
         }
 
         if (
+          // @ts-ignore
           mediaHandler.videoInput !== videoInput ||
+          // @ts-ignore
           mediaHandler.audioInput !== audioInput
         ) {
           mediaHandler.setMediaInputs(audioInput, videoInput);
@@ -149,18 +180,21 @@ export function MediaHandlerProvider({ client, children }) {
     }
     updateDevices();
 
-    mediaHandler.on("local_streams_changed", updateDevices);
+    mediaHandler.on(MediaHandlerEvent.LocalStreamsChanged, updateDevices);
     navigator.mediaDevices.addEventListener("devicechange", updateDevices);
 
     return () => {
-      mediaHandler.removeListener("local_streams_changed", updateDevices);
+      mediaHandler.removeListener(
+        MediaHandlerEvent.LocalStreamsChanged,
+        updateDevices
+      );
       navigator.mediaDevices.removeEventListener("devicechange", updateDevices);
       mediaHandler.stopAllStreams();
     };
   }, [client]);
 
-  const setAudioInput = useCallback(
-    (deviceId) => {
+  const setAudioInput: (deviceId: string) => void = useCallback(
+    (deviceId: string) => {
       updateMediaPreferences({ audioInput: deviceId });
       setState((prevState) => ({ ...prevState, audioInput: deviceId }));
       client.getMediaHandler().setAudioInput(deviceId);
@@ -168,7 +202,7 @@ export function MediaHandlerProvider({ client, children }) {
     [client]
   );
 
-  const setVideoInput = useCallback(
+  const setVideoInput: (deviceId: string) => void = useCallback(
     (deviceId) => {
       updateMediaPreferences({ videoInput: deviceId });
       setState((prevState) => ({ ...prevState, videoInput: deviceId }));
@@ -177,35 +211,36 @@ export function MediaHandlerProvider({ client, children }) {
     [client]
   );
 
-  const setAudioOutput = useCallback((deviceId) => {
+  const setAudioOutput: (deviceId: string) => void = useCallback((deviceId) => {
     updateMediaPreferences({ audioOutput: deviceId });
     setState((prevState) => ({ ...prevState, audioOutput: deviceId }));
   }, []);
 
-  const context = useMemo(
-    () => ({
-      audioInput,
-      audioInputs,
-      setAudioInput,
-      videoInput,
-      videoInputs,
-      setVideoInput,
-      audioOutput,
-      audioOutputs,
-      setAudioOutput,
-    }),
-    [
-      audioInput,
-      audioInputs,
-      setAudioInput,
-      videoInput,
-      videoInputs,
-      setVideoInput,
-      audioOutput,
-      audioOutputs,
-      setAudioOutput,
-    ]
-  );
+  const context: MediaHandlerContextInterface =
+    useMemo<MediaHandlerContextInterface>(
+      () => ({
+        audioInput,
+        audioInputs,
+        setAudioInput,
+        videoInput,
+        videoInputs,
+        setVideoInput,
+        audioOutput,
+        audioOutputs,
+        setAudioOutput,
+      }),
+      [
+        audioInput,
+        audioInputs,
+        setAudioInput,
+        videoInput,
+        videoInputs,
+        setVideoInput,
+        audioOutput,
+        audioOutputs,
+        setAudioOutput,
+      ]
+    );
 
   return (
     <MediaHandlerContext.Provider value={context}>

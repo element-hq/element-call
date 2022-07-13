@@ -28,6 +28,7 @@
   display: flex;
   flex-direction: column;
   margin: 20px;
+  text-align: center;
 }
 
 .participants > p {
@@ -41,6 +42,7 @@
 
 .talkingInfo {
   display: flex;
+  flex-shrink: 0;
   flex-direction: column;
   align-items: center;
   margin-bottom: 20px;
