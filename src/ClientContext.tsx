@@ -72,7 +72,11 @@ type ClientProviderState = Omit<
   "changePassword" | "logout" | "setClient"
 > & { error?: Error };
 
-export const ClientProvider: FC = ({ children }) => {
+interface Props {
+  children: JSX.Element;
+}
+
+export const ClientProvider: FC<Props> = ({ children }) => {
   const history = useHistory();
   const [
     { loading, isAuthenticated, isPasswordlessUser, client, userName, error },

@@ -36,6 +36,14 @@ initRageshake();
 
 console.info(`matrix-video-chat ${import.meta.env.VITE_APP_VERSION || "dev"}`);
 
+if (!window.isSecureContext) {
+  throw new Error(
+    "This app cannot run in an insecure context. To fix this, access the app " +
+      "via a local loopback address, or serve it over HTTPS.\n" +
+      "https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts"
+  );
+}
+
 if (import.meta.env.VITE_CUSTOM_THEME) {
   const style = document.documentElement.style;
   style.setProperty("--accent", import.meta.env.VITE_THEME_ACCENT as string);

@@ -58,8 +58,12 @@ export const usePTTSounds = (): PTTSounds => {
           break;
       }
       if (ref.current) {
-        ref.current.currentTime = 0;
-        await ref.current.play();
+        try {
+          ref.current.currentTime = 0;
+          await ref.current.play();
+        } catch (e) {
+          console.log("Couldn't play sound effect", e);
+        }
       } else {
         console.log("No media element found");
       }

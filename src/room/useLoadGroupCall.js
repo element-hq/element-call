@@ -54,7 +54,13 @@ async function fetchGroupCall(
   });
 }
 
-export function useLoadGroupCall(client, roomId, viaServers, createIfNotFound) {
+export function useLoadGroupCall(
+  client,
+  roomId,
+  viaServers,
+  createIfNotFound,
+  createPtt
+) {
   const [state, setState] = useState({
     loading: true,
     error: undefined,
@@ -80,7 +86,7 @@ export function useLoadGroupCall(client, roomId, viaServers, createIfNotFound) {
           isLocalRoomId(roomId)
         ) {
           const roomName = roomNameFromRoomId(roomId);
-          await createRoom(client, roomName);
+          await createRoom(client, roomName, createPtt);
           const groupCall = await fetchGroupCall(
             client,
             roomId,
@@ -103,7 +109,7 @@ export function useLoadGroupCall(client, roomId, viaServers, createIfNotFound) {
       .catch((error) =>
         setState((prevState) => ({ ...prevState, loading: false, error }))
       );
-  }, [client, roomId, state.reloadId, createIfNotFound, viaServers]);
+  }, [client, roomId, state.reloadId, createIfNotFound, viaServers, createPtt]);
 
   return state;
 }
