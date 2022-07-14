@@ -35,26 +35,6 @@ import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
 import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
 
-// function getCallUserId(call) {
-//   return call.getOpponentMember()?.userId || call.invitee || null;
-// }
-
-// function getCallState(call: { callId: any; state: any; direction: any }) {
-//   return {
-//     id: call.callId,
-//     opponentMemberId: getCallUserId(call),
-//     state: call.state,
-//     direction: call.direction,
-//   };
-// }
-
-// function getHangupCallState(call) {
-//   return {
-//     ...getCallState(call),
-//     hangupReason: call.hangupReason,
-//   };
-// }
-
 interface State {
   eventsByUserId: { [userId: string]: SequenceDiagramMatrixEvent[] };
   remoteUserIds: string[];
@@ -391,30 +371,6 @@ function useGroupCallState(
       });
     }
 
-    // function onCallsChanged() {
-    //   const calls = groupCall.calls.reduce((obj, call) => {
-    //     obj[
-    //       `${call.callId} (${call.getOpponentMember()?.userId || call.sender})`
-    //     ] = getCallState(call);
-    //     return obj;
-    //   }, {});
-
-    //   updateState({ calls });
-    // }
-
-    // function onCallHangup(call) {
-    //   setState(({ hangupCalls, ...rest }) => ({
-    //     ...rest,
-    //     hangupCalls: {
-    //       ...hangupCalls,
-    //       [`${call.callId} (${
-    //         call.getOpponentMember()?.userId || call.sender
-    //       })`]: getHangupCallState(call),
-    //     },
-    //   }));
-    //   dispatch({ type: "call_hangup", call });
-    // }
-
     function onReceivedVoipEvent(event: MatrixEvent) {
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
     }
@@ -441,50 +397,6 @@ function useGroupCallState(
       client.removeListener(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
     };
   }, [client, groupCall]);
-
-  // useEffect(() => {
-  //   let timeout;
-
-  //   async function updateCallStats() {
-  //     const callIds = groupCall.calls.map(
-  //       (call) =>
-  //         `${call.callId} (${call.getOpponentMember()?.userId || call.sender})`
-  //     );
-  //     const stats = await Promise.all(
-  //       groupCall.calls.map((call) =>
-  //         call.peerConn
-  //           ? call.peerConn
-  //               .getStats(null)
-  //               .then((stats) =>
-  //                 Object.fromEntries(
-  //                   Array.from(stats).map(([_id, report], i) => [
-  //                     report.type + i,
-  //                     report,
-  //                   ])
-  //                 )
-  //               )
-  //           : Promise.resolve(null)
-  //       )
-  //     );
-
-  //     const callStats = {};
-
-  //     for (let i = 0; i < groupCall.calls.length; i++) {
-  //       callStats[callIds[i]] = stats[i];
-  //     }
-
-  //     dispatch({ type: "callStats", callStats });
-  //     timeout = setTimeout(updateCallStats, 1000);
-  //   }
-
-  //   if (pollCallStats) {
-  //     updateCallStats();
-  //   }
-
-  //   return () => {
-  //     clearTimeout(timeout);
-  //   };
-  // }, [pollCallStats]);
 
   return state;
 }
