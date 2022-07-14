@@ -23,7 +23,7 @@ import { Button, ButtonVariant } from "./Button";
 
 interface Props {
   value: string;
-  children: JSX.Element | string;
+  children?: JSX.Element | string;
   className?: string;
   variant?: ButtonVariant;
   copiedMessage?: string;

@@ -30,7 +30,7 @@ export function RoomAuthView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
 
-  const [registerPasswordlessUser, recaptchaId, privacyPolicyUrl] =
+  const { registerPasswordlessUser, recaptchaId, privacyPolicyUrl } =
     useRegisterPasswordlessUser();
 
   function isString(formData: FormDataEntryValue): formData is string {
