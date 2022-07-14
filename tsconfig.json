@@ -5,7 +5,7 @@
     "module": "es2020",
     "moduleResolution": "node",
     "noEmit": true,
-    "noImplicitAny": true,
+    "noImplicitAny": false,
     "noUnusedLocals": true,
     "jsx": "preserve",
     "lib": ["es2020", "dom", "dom.iterable"]
