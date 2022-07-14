@@ -15,6 +15,9 @@ limitations under the License.
 */
 
 import React, { useState, useCallback } from "react";
+import { useHistory } from "react-router-dom";
+import { MatrixClient } from "matrix-js-sdk";
+
 import { createRoom, roomAliasLocalpartFromRoomName } from "../matrix-utils";
 import { useGroupCallRooms } from "./useGroupCallRooms";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
@@ -26,21 +29,23 @@ import { CallList } from "./CallList";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
-import { useHistory } from "react-router-dom";
 import { Title } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
 
-export function RegisteredView({ client }) {
+export function RegisteredView({ client }: { client: MatrixClient }) {
   const [callType, setCallType] = useState(CallType.Video);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<Error>();
   const history = useHistory();
+  const { modalState, modalProps } = useModalTriggerState();
+
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
-      const roomName = data.get("callName");
+      const roomNameData = data.get("callName");
+      const roomName = typeof roomNameData === "string" ? roomNameData : "";
       const ptt = callType === CallType.Radio;
 
       async function submit() {
@@ -68,13 +73,12 @@ export function RegisteredView({ client }) {
         }
       });
     },
-    [client, callType]
+    [callType, client, history, modalState]
   );
 
   const recentRooms = useGroupCallRooms(client);
 
-  const { modalState, modalProps } = useModalTriggerState();
-  const [existingRoomId, setExistingRoomId] = useState();
+  const [existingRoomId, setExistingRoomId] = useState<string>();
   const onJoinExistingRoom = useCallback(() => {
     history.push(`/${existingRoomId}`);
   }, [history, existingRoomId]);
