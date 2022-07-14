@@ -24,6 +24,19 @@ export const defaultHomeserver =
 
 export const defaultHomeserverHost = new URL(defaultHomeserver).host;
 
+export class CryptoStoreIntegrityError extends Error {
+  constructor() {
+    super("Crypto store data was expected, but none was found");
+  }
+}
+
+const SYNC_STORE_NAME = "element-call-sync";
+// Note that the crypto store name has changed from previous versions
+// deliberately in order to force a logout for all users due to
+// https://github.com/vector-im/element-call/issues/464
+// (It's a good opportunity to make the database names consistent.)
+const CRYPTO_STORE_NAME = "element-call-crypto";
+
 function waitForSync(client: MatrixClient) {
   return new Promise<void>((resolve, reject) => {
     const onSync = (
@@ -43,8 +56,18 @@ function waitForSync(client: MatrixClient) {
   });
 }
 
+/**
+ * Initialises and returns a new Matrix Client
+ * If true is passed for the 'restore' parameter, a check will be made
+ * to ensure that corresponding crypto data is stored and recovered.
+ * If the check fails, CryptoStoreIntegrityError will be thrown.
+ * @param clientOptions Object of options passed through to the client
+ * @param restore Whether the session is being restored from storage
+ * @returns The MatrixClient instance
+ */
 export async function initClient(
-  clientOptions: ICreateClientOpts
+  clientOptions: ICreateClientOpts,
+  restore: boolean
 ): Promise<MatrixClient> {
   // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
   window.OLM_OPTIONS = {};
@@ -62,17 +85,45 @@ export async function initClient(
     storeOpts.store = new IndexedDBStore({
       indexedDB: window.indexedDB,
       localStorage,
-      dbName: "element-call-sync",
+      dbName: SYNC_STORE_NAME,
       workerFactory: () => new IndexedDBWorker(),
     });
   } else if (localStorage) {
     storeOpts.store = new MemoryStore({ localStorage });
   }
 
+  // Check whether we have crypto data store. If we are restoring a session
+  // from storage then we will have started the crypto store and therefore
+  // have generated keys for that device, so if we can't recover those keys,
+  // we must not continue or we'll generate new keys and anyone who saw our
+  // previous keys will not accept our new key.
+  // It's worth mentioning here that if support for indexeddb or localstorage
+  // appears or disappears between sessions (it happens) then the failure mode
+  // here will be that we'll try a different store, not find crypto data and
+  // fail to restore the session. An alternative would be to continue using
+  // whatever we were using before, but that could be confusing since you could
+  // enable indexeddb and but the app would still not be using it.
+  if (restore) {
+    if (indexedDB) {
+      const cryptoStoreExists = await IndexedDBCryptoStore.exists(
+        indexedDB,
+        CRYPTO_STORE_NAME
+      );
+      if (!cryptoStoreExists) throw new CryptoStoreIntegrityError();
+    } else if (localStorage) {
+      if (!LocalStorageCryptoStore.exists(localStorage))
+        throw new CryptoStoreIntegrityError();
+    } else {
+      // if we get here then we're using the memory store, which cannot
+      // possibly have remembered a session, so it's an error.
+      throw new CryptoStoreIntegrityError();
+    }
+  }
+
   if (indexedDB) {
     storeOpts.cryptoStore = new IndexedDBCryptoStore(
       indexedDB,
-      "matrix-js-sdk:crypto"
+      CRYPTO_STORE_NAME
     );
   } else if (localStorage) {
     storeOpts.cryptoStore = new LocalStorageCryptoStore(localStorage);
