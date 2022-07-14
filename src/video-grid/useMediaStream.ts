@@ -33,7 +33,8 @@ declare global {
 export const useMediaStream = (
   stream: MediaStream,
   audioOutputDevice: string,
-  mute = false
+  mute = false,
+  localVolume: number,
 ): RefObject<MediaElement> => {
   const mediaRef = useRef<MediaElement>();
 
@@ -83,6 +84,13 @@ export const useMediaStream = (
       }
     }
   }, [audioOutputDevice]);
+
+  useEffect(() => {
+    if (!mediaRef.current) return;
+    if (localVolume === null || localVolume === undefined) return;
+
+    mediaRef.current.volume = localVolume;
+  }, [localVolume])
 
   useEffect(() => {
     const mediaEl = mediaRef.current;
@@ -187,7 +195,8 @@ export const useSpatialMediaStream = (
   audioOutputDevice: string,
   audioContext: AudioContext,
   audioDestination: AudioNode,
-  mute = false
+  mute = false,
+  localVolume: number,
 ): [RefObject<Element>, RefObject<MediaElement>] => {
   const tileRef = useRef<Element>();
   const [spatialAudio] = useSpatialAudio();
@@ -195,7 +204,8 @@ export const useSpatialMediaStream = (
   const mediaRef = useMediaStream(
     stream,
     audioOutputDevice,
-    spatialAudio || mute
+    spatialAudio || mute,
+    localVolume,
   );
 
   const pannerNodeRef = useRef<PannerNode>();

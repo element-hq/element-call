@@ -27,6 +27,7 @@ function getCallFeedState(callFeed) {
       : true,
     videoMuted: callFeed ? callFeed.isVideoMuted() : true,
     audioMuted: callFeed ? callFeed.isAudioMuted() : true,
+    localVolume: callFeed ? callFeed.getLocalVolume() : 0,
     stream: callFeed ? callFeed.stream : undefined,
     purpose: callFeed ? callFeed.purpose : undefined,
   };
@@ -44,6 +45,10 @@ export function useCallFeed(callFeed) {
       setState((prevState) => ({ ...prevState, audioMuted, videoMuted }));
     }
 
+    function onLocalVolumeChanged(localVolume) {
+      setState((prevState) => ({ ...prevState, localVolume }))
+    }
+
     function onUpdateCallFeed() {
       setState(getCallFeedState(callFeed));
     }
@@ -51,6 +56,7 @@ export function useCallFeed(callFeed) {
     if (callFeed) {
       callFeed.on(CallFeedEvent.Speaking, onSpeaking);
       callFeed.on(CallFeedEvent.MuteStateChanged, onMuteStateChanged);
+      callFeed.on(CallFeedEvent.LocalVolumeChanged, onLocalVolumeChanged);
       callFeed.on(CallFeedEvent.NewStream, onUpdateCallFeed);
     }
 
@@ -63,6 +69,7 @@ export function useCallFeed(callFeed) {
           CallFeedEvent.MuteStateChanged,
           onMuteStateChanged
         );
+        callFeed.removeListener(CallFeedEvent.LocalVolumeChanged, onLocalVolumeChanged);
         callFeed.removeListener(CallFeedEvent.NewStream, onUpdateCallFeed);
       }
     };
