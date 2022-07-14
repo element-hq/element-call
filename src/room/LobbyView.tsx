@@ -140,7 +140,7 @@ export function LobbyView({
             className={styles.copyButton}
             copiedMessage="Call link copied"
           >
-            <p>Copy call link and join later</p>
+            Copy call link and join later
           </CopyButton>
         </div>
         {!isEmbedded && (
