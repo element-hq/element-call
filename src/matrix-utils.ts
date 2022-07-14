@@ -97,6 +97,12 @@ export async function initClient(
   // have generated keys for that device, so if we can't recover those keys,
   // we must not continue or we'll generate new keys and anyone who saw our
   // previous keys will not accept our new key.
+  // It's worth mentioning here that if support for indexeddb or localstorage
+  // appears or disappears between sessions (it happens) then the failure mode
+  // here will be that we'll try a different store, not find crypto data and
+  // fail to restore the session. An alternative would be to continue using
+  // whatever we were using before, but that could be confusing since you could
+  // enable indexeddb and but the app would still not be using it.
   if (restore) {
     if (indexedDB) {
       const cryptoStoreExists = await IndexedDBCryptoStore.exists(
