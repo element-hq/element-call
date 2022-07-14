@@ -41,8 +41,7 @@ export function RoomPage() {
     ];
   }, [search]);
   const roomId = (maybeRoomId || hash || "").toLowerCase();
-  const { registerPasswordlessUser, recaptchaId } =
-    useRegisterPasswordlessUser();
+  const { registerPasswordlessUser } = useRegisterPasswordlessUser();
   const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
