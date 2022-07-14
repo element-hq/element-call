@@ -16,26 +16,21 @@ limitations under the License.
 
 import React, { useCallback, useState } from "react";
 import styles from "./RoomAuthView.module.css";
-import { useClient } from "../ClientContext";
 import { Button } from "../button";
 import { Body, Caption, Link, Headline } from "../typography/Typography";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { useLocation } from "react-router-dom";
-import { useRecaptcha } from "../auth/useRecaptcha";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { randomString } from "matrix-js-sdk/src/randomstring";
-import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { Form } from "../form/Form";
 import { UserMenuContainer } from "../UserMenuContainer";
-import { generateRandomName } from "../auth/generateRandomName";
+import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 
 export function RoomAuthView() {
-  const { setClient } = useClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState();
-  const [privacyPolicyUrl, recaptchaKey, register] =
-    useInteractiveRegistration();
-  const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
+
+  const { registerPasswordlessUser, recaptchaId, privacyPolicyUrl } =
+    useRegisterPasswordlessUser();
 
   const onSubmit = useCallback(
     (e) => {
@@ -43,29 +38,13 @@ export function RoomAuthView() {
       const data = new FormData(e.target);
       const displayName = data.get("displayName");
 
-      async function submit() {
-        setError(undefined);
-        setLoading(true);
-        const recaptchaResponse = await execute();
-        const userName = generateRandomName();
-        const [client, session] = await register(
-          userName,
-          randomString(16),
-          displayName,
-          recaptchaResponse,
-          true
-        );
-        setClient(client, session);
-      }
-
-      submit().catch((error) => {
-        console.error(error);
+      registerPasswordlessUser(displayName).catch((error) => {
+        console.error("Failed to register passwordless user", e);
         setLoading(false);
         setError(error);
-        reset();
       });
     },
-    [register, reset, execute]
+    [registerPasswordlessUser]
   );
 
   const location = useLocation();
