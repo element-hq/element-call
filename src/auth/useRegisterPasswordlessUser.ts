@@ -24,7 +24,7 @@ import { useRecaptcha } from "../auth/useRecaptcha";
 
 export interface UseRegisterPasswordlessUserType {
   privacyPolicyUrl: string;
-  registerPasswordlessUser: (string) => Promise<void>;
+  registerPasswordlessUser: (displayName: string) => Promise<void>;
   recaptchaId: string;
 }
 
