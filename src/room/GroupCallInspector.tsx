@@ -36,10 +36,10 @@ import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
 
 interface State {
-  eventsByUserId: { [userId: string]: SequenceDiagramMatrixEvent[] };
-  remoteUserIds: string[];
-  localUserId: string;
-  localSessionId: string;
+  eventsByUserId?: { [userId: string]: SequenceDiagramMatrixEvent[] };
+  remoteUserIds?: string[];
+  localUserId?: string;
+  localSessionId?: string;
 }
 
 const defaultCollapsedFields = [
@@ -108,15 +108,20 @@ function formatTimestamp(timestamp: number | Date) {
   return dateFormatter.format(timestamp);
 }
 
-export const InspectorContext = createContext({} as State);
+export const InspectorContext =
+  createContext<[State, React.Dispatch<React.SetStateAction<State>>]>(
+    undefined
+  );
 
 export function InspectorContextProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // Review question: was this supposed to be useState
-  const context = useContext(InspectorContext);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const [context, _] = useState<
+    [State, React.Dispatch<React.SetStateAction<State>>]
+  >({});
   return (
     <InspectorContext.Provider value={context}>
       {children}
@@ -414,9 +419,8 @@ export function GroupCallInspector({
   const [selectedUserId, setSelectedUserId] = useState<string>();
   const state = useGroupCallState(client, groupCall, show);
 
-  // Review questions: was this supposed to be setContext?
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_, setState] = useState({} as State);
+  const [_, setState] = useContext(InspectorContext);
 
   useEffect(() => {
     setState(state);
