@@ -383,10 +383,9 @@ function useGroupCallState(
     function onSendVoipEvent(event: MatrixEvent) {
       dispatch({ type: CallEvent.SendVoipEvent, event });
     }
-    const firstCall = groupCall.calls[0];
     client.on(RoomStateEvent.Events, onUpdateRoomState);
     //groupCall.on("calls_changed", onCallsChanged);
-    firstCall.on(CallEvent.SendVoipEvent, onSendVoipEvent);
+    groupCall.on(CallEvent.SendVoipEvent, onSendVoipEvent);
     //client.on("state", onCallsChanged);
     //client.on("hangup", onCallHangup);
     client.on(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
@@ -396,7 +395,7 @@ function useGroupCallState(
     return () => {
       client.removeListener(RoomStateEvent.Events, onUpdateRoomState);
       //groupCall.removeListener("calls_changed", onCallsChanged);
-      firstCall.removeListener(CallEvent.SendVoipEvent, onSendVoipEvent);
+      groupCall.removeListener(CallEvent.SendVoipEvent, onSendVoipEvent);
       //client.removeListener("state", onCallsChanged);
       //client.removeListener("hangup", onCallHangup);
       client.removeListener(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);

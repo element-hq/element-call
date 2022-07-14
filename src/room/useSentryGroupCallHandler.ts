@@ -32,15 +32,13 @@ export function useSentryGroupCallHandler(groupCall: GroupCall) {
     }
 
     if (groupCall) {
-      groupCall.calls.forEach((c) => c.on(CallEvent.Hangup, onHangup));
+      groupCall.on(CallEvent.Hangup, onHangup);
       groupCall.on(GroupCallEvent.Error, onError);
     }
 
     return () => {
       if (groupCall) {
-        groupCall.calls.forEach((c) =>
-          c.removeListener(CallEvent.Hangup, onHangup)
-        );
+        groupCall.removeListener(CallEvent.Hangup, onHangup);
         groupCall.removeListener(GroupCallEvent.Error, onError);
       }
     };
