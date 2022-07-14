@@ -121,7 +121,7 @@ export function InspectorContextProvider({
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [context, _] = useState<
     [State, React.Dispatch<React.SetStateAction<State>>]
-  >({});
+  >([{}, () => {}]);
   return (
     <InspectorContext.Provider value={context}>
       {children}
