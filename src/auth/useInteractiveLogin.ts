@@ -57,12 +57,15 @@ export const useInteractiveLogin = () =>
       passwordlessUser: false,
     };
 
-    const client = await initClient({
-      baseUrl: defaultHomeserver,
-      accessToken: access_token,
-      userId: user_id,
-      deviceId: device_id,
-    });
+    const client = await initClient(
+      {
+        baseUrl: defaultHomeserver,
+        accessToken: access_token,
+        userId: user_id,
+        deviceId: device_id,
+      },
+      false
+    );
     /* eslint-enable camelcase */
 
     return [client, session];
