@@ -53,7 +53,7 @@ export function CallEndedView({ client }: { client: MatrixClient }) {
               variant="default"
               to="/register"
             >
-              <>Create account</>
+              Create account
             </LinkButton>
           </div>
         </main>
