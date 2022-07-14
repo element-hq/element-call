@@ -65,6 +65,7 @@ async function fetchGroupCall(
 }
 interface State {
   loading: boolean;
+  reloadId?: string;
   error?: Error;
   groupCall?: GroupCall;
 }
@@ -72,10 +73,12 @@ export function useLoadGroupCall(
   client: MatrixClient,
   roomId: string,
   viaServers: string[],
-  createIfNotFound: boolean
+  createIfNotFound: boolean,
+  createPtt: boolean
 ) {
   const [state, setState] = useState<State>({
     loading: true,
+    reloadId: undefined,
     error: undefined,
     groupCall: undefined,
   });
@@ -99,7 +102,7 @@ export function useLoadGroupCall(
           isLocalRoomId(roomId)
         ) {
           const roomName = roomNameFromRoomId(roomId);
-          await createRoom(client, roomName);
+          await createRoom(client, roomName, createPtt);
           const groupCall = await fetchGroupCall(
             client,
             roomId,
@@ -122,7 +125,7 @@ export function useLoadGroupCall(
       .catch((error) =>
         setState((prevState) => ({ ...prevState, loading: false, error }))
       );
-  }, [client, roomId, createIfNotFound, viaServers]);
+  }, [client, roomId, state.reloadId, createIfNotFound, viaServers, createPtt]);
 
   return state;
 }

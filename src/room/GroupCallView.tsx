@@ -73,7 +73,10 @@ export function GroupCallView({
 
   useEffect(() => {
     window.groupCall = groupCall;
-  }, [groupCall]);
+
+    // In embedded mode, bypass the lobby and just enter the call straight away
+    if (isEmbedded) groupCall.enter();
+  }, [groupCall, isEmbedded]);
 
   useSentryGroupCallHandler(groupCall);
 
@@ -140,23 +143,31 @@ export function GroupCallView({
   } else if (left) {
     return <CallEndedView client={client} />;
   } else {
-    return (
-      <LobbyView
-        client={client}
-        groupCall={groupCall}
-        roomName={groupCall.room.name}
-        avatarUrl={avatarUrl}
-        state={state}
-        onInitLocalCallFeed={initLocalCallFeed}
-        localCallFeed={localCallFeed}
-        onEnter={enter}
-        microphoneMuted={microphoneMuted}
-        localVideoMuted={localVideoMuted}
-        toggleLocalVideoMuted={toggleLocalVideoMuted}
-        toggleMicrophoneMuted={toggleMicrophoneMuted}
-        roomId={roomId}
-        isEmbedded={isEmbedded}
-      />
-    );
+    if (isEmbedded) {
+      return (
+        <FullScreenView>
+          <h1>Loading room...</h1>
+        </FullScreenView>
+      );
+    } else {
+      return (
+        <LobbyView
+          client={client}
+          groupCall={groupCall}
+          roomName={groupCall.room.name}
+          avatarUrl={avatarUrl}
+          state={state}
+          onInitLocalCallFeed={initLocalCallFeed}
+          localCallFeed={localCallFeed}
+          onEnter={enter}
+          microphoneMuted={microphoneMuted}
+          localVideoMuted={localVideoMuted}
+          toggleLocalVideoMuted={toggleLocalVideoMuted}
+          toggleMicrophoneMuted={toggleMicrophoneMuted}
+          roomId={roomId}
+          isEmbedded={isEmbedded}
+        />
+      );
+    }
   }
 }

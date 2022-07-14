@@ -72,7 +72,11 @@ type ClientProviderState = Omit<
   "changePassword" | "logout" | "setClient"
 > & { error?: Error };
 
-export const ClientProvider: FC = ({ children }) => {
+interface Props {
+  children: JSX.Element;
+}
+
+export const ClientProvider: FC<Props> = ({ children }) => {
   const history = useHistory();
   const [
     { loading, isAuthenticated, isPasswordlessUser, client, userName, error },
@@ -98,12 +102,15 @@ export const ClientProvider: FC = ({ children }) => {
           const { user_id, device_id, access_token, passwordlessUser } =
             session;
 
-          const client = await initClient({
-            baseUrl: defaultHomeserver,
-            accessToken: access_token,
-            userId: user_id,
-            deviceId: device_id,
-          });
+          const client = await initClient(
+            {
+              baseUrl: defaultHomeserver,
+              accessToken: access_token,
+              userId: user_id,
+              deviceId: device_id,
+            },
+            true
+          );
           /* eslint-enable camelcase */
 
           return { client, isPasswordlessUser: passwordlessUser };

@@ -26,6 +26,7 @@ interface Props {
   roomId: string;
   viaServers: string[];
   children: (groupCall: GroupCall) => ReactNode;
+  createPtt: boolean;
 }
 
 export function GroupCallLoader({
@@ -33,12 +34,14 @@ export function GroupCallLoader({
   roomId,
   viaServers,
   children,
+  createPtt,
 }: Props): JSX.Element {
   const { loading, error, groupCall } = useLoadGroupCall(
     client,
     roomId,
     viaServers,
-    true
+    true,
+    createPtt
   );
 
   usePageTitle(groupCall ? groupCall.room.name : "Loading...");

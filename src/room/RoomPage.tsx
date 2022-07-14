@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useLocation, useParams } from "react-router-dom";
 
 import { useClient } from "../ClientContext";
@@ -23,6 +23,7 @@ import { RoomAuthView } from "./RoomAuthView";
 import { GroupCallLoader } from "./GroupCallLoader";
 import { GroupCallView } from "./GroupCallView";
 import { MediaHandlerProvider } from "../settings/useMediaHandler";
+import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 
 export function RoomPage() {
   const { loading, isAuthenticated, error, client, isPasswordlessUser } =
@@ -30,13 +31,37 @@ export function RoomPage() {
 
   const { roomId: maybeRoomId } = useParams();
   const { hash, search }: { hash: string; search: string } = useLocation();
-  const [viaServers, isEmbedded] = useMemo(() => {
+  const [viaServers, isEmbedded, isPtt, displayName] = useMemo(() => {
     const params = new URLSearchParams(search);
-    return [params.getAll("via"), params.has("embed")];
+    return [
+      params.getAll("via"),
+      params.has("embed"),
+      params.get("ptt") === "true",
+      params.get("displayName"),
+    ];
   }, [search]);
   const roomId = (maybeRoomId || hash || "").toLowerCase();
+  const { registerPasswordlessUser, recaptchaId } =
+    useRegisterPasswordlessUser();
+  const [isRegistering, setIsRegistering] = useState(false);
 
-  if (loading) {
+  useEffect(() => {
+    // If we're not already authed and we've been given a display name as
+    // a URL param, automatically register a passwordless user
+    if (!isAuthenticated && displayName) {
+      setIsRegistering(true);
+      registerPasswordlessUser(displayName).finally(() => {
+        setIsRegistering(false);
+      });
+    }
+  }, [
+    isAuthenticated,
+    displayName,
+    setIsRegistering,
+    registerPasswordlessUser,
+  ]);
+
+  if (loading || isRegistering) {
     return <LoadingView />;
   }
 
@@ -50,7 +75,12 @@ export function RoomPage() {
 
   return (
     <MediaHandlerProvider client={client}>
-      <GroupCallLoader client={client} roomId={roomId} viaServers={viaServers}>
+      <GroupCallLoader
+        client={client}
+        roomId={roomId}
+        viaServers={viaServers}
+        createPtt={isPtt}
+      >
         {(groupCall) => (
           <GroupCallView
             client={client}
