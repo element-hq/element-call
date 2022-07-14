@@ -14,11 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { GroupCall, MatrixClient, Room, RoomMember } from "matrix-js-sdk";
+import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
 import { useState, useEffect } from "react";
 
-const tsCache = {};
+export interface GroupCallRoom {
+  roomId: string;
+  roomName: string;
+  avatarUrl: string;
+  room: Room;
+  groupCall: GroupCall;
+  participants: RoomMember[];
+}
+const tsCache: { [index: string]: number } = {};
 
-function getLastTs(client, r) {
+function getLastTs(client: MatrixClient, r: Room) {
   if (tsCache[r.roomId]) {
     return tsCache[r.roomId];
   }
@@ -59,13 +69,13 @@ function getLastTs(client, r) {
   return ts;
 }
 
-function sortRooms(client, rooms) {
+function sortRooms(client: MatrixClient, rooms: Room[]): Room[] {
   return rooms.sort((a, b) => {
     return getLastTs(client, b) - getLastTs(client, a);
   });
 }
 
-export function useGroupCallRooms(client) {
+export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
   const [rooms, setRooms] = useState([]);
 
   useEffect(() => {
@@ -90,12 +100,15 @@ export function useGroupCallRooms(client) {
 
     updateRooms();
 
-    client.on("GroupCall.incoming", updateRooms);
-    client.on("GroupCall.participants", updateRooms);
+    client.on(GroupCallEventHandlerEvent.Incoming, updateRooms);
+    client.on(GroupCallEventHandlerEvent.Participants, updateRooms);
 
     return () => {
-      client.removeListener("GroupCall.incoming", updateRooms);
-      client.removeListener("GroupCall.participants", updateRooms);
+      client.removeListener(GroupCallEventHandlerEvent.Incoming, updateRooms);
+      client.removeListener(
+        GroupCallEventHandlerEvent.Participants,
+        updateRooms
+      );
     };
   }, [client]);
 
