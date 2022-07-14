@@ -29,7 +29,7 @@ interface Props {
   className: string;
   variant: ButtonVariant;
   size: ButtonSize;
-  children: JSX.Element;
+  children: JSX.Element | string;
   to: H.LocationDescriptor | ((location: H.Location) => H.LocationDescriptor);
   [index: string]: unknown;
 }
