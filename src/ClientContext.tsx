@@ -117,12 +117,15 @@ export const ClientProvider: FC<Props> = ({ children }) => {
               session;
 
             logger.log("Using a standalone client");
-            const client = await initClient({
-              baseUrl: defaultHomeserver,
-              accessToken: access_token,
-              userId: user_id,
-              deviceId: device_id,
-            });
+            const client = await initClient(
+              {
+                baseUrl: defaultHomeserver,
+                accessToken: access_token,
+                userId: user_id,
+                deviceId: device_id,
+              },
+              true
+            );
             /* eslint-enable camelcase */
 
             return { client, isPasswordlessUser: passwordlessUser };

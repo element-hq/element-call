@@ -90,12 +90,15 @@ export const useInteractiveRegistration = (): [
       const { user_id, access_token, device_id } =
         (await interactiveAuth.attemptAuth()) as any;
 
-      const client = await initClient({
-        baseUrl: defaultHomeserver,
-        accessToken: access_token,
-        userId: user_id,
-        deviceId: device_id,
-      });
+      const client = await initClient(
+        {
+          baseUrl: defaultHomeserver,
+          accessToken: access_token,
+          userId: user_id,
+          deviceId: device_id,
+        },
+        false
+      );
 
       await client.setDisplayName(displayName);
 
