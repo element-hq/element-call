@@ -38,7 +38,7 @@ export const useLoadGroupCall = (
   roomIdOrAlias: string,
   viaServers: string[],
   createPtt: boolean
-) => {
+): GroupCallLoadState => {
   const [state, setState] = useState<GroupCallLoadState>({ loading: true });
 
   useEffect(() => {
