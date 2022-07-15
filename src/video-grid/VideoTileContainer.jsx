@@ -20,6 +20,9 @@ import { useCallFeed } from "./useCallFeed";
 import { useSpatialMediaStream } from "./useMediaStream";
 import { useRoomMemberName } from "./useRoomMemberName";
 import { VideoTile } from "./VideoTile";
+import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
+import { useModalTriggerState } from "../Modal";
+
 
 export function VideoTileContainer({
   item,
@@ -37,6 +40,7 @@ export function VideoTileContainer({
     isLocal,
     audioMuted,
     videoMuted,
+    localVolume,
     noVideo,
     speaking,
     stream,
@@ -49,26 +53,37 @@ export function VideoTileContainer({
     audioOutputDevice,
     audioContext,
     audioDestination,
-    isLocal
+    isLocal,
+    localVolume
   );
+  const { modalState: videoTileSettingsModalState, modalProps: videoTileSettingsModalProps } =
+    useModalTriggerState();
+  const onOptionsPress = () => {
+    videoTileSettingsModalState.open();
+  }
 
   // Firefox doesn't respect the disablePictureInPicture attribute
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
 
   return (
-    <VideoTile
-      isLocal={isLocal}
-      speaking={speaking && !disableSpeakingIndicator}
-      audioMuted={audioMuted}
-      noVideo={noVideo}
-      videoMuted={videoMuted}
-      screenshare={purpose === SDPStreamMetadataPurpose.Screenshare}
-      name={rawDisplayName}
-      showName={showName}
-      ref={tileRef}
-      mediaRef={mediaRef}
-      avatar={getAvatar && getAvatar(member, width, height)}
-      {...rest}
-    />
+    <>
+      <VideoTile
+        isLocal={isLocal}
+        speaking={speaking && !disableSpeakingIndicator}
+        audioMuted={audioMuted}
+        noVideo={noVideo}
+        videoMuted={videoMuted}
+        screenshare={purpose === SDPStreamMetadataPurpose.Screenshare}
+        name={rawDisplayName}
+        showName={showName}
+        ref={tileRef}
+        mediaRef={mediaRef}
+        avatar={getAvatar && getAvatar(member, width, height)}
+        onOptionsPress={onOptionsPress}
+        showOptions={!item.callFeed.isLocal()}
+        {...rest}
+      />
+      {videoTileSettingsModalState.isOpen && <VideoTileSettingsModal {...videoTileSettingsModalProps} feed={item.callFeed} />}
+    </>
   );
 }
