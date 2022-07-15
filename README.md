@@ -27,6 +27,7 @@ git clone https://github.com/vector-im/element-call.git
 cd element-call
 yarn
 yarn link matrix-js-sdk
+cp .env.example .env
 yarn dev
 ```
 
