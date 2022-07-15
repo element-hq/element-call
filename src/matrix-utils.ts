@@ -9,10 +9,6 @@ import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
 import { ICreateClientOpts } from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
 import { Visibility, Preset } from "matrix-js-sdk/src/@types/partials";
-import {
-  GroupCallIntent,
-  GroupCallType,
-} from "matrix-js-sdk/src/webrtc/groupCall";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 import { logger } from "matrix-js-sdk/src/logger";
 
@@ -223,10 +219,9 @@ export function isLocalRoomId(roomId: string): boolean {
 
 export async function createRoom(
   client: MatrixClient,
-  name: string,
-  isPtt = false
+  name: string
 ): Promise<string> {
-  const createRoomResult = await client.createRoom({
+  await client.createRoom({
     visibility: Visibility.Private,
     preset: Preset.PublicChat,
     name,
@@ -255,15 +250,6 @@ export async function createRoom(
       },
     },
   });
-
-  console.log(`Creating ${isPtt ? "PTT" : "video"} group call room`);
-
-  await client.createGroupCall(
-    createRoomResult.room_id,
-    isPtt ? GroupCallType.Voice : GroupCallType.Video,
-    isPtt,
-    GroupCallIntent.Prompt
-  );
 
   return fullAliasFromRoomName(name, client);
 }
