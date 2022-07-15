@@ -67,9 +67,9 @@ export const useLoadGroupCall = (
       const room = await fetchOrCreateRoom();
       const groupCall = client.getGroupCallForRoom(room.roomId);
 
-      if (groupCall) {
-        return groupCall;
-      } else if (
+      if (groupCall) return groupCall;
+
+      if (
         room.currentState.mayClientSendStateEvent(
           EventType.GroupCallPrefix,
           client
@@ -83,31 +83,28 @@ export const useLoadGroupCall = (
           createPtt,
           GroupCallIntent.Room
         );
-      } else {
-        // We don't have permission to create the call, so all we can do is wait
-        // for one to come in
-        return new Promise((resolve, reject) => {
-          const onGroupCallIncoming = (groupCall: GroupCall) => {
-            if (groupCall?.room.roomId === room.roomId) {
-              clearTimeout(timeout);
-              client.off(
-                GroupCallEventHandlerEvent.Incoming,
-                onGroupCallIncoming
-              );
-              resolve(groupCall);
-            }
-          };
-          client.on(GroupCallEventHandlerEvent.Incoming, onGroupCallIncoming);
+      }
 
-          const timeout = setTimeout(() => {
+      // We don't have permission to create the call, so all we can do is wait
+      // for one to come in
+      return new Promise((resolve, reject) => {
+        const onGroupCallIncoming = (groupCall: GroupCall) => {
+          if (groupCall?.room.roomId === room.roomId) {
+            clearTimeout(timeout);
             client.off(
               GroupCallEventHandlerEvent.Incoming,
               onGroupCallIncoming
             );
-            reject(new Error("Fetching group call timed out."));
-          }, 30000);
-        });
-      }
+            resolve(groupCall);
+          }
+        };
+        client.on(GroupCallEventHandlerEvent.Incoming, onGroupCallIncoming);
+
+        const timeout = setTimeout(() => {
+          client.off(GroupCallEventHandlerEvent.Incoming, onGroupCallIncoming);
+          reject(new Error("Fetching group call timed out."));
+        }, 30000);
+      });
     };
 
     fetchOrCreateGroupCall()
