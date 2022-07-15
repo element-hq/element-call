@@ -8,7 +8,6 @@ import { MemoryCryptoStore } from "matrix-js-sdk/src/crypto/store/memory-crypto-
 import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
 import { ICreateClientOpts } from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
-import { Room } from "matrix-js-sdk/src/models/room";
 import { Visibility, Preset } from "matrix-js-sdk/src/@types/partials";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 import { logger } from "matrix-js-sdk/src/logger";
@@ -222,24 +221,7 @@ export async function createRoom(
   client: MatrixClient,
   name: string
 ): Promise<string> {
-  let setExpectedRoomId: (roomId: string) => void;
-  const expectedRoomId = new Promise<string>(
-    (resolve) => (setExpectedRoomId = resolve)
-  );
-
-  // There's no telling whether the new room will come down sync in the middle
-  // of the createRoom request, or after it, so start watching for it beforehand
-  const roomReceived = new Promise<void>((resolve) => {
-    const onRoom = async (room: Room) => {
-      if (room.roomId === (await expectedRoomId)) {
-        resolve();
-        client.off(ClientEvent.Room, onRoom);
-      }
-    };
-    client.on(ClientEvent.Room, onRoom);
-  });
-
-  const createRoomResult = await client.createRoom({
+  await client.createRoom({
     visibility: Visibility.Private,
     preset: Preset.PublicChat,
     name,
@@ -268,10 +250,6 @@ export async function createRoom(
       },
     },
   });
-
-  // Wait for the room to come down sync before doing anything with it
-  setExpectedRoomId(createRoomResult.room_id);
-  await roomReceived;
 
   return fullAliasFromRoomName(name, client);
 }
