@@ -23,7 +23,6 @@ import { VideoTile } from "./VideoTile";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 import { useModalTriggerState } from "../Modal";
 
-
 export function VideoTileContainer({
   item,
   width,
@@ -56,11 +55,13 @@ export function VideoTileContainer({
     isLocal,
     localVolume
   );
-  const { modalState: videoTileSettingsModalState, modalProps: videoTileSettingsModalProps } =
-    useModalTriggerState();
+  const {
+    modalState: videoTileSettingsModalState,
+    modalProps: videoTileSettingsModalProps,
+  } = useModalTriggerState();
   const onOptionsPress = () => {
     videoTileSettingsModalState.open();
-  }
+  };
 
   // Firefox doesn't respect the disablePictureInPicture attribute
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
@@ -83,7 +84,12 @@ export function VideoTileContainer({
         showOptions={!item.callFeed.isLocal()}
         {...rest}
       />
-      {videoTileSettingsModalState.isOpen && <VideoTileSettingsModal {...videoTileSettingsModalProps} feed={item.callFeed} />}
+      {videoTileSettingsModalState.isOpen && (
+        <VideoTileSettingsModal
+          {...videoTileSettingsModalProps}
+          feed={item.callFeed}
+        />
+      )}
     </>
   );
 }

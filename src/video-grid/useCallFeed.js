@@ -46,7 +46,7 @@ export function useCallFeed(callFeed) {
     }
 
     function onLocalVolumeChanged(localVolume) {
-      setState((prevState) => ({ ...prevState, localVolume }))
+      setState((prevState) => ({ ...prevState, localVolume }));
     }
 
     function onUpdateCallFeed() {
@@ -69,7 +69,10 @@ export function useCallFeed(callFeed) {
           CallFeedEvent.MuteStateChanged,
           onMuteStateChanged
         );
-        callFeed.removeListener(CallFeedEvent.LocalVolumeChanged, onLocalVolumeChanged);
+        callFeed.removeListener(
+          CallFeedEvent.LocalVolumeChanged,
+          onLocalVolumeChanged
+        );
         callFeed.removeListener(CallFeedEvent.NewStream, onUpdateCallFeed);
       }
     };
