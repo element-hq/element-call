@@ -302,7 +302,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallType {
   const toggleScreensharing = useCallback(() => {
     updateState({ requestingScreenshare: true });
 
-    groupCall.setScreensharingEnabled(!groupCall.isScreensharing()).then(() => {
+    groupCall.setScreensharingEnabled(!groupCall.isScreensharing(), { audio: true }).then(() => {
       updateState({ requestingScreenshare: false });
     });
   }, [groupCall]);
