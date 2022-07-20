@@ -4,6 +4,8 @@ import styles from "./FullScreenView.module.css";
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import classNames from "classnames";
 import { LinkButton, Button } from "./button";
+import { useSubmitRageshake } from "./settings/submit-rageshake";
+import { ErrorMessage } from "./input/Input";
 
 export function FullScreenView({ className, children }) {
   return (
@@ -55,6 +57,56 @@ export function ErrorView({ error }) {
           Return to home screen
         </LinkButton>
       )}
+    </FullScreenView>
+  );
+}
+
+export function CrashView() {
+  const { submitRageshake, sending, sent, error } = useSubmitRageshake();
+
+  const sendDebugLogs = useCallback(() => {
+    submitRageshake({
+      description: "**Soft Crash**",
+      sendLogs: true,
+    });
+  }, [submitRageshake]);
+
+  const onReload = useCallback(() => {
+    window.location = "/";
+  }, []);
+
+  let logsComponent;
+  if (sent) {
+    logsComponent = <div>Thanks! We'll get right on it.</div>;
+  } else if (sending) {
+    logsComponent = <div>Sending...</div>;
+  } else {
+    logsComponent = (
+      <Button
+        size="lg"
+        variant="default"
+        onPress={sendDebugLogs}
+        className={styles.wideButton}
+      >
+        Send debug logs
+      </Button>
+    );
+  }
+
+  return (
+    <FullScreenView>
+      <h1>Oops, something's gone wrong.</h1>
+      <p>Submitting debug logs will help us track down the problem.</p>
+      <div className={styles.sendLogsSection}>{logsComponent}</div>
+      {error && <ErrorMessage>Couldn't send debug logs!</ErrorMessage>}
+      <Button
+        size="lg"
+        variant="default"
+        className={styles.wideButton}
+        onPress={onReload}
+      >
+        Return to home screen
+      </Button>
     </FullScreenView>
   );
 }
