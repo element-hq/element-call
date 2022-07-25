@@ -70,7 +70,7 @@ export function UnauthenticatedView() {
 
         let roomIdOrAlias;
         try {
-          roomIdOrAlias = await createRoom(client, roomName, ptt);
+          [roomIdOrAlias] = await createRoom(client, roomName, ptt);
         } catch (error) {
           if (error.errcode === "M_ROOM_IN_USE") {
             setOnFinished(() => () => {
