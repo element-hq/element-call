@@ -29,6 +29,7 @@ interface Props {
   inCall: boolean;
   roomId: string;
   onClose?: () => void;
+  // TODO: add all props for for <Modal>
   [index: string]: unknown;
 }
 export function FeedbackModal({ inCall, roomId, onClose, ...rest }: Props) {

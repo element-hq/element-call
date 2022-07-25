@@ -31,6 +31,7 @@ interface Props {
   size: ButtonSize;
   children: JSX.Element | string;
   to: H.LocationDescriptor | ((location: H.Location) => H.LocationDescriptor);
+  // TODO: add all props for <Link>
   [index: string]: unknown;
 }
 
