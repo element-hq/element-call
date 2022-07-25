@@ -33,17 +33,13 @@ export function RoomAuthView() {
   const { registerPasswordlessUser, recaptchaId, privacyPolicyUrl } =
     useRegisterPasswordlessUser();
 
-  function isString(formData: FormDataEntryValue): formData is string {
-    return typeof formData === "string";
-  }
   const onSubmit = useCallback(
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
       const dataForDisplayName = data.get("displayName");
-      const displayName = isString(dataForDisplayName)
-        ? dataForDisplayName
-        : "";
+      const displayName =
+        typeof dataForDisplayName === "string" ? dataForDisplayName : "";
 
       registerPasswordlessUser(displayName).catch((error) => {
         console.error("Failed to register passwordless user", e);
