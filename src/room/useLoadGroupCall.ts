@@ -13,110 +13,133 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import { MatrixClient } from "matrix-js-sdk";
-import { useState, useEffect } from "react";
-import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
 
+import { useState, useEffect } from "react";
+import { EventType } from "matrix-js-sdk/src/@types/event";
+import {
+  GroupCallType,
+  GroupCallIntent,
+} from "matrix-js-sdk/src/webrtc/groupCall";
+import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
+import { ClientEvent } from "matrix-js-sdk/src/client";
+
+import type { MatrixClient } from "matrix-js-sdk/src/client";
+import type { Room } from "matrix-js-sdk/src/models/room";
+import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
 
-async function fetchGroupCall(
-  client: MatrixClient,
-  roomIdOrAlias: string,
-  viaServers: string[] = undefined,
-  timeout = 5000
-) {
-  const { roomId }: { roomId: string } = await client.joinRoom(roomIdOrAlias, {
-    viaServers,
-  });
-
-  return new Promise<GroupCall>((resolve, reject) => {
-    let timeoutId: number;
-
-    function onGroupCallIncoming(groupCall: GroupCall) {
-      if (groupCall && groupCall.room.roomId === roomId) {
-        clearTimeout(timeoutId);
-        client.removeListener(
-          GroupCallEventHandlerEvent.Incoming,
-          onGroupCallIncoming
-        );
-        resolve(groupCall);
-      }
-    }
-
-    const groupCall: GroupCall = client.getGroupCallForRoom(roomId);
-
-    if (groupCall) {
-      resolve(groupCall);
-    }
-
-    client.on(GroupCallEventHandlerEvent.Incoming, onGroupCallIncoming);
-
-    if (timeout) {
-      timeoutId = setTimeout(() => {
-        client.removeListener(
-          GroupCallEventHandlerEvent.Incoming,
-          onGroupCallIncoming
-        );
-        reject(new Error("Fetching group call timed out."));
-      }, timeout);
-    }
-  });
-}
-interface State {
+export interface GroupCallLoadState {
   loading: boolean;
-  reloadId?: string;
   error?: Error;
   groupCall?: GroupCall;
 }
-export function useLoadGroupCall(
+
+export const useLoadGroupCall = (
   client: MatrixClient,
-  roomId: string,
+  roomIdOrAlias: string,
   viaServers: string[],
-  createIfNotFound: boolean,
   createPtt: boolean
-) {
-  const [state, setState] = useState<State>({
-    loading: true,
-    reloadId: undefined,
-    error: undefined,
-    groupCall: undefined,
-  });
+): GroupCallLoadState => {
+  const [state, setState] = useState<GroupCallLoadState>({ loading: true });
 
   useEffect(() => {
-    async function fetchOrCreateGroupCall() {
+    setState({ loading: true });
+
+    const waitForRoom = async (roomId: string): Promise<Room> => {
+      const room = client.getRoom(roomId);
+      if (room) return room;
+      console.log(`Room ${roomId} hasn't arrived yet: waiting`);
+
+      const waitPromise = new Promise<Room>((resolve) => {
+        const onRoomEvent = async (room: Room) => {
+          if (room.roomId === roomId) {
+            client.removeListener(ClientEvent.Room, onRoomEvent);
+            resolve(room);
+          }
+        };
+        client.on(ClientEvent.Room, onRoomEvent);
+      });
+
+      // race the promise with a timeout so we don't
+      // wait forever for the room
+      const timeoutPromise = new Promise<Room>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("Timed out trying to join room"));
+        }, 30000);
+      });
+
+      return Promise.race([waitPromise, timeoutPromise]);
+    };
+
+    const fetchOrCreateRoom = async (): Promise<Room> => {
       try {
-        const groupCall = await fetchGroupCall(
-          client,
-          roomId,
-          viaServers,
-          30000
-        );
-        return groupCall;
+        const room = await client.joinRoom(roomIdOrAlias, { viaServers });
+        // wait for the room to come down the sync stream, otherwise
+        // client.getRoom() won't return the room.
+        return waitForRoom(room.roomId);
       } catch (error) {
         if (
-          createIfNotFound &&
+          isLocalRoomId(roomIdOrAlias) &&
           (error.errcode === "M_NOT_FOUND" ||
             (error.message &&
-              error.message.indexOf("Failed to fetch alias") !== -1)) &&
-          isLocalRoomId(roomId)
+              error.message.indexOf("Failed to fetch alias") !== -1))
         ) {
-          const roomName = roomNameFromRoomId(roomId);
-          await createRoom(client, roomName, createPtt);
-          const groupCall = await fetchGroupCall(
+          // The room doesn't exist, but we can create it
+          const [, roomId] = await createRoom(
             client,
-            roomId,
-            viaServers,
-            30000
+            roomNameFromRoomId(roomIdOrAlias)
           );
-          return groupCall;
+          // likewise, wait for the room
+          return await waitForRoom(roomId);
+        } else {
+          throw error;
         }
-
-        throw error;
       }
-    }
+    };
 
-    setState({ loading: true });
+    const fetchOrCreateGroupCall = async (): Promise<GroupCall> => {
+      const room = await fetchOrCreateRoom();
+      const groupCall = client.getGroupCallForRoom(room.roomId);
+
+      if (groupCall) return groupCall;
+
+      if (
+        room.currentState.mayClientSendStateEvent(
+          EventType.GroupCallPrefix,
+          client
+        )
+      ) {
+        // The call doesn't exist, but we can create it
+        console.log(`Creating ${createPtt ? "PTT" : "video"} group call room`);
+        return await client.createGroupCall(
+          room.roomId,
+          createPtt ? GroupCallType.Voice : GroupCallType.Video,
+          createPtt,
+          GroupCallIntent.Room
+        );
+      }
+
+      // We don't have permission to create the call, so all we can do is wait
+      // for one to come in
+      return new Promise((resolve, reject) => {
+        const onGroupCallIncoming = (groupCall: GroupCall) => {
+          if (groupCall?.room.roomId === room.roomId) {
+            clearTimeout(timeout);
+            client.off(
+              GroupCallEventHandlerEvent.Incoming,
+              onGroupCallIncoming
+            );
+            resolve(groupCall);
+          }
+        };
+        client.on(GroupCallEventHandlerEvent.Incoming, onGroupCallIncoming);
+
+        const timeout = setTimeout(() => {
+          client.off(GroupCallEventHandlerEvent.Incoming, onGroupCallIncoming);
+          reject(new Error("Fetching group call timed out."));
+        }, 30000);
+      });
+    };
 
     fetchOrCreateGroupCall()
       .then((groupCall) =>
@@ -125,7 +148,7 @@ export function useLoadGroupCall(
       .catch((error) =>
         setState((prevState) => ({ ...prevState, loading: false, error }))
       );
-  }, [client, roomId, state.reloadId, createIfNotFound, viaServers, createPtt]);
+  }, [client, roomIdOrAlias, viaServers, createPtt]);
 
   return state;
-}
+};

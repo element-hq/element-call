@@ -40,7 +40,6 @@ export function GroupCallLoader({
     client,
     roomId,
     viaServers,
-    true,
     createPtt
   );
 
