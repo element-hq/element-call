@@ -101,12 +101,15 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           const { user_id, device_id, access_token, passwordlessUser } =
             session;
 
-          const client = await initClient({
-            baseUrl: defaultHomeserver,
-            accessToken: access_token,
-            userId: user_id,
-            deviceId: device_id,
-          });
+          const client = await initClient(
+            {
+              baseUrl: defaultHomeserver,
+              accessToken: access_token,
+              userId: user_id,
+              deviceId: device_id,
+            },
+            true
+          );
           /* eslint-enable camelcase */
 
           return { client, isPasswordlessUser: passwordlessUser };
