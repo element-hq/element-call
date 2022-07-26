@@ -21,6 +21,7 @@ import {
   GroupCallIntent,
 } from "matrix-js-sdk/src/webrtc/groupCall";
 import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
+import { ClientEvent } from "matrix-js-sdk/src/client";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
@@ -44,9 +45,38 @@ export const useLoadGroupCall = (
   useEffect(() => {
     setState({ loading: true });
 
+    const waitForRoom = async (roomId: string): Promise<Room> => {
+      const room = client.getRoom(roomId);
+      if (room) return room;
+      console.log(`Room ${roomId} hasn't arrived yet: waiting`);
+
+      const waitPromise = new Promise<Room>((resolve) => {
+        const onRoomEvent = async (room: Room) => {
+          if (room.roomId === roomId) {
+            client.removeListener(ClientEvent.Room, onRoomEvent);
+            resolve(room);
+          }
+        };
+        client.on(ClientEvent.Room, onRoomEvent);
+      });
+
+      // race the promise with a timeout so we don't
+      // wait forever for the room
+      const timeoutPromise = new Promise<Room>((_, reject) => {
+        setTimeout(() => {
+          reject(new Error("Timed out trying to join room"));
+        }, 30000);
+      });
+
+      return Promise.race([waitPromise, timeoutPromise]);
+    };
+
     const fetchOrCreateRoom = async (): Promise<Room> => {
       try {
-        return await client.joinRoom(roomIdOrAlias, { viaServers });
+        const room = await client.joinRoom(roomIdOrAlias, { viaServers });
+        // wait for the room to come down the sync stream, otherwise
+        // client.getRoom() won't return the room.
+        return waitForRoom(room.roomId);
       } catch (error) {
         if (
           isLocalRoomId(roomIdOrAlias) &&
@@ -55,8 +85,12 @@ export const useLoadGroupCall = (
               error.message.indexOf("Failed to fetch alias") !== -1))
         ) {
           // The room doesn't exist, but we can create it
-          await createRoom(client, roomNameFromRoomId(roomIdOrAlias));
-          return await client.joinRoom(roomIdOrAlias, { viaServers });
+          const [, roomId] = await createRoom(
+            client,
+            roomNameFromRoomId(roomIdOrAlias)
+          );
+          // likewise, wait for the room
+          return await waitForRoom(roomId);
         } else {
           throw error;
         }
