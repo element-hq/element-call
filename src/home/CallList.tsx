@@ -16,7 +16,7 @@ limitations under the License.
 
 import React from "react";
 import { Link } from "react-router-dom";
-import { MatrixClient, Room, RoomMember } from "matrix-js-sdk";
+import { MatrixClient, RoomMember } from "matrix-js-sdk";
 
 import { CopyButton } from "../button";
 import { Facepile } from "../Facepile";
