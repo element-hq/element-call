@@ -65,7 +65,7 @@ export function InCallView({
   toggleScreensharing,
   isScreensharing,
   screenshareFeeds,
-  roomId,
+  roomIdOrAlias,
   unencryptedEventsFromUsers,
 }) {
   usePreventScroll();
@@ -184,7 +184,7 @@ export function InCallView({
         )}
         <OverflowMenu
           inCall
-          roomId={roomId}
+          roomIdOrAlias={roomIdOrAlias}
           client={client}
           groupCall={groupCall}
           showInvite={true}
@@ -201,7 +201,7 @@ export function InCallView({
       {rageshakeRequestModalState.isOpen && (
         <RageshakeRequestModal
           {...rageshakeRequestModalProps}
-          roomId={roomId}
+          roomIdOrAlias={roomIdOrAlias}
         />
       )}
     </div>

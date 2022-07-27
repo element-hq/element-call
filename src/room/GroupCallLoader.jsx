@@ -21,14 +21,14 @@ import { usePageTitle } from "../usePageTitle";
 
 export function GroupCallLoader({
   client,
-  roomId,
+  roomIdOrAlias,
   viaServers,
   createPtt,
   children,
 }) {
   const { loading, error, groupCall } = useLoadGroupCall(
     client,
-    roomId,
+    roomIdOrAlias,
     viaServers,
     createPtt
   );
