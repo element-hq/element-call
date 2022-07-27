@@ -59,10 +59,10 @@ interface ClientState {
   isPasswordlessUser: boolean;
   client: MatrixClient;
   userName: string;
-  error: Error;
   changePassword: (password: string) => Promise<void>;
   logout: () => void;
   setClient: (client: MatrixClient, session: Session) => void;
+  error?: Error;
 }
 
 const ClientContext = createContext<ClientState>(null);
