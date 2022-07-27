@@ -24,7 +24,11 @@ export function Facepile({
     <div
       className={classNames(styles.facepile, styles[size], className)}
       title={participants.map((member) => member.name).join(", ")}
-      style={{ width: participants.length * (_size - _overlap) + _overlap }}
+      style={{
+        width:
+          Math.min(participants.length, max + 1) * (_size - _overlap) +
+          _overlap,
+      }}
       {...rest}
     >
       {participants.slice(0, max).map((member, i) => {
