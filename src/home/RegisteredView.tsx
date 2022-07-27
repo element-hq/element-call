@@ -14,7 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useState, useCallback } from "react";
+import React, {
+  useState,
+  useCallback,
+  FormEvent,
+  FormEventHandler,
+} from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk";
 
@@ -32,27 +37,31 @@ import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { Title } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
+interface Props {
+  client: MatrixClient;
+  isPasswordlessUser: boolean;
+}
 
-export function RegisteredView({ client }: { client: MatrixClient }) {
+export function RegisteredView({ client, isPasswordlessUser }: Props) {
   const [callType, setCallType] = useState(CallType.Video);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const history = useHistory();
   const { modalState, modalProps } = useModalTriggerState();
 
-  const onSubmit = useCallback(
-    (e) => {
+  const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
+    (e: FormEvent) => {
       e.preventDefault();
-      const data = new FormData(e.target);
+      const data = new FormData(e.target as HTMLFormElement);
       const roomNameData = data.get("callName");
       const roomName = typeof roomNameData === "string" ? roomNameData : "";
-      const ptt = callType === CallType.Radio;
+      // const ptt = callType === CallType.Radio;
 
       async function submit() {
         setError(undefined);
         setLoading(true);
 
-        const [roomIdOrAlias] = await createRoom(client, roomName, ptt);
+        const [roomIdOrAlias] = await createRoom(client, roomName);
 
         if (roomIdOrAlias) {
           history.push(`/room/${roomIdOrAlias}`);
@@ -69,11 +78,10 @@ export function RegisteredView({ client }: { client: MatrixClient }) {
           console.error(error);
           setLoading(false);
           setError(error);
-          reset();
         }
       });
     },
-    [callType, client, history, modalState]
+    [client, history, modalState]
   );
 
   const recentRooms = useGroupCallRooms(client);

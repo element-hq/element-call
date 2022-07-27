@@ -24,6 +24,7 @@ import styles from "./JoinExistingCallModal.module.css";
 interface Props {
   onJoin: (e: PressEvent) => void;
   onClose: (e: PressEvent) => void;
+  // TODO: add used parameters for <Modal>
   [index: string]: unknown;
 }
 export function JoinExistingCallModal({ onJoin, onClose, ...rest }: Props) {
