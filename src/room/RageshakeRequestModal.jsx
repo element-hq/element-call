@@ -21,7 +21,11 @@ import { FieldRow, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake } from "../settings/submit-rageshake";
 import { Body } from "../typography/Typography";
 
-export function RageshakeRequestModal({ rageshakeRequestId, roomId, ...rest }) {
+export function RageshakeRequestModal({
+  rageshakeRequestId,
+  roomIdOrAlias,
+  ...rest
+}) {
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
 
   useEffect(() => {
@@ -43,7 +47,7 @@ export function RageshakeRequestModal({ rageshakeRequestId, roomId, ...rest }) {
               submitRageshake({
                 sendLogs: true,
                 rageshakeRequestId,
-                roomId,
+                roomIdOrAlias, // Possibly not a room ID, but oh well
               })
             }
             disabled={sending}

@@ -20,7 +20,7 @@ import { CopyButton } from "../button";
 import { getRoomUrl } from "../matrix-utils";
 import styles from "./InviteModal.module.css";
 
-export function InviteModal({ roomId, ...rest }) {
+export function InviteModal({ roomIdOrAlias, ...rest }) {
   return (
     <Modal
       title="Invite People"
@@ -30,7 +30,10 @@ export function InviteModal({ roomId, ...rest }) {
     >
       <ModalContent>
         <p>Copy and share this meeting link</p>
-        <CopyButton className={styles.copyButton} value={getRoomUrl(roomId)} />
+        <CopyButton
+          className={styles.copyButton}
+          value={getRoomUrl(roomIdOrAlias)}
+        />
       </ModalContent>
     </Modal>
   );

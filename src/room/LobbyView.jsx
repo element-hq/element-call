@@ -41,7 +41,7 @@ export function LobbyView({
   localVideoMuted,
   toggleLocalVideoMuted,
   toggleMicrophoneMuted,
-  roomId,
+  roomIdOrAlias,
   isEmbedded,
 }) {
   const { stream } = useCallFeed(localCallFeed);
@@ -95,7 +95,7 @@ export function LobbyView({
             <VideoPreview
               state={state}
               client={client}
-              roomId={roomId}
+              roomIdOrAlias={roomIdOrAlias}
               microphoneMuted={microphoneMuted}
               localVideoMuted={localVideoMuted}
               toggleLocalVideoMuted={toggleLocalVideoMuted}
@@ -116,7 +116,7 @@ export function LobbyView({
           <Body>Or</Body>
           <CopyButton
             variant="secondaryCopy"
-            value={getRoomUrl(roomId)}
+            value={getRoomUrl(roomIdOrAlias)}
             className={styles.copyButton}
             copiedMessage="Call link copied"
           >

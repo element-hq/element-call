@@ -29,7 +29,11 @@ import { MatrixEvent } from "matrix-js-sdk/src/models/event";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { ErrorView } from "./FullScreenView";
-import { initClient, initMatroskaClient, defaultHomeserver } from "./matrix-utils";
+import {
+  initClient,
+  initMatroskaClient,
+  defaultHomeserver,
+} from "./matrix-utils";
 
 declare global {
   interface Window {

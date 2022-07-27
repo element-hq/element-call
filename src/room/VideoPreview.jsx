@@ -30,7 +30,7 @@ import { useModalTriggerState } from "../Modal";
 export function VideoPreview({
   client,
   state,
-  roomId,
+  roomIdOrAlias,
   microphoneMuted,
   localVideoMuted,
   toggleLocalVideoMuted,
@@ -80,7 +80,7 @@ export function VideoPreview({
               onPress={toggleLocalVideoMuted}
             />
             <OverflowMenu
-              roomId={roomId}
+              roomIdOrAlias={roomIdOrAlias}
               client={client}
               feedbackModalState={feedbackModalState}
               feedbackModalProps={feedbackModalProps}

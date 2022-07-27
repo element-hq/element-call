@@ -5,7 +5,11 @@ import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
 import { LocalStorageCryptoStore } from "matrix-js-sdk/src/crypto/store/localStorage-crypto-store";
 import { MemoryCryptoStore } from "matrix-js-sdk/src/crypto/store/memory-crypto-store";
-import { createClient, createRoomWidgetClient, MatrixClient } from "matrix-js-sdk/src/matrix";
+import {
+  createClient,
+  createRoomWidgetClient,
+  MatrixClient,
+} from "matrix-js-sdk/src/matrix";
 import { ICreateClientOpts } from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
 import { EventType } from "matrix-js-sdk/src/@types/event";
@@ -15,6 +19,7 @@ import { WidgetApi } from "matrix-widget-api";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import IndexedDBWorker from "./IndexedDBWorker?worker";
+import { getRoomParams } from "./room/useRoomParams";
 
 export const defaultHomeserver =
   (import.meta.env.VITE_DEFAULT_HOMESERVER as string) ??
@@ -82,20 +87,20 @@ const SEND_RECV_TO_DEVICE = [
  * @returns The MatrixClient instance
  */
 export async function initMatroskaClient(
-  widgetId: string, parentUrl: string,
+  widgetId: string,
+  parentUrl: string
 ): Promise<MatrixClient> {
   // In this mode, we use a special client which routes all requests through
   // the host application via the widget API
 
-  // The rest of the data we need is encoded in the fragment so as to avoid
-  // leaking it to the server
-  const fragmentQueryStart = window.location.hash.indexOf("?");
-  const roomId = window.location.hash.substring(0, fragmentQueryStart);
-  const fragmentQuery = new URLSearchParams(window.location.hash.substring(fragmentQueryStart));
+  const { roomId, userId, deviceId } = getRoomParams();
+  if (!roomId) throw new Error("Room ID must be supplied");
+  if (!userId) throw new Error("User ID must be supplied");
+  if (!deviceId) throw new Error("Device ID must be supplied");
 
   // Since all data should be coming from the host application, there's no
   // need to persist anything, and therefore we can use the default stores
-  // We don't even need to set up crypto!
+  // We don't even need to set up crypto
   const client = createRoomWidgetClient(
     new WidgetApi(widgetId, new URL(parentUrl).origin),
     {
@@ -103,14 +108,15 @@ export async function initMatroskaClient(
       receiveState: SEND_RECV_STATE,
       sendToDevice: SEND_RECV_TO_DEVICE,
       receiveToDevice: SEND_RECV_TO_DEVICE,
+      turnServers: true,
     },
     roomId,
     {
       baseUrl: "",
-      userId: fragmentQuery.get("userId"),
-      deviceId: fragmentQuery.get("deviceId"),
+      userId,
+      deviceId,
       timelineSupport: true,
-    },
+    }
   );
 
   await client.startClient();
@@ -192,16 +198,13 @@ export async function initClient(
     storeOpts.cryptoStore = new MemoryCryptoStore();
   }
 
-  // XXX: we read from the URL search params in RoomPage too:
+  // XXX: we read from the room params in RoomPage too:
   // it would be much better to read them in one place and pass
   // the values around, but we initialise the matrix client in
   // many different places so we'd have to pass it into all of
   // them.
-  const params = new URLSearchParams(window.location.search);
-  // disable e2e only if enableE2e=false is given
-  const enableE2e = params.get("enableE2e") !== "false";
-
-  if (!enableE2e) {
+  const { e2eEnabled } = getRoomParams();
+  if (!e2eEnabled) {
     logger.info("Disabling E2E: group call signalling will NOT be encrypted.");
   }
 
@@ -212,7 +215,7 @@ export async function initClient(
     // Use a relatively low timeout for API calls: this is a realtime app
     // so we don't want API calls taking ages, we'd rather they just fail.
     localTimeoutMs: 5000,
-    useE2eForGroupCall: enableE2e,
+    useE2eForGroupCall: e2eEnabled,
   });
 
   try {
@@ -319,17 +322,17 @@ export async function createRoom(
   return [fullAliasFromRoomName(name, client), result.room_id];
 }
 
-export function getRoomUrl(roomId: string): string {
-  if (roomId.startsWith("#")) {
-    const [localPart, host] = roomId.replace("#", "").split(":");
+export function getRoomUrl(roomIdOrAlias: string): string {
+  if (roomIdOrAlias.startsWith("#")) {
+    const [localPart, host] = roomIdOrAlias.replace("#", "").split(":");
 
     if (host !== defaultHomeserverHost) {
-      return `${window.location.protocol}//${window.location.host}/room/${roomId}`;
+      return `${window.location.protocol}//${window.location.host}/room/${roomIdOrAlias}`;
     } else {
       return `${window.location.protocol}//${window.location.host}/${localPart}`;
     }
   } else {
-    return `${window.location.protocol}//${window.location.host}/room/${roomId}`;
+    return `${window.location.protocol}//${window.location.host}/room/#?roomId=${roomIdOrAlias}`;
   }
 }
 

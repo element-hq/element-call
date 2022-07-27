@@ -30,7 +30,7 @@ import { TooltipTrigger } from "../Tooltip";
 import { FeedbackModal } from "./FeedbackModal";
 
 export function OverflowMenu({
-  roomId,
+  roomIdOrAlias,
   inCall,
   groupCall,
   showInvite,
@@ -88,7 +88,7 @@ export function OverflowMenu({
       </PopoverMenuTrigger>
       {settingsModalState.isOpen && <SettingsModal {...settingsModalProps} />}
       {inviteModalState.isOpen && (
-        <InviteModal roomId={roomId} {...inviteModalProps} />
+        <InviteModal roomIdOrAlias={roomIdOrAlias} {...inviteModalProps} />
       )}
       {feedbackModalState.isOpen && (
         <FeedbackModal
