@@ -52,7 +52,7 @@ export function RegisteredView({ client }: { client: MatrixClient }) {
         setError(undefined);
         setLoading(true);
 
-        const roomIdOrAlias = await createRoom(client, roomName, ptt);
+        const [roomIdOrAlias] = await createRoom(client, roomName, ptt);
 
         if (roomIdOrAlias) {
           history.push(`/room/${roomIdOrAlias}`);
