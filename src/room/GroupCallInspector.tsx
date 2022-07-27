@@ -35,7 +35,7 @@ import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
 import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
 
-interface State {
+interface InspectorContextState {
   eventsByUserId?: { [userId: string]: SequenceDiagramMatrixEvent[] };
   remoteUserIds?: string[];
   localUserId?: string;
@@ -109,19 +109,21 @@ function formatTimestamp(timestamp: number | Date) {
 }
 
 export const InspectorContext =
-  createContext<[State, React.Dispatch<React.SetStateAction<State>>]>(
-    undefined
-  );
+  createContext<
+    [
+      InspectorContextState,
+      React.Dispatch<React.SetStateAction<InspectorContextState>>
+    ]
+  >(undefined);
 
 export function InspectorContextProvider({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [context, _] = useState<
-    [State, React.Dispatch<React.SetStateAction<State>>]
-  >([{}, () => {}]);
+  // The context will be initialized empty.
+  // It is then set from within GroupCallInspector.
+  const context = useState<InspectorContextState>({});
   return (
     <InspectorContext.Provider value={context}>
       {children}
@@ -225,7 +227,7 @@ export function SequenceDiagramViewer({
 }
 
 function reducer(
-  state: State,
+  state: InspectorContextState,
   action: {
     type?: CallEvent | ClientEvent | RoomStateEvent;
     event: MatrixEvent;
