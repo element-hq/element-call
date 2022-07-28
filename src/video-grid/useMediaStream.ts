@@ -208,6 +208,7 @@ export const useSpatialMediaStream = (
     localVolume
   );
 
+  const gainNodeRef = useRef<GainNode>();
   const pannerNodeRef = useRef<PannerNode>();
   const sourceRef = useRef<MediaStreamAudioSourceNode>();
 
@@ -224,12 +225,18 @@ export const useSpatialMediaStream = (
           refDistance: 3,
         });
       }
+      if (!gainNodeRef.current) {
+        gainNodeRef.current = new GainNode(audioContext, {
+          gain: localVolume,
+        });
+      }
       if (!sourceRef.current) {
         sourceRef.current = audioContext.createMediaStreamSource(stream);
       }
 
       const tile = tileRef.current;
       const source = sourceRef.current;
+      const gainNode = gainNodeRef.current;
       const pannerNode = pannerNodeRef.current;
 
       const updatePosition = () => {
@@ -244,8 +251,9 @@ export const useSpatialMediaStream = (
         pannerNodeRef.current.positionZ.value = -2;
       };
 
+      gainNode.gain.value = localVolume;
       updatePosition();
-      source.connect(pannerNode).connect(audioDestination);
+      source.connect(gainNode).connect(pannerNode).connect(audioDestination);
       // HACK: We abuse the CSS transitionrun event to detect when the tile
       // moves, because useMeasure, IntersectionObserver, etc. all have no
       // ability to track changes in the CSS transform property
@@ -254,10 +262,11 @@ export const useSpatialMediaStream = (
       return () => {
         tile.removeEventListener("transitionrun", updatePosition);
         source.disconnect();
+        gainNode.disconnect();
         pannerNode.disconnect();
       };
     }
-  }, [stream, spatialAudio, audioContext, audioDestination, mute]);
+  }, [stream, spatialAudio, audioContext, audioDestination, mute, localVolume]);
 
   return [tileRef, mediaRef];
 };
