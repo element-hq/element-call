@@ -63,11 +63,11 @@ interface Props {
   feed: CallFeed;
 }
 
-export const VideoTileSettingsModal = (props: Props) => {
+export const VideoTileSettingsModal = ({ feed, ...rest }: Props) => {
   return (
-    <Modal title="Feed settings" isDismissable mobileFullScreen {...props}>
+    <Modal title="Feed settings" isDismissable mobileFullScreen {...rest}>
       <div className={styles.content}>
-        <LocalVolume feed={props.feed} />
+        <LocalVolume feed={feed} />
       </div>
     </Modal>
   );
