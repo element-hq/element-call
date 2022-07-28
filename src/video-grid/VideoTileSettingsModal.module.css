@@ -17,24 +17,18 @@
 }
 
 .localVolumeSlider[type="range"]::-moz-range-track {
-  -ms-appearance: none;
   -moz-appearance: none;
-  -webkit-appearance: none;
   appearance: none;
 
   height: 4px;
 }
 .localVolumeSlider[type="range"]::-ms-track {
   -ms-appearance: none;
-  -moz-appearance: none;
-  -webkit-appearance: none;
   appearance: none;
 
   height: 4px;
 }
 .localVolumeSlider[type="range"]::-webkit-slider-runnable-track {
-  -ms-appearance: none;
-  -moz-appearance: none;
   -webkit-appearance: none;
   appearance: none;
 
