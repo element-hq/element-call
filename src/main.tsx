@@ -28,9 +28,7 @@ import { Integrations } from "@sentry/tracing";
 
 import "./index.css";
 import App from "./App";
-import { ErrorView } from "./FullScreenView";
 import { init as initRageshake } from "./settings/rageshake";
-import { InspectorContextProvider } from "./room/GroupCallInspector";
 
 initRageshake();
 
@@ -104,11 +102,7 @@ Sentry.init({
 
 ReactDOM.render(
   <React.StrictMode>
-    <Sentry.ErrorBoundary fallback={ErrorView}>
-      <InspectorContextProvider>
-        <App history={history} />
-      </InspectorContextProvider>
-    </Sentry.ErrorBoundary>
+    <App history={history} />
   </React.StrictMode>,
   document.getElementById("root")
 );

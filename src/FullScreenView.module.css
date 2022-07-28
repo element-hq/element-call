@@ -36,6 +36,12 @@
   margin-bottom: 0;
 }
 
-.homeLink {
+/* Make the buttons the same width */
+.wideButton {
   width: 291px;
+}
+
+/* Fixed height to avoid content jumping around*/
+.sendLogsSection {
+  height: 50px;
 }
