@@ -59,27 +59,6 @@ function waitForSync(client: MatrixClient) {
   });
 }
 
-// The event types that the app needs to be able to send/receive in Matroska
-// mode in order to function
-const SEND_RECV_STATE = [
-  { eventType: EventType.RoomMember },
-  { eventType: EventType.GroupCallPrefix },
-  { eventType: EventType.GroupCallMemberPrefix },
-];
-const SEND_RECV_TO_DEVICE = [
-  EventType.CallInvite,
-  EventType.CallCandidates,
-  EventType.CallAnswer,
-  EventType.CallHangup,
-  EventType.CallReject,
-  EventType.CallSelectAnswer,
-  EventType.CallNegotiate,
-  EventType.CallSDPStreamMetadataChanged,
-  EventType.CallSDPStreamMetadataChangedPrefix,
-  EventType.CallReplaces,
-  "org.matrix.call_duplicate_session",
-];
-
 /**
  * Initialises and returns a new widget-API-based Matrix Client.
  * @param widgetId The ID of the widget that the app is running inside.
@@ -98,16 +77,38 @@ export async function initMatroskaClient(
   if (!userId) throw new Error("User ID must be supplied");
   if (!deviceId) throw new Error("Device ID must be supplied");
 
+  // These are all the to-device event types the app uses
+  const sendRecvToDevice = [
+    EventType.CallInvite,
+    EventType.CallCandidates,
+    EventType.CallAnswer,
+    EventType.CallHangup,
+    EventType.CallReject,
+    EventType.CallSelectAnswer,
+    EventType.CallNegotiate,
+    EventType.CallSDPStreamMetadataChanged,
+    EventType.CallSDPStreamMetadataChangedPrefix,
+    EventType.CallReplaces,
+    "org.matrix.call_duplicate_session",
+  ];
+
   // Since all data should be coming from the host application, there's no
   // need to persist anything, and therefore we can use the default stores
   // We don't even need to set up crypto
   const client = createRoomWidgetClient(
     new WidgetApi(widgetId, new URL(parentUrl).origin),
     {
-      sendState: SEND_RECV_STATE,
-      receiveState: SEND_RECV_STATE,
-      sendToDevice: SEND_RECV_TO_DEVICE,
-      receiveToDevice: SEND_RECV_TO_DEVICE,
+      sendState: [
+        { eventType: EventType.GroupCallPrefix },
+        { eventType: EventType.GroupCallMemberPrefix, stateKey: userId },
+      ],
+      receiveState: [
+        { eventType: EventType.RoomMember },
+        { eventType: EventType.GroupCallPrefix },
+        { eventType: EventType.GroupCallMemberPrefix },
+      ],
+      sendToDevice: sendRecvToDevice,
+      receiveToDevice: sendRecvToDevice,
       turnServers: true,
     },
     roomId,
