@@ -239,16 +239,10 @@ export function InviteButton({
   );
 }
 
-export function OptionsButton({
-  className,
-  ...rest
-}: {
-  className?: string;
-  [index: string]: unknown;
-}) {
+export function OptionsButton(props: Omit<Props, "variant">) {
   return (
     <TooltipTrigger>
-      <Button variant="icon" {...rest}>
+      <Button variant="icon" {...props}>
         <OverflowIcon />
       </Button>
       {() => "Options"}
