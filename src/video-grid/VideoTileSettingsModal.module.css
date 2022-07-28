@@ -3,7 +3,7 @@
 }
 
 .localVolumePercentage {
-  width: 40px;
+  width: 3ch;
 }
 
 .localVolumeSlider[type="range"] {
