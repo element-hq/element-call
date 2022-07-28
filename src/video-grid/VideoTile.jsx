@@ -20,6 +20,7 @@ import classNames from "classnames";
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
+import { OptionsButton } from "../button/Button";
 
 export const VideoTile = forwardRef(
   (
@@ -35,6 +36,8 @@ export const VideoTile = forwardRef(
       name,
       showName,
       mediaRef,
+      onOptionsPress,
+      showOptions,
       ...rest
     },
     ref
@@ -62,12 +65,17 @@ export const VideoTile = forwardRef(
           </div>
         ) : (
           (showName || audioMuted || (videoMuted && !noVideo)) && (
-            <div className={styles.memberName}>
+            <div className={classNames(styles.infoBubble, styles.memberName)}>
               {audioMuted && !(videoMuted && !noVideo) && <MicMutedIcon />}
               {videoMuted && !noVideo && <VideoMutedIcon />}
               {showName && <span title={name}>{name}</span>}
             </div>
           )
+        )}
+        {showOptions && (
+          <div className={classNames(styles.infoBubble, styles.optionsButton)}>
+            <OptionsButton onPress={onOptionsPress} />
+          </div>
         )}
         <video ref={mediaRef} playsInline disablePictureInPicture />
       </animated.div>

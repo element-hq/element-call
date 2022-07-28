@@ -44,10 +44,8 @@
   object-fit: contain;
 }
 
-.memberName {
+.infoBubble {
   position: absolute;
-  bottom: 16px;
-  left: 16px;
   height: 24px;
   padding: 0 8px;
   color: white;
@@ -60,6 +58,21 @@
   max-width: calc(100% - 48px);
   overflow: hidden;
   z-index: 1;
+}
+
+.optionsButton {
+  right: 16px;
+  top: 16px;
+}
+
+.optionsButton button svg {
+  height: 20px;
+  width: 20px;
+}
+
+.memberName {
+  left: 16px;
+  bottom: 16px;
 }
 
 .memberName > * {

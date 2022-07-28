@@ -220,8 +220,8 @@ export function isLocalRoomId(roomId: string): boolean {
 export async function createRoom(
   client: MatrixClient,
   name: string
-): Promise<string> {
-  await client.createRoom({
+): Promise<[string, string]> {
+  const result = await client.createRoom({
     visibility: Visibility.Private,
     preset: Preset.PublicChat,
     name,
@@ -251,7 +251,7 @@ export async function createRoom(
     },
   });
 
-  return fullAliasFromRoomName(name, client);
+  return [fullAliasFromRoomName(name, client), result.room_id];
 }
 
 export function getRoomUrl(roomId: string): string {

@@ -33,7 +33,8 @@ declare global {
 export const useMediaStream = (
   stream: MediaStream,
   audioOutputDevice: string,
-  mute = false
+  mute = false,
+  localVolume: number
 ): RefObject<MediaElement> => {
   const mediaRef = useRef<MediaElement>();
 
@@ -83,6 +84,13 @@ export const useMediaStream = (
       }
     }
   }, [audioOutputDevice]);
+
+  useEffect(() => {
+    if (!mediaRef.current) return;
+    if (localVolume === null || localVolume === undefined) return;
+
+    mediaRef.current.volume = localVolume;
+  }, [localVolume]);
 
   useEffect(() => {
     const mediaEl = mediaRef.current;
@@ -187,7 +195,8 @@ export const useSpatialMediaStream = (
   audioOutputDevice: string,
   audioContext: AudioContext,
   audioDestination: AudioNode,
-  mute = false
+  mute = false,
+  localVolume: number
 ): [RefObject<Element>, RefObject<MediaElement>] => {
   const tileRef = useRef<Element>();
   const [spatialAudio] = useSpatialAudio();
@@ -195,18 +204,30 @@ export const useSpatialMediaStream = (
   const mediaRef = useMediaStream(
     stream,
     audioOutputDevice,
-    spatialAudio || mute
+    spatialAudio || mute,
+    localVolume
   );
 
+  const gainNodeRef = useRef<GainNode>();
   const pannerNodeRef = useRef<PannerNode>();
   const sourceRef = useRef<MediaStreamAudioSourceNode>();
 
   useEffect(() => {
-    if (spatialAudio && tileRef.current && !mute) {
+    if (
+      spatialAudio &&
+      tileRef.current &&
+      !mute &&
+      stream.getAudioTracks().length > 0
+    ) {
       if (!pannerNodeRef.current) {
         pannerNodeRef.current = new PannerNode(audioContext, {
           panningModel: "HRTF",
           refDistance: 3,
+        });
+      }
+      if (!gainNodeRef.current) {
+        gainNodeRef.current = new GainNode(audioContext, {
+          gain: localVolume,
         });
       }
       if (!sourceRef.current) {
@@ -215,6 +236,7 @@ export const useSpatialMediaStream = (
 
       const tile = tileRef.current;
       const source = sourceRef.current;
+      const gainNode = gainNodeRef.current;
       const pannerNode = pannerNodeRef.current;
 
       const updatePosition = () => {
@@ -229,8 +251,9 @@ export const useSpatialMediaStream = (
         pannerNodeRef.current.positionZ.value = -2;
       };
 
+      gainNode.gain.value = localVolume;
       updatePosition();
-      source.connect(pannerNode).connect(audioDestination);
+      source.connect(gainNode).connect(pannerNode).connect(audioDestination);
       // HACK: We abuse the CSS transitionrun event to detect when the tile
       // moves, because useMeasure, IntersectionObserver, etc. all have no
       // ability to track changes in the CSS transform property
@@ -239,10 +262,11 @@ export const useSpatialMediaStream = (
       return () => {
         tile.removeEventListener("transitionrun", updatePosition);
         source.disconnect();
+        gainNode.disconnect();
         pannerNode.disconnect();
       };
     }
-  }, [stream, spatialAudio, audioContext, audioDestination, mute]);
+  }, [stream, spatialAudio, audioContext, audioDestination, mute, localVolume]);
 
   return [tileRef, mediaRef];
 };
