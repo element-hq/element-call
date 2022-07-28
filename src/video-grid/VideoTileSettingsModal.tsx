@@ -58,6 +58,7 @@ const LocalVolume: React.FC<LocalVolumeProps> = ({
   );
 };
 
+// TODO: Extend ModalProps
 interface Props {
   feed: CallFeed;
 }
