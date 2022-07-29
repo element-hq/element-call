@@ -29,7 +29,7 @@ import { GroupCallRoom } from "./useGroupCallRooms";
 interface CallListProps {
   rooms: GroupCallRoom[];
   client: MatrixClient;
-  disableFacepile: boolean;
+  disableFacepile?: boolean;
 }
 export function CallList({ rooms, client, disableFacepile }: CallListProps) {
   return (
@@ -62,7 +62,7 @@ interface CallTileProps {
   roomId: string;
   participants: RoomMember[];
   client: MatrixClient;
-  disableFacepile: boolean;
+  disableFacepile?: boolean;
 }
 function CallTile({
   name,
