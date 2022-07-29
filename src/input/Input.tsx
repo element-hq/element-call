@@ -22,7 +22,7 @@ import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 
 interface FieldRowProps {
   children: JSX.Element;
-  rightAlign: string;
+  rightAlign?: boolean;
   className?: string;
 }
 
