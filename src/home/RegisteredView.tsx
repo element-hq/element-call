@@ -37,6 +37,7 @@ import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { Title } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
+
 interface Props {
   client: MatrixClient;
   isPasswordlessUser: boolean;

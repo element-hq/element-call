@@ -21,6 +21,7 @@ import { Modal, ModalContent } from "../Modal";
 import { Button } from "../button";
 import { FieldRow } from "../input/Input";
 import styles from "./JoinExistingCallModal.module.css";
+
 interface Props {
   onJoin: (e: PressEvent) => void;
   onClose: (e: PressEvent) => void;
