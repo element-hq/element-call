@@ -26,37 +26,45 @@ import { RoomRedirect } from "./room/RoomRedirect";
 import { ClientProvider } from "./ClientContext";
 import { usePageFocusStyle } from "./usePageFocusStyle";
 import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
+import { InspectorContextProvider } from "./room/GroupCallInspector";
+import { CrashView } from "./FullScreenView";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
 export default function App({ history }) {
   usePageFocusStyle();
 
+  const errorPage = <CrashView />;
+
   return (
     <Router history={history}>
       <ClientProvider>
-        <OverlayProvider>
-          <Switch>
-            <SentryRoute exact path="/">
-              <HomePage />
-            </SentryRoute>
-            <SentryRoute exact path="/login">
-              <LoginPage />
-            </SentryRoute>
-            <SentryRoute exact path="/register">
-              <RegisterPage />
-            </SentryRoute>
-            <SentryRoute path="/room/:roomId?">
-              <RoomPage />
-            </SentryRoute>
-            <SentryRoute path="/inspector">
-              <SequenceDiagramViewerPage />
-            </SentryRoute>
-            <SentryRoute path="*">
-              <RoomRedirect />
-            </SentryRoute>
-          </Switch>
-        </OverlayProvider>
+        <InspectorContextProvider>
+          <Sentry.ErrorBoundary fallback={errorPage}>
+            <OverlayProvider>
+              <Switch>
+                <SentryRoute exact path="/">
+                  <HomePage />
+                </SentryRoute>
+                <SentryRoute exact path="/login">
+                  <LoginPage />
+                </SentryRoute>
+                <SentryRoute exact path="/register">
+                  <RegisterPage />
+                </SentryRoute>
+                <SentryRoute path="/room/:roomId?">
+                  <RoomPage />
+                </SentryRoute>
+                <SentryRoute path="/inspector">
+                  <SequenceDiagramViewerPage />
+                </SentryRoute>
+                <SentryRoute path="*">
+                  <RoomRedirect />
+                </SentryRoute>
+              </Switch>
+            </OverlayProvider>
+          </Sentry.ErrorBoundary>
+        </InspectorContextProvider>
       </ClientProvider>
     </Router>
   );

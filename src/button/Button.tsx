@@ -30,6 +30,7 @@ import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
 import { TooltipTrigger } from "../Tooltip";
+import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
 
 export type ButtonVariant =
   | "default"
@@ -241,6 +242,17 @@ export function InviteButton({
         <AddUserIcon />
       </Button>
       {() => "Invite"}
+    </TooltipTrigger>
+  );
+}
+
+export function OptionsButton(props: Omit<Props, "variant">) {
+  return (
+    <TooltipTrigger>
+      <Button variant="icon" {...props}>
+        <OverflowIcon />
+      </Button>
+      {() => "Options"}
     </TooltipTrigger>
   );
 }
