@@ -14,14 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { forwardRef, useRef } from "react";
+import React, { forwardRef } from "react";
 import { DismissButton, useOverlay } from "@react-aria/overlays";
 import { FocusScope } from "@react-aria/focus";
 import classNames from "classnames";
-import styles from "./Popover.module.css";
 import { useObjectRef } from "@react-aria/utils";
 
-export const Popover = forwardRef(
+import styles from "./Popover.module.css";
+
+interface PopoverProps {
+  isOpen: boolean;
+  onClose: () => void;
+  className: string;
+  children: JSX.Element;
+  [index: string]: unknown;
+}
+
+export const Popover = forwardRef<HTMLDivElement, PopoverProps>(
   ({ isOpen = true, onClose, className, children, ...rest }, ref) => {
     const popoverRef = useObjectRef(ref);
 
