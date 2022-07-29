@@ -51,7 +51,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   src: string;
   fallback: string;
   size?: Size | number;
-  className: string;
+  className?: string;
   style?: CSSProperties;
 }
 

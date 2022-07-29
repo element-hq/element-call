@@ -14,12 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { forwardRef } from "react";
+import React, { forwardRef, ReactNode } from "react";
 import classNames from "classnames";
+
 import styles from "./Input.module.css";
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 
-export function FieldRow({ children, rightAlign, className, ...rest }) {
+interface FieldRowProps {
+  children: JSX.Element;
+  rightAlign: string;
+  className?: string;
+}
+
+export function FieldRow({ children, rightAlign, className }: FieldRowProps) {
   return (
     <div
       className={classNames(
@@ -33,11 +40,28 @@ export function FieldRow({ children, rightAlign, className, ...rest }) {
   );
 }
 
-export function Field({ children, className, ...rest }) {
+interface FieldProps {
+  children: ReactNode;
+  className?: string;
+}
+export function Field({ children, className }: FieldProps) {
   return <div className={classNames(styles.field, className)}>{children}</div>;
 }
 
-export const InputField = forwardRef(
+interface InputFieldProps {
+  id: string;
+  label: string;
+  className: string;
+  type: string;
+  checked: boolean;
+  prefix: string;
+  suffix: string;
+  description: string;
+  disabled: boolean;
+  [index: string]: unknown;
+}
+
+export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
   (
     {
       id,
@@ -66,13 +90,8 @@ export const InputField = forwardRef(
       >
         {prefix && <span>{prefix}</span>}
         {type === "textarea" ? (
-          <textarea
-            id={id}
-            {...rest}
-            ref={ref}
-            type={type}
-            disabled={disabled}
-          />
+          // for review: can i remove type and ref here?
+          <textarea id={id} {...rest} disabled={disabled} />
         ) : (
           <input
             id={id}
@@ -99,6 +118,6 @@ export const InputField = forwardRef(
   }
 );
 
-export function ErrorMessage({ children }) {
+export function ErrorMessage({ children }: { children: JSX.Element }) {
   return <p className={styles.errorMessage}>{children}</p>;
 }

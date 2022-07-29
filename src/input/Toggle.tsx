@@ -15,22 +15,30 @@ limitations under the License.
 */
 
 import React, { useCallback, useRef } from "react";
-import styles from "./Toggle.module.css";
 import { useToggleButton } from "@react-aria/button";
 import classNames from "classnames";
+
+import styles from "./Toggle.module.css";
 import { Field } from "./Input";
 
-export function Toggle({ id, label, className, onChange, isSelected }) {
+interface Props {
+  id: string;
+  label: string;
+  className: string;
+  onChange: (selected: boolean) => void;
+  isSelected: boolean;
+}
+export function Toggle({ id, label, className, onChange, isSelected }: Props) {
   const buttonRef = useRef();
   const toggle = useCallback(() => {
     onChange(!isSelected);
-  });
-  const { buttonProps } = useToggleButton(
+  }, [isSelected, onChange]);
+
+  const buttonProps = useToggleButton(
     { isSelected },
-    { toggle },
+    { isSelected: isSelected, setSelected: undefined, toggle },
     buttonRef
   );
-
   return (
     <Field
       className={classNames(

@@ -19,13 +19,25 @@ import React, { useEffect } from "react";
 import { useCallback } from "react";
 import { useState } from "react";
 import { forwardRef } from "react";
-import { Avatar } from "../Avatar";
-import { Button } from "../button";
 import classNames from "classnames";
+
+import { Avatar, Size } from "../Avatar";
+import { Button } from "../button";
 import { ReactComponent as EditIcon } from "../icons/Edit.svg";
 import styles from "./AvatarInputField.module.css";
 
-export const AvatarInputField = forwardRef(
+interface Props {
+  id: string;
+  label: string;
+  className: string;
+  avatarUrl: string;
+  displayName: string;
+  onRemoveAvatar: () => void;
+  // TODO: add used parameters for HTMLInputElement
+  [index: string]: unknown;
+}
+
+export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
   (
     { id, label, className, avatarUrl, displayName, onRemoveAvatar, ...rest },
     ref
@@ -36,20 +48,24 @@ export const AvatarInputField = forwardRef(
     const fileInputRef = useObjectRef(ref);
 
     useEffect(() => {
-      const onChange = (e) => {
-        if (e.target.files.length > 0) {
-          setObjUrl(URL.createObjectURL(e.target.files[0]));
+      const currentInput = fileInputRef.current;
+
+      const onChange = (e: Event) => {
+        const inputEvent = e as unknown as React.ChangeEvent<HTMLInputElement>;
+        if (inputEvent.target.files.length > 0) {
+          setObjUrl(URL.createObjectURL(inputEvent.target.files[0]));
           setRemoved(false);
         } else {
           setObjUrl(null);
         }
+        // }
       };
 
-      fileInputRef.current.addEventListener("change", onChange);
+      currentInput.addEventListener("change", onChange);
 
       return () => {
-        if (fileInputRef.current) {
-          fileInputRef.current.removeEventListener("change", onChange);
+        if (currentInput) {
+          currentInput.removeEventListener("change", onChange);
         }
       };
     });
@@ -63,7 +79,7 @@ export const AvatarInputField = forwardRef(
       <div className={classNames(styles.avatarInputField, className)}>
         <div className={styles.avatarContainer}>
           <Avatar
-            size="xl"
+            size={Size.XL}
             src={removed ? null : objUrl || avatarUrl}
             fallback={displayName.slice(0, 1).toUpperCase()}
           />
