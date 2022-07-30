@@ -166,7 +166,9 @@ export const RegisterPage: FC = () => {
                   required
                   name="password"
                   type="password"
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e: FormEvent<HTMLInputElement>) =>
+                    setPassword(e.target.value)
+                  }
                   value={password}
                   placeholder="Password"
                   label="Password"
@@ -177,7 +179,9 @@ export const RegisterPage: FC = () => {
                   required
                   type="password"
                   name="passwordConfirmation"
-                  onChange={(e) => setPasswordConfirmation(e.target.value)}
+                  onChange={(e: FormEvent<HTMLInputElement>) =>
+                    setPasswordConfirmation(e.target.value)
+                  }
                   value={passwordConfirmation}
                   placeholder="Confirm Password"
                   label="Confirm Password"

@@ -49,8 +49,7 @@ export function Field({ children, className }: FieldProps) {
   return <div className={classNames(styles.field, className)}>{children}</div>;
 }
 
-interface InputFieldProps
-  extends HTMLAttributes<HTMLInputElement | HTMLTextAreaElement> {
+interface InputFieldProps {
   label: string;
   type: string;
   prefix?: string;
@@ -60,11 +59,13 @@ interface InputFieldProps
   className?: string;
   description?: string;
   disabled?: boolean;
+  required?: boolean;
 }
 
 export const InputField = forwardRef<
   HTMLInputElement | HTMLTextAreaElement,
-  InputFieldProps
+  InputFieldProps &
+    (HTMLAttributes<HTMLInputElement> | HTMLAttributes<HTMLTextAreaElement>)
 >(
   (
     {
