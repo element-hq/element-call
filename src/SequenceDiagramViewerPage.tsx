@@ -1,13 +1,20 @@
 import React, { useCallback, useState } from "react";
+
 import { SequenceDiagramViewer } from "./room/GroupCallInspector";
 import { FieldRow, InputField } from "./input/Input";
 import { usePageTitle } from "./usePageTitle";
 
+interface DebugLog {
+  localUserId: string;
+  eventsByUserId: Record<string, {}>;
+  remoteUserIds: string[];
+}
+
 export function SequenceDiagramViewerPage() {
   usePageTitle("Inspector");
 
-  const [debugLog, setDebugLog] = useState();
-  const [selectedUserId, setSelectedUserId] = useState();
+  const [debugLog, setDebugLog] = useState<DebugLog>();
+  const [selectedUserId, setSelectedUserId] = useState<string>();
   const onChangeDebugLog = useCallback((e) => {
     if (e.target.files && e.target.files.length > 0) {
       e.target.files[0].text().then((text) => {
