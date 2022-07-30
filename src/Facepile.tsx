@@ -1,22 +1,48 @@
-import React from "react";
-import styles from "./Facepile.module.css";
-import classNames from "classnames";
-import { Avatar, sizes } from "./Avatar";
+/*
+Copyright 2022 New Vector Ltd
 
-const overlapMap = {
-  xs: 2,
-  sm: 4,
-  md: 8,
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+import React, { HTMLAttributes } from "react";
+import classNames from "classnames";
+import { MatrixClient, RoomMember } from "matrix-js-sdk";
+
+import styles from "./Facepile.module.css";
+import { Avatar, Size, sizes } from "./Avatar";
+
+const overlapMap: Partial<Record<Size, number>> = {
+  [Size.XS]: 2,
+  [Size.SM]: 4,
+  [Size.MD]: 8,
 };
+
+interface Props extends HTMLAttributes<HTMLDivElement> {
+  className: string;
+  client: MatrixClient;
+  participants: RoomMember[];
+  max: number;
+  size: Size;
+}
 
 export function Facepile({
   className,
   client,
   participants,
-  max,
-  size,
+  max = 3,
+  size = Size.XS,
   ...rest
-}) {
+}: Props) {
   const _size = sizes.get(size);
   const _overlap = overlapMap[size];
 
@@ -56,8 +82,3 @@ export function Facepile({
     </div>
   );
 }
-
-Facepile.defaultProps = {
-  max: 3,
-  size: "xs",
-};
