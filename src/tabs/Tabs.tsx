@@ -25,13 +25,13 @@ import { Node } from "@react-types/shared";
 // import {Collection} from
 import styles from "./Tabs.module.css";
 
-interface TabContainerProps extends TabListProps<JSX.Element> {
+interface TabContainerProps<T> extends TabListProps<T> {
   className?: string;
 }
 
-export function TabContainer(props: TabContainerProps) {
-  const state = useTabListState(props);
-  const ref = useRef();
+export function TabContainer<T extends object>(props: TabContainerProps<T>) {
+  const state = useTabListState<T>(props);
+  const ref = useRef<HTMLUListElement>();
   const { tabListProps } = useTabList(props, state, ref);
   return (
     <div className={classNames(styles.tabContainer, props.className)}>
@@ -45,12 +45,12 @@ export function TabContainer(props: TabContainerProps) {
   );
 }
 
-interface TabProps {
-  item: Node<JSX.Element>;
-  state: TabListState<object>;
+interface TabProps<T> {
+  item: Node<T>;
+  state: TabListState<T>;
 }
 
-function Tab({ item, state }: TabProps) {
+function Tab<T>({ item, state }: TabProps<T>) {
   const { key, rendered } = item;
   const ref = useRef();
   const { tabProps } = useTab({ key }, state, ref);
@@ -69,12 +69,12 @@ function Tab({ item, state }: TabProps) {
   );
 }
 
-interface TabPanelProps extends AriaTabPanelProps {
-  state: TabListState<object>;
+interface TabPanelProps<T> extends AriaTabPanelProps {
+  state: TabListState<T>;
 }
 
-function TabPanel({ state, ...props }: TabPanelProps) {
-  const ref = useRef();
+function TabPanel<T>({ state, ...props }: TabPanelProps<T>) {
+  const ref = useRef<HTMLDivElement>();
   const { tabPanelProps } = useTabPanel(props, state, ref);
   return (
     <div {...tabPanelProps} ref={ref} className={styles.tabPanel}>

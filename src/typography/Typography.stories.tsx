@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import React from "react";
+
 import { Headline, Title, Subtitle, Body, Caption, Micro } from "./Typography";
 
 export default {

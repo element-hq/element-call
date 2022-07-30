@@ -14,35 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { Component, forwardRef } from "react";
+import React, { Component, forwardRef, ReactNode } from "react";
 import classNames from "classnames";
 import { Link as RouterLink } from "react-router-dom";
 
 import styles from "./Typography.module.css";
 
 interface TypographyProps {
-  as: Component;
-  children: JSX.Element;
+  children: ReactNode;
   className?: string;
-  fontWieght?: number;
   overflowEllipsis?: boolean;
   [index: string]: unknown;
   fontWeight: number;
 }
-export const Headline = forwardRef<Component, TypographyProps>(
-  (
-    {
-      as: Component = "h1",
-      children,
-      className,
-      fontWeight,
-      overflowEllipsis,
-      ...rest
-    },
-    ref
-  ) => {
+
+export const Headline = forwardRef<JSX.Element, TypographyProps>(
+  ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
     return (
-      <Component
+      <h1
         {...rest}
         className={classNames(
           styles[fontWeight],
@@ -52,25 +41,15 @@ export const Headline = forwardRef<Component, TypographyProps>(
         ref={ref}
       >
         {children}
-      </Component>
+      </h1>
     );
   }
 );
 
 export const Title = forwardRef<Component, TypographyProps>(
-  (
-    {
-      as: Component = "h2",
-      children,
-      className,
-      fontWeight,
-      overflowEllipsis,
-      ...rest
-    },
-    ref
-  ) => {
+  ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
     return (
-      <Component
+      <h2
         {...rest}
         className={classNames(
           styles[fontWeight],
@@ -80,25 +59,15 @@ export const Title = forwardRef<Component, TypographyProps>(
         ref={ref}
       >
         {children}
-      </Component>
+      </h2>
     );
   }
 );
 
 export const Subtitle = forwardRef(
-  (
-    {
-      as: Component = "h3",
-      children,
-      className,
-      fontWeight,
-      overflowEllipsis,
-      ...rest
-    },
-    ref
-  ) => {
+  ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
     return (
-      <Component
+      <h3
         {...rest}
         className={classNames(
           styles[fontWeight],
@@ -108,25 +77,15 @@ export const Subtitle = forwardRef(
         ref={ref}
       >
         {children}
-      </Component>
+      </h3>
     );
   }
 );
 
-export const Body = forwardRef(
-  (
-    {
-      as: Component = "p",
-      children,
-      className,
-      fontWeight,
-      overflowEllipsis,
-      ...rest
-    },
-    ref
-  ) => {
+export const Body = forwardRef<JSX.Element, TypographyProps>(
+  ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
     return (
-      <Component
+      <p
         {...rest}
         className={classNames(
           styles[fontWeight],
@@ -136,25 +95,15 @@ export const Body = forwardRef(
         ref={ref}
       >
         {children}
-      </Component>
+      </p>
     );
   }
 );
 
 export const Caption = forwardRef(
-  (
-    {
-      as: Component = "p",
-      children,
-      className,
-      fontWeight,
-      overflowEllipsis,
-      ...rest
-    },
-    ref
-  ) => {
+  ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
     return (
-      <Component
+      <p
         {...rest}
         className={classNames(
           styles.caption,
@@ -165,25 +114,15 @@ export const Caption = forwardRef(
         ref={ref}
       >
         {children}
-      </Component>
+      </p>
     );
   }
 );
 
 export const Micro = forwardRef(
-  (
-    {
-      as: Component = "p",
-      children,
-      className,
-      fontWeight,
-      overflowEllipsis,
-      ...rest
-    },
-    ref
-  ) => {
+  ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
     return (
-      <Component
+      <p
         {...rest}
         className={classNames(
           styles.micro,
@@ -194,7 +133,7 @@ export const Micro = forwardRef(
         ref={ref}
       >
         {children}
-      </Component>
+      </p>
     );
   }
 );
