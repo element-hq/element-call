@@ -14,12 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { forwardRef } from "react";
+import React, { Component, forwardRef } from "react";
 import classNames from "classnames";
 import { Link as RouterLink } from "react-router-dom";
+
 import styles from "./Typography.module.css";
 
-export const Headline = forwardRef(
+interface TypographyProps {
+  as: Component;
+  children: JSX.Element;
+  className?: string;
+  fontWieght?: number;
+  overflowEllipsis?: boolean;
+  [index: string]: unknown;
+  fontWeight: number;
+}
+export const Headline = forwardRef<Component, TypographyProps>(
   (
     {
       as: Component = "h1",
@@ -47,7 +57,7 @@ export const Headline = forwardRef(
   }
 );
 
-export const Title = forwardRef(
+export const Title = forwardRef<Component, TypographyProps>(
   (
     {
       as: Component = "h2",

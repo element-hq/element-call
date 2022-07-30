@@ -17,11 +17,19 @@ limitations under the License.
 import React, { useRef } from "react";
 import { useTabList, useTab, useTabPanel } from "@react-aria/tabs";
 import { Item } from "@react-stately/collections";
-import { useTabListState } from "@react-stately/tabs";
-import styles from "./Tabs.module.css";
+import { useTabListState, TabListState } from "@react-stately/tabs";
 import classNames from "classnames";
+import { AriaTabPanelProps, TabListProps } from "@react-types/tabs";
+import { Node } from "@react-types/shared";
 
-export function TabContainer(props) {
+// import {Collection} from
+import styles from "./Tabs.module.css";
+
+interface TabContainerProps extends TabListProps<JSX.Element> {
+  className?: string;
+}
+
+export function TabContainer(props: TabContainerProps) {
   const state = useTabListState(props);
   const ref = useRef();
   const { tabListProps } = useTabList(props, state, ref);
@@ -29,7 +37,7 @@ export function TabContainer(props) {
     <div className={classNames(styles.tabContainer, props.className)}>
       <ul {...tabListProps} ref={ref} className={styles.tabList}>
         {[...state.collection].map((item) => (
-          <Tab key={item.key} item={item} state={state} />
+          <Tab item={item} state={state} />
         ))}
       </ul>
       <TabPanel key={state.selectedItem?.key} state={state} />
@@ -37,7 +45,12 @@ export function TabContainer(props) {
   );
 }
 
-function Tab({ item, state }) {
+interface TabProps {
+  item: Node<JSX.Element>;
+  state: TabListState<object>;
+}
+
+function Tab({ item, state }: TabProps) {
   const { key, rendered } = item;
   const ref = useRef();
   const { tabProps } = useTab({ key }, state, ref);
@@ -56,7 +69,11 @@ function Tab({ item, state }) {
   );
 }
 
-function TabPanel({ state, ...props }) {
+interface TabPanelProps extends AriaTabPanelProps {
+  state: TabListState<object>;
+}
+
+function TabPanel({ state, ...props }: TabPanelProps) {
   const ref = useRef();
   const { tabPanelProps } = useTabPanel(props, state, ref);
   return (
