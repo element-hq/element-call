@@ -1,12 +1,17 @@
 import React, { useCallback } from "react";
 import { useHistory, useLocation } from "react-router-dom";
+
 import { useClient } from "./ClientContext";
 import { useProfile } from "./profile/useProfile";
 import { useModalTriggerState } from "./Modal";
 import { ProfileModal } from "./profile/ProfileModal";
 import { UserMenu } from "./UserMenu";
 
-export function UserMenuContainer({ preventNavigation }) {
+interface Props {
+  preventNavigation: boolean;
+}
+
+export function UserMenuContainer({ preventNavigation }: Props) {
   const location = useLocation();
   const history = useHistory();
   const { isAuthenticated, isPasswordlessUser, logout, userName, client } =
@@ -15,7 +20,7 @@ export function UserMenuContainer({ preventNavigation }) {
   const { modalState, modalProps } = useModalTriggerState();
 
   const onAction = useCallback(
-    (value) => {
+    (value: string) => {
       switch (value) {
         case "user":
           modalState.open();
