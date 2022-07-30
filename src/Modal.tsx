@@ -54,7 +54,10 @@ export function Modal({
   ...rest
 }: ModalProps) {
   const modalRef = useRef();
-  const { overlayProps, underlayProps } = useOverlay(rest, modalRef);
+  const { overlayProps, underlayProps } = useOverlay(
+    { ...rest, onClose },
+    modalRef
+  );
   usePreventScroll();
   const { modalProps } = useModal();
   const { dialogProps, titleProps } = useDialog(rest, modalRef);
