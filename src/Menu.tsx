@@ -1,15 +1,28 @@
 import React, { useRef, useState } from "react";
-import styles from "./Menu.module.css";
-import { useMenu, useMenuItem } from "@react-aria/menu";
-import { useTreeState } from "@react-stately/tree";
+import { AriaMenuOptions, useMenu, useMenuItem } from "@react-aria/menu";
+import { TreeState, useTreeState } from "@react-stately/tree";
 import { mergeProps } from "@react-aria/utils";
 import { useFocus } from "@react-aria/interactions";
 import classNames from "classnames";
+import { Node } from "@react-types/shared";
 
-export function Menu({ className, onAction, ...rest }) {
-  const state = useTreeState({ ...rest, selectionMode: "none" });
+import styles from "./Menu.module.css";
+
+interface MenuProps<T> extends AriaMenuOptions<T> {
+  className: String;
+  onAction: () => void;
+  onClose: () => void;
+}
+
+export function Menu<T extends object>({
+  className,
+  onAction,
+  onClose,
+  ...rest
+}: MenuProps<T>) {
+  const state = useTreeState<T>({ ...rest, selectionMode: "none" });
   const menuRef = useRef();
-  const { menuProps } = useMenu(rest, state, menuRef);
+  const { menuProps } = useMenu<T>(rest, state, menuRef);
 
   return (
     <ul
@@ -23,19 +36,25 @@ export function Menu({ className, onAction, ...rest }) {
           item={item}
           state={state}
           onAction={onAction}
-          onClose={rest.onClose}
+          onClose={onClose}
         />
       ))}
     </ul>
   );
 }
 
-function MenuItem({ item, state, onAction, onClose }) {
+interface MenuItemProps<T> {
+  item: Node<T>;
+  state: TreeState<T>;
+  onAction: () => void;
+  onClose: () => void;
+}
+
+function MenuItem<T>({ item, state, onAction, onClose }: MenuItemProps<T>) {
   const ref = useRef();
   const { menuItemProps } = useMenuItem(
     {
       key: item.key,
-      isDisabled: item.isDisabled,
       onAction,
       onClose,
     },
