@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { forwardRef, HTMLAttributes, ReactNode } from "react";
+import React, { FormEvent, forwardRef, HTMLAttributes, ReactNode } from "react";
 import classNames from "classnames";
 
 import styles from "./Input.module.css";
@@ -60,12 +60,19 @@ interface InputFieldProps {
   description?: string;
   disabled?: boolean;
   required?: boolean;
+  // this is a hack. Those variables should be part of `HTMLAttributes<HTMLInputElement> | HTMLAttributes<HTMLTextAreaElement>`
+  // but extending from this union type does not work
+  name?: string;
+  autoCorrect?: string;
+  autoCapitalize?: string;
+  value?: string;
+  placeholder?: string;
+  onChange?: (event: FormEvent) => void;
 }
 
 export const InputField = forwardRef<
   HTMLInputElement | HTMLTextAreaElement,
-  InputFieldProps &
-    (HTMLAttributes<HTMLInputElement> | HTMLAttributes<HTMLTextAreaElement>)
+  InputFieldProps
 >(
   (
     {
