@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { forwardRef, ReactNode } from "react";
+import React, { forwardRef, HTMLAttributes, ReactNode } from "react";
 import classNames from "classnames";
 
 import styles from "./Input.module.css";
@@ -44,11 +44,13 @@ interface FieldProps {
   children: ReactNode;
   className?: string;
 }
+
 export function Field({ children, className }: FieldProps) {
   return <div className={classNames(styles.field, className)}>{children}</div>;
 }
 
-interface InputFieldProps {
+interface InputFieldProps
+  extends HTMLAttributes<HTMLInputElement | HTMLTextAreaElement> {
   id: string;
   label: string;
   className: string;
@@ -58,10 +60,12 @@ interface InputFieldProps {
   suffix: string;
   description: string;
   disabled: boolean;
-  [index: string]: unknown;
 }
 
-export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
+export const InputField = forwardRef<
+  HTMLInputElement | HTMLTextAreaElement,
+  InputFieldProps
+>(
   (
     {
       id,
@@ -90,16 +94,20 @@ export const InputField = forwardRef<HTMLInputElement, InputFieldProps>(
       >
         {prefix && <span>{prefix}</span>}
         {type === "textarea" ? (
-          // for review: can i remove type and ref here?
-          <textarea id={id} {...rest} disabled={disabled} />
+          <textarea
+            id={id}
+            ref={ref as React.ForwardedRef<HTMLTextAreaElement>}
+            disabled={disabled}
+            {...rest}
+          />
         ) : (
           <input
             id={id}
-            {...rest}
-            ref={ref}
+            ref={ref as React.ForwardedRef<HTMLInputElement>}
             type={type}
             checked={checked}
             disabled={disabled}
+            {...rest}
           />
         )}
 

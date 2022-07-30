@@ -28,8 +28,9 @@ interface Props {
   onChange: (selected: boolean) => void;
   isSelected: boolean;
 }
+
 export function Toggle({ id, label, className, onChange, isSelected }: Props) {
-  const buttonRef = useRef();
+  const buttonRef = useRef<HTMLButtonElement>();
   const toggle = useCallback(() => {
     onChange(!isSelected);
   }, [isSelected, onChange]);

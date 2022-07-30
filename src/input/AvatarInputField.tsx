@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { useObjectRef } from "@react-aria/utils";
-import React, { useEffect } from "react";
+import React, { HTMLAttributes, useEffect } from "react";
 import { useCallback } from "react";
 import { useState } from "react";
 import { forwardRef } from "react";
@@ -26,15 +26,13 @@ import { Button } from "../button";
 import { ReactComponent as EditIcon } from "../icons/Edit.svg";
 import styles from "./AvatarInputField.module.css";
 
-interface Props {
+interface Props extends HTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
   className: string;
   avatarUrl: string;
   displayName: string;
   onRemoveAvatar: () => void;
-  // TODO: add used parameters for HTMLInputElement
-  [index: string]: unknown;
 }
 
 export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
@@ -43,7 +41,7 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
     ref
   ) => {
     const [removed, setRemoved] = useState(false);
-    const [objUrl, setObjUrl] = useState(null);
+    const [objUrl, setObjUrl] = useState<string>(null);
 
     const fileInputRef = useObjectRef(ref);
 
@@ -58,15 +56,12 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
         } else {
           setObjUrl(null);
         }
-        // }
       };
 
       currentInput.addEventListener("change", onChange);
 
       return () => {
-        if (currentInput) {
-          currentInput.removeEventListener("change", onChange);
-        }
+        currentInput?.removeEventListener("change", onChange);
       };
     });
 
