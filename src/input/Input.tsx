@@ -21,7 +21,7 @@ import styles from "./Input.module.css";
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 
 interface FieldRowProps {
-  children: JSX.Element;
+  children: ReactNode;
   rightAlign?: boolean;
   className?: string;
 }
@@ -51,15 +51,15 @@ export function Field({ children, className }: FieldProps) {
 
 interface InputFieldProps
   extends HTMLAttributes<HTMLInputElement | HTMLTextAreaElement> {
-  id: string;
   label: string;
-  className: string;
   type: string;
-  checked: boolean;
-  prefix: string;
-  suffix: string;
-  description: string;
-  disabled: boolean;
+  prefix?: string;
+  suffix?: string;
+  id?: string;
+  checked?: boolean;
+  className?: string;
+  description?: string;
+  disabled?: boolean;
 }
 
 export const InputField = forwardRef<
@@ -126,6 +126,6 @@ export const InputField = forwardRef<
   }
 );
 
-export function ErrorMessage({ children }: { children: JSX.Element }) {
+export function ErrorMessage({ children }: { children: ReactNode }) {
   return <p className={styles.errorMessage}>{children}</p>;
 }
