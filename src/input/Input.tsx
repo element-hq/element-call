@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { FormEvent, forwardRef, HTMLAttributes, ReactNode } from "react";
+import React, { FormEvent, forwardRef, ReactNode } from "react";
 import classNames from "classnames";
 
 import styles from "./Input.module.css";
