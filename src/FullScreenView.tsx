@@ -1,13 +1,19 @@
-import React, { useCallback, useEffect } from "react";
+import React, { ReactNode, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import styles from "./FullScreenView.module.css";
-import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import classNames from "classnames";
+
+import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import { LinkButton, Button } from "./button";
 import { useSubmitRageshake } from "./settings/submit-rageshake";
 import { ErrorMessage } from "./input/Input";
+import styles from "./FullScreenView.module.css";
 
-export function FullScreenView({ className, children }) {
+interface FullScreenViewProps {
+  className?: string;
+  children: ReactNode;
+}
+
+export function FullScreenView({ className, children }: FullScreenViewProps) {
   return (
     <div className={classNames(styles.page, className)}>
       <Header>
@@ -23,7 +29,11 @@ export function FullScreenView({ className, children }) {
   );
 }
 
-export function ErrorView({ error }) {
+interface ErrorViewProps {
+  error: Error;
+}
+
+export function ErrorView({ error }: ErrorViewProps) {
   const location = useLocation();
 
   useEffect(() => {
@@ -31,7 +41,7 @@ export function ErrorView({ error }) {
   }, [error]);
 
   const onReload = useCallback(() => {
-    window.location = "/";
+    window.location.href = "/";
   }, []);
 
   return (
@@ -72,7 +82,7 @@ export function CrashView() {
   }, [submitRageshake]);
 
   const onReload = useCallback(() => {
-    window.location = "/";
+    window.location.href = "/";
   }, []);
 
   let logsComponent;
