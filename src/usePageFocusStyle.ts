@@ -1,8 +1,9 @@
 import { useEffect } from "react";
 import { useFocusVisible } from "@react-aria/interactions";
+
 import styles from "./usePageFocusStyle.module.css";
 
-export function usePageFocusStyle() {
+export function usePageFocusStyle(): void {
   const { isFocusVisible } = useFocusVisible();
 
   useEffect(() => {
