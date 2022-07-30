@@ -1,29 +1,70 @@
-import React, { useRef, useMemo } from "react";
+/*
+Copyright 2022 New Vector Ltd
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+/* eslint-disable jsx-a11y/no-autofocus */
+
+import React, { useRef, useMemo, ReactNode } from "react";
 import {
   useOverlay,
   usePreventScroll,
   useModal,
   OverlayContainer,
+  OverlayProps,
 } from "@react-aria/overlays";
-import { useOverlayTriggerState } from "@react-stately/overlays";
+import {
+  OverlayTriggerState,
+  useOverlayTriggerState,
+} from "@react-stately/overlays";
 import { useDialog } from "@react-aria/dialog";
 import { FocusScope } from "@react-aria/focus";
-import { useButton } from "@react-aria/button";
+import { ButtonAria, useButton } from "@react-aria/button";
+import classNames from "classnames";
+import { AriaDialogProps } from "@react-types/dialog";
+
 import { ReactComponent as CloseIcon } from "./icons/Close.svg";
 import styles from "./Modal.module.css";
-import classNames from "classnames";
 
-export function Modal(props) {
-  const { title, children, className, mobileFullScreen } = props;
+interface ModalProps extends OverlayProps, AriaDialogProps {
+  title: string;
+  children: ReactNode;
+  className?: string;
+  mobileFullScreen?: boolean;
+  onClose?: () => void;
+}
+
+export function Modal({
+  title,
+  children,
+  className,
+  mobileFullScreen,
+  onClose,
+  ...rest
+}: ModalProps) {
   const modalRef = useRef();
-  const { overlayProps, underlayProps } = useOverlay(props, modalRef);
+  const { overlayProps, underlayProps } = useOverlay(rest, modalRef);
   usePreventScroll();
   const { modalProps } = useModal();
-  const { dialogProps, titleProps } = useDialog(props, modalRef);
+  const { dialogProps, titleProps } = useDialog(rest, modalRef);
   const closeButtonRef = useRef();
-  const { buttonProps: closeButtonProps } = useButton({
-    onPress: () => props.onClose(),
-  });
+  const { buttonProps: closeButtonProps } = useButton(
+    {
+      onPress: () => onClose(),
+    },
+    closeButtonRef
+  );
 
   return (
     <OverlayContainer>
@@ -58,7 +99,16 @@ export function Modal(props) {
   );
 }
 
-export function ModalContent({ children, className, ...rest }) {
+interface ModalContentProps {
+  children: ReactNode;
+  className?: string;
+}
+
+export function ModalContent({
+  children,
+  className,
+  ...rest
+}: ModalContentProps) {
   return (
     <div className={classNames(styles.content, className)} {...rest}>
       {children}
@@ -66,7 +116,10 @@ export function ModalContent({ children, className, ...rest }) {
   );
 }
 
-export function useModalTriggerState() {
+export function useModalTriggerState(): {
+  modalState: OverlayTriggerState;
+  modalProps: { isOpen: boolean; onClose: () => void };
+} {
   const modalState = useOverlayTriggerState({});
   const modalProps = useMemo(
     () => ({ isOpen: modalState.isOpen, onClose: modalState.close }),
@@ -75,7 +128,10 @@ export function useModalTriggerState() {
   return { modalState, modalProps };
 }
 
-export function useToggleModalButton(modalState, ref) {
+export function useToggleModalButton(
+  modalState: OverlayTriggerState,
+  ref: React.RefObject<HTMLButtonElement>
+): ButtonAria<React.ButtonHTMLAttributes<HTMLButtonElement>> {
   return useButton(
     {
       onPress: () => modalState.toggle(),
@@ -84,7 +140,10 @@ export function useToggleModalButton(modalState, ref) {
   );
 }
 
-export function useOpenModalButton(modalState, ref) {
+export function useOpenModalButton(
+  modalState: OverlayTriggerState,
+  ref: React.RefObject<HTMLButtonElement>
+): ButtonAria<React.ButtonHTMLAttributes<HTMLButtonElement>> {
   return useButton(
     {
       onPress: () => modalState.open(),
@@ -93,7 +152,10 @@ export function useOpenModalButton(modalState, ref) {
   );
 }
 
-export function useCloseModalButton(modalState, ref) {
+export function useCloseModalButton(
+  modalState: OverlayTriggerState,
+  ref: React.RefObject<HTMLButtonElement>
+): ButtonAria<React.ButtonHTMLAttributes<HTMLButtonElement>> {
   return useButton(
     {
       onPress: () => modalState.close(),
@@ -102,8 +164,12 @@ export function useCloseModalButton(modalState, ref) {
   );
 }
 
-export function ModalTrigger({ children }) {
-  const { modalState, modalProps } = useModalState();
+interface ModalTriggerProps {
+  children: ReactNode;
+}
+
+export function ModalTrigger({ children }: ModalTriggerProps) {
+  const { modalState, modalProps } = useModalTriggerState();
   const buttonRef = useRef();
   const { buttonProps } = useToggleModalButton(modalState, buttonRef);
 
