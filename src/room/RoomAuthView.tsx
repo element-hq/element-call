@@ -15,11 +15,12 @@ limitations under the License.
 */
 
 import React, { useCallback, useState } from "react";
+import { useLocation } from "react-router-dom";
+
 import styles from "./RoomAuthView.module.css";
 import { Button } from "../button";
 import { Body, Caption, Link, Headline } from "../typography/Typography";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
-import { useLocation } from "react-router-dom";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Form } from "../form/Form";
 import { UserMenuContainer } from "../UserMenuContainer";
@@ -27,7 +28,7 @@ import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser
 
 export function RoomAuthView() {
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<Error>();
 
   const { registerPasswordlessUser, recaptchaId, privacyPolicyUrl } =
     useRegisterPasswordlessUser();
@@ -36,7 +37,9 @@ export function RoomAuthView() {
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
-      const displayName = data.get("displayName");
+      const dataForDisplayName = data.get("displayName");
+      const displayName =
+        typeof dataForDisplayName === "string" ? dataForDisplayName : "";
 
       registerPasswordlessUser(displayName).catch((error) => {
         console.error("Failed to register passwordless user", e);

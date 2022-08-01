@@ -206,7 +206,6 @@ export const PTTCallView: React.FC<Props> = ({
               <OverflowMenu
                 inCall
                 roomId={roomId}
-                client={client}
                 groupCall={groupCall}
                 showInvite={false}
                 feedbackModalState={feedbackModalState}

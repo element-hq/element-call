@@ -15,10 +15,14 @@ limitations under the License.
 */
 
 import React, { useEffect, useRef } from "react";
+import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
+import { MatrixClient } from "matrix-js-sdk/src/client";
+import { PressEvent } from "@react-types/shared";
+import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
+
 import styles from "./LobbyView.module.css";
 import { Button, CopyButton } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { useCallFeed } from "../video-grid/useCallFeed";
 import { getRoomUrl } from "../matrix-utils";
 import { UserMenuContainer } from "../UserMenuContainer";
@@ -28,6 +32,22 @@ import { useMediaHandler } from "../settings/useMediaHandler";
 import { VideoPreview } from "./VideoPreview";
 import { AudioPreview } from "./AudioPreview";
 
+interface Props {
+  client: MatrixClient;
+  groupCall: GroupCall;
+  roomName: string;
+  avatarUrl: string;
+  state: GroupCallState;
+  onInitLocalCallFeed: () => void;
+  onEnter: (e: PressEvent) => void;
+  localCallFeed: CallFeed;
+  microphoneMuted: boolean;
+  toggleLocalVideoMuted: () => void;
+  toggleMicrophoneMuted: () => void;
+  localVideoMuted: boolean;
+  roomId: string;
+  isEmbedded: boolean;
+}
 export function LobbyView({
   client,
   groupCall,
@@ -43,7 +63,7 @@ export function LobbyView({
   toggleMicrophoneMuted,
   roomId,
   isEmbedded,
-}) {
+}: Props) {
   const { stream } = useCallFeed(localCallFeed);
   const {
     audioInput,
@@ -60,7 +80,7 @@ export function LobbyView({
 
   useLocationNavigation(state === GroupCallState.InitializingLocalCallFeed);
 
-  const joinCallButtonRef = useRef();
+  const joinCallButtonRef = useRef<HTMLButtonElement>();
 
   useEffect(() => {
     if (state === GroupCallState.LocalCallFeedInitialized) {

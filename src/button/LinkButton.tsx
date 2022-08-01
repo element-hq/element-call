@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ReactNode } from "react";
+import React, { HTMLAttributes } from "react";
 import { Link } from "react-router-dom";
 import classNames from "classnames";
+import * as H from "history";
 
 import {
   variantToClassName,
@@ -24,19 +25,21 @@ import {
   ButtonVariant,
   ButtonSize,
 } from "./Button";
-interface Props {
-  className?: string;
-  variant?: ButtonVariant;
+
+interface Props extends HTMLAttributes<HTMLAnchorElement> {
+  children: JSX.Element | string;
+  to: H.LocationDescriptor | ((location: H.Location) => H.LocationDescriptor);
   size?: ButtonSize;
-  children: ReactNode;
-  [index: string]: unknown;
+  variant?: ButtonVariant;
+  className?: string;
 }
 
 export function LinkButton({
-  className,
-  variant,
-  size,
   children,
+  to,
+  size,
+  variant,
+  className,
   ...rest
 }: Props) {
   return (
@@ -46,6 +49,7 @@ export function LinkButton({
         sizeToClassName[size],
         className
       )}
+      to={to}
       {...rest}
     >
       {children}

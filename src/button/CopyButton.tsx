@@ -23,9 +23,9 @@ import { Button, ButtonVariant } from "./Button";
 
 interface Props {
   value: string;
-  children?: JSX.Element;
-  className: string;
-  variant: ButtonVariant;
+  children?: JSX.Element | string;
+  className?: string;
+  variant?: ButtonVariant;
   copiedMessage?: string;
 }
 export function CopyButton({

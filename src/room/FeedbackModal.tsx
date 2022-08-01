@@ -15,6 +15,8 @@ limitations under the License.
 */
 
 import React, { useCallback, useEffect } from "react";
+import { randomString } from "matrix-js-sdk/src/randomstring";
+
 import { Modal, ModalContent } from "../Modal";
 import { Button } from "../button";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
@@ -23,9 +25,14 @@ import {
   useRageshakeRequest,
 } from "../settings/submit-rageshake";
 import { Body } from "../typography/Typography";
-import { randomString } from "matrix-js-sdk/src/randomstring";
-
-export function FeedbackModal({ inCall, roomId, ...rest }) {
+interface Props {
+  inCall: boolean;
+  roomId: string;
+  onClose?: () => void;
+  // TODO: add all props for for <Modal>
+  [index: string]: unknown;
+}
+export function FeedbackModal({ inCall, roomId, onClose, ...rest }: Props) {
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
   const sendRageshakeRequest = useRageshakeRequest();
 
@@ -33,8 +40,12 @@ export function FeedbackModal({ inCall, roomId, ...rest }) {
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
-      const description = data.get("description");
-      const sendLogs = data.get("sendLogs");
+      const descriptionData = data.get("description");
+      const description =
+        typeof descriptionData === "string" ? descriptionData : "";
+      const sendLogsData = data.get("sendLogs");
+      const sendLogs =
+        typeof sendLogsData === "string" ? sendLogsData === "true" : false;
       const rageshakeRequestId = randomString(16);
 
       submitRageshake({
@@ -53,9 +64,9 @@ export function FeedbackModal({ inCall, roomId, ...rest }) {
 
   useEffect(() => {
     if (sent) {
-      rest.onClose();
+      onClose();
     }
-  }, [sent, rest.onClose]);
+  }, [sent, onClose]);
 
   return (
     <Modal title="Submit Feedback" isDismissable {...rest}>

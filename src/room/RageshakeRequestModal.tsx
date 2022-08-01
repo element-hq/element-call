@@ -15,20 +15,30 @@ limitations under the License.
 */
 
 import React, { useEffect } from "react";
+
 import { Modal, ModalContent } from "../Modal";
 import { Button } from "../button";
 import { FieldRow, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake } from "../settings/submit-rageshake";
 import { Body } from "../typography/Typography";
 
-export function RageshakeRequestModal({ rageshakeRequestId, roomId, ...rest }) {
+export function RageshakeRequestModal({
+  rageshakeRequestId,
+  roomId,
+  ...rest
+}: {
+  rageshakeRequestId: string;
+  roomId: string;
+  onClose: () => void;
+  [x: string]: unknown;
+}) {
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
 
   useEffect(() => {
     if (sent) {
       rest.onClose();
     }
-  }, [sent, rest.onClose]);
+  }, [sent, rest]);
 
   return (
     <Modal title="Debug Log Request" isDismissable {...rest}>

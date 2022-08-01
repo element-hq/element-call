@@ -16,13 +16,16 @@ limitations under the License.
 
 import React, { useCallback, useState } from "react";
 
-import { SequenceDiagramViewer } from "./room/GroupCallInspector";
+import {
+  SequenceDiagramViewer,
+  SequenceDiagramMatrixEvent,
+} from "./room/GroupCallInspector";
 import { FieldRow, InputField } from "./input/Input";
 import { usePageTitle } from "./usePageTitle";
 
 interface DebugLog {
   localUserId: string;
-  eventsByUserId: Record<string, {}>;
+  eventsByUserId: { [userId: string]: SequenceDiagramMatrixEvent[] };
   remoteUserIds: string[];
 }
 
@@ -33,7 +36,7 @@ export function SequenceDiagramViewerPage() {
   const [selectedUserId, setSelectedUserId] = useState<string>();
   const onChangeDebugLog = useCallback((e) => {
     if (e.target.files && e.target.files.length > 0) {
-      e.target.files[0].text().then((text) => {
+      e.target.files[0].text().then((text: string) => {
         setDebugLog(JSON.parse(text));
       });
     }

@@ -15,18 +15,31 @@ limitations under the License.
 */
 
 import React from "react";
+import useMeasure from "react-use-measure";
+import { ResizeObserver } from "@juggle/resize-observer";
+import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
+import { MatrixClient } from "matrix-js-sdk/src/client";
+
 import { MicButton, VideoButton } from "../button";
 import { useMediaStream } from "../video-grid/useMediaStream";
 import { OverflowMenu } from "./OverflowMenu";
 import { Avatar } from "../Avatar";
 import { useProfile } from "../profile/useProfile";
-import useMeasure from "react-use-measure";
-import { ResizeObserver } from "@juggle/resize-observer";
-import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import styles from "./VideoPreview.module.css";
 import { Body } from "../typography/Typography";
 import { useModalTriggerState } from "../Modal";
 
+interface Props {
+  client: MatrixClient;
+  state: GroupCallState;
+  roomId: string;
+  microphoneMuted: boolean;
+  localVideoMuted: boolean;
+  toggleLocalVideoMuted: () => void;
+  toggleMicrophoneMuted: () => void;
+  audioOutput: string;
+  stream: MediaStream;
+}
 export function VideoPreview({
   client,
   state,
@@ -37,7 +50,7 @@ export function VideoPreview({
   toggleMicrophoneMuted,
   audioOutput,
   stream,
-}) {
+}: Props) {
   const videoRef = useMediaStream(stream, audioOutput, true);
   const { displayName, avatarUrl } = useProfile(client);
   const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
@@ -81,9 +94,11 @@ export function VideoPreview({
             />
             <OverflowMenu
               roomId={roomId}
-              client={client}
               feedbackModalState={feedbackModalState}
               feedbackModalProps={feedbackModalProps}
+              inCall={false}
+              groupCall={undefined}
+              showInvite={false}
             />
           </div>
         </>

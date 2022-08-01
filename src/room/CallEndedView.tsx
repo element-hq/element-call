@@ -15,13 +15,15 @@ limitations under the License.
 */
 
 import React from "react";
+import { MatrixClient } from "matrix-js-sdk";
+
 import styles from "./CallEndedView.module.css";
 import { LinkButton } from "../button";
 import { useProfile } from "../profile/useProfile";
 import { Subtitle, Body, Link, Headline } from "../typography/Typography";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 
-export function CallEndedView({ client }) {
+export function CallEndedView({ client }: { client: MatrixClient }) {
   const { displayName } = useProfile(client);
 
   return (
