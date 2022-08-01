@@ -28,11 +28,10 @@ import { Tooltip, TooltipTrigger } from "../Tooltip";
 export function GridLayoutMenu({ layout, setLayout }) {
   return (
     <PopoverMenuTrigger placement="bottom right">
-      <TooltipTrigger>
+      <TooltipTrigger tooltip={() => "Layout Type"}>
         <Button variant="icon">
           {layout === "spotlight" ? <SpotlightIcon /> : <FreedomIcon />}
         </Button>
-        {() => "Layout Type"}
       </TooltipTrigger>
       {(props) => (
         <Menu {...props} label="Grid layout menu" onAction={setLayout}>

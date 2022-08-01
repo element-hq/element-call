@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import classNames from "classnames";
 
@@ -25,10 +25,10 @@ import {
   ButtonSize,
 } from "./Button";
 interface Props {
-  className: string;
-  variant: ButtonVariant;
-  size: ButtonSize;
-  children: JSX.Element;
+  className?: string;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  children: ReactNode;
   [index: string]: unknown;
 }
 

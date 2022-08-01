@@ -1,18 +1,26 @@
 import classNames from "classnames";
-import React, { useCallback, useRef } from "react";
+import React, { HTMLAttributes, ReactNode, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import styles from "./Header.module.css";
-import { ReactComponent as Logo } from "./icons/Logo.svg";
-import { ReactComponent as VideoIcon } from "./icons/Video.svg";
-import { ReactComponent as ArrowLeftIcon } from "./icons/ArrowLeft.svg";
 import { useButton } from "@react-aria/button";
-import { Subtitle } from "./typography/Typography";
-import { Avatar } from "./Avatar";
-import { IncompatibleVersionModal } from "./IncompatibleVersionModal";
+import { AriaButtonProps } from "@react-types/button";
+import { Room } from "matrix-js-sdk";
+
+import styles from "./Header.module.css";
 import { useModalTriggerState } from "./Modal";
 import { Button } from "./button";
+import { ReactComponent as Logo } from "./icons/Logo.svg";
+import { ReactComponent as VideoIcon } from "./icons/Video.svg";
+import { Subtitle } from "./typography/Typography";
+import { Avatar, Size } from "./Avatar";
+import { IncompatibleVersionModal } from "./IncompatibleVersionModal";
+import { ReactComponent as ArrowLeftIcon } from "./icons/ArrowLeft.svg";
 
-export function Header({ children, className, ...rest }) {
+interface HeaderProps extends HTMLAttributes<HTMLElement> {
+  children: ReactNode;
+  className?: string;
+}
+
+export function Header({ children, className, ...rest }: HeaderProps) {
   return (
     <header className={classNames(styles.header, className)} {...rest}>
       {children}
@@ -20,7 +28,18 @@ export function Header({ children, className, ...rest }) {
   );
 }
 
-export function LeftNav({ children, className, hideMobile, ...rest }) {
+interface LeftNavProps extends HTMLAttributes<HTMLElement> {
+  children: ReactNode;
+  className?: string;
+  hideMobile?: boolean;
+}
+
+export function LeftNav({
+  children,
+  className,
+  hideMobile,
+  ...rest
+}: LeftNavProps) {
   return (
     <div
       className={classNames(
@@ -36,7 +55,18 @@ export function LeftNav({ children, className, hideMobile, ...rest }) {
   );
 }
 
-export function RightNav({ children, className, hideMobile, ...rest }) {
+interface RightNavProps extends HTMLAttributes<HTMLElement> {
+  children?: ReactNode;
+  className?: string;
+  hideMobile?: string;
+}
+
+export function RightNav({
+  children,
+  className,
+  hideMobile,
+  ...rest
+}: RightNavProps) {
   return (
     <div
       className={classNames(
@@ -52,7 +82,11 @@ export function RightNav({ children, className, hideMobile, ...rest }) {
   );
 }
 
-export function HeaderLogo({ className }) {
+interface HeaderLogoProps {
+  className?: string;
+}
+
+export function HeaderLogo({ className }: HeaderLogoProps) {
   return (
     <Link className={classNames(styles.headerLogo, className)} to="/">
       <Logo />
@@ -60,12 +94,17 @@ export function HeaderLogo({ className }) {
   );
 }
 
-export function RoomHeaderInfo({ roomName, avatarUrl }) {
+interface RoomHeaderInfo {
+  roomName: string;
+  avatarUrl: string;
+}
+
+export function RoomHeaderInfo({ roomName, avatarUrl }: RoomHeaderInfo) {
   return (
     <>
       <div className={styles.roomAvatar}>
         <Avatar
-          size="md"
+          size={Size.MD}
           src={avatarUrl}
           bgKey={roomName}
           fallback={roomName.slice(0, 1).toUpperCase()}
@@ -77,12 +116,18 @@ export function RoomHeaderInfo({ roomName, avatarUrl }) {
   );
 }
 
+interface RoomSetupHeaderInfoProps extends AriaButtonProps<"button"> {
+  roomName: string;
+  avatarUrl: string;
+  isEmbedded: boolean;
+}
+
 export function RoomSetupHeaderInfo({
   roomName,
   avatarUrl,
   isEmbedded,
   ...rest
-}) {
+}: RoomSetupHeaderInfoProps) {
   const ref = useRef();
   const { buttonProps } = useButton(rest, ref);
 
@@ -102,7 +147,15 @@ export function RoomSetupHeaderInfo({
   );
 }
 
-export function VersionMismatchWarning({ users, room }) {
+interface VersionMismatchWarningProps {
+  users: Set<string>;
+  room: Room;
+}
+
+export function VersionMismatchWarning({
+  users,
+  room,
+}: VersionMismatchWarningProps) {
   const { modalState, modalProps } = useModalTriggerState();
 
   const onDetailsClick = useCallback(() => {

@@ -26,7 +26,7 @@ import styles from "./ProfileModal.module.css";
 
 interface Props {
   client: MatrixClient;
-  onClose: () => {};
+  onClose: () => void;
   [rest: string]: unknown;
 }
 export function ProfileModal({ client, ...rest }: Props) {

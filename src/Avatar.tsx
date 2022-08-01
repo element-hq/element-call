@@ -48,11 +48,11 @@ const resolveAvatarSrc = (client: MatrixClient, src: string, size: number) =>
 
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   bgKey?: string;
-  src: string;
-  fallback: string;
+  src?: string;
   size?: Size | number;
-  className: string;
+  className?: string;
   style?: CSSProperties;
+  fallback: string;
 }
 
 export const Avatar: React.FC<Props> = ({
