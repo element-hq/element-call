@@ -62,6 +62,7 @@ interface ClientState {
   changePassword: (password: string) => Promise<void>;
   logout: () => void;
   setClient: (client: MatrixClient, session: Session) => void;
+  error?: Error;
 }
 
 const ClientContext = createContext<ClientState>(null);

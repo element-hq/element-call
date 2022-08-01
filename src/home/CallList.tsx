@@ -16,14 +16,22 @@ limitations under the License.
 
 import React from "react";
 import { Link } from "react-router-dom";
+import { MatrixClient, RoomMember } from "matrix-js-sdk";
+
 import { CopyButton } from "../button";
 import { Facepile } from "../Facepile";
-import { Avatar } from "../Avatar";
+import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
 import { getRoomUrl } from "../matrix-utils";
 import { Body, Caption } from "../typography/Typography";
+import { GroupCallRoom } from "./useGroupCallRooms";
 
-export function CallList({ rooms, client, disableFacepile }) {
+interface CallListProps {
+  rooms: GroupCallRoom[];
+  client: MatrixClient;
+  disableFacepile?: boolean;
+}
+export function CallList({ rooms, client, disableFacepile }: CallListProps) {
   return (
     <>
       <div className={styles.callList}>
@@ -48,7 +56,14 @@ export function CallList({ rooms, client, disableFacepile }) {
     </>
   );
 }
-
+interface CallTileProps {
+  name: string;
+  avatarUrl: string;
+  roomId: string;
+  participants: RoomMember[];
+  client: MatrixClient;
+  disableFacepile?: boolean;
+}
 function CallTile({
   name,
   avatarUrl,
@@ -56,12 +71,12 @@ function CallTile({
   participants,
   client,
   disableFacepile,
-}) {
+}: CallTileProps) {
   return (
     <div className={styles.callTile}>
       <Link to={`/room/${roomId}`} className={styles.callTileLink}>
         <Avatar
-          size="lg"
+          size={Size.LG}
           bgKey={name}
           src={avatarUrl}
           fallback={name.slice(0, 1).toUpperCase()}

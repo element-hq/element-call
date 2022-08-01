@@ -14,7 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useState, useCallback } from "react";
+import React, {
+  useState,
+  useCallback,
+  FormEvent,
+  FormEventHandler,
+} from "react";
+import { useHistory } from "react-router-dom";
+import { MatrixClient } from "matrix-js-sdk";
+
 import { createRoom, roomAliasLocalpartFromRoomName } from "../matrix-utils";
 import { useGroupCallRooms } from "./useGroupCallRooms";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
@@ -26,28 +34,35 @@ import { CallList } from "./CallList";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
-import { useHistory } from "react-router-dom";
 import { Title } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
 
-export function RegisteredView({ client }) {
+interface Props {
+  client: MatrixClient;
+  isPasswordlessUser: boolean;
+}
+
+export function RegisteredView({ client, isPasswordlessUser }: Props) {
   const [callType, setCallType] = useState(CallType.Video);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<Error>();
   const history = useHistory();
-  const onSubmit = useCallback(
-    (e) => {
+  const { modalState, modalProps } = useModalTriggerState();
+
+  const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
+    (e: FormEvent) => {
       e.preventDefault();
-      const data = new FormData(e.target);
-      const roomName = data.get("callName");
-      const ptt = callType === CallType.Radio;
+      const data = new FormData(e.target as HTMLFormElement);
+      const roomNameData = data.get("callName");
+      const roomName = typeof roomNameData === "string" ? roomNameData : "";
+      // const ptt = callType === CallType.Radio;
 
       async function submit() {
         setError(undefined);
         setLoading(true);
 
-        const [roomIdOrAlias] = await createRoom(client, roomName, ptt);
+        const [roomIdOrAlias] = await createRoom(client, roomName);
 
         if (roomIdOrAlias) {
           history.push(`/room/${roomIdOrAlias}`);
@@ -64,17 +79,15 @@ export function RegisteredView({ client }) {
           console.error(error);
           setLoading(false);
           setError(error);
-          reset();
         }
       });
     },
-    [client, callType]
+    [client, history, modalState]
   );
 
   const recentRooms = useGroupCallRooms(client);
 
-  const { modalState, modalProps } = useModalTriggerState();
-  const [existingRoomId, setExistingRoomId] = useState();
+  const [existingRoomId, setExistingRoomId] = useState<string>();
   const onJoinExistingRoom = useCallback(() => {
     history.push(`/${existingRoomId}`);
   }, [history, existingRoomId]);
