@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { Component, forwardRef, ReactNode } from "react";
+import React, {, forwardRef, ReactNode } from "react";
 import classNames from "classnames";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -28,7 +28,7 @@ interface TypographyProps {
   fontWeight: number;
 }
 
-export const Headline = forwardRef<JSX.Element, TypographyProps>(
+export const Headline = forwardRef<HTMLHeadingElement, TypographyProps>(
   ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
     return (
       <h1
@@ -46,7 +46,7 @@ export const Headline = forwardRef<JSX.Element, TypographyProps>(
   }
 );
 
-export const Title = forwardRef<Component, TypographyProps>(
+export const Title = forwardRef<HTMLHeadingElement, TypographyProps>(
   ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
     return (
       <h2
@@ -64,7 +64,7 @@ export const Title = forwardRef<Component, TypographyProps>(
   }
 );
 
-export const Subtitle = forwardRef(
+export const Subtitle = forwardRef<HTMLParagraphElement, TypographyProps>(
   ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
     return (
       <h3
@@ -82,7 +82,7 @@ export const Subtitle = forwardRef(
   }
 );
 
-export const Body = forwardRef<JSX.Element, TypographyProps>(
+export const Body = forwardRef<HTMLParagraphElement, TypographyProps>(
   ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
     return (
       <p
@@ -100,7 +100,7 @@ export const Body = forwardRef<JSX.Element, TypographyProps>(
   }
 );
 
-export const Caption = forwardRef(
+export const Caption = forwardRef<HTMLParagraphElement, TypographyProps>(
   ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
     return (
       <p
@@ -119,7 +119,7 @@ export const Caption = forwardRef(
   }
 );
 
-export const Micro = forwardRef(
+export const Micro = forwardRef<HTMLParagraphElement, TypographyProps>(
   ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
     return (
       <p
@@ -138,7 +138,13 @@ export const Micro = forwardRef(
   }
 );
 
-export const Link = forwardRef(
+interface LinkProps extends TypographyProps {
+  to: string;
+  as: string;
+  color: string;
+  href: string;
+}
+export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
   (
     {
       as,
@@ -164,21 +170,21 @@ export const Link = forwardRef(
       };
     }
 
-    return (
-      <Component
-        {...externalLinkProps}
-        {...rest}
-        to={to}
-        className={classNames(
+    return React.createElement(
+      Component,
+      {
+        ...externalLinkProps,
+        ...rest,
+        to: to,
+        className: classNames(
           styles[color],
           styles[fontWeight],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
-        )}
-        ref={ref}
-      >
-        {children}
-      </Component>
+        ),
+        ref: ref,
+      },
+      { children }
     );
   }
 );
