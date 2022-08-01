@@ -15,13 +15,26 @@ limitations under the License.
 */
 
 import classNames from "classnames";
-import React, { forwardRef } from "react";
+import React, { FormEventHandler, forwardRef } from "react";
+
 import styles from "./Form.module.css";
 
-export const Form = forwardRef(({ children, className, ...rest }, ref) => {
-  return (
-    <form {...rest} className={classNames(styles.form, className)} ref={ref}>
-      {children}
-    </form>
-  );
-});
+interface FormProps {
+  className: string;
+  onSubmit: FormEventHandler<HTMLFormElement>;
+  children: JSX.Element[];
+}
+
+export const Form = forwardRef<HTMLFormElement, FormProps>(
+  ({ children, className, onSubmit }, ref) => {
+    return (
+      <form
+        onSubmit={onSubmit}
+        className={classNames(styles.form, className)}
+        ref={ref}
+      >
+        {children}
+      </form>
+    );
+  }
+);
