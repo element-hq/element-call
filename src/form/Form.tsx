@@ -14,17 +14,27 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import "matrix-js-sdk/src/@types/global";
+import classNames from "classnames";
+import React, { FormEventHandler, forwardRef } from "react";
 
-declare global {
-  interface Window {
-    // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
-    OLM_OPTIONS: Record<string, string>;
-  }
+import styles from "./Form.module.css";
 
-  // TypeScript doesn't know about the experimental setSinkId method, so we
-  // declare it ourselves
-  interface MediaElement extends HTMLVideoElement {
-    setSinkId: (id: string) => void;
-  }
+interface FormProps {
+  className: string;
+  onSubmit: FormEventHandler<HTMLFormElement>;
+  children: JSX.Element[];
 }
+
+export const Form = forwardRef<HTMLFormElement, FormProps>(
+  ({ children, className, onSubmit }, ref) => {
+    return (
+      <form
+        onSubmit={onSubmit}
+        className={classNames(styles.form, className)}
+        ref={ref}
+      >
+        {children}
+      </form>
+    );
+  }
+);

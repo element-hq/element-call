@@ -62,6 +62,7 @@ interface ClientState {
   changePassword: (password: string) => Promise<void>;
   logout: () => void;
   setClient: (client: MatrixClient, session: Session) => void;
+  error?: Error;
 }
 
 const ClientContext = createContext<ClientState>(null);
@@ -131,6 +132,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           isAuthenticated: Boolean(client),
           isPasswordlessUser,
           userName: client?.getUserIdLocalpart(),
+          error: undefined,
         });
       })
       .catch(() => {
@@ -140,6 +142,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           isAuthenticated: false,
           isPasswordlessUser: false,
           userName: null,
+          error: undefined,
         });
       });
   }, []);
@@ -169,6 +172,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         isAuthenticated: true,
         isPasswordlessUser: false,
         userName: client.getUserIdLocalpart(),
+        error: undefined,
       });
     },
     [client]
@@ -189,6 +193,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           isAuthenticated: true,
           isPasswordlessUser: session.passwordlessUser,
           userName: newClient.getUserIdLocalpart(),
+          error: undefined,
         });
       } else {
         clearSession();
@@ -199,6 +204,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           isAuthenticated: false,
           isPasswordlessUser: false,
           userName: null,
+          error: undefined,
         });
       }
     },
@@ -257,6 +263,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       logout,
       userName,
       setClient,
+      error: undefined,
     }),
     [
       loading,

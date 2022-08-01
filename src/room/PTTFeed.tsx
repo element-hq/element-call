@@ -14,17 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import "matrix-js-sdk/src/@types/global";
+import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
+import React from "react";
 
-declare global {
-  interface Window {
-    // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
-    OLM_OPTIONS: Record<string, string>;
-  }
+import { useCallFeed } from "../video-grid/useCallFeed";
+import { useMediaStream } from "../video-grid/useMediaStream";
+import styles from "./PTTFeed.module.css";
 
-  // TypeScript doesn't know about the experimental setSinkId method, so we
-  // declare it ourselves
-  interface MediaElement extends HTMLVideoElement {
-    setSinkId: (id: string) => void;
-  }
+export function PTTFeed({
+  callFeed,
+  audioOutputDevice,
+}: {
+  callFeed: CallFeed;
+  audioOutputDevice: string;
+}) {
+  const { isLocal, stream } = useCallFeed(callFeed);
+  const mediaRef = useMediaStream(stream, audioOutputDevice, isLocal);
+  return <audio ref={mediaRef} className={styles.audioFeed} playsInline />;
 }

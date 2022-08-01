@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Matrix.org Foundation C.I.C.
+Copyright 2022 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,17 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import "matrix-js-sdk/src/@types/global";
+import { useEffect } from "react";
 
-declare global {
-  interface Window {
-    // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
-    OLM_OPTIONS: Record<string, string>;
-  }
-
-  // TypeScript doesn't know about the experimental setSinkId method, so we
-  // declare it ourselves
-  interface MediaElement extends HTMLVideoElement {
-    setSinkId: (id: string) => void;
-  }
+export function usePageTitle(title: string): void {
+  useEffect(() => {
+    const productName =
+      import.meta.env.VITE_PRODUCT_NAME || "Matrix Video Chat";
+    document.title = title ? `${productName} | ${title}` : productName;
+  }, [title]);
 }
