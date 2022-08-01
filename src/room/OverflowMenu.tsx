@@ -99,7 +99,7 @@ export function OverflowMenu({
           </Button>
         </TooltipTrigger>
         {(props: JSX.IntrinsicAttributes) => (
-          <Menu {...props} label="More menu" onAction={onAction}>
+          <Menu {...props} onAction={onAction}>
             {showInvite && (
               <Item key="invite" textValue="Invite people">
                 <AddUserIcon />

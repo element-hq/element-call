@@ -143,7 +143,7 @@ type CallEventContent = {
   dest_session_id: string;
 } & IContent;
 
-type SequenceDiagramMatrixEvent = {
+export type SequenceDiagramMatrixEvent = {
   to: string;
   from: string;
   timestamp: number;
