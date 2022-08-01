@@ -184,7 +184,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
         ),
         ref: ref,
       },
-      { children }
+      children
     );
   }
 );
