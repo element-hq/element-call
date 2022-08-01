@@ -60,7 +60,7 @@
 }
 
 .infoBubbleIcon {
-  background-color: rgba(23, 25, 28, 0.85);
+  background-color: var(--backgrouund-85);
 }
 
 .button button:hover svg * {
