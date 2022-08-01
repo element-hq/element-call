@@ -48,7 +48,7 @@
   position: absolute;
   height: 24px;
   padding: 0 8px;
-  color: white;
+  color: var(--primary-content);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -64,7 +64,9 @@
 }
 
 .button button:hover svg * {
-  fill: white !important; /* To override .iconButton:not(.stroke):hover svg */
+  fill: var(
+    --primary-content
+  ) !important; /* To override .iconButton:not(.stroke):hover svg */
 }
 
 .button button svg {
