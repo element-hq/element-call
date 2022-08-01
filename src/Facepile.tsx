@@ -31,8 +31,8 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   className: string;
   client: MatrixClient;
   participants: RoomMember[];
-  max: number;
-  size: Size;
+  max?: number;
+  size?: Size;
 }
 
 export function Facepile({
