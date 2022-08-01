@@ -34,11 +34,10 @@ interface Props {
 export function GridLayoutMenu({ layout, setLayout }: Props) {
   return (
     <PopoverMenuTrigger placement="bottom right">
-      <TooltipTrigger>
+      <TooltipTrigger tooltip={() => "Layout Type"}>
         <Button variant="icon">
           {layout === "spotlight" ? <SpotlightIcon /> : <FreedomIcon />}
         </Button>
-        {() => "Layout Type"}
       </TooltipTrigger>
       {(props: JSX.IntrinsicAttributes) => (
         <Menu {...props} label="Grid layout menu" onAction={setLayout}>

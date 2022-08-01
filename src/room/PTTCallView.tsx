@@ -38,6 +38,7 @@ import { usePTTSounds } from "../sound/usePttSounds";
 import { PTTClips } from "../sound/PTTClips";
 import { GroupCallInspector } from "./GroupCallInspector";
 import { OverflowMenu } from "./OverflowMenu";
+import { Size } from "../Avatar";
 
 function getPromptText(
   networkWaiting: boolean,
@@ -112,7 +113,7 @@ export const PTTCallView: React.FC<Props> = ({
   const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
     useModalTriggerState();
   const [containerRef, bounds] = useMeasure({ polyfill: ResizeObserver });
-  const facepileSize = bounds.width < 800 ? "sm" : "md";
+  const facepileSize = bounds.width < 800 ? Size.SM : Size.MD;
   const showControls = bounds.height > 500;
   const pttButtonSize = 232;
 

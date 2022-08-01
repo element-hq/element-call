@@ -141,11 +141,12 @@ export function MicButton({
   [index: string]: unknown;
 }) {
   return (
-    <TooltipTrigger>
+    <TooltipTrigger
+      tooltip={() => (muted ? "Unmute microphone" : "Mute microphone")}
+    >
       <Button variant="toolbar" {...rest} off={muted}>
         {muted ? <MuteMicIcon /> : <MicIcon />}
       </Button>
-      {() => (muted ? "Unmute microphone" : "Mute microphone")}
     </TooltipTrigger>
   );
 }
@@ -159,11 +160,12 @@ export function VideoButton({
   [index: string]: unknown;
 }) {
   return (
-    <TooltipTrigger>
+    <TooltipTrigger
+      tooltip={() => (muted ? "Turn on camera" : "Turn off camera")}
+    >
       <Button variant="toolbar" {...rest} off={muted}>
         {muted ? <DisableVideoIcon /> : <VideoIcon />}
       </Button>
-      {() => (muted ? "Turn on camera" : "Turn off camera")}
     </TooltipTrigger>
   );
 }
@@ -179,11 +181,12 @@ export function ScreenshareButton({
   [index: string]: unknown;
 }) {
   return (
-    <TooltipTrigger>
+    <TooltipTrigger
+      tooltip={() => (enabled ? "Stop sharing screen" : "Share screen")}
+    >
       <Button variant="toolbarSecondary" {...rest} on={enabled}>
         <ScreenshareIcon />
       </Button>
-      {() => (enabled ? "Stop sharing screen" : "Share screen")}
     </TooltipTrigger>
   );
 }
@@ -197,7 +200,7 @@ export function HangupButton({
   [index: string]: unknown;
 }) {
   return (
-    <TooltipTrigger>
+    <TooltipTrigger tooltip={() => "Leave"}>
       <Button
         variant="toolbar"
         className={classNames(styles.hangupButton, className)}
@@ -205,7 +208,6 @@ export function HangupButton({
       >
         <HangupIcon />
       </Button>
-      {() => "Leave"}
     </TooltipTrigger>
   );
 }
@@ -219,11 +221,10 @@ export function SettingsButton({
   [index: string]: unknown;
 }) {
   return (
-    <TooltipTrigger>
+    <TooltipTrigger tooltip={() => "Settings"}>
       <Button variant="toolbar" {...rest}>
         <SettingsIcon />
       </Button>
-      {() => "Settings"}
     </TooltipTrigger>
   );
 }
@@ -237,22 +238,20 @@ export function InviteButton({
   [index: string]: unknown;
 }) {
   return (
-    <TooltipTrigger>
+    <TooltipTrigger tooltip={() => "Invite"}>
       <Button variant="toolbar" {...rest}>
         <AddUserIcon />
       </Button>
-      {() => "Invite"}
     </TooltipTrigger>
   );
 }
 
 export function OptionsButton(props: Omit<Props, "variant">) {
   return (
-    <TooltipTrigger>
+    <TooltipTrigger tooltip={() => "Options"}>
       <Button variant="icon" {...props}>
         <OverflowIcon />
       </Button>
-      {() => "Options"}
     </TooltipTrigger>
   );
 }

@@ -26,11 +26,11 @@ import { InspectorContext } from "../room/GroupCallInspector";
 import { useModalTriggerState } from "../Modal";
 
 interface RageShakeSubmitOptions {
-  description?: string;
-  roomId: string;
-  label?: string;
   sendLogs: boolean;
-  rageshakeRequestId: string;
+  rageshakeRequestId?: string;
+  description?: string;
+  roomId?: string;
+  label?: string;
 }
 
 export function useSubmitRageshake(): {
