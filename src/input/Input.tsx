@@ -68,6 +68,7 @@ interface InputFieldProps {
   autoCapitalize?: string;
   value?: string;
   placeholder?: string;
+  defaultChecked?: boolean;
   onChange?: (event: ChangeEvent) => void;
 }
 

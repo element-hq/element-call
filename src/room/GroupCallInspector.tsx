@@ -22,7 +22,7 @@ import React, {
   useRef,
   createContext,
   useContext,
-  Dispatch,
+  Key,
 } from "react";
 import ReactJson, { CollapsedFieldProps } from "react-json-view";
 import mermaid from "mermaid";
@@ -156,7 +156,7 @@ interface SequenceDiagramViewerProps {
   localUserId: string;
   remoteUserIds: string[];
   selectedUserId: string;
-  onSelectUserId: Dispatch<(prevState: undefined) => undefined>;
+  onSelectUserId: (key: Key) => unknown;
   events: SequenceDiagramMatrixEvent[];
 }
 
@@ -447,7 +447,7 @@ export function GroupCallInspector({
         <SequenceDiagramViewer
           localUserId={state.localUserId}
           selectedUserId={selectedUserId}
-          onSelectUserId={setSelectedUserId}
+          onSelectUserId={setSelectedUserId as (key: Key) => unknown}
           remoteUserIds={state.remoteUserIds}
           events={state.eventsByUserId[selectedUserId]}
         />
