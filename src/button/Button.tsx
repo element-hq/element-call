@@ -30,7 +30,7 @@ import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
 import { TooltipTrigger } from "../Tooltip";
-import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
+import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 
 export type ButtonVariant =
   | "default"
@@ -239,11 +239,11 @@ export function InviteButton({
   );
 }
 
-export function OptionsButton(props: Omit<Props, "variant">) {
+export function AudioButton(props: Omit<Props, "variant">) {
   return (
     <TooltipTrigger tooltip={() => "Options"}>
-      <Button variant="icon" {...props}>
-        <OverflowIcon />
+      <Button variant="icon" {...props} tooltip={() => "Volume"}>
+        <AudioIcon />
       </Button>
     </TooltipTrigger>
   );

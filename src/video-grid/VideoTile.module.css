@@ -49,7 +49,6 @@
   height: 24px;
   padding: 0 8px;
   color: white;
-  background-color: rgba(23, 25, 28, 0.85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,14 +59,22 @@
   z-index: 1;
 }
 
-.optionsButton {
-  right: 16px;
-  top: 16px;
+.infoBubbleIcon {
+  background-color: rgba(23, 25, 28, 0.85);
 }
 
-.optionsButton button svg {
+.button button:hover svg * {
+  fill: white !important; /* To override .iconButton:not(.stroke):hover svg */
+}
+
+.button button svg {
   height: 20px;
   width: 20px;
+}
+
+.audioButton {
+  right: 16px;
+  top: 16px;
 }
 
 .memberName {
