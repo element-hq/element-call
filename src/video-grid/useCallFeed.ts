@@ -39,6 +39,7 @@ function getCallFeedState(callFeed: CallFeed): CallFeedState {
     localVolume: callFeed ? callFeed.getLocalVolume() : 0,
     stream: callFeed ? callFeed.stream : undefined,
     purpose: callFeed ? callFeed.purpose : undefined,
+    voiceActivityTreshold: callFeed ? callFeed.voiceActivityTreshold : 0,
   };
 }
 
@@ -62,6 +63,13 @@ export function useCallFeed(callFeed: CallFeed): CallFeedState {
 
     function onUpdateCallFeed() {
       setState(getCallFeedState(callFeed));
+    }
+
+    function onVoiceActivityTresholdChanged(treshold) {
+      setState((prevState) => ({
+        ...prevState,
+        voiceActivityTreshold: treshold,
+      }));
     }
 
     if (callFeed) {

@@ -44,6 +44,7 @@ export interface UseGroupCallReturnType {
   toggleLocalVideoMuted: () => void;
   toggleMicrophoneMuted: () => void;
   toggleScreensharing: () => void;
+  setVoiceActivityTreshold: (treshold: number) => void;
   requestingScreenshare: boolean;
   isScreensharing: boolean;
   screenshareFeeds: CallFeed[];
@@ -299,6 +300,13 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     groupCall.setMicrophoneMuted(!groupCall.isMicrophoneMuted());
   }, [groupCall]);
 
+  const setVoiceActivityTreshold = useCallback(
+    (value: number) => {
+      groupCall.localCallFeed?.setVoiceActivityTreshold(value);
+    },
+    [groupCall]
+  );
+
   const toggleScreensharing = useCallback(() => {
     updateState({ requestingScreenshare: true });
 
@@ -334,6 +342,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     toggleLocalVideoMuted,
     toggleMicrophoneMuted,
     toggleScreensharing,
+    setVoiceActivityTreshold,
     requestingScreenshare,
     isScreensharing,
     screenshareFeeds,

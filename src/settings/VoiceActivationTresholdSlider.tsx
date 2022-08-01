@@ -8,7 +8,12 @@ export function VoiceActivationTresholdSlider() {
 
   return (
     <div style={{ width: 200 }}>
-      <Slider defaultValue={treshold} onChange={setTreshold} />
+      <Slider
+        min={-100}
+        max={0}
+        defaultValue={treshold}
+        onChange={setTreshold}
+      />
     </div>
   );
 }
