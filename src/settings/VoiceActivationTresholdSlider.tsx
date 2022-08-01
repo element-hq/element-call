@@ -5,7 +5,6 @@ import { useVoiceActivationTreshold } from "./useSetting";
 
 export function VoiceActivationTresholdSlider() {
   const [treshold, setTreshold] = useVoiceActivationTreshold();
-
   return (
     <div style={{ width: 444 }}>
       <Slider
