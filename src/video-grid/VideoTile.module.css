@@ -63,6 +63,14 @@
   background-color: var(--backgrouund-85);
 }
 
+.button {
+  display: none;
+}
+
+.videoTile:hover .button {
+  display: initial;
+}
+
 .button button:hover svg * {
   fill: var(
     --primary-content
