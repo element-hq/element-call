@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { useObjectRef } from "@react-aria/utils";
-import React, { HTMLAttributes, useEffect } from "react";
+import React, { AllHTMLAttributes, useEffect } from "react";
 import { useCallback } from "react";
 import { useState } from "react";
 import { forwardRef } from "react";
@@ -26,16 +26,12 @@ import { Button } from "../button";
 import { ReactComponent as EditIcon } from "../icons/Edit.svg";
 import styles from "./AvatarInputField.module.css";
 
-interface Props extends HTMLAttributes<HTMLInputElement> {
+interface Props extends AllHTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
   avatarUrl: string;
   displayName: string;
   onRemoveAvatar: () => void;
-  //hack because extending from HTMLAttributes<HTMLInputElement> seems to not work
-  name: string;
-
-  className?: string;
 }
 
 export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
