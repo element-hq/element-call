@@ -12,12 +12,14 @@ interface MenuProps<T> extends AriaMenuOptions<T> {
   className?: String;
   onClose?: () => void;
   onAction: (value: Key) => void;
+  label?: string;
 }
 
 export function Menu<T extends object>({
   className,
   onAction,
   onClose,
+  label,
   ...rest
 }: MenuProps<T>) {
   const state = useTreeState<T>({ ...rest, selectionMode: "none" });
