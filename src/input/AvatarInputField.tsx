@@ -29,10 +29,13 @@ import styles from "./AvatarInputField.module.css";
 interface Props extends HTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
-  className: string;
   avatarUrl: string;
   displayName: string;
   onRemoveAvatar: () => void;
+  //hack because extending from HTMLAttributes<HTMLInputElement> seems to not work
+  name: string;
+
+  className?: string;
 }
 
 export const AvatarInputField = forwardRef<HTMLInputElement, Props>(

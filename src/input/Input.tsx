@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { FormEvent, forwardRef, ReactNode } from "react";
+import React, { ChangeEvent, forwardRef, ReactNode } from "react";
 import classNames from "classnames";
 
 import styles from "./Input.module.css";
@@ -63,11 +63,12 @@ interface InputFieldProps {
   // this is a hack. Those variables should be part of `HTMLAttributes<HTMLInputElement> | HTMLAttributes<HTMLTextAreaElement>`
   // but extending from this union type does not work
   name?: string;
+  autoComplete?: string;
   autoCorrect?: string;
   autoCapitalize?: string;
   value?: string;
   placeholder?: string;
-  onChange?: (event: FormEvent) => void;
+  onChange?: (event: ChangeEvent) => void;
 }
 
 export const InputField = forwardRef<

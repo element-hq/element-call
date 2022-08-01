@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { MatrixClient } from "matrix-js-sdk";
 
 import { Button } from "../button";
@@ -47,7 +47,7 @@ export function ProfileModal({ client, ...rest }: Props) {
   }, []);
 
   const onChangeDisplayName = useCallback(
-    (e) => {
+    (e: ChangeEvent<HTMLInputElement>) => {
       setDisplayName(e.target.value);
     },
     [setDisplayName]

@@ -26,7 +26,7 @@ import styles from "./SelectInput.module.css";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
 
 interface Props extends AriaSelectOptions<object> {
-  className: string;
+  className?: string;
 }
 
 export function SelectInput(props: Props) {

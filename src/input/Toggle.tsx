@@ -24,9 +24,9 @@ import { Field } from "./Input";
 interface Props {
   id: string;
   label: string;
-  className: string;
   onChange: (selected: boolean) => void;
   isSelected: boolean;
+  className?: string;
 }
 
 export function Toggle({ id, label, className, onChange, isSelected }: Props) {
