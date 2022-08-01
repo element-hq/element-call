@@ -1,16 +1,26 @@
 import React, { useMemo } from "react";
 import { Item } from "@react-stately/collections";
+import { useLocation } from "react-router-dom";
+
 import { Button, LinkButton } from "./button";
 import { PopoverMenuTrigger } from "./popover/PopoverMenu";
 import { Menu } from "./Menu";
-import { Tooltip, TooltipTrigger } from "./Tooltip";
-import { Avatar } from "./Avatar";
+import { TooltipTrigger } from "./Tooltip";
+import { Avatar, Size } from "./Avatar";
 import { ReactComponent as UserIcon } from "./icons/User.svg";
 import { ReactComponent as LoginIcon } from "./icons/Login.svg";
 import { ReactComponent as LogoutIcon } from "./icons/Logout.svg";
-import styles from "./UserMenu.module.css";
-import { useLocation } from "react-router-dom";
 import { Body } from "./typography/Typography";
+import styles from "./UserMenu.module.css";
+
+interface UserMenuProps {
+  preventNavigation: boolean;
+  isAuthenticated: boolean;
+  isPasswordlessUser: boolean;
+  displayName: string;
+  avatarUrl: string;
+  onAction: (value: string) => void;
+}
 
 export function UserMenu({
   preventNavigation,
@@ -19,7 +29,7 @@ export function UserMenu({
   displayName,
   avatarUrl,
   onAction,
-}) {
+}: UserMenuProps) {
   const location = useLocation();
 
   const items = useMemo(() => {
@@ -62,11 +72,11 @@ export function UserMenu({
 
   return (
     <PopoverMenuTrigger placement="bottom right">
-      <TooltipTrigger placement="bottom left">
+      <TooltipTrigger tooltip={() => "Profile"} placement="bottom left">
         <Button variant="icon" className={styles.userButton}>
           {isAuthenticated && (!isPasswordlessUser || avatarUrl) ? (
             <Avatar
-              size="sm"
+              size={Size.SM}
               className={styles.avatar}
               src={avatarUrl}
               fallback={displayName.slice(0, 1).toUpperCase()}
@@ -75,12 +85,11 @@ export function UserMenu({
             <UserIcon />
           )}
         </Button>
-        {() => "Profile"}
       </TooltipTrigger>
       {(props) => (
         <Menu {...props} label="User menu" onAction={onAction}>
           {items.map(({ key, icon: Icon, label }) => (
-            <Item key={key} textValue={label} className={styles.menuItem}>
+            <Item key={key} textValue={label}>
               <Icon width={24} height={24} className={styles.menuIcon} />
               <Body overflowEllipsis>{label}</Body>
             </Item>

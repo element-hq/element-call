@@ -18,6 +18,7 @@ import React from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
+
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
@@ -31,7 +32,11 @@ import { CrashView } from "./FullScreenView";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
-export default function App({ history }) {
+interface AppProps {
+  history: History;
+}
+
+export default function App({ history }: AppProps) {
   usePageFocusStyle();
 
   const errorPage = <CrashView />;

@@ -27,10 +27,10 @@ import { useModalTriggerState } from "../Modal";
 
 interface RageShakeSubmitOptions {
   description: string;
-  roomId: string;
-  label: string;
+  roomId?: string;
+  label?: string;
   sendLogs: boolean;
-  rageshakeRequestId: string;
+  rageshakeRequestId?: string;
 }
 
 export function useSubmitRageshake(): {
