@@ -8,7 +8,7 @@ import { ProfileModal } from "./profile/ProfileModal";
 import { UserMenu } from "./UserMenu";
 
 interface Props {
-  preventNavigation: boolean;
+  preventNavigation?: boolean;
 }
 
 export function UserMenuContainer({ preventNavigation }: Props) {
