@@ -16,7 +16,9 @@ limitations under the License.
 
 import React, { useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
+import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
+import { MatrixClient } from "matrix-js-sdk";
+
 import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
@@ -26,14 +28,25 @@ import { CallEndedView } from "./CallEndedView";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
-
+declare global {
+  interface Window {
+    groupCall: GroupCall;
+  }
+}
+interface Props {
+  client: MatrixClient;
+  isPasswordlessUser: boolean;
+  isEmbedded: boolean;
+  roomId: string;
+  groupCall: GroupCall;
+}
 export function GroupCallView({
   client,
   isPasswordlessUser,
   isEmbedded,
   roomId,
   groupCall,
-}) {
+}: Props) {
   const {
     state,
     error,
@@ -52,7 +65,6 @@ export function GroupCallView({
     isScreensharing,
     localScreenshareFeed,
     screenshareFeeds,
-    hasLocalParticipant,
     participants,
     unencryptedEventsFromUsers,
   } = useGroupCall(groupCall);
@@ -80,7 +92,7 @@ export function GroupCallView({
     if (!isPasswordlessUser) {
       history.push("/");
     }
-  }, [leave, history]);
+  }, [leave, isPasswordlessUser, history]);
 
   if (error) {
     return <ErrorView error={error} />;
@@ -142,7 +154,6 @@ export function GroupCallView({
         <LobbyView
           client={client}
           groupCall={groupCall}
-          hasLocalParticipant={hasLocalParticipant}
           roomName={groupCall.room.name}
           avatarUrl={avatarUrl}
           state={state}

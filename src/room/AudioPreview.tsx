@@ -15,11 +15,23 @@ limitations under the License.
 */
 
 import React from "react";
-import styles from "./AudioPreview.module.css";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
-import { SelectInput } from "../input/SelectInput";
 import { Item } from "@react-stately/collections";
+
+import styles from "./AudioPreview.module.css";
+import { SelectInput } from "../input/SelectInput";
 import { Body } from "../typography/Typography";
+
+interface Props {
+  state: GroupCallState;
+  roomName: string;
+  audioInput: string;
+  audioInputs: MediaDeviceInfo[];
+  setAudioInput: (deviceId: string) => void;
+  audioOutput: string;
+  audioOutputs: MediaDeviceInfo[];
+  setAudioOutput: (deviceId: string) => void;
+}
 
 export function AudioPreview({
   state,
@@ -30,7 +42,7 @@ export function AudioPreview({
   audioOutput,
   audioOutputs,
   setAudioOutput,
-}) {
+}: Props) {
   return (
     <>
       <h1>{`${roomName} - Walkie-talkie call`}</h1>

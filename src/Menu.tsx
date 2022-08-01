@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { Key, useRef, useState } from "react";
 import { AriaMenuOptions, useMenu, useMenuItem } from "@react-aria/menu";
 import { TreeState, useTreeState } from "@react-stately/tree";
 import { mergeProps } from "@react-aria/utils";
@@ -9,15 +9,17 @@ import { Node } from "@react-types/shared";
 import styles from "./Menu.module.css";
 
 interface MenuProps<T> extends AriaMenuOptions<T> {
-  className: String;
-  onAction: () => void;
-  onClose: () => void;
+  className?: String;
+  onClose?: () => void;
+  onAction: (value: Key) => void;
+  label?: string;
 }
 
 export function Menu<T extends object>({
   className,
   onAction,
   onClose,
+  label,
   ...rest
 }: MenuProps<T>) {
   const state = useTreeState<T>({ ...rest, selectionMode: "none" });
@@ -46,7 +48,7 @@ export function Menu<T extends object>({
 interface MenuItemProps<T> {
   item: Node<T>;
   state: TreeState<T>;
-  onAction: () => void;
+  onAction: (value: Key) => void;
   onClose: () => void;
 }
 

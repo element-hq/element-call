@@ -34,7 +34,7 @@ export const useMediaStream = (
   stream: MediaStream,
   audioOutputDevice: string,
   mute = false,
-  localVolume: number
+  localVolume?: number
 ): RefObject<MediaElement> => {
   const mediaRef = useRef<MediaElement>();
 
@@ -196,7 +196,7 @@ export const useSpatialMediaStream = (
   audioContext: AudioContext,
   audioDestination: AudioNode,
   mute = false,
-  localVolume: number
+  localVolume?: number
 ): [RefObject<Element>, RefObject<MediaElement>] => {
   const tileRef = useRef<Element>();
   const [spatialAudio] = useSpatialAudio();

@@ -32,9 +32,8 @@ import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
 
 interface Props {
-  setShowInspector: boolean;
-  showInspector: boolean;
-  [rest: string]: unknown;
+  isOpen: boolean;
+  onClose: () => void;
 }
 
 export const SettingsModal = (props: Props) => {

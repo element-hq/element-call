@@ -11,7 +11,7 @@ interface Props {
   preventNavigation?: boolean;
 }
 
-export function UserMenuContainer({ preventNavigation }: Props) {
+export function UserMenuContainer({ preventNavigation = false }: Props) {
   const location = useLocation();
   const history = useHistory();
   const { isAuthenticated, isPasswordlessUser, logout, userName, client } =

@@ -14,18 +14,28 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { ReactNode } from "react";
+import { GroupCall, MatrixClient } from "matrix-js-sdk";
+
 import { useLoadGroupCall } from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { usePageTitle } from "../usePageTitle";
+
+interface Props {
+  client: MatrixClient;
+  roomId: string;
+  viaServers: string[];
+  children: (groupCall: GroupCall) => ReactNode;
+  createPtt: boolean;
+}
 
 export function GroupCallLoader({
   client,
   roomId,
   viaServers,
-  createPtt,
   children,
-}) {
+  createPtt,
+}: Props): JSX.Element {
   const { loading, error, groupCall } = useLoadGroupCall(
     client,
     roomId,
@@ -47,5 +57,5 @@ export function GroupCallLoader({
     return <ErrorView error={error} />;
   }
 
-  return children(groupCall);
+  return <>{children(groupCall)}</>;
 }

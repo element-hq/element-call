@@ -22,39 +22,25 @@ import React, {
   useRef,
   createContext,
   useContext,
+  Dispatch,
 } from "react";
-import ReactJson from "react-json-view";
+import ReactJson, { CollapsedFieldProps } from "react-json-view";
 import mermaid from "mermaid";
+import { Item } from "@react-stately/collections";
+import { MatrixEvent, GroupCall, IContent } from "matrix-js-sdk";
+import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
+import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
+import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
+
 import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
-import { Item } from "@react-stately/collections";
 
-function getCallUserId(call) {
-  return call.getOpponentMember()?.userId || call.invitee || null;
+interface InspectorContextState {
+  eventsByUserId?: { [userId: string]: SequenceDiagramMatrixEvent[] };
+  remoteUserIds?: string[];
+  localUserId?: string;
+  localSessionId?: string;
 }
-
-function getCallState(call) {
-  return {
-    id: call.callId,
-    opponentMemberId: getCallUserId(call),
-    state: call.state,
-    direction: call.direction,
-  };
-}
-
-function getHangupCallState(call) {
-  return {
-    ...getCallState(call),
-    hangupReason: call.hangupReason,
-  };
-}
-
-const dateFormatter = new Intl.DateTimeFormat([], {
-  hour: "2-digit",
-  minute: "2-digit",
-  second: "2-digit",
-  fractionalSecondDigits: 3,
-});
 
 const defaultCollapsedFields = [
   "org.matrix.msc3401.call",
@@ -67,19 +53,19 @@ const defaultCollapsedFields = [
   "content",
 ];
 
-function shouldCollapse({ name, src, type, namespace }) {
+function shouldCollapse({ name }: CollapsedFieldProps) {
   return defaultCollapsedFields.includes(name);
 }
 
-function getUserName(userId) {
-  const match = userId.match(/@([^\:]+):/);
+function getUserName(userId: string) {
+  const match = userId.match(/@([^:]+):/);
 
   return match && match.length > 0
     ? match[1].replace("-", " ").replace(/\W/g, "")
     : userId.replace(/\W/g, "");
 }
 
-function formatContent(type, content) {
+function formatContent(type: string, content: CallEventContent) {
   if (type === "m.call.hangup") {
     return `callId: ${content.call_id.slice(-4)} reason: ${
       content.reason
@@ -109,19 +95,69 @@ function formatContent(type, content) {
   }
 }
 
-function formatTimestamp(timestamp) {
+const dateFormatter = new Intl.DateTimeFormat([], {
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore the linter does not know about this property of the DataTimeFormatOptions
+  fractionalSecondDigits: 3,
+});
+
+function formatTimestamp(timestamp: number | Date) {
   return dateFormatter.format(timestamp);
 }
 
-export const InspectorContext = createContext();
+export const InspectorContext =
+  createContext<
+    [
+      InspectorContextState,
+      React.Dispatch<React.SetStateAction<InspectorContextState>>
+    ]
+  >(undefined);
 
-export function InspectorContextProvider({ children }) {
-  const context = useState({});
+export function InspectorContextProvider({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  // The context will be initialized empty.
+  // It is then set from within GroupCallInspector.
+  const context = useState<InspectorContextState>({});
   return (
     <InspectorContext.Provider value={context}>
       {children}
     </InspectorContext.Provider>
   );
+}
+
+type CallEventContent = {
+  ["m.calls"]: {
+    ["m.devices"]: { session_id: string; [x: string]: unknown }[];
+    ["m.call_id"]: string;
+  }[];
+} & {
+  call_id: string;
+  reason: string;
+  sender_session_id: string;
+  dest_session_id: string;
+} & IContent;
+
+export type SequenceDiagramMatrixEvent = {
+  to: string;
+  from: string;
+  timestamp: number;
+  type: string;
+  content: CallEventContent;
+  ignored: boolean;
+};
+
+interface SequenceDiagramViewerProps {
+  localUserId: string;
+  remoteUserIds: string[];
+  selectedUserId: string;
+  onSelectUserId: Dispatch<(prevState: undefined) => undefined>;
+  events: SequenceDiagramMatrixEvent[];
 }
 
 export function SequenceDiagramViewer({
@@ -130,8 +166,8 @@ export function SequenceDiagramViewer({
   selectedUserId,
   onSelectUserId,
   events,
-}) {
-  const mermaidElRef = useRef();
+}: SequenceDiagramViewerProps) {
+  const mermaidElRef = useRef<HTMLDivElement>();
 
   useEffect(() => {
     mermaid.initialize({
@@ -165,7 +201,7 @@ export function SequenceDiagramViewer({
       }
     `;
 
-    mermaid.mermaidAPI.render("mermaid", graphDefinition, (svgCode) => {
+    mermaid.mermaidAPI.render("mermaid", graphDefinition, (svgCode: string) => {
       mermaidElRef.current.innerHTML = svgCode;
     });
   }, [events, localUserId, selectedUserId]);
@@ -190,9 +226,17 @@ export function SequenceDiagramViewer({
   );
 }
 
-function reducer(state, action) {
+function reducer(
+  state: InspectorContextState,
+  action: {
+    type?: CallEvent | ClientEvent | RoomStateEvent;
+    event: MatrixEvent;
+    callStateEvent?: MatrixEvent;
+    memberStateEvents?: MatrixEvent[];
+  }
+) {
   switch (action.type) {
-    case "receive_room_state_event": {
+    case RoomStateEvent.Events: {
       const { event, callStateEvent, memberStateEvents } = action;
 
       let eventsByUserId = state.eventsByUserId;
@@ -247,12 +291,12 @@ function reducer(state, action) {
         ),
       };
     }
-    case "received_voip_event": {
+    case ClientEvent.ReceivedVoipEvent: {
       const event = action.event;
       const eventsByUserId = { ...state.eventsByUserId };
       const fromId = event.getSender();
       const toId = state.localUserId;
-      const content = event.getContent();
+      const content = event.getContent<CallEventContent>();
 
       const remoteUserIds = eventsByUserId[fromId]
         ? state.remoteUserIds
@@ -272,11 +316,11 @@ function reducer(state, action) {
 
       return { ...state, eventsByUserId, remoteUserIds };
     }
-    case "send_voip_event": {
+    case CallEvent.SendVoipEvent: {
       const event = action.event;
       const eventsByUserId = { ...state.eventsByUserId };
       const fromId = state.localUserId;
-      const toId = event.userId;
+      const toId = event.target.userId; // was .user
 
       const remoteUserIds = eventsByUserId[toId]
         ? state.remoteUserIds
@@ -287,8 +331,8 @@ function reducer(state, action) {
         {
           from: fromId,
           to: toId,
-          type: event.eventType,
-          content: event.content,
+          type: event.getType(),
+          content: event.getContent(),
           timestamp: Date.now(),
           ignored: false,
         },
@@ -301,7 +345,11 @@ function reducer(state, action) {
   }
 }
 
-function useGroupCallState(client, groupCall, pollCallStats) {
+function useGroupCallState(
+  client: MatrixClient,
+  groupCall: GroupCall,
+  showPollCallStats: boolean
+) {
   const [state, dispatch] = useReducer(reducer, {
     localUserId: client.getUserId(),
     localSessionId: client.getSessionId(),
@@ -312,7 +360,7 @@ function useGroupCallState(client, groupCall, pollCallStats) {
   });
 
   useEffect(() => {
-    function onUpdateRoomState(event) {
+    function onUpdateRoomState(event?: MatrixEvent) {
       const callStateEvent = groupCall.room.currentState.getStateEvents(
         "org.matrix.msc3401.call",
         groupCall.groupCallId
@@ -323,120 +371,60 @@ function useGroupCallState(client, groupCall, pollCallStats) {
       );
 
       dispatch({
-        type: "receive_room_state_event",
+        type: RoomStateEvent.Events,
         event,
         callStateEvent,
         memberStateEvents,
       });
     }
 
-    // function onCallsChanged() {
-    //   const calls = groupCall.calls.reduce((obj, call) => {
-    //     obj[
-    //       `${call.callId} (${call.getOpponentMember()?.userId || call.sender})`
-    //     ] = getCallState(call);
-    //     return obj;
-    //   }, {});
-
-    //   updateState({ calls });
-    // }
-
-    // function onCallHangup(call) {
-    //   setState(({ hangupCalls, ...rest }) => ({
-    //     ...rest,
-    //     hangupCalls: {
-    //       ...hangupCalls,
-    //       [`${call.callId} (${
-    //         call.getOpponentMember()?.userId || call.sender
-    //       })`]: getHangupCallState(call),
-    //     },
-    //   }));
-    //   dispatch({ type: "call_hangup", call });
-    // }
-
-    function onReceivedVoipEvent(event) {
-      dispatch({ type: "received_voip_event", event });
+    function onReceivedVoipEvent(event: MatrixEvent) {
+      dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
     }
 
-    function onSendVoipEvent(event) {
-      dispatch({ type: "send_voip_event", event });
+    function onSendVoipEvent(event: MatrixEvent) {
+      dispatch({ type: CallEvent.SendVoipEvent, event });
     }
-
-    client.on("RoomState.events", onUpdateRoomState);
+    client.on(RoomStateEvent.Events, onUpdateRoomState);
     //groupCall.on("calls_changed", onCallsChanged);
-    groupCall.on("send_voip_event", onSendVoipEvent);
+    groupCall.on(CallEvent.SendVoipEvent, onSendVoipEvent);
     //client.on("state", onCallsChanged);
     //client.on("hangup", onCallHangup);
-    client.on("received_voip_event", onReceivedVoipEvent);
+    client.on(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
 
     onUpdateRoomState();
 
     return () => {
-      client.removeListener("RoomState.events", onUpdateRoomState);
+      client.removeListener(RoomStateEvent.Events, onUpdateRoomState);
       //groupCall.removeListener("calls_changed", onCallsChanged);
-      groupCall.removeListener("send_voip_event", onSendVoipEvent);
+      groupCall.removeListener(CallEvent.SendVoipEvent, onSendVoipEvent);
       //client.removeListener("state", onCallsChanged);
       //client.removeListener("hangup", onCallHangup);
-      client.removeListener("received_voip_event", onReceivedVoipEvent);
+      client.removeListener(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
     };
   }, [client, groupCall]);
 
-  // useEffect(() => {
-  //   let timeout;
-
-  //   async function updateCallStats() {
-  //     const callIds = groupCall.calls.map(
-  //       (call) =>
-  //         `${call.callId} (${call.getOpponentMember()?.userId || call.sender})`
-  //     );
-  //     const stats = await Promise.all(
-  //       groupCall.calls.map((call) =>
-  //         call.peerConn
-  //           ? call.peerConn
-  //               .getStats(null)
-  //               .then((stats) =>
-  //                 Object.fromEntries(
-  //                   Array.from(stats).map(([_id, report], i) => [
-  //                     report.type + i,
-  //                     report,
-  //                   ])
-  //                 )
-  //               )
-  //           : Promise.resolve(null)
-  //       )
-  //     );
-
-  //     const callStats = {};
-
-  //     for (let i = 0; i < groupCall.calls.length; i++) {
-  //       callStats[callIds[i]] = stats[i];
-  //     }
-
-  //     dispatch({ type: "callStats", callStats });
-  //     timeout = setTimeout(updateCallStats, 1000);
-  //   }
-
-  //   if (pollCallStats) {
-  //     updateCallStats();
-  //   }
-
-  //   return () => {
-  //     clearTimeout(timeout);
-  //   };
-  // }, [pollCallStats]);
-
   return state;
 }
-
-export function GroupCallInspector({ client, groupCall, show }) {
+interface GroupCallInspectorProps {
+  client: MatrixClient;
+  groupCall: GroupCall;
+  show: boolean;
+}
+export function GroupCallInspector({
+  client,
+  groupCall,
+  show,
+}: GroupCallInspectorProps) {
   const [currentTab, setCurrentTab] = useState("sequence-diagrams");
-  const [selectedUserId, setSelectedUserId] = useState();
+  const [selectedUserId, setSelectedUserId] = useState<string>();
   const state = useGroupCallState(client, groupCall, show);
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setState] = useContext(InspectorContext);
 
   useEffect(() => {
-    setState({ json: state });
+    setState(state);
   }, [setState, state]);
 
   if (!show) {
@@ -446,7 +434,7 @@ export function GroupCallInspector({ client, groupCall, show }) {
   return (
     <Resizable
       enable={{ top: true }}
-      defaultSize={{ height: 200 }}
+      defaultSize={{ height: 200, width: undefined }}
       className={styles.inspector}
     >
       <div className={styles.toolbar}>

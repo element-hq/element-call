@@ -16,11 +16,11 @@ limitations under the License.
 
 import React, { useEffect, useState } from "react";
 
-function leftPad(value) {
-  return value < 10 ? "0" + value : value;
+function leftPad(value: number): string {
+  return value < 10 ? "0" + value : "" + value;
 }
 
-function formatTime(msElapsed) {
+function formatTime(msElapsed: number): string {
   const secondsElapsed = msElapsed / 1000;
   const hours = Math.floor(secondsElapsed / 3600);
   const minutes = Math.floor(secondsElapsed / 60) - hours * 60;
@@ -28,15 +28,15 @@ function formatTime(msElapsed) {
   return `${leftPad(hours)}:${leftPad(minutes)}:${leftPad(seconds)}`;
 }
 
-export function Timer({ value }) {
-  const [timestamp, setTimestamp] = useState();
+export function Timer({ value }: { value: string }) {
+  const [timestamp, setTimestamp] = useState<string>();
 
   useEffect(() => {
     const startTimeMs = performance.now();
 
-    let animationFrame;
+    let animationFrame: number;
 
-    function onUpdate(curTimeMs) {
+    function onUpdate(curTimeMs: number) {
       const msElapsed = curTimeMs - startTimeMs;
       setTimestamp(formatTime(msElapsed));
       animationFrame = requestAnimationFrame(onUpdate);
