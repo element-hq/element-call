@@ -25,8 +25,8 @@ import styles from "./Popover.module.css";
 interface Props extends HTMLAttributes<HTMLDivElement> {
   isOpen: boolean;
   onClose: () => void;
-  className: string;
-  children: JSX.Element;
+  className?: string;
+  children?: JSX.Element;
 }
 
 export const Popover = forwardRef<HTMLDivElement, Props>(
