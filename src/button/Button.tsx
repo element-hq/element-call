@@ -30,7 +30,7 @@ import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
 import { TooltipTrigger } from "../Tooltip";
-import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
+import { VolumeIcon } from "./VolumeIcon";
 
 export type ButtonVariant =
   | "default"
@@ -239,11 +239,18 @@ export function InviteButton({
   );
 }
 
-export function AudioButton(props: Omit<Props, "variant">) {
+interface AudioButtonProps extends Omit<Props, "variant"> {
+  /**
+   * A number between 0 and 1
+   */
+  volume: number;
+}
+
+export function AudioButton({ volume, ...rest }: AudioButtonProps) {
   return (
     <TooltipTrigger tooltip={() => "Local volume"}>
-      <Button variant="icon" {...props}>
-        <AudioIcon />
+      <Button variant="icon" {...rest}>
+        <VolumeIcon volume={volume} />
       </Button>
     </TooltipTrigger>
   );
