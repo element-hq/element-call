@@ -67,6 +67,19 @@
   display: none;
 }
 
+.videoTile:not(.isLocal):hover::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: calc(
+    16px + 20px + 16px
+  ); /* top padding + button size + buttom padding */
+  background-image: linear-gradient(to bottom, var(--background), transparent);
+  opacity: 0.8;
+}
+
 .videoTile:hover .button {
   display: initial;
 }
