@@ -76,8 +76,7 @@
   height: calc(
     16px + 20px + 16px
   ); /* top padding + button size + buttom padding */
-  background-image: linear-gradient(to bottom, var(--background), transparent);
-  opacity: 0.8;
+  background-color: var(--background-85);
 }
 
 .videoTile:hover .button {
