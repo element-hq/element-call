@@ -231,7 +231,7 @@ function reducer(
   action: {
     type?: CallEvent | ClientEvent | RoomStateEvent;
     event?: MatrixEvent;
-    rawEvent?: object;
+    rawEvent?: Record<string, unknown>;
     callStateEvent?: MatrixEvent;
     memberStateEvents?: MatrixEvent[];
   }
@@ -321,7 +321,7 @@ function reducer(
       const event = action.rawEvent;
       const eventsByUserId = { ...state.eventsByUserId };
       const fromId = state.localUserId;
-      const toId = event.userId;
+      const toId = event.userId as string;
 
       const remoteUserIds = eventsByUserId[toId]
         ? state.remoteUserIds
@@ -332,8 +332,8 @@ function reducer(
         {
           from: fromId,
           to: toId,
-          type: event.eventType,
-          content: event.content,
+          type: event.eventType as string,
+          content: event.content as CallEventContent,
           timestamp: Date.now(),
           ignored: false,
         },
@@ -383,7 +383,7 @@ function useGroupCallState(
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
     }
 
-    function onSendVoipEvent(event: object) {
+    function onSendVoipEvent(event: Record<string, unknown>) {
       dispatch({ type: CallEvent.SendVoipEvent, rawEvent: event });
     }
     client.on(RoomStateEvent.Events, onUpdateRoomState);
