@@ -30,6 +30,6 @@ interface Props {
 
 export function VolumeIcon({ volume }: Props) {
   if (volume <= 0) return <AudioMuted />;
-  if (volume <= 0.75) return <AudioLow />;
+  if (volume <= 0.5) return <AudioLow />;
   return <Audio />;
 }
