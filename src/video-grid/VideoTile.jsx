@@ -38,6 +38,7 @@ export const VideoTile = forwardRef(
       mediaRef,
       onOptionsPress,
       showOptions,
+      localVolume,
       ...rest
     },
     ref
@@ -86,7 +87,7 @@ export const VideoTile = forwardRef(
               styles.audioButton
             )}
           >
-            <AudioButton onPress={onOptionsPress} />
+            <AudioButton volume={localVolume} onPress={onOptionsPress} />
           </div>
         )}
         <video ref={mediaRef} playsInline disablePictureInPicture />
