@@ -230,7 +230,8 @@ function reducer(
   state: InspectorContextState,
   action: {
     type?: CallEvent | ClientEvent | RoomStateEvent;
-    event: MatrixEvent;
+    event?: MatrixEvent;
+    rawEvent?: Record<string, unknown>;
     callStateEvent?: MatrixEvent;
     memberStateEvents?: MatrixEvent[];
   }
@@ -317,10 +318,10 @@ function reducer(
       return { ...state, eventsByUserId, remoteUserIds };
     }
     case CallEvent.SendVoipEvent: {
-      const event = action.event;
+      const event = action.rawEvent;
       const eventsByUserId = { ...state.eventsByUserId };
       const fromId = state.localUserId;
-      const toId = event.target.userId; // was .user
+      const toId = event.userId as string;
 
       const remoteUserIds = eventsByUserId[toId]
         ? state.remoteUserIds
@@ -331,8 +332,8 @@ function reducer(
         {
           from: fromId,
           to: toId,
-          type: event.getType(),
-          content: event.getContent(),
+          type: event.eventType as string,
+          content: event.content as CallEventContent,
           timestamp: Date.now(),
           ignored: false,
         },
@@ -382,8 +383,8 @@ function useGroupCallState(
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
     }
 
-    function onSendVoipEvent(event: MatrixEvent) {
-      dispatch({ type: CallEvent.SendVoipEvent, event });
+    function onSendVoipEvent(event: Record<string, unknown>) {
+      dispatch({ type: CallEvent.SendVoipEvent, rawEvent: event });
     }
     client.on(RoomStateEvent.Events, onUpdateRoomState);
     //groupCall.on("calls_changed", onCallsChanged);
