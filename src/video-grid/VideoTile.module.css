@@ -67,7 +67,7 @@
   display: none;
 }
 
-.videoTile:not(.isLocal):hover::after {
+.videoTile:not(.isLocal):hover::before {
   content: "";
   position: absolute;
   top: 0;
