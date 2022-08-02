@@ -241,8 +241,8 @@ export function InviteButton({
 
 export function AudioButton(props: Omit<Props, "variant">) {
   return (
-    <TooltipTrigger tooltip={() => "Options"}>
-      <Button variant="icon" {...props} tooltip={() => "Local volume"}>
+    <TooltipTrigger tooltip={() => "Local volume"}>
+      <Button variant="icon" {...props}>
         <AudioIcon />
       </Button>
     </TooltipTrigger>
