@@ -80,7 +80,11 @@
 }
 
 .videoTile:not(.isLocal):not(:hover) .toolbar {
-  //display: none;
+  display: none;
+}
+
+.videoTile:not(.isLocal):hover .presenterLabel {
+  top: calc(42px + 20px); /* toolbar + margin */
 }
 
 .button {
@@ -129,9 +133,7 @@
 
 .presenterLabel {
   position: absolute;
-  top: calc(
-    16px + 20px + 16px + 20px
-  ); /* top padding + button size + buttom padding + top padding */
+  top: 20px;
   left: 50%;
   transform: translateX(-50%);
   background-color: #17191c;
