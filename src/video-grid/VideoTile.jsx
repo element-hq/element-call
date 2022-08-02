@@ -54,6 +54,15 @@ export const VideoTile = forwardRef(
         ref={ref}
         {...rest}
       >
+        {showOptions && (
+          <div className={classNames(styles.toolbar)}>
+            <AudioButton
+              className={styles.button}
+              volume={localVolume}
+              onPress={onOptionsPress}
+            />
+          </div>
+        )}
         {(videoMuted || noVideo) && (
           <>
             <div className={styles.videoMutedOverlay} />
@@ -66,30 +75,14 @@ export const VideoTile = forwardRef(
           </div>
         ) : (
           (showName || audioMuted || (videoMuted && !noVideo)) && (
-            <div
-              className={classNames(
-                styles.infoBubble,
-                styles.memberName,
-                styles.infoBubbleIcon
-              )}
-            >
+            <div className={classNames(styles.infoBubble, styles.memberName)}>
               {audioMuted && !(videoMuted && !noVideo) && <MicMutedIcon />}
               {videoMuted && !noVideo && <VideoMutedIcon />}
               {showName && <span title={name}>{name}</span>}
             </div>
           )
         )}
-        {showOptions && (
-          <div
-            className={classNames(
-              styles.infoBubble,
-              styles.button,
-              styles.audioButton
-            )}
-          >
-            <AudioButton volume={localVolume} onPress={onOptionsPress} />
-          </div>
-        )}
+
         <video ref={mediaRef} playsInline disablePictureInPicture />
       </animated.div>
     );

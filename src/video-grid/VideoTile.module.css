@@ -49,6 +49,7 @@
   height: 24px;
   padding: 0 8px;
   color: var(--primary-content);
+  background-color: var(--background-85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -59,38 +60,36 @@
   z-index: 1;
 }
 
-.infoBubbleIcon {
-  background-color: var(--background-85);
-}
-
-.button {
-  display: none;
-}
-
-.videoTile:not(.isLocal):hover::before {
-  content: "";
+.toolbar {
   position: absolute;
   top: 0;
   left: 0;
+
   width: 100%;
-  height: calc(
-    16px + 20px + 16px
-  ); /* top padding + button size + buttom padding */
+  height: 42px;
+
+  color: var(--primary-content);
   background-color: var(--background-85);
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  overflow: hidden;
+  z-index: 1;
 }
 
-.videoTile:hover .button {
-  display: initial;
+.videoTile:not(.isLocal):not(:hover) .toolbar {
+  //display: none;
 }
 
-.button button svg {
-  height: 20px;
-  width: 20px;
+.button {
+  margin-right: 16px;
 }
 
-.audioButton {
-  right: 16px;
-  top: 16px;
+.button svg {
+  width: 16px;
+  height: 16px;
 }
 
 .memberName {
@@ -130,7 +129,9 @@
 
 .presenterLabel {
   position: absolute;
-  top: 20px;
+  top: calc(
+    16px + 20px + 16px + 20px
+  ); /* top padding + button size + buttom padding + top padding */
   left: 50%;
   transform: translateX(-50%);
   background-color: #17191c;
