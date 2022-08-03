@@ -148,6 +148,8 @@ export async function initClient(
     // so we don't want API calls taking ages, we'd rather they just fail.
     localTimeoutMs: 5000,
     useE2eForGroupCall: enableE2e,
+    localSfu: "@sfu:call.ems.host",
+    localSfuDeviceId: "YNZDLSEQMP",
   });
 
   try {
