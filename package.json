@@ -2,7 +2,7 @@
   "version": "0.0.0",
   "scripts": {
     "dev": "vite",
-    "build": "vite build && cp ./config/netlify_redirects ./dist/",
+    "build": "vite build && cp ./config/netlify_redirects ./dist/_redirects",
     "serve": "vite preview",
     "storybook": "start-storybook -p 6006",
     "build-storybook": "build-storybook",
