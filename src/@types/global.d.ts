@@ -24,7 +24,7 @@ declare global {
 
   // TypeScript doesn't know about the experimental setSinkId method, so we
   // declare it ourselves
-  interface MediaElement extends HTMLMediaElement {
+  interface MediaElement extends HTMLVideoElement {
     setSinkId: (id: string) => void;
   }
 }

@@ -24,6 +24,7 @@ import React, {
   useMemo,
   useContext,
   createContext,
+  ReactNode,
 } from "react";
 
 export interface MediaHandlerContextInterface {
@@ -73,7 +74,7 @@ function updateMediaPreferences(newPreferences: MediaPreferences): void {
 }
 interface Props {
   client: MatrixClient;
-  children: JSX.Element[];
+  children: ReactNode;
 }
 export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
   const [

@@ -82,6 +82,7 @@ export function VideoTileContainer({
         avatar={getAvatar && getAvatar(member, width, height)}
         onOptionsPress={onOptionsPress}
         showOptions={!item.callFeed.isLocal()}
+        localVolume={localVolume}
         {...rest}
       />
       {videoTileSettingsModalState.isOpen && (
