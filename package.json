@@ -39,7 +39,7 @@
     "color-hash": "^2.0.1",
     "events": "^3.3.0",
     "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#8ba2d257ae24bbed61cd7fe99af081324337161c",
-    "matrix-widget-api": "^0.1.0-beta.18",
+    "matrix-widget-api": "^1.0.0",
     "mermaid": "^8.13.8",
     "normalize.css": "^8.0.1",
     "pako": "^2.0.4",
