@@ -84,6 +84,10 @@ if (import.meta.env.VITE_CUSTOM_THEME) {
     "--background",
     import.meta.env.VITE_THEME_BACKGROUND as string
   );
+  style.setProperty(
+    "--background-85",
+    import.meta.env.VITE_THEME_BACKGROUND_85 as string
+  );
 }
 
 const history = createBrowserHistory();

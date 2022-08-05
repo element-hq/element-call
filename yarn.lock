@@ -8397,7 +8397,6 @@ matrix-events-sdk@^0.0.1-beta.7:
   resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8ba2d257ae24bbed61cd7fe99af081324337161c"
   dependencies:
     "@babel/runtime" "^7.12.5"
-    "@types/sdp-transform" "^2.4.5"
     another-json "^0.2.0"
     browser-request "^0.3.3"
     bs58 "^4.0.1"
@@ -8407,13 +8406,12 @@ matrix-events-sdk@^0.0.1-beta.7:
     p-retry "^4.5.0"
     qs "^6.9.6"
     request "^2.88.2"
-    sdp-transform "^2.14.1"
     unhomoglyph "^1.0.6"
 
-matrix-widget-api@^0.1.0-beta.18:
-  version "0.1.0-beta.18"
-  resolved "https://registry.yarnpkg.com/matrix-widget-api/-/matrix-widget-api-0.1.0-beta.18.tgz#4efd30edec3eeb4211285985464c062fcab59795"
-  integrity sha512-kCpcs6rrB94Mmr2/1gBJ+6auWyZ5UvOMOn5K2VFafz2/NDMzZg9OVWj9KFYnNAuwwBE5/tCztYEj6OQ+hgbwOQ==
+matrix-widget-api@^1.0.0:
+  version "1.0.0"
+  resolved "https://registry.yarnpkg.com/matrix-widget-api/-/matrix-widget-api-1.0.0.tgz#0cde6839cca66ad817ab12aca3490ccc8bac97d1"
+  integrity sha512-cy8p/8EteRPTFIAw7Q9EgPUJc2jD19ZahMR8bMKf2NkILDcjuPMC0UWnsJyB3fSnlGw+VbGepttRpULM31zX8Q==
   dependencies:
     "@types/events" "^3.0.0"
     events "^3.2.0"
