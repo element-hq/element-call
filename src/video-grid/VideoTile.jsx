@@ -20,7 +20,7 @@ import classNames from "classnames";
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
-import { AudioButton } from "../button/Button";
+import { AudioButton, FullscreenButton } from "../button/Button";
 
 export const VideoTile = forwardRef(
   (
@@ -39,6 +39,8 @@ export const VideoTile = forwardRef(
       onOptionsPress,
       showOptions,
       localVolume,
+      isFullscreen,
+      onFullscreen,
       ...rest
     },
     ref
@@ -50,17 +52,27 @@ export const VideoTile = forwardRef(
           [styles.speaking]: speaking,
           [styles.muted]: audioMuted,
           [styles.screenshare]: screenshare,
+          [styles.fullscreen]: isFullscreen,
         })}
         ref={ref}
         {...rest}
       >
-        {showOptions && (
+        {(!isLocal || screenshare) && (
           <div className={classNames(styles.toolbar)}>
-            <AudioButton
-              className={styles.button}
-              volume={localVolume}
-              onPress={onOptionsPress}
-            />
+            {!isLocal && (
+              <AudioButton
+                className={styles.button}
+                volume={localVolume}
+                onPress={onOptionsPress}
+              />
+            )}
+            {screenshare && (
+              <FullscreenButton
+                className={styles.button}
+                fullscreen={isFullscreen}
+                onPress={onFullscreen}
+              />
+            )}
           </div>
         )}
         {(videoMuted || noVideo) && (
