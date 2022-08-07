@@ -26,7 +26,11 @@ interface FieldRowProps {
   className?: string;
 }
 
-export function FieldRow({ children, rightAlign, className }: FieldRowProps) {
+export function FieldRow({
+  children,
+  rightAlign,
+  className,
+}: FieldRowProps): JSX.Element {
   return (
     <div
       className={classNames(
@@ -45,7 +49,7 @@ interface FieldProps {
   className?: string;
 }
 
-export function Field({ children, className }: FieldProps) {
+export function Field({ children, className }: FieldProps): JSX.Element {
   return <div className={classNames(styles.field, className)}>{children}</div>;
 }
 
@@ -136,6 +140,10 @@ export const InputField = forwardRef<
   }
 );
 
-export function ErrorMessage({ children }: { children: ReactNode }) {
+export function ErrorMessage({
+  children,
+}: {
+  children: ReactNode;
+}): JSX.Element {
   return <p className={styles.errorMessage}>{children}</p>;
 }

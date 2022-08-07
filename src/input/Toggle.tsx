@@ -29,7 +29,13 @@ interface Props {
   className?: string;
 }
 
-export function Toggle({ id, label, className, onChange, isSelected }: Props) {
+export function Toggle({
+  id,
+  label,
+  className,
+  onChange,
+  isSelected,
+}: Props): JSX.Element {
   const buttonRef = useRef<HTMLButtonElement>();
   const toggle = useCallback(() => {
     onChange(!isSelected);

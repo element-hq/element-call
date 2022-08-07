@@ -29,7 +29,7 @@ interface Props extends AriaSelectOptions<object> {
   className?: string;
 }
 
-export function SelectInput(props: Props) {
+export function SelectInput(props: Props): JSX.Element {
   const state = useSelectState(props);
 
   const ref = useRef();
