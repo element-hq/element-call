@@ -88,7 +88,7 @@
   display: none;
 }
 
-.videoTile:not(.fullscreen):hover .presenterLabel,
+.videoTile.screenshare:hover .presenterLabel,
 .videoTile:not(.isLocal):hover .presenterLabel {
   top: calc(42px + 20px); /* toolbar + margin */
 }
