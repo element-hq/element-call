@@ -33,6 +33,8 @@ export function VideoTileContainer({
   audioContext,
   audioDestination,
   disableSpeakingIndicator,
+  isFullscreen,
+  onFullscreen,
   ...rest
 }) {
   const {
@@ -81,8 +83,9 @@ export function VideoTileContainer({
         mediaRef={mediaRef}
         avatar={getAvatar && getAvatar(member, width, height)}
         onOptionsPress={onOptionsPress}
-        showOptions={!item.callFeed.isLocal()}
         localVolume={localVolume}
+        isFullscreen={isFullscreen}
+        onFullscreen={() => onFullscreen(item)}
         {...rest}
       />
       {videoTileSettingsModalState.isOpen && (
