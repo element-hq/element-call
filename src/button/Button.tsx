@@ -29,6 +29,8 @@ import { ReactComponent as ScreenshareIcon } from "../icons/Screenshare.svg";
 import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
+import { ReactComponent as Fullscreen } from "../icons/Fullscreen.svg";
+import { ReactComponent as FullscreenExit } from "../icons/FullscreenExit.svg";
 import { TooltipTrigger } from "../Tooltip";
 import { VolumeIcon } from "./VolumeIcon";
 
@@ -258,6 +260,23 @@ export function AudioButton({ volume, ...rest }: AudioButtonProps) {
     <TooltipTrigger tooltip={() => "Local volume"}>
       <Button variant="icon" {...rest}>
         <VolumeIcon volume={volume} />
+      </Button>
+    </TooltipTrigger>
+  );
+}
+
+interface FullscreenButtonProps extends Omit<Props, "variant"> {
+  fullscreen?: boolean;
+}
+
+export function FullscreenButton({
+  fullscreen,
+  ...rest
+}: FullscreenButtonProps) {
+  return (
+    <TooltipTrigger tooltip={() => "Full screen"}>
+      <Button variant="icon" {...rest}>
+        {fullscreen ? <FullscreenExit /> : <Fullscreen />}
       </Button>
     </TooltipTrigger>
   );
