@@ -9,12 +9,11 @@
 }
 
 .preview video {
-  width: calc(100% + 1px);
+  width: 100%;
   height: 100%;
   object-fit: contain;
   background-color: black;
-  /* transform scale doesn't perfectly match width, so make -1.01 border issues */
-  transform: scaleX(-1.01);
+  transform: scaleX(-1);
 }
 
 .avatarContainer {
