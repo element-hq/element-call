@@ -74,6 +74,7 @@ interface Props {
   roomId: string;
   unencryptedEventsFromUsers: Set<string>;
 }
+
 export interface Participant {
   id: string;
   callFeed: CallFeed;
