@@ -166,7 +166,7 @@ export function InCallView({
     );
   }, []);
 
-  const renderContent = useCallback(() => {
+  const renderContent = useCallback((): JSX.Element => {
     if (items.length === 0) {
       return (
         <div className={styles.centerMessage}>
