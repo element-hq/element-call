@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { Key, useCallback, useState } from "react";
+import React, { useCallback, useState } from "react";
 
 import {
   SequenceDiagramViewer,
@@ -57,7 +57,7 @@ export function SequenceDiagramViewerPage() {
         <SequenceDiagramViewer
           localUserId={debugLog.localUserId}
           selectedUserId={selectedUserId}
-          onSelectUserId={setSelectedUserId as (key: Key) => unknown}
+          onSelectUserId={setSelectedUserId}
           remoteUserIds={debugLog.remoteUserIds}
           events={debugLog.eventsByUserId[selectedUserId]}
         />
