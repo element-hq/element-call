@@ -54,6 +54,12 @@ limitations under the License.
   margin-right: 0px;
 }
 
+.footerFullscreen {
+  position: absolute;
+  width: 100%;
+  bottom: 0;
+}
+
 .avatar {
   position: absolute;
   top: 50%;

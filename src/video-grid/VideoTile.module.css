@@ -40,6 +40,11 @@
   box-shadow: inset 0 0 0 4px var(--accent) !important;
 }
 
+.videoTile.fullscreen {
+  position: relative;
+  border-radius: 0;
+}
+
 .videoTile.screenshare > video {
   object-fit: contain;
 }
@@ -79,10 +84,11 @@
   z-index: 1;
 }
 
-.videoTile:not(.isLocal):not(:hover) .toolbar {
+.videoTile:not(:hover) .toolbar {
   display: none;
 }
 
+.videoTile.screenshare:hover .presenterLabel,
 .videoTile:not(.isLocal):hover .presenterLabel {
   top: calc(42px + 20px); /* toolbar + margin */
 }
