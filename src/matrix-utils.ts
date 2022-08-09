@@ -77,7 +77,16 @@ export async function initMatroskaClient(
   if (!userId) throw new Error("User ID must be supplied");
   if (!deviceId) throw new Error("Device ID must be supplied");
 
-  // These are all the to-device event types the app uses
+  // These are all the event types the app uses
+  const sendState = [
+    { eventType: EventType.GroupCallPrefix },
+    { eventType: EventType.GroupCallMemberPrefix, stateKey: userId },
+  ];
+  const receiveState = [
+    { eventType: EventType.RoomMember },
+    { eventType: EventType.GroupCallPrefix },
+    { eventType: EventType.GroupCallMemberPrefix },
+  ];
   const sendRecvToDevice = [
     EventType.CallInvite,
     EventType.CallCandidates,
@@ -98,15 +107,8 @@ export async function initMatroskaClient(
   const client = createRoomWidgetClient(
     new WidgetApi(widgetId, new URL(parentUrl).origin),
     {
-      sendState: [
-        { eventType: EventType.GroupCallPrefix },
-        { eventType: EventType.GroupCallMemberPrefix, stateKey: userId },
-      ],
-      receiveState: [
-        { eventType: EventType.RoomMember },
-        { eventType: EventType.GroupCallPrefix },
-        { eventType: EventType.GroupCallMemberPrefix },
-      ],
+      sendState,
+      receiveState,
       sendToDevice: sendRecvToDevice,
       receiveToDevice: sendRecvToDevice,
       turnServers: true,
