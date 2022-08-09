@@ -71,7 +71,7 @@ interface Props {
   isScreensharing: boolean;
   screenshareFeeds: CallFeed[];
   localScreenshareFeed: CallFeed;
-  roomId: string;
+  roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
 }
 
@@ -99,7 +99,7 @@ export function InCallView({
   isScreensharing,
   screenshareFeeds,
   localScreenshareFeed,
-  roomId,
+  roomIdOrAlias,
   unencryptedEventsFromUsers,
 }: Props) {
   usePreventScroll();
@@ -260,7 +260,7 @@ export function InCallView({
         {!fullscreenParticipant && (
           <OverflowMenu
             inCall
-            roomId={roomId}
+            roomIdOrAlias={roomIdOrAlias}
             groupCall={groupCall}
             showInvite={true}
             feedbackModalState={feedbackModalState}
@@ -277,7 +277,7 @@ export function InCallView({
       {rageshakeRequestModalState.isOpen && (
         <RageshakeRequestModal
           {...rageshakeRequestModalProps}
-          roomId={roomId}
+          roomIdOrAlias={roomIdOrAlias}
         />
       )}
     </div>

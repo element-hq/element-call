@@ -14,31 +14,30 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { FC } from "react";
 
-import { Modal, ModalContent } from "../Modal";
+import { Modal, ModalContent, ModalProps } from "../Modal";
 import { CopyButton } from "../button";
 import { getRoomUrl } from "../matrix-utils";
 import styles from "./InviteModal.module.css";
 
-export function InviteModal({
-  roomId,
-  ...rest
-}: {
-  roomId: string;
-  [x: string]: unknown;
-}) {
-  return (
-    <Modal
-      title="Invite People"
-      isDismissable
-      className={styles.inviteModal}
-      {...rest}
-    >
-      <ModalContent>
-        <p>Copy and share this meeting link</p>
-        <CopyButton className={styles.copyButton} value={getRoomUrl(roomId)} />
-      </ModalContent>
-    </Modal>
-  );
+interface Props extends Omit<ModalProps, "title" | "children"> {
+  roomIdOrAlias: string;
 }
+
+export const InviteModal: FC<Props> = ({ roomIdOrAlias, ...rest }) => (
+  <Modal
+    title="Invite People"
+    isDismissable
+    className={styles.inviteModal}
+    {...rest}
+  >
+    <ModalContent>
+      <p>Copy and share this meeting link</p>
+      <CopyButton
+        className={styles.copyButton}
+        value={getRoomUrl(roomIdOrAlias)}
+      />
+    </ModalContent>
+  </Modal>
+);

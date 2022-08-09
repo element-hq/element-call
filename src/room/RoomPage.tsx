@@ -1,5 +1,5 @@
 /*
-Copyright 2021 New Vector Ltd
+Copyright 2021-2022 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,33 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useLocation, useParams } from "react-router-dom";
+import React, { FC, useEffect, useState } from "react";
 
 import { useClient } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
 import { GroupCallLoader } from "./GroupCallLoader";
 import { GroupCallView } from "./GroupCallView";
+import { useRoomParams } from "./useRoomParams";
 import { MediaHandlerProvider } from "../settings/useMediaHandler";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 
-export function RoomPage() {
+export const RoomPage: FC = () => {
   const { loading, isAuthenticated, error, client, isPasswordlessUser } =
     useClient();
 
-  const { roomId: maybeRoomId } = useParams();
-  const { hash, search }: { hash: string; search: string } = useLocation();
-  const [viaServers, isEmbedded, isPtt, displayName] = useMemo(() => {
-    const params = new URLSearchParams(search);
-    return [
-      params.getAll("via"),
-      params.has("embed"),
-      params.get("ptt") === "true",
-      params.get("displayName"),
-    ];
-  }, [search]);
-  const roomId = (maybeRoomId || hash || "").toLowerCase();
+  const { roomAlias, roomId, viaServers, isEmbedded, isPtt, displayName } =
+    useRoomParams();
+  const roomIdOrAlias = roomId ?? roomAlias;
+  if (!roomIdOrAlias) throw new Error("No room specified");
+
   const { registerPasswordlessUser } = useRegisterPasswordlessUser();
   const [isRegistering, setIsRegistering] = useState(false);
 
@@ -76,14 +69,14 @@ export function RoomPage() {
     <MediaHandlerProvider client={client}>
       <GroupCallLoader
         client={client}
-        roomId={roomId}
+        roomIdOrAlias={roomIdOrAlias}
         viaServers={viaServers}
         createPtt={isPtt}
       >
         {(groupCall) => (
           <GroupCallView
             client={client}
-            roomId={roomId}
+            roomIdOrAlias={roomIdOrAlias}
             groupCall={groupCall}
             isPasswordlessUser={isPasswordlessUser}
             isEmbedded={isEmbedded}
@@ -92,4 +85,4 @@ export function RoomPage() {
       </GroupCallLoader>
     </MediaHandlerProvider>
   );
-}
+};

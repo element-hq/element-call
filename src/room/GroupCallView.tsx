@@ -37,14 +37,14 @@ interface Props {
   client: MatrixClient;
   isPasswordlessUser: boolean;
   isEmbedded: boolean;
-  roomId: string;
+  roomIdOrAlias: string;
   groupCall: GroupCall;
 }
 export function GroupCallView({
   client,
   isPasswordlessUser,
   isEmbedded,
-  roomId,
+  roomIdOrAlias,
   groupCall,
 }: Props) {
   const {
@@ -101,7 +101,7 @@ export function GroupCallView({
       return (
         <PTTCallView
           client={client}
-          roomId={roomId}
+          roomIdOrAlias={roomIdOrAlias}
           roomName={groupCall.room.name}
           avatarUrl={avatarUrl}
           groupCall={groupCall}
@@ -129,7 +129,7 @@ export function GroupCallView({
           isScreensharing={isScreensharing}
           localScreenshareFeed={localScreenshareFeed}
           screenshareFeeds={screenshareFeeds}
-          roomId={roomId}
+          roomIdOrAlias={roomIdOrAlias}
           unencryptedEventsFromUsers={unencryptedEventsFromUsers}
         />
       );
@@ -164,7 +164,7 @@ export function GroupCallView({
           localVideoMuted={localVideoMuted}
           toggleLocalVideoMuted={toggleLocalVideoMuted}
           toggleMicrophoneMuted={toggleMicrophoneMuted}
-          roomId={roomId}
+          roomIdOrAlias={roomIdOrAlias}
           isEmbedded={isEmbedded}
         />
       );

@@ -32,7 +32,7 @@ import { useModalTriggerState } from "../Modal";
 interface Props {
   client: MatrixClient;
   state: GroupCallState;
-  roomId: string;
+  roomIdOrAlias: string;
   microphoneMuted: boolean;
   localVideoMuted: boolean;
   toggleLocalVideoMuted: () => void;
@@ -43,7 +43,7 @@ interface Props {
 export function VideoPreview({
   client,
   state,
-  roomId,
+  roomIdOrAlias,
   microphoneMuted,
   localVideoMuted,
   toggleLocalVideoMuted,
@@ -93,7 +93,7 @@ export function VideoPreview({
               onPress={toggleLocalVideoMuted}
             />
             <OverflowMenu
-              roomId={roomId}
+              roomIdOrAlias={roomIdOrAlias}
               feedbackModalState={feedbackModalState}
               feedbackModalProps={feedbackModalProps}
               inCall={false}

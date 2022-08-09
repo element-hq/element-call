@@ -37,7 +37,7 @@ import { AriaDialogProps } from "@react-types/dialog";
 import { ReactComponent as CloseIcon } from "./icons/Close.svg";
 import styles from "./Modal.module.css";
 
-interface ModalProps extends OverlayProps, AriaDialogProps {
+export interface ModalProps extends OverlayProps, AriaDialogProps {
   title: string;
   children: ReactNode;
   className?: string;
