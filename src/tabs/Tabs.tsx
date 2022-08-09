@@ -22,14 +22,15 @@ import classNames from "classnames";
 import { AriaTabPanelProps, TabListProps } from "@react-types/tabs";
 import { Node } from "@react-types/shared";
 
-// import {Collection} from
 import styles from "./Tabs.module.css";
 
 interface TabContainerProps<T> extends TabListProps<T> {
   className?: string;
 }
 
-export function TabContainer<T extends object>(props: TabContainerProps<T>) {
+export function TabContainer<T extends object>(
+  props: TabContainerProps<T>
+): JSX.Element {
   const state = useTabListState<T>(props);
   const ref = useRef<HTMLUListElement>();
   const { tabListProps } = useTabList(props, state, ref);
@@ -50,9 +51,9 @@ interface TabProps<T> {
   state: TabListState<T>;
 }
 
-function Tab<T>({ item, state }: TabProps<T>) {
+function Tab<T>({ item, state }: TabProps<T>): JSX.Element {
   const { key, rendered } = item;
-  const ref = useRef();
+  const ref = useRef<HTMLLIElement>();
   const { tabProps } = useTab({ key }, state, ref);
 
   return (
@@ -73,7 +74,7 @@ interface TabPanelProps<T> extends AriaTabPanelProps {
   state: TabListState<T>;
 }
 
-function TabPanel<T>({ state, ...props }: TabPanelProps<T>) {
+function TabPanel<T>({ state, ...props }: TabPanelProps<T>): JSX.Element {
   const ref = useRef<HTMLDivElement>();
   const { tabPanelProps } = useTabPanel(props, state, ref);
   return (

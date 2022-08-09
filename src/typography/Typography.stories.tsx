@@ -25,7 +25,7 @@ export default {
   },
 };
 
-export const Typography = () => (
+export const Typography: React.FC<{}> = () => (
   <>
     <Headline>Headline Semi Bold</Headline>
     <Title>Title</Title>

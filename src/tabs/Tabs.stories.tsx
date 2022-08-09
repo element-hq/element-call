@@ -30,7 +30,7 @@ export default {
   },
 };
 
-export const Tabs = () => (
+export const Tabs: React.FC<{}> = () => (
   <TabContainer>
     <TabItem
       title={

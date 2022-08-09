@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { forwardRef, ReactNode } from "react";
+import { createElement, forwardRef, ReactNode } from "react";
 import classNames from "classnames";
 import { Link as RouterLink } from "react-router-dom";
 
@@ -22,118 +22,178 @@ import styles from "./Typography.module.css";
 
 interface TypographyProps {
   children: ReactNode;
+  fontWeight?: number;
   className?: string;
   overflowEllipsis?: boolean;
-  [index: string]: unknown;
-  fontWeight: number;
+  as?: string;
 }
 
 export const Headline = forwardRef<HTMLHeadingElement, TypographyProps>(
-  ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
-    return (
-      <h1
-        {...rest}
-        className={classNames(
+  (
+    {
+      as: Component = "h1",
+      children,
+      className,
+      fontWeight,
+      overflowEllipsis,
+      ...rest
+    },
+    ref
+  ) => {
+    return createElement(
+      Component,
+      {
+        ...rest,
+        className: classNames(
           styles[fontWeight],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
-        )}
-        ref={ref}
-      >
-        {children}
-      </h1>
+        ),
+        ref,
+      },
+      children
     );
   }
 );
 
 export const Title = forwardRef<HTMLHeadingElement, TypographyProps>(
-  ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
-    return (
-      <h2
-        {...rest}
-        className={classNames(
+  (
+    {
+      as: Component = "h2",
+      children,
+      className,
+      fontWeight,
+      overflowEllipsis,
+      ...rest
+    },
+    ref
+  ) => {
+    return createElement(
+      Component,
+      {
+        ...rest,
+        className: classNames(
           styles[fontWeight],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
-        )}
-        ref={ref}
-      >
-        {children}
-      </h2>
+        ),
+        ref,
+      },
+      children
     );
   }
 );
 
 export const Subtitle = forwardRef<HTMLParagraphElement, TypographyProps>(
-  ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
-    return (
-      <h3
-        {...rest}
-        className={classNames(
+  (
+    {
+      as: Component = "h3",
+      children,
+      className,
+      fontWeight,
+      overflowEllipsis,
+      ...rest
+    },
+    ref
+  ) => {
+    return createElement(
+      Component,
+      {
+        ...rest,
+        className: classNames(
           styles[fontWeight],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
-        )}
-        ref={ref}
-      >
-        {children}
-      </h3>
+        ),
+        ref,
+      },
+      children
     );
   }
 );
 
 export const Body = forwardRef<HTMLParagraphElement, TypographyProps>(
-  ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
-    return (
-      <p
-        {...rest}
-        className={classNames(
+  (
+    {
+      as: Component = "p",
+      children,
+      className,
+      fontWeight,
+      overflowEllipsis,
+      ...rest
+    },
+    ref
+  ) => {
+    return createElement(
+      Component,
+      {
+        ...rest,
+        className: classNames(
           styles[fontWeight],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
-        )}
-        ref={ref}
-      >
-        {children}
-      </p>
+        ),
+        ref,
+      },
+      children
     );
   }
 );
 
 export const Caption = forwardRef<HTMLParagraphElement, TypographyProps>(
-  ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
-    return (
-      <p
-        {...rest}
-        className={classNames(
+  (
+    {
+      as: Component = "p",
+      children,
+      className,
+      fontWeight,
+      overflowEllipsis,
+      ...rest
+    },
+    ref
+  ) => {
+    return createElement(
+      Component,
+      {
+        ...rest,
+        className: classNames(
           styles.caption,
           styles[fontWeight],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
-        )}
-        ref={ref}
-      >
-        {children}
-      </p>
+        ),
+        ref,
+      },
+      children
     );
   }
 );
 
 export const Micro = forwardRef<HTMLParagraphElement, TypographyProps>(
-  ({ children, className, fontWeight, overflowEllipsis, ...rest }, ref) => {
-    return (
-      <p
-        {...rest}
-        className={classNames(
+  (
+    {
+      as: Component = "p",
+      children,
+      className,
+      fontWeight,
+      overflowEllipsis,
+      ...rest
+    },
+    ref
+  ) => {
+    return createElement(
+      Component,
+      {
+        ...rest,
+        className: classNames(
           styles.micro,
           styles[fontWeight],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
-        )}
-        ref={ref}
-      >
-        {children}
-      </p>
+        ),
+        ref,
+      },
+      children
     );
   }
 );
@@ -159,8 +219,8 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
     },
     ref
   ) => {
-    const Component = as || (to ? RouterLink : "a");
-    let externalLinkProps;
+    const Component: string | RouterLink = as || (to ? RouterLink : "a");
+    let externalLinkProps: { href: string; target: string; rel: string };
 
     if (href) {
       externalLinkProps = {
@@ -170,7 +230,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
       };
     }
 
-    return React.createElement(
+    return createElement(
       Component,
       {
         ...externalLinkProps,
