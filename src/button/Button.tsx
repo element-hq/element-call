@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import React, { forwardRef } from "react";
+import React, { forwardRef, useCallback } from "react";
 import { PressEvent } from "@react-types/shared";
 import classNames from "classnames";
 import { useButton } from "@react-aria/button";
@@ -273,8 +273,12 @@ export function FullscreenButton({
   fullscreen,
   ...rest
 }: FullscreenButtonProps) {
+  const getTooltip = useCallback(() => {
+    return fullscreen ? "Exit full screen" : "Full screen";
+  }, [fullscreen]);
+
   return (
-    <TooltipTrigger tooltip={() => "Full screen"}>
+    <TooltipTrigger tooltip={getTooltip}>
       <Button variant="icon" {...rest}>
         {fullscreen ? <FullscreenExit /> : <Fullscreen />}
       </Button>

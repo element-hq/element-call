@@ -74,6 +74,7 @@ interface Props {
   roomId: string;
   unencryptedEventsFromUsers: Set<string>;
 }
+
 export interface Participant {
   id: string;
   callFeed: CallFeed;
@@ -165,7 +166,7 @@ export function InCallView({
     );
   }, []);
 
-  const renderContent = useCallback(() => {
+  const renderContent = useCallback((): JSX.Element => {
     if (items.length === 0) {
       return (
         <div className={styles.centerMessage}>

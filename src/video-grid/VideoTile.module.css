@@ -84,12 +84,11 @@
   z-index: 1;
 }
 
-.videoTile:not(:hover) .toolbar {
-  display: none;
+.toolbar:not(:hover) {
+  opacity: 0;
 }
 
-.videoTile.screenshare:hover .presenterLabel,
-.videoTile:not(.isLocal):hover .presenterLabel {
+.toolbar:hover + .presenterLabel {
   top: calc(42px + 20px); /* toolbar + margin */
 }
 
