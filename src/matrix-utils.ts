@@ -5,14 +5,21 @@ import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
 import { LocalStorageCryptoStore } from "matrix-js-sdk/src/crypto/store/localStorage-crypto-store";
 import { MemoryCryptoStore } from "matrix-js-sdk/src/crypto/store/memory-crypto-store";
-import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
+import {
+  createClient,
+  createRoomWidgetClient,
+  MatrixClient,
+} from "matrix-js-sdk/src/matrix";
 import { ICreateClientOpts } from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
+import { EventType } from "matrix-js-sdk/src/@types/event";
 import { Visibility, Preset } from "matrix-js-sdk/src/@types/partials";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
+import { WidgetApi } from "matrix-widget-api";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import IndexedDBWorker from "./IndexedDBWorker?worker";
+import { getRoomParams } from "./room/useRoomParams";
 
 export const defaultHomeserver =
   (import.meta.env.VITE_DEFAULT_HOMESERVER as string) ??
@@ -53,7 +60,74 @@ function waitForSync(client: MatrixClient) {
 }
 
 /**
- * Initialises and returns a new Matrix Client
+ * Initialises and returns a new widget-API-based Matrix Client.
+ * @param widgetId The ID of the widget that the app is running inside.
+ * @param parentUrl The URL of the parent client.
+ * @returns The MatrixClient instance
+ */
+export async function initMatroskaClient(
+  widgetId: string,
+  parentUrl: string
+): Promise<MatrixClient> {
+  // In this mode, we use a special client which routes all requests through
+  // the host application via the widget API
+
+  const { roomId, userId, deviceId } = getRoomParams();
+  if (!roomId) throw new Error("Room ID must be supplied");
+  if (!userId) throw new Error("User ID must be supplied");
+  if (!deviceId) throw new Error("Device ID must be supplied");
+
+  // These are all the event types the app uses
+  const sendState = [
+    { eventType: EventType.GroupCallPrefix },
+    { eventType: EventType.GroupCallMemberPrefix, stateKey: userId },
+  ];
+  const receiveState = [
+    { eventType: EventType.RoomMember },
+    { eventType: EventType.GroupCallPrefix },
+    { eventType: EventType.GroupCallMemberPrefix },
+  ];
+  const sendRecvToDevice = [
+    EventType.CallInvite,
+    EventType.CallCandidates,
+    EventType.CallAnswer,
+    EventType.CallHangup,
+    EventType.CallReject,
+    EventType.CallSelectAnswer,
+    EventType.CallNegotiate,
+    EventType.CallSDPStreamMetadataChanged,
+    EventType.CallSDPStreamMetadataChangedPrefix,
+    EventType.CallReplaces,
+    "org.matrix.call_duplicate_session",
+  ];
+
+  // Since all data should be coming from the host application, there's no
+  // need to persist anything, and therefore we can use the default stores
+  // We don't even need to set up crypto
+  const client = createRoomWidgetClient(
+    new WidgetApi(widgetId, new URL(parentUrl).origin),
+    {
+      sendState,
+      receiveState,
+      sendToDevice: sendRecvToDevice,
+      receiveToDevice: sendRecvToDevice,
+      turnServers: true,
+    },
+    roomId,
+    {
+      baseUrl: "",
+      userId,
+      deviceId,
+      timelineSupport: true,
+    }
+  );
+
+  await client.startClient();
+  return client;
+}
+
+/**
+ * Initialises and returns a new standalone Matrix Client.
  * If true is passed for the 'restore' parameter, a check will be made
  * to ensure that corresponding crypto data is stored and recovered.
  * If the check fails, CryptoStoreIntegrityError will be thrown.
@@ -127,16 +201,13 @@ export async function initClient(
     storeOpts.cryptoStore = new MemoryCryptoStore();
   }
 
-  // XXX: we read from the URL search params in RoomPage too:
+  // XXX: we read from the room params in RoomPage too:
   // it would be much better to read them in one place and pass
   // the values around, but we initialise the matrix client in
   // many different places so we'd have to pass it into all of
   // them.
-  const params = new URLSearchParams(window.location.search);
-  // disable e2e only if enableE2e=false is given
-  const enableE2e = params.get("enableE2e") !== "false";
-
-  if (!enableE2e) {
+  const { e2eEnabled } = getRoomParams();
+  if (!e2eEnabled) {
     logger.info("Disabling E2E: group call signalling will NOT be encrypted.");
   }
 
@@ -144,10 +215,10 @@ export async function initClient(
     ...storeOpts,
     ...clientOptions,
     useAuthorizationHeader: true,
-    // Use a relatively low timeout for API calls: this is a realtime application
+    // Use a relatively low timeout for API calls: this is a realtime app
     // so we don't want API calls taking ages, we'd rather they just fail.
     localTimeoutMs: 5000,
-    useE2eForGroupCall: enableE2e,
+    useE2eForGroupCall: e2eEnabled,
   });
 
   try {
@@ -254,17 +325,17 @@ export async function createRoom(
   return [fullAliasFromRoomName(name, client), result.room_id];
 }
 
-export function getRoomUrl(roomId: string): string {
-  if (roomId.startsWith("#")) {
-    const [localPart, host] = roomId.replace("#", "").split(":");
+export function getRoomUrl(roomIdOrAlias: string): string {
+  if (roomIdOrAlias.startsWith("#")) {
+    const [localPart, host] = roomIdOrAlias.replace("#", "").split(":");
 
     if (host !== defaultHomeserverHost) {
-      return `${window.location.protocol}//${window.location.host}/room/${roomId}`;
+      return `${window.location.protocol}//${window.location.host}/room/${roomIdOrAlias}`;
     } else {
       return `${window.location.protocol}//${window.location.host}/${localPart}`;
     }
   } else {
-    return `${window.location.protocol}//${window.location.host}/room/${roomId}`;
+    return `${window.location.protocol}//${window.location.host}/room/#?roomId=${roomIdOrAlias}`;
   }
 }
 

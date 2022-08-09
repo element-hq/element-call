@@ -38,6 +38,7 @@ import { usePTTSounds } from "../sound/usePttSounds";
 import { PTTClips } from "../sound/PTTClips";
 import { GroupCallInspector } from "./GroupCallInspector";
 import { OverflowMenu } from "./OverflowMenu";
+import { Size } from "../Avatar";
 
 function getPromptText(
   networkWaiting: boolean,
@@ -86,7 +87,7 @@ function getPromptText(
 
 interface Props {
   client: MatrixClient;
-  roomId: string;
+  roomIdOrAlias: string;
   roomName: string;
   avatarUrl: string;
   groupCall: GroupCall;
@@ -98,7 +99,7 @@ interface Props {
 
 export const PTTCallView: React.FC<Props> = ({
   client,
-  roomId,
+  roomIdOrAlias,
   roomName,
   avatarUrl,
   groupCall,
@@ -112,7 +113,7 @@ export const PTTCallView: React.FC<Props> = ({
   const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
     useModalTriggerState();
   const [containerRef, bounds] = useMeasure({ polyfill: ResizeObserver });
-  const facepileSize = bounds.width < 800 ? "sm" : "md";
+  const facepileSize = bounds.width < 800 ? Size.SM : Size.MD;
   const showControls = bounds.height > 500;
   const pttButtonSize = 232;
 
@@ -204,8 +205,7 @@ export const PTTCallView: React.FC<Props> = ({
             <div className={styles.footer}>
               <OverflowMenu
                 inCall
-                roomId={roomId}
-                client={client}
+                roomIdOrAlias={roomIdOrAlias}
                 groupCall={groupCall}
                 showInvite={false}
                 feedbackModalState={feedbackModalState}
@@ -282,7 +282,7 @@ export const PTTCallView: React.FC<Props> = ({
       </div>
 
       {inviteModalState.isOpen && showControls && (
-        <InviteModal roomId={roomId} {...inviteModalProps} />
+        <InviteModal roomIdOrAlias={roomIdOrAlias} {...inviteModalProps} />
       )}
     </div>
   );

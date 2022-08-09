@@ -17,10 +17,10 @@ limitations under the License.
 import React, { ChangeEvent, useState } from "react";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
-import selectInputStyles from "../input/SelectInput.module.css";
 import { FieldRow } from "../input/Input";
 import { Modal } from "../Modal";
 import styles from "./VideoTileSettingsModal.module.css";
+import { VolumeIcon } from "../button/VolumeIcon";
 
 interface LocalVolumeProps {
   feed: CallFeed;
@@ -39,11 +39,8 @@ const LocalVolume: React.FC<LocalVolumeProps> = ({
 
   return (
     <>
-      <h4 className={selectInputStyles.label}> Local Volume </h4>
       <FieldRow>
-        <span className={styles.localVolumePercentage}>
-          {`${Math.round(localVolume * 100)}%`}
-        </span>
+        <VolumeIcon volume={localVolume} />
         <input
           className={styles.localVolumeSlider}
           type="range"
@@ -65,7 +62,13 @@ interface Props {
 
 export const VideoTileSettingsModal = ({ feed, ...rest }: Props) => {
   return (
-    <Modal title="Feed settings" isDismissable mobileFullScreen {...rest}>
+    <Modal
+      className={styles.videoTileSettingsModal}
+      title="Local volume"
+      isDismissable
+      mobileFullScreen
+      {...rest}
+    >
       <div className={styles.content}>
         <LocalVolume feed={feed} />
       </div>

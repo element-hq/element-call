@@ -40,6 +40,11 @@
   box-shadow: inset 0 0 0 4px var(--accent) !important;
 }
 
+.videoTile.fullscreen {
+  position: relative;
+  border-radius: 0;
+}
+
 .videoTile.screenshare > video {
   object-fit: contain;
 }
@@ -48,8 +53,8 @@
   position: absolute;
   height: 24px;
   padding: 0 8px;
-  color: white;
-  background-color: rgba(23, 25, 28, 0.85);
+  color: var(--primary-content);
+  background-color: var(--background-85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -60,14 +65,40 @@
   z-index: 1;
 }
 
-.optionsButton {
-  right: 16px;
-  top: 16px;
+.toolbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  width: 100%;
+  height: 42px;
+
+  color: var(--primary-content);
+  background-color: var(--background-85);
+
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+
+  overflow: hidden;
+  z-index: 1;
 }
 
-.optionsButton button svg {
-  height: 20px;
-  width: 20px;
+.toolbar:not(:hover) {
+  opacity: 0;
+}
+
+.toolbar:hover + .presenterLabel {
+  top: calc(42px + 20px); /* toolbar + margin */
+}
+
+.button {
+  margin-right: 16px;
+}
+
+.button svg {
+  width: 16px;
+  height: 16px;
 }
 
 .memberName {

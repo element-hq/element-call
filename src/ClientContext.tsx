@@ -26,9 +26,14 @@ import React, {
 import { useHistory } from "react-router-dom";
 import { MatrixClient, ClientEvent } from "matrix-js-sdk/src/client";
 import { MatrixEvent } from "matrix-js-sdk/src/models/event";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { ErrorView } from "./FullScreenView";
-import { initClient, defaultHomeserver } from "./matrix-utils";
+import {
+  initClient,
+  initMatroskaClient,
+  defaultHomeserver,
+} from "./matrix-utils";
 
 declare global {
   interface Window {
@@ -62,6 +67,7 @@ interface ClientState {
   changePassword: (password: string) => Promise<void>;
   logout: () => void;
   setClient: (client: MatrixClient, session: Session) => void;
+  error?: Error;
 }
 
 const ClientContext = createContext<ClientState>(null);
@@ -90,40 +96,55 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   });
 
   useEffect(() => {
-    const restore = async (): Promise<
+    const init = async (): Promise<
       Pick<ClientProviderState, "client" | "isPasswordlessUser">
     > => {
-      try {
-        const session = loadSession();
+      const query = new URLSearchParams(window.location.search);
+      const widgetId = query.get("widgetId");
+      const parentUrl = query.get("parentUrl");
 
-        if (session) {
-          /* eslint-disable camelcase */
-          const { user_id, device_id, access_token, passwordlessUser } =
-            session;
+      if (widgetId && parentUrl) {
+        // We're inside a widget, so let's engage *Matroska mode*
+        logger.log("Using a Matroska client");
 
-          const client = await initClient(
-            {
-              baseUrl: defaultHomeserver,
-              accessToken: access_token,
-              userId: user_id,
-              deviceId: device_id,
-            },
-            true
-          );
-          /* eslint-enable camelcase */
+        return {
+          client: await initMatroskaClient(widgetId, parentUrl),
+          isPasswordlessUser: false,
+        };
+      } else {
+        // We're running as a standalone application
+        try {
+          const session = loadSession();
 
-          return { client, isPasswordlessUser: passwordlessUser };
+          if (session) {
+            /* eslint-disable camelcase */
+            const { user_id, device_id, access_token, passwordlessUser } =
+              session;
+
+            logger.log("Using a standalone client");
+            const client = await initClient(
+              {
+                baseUrl: defaultHomeserver,
+                accessToken: access_token,
+                userId: user_id,
+                deviceId: device_id,
+              },
+              true
+            );
+            /* eslint-enable camelcase */
+
+            return { client, isPasswordlessUser: passwordlessUser };
+          }
+
+          return { client: undefined, isPasswordlessUser: false };
+        } catch (err) {
+          clearSession();
+          throw err;
         }
-
-        return { client: undefined, isPasswordlessUser: false };
-      } catch (err) {
-        console.error(err);
-        clearSession();
-        throw err;
       }
     };
 
-    restore()
+    init()
       .then(({ client, isPasswordlessUser }) => {
         setState({
           client,
@@ -131,15 +152,18 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           isAuthenticated: Boolean(client),
           isPasswordlessUser,
           userName: client?.getUserIdLocalpart(),
+          error: undefined,
         });
       })
-      .catch(() => {
+      .catch((err) => {
+        logger.error(err);
         setState({
           client: undefined,
           loading: false,
           isAuthenticated: false,
           isPasswordlessUser: false,
           userName: null,
+          error: undefined,
         });
       });
   }, []);
@@ -169,6 +193,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         isAuthenticated: true,
         isPasswordlessUser: false,
         userName: client.getUserIdLocalpart(),
+        error: undefined,
       });
     },
     [client]
@@ -189,6 +214,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           isAuthenticated: true,
           isPasswordlessUser: session.passwordlessUser,
           userName: newClient.getUserIdLocalpart(),
+          error: undefined,
         });
       } else {
         clearSession();
@@ -199,6 +225,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           isAuthenticated: false,
           isPasswordlessUser: false,
           userName: null,
+          error: undefined,
         });
       }
     },
@@ -257,6 +284,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       logout,
       userName,
       setClient,
+      error: undefined,
     }),
     [
       loading,

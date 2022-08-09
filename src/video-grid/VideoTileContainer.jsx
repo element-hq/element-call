@@ -22,6 +22,7 @@ import { useRoomMemberName } from "./useRoomMemberName";
 import { VideoTile } from "./VideoTile";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 import { useModalTriggerState } from "../Modal";
+import { useCallback } from "react";
 
 export function VideoTileContainer({
   item,
@@ -33,6 +34,8 @@ export function VideoTileContainer({
   audioContext,
   audioDestination,
   disableSpeakingIndicator,
+  isFullscreen,
+  onFullscreen,
   ...rest
 }) {
   const {
@@ -63,6 +66,10 @@ export function VideoTileContainer({
     videoTileSettingsModalState.open();
   };
 
+  const onFullscreenCallback = useCallback(() => {
+    onFullscreen(item);
+  }, [onFullscreen, item]);
+
   // Firefox doesn't respect the disablePictureInPicture attribute
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
 
@@ -81,7 +88,9 @@ export function VideoTileContainer({
         mediaRef={mediaRef}
         avatar={getAvatar && getAvatar(member, width, height)}
         onOptionsPress={onOptionsPress}
-        showOptions={!item.callFeed.isLocal()}
+        localVolume={localVolume}
+        isFullscreen={isFullscreen}
+        onFullscreen={onFullscreenCallback}
         {...rest}
       />
       {videoTileSettingsModalState.isOpen && (

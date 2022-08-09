@@ -20,7 +20,7 @@ import classNames from "classnames";
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
-import { OptionsButton } from "../button/Button";
+import { AudioButton, FullscreenButton } from "../button/Button";
 
 export const VideoTile = forwardRef(
   (
@@ -38,6 +38,9 @@ export const VideoTile = forwardRef(
       mediaRef,
       onOptionsPress,
       showOptions,
+      localVolume,
+      isFullscreen,
+      onFullscreen,
       ...rest
     },
     ref
@@ -49,10 +52,29 @@ export const VideoTile = forwardRef(
           [styles.speaking]: speaking,
           [styles.muted]: audioMuted,
           [styles.screenshare]: screenshare,
+          [styles.fullscreen]: isFullscreen,
         })}
         ref={ref}
         {...rest}
       >
+        {(!isLocal || screenshare) && (
+          <div className={classNames(styles.toolbar)}>
+            {!isLocal && (
+              <AudioButton
+                className={styles.button}
+                volume={localVolume}
+                onPress={onOptionsPress}
+              />
+            )}
+            {screenshare && (
+              <FullscreenButton
+                className={styles.button}
+                fullscreen={isFullscreen}
+                onPress={onFullscreen}
+              />
+            )}
+          </div>
+        )}
         {(videoMuted || noVideo) && (
           <>
             <div className={styles.videoMutedOverlay} />
@@ -72,11 +94,7 @@ export const VideoTile = forwardRef(
             </div>
           )
         )}
-        {showOptions && (
-          <div className={classNames(styles.infoBubble, styles.optionsButton)}>
-            <OptionsButton onPress={onOptionsPress} />
-          </div>
-        )}
+
         <video ref={mediaRef} playsInline disablePictureInPicture />
       </animated.div>
     );
