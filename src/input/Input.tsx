@@ -14,12 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { forwardRef } from "react";
+import React, { ChangeEvent, forwardRef, ReactNode } from "react";
 import classNames from "classnames";
+
 import styles from "./Input.module.css";
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
 
-export function FieldRow({ children, rightAlign, className, ...rest }) {
+interface FieldRowProps {
+  children: ReactNode;
+  rightAlign?: boolean;
+  className?: string;
+}
+
+export function FieldRow({
+  children,
+  rightAlign,
+  className,
+}: FieldRowProps): JSX.Element {
   return (
     <div
       className={classNames(
@@ -33,11 +44,42 @@ export function FieldRow({ children, rightAlign, className, ...rest }) {
   );
 }
 
-export function Field({ children, className, ...rest }) {
+interface FieldProps {
+  children: ReactNode;
+  className?: string;
+}
+
+export function Field({ children, className }: FieldProps): JSX.Element {
   return <div className={classNames(styles.field, className)}>{children}</div>;
 }
 
-export const InputField = forwardRef(
+interface InputFieldProps {
+  label: string;
+  type: string;
+  prefix?: string;
+  suffix?: string;
+  id?: string;
+  checked?: boolean;
+  className?: string;
+  description?: string;
+  disabled?: boolean;
+  required?: boolean;
+  // this is a hack. Those variables should be part of `HTMLAttributes<HTMLInputElement> | HTMLAttributes<HTMLTextAreaElement>`
+  // but extending from this union type does not work
+  name?: string;
+  autoComplete?: string;
+  autoCorrect?: string;
+  autoCapitalize?: string;
+  value?: string;
+  placeholder?: string;
+  defaultChecked?: boolean;
+  onChange?: (event: ChangeEvent) => void;
+}
+
+export const InputField = forwardRef<
+  HTMLInputElement | HTMLTextAreaElement,
+  InputFieldProps
+>(
   (
     {
       id,
@@ -68,19 +110,18 @@ export const InputField = forwardRef(
         {type === "textarea" ? (
           <textarea
             id={id}
-            {...rest}
-            ref={ref}
-            type={type}
+            ref={ref as React.ForwardedRef<HTMLTextAreaElement>}
             disabled={disabled}
+            {...rest}
           />
         ) : (
           <input
             id={id}
-            {...rest}
-            ref={ref}
+            ref={ref as React.ForwardedRef<HTMLInputElement>}
             type={type}
             checked={checked}
             disabled={disabled}
+            {...rest}
           />
         )}
 
@@ -99,6 +140,10 @@ export const InputField = forwardRef(
   }
 );
 
-export function ErrorMessage({ children }) {
+export function ErrorMessage({
+  children,
+}: {
+  children: ReactNode;
+}): JSX.Element {
   return <p className={styles.errorMessage}>{children}</p>;
 }

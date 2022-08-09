@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import React, { forwardRef } from "react";
+import React, { forwardRef, useCallback } from "react";
 import { PressEvent } from "@react-types/shared";
 import classNames from "classnames";
 import { useButton } from "@react-aria/button";
@@ -29,6 +29,8 @@ import { ReactComponent as ScreenshareIcon } from "../icons/Screenshare.svg";
 import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
+import { ReactComponent as Fullscreen } from "../icons/Fullscreen.svg";
+import { ReactComponent as FullscreenExit } from "../icons/FullscreenExit.svg";
 import { TooltipTrigger } from "../Tooltip";
 import { VolumeIcon } from "./VolumeIcon";
 
@@ -258,6 +260,27 @@ export function AudioButton({ volume, ...rest }: AudioButtonProps) {
     <TooltipTrigger tooltip={() => "Local volume"}>
       <Button variant="icon" {...rest}>
         <VolumeIcon volume={volume} />
+      </Button>
+    </TooltipTrigger>
+  );
+}
+
+interface FullscreenButtonProps extends Omit<Props, "variant"> {
+  fullscreen?: boolean;
+}
+
+export function FullscreenButton({
+  fullscreen,
+  ...rest
+}: FullscreenButtonProps) {
+  const getTooltip = useCallback(() => {
+    return fullscreen ? "Exit full screen" : "Full screen";
+  }, [fullscreen]);
+
+  return (
+    <TooltipTrigger tooltip={getTooltip}>
+      <Button variant="icon" {...rest}>
+        {fullscreen ? <FullscreenExit /> : <Fullscreen />}
       </Button>
     </TooltipTrigger>
   );

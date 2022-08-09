@@ -22,7 +22,6 @@ import React, {
   useRef,
   createContext,
   useContext,
-  Dispatch,
 } from "react";
 import ReactJson, { CollapsedFieldProps } from "react-json-view";
 import mermaid from "mermaid";
@@ -156,7 +155,7 @@ interface SequenceDiagramViewerProps {
   localUserId: string;
   remoteUserIds: string[];
   selectedUserId: string;
-  onSelectUserId: Dispatch<(prevState: undefined) => undefined>;
+  onSelectUserId: (userId: string) => void;
   events: SequenceDiagramMatrixEvent[];
 }
 
