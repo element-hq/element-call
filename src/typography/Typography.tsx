@@ -199,8 +199,7 @@ export const Micro = forwardRef<HTMLParagraphElement, TypographyProps>(
 );
 
 interface LinkProps extends TypographyProps {
-  to?: string;
-  as?: string;
+  to?: string | unknown;
   color?: string;
   href?: string;
 }
