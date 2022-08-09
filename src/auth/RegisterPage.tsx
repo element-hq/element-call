@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import React, {
+  ChangeEvent,
   FC,
   FormEvent,
   useCallback,
@@ -166,7 +167,9 @@ export const RegisterPage: FC = () => {
                   required
                   name="password"
                   type="password"
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setPassword(e.target.value)
+                  }
                   value={password}
                   placeholder="Password"
                   label="Password"
@@ -177,7 +180,9 @@ export const RegisterPage: FC = () => {
                   required
                   type="password"
                   name="passwordConfirmation"
-                  onChange={(e) => setPasswordConfirmation(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                    setPasswordConfirmation(e.target.value)
+                  }
                   value={passwordConfirmation}
                   placeholder="Confirm Password"
                   label="Confirm Password"
