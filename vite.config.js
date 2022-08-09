@@ -41,6 +41,12 @@ export default defineConfig(({ mode }) => {
       },
     },
     resolve: {
+      alias: {
+        // matrix-widget-api has its transpiled lib/index.js as its entry point,
+        // which Vite for some reason refuses to work with, so we point it to
+        // src/index.ts instead
+        "matrix-widget-api": "matrix-widget-api/src/index.ts",
+      },
       dedupe: [
         "react",
         "react-dom",
