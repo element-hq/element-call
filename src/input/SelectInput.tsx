@@ -15,16 +15,21 @@ limitations under the License.
 */
 
 import React, { useRef } from "react";
-import { HiddenSelect, useSelect } from "@react-aria/select";
+import { AriaSelectOptions, HiddenSelect, useSelect } from "@react-aria/select";
 import { useButton } from "@react-aria/button";
 import { useSelectState } from "@react-stately/select";
+import classNames from "classnames";
+
 import { Popover } from "../popover/Popover";
 import { ListBox } from "../ListBox";
 import styles from "./SelectInput.module.css";
-import classNames from "classnames";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
 
-export function SelectInput(props) {
+interface Props extends AriaSelectOptions<object> {
+  className?: string;
+}
+
+export function SelectInput(props: Props): JSX.Element {
   const state = useSelectState(props);
 
   const ref = useRef();

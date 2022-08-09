@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useRef } from "react";
 import { usePreventScroll } from "@react-aria/overlays";
 import { GroupCall, MatrixClient } from "matrix-js-sdk";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
+import classNames from "classnames";
 
 import styles from "./InCallView.module.css";
 import {
@@ -46,6 +47,7 @@ import { useMediaHandler } from "../settings/useMediaHandler";
 import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { useAudioContext } from "../video-grid/useMediaStream";
+import { useFullscreen } from "../video-grid/useFullscreen";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -72,7 +74,8 @@ interface Props {
   roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
 }
-interface Participant {
+
+export interface Participant {
   id: string;
   callFeed: CallFeed;
   focused: boolean;
@@ -100,7 +103,9 @@ export function InCallView({
   unencryptedEventsFromUsers,
 }: Props) {
   usePreventScroll();
+  const elementRef = useRef<HTMLDivElement>();
   const [layout, setLayout] = useVideoGridLayout(screenshareFeeds.length > 0);
+  const { toggleFullscreen, fullscreenParticipant } = useFullscreen(elementRef);
 
   const [audioContext, audioDestination, audioRef] = useAudioContext();
   const { audioOutput } = useMediaHandler();
@@ -161,65 +166,107 @@ export function InCallView({
     );
   }, []);
 
+  const renderContent = useCallback((): JSX.Element => {
+    if (items.length === 0) {
+      return (
+        <div className={styles.centerMessage}>
+          <p>Waiting for other participants...</p>
+        </div>
+      );
+    }
+    if (fullscreenParticipant) {
+      return (
+        <VideoTileContainer
+          key={fullscreenParticipant.id}
+          item={fullscreenParticipant}
+          getAvatar={renderAvatar}
+          audioOutputDevice={audioOutput}
+          audioContext={audioContext}
+          audioDestination={audioDestination}
+          disableSpeakingIndicator={true}
+          isFullscreen={fullscreenParticipant}
+          onFullscreen={toggleFullscreen}
+        />
+      );
+    }
+
+    return (
+      <VideoGrid items={items} layout={layout} disableAnimations={isSafari}>
+        {({ item, ...rest }: { item: Participant; [x: string]: unknown }) => (
+          <VideoTileContainer
+            key={item.id}
+            item={item}
+            getAvatar={renderAvatar}
+            showName={items.length > 2 || item.focused}
+            audioOutputDevice={audioOutput}
+            audioContext={audioContext}
+            audioDestination={audioDestination}
+            disableSpeakingIndicator={items.length < 3}
+            isFullscreen={fullscreenParticipant}
+            onFullscreen={toggleFullscreen}
+            {...rest}
+          />
+        )}
+      </VideoGrid>
+    );
+  }, [
+    fullscreenParticipant,
+    items,
+    audioContext,
+    audioDestination,
+    audioOutput,
+    layout,
+    renderAvatar,
+    toggleFullscreen,
+  ]);
+
   const {
     modalState: rageshakeRequestModalState,
     modalProps: rageshakeRequestModalProps,
   } = useRageshakeRequestModal(groupCall.room.roomId);
 
+  const footerClassNames = classNames(styles.footer, {
+    [styles.footerFullscreen]: fullscreenParticipant,
+  });
+
   return (
-    <div className={styles.inRoom}>
+    <div className={styles.inRoom} ref={elementRef}>
       <audio ref={audioRef} />
-      <Header>
-        <LeftNav>
-          <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
-          <VersionMismatchWarning
-            users={unencryptedEventsFromUsers}
-            room={groupCall.room}
-          />
-        </LeftNav>
-        <RightNav>
-          <GridLayoutMenu layout={layout} setLayout={setLayout} />
-          <UserMenuContainer preventNavigation />
-        </RightNav>
-      </Header>
-      {items.length === 0 ? (
-        <div className={styles.centerMessage}>
-          <p>Waiting for other participants...</p>
-        </div>
-      ) : (
-        <VideoGrid items={items} layout={layout} disableAnimations={isSafari}>
-          {({ item, ...rest }: { item: Participant; [x: string]: unknown }) => (
-            <VideoTileContainer
-              key={item.id}
-              item={item}
-              getAvatar={renderAvatar}
-              showName={items.length > 2 || item.focused}
-              audioOutputDevice={audioOutput}
-              audioContext={audioContext}
-              audioDestination={audioDestination}
-              disableSpeakingIndicator={items.length < 3}
-              {...rest}
+      {!fullscreenParticipant && (
+        <Header>
+          <LeftNav>
+            <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
+            <VersionMismatchWarning
+              users={unencryptedEventsFromUsers}
+              room={groupCall.room}
             />
-          )}
-        </VideoGrid>
+          </LeftNav>
+          <RightNav>
+            <GridLayoutMenu layout={layout} setLayout={setLayout} />
+            <UserMenuContainer preventNavigation />
+          </RightNav>
+        </Header>
       )}
-      <div className={styles.footer}>
+      {renderContent()}
+      <div className={footerClassNames}>
         <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
         <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
-        {canScreenshare && !isSafari && (
+        {canScreenshare && !isSafari && !fullscreenParticipant && (
           <ScreenshareButton
             enabled={isScreensharing}
             onPress={toggleScreensharing}
           />
         )}
-        <OverflowMenu
-          inCall
-          roomIdOrAlias={roomIdOrAlias}
-          groupCall={groupCall}
-          showInvite={true}
-          feedbackModalState={feedbackModalState}
-          feedbackModalProps={feedbackModalProps}
-        />
+        {!fullscreenParticipant && (
+          <OverflowMenu
+            inCall
+            roomIdOrAlias={roomIdOrAlias}
+            groupCall={groupCall}
+            showInvite={true}
+            feedbackModalState={feedbackModalState}
+            feedbackModalProps={feedbackModalProps}
+          />
+        )}
         <HangupButton onPress={onLeave} />
       </div>
       <GroupCallInspector

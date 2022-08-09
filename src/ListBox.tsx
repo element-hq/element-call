@@ -23,10 +23,10 @@ import classNames from "classnames";
 import styles from "./ListBox.module.css";
 
 interface ListBoxProps<T> extends AriaListBoxOptions<T> {
-  className: string;
   optionClassName: string;
-  listBoxRef: React.MutableRefObject<HTMLUListElement>;
   state: ListState<T>;
+  className?: string;
+  listBoxRef?: React.MutableRefObject<HTMLUListElement>;
 }
 
 export function ListBox<T>({
