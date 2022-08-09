@@ -22,7 +22,7 @@ import styles from "./Typography.module.css";
 
 interface TypographyProps {
   children: ReactNode;
-  fontWeight?: number;
+  fontWeight?: string;
   className?: string;
   overflowEllipsis?: boolean;
   as?: string;
@@ -199,10 +199,10 @@ export const Micro = forwardRef<HTMLParagraphElement, TypographyProps>(
 );
 
 interface LinkProps extends TypographyProps {
-  to: string;
-  as: string;
-  color: string;
-  href: string;
+  to?: string;
+  as?: string;
+  color?: string;
+  href?: string;
 }
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
   (
