@@ -17,6 +17,7 @@ limitations under the License.
 import { createElement, forwardRef, ReactNode } from "react";
 import classNames from "classnames";
 import { Link as RouterLink } from "react-router-dom";
+import * as H from "history";
 
 import styles from "./Typography.module.css";
 
@@ -199,7 +200,7 @@ export const Micro = forwardRef<HTMLParagraphElement, TypographyProps>(
 );
 
 interface LinkProps extends TypographyProps {
-  to?: string | unknown;
+  to?: H.LocationDescriptor<unknown>;
   color?: string;
   href?: string;
 }
