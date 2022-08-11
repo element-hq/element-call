@@ -17,19 +17,28 @@ limitations under the License.
 import React, { useRef } from "react";
 import { useTabList, useTab, useTabPanel } from "@react-aria/tabs";
 import { Item } from "@react-stately/collections";
-import { useTabListState } from "@react-stately/tabs";
-import styles from "./Tabs.module.css";
+import { useTabListState, TabListState } from "@react-stately/tabs";
 import classNames from "classnames";
+import { AriaTabPanelProps, TabListProps } from "@react-types/tabs";
+import { Node } from "@react-types/shared";
 
-export function TabContainer(props) {
-  const state = useTabListState(props);
-  const ref = useRef();
+import styles from "./Tabs.module.css";
+
+interface TabContainerProps<T> extends TabListProps<T> {
+  className?: string;
+}
+
+export function TabContainer<T extends object>(
+  props: TabContainerProps<T>
+): JSX.Element {
+  const state = useTabListState<T>(props);
+  const ref = useRef<HTMLUListElement>();
   const { tabListProps } = useTabList(props, state, ref);
   return (
     <div className={classNames(styles.tabContainer, props.className)}>
       <ul {...tabListProps} ref={ref} className={styles.tabList}>
         {[...state.collection].map((item) => (
-          <Tab key={item.key} item={item} state={state} />
+          <Tab item={item} state={state} />
         ))}
       </ul>
       <TabPanel key={state.selectedItem?.key} state={state} />
@@ -37,9 +46,14 @@ export function TabContainer(props) {
   );
 }
 
-function Tab({ item, state }) {
+interface TabProps<T> {
+  item: Node<T>;
+  state: TabListState<T>;
+}
+
+function Tab<T>({ item, state }: TabProps<T>): JSX.Element {
   const { key, rendered } = item;
-  const ref = useRef();
+  const ref = useRef<HTMLLIElement>();
   const { tabProps } = useTab({ key }, state, ref);
 
   return (
@@ -56,8 +70,12 @@ function Tab({ item, state }) {
   );
 }
 
-function TabPanel({ state, ...props }) {
-  const ref = useRef();
+interface TabPanelProps<T> extends AriaTabPanelProps {
+  state: TabListState<T>;
+}
+
+function TabPanel<T>({ state, ...props }: TabPanelProps<T>): JSX.Element {
+  const ref = useRef<HTMLDivElement>();
   const { tabPanelProps } = useTabPanel(props, state, ref);
   return (
     <div {...tabPanelProps} ref={ref} className={styles.tabPanel}>
