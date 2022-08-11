@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import React from "react";
+
 import { TabContainer, TabItem } from "./Tabs";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { ReactComponent as VideoIcon } from "../icons/Video.svg";
@@ -29,7 +30,7 @@ export default {
   },
 };
 
-export const Tabs = () => (
+export const Tabs: React.FC<{}> = () => (
   <TabContainer>
     <TabItem
       title={
