@@ -14,10 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { RoomMember, RoomMemberEvent } from "matrix-js-sdk";
 import { useState, useEffect } from "react";
 
-export function useRoomMemberName(member) {
-  const [state, setState] = useState({
+interface RoomMemberName {
+  name: string;
+  rawDisplayName: string;
+}
+export function useRoomMemberName(member: RoomMember): RoomMemberName {
+  const [state, setState] = useState<RoomMemberName>({
     name: member.name,
     rawDisplayName: member.rawDisplayName,
   });
@@ -29,10 +34,10 @@ export function useRoomMemberName(member) {
 
     updateName();
 
-    member.on("RoomMember.name", updateName);
+    member.on(RoomMemberEvent.Name, updateName);
 
     return () => {
-      member.removeListener("RoomMember.name", updateName);
+      member.removeListener(RoomMemberEvent.Name, updateName);
     };
   }, [member]);
 

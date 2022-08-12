@@ -14,20 +14,46 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useDrag, useGesture } from "@use-gesture/react";
-import { useSprings } from "@react-spring/web";
+import React, { Key, useCallback, useEffect, useRef, useState } from "react";
+import { FullGestureState, useDrag, useGesture } from "@use-gesture/react";
+import { Interpolation, SpringValue, useSprings } from "@react-spring/web";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
-import styles from "./VideoGrid.module.css";
+import { ReactDOMAttributes } from "@use-gesture/react/dist/declarations/src/types";
 
-export function useVideoGridLayout(hasScreenshareFeeds) {
-  const layoutRef = useRef("freedom");
-  const revertLayoutRef = useRef("freedom");
+import styles from "./VideoGrid.module.css";
+import { Layout } from "../room/GridLayoutMenu";
+import { Participant } from "../room/InCallView";
+
+interface TilePosition {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  zIndex: number;
+}
+
+interface Tile {
+  key: Key;
+  order: number;
+  item: Participant;
+  remove: boolean;
+  focused: boolean;
+  presenter: boolean;
+}
+
+type LayoutDirection = "vertical" | "horizontal";
+
+export function useVideoGridLayout(hasScreenshareFeeds: boolean): {
+  layout: Layout;
+  setLayout: (layout: Layout) => void;
+} {
+  const layoutRef = useRef<Layout>("freedom");
+  const revertLayoutRef = useRef<Layout>("freedom");
   const prevHasScreenshareFeeds = useRef(hasScreenshareFeeds);
   const [, forceUpdate] = useState({});
 
-  const setLayout = useCallback((layout) => {
+  const setLayout = useCallback((layout: Layout) => {
     // Store the user's set layout to revert to after a screenshare is finished
     revertLayoutRef.current = layout;
     layoutRef.current = layout;
@@ -48,13 +74,13 @@ export function useVideoGridLayout(hasScreenshareFeeds) {
 
   prevHasScreenshareFeeds.current = hasScreenshareFeeds;
 
-  return [layoutRef.current, setLayout];
+  return { layout: layoutRef.current, setLayout };
 }
 
 const GAP = 8;
 
 function useIsMounted() {
-  const isMountedRef = useRef(false);
+  const isMountedRef = useRef<boolean>(false);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -67,7 +93,7 @@ function useIsMounted() {
   return isMountedRef;
 }
 
-function isInside([x, y], targetTile) {
+function isInside([x, y]: number[], targetTile: TilePosition): boolean {
   const left = targetTile.x;
   const top = targetTile.y;
   const bottom = targetTile.y + targetTile.height;
@@ -80,17 +106,18 @@ function isInside([x, y], targetTile) {
   return true;
 }
 
-const getPipGap = (gridAspectRatio) => (gridAspectRatio < 1 ? 12 : 24);
+const getPipGap = (gridAspectRatio: number): number =>
+  gridAspectRatio < 1 ? 12 : 24;
 
 function getTilePositions(
-  tileCount,
-  presenterTileCount,
-  gridWidth,
-  gridHeight,
-  pipXRatio,
-  pipYRatio,
-  layout
-) {
+  tileCount: number,
+  presenterTileCount: number,
+  gridWidth: number,
+  gridHeight: number,
+  pipXRatio: number,
+  pipYRatio: number,
+  layout: Layout
+): TilePosition[] {
   if (layout === "freedom") {
     if (tileCount === 2 && presenterTileCount === 0) {
       return getOneOnOneLayoutTilePositions(
@@ -113,11 +140,11 @@ function getTilePositions(
 }
 
 function getOneOnOneLayoutTilePositions(
-  gridWidth,
-  gridHeight,
-  pipXRatio,
-  pipYRatio
-) {
+  gridWidth: number,
+  gridHeight: number,
+  pipXRatio: number,
+  pipYRatio: number
+): TilePosition[] {
   const [remotePosition] = getFreedomLayoutTilePositions(
     1,
     0,
@@ -149,8 +176,12 @@ function getOneOnOneLayoutTilePositions(
   ];
 }
 
-function getSpotlightLayoutTilePositions(tileCount, gridWidth, gridHeight) {
-  const tilePositions = [];
+function getSpotlightLayoutTilePositions(
+  tileCount: number,
+  gridWidth: number,
+  gridHeight: number
+): TilePosition[] {
+  const tilePositions: TilePosition[] = [];
 
   const gridAspectRatio = gridWidth / gridHeight;
 
@@ -215,11 +246,11 @@ function getSpotlightLayoutTilePositions(tileCount, gridWidth, gridHeight) {
 }
 
 function getFreedomLayoutTilePositions(
-  tileCount,
-  presenterTileCount,
-  gridWidth,
-  gridHeight
-) {
+  tileCount: number,
+  presenterTileCount: number,
+  gridWidth: number,
+  gridHeight: number
+): TilePosition[] {
   if (tileCount === 0) {
     return [];
   }
@@ -330,7 +361,14 @@ function getFreedomLayoutTilePositions(
   return tilePositions;
 }
 
-function getSubGridBoundingBox(positions) {
+function getSubGridBoundingBox(positions: TilePosition[]): {
+  left: number;
+  right: number;
+  top: number;
+  bottom: number;
+  width: number;
+  height: number;
+} {
   let left = 0;
   let right = 0;
   let top = 0;
@@ -373,13 +411,18 @@ function getSubGridBoundingBox(positions) {
   };
 }
 
-function isMobileBreakpoint(gridWidth, gridHeight) {
+function isMobileBreakpoint(gridWidth: number, gridHeight: number): boolean {
   const gridAspectRatio = gridWidth / gridHeight;
   return gridAspectRatio < 1;
 }
 
-function getGridLayout(tileCount, presenterTileCount, gridWidth, gridHeight) {
-  let layoutDirection = "horizontal";
+function getGridLayout(
+  tileCount: number,
+  presenterTileCount: number,
+  gridWidth: number,
+  gridHeight: number
+): { itemGridRatio: number; layoutDirection: LayoutDirection } {
+  let layoutDirection: LayoutDirection = "horizontal";
   let itemGridRatio = 1;
 
   if (presenterTileCount === 0) {
@@ -397,7 +440,13 @@ function getGridLayout(tileCount, presenterTileCount, gridWidth, gridHeight) {
   return { itemGridRatio, layoutDirection };
 }
 
-function centerTiles(positions, gridWidth, gridHeight, offsetLeft, offsetTop) {
+function centerTiles(
+  positions: TilePosition[],
+  gridWidth: number,
+  gridHeight: number,
+  offsetLeft: number,
+  offsetTop: number
+) {
   const bounds = getSubGridBoundingBox(positions);
 
   const leftOffset = Math.round((gridWidth - bounds.width) / 2) + offsetLeft;
@@ -408,7 +457,11 @@ function centerTiles(positions, gridWidth, gridHeight, offsetLeft, offsetTop) {
   return positions;
 }
 
-function applyTileOffsets(positions, leftOffset, topOffset) {
+function applyTileOffsets(
+  positions: TilePosition[],
+  leftOffset: number,
+  topOffset: number
+) {
   for (const position of positions) {
     position.x += leftOffset;
     position.y += topOffset;
@@ -417,12 +470,16 @@ function applyTileOffsets(positions, leftOffset, topOffset) {
   return positions;
 }
 
-function getSubGridLayout(tileCount, gridWidth, gridHeight) {
+function getSubGridLayout(
+  tileCount: number,
+  gridWidth: number,
+  gridHeight: number
+): { columnCount: number; rowCount: number; tileAspectRatio: number } {
   const gridAspectRatio = gridWidth / gridHeight;
 
-  let columnCount;
-  let rowCount;
-  let tileAspectRatio = 16 / 9;
+  let columnCount: number;
+  let rowCount: number;
+  let tileAspectRatio: number = 16 / 9;
 
   if (gridAspectRatio < 3 / 4) {
     // Phone
@@ -528,26 +585,26 @@ function getSubGridLayout(tileCount, gridWidth, gridHeight) {
 }
 
 function getSubGridPositions(
-  tileCount,
-  columnCount,
-  rowCount,
-  tileAspectRatio,
-  gridWidth,
-  gridHeight
+  tileCount: number,
+  columnCount: number,
+  rowCount: number,
+  tileAspectRatio: number,
+  gridWidth: number,
+  gridHeight: number
 ) {
   if (tileCount === 0) {
     return [];
   }
 
-  const newTilePositions = [];
+  const newTilePositions: TilePosition[] = [];
 
   const boxWidth = Math.round(
     (gridWidth - GAP * (columnCount + 1)) / columnCount
   );
   const boxHeight = Math.round((gridHeight - GAP * (rowCount + 1)) / rowCount);
 
-  let tileWidth;
-  let tileHeight;
+  let tileWidth: number;
+  let tileHeight: number;
 
   if (tileAspectRatio) {
     const boxAspectRatio = boxWidth / boxHeight;
@@ -568,7 +625,7 @@ function getSubGridPositions(
     const verticalIndex = Math.floor(i / columnCount);
     const top = verticalIndex * GAP + verticalIndex * tileHeight;
 
-    let rowItemCount;
+    let rowItemCount: number;
 
     if (verticalIndex + 1 === rowCount && tileCount % columnCount !== 0) {
       rowItemCount = tileCount % columnCount;
@@ -603,16 +660,16 @@ function getSubGridPositions(
   return newTilePositions;
 }
 
-function reorderTiles(tiles, layout) {
+function reorderTiles(tiles: Tile[], layout: Layout) {
   if (layout === "freedom" && tiles.length === 2) {
     // 1:1 layout
     tiles.forEach((tile) => (tile.order = tile.item.isLocal ? 0 : 1));
   } else {
-    const focusedTiles = [];
-    const presenterTiles = [];
-    const otherTiles = [];
+    const focusedTiles: Tile[] = [];
+    const presenterTiles: Tile[] = [];
+    const otherTiles: Tile[] = [];
 
-    const orderedTiles = new Array(tiles.length);
+    const orderedTiles: Tile[] = new Array(tiles.length);
     tiles.forEach((tile) => (orderedTiles[tile.order] = tile));
 
     orderedTiles.forEach((tile) =>
@@ -630,27 +687,63 @@ function reorderTiles(tiles, layout) {
   }
 }
 
-export function VideoGrid({ items, layout, disableAnimations, children }) {
+interface DragTileData {
+  offsetX: number;
+  offsetY: number;
+  key: Key;
+  x: number;
+  y: number;
+}
+
+interface ChildrenProperties extends ReactDOMAttributes {
+  key: Key;
+  style: {
+    scale: SpringValue<number>;
+    opacity: SpringValue<number>;
+    boxShadow: Interpolation<number, string>;
+  };
+  width: number;
+  height: number;
+  item: Participant;
+  [index: string]: unknown;
+}
+
+interface VideoGridProps {
+  items: Participant[];
+  layout: Layout;
+  disableAnimations?: boolean;
+  children: (props: ChildrenProperties) => React.ReactNode;
+}
+
+export function VideoGrid({
+  items,
+  layout,
+  disableAnimations,
+  children,
+}: VideoGridProps) {
   // Place the PiP in the bottom right corner by default
   const [pipXRatio, setPipXRatio] = useState(1);
   const [pipYRatio, setPipYRatio] = useState(1);
 
-  const [{ tiles, tilePositions }, setTileState] = useState({
+  const [{ tiles, tilePositions }, setTileState] = useState<{
+    tiles: Tile[];
+    tilePositions: TilePosition[];
+  }>({
     tiles: [],
     tilePositions: [],
   });
-  const [scrollPosition, setScrollPosition] = useState(0);
-  const draggingTileRef = useRef(null);
-  const lastTappedRef = useRef({});
-  const lastLayoutRef = useRef(layout);
+  const [scrollPosition, setScrollPosition] = useState<number>(0);
+  const draggingTileRef = useRef<DragTileData>(null);
+  const lastTappedRef = useRef<{ [index: Key]: number }>({});
+  const lastLayoutRef = useRef<Layout>(layout);
   const isMounted = useIsMounted();
 
   const [gridRef, gridBounds] = useMeasure({ polyfill: ResizeObserver });
 
   useEffect(() => {
     setTileState(({ tiles, ...rest }) => {
-      const newTiles = [];
-      const removedTileKeys = new Set();
+      const newTiles: Tile[] = [];
+      const removedTileKeys: Set<Key> = new Set();
 
       for (const tile of tiles) {
         let item = items.find((item) => item.id === tile.key);
@@ -663,7 +756,7 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
           removedTileKeys.add(tile.key);
         }
 
-        let focused;
+        let focused: boolean;
         let presenter = false;
 
         if (layout === "spotlight") {
@@ -694,7 +787,7 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
           continue;
         }
 
-        const newTile = {
+        const newTile: Tile = {
           key: item.id,
           order: existingTile?.order ?? newTiles.length,
           item,
@@ -721,7 +814,7 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
           }
 
           setTileState(({ tiles, ...rest }) => {
-            const newTiles = tiles
+            const newTiles: Tile[] = tiles
               .filter((tile) => !removedTileKeys.has(tile.key))
               .map((tile) => ({ ...tile })); // clone before reordering
             reorderTiles(newTiles, layout);
@@ -772,7 +865,7 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
   }, [items, gridBounds, layout, isMounted, pipXRatio, pipYRatio]);
 
   const animate = useCallback(
-    (tiles) => (tileIndex) => {
+    (tiles: Tile[]) => (tileIndex: number) => {
       const tile = tiles[tileIndex];
       const tilePosition = tilePositions[tile.order];
       const draggingTile = draggingTileRef.current;
@@ -789,7 +882,7 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
           opacity: 1,
           zIndex: 2,
           shadow: 15,
-          immediate: (key) =>
+          immediate: (key: string) =>
             disableAnimations ||
             key === "zIndex" ||
             key === "x" ||
@@ -831,11 +924,11 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
             opacity: 0,
           },
           reset: false,
-          immediate: (key) =>
+          immediate: (key: string) =>
             disableAnimations || key === "zIndex" || key === "shadow",
           // If we just stopped dragging a tile, give it time for its animation
           // to settle before pushing its z-index back down
-          delay: (key) => (key === "zIndex" ? 500 : 0),
+          delay: (key: string) => (key === "zIndex" ? 500 : 0),
         };
       }
     },
@@ -849,7 +942,7 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
   ]);
 
   const onTap = useCallback(
-    (tileKey) => {
+    (tileKey: Key) => {
       const lastTapped = lastTappedRef.current[tileKey];
 
       if (!lastTapped || Date.now() - lastTapped > 500) {
@@ -866,7 +959,7 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
       setTileState(({ tiles, ...state }) => {
         let presenterTileCount = 0;
         const newTiles = tiles.map((tile) => {
-          let newTile = { ...tile }; // clone before reordering
+          const newTile = { ...tile }; // clone before reordering
 
           if (tile.item === item) {
             newTile.focused = !tile.focused;
@@ -895,7 +988,7 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
         };
       });
     },
-    [tiles, gridBounds, layout]
+    [tiles, layout, gridBounds.width, gridBounds.height, pipXRatio, pipYRatio]
   );
 
   const bindTile = useDrag(
@@ -1008,12 +1101,18 @@ export function VideoGrid({ items, layout, disableAnimations, children }) {
   );
 
   const onGridGesture = useCallback(
-    (e, isWheel) => {
+    (
+      e:
+        | Omit<FullGestureState<"wheel">, "event">
+        | Omit<FullGestureState<"drag">, "event">,
+      isWheel: boolean
+    ) => {
       if (layout !== "spotlight") {
         return;
       }
 
       const isMobile = isMobileBreakpoint(gridBounds.width, gridBounds.height);
+
       let movement = e.delta[isMobile ? 0 : 1];
 
       if (isWheel) {
