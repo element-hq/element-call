@@ -15,10 +15,12 @@ limitations under the License.
 */
 
 import React, { useState } from "react";
+import { useMemo } from "react";
+
 import { VideoGrid, useVideoGridLayout } from "./VideoGrid";
 import { VideoTile } from "./VideoTile";
-import { useMemo } from "react";
 import { Button } from "../button";
+import { Participant } from "../room/InCallView";
 
 export default {
   title: "VideoGrid",
@@ -28,10 +30,10 @@ export default {
 };
 
 export const ParticipantsTest = () => {
-  const [layout, setLayout] = useVideoGridLayout(false);
+  const { layout, setLayout } = useVideoGridLayout(false);
   const [participantCount, setParticipantCount] = useState(1);
 
-  const items = useMemo(
+  const items: Participant[] = useMemo(
     () =>
       new Array(participantCount).fill(undefined).map((_, i) => ({
         id: (i + 1).toString(),
@@ -46,9 +48,7 @@ export const ParticipantsTest = () => {
       <div style={{ display: "flex", width: "100vw", height: "32px" }}>
         <Button
           onPress={() =>
-            setLayout((layout) =>
-              layout === "freedom" ? "spotlight" : "freedom"
-            )
+            setLayout(layout === "freedom" ? "spotlight" : "freedom")
           }
         >
           Toggle Layout
@@ -76,7 +76,6 @@ export const ParticipantsTest = () => {
             <VideoTile
               key={item.id}
               name={`User ${item.id}`}
-              showName={items.length > 2 || item.focused}
               disableSpeakingIndicator={items.length < 3}
               {...rest}
             />
