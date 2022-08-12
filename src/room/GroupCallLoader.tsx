@@ -15,7 +15,8 @@ limitations under the License.
 */
 
 import React, { ReactNode } from "react";
-import { GroupCall, MatrixClient } from "matrix-js-sdk";
+import { MatrixClient } from "matrix-js-sdk/src/client";
+import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 
 import { useLoadGroupCall } from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";

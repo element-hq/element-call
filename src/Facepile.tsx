@@ -16,7 +16,8 @@ limitations under the License.
 
 import React, { HTMLAttributes } from "react";
 import classNames from "classnames";
-import { MatrixClient, RoomMember } from "matrix-js-sdk";
+import { MatrixClient } from "matrix-js-sdk/src/client";
+import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 
 import styles from "./Facepile.module.css";
 import { Avatar, Size, sizes } from "./Avatar";

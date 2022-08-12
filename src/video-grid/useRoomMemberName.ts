@@ -14,7 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { RoomMember, RoomMemberEvent } from "matrix-js-sdk";
+import {
+  RoomMember,
+  RoomMemberEvent,
+} from "matrix-js-sdk/src/models/room-member";
 import { useState, useEffect } from "react";
 
 interface RoomMemberName {
