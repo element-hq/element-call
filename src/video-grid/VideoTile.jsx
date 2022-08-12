@@ -29,12 +29,10 @@ export const VideoTile = forwardRef(
       isLocal,
       speaking,
       audioMuted,
-      noVideo,
       videoMuted,
       screenshare,
       avatar,
       name,
-      showName,
       mediaRef,
       onOptionsPress,
       showOptions,
@@ -75,7 +73,7 @@ export const VideoTile = forwardRef(
             )}
           </div>
         )}
-        {(videoMuted || noVideo) && (
+        {videoMuted && (
           <>
             <div className={styles.videoMutedOverlay} />
             {avatar}
@@ -86,15 +84,12 @@ export const VideoTile = forwardRef(
             <span>{`${name} is presenting`}</span>
           </div>
         ) : (
-          (showName || audioMuted || (videoMuted && !noVideo)) && (
-            <div className={classNames(styles.infoBubble, styles.memberName)}>
-              {audioMuted && !(videoMuted && !noVideo) && <MicMutedIcon />}
-              {videoMuted && !noVideo && <VideoMutedIcon />}
-              {showName && <span title={name}>{name}</span>}
-            </div>
-          )
+          <div className={classNames(styles.infoBubble, styles.memberName)}>
+            {audioMuted && !videoMuted && <MicMutedIcon />}
+            {videoMuted && <VideoMutedIcon />}
+            <span title={name}>{name}</span>
+          </div>
         )}
-
         <video ref={mediaRef} playsInline disablePictureInPicture />
       </animated.div>
     );
