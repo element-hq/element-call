@@ -200,7 +200,6 @@ export function InCallView({
             key={item.id}
             item={item}
             getAvatar={renderAvatar}
-            showName={items.length > 2 || item.focused}
             audioOutputDevice={audioOutput}
             audioContext={audioContext}
             audioDestination={audioDestination}

@@ -49,7 +49,6 @@ export function VideoTileContainer({
   width,
   height,
   getAvatar,
-  showName,
   audioOutputDevice,
   audioContext,
   audioDestination,
@@ -63,7 +62,6 @@ export function VideoTileContainer({
     audioMuted,
     videoMuted,
     localVolume,
-    noVideo,
     speaking,
     stream,
     purpose,
@@ -99,11 +97,9 @@ export function VideoTileContainer({
         isLocal={isLocal}
         speaking={speaking && !disableSpeakingIndicator}
         audioMuted={audioMuted}
-        noVideo={noVideo}
         videoMuted={videoMuted}
         screenshare={purpose === SDPStreamMetadataPurpose.Screenshare}
         name={rawDisplayName}
-        showName={showName}
         ref={tileRef}
         mediaRef={mediaRef}
         avatar={getAvatar && getAvatar(member, width, height)}
