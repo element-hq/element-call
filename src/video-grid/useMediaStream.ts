@@ -177,7 +177,6 @@ export const useAudioContext = (): [
 
 export const useSpatialMediaStream = (
   stream: MediaStream,
-  audioOutputDevice: string,
   audioContext: AudioContext,
   audioDestination: AudioNode,
   mute = false,
@@ -185,13 +184,8 @@ export const useSpatialMediaStream = (
 ): [RefObject<Element>, RefObject<MediaElement>] => {
   const tileRef = useRef<Element>();
   const [spatialAudio] = useSpatialAudio();
-  // If spatial audio is enabled, we handle audio separately from the video element
-  const mediaRef = useMediaStream(
-    stream,
-    audioOutputDevice,
-    spatialAudio || mute,
-    localVolume
-  );
+  // We always handle audio separately form the video element
+  const mediaRef = useMediaStream(stream, undefined, true, undefined);
 
   const gainNodeRef = useRef<GainNode>();
   const pannerNodeRef = useRef<PannerNode>();
@@ -200,6 +194,7 @@ export const useSpatialMediaStream = (
   useEffect(() => {
     if (
       spatialAudio &&
+      audioContext &&
       tileRef.current &&
       !mute &&
       stream.getAudioTracks().length > 0
