@@ -28,7 +28,6 @@ interface Props {
   showName?: boolean;
   speaking?: boolean;
   audioMuted?: boolean;
-  noVideo?: boolean;
   videoMuted?: boolean;
   screenshare?: boolean;
   avatar?: JSX.Element;

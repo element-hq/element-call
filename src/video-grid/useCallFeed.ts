@@ -23,7 +23,6 @@ interface CallFeedState {
   member: RoomMember;
   isLocal: boolean;
   speaking: boolean;
-  noVideo: boolean;
   videoMuted: boolean;
   audioMuted: boolean;
   localVolume: number;
