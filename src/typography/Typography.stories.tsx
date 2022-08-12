@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import React from "react";
+
 import { Headline, Title, Subtitle, Body, Caption, Micro } from "./Typography";
 
 export default {
@@ -24,7 +25,7 @@ export default {
   },
 };
 
-export const Typography = () => (
+export const Typography: React.FC<{}> = () => (
   <>
     <Headline>Headline Semi Bold</Headline>
     <Title>Title</Title>

@@ -87,7 +87,7 @@ function getPromptText(
 
 interface Props {
   client: MatrixClient;
-  roomId: string;
+  roomIdOrAlias: string;
   roomName: string;
   avatarUrl: string;
   groupCall: GroupCall;
@@ -99,7 +99,7 @@ interface Props {
 
 export const PTTCallView: React.FC<Props> = ({
   client,
-  roomId,
+  roomIdOrAlias,
   roomName,
   avatarUrl,
   groupCall,
@@ -205,7 +205,7 @@ export const PTTCallView: React.FC<Props> = ({
             <div className={styles.footer}>
               <OverflowMenu
                 inCall
-                roomId={roomId}
+                roomIdOrAlias={roomIdOrAlias}
                 groupCall={groupCall}
                 showInvite={false}
                 feedbackModalState={feedbackModalState}
@@ -282,7 +282,7 @@ export const PTTCallView: React.FC<Props> = ({
       </div>
 
       {inviteModalState.isOpen && showControls && (
-        <InviteModal roomId={roomId} {...inviteModalProps} />
+        <InviteModal roomIdOrAlias={roomIdOrAlias} {...inviteModalProps} />
       )}
     </div>
   );

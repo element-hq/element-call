@@ -23,7 +23,7 @@ import { usePageTitle } from "../usePageTitle";
 
 interface Props {
   client: MatrixClient;
-  roomId: string;
+  roomIdOrAlias: string;
   viaServers: string[];
   children: (groupCall: GroupCall) => ReactNode;
   createPtt: boolean;
@@ -31,14 +31,14 @@ interface Props {
 
 export function GroupCallLoader({
   client,
-  roomId,
+  roomIdOrAlias,
   viaServers,
   children,
   createPtt,
 }: Props): JSX.Element {
   const { loading, error, groupCall } = useLoadGroupCall(
     client,
-    roomId,
+    roomIdOrAlias,
     viaServers,
     createPtt
   );

@@ -14,24 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect } from "react";
+import React, { FC, useEffect } from "react";
 
-import { Modal, ModalContent } from "../Modal";
+import { Modal, ModalContent, ModalProps } from "../Modal";
 import { Button } from "../button";
 import { FieldRow, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake } from "../settings/submit-rageshake";
 import { Body } from "../typography/Typography";
 
-export function RageshakeRequestModal({
-  rageshakeRequestId,
-  roomId,
-  ...rest
-}: {
+interface Props extends Omit<ModalProps, "title" | "children"> {
   rageshakeRequestId: string;
-  roomId: string;
+  roomIdOrAlias: string;
   onClose: () => void;
-  [x: string]: unknown;
-}) {
+}
+
+export const RageshakeRequestModal: FC<Props> = ({
+  rageshakeRequestId,
+  roomIdOrAlias,
+  ...rest
+}) => {
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export function RageshakeRequestModal({
               submitRageshake({
                 sendLogs: true,
                 rageshakeRequestId,
-                roomId,
+                roomId: roomIdOrAlias, // Possibly not a room ID, but oh well
               })
             }
             disabled={sending}
@@ -69,4 +70,4 @@ export function RageshakeRequestModal({
       </ModalContent>
     </Modal>
   );
-}
+};
