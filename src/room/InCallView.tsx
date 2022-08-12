@@ -16,7 +16,7 @@ limitations under the License.
 
 import React, { useCallback, useMemo, useRef } from "react";
 import { usePreventScroll } from "@react-aria/overlays";
-import { GroupCall, MatrixClient } from "matrix-js-sdk";
+import { GroupCall, MatrixClient, RoomMember } from "matrix-js-sdk";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import classNames from "classnames";
 
@@ -77,10 +77,10 @@ interface Props {
 
 export interface Participant {
   id: string;
-  callFeed: CallFeed;
   focused: boolean;
-  isLocal: boolean;
   presenter: boolean;
+  callFeed?: CallFeed;
+  isLocal?: boolean;
 }
 
 export function InCallView({
@@ -104,7 +104,7 @@ export function InCallView({
 }: Props) {
   usePreventScroll();
   const elementRef = useRef<HTMLDivElement>();
-  const [layout, setLayout] = useVideoGridLayout(screenshareFeeds.length > 0);
+  const { layout, setLayout } = useVideoGridLayout(screenshareFeeds.length > 0);
   const { toggleFullscreen, fullscreenParticipant } = useFullscreen(elementRef);
 
   const [audioContext, audioDestination, audioRef] = useAudioContext();
@@ -151,20 +151,23 @@ export function InCallView({
     return participants;
   }, [userMediaFeeds, activeSpeaker, screenshareFeeds, layout]);
 
-  const renderAvatar = useCallback((roomMember, width, height) => {
-    const avatarUrl = roomMember.user?.avatarUrl;
-    const size = Math.round(Math.min(width, height) / 2);
+  const renderAvatar = useCallback(
+    (roomMember: RoomMember, width: number, height: number) => {
+      const avatarUrl = roomMember.user?.avatarUrl;
+      const size = Math.round(Math.min(width, height) / 2);
 
-    return (
-      <Avatar
-        key={roomMember.userId}
-        size={size}
-        src={avatarUrl}
-        fallback={roomMember.name.slice(0, 1).toUpperCase()}
-        className={styles.avatar}
-      />
-    );
-  }, []);
+      return (
+        <Avatar
+          key={roomMember.userId}
+          size={size}
+          src={avatarUrl}
+          fallback={roomMember.name.slice(0, 1).toUpperCase()}
+          className={styles.avatar}
+        />
+      );
+    },
+    []
+  );
 
   const renderContent = useCallback((): JSX.Element => {
     if (items.length === 0) {
@@ -184,7 +187,7 @@ export function InCallView({
           audioContext={audioContext}
           audioDestination={audioDestination}
           disableSpeakingIndicator={true}
-          isFullscreen={fullscreenParticipant}
+          isFullscreen={!!fullscreenParticipant}
           onFullscreen={toggleFullscreen}
         />
       );
@@ -202,7 +205,7 @@ export function InCallView({
             audioContext={audioContext}
             audioDestination={audioDestination}
             disableSpeakingIndicator={items.length < 3}
-            isFullscreen={fullscreenParticipant}
+            isFullscreen={!!fullscreenParticipant}
             onFullscreen={toggleFullscreen}
             {...rest}
           />

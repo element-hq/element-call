@@ -15,9 +15,22 @@ limitations under the License.
 */
 
 import { useState, useEffect } from "react";
-import { CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
+import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
+import { RoomMember } from "matrix-js-sdk";
+import { SDPStreamMetadataPurpose } from "matrix-js-sdk/src/webrtc/callEventTypes";
 
-function getCallFeedState(callFeed) {
+interface CallFeedState {
+  member: RoomMember;
+  isLocal: boolean;
+  speaking: boolean;
+  noVideo: boolean;
+  videoMuted: boolean;
+  audioMuted: boolean;
+  localVolume: number;
+  stream: MediaStream;
+  purpose: SDPStreamMetadataPurpose;
+}
+function getCallFeedState(callFeed: CallFeed): CallFeedState {
   return {
     member: callFeed ? callFeed.getMember() : null,
     isLocal: callFeed ? callFeed.isLocal() : false,
@@ -33,19 +46,21 @@ function getCallFeedState(callFeed) {
   };
 }
 
-export function useCallFeed(callFeed) {
-  const [state, setState] = useState(() => getCallFeedState(callFeed));
+export function useCallFeed(callFeed: CallFeed): CallFeedState {
+  const [state, setState] = useState<CallFeedState>(() =>
+    getCallFeedState(callFeed)
+  );
 
   useEffect(() => {
-    function onSpeaking(speaking) {
+    function onSpeaking(speaking: boolean) {
       setState((prevState) => ({ ...prevState, speaking }));
     }
 
-    function onMuteStateChanged(audioMuted, videoMuted) {
+    function onMuteStateChanged(audioMuted: boolean, videoMuted: boolean) {
       setState((prevState) => ({ ...prevState, audioMuted, videoMuted }));
     }
 
-    function onLocalVolumeChanged(localVolume) {
+    function onLocalVolumeChanged(localVolume: number) {
       setState((prevState) => ({ ...prevState, localVolume }));
     }
 

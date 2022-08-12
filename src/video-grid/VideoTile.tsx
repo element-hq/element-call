@@ -17,30 +17,53 @@ limitations under the License.
 import React, { forwardRef } from "react";
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
+
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
 import { AudioButton, FullscreenButton } from "../button/Button";
 
-export const VideoTile = forwardRef(
+interface Props {
+  name: string;
+  showName: boolean;
+  speaking?: boolean;
+  audioMuted?: boolean;
+  noVideo?: boolean;
+  videoMuted?: boolean;
+  screenshare?: boolean;
+  avatar?: JSX.Element;
+  mediaRef?: React.RefObject<MediaElement>;
+  onOptionsPress?: () => void;
+  localVolume?: number;
+  isFullscreen?: boolean;
+  onFullscreen?: () => void;
+  className?: string;
+  showOptions?: boolean;
+  isLocal?: boolean;
+  disableSpeakingIndicator?: boolean;
+}
+
+export const VideoTile = forwardRef<HTMLDivElement, Props>(
   (
     {
-      className,
-      isLocal,
+      name,
+      showName,
       speaking,
       audioMuted,
       noVideo,
       videoMuted,
       screenshare,
       avatar,
-      name,
-      showName,
       mediaRef,
       onOptionsPress,
-      showOptions,
       localVolume,
       isFullscreen,
       onFullscreen,
+      className,
+      showOptions,
+      isLocal,
+      // TODO: disableSpeakingIndicator is not used atm.
+      disableSpeakingIndicator,
       ...rest
     },
     ref
