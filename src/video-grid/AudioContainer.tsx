@@ -39,7 +39,7 @@ export function AudioForParticipant({
   const sourceRef = useRef<MediaStreamAudioSourceNode>();
 
   useEffect(() => {
-    if (!item.isLocal && stream.getAudioTracks().length > 0 && audioContext) {
+    if (!item.isLocal && audioContext) {
       if (!gainNodeRef.current) {
         gainNodeRef.current = new GainNode(audioContext, {
           gain: localVolume,
