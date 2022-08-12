@@ -17,30 +17,49 @@ limitations under the License.
 import React, { forwardRef } from "react";
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
+
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
 import { AudioButton, FullscreenButton } from "../button/Button";
 
-export const VideoTile = forwardRef(
+interface Props {
+  name: string;
+  speaking?: boolean;
+  audioMuted?: boolean;
+  videoMuted?: boolean;
+  screenshare?: boolean;
+  avatar?: JSX.Element;
+  mediaRef?: React.RefObject<MediaElement>;
+  onOptionsPress?: () => void;
+  localVolume?: number;
+  isFullscreen?: boolean;
+  onFullscreen?: () => void;
+  className?: string;
+  showOptions?: boolean;
+  isLocal?: boolean;
+  disableSpeakingIndicator?: boolean;
+}
+
+export const VideoTile = forwardRef<HTMLDivElement, Props>(
   (
     {
-      className,
-      isLocal,
+      name,
       speaking,
       audioMuted,
-      noVideo,
       videoMuted,
       screenshare,
       avatar,
-      name,
-      showName,
       mediaRef,
       onOptionsPress,
-      showOptions,
       localVolume,
       isFullscreen,
       onFullscreen,
+      className,
+      showOptions,
+      isLocal,
+      // TODO: disableSpeakingIndicator is not used atm.
+      disableSpeakingIndicator,
       ...rest
     },
     ref
@@ -75,7 +94,7 @@ export const VideoTile = forwardRef(
             )}
           </div>
         )}
-        {(videoMuted || noVideo) && (
+        {videoMuted && (
           <>
             <div className={styles.videoMutedOverlay} />
             {avatar}
@@ -86,15 +105,12 @@ export const VideoTile = forwardRef(
             <span>{`${name} is presenting`}</span>
           </div>
         ) : (
-          (showName || audioMuted || (videoMuted && !noVideo)) && (
-            <div className={classNames(styles.infoBubble, styles.memberName)}>
-              {audioMuted && !(videoMuted && !noVideo) && <MicMutedIcon />}
-              {videoMuted && !noVideo && <VideoMutedIcon />}
-              {showName && <span title={name}>{name}</span>}
-            </div>
-          )
+          <div className={classNames(styles.infoBubble, styles.memberName)}>
+            {audioMuted && !videoMuted && <MicMutedIcon />}
+            {videoMuted && <VideoMutedIcon />}
+            <span title={name}>{name}</span>
+          </div>
         )}
-
         <video ref={mediaRef} playsInline disablePictureInPicture />
       </animated.div>
     );
