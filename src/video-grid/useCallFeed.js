@@ -22,9 +22,6 @@ function getCallFeedState(callFeed) {
     member: callFeed ? callFeed.getMember() : null,
     isLocal: callFeed ? callFeed.isLocal() : false,
     speaking: callFeed ? callFeed.isSpeaking() : false,
-    noVideo: callFeed
-      ? !callFeed.stream || callFeed.stream.getVideoTracks().length === 0
-      : true,
     videoMuted: callFeed ? callFeed.isVideoMuted() : true,
     audioMuted: callFeed ? callFeed.isAudioMuted() : true,
     localVolume: callFeed ? callFeed.getLocalVolume() : 0,
