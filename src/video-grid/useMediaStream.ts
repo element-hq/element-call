@@ -213,12 +213,7 @@ export const useSpatialMediaStream = (
   const sourceRef = useRef<MediaStreamAudioSourceNode>();
 
   useEffect(() => {
-    if (
-      spatialAudio &&
-      tileRef.current &&
-      !mute &&
-      stream.getAudioTracks().length > 0
-    ) {
+    if (spatialAudio && tileRef.current && !mute) {
       if (!pannerNodeRef.current) {
         pannerNodeRef.current = new PannerNode(audioContext, {
           panningModel: "HRTF",
