@@ -26,7 +26,7 @@ import menuStyles from "../Menu.module.css";
 import { Menu } from "../Menu";
 import { TooltipTrigger } from "../Tooltip";
 
-type Layout = "freedom" | "spotlight";
+export type Layout = "freedom" | "spotlight";
 interface Props {
   layout: Layout;
   setLayout: (layout: Layout) => void;

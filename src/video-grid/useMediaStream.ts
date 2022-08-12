@@ -181,8 +181,8 @@ export const useSpatialMediaStream = (
   audioDestination: AudioNode,
   mute = false,
   localVolume?: number
-): [RefObject<Element>, RefObject<MediaElement>] => {
-  const tileRef = useRef<Element>();
+): [RefObject<HTMLDivElement>, RefObject<MediaElement>] => {
+  const tileRef = useRef<HTMLDivElement>();
   const [spatialAudio] = useSpatialAudio();
   // We always handle audio separately form the video element
   const mediaRef = useMediaStream(stream, undefined, true, undefined);
@@ -192,13 +192,7 @@ export const useSpatialMediaStream = (
   const sourceRef = useRef<MediaStreamAudioSourceNode>();
 
   useEffect(() => {
-    if (
-      spatialAudio &&
-      audioContext &&
-      tileRef.current &&
-      !mute &&
-      stream.getAudioTracks().length > 0
-    ) {
+    if (spatialAudio && audioContext && tileRef.current && !mute) {
       if (!pannerNodeRef.current) {
         pannerNodeRef.current = new PannerNode(audioContext, {
           panningModel: "HRTF",

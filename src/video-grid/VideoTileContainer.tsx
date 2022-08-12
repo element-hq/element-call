@@ -16,33 +16,51 @@ limitations under the License.
 
 import { SDPStreamMetadataPurpose } from "matrix-js-sdk/src/webrtc/callEventTypes";
 import React from "react";
+import { useCallback } from "react";
+import { RoomMember } from "matrix-js-sdk";
+
 import { useCallFeed } from "./useCallFeed";
 import { useSpatialMediaStream } from "./useMediaStream";
 import { useRoomMemberName } from "./useRoomMemberName";
 import { VideoTile } from "./VideoTile";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 import { useModalTriggerState } from "../Modal";
-import { useCallback } from "react";
+import { Participant } from "../room/InCallView";
 
+interface Props {
+  item: Participant;
+  width?: number;
+  height?: number;
+  getAvatar: (
+    roomMember: RoomMember,
+    width: number,
+    height: number
+  ) => JSX.Element;
+  audioOutputDevice: string;
+  audioContext: AudioContext;
+  audioDestination: AudioNode;
+  disableSpeakingIndicator: boolean;
+  isFullscreen: boolean;
+  onFullscreen: (item: Participant) => void;
+}
 export function VideoTileContainer({
   item,
   width,
   height,
   getAvatar,
-  showName,
+  audioOutputDevice,
   audioContext,
   audioDestination,
   disableSpeakingIndicator,
   isFullscreen,
   onFullscreen,
   ...rest
-}) {
+}: Props) {
   const {
     isLocal,
     audioMuted,
     videoMuted,
     localVolume,
-    noVideo,
     speaking,
     stream,
     purpose,
@@ -77,11 +95,9 @@ export function VideoTileContainer({
         isLocal={isLocal}
         speaking={speaking && !disableSpeakingIndicator}
         audioMuted={audioMuted}
-        noVideo={noVideo}
         videoMuted={videoMuted}
         screenshare={purpose === SDPStreamMetadataPurpose.Screenshare}
         name={rawDisplayName}
-        showName={showName}
         ref={tileRef}
         mediaRef={mediaRef}
         avatar={getAvatar && getAvatar(member, width, height)}
