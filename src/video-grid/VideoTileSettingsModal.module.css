@@ -27,7 +27,7 @@
   --slider-color: var(--quinary-content);
   --slider-height: 4px;
   --thumb-color: var(--accent);
-  --thumb-radious: 100%;
+  --thumb-radius: 100%;
   --thumb-size: 16px;
   --thumb-margin-top: -6px;
 
@@ -64,7 +64,7 @@
   height: var(--thumb-size);
   width: var(--thumb-size);
   margin-top: var(--thumb-margin-top);
-  border-radius: var(--thumb-radious);
+  border-radius: var(--thumb-radius);
   background: var(--thumb-color);
 }
 .localVolumeSlider[type="range"]::-ms-thumb {
@@ -74,7 +74,7 @@
   height: var(--thumb-size);
   width: var(--thumb-size);
   margin-top: var(--thumb-margin-top);
-  border-radius: var(--thumb-radious);
+  border-radius: var(--thumb-radius);
   background: var(--thumb-color);
 }
 .localVolumeSlider[type="range"]::-webkit-slider-thumb {
@@ -84,7 +84,7 @@
   height: var(--thumb-size);
   width: var(--thumb-size);
   margin-top: var(--thumb-margin-top);
-  border-radius: var(--thumb-radious);
+  border-radius: var(--thumb-radius);
   background: var(--thumb-color);
 }
 
