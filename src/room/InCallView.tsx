@@ -48,6 +48,7 @@ import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { useAudioContext } from "../video-grid/useMediaStream";
 import { useFullscreen } from "../video-grid/useFullscreen";
+import { useAudioOutputDevice } from "../video-grid/useAudioOutputDevice";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -113,6 +114,8 @@ export function InCallView({
 
   const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
     useModalTriggerState();
+
+  useAudioOutputDevice(audioRef, audioOutput);
 
   const items = useMemo(() => {
     const participants: Participant[] = [];

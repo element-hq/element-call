@@ -22,6 +22,7 @@ import {
 } from "matrix-js-sdk/src/webrtc/audioContext";
 
 import { useSpatialAudio } from "../settings/useSetting";
+import { useAudioOutputDevice } from "./useAudioOutputDevice";
 
 declare global {
   interface Window {
@@ -37,6 +38,8 @@ export const useMediaStream = (
   localVolume?: number
 ): RefObject<MediaElement> => {
   const mediaRef = useRef<MediaElement>();
+
+  useAudioOutputDevice(mediaRef, audioOutputDevice);
 
   useEffect(() => {
     console.log(
@@ -66,24 +69,6 @@ export const useMediaStream = (
       }
     }
   }, [stream, mute]);
-
-  useEffect(() => {
-    if (
-      mediaRef.current &&
-      audioOutputDevice &&
-      mediaRef.current !== undefined
-    ) {
-      if (mediaRef.current.setSinkId) {
-        console.log(
-          `useMediaStream setting output setSinkId ${audioOutputDevice}`
-        );
-        // Chrome for Android doesn't support this
-        mediaRef.current.setSinkId(audioOutputDevice);
-      } else {
-        console.log("Can't set output - no setsinkid");
-      }
-    }
-  }, [audioOutputDevice]);
 
   useEffect(() => {
     if (!mediaRef.current) return;
@@ -156,11 +141,11 @@ const createLoopback = async (stream: MediaStream): Promise<MediaStream> => {
 export const useAudioContext = (): [
   AudioContext,
   AudioNode,
-  RefObject<HTMLAudioElement>
+  RefObject<MediaElement>
 ] => {
   const context = useRef<AudioContext>();
   const destination = useRef<AudioNode>();
-  const audioRef = useRef<HTMLAudioElement>();
+  const audioRef = useRef<MediaElement>();
 
   useEffect(() => {
     if (audioRef.current && !context.current) {
