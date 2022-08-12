@@ -30,7 +30,6 @@ export function VideoTileContainer({
   height,
   getAvatar,
   showName,
-  audioOutputDevice,
   audioContext,
   audioDestination,
   disableSpeakingIndicator,
@@ -52,7 +51,6 @@ export function VideoTileContainer({
   const { rawDisplayName } = useRoomMemberName(member);
   const [tileRef, mediaRef] = useSpatialMediaStream(
     stream,
-    audioOutputDevice,
     audioContext,
     audioDestination,
     isLocal,
