@@ -25,7 +25,7 @@ import { AudioButton, FullscreenButton } from "../button/Button";
 
 interface Props {
   name: string;
-  showName: boolean;
+  showName?: boolean;
   speaking?: boolean;
   audioMuted?: boolean;
   noVideo?: boolean;
