@@ -25,7 +25,6 @@ import { AudioButton, FullscreenButton } from "../button/Button";
 
 interface Props {
   name: string;
-  showName?: boolean;
   speaking?: boolean;
   audioMuted?: boolean;
   videoMuted?: boolean;
@@ -46,7 +45,6 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
   (
     {
       name,
-      showName,
       speaking,
       audioMuted,
       videoMuted,

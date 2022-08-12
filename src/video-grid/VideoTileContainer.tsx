@@ -36,7 +36,6 @@ interface Props {
     width: number,
     height: number
   ) => JSX.Element;
-  showName?: boolean;
   audioOutputDevice: string;
   audioContext: AudioContext;
   audioDestination: AudioNode;
