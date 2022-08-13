@@ -3,7 +3,7 @@ import React, { HTMLAttributes, ReactNode, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useButton } from "@react-aria/button";
 import { AriaButtonProps } from "@react-types/button";
-import { Room } from "matrix-js-sdk";
+import { Room } from "matrix-js-sdk/src/models/room";
 
 import styles from "./Header.module.css";
 import { useModalTriggerState } from "./Modal";

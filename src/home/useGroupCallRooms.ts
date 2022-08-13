@@ -14,7 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { GroupCall, MatrixClient, Room, RoomMember } from "matrix-js-sdk";
+import { MatrixClient } from "matrix-js-sdk/src/client";
+import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
+import { Room } from "matrix-js-sdk/src/models/room";
+import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
 import { useState, useEffect } from "react";
 

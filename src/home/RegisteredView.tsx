@@ -21,7 +21,7 @@ import React, {
   FormEventHandler,
 } from "react";
 import { useHistory } from "react-router-dom";
-import { MatrixClient } from "matrix-js-sdk";
+import { MatrixClient } from "matrix-js-sdk/src/client";
 
 import { createRoom, roomAliasLocalpartFromRoomName } from "../matrix-utils";
 import { useGroupCallRooms } from "./useGroupCallRooms";

@@ -16,7 +16,7 @@ limitations under the License.
 
 import { useCallback, useContext, useEffect, useState } from "react";
 import pako from "pako";
-import { MatrixEvent } from "matrix-js-sdk";
+import { MatrixEvent } from "matrix-js-sdk/src/models/event";
 import { OverlayTriggerState } from "@react-stately/overlays";
 import { MatrixClient, ClientEvent } from "matrix-js-sdk/src/client";
 
