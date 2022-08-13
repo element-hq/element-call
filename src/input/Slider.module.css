@@ -4,65 +4,82 @@
   -webkit-appearance: none;
   appearance: none;
 
+  background-color: transparent;
+  --slider-color: var(--quinary-content);
+  --slider-height: 4px;
+  --thumb-color: var(--accent);
+  --thumb-radius: 100%;
+  --thumb-size: 16px;
+  --thumb-margin-top: -6px;
+
   cursor: pointer;
   width: 100%;
 }
 
 .slider[type="range"]::-moz-range-track {
-  -ms-appearance: none;
   -moz-appearance: none;
-  -webkit-appearance: none;
   appearance: none;
 
-  height: 4px;
+  background-color: var(--slider-color);
+  height: var(--slider-height);
 }
 .slider[type="range"]::-ms-track {
   -ms-appearance: none;
-  -moz-appearance: none;
-  -webkit-appearance: none;
   appearance: none;
 
-  height: 4px;
+  background-color: var(--slider-color);
+  height: var(--slider-height);
 }
 .slider[type="range"]::-webkit-slider-runnable-track {
-  -ms-appearance: none;
-  -moz-appearance: none;
   -webkit-appearance: none;
   appearance: none;
 
-  height: 4px;
+  background-color: var(--slider-color);
+  height: var(--slider-height);
 }
 
 .slider[type="range"]::-moz-range-thumb {
   -moz-appearance: none;
   appearance: none;
 
-  height: 16px;
-  width: 16px;
-  margin-top: -6px;
-
-  border-radius: 100%;
-  background: var(--accent);
+  height: var(--thumb-size);
+  width: var(--thumb-size);
+  margin-top: var(--thumb-margin-top);
+  border-radius: var(--thumb-radius);
+  background: var(--thumb-color);
 }
 .slider[type="range"]::-ms-thumb {
   -ms-appearance: none;
   appearance: none;
 
-  height: 16px;
-  width: 16px;
-  margin-top: -6px;
-
-  border-radius: 100%;
-  background: var(--accent);
+  height: var(--thumb-size);
+  width: var(--thumb-size);
+  margin-top: var(--thumb-margin-top);
+  border-radius: var(--thumb-radius);
+  background: var(--thumb-color);
 }
 .slider[type="range"]::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
 
-  height: 16px;
-  width: 16px;
-  margin-top: -6px;
+  height: var(--thumb-size);
+  width: var(--thumb-size);
+  margin-top: var(--thumb-margin-top);
+  border-radius: var(--thumb-radius);
+  background: var(--thumb-color);
+}
 
-  border-radius: 100%;
-  background: var(--accent);
+.slider[type="range"]::-moz-range-progress {
+  -moz-appearance: none;
+  appearance: none;
+
+  height: var(--slider-height);
+  background: var(--thumb-color);
+}
+.slider[type="range"]::-ms-fill-lower {
+  -moz-appearance: none;
+  appearance: none;
+
+  height: var(--slider-height);
+  background: var(--thumb-color);
 }
