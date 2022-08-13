@@ -17,7 +17,7 @@ limitations under the License.
 import { SDPStreamMetadataPurpose } from "matrix-js-sdk/src/webrtc/callEventTypes";
 import React from "react";
 import { useCallback } from "react";
-import { RoomMember } from "matrix-js-sdk";
+import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 
 import { useCallFeed } from "./useCallFeed";
 import { useSpatialMediaStream } from "./useMediaStream";
