@@ -15,17 +15,6 @@ export function VoiceActivationTresholdSlider() {
         defaultValue={treshold}
         onChange={setTreshold}
       />
-      {/* <input
-        type="range"
-        min="-100"
-        max="0"
-        step="1"
-        defaultValue={treshold}
-        onChange={(e) => {
-          const newValue = +e.target.value;
-          setTreshold(newValue);
-        }}
-      /> */}
     </div>
   );
 }
