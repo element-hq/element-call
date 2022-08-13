@@ -33,13 +33,13 @@ export function AudioForParticipant({
   audioContext,
   audioDestination,
 }: AudioForParticipantProps): JSX.Element {
-  const { stream, localVolume } = useCallFeed(item.callFeed);
+  const { stream, localVolume, audioMuted } = useCallFeed(item.callFeed);
 
   const gainNodeRef = useRef<GainNode>();
   const sourceRef = useRef<MediaStreamAudioSourceNode>();
 
   useEffect(() => {
-    if (!item.isLocal && audioContext) {
+    if (!item.isLocal && audioContext && !audioMuted) {
       if (!gainNodeRef.current) {
         gainNodeRef.current = new GainNode(audioContext, {
           gain: localVolume,
@@ -60,7 +60,7 @@ export function AudioForParticipant({
         gainNode.disconnect();
       };
     }
-  }, [item, audioContext, audioDestination, stream, localVolume]);
+  }, [item, audioContext, audioDestination, stream, localVolume, audioMuted]);
 
   return null;
 }
