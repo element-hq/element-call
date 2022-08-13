@@ -72,7 +72,7 @@ export function VideoTileContainer({
     audioOutputDevice,
     audioContext,
     audioDestination,
-    isLocal,
+    isLocal || audioMuted,
     localVolume
   );
   const {
