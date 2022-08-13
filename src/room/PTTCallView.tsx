@@ -17,7 +17,9 @@ limitations under the License.
 import React, { useEffect } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
-import { GroupCall, MatrixClient, RoomMember } from "matrix-js-sdk";
+import { MatrixClient } from "matrix-js-sdk/src/client";
+import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
 import { useDelayedState } from "../useDelayedState";
