@@ -150,7 +150,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
                   },
                   false // Don't need the crypto store just to log out
                 );
-                await client.logout();
+                await client.logout(undefined, true);
               } catch (err_) {
                 logger.warn(
                   "The previous session was lost, and we couldn't log it out, " +
