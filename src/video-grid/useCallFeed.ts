@@ -16,7 +16,7 @@ limitations under the License.
 
 import { useState, useEffect } from "react";
 import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
-import { RoomMember } from "matrix-js-sdk";
+import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { SDPStreamMetadataPurpose } from "matrix-js-sdk/src/webrtc/callEventTypes";
 
 interface CallFeedState {

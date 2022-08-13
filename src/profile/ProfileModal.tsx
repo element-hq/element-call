@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
-import { MatrixClient } from "matrix-js-sdk";
+import { MatrixClient } from "matrix-js-sdk/src/client";
 
 import { Button } from "../button";
 import { useProfile } from "./useProfile";

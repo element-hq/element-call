@@ -33,6 +33,7 @@ import {
   initClient,
   initMatroskaClient,
   defaultHomeserver,
+  CryptoStoreIntegrityError,
 } from "./matrix-utils";
 
 declare global {
@@ -115,28 +116,51 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         // We're running as a standalone application
         try {
           const session = loadSession();
+          if (!session) return { client: undefined, isPasswordlessUser: false };
 
-          if (session) {
-            /* eslint-disable camelcase */
-            const { user_id, device_id, access_token, passwordlessUser } =
-              session;
+          logger.log("Using a standalone client");
 
-            logger.log("Using a standalone client");
-            const client = await initClient(
-              {
-                baseUrl: defaultHomeserver,
-                accessToken: access_token,
-                userId: user_id,
-                deviceId: device_id,
-              },
-              true
-            );
-            /* eslint-enable camelcase */
+          /* eslint-disable camelcase */
+          const { user_id, device_id, access_token, passwordlessUser } =
+            session;
 
-            return { client, isPasswordlessUser: passwordlessUser };
+          try {
+            return {
+              client: await initClient(
+                {
+                  baseUrl: defaultHomeserver,
+                  accessToken: access_token,
+                  userId: user_id,
+                  deviceId: device_id,
+                },
+                true
+              ),
+              isPasswordlessUser: passwordlessUser,
+            };
+          } catch (err) {
+            if (err instanceof CryptoStoreIntegrityError) {
+              // We can't use this session anymore, so let's log it out
+              try {
+                const client = await initClient(
+                  {
+                    baseUrl: defaultHomeserver,
+                    accessToken: access_token,
+                    userId: user_id,
+                    deviceId: device_id,
+                  },
+                  false // Don't need the crypto store just to log out
+                );
+                await client.logout(undefined, true);
+              } catch (err_) {
+                logger.warn(
+                  "The previous session was lost, and we couldn't log it out, " +
+                    "either"
+                );
+              }
+            }
+            throw err;
           }
-
-          return { client: undefined, isPasswordlessUser: false };
+          /* eslint-enable camelcase */
         } catch (err) {
           clearSession();
           throw err;
