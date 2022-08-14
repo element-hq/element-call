@@ -62,7 +62,15 @@ export function AudioForParticipant({
         gainNode.disconnect();
       };
     }
-  }, [item, audioContext, audioDestination, stream, localVolume, audioMuted]);
+  }, [
+    item,
+    audioContext,
+    audioDestination,
+    stream,
+    localVolume,
+    audioMuted,
+    audioTrackCount,
+  ]);
 
   return null;
 }
