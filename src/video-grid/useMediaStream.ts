@@ -23,6 +23,7 @@ import {
 
 import { useSpatialAudio } from "../settings/useSetting";
 import { useEventTarget } from "../useEvents";
+import { useAudioOutputDevice } from "./useAudioOutputDevice";
 
 declare global {
   interface Window {
@@ -56,6 +57,8 @@ export const useMediaStream = (
 ): RefObject<MediaElement> => {
   const mediaRef = useRef<MediaElement>();
 
+  useAudioOutputDevice(mediaRef, audioOutputDevice);
+
   useEffect(() => {
     console.log(
       `useMediaStream update stream mediaRef.current ${!!mediaRef.current} stream ${
@@ -84,24 +87,6 @@ export const useMediaStream = (
       }
     }
   }, [stream, mute]);
-
-  useEffect(() => {
-    if (
-      mediaRef.current &&
-      audioOutputDevice &&
-      mediaRef.current !== undefined
-    ) {
-      if (mediaRef.current.setSinkId) {
-        console.log(
-          `useMediaStream setting output setSinkId ${audioOutputDevice}`
-        );
-        // Chrome for Android doesn't support this
-        mediaRef.current.setSinkId(audioOutputDevice);
-      } else {
-        console.log("Can't set output - no setsinkid");
-      }
-    }
-  }, [audioOutputDevice]);
 
   useEffect(() => {
     if (!mediaRef.current) return;
@@ -174,11 +159,11 @@ const createLoopback = async (stream: MediaStream): Promise<MediaStream> => {
 export const useAudioContext = (): [
   AudioContext,
   AudioNode,
-  RefObject<HTMLAudioElement>
+  RefObject<MediaElement>
 ] => {
   const context = useRef<AudioContext>();
   const destination = useRef<AudioNode>();
-  const audioRef = useRef<HTMLAudioElement>();
+  const audioRef = useRef<MediaElement>();
 
   useEffect(() => {
     if (audioRef.current && !context.current) {
@@ -210,7 +195,6 @@ export const useAudioContext = (): [
 
 export const useSpatialMediaStream = (
   stream: MediaStream,
-  audioOutputDevice: string,
   audioContext: AudioContext,
   audioDestination: AudioNode,
   mute = false,
@@ -218,13 +202,8 @@ export const useSpatialMediaStream = (
 ): [RefObject<HTMLDivElement>, RefObject<MediaElement>] => {
   const tileRef = useRef<HTMLDivElement>();
   const [spatialAudio] = useSpatialAudio();
-  // If spatial audio is enabled, we handle audio separately from the video element
-  const mediaRef = useMediaStream(
-    stream,
-    audioOutputDevice,
-    spatialAudio || mute,
-    localVolume
-  );
+  // We always handle audio separately form the video element
+  const mediaRef = useMediaStream(stream, undefined, true, undefined);
   const [audioTrackCount] = useMediaStreamTrackCount(stream);
 
   const gainNodeRef = useRef<GainNode>();

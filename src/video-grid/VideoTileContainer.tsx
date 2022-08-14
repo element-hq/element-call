@@ -36,7 +36,6 @@ interface Props {
     width: number,
     height: number
   ) => JSX.Element;
-  audioOutputDevice: string;
   audioContext: AudioContext;
   audioDestination: AudioNode;
   disableSpeakingIndicator: boolean;
@@ -48,7 +47,6 @@ export function VideoTileContainer({
   width,
   height,
   getAvatar,
-  audioOutputDevice,
   audioContext,
   audioDestination,
   disableSpeakingIndicator,
@@ -69,7 +67,6 @@ export function VideoTileContainer({
   const { rawDisplayName } = useRoomMemberName(member);
   const [tileRef, mediaRef] = useSpatialMediaStream(
     stream,
-    audioOutputDevice,
     audioContext,
     audioDestination,
     isLocal || audioMuted,

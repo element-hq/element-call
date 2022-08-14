@@ -46,10 +46,12 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { useMediaHandler } from "../settings/useMediaHandler";
-import { useShowInspector } from "../settings/useSetting";
+import { useShowInspector, useSpatialAudio } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { useAudioContext } from "../video-grid/useMediaStream";
 import { useFullscreen } from "../video-grid/useFullscreen";
+import { AudioContainer } from "../video-grid/AudioContainer";
+import { useAudioOutputDevice } from "../video-grid/useAudioOutputDevice";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -109,12 +111,16 @@ export function InCallView({
   const { layout, setLayout } = useVideoGridLayout(screenshareFeeds.length > 0);
   const { toggleFullscreen, fullscreenParticipant } = useFullscreen(elementRef);
 
+  const [spatialAudio] = useSpatialAudio();
+
   const [audioContext, audioDestination, audioRef] = useAudioContext();
   const { audioOutput } = useMediaHandler();
   const [showInspector] = useShowInspector();
 
   const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
     useModalTriggerState();
+
+  useAudioOutputDevice(audioRef, audioOutput);
 
   const items = useMemo(() => {
     const participants: Participant[] = [];
@@ -185,7 +191,6 @@ export function InCallView({
           key={fullscreenParticipant.id}
           item={fullscreenParticipant}
           getAvatar={renderAvatar}
-          audioOutputDevice={audioOutput}
           audioContext={audioContext}
           audioDestination={audioDestination}
           disableSpeakingIndicator={true}
@@ -202,7 +207,6 @@ export function InCallView({
             key={item.id}
             item={item}
             getAvatar={renderAvatar}
-            audioOutputDevice={audioOutput}
             audioContext={audioContext}
             audioDestination={audioDestination}
             disableSpeakingIndicator={items.length < 3}
@@ -218,7 +222,6 @@ export function InCallView({
     items,
     audioContext,
     audioDestination,
-    audioOutput,
     layout,
     renderAvatar,
     toggleFullscreen,
@@ -236,6 +239,13 @@ export function InCallView({
   return (
     <div className={styles.inRoom} ref={elementRef}>
       <audio ref={audioRef} />
+      {(!spatialAudio || fullscreenParticipant) && (
+        <AudioContainer
+          items={items}
+          audioContext={audioContext}
+          audioDestination={audioDestination}
+        />
+      )}
       {!fullscreenParticipant && (
         <Header>
           <LeftNav>
