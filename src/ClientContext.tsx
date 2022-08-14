@@ -34,6 +34,8 @@ import {
   initMatroskaClient,
   defaultHomeserver,
   CryptoStoreIntegrityError,
+  defaultSfuUserId,
+  defaultSfuDeviceId,
 } from "./matrix-utils";
 
 declare global {
@@ -132,6 +134,8 @@ export const ClientProvider: FC<Props> = ({ children }) => {
                   accessToken: access_token,
                   userId: user_id,
                   deviceId: device_id,
+                  localSfu: defaultSfuUserId,
+                  localSfuDeviceId: defaultSfuDeviceId,
                 },
                 true
               ),
@@ -147,6 +151,8 @@ export const ClientProvider: FC<Props> = ({ children }) => {
                     accessToken: access_token,
                     userId: user_id,
                     deviceId: device_id,
+                    localSfu: defaultSfuUserId,
+                    localSfuDeviceId: defaultSfuDeviceId,
                   },
                   false // Don't need the crypto store just to log out
                 );

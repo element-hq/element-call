@@ -24,6 +24,10 @@ import { getRoomParams } from "./room/useRoomParams";
 export const defaultHomeserver =
   (import.meta.env.VITE_DEFAULT_HOMESERVER as string) ??
   `${window.location.protocol}//${window.location.host}`;
+export const defaultSfuUserId = import.meta.env
+  .VITE_DEFAULT_SFU_USER_ID as string;
+export const defaultSfuDeviceId = import.meta.env
+  .VITE_DEFAULT_SFU_DEVICE_ID as string;
 
 export const defaultHomeserverHost = new URL(defaultHomeserver).host;
 
@@ -219,8 +223,6 @@ export async function initClient(
     // so we don't want API calls taking ages, we'd rather they just fail.
     localTimeoutMs: 5000,
     useE2eForGroupCall: e2eEnabled,
-    localSfu: "@sfu:call.ems.host",
-    localSfuDeviceId: "YNZDLSEQMP",
   });
 
   try {

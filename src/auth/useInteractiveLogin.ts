@@ -18,7 +18,12 @@ import { useCallback } from "react";
 import { InteractiveAuth } from "matrix-js-sdk/src/interactive-auth";
 import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
 
-import { initClient, defaultHomeserver } from "../matrix-utils";
+import {
+  initClient,
+  defaultHomeserver,
+  defaultSfuUserId,
+  defaultSfuDeviceId,
+} from "../matrix-utils";
 import { Session } from "../ClientContext";
 
 export const useInteractiveLogin = () =>
@@ -63,6 +68,8 @@ export const useInteractiveLogin = () =>
         accessToken: access_token,
         userId: user_id,
         deviceId: device_id,
+        localSfu: defaultSfuUserId,
+        localSfuDeviceId: defaultSfuDeviceId,
       },
       false
     );
