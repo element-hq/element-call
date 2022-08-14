@@ -207,7 +207,6 @@ export function InCallView({
             key={item.id}
             item={item}
             getAvatar={renderAvatar}
-            audioOutputDevice={audioOutput}
             audioContext={audioContext}
             audioDestination={audioDestination}
             disableSpeakingIndicator={items.length < 3}
@@ -226,7 +225,6 @@ export function InCallView({
     layout,
     renderAvatar,
     toggleFullscreen,
-    audioOutput,
   ]);
 
   const {
