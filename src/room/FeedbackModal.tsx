@@ -69,7 +69,7 @@ export function FeedbackModal({ inCall, roomId, onClose, ...rest }: Props) {
   }, [sent, onClose]);
 
   return (
-    <Modal title="Submit Feedback" isDismissable {...rest}>
+    <Modal title="Submit Feedback" isDismissable onClose={onClose} {...rest}>
       <ModalContent>
         <Body>Having trouble? Help us fix it.</Body>
         <form onSubmit={onSubmitFeedback}>
