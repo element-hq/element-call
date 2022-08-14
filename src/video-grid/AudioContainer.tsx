@@ -18,6 +18,7 @@ import React, { useEffect, useRef } from "react";
 
 import { Participant } from "../room/InCallView";
 import { useCallFeed } from "./useCallFeed";
+import { useMediaStreamTrackCount } from "./useMediaStream";
 
 // XXX: These in fact do not render anything but to my knowledge this is the
 // only way to a hook on an array
@@ -34,12 +35,13 @@ export function AudioForParticipant({
   audioDestination,
 }: AudioForParticipantProps): JSX.Element {
   const { stream, localVolume, audioMuted } = useCallFeed(item.callFeed);
+  const [audioTrackCount] = useMediaStreamTrackCount(stream);
 
   const gainNodeRef = useRef<GainNode>();
   const sourceRef = useRef<MediaStreamAudioSourceNode>();
 
   useEffect(() => {
-    if (!item.isLocal && audioContext && !audioMuted) {
+    if (!item.isLocal && audioContext && !audioMuted && audioTrackCount > 0) {
       if (!gainNodeRef.current) {
         gainNodeRef.current = new GainNode(audioContext, {
           gain: localVolume,
