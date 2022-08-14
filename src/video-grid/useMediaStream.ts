@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useRef, useEffect, RefObject } from "react";
+import { useRef, useEffect, RefObject, useState, useCallback } from "react";
 import { parse as parseSdp, write as writeSdp } from "sdp-transform";
 import {
   acquireContext,
@@ -22,6 +22,7 @@ import {
 } from "matrix-js-sdk/src/webrtc/audioContext";
 
 import { useSpatialAudio } from "../settings/useSetting";
+import { useEventTarget } from "../useEvents";
 import { useAudioOutputDevice } from "./useAudioOutputDevice";
 
 declare global {
@@ -30,6 +31,23 @@ declare global {
     chrome?: unknown;
   }
 }
+
+export const useMediaStreamTrackCount = (
+  stream: MediaStream
+): [number, number] => {
+  const [audioTrackCount, setAudioTrackCount] = useState(0);
+  const [videoTrackCount, setVideoTrackCount] = useState(0);
+
+  const tracksChanged = useCallback(() => {
+    setAudioTrackCount(stream.getAudioTracks().length);
+    setVideoTrackCount(stream.getVideoTracks().length);
+  }, [stream]);
+
+  useEventTarget(stream, "addtrack", tracksChanged);
+  useEventTarget(stream, "removetrack", tracksChanged);
+
+  return [audioTrackCount, videoTrackCount];
+};
 
 export const useMediaStream = (
   stream: MediaStream,
@@ -186,13 +204,14 @@ export const useSpatialMediaStream = (
   const [spatialAudio] = useSpatialAudio();
   // We always handle audio separately form the video element
   const mediaRef = useMediaStream(stream, undefined, true, undefined);
+  const [audioTrackCount] = useMediaStreamTrackCount(stream);
 
   const gainNodeRef = useRef<GainNode>();
   const pannerNodeRef = useRef<PannerNode>();
   const sourceRef = useRef<MediaStreamAudioSourceNode>();
 
   useEffect(() => {
-    if (spatialAudio && audioContext && tileRef.current && !mute) {
+    if (spatialAudio && tileRef.current && !mute && audioTrackCount > 0) {
       if (!pannerNodeRef.current) {
         pannerNodeRef.current = new PannerNode(audioContext, {
           panningModel: "HRTF",
@@ -240,7 +259,15 @@ export const useSpatialMediaStream = (
         pannerNode.disconnect();
       };
     }
-  }, [stream, spatialAudio, audioContext, audioDestination, mute, localVolume]);
+  }, [
+    stream,
+    spatialAudio,
+    audioContext,
+    audioDestination,
+    mute,
+    localVolume,
+    audioTrackCount,
+  ]);
 
   return [tileRef, mediaRef];
 };
