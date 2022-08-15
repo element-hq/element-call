@@ -34,8 +34,12 @@ declare global {
 export const useMediaStreamTrackCount = (
   stream: MediaStream
 ): [number, number] => {
-  const [audioTrackCount, setAudioTrackCount] = useState(0);
-  const [videoTrackCount, setVideoTrackCount] = useState(0);
+  const [audioTrackCount, setAudioTrackCount] = useState(
+    stream.getAudioTracks().length
+  );
+  const [videoTrackCount, setVideoTrackCount] = useState(
+    stream.getVideoTracks().length
+  );
 
   const tracksChanged = useCallback(() => {
     setAudioTrackCount(stream.getAudioTracks().length);
