@@ -87,9 +87,11 @@ export function AudioContainer({
 }: AudioContainerProps): JSX.Element {
   return (
     <>
-      {items.map((item) => (
-        <AudioForParticipant key={item.id} item={item} {...rest} />
-      ))}
+      {items
+        .filter((item) => !item.isLocal)
+        .map((item) => (
+          <AudioForParticipant key={item.id} item={item} {...rest} />
+        ))}
     </>
   );
 }
