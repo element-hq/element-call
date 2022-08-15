@@ -83,3 +83,20 @@
   height: var(--slider-height);
   background: var(--thumb-color);
 }
+
+.sliderGreen[type="range"] {
+  outline: 1px solid red;
+  background: green !important;
+  background: linear-gradient(90deg, #d3d3d3 50%, green 50%) !important;
+}
+.sliderGreen[type="range"]::-webkit-slider-thumb {
+  background: green !important;
+}
+
+.sliderRed[type="range"] {
+  background: red !important;
+  background: linear-gradient(90deg, red 50%, #d3d3d3 50%) !important;
+}
+.sliderRed[type="range"]::-webkit-slider-thumb {
+  background: red !important;
+}

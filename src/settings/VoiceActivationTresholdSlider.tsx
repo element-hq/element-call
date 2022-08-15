@@ -14,6 +14,7 @@ export function VoiceActivationTresholdSlider() {
         defaultValue={treshold}
         onChange={setTreshold}
       />
+      {treshold}
     </div>
   );
 }
