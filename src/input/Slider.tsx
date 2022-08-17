@@ -10,6 +10,7 @@ interface SliderProps {
   step?: number;
   min?: number;
   max?: number;
+  inputValue?: number;
 }
 
 export function Slider({
@@ -19,6 +20,7 @@ export function Slider({
   step = 0.01,
   min = 0,
   max = 1,
+  inputValue,
 }: SliderProps) {
   const handleOnChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value: number = +event.target.value;
@@ -34,6 +36,7 @@ export function Slider({
       step={step}
       defaultValue={defaultValue}
       value={value}
+      inputValue={inputValue}
       onChange={handleOnChange}
     />
   );
