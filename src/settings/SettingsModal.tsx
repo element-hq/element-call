@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Item } from "@react-stately/collections";
+import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -31,6 +32,7 @@ import { Button } from "../button";
 import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
 import { VoiceActivationTresholdSlider } from "./VoiceActivationTresholdSlider";
+import { useClient } from "../ClientContext";
 
 interface Props {
   isOpen: boolean;

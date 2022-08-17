@@ -1,0 +1,25 @@
+.container {
+  width: 444px;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.container > * {
+  position: absolute;
+  left: 0;
+}
+
+.volumeIndicator {
+  height: 6px;
+  width: 50%;
+  transition: width 0.2s;
+}
+
+.volumeIndicator.green {
+  background-color: #0dbd8b;
+}
+
+.volumeIndicator.red {
+  background-color: #ff5b55;
+}

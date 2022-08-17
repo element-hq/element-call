@@ -5,8 +5,11 @@
   appearance: none;
 
   background-color: transparent;
-  --slider-color: var(--quinary-content);
-  --slider-height: 4px;
+
+  /* This (slider-color) is 50% transparent to allow the voice activity slider to
+     display volumebar behind the slider */
+  --slider-color: var(--quinary-content-50);
+  --slider-height: 6px;
   --thumb-color: var(--accent);
   --thumb-radius: 100%;
   --thumb-size: 16px;
