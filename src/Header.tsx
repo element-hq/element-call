@@ -58,7 +58,7 @@ export function LeftNav({
 interface RightNavProps extends HTMLAttributes<HTMLElement> {
   children?: ReactNode;
   className?: string;
-  hideMobile?: string;
+  hideMobile?: boolean;
 }
 
 export function RightNav({
