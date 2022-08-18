@@ -56,13 +56,13 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
       const data = new FormData(e.target as HTMLFormElement);
       const roomNameData = data.get("callName");
       const roomName = typeof roomNameData === "string" ? roomNameData : "";
-      // const ptt = callType === CallType.Radio;
+      const ptt = callType === CallType.Radio;
 
       async function submit() {
         setError(undefined);
         setLoading(true);
 
-        const [roomIdOrAlias] = await createRoom(client, roomName);
+        const [roomIdOrAlias] = await createRoom(client, roomName, ptt);
 
         if (roomIdOrAlias) {
           history.push(`/room/${roomIdOrAlias}`);
@@ -82,7 +82,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
         }
       });
     },
-    [client, history, modalState]
+    [client, history, modalState, callType]
   );
 
   const recentRooms = useGroupCallRooms(client);
