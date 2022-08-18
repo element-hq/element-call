@@ -87,7 +87,8 @@ export const useLoadGroupCall = (
           // The room doesn't exist, but we can create it
           const [, roomId] = await createRoom(
             client,
-            roomNameFromRoomId(roomIdOrAlias)
+            roomNameFromRoomId(roomIdOrAlias),
+            createPtt
           );
           // likewise, wait for the room
           return await waitForRoom(roomId);
