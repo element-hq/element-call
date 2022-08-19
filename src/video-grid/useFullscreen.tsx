@@ -15,10 +15,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Participant } from "../room/InCallView";
 import { useEventTarget } from "../useEvents";
+import { useCallFeed } from "./useCallFeed";
 
 export function useFullscreen(ref: React.RefObject<HTMLElement>): {
   toggleFullscreen: (participant: Participant) => void;
@@ -26,6 +27,7 @@ export function useFullscreen(ref: React.RefObject<HTMLElement>): {
 } {
   const [fullscreenParticipant, setFullscreenParticipant] =
     useState<Participant | null>(null);
+  const { disposed } = useCallFeed(fullscreenParticipant?.callFeed);
 
   const toggleFullscreen = useCallback(
     (participant: Participant) => {
@@ -51,6 +53,13 @@ export function useFullscreen(ref: React.RefObject<HTMLElement>): {
   }, [setFullscreenParticipant]);
 
   useEventTarget(ref.current, "fullscreenchange", onFullscreenChanged);
+
+  useEffect(() => {
+    if (disposed) {
+      document.exitFullscreen();
+      setFullscreenParticipant(null);
+    }
+  }, [disposed]);
 
   return { toggleFullscreen, fullscreenParticipant };
 }
