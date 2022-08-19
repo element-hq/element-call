@@ -38,7 +38,7 @@ function getCallFeedState(callFeed: CallFeed): CallFeedState {
     videoMuted: callFeed ? callFeed.isVideoMuted() : true,
     audioMuted: callFeed ? callFeed.isAudioMuted() : true,
     localVolume: callFeed ? callFeed.getLocalVolume() : 0,
-    disposed: callFeed ? callFeed.idDisposed() : undefined,
+    disposed: callFeed ? callFeed.disposed : undefined,
     stream: callFeed ? callFeed.stream : undefined,
     purpose: callFeed ? callFeed.purpose : undefined,
   };
