@@ -14,45 +14,46 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useState } from "react";
+import React, { FC, useCallback, useState, FormEventHandler } from "react";
+import { useHistory } from "react-router-dom";
+import { randomString } from "matrix-js-sdk/src/randomstring";
+
 import { useClient } from "../ClientContext";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { UserMenuContainer } from "../UserMenuContainer";
-import { useHistory } from "react-router-dom";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
-import { randomString } from "matrix-js-sdk/src/randomstring";
 import { createRoom, roomAliasLocalpartFromRoomName } from "../matrix-utils";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { useRecaptcha } from "../auth/useRecaptcha";
-import { Body, Caption, Link, Headline } from "../typography/Typography";
+import { Body, Caption, Link } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
 import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
 
-export function UnauthenticatedView() {
+export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
   const [callType, setCallType] = useState(CallType.Video);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState();
+  const [error, setError] = useState<Error>();
   const [privacyPolicyUrl, recaptchaKey, register] =
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const { modalState, modalProps } = useModalTriggerState();
-  const [onFinished, setOnFinished] = useState();
+  const [onFinished, setOnFinished] = useState<() => void>();
   const history = useHistory();
 
-  const onSubmit = useCallback(
+  const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     (e) => {
       e.preventDefault();
-      const data = new FormData(e.target);
-      const roomName = data.get("callName");
-      const displayName = data.get("displayName");
+      const data = new FormData(e.target as HTMLFormElement);
+      const roomName = data.get("callName") as string;
+      const displayName = data.get("displayName") as string;
       const ptt = callType === CallType.Radio;
 
       async function submit() {
@@ -68,12 +69,12 @@ export function UnauthenticatedView() {
           true
         );
 
-        let roomIdOrAlias;
+        let roomIdOrAlias: string;
         try {
           [roomIdOrAlias] = await createRoom(client, roomName, ptt);
         } catch (error) {
           if (error.errcode === "M_ROOM_IN_USE") {
-            setOnFinished(() => () => {
+            setOnFinished(() => {
               setClient(client, session);
               const aliasLocalpart = roomAliasLocalpartFromRoomName(roomName);
               const [, serverName] = client.getUserId().split(":");
@@ -100,7 +101,7 @@ export function UnauthenticatedView() {
         reset();
       });
     },
-    [register, reset, execute, history, callType]
+    [register, reset, execute, history, callType, modalState, setClient]
   );
 
   const callNameLabel =
@@ -177,4 +178,4 @@ export function UnauthenticatedView() {
       )}
     </>
   );
-}
+};

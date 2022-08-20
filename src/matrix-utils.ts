@@ -17,7 +17,12 @@ import { Visibility, Preset } from "matrix-js-sdk/src/@types/partials";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 import { WidgetApi } from "matrix-widget-api";
 import { logger } from "matrix-js-sdk/src/logger";
+import {
+  GroupCallIntent,
+  GroupCallType,
+} from "matrix-js-sdk/src/webrtc/groupCall";
 
+import type { Room } from "matrix-js-sdk/src/models/room";
 import IndexedDBWorker from "./IndexedDBWorker?worker";
 import { getRoomParams } from "./room/useRoomParams";
 
@@ -294,9 +299,10 @@ export function isLocalRoomId(roomId: string): boolean {
 
 export async function createRoom(
   client: MatrixClient,
-  name: string
+  name: string,
+  ptt: boolean
 ): Promise<[string, string]> {
-  const result = await client.createRoom({
+  const createPromise = client.createRoom({
     visibility: Visibility.Private,
     preset: Preset.PublicChat,
     name,
@@ -325,6 +331,36 @@ export async function createRoom(
       },
     },
   });
+
+  // Wait for the room to arrive
+  await new Promise<void>((resolve, reject) => {
+    const onRoom = async (room: Room) => {
+      if (room.roomId === (await createPromise).room_id) {
+        resolve();
+        cleanUp();
+      }
+    };
+    createPromise.catch((e) => {
+      reject(e);
+      cleanUp();
+    });
+
+    const cleanUp = () => {
+      client.off(ClientEvent.Room, onRoom);
+    };
+    client.on(ClientEvent.Room, onRoom);
+  });
+
+  const result = await createPromise;
+
+  console.log(`Creating ${ptt ? "PTT" : "video"} group call room`);
+
+  await client.createGroupCall(
+    result.room_id,
+    ptt ? GroupCallType.Voice : GroupCallType.Video,
+    ptt,
+    GroupCallIntent.Room
+  );
 
   return [fullAliasFromRoomName(name, client), result.room_id];
 }
