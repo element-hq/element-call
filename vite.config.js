@@ -36,9 +36,6 @@ export default defineConfig(({ mode }) => {
       }),
     ],
     server: {
-      hmr: {
-        port: 3000,
-      },
       proxy: {
         "/_matrix": env.VITE_DEFAULT_HOMESERVER || "http://localhost:8008",
       },
