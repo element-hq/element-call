@@ -39,7 +39,7 @@ function getCallFeedState(callFeed: CallFeed): CallFeedState {
     localVolume: callFeed ? callFeed.getLocalVolume() : 0,
     stream: callFeed ? callFeed.stream : undefined,
     purpose: callFeed ? callFeed.purpose : undefined,
-    voiceActivityTreshold: callFeed ? callFeed.voiceActivityTreshold : 0,
+    voiceActivityThreshold: callFeed ? callFeed.voiceActivityThreshold : 0,
   };
 }
 
@@ -65,10 +65,10 @@ export function useCallFeed(callFeed: CallFeed): CallFeedState {
       setState(getCallFeedState(callFeed));
     }
 
-    function onVoiceActivityTresholdChanged(treshold) {
+    function onVoiceActivityThresholdChanged(threshold) {
       setState((prevState) => ({
         ...prevState,
-        voiceActivityTreshold: treshold,
+        voiceActivityThreshold: threshold,
       }));
     }
 
@@ -78,8 +78,8 @@ export function useCallFeed(callFeed: CallFeed): CallFeedState {
       callFeed.on(CallFeedEvent.LocalVolumeChanged, onLocalVolumeChanged);
       callFeed.on(CallFeedEvent.NewStream, onUpdateCallFeed);
       callFeed.on(
-        CallFeedEvent.VoiceActivityTresholdChanged,
-        onVoiceActivityTresholdChanged
+        CallFeedEvent.VoiceActivityThresholdChanged,
+        onVoiceActivityThresholdChanged
       );
     }
 

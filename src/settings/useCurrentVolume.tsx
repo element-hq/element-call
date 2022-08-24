@@ -25,7 +25,7 @@ export default function useCurrentVolume() {
           purpose: undefined,
         });
         feed.measureVolumeActivity(true);
-        feed.setVoiceActivityTreshold(-Infinity);
+        feed.setVoiceActivityThreshold(-Infinity);
         setCallfeed(feed);
       });
   }, [client]);

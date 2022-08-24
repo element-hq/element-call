@@ -28,7 +28,7 @@ import { CallEndedView } from "./CallEndedView";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
-import { useVoiceActivationTreshold } from "../settings/useSetting";
+import { useVoiceActivationThreshold } from "../settings/useSetting";
 declare global {
   interface Window {
     groupCall: GroupCall;
@@ -63,7 +63,7 @@ export function GroupCallView({
     toggleLocalVideoMuted,
     toggleMicrophoneMuted,
     toggleScreensharing,
-    setVoiceActivityTreshold,
+    setVoiceActivityThreshold,
     requestingScreenshare,
     isScreensharing,
     localScreenshareFeed,
@@ -74,12 +74,12 @@ export function GroupCallView({
 
   const avatarUrl = useRoomAvatar(groupCall.room);
 
-  const [treshold] = useVoiceActivationTreshold();
+  const [threshold] = useVoiceActivationThreshold();
 
   useEffect(() => {
-    console.log("TRESHOLD CHANCED?", treshold);
-    setVoiceActivityTreshold?.(treshold);
-  }, [treshold, setVoiceActivityTreshold]);
+    console.log("THRESHOLD CHANCED?", threshold);
+    setVoiceActivityThreshold?.(threshold);
+  }, [threshold, setVoiceActivityThreshold]);
 
   useEffect(() => {
     window.groupCall = groupCall;

@@ -54,5 +54,5 @@ const useSetting = <T>(
 
 export const useSpatialAudio = () => useSetting("spatial-audio", false);
 export const useShowInspector = () => useSetting("show-inspector", false);
-export const useVoiceActivationTreshold = () =>
-  useSetting("voice-activation-treshold", 0);
+export const useVoiceActivationThreshold = () =>
+  useSetting("voice-activation-threshold", 0);

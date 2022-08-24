@@ -31,7 +31,7 @@ import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
 import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
-import { VoiceActivationTresholdSlider } from "./VoiceActivationTresholdSlider";
+import { VoiceActivationThresholdSlider } from "./VoiceActivationThresholdSlider";
 import { useClient } from "../ClientContext";
 
 interface Props {
@@ -103,9 +103,9 @@ export const SettingsModal = (props: Props) => {
             </SelectInput>
           )}
 
-          <h4 className={styles.label}>Voice activation treshold</h4>
+          <h4 className={styles.label}>Voice activation threshold</h4>
           <FieldRow>
-            <VoiceActivationTresholdSlider />
+            <VoiceActivationThresholdSlider />
           </FieldRow>
 
           <FieldRow>

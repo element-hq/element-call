@@ -3,27 +3,27 @@ import React from "react";
 
 import { Slider } from "../input/Slider";
 import useCurrentVolume from "./useCurrentVolume";
-import { useVoiceActivationTreshold } from "./useSetting";
-import styles from "./VoiceActivationTresholdSlider.module.css";
+import { useVoiceActivationThreshold } from "./useSetting";
+import styles from "./VoiceActivationThresholdSlider.module.css";
 
-export function VoiceActivationTresholdSlider() {
-  const [treshold, setTreshold] = useVoiceActivationTreshold();
+export function VoiceActivationThresholdSlider() {
+  const [threshold, setThreshold] = useVoiceActivationThreshold();
 
   return (
     <div className={styles.container}>
-      <VolumeIndicator treshold={treshold} />
+      <VolumeIndicator threshold={threshold} />
       <Slider
         min={-100}
         max={0}
         step={1}
-        defaultValue={treshold}
-        onChange={setTreshold}
+        defaultValue={threshold}
+        onChange={setThreshold}
       />
     </div>
   );
 }
 
-function VolumeIndicator({ treshold }: { treshold: number }) {
+function VolumeIndicator({ threshold }: { threshold: number }) {
   const { volume } = useCurrentVolume();
   const volumePercentage = Math.min(Math.max(volume + 100, 0), 100);
 
@@ -31,8 +31,8 @@ function VolumeIndicator({ treshold }: { treshold: number }) {
     <div
       className={classNames(
         styles.volumeIndicator,
-        { [styles.green]: volume >= treshold },
-        { [styles.red]: volume < treshold }
+        { [styles.green]: volume >= threshold },
+        { [styles.red]: volume < threshold }
       )}
       style={{
         width: volumePercentage + "%",
