@@ -28,6 +28,7 @@ interface CallFeedState {
   localVolume: number;
   stream: MediaStream;
   purpose: SDPStreamMetadataPurpose;
+  voiceActivityThreshold: number;
 }
 function getCallFeedState(callFeed: CallFeed): CallFeedState {
   return {

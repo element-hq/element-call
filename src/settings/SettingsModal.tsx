@@ -14,9 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Item } from "@react-stately/collections";
-import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
