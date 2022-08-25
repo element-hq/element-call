@@ -121,8 +121,11 @@ export function InspectorContextProvider({
 }: {
   children: React.ReactNode;
 }) {
-  // The context will be initialized empty.
-  // It is then set from within GroupCallInspector.
+  // We take the tuple of [currentState, setter] and stick
+  // it straight into the context for other things to call
+  // the setState method... this feels like a fairly severe
+  // contortion of the hooks API - is this really the best way
+  // to do this?
   const context = useState<InspectorContextState>({});
   return (
     <InspectorContext.Provider value={context}>

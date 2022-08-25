@@ -40,7 +40,9 @@ export function useSubmitRageshake(): {
   error: Error;
 } {
   const client: MatrixClient = useClient().client;
-  const json = useContext(InspectorContext);
+  // The value of the context is the whole tuple returned from setState,
+  // so we just want the current state.
+  const [inspectorState] = useContext(InspectorContext);
 
   const [{ sending, sent, error }, setState] = useState({
     sending: false,
@@ -231,10 +233,12 @@ export function useSubmitRageshake(): {
             body.append("compressed-log", new Blob([buf]), entry.id);
           }
 
-          if (json) {
+          if (inspectorState) {
             body.append(
               "file",
-              new Blob([JSON.stringify(json)], { type: "text/plain" }),
+              new Blob([JSON.stringify(inspectorState)], {
+                type: "text/plain",
+              }),
               "groupcall.txt"
             );
           }
@@ -262,7 +266,7 @@ export function useSubmitRageshake(): {
         console.error(error);
       }
     },
-    [client, json, sending]
+    [client, inspectorState, sending]
   );
 
   return {
