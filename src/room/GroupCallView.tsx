@@ -77,7 +77,6 @@ export function GroupCallView({
   const [threshold] = useVoiceActivationThreshold();
 
   useEffect(() => {
-    console.log("THRESHOLD CHANCED?", threshold);
     setVoiceActivityThreshold?.(threshold);
   }, [threshold, setVoiceActivityThreshold]);
 
