@@ -32,7 +32,6 @@ import { Button } from "../button";
 import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
 import { VoiceActivationThresholdSlider } from "./VoiceActivationThresholdSlider";
-import { useClient } from "../ClientContext";
 
 interface Props {
   isOpen: boolean;
