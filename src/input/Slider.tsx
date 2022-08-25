@@ -1,6 +1,5 @@
 import React, { ChangeEvent } from "react";
 
-import "rc-slider/assets/index.css";
 import styles from "./Slider.module.css";
 
 interface SliderProps {
