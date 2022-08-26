@@ -66,11 +66,8 @@ export function useCallFeed(callFeed: CallFeed): CallFeedState {
       setState(getCallFeedState(callFeed));
     }
 
-    function onVoiceActivityThresholdChanged(threshold) {
-      setState((prevState) => ({
-        ...prevState,
-        voiceActivityThreshold: threshold,
-      }));
+    function onVoiceActivityThresholdChanged(voiceActivityThreshold: number) {
+      setState((prevState) => ({...prevState, voiceActivityThreshold}));
     }
 
     if (callFeed) {
