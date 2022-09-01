@@ -58,7 +58,7 @@ export const useLoadGroupCall = (
             resolve(room);
           }
         };
-        client.on(ClientEvent.Room, onRoomEvent);
+        client.on(GroupCallEventHandlerEvent.Room, onRoomEvent);
       });
 
       // race the promise with a timeout so we don't
