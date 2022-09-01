@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useState } from "react";
 import { Item } from "@react-stately/collections";
 
 import { Modal } from "../Modal";
@@ -31,11 +31,12 @@ import { Button } from "../button";
 import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
 import { VoiceActivationThresholdSlider } from "./VoiceActivationThresholdSlider";
+import { useToggleMicrophoneMute } from "./useSetting";
 
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-}
+  }
 
 export const SettingsModal = (props: Props) => {
   const {
@@ -50,10 +51,18 @@ export const SettingsModal = (props: Props) => {
     setAudioOutput,
   } = useMediaHandler();
 
+  
   const [spatialAudio, setSpatialAudio] = useSpatialAudio();
   const [showInspector, setShowInspector] = useShowInspector();
+  const [voiceActivationTesting, setVoiceActivationTesting] = useState(false);
+  const [muted ,setMicrophoneMuted] = useToggleMicrophoneMute();
 
   const downloadDebugLog = useDownloadDebugLog();
+
+  function handleVoiceActivationTesting() {
+    setVoiceActivationTesting(!voiceActivationTesting);
+    setMicrophoneMuted(!muted);
+  }  
 
   return (
     <Modal
@@ -103,8 +112,14 @@ export const SettingsModal = (props: Props) => {
 
           <h4 className={styles.label}>Voice activation threshold</h4>
           <FieldRow>
-            <VoiceActivationThresholdSlider />
+            <Button
+              size="lg"
+              variant="default"
+              onPress={() => handleVoiceActivationTesting() }>{muted ? "stop" : "test"}</Button>
+            <VoiceActivationThresholdSlider enabled={voiceActivationTesting} />
           </FieldRow>
+          <>Sets a threshold that your input volume needs to surpass. Use the slider to change this threshold.
+          If the bar exceeds the slider point, your voice is loud enough!</>
 
           <FieldRow>
             <InputField

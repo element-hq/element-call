@@ -208,10 +208,6 @@ export const useSpatialMediaStream = (
     localVolume
   );
 
-  useEffect(() => {
-    console.log({ mediaRef: mediaRef.current });
-  }, [mediaRef]);
-
   const gainNodeRef = useRef<GainNode>();
   const pannerNodeRef = useRef<PannerNode>();
   const sourceRef = useRef<MediaStreamAudioSourceNode>();
