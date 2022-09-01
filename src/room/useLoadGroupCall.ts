@@ -21,7 +21,6 @@ import {
   GroupCallIntent,
 } from "matrix-js-sdk/src/webrtc/groupCall";
 import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
-import { ClientEvent } from "matrix-js-sdk/src/client";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
