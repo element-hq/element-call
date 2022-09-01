@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { SDPStreamMetadataPurpose } from "matrix-js-sdk/src/webrtc/callEventTypes";
-import React from "react";
+import React, { useEffect } from "react";
 import { useCallback } from "react";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 
@@ -86,6 +86,10 @@ export function VideoTileContainer({
 
   // Firefox doesn't respect the disablePictureInPicture attribute
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
+
+  useEffect(() => {
+    item.callFeed.setResolution(width, height);
+  }, [width, height, item]);
 
   return (
     <>
