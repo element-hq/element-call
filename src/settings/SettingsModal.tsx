@@ -32,7 +32,7 @@ import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
 import { VoiceActivationThresholdSlider } from "./VoiceActivationThresholdSlider";
 import { useToggleMicrophoneMute } from "./useSetting";
-import { InputHeader } from "../input/InputHeader";
+import { InputSlider } from "../input/InputSlider";
 
 interface Props {
   isOpen: boolean;
@@ -111,15 +111,16 @@ export const SettingsModal = (props: Props) => {
             </SelectInput>
           )}
 
-          <InputHeader
-          label="Voice activation threshold"
-          child={<>
-            <Button
-              size="lg"
-              variant="default"
-              onPress={() => handleVoiceActivationTesting() }>{muted ? "stop" : "test"}</Button>
-            <VoiceActivationThresholdSlider enabled={voiceActivationTesting} /></>}
-          description="Sets a threshold that your voice needs to surpass (The bar lights up in green). You are muted during configuration."
+          <InputSlider
+            label="Voice activation threshold"
+            children={<>
+              <Button
+                size="lg"
+                variant="default"
+                onPress={() => handleVoiceActivationTesting() }>{muted ? "stop" : "test"}
+              </Button>
+              <VoiceActivationThresholdSlider enabled={voiceActivationTesting} /></>}
+            description="Sets a threshold that your voice needs to surpass (The bar lights up in green). You are muted during configuration."
           />
 
           <FieldRow>

@@ -17,39 +17,39 @@ limitations under the License.
 import React, { forwardRef, ReactNode } from "react";
 import classNames from "classnames";
 
-import styles from "./InputHeader.module.css";
+import styles from "./InputSlider.module.css";
 import { FieldRow } from "../input/Input";
 
-interface HeaderProps {
+interface InputSliderProps {
   children: ReactNode;
   className?: string;
 }
 
-export function Field({ children, className }: HeaderProps): JSX.Element {
+export function Field({ children, className }: InputSliderProps): JSX.Element {
   return <div className={classNames(styles.field, className)}>{children}</div>;
 }
 
-interface InputHeaderProps {
+interface InputSliderProps {
   label: string;
-  child:  ReactNode;
+  children:  ReactNode;
   description: string;
 }
 
-export const InputHeader = forwardRef<
+export const InputSlider = forwardRef<
   HTMLElement,
-  InputHeaderProps
+  InputSliderProps
 >(
   (
     {
       label,
-      child,
+      children,
       description
     }
   ) => {
     return (
       <div>
         <label className={styles.label}>{label}</label>
-        <FieldRow className={styles.button} children={child} />
+        <FieldRow className={styles.button} children={children} />
         {description && <p className={styles.description}>{description}</p>}
       </div>
     );
