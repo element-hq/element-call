@@ -22,6 +22,7 @@ import {
 } from "matrix-js-sdk/src/webrtc/groupCall";
 import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
 import { ClientEvent } from "matrix-js-sdk/src/client";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
@@ -53,7 +54,7 @@ export const useLoadGroupCall = (
       const waitPromise = new Promise<Room>((resolve) => {
         const onRoomEvent = async (room: Room) => {
           if (room.roomId === roomId) {
-            client.removeListener(ClientEvent.Room, onRoomEvent);
+            client.removeListener(GroupCallEventHandlerEvent.Room, onRoomEvent);
             resolve(room);
           }
         };
@@ -74,6 +75,7 @@ export const useLoadGroupCall = (
     const fetchOrCreateRoom = async (): Promise<Room> => {
       try {
         const room = await client.joinRoom(roomIdOrAlias, { viaServers });
+        logger.info(`Joined ${roomIdOrAlias}, waiting for Room event`);
         // wait for the room to come down the sync stream, otherwise
         // client.getRoom() won't return the room.
         return waitForRoom(room.roomId);
@@ -100,7 +102,9 @@ export const useLoadGroupCall = (
 
     const fetchOrCreateGroupCall = async (): Promise<GroupCall> => {
       const room = await fetchOrCreateRoom();
+      logger.debug(`Fetched / joined room ${roomIdOrAlias}`);
       const groupCall = client.getGroupCallForRoom(room.roomId);
+      logger.debug("Got group call", groupCall);
 
       if (groupCall) return groupCall;
 
@@ -111,7 +115,11 @@ export const useLoadGroupCall = (
         )
       ) {
         // The call doesn't exist, but we can create it
-        console.log(`Creating ${createPtt ? "PTT" : "video"} group call room`);
+        console.log(
+          `No call found in ${roomIdOrAlias}: creating ${
+            createPtt ? "PTT" : "video"
+          } call`
+        );
         return await client.createGroupCall(
           room.roomId,
           createPtt ? GroupCallType.Voice : GroupCallType.Video,
