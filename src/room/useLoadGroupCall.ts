@@ -45,39 +45,15 @@ export const useLoadGroupCall = (
   useEffect(() => {
     setState({ loading: true });
 
-    const waitForRoom = async (roomId: string): Promise<Room> => {
-      const room = client.getRoom(roomId);
-      if (room) return room;
-      console.log(`Room ${roomId} hasn't arrived yet: waiting`);
-
-      const waitPromise = new Promise<Room>((resolve) => {
-        const onRoomEvent = async (room: Room) => {
-          if (room.roomId === roomId) {
-            client.removeListener(GroupCallEventHandlerEvent.Room, onRoomEvent);
-            resolve(room);
-          }
-        };
-        client.on(GroupCallEventHandlerEvent.Room, onRoomEvent);
-      });
-
-      // race the promise with a timeout so we don't
-      // wait forever for the room
-      const timeoutPromise = new Promise<Room>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error("Timed out trying to join room"));
-        }, 30000);
-      });
-
-      return Promise.race([waitPromise, timeoutPromise]);
-    };
-
     const fetchOrCreateRoom = async (): Promise<Room> => {
       try {
         const room = await client.joinRoom(roomIdOrAlias, { viaServers });
-        logger.info(`Joined ${roomIdOrAlias}, waiting for Room event`);
-        // wait for the room to come down the sync stream, otherwise
-        // client.getRoom() won't return the room.
-        return waitForRoom(room.roomId);
+        logger.info(
+          `Joined ${roomIdOrAlias}, waiting room to be ready for group calls`
+        );
+        await client.waitUntilRoomReadyForGroupCalls(room.roomId);
+        logger.info(`${roomIdOrAlias}, is ready for group calls`);
+        return room;
       } catch (error) {
         if (
           isLocalRoomId(roomIdOrAlias) &&
@@ -92,7 +68,8 @@ export const useLoadGroupCall = (
             createPtt
           );
           // likewise, wait for the room
-          return await waitForRoom(roomId);
+          await client.waitUntilRoomReadyForGroupCalls(roomId);
+          return client.getRoom(roomId);
         } else {
           throw error;
         }
