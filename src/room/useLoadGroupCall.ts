@@ -80,7 +80,7 @@ export const useLoadGroupCall = (
       const room = await fetchOrCreateRoom();
       logger.debug(`Fetched / joined room ${roomIdOrAlias}`);
       const groupCall = client.getGroupCallForRoom(room.roomId);
-      logger.debug("Got group call", groupCall);
+      logger.debug("Got group call", groupCall.groupCallId);
 
       if (groupCall) return groupCall;
 
