@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useState, useCallback } from "react";
 
+import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { useClient } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
@@ -29,8 +30,16 @@ export const RoomPage: FC = () => {
   const { loading, isAuthenticated, error, client, isPasswordlessUser } =
     useClient();
 
-  const { roomAlias, roomId, viaServers, isEmbedded, isPtt, displayName } =
-    useRoomParams();
+  const {
+    roomAlias,
+    roomId,
+    viaServers,
+    isEmbedded,
+    preload,
+    hideHeader,
+    isPtt,
+    displayName,
+  } = useRoomParams();
   const roomIdOrAlias = roomId ?? roomAlias;
   if (!roomIdOrAlias) throw new Error("No room specified");
 
@@ -53,6 +62,21 @@ export const RoomPage: FC = () => {
     registerPasswordlessUser,
   ]);
 
+  const groupCallView = useCallback(
+    (groupCall: GroupCall) => (
+      <GroupCallView
+        client={client}
+        roomIdOrAlias={roomIdOrAlias}
+        groupCall={groupCall}
+        isPasswordlessUser={isPasswordlessUser}
+        isEmbedded={isEmbedded}
+        preload={preload}
+        hideHeader={hideHeader}
+      />
+    ),
+    [client, roomIdOrAlias, isPasswordlessUser, isEmbedded, preload, hideHeader]
+  );
+
   if (loading || isRegistering) {
     return <LoadingView />;
   }
@@ -73,15 +97,7 @@ export const RoomPage: FC = () => {
         viaServers={viaServers}
         createPtt={isPtt}
       >
-        {(groupCall) => (
-          <GroupCallView
-            client={client}
-            roomIdOrAlias={roomIdOrAlias}
-            groupCall={groupCall}
-            isPasswordlessUser={isPasswordlessUser}
-            isEmbedded={isEmbedded}
-          />
-        )}
+        {groupCallView}
       </GroupCallLoader>
     </MediaHandlerProvider>
   );
