@@ -97,6 +97,7 @@ interface Props {
   userMediaFeeds: CallFeed[];
   onLeave: () => void;
   isEmbedded: boolean;
+  hideHeader: boolean;
 }
 
 export const PTTCallView: React.FC<Props> = ({
@@ -109,6 +110,7 @@ export const PTTCallView: React.FC<Props> = ({
   userMediaFeeds,
   onLeave,
   isEmbedded,
+  hideHeader,
 }) => {
   const { modalState: inviteModalState, modalProps: inviteModalProps } =
     useModalTriggerState();
@@ -176,7 +178,7 @@ export const PTTCallView: React.FC<Props> = ({
         // https://github.com/vector-im/element-call/issues/328
         show={false}
       />
-      {showControls && (
+      {!hideHeader && showControls && (
         <Header className={styles.header}>
           <LeftNav>
             <RoomSetupHeaderInfo

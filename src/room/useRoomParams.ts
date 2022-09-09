@@ -24,6 +24,8 @@ export interface RoomParams {
   // Whether the app is running in embedded mode, and should keep the user
   // confined to the current room
   isEmbedded: boolean;
+  // Whether to hide the room header when in a call
+  hideHeader: boolean;
   // Whether to start a walkie-talkie call instead of a video call
   isPtt: boolean;
   // Whether to use end-to-end encryption
@@ -75,6 +77,7 @@ export const getRoomParams = (
     roomId: getParam("roomId"),
     viaServers: getAllParams("via"),
     isEmbedded: hasParam("embed"),
+    hideHeader: hasParam("hideHeader"),
     isPtt: hasParam("ptt"),
     e2eEnabled: getParam("enableE2e") !== "false", // Defaults to true
     userId: getParam("userId"),

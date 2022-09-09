@@ -47,6 +47,7 @@ interface Props {
   localVideoMuted: boolean;
   roomIdOrAlias: string;
   isEmbedded: boolean;
+  hideHeader: boolean;
 }
 export function LobbyView({
   client,
@@ -63,6 +64,7 @@ export function LobbyView({
   toggleMicrophoneMuted,
   roomIdOrAlias,
   isEmbedded,
+  hideHeader,
 }: Props) {
   const { stream } = useCallFeed(localCallFeed);
   const {
@@ -90,14 +92,16 @@ export function LobbyView({
 
   return (
     <div className={styles.room}>
-      <Header>
-        <LeftNav>
-          <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
-        </LeftNav>
-        <RightNav>
-          <UserMenuContainer />
-        </RightNav>
-      </Header>
+      {!hideHeader && (
+        <Header>
+          <LeftNav>
+            <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
+          </LeftNav>
+          <RightNav>
+            <UserMenuContainer />
+          </RightNav>
+        </Header>
+      )}
       <div className={styles.joinRoom}>
         <div className={styles.joinRoomContent}>
           {groupCall.isPtt ? (
