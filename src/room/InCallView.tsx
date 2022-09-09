@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import { usePreventScroll } from "@react-aria/overlays";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
@@ -22,6 +22,7 @@ import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import classNames from "classnames";
 
+import type { IWidgetApiRequest } from "matrix-widget-api";
 import styles from "./InCallView.module.css";
 import {
   HangupButton,
@@ -52,6 +53,7 @@ import { useAudioContext } from "../video-grid/useMediaStream";
 import { useFullscreen } from "../video-grid/useFullscreen";
 import { AudioContainer } from "../video-grid/AudioContainer";
 import { useAudioOutputDevice } from "../video-grid/useAudioOutputDevice";
+import { widget, ElementWidgetActions } from "../widget";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -77,6 +79,7 @@ interface Props {
   localScreenshareFeed: CallFeed;
   roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
+  hideHeader: boolean;
 }
 
 export interface Participant {
@@ -105,6 +108,7 @@ export function InCallView({
   localScreenshareFeed,
   roomIdOrAlias,
   unencryptedEventsFromUsers,
+  hideHeader,
 }: Props) {
   usePreventScroll();
   const elementRef = useRef<HTMLDivElement>();
@@ -121,6 +125,42 @@ export function InCallView({
     useModalTriggerState();
 
   useAudioOutputDevice(audioRef, audioOutput);
+
+  useEffect(() => {
+    widget?.api.transport.send(
+      layout === "freedom"
+        ? ElementWidgetActions.TileLayout
+        : ElementWidgetActions.SpotlightLayout,
+      {}
+    );
+  }, [layout]);
+
+  useEffect(() => {
+    if (widget) {
+      const onTileLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
+        setLayout("freedom");
+        await widget.api.transport.reply(ev.detail, {});
+      };
+      const onSpotlightLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
+        setLayout("spotlight");
+        await widget.api.transport.reply(ev.detail, {});
+      };
+
+      widget.lazyActions.on(ElementWidgetActions.TileLayout, onTileLayout);
+      widget.lazyActions.on(
+        ElementWidgetActions.SpotlightLayout,
+        onSpotlightLayout
+      );
+
+      return () => {
+        widget.lazyActions.off(ElementWidgetActions.TileLayout, onTileLayout);
+        widget.lazyActions.off(
+          ElementWidgetActions.SpotlightLayout,
+          onSpotlightLayout
+        );
+      };
+    }
+  }, [setLayout]);
 
   const items = useMemo(() => {
     const participants: Participant[] = [];
@@ -246,7 +286,7 @@ export function InCallView({
           audioDestination={audioDestination}
         />
       )}
-      {!fullscreenParticipant && (
+      {!hideHeader && !fullscreenParticipant && (
         <Header>
           <LeftNav>
             <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
