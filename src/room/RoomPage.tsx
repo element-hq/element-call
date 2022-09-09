@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { FC, useEffect, useState } from "react";
+import React, { FC, useEffect, useState, useCallback } from "react";
 
+import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { useClient } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
@@ -34,6 +35,7 @@ export const RoomPage: FC = () => {
     roomId,
     viaServers,
     isEmbedded,
+    preload,
     hideHeader,
     isPtt,
     displayName,
@@ -68,10 +70,11 @@ export const RoomPage: FC = () => {
         groupCall={groupCall}
         isPasswordlessUser={isPasswordlessUser}
         isEmbedded={isEmbedded}
+        preload={preload}
         hideHeader={hideHeader}
       />
     ),
-    [client, roomIdOrAlias, isPasswordlessUser, isEmbedded, hideHeader]
+    [client, roomIdOrAlias, isPasswordlessUser, isEmbedded, preload, hideHeader]
   );
 
   if (loading || isRegistering) {
