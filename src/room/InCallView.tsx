@@ -77,6 +77,7 @@ interface Props {
   localScreenshareFeed: CallFeed;
   roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
+  hideHeader: boolean;
 }
 
 export interface Participant {
@@ -105,6 +106,7 @@ export function InCallView({
   localScreenshareFeed,
   roomIdOrAlias,
   unencryptedEventsFromUsers,
+  hideHeader,
 }: Props) {
   usePreventScroll();
   const elementRef = useRef<HTMLDivElement>();
@@ -246,7 +248,7 @@ export function InCallView({
           audioDestination={audioDestination}
         />
       )}
-      {!fullscreenParticipant && (
+      {!hideHeader && !fullscreenParticipant && (
         <Header>
           <LeftNav>
             <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />

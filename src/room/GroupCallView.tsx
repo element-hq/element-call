@@ -30,20 +30,24 @@ import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
 declare global {
   interface Window {
-    groupCall: GroupCall;
+    groupCall?: GroupCall;
   }
 }
+
 interface Props {
   client: MatrixClient;
   isPasswordlessUser: boolean;
   isEmbedded: boolean;
+  hideHeader: boolean;
   roomIdOrAlias: string;
   groupCall: GroupCall;
 }
+
 export function GroupCallView({
   client,
   isPasswordlessUser,
   isEmbedded,
+  hideHeader,
   roomIdOrAlias,
   groupCall,
 }: Props) {
@@ -109,6 +113,7 @@ export function GroupCallView({
           userMediaFeeds={userMediaFeeds}
           onLeave={onLeave}
           isEmbedded={isEmbedded}
+          hideHeader={hideHeader}
         />
       );
     } else {
@@ -131,6 +136,7 @@ export function GroupCallView({
           screenshareFeeds={screenshareFeeds}
           roomIdOrAlias={roomIdOrAlias}
           unencryptedEventsFromUsers={unencryptedEventsFromUsers}
+          hideHeader={hideHeader}
         />
       );
     }
@@ -166,6 +172,7 @@ export function GroupCallView({
           toggleMicrophoneMuted={toggleMicrophoneMuted}
           roomIdOrAlias={roomIdOrAlias}
           isEmbedded={isEmbedded}
+          hideHeader={hideHeader}
         />
       );
     }

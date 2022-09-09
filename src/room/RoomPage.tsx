@@ -29,8 +29,15 @@ export const RoomPage: FC = () => {
   const { loading, isAuthenticated, error, client, isPasswordlessUser } =
     useClient();
 
-  const { roomAlias, roomId, viaServers, isEmbedded, isPtt, displayName } =
-    useRoomParams();
+  const {
+    roomAlias,
+    roomId,
+    viaServers,
+    isEmbedded,
+    hideHeader,
+    isPtt,
+    displayName,
+  } = useRoomParams();
   const roomIdOrAlias = roomId ?? roomAlias;
   if (!roomIdOrAlias) throw new Error("No room specified");
 
@@ -53,6 +60,20 @@ export const RoomPage: FC = () => {
     registerPasswordlessUser,
   ]);
 
+  const groupCallView = useCallback(
+    (groupCall: GroupCall) => (
+      <GroupCallView
+        client={client}
+        roomIdOrAlias={roomIdOrAlias}
+        groupCall={groupCall}
+        isPasswordlessUser={isPasswordlessUser}
+        isEmbedded={isEmbedded}
+        hideHeader={hideHeader}
+      />
+    ),
+    [client, roomIdOrAlias, isPasswordlessUser, isEmbedded, hideHeader]
+  );
+
   if (loading || isRegistering) {
     return <LoadingView />;
   }
@@ -73,15 +94,7 @@ export const RoomPage: FC = () => {
         viaServers={viaServers}
         createPtt={isPtt}
       >
-        {(groupCall) => (
-          <GroupCallView
-            client={client}
-            roomIdOrAlias={roomIdOrAlias}
-            groupCall={groupCall}
-            isPasswordlessUser={isPasswordlessUser}
-            isEmbedded={isEmbedded}
-          />
-        )}
+        {groupCallView}
       </GroupCallLoader>
     </MediaHandlerProvider>
   );
