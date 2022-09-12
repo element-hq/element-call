@@ -106,7 +106,6 @@ export const widget: WidgetHelpers | null = (() => {
         EventType.CallSDPStreamMetadataChanged,
         EventType.CallSDPStreamMetadataChangedPrefix,
         EventType.CallReplaces,
-        "org.matrix.call_duplicate_session",
       ];
 
       const client = createRoomWidgetClient(
