@@ -252,10 +252,19 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     [client]
   );
 
-  const logout = useCallback(() => {
+  const logout = useCallback(async () => {
+    await client.logout(undefined, true);
     clearSession();
+    setState({
+      client: undefined,
+      loading: false,
+      isAuthenticated: false,
+      isPasswordlessUser: true,
+      userName: "",
+      error: undefined,
+    });
     history.push("/");
-  }, [history]);
+  }, [history, client]);
 
   useEffect(() => {
     // To protect against multiple sessions writing to the same storage
