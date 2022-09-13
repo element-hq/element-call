@@ -258,7 +258,11 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   }, [history]);
 
   useEffect(() => {
-    if (client) {
+    // To protect against multiple sessions writing to the same storage
+    // simultaneously, we send a to-device message that shuts down all other
+    // running instances of the app. This isn't necessary if the app is running
+    // in a widget though, since then it'll be mostly stateless.
+    if (!widget && client) {
       const loadTime = Date.now();
 
       const onToDeviceEvent = (event: MatrixEvent) => {
