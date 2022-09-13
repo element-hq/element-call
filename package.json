@@ -38,7 +38,7 @@
     "classnames": "^2.3.1",
     "color-hash": "^2.0.1",
     "events": "^3.3.0",
-    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#36a6117ee284cefe7d16055352c9cefce30ce6b1",
+    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#41cee6f1cc29c14f60bfcde709ec322aeafbebb3",
     "matrix-widget-api": "^1.0.0",
     "mermaid": "^8.13.8",
     "normalize.css": "^8.0.1",
