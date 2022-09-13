@@ -150,6 +150,7 @@ export function GroupCallView({
       const onHangup = async (ev: CustomEvent<IWidgetApiRequest>) => {
         leave();
         await widget.api.transport.reply(ev.detail, {});
+        widget.api.setAlwaysOnScreen(false);
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
       return () => {
