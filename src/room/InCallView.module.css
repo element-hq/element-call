@@ -43,7 +43,7 @@ limitations under the License.
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 64px;
+  height: calc(50px + 2 * 8px);
 }
 
 .footer > * {
@@ -54,7 +54,7 @@ limitations under the License.
   margin-right: 0px;
 }
 
-.footerFullscreen {
+.maximised .footer {
   position: absolute;
   width: 100%;
   bottom: 0;
@@ -67,8 +67,14 @@ limitations under the License.
   transform: translate(-50%, -50%);
 }
 
+@media (min-height: 300px) {
+  .footer {
+    height: calc(50px + 2 * 24px);
+  }
+}
+
 @media (min-width: 800px) {
   .footer {
-    height: 118px;
+    height: calc(50px + 2 * 32px);
   }
 }

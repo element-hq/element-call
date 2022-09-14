@@ -33,7 +33,8 @@ interface Props {
   mediaRef?: React.RefObject<MediaElement>;
   onOptionsPress?: () => void;
   localVolume?: number;
-  isFullscreen?: boolean;
+  maximised: boolean;
+  fullscreen?: boolean;
   onFullscreen?: () => void;
   className?: string;
   showOptions?: boolean;
@@ -53,7 +54,8 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       mediaRef,
       onOptionsPress,
       localVolume,
-      isFullscreen,
+      maximised,
+      fullscreen,
       onFullscreen,
       className,
       showOptions,
@@ -71,7 +73,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           [styles.speaking]: speaking,
           [styles.muted]: audioMuted,
           [styles.screenshare]: screenshare,
-          [styles.fullscreen]: isFullscreen,
+          [styles.maximised]: maximised,
         })}
         ref={ref}
         {...rest}
@@ -88,7 +90,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             {screenshare && (
               <FullscreenButton
                 className={styles.button}
-                fullscreen={isFullscreen}
+                fullscreen={fullscreen}
                 onPress={onFullscreen}
               />
             )}
@@ -100,17 +102,18 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             {avatar}
           </>
         )}
-        {screenshare ? (
-          <div className={styles.presenterLabel}>
-            <span>{`${name} is presenting`}</span>
-          </div>
-        ) : (
-          <div className={classNames(styles.infoBubble, styles.memberName)}>
-            {audioMuted && !videoMuted && <MicMutedIcon />}
-            {videoMuted && <VideoMutedIcon />}
-            <span title={name}>{name}</span>
-          </div>
-        )}
+        {!maximised &&
+          (screenshare ? (
+            <div className={styles.presenterLabel}>
+              <span>{`${name} is presenting`}</span>
+            </div>
+          ) : (
+            <div className={classNames(styles.infoBubble, styles.memberName)}>
+              {audioMuted && !videoMuted && <MicMutedIcon />}
+              {videoMuted && <VideoMutedIcon />}
+              <span title={name}>{name}</span>
+            </div>
+          ))}
         <video ref={mediaRef} playsInline disablePictureInPicture />
       </animated.div>
     );
