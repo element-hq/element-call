@@ -215,7 +215,7 @@ export function InCallView({
   // window is too small to show everyone
   const maximisedParticipant = useMemo(
     () =>
-      fullscreenParticipant ?? bounds.height <= 500
+      fullscreenParticipant ?? (bounds.height <= 500 && bounds.width <= 500)
         ? items.find((item) => item.focused) ??
           items.find((item) => item.callFeed) ??
           null
