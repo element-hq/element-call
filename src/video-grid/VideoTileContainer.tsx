@@ -39,9 +39,11 @@ interface Props {
   audioContext: AudioContext;
   audioDestination: AudioNode;
   disableSpeakingIndicator: boolean;
-  isFullscreen: boolean;
+  maximised: boolean;
+  fullscreen: boolean;
   onFullscreen: (item: Participant) => void;
 }
+
 export function VideoTileContainer({
   item,
   width,
@@ -50,7 +52,8 @@ export function VideoTileContainer({
   audioContext,
   audioDestination,
   disableSpeakingIndicator,
-  isFullscreen,
+  maximised,
+  fullscreen,
   onFullscreen,
   ...rest
 }: Props) {
@@ -101,7 +104,8 @@ export function VideoTileContainer({
         avatar={getAvatar && getAvatar(member, width, height)}
         onOptionsPress={onOptionsPress}
         localVolume={localVolume}
-        isFullscreen={isFullscreen}
+        maximised={maximised}
+        fullscreen={fullscreen}
         onFullscreen={onFullscreenCallback}
         {...rest}
       />
