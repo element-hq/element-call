@@ -33,7 +33,7 @@ interface Props {
   mediaRef?: React.RefObject<MediaElement>;
   onOptionsPress?: () => void;
   localVolume?: number;
-  maximised: boolean;
+  maximised?: boolean;
   fullscreen?: boolean;
   onFullscreen?: () => void;
   className?: string;
