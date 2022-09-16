@@ -8,7 +8,14 @@
     "noImplicitAny": false,
     "noUnusedLocals": true,
     "jsx": "preserve",
-    "lib": ["es2020", "dom", "dom.iterable"]
+    "lib": ["es2020", "dom", "dom.iterable"],
+    "strict": false,
+    "plugins": [
+      {
+        "name": "typescript-strict-plugin",
+        "paths": ["src"]
+      }
+    ]
   },
   "include": ["./src/**/*.ts", "./src/**/*.tsx"]
 }
