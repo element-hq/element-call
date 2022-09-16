@@ -77,7 +77,6 @@ export const ParticipantsTest = () => {
               key={item.id}
               name={`User ${item.id}`}
               disableSpeakingIndicator={items.length < 3}
-              maximised={false}
               {...rest}
             />
           )}
