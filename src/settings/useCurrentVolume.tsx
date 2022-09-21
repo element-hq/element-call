@@ -13,11 +13,10 @@ export default function useCurrentVolume() {
   useEffect(() => {
     client
       ?.getMediaHandler()
-      .getUserMediaStreamNode(true, false)
-      .then((callStreamNode) => {
+      .getUserMediaStream(true, false)
+      .then((stream) => {
         const feed = new CallFeed({
-          stream: callStreamNode.mediaStream,
-          streamNode: callStreamNode,
+          stream,
           audioMuted: false,
           videoMuted: true,
           roomId: "",
