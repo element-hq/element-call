@@ -13,6 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+.sliderTranslucent[type="range"] {
+  --slider-color: var(--quinary-content-50) !important;
+}
+.sliderTranslucent[type="range"]::-moz-range-progress {
+  background: transparent !important;
+}
 
 .slider[type="range"] {
   -ms-appearance: none;
@@ -24,7 +30,7 @@ limitations under the License.
 
   /* This (slider-color) is 50% transparent to allow the voice activity slider to
      display volumebar behind the slider */
-  --slider-color: var(--quinary-content-50);
+  --slider-color: var(--quinary-content);
   --slider-height: 6px;
   --thumb-color: var(--accent);
   --thumb-radius: 100%;

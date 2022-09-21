@@ -22,30 +22,39 @@ import useCurrentVolume from "./useCurrentVolume";
 import { useVoiceActivationThreshold } from "./useSetting";
 import styles from "./VoiceActivationThresholdSlider.module.css";
 
-export function VoiceActivationThresholdSlider({ enabled } : { enabled: boolean }) {
+export function VoiceActivationThresholdSlider({
+  enabled,
+}: {
+  enabled: boolean;
+}) {
   const [threshold, setThreshold] = useVoiceActivationThreshold();
 
   return (
-    <div className={styles.container} style={{
-          opacity: enabled ? 1 : 0.25,
-          pointerEvents: enabled ? "initial" : "none"
-        }}>
-      <VolumeIndicator threshold={threshold} />  
+    <div
+      className={styles.container}
+      style={{
+        opacity: enabled ? 1 : 0.25,
+        pointerEvents: enabled ? "initial" : "none",
+      }}
+    >
+      <VolumeIndicator threshold={threshold} />
       <Slider
         min={-100}
         max={0}
         step={1}
         defaultValue={threshold}
         onChange={setThreshold}
+        translucent
       />
     </div>
   );
 }
-function VolumeIndicator({ threshold} : { threshold: number}) {
+function VolumeIndicator({ threshold }: { threshold: number }) {
   const { volume } = useCurrentVolume();
+  console.log("volume", volume);
   const volumePercentage = Math.min(Math.max(volume + 100, 0), 100);
   return (
-   <div
+    <div
       className={classNames(
         styles.volumeIndicator,
         { [styles.green]: volume >= threshold },
@@ -57,4 +66,3 @@ function VolumeIndicator({ threshold} : { threshold: number}) {
     />
   );
 }
-

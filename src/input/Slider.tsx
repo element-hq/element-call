@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import classNames from "classnames";
 import React, { ChangeEvent } from "react";
 
 import styles from "./Slider.module.css";
@@ -26,6 +27,7 @@ interface SliderProps {
   min?: number;
   max?: number;
   sliderTrackOpacity?: number;
+  translucent?: boolean;
 }
 
 export function Slider({
@@ -35,6 +37,7 @@ export function Slider({
   step = 0.01,
   min = 0,
   max = 1,
+  translucent = false,
 }: SliderProps) {
   const handleOnChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value: number = +event.target.value;
@@ -43,7 +46,10 @@ export function Slider({
 
   return (
     <input
-      className={styles.slider}
+      className={classNames(
+        styles.slider,
+        translucent ? styles.sliderTranslucent : undefined
+      )}
       type="range"
       min={min}
       max={max}

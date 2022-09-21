@@ -23,6 +23,7 @@ import { TabContainer, TabItem } from "../tabs/Tabs";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
+import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { SelectInput } from "../input/SelectInput";
 import { useMediaHandler } from "./useMediaHandler";
 import { useSpatialAudio, useShowInspector } from "./useSetting";
@@ -37,7 +38,7 @@ import { InputSlider } from "../input/InputSlider";
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  }
+}
 
 export const SettingsModal = (props: Props) => {
   const {
@@ -52,18 +53,19 @@ export const SettingsModal = (props: Props) => {
     setAudioOutput,
   } = useMediaHandler();
 
-  
   const [spatialAudio, setSpatialAudio] = useSpatialAudio();
   const [showInspector, setShowInspector] = useShowInspector();
   const [voiceActivationTesting, setVoiceActivationTesting] = useState(false);
-  const [muted ,setMicrophoneMuted] = useToggleMicrophoneMute();
+  const [muted, setMicrophoneMuted] = useToggleMicrophoneMute();
 
   const downloadDebugLog = useDownloadDebugLog();
 
   function handleVoiceActivationTesting() {
-    setVoiceActivationTesting(!voiceActivationTesting);
+    setVoiceActivationTesting(
+      (voiceActivationTesting) => !voiceActivationTesting
+    );
     setMicrophoneMuted(!muted);
-  }  
+  }
 
   return (
     <Modal
@@ -110,18 +112,6 @@ export const SettingsModal = (props: Props) => {
               ))}
             </SelectInput>
           )}
-
-          <InputSlider
-            label="Voice activation threshold"
-            children={<>
-              <Button
-                size="lg"
-                variant="default"
-                onPress={() => handleVoiceActivationTesting() }>{muted ? "stop" : "test"}
-              </Button>
-              <VoiceActivationThresholdSlider enabled={voiceActivationTesting} /></>}
-            description="Sets a threshold that your voice needs to surpass (The bar lights up in green). You are muted during configuration."
-          />
 
           <FieldRow>
             <InputField
@@ -186,6 +176,33 @@ export const SettingsModal = (props: Props) => {
           <FieldRow>
             <Button onPress={downloadDebugLog}>Download Debug Logs</Button>
           </FieldRow>
+        </TabItem>
+        <TabItem
+          title={
+            <>
+              <SettingsIcon width={16} height={16} />
+              <span>Advanced</span>
+            </>
+          }
+        >
+          <InputSlider
+            label="Voice activation threshold"
+            children={
+              <>
+                <Button
+                  size="lg"
+                  variant="default"
+                  onPress={() => handleVoiceActivationTesting()}
+                >
+                  {voiceActivationTesting ? "stop" : "test"}
+                </Button>
+                <VoiceActivationThresholdSlider
+                  enabled={voiceActivationTesting}
+                />
+              </>
+            }
+            description="Sets a threshold that your voice needs to surpass (The bar lights up in green when your microphone is louder than the threshold). You will not be heard when the volume of your microphone drops below that threshold. You are muted during configuration."
+          />
         </TabItem>
       </TabContainer>
     </Modal>
