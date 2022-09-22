@@ -660,6 +660,8 @@ function getSubGridPositions(
   return newTilePositions;
 }
 
+// Sets the 'order' property on tiles based on the layout param and
+// other properties of the tiles, eg. 'focused' and 'presenter'
 function reorderTiles(tiles: Tile[], layout: Layout) {
   if (layout === "freedom" && tiles.length === 2) {
     // 1:1 layout
@@ -904,12 +906,12 @@ export function VideoGrid({
         return {
           x:
             tilePosition.x +
-            (layout === "spotlight" && tileIndex !== 0 && isMobile
+            (layout === "spotlight" && tile.order !== 0 && isMobile
               ? scrollPosition
               : 0),
           y:
             tilePosition.y +
-            (layout === "spotlight" && tileIndex !== 0 && !isMobile
+            (layout === "spotlight" && tile.order !== 0 && !isMobile
               ? scrollPosition
               : 0),
           width: tilePosition.width,
