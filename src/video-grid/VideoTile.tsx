@@ -66,6 +66,27 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     },
     ref
   ) => {
+    const toolbarButtons: JSX.Element[] = [];
+    if (!isLocal) {
+      toolbarButtons.push(
+        <AudioButton
+          className={styles.button}
+          volume={localVolume}
+          onPress={onOptionsPress}
+        />
+      );
+
+      if (screenshare) {
+        toolbarButtons.push(
+          <FullscreenButton
+            className={styles.button}
+            fullscreen={fullscreen}
+            onPress={onFullscreen}
+          />
+        );
+      }
+    }
+
     return (
       <animated.div
         className={classNames(styles.videoTile, className, {
@@ -78,23 +99,8 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         ref={ref}
         {...rest}
       >
-        {(!isLocal || screenshare) && (
-          <div className={classNames(styles.toolbar)}>
-            {!isLocal && (
-              <AudioButton
-                className={styles.button}
-                volume={localVolume}
-                onPress={onOptionsPress}
-              />
-            )}
-            {screenshare && (
-              <FullscreenButton
-                className={styles.button}
-                fullscreen={fullscreen}
-                onPress={onFullscreen}
-              />
-            )}
-          </div>
+        {toolbarButtons.length > 0 && (
+          <div className={classNames(styles.toolbar)}>{toolbarButtons}</div>
         )}
         {videoMuted && (
           <>
