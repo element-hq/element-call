@@ -109,7 +109,7 @@ export function VideoTileContainer({
         onFullscreen={onFullscreenCallback}
         {...rest}
       />
-      {videoTileSettingsModalState.isOpen && (
+      {videoTileSettingsModalState.isOpen && !maximised && (
         <VideoTileSettingsModal
           {...videoTileSettingsModalProps}
           feed={item.callFeed}
