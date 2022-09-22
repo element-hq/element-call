@@ -78,7 +78,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         ref={ref}
         {...rest}
       >
-        {(!isLocal || screenshare) && (
+        {(!isLocal || screenshare) && !maximised && (
           <div className={classNames(styles.toolbar)}>
             {!isLocal && (
               <AudioButton
