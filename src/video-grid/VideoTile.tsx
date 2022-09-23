@@ -99,7 +99,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         ref={ref}
         {...rest}
       >
-        {toolbarButtons.length > 0 && (
+        {toolbarButtons.length > 0 && !maximised && (
           <div className={classNames(styles.toolbar)}>{toolbarButtons}</div>
         )}
         {videoMuted && (
