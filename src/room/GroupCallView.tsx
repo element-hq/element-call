@@ -132,15 +132,14 @@ export function GroupCallView({
   const history = useHistory();
 
   const onLeave = useCallback(() => {
+    setLeft(true);
     leave();
     if (widget) {
       widget.api.transport.send(ElementWidgetActions.HangupCall, {});
       widget.api.setAlwaysOnScreen(false);
     }
 
-    if (isPasswordlessUser) {
-      setLeft(true);
-    } else if (!isEmbedded) {
+    if (!isPasswordlessUser && !isEmbedded) {
       history.push("/");
     }
   }, [leave, isPasswordlessUser, isEmbedded, history]);
@@ -208,7 +207,14 @@ export function GroupCallView({
       </FullScreenView>
     );
   } else if (left) {
-    return <CallEndedView client={client} />;
+    if (isPasswordlessUser) {
+      return <CallEndedView client={client} />;
+    } else {
+      // If the user is a regular user, we'll have sent them back to the homepage,
+      // so just sit here & do nothing: otherwise we would (briefly) mount the
+      // LobbyView again which would open capture devices again.
+      return null;
+    }
   } else if (preload) {
     return null;
   } else if (isEmbedded) {
