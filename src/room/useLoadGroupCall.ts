@@ -22,8 +22,9 @@ import {
 } from "matrix-js-sdk/src/webrtc/groupCall";
 import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
 import { logger } from "matrix-js-sdk/src/logger";
+import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
+import { SyncState } from "matrix-js-sdk/src/sync";
 
-import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
@@ -126,7 +127,26 @@ export const useLoadGroupCall = (
       });
     };
 
-    fetchOrCreateGroupCall()
+    const waitForClientSyncing = async () => {
+      if (client.getSyncState() !== SyncState.Syncing) {
+        logger.debug(
+          "useLoadGroupCall: waiting for client to start syncing..."
+        );
+        await new Promise<void>((resolve) => {
+          const onSync = () => {
+            if (client.getSyncState() === SyncState.Syncing) {
+              client.off(ClientEvent.Sync, onSync);
+              return resolve();
+            }
+          };
+          client.on(ClientEvent.Sync, onSync);
+        });
+        logger.debug("useLoadGroupCall: client is now syncing.");
+      }
+    };
+
+    waitForClientSyncing()
+      .then(fetchOrCreateGroupCall)
       .then((groupCall) =>
         setState((prevState) => ({ ...prevState, loading: false, groupCall }))
       )
