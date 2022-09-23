@@ -139,10 +139,10 @@ export function GroupCallView({
       widget.api.setAlwaysOnScreen(false);
     }
 
-    if (!isEmbedded) {
+    if (!isPasswordlessUser && !isEmbedded) {
       history.push("/");
     }
-  }, [leave, isEmbedded, history]);
+  }, [leave, isPasswordlessUser, isEmbedded, history]);
 
   useEffect(() => {
     if (widget && state === GroupCallState.Entered) {
