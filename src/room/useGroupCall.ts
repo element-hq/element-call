@@ -28,6 +28,7 @@ import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 
 import { usePageUnload } from "./usePageUnload";
+import { PosthogAnalytics } from "../PosthogAnalytics";
 
 export interface UseGroupCallReturnType {
   state: GroupCallState;
@@ -282,6 +283,8 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     ) {
       return;
     }
+
+    PosthogAnalytics.instance.cacheStartCallTime(new Date());
 
     groupCall.enter().catch((error) => {
       console.error(error);

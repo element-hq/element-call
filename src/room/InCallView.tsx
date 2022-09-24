@@ -52,6 +52,7 @@ import { useAudioContext } from "../video-grid/useMediaStream";
 import { useFullscreen } from "../video-grid/useFullscreen";
 import { AudioContainer } from "../video-grid/AudioContainer";
 import { useAudioOutputDevice } from "../video-grid/useAudioOutputDevice";
+import { PosthogAnalytics } from "../PosthogAnalytics";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -138,6 +139,8 @@ export function InCallView({
       });
     }
 
+    PosthogAnalytics.instance.cacheMaxUserCount(participants.length)
+
     for (const callFeed of screenshareFeeds) {
       const userMediaItem = participants.find(
         (item) => item.callFeed.userId === callFeed.userId
@@ -202,7 +205,7 @@ export function InCallView({
 
     return (
       <VideoGrid items={items} layout={layout} disableAnimations={isSafari}>
-        {({ item, ...rest }: { item: Participant; [x: string]: unknown }) => (
+        {({ item, ...rest }: { item: Participant;[x: string]: unknown }) => (
           <VideoTileContainer
             key={item.id}
             item={item}

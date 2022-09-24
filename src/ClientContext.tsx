@@ -154,7 +154,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
               } catch (err_) {
                 logger.warn(
                   "The previous session was lost, and we couldn't log it out, " +
-                    "either"
+                  "either"
                 );
               }
             }

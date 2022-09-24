@@ -28,6 +28,8 @@ import { CallEndedView } from "./CallEndedView";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
+import { PosthogAnalytics } from "../PosthogAnalytics";
+
 declare global {
   interface Window {
     groupCall: GroupCall;
@@ -87,6 +89,11 @@ export function GroupCallView({
 
   const onLeave = useCallback(() => {
     setLeft(true);
+
+    if (groupCall.room.getMembers().length == 1) {
+      PosthogAnalytics.instance.trackCallAnalyticsEvent(groupCall.room.name);
+    }
+
     leave();
 
     if (!isPasswordlessUser) {
