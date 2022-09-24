@@ -26,6 +26,7 @@ interface CallFeedState {
   videoMuted: boolean;
   audioMuted: boolean;
   localVolume: number;
+  disposed: boolean;
   stream: MediaStream;
   purpose: SDPStreamMetadataPurpose;
 }
@@ -37,6 +38,7 @@ function getCallFeedState(callFeed: CallFeed): CallFeedState {
     videoMuted: callFeed ? callFeed.isVideoMuted() : true,
     audioMuted: callFeed ? callFeed.isAudioMuted() : true,
     localVolume: callFeed ? callFeed.getLocalVolume() : 0,
+    disposed: callFeed ? callFeed.disposed : undefined,
     stream: callFeed ? callFeed.stream : undefined,
     purpose: callFeed ? callFeed.purpose : undefined,
   };
@@ -69,6 +71,7 @@ export function useCallFeed(callFeed: CallFeed): CallFeedState {
       callFeed.on(CallFeedEvent.MuteStateChanged, onMuteStateChanged);
       callFeed.on(CallFeedEvent.LocalVolumeChanged, onLocalVolumeChanged);
       callFeed.on(CallFeedEvent.NewStream, onUpdateCallFeed);
+      callFeed.on(CallFeedEvent.Disposed, onUpdateCallFeed);
     }
 
     onUpdateCallFeed();

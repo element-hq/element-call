@@ -21,9 +21,10 @@ import {
   GroupCallIntent,
 } from "matrix-js-sdk/src/webrtc/groupCall";
 import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
-import { ClientEvent } from "matrix-js-sdk/src/client";
+import { logger } from "matrix-js-sdk/src/logger";
+import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
+import { SyncState } from "matrix-js-sdk/src/sync";
 
-import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
@@ -45,38 +46,15 @@ export const useLoadGroupCall = (
   useEffect(() => {
     setState({ loading: true });
 
-    const waitForRoom = async (roomId: string): Promise<Room> => {
-      const room = client.getRoom(roomId);
-      if (room) return room;
-      console.log(`Room ${roomId} hasn't arrived yet: waiting`);
-
-      const waitPromise = new Promise<Room>((resolve) => {
-        const onRoomEvent = async (room: Room) => {
-          if (room.roomId === roomId) {
-            client.removeListener(ClientEvent.Room, onRoomEvent);
-            resolve(room);
-          }
-        };
-        client.on(ClientEvent.Room, onRoomEvent);
-      });
-
-      // race the promise with a timeout so we don't
-      // wait forever for the room
-      const timeoutPromise = new Promise<Room>((_, reject) => {
-        setTimeout(() => {
-          reject(new Error("Timed out trying to join room"));
-        }, 30000);
-      });
-
-      return Promise.race([waitPromise, timeoutPromise]);
-    };
-
     const fetchOrCreateRoom = async (): Promise<Room> => {
       try {
         const room = await client.joinRoom(roomIdOrAlias, { viaServers });
-        // wait for the room to come down the sync stream, otherwise
-        // client.getRoom() won't return the room.
-        return waitForRoom(room.roomId);
+        logger.info(
+          `Joined ${roomIdOrAlias}, waiting room to be ready for group calls`
+        );
+        await client.waitUntilRoomReadyForGroupCalls(room.roomId);
+        logger.info(`${roomIdOrAlias}, is ready for group calls`);
+        return room;
       } catch (error) {
         if (
           isLocalRoomId(roomIdOrAlias) &&
@@ -87,10 +65,12 @@ export const useLoadGroupCall = (
           // The room doesn't exist, but we can create it
           const [, roomId] = await createRoom(
             client,
-            roomNameFromRoomId(roomIdOrAlias)
+            roomNameFromRoomId(roomIdOrAlias),
+            createPtt
           );
           // likewise, wait for the room
-          return await waitForRoom(roomId);
+          await client.waitUntilRoomReadyForGroupCalls(roomId);
+          return client.getRoom(roomId);
         } else {
           throw error;
         }
@@ -99,7 +79,9 @@ export const useLoadGroupCall = (
 
     const fetchOrCreateGroupCall = async (): Promise<GroupCall> => {
       const room = await fetchOrCreateRoom();
+      logger.debug(`Fetched / joined room ${roomIdOrAlias}`);
       const groupCall = client.getGroupCallForRoom(room.roomId);
+      logger.debug("Got group call", groupCall?.groupCallId);
 
       if (groupCall) return groupCall;
 
@@ -110,7 +92,11 @@ export const useLoadGroupCall = (
         )
       ) {
         // The call doesn't exist, but we can create it
-        console.log(`Creating ${createPtt ? "PTT" : "video"} group call room`);
+        console.log(
+          `No call found in ${roomIdOrAlias}: creating ${
+            createPtt ? "PTT" : "video"
+          } call`
+        );
         return await client.createGroupCall(
           room.roomId,
           createPtt ? GroupCallType.Voice : GroupCallType.Video,
@@ -141,7 +127,26 @@ export const useLoadGroupCall = (
       });
     };
 
-    fetchOrCreateGroupCall()
+    const waitForClientSyncing = async () => {
+      if (client.getSyncState() !== SyncState.Syncing) {
+        logger.debug(
+          "useLoadGroupCall: waiting for client to start syncing..."
+        );
+        await new Promise<void>((resolve) => {
+          const onSync = () => {
+            if (client.getSyncState() === SyncState.Syncing) {
+              client.off(ClientEvent.Sync, onSync);
+              return resolve();
+            }
+          };
+          client.on(ClientEvent.Sync, onSync);
+        });
+        logger.debug("useLoadGroupCall: client is now syncing.");
+      }
+    };
+
+    waitForClientSyncing()
+      .then(fetchOrCreateGroupCall)
       .then((groupCall) =>
         setState((prevState) => ({ ...prevState, loading: false, groupCall }))
       )

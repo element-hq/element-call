@@ -33,7 +33,8 @@ interface Props {
   mediaRef?: React.RefObject<MediaElement>;
   onOptionsPress?: () => void;
   localVolume?: number;
-  isFullscreen?: boolean;
+  maximised?: boolean;
+  fullscreen?: boolean;
   onFullscreen?: () => void;
   className?: string;
   showOptions?: boolean;
@@ -53,7 +54,8 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       mediaRef,
       onOptionsPress,
       localVolume,
-      isFullscreen,
+      maximised,
+      fullscreen,
       onFullscreen,
       className,
       showOptions,
@@ -64,6 +66,27 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     },
     ref
   ) => {
+    const toolbarButtons: JSX.Element[] = [];
+    if (!isLocal) {
+      toolbarButtons.push(
+        <AudioButton
+          className={styles.button}
+          volume={localVolume}
+          onPress={onOptionsPress}
+        />
+      );
+
+      if (screenshare) {
+        toolbarButtons.push(
+          <FullscreenButton
+            className={styles.button}
+            fullscreen={fullscreen}
+            onPress={onFullscreen}
+          />
+        );
+      }
+    }
+
     return (
       <animated.div
         className={classNames(styles.videoTile, className, {
@@ -71,28 +94,13 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           [styles.speaking]: speaking,
           [styles.muted]: audioMuted,
           [styles.screenshare]: screenshare,
-          [styles.fullscreen]: isFullscreen,
+          [styles.maximised]: maximised,
         })}
         ref={ref}
         {...rest}
       >
-        {(!isLocal || screenshare) && (
-          <div className={classNames(styles.toolbar)}>
-            {!isLocal && (
-              <AudioButton
-                className={styles.button}
-                volume={localVolume}
-                onPress={onOptionsPress}
-              />
-            )}
-            {screenshare && (
-              <FullscreenButton
-                className={styles.button}
-                fullscreen={isFullscreen}
-                onPress={onFullscreen}
-              />
-            )}
-          </div>
+        {toolbarButtons.length > 0 && !maximised && (
+          <div className={classNames(styles.toolbar)}>{toolbarButtons}</div>
         )}
         {videoMuted && (
           <>
@@ -100,17 +108,18 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             {avatar}
           </>
         )}
-        {screenshare ? (
-          <div className={styles.presenterLabel}>
-            <span>{`${name} is presenting`}</span>
-          </div>
-        ) : (
-          <div className={classNames(styles.infoBubble, styles.memberName)}>
-            {audioMuted && !videoMuted && <MicMutedIcon />}
-            {videoMuted && <VideoMutedIcon />}
-            <span title={name}>{name}</span>
-          </div>
-        )}
+        {!maximised &&
+          (screenshare ? (
+            <div className={styles.presenterLabel}>
+              <span>{`${name} is presenting`}</span>
+            </div>
+          ) : (
+            <div className={classNames(styles.infoBubble, styles.memberName)}>
+              {audioMuted && !videoMuted && <MicMutedIcon />}
+              {videoMuted && <VideoMutedIcon />}
+              <span title={name}>{name}</span>
+            </div>
+          ))}
         <video ref={mediaRef} playsInline disablePictureInPicture />
       </animated.div>
     );

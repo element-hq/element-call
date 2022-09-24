@@ -5,19 +5,19 @@ import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
 import { LocalStorageCryptoStore } from "matrix-js-sdk/src/crypto/store/localStorage-crypto-store";
 import { MemoryCryptoStore } from "matrix-js-sdk/src/crypto/store/memory-crypto-store";
-import {
-  createClient,
-  createRoomWidgetClient,
-  MatrixClient,
-} from "matrix-js-sdk/src/matrix";
+import { createClient } from "matrix-js-sdk/src/matrix";
 import { ICreateClientOpts } from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
-import { EventType } from "matrix-js-sdk/src/@types/event";
 import { Visibility, Preset } from "matrix-js-sdk/src/@types/partials";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
-import { WidgetApi } from "matrix-widget-api";
 import { logger } from "matrix-js-sdk/src/logger";
+import {
+  GroupCallIntent,
+  GroupCallType,
+} from "matrix-js-sdk/src/webrtc/groupCall";
 
+import type { MatrixClient } from "matrix-js-sdk/src/client";
+import type { Room } from "matrix-js-sdk/src/models/room";
 import IndexedDBWorker from "./IndexedDBWorker?worker";
 import { getRoomParams } from "./room/useRoomParams";
 
@@ -57,73 +57,6 @@ function waitForSync(client: MatrixClient) {
     };
     client.on(ClientEvent.Sync, onSync);
   });
-}
-
-/**
- * Initialises and returns a new widget-API-based Matrix Client.
- * @param widgetId The ID of the widget that the app is running inside.
- * @param parentUrl The URL of the parent client.
- * @returns The MatrixClient instance
- */
-export async function initMatroskaClient(
-  widgetId: string,
-  parentUrl: string
-): Promise<MatrixClient> {
-  // In this mode, we use a special client which routes all requests through
-  // the host application via the widget API
-
-  const { roomId, userId, deviceId } = getRoomParams();
-  if (!roomId) throw new Error("Room ID must be supplied");
-  if (!userId) throw new Error("User ID must be supplied");
-  if (!deviceId) throw new Error("Device ID must be supplied");
-
-  // These are all the event types the app uses
-  const sendState = [
-    { eventType: EventType.GroupCallPrefix },
-    { eventType: EventType.GroupCallMemberPrefix, stateKey: userId },
-  ];
-  const receiveState = [
-    { eventType: EventType.RoomMember },
-    { eventType: EventType.GroupCallPrefix },
-    { eventType: EventType.GroupCallMemberPrefix },
-  ];
-  const sendRecvToDevice = [
-    EventType.CallInvite,
-    EventType.CallCandidates,
-    EventType.CallAnswer,
-    EventType.CallHangup,
-    EventType.CallReject,
-    EventType.CallSelectAnswer,
-    EventType.CallNegotiate,
-    EventType.CallSDPStreamMetadataChanged,
-    EventType.CallSDPStreamMetadataChangedPrefix,
-    EventType.CallReplaces,
-    "org.matrix.call_duplicate_session",
-  ];
-
-  // Since all data should be coming from the host application, there's no
-  // need to persist anything, and therefore we can use the default stores
-  // We don't even need to set up crypto
-  const client = createRoomWidgetClient(
-    new WidgetApi(widgetId, new URL(parentUrl).origin),
-    {
-      sendState,
-      receiveState,
-      sendToDevice: sendRecvToDevice,
-      receiveToDevice: sendRecvToDevice,
-      turnServers: true,
-    },
-    roomId,
-    {
-      baseUrl: "",
-      userId,
-      deviceId,
-      timelineSupport: true,
-    }
-  );
-
-  await client.startClient();
-  return client;
 }
 
 /**
@@ -290,9 +223,10 @@ export function isLocalRoomId(roomId: string): boolean {
 
 export async function createRoom(
   client: MatrixClient,
-  name: string
+  name: string,
+  ptt: boolean
 ): Promise<[string, string]> {
-  const result = await client.createRoom({
+  const createPromise = client.createRoom({
     visibility: Visibility.Private,
     preset: Preset.PublicChat,
     name,
@@ -321,6 +255,36 @@ export async function createRoom(
       },
     },
   });
+
+  // Wait for the room to arrive
+  await new Promise<void>((resolve, reject) => {
+    const onRoom = async (room: Room) => {
+      if (room.roomId === (await createPromise).room_id) {
+        resolve();
+        cleanUp();
+      }
+    };
+    createPromise.catch((e) => {
+      reject(e);
+      cleanUp();
+    });
+
+    const cleanUp = () => {
+      client.off(ClientEvent.Room, onRoom);
+    };
+    client.on(ClientEvent.Room, onRoom);
+  });
+
+  const result = await createPromise;
+
+  console.log(`Creating ${ptt ? "PTT" : "video"} group call room`);
+
+  await client.createGroupCall(
+    result.room_id,
+    ptt ? GroupCallType.Voice : GroupCallType.Video,
+    ptt,
+    GroupCallIntent.Room
+  );
 
   return [fullAliasFromRoomName(name, client), result.room_id];
 }

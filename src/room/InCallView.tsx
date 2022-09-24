@@ -14,14 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useMemo, useRef } from "react";
+import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import { usePreventScroll } from "@react-aria/overlays";
+import useMeasure from "react-use-measure";
+import { ResizeObserver } from "@juggle/resize-observer";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import classNames from "classnames";
 
+import type { IWidgetApiRequest } from "matrix-widget-api";
 import styles from "./InCallView.module.css";
 import {
   HangupButton,
@@ -53,6 +56,7 @@ import { useFullscreen } from "../video-grid/useFullscreen";
 import { AudioContainer } from "../video-grid/AudioContainer";
 import { useAudioOutputDevice } from "../video-grid/useAudioOutputDevice";
 import { PosthogAnalytics } from "../PosthogAnalytics";
+import { widget, ElementWidgetActions } from "../widget";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -78,6 +82,7 @@ interface Props {
   localScreenshareFeed: CallFeed;
   roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
+  hideHeader: boolean;
 }
 
 export interface Participant {
@@ -106,11 +111,23 @@ export function InCallView({
   localScreenshareFeed,
   roomIdOrAlias,
   unencryptedEventsFromUsers,
+  hideHeader,
 }: Props) {
   usePreventScroll();
-  const elementRef = useRef<HTMLDivElement>();
+  const containerRef1 = useRef<HTMLDivElement | null>(null);
+  const [containerRef2, bounds] = useMeasure({ polyfill: ResizeObserver });
+  // Merge the refs so they can attach to the same element
+  const containerRef = useCallback(
+    (el: HTMLDivElement) => {
+      containerRef1.current = el;
+      containerRef2(el);
+    },
+    [containerRef1, containerRef2]
+  );
+
   const { layout, setLayout } = useVideoGridLayout(screenshareFeeds.length > 0);
-  const { toggleFullscreen, fullscreenParticipant } = useFullscreen(elementRef);
+  const { toggleFullscreen, fullscreenParticipant } =
+    useFullscreen(containerRef1);
 
   const [spatialAudio] = useSpatialAudio();
 
@@ -123,6 +140,42 @@ export function InCallView({
 
   useAudioOutputDevice(audioRef, audioOutput);
 
+  useEffect(() => {
+    widget?.api.transport.send(
+      layout === "freedom"
+        ? ElementWidgetActions.TileLayout
+        : ElementWidgetActions.SpotlightLayout,
+      {}
+    );
+  }, [layout]);
+
+  useEffect(() => {
+    if (widget) {
+      const onTileLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
+        setLayout("freedom");
+        await widget.api.transport.reply(ev.detail, {});
+      };
+      const onSpotlightLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
+        setLayout("spotlight");
+        await widget.api.transport.reply(ev.detail, {});
+      };
+
+      widget.lazyActions.on(ElementWidgetActions.TileLayout, onTileLayout);
+      widget.lazyActions.on(
+        ElementWidgetActions.SpotlightLayout,
+        onSpotlightLayout
+      );
+
+      return () => {
+        widget.lazyActions.off(ElementWidgetActions.TileLayout, onTileLayout);
+        widget.lazyActions.off(
+          ElementWidgetActions.SpotlightLayout,
+          onSpotlightLayout
+        );
+      };
+    }
+  }, [setLayout]);
+
   const items = useMemo(() => {
     const participants: Participant[] = [];
 
@@ -131,15 +184,13 @@ export function InCallView({
         id: callFeed.stream.id,
         callFeed,
         focused:
-          screenshareFeeds.length === 0 && layout === "spotlight"
-            ? callFeed.userId === activeSpeaker
-            : false,
+          screenshareFeeds.length === 0 && callFeed.userId === activeSpeaker,
         isLocal: callFeed.isLocal(),
         presenter: false,
       });
     }
 
-    PosthogAnalytics.instance.cacheMaxUserCount(participants.length)
+    PosthogAnalytics.instance.cacheMaxUserCount(participants.length);
 
     for (const callFeed of screenshareFeeds) {
       const userMediaItem = participants.find(
@@ -160,7 +211,20 @@ export function InCallView({
     }
 
     return participants;
-  }, [userMediaFeeds, activeSpeaker, screenshareFeeds, layout]);
+  }, [userMediaFeeds, activeSpeaker, screenshareFeeds]);
+
+  // The maximised participant: either the participant that the user has
+  // manually put in fullscreen, or the focused (active) participant if the
+  // window is too small to show everyone
+  const maximisedParticipant = useMemo(
+    () =>
+      fullscreenParticipant ?? (bounds.height <= 500 && bounds.width <= 500)
+        ? items.find((item) => item.focused) ??
+          items.find((item) => item.callFeed) ??
+          null
+        : null,
+    [fullscreenParticipant, bounds, items]
+  );
 
   const renderAvatar = useCallback(
     (roomMember: RoomMember, width: number, height: number) => {
@@ -180,7 +244,7 @@ export function InCallView({
     []
   );
 
-  const renderContent = useCallback((): JSX.Element => {
+  const renderContent = (): JSX.Element => {
     if (items.length === 0) {
       return (
         <div className={styles.centerMessage}>
@@ -188,16 +252,19 @@ export function InCallView({
         </div>
       );
     }
-    if (fullscreenParticipant) {
+    if (maximisedParticipant) {
       return (
         <VideoTileContainer
-          key={fullscreenParticipant.id}
-          item={fullscreenParticipant}
+          height={bounds.height}
+          width={bounds.width}
+          key={maximisedParticipant.id}
+          item={maximisedParticipant}
           getAvatar={renderAvatar}
           audioContext={audioContext}
           audioDestination={audioDestination}
           disableSpeakingIndicator={true}
-          isFullscreen={!!fullscreenParticipant}
+          maximised={Boolean(maximisedParticipant)}
+          fullscreen={maximisedParticipant === fullscreenParticipant}
           onFullscreen={toggleFullscreen}
         />
       );
@@ -205,7 +272,7 @@ export function InCallView({
 
     return (
       <VideoGrid items={items} layout={layout} disableAnimations={isSafari}>
-        {({ item, ...rest }: { item: Participant;[x: string]: unknown }) => (
+        {({ item, ...rest }: { item: Participant; [x: string]: unknown }) => (
           <VideoTileContainer
             key={item.id}
             item={item}
@@ -213,43 +280,36 @@ export function InCallView({
             audioContext={audioContext}
             audioDestination={audioDestination}
             disableSpeakingIndicator={items.length < 3}
-            isFullscreen={!!fullscreenParticipant}
+            maximised={false}
+            fullscreen={false}
             onFullscreen={toggleFullscreen}
             {...rest}
           />
         )}
       </VideoGrid>
     );
-  }, [
-    fullscreenParticipant,
-    items,
-    audioContext,
-    audioDestination,
-    layout,
-    renderAvatar,
-    toggleFullscreen,
-  ]);
+  };
 
   const {
     modalState: rageshakeRequestModalState,
     modalProps: rageshakeRequestModalProps,
   } = useRageshakeRequestModal(groupCall.room.roomId);
 
-  const footerClassNames = classNames(styles.footer, {
-    [styles.footerFullscreen]: fullscreenParticipant,
+  const containerClasses = classNames(styles.inRoom, {
+    [styles.maximised]: maximisedParticipant,
   });
 
   return (
-    <div className={styles.inRoom} ref={elementRef}>
+    <div className={containerClasses} ref={containerRef}>
       <audio ref={audioRef} />
-      {(!spatialAudio || fullscreenParticipant) && (
+      {(!spatialAudio || maximisedParticipant) && (
         <AudioContainer
           items={items}
           audioContext={audioContext}
           audioDestination={audioDestination}
         />
       )}
-      {!fullscreenParticipant && (
+      {!hideHeader && !maximisedParticipant && (
         <Header>
           <LeftNav>
             <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
@@ -265,16 +325,16 @@ export function InCallView({
         </Header>
       )}
       {renderContent()}
-      <div className={footerClassNames}>
+      <div className={styles.footer}>
         <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
         <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
-        {canScreenshare && !isSafari && !fullscreenParticipant && (
+        {canScreenshare && !isSafari && !maximisedParticipant && (
           <ScreenshareButton
             enabled={isScreensharing}
             onPress={toggleScreensharing}
           />
         )}
-        {!fullscreenParticipant && (
+        {!maximisedParticipant && (
           <OverflowMenu
             inCall
             roomIdOrAlias={roomIdOrAlias}

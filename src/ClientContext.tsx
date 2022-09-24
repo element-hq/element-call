@@ -31,10 +31,10 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { ErrorView } from "./FullScreenView";
 import {
   initClient,
-  initMatroskaClient,
   defaultHomeserver,
   CryptoStoreIntegrityError,
 } from "./matrix-utils";
+import { widget } from "./widget";
 
 declare global {
   interface Window {
@@ -100,16 +100,12 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     const init = async (): Promise<
       Pick<ClientProviderState, "client" | "isPasswordlessUser">
     > => {
-      const query = new URLSearchParams(window.location.search);
-      const widgetId = query.get("widgetId");
-      const parentUrl = query.get("parentUrl");
-
-      if (widgetId && parentUrl) {
-        // We're inside a widget, so let's engage *Matroska mode*
-        logger.log("Using a Matroska client");
+      if (widget) {
+        // We're inside a widget, so let's engage *matryoshka mode*
+        logger.log("Using a matryoshka client");
 
         return {
-          client: await initMatroskaClient(widgetId, parentUrl),
+          client: await widget.client,
           isPasswordlessUser: false,
         };
       } else {
@@ -271,7 +267,11 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   }, [history, client]);
 
   useEffect(() => {
-    if (client) {
+    // To protect against multiple sessions writing to the same storage
+    // simultaneously, we send a to-device message that shuts down all other
+    // running instances of the app. This isn't necessary if the app is running
+    // in a widget though, since then it'll be mostly stateless.
+    if (!widget && client) {
       const loadTime = Date.now();
 
       const onToDeviceEvent = (event: MatrixEvent) => {

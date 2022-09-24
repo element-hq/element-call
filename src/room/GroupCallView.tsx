@@ -19,6 +19,8 @@ import { useHistory } from "react-router-dom";
 import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 
+import type { IWidgetApiRequest } from "matrix-widget-api";
+import { widget, ElementWidgetActions, JoinCallData } from "../widget";
 import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
@@ -29,23 +31,30 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { PosthogAnalytics } from "../PosthogAnalytics";
+import { useMediaHandler } from "../settings/useMediaHandler";
 
 declare global {
   interface Window {
-    groupCall: GroupCall;
+    groupCall?: GroupCall;
   }
 }
+
 interface Props {
   client: MatrixClient;
   isPasswordlessUser: boolean;
   isEmbedded: boolean;
+  preload: boolean;
+  hideHeader: boolean;
   roomIdOrAlias: string;
   groupCall: GroupCall;
 }
+
 export function GroupCallView({
   client,
   isPasswordlessUser,
   isEmbedded,
+  preload,
+  hideHeader,
   roomIdOrAlias,
   groupCall,
 }: Props) {
@@ -71,14 +80,50 @@ export function GroupCallView({
     unencryptedEventsFromUsers,
   } = useGroupCall(groupCall);
 
+  const { setAudioInput, setVideoInput } = useMediaHandler();
+
   const avatarUrl = useRoomAvatar(groupCall.room);
 
   useEffect(() => {
     window.groupCall = groupCall;
+    return () => {
+      delete window.groupCall;
+    };
+  }, [groupCall]);
 
-    // In embedded mode, bypass the lobby and just enter the call straight away
-    if (isEmbedded) groupCall.enter();
-  }, [groupCall, isEmbedded]);
+  useEffect(() => {
+    if (widget && preload) {
+      // In preload mode, wait for a join action before entering
+      const onJoin = async (ev: CustomEvent<IWidgetApiRequest>) => {
+        const { audioInput, videoInput } = ev.detail
+          .data as unknown as JoinCallData;
+        if (audioInput !== null) setAudioInput(audioInput);
+        if (videoInput !== null) setVideoInput(videoInput);
+        await Promise.all([
+          groupCall.setMicrophoneMuted(audioInput === null),
+          groupCall.setLocalVideoMuted(videoInput === null),
+        ]);
+
+        await groupCall.enter();
+        await Promise.all([
+          widget.api.setAlwaysOnScreen(true),
+          widget.api.transport.reply(ev.detail, {}),
+        ]);
+      };
+
+      widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
+      return () => {
+        widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
+      };
+    }
+  }, [groupCall, preload, setAudioInput, setVideoInput]);
+
+  useEffect(() => {
+    if (isEmbedded && !preload) {
+      // In embedded mode, bypass the lobby and just enter the call straight away
+      groupCall.enter();
+    }
+  }, [groupCall, isEmbedded, preload]);
 
   useSentryGroupCallHandler(groupCall);
 
@@ -95,11 +140,29 @@ export function GroupCallView({
     }
 
     leave();
+    if (widget) {
+      widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+      widget.api.setAlwaysOnScreen(false);
+    }
 
-    if (!isPasswordlessUser) {
+    if (!isPasswordlessUser && !isEmbedded) {
       history.push("/");
     }
-  }, [leave, isPasswordlessUser, history]);
+  }, [leave, isPasswordlessUser, isEmbedded, history]);
+
+  useEffect(() => {
+    if (widget && state === GroupCallState.Entered) {
+      const onHangup = async (ev: CustomEvent<IWidgetApiRequest>) => {
+        leave();
+        await widget.api.transport.reply(ev.detail, {});
+        widget.api.setAlwaysOnScreen(false);
+      };
+      widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
+      return () => {
+        widget.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
+      };
+    }
+  }, [groupCall, state, leave]);
 
   if (error) {
     return <ErrorView error={error} />;
@@ -116,6 +179,7 @@ export function GroupCallView({
           userMediaFeeds={userMediaFeeds}
           onLeave={onLeave}
           isEmbedded={isEmbedded}
+          hideHeader={hideHeader}
         />
       );
     } else {
@@ -138,6 +202,7 @@ export function GroupCallView({
           screenshareFeeds={screenshareFeeds}
           roomIdOrAlias={roomIdOrAlias}
           unencryptedEventsFromUsers={unencryptedEventsFromUsers}
+          hideHeader={hideHeader}
         />
       );
     }
@@ -148,33 +213,41 @@ export function GroupCallView({
       </FullScreenView>
     );
   } else if (left) {
-    return <CallEndedView client={client} />;
-  } else {
-    if (isEmbedded) {
-      return (
-        <FullScreenView>
-          <h1>Loading room...</h1>
-        </FullScreenView>
-      );
+    if (isPasswordlessUser) {
+      return <CallEndedView client={client} />;
     } else {
-      return (
-        <LobbyView
-          client={client}
-          groupCall={groupCall}
-          roomName={groupCall.room.name}
-          avatarUrl={avatarUrl}
-          state={state}
-          onInitLocalCallFeed={initLocalCallFeed}
-          localCallFeed={localCallFeed}
-          onEnter={enter}
-          microphoneMuted={microphoneMuted}
-          localVideoMuted={localVideoMuted}
-          toggleLocalVideoMuted={toggleLocalVideoMuted}
-          toggleMicrophoneMuted={toggleMicrophoneMuted}
-          roomIdOrAlias={roomIdOrAlias}
-          isEmbedded={isEmbedded}
-        />
-      );
+      // If the user is a regular user, we'll have sent them back to the homepage,
+      // so just sit here & do nothing: otherwise we would (briefly) mount the
+      // LobbyView again which would open capture devices again.
+      return null;
     }
+  } else if (preload) {
+    return null;
+  } else if (isEmbedded) {
+    return (
+      <FullScreenView>
+        <h1>Loading room...</h1>
+      </FullScreenView>
+    );
+  } else {
+    return (
+      <LobbyView
+        client={client}
+        groupCall={groupCall}
+        roomName={groupCall.room.name}
+        avatarUrl={avatarUrl}
+        state={state}
+        onInitLocalCallFeed={initLocalCallFeed}
+        localCallFeed={localCallFeed}
+        onEnter={enter}
+        microphoneMuted={microphoneMuted}
+        localVideoMuted={localVideoMuted}
+        toggleLocalVideoMuted={toggleLocalVideoMuted}
+        toggleMicrophoneMuted={toggleMicrophoneMuted}
+        roomIdOrAlias={roomIdOrAlias}
+        isEmbedded={isEmbedded}
+        hideHeader={hideHeader}
+      />
+    );
   }
 }
