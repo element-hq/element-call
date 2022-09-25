@@ -190,7 +190,9 @@ export function InCallView({
       });
     }
 
-    PosthogAnalytics.instance.cacheMaxUserCount(participants.length);
+    PosthogAnalytics.instance.eventCallEnded.cacheParticipantCountChanged(
+      participants.length
+    );
 
     for (const callFeed of screenshareFeeds) {
       const userMediaItem = participants.find(

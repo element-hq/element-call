@@ -35,6 +35,7 @@ import {
   CryptoStoreIntegrityError,
 } from "./matrix-utils";
 import { widget } from "./widget";
+import { PosthogAnalytics, RegistrationType } from "./PosthogAnalytics";
 
 declare global {
   interface Window {
@@ -150,7 +151,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
               } catch (err_) {
                 logger.warn(
                   "The previous session was lost, and we couldn't log it out, " +
-                  "either"
+                    "either"
                 );
               }
             }
@@ -264,6 +265,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       error: undefined,
     });
     history.push("/");
+    PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
   }, [history, client]);
 
   useEffect(() => {

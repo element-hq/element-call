@@ -14,67 +14,99 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IPosthogEvent, PosthogAnalytics } from './PosthogAnalytics';
-
+import {
+  IPosthogEvent,
+  PosthogAnalytics,
+  RegistrationType,
+} from "./PosthogAnalytics";
 
 interface CallEnded extends IPosthogEvent {
-  eventName: "callEnded",
-  callName: string,
-  callParticipantsOnLeave: number,
-  callParticipantsMax: number,
-  callDuration: number,
+  eventName: "CallEnded";
+  callName: string;
+  callParticipantsOnLeave: number;
+  callParticipantsMax: number;
+  callDuration: number;
 }
 
 export class CallEndedTracker {
-
-  private cache: { startTime: Date, maxParticipantsCount: number, } = {
+  private cache: { startTime: Date; maxParticipantsCount: number } = {
     startTime: new Date(0),
     maxParticipantsCount: 0,
-  }
+  };
 
   cacheStartCall(time: Date) {
-    this.cache.startTime = time
+    this.cache.startTime = time;
   }
 
-  cachePartCountChanged(count: number) {
-    this.cache.maxParticipantsCount = Math.max(count, this.cache.maxParticipantsCount)
+  cacheParticipantCountChanged(count: number) {
+    this.cache.maxParticipantsCount = Math.max(
+      count,
+      this.cache.maxParticipantsCount
+    );
   }
 
   track(callName: string, callParticipantsNow: number) {
     PosthogAnalytics.instance.trackEvent<CallEnded>({
-      eventName: "callEnded",
+      eventName: "CallEnded",
       callName,
       callParticipantsMax: this.cache.maxParticipantsCount,
       callParticipantsOnLeave: callParticipantsNow,
-      callDuration: (new Date()).getSeconds() - this.cache.startTime.getSeconds()
-    })
+      callDuration: new Date().getSeconds() - this.cache.startTime.getSeconds(),
+    });
   }
 }
 
+interface CallStarted extends IPosthogEvent {
+  eventName: "CallStarted";
+  callName: string;
+}
+
+export class CallStartedTracker {
+  track(callName: string) {
+    PosthogAnalytics.instance.trackEvent<CallStarted>({
+      eventName: "CallStarted",
+      callName,
+    });
+  }
+}
 
 interface Signup extends IPosthogEvent {
-  eventName: "signup"
-  signupDuration: number,
+  eventName: "Signup";
+  signupDuration: number;
 }
 
-export class SignupCache {
-
-  private cache: { signupStart: Date, signupEnd: Date } = {
+export class SignupTracker {
+  private cache: { signupStart: Date; signupEnd: Date } = {
     signupStart: new Date(0),
     signupEnd: new Date(0),
-  }
+  };
   cacheSignupStart(time: Date) {
-    this.cache.signupStart = time
+    this.cache.signupStart = time;
   }
 
   cacheSignupEnd(time: Date) {
-    this.cache.signupEnd = time
+    this.cache.signupEnd = time;
   }
 
   track() {
     PosthogAnalytics.instance.trackEvent<Signup>({
-      eventName: "signup",
-      signupDuration: (new Date()).getSeconds() - this.cache.signupStart.getSeconds()
-    })
+      eventName: "Signup",
+      signupDuration:
+        new Date().getSeconds() - this.cache.signupStart.getSeconds(),
+    });
+    PosthogAnalytics.instance.setRegistrationType(RegistrationType.Registered);
+  }
+}
+
+interface Login extends IPosthogEvent {
+  eventName: "Login";
+}
+
+export class LoginTracker {
+  track() {
+    PosthogAnalytics.instance.trackEvent<Login>({
+      eventName: "Login",
+    });
+    PosthogAnalytics.instance.setRegistrationType(RegistrationType.Registered);
   }
 }

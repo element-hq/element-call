@@ -135,9 +135,10 @@ export function GroupCallView({
   const onLeave = useCallback(() => {
     setLeft(true);
 
-    if (groupCall.room.getMembers().length == 1) {
-      PosthogAnalytics.instance.trackCallAnalyticsEvent(groupCall.room.name);
-    }
+    PosthogAnalytics.instance.eventCallEnded.track(
+      groupCall.room.name,
+      groupCall.room.getMembers().length
+    );
 
     leave();
     if (widget) {

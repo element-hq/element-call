@@ -32,6 +32,7 @@ import { defaultHomeserver, defaultHomeserverHost } from "../matrix-utils";
 import styles from "./LoginPage.module.css";
 import { useInteractiveLogin } from "./useInteractiveLogin";
 import { usePageTitle } from "../usePageTitle";
+import { PosthogAnalytics } from "../PosthogAnalytics";
 
 export const LoginPage: FC = () => {
   usePageTitle("Login");
@@ -62,6 +63,7 @@ export const LoginPage: FC = () => {
           } else {
             history.push("/");
           }
+          PosthogAnalytics.instance.eventLogin.track();
         })
         .catch((error) => {
           setError(error);
