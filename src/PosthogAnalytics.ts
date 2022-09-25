@@ -90,17 +90,15 @@ export class PosthogAnalytics {
    * 1. Declare a type for the event, extending IPosthogEvent.
    */
 
-  private anonymity = Anonymity.Pseudonymous;
-  // set true during the constructor if posthog config is present, otherwise false
-  private readonly enabled: boolean = false;
-  private static _instance = null;
-  private platformSuperProperties = {};
   private static ANALYTICS_EVENT_TYPE = "im.vector.analytics";
-  // private propertiesForNextEvent: Partial<Record<"$set" | "$set_once", UserProperties>> = {};
-  // private userPropertyCache: UserProperties = {};
-  private registrationType: RegistrationType = RegistrationType.Guest;
 
-  private registrationTimeCache: Date;
+  // set true during the constructor if posthog config is present, otherwise false
+  private static _instance = null;
+
+  private readonly enabled: boolean = false;
+  private anonymity = Anonymity.Pseudonymous;
+  private platformSuperProperties = {};
+  private registrationType: RegistrationType = RegistrationType.Guest;
 
   public static get instance(): PosthogAnalytics {
     if (!this._instance) {
@@ -108,9 +106,7 @@ export class PosthogAnalytics {
     }
     return this._instance;
   }
-  // public static init(client, MatrixClient) {
-  //   this._instance = new PosthogAnalytics(posthog, client);
-  // }
+
   constructor(private readonly posthog: PostHog) {
     const posthogConfig: PosthogSettings = {
       project_api_key: import.meta.env.VITE_POSTHOG_PROJECT_API_KEY,
@@ -122,11 +118,6 @@ export class PosthogAnalytics {
         autocapture: false,
         mask_all_text: true,
         mask_all_element_attributes: true,
-        // This only triggers on page load, which for our SPA isn't particularly useful.
-        // Plus, the .capture call originating from somewhere in posthog makes it hard
-        // to redact URLs, which requires async code.
-        //
-        // To raise this manually, just call .capture("$pageview") or posthog.capture_pageview.
         capture_pageview: false,
         sanitize_properties: this.sanitizeProperties,
         respect_dnt: true,
@@ -141,7 +132,7 @@ export class PosthogAnalytics {
 
   private sanitizeProperties = (
     properties: Properties,
-    eventName: string
+    _eventName: string
   ): Properties => {
     // Callback from posthog to sanitize properties before sending them to the server.
     //
@@ -176,7 +167,6 @@ export class PosthogAnalytics {
     };
   }
 
-  // eslint-disable-nextline no-unused-varsx
   private capture(
     eventName: string,
     properties: Properties,
@@ -185,24 +175,16 @@ export class PosthogAnalytics {
     if (!this.enabled) {
       return;
     }
-    // const { origin, hash, pathname } = window.location;
-    // properties["redactedCurrentUrl"] = getRedactedCurrentLocation(origin, hash, pathname);
-    this.posthog.capture(
-      eventName,
-      // { ...this.propertiesForNextEvent},
-      { ...properties },
-      options
-    );
-    // this.propertiesForNextEvent = {};
+    this.posthog.capture(eventName, { ...properties }, options);
   }
 
   public isEnabled(): boolean {
     return this.enabled;
   }
 
-  public setAnonymity(anonymity: Anonymity): void {
+  setAnonymity(anonymity: Anonymity): void {
     // Update this.anonymity.
-    // This is public for testing purposes, typically you want to call updateAnonymityFromSettings
+    // To update the anonymity typically you want to call updateAnonymityFromSettings
     // to ensure this value is in step with the user's settings.
     if (
       this.enabled &&
@@ -284,7 +266,7 @@ export class PosthogAnalytics {
   }
 
   private userRegisteredInThisSession(): boolean {
-    return this.registrationTimeCache > new Date(0);
+    return this.eventSignup.getSignupEndTime() > new Date(0);
   }
 
   public async updateAnonymityFromSettings(

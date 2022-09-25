@@ -84,6 +84,10 @@ export class SignupTracker {
     this.cache.signupStart = time;
   }
 
+  getSignupEndTime() {
+    return this.cache.signupEnd;
+  }
+
   cacheSignupEnd(time: Date) {
     this.cache.signupEnd = time;
   }
