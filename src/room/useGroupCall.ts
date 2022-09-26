@@ -296,11 +296,15 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
   const leave = useCallback(() => groupCall.leave(), [groupCall]);
 
   const toggleLocalVideoMuted = useCallback(() => {
-    groupCall.setLocalVideoMuted(!groupCall.isLocalVideoMuted());
+    let toggleToMute = !groupCall.isLocalVideoMuted();
+    groupCall.setLocalVideoMuted(toggleToMute);
+    PosthogAnalytics.instance.eventMuteCamera.track(toggleToMute);
   }, [groupCall]);
 
   const toggleMicrophoneMuted = useCallback(() => {
-    groupCall.setMicrophoneMuted(!groupCall.isMicrophoneMuted());
+    let toggleToMute = !groupCall.isMicrophoneMuted();
+    groupCall.setMicrophoneMuted(toggleToMute);
+    PosthogAnalytics.instance.eventMuteMicrophone.track(toggleToMute);
   }, [groupCall]);
 
   const toggleScreensharing = useCallback(() => {

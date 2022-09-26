@@ -22,7 +22,9 @@ import {
   CallEndedTracker,
   CallStartedTracker,
   LoginTracker,
-  SignupTracker as SignupTracker,
+  SignupTracker,
+  MuteCameraTracker,
+  MuteMicrophoneTracker,
 } from "./PosthogEvents";
 
 /* Posthog analytics tracking.
@@ -331,6 +333,8 @@ export class PosthogAnalytics {
   public eventSignup = new SignupTracker();
   public eventCallStarted = new CallStartedTracker();
   public eventLogin = new LoginTracker();
+  public eventMuteMicrophone = new MuteMicrophoneTracker();
+  public eventMuteCamera = new MuteCameraTracker();
 }
 
 PosthogAnalytics.instance;

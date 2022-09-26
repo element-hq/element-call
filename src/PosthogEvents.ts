@@ -114,3 +114,31 @@ export class LoginTracker {
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Registered);
   }
 }
+
+interface MuteMicrophone {
+  eventName: "MuteMicrophone";
+  targetMuteState: "mute" | "unmute";
+}
+
+export class MuteMicrophoneTracker {
+  track(targetIsMute: boolean) {
+    PosthogAnalytics.instance.trackEvent<MuteMicrophone>({
+      eventName: "MuteMicrophone",
+      targetMuteState: targetIsMute ? "mute" : "unmute",
+    });
+  }
+}
+
+interface MuteCamera {
+  eventName: "MuteCamera";
+  targetMuteState: "mute" | "unmute";
+}
+
+export class MuteCameraTracker {
+  track(targetIsMute: boolean) {
+    PosthogAnalytics.instance.trackEvent<MuteCamera>({
+      eventName: "MuteCamera",
+      targetMuteState: targetIsMute ? "mute" : "unmute",
+    });
+  }
+}
