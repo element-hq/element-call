@@ -285,7 +285,7 @@ export class PosthogAnalytics {
     }
 
     if (anonymity !== Anonymity.Disabled) {
-      await PosthogAnalytics.instance.updateSuperProperties();
+      await this.updateSuperProperties();
     }
   }
 

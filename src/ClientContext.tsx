@@ -104,7 +104,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       if (widget) {
         // We're inside a widget, so let's engage *matryoshka mode*
         logger.log("Using a matryoshka client");
-
+        PosthogAnalytics.instance.setRegistrationType(
+          RegistrationType.Registered
+        );
         return {
           client: await widget.client,
           isPasswordlessUser: false,
@@ -122,6 +124,11 @@ export const ClientProvider: FC<Props> = ({ children }) => {
             session;
 
           try {
+            PosthogAnalytics.instance.setRegistrationType(
+              passwordlessUser
+                ? RegistrationType.Guest
+                : RegistrationType.Registered
+            );
             return {
               client: await initClient(
                 {
