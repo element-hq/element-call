@@ -84,7 +84,7 @@ export async function initClient(
 
   const storeOpts = {} as ICreateClientOpts;
 
-  if (indexedDB && localStorage /*&& !import.meta.env.DEV*/) {
+  if (indexedDB && localStorage && !import.meta.env.DEV) {
     storeOpts.store = new IndexedDBStore({
       indexedDB: window.indexedDB,
       localStorage,
