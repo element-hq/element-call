@@ -254,6 +254,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
   const logout = useCallback(async () => {
     await client.logout(undefined, true);
+    await client.clearStores();
     clearSession();
     setState({
       client: undefined,
