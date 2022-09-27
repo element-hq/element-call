@@ -215,13 +215,15 @@ export function InCallView({
   // window is too small to show everyone
   const maximisedParticipant = useMemo(
     () =>
-      fullscreenParticipant ?? (bounds.height <= 500 && bounds.width <= 500)
+      fullscreenParticipant ?? (bounds.height <= 400 && bounds.width <= 400)
         ? items.find((item) => item.focused) ??
           items.find((item) => item.callFeed) ??
           null
         : null,
     [fullscreenParticipant, bounds, items]
   );
+
+  const reducedControls = bounds.width <= 400;
 
   const renderAvatar = useCallback(
     (roomMember: RoomMember, width: number, height: number) => {
@@ -325,13 +327,13 @@ export function InCallView({
       <div className={styles.footer}>
         <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
         <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
-        {canScreenshare && !isSafari && !maximisedParticipant && (
+        {canScreenshare && !isSafari && !reducedControls && (
           <ScreenshareButton
             enabled={isScreensharing}
             onPress={toggleScreensharing}
           />
         )}
-        {!maximisedParticipant && (
+        {!reducedControls && (
           <OverflowMenu
             inCall
             roomIdOrAlias={roomIdOrAlias}
