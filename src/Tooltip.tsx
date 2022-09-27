@@ -86,7 +86,7 @@ export const TooltipTrigger = forwardRef<HTMLElement, TooltipTriggerProps>(
       targetRef: triggerRef,
       overlayRef,
       isOpen: tooltipState.isOpen,
-      offset: 5,
+      offset: 12,
     });
 
     return (
