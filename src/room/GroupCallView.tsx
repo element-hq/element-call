@@ -105,7 +105,11 @@ export function GroupCallView({
           .data as unknown as JoinCallData;
 
         if (audioInput !== null) {
-          const deviceId = await findDeviceByName(audioInput, devices);
+          const deviceId = await findDeviceByName(
+            audioInput,
+            "audioinput",
+            devices
+          );
           if (!deviceId) {
             logger.warn("Unknown audio input: " + audioInput);
           } else {
@@ -117,7 +121,11 @@ export function GroupCallView({
         }
 
         if (videoInput !== null) {
-          const deviceId = await findDeviceByName(videoInput, devices);
+          const deviceId = await findDeviceByName(
+            videoInput,
+            "videoinput",
+            devices
+          );
           if (!deviceId) {
             logger.warn("Unknown video input: " + videoInput);
           } else {

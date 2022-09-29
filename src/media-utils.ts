@@ -24,9 +24,12 @@ import { logger } from "matrix-js-sdk/src/logger";
  */
 export async function findDeviceByName(
   deviceName: string,
+  kind: MediaDeviceKind,
   devices: MediaDeviceInfo[]
 ): Promise<string | undefined> {
-  const deviceInfo = devices.find((d) => d.label === deviceName);
+  const deviceInfo = devices.find(
+    (d) => d.kind === kind && d.label === deviceName
+  );
   return deviceInfo?.deviceId;
 }
 
