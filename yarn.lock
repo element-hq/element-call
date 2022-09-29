@@ -8484,9 +8484,9 @@ matrix-events-sdk@^0.0.1-beta.7:
   resolved "https://registry.yarnpkg.com/matrix-events-sdk/-/matrix-events-sdk-0.0.1-beta.7.tgz#5ffe45eba1f67cc8d7c2377736c728b322524934"
   integrity sha512-9jl4wtWanUFSy2sr2lCjErN/oC8KTAtaeaozJtrgot1JiQcEI4Rda9OLgQ7nLKaqb4Z/QUx/fR3XpDzm5Jy1JA==
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#f41b7706e489cc1b83e6b25dd50091be2b5a9083":
-  version "19.5.0"
-  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/f41b7706e489cc1b83e6b25dd50091be2b5a9083"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#ce3b72c85031f188a092d1c39806ef7536e65bdd":
+  version "20.0.1"
+  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/ce3b72c85031f188a092d1c39806ef7536e65bdd"
   dependencies:
     "@babel/runtime" "^7.12.5"
     "@types/sdp-transform" "^2.4.5"
