@@ -32,7 +32,7 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { useMediaHandler } from "../settings/useMediaHandler";
-import { findDeviceByName } from "../media-utils";
+import { findDeviceByName, getDevices } from "../media-utils";
 
 declare global {
   interface Window {
@@ -96,11 +96,16 @@ export function GroupCallView({
     if (widget && preload) {
       // In preload mode, wait for a join action before entering
       const onJoin = async (ev: CustomEvent<IWidgetApiRequest>) => {
+        // Get the available devices so we can match the selected device
+        // to its ID. This involves getting a media stream (see docs on
+        // the function) so we only do it once and re-use the result.
+        const devices = await getDevices();
+
         const { audioInput, videoInput } = ev.detail
           .data as unknown as JoinCallData;
 
         if (audioInput !== null) {
-          const deviceId = await findDeviceByName(audioInput);
+          const deviceId = await findDeviceByName(audioInput, devices);
           if (!deviceId) {
             logger.warn("Unknown audio input: " + audioInput);
           } else {
@@ -112,7 +117,7 @@ export function GroupCallView({
         }
 
         if (videoInput !== null) {
-          const deviceId = await findDeviceByName(videoInput);
+          const deviceId = await findDeviceByName(videoInput, devices);
           if (!deviceId) {
             logger.warn("Unknown video input: " + videoInput);
           } else {

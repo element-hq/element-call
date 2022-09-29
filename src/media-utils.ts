@@ -14,10 +14,55 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { logger } from "matrix-js-sdk/src/logger";
+
+/**
+ * Finds a media device with label matching 'deviceName'
+ * @param deviceName The label of the device to look for
+ * @param devices The list of devices to search
+ * @returns A matching media device or undefined if no matching device was found
+ */
 export async function findDeviceByName(
-  deviceName: string
+  deviceName: string,
+  devices: MediaDeviceInfo[]
 ): Promise<string | undefined> {
-  const devices = await navigator.mediaDevices.enumerateDevices();
   const deviceInfo = devices.find((d) => d.label === deviceName);
   return deviceInfo?.deviceId;
+}
+
+/**
+ * Gets the available audio input/output and video input devices
+ * from the browser: a wrapper around mediaDevices.enumerateDevices()
+ * that requests a stream and holds it while calling enumerateDevices().
+ * This is because some browsers (Firefox) only return device labels when
+ * the app has an active user media stream. In Chrome, this will get a
+ * stream from the default camera which can mean, for example, that the
+ * light for the FaceTime camera turns on briefly even if you selected
+ * another camera. Once the Permissions API
+ * (https://developer.mozilla.org/en-US/docs/Web/API/Permissions_API)
+ * is ready for primetime, this should allow us to avoid this.
+ *
+ * @return The available media devices
+ */
+export async function getDevices(): Promise<MediaDeviceInfo[]> {
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+      video: true,
+    });
+  } catch (e) {
+    logger.info("Couldn't get media stream for enumerateDevices: failing");
+    throw e;
+  }
+
+  try {
+    return await navigator.mediaDevices.enumerateDevices();
+  } catch (error) {
+    logger.warn("Unable to refresh WebRTC Devices: ", error);
+  } finally {
+    for (const track of stream.getTracks()) {
+      track.stop();
+    }
+  }
 }
