@@ -48,7 +48,7 @@ export async function findDeviceByName(
  * @return The available media devices
  */
 export async function getDevices(): Promise<MediaDeviceInfo[]> {
-  let stream;
+  let stream: MediaStream;
   try {
     stream = await navigator.mediaDevices.getUserMedia({
       audio: true,
