@@ -18,6 +18,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { widget, ElementWidgetActions, JoinCallData } from "../widget";
@@ -31,6 +32,7 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { useMediaHandler } from "../settings/useMediaHandler";
+import { findDeviceByName, getDevices } from "../media-utils";
 
 declare global {
   interface Window {
@@ -94,10 +96,45 @@ export function GroupCallView({
     if (widget && preload) {
       // In preload mode, wait for a join action before entering
       const onJoin = async (ev: CustomEvent<IWidgetApiRequest>) => {
+        // Get the available devices so we can match the selected device
+        // to its ID. This involves getting a media stream (see docs on
+        // the function) so we only do it once and re-use the result.
+        const devices = await getDevices();
+
         const { audioInput, videoInput } = ev.detail
           .data as unknown as JoinCallData;
-        if (audioInput !== null) setAudioInput(audioInput);
-        if (videoInput !== null) setVideoInput(videoInput);
+
+        if (audioInput !== null) {
+          const deviceId = await findDeviceByName(
+            audioInput,
+            "audioinput",
+            devices
+          );
+          if (!deviceId) {
+            logger.warn("Unknown audio input: " + audioInput);
+          } else {
+            logger.debug(
+              `Found audio input ID ${deviceId} for name ${audioInput}`
+            );
+            setAudioInput(deviceId);
+          }
+        }
+
+        if (videoInput !== null) {
+          const deviceId = await findDeviceByName(
+            videoInput,
+            "videoinput",
+            devices
+          );
+          if (!deviceId) {
+            logger.warn("Unknown video input: " + videoInput);
+          } else {
+            logger.debug(
+              `Found video input ID ${deviceId} for name ${videoInput}`
+            );
+            setVideoInput(deviceId);
+          }
+        }
         await Promise.all([
           groupCall.setMicrophoneMuted(audioInput === null),
           groupCall.setLocalVideoMuted(videoInput === null),
