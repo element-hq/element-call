@@ -56,7 +56,7 @@ export const SettingsModal = (props: Props) => {
   const [spatialAudio, setSpatialAudio] = useSpatialAudio();
   const [showInspector, setShowInspector] = useShowInspector();
   const [voiceActivationTesting, setVoiceActivationTesting] = useState(false);
-  const [muted, setMicrophoneMuted] = useToggleMicrophoneMute();
+  const [, setMicrophoneMuted] = useToggleMicrophoneMute();
 
   const downloadDebugLog = useDownloadDebugLog();
 
@@ -64,7 +64,7 @@ export const SettingsModal = (props: Props) => {
     setVoiceActivationTesting(
       (voiceActivationTesting) => !voiceActivationTesting
     );
-    setMicrophoneMuted(!muted);
+    setMicrophoneMuted(!voiceActivationTesting);
   }
 
   return (

@@ -28,7 +28,7 @@ import { CallEndedView } from "./CallEndedView";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
-import { useVoiceActivationThreshold, useToggleMicrophoneMute } from "../settings/useSetting";
+import { useVoiceActivationThreshold } from "../settings/useSetting";
 declare global {
   interface Window {
     groupCall: GroupCall;
@@ -75,15 +75,10 @@ export function GroupCallView({
   const avatarUrl = useRoomAvatar(groupCall.room);
 
   const [threshold] = useVoiceActivationThreshold();
-  const [muted] = useToggleMicrophoneMute();
 
   useEffect(() => {
     setVoiceActivityThreshold?.(threshold);
   }, [threshold, setVoiceActivityThreshold]);
-
-  useEffect(() => {
-    toggleLocalVideoMuted();
-  }, [muted, toggleMicrophoneMuted]);
 
   useEffect(() => {
     window.groupCall = groupCall;
@@ -132,7 +127,7 @@ export function GroupCallView({
           client={client}
           roomName={groupCall.room.name}
           avatarUrl={avatarUrl}
-          microphoneMuted={muted}
+          microphoneMuted={microphoneMuted}
           localVideoMuted={localVideoMuted}
           toggleLocalVideoMuted={toggleLocalVideoMuted}
           toggleMicrophoneMuted={toggleMicrophoneMuted}
@@ -174,7 +169,7 @@ export function GroupCallView({
           onInitLocalCallFeed={initLocalCallFeed}
           localCallFeed={localCallFeed}
           onEnter={enter}
-          microphoneMuted={muted}
+          microphoneMuted={microphoneMuted}
           localVideoMuted={localVideoMuted}
           toggleLocalVideoMuted={toggleLocalVideoMuted}
           toggleMicrophoneMuted={toggleMicrophoneMuted}

@@ -28,6 +28,7 @@ import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 
 import { usePageUnload } from "./usePageUnload";
+import { useToggleMicrophoneMute } from "../settings/useSetting";
 
 export interface UseGroupCallReturnType {
   state: GroupCallState;
@@ -110,6 +111,8 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     participants: [],
     hasLocalParticipant: false,
   });
+
+  const [muted] = useToggleMicrophoneMute();
 
   const [unencryptedEventsFromUsers, addUnencryptedEventUser] = useReducer(
     (state: Set<string>, newVal: string) => {
@@ -297,8 +300,13 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
   }, [groupCall]);
 
   const toggleMicrophoneMuted = useCallback(() => {
+    console.log("TOGGLE MIC GROUP CALL");
     groupCall.setMicrophoneMuted(!groupCall.isMicrophoneMuted());
   }, [groupCall]);
+
+  useEffect(() => {
+    toggleMicrophoneMuted();
+  }, [muted, toggleMicrophoneMuted]);
 
   const setVoiceActivityThreshold = useCallback(
     (value: number) => {
