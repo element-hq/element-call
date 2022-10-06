@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { Item } from "@react-stately/collections";
 
 import { Modal } from "../Modal";
@@ -60,12 +60,12 @@ export const SettingsModal = (props: Props) => {
 
   const downloadDebugLog = useDownloadDebugLog();
 
-  function handleVoiceActivationTesting() {
+  const handleVoiceActivationTesting = useCallback(() => {
     setVoiceActivationTesting(
       (voiceActivationTesting) => !voiceActivationTesting
     );
     setMicrophoneMuted(!voiceActivationTesting);
-  }
+  }, [setMicrophoneMuted, setVoiceActivationTesting, voiceActivationTesting]);
 
   return (
     <Modal

@@ -32,21 +32,12 @@ export function Field({ children, className }: InputSliderProps): JSX.Element {
 
 interface InputSliderProps {
   label: string;
-  children:  ReactNode;
+  children: ReactNode;
   description: string;
 }
 
-export const InputSlider = forwardRef<
-  HTMLElement,
-  InputSliderProps
->(
-  (
-    {
-      label,
-      children,
-      description
-    }
-  ) => {
+export const InputSlider = forwardRef<HTMLElement, InputSliderProps>(
+  ({ label, children, description }) => {
     return (
       <div>
         <label className={styles.label}>{label}</label>
@@ -56,11 +47,3 @@ export const InputSlider = forwardRef<
     );
   }
 );
-
-export function ErrorMessage({
-  children,
-}: {
-  children: ReactNode;
-}): JSX.Element {
-  return <p className={styles.errorMessage}>{children}</p>;
-}
