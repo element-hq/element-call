@@ -300,7 +300,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
   }, [groupCall]);
 
   const toggleMicrophoneMuted = useCallback(() => {
-    console.log("TOGGLE MIC GROUP CALL");
     groupCall.setMicrophoneMuted(!groupCall.isMicrophoneMuted());
   }, [groupCall]);
 
