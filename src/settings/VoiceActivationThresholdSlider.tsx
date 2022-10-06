@@ -49,6 +49,7 @@ export function VoiceActivationThresholdSlider({
     </div>
   );
 }
+
 function VolumeIndicator({ threshold }: { threshold: number }) {
   const { volume } = useCurrentVolume();
   const volumePercentage = Math.min(Math.max(volume + 100, 0), 100);
