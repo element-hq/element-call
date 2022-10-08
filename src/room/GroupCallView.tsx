@@ -74,7 +74,6 @@ export function GroupCallView({
     toggleLocalVideoMuted,
     toggleMicrophoneMuted,
     toggleScreensharing,
-    setVoiceActivityThreshold,
     requestingScreenshare,
     isScreensharing,
     localScreenshareFeed,
@@ -90,8 +89,8 @@ export function GroupCallView({
   const [threshold] = useVoiceActivationThreshold();
 
   useEffect(() => {
-    setVoiceActivityThreshold?.(threshold);
-  }, [threshold, setVoiceActivityThreshold]);
+    groupCall.setVoiceActivityThreshold(threshold);
+  }, [groupCall, threshold]);
 
   useEffect(() => {
     window.groupCall = groupCall;
