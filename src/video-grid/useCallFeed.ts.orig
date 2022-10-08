@@ -77,8 +77,14 @@ export function useCallFeed(callFeed: CallFeed): CallFeedState {
       callFeed.on(CallFeedEvent.MuteStateChanged, onMuteStateChanged);
       callFeed.on(CallFeedEvent.LocalVolumeChanged, onLocalVolumeChanged);
       callFeed.on(CallFeedEvent.NewStream, onUpdateCallFeed);
-      callFeed.on(CallFeedEvent.VoiceActivityThresholdChanged, onVoiceActivityThresholdChanged);
+<<<<<<< HEAD
+      callFeed.on(
+        CallFeedEvent.VoiceActivityThresholdChanged,
+        onVoiceActivityThresholdChanged
+      );
+=======
       callFeed.on(CallFeedEvent.Disposed, onUpdateCallFeed);
+>>>>>>> upstream/main
     }
 
     onUpdateCallFeed();

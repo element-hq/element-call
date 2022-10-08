@@ -36,23 +36,24 @@ interface Props {
     width: number,
     height: number
   ) => JSX.Element;
-  audioOutputDevice: string;
   audioContext: AudioContext;
   audioDestination: AudioNode;
   disableSpeakingIndicator: boolean;
-  isFullscreen: boolean;
+  maximised: boolean;
+  fullscreen: boolean;
   onFullscreen: (item: Participant) => void;
 }
+
 export function VideoTileContainer({
   item,
   width,
   height,
   getAvatar,
-  audioOutputDevice,
   audioContext,
   audioDestination,
   disableSpeakingIndicator,
-  isFullscreen,
+  maximised,
+  fullscreen,
   onFullscreen,
   ...rest
 }: Props) {
@@ -69,7 +70,6 @@ export function VideoTileContainer({
   const { rawDisplayName } = useRoomMemberName(member);
   const [tileRef, mediaRef] = useSpatialMediaStream(
     stream,
-    audioOutputDevice,
     audioContext,
     audioDestination,
     isLocal,
@@ -104,11 +104,12 @@ export function VideoTileContainer({
         avatar={getAvatar && getAvatar(member, width, height)}
         onOptionsPress={onOptionsPress}
         localVolume={localVolume}
-        isFullscreen={isFullscreen}
+        maximised={maximised}
+        fullscreen={fullscreen}
         onFullscreen={onFullscreenCallback}
         {...rest}
       />
-      {videoTileSettingsModalState.isOpen && (
+      {videoTileSettingsModalState.isOpen && !maximised && (
         <VideoTileSettingsModal
           {...videoTileSettingsModalProps}
           feed={item.callFeed}

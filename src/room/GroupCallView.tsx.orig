@@ -31,10 +31,13 @@ import { CallEndedView } from "./CallEndedView";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
+<<<<<<< HEAD
 import { useVoiceActivationThreshold } from "../settings/useSetting";
+=======
 import { useMediaHandler } from "../settings/useMediaHandler";
 import { findDeviceByName, getDevices } from "../media-utils";
 
+>>>>>>> upstream/main
 declare global {
   interface Window {
     groupCall?: GroupCall;

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useRef, useEffect, RefObject } from "react";
+import { useRef, useEffect, RefObject, useState, useCallback } from "react";
 import { parse as parseSdp, write as writeSdp } from "sdp-transform";
 import {
   acquireContext,
@@ -22,6 +22,8 @@ import {
 } from "matrix-js-sdk/src/webrtc/audioContext";
 
 import { useSpatialAudio } from "../settings/useSetting";
+import { useEventTarget } from "../useEvents";
+import { useAudioOutputDevice } from "./useAudioOutputDevice";
 
 declare global {
   interface Window {
@@ -30,6 +32,27 @@ declare global {
   }
 }
 
+export const useMediaStreamTrackCount = (
+  stream: MediaStream
+): [number, number] => {
+  const [audioTrackCount, setAudioTrackCount] = useState(
+    stream.getAudioTracks().length
+  );
+  const [videoTrackCount, setVideoTrackCount] = useState(
+    stream.getVideoTracks().length
+  );
+
+  const tracksChanged = useCallback(() => {
+    setAudioTrackCount(stream.getAudioTracks().length);
+    setVideoTrackCount(stream.getVideoTracks().length);
+  }, [stream]);
+
+  useEventTarget(stream, "addtrack", tracksChanged);
+  useEventTarget(stream, "removetrack", tracksChanged);
+
+  return [audioTrackCount, videoTrackCount];
+};
+
 export const useMediaStream = (
   stream: MediaStream,
   audioOutputDevice: string,
@@ -37,6 +60,8 @@ export const useMediaStream = (
   localVolume?: number
 ): RefObject<MediaElement> => {
   const mediaRef = useRef<MediaElement>();
+
+  useAudioOutputDevice(mediaRef, audioOutputDevice);
 
   useEffect(() => {
     console.log(
@@ -66,24 +91,6 @@ export const useMediaStream = (
       }
     }
   }, [stream, mute]);
-
-  useEffect(() => {
-    if (
-      mediaRef.current &&
-      audioOutputDevice &&
-      mediaRef.current !== undefined
-    ) {
-      if (mediaRef.current.setSinkId) {
-        console.log(
-          `useMediaStream setting output setSinkId ${audioOutputDevice}`
-        );
-        // Chrome for Android doesn't support this
-        mediaRef.current.setSinkId(audioOutputDevice);
-      } else {
-        console.log("Can't set output - no setsinkid");
-      }
-    }
-  }, [audioOutputDevice]);
 
   useEffect(() => {
     if (!mediaRef.current) return;
@@ -156,11 +163,11 @@ const createLoopback = async (stream: MediaStream): Promise<MediaStream> => {
 export const useAudioContext = (): [
   AudioContext,
   AudioNode,
-  RefObject<HTMLAudioElement>
+  RefObject<MediaElement>
 ] => {
   const context = useRef<AudioContext>();
   const destination = useRef<AudioNode>();
-  const audioRef = useRef<HTMLAudioElement>();
+  const audioRef = useRef<MediaElement>();
 
   useEffect(() => {
     if (audioRef.current && !context.current) {
@@ -192,7 +199,6 @@ export const useAudioContext = (): [
 
 export const useSpatialMediaStream = (
   stream: MediaStream,
-  audioOutputDevice: string,
   audioContext: AudioContext,
   audioDestination: AudioNode,
   mute = false,
@@ -200,20 +206,16 @@ export const useSpatialMediaStream = (
 ): [RefObject<HTMLDivElement>, RefObject<MediaElement>] => {
   const tileRef = useRef<HTMLDivElement>();
   const [spatialAudio] = useSpatialAudio();
-  // If spatial audio is enabled, we handle audio separately from the video element
-  const mediaRef = useMediaStream(
-    stream,
-    audioOutputDevice,
-    spatialAudio || mute,
-    localVolume
-  );
+  // We always handle audio separately form the video element
+  const mediaRef = useMediaStream(stream, undefined, true, undefined);
+  const [audioTrackCount] = useMediaStreamTrackCount(stream);
 
   const gainNodeRef = useRef<GainNode>();
   const pannerNodeRef = useRef<PannerNode>();
   const sourceRef = useRef<MediaStreamAudioSourceNode>();
 
   useEffect(() => {
-    if (spatialAudio && tileRef.current && !mute) {
+    if (spatialAudio && tileRef.current && !mute && audioTrackCount > 0) {
       if (!pannerNodeRef.current) {
         pannerNodeRef.current = new PannerNode(audioContext, {
           panningModel: "HRTF",
@@ -261,7 +263,15 @@ export const useSpatialMediaStream = (
         pannerNode.disconnect();
       };
     }
-  }, [stream, spatialAudio, audioContext, audioDestination, mute, localVolume]);
+  }, [
+    stream,
+    spatialAudio,
+    audioContext,
+    audioDestination,
+    mute,
+    localVolume,
+    audioTrackCount,
+  ]);
 
   return [tileRef, mediaRef];
 };

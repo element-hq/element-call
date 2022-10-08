@@ -43,9 +43,7 @@ export function FeedbackModal({ inCall, roomId, onClose, ...rest }: Props) {
       const descriptionData = data.get("description");
       const description =
         typeof descriptionData === "string" ? descriptionData : "";
-      const sendLogsData = data.get("sendLogs");
-      const sendLogs =
-        typeof sendLogsData === "string" ? sendLogsData === "true" : false;
+      const sendLogs = Boolean(data.get("sendLogs"));
       const rageshakeRequestId = randomString(16);
 
       submitRageshake({
@@ -69,7 +67,7 @@ export function FeedbackModal({ inCall, roomId, onClose, ...rest }: Props) {
   }, [sent, onClose]);
 
   return (
-    <Modal title="Submit Feedback" isDismissable {...rest}>
+    <Modal title="Submit Feedback" isDismissable onClose={onClose} {...rest}>
       <ModalContent>
         <Body>Having trouble? Help us fix it.</Body>
         <form onSubmit={onSubmitFeedback}>
