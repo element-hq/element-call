@@ -35,7 +35,6 @@ export default function useCurrentVolume() {
 
     const interval = setInterval(() => {
       setVolume(callFeed.maxVolume);
-      console.log(callFeed.maxVolume);
     }, VOLUME_UPDATE_INTERVAL);
 
     return () => clearInterval(interval);
