@@ -90,7 +90,7 @@ export function GroupCallView({
 
   useEffect(() => {
     groupCall.setVoiceActivityThreshold(threshold);
-  }, [groupCall, threshold]);
+  }, [groupCall, groupCall.localCallFeed, threshold]);
 
   useEffect(() => {
     window.groupCall = groupCall;
