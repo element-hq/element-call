@@ -16,6 +16,9 @@ limitations under the License.
 
 import { useEffect, useCallback, useRef, useState } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
+import { useTranslation } from "react-i18next";
+
+import { translatedError } from "../TranslatedError";
 
 declare global {
   interface Window {
@@ -32,6 +35,7 @@ interface RecaptchaPromiseRef {
 }
 
 export const useRecaptcha = (sitekey: string) => {
+  const { t } = useTranslation();
   const [recaptchaId] = useState(() => randomString(16));
   const promiseRef = useRef<RecaptchaPromiseRef>();
 
@@ -71,14 +75,14 @@ export const useRecaptcha = (sitekey: string) => {
 
     if (!window.grecaptcha) {
       console.log("Recaptcha not loaded");
-      return Promise.reject(new Error("Recaptcha not loaded"));
+      return Promise.reject(translatedError("Recaptcha not loaded", t));
     }
 
     return new Promise((resolve, reject) => {
       const observer = new MutationObserver((mutationsList) => {
         for (const item of mutationsList) {
           if ((item.target as HTMLElement)?.style?.visibility !== "visible") {
-            reject(new Error("Recaptcha dismissed"));
+            reject(translatedError("Recaptcha dismissed", t));
             observer.disconnect();
             return;
           }
@@ -108,7 +112,7 @@ export const useRecaptcha = (sitekey: string) => {
         });
       }
     });
-  }, [sitekey]);
+  }, [sitekey, t]);
 
   const reset = useCallback(() => {
     window.grecaptcha?.reset();

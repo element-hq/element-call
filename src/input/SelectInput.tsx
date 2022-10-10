@@ -19,6 +19,7 @@ import { AriaSelectOptions, HiddenSelect, useSelect } from "@react-aria/select";
 import { useButton } from "@react-aria/button";
 import { useSelectState } from "@react-stately/select";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import { Popover } from "../popover/Popover";
 import { ListBox } from "../ListBox";
@@ -30,6 +31,7 @@ interface Props extends AriaSelectOptions<object> {
 }
 
 export function SelectInput(props: Props): JSX.Element {
+  const { t } = useTranslation();
   const state = useSelectState(props);
 
   const ref = useRef();
@@ -56,7 +58,7 @@ export function SelectInput(props: Props): JSX.Element {
         <span {...valueProps} className={styles.selectedItem}>
           {state.selectedItem
             ? state.selectedItem.rendered
-            : "Select an option"}
+            : t("Select an option")}
         </span>
         <ArrowDownIcon />
       </button>

@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import React, { FC } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Modal, ModalContent, ModalProps } from "../Modal";
 import { CopyButton } from "../button";
@@ -25,19 +26,23 @@ interface Props extends Omit<ModalProps, "title" | "children"> {
   roomIdOrAlias: string;
 }
 
-export const InviteModal: FC<Props> = ({ roomIdOrAlias, ...rest }) => (
-  <Modal
-    title="Invite People"
-    isDismissable
-    className={styles.inviteModal}
-    {...rest}
-  >
-    <ModalContent>
-      <p>Copy and share this meeting link</p>
-      <CopyButton
-        className={styles.copyButton}
-        value={getRoomUrl(roomIdOrAlias)}
-      />
-    </ModalContent>
-  </Modal>
-);
+export const InviteModal: FC<Props> = ({ roomIdOrAlias, ...rest }) => {
+  const { t } = useTranslation();
+
+  return (
+    <Modal
+      title={t("Invite people")}
+      isDismissable
+      className={styles.inviteModal}
+      {...rest}
+    >
+      <ModalContent>
+        <p>{t("Copy and share this call link")}</p>
+        <CopyButton
+          className={styles.copyButton}
+          value={getRoomUrl(roomIdOrAlias)}
+        />
+      </ModalContent>
+    </Modal>
+  );
+};

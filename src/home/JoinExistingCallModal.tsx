@@ -16,6 +16,7 @@ limitations under the License.
 
 import React from "react";
 import { PressEvent } from "@react-types/shared";
+import { useTranslation } from "react-i18next";
 
 import { Modal, ModalContent } from "../Modal";
 import { Button } from "../button";
@@ -29,13 +30,15 @@ interface Props {
   [index: string]: unknown;
 }
 export function JoinExistingCallModal({ onJoin, onClose, ...rest }: Props) {
+  const { t } = useTranslation();
+
   return (
-    <Modal title="Join existing call?" isDismissable {...rest}>
+    <Modal title={t("Join existing call?")} isDismissable {...rest}>
       <ModalContent>
-        <p>This call already exists, would you like to join?</p>
+        <p>{t("This call already exists, would you like to join?")}</p>
         <FieldRow rightAlign className={styles.buttons}>
-          <Button onPress={onClose}>No</Button>
-          <Button onPress={onJoin}>Yes, join call</Button>
+          <Button onPress={onClose}>{t("No")}</Button>
+          <Button onPress={onJoin}>{t("Yes, join call")}</Button>
         </FieldRow>
       </ModalContent>
     </Modal>

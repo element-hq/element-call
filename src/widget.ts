@@ -22,7 +22,7 @@ import { WidgetApi, MatrixCapabilities } from "matrix-widget-api";
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { LazyEventEmitter } from "./LazyEventEmitter";
-import { getRoomParams } from "./room/useRoomParams";
+import { getUrlParams } from "./UrlParams";
 
 // Subset of the actions in matrix-react-sdk
 export enum ElementWidgetActions {
@@ -80,7 +80,7 @@ export const widget: WidgetHelpers | null = (() => {
       // We need to do this now rather than later because it has capabilities to
       // request, and is responsible for starting the transport (should it be?)
 
-      const { roomId, userId, deviceId } = getRoomParams();
+      const { roomId, userId, deviceId } = getUrlParams();
       if (!roomId) throw new Error("Room ID must be supplied");
       if (!userId) throw new Error("User ID must be supplied");
       if (!deviceId) throw new Error("Device ID must be supplied");
