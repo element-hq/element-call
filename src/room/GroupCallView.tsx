@@ -19,6 +19,7 @@ import { useHistory } from "react-router-dom";
 import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { logger } from "matrix-js-sdk/src/logger";
+import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { widget, ElementWidgetActions, JoinCallData } from "../widget";
@@ -81,8 +82,8 @@ export function GroupCallView({
     unencryptedEventsFromUsers,
   } = useGroupCall(groupCall);
 
+  const { t } = useTranslation();
   const { setAudioInput, setVideoInput } = useMediaHandler();
-
   const avatarUrl = useRoomAvatar(groupCall.room);
 
   useEffect(() => {
@@ -240,7 +241,7 @@ export function GroupCallView({
   } else if (state === GroupCallState.Entering) {
     return (
       <FullScreenView>
-        <h1>Entering room...</h1>
+        <h1>{t("Entering room…")}</h1>
       </FullScreenView>
     );
   } else if (left) {
@@ -257,7 +258,7 @@ export function GroupCallView({
   } else if (isEmbedded) {
     return (
       <FullScreenView>
-        <h1>Loading room...</h1>
+        <h1>{t("Loading room…")}</h1>
       </FullScreenView>
     );
   } else {

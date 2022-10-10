@@ -17,6 +17,7 @@ limitations under the License.
 import React, { ReactNode } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
+import { useTranslation } from "react-i18next";
 
 import { useLoadGroupCall } from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
@@ -37,6 +38,7 @@ export function GroupCallLoader({
   children,
   createPtt,
 }: Props): JSX.Element {
+  const { t } = useTranslation();
   const { loading, error, groupCall } = useLoadGroupCall(
     client,
     roomIdOrAlias,
@@ -44,12 +46,12 @@ export function GroupCallLoader({
     createPtt
   );
 
-  usePageTitle(groupCall ? groupCall.room.name : "Loading...");
+  usePageTitle(groupCall ? groupCall.room.name : t("Loading…"));
 
   if (loading) {
     return (
       <FullScreenView>
-        <h1>Loading room...</h1>
+        <h1>{t("Loading room…")}</h1>
       </FullScreenView>
     );
   }

@@ -27,6 +27,7 @@ import { useHistory } from "react-router-dom";
 import { MatrixClient, ClientEvent } from "matrix-js-sdk/src/client";
 import { MatrixEvent } from "matrix-js-sdk/src/models/event";
 import { logger } from "matrix-js-sdk/src/logger";
+import { useTranslation } from "react-i18next";
 
 import { ErrorView } from "./FullScreenView";
 import {
@@ -35,6 +36,7 @@ import {
   CryptoStoreIntegrityError,
 } from "./matrix-utils";
 import { widget } from "./widget";
+import { translatedError } from "./TranslatedError";
 
 declare global {
   interface Window {
@@ -267,6 +269,8 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     history.push("/");
   }, [history, client]);
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     // To protect against multiple sessions writing to the same storage
     // simultaneously, we send a to-device message that shuts down all other
@@ -287,8 +291,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
           setState((prev) => ({
             ...prev,
-            error: new Error(
-              "This application has been opened in another tab."
+            error: translatedError(
+              "This application has been opened in another tab.",
+              t
             ),
           }));
         }
@@ -306,7 +311,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         client?.removeListener(ClientEvent.ToDeviceEvent, onToDeviceEvent);
       };
     }
-  }, [client]);
+  }, [client, t]);
 
   const context = useMemo<ClientState>(
     () => ({

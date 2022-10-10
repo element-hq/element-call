@@ -18,6 +18,7 @@ import React, { useCallback } from "react";
 import { Item } from "@react-stately/collections";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { OverlayTriggerState } from "@react-stately/overlays";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "../button";
 import { Menu } from "../Menu";
@@ -31,6 +32,7 @@ import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
 import { TooltipTrigger } from "../Tooltip";
 import { FeedbackModal } from "./FeedbackModal";
+
 interface Props {
   roomIdOrAlias: string;
   inCall: boolean;
@@ -42,6 +44,7 @@ interface Props {
     onClose: () => void;
   };
 }
+
 export function OverflowMenu({
   roomIdOrAlias,
   inCall,
@@ -50,6 +53,8 @@ export function OverflowMenu({
   feedbackModalState,
   feedbackModalProps,
 }: Props) {
+  const { t } = useTranslation();
+
   const {
     modalState: inviteModalState,
     modalProps: inviteModalProps,
@@ -90,29 +95,31 @@ export function OverflowMenu({
     [feedbackModalState, inviteModalState, settingsModalState]
   );
 
+  const tooltip = useCallback(() => t("More"), [t]);
+
   return (
     <>
       <PopoverMenuTrigger disableOnState>
-        <TooltipTrigger tooltip={() => "More"} placement="top">
+        <TooltipTrigger tooltip={tooltip} placement="top">
           <Button variant="toolbar">
             <OverflowIcon />
           </Button>
         </TooltipTrigger>
         {(props: JSX.IntrinsicAttributes) => (
-          <Menu {...props} label="more menu" onAction={onAction}>
+          <Menu {...props} label={t("More menu")} onAction={onAction}>
             {showInvite && (
-              <Item key="invite" textValue="Invite people">
+              <Item key="invite" textValue={t("Invite people")}>
                 <AddUserIcon />
-                <span>Invite people</span>
+                <span>{t("Invite people")}</span>
               </Item>
             )}
-            <Item key="settings" textValue="Settings">
+            <Item key="settings" textValue={t("Settings")}>
               <SettingsIcon />
-              <span>Settings</span>
+              <span>{t("Settings")}</span>
             </Item>
-            <Item key="feedback" textValue="Submit Feedback">
+            <Item key="feedback" textValue={t("Submit feedback")}>
               <FeedbackIcon />
-              <span>Submit Feedback</span>
+              <span>{t("Submit feedback")}</span>
             </Item>
           </Menu>
         )}

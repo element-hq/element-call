@@ -14,8 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useCallback } from "react";
 import { Item } from "@react-stately/collections";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "../button";
 import { PopoverMenuTrigger } from "../popover/PopoverMenu";
@@ -27,28 +28,33 @@ import { Menu } from "../Menu";
 import { TooltipTrigger } from "../Tooltip";
 
 export type Layout = "freedom" | "spotlight";
+
 interface Props {
   layout: Layout;
   setLayout: (layout: Layout) => void;
 }
+
 export function GridLayoutMenu({ layout, setLayout }: Props) {
+  const { t } = useTranslation();
+  const tooltip = useCallback(() => t("Change layout"), [t]);
+
   return (
     <PopoverMenuTrigger placement="bottom right">
-      <TooltipTrigger tooltip={() => "Layout Type"}>
+      <TooltipTrigger tooltip={tooltip}>
         <Button variant="icon">
           {layout === "spotlight" ? <SpotlightIcon /> : <FreedomIcon />}
         </Button>
       </TooltipTrigger>
       {(props: JSX.IntrinsicAttributes) => (
-        <Menu {...props} label="Grid layout menu" onAction={setLayout}>
-          <Item key="freedom" textValue="Freedom">
+        <Menu {...props} label={t("Grid layout menu")} onAction={setLayout}>
+          <Item key="freedom" textValue={t("Freedom")}>
             <FreedomIcon />
             <span>Freedom</span>
             {layout === "freedom" && (
               <CheckIcon className={menuStyles.checkIcon} />
             )}
           </Item>
-          <Item key="spotlight" textValue="Spotlight">
+          <Item key="spotlight" textValue={t("Spotlight")}>
             <SpotlightIcon />
             <span>Spotlight</span>
             {layout === "spotlight" && (

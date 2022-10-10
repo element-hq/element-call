@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { useButton } from "@react-aria/button";
 import { AriaButtonProps } from "@react-types/button";
 import { Room } from "matrix-js-sdk/src/models/room";
+import { useTranslation } from "react-i18next";
 
 import styles from "./Header.module.css";
 import { useModalTriggerState } from "./Modal";
@@ -156,6 +157,7 @@ export function VersionMismatchWarning({
   users,
   room,
 }: VersionMismatchWarningProps) {
+  const { t } = useTranslation();
   const { modalState, modalProps } = useModalTriggerState();
 
   const onDetailsClick = useCallback(() => {
@@ -166,9 +168,9 @@ export function VersionMismatchWarning({
 
   return (
     <span className={styles.versionMismatchWarning}>
-      Incomaptible versions!
+      {t("Incompatible versions!")}
       <Button variant="link" onClick={onDetailsClick}>
-        Details
+        {t("Details")}
       </Button>
       {modalState.isOpen && (
         <IncompatibleVersionModal userIds={users} room={room} {...modalProps} />

@@ -23,6 +23,7 @@ import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import styles from "./InCallView.module.css";
@@ -112,6 +113,7 @@ export function InCallView({
   unencryptedEventsFromUsers,
   hideHeader,
 }: Props) {
+  const { t } = useTranslation();
   usePreventScroll();
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure({ polyfill: ResizeObserver });
@@ -247,7 +249,7 @@ export function InCallView({
     if (items.length === 0) {
       return (
         <div className={styles.centerMessage}>
-          <p>Waiting for other participants...</p>
+          <p>{t("Waiting for other participants…")}</p>
         </div>
       );
     }

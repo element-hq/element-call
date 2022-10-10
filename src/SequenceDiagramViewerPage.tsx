@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import React, { useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import {
   SequenceDiagramViewer,
@@ -30,7 +31,8 @@ interface DebugLog {
 }
 
 export function SequenceDiagramViewerPage() {
-  usePageTitle("Inspector");
+  const { t } = useTranslation();
+  usePageTitle(t("Inspector"));
 
   const [debugLog, setDebugLog] = useState<DebugLog>();
   const [selectedUserId, setSelectedUserId] = useState<string>();
@@ -49,7 +51,7 @@ export function SequenceDiagramViewerPage() {
           type="file"
           id="debugLog"
           name="debugLog"
-          label="Debug Log"
+          label={t("Debug log")}
           onChange={onChangeDebugLog}
         />
       </FieldRow>

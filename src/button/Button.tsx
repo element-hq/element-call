@@ -18,6 +18,7 @@ import { PressEvent } from "@react-types/shared";
 import classNames from "classnames";
 import { useButton } from "@react-aria/button";
 import { mergeProps, useObjectRef } from "@react-aria/utils";
+import { useTranslation } from "react-i18next";
 
 import styles from "./Button.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
@@ -142,9 +143,11 @@ export function MicButton({
   // TODO: add all props for <Button>
   [index: string]: unknown;
 }) {
+  const { t } = useTranslation();
+
   return (
     <TooltipTrigger
-      tooltip={() => (muted ? "Unmute microphone" : "Mute microphone")}
+      tooltip={() => (muted ? t("Unmute microphone") : t("Mute microphone"))}
     >
       <Button variant="toolbar" {...rest} off={muted}>
         {muted ? <MuteMicIcon /> : <MicIcon />}
@@ -161,9 +164,11 @@ export function VideoButton({
   // TODO: add all props for <Button>
   [index: string]: unknown;
 }) {
+  const { t } = useTranslation();
+
   return (
     <TooltipTrigger
-      tooltip={() => (muted ? "Turn on camera" : "Turn off camera")}
+      tooltip={() => (muted ? t("Turn on camera") : t("Turn off camera"))}
     >
       <Button variant="toolbar" {...rest} off={muted}>
         {muted ? <DisableVideoIcon /> : <VideoIcon />}
@@ -182,9 +187,11 @@ export function ScreenshareButton({
   // TODO: add all props for <Button>
   [index: string]: unknown;
 }) {
+  const { t } = useTranslation();
+
   return (
     <TooltipTrigger
-      tooltip={() => (enabled ? "Stop sharing screen" : "Share screen")}
+      tooltip={() => (enabled ? t("Stop sharing screen") : t("Share screen"))}
     >
       <Button variant="toolbarSecondary" {...rest} on={enabled}>
         <ScreenshareIcon />
@@ -201,8 +208,11 @@ export function HangupButton({
   // TODO: add all props for <Button>
   [index: string]: unknown;
 }) {
+  const { t } = useTranslation();
+  const tooltip = useCallback(() => t("Leave"), [t]);
+
   return (
-    <TooltipTrigger tooltip={() => "Leave"}>
+    <TooltipTrigger tooltip={tooltip}>
       <Button
         variant="toolbar"
         className={classNames(styles.hangupButton, className)}
@@ -222,8 +232,11 @@ export function SettingsButton({
   // TODO: add all props for <Button>
   [index: string]: unknown;
 }) {
+  const { t } = useTranslation();
+  const tooltip = useCallback(() => t("Settings"), [t]);
+
   return (
-    <TooltipTrigger tooltip={() => "Settings"}>
+    <TooltipTrigger tooltip={tooltip}>
       <Button variant="toolbar" {...rest}>
         <SettingsIcon />
       </Button>
@@ -239,8 +252,11 @@ export function InviteButton({
   // TODO: add all props for <Button>
   [index: string]: unknown;
 }) {
+  const { t } = useTranslation();
+  const tooltip = useCallback(() => t("Invite"), [t]);
+
   return (
-    <TooltipTrigger tooltip={() => "Invite"}>
+    <TooltipTrigger tooltip={tooltip}>
       <Button variant="toolbar" {...rest}>
         <AddUserIcon />
       </Button>
@@ -256,8 +272,11 @@ interface AudioButtonProps extends Omit<Props, "variant"> {
 }
 
 export function AudioButton({ volume, ...rest }: AudioButtonProps) {
+  const { t } = useTranslation();
+  const tooltip = useCallback(() => t("Local volume"), [t]);
+
   return (
-    <TooltipTrigger tooltip={() => "Local volume"}>
+    <TooltipTrigger tooltip={tooltip}>
       <Button variant="icon" {...rest}>
         <VolumeIcon volume={volume} />
       </Button>
@@ -273,12 +292,13 @@ export function FullscreenButton({
   fullscreen,
   ...rest
 }: FullscreenButtonProps) {
-  const getTooltip = useCallback(() => {
-    return fullscreen ? "Exit full screen" : "Full screen";
-  }, [fullscreen]);
+  const { t } = useTranslation();
+  const tooltip = useCallback(() => {
+    return fullscreen ? t("Exit full screen") : t("Full screen");
+  }, [fullscreen, t]);
 
   return (
-    <TooltipTrigger tooltip={getTooltip}>
+    <TooltipTrigger tooltip={tooltip}>
       <Button variant="icon" {...rest}>
         {fullscreen ? <FullscreenExit /> : <Fullscreen />}
       </Button>

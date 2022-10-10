@@ -33,6 +33,7 @@ import { FocusScope } from "@react-aria/focus";
 import { ButtonAria, useButton } from "@react-aria/button";
 import classNames from "classnames";
 import { AriaDialogProps } from "@react-types/dialog";
+import { useTranslation } from "react-i18next";
 
 import { ReactComponent as CloseIcon } from "./icons/Close.svg";
 import styles from "./Modal.module.css";
@@ -53,6 +54,7 @@ export function Modal({
   onClose,
   ...rest
 }: ModalProps) {
+  const { t } = useTranslation();
   const modalRef = useRef();
   const { overlayProps, underlayProps } = useOverlay(
     { ...rest, onClose },
@@ -90,6 +92,7 @@ export function Modal({
                 {...closeButtonProps}
                 ref={closeButtonRef}
                 className={styles.closeButton}
+                title={t("Close")}
               >
                 <CloseIcon />
               </button>

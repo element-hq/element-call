@@ -14,10 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { HTMLAttributes } from "react";
+import React, { HTMLAttributes, useMemo } from "react";
 import classNames from "classnames";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { useTranslation } from "react-i18next";
 
 import styles from "./Facepile.module.css";
 import { Avatar, Size, sizes } from "./Avatar";
@@ -44,13 +45,25 @@ export function Facepile({
   size = Size.XS,
   ...rest
 }: Props) {
+  const { t } = useTranslation();
+
   const _size = sizes.get(size);
   const _overlap = overlapMap[size];
+
+  const title = useMemo(() => {
+    return participants.reduce<string | null>(
+      (prev, curr) =>
+        prev === null
+          ? curr.name
+          : t("{{names}}, {{name}}", { names: prev, name: curr.name }),
+      null
+    ) as string;
+  }, [participants, t]);
 
   return (
     <div
       className={classNames(styles.facepile, styles[size], className)}
-      title={participants.map((member) => member.name).join(", ")}
+      title={title}
       style={{
         width:
           Math.min(participants.length, max + 1) * (_size - _overlap) +
