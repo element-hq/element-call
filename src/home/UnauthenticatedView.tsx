@@ -17,6 +17,7 @@ limitations under the License.
 import React, { FC, useCallback, useState, FormEventHandler } from "react";
 import { useHistory } from "react-router-dom";
 import { randomString } from "matrix-js-sdk/src/randomstring";
+import { Trans, useTranslation } from "react-i18next";
 
 import { useClient } from "../ClientContext";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
@@ -47,6 +48,7 @@ export const UnauthenticatedView: FC = () => {
   const { modalState, modalProps } = useModalTriggerState();
   const [onFinished, setOnFinished] = useState<() => void>();
   const history = useHistory();
+  const { t } = useTranslation();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     (e) => {
@@ -105,7 +107,9 @@ export const UnauthenticatedView: FC = () => {
   );
 
   const callNameLabel =
-    callType === CallType.Video ? "Video call name" : "Walkie-talkie call name";
+    callType === CallType.Video
+      ? t("Video call name")
+      : t("Walkie-talkie call name");
 
   return (
     <>
@@ -137,24 +141,26 @@ export const UnauthenticatedView: FC = () => {
               <InputField
                 id="displayName"
                 name="displayName"
-                label="Display Name"
-                placeholder="Display Name"
+                label={t("Display name")}
+                placeholder={t("Display name")}
                 type="text"
                 required
                 autoComplete="off"
               />
             </FieldRow>
             <Caption>
-              By clicking "Go", you agree to our{" "}
-              <Link href={privacyPolicyUrl}>Terms and conditions</Link>
+              <Trans>
+                By clicking "Go", you agree to our{" "}
+                <Link href={privacyPolicyUrl}>Terms and conditions</Link>
+              </Trans>
             </Caption>
             {error && (
               <FieldRow>
-                <ErrorMessage>{error.message}</ErrorMessage>
+                <ErrorMessage error={error} />
               </FieldRow>
             )}
             <Button type="submit" size="lg" disabled={loading}>
-              {loading ? "Loading..." : "Go"}
+              {loading ? t("Loading…") : t("Go")}
             </Button>
             <div id={recaptchaId} />
           </Form>
@@ -162,14 +168,16 @@ export const UnauthenticatedView: FC = () => {
         <footer className={styles.footer}>
           <Body className={styles.mobileLoginLink}>
             <Link color="primary" to="/login">
-              Login to your account
+              {t("Login to your account")}
             </Link>
           </Body>
           <Body>
-            Not registered yet?{" "}
-            <Link color="primary" to="/register">
-              Create an account
-            </Link>
+            <Trans>
+              Not registered yet?{" "}
+              <Link color="primary" to="/register">
+                Create an account
+              </Link>
+            </Trans>
           </Body>
         </footer>
       </div>

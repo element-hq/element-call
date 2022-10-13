@@ -16,6 +16,7 @@ limitations under the License.
 
 import React from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
+import { Trans, useTranslation } from "react-i18next";
 
 import styles from "./CallEndedView.module.css";
 import { LinkButton } from "../button";
@@ -24,6 +25,7 @@ import { Subtitle, Body, Link, Headline } from "../typography/Typography";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 
 export function CallEndedView({ client }: { client: MatrixClient }) {
+  const { t } = useTranslation();
   const { displayName } = useProfile(client);
 
   return (
@@ -37,29 +39,31 @@ export function CallEndedView({ client }: { client: MatrixClient }) {
       <div className={styles.container}>
         <main className={styles.main}>
           <Headline className={styles.headline}>
-            {displayName}, your call is now ended
+            {t("{{displayName}}, your call is now ended", { displayName })}
           </Headline>
           <div className={styles.callEndedContent}>
-            <Subtitle>
-              Why not finish by setting up a password to keep your account?
-            </Subtitle>
-            <Subtitle>
-              You'll be able to keep your name and set an avatar for use on
-              future calls
-            </Subtitle>
+            <Trans>
+              <Subtitle>
+                Why not finish by setting up a password to keep your account?
+              </Subtitle>
+              <Subtitle>
+                You'll be able to keep your name and set an avatar for use on
+                future calls
+              </Subtitle>
+            </Trans>
             <LinkButton
               className={styles.callEndedButton}
               size="lg"
               variant="default"
               to="/register"
             >
-              Create account
+              {t("Create account")}
             </LinkButton>
           </div>
         </main>
         <Body className={styles.footer}>
           <Link color="primary" to="/">
-            Not now, return to home screen
+            {t("Not now, return to home screen")}
           </Link>
         </Body>
       </div>

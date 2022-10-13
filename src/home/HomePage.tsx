@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 import { useClient } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
@@ -23,7 +24,8 @@ import { RegisteredView } from "./RegisteredView";
 import { usePageTitle } from "../usePageTitle";
 
 export function HomePage() {
-  usePageTitle("Home");
+  const { t } = useTranslation();
+  usePageTitle(t("Home"));
 
   const { isAuthenticated, isPasswordlessUser, loading, error, client } =
     useClient();

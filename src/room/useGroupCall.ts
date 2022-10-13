@@ -26,8 +26,10 @@ import {
 import { MatrixCall } from "matrix-js-sdk/src/webrtc/call";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { useTranslation } from "react-i18next";
 
 import { usePageUnload } from "./usePageUnload";
+import { TranslatedError, translatedError } from "../TranslatedError";
 
 export interface UseGroupCallReturnType {
   state: GroupCallState;
@@ -37,7 +39,7 @@ export interface UseGroupCallReturnType {
   userMediaFeeds: CallFeed[];
   microphoneMuted: boolean;
   localVideoMuted: boolean;
-  error: Error;
+  error: TranslatedError | null;
   initLocalCallFeed: () => void;
   enter: () => void;
   leave: () => void;
@@ -60,7 +62,7 @@ interface State {
   localCallFeed: CallFeed;
   activeSpeaker: string;
   userMediaFeeds: CallFeed[];
-  error: Error;
+  error: TranslatedError | null;
   microphoneMuted: boolean;
   localVideoMuted: boolean;
   screenshareFeeds: CallFeed[];
@@ -309,15 +311,18 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
       });
   }, [groupCall]);
 
+  const { t } = useTranslation();
+
   useEffect(() => {
     if (window.RTCPeerConnection === undefined) {
-      const error = new Error(
-        "WebRTC is not supported or is being blocked in this browser."
+      const error = translatedError(
+        "WebRTC is not supported or is being blocked in this browser.",
+        t
       );
       console.error(error);
       updateState({ error });
     }
-  }, []);
+  }, [t]);
 
   return {
     state,

@@ -17,10 +17,12 @@ limitations under the License.
 import React, { useEffect } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
+import i18n from "i18next";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
+import { useTranslation } from "react-i18next";
 
 import { useDelayedState } from "../useDelayedState";
 import { useModalTriggerState } from "../Modal";
@@ -50,40 +52,45 @@ function getPromptText(
   talkOverEnabled: boolean,
   activeSpeakerUserId: string,
   activeSpeakerDisplayName: string,
-  connected: boolean
+  connected: boolean,
+  t: typeof i18n.t
 ): string {
-  if (!connected) return "Connection lost";
+  if (!connected) return t("Connection lost");
 
   const isTouchScreen = Boolean(window.ontouchstart !== undefined);
 
   if (networkWaiting) {
-    return "Waiting for network";
+    return t("Waiting for network");
   }
 
   if (showTalkOverError) {
-    return "You can't talk at the same time";
+    return t("You can't talk at the same time");
   }
 
   if (pttButtonHeld && activeSpeakerIsLocalUser) {
     if (isTouchScreen) {
-      return "Release to stop";
+      return t("Release to stop");
     } else {
-      return "Release spacebar key to stop";
+      return t("Release spacebar key to stop");
     }
   }
 
   if (talkOverEnabled && activeSpeakerUserId && !activeSpeakerIsLocalUser) {
     if (isTouchScreen) {
-      return `Press and hold to talk over ${activeSpeakerDisplayName}`;
+      return t("Press and hold to talk over {{name}}", {
+        name: activeSpeakerDisplayName,
+      });
     } else {
-      return `Press and hold spacebar to talk over ${activeSpeakerDisplayName}`;
+      return t("Press and hold spacebar to talk over {{name}}", {
+        name: activeSpeakerDisplayName,
+      });
     }
   }
 
   if (isTouchScreen) {
-    return "Press and hold to talk";
+    return t("Press and hold to talk");
   } else {
-    return "Press and hold spacebar to talk";
+    return t("Press and hold spacebar to talk");
   }
 }
 
@@ -112,6 +119,7 @@ export const PTTCallView: React.FC<Props> = ({
   isEmbedded,
   hideHeader,
 }) => {
+  const { t } = useTranslation();
   const { modalState: inviteModalState, modalProps: inviteModalProps } =
     useModalTriggerState();
   const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
@@ -195,9 +203,11 @@ export const PTTCallView: React.FC<Props> = ({
         {showControls && (
           <>
             <div className={styles.participants}>
-              <p>{`${participants.length} ${
-                participants.length > 1 ? "people" : "person"
-              } connected`}</p>
+              <p>
+                {t("{{count}} people connected", {
+                  count: participants.length,
+                })}
+              </p>
               <Facepile
                 size={facepileSize}
                 max={8}
@@ -230,8 +240,10 @@ export const PTTCallView: React.FC<Props> = ({
                     <AudioIcon className={styles.speakerIcon} />
                   )}
                   {activeSpeakerIsLocalUser
-                    ? "Talking..."
-                    : `${activeSpeakerDisplayName} is talking...`}
+                    ? t("Talking…")
+                    : t("{{name}} is talking…", {
+                        name: activeSpeakerDisplayName,
+                      })}
                 </h2>
                 <Timer value={activeSpeakerUserId} />
               </div>
@@ -263,7 +275,8 @@ export const PTTCallView: React.FC<Props> = ({
                 talkOverEnabled,
                 activeSpeakerUserId,
                 activeSpeakerDisplayName,
-                connected
+                connected,
+                t
               )}
             </p>
           )}
@@ -278,7 +291,7 @@ export const PTTCallView: React.FC<Props> = ({
             <Toggle
               isSelected={talkOverEnabled}
               onChange={setTalkOverEnabled}
-              label="Talk over speaker"
+              label={t("Talk over speaker")}
               id="talkOverEnabled"
             />
           )}

@@ -23,6 +23,7 @@ import React, {
   useMemo,
 } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 
 import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
 import { useClient } from "../ClientContext";
@@ -34,7 +35,8 @@ import { useInteractiveLogin } from "./useInteractiveLogin";
 import { usePageTitle } from "../usePageTitle";
 
 export const LoginPage: FC = () => {
-  usePageTitle("Login");
+  const { t } = useTranslation();
+  usePageTitle(t("Login"));
 
   const { setClient } = useClient();
   const login = useInteractiveLogin();
@@ -93,8 +95,8 @@ export const LoginPage: FC = () => {
                 <InputField
                   type="text"
                   ref={usernameRef}
-                  placeholder="Username"
-                  label="Username"
+                  placeholder={t("Username")}
+                  label={t("Username")}
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
@@ -105,18 +107,18 @@ export const LoginPage: FC = () => {
                 <InputField
                   type="password"
                   ref={passwordRef}
-                  placeholder="Password"
-                  label="Password"
+                  placeholder={t("Password")}
+                  label={t("Password")}
                 />
               </FieldRow>
               {error && (
                 <FieldRow>
-                  <ErrorMessage>{error.message}</ErrorMessage>
+                  <ErrorMessage error={error} />
                 </FieldRow>
               )}
               <FieldRow>
                 <Button type="submit" disabled={loading}>
-                  {loading ? "Logging in..." : "Login"}
+                  {loading ? t("Logging in…") : t("Login")}
                 </Button>
               </FieldRow>
             </form>
@@ -124,9 +126,11 @@ export const LoginPage: FC = () => {
           <div className={styles.authLinks}>
             <p>Not registered yet?</p>
             <p>
-              <Link to="/register">Create an account</Link>
-              {" Or "}
-              <Link to="/">Access as a guest</Link>
+              <Trans>
+                <Link to="/register">Create an account</Link>
+                {" Or "}
+                <Link to="/">Access as a guest</Link>
+              </Trans>
             </p>
           </div>
         </div>

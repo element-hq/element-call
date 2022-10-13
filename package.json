@@ -1,5 +1,6 @@
 {
   "version": "0.0.0",
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -10,7 +11,8 @@
     "prettier:format": "prettier -w src",
     "lint": "yarn lint:types && yarn lint:js",
     "lint:js": "eslint --max-warnings 0 src",
-    "lint:types": "tsc"
+    "lint:types": "tsc",
+    "i18n": "node_modules/i18next-parser/bin/cli.js"
   },
   "dependencies": {
     "@juggle/resize-observer": "^3.3.1",
@@ -38,6 +40,9 @@
     "classnames": "^2.3.1",
     "color-hash": "^2.0.1",
     "events": "^3.3.0",
+    "i18next": "^21.10.0",
+    "i18next-browser-languagedetector": "^6.1.8",
+    "i18next-http-backend": "^1.4.4",
     "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#ce3b72c85031f188a092d1c39806ef7536e65bdd",
     "matrix-widget-api": "^1.0.0",
     "mermaid": "^8.13.8",
@@ -47,6 +52,7 @@
     "re-resizable": "^6.9.0",
     "react": "^17.0.0",
     "react-dom": "^17.0.0",
+    "react-i18next": "^11.18.6",
     "react-json-view": "^1.21.3",
     "react-router": "6",
     "react-router-dom": "^5.2.0",
@@ -71,6 +77,7 @@
     "eslint-plugin-matrix-org": "^0.4.0",
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^4.5.0",
+    "i18next-parser": "^6.6.0",
     "prettier": "^2.6.2",
     "sass": "^1.42.1",
     "storybook-builder-vite": "^0.1.12",

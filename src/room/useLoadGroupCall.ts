@@ -24,10 +24,12 @@ import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEv
 import { logger } from "matrix-js-sdk/src/logger";
 import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { SyncState } from "matrix-js-sdk/src/sync";
+import { useTranslation } from "react-i18next";
 
 import type { Room } from "matrix-js-sdk/src/models/room";
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
+import { translatedError } from "../TranslatedError";
 
 export interface GroupCallLoadState {
   loading: boolean;
@@ -41,6 +43,7 @@ export const useLoadGroupCall = (
   viaServers: string[],
   createPtt: boolean
 ): GroupCallLoadState => {
+  const { t } = useTranslation();
   const [state, setState] = useState<GroupCallLoadState>({ loading: true });
 
   useEffect(() => {
@@ -122,7 +125,7 @@ export const useLoadGroupCall = (
 
         const timeout = setTimeout(() => {
           client.off(GroupCallEventHandlerEvent.Incoming, onGroupCallIncoming);
-          reject(new Error("Fetching group call timed out."));
+          reject(translatedError("Fetching group call timed out.", t));
         }, 30000);
       });
     };
@@ -153,7 +156,7 @@ export const useLoadGroupCall = (
       .catch((error) =>
         setState((prevState) => ({ ...prevState, loading: false, error }))
       );
-  }, [client, roomIdOrAlias, viaServers, createPtt]);
+  }, [client, roomIdOrAlias, viaServers, createPtt, t]);
 
   return state;
 };
