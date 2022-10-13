@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import React, { FC, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 
 import { Modal, ModalContent, ModalProps } from "../Modal";
 import { Button } from "../button";
@@ -33,6 +34,7 @@ export const RageshakeRequestModal: FC<Props> = ({
   roomIdOrAlias,
   ...rest
 }) => {
+  const { t } = useTranslation();
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
 
   useEffect(() => {
@@ -42,11 +44,12 @@ export const RageshakeRequestModal: FC<Props> = ({
   }, [sent, rest]);
 
   return (
-    <Modal title="Debug Log Request" isDismissable {...rest}>
+    <Modal title={t("Debug log request")} isDismissable {...rest}>
       <ModalContent>
         <Body>
-          Another user on this call is having an issue. In order to better
-          diagnose these issues we'd like to collect a debug log.
+          {t(
+            "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log."
+          )}
         </Body>
         <FieldRow>
           <Button
@@ -59,12 +62,12 @@ export const RageshakeRequestModal: FC<Props> = ({
             }
             disabled={sending}
           >
-            {sending ? "Sending debug log..." : "Send debug log"}
+            {sending ? t("Sending debug log…") : t("Send debug log")}
           </Button>
         </FieldRow>
         {error && (
           <FieldRow>
-            <ErrorMessage>{error.message}</ErrorMessage>
+            <ErrorMessage error={error} />
           </FieldRow>
         )}
       </ModalContent>

@@ -1,6 +1,7 @@
-import React, { useMemo } from "react";
+import React, { useCallback, useMemo } from "react";
 import { Item } from "@react-stately/collections";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 
 import { Button, LinkButton } from "./button";
 import { PopoverMenuTrigger } from "./popover/PopoverMenu";
@@ -30,6 +31,7 @@ export function UserMenu({
   avatarUrl,
   onAction,
 }: UserMenuProps) {
+  const { t } = useTranslation();
   const location = useLocation();
 
   const items = useMemo(() => {
@@ -45,7 +47,7 @@ export function UserMenu({
       if (isPasswordlessUser && !preventNavigation) {
         arr.push({
           key: "login",
-          label: "Sign In",
+          label: t("Sign in"),
           icon: LoginIcon,
         });
       }
@@ -53,14 +55,16 @@ export function UserMenu({
       if (!isPasswordlessUser && !preventNavigation) {
         arr.push({
           key: "logout",
-          label: "Sign Out",
+          label: t("Sign out"),
           icon: LogoutIcon,
         });
       }
     }
 
     return arr;
-  }, [isAuthenticated, isPasswordlessUser, displayName, preventNavigation]);
+  }, [isAuthenticated, isPasswordlessUser, displayName, preventNavigation, t]);
+
+  const tooltip = useCallback(() => t("Profile"), [t]);
 
   if (!isAuthenticated) {
     return (
@@ -72,7 +76,7 @@ export function UserMenu({
 
   return (
     <PopoverMenuTrigger placement="bottom right">
-      <TooltipTrigger tooltip={() => "Profile"} placement="bottom left">
+      <TooltipTrigger tooltip={tooltip} placement="bottom left">
         <Button variant="icon" className={styles.userButton}>
           {isAuthenticated && (!isPasswordlessUser || avatarUrl) ? (
             <Avatar
@@ -87,7 +91,7 @@ export function UserMenu({
         </Button>
       </TooltipTrigger>
       {(props) => (
-        <Menu {...props} label="User menu" onAction={onAction}>
+        <Menu {...props} label={t("User menu")} onAction={onAction}>
           {items.map(({ key, icon: Icon, label }) => (
             <Item key={key} textValue={label}>
               <Icon width={24} height={24} className={styles.menuIcon} />

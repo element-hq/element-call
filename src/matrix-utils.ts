@@ -19,7 +19,7 @@ import {
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import IndexedDBWorker from "./IndexedDBWorker?worker";
-import { getRoomParams } from "./room/useRoomParams";
+import { getUrlParams } from "./UrlParams";
 
 export const defaultHomeserver =
   (import.meta.env.VITE_DEFAULT_HOMESERVER as string) ??
@@ -134,12 +134,12 @@ export async function initClient(
     storeOpts.cryptoStore = new MemoryCryptoStore();
   }
 
-  // XXX: we read from the room params in RoomPage too:
+  // XXX: we read from the URL params in RoomPage too:
   // it would be much better to read them in one place and pass
   // the values around, but we initialise the matrix client in
   // many different places so we'd have to pass it into all of
   // them.
-  const { e2eEnabled } = getRoomParams();
+  const { e2eEnabled } = getUrlParams();
   if (!e2eEnabled) {
     logger.info("Disabling E2E: group call signalling will NOT be encrypted.");
   }

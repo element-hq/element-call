@@ -17,7 +17,7 @@ limitations under the License.
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 
-export interface RoomParams {
+export interface UrlParams {
   roomAlias: string | null;
   roomId: string | null;
   viaServers: string[];
@@ -39,25 +39,27 @@ export interface RoomParams {
   displayName: string | null;
   // The device's ID (only used in Matroska mode)
   deviceId: string | null;
+  // The BCP 47 code of the language the app should use
+  lang: string | null;
 }
 
 /**
- * Gets the room parameters for the current URL.
- * @param {string} query The URL query string
- * @param {string} fragment The URL fragment string
- * @returns {RoomParams} The room parameters encoded in the URL
+ * Gets the app parameters for the current URL.
+ * @param query The URL query string
+ * @param fragment The URL fragment string
+ * @returns The app parameters encoded in the URL
  */
-export const getRoomParams = (
+export const getUrlParams = (
   query: string = window.location.search,
   fragment: string = window.location.hash
-): RoomParams => {
+): UrlParams => {
   const fragmentQueryStart = fragment.indexOf("?");
   const fragmentParams = new URLSearchParams(
     fragmentQueryStart === -1 ? "" : fragment.substring(fragmentQueryStart)
   );
   const queryParams = new URLSearchParams(query);
 
-  // Normally, room params should be encoded in the fragment so as to avoid
+  // Normally, URL params should be encoded in the fragment so as to avoid
   // leaking them to the server. However, we also check the normal query
   // string for backwards compatibility with versions that only used that.
   const hasParam = (name: string): boolean =>
@@ -87,14 +89,15 @@ export const getRoomParams = (
     userId: getParam("userId"),
     displayName: getParam("displayName"),
     deviceId: getParam("deviceId"),
+    lang: getParam("lang"),
   };
 };
 
 /**
- * Hook to simplify use of getRoomParams.
- * @returns {RoomParams} The room parameters for the current URL
+ * Hook to simplify use of getUrlParams.
+ * @returns The app parameters for the current URL
  */
-export const useRoomParams = (): RoomParams => {
+export const useUrlParams = (): UrlParams => {
   const { hash, search } = useLocation();
-  return useMemo(() => getRoomParams(search, hash), [search, hash]);
+  return useMemo(() => getUrlParams(search, hash), [search, hash]);
 };

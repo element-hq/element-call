@@ -19,6 +19,7 @@ import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
+import { useTranslation } from "react-i18next";
 
 import { MicButton, VideoButton } from "../button";
 import { useMediaStream } from "../video-grid/useMediaStream";
@@ -40,6 +41,7 @@ interface Props {
   audioOutput: string;
   stream: MediaStream;
 }
+
 export function VideoPreview({
   client,
   state,
@@ -51,6 +53,7 @@ export function VideoPreview({
   audioOutput,
   stream,
 }: Props) {
+  const { t } = useTranslation();
   const videoRef = useMediaStream(stream, audioOutput, true);
   const { displayName, avatarUrl } = useProfile(client);
   const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
@@ -64,12 +67,12 @@ export function VideoPreview({
       <video ref={videoRef} muted playsInline disablePictureInPicture />
       {state === GroupCallState.LocalCallFeedUninitialized && (
         <Body fontWeight="semiBold" className={styles.cameraPermissions}>
-          Camera/microphone permissions needed to join the call.
+          {t("Camera/microphone permissions needed to join the call.")}
         </Body>
       )}
       {state === GroupCallState.InitializingLocalCallFeed && (
         <Body fontWeight="semiBold" className={styles.cameraPermissions}>
-          Accept camera/microphone permissions to join the call.
+          {t("Accept camera/microphone permissions to join the call.")}
         </Body>
       )}
       {state === GroupCallState.LocalCallFeedInitialized && (

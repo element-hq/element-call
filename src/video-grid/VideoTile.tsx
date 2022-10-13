@@ -17,6 +17,7 @@ limitations under the License.
 import React, { forwardRef } from "react";
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
@@ -66,6 +67,8 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     },
     ref
   ) => {
+    const { t } = useTranslation();
+
     const toolbarButtons: JSX.Element[] = [];
     if (!isLocal) {
       toolbarButtons.push(
@@ -111,7 +114,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         {!maximised &&
           (screenshare ? (
             <div className={styles.presenterLabel}>
-              <span>{`${name} is presenting`}</span>
+              <span>{t("{{name}} is presenting", { name })}</span>
             </div>
           ) : (
             <div className={classNames(styles.infoBubble, styles.memberName)}>

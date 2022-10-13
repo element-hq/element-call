@@ -17,6 +17,7 @@ limitations under the License.
 import React from "react";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { Item } from "@react-stately/collections";
+import { useTranslation } from "react-i18next";
 
 import styles from "./AudioPreview.module.css";
 import { SelectInput } from "../input/SelectInput";
@@ -43,24 +44,26 @@ export function AudioPreview({
   audioOutputs,
   setAudioOutput,
 }: Props) {
+  const { t } = useTranslation();
+
   return (
     <>
-      <h1>{`${roomName} - Walkie-talkie call`}</h1>
+      <h1>{t("{{roomName}} - Walkie-talkie call", { roomName })}</h1>
       <div className={styles.preview}>
         {state === GroupCallState.LocalCallFeedUninitialized && (
           <Body fontWeight="semiBold" className={styles.microphonePermissions}>
-            Microphone permissions needed to join the call.
+            {t("Microphone permissions needed to join the call.")}
           </Body>
         )}
         {state === GroupCallState.InitializingLocalCallFeed && (
           <Body fontWeight="semiBold" className={styles.microphonePermissions}>
-            Accept microphone permissions to join the call.
+            {t("Accept microphone permissions to join the call.")}
           </Body>
         )}
         {state === GroupCallState.LocalCallFeedInitialized && (
           <>
             <SelectInput
-              label="Microphone"
+              label={t("Microphone")}
               selectedKey={audioInput}
               onSelectionChange={setAudioInput}
               className={styles.inputField}
@@ -69,13 +72,13 @@ export function AudioPreview({
                 <Item key={deviceId}>
                   {!!label && label.trim().length > 0
                     ? label
-                    : `Microphone ${index + 1}`}
+                    : t("Microphone {{n}}", { n: index + 1 })}
                 </Item>
               ))}
             </SelectInput>
             {audioOutputs.length > 0 && (
               <SelectInput
-                label="Speaker"
+                label={t("Speaker")}
                 selectedKey={audioOutput}
                 onSelectionChange={setAudioOutput}
                 className={styles.inputField}
@@ -84,7 +87,7 @@ export function AudioPreview({
                   <Item key={deviceId}>
                     {!!label && label.trim().length > 0
                       ? label
-                      : `Speaker ${index + 1}`}
+                      : t("Speaker {{n}}", { n: index + 1 })}
                   </Item>
                 ))}
               </SelectInput>

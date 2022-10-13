@@ -20,6 +20,7 @@ import { useCallback } from "react";
 import { useState } from "react";
 import { forwardRef } from "react";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import { Avatar, Size } from "../Avatar";
 import { Button } from "../button";
@@ -39,6 +40,8 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
     { id, label, className, avatarUrl, displayName, onRemoveAvatar, ...rest },
     ref
   ) => {
+    const { t } = useTranslation();
+
     const [removed, setRemoved] = useState(false);
     const [objUrl, setObjUrl] = useState<string>(null);
 
@@ -97,7 +100,7 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
             variant="icon"
             onPress={onPressRemoveAvatar}
           >
-            Remove
+            {t("Remove")}
           </Button>
         )}
       </div>

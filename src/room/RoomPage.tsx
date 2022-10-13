@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import React, { FC, useEffect, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { useClient } from "../ClientContext";
@@ -22,11 +23,13 @@ import { ErrorView, LoadingView } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
 import { GroupCallLoader } from "./GroupCallLoader";
 import { GroupCallView } from "./GroupCallView";
-import { useRoomParams } from "./useRoomParams";
+import { useUrlParams } from "../UrlParams";
 import { MediaHandlerProvider } from "../settings/useMediaHandler";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
+import { translatedError } from "../TranslatedError";
 
 export const RoomPage: FC = () => {
+  const { t } = useTranslation();
   const { loading, isAuthenticated, error, client, isPasswordlessUser } =
     useClient();
 
@@ -39,9 +42,9 @@ export const RoomPage: FC = () => {
     hideHeader,
     isPtt,
     displayName,
-  } = useRoomParams();
+  } = useUrlParams();
   const roomIdOrAlias = roomId ?? roomAlias;
-  if (!roomIdOrAlias) throw new Error("No room specified");
+  if (!roomIdOrAlias) throw translatedError("No room specified", t);
 
   const { registerPasswordlessUser } = useRegisterPasswordlessUser();
   const [isRegistering, setIsRegistering] = useState(false);

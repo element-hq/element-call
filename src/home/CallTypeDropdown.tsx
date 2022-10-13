@@ -16,6 +16,7 @@ limitations under the License.
 
 import React, { FC } from "react";
 import { Item } from "@react-stately/collections";
+import { useTranslation } from "react-i18next";
 
 import { Headline } from "../typography/Typography";
 import { Button } from "../button";
@@ -39,25 +40,29 @@ interface Props {
 }
 
 export const CallTypeDropdown: FC<Props> = ({ callType, setCallType }) => {
+  const { t } = useTranslation();
+
   return (
     <PopoverMenuTrigger placement="bottom">
       <Button variant="dropdown" className={commonStyles.headline}>
         <Headline className={styles.label}>
-          {callType === CallType.Video ? "Video call" : "Walkie-talkie call"}
+          {callType === CallType.Video
+            ? t("Video call")
+            : t("Walkie-talkie call")}
         </Headline>
       </Button>
       {(props: JSX.IntrinsicAttributes) => (
-        <Menu {...props} label="Call type menu" onAction={setCallType}>
-          <Item key={CallType.Video} textValue="Video call">
+        <Menu {...props} label={t("Call type menu")} onAction={setCallType}>
+          <Item key={CallType.Video} textValue={t("Video call")}>
             <VideoIcon />
-            <span>Video call</span>
+            <span>{t("Video call")}</span>
             {callType === CallType.Video && (
               <CheckIcon className={menuStyles.checkIcon} />
             )}
           </Item>
-          <Item key={CallType.Radio} textValue="Walkie-talkie call">
+          <Item key={CallType.Radio} textValue={t("Walkie-talkie call")}>
             <MicIcon />
-            <span>Walkie-talkie call</span>
+            <span>{t("Walkie-talkie call")}</span>
             {callType === CallType.Radio && (
               <CheckIcon className={menuStyles.checkIcon} />
             )}

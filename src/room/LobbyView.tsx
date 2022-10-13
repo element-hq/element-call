@@ -19,6 +19,7 @@ import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { PressEvent } from "@react-types/shared";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
+import { useTranslation } from "react-i18next";
 
 import styles from "./LobbyView.module.css";
 import { Button, CopyButton } from "../button";
@@ -66,6 +67,7 @@ export function LobbyView({
   isEmbedded,
   hideHeader,
 }: Props) {
+  const { t } = useTranslation();
   const { stream } = useCallFeed(localCallFeed);
   const {
     audioInput,
@@ -142,15 +144,15 @@ export function LobbyView({
             variant="secondaryCopy"
             value={getRoomUrl(roomIdOrAlias)}
             className={styles.copyButton}
-            copiedMessage="Call link copied"
+            copiedMessage={t("Call link copied")}
           >
-            Copy call link and join later
+            {t("Copy call link and join later")}
           </CopyButton>
         </div>
         {!isEmbedded && (
           <Body className={styles.joinRoomFooter}>
             <Link color="primary" to="/">
-              Take me Home
+              {t("Take me Home")}
             </Link>
           </Body>
         )}

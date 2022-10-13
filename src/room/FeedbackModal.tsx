@@ -16,6 +16,7 @@ limitations under the License.
 
 import React, { useCallback, useEffect } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
+import { useTranslation } from "react-i18next";
 
 import { Modal, ModalContent } from "../Modal";
 import { Button } from "../button";
@@ -25,6 +26,7 @@ import {
   useRageshakeRequest,
 } from "../settings/submit-rageshake";
 import { Body } from "../typography/Typography";
+
 interface Props {
   inCall: boolean;
   roomId: string;
@@ -32,7 +34,9 @@ interface Props {
   // TODO: add all props for for <Modal>
   [index: string]: unknown;
 }
+
 export function FeedbackModal({ inCall, roomId, onClose, ...rest }: Props) {
+  const { t } = useTranslation();
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
   const sendRageshakeRequest = useRageshakeRequest();
 
@@ -67,15 +71,20 @@ export function FeedbackModal({ inCall, roomId, onClose, ...rest }: Props) {
   }, [sent, onClose]);
 
   return (
-    <Modal title="Submit Feedback" isDismissable onClose={onClose} {...rest}>
+    <Modal
+      title={t("Submit feedback")}
+      isDismissable
+      onClose={onClose}
+      {...rest}
+    >
       <ModalContent>
-        <Body>Having trouble? Help us fix it.</Body>
+        <Body>{t("Having trouble? Help us fix it.")}</Body>
         <form onSubmit={onSubmitFeedback}>
           <FieldRow>
             <InputField
               id="description"
               name="description"
-              label="Description (optional)"
+              label={t("Description (optional)")}
               type="textarea"
             />
           </FieldRow>
@@ -83,19 +92,19 @@ export function FeedbackModal({ inCall, roomId, onClose, ...rest }: Props) {
             <InputField
               id="sendLogs"
               name="sendLogs"
-              label="Include Debug Logs"
+              label={t("Include debug logs")}
               type="checkbox"
               defaultChecked
             />
           </FieldRow>
           {error && (
             <FieldRow>
-              <ErrorMessage>{error.message}</ErrorMessage>
+              <ErrorMessage error={error} />
             </FieldRow>
           )}
           <FieldRow>
             <Button type="submit" disabled={sending}>
-              {sending ? "Submitting feedback..." : "Submit Feedback"}
+              {sending ? t("Submitting feedback…") : t("Submit feedback")}
             </Button>
           </FieldRow>
         </form>
