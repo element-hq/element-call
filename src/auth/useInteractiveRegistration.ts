@@ -37,7 +37,7 @@ export const useInteractiveRegistration = (): [
 
   const authClient = useRef<MatrixClient>();
   if (!authClient.current) {
-    authClient.current = createClient(defaultHomeserver);
+    authClient.current = createClient({ baseUrl: defaultHomeserver });
   }
 
   useEffect(() => {

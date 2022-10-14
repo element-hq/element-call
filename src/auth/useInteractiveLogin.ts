@@ -29,7 +29,7 @@ export const useInteractiveLogin = () =>
       password: string
     ) => Promise<[MatrixClient, Session]>
   >(async (homeserver: string, username: string, password: string) => {
-    const authClient = createClient(homeserver);
+    const authClient = createClient({ baseUrl: homeserver });
 
     const interactiveAuth = new InteractiveAuth({
       matrixClient: authClient,
