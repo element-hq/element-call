@@ -58,7 +58,7 @@ import { useFullscreen } from "../video-grid/useFullscreen";
 import { AudioContainer } from "../video-grid/AudioContainer";
 import { useAudioOutputDevice } from "../video-grid/useAudioOutputDevice";
 import { widget, ElementWidgetActions } from "../widget";
-import { useJoinRule } from "./useRoomState";
+import { useJoinRule } from "./useJoinRule";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
