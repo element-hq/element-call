@@ -3,5 +3,18 @@
     "Video call": "Videoanruf",
     "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Account erstellen</0> Oder <2>Als Gast beitreten</2>",
     "{{roomName}} - Walkie-talkie call": "Walkie-talkie Anruf",
-    "{{displayName}}, your call is now ended": "dein Anruf wurde beendet"
+    "{{displayName}}, your call is now ended": "dein Anruf wurde beendet",
+    "{{name}} is presenting": "{{name}} präsentiert",
+    "Avatar": "Avatar",
+    "Audio": "Audio",
+    "Connection lost": "Verbindung verloren",
+    "Create account": "Konto erstellen",
+    "Go": "Los geht's",
+    "Full screen": "Vollbild",
+    "Copied!": "Kopiert!",
+    "Close": "Schließen",
+    "Camera {{n}}": "Kamera {{n}}",
+    "Camera": "Kamera",
+    "{{names}}, {{name}}": "{{names}}, {{name}}",
+    "{{name}} is talking…": "{{name}} spricht…"
 }
