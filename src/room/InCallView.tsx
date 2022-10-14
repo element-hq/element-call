@@ -24,6 +24,7 @@ import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
+import { JoinRule } from "matrix-js-sdk/src/@types/partials";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import styles from "./InCallView.module.css";
@@ -57,6 +58,7 @@ import { useFullscreen } from "../video-grid/useFullscreen";
 import { AudioContainer } from "../video-grid/AudioContainer";
 import { useAudioOutputDevice } from "../video-grid/useAudioOutputDevice";
 import { widget, ElementWidgetActions } from "../widget";
+import { useJoinRule } from "./useJoinRule";
 import { useUrlParams } from "../UrlParams";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
@@ -116,6 +118,8 @@ export function InCallView({
 }: Props) {
   const { t } = useTranslation();
   usePreventScroll();
+  const joinRule = useJoinRule(groupCall.room);
+
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure({ polyfill: ResizeObserver });
   // Merge the refs so they can attach to the same element
@@ -346,7 +350,7 @@ export function InCallView({
             inCall
             roomIdOrAlias={roomIdOrAlias}
             groupCall={groupCall}
-            showInvite={true}
+            showInvite={joinRule === JoinRule.Public}
             feedbackModalState={feedbackModalState}
             feedbackModalProps={feedbackModalProps}
           />

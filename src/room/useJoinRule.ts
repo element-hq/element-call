@@ -15,12 +15,12 @@ limitations under the License.
 */
 
 import { useCallback } from "react";
-import { Room } from "matrix-js-sdk/src/models/room";
 
+import type { Room } from "matrix-js-sdk/src/models/room";
 import { useRoomState } from "./useRoomState";
 
-export const useRoomAvatar = (room: Room) =>
+export const useJoinRule = (room: Room) =>
   useRoomState(
     room,
-    useCallback(() => room.getMxcAvatarUrl(), [room])
+    useCallback((state) => state.getJoinRule(), [])
   );
