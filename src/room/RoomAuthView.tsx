@@ -98,7 +98,7 @@ export function RoomAuthView() {
         </main>
         <Body className={styles.footer}>
           <Trans>
-            {"Not registered yet? "}
+            Not registered yet?{" "}
             <Link
               color="primary"
               to={{ pathname: "/login", state: { from: location } }}
