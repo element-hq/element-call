@@ -34,7 +34,7 @@ function isIOS() {
 
 export function usePageUnload(callback: () => void) {
   useEffect(() => {
-    let pageVisibilityTimeout: number;
+    let pageVisibilityTimeout: ReturnType<typeof setTimeout>;
 
     function onBeforeUnload(event: PageTransitionEvent) {
       if (event.type === "visibilitychange") {
