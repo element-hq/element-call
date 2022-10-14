@@ -1,5 +1,6 @@
 {
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Konto erstellen</0> oder <2>Zugang als Gast</2>",
+  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Uups, Etwas ist schief gelaufen.</0><1>Die debug Logs helfen uns das Problem zu identifizieren.</1>",
   "Accept camera/microphone permissions to join the call.": "Erlaube Zugriff auf Kamera/Mikrofon um dem Anruf beizutreten.",
   "Accept microphone permissions to join the call.": "Erlaube Zugriff auf das Mikrofon um dem Anruf beizutreten.",
   "Audio": "Audio",
