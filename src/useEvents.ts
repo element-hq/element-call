@@ -16,6 +16,12 @@ limitations under the License.
 
 import { useEffect } from "react";
 
+import type {
+  Listener,
+  ListenerMap,
+  TypedEventEmitter,
+} from "matrix-js-sdk/src/models/typed-event-emitter";
+
 // Shortcut for registering a listener on an EventTarget
 export const useEventTarget = <T extends Event>(
   target: EventTarget,
@@ -31,4 +37,20 @@ export const useEventTarget = <T extends Event>(
   }, [target, eventType, listener, options]);
 };
 
-// TODO: Have a similar hook for EventEmitters
+// Shortcut for registering a listener on a TypedEventEmitter
+export const useTypedEventEmitter = <
+  Events extends string,
+  Arguments extends ListenerMap<Events>,
+  T extends Events
+>(
+  emitter: TypedEventEmitter<Events, Arguments>,
+  eventType: T,
+  listener: Listener<Events, Arguments, T>
+) => {
+  useEffect(() => {
+    emitter.on(eventType, listener);
+    return () => {
+      emitter.off(eventType, listener);
+    };
+  }, [emitter, eventType, listener]);
+};

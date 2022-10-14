@@ -29,7 +29,7 @@ import { LobbyView } from "./LobbyView";
 import { InCallView } from "./InCallView";
 import { PTTCallView } from "./PTTCallView";
 import { CallEndedView } from "./CallEndedView";
-import { useRoomAvatar } from "./useRoomAvatar";
+import { useRoomAvatar } from "./useRoomState";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { useMediaHandler } from "../settings/useMediaHandler";
