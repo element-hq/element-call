@@ -101,7 +101,9 @@ export function useProfile(client: MatrixClient) {
           if (removeAvatar) {
             await client.setAvatarUrl("");
           } else if (avatar) {
-            mxcAvatarUrl = await client.uploadContent(avatar);
+            ({ content_uri: mxcAvatarUrl } = await client.uploadContent(
+              avatar
+            ));
             await client.setAvatarUrl(mxcAvatarUrl);
           }
 
