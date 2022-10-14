@@ -1,4 +1,5 @@
 {
+  "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Sie haben bereits ein Konto?</0><1><0>Anmelden</0> Or <2>Zugang als Besucher</2></1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Konto erstellen</0> oder <2>Zugang als Gast</2>",
   "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Uups, Etwas ist schief gelaufen.</0><1>Die debug Logs helfen uns das Problem zu identifizieren.</1>",
   "Accept camera/microphone permissions to join the call.": "Erlaube Zugriff auf Kamera/Mikrofon um dem Anruf beizutreten.",
@@ -18,6 +19,8 @@
   "Go": "Los geht's",
   "Invite": "Einladen",
   "Video call": "Videoanruf",
+  "{{count}} people connected|one": "{{count}} Teilnehmer verbunden",
+  "{{count}} people connected|other": "{{count}} Teilnehmer verbunden",
   "{{displayName}}, your call is now ended": "{{displayName}}, dein Anruf wurde beendet",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "{{name}} is presenting": "{{name}} präsentiert",
