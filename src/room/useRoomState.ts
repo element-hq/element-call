@@ -37,15 +37,3 @@ export const useRoomState = <T>(room: Room, f: (state: RoomState) => T): T => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => f(room.currentState), [room, f, numUpdates]);
 };
-
-export const useRoomAvatar = (room: Room) =>
-  useRoomState(
-    room,
-    useCallback(() => room.getMxcAvatarUrl(), [room])
-  );
-
-export const useJoinRule = (room: Room) =>
-  useRoomState(
-    room,
-    useCallback((state) => state.getJoinRule(), [])
-  );
