@@ -57,6 +57,7 @@ import { useFullscreen } from "../video-grid/useFullscreen";
 import { AudioContainer } from "../video-grid/AudioContainer";
 import { useAudioOutputDevice } from "../video-grid/useAudioOutputDevice";
 import { widget, ElementWidgetActions } from "../widget";
+import { useUrlParams } from "../UrlParams";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -140,6 +141,8 @@ export function InCallView({
     useModalTriggerState();
 
   useAudioOutputDevice(audioRef, audioOutput);
+
+  const { hideScreensharing } = useUrlParams();
 
   useEffect(() => {
     widget?.api.transport.send(
@@ -329,12 +332,15 @@ export function InCallView({
       <div className={styles.footer}>
         <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
         <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
-        {canScreenshare && !isSafari && !reducedControls && (
-          <ScreenshareButton
-            enabled={isScreensharing}
-            onPress={toggleScreensharing}
-          />
-        )}
+        {canScreenshare &&
+          !hideScreensharing &&
+          !isSafari &&
+          !reducedControls && (
+            <ScreenshareButton
+              enabled={isScreensharing}
+              onPress={toggleScreensharing}
+            />
+          )}
         {!reducedControls && (
           <OverflowMenu
             inCall
