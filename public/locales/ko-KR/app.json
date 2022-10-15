@@ -1,1 +1,12 @@
-{}
+{
+  "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "",
+  "<0>Create an account</0> Or <2>Access as a guest</2>": "",
+  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "",
+  "{{count}} people connected|one": "",
+  "{{count}} people connected|other": "",
+  "{{displayName}}, your call is now ended": "",
+  "{{names}}, {{name}}": "",
+  "{{name}} is presenting": "",
+  "{{name}} is talking…": "",
+  "{{roomName}} - Walkie-talkie call": ""
+}
