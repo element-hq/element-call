@@ -127,5 +127,7 @@
   "{{name}} is presenting": "{{name}} präsentiert",
   "{{name}} is talking…": "{{name}} spricht …",
   "{{roomName}} - Walkie-talkie call": "Walkie-talkie Anruf",
-  "Fetching group call timed out.": "Zeitüberschreitung beim Abrufen des Gruppenanrufs."
+  "Fetching group call timed out.": "Zeitüberschreitung beim Abrufen des Gruppenanrufs.",
+  "Walkie-talkie call name": "Walkie-talkie Anruf Name",
+  "Sending debug logs…": "Sende Debug-Logs …"
 }
