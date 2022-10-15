@@ -1,5 +1,5 @@
 {
-  "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Mevcut hesabınız mı var?</0><1><0>Gir</0> yahut <2>Konuk girişi</2></1>",
+  "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Create an account</0> Or <2>Access as a guest</2>",
   "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>",
