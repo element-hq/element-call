@@ -62,7 +62,7 @@ export const RageshakeRequestModal: FC<Props> = ({
             }
             disabled={sending}
           >
-            {sending ? t("Sending debug log…") : t("Send debug log")}
+            {sending ? t("Sending debug logs…") : t("Send debug logs")}
           </Button>
         </FieldRow>
         {error && (
