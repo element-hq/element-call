@@ -1,4 +1,11 @@
 {
+  "{{count}} people connected|one": "{{count}} person connected",
+  "{{count}} people connected|other": "{{count}} people connected",
+  "{{displayName}}, your call is now ended": "{{displayName}}, your call is now ended",
+  "{{name}} is presenting": "{{name}} is presenting",
+  "{{name}} is talking…": "{{name}} is talking…",
+  "{{names}}, {{name}}": "{{names}}, {{name}}",
+  "{{roomName}} - Walkie-talkie call": "{{roomName}} - Walkie-talkie call",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Create an account</0> Or <2>Access as a guest</2>",
   "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>",
@@ -56,8 +63,8 @@
   "Login": "Login",
   "Login to your account": "Login to your account",
   "Microphone": "Microphone",
-  "Microphone permissions needed to join the call.": "Microphone permissions needed to join the call.",
   "Microphone {{n}}": "Microphone {{n}}",
+  "Microphone permissions needed to join the call.": "Microphone permissions needed to join the call.",
   "More": "More",
   "More menu": "More menu",
   "Mute microphone": "Mute microphone",
@@ -122,12 +129,5 @@
   "WebRTC is not supported or is being blocked in this browser.": "WebRTC is not supported or is being blocked in this browser.",
   "Yes, join call": "Yes, join call",
   "You can't talk at the same time": "You can't talk at the same time",
-  "Your recent calls": "Your recent calls",
-  "{{count}} people connected|one": "{{count}} person connected",
-  "{{count}} people connected|other": "{{count}} people connected",
-  "{{displayName}}, your call is now ended": "{{displayName}}, your call is now ended",
-  "{{names}}, {{name}}": "{{names}}, {{name}}",
-  "{{name}} is presenting": "{{name}} is presenting",
-  "{{name}} is talking…": "{{name}} is talking…",
-  "{{roomName}} - Walkie-talkie call": "{{roomName}} - Walkie-talkie call"
+  "Your recent calls": "Your recent calls"
 }
