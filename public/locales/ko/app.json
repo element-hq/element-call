@@ -1,0 +1,12 @@
+{
+  "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "",
+  "<0>Create an account</0> Or <2>Access as a guest</2>": "",
+  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "",
+  "{{count}} people connected|one": "{{count}}명 연결됨",
+  "{{count}} people connected|other": "{{count}}명 연결됨",
+  "{{displayName}}, your call is now ended": "{{displayName}}님, 전화가 종료되었습니다",
+  "{{names}}, {{name}}": "{{names}}님, {{name}}님",
+  "{{name}} is presenting": "{{name}}님이 발표 중",
+  "{{name}} is talking…": "{{name}}님이 말하는 중…",
+  "{{roomName}} - Walkie-talkie call": "{{roomName}} - 워키토키 전화"
+}
