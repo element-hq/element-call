@@ -35,12 +35,14 @@ export interface UrlParams {
   isPtt: boolean;
   // Whether to use end-to-end encryption
   e2eEnabled: boolean;
-  // The user's ID (only used in Matroska mode)
+  // The user's ID (only used in matryoshka mode)
   userId: string | null;
   // The display name to use for auto-registration
   displayName: string | null;
-  // The device's ID (only used in Matroska mode)
+  // The device's ID (only used in matryoshka mode)
   deviceId: string | null;
+  // The base URL of the homeserver to use for media lookups in matryoshka mode
+  baseUrl: string | null;
   // The BCP 47 code of the language the app should use
   lang: string | null;
 }
@@ -92,6 +94,7 @@ export const getUrlParams = (
     userId: getParam("userId"),
     displayName: getParam("displayName"),
     deviceId: getParam("deviceId"),
+    baseUrl: getParam("baseUrl"),
     lang: getParam("lang"),
   };
 };

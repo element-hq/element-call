@@ -80,10 +80,11 @@ export const widget: WidgetHelpers | null = (() => {
       // We need to do this now rather than later because it has capabilities to
       // request, and is responsible for starting the transport (should it be?)
 
-      const { roomId, userId, deviceId } = getUrlParams();
+      const { roomId, userId, deviceId, baseUrl } = getUrlParams();
       if (!roomId) throw new Error("Room ID must be supplied");
       if (!userId) throw new Error("User ID must be supplied");
       if (!deviceId) throw new Error("Device ID must be supplied");
+      if (!baseUrl) throw new Error("Base URL must be supplied")
 
       // These are all the event types the app uses
       const sendState = [
@@ -119,7 +120,7 @@ export const widget: WidgetHelpers | null = (() => {
         },
         roomId,
         {
-          baseUrl: "",
+          baseUrl,
           userId,
           deviceId,
           timelineSupport: true,
