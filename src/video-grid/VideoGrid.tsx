@@ -316,11 +316,7 @@ function getFreedomLayoutTilePositions(
     columnCount: focusedColumnCount,
     rowCount: focusedRowCount,
     tileAspectRatio: focusedTileAspectRatio,
-  } = getSubGridLayout(
-    focusedTileCount,
-    focusedGridWidth,
-    focusedGridHeight
-  );
+  } = getSubGridLayout(focusedTileCount, focusedGridWidth, focusedGridHeight);
 
   const focusedGridPositions = getSubGridPositions(
     focusedTileCount,
@@ -333,13 +329,7 @@ function getFreedomLayoutTilePositions(
 
   const tilePositions = [...focusedGridPositions, ...itemGridPositions];
 
-  centerTiles(
-    focusedGridPositions,
-    focusedGridWidth,
-    focusedGridHeight,
-    0,
-    0
-  );
+  centerTiles(focusedGridPositions, focusedGridWidth, focusedGridHeight, 0, 0);
 
   if (layoutDirection === "vertical") {
     centerTiles(
@@ -664,7 +654,11 @@ function getSubGridPositions(
 // Sets the 'order' property on tiles based on the layout param and
 // other properties of the tiles, eg. 'focused' and 'presenter'
 function reorderTiles(tiles: Tile[], layout: Layout) {
-  if (layout === "freedom" && tiles.length === 2 && !tiles.some(t => t.presenter)) {
+  if (
+    layout === "freedom" &&
+    tiles.length === 2 &&
+    !tiles.some((t) => t.presenter)
+  ) {
     // 1:1 layout
     tiles.forEach((tile) => (tile.order = tile.item.isLocal ? 0 : 1));
   } else {
@@ -678,9 +672,7 @@ function reorderTiles(tiles: Tile[], layout: Layout) {
       (tile.focused ? focusedTiles : otherTiles).push(tile)
     );
 
-    [...focusedTiles, ...otherTiles].forEach(
-      (tile, i) => (tile.order = i)
-    );
+    [...focusedTiles, ...otherTiles].forEach((tile, i) => (tile.order = i));
   }
 }
 
@@ -824,7 +816,7 @@ export function VideoGrid({
               tilePositions: getTilePositions(
                 newTiles.length,
                 focusedTileCount,
-                newTiles.some(t => t.presenter),
+                newTiles.some((t) => t.presenter),
                 gridBounds.width,
                 gridBounds.height,
                 pipXRatio,
@@ -849,7 +841,7 @@ export function VideoGrid({
         tilePositions: getTilePositions(
           newTiles.length,
           focusedTileCount,
-          newTiles.some(t => t.presenter),
+          newTiles.some((t) => t.presenter),
           gridBounds.width,
           gridBounds.height,
           pipXRatio,
@@ -975,7 +967,7 @@ export function VideoGrid({
           tilePositions: getTilePositions(
             newTiles.length,
             focusedTileCount,
-            newTiles.some(t => t.presenter),
+            newTiles.some((t) => t.presenter),
             gridBounds.width,
             gridBounds.height,
             pipXRatio,
@@ -1007,7 +999,7 @@ export function VideoGrid({
 
       let newTiles = tiles;
 
-      if (tiles.length === 2 && !tiles.some(t => t.presenter)) {
+      if (tiles.length === 2 && !tiles.some((t) => t.presenter)) {
         // We're in 1:1 mode, so only the local tile should be draggable
         if (!dragTile.item.isLocal) return;
 
