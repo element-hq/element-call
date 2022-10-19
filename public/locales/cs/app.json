@@ -1,1 +1,17 @@
-{}
+{
+  "Copy and share this call link": "Zkopírujte a sdílejte odkaz na hovor",
+  "Copied!": "Zkopírováno!",
+  "Connection lost": "Připojení ztraceno",
+  "Confirm password": "Potvrdit heslo",
+  "Close": "Zavřít",
+  "Change layout": "Změnit rozložení",
+  "Camera/microphone permissions needed to join the call.": "Oprávnění k přístupu ke kameře/mikrofonu jsou nutná pro připojení k hovoru.",
+  "Camera {{n}}": "Kamera {{n}}",
+  "Camera": "Kamera",
+  "Call link copied": "Odkaz na hovor zkopírován",
+  "Avatar": "Avatar",
+  "Audio": "Audio",
+  "Accept microphone permissions to join the call.": "Povolte přístup k mikrofonu pro připojení k hovoru.",
+  "Accept camera/microphone permissions to join the call.": "Povolte přístup ke kameře/mikrofonu pro připojení do hovoru.",
+  "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Vytvořit účet</0> Or <2>Jako host</2>"
+}
