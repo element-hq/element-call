@@ -32,7 +32,7 @@ export function useFullscreen(ref: React.RefObject<HTMLElement>): {
   const toggleFullscreen = useCallback(
     (participant: Participant) => {
       if (fullscreenParticipant) {
-        document.exitFullscreen();
+        document.exitFullscreen().catch((e) => console.error(e));
         setFullscreenParticipant(null);
       } else {
         try {
@@ -56,7 +56,7 @@ export function useFullscreen(ref: React.RefObject<HTMLElement>): {
 
   useEffect(() => {
     if (disposed) {
-      document.exitFullscreen();
+      document.exitFullscreen().catch((e) => console.error(e));
       setFullscreenParticipant(null);
     }
   }, [disposed]);
