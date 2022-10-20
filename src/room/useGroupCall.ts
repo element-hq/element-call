@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 
 import { usePageUnload } from "./usePageUnload";
 import { TranslatedError, translatedError } from "../TranslatedError";
+import { ElementWidgetActions, widget } from "../widget";
 
 export interface UseGroupCallReturnType {
   state: GroupCallState;
@@ -304,11 +305,31 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
   const toggleScreensharing = useCallback(() => {
     updateState({ requestingScreenshare: true });
 
-    groupCall
-      .setScreensharingEnabled(!groupCall.isScreensharing(), { audio: true })
-      .then(() => {
+    if (groupCall.isScreensharing()) {
+      groupCall.setScreensharingEnabled(false).then(() => {
         updateState({ requestingScreenshare: false });
       });
+    } else {
+      widget.api.transport
+        .send(ElementWidgetActions.Screenshare, {})
+        .then(
+          (reply: { desktopCapturerSourceId: string; failed?: boolean }) => {
+            if (reply.failed) {
+              updateState({ requestingScreenshare: false });
+              return;
+            }
+
+            groupCall
+              .setScreensharingEnabled(true, {
+                audio: !reply.desktopCapturerSourceId,
+                desktopCapturerSourceId: reply.desktopCapturerSourceId,
+              })
+              .then(() => {
+                updateState({ requestingScreenshare: false });
+              });
+          }
+        );
+    }
   }, [groupCall]);
 
   const { t } = useTranslation();
