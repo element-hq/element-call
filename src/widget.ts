@@ -30,6 +30,7 @@ export enum ElementWidgetActions {
   HangupCall = "im.vector.hangup",
   TileLayout = "io.element.tile_layout",
   SpotlightLayout = "io.element.spotlight_layout",
+  Screenshare = "io.element.screenshare",
 }
 
 export interface JoinCallData {
