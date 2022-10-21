@@ -35,20 +35,30 @@ declare global {
 export const useMediaStreamTrackCount = (
   stream: MediaStream
 ): [number, number] => {
+  const latestAudioTrackCount = stream ? stream.getAudioTracks().length : 0;
+  const latestVideoTrackCount = stream ? stream.getVideoTracks().length : 0;
+
   const [audioTrackCount, setAudioTrackCount] = useState(
-    stream.getAudioTracks().length
+    stream ? stream.getAudioTracks().length : 0
   );
   const [videoTrackCount, setVideoTrackCount] = useState(
-    stream.getVideoTracks().length
+    stream ? stream.getVideoTracks().length : 0
   );
 
   const tracksChanged = useCallback(() => {
-    setAudioTrackCount(stream.getAudioTracks().length);
-    setVideoTrackCount(stream.getVideoTracks().length);
+    setAudioTrackCount(stream ? stream.getAudioTracks().length : 0);
+    setVideoTrackCount(stream ? stream.getVideoTracks().length : 0);
   }, [stream]);
 
   useEventTarget(stream, "addtrack", tracksChanged);
   useEventTarget(stream, "removetrack", tracksChanged);
+
+  if (
+    latestAudioTrackCount !== audioTrackCount ||
+    latestVideoTrackCount !== videoTrackCount
+  ) {
+    tracksChanged();
+  }
 
   return [audioTrackCount, videoTrackCount];
 };

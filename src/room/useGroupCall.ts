@@ -49,7 +49,6 @@ export interface UseGroupCallReturnType {
   requestingScreenshare: boolean;
   isScreensharing: boolean;
   screenshareFeeds: CallFeed[];
-  localScreenshareFeed: CallFeed;
   localDesktopCapturerSourceId: string;
   participants: RoomMember[];
   hasLocalParticipant: boolean;
@@ -66,7 +65,6 @@ interface State {
   microphoneMuted: boolean;
   localVideoMuted: boolean;
   screenshareFeeds: CallFeed[];
-  localScreenshareFeed: CallFeed;
   localDesktopCapturerSourceId: string;
   isScreensharing: boolean;
   requestingScreenshare: boolean;
@@ -87,7 +85,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
       localVideoMuted,
       isScreensharing,
       screenshareFeeds,
-      localScreenshareFeed,
       localDesktopCapturerSourceId,
       participants,
       hasLocalParticipant,
@@ -105,7 +102,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     localVideoMuted: false,
     isScreensharing: false,
     screenshareFeeds: [],
-    localScreenshareFeed: null,
     localDesktopCapturerSourceId: null,
     requestingScreenshare: false,
     participants: [],
@@ -133,7 +129,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
         microphoneMuted: groupCall.isMicrophoneMuted(),
         localVideoMuted: groupCall.isLocalVideoMuted(),
         isScreensharing: groupCall.isScreensharing(),
-        localScreenshareFeed: groupCall.localScreenshareFeed,
         localDesktopCapturerSourceId: groupCall.localDesktopCapturerSourceId,
         screenshareFeeds: [...groupCall.screenshareFeeds],
         participants: [...groupCall.participants],
@@ -170,12 +165,11 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
 
     function onLocalScreenshareStateChanged(
       isScreensharing: boolean,
-      localScreenshareFeed: CallFeed,
+      _localScreenshareFeed: CallFeed,
       localDesktopCapturerSourceId: string
     ): void {
       updateState({
         isScreensharing,
-        localScreenshareFeed,
         localDesktopCapturerSourceId,
       });
     }
@@ -226,7 +220,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
       microphoneMuted: groupCall.isMicrophoneMuted(),
       localVideoMuted: groupCall.isLocalVideoMuted(),
       isScreensharing: groupCall.isScreensharing(),
-      localScreenshareFeed: groupCall.localScreenshareFeed,
       localDesktopCapturerSourceId: groupCall.localDesktopCapturerSourceId,
       screenshareFeeds: [...groupCall.screenshareFeeds],
       participants: [...groupCall.participants],
@@ -342,7 +335,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     requestingScreenshare,
     isScreensharing,
     screenshareFeeds,
-    localScreenshareFeed,
     localDesktopCapturerSourceId,
     participants,
     hasLocalParticipant,

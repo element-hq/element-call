@@ -16,7 +16,7 @@ limitations under the License.
 
 import React, { FC, useEffect, useRef } from "react";
 
-import { Participant } from "../room/InCallView";
+import { TileDescriptor } from "../room/InCallView";
 import { useCallFeed } from "./useCallFeed";
 import { useMediaStreamTrackCount } from "./useMediaStream";
 
@@ -24,7 +24,7 @@ import { useMediaStreamTrackCount } from "./useMediaStream";
 // only way to a hook on an array
 
 interface AudioForParticipantProps {
-  item: Participant;
+  item: TileDescriptor;
   audioContext: AudioContext;
   audioDestination: AudioNode;
 }
@@ -78,7 +78,7 @@ export const AudioForParticipant: FC<AudioForParticipantProps> = ({
 };
 
 interface AudioContainerProps {
-  items: Participant[];
+  items: TileDescriptor[];
   audioContext: AudioContext;
   audioDestination: AudioNode;
 }

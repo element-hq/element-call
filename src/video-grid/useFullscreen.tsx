@@ -17,27 +17,27 @@ limitations under the License.
 
 import { useCallback, useEffect, useState } from "react";
 
-import { Participant } from "../room/InCallView";
+import { TileDescriptor } from "../room/InCallView";
 import { useEventTarget } from "../useEvents";
 import { useCallFeed } from "./useCallFeed";
 
 export function useFullscreen(ref: React.RefObject<HTMLElement>): {
-  toggleFullscreen: (participant: Participant) => void;
-  fullscreenParticipant: Participant | null;
+  toggleFullscreen: (participant: TileDescriptor) => void;
+  fullscreenParticipant: TileDescriptor | null;
 } {
   const [fullscreenParticipant, setFullscreenParticipant] =
-    useState<Participant | null>(null);
+    useState<TileDescriptor | null>(null);
   const { disposed } = useCallFeed(fullscreenParticipant?.callFeed);
 
   const toggleFullscreen = useCallback(
-    (participant: Participant) => {
+    (tileDes: TileDescriptor) => {
       if (fullscreenParticipant) {
         document.exitFullscreen();
         setFullscreenParticipant(null);
       } else {
         try {
           ref.current.requestFullscreen();
-          setFullscreenParticipant(participant);
+          setFullscreenParticipant(tileDes);
         } catch (error) {
           console.warn("Failed to fullscreen:", error);
         }
