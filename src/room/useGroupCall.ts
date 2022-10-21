@@ -336,10 +336,12 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
   const onScreenshareStart = useCallback(
     async (ev: CustomEvent<IWidgetApiRequest>) => {
       updateState({ requestingScreenshare: false });
+
+      const data = ev.detail.data as unknown as ScreenshareStartData;
+
       await groupCall.setScreensharingEnabled(true, {
-        desktopCapturerSourceId: ev.detail.data
-          .desktopCapturerSourceId as string,
-        audio: !ev.detail.data.desktopCapturerSourceId,
+        desktopCapturerSourceId: data.desktopCapturerSourceId as string,
+        audio: !data.desktopCapturerSourceId,
       });
       await widget.api.transport.reply(ev.detail, {});
     },
