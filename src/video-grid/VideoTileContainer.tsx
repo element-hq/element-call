@@ -25,10 +25,10 @@ import { useRoomMemberName } from "./useRoomMemberName";
 import { VideoTile } from "./VideoTile";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 import { useModalTriggerState } from "../Modal";
-import { Participant } from "../room/InCallView";
+import { TileDescriptor } from "../room/InCallView";
 
 interface Props {
-  item: Participant;
+  item: TileDescriptor;
   width?: number;
   height?: number;
   getAvatar: (
@@ -41,7 +41,7 @@ interface Props {
   disableSpeakingIndicator: boolean;
   maximised: boolean;
   fullscreen: boolean;
-  onFullscreen: (item: Participant) => void;
+  onFullscreen: (item: TileDescriptor) => void;
 }
 
 export function VideoTileContainer({
@@ -65,9 +65,8 @@ export function VideoTileContainer({
     speaking,
     stream,
     purpose,
-    member,
   } = useCallFeed(item.callFeed);
-  const { rawDisplayName } = useRoomMemberName(member);
+  const { rawDisplayName } = useRoomMemberName(item.member);
   const [tileRef, mediaRef] = useSpatialMediaStream(
     stream,
     audioContext,
@@ -99,9 +98,10 @@ export function VideoTileContainer({
         videoMuted={videoMuted}
         screenshare={purpose === SDPStreamMetadataPurpose.Screenshare}
         name={rawDisplayName}
+        hasFeed={Boolean(item.callFeed)}
         ref={tileRef}
         mediaRef={mediaRef}
-        avatar={getAvatar && getAvatar(member, width, height)}
+        avatar={getAvatar && getAvatar(item.member, width, height)}
         onOptionsPress={onOptionsPress}
         localVolume={localVolume}
         maximised={maximised}

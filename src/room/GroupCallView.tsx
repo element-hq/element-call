@@ -76,7 +76,6 @@ export function GroupCallView({
     toggleScreensharing,
     requestingScreenshare,
     isScreensharing,
-    localScreenshareFeed,
     screenshareFeeds,
     participants,
     unencryptedEventsFromUsers,
@@ -221,6 +220,7 @@ export function GroupCallView({
           client={client}
           roomName={groupCall.room.name}
           avatarUrl={avatarUrl}
+          participants={participants}
           microphoneMuted={microphoneMuted}
           localVideoMuted={localVideoMuted}
           toggleLocalVideoMuted={toggleLocalVideoMuted}
@@ -230,7 +230,6 @@ export function GroupCallView({
           onLeave={onLeave}
           toggleScreensharing={toggleScreensharing}
           isScreensharing={isScreensharing}
-          localScreenshareFeed={localScreenshareFeed}
           screenshareFeeds={screenshareFeeds}
           roomIdOrAlias={roomIdOrAlias}
           unencryptedEventsFromUsers={unencryptedEventsFromUsers}

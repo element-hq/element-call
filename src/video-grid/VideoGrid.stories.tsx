@@ -16,11 +16,12 @@ limitations under the License.
 
 import React, { useState } from "react";
 import { useMemo } from "react";
+import { RoomMember } from "matrix-js-sdk";
 
 import { VideoGrid, useVideoGridLayout } from "./VideoGrid";
 import { VideoTile } from "./VideoTile";
 import { Button } from "../button";
-import { Participant } from "../room/InCallView";
+import { TileDescriptor } from "../room/InCallView";
 
 export default {
   title: "VideoGrid",
@@ -33,10 +34,11 @@ export const ParticipantsTest = () => {
   const { layout, setLayout } = useVideoGridLayout(false);
   const [participantCount, setParticipantCount] = useState(1);
 
-  const items: Participant[] = useMemo(
+  const items: TileDescriptor[] = useMemo(
     () =>
       new Array(participantCount).fill(undefined).map((_, i) => ({
         id: (i + 1).toString(),
+        member: new RoomMember("!fake:room.id", `@user${i}:fake.dummy`),
         focused: false,
         presenter: false,
       })),

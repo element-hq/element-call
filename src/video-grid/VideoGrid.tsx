@@ -23,7 +23,7 @@ import { ReactDOMAttributes } from "@use-gesture/react/dist/declarations/src/typ
 
 import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/GridLayoutMenu";
-import { Participant } from "../room/InCallView";
+import { TileDescriptor } from "../room/InCallView";
 
 interface TilePosition {
   x: number;
@@ -36,7 +36,7 @@ interface TilePosition {
 interface Tile {
   key: Key;
   order: number;
-  item: Participant;
+  item: TileDescriptor;
   remove: boolean;
   focused: boolean;
   presenter: boolean;
@@ -693,12 +693,12 @@ interface ChildrenProperties extends ReactDOMAttributes {
   };
   width: number;
   height: number;
-  item: Participant;
+  item: TileDescriptor;
   [index: string]: unknown;
 }
 
 interface VideoGridProps {
-  items: Participant[];
+  items: TileDescriptor[];
   layout: Layout;
   disableAnimations?: boolean;
   children: (props: ChildrenProperties) => React.ReactNode;

@@ -70,6 +70,7 @@ const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 interface Props {
   client: MatrixClient;
   groupCall: GroupCall;
+  participants: RoomMember[];
   roomName: string;
   avatarUrl: string;
   microphoneMuted: boolean;
@@ -82,14 +83,16 @@ interface Props {
   onLeave: () => void;
   isScreensharing: boolean;
   screenshareFeeds: CallFeed[];
-  localScreenshareFeed: CallFeed;
   roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
 }
 
-export interface Participant {
+// Represents something that should get a tile on the layout,
+// ie. a user's video feed or a screen share feed.
+export interface TileDescriptor {
   id: string;
+  member: RoomMember;
   focused: boolean;
   presenter: boolean;
   callFeed?: CallFeed;
@@ -99,6 +102,7 @@ export interface Participant {
 export function InCallView({
   client,
   groupCall,
+  participants,
   roomName,
   avatarUrl,
   microphoneMuted,
@@ -111,7 +115,6 @@ export function InCallView({
   toggleScreensharing,
   isScreensharing,
   screenshareFeeds,
-  localScreenshareFeed,
   roomIdOrAlias,
   unencryptedEventsFromUsers,
   hideHeader,
@@ -185,39 +188,48 @@ export function InCallView({
   }, [setLayout]);
 
   const items = useMemo(() => {
-    const participants: Participant[] = [];
+    const tileDescriptors: TileDescriptor[] = [];
 
-    for (const callFeed of userMediaFeeds) {
-      participants.push({
-        id: callFeed.stream.id,
-        callFeed,
-        focused:
-          screenshareFeeds.length === 0 && callFeed.userId === activeSpeaker,
-        isLocal: callFeed.isLocal(),
+    // one tile for each participants, to start with (we want a tile for everyone we
+    // think should be in the call, even if we don't have a media feed for them yet)
+    for (const p of participants) {
+      const userMediaFeed = userMediaFeeds.find((f) => f.userId === p.userId);
+
+      // NB. this assumes that the same user can't join more than once from multiple
+      // devices, but the participants are just RoomMembers, so this assumption is baked
+      // into GroupCall itself.
+      tileDescriptors.push({
+        id: p.userId,
+        member: p,
+        callFeed: userMediaFeed,
+        focused: screenshareFeeds.length === 0 && p.userId === activeSpeaker,
+        isLocal: p.userId === client.getUserId(),
         presenter: false,
       });
     }
 
-    for (const callFeed of screenshareFeeds) {
-      const userMediaItem = participants.find(
-        (item) => item.callFeed.userId === callFeed.userId
+    // add the screenshares too
+    for (const screenshareFeed of screenshareFeeds) {
+      const userMediaItem = tileDescriptors.find(
+        (item) => item.member.userId === screenshareFeed.userId
       );
 
       if (userMediaItem) {
         userMediaItem.presenter = true;
       }
 
-      participants.push({
-        id: callFeed.stream.id,
-        callFeed,
+      tileDescriptors.push({
+        id: screenshareFeed.stream.id,
+        member: userMediaItem?.member,
+        callFeed: screenshareFeed,
         focused: true,
-        isLocal: callFeed.isLocal(),
+        isLocal: screenshareFeed.isLocal(),
         presenter: false,
       });
     }
 
-    return participants;
-  }, [userMediaFeeds, activeSpeaker, screenshareFeeds]);
+    return tileDescriptors;
+  }, [client, participants, userMediaFeeds, activeSpeaker, screenshareFeeds]);
 
   // The maximised participant: either the participant that the user has
   // manually put in fullscreen, or the focused (active) participant if the
@@ -281,7 +293,13 @@ export function InCallView({
 
     return (
       <VideoGrid items={items} layout={layout} disableAnimations={isSafari}>
-        {({ item, ...rest }: { item: Participant; [x: string]: unknown }) => (
+        {({
+          item,
+          ...rest
+        }: {
+          item: TileDescriptor;
+          [x: string]: unknown;
+        }) => (
           <VideoTileContainer
             key={item.id}
             item={item}
