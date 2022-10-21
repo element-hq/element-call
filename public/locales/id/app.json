@@ -128,5 +128,6 @@
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "{{name}} is presenting": "{{name}} sedang mempresentasi",
   "{{name}} is talking…": "{{name}} sedang berbicara…",
-  "{{roomName}} - Walkie-talkie call": "{{roomName}} - Panggilan protofon"
+  "{{roomName}} - Walkie-talkie call": "{{roomName}} - Panggilan protofon",
+  "Sending debug logs…": "Mengirimkan catatan pengawakutuan…"
 }
