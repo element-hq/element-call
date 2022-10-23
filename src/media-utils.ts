@@ -48,24 +48,42 @@ export async function findDeviceByName(
  * @return The available media devices
  */
 export async function getDevices(): Promise<MediaDeviceInfo[]> {
-  let stream: MediaStream;
+  // First get the devices without their labels, to learn what kinds of streams
+  // we can request
+  let devices: MediaDeviceInfo[];
   try {
-    stream = await navigator.mediaDevices.getUserMedia({
-      audio: true,
-      video: true,
-    });
+    devices = await navigator.mediaDevices.enumerateDevices();
+  } catch (error) {
+    logger.warn("Unable to refresh WebRTC devices", error);
+    devices = [];
+  }
+
+  let stream: MediaStream | null = null;
+  try {
+    if (devices.some((d) => d.kind === "audioinput")) {
+      // Holding just an audio stream will be enough to get us all device labels
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } else if (devices.some((d) => d.kind === "videoinput")) {
+      // We have to resort to a video stream
+      stream = await navigator.mediaDevices.getUserMedia({ video: true });
+    }
   } catch (e) {
     logger.info("Couldn't get media stream for enumerateDevices: failing");
     throw e;
   }
 
-  try {
-    return await navigator.mediaDevices.enumerateDevices();
-  } catch (error) {
-    logger.warn("Unable to refresh WebRTC Devices: ", error);
-  } finally {
-    for (const track of stream.getTracks()) {
-      track.stop();
+  if (stream !== null) {
+    try {
+      return await navigator.mediaDevices.enumerateDevices();
+    } catch (error) {
+      logger.warn("Unable to refresh WebRTC devices", error);
+    } finally {
+      for (const track of stream.getTracks()) {
+        track.stop();
+      }
     }
   }
+
+  // If all else failed, continue without device labels
+  return devices;
 }
