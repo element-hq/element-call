@@ -88,6 +88,7 @@ export const widget: WidgetHelpers | null = (() => {
       if (!baseUrl) throw new Error("Base URL must be supplied");
 
       // These are all the event types the app uses
+      const sendRecvEvent = ["org.matrix.rageshake_request"];
       const sendState = [
         { eventType: EventType.GroupCallPrefix },
         { eventType: EventType.GroupCallMemberPrefix, stateKey: userId },
@@ -113,6 +114,8 @@ export const widget: WidgetHelpers | null = (() => {
       const client = createRoomWidgetClient(
         api,
         {
+          sendEvent: sendRecvEvent,
+          receiveEvent: sendRecvEvent,
           sendState,
           receiveState,
           sendToDevice: sendRecvToDevice,
