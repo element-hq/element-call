@@ -27,10 +27,11 @@ import { MatrixCall } from "matrix-js-sdk/src/webrtc/call";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useTranslation } from "react-i18next";
+import { IWidgetApiRequest } from "matrix-widget-api";
 
 import { usePageUnload } from "./usePageUnload";
 import { TranslatedError, translatedError } from "../TranslatedError";
-import { ElementWidgetActions, widget } from "../widget";
+import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
 
 export interface UseGroupCallReturnType {
   state: GroupCallState;
@@ -302,35 +303,83 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     groupCall.setMicrophoneMuted(!groupCall.isMicrophoneMuted());
   }, [groupCall]);
 
-  const toggleScreensharing = useCallback(() => {
-    updateState({ requestingScreenshare: true });
+  const toggleScreensharing = useCallback(async () => {
+    if (!groupCall.isScreensharing()) {
+      // toggling on
+      updateState({ requestingScreenshare: true });
 
-    if (groupCall.isScreensharing()) {
-      groupCall.setScreensharingEnabled(false).then(() => {
+      try {
+        await groupCall.setScreensharingEnabled(true, {
+          audio: true,
+          throwOnFail: true,
+        });
         updateState({ requestingScreenshare: false });
-      });
-    } else {
-      widget.api.transport
-        .send(ElementWidgetActions.Screenshare, {})
-        .then(
-          (reply: { desktopCapturerSourceId: string; failed?: boolean }) => {
-            if (reply.failed) {
-              updateState({ requestingScreenshare: false });
-              return;
-            }
-
-            groupCall
-              .setScreensharingEnabled(true, {
-                audio: !reply.desktopCapturerSourceId,
-                desktopCapturerSourceId: reply.desktopCapturerSourceId,
-              })
-              .then(() => {
-                updateState({ requestingScreenshare: false });
-              });
+      } catch (e) {
+        // this will fail in Electron because getDisplayMedia just throws a permission
+        // error, so if we have a widget API, try requesting via that.
+        if (widget) {
+          const reply = await widget.api.transport.send(
+            ElementWidgetActions.ScreenshareRequest,
+            {}
+          );
+          if (!reply.pending) {
+            updateState({ requestingScreenshare: false });
           }
-        );
+        }
+      }
+    } else {
+      // toggling off
+      groupCall.setScreensharingEnabled(false);
     }
   }, [groupCall]);
+
+  const onScreenshareStart = useCallback(
+    async (ev: CustomEvent<IWidgetApiRequest>) => {
+      updateState({ requestingScreenshare: false });
+
+      const data = ev.detail.data as unknown as ScreenshareStartData;
+
+      await groupCall.setScreensharingEnabled(true, {
+        desktopCapturerSourceId: data.desktopCapturerSourceId as string,
+        audio: !data.desktopCapturerSourceId,
+      });
+      await widget.api.transport.reply(ev.detail, {});
+    },
+    [groupCall]
+  );
+
+  const onScreenshareStop = useCallback(
+    async (ev: CustomEvent<IWidgetApiRequest>) => {
+      updateState({ requestingScreenshare: false });
+      await groupCall.setScreensharingEnabled(false);
+      await widget.api.transport.reply(ev.detail, {});
+    },
+    [groupCall]
+  );
+
+  useEffect(() => {
+    if (widget) {
+      widget.lazyActions.on(
+        ElementWidgetActions.ScreenshareStart,
+        onScreenshareStart
+      );
+      widget.lazyActions.on(
+        ElementWidgetActions.ScreenshareStop,
+        onScreenshareStop
+      );
+
+      return () => {
+        widget.lazyActions.off(
+          ElementWidgetActions.ScreenshareStart,
+          onScreenshareStart
+        );
+        widget.lazyActions.off(
+          ElementWidgetActions.ScreenshareStop,
+          onScreenshareStop
+        );
+      };
+    }
+  }, [onScreenshareStart, onScreenshareStop]);
 
   const { t } = useTranslation();
 
