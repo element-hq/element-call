@@ -237,14 +237,14 @@ export function InCallView({
 
   const renderAvatar = useCallback(
     (roomMember: RoomMember, width: number, height: number) => {
-      const avatarUrl = roomMember.user?.avatarUrl;
+      const avatarUrl = roomMember.getMxcAvatarUrl();
       const size = Math.round(Math.min(width, height) / 2);
 
       return (
         <Avatar
           key={roomMember.userId}
           size={size}
-          src={avatarUrl}
+          src={avatarUrl ?? undefined}
           fallback={roomMember.name.slice(0, 1).toUpperCase()}
           className={styles.avatar}
         />
