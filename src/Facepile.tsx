@@ -72,12 +72,12 @@ export function Facepile({
       {...rest}
     >
       {participants.slice(0, max).map((member, i) => {
-        const avatarUrl = member.user?.avatarUrl;
+        const avatarUrl = member.getMxcAvatarUrl();
         return (
           <Avatar
             key={member.userId}
             size={size}
-            src={avatarUrl}
+            src={avatarUrl ?? undefined}
             fallback={member.name.slice(0, 1).toUpperCase()}
             className={styles.avatar}
             style={{ left: i * (_size - _overlap) }}
