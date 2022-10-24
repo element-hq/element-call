@@ -19,7 +19,7 @@ import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { PressEvent } from "@react-types/shared";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 import styles from "./LobbyView.module.css";
 import { Button, CopyButton } from "../button";
@@ -130,24 +130,26 @@ export function LobbyView({
               audioOutput={audioOutput}
             />
           )}
-          <Button
-            ref={joinCallButtonRef}
-            className={styles.copyButton}
-            size="lg"
-            disabled={state !== GroupCallState.LocalCallFeedInitialized}
-            onPress={onEnter}
-          >
-            Join call now
-          </Button>
-          <Body>Or</Body>
-          <CopyButton
-            variant="secondaryCopy"
-            value={getRoomUrl(roomIdOrAlias)}
-            className={styles.copyButton}
-            copiedMessage={t("Call link copied")}
-          >
-            {t("Copy call link and join later")}
-          </CopyButton>
+          <Trans>
+            <Button
+              ref={joinCallButtonRef}
+              className={styles.copyButton}
+              size="lg"
+              disabled={state !== GroupCallState.LocalCallFeedInitialized}
+              onPress={onEnter}
+            >
+              Join call now
+            </Button>
+            <Body>Or</Body>
+            <CopyButton
+              variant="secondaryCopy"
+              value={getRoomUrl(roomIdOrAlias)}
+              className={styles.copyButton}
+              copiedMessage={t("Call link copied")}
+            >
+              Copy call link and join later
+            </CopyButton>
+          </Trans>
         </div>
         {!isEmbedded && (
           <Body className={styles.joinRoomFooter}>
