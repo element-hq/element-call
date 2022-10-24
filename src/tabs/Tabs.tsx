@@ -38,7 +38,7 @@ export function TabContainer<T extends object>(
     <div className={classNames(styles.tabContainer, props.className)}>
       <ul {...tabListProps} ref={ref} className={styles.tabList}>
         {[...state.collection].map((item) => (
-          <Tab item={item} state={state} />
+          <Tab item={item} state={state} key={item.key} />
         ))}
       </ul>
       <TabPanel key={state.selectedItem?.key} state={state} />
