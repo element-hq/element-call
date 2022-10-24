@@ -2,6 +2,7 @@
   "{{count}} people connected|one": "{{count}} person connected",
   "{{count}} people connected|other": "{{count}} people connected",
   "{{displayName}}, your call is now ended": "{{displayName}}, your call is now ended",
+  "{{name}} (Connecting...)": "{{name}} (Connecting...)",
   "{{name}} is presenting": "{{name}} is presenting",
   "{{name}} is talking…": "{{name}} is talking…",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
