@@ -33,7 +33,7 @@ declare global {
 }
 
 export const useMediaStreamTrackCount = (
-  stream: MediaStream
+  stream: MediaStream | null
 ): [number, number] => {
   const latestAudioTrackCount = stream ? stream.getAudioTracks().length : 0;
   const latestVideoTrackCount = stream ? stream.getVideoTracks().length : 0;
