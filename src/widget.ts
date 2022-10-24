@@ -30,12 +30,30 @@ export enum ElementWidgetActions {
   HangupCall = "im.vector.hangup",
   TileLayout = "io.element.tile_layout",
   SpotlightLayout = "io.element.spotlight_layout",
-  Screenshare = "io.element.screenshare",
+
+  // Element Call -> host requesting to start a screenshare
+  // (ie. expects a ScreenshareStart once the user has picked a source)
+  // Element Call -> host requesting to start a screenshare
+  // (ie. expects a ScreenshareStart once the user has picked a source)
+  // replies with { pending } where pending is true if the host has asked
+  // the user to choose a window and false if not (ie. if the host isn't
+  // running within Electron)
+  ScreenshareRequest = "io.element.screenshare_request",
+  // host -> Element Call telling EC to start screen sharing with
+  // the given source
+  ScreenshareStart = "io.element.screenshare_start",
+  // host -> Element Call telling EC to stop screen sharing, or that
+  // the user cancelled when selecting a source after a ScreenshareRequest
+  ScreenshareStop = "io.element.screenshare_stop",
 }
 
 export interface JoinCallData {
   audioInput: string | null;
   videoInput: string | null;
+}
+
+export interface ScreenshareStartData {
+  desktopCapturerSourceId: string;
 }
 
 interface WidgetHelpers {
@@ -69,6 +87,8 @@ export const widget: WidgetHelpers | null = (() => {
         ElementWidgetActions.HangupCall,
         ElementWidgetActions.TileLayout,
         ElementWidgetActions.SpotlightLayout,
+        ElementWidgetActions.ScreenshareStart,
+        ElementWidgetActions.ScreenshareStop,
       ].forEach((action) => {
         api.on(`action:${action}`, (ev: CustomEvent<IWidgetApiRequest>) => {
           ev.preventDefault();
