@@ -120,7 +120,7 @@ function getTilePositions(
   layout: Layout
 ): TilePosition[] {
   if (layout === "freedom") {
-    if (tileCount === 2 && !hasPresenter) {
+    if (tileCount === 2 && !hasPresenter && focusedTileCount === 0) {
       return getOneOnOneLayoutTilePositions(
         gridWidth,
         gridHeight,
@@ -657,7 +657,7 @@ function reorderTiles(tiles: Tile[], layout: Layout) {
   if (
     layout === "freedom" &&
     tiles.length === 2 &&
-    !tiles.some((t) => t.presenter)
+    !tiles.some((t) => t.presenter || t.focused)
   ) {
     // 1:1 layout
     tiles.forEach((tile) => (tile.order = tile.item.isLocal ? 0 : 1));
@@ -999,7 +999,7 @@ export function VideoGrid({
 
       let newTiles = tiles;
 
-      if (tiles.length === 2 && !tiles.some((t) => t.presenter)) {
+      if (tiles.length === 2 && !tiles.some((t) => t.presenter || t.focused)) {
         // We're in 1:1 mode, so only the local tile should be draggable
         if (!dragTile.item.isLocal) return;
 
