@@ -48,7 +48,7 @@
   "Connection lost": "ارتباط قطع شد",
   "Confirm password": "تایید رمزعبور",
   "Close": "بستن",
-  "Change layout": "تغییر لایوت",
+  "Change layout": "تغییر طرح",
   "Camera/microphone permissions needed to join the call.": "برای پیوستن به تماس، دسترسی به دوربین/ میکروفون نیاز است.",
   "Camera {{n}}": "دوربین {{n}}",
   "Camera": "دوربین",
@@ -71,5 +71,9 @@
   "{{name}} is presenting": "{{name}} حاضر است",
   "{{displayName}}, your call is now ended": "{{displayName}} تماس شما پایان یافت",
   "{{count}} people connected|other": "{{count}} نفر متصل هستند",
-  "{{count}} people connected|one": "{{count}} فرد متصل هستند"
+  "{{count}} people connected|one": "{{count}} فرد متصل هستند",
+  "Local volume": "حجم داخلی",
+  "Inspector": "بازرس",
+  "Incompatible versions!": "نسخه‌های ناسازگار!",
+  "Incompatible versions": "نسخه‌های ناسازگار"
 }
