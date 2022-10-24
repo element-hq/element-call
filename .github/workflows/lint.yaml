@@ -16,6 +16,8 @@ jobs:
         run: "yarn install"
       - name: Prettier
         run: "yarn run prettier:check"
+      - name: i18n
+        run: "yarn run i18n:check"
       - name: ESLint
         run: "yarn run lint:js"
       - name: Type check
