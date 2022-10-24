@@ -139,7 +139,7 @@ export function LobbyView({
           >
             Join call now
           </Button>
-          <Body>Or</Body>
+          <Body>{t("Or")}</Body>
           <CopyButton
             variant="secondaryCopy"
             value={getRoomUrl(roomIdOrAlias)}
