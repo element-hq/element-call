@@ -12,7 +12,8 @@
     "lint": "yarn lint:types && yarn lint:js",
     "lint:js": "eslint --max-warnings 0 src",
     "lint:types": "tsc",
-    "i18n": "node_modules/i18next-parser/bin/cli.js"
+    "i18n": "node_modules/i18next-parser/bin/cli.js",
+    "i18n:check": "node_modules/i18next-parser/bin/cli.js --fail-on-warnings --fail-on-update"
   },
   "dependencies": {
     "@juggle/resize-observer": "^3.3.1",
