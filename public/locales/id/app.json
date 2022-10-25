@@ -128,5 +128,7 @@
   "{{name}} is presenting": "{{name}} sedang mempresentasi",
   "{{name}} is talking…": "{{name}} sedang berbicara…",
   "{{roomName}} - Walkie-talkie call": "{{roomName}} - Panggilan protofon",
-  "Sending debug logs…": "Mengirimkan catatan pengawakutuan…"
+  "Sending debug logs…": "Mengirimkan catatan pengawakutuan…",
+  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Bergabung panggilan sekarang</0><1>Atau</1><2>Salin tautan dan bergabung nanti</2>",
+  "{{name}} (Connecting...)": "{{name}} (Menghubungkan...)"
 }
