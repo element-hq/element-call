@@ -26,6 +26,7 @@ import { AudioButton, FullscreenButton } from "../button/Button";
 
 interface Props {
   name: string;
+  hasFeed: Boolean;
   speaking?: boolean;
   audioMuted?: boolean;
   videoMuted?: boolean;
@@ -47,6 +48,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
   (
     {
       name,
+      hasFeed,
       speaking,
       audioMuted,
       videoMuted,
@@ -90,6 +92,8 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       }
     }
 
+    const caption = hasFeed ? name : t("{{name}} (Connecting...)", { name });
+
     return (
       <animated.div
         className={classNames(styles.videoTile, className, {
@@ -120,7 +124,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             <div className={classNames(styles.infoBubble, styles.memberName)}>
               {audioMuted && !videoMuted && <MicMutedIcon />}
               {videoMuted && <VideoMutedIcon />}
-              <span title={name}>{name}</span>
+              <span title={caption}>{caption}</span>
             </div>
           ))}
         <video ref={mediaRef} playsInline disablePictureInPicture />
