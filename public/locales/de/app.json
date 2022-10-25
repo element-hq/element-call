@@ -128,5 +128,7 @@
   "{{roomName}} - Walkie-talkie call": "{{roomName}} – Walkie-Talkie-Anruf",
   "Fetching group call timed out.": "Zeitüberschreitung beim Abrufen des Gruppenanrufs.",
   "Walkie-talkie call name": "Name des Walkie-Talkie-Anrufs",
-  "Sending debug logs…": "Sende Debug-Protokolle …"
+  "Sending debug logs…": "Sende Debug-Protokolle …",
+  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Anruf beitreten</0><1>Oder</1><2>Anruflink kopieren und später beitreten</2>",
+  "{{name}} (Connecting...)": "{{name}} (Verbindet …)"
 }
