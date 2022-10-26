@@ -25,7 +25,7 @@ export const defaultHomeserver =
   (import.meta.env.VITE_DEFAULT_HOMESERVER as string) ??
   `${window.location.protocol}//${window.location.host}`;
 export const fallbackICEServerAllowed =
-  import.meta.env.VITE_FALLBACK_ICE_ALLOWED === "true";
+  import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
 
 export const defaultHomeserverHost = new URL(defaultHomeserver).host;
 
