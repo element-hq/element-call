@@ -1,5 +1,3 @@
-import Olm from "@matrix-org/olm";
-import olmWasmPath from "@matrix-org/olm/olm.wasm?url";
 import { IndexedDBStore } from "matrix-js-sdk/src/store/indexeddb";
 import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
@@ -72,10 +70,6 @@ export async function initClient(
   clientOptions: ICreateClientOpts,
   restore: boolean
 ): Promise<MatrixClient> {
-  // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
-  window.OLM_OPTIONS = {};
-  await Olm.init({ locateFile: () => olmWasmPath });
-
   let indexedDB: IDBFactory;
 
   try {
