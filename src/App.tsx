@@ -14,7 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { Suspense } from "react";
+import Olm from "@matrix-org/olm";
+import olmWasmPath from "@matrix-org/olm/olm.wasm?url";
+import React, { Suspense, useState } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
@@ -28,7 +30,7 @@ import { ClientProvider } from "./ClientContext";
 import { usePageFocusStyle } from "./usePageFocusStyle";
 import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
 import { InspectorContextProvider } from "./room/GroupCallInspector";
-import { CrashView } from "./FullScreenView";
+import { CrashView, LoadingView } from "./FullScreenView";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -37,9 +39,19 @@ interface AppProps {
 }
 
 export default function App({ history }: AppProps) {
+  const [loadingOlm, setLoadingOlm] = useState(false);
+
   usePageFocusStyle();
 
+  // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
+  window.OLM_OPTIONS = {};
+  Olm.init({ locateFile: () => olmWasmPath }).then(() => setLoadingOlm(false));
+
   const errorPage = <CrashView />;
+
+  if (loadingOlm) {
+    return <LoadingView />;
+  }
 
   return (
     <Router history={history}>
