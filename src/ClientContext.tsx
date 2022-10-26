@@ -34,6 +34,7 @@ import {
   initClient,
   defaultHomeserver,
   CryptoStoreIntegrityError,
+  fallbackICEServerAllowed,
 } from "./matrix-utils";
 import { widget } from "./widget";
 import { translatedError } from "./TranslatedError";
@@ -130,6 +131,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
                   accessToken: access_token,
                   userId: user_id,
                   deviceId: device_id,
+                  fallbackICEServerAllowed: fallbackICEServerAllowed,
                 },
                 true
               ),
@@ -145,6 +147,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
                     accessToken: access_token,
                     userId: user_id,
                     deviceId: device_id,
+                    fallbackICEServerAllowed: fallbackICEServerAllowed,
                   },
                   false // Don't need the crypto store just to log out
                 );
