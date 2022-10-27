@@ -14,9 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useRef } from "react";
+import React, { FC, useEffect, useRef } from "react";
 
-import { Participant } from "../room/InCallView";
+import { TileDescriptor } from "../room/InCallView";
 import { useCallFeed } from "./useCallFeed";
 import { useMediaStreamTrackCount } from "./useMediaStream";
 
@@ -24,24 +24,27 @@ import { useMediaStreamTrackCount } from "./useMediaStream";
 // only way to a hook on an array
 
 interface AudioForParticipantProps {
-  item: Participant;
+  item: TileDescriptor;
   audioContext: AudioContext;
   audioDestination: AudioNode;
 }
 
-export function AudioForParticipant({
+export const AudioForParticipant: FC<AudioForParticipantProps> = ({
   item,
   audioContext,
   audioDestination,
-}: AudioForParticipantProps): JSX.Element {
-  const { stream, localVolume, audioMuted } = useCallFeed(item.callFeed);
+}) => {
+  const { stream, localVolume } = useCallFeed(item.callFeed);
   const [audioTrackCount] = useMediaStreamTrackCount(stream);
 
   const gainNodeRef = useRef<GainNode>();
   const sourceRef = useRef<MediaStreamAudioSourceNode>();
 
   useEffect(() => {
-    if (!item.isLocal && audioContext && !audioMuted && audioTrackCount > 0) {
+    // We don't compare the audioMuted flag of useCallFeed here, since unmuting
+    // depends on to-device messages which may lag behind the audio actually
+    // starting to flow over the network
+    if (!item.isLocal && audioContext && audioTrackCount > 0) {
       if (!gainNodeRef.current) {
         gainNodeRef.current = new GainNode(audioContext, {
           gain: localVolume,
@@ -68,23 +71,19 @@ export function AudioForParticipant({
     audioDestination,
     stream,
     localVolume,
-    audioMuted,
     audioTrackCount,
   ]);
 
   return null;
-}
+};
 
 interface AudioContainerProps {
-  items: Participant[];
+  items: TileDescriptor[];
   audioContext: AudioContext;
   audioDestination: AudioNode;
 }
 
-export function AudioContainer({
-  items,
-  ...rest
-}: AudioContainerProps): JSX.Element {
+export const AudioContainer: FC<AudioContainerProps> = ({ items, ...rest }) => {
   return (
     <>
       {items
@@ -94,4 +93,4 @@ export function AudioContainer({
         ))}
     </>
   );
-}
+};

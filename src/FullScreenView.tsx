@@ -1,12 +1,14 @@
 import React, { ReactNode, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import classNames from "classnames";
+import { Trans, useTranslation } from "react-i18next";
 
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import { LinkButton, Button } from "./button";
 import { useSubmitRageshake } from "./settings/submit-rageshake";
 import { ErrorMessage } from "./input/Input";
 import styles from "./FullScreenView.module.css";
+import { translatedError, TranslatedError } from "./TranslatedError";
 
 interface FullScreenViewProps {
   className?: string;
@@ -35,6 +37,7 @@ interface ErrorViewProps {
 
 export function ErrorView({ error }: ErrorViewProps) {
   const location = useLocation();
+  const { t } = useTranslation();
 
   useEffect(() => {
     console.error(error);
@@ -47,7 +50,11 @@ export function ErrorView({ error }: ErrorViewProps) {
   return (
     <FullScreenView>
       <h1>Error</h1>
-      <p>{error.message}</p>
+      <p>
+        {error instanceof TranslatedError
+          ? error.translatedMessage
+          : error.message}
+      </p>
       {location.pathname === "/" ? (
         <Button
           size="lg"
@@ -55,7 +62,7 @@ export function ErrorView({ error }: ErrorViewProps) {
           className={styles.homeLink}
           onPress={onReload}
         >
-          Return to home screen
+          {t("Return to home screen")}
         </Button>
       ) : (
         <LinkButton
@@ -64,7 +71,7 @@ export function ErrorView({ error }: ErrorViewProps) {
           className={styles.homeLink}
           to="/"
         >
-          Return to home screen
+          {t("Return to home screen")}
         </LinkButton>
       )}
     </FullScreenView>
@@ -72,6 +79,7 @@ export function ErrorView({ error }: ErrorViewProps) {
 }
 
 export function CrashView() {
+  const { t } = useTranslation();
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
 
   const sendDebugLogs = useCallback(() => {
@@ -85,11 +93,11 @@ export function CrashView() {
     window.location.href = "/";
   }, []);
 
-  let logsComponent;
+  let logsComponent: JSX.Element | null = null;
   if (sent) {
-    logsComponent = <div>Thanks! We'll get right on it.</div>;
+    logsComponent = <div>{t("Thanks! We'll get right on it.")}</div>;
   } else if (sending) {
-    logsComponent = <div>Sending...</div>;
+    logsComponent = <div>{t("Sending…")}</div>;
   } else {
     logsComponent = (
       <Button
@@ -98,33 +106,39 @@ export function CrashView() {
         onPress={sendDebugLogs}
         className={styles.wideButton}
       >
-        Send debug logs
+        {t("Send debug logs")}
       </Button>
     );
   }
 
   return (
     <FullScreenView>
-      <h1>Oops, something's gone wrong.</h1>
-      <p>Submitting debug logs will help us track down the problem.</p>
+      <Trans>
+        <h1>Oops, something's gone wrong.</h1>
+        <p>Submitting debug logs will help us track down the problem.</p>
+      </Trans>
       <div className={styles.sendLogsSection}>{logsComponent}</div>
-      {error && <ErrorMessage>Couldn't send debug logs!</ErrorMessage>}
+      {error && (
+        <ErrorMessage error={translatedError("Couldn't send debug logs!", t)} />
+      )}
       <Button
         size="lg"
         variant="default"
         className={styles.wideButton}
         onPress={onReload}
       >
-        Return to home screen
+        {t("Return to home screen")}
       </Button>
     </FullScreenView>
   );
 }
 
 export function LoadingView() {
+  const { t } = useTranslation();
+
   return (
     <FullScreenView>
-      <h1>Loading...</h1>
+      <h1>{t("Loading…")}</h1>
     </FullScreenView>
   );
 }

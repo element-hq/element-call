@@ -26,6 +26,7 @@ import React, {
 import { useHistory, useLocation } from "react-router-dom";
 import { captureException } from "@sentry/react";
 import { sleep } from "matrix-js-sdk/src/utils";
+import { Trans, useTranslation } from "react-i18next";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
@@ -41,7 +42,8 @@ import { usePageTitle } from "../usePageTitle";
 import { PosthogAnalytics } from "../PosthogAnalytics";
 
 export const RegisterPage: FC = () => {
-  usePageTitle("Register");
+  const { t } = useTranslation();
+  usePageTitle(t("Register"));
 
   const { loading, isAuthenticated, isPasswordlessUser, client, setClient } =
     useClient();
@@ -129,11 +131,11 @@ export const RegisterPage: FC = () => {
 
   useEffect(() => {
     if (password && passwordConfirmation && password !== passwordConfirmation) {
-      confirmPasswordRef.current?.setCustomValidity("Passwords must match");
+      confirmPasswordRef.current?.setCustomValidity(t("Passwords must match"));
     } else {
       confirmPasswordRef.current?.setCustomValidity("");
     }
-  }, [password, passwordConfirmation]);
+  }, [password, passwordConfirmation, t]);
 
   useEffect(() => {
     if (!loading && isAuthenticated && !isPasswordlessUser && !registering) {
@@ -159,8 +161,8 @@ export const RegisterPage: FC = () => {
                 <InputField
                   type="text"
                   name="userName"
-                  placeholder="Username"
-                  label="Username"
+                  placeholder={t("Username")}
+                  label={t("Username")}
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
@@ -176,8 +178,8 @@ export const RegisterPage: FC = () => {
                     setPassword(e.target.value)
                   }
                   value={password}
-                  placeholder="Password"
-                  label="Password"
+                  placeholder={t("Password")}
+                  label={t("Password")}
                 />
               </FieldRow>
               <FieldRow>
@@ -189,45 +191,49 @@ export const RegisterPage: FC = () => {
                     setPasswordConfirmation(e.target.value)
                   }
                   value={passwordConfirmation}
-                  placeholder="Confirm Password"
-                  label="Confirm Password"
+                  placeholder={t("Confirm password")}
+                  label={t("Confirm password")}
                   ref={confirmPasswordRef}
                 />
               </FieldRow>
               <Caption>
-                This site is protected by ReCAPTCHA and the Google{" "}
-                <Link href="https://www.google.com/policies/privacy/">
-                  Privacy Policy
-                </Link>{" "}
-                and{" "}
-                <Link href="https://policies.google.com/terms">
-                  Terms of Service
-                </Link>{" "}
-                apply.
-                <br />
-                By clicking "Register", you agree to our{" "}
-                <Link href={privacyPolicyUrl}>Terms and conditions</Link>
+                <Trans>
+                  This site is protected by ReCAPTCHA and the Google{" "}
+                  <Link href="https://www.google.com/policies/privacy/">
+                    Privacy Policy
+                  </Link>{" "}
+                  and{" "}
+                  <Link href="https://policies.google.com/terms">
+                    Terms of Service
+                  </Link>{" "}
+                  apply.
+                  <br />
+                  By clicking "Register", you agree to our{" "}
+                  <Link href={privacyPolicyUrl}>Terms and conditions</Link>
+                </Trans>
               </Caption>
               {error && (
                 <FieldRow>
-                  <ErrorMessage>{error.message}</ErrorMessage>
+                  <ErrorMessage error={error} />
                 </FieldRow>
               )}
               <FieldRow>
                 <Button type="submit" disabled={registering}>
-                  {registering ? "Registering..." : "Register"}
+                  {registering ? t("Registering…") : t("Register")}
                 </Button>
               </FieldRow>
               <div id={recaptchaId} />
             </form>
           </div>
           <div className={styles.authLinks}>
-            <p>Already have an account?</p>
-            <p>
-              <Link to="/login">Log in</Link>
-              {" Or "}
-              <Link to="/">Access as a guest</Link>
-            </p>
+            <Trans>
+              <p>Already have an account?</p>
+              <p>
+                <Link to="/login">Log in</Link>
+                {" Or "}
+                <Link to="/">Access as a guest</Link>
+              </p>
+            </Trans>
           </div>
         </div>
       </div>

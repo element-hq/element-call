@@ -27,15 +27,18 @@ import { useHistory } from "react-router-dom";
 import { MatrixClient, ClientEvent } from "matrix-js-sdk/src/client";
 import { MatrixEvent } from "matrix-js-sdk/src/models/event";
 import { logger } from "matrix-js-sdk/src/logger";
+import { useTranslation } from "react-i18next";
 
 import { ErrorView } from "./FullScreenView";
 import {
   initClient,
   defaultHomeserver,
   CryptoStoreIntegrityError,
+  fallbackICEServerAllowed,
 } from "./matrix-utils";
 import { widget } from "./widget";
 import { PosthogAnalytics, RegistrationType } from "./PosthogAnalytics";
+import { translatedError } from "./TranslatedError";
 
 declare global {
   interface Window {
@@ -136,6 +139,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
                   accessToken: access_token,
                   userId: user_id,
                   deviceId: device_id,
+                  fallbackICEServerAllowed: fallbackICEServerAllowed,
                 },
                 true
               ),
@@ -151,10 +155,11 @@ export const ClientProvider: FC<Props> = ({ children }) => {
                     accessToken: access_token,
                     userId: user_id,
                     deviceId: device_id,
+                    fallbackICEServerAllowed: fallbackICEServerAllowed,
                   },
                   false // Don't need the crypto store just to log out
                 );
-                await client.logout(undefined, true);
+                await client.logout(true);
               } catch (err_) {
                 logger.warn(
                   "The previous session was lost, and we couldn't log it out, " +
@@ -261,7 +266,8 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   );
 
   const logout = useCallback(async () => {
-    await client.logout(undefined, true);
+    await client.logout(true);
+    await client.clearStores();
     clearSession();
     setState({
       client: undefined,
@@ -274,6 +280,8 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     history.push("/");
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
   }, [history, client]);
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     // To protect against multiple sessions writing to the same storage
@@ -295,8 +303,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
           setState((prev) => ({
             ...prev,
-            error: new Error(
-              "This application has been opened in another tab."
+            error: translatedError(
+              "This application has been opened in another tab.",
+              t
             ),
           }));
         }
@@ -314,7 +323,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         client?.removeListener(ClientEvent.ToDeviceEvent, onToDeviceEvent);
       };
     }
-  }, [client]);
+  }, [client, t]);
 
   const context = useMemo<ClientState>(
     () => ({

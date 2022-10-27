@@ -26,9 +26,13 @@ import {
 import { MatrixCall } from "matrix-js-sdk/src/webrtc/call";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { useTranslation } from "react-i18next";
+import { IWidgetApiRequest } from "matrix-widget-api";
 
 import { usePageUnload } from "./usePageUnload";
 import { PosthogAnalytics } from "../PosthogAnalytics";
+import { TranslatedError, translatedError } from "../TranslatedError";
+import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
 
 export interface UseGroupCallReturnType {
   state: GroupCallState;
@@ -38,7 +42,7 @@ export interface UseGroupCallReturnType {
   userMediaFeeds: CallFeed[];
   microphoneMuted: boolean;
   localVideoMuted: boolean;
-  error: Error;
+  error: TranslatedError | null;
   initLocalCallFeed: () => void;
   enter: () => void;
   leave: () => void;
@@ -48,7 +52,6 @@ export interface UseGroupCallReturnType {
   requestingScreenshare: boolean;
   isScreensharing: boolean;
   screenshareFeeds: CallFeed[];
-  localScreenshareFeed: CallFeed;
   localDesktopCapturerSourceId: string;
   participants: RoomMember[];
   hasLocalParticipant: boolean;
@@ -61,11 +64,10 @@ interface State {
   localCallFeed: CallFeed;
   activeSpeaker: string;
   userMediaFeeds: CallFeed[];
-  error: Error;
+  error: TranslatedError | null;
   microphoneMuted: boolean;
   localVideoMuted: boolean;
   screenshareFeeds: CallFeed[];
-  localScreenshareFeed: CallFeed;
   localDesktopCapturerSourceId: string;
   isScreensharing: boolean;
   requestingScreenshare: boolean;
@@ -86,7 +88,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
       localVideoMuted,
       isScreensharing,
       screenshareFeeds,
-      localScreenshareFeed,
       localDesktopCapturerSourceId,
       participants,
       hasLocalParticipant,
@@ -104,7 +105,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     localVideoMuted: false,
     isScreensharing: false,
     screenshareFeeds: [],
-    localScreenshareFeed: null,
     localDesktopCapturerSourceId: null,
     requestingScreenshare: false,
     participants: [],
@@ -132,7 +132,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
         microphoneMuted: groupCall.isMicrophoneMuted(),
         localVideoMuted: groupCall.isLocalVideoMuted(),
         isScreensharing: groupCall.isScreensharing(),
-        localScreenshareFeed: groupCall.localScreenshareFeed,
         localDesktopCapturerSourceId: groupCall.localDesktopCapturerSourceId,
         screenshareFeeds: [...groupCall.screenshareFeeds],
         participants: [...groupCall.participants],
@@ -169,12 +168,11 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
 
     function onLocalScreenshareStateChanged(
       isScreensharing: boolean,
-      localScreenshareFeed: CallFeed,
+      _localScreenshareFeed: CallFeed,
       localDesktopCapturerSourceId: string
     ): void {
       updateState({
         isScreensharing,
-        localScreenshareFeed,
         localDesktopCapturerSourceId,
       });
     }
@@ -225,7 +223,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
       microphoneMuted: groupCall.isMicrophoneMuted(),
       localVideoMuted: groupCall.isLocalVideoMuted(),
       isScreensharing: groupCall.isScreensharing(),
-      localScreenshareFeed: groupCall.localScreenshareFeed,
       localDesktopCapturerSourceId: groupCall.localDesktopCapturerSourceId,
       screenshareFeeds: [...groupCall.screenshareFeeds],
       participants: [...groupCall.participants],
@@ -296,36 +293,107 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
   const leave = useCallback(() => groupCall.leave(), [groupCall]);
 
   const toggleLocalVideoMuted = useCallback(() => {
-    let toggleToMute = !groupCall.isLocalVideoMuted();
+    const toggleToMute = !groupCall.isLocalVideoMuted();
     groupCall.setLocalVideoMuted(toggleToMute);
     PosthogAnalytics.instance.eventMuteCamera.track(toggleToMute);
   }, [groupCall]);
 
   const toggleMicrophoneMuted = useCallback(() => {
-    let toggleToMute = !groupCall.isMicrophoneMuted();
+    const toggleToMute = !groupCall.isMicrophoneMuted();
     groupCall.setMicrophoneMuted(toggleToMute);
     PosthogAnalytics.instance.eventMuteMicrophone.track(toggleToMute);
   }, [groupCall]);
 
-  const toggleScreensharing = useCallback(() => {
-    updateState({ requestingScreenshare: true });
+  const toggleScreensharing = useCallback(async () => {
+    if (!groupCall.isScreensharing()) {
+      // toggling on
+      updateState({ requestingScreenshare: true });
 
-    groupCall
-      .setScreensharingEnabled(!groupCall.isScreensharing(), { audio: true })
-      .then(() => {
+      try {
+        await groupCall.setScreensharingEnabled(true, {
+          audio: true,
+          throwOnFail: true,
+        });
         updateState({ requestingScreenshare: false });
-      });
+      } catch (e) {
+        // this will fail in Electron because getDisplayMedia just throws a permission
+        // error, so if we have a widget API, try requesting via that.
+        if (widget) {
+          const reply = await widget.api.transport.send(
+            ElementWidgetActions.ScreenshareRequest,
+            {}
+          );
+          if (!reply.pending) {
+            updateState({ requestingScreenshare: false });
+          }
+        }
+      }
+    } else {
+      // toggling off
+      groupCall.setScreensharingEnabled(false);
+    }
   }, [groupCall]);
+
+  const onScreenshareStart = useCallback(
+    async (ev: CustomEvent<IWidgetApiRequest>) => {
+      updateState({ requestingScreenshare: false });
+
+      const data = ev.detail.data as unknown as ScreenshareStartData;
+
+      await groupCall.setScreensharingEnabled(true, {
+        desktopCapturerSourceId: data.desktopCapturerSourceId as string,
+        audio: !data.desktopCapturerSourceId,
+      });
+      await widget.api.transport.reply(ev.detail, {});
+    },
+    [groupCall]
+  );
+
+  const onScreenshareStop = useCallback(
+    async (ev: CustomEvent<IWidgetApiRequest>) => {
+      updateState({ requestingScreenshare: false });
+      await groupCall.setScreensharingEnabled(false);
+      await widget.api.transport.reply(ev.detail, {});
+    },
+    [groupCall]
+  );
+
+  useEffect(() => {
+    if (widget) {
+      widget.lazyActions.on(
+        ElementWidgetActions.ScreenshareStart,
+        onScreenshareStart
+      );
+      widget.lazyActions.on(
+        ElementWidgetActions.ScreenshareStop,
+        onScreenshareStop
+      );
+
+      return () => {
+        widget.lazyActions.off(
+          ElementWidgetActions.ScreenshareStart,
+          onScreenshareStart
+        );
+        widget.lazyActions.off(
+          ElementWidgetActions.ScreenshareStop,
+          onScreenshareStop
+        );
+      };
+    }
+  }, [onScreenshareStart, onScreenshareStop]);
+
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (window.RTCPeerConnection === undefined) {
-      const error = new Error(
-        "WebRTC is not supported or is being blocked in this browser."
+      const error = translatedError(
+        "WebRTC is not supported or is being blocked in this browser.",
+        t
       );
       console.error(error);
       updateState({ error });
     }
-  }, []);
+  }, [t]);
 
   return {
     state,
@@ -345,7 +413,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     requestingScreenshare,
     isScreensharing,
     screenshareFeeds,
-    localScreenshareFeed,
     localDesktopCapturerSourceId,
     participants,
     hasLocalParticipant,

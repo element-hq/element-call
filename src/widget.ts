@@ -22,7 +22,7 @@ import { WidgetApi, MatrixCapabilities } from "matrix-widget-api";
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { LazyEventEmitter } from "./LazyEventEmitter";
-import { getRoomParams } from "./room/useRoomParams";
+import { getUrlParams } from "./UrlParams";
 
 // Subset of the actions in matrix-react-sdk
 export enum ElementWidgetActions {
@@ -30,11 +30,30 @@ export enum ElementWidgetActions {
   HangupCall = "im.vector.hangup",
   TileLayout = "io.element.tile_layout",
   SpotlightLayout = "io.element.spotlight_layout",
+
+  // Element Call -> host requesting to start a screenshare
+  // (ie. expects a ScreenshareStart once the user has picked a source)
+  // Element Call -> host requesting to start a screenshare
+  // (ie. expects a ScreenshareStart once the user has picked a source)
+  // replies with { pending } where pending is true if the host has asked
+  // the user to choose a window and false if not (ie. if the host isn't
+  // running within Electron)
+  ScreenshareRequest = "io.element.screenshare_request",
+  // host -> Element Call telling EC to start screen sharing with
+  // the given source
+  ScreenshareStart = "io.element.screenshare_start",
+  // host -> Element Call telling EC to stop screen sharing, or that
+  // the user cancelled when selecting a source after a ScreenshareRequest
+  ScreenshareStop = "io.element.screenshare_stop",
 }
 
 export interface JoinCallData {
   audioInput: string | null;
   videoInput: string | null;
+}
+
+export interface ScreenshareStartData {
+  desktopCapturerSourceId: string;
 }
 
 interface WidgetHelpers {
@@ -68,6 +87,8 @@ export const widget: WidgetHelpers | null = (() => {
         ElementWidgetActions.HangupCall,
         ElementWidgetActions.TileLayout,
         ElementWidgetActions.SpotlightLayout,
+        ElementWidgetActions.ScreenshareStart,
+        ElementWidgetActions.ScreenshareStop,
       ].forEach((action) => {
         api.on(`action:${action}`, (ev: CustomEvent<IWidgetApiRequest>) => {
           ev.preventDefault();
@@ -80,12 +101,14 @@ export const widget: WidgetHelpers | null = (() => {
       // We need to do this now rather than later because it has capabilities to
       // request, and is responsible for starting the transport (should it be?)
 
-      const { roomId, userId, deviceId } = getRoomParams();
+      const { roomId, userId, deviceId, baseUrl } = getUrlParams();
       if (!roomId) throw new Error("Room ID must be supplied");
       if (!userId) throw new Error("User ID must be supplied");
       if (!deviceId) throw new Error("Device ID must be supplied");
+      if (!baseUrl) throw new Error("Base URL must be supplied");
 
       // These are all the event types the app uses
+      const sendRecvEvent = ["org.matrix.rageshake_request"];
       const sendState = [
         { eventType: EventType.GroupCallPrefix },
         { eventType: EventType.GroupCallMemberPrefix, stateKey: userId },
@@ -111,6 +134,8 @@ export const widget: WidgetHelpers | null = (() => {
       const client = createRoomWidgetClient(
         api,
         {
+          sendEvent: sendRecvEvent,
+          receiveEvent: sendRecvEvent,
           sendState,
           receiveState,
           sendToDevice: sendRecvToDevice,
@@ -119,7 +144,7 @@ export const widget: WidgetHelpers | null = (() => {
         },
         roomId,
         {
-          baseUrl: "",
+          baseUrl,
           userId,
           deviceId,
           timelineSupport: true,

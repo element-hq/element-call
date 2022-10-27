@@ -16,6 +16,7 @@ limitations under the License.
 
 import React, { useCallback, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 
 import styles from "./RoomAuthView.module.css";
 import { Button } from "../button";
@@ -50,6 +51,7 @@ export function RoomAuthView() {
     [registerPasswordlessUser]
   );
 
+  const { t } = useTranslation();
   const location = useLocation();
 
   return (
@@ -64,42 +66,46 @@ export function RoomAuthView() {
       </Header>
       <div className={styles.container}>
         <main className={styles.main}>
-          <Headline className={styles.headline}>Join Call</Headline>
+          <Headline className={styles.headline}>{t("Join call")}</Headline>
           <Form className={styles.form} onSubmit={onSubmit}>
             <FieldRow>
               <InputField
                 id="displayName"
                 name="displayName"
-                label="Display Name"
-                placeholder="Display Name"
+                label={t("Display name")}
+                placeholder={t("Display name")}
                 type="text"
                 required
                 autoComplete="off"
               />
             </FieldRow>
             <Caption>
-              By clicking "Join call now", you agree to our{" "}
-              <Link href={privacyPolicyUrl}>Terms and conditions</Link>
+              <Trans>
+                By clicking "Join call now", you agree to our{" "}
+                <Link href={privacyPolicyUrl}>Terms and conditions</Link>
+              </Trans>
             </Caption>
             {error && (
               <FieldRow>
-                <ErrorMessage>{error.message}</ErrorMessage>
+                <ErrorMessage error={error} />
               </FieldRow>
             )}
             <Button type="submit" size="lg" disabled={loading}>
-              {loading ? "Loading..." : "Join call now"}
+              {loading ? t("Loading…") : t("Join call now")}
             </Button>
             <div id={recaptchaId} />
           </Form>
         </main>
         <Body className={styles.footer}>
-          {"Not registered yet? "}
-          <Link
-            color="primary"
-            to={{ pathname: "/login", state: { from: location } }}
-          >
-            Create an account
-          </Link>
+          <Trans>
+            Not registered yet?{" "}
+            <Link
+              color="primary"
+              to={{ pathname: "/login", state: { from: location } }}
+            >
+              Create an account
+            </Link>
+          </Trans>
         </Body>
       </div>
     </>

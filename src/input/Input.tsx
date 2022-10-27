@@ -14,11 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ChangeEvent, forwardRef, ReactNode } from "react";
+import React, { ChangeEvent, FC, forwardRef, ReactNode } from "react";
 import classNames from "classnames";
 
 import styles from "./Input.module.css";
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
+import { TranslatedError } from "../TranslatedError";
 
 interface FieldRowProps {
   children: ReactNode;
@@ -140,10 +141,12 @@ export const InputField = forwardRef<
   }
 );
 
-export function ErrorMessage({
-  children,
-}: {
-  children: ReactNode;
-}): JSX.Element {
-  return <p className={styles.errorMessage}>{children}</p>;
+interface ErrorMessageProps {
+  error: Error;
 }
+
+export const ErrorMessage: FC<ErrorMessageProps> = ({ error }) => (
+  <p className={styles.errorMessage}>
+    {error instanceof TranslatedError ? error.translatedMessage : error.message}
+  </p>
+);

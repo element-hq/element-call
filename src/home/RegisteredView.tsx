@@ -22,6 +22,7 @@ import React, {
 } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
+import { useTranslation } from "react-i18next";
 
 import { createRoom, roomAliasLocalpartFromRoomName } from "../matrix-utils";
 import { useGroupCallRooms } from "./useGroupCallRooms";
@@ -48,6 +49,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const history = useHistory();
+  const { t } = useTranslation();
   const { modalState, modalProps } = useModalTriggerState();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
@@ -93,7 +95,9 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
   }, [history, existingRoomId]);
 
   const callNameLabel =
-    callType === CallType.Video ? "Video call name" : "Walkie-talkie call name";
+    callType === CallType.Video
+      ? t("Video call name")
+      : t("Walkie-talkie call name");
 
   return (
     <>
@@ -127,19 +131,19 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
                 className={styles.button}
                 disabled={loading}
               >
-                {loading ? "Loading..." : "Go"}
+                {loading ? t("Loading…") : t("Go")}
               </Button>
             </FieldRow>
             {error && (
               <FieldRow className={styles.fieldRow}>
-                <ErrorMessage>{error.message}</ErrorMessage>
+                <ErrorMessage error={error} />
               </FieldRow>
             )}
           </Form>
           {recentRooms.length > 0 && (
             <>
               <Title className={styles.recentCallsTitle}>
-                Your recent Calls
+                {t("Your recent calls")}
               </Title>
               <CallList rooms={recentRooms} client={client} disableFacepile />
             </>

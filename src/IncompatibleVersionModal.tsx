@@ -15,7 +15,8 @@ limitations under the License.
 */
 
 import { Room } from "matrix-js-sdk/src/models/room";
-import React from "react";
+import React, { useMemo } from "react";
+import { Trans, useTranslation } from "react-i18next";
 
 import { Modal, ModalContent } from "./Modal";
 import { Body } from "./typography/Typography";
@@ -30,17 +31,21 @@ export const IncompatibleVersionModal: React.FC<Props> = ({
   room,
   ...rest
 }) => {
-  const userLis = Array.from(userIds).map((u) => (
-    <li>{room.getMember(u).name}</li>
-  ));
+  const { t } = useTranslation();
+  const userLis = useMemo(
+    () => [...userIds].map((u) => <li>{room.getMember(u)?.name ?? u}</li>),
+    [userIds, room]
+  );
 
   return (
-    <Modal title="Incompatible Versions" isDismissable {...rest}>
+    <Modal title={t("Incompatible versions")} isDismissable {...rest}>
       <ModalContent>
         <Body>
-          Other users are trying to join this call from incompatible versions.
-          These users should ensure that they have refreshed their browsers:
-          <ul>{userLis}</ul>
+          <Trans>
+            Other users are trying to join this call from incompatible versions.
+            These users should ensure that they have refreshed their browsers:
+            <ul>{userLis}</ul>
+          </Trans>
         </Body>
       </ModalContent>
     </Modal>

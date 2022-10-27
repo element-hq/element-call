@@ -1,5 +1,3 @@
-import Olm from "@matrix-org/olm";
-import olmWasmPath from "@matrix-org/olm/olm.wasm?url";
 import { IndexedDBStore } from "matrix-js-sdk/src/store/indexeddb";
 import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
@@ -19,11 +17,13 @@ import {
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import IndexedDBWorker from "./IndexedDBWorker?worker";
-import { getRoomParams } from "./room/useRoomParams";
+import { getUrlParams } from "./UrlParams";
 
 export const defaultHomeserver =
   (import.meta.env.VITE_DEFAULT_HOMESERVER as string) ??
   `${window.location.protocol}//${window.location.host}`;
+export const fallbackICEServerAllowed =
+  import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
 
 export const defaultHomeserverHost = new URL(defaultHomeserver).host;
 
@@ -72,10 +72,6 @@ export async function initClient(
   clientOptions: ICreateClientOpts,
   restore: boolean
 ): Promise<MatrixClient> {
-  // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
-  window.OLM_OPTIONS = {};
-  await Olm.init({ locateFile: () => olmWasmPath });
-
   let indexedDB: IDBFactory;
 
   try {
@@ -134,12 +130,12 @@ export async function initClient(
     storeOpts.cryptoStore = new MemoryCryptoStore();
   }
 
-  // XXX: we read from the room params in RoomPage too:
+  // XXX: we read from the URL params in RoomPage too:
   // it would be much better to read them in one place and pass
   // the values around, but we initialise the matrix client in
   // many different places so we'd have to pass it into all of
   // them.
-  const { e2eEnabled } = getRoomParams();
+  const { e2eEnabled } = getUrlParams();
   if (!e2eEnabled) {
     logger.info("Disabling E2E: group call signalling will NOT be encrypted.");
   }
@@ -152,6 +148,7 @@ export async function initClient(
     // so we don't want API calls taking ages, we'd rather they just fail.
     localTimeoutMs: 5000,
     useE2eForGroupCall: e2eEnabled,
+    fallbackICEServerAllowed: fallbackICEServerAllowed,
   });
 
   try {

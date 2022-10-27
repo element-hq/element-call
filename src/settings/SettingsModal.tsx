@@ -16,6 +16,7 @@ limitations under the License.
 
 import React from "react";
 import { Item } from "@react-stately/collections";
+import { useTranslation } from "react-i18next";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -41,6 +42,7 @@ interface Props {
 }
 
 export const SettingsModal = (props: Props) => {
+  const { t } = useTranslation();
   const {
     audioInput,
     audioInputs,
@@ -61,7 +63,7 @@ export const SettingsModal = (props: Props) => {
 
   return (
     <Modal
-      title="Settings"
+      title={t("Settings")}
       isDismissable
       mobileFullScreen
       className={styles.settingsModal}
@@ -72,12 +74,12 @@ export const SettingsModal = (props: Props) => {
           title={
             <>
               <AudioIcon width={16} height={16} />
-              <span>Audio</span>
+              <span>{t("Audio")}</span>
             </>
           }
         >
           <SelectInput
-            label="Microphone"
+            label={t("Microphone")}
             selectedKey={audioInput}
             onSelectionChange={setAudioInput}
           >
@@ -85,13 +87,13 @@ export const SettingsModal = (props: Props) => {
               <Item key={deviceId}>
                 {!!label && label.trim().length > 0
                   ? label
-                  : `Microphone ${index + 1}`}
+                  : t("Microphone {{n}}", { n: index + 1 })}
               </Item>
             ))}
           </SelectInput>
           {audioOutputs.length > 0 && (
             <SelectInput
-              label="Speaker"
+              label={t("Speaker")}
               selectedKey={audioOutput}
               onSelectionChange={setAudioOutput}
             >
@@ -99,7 +101,7 @@ export const SettingsModal = (props: Props) => {
                 <Item key={deviceId}>
                   {!!label && label.trim().length > 0
                     ? label
-                    : `Speaker ${index + 1}`}
+                    : t("Speaker {{n}}", { n: index + 1 })}
                 </Item>
               ))}
             </SelectInput>
@@ -107,10 +109,12 @@ export const SettingsModal = (props: Props) => {
           <FieldRow>
             <InputField
               id="spatialAudio"
-              label="Spatial audio"
+              label={t("Spatial audio")}
               type="checkbox"
               checked={spatialAudio}
-              description="This will make a speaker's audio seem as if it is coming from where their tile is positioned on screen. (Experimental feature: this may impact the stability of audio.)"
+              description={t(
+                "This will make a speaker's audio seem as if it is coming from where their tile is positioned on screen. (Experimental feature: this may impact the stability of audio.)"
+              )}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setSpatialAudio(event.target.checked)
               }
@@ -133,12 +137,12 @@ export const SettingsModal = (props: Props) => {
           title={
             <>
               <VideoIcon width={16} height={16} />
-              <span>Video</span>
+              <span>{t("Video")}</span>
             </>
           }
         >
           <SelectInput
-            label="Camera"
+            label={t("Camera")}
             selectedKey={videoInput}
             onSelectionChange={setVideoInput}
           >
@@ -146,7 +150,7 @@ export const SettingsModal = (props: Props) => {
               <Item key={deviceId}>
                 {!!label && label.trim().length > 0
                   ? label
-                  : `Camera ${index + 1}`}
+                  : t("Camera {{n}}", { n: index + 1 })}
               </Item>
             ))}
           </SelectInput>
@@ -155,20 +159,22 @@ export const SettingsModal = (props: Props) => {
           title={
             <>
               <DeveloperIcon width={16} height={16} />
-              <span>Developer</span>
+              <span>{t("Developer")}</span>
             </>
           }
         >
           <FieldRow>
             <Body className={styles.fieldRowText}>
-              Version: {import.meta.env.VITE_APP_VERSION || "dev"}
+              {t("Version: {{version}}", {
+                version: import.meta.env.VITE_APP_VERSION || "dev",
+              })}
             </Body>
           </FieldRow>
           <FieldRow>
             <InputField
               id="showInspector"
               name="inspector"
-              label="Show Call Inspector"
+              label={t("Show call inspector")}
               type="checkbox"
               checked={showInspector}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -177,7 +183,9 @@ export const SettingsModal = (props: Props) => {
             />
           </FieldRow>
           <FieldRow>
-            <Button onPress={downloadDebugLog}>Download Debug Logs</Button>
+            <Button onPress={downloadDebugLog}>
+              {t("Download debug logs")}
+            </Button>
           </FieldRow>
         </TabItem>
       </TabContainer>

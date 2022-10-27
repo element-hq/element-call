@@ -17,6 +17,7 @@ limitations under the License.
 import React, { forwardRef } from "react";
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
+import { useTranslation } from "react-i18next";
 
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
@@ -25,6 +26,7 @@ import { AudioButton, FullscreenButton } from "../button/Button";
 
 interface Props {
   name: string;
+  hasFeed: Boolean;
   speaking?: boolean;
   audioMuted?: boolean;
   videoMuted?: boolean;
@@ -46,6 +48,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
   (
     {
       name,
+      hasFeed,
       speaking,
       audioMuted,
       videoMuted,
@@ -66,6 +69,8 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     },
     ref
   ) => {
+    const { t } = useTranslation();
+
     const toolbarButtons: JSX.Element[] = [];
     if (!isLocal) {
       toolbarButtons.push(
@@ -86,6 +91,8 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         );
       }
     }
+
+    const caption = hasFeed ? name : t("{{name}} (Connecting...)", { name });
 
     return (
       <animated.div
@@ -111,13 +118,13 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         {!maximised &&
           (screenshare ? (
             <div className={styles.presenterLabel}>
-              <span>{`${name} is presenting`}</span>
+              <span>{t("{{name}} is presenting", { name })}</span>
             </div>
           ) : (
             <div className={classNames(styles.infoBubble, styles.memberName)}>
               {audioMuted && !videoMuted && <MicMutedIcon />}
               {videoMuted && <VideoMutedIcon />}
-              <span title={name}>{name}</span>
+              <span title={caption}>{caption}</span>
             </div>
           ))}
         <video ref={mediaRef} playsInline disablePictureInPicture />

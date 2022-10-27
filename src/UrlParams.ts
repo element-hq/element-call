@@ -17,7 +17,7 @@ limitations under the License.
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 
-export interface RoomParams {
+export interface UrlParams {
   roomAlias: string | null;
   roomId: string | null;
   viaServers: string[];
@@ -29,35 +29,41 @@ export interface RoomParams {
   preload: boolean;
   // Whether to hide the room header when in a call
   hideHeader: boolean;
+  // Whether to hide the screen-sharing button
+  hideScreensharing: boolean;
   // Whether to start a walkie-talkie call instead of a video call
   isPtt: boolean;
   // Whether to use end-to-end encryption
   e2eEnabled: boolean;
-  // The user's ID (only used in Matroska mode)
+  // The user's ID (only used in matryoshka mode)
   userId: string | null;
   // The display name to use for auto-registration
   displayName: string | null;
-  // The device's ID (only used in Matroska mode)
+  // The device's ID (only used in matryoshka mode)
   deviceId: string | null;
+  // The base URL of the homeserver to use for media lookups in matryoshka mode
+  baseUrl: string | null;
+  // The BCP 47 code of the language the app should use
+  lang: string | null;
 }
 
 /**
- * Gets the room parameters for the current URL.
- * @param {string} query The URL query string
- * @param {string} fragment The URL fragment string
- * @returns {RoomParams} The room parameters encoded in the URL
+ * Gets the app parameters for the current URL.
+ * @param query The URL query string
+ * @param fragment The URL fragment string
+ * @returns The app parameters encoded in the URL
  */
-export const getRoomParams = (
+export const getUrlParams = (
   query: string = window.location.search,
   fragment: string = window.location.hash
-): RoomParams => {
+): UrlParams => {
   const fragmentQueryStart = fragment.indexOf("?");
   const fragmentParams = new URLSearchParams(
     fragmentQueryStart === -1 ? "" : fragment.substring(fragmentQueryStart)
   );
   const queryParams = new URLSearchParams(query);
 
-  // Normally, room params should be encoded in the fragment so as to avoid
+  // Normally, URL params should be encoded in the fragment so as to avoid
   // leaking them to the server. However, we also check the normal query
   // string for backwards compatibility with versions that only used that.
   const hasParam = (name: string): boolean =>
@@ -82,19 +88,22 @@ export const getRoomParams = (
     isEmbedded: hasParam("embed"),
     preload: hasParam("preload"),
     hideHeader: hasParam("hideHeader"),
+    hideScreensharing: hasParam("hideScreensharing"),
     isPtt: hasParam("ptt"),
     e2eEnabled: getParam("enableE2e") !== "false", // Defaults to true
     userId: getParam("userId"),
     displayName: getParam("displayName"),
     deviceId: getParam("deviceId"),
+    baseUrl: getParam("baseUrl"),
+    lang: getParam("lang"),
   };
 };
 
 /**
- * Hook to simplify use of getRoomParams.
- * @returns {RoomParams} The room parameters for the current URL
+ * Hook to simplify use of getUrlParams.
+ * @returns The app parameters for the current URL
  */
-export const useRoomParams = (): RoomParams => {
+export const useUrlParams = (): UrlParams => {
   const { hash, search } = useLocation();
-  return useMemo(() => getRoomParams(search, hash), [search, hash]);
+  return useMemo(() => getUrlParams(search, hash), [search, hash]);
 };

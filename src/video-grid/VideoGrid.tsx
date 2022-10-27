@@ -23,7 +23,7 @@ import { ReactDOMAttributes } from "@use-gesture/react/dist/declarations/src/typ
 
 import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/GridLayoutMenu";
-import { Participant } from "../room/InCallView";
+import { TileDescriptor } from "../room/InCallView";
 
 interface TilePosition {
   x: number;
@@ -36,7 +36,7 @@ interface TilePosition {
 interface Tile {
   key: Key;
   order: number;
-  item: Participant;
+  item: TileDescriptor;
   remove: boolean;
   focused: boolean;
   presenter: boolean;
@@ -111,7 +111,8 @@ const getPipGap = (gridAspectRatio: number): number =>
 
 function getTilePositions(
   tileCount: number,
-  presenterTileCount: number,
+  focusedTileCount: number,
+  hasPresenter: boolean,
   gridWidth: number,
   gridHeight: number,
   pipXRatio: number,
@@ -119,7 +120,7 @@ function getTilePositions(
   layout: Layout
 ): TilePosition[] {
   if (layout === "freedom") {
-    if (tileCount === 2 && presenterTileCount === 0) {
+    if (tileCount === 2 && !hasPresenter && focusedTileCount === 0) {
       return getOneOnOneLayoutTilePositions(
         gridWidth,
         gridHeight,
@@ -130,7 +131,7 @@ function getTilePositions(
 
     return getFreedomLayoutTilePositions(
       tileCount,
-      presenterTileCount,
+      focusedTileCount,
       gridWidth,
       gridHeight
     );
@@ -247,7 +248,7 @@ function getSpotlightLayoutTilePositions(
 
 function getFreedomLayoutTilePositions(
   tileCount: number,
-  presenterTileCount: number,
+  focusedTileCount: number,
   gridWidth: number,
   gridHeight: number
 ): TilePosition[] {
@@ -261,7 +262,7 @@ function getFreedomLayoutTilePositions(
 
   const { layoutDirection, itemGridRatio } = getGridLayout(
     tileCount,
-    presenterTileCount,
+    focusedTileCount,
     gridWidth,
     gridHeight
   );
@@ -277,7 +278,7 @@ function getFreedomLayoutTilePositions(
     itemGridHeight = gridHeight;
   }
 
-  const itemTileCount = tileCount - presenterTileCount;
+  const itemTileCount = tileCount - focusedTileCount;
 
   const {
     columnCount: itemColumnCount,
@@ -295,65 +296,55 @@ function getFreedomLayoutTilePositions(
   );
   const itemGridBounds = getSubGridBoundingBox(itemGridPositions);
 
-  let presenterGridWidth;
-  let presenterGridHeight;
+  let focusedGridWidth: number;
+  let focusedGridHeight: number;
 
-  if (presenterTileCount === 0) {
-    presenterGridWidth = 0;
-    presenterGridHeight = 0;
+  if (focusedTileCount === 0) {
+    focusedGridWidth = 0;
+    focusedGridHeight = 0;
   } else if (layoutDirection === "vertical") {
-    presenterGridWidth = gridWidth;
-    presenterGridHeight =
+    focusedGridWidth = gridWidth;
+    focusedGridHeight =
       gridHeight - (itemGridBounds.height + (itemTileCount ? GAP * 2 : 0));
   } else {
-    presenterGridWidth =
+    focusedGridWidth =
       gridWidth - (itemGridBounds.width + (itemTileCount ? GAP * 2 : 0));
-    presenterGridHeight = gridHeight;
+    focusedGridHeight = gridHeight;
   }
 
   const {
-    columnCount: presenterColumnCount,
-    rowCount: presenterRowCount,
-    tileAspectRatio: presenterTileAspectRatio,
-  } = getSubGridLayout(
-    presenterTileCount,
-    presenterGridWidth,
-    presenterGridHeight
+    columnCount: focusedColumnCount,
+    rowCount: focusedRowCount,
+    tileAspectRatio: focusedTileAspectRatio,
+  } = getSubGridLayout(focusedTileCount, focusedGridWidth, focusedGridHeight);
+
+  const focusedGridPositions = getSubGridPositions(
+    focusedTileCount,
+    focusedColumnCount,
+    focusedRowCount,
+    focusedTileAspectRatio,
+    focusedGridWidth,
+    focusedGridHeight
   );
 
-  const presenterGridPositions = getSubGridPositions(
-    presenterTileCount,
-    presenterColumnCount,
-    presenterRowCount,
-    presenterTileAspectRatio,
-    presenterGridWidth,
-    presenterGridHeight
-  );
+  const tilePositions = [...focusedGridPositions, ...itemGridPositions];
 
-  const tilePositions = [...presenterGridPositions, ...itemGridPositions];
-
-  centerTiles(
-    presenterGridPositions,
-    presenterGridWidth,
-    presenterGridHeight,
-    0,
-    0
-  );
+  centerTiles(focusedGridPositions, focusedGridWidth, focusedGridHeight, 0, 0);
 
   if (layoutDirection === "vertical") {
     centerTiles(
       itemGridPositions,
       gridWidth,
-      gridHeight - presenterGridHeight,
+      gridHeight - focusedGridHeight,
       0,
-      presenterGridHeight
+      focusedGridHeight
     );
   } else {
     centerTiles(
       itemGridPositions,
-      gridWidth - presenterGridWidth,
+      gridWidth - focusedGridWidth,
       gridHeight,
-      presenterGridWidth,
+      focusedGridWidth,
       0
     );
   }
@@ -418,14 +409,14 @@ function isMobileBreakpoint(gridWidth: number, gridHeight: number): boolean {
 
 function getGridLayout(
   tileCount: number,
-  presenterTileCount: number,
+  focusedTileCount: number,
   gridWidth: number,
   gridHeight: number
 ): { itemGridRatio: number; layoutDirection: LayoutDirection } {
   let layoutDirection: LayoutDirection = "horizontal";
   let itemGridRatio = 1;
 
-  if (presenterTileCount === 0) {
+  if (focusedTileCount === 0) {
     return { itemGridRatio, layoutDirection };
   }
 
@@ -663,29 +654,25 @@ function getSubGridPositions(
 // Sets the 'order' property on tiles based on the layout param and
 // other properties of the tiles, eg. 'focused' and 'presenter'
 function reorderTiles(tiles: Tile[], layout: Layout) {
-  if (layout === "freedom" && tiles.length === 2) {
+  if (
+    layout === "freedom" &&
+    tiles.length === 2 &&
+    !tiles.some((t) => t.presenter || t.focused)
+  ) {
     // 1:1 layout
     tiles.forEach((tile) => (tile.order = tile.item.isLocal ? 0 : 1));
   } else {
     const focusedTiles: Tile[] = [];
-    const presenterTiles: Tile[] = [];
     const otherTiles: Tile[] = [];
 
     const orderedTiles: Tile[] = new Array(tiles.length);
     tiles.forEach((tile) => (orderedTiles[tile.order] = tile));
 
     orderedTiles.forEach((tile) =>
-      (tile.focused
-        ? focusedTiles
-        : tile.presenter
-        ? presenterTiles
-        : otherTiles
-      ).push(tile)
+      (tile.focused ? focusedTiles : otherTiles).push(tile)
     );
 
-    [...focusedTiles, ...presenterTiles, ...otherTiles].forEach(
-      (tile, i) => (tile.order = i)
-    );
+    [...focusedTiles, ...otherTiles].forEach((tile, i) => (tile.order = i));
   }
 }
 
@@ -706,12 +693,12 @@ interface ChildrenProperties extends ReactDOMAttributes {
   };
   width: number;
   height: number;
-  item: Participant;
+  item: TileDescriptor;
   [index: string]: unknown;
 }
 
 interface VideoGridProps {
-  items: Participant[];
+  items: TileDescriptor[];
   layout: Layout;
   disableAnimations?: boolean;
   children: (props: ChildrenProperties) => React.ReactNode;
@@ -759,11 +746,8 @@ export function VideoGrid({
         }
 
         let focused: boolean;
-        let presenter = false;
-
         if (layout === "spotlight") {
           focused = item.focused;
-          presenter = item.presenter;
         } else {
           focused = layout === lastLayoutRef.current ? tile.focused : false;
         }
@@ -774,7 +758,7 @@ export function VideoGrid({
           item,
           remove,
           focused,
-          presenter,
+          presenter: item.presenter,
         });
       }
 
@@ -795,7 +779,7 @@ export function VideoGrid({
           item,
           remove: false,
           focused: layout === "spotlight" && item.focused,
-          presenter: layout === "spotlight" && item.presenter,
+          presenter: item.presenter,
         };
 
         if (existingTile) {
@@ -821,7 +805,7 @@ export function VideoGrid({
               .map((tile) => ({ ...tile })); // clone before reordering
             reorderTiles(newTiles, layout);
 
-            const presenterTileCount = newTiles.reduce(
+            const focusedTileCount = newTiles.reduce(
               (count, tile) => count + (tile.focused ? 1 : 0),
               0
             );
@@ -831,7 +815,8 @@ export function VideoGrid({
               tiles: newTiles,
               tilePositions: getTilePositions(
                 newTiles.length,
-                presenterTileCount,
+                focusedTileCount,
+                newTiles.some((t) => t.presenter),
                 gridBounds.width,
                 gridBounds.height,
                 pipXRatio,
@@ -843,7 +828,7 @@ export function VideoGrid({
         }, 250);
       }
 
-      const presenterTileCount = newTiles.reduce(
+      const focusedTileCount = newTiles.reduce(
         (count, tile) => count + (tile.focused ? 1 : 0),
         0
       );
@@ -855,7 +840,8 @@ export function VideoGrid({
         tiles: newTiles,
         tilePositions: getTilePositions(
           newTiles.length,
-          presenterTileCount,
+          focusedTileCount,
+          newTiles.some((t) => t.presenter),
           gridBounds.width,
           gridBounds.height,
           pipXRatio,
@@ -959,7 +945,7 @@ export function VideoGrid({
       const item = tile.item;
 
       setTileState(({ tiles, ...state }) => {
-        let presenterTileCount = 0;
+        let focusedTileCount = 0;
         const newTiles = tiles.map((tile) => {
           const newTile = { ...tile }; // clone before reordering
 
@@ -967,7 +953,7 @@ export function VideoGrid({
             newTile.focused = !tile.focused;
           }
           if (newTile.focused) {
-            presenterTileCount++;
+            focusedTileCount++;
           }
 
           return newTile;
@@ -980,7 +966,8 @@ export function VideoGrid({
           tiles: newTiles,
           tilePositions: getTilePositions(
             newTiles.length,
-            presenterTileCount,
+            focusedTileCount,
+            newTiles.some((t) => t.presenter),
             gridBounds.width,
             gridBounds.height,
             pipXRatio,
@@ -1012,7 +999,7 @@ export function VideoGrid({
 
       let newTiles = tiles;
 
-      if (tiles.length === 2) {
+      if (tiles.length === 2 && !tiles.some((t) => t.presenter || t.focused)) {
         // We're in 1:1 mode, so only the local tile should be draggable
         if (!dragTile.item.isLocal) return;
 

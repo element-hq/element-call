@@ -16,6 +16,7 @@ limitations under the License.
 
 import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
+import { useTranslation } from "react-i18next";
 
 import { Button } from "../button";
 import { useProfile } from "./useProfile";
@@ -31,6 +32,7 @@ interface Props {
 }
 export function ProfileModal({ client, ...rest }: Props) {
   const { onClose } = rest;
+  const { t } = useTranslation();
   const {
     success,
     error,
@@ -83,14 +85,14 @@ export function ProfileModal({ client, ...rest }: Props) {
   }, [success, onClose]);
 
   return (
-    <Modal title="Profile" isDismissable {...rest}>
+    <Modal title={t("Profile")} isDismissable {...rest}>
       <ModalContent>
         <form onSubmit={onSubmit}>
           <FieldRow className={styles.avatarFieldRow}>
             <AvatarInputField
               id="avatar"
               name="avatar"
-              label="Avatar"
+              label={t("Avatar")}
               avatarUrl={avatarUrl}
               displayName={displayName}
               onRemoveAvatar={onRemoveAvatar}
@@ -100,7 +102,7 @@ export function ProfileModal({ client, ...rest }: Props) {
             <InputField
               id="userId"
               name="userId"
-              label="User Id"
+              label={t("User ID")}
               type="text"
               disabled
               value={client.getUserId()}
@@ -110,18 +112,18 @@ export function ProfileModal({ client, ...rest }: Props) {
             <InputField
               id="displayName"
               name="displayName"
-              label="Display Name"
+              label={t("Display name")}
               type="text"
               required
               autoComplete="off"
-              placeholder="Display Name"
+              placeholder={t("Display name")}
               value={displayName}
               onChange={onChangeDisplayName}
             />
           </FieldRow>
           {error && (
             <FieldRow>
-              <ErrorMessage>{error.message}</ErrorMessage>
+              <ErrorMessage error={error} />
             </FieldRow>
           )}
           <FieldRow rightAlign>
@@ -129,7 +131,7 @@ export function ProfileModal({ client, ...rest }: Props) {
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? "Saving..." : "Save"}
+              {loading ? t("Saving…") : t("Save")}
             </Button>
           </FieldRow>
         </form>
