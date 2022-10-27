@@ -20,7 +20,6 @@
   "Connection lost": "Connexion interrompue",
   "Copied!": "Copié !",
   "Copy and share this call link": "Copier et partager le lien de cet appel",
-  "Copy call link and join later": "Copier le lien de cet appel et rejoindre plus tard",
   "Create account": "Créer un compte",
   "Debug log": "Journal de débogage",
   "Debug log request": "Demande d’un journal de débogage",
@@ -129,5 +128,7 @@
   "Speaker": "Intervenant",
   "Invite": "Inviter",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Vous avez déjà un compte ?</0><1><0>Se connecter</0> Ou <2>Accès invité</2></1>",
-  "Sending debug logs…": "Envoi des journaux de débogage…"
+  "Sending debug logs…": "Envoi des journaux de débogage…",
+  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Rejoindre l’appel maintenant</0><1>Ou</1><2>Copier le lien de l’appel et rejoindre plus tard</2>",
+  "{{name}} (Connecting...)": "{{name}} (Connexion…)"
 }
