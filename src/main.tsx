@@ -20,8 +20,8 @@ limitations under the License.
 // dependency references.
 import "matrix-js-sdk/src/browser-index";
 
-import React from "react";
-import ReactDOM from "react-dom";
+import React, { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 import { createBrowserHistory } from "history";
 import * as Sentry from "@sentry/react";
 import { Integrations } from "@sentry/tracing";
@@ -39,6 +39,8 @@ initRageshake();
 
 console.info(`matrix-video-chat ${import.meta.env.VITE_APP_VERSION || "dev"}`);
 
+const root = createRoot(document.getElementById("root")!);
+
 let fatalError: Error | null = null;
 
 if (!window.isSecureContext) {
@@ -52,7 +54,7 @@ if (!window.isSecureContext) {
 }
 
 if (fatalError !== null) {
-  ReactDOM.render(<>fatalError.message</>, document.getElementById("root"));
+  root.render(fatalError.message);
   throw fatalError; // Stop the app early
 }
 
@@ -147,9 +149,8 @@ i18n
     },
   });
 
-ReactDOM.render(
-  <React.StrictMode>
+root.render(
+  <StrictMode>
     <App history={history} />
-  </React.StrictMode>,
-  document.getElementById("root")
+  </StrictMode>
 );
