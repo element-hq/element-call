@@ -28,6 +28,10 @@ module.exports = {
                 "plugin:matrix-org/react",
                 "prettier",
             ],
+            rules: {
+                // We're aiming to convert this code to strict mode
+                "@typescript-eslint/no-non-null-assertion": "off",
+            },
         },
     ],
     settings: {
