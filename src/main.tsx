@@ -52,7 +52,7 @@ if (!window.isSecureContext) {
 }
 
 if (fatalError !== null) {
-  ReactDOM.render(fatalError.message, document.getElementById("root"));
+  ReactDOM.render(<>fatalError.message</>, document.getElementById("root"));
   throw fatalError; // Stop the app early
 }
 
