@@ -31,7 +31,7 @@ import { usePageFocusStyle } from "./usePageFocusStyle";
 import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
 import { InspectorContextProvider } from "./room/GroupCallInspector";
 import { CrashView, LoadingView } from "./FullScreenView";
-
+import * as Config from "./config/Config"
 const SentryRoute = Sentry.withSentryRouting(Route);
 
 interface AppProps {
@@ -39,17 +39,18 @@ interface AppProps {
 }
 
 export default function App({ history }: AppProps) {
-  const [loadingOlm, setLoadingOlm] = useState(false);
+  const [loadingOlm, setLoadingOlm] = useState(true);
+  const [loadingConfig, setLoadingConfig] = useState(true);
 
   usePageFocusStyle();
 
   // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
   window.OLM_OPTIONS = {};
   Olm.init({ locateFile: () => olmWasmPath }).then(() => setLoadingOlm(false));
-
+  Config.init().then(() => setLoadingConfig(false));
   const errorPage = <CrashView />;
 
-  if (loadingOlm) {
+  if (loadingOlm || loadingConfig) {
     return <LoadingView />;
   }
 
