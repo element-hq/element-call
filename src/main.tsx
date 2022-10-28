@@ -20,8 +20,8 @@ limitations under the License.
 // dependency references.
 import "matrix-js-sdk/src/browser-index";
 
-import React from "react";
-import ReactDOM from "react-dom";
+import React, { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
 import { createBrowserHistory } from "history";
 import * as Sentry from "@sentry/react";
 import { Integrations } from "@sentry/tracing";
@@ -39,12 +39,23 @@ initRageshake();
 
 console.info(`matrix-video-chat ${import.meta.env.VITE_APP_VERSION || "dev"}`);
 
+const root = createRoot(document.getElementById("root")!);
+
+let fatalError: Error | null = null;
+
 if (!window.isSecureContext) {
-  throw new Error(
+  fatalError = new Error(
     "This app cannot run in an insecure context. To fix this, access the app " +
       "via a local loopback address, or serve it over HTTPS.\n" +
       "https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts"
   );
+} else if (!navigator.mediaDevices) {
+  fatalError = new Error("Your browser does not support WebRTC.");
+}
+
+if (fatalError !== null) {
+  root.render(fatalError.message);
+  throw fatalError; // Stop the app early
 }
 
 if (import.meta.env.VITE_CUSTOM_THEME) {
@@ -138,9 +149,8 @@ i18n
     },
   });
 
-ReactDOM.render(
-  <React.StrictMode>
+root.render(
+  <StrictMode>
     <App history={history} />
-  </React.StrictMode>,
-  document.getElementById("root")
+  </StrictMode>
 );
