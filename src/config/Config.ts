@@ -19,19 +19,24 @@ import { DEFAULT, IConfigOptions } from "./ConfigOptions";
 class Config {
     static instance: Config
     config: IConfigOptions;
+    initPromise: Promise<void>;
     constructor(){
         this.config = DEFAULT
     }
 }
 
 export function init(): Promise<void> {
+    if(Config?.instance?.initPromise){
+        return Config.instance.initPromise;
+    }
     Config.instance = new Config();
-    return new Promise<void>((resolve)=>{
+    Config.instance.initPromise = new Promise<void>((resolve)=>{
         downloadConfig("../config.json").then((config)=>{
             Config.instance.config = config;
             resolve();
         })
     });   
+    return Config.instance.initPromise;
 }
 
 async function downloadConfig(configJsonFilename: string): Promise<IConfigOptions> {
