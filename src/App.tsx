@@ -31,7 +31,8 @@ import { usePageFocusStyle } from "./usePageFocusStyle";
 import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
 import { InspectorContextProvider } from "./room/GroupCallInspector";
 import { CrashView, LoadingView } from "./FullScreenView";
-import * as Config from "./config/Config"
+import { Config } from "./config/Config";
+
 const SentryRoute = Sentry.withSentryRouting(Route);
 
 interface AppProps {
@@ -39,7 +40,6 @@ interface AppProps {
 }
 
 export default function App({ history }: AppProps) {
-
   const [olmLoaded, setOlmLoaded] = useState(false);
   const [configLoaded, setConfigLoaded] = useState(false);
 
@@ -53,16 +53,16 @@ export default function App({ history }: AppProps) {
         setOlmLoaded(true)
       );
     }
-    if(!configLoaded){
+    if (!configLoaded) {
       Config.init().then(() => setConfigLoaded(true));
     }
-  }, [olmLoaded, setOlmLoaded]);
+  }, [olmLoaded, setOlmLoaded, configLoaded, setConfigLoaded]);
 
   const errorPage = <CrashView />;
 
   return (
     <Router history={history}>
-      {(olmLoaded && configLoaded) ? (
+      {olmLoaded && configLoaded ? (
         <Suspense fallback={null}>
           <ClientProvider>
             <InspectorContextProvider>

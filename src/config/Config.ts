@@ -16,45 +16,47 @@ limitations under the License.
 
 import { DEFAULT, IConfigOptions } from "./ConfigOptions";
 
-class Config {
-    static instance: Config
-    config: IConfigOptions;
-    initPromise: Promise<void>;
-    constructor(){
-        this.config = DEFAULT
-    }
-}
-
-export function init(): Promise<void> {
-    if(Config?.instance?.initPromise){
-        return Config.instance.initPromise;
+export class Config {
+  static instance: Config;
+  static init(): Promise<void> {
+    if (Config?.instance?.initPromise) {
+      return Config.instance.initPromise;
     }
     Config.instance = new Config();
-    Config.instance.initPromise = new Promise<void>((resolve)=>{
-        downloadConfig("../config.json").then((config)=>{
-            Config.instance.config = config;
-            resolve();
-        })
-    });   
+    Config.instance.initPromise = new Promise<void>((resolve) => {
+      downloadConfig("../config.json").then((config) => {
+        Config.instance.config = config;
+        resolve();
+      });
+    });
     return Config.instance.initPromise;
+  }
+
+  config: IConfigOptions;
+  initPromise: Promise<void>;
+  constructor() {
+    this.config = DEFAULT;
+  }
 }
 
-async function downloadConfig(configJsonFilename: string): Promise<IConfigOptions> {
+async function downloadConfig(
+  configJsonFilename: string
+): Promise<IConfigOptions> {
   const url = new URL(configJsonFilename, window.location.href);
   url.searchParams.set("cachebuster", Date.now().toString());
   const res = await fetch(url, {
-      cache: "no-cache",
-      method: "GET",
+    cache: "no-cache",
+    method: "GET",
   });
 
   if (res.status === 404 || res.status === 0) {
-      // Lack of a config isn't an error, we should just use the defaults.
-      // Also treat a blank config as no config, assuming the status code is 0, because we don't get 404s from file:
-      // URIs so this is the only way we can not fail if the file doesn't exist when loading from a file:// URI.
-      return {} as IConfigOptions;
+    // Lack of a config isn't an error, we should just use the defaults.
+    // Also treat a blank config as no config, assuming the status code is 0, because we don't get 404s from file:
+    // URIs so this is the only way we can not fail if the file doesn't exist when loading from a file:// URI.
+    return {} as IConfigOptions;
   }
 
   if (res.ok) {
-      return res.json();
+    return res.json();
   }
 }
