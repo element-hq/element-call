@@ -56,7 +56,7 @@
   "Press and hold spacebar to talk": "Rääkimiseks vajuta ja hoia all tühikuklahvi",
   "Passwords must match": "Salasõnad ei klapi",
   "Password": "Salasõna",
-  "Not registered yet? <2>Create an account</2>": "Sa pole veel registreerunud? <2>Loo kasutajakonto</2>",
+  "Not registered yet? <2>Create an account</2>": "Pole veel registreerunud? <2>Loo kasutajakonto</2>",
   "Not now, return to home screen": "Mitte praegu, mine tagasi avalehele",
   "No": "Ei",
   "Mute microphone": "Summuta mikrofon",
@@ -110,5 +110,6 @@
   "Profile": "Profiil",
   "Press and hold to talk over {{name}}": "{{name}} ülerääkimiseks vajuta ja hoia all",
   "Press and hold to talk": "Rääkimiseks vajuta ja hoia all",
-  "Press and hold spacebar to talk over {{name}}": "{{name}} ülerääkimiseks vajuta ja hoia all tühikuklahvi"
+  "Press and hold spacebar to talk over {{name}}": "{{name}} ülerääkimiseks vajuta ja hoia all tühikuklahvi",
+  "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "Teised kasutajad üritavad selle kõnega liituda ühildumatuid versioone kasutades. Need kasutajad peaksid oma brauseris lehe uuestilaadimise tegema:<1>{userLis}</1>"
 }
