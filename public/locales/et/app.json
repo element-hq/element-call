@@ -77,7 +77,7 @@
   "Join existing call?": "Liitu juba käimasoleva kõnega?",
   "Join call now": "Kõnega liitumine",
   "Join call": "Kõnega liitumine",
-  "User ID": "Kasutaja tunnus",
+  "User ID": "Kasutajatunnus",
   "Turn on camera": "Lülita kaamera sisse",
   "Turn off camera": "Lülita kaamera välja",
   "Submitting feedback…": "Tagasiside saatmine…",
@@ -111,5 +111,17 @@
   "Press and hold to talk over {{name}}": "{{name}} ülerääkimiseks vajuta ja hoia all",
   "Press and hold to talk": "Rääkimiseks vajuta ja hoia all",
   "Press and hold spacebar to talk over {{name}}": "{{name}} ülerääkimiseks vajuta ja hoia all tühikuklahvi",
-  "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "Teised kasutajad üritavad selle kõnega liituda ühildumatuid versioone kasutades. Need kasutajad peaksid oma brauseris lehe uuestilaadimise tegema:<1>{userLis}</1>"
+  "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "Teised kasutajad üritavad selle kõnega liituda ühildumatuid versioone kasutades. Need kasutajad peaksid oma brauseris lehe uuestilaadimise tegema:<1>{userLis}</1>",
+  "Waiting for other participants…": "Ootame teiste osalejate lisandumist…",
+  "Waiting for network": "Ootame võrguühendust",
+  "Video call name": "Videokõne nimi",
+  "Video call": "Videokõne",
+  "Video": "Video",
+  "Version: {{version}}": "Versioon: {{version}}",
+  "Username": "Kasutajanimi",
+  "This call already exists, would you like to join?": "See kõne on juba olemas, kas sa soovoid liituda?",
+  "Talking…": "Sa oled rääkimas…",
+  "Talk over speaker": "Kasuta kõlarit",
+  "Thanks! We'll get right on it.": "Tänud! Tegelesema sellega niipea, kui võimalik.",
+  "Unmute microphone": "Lõpeta mikrofoni summitamine"
 }
