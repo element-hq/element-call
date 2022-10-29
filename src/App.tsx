@@ -37,9 +37,10 @@ const SentryRoute = Sentry.withSentryRouting(Route);
 
 interface AppProps {
   history: History;
+  onConfigLoaded: () => void;
 }
 
-export default function App({ history }: AppProps) {
+export default function App({ history, onConfigLoaded }: AppProps) {
   const [olmLoaded, setOlmLoaded] = useState(false);
   const [configLoaded, setConfigLoaded] = useState(false);
 
@@ -53,10 +54,14 @@ export default function App({ history }: AppProps) {
         setOlmLoaded(true)
       );
     }
-    if (!configLoaded) {
-      Config.init().then(() => setConfigLoaded(true));
+    // only init Config if its not loaded and not initialized (prohibit calling `then`)
+    if (!configLoaded && !Config.instance) {
+      Config.init().then(() => {
+        setConfigLoaded(true);
+        onConfigLoaded();
+      });
     }
-  }, [olmLoaded, setOlmLoaded, configLoaded, setConfigLoaded]);
+  }, [olmLoaded, setOlmLoaded, configLoaded, setConfigLoaded, onConfigLoaded]);
 
   const errorPage = <CrashView />;
 

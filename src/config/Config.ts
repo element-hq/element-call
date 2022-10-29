@@ -25,7 +25,7 @@ export class Config {
     Config.instance = new Config();
     Config.instance.initPromise = new Promise<void>((resolve) => {
       downloadConfig("../config.json").then((config) => {
-        Config.instance.config = config;
+        Config.instance.config = { ...Config.instance.config, ...config };
         resolve();
       });
     });

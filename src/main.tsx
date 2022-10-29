@@ -34,6 +34,7 @@ import "./index.css";
 import App from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { getUrlParams } from "./UrlParams";
+import { Config } from "./config/Config";
 
 initRageshake();
 
@@ -108,18 +109,6 @@ if (import.meta.env.VITE_CUSTOM_THEME) {
 
 const history = createBrowserHistory();
 
-Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN as string,
-  environment:
-    (import.meta.env.VITE_SENTRY_ENVIRONMENT as string) ?? "production",
-  integrations: [
-    new Integrations.BrowserTracing({
-      routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),
-    }),
-  ],
-  tracesSampleRate: 1.0,
-});
-
 const languageDetector = new LanguageDetector();
 languageDetector.addDetector({
   name: "urlFragment",
@@ -149,8 +138,22 @@ i18n
     },
   });
 
+// Initilization done after the App config has loaded:
+function onConfigLoaded() {
+  Sentry.init({
+    dsn: Config.instance.config.sentry.dns,
+    environment: Config.instance.config.sentry.environment ?? "production",
+    integrations: [
+      new Integrations.BrowserTracing({
+        routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),
+      }),
+    ],
+    tracesSampleRate: 1.0,
+  });
+}
+
 root.render(
   <StrictMode>
-    <App history={history} />
+    <App history={history} onConfigLoaded={onConfigLoaded} />
   </StrictMode>
 );
