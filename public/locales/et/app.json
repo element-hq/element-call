@@ -61,5 +61,20 @@
   "No": "Ei",
   "Mute microphone": "Summuta mikrofon",
   "Your recent calls": "Sinu hiljutised kõned",
-  "You can't talk at the same time": "Te ei saa üheaegselt rääkida"
+  "You can't talk at the same time": "Te ei saa üheaegselt rääkida",
+  "More menu": "Rohkem valikuid",
+  "More": "Rohkem",
+  "Microphone permissions needed to join the call.": "Kõnega liitumiseks on vaja lubada mikrofoni kasutamine.",
+  "Microphone {{n}}": "Mikrofon {{n}}",
+  "Microphone": "Mikrofon",
+  "Login to your account": "Logi oma kontosse sisse",
+  "Login": "Sisselogimine",
+  "Logging in…": "Sisselogimine …",
+  "Local volume": "Kohalik helitugevus",
+  "Loading…": "Laadimine …",
+  "Loading room…": "Ruumi laadimine …",
+  "Leave": "Lahku",
+  "Join existing call?": "Liitu juba käimasoleva kõnega?",
+  "Join call now": "Kõnega liitumine",
+  "Join call": "Kõnega liitumine"
 }
