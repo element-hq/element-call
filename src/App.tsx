@@ -39,35 +39,41 @@ interface AppProps {
   history: History;
   onConfigLoaded: () => void;
 }
+enum LoadState {
+  none,
+  loading,
+  loaded,
+}
 
 export default function App({ history, onConfigLoaded }: AppProps) {
-  const [olmLoaded, setOlmLoaded] = useState(false);
-  const [configLoaded, setConfigLoaded] = useState(false);
+  const [olmState, setOlmState] = useState(LoadState.none);
+  const [configState, setConfigState] = useState(LoadState.none);
 
   usePageFocusStyle();
 
   useEffect(() => {
-    if (!olmLoaded) {
+    if (olmState === LoadState.none) {
+      setOlmState(LoadState.loading);
       // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
       window.OLM_OPTIONS = {};
       Olm.init({ locateFile: () => olmWasmPath }).then(() =>
-        setOlmLoaded(true)
+        setOlmState(LoadState.loaded)
       );
     }
-    // only init Config if its not loaded and not initialized (prohibit calling `then`)
-    if (!configLoaded && !Config.instance) {
+    if (configState === LoadState.none) {
+      setOlmState(LoadState.loading);
       Config.init().then(() => {
-        setConfigLoaded(true);
+        setConfigState(LoadState.loaded);
         onConfigLoaded();
       });
     }
-  }, [olmLoaded, setOlmLoaded, configLoaded, setConfigLoaded, onConfigLoaded]);
+  }, [olmState, setOlmState, configState, setConfigState, onConfigLoaded]);
 
   const errorPage = <CrashView />;
 
   return (
     <Router history={history}>
-      {olmLoaded && configLoaded ? (
+      {olmState === LoadState.loaded && configState === LoadState.loaded ? (
         <Suspense fallback={null}>
           <ClientProvider>
             <InspectorContextProvider>
