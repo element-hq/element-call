@@ -120,8 +120,8 @@
   "Version: {{version}}": "Versioon: {{version}}",
   "Username": "Kasutajanimi",
   "This call already exists, would you like to join?": "See kõne on juba olemas, kas sa soovoid liituda?",
-  "Talking…": "Sa oled rääkimas…",
-  "Talk over speaker": "Kasuta kõlarit",
-  "Thanks! We'll get right on it.": "Tänud! Tegelesema sellega niipea, kui võimalik.",
+  "Talking…": "Jutt käib…",
+  "Talk over speaker": "Räägi teisest kõnelejast üle",
+  "Thanks! We'll get right on it.": "Tänud! Tegeleme sellega esimesel võimalusel.",
   "Unmute microphone": "Lõpeta mikrofoni summitamine"
 }
