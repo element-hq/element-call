@@ -40,30 +40,30 @@ interface AppProps {
   onConfigLoaded: () => void;
 }
 enum LoadState {
-  none,
-  loading,
-  loaded,
+  None,
+  Loading,
+  Loaded,
 }
 
 export default function App({ history, onConfigLoaded }: AppProps) {
-  const [olmState, setOlmState] = useState(LoadState.none);
-  const [configState, setConfigState] = useState(LoadState.none);
+  const [olmState, setOlmState] = useState(LoadState.None);
+  const [configState, setConfigState] = useState(LoadState.None);
 
   usePageFocusStyle();
 
   useEffect(() => {
-    if (olmState === LoadState.none) {
-      setOlmState(LoadState.loading);
+    if (olmState === LoadState.None) {
+      setOlmState(LoadState.Loading);
       // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
       window.OLM_OPTIONS = {};
       Olm.init({ locateFile: () => olmWasmPath }).then(() =>
-        setOlmState(LoadState.loaded)
+        setOlmState(LoadState.Loaded)
       );
     }
-    if (configState === LoadState.none) {
-      setOlmState(LoadState.loading);
+    if (configState === LoadState.None) {
+      setOlmState(LoadState.Loading);
       Config.init().then(() => {
-        setConfigState(LoadState.loaded);
+        setConfigState(LoadState.Loaded);
         onConfigLoaded();
       });
     }
@@ -73,7 +73,7 @@ export default function App({ history, onConfigLoaded }: AppProps) {
 
   return (
     <Router history={history}>
-      {olmState === LoadState.loaded && configState === LoadState.loaded ? (
+      {olmState === LoadState.Loaded && configState === LoadState.Loaded ? (
         <Suspense fallback={null}>
           <ClientProvider>
             <InspectorContextProvider>
