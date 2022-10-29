@@ -119,7 +119,7 @@
   "Video": "Video",
   "Version: {{version}}": "Versioon: {{version}}",
   "Username": "Kasutajanimi",
-  "This call already exists, would you like to join?": "See kõne on juba olemas, kas sa soovid liituda?",
+  "This call already exists, would you like to join?": "See kõne on juba olemas, kas soovid liituda?",
   "Talking…": "Jutt käib…",
   "Talk over speaker": "Räägi teisest kõnelejast üle",
   "Thanks! We'll get right on it.": "Tänud! Tegeleme sellega esimesel võimalusel.",
@@ -128,5 +128,7 @@
   "Yes, join call": "Jah, liitu kõnega",
   "Walkie-talkie call": "Walkie-talkie stiilis kõne",
   "Walkie-talkie call name": "Walkie-talkie stiilis kõne nimi",
-  "WebRTC is not supported or is being blocked in this browser.": "WebRTC pole kas selles brauseris toetatud või on keelatud."
+  "WebRTC is not supported or is being blocked in this browser.": "WebRTC pole kas selles brauseris toetatud või on keelatud.",
+  "This will make a speaker's audio seem as if it is coming from where their tile is positioned on screen. (Experimental feature: this may impact the stability of audio.)": "Muudab kõneleja heli nii, nagu tuleks see sealt, kus on tema pilt ekraanil. (Katsetuslik funktsioon - võib mõjutada heli stabiilsust.)",
+  "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>Terms and conditions</12>": "Seda saiti kaitseb ReCAPTCHA ning kehtivad Google <2>privaatsuspoliitika</2> ja <6>teenusetingimused</6>.<9></9>Klikkides \"Registreeri\", nõustud meie <12>tingimustega</12>"
 }
