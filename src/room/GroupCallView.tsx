@@ -186,7 +186,7 @@ export function GroupCallView({
     if (!isPasswordlessUser && !isEmbedded) {
       history.push("/");
     }
-  }, [leave, isPasswordlessUser, isEmbedded, history]);
+  }, [groupCall.room, leave, isPasswordlessUser, isEmbedded, history]);
 
   useEffect(() => {
     if (widget && state === GroupCallState.Entered) {
