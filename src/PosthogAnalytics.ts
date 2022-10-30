@@ -15,8 +15,9 @@ limitations under the License.
 */
 
 import posthog, { CaptureOptions, PostHog, Properties } from "posthog-js";
-import { widget } from "./widget";
 import { logger } from "matrix-js-sdk/src/logger";
+
+import { widget } from "./widget";
 import { settingsBus } from "./settings/useSetting";
 import {
   CallEndedTracker,
@@ -26,6 +27,7 @@ import {
   MuteCameraTracker,
   MuteMicrophoneTracker,
 } from "./PosthogEvents";
+import { Config } from "./config/Config";
 
 /* Posthog analytics tracking.
  *
@@ -111,8 +113,8 @@ export class PosthogAnalytics {
 
   constructor(private readonly posthog: PostHog) {
     const posthogConfig: PosthogSettings = {
-      project_api_key: import.meta.env.VITE_POSTHOG_PROJECT_API_KEY,
-      api_host: import.meta.env.VITE_POSTHOG_API_HOST,
+      project_api_key: Config.instance.config.posthog.api_key,
+      api_host: Config.instance.config.posthog.api_host,
     };
     if (posthogConfig.project_api_key && posthogConfig.api_host) {
       this.posthog.init(posthogConfig.project_api_key, {
@@ -162,7 +164,7 @@ export class PosthogAnalytics {
   }
 
   private static getPlatformProperties(): PlatformProperties {
-    let appVersion = import.meta.env.VITE_APP_VERSION || "unknown";
+    const appVersion = import.meta.env.VITE_APP_VERSION || "unknown";
     return {
       appVersion,
       appPlatform: widget ? "embedded" : "jssdk",
@@ -336,5 +338,3 @@ export class PosthogAnalytics {
   public eventMuteMicrophone = new MuteMicrophoneTracker();
   public eventMuteCamera = new MuteCameraTracker();
 }
-
-PosthogAnalytics.instance;
