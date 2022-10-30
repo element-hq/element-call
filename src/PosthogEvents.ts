@@ -80,6 +80,7 @@ export class SignupTracker {
     signupStart: new Date(0),
     signupEnd: new Date(0),
   };
+
   cacheSignupStart(time: Date) {
     this.cache.signupStart = time;
   }
