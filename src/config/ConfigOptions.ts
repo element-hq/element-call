@@ -11,4 +11,9 @@ export interface IConfigOptions {
   };
 }
 
-export const DEFAULT: IConfigOptions = {};
+export const DEFAULT_CONFIG: IConfigOptions = {
+  sentry: { dns: "", environment: "production" },
+  rageshake: {
+    submit_url: "https://element.io/bugreports/submit",
+  },
+};

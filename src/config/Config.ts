@@ -14,29 +14,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { DEFAULT, IConfigOptions } from "./ConfigOptions";
+import { IConfigOptions } from "./ConfigOptions";
 
 export class Config {
-  static instance: Config;
-  static init(): Promise<void> {
-    if (Config?.instance?.initPromise) {
-      return Config.instance.initPromise;
+  private static _instance: Config;
+  public static get instance(): Config {
+    if (!this._instance)
+      throw new Error("Config instance read before config got initialized");
+    return this._instance;
+  }
+  public static init(): Promise<void> {
+    if (Config?._instance?.initPromise) {
+      return Config._instance.initPromise;
     }
-    Config.instance = new Config();
-    Config.instance.initPromise = new Promise<void>((resolve) => {
+    Config._instance = new Config();
+    Config._instance.initPromise = new Promise<void>((resolve) => {
       downloadConfig("../config.json").then((config) => {
-        Config.instance.config = { ...Config.instance.config, ...config };
+        Config._instance.config = { ...Config._instance.config, ...config };
         resolve();
       });
     });
-    return Config.instance.initPromise;
+    return Config._instance.initPromise;
   }
 
-  config: IConfigOptions;
-  initPromise: Promise<void>;
-  constructor() {
-    this.config = DEFAULT;
-  }
+  public config: IConfigOptions;
+  private initPromise: Promise<void>;
 }
 
 async function downloadConfig(

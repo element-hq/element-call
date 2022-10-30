@@ -1,6 +1,6 @@
 {
   "posthog": {
-    "api_key": "ldb_dFdsalfVyKnf2K1exampleKey1flKIiewrdn8HFJAL",
+    "api_key": "examplePosthogKey",
     "api_host": "https://posthog.com"
   },
   "sentry": {

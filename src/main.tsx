@@ -35,6 +35,7 @@ import App from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
+import { DEFAULT_CONFIG } from "./config/ConfigOptions";
 
 initRageshake();
 
@@ -141,8 +142,10 @@ i18n
 // Initilization done after the App config has loaded:
 function onConfigLoaded() {
   Sentry.init({
-    dsn: Config.instance.config.sentry.dns,
-    environment: Config.instance.config.sentry.environment ?? "production",
+    dsn: Config.instance.config.sentry?.dns ?? DEFAULT_CONFIG.sentry.dns,
+    environment:
+      Config.instance.config.sentry.environment ??
+      DEFAULT_CONFIG.sentry.environment,
     integrations: [
       new Integrations.BrowserTracing({
         routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),
