@@ -100,7 +100,6 @@ export const RegisterPage: FC = () => {
 
         setClient(newClient, session);
         PosthogAnalytics.instance.eventSignup.cacheSignupEnd(new Date());
-
       };
 
       submit()

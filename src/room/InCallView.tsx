@@ -211,7 +211,7 @@ export function InCallView({
 
     PosthogAnalytics.instance.eventCallEnded.cacheParticipantCountChanged(
       participants.length
-    );    
+    );
     // add the screenshares too
     for (const screenshareFeed of screenshareFeeds) {
       const userMediaItem = tileDescriptors.find(
