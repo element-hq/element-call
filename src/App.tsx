@@ -36,6 +36,7 @@ const SentryRoute = Sentry.withSentryRouting(Route);
 interface AppProps {
   history: History;
 }
+
 export default function App({ history }: AppProps) {
   const [loaded, setLoaded] = useState(false);
 

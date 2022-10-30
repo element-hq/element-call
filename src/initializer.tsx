@@ -40,10 +40,7 @@ class DependencyLoadStates {
   i18n: LoadState = LoadState.None;
 
   allDepsAreLoaded() {
-    const notLoadedDeps = Object.values(this).filter(
-      (s) => s !== LoadState.Loaded
-    );
-    return notLoadedDeps.length === 0;
+    return !Object.values(this).some((s) => s !== LoadState.Loaded);
   }
 }
 
