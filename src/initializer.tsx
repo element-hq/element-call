@@ -40,27 +40,24 @@ class DependencyLoadStates {
   i18n: LoadState = LoadState.None;
 
   allDepsAreLoaded() {
-    const notLoadedDeps = Object.values(this).filter(
-      (s) => s !== LoadState.Loaded
-    );
-    return notLoadedDeps.length === 0;
+    return !Object.values(this).some((s) => s !== LoadState.Loaded);
   }
 }
 
 export class Initializer {
-  private static _instance: Initializer;
+  private static internalInstance: Initializer;
 
   public static init(): Promise<void> | null {
-    if (Initializer?._instance?.initPromise) {
+    if (Initializer?.internalInstance?.initPromise) {
       return null;
     }
-    Initializer._instance = new Initializer();
-    Initializer._instance.initPromise = new Promise<void>((resolve) => {
+    Initializer.internalInstance = new Initializer();
+    Initializer.internalInstance.initPromise = new Promise<void>((resolve) => {
       // initStep calls itself recursivly until everything is initialized in the correct order.
       // Then the promise gets resolved.
-      Initializer._instance.initStep(resolve);
+      Initializer.internalInstance.initStep(resolve);
     });
-    return Initializer._instance.initPromise;
+    return Initializer.internalInstance.initPromise;
   }
 
   loadStates = new DependencyLoadStates();

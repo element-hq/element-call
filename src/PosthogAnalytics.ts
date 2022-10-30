@@ -97,7 +97,7 @@ export class PosthogAnalytics {
   private static ANALYTICS_EVENT_TYPE = "im.vector.analytics";
 
   // set true during the constructor if posthog config is present, otherwise false
-  private static _instance = null;
+  private static internalInstance = null;
 
   private readonly enabled: boolean = false;
   private anonymity = Anonymity.Pseudonymous;
@@ -105,10 +105,10 @@ export class PosthogAnalytics {
   private registrationType: RegistrationType = RegistrationType.Guest;
 
   public static get instance(): PosthogAnalytics {
-    if (!this._instance) {
-      this._instance = new PosthogAnalytics(posthog);
+    if (!this.internalInstance) {
+      this.internalInstance = new PosthogAnalytics(posthog);
     }
-    return this._instance;
+    return this.internalInstance;
   }
 
   constructor(private readonly posthog: PostHog) {

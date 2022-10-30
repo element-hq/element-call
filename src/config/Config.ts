@@ -17,24 +17,24 @@ limitations under the License.
 import { DEFAULT_CONFIG, IConfigOptions } from "./ConfigOptions";
 
 export class Config {
-  private static _instance: Config;
+  private static internalInstance: Config;
   public static get instance(): Config {
-    if (!this._instance)
+    if (!this.internalInstance)
       throw new Error("Config instance read before config got initialized");
-    return this._instance;
+    return this.internalInstance;
   }
   public static init(): Promise<void> {
-    if (Config?._instance?.initPromise) {
-      return Config._instance.initPromise;
+    if (Config?.internalInstance?.initPromise) {
+      return Config.internalInstance.initPromise;
     }
-    Config._instance = new Config();
-    Config._instance.initPromise = new Promise<void>((resolve) => {
+    Config.internalInstance = new Config();
+    Config.internalInstance.initPromise = new Promise<void>((resolve) => {
       downloadConfig("../config.json").then((config) => {
-        Config._instance.config = { ...DEFAULT_CONFIG, ...config };
+        Config.internalInstance.config = { ...DEFAULT_CONFIG, ...config };
         resolve();
       });
     });
-    return Config._instance.initPromise;
+    return Config.internalInstance.initPromise;
   }
 
   public config: IConfigOptions;
