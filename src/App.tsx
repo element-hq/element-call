@@ -14,9 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import Olm from "@matrix-org/olm";
-import olmWasmPath from "@matrix-org/olm/olm.wasm?url";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
@@ -31,49 +29,22 @@ import { usePageFocusStyle } from "./usePageFocusStyle";
 import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
 import { InspectorContextProvider } from "./room/GroupCallInspector";
 import { CrashView, LoadingView } from "./FullScreenView";
-import { Config } from "./config/Config";
+import { useDependenciesLoaded } from "./useDependenciesLoaded";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
 interface AppProps {
   history: History;
-  onConfigLoaded: () => void;
 }
-enum LoadState {
-  None,
-  Loading,
-  Loaded,
-}
-
-export default function App({ history, onConfigLoaded }: AppProps) {
-  const [olmState, setOlmState] = useState(LoadState.None);
-  const [configState, setConfigState] = useState(LoadState.None);
-
+export default function App({ history }: AppProps) {
+  const loaded = useDependenciesLoaded();
   usePageFocusStyle();
-
-  useEffect(() => {
-    if (olmState === LoadState.None) {
-      setOlmState(LoadState.Loading);
-      // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
-      window.OLM_OPTIONS = {};
-      Olm.init({ locateFile: () => olmWasmPath }).then(() =>
-        setOlmState(LoadState.Loaded)
-      );
-    }
-    if (configState === LoadState.None) {
-      setOlmState(LoadState.Loading);
-      Config.init().then(() => {
-        setConfigState(LoadState.Loaded);
-        onConfigLoaded();
-      });
-    }
-  }, [olmState, setOlmState, configState, setConfigState, onConfigLoaded]);
 
   const errorPage = <CrashView />;
 
   return (
     <Router history={history}>
-      {olmState === LoadState.Loaded && configState === LoadState.Loaded ? (
+      {loaded ? (
         <Suspense fallback={null}>
           <ClientProvider>
             <InspectorContextProvider>

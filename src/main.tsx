@@ -23,19 +23,10 @@ import "matrix-js-sdk/src/browser-index";
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserHistory } from "history";
-import * as Sentry from "@sentry/react";
-import { Integrations } from "@sentry/tracing";
-import i18n from "i18next";
-import { initReactI18next } from "react-i18next";
-import Backend from "i18next-http-backend";
-import LanguageDetector from "i18next-browser-languagedetector";
 
 import "./index.css";
 import App from "./App";
 import { init as initRageshake } from "./settings/rageshake";
-import { getUrlParams } from "./UrlParams";
-import { Config } from "./config/Config";
-import { DEFAULT_CONFIG } from "./config/ConfigOptions";
 
 initRageshake();
 
@@ -110,53 +101,8 @@ if (import.meta.env.VITE_CUSTOM_THEME) {
 
 const history = createBrowserHistory();
 
-const languageDetector = new LanguageDetector();
-languageDetector.addDetector({
-  name: "urlFragment",
-  // Look for a language code in the URL's fragment
-  lookup: () => getUrlParams().lang ?? undefined,
-});
-
-i18n
-  .use(Backend)
-  .use(languageDetector)
-  .use(initReactI18next)
-  .init({
-    fallbackLng: "en-GB",
-    defaultNS: "app",
-    keySeparator: false,
-    nsSeparator: false,
-    pluralSeparator: "|",
-    contextSeparator: "|",
-    interpolation: {
-      escapeValue: false, // React has built-in XSS protections
-    },
-    detection: {
-      // No localStorage detectors or caching here, since we don't have any way
-      // of letting the user manually select a language
-      order: ["urlFragment", "navigator"],
-      caches: [],
-    },
-  });
-
-// Initilization done after the App config has loaded:
-function onConfigLoaded() {
-  Sentry.init({
-    dsn: Config.instance.config.sentry?.dns ?? DEFAULT_CONFIG.sentry.dns,
-    environment:
-      Config.instance.config.sentry.environment ??
-      DEFAULT_CONFIG.sentry.environment,
-    integrations: [
-      new Integrations.BrowserTracing({
-        routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),
-      }),
-    ],
-    tracesSampleRate: 1.0,
-  });
-}
-
 root.render(
   <StrictMode>
-    <App history={history} onConfigLoaded={onConfigLoaded} />
+    <App history={history} />
   </StrictMode>
 );
