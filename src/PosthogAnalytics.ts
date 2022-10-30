@@ -71,12 +71,12 @@ export enum RegistrationType {
 
 interface PlatformProperties {
   appVersion: string;
-  appPlatform: "embedded" | "jssdk";
+  appMatrixBackend: "embedded" | "jssdk";
 }
 
 interface PosthogSettings {
-  project_api_key: string;
-  api_host: string;
+  project_api_key?: string;
+  api_host?: string;
 }
 
 export class PosthogAnalytics {
@@ -113,8 +113,8 @@ export class PosthogAnalytics {
 
   constructor(private readonly posthog: PostHog) {
     const posthogConfig: PosthogSettings = {
-      project_api_key: Config.instance.config.posthog.api_key,
-      api_host: Config.instance.config.posthog.api_host,
+      project_api_key: Config.instance.config.posthog?.api_key,
+      api_host: Config.instance.config.posthog?.api_host,
     };
     if (posthogConfig.project_api_key && posthogConfig.api_host) {
       this.posthog.init(posthogConfig.project_api_key, {
@@ -167,7 +167,7 @@ export class PosthogAnalytics {
     const appVersion = import.meta.env.VITE_APP_VERSION || "unknown";
     return {
       appVersion,
-      appPlatform: widget ? "embedded" : "jssdk",
+      appMatrixBackend: widget ? "embedded" : "jssdk",
     };
   }
 
