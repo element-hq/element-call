@@ -21,7 +21,6 @@
   "Connection lost": "Koneksi hilang",
   "Copied!": "Disalin!",
   "Copy and share this call link": "Salin dan bagikan tautan panggilan ini",
-  "Copy call link and join later": "Salin tautan panggilan dan bergabung nanti",
   "Create account": "Buat akun",
   "Debug log": "Catatan pengawakutuan",
   "Debug log request": "Permintaan catatan pengawakutuan",
@@ -128,5 +127,8 @@
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "{{name}} is presenting": "{{name}} sedang mempresentasi",
   "{{name}} is talking…": "{{name}} sedang berbicara…",
-  "{{roomName}} - Walkie-talkie call": "{{roomName}} - Panggilan protofon"
+  "{{roomName}} - Walkie-talkie call": "{{roomName}} - Panggilan protofon",
+  "Sending debug logs…": "Mengirimkan catatan pengawakutuan…",
+  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Bergabung panggilan sekarang</0><1>Atau</1><2>Salin tautan dan bergabung nanti</2>",
+  "{{name}} (Connecting...)": "{{name}} (Menghubungkan...)"
 }

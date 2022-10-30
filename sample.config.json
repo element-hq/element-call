@@ -1,0 +1,13 @@
+{
+  "posthog": {
+    "api_key": "examplePosthogKey",
+    "api_host": "https://posthog.com"
+  },
+  "sentry": {
+    "environment": "main-branch",
+    "dns": "https://examplePublicKey@o0.ingest.sentry.io/0"
+  },
+  "rageshake": {
+    "submit_url": "http://localhost:9110/api/submit"
+  }
+}

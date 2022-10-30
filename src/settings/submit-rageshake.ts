@@ -24,6 +24,8 @@ import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
 import { InspectorContext } from "../room/GroupCallInspector";
 import { useModalTriggerState } from "../Modal";
+import { Config } from "../config/Config";
+import { DEFAULT_CONFIG } from "../config/ConfigOptions";
 
 interface RageShakeSubmitOptions {
   sendLogs: boolean;
@@ -252,8 +254,8 @@ export function useSubmitRageshake(): {
         }
 
         await fetch(
-          (import.meta.env.VITE_RAGESHAKE_SUBMIT_URL as string) ||
-            "https://element.io/bugreports/submit",
+          Config.instance.config.rageshake?.submit_url ??
+            DEFAULT_CONFIG.rageshake.submit_url,
           {
             method: "POST",
             body,
