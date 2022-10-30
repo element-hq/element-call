@@ -21,7 +21,6 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
-import { useEffect, useState } from "react";
 import * as Sentry from "@sentry/react";
 
 import { getUrlParams } from "./UrlParams";
@@ -34,51 +33,64 @@ enum LoadState {
   Loaded,
 }
 
-// We need to synchonysly track the if init on the deps is already called:
-// otherwise strict mode will trigger the effect twice with xxxState still beeing LoadState.None
-// resulting in calling init twice.
-let alreadyInitializedOlm = false;
-let alreadyInitializedConfig = false;
-let alreadyInitializedSentry = false;
-let alreadyInitializedi18n = false;
+class DependencyLoadStates {
+  olm: LoadState = LoadState.None;
+  config: LoadState = LoadState.None;
+  sentry: LoadState = LoadState.None;
+  i18n: LoadState = LoadState.None;
 
-export function useDependenciesLoaded(): boolean {
-  // We track the loading state of all dependencies so that we can control the order/dependencies of the initialization
-  const [olmState, setOlmState] = useState(LoadState.None);
-  const [configState, setConfigState] = useState(LoadState.None);
-  const [sentryState, setSentryState] = useState(LoadState.None);
-  const [i18nState, seti18nState] = useState(LoadState.None);
+  allDepsAreLoaded() {
+    const notLoadedDeps = Object.values(this).filter(
+      (s) => s !== LoadState.Loaded
+    );
+    return notLoadedDeps.length === 0;
+  }
+}
 
-  useEffect(() => {
+export class Initializer {
+  private static _instance: Initializer;
+
+  public static init(): Promise<void> | null {
+    if (Initializer?._instance?.initPromise) {
+      return null;
+    }
+    Initializer._instance = new Initializer();
+    Initializer._instance.initPromise = new Promise<void>((resolve) => {
+      // initStep calls itself recursivly until everything is initialized in the correct order.
+      // Then the promise gets resolved.
+      Initializer._instance.initStep(resolve);
+    });
+    return Initializer._instance.initPromise;
+  }
+
+  loadStates = new DependencyLoadStates();
+
+  initStep(resolve: (value: void | PromiseLike<void>) => void) {
     // olm
-    if (olmState === LoadState.None && !alreadyInitializedOlm) {
-      alreadyInitializedOlm = true;
-      setOlmState(LoadState.Loading);
+    if (this.loadStates.olm === LoadState.None) {
+      this.loadStates.olm = LoadState.Loading;
       // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
       window.OLM_OPTIONS = {};
-      Olm.init({ locateFile: () => olmWasmPath }).then(() =>
-        setOlmState(LoadState.Loaded)
-      );
+      Olm.init({ locateFile: () => olmWasmPath }).then(() => {
+        this.loadStates.olm = LoadState.Loaded;
+        this.initStep(resolve);
+      });
     }
 
     // config
-    if (configState === LoadState.None && !alreadyInitializedConfig) {
-      alreadyInitializedConfig = true;
-
-      setConfigState(LoadState.Loading);
+    if (this.loadStates.config === LoadState.None) {
+      this.loadStates.config = LoadState.Loading;
       Config.init().then(() => {
-        setConfigState(LoadState.Loaded);
+        this.loadStates.config = LoadState.Loaded;
+        this.initStep(resolve);
       });
     }
 
     //sentry (only initialize after the config is ready)
     if (
-      sentryState === LoadState.None &&
-      configState === LoadState.Loaded &&
-      !alreadyInitializedSentry
+      this.loadStates.sentry === LoadState.None &&
+      this.loadStates.config === LoadState.Loaded
     ) {
-      alreadyInitializedSentry = true;
-
       Sentry.init({
         dsn: Config.instance.config.sentry?.dns ?? DEFAULT_CONFIG.sentry.dns,
         environment:
@@ -92,12 +104,11 @@ export function useDependenciesLoaded(): boolean {
         ],
         tracesSampleRate: 1.0,
       });
-      setSentryState(LoadState.Loaded);
+      this.loadStates.sentry = LoadState.Loaded;
     }
 
     //i18n
-    if (i18nState === LoadState.None && !alreadyInitializedi18n) {
-      alreadyInitializedi18n = true;
+    if (this.loadStates.i18n === LoadState.None) {
       const languageDetector = new LanguageDetector();
       languageDetector.addDetector({
         name: "urlFragment",
@@ -126,14 +137,13 @@ export function useDependenciesLoaded(): boolean {
             caches: [],
           },
         });
-      seti18nState(LoadState.Loaded);
+      this.loadStates.i18n = LoadState.Loaded;
     }
-  }, [configState, i18nState, olmState, sentryState]);
 
-  return (
-    olmState === LoadState.Loaded &&
-    configState === LoadState.Loaded &&
-    sentryState === LoadState.Loaded &&
-    i18nState === LoadState.Loaded
-  );
+    if (this.loadStates.allDepsAreLoaded()) {
+      // resolve if there is no dependency that is not loaded
+      resolve();
+    }
+  }
+  private initPromise: Promise<void>;
 }

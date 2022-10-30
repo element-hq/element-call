@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { IConfigOptions } from "./ConfigOptions";
+import { DEFAULT_CONFIG, IConfigOptions } from "./ConfigOptions";
 
 export class Config {
   private static _instance: Config;
@@ -30,7 +30,7 @@ export class Config {
     Config._instance = new Config();
     Config._instance.initPromise = new Promise<void>((resolve) => {
       downloadConfig("../config.json").then((config) => {
-        Config._instance.config = { ...Config._instance.config, ...config };
+        Config._instance.config = { ...DEFAULT_CONFIG, ...config };
         resolve();
       });
     });

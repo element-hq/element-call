@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
@@ -29,7 +29,7 @@ import { usePageFocusStyle } from "./usePageFocusStyle";
 import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
 import { InspectorContextProvider } from "./room/GroupCallInspector";
 import { CrashView, LoadingView } from "./FullScreenView";
-import { useDependenciesLoaded } from "./useDependenciesLoaded";
+import { Initializer } from "./initializer";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -37,7 +37,14 @@ interface AppProps {
   history: History;
 }
 export default function App({ history }: AppProps) {
-  const loaded = useDependenciesLoaded();
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    Initializer.init()?.then(() => {
+      setLoaded(true);
+    });
+  });
+
   usePageFocusStyle();
 
   const errorPage = <CrashView />;
