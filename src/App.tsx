@@ -14,9 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import Olm from "@matrix-org/olm";
-import olmWasmPath from "@matrix-org/olm/olm.wasm?url";
-import React, { Suspense, useEffect, useState } from "react";
+import React, { Suspense } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
@@ -30,7 +28,7 @@ import { ClientProvider } from "./ClientContext";
 import { usePageFocusStyle } from "./usePageFocusStyle";
 import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
 import { InspectorContextProvider } from "./room/GroupCallInspector";
-import { CrashView, LoadingView } from "./FullScreenView";
+import { CrashView } from "./FullScreenView";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -39,58 +37,42 @@ interface AppProps {
 }
 
 export default function App({ history }: AppProps) {
-  const [olmLoaded, setOlmLoaded] = useState(false);
-
   usePageFocusStyle();
-
-  useEffect(() => {
-    if (!olmLoaded) {
-      // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
-      window.OLM_OPTIONS = {};
-      Olm.init({ locateFile: () => olmWasmPath }).then(() =>
-        setOlmLoaded(true)
-      );
-    }
-  }, [olmLoaded, setOlmLoaded]);
 
   const errorPage = <CrashView />;
 
   return (
     <Router history={history}>
-      {olmLoaded ? (
-        <Suspense fallback={null}>
-          <ClientProvider>
-            <InspectorContextProvider>
-              <Sentry.ErrorBoundary fallback={errorPage}>
-                <OverlayProvider>
-                  <Switch>
-                    <SentryRoute exact path="/">
-                      <HomePage />
-                    </SentryRoute>
-                    <SentryRoute exact path="/login">
-                      <LoginPage />
-                    </SentryRoute>
-                    <SentryRoute exact path="/register">
-                      <RegisterPage />
-                    </SentryRoute>
-                    <SentryRoute path="/room/:roomId?">
-                      <RoomPage />
-                    </SentryRoute>
-                    <SentryRoute path="/inspector">
-                      <SequenceDiagramViewerPage />
-                    </SentryRoute>
-                    <SentryRoute path="*">
-                      <RoomRedirect />
-                    </SentryRoute>
-                  </Switch>
-                </OverlayProvider>
-              </Sentry.ErrorBoundary>
-            </InspectorContextProvider>
-          </ClientProvider>
-        </Suspense>
-      ) : (
-        <LoadingView />
-      )}
+      <Suspense fallback={null}>
+        <ClientProvider>
+          <InspectorContextProvider>
+            <Sentry.ErrorBoundary fallback={errorPage}>
+              <OverlayProvider>
+                <Switch>
+                  <SentryRoute exact path="/">
+                    <HomePage />
+                  </SentryRoute>
+                  <SentryRoute exact path="/login">
+                    <LoginPage />
+                  </SentryRoute>
+                  <SentryRoute exact path="/register">
+                    <RegisterPage />
+                  </SentryRoute>
+                  <SentryRoute path="/room/:roomId?">
+                    <RoomPage />
+                  </SentryRoute>
+                  <SentryRoute path="/inspector">
+                    <SequenceDiagramViewerPage />
+                  </SentryRoute>
+                  <SentryRoute path="*">
+                    <RoomRedirect />
+                  </SentryRoute>
+                </Switch>
+              </OverlayProvider>
+            </Sentry.ErrorBoundary>
+          </InspectorContextProvider>
+        </ClientProvider>
+      </Suspense>
     </Router>
   );
 }

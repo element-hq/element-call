@@ -106,7 +106,8 @@
     ],
     "moduleNameMapper": {
       "\\.(css|less|svg)+$": "identity-obj-proxy",
-      "./IndexedDBWorker\\?worker": "<rootDir>/test/mocks/workerMock.ts"
+      "^\\./IndexedDBWorker\\?worker$": "<rootDir>/test/mocks/workerMock.ts",
+      "^\\./olm$": "<rootDir>/test/mocks/olmMock.ts"
     }
   }
 }
