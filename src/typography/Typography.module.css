@@ -24,6 +24,11 @@
   color: var(--links);
 }
 
+.link:hover {
+  text-decoration: underline;
+  opacity: initial;
+}
+
 .primary {
   color: var(--accent);
 }
