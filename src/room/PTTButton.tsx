@@ -22,6 +22,7 @@ import styles from "./PTTButton.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { useEventTarget } from "../useEvents";
 import { Avatar } from "../Avatar";
+import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 
 interface Props {
   enabled: boolean;
@@ -159,8 +160,14 @@ export const PTTButton: React.FC<Props> = ({
   // TODO: We will need to disable this for a global PTT hotkey to work
   useEventTarget(window, "blur", unhold);
 
+  const prefersReducedMotion = usePrefersReducedMotion();
   const { shadow } = useSpring({
-    shadow: (Math.max(activeSpeakerVolume, -70) + 70) * 0.6,
+    immediate: prefersReducedMotion,
+    shadow: prefersReducedMotion
+      ? activeSpeakerUserId
+        ? 17
+        : 0
+      : (Math.max(activeSpeakerVolume, -70) + 70) * 0.6,
     config: {
       clamp: true,
       tension: 300,
