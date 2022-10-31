@@ -86,7 +86,9 @@ export const useMediaStream = (
       if (stream) {
         mediaEl.muted = mute;
         mediaEl.srcObject = stream;
-        mediaEl.play();
+        mediaEl.play().catch((e) => {
+          if (e.name !== "AbortError") throw e;
+        });
 
         // Unmuting the tab in Safari causes all video elements to be individually
         // unmuted, so we need to reset the mute state here to prevent audio loops
