@@ -51,7 +51,7 @@ export interface UseGroupCallReturnType {
   requestingScreenshare: boolean;
   isScreensharing: boolean;
   screenshareFeeds: CallFeed[];
-  localDesktopCapturerSourceId: string;
+  localDesktopCapturerSourceId: string; // XXX: This looks unused?
   participants: RoomMember[];
   hasLocalParticipant: boolean;
   unencryptedEventsFromUsers: Set<string>;
