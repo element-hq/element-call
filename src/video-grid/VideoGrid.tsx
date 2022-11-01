@@ -654,9 +654,16 @@ function getSubGridPositions(
 // Sets the 'order' property on tiles based on the layout param and
 // other properties of the tiles, eg. 'focused' and 'presenter'
 function reorderTiles(tiles: Tile[], layout: Layout) {
+  // We use a special layout for 1:1 to always put the local tile first.
+  // We only do this if there are two tiles (obviously) and exactly one
+  // of them is local: during startup we can have tiles from other users
+  // but not our own, due to the order they're added, so without this we
+  // can assign multiple remote tiles order '1' and this persists through
+  // subsequent reorders because we preserve the order of the tiles.
   if (
     layout === "freedom" &&
     tiles.length === 2 &&
+    tiles.filter((t) => t.item.isLocal).length === 1 &&
     !tiles.some((t) => t.presenter || t.focused)
   ) {
     // 1:1 layout
