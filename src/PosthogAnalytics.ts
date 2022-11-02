@@ -71,7 +71,7 @@ export enum RegistrationType {
 
 interface PlatformProperties {
   appVersion: string;
-  appMatrixBackend: "embedded" | "jssdk";
+  matrixBackend: "embedded" | "jssdk";
 }
 
 interface PosthogSettings {
@@ -167,7 +167,7 @@ export class PosthogAnalytics {
     const appVersion = import.meta.env.VITE_APP_VERSION || "unknown";
     return {
       appVersion,
-      appMatrixBackend: widget ? "embedded" : "jssdk",
+      matrixBackend: widget ? "embedded" : "jssdk",
     };
   }
 
