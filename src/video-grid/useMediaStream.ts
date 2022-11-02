@@ -64,8 +64,8 @@ export const useMediaStreamTrackCount = (
 };
 
 export const useMediaStream = (
-  stream: MediaStream,
-  audioOutputDevice: string,
+  stream: MediaStream | null,
+  audioOutputDevice: string | null,
   mute = false,
   localVolume?: number
 ): RefObject<MediaElement> => {
@@ -158,7 +158,7 @@ const createLoopback = async (stream: MediaStream): Promise<MediaStream> => {
   await loopbackConn.setRemoteDescription(offer);
   const answer = await loopbackConn.createAnswer();
   // Rewrite SDP to be stereo and (variable) max bitrate
-  const parsedSdp = parseSdp(answer.sdp);
+  const parsedSdp = parseSdp(answer.sdp!);
   parsedSdp.media.forEach((m) =>
     m.fmtp.forEach(
       (f) => (f.config += `;stereo=1;cbr=0;maxaveragebitrate=510000;`)
@@ -206,11 +206,11 @@ export const useAudioContext = (): [
     }
   }, []);
 
-  return [context.current, destination.current, audioRef];
+  return [context.current!, destination.current!, audioRef];
 };
 
 export const useSpatialMediaStream = (
-  stream: MediaStream,
+  stream: MediaStream | null,
   audioContext: AudioContext,
   audioDestination: AudioNode,
   mute = false,
@@ -219,7 +219,7 @@ export const useSpatialMediaStream = (
   const tileRef = useRef<HTMLDivElement>();
   const [spatialAudio] = useSpatialAudio();
   // We always handle audio separately form the video element
-  const mediaRef = useMediaStream(stream, undefined, true, undefined);
+  const mediaRef = useMediaStream(stream, null, true);
   const [audioTrackCount] = useMediaStreamTrackCount(stream);
 
   const gainNodeRef = useRef<GainNode>();
@@ -240,7 +240,7 @@ export const useSpatialMediaStream = (
         });
       }
       if (!sourceRef.current) {
-        sourceRef.current = audioContext.createMediaStreamSource(stream);
+        sourceRef.current = audioContext.createMediaStreamSource(stream!);
       }
 
       const tile = tileRef.current;
@@ -252,12 +252,12 @@ export const useSpatialMediaStream = (
         const bounds = tile.getBoundingClientRect();
         const windowSize = Math.max(window.innerWidth, window.innerHeight);
         // Position the source relative to its placement in the window
-        pannerNodeRef.current.positionX.value =
+        pannerNodeRef.current!.positionX.value =
           (bounds.x + bounds.width / 2) / windowSize - 0.5;
-        pannerNodeRef.current.positionY.value =
+        pannerNodeRef.current!.positionY.value =
           (bounds.y + bounds.height / 2) / windowSize - 0.5;
         // Put the source in front of the listener
-        pannerNodeRef.current.positionZ.value = -2;
+        pannerNodeRef.current!.positionZ.value = -2;
       };
 
       gainNode.gain.value = localVolume;

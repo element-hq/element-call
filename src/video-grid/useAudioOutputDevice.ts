@@ -18,7 +18,7 @@ import { RefObject, useEffect } from "react";
 
 export function useAudioOutputDevice(
   mediaRef: RefObject<MediaElement>,
-  audioOutputDevice: string
+  audioOutputDevice: string | undefined
 ): void {
   useEffect(() => {
     if (
