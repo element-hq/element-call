@@ -72,7 +72,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     const { t } = useTranslation();
 
     const toolbarButtons: JSX.Element[] = [];
-    if (!isLocal) {
+    if (hasFeed && !isLocal) {
       toolbarButtons.push(
         <AudioButton
           key="localVolume"
