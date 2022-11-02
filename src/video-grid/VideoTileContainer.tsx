@@ -68,7 +68,7 @@ export function VideoTileContainer({
   } = useCallFeed(item.callFeed);
   const { rawDisplayName } = useRoomMemberName(item.member);
   const [tileRef, mediaRef] = useSpatialMediaStream(
-    stream,
+    stream ?? null,
     audioContext,
     audioDestination,
     isLocal,
@@ -109,7 +109,7 @@ export function VideoTileContainer({
         onFullscreen={onFullscreenCallback}
         {...rest}
       />
-      {videoTileSettingsModalState.isOpen && !maximised && (
+      {videoTileSettingsModalState.isOpen && !maximised && item.callFeed && (
         <VideoTileSettingsModal
           {...videoTileSettingsModalProps}
           feed={item.callFeed}
