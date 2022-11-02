@@ -18,8 +18,7 @@ import { useEffect } from "react";
 
 export function usePageTitle(title: string): void {
   useEffect(() => {
-    const productName =
-      import.meta.env.VITE_PRODUCT_NAME || "Matrix Video Chat";
+    const productName = import.meta.env.VITE_PRODUCT_NAME || "Element Call";
     document.title = title ? `${productName} | ${title}` : productName;
   }, [title]);
 }
