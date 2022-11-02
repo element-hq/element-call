@@ -75,6 +75,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     if (!isLocal) {
       toolbarButtons.push(
         <AudioButton
+          key="localVolume"
           className={styles.button}
           volume={localVolume}
           onPress={onOptionsPress}
@@ -84,6 +85,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       if (screenshare) {
         toolbarButtons.push(
           <FullscreenButton
+            key="fullscreen"
             className={styles.button}
             fullscreen={fullscreen}
             onPress={onFullscreen}
