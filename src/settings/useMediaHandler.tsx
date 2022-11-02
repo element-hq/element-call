@@ -160,7 +160,7 @@ export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
 
         if (
           // @ts-ignore
-          mediaHandler.videoInput !== videoInput ||
+          (mediaHandler.videoInput && mediaHandler.videoInput !== videoInput) ||
           // @ts-ignore
           mediaHandler.audioInput !== audioInput
         ) {
