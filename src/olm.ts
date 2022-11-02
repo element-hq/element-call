@@ -14,11 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useEffect } from "react";
+import Olm from "@matrix-org/olm";
+import olmWasmPath from "@matrix-org/olm/olm.wasm?url";
 
-export function usePageTitle(title: string): void {
-  useEffect(() => {
-    const productName = import.meta.env.VITE_PRODUCT_NAME || "Element Call";
-    document.title = title ? `${productName} | ${title}` : productName;
-  }, [title]);
-}
+// https://gitlab.matrix.org/matrix-org/olm/-/issues/10
+window.OLM_OPTIONS = {};
+
+let olmLoaded: Promise<void> | null = null;
+
+/**
+ * Loads Olm, if not already loaded.
+ */
+export const loadOlm = (): Promise<void> =>
+  (olmLoaded ??= Olm.init({ locateFile: () => olmWasmPath }));

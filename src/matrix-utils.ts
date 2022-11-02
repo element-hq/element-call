@@ -18,6 +18,7 @@ import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import IndexedDBWorker from "./IndexedDBWorker?worker";
 import { getUrlParams } from "./UrlParams";
+import { loadOlm } from "./olm";
 
 export const defaultHomeserver =
   (import.meta.env.VITE_DEFAULT_HOMESERVER as string) ??
@@ -72,8 +73,9 @@ export async function initClient(
   clientOptions: ICreateClientOpts,
   restore: boolean
 ): Promise<MatrixClient> {
-  let indexedDB: IDBFactory;
+  await loadOlm();
 
+  let indexedDB: IDBFactory;
   try {
     indexedDB = window.indexedDB;
   } catch (e) {}

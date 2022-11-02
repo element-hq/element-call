@@ -60,6 +60,7 @@ import { useAudioOutputDevice } from "../video-grid/useAudioOutputDevice";
 import { widget, ElementWidgetActions } from "../widget";
 import { useJoinRule } from "./useJoinRule";
 import { useUrlParams } from "../UrlParams";
+import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -265,6 +266,8 @@ export function InCallView({
     []
   );
 
+  const prefersReducedMotion = usePrefersReducedMotion();
+
   const renderContent = (): JSX.Element => {
     if (items.length === 0) {
       return (
@@ -292,7 +295,11 @@ export function InCallView({
     }
 
     return (
-      <VideoGrid items={items} layout={layout} disableAnimations={isSafari}>
+      <VideoGrid
+        items={items}
+        layout={layout}
+        disableAnimations={prefersReducedMotion || isSafari}
+      >
         {({
           item,
           ...rest
