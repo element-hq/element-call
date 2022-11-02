@@ -89,7 +89,7 @@ export class Initializer {
       this.loadStates.config === LoadState.Loaded
     ) {
       Sentry.init({
-        dsn: Config.instance.config.sentry?.dns ?? DEFAULT_CONFIG.sentry.dns,
+        dsn: Config.instance.config.sentry?.DSN ?? DEFAULT_CONFIG.sentry.DSN,
         environment:
           Config.instance.config.sentry.environment ??
           DEFAULT_CONFIG.sentry.environment,

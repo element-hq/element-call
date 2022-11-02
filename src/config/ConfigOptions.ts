@@ -3,7 +3,7 @@ export interface IConfigOptions {
     api_key: string;
   };
   sentry?: {
-    dns: string;
+    DSN: string;
     environment: string;
   };
   rageshake?: {
@@ -12,7 +12,7 @@ export interface IConfigOptions {
 }
 
 export const DEFAULT_CONFIG: IConfigOptions = {
-  sentry: { dns: "", environment: "production" },
+  sentry: { DSN: "", environment: "production" },
   rageshake: {
     submit_url: "https://element.io/bugreports/submit",
   },
