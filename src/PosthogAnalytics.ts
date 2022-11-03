@@ -37,12 +37,9 @@ import { Config } from "./config/Config";
  * - If [Do Not Track](https://developer.mozilla.org/en-US/docs/Web/API/Navigator/doNotTrack) is
  *   enabled, events are not sent (this detection is built into posthog and turned on via the
  *   `respect_dnt` flag being passed to `posthog.init`).
- * - If the `feature_pseudonymous_analytics_opt_in` labs flag is `true`, track pseudonomously by maintaining
- *   a randomised analytics ID in account_data for that user (shared between devices) and sending it to posthog to
-     identify the user.
- * - Otherwise, if the existing `analyticsOptIn` flag is `true`, track anonymously, i.e. do not identify the user
-     using any identifier that would be consistent across devices.
- * - If both flags are false or not set, events are not sent.
+ * - If the posthog analytics are explicitly activated by the user in the element call settings,
+ *   a randomised analytics ID is created and stored in account_data for that user (shared between devices)
+ *   so that the user can be identify in posthog.
  */
 
 export interface IPosthogEvent {
@@ -139,7 +136,6 @@ export class PosthogAnalytics {
     _eventName: string
   ): Properties => {
     // Callback from posthog to sanitize properties before sending them to the server.
-    //
     // Here we sanitize posthog's built in properties which leak PII e.g. url reporting.
     // See utils.js _.info.properties in posthog-js.
 
