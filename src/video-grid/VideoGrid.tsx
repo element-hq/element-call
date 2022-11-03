@@ -859,73 +859,103 @@ export function VideoGrid({
     });
   }, [items, gridBounds, layout, isMounted, pipXRatio, pipYRatio]);
 
+  const tilePositionsValid = useRef(false);
+
   const animate = useCallback(
-    (tiles: Tile[]) => (tileIndex: number) => {
-      const tile = tiles[tileIndex];
-      const tilePosition = tilePositions[tile.order];
-      const draggingTile = draggingTileRef.current;
-      const dragging = draggingTile && tile.key === draggingTile.key;
-      const remove = tile.remove;
+    (tiles: Tile[]) => {
+      // Whether the tile positions were valid at the time of the previous
+      // animation
+      const tilePositionsWereValid = tilePositionsValid.current;
 
-      if (dragging) {
-        return {
-          width: tilePosition.width,
-          height: tilePosition.height,
-          x: draggingTile.offsetX + draggingTile.x,
-          y: draggingTile.offsetY + draggingTile.y,
-          scale: 1.1,
-          opacity: 1,
-          zIndex: 2,
-          shadow: 15,
-          immediate: (key: string) =>
-            disableAnimations ||
-            key === "zIndex" ||
-            key === "x" ||
-            key === "y" ||
-            key === "shadow",
-          from: {
-            shadow: 0,
-            scale: 0,
-            opacity: 0,
-          },
-          reset: false,
-        };
-      } else {
-        const isMobile = isMobileBreakpoint(
-          gridBounds.width,
-          gridBounds.height
-        );
+      return (tileIndex: number) => {
+        const tile = tiles[tileIndex];
+        const tilePosition = tilePositions[tile.order];
+        const draggingTile = draggingTileRef.current;
+        const dragging = draggingTile && tile.key === draggingTile.key;
+        const remove = tile.remove;
+        tilePositionsValid.current = tilePosition.height > 0;
 
-        return {
-          x:
+        if (dragging) {
+          return {
+            width: tilePosition.width,
+            height: tilePosition.height,
+            x: draggingTile.offsetX + draggingTile.x,
+            y: draggingTile.offsetY + draggingTile.y,
+            scale: 1.1,
+            opacity: 1,
+            zIndex: 2,
+            shadow: 15,
+            immediate: (key: string) =>
+              disableAnimations ||
+              key === "zIndex" ||
+              key === "x" ||
+              key === "y" ||
+              key === "shadow",
+            from: {
+              shadow: 0,
+              scale: 0,
+              opacity: 0,
+            },
+            reset: false,
+          };
+        } else {
+          const isMobile = isMobileBreakpoint(
+            gridBounds.width,
+            gridBounds.height
+          );
+
+          const x =
             tilePosition.x +
             (layout === "spotlight" && tile.order !== 0 && isMobile
               ? scrollPosition
-              : 0),
-          y:
+              : 0);
+          const y =
             tilePosition.y +
             (layout === "spotlight" && tile.order !== 0 && !isMobile
               ? scrollPosition
-              : 0),
-          width: tilePosition.width,
-          height: tilePosition.height,
-          scale: remove ? 0 : 1,
-          opacity: remove ? 0 : 1,
-          zIndex: tilePosition.zIndex,
-          shadow: 1,
-          from: {
+              : 0);
+          const from: {
+            shadow: number;
+            scale: number;
+            opacity: number;
+            x?: number;
+            y?: number;
+            width?: number;
+            height?: number;
+          } = { shadow: 1, scale: 0, opacity: 0 };
+          let reset = false;
+
+          if (!tilePositionsWereValid) {
+            // This indicates that the component just mounted. We discard the
+            // previous keyframe by resetting the tile's position, so that it
+            // animates in from the right place on screen, rather than wherever
+            // the zero-height grid placed it.
+            from.x = x;
+            from.y = y;
+            from.width = tilePosition.width;
+            from.height = tilePosition.height;
+            reset = true;
+          }
+
+          return {
+            x,
+            y,
+            width: tilePosition.width,
+            height: tilePosition.height,
+            scale: remove ? 0 : 1,
+            opacity: remove ? 0 : 1,
+            zIndex: tilePosition.zIndex,
             shadow: 1,
-            scale: 0,
-            opacity: 0,
-          },
-          reset: false,
-          immediate: (key: string) =>
-            disableAnimations || key === "zIndex" || key === "shadow",
-          // If we just stopped dragging a tile, give it time for its animation
-          // to settle before pushing its z-index back down
-          delay: (key: string) => (key === "zIndex" ? 500 : 0),
-        };
-      }
+            from,
+            reset,
+            immediate: (key: string) =>
+              disableAnimations || key === "zIndex" || key === "shadow",
+            // If we just stopped dragging a tile, give it time for the
+            // animation to settle before pushing its z-index back down
+            delay: (key: string) => (key === "zIndex" ? 500 : 0),
+          };
+        }
+      };
     },
     [tilePositions, disableAnimations, scrollPosition, layout, gridBounds]
   );
