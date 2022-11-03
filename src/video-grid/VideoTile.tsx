@@ -82,16 +82,14 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         />
       );
 
-      if (screenshare) {
-        toolbarButtons.push(
-          <FullscreenButton
-            key="fullscreen"
-            className={styles.button}
-            fullscreen={fullscreen}
-            onPress={onFullscreen}
-          />
-        );
-      }
+      toolbarButtons.push(
+        <FullscreenButton
+          key="fullscreen"
+          className={styles.button}
+          fullscreen={fullscreen}
+          onPress={onFullscreen}
+        />
+      );
     }
 
     const caption = hasFeed ? name : t("{{name}} (Connecting...)", { name });
