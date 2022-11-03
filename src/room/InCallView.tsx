@@ -222,7 +222,7 @@ export function InCallView({
 
       tileDescriptors.push({
         id: screenshareFeed.stream.id,
-        member: userMediaItem?.member,
+        member: screenshareFeed.getMember()!,
         callFeed: screenshareFeed,
         focused: true,
         isLocal: screenshareFeed.isLocal(),
