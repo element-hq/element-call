@@ -5,7 +5,7 @@
   },
   "sentry": {
     "environment": "main-branch",
-    "dns": "https://examplePublicKey@o0.ingest.sentry.io/0"
+    "DSN": "https://examplePublicKey@o0.ingest.sentry.io/0"
   },
   "rageshake": {
     "submit_url": "http://localhost:9110/api/submit"
