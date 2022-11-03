@@ -15,13 +15,8 @@ limitations under the License.
 */
 
 import { Integrations } from "@sentry/tracing";
-import i18n from "i18next";
-import { initReactI18next } from "react-i18next";
-import LanguageDetector from "i18next-browser-languagedetector";
-import Backend from "i18next-http-backend";
 import * as Sentry from "@sentry/react";
 
-import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { DEFAULT_CONFIG } from "./config/ConfigOptions";
 
@@ -36,7 +31,6 @@ class DependencyLoadStates {
   // olm: LoadState = LoadState.None;
   config: LoadState = LoadState.None;
   sentry: LoadState = LoadState.None;
-  i18n: LoadState = LoadState.None;
 
   allDepsAreLoaded() {
     return !Object.values(this).some((s) => s !== LoadState.Loaded);
@@ -102,39 +96,6 @@ export class Initializer {
         tracesSampleRate: 1.0,
       });
       this.loadStates.sentry = LoadState.Loaded;
-    }
-
-    //i18n
-    if (this.loadStates.i18n === LoadState.None) {
-      const languageDetector = new LanguageDetector();
-      languageDetector.addDetector({
-        name: "urlFragment",
-        // Look for a language code in the URL's fragment
-        lookup: () => getUrlParams().lang ?? undefined,
-      });
-
-      i18n
-        .use(Backend)
-        .use(languageDetector)
-        .use(initReactI18next)
-        .init({
-          fallbackLng: "en-GB",
-          defaultNS: "app",
-          keySeparator: false,
-          nsSeparator: false,
-          pluralSeparator: "|",
-          contextSeparator: "|",
-          interpolation: {
-            escapeValue: false, // React has built-in XSS protections
-          },
-          detection: {
-            // No localStorage detectors or caching here, since we don't have any way
-            // of letting the user manually select a language
-            order: ["urlFragment", "navigator"],
-            caches: [],
-          },
-        });
-      this.loadStates.i18n = LoadState.Loaded;
     }
 
     if (this.loadStates.allDepsAreLoaded()) {
