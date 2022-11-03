@@ -22,6 +22,7 @@ import React, {
   createContext,
   useMemo,
   useContext,
+  useRef,
 } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient, ClientEvent } from "matrix-js-sdk/src/client";
@@ -88,6 +89,7 @@ interface Props {
 
 export const ClientProvider: FC<Props> = ({ children }) => {
   const history = useHistory();
+  const initializing = useRef(false);
   const [
     { loading, isAuthenticated, isPasswordlessUser, client, userName, error },
     setState,
@@ -101,6 +103,12 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   });
 
   useEffect(() => {
+    // In case the component is mounted, unmounted, and remounted quickly (as
+    // React does in strict mode), we need to make sure not to doubly initialize
+    // the client
+    if (initializing.current) return;
+    initializing.current = true;
+
     const init = async (): Promise<
       Pick<ClientProviderState, "client" | "isPasswordlessUser">
     > => {
@@ -198,7 +206,8 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           userName: null,
           error: undefined,
         });
-      });
+      })
+      .finally(() => (initializing.current = false));
   }, []);
 
   const changePassword = useCallback(

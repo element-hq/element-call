@@ -127,6 +127,7 @@ export function InCallView({
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure({ polyfill: ResizeObserver });
+  const boundsValid = bounds.height > 0;
   // Merge the refs so they can attach to the same element
   const containerRef = useCallback(
     (el: HTMLDivElement) => {
@@ -242,15 +243,15 @@ export function InCallView({
   const maximisedParticipant = useMemo(
     () =>
       fullscreenParticipant ??
-      (bounds.height <= 400 && bounds.width <= 400
+      (boundsValid && bounds.height <= 400 && bounds.width <= 400
         ? items.find((item) => item.focused) ??
           items.find((item) => item.callFeed) ??
           null
         : null),
-    [fullscreenParticipant, bounds, items]
+    [fullscreenParticipant, boundsValid, bounds, items]
   );
 
-  const reducedControls = bounds.width <= 400;
+  const reducedControls = boundsValid && bounds.width <= 400;
 
   const renderAvatar = useCallback(
     (roomMember: RoomMember, width: number, height: number) => {

@@ -309,5 +309,7 @@ export function getAvatarUrl(
 ): string {
   const width = Math.floor(avatarSize * window.devicePixelRatio);
   const height = Math.floor(avatarSize * window.devicePixelRatio);
-  return mxcUrl && client.mxcUrlToHttp(mxcUrl, width, height, "crop");
+  // scale is more suitable for larger sizes
+  const resizeMethod = avatarSize <= 96 ? "crop" : "scale";
+  return mxcUrl && client.mxcUrlToHttp(mxcUrl, width, height, resizeMethod)!;
 }
