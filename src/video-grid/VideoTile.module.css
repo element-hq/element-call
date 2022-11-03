@@ -47,6 +47,7 @@
   width: 100%;
 }
 
+.videoTile.maximised > video,
 .videoTile.screenshare > video {
   object-fit: contain;
 }
