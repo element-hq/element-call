@@ -1,0 +1,13 @@
+{
+  "posthog": {
+    "api_key": "phc_MhClVy9DiV20vazSYIiedFkM5Xi3z1LPBwrdn9PYZQQ",
+    "api_host": "https://app.posthog.com"
+  },
+  "sentry": {
+    "environment": "main-branch-cd",
+    "DSN": "https://b1e328d49be3402ba96101338989fb35@sentry.matrix.org/41"
+  },
+  "rageshake": {
+    "submit_url": "https://element.io/bugreports/submit"
+  }
+}
