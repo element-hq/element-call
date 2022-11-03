@@ -23,17 +23,10 @@ import "matrix-js-sdk/src/browser-index";
 import React, { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserHistory } from "history";
-import * as Sentry from "@sentry/react";
-import { Integrations } from "@sentry/tracing";
-import i18n from "i18next";
-import { initReactI18next } from "react-i18next";
-import Backend from "i18next-http-backend";
-import LanguageDetector from "i18next-browser-languagedetector";
 
 import "./index.css";
 import App from "./App";
 import { init as initRageshake } from "./settings/rageshake";
-import { getUrlParams } from "./UrlParams";
 
 initRageshake();
 
@@ -107,47 +100,6 @@ if (import.meta.env.VITE_CUSTOM_THEME) {
 }
 
 const history = createBrowserHistory();
-
-Sentry.init({
-  dsn: import.meta.env.VITE_SENTRY_DSN as string,
-  environment:
-    (import.meta.env.VITE_SENTRY_ENVIRONMENT as string) ?? "production",
-  integrations: [
-    new Integrations.BrowserTracing({
-      routingInstrumentation: Sentry.reactRouterV5Instrumentation(history),
-    }),
-  ],
-  tracesSampleRate: 1.0,
-});
-
-const languageDetector = new LanguageDetector();
-languageDetector.addDetector({
-  name: "urlFragment",
-  // Look for a language code in the URL's fragment
-  lookup: () => getUrlParams().lang ?? undefined,
-});
-
-i18n
-  .use(Backend)
-  .use(languageDetector)
-  .use(initReactI18next)
-  .init({
-    fallbackLng: "en-GB",
-    defaultNS: "app",
-    keySeparator: false,
-    nsSeparator: false,
-    pluralSeparator: "|",
-    contextSeparator: "|",
-    interpolation: {
-      escapeValue: false, // React has built-in XSS protections
-    },
-    detection: {
-      // No localStorage detectors or caching here, since we don't have any way
-      // of letting the user manually select a language
-      order: ["urlFragment", "navigator"],
-      caches: [],
-    },
-  });
 
 root.render(
   <StrictMode>

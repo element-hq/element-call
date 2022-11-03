@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { Suspense } from "react";
+import React, { Suspense, useEffect, useState } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
@@ -28,7 +28,8 @@ import { ClientProvider } from "./ClientContext";
 import { usePageFocusStyle } from "./usePageFocusStyle";
 import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
 import { InspectorContextProvider } from "./room/GroupCallInspector";
-import { CrashView } from "./FullScreenView";
+import { CrashView, LoadingView } from "./FullScreenView";
+import { Initializer } from "./initializer";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -37,42 +38,54 @@ interface AppProps {
 }
 
 export default function App({ history }: AppProps) {
+  const [loaded, setLoaded] = useState(false);
+
+  useEffect(() => {
+    Initializer.init()?.then(() => {
+      setLoaded(true);
+    });
+  });
+
   usePageFocusStyle();
 
   const errorPage = <CrashView />;
 
   return (
     <Router history={history}>
-      <Suspense fallback={null}>
-        <ClientProvider>
-          <InspectorContextProvider>
-            <Sentry.ErrorBoundary fallback={errorPage}>
-              <OverlayProvider>
-                <Switch>
-                  <SentryRoute exact path="/">
-                    <HomePage />
-                  </SentryRoute>
-                  <SentryRoute exact path="/login">
-                    <LoginPage />
-                  </SentryRoute>
-                  <SentryRoute exact path="/register">
-                    <RegisterPage />
-                  </SentryRoute>
-                  <SentryRoute path="/room/:roomId?">
-                    <RoomPage />
-                  </SentryRoute>
-                  <SentryRoute path="/inspector">
-                    <SequenceDiagramViewerPage />
-                  </SentryRoute>
-                  <SentryRoute path="*">
-                    <RoomRedirect />
-                  </SentryRoute>
-                </Switch>
-              </OverlayProvider>
-            </Sentry.ErrorBoundary>
-          </InspectorContextProvider>
-        </ClientProvider>
-      </Suspense>
+      {loaded ? (
+        <Suspense fallback={null}>
+          <ClientProvider>
+            <InspectorContextProvider>
+              <Sentry.ErrorBoundary fallback={errorPage}>
+                <OverlayProvider>
+                  <Switch>
+                    <SentryRoute exact path="/">
+                      <HomePage />
+                    </SentryRoute>
+                    <SentryRoute exact path="/login">
+                      <LoginPage />
+                    </SentryRoute>
+                    <SentryRoute exact path="/register">
+                      <RegisterPage />
+                    </SentryRoute>
+                    <SentryRoute path="/room/:roomId?">
+                      <RoomPage />
+                    </SentryRoute>
+                    <SentryRoute path="/inspector">
+                      <SequenceDiagramViewerPage />
+                    </SentryRoute>
+                    <SentryRoute path="*">
+                      <RoomRedirect />
+                    </SentryRoute>
+                  </Switch>
+                </OverlayProvider>
+              </Sentry.ErrorBoundary>
+            </InspectorContextProvider>
+          </ClientProvider>
+        </Suspense>
+      ) : (
+        <LoadingView />
+      )}
     </Router>
   );
 }
