@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import Olm from "@matrix-org/olm";
-import olmWasmPath from "@matrix-org/olm/olm.wasm?url";
 import { Integrations } from "@sentry/tracing";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
@@ -34,7 +32,8 @@ enum LoadState {
 }
 
 class DependencyLoadStates {
-  olm: LoadState = LoadState.None;
+  // TODO: decide where olm should be initialized (see TODO comment below)
+  // olm: LoadState = LoadState.None;
   config: LoadState = LoadState.None;
   sentry: LoadState = LoadState.None;
   i18n: LoadState = LoadState.None;
@@ -63,16 +62,17 @@ export class Initializer {
   loadStates = new DependencyLoadStates();
 
   initStep(resolve: (value: void | PromiseLike<void>) => void) {
-    // olm
-    if (this.loadStates.olm === LoadState.None) {
-      this.loadStates.olm = LoadState.Loading;
-      // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
-      window.OLM_OPTIONS = {};
-      Olm.init({ locateFile: () => olmWasmPath }).then(() => {
-        this.loadStates.olm = LoadState.Loaded;
-        this.initStep(resolve);
-      });
-    }
+    // TODO: Olm is initialized with the client currently (see `initClient()` and `olm.ts`)
+    // we need to decide if we want to init it here or keep it in initClient
+    // if (this.loadStates.olm === LoadState.None) {
+    //   this.loadStates.olm = LoadState.Loading;
+    //   // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
+    //   window.OLM_OPTIONS = {};
+    //   Olm.init({ locateFile: () => olmWasmPath }).then(() => {
+    //     this.loadStates.olm = LoadState.Loaded;
+    //     this.initStep(resolve);
+    //   });
+    // }
 
     // config
     if (this.loadStates.config === LoadState.None) {
