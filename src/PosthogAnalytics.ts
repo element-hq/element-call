@@ -124,7 +124,10 @@ export class PosthogAnalytics {
         respect_dnt: true,
         advanced_disable_decide: true,
       });
-      this.enabled = true;
+      if (PosthogAnalytics.getPlatformProperties().matrixBackend === "jssdk") {
+        // only enable analytics on jssdk (not in embedded mode for now)
+        this.enabled = true;
+      }
     } else {
       this.enabled = false;
     }
