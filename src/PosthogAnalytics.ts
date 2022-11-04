@@ -1,5 +1,5 @@
 /*
-Copyright 2021 The Matrix.org Foundation C.I.C.
+Copyright 2022 The Matrix.org Foundation C.I.C.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import { Config } from "./config/Config";
  *   `respect_dnt` flag being passed to `posthog.init`).
  * - If the posthog analytics are explicitly activated by the user in the element call settings,
  *   a randomised analytics ID is created and stored in account_data for that user (shared between devices)
- *   so that the user can be identify in posthog.
+ *   so that the user can be identified in posthog.
  */
 
 export interface IPosthogEvent {
