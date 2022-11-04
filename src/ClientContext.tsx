@@ -38,6 +38,7 @@ import {
   fallbackICEServerAllowed,
 } from "./matrix-utils";
 import { widget } from "./widget";
+import { PosthogAnalytics, RegistrationType } from "./PosthogAnalytics";
 import { translatedError } from "./TranslatedError";
 
 declare global {
@@ -114,7 +115,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       if (widget) {
         // We're inside a widget, so let's engage *matryoshka mode*
         logger.log("Using a matryoshka client");
-
+        PosthogAnalytics.instance.setRegistrationType(
+          RegistrationType.Registered
+        );
         return {
           client: await widget.client,
           isPasswordlessUser: false,
@@ -132,6 +135,11 @@ export const ClientProvider: FC<Props> = ({ children }) => {
             session;
 
           try {
+            PosthogAnalytics.instance.setRegistrationType(
+              passwordlessUser
+                ? RegistrationType.Guest
+                : RegistrationType.Registered
+            );
             return {
               client: await initClient(
                 {
@@ -279,6 +287,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       error: undefined,
     });
     history.push("/");
+    PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
   }, [history, client]);
 
   const { t } = useTranslation();

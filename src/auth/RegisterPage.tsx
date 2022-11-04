@@ -39,6 +39,7 @@ import { LoadingView } from "../FullScreenView";
 import { useRecaptcha } from "./useRecaptcha";
 import { Caption, Link } from "../typography/Typography";
 import { usePageTitle } from "../usePageTitle";
+import { PosthogAnalytics } from "../PosthogAnalytics";
 
 export const RegisterPage: FC = () => {
   const { t } = useTranslation();
@@ -98,6 +99,7 @@ export const RegisterPage: FC = () => {
         }
 
         setClient(newClient, session);
+        PosthogAnalytics.instance.eventSignup.cacheSignupEnd(new Date());
       };
 
       submit()
@@ -142,6 +144,8 @@ export const RegisterPage: FC = () => {
 
   if (loading) {
     return <LoadingView />;
+  } else {
+    PosthogAnalytics.instance.eventSignup.cacheSignupStart(new Date());
   }
 
   return (

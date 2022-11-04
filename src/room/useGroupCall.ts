@@ -30,6 +30,7 @@ import { useTranslation } from "react-i18next";
 import { IWidgetApiRequest } from "matrix-widget-api";
 
 import { usePageUnload } from "./usePageUnload";
+import { PosthogAnalytics } from "../PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
 
@@ -280,6 +281,9 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
       return;
     }
 
+    PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
+    PosthogAnalytics.instance.eventCallStarted.track(groupCall.room.name);
+
     groupCall.enter().catch((error) => {
       console.error(error);
       updateState({ error });
@@ -289,11 +293,15 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
   const leave = useCallback(() => groupCall.leave(), [groupCall]);
 
   const toggleLocalVideoMuted = useCallback(() => {
-    groupCall.setLocalVideoMuted(!groupCall.isLocalVideoMuted());
+    const toggleToMute = !groupCall.isLocalVideoMuted();
+    groupCall.setLocalVideoMuted(toggleToMute);
+    PosthogAnalytics.instance.eventMuteCamera.track(toggleToMute);
   }, [groupCall]);
 
   const toggleMicrophoneMuted = useCallback(() => {
-    groupCall.setMicrophoneMuted(!groupCall.isMicrophoneMuted());
+    const toggleToMute = !groupCall.isMicrophoneMuted();
+    groupCall.setMicrophoneMuted(toggleToMute);
+    PosthogAnalytics.instance.eventMuteMicrophone.track(toggleToMute);
   }, [groupCall]);
 
   const toggleScreensharing = useCallback(async () => {

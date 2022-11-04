@@ -57,6 +57,7 @@ import { useAudioContext } from "../video-grid/useMediaStream";
 import { useFullscreen } from "../video-grid/useFullscreen";
 import { AudioContainer } from "../video-grid/AudioContainer";
 import { useAudioOutputDevice } from "../video-grid/useAudioOutputDevice";
+import { PosthogAnalytics } from "../PosthogAnalytics";
 import { widget, ElementWidgetActions } from "../widget";
 import { useJoinRule } from "./useJoinRule";
 import { useUrlParams } from "../UrlParams";
@@ -210,6 +211,9 @@ export function InCallView({
       });
     }
 
+    PosthogAnalytics.instance.eventCallEnded.cacheParticipantCountChanged(
+      participants.length
+    );
     // add the screenshares too
     for (const screenshareFeed of screenshareFeeds) {
       const userMediaItem = tileDescriptors.find(
