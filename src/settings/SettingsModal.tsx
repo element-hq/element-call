@@ -121,18 +121,6 @@ export const SettingsModal = (props: Props) => {
               }
             />
           </FieldRow>
-          <FieldRow>
-            <InputField
-              id="optInAnalytics"
-              label="Allow analytics"
-              type="checkbox"
-              checked={optInAnalytics}
-              description="This will send anonymized data such as the duration of a call the and number of participants to the element call team to help us optimizing the application based on how it is used."
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setOptInAnalytics(event.target.checked)
-              }
-            />
-          </FieldRow>
         </TabItem>
         <TabItem
           title={
