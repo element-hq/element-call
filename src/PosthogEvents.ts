@@ -96,8 +96,7 @@ export class SignupTracker {
   track() {
     PosthogAnalytics.instance.trackEvent<Signup>({
       eventName: "Signup",
-      signupDuration:
-        new Date().getSeconds() - this.cache.signupStart.getSeconds(),
+      signupDuration: Date.now() - this.cache.signupStart.getTime(),
     });
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Registered);
   }
