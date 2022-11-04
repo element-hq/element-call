@@ -49,6 +49,9 @@ jobs:
         # We fetch from github directly as we don't bother checking out the repo
         run: curl -s https://raw.githubusercontent.com/vector-im/element-call/main/config/netlify_redirects > dist/_redirects
 
+      - name: Add config file
+        run: curl -s https://raw.githubusercontent.com/vector-im/element-call/main/config/element_io_develop.json > dist/config.json
+
       - name: Deploy to Netlify
         id: netlify
         uses: nwtgck/actions-netlify@v1.2.3
