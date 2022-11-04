@@ -25,7 +25,7 @@ import styles from "./JoinExistingCallModal.module.css";
 
 interface Props {
   onJoin: (e: PressEvent) => void;
-  onClose: (e: PressEvent) => void;
+  onClose: () => void;
   // TODO: add used parameters for <Modal>
   [index: string]: unknown;
 }
@@ -33,7 +33,12 @@ export function JoinExistingCallModal({ onJoin, onClose, ...rest }: Props) {
   const { t } = useTranslation();
 
   return (
-    <Modal title={t("Join existing call?")} isDismissable {...rest}>
+    <Modal
+      title={t("Join existing call?")}
+      isDismissable
+      {...rest}
+      onClose={onClose}
+    >
       <ModalContent>
         <p>{t("This call already exists, would you like to join?")}</p>
         <FieldRow rightAlign className={styles.buttons}>
