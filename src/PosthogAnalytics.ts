@@ -113,7 +113,11 @@ export class PosthogAnalytics {
       project_api_key: Config.instance.config.posthog?.api_key,
       api_host: Config.instance.config.posthog?.api_host,
     };
-    if (posthogConfig.project_api_key && posthogConfig.api_host) {
+    if (
+      posthogConfig.project_api_key &&
+      posthogConfig.api_host &&
+      PosthogAnalytics.getPlatformProperties().matrixBackend === "jssdk"
+    ) {
       this.posthog.init(posthogConfig.project_api_key, {
         api_host: posthogConfig.api_host,
         autocapture: false,
@@ -124,10 +128,8 @@ export class PosthogAnalytics {
         respect_dnt: true,
         advanced_disable_decide: true,
       });
-      if (PosthogAnalytics.getPlatformProperties().matrixBackend === "jssdk") {
-        // only enable analytics on jssdk (not in embedded mode for now)
-        this.enabled = true;
-      }
+
+      this.enabled = true;
     } else {
       this.enabled = false;
     }
