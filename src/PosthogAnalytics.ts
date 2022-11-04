@@ -128,7 +128,6 @@ export class PosthogAnalytics {
         respect_dnt: true,
         advanced_disable_decide: true,
       });
-
       this.enabled = true;
     } else {
       this.enabled = false;
