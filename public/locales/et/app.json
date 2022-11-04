@@ -1,7 +1,7 @@
 {
-  "Accept camera/microphone permissions to join the call.": "Kõnega anna õigused kaamera/mikrofoni kasutamiseks.",
+  "Accept camera/microphone permissions to join the call.": "Kõnega liitumiseks anna õigused kaamera/mikrofoni kasutamiseks.",
   "Accept microphone permissions to join the call.": "Kõnega liitumiseks anna õigused mikrofoni kasutamiseks.",
-  "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Kas hoopis tahad salasõna seadistada ja sellega oma kasutajakonto alles jätta?</0><1>Siis saad säilitada oma nime ja määrata tunnuspildi, mida saad kasutada tulevastes kõnedes</1>",
+  "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Kas soovid salasõna seadistada ja sellega oma kasutajakonto alles jätta?</0><1>Nii saad säilitada oma nime ja määrata profiilipildi, mida saad kasutada tulevastes kõnedes</1>",
   "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Ups, midagi läks valesti.</0><1>Logide saatmine meile aitab meil probleemi lahendada.</1>",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Liitu kõnega kohe</0><1> Või</1><2>Kopeeri kõne link ja liitu hiljem</2>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Loo konto</0> Või <2>Sisene külalisena</2>",
