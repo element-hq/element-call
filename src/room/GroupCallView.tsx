@@ -174,7 +174,7 @@ export function GroupCallView({
 
     PosthogAnalytics.instance.eventCallEnded.track(
       groupCall.room.name,
-      groupCall.room.getMembers().length
+      groupCall.participants.length
     );
 
     leave();
@@ -186,7 +186,14 @@ export function GroupCallView({
     if (!isPasswordlessUser && !isEmbedded) {
       history.push("/");
     }
-  }, [groupCall.room, leave, isPasswordlessUser, isEmbedded, history]);
+  }, [
+    groupCall.room.name,
+    groupCall.participants.length,
+    leave,
+    isPasswordlessUser,
+    isEmbedded,
+    history,
+  ]);
 
   useEffect(() => {
     if (widget && state === GroupCallState.Entered) {
