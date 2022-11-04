@@ -51,7 +51,7 @@ export class CallEndedTracker {
       callName,
       callParticipantsMax: this.cache.maxParticipantsCount,
       callParticipantsOnLeave: callParticipantsNow,
-      callDuration: new Date().getSeconds() - this.cache.startTime.getSeconds(),
+      callDuration: Date.now() - this.cache.startTime.getTime(),
     });
   }
 }
