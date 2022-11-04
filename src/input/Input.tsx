@@ -122,6 +122,7 @@ export const InputField = forwardRef<
             type={type}
             checked={checked}
             disabled={disabled}
+            aria-describedby={description ? id + "-desc" : undefined}
             {...rest}
           />
         )}
@@ -135,7 +136,11 @@ export const InputField = forwardRef<
           {label}
         </label>
         {suffix && <span>{suffix}</span>}
-        {description && <p className={styles.description}>{description}</p>}
+        {description && (
+          <p id={id + "-desc"} className={styles.description}>
+            {description}
+          </p>
+        )}
       </Field>
     );
   }
