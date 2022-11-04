@@ -353,7 +353,7 @@ function useGroupCallState(
   client: MatrixClient,
   groupCall: GroupCall,
   showPollCallStats: boolean
-) {
+): InspectorContextState {
   const [state, dispatch] = useReducer(reducer, {
     localUserId: client.getUserId(),
     localSessionId: client.getSessionId(),
@@ -410,11 +410,13 @@ function useGroupCallState(
 
   return state;
 }
+
 interface GroupCallInspectorProps {
   client: MatrixClient;
   groupCall: GroupCall;
   show: boolean;
 }
+
 export function GroupCallInspector({
   client,
   groupCall,

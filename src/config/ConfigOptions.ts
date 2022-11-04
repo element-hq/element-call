@@ -1,6 +1,7 @@
 export interface IConfigOptions {
   posthog?: {
     api_key: string;
+    api_host: string;
   };
   sentry?: {
     DSN: string;

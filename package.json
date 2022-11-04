@@ -51,6 +51,7 @@
     "normalize.css": "^8.0.1",
     "pako": "^2.0.4",
     "postcss-preset-env": "^7",
+    "posthog-js": "^1.29.0",
     "re-resizable": "^6.9.0",
     "react": "18",
     "react-dom": "18",

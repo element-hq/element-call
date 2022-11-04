@@ -32,6 +32,7 @@ import { CallEndedView } from "./CallEndedView";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
+import { PosthogAnalytics } from "../PosthogAnalytics";
 import { useMediaHandler } from "../settings/useMediaHandler";
 import { findDeviceByName, getDevices } from "../media-utils";
 
@@ -170,6 +171,12 @@ export function GroupCallView({
 
   const onLeave = useCallback(() => {
     setLeft(true);
+
+    PosthogAnalytics.instance.eventCallEnded.track(
+      groupCall.room.name,
+      groupCall.participants.length
+    );
+
     leave();
     if (widget) {
       widget.api.transport.send(ElementWidgetActions.HangupCall, {});
@@ -179,7 +186,14 @@ export function GroupCallView({
     if (!isPasswordlessUser && !isEmbedded) {
       history.push("/");
     }
-  }, [leave, isPasswordlessUser, isEmbedded, history]);
+  }, [
+    groupCall.room.name,
+    groupCall.participants.length,
+    leave,
+    isPasswordlessUser,
+    isEmbedded,
+    history,
+  ]);
 
   useEffect(() => {
     if (widget && state === GroupCallState.Entered) {

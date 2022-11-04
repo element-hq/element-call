@@ -26,7 +26,11 @@ import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
 import { SelectInput } from "../input/SelectInput";
 import { useMediaHandler } from "./useMediaHandler";
-import { useSpatialAudio, useShowInspector } from "./useSetting";
+import {
+  useSpatialAudio,
+  useShowInspector,
+  useOptInAnalytics,
+} from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
 import { useDownloadDebugLog } from "./submit-rageshake";
@@ -53,6 +57,7 @@ export const SettingsModal = (props: Props) => {
 
   const [spatialAudio, setSpatialAudio] = useSpatialAudio();
   const [showInspector, setShowInspector] = useShowInspector();
+  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
 
   const downloadDebugLog = useDownloadDebugLog();
 
@@ -112,6 +117,18 @@ export const SettingsModal = (props: Props) => {
               )}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setSpatialAudio(event.target.checked)
+              }
+            />
+          </FieldRow>
+          <FieldRow>
+            <InputField
+              id="optInAnalytics"
+              label="Allow analytics"
+              type="checkbox"
+              checked={optInAnalytics}
+              description="This will send anonymized data such as the duration of a call the and number of participants to the element call team to help us optimizing the application based on how it is used."
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setOptInAnalytics(event.target.checked)
               }
             />
           </FieldRow>

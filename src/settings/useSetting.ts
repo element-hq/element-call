@@ -18,7 +18,7 @@ import { EventEmitter } from "events";
 import { useMemo, useState, useEffect, useCallback } from "react";
 
 // Bus to notify other useSetting consumers when a setting is changed
-const settingsBus = new EventEmitter();
+export const settingsBus = new EventEmitter();
 
 // Like useState, but reads from and persists the value to localStorage
 const useSetting = <T>(
@@ -54,3 +54,4 @@ const useSetting = <T>(
 
 export const useSpatialAudio = () => useSetting("spatial-audio", false);
 export const useShowInspector = () => useSetting("show-inspector", false);
+export const useOptInAnalytics = () => useSetting("opt-in-analytics", false);
