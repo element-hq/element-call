@@ -18,7 +18,7 @@ import posthog, { CaptureOptions, PostHog, Properties } from "posthog-js";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { widget } from "./widget";
-import { settingsBus } from "./settings/useSetting";
+import { getSetting, settingsBus } from "./settings/useSetting";
 import {
   CallEndedTracker,
   CallStartedTracker,
@@ -97,7 +97,7 @@ export class PosthogAnalytics {
   private static internalInstance = null;
 
   private readonly enabled: boolean = false;
-  private anonymity = Anonymity.Pseudonymous;
+  private anonymity = Anonymity.Disabled;
   private platformSuperProperties = {};
   private registrationType: RegistrationType = RegistrationType.Guest;
 
@@ -132,6 +132,8 @@ export class PosthogAnalytics {
     } else {
       this.enabled = false;
     }
+    const optInAnalytics = getSetting("opt-in-analytics", false);
+    this.updateAnonymityFromSettings(optInAnalytics);
     this.startListeningToSettingsChanges();
   }
 
@@ -152,6 +154,12 @@ export class PosthogAnalytics {
 
       // drop device ID, which is a UUID persisted in local storage
       properties["$device_id"] = null;
+    }
+    if (PosthogAnalytics.getPlatformProperties().matrixBackend === "embedded") {
+      // the url for embedded widgets leak a lot of private data since the url is used to transport those value to the widget.
+      properties["$current_url"] = (properties["$current_url"] as string).split(
+        "/"
+      )[0];
     }
 
     return properties;
@@ -270,6 +278,7 @@ export class PosthogAnalytics {
   }
 
   private userRegisteredInThisSession(): boolean {
+    // only if the signup end got tracked the end time is set. Otherwise its default value is Date(0).
     return this.eventSignup.getSignupEndTime() > new Date(0);
   }
 
