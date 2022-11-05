@@ -130,5 +130,8 @@
   "Walkie-talkie call name": "Name des Walkie-Talkie-Anrufs",
   "Sending debug logs…": "Sende Debug-Protokolle …",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Anruf beitreten</0><1>Oder</1><2>Anruflink kopieren und später beitreten</2>",
-  "{{name}} (Connecting...)": "{{name}} (verbindet sich …)"
+  "{{name}} (Connecting...)": "{{name}} (verbindet sich …)",
+  "Allow analytics": "Analysedaten senden",
+  "Advanced": "Erweitert",
+  "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used.": "Dies wird anonyme Daten (wie z. B. die Dauer eines Anrufs und die Zahl der Teilnehmenden) dem Element Call-Team senden, um uns bei der Optimierung der Anwendung basierend auf dem Nutzungsverhalten zu helfen."
 }
