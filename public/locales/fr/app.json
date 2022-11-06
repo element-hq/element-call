@@ -130,5 +130,8 @@
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Vous avez déjà un compte ?</0><1><0>Se connecter</0> Ou <2>Accès invité</2></1>",
   "Sending debug logs…": "Envoi des journaux de débogage…",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Rejoindre l’appel maintenant</0><1>Ou</1><2>Copier le lien de l’appel et rejoindre plus tard</2>",
-  "{{name}} (Connecting...)": "{{name}} (Connexion…)"
+  "{{name}} (Connecting...)": "{{name}} (Connexion…)",
+  "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used.": "Cela enverra des données anonymisées (telles que la durée d’un appel et le nombre de participants) à l’équipe de Element Call pour aider à optimiser l’application en fonction de l’utilisation.",
+  "Allow analytics": "Autoriser les statistiques",
+  "Advanced": "Avancé"
 }
