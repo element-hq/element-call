@@ -24,11 +24,13 @@ import { Body } from "./typography/Typography";
 interface Props {
   userIds: Set<string>;
   room: Room;
+  onClose: () => void;
 }
 
 export const IncompatibleVersionModal: React.FC<Props> = ({
   userIds,
   room,
+  onClose,
   ...rest
 }) => {
   const { t } = useTranslation();
@@ -38,7 +40,12 @@ export const IncompatibleVersionModal: React.FC<Props> = ({
   );
 
   return (
-    <Modal title={t("Incompatible versions")} isDismissable {...rest}>
+    <Modal
+      title={t("Incompatible versions")}
+      isDismissable
+      onClose={onClose}
+      {...rest}
+    >
       <ModalContent>
         <Body>
           <Trans>
