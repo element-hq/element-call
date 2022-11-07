@@ -14,9 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ChangeEvent, FC, forwardRef, ReactNode } from "react";
+import React, { ChangeEvent, FC, forwardRef, ReactNode, useId } from "react";
 import classNames from "classnames";
-import { useId } from "@react-aria/utils";
 
 import styles from "./Input.module.css";
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
@@ -97,7 +96,7 @@ export const InputField = forwardRef<
     },
     ref
   ) => {
-    const descriptionId = useId(id + "-desc");
+    const descriptionId = useId();
 
     return (
       <Field
