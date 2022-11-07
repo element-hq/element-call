@@ -42,12 +42,11 @@ server {
 
 ## Development
 
-Element Call is built against the `robertlong/group-call` branch of [matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk/pull/2553). To get started, clone, install, and link the package:
+Element Call is built against [matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk/pull/2553). To get started, clone, install, and link the package:
 
 ```
 git clone https://github.com/matrix-org/matrix-js-sdk.git
 cd matrix-js-sdk
-git switch robertlong/group-call
 yarn
 yarn link
 ```
