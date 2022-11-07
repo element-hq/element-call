@@ -88,8 +88,14 @@ interface HeaderLogoProps {
 }
 
 export function HeaderLogo({ className }: HeaderLogoProps) {
+  const { t } = useTranslation();
+
   return (
-    <Link className={classNames(styles.headerLogo, className)} to="/">
+    <Link
+      className={classNames(styles.headerLogo, className)}
+      to="/"
+      aria-label={t("Element Call Home")}
+    >
       <Logo />
     </Link>
   );
