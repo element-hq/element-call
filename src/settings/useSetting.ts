@@ -55,7 +55,7 @@ export const getSetting = <T>(name: string, defaultValue: T): T => {
   const key = `matrix-setting-${name}`;
 
   const item = localStorage.getItem(key);
-  return item == null ? defaultValue : JSON.parse(item);
+  return item === null ? defaultValue : JSON.parse(item);
 };
 
 export const useSpatialAudio = () => useSetting("spatial-audio", false);
