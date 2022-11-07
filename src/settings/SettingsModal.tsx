@@ -24,6 +24,7 @@ import { TabContainer, TabItem } from "../tabs/Tabs";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
+import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
 import { SelectInput } from "../input/SelectInput";
 import { useMediaHandler } from "./useMediaHandler";
 import {
@@ -120,18 +121,6 @@ export const SettingsModal = (props: Props) => {
               }
             />
           </FieldRow>
-          <FieldRow>
-            <InputField
-              id="optInAnalytics"
-              label="Allow analytics"
-              type="checkbox"
-              checked={optInAnalytics}
-              description="This will send anonymized data such as the duration of a call the and number of participants to the element call team to help us optimizing the application based on how it is used."
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setOptInAnalytics(event.target.checked)
-              }
-            />
-          </FieldRow>
         </TabItem>
         <TabItem
           title={
@@ -154,6 +143,29 @@ export const SettingsModal = (props: Props) => {
               </Item>
             ))}
           </SelectInput>
+        </TabItem>
+        <TabItem
+          title={
+            <>
+              <OverflowIcon width={16} height={16} />
+              <span>{t("Advanced")}</span>
+            </>
+          }
+        >
+          <FieldRow>
+            <InputField
+              id="optInAnalytics"
+              label={t("Allow analytics")}
+              type="checkbox"
+              checked={optInAnalytics}
+              description={t(
+                "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used."
+              )}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setOptInAnalytics(event.target.checked)
+              }
+            />
+          </FieldRow>
         </TabItem>
         <TabItem
           title={

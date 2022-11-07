@@ -48,6 +48,7 @@ export function CopyButton({
       className={className}
       onPress={setCopied}
       iconStyle={isCopied ? "stroke" : "fill"}
+      aria-label={t("Copy")}
     >
       {isCopied ? (
         <>
