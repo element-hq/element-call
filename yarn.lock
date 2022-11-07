@@ -10206,7 +10206,7 @@ matrix-events-sdk@0.0.1-beta.7:
     bs58 "^5.0.0"
     content-type "^1.0.4"
     loglevel "^1.7.1"
-    matrix-events-sdk "0.0.1-beta.7"
+    matrix-events-sdk "^0.0.1-beta.7"
     matrix-widget-api "^1.0.0"
     p-retry "4"
     qs "^6.9.6"
