@@ -133,7 +133,7 @@ export class PosthogAnalytics {
       this.enabled = false;
     }
     const optInAnalytics = getSetting("opt-in-analytics", false);
-    this.updateAnonymityFromSettings(optInAnalytics);
+    this.updateAnonymityFromSettingsAndIdentifyUser(optInAnalytics);
     this.startListeningToSettingsChanges();
   }
 
@@ -276,7 +276,7 @@ export class PosthogAnalytics {
     return this.eventSignup.getSignupEndTime() > new Date(0);
   }
 
-  public async updateAnonymityFromSettings(
+  public async updateAnonymityFromSettingsAndIdentifyUser(
     pseudonymousOptIn: boolean
   ): Promise<void> {
     // Update this.anonymity based on the user's analytics opt-in settings
@@ -318,7 +318,7 @@ export class PosthogAnalytics {
     // Note that for new accounts, pseudonymousAnalyticsOptIn won't be set, so updateAnonymityFromSettings
     // won't be called (i.e. this.anonymity will be left as the default, until the setting changes)
     settingsBus.on("opt-in-analytics", (optInAnalytics) => {
-      this.updateAnonymityFromSettings(optInAnalytics);
+      this.updateAnonymityFromSettingsAndIdentifyUser(optInAnalytics);
     });
   }
 
