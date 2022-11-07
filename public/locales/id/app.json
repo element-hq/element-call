@@ -130,5 +130,8 @@
   "{{roomName}} - Walkie-talkie call": "{{roomName}} - Panggilan protofon",
   "Sending debug logs…": "Mengirimkan catatan pengawakutuan…",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Bergabung panggilan sekarang</0><1>Atau</1><2>Salin tautan dan bergabung nanti</2>",
-  "{{name}} (Connecting...)": "{{name}} (Menghubungkan...)"
+  "{{name}} (Connecting...)": "{{name}} (Menghubungkan...)",
+  "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used.": "Ini akan mengirimkan data anonim (seperti durasi dan jumlah peserta panggilan) ke tim Element Call untuk membantu kami mengoptimalkan aplikasi berdasarkan bagaimana penggunaannya.",
+  "Allow analytics": "Perbolehkan analitik",
+  "Advanced": "Tingkat lanjut"
 }
