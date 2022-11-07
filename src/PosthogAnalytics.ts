@@ -18,7 +18,7 @@ import posthog, { CaptureOptions, PostHog, Properties } from "posthog-js";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { widget } from "./widget";
-import { settingsBus } from "./settings/useSetting";
+import { getSetting, settingsBus } from "./settings/useSetting";
 import {
   CallEndedTracker,
   CallStartedTracker,
@@ -97,7 +97,7 @@ export class PosthogAnalytics {
   private static internalInstance = null;
 
   private readonly enabled: boolean = false;
-  private anonymity = Anonymity.Pseudonymous;
+  private anonymity = Anonymity.Disabled;
   private platformSuperProperties = {};
   private registrationType: RegistrationType = RegistrationType.Guest;
 
@@ -132,6 +132,8 @@ export class PosthogAnalytics {
     } else {
       this.enabled = false;
     }
+    const optInAnalytics = getSetting("opt-in-analytics", false);
+    this.updateAnonymityFromSettingsAndIdentifyUser(optInAnalytics);
     this.startListeningToSettingsChanges();
   }
 
@@ -270,10 +272,11 @@ export class PosthogAnalytics {
   }
 
   private userRegisteredInThisSession(): boolean {
+    // only if the signup end got tracked the end time is set. Otherwise its default value is Date(0).
     return this.eventSignup.getSignupEndTime() > new Date(0);
   }
 
-  public async updateAnonymityFromSettings(
+  public async updateAnonymityFromSettingsAndIdentifyUser(
     pseudonymousOptIn: boolean
   ): Promise<void> {
     // Update this.anonymity based on the user's analytics opt-in settings
@@ -315,7 +318,7 @@ export class PosthogAnalytics {
     // Note that for new accounts, pseudonymousAnalyticsOptIn won't be set, so updateAnonymityFromSettings
     // won't be called (i.e. this.anonymity will be left as the default, until the setting changes)
     settingsBus.on("opt-in-analytics", (optInAnalytics) => {
-      this.updateAnonymityFromSettings(optInAnalytics);
+      this.updateAnonymityFromSettingsAndIdentifyUser(optInAnalytics);
     });
   }
 
