@@ -43,7 +43,7 @@ export interface ModalProps extends OverlayProps, AriaDialogProps {
   children: ReactNode;
   className?: string;
   mobileFullScreen?: boolean;
-  onClose?: () => void;
+  onClose: () => void;
 }
 
 export function Modal({
