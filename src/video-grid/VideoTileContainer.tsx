@@ -71,7 +71,7 @@ export function VideoTileContainer({
     stream ?? null,
     audioContext,
     audioDestination,
-    isLocal,
+    isLocal || maximised,
     localVolume
   );
   const {
