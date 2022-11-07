@@ -16,6 +16,7 @@ limitations under the License.
 
 import React, { ChangeEvent, FC, forwardRef, ReactNode } from "react";
 import classNames from "classnames";
+import { useId } from "@react-aria/utils";
 
 import styles from "./Input.module.css";
 import { ReactComponent as CheckIcon } from "../icons/Check.svg";
@@ -96,6 +97,8 @@ export const InputField = forwardRef<
     },
     ref
   ) => {
+    const descriptionId = useId(id + "-desc");
+
     return (
       <Field
         className={classNames(
@@ -113,6 +116,7 @@ export const InputField = forwardRef<
             id={id}
             ref={ref as React.ForwardedRef<HTMLTextAreaElement>}
             disabled={disabled}
+            aria-describedby={descriptionId}
             {...rest}
           />
         ) : (
@@ -122,7 +126,7 @@ export const InputField = forwardRef<
             type={type}
             checked={checked}
             disabled={disabled}
-            aria-describedby={description ? id + "-desc" : undefined}
+            aria-describedby={descriptionId}
             {...rest}
           />
         )}
@@ -137,7 +141,7 @@ export const InputField = forwardRef<
         </label>
         {suffix && <span>{suffix}</span>}
         {description && (
-          <p id={id + "-desc"} className={styles.description}>
+          <p id={descriptionId} className={styles.description}>
             {description}
           </p>
         )}
