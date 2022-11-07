@@ -155,12 +155,6 @@ export class PosthogAnalytics {
       // drop device ID, which is a UUID persisted in local storage
       properties["$device_id"] = null;
     }
-    if (PosthogAnalytics.getPlatformProperties().matrixBackend === "embedded") {
-      // the url for embedded widgets leak a lot of private data since the url is used to transport those value to the widget.
-      properties["$current_url"] = (properties["$current_url"] as string).split(
-        "/"
-      )[0];
-    }
 
     return properties;
   };
