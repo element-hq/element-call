@@ -133,5 +133,7 @@
   "{{count}} people connected|one": "{{count}} persona conectada",
   "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used.": "Esto enviará datos anónimos (como la duración de la llamada y el número de participantes) al equipo de Element Calle para ayudarnos a optimizar la aplicación dependiendo de cómo se use.",
   "Allow analytics": "Permitir analíticas",
-  "Advanced": "Avanzado"
+  "Advanced": "Avanzado",
+  "Element Call Home": "Inicio de Element Call",
+  "Copy": "Copiar"
 }
