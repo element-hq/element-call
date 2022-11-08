@@ -14,7 +14,7 @@
   "Call type menu": "Anruftyp Menü",
   "Camera": "Kamera",
   "Camera {{n}}": "Kamera {{n}}",
-  "Camera/microphone permissions needed to join the call.": "Kamera-/Mikrofonberechtigung für die Teilnahme am Anruf erforderlich.",
+  "Camera/microphone permissions needed to join the call.": "Für die Teilnahme am Anruf sind Kamera- und Mikrofonberechtigungen erforderlich.",
   "Change layout": "Layout ändern",
   "Close": "Schließen",
   "Confirm password": "Passwort bestätigen",
@@ -133,5 +133,7 @@
   "{{name}} (Connecting...)": "{{name}} (verbindet sich …)",
   "Allow analytics": "Analysedaten senden",
   "Advanced": "Erweitert",
-  "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used.": "Dies wird anonyme Daten (wie z. B. die Dauer eines Anrufs und die Zahl der Teilnehmenden) dem Element Call-Team senden, um uns bei der Optimierung der Anwendung basierend auf dem Nutzungsverhalten zu helfen."
+  "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used.": "Dies wird anonyme Daten (wie z. B. die Dauer eines Anrufs und die Zahl der Teilnehmenden) dem Element Call-Team senden, um uns bei der Optimierung der Anwendung basierend auf dem Nutzungsverhalten zu helfen.",
+  "Copy": "Kopieren",
+  "Element Call Home": "Element Call-Startseite"
 }
