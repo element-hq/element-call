@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ChangeEvent, FC, forwardRef, ReactNode } from "react";
+import React, { ChangeEvent, FC, forwardRef, ReactNode, useId } from "react";
 import classNames from "classnames";
 
 import styles from "./Input.module.css";
@@ -96,6 +96,8 @@ export const InputField = forwardRef<
     },
     ref
   ) => {
+    const descriptionId = useId();
+
     return (
       <Field
         className={classNames(
@@ -113,6 +115,7 @@ export const InputField = forwardRef<
             id={id}
             ref={ref as React.ForwardedRef<HTMLTextAreaElement>}
             disabled={disabled}
+            aria-describedby={descriptionId}
             {...rest}
           />
         ) : (
@@ -122,6 +125,7 @@ export const InputField = forwardRef<
             type={type}
             checked={checked}
             disabled={disabled}
+            aria-describedby={descriptionId}
             {...rest}
           />
         )}
@@ -135,7 +139,11 @@ export const InputField = forwardRef<
           {label}
         </label>
         {suffix && <span>{suffix}</span>}
-        {description && <p className={styles.description}>{description}</p>}
+        {description && (
+          <p id={descriptionId} className={styles.description}>
+            {description}
+          </p>
+        )}
       </Field>
     );
   }
