@@ -133,5 +133,7 @@
   "{{name}} (Connecting...)": "{{name}} (З'єднання...)",
   "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used.": "Це дозволить надсилати анонімні дані (такі як тривалість виклику та кількість учасників) команді викликів Element, щоб допомогти нам оптимізувати застосунок на основі того, як він використовується.",
   "Allow analytics": "Дозволити аналітику",
-  "Advanced": "Розширені"
+  "Advanced": "Розширені",
+  "Element Call Home": "Домівка Element Call",
+  "Copy": "Копіювати"
 }
