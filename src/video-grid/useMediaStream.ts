@@ -20,6 +20,7 @@ import {
   acquireContext,
   releaseContext,
 } from "matrix-js-sdk/src/webrtc/audioContext";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { useSpatialAudio } from "../settings/useSetting";
 import { useEventTarget } from "../useEvents";
@@ -213,10 +214,10 @@ export const useSpatialMediaStream = (
   stream: MediaStream | null,
   audioContext: AudioContext,
   audioDestination: AudioNode,
-  mute = false,
-  localVolume?: number
+  localVolume: number,
+  mute = false
 ): [RefObject<HTMLDivElement>, RefObject<MediaElement>] => {
-  const tileRef = useRef<HTMLDivElement>();
+  const tileRef = useRef<HTMLDivElement | null>(null);
   const [spatialAudio] = useSpatialAudio();
   // We always handle audio separately form the video element
   const mediaRef = useMediaStream(stream, null, true);
@@ -227,53 +228,63 @@ export const useSpatialMediaStream = (
   const sourceRef = useRef<MediaStreamAudioSourceNode>();
 
   useEffect(() => {
-    if (spatialAudio && tileRef.current && !mute && audioTrackCount > 0) {
-      if (!pannerNodeRef.current) {
-        pannerNodeRef.current = new PannerNode(audioContext, {
-          panningModel: "HRTF",
-          refDistance: 3,
-        });
+    if (spatialAudio) {
+      if (tileRef.current && !mute && audioTrackCount > 0) {
+        logger.debug(`Rendering spatial audio for ${stream!.id}`);
+
+        if (!pannerNodeRef.current) {
+          pannerNodeRef.current = new PannerNode(audioContext, {
+            panningModel: "HRTF",
+            refDistance: 3,
+          });
+        }
+        if (!gainNodeRef.current) {
+          gainNodeRef.current = new GainNode(audioContext, {
+            gain: localVolume,
+          });
+        }
+        if (!sourceRef.current || sourceRef.current.mediaStream !== stream!) {
+          sourceRef.current = audioContext.createMediaStreamSource(stream!);
+        }
+
+        const tile = tileRef.current;
+        const source = sourceRef.current;
+        const gainNode = gainNodeRef.current;
+        const pannerNode = pannerNodeRef.current;
+
+        const updatePosition = () => {
+          const bounds = tile.getBoundingClientRect();
+          const windowSize = Math.max(window.innerWidth, window.innerHeight);
+          // Position the source relative to its placement in the window
+          pannerNodeRef.current!.positionX.value =
+            (bounds.x + bounds.width / 2) / windowSize - 0.5;
+          pannerNodeRef.current!.positionY.value =
+            (bounds.y + bounds.height / 2) / windowSize - 0.5;
+          // Put the source in front of the listener
+          pannerNodeRef.current!.positionZ.value = -2;
+        };
+
+        gainNode.gain.value = localVolume;
+        updatePosition();
+        source.connect(gainNode).connect(pannerNode).connect(audioDestination);
+        // HACK: We abuse the CSS transitionrun event to detect when the tile
+        // moves, because useMeasure, IntersectionObserver, etc. all have no
+        // ability to track changes in the CSS transform property
+        tile.addEventListener("transitionrun", updatePosition);
+
+        return () => {
+          tile.removeEventListener("transitionrun", updatePosition);
+          source.disconnect();
+          gainNode.disconnect();
+          pannerNode.disconnect();
+        };
+      } else if (stream) {
+        logger.debug(
+          `Not rendering spatial audio for ${stream.id} (tile ref ${Boolean(
+            tileRef.current
+          )}, mute ${mute}, track count ${audioTrackCount})`
+        );
       }
-      if (!gainNodeRef.current) {
-        gainNodeRef.current = new GainNode(audioContext, {
-          gain: localVolume,
-        });
-      }
-      if (!sourceRef.current) {
-        sourceRef.current = audioContext.createMediaStreamSource(stream!);
-      }
-
-      const tile = tileRef.current;
-      const source = sourceRef.current;
-      const gainNode = gainNodeRef.current;
-      const pannerNode = pannerNodeRef.current;
-
-      const updatePosition = () => {
-        const bounds = tile.getBoundingClientRect();
-        const windowSize = Math.max(window.innerWidth, window.innerHeight);
-        // Position the source relative to its placement in the window
-        pannerNodeRef.current!.positionX.value =
-          (bounds.x + bounds.width / 2) / windowSize - 0.5;
-        pannerNodeRef.current!.positionY.value =
-          (bounds.y + bounds.height / 2) / windowSize - 0.5;
-        // Put the source in front of the listener
-        pannerNodeRef.current!.positionZ.value = -2;
-      };
-
-      gainNode.gain.value = localVolume;
-      updatePosition();
-      source.connect(gainNode).connect(pannerNode).connect(audioDestination);
-      // HACK: We abuse the CSS transitionrun event to detect when the tile
-      // moves, because useMeasure, IntersectionObserver, etc. all have no
-      // ability to track changes in the CSS transform property
-      tile.addEventListener("transitionrun", updatePosition);
-
-      return () => {
-        tile.removeEventListener("transitionrun", updatePosition);
-        source.disconnect();
-        gainNode.disconnect();
-        pannerNode.disconnect();
-      };
     }
   }, [
     stream,
