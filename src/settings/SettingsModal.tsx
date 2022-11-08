@@ -159,7 +159,7 @@ export const SettingsModal = (props: Props) => {
               type="checkbox"
               checked={optInAnalytics}
               description={t(
-                "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used."
+                "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used."
               )}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setOptInAnalytics(event.target.checked)
