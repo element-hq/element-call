@@ -133,5 +133,7 @@
   "{{name}} (Connecting...)": "{{name}} (Menghubungkan...)",
   "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used.": "Ini akan mengirimkan data anonim (seperti durasi dan jumlah peserta panggilan) ke tim Element Call untuk membantu kami mengoptimalkan aplikasi berdasarkan bagaimana penggunaannya.",
   "Allow analytics": "Perbolehkan analitik",
-  "Advanced": "Tingkat lanjut"
+  "Advanced": "Tingkat lanjut",
+  "Element Call Home": "Beranda Element Call",
+  "Copy": "Salin"
 }
