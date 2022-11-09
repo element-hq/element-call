@@ -16,9 +16,10 @@ git clone https://github.com/vector-im/element-call.git
 cd element-call
 yarn
 cp .env.example .env
+cp sample.config.json public/config.json
 ```
 
-You can now edit the configuration in `.env` to your liking. The most important thing is to set `VITE_DEFAULT_HOMESERVER` to the homeserver that the app should use, such as `https://call.ems.host`.
+You can now edit the configuration in `.env` and `public/config.json` to your liking. (See the [configuration](#Configuration) section for details.) The most important thing is to set `VITE_DEFAULT_HOMESERVER` to the homeserver that the app should use, such as `https://call.ems.host`.
 
 Next, build the project:
 
@@ -59,6 +60,7 @@ cd element-call
 yarn
 yarn link matrix-js-sdk
 cp .env.example .env
+cp sample.config.json public/config.json
 ```
 
 By default, the app expects you to have [Synapse](https://matrix-org.github.io/synapse/latest/setup/installation.html) installed locally and running on port 8008. If you wish to use another homeserver, you can set it in your `.env` file.
@@ -69,9 +71,9 @@ You're now ready to launch the development server:
 yarn dev
 ```
 
-## Config
+## Configuration
 
-Configuration options are documented in the `.env` file.
+There are currently two different config files. `.env` holds variables that are used at build time, while `public/config.json` holds variables that are used at runtime. Documentation and default values for `public/config.json` can be found in [ConfigOptions.ts](src/config/ConfigOptions.ts).
 
 ## Translation
 
