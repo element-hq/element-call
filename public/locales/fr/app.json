@@ -133,5 +133,7 @@
   "{{name}} (Connecting...)": "{{name}} (Connexion…)",
   "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used.": "Cela enverra des données anonymisées (telles que la durée d’un appel et le nombre de participants) à l’équipe de Element Call pour aider à optimiser l’application en fonction de l’utilisation.",
   "Allow analytics": "Autoriser les statistiques",
-  "Advanced": "Avancé"
+  "Advanced": "Avancé",
+  "Element Call Home": "Accueil Element Call",
+  "Copy": "Copier"
 }
