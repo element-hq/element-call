@@ -134,5 +134,6 @@
   "Allow analytics": "Luba analüütika",
   "Advanced": "Lisaseadistused",
   "Element Call Home": "Element Call Home",
-  "Copy": "Kopeeri"
+  "Copy": "Kopeeri",
+  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Me saadame kõne anonüümsed andmed (nagu kõne kestus ja osalejate arv) meie arendustiimile ja see võimaldab levinud kasutusmustrite alusel arendust optimeerida."
 }
