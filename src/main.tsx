@@ -31,7 +31,7 @@ import { Initializer } from "./initializer";
 
 initRageshake();
 
-console.info(`matrix-video-chat ${import.meta.env.VITE_APP_VERSION || "dev"}`);
+console.info(`Element Call ${import.meta.env.VITE_APP_VERSION || "dev"}`);
 
 const root = createRoot(document.getElementById("root")!);
 
