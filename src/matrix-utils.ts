@@ -225,7 +225,7 @@ export async function createRoom(
   name: string,
   ptt: boolean
 ): Promise<[string, string]> {
-  console.log(`Creating room for froup call`);
+  logger.log(`Creating room for group call`);
   const createPromise = client.createRoom({
     visibility: Visibility.Private,
     preset: Preset.PublicChat,
