@@ -277,7 +277,7 @@ export async function createRoom(
 
   const result = await createPromise;
 
-  console.log(
+  logger.log(
     `Creating ${ptt ? "PTT" : "video"} group call in ${result.room_id}`
   );
 
