@@ -131,7 +131,6 @@
   "WebRTC is not supported or is being blocked in this browser.": "WebRTC pole kas selles brauseris toetatud või on keelatud.",
   "This will make a speaker's audio seem as if it is coming from where their tile is positioned on screen. (Experimental feature: this may impact the stability of audio.)": "Muudab kõneleja heli nii, nagu tuleks see sealt, kus on tema pilt ekraanil. (See on katseline funktsionaalsus ja võib mõjutada heli stabiilsust.)",
   "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>Terms and conditions</12>": "Siin saidis on kasutusel ReCAPTCHA ning kehtivad Google <2>privaatsuspoliitika</2> ja <6>teenusetingimused</6>.<9></9>Klikkides „Registreeru“, nõustud meie <12>kasutustingimustega</12>",
-  "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used.": "Me saadame kõne anonüümsed andmed (nagu kõne kestus ja osalejate arv) meie arendustiimile ja see võimaldab levinud kasutusmustrite alusel arendust optimeerida.",
   "Allow analytics": "Luba analüütika",
   "Advanced": "Lisaseadistused",
   "Element Call Home": "Element Call Home",
