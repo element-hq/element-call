@@ -225,6 +225,7 @@ export async function createRoom(
   name: string,
   ptt: boolean
 ): Promise<[string, string]> {
+  logger.log(`Creating room for group call`);
   const createPromise = client.createRoom({
     visibility: Visibility.Private,
     preset: Preset.PublicChat,
@@ -276,7 +277,9 @@ export async function createRoom(
 
   const result = await createPromise;
 
-  console.log(`Creating ${ptt ? "PTT" : "video"} group call room`);
+  logger.log(
+    `Creating ${ptt ? "PTT" : "video"} group call in ${result.room_id}`
+  );
 
   await client.createGroupCall(
     result.room_id,
