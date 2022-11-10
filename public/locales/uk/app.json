@@ -131,7 +131,6 @@
   "{{count}} people connected|one": "{{count}} під'єднується",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Приєднатися до виклику зараз</0><1>Or</1><2>Скопіювати посилання на виклик і приєднатися пізніше</2>",
   "{{name}} (Connecting...)": "{{name}} (З'єднання...)",
-  "This will send anonymized data (such as the duration of a call and the number of participants) to the element call team to help us optimise the application based on how it is used.": "Це дозволить надсилати анонімні дані (такі як тривалість виклику та кількість учасників) команді викликів Element, щоб допомогти нам оптимізувати застосунок на основі того, як він використовується.",
   "Allow analytics": "Дозволити аналітику",
   "Advanced": "Розширені",
   "Element Call Home": "Домівка Element Call",
