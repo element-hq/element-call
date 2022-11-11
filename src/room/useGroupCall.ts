@@ -298,10 +298,14 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     PosthogAnalytics.instance.eventMuteCamera.track(toggleToMute);
   }, [groupCall]);
 
+  const setMicrophoneMuted = useCallback((setMuted) => {
+    groupCall.setMicrophoneMuted(setMuted);
+    PosthogAnalytics.instance.eventMuteMicrophone.track(setMuted);
+  }, [groupCall]);
+
   const toggleMicrophoneMuted = useCallback(() => {
     const toggleToMute = !groupCall.isMicrophoneMuted();
-    groupCall.setMicrophoneMuted(toggleToMute);
-    PosthogAnalytics.instance.eventMuteMicrophone.track(toggleToMute);
+    setMicrophoneMuted(toggleToMute);
   }, [groupCall]);
 
   const toggleScreensharing = useCallback(async () => {
@@ -394,6 +398,33 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
       updateState({ error });
     }
   }, [t]);
+
+
+  useEffect(() => {
+    const keyDownListener = (event) => {
+      if (event.key === "m") {
+        toggleMicrophoneMuted();
+      }
+      if (event.key === " ") {
+        setMicrophoneMuted(false);
+      }
+    };
+
+    const keyUpListener = (event) => {
+      if (event.key === " ") {
+        setMicrophoneMuted(true);
+      }
+    };
+
+    window.addEventListener("keydown", keyDownListener, true);
+    window.addEventListener("keyup", keyUpListener, true);
+
+    return () => {
+      window.removeEventListener("keydown", keyDownListener, true);
+      window.removeEventListener("keyup", keyUpListener, true);
+    }
+  }, [toggleMicrophoneMuted, setMicrophoneMuted]);
+
 
   return {
     state,
