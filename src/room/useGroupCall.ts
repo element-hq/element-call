@@ -298,10 +298,13 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     PosthogAnalytics.instance.eventMuteCamera.track(toggleToMute);
   }, [groupCall]);
 
-  const setMicrophoneMuted = useCallback((setMuted) => {
-    groupCall.setMicrophoneMuted(setMuted);
-    PosthogAnalytics.instance.eventMuteMicrophone.track(setMuted);
-  }, [groupCall]);
+  const setMicrophoneMuted = useCallback(
+    (setMuted) => {
+      groupCall.setMicrophoneMuted(setMuted);
+      PosthogAnalytics.instance.eventMuteMicrophone.track(setMuted);
+    },
+    [groupCall]
+  );
 
   const toggleMicrophoneMuted = useCallback(() => {
     const toggleToMute = !groupCall.isMicrophoneMuted();
@@ -399,7 +402,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     }
   }, [t]);
 
-
   useEffect(() => {
     const keyDownListener = (event) => {
       if (event.key === "m") {
@@ -422,9 +424,8 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     return () => {
       window.removeEventListener("keydown", keyDownListener, true);
       window.removeEventListener("keyup", keyUpListener, true);
-    }
+    };
   }, [toggleMicrophoneMuted, setMicrophoneMuted]);
-
 
   return {
     state,
