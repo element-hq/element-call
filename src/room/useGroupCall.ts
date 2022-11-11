@@ -309,7 +309,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
   const toggleMicrophoneMuted = useCallback(() => {
     const toggleToMute = !groupCall.isMicrophoneMuted();
     setMicrophoneMuted(toggleToMute);
-  }, [groupCall]);
+  }, [groupCall, setMicrophoneMuted]);
 
   const toggleScreensharing = useCallback(async () => {
     if (!groupCall.isScreensharing()) {
