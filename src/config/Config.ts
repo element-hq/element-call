@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { DEFAULT_CONFIG, IConfigOptions } from "./ConfigOptions";
+import { DEFAULT_CONFIG, ConfigOptions, ResolvedConfigOptions } from "./ConfigOptions";
 
 export class Config {
   private static internalInstance: Config;
@@ -37,13 +37,13 @@ export class Config {
     return Config.internalInstance.initPromise;
   }
 
-  public config: IConfigOptions;
+  public config: ResolvedConfigOptions;
   private initPromise: Promise<void>;
 }
 
 async function downloadConfig(
   configJsonFilename: string
-): Promise<IConfigOptions> {
+): Promise<ConfigOptions> {
   const url = new URL(configJsonFilename, window.location.href);
   url.searchParams.set("cachebuster", Date.now().toString());
   const res = await fetch(url, {
@@ -51,14 +51,12 @@ async function downloadConfig(
     method: "GET",
   });
 
-  if (res.status === 404 || res.status === 0) {
+  if (!res.ok || res.status === 404 || res.status === 0) {
     // Lack of a config isn't an error, we should just use the defaults.
     // Also treat a blank config as no config, assuming the status code is 0, because we don't get 404s from file:
     // URIs so this is the only way we can not fail if the file doesn't exist when loading from a file:// URI.
-    return {} as IConfigOptions;
+    return {};
   }
 
-  if (res.ok) {
-    return res.json();
-  }
+  return res.json();
 }

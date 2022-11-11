@@ -5,4 +5,4 @@ dist
 dist-ssr
 *.local
 .idea/
-config.json
+public/config.json
