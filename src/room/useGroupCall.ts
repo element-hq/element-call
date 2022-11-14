@@ -404,6 +404,8 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     }
   }, [t]);
 
+  const [spacebarHeld, setSpacebarHeld] = useState(false);
+
   useEventTarget(
     window,
     "keydown",
@@ -420,10 +422,16 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
         } else if (event.key == "v") {
           toggleLocalVideoMuted();
         } else if (event.key === " ") {
+          setSpacebarHeld(true);
           setMicrophoneMuted(false);
         }
       },
-      [toggleLocalVideoMuted, toggleMicrophoneMuted, setMicrophoneMuted]
+      [
+        toggleLocalVideoMuted,
+        toggleMicrophoneMuted,
+        setMicrophoneMuted,
+        setSpacebarHeld,
+      ]
     )
   );
 
@@ -439,11 +447,23 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
         }
 
         if (event.key === " ") {
+          setSpacebarHeld(false);
           setMicrophoneMuted(true);
         }
       },
-      [setMicrophoneMuted]
+      [setMicrophoneMuted, setSpacebarHeld]
     )
+  );
+
+  useEventTarget(
+    window,
+    "blur",
+    useCallback(() => {
+      if (spacebarHeld) {
+        setSpacebarHeld(false);
+        setMicrophoneMuted(true);
+      }
+    }, [setMicrophoneMuted, setSpacebarHeld, spacebarHeld])
   );
 
   return {
