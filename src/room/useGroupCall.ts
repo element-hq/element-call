@@ -417,12 +417,13 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
 
         if (event.key === "m") {
           toggleMicrophoneMuted();
-        }
-        if (event.key === " ") {
+        } else if (event.key == "v") {
+          toggleLocalVideoMuted();
+        } else if (event.key === " ") {
           setMicrophoneMuted(false);
         }
       },
-      [toggleMicrophoneMuted, setMicrophoneMuted]
+      [toggleLocalVideoMuted, toggleMicrophoneMuted, setMicrophoneMuted]
     )
   );
 
