@@ -171,11 +171,11 @@ export const SettingsModal = (props: Props) => {
           <FieldRow>
             <InputField
               id="keyboardShortcuts"
-              label={t("Enable keyboard shortcuts")}
+              label={t("Single-key keyboard shortcuts")}
               type="checkbox"
               checked={keyboardShortcuts}
               description={t(
-                "Whether to enable the keyboard shortcuts, e.g. 'm' to mute/unmute the mic."
+                "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic."
               )}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setKeyboardShortcuts(event.target.checked)
