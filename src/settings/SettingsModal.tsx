@@ -175,7 +175,7 @@ export const SettingsModal = (props: Props) => {
               type="checkbox"
               checked={keyboardShortcuts}
               description={t(
-                "Whether to enable the keyboard shortcuts to e.g. mute/unmute the local microphone."
+                "Whether to enable the keyboard shortcuts, e.g. 'm' to mute/unmute the mic."
               )}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setKeyboardShortcuts(event.target.checked)
