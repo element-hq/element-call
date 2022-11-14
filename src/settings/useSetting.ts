@@ -61,3 +61,5 @@ export const getSetting = <T>(name: string, defaultValue: T): T => {
 export const useSpatialAudio = () => useSetting("spatial-audio", false);
 export const useShowInspector = () => useSetting("show-inspector", false);
 export const useOptInAnalytics = () => useSetting("opt-in-analytics", false);
+export const useKeyboardShortcuts = () =>
+  useSetting("keyboard-shortcuts", true);

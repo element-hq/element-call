@@ -33,6 +33,7 @@ import { usePageUnload } from "./usePageUnload";
 import { PosthogAnalytics } from "../PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
+import { getSetting } from "../settings/useSetting";
 
 export interface UseGroupCallReturnType {
   state: GroupCallState;
@@ -404,6 +405,12 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
 
   useEffect(() => {
     const keyDownListener = (event) => {
+      // Check if keyboard shortcuts are enabled
+      const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
+      if (!keyboardShortcuts) {
+        return;
+      }
+
       if (event.key === "m") {
         toggleMicrophoneMuted();
       }
@@ -413,6 +420,12 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     };
 
     const keyUpListener = (event) => {
+      // Check if keyboard shortcuts are enabled
+      const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
+      if (!keyboardShortcuts) {
+        return;
+      }
+
       if (event.key === " ") {
         setMicrophoneMuted(true);
       }
