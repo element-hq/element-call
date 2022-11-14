@@ -34,6 +34,7 @@ import { PosthogAnalytics } from "../PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
 import { getSetting } from "../settings/useSetting";
+import { useEventTarget } from "../useEvents";
 
 export interface UseGroupCallReturnType {
   state: GroupCallState;
@@ -403,42 +404,46 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     }
   }, [t]);
 
-  useEffect(() => {
-    const keyDownListener = (event) => {
-      // Check if keyboard shortcuts are enabled
-      const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
-      if (!keyboardShortcuts) {
-        return;
-      }
+  useEventTarget(
+    window,
+    "keydown",
+    useCallback(
+      (event: KeyboardEvent) => {
+        // Check if keyboard shortcuts are enabled
+        const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
+        if (!keyboardShortcuts) {
+          return;
+        }
 
-      if (event.key === "m") {
-        toggleMicrophoneMuted();
-      }
-      if (event.key === " ") {
-        setMicrophoneMuted(false);
-      }
-    };
+        if (event.key === "m") {
+          toggleMicrophoneMuted();
+        }
+        if (event.key === " ") {
+          setMicrophoneMuted(false);
+        }
+      },
+      [toggleMicrophoneMuted, setMicrophoneMuted]
+    )
+  );
 
-    const keyUpListener = (event) => {
-      // Check if keyboard shortcuts are enabled
-      const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
-      if (!keyboardShortcuts) {
-        return;
-      }
+  useEventTarget(
+    window,
+    "keyup",
+    useCallback(
+      (event: KeyboardEvent) => {
+        // Check if keyboard shortcuts are enabled
+        const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
+        if (!keyboardShortcuts) {
+          return;
+        }
 
-      if (event.key === " ") {
-        setMicrophoneMuted(true);
-      }
-    };
-
-    window.addEventListener("keydown", keyDownListener, true);
-    window.addEventListener("keyup", keyUpListener, true);
-
-    return () => {
-      window.removeEventListener("keydown", keyDownListener, true);
-      window.removeEventListener("keyup", keyUpListener, true);
-    };
-  }, [toggleMicrophoneMuted, setMicrophoneMuted]);
+        if (event.key === " ") {
+          setMicrophoneMuted(true);
+        }
+      },
+      [setMicrophoneMuted]
+    )
+  );
 
   return {
     state,
