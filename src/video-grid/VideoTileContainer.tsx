@@ -98,7 +98,7 @@ export function VideoTileContainer({
         videoMuted={videoMuted}
         screenshare={purpose === SDPStreamMetadataPurpose.Screenshare}
         name={rawDisplayName}
-        hasFeed={Boolean(item.callFeed)}
+        connectionState={item.connectionState}
         ref={tileRef}
         mediaRef={mediaRef}
         avatar={getAvatar && getAvatar(item.member, width, height)}
