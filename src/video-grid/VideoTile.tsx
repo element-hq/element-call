@@ -23,10 +23,11 @@ import styles from "./VideoTile.module.css";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
 import { AudioButton, FullscreenButton } from "../button/Button";
+import { ConnectionState } from "../room/InCallView";
 
 interface Props {
   name: string;
-  hasFeed: Boolean;
+  connectionState: ConnectionState;
   speaking?: boolean;
   audioMuted?: boolean;
   videoMuted?: boolean;
@@ -48,7 +49,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
   (
     {
       name,
-      hasFeed,
+      connectionState,
       speaking,
       audioMuted,
       videoMuted,
@@ -72,7 +73,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     const { t } = useTranslation();
 
     const toolbarButtons: JSX.Element[] = [];
-    if (hasFeed && !isLocal) {
+    if (connectionState == ConnectionState.CONNECTED && !isLocal) {
       toolbarButtons.push(
         <AudioButton
           key="localVolume"
@@ -94,7 +95,20 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       }
     }
 
-    const caption = hasFeed ? name : t("{{name}} (Connecting...)", { name });
+    let caption: string;
+    switch (connectionState) {
+      case ConnectionState.ESTABLISHING_CALL:
+        caption = t("{{name}} (Connecting...)", { name });
+
+        break;
+      case ConnectionState.WAIT_MEDIA:
+        // not strictly true, but probably easier to understand than, "Waiting for media"
+        caption = t("{{name}} (Waiting for video...)", { name });
+        break;
+      case ConnectionState.CONNECTED:
+        caption = name;
+        break;
+    }
 
     return (
       <animated.div
