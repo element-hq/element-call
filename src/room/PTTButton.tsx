@@ -23,6 +23,7 @@ import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { useEventTarget } from "../useEvents";
 import { Avatar } from "../Avatar";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
+import { getSetting } from "../settings/useSetting";
 
 interface Props {
   enabled: boolean;
@@ -134,6 +135,12 @@ export const PTTButton: React.FC<Props> = ({
       (e: KeyboardEvent) => {
         if (e.code === "Space") {
           if (!enabled) return;
+          // Check if keyboard shortcuts are enabled
+          const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
+          if (!keyboardShortcuts) {
+            return;
+          }
+
           e.preventDefault();
 
           hold();
@@ -148,6 +155,12 @@ export const PTTButton: React.FC<Props> = ({
     useCallback(
       (e: KeyboardEvent) => {
         if (e.code === "Space") {
+          // Check if keyboard shortcuts are enabled
+          const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
+          if (!keyboardShortcuts) {
+            return;
+          }
+
           e.preventDefault();
 
           unhold();
