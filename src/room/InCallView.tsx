@@ -215,6 +215,10 @@ export function InCallView({
   }, [calls, updateConnectionStates]);
 
   useEffect(() => {
+    updateConnectionStates();
+  }, [participants, updateConnectionStates]);
+
+  useEffect(() => {
     widget?.api.transport.send(
       layout === "freedom"
         ? ElementWidgetActions.TileLayout
