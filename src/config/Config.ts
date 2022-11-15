@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { DEFAULT_CONFIG, ConfigOptions, ResolvedConfigOptions } from "./ConfigOptions";
+import {
+  DEFAULT_CONFIG,
+  ConfigOptions,
+  ResolvedConfigOptions,
+} from "./ConfigOptions";
 
 export class Config {
   private static internalInstance: Config;

@@ -42,6 +42,7 @@
   "Display name": "Display name",
   "Download debug logs": "Download debug logs",
   "Element Call Home": "Element Call Home",
+  "Single-key keyboard shortcuts": "Single-key keyboard shortcuts",
   "Entering room…": "Entering room…",
   "Exit full screen": "Exit full screen",
   "Fetching group call timed out.": "Fetching group call timed out.",
@@ -133,6 +134,7 @@
   "Walkie-talkie call": "Walkie-talkie call",
   "Walkie-talkie call name": "Walkie-talkie call name",
   "WebRTC is not supported or is being blocked in this browser.": "WebRTC is not supported or is being blocked in this browser.",
+  "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.",
   "Yes, join call": "Yes, join call",
   "You can't talk at the same time": "You can't talk at the same time",
   "Your recent calls": "Your recent calls"

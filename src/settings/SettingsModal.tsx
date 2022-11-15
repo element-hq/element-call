@@ -28,6 +28,7 @@ import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
 import { SelectInput } from "../input/SelectInput";
 import { useMediaHandler } from "./useMediaHandler";
 import {
+  useKeyboardShortcuts,
   useSpatialAudio,
   useShowInspector,
   useOptInAnalytics,
@@ -59,6 +60,7 @@ export const SettingsModal = (props: Props) => {
   const [spatialAudio, setSpatialAudio] = useSpatialAudio();
   const [showInspector, setShowInspector] = useShowInspector();
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
+  const [keyboardShortcuts, setKeyboardShortcuts] = useKeyboardShortcuts();
 
   const downloadDebugLog = useDownloadDebugLog();
 
@@ -163,6 +165,20 @@ export const SettingsModal = (props: Props) => {
               )}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setOptInAnalytics(event.target.checked)
+              }
+            />
+          </FieldRow>
+          <FieldRow>
+            <InputField
+              id="keyboardShortcuts"
+              label={t("Single-key keyboard shortcuts")}
+              type="checkbox"
+              checked={keyboardShortcuts}
+              description={t(
+                "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic."
+              )}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setKeyboardShortcuts(event.target.checked)
               }
             />
           </FieldRow>
