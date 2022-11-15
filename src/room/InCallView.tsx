@@ -292,7 +292,7 @@ export function InCallView({
         focused: true,
         isLocal: screenshareFeed.isLocal(),
         presenter: false,
-        connectionState: ConnectionState.CONNECTED, // by definition since the screen shares arrived on the same connection
+        connectionState: connStates.get(screenshareFeed.userId),
       });
     }
 
