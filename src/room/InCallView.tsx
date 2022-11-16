@@ -14,7 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useCallback, useMemo, useRef } from "react";
+import React, {
+  useEffect,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { usePreventScroll } from "@react-aria/overlays";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
@@ -25,6 +31,11 @@ import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import { JoinRule } from "matrix-js-sdk/src/@types/partials";
+import {
+  CallEvent,
+  CallState,
+  MatrixCall,
+} from "matrix-js-sdk/src/webrtc/call";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import styles from "./InCallView.module.css";
@@ -73,6 +84,7 @@ interface Props {
   client: MatrixClient;
   groupCall: GroupCall;
   participants: RoomMember[];
+  calls: MatrixCall[];
   roomName: string;
   avatarUrl: string;
   microphoneMuted: boolean;
@@ -90,6 +102,12 @@ interface Props {
   hideHeader: boolean;
 }
 
+export enum ConnectionState {
+  EstablishingCall = "establishing call", // call hasn't been established yet
+  WaitMedia = "wait_media", // call is set up, waiting for ICE to connect
+  Connected = "connected", // media is flowing
+}
+
 // Represents something that should get a tile on the layout,
 // ie. a user's video feed or a screen share feed.
 export interface TileDescriptor {
@@ -99,12 +117,14 @@ export interface TileDescriptor {
   presenter: boolean;
   callFeed?: CallFeed;
   isLocal?: boolean;
+  connectionState: ConnectionState;
 }
 
 export function InCallView({
   client,
   groupCall,
   participants,
+  calls,
   roomName,
   avatarUrl,
   microphoneMuted,
@@ -153,6 +173,50 @@ export function InCallView({
   useAudioOutputDevice(audioRef, audioOutput);
 
   const { hideScreensharing } = useUrlParams();
+
+  const makeConnectionStatesMap = useCallback(() => {
+    const newConnStates = new Map<string, ConnectionState>();
+    for (const participant of participants) {
+      const userCall = groupCall.getCallByUserId(participant.userId);
+      const feed = userMediaFeeds.find((f) => f.userId === participant.userId);
+      let connectionState = ConnectionState.EstablishingCall;
+      if (feed && feed.isLocal()) {
+        connectionState = ConnectionState.Connected;
+      } else if (userCall) {
+        if (userCall.state === CallState.Connected) {
+          connectionState = ConnectionState.Connected;
+        } else if (userCall.state === CallState.Connecting) {
+          connectionState = ConnectionState.WaitMedia;
+        }
+      }
+      newConnStates.set(participant.userId, connectionState);
+    }
+    return newConnStates;
+  }, [groupCall, participants, userMediaFeeds]);
+
+  const [connStates, setConnStates] = useState(
+    new Map<string, ConnectionState>()
+  );
+
+  const updateConnectionStates = useCallback(() => {
+    setConnStates(makeConnectionStatesMap());
+  }, [setConnStates, makeConnectionStatesMap]);
+
+  useEffect(() => {
+    for (const call of calls) {
+      call.on(CallEvent.State, updateConnectionStates);
+    }
+
+    return () => {
+      for (const call of calls) {
+        call.off(CallEvent.State, updateConnectionStates);
+      }
+    };
+  }, [calls, updateConnectionStates]);
+
+  useEffect(() => {
+    updateConnectionStates();
+  }, [participants, updateConnectionStates]);
 
   useEffect(() => {
     widget?.api.transport.send(
@@ -208,6 +272,7 @@ export function InCallView({
         focused: screenshareFeeds.length === 0 && p.userId === activeSpeaker,
         isLocal: p.userId === client.getUserId(),
         presenter: false,
+        connectionState: connStates.get(p.userId),
       });
     }
 
@@ -231,11 +296,19 @@ export function InCallView({
         focused: true,
         isLocal: screenshareFeed.isLocal(),
         presenter: false,
+        connectionState: connStates.get(screenshareFeed.userId),
       });
     }
 
     return tileDescriptors;
-  }, [client, participants, userMediaFeeds, activeSpeaker, screenshareFeeds]);
+  }, [
+    client,
+    participants,
+    userMediaFeeds,
+    activeSpeaker,
+    screenshareFeeds,
+    connStates,
+  ]);
 
   // The maximised participant: either the participant that the user has
   // manually put in fullscreen, or the focused (active) participant if the

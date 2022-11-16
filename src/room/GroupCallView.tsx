@@ -79,6 +79,7 @@ export function GroupCallView({
     isScreensharing,
     screenshareFeeds,
     participants,
+    calls,
     unencryptedEventsFromUsers,
   } = useGroupCall(groupCall);
 
@@ -235,6 +236,7 @@ export function GroupCallView({
           roomName={groupCall.room.name}
           avatarUrl={avatarUrl}
           participants={participants}
+          calls={calls}
           microphoneMuted={microphoneMuted}
           localVideoMuted={localVideoMuted}
           toggleLocalVideoMuted={toggleLocalVideoMuted}
