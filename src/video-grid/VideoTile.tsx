@@ -73,7 +73,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     const { t } = useTranslation();
 
     const toolbarButtons: JSX.Element[] = [];
-    if (connectionState == ConnectionState.CONNECTED && !isLocal) {
+    if (connectionState == ConnectionState.Connected && !isLocal) {
       toolbarButtons.push(
         <AudioButton
           key="localVolume"
@@ -97,15 +97,15 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
 
     let caption: string;
     switch (connectionState) {
-      case ConnectionState.ESTABLISHING_CALL:
+      case ConnectionState.EstablishingCall:
         caption = t("{{name}} (Connecting...)", { name });
 
         break;
-      case ConnectionState.WAIT_MEDIA:
+      case ConnectionState.WaitMedia:
         // not strictly true, but probably easier to understand than, "Waiting for media"
         caption = t("{{name}} (Waiting for video...)", { name });
         break;
-      case ConnectionState.CONNECTED:
+      case ConnectionState.Connected:
         caption = name;
         break;
     }

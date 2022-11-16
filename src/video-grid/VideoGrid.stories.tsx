@@ -41,7 +41,7 @@ export const ParticipantsTest = () => {
         member: new RoomMember("!fake:room.id", `@user${i}:fake.dummy`),
         focused: false,
         presenter: false,
-        connectionState: ConnectionState.CONNECTED,
+        connectionState: ConnectionState.Connected,
       })),
     [participantCount]
   );
@@ -80,7 +80,7 @@ export const ParticipantsTest = () => {
               key={item.id}
               name={`User ${item.id}`}
               disableSpeakingIndicator={items.length < 3}
-              connectionState={ConnectionState.CONNECTED}
+              connectionState={ConnectionState.Connected}
               {...rest}
             />
           )}
