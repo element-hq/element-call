@@ -99,7 +99,6 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     switch (connectionState) {
       case ConnectionState.EstablishingCall:
         caption = t("{{name}} (Connecting...)", { name });
-
         break;
       case ConnectionState.WaitMedia:
         // not strictly true, but probably easier to understand than, "Waiting for media"
