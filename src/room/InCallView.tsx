@@ -103,9 +103,9 @@ interface Props {
 }
 
 export enum ConnectionState {
-  ESTABLISHING_CALL = "establishing call", // call hasn't been established yet
-  WAIT_MEDIA = "wait_media", // call is set up, waiting for ICE to connect
-  CONNECTED = "connected", // media is flowing
+  EstablishingCall = "establishing call", // call hasn't been established yet
+  WaitMedia = "wait_media", // call is set up, waiting for ICE to connect
+  Connected = "connected", // media is flowing
 }
 
 // Represents something that should get a tile on the layout,
@@ -179,14 +179,14 @@ export function InCallView({
     for (const participant of participants) {
       const userCall = groupCall.getCallByUserId(participant.userId);
       const feed = userMediaFeeds.find((f) => f.userId === participant.userId);
-      let connectionState = ConnectionState.ESTABLISHING_CALL;
+      let connectionState = ConnectionState.EstablishingCall;
       if (feed && feed.isLocal()) {
-        connectionState = ConnectionState.CONNECTED;
+        connectionState = ConnectionState.Connected;
       } else if (userCall) {
         if (userCall.state === CallState.Connected) {
-          connectionState = ConnectionState.CONNECTED;
+          connectionState = ConnectionState.Connected;
         } else if (userCall.state === CallState.Connecting) {
-          connectionState = ConnectionState.WAIT_MEDIA;
+          connectionState = ConnectionState.WaitMedia;
         }
       }
       newConnStates.set(participant.userId, connectionState);
