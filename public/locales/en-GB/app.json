@@ -3,6 +3,7 @@
   "{{count}} people connected|other": "{{count}} people connected",
   "{{displayName}}, your call is now ended": "{{displayName}}, your call is now ended",
   "{{name}} (Connecting...)": "{{name}} (Connecting...)",
+  "{{name}} (Waiting for video...)": "{{name}} (Waiting for video...)",
   "{{name}} is presenting": "{{name}} is presenting",
   "{{name}} is talking…": "{{name}} is talking…",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
