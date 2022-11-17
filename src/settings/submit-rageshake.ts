@@ -72,10 +72,15 @@ export function useSubmitRageshake(): {
           touchInput = String(window.matchMedia("(pointer: coarse)").matches);
         } catch (e) {}
 
+        let description = opts.rageshakeRequestId
+          ? `Rageshake ${opts.rageshakeRequestId}`
+          : "";
+        if (opts.description) description += `: ${opts.description}`;
+
         const body = new FormData();
         body.append(
           "text",
-          opts.description || "User did not supply any additional text."
+          description ?? "User did not supply any additional text."
         );
         body.append("app", "matrix-video-chat");
         body.append(
