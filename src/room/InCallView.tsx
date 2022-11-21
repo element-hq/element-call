@@ -14,13 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, {
-  useEffect,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useCallback, useMemo, useRef } from "react";
 import { usePreventScroll } from "@react-aria/overlays";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
@@ -31,11 +25,6 @@ import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import { JoinRule } from "matrix-js-sdk/src/@types/partials";
-import {
-  CallEvent,
-  CallState,
-  MatrixCall,
-} from "matrix-js-sdk/src/webrtc/call";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import styles from "./InCallView.module.css";
@@ -73,6 +62,7 @@ import { widget, ElementWidgetActions } from "../widget";
 import { useJoinRule } from "./useJoinRule";
 import { useUrlParams } from "../UrlParams";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
+import { ConnectionState, ParticipantInfo } from "./useGroupCall";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -83,8 +73,7 @@ const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 interface Props {
   client: MatrixClient;
   groupCall: GroupCall;
-  participants: RoomMember[];
-  calls: MatrixCall[];
+  participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   roomName: string;
   avatarUrl: string;
   microphoneMuted: boolean;
@@ -93,19 +82,13 @@ interface Props {
   toggleMicrophoneMuted: () => void;
   toggleScreensharing: () => void;
   userMediaFeeds: CallFeed[];
-  activeSpeaker: string;
+  activeSpeaker: CallFeed | null;
   onLeave: () => void;
   isScreensharing: boolean;
   screenshareFeeds: CallFeed[];
   roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
-}
-
-export enum ConnectionState {
-  EstablishingCall = "establishing call", // call hasn't been established yet
-  WaitMedia = "wait_media", // call is set up, waiting for ICE to connect
-  Connected = "connected", // media is flowing
 }
 
 // Represents something that should get a tile on the layout,
@@ -124,7 +107,6 @@ export function InCallView({
   client,
   groupCall,
   participants,
-  calls,
   roomName,
   avatarUrl,
   microphoneMuted,
@@ -174,50 +156,6 @@ export function InCallView({
 
   const { hideScreensharing } = useUrlParams();
 
-  const makeConnectionStatesMap = useCallback(() => {
-    const newConnStates = new Map<string, ConnectionState>();
-    for (const participant of participants) {
-      const userCall = groupCall.getCallByUserId(participant.userId);
-      const feed = userMediaFeeds.find((f) => f.userId === participant.userId);
-      let connectionState = ConnectionState.EstablishingCall;
-      if (feed && feed.isLocal()) {
-        connectionState = ConnectionState.Connected;
-      } else if (userCall) {
-        if (userCall.state === CallState.Connected) {
-          connectionState = ConnectionState.Connected;
-        } else if (userCall.state === CallState.Connecting) {
-          connectionState = ConnectionState.WaitMedia;
-        }
-      }
-      newConnStates.set(participant.userId, connectionState);
-    }
-    return newConnStates;
-  }, [groupCall, participants, userMediaFeeds]);
-
-  const [connStates, setConnStates] = useState(
-    new Map<string, ConnectionState>()
-  );
-
-  const updateConnectionStates = useCallback(() => {
-    setConnStates(makeConnectionStatesMap());
-  }, [setConnStates, makeConnectionStatesMap]);
-
-  useEffect(() => {
-    for (const call of calls) {
-      call.on(CallEvent.State, updateConnectionStates);
-    }
-
-    return () => {
-      for (const call of calls) {
-        call.off(CallEvent.State, updateConnectionStates);
-      }
-    };
-  }, [calls, updateConnectionStates]);
-
-  useEffect(() => {
-    updateConnectionStates();
-  }, [participants, updateConnectionStates]);
-
   useEffect(() => {
     widget?.api.transport.send(
       layout === "freedom"
@@ -256,59 +194,57 @@ export function InCallView({
 
   const items = useMemo(() => {
     const tileDescriptors: TileDescriptor[] = [];
+    const localUserId = client.getUserId()!;
+    const localDeviceId = client.getDeviceId()!;
 
-    // one tile for each participants, to start with (we want a tile for everyone we
-    // think should be in the call, even if we don't have a media feed for them yet)
-    for (const p of participants) {
-      const userMediaFeed = userMediaFeeds.find((f) => f.userId === p.userId);
+    // One tile for each participant, to start with (we want a tile for everyone we
+    // think should be in the call, even if we don't have a call feed for them yet)
+    for (const [member, participantMap] of participants) {
+      for (const [deviceId, { connectionState, presenter }] of participantMap) {
+        const callFeed = userMediaFeeds.find(
+          (f) => f.userId === member.userId && f.deviceId === deviceId
+        );
 
-      // NB. this assumes that the same user can't join more than once from multiple
-      // devices, but the participants are just RoomMembers, so this assumption is baked
-      // into GroupCall itself.
-      tileDescriptors.push({
-        id: p.userId,
-        member: p,
-        callFeed: userMediaFeed,
-        focused: screenshareFeeds.length === 0 && p.userId === activeSpeaker,
-        isLocal: p.userId === client.getUserId(),
-        presenter: false,
-        connectionState: connStates.get(p.userId),
-      });
+        tileDescriptors.push({
+          id: `${member.userId} ${deviceId}`,
+          member,
+          callFeed,
+          focused: screenshareFeeds.length === 0 && callFeed === activeSpeaker,
+          isLocal: member.userId === localUserId && deviceId === localDeviceId,
+          presenter,
+          connectionState,
+        });
+      }
     }
 
     PosthogAnalytics.instance.eventCallEnded.cacheParticipantCountChanged(
-      participants.length
+      tileDescriptors.length
     );
-    // add the screenshares too
+
+    // Add the screenshares too
     for (const screenshareFeed of screenshareFeeds) {
-      const userMediaItem = tileDescriptors.find(
-        (item) => item.member.userId === screenshareFeed.userId
-      );
+      const member = screenshareFeed.getMember()!;
+      const connectionState = participants
+        .get(member)
+        ?.get(screenshareFeed.deviceId!)?.connectionState;
 
-      if (userMediaItem) {
-        userMediaItem.presenter = true;
+      // If the participant has left, their screenshare feed is stale and we
+      // shouldn't bother showing it
+      if (connectionState !== undefined) {
+        tileDescriptors.push({
+          id: screenshareFeed.stream.id,
+          member,
+          callFeed: screenshareFeed,
+          focused: true,
+          isLocal: screenshareFeed.isLocal(),
+          presenter: false,
+          connectionState,
+        });
       }
-
-      tileDescriptors.push({
-        id: screenshareFeed.stream.id,
-        member: screenshareFeed.getMember()!,
-        callFeed: screenshareFeed,
-        focused: true,
-        isLocal: screenshareFeed.isLocal(),
-        presenter: false,
-        connectionState: connStates.get(screenshareFeed.userId),
-      });
     }
 
     return tileDescriptors;
-  }, [
-    client,
-    participants,
-    userMediaFeeds,
-    activeSpeaker,
-    screenshareFeeds,
-    connStates,
-  ]);
+  }, [client, participants, userMediaFeeds, activeSpeaker, screenshareFeeds]);
 
   // The maximised participant: either the participant that the user has
   // manually put in fullscreen, or the focused (active) participant if the
