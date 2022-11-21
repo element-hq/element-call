@@ -23,7 +23,7 @@ import styles from "./VideoTile.module.css";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
 import { AudioButton, FullscreenButton } from "../button/Button";
-import { ConnectionState } from "../room/InCallView";
+import { ConnectionState } from "../room/useGroupCall";
 
 interface Props {
   name: string;
