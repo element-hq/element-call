@@ -135,5 +135,8 @@
   "Advanced": "Lisaseadistused",
   "Element Call Home": "Element Call Home",
   "Copy": "Kopeeri",
-  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Me saadame kõne anonüümsed andmed (nagu kõne kestus ja osalejate arv) meie arendustiimile ja see võimaldab levinud kasutusmustrite alusel arendust optimeerida."
+  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Me saadame kõne anonüümsed andmed (nagu kõne kestus ja osalejate arv) meie arendustiimile ja see võimaldab levinud kasutusmustrite alusel arendust optimeerida.",
+  "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Kas kasutame üheklahvilisi kiirklahve, näiteks „m“ mikrofoni sisse/välja lülitamiseks.",
+  "Single-key keyboard shortcuts": "Üheklahvilised kiirklahvid",
+  "{{name}} (Waiting for video...)": "{{name}} (Ootame videovoo algust...)"
 }
