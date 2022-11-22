@@ -73,6 +73,19 @@ function Option<T>({ item, state, className }: OptionProps<T>) {
     ref
   );
 
+  // Hack: remove the onPointerUp event handler and re-wire it to
+  // onClick. Chrome Android triggers a click event after the onpointerup
+  // event which leaks through to elements underneath the z-indexed select
+  // popover. preventDefault / stopPropagation don't have any effect, even
+  // adding just a dummy onClick handler still doesn't work, but it's fine
+  // if we handle just onClick.
+  // https://github.com/vector-im/element-call/issues/762
+  const origPointerUp = optionProps.onPointerUp;
+  delete optionProps.onPointerUp;
+  optionProps.onClick = (e) => {
+    origPointerUp(e as unknown as React.PointerEvent<HTMLElement>);
+  };
+
   return (
     <li
       {...optionProps}
