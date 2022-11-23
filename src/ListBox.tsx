@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import { useListBox, useOption, AriaListBoxOptions } from "@react-aria/listbox";
 import { ListState } from "@react-stately/list";
 import { Node } from "@react-types/shared";
@@ -71,6 +71,22 @@ function Option<T>({ item, state, className }: OptionProps<T>) {
     { key: item.key },
     state,
     ref
+  );
+
+  // Hack: remove the onPointerUp event handler and re-wire it to
+  // onClick. Chrome Android triggers a click event after the onpointerup
+  // event which leaks through to elements underneath the z-indexed select
+  // popover. preventDefault / stopPropagation don't have any effect, even
+  // adding just a dummy onClick handler still doesn't work, but it's fine
+  // if we handle just onClick.
+  // https://github.com/vector-im/element-call/issues/762
+  const origPointerUp = optionProps.onPointerUp;
+  delete optionProps.onPointerUp;
+  optionProps.onClick = useCallback(
+    (e) => {
+      origPointerUp(e as unknown as React.PointerEvent<HTMLElement>);
+    },
+    [origPointerUp]
   );
 
   return (
