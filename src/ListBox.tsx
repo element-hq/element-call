@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import { useListBox, useOption, AriaListBoxOptions } from "@react-aria/listbox";
 import { ListState } from "@react-stately/list";
 import { Node } from "@react-types/shared";
@@ -82,9 +82,12 @@ function Option<T>({ item, state, className }: OptionProps<T>) {
   // https://github.com/vector-im/element-call/issues/762
   const origPointerUp = optionProps.onPointerUp;
   delete optionProps.onPointerUp;
-  optionProps.onClick = useCallback((e) => {
-    origPointerUp(e as unknown as React.PointerEvent<HTMLElement>);
-  }, [origPointerUp]);
+  optionProps.onClick = useCallback(
+    (e) => {
+      origPointerUp(e as unknown as React.PointerEvent<HTMLElement>);
+    },
+    [origPointerUp]
+  );
 
   return (
     <li
