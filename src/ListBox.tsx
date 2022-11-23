@@ -82,9 +82,9 @@ function Option<T>({ item, state, className }: OptionProps<T>) {
   // https://github.com/vector-im/element-call/issues/762
   const origPointerUp = optionProps.onPointerUp;
   delete optionProps.onPointerUp;
-  optionProps.onClick = (e) => {
+  optionProps.onClick = useCallback((e) => {
     origPointerUp(e as unknown as React.PointerEvent<HTMLElement>);
-  };
+  }, [origPointerUp]);
 
   return (
     <li
