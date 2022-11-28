@@ -32,7 +32,7 @@ const overlapMap: Partial<Record<Size, number>> = {
 interface Props extends HTMLAttributes<HTMLDivElement> {
   className: string;
   client: MatrixClient;
-  participants: RoomMember[];
+  members: RoomMember[];
   max?: number;
   size?: Size;
 }
@@ -40,7 +40,7 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
 export function Facepile({
   className,
   client,
-  participants,
+  members,
   max = 3,
   size = Size.XS,
   ...rest
@@ -51,14 +51,14 @@ export function Facepile({
   const _overlap = overlapMap[size];
 
   const title = useMemo(() => {
-    return participants.reduce<string | null>(
+    return members.reduce<string | null>(
       (prev, curr) =>
         prev === null
           ? curr.name
           : t("{{names}}, {{name}}", { names: prev, name: curr.name }),
       null
     ) as string;
-  }, [participants, t]);
+  }, [members, t]);
 
   return (
     <div
@@ -66,12 +66,11 @@ export function Facepile({
       title={title}
       style={{
         width:
-          Math.min(participants.length, max + 1) * (_size - _overlap) +
-          _overlap,
+          Math.min(members.length, max + 1) * (_size - _overlap) + _overlap,
       }}
       {...rest}
     >
-      {participants.slice(0, max).map((member, i) => {
+      {members.slice(0, max).map((member, i) => {
         const avatarUrl = member.getMxcAvatarUrl();
         return (
           <Avatar
@@ -84,11 +83,11 @@ export function Facepile({
           />
         );
       })}
-      {participants.length > max && (
+      {members.length > max && (
         <Avatar
           key="additional"
           size={size}
-          fallback={`+${participants.length - max}`}
+          fallback={`+${members.length - max}`}
           className={styles.avatar}
           style={{ left: max * (_size - _overlap) }}
         />

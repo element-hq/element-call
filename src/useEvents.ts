@@ -24,7 +24,7 @@ import type {
 
 // Shortcut for registering a listener on an EventTarget
 export const useEventTarget = <T extends Event>(
-  target: EventTarget,
+  target: EventTarget | null | undefined,
   eventType: string,
   listener: (event: T) => void,
   options?: AddEventListenerOptions

@@ -25,8 +25,7 @@ import React, {
   useRef,
 } from "react";
 import { useHistory } from "react-router-dom";
-import { MatrixClient, ClientEvent } from "matrix-js-sdk/src/client";
-import { MatrixEvent } from "matrix-js-sdk/src/models/event";
+import { MatrixClient } from "matrix-js-sdk/src/client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
 
@@ -40,6 +39,7 @@ import {
 import { widget } from "./widget";
 import { PosthogAnalytics, RegistrationType } from "./PosthogAnalytics";
 import { translatedError } from "./TranslatedError";
+import { useEventTarget } from "./useEvents";
 
 declare global {
   interface Window {
@@ -54,6 +54,9 @@ export interface Session {
   passwordlessUser: boolean;
   tempPassword?: string;
 }
+
+const loadChannel =
+  "BroadcastChannel" in window ? new BroadcastChannel("load") : null;
 
 const loadSession = (): Session => {
   const data = localStorage.getItem("matrix-auth-store");
@@ -292,47 +295,29 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
   const { t } = useTranslation();
 
+  // To protect against multiple sessions writing to the same storage
+  // simultaneously, we send a broadcast message that shuts down all other
+  // running instances of the app. This isn't necessary if the app is running in
+  // a widget though, since then it'll be mostly stateless.
   useEffect(() => {
-    // To protect against multiple sessions writing to the same storage
-    // simultaneously, we send a to-device message that shuts down all other
-    // running instances of the app. This isn't necessary if the app is running
-    // in a widget though, since then it'll be mostly stateless.
-    if (!widget && client) {
-      const loadTime = Date.now();
+    if (!widget) loadChannel?.postMessage({});
+  }, []);
 
-      const onToDeviceEvent = (event: MatrixEvent) => {
-        if (event.getType() !== "org.matrix.call_duplicate_session") return;
+  useEventTarget(
+    loadChannel,
+    "message",
+    useCallback(() => {
+      client?.stopClient();
 
-        const content = event.getContent();
-
-        if (content.session_id === client.getSessionId()) return;
-
-        if (content.timestamp > loadTime) {
-          client?.stopClient();
-
-          setState((prev) => ({
-            ...prev,
-            error: translatedError(
-              "This application has been opened in another tab.",
-              t
-            ),
-          }));
-        }
-      };
-
-      client.on(ClientEvent.ToDeviceEvent, onToDeviceEvent);
-
-      client.sendToDevice("org.matrix.call_duplicate_session", {
-        [client.getUserId()]: {
-          "*": { session_id: client.getSessionId(), timestamp: loadTime },
-        },
-      });
-
-      return () => {
-        client?.removeListener(ClientEvent.ToDeviceEvent, onToDeviceEvent);
-      };
-    }
-  }, [client, t]);
+      setState((prev) => ({
+        ...prev,
+        error: translatedError(
+          "This application has been opened in another tab.",
+          t
+        ),
+      }));
+    }, [client, setState, t])
+  );
 
   const context = useMemo<ClientState>(
     () => ({
