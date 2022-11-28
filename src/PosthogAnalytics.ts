@@ -16,9 +16,10 @@ limitations under the License.
 
 import posthog, { CaptureOptions, PostHog, Properties } from "posthog-js";
 import { logger } from "matrix-js-sdk/src/logger";
+import { MatrixClient } from "matrix-js-sdk";
 
 import { widget } from "./widget";
-import { getSetting, settingsBus } from "./settings/useSetting";
+import { getSetting, setSetting, settingsBus } from "./settings/useSetting";
 import {
   CallEndedTracker,
   CallStartedTracker,
@@ -28,6 +29,7 @@ import {
   MuteMicrophoneTracker,
 } from "./PosthogEvents";
 import { Config } from "./config/Config";
+import { getUrlParams } from "./UrlParams";
 
 /* Posthog analytics tracking.
  *
@@ -113,11 +115,19 @@ export class PosthogAnalytics {
       project_api_key: Config.instance.config.posthog?.api_key,
       api_host: Config.instance.config.posthog?.api_host,
     };
-    if (
-      posthogConfig.project_api_key &&
-      posthogConfig.api_host &&
-      PosthogAnalytics.getPlatformProperties().matrixBackend === "jssdk"
-    ) {
+
+    if (posthogConfig.project_api_key && posthogConfig.api_host) {
+      if (
+        PosthogAnalytics.getPlatformProperties().matrixBackend === "embedded"
+      ) {
+        const { analyticsID } = getUrlParams();
+        // if the embedding platform (element web) already got approval to communicating with posthog
+        // element call can also send events to posthog
+        if (analyticsID) {
+          setSetting("opt-in-analytics", true);
+        }
+      }
+
       this.posthog.init(posthogConfig.project_api_key, {
         api_host: posthogConfig.api_host,
         autocapture: false,
@@ -155,6 +165,13 @@ export class PosthogAnalytics {
       // drop device ID, which is a UUID persisted in local storage
       properties["$device_id"] = null;
     }
+    if (PosthogAnalytics.getPlatformProperties().matrixBackend === "embedded") {
+      // the url for embedded widgets leak a lot of private data since the url is used to transport those value to the widget.
+      properties["$current_url"] = (properties["$current_url"] as string)
+        .split("/")
+        .slice(0, 3)
+        .join("");
+    }
 
     return properties;
   };
@@ -166,7 +183,7 @@ export class PosthogAnalytics {
   }
 
   private static getPlatformProperties(): PlatformProperties {
-    const appVersion = import.meta.env.VITE_APP_VERSION || "unknown";
+    const appVersion = import.meta.env.VITE_APP_VERSION || "dev";
     return {
       appVersion,
       matrixBackend: widget ? "embedded" : "jssdk",
@@ -218,29 +235,56 @@ export class PosthogAnalytics {
     if (this.anonymity == Anonymity.Pseudonymous) {
       // Check the user's account_data for an analytics ID to use. Storing the ID in account_data allows
       // different devices to send the same ID.
+      let analyticsID = await this.getAnalyticsId(client);
       try {
-        const accountData = await client.getAccountDataFromServer(
-          PosthogAnalytics.ANALYTICS_EVENT_TYPE
-        );
-        let analyticsID = accountData?.id;
-        if (!analyticsID) {
+        if (!analyticsID && !widget) {
+          // only try setting up a new analytics ID in the standalone app.
+
           // Couldn't retrieve an analytics ID from user settings, so create one and set it on the server.
           // Note there's a race condition here - if two devices do these steps at the same time, last write
           // wins, and the first writer will send tracking with an ID that doesn't match the one on the server
           // until the next time account data is refreshed and this function is called (most likely on next
           // page load). This will happen pretty infrequently, so we can tolerate the possibility.
           analyticsID = analyticsIdGenerator();
-          await client.setAccountData(
-            PosthogAnalytics.ANALYTICS_EVENT_TYPE,
-            Object.assign({ id: analyticsID }, accountData)
-          );
+          await this.setAnalyticsId(analyticsID, client);
         }
-        this.posthog.identify(analyticsID);
       } catch (e) {
         // The above could fail due to network requests, but not essential to starting the application,
         // so swallow it.
         logger.log("Unable to identify user for tracking" + e.toString());
       }
+      if (analyticsID) {
+        this.posthog.identify(analyticsID);
+      } else {
+        console.warn(
+          "No analyticsID is availble. Should not try to setup posthog"
+        );
+      }
+    }
+  }
+
+  async getAnalyticsId(client: MatrixClient) {
+    if (widget) {
+      return getUrlParams().analyticsID;
+    } else {
+      const accountData = await client.getAccountDataFromServer(
+        PosthogAnalytics.ANALYTICS_EVENT_TYPE
+      );
+      const analyticsID = accountData?.id;
+      return analyticsID;
+    }
+  }
+
+  async setAnalyticsId(analyticsID: string, client: MatrixClient) {
+    if (!widget) {
+      // the analytics ID only needs to be set in the standalone version.
+      const accountData = await client.getAccountDataFromServer(
+        PosthogAnalytics.ANALYTICS_EVENT_TYPE
+      );
+      await client.setAccountData(
+        PosthogAnalytics.ANALYTICS_EVENT_TYPE,
+        Object.assign({ id: analyticsID }, accountData)
+      );
     }
   }
 

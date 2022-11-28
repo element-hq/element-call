@@ -45,6 +45,8 @@ export interface UrlParams {
   baseUrl: string | null;
   // The BCP 47 code of the language the app should use
   lang: string | null;
+  // The Posthog analytics ID. It is only available if the user has given consent for sharing telemetry in element web.
+  analyticsID: string | null;
 }
 
 /**
@@ -96,6 +98,7 @@ export const getUrlParams = (
     deviceId: getParam("deviceId"),
     baseUrl: getParam("baseUrl"),
     lang: getParam("lang"),
+    analyticsID: getParam("analyticsID"),
   };
 };
 
