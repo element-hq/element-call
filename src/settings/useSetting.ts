@@ -54,12 +54,6 @@ const useSetting = <T>(
     ),
   ];
 };
-export const getSetting = <T>(name: string, defaultValue: T): T => {
-  const key = `matrix-setting-${name}`;
-
-  const item = localStorage.getItem(key);
-  return item === null ? defaultValue : JSON.parse(item);
-};
 
 export const getSetting = <T>(name: string, defaultValue: T): T => {
   const item = localStorage.getItem(getSettingKey(name));
