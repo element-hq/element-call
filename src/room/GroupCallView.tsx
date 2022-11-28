@@ -143,6 +143,10 @@ export function GroupCallView({
         ]);
 
         await groupCall.enter();
+
+        PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
+        PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
+
         await Promise.all([
           widget.api.setAlwaysOnScreen(true),
           widget.api.transport.reply(ev.detail, {}),
@@ -160,6 +164,9 @@ export function GroupCallView({
     if (isEmbedded && !preload) {
       // In embedded mode, bypass the lobby and just enter the call straight away
       groupCall.enter();
+
+      PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
+      PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
     }
   }, [groupCall, isEmbedded, preload]);
 
