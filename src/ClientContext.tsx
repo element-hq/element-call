@@ -55,7 +55,8 @@ export interface Session {
   tempPassword?: string;
 }
 
-const loadChannel = new BroadcastChannel("load");
+const loadChannel =
+  "BroadcastChannel" in window ? new BroadcastChannel("load") : null;
 
 const loadSession = (): Session => {
   const data = localStorage.getItem("matrix-auth-store");
@@ -299,7 +300,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   // running instances of the app. This isn't necessary if the app is running in
   // a widget though, since then it'll be mostly stateless.
   useEffect(() => {
-    if (!widget) loadChannel.postMessage({});
+    if (!widget) loadChannel?.postMessage({});
   }, []);
 
   useEventTarget(
