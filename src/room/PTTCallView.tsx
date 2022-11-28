@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect } from "react";
+import React, { useEffect, useMemo } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import i18n from "i18next";
@@ -43,6 +43,7 @@ import { PTTClips } from "../sound/PTTClips";
 import { GroupCallInspector } from "./GroupCallInspector";
 import { OverflowMenu } from "./OverflowMenu";
 import { Size } from "../Avatar";
+import { ParticipantInfo } from "./useGroupCall";
 
 function getPromptText(
   networkWaiting: boolean,
@@ -100,7 +101,7 @@ interface Props {
   roomName: string;
   avatarUrl: string;
   groupCall: GroupCall;
-  participants: RoomMember[];
+  participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   userMediaFeeds: CallFeed[];
   onLeave: () => void;
   isEmbedded: boolean;
@@ -151,6 +152,15 @@ export const PTTCallView: React.FC<Props> = ({
     transmitBlocked,
     connected,
   } = usePTT(client, groupCall, userMediaFeeds, playClip);
+
+  const participatingMembers = useMemo(() => {
+    const members: RoomMember[] = [];
+    for (const [member, deviceMap] of participants) {
+      // Repeat the member for as many devices as they're using
+      for (let i = 0; i < deviceMap.size; i++) members.push(member);
+    }
+    return members;
+  }, [participants]);
 
   const [talkingExpected, enqueueTalkingExpected, setTalkingExpected] =
     useDelayedState(false);
@@ -205,7 +215,7 @@ export const PTTCallView: React.FC<Props> = ({
             <div className={styles.participants}>
               <p>
                 {t("{{count}} people connected", {
-                  count: participants.length,
+                  count: participatingMembers.length,
                 })}
               </p>
               <Facepile
@@ -213,7 +223,7 @@ export const PTTCallView: React.FC<Props> = ({
                 max={8}
                 className={styles.facepile}
                 client={client}
-                participants={participants}
+                members={participatingMembers}
               />
             </div>
             <div className={styles.footer}>

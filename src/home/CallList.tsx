@@ -92,7 +92,7 @@ function CallTile({
             <Facepile
               className={styles.facePile}
               client={client}
-              participants={participants}
+              members={participants}
             />
           )}
         </div>
