@@ -110,7 +110,6 @@ export const widget: WidgetHelpers | null = (() => {
       // These are all the event types the app uses
       const sendRecvEvent = ["org.matrix.rageshake_request"];
       const sendState = [
-        { eventType: EventType.GroupCallPrefix },
         { eventType: EventType.GroupCallMemberPrefix, stateKey: userId },
       ];
       const receiveState = [

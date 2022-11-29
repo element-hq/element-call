@@ -30,6 +30,7 @@ import type { Room } from "matrix-js-sdk/src/models/room";
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
 import { translatedError } from "../TranslatedError";
+import { widget } from "../widget";
 
 export interface GroupCallLoadState {
   loading: boolean;
@@ -89,6 +90,7 @@ export const useLoadGroupCall = (
       if (groupCall) return groupCall;
 
       if (
+        !widget &&
         room.currentState.mayClientSendStateEvent(
           EventType.GroupCallPrefix,
           client
