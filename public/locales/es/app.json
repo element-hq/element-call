@@ -91,12 +91,11 @@
   "Home": "Inicio",
   "Having trouble? Help us fix it.": "¿Tienes problemas? Ayúdanos a resolverlos.",
   "Grid layout menu": "Menú de distribución de cuadrícula",
-  "Go": "Empezar",
+  "Go": "Comenzar",
   "Full screen": "Pantalla completa",
   "Freedom": "Libre",
   "Fetching group call timed out.": "Se ha agotado el tiempo de espera para obtener la llamada grupal.",
   "Exit full screen": "Salir de pantalla completa",
-  "Entering room…": "Entrando a la sala…",
   "Download debug logs": "Descargar registros de depuración",
   "Display name": "Nombre a mostrar",
   "Developer": "Desarrollador",
@@ -130,5 +129,10 @@
   "{{name}} (Connecting...)": "{{name}} (Conectando...)",
   "{{displayName}}, your call is now ended": "{{displayName}}, tu llamada ha finalizado",
   "{{count}} people connected|other": "{{count}} personas conectadas",
-  "{{count}} people connected|one": "{{count}} persona conectada"
+  "{{count}} people connected|one": "{{count}} persona conectada",
+  "Allow analytics": "Permitir analíticas",
+  "Advanced": "Avanzado",
+  "Element Call Home": "Inicio de Element Call",
+  "Copy": "Copiar",
+  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Esto enviará datos anónimos (como la duración de la llamada y el número de participantes) al equipo de Element Call para ayudarnos a optimizar la aplicación dependiendo de cómo se use."
 }

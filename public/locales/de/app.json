@@ -14,7 +14,7 @@
   "Call type menu": "Anruftyp Menü",
   "Camera": "Kamera",
   "Camera {{n}}": "Kamera {{n}}",
-  "Camera/microphone permissions needed to join the call.": "Kamera-/Mikrofonberechtigung für die Teilnahme am Anruf erforderlich.",
+  "Camera/microphone permissions needed to join the call.": "Für die Teilnahme am Anruf sind Kamera- und Mikrofonberechtigungen erforderlich.",
   "Change layout": "Layout ändern",
   "Close": "Schließen",
   "Confirm password": "Passwort bestätigen",
@@ -29,7 +29,6 @@
   "Developer": "Entwickler",
   "Display name": "Anzeigename",
   "Download debug logs": "Debug-Protokolle herunterladen",
-  "Entering room…": "Betrete Raum …",
   "Exit full screen": "Vollbildmodus verlassen",
   "Freedom": "Freiraum",
   "Full screen": "Vollbild",
@@ -130,5 +129,13 @@
   "Walkie-talkie call name": "Name des Walkie-Talkie-Anrufs",
   "Sending debug logs…": "Sende Debug-Protokolle …",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Anruf beitreten</0><1>Oder</1><2>Anruflink kopieren und später beitreten</2>",
-  "{{name}} (Connecting...)": "{{name}} (verbindet sich …)"
+  "{{name}} (Connecting...)": "{{name}} (verbindet sich …)",
+  "Allow analytics": "Analysedaten senden",
+  "Advanced": "Erweitert",
+  "Copy": "Kopieren",
+  "Element Call Home": "Element Call-Startseite",
+  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Dies wird anonymisierte Daten (wie z. B. die Dauer eines Anrufs und die Zahl der Teilnehmenden) dem Element Call-Team senden, um uns bei der Optimierung der Anwendung basierend auf dem Nutzungsverhalten zu helfen.",
+  "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Ob Tastenkürzel mit nur einer Taste aktiviert sein sollen, z. B. „m“ um das Mikrofon stumm/aktiv zu schalten.",
+  "Single-key keyboard shortcuts": "Ein-Tasten-Tastenkürzel",
+  "{{name}} (Waiting for video...)": "{{name}} (Warte auf Video …)"
 }
