@@ -3,7 +3,6 @@
   "Saving…": "Сохранение…",
   "Registering…": "Регистрация…",
   "Logging in…": "Вход…",
-  "Entering room…": "Вход в комнату…",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "Waiting for other participants…": "Ожидание других участников…",
   "This will make a speaker's audio seem as if it is coming from where their tile is positioned on screen. (Experimental feature: this may impact the stability of audio.)": "Эта функция балансирует звук к расположению плитки на экране. (Экспериментальная функция: может повлиять на стабильность аудио.)",
