@@ -3,7 +3,6 @@
   "Saving…": "Сохранение…",
   "Registering…": "Регистрация…",
   "Logging in…": "Вход…",
-  "Entering room…": "Вход в комнату…",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "Waiting for other participants…": "Ожидание других участников…",
   "This will make a speaker's audio seem as if it is coming from where their tile is positioned on screen. (Experimental feature: this may impact the stability of audio.)": "Эта функция балансирует звук к расположению плитки на экране. (Экспериментальная функция: может повлиять на стабильность аудио.)",
@@ -128,5 +127,12 @@
   "{{name}} is presenting": "{{name}} показывает",
   "{{displayName}}, your call is now ended": "{{displayName}}, ваш звонок завершён",
   "{{count}} people connected|other": "{{count}} подключилось",
-  "{{count}} people connected|one": "{{count}} подключился"
+  "{{count}} people connected|one": "{{count}} подключился",
+  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Это даст разрешение на отправку анонимизированных данных (таких, как продолжительность звонка и количество участников) команде Element Call, чтобы помочь нам оптимизировать работу приложения на основании того как оно используется.",
+  "Element Call Home": "Главная Element Call",
+  "Copy": "Копировать",
+  "Allow analytics": "Разрешить аналитику",
+  "Advanced": "Расширенные",
+  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Присоедениться к звонку сейчас</0><1>Or<1><2>Скопировать ссылку на звонок и присоедениться позже</2>",
+  "{{name}} (Connecting...)": "{{name}} (Соединение...)"
 }

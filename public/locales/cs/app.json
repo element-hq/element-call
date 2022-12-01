@@ -79,5 +79,11 @@
   "Invite": "Pozvat",
   "Inspector": "Insepktor",
   "Incompatible versions!": "Nekompatibilní verze!",
-  "Incompatible versions": "Nekompatibilní verze"
+  "Incompatible versions": "Nekompatibilní verze",
+  "{{name}} is talking…": "{{name}} mluví…",
+  "{{name}} is presenting": "{{name}} prezentuje",
+  "{{name}} (Connecting...)": "{{name}} (Připojení...)",
+  "{{displayName}}, your call is now ended": "{{displayName}}, váš hovor je nyní ukončen",
+  "{{count}} people connected|other": "{{count}} lidí připojeno",
+  "{{count}} people connected|one": "{{count}} lidí připojeno"
 }
