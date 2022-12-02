@@ -84,6 +84,8 @@
 
   overflow: hidden;
   z-index: 1;
+
+  transition: opacity ease 0.15s;
 }
 
 .toolbar:not(:hover) {
