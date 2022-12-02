@@ -101,6 +101,7 @@ export const LoginPage: FC = () => {
                   label={t("Username")}
                   autoCorrect="off"
                   autoCapitalize="none"
+                  autoFocus
                   prefix="@"
                   suffix={`:${homeserverHost}`}
                 />

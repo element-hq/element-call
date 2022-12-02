@@ -77,6 +77,7 @@ export function RoomAuthView() {
                 type="text"
                 required
                 autoComplete="off"
+                autoFocus
               />
             </FieldRow>
             <Caption>

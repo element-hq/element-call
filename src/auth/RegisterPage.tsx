@@ -164,6 +164,7 @@ export const RegisterPage: FC = () => {
                   label={t("Username")}
                   autoCorrect="off"
                   autoCapitalize="none"
+                  autoFocus
                   prefix="@"
                   suffix={`:${defaultHomeserverHost}`}
                 />

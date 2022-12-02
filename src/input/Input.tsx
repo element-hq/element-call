@@ -71,6 +71,7 @@ interface InputFieldProps {
   autoComplete?: string;
   autoCorrect?: string;
   autoCapitalize?: string;
+  autoFocus?: boolean;
   value?: string;
   placeholder?: string;
   defaultChecked?: boolean;
