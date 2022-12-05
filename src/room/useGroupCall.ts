@@ -23,12 +23,7 @@ import {
   GroupCallUnknownDeviceError,
   GroupCallError,
 } from "matrix-js-sdk/src/webrtc/groupCall";
-import {
-  CallState,
-  MatrixCall,
-  CallEvent,
-} from "matrix-js-sdk/src/webrtc/call";
-import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
+import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useTranslation } from "react-i18next";
 import { IWidgetApiRequest } from "matrix-widget-api";
@@ -96,29 +91,20 @@ function getParticipants(
   const participants = new Map<RoomMember, Map<string, ParticipantInfo>>();
 
   for (const [member, participantsStateMap] of groupCall.participants) {
-    const callMap = groupCall.calls.get(member);
     const participantInfoMap = new Map<string, ParticipantInfo>();
     participants.set(member, participantInfoMap);
 
     for (const [deviceId, participant] of participantsStateMap) {
-      const call = callMap?.get(deviceId);
       const feed = groupCall.userMediaFeeds.find(
         (f) => f.userId === member.userId && f.deviceId === deviceId
       );
 
-      let connectionState = ConnectionState.EstablishingCall;
-      if (feed?.isLocal()) {
-        connectionState = ConnectionState.Connected;
-      } else if (call !== undefined) {
-        if (call.state === CallState.Connected) {
-          connectionState = ConnectionState.Connected;
-        } else if (call.state === CallState.Connecting) {
-          connectionState = ConnectionState.WaitMedia;
-        }
-      }
-
       participantInfoMap.set(deviceId, {
-        connectionState,
+        connectionState: feed
+          ? feed.connected
+            ? ConnectionState.Connected
+            : ConnectionState.WaitMedia
+          : ConnectionState.EstablishingCall,
         presenter: participant.screensharing,
       });
     }
@@ -188,16 +174,46 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
       });
     }
 
+    const prevUserMediaFeeds = new Set<CallFeed>();
+
     function onUserMediaFeedsChanged(userMediaFeeds: CallFeed[]): void {
+      for (const feed of prevUserMediaFeeds) {
+        feed.off(CallFeedEvent.ConnectedChanged, onConnectedChanged);
+      }
+      prevUserMediaFeeds.clear();
+
+      for (const feed of userMediaFeeds) {
+        feed.on(CallFeedEvent.ConnectedChanged, onConnectedChanged);
+        prevUserMediaFeeds.add(feed);
+      }
+
       updateState({
         userMediaFeeds: [...userMediaFeeds],
         participants: getParticipants(groupCall),
       });
     }
 
+    const prevScreenshareFeeds = new Set<CallFeed>();
+
     function onScreenshareFeedsChanged(screenshareFeeds: CallFeed[]): void {
+      for (const feed of prevScreenshareFeeds) {
+        feed.off(CallFeedEvent.ConnectedChanged, onConnectedChanged);
+      }
+      prevScreenshareFeeds.clear();
+
+      for (const feed of screenshareFeeds) {
+        feed.on(CallFeedEvent.ConnectedChanged, onConnectedChanged);
+        prevScreenshareFeeds.add(feed);
+      }
+
       updateState({
         screenshareFeeds: [...screenshareFeeds],
+      });
+    }
+
+    function onConnectedChanged(connected: boolean): void {
+      updateState({
+        participants: getParticipants(groupCall),
       });
     }
 
@@ -228,25 +244,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
       });
     }
 
-    const prevCalls = new Set<MatrixCall>();
-
-    function onCallState(): void {
-      updateState({ participants: getParticipants(groupCall) });
-    }
-
-    function onCallsChanged(
-      calls: Map<RoomMember, Map<string, MatrixCall>>
-    ): void {
-      for (const call of prevCalls) call.off(CallEvent.State, onCallState);
-      prevCalls.clear();
-
-      for (const deviceMap of calls.values()) {
-        for (const call of deviceMap.values()) {
-          call.on(CallEvent.State, onCallState);
-          prevCalls.add(call);
-        }
-      }
-
+    function onCallsChanged(): void {
       updateState({ participants: getParticipants(groupCall) });
     }
 
