@@ -21,7 +21,8 @@ import { RoomMember } from "matrix-js-sdk";
 import { VideoGrid, useVideoGridLayout } from "./VideoGrid";
 import { VideoTile } from "./VideoTile";
 import { Button } from "../button";
-import { ConnectionState, TileDescriptor } from "../room/InCallView";
+import { TileDescriptor } from "../room/InCallView";
+import { ConnectionState } from "../room/useGroupCall";
 
 export default {
   title: "VideoGrid",

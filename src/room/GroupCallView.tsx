@@ -79,7 +79,6 @@ export function GroupCallView({
     isScreensharing,
     screenshareFeeds,
     participants,
-    calls,
     unencryptedEventsFromUsers,
   } = useGroupCall(groupCall);
 
@@ -180,9 +179,14 @@ export function GroupCallView({
   const onLeave = useCallback(() => {
     setLeft(true);
 
+    let participantCount = 0;
+    for (const deviceMap of groupCall.participants.values()) {
+      participantCount += deviceMap.size;
+    }
+
     PosthogAnalytics.instance.eventCallEnded.track(
       groupCall.room.name,
-      groupCall.participants.length
+      participantCount
     );
 
     leave();
@@ -194,14 +198,7 @@ export function GroupCallView({
     if (!isPasswordlessUser && !isEmbedded) {
       history.push("/");
     }
-  }, [
-    groupCall.room.name,
-    groupCall.participants.length,
-    leave,
-    isPasswordlessUser,
-    isEmbedded,
-    history,
-  ]);
+  }, [groupCall, leave, isPasswordlessUser, isEmbedded, history]);
 
   useEffect(() => {
     if (widget && state === GroupCallState.Entered) {
@@ -243,7 +240,6 @@ export function GroupCallView({
           roomName={groupCall.room.name}
           avatarUrl={avatarUrl}
           participants={participants}
-          calls={calls}
           microphoneMuted={microphoneMuted}
           localVideoMuted={localVideoMuted}
           toggleLocalVideoMuted={toggleLocalVideoMuted}
@@ -260,12 +256,6 @@ export function GroupCallView({
         />
       );
     }
-  } else if (state === GroupCallState.Entering) {
-    return (
-      <FullScreenView>
-        <h1>{t("Entering room…")}</h1>
-      </FullScreenView>
-    );
   } else if (left) {
     if (isPasswordlessUser) {
       return <CallEndedView client={client} />;

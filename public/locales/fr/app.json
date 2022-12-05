@@ -28,7 +28,6 @@
   "Developer": "Développeur",
   "Display name": "Nom d’affichage",
   "Download debug logs": "Télécharger les journaux de débogage",
-  "Entering room…": "Entrée dans le salon…",
   "Exit full screen": "Quitter le plein écran",
   "Freedom": "Libre",
   "Full screen": "Plein écran",
@@ -130,5 +129,13 @@
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Vous avez déjà un compte ?</0><1><0>Se connecter</0> Ou <2>Accès invité</2></1>",
   "Sending debug logs…": "Envoi des journaux de débogage…",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Rejoindre l’appel maintenant</0><1>Ou</1><2>Copier le lien de l’appel et rejoindre plus tard</2>",
-  "{{name}} (Connecting...)": "{{name}} (Connexion…)"
+  "{{name}} (Connecting...)": "{{name}} (Connexion…)",
+  "Allow analytics": "Autoriser les statistiques",
+  "Advanced": "Avancé",
+  "Element Call Home": "Accueil Element Call",
+  "Copy": "Copier",
+  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Cela enverra des données anonymisées (telles que la durée d’un appel et le nombre de participants) à l’équipe de Element Call pour aider à optimiser l’application en fonction de l’utilisation.",
+  "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Bascule sur les raccourcis clavier à touche unique, par exemple « m » pour désactiver / activer le micro.",
+  "Single-key keyboard shortcuts": "Raccourcis clavier en une touche",
+  "{{name}} (Waiting for video...)": "{{name}} (En attente de vidéo…)"
 }
