@@ -185,7 +185,7 @@ export function GroupCallView({
     }
 
     PosthogAnalytics.instance.eventCallEnded.track(
-      groupCall.room.name,
+      groupCall.groupCallId,
       participantCount
     );
 
