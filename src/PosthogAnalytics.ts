@@ -349,6 +349,11 @@ export class PosthogAnalytics {
       : Anonymity.Disabled;
     this.setAnonymity(anonymity);
     if (anonymity === Anonymity.Pseudonymous) {
+      this.setRegistrationType(
+        window.matrixclient.isGuest() || window.isPasswordlessUser ?
+          RegistrationType.Guest :
+          RegistrationType.Registered
+      );
       await this.identifyUser(PosthogAnalytics.getRandomAnalyticsId);
       if (this.userRegisteredInThisSession()) {
         this.eventSignup.track();
