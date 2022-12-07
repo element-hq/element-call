@@ -17,7 +17,7 @@ limitations under the License.
 import posthog, { CaptureOptions, PostHog, Properties } from "posthog-js";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixClient } from "matrix-js-sdk";
-import { Buffer } from 'buffer';
+import { Buffer } from "buffer";
 
 import { widget } from "./widget";
 import { getSetting, setSetting, settingsBus } from "./settings/useSetting";
@@ -258,7 +258,7 @@ export class PosthogAnalytics {
       if (analyticsID) {
         this.posthog.identify(analyticsID);
       } else {
-        console.warn(
+        logger.info(
           "No analyticsID is availble. Should not try to setup posthog"
         );
       }
@@ -280,17 +280,22 @@ export class PosthogAnalytics {
       // we dont just use the element web analytics ID because that would allow to associate
       // users between the two posthog instances. By using a hash from the username and the element web analytics id
       // it is not possible to conclude the element web posthog user id from the element call user id and vice versa.
-      return await this.hashedEcAnalyticsId(accountAnalyticsId)
+      return await this.hashedEcAnalyticsId(accountAnalyticsId);
     }
     return null;
   }
 
   async hashedEcAnalyticsId(accountAnalyticsId: string): Promise<string> {
     const client: MatrixClient = window.matrixclient;
-    const posthogIdMaterial = 'ec' + accountAnalyticsId + client.getUserId();
-    const bufferForPosthogId = await crypto.subtle.digest("sha-256", Buffer.from(posthogIdMaterial, "utf-8"))
-    const view = new Int32Array(bufferForPosthogId)
-    return Array.from(view).map((b) => Math.abs(b).toString(16).padStart(2, "0")).join("");
+    const posthogIdMaterial = "ec" + accountAnalyticsId + client.getUserId();
+    const bufferForPosthogId = await crypto.subtle.digest(
+      "sha-256",
+      Buffer.from(posthogIdMaterial, "utf-8")
+    );
+    const view = new Int32Array(bufferForPosthogId);
+    return Array.from(view)
+      .map((b) => Math.abs(b).toString(16).padStart(2, "0"))
+      .join("");
   }
 
   async setAccountAnalyticsId(analyticsID: string) {
@@ -350,9 +355,9 @@ export class PosthogAnalytics {
     this.setAnonymity(anonymity);
     if (anonymity === Anonymity.Pseudonymous) {
       this.setRegistrationType(
-        window.matrixclient.isGuest() || window.isPasswordlessUser ?
-          RegistrationType.Guest :
-          RegistrationType.Registered
+        window.matrixclient.isGuest() || window.isPasswordlessUser
+          ? RegistrationType.Guest
+          : RegistrationType.Registered
       );
       await this.identifyUser(PosthogAnalytics.getRandomAnalyticsId);
       if (this.userRegisteredInThisSession()) {
