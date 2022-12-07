@@ -17,6 +17,7 @@ limitations under the License.
 import posthog, { CaptureOptions, PostHog, Properties } from "posthog-js";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixClient } from "matrix-js-sdk";
+import { Buffer } from 'buffer';
 
 import { widget } from "./widget";
 import { getSetting, setSetting, settingsBus } from "./settings/useSetting";
@@ -143,6 +144,7 @@ export class PosthogAnalytics {
       this.enabled = false;
     }
     const optInAnalytics = getSetting("opt-in-analytics", false);
+
     this.updateAnonymityFromSettingsAndIdentifyUser(optInAnalytics);
     this.startListeningToSettingsChanges();
   }
@@ -230,12 +232,11 @@ export class PosthogAnalytics {
 
   public async identifyUser(analyticsIdGenerator: () => string): Promise<void> {
     // There might be a better way to get the client here.
-    const client = window.matrixclient;
 
     if (this.anonymity == Anonymity.Pseudonymous) {
       // Check the user's account_data for an analytics ID to use. Storing the ID in account_data allows
       // different devices to send the same ID.
-      let analyticsID = await this.getAnalyticsId(client);
+      let analyticsID = await this.getAnalyticsId();
       try {
         if (!analyticsID && !widget) {
           // only try setting up a new analytics ID in the standalone app.
@@ -245,8 +246,9 @@ export class PosthogAnalytics {
           // wins, and the first writer will send tracking with an ID that doesn't match the one on the server
           // until the next time account data is refreshed and this function is called (most likely on next
           // page load). This will happen pretty infrequently, so we can tolerate the possibility.
-          analyticsID = analyticsIdGenerator();
-          await this.setAnalyticsId(analyticsID, client);
+          const accountDataAnalyticsId = analyticsIdGenerator();
+          await this.setAccountAnalyticsId(accountDataAnalyticsId);
+          analyticsID = await this.hashedEcAnalyticsId(accountDataAnalyticsId);
         }
       } catch (e) {
         // The above could fail due to network requests, but not essential to starting the application,
@@ -263,20 +265,38 @@ export class PosthogAnalytics {
     }
   }
 
-  async getAnalyticsId(client: MatrixClient) {
+  async getAnalyticsId() {
+    const client: MatrixClient = window.matrixclient;
+    let accountAnalyticsId;
     if (widget) {
-      return getUrlParams().analyticsID;
+      accountAnalyticsId = getUrlParams().analyticsID;
     } else {
       const accountData = await client.getAccountDataFromServer(
         PosthogAnalytics.ANALYTICS_EVENT_TYPE
       );
-      const analyticsID = accountData?.id;
-      return analyticsID;
+      accountAnalyticsId = accountData?.id;
     }
+    if (accountAnalyticsId) {
+      // we dont just use the element web analytics ID because that would allow to associate
+      // users between the two posthog instances. By using a hash from the username and the element web analytics id
+      // it is not possible to conclude the element web posthog user id from the element call user id and vice versa.
+      return await this.hashedEcAnalyticsId(accountAnalyticsId)
+    }
+    return null;
   }
 
-  async setAnalyticsId(analyticsID: string, client: MatrixClient) {
+  async hashedEcAnalyticsId(accountAnalyticsId: string): Promise<string> {
+    const client: MatrixClient = window.matrixclient;
+    const posthogIdMaterial = 'ec' + accountAnalyticsId + client.getUserId();
+    const bufferForPosthogId = await crypto.subtle.digest("sha-256", Buffer.from(posthogIdMaterial, "utf-8"))
+    const view = new Int32Array(bufferForPosthogId)
+    return Array.from(view).map((b) => Math.abs(b).toString(16).padStart(2, "0")).join("");
+  }
+
+  async setAccountAnalyticsId(analyticsID: string) {
     if (!widget) {
+      const client = window.matrixclient;
+
       // the analytics ID only needs to be set in the standalone version.
       const accountData = await client.getAccountDataFromServer(
         PosthogAnalytics.ANALYTICS_EVENT_TYPE
