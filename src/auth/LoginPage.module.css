@@ -36,7 +36,7 @@
 
 .formContainer h4 {
   font-weight: normal;
-  font-size: 18px;
+  font-size: var(--font-size-subtitle);
   margin-bottom: 0;
 }
 
@@ -48,7 +48,7 @@
 .formContainer button {
   height: 48px;
   width: 100%;
-  font-size: 15px;
+  font-size: var(--font-size-body);
   font-weight: 600;
 }
 
@@ -61,7 +61,7 @@
 
 .authLinks {
   margin-bottom: 100px;
-  font-size: 15px;
+  font-size: var(--font-size-body);
 }
 
 .authLinks a {

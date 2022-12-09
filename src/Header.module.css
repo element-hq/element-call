@@ -131,7 +131,7 @@
   }
 
   .leftNav h3 {
-    font-size: 18px;
+    font-size: var(--font-size-subtitle);
   }
 
   .nav {
