@@ -54,7 +54,7 @@ limitations under the License.
   bottom: 86px;
   left: 50%;
   font-weight: 600;
-  font-size: 15px;
+  font-size: var(--font-size-body);
   transform: translateX(-50%);
 }
 

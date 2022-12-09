@@ -64,7 +64,7 @@
 .actionTip {
   margin-top: 20px;
   margin-bottom: 20px;
-  font-size: 17px;
+  font-size: var(--font-size-subtitle);
 }
 
 .footer {

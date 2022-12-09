@@ -7,7 +7,7 @@
 
 .label {
   font-weight: 600;
-  font-size: 18px;
+  font-size: var(--font-size-subtitle);
   margin-top: 0;
   margin-bottom: 12px;
 }
@@ -20,7 +20,7 @@
   background-color: var(--background);
   border-radius: 8px;
   border: 1px solid var(--quinary-content);
-  font-size: 15px;
+  font-size: var(--font-size-body);
   color: var(--primary-content);
   height: 40px;
   max-width: 100%;

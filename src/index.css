@@ -23,8 +23,20 @@ limitations under the License.
 @import "normalize.css/normalize.css";
 
 :root {
+  --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+    "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
+    "Helvetica Neue", sans-serif;
   --inter-unicode-range: U+0000-20e2, U+20e4-23ce, U+23d0-24c1, U+24c3-259f,
     U+25c2-2664, U+2666-2763, U+2765-2b05, U+2b07-2b1b, U+2b1d-10FFFF;
+
+  --font-scale: 1;
+  --font-size-micro: calc(10px * var(--font-scale));
+  --font-size-caption: calc(12px * var(--font-scale));
+  --font-size-body: calc(15px * var(--font-scale));
+  --font-size-subtitle: calc(18px * var(--font-scale));
+  --font-size-title: calc(24px * var(--font-scale));
+  --font-size-headline: calc(32px * var(--font-scale));
+
   --accent: #0dbd8b;
   --accent-20: #0dbd8b33;
   --alert: #ff5b55;
@@ -127,9 +139,7 @@ body {
   color: var(--primary-content);
   color-scheme: dark;
   margin: 0;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
-    "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
-    sans-serif;
+  font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -159,28 +169,31 @@ a {
 /* Headline Semi Bold */
 h1 {
   font-weight: 600;
-  font-size: 32px;
-  line-height: 39px;
+  font-size: var(--font-size-headline);
 }
 
 /* Title */
 h2 {
   font-weight: 600;
-  font-size: 24px;
-  line-height: 29px;
+  font-size: var(--font-size-title);
 }
 
 /* Subtitle */
 h3 {
   font-weight: 400;
-  font-size: 18px;
-  line-height: 22px;
+  font-size: var(--font-size-subtitle);
+}
+
+h1,
+h2,
+h3 {
+  line-height: 1.2;
 }
 
 /* Body */
 p {
-  font-size: 15px;
-  line-height: 24px;
+  font-size: var(--font-size-body);
+  line-height: var(--font-size-title);
 }
 
 a {
@@ -202,21 +215,21 @@ hr {
   text-align: center;
   height: 5px;
   font-weight: 600;
-  font-size: 15px;
+  font-size: var(--font-size-body);
   line-height: 24px;
   margin: 0 12px;
 }
 
 summary {
-  font-size: 14px;
+  font-size: var(--font-size-body);
 }
 
 details > :not(summary) {
-  margin-left: 16px;
+  margin-left: var(--font-size-body);
 }
 
 details[open] > summary {
-  margin-bottom: 16px;
+  margin-bottom: var(--font-size-body);
 }
 
 #root > [data-overlay-container] {
