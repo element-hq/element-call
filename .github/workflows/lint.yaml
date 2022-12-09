@@ -11,7 +11,7 @@ jobs:
       - name: Yarn cache
         uses: actions/setup-node@v3
         with:
-          cache: 'yarn'
+          cache: "yarn"
       - name: Install dependencies
         run: "yarn install"
       - name: Prettier
