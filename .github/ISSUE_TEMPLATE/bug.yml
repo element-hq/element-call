@@ -42,7 +42,7 @@ body:
     id: browser
     attributes:
       label: Browser information
-      description: Which browser are you using? Which version? 
+      description: Which browser are you using? Which version?
       placeholder: e.g. Chromium Version 92.0.4515.131
     validations:
       required: false
@@ -58,10 +58,10 @@ body:
     id: rageshake
     attributes:
       label: Will you send logs?
-      description:  |
+      description: |
         To send them, press the 'Submit Feedback' button and check 'Include Debug Logs'. Please link to this issue in the description field.
       options:
-        - 'Yes'
-        - 'No'
+        - "Yes"
+        - "No"
     validations:
       required: true

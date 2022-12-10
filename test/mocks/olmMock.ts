@@ -1,1 +1,1 @@
-module.exports = { loadOlm: jest.fn(async () => {}) }
+module.exports = { loadOlm: jest.fn(async () => {}) };
