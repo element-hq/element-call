@@ -119,9 +119,9 @@
 }
 
 .memberName span {
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   font-weight: 400;
-  line-height: 16px;
+  line-height: var(--font-size-body);
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
@@ -152,8 +152,8 @@
   align-items: center;
   padding: 4px 8px;
   font-weight: normal;
-  font-size: 12px;
-  line-height: 15px;
+  font-size: var(--font-size-caption);
+  line-height: var(--font-size-body);
 }
 
 .screensharePIP {

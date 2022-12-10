@@ -41,7 +41,7 @@ limitations under the License.
 .copyButton {
   padding: 7px 15px;
   border-radius: 8px;
-  font-size: 14px;
+  font-size: var(--font-size-body);
   font-weight: 700;
 }
 
@@ -142,7 +142,7 @@ limitations under the License.
 
 .copyButton span {
   font-weight: 600;
-  font-size: 15px;
+  font-size: var(--font-size-body);
   margin-right: 10px;
   overflow: hidden;
   white-space: nowrap;
