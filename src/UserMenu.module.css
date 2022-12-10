@@ -10,13 +10,13 @@
 .avatar {
   width: 24px;
   height: 24px;
-  font-size: 12px;
+  font-size: var(--font-size-caption);
 }
 
 @media (min-width: 800px) {
   .avatar {
     width: 32px;
     height: 32px;
-    font-size: 15px;
+    font-size: var(--font-size-body);
   }
 }
