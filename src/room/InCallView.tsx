@@ -49,6 +49,7 @@ import { GridLayoutMenu } from "./GridLayoutMenu";
 import { Avatar } from "../Avatar";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
+import { useMediaHandler } from "../settings/useMediaHandler";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { useShowInspector, useSpatialAudio } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
@@ -59,10 +60,9 @@ import { widget, ElementWidgetActions } from "../widget";
 import { useJoinRule } from "./useJoinRule";
 import { useUrlParams } from "../UrlParams";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
-import { TileDescriptor } from "../video-grid/TileDescriptor";
 import { ParticipantInfo } from "./useGroupCall";
+import { TileDescriptor } from "../video-grid/TileDescriptor";
 import { AudioSink } from "../video-grid/AudioSink";
-import { useMediaHandler } from "../settings/useMediaHandler";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
