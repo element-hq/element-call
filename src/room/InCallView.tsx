@@ -50,19 +50,19 @@ import { Avatar } from "../Avatar";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { useMediaHandler } from "../settings/useMediaHandler";
 import { useShowInspector, useSpatialAudio } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { useAudioContext } from "../video-grid/useMediaStream";
 import { useFullscreen } from "../video-grid/useFullscreen";
-import { AudioContainer } from "../video-grid/AudioContainer";
-import { useAudioOutputDevice } from "../video-grid/useAudioOutputDevice";
 import { PosthogAnalytics } from "../PosthogAnalytics";
 import { widget, ElementWidgetActions } from "../widget";
 import { useJoinRule } from "./useJoinRule";
 import { useUrlParams } from "../UrlParams";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
-import { ConnectionState, ParticipantInfo } from "./useGroupCall";
+import { TileDescriptor } from "../video-grid/TileDescriptor";
+import { ParticipantInfo } from "./useGroupCall";
+import { AudioSink } from "../video-grid/AudioSink";
+import { useMediaHandler } from "../settings/useMediaHandler";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -89,18 +89,6 @@ interface Props {
   roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
-}
-
-// Represents something that should get a tile on the layout,
-// ie. a user's video feed or a screen share feed.
-export interface TileDescriptor {
-  id: string;
-  member: RoomMember;
-  focused: boolean;
-  presenter: boolean;
-  callFeed?: CallFeed;
-  isLocal?: boolean;
-  connectionState: ConnectionState;
 }
 
 export function InCallView({
@@ -145,14 +133,11 @@ export function InCallView({
 
   const [spatialAudio] = useSpatialAudio();
 
-  const [audioContext, audioDestination, audioRef] = useAudioContext();
-  const { audioOutput } = useMediaHandler();
+  const [audioContext, audioDestination] = useAudioContext();
   const [showInspector] = useShowInspector();
 
   const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
     useModalTriggerState();
-
-  useAudioOutputDevice(audioRef, audioOutput);
 
   const { hideScreensharing } = useUrlParams();
 
@@ -347,16 +332,30 @@ export function InCallView({
     [styles.maximised]: maximisedParticipant,
   });
 
+  // If spatial audio is disabled, we render one audio tag for each participant
+  // (with spatial audio, all the audio goes via the Web Audio API)
+  // We also do this if there's a feed maximised because we only trigger spatial
+  // audio rendering for feeds that we're displaying, which will need to be fixed
+  // once we start having more participants than we can fit on a screen, but this
+  // is a workaround for now.
+  const { audioOutput } = useMediaHandler();
+  const audioElements: JSX.Element[] = [];
+  if (!spatialAudio || maximisedParticipant) {
+    for (const item of items) {
+      if (item.isLocal) continue; // We don't want to render own audio
+      audioElements.push(
+        <AudioSink
+          tileDescriptor={item}
+          audioOutput={audioOutput}
+          key={item.id}
+        />
+      );
+    }
+  }
+
   return (
     <div className={containerClasses} ref={containerRef}>
-      <audio ref={audioRef} />
-      {(!spatialAudio || maximisedParticipant) && (
-        <AudioContainer
-          items={items}
-          audioContext={audioContext}
-          audioDestination={audioDestination}
-        />
-      )}
+      <>{audioElements}</>
       {!hideHeader && !maximisedParticipant && (
         <Header>
           <LeftNav>

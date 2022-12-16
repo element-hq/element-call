@@ -25,7 +25,7 @@ import { useRoomMemberName } from "./useRoomMemberName";
 import { VideoTile } from "./VideoTile";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 import { useModalTriggerState } from "../Modal";
-import { TileDescriptor } from "../room/InCallView";
+import { TileDescriptor } from "./TileDescriptor";
 
 interface Props {
   item: TileDescriptor;
@@ -72,7 +72,7 @@ export function VideoTileContainer({
     audioContext,
     audioDestination,
     localVolume,
-    isLocal || maximised
+    isLocal
   );
   const {
     modalState: videoTileSettingsModalState,
