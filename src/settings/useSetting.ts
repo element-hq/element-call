@@ -58,7 +58,26 @@ export const getSetting = <T>(name: string, defaultValue: T): T => {
   return item === null ? defaultValue : JSON.parse(item);
 };
 
-export const useSpatialAudio = () => useSetting("spatial-audio", false);
+export const canEnableSpatialAudio = () => {
+  const { userAgent } = navigator;
+  // Spatial audio means routing audio through audio contexts. On Chrome,
+  // this bypasses the AEC processor and so breaks echo cancellation.
+  // We only allow spatial audio to be enabled on Firefox which we know
+  // passes audio context audio through the AEC algorithm.
+  // https://bugs.chromium.org/p/chromium/issues/detail?id=687574 is the
+  // chrome bug for this: once this is fixed and the updated version is deployed
+  // widely enough, we can allow spatial audio everywhere. It's currently in a
+  // chrome flag, so we could enable this in Electron if we enabled the chrome flag
+  // in the Electron wrapper.
+  return userAgent.includes("Firefox");
+};
+
+export const useSpatialAudio = (): [boolean, (val: boolean) => void] => {
+  const settingVal = useSetting("spatial-audio", false);
+  if (canEnableSpatialAudio()) return settingVal;
+
+  return [false, (_: boolean) => {}];
+};
 export const useShowInspector = () => useSetting("show-inspector", false);
 export const useOptInAnalytics = () => useSetting("opt-in-analytics", false);
 export const useKeyboardShortcuts = () =>

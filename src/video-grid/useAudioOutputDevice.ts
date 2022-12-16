@@ -16,6 +16,8 @@ limitations under the License.
 
 import { RefObject, useEffect } from "react";
 
+// Uses setSinkId on an audio output element to set the device it outputs to,
+// where supported by the browser.
 export function useAudioOutputDevice(
   mediaRef: RefObject<MediaElement>,
   audioOutputDevice: string | undefined
