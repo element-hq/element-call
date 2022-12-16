@@ -1,1 +1,15 @@
-{}
+{
+  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>糟糕，發生錯誤。</0><1>送出錯誤訊息來幫助我們追蹤與解決問題。</1>",
+  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>加入通話</0><1>或</1><2>複製通話連結並稍候加入</2>",
+  "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>建立帳號</0> 或 <2>訪客模式</2>",
+  "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>已經有帳號了？</0><1><0>登入</0> Or <2>訪客模式登入</2></1>",
+  "{{roomName}} - Walkie-talkie call": "{{roomName}} - 無線電通話",
+  "{{names}}, {{name}}": "{{names}}，{{name}}",
+  "{{name}} is talking…": "{{name}} 正在交談中…",
+  "{{name}} is presenting": "{{name}} 正在報告",
+  "{{name}} (Waiting for video...)": "{{name}} (等待視訊畫面 ...)",
+  "{{name}} (Connecting...)": "{{name}} (連線中 ...)",
+  "{{displayName}}, your call is now ended": "{{displayName}}，您的通話現在已結束",
+  "{{count}} people connected|other": "{{count}} 人已連線",
+  "{{count}} people connected|one": "{{count}} 人已連線"
+}
