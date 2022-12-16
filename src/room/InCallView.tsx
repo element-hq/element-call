@@ -231,21 +231,22 @@ export function InCallView({
     return tileDescriptors;
   }, [client, participants, userMediaFeeds, activeSpeaker, screenshareFeeds]);
 
+  const reducedControls = boundsValid && bounds.width <= 400;
+  const noControls = reducedControls && bounds.height <= 400;
+
   // The maximised participant: either the participant that the user has
   // manually put in fullscreen, or the focused (active) participant if the
   // window is too small to show everyone
   const maximisedParticipant = useMemo(
     () =>
       fullscreenParticipant ??
-      (boundsValid && bounds.height <= 400 && bounds.width <= 400
+      (noControls
         ? items.find((item) => item.focused) ??
           items.find((item) => item.callFeed) ??
           null
         : null),
-    [fullscreenParticipant, boundsValid, bounds, items]
+    [fullscreenParticipant, noControls, items]
   );
-
-  const reducedControls = boundsValid && bounds.width <= 400;
 
   const renderAvatar = useCallback(
     (roomMember: RoomMember, width: number, height: number) => {
@@ -353,6 +354,42 @@ export function InCallView({
     }
   }
 
+  let footer: JSX.Element | null;
+
+  if (noControls) {
+    footer = null;
+  } else if (reducedControls) {
+    footer = (
+      <div className={styles.footer}>
+        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
+        <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
+        <HangupButton onPress={onLeave} />
+      </div>
+    );
+  } else {
+    footer = (
+      <div className={styles.footer}>
+        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
+        <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
+        {canScreenshare && !hideScreensharing && !isSafari && (
+          <ScreenshareButton
+            enabled={isScreensharing}
+            onPress={toggleScreensharing}
+          />
+        )}
+        <OverflowMenu
+          inCall
+          roomIdOrAlias={roomIdOrAlias}
+          groupCall={groupCall}
+          showInvite={joinRule === JoinRule.Public}
+          feedbackModalState={feedbackModalState}
+          feedbackModalProps={feedbackModalProps}
+        />
+        <HangupButton onPress={onLeave} />
+      </div>
+    );
+  }
+
   return (
     <div className={containerClasses} ref={containerRef}>
       <>{audioElements}</>
@@ -372,30 +409,7 @@ export function InCallView({
         </Header>
       )}
       {renderContent()}
-      <div className={styles.footer}>
-        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
-        <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
-        {canScreenshare &&
-          !hideScreensharing &&
-          !isSafari &&
-          !reducedControls && (
-            <ScreenshareButton
-              enabled={isScreensharing}
-              onPress={toggleScreensharing}
-            />
-          )}
-        {!reducedControls && (
-          <OverflowMenu
-            inCall
-            roomIdOrAlias={roomIdOrAlias}
-            groupCall={groupCall}
-            showInvite={joinRule === JoinRule.Public}
-            feedbackModalState={feedbackModalState}
-            feedbackModalProps={feedbackModalProps}
-          />
-        )}
-        <HangupButton onPress={onLeave} />
-      </div>
+      {footer}
       <GroupCallInspector
         client={client}
         groupCall={groupCall}
