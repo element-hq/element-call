@@ -32,7 +32,7 @@
 .inputField input,
 .inputField textarea {
   font-weight: 400;
-  font-size: 15px;
+  font-size: var(--font-size-body);
   border: none;
   border-radius: 4px;
   padding: 12px 9px 10px 9px;
@@ -73,7 +73,7 @@
     top 0.25s ease-out 0.1s, background-color 0.25s ease-out 0.1s;
   color: var(--tertiary-content);
   background-color: transparent;
-  font-size: 15px;
+  font-size: var(--font-size-body);
   position: absolute;
   left: 0;
   top: 0;
@@ -104,7 +104,7 @@
   background-color: var(--system);
   transition: font-size 0.25s ease-out 0s, color 0.25s ease-out 0s,
     top 0.25s ease-out 0s, background-color 0.25s ease-out 0s;
-  font-size: 10px;
+  font-size: var(--font-size-micro);
   top: -13px;
   padding: 0 2px;
   pointer-events: auto;
@@ -125,7 +125,7 @@
   display: flex;
   align-items: center;
   flex-grow: 1;
-  font-size: 15px;
+  font-size: var(--font-size-body);
   line-height: 24px;
 }
 
@@ -174,7 +174,7 @@
 
 .errorMessage {
   margin: 0;
-  font-size: 13px;
+  font-size: var(--font-size-caption);
   color: var(--alert);
   font-weight: 600;
 }

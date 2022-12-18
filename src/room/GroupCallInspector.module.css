@@ -19,7 +19,7 @@
 }
 
 .sequenceDiagramViewer :global(.messageText) {
-  font-size: 12px;
+  font-size: var(--font-size-caption);
   fill: var(--primary-content) !important;
   stroke: var(--primary-content) !important;
 }

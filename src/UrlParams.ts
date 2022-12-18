@@ -21,31 +21,63 @@ export interface UrlParams {
   roomAlias: string | null;
   roomId: string | null;
   viaServers: string[];
-  // Whether the app is running in embedded mode, and should keep the user
-  // confined to the current room
+  /**
+   * Whether the app is running in embedded mode, and should keep the user
+   * confined to the current room.
+   */
   isEmbedded: boolean;
-  // Whether the app should pause before joining the call until it sees an
-  // io.element.join widget action, allowing it to be preloaded
+  /**
+   * Whether the app should pause before joining the call until it sees an
+   * io.element.join widget action, allowing it to be preloaded.
+   */
   preload: boolean;
-  // Whether to hide the room header when in a call
+  /**
+   * Whether to hide the room header when in a call.
+   */
   hideHeader: boolean;
-  // Whether to hide the screen-sharing button
+  /**
+   * Whether to hide the screen-sharing button.
+   */
   hideScreensharing: boolean;
-  // Whether to start a walkie-talkie call instead of a video call
+  /**
+   * Whether to start a walkie-talkie call instead of a video call.
+   */
   isPtt: boolean;
-  // Whether to use end-to-end encryption
+  /**
+   * Whether to use end-to-end encryption.
+   */
   e2eEnabled: boolean;
-  // The user's ID (only used in matryoshka mode)
+  /**
+   * The user's ID (only used in matryoshka mode).
+   */
   userId: string | null;
-  // The display name to use for auto-registration
+  /**
+   * The display name to use for auto-registration.
+   */
   displayName: string | null;
-  // The device's ID (only used in matryoshka mode)
+  /**
+   * The device's ID (only used in matryoshka mode).
+   */
   deviceId: string | null;
-  // The base URL of the homeserver to use for media lookups in matryoshka mode
+  /**
+   * The base URL of the homeserver to use for media lookups in matryoshka mode.
+   */
   baseUrl: string | null;
-  // The BCP 47 code of the language the app should use
+  /**
+   * The BCP 47 code of the language the app should use.
+   */
   lang: string | null;
-  // The Posthog analytics ID. It is only available if the user has given consent for sharing telemetry in element web.
+  /**
+   * The fonts which the interface should use, if not empty.
+   */
+  fonts: string[];
+  /**
+   * The factor by which to scale the interface's font size.
+   */
+  fontScale: number | null;
+  /**
+   * The Posthog analytics ID. It is only available if the user has given consent for sharing telemetry in element web.
+   */
   analyticsID: string | null;
 }
 
@@ -83,6 +115,8 @@ export const getUrlParams = (
       ? fragment
       : fragment.substring(0, fragmentQueryStart);
 
+  const fontScale = parseFloat(getParam("fontScale") ?? "");
+
   return {
     roomAlias: fragmentRoute.length > 1 ? fragmentRoute : null,
     roomId: getParam("roomId"),
@@ -98,6 +132,8 @@ export const getUrlParams = (
     deviceId: getParam("deviceId"),
     baseUrl: getParam("baseUrl"),
     lang: getParam("lang"),
+    fonts: getAllParams("font"),
+    fontScale: Number.isNaN(fontScale) ? null : fontScale,
     analyticsID: getParam("analyticsID"),
   };
 };

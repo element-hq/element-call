@@ -133,6 +133,21 @@ export class Initializer {
         import.meta.env.VITE_THEME_BACKGROUND_85 as string
       );
     }
+
+    // Custom fonts
+    const { fonts, fontScale } = getUrlParams();
+    if (fontScale !== null) {
+      document.documentElement.style.setProperty(
+        "--font-scale",
+        fontScale.toString()
+      );
+    }
+    if (fonts.length > 0) {
+      document.documentElement.style.setProperty(
+        "--font-family",
+        fonts.map((f) => `"${f}"`).join(", ")
+      );
+    }
   }
 
   public static init(): Promise<void> | null {

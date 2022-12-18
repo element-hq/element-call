@@ -1,11 +1,11 @@
 .caption {
-  font-size: 12px;
-  line-height: 15px;
+  font-size: var(--font-size-caption);
+  line-height: var(--font-size-body);
 }
 
 .micro {
-  font-size: 10px;
-  line-height: 12px;
+  font-size: var(--font-size-micro);
+  line-height: var(--font-size-caption);
 }
 
 .regular {

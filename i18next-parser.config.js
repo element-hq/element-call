@@ -6,11 +6,13 @@ export default {
   createOldCatalogs: false,
   defaultNamespace: "app",
   lexers: {
-    ts: [{
-      lexer: "JavascriptLexer",
-      functions: ["t", "translatedError"],
-      functionsNamespace: ["useTranslation", "withTranslation"],
-    }],
+    ts: [
+      {
+        lexer: "JavascriptLexer",
+        functions: ["t", "translatedError"],
+        functionsNamespace: ["useTranslation", "withTranslation"],
+      },
+    ],
   },
   locales: ["en-GB"],
   output: "public/locales/$LOCALE/$NAMESPACE.json",
