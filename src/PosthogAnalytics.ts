@@ -125,7 +125,7 @@ export class PosthogAnalytics {
         const { analyticsID } = getUrlParams();
         // if the embedding platform (element web) already got approval to communicating with posthog
         // element call can also send events to posthog
-        setSetting("opt-in-analytics", !!analyticsID);
+        setSetting("opt-in-analytics", Boolean(analyticsID));
       }
 
       this.posthog.init(posthogConfig.project_api_key, {
