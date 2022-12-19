@@ -35,11 +35,6 @@ export default defineConfig(({ mode }) => {
         },
       }),
     ],
-    server: {
-      proxy: {
-        "/_matrix": env.VITE_DEFAULT_HOMESERVER || "http://localhost:8008",
-      },
-    },
     resolve: {
       alias: {
         // matrix-widget-api has its transpiled lib/index.js as its entry point,
