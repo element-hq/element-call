@@ -22,7 +22,7 @@ import {
 
 interface CallEnded extends IPosthogEvent {
   eventName: "CallEnded";
-  callName: string;
+  callId: string;
   callParticipantsOnLeave: number;
   callParticipantsMax: number;
   callDuration: number;
@@ -45,10 +45,10 @@ export class CallEndedTracker {
     );
   }
 
-  track(callName: string, callParticipantsNow: number) {
+  track(callId: string, callParticipantsNow: number) {
     PosthogAnalytics.instance.trackEvent<CallEnded>({
       eventName: "CallEnded",
-      callName,
+      callId: callId,
       callParticipantsMax: this.cache.maxParticipantsCount,
       callParticipantsOnLeave: callParticipantsNow,
       callDuration: (Date.now() - this.cache.startTime.getTime()) / 1000,
@@ -58,14 +58,14 @@ export class CallEndedTracker {
 
 interface CallStarted extends IPosthogEvent {
   eventName: "CallStarted";
-  callName: string;
+  callId: string;
 }
 
 export class CallStartedTracker {
-  track(callName: string) {
+  track(callId: string) {
     PosthogAnalytics.instance.trackEvent<CallStarted>({
       eventName: "CallStarted",
-      callName,
+      callId: callId,
     });
   }
 }
