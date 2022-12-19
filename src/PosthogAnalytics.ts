@@ -99,6 +99,7 @@ export class PosthogAnalytics {
   // set true during the constructor if posthog config is present, otherwise false
   private static internalInstance = null;
 
+  private identificationPromise: Promise<void>;
   private readonly enabled: boolean = false;
   private anonymity = Anonymity.Disabled;
   private platformSuperProperties = {};
@@ -124,9 +125,7 @@ export class PosthogAnalytics {
         const { analyticsID } = getUrlParams();
         // if the embedding platform (element web) already got approval to communicating with posthog
         // element call can also send events to posthog
-        if (analyticsID) {
-          setSetting("opt-in-analytics", true);
-        }
+        setSetting("opt-in-analytics", !!analyticsID);
       }
 
       this.posthog.init(posthogConfig.project_api_key, {
@@ -143,10 +142,9 @@ export class PosthogAnalytics {
     } else {
       this.enabled = false;
     }
-    const optInAnalytics = getSetting("opt-in-analytics", false);
-
-    this.updateAnonymityFromSettingsAndIdentifyUser(optInAnalytics);
     this.startListeningToSettingsChanges();
+    const optInAnalytics = getSetting("opt-in-analytics", false);
+    this.updateAnonymityAndIdentifyUser(optInAnalytics);
   }
 
   private sanitizeProperties = (
@@ -167,13 +165,12 @@ export class PosthogAnalytics {
       // drop device ID, which is a UUID persisted in local storage
       properties["$device_id"] = null;
     }
-    if (PosthogAnalytics.getPlatformProperties().matrixBackend === "embedded") {
-      // the url for embedded widgets leak a lot of private data since the url is used to transport those value to the widget.
-      properties["$current_url"] = (properties["$current_url"] as string)
-        .split("/")
-        .slice(0, 3)
-        .join("");
-    }
+    // the url leaks a lot of private data like the call name or the user.
+    // Its stripped down to the bare minimum to only give insights about the host (develop, main or sfu)
+    properties["$current_url"] = (properties["$current_url"] as string)
+      .split("/")
+      .slice(0, 3)
+      .join("");
 
     return properties;
   };
@@ -230,7 +227,7 @@ export class PosthogAnalytics {
       .join("");
   }
 
-  public async identifyUser(analyticsIdGenerator: () => string): Promise<void> {
+  public async identifyUser(analyticsIdGenerator: () => string) {
     // There might be a better way to get the client here.
 
     if (this.anonymity == Anonymity.Pseudonymous) {
@@ -324,12 +321,11 @@ export class PosthogAnalytics {
     this.setAnonymity(Anonymity.Disabled);
   }
 
-  public async updateSuperProperties(): Promise<void> {
+  public updateSuperProperties() {
     // Update super properties in posthog with our platform (app version, platform).
     // These properties will be subsequently passed in every event.
     //
     // This only needs to be done once per page lifetime. Note that getPlatformProperties
-    // is async and can involve a network request if we are running in a browser.
     this.platformSuperProperties = PosthogAnalytics.getPlatformProperties();
     this.registerSuperProperties({
       ...this.platformSuperProperties,
@@ -345,7 +341,7 @@ export class PosthogAnalytics {
     return this.eventSignup.getSignupEndTime() > new Date(0);
   }
 
-  public async updateAnonymityFromSettingsAndIdentifyUser(
+  public async updateAnonymityAndIdentifyUser(
     pseudonymousOptIn: boolean
   ): Promise<void> {
     // Update this.anonymity based on the user's analytics opt-in settings
@@ -353,27 +349,36 @@ export class PosthogAnalytics {
       ? Anonymity.Pseudonymous
       : Anonymity.Disabled;
     this.setAnonymity(anonymity);
+
     if (anonymity === Anonymity.Pseudonymous) {
       this.setRegistrationType(
         window.matrixclient.isGuest() || window.isPasswordlessUser
           ? RegistrationType.Guest
           : RegistrationType.Registered
       );
-      await this.identifyUser(PosthogAnalytics.getRandomAnalyticsId);
+      // store the promise to await posthog-tracking-events until the identification is done.
+      this.identificationPromise = this.identifyUser(
+        PosthogAnalytics.getRandomAnalyticsId
+      );
+      await this.identificationPromise;
       if (this.userRegisteredInThisSession()) {
         this.eventSignup.track();
       }
     }
 
     if (anonymity !== Anonymity.Disabled) {
-      await this.updateSuperProperties();
+      this.updateSuperProperties();
     }
   }
 
-  public trackEvent<E extends IPosthogEvent>(
+  public async trackEvent<E extends IPosthogEvent>(
     { eventName, ...properties }: E,
     options?: IPostHogEventOptions
-  ): void {
+  ): Promise<void> {
+    if (this.identificationPromise) {
+      // only make calls to posthog after the identificaion is done
+      await this.identificationPromise;
+    }
     if (
       this.anonymity == Anonymity.Disabled ||
       this.anonymity == Anonymity.Anonymous
@@ -392,7 +397,7 @@ export class PosthogAnalytics {
     // Note that for new accounts, pseudonymousAnalyticsOptIn won't be set, so updateAnonymityFromSettings
     // won't be called (i.e. this.anonymity will be left as the default, until the setting changes)
     settingsBus.on("opt-in-analytics", (optInAnalytics) => {
-      this.updateAnonymityFromSettingsAndIdentifyUser(optInAnalytics);
+      this.updateAnonymityAndIdentifyUser(optInAnalytics);
     });
   }
 
