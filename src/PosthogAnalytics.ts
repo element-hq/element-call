@@ -16,9 +16,11 @@ limitations under the License.
 
 import posthog, { CaptureOptions, PostHog, Properties } from "posthog-js";
 import { logger } from "matrix-js-sdk/src/logger";
+import { MatrixClient } from "matrix-js-sdk";
+import { Buffer } from "buffer";
 
 import { widget } from "./widget";
-import { getSetting, settingsBus } from "./settings/useSetting";
+import { getSetting, setSetting, settingsBus } from "./settings/useSetting";
 import {
   CallEndedTracker,
   CallStartedTracker,
@@ -28,6 +30,7 @@ import {
   MuteMicrophoneTracker,
 } from "./PosthogEvents";
 import { Config } from "./config/Config";
+import { getUrlParams } from "./UrlParams";
 
 /* Posthog analytics tracking.
  *
@@ -96,6 +99,7 @@ export class PosthogAnalytics {
   // set true during the constructor if posthog config is present, otherwise false
   private static internalInstance = null;
 
+  private identificationPromise: Promise<void>;
   private readonly enabled: boolean = false;
   private anonymity = Anonymity.Disabled;
   private platformSuperProperties = {};
@@ -113,11 +117,17 @@ export class PosthogAnalytics {
       project_api_key: Config.instance.config.posthog?.api_key,
       api_host: Config.instance.config.posthog?.api_host,
     };
-    if (
-      posthogConfig.project_api_key &&
-      posthogConfig.api_host &&
-      PosthogAnalytics.getPlatformProperties().matrixBackend === "jssdk"
-    ) {
+
+    if (posthogConfig.project_api_key && posthogConfig.api_host) {
+      if (
+        PosthogAnalytics.getPlatformProperties().matrixBackend === "embedded"
+      ) {
+        const { analyticsID } = getUrlParams();
+        // if the embedding platform (element web) already got approval to communicating with posthog
+        // element call can also send events to posthog
+        setSetting("opt-in-analytics", Boolean(analyticsID));
+      }
+
       this.posthog.init(posthogConfig.project_api_key, {
         api_host: posthogConfig.api_host,
         autocapture: false,
@@ -132,9 +142,9 @@ export class PosthogAnalytics {
     } else {
       this.enabled = false;
     }
-    const optInAnalytics = getSetting("opt-in-analytics", false);
-    this.updateAnonymityFromSettingsAndIdentifyUser(optInAnalytics);
     this.startListeningToSettingsChanges();
+    const optInAnalytics = getSetting("opt-in-analytics", false);
+    this.updateAnonymityAndIdentifyUser(optInAnalytics);
   }
 
   private sanitizeProperties = (
@@ -155,6 +165,12 @@ export class PosthogAnalytics {
       // drop device ID, which is a UUID persisted in local storage
       properties["$device_id"] = null;
     }
+    // the url leaks a lot of private data like the call name or the user.
+    // Its stripped down to the bare minimum to only give insights about the host (develop, main or sfu)
+    properties["$current_url"] = (properties["$current_url"] as string)
+      .split("/")
+      .slice(0, 3)
+      .join("");
 
     return properties;
   };
@@ -166,7 +182,7 @@ export class PosthogAnalytics {
   }
 
   private static getPlatformProperties(): PlatformProperties {
-    const appVersion = import.meta.env.VITE_APP_VERSION || "unknown";
+    const appVersion = import.meta.env.VITE_APP_VERSION || "dev";
     return {
       appVersion,
       matrixBackend: widget ? "embedded" : "jssdk",
@@ -211,36 +227,86 @@ export class PosthogAnalytics {
       .join("");
   }
 
-  public async identifyUser(analyticsIdGenerator: () => string): Promise<void> {
+  public async identifyUser(analyticsIdGenerator: () => string) {
     // There might be a better way to get the client here.
-    const client = window.matrixclient;
 
     if (this.anonymity == Anonymity.Pseudonymous) {
       // Check the user's account_data for an analytics ID to use. Storing the ID in account_data allows
       // different devices to send the same ID.
+      let analyticsID = await this.getAnalyticsId();
       try {
-        const accountData = await client.getAccountDataFromServer(
-          PosthogAnalytics.ANALYTICS_EVENT_TYPE
-        );
-        let analyticsID = accountData?.id;
-        if (!analyticsID) {
+        if (!analyticsID && !widget) {
+          // only try setting up a new analytics ID in the standalone app.
+
           // Couldn't retrieve an analytics ID from user settings, so create one and set it on the server.
           // Note there's a race condition here - if two devices do these steps at the same time, last write
           // wins, and the first writer will send tracking with an ID that doesn't match the one on the server
           // until the next time account data is refreshed and this function is called (most likely on next
           // page load). This will happen pretty infrequently, so we can tolerate the possibility.
-          analyticsID = analyticsIdGenerator();
-          await client.setAccountData(
-            PosthogAnalytics.ANALYTICS_EVENT_TYPE,
-            Object.assign({ id: analyticsID }, accountData)
-          );
+          const accountDataAnalyticsId = analyticsIdGenerator();
+          await this.setAccountAnalyticsId(accountDataAnalyticsId);
+          analyticsID = await this.hashedEcAnalyticsId(accountDataAnalyticsId);
         }
-        this.posthog.identify(analyticsID);
       } catch (e) {
         // The above could fail due to network requests, but not essential to starting the application,
         // so swallow it.
         logger.log("Unable to identify user for tracking" + e.toString());
       }
+      if (analyticsID) {
+        this.posthog.identify(analyticsID);
+      } else {
+        logger.info(
+          "No analyticsID is availble. Should not try to setup posthog"
+        );
+      }
+    }
+  }
+
+  async getAnalyticsId() {
+    const client: MatrixClient = window.matrixclient;
+    let accountAnalyticsId;
+    if (widget) {
+      accountAnalyticsId = getUrlParams().analyticsID;
+    } else {
+      const accountData = await client.getAccountDataFromServer(
+        PosthogAnalytics.ANALYTICS_EVENT_TYPE
+      );
+      accountAnalyticsId = accountData?.id;
+    }
+    if (accountAnalyticsId) {
+      // we dont just use the element web analytics ID because that would allow to associate
+      // users between the two posthog instances. By using a hash from the username and the element web analytics id
+      // it is not possible to conclude the element web posthog user id from the element call user id and vice versa.
+      return await this.hashedEcAnalyticsId(accountAnalyticsId);
+    }
+    return null;
+  }
+
+  async hashedEcAnalyticsId(accountAnalyticsId: string): Promise<string> {
+    const client: MatrixClient = window.matrixclient;
+    const posthogIdMaterial = "ec" + accountAnalyticsId + client.getUserId();
+    const bufferForPosthogId = await crypto.subtle.digest(
+      "sha-256",
+      Buffer.from(posthogIdMaterial, "utf-8")
+    );
+    const view = new Int32Array(bufferForPosthogId);
+    return Array.from(view)
+      .map((b) => Math.abs(b).toString(16).padStart(2, "0"))
+      .join("");
+  }
+
+  async setAccountAnalyticsId(analyticsID: string) {
+    if (!widget) {
+      const client = window.matrixclient;
+
+      // the analytics ID only needs to be set in the standalone version.
+      const accountData = await client.getAccountDataFromServer(
+        PosthogAnalytics.ANALYTICS_EVENT_TYPE
+      );
+      await client.setAccountData(
+        PosthogAnalytics.ANALYTICS_EVENT_TYPE,
+        Object.assign({ id: analyticsID }, accountData)
+      );
     }
   }
 
@@ -255,12 +321,11 @@ export class PosthogAnalytics {
     this.setAnonymity(Anonymity.Disabled);
   }
 
-  public async updateSuperProperties(): Promise<void> {
+  public updateSuperProperties() {
     // Update super properties in posthog with our platform (app version, platform).
     // These properties will be subsequently passed in every event.
     //
     // This only needs to be done once per page lifetime. Note that getPlatformProperties
-    // is async and can involve a network request if we are running in a browser.
     this.platformSuperProperties = PosthogAnalytics.getPlatformProperties();
     this.registerSuperProperties({
       ...this.platformSuperProperties,
@@ -276,7 +341,7 @@ export class PosthogAnalytics {
     return this.eventSignup.getSignupEndTime() > new Date(0);
   }
 
-  public async updateAnonymityFromSettingsAndIdentifyUser(
+  public async updateAnonymityAndIdentifyUser(
     pseudonymousOptIn: boolean
   ): Promise<void> {
     // Update this.anonymity based on the user's analytics opt-in settings
@@ -284,22 +349,36 @@ export class PosthogAnalytics {
       ? Anonymity.Pseudonymous
       : Anonymity.Disabled;
     this.setAnonymity(anonymity);
+
     if (anonymity === Anonymity.Pseudonymous) {
-      await this.identifyUser(PosthogAnalytics.getRandomAnalyticsId);
+      this.setRegistrationType(
+        window.matrixclient.isGuest() || window.isPasswordlessUser
+          ? RegistrationType.Guest
+          : RegistrationType.Registered
+      );
+      // store the promise to await posthog-tracking-events until the identification is done.
+      this.identificationPromise = this.identifyUser(
+        PosthogAnalytics.getRandomAnalyticsId
+      );
+      await this.identificationPromise;
       if (this.userRegisteredInThisSession()) {
         this.eventSignup.track();
       }
     }
 
     if (anonymity !== Anonymity.Disabled) {
-      await this.updateSuperProperties();
+      this.updateSuperProperties();
     }
   }
 
-  public trackEvent<E extends IPosthogEvent>(
+  public async trackEvent<E extends IPosthogEvent>(
     { eventName, ...properties }: E,
     options?: IPostHogEventOptions
-  ): void {
+  ): Promise<void> {
+    if (this.identificationPromise) {
+      // only make calls to posthog after the identificaion is done
+      await this.identificationPromise;
+    }
     if (
       this.anonymity == Anonymity.Disabled ||
       this.anonymity == Anonymity.Anonymous
@@ -318,7 +397,7 @@ export class PosthogAnalytics {
     // Note that for new accounts, pseudonymousAnalyticsOptIn won't be set, so updateAnonymityFromSettings
     // won't be called (i.e. this.anonymity will be left as the default, until the setting changes)
     settingsBus.on("opt-in-analytics", (optInAnalytics) => {
-      this.updateAnonymityFromSettingsAndIdentifyUser(optInAnalytics);
+      this.updateAnonymityAndIdentifyUser(optInAnalytics);
     });
   }
 

@@ -20,12 +20,15 @@ import { useMemo, useState, useEffect, useCallback } from "react";
 // Bus to notify other useSetting consumers when a setting is changed
 export const settingsBus = new EventEmitter();
 
+const getSettingKey = (name: string): string => {
+  return `matrix-setting-${name}`;
+};
 // Like useState, but reads from and persists the value to localStorage
 const useSetting = <T>(
   name: string,
   defaultValue: T
 ): [T, (value: T) => void] => {
-  const key = useMemo(() => `matrix-setting-${name}`, [name]);
+  const key = useMemo(() => getSettingKey(name), [name]);
 
   const [value, setValue] = useState<T>(() => {
     const item = localStorage.getItem(key);
@@ -51,11 +54,15 @@ const useSetting = <T>(
     ),
   ];
 };
-export const getSetting = <T>(name: string, defaultValue: T): T => {
-  const key = `matrix-setting-${name}`;
 
-  const item = localStorage.getItem(key);
+export const getSetting = <T>(name: string, defaultValue: T): T => {
+  const item = localStorage.getItem(getSettingKey(name));
   return item === null ? defaultValue : JSON.parse(item);
+};
+
+export const setSetting = <T>(name: string, newValue: T) => {
+  localStorage.setItem(getSettingKey(name), JSON.stringify(newValue));
+  settingsBus.emit(name, newValue);
 };
 
 export const useSpatialAudio = () => useSetting("spatial-audio", false);

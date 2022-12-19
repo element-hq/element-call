@@ -44,6 +44,7 @@ import { useEventTarget } from "./useEvents";
 declare global {
   interface Window {
     matrixclient: MatrixClient;
+    isPasswordlessUser: boolean;
   }
 }
 
@@ -118,9 +119,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       if (widget) {
         // We're inside a widget, so let's engage *matryoshka mode*
         logger.log("Using a matryoshka client");
-        PosthogAnalytics.instance.setRegistrationType(
-          RegistrationType.Registered
-        );
         return {
           client: await widget.client,
           isPasswordlessUser: false,
@@ -138,11 +136,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
             session;
 
           try {
-            PosthogAnalytics.instance.setRegistrationType(
-              passwordlessUser
-                ? RegistrationType.Guest
-                : RegistrationType.Registered
-            );
             return {
               client: await initClient(
                 {
@@ -345,7 +338,8 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
   useEffect(() => {
     window.matrixclient = client;
-  }, [client]);
+    window.isPasswordlessUser = isPasswordlessUser;
+  }, [client, isPasswordlessUser]);
 
   if (error) {
     return <ErrorView error={error} />;
