@@ -346,7 +346,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     }
 
     PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
-    PosthogAnalytics.instance.eventCallStarted.track(groupCall.room.name);
+    PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
 
     groupCall.enter().catch((error) => {
       console.error(error);

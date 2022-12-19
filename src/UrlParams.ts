@@ -75,6 +75,10 @@ export interface UrlParams {
    * The factor by which to scale the interface's font size.
    */
   fontScale: number | null;
+  /**
+   * The Posthog analytics ID. It is only available if the user has given consent for sharing telemetry in element web.
+   */
+  analyticsID: string | null;
 }
 
 /**
@@ -130,6 +134,7 @@ export const getUrlParams = (
     lang: getParam("lang"),
     fonts: getAllParams("font"),
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
+    analyticsID: getParam("analyticsID"),
   };
 };
 
