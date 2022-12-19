@@ -72,7 +72,12 @@ export function VideoTileContainer({
     audioContext,
     audioDestination,
     localVolume,
-    isLocal
+    // The feed is muted if it's local audio (because we don't want our own audio,
+    // but it's a hook and we can't call it conditionally so we're stuck with it)
+    // or if there's a maximised feed in which case we always render audio via audio
+    // elements because we wire it up at the video tile container level and only one
+    // video tile container is displayed.
+    isLocal || maximised
   );
   const {
     modalState: videoTileSettingsModalState,
