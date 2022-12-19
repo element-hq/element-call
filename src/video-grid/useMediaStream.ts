@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { useRef, useEffect, RefObject, useState, useCallback } from "react";
-import { parse as parseSdp, write as writeSdp } from "sdp-transform";
 import {
   acquireContext,
   releaseContext,
@@ -64,6 +63,8 @@ export const useMediaStreamTrackCount = (
   return [audioTrackCount, videoTrackCount];
 };
 
+// Binds a media stream to a media output element, returning a ref for the
+// media element that should then be passed to the media element to be used.
 export const useMediaStream = (
   stream: MediaStream | null,
   audioOutputDevice: string | null,
@@ -78,7 +79,7 @@ export const useMediaStream = (
     console.log(
       `useMediaStream update stream mediaRef.current ${!!mediaRef.current} stream ${
         stream && stream.id
-      }`
+      } muted ${mute}`
     );
 
     if (mediaRef.current) {
@@ -127,89 +128,30 @@ export const useMediaStream = (
   return mediaRef;
 };
 
-// Loops the given audio stream back through a local peer connection, to make
-// AEC work with Web Audio streams on Chrome. The resulting stream should be
-// played through an audio element.
-// This hack can be removed once the following bug is resolved:
-// https://bugs.chromium.org/p/chromium/issues/detail?id=687574
-const createLoopback = async (stream: MediaStream): Promise<MediaStream> => {
-  // Prepare our local peer connections
-  const conn = new RTCPeerConnection();
-  const loopbackConn = new RTCPeerConnection();
-  const loopbackStream = new MediaStream();
-
-  conn.addEventListener("icecandidate", ({ candidate }) => {
-    if (candidate) loopbackConn.addIceCandidate(new RTCIceCandidate(candidate));
-  });
-  loopbackConn.addEventListener("icecandidate", ({ candidate }) => {
-    if (candidate) conn.addIceCandidate(new RTCIceCandidate(candidate));
-  });
-  loopbackConn.addEventListener("track", ({ track }) =>
-    loopbackStream.addTrack(track)
-  );
-
-  // Hook the connections together
-  stream.getTracks().forEach((track) => conn.addTrack(track));
-  const offer = await conn.createOffer({
-    offerToReceiveAudio: false,
-    offerToReceiveVideo: false,
-  });
-  await conn.setLocalDescription(offer);
-
-  await loopbackConn.setRemoteDescription(offer);
-  const answer = await loopbackConn.createAnswer();
-  // Rewrite SDP to be stereo and (variable) max bitrate
-  const parsedSdp = parseSdp(answer.sdp!);
-  parsedSdp.media.forEach((m) =>
-    m.fmtp.forEach(
-      (f) => (f.config += `;stereo=1;cbr=0;maxaveragebitrate=510000;`)
-    )
-  );
-  answer.sdp = writeSdp(parsedSdp);
-
-  await loopbackConn.setLocalDescription(answer);
-  await conn.setRemoteDescription(answer);
-
-  return loopbackStream;
-};
-
-export const useAudioContext = (): [
-  AudioContext,
-  AudioNode,
-  RefObject<MediaElement>
-] => {
+// Provides a properly refcounted instance of the shared audio context,
+// along with the context's destination audio node and a ref to be used
+// for the <audio> sink element.
+export const useAudioContext = (): [AudioContext, AudioNode] => {
   const context = useRef<AudioContext>();
   const destination = useRef<AudioNode>();
-  const audioRef = useRef<MediaElement>();
 
   useEffect(() => {
-    if (audioRef.current && !context.current) {
+    if (!context.current) {
       context.current = acquireContext();
 
-      if (window.chrome) {
-        // We're in Chrome, which needs a loopback hack applied to enable AEC
-        const streamDest = context.current.createMediaStreamDestination();
-        destination.current = streamDest;
-
-        const audioEl = audioRef.current;
-        (async () => {
-          audioEl.srcObject = await createLoopback(streamDest.stream);
-          await audioEl.play();
-        })();
-        return () => {
-          audioEl.srcObject = null;
-          releaseContext();
-        };
-      } else {
-        destination.current = context.current.destination;
-        return releaseContext;
-      }
+      destination.current = context.current.destination;
+      return releaseContext;
     }
   }, []);
 
-  return [context.current!, destination.current!, audioRef];
+  return [context.current!, destination.current!];
 };
 
+// Either renders a media stream with spatial audio or is just a no-op wrapper
+// around useMediaStream, depending on whether spatial audio is enabled.
+// Returns refs for the tile element from which the position is derived and
+// a <video> element to render the video to.
+// (hooks can't be conditional so we must use the same hook in each case).
 export const useSpatialMediaStream = (
   stream: MediaStream | null,
   audioContext: AudioContext,
@@ -219,7 +161,12 @@ export const useSpatialMediaStream = (
 ): [RefObject<HTMLDivElement>, RefObject<MediaElement>] => {
   const tileRef = useRef<HTMLDivElement | null>(null);
   const [spatialAudio] = useSpatialAudio();
-  // We always handle audio separately form the video element
+
+  // This media stream is only used for the video - the audio goes via the audio
+  // context, so the audio output doesn't matter and the element is always muted
+  // (we could split the video out into a separate stream with just the video track
+  // and pass that as the srcObject of the element, but it seems unnecessary when we
+  // can just mute the element).
   const mediaRef = useMediaStream(stream, null, true);
   const [audioTrackCount] = useMediaStreamTrackCount(stream);
 

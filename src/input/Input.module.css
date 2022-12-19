@@ -151,6 +151,15 @@
   margin-right: 10px;
 }
 
+.checkboxField.disabled,
+.checkboxField.disabled .description {
+  color: var(--quinary-content);
+}
+
+.checkboxField.disabled .checkbox {
+  border-color: var(--quinary-content);
+}
+
 .checkbox svg {
   display: none;
 }

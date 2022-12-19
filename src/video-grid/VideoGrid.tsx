@@ -23,7 +23,7 @@ import { ReactDOMAttributes } from "@use-gesture/react/dist/declarations/src/typ
 
 import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/GridLayoutMenu";
-import { TileDescriptor } from "../room/InCallView";
+import { TileDescriptor } from "./TileDescriptor";
 
 interface TilePosition {
   x: number;

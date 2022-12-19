@@ -25,7 +25,7 @@ import { useRoomMemberName } from "./useRoomMemberName";
 import { VideoTile } from "./VideoTile";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 import { useModalTriggerState } from "../Modal";
-import { TileDescriptor } from "../room/InCallView";
+import { TileDescriptor } from "./TileDescriptor";
 
 interface Props {
   item: TileDescriptor;
@@ -72,6 +72,11 @@ export function VideoTileContainer({
     audioContext,
     audioDestination,
     localVolume,
+    // The feed is muted if it's local audio (because we don't want our own audio,
+    // but it's a hook and we can't call it conditionally so we're stuck with it)
+    // or if there's a maximised feed in which case we always render audio via audio
+    // elements because we wire it up at the video tile container level and only one
+    // video tile container is displayed.
     isLocal || maximised
   );
   const {

@@ -17,8 +17,8 @@ limitations under the License.
 
 import { useCallback, useEffect, useState } from "react";
 
-import { TileDescriptor } from "../room/InCallView";
 import { useEventTarget } from "../useEvents";
+import { TileDescriptor } from "./TileDescriptor";
 import { useCallFeed } from "./useCallFeed";
 
 export function useFullscreen(ref: React.RefObject<HTMLElement>): {
