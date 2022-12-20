@@ -15,19 +15,18 @@ Until prebuilt tarballs are available, you'll need to build Element Call from so
 git clone https://github.com/vector-im/element-call.git
 cd element-call
 yarn
-cp .env.example .env
-cp sample.config.json public/config.json
-```
-
-You can now edit the configuration in `.env` and `public/config.json` to your liking. (See the [configuration](#Configuration) section for details.) The most important thing is to set `VITE_DEFAULT_HOMESERVER` to the homeserver that the app should use, such as `https://call.ems.host`.
-
-Next, build the project:
-
-```
 yarn build
 ```
 
 If all went well, you can now find the build output under `dist` as a series of static files. These can be hosted using any web server of your choice.
+
+You may also wish to add a configuration file (Element Call uses the domain it's hosted on as a Homeserver URL by default,
+but you can change this in the config file). This goes in `public/config.json` - you can use the sample as a starting point:
+
+```
+cp config/config.sample.json public/config.json
+# edit public/config.json
+```
 
 Because Element Call uses client-side routing, your server must be able to route any requests to non-existing paths back to `/index.html`. For example, in Nginx you can achieve this with the `try_files` directive:
 
@@ -59,11 +58,9 @@ git clone https://github.com/vector-im/element-call.git
 cd element-call
 yarn
 yarn link matrix-js-sdk
-cp .env.example .env
-cp sample.config.json public/config.json
 ```
 
-By default, the app expects you to have [Synapse](https://matrix-org.github.io/synapse/latest/setup/installation.html) installed locally and running on port 8008. If you wish to use another homeserver, you can set it in your `.env` file.
+By default, the app expects you to have [Synapse](https://matrix-org.github.io/synapse/latest/setup/installation.html) installed locally and running on port 8008. If you wish to use another homeserver, you can add a config file as above.
 
 You're now ready to launch the development server:
 
