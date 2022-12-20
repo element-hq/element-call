@@ -18,8 +18,9 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { InteractiveAuth } from "matrix-js-sdk/src/interactive-auth";
 import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
 
-import { initClient, defaultHomeserver } from "../matrix-utils";
+import { initClient } from "../matrix-utils";
 import { Session } from "../ClientContext";
+import { Config } from "../config/Config";
 
 export const useInteractiveRegistration = (): [
   string,
@@ -37,7 +38,9 @@ export const useInteractiveRegistration = (): [
 
   const authClient = useRef<MatrixClient>();
   if (!authClient.current) {
-    authClient.current = createClient({ baseUrl: defaultHomeserver });
+    authClient.current = createClient({
+      baseUrl: Config.defaultHomeserverUrl(),
+    });
   }
 
   useEffect(() => {
@@ -92,7 +95,7 @@ export const useInteractiveRegistration = (): [
 
       const client = await initClient(
         {
-          baseUrl: defaultHomeserver,
+          baseUrl: Config.defaultHomeserverUrl(),
           accessToken: access_token,
           userId: user_id,
           deviceId: device_id,

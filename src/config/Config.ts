@@ -14,11 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {
-  DEFAULT_CONFIG,
-  ConfigOptions,
-  ResolvedConfigOptions,
-} from "./ConfigOptions";
+import { DEFAULT_CONFIG, ConfigOptions } from "./ConfigOptions";
 
 export class Config {
   private static internalInstance: Config;
@@ -41,7 +37,26 @@ export class Config {
     return Config.internalInstance.initPromise;
   }
 
-  public config: ResolvedConfigOptions;
+  // Convenience accessors
+  public static defaultHomeserverUrl(): string | undefined {
+    const defaultServerConfig = Config.instance.config.default_server_config;
+    if (!defaultServerConfig) {
+      return undefined;
+    }
+
+    return defaultServerConfig["m.homeserver"]?.base_url;
+  }
+
+  public static defaultServerName(): string | undefined {
+    const defaultServerConfig = Config.instance.config.default_server_config;
+    if (!defaultServerConfig) {
+      return undefined;
+    }
+
+    return defaultServerConfig["m.homeserver"]?.server_name;
+  }
+
+  public config: ConfigOptions;
   private initPromise: Promise<void>;
 }
 
@@ -59,7 +74,7 @@ async function downloadConfig(
     // Lack of a config isn't an error, we should just use the defaults.
     // Also treat a blank config as no config, assuming the status code is 0, because we don't get 404s from file:
     // URIs so this is the only way we can not fail if the file doesn't exist when loading from a file:// URI.
-    return {};
+    return DEFAULT_CONFIG;
   }
 
   return res.json();

@@ -29,11 +29,11 @@ import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
 import { useClient } from "../ClientContext";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
-import { defaultHomeserver, defaultHomeserverHost } from "../matrix-utils";
 import styles from "./LoginPage.module.css";
 import { useInteractiveLogin } from "./useInteractiveLogin";
 import { usePageTitle } from "../usePageTitle";
 import { PosthogAnalytics } from "../PosthogAnalytics";
+import { Config } from "../config/Config";
 
 export const LoginPage: FC = () => {
   const { t } = useTranslation();
@@ -41,7 +41,7 @@ export const LoginPage: FC = () => {
 
   const { setClient } = useClient();
   const login = useInteractiveLogin();
-  const homeserver = defaultHomeserver; // TODO: Make this configurable
+  const homeserver = Config.defaultHomeserverUrl(); // TODO: Make this configurable
   const usernameRef = useRef<HTMLInputElement>();
   const passwordRef = useRef<HTMLInputElement>();
   const history = useHistory();
@@ -76,11 +76,9 @@ export const LoginPage: FC = () => {
   );
 
   const homeserverHost = useMemo(() => {
-    try {
-      return new URL(homeserver).host;
-    } catch (error) {
-      return defaultHomeserverHost;
-    }
+    // XXX: This isn't really correct: the server name of an HS may not
+    // be the same as the hostname of the client API endpoint.
+    return new URL(homeserver).host;
   }, [homeserver]);
 
   return (

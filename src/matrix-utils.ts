@@ -19,14 +19,10 @@ import type { Room } from "matrix-js-sdk/src/models/room";
 import IndexedDBWorker from "./IndexedDBWorker?worker";
 import { getUrlParams } from "./UrlParams";
 import { loadOlm } from "./olm";
+import { Config } from "./config/Config";
 
-export const defaultHomeserver =
-  (import.meta.env.VITE_DEFAULT_HOMESERVER as string) ??
-  `${window.location.protocol}//${window.location.host}`;
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
-
-export const defaultHomeserverHost = new URL(defaultHomeserver).host;
 
 export class CryptoStoreIntegrityError extends Error {
   constructor() {
@@ -206,7 +202,7 @@ export function roomNameFromRoomId(roomId: string): string {
     .toLowerCase();
 }
 
-export function isLocalRoomId(roomId: string): boolean {
+export function isLocalRoomId(roomId: string, client: MatrixClient): boolean {
   if (!roomId) {
     return false;
   }
@@ -217,7 +213,7 @@ export function isLocalRoomId(roomId: string): boolean {
     return false;
   }
 
-  return parts[1] === defaultHomeserverHost;
+  return parts[1] === client.getDomain();
 }
 
 export async function createRoom(
@@ -291,11 +287,12 @@ export async function createRoom(
   return [fullAliasFromRoomName(name, client), result.room_id];
 }
 
+// Returns a URL to that will load Element Call with the given room
 export function getRoomUrl(roomIdOrAlias: string): string {
   if (roomIdOrAlias.startsWith("#")) {
     const [localPart, host] = roomIdOrAlias.replace("#", "").split(":");
 
-    if (host !== defaultHomeserverHost) {
+    if (host !== Config.defaultServerName()) {
       return `${window.location.protocol}//${window.location.host}/room/${roomIdOrAlias}`;
     } else {
       return `${window.location.protocol}//${window.location.host}/${localPart}`;
