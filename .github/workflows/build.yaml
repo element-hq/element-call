@@ -2,8 +2,6 @@ name: Build
 on:
   push:
     branches: [main]
-env:
-  VITE_DEFAULT_HOMESERVER: "https://call.ems.host"
 jobs:
   build:
     name: Build
