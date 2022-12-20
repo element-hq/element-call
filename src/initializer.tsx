@@ -23,7 +23,6 @@ import * as Sentry from "@sentry/react";
 
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
-import { DEFAULT_CONFIG } from "./config/ConfigOptions";
 
 enum LoadState {
   None,
@@ -193,10 +192,8 @@ export class Initializer {
       this.loadStates.config === LoadState.Loaded
     ) {
       Sentry.init({
-        dsn: Config.instance.config.sentry?.DSN ?? DEFAULT_CONFIG.sentry.DSN,
-        environment:
-          Config.instance.config.sentry.environment ??
-          DEFAULT_CONFIG.sentry.environment,
+        dsn: Config.instance.config.sentry?.DSN,
+        environment: Config.instance.config.sentry?.environment,
         integrations: [
           new Integrations.BrowserTracing({
             routingInstrumentation:

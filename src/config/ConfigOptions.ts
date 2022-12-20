@@ -19,21 +19,24 @@ export interface ConfigOptions {
   rageshake?: {
     submit_url: string;
   };
+
+  // Describes the default homeserver to use. The same format as Element Web
+  // (without identity servers as we don't use them).
+  default_server_config: {
+    ["m.homeserver"]: {
+      base_url: string;
+      server_name: string;
+    };
+  };
 }
 
-export interface ResolvedConfigOptions extends ConfigOptions {
-  sentry: {
-    DSN: string;
-    environment: string;
-  };
-  rageshake: {
-    submit_url: string;
-  };
-}
-
-export const DEFAULT_CONFIG: ResolvedConfigOptions = {
-  sentry: { DSN: "", environment: "production" },
-  rageshake: {
-    submit_url: "https://element.io/bugreports/submit",
+export const DEFAULT_CONFIG: ConfigOptions = {
+  default_server_config: {
+    ["m.homeserver"]: {
+      // These are probably poor guesses - we may want to just not work without
+      // a config file.
+      base_url: `${window.location.protocol}//${window.location.host}`,
+      server_name: window.location.host,
+    },
   },
 };

@@ -31,7 +31,7 @@ export default defineConfig(({ mode }) => {
       svgrPlugin(),
       htmlTemplate.default({
         data: {
-          title: env.VITE_PRODUCT_NAME || "Element Call",
+          title: "Element Call",
         },
       }),
     ],
