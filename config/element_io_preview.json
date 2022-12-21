@@ -4,5 +4,9 @@
       "base_url": "https://call.ems.host",
       "server_name": "call.ems.host"
     }
+  },
+  "temp_sfu": {
+    "user_id": "@sfu:call.ems.host",
+    "device_id": "YNZDLSEQMP"
   }
 }

@@ -28,6 +28,15 @@ export interface ConfigOptions {
       server_name: string;
     };
   };
+
+  /**
+   * Sets the client's preferred SFU
+   * TEMPORARY: Will be removed in favour of getting SFUs from the homeserver
+   */
+  temp_sfu?: {
+    user_id: string;
+    device_id: string;
+  };
 }
 
 // Overrides members from ConfigOptions that are always provided by the
