@@ -114,8 +114,8 @@ export class PosthogAnalytics {
 
   constructor(private readonly posthog: PostHog) {
     const posthogConfig: PosthogSettings = {
-      project_api_key: Config.instance.config.posthog?.api_key,
-      api_host: Config.instance.config.posthog?.api_host,
+      project_api_key: Config.get().posthog?.api_key,
+      api_host: Config.get().posthog?.api_host,
     };
 
     if (posthogConfig.project_api_key && posthogConfig.api_host) {
