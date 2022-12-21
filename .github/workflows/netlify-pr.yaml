@@ -4,10 +4,14 @@ on:
     workflows: ["Build"]
     types:
       - completed
+    branches-ignore:
+      - main
 jobs:
   deploy:
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
+    permissions:
+      deployments: write
     environment: Netlify
     steps:
       - name: 📝 Create Deployment
@@ -34,7 +38,7 @@ jobs:
         uses: dawidd6/action-download-artifact@v2
         with:
           run_id: ${{ github.event.workflow_run.id }}
-          name: previewbuild
+          name: build
           path: webapp
 
       - name: Add redirects file
