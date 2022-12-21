@@ -41,21 +41,11 @@ export class Config {
 
   // Convenience accessors
   public static defaultHomeserverUrl(): string | undefined {
-    const defaultServerConfig = Config.get().default_server_config;
-    if (!defaultServerConfig) {
-      return undefined;
-    }
-
-    return defaultServerConfig["m.homeserver"].base_url;
+    return Config.get().default_server_config["m.homeserver"].base_url;
   }
 
   public static defaultServerName(): string | undefined {
-    const defaultServerConfig = Config.get().default_server_config;
-    if (!defaultServerConfig) {
-      return undefined;
-    }
-
-    return defaultServerConfig["m.homeserver"].server_name;
+    return Config.get().default_server_config["m.homeserver"].server_name;
   }
 
   public config?: ConfigOptions;
