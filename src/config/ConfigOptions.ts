@@ -33,10 +33,8 @@ export interface ConfigOptions {
 export const DEFAULT_CONFIG: ConfigOptions = {
   default_server_config: {
     ["m.homeserver"]: {
-      // These are probably poor guesses - we may want to just not work without
-      // a config file.
-      base_url: `${window.location.protocol}//${window.location.host}`,
-      server_name: window.location.host,
+      base_url: "http://localhost:8008",
+      server_name: "localhost",
     },
   },
 };
