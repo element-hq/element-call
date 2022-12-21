@@ -30,6 +30,8 @@ export interface ConfigOptions {
   };
 }
 
+// Overrides members from ConfigOptions that are always provided by the
+// default config and are therefore non-optional.
 export interface ResolvedConfigOptions extends ConfigOptions {
   default_server_config: {
     ["m.homeserver"]: {
