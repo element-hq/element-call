@@ -14,7 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { DEFAULT_CONFIG, ConfigOptions } from "./ConfigOptions";
+import {
+  DEFAULT_CONFIG,
+  ConfigOptions,
+  ResolvedConfigOptions,
+} from "./ConfigOptions";
 
 export class Config {
   private static internalInstance: Config;
@@ -48,7 +52,7 @@ export class Config {
     return Config.get().default_server_config["m.homeserver"].server_name;
   }
 
-  public config?: ConfigOptions;
+  public config?: ResolvedConfigOptions;
   private initPromise?: Promise<void>;
 }
 
