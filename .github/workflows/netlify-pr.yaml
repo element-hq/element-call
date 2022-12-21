@@ -5,7 +5,7 @@ on:
     types:
       - completed
     branches-ignore:
-      - main
+      - "main"
 jobs:
   deploy:
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
