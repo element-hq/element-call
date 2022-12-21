@@ -14,14 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, {
-  FC,
-  FormEvent,
-  useCallback,
-  useRef,
-  useState,
-  useMemo,
-} from "react";
+import React, { FC, FormEvent, useCallback, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 
@@ -75,12 +68,6 @@ export const LoginPage: FC = () => {
     [login, location, history, homeserver, setClient]
   );
 
-  const homeserverHost = useMemo(() => {
-    // XXX: This isn't really correct: the server name of an HS may not
-    // be the same as the hostname of the client API endpoint.
-    return new URL(homeserver).host;
-  }, [homeserver]);
-
   return (
     <>
       <div className={styles.container}>
@@ -100,7 +87,7 @@ export const LoginPage: FC = () => {
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
-                  suffix={`:${homeserverHost}`}
+                  suffix={`:${Config.defaultServerName()}`}
                 />
               </FieldRow>
               <FieldRow>
