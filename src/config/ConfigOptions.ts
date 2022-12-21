@@ -22,6 +22,15 @@ export interface ConfigOptions {
 
   // Describes the default homeserver to use. The same format as Element Web
   // (without identity servers as we don't use them).
+  default_server_config?: {
+    ["m.homeserver"]: {
+      base_url: string;
+      server_name: string;
+    };
+  };
+}
+
+export interface ResolvedConfigOptions extends ConfigOptions {
   default_server_config: {
     ["m.homeserver"]: {
       base_url: string;
@@ -30,7 +39,7 @@ export interface ConfigOptions {
   };
 }
 
-export const DEFAULT_CONFIG: ConfigOptions = {
+export const DEFAULT_CONFIG: ResolvedConfigOptions = {
   default_server_config: {
     ["m.homeserver"]: {
       base_url: "http://localhost:8008",
