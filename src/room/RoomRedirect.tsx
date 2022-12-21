@@ -17,9 +17,11 @@ limitations under the License.
 import React, { useEffect } from "react";
 import { useLocation, useHistory } from "react-router-dom";
 
-import { defaultHomeserverHost } from "../matrix-utils";
+import { Config } from "../config/Config";
 import { LoadingView } from "../FullScreenView";
 
+// A component that, when loaded, redirects the client to a full room URL
+// based on the current URL being an abbreviated room URL
 export function RoomRedirect() {
   const { pathname } = useLocation();
   const history = useHistory();
@@ -32,7 +34,7 @@ export function RoomRedirect() {
     }
 
     if (!roomId.startsWith("#") && !roomId.startsWith("!")) {
-      roomId = `#${roomId}:${defaultHomeserverHost}`;
+      roomId = `#${roomId}:${Config.defaultServerName()}`;
     }
 
     history.replace(`/room/${roomId.toLowerCase()}`);

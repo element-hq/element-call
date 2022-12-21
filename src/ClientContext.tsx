@@ -32,7 +32,6 @@ import { useTranslation } from "react-i18next";
 import { ErrorView } from "./FullScreenView";
 import {
   initClient,
-  defaultHomeserver,
   CryptoStoreIntegrityError,
   fallbackICEServerAllowed,
 } from "./matrix-utils";
@@ -40,6 +39,7 @@ import { widget } from "./widget";
 import { PosthogAnalytics, RegistrationType } from "./PosthogAnalytics";
 import { translatedError } from "./TranslatedError";
 import { useEventTarget } from "./useEvents";
+import { Config } from "./config/Config";
 
 declare global {
   interface Window {
@@ -139,7 +139,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
             return {
               client: await initClient(
                 {
-                  baseUrl: defaultHomeserver,
+                  baseUrl: Config.defaultHomeserverUrl(),
                   accessToken: access_token,
                   userId: user_id,
                   deviceId: device_id,
@@ -155,7 +155,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
               try {
                 const client = await initClient(
                   {
-                    baseUrl: defaultHomeserver,
+                    baseUrl: Config.defaultHomeserverUrl(),
                     accessToken: access_token,
                     userId: user_id,
                     deviceId: device_id,

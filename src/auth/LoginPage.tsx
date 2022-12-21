@@ -14,14 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, {
-  FC,
-  FormEvent,
-  useCallback,
-  useRef,
-  useState,
-  useMemo,
-} from "react";
+import React, { FC, FormEvent, useCallback, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 
@@ -29,11 +22,11 @@ import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
 import { useClient } from "../ClientContext";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
-import { defaultHomeserver, defaultHomeserverHost } from "../matrix-utils";
 import styles from "./LoginPage.module.css";
 import { useInteractiveLogin } from "./useInteractiveLogin";
 import { usePageTitle } from "../usePageTitle";
 import { PosthogAnalytics } from "../PosthogAnalytics";
+import { Config } from "../config/Config";
 
 export const LoginPage: FC = () => {
   const { t } = useTranslation();
@@ -41,7 +34,7 @@ export const LoginPage: FC = () => {
 
   const { setClient } = useClient();
   const login = useInteractiveLogin();
-  const homeserver = defaultHomeserver; // TODO: Make this configurable
+  const homeserver = Config.defaultHomeserverUrl(); // TODO: Make this configurable
   const usernameRef = useRef<HTMLInputElement>();
   const passwordRef = useRef<HTMLInputElement>();
   const history = useHistory();
@@ -75,14 +68,6 @@ export const LoginPage: FC = () => {
     [login, location, history, homeserver, setClient]
   );
 
-  const homeserverHost = useMemo(() => {
-    try {
-      return new URL(homeserver).host;
-    } catch (error) {
-      return defaultHomeserverHost;
-    }
-  }, [homeserver]);
-
   return (
     <>
       <div className={styles.container}>
@@ -102,7 +87,7 @@ export const LoginPage: FC = () => {
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
-                  suffix={`:${homeserverHost}`}
+                  suffix={`:${Config.defaultServerName()}`}
                 />
               </FieldRow>
               <FieldRow>

@@ -25,7 +25,6 @@ import { useClient } from "../ClientContext";
 import { InspectorContext } from "../room/GroupCallInspector";
 import { useModalTriggerState } from "../Modal";
 import { Config } from "../config/Config";
-import { DEFAULT_CONFIG } from "../config/ConfigOptions";
 
 interface RageShakeSubmitOptions {
   sendLogs: boolean;
@@ -54,6 +53,10 @@ export function useSubmitRageshake(): {
 
   const submitRageshake = useCallback(
     async (opts) => {
+      if (!Config.get().rageshake?.submit_url) {
+        throw new Error("No rageshake URL is configured");
+      }
+
       if (sending) {
         return;
       }
@@ -258,14 +261,10 @@ export function useSubmitRageshake(): {
           );
         }
 
-        await fetch(
-          Config.instance.config.rageshake?.submit_url ??
-            DEFAULT_CONFIG.rageshake.submit_url,
-          {
-            method: "POST",
-            body,
-          }
-        );
+        await fetch(Config.get().rageshake?.submit_url, {
+          method: "POST",
+          body,
+        });
 
         setState({ sending: false, sent: true, error: null });
       } catch (error) {

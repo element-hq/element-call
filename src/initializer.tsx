@@ -23,7 +23,6 @@ import * as Sentry from "@sentry/react";
 
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
-import { DEFAULT_CONFIG } from "./config/ConfigOptions";
 
 enum LoadState {
   None,
@@ -192,19 +191,21 @@ export class Initializer {
       this.loadStates.sentry === LoadState.None &&
       this.loadStates.config === LoadState.Loaded
     ) {
-      Sentry.init({
-        dsn: Config.instance.config.sentry?.DSN ?? DEFAULT_CONFIG.sentry.DSN,
-        environment:
-          Config.instance.config.sentry.environment ??
-          DEFAULT_CONFIG.sentry.environment,
-        integrations: [
-          new Integrations.BrowserTracing({
-            routingInstrumentation:
-              Sentry.reactRouterV5Instrumentation(history),
-          }),
-        ],
-        tracesSampleRate: 1.0,
-      });
+      if (Config.get().sentry?.DSN && Config.get().sentry?.environment) {
+        Sentry.init({
+          dsn: Config.get().sentry?.DSN,
+          environment: Config.get().sentry?.environment,
+          integrations: [
+            new Integrations.BrowserTracing({
+              routingInstrumentation:
+                Sentry.reactRouterV5Instrumentation(history),
+            }),
+          ],
+          tracesSampleRate: 1.0,
+        });
+      }
+      // Sentry is now 'loadeed' (even if we actually skipped starting
+      // it due to to not being configured)
       this.loadStates.sentry = LoadState.Loaded;
     }
 
