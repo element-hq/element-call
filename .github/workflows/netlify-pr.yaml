@@ -37,6 +37,13 @@ jobs:
           name: previewbuild
           path: webapp
 
+      - name: Add redirects file
+        # We fetch from github directly as we don't bother checking out the repo
+        run: curl -s https://raw.githubusercontent.com/vector-im/element-call/main/config/netlify_redirects > webapp/_redirects
+
+      - name: Add config file
+        run: curl -s https://raw.githubusercontent.com/vector-im/element-call/main/config/element_io_preview.json > webapp/config.json
+
       - name: ☁️ Deploy to Netlify
         id: netlify
         uses: nwtgck/actions-netlify@v1.2
