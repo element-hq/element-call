@@ -53,7 +53,7 @@ export function useSubmitRageshake(): {
 
   const submitRageshake = useCallback(
     async (opts) => {
-      if (!Config.instance.config.rageshake?.submit_url) {
+      if (!Config.get().rageshake?.submit_url) {
         throw new Error("No rageshake URL is configured");
       }
 
@@ -261,7 +261,7 @@ export function useSubmitRageshake(): {
           );
         }
 
-        await fetch(Config.instance.config.rageshake?.submit_url, {
+        await fetch(Config.get().rageshake?.submit_url, {
           method: "POST",
           body,
         });

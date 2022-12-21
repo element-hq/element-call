@@ -191,13 +191,10 @@ export class Initializer {
       this.loadStates.sentry === LoadState.None &&
       this.loadStates.config === LoadState.Loaded
     ) {
-      if (
-        Config.instance.config.sentry?.DSN &&
-        Config.instance.config.sentry?.environment
-      ) {
+      if (Config.get().sentry?.DSN && Config.get().sentry?.environment) {
         Sentry.init({
-          dsn: Config.instance.config.sentry?.DSN,
-          environment: Config.instance.config.sentry?.environment,
+          dsn: Config.get().sentry?.DSN,
+          environment: Config.get().sentry?.environment,
           integrations: [
             new Integrations.BrowserTracing({
               routingInstrumentation:

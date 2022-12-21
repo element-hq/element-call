@@ -18,13 +18,15 @@ import { DEFAULT_CONFIG, ConfigOptions } from "./ConfigOptions";
 
 export class Config {
   private static internalInstance: Config;
-  public static get instance(): Config {
-    if (!this.internalInstance)
+
+  public static get(): ConfigOptions {
+    if (!this.internalInstance?.config)
       throw new Error("Config instance read before config got initialized");
-    return this.internalInstance;
+    return this.internalInstance.config;
   }
+
   public static init(): Promise<void> {
-    if (Config?.internalInstance?.initPromise) {
+    if (Config.internalInstance?.initPromise) {
       return Config.internalInstance.initPromise;
     }
     Config.internalInstance = new Config();
@@ -39,25 +41,25 @@ export class Config {
 
   // Convenience accessors
   public static defaultHomeserverUrl(): string | undefined {
-    const defaultServerConfig = Config.instance.config.default_server_config;
+    const defaultServerConfig = Config.get().default_server_config;
     if (!defaultServerConfig) {
       return undefined;
     }
 
-    return defaultServerConfig["m.homeserver"]?.base_url;
+    return defaultServerConfig["m.homeserver"].base_url;
   }
 
   public static defaultServerName(): string | undefined {
-    const defaultServerConfig = Config.instance.config.default_server_config;
+    const defaultServerConfig = Config.get().default_server_config;
     if (!defaultServerConfig) {
       return undefined;
     }
 
-    return defaultServerConfig["m.homeserver"]?.server_name;
+    return defaultServerConfig["m.homeserver"].server_name;
   }
 
-  public config: ConfigOptions;
-  private initPromise: Promise<void>;
+  public config?: ConfigOptions;
+  private initPromise?: Promise<void>;
 }
 
 async function downloadConfig(
