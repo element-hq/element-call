@@ -25,7 +25,6 @@ import { useClient } from "../ClientContext";
 import { InspectorContext } from "../room/GroupCallInspector";
 import { useModalTriggerState } from "../Modal";
 import { Config } from "../config/Config";
-import { DEFAULT_CONFIG } from "../config/ConfigOptions";
 
 interface RageShakeSubmitOptions {
   sendLogs: boolean;
