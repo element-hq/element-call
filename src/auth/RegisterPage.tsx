@@ -31,7 +31,6 @@ import { Trans, useTranslation } from "react-i18next";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { useClient } from "../ClientContext";
-import { defaultHomeserverHost } from "../matrix-utils";
 import { useInteractiveRegistration } from "./useInteractiveRegistration";
 import styles from "./LoginPage.module.css";
 import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
@@ -40,6 +39,7 @@ import { useRecaptcha } from "./useRecaptcha";
 import { Caption, Link } from "../typography/Typography";
 import { usePageTitle } from "../usePageTitle";
 import { PosthogAnalytics } from "../PosthogAnalytics";
+import { Config } from "../config/Config";
 
 export const RegisterPage: FC = () => {
   const { t } = useTranslation();
@@ -165,7 +165,7 @@ export const RegisterPage: FC = () => {
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
-                  suffix={`:${defaultHomeserverHost}`}
+                  suffix={`:${Config.defaultServerName()}`}
                 />
               </FieldRow>
               <FieldRow>

@@ -22,13 +22,15 @@ import {
 
 export class Config {
   private static internalInstance: Config;
-  public static get instance(): Config {
-    if (!this.internalInstance)
+
+  public static get(): ConfigOptions {
+    if (!this.internalInstance?.config)
       throw new Error("Config instance read before config got initialized");
-    return this.internalInstance;
+    return this.internalInstance.config;
   }
+
   public static init(): Promise<void> {
-    if (Config?.internalInstance?.initPromise) {
+    if (Config.internalInstance?.initPromise) {
       return Config.internalInstance.initPromise;
     }
     Config.internalInstance = new Config();
@@ -41,8 +43,17 @@ export class Config {
     return Config.internalInstance.initPromise;
   }
 
-  public config: ResolvedConfigOptions;
-  private initPromise: Promise<void>;
+  // Convenience accessors
+  public static defaultHomeserverUrl(): string | undefined {
+    return Config.get().default_server_config["m.homeserver"].base_url;
+  }
+
+  public static defaultServerName(): string | undefined {
+    return Config.get().default_server_config["m.homeserver"].server_name;
+  }
+
+  public config?: ResolvedConfigOptions;
+  private initPromise?: Promise<void>;
 }
 
 async function downloadConfig(
@@ -59,7 +70,7 @@ async function downloadConfig(
     // Lack of a config isn't an error, we should just use the defaults.
     // Also treat a blank config as no config, assuming the status code is 0, because we don't get 404s from file:
     // URIs so this is the only way we can not fail if the file doesn't exist when loading from a file:// URI.
-    return {};
+    return DEFAULT_CONFIG;
   }
 
   return res.json();

@@ -61,7 +61,7 @@ export const useLoadGroupCall = (
         return room;
       } catch (error) {
         if (
-          isLocalRoomId(roomIdOrAlias) &&
+          isLocalRoomId(roomIdOrAlias, client) &&
           (error.errcode === "M_NOT_FOUND" ||
             (error.message &&
               error.message.indexOf("Failed to fetch alias") !== -1))
