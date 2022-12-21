@@ -79,8 +79,8 @@ export async function initClient(
   // options we always pass to the client (stuff that we need in order to work)
   const baseOpts = {
     fallbackICEServerAllowed: fallbackICEServerAllowed,
-    localSfuUserId: Config.get().temp_sfu.user_id,
-    localSfuDeviceId: Config.get().temp_sfu.device_id,
+    localSfuUserId: Config.get().temp_sfu?.user_id,
+    localSfuDeviceId: Config.get().temp_sfu?.device_id,
   } as ICreateClientOpts;
 
   if (indexedDB && localStorage && !import.meta.env.DEV) {
