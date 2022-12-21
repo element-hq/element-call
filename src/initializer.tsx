@@ -191,17 +191,24 @@ export class Initializer {
       this.loadStates.sentry === LoadState.None &&
       this.loadStates.config === LoadState.Loaded
     ) {
-      Sentry.init({
-        dsn: Config.instance.config.sentry?.DSN,
-        environment: Config.instance.config.sentry?.environment,
-        integrations: [
-          new Integrations.BrowserTracing({
-            routingInstrumentation:
-              Sentry.reactRouterV5Instrumentation(history),
-          }),
-        ],
-        tracesSampleRate: 1.0,
-      });
+      if (
+        Config.instance.config.sentry?.DSN &&
+        Config.instance.config.sentry?.environment
+      ) {
+        Sentry.init({
+          dsn: Config.instance.config.sentry?.DSN,
+          environment: Config.instance.config.sentry?.environment,
+          integrations: [
+            new Integrations.BrowserTracing({
+              routingInstrumentation:
+                Sentry.reactRouterV5Instrumentation(history),
+            }),
+          ],
+          tracesSampleRate: 1.0,
+        });
+      }
+      // Sentry is now 'loadeed' (even if we actually skipped starting
+      // it due to to not being configured)
       this.loadStates.sentry = LoadState.Loaded;
     }
 
