@@ -42,7 +42,7 @@ jobs:
 
       - name: Create Tarball
         run: |
-          tar --numeric-owner --transform "/dist/element-call-foo/" -cvzf element-call-${{ github.ref }}.tar.gz dist
+          tar --numeric-owner --transform "s/dist/element-call-foo/" -cvzf element-call-${{ github.ref }}.tar.gz dist
       - name: Upload
         uses: djn24/add-asset-to-release@v1
         with:
