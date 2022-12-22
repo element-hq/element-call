@@ -37,17 +37,18 @@ jobs:
         env:
           SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_URL: ${{ secrets.SENTRY_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          VITE_APP_VERSION: ${{ github.ref }}
+          VITE_APP_VERSION: ${{ github.event.release.tag_name }}
 
       - name: Create Tarball
         run: |
-          tar --numeric-owner --transform "s/dist/element-call-foo/" -cvzf element-call-${{ github.ref }}.tar.gz dist
+          tar --numeric-owner --transform "s/dist/element-call-foo/" -cvzf element-call-${{ github.event.release.tag_name }}.tar.gz dist
       - name: Upload
         uses: djn24/add-asset-to-release@v1
         with:
           token: ${{secrets.GITHUB_TOKEN}}
-          path: "element-call-${{ github.ref }}.tar.gz"
+          path: "element-call-${{ github.event.release.tag_name }}.tar.gz"
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta

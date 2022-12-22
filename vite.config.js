@@ -41,6 +41,7 @@ export default defineConfig(({ mode }) => {
   return {
     build: {
       sourcemap: true,
+      dist: process.env.VITE_APP_VERSION,
     },
     plugins,
     resolve: {
