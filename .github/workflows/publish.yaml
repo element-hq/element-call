@@ -26,6 +26,24 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Yarn cache
+        uses: actions/setup-node@v3
+        with:
+          cache: "yarn"
+      - name: Install dependencies
+        run: "yarn install"
+      - name: Build
+        run: "yarn run build"
+
+      - name: Create Tarball
+        run: -
+          tar --numeric-owner --transform "/dist/element-call-foo/" -cvzf element-call-${{ github.ref }}.tar.gz dist
+      - name: Upload
+        uses: djn24/add-asset-to-release@v1
+        with:
+          token: ${{secrets.GITHUB_TOKEN}}
+          path: "element-call-${{ github.ref }}.tar.gz"
+
       - name: Extract metadata (tags, labels) for Docker
         id: meta
         uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
