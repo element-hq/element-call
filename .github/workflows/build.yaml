@@ -19,7 +19,7 @@ jobs:
       - name: Build
         run: "yarn run build"
         env:
-          SENTRY_ORG: ${{ secrets.SENTRY_SENTRY_ORG }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       - name: Upload Artifact
