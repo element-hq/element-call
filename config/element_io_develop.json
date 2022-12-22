@@ -6,8 +6,8 @@
     }
   },
   "posthog": {
-    "api_key": "phc_MhClVy9DiV20vazSYIiedFkM5Xi3z1LPBwrdn9PYZQQ",
-    "api_host": "https://app.posthog.com"
+    "api_key": "phc_eKb9HoAr83OmcDiU9jt7QSIcCz5EDWCFvQfvQ3uh98T",
+    "api_host": "https://posthog-element-call.element.io"
   },
   "sentry": {
     "environment": "main-branch-cd",
