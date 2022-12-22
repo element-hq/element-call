@@ -32,6 +32,7 @@ import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
 import { TooltipTrigger } from "../Tooltip";
 import { FeedbackModal } from "./FeedbackModal";
+import { Config } from "../config/Config";
 
 interface Props {
   roomIdOrAlias: string;
@@ -117,10 +118,12 @@ export function OverflowMenu({
               <SettingsIcon />
               <span>{t("Settings")}</span>
             </Item>
-            <Item key="feedback" textValue={t("Submit feedback")}>
-              <FeedbackIcon />
-              <span>{t("Submit feedback")}</span>
-            </Item>
+            {Config.get().rageshake?.submit_url && (
+              <Item key="feedback" textValue={t("Submit feedback")}>
+                <FeedbackIcon />
+                <span>{t("Submit feedback")}</span>
+              </Item>
+            )}
           </Menu>
         )}
       </PopoverMenuTrigger>
