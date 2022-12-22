@@ -377,14 +377,16 @@ export function InCallView({
             onPress={toggleScreensharing}
           />
         )}
-        <OverflowMenu
-          inCall
-          roomIdOrAlias={roomIdOrAlias}
-          groupCall={groupCall}
-          showInvite={joinRule === JoinRule.Public}
-          feedbackModalState={feedbackModalState}
-          feedbackModalProps={feedbackModalProps}
-        />
+        {!maximisedParticipant && (
+          <OverflowMenu
+            inCall
+            roomIdOrAlias={roomIdOrAlias}
+            groupCall={groupCall}
+            showInvite={joinRule === JoinRule.Public}
+            feedbackModalState={feedbackModalState}
+            feedbackModalProps={feedbackModalProps}
+          />
+        )}
         <HangupButton onPress={onLeave} />
       </div>
     );
