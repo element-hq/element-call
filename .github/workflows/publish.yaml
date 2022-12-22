@@ -33,7 +33,12 @@ jobs:
       - name: Install dependencies
         run: "yarn install"
       - name: Build
-        run: "VITE_APP_VERSION={{ github.ref }} yarn run build"
+        run: "yarn run build"
+        env:
+          SENTRY_ORG: ${{ secrets.SENTRY_SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          VITE_APP_VERSION: ${{ github.ref }}
 
       - name: Create Tarball
         run: |
