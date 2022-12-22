@@ -17,24 +17,32 @@ limitations under the License.
 import { defineConfig, loadEnv } from "vite";
 import svgrPlugin from "vite-plugin-svgr";
 import htmlTemplate from "vite-plugin-html-template";
+import sentryVitePlugin from "@sentry/vite-plugin";
+
 import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd());
 
+  const plugins = [
+    svgrPlugin(),
+    htmlTemplate.default({
+      data: {
+        title: env.VITE_PRODUCT_NAME || "Element Call",
+      },
+    }),
+  ];
+
+  plugins.push(sentryVitePlugin({  
+    include: "./dist",  
+  }));
+
   return {
     build: {
       sourcemap: true,
     },
-    plugins: [
-      svgrPlugin(),
-      htmlTemplate.default({
-        data: {
-          title: env.VITE_PRODUCT_NAME || "Element Call",
-        },
-      }),
-    ],
+    plugins,
     resolve: {
       alias: {
         // matrix-widget-api has its transpiled lib/index.js as its entry point,
