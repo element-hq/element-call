@@ -33,7 +33,7 @@ jobs:
       - name: Install dependencies
         run: "yarn install"
       - name: Build
-        run: "yarn run build"
+        run: "VITE_APP_VERSION={{ github.ref }} yarn run build"
 
       - name: Create Tarball
         run: |
