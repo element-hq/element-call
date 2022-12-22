@@ -34,12 +34,19 @@ export default defineConfig(({ mode }) => {
     }),
   ];
 
-  plugins.push(
-    sentryVitePlugin({
-      include: "./dist",
-      release: process.env.VITE_APP_VERSION,
-    })
-  );
+  if (
+    process.env.SENTRY_ORG &&
+    process.ev.SENTRY_PROJECT &&
+    process.env.SENTRY_AUTH_TOKEN &&
+    process.env.SENTRY_URL
+  ) {
+    plugins.push(
+      sentryVitePlugin({
+        include: "./dist",
+        release: process.env.VITE_APP_VERSION,
+      })
+    );
+  }
 
   return {
     build: {
