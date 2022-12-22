@@ -13,7 +13,7 @@ jobs:
     name: Build & publish
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       packages: write
     steps:
       - name: Check it out
@@ -45,10 +45,11 @@ jobs:
         run: |
           tar --numeric-owner --transform "s/dist/element-call-foo/" -cvzf element-call-${{ github.event.release.tag_name }}.tar.gz dist
       - name: Upload
-        uses: AButler/upload-release-assets@v2.0
+        uses: alexellis/upload-assets@0.4.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         with:
-          repo-token: ${{secrets.GITHUB_TOKEN}}
-          files: "element-call-${{ github.event.release.tag_name }}.tar.gz"
+          asset_paths: '["element-call-${{ github.event.release.tag_name }}.tar.gz"]'
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
