@@ -13,7 +13,7 @@ jobs:
     name: Build & publish
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+      contents: write # required to upload release asset
       packages: write
     steps:
       - name: Check it out
@@ -43,7 +43,7 @@ jobs:
 
       - name: Create Tarball
         run: |
-          tar --numeric-owner --transform "s/dist/element-call-foo/" -cvzf element-call-${{ github.event.release.tag_name }}.tar.gz dist
+          tar --numeric-owner --transform "s/dist/element-call-"${{ github.event.release.tag_name }}"/" -cvzf element-call-${{ github.event.release.tag_name }}.tar.gz dist
       - name: Upload
         uses: alexellis/upload-assets@0.4.0
         env:
