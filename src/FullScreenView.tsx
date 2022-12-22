@@ -116,10 +116,13 @@ export function CrashView() {
     <FullScreenView>
       <Trans>
         <h1>Oops, something's gone wrong.</h1>
-        {Config.get().rageshake?.submit_url && (
-          <p>Submitting debug logs will help us track down the problem.</p>
-        )}
       </Trans>
+      {Config.get().rageshake?.submit_url && (
+        <Trans>
+          <p>Submitting debug logs will help us track down the problem.</p>
+        </Trans>
+      )}
+
       <div className={styles.sendLogsSection}>{logsComponent}</div>
       {error && (
         <ErrorMessage error={translatedError("Couldn't send debug logs!", t)} />
