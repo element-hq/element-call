@@ -45,10 +45,10 @@ jobs:
         run: |
           tar --numeric-owner --transform "s/dist/element-call-foo/" -cvzf element-call-${{ github.event.release.tag_name }}.tar.gz dist
       - name: Upload
-        uses: djn24/add-asset-to-release@v1
+        uses: AButler/upload-release-assets@v2.0
         with:
-          token: ${{secrets.GITHUB_TOKEN}}
-          path: "element-call-${{ github.event.release.tag_name }}.tar.gz"
+          repo-token: ${{secrets.GITHUB_TOKEN}}
+          files: "element-call-${{ github.event.release.tag_name }}.tar.gz"
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
