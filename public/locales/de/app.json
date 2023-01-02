@@ -137,5 +137,6 @@
   "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Dies wird anonymisierte Daten (wie z. B. die Dauer eines Anrufs und die Zahl der Teilnehmenden) dem Element Call-Team senden, um uns bei der Optimierung der Anwendung basierend auf dem Nutzungsverhalten zu helfen.",
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Ob Tastenkürzel mit nur einer Taste aktiviert sein sollen, z. B. „m“ um das Mikrofon stumm/aktiv zu schalten.",
   "Single-key keyboard shortcuts": "Ein-Tasten-Tastenkürzel",
-  "{{name}} (Waiting for video...)": "{{name}} (Warte auf Video …)"
+  "{{name}} (Waiting for video...)": "{{name}} (Warte auf Video …)",
+  "This feature is only supported on Firefox.": "Diese Funktion wird nur in Firefox unterstützt."
 }
