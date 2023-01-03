@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Matrix.org Foundation C.I.C.
+Copyright 2022 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -377,14 +377,16 @@ export function InCallView({
             onPress={toggleScreensharing}
           />
         )}
-        <OverflowMenu
-          inCall
-          roomIdOrAlias={roomIdOrAlias}
-          groupCall={groupCall}
-          showInvite={joinRule === JoinRule.Public}
-          feedbackModalState={feedbackModalState}
-          feedbackModalProps={feedbackModalProps}
-        />
+        {!maximisedParticipant && (
+          <OverflowMenu
+            inCall
+            roomIdOrAlias={roomIdOrAlias}
+            groupCall={groupCall}
+            showInvite={joinRule === JoinRule.Public}
+            feedbackModalState={feedbackModalState}
+            feedbackModalProps={feedbackModalProps}
+          />
+        )}
         <HangupButton onPress={onLeave} />
       </div>
     );

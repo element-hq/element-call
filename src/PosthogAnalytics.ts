@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The Matrix.org Foundation C.I.C.
+Copyright 2022 The New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -52,10 +52,6 @@ export interface IPosthogEvent {
   // do not allow these to be sent manually, we enqueue them all for caching purposes
   $set?: void;
   $set_once?: void;
-}
-
-export interface IPostHogEventOptions {
-  timestamp?: Date;
 }
 
 export enum Anonymity {
@@ -373,7 +369,7 @@ export class PosthogAnalytics {
 
   public async trackEvent<E extends IPosthogEvent>(
     { eventName, ...properties }: E,
-    options?: IPostHogEventOptions
+    options?: CaptureOptions
   ): Promise<void> {
     if (this.identificationPromise) {
       // only make calls to posthog after the identificaion is done
