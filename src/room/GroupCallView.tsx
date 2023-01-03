@@ -176,7 +176,7 @@ export function GroupCallView({
   const [left, setLeft] = useState(false);
   const history = useHistory();
 
-  const onLeave = useCallback(() => {
+  const onLeave = useCallback(async () => {
     setLeft(true);
 
     let participantCount = 0;
@@ -184,13 +184,20 @@ export function GroupCallView({
       participantCount += deviceMap.size;
     }
 
+    // In widget mode we want the event to be sent instantly so it is not queued
+    const sendInstantly = !!widget;
     PosthogAnalytics.instance.eventCallEnded.track(
       groupCall.groupCallId,
-      participantCount
+      participantCount,
+      sendInstantly
     );
 
     leave();
     if (widget) {
+      // we need to wait until the callEnded event is tracked. Otherwise the iFrame gets killed before tracking the event
+      // This blocks for 500ms;
+      await new Promise((resolve) => window.setTimeout(resolve, 500)); // 500ms
+      PosthogAnalytics.instance.logout();
       widget.api.transport.send(ElementWidgetActions.HangupCall, {});
       widget.api.setAlwaysOnScreen(false);
     }
