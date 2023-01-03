@@ -54,10 +54,6 @@ export interface IPosthogEvent {
   $set_once?: void;
 }
 
-export interface IPostHogEventOptions {
-  timestamp?: Date;
-}
-
 export enum Anonymity {
   Disabled,
   Anonymous,
@@ -373,7 +369,7 @@ export class PosthogAnalytics {
 
   public async trackEvent<E extends IPosthogEvent>(
     { eventName, ...properties }: E,
-    options?: IPostHogEventOptions
+    options?: CaptureOptions
   ): Promise<void> {
     if (this.identificationPromise) {
       // only make calls to posthog after the identificaion is done
