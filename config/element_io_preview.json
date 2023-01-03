@@ -4,5 +4,8 @@
       "base_url": "https://call.ems.host",
       "server_name": "call.ems.host"
     }
+  },
+  "rageshake": {
+    "submit_url": "https://element.io/bugreports/submit"
   }
 }
