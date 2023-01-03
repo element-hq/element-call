@@ -43,7 +43,7 @@ jobs:
 
       - name: Create Tarball
         run: |
-          tar --numeric-owner --transform "s/dist/element-call-$GITHUB_TAG_NAME/" -cvzf element-call-$GITHUB_TAG_NAME.tar.gz dist
+          tar --numeric-owner --transform "s/dist/element-call-${GITHUB_TAG_NAME}/" -cvzf element-call-${GITHUB_TAG_NAME}.tar.gz dist
       - name: Upload
         uses: alexellis/upload-assets@0.4.0
         env:
