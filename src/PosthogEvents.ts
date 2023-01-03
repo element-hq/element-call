@@ -1,5 +1,5 @@
 /*
-Copyright 2022 The Matrix.org Foundation C.I.C.
+Copyright 2022 The New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -45,14 +45,17 @@ export class CallEndedTracker {
     );
   }
 
-  track(callId: string, callParticipantsNow: number) {
-    PosthogAnalytics.instance.trackEvent<CallEnded>({
-      eventName: "CallEnded",
-      callId: callId,
-      callParticipantsMax: this.cache.maxParticipantsCount,
-      callParticipantsOnLeave: callParticipantsNow,
-      callDuration: (Date.now() - this.cache.startTime.getTime()) / 1000,
-    });
+  track(callId: string, callParticipantsNow: number, sendInstantly: boolean) {
+    PosthogAnalytics.instance.trackEvent<CallEnded>(
+      {
+        eventName: "CallEnded",
+        callId: callId,
+        callParticipantsMax: this.cache.maxParticipantsCount,
+        callParticipantsOnLeave: callParticipantsNow,
+        callDuration: (Date.now() - this.cache.startTime.getTime()) / 1000,
+      },
+      { send_instantly: sendInstantly }
+    );
   }
 }
 
