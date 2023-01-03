@@ -13,7 +13,7 @@ jobs:
     name: Build & publish
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write # required to upload release asset
       packages: write
     steps:
       - name: Check it out
@@ -25,6 +25,33 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Yarn cache
+        uses: actions/setup-node@v3
+        with:
+          cache: "yarn"
+      - name: Install dependencies
+        run: "yarn install"
+      - name: Build
+        run: "yarn run build"
+        env:
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+          SENTRY_URL: ${{ secrets.SENTRY_URL }}
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          VITE_APP_VERSION: ${{ github.event.release.tag_name }}
+
+      - name: Create Tarball
+        env:
+          GITHUB_TAG_NAME: ${{ github.event.release.tag_name }}
+        run: |
+          tar --numeric-owner --transform "s/dist/element-call-${GITHUB_TAG_NAME}/" -cvzf element-call-${GITHUB_TAG_NAME}.tar.gz dist
+      - name: Upload
+        uses: alexellis/upload-assets@0.4.0
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        with:
+          asset_paths: '["element-call-${{ github.event.release.tag_name }}.tar.gz"]'
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta

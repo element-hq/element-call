@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Matrix.org Foundation C.I.C.
+Copyright 2022 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
 import { TooltipTrigger } from "../Tooltip";
 import { FeedbackModal } from "./FeedbackModal";
+import { Config } from "../config/Config";
 
 interface Props {
   roomIdOrAlias: string;
@@ -117,10 +118,12 @@ export function OverflowMenu({
               <SettingsIcon />
               <span>{t("Settings")}</span>
             </Item>
-            <Item key="feedback" textValue={t("Submit feedback")}>
-              <FeedbackIcon />
-              <span>{t("Submit feedback")}</span>
-            </Item>
+            {Config.get().rageshake?.submit_url && (
+              <Item key="feedback" textValue={t("Submit feedback")}>
+                <FeedbackIcon />
+                <span>{t("Submit feedback")}</span>
+              </Item>
+            )}
           </Menu>
         )}
       </PopoverMenuTrigger>

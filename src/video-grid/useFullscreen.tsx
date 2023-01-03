@@ -15,6 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { logger } from "matrix-js-sdk/src/logger";
 import { useCallback, useEffect, useState } from "react";
 
 import { useEventTarget } from "../useEvents";
@@ -36,7 +37,13 @@ export function useFullscreen(ref: React.RefObject<HTMLElement>): {
         setFullscreenParticipant(null);
       } else {
         try {
-          ref.current.requestFullscreen();
+          if (ref.current.requestFullscreen) {
+            ref.current.requestFullscreen();
+          } else if (ref.current.webkitRequestFullscreen) {
+            ref.current.webkitRequestFullscreen();
+          } else {
+            logger.error("No available fullscreen API!");
+          }
           setFullscreenParticipant(tileDes);
         } catch (error) {
           console.warn("Failed to fullscreen:", error);
@@ -47,16 +54,23 @@ export function useFullscreen(ref: React.RefObject<HTMLElement>): {
   );
 
   const onFullscreenChanged = useCallback(() => {
-    if (!document.fullscreenElement) {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
       setFullscreenParticipant(null);
     }
   }, [setFullscreenParticipant]);
 
   useEventTarget(ref.current, "fullscreenchange", onFullscreenChanged);
+  useEventTarget(ref.current, "webkitfullscreenchange", onFullscreenChanged);
 
   useEffect(() => {
     if (disposed) {
-      document.exitFullscreen();
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else {
+        logger.error("No available fullscreen API!");
+      }
       setFullscreenParticipant(null);
     }
   }, [disposed]);
