@@ -36,7 +36,7 @@ export default defineConfig(({ mode }) => {
 
   if (
     process.env.SENTRY_ORG &&
-    process.ev.SENTRY_PROJECT &&
+    process.env.SENTRY_PROJECT &&
     process.env.SENTRY_AUTH_TOKEN &&
     process.env.SENTRY_URL
   ) {
