@@ -54,16 +54,23 @@ export function useFullscreen(ref: React.RefObject<HTMLElement>): {
   );
 
   const onFullscreenChanged = useCallback(() => {
-    if (!document.fullscreenElement) {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
       setFullscreenParticipant(null);
     }
   }, [setFullscreenParticipant]);
 
   useEventTarget(ref.current, "fullscreenchange", onFullscreenChanged);
+  useEventTarget(ref.current, "webkitfullscreenchange", onFullscreenChanged);
 
   useEffect(() => {
     if (disposed) {
-      document.exitFullscreen();
+      if (document.exitFullscreen) {
+        document.exitFullscreen();
+      } else if (document.webkitExitFullscreen) {
+        document.webkitExitFullscreen();
+      } else {
+        logger.error("No available fullscreen API!");
+      }
       setFullscreenParticipant(null);
     }
   }, [disposed]);
