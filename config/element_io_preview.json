@@ -8,5 +8,8 @@
   "temp_sfu": {
     "user_id": "@sfu:call.ems.host",
     "device_id": "YNZDLSEQMP"
+  },
+  "rageshake": {
+    "submit_url": "https://element.io/bugreports/submit"
   }
 }

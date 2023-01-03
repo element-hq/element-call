@@ -1,5 +1,5 @@
 /*
-Copyright 2022 Matrix.org Foundation C.I.C.
+Copyright 2022 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -17,6 +17,12 @@ limitations under the License.
 import "matrix-js-sdk/src/@types/global";
 
 declare global {
+  interface Document {
+    // Safari only supports this prefixed, so tell the type system about it
+    webkitExitFullscreen: () => void;
+    webkitFullscreenElement: HTMLElement | null;
+  }
+
   interface Window {
     // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
     OLM_OPTIONS: Record<string, string>;
@@ -26,5 +32,10 @@ declare global {
   // declare it ourselves
   interface MediaElement extends HTMLVideoElement {
     setSinkId: (id: string) => void;
+  }
+
+  interface HTMLElement {
+    // Safari only supports this prefixed, so tell the type system about it
+    webkitRequestFullscreen: () => void;
   }
 }
