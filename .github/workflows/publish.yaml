@@ -42,13 +42,14 @@ jobs:
           VITE_APP_VERSION: ${{ github.event.release.tag_name }}
 
       - name: Create Tarball
+        env:
+          GITHUB_TAG_NAME: ${{ github.event.release.tag_name }}
         run: |
           tar --numeric-owner --transform "s/dist/element-call-${GITHUB_TAG_NAME}/" -cvzf element-call-${GITHUB_TAG_NAME}.tar.gz dist
       - name: Upload
         uses: alexellis/upload-assets@0.4.0
         env:
           GITHUB_TOKEN: ${{ github.token }}
-          GITHUB_TAG_NAME: ${{ github.event.release.tag_name }}
         with:
           asset_paths: '["element-call-${{ github.event.release.tag_name }}.tar.gz"]'
 
