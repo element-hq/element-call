@@ -27,4 +27,9 @@ declare global {
   interface MediaElement extends HTMLVideoElement {
     setSinkId: (id: string) => void;
   }
+
+  interface HTMLElement {
+    // Safari only supports this prefixed, so tell the type system about it
+    webkitRequestFullscreen: () => void;
+  }
 }
