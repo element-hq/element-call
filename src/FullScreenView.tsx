@@ -9,6 +9,7 @@ import { useSubmitRageshake } from "./settings/submit-rageshake";
 import { ErrorMessage } from "./input/Input";
 import styles from "./FullScreenView.module.css";
 import { translatedError, TranslatedError } from "./TranslatedError";
+import { Config } from "./config/Config";
 
 interface FullScreenViewProps {
   className?: string;
@@ -98,7 +99,7 @@ export function CrashView() {
     logsComponent = <div>{t("Thanks! We'll get right on it.")}</div>;
   } else if (sending) {
     logsComponent = <div>{t("Sending…")}</div>;
-  } else {
+  } else if (Config.get().rageshake?.submit_url) {
     logsComponent = (
       <Button
         size="lg"
@@ -115,8 +116,13 @@ export function CrashView() {
     <FullScreenView>
       <Trans>
         <h1>Oops, something's gone wrong.</h1>
-        <p>Submitting debug logs will help us track down the problem.</p>
       </Trans>
+      {Config.get().rageshake?.submit_url && (
+        <Trans>
+          <p>Submitting debug logs will help us track down the problem.</p>
+        </Trans>
+      )}
+
       <div className={styles.sendLogsSection}>{logsComponent}</div>
       {error && (
         <ErrorMessage error={translatedError("Couldn't send debug logs!", t)} />
