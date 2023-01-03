@@ -15,6 +15,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { logger } from "@sentry/utils";
 import { useCallback, useEffect, useState } from "react";
 
 import { useEventTarget } from "../useEvents";
@@ -36,7 +37,13 @@ export function useFullscreen(ref: React.RefObject<HTMLElement>): {
         setFullscreenParticipant(null);
       } else {
         try {
-          ref.current.requestFullscreen();
+          if (ref.current.requestFullscreen) {
+            ref.current.requestFullscreen();
+          } else if (ref.current.webkitRequestFullscreen) {
+            ref.current.webkitRequestFullscreen();
+          } else {
+            logger.error("No available fullscreen API!");
+          }
           setFullscreenParticipant(tileDes);
         } catch (error) {
           console.warn("Failed to fullscreen:", error);
