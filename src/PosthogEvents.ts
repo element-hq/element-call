@@ -45,14 +45,17 @@ export class CallEndedTracker {
     );
   }
 
-  track(callId: string, callParticipantsNow: number) {
-    PosthogAnalytics.instance.trackEvent<CallEnded>({
-      eventName: "CallEnded",
-      callId: callId,
-      callParticipantsMax: this.cache.maxParticipantsCount,
-      callParticipantsOnLeave: callParticipantsNow,
-      callDuration: (Date.now() - this.cache.startTime.getTime()) / 1000,
-    });
+  track(callId: string, callParticipantsNow: number, sendInstantly: boolean) {
+    PosthogAnalytics.instance.trackEvent<CallEnded>(
+      {
+        eventName: "CallEnded",
+        callId: callId,
+        callParticipantsMax: this.cache.maxParticipantsCount,
+        callParticipantsOnLeave: callParticipantsNow,
+        callDuration: (Date.now() - this.cache.startTime.getTime()) / 1000,
+      },
+      { send_instantly: sendInstantly }
+    );
   }
 }
 
