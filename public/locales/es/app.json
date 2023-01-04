@@ -134,5 +134,8 @@
   "Advanced": "Avanzado",
   "Element Call Home": "Inicio de Element Call",
   "Copy": "Copiar",
-  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Esto enviará datos anónimos (como la duración de la llamada y el número de participantes) al equipo de Element Call para ayudarnos a optimizar la aplicación dependiendo de cómo se use."
+  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Esto enviará datos anónimos (como la duración de la llamada y el número de participantes) al equipo de Element Call para ayudarnos a optimizar la aplicación dependiendo de cómo se use.",
+  "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Habilita los atajos de teclado de una sola tecla, por ejemplo 'm' para silenciar/desilenciar el micrófono.",
+  "Single-key keyboard shortcuts": "Atajos de teclado de una sola tecla",
+  "{{name}} (Waiting for video...)": "{{name}} (Esperando al video...)"
 }
