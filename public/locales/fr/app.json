@@ -1,6 +1,5 @@
 {
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Créer un compte</0> Or <2>Accès invité</2>",
-  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Mince, une erreur est survenue.</0><1>Envoyer les journaux de débogage nous aidera à résoudre le problème.</1>",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Pourquoi ne pas créer un mot de passe pour conserver votre compte ?</0><1>Vous pourrez garder votre nom et définir un avatar pour vos futurs appels</1>",
   "Accept camera/microphone permissions to join the call.": "Autorisez l’accès à votre caméra et microphone pour rejoindre l’appel.",
   "Accept microphone permissions to join the call.": "Autorisez l’accès au microphone pour rejoindre l’appel.",

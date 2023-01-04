@@ -125,7 +125,6 @@
   "Accept camera/microphone permissions to join the call.": "Prijmite povolenia kamery/mikrofónu, aby ste sa mohli pripojiť k hovoru.",
   "Accept microphone permissions to join the call.": "Prijmite povolenia mikrofónu, aby ste sa mohli pripojiť k hovoru.",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Prečo neskončiť nastavením hesla, aby ste si zachovali svoj účet? </0><1>Budete si môcť ponechať svoje meno a nastaviť obrázok, ktorý sa bude používať pri budúcich hovoroch</1>",
-  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Hops, niečo sa pokazilo.</0><1>Odoslanie záznamov ladenia nám pomôže nájsť problém.</1>",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Pripojiť sa k hovoru teraz</0><1>alebo</1><2>Kopírovať odkaz na hovor a pripojiť sa neskôr</2>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Vytvoriť konto</0> Alebo <2>Prihlásiť sa ako hosť</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Už máte konto?</0><1><0>Prihláste sa</0> Alebo <2>Prihlásiť sa ako hosť</2></1>",

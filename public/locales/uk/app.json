@@ -118,7 +118,6 @@
   "Accept microphone permissions to join the call.": "Надайте дозволи на використання мікрофонів для приєднання до виклику.",
   "Accept camera/microphone permissions to join the call.": "Надайте дозвіл на використання камери/мікрофона для приєднання до виклику.",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Чому б не завершити, налаштувавши пароль для збереження свого облікового запису?</0><1>Ви зможете зберегти своє ім'я та встановити аватарку для подальшого користування під час майбутніх викликів</1>",
-  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Халепа, щось пішло не так.</0><1>Надсилання журналів зневадження допоможе нам виявити проблему.</1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Створити обліковий запис</0> або <2>Отримати доступ як гість</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Уже маєте обліковий запис?</0><1><0>Увійти</0> Or <2>Отримати доступ як гість</2></1>",
   "{{roomName}} - Walkie-talkie call": "{{roomName}} - Виклик-рація",
