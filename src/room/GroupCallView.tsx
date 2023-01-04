@@ -196,7 +196,7 @@ export function GroupCallView({
     leave();
     if (widget) {
       // we need to wait until the callEnded event is tracked. Otherwise the iFrame gets killed before tracking the event.
-      await new Promise((resolve) => window.setTimeout(resolve, 500)); // 500ms
+      await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
       PosthogAnalytics.instance.logout();
       widget.api.transport.send(ElementWidgetActions.HangupCall, {});
       widget.api.setAlwaysOnScreen(false);
