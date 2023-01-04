@@ -137,5 +137,7 @@
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Apakah pintasan papan ketik seharusnya diaktifkan, mis. 'm' untuk membisukan/menyuarakan mikrofon.",
   "Single-key keyboard shortcuts": "Pintasan papan ketik satu tombol",
   "{{name}} (Waiting for video...)": "{{name}} (Menunggu video...)",
-  "This feature is only supported on Firefox.": "Fitur ini hanya didukung di Firefox."
+  "This feature is only supported on Firefox.": "Fitur ini hanya didukung di Firefox.",
+  "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Mengirim catatan pengawakutuan akan membantu kami melacak masalahnya.</0>",
+  "<0>Oops, something's gone wrong.</0>": "<0>Aduh, ada yang salah.</0>"
 }
