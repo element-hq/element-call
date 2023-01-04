@@ -1,7 +1,6 @@
 {
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Вече имате акаунт?</0><1><0>Влезте с него</0> или <2>Влезте като гост</2></1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Създайте акаунт</0> или <2>Влезте като гост</2>",
-  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Възникна грешка.</0><1>Изпращнето на debug логове ще ни помогне да открием проблема.</1>",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Защо не настройте парола за да запазите акаунта си?</0><1>Ще можете да запазите името и аватара си за бъдещи разговори</1>",
   "Accept camera/microphone permissions to join the call.": "Приемете разрешенията за камера/микрофон за да се присъедините в разговора.",
   "Accept microphone permissions to join the call.": "Приемете разрешението за микрофона за да се присъедините в разговора.",

@@ -95,7 +95,6 @@
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "{{name}} is presenting": "{{name}} sunuyor",
   "{{name}} is talking…": "{{name}} konuşuyor…",
-  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Hoop, bir şeyler yanlış.</0><1>Hata ayıklama kütüğünü göndermek sorunu incelememize yardımcı olur.</1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Hesap oluştur</0> yahut <2>Konuk olarak gir</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Mevcut hesabınız mı var?</0><1><0>Gir</0> yahut <2>Konuk girişi</2></1>"
 }
