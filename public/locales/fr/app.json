@@ -137,5 +137,7 @@
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Bascule sur les raccourcis clavier à touche unique, par exemple « m » pour désactiver / activer le micro.",
   "Single-key keyboard shortcuts": "Raccourcis clavier en une touche",
   "{{name}} (Waiting for video...)": "{{name}} (En attente de vidéo…)",
-  "This feature is only supported on Firefox.": "Cette fonctionnalité est prise en charge dans Firefox uniquement."
+  "This feature is only supported on Firefox.": "Cette fonctionnalité est prise en charge dans Firefox uniquement.",
+  "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Soumettre les journaux de débogage nous aidera à déterminer le problème.</0>",
+  "<0>Oops, something's gone wrong.</0>": "<0>Oups, quelque chose s’est mal passé.</0>"
 }
