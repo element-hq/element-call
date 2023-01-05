@@ -121,13 +121,15 @@ export class LoginTracker {
 interface MuteMicrophone {
   eventName: "MuteMicrophone";
   targetMuteState: "mute" | "unmute";
+  callId: string;
 }
 
 export class MuteMicrophoneTracker {
-  track(targetIsMute: boolean) {
+  track(targetIsMute: boolean, callId: string) {
     PosthogAnalytics.instance.trackEvent<MuteMicrophone>({
       eventName: "MuteMicrophone",
       targetMuteState: targetIsMute ? "mute" : "unmute",
+      callId,
     });
   }
 }
@@ -135,13 +137,15 @@ export class MuteMicrophoneTracker {
 interface MuteCamera {
   eventName: "MuteCamera";
   targetMuteState: "mute" | "unmute";
+  callId: string;
 }
 
 export class MuteCameraTracker {
-  track(targetIsMute: boolean) {
+  track(targetIsMute: boolean, callId: string) {
     PosthogAnalytics.instance.trackEvent<MuteCamera>({
       eventName: "MuteCamera",
       targetMuteState: targetIsMute ? "mute" : "unmute",
+      callId,
     });
   }
 }
