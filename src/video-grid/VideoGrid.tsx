@@ -106,8 +106,8 @@ function isInside([x, y]: number[], targetTile: TilePosition): boolean {
   return true;
 }
 
-const getPipGap = (gridAspectRatio: number): number =>
-  gridAspectRatio < 1 ? 12 : 24;
+const getPipGap = (gridAspectRatio: number, gridWidth: number): number =>
+  gridAspectRatio < 1 || gridWidth < 700 ? 12 : 24;
 
 function getTilePositions(
   tileCount: number,
@@ -155,9 +155,10 @@ function getOneOnOneLayoutTilePositions(
 
   const gridAspectRatio = gridWidth / gridHeight;
 
-  const pipWidth = gridAspectRatio < 1 ? 114 : 230;
-  const pipHeight = gridAspectRatio < 1 ? 163 : 155;
-  const pipGap = getPipGap(gridAspectRatio);
+  const smallPip = gridAspectRatio < 1 || gridWidth < 700;
+  const pipWidth = smallPip ? 114 : 230;
+  const pipHeight = smallPip ? 163 : 155;
+  const pipGap = getPipGap(gridAspectRatio, gridWidth);
 
   const pipMinX = remotePosition.x + pipGap;
   const pipMinY = remotePosition.y + pipGap;
@@ -1045,7 +1046,10 @@ export function VideoGrid({
         if (last) {
           const remotePosition = tilePositions[1];
 
-          const pipGap = getPipGap(gridBounds.width / gridBounds.height);
+          const pipGap = getPipGap(
+            gridBounds.width / gridBounds.height,
+            gridBounds.width
+          );
           const pipMinX = remotePosition.x + pipGap;
           const pipMinY = remotePosition.y + pipGap;
           const pipMaxX =

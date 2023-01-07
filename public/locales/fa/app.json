@@ -61,7 +61,6 @@
   "Accept microphone permissions to join the call.": "پذیرفتن دسترسی به میکروفون برای پیوستن به تماس.",
   "Accept camera/microphone permissions to join the call.": "پذیرفتن دسترسی دوربین/ میکروفون برای پیوستن به تماس.",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>چرا یک رمز عبور برای حساب کاربری خود تنظیم نمی‌کنید؟</0><1>شما می‌توانید نام خود را حفظ کنید و یک آواتار برای تماس‌های آینده بسازید</1>",
-  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>اوه، مشکلی پیش آمده.</0><1>ثبت کردن لاگ رفع اشکال به پیدا کردن مشکل توسط ما کمک میکند</1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>ساخت حساب کاربری</0> Or <2>دسترسی به عنوان میهمان</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>از قبل حساب کاربری دارید؟</0><1><0>ورود</0> Or <2>به عنوان یک میهمان وارد شوید</2></1>",
   "{{roomName}} - Walkie-talkie call": "{{roomName}} - تماس واکی-تاکی",

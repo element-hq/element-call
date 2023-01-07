@@ -1,7 +1,6 @@
 {
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Sudah punya akun?</0><1><0>Masuk</0> Atau <2>Akses sebagai tamu</2></1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Buat akun</0> Atau <2>Akses sebagai tamu</2>",
-  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Aduh, ada yang salah.</0><1>Mengirimkan catatan pengawakutuan akan membantu kami melacak masalahnya.</1>",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Kenapa tidak selesaikan dengan mengatur sebuah kata sandi untuk menjaga akun Anda?</0><1>Anda akan dapat tetap menggunakan nama Anda dan atur sebuah avatar untuk digunakan dalam panggilan di masa mendatang</1>",
   "Accept camera/microphone permissions to join the call.": "Terima izin kamera/mikrofon untuk bergabung ke panggilan.",
   "Accept microphone permissions to join the call.": "Terima izin mikrofon untuk bergabung ke panggilan.",
@@ -137,5 +136,6 @@
   "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Ini akan mengirimkan data anonim (seperti durasi dan jumlah peserta panggilan) ke tim Element Call untuk membantu kami mengoptimalkan aplikasi berdasarkan bagaimana penggunaannya.",
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Apakah pintasan papan ketik seharusnya diaktifkan, mis. 'm' untuk membisukan/menyuarakan mikrofon.",
   "Single-key keyboard shortcuts": "Pintasan papan ketik satu tombol",
-  "{{name}} (Waiting for video...)": "{{name}} (Menunggu video...)"
+  "{{name}} (Waiting for video...)": "{{name}} (Menunggu video...)",
+  "This feature is only supported on Firefox.": "Fitur ini hanya didukung di Firefox."
 }

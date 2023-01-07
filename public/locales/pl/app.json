@@ -117,7 +117,6 @@
   "Accept microphone permissions to join the call.": "Przyznaj uprawnienia do mikrofonu aby dołączyć do połączenia.",
   "Accept camera/microphone permissions to join the call.": "Przyznaj uprawnienia do kamery/mikrofonu aby dołączyć do połączenia.",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Może zechcesz ustawić hasło, aby zachować swoje konto?</0><1>Będziesz w stanie utrzymać swoją nazwę i ustawić awatar do wyświetlania podczas połączeń w przyszłości</1>",
-  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Ups, coś poszło nie tak.</0><1>Przesłanie dzienników debugowania pomoże nam odnaleźć ten błąd.</1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Utwórz konto</0> Albo <2>Dołącz jako gość</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Masz już konto?</0><1><0>Zaloguj się</0> Albo <2>Dołącz jako gość</2></1>",
   "{{roomName}} - Walkie-talkie call": "{{roomName}} - połączenie walkie-talkie",
