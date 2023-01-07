@@ -43,7 +43,6 @@
   "Accept microphone permissions to join the call.": "授予麦克风权限以加入通话。",
   "Accept camera/microphone permissions to join the call.": "授予摄像头/麦克风权限以加入通话。",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>为什么不设置一个密码来保留你的账户？</0><1>你将可以保留你的名字并设置一个头像，以便在未来的通话中使用。</1>",
-  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>哎呀，出错了。</0><1>提交调试日志将有助于我们追踪问题。</1>",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>现在加入通话</0><1>或</1><2>复制通话链接并稍后加入</2>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>创建账户</0> Or <2>以访客身份继续</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>已有账户？</0><1><0>登录</0> Or <2>以访客身份继续</2></1>",
