@@ -359,13 +359,19 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
   const toggleLocalVideoMuted = useCallback(() => {
     const toggleToMute = !groupCall.isLocalVideoMuted();
     groupCall.setLocalVideoMuted(toggleToMute);
-    PosthogAnalytics.instance.eventMuteCamera.track(toggleToMute);
+    PosthogAnalytics.instance.eventMuteCamera.track(
+      toggleToMute,
+      groupCall.groupCallId
+    );
   }, [groupCall]);
 
   const setMicrophoneMuted = useCallback(
     (setMuted) => {
       groupCall.setMicrophoneMuted(setMuted);
-      PosthogAnalytics.instance.eventMuteMicrophone.track(setMuted);
+      PosthogAnalytics.instance.eventMuteMicrophone.track(
+        setMuted,
+        groupCall.groupCallId
+      );
     },
     [groupCall]
   );
