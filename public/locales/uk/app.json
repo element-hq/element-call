@@ -118,7 +118,6 @@
   "Accept microphone permissions to join the call.": "Надайте дозволи на використання мікрофонів для приєднання до виклику.",
   "Accept camera/microphone permissions to join the call.": "Надайте дозвіл на використання камери/мікрофона для приєднання до виклику.",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Чому б не завершити, налаштувавши пароль для збереження свого облікового запису?</0><1>Ви зможете зберегти своє ім'я та встановити аватарку для подальшого користування під час майбутніх викликів</1>",
-  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Халепа, щось пішло не так.</0><1>Надсилання журналів зневадження допоможе нам виявити проблему.</1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Створити обліковий запис</0> або <2>Отримати доступ як гість</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Уже маєте обліковий запис?</0><1><0>Увійти</0> Or <2>Отримати доступ як гість</2></1>",
   "{{roomName}} - Walkie-talkie call": "{{roomName}} - Виклик-рація",
@@ -137,5 +136,6 @@
   "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Це дозволить надсилати анонімні дані (такі як тривалість виклику та кількість учасників) команді Element Call, щоб допомогти нам оптимізувати роботу застосунку на основі того, як він використовується.",
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Чи вмикати/вимикати мікрофон однією клавішею, наприклад, «m» для ввімкнення/вимкнення мікрофона.",
   "Single-key keyboard shortcuts": "Одноклавішні комбінації клавіш",
-  "{{name}} (Waiting for video...)": "{{name}} (Очікування на відео...)"
+  "{{name}} (Waiting for video...)": "{{name}} (Очікування на відео...)",
+  "This feature is only supported on Firefox.": "Ця функція підтримується лише в браузері Firefox."
 }

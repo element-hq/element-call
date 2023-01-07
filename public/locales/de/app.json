@@ -1,7 +1,6 @@
 {
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Du hast bereits ein Konto?</0><1><0>Anmelden</0> Oder <2>Als Gast betreten</2></1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Konto erstellen</0> Oder <2>Als Gast betreten</2>",
-  "<0>Oops, something's gone wrong.</0><1>Submitting debug logs will help us track down the problem.</1>": "<0>Hoppla, da ist etwas schief gelaufen.</0><1>Die Übermittlung von Debug-Protokollen wird uns helfen, das Problem zu finden.</1>",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Warum vergibst du nicht abschließend ein Passwort, um dein Konto zu erhalten?</0><1>Du kannst deinen Namen behalten und ein Profilbild für zukünftige Anrufe festlegen.</1>",
   "Accept camera/microphone permissions to join the call.": "Erlaube Zugriff auf Kamera/Mikrofon um dem Anruf beizutreten.",
   "Accept microphone permissions to join the call.": "Erlaube Zugriff auf das Mikrofon um dem Anruf beizutreten.",
@@ -137,5 +136,6 @@
   "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Dies wird anonymisierte Daten (wie z. B. die Dauer eines Anrufs und die Zahl der Teilnehmenden) dem Element Call-Team senden, um uns bei der Optimierung der Anwendung basierend auf dem Nutzungsverhalten zu helfen.",
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Ob Tastenkürzel mit nur einer Taste aktiviert sein sollen, z. B. „m“ um das Mikrofon stumm/aktiv zu schalten.",
   "Single-key keyboard shortcuts": "Ein-Tasten-Tastenkürzel",
-  "{{name}} (Waiting for video...)": "{{name}} (Warte auf Video …)"
+  "{{name}} (Waiting for video...)": "{{name}} (Warte auf Video …)",
+  "This feature is only supported on Firefox.": "Diese Funktion wird nur in Firefox unterstützt."
 }

@@ -31,14 +31,15 @@ export const AudioSink: React.FC<Props> = ({
   tileDescriptor,
   audioOutput,
 }: Props) => {
-  const { audioMuted, localVolume, stream } = useCallFeed(
-    tileDescriptor.callFeed
-  );
+  const { localVolume, stream } = useCallFeed(tileDescriptor.callFeed);
 
   const audioElementRef = useMediaStream(
     stream,
     audioOutput,
-    audioMuted,
+    // We don't compare the audioMuted flag of useCallFeed here, since unmuting
+    // depends on to-device messages which may lag behind the audio actually
+    // starting to flow over the stream
+    tileDescriptor.isLocal,
     localVolume
   );
 
