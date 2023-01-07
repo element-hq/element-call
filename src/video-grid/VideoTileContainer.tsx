@@ -62,6 +62,7 @@ export function VideoTileContainer({
     audioMuted,
     videoMuted,
     localVolume,
+    hasAudio,
     speaking,
     stream,
     purpose,
@@ -109,6 +110,7 @@ export function VideoTileContainer({
         avatar={getAvatar && getAvatar(item.member, width, height)}
         onOptionsPress={onOptionsPress}
         localVolume={localVolume}
+        hasAudio={hasAudio}
         maximised={maximised}
         fullscreen={fullscreen}
         onFullscreen={onFullscreenCallback}
