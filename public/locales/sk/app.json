@@ -137,5 +137,7 @@
   "{{displayName}}, your call is now ended": "{{displayName}}, váš hovor je teraz ukončený",
   "{{count}} people connected|other": "{{count}} osôb pripojených",
   "{{count}} people connected|one": "{{count}} osoba pripojená",
-  "This feature is only supported on Firefox.": "Táto funkcia je podporovaná len v prehliadači Firefox."
+  "This feature is only supported on Firefox.": "Táto funkcia je podporovaná len v prehliadači Firefox.",
+  "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Odoslanie záznamov ladenia nám pomôže nájsť problém.</0>",
+  "<0>Oops, something's gone wrong.</0>": "<0>Hups, niečo sa pokazilo.</0>"
 }
