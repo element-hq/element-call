@@ -36,6 +36,7 @@ interface Props {
   mediaRef?: React.RefObject<MediaElement>;
   onOptionsPress?: () => void;
   localVolume?: number;
+  hasAudio?: boolean;
   maximised?: boolean;
   fullscreen?: boolean;
   onFullscreen?: () => void;
@@ -58,6 +59,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       mediaRef,
       onOptionsPress,
       localVolume,
+      hasAudio,
       maximised,
       fullscreen,
       onFullscreen,
@@ -74,14 +76,16 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
 
     const toolbarButtons: JSX.Element[] = [];
     if (connectionState == ConnectionState.Connected && !isLocal) {
-      toolbarButtons.push(
-        <AudioButton
-          key="localVolume"
-          className={styles.button}
-          volume={localVolume}
-          onPress={onOptionsPress}
-        />
-      );
+      if (hasAudio) {
+        toolbarButtons.push(
+          <AudioButton
+            key="localVolume"
+            className={styles.button}
+            volume={localVolume}
+            onPress={onOptionsPress}
+          />
+        );
+      }
 
       if (screenshare) {
         toolbarButtons.push(
