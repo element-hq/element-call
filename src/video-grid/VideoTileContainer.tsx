@@ -96,7 +96,11 @@ export function VideoTileContainer({
 
   useEffect(() => {
     item.callFeed?.setResolution(width, height);
-  }, [width, height, item]);
+  }, [width, height, item.callFeed]);
+
+  useEffect(() => {
+    item.callFeed?.setIsVisible(true);
+  }, [item.callFeed]);
 
   return (
     <>
