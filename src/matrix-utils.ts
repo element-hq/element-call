@@ -94,12 +94,17 @@ export async function initClient(
 
   const storeOpts = {} as ICreateClientOpts;
 
-  if (indexedDB && localStorage && !import.meta.env.DEV) {
+  if (indexedDB && localStorage) {
     storeOpts.store = new IndexedDBStore({
       indexedDB: window.indexedDB,
       localStorage,
       dbName: SYNC_STORE_NAME,
-      workerFactory: () => new IndexedDBWorker(),
+      // We can't use the worker in dev mode because Vite simply doesn't bundle workers
+      // in dev mode: it expects them to use native modules. Ours don't, and even then only
+      // Chrome supports it. (It bundles them fine in production mode.)
+      workerFactory: import.meta.env.DEV
+        ? undefined
+        : () => new IndexedDBWorker(),
     });
   } else if (localStorage) {
     storeOpts.store = new MemoryStore({ localStorage });
