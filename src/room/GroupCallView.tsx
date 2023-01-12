@@ -75,6 +75,7 @@ export function GroupCallView({
     toggleLocalVideoMuted,
     toggleMicrophoneMuted,
     toggleScreensharing,
+    setMicrophoneMuted,
     requestingScreenshare,
     isScreensharing,
     screenshareFeeds,
@@ -251,6 +252,7 @@ export function GroupCallView({
           localVideoMuted={localVideoMuted}
           toggleLocalVideoMuted={toggleLocalVideoMuted}
           toggleMicrophoneMuted={toggleMicrophoneMuted}
+          setMicrophoneMuted={setMicrophoneMuted}
           userMediaFeeds={userMediaFeeds}
           activeSpeaker={activeSpeaker}
           onLeave={onLeave}
