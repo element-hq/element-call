@@ -63,7 +63,7 @@ import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { ParticipantInfo } from "./useGroupCall";
 import { TileDescriptor } from "../video-grid/TileDescriptor";
 import { AudioSink } from "../video-grid/AudioSink";
-import { useKeyboardShortcuts } from "../useKeyboardShortcuts";
+import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -144,7 +144,7 @@ export function InCallView({
 
   const { hideScreensharing } = useUrlParams();
 
-  useKeyboardShortcuts(
+  useCallViewKeyboardShortcuts(
     !feedbackModalState.isOpen,
     toggleMicrophoneMuted,
     toggleLocalVideoMuted,
