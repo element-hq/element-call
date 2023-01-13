@@ -43,13 +43,14 @@ export function useCallViewKeyboardShortcuts(
           toggleMicrophoneMuted();
         } else if (event.key == "v") {
           toggleLocalVideoMuted();
-        } else if (event.key === " ") {
+        } else if (event.key === " " && !spacebarHeld) {
           setSpacebarHeld(true);
           setMicrophoneMuted(false);
         }
       },
       [
         enabled,
+        spacebarHeld,
         toggleLocalVideoMuted,
         toggleMicrophoneMuted,
         setMicrophoneMuted,
