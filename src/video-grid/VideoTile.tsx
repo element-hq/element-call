@@ -36,6 +36,7 @@ interface Props {
   mediaRef?: React.RefObject<MediaElement>;
   onOptionsPress?: () => void;
   localVolume?: number;
+  hasAudio?: boolean;
   maximised?: boolean;
   fullscreen?: boolean;
   onFullscreen?: () => void;
@@ -58,6 +59,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       mediaRef,
       onOptionsPress,
       localVolume,
+      hasAudio,
       maximised,
       fullscreen,
       onFullscreen,
@@ -74,14 +76,16 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
 
     const toolbarButtons: JSX.Element[] = [];
     if (connectionState == ConnectionState.Connected && !isLocal) {
-      toolbarButtons.push(
-        <AudioButton
-          key="localVolume"
-          className={styles.button}
-          volume={localVolume}
-          onPress={onOptionsPress}
-        />
-      );
+      if (hasAudio) {
+        toolbarButtons.push(
+          <AudioButton
+            key="localVolume"
+            className={styles.button}
+            volume={localVolume}
+            onPress={onOptionsPress}
+          />
+        );
+      }
 
       if (screenshare) {
         toolbarButtons.push(
@@ -137,7 +141,13 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             </div>
           ) : (
             <div className={classNames(styles.infoBubble, styles.memberName)}>
-              {audioMuted && !videoMuted && <MicMutedIcon />}
+              {
+                /* If the user is speaking, it's safe to say they're unmuted.
+                Mute state is currently sent over to-device messages, which
+                aren't quite real-time, so this is an important kludge to make
+                sure no one appears muted when they've clearly begun talking. */
+                audioMuted && !videoMuted && !speaking && <MicMutedIcon />
+              }
               {videoMuted && <VideoMutedIcon />}
               <span title={caption}>{caption}</span>
             </div>
