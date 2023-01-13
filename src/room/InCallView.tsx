@@ -63,6 +63,7 @@ import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { ParticipantInfo } from "./useGroupCall";
 import { TileDescriptor } from "../video-grid/TileDescriptor";
 import { AudioSink } from "../video-grid/AudioSink";
+import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -81,6 +82,7 @@ interface Props {
   toggleLocalVideoMuted: () => void;
   toggleMicrophoneMuted: () => void;
   toggleScreensharing: () => void;
+  setMicrophoneMuted: (muted: boolean) => void;
   userMediaFeeds: CallFeed[];
   activeSpeaker: CallFeed | null;
   onLeave: () => void;
@@ -101,6 +103,7 @@ export function InCallView({
   localVideoMuted,
   toggleLocalVideoMuted,
   toggleMicrophoneMuted,
+  setMicrophoneMuted,
   userMediaFeeds,
   activeSpeaker,
   onLeave,
@@ -140,6 +143,13 @@ export function InCallView({
     useModalTriggerState();
 
   const { hideScreensharing } = useUrlParams();
+
+  useCallViewKeyboardShortcuts(
+    !feedbackModalState.isOpen,
+    toggleMicrophoneMuted,
+    toggleLocalVideoMuted,
+    setMicrophoneMuted
+  );
 
   useEffect(() => {
     widget?.api.transport.send(
