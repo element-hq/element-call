@@ -137,5 +137,7 @@
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Kas kasutame üheklahvilisi kiirklahve, näiteks „m“ mikrofoni sisse/välja lülitamiseks.",
   "Single-key keyboard shortcuts": "Üheklahvilised kiirklahvid",
   "{{name}} (Waiting for video...)": "{{name}} (Ootame videovoo algust...)",
-  "This feature is only supported on Firefox.": "See funktsionaalsus on toetatud vaid Firefoxis."
+  "This feature is only supported on Firefox.": "See funktsionaalsus on toetatud vaid Firefoxis.",
+  "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Kui saadad meile vealogid, siis on lihtsam vea põhjust otsida.</0>",
+  "<0>Oops, something's gone wrong.</0>": "<0>Ohoo, midagi on nüüd katki.</0>"
 }

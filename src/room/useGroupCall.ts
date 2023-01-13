@@ -32,8 +32,6 @@ import { usePageUnload } from "./usePageUnload";
 import { PosthogAnalytics } from "../PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
-import { getSetting } from "../settings/useSetting";
-import { useEventTarget } from "../useEvents";
 
 export enum ConnectionState {
   EstablishingCall = "establishing call", // call hasn't been established yet
@@ -60,6 +58,7 @@ export interface UseGroupCallReturnType {
   toggleLocalVideoMuted: () => void;
   toggleMicrophoneMuted: () => void;
   toggleScreensharing: () => void;
+  setMicrophoneMuted: (muted: boolean) => void;
   requestingScreenshare: boolean;
   isScreensharing: boolean;
   screenshareFeeds: CallFeed[];
@@ -472,68 +471,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     }
   }, [t, updateState]);
 
-  const [spacebarHeld, setSpacebarHeld] = useState(false);
-
-  useEventTarget(
-    window,
-    "keydown",
-    useCallback(
-      (event: KeyboardEvent) => {
-        // Check if keyboard shortcuts are enabled
-        const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
-        if (!keyboardShortcuts) {
-          return;
-        }
-
-        if (event.key === "m") {
-          toggleMicrophoneMuted();
-        } else if (event.key == "v") {
-          toggleLocalVideoMuted();
-        } else if (event.key === " ") {
-          setSpacebarHeld(true);
-          setMicrophoneMuted(false);
-        }
-      },
-      [
-        toggleLocalVideoMuted,
-        toggleMicrophoneMuted,
-        setMicrophoneMuted,
-        setSpacebarHeld,
-      ]
-    )
-  );
-
-  useEventTarget(
-    window,
-    "keyup",
-    useCallback(
-      (event: KeyboardEvent) => {
-        // Check if keyboard shortcuts are enabled
-        const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
-        if (!keyboardShortcuts) {
-          return;
-        }
-
-        if (event.key === " ") {
-          setSpacebarHeld(false);
-          setMicrophoneMuted(true);
-        }
-      },
-      [setMicrophoneMuted, setSpacebarHeld]
-    )
-  );
-
-  useEventTarget(
-    window,
-    "blur",
-    useCallback(() => {
-      if (spacebarHeld) {
-        setSpacebarHeld(false);
-        setMicrophoneMuted(true);
-      }
-    }, [setMicrophoneMuted, setSpacebarHeld, spacebarHeld])
-  );
-
   return {
     state,
     localCallFeed,
@@ -548,6 +485,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     toggleLocalVideoMuted,
     toggleMicrophoneMuted,
     toggleScreensharing,
+    setMicrophoneMuted,
     requestingScreenshare,
     isScreensharing,
     screenshareFeeds,

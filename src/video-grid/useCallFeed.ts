@@ -25,6 +25,7 @@ interface CallFeedState {
   videoMuted: boolean;
   audioMuted: boolean;
   localVolume: number;
+  hasAudio: boolean;
   disposed: boolean | undefined;
   stream: MediaStream | undefined;
   purpose: SDPStreamMetadataPurpose | undefined;
@@ -38,6 +39,7 @@ function getCallFeedState(callFeed: CallFeed | undefined): CallFeedState {
     videoMuted: callFeed ? callFeed.isVideoMuted() : true,
     audioMuted: callFeed ? callFeed.isAudioMuted() : true,
     localVolume: callFeed ? callFeed.getLocalVolume() : 0,
+    hasAudio: callFeed ? callFeed.stream.getAudioTracks().length >= 1 : false,
     disposed: callFeed ? callFeed.disposed : undefined,
     stream: callFeed ? callFeed.stream : undefined,
     purpose: callFeed ? callFeed.purpose : undefined,
