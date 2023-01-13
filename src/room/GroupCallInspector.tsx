@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import * as Sentry from "@sentry/react";
 import { Resizable } from "re-resizable";
 import React, {
   useEffect,
@@ -34,6 +35,7 @@ import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
 
 import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
+import { PosthogAnalytics } from "../PosthogAnalytics";
 
 interface InspectorContextState {
   eventsByUserId?: { [userId: string]: SequenceDiagramMatrixEvent[] };
@@ -106,6 +108,19 @@ const dateFormatter = new Intl.DateTimeFormat([], {
 
 function formatTimestamp(timestamp: number | Date) {
   return dateFormatter.format(timestamp);
+}
+
+function formatType(event: SequenceDiagramMatrixEvent): string {
+  if (event.content.msgtype === "m.bad.encrypted") return "Undecryptable";
+  return event.type;
+}
+
+function lineForEvent(event: SequenceDiagramMatrixEvent): string {
+  return `${getUserName(event.from)} ${
+    event.ignored ? "-x" : "->>"
+  } ${getUserName(event.to)}: ${formatTimestamp(event.timestamp)} ${formatType(
+    event
+  )} ${formatContent(event.type, event.content)}`;
 }
 
 export const InspectorContext =
@@ -187,21 +202,7 @@ export function SequenceDiagramViewer({
       participant ${getUserName(localUserId)}
       participant Room
       participant ${selectedUserId ? getUserName(selectedUserId) : "unknown"}
-      ${
-        events
-          ? events
-              .map(
-                ({ to, from, timestamp, type, content, ignored }) =>
-                  `${getUserName(from)} ${ignored ? "-x" : "->>"} ${getUserName(
-                    to
-                  )}: ${formatTimestamp(timestamp)} ${type} ${formatContent(
-                    type,
-                    content
-                  )}`
-              )
-              .join("\n  ")
-          : ""
-      }
+      ${events ? events.map(lineForEvent).join("\n  ") : ""}
     `;
 
     mermaid.mermaidAPI.render("mermaid", graphDefinition, (svgCode: string) => {
@@ -389,12 +390,23 @@ function useGroupCallState(
     function onSendVoipEvent(event: Record<string, unknown>) {
       dispatch({ type: CallEvent.SendVoipEvent, rawEvent: event });
     }
+
+    function onUndecryptableToDevice(event: MatrixEvent) {
+      dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
+
+      Sentry.captureMessage("Undecryptable to-device Event");
+      PosthogAnalytics.instance.eventUndecryptableToDevice.track(
+        groupCall.groupCallId
+      );
+    }
+
     client.on(RoomStateEvent.Events, onUpdateRoomState);
     //groupCall.on("calls_changed", onCallsChanged);
     groupCall.on(CallEvent.SendVoipEvent, onSendVoipEvent);
     //client.on("state", onCallsChanged);
     //client.on("hangup", onCallHangup);
     client.on(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
+    client.on(ClientEvent.UndecryptableToDeviceEvent, onUndecryptableToDevice);
 
     onUpdateRoomState();
 
@@ -405,6 +417,10 @@ function useGroupCallState(
       //client.removeListener("state", onCallsChanged);
       //client.removeListener("hangup", onCallHangup);
       client.removeListener(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
+      client.removeListener(
+        ClientEvent.UndecryptableToDeviceEvent,
+        onUndecryptableToDevice
+      );
     };
   }, [client, groupCall]);
 
