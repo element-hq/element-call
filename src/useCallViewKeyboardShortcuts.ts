@@ -19,7 +19,7 @@ import { useCallback, useState } from "react";
 import { getSetting } from "./settings/useSetting";
 import { useEventTarget } from "./useEvents";
 
-export function useKeyboardShortcuts(
+export function useCallViewKeyboardShortcuts(
   enabled: boolean,
   toggleMicrophoneMuted: () => void,
   toggleLocalVideoMuted: () => void,
