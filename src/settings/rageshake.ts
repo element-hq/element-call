@@ -37,14 +37,22 @@ limitations under the License.
 //    actually timestamps. We then purge the remaining logs. We also do this
 //    purge on startup to prevent logs from accumulating.
 
+import EventEmitter from "events";
+import { throttle } from "lodash";
 import { logger } from "matrix-js-sdk/src/logger";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 
-// the frequency with which we flush to indexeddb
-const FLUSH_RATE_MS = 30 * 1000;
-
 // the length of log data we keep in indexeddb (and include in the reports)
 const MAX_LOG_SIZE = 1024 * 1024 * 5; // 5 MB
+
+// Shortest amount of time between flushes. We are just appending to an
+// IndexedDB table so we don't expect flushing to be that expensive, but
+// we can batch the writes a little.
+const MAX_FLUSH_INTERVAL = 2 * 1000;
+
+enum ConsoleLoggerEvent {
+  Log = "log",
+}
 
 type LogFunction = (
   ...args: (Error | DOMException | object | string)[]
@@ -59,7 +67,7 @@ interface LogEntry {
   index?: number;
 }
 
-export class ConsoleLogger {
+export class ConsoleLogger extends EventEmitter {
   private logs = "";
   private originalFunctions: { [key in LogFunctionName]?: LogFunction } = {};
 
@@ -113,6 +121,8 @@ export class ConsoleLogger {
     // Using + really is the quickest way in JS
     // http://jsperf.com/concat-vs-plus-vs-join
     this.logs += line;
+
+    this.emit(ConsoleLoggerEvent.Log);
   }
 
   /**
@@ -142,8 +152,14 @@ export class IndexedDBLogStore {
   private flushAgainPromise: Promise<void> = null;
   private id: string;
 
-  constructor(private indexedDB: IDBFactory, private logger: ConsoleLogger) {
+  constructor(
+    private indexedDB: IDBFactory,
+    private loggerInstance: ConsoleLogger
+  ) {
     this.id = "instance-" + randomString(16);
+
+    loggerInstance.on(ConsoleLoggerEvent.Log, this.onLoggerLog);
+    window.addEventListener("beforeunload", this.flush);
   }
 
   /**
@@ -154,19 +170,18 @@ export class IndexedDBLogStore {
     return new Promise((resolve, reject) => {
       req.onsuccess = () => {
         this.db = req.result;
-        // Periodically flush logs to local storage / indexeddb
-        setInterval(this.flush.bind(this), FLUSH_RATE_MS);
+
         resolve();
       };
 
-      req.onerror = (event) => {
+      req.onerror = () => {
         const err = "Failed to open log database: " + req.error.name;
         logger.error(err);
         reject(new Error(err));
       };
 
       // First time: Setup the object store
-      req.onupgradeneeded = (event) => {
+      req.onupgradeneeded = () => {
         const db = req.result;
         // This is the log entries themselves. Each entry is a chunk of
         // logs (ie multiple lines). 'id' is the instance ID (so logs with
@@ -197,6 +212,26 @@ export class IndexedDBLogStore {
     });
   }
 
+  private onLoggerLog = () => {
+    if (!this.db) return;
+
+    this.throttledFlush();
+  };
+
+  // Throttled function to flush logs. We use throttle rather
+  // than debounce as we want logs to be written regularly, otherwise
+  // if there's a constant stream of logging, we'd never write anything.
+  private throttledFlush = throttle(
+    () => {
+      this.flush();
+    },
+    MAX_FLUSH_INTERVAL,
+    {
+      leading: false,
+      trailing: true,
+    }
+  );
+
   /**
    * Flush logs to disk.
    *
@@ -216,7 +251,7 @@ export class IndexedDBLogStore {
    *
    * @return {Promise} Resolved when the logs have been flushed.
    */
-  public flush(): Promise<void> {
+  public flush = (): Promise<void> => {
     // check if a flush() operation is ongoing
     if (this.flushPromise) {
       if (this.flushAgainPromise) {
@@ -241,14 +276,14 @@ export class IndexedDBLogStore {
         reject(new Error("No connected database"));
         return;
       }
-      const lines = this.logger.popLogs();
+      const lines = this.loggerInstance.popLogs();
       if (lines.length === 0) {
         resolve();
         return;
       }
       const txn = this.db.transaction(["logs", "logslastmod"], "readwrite");
       const objStore = txn.objectStore("logs");
-      txn.oncomplete = (event) => {
+      txn.oncomplete = () => {
         resolve();
       };
       txn.onerror = (event) => {
@@ -262,7 +297,7 @@ export class IndexedDBLogStore {
       this.flushPromise = null;
     });
     return this.flushPromise;
-  }
+  };
 
   /**
    * Consume the most recent logs and return them. Older logs which are not
@@ -433,11 +468,11 @@ function selectQuery<T>(
   const query = store.openCursor(keyRange);
   return new Promise((resolve, reject) => {
     const results = [];
-    query.onerror = (event) => {
+    query.onerror = () => {
       reject(new Error("Query failed: " + query.error.message));
     };
     // collect results
-    query.onsuccess = (event) => {
+    query.onsuccess = () => {
       const cursor = query.result;
       if (!cursor) {
         resolve(results);
