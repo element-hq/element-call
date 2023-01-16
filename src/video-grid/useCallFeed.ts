@@ -39,7 +39,10 @@ function getCallFeedState(callFeed: CallFeed | undefined): CallFeedState {
     videoMuted: callFeed ? callFeed.isVideoMuted() : true,
     audioMuted: callFeed ? callFeed.isAudioMuted() : true,
     localVolume: callFeed ? callFeed.getLocalVolume() : 0,
-    hasAudio: callFeed ? callFeed.stream.getAudioTracks().length >= 1 : false,
+    hasAudio:
+      callFeed && callFeed.stream
+        ? callFeed.stream.getAudioTracks().length >= 1
+        : false,
     disposed: callFeed ? callFeed.disposed : undefined,
     stream: callFeed ? callFeed.stream : undefined,
     purpose: callFeed ? callFeed.purpose : undefined,
