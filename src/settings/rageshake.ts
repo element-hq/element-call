@@ -48,7 +48,7 @@ const MAX_LOG_SIZE = 1024 * 1024 * 5; // 5 MB
 // Shortest amount of time between flushes. We are just appending to an
 // IndexedDB table so we don't expect flushing to be that expensive, but
 // we can batch the writes a little.
-const MAX_FLUSH_INTERVAL = 2 * 1000;
+const MAX_FLUSH_INTERVAL_MS = 2 * 1000;
 
 enum ConsoleLoggerEvent {
   Log = "log",
@@ -225,7 +225,7 @@ export class IndexedDBLogStore {
     () => {
       this.flush();
     },
-    MAX_FLUSH_INTERVAL,
+    MAX_FLUSH_INTERVAL_MS,
     {
       leading: false,
       trailing: true,
