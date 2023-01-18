@@ -16,6 +16,7 @@ limitations under the License.
 
 .videoTile {
   position: absolute;
+  top: 0;
   will-change: transform, width, height, opacity, box-shadow;
   border-radius: 20px;
   overflow: hidden;

@@ -705,7 +705,7 @@ interface ChildrenProperties extends ReactDOMAttributes {
   [index: string]: unknown;
 }
 
-interface VideoGridProps {
+export interface VideoGridProps {
   items: TileDescriptor[];
   layout: Layout;
   disableAnimations?: boolean;
