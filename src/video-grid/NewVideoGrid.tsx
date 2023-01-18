@@ -80,16 +80,18 @@ export const NewVideoGrid: FC<Props> = ({ items, children }) => {
 
   const slotCells = useMemo(() => cells.filter(cell => cell.slot), [cells])
 
-  const tiles: Tile[] = useMemo(() => slotRects.map((slot, i) => {
+  const tiles: Tile[] = useMemo(() => slotRects.flatMap((slot, i) => {
     const cell = slotCells[i]
-    return {
+    if (cell === undefined) return []
+
+    return [{
       item: cell.item,
       x: slot.x,
       y: slot.y,
       width: slot.width,
       height: slot.height,
       dragging: false,
-    }
+    }]
   }), [slotRects, cells])
 
   const [tileTransitions] = useTransition(tiles, () => ({
@@ -109,7 +111,11 @@ export const NewVideoGrid: FC<Props> = ({ items, children }) => {
 
   // Render nothing if the bounds are not yet known
   if (gridBounds.width === 0) {
-    return <div ref={gridRef} className={styles.grid} />
+    return <div ref={gridRef} className={styles.grid}>
+      {/* It's important that we always attach slotGridRef to something,
+      or else we may not receive the initial slot rects. */}
+      <div ref={slotGridRef} className={styles.slotGrid} />
+    </div>
   }
 
   return (
