@@ -1,5 +1,13 @@
 import { useTransition } from "@react-spring/web";
-import React, { FC, memo, ReactNode, useMemo, useRef } from "react";
+import React, {
+  FC,
+  memo,
+  ReactNode,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import useMeasure from "react-use-measure";
 import styles from "./NewVideoGrid.module.css";
 import { TileDescriptor } from "./TileDescriptor";
@@ -33,7 +41,6 @@ interface Rect {
 
 interface Tile extends Rect {
   item: TileDescriptor;
-  dragging: boolean;
 }
 
 interface SlotsProps {
@@ -50,14 +57,18 @@ const Slots: FC<SlotsProps> = memo(({ count }) => {
   return <>{slots}</>;
 });
 
-export const NewVideoGrid: FC<Props> = ({ items, children }) => {
-  const slotGridRef = useRef<HTMLDivElement>(null);
+export const NewVideoGrid: FC<Props> = ({
+  items,
+  disableAnimations,
+  children,
+}) => {
+  const [slotGrid, setSlotGrid] = useState<HTMLDivElement | null>(null);
   const [gridRef, gridBounds] = useMeasure();
 
   const slotRects = useMemo(() => {
-    if (slotGridRef.current === null) return [];
+    if (slotGrid === null) return [];
 
-    const slots = slotGridRef.current.getElementsByClassName(styles.slot);
+    const slots = slotGrid.getElementsByClassName(styles.slot);
     const rects = new Array<Rect>(slots.length);
     for (let i = 0; i < slots.length; i++) {
       const slot = slots[i] as HTMLElement;
@@ -70,7 +81,7 @@ export const NewVideoGrid: FC<Props> = ({ items, children }) => {
     }
 
     return rects;
-  }, [items, gridBounds]);
+  }, [items, gridBounds, slotGrid]);
 
   const cells: Cell[] = useMemo(
     () =>
@@ -98,7 +109,6 @@ export const NewVideoGrid: FC<Props> = ({ items, children }) => {
             y: slot.y,
             width: slot.width,
             height: slot.height,
-            dragging: false,
           },
         ];
       }),
@@ -109,18 +119,36 @@ export const NewVideoGrid: FC<Props> = ({ items, children }) => {
     tiles,
     () => ({
       key: ({ item }: Tile) => item.id,
-      from: { opacity: 0 },
-      enter: ({ x, y, width, height }: Tile) => ({
-        opacity: 1,
+      from: (({ x, y, width, height }: Tile) => ({
+        opacity: 0,
+        scale: 0,
+        shadow: 1,
         x,
         y,
         width,
         height,
-      }),
+        // react-spring's types are bugged and need this to be a function with no
+        // parameters to infer the spring type
+      })) as unknown as () => {
+        opacity: number;
+        scale: number;
+        shadow: number;
+        x: number;
+        y: number;
+        width: number;
+        height: number;
+      },
+      enter: { opacity: 1, scale: 1 },
       update: ({ x, y, width, height }: Tile) => ({ x, y, width, height }),
-      leave: { opacity: 0 },
+      leave: { opacity: 0, scale: 0 },
+      immediate: (key: string) =>
+        disableAnimations || key === "zIndex" || key === "shadow",
+      // If we just stopped dragging a tile, give it time for the
+      // animation to settle before pushing its z-index back down
+      delay: (key: string) => (key === "zIndex" ? 500 : 0),
+      trail: 20,
     }),
-    [tiles]
+    [tiles, disableAnimations]
   );
 
   const slotGridStyle = useMemo(() => {
@@ -132,24 +160,23 @@ export const NewVideoGrid: FC<Props> = ({ items, children }) => {
 
   // Render nothing if the bounds are not yet known
   if (gridBounds.width === 0) {
-    return (
-      <div ref={gridRef} className={styles.grid}>
-        {/* It's important that we always attach slotGridRef to something,
-      or else we may not receive the initial slot rects. */}
-        <div ref={slotGridRef} className={styles.slotGrid} />
-      </div>
-    );
+    return <div ref={gridRef} className={styles.grid} />;
   }
 
   return (
     <div ref={gridRef} className={styles.grid}>
-      <div style={slotGridStyle} ref={slotGridRef} className={styles.slotGrid}>
+      <div style={slotGridStyle} ref={setSlotGrid} className={styles.slotGrid}>
         <Slots count={items.length} />
       </div>
-      {tileTransitions((style, tile) =>
+      {tileTransitions(({ shadow, ...style }, tile) =>
         children({
           key: tile.item.id,
-          style: style as any,
+          style: {
+            boxShadow: shadow.to(
+              (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
+            ),
+            ...style,
+          },
           width: tile.width,
           height: tile.height,
           item: tile.item,
