@@ -52,7 +52,11 @@ export const useLoadGroupCall = (
 
     const fetchOrCreateRoom = async (): Promise<Room> => {
       try {
-        const room = await client.joinRoom(roomIdOrAlias, { viaServers });
+        // We lowercase the localpart when we create the room, so we must lowercase
+        // it here too (we just do the whole alias).
+        const room = await client.joinRoom(roomIdOrAlias.toLowerCase(), {
+          viaServers,
+        });
         logger.info(
           `Joined ${roomIdOrAlias}, waiting room to be ready for group calls`
         );
