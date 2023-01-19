@@ -211,6 +211,12 @@ export function fullAliasFromRoomName(
   return `#${roomAliasLocalpartFromRoomName(roomName)}:${client.getDomain()}`;
 }
 
+/**
+ * XXX What is this trying to do? It looks like it's getting the localpart from
+ * a room alias, but why is it splitting on hyphens and then putting spaces in??
+ * @param roomId
+ * @returns
+ */
 export function roomNameFromRoomId(roomId: string): string {
   return roomId
     .match(/([^:]+):.*$/)[1]
