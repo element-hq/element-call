@@ -1,0 +1,18 @@
+.grid {
+  position: relative;
+  flex-grow: 1;
+  padding: 0 22px;
+  overflow-y: scroll;
+}
+
+.slotGrid {
+  position: relative;
+  display: grid;
+  grid-auto-rows: 183px;
+  column-gap: 18px;
+  row-gap: 21px;
+}
+
+.slot {
+  background-color: red;
+}

@@ -149,3 +149,17 @@ export class MuteCameraTracker {
     });
   }
 }
+
+interface UndecryptableToDeviceEvent {
+  eventName: "UndecryptableToDeviceEvent";
+  callId: string;
+}
+
+export class UndecryptableToDeviceEventTracker {
+  track(callId: string) {
+    PosthogAnalytics.instance.trackEvent<UndecryptableToDeviceEvent>({
+      eventName: "UndecryptableToDeviceEvent",
+      callId,
+    });
+  }
+}

@@ -64,6 +64,7 @@ import { ParticipantInfo } from "./useGroupCall";
 import { TileDescriptor } from "../video-grid/TileDescriptor";
 import { AudioSink } from "../video-grid/AudioSink";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
+import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -305,7 +306,7 @@ export function InCallView({
     }
 
     return (
-      <VideoGrid
+      <NewVideoGrid
         items={items}
         layout={layout}
         disableAnimations={prefersReducedMotion || isSafari}
@@ -330,7 +331,7 @@ export function InCallView({
             {...rest}
           />
         )}
-      </VideoGrid>
+      </NewVideoGrid>
     );
   };
 
