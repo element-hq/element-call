@@ -38,5 +38,7 @@
   "Developer": "開発者",
   "Details": "詳細",
   "Full screen": "全画面表示",
-  "Exit full screen": "全画面表示を終了"
+  "Exit full screen": "全画面表示を終了",
+  "Include debug logs": "デバッグログを含む",
+  "Home": "ホーム"
 }
