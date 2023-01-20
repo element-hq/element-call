@@ -90,6 +90,9 @@
   "Video": "ビデオ",
   "Waiting for other participants…": "他の参加者を待機しています…",
   "Waiting for network": "ネットワークを待機しています",
-  "Walkie-talkie call name": "トランシーバー通話の名前",
-  "Walkie-talkie call": "トランシーバー通話"
+  "Walkie-talkie call name": "トランシーバー通話の名称",
+  "Walkie-talkie call": "トランシーバー通話",
+  "Camera {{n}}": "カメラ {{n}}",
+  "{{name}} is talking…": "{{name}}が話しています…",
+  "Yes, join call": "はい、通話に参加"
 }
