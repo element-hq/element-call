@@ -94,5 +94,11 @@
   "Walkie-talkie call": "トランシーバー通話",
   "Camera {{n}}": "カメラ {{n}}",
   "{{name}} is talking…": "{{name}}が話しています…",
-  "Yes, join call": "はい、通話に参加"
+  "Yes, join call": "はい、通話に参加",
+  "Spatial audio": "空間オーディオ",
+  "Select an option": "オプションを選択",
+  "Debug log request": "デバッグログを要求",
+  "Your recent calls": "最近の通話",
+  "You can't talk at the same time": "同時に会話することはできません",
+  "WebRTC is not supported or is being blocked in this browser.": "お使いのブラウザでWebRTCがサポートされていないか、またはブロックされています。"
 }
