@@ -8,5 +8,13 @@
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>アカウントを作成</0>または<2>ゲストとしてアクセス</2>",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>今すぐ通話に参加</0><1>または</1><2>通話リンクをコピーし、後で参加</2>",
   "Accept camera/microphone permissions to join the call.": "通話に参加するには、カメラ・マイクの許可が必要です。",
-  "<0>Oops, something's gone wrong.</0>": "<0>何かがうまく行きませんでした。</0>"
+  "<0>Oops, something's gone wrong.</0>": "<0>何かがうまく行きませんでした。</0>",
+  "Camera/microphone permissions needed to join the call.": "通話に参加する場合、カメラ・マイクの許可が必要です",
+  "Allow analytics": "アナリティクスを許可",
+  "Camera": "カメラ",
+  "Call link copied": "通話リンクをコピーしました",
+  "By clicking \"Join call now\", you agree to our <2>Terms and conditions</2>": "「今すぐ通話に参加」をクリックすると、<2>利用規約</2>に同意したとみなされます",
+  "By clicking \"Go\", you agree to our <2>Terms and conditions</2>": "「続行」をクリックすると、 <2>利用規約</2>に同意したとみなされます",
+  "Avatar": "アバター",
+  "Accept microphone permissions to join the call.": "通話に参加するには、マイクの許可が必要です。"
 }
