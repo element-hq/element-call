@@ -85,8 +85,9 @@
   "Passwords must match": "パスワードが一致する必要があります",
   "Password": "パスワード",
   "Speaker": "スピーカー",
-  "Video call name": "ビデオ通話の名前",
+  "Video call name": "ビデオ通話の名称",
   "Video call": "ビデオ通話",
   "Video": "ビデオ",
-  "Waiting for other participants…": "他の参加者を待っています…"
+  "Waiting for other participants…": "他の参加者を待っています…",
+  "Waiting for network": "ネットワークを待機しています"
 }
