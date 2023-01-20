@@ -40,5 +40,7 @@
   "Full screen": "全画面表示",
   "Exit full screen": "全画面表示を終了",
   "Include debug logs": "デバッグログを含む",
-  "Home": "ホーム"
+  "Home": "ホーム",
+  "Incompatible versions!": "互換性のないバージョンです!",
+  "Incompatible versions": "互換性のないバージョン"
 }
