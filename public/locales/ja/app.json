@@ -1,5 +1,6 @@
 {
   "{{name}} (Connecting...)": "{{name}}（接続中…）",
   "{{count}} people connected|other": "{{count}}人が接続済",
-  "{{count}} people connected|one": "{{count}}人が接続済"
+  "{{count}} people connected|one": "{{count}}人が接続済",
+  "{{name}} (Waiting for video...)": "{{name}} (ビデオを待機しています…)"
 }
