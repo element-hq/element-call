@@ -1,5 +1,5 @@
 {
-  "{{name}} (Connecting...)": "{{name}}（接続中…）",
+  "{{name}} (Connecting...)": "{{name}}（接続しています…）",
   "{{count}} people connected|other": "{{count}}人が接続済",
   "{{count}} people connected|one": "{{count}}人が接続済",
   "{{name}} (Waiting for video...)": "{{name}}（ビデオを待機しています…）",
@@ -48,13 +48,13 @@
   "Join call": "通話に参加",
   "Invite": "招待",
   "Invite people": "連絡先を招待",
-  "Not registered yet? <2>Create an account</2>": "まだアカウントをお持ちではありませんか？ <2>アカウントを作成</2>",
+  "Not registered yet? <2>Create an account</2>": "アカウントがありませんか？ <2>アカウントを作成</2>",
   "Mute microphone": "マイクをミュート",
   "Microphone permissions needed to join the call.": "通話の参加にはマイクの許可が必要です。",
   "Microphone": "マイク",
   "Login": "ログイン",
-  "Logging in…": "ログイン中です…",
-  "Loading…": "読み込み中です…",
+  "Logging in…": "ログインしています…",
+  "Loading…": "読み込んでいます…",
   "Loading room…": "ルームを読み込んでいます…",
   "Leave": "退出",
   "Version: {{version}}": "バージョン: {{version}}",
@@ -83,5 +83,6 @@
   "Profile": "プロフィール",
   "Press and hold spacebar to talk": "スペースを長押しで会話",
   "Passwords must match": "パスワードが一致する必要があります",
-  "Password": "パスワード"
+  "Password": "パスワード",
+  "Speaker": "スピーカー"
 }
