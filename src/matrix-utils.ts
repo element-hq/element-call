@@ -212,7 +212,7 @@ export function fullAliasFromRoomName(
 }
 
 /**
- * XXX What is this trying to do? It looks like it's getting the localpart from
+ * XXX: What is this trying to do? It looks like it's getting the localpart from
  * a room alias, but why is it splitting on hyphens and then putting spaces in??
  * @param roomId
  * @returns
