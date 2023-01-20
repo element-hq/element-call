@@ -113,12 +113,14 @@ export const usePTT = (
     },
     setState,
   ] = useState(() => {
+    // slightly concerningly, this can end up null as we seem to sometimes get
+    // here before the room state contains our own member event
     const roomMember = groupCall.room.getMember(client.getUserId());
 
     const activeSpeakerFeed = getActiveSpeakerFeed(userMediaFeeds, groupCall);
 
     return {
-      isAdmin: roomMember.powerLevel >= 100,
+      isAdmin: roomMember ? roomMember.powerLevel >= 100 : false,
       talkOverEnabled: false,
       pttButtonHeld: false,
       activeSpeakerUserId: activeSpeakerFeed ? activeSpeakerFeed.userId : null,
