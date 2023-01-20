@@ -2,5 +2,7 @@
   "{{name}} (Connecting...)": "{{name}}（接続中…）",
   "{{count}} people connected|other": "{{count}}人が接続済",
   "{{count}} people connected|one": "{{count}}人が接続済",
-  "{{name}} (Waiting for video...)": "{{name}} (ビデオを待機しています…)"
+  "{{name}} (Waiting for video...)": "{{name}} (ビデオを待機しています…)",
+  "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>既にアカウントをお持ちですか?</0><1><0>ログイン</0> Or <2>ゲストとしてアクセス</2></1>",
+  "{{roomName}} - Walkie-talkie call": "{{roomName}} - トランシーバー通話"
 }
