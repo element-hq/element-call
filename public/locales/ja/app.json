@@ -9,7 +9,7 @@
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>今すぐ通話に参加</0><1>または</1><2>通話リンクをコピーし、後で参加</2>",
   "Accept camera/microphone permissions to join the call.": "通話に参加するには、カメラ・マイクの許可が必要です。",
   "<0>Oops, something's gone wrong.</0>": "<0>何かがうまく行きませんでした。</0>",
-  "Camera/microphone permissions needed to join the call.": "通話に参加する場合、カメラ・マイクの許可が必要です",
+  "Camera/microphone permissions needed to join the call.": "通話に参加する場合、カメラ・マイクの許可が必要です。",
   "Allow analytics": "アナリティクスを許可",
   "Camera": "カメラ",
   "Call link copied": "通話リンクをコピーしました",
