@@ -50,9 +50,9 @@ export const RoomPage: FC = () => {
   const [isRegistering, setIsRegistering] = useState(false);
 
   useEffect(() => {
-    // If we're not already authed and we've been given a display name as
+    // If we've finished loading, are not already authed and we've been given a display name as
     // a URL param, automatically register a passwordless user
-    if (!isAuthenticated && displayName) {
+    if (!loading && !isAuthenticated && displayName) {
       setIsRegistering(true);
       registerPasswordlessUser(displayName).finally(() => {
         setIsRegistering(false);
@@ -63,6 +63,7 @@ export const RoomPage: FC = () => {
     displayName,
     setIsRegistering,
     registerPasswordlessUser,
+    loading,
   ]);
 
   const groupCallView = useCallback(
