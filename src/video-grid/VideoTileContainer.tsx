@@ -26,6 +26,7 @@ import { VideoTile } from "./VideoTile";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 import { useModalTriggerState } from "../Modal";
 import { TileDescriptor } from "./TileDescriptor";
+import { useIsVisible } from "../useIsVisible";
 
 interface Props {
   item: TileDescriptor;
@@ -95,13 +96,15 @@ export function VideoTileContainer({
   // Firefox doesn't respect the disablePictureInPicture attribute
   // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
 
-  useEffect(() => {
-    item.callFeed?.setResolution(width, height);
-  }, [width, height, item.callFeed]);
+  const isVisible = useIsVisible(tileRef.current);
 
   useEffect(() => {
-    item.callFeed?.setIsVisible(true);
-  }, [item.callFeed]);
+    item?.callFeed?.setResolution(width, height);
+  }, [item?.callFeed, width, height]);
+
+  useEffect(() => {
+    item?.callFeed?.setIsVisible(isVisible);
+  }, [item?.callFeed, isVisible]);
 
   return (
     <>
