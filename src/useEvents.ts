@@ -27,7 +27,7 @@ export const useEventTarget = <T extends Event>(
   target: EventTarget | null | undefined,
   eventType: string,
   listener: (event: T) => void,
-  options?: AddEventListenerOptions
+  options?: AddEventListenerOptions | boolean
 ) => {
   useEffect(() => {
     if (target) {
