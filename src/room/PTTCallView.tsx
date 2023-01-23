@@ -210,36 +210,36 @@ export const PTTCallView: React.FC<Props> = ({
         </Header>
       )}
       <div className={styles.center}>
-        {showControls && (
-          <>
-            <div className={styles.participants}>
-              <p>
-                {t("{{count}} people connected", {
-                  count: participatingMembers.length,
-                })}
-              </p>
-              <Facepile
-                size={facepileSize}
-                max={8}
-                className={styles.facepile}
-                client={client}
-                members={participatingMembers}
-              />
-            </div>
-            <div className={styles.footer}>
-              <OverflowMenu
-                inCall
-                roomIdOrAlias={roomIdOrAlias}
-                groupCall={groupCall}
-                showInvite={false}
-                feedbackModalState={feedbackModalState}
-                feedbackModalProps={feedbackModalProps}
-              />
-              {!isEmbedded && <HangupButton onPress={onLeave} />}
-              <InviteButton onPress={() => inviteModalState.open()} />
-            </div>
-          </>
-        )}
+        {/* Always render this because the window will become shorter when the on-screen
+            keyboard appears, so if we don't render it, the dialog will unmount. */}
+        <div style={{ display: showControls ? "block" : "none" }}>
+          <div className={styles.participants}>
+            <p>
+              {t("{{count}} people connected", {
+                count: participatingMembers.length,
+              })}
+            </p>
+            <Facepile
+              size={facepileSize}
+              max={8}
+              className={styles.facepile}
+              client={client}
+              members={participatingMembers}
+            />
+          </div>
+          <div className={styles.footer}>
+            <OverflowMenu
+              inCall
+              roomIdOrAlias={roomIdOrAlias}
+              groupCall={groupCall}
+              showInvite={false}
+              feedbackModalState={feedbackModalState}
+              feedbackModalProps={feedbackModalProps}
+            />
+            {!isEmbedded && <HangupButton onPress={onLeave} />}
+            <InviteButton onPress={() => inviteModalState.open()} />
+          </div>
+        </div>
 
         <div className={styles.pttButtonContainer}>
           {showControls &&
