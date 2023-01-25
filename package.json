@@ -62,6 +62,7 @@
     "react-use-clipboard": "^1.0.7",
     "react-use-measure": "^2.1.1",
     "sdp-transform": "^2.14.1",
+    "tinyqueue": "^2.0.3",
     "unique-names-generator": "^4.6.0"
   },
   "devDependencies": {
