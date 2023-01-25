@@ -1,14 +1,7 @@
 import { useTransition } from "@react-spring/web";
-import React, {
-  FC,
-  memo,
-  ReactNode,
-  useCallback,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { FC, memo, ReactNode, useMemo, useState } from "react";
 import useMeasure from "react-use-measure";
+
 import styles from "./NewVideoGrid.module.css";
 import { TileDescriptor } from "./TileDescriptor";
 import { VideoGridProps as Props } from "./VideoGrid";
@@ -81,7 +74,7 @@ export const NewVideoGrid: FC<Props> = ({
     }
 
     return rects;
-  }, [items, gridBounds, slotGrid]);
+  }, [slotGrid]);
 
   const cells: Cell[] = useMemo(
     () =>
@@ -112,7 +105,7 @@ export const NewVideoGrid: FC<Props> = ({
           },
         ];
       }),
-    [slotRects, cells]
+    [slotRects, slotCells]
   );
 
   const [tileTransitions] = useTransition(
