@@ -41,7 +41,7 @@ import {
   RoomHeaderInfo,
   VersionMismatchWarning,
 } from "../Header";
-import { useVideoGridLayout } from "../video-grid/VideoGrid";
+import { VideoGrid, useVideoGridLayout } from "../video-grid/VideoGrid";
 import { VideoTileContainer } from "../video-grid/VideoTileContainer";
 import { GroupCallInspector } from "./GroupCallInspector";
 import { OverflowMenu } from "./OverflowMenu";
