@@ -17,6 +17,7 @@ limitations under the License.
 import React, { useCallback, useState, useRef } from "react";
 import classNames from "classnames";
 import { useSpring, animated } from "@react-spring/web";
+import { logger } from "@sentry/utils";
 
 import styles from "./PTTButton.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
@@ -68,11 +69,23 @@ export const PTTButton: React.FC<Props> = ({
     enqueueNetworkWaiting(true, 100);
     startTalking();
   }, [enqueueNetworkWaiting, startTalking, buttonHeld]);
+
   const unhold = useCallback(() => {
+    if (!buttonHeld) return;
     setButtonHeld(false);
     setNetworkWaiting(false);
     stopTalking();
-  }, [setNetworkWaiting, stopTalking]);
+  }, [setNetworkWaiting, stopTalking, buttonHeld]);
+
+  const onMouseUp = useCallback(() => {
+    logger.info("Mouse up event: unholding PTT button");
+    unhold();
+  }, [unhold]);
+
+  const onBlur = useCallback(() => {
+    logger.info("Blur event: unholding PTT button");
+    unhold();
+  }, [unhold]);
 
   const onButtonMouseDown = useCallback(
     (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -85,7 +98,7 @@ export const PTTButton: React.FC<Props> = ({
   // These listeners go on the window so even if the user's cursor / finger
   // leaves the button while holding it, the button stays pushed until
   // they stop clicking / tapping.
-  useEventTarget(window, "mouseup", unhold);
+  useEventTarget(window, "mouseup", onMouseUp);
   useEventTarget(
     window,
     "touchend",
@@ -102,6 +115,8 @@ export const PTTButton: React.FC<Props> = ({
           }
         }
         if (!touchFound) return;
+
+        logger.info("Touch event ended: unholding PTT button");
 
         e.preventDefault();
         unhold();
@@ -163,6 +178,8 @@ export const PTTButton: React.FC<Props> = ({
 
           e.preventDefault();
 
+          logger.info("Keyup event for spacebar: unholding PTT button");
+
           unhold();
         }
       },
@@ -171,7 +188,7 @@ export const PTTButton: React.FC<Props> = ({
   );
 
   // TODO: We will need to disable this for a global PTT hotkey to work
-  useEventTarget(window, "blur", unhold);
+  useEventTarget(window, "blur", onBlur);
 
   const prefersReducedMotion = usePrefersReducedMotion();
   const { shadow } = useSpring({
