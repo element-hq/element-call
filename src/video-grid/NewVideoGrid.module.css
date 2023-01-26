@@ -2,7 +2,7 @@
   position: relative;
   flex-grow: 1;
   padding: 0 22px;
-  overflow-y: scroll;
+  overflow-y: auto;
 }
 
 .slotGrid {
