@@ -1,0 +1,22 @@
+name: Run E2E tests
+on: push
+jobs:
+  e2e:
+    name: Run E2E tests
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out test private repo
+        uses: actions/checkout@v3
+        with:
+          repository: vector-im/static-call-participant
+          ref: refs/heads/e2e
+          path: static-call-participant
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Yarn cache
+        uses: actions/setup-node@v3
+        with:
+          cache: "yarn"
+      - name: Install dependencies
+        run: "cd static-call-participant && yarn install"
+      - name: Start Test cases
+        run: "cd static-call-participant && HTTP_SERVER_PUBLIC_DOMAIN=localhost yarn start start -f callemshost-users.txt -h @e2e-caller:call.ems.host -c e2e-caller -l e2e-caller -r @e2etest:call.ems.host -e https://element-call.netlify.app"
