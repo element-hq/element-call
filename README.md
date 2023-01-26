@@ -42,6 +42,12 @@ server {
 }
 ```
 
+By default, the app expects you to have [Synapse](https://matrix-org.github.io/synapse/latest/setup/installation.html) installed locally and running on port 8008. If you wish to use another homeserver, you can add a config file as above.
+
+Element Call requires a Synapse homeserver with registration enabled without any 3pid or token requirements, if you want it to be used by unregistered users. Furthermore, it cannot be used to log in to an existing homeserver where user accounts have joined normal rooms, as it cannot handle those yet.
+
+Therefore, to use a self-hosted Synapse homeserver, this is recommended to be a new server where any user account created has not joined any normal rooms anywhere in the Matrix federated network. The HS used can be setup to disable federation, so as to prevent spam registrations (if you keep registrations open) and to ensure Element Call continues to work in case any user decides to log in to their Element Call account using the standard Element app and joins normal rooms that Element Call cannot handle.
+
 ## Development
 
 Element Call is built against [matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk/pull/2553). To get started, clone, install, and link the package:
@@ -61,8 +67,6 @@ cd element-call
 yarn
 yarn link matrix-js-sdk
 ```
-
-By default, the app expects you to have [Synapse](https://matrix-org.github.io/synapse/latest/setup/installation.html) installed locally and running on port 8008. If you wish to use another homeserver, you can add a config file as above.
 
 You're now ready to launch the development server:
 
