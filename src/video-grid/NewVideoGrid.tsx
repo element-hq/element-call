@@ -1,10 +1,8 @@
-import { useTransition } from "@react-spring/web";
+import { SpringRef, TransitionFn, useTransition } from "@react-spring/web";
 import { useDrag } from "@use-gesture/react";
 import React, {
   FC,
-  memo,
   ReactNode,
-  useCallback,
   useEffect,
   useMemo,
   useState,
@@ -25,6 +23,7 @@ interface Cell {
   /**
    * Whether this cell is the first cell of the containing slot.
    */
+  // TODO: Rename to 'start'?
   slot: boolean;
   /**
    * The width, in columns, of the containing slot.
@@ -122,6 +121,25 @@ const findLast1By1Index = (g: Grid): number | null =>
 const row = (index: number, g: Grid): number => Math.floor(index / g.columns);
 const column = (index: number, g: Grid): number => index % g.columns;
 
+function* cellsInArea(start: number, end: number, g: Grid): Generator<number, void, unknown>{
+  const startColumn = column(start, g)
+  const endColumn = column(end, g)
+  for (let i = start; i <= end; i = column(i, g) === endColumn ? i + g.columns + startColumn - endColumn : i + 1)
+    yield i
+}
+
+const forEachCellInArea = (start: number, end: number, g: Grid, fn: (c: Cell | undefined, i: number) => void) => {
+  for (const i of cellsInArea(start, end, g)) fn(g.cells[i], i)
+}
+
+const allCellsInArea = (start: number, end: number, g: Grid, fn: (c: Cell | undefined, i: number) => boolean) => {
+  for (const i of cellsInArea(start, end, g)) {
+    if (!fn(g.cells[i], i)) return false
+  }
+
+  return true
+}
+
 /**
  * Gets the index of the next gap in the grid that should be backfilled by 1×1
  * tiles.
@@ -209,20 +227,6 @@ const fillGaps = (g: Grid): Grid => {
   return result;
 };
 
-interface SlotsProps {
-  count: number;
-}
-
-/**
- * Generates a number of empty slot divs.
- */
-const Slots: FC<SlotsProps> = memo(({ count }) => {
-  const slots = new Array<ReactNode>(count);
-  for (let i = 0; i < count; i++)
-    slots[i] = <div className={styles.slot} key={i} />;
-  return <>{slots}</>;
-});
-
 export const NewVideoGrid: FC<Props> = ({
   items,
   disableAnimations,
@@ -263,7 +267,7 @@ export const NewVideoGrid: FC<Props> = ({
     }
 
     return rects;
-  }, [items, slotGridGeneration, slotGrid]);
+  }, [items, slotGridGeneration, slotGrid, gridBounds]);
 
   const [grid, setGrid] = useReactiveState<Grid>(
     (prevGrid = { generation: 0, columns: 6, cells: [] }) => {
@@ -313,7 +317,6 @@ export const NewVideoGrid: FC<Props> = ({
       if (slotGridGeneration !== grid.generation) return prevTiles ?? [];
 
       const slotCells = grid.cells.filter((c) => c?.slot) as Cell[];
-      console.log(slotGridGeneration, grid.generation, slotCells.length, slotRects.length, slotGrid?.getElementsByClassName(styles.slot).length)
       return zipWith(slotCells, slotRects, (cell, rect) => ({
         item: cell.item,
         x: rect.x,
@@ -329,7 +332,7 @@ export const NewVideoGrid: FC<Props> = ({
     tiles,
     () => ({
       key: ({ item }: Tile) => item.id,
-      from: (({ x, y, width, height }: Tile) => ({
+      from: ({ x, y, width, height }: Tile) => ({
         opacity: 0,
         scale: 0,
         shadow: 1,
@@ -337,9 +340,7 @@ export const NewVideoGrid: FC<Props> = ({
         y,
         width,
         height,
-        // react-spring's types are bugged and need this to be a function with no
-        // parameters to infer the spring type
-      })) as unknown as () => TileSpring,
+      }),
       enter: { opacity: 1, scale: 1 },
       update: ({ x, y, width, height }: Tile) => ({ x, y, width, height }),
       leave: { opacity: 0, scale: 0 },
@@ -350,18 +351,35 @@ export const NewVideoGrid: FC<Props> = ({
       delay: (key: string) => (key === "zIndex" ? 500 : 0),
     }),
     [tiles, disableAnimations]
-  );
+    // react-spring's types are bugged and can't infer the spring type
+  ) as unknown as [TransitionFn<Tile, TileSpring>, SpringRef<TileSpring>];
 
   const slotGridStyle = useMemo(() => {
-    const columnCount = gridBounds.width >= 800 ? 6 : 3;
+    const columnCount = 6
+
+    const areas = new Array<(number | null)[]>(Math.ceil(grid.cells.length / grid.columns))
+    for (let i = 0; i < areas.length; i++) areas[i] = new Array<number | null>(grid.columns).fill(null)
+
+    let slotId = 0
+    for (let i = 0; i < grid.cells.length; i++) {
+      const cell = grid.cells[i]
+      if (cell?.slot) {
+        const slotEnd = i + cell.columns - 1 + grid.columns * (cell.rows - 1)
+        forEachCellInArea(i, slotEnd, grid, (_c, j) => areas[row(j, grid)][column(j, grid)] = slotId)
+        slotId++
+      }
+    }
+
     return {
+      gridTemplateAreas: areas.map(row => `'${row.map(slotId => slotId === null ? "." : `s${slotId}`).join(" ")}'`).join(" "),
       gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
     };
-  }, [gridBounds]);
+  }, [grid]);
 
   const bindTile = useDrag(
-    useCallback(({ event, tap }) => {
+    ({ event, tap, args }) => {
       event.preventDefault();
+      const tileId = args[0] as string
 
       if (tap) {
         // TODO: When enlarging tiles, add the minimum number of rows required
@@ -370,10 +388,104 @@ export const NewVideoGrid: FC<Props> = ({
         // displace overlapping tiles, and then backfill.
         // When unenlarging tiles, consider doing that in reverse (deleting
         // rows and displacing tiles. pushing tiles outwards might be necessary)
+        setGrid(g => {
+          const from = g.cells.findIndex(c => c?.item.id === tileId)
+          if (from === -1) return g // Tile removed, no change
+          const fromWidth = g.cells[from]!.columns
+          const fromHeight = g.cells[from]!.rows
+
+          const [toWidth, toHeight] = fromWidth === 1 && fromHeight === 1 ? [3, 2] : [1, 1]
+          const newRows = Math.ceil((toWidth * toHeight - fromWidth * fromHeight) / g.columns)
+
+          const candidateWidth = toWidth
+          const candidateHeight = toHeight - newRows
+
+          const slotStarts = new Array<number>(g.cells.length)
+          g.cells.forEach((c, start) => {
+            if (c === undefined || c.item.id === tileId) {
+              slotStarts[start] = start
+            } else if (c.slot) {
+              const end = start + c.columns - 1 + g.columns * (c.rows - 1)
+              forEachCellInArea(start, end, g, (_c, i) => slotStarts[i] = start)
+            } else if (slotStarts[start] === undefined) {
+              slotStarts[start] = start
+            }
+          })
+
+          const nextScanLocations = new Set<number>([from])
+          const scanColumnOffset = Math.floor((toWidth - 1) / 2)
+          const scanRowOffset = Math.floor((toHeight - 1) / 2)
+          let to: number | null = null
+
+          const displaceable = (c: Cell | undefined, i: number): boolean => c === undefined || (c.columns === 1 && c.rows === 1) || g.cells[slotStarts[i]]?.item.id === tileId
+
+          for (const scanLocation of nextScanLocations) {
+            const start = scanLocation - scanColumnOffset - g.columns * scanRowOffset
+            const end = start + candidateWidth - 1 + g.columns * (candidateHeight - 1)
+            const startColumn = column(start, g);
+            const endColumn = column(end, g);
+
+            if (start >= 0 && end < g.cells.length && endColumn - startColumn + 1 === candidateWidth) {
+              if (allCellsInArea(start, end, g, displaceable)) {
+                to = start
+                break
+              }
+            }
+
+            if (startColumn > 0) nextScanLocations.add(scanLocation - 1)
+            if (endColumn < g.columns - 1) nextScanLocations.add(scanLocation + 1)
+            nextScanLocations.add(scanLocation - g.columns)
+            nextScanLocations.add(scanLocation + g.columns)
+          }
+
+          if (to === null) return g
+
+          const gappyGrid: Grid = {
+            ...g,
+            generation: g.generation + 1,
+            cells: new Array(g.cells.length + newRows * g.columns),
+          }
+
+          const toRow = row(to, g)
+
+          for (let src = 0; src < g.cells.length; src++) {
+            if (g.cells[src]?.item.id !== tileId) {
+              const dest = row(src, g) > toRow + toHeight - 1 ? src + g.columns * newRows : src
+              gappyGrid.cells[dest] = g.cells[src]
+            }
+          }
+
+          const displacedTiles: Cell[] = []
+          const toEnd = to + toWidth - 1 + g.columns * (toHeight - 1)
+          forEachCellInArea(to, toEnd, gappyGrid, (c, i) => {
+            if (c !== undefined) displacedTiles.push(c)
+            gappyGrid.cells[i] = {
+              item: g.cells[from]!.item,
+              slot: i === to,
+              columns: toWidth,
+              rows: toHeight,
+            }
+          })
+
+          for (let i = 0; displacedTiles.length > 0; i++) {
+            if (gappyGrid.cells[i] === undefined) gappyGrid.cells[i] = displacedTiles.shift()
+          }
+
+          const nonGappy = fillGaps(gappyGrid)
+          console.log(`${g.cells.length} => ${nonGappy.cells.length}, ${g.generation} => ${nonGappy.generation}`)
+          return nonGappy
+        })
       }
-    }, []),
+    },
     { filterTaps: true, pointer: { buttons: [1] } }
   );
+
+  const slots = useMemo(() => {
+    const slots = new Array<ReactNode>(items.length);
+    for (let i = 0; i < items.length; i++)
+      slots[i] = <div className={styles.slot} key={i} style={{ gridArea: `s${i}` }} />;
+    return slots
+  }, [items.length])
 
   // Render nothing if the bounds are not yet known
   if (gridBounds.width === 0) {
@@ -388,7 +500,7 @@ export const NewVideoGrid: FC<Props> = ({
         className={styles.slotGrid}
         data-generation={grid.generation}
       >
-        <Slots count={items.length} />
+        {slots}
       </div>
       {tileTransitions(({ shadow, ...style }, tile) =>
         children({
