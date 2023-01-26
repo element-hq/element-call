@@ -5,6 +5,10 @@
       "server_name": "call.ems.host"
     }
   },
+  "posthog": {
+    "api_key": "phc_rXGHx9vDmyEvyRxPziYtdVIv0ahEv8A9uLWFcCi1WcU",
+    "api_host": "https://posthog-element-call.element.io"
+  },
   "rageshake": {
     "submit_url": "https://element.io/bugreports/submit"
   }
