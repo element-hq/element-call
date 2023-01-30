@@ -121,6 +121,12 @@ const findLast1By1Index = (g: Grid): number | null =>
 const row = (index: number, g: Grid): number => Math.floor(index / g.columns);
 const column = (index: number, g: Grid): number => index % g.columns;
 
+const inArea = (index: number, start: number, end: number, g: Grid): boolean => {
+  const indexColumn = column(index, g)
+  const indexRow = column(index, g)
+  return indexRow >= row(start, g) && indexRow <= row(end, g) && indexColumn >= column(start, g) && indexColumn <= column(end, g)
+}
+
 function* cellsInArea(start: number, end: number, g: Grid): Generator<number, void, unknown>{
   const startColumn = column(start, g)
   const endColumn = column(end, g)
@@ -139,6 +145,9 @@ const allCellsInArea = (start: number, end: number, g: Grid, fn: (c: Cell | unde
 
   return true
 }
+
+const areaEnd = (start: number, columns: number, rows: number, g: Grid): number =>
+   start + columns - 1 + g.columns * (rows - 1)
 
 /**
  * Gets the index of the next gap in the grid that should be backfilled by 1×1
@@ -382,17 +391,14 @@ export const NewVideoGrid: FC<Props> = ({
       const tileId = args[0] as string
 
       if (tap) {
-        // TODO: When enlarging tiles, add the minimum number of rows required
-        // to not need to force any tiles towards the end, find the right number
-        // of consecutive spots for a tile of size w * (h - added rows),
-        // displace overlapping tiles, and then backfill.
-        // When unenlarging tiles, consider doing that in reverse (deleting
+        // TODO: When unenlarging tiles, do this in reverse somehow (deleting
         // rows and displacing tiles. pushing tiles outwards might be necessary)
         setGrid(g => {
           const from = g.cells.findIndex(c => c?.item.id === tileId)
           if (from === -1) return g // Tile removed, no change
           const fromWidth = g.cells[from]!.columns
           const fromHeight = g.cells[from]!.rows
+          const fromEnd = areaEnd(from, fromWidth, fromHeight, g)
 
           const [toWidth, toHeight] = fromWidth === 1 && fromHeight === 1 ? [3, 2] : [1, 1]
           const newRows = Math.ceil((toWidth * toHeight - fromWidth * fromHeight) / g.columns)
@@ -400,28 +406,16 @@ export const NewVideoGrid: FC<Props> = ({
           const candidateWidth = toWidth
           const candidateHeight = toHeight - newRows
 
-          const slotStarts = new Array<number>(g.cells.length)
-          g.cells.forEach((c, start) => {
-            if (c === undefined || c.item.id === tileId) {
-              slotStarts[start] = start
-            } else if (c.slot) {
-              const end = start + c.columns - 1 + g.columns * (c.rows - 1)
-              forEachCellInArea(start, end, g, (_c, i) => slotStarts[i] = start)
-            } else if (slotStarts[start] === undefined) {
-              slotStarts[start] = start
-            }
-          })
-
           const nextScanLocations = new Set<number>([from])
           const scanColumnOffset = Math.floor((toWidth - 1) / 2)
           const scanRowOffset = Math.floor((toHeight - 1) / 2)
           let to: number | null = null
 
-          const displaceable = (c: Cell | undefined, i: number): boolean => c === undefined || (c.columns === 1 && c.rows === 1) || g.cells[slotStarts[i]]?.item.id === tileId
+          const displaceable = (c: Cell | undefined, i: number): boolean => c === undefined || (c.columns === 1 && c.rows === 1) || inArea(i, from, fromEnd, g)
 
           for (const scanLocation of nextScanLocations) {
             const start = scanLocation - scanColumnOffset - g.columns * scanRowOffset
-            const end = start + candidateWidth - 1 + g.columns * (candidateHeight - 1)
+            const end = areaEnd(start, candidateWidth, candidateHeight, g)
             const startColumn = column(start, g);
             const endColumn = column(end, g);
 
@@ -438,6 +432,7 @@ export const NewVideoGrid: FC<Props> = ({
             nextScanLocations.add(scanLocation + g.columns)
           }
 
+          // TODO: Don't give up on placing the tile yet
           if (to === null) return g
 
           const gappyGrid: Grid = {
@@ -456,7 +451,7 @@ export const NewVideoGrid: FC<Props> = ({
           }
 
           const displacedTiles: Cell[] = []
-          const toEnd = to + toWidth - 1 + g.columns * (toHeight - 1)
+          const toEnd = areaEnd(to, toWidth, toHeight, g)
           forEachCellInArea(to, toEnd, gappyGrid, (c, i) => {
             if (c !== undefined) displacedTiles.push(c)
             gappyGrid.cells[i] = {
@@ -471,9 +466,7 @@ export const NewVideoGrid: FC<Props> = ({
             if (gappyGrid.cells[i] === undefined) gappyGrid.cells[i] = displacedTiles.shift()
           }
 
-          const nonGappy = fillGaps(gappyGrid)
-          console.log(`${g.cells.length} => ${nonGappy.cells.length}, ${g.generation} => ${nonGappy.generation}`)
-          return nonGappy
+          return fillGaps(gappyGrid)
         })
       }
     },
