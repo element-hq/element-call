@@ -96,7 +96,7 @@ limitations under the License.
 
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
 
   overflow: hidden;
   z-index: 1;
@@ -178,4 +178,8 @@ limitations under the License.
   width: 25%;
   max-width: 360px;
   border-radius: 20px;
+}
+
+.debugInfo {
+  margin-left: 16px;
 }
