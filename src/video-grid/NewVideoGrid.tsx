@@ -328,13 +328,15 @@ const cycleTileSize = (tileId: string, g: Grid): Grid => {
 
   const toRow = row(to, g);
 
-  for (let src = 0; src < g.cells.length; src++) {
-    if (g.cells[src]?.item.id !== tileId) {
-      const dest =
-        row(src, g) > toRow + toHeight - 1 ? src + g.columns * newRows : src;
-      gappyGrid.cells[dest] = g.cells[src];
+  g.cells.forEach((c, src) => {
+    if (c?.slot && c.item.id !== tileId) {
+      const offset =
+        row(src, g) > toRow + candidateHeight - 1 ? g.columns * newRows : 0;
+      forEachCellInArea(src, areaEnd(src, c.columns, c.rows, g), g, (c, i) => {
+        gappyGrid.cells[i + offset] = c
+      })
     }
-  }
+  })
 
   const displacedTiles: Cell[] = [];
   const toEnd = areaEnd(to, toWidth, toHeight, g);
