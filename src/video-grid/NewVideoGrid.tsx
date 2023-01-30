@@ -236,6 +236,85 @@ const fillGaps = (g: Grid): Grid => {
   return result;
 };
 
+const cycleTileSize = (tileId: string, g: Grid): Grid => {
+  // TODO: When unenlarging tiles, do all this in reverse somehow (deleting
+  // rows and displacing tiles. pushing tiles outwards might be necessary)
+
+  const from = g.cells.findIndex(c => c?.item.id === tileId)
+  if (from === -1) return g // Tile removed, no change
+  const fromWidth = g.cells[from]!.columns
+  const fromHeight = g.cells[from]!.rows
+  const fromEnd = areaEnd(from, fromWidth, fromHeight, g)
+
+  const [toWidth, toHeight] = fromWidth === 1 && fromHeight === 1 ? [3, 2] : [1, 1]
+  const newRows = Math.ceil((toWidth * toHeight - fromWidth * fromHeight) / g.columns)
+
+  const candidateWidth = toWidth
+  const candidateHeight = toHeight - newRows
+
+  const nextScanLocations = new Set<number>([from])
+  const scanColumnOffset = Math.floor((toWidth - 1) / 2)
+  const scanRowOffset = Math.floor((toHeight - 1) / 2)
+  let to: number | null = null
+
+  const displaceable = (c: Cell | undefined, i: number): boolean => c === undefined || (c.columns === 1 && c.rows === 1) || inArea(i, from, fromEnd, g)
+
+  for (const scanLocation of nextScanLocations) {
+    const start = scanLocation - scanColumnOffset - g.columns * scanRowOffset
+    const end = areaEnd(start, candidateWidth, candidateHeight, g)
+    const startColumn = column(start, g);
+    const endColumn = column(end, g);
+
+    if (start >= 0 && end < g.cells.length && endColumn - startColumn + 1 === candidateWidth) {
+      if (allCellsInArea(start, end, g, displaceable)) {
+        to = start
+        break
+      }
+    }
+
+    if (startColumn > 0) nextScanLocations.add(scanLocation - 1)
+    if (endColumn < g.columns - 1) nextScanLocations.add(scanLocation + 1)
+    nextScanLocations.add(scanLocation - g.columns)
+    nextScanLocations.add(scanLocation + g.columns)
+  }
+
+  // TODO: Don't give up on placing the tile yet
+  if (to === null) return g
+
+  const gappyGrid: Grid = {
+    ...g,
+    generation: g.generation + 1,
+    cells: new Array(g.cells.length + newRows * g.columns),
+  }
+
+  const toRow = row(to, g)
+
+  for (let src = 0; src < g.cells.length; src++) {
+    if (g.cells[src]?.item.id !== tileId) {
+      const dest = row(src, g) > toRow + toHeight - 1 ? src + g.columns * newRows : src
+      gappyGrid.cells[dest] = g.cells[src]
+    }
+  }
+
+  const displacedTiles: Cell[] = []
+  const toEnd = areaEnd(to, toWidth, toHeight, g)
+  forEachCellInArea(to, toEnd, gappyGrid, (c, i) => {
+    if (c !== undefined) displacedTiles.push(c)
+    gappyGrid.cells[i] = {
+      item: g.cells[from]!.item,
+      slot: i === to,
+      columns: toWidth,
+      rows: toHeight,
+    }
+  })
+
+  for (let i = 0; displacedTiles.length > 0; i++) {
+    if (gappyGrid.cells[i] === undefined) gappyGrid.cells[i] = displacedTiles.shift()
+  }
+
+  return fillGaps(gappyGrid)
+}
+
 export const NewVideoGrid: FC<Props> = ({
   items,
   disableAnimations,
@@ -391,83 +470,9 @@ export const NewVideoGrid: FC<Props> = ({
       const tileId = args[0] as string
 
       if (tap) {
-        // TODO: When unenlarging tiles, do this in reverse somehow (deleting
-        // rows and displacing tiles. pushing tiles outwards might be necessary)
-        setGrid(g => {
-          const from = g.cells.findIndex(c => c?.item.id === tileId)
-          if (from === -1) return g // Tile removed, no change
-          const fromWidth = g.cells[from]!.columns
-          const fromHeight = g.cells[from]!.rows
-          const fromEnd = areaEnd(from, fromWidth, fromHeight, g)
-
-          const [toWidth, toHeight] = fromWidth === 1 && fromHeight === 1 ? [3, 2] : [1, 1]
-          const newRows = Math.ceil((toWidth * toHeight - fromWidth * fromHeight) / g.columns)
-
-          const candidateWidth = toWidth
-          const candidateHeight = toHeight - newRows
-
-          const nextScanLocations = new Set<number>([from])
-          const scanColumnOffset = Math.floor((toWidth - 1) / 2)
-          const scanRowOffset = Math.floor((toHeight - 1) / 2)
-          let to: number | null = null
-
-          const displaceable = (c: Cell | undefined, i: number): boolean => c === undefined || (c.columns === 1 && c.rows === 1) || inArea(i, from, fromEnd, g)
-
-          for (const scanLocation of nextScanLocations) {
-            const start = scanLocation - scanColumnOffset - g.columns * scanRowOffset
-            const end = areaEnd(start, candidateWidth, candidateHeight, g)
-            const startColumn = column(start, g);
-            const endColumn = column(end, g);
-
-            if (start >= 0 && end < g.cells.length && endColumn - startColumn + 1 === candidateWidth) {
-              if (allCellsInArea(start, end, g, displaceable)) {
-                to = start
-                break
-              }
-            }
-
-            if (startColumn > 0) nextScanLocations.add(scanLocation - 1)
-            if (endColumn < g.columns - 1) nextScanLocations.add(scanLocation + 1)
-            nextScanLocations.add(scanLocation - g.columns)
-            nextScanLocations.add(scanLocation + g.columns)
-          }
-
-          // TODO: Don't give up on placing the tile yet
-          if (to === null) return g
-
-          const gappyGrid: Grid = {
-            ...g,
-            generation: g.generation + 1,
-            cells: new Array(g.cells.length + newRows * g.columns),
-          }
-
-          const toRow = row(to, g)
-
-          for (let src = 0; src < g.cells.length; src++) {
-            if (g.cells[src]?.item.id !== tileId) {
-              const dest = row(src, g) > toRow + toHeight - 1 ? src + g.columns * newRows : src
-              gappyGrid.cells[dest] = g.cells[src]
-            }
-          }
-
-          const displacedTiles: Cell[] = []
-          const toEnd = areaEnd(to, toWidth, toHeight, g)
-          forEachCellInArea(to, toEnd, gappyGrid, (c, i) => {
-            if (c !== undefined) displacedTiles.push(c)
-            gappyGrid.cells[i] = {
-              item: g.cells[from]!.item,
-              slot: i === to,
-              columns: toWidth,
-              rows: toHeight,
-            }
-          })
-
-          for (let i = 0; displacedTiles.length > 0; i++) {
-            if (gappyGrid.cells[i] === undefined) gappyGrid.cells[i] = displacedTiles.shift()
-          }
-
-          return fillGaps(gappyGrid)
-        })
+        setGrid(g => cycleTileSize(tileId, g))
+      } else {
+        // TODO
       }
     },
     { filterTaps: true, pointer: { buttons: [1] } }
