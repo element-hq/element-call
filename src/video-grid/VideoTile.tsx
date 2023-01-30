@@ -24,6 +24,8 @@ import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
 import { AudioButton, FullscreenButton } from "../button/Button";
 import { ConnectionState } from "../room/useGroupCall";
+import { CallFeedDebugInfo } from "./useCallFeed";
+import { useShowCallFeedDebugInfo } from "../settings/useSetting";
 
 interface Props {
   name: string;
@@ -44,6 +46,7 @@ interface Props {
   showOptions?: boolean;
   isLocal?: boolean;
   disableSpeakingIndicator?: boolean;
+  debugInfo: CallFeedDebugInfo;
 }
 
 export const VideoTile = forwardRef<HTMLDivElement, Props>(
@@ -68,10 +71,12 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       isLocal,
       // TODO: disableSpeakingIndicator is not used atm.
       disableSpeakingIndicator,
+      debugInfo,
       ...rest
     },
     ref
   ) => {
+    const [showCallFeedDebugInfo] = useShowCallFeedDebugInfo();
     const { t } = useTranslation();
 
     const toolbarButtons: JSX.Element[] = [];
@@ -126,7 +131,12 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         {...rest}
       >
         {toolbarButtons.length > 0 && !maximised && (
-          <div className={classNames(styles.toolbar)}>{toolbarButtons}</div>
+          <div className={classNames(styles.toolbar)}>
+            <div className={classNames(styles.debugInfo)}>
+              {JSON.stringify(debugInfo)}
+            </div>
+            <div>{toolbarButtons}</div>
+          </div>
         )}
         {videoMuted && (
           <>
