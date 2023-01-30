@@ -101,7 +101,9 @@
   "Your recent calls": "最近の通話",
   "You can't talk at the same time": "同時に会話することはできません",
   "WebRTC is not supported or is being blocked in this browser.": "お使いのブラウザでWebRTCがサポートされていないか、またはブロックされています。",
-  "Login to your account": "お持ちのアカウントでログイン",
+  "Login to your account": "アカウントにログイン",
   "Freedom": "自由",
-  "{{displayName}}, your call is now ended": "{{displayName}}、通話が終了しました"
+  "{{displayName}}, your call is now ended": "{{displayName}}、通話が終了しました",
+  "Talking…": "話しています…",
+  "Remove": "削除"
 }
