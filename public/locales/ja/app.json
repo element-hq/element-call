@@ -100,5 +100,6 @@
   "Debug log request": "デバッグログを要求",
   "Your recent calls": "最近の通話",
   "You can't talk at the same time": "同時に会話することはできません",
-  "WebRTC is not supported or is being blocked in this browser.": "お使いのブラウザでWebRTCがサポートされていないか、またはブロックされています。"
+  "WebRTC is not supported or is being blocked in this browser.": "お使いのブラウザでWebRTCがサポートされていないか、またはブロックされています。",
+  "Login to your account": "お持ちのアカウントでログイン"
 }
