@@ -17,7 +17,6 @@ limitations under the License.
 .inRoom {
   position: relative;
   display: flex;
-  gap: 8px;
   flex-direction: column;
   overflow: hidden;
   min-height: 100%;
@@ -41,6 +40,7 @@ limitations under the License.
 
 .footer {
   position: relative;
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;

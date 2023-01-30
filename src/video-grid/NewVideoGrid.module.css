@@ -3,6 +3,7 @@
   flex-grow: 1;
   padding: 0 22px;
   overflow-y: auto;
+  scroll-snap-type: both mandatory;
 }
 
 .slotGrid {
@@ -14,4 +15,12 @@
 }
 
 .slot {
+  scroll-snap-align: start;
+}
+
+.slot:last-child {
+  /* This causes the grid to scroll up smoothly to the last item when its height
+  shrinks, and ensures that the user can always scroll the last row fully in
+  view */
+  scroll-snap-align: end;
 }
