@@ -16,8 +16,8 @@ limitations under the License.
 
 .videoTile {
   position: absolute;
+  contain: strict;
   top: 0;
-  will-change: transform, width, height, opacity, box-shadow;
   width: var(--tileWidth);
   height: var(--tileHeight);
   border-radius: 20px;
