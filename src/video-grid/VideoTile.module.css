@@ -18,6 +18,8 @@ limitations under the License.
   position: absolute;
   top: 0;
   will-change: transform, width, height, opacity, box-shadow;
+  width: var(--tileWidth);
+  height: var(--tileHeight);
   border-radius: 20px;
   overflow: hidden;
   cursor: pointer;

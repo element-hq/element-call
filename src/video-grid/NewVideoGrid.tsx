@@ -563,7 +563,7 @@ export const NewVideoGrid: FC<Props> = ({
       >
         {slots}
       </div>
-      {tileTransitions(({ shadow, ...style }, tile) =>
+      {tileTransitions(({ shadow, width, height, ...style }, tile) =>
         children({
           ...bindTile(tile.item.id),
           key: tile.item.id,
@@ -571,6 +571,8 @@ export const NewVideoGrid: FC<Props> = ({
             boxShadow: shadow.to(
               (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
             ),
+            "--tileWidth": width.to((w) => `${w}px`),
+            "--tileHeight": height.to((h) => `${h}px`),
             ...style,
           },
           width: tile.width,
