@@ -1,4 +1,5 @@
 .grid {
+  contain: strict;
   position: relative;
   flex-grow: 1;
   padding: 0 22px;
@@ -7,6 +8,7 @@
 }
 
 .slotGrid {
+  contain: strict;
   position: relative;
   display: grid;
   grid-auto-rows: 183px;
@@ -15,6 +17,7 @@
 }
 
 .slot {
+  contain: strict;
   scroll-snap-align: start;
 }
 
