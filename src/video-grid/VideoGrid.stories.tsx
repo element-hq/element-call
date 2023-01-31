@@ -82,6 +82,7 @@ export const ParticipantsTest = () => {
               name={`User ${item.id}`}
               disableSpeakingIndicator={items.length < 3}
               connectionState={ConnectionState.Connected}
+              debugInfo={{ width: undefined, height: undefined }}
               {...rest}
             />
           )}
