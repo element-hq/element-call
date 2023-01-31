@@ -122,7 +122,7 @@ const inArea = (
   g: Grid
 ): boolean => {
   const indexColumn = column(index, g);
-  const indexRow = column(index, g);
+  const indexRow = row(index, g);
   return (
     indexRow >= row(start, g) &&
     indexRow <= row(end, g) &&
@@ -266,9 +266,6 @@ const fillGaps = (g: Grid): Grid => {
 };
 
 const cycleTileSize = (tileId: string, g: Grid): Grid => {
-  // TODO: When unenlarging tiles, do all this in reverse somehow (deleting
-  // rows and displacing tiles. pushing tiles outwards might be necessary)
-
   const from = g.cells.findIndex((c) => c?.item.id === tileId);
   if (from === -1) return g; // Tile removed, no change
   const fromWidth = g.cells[from]!.columns;
@@ -277,12 +274,19 @@ const cycleTileSize = (tileId: string, g: Grid): Grid => {
 
   const [toWidth, toHeight] =
     fromWidth === 1 && fromHeight === 1 ? [3, 2] : [1, 1];
-  const newRows = Math.ceil(
-    (toWidth * toHeight - fromWidth * fromHeight) / g.columns
+  const newRows = Math.max(
+    0,
+    Math.ceil((toWidth * toHeight - fromWidth * fromHeight) / g.columns)
   );
 
   const candidateWidth = toWidth;
   const candidateHeight = toHeight - newRows;
+
+  const gappyGrid: Grid = {
+    ...g,
+    generation: g.generation + 1,
+    cells: new Array(g.cells.length + newRows * g.columns),
+  };
 
   const nextScanLocations = new Set<number>([from]);
   const scanColumnOffset = Math.floor((toWidth - 1) / 2);
@@ -302,7 +306,7 @@ const cycleTileSize = (tileId: string, g: Grid): Grid => {
 
     if (
       start >= 0 &&
-      end < g.cells.length &&
+      end < gappyGrid.cells.length &&
       endColumn - startColumn + 1 === candidateWidth
     ) {
       if (allCellsInArea(start, end, g, displaceable)) {
@@ -320,12 +324,6 @@ const cycleTileSize = (tileId: string, g: Grid): Grid => {
   // TODO: Don't give up on placing the tile yet
   if (to === null) return g;
 
-  const gappyGrid: Grid = {
-    ...g,
-    generation: g.generation + 1,
-    cells: new Array(g.cells.length + newRows * g.columns),
-  };
-
   const toRow = row(to, g);
 
   g.cells.forEach((c, src) => {
@@ -333,10 +331,10 @@ const cycleTileSize = (tileId: string, g: Grid): Grid => {
       const offset =
         row(src, g) > toRow + candidateHeight - 1 ? g.columns * newRows : 0;
       forEachCellInArea(src, areaEnd(src, c.columns, c.rows, g), g, (c, i) => {
-        gappyGrid.cells[i + offset] = c
-      })
+        gappyGrid.cells[i + offset] = c;
+      });
     }
-  })
+  });
 
   const displacedTiles: Cell[] = [];
   const toEnd = areaEnd(to, toWidth, toHeight, g);
