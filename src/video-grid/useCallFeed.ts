@@ -18,6 +18,13 @@ import { useState, useEffect } from "react";
 import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
 import { SDPStreamMetadataPurpose } from "matrix-js-sdk/src/webrtc/callEventTypes";
 
+const DEBUG_INFO_INTERVAL = 1000; // ms
+
+export interface CallFeedDebugInfo {
+  width: number | undefined;
+  height: number | undefined;
+}
+
 interface CallFeedState {
   callFeed: CallFeed | undefined;
   isLocal: boolean;
@@ -29,6 +36,14 @@ interface CallFeedState {
   disposed: boolean | undefined;
   stream: MediaStream | undefined;
   purpose: SDPStreamMetadataPurpose | undefined;
+  debugInfo: CallFeedDebugInfo;
+}
+
+function getDebugInfo(callFeed: CallFeed | undefined): CallFeedDebugInfo {
+  return {
+    width: callFeed?.stream?.getVideoTracks()?.[0]?.getSettings()?.width,
+    height: callFeed?.stream?.getVideoTracks()?.[0]?.getSettings()?.height,
+  };
 }
 
 function getCallFeedState(callFeed: CallFeed | undefined): CallFeedState {
@@ -46,6 +61,7 @@ function getCallFeedState(callFeed: CallFeed | undefined): CallFeedState {
     disposed: callFeed ? callFeed.disposed : undefined,
     stream: callFeed ? callFeed.stream : undefined,
     purpose: callFeed ? callFeed.purpose : undefined,
+    debugInfo: getDebugInfo(callFeed),
   };
 }
 
@@ -81,7 +97,16 @@ export function useCallFeed(callFeed: CallFeed | undefined): CallFeedState {
 
     onUpdateCallFeed();
 
+    const debugInfoInterval = setInterval(() => {
+      setState((prevState) => ({
+        ...prevState,
+        debugInfo: getDebugInfo(callFeed),
+      }));
+    }, DEBUG_INFO_INTERVAL);
+
     return () => {
+      clearInterval(debugInfoInterval);
+
       if (callFeed) {
         callFeed.removeListener(CallFeedEvent.Speaking, onSpeaking);
         callFeed.removeListener(
