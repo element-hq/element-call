@@ -130,11 +130,13 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         ref={ref}
         {...rest}
       >
+        {showCallFeedDebugInfo && (
+          <div className={classNames(styles.debugInfo)}>
+            {JSON.stringify(debugInfo)}
+          </div>
+        )}
         {toolbarButtons.length > 0 && !maximised && (
           <div className={classNames(styles.toolbar)}>
-            <div className={classNames(styles.debugInfo)}>
-              {showCallFeedDebugInfo && JSON.stringify(debugInfo)}
-            </div>
             <div>{toolbarButtons}</div>
           </div>
         )}
