@@ -66,6 +66,12 @@ limitations under the License.
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  /* To make avatars scale smoothly with their tiles during animations, we
+  override the styles set on the element */
+  --avatarSize: calc(min(var(--tileWidth), var(--tileHeight)) / 2);
+  width: var(--avatarSize) !important;
+  height: var(--avatarSize) !important;
+  border-radius: 10000px !important;
 }
 
 @media (min-height: 300px) {
