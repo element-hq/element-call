@@ -96,7 +96,7 @@ limitations under the License.
 
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
 
   overflow: hidden;
   z-index: 1;
@@ -181,5 +181,8 @@ limitations under the License.
 }
 
 .debugInfo {
-  margin-left: 16px;
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background-color: rgba(0, 0, 0, 0.5);
 }
