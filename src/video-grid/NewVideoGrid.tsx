@@ -477,6 +477,7 @@ export const NewVideoGrid: FC<Props> = ({
       enter: { opacity: 1, scale: 1 },
       update: ({ x, y, width, height }: Tile) => ({ x, y, width, height }),
       leave: { opacity: 0, scale: 0 },
+      config: { mass: 0.7, tension: 252, friction: 25 },
       immediate: (key: string) =>
         disableAnimations || key === "zIndex" || key === "shadow",
       // If we just stopped dragging a tile, give it time for the
