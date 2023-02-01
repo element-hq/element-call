@@ -319,7 +319,6 @@ export function InCallView({
           [x: string]: unknown;
         }) => (
           <VideoTileContainer
-            key={item.id}
             item={item}
             getAvatar={renderAvatar}
             audioContext={audioContext}
