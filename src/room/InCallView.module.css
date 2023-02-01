@@ -17,7 +17,6 @@ limitations under the License.
 .inRoom {
   position: relative;
   display: flex;
-  gap: 8px;
   flex-direction: column;
   overflow: hidden;
   min-height: 100%;
@@ -41,6 +40,7 @@ limitations under the License.
 
 .footer {
   position: relative;
+  flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -66,6 +66,12 @@ limitations under the License.
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
+  /* To make avatars scale smoothly with their tiles during animations, we
+  override the styles set on the element */
+  --avatarSize: calc(min(var(--tileWidth), var(--tileHeight)) / 2);
+  width: var(--avatarSize) !important;
+  height: var(--avatarSize) !important;
+  border-radius: 10000px !important;
 }
 
 @media (min-height: 300px) {

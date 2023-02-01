@@ -124,5 +124,16 @@
   "{{name}} is talking…": "{{name}} mówi…",
   "{{name}} is presenting": "{{name}} prezentuje",
   "{{displayName}}, your call is now ended": "{{displayName}}, twoje połączenie zostało zakończone",
-  "{{count}} people connected|one": "{{count}} osoba połączona"
+  "{{count}} people connected|one": "{{count}} osoba połączona",
+  "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Czy włączyć skróty klawiszowe pojedynczych klawiszy, np. 'm' aby wyciszyć/załączyć mikrofon.",
+  "This feature is only supported on Firefox.": "Ta funkcjonalność jest dostępna tylko w Firefox.",
+  "Single-key keyboard shortcuts": "Skróty klawiszowe (pojedyncze klawisze)",
+  "Copy": "Kopiuj",
+  "Allow analytics": "Zezwól na analitykę",
+  "Advanced": "Zaawansowane",
+  "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Wysłanie logów debuggowania pomoże nam ustalić przyczynę problemu.</0>",
+  "<0>Oops, something's gone wrong.</0>": "<0>Ojej, coś poszło nie tak.</0>",
+  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Dołącz do rozmowy teraz</0><1>Or</1><2>Skopiuj link do rozmowy i dołącz później</2>",
+  "{{name}} (Waiting for video...)": "{{name}} (Oczekiwanie na wideo...)",
+  "{{name}} (Connecting...)": "{{name}} (Łączenie...)"
 }

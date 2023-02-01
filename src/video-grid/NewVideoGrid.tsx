@@ -1,10 +1,11 @@
 import { SpringRef, TransitionFn, useTransition } from "@react-spring/web";
-import { useDrag } from "@use-gesture/react";
+import { EventTypes, Handler, useScroll } from "@use-gesture/react";
 import React, {
   FC,
   ReactNode,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 import useMeasure from "react-use-measure";
@@ -14,6 +15,7 @@ import { VideoGridProps as Props } from "./VideoGrid";
 import { useReactiveState } from "../useReactiveState";
 import TinyQueue from "tinyqueue";
 import { zipWith } from "lodash";
+import { useMergedRefs } from "../useMergedRefs";
 
 interface Cell {
   /**
@@ -56,10 +58,19 @@ interface TileSpring {
   opacity: number;
   scale: number;
   shadow: number;
+  zIndex: number;
   x: number;
   y: number;
   width: number;
   height: number;
+}
+
+interface DragState {
+  tileId: string;
+  tileX: number;
+  tileY: number;
+  cursorX: number;
+  cursorY: number;
 }
 
 const dijkstra = (g: Grid): number[] => {
@@ -121,24 +132,68 @@ const findLast1By1Index = (g: Grid): number | null =>
 const row = (index: number, g: Grid): number => Math.floor(index / g.columns);
 const column = (index: number, g: Grid): number => index % g.columns;
 
-function* cellsInArea(start: number, end: number, g: Grid): Generator<number, void, unknown>{
-  const startColumn = column(start, g)
-  const endColumn = column(end, g)
-  for (let i = start; i <= end; i = column(i, g) === endColumn ? i + g.columns + startColumn - endColumn : i + 1)
-    yield i
+const inArea = (
+  index: number,
+  start: number,
+  end: number,
+  g: Grid
+): boolean => {
+  const indexColumn = column(index, g);
+  const indexRow = row(index, g);
+  return (
+    indexRow >= row(start, g) &&
+    indexRow <= row(end, g) &&
+    indexColumn >= column(start, g) &&
+    indexColumn <= column(end, g)
+  );
+};
+
+function* cellsInArea(
+  start: number,
+  end: number,
+  g: Grid
+): Generator<number, void, unknown> {
+  const startColumn = column(start, g);
+  const endColumn = column(end, g);
+  for (
+    let i = start;
+    i <= end;
+    i =
+      column(i, g) === endColumn
+        ? i + g.columns + startColumn - endColumn
+        : i + 1
+  )
+    yield i;
 }
 
-const forEachCellInArea = (start: number, end: number, g: Grid, fn: (c: Cell | undefined, i: number) => void) => {
-  for (const i of cellsInArea(start, end, g)) fn(g.cells[i], i)
-}
+const forEachCellInArea = (
+  start: number,
+  end: number,
+  g: Grid,
+  fn: (c: Cell | undefined, i: number) => void
+) => {
+  for (const i of cellsInArea(start, end, g)) fn(g.cells[i], i);
+};
 
-const allCellsInArea = (start: number, end: number, g: Grid, fn: (c: Cell | undefined, i: number) => boolean) => {
+const allCellsInArea = (
+  start: number,
+  end: number,
+  g: Grid,
+  fn: (c: Cell | undefined, i: number) => boolean
+) => {
   for (const i of cellsInArea(start, end, g)) {
-    if (!fn(g.cells[i], i)) return false
+    if (!fn(g.cells[i], i)) return false;
   }
 
-  return true
-}
+  return true;
+};
+
+const areaEnd = (
+  start: number,
+  columns: number,
+  rows: number,
+  g: Grid
+): number => start + columns - 1 + g.columns * (rows - 1);
 
 /**
  * Gets the index of the next gap in the grid that should be backfilled by 1×1
@@ -227,29 +282,127 @@ const fillGaps = (g: Grid): Grid => {
   return result;
 };
 
+const cycleTileSize = (tileId: string, g: Grid): Grid => {
+  const from = g.cells.findIndex((c) => c?.item.id === tileId);
+  if (from === -1) return g; // Tile removed, no change
+  const fromWidth = g.cells[from]!.columns;
+  const fromHeight = g.cells[from]!.rows;
+  const fromEnd = areaEnd(from, fromWidth, fromHeight, g);
+
+  const [toWidth, toHeight] =
+    fromWidth === 1 && fromHeight === 1 ? [3, 2] : [1, 1];
+  const newRows = Math.max(
+    0,
+    Math.ceil((toWidth * toHeight - fromWidth * fromHeight) / g.columns)
+  );
+
+  const candidateWidth = toWidth;
+  const candidateHeight = toHeight - newRows;
+
+  const gappyGrid: Grid = {
+    ...g,
+    generation: g.generation + 1,
+    cells: new Array(g.cells.length + newRows * g.columns),
+  };
+
+  const nextScanLocations = new Set<number>([from]);
+  const scanColumnOffset = Math.floor((toWidth - 1) / 2);
+  const scanRowOffset = Math.floor((toHeight - 1) / 2);
+  let to: number | null = null;
+
+  const displaceable = (c: Cell | undefined, i: number): boolean =>
+    c === undefined ||
+    (c.columns === 1 && c.rows === 1) ||
+    inArea(i, from, fromEnd, g);
+
+  for (const scanLocation of nextScanLocations) {
+    const start = scanLocation - scanColumnOffset - g.columns * scanRowOffset;
+    const end = areaEnd(start, candidateWidth, candidateHeight, g);
+    const startColumn = column(start, g);
+    const endColumn = column(end, g);
+
+    if (
+      start >= 0 &&
+      end < gappyGrid.cells.length &&
+      endColumn - startColumn + 1 === candidateWidth
+    ) {
+      if (allCellsInArea(start, end, g, displaceable)) {
+        to = start;
+        break;
+      }
+    }
+
+    if (startColumn > 0) nextScanLocations.add(scanLocation - 1);
+    if (endColumn < g.columns - 1) nextScanLocations.add(scanLocation + 1);
+    nextScanLocations.add(scanLocation - g.columns);
+    nextScanLocations.add(scanLocation + g.columns);
+  }
+
+  // TODO: Don't give up on placing the tile yet
+  if (to === null) return g;
+
+  const toRow = row(to, g);
+
+  g.cells.forEach((c, src) => {
+    if (c?.slot && c.item.id !== tileId) {
+      const offset =
+        row(src, g) > toRow + candidateHeight - 1 ? g.columns * newRows : 0;
+      forEachCellInArea(src, areaEnd(src, c.columns, c.rows, g), g, (c, i) => {
+        gappyGrid.cells[i + offset] = c;
+      });
+    }
+  });
+
+  const displacedTiles: Cell[] = [];
+  const toEnd = areaEnd(to, toWidth, toHeight, g);
+  forEachCellInArea(to, toEnd, gappyGrid, (c, i) => {
+    if (c !== undefined) displacedTiles.push(c);
+    gappyGrid.cells[i] = {
+      item: g.cells[from]!.item,
+      slot: i === to,
+      columns: toWidth,
+      rows: toHeight,
+    };
+  });
+
+  for (let i = 0; displacedTiles.length > 0; i++) {
+    if (gappyGrid.cells[i] === undefined)
+      gappyGrid.cells[i] = displacedTiles.shift();
+  }
+
+  return fillGaps(gappyGrid);
+};
+
 export const NewVideoGrid: FC<Props> = ({
   items,
   disableAnimations,
   children,
 }) => {
   const [slotGrid, setSlotGrid] = useState<HTMLDivElement | null>(null);
-  const [slotGridGeneration, setSlotGridGeneration] = useState(0)
-  const [gridRef, gridBounds] = useMeasure();
+  const [slotGridGeneration, setSlotGridGeneration] = useState(0);
+
+  const [gridRef1, gridBounds] = useMeasure();
+  const gridRef2 = useRef<HTMLDivElement | null>(null);
+  const gridRef = useMergedRefs(gridRef1, gridRef2);
 
   useEffect(() => {
     if (slotGrid !== null) {
-      setSlotGridGeneration(parseInt(slotGrid.getAttribute("data-generation")!))
+      setSlotGridGeneration(
+        parseInt(slotGrid.getAttribute("data-generation")!)
+      );
 
-      const observer = new MutationObserver(mutations => {
-        if (mutations.some(m => m.type === "attributes")) {
-          setSlotGridGeneration(parseInt(slotGrid.getAttribute("data-generation")!))
+      const observer = new MutationObserver((mutations) => {
+        if (mutations.some((m) => m.type === "attributes")) {
+          setSlotGridGeneration(
+            parseInt(slotGrid.getAttribute("data-generation")!)
+          );
         }
-      })
+      });
 
-      observer.observe(slotGrid, { attributes: true })
-      return () => observer.disconnect()
+      observer.observe(slotGrid, { attributes: true });
+      return () => observer.disconnect();
     }
-  }, [slotGrid, setSlotGridGeneration])
+  }, [slotGrid, setSlotGridGeneration]);
 
   const slotRects = useMemo(() => {
     if (slotGrid === null) return [];
@@ -317,18 +470,17 @@ export const NewVideoGrid: FC<Props> = ({
       if (slotGridGeneration !== grid.generation) return prevTiles ?? [];
 
       const slotCells = grid.cells.filter((c) => c?.slot) as Cell[];
-      return zipWith(slotCells, slotRects, (cell, rect) => ({
-        item: cell.item,
-        x: rect.x,
-        y: rect.y,
-        width: rect.width,
-        height: rect.height,
-      }));
+      const tileRects = new Map<TileDescriptor, Rect>(zipWith(slotCells, slotRects, (cell, rect) => [cell.item, rect]))
+      return items.map(item => ({ ...tileRects.get(item)!, item }))
     },
     [slotRects, grid, slotGridGeneration]
   );
 
-  const [tileTransitions] = useTransition(
+  // Drag state is stored in a ref rather than component state, because we use
+  // react-spring's imperative API during gestures to improve responsiveness
+  const dragState = useRef<DragState | null>(null);
+
+  const [tileTransitions, springRef] = useTransition(
     tiles,
     () => ({
       key: ({ item }: Tile) => item.id,
@@ -336,156 +488,186 @@ export const NewVideoGrid: FC<Props> = ({
         opacity: 0,
         scale: 0,
         shadow: 1,
+        zIndex: 1,
         x,
         y,
         width,
         height,
+        immediate: disableAnimations,
       }),
-      enter: { opacity: 1, scale: 1 },
-      update: ({ x, y, width, height }: Tile) => ({ x, y, width, height }),
-      leave: { opacity: 0, scale: 0 },
-      immediate: (key: string) =>
-        disableAnimations || key === "zIndex" || key === "shadow",
-      // If we just stopped dragging a tile, give it time for the
-      // animation to settle before pushing its z-index back down
-      delay: (key: string) => (key === "zIndex" ? 500 : 0),
+      enter: { opacity: 1, scale: 1, immediate: disableAnimations },
+      update: ({ item, x, y, width, height }: Tile) =>
+        item.id === dragState.current?.tileId
+          ? {}
+          : {
+              x,
+              y,
+              width,
+              height,
+              immediate: disableAnimations,
+            },
+      leave: { opacity: 0, scale: 0, immediate: disableAnimations },
+      config: { mass: 0.7, tension: 252, friction: 25 },
     }),
     [tiles, disableAnimations]
     // react-spring's types are bugged and can't infer the spring type
   ) as unknown as [TransitionFn<Tile, TileSpring>, SpringRef<TileSpring>];
 
   const slotGridStyle = useMemo(() => {
-    const columnCount = 6
+    const columnCount = 6;
 
-    const areas = new Array<(number | null)[]>(Math.ceil(grid.cells.length / grid.columns))
-    for (let i = 0; i < areas.length; i++) areas[i] = new Array<number | null>(grid.columns).fill(null)
+    const areas = new Array<(number | null)[]>(
+      Math.ceil(grid.cells.length / grid.columns)
+    );
+    for (let i = 0; i < areas.length; i++)
+      areas[i] = new Array<number | null>(grid.columns).fill(null);
 
-    let slotId = 0
+    let slotId = 0;
     for (let i = 0; i < grid.cells.length; i++) {
-      const cell = grid.cells[i]
+      const cell = grid.cells[i];
       if (cell?.slot) {
-        const slotEnd = i + cell.columns - 1 + grid.columns * (cell.rows - 1)
-        forEachCellInArea(i, slotEnd, grid, (_c, j) => areas[row(j, grid)][column(j, grid)] = slotId)
-        slotId++
+        const slotEnd = i + cell.columns - 1 + grid.columns * (cell.rows - 1);
+        forEachCellInArea(
+          i,
+          slotEnd,
+          grid,
+          (_c, j) => (areas[row(j, grid)][column(j, grid)] = slotId)
+        );
+        slotId++;
       }
     }
 
     return {
-      gridTemplateAreas: areas.map(row => `'${row.map(slotId => slotId === null ? "." : `s${slotId}`).join(" ")}'`).join(" "),
+      gridTemplateAreas: areas
+        .map(
+          (row) =>
+            `'${row
+              .map((slotId) => (slotId === null ? "." : `s${slotId}`))
+              .join(" ")}'`
+        )
+        .join(" "),
       gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
     };
   }, [grid]);
 
-  const bindTile = useDrag(
-    ({ event, tap, args }) => {
-      event.preventDefault();
-      const tileId = args[0] as string
+  const animateDraggedTile = (endOfGesture: boolean) => {
+    const { tileId, tileX, tileY, cursorX, cursorY } = dragState.current!;
+    const tile = tiles.find((t) => t.item.id === tileId)!;
 
-      if (tap) {
-        // TODO: When enlarging tiles, add the minimum number of rows required
-        // to not need to force any tiles towards the end, find the right number
-        // of consecutive spots for a tile of size w * (h - added rows),
-        // displace overlapping tiles, and then backfill.
-        // When unenlarging tiles, consider doing that in reverse (deleting
-        // rows and displacing tiles. pushing tiles outwards might be necessary)
-        setGrid(g => {
-          const from = g.cells.findIndex(c => c?.item.id === tileId)
-          if (from === -1) return g // Tile removed, no change
-          const fromWidth = g.cells[from]!.columns
-          const fromHeight = g.cells[from]!.rows
+    springRef.start((_i, controller) => {
+      if ((controller.item as Tile).item.id === tileId) {
+        if (endOfGesture) {
+          return {
+            scale: 1,
+            zIndex: 1,
+            shadow: 1,
+            x: tile.x,
+            y: tile.y,
+            width: tile.width,
+            height: tile.height,
+            immediate: disableAnimations || ((key) => key === "zIndex"),
+            // Allow the tile's position to settle before pushing its
+            // z-index back down
+            delay: (key) => (key === "zIndex" ? 500 : 0),
+          };
+        } else {
+          return {
+            scale: 1.1,
+            zIndex: 2,
+            shadow: 15,
+            x: tileX,
+            y: tileY,
+            immediate:
+              disableAnimations ||
+              ((key) => key === "zIndex" || key === "x" || key === "y"),
+          };
+        }
+      } else {
+        return {};
+      }
+    });
 
-          const [toWidth, toHeight] = fromWidth === 1 && fromHeight === 1 ? [3, 2] : [1, 1]
-          const newRows = Math.ceil((toWidth * toHeight - fromWidth * fromHeight) / g.columns)
+    const overTile = tiles.find(
+      (t) =>
+        cursorX >= t.x &&
+        cursorX < t.x + t.width &&
+        cursorY >= t.y &&
+        cursorY < t.y + t.height
+    );
+    if (overTile !== undefined && overTile.item.id !== tileId) {
+      setGrid((g) => ({
+        ...g,
+        cells: g.cells.map((c) => {
+          if (c?.item === overTile.item) return { ...c, item: tile.item };
+          if (c?.item === tile.item) return { ...c, item: overTile.item };
+          return c;
+        }),
+      }));
+    }
+  };
 
-          const candidateWidth = toWidth
-          const candidateHeight = toHeight - newRows
+  const onTileDrag = (
+    tileId: string,
+    {
+      tap,
+      initial: [initialX, initialY],
+      delta: [dx, dy],
+      last,
+    }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
+  ) => {
+    if (tap) {
+      setGrid((g) => cycleTileSize(tileId, g));
+    } else {
+      const tileSpring = springRef.current
+        .find((c) => (c.item as Tile).item.id === tileId)!
+        .get();
 
-          const slotStarts = new Array<number>(g.cells.length)
-          g.cells.forEach((c, start) => {
-            if (c === undefined || c.item.id === tileId) {
-              slotStarts[start] = start
-            } else if (c.slot) {
-              const end = start + c.columns - 1 + g.columns * (c.rows - 1)
-              forEachCellInArea(start, end, g, (_c, i) => slotStarts[i] = start)
-            } else if (slotStarts[start] === undefined) {
-              slotStarts[start] = start
-            }
-          })
+      if (dragState.current === null) {
+        dragState.current = {
+          tileId,
+          tileX: tileSpring.x,
+          tileY: tileSpring.y,
+          cursorX: initialX - gridBounds.x,
+          cursorY: initialY - gridBounds.y + scrollOffset.current,
+        };
+      }
+      dragState.current.tileX += dx;
+      dragState.current.tileY += dy;
+      dragState.current.cursorX += dx;
+      dragState.current.cursorY += dy;
 
-          const nextScanLocations = new Set<number>([from])
-          const scanColumnOffset = Math.floor((toWidth - 1) / 2)
-          const scanRowOffset = Math.floor((toHeight - 1) / 2)
-          let to: number | null = null
+      animateDraggedTile(last);
 
-          const displaceable = (c: Cell | undefined, i: number): boolean => c === undefined || (c.columns === 1 && c.rows === 1) || g.cells[slotStarts[i]]?.item.id === tileId
+      if (last) dragState.current = null;
+    }
+  };
 
-          for (const scanLocation of nextScanLocations) {
-            const start = scanLocation - scanColumnOffset - g.columns * scanRowOffset
-            const end = start + candidateWidth - 1 + g.columns * (candidateHeight - 1)
-            const startColumn = column(start, g);
-            const endColumn = column(end, g);
+  const onTileDragRef = useRef(onTileDrag);
+  onTileDragRef.current = onTileDrag;
 
-            if (start >= 0 && end < g.cells.length && endColumn - startColumn + 1 === candidateWidth) {
-              if (allCellsInArea(start, end, g, displaceable)) {
-                to = start
-                break
-              }
-            }
+  const scrollOffset = useRef(0);
 
-            if (startColumn > 0) nextScanLocations.add(scanLocation - 1)
-            if (endColumn < g.columns - 1) nextScanLocations.add(scanLocation + 1)
-            nextScanLocations.add(scanLocation - g.columns)
-            nextScanLocations.add(scanLocation + g.columns)
-          }
+  useScroll(
+    ({ xy: [, y], delta: [, dy] }) => {
+      scrollOffset.current = y;
 
-          if (to === null) return g
-
-          const gappyGrid: Grid = {
-            ...g,
-            generation: g.generation + 1,
-            cells: new Array(g.cells.length + newRows * g.columns),
-          }
-
-          const toRow = row(to, g)
-
-          for (let src = 0; src < g.cells.length; src++) {
-            if (g.cells[src]?.item.id !== tileId) {
-              const dest = row(src, g) > toRow + toHeight - 1 ? src + g.columns * newRows : src
-              gappyGrid.cells[dest] = g.cells[src]
-            }
-          }
-
-          const displacedTiles: Cell[] = []
-          const toEnd = to + toWidth - 1 + g.columns * (toHeight - 1)
-          forEachCellInArea(to, toEnd, gappyGrid, (c, i) => {
-            if (c !== undefined) displacedTiles.push(c)
-            gappyGrid.cells[i] = {
-              item: g.cells[from]!.item,
-              slot: i === to,
-              columns: toWidth,
-              rows: toHeight,
-            }
-          })
-
-          for (let i = 0; displacedTiles.length > 0; i++) {
-            if (gappyGrid.cells[i] === undefined) gappyGrid.cells[i] = displacedTiles.shift()
-          }
-
-          const nonGappy = fillGaps(gappyGrid)
-          console.log(`${g.cells.length} => ${nonGappy.cells.length}, ${g.generation} => ${nonGappy.generation}`)
-          return nonGappy
-        })
+      if (dragState.current !== null) {
+        dragState.current.tileY += dy;
+        dragState.current.cursorY += dy;
+        animateDraggedTile(false);
       }
     },
-    { filterTaps: true, pointer: { buttons: [1] } }
+    { target: gridRef2 }
   );
 
   const slots = useMemo(() => {
     const slots = new Array<ReactNode>(items.length);
     for (let i = 0; i < items.length; i++)
-      slots[i] = <div className={styles.slot} key={i} style={{ gridArea: `s${i}` }} />;
-    return slots
-  }, [items.length])
+      slots[i] = (
+        <div className={styles.slot} key={i} style={{ gridArea: `s${i}` }} />
+      );
+    return slots;
+  }, [items.length]);
 
   // Render nothing if the bounds are not yet known
   if (gridBounds.width === 0) {
@@ -502,19 +684,14 @@ export const NewVideoGrid: FC<Props> = ({
       >
         {slots}
       </div>
-      {tileTransitions(({ shadow, ...style }, tile) =>
+      {tileTransitions((style, tile) =>
         children({
-          ...bindTile(tile.item.id),
+          ...style,
           key: tile.item.id,
-          style: {
-            boxShadow: shadow.to(
-              (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
-            ),
-            ...style,
-          },
-          width: tile.width,
-          height: tile.height,
+          targetWidth: tile.width,
+          targetHeight: tile.height,
           item: tile.item,
+          onDragRef: onTileDragRef,
         })
       )}
     </div>
