@@ -85,6 +85,7 @@ export const VideoTileContainer: FC<Props> = memo(
       speaking,
       stream,
       purpose,
+      debugInfo,
     } = useCallFeed(item.callFeed);
     const { rawDisplayName } = useRoomMemberName(item.member);
 
@@ -150,6 +151,7 @@ export const VideoTileContainer: FC<Props> = memo(
           maximised={maximised}
           fullscreen={fullscreen}
           onFullscreen={onFullscreenCallback}
+          debugInfo={debugInfo}
           {...rest}
         />
         {videoTileSettingsModalState.isOpen && !maximised && item.callFeed && (

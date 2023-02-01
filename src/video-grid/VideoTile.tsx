@@ -24,6 +24,8 @@ import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
 import { AudioButton, FullscreenButton } from "../button/Button";
 import { ConnectionState } from "../room/useGroupCall";
+import { CallFeedDebugInfo } from "./useCallFeed";
+import { useShowCallFeedDebugInfo } from "../settings/useSetting";
 
 interface Props {
   name: string;
@@ -52,6 +54,7 @@ interface Props {
   y: SpringValue<number>;
   width: SpringValue<number>;
   height: SpringValue<number>;
+  debugInfo: CallFeedDebugInfo;
 }
 
 export const VideoTile = forwardRef<HTMLElement, Props>(
@@ -84,10 +87,12 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
       y,
       width,
       height,
+      debugInfo,
       ...rest
     },
     ref
   ) => {
+    const [showCallFeedDebugInfo] = useShowCallFeedDebugInfo();
     const { t } = useTranslation();
 
     const toolbarButtons: JSX.Element[] = [];
@@ -153,6 +158,11 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
         ref={ref as ForwardedRef<HTMLDivElement>}
         {...rest}
       >
+        {showCallFeedDebugInfo && (
+          <div className={classNames(styles.debugInfo)}>
+            {JSON.stringify(debugInfo)}
+          </div>
+        )}
         {toolbarButtons.length > 0 && !maximised && (
           <div className={classNames(styles.toolbar)}>{toolbarButtons}</div>
         )}
