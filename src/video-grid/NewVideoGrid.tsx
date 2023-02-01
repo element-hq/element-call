@@ -1,6 +1,13 @@
 import { SpringRef, TransitionFn, useTransition } from "@react-spring/web";
-import { useDrag } from "@use-gesture/react";
-import React, { FC, ReactNode, useEffect, useMemo, useState } from "react";
+import { useDrag, useScroll } from "@use-gesture/react";
+import React, {
+  FC,
+  ReactNode,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import useMeasure from "react-use-measure";
 import styles from "./NewVideoGrid.module.css";
 import { TileDescriptor } from "./TileDescriptor";
@@ -50,10 +57,17 @@ interface TileSpring {
   opacity: number;
   scale: number;
   shadow: number;
+  zIndex: number;
   x: number;
   y: number;
   width: number;
   height: number;
+}
+
+interface DragState {
+  tileId: string;
+  x: number;
+  y: number;
 }
 
 const dijkstra = (g: Grid): number[] => {
@@ -461,7 +475,11 @@ export const NewVideoGrid: FC<Props> = ({
     [slotRects, grid, slotGridGeneration]
   );
 
-  const [tileTransitions] = useTransition(
+  // Drag state is stored in a ref rather than component state, because we use
+  // react-spring's imperative API during gestures to improve responsiveness
+  const dragState = useRef<DragState | null>(null);
+
+  const [tileTransitions, springRef] = useTransition(
     tiles,
     () => ({
       key: ({ item }: Tile) => item.id,
@@ -469,20 +487,26 @@ export const NewVideoGrid: FC<Props> = ({
         opacity: 0,
         scale: 0,
         shadow: 1,
+        zIndex: 1,
         x,
         y,
         width,
         height,
+        immediate: disableAnimations,
       }),
-      enter: { opacity: 1, scale: 1 },
-      update: ({ x, y, width, height }: Tile) => ({ x, y, width, height }),
-      leave: { opacity: 0, scale: 0 },
+      enter: { opacity: 1, scale: 1, immediate: disableAnimations },
+      update: ({ item, x, y, width, height }: Tile) =>
+        item.id === dragState.current?.tileId
+          ? {}
+          : {
+              x,
+              y,
+              width,
+              height,
+              immediate: disableAnimations,
+            },
+      leave: { opacity: 0, scale: 0, immediate: disableAnimations },
       config: { mass: 0.7, tension: 252, friction: 25 },
-      immediate: (key: string) =>
-        disableAnimations || key === "zIndex" || key === "shadow",
-      // If we just stopped dragging a tile, give it time for the
-      // animation to settle before pushing its z-index back down
-      delay: (key: string) => (key === "zIndex" ? 500 : 0),
     }),
     [tiles, disableAnimations]
     // react-spring's types are bugged and can't infer the spring type
@@ -525,19 +549,80 @@ export const NewVideoGrid: FC<Props> = ({
     };
   }, [grid]);
 
+  const animateDraggedTile = (endOfGesture: boolean) =>
+    springRef.start((_i, controller) => {
+      const { tileId, x, y } = dragState.current!;
+
+      // react-spring appears to not update a controller's item as long as the
+      // key remains stable, so we can use it to look up the tile's ID but not
+      // its position
+      if ((controller.item as Tile).item.id === tileId) {
+        if (endOfGesture) {
+          const tile = tiles.find((t) => t.item.id === tileId)!;
+
+          return {
+            scale: 1,
+            zIndex: 1,
+            shadow: 1,
+            x: tile.x,
+            y: tile.y,
+            immediate: disableAnimations || ((key) => key === "zIndex"),
+            // Allow the tile's position to settle before pushing its
+            // z-index back down
+            delay: (key) => (key === "zIndex" ? 500 : 0),
+          };
+        } else {
+          return {
+            scale: 1.1,
+            zIndex: 2,
+            shadow: 15,
+            x,
+            y,
+            immediate:
+              disableAnimations ||
+              ((key) => key === "zIndex" || key === "x" || key === "y"),
+          };
+        }
+      } else {
+        return {};
+      }
+    });
+
   const bindTile = useDrag(
-    ({ event, tap, args }) => {
-      event.preventDefault();
+    ({ tap, args, delta: [dx, dy], last }) => {
       const tileId = args[0] as string;
 
       if (tap) {
         setGrid((g) => cycleTileSize(tileId, g));
       } else {
-        // TODO
+        const tileSpring = springRef.current
+          .find((c) => (c.item as Tile).item.id === tileId)!
+          .get();
+
+        if (dragState.current === null) {
+          dragState.current = { tileId, x: tileSpring.x, y: tileSpring.y };
+        }
+        dragState.current.x += dx;
+        dragState.current.y += dy;
+
+        animateDraggedTile(last);
+
+        if (last) dragState.current = null;
       }
     },
     { filterTaps: true, pointer: { buttons: [1] } }
   );
+
+  const scrollOffset = useRef(0);
+
+  const bindGrid = useScroll(({ xy: [, y], delta: [, dy] }) => {
+    scrollOffset.current = y;
+
+    if (dragState.current !== null) {
+      dragState.current.y += dy;
+      animateDraggedTile(false);
+    }
+  });
 
   const slots = useMemo(() => {
     const slots = new Array<ReactNode>(items.length);
@@ -554,7 +639,7 @@ export const NewVideoGrid: FC<Props> = ({
   }
 
   return (
-    <div ref={gridRef} className={styles.grid}>
+    <div {...bindGrid()} ref={gridRef} className={styles.grid}>
       <div
         style={slotGridStyle}
         ref={setSlotGrid}
