@@ -694,14 +694,17 @@ interface DragTileData {
 
 interface ChildrenProperties extends ReactDOMAttributes {
   key: Key;
-  style: {
-    scale: SpringValue<number>;
-    opacity: SpringValue<number>;
-    boxShadow: Interpolation<number, string>;
-  };
-  width: number;
-  height: number;
+  targetWidth: number;
+  targetHeight: number;
   item: TileDescriptor;
+  opacity: SpringValue<number>;
+  scale: SpringValue<number>;
+  shadow: SpringValue<number>;
+  zIndex: SpringValue<number>;
+  x: SpringValue<number>;
+  y: SpringValue<number>;
+  width: SpringValue<number>;
+  height: SpringValue<number>;
   [index: string]: unknown;
 }
 
