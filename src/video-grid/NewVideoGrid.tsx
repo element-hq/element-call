@@ -1,5 +1,5 @@
 import { SpringRef, TransitionFn, useTransition } from "@react-spring/web";
-import { useDrag, useScroll } from "@use-gesture/react";
+import { EventTypes, Handler, useScroll } from "@use-gesture/react";
 import React, {
   FC,
   ReactNode,
@@ -15,6 +15,7 @@ import { VideoGridProps as Props } from "./VideoGrid";
 import { useReactiveState } from "../useReactiveState";
 import TinyQueue from "tinyqueue";
 import { zipWith } from "lodash";
+import { useMergedRefs } from "../useMergedRefs";
 
 interface Cell {
   /**
@@ -66,8 +67,10 @@ interface TileSpring {
 
 interface DragState {
   tileId: string;
-  x: number;
-  y: number;
+  tileX: number;
+  tileY: number;
+  cursorX: number;
+  cursorY: number;
 }
 
 const dijkstra = (g: Grid): number[] => {
@@ -377,7 +380,10 @@ export const NewVideoGrid: FC<Props> = ({
 }) => {
   const [slotGrid, setSlotGrid] = useState<HTMLDivElement | null>(null);
   const [slotGridGeneration, setSlotGridGeneration] = useState(0);
-  const [gridRef, gridBounds] = useMeasure();
+
+  const [gridRef1, gridBounds] = useMeasure();
+  const gridRef2 = useRef<HTMLDivElement | null>(null);
+  const gridRef = useMergedRefs(gridRef1, gridRef2);
 
   useEffect(() => {
     if (slotGrid !== null) {
@@ -549,23 +555,21 @@ export const NewVideoGrid: FC<Props> = ({
     };
   }, [grid]);
 
-  const animateDraggedTile = (endOfGesture: boolean) =>
-    springRef.start((_i, controller) => {
-      const { tileId, x, y } = dragState.current!;
+  const animateDraggedTile = (endOfGesture: boolean) => {
+    const { tileId, tileX, tileY, cursorX, cursorY } = dragState.current!;
+    const tile = tiles.find((t) => t.item.id === tileId)!;
 
-      // react-spring appears to not update a controller's item as long as the
-      // key remains stable, so we can use it to look up the tile's ID but not
-      // its position
+    springRef.start((_i, controller) => {
       if ((controller.item as Tile).item.id === tileId) {
         if (endOfGesture) {
-          const tile = tiles.find((t) => t.item.id === tileId)!;
-
           return {
             scale: 1,
             zIndex: 1,
             shadow: 1,
             x: tile.x,
             y: tile.y,
+            width: tile.width,
+            height: tile.height,
             immediate: disableAnimations || ((key) => key === "zIndex"),
             // Allow the tile's position to settle before pushing its
             // z-index back down
@@ -576,8 +580,8 @@ export const NewVideoGrid: FC<Props> = ({
             scale: 1.1,
             zIndex: 2,
             shadow: 15,
-            x,
-            y,
+            x: tileX,
+            y: tileY,
             immediate:
               disableAnimations ||
               ((key) => key === "zIndex" || key === "x" || key === "y"),
@@ -588,41 +592,78 @@ export const NewVideoGrid: FC<Props> = ({
       }
     });
 
-  const bindTile = useDrag(
-    ({ tap, args, delta: [dx, dy], last }) => {
-      const tileId = args[0] as string;
+    const overTile = tiles.find(
+      (t) =>
+        cursorX >= t.x &&
+        cursorX < t.x + t.width &&
+        cursorY >= t.y &&
+        cursorY < t.y + t.height
+    );
+    if (overTile !== undefined && overTile.item.id !== tileId) {
+      setGrid((g) => ({
+        ...g,
+        cells: g.cells.map((c) => {
+          if (c?.item === overTile.item) return { ...c, item: tile.item };
+          if (c?.item === tile.item) return { ...c, item: overTile.item };
+          return c;
+        }),
+      }));
+    }
+  };
 
-      if (tap) {
-        setGrid((g) => cycleTileSize(tileId, g));
-      } else {
-        const tileSpring = springRef.current
-          .find((c) => (c.item as Tile).item.id === tileId)!
-          .get();
+  const onTileDrag = (
+    tileId: string,
+    {
+      tap,
+      initial: [initialX, initialY],
+      delta: [dx, dy],
+      last,
+    }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
+  ) => {
+    if (tap) {
+      setGrid((g) => cycleTileSize(tileId, g));
+    } else {
+      const tileSpring = springRef.current
+        .find((c) => (c.item as Tile).item.id === tileId)!
+        .get();
 
-        if (dragState.current === null) {
-          dragState.current = { tileId, x: tileSpring.x, y: tileSpring.y };
-        }
-        dragState.current.x += dx;
-        dragState.current.y += dy;
-
-        animateDraggedTile(last);
-
-        if (last) dragState.current = null;
+      if (dragState.current === null) {
+        dragState.current = {
+          tileId,
+          tileX: tileSpring.x,
+          tileY: tileSpring.y,
+          cursorX: initialX - gridBounds.x,
+          cursorY: initialY - gridBounds.y + scrollOffset.current,
+        };
       }
-    },
-    { filterTaps: true, pointer: { buttons: [1] } }
-  );
+      dragState.current.tileX += dx;
+      dragState.current.tileY += dy;
+      dragState.current.cursorX += dx;
+      dragState.current.cursorY += dy;
+
+      animateDraggedTile(last);
+
+      if (last) dragState.current = null;
+    }
+  };
+
+  const onTileDragRef = useRef(onTileDrag);
+  onTileDragRef.current = onTileDrag;
 
   const scrollOffset = useRef(0);
 
-  const bindGrid = useScroll(({ xy: [, y], delta: [, dy] }) => {
-    scrollOffset.current = y;
+  useScroll(
+    ({ xy: [, y], delta: [, dy] }) => {
+      scrollOffset.current = y;
 
-    if (dragState.current !== null) {
-      dragState.current.y += dy;
-      animateDraggedTile(false);
-    }
-  });
+      if (dragState.current !== null) {
+        dragState.current.tileY += dy;
+        dragState.current.cursorY += dy;
+        animateDraggedTile(false);
+      }
+    },
+    { target: gridRef2 }
+  );
 
   const slots = useMemo(() => {
     const slots = new Array<ReactNode>(items.length);
@@ -639,7 +680,7 @@ export const NewVideoGrid: FC<Props> = ({
   }
 
   return (
-    <div {...bindGrid()} ref={gridRef} className={styles.grid}>
+    <div ref={gridRef} className={styles.grid}>
       <div
         style={slotGridStyle}
         ref={setSlotGrid}
@@ -648,21 +689,14 @@ export const NewVideoGrid: FC<Props> = ({
       >
         {slots}
       </div>
-      {tileTransitions(({ shadow, width, height, ...style }, tile) =>
+      {tileTransitions((style, tile) =>
         children({
-          ...bindTile(tile.item.id),
+          ...style,
           key: tile.item.id,
-          style: {
-            boxShadow: shadow.to(
-              (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
-            ),
-            "--tileWidth": width.to((w) => `${w}px`),
-            "--tileHeight": height.to((h) => `${h}px`),
-            ...style,
-          },
-          width: tile.width,
-          height: tile.height,
+          targetWidth: tile.width,
+          targetHeight: tile.height,
           item: tile.item,
+          onDragRef: onTileDragRef,
         })
       )}
     </div>

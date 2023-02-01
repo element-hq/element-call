@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { SDPStreamMetadataPurpose } from "matrix-js-sdk/src/webrtc/callEventTypes";
-import React from "react";
+import React, { FC, memo, RefObject } from "react";
 import { useCallback } from "react";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 
@@ -26,11 +26,13 @@ import { VideoTile } from "./VideoTile";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 import { useModalTriggerState } from "../Modal";
 import { TileDescriptor } from "./TileDescriptor";
+import { SpringValue } from "@react-spring/web";
+import { EventTypes, Handler, useDrag } from "@use-gesture/react";
 
 interface Props {
   item: TileDescriptor;
-  width?: number;
-  height?: number;
+  targetWidth: number;
+  targetHeight: number;
   getAvatar: (
     roomMember: RoomMember,
     width: number,
@@ -42,86 +44,113 @@ interface Props {
   maximised: boolean;
   fullscreen: boolean;
   onFullscreen: (item: TileDescriptor) => void;
+  opacity: SpringValue<number>;
+  scale: SpringValue<number>;
+  shadow: SpringValue<number>;
+  zIndex: SpringValue<number>;
+  x: SpringValue<number>;
+  y: SpringValue<number>;
+  width: SpringValue<number>;
+  height: SpringValue<number>;
+  onDragRef: RefObject<
+    (
+      tileId: string,
+      state: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
+    ) => void
+  >;
 }
 
-export function VideoTileContainer({
-  item,
-  width,
-  height,
-  getAvatar,
-  audioContext,
-  audioDestination,
-  disableSpeakingIndicator,
-  maximised,
-  fullscreen,
-  onFullscreen,
-  ...rest
-}: Props) {
-  const {
-    isLocal,
-    audioMuted,
-    videoMuted,
-    localVolume,
-    hasAudio,
-    speaking,
-    stream,
-    purpose,
-  } = useCallFeed(item.callFeed);
-  const { rawDisplayName } = useRoomMemberName(item.member);
-  const [tileRef, mediaRef] = useSpatialMediaStream(
-    stream ?? null,
+export const VideoTileContainer: FC<Props> = memo(
+  ({
+    item,
+    targetWidth,
+    targetHeight,
+    getAvatar,
     audioContext,
     audioDestination,
-    localVolume,
-    // The feed is muted if it's local audio (because we don't want our own audio,
-    // but it's a hook and we can't call it conditionally so we're stuck with it)
-    // or if there's a maximised feed in which case we always render audio via audio
-    // elements because we wire it up at the video tile container level and only one
-    // video tile container is displayed.
-    isLocal || maximised
-  );
-  const {
-    modalState: videoTileSettingsModalState,
-    modalProps: videoTileSettingsModalProps,
-  } = useModalTriggerState();
-  const onOptionsPress = () => {
-    videoTileSettingsModalState.open();
-  };
+    disableSpeakingIndicator,
+    maximised,
+    fullscreen,
+    onFullscreen,
+    onDragRef,
+    ...rest
+  }) => {
+    const {
+      isLocal,
+      audioMuted,
+      videoMuted,
+      localVolume,
+      hasAudio,
+      speaking,
+      stream,
+      purpose,
+    } = useCallFeed(item.callFeed);
+    const { rawDisplayName } = useRoomMemberName(item.member);
 
-  const onFullscreenCallback = useCallback(() => {
-    onFullscreen(item);
-  }, [onFullscreen, item]);
+    const [tileRef, mediaRef] = useSpatialMediaStream(
+      stream ?? null,
+      audioContext,
+      audioDestination,
+      localVolume,
+      // The feed is muted if it's local audio (because we don't want our own audio,
+      // but it's a hook and we can't call it conditionally so we're stuck with it)
+      // or if there's a maximised feed in which case we always render audio via audio
+      // elements because we wire it up at the video tile container level and only one
+      // video tile container is displayed.
+      isLocal || maximised
+    );
 
-  // Firefox doesn't respect the disablePictureInPicture attribute
-  // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
+    useDrag((state) => onDragRef.current!(item.id, state), {
+      target: tileRef,
+      filterTaps: true,
+      pointer: { buttons: [1] },
+    });
 
-  return (
-    <>
-      <VideoTile
-        isLocal={isLocal}
-        speaking={speaking && !disableSpeakingIndicator}
-        audioMuted={audioMuted}
-        videoMuted={videoMuted}
-        screenshare={purpose === SDPStreamMetadataPurpose.Screenshare}
-        name={rawDisplayName}
-        connectionState={item.connectionState}
-        ref={tileRef}
-        mediaRef={mediaRef}
-        avatar={getAvatar && getAvatar(item.member, width, height)}
-        onOptionsPress={onOptionsPress}
-        localVolume={localVolume}
-        hasAudio={hasAudio}
-        maximised={maximised}
-        fullscreen={fullscreen}
-        onFullscreen={onFullscreenCallback}
-        {...rest}
-      />
-      {videoTileSettingsModalState.isOpen && !maximised && item.callFeed && (
-        <VideoTileSettingsModal
-          {...videoTileSettingsModalProps}
-          feed={item.callFeed}
+    const {
+      modalState: videoTileSettingsModalState,
+      modalProps: videoTileSettingsModalProps,
+    } = useModalTriggerState();
+    const onOptionsPress = () => {
+      videoTileSettingsModalState.open();
+    };
+
+    const onFullscreenCallback = useCallback(() => {
+      onFullscreen(item);
+    }, [onFullscreen, item]);
+
+    // Firefox doesn't respect the disablePictureInPicture attribute
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
+
+    return (
+      <>
+        <VideoTile
+          isLocal={isLocal}
+          speaking={speaking && !disableSpeakingIndicator}
+          audioMuted={audioMuted}
+          videoMuted={videoMuted}
+          screenshare={purpose === SDPStreamMetadataPurpose.Screenshare}
+          name={rawDisplayName}
+          connectionState={item.connectionState}
+          ref={tileRef}
+          mediaRef={mediaRef}
+          avatar={
+            getAvatar && getAvatar(item.member, targetWidth, targetHeight)
+          }
+          onOptionsPress={onOptionsPress}
+          localVolume={localVolume}
+          hasAudio={hasAudio}
+          maximised={maximised}
+          fullscreen={fullscreen}
+          onFullscreen={onFullscreenCallback}
+          {...rest}
         />
-      )}
-    </>
-  );
-}
+        {videoTileSettingsModalState.isOpen && !maximised && item.callFeed && (
+          <VideoTileSettingsModal
+            {...videoTileSettingsModalProps}
+            feed={item.callFeed}
+          />
+        )}
+      </>
+    );
+  }
+);
