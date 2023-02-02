@@ -32,13 +32,13 @@ import { useDialog } from "@react-aria/dialog";
 import { FocusScope } from "@react-aria/focus";
 import { ButtonAria, useButton } from "@react-aria/button";
 import classNames from "classnames";
-import { AriaDialogProps } from "@react-types/dialog";
+import { SpectrumDialogProps } from "@react-types/dialog";
 import { useTranslation } from "react-i18next";
 
 import { ReactComponent as CloseIcon } from "./icons/Close.svg";
 import styles from "./Modal.module.css";
 
-export interface ModalProps extends OverlayProps, AriaDialogProps {
+export interface ModalProps extends OverlayProps, SpectrumDialogProps {
   title: string;
   children: ReactNode;
   className?: string;
