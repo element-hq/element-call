@@ -30,5 +30,5 @@ export function PTTFeed({
 }) {
   const { isLocal, stream } = useCallFeed(callFeed);
   const mediaRef = useMediaStream(stream, audioOutputDevice, isLocal);
-  return <audio ref={mediaRef} className={styles.audioFeed} />;
+  return <audio ref={mediaRef} className={styles.audioFeed} playsInline />;
 }
