@@ -136,5 +136,8 @@
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Proč neskončit nastavením hesla, abyste mohli účet použít znovu?</0><1>Budete si moci nechat své jméno a nastavit si avatar pro budoucí hovory </1>",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Připojit se</0><1>Or</1><2>Zkopírovat odkaz a připojit se později</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Už máte účet?</0><1><0>Přihlásit se</0> Or <2>Jako host</2></1>",
-  "{{name}} (Waiting for video...)": "{{name}} (Čekání na video...)"
+  "{{name}} (Waiting for video...)": "{{name}} (Čekání na video...)",
+  "This feature is only supported on Firefox.": "Tato funkce je podporována jen ve Firefoxu.",
+  "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Odeslání ladících záznamů nám pomůže diagnostikovat problém.</0>",
+  "<0>Oops, something's gone wrong.</0>": "<0>Oops, něco se pokazilo.</0>"
 }

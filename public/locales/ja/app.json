@@ -90,6 +90,18 @@
   "Video": "ビデオ",
   "Waiting for other participants…": "他の参加者を待機しています…",
   "Waiting for network": "ネットワークを待機しています",
-  "Walkie-talkie call name": "トランシーバー通話の名前",
-  "Walkie-talkie call": "トランシーバー通話"
+  "Walkie-talkie call name": "トランシーバー通話の名称",
+  "Walkie-talkie call": "トランシーバー通話",
+  "Camera {{n}}": "カメラ {{n}}",
+  "{{name}} is talking…": "{{name}}が話しています…",
+  "Yes, join call": "はい、通話に参加",
+  "Spatial audio": "空間オーディオ",
+  "Select an option": "オプションを選択",
+  "Debug log request": "デバッグログを要求",
+  "Your recent calls": "最近の通話",
+  "You can't talk at the same time": "同時に会話することはできません",
+  "WebRTC is not supported or is being blocked in this browser.": "お使いのブラウザでWebRTCがサポートされていないか、またはブロックされています。",
+  "Login to your account": "お持ちのアカウントでログイン",
+  "Freedom": "自由",
+  "{{displayName}}, your call is now ended": "{{displayName}}、通話が終了しました"
 }
