@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { Key, ReactNode, useRef, useState } from "react";
+import React, { Key, useRef, useState } from "react";
 import { AriaMenuOptions, useMenu, useMenuItem } from "@react-aria/menu";
 import { TreeState, useTreeState } from "@react-stately/tree";
 import { mergeProps } from "@react-aria/utils";
@@ -25,11 +25,10 @@ import { Node } from "@react-types/shared";
 import styles from "./Menu.module.css";
 
 interface MenuProps<T> extends AriaMenuOptions<T> {
-  className?: string;
+  className?: String;
   onClose?: () => void;
   onAction: (value: Key) => void;
   label?: string;
-  children: ReactNode;
 }
 
 export function Menu<T extends object>({
@@ -39,11 +38,7 @@ export function Menu<T extends object>({
   label,
   ...rest
 }: MenuProps<T>) {
-  const state = useTreeState<T>({
-    ...rest,
-    selectionMode: "none",
-    children: undefined,
-  });
+  const state = useTreeState<T>({ ...rest, selectionMode: "none" });
   const menuRef = useRef();
   const { menuProps } = useMenu<T>(rest, state, menuRef);
 
