@@ -80,9 +80,6 @@ export const canEnableSpatialAudio = () => {
 };
 
 export const useSpatialAudio = (): [boolean, (val: boolean) => void] => {
-  const settingVal = useSetting("spatial-audio", false);
-  if (canEnableSpatialAudio()) return settingVal;
-
   return [false, (_: boolean) => {}];
 };
 
