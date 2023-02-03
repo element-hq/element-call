@@ -9,12 +9,13 @@ import React, {
   useState,
 } from "react";
 import useMeasure from "react-use-measure";
+import TinyQueue from "tinyqueue";
+import { zipWith } from "lodash";
+
 import styles from "./NewVideoGrid.module.css";
 import { TileDescriptor } from "./TileDescriptor";
 import { VideoGridProps as Props } from "./VideoGrid";
 import { useReactiveState } from "../useReactiveState";
-import TinyQueue from "tinyqueue";
-import { zipWith } from "lodash";
 import { useMergedRefs } from "../useMergedRefs";
 
 interface Cell {
@@ -195,6 +196,18 @@ const areaEnd = (
   g: Grid
 ): number => start + columns - 1 + g.columns * (rows - 1);
 
+const isRowEmpty = (start: number, grid: Grid) => {
+  for (let i = start; i < start + grid.columns; ++i) {
+    if (grid.cells[i] !== undefined) {
+      return false;
+    }
+    if (i > grid.columns && grid.cells[i - grid.columns]?.rows > 1) {
+      return false;
+    }
+  }
+  return true;
+};
+
 /**
  * Gets the index of the next gap in the grid that should be backfilled by 1×1
  * tiles.
@@ -270,8 +283,28 @@ const fillGaps = (g: Grid): Grid => {
     } while (gap !== null);
   }
 
-  // TODO: If there are any large tiles on the last row, shuffle them back
+  // If there are any large tiles on the last row, shuffle them back
   // upwards into a full row
+  let shifted = false;
+  do {
+    shifted = false;
+    for (let i = 0; i < result.cells.length; i += result.columns) {
+      if (i + result.columns > result.cells.length) break;
+
+      const shouldShift =
+        isRowEmpty(i, result) && !isRowEmpty(i + result.columns, result);
+
+      if (shouldShift) {
+        for (let j = i; j < result.cells.length - result.columns; ++j) {
+          if (j + result.columns > result.cells.length) break;
+
+          result.cells[j] = result.cells[j + result.columns];
+          result.cells[j + result.columns] = undefined;
+        }
+        shifted = true;
+      }
+    }
+  } while (shifted);
 
   // Shrink the array to remove trailing gaps
   const finalLength =
@@ -470,8 +503,10 @@ export const NewVideoGrid: FC<Props> = ({
       if (slotGridGeneration !== grid.generation) return prevTiles ?? [];
 
       const slotCells = grid.cells.filter((c) => c?.slot) as Cell[];
-      const tileRects = new Map<TileDescriptor, Rect>(zipWith(slotCells, slotRects, (cell, rect) => [cell.item, rect]))
-      return items.map(item => ({ ...tileRects.get(item)!, item }))
+      const tileRects = new Map<TileDescriptor, Rect>(
+        zipWith(slotCells, slotRects, (cell, rect) => [cell.item, rect])
+      );
+      return items.map((item) => ({ ...tileRects.get(item)!, item }));
     },
     [slotRects, grid, slotGridGeneration]
   );
