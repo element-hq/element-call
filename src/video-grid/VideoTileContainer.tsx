@@ -103,7 +103,7 @@ export const VideoTileContainer: FC<Props> = memo(
     useDrag((state) => onDragRef.current!(item.id, state), {
       target: tileRef,
       filterTaps: true,
-      pointer: { buttons: [1] },
+      preventScroll: true,
     });
 
     const {
