@@ -202,15 +202,18 @@ export function InCallView({
           (f) => f.userId === member.userId && f.deviceId === deviceId
         );
 
-        tileDescriptors.push({
-          id: `${member.userId} ${deviceId}`,
-          member,
-          callFeed,
-          focused: screenshareFeeds.length === 0 && callFeed === activeSpeaker,
-          isLocal: member.userId === localUserId && deviceId === localDeviceId,
-          presenter,
-          connectionState,
-        });
+        for (let i = 0; i < 3; i++)
+          tileDescriptors.push({
+            id: `${member.userId} ${deviceId} ${i}`,
+            member,
+            callFeed,
+            focused:
+              screenshareFeeds.length === 0 && callFeed === activeSpeaker,
+            isLocal:
+              member.userId === localUserId && deviceId === localDeviceId,
+            presenter,
+            connectionState,
+          });
       }
     }
 
