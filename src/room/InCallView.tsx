@@ -65,6 +65,7 @@ import { TileDescriptor } from "../video-grid/TileDescriptor";
 import { AudioSink } from "../video-grid/AudioSink";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { NewVideoGrid } from "../video-grid/NewVideoGrid";
+import { useReactiveState } from "../useReactiveState";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -242,6 +243,40 @@ export function InCallView({
     return tileDescriptors;
   }, [client, participants, userMediaFeeds, activeSpeaker, screenshareFeeds]);
 
+  const [itemsByActivity, setItemsByActivity] = useReactiveState<
+    TileDescriptor[]
+  >(
+    (prevItems = []) => {
+      const prevIds = new Set(prevItems.map((i) => i.id));
+      const newIds = new Set(items.map((i) => i.id));
+      return [
+        ...prevItems.filter((i) => newIds.has(i.id)),
+        ...items.filter((i) => !prevIds.has(i.id)),
+      ];
+    },
+    [items]
+  );
+
+  const onAudioActivity = useCallback(
+    (item: TileDescriptor) => {
+      setItemsByActivity((prevItems) => {
+        const prevIndex = prevItems.findIndex((i) => i.id === item.id);
+        // Move the item to the front of the array
+        return [
+          prevItems[prevIndex],
+          ...prevItems.slice(0, prevIndex),
+          ...prevItems.slice(prevIndex + 1),
+        ];
+      });
+    },
+    [setItemsByActivity]
+  );
+
+  const visibleItems = useMemo(
+    () => itemsByActivity.slice(0, Math.min(20, itemsByActivity.length)),
+    [itemsByActivity]
+  );
+
   const reducedControls = boundsValid && bounds.width <= 400;
   const noControls = reducedControls && bounds.height <= 400;
 
@@ -252,11 +287,11 @@ export function InCallView({
     () =>
       fullscreenParticipant ??
       (noControls
-        ? items.find((item) => item.focused) ??
-          items.find((item) => item.callFeed) ??
+        ? visibleItems.find((item) => item.focused) ??
+          visibleItems.find((item) => item.callFeed) ??
           null
         : null),
-    [fullscreenParticipant, noControls, items]
+    [fullscreenParticipant, noControls, visibleItems]
   );
 
   const renderAvatar = useCallback(
@@ -280,7 +315,7 @@ export function InCallView({
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const renderContent = (): JSX.Element => {
-    if (items.length === 0) {
+    if (visibleItems.length === 0) {
       return (
         <div className={styles.centerMessage}>
           <p>{t("Waiting for other participants…")}</p>
@@ -307,7 +342,7 @@ export function InCallView({
 
     return (
       <NewVideoGrid
-        items={items}
+        items={visibleItems}
         layout={layout}
         disableAnimations={prefersReducedMotion || isSafari}
       >
@@ -323,7 +358,7 @@ export function InCallView({
             getAvatar={renderAvatar}
             audioContext={audioContext}
             audioDestination={audioDestination}
-            disableSpeakingIndicator={items.length < 3}
+            disableSpeakingIndicator={visibleItems.length < 3}
             maximised={false}
             fullscreen={false}
             onFullscreen={toggleFullscreen}

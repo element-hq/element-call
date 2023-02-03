@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useEffect } from "react";
 
 import { TileDescriptor } from "./TileDescriptor";
 import { useCallFeed } from "./useCallFeed";
@@ -23,6 +23,7 @@ import { useMediaStream } from "./useMediaStream";
 interface Props {
   tileDescriptor: TileDescriptor;
   audioOutput: string;
+  onAudioActivity: (item: TileDescriptor) => void;
 }
 
 // Renders and <audio> element on the page playing the given stream
@@ -30,8 +31,15 @@ interface Props {
 export const AudioSink: React.FC<Props> = ({
   tileDescriptor,
   audioOutput,
+  onAudioActivity,
 }: Props) => {
-  const { localVolume, stream } = useCallFeed(tileDescriptor.callFeed);
+  const { localVolume, stream, speaking } = useCallFeed(
+    tileDescriptor.callFeed
+  );
+
+  useEffect(() => {
+    if (speaking) onAudioActivity(tileDescriptor);
+  }, [speaking, tileDescriptor, onAudioActivity]);
 
   const audioElementRef = useMediaStream(
     stream,
