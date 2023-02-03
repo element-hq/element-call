@@ -202,7 +202,7 @@ export function InCallView({
           (f) => f.userId === member.userId && f.deviceId === deviceId
         );
 
-        for (let i = 0; i < 3; i++)
+        for (let i = 0; i < 6; i++)
           tileDescriptors.push({
             id: `${member.userId} ${deviceId} ${i}`,
             member,
