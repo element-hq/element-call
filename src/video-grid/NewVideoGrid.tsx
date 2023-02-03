@@ -470,8 +470,10 @@ export const NewVideoGrid: FC<Props> = ({
       if (slotGridGeneration !== grid.generation) return prevTiles ?? [];
 
       const slotCells = grid.cells.filter((c) => c?.slot) as Cell[];
-      const tileRects = new Map<TileDescriptor, Rect>(zipWith(slotCells, slotRects, (cell, rect) => [cell.item, rect]))
-      return items.map(item => ({ ...tileRects.get(item)!, item }))
+      const tileRects = new Map<TileDescriptor, Rect>(
+        zipWith(slotCells, slotRects, (cell, rect) => [cell.item, rect])
+      );
+      return items.map((item) => ({ ...tileRects.get(item)!, item }));
     },
     [slotRects, grid, slotGridGeneration]
   );
