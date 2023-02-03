@@ -251,9 +251,11 @@ export function InCallView({
   >(
     (prevItems = []) => {
       const prevIds = new Set(prevItems.map((i) => i.id));
-      const newIds = new Set(items.map((i) => i.id));
+      const newItems = new Map(items.map((i) => [i.id, i]));
       return [
-        ...prevItems.filter((i) => newIds.has(i.id)),
+        ...prevItems
+          .filter((i) => newItems.has(i.id))
+          .map((i) => newItems.get(i.id)!),
         ...items.filter((i) => !prevIds.has(i.id)),
       ];
     },
