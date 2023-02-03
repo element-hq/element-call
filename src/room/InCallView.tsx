@@ -396,6 +396,7 @@ export function InCallView({
         <AudioSink
           tileDescriptor={item}
           audioOutput={audioOutput}
+          onAudioActivity={onAudioActivity}
           key={item.id}
         />
       );
