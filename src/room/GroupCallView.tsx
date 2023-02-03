@@ -89,6 +89,7 @@ export function GroupCallView({
 
   useEffect(() => {
     window.groupCall = groupCall;
+    groupCall.setMicrophoneMuted(true);
     return () => {
       delete window.groupCall;
     };

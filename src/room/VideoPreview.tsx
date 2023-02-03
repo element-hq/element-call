@@ -87,10 +87,6 @@ export function VideoPreview({
             </div>
           )}
           <div className={styles.previewButtons}>
-            <MicButton
-              muted={microphoneMuted}
-              onPress={toggleMicrophoneMuted}
-            />
             <VideoButton
               muted={localVideoMuted}
               onPress={toggleLocalVideoMuted}
