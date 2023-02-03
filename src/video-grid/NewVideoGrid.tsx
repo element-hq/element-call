@@ -308,6 +308,7 @@ const cycleTileSize = (tileId: string, g: Grid): Grid => {
   const nextScanLocations = new Set<number>([from]);
   const scanColumnOffset = Math.floor((toWidth - 1) / 2);
   const scanRowOffset = Math.floor((toHeight - 1) / 2);
+  const rows = row(g.cells.length - 1, g) + 1
   let to: number | null = null;
 
   const displaceable = (c: Cell | undefined, i: number): boolean =>
@@ -319,6 +320,7 @@ const cycleTileSize = (tileId: string, g: Grid): Grid => {
     const start = scanLocation - scanColumnOffset - g.columns * scanRowOffset;
     const end = areaEnd(start, candidateWidth, candidateHeight, g);
     const startColumn = column(start, g);
+    const startRow = row(start, g)
     const endColumn = column(end, g);
 
     if (
@@ -334,8 +336,8 @@ const cycleTileSize = (tileId: string, g: Grid): Grid => {
 
     if (startColumn > 0) nextScanLocations.add(scanLocation - 1);
     if (endColumn < g.columns - 1) nextScanLocations.add(scanLocation + 1);
-    nextScanLocations.add(scanLocation - g.columns);
-    nextScanLocations.add(scanLocation + g.columns);
+    if (startRow > 0) nextScanLocations.add(scanLocation - g.columns);
+    if (startRow <= rows) nextScanLocations.add(scanLocation + g.columns);
   }
 
   // TODO: Don't give up on placing the tile yet
