@@ -20,10 +20,9 @@ limitations under the License.
   top: 0;
   width: var(--tileWidth);
   height: var(--tileHeight);
-  border-radius: 20px;
+  border-radius: 8px;
   overflow: hidden;
   cursor: pointer;
-  touch-action: none;
 
   /* HACK: This has no visual effect due to the short duration, but allows the
   JS to detect movement via the transform property for audio spatialization */
@@ -181,4 +180,10 @@ limitations under the License.
   top: 16px;
   left: 16px;
   background-color: rgba(0, 0, 0, 0.5);
+}
+
+@media (min-width: 800px) {
+  .videoTile {
+    border-radius: 20px;
+  }
 }
