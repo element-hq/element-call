@@ -2,20 +2,31 @@
   contain: strict;
   position: relative;
   flex-grow: 1;
-  padding: 0 22px;
+  padding: 0 20px;
   overflow-y: auto;
   overflow-x: hidden;
 }
 
 .slotGrid {
-  contain: strict;
   position: relative;
   display: grid;
-  grid-auto-rows: 183px;
-  column-gap: 18px;
-  row-gap: 21px;
+  grid-auto-rows: 163px;
+  gap: 8px;
+  padding-bottom: var(--footerHeight);
 }
 
 .slot {
   contain: strict;
+}
+
+@media (min-width: 800px) {
+  .grid {
+    padding: 0 22px;
+  }
+
+  .slotGrid {
+    grid-auto-rows: 183px;
+    column-gap: 18px;
+    row-gap: 21px;
+  }
 }

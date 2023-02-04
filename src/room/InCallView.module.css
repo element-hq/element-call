@@ -20,9 +20,10 @@ limitations under the License.
   flex-direction: column;
   overflow: hidden;
   min-height: 100%;
-  position: fixed;
   height: 100%;
   width: 100%;
+  --footerPadding: 8px;
+  --footerHeight: calc(50px + 2 * var(--footerPadding));
 }
 
 .centerMessage {
@@ -39,12 +40,27 @@ limitations under the License.
 }
 
 .footer {
-  position: relative;
-  flex-shrink: 0;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: calc(50px + 2 * 8px);
+  padding: var(--footerPadding) 0;
+  /* TODO: Un-hardcode these colors */
+  background: linear-gradient(
+    360deg,
+    #15191e 0%,
+    rgba(21, 25, 30, 0.9) 37%,
+    rgba(21, 25, 30, 0.8) 49.68%,
+    rgba(21, 25, 30, 0.7) 56.68%,
+    rgba(21, 25, 30, 0.427397) 72.92%,
+    rgba(21, 25, 30, 0.257534) 81.06%,
+    rgba(21, 25, 30, 0.136986) 87.29%,
+    rgba(21, 25, 30, 0.0658079) 92.4%,
+    rgba(21, 25, 30, 0) 100%
+  );
 }
 
 .footer > * {
@@ -75,13 +91,13 @@ limitations under the License.
 }
 
 @media (min-height: 300px) {
-  .footer {
-    height: calc(50px + 2 * 24px);
+  .inRoom {
+    --footerPadding: 24px;
   }
 }
 
 @media (min-width: 800px) {
-  .footer {
-    height: calc(50px + 2 * 32px);
+  .inRoom {
+    --footerPadding: 32px;
   }
 }

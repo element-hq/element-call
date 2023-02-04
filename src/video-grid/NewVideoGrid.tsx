@@ -290,7 +290,9 @@ const cycleTileSize = (tileId: string, g: Grid): Grid => {
   const fromEnd = areaEnd(from, fromWidth, fromHeight, g);
 
   const [toWidth, toHeight] =
-    fromWidth === 1 && fromHeight === 1 ? [3, 2] : [1, 1];
+    fromWidth === 1 && fromHeight === 1
+      ? [Math.min(3, Math.max(2, g.columns - 1)), 2]
+      : [1, 1];
   const newRows = Math.max(
     0,
     Math.ceil((toWidth * toHeight - fromWidth * fromHeight) / g.columns)
@@ -308,7 +310,7 @@ const cycleTileSize = (tileId: string, g: Grid): Grid => {
   const nextScanLocations = new Set<number>([from]);
   const scanColumnOffset = Math.floor((toWidth - 1) / 2);
   const scanRowOffset = Math.floor((toHeight - 1) / 2);
-  const rows = row(g.cells.length - 1, g) + 1
+  const rows = row(g.cells.length - 1, g) + 1;
   let to: number | null = null;
 
   const displaceable = (c: Cell | undefined, i: number): boolean =>
@@ -320,7 +322,7 @@ const cycleTileSize = (tileId: string, g: Grid): Grid => {
     const start = scanLocation - scanColumnOffset - g.columns * scanRowOffset;
     const end = areaEnd(start, candidateWidth, candidateHeight, g);
     const startColumn = column(start, g);
-    const startRow = row(start, g)
+    const startRow = row(start, g);
     const endColumn = column(end, g);
 
     if (
@@ -424,8 +426,30 @@ export const NewVideoGrid: FC<Props> = ({
     return rects;
   }, [items, slotGridGeneration, slotGrid, gridBounds]);
 
-  const [grid, setGrid] = useReactiveState<Grid>(
-    (prevGrid = { generation: 0, columns: 6, cells: [] }) => {
+  const [columns] = useReactiveState<number | null>(
+    // Since grid resizing isn't implemented yet, pick a column count on mount
+    // and stick to it
+    (prevColumns) =>
+      prevColumns !== undefined && prevColumns !== null
+        ? prevColumns
+        : // The grid bounds might not be known yet
+        gridBounds.width === 0
+        ? null
+        : Math.max(2, Math.floor(gridBounds.width * 0.0045)),
+    [gridBounds]
+  );
+
+  const [grid, setGrid] = useReactiveState<Grid | null>(
+    (prevGrid = null) => {
+      if (prevGrid === null) {
+        // We can't do anything if the column count isn't known yet
+        if (columns === null) {
+          return null;
+        } else {
+          prevGrid = { generation: slotGridGeneration, columns, cells: [] };
+        }
+      }
+
       // Step 1: Update tiles that still exist, and remove tiles that have left
       // the grid
       const itemsById = new Map(items.map((i) => [i.id, i]));
@@ -462,18 +486,20 @@ export const NewVideoGrid: FC<Props> = ({
 
       return grid3;
     },
-    [items]
+    [items, columns]
   );
 
   const [tiles] = useReactiveState<Tile[]>(
     (prevTiles) => {
       // If React hasn't yet rendered the current generation of the layout, skip
       // the update, because grid and slotRects will be out of sync
-      if (slotGridGeneration !== grid.generation) return prevTiles ?? [];
+      if (slotGridGeneration !== grid?.generation) return prevTiles ?? [];
 
       const slotCells = grid.cells.filter((c) => c?.slot) as Cell[];
-      const tileRects = new Map<TileDescriptor, Rect>(zipWith(slotCells, slotRects, (cell, rect) => [cell.item, rect]))
-      return items.map(item => ({ ...tileRects.get(item)!, item }))
+      const tileRects = new Map<TileDescriptor, Rect>(
+        zipWith(slotCells, slotRects, (cell, rect) => [cell.item, rect])
+      );
+      return items.map((item) => ({ ...tileRects.get(item)!, item }));
     },
     [slotRects, grid, slotGridGeneration]
   );
@@ -516,7 +542,7 @@ export const NewVideoGrid: FC<Props> = ({
   ) as unknown as [TransitionFn<Tile, TileSpring>, SpringRef<TileSpring>];
 
   const slotGridStyle = useMemo(() => {
-    const columnCount = 6;
+    if (grid === null) return {};
 
     const areas = new Array<(number | null)[]>(
       Math.ceil(grid.cells.length / grid.columns)
@@ -548,9 +574,9 @@ export const NewVideoGrid: FC<Props> = ({
               .join(" ")}'`
         )
         .join(" "),
-      gridTemplateColumns: `repeat(${columnCount}, 1fr)`,
+      gridTemplateColumns: `repeat(${columns}, 1fr)`,
     };
-  }, [grid]);
+  }, [grid, columns]);
 
   const animateDraggedTile = (endOfGesture: boolean) => {
     const { tileId, tileX, tileY, cursorX, cursorY } = dragState.current!;
@@ -598,8 +624,8 @@ export const NewVideoGrid: FC<Props> = ({
     );
     if (overTile !== undefined && overTile.item.id !== tileId) {
       setGrid((g) => ({
-        ...g,
-        cells: g.cells.map((c) => {
+        ...g!,
+        cells: g!.cells.map((c) => {
           if (c?.item === overTile.item) return { ...c, item: tile.item };
           if (c?.item === tile.item) return { ...c, item: overTile.item };
           return c;
@@ -618,7 +644,7 @@ export const NewVideoGrid: FC<Props> = ({
     }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
   ) => {
     if (tap) {
-      setGrid((g) => cycleTileSize(tileId, g));
+      setGrid((g) => cycleTileSize(tileId, g!));
     } else {
       const tileSpring = springRef.current
         .find((c) => (c.item as Tile).item.id === tileId)!
@@ -671,8 +697,8 @@ export const NewVideoGrid: FC<Props> = ({
     return slots;
   }, [items.length]);
 
-  // Render nothing if the bounds are not yet known
-  if (gridBounds.width === 0) {
+  // Render nothing if the grid has yet to be generated
+  if (grid === null) {
     return <div ref={gridRef} className={styles.grid} />;
   }
 
