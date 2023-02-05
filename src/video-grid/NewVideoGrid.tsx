@@ -130,7 +130,8 @@ const findLast1By1Index = (g: Grid): number | null =>
   findLastIndex(g.cells, (c) => c?.rows === 1 && c?.columns === 1);
 
 const row = (index: number, g: Grid): number => Math.floor(index / g.columns);
-const column = (index: number, g: Grid): number => index % g.columns;
+const column = (index: number, g: Grid): number =>
+  ((index % g.columns) + g.columns) % g.columns;
 
 const inArea = (
   index: number,
