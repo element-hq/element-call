@@ -30,9 +30,6 @@ limitations under the License.
 }
 
 .videoTile * {
-  touch-action: none;
-  -moz-user-select: none;
-  -webkit-user-drag: none;
   user-select: none;
 }
 
