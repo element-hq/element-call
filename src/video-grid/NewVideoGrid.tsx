@@ -17,8 +17,11 @@ limitations under the License.
 import { SpringRef, TransitionFn, useTransition } from "@react-spring/web";
 import { EventTypes, Handler, useScroll } from "@use-gesture/react";
 import React, {
+  Dispatch,
   FC,
   ReactNode,
+  SetStateAction,
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -39,7 +42,81 @@ import {
   fillGaps,
   forEachCellInArea,
   cycleTileSize,
+  appendItems,
 } from "./model";
+
+interface GridState extends Grid {
+  /**
+   * The ID of the current state of the grid.
+   */
+  generation: number;
+}
+
+const useGridState = (
+  columns: number | null,
+  items: TileDescriptor[]
+): [GridState | null, Dispatch<SetStateAction<Grid>>] => {
+  const [grid, setGrid_] = useReactiveState<GridState | null>(
+    (prevGrid = null) => {
+      if (prevGrid === null) {
+        // We can't do anything if the column count isn't known yet
+        if (columns === null) {
+          return null;
+        } else {
+          prevGrid = { generation: 0, columns, cells: [] };
+        }
+      }
+
+      // Step 1: Update tiles that still exist, and remove tiles that have left
+      // the grid
+      const itemsById = new Map(items.map((i) => [i.id, i]));
+      const grid1: Grid = {
+        ...prevGrid,
+        cells: prevGrid.cells.map((c) => {
+          if (c === undefined) return undefined;
+          const item = itemsById.get(c.item.id);
+          return item === undefined ? undefined : { ...c, item };
+        }),
+      };
+
+      // Step 2: Backfill gaps left behind by removed tiles
+      const grid2 = fillGaps(grid1);
+
+      // Step 3: Add new tiles to the end of the grid
+      const existingItemIds = new Set(
+        grid2.cells.filter((c) => c !== undefined).map((c) => c!.item.id)
+      );
+      const newItems = items.filter((i) => !existingItemIds.has(i.id));
+      const grid3 = appendItems(newItems, grid2);
+
+      return { ...grid3, generation: prevGrid.generation + 1 };
+    },
+    [columns, items]
+  );
+
+  const setGrid: Dispatch<SetStateAction<Grid>> = useCallback(
+    (action) => {
+      if (typeof action === "function") {
+        setGrid_((prevGrid) =>
+          prevGrid === null
+            ? null
+            : {
+                ...(action as (prev: Grid) => Grid)(prevGrid),
+                generation: prevGrid.generation + 1,
+              }
+        );
+      } else {
+        setGrid_((prevGrid) => ({
+          ...action,
+          generation: prevGrid?.generation ?? 1,
+        }));
+      }
+    },
+    [setGrid_]
+  );
+
+  return [grid, setGrid];
+};
 
 interface Rect {
   x: number;
@@ -133,55 +210,7 @@ export const NewVideoGrid: FC<Props> = ({
     [gridBounds]
   );
 
-  const [grid, setGrid] = useReactiveState<Grid | null>(
-    (prevGrid = null) => {
-      if (prevGrid === null) {
-        // We can't do anything if the column count isn't known yet
-        if (columns === null) {
-          return null;
-        } else {
-          prevGrid = { generation: slotGridGeneration, columns, cells: [] };
-        }
-      }
-
-      // Step 1: Update tiles that still exist, and remove tiles that have left
-      // the grid
-      const itemsById = new Map(items.map((i) => [i.id, i]));
-      const grid1: Grid = {
-        ...prevGrid,
-        generation: prevGrid.generation + 1,
-        cells: prevGrid.cells.map((c) => {
-          if (c === undefined) return undefined;
-          const item = itemsById.get(c.item.id);
-          return item === undefined ? undefined : { ...c, item };
-        }),
-      };
-
-      // Step 2: Backfill gaps left behind by removed tiles
-      const grid2 = fillGaps(grid1);
-
-      // Step 3: Add new tiles to the end of the grid
-      const existingItemIds = new Set(
-        grid2.cells.filter((c) => c !== undefined).map((c) => c!.item.id)
-      );
-      const newItems = items.filter((i) => !existingItemIds.has(i.id));
-      const grid3: Grid = {
-        ...grid2,
-        cells: [
-          ...grid2.cells,
-          ...newItems.map((i) => ({
-            item: i,
-            slot: true,
-            columns: 1,
-            rows: 1,
-          })),
-        ],
-      };
-
-      return grid3;
-    },
-    [items, columns]
-  );
+  const [grid, setGrid] = useGridState(columns, items);
 
   const [tiles] = useReactiveState<Tile[]>(
     (prevTiles) => {
@@ -189,9 +218,9 @@ export const NewVideoGrid: FC<Props> = ({
       // the update, because grid and slotRects will be out of sync
       if (slotGridGeneration !== grid?.generation) return prevTiles ?? [];
 
-      const slotCells = grid.cells.filter((c) => c?.slot) as Cell[];
+      const tileCells = grid.cells.filter((c) => c?.origin) as Cell[];
       const tileRects = new Map<TileDescriptor, Rect>(
-        zipWith(slotCells, slotRects, (cell, rect) => [cell.item, rect])
+        zipWith(tileCells, slotRects, (cell, rect) => [cell.item, rect])
       );
       return items.map((item) => ({ ...tileRects.get(item)!, item }));
     },
@@ -247,7 +276,7 @@ export const NewVideoGrid: FC<Props> = ({
     let slotId = 0;
     for (let i = 0; i < grid.cells.length; i++) {
       const cell = grid.cells[i];
-      if (cell?.slot) {
+      if (cell?.origin) {
         const slotEnd = i + cell.columns - 1 + grid.columns * (cell.rows - 1);
         forEachCellInArea(
           i,
