@@ -148,17 +148,26 @@ interface DragState {
   cursorY: number;
 }
 
+/**
+ * An interactive, animated grid of video tiles.
+ */
 export const NewVideoGrid: FC<Props> = ({
   items,
   disableAnimations,
   children,
 }) => {
+  // Overview: This component lays out tiles by rendering an invisible template
+  // grid of "slots" for tiles to go in. Once rendered, it uses the DOM API to
+  // get the dimensions of each slot, feeding these numbers back into
+  // react-spring to let the actual tiles move freely atop the template.
+
+  // To know when the rendered grid becomes consistent with the layout we've
+  // requested, we give it a data-generation attribute which holds the ID of the
+  // most recently rendered generation of the grid, and watch it with a
+  // MutationObserver.
+
   const [slotGrid, setSlotGrid] = useState<HTMLDivElement | null>(null);
   const [slotGridGeneration, setSlotGridGeneration] = useState(0);
-
-  const [gridRef1, gridBounds] = useMeasure();
-  const gridRef2 = useRef<HTMLDivElement | null>(null);
-  const gridRef = useMergedRefs(gridRef1, gridRef2);
 
   useEffect(() => {
     if (slotGrid !== null) {
@@ -178,6 +187,10 @@ export const NewVideoGrid: FC<Props> = ({
       return () => observer.disconnect();
     }
   }, [slotGrid, setSlotGridGeneration]);
+
+  const [gridRef1, gridBounds] = useMeasure();
+  const gridRef2 = useRef<HTMLDivElement | null>(null);
+  const gridRef = useMergedRefs(gridRef1, gridRef2);
 
   const slotRects = useMemo(() => {
     if (slotGrid === null) return [];
@@ -214,7 +227,7 @@ export const NewVideoGrid: FC<Props> = ({
 
   const [tiles] = useReactiveState<Tile[]>(
     (prevTiles) => {
-      // If React hasn't yet rendered the current generation of the layout, skip
+      // If React hasn't yet rendered the current generation of the grid, skip
       // the update, because grid and slotRects will be out of sync
       if (slotGridGeneration !== grid?.generation) return prevTiles ?? [];
 
@@ -263,43 +276,6 @@ export const NewVideoGrid: FC<Props> = ({
     [tiles, disableAnimations]
     // react-spring's types are bugged and can't infer the spring type
   ) as unknown as [TransitionFn<Tile, TileSpring>, SpringRef<TileSpring>];
-
-  const slotGridStyle = useMemo(() => {
-    if (grid === null) return {};
-
-    const areas = new Array<(number | null)[]>(
-      Math.ceil(grid.cells.length / grid.columns)
-    );
-    for (let i = 0; i < areas.length; i++)
-      areas[i] = new Array<number | null>(grid.columns).fill(null);
-
-    let slotId = 0;
-    for (let i = 0; i < grid.cells.length; i++) {
-      const cell = grid.cells[i];
-      if (cell?.origin) {
-        const slotEnd = i + cell.columns - 1 + grid.columns * (cell.rows - 1);
-        forEachCellInArea(
-          i,
-          slotEnd,
-          grid,
-          (_c, j) => (areas[row(j, grid)][column(j, grid)] = slotId)
-        );
-        slotId++;
-      }
-    }
-
-    return {
-      gridTemplateAreas: areas
-        .map(
-          (row) =>
-            `'${row
-              .map((slotId) => (slotId === null ? "." : `s${slotId}`))
-              .join(" ")}'`
-        )
-        .join(" "),
-      gridTemplateColumns: `repeat(${columns}, 1fr)`,
-    };
-  }, [grid, columns]);
 
   const animateDraggedTile = (endOfGesture: boolean) => {
     const { tileId, tileX, tileY, cursorX, cursorY } = dragState.current!;
@@ -357,6 +333,11 @@ export const NewVideoGrid: FC<Props> = ({
     }
   };
 
+  // Callback for useDrag. We could call useDrag here, but the default
+  // pattern of spreading {...bind()} across the children to bind the gesture
+  // ends up breaking memoization and ruining this component's performance.
+  // Instead, we pass this callback to each tile via a ref, to let them bind the
+  // gesture using the much more sensible ref-based method.
   const onTileDrag = (
     tileId: string,
     {
@@ -410,6 +391,43 @@ export const NewVideoGrid: FC<Props> = ({
     },
     { target: gridRef2 }
   );
+
+  const slotGridStyle = useMemo(() => {
+    if (grid === null) return {};
+
+    const areas = new Array<(number | null)[]>(
+      Math.ceil(grid.cells.length / grid.columns)
+    );
+    for (let i = 0; i < areas.length; i++)
+      areas[i] = new Array<number | null>(grid.columns).fill(null);
+
+    let slotId = 0;
+    for (let i = 0; i < grid.cells.length; i++) {
+      const cell = grid.cells[i];
+      if (cell?.origin) {
+        const slotEnd = i + cell.columns - 1 + grid.columns * (cell.rows - 1);
+        forEachCellInArea(
+          i,
+          slotEnd,
+          grid,
+          (_c, j) => (areas[row(j, grid)][column(j, grid)] = slotId)
+        );
+        slotId++;
+      }
+    }
+
+    return {
+      gridTemplateAreas: areas
+        .map(
+          (row) =>
+            `'${row
+              .map((slotId) => (slotId === null ? "." : `s${slotId}`))
+              .join(" ")}'`
+        )
+        .join(" "),
+      gridTemplateColumns: `repeat(${columns}, 1fr)`,
+    };
+  }, [grid, columns]);
 
   const slots = useMemo(() => {
     const slots = new Array<ReactNode>(items.length);
