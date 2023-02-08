@@ -17,29 +17,34 @@ limitations under the License.
 import TinyQueue from "tinyqueue";
 import { TileDescriptor } from "./TileDescriptor";
 
+/**
+ * A 1×1 cell in a grid which belongs to a tile.
+ */
 export interface Cell {
   /**
-   * The item held by the slot containing this cell.
+   * The item displayed on the tile.
    */
   item: TileDescriptor;
   /**
-   * Whether this cell is the first cell of the containing slot.
+   * Whether this cell is the origin (top left corner) of the tile.
    */
-  // TODO: Rename to 'start'?
-  slot: boolean;
+  origin: boolean;
   /**
-   * The width, in columns, of the containing slot.
+   * The width, in columns, of the tile.
    */
   columns: number;
   /**
-   * The height, in rows, of the containing slot.
+   * The height, in rows, of the tile.
    */
   rows: number;
 }
 
 export interface Grid {
-  generation: number;
   columns: number;
+  /**
+   * The cells of the grid, in left-to-right top-to-bottom order.
+   * undefined = empty.
+   */
   cells: (Cell | undefined)[];
 }
 
@@ -55,9 +60,9 @@ export function dijkstra(g: Grid): number[] {
 
   const visit = (curr: number, via: number) => {
     const viaCell = g.cells[via];
-    const viaLargeSlot =
+    const viaLargeTile =
       viaCell !== undefined && (viaCell.rows > 1 || viaCell.columns > 1);
-    const distanceVia = distances[via] + (viaLargeSlot ? 4 : 1);
+    const distanceVia = distances[via] + (viaLargeTile ? 4 : 1);
 
     if (distanceVia < distances[curr]) {
       distances[curr] = distanceVia;
@@ -252,6 +257,21 @@ export function fillGaps(g: Grid): Grid {
   return result;
 }
 
+export function appendItems(items: TileDescriptor[], g: Grid): Grid {
+  return {
+    ...g,
+    cells: [
+      ...g.cells,
+      ...items.map((i) => ({
+        item: i,
+        origin: true,
+        columns: 1,
+        rows: 1,
+      })),
+    ],
+  };
+}
+
 export function cycleTileSize(tileId: string, g: Grid): Grid {
   const from = g.cells.findIndex((c) => c?.item.id === tileId);
   if (from === -1) return g; // Tile removed, no change
@@ -273,7 +293,6 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
 
   const gappyGrid: Grid = {
     ...g,
-    generation: g.generation + 1,
     cells: new Array(g.cells.length + newRows * g.columns),
   };
 
@@ -318,7 +337,7 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
   const toRow = row(to, g);
 
   g.cells.forEach((c, src) => {
-    if (c?.slot && c.item.id !== tileId) {
+    if (c?.origin && c.item.id !== tileId) {
       const offset =
         row(src, g) > toRow + candidateHeight - 1 ? g.columns * newRows : 0;
       forEachCellInArea(src, areaEnd(src, c.columns, c.rows, g), g, (c, i) => {
@@ -333,7 +352,7 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
     if (c !== undefined) displacedTiles.push(c);
     gappyGrid.cells[i] = {
       item: g.cells[from]!.item,
-      slot: i === to,
+      origin: i === to,
       columns: toWidth,
       rows: toHeight,
     };
