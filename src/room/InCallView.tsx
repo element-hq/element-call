@@ -65,6 +65,7 @@ import { TileDescriptor } from "../video-grid/TileDescriptor";
 import { AudioSink } from "../video-grid/AudioSink";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { NewVideoGrid } from "../video-grid/NewVideoGrid";
+import { SpringValue } from "@react-spring/web";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -290,8 +291,9 @@ export function InCallView({
     if (maximisedParticipant) {
       return (
         <VideoTileContainer
-          height={bounds.height}
-          width={bounds.width}
+          height={new SpringValue<number>(bounds.height)}
+          width={new SpringValue<number>(bounds.width)}
+          shadow={new SpringValue<number>(0)}
           key={maximisedParticipant.id}
           item={maximisedParticipant}
           getAvatar={renderAvatar}
