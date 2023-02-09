@@ -138,7 +138,7 @@ export class PosthogAnalytics {
       this.enabled = true;
     } else {
       logger.info(
-        "Posthog is not enabled because there are no api key and no host given in the config"
+        "Posthog is not enabled because there is no api key or no host given in the config"
       );
       this.enabled = false;
     }
