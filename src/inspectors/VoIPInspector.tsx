@@ -14,11 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { MatrixClient } from "matrix-js-sdk/src/client";
+import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
+import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import React from "react";
 
 import styles from "./VoIPInspector.module.css";
-import { GroupCall, MatrixClient } from "../../../matrix-js-sdk";
-import { CallFeed } from "../../../matrix-js-sdk/src/webrtc/callFeed";
 
 interface VoIPViewerProps {
   client: MatrixClient;
