@@ -44,8 +44,6 @@ interface InspectorContextState {
   remoteUserIds?: string[];
   localUserId?: string;
   localSessionId?: string;
-  userMediaFeeds: CallFeed[];
-  screenshareFeeds: CallFeed[];
 }
 
 const defaultCollapsedFields = [
@@ -365,8 +363,6 @@ function useGroupCallState(
     eventsByUserId: {},
     remoteUserIds: [],
     callStateEvent: null,
-    userMediaFeeds: groupCall.userMediaFeeds,
-    screenshareFeeds: groupCall.screenshareFeeds,
     memberStateEvents: {},
   });
 
@@ -483,7 +479,7 @@ export function GroupCallInspector({
           <button onClick={() => setCurrentTab("voip")}>VoIP</button>
         )}
       </div>
-      {currentTab === "sequence-diagrams" && (
+      {showCallFeedDebugInfo && currentTab === "sequence-diagrams" && (
         <SequenceDiagramViewer
           localUserId={state.localUserId}
           selectedUserId={selectedUserId}
@@ -492,7 +488,7 @@ export function GroupCallInspector({
           events={state.eventsByUserId[selectedUserId]}
         />
       )}
-      {currentTab === "inspector" && (
+      {showInspector && currentTab === "inspector" && (
         <ReactJson
           theme="monokai"
           src={state}
@@ -505,12 +501,12 @@ export function GroupCallInspector({
           style={{ height: "100%", overflowY: "scroll" }}
         />
       )}
-      {currentTab === "voip" && (
+      {showVoIPDebugInfo && currentTab === "voip" && (
         <VoIPViewer
           client={client}
           groupCall={groupCall}
-          userMediaFeeds={state.userMediaFeeds}
-          screenshareFeeds={state.screenshareFeeds}
+          userMediaFeeds={groupCall.userMediaFeeds}
+          screenshareFeeds={groupCall.screenshareFeeds}
         />
       )}
     </Resizable>
