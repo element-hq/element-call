@@ -158,6 +158,38 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     [setState]
   );
 
+  const doNothingMediaActionCallback = useCallback(
+    (details: MediaSessionActionDetails) => {},
+    []
+  );
+
+  useEffect(() => {
+    // disable the media action keys, otherwise audio elements get paused when
+    // the user presses media keys or unplugs headphones, etc.
+    // Note there are actions for muting / unmuting a microphone & hanging up
+    // which we could wire up.
+    const mediaActions: MediaSessionAction[] = [
+      "play",
+      "pause",
+      "stop",
+      "nexttrack",
+      "previoustrack",
+    ];
+
+    for (const mediaAction of mediaActions) {
+      navigator.mediaSession.setActionHandler(
+        mediaAction,
+        doNothingMediaActionCallback
+      );
+    }
+
+    return () => {
+      for (const mediaAction of mediaActions) {
+        navigator.mediaSession.setActionHandler(mediaAction, null);
+      }
+    };
+  }, [doNothingMediaActionCallback]);
+
   useEffect(() => {
     function onGroupCallStateChanged() {
       updateState({
