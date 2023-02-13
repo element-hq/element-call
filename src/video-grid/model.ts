@@ -48,21 +48,33 @@ export interface Grid {
   cells: (Cell | undefined)[];
 }
 
-export function dijkstra(g: Grid): number[] {
-  const end = findLast1By1Index(g) ?? 0;
-  const endRow = row(end, g);
-  const endColumn = column(end, g);
+/**
+ * Gets the paths that tiles should travel along in the grid to reach a
+ * particular destination.
+ * @param dest The destination index.
+ * @param g The grid.
+ * @returns An array in which each cell holds the index of the next cell to move
+ *   to to reach the destination, or null if it is the destination.
+ */
+export function getPaths(dest: number, g: Grid): (number | null)[] {
+  const destRow = row(dest, g);
+  const destColumn = column(dest, g);
 
-  const distances = new Array<number>(end + 1).fill(Infinity);
-  distances[end] = 0;
-  const edges = new Array<number | undefined>(end).fill(undefined);
-  const heap = new TinyQueue([end], (i) => distances[i]);
+  // This is Dijkstra's algorithm
+
+  const distances = new Array<number>(dest + 1).fill(Infinity);
+  distances[dest] = 0;
+  const edges = new Array<number | null | undefined>(dest).fill(undefined);
+  edges[dest] = null;
+  const heap = new TinyQueue([dest], (i) => distances[i]);
 
   const visit = (curr: number, via: number) => {
     const viaCell = g.cells[via];
     const viaLargeTile =
       viaCell !== undefined && (viaCell.rows > 1 || viaCell.columns > 1);
-    const distanceVia = distances[via] + (viaLargeTile ? 4 : 1);
+    // Since it looks nicer to have paths go around large tiles, we impose an
+    // increased cost for moving through them
+    const distanceVia = distances[via] + (viaLargeTile ? 8 : 1);
 
     if (distanceVia < distances[curr]) {
       distances[curr] = distanceVia;
@@ -76,18 +88,20 @@ export function dijkstra(g: Grid): number[] {
     const viaRow = row(via, g);
     const viaColumn = column(via, g);
 
+    // Visit each neighbor
     if (viaRow > 0) visit(via - g.columns, via);
     if (viaColumn > 0) visit(via - 1, via);
-    if (viaColumn < (viaRow === endRow ? endColumn : g.columns - 1))
+    if (viaColumn < (viaRow === destRow ? destColumn : g.columns - 1))
       visit(via + 1, via);
     if (
-      viaRow < endRow - 1 ||
-      (viaRow === endRow - 1 && viaColumn <= endColumn)
+      viaRow < destRow - 1 ||
+      (viaRow === destRow - 1 && viaColumn <= destColumn)
     )
       visit(via + g.columns, via);
   }
 
-  return edges as number[];
+  // The heap is empty, so we've generated all paths
+  return edges as (number | null)[];
 }
 
 function findLastIndex<T>(
@@ -194,27 +208,30 @@ function getNextGap(g: Grid): number | null {
   return null;
 }
 
+/**
+ * Backfill any gaps in the grid.
+ */
 export function fillGaps(g: Grid): Grid {
   const result: Grid = { ...g, cells: [...g.cells] };
   let gap = getNextGap(result);
 
   if (gap !== null) {
-    const pathToEnd = dijkstra(result);
+    const pathsToEnd = getPaths(findLast1By1Index(result)!, result);
 
     do {
       let filled = false;
       let to = gap;
-      let from: number | undefined = pathToEnd[gap];
+      let from = pathsToEnd[gap];
 
       // First, attempt to fill the gap by moving 1×1 tiles backwards from the
       // end of the grid along a set path
-      while (from !== undefined) {
+      while (from !== null) {
         const toCell = result.cells[to];
         const fromCell = result.cells[from];
 
-        // Skip over large tiles
+        // Skip over slots that are already full
         if (toCell !== undefined) {
-          to = pathToEnd[to];
+          to = pathsToEnd[to]!;
           // Skip over large tiles. Also, we might run into gaps along the path
           // created during the filling of previous gaps. Skip over those too;
           // they'll be picked up on the next iteration of the outer loop.
@@ -223,13 +240,13 @@ export function fillGaps(g: Grid): Grid {
           fromCell.rows > 1 ||
           fromCell.columns > 1
         ) {
-          from = pathToEnd[from];
+          from = pathsToEnd[from];
         } else {
           result.cells[to] = result.cells[from];
           result.cells[from] = undefined;
           filled = true;
-          to = pathToEnd[to];
-          from = pathToEnd[from];
+          to = pathsToEnd[to]!;
+          from = pathsToEnd[from];
         }
       }
 
@@ -272,6 +289,12 @@ export function appendItems(items: TileDescriptor[], g: Grid): Grid {
   };
 }
 
+/**
+ * Changes the size of a tile, rearranging the grid to make space.
+ * @param tileId The ID of the tile to modify.
+ * @param g The grid.
+ * @returns The updated grid.
+ */
 export function cycleTileSize(tileId: string, g: Grid): Grid {
   const from = g.cells.findIndex((c) => c?.item.id === tileId);
   if (from === -1) return g; // Tile removed, no change
@@ -279,63 +302,84 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
   const fromHeight = g.cells[from]!.rows;
   const fromEnd = areaEnd(from, fromWidth, fromHeight, g);
 
+  // The target dimensions, which toggle between 1×1 and larger than 1×1
   const [toWidth, toHeight] =
     fromWidth === 1 && fromHeight === 1
       ? [Math.min(3, Math.max(2, g.columns - 1)), 2]
       : [1, 1];
+
+  // If we're expanding the tile, we want to create enough new rows at the
+  // tile's target position such that every new unit of grid area created during
+  // the expansion can fit within the new rows.
+  // We do it this way, since it's easier to backfill gaps in the grid than it
+  // is to push colliding tiles outwards.
   const newRows = Math.max(
     0,
     Math.ceil((toWidth * toHeight - fromWidth * fromHeight) / g.columns)
   );
 
-  const candidateWidth = toWidth;
-  const candidateHeight = toHeight - newRows;
-
+  // This is the grid with the new rows added
   const gappyGrid: Grid = {
     ...g,
     cells: new Array(g.cells.length + newRows * g.columns),
   };
 
-  const nextScanLocations = new Set<number>([from]);
+  // The next task is to scan for a spot to place the modified tile. Since we
+  // might be creating new rows at the target position, this spot can be shorter
+  // than the target height.
+  const candidateWidth = toWidth;
+  const candidateHeight = toHeight - newRows;
+
+  // To make the tile appear to expand outwards from its center, we're actually
+  // scanning for locations to put the *center* of the tile. These numbers are
+  // the offsets between the tile's origin and its center.
   const scanColumnOffset = Math.floor((toWidth - 1) / 2);
   const scanRowOffset = Math.floor((toHeight - 1) / 2);
+
+  const nextScanLocations = new Set<number>([from]);
   const rows = row(g.cells.length - 1, g) + 1;
   let to: number | null = null;
 
+  // The contents of a given cell are 'displaceable' if it's empty, holds a 1×1
+  // tile, or is part of the original tile we're trying to reposition
   const displaceable = (c: Cell | undefined, i: number): boolean =>
     c === undefined ||
     (c.columns === 1 && c.rows === 1) ||
     inArea(i, from, fromEnd, g);
 
+  // Do the scanning
   for (const scanLocation of nextScanLocations) {
     const start = scanLocation - scanColumnOffset - g.columns * scanRowOffset;
     const end = areaEnd(start, candidateWidth, candidateHeight, g);
     const startColumn = column(start, g);
     const startRow = row(start, g);
     const endColumn = column(end, g);
+    const endRow = row(end, g);
 
     if (
       start >= 0 &&
-      end < gappyGrid.cells.length &&
-      endColumn - startColumn + 1 === candidateWidth
+      endColumn - startColumn + 1 === candidateWidth &&
+      allCellsInArea(start, end, g, displaceable)
     ) {
-      if (allCellsInArea(start, end, g, displaceable)) {
-        to = start;
-        break;
-      }
+      // This location works!
+      to = start;
+      break;
     }
 
+    // Scan outwards in all directions
     if (startColumn > 0) nextScanLocations.add(scanLocation - 1);
     if (endColumn < g.columns - 1) nextScanLocations.add(scanLocation + 1);
     if (startRow > 0) nextScanLocations.add(scanLocation - g.columns);
-    if (startRow <= rows) nextScanLocations.add(scanLocation + g.columns);
+    if (endRow < rows - 1) nextScanLocations.add(scanLocation + g.columns);
   }
 
-  // TODO: Don't give up on placing the tile yet
+  // If there is no space in the grid, give up
   if (to === null) return g;
 
   const toRow = row(to, g);
 
+  // Copy tiles from the original grid to the new one, with the new rows
+  // inserted at the target location
   g.cells.forEach((c, src) => {
     if (c?.origin && c.item.id !== tileId) {
       const offset =
@@ -346,6 +390,8 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
     }
   });
 
+  // Place the tile in its target position, making a note of the tiles being
+  // overwritten
   const displacedTiles: Cell[] = [];
   const toEnd = areaEnd(to, toWidth, toHeight, g);
   forEachCellInArea(to, toEnd, gappyGrid, (c, i) => {
@@ -358,10 +404,12 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
     };
   });
 
+  // Place the displaced tiles in the remaining space
   for (let i = 0; displacedTiles.length > 0; i++) {
     if (gappyGrid.cells[i] === undefined)
       gappyGrid.cells[i] = displacedTiles.shift();
   }
 
+  // Fill any gaps that remain
   return fillGaps(gappyGrid);
 }
