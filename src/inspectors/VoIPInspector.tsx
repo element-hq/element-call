@@ -75,14 +75,21 @@ function Table({ name, feeds }: TableProp): JSX.Element {
         <div className={styles.col}>StreamID</div>
         <div className={styles.col}>Tracks</div>
       </header>
-      {feeds.map((feed, i) => (
-        <TableRow
-          key={i}
-          index={i}
-          user={feed.isLocal() ? "local" : feed.userId}
-          stream={feed.stream}
-        />
-      ))}
+      {feeds.map((feed, i) => {
+        const user = feed.isLocal()
+          ? "local"
+          : feed.getMember() !== null
+          ? feed.getMember()?.name
+          : feed.userId;
+        return (
+          <TableRow
+            key={i}
+            index={i}
+            user={user ? user : feed.userId}
+            stream={feed.stream}
+          />
+        );
+      })}
     </div>
   );
 }
