@@ -18,6 +18,7 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import React from "react";
+import { t } from "i18next";
 
 import styles from "./VoIPInspector.module.css";
 
@@ -37,8 +38,8 @@ export function VoIPViewer({
   return (
     <div className={styles.scrollContainer}>
       <div className={styles.voIPInspectorViewer}>
-        <Table name="Media Feeds" feeds={userMediaFeeds} />
-        <Table name="Screen Share Feeds" feeds={screenshareFeeds} />
+        <Table name={t("Media Feeds")} feeds={userMediaFeeds} />
+        <Table name={t("Screen Share Feeds")} feeds={screenshareFeeds} />
       </div>
     </div>
   );
@@ -54,12 +55,13 @@ interface TableProp {
 function Table({ name, feeds }: TableProp): JSX.Element {
   // Catch case if feeds is empty
   if (feeds.length === 0) {
+    const noFeed = t("No Feeds...")
     return (
       <div className={styles.section}>
         <p className={styles.sectionTitle}>{name}</p>
 
         <div className={styles.centerMessage}>
-          <p>No Feeds..</p>
+            <p>{noFeed}</p>
         </div>
       </div>
     );
@@ -83,7 +85,7 @@ function Table({ name, feeds }: TableProp): JSX.Element {
           : feed.userId;
         return (
           <TableRow
-            key={i}
+            key={feed.feedId}
             index={i}
             user={user ? user : feed.userId}
             stream={feed.stream}
@@ -108,8 +110,8 @@ function TableRow({ index, user, stream }: TableRowProp): JSX.Element {
       <div className={styles.col}>{stream?.id}</div>
       <div className={styles.col}>
         {stream?.getTracks().map(
-          (track, index): JSX.Element => (
-            <TrackColumn key={index} kind={track.kind} trackId={track.id} />
+          (track): JSX.Element => (
+            <TrackColumn key={track.id} kind={track.kind} trackId={track.id} />
           )
         )}
       </div>
