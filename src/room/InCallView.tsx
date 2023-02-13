@@ -55,7 +55,7 @@ import {
   useShowCallFeedDebugInfo,
   useShowInspector,
   useShowVoIPDebugInfo,
-  useSpatialAudio
+  useSpatialAudio,
 } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { useAudioContext } from "../video-grid/useMediaStream";

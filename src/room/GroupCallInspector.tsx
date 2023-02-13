@@ -37,7 +37,6 @@ import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
 import { PosthogAnalytics } from "../PosthogAnalytics";
 import { VoIPViewer } from "../inspectors/VoIPInspector";
-import { CallFeed } from "../../../matrix-js-sdk/src/webrtc/callFeed";
 
 interface InspectorContextState {
   eventsByUserId?: { [userId: string]: SequenceDiagramMatrixEvent[] };
@@ -472,7 +471,7 @@ export function GroupCallInspector({
             Sequence Diagrams
           </button>
         )}
-        { showInspector === true && (
+        {showInspector === true && (
           <button onClick={() => setCurrentTab("inspector")}>Inspector</button>
         )}
         {showVoIPDebugInfo === true && (

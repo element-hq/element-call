@@ -94,4 +94,4 @@ export const useShowCallFeedDebugInfo = () =>
   useSetting("show-call-feed-debug-info", false);
 
 export const useShowVoIPDebugInfo = () =>
-    useSetting("show-voip-debug-info", false);
+  useSetting("show-voip-debug-info", false);

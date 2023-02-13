@@ -62,7 +62,8 @@ export const SettingsModal = (props: Props) => {
 
   const [spatialAudio, setSpatialAudio] = useSpatialAudio();
   const [showInspector, setShowInspector] = useShowInspector();
-  const [showCallFeedDebugInfo, setShowCallFeedDebugInfo] = useShowCallFeedDebugInfo();
+  const [showCallFeedDebugInfo, setShowCallFeedDebugInfo] =
+    useShowCallFeedDebugInfo();
   const [showVoIPDebugInfo, setShowVoIPDebugInfo] = useShowVoIPDebugInfo();
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const [keyboardShortcuts, setKeyboardShortcuts] = useKeyboardShortcuts();
@@ -234,14 +235,14 @@ export const SettingsModal = (props: Props) => {
           </FieldRow>
           <FieldRow>
             <InputField
-                id="showVoIPDebugInfo"
-                name="voIPDebugInfo"
-                label={t("Show VoIP debug info")}
-                type="checkbox"
-                checked={showVoIPDebugInfo}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                    setShowVoIPDebugInfo(e.target.checked)
-                }
+              id="showVoIPDebugInfo"
+              name="voIPDebugInfo"
+              label={t("Show VoIP debug info")}
+              type="checkbox"
+              checked={showVoIPDebugInfo}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setShowVoIPDebugInfo(e.target.checked)
+              }
             />
           </FieldRow>
           <FieldRow>

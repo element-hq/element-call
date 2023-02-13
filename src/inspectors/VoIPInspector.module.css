@@ -15,40 +15,39 @@ limitations under the License.
 */
 
 element {
-    --table-header: #1976D2;
-    --table-header-border: #1565C0;
-    --table-border: #d9d9d9;
-    --row-bg: #ffffff;
+  --table-header: #1976d2;
+  --table-header-border: #1565c0;
+  --table-border: #d9d9d9;
+  --row-bg: #ffffff;
 }
 
 .scrollContainer {
-    height: 100%;
-    overflow-y: auto;
+  height: 100%;
+  overflow-y: auto;
 }
 
 .voIPInspectorViewer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
 }
 
 .voIPInspectorViewer :global(.messageText) {
-    font-size: var(--font-size-caption);
-    fill: var(--primary-content) !important;
-    stroke: var(--primary-content) !important;
+  font-size: var(--font-size-caption);
+  fill: var(--primary-content) !important;
+  stroke: var(--primary-content) !important;
 }
 
 .section {
-    display: table;
-    width: 100%;
+  display: table;
+  width: 100%;
 }
 
 .section > * {
-    display: table-row;
+  display: table-row;
 }
 
 .section .col {
-    display: table-cell;
+  display: table-cell;
 }
-
