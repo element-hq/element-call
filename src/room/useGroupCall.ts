@@ -188,7 +188,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
         navigator.mediaSession.setActionHandler(mediaAction, null);
       }
     };
-  }, [doNothingMediaEventCallback]);
+  }, [doNothingMediaActionCallback]);
 
   useEffect(() => {
     function onGroupCallStateChanged() {
