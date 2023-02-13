@@ -194,9 +194,7 @@ export const PTTCallView: React.FC<Props> = ({
         groupCall={groupCall}
         // Never shown in PTT mode, but must be present to collect call state
         // https://github.com/vector-im/element-call/issues/328
-        showInspector={false}
-        showCallFeedDebugInfo={false}
-        showVoIPDebugInfo={false}
+        show={false}
       />
       {!hideHeader && showControls && (
         <Header className={styles.header}>

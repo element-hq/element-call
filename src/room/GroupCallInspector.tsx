@@ -36,7 +36,7 @@ import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
 import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
 import { PosthogAnalytics } from "../PosthogAnalytics";
-import { VoIPViewer } from "../inspectors/VoIPInspector";
+import { MediaViewer } from "../inspectors/MediaInspector";
 
 interface InspectorContextState {
   eventsByUserId?: { [userId: string]: SequenceDiagramMatrixEvent[] };
@@ -431,19 +431,14 @@ function useGroupCallState(
 interface GroupCallInspectorProps {
   client: MatrixClient;
   groupCall: GroupCall;
-  showInspector: boolean;
-  showCallFeedDebugInfo: boolean;
-  showVoIPDebugInfo: boolean;
+  show: boolean;
 }
 
 export function GroupCallInspector({
   client,
   groupCall,
-  showInspector,
-  showCallFeedDebugInfo,
-  showVoIPDebugInfo,
+  show,
 }: GroupCallInspectorProps) {
-  const show = showInspector || showCallFeedDebugInfo || showVoIPDebugInfo;
   const [currentTab, setCurrentTab] = useState("sequence-diagrams");
   const [selectedUserId, setSelectedUserId] = useState<string>();
   const state = useGroupCallState(client, groupCall, show);
@@ -466,19 +461,13 @@ export function GroupCallInspector({
       className={styles.inspector}
     >
       <div className={styles.toolbar}>
-        {showCallFeedDebugInfo === true && (
-          <button onClick={() => setCurrentTab("sequence-diagrams")}>
-            Sequence Diagrams
-          </button>
-        )}
-        {showInspector === true && (
-          <button onClick={() => setCurrentTab("inspector")}>Inspector</button>
-        )}
-        {showVoIPDebugInfo === true && (
-          <button onClick={() => setCurrentTab("voip")}>VoIP</button>
-        )}
+        <button onClick={() => setCurrentTab("sequence-diagrams")}>
+          Sequence Diagrams
+        </button>
+        <button onClick={() => setCurrentTab("inspector")}>Inspector</button>
+        <button onClick={() => setCurrentTab("voip")}>Media</button>
       </div>
-      {showCallFeedDebugInfo && currentTab === "sequence-diagrams" && (
+      {currentTab === "sequence-diagrams" && (
         <SequenceDiagramViewer
           localUserId={state.localUserId}
           selectedUserId={selectedUserId}
@@ -487,7 +476,7 @@ export function GroupCallInspector({
           events={state.eventsByUserId[selectedUserId]}
         />
       )}
-      {showInspector && currentTab === "inspector" && (
+      {currentTab === "inspector" && (
         <ReactJson
           theme="monokai"
           src={state}
@@ -500,8 +489,8 @@ export function GroupCallInspector({
           style={{ height: "100%", overflowY: "scroll" }}
         />
       )}
-      {showVoIPDebugInfo && currentTab === "voip" && (
-        <VoIPViewer
+      {currentTab === "voip" && (
+        <MediaViewer
           client={client}
           groupCall={groupCall}
           userMediaFeeds={groupCall.userMediaFeeds}

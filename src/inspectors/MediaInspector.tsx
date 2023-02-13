@@ -20,21 +20,21 @@ import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import React from "react";
 import { t } from "i18next";
 
-import styles from "./VoIPInspector.module.css";
+import styles from "./MediaInspector.module.css";
 
-interface VoIPViewerProps {
+interface MediaViewerProps {
   client: MatrixClient;
   groupCall: GroupCall;
   userMediaFeeds: CallFeed[];
   screenshareFeeds: CallFeed[];
 }
 
-export function VoIPViewer({
+export function MediaViewer({
   client,
   groupCall,
   userMediaFeeds,
   screenshareFeeds,
-}: VoIPViewerProps) {
+}: MediaViewerProps) {
   return (
     <div className={styles.scrollContainer}>
       <div className={styles.voIPInspectorViewer}>
@@ -55,13 +55,13 @@ interface TableProp {
 function Table({ name, feeds }: TableProp): JSX.Element {
   // Catch case if feeds is empty
   if (feeds.length === 0) {
-    const noFeed = t("No Feeds...")
+    const noFeed = t("No Feeds...");
     return (
       <div className={styles.section}>
         <p className={styles.sectionTitle}>{name}</p>
 
         <div className={styles.centerMessage}>
-            <p>{noFeed}</p>
+          <p>{noFeed}</p>
         </div>
       </div>
     );
