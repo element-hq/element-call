@@ -36,12 +36,16 @@ import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
 import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
 import { PosthogAnalytics } from "../PosthogAnalytics";
+import { VoIPViewer } from "../inspectors/VoIPInspector";
+import { CallFeed } from "../../../matrix-js-sdk/src/webrtc/callFeed";
 
 interface InspectorContextState {
   eventsByUserId?: { [userId: string]: SequenceDiagramMatrixEvent[] };
   remoteUserIds?: string[];
   localUserId?: string;
   localSessionId?: string;
+  userMediaFeeds: CallFeed[];
+  screenshareFeeds: CallFeed[];
 }
 
 const defaultCollapsedFields = [
@@ -361,6 +365,8 @@ function useGroupCallState(
     eventsByUserId: {},
     remoteUserIds: [],
     callStateEvent: null,
+    userMediaFeeds: groupCall.userMediaFeeds,
+    screenshareFeeds: groupCall.screenshareFeeds,
     memberStateEvents: {},
   });
 
@@ -464,6 +470,7 @@ export function GroupCallInspector({
           Sequence Diagrams
         </button>
         <button onClick={() => setCurrentTab("inspector")}>Inspector</button>
+        <button onClick={() => setCurrentTab("voip")}>VoIP</button>
       </div>
       {currentTab === "sequence-diagrams" && (
         <SequenceDiagramViewer
@@ -485,6 +492,14 @@ export function GroupCallInspector({
           displayObjectSize={false}
           enableClipboard
           style={{ height: "100%", overflowY: "scroll" }}
+        />
+      )}
+      {currentTab === "voip" && (
+        <VoIPViewer
+            client={client}
+            groupCall={groupCall}
+            userMediaFeeds={state.userMediaFeeds}
+            screenshareFeeds={state.screenshareFeeds}
         />
       )}
     </Resizable>

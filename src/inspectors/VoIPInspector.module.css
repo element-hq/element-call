@@ -1,0 +1,54 @@
+/*
+Copyright 2023 New Vector Ltd
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+element {
+    --table-header: #1976D2;
+    --table-header-border: #1565C0;
+    --table-border: #d9d9d9;
+    --row-bg: #ffffff;
+}
+
+.scrollContainer {
+    height: 100%;
+    overflow-y: auto;
+}
+
+.voIPInspectorViewer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px;
+}
+
+.voIPInspectorViewer :global(.messageText) {
+    font-size: var(--font-size-caption);
+    fill: var(--primary-content) !important;
+    stroke: var(--primary-content) !important;
+}
+
+.section {
+    display: table;
+    width: 100%;
+}
+
+.section > * {
+    display: table-row;
+}
+
+.section .col {
+    display: table-cell;
+}
+
