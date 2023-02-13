@@ -55,7 +55,7 @@ interface TableProp {
 function Table({ name, feeds }: TableProp): JSX.Element {
   // Catch case if feeds is empty
   if (feeds.length === 0) {
-    const noFeed = t("No Feeds...");
+    const noFeed = t("No Feeds…");
     return (
       <div className={styles.section}>
         <p className={styles.sectionTitle}>{name}</p>
