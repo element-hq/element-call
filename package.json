@@ -45,7 +45,7 @@
     "i18next": "^21.10.0",
     "i18next-browser-languagedetector": "^6.1.8",
     "i18next-http-backend": "^1.4.4",
-    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#ae60e84f00ae44f9651f8f90c524b88418b49994",
+    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#0d97a933c24d082d5978a7005dbc5bdb01b51284",
     "matrix-widget-api": "^1.0.0",
     "mermaid": "^8.13.8",
     "normalize.css": "^8.0.1",
