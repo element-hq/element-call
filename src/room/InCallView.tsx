@@ -51,7 +51,12 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { useMediaHandler } from "../settings/useMediaHandler";
-import { useShowInspector, useSpatialAudio } from "../settings/useSetting";
+import {
+  useShowCallFeedDebugInfo,
+  useShowInspector,
+  useShowVoIPDebugInfo,
+  useSpatialAudio
+} from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { useAudioContext } from "../video-grid/useMediaStream";
 import { useFullscreen } from "../video-grid/useFullscreen";
@@ -138,6 +143,8 @@ export function InCallView({
 
   const [audioContext, audioDestination] = useAudioContext();
   const [showInspector] = useShowInspector();
+  const [showCallFeedDebugInfo] = useShowCallFeedDebugInfo();
+  const [showVoIPDebugInfo] = useShowVoIPDebugInfo();
 
   const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
     useModalTriggerState();
@@ -425,7 +432,9 @@ export function InCallView({
       <GroupCallInspector
         client={client}
         groupCall={groupCall}
-        show={showInspector}
+        showInspector={showInspector}
+        showCallFeedDebugInfo={showCallFeedDebugInfo}
+        showVoIPDebugInfo={showVoIPDebugInfo}
       />
       {rageshakeRequestModalState.isOpen && (
         <RageshakeRequestModal

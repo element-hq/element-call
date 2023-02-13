@@ -436,14 +436,19 @@ function useGroupCallState(
 interface GroupCallInspectorProps {
   client: MatrixClient;
   groupCall: GroupCall;
-  show: boolean;
+  showInspector: boolean;
+  showCallFeedDebugInfo: boolean;
+  showVoIPDebugInfo: boolean;
 }
 
 export function GroupCallInspector({
   client,
   groupCall,
-  show,
+  showInspector,
+  showCallFeedDebugInfo,
+  showVoIPDebugInfo,
 }: GroupCallInspectorProps) {
+  const show = showInspector || showCallFeedDebugInfo || showVoIPDebugInfo;
   const [currentTab, setCurrentTab] = useState("sequence-diagrams");
   const [selectedUserId, setSelectedUserId] = useState<string>();
   const state = useGroupCallState(client, groupCall, show);
@@ -466,11 +471,17 @@ export function GroupCallInspector({
       className={styles.inspector}
     >
       <div className={styles.toolbar}>
-        <button onClick={() => setCurrentTab("sequence-diagrams")}>
-          Sequence Diagrams
-        </button>
-        <button onClick={() => setCurrentTab("inspector")}>Inspector</button>
-        <button onClick={() => setCurrentTab("voip")}>VoIP</button>
+        {showCallFeedDebugInfo === true && (
+          <button onClick={() => setCurrentTab("sequence-diagrams")}>
+            Sequence Diagrams
+          </button>
+        )}
+        { showInspector === true && (
+          <button onClick={() => setCurrentTab("inspector")}>Inspector</button>
+        )}
+        {showVoIPDebugInfo === true && (
+          <button onClick={() => setCurrentTab("voip")}>VoIP</button>
+        )}
       </div>
       {currentTab === "sequence-diagrams" && (
         <SequenceDiagramViewer
@@ -496,10 +507,10 @@ export function GroupCallInspector({
       )}
       {currentTab === "voip" && (
         <VoIPViewer
-            client={client}
-            groupCall={groupCall}
-            userMediaFeeds={state.userMediaFeeds}
-            screenshareFeeds={state.screenshareFeeds}
+          client={client}
+          groupCall={groupCall}
+          userMediaFeeds={state.userMediaFeeds}
+          screenshareFeeds={state.screenshareFeeds}
         />
       )}
     </Resizable>
