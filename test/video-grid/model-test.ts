@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import {
+  appendItems,
   column,
   cycleTileSize,
   fillGaps,
@@ -71,6 +72,26 @@ function testFillGaps(title: string, input: string, output: string): void {
     expect(showGrid(fillGaps(mkGrid(input)))).toBe(output);
   });
 }
+
+testFillGaps(
+  "does nothing on an empty grid",
+  `
+`,
+  `
+`
+);
+
+testFillGaps(
+  "does nothing if there are no gaps",
+  `
+ab
+cd
+ef`,
+  `
+ab
+cd
+ef`
+);
 
 testFillGaps(
   "fills a gap",
@@ -245,3 +266,18 @@ cbb
 dde
 ddf`
 );
+
+test("appendItems appends 1×1 tiles", () => {
+  const grid1 = `
+aab
+aac
+d`;
+  const grid2 = `
+aab
+aac
+def`;
+  const newItems = ["e", "f"].map(
+    (i) => ({ id: i } as unknown as TileDescriptor)
+  );
+  expect(showGrid(appendItems(newItems, mkGrid(grid1)))).toBe(grid2);
+});
