@@ -44,14 +44,14 @@ interface Props {
   showOptions?: boolean;
   isLocal?: boolean;
   disableSpeakingIndicator?: boolean;
-  opacity: SpringValue<number>;
-  scale: SpringValue<number>;
-  shadow: SpringValue<number>;
-  zIndex: SpringValue<number>;
-  x: SpringValue<number>;
-  y: SpringValue<number>;
-  width: SpringValue<number>;
-  height: SpringValue<number>;
+  opacity?: SpringValue<number>;
+  scale?: SpringValue<number>;
+  shadow?: SpringValue<number>;
+  zIndex?: SpringValue<number>;
+  x?: SpringValue<number>;
+  y?: SpringValue<number>;
+  width?: SpringValue<number>;
+  height?: SpringValue<number>;
 }
 
 export const VideoTile = forwardRef<HTMLElement, Props>(
@@ -141,14 +141,17 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
         style={{
           opacity,
           scale,
-          boxShadow: shadow.to(
+          boxShadow: shadow?.to(
             (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
           ),
           zIndex,
           x,
           y,
-          "--tileWidth": width.to((w) => `${w}px`),
-          "--tileHeight": height.to((h) => `${h}px`),
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore React does in fact support assigning custom properties,
+          // but React's types say no
+          "--tileWidth": width?.to((w) => `${w}px`),
+          "--tileHeight": height?.to((h) => `${h}px`),
         }}
         ref={ref as ForwardedRef<HTMLDivElement>}
         {...rest}

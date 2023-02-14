@@ -16,7 +16,12 @@ limitations under the License.
 
 import React, { Key, useCallback, useEffect, useRef, useState } from "react";
 import { FullGestureState, useDrag, useGesture } from "@use-gesture/react";
-import { Interpolation, SpringValue, useSprings } from "@react-spring/web";
+import {
+  SpringRef,
+  SpringValue,
+  SpringValues,
+  useSprings,
+} from "@react-spring/web";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { ReactDOMAttributes } from "@use-gesture/react/dist/declarations/src/types";
@@ -40,6 +45,17 @@ interface Tile {
   remove: boolean;
   focused: boolean;
   presenter: boolean;
+}
+
+export interface TileSpring {
+  opacity: number;
+  scale: number;
+  shadow: number;
+  zIndex: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 type LayoutDirection = "vertical" | "horizontal";
@@ -692,7 +708,7 @@ interface DragTileData {
   y: number;
 }
 
-interface ChildrenProperties extends ReactDOMAttributes {
+export interface ChildrenProperties extends ReactDOMAttributes {
   key: Key;
   targetWidth: number;
   targetHeight: number;
@@ -970,7 +986,7 @@ export function VideoGrid({
     tilePositions,
     tiles,
     scrollPosition,
-  ]);
+  ]) as unknown as [SpringValues<TileSpring>[], SpringRef<TileSpring>];
 
   const onTap = useCallback(
     (tileKey: Key) => {
@@ -1191,7 +1207,6 @@ export function VideoGrid({
           targetWidth: tilePosition.width,
           targetHeight: tilePosition.height,
           item: tile.item,
-          onDragRef: onTileDragRef,
         });
       })}
     </div>

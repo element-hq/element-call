@@ -28,11 +28,12 @@ import React, {
   useState,
 } from "react";
 import useMeasure from "react-use-measure";
+import { zipWith } from "lodash";
+
 import styles from "./NewVideoGrid.module.css";
 import { TileDescriptor } from "./TileDescriptor";
-import { VideoGridProps as Props } from "./VideoGrid";
+import { VideoGridProps as Props, TileSpring } from "./VideoGrid";
 import { useReactiveState } from "../useReactiveState";
-import { zipWith } from "lodash";
 import { useMergedRefs } from "../useMergedRefs";
 import {
   Grid,
@@ -129,17 +130,6 @@ interface Tile extends Rect {
   item: TileDescriptor;
 }
 
-interface TileSpring {
-  opacity: number;
-  scale: number;
-  shadow: number;
-  zIndex: number;
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 interface DragState {
   tileId: string;
   tileX: number;
@@ -208,7 +198,10 @@ export const NewVideoGrid: FC<Props> = ({
     }
 
     return rects;
-  }, [items, slotGridGeneration, slotGrid, gridBounds]);
+    // The rects may change due to the grid being resized or rerendered, but
+    // eslint can't statically verify this
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slotGrid, slotGridGeneration, gridBounds]);
 
   const [columns] = useReactiveState<number | null>(
     // Since grid resizing isn't implemented yet, pick a column count on mount

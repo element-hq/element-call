@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import TinyQueue from "tinyqueue";
+
 import { TileDescriptor } from "./TileDescriptor";
 
 /**
