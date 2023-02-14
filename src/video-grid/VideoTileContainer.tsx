@@ -52,7 +52,7 @@ interface Props {
   y: SpringValue<number>;
   width: SpringValue<number>;
   height: SpringValue<number>;
-  onDragRef: RefObject<
+  onDragRef?: RefObject<
     (
       tileId: string,
       state: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
@@ -100,7 +100,7 @@ export const VideoTileContainer: FC<Props> = memo(
       isLocal || maximised
     );
 
-    useDrag((state) => onDragRef.current!(item.id, state), {
+    useDrag((state) => onDragRef?.current!(item.id, state), {
       target: tileRef,
       filterTaps: true,
       preventScroll: true,

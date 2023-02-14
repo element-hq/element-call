@@ -899,6 +899,7 @@ export function VideoGrid({
               shadow: 0,
               scale: 0,
               opacity: 0,
+              zIndex: 0,
             },
             reset: false,
           };
@@ -922,6 +923,7 @@ export function VideoGrid({
             shadow: number;
             scale: number;
             opacity: number;
+            zIndex?: number;
             x?: number;
             y?: number;
             width?: number;
@@ -1178,22 +1180,18 @@ export function VideoGrid({
 
   return (
     <div className={styles.videoGrid} ref={gridRef} {...bindGrid()}>
-      {springs.map(({ shadow, ...style }, i) => {
+      {springs.map((style, i) => {
         const tile = tiles[i];
         const tilePosition = tilePositions[tile.order];
 
         return children({
           ...bindTile(tile.key),
-          key: tile.key,
-          style: {
-            boxShadow: shadow.to(
-              (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
-            ),
-            ...style,
-          },
-          width: tilePosition.width,
-          height: tilePosition.height,
+          ...style,
+          key: tile.item.id,
+          targetWidth: tilePosition.width,
+          targetHeight: tilePosition.height,
           item: tile.item,
+          onDragRef: onTileDragRef,
         });
       })}
     </div>
