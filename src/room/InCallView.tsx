@@ -51,7 +51,11 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { useMediaHandler } from "../settings/useMediaHandler";
-import { useShowInspector, useSpatialAudio } from "../settings/useSetting";
+import {
+  useNewGrid,
+  useShowInspector,
+  useSpatialAudio,
+} from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { useAudioContext } from "../video-grid/useMediaStream";
 import { useFullscreen } from "../video-grid/useFullscreen";
@@ -277,6 +281,8 @@ export function InCallView({
     []
   );
 
+  const [newGrid] = useNewGrid();
+  const Grid = newGrid ? NewVideoGrid : VideoGrid;
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const renderContent = (): JSX.Element => {
@@ -306,7 +312,7 @@ export function InCallView({
     }
 
     return (
-      <NewVideoGrid
+      <Grid
         items={items}
         layout={layout}
         disableAnimations={prefersReducedMotion || isSafari}
@@ -330,7 +336,7 @@ export function InCallView({
             {...rest}
           />
         )}
-      </NewVideoGrid>
+      </Grid>
     );
   };
 
