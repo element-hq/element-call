@@ -1,5 +1,9 @@
 import { MutableRefObject, RefCallback, useCallback } from "react";
 
+/**
+ * Combines multiple refs into one, useful for attaching multiple refs to the
+ * same DOM node.
+ */
 export const useMergedRefs = <T>(
   ...refs: (MutableRefObject<T | null> | RefCallback<T | null>)[]
 ): RefCallback<T | null> =>
