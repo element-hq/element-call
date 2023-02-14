@@ -41,7 +41,11 @@ import {
   RoomHeaderInfo,
   VersionMismatchWarning,
 } from "../Header";
-import { VideoGrid, useVideoGridLayout } from "../video-grid/VideoGrid";
+import {
+  VideoGrid,
+  useVideoGridLayout,
+  ChildrenProperties,
+} from "../video-grid/VideoGrid";
 import { VideoTileContainer } from "../video-grid/VideoTileContainer";
 import { GroupCallInspector } from "./GroupCallInspector";
 import { OverflowMenu } from "./OverflowMenu";
@@ -296,8 +300,8 @@ export function InCallView({
     if (maximisedParticipant) {
       return (
         <VideoTileContainer
-          height={bounds.height}
-          width={bounds.width}
+          targetHeight={bounds.height}
+          targetWidth={bounds.width}
           key={maximisedParticipant.id}
           item={maximisedParticipant}
           getAvatar={renderAvatar}
@@ -317,13 +321,7 @@ export function InCallView({
         layout={layout}
         disableAnimations={prefersReducedMotion || isSafari}
       >
-        {({
-          item,
-          ...rest
-        }: {
-          item: TileDescriptor;
-          [x: string]: unknown;
-        }) => (
+        {({ item, ...rest }: ChildrenProperties) => (
           <VideoTileContainer
             item={item}
             getAvatar={renderAvatar}

@@ -18,6 +18,8 @@ import { SDPStreamMetadataPurpose } from "matrix-js-sdk/src/webrtc/callEventType
 import React, { FC, memo, RefObject } from "react";
 import { useCallback } from "react";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { SpringValue } from "@react-spring/web";
+import { EventTypes, Handler, useDrag } from "@use-gesture/react";
 
 import { useCallFeed } from "./useCallFeed";
 import { useSpatialMediaStream } from "./useMediaStream";
@@ -26,8 +28,6 @@ import { VideoTile } from "./VideoTile";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 import { useModalTriggerState } from "../Modal";
 import { TileDescriptor } from "./TileDescriptor";
-import { SpringValue } from "@react-spring/web";
-import { EventTypes, Handler, useDrag } from "@use-gesture/react";
 
 interface Props {
   item: TileDescriptor;
@@ -44,14 +44,14 @@ interface Props {
   maximised: boolean;
   fullscreen: boolean;
   onFullscreen: (item: TileDescriptor) => void;
-  opacity: SpringValue<number>;
-  scale: SpringValue<number>;
-  shadow: SpringValue<number>;
-  zIndex: SpringValue<number>;
-  x: SpringValue<number>;
-  y: SpringValue<number>;
-  width: SpringValue<number>;
-  height: SpringValue<number>;
+  opacity?: SpringValue<number>;
+  scale?: SpringValue<number>;
+  shadow?: SpringValue<number>;
+  zIndex?: SpringValue<number>;
+  x?: SpringValue<number>;
+  y?: SpringValue<number>;
+  width?: SpringValue<number>;
+  height?: SpringValue<number>;
   onDragRef?: RefObject<
     (
       tileId: string,
