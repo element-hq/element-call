@@ -986,6 +986,7 @@ export function VideoGrid({
     tilePositions,
     tiles,
     scrollPosition,
+    // react-spring's types are bugged and can't infer the spring type
   ]) as unknown as [SpringValues<TileSpring>[], SpringRef<TileSpring>];
 
   const onTap = useCallback(
