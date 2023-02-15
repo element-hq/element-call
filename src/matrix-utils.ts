@@ -92,10 +92,13 @@ export async function initClient(
     indexedDB = window.indexedDB;
   } catch (e) {}
 
-  const storeOpts = {} as ICreateClientOpts;
+  const baseOpts = {
+    fallbackICEServerAllowed: fallbackICEServerAllowed,
+    isVoipWithNoMediaAllowed: Config.get().features?.feature_group_calls_without_video_and_audio
+  } as ICreateClientOpts;
 
   if (indexedDB && localStorage) {
-    storeOpts.store = new IndexedDBStore({
+    baseOpts.store = new IndexedDBStore({
       indexedDB: window.indexedDB,
       localStorage,
       dbName: SYNC_STORE_NAME,
@@ -107,7 +110,7 @@ export async function initClient(
         : () => new IndexedDBWorker(),
     });
   } else if (localStorage) {
-    storeOpts.store = new MemoryStore({ localStorage });
+    baseOpts.store = new MemoryStore({ localStorage });
   }
 
   // Check whether we have crypto data store. If we are restoring a session
@@ -139,14 +142,14 @@ export async function initClient(
   }
 
   if (indexedDB) {
-    storeOpts.cryptoStore = new IndexedDBCryptoStore(
+    baseOpts.cryptoStore = new IndexedDBCryptoStore(
       indexedDB,
       CRYPTO_STORE_NAME
     );
   } else if (localStorage) {
-    storeOpts.cryptoStore = new LocalStorageCryptoStore(localStorage);
+    baseOpts.cryptoStore = new LocalStorageCryptoStore(localStorage);
   } else {
-    storeOpts.cryptoStore = new MemoryCryptoStore();
+    baseOpts.cryptoStore = new MemoryCryptoStore();
   }
 
   // XXX: we read from the URL params in RoomPage too:
@@ -160,7 +163,7 @@ export async function initClient(
   }
 
   const client = createClient({
-    ...storeOpts,
+    ...baseOpts,
     ...clientOptions,
     useAuthorizationHeader: true,
     // Use a relatively low timeout for API calls: this is a realtime app
