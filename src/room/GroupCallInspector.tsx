@@ -36,6 +36,7 @@ import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
 import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
 import { PosthogAnalytics } from "../PosthogAnalytics";
+import { MediaViewer } from "../inspectors/MediaInspector";
 
 interface InspectorContextState {
   eventsByUserId?: { [userId: string]: SequenceDiagramMatrixEvent[] };
@@ -464,6 +465,7 @@ export function GroupCallInspector({
           Sequence Diagrams
         </button>
         <button onClick={() => setCurrentTab("inspector")}>Inspector</button>
+        <button onClick={() => setCurrentTab("voip")}>Media</button>
       </div>
       {currentTab === "sequence-diagrams" && (
         <SequenceDiagramViewer
@@ -485,6 +487,14 @@ export function GroupCallInspector({
           displayObjectSize={false}
           enableClipboard
           style={{ height: "100%", overflowY: "scroll" }}
+        />
+      )}
+      {currentTab === "voip" && (
+        <MediaViewer
+          client={client}
+          groupCall={groupCall}
+          userMediaFeeds={groupCall.userMediaFeeds}
+          screenshareFeeds={groupCall.screenshareFeeds}
         />
       )}
     </Resizable>

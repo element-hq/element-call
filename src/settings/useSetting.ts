@@ -90,5 +90,3 @@ export const useShowInspector = () => useSetting("show-inspector", false);
 export const useOptInAnalytics = () => useSetting("opt-in-analytics", false);
 export const useKeyboardShortcuts = () =>
   useSetting("keyboard-shortcuts", true);
-export const useShowCallFeedDebugInfo = () =>
-  useSetting("show-call-feed-debug-info", false);

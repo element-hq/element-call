@@ -33,7 +33,6 @@ import {
   useShowInspector,
   useOptInAnalytics,
   canEnableSpatialAudio,
-  useShowCallFeedDebugInfo,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
@@ -61,8 +60,6 @@ export const SettingsModal = (props: Props) => {
 
   const [spatialAudio, setSpatialAudio] = useSpatialAudio();
   const [showInspector, setShowInspector] = useShowInspector();
-  const [showCallFeedDebugInfo, setShowCallFeedDebugInfo] =
-    useShowCallFeedDebugInfo();
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const [keyboardShortcuts, setKeyboardShortcuts] = useKeyboardShortcuts();
 
@@ -216,18 +213,6 @@ export const SettingsModal = (props: Props) => {
               checked={showInspector}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setShowInspector(e.target.checked)
-              }
-            />
-          </FieldRow>
-          <FieldRow>
-            <InputField
-              id="showCallFeedDebugInfo"
-              name="callFeedDebugInfo"
-              label={t("Show call feed debug info")}
-              type="checkbox"
-              checked={showCallFeedDebugInfo}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setShowCallFeedDebugInfo(e.target.checked)
               }
             />
           </FieldRow>
