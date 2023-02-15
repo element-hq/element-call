@@ -91,6 +91,7 @@ interface Props {
   roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
+  isOnlyScreenshare: boolean;
 }
 
 export function InCallView({
@@ -113,6 +114,7 @@ export function InCallView({
   roomIdOrAlias,
   unencryptedEventsFromUsers,
   hideHeader,
+  isOnlyScreenshare,
 }: Props) {
   const { t } = useTranslation();
   usePreventScroll();
@@ -368,26 +370,27 @@ export function InCallView({
 
   if (noControls) {
     footer = null;
-  } else if (reducedControls) {
-    footer = (
-      <div className={styles.footer}>
-        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
-        <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
-        <HangupButton onPress={onLeave} />
-      </div>
-    );
   } else {
-    footer = (
-      <div className={styles.footer}>
-        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
+    const buttons: JSX.Element[] = [];
+
+    if (!isOnlyScreenshare) {
+      buttons.push(
+        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />,
         <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
-        {canScreenshare && !hideScreensharing && !isSafari && (
+      );
+    }
+
+    if (!reducedControls) {
+      if (canScreenshare && !hideScreensharing && !isSafari) {
+        buttons.push(
           <ScreenshareButton
             enabled={isScreensharing}
             onPress={toggleScreensharing}
           />
-        )}
-        {!maximisedParticipant && (
+        );
+      }
+      if (!maximisedParticipant) {
+        buttons.push(
           <OverflowMenu
             inCall
             roomIdOrAlias={roomIdOrAlias}
@@ -396,10 +399,12 @@ export function InCallView({
             feedbackModalState={feedbackModalState}
             feedbackModalProps={feedbackModalProps}
           />
-        )}
-        <HangupButton onPress={onLeave} />
-      </div>
-    );
+        );
+      }
+    }
+
+    buttons.push(<HangupButton onPress={onLeave} />);
+    footer = <div className={styles.footer}>{buttons}</div>;
   }
 
   return (
