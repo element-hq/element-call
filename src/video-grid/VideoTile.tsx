@@ -25,7 +25,7 @@ import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
 import { AudioButton, FullscreenButton } from "../button/Button";
 import { ConnectionState } from "../room/useGroupCall";
 import { CallFeedDebugInfo } from "./useCallFeed";
-import { useShowCallFeedDebugInfo } from "../settings/useSetting";
+import { useShowInspector } from "../settings/useSetting";
 
 interface Props {
   name: string;
@@ -76,7 +76,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     },
     ref
   ) => {
-    const [showCallFeedDebugInfo] = useShowCallFeedDebugInfo();
+    const [showInspector] = useShowInspector();
     const { t } = useTranslation();
 
     const toolbarButtons: JSX.Element[] = [];
@@ -130,7 +130,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         ref={ref}
         {...rest}
       >
-        {showCallFeedDebugInfo && (
+        {showInspector && (
           <div className={classNames(styles.debugInfo)}>
             {JSON.stringify(debugInfo)}
           </div>
