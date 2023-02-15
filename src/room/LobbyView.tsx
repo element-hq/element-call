@@ -49,6 +49,7 @@ interface Props {
   roomIdOrAlias: string;
   isEmbedded: boolean;
   hideHeader: boolean;
+  isOnlyScreenShare: boolean;
 }
 export function LobbyView({
   client,
@@ -66,6 +67,7 @@ export function LobbyView({
   roomIdOrAlias,
   isEmbedded,
   hideHeader,
+  isOnlyScreenShare,
 }: Props) {
   const { t } = useTranslation();
   const { stream } = useCallFeed(localCallFeed);

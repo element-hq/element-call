@@ -81,6 +81,7 @@ export function GroupCallView({
     screenshareFeeds,
     participants,
     unencryptedEventsFromUsers,
+    initCallWithoutVideoAndAudio,
   } = useGroupCall(groupCall);
 
   const { t } = useTranslation();
@@ -300,6 +301,7 @@ export function GroupCallView({
         roomIdOrAlias={roomIdOrAlias}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
+        isOnlyScreenShare={initCallWithoutVideoAndAudio}
       />
     );
   }
