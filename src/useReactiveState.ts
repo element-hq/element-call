@@ -23,6 +23,11 @@ import {
   useState,
 } from "react";
 
+/**
+ * Hook creating a stateful value that updates automatically whenever the
+ * dependencies change. Or equivalently, a version of useMemo that takes its own
+ * previous value as an input, and can be updated manually.
+ */
 export const useReactiveState = <T>(
   updateFn: (prevState?: T) => T,
   deps: DependencyList
