@@ -3,9 +3,9 @@ on:
   ## TDOO: Remove PUSH trigger after clear that's it works
   push:
     branches:
-      - 'e2e'
+      - "e2e"
   workflow_run:
-    workflows: [ "deploy" ]
+    workflows: ["deploy"]
     types:
       - completed
     branches-ignore:
@@ -19,8 +19,7 @@ jobs:
         uses: actions/checkout@v3
         with:
           repository: vector-im/static-call-participant
-          ## TDOO: Change the branch to main before merge PR in master
-          ref: refs/heads/e2e
+          ref: refs/heads/main
           path: static-call-participant
           token: ${{ secrets.GITHUB_TOKEN }}
       - name: Build E2E Image
