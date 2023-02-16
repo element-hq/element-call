@@ -6,3 +6,4 @@ dist-ssr
 *.local
 .idea/
 public/config.json
+/coverage
