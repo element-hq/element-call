@@ -49,7 +49,7 @@ function getDebugInfo(callFeed: CallFeed | undefined): CallFeedDebugInfo {
 function getCallFeedState(callFeed: CallFeed | undefined): CallFeedState {
   return {
     callFeed,
-    isLocal: callFeed ? callFeed.isLocal() : false,
+    isLocal: callFeed ? callFeed.isLocal : false,
     speaking: callFeed ? callFeed.isSpeaking() : false,
     videoMuted: callFeed ? callFeed.isVideoMuted() : true,
     audioMuted: callFeed ? callFeed.isAudioMuted() : true,
