@@ -227,11 +227,11 @@ export function InCallView({
       // shouldn't bother showing it
       if (connectionState !== undefined) {
         tileDescriptors.push({
-          id: screenshareFeed.feedId,
+          id: screenshareFeed.id,
           member,
           callFeed: screenshareFeed,
           focused: true,
-          isLocal: screenshareFeed.isLocal(),
+          isLocal: screenshareFeed.isLocal,
           presenter: false,
           connectionState,
         });
