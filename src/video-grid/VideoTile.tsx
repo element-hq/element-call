@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { forwardRef } from "react";
-import { animated } from "@react-spring/web";
+import React, { ForwardedRef, forwardRef } from "react";
+import { animated, SpringValue } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
@@ -44,9 +44,17 @@ interface Props {
   showOptions?: boolean;
   isLocal?: boolean;
   disableSpeakingIndicator?: boolean;
+  opacity?: SpringValue<number>;
+  scale?: SpringValue<number>;
+  shadow?: SpringValue<number>;
+  zIndex?: SpringValue<number>;
+  x?: SpringValue<number>;
+  y?: SpringValue<number>;
+  width?: SpringValue<number>;
+  height?: SpringValue<number>;
 }
 
-export const VideoTile = forwardRef<HTMLDivElement, Props>(
+export const VideoTile = forwardRef<HTMLElement, Props>(
   (
     {
       name,
@@ -68,6 +76,14 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       isLocal,
       // TODO: disableSpeakingIndicator is not used atm.
       disableSpeakingIndicator,
+      opacity,
+      scale,
+      shadow,
+      zIndex,
+      x,
+      y,
+      width,
+      height,
       ...rest
     },
     ref
@@ -122,7 +138,22 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           [styles.screenshare]: screenshare,
           [styles.maximised]: maximised,
         })}
-        ref={ref}
+        style={{
+          opacity,
+          scale,
+          boxShadow: shadow?.to(
+            (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
+          ),
+          zIndex,
+          x,
+          y,
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore React does in fact support assigning custom properties,
+          // but React's types say no
+          "--tileWidth": width?.to((w) => `${w}px`),
+          "--tileHeight": height?.to((h) => `${h}px`),
+        }}
+        ref={ref as ForwardedRef<HTMLDivElement>}
         {...rest}
       >
         {toolbarButtons.length > 0 && !maximised && (

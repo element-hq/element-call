@@ -158,8 +158,8 @@ export const useSpatialMediaStream = (
   audioDestination: AudioNode,
   localVolume: number,
   mute = false
-): [RefObject<HTMLDivElement>, RefObject<MediaElement>] => {
-  const tileRef = useRef<HTMLDivElement | null>(null);
+): [RefObject<HTMLElement>, RefObject<MediaElement>] => {
+  const tileRef = useRef<HTMLElement | null>(null);
   const [spatialAudio] = useSpatialAudio();
 
   // This media stream is only used for the video - the audio goes via the audio
