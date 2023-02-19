@@ -111,5 +111,6 @@
   "This call already exists, would you like to join?": "この通話は既に存在します。参加しますか？",
   "Take me Home": "ホームに戻る",
   "Press and hold to talk": "押し続けて会話",
-  "{{name}} is presenting": "{{name}}が画面を共有しています"
+  "{{name}} is presenting": "{{name}}が画面を共有しています",
+  "{{names}}, {{name}}": "{{names}}、{{name}}"
 }
