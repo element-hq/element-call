@@ -139,5 +139,6 @@
   "{{name}} (Waiting for video...)": "{{name}} (Ootame videovoo algust...)",
   "This feature is only supported on Firefox.": "See funktsionaalsus on toetatud vaid Firefoxis.",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Kui saadad meile vealogid, siis on lihtsam vea põhjust otsida.</0>",
-  "<0>Oops, something's gone wrong.</0>": "<0>Ohoo, midagi on nüüd katki.</0>"
+  "<0>Oops, something's gone wrong.</0>": "<0>Ohoo, midagi on nüüd katki.</0>",
+  "Use the upcoming grid system": "Kasuta tulevast ruudustiku-põhist paigutust"
 }
