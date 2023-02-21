@@ -94,7 +94,8 @@ export async function initClient(
 
   const baseOpts = {
     fallbackICEServerAllowed: fallbackICEServerAllowed,
-    isVoipWithNoMediaAllowed: Config.get().features?.feature_group_calls_without_video_and_audio
+    isVoipWithNoMediaAllowed:
+      Config.get().features?.feature_group_calls_without_video_and_audio,
   } as ICreateClientOpts;
 
   if (indexedDB && localStorage) {
