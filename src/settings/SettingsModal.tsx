@@ -33,6 +33,7 @@ import {
   useShowInspector,
   useOptInAnalytics,
   canEnableSpatialAudio,
+  useNewGrid,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
@@ -62,6 +63,7 @@ export const SettingsModal = (props: Props) => {
   const [showInspector, setShowInspector] = useShowInspector();
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const [keyboardShortcuts, setKeyboardShortcuts] = useKeyboardShortcuts();
+  const [newGrid, setNewGrid] = useNewGrid();
 
   const downloadDebugLog = useDownloadDebugLog();
 
@@ -213,6 +215,17 @@ export const SettingsModal = (props: Props) => {
               checked={showInspector}
               onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                 setShowInspector(e.target.checked)
+              }
+            />
+          </FieldRow>
+          <FieldRow>
+            <InputField
+              id="newGrid"
+              label={t("Use the upcoming grid system")}
+              type="checkbox"
+              checked={newGrid}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setNewGrid(e.target.checked)
               }
             />
           </FieldRow>
