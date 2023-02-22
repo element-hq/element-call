@@ -21,7 +21,7 @@ jobs:
           repository: vector-im/static-call-participant
           ref: refs/heads/main
           path: static-call-participant
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GH_E2E_TEST_TOKEN }}
       - name: Build E2E Image
         run: "cd static-call-participant && docker build --no-cache --tag matrixdotorg/chrome-node-static-call-participant:latest ."
       - name: Run E2E tests in container
