@@ -100,7 +100,7 @@ interface Props {
   roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
-  isOnlyScreenshare: boolean;
+  allowCallWithoutVideoAndAudio: boolean;
 }
 
 export function InCallView({
@@ -123,7 +123,7 @@ export function InCallView({
   roomIdOrAlias,
   unencryptedEventsFromUsers,
   hideHeader,
-  isOnlyScreenshare,
+  allowCallWithoutVideoAndAudio,
 }: Props) {
   const { t } = useTranslation();
   usePreventScroll();
@@ -377,7 +377,7 @@ export function InCallView({
   } else {
     const buttons: JSX.Element[] = [];
 
-    if (!isOnlyScreenshare) {
+    if (!allowCallWithoutVideoAndAudio) {
       buttons.push(
         <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />,
         <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />

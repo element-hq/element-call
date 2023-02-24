@@ -263,7 +263,7 @@ export function GroupCallView({
           roomIdOrAlias={roomIdOrAlias}
           unencryptedEventsFromUsers={unencryptedEventsFromUsers}
           hideHeader={hideHeader}
-          isOnlyScreenshare={allowCallWithoutVideoAndAudio}
+          allowCallWithoutVideoAndAudio={allowCallWithoutVideoAndAudio}
         />
       );
     }
@@ -302,7 +302,7 @@ export function GroupCallView({
         roomIdOrAlias={roomIdOrAlias}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
-        isOnlyScreenShare={allowCallWithoutVideoAndAudio}
+        allowCallWithoutVideoAndAudio={allowCallWithoutVideoAndAudio}
       />
     );
   }
