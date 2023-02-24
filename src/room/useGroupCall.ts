@@ -66,7 +66,7 @@ export interface UseGroupCallReturnType {
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   hasLocalParticipant: boolean;
   unencryptedEventsFromUsers: Set<string>;
-  initCallWithoutVideoAndAudio: boolean;
+  allowCallWithoutVideoAndAudio: boolean;
 }
 
 interface State {
@@ -147,7 +147,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     hasLocalParticipant: false,
   });
 
-  const initCallWithoutVideoAndAudio = groupCall.initCallWithoutVideoAndAudio;
+  const allowCallWithoutVideoAndAudio = groupCall.allowCallWithoutVideoAndAudio;
 
   const [unencryptedEventsFromUsers, addUnencryptedEventUser] = useReducer(
     (state: Set<string>, newVal: string) => {
@@ -528,6 +528,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     participants,
     hasLocalParticipant,
     unencryptedEventsFromUsers,
-    initCallWithoutVideoAndAudio,
+    allowCallWithoutVideoAndAudio,
   };
 }
