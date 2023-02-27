@@ -100,7 +100,6 @@ interface Props {
   roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
-  allowCallWithoutVideoAndAudio: boolean;
 }
 
 export function InCallView({
@@ -123,7 +122,6 @@ export function InCallView({
   roomIdOrAlias,
   unencryptedEventsFromUsers,
   hideHeader,
-  allowCallWithoutVideoAndAudio,
 }: Props) {
   const { t } = useTranslation();
   usePreventScroll();
@@ -377,17 +375,24 @@ export function InCallView({
   } else {
     const buttons: JSX.Element[] = [];
 
-    if (!allowCallWithoutVideoAndAudio) {
-      buttons.push(
-        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />,
-        <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
-      );
-    }
+    buttons.push(
+      <MicButton
+        key="1"
+        muted={microphoneMuted}
+        onPress={toggleMicrophoneMuted}
+      />,
+      <VideoButton
+        key="2"
+        muted={localVideoMuted}
+        onPress={toggleLocalVideoMuted}
+      />
+    );
 
     if (!reducedControls) {
       if (canScreenshare && !hideScreensharing && !isSafari) {
         buttons.push(
           <ScreenshareButton
+            key="3"
             enabled={isScreensharing}
             onPress={toggleScreensharing}
           />
@@ -396,6 +401,7 @@ export function InCallView({
       if (!maximisedParticipant) {
         buttons.push(
           <OverflowMenu
+            key="4"
             inCall
             roomIdOrAlias={roomIdOrAlias}
             groupCall={groupCall}
@@ -407,7 +413,7 @@ export function InCallView({
       }
     }
 
-    buttons.push(<HangupButton onPress={onLeave} />);
+    buttons.push(<HangupButton key="6" onPress={onLeave} />);
     footer = <div className={styles.footer}>{buttons}</div>;
   }
 
