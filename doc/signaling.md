@@ -7,7 +7,7 @@ WebRTC Signaling is a part of it.
 
 ## Message Exchange
 To set up and operate a video conference, data have to be exchanged between the participants.
-Matrix itself provides tree different message protocols for data synchronization and data persistence.
+Matrix itself provides three different message protocols for data synchronization and data persistence.
 
 1. [State Events](https://spec.matrix.org/latest/#events)
 
