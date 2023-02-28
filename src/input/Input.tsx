@@ -55,7 +55,7 @@ export function Field({ children, className }: FieldProps): JSX.Element {
 }
 
 interface InputFieldProps {
-  label: string;
+  label?: string;
   type: string;
   prefix?: string;
   suffix?: string;
