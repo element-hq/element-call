@@ -212,7 +212,7 @@ export function fullAliasFromRoomName(
 }
 
 /**
- * Applies some basic sanitisation to an room name that the user
+ * Applies some basic sanitisation to a room name that the user
  * has given us
  * @param input The room name from the user
  * @param client A matrix client object
