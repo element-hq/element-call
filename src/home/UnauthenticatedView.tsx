@@ -24,7 +24,11 @@ import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
-import { createRoom, roomAliasLocalpartFromRoomName } from "../matrix-utils";
+import {
+  createRoom,
+  roomAliasLocalpartFromRoomName,
+  sanitiseRoomNameInput,
+} from "../matrix-utils";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
@@ -57,7 +61,7 @@ export const UnauthenticatedView: FC = () => {
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target as HTMLFormElement);
-      const roomName = data.get("callName") as string;
+      const roomName = sanitiseRoomNameInput(data.get("callName") as string);
       const displayName = data.get("displayName") as string;
       const ptt = callType === CallType.Radio;
 

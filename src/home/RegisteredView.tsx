@@ -24,7 +24,11 @@ import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 
-import { createRoom, roomAliasLocalpartFromRoomName } from "../matrix-utils";
+import {
+  createRoom,
+  roomAliasLocalpartFromRoomName,
+  sanitiseRoomNameInput,
+} from "../matrix-utils";
 import { useGroupCallRooms } from "./useGroupCallRooms";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import commonStyles from "./common.module.css";
@@ -60,7 +64,10 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
       e.preventDefault();
       const data = new FormData(e.target as HTMLFormElement);
       const roomNameData = data.get("callName");
-      const roomName = typeof roomNameData === "string" ? roomNameData : "";
+      const roomName =
+        typeof roomNameData === "string"
+          ? sanitiseRoomNameInput(roomNameData)
+          : "";
       const ptt = callType === CallType.Radio;
 
       async function submit() {
