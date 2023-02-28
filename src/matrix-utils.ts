@@ -212,6 +212,31 @@ export function fullAliasFromRoomName(
 }
 
 /**
+ * Applies some basic sanitisation to an room name that the user
+ * has given us
+ * @param input The room name from the user
+ * @param client A matrix client object
+ */
+export function sanitiseRoomNameInput(input: string): string {
+  // check to see if the user has enetered a fully qualified room
+  // alias. If so, turn it into just the localpart because that's what
+  // we use
+  const parts = input.split(":", 2);
+  if (parts.length === 2 && parts[0][0] === "#") {
+    // looks like a room alias
+    if (parts[1] === Config.defaultServerName()) {
+      // it's local to our own homeserver
+      return parts[0];
+    } else {
+      throw new Error("Unsupported remote room alias");
+    }
+  }
+
+  // that's all we do here right now
+  return input;
+}
+
+/**
  * XXX: What is this trying to do? It looks like it's getting the localpart from
  * a room alias, but why is it splitting on hyphens and then putting spaces in??
  * @param roomId
