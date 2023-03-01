@@ -29,7 +29,7 @@ import { useTranslation } from "react-i18next";
 import { IWidgetApiRequest } from "matrix-widget-api";
 
 import { usePageUnload } from "./usePageUnload";
-import { PosthogAnalytics } from "../PosthogAnalytics";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
 

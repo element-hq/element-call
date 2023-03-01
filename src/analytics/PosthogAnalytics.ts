@@ -19,8 +19,8 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixClient } from "matrix-js-sdk";
 import { Buffer } from "buffer";
 
-import { widget } from "./widget";
-import { getSetting, setSetting, settingsBus } from "./settings/useSetting";
+import { widget } from "../widget";
+import { getSetting, setSetting, settingsBus } from "../settings/useSetting";
 import {
   CallEndedTracker,
   CallStartedTracker,
@@ -30,8 +30,8 @@ import {
   MuteMicrophoneTracker,
   UndecryptableToDeviceEventTracker,
 } from "./PosthogEvents";
-import { Config } from "./config/Config";
-import { getUrlParams } from "./UrlParams";
+import { Config } from "../config/Config";
+import { getUrlParams } from "../UrlParams";
 
 /* Posthog analytics tracking.
  *

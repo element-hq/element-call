@@ -32,7 +32,7 @@ import { CallEndedView } from "./CallEndedView";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
-import { PosthogAnalytics } from "../PosthogAnalytics";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useMediaHandler } from "../settings/useMediaHandler";
 import { findDeviceByName, getDevices } from "../media-utils";
 

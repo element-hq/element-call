@@ -34,11 +34,13 @@ import {
   useOptInAnalytics,
   canEnableSpatialAudio,
   useNewGrid,
+  useDeveloperSettingsTab,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
 import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
+import { optInDescription } from "../analytics/AnalyticsOptInDescription";
 
 interface Props {
   isOpen: boolean;
@@ -62,6 +64,8 @@ export const SettingsModal = (props: Props) => {
   const [spatialAudio, setSpatialAudio] = useSpatialAudio();
   const [showInspector, setShowInspector] = useShowInspector();
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
+  const [developerSettingsTab, setDeveloperSettingsTab] =
+    useDeveloperSettingsTab();
   const [keyboardShortcuts, setKeyboardShortcuts] = useKeyboardShortcuts();
   const [newGrid, setNewGrid] = useNewGrid();
 
@@ -80,7 +84,7 @@ export const SettingsModal = (props: Props) => {
           title={
             <>
               <AudioIcon width={16} height={16} />
-              <span>{t("Audio")}</span>
+              <span className={styles.tabLabel}>{t("Audio")}</span>
             </>
           }
         >
@@ -158,24 +162,11 @@ export const SettingsModal = (props: Props) => {
           title={
             <>
               <OverflowIcon width={16} height={16} />
-              <span>{t("Advanced")}</span>
+              <span>{t("More")}</span>
             </>
           }
         >
-          <FieldRow>
-            <InputField
-              id="optInAnalytics"
-              label={t("Allow analytics")}
-              type="checkbox"
-              checked={optInAnalytics}
-              description={t(
-                "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used."
-              )}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setOptInAnalytics(event.target.checked)
-              }
-            />
-          </FieldRow>
+          <h4>Keyboard</h4>
           <FieldRow>
             <InputField
               id="keyboardShortcuts"
@@ -190,51 +181,79 @@ export const SettingsModal = (props: Props) => {
               }
             />
           </FieldRow>
-        </TabItem>
-        <TabItem
-          title={
-            <>
-              <DeveloperIcon width={16} height={16} />
-              <span>{t("Developer")}</span>
-            </>
-          }
-        >
-          <FieldRow>
-            <Body className={styles.fieldRowText}>
-              {t("Version: {{version}}", {
-                version: import.meta.env.VITE_APP_VERSION || "dev",
-              })}
-            </Body>
-          </FieldRow>
+          <h4>Analytics</h4>
           <FieldRow>
             <InputField
-              id="showInspector"
-              name="inspector"
-              label={t("Show call inspector")}
+              id="optInAnalytics"
               type="checkbox"
-              checked={showInspector}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setShowInspector(e.target.checked)
+              checked={optInAnalytics}
+              description={optInDescription()}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setOptInAnalytics(event.target.checked)
               }
             />
           </FieldRow>
           <FieldRow>
             <InputField
-              id="newGrid"
-              label={t("Use the upcoming grid system")}
+              id="developerSettingsTab"
               type="checkbox"
-              checked={newGrid}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setNewGrid(e.target.checked)
+              checked={developerSettingsTab}
+              label={t("Developer Settings")}
+              description={t(
+                "Expose developer settings in the settings window."
+              )}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setDeveloperSettingsTab(event.target.checked)
               }
             />
           </FieldRow>
-          <FieldRow>
-            <Button onPress={downloadDebugLog}>
-              {t("Download debug logs")}
-            </Button>
-          </FieldRow>
         </TabItem>
+        {developerSettingsTab && (
+          <TabItem
+            title={
+              <>
+                <DeveloperIcon width={16} height={16} />
+                <span>{t("Developer")}</span>
+              </>
+            }
+          >
+            <FieldRow>
+              <Body className={styles.fieldRowText}>
+                {t("Version: {{version}}", {
+                  version: import.meta.env.VITE_APP_VERSION || "dev",
+                })}
+              </Body>
+            </FieldRow>
+            <FieldRow>
+              <InputField
+                id="showInspector"
+                name="inspector"
+                label={t("Show call inspector")}
+                type="checkbox"
+                checked={showInspector}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setShowInspector(e.target.checked)
+                }
+              />
+            </FieldRow>
+            <FieldRow>
+              <InputField
+                id="newGrid"
+                label={t("Use the upcoming grid system")}
+                type="checkbox"
+                checked={newGrid}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setNewGrid(e.target.checked)
+                }
+              />
+            </FieldRow>
+            <FieldRow>
+              <Button onPress={downloadDebugLog}>
+                {t("Download debug logs")}
+              </Button>
+            </FieldRow>
+          </TabItem>
+        )}
       </TabContainer>
     </Modal>
   );

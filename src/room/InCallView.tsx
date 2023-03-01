@@ -63,7 +63,7 @@ import {
 import { useModalTriggerState } from "../Modal";
 import { useAudioContext } from "../video-grid/useMediaStream";
 import { useFullscreen } from "../video-grid/useFullscreen";
-import { PosthogAnalytics } from "../PosthogAnalytics";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { widget, ElementWidgetActions } from "../widget";
 import { useJoinRule } from "./useJoinRule";
 import { useUrlParams } from "../UrlParams";
