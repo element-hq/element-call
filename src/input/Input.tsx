@@ -55,14 +55,14 @@ export function Field({ children, className }: FieldProps): JSX.Element {
 }
 
 interface InputFieldProps {
-  label: string;
+  label?: string;
   type: string;
   prefix?: string;
   suffix?: string;
   id?: string;
   checked?: boolean;
   className?: string;
-  description?: string;
+  description?: string | ReactNode;
   disabled?: boolean;
   required?: boolean;
   // this is a hack. Those variables should be part of `HTMLAttributes<HTMLInputElement> | HTMLAttributes<HTMLTextAreaElement>`
@@ -140,7 +140,14 @@ export const InputField = forwardRef<
         </label>
         {suffix && <span>{suffix}</span>}
         {description && (
-          <p id={descriptionId} className={styles.description}>
+          <p
+            id={descriptionId}
+            className={
+              label
+                ? styles.description
+                : classNames(styles.description, styles.noLabel)
+            }
+          >
             {description}
           </p>
         )}
