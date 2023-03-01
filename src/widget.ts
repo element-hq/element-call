@@ -101,7 +101,7 @@ export const widget: WidgetHelpers | null = (() => {
       // We need to do this now rather than later because it has capabilities to
       // request, and is responsible for starting the transport (should it be?)
 
-      const { roomId, userId, deviceId, baseUrl } = getUrlParams();
+      const { roomId, userId, deviceId, baseUrl, e2eEnabled } = getUrlParams();
       if (!roomId) throw new Error("Room ID must be supplied");
       if (!userId) throw new Error("User ID must be supplied");
       if (!deviceId) throw new Error("Device ID must be supplied");
@@ -147,6 +147,7 @@ export const widget: WidgetHelpers | null = (() => {
           userId,
           deviceId,
           timelineSupport: true,
+          useE2eForGroupCall: e2eEnabled,
         }
       );
       const clientPromise = client.startClient().then(() => client);
