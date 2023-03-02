@@ -30,20 +30,6 @@ cp config/config.sample.json public/config.json
 # edit public/config.json
 ```
 
-#### Allow to join group calls without camera and audio device:
-
-You can allow to join a group call without video and audio by setup this feature in your config.json:
-
-```json
-{
-  ...
-
-  "features": {
-    "feature_group_calls_without_video_and_audio": true
-  }
-}
-```
-
 Because Element Call uses client-side routing, your server must be able to route any requests to non-existing paths back to `/index.html`. For example, in Nginx you can achieve this with the `try_files` directive:
 
 ```
@@ -61,6 +47,22 @@ By default, the app expects you to have a Matrix homeserver (such as [Synapse](h
 Element Call requires a homeserver with registration enabled without any 3pid or token requirements, if you want it to be used by unregistered users. Furthermore, it is not recommended to use it with an existing homeserver where user accounts have joined normal rooms, as it may not be able to handle those yet and it may behave unreliably.
 
 Therefore, to use a self-hosted homeserver, this is recommended to be a new server where any user account created has not joined any normal rooms anywhere in the Matrix federated network. The homeserver used can be setup to disable federation, so as to prevent spam registrations (if you keep registrations open) and to ensure Element Call continues to work in case any user decides to log in to their Element Call account using the standard Element app and joins normal rooms that Element Call cannot handle.
+
+### Features
+
+#### Allow to join group calls without camera and audio device
+
+You can allow to join a group call without video and audio by setup this feature in your `config.json`:
+
+```json
+{
+  ...
+
+  "features": {
+    "feature_group_calls_without_video_and_audio": true
+  }
+}
+```
 
 ## Development
 
