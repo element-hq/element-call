@@ -48,6 +48,22 @@ Element Call requires a homeserver with registration enabled without any 3pid or
 
 Therefore, to use a self-hosted homeserver, this is recommended to be a new server where any user account created has not joined any normal rooms anywhere in the Matrix federated network. The homeserver used can be setup to disable federation, so as to prevent spam registrations (if you keep registrations open) and to ensure Element Call continues to work in case any user decides to log in to their Element Call account using the standard Element app and joins normal rooms that Element Call cannot handle.
 
+### Features
+
+#### Allow joining group calls without a camera and a microphone
+
+You can allow joining a group call without video and audio enabling this feature in your `config.json`:
+
+```json
+{
+  ...
+
+  "features": {
+    "feature_group_calls_without_video_and_audio": true
+  }
+}
+```
+
 ## Development
 
 Element Call is built against [matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk/pull/2553). To get started, clone, install, and link the package:

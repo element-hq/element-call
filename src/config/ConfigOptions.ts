@@ -44,6 +44,14 @@ export interface ConfigOptions {
       server_name: string;
     };
   };
+
+  /**
+   * Allow to join a group calls without audio and video.
+   * TEMPORARY: Is a feature that's not proved and experimental
+   */
+  features?: {
+    feature_group_calls_without_video_and_audio: boolean;
+  };
 }
 
 // Overrides members from ConfigOptions that are always provided by the
