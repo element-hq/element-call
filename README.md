@@ -30,6 +30,20 @@ cp config/config.sample.json public/config.json
 # edit public/config.json
 ```
 
+#### Allow to join group calls without camera and audio device:
+
+You can allow to join a group call without video and audio by setup this feature in your config.json:
+
+```json
+{
+  ...
+
+  "features": {
+    "feature_group_calls_without_video_and_audio": true
+  }
+}
+```
+
 Because Element Call uses client-side routing, your server must be able to route any requests to non-existing paths back to `/index.html`. For example, in Nginx you can achieve this with the `try_files` directive:
 
 ```
