@@ -50,9 +50,9 @@ Therefore, to use a self-hosted homeserver, this is recommended to be a new serv
 
 ### Features
 
-#### Allow to join group calls without camera and audio device
+#### Allow joining group calls without a camera and a microphone
 
-You can allow to join a group call without video and audio by setup this feature in your `config.json`:
+You can allow joining a group call without video and audio enabling this feature in your `config.json`:
 
 ```json
 {
