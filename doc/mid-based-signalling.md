@@ -39,7 +39,7 @@ m.call.invite:
         "m.call.transferee": false,
         "m.call.dtmf": false,
     },
-    "m.tracks.describe": {
+    "m.call.describe": {
         "1": { // transceiver mid 1
             "media_uuid": "aaaa-aaaa-aaaaaa-aaaa-aaaa",
             "media_group_uuid": "1234-1234-123456-1234-1234", // rather than 'track group ID' to match media UUID?
@@ -59,7 +59,7 @@ m.call.invite:
 Note that the SDP content is now in a section called `m.negotiate`. This is a mixin block common to all negotiation events
 (invite, answer, negotiate).
 
-The `m.tracks.describe` block is a 'mixin' block in externsible events terms and describes the media being sent on each
+The `m.call.describe` block is a 'mixin' block in externsible events terms and describes the media being sent on each
 transceiver by the sending user. It *always* refers only to the media being sent by the device that sends the event.
 
 The same is sent either to a focus or a peer client.
@@ -88,7 +88,7 @@ m.call.answer (full mesh)
         "m.call.transferee": false,
         "m.call.dtmf": false,
     },
-    "m.tracks.describe": {
+    "m.call.describe": {
         "1": { // transceiver mid 1
             "media_uuid": "cccc-cccc-cccccc-cccc-cccc",
             "media_group_uuid": "2345-2345-234567-2345-2345",
@@ -106,7 +106,7 @@ m.call.answer (full mesh)
 ```
 
 A focus, however, will not send any tracks by default and therefore does not include an
-`m.tracks.describe` bblock. Instead, it includes an `m.track.advertise` block advertising
+`m.call.describe` bblock. Instead, it includes an `m.track.advertise` block advertising
 what tracks are available for that `conf_id`.
 
 m.call.answer (focus)
@@ -126,7 +126,7 @@ m.call.answer (focus)
         "m.call.transferee": false,
         "m.call.dtmf": false,
     },
-    "m.tracks.advertise": {
+    "m.call.advertise": {
         "alice:example.org": { // user ID
             "88888888": { // device ID
                 "2345-2345-234567-2345-2345": [{ // media group uuid
@@ -225,7 +225,7 @@ m.call.negotiate
             "sdp": "[...]",
         }
     },
-    "m.tracks.describe": {
+    "m.call.describe": {
         "1": { // transceiver mid 1
             "media_uuid": "aaaa-aaaa-aaaaaa-aaaa-aaaa",
             "media_group_uuid": "1234-1234-123456-1234-1234", // rather than 'track group ID' to match media UUID?
@@ -249,4 +249,4 @@ howerver, as the client equally already knows what user IDs the media UUIDs corr
 a full mesh track description.
 
 Or it may already have enough spare transceivers and not need to negotiate, in which case it simply sends the same
-track description block without a negotiation (and with event type `m.tracks.describe`.
+track description block without a negotiation (and with event type `m.call.describe`.
