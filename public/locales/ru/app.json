@@ -139,5 +139,6 @@
   "Single-key keyboard shortcuts": "Горячие клавиши",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Отправка журналов поможет нам найти и устранить проблему.</0>",
   "<0>Oops, something's gone wrong.</0>": "<0>Упс, что-то пошло не так.</0>",
-  "{{name}} (Waiting for video...)": "{{name}} (Ожидание видео...)"
+  "{{name}} (Waiting for video...)": "{{name}} (Ожидание видео...)",
+  "Use the upcoming grid system": "Использовать сеточный показ"
 }
