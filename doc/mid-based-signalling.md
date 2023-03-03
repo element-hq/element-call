@@ -183,7 +183,9 @@ This has also been rearrnaged a little to make the media UUIDs the keys and remo
 unsubscribe section which is unnecessary if we always send the complete set of tracks we
 want to receive (we unsubscribe by just removing the media UUID from the dict).
 
-This also now contains a sequence number, so the focus can reply with a an ack:
+This also now contains a sequence number. This is a monotonically increasing integer, starting
+at 0 and scoped to the lifetime of the peer connection. The focus will send a reply containing
+this sequence number to acknowledge that it has processed the message. This can be a positive ack:
 
 m.call.ack
 ```
