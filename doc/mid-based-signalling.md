@@ -23,7 +23,7 @@ us an idea of whether it could work or not.**
 m.call.invite:
 ```
 {
-    "m.negotiate": {
+    "m.call.negotiate": {
         "version": 1,
         "call_id": "35657a5b793ce",
         "conf_id": "bbe53499f82e3",
