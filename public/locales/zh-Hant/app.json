@@ -10,5 +10,8 @@
   "{{name}} (Connecting...)": "{{name}} (連線中 ...)",
   "{{displayName}}, your call is now ended": "{{displayName}}，您的通話現在已結束",
   "{{count}} people connected|other": "{{count}} 人已連線",
-  "{{count}} people connected|one": "{{count}} 人已連線"
+  "{{count}} people connected|one": "{{count}} 人已連線",
+  "Use the upcoming grid system": "使用即將推出的網格系統",
+  "Privacy Policy": "隱私權政策",
+  "Expose developer settings in the settings window.": "在設定視窗中顯示開發者設定。"
 }
