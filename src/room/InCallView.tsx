@@ -41,7 +41,11 @@ import {
   RoomHeaderInfo,
   VersionMismatchWarning,
 } from "../Header";
-import { VideoGrid, useVideoGridLayout } from "../video-grid/VideoGrid";
+import {
+  VideoGrid,
+  useVideoGridLayout,
+  ChildrenProperties,
+} from "../video-grid/VideoGrid";
 import { VideoTileContainer } from "../video-grid/VideoTileContainer";
 import { GroupCallInspector } from "./GroupCallInspector";
 import { OverflowMenu } from "./OverflowMenu";
@@ -51,11 +55,15 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { useMediaHandler } from "../settings/useMediaHandler";
-import { useShowInspector, useSpatialAudio } from "../settings/useSetting";
+import {
+  useNewGrid,
+  useShowInspector,
+  useSpatialAudio,
+} from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { useAudioContext } from "../video-grid/useMediaStream";
 import { useFullscreen } from "../video-grid/useFullscreen";
-import { PosthogAnalytics } from "../PosthogAnalytics";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { widget, ElementWidgetActions } from "../widget";
 import { useJoinRule } from "./useJoinRule";
 import { useUrlParams } from "../UrlParams";
@@ -64,6 +72,7 @@ import { ParticipantInfo } from "./useGroupCall";
 import { TileDescriptor } from "../video-grid/TileDescriptor";
 import { AudioSink } from "../video-grid/AudioSink";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
+import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -276,6 +285,8 @@ export function InCallView({
     []
   );
 
+  const [newGrid] = useNewGrid();
+  const Grid = newGrid ? NewVideoGrid : VideoGrid;
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const renderContent = (): JSX.Element => {
@@ -289,8 +300,8 @@ export function InCallView({
     if (maximisedParticipant) {
       return (
         <VideoTileContainer
-          height={bounds.height}
-          width={bounds.width}
+          targetHeight={bounds.height}
+          targetWidth={bounds.width}
           key={maximisedParticipant.id}
           item={maximisedParticipant}
           getAvatar={renderAvatar}
@@ -305,20 +316,13 @@ export function InCallView({
     }
 
     return (
-      <VideoGrid
+      <Grid
         items={items}
         layout={layout}
         disableAnimations={prefersReducedMotion || isSafari}
       >
-        {({
-          item,
-          ...rest
-        }: {
-          item: TileDescriptor;
-          [x: string]: unknown;
-        }) => (
+        {({ item, ...rest }: ChildrenProperties) => (
           <VideoTileContainer
-            key={item.id}
             item={item}
             getAvatar={renderAvatar}
             audioContext={audioContext}
@@ -330,7 +334,7 @@ export function InCallView({
             {...rest}
           />
         )}
-      </VideoGrid>
+      </Grid>
     );
   };
 
@@ -368,27 +372,36 @@ export function InCallView({
 
   if (noControls) {
     footer = null;
-  } else if (reducedControls) {
-    footer = (
-      <div className={styles.footer}>
-        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
-        <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
-        <HangupButton onPress={onLeave} />
-      </div>
-    );
   } else {
-    footer = (
-      <div className={styles.footer}>
-        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
-        <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
-        {canScreenshare && !hideScreensharing && !isSafari && (
+    const buttons: JSX.Element[] = [];
+
+    buttons.push(
+      <MicButton
+        key="1"
+        muted={microphoneMuted}
+        onPress={toggleMicrophoneMuted}
+      />,
+      <VideoButton
+        key="2"
+        muted={localVideoMuted}
+        onPress={toggleLocalVideoMuted}
+      />
+    );
+
+    if (!reducedControls) {
+      if (canScreenshare && !hideScreensharing && !isSafari) {
+        buttons.push(
           <ScreenshareButton
+            key="3"
             enabled={isScreensharing}
             onPress={toggleScreensharing}
           />
-        )}
-        {!maximisedParticipant && (
+        );
+      }
+      if (!maximisedParticipant) {
+        buttons.push(
           <OverflowMenu
+            key="4"
             inCall
             roomIdOrAlias={roomIdOrAlias}
             groupCall={groupCall}
@@ -396,10 +409,12 @@ export function InCallView({
             feedbackModalState={feedbackModalState}
             feedbackModalProps={feedbackModalProps}
           />
-        )}
-        <HangupButton onPress={onLeave} />
-      </div>
-    );
+        );
+      }
+    }
+
+    buttons.push(<HangupButton key="6" onPress={onLeave} />);
+    footer = <div className={styles.footer}>{buttons}</div>;
   }
 
   return (

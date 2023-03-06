@@ -26,3 +26,12 @@ limitations under the License.
 .fieldRowText {
   margin-bottom: 0;
 }
+
+/*
+This style guarantees a fixed width of the tab bar in the settings window.
+The "Developer" item in the tab bar can be toggled.
+Without a defined width activating the developer tab makes the tab container jump to the right.
+*/
+.tabLabel {
+  width: 80px;
+}

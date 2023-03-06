@@ -92,10 +92,14 @@ export async function initClient(
     indexedDB = window.indexedDB;
   } catch (e) {}
 
-  const storeOpts = {} as ICreateClientOpts;
+  const baseOpts = {
+    fallbackICEServerAllowed: fallbackICEServerAllowed,
+    isVoipWithNoMediaAllowed:
+      Config.get().features?.feature_group_calls_without_video_and_audio,
+  } as ICreateClientOpts;
 
   if (indexedDB && localStorage) {
-    storeOpts.store = new IndexedDBStore({
+    baseOpts.store = new IndexedDBStore({
       indexedDB: window.indexedDB,
       localStorage,
       dbName: SYNC_STORE_NAME,
@@ -107,7 +111,7 @@ export async function initClient(
         : () => new IndexedDBWorker(),
     });
   } else if (localStorage) {
-    storeOpts.store = new MemoryStore({ localStorage });
+    baseOpts.store = new MemoryStore({ localStorage });
   }
 
   // Check whether we have crypto data store. If we are restoring a session
@@ -139,14 +143,14 @@ export async function initClient(
   }
 
   if (indexedDB) {
-    storeOpts.cryptoStore = new IndexedDBCryptoStore(
+    baseOpts.cryptoStore = new IndexedDBCryptoStore(
       indexedDB,
       CRYPTO_STORE_NAME
     );
   } else if (localStorage) {
-    storeOpts.cryptoStore = new LocalStorageCryptoStore(localStorage);
+    baseOpts.cryptoStore = new LocalStorageCryptoStore(localStorage);
   } else {
-    storeOpts.cryptoStore = new MemoryCryptoStore();
+    baseOpts.cryptoStore = new MemoryCryptoStore();
   }
 
   // XXX: we read from the URL params in RoomPage too:
@@ -160,7 +164,7 @@ export async function initClient(
   }
 
   const client = createClient({
-    ...storeOpts,
+    ...baseOpts,
     ...clientOptions,
     useAuthorizationHeader: true,
     // Use a relatively low timeout for API calls: this is a realtime app
@@ -209,6 +213,31 @@ export function fullAliasFromRoomName(
   client: MatrixClient
 ): string {
   return `#${roomAliasLocalpartFromRoomName(roomName)}:${client.getDomain()}`;
+}
+
+/**
+ * Applies some basic sanitisation to a room name that the user
+ * has given us
+ * @param input The room name from the user
+ * @param client A matrix client object
+ */
+export function sanitiseRoomNameInput(input: string): string {
+  // check to see if the user has enetered a fully qualified room
+  // alias. If so, turn it into just the localpart because that's what
+  // we use
+  const parts = input.split(":", 2);
+  if (parts.length === 2 && parts[0][0] === "#") {
+    // looks like a room alias
+    if (parts[1] === Config.defaultServerName()) {
+      // it's local to our own homeserver
+      return parts[0];
+    } else {
+      throw new Error("Unsupported remote room alias");
+    }
+  }
+
+  // that's all we do here right now
+  return input;
 }
 
 /**

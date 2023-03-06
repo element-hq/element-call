@@ -25,7 +25,7 @@ import { Button } from "../button";
 import styles from "./LoginPage.module.css";
 import { useInteractiveLogin } from "./useInteractiveLogin";
 import { usePageTitle } from "../usePageTitle";
-import { PosthogAnalytics } from "../PosthogAnalytics";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
 
 export const LoginPage: FC = () => {

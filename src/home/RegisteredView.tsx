@@ -24,7 +24,11 @@ import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 
-import { createRoom, roomAliasLocalpartFromRoomName } from "../matrix-utils";
+import {
+  createRoom,
+  roomAliasLocalpartFromRoomName,
+  sanitiseRoomNameInput,
+} from "../matrix-utils";
 import { useGroupCallRooms } from "./useGroupCallRooms";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import commonStyles from "./common.module.css";
@@ -38,6 +42,8 @@ import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { Title } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
+import { useOptInAnalytics } from "../settings/useSetting";
+import { optInDescription } from "../analytics/AnalyticsOptInDescription";
 
 interface Props {
   client: MatrixClient;
@@ -48,6 +54,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
   const [callType, setCallType] = useState(CallType.Video);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
+  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const history = useHistory();
   const { t } = useTranslation();
   const { modalState, modalProps } = useModalTriggerState();
@@ -57,7 +64,10 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
       e.preventDefault();
       const data = new FormData(e.target as HTMLFormElement);
       const roomNameData = data.get("callName");
-      const roomName = typeof roomNameData === "string" ? roomNameData : "";
+      const roomName =
+        typeof roomNameData === "string"
+          ? sanitiseRoomNameInput(roomNameData)
+          : "";
       const ptt = callType === CallType.Radio;
 
       async function submit() {
@@ -134,6 +144,15 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
                 {loading ? t("Loading…") : t("Go")}
               </Button>
             </FieldRow>
+            <InputField
+              id="optInAnalytics"
+              type="checkbox"
+              checked={optInAnalytics}
+              description={optInDescription()}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setOptInAnalytics(event.target.checked)
+              }
+            />
             {error && (
               <FieldRow className={styles.fieldRow}>
                 <ErrorMessage error={error} />

@@ -90,3 +90,6 @@ export const useShowInspector = () => useSetting("show-inspector", false);
 export const useOptInAnalytics = () => useSetting("opt-in-analytics", false);
 export const useKeyboardShortcuts = () =>
   useSetting("keyboard-shortcuts", true);
+export const useNewGrid = () => useSetting("new-grid", false);
+export const useDeveloperSettingsTab = () =>
+  useSetting("developer-settings-tab", false);

@@ -16,7 +16,12 @@ limitations under the License.
 
 import React, { Key, useCallback, useEffect, useRef, useState } from "react";
 import { FullGestureState, useDrag, useGesture } from "@use-gesture/react";
-import { Interpolation, SpringValue, useSprings } from "@react-spring/web";
+import {
+  SpringRef,
+  SpringValue,
+  SpringValues,
+  useSprings,
+} from "@react-spring/web";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { ReactDOMAttributes } from "@use-gesture/react/dist/declarations/src/types";
@@ -40,6 +45,17 @@ interface Tile {
   remove: boolean;
   focused: boolean;
   presenter: boolean;
+}
+
+export interface TileSpring {
+  opacity: number;
+  scale: number;
+  shadow: number;
+  zIndex: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 type LayoutDirection = "vertical" | "horizontal";
@@ -692,20 +708,23 @@ interface DragTileData {
   y: number;
 }
 
-interface ChildrenProperties extends ReactDOMAttributes {
+export interface ChildrenProperties extends ReactDOMAttributes {
   key: Key;
-  style: {
-    scale: SpringValue<number>;
-    opacity: SpringValue<number>;
-    boxShadow: Interpolation<number, string>;
-  };
-  width: number;
-  height: number;
+  targetWidth: number;
+  targetHeight: number;
   item: TileDescriptor;
+  opacity: SpringValue<number>;
+  scale: SpringValue<number>;
+  shadow: SpringValue<number>;
+  zIndex: SpringValue<number>;
+  x: SpringValue<number>;
+  y: SpringValue<number>;
+  width: SpringValue<number>;
+  height: SpringValue<number>;
   [index: string]: unknown;
 }
 
-interface VideoGridProps {
+export interface VideoGridProps {
   items: TileDescriptor[];
   layout: Layout;
   disableAnimations?: boolean;
@@ -896,6 +915,7 @@ export function VideoGrid({
               shadow: 0,
               scale: 0,
               opacity: 0,
+              zIndex: 0,
             },
             reset: false,
           };
@@ -919,6 +939,7 @@ export function VideoGrid({
             shadow: number;
             scale: number;
             opacity: number;
+            zIndex?: number;
             x?: number;
             y?: number;
             width?: number;
@@ -965,7 +986,8 @@ export function VideoGrid({
     tilePositions,
     tiles,
     scrollPosition,
-  ]);
+    // react-spring's types are bugged and can't infer the spring type
+  ]) as unknown as [SpringValues<TileSpring>[], SpringRef<TileSpring>];
 
   const onTap = useCallback(
     (tileKey: Key) => {
@@ -1175,21 +1197,16 @@ export function VideoGrid({
 
   return (
     <div className={styles.videoGrid} ref={gridRef} {...bindGrid()}>
-      {springs.map(({ shadow, ...style }, i) => {
+      {springs.map((style, i) => {
         const tile = tiles[i];
         const tilePosition = tilePositions[tile.order];
 
         return children({
           ...bindTile(tile.key),
-          key: tile.key,
-          style: {
-            boxShadow: shadow.to(
-              (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
-            ),
-            ...style,
-          },
-          width: tilePosition.width,
-          height: tilePosition.height,
+          ...style,
+          key: tile.item.id,
+          targetWidth: tilePosition.width,
+          targetHeight: tilePosition.height,
           item: tile.item,
         });
       })}

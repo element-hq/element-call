@@ -29,7 +29,7 @@ import { useTranslation } from "react-i18next";
 import { IWidgetApiRequest } from "matrix-widget-api";
 
 import { usePageUnload } from "./usePageUnload";
-import { PosthogAnalytics } from "../PosthogAnalytics";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
 
@@ -98,12 +98,24 @@ function getParticipants(
         (f) => f.userId === member.userId && f.deviceId === deviceId
       );
 
-      participantInfoMap.set(deviceId, {
-        connectionState: feed
+      let connectionState: ConnectionState;
+      // If we allow calls without media, we have no feeds and cannot read the connection status from them.
+      // @TODO: The connection state should generally not be determined by the feed.
+      if (
+        groupCall.allowCallWithoutVideoAndAudio &&
+        !feed &&
+        !participant.screensharing
+      ) {
+        connectionState = ConnectionState.Connected;
+      } else {
+        connectionState = feed
           ? feed.connected
             ? ConnectionState.Connected
             : ConnectionState.WaitMedia
-          : ConnectionState.EstablishingCall,
+          : ConnectionState.EstablishingCall;
+      }
+      participantInfoMap.set(deviceId, {
+        connectionState,
         presenter: participant.screensharing,
       });
     }
@@ -157,6 +169,38 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     (state: Partial<State>) => setState((prev) => ({ ...prev, ...state })),
     [setState]
   );
+
+  const doNothingMediaActionCallback = useCallback(
+    (details: MediaSessionActionDetails) => {},
+    []
+  );
+
+  useEffect(() => {
+    // disable the media action keys, otherwise audio elements get paused when
+    // the user presses media keys or unplugs headphones, etc.
+    // Note there are actions for muting / unmuting a microphone & hanging up
+    // which we could wire up.
+    const mediaActions: MediaSessionAction[] = [
+      "play",
+      "pause",
+      "stop",
+      "nexttrack",
+      "previoustrack",
+    ];
+
+    for (const mediaAction of mediaActions) {
+      navigator.mediaSession.setActionHandler(
+        mediaAction,
+        doNothingMediaActionCallback
+      );
+    }
+
+    return () => {
+      for (const mediaAction of mediaActions) {
+        navigator.mediaSession.setActionHandler(mediaAction, null);
+      }
+    };
+  }, [doNothingMediaActionCallback]);
 
   useEffect(() => {
     function onGroupCallStateChanged() {
