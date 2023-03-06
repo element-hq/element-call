@@ -1,9 +1,5 @@
 name: Run E2E tests
 on:
-  ## TDOO: Remove PUSH trigger after clear that's it works
-  push:
-    branches:
-      - "e2e"
   workflow_run:
     workflows: ["deploy"]
     types:
