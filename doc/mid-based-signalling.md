@@ -106,7 +106,7 @@ m.call.answer (full mesh)
 ```
 
 A focus, however, will not send any tracks by default and therefore does not include an
-`m.call.describe` bblock. Instead, it includes an `m.track.advertise` block advertising
+`m.call.describe` block. Instead, it includes an `m.track.advertise` block advertising
 what tracks are available for that `conf_id`.
 
 m.call.answer (focus)
