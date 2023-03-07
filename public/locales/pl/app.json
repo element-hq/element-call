@@ -129,7 +129,6 @@
   "This feature is only supported on Firefox.": "Ta funkcjonalność jest dostępna tylko w Firefox.",
   "Single-key keyboard shortcuts": "Skróty klawiszowe (pojedyncze klawisze)",
   "Copy": "Kopiuj",
-  "Advanced": "Zaawansowane",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Wysłanie logów debuggowania pomoże nam ustalić przyczynę problemu.</0>",
   "<0>Oops, something's gone wrong.</0>": "<0>Ojej, coś poszło nie tak.</0>",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Dołącz do rozmowy teraz</0><1>Or</1><2>Skopiuj link do rozmowy i dołącz później</2>",

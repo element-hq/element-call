@@ -129,7 +129,6 @@
   "{{count}} people connected|one": "{{count}} подключился",
   "Element Call Home": "Главная Element Call",
   "Copy": "Копировать",
-  "Advanced": "Расширенные",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Присоединиться сейчас</0><1>или<1><2>cкопировать ссылку на звонок и присоединиться позже</2>",
   "{{name}} (Connecting...)": "{{name}} (Соединение...)",
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Включить горячие клавиши, например 'm' чтобы отключить/включить микрофон.",

@@ -37,7 +37,6 @@
   "Sign in": "登录",
   "Audio": "音频",
   "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.": "这个通话中的另一个用户出现了问题。为了更好地诊断这些问题，我们想收集调试日志。",
-  "Advanced": "偏好",
   "Accept microphone permissions to join the call.": "授予麦克风权限以加入通话。",
   "Accept camera/microphone permissions to join the call.": "授予摄像头/麦克风权限以加入通话。",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>为什么不设置一个密码来保留你的账户？</0><1>你将可以保留你的名字并设置一个头像，以便在未来的通话中使用。</1>",
