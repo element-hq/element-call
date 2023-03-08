@@ -129,15 +129,17 @@
   "Sending debug logs…": "Envoi des journaux de débogage…",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Rejoindre l’appel maintenant</0><1>Ou</1><2>Copier le lien de l’appel et rejoindre plus tard</2>",
   "{{name}} (Connecting...)": "{{name}} (Connexion…)",
-  "Allow analytics": "Autoriser les statistiques",
-  "Advanced": "Avancé",
   "Element Call Home": "Accueil Element Call",
   "Copy": "Copier",
-  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Cela enverra des données anonymisées (telles que la durée d’un appel et le nombre de participants) à l’équipe de Element Call pour aider à optimiser l’application en fonction de l’utilisation.",
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Bascule sur les raccourcis clavier à touche unique, par exemple « m » pour désactiver / activer le micro.",
   "Single-key keyboard shortcuts": "Raccourcis clavier en une touche",
   "{{name}} (Waiting for video...)": "{{name}} (En attente de vidéo…)",
   "This feature is only supported on Firefox.": "Cette fonctionnalité est prise en charge dans Firefox uniquement.",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Soumettre les journaux de débogage nous aidera à déterminer le problème.</0>",
-  "<0>Oops, something's gone wrong.</0>": "<0>Oups, quelque chose s’est mal passé.</0>"
+  "<0>Oops, something's gone wrong.</0>": "<0>Oups, quelque chose s’est mal passé.</0>",
+  "Use the upcoming grid system": "Utiliser le futur système de grille",
+  "Privacy Policy": "Politique de confidentialité",
+  "Expose developer settings in the settings window.": "Affiche les paramètres développeurs dans la fenêtre des paramètres.",
+  "Developer Settings": "Paramètres développeurs",
+  "By ticking this box you consent to the collection of anonymous data, which we use to improve your experience. You can find more information about which data we track in our ": "En cochant cette case vous consentez à la collecte de données anonymes, que nous nous utilisons pour améliorer votre expérience. Vous trouverez plus d’informations sur les données collectées dans notre "
 }

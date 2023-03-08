@@ -128,12 +128,9 @@
   "Stop sharing screen": "توقف اشتراک‌گذاری صفحه نمایش",
   "Spatial audio": "صدای جهت‌دار",
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "این که میان‌برهای صفحه‌کلید تک‌کلیده مثل m برای خموشی و ناخموشی میکروفون به کار بیفتند یا نه.",
-  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "داده‌های ناشناس شده (از اطَلاعاتی مثل طول تماس و شمارهٔ طرف‌ها) را به گروه تماس المنت فرستاده تا در بهینه‌سازی برنامه بر پایهٔ چگونگی استفاده‌اش یاریمان کنند.",
   "Single-key keyboard shortcuts": "میان‌برهای صفحه‌کلید تک‌کلیده",
   "Element Call Home": "خانهٔ تماس المنت",
   "Copy": "رونوشت",
-  "Allow analytics": "نمایش تجزیه‌ها",
-  "Advanced": "پیش رفته",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>اکنون به تماس پیوسته</0><1>یا</1><2>پیوند تماس را رونوشت کرده و بعداً بپیوندید</2>",
   "{{name}} (Waiting for video...)": "{{name}} (منتظر تصویر…)",
   "{{name}} (Connecting...)": "{{name}} (وصل شدن…)"
