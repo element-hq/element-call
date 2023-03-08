@@ -129,15 +129,17 @@
   "Sending debug logs…": "Mengirimkan catatan pengawakutuan…",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Bergabung panggilan sekarang</0><1>Atau</1><2>Salin tautan dan bergabung nanti</2>",
   "{{name}} (Connecting...)": "{{name}} (Menghubungkan...)",
-  "Allow analytics": "Perbolehkan analitik",
-  "Advanced": "Tingkat lanjut",
   "Element Call Home": "Beranda Element Call",
   "Copy": "Salin",
-  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Ini akan mengirimkan data anonim (seperti durasi dan jumlah peserta panggilan) ke tim Element Call untuk membantu kami mengoptimalkan aplikasi berdasarkan bagaimana penggunaannya.",
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Apakah pintasan papan ketik seharusnya diaktifkan, mis. 'm' untuk membisukan/menyuarakan mikrofon.",
   "Single-key keyboard shortcuts": "Pintasan papan ketik satu tombol",
   "{{name}} (Waiting for video...)": "{{name}} (Menunggu video...)",
   "This feature is only supported on Firefox.": "Fitur ini hanya didukung di Firefox.",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Mengirim catatan pengawakutuan akan membantu kami melacak masalahnya.</0>",
-  "<0>Oops, something's gone wrong.</0>": "<0>Aduh, ada yang salah.</0>"
+  "<0>Oops, something's gone wrong.</0>": "<0>Aduh, ada yang salah.</0>",
+  "Use the upcoming grid system": "Gunakan sistem kisi yang akan segera datang",
+  "Privacy Policy": "Kebijakan Privasi kami",
+  "Expose developer settings in the settings window.": "Ekspos pengaturan pengembang dalam jendela pengaturan.",
+  "Developer Settings": "Pengaturan Pengembang",
+  "By ticking this box you consent to the collection of anonymous data, which we use to improve your experience. You can find more information about which data we track in our ": "Dengan mencentang kotak ini Anda setuju untuk pengumpulan data anonim, yang kami gunakan untuk meningkatkan pengalaman. Anda dapat mempelajari lebih banyak informasi tentang data yang kami lacak di "
 }
