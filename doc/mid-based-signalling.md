@@ -39,7 +39,7 @@ m.call.invite:
         "m.call.transferee": false,
         "m.call.dtmf": false,
     },
-    "m.call.describe": {
+    "m.call.describe_media": {
         "1": { // transceiver mid 1
             "media_uuid": "aaaa-aaaa-aaaaaa-aaaa-aaaa",
             "media_group_uuid": "1234-1234-123456-1234-1234", // rather than 'track group ID' to match media UUID?
@@ -59,7 +59,7 @@ m.call.invite:
 Note that the SDP content is now in a section called `m.negotiate`. This is a mixin block common to all negotiation events
 (invite, answer, negotiate).
 
-The `m.call.describe` block is a 'mixin' block in extensible events terms and describes the media being sent on each
+The `m.call.describe_media` block is a 'mixin' block in extensible events terms and describes the media being sent on each
 transceiver by the sending user. It *always* refers only to the media being sent by the device that sends the event.
 
 The same is sent either to a focus or a peer client.
@@ -88,7 +88,7 @@ m.call.answer (full mesh)
         "m.call.transferee": false,
         "m.call.dtmf": false,
     },
-    "m.call.describe": {
+    "m.call.describe_media": {
         "1": { // transceiver mid 1
             "media_uuid": "cccc-cccc-cccccc-cccc-cccc",
             "media_group_uuid": "2345-2345-234567-2345-2345",
@@ -106,7 +106,7 @@ m.call.answer (full mesh)
 ```
 
 A focus, however, will not send any tracks by default and therefore does not include an
-`m.call.describe` block. Instead, it includes an `m.track.advertise` block advertising
+`m.call.describe_media` block. Instead, it includes an `m.track.advertise` block advertising
 what tracks are available for that `conf_id`.
 
 m.call.answer (focus)
@@ -126,7 +126,7 @@ m.call.answer (focus)
         "m.call.transferee": false,
         "m.call.dtmf": false,
     },
-    "m.call.advertise": {
+    "m.call.advertise_media": {
         "alice:example.org": { // user ID
             "88888888": { // device ID
                 "2345-2345-234567-2345-2345": [{ // media group uuid
@@ -150,24 +150,24 @@ list of tracks. It would be more duplication but maybe less effort to read.
 
 The expected behaviour here would be for foci to essentially maintain a structure with all
 tracks being pushed to it. This structure would probably have call IDs as a top level index,
-then look very similar to the structure of the `m.call.advertise` event. It could keep
+then look very similar to the structure of the `m.call.advertise_media` event. It could keep
 a reference to the transceiver it was receiving media on in the structure itself alongside
 the media UUID, or maintain a separate map of media UUID to transceiver / peer connection such
 that the first structure could be marshalled to JSON and sent to clients as-is. These are just
 potential implementations though, all that is important is that the focus maintains sufficient
 information about each track being sent to each client.
 
-On the client side, the client will essentially take the `m.call.advertise` data and save it
+On the client side, the client will essentially take the `m.call.advertise_media` data and save it
 almost as-is. It would probably cross-reference it against the call member state events to
 ensure that it wasn't showing feeds for any users that did not have state events indicating
 that they were in the call, although if we trust the focus and assume that conf IDs are unique
 enough to be unguessable, this may be unnecessary.
 
 In the simplest case, the client will simply iterate through this structure and add every
-media UUID it finds to an `m.call.subscribe` message.
+media UUID it finds to an `m.call.subscribe_media` message.
 
-The most complex part is that when the `m.call.describe` message arrives back from the focus,
-it will have to search through the data from the `m.call.advertise` message to map the tracks
+The most complex part is that when the `m.call.describe_media` message arrives back from the focus,
+it will have to search through the data from the `m.call.advertise_media` message to map the tracks
 it is now receving to the right user IDs (XXX: it could build them into a map to make this lookup
 efficient, although if we make the advertise message indexed by media UUID then it already has
 a map indexed by the correct thing...)
@@ -189,9 +189,9 @@ m.select\_answer
 Once the client receives this, it decides what tracks it wants to receive and then sends
 a subscribe message over the data channel:
 
-m.call.subscribe
+m.call.subscribe\_media
 ```
-"m.call.subscribe": {
+"m.call.subscribe_media": {
     "seq": 1,
     "media_uuids": {
         "aaaa-aaaa-aaaaaa-aaaa-aaaa": {
@@ -251,7 +251,7 @@ m.call.negotiate
             "sdp": "[...]",
         }
     },
-    "m.call.describe": {
+    "m.call.describe_media": {
         "1": { // transceiver mid 1
             "media_uuid": "aaaa-aaaa-aaaaaa-aaaa-aaaa",
             "media_group_uuid": "1234-1234-123456-1234-1234", // rather than 'track group ID' to match media UUID?
@@ -275,4 +275,4 @@ howerver, as the client equally already knows what user IDs the media UUIDs corr
 a full mesh track description.
 
 Or it may already have enough spare transceivers and not need to negotiate, in which case it simply sends the same
-track description block without a negotiation (and with event type `m.call.describe`.
+track description block without a negotiation (and with event type `m.call.describe_media`.
