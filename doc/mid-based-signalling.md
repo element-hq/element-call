@@ -59,7 +59,7 @@ m.call.invite:
 Note that the SDP content is now in a section called `m.negotiate`. This is a mixin block common to all negotiation events
 (invite, answer, negotiate).
 
-The `m.call.describe` block is a 'mixin' block in externsible events terms and describes the media being sent on each
+The `m.call.describe` block is a 'mixin' block in extensible events terms and describes the media being sent on each
 transceiver by the sending user. It *always* refers only to the media being sent by the device that sends the event.
 
 The same is sent either to a focus or a peer client.
