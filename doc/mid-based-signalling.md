@@ -11,7 +11,7 @@ can be quite large,would have to be duplicated in the JSON. Therefore, there's a
 advantage to taking to opportunity to migrate to an extensible event format now.
 
 We use the same event types for call invites and answers, so it is important that these events
-are only send via to device message directly to client known to support them. They must not be
+are only sent via to-device messages directly to clients known to support them. They must not be
 sent in rooms not supporting extensible events.
 
 This outlines how a switch to mid + media UUID based signalling would work in more detail.
