@@ -150,10 +150,12 @@ list of tracks. It would be more duplication but maybe less effort to read.
 
 The expected behaviour here would be for foci to essentially maintain a structure with all
 tracks being pushed to it. This structure would probably have call IDs as a top level index,
-then look very similar to the structure of the `m.call.advertise` event. It could either keep
+then look very similar to the structure of the `m.call.advertise` event. It could keep
 a reference to the transceiver it was receiving media on in the structure itself alongside
 the media UUID, or maintain a separate map of media UUID to transceiver / peer connection such
-that the first structure could be marshalled to JSON and sent to clients as-is.
+that the first structure could be marshalled to JSON and sent to clients as-is. These are just
+potential implementations though, all that is important is that the focus maintains sufficient
+information about each track being sent to each client.
 
 On the client side, the client will essentially take the `m.call.advertise` data and save it
 almost as-is. It would probably cross-reference it against the call member state events to
