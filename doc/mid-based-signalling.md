@@ -127,18 +127,18 @@ m.call.answer (focus)
         "m.call.dtmf": false,
     },
     "m.call.advertise_media": {
-        "alice:example.org": { // user ID
-            "88888888": { // device ID
-                "2345-2345-234567-2345-2345": [{ // media group uuid
-                    "media_uuid": "aaaa-aaaa-aaaaaa-aaaa-aaaa":
-                    "purpose": "m.usermedia",
-                    "kind": "video",
-                }, {
-                    "media_uuid": "bbbb-bbbb-bbbbbb-bbbb-bbbb":
-                    "purpose": "m.usermedia",
-                    "kind": "audio",
-                },
-            },
+        "2345-2345-234567-2345-2345": { // media group uuid
+            "user_id": "alice:example.org",
+            "device_id": "88888888",
+            media: [{
+                "media_uuid": "aaaa-aaaa-aaaaaa-aaaa-aaaa":
+                "purpose": "m.usermedia",
+                "kind": "video",
+            }, {
+                "media_uuid": "bbbb-bbbb-bbbbbb-bbbb-bbbb":
+                "purpose": "m.usermedia",
+                "kind": "audio",
+            }],
         }
     },
 }
