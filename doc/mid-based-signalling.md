@@ -201,7 +201,7 @@ m.call.subscribe
 },
 ```
 
-This has also been rearrnaged a little to make the media UUIDs the keys and remove the
+This has also been rearranged a little to make the media UUIDs the keys and remove the
 unsubscribe section which is unnecessary if we always send the complete set of tracks we
 want to receive (we unsubscribe by just removing the media UUID from the dict).
 
