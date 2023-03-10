@@ -385,6 +385,22 @@ export class PosthogAnalytics {
     this.capture(eventName, properties, options);
   }
 
+  public async trackFromSpan(
+    { eventName, ...properties },
+    options?: CaptureOptions
+  ): Promise<void> {
+    if (this.identificationPromise) {
+      // only make calls to posthog after the identificaion is done
+      await this.identificationPromise;
+    }
+    if (
+      this.anonymity == Anonymity.Disabled ||
+      this.anonymity == Anonymity.Anonymous
+    )
+      return;
+    this.capture(eventName, properties, options);
+  }
+
   public startListeningToSettingsChanges(): void {
     // Listen to account data changes from sync so we can observe changes to relevant flags and update.
     // This is called -
