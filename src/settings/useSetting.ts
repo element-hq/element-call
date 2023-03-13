@@ -87,9 +87,15 @@ export const useSpatialAudio = (): [boolean, (val: boolean) => void] => {
 };
 
 export const useShowInspector = () => useSetting("show-inspector", false);
-export const useOptInAnalytics = () => useSetting("opt-in-analytics", false);
+
+// null = undecided
+export const useOptInAnalytics = () =>
+  useSetting<boolean | null>("opt-in-analytics", null);
+
 export const useKeyboardShortcuts = () =>
   useSetting("keyboard-shortcuts", true);
+
 export const useNewGrid = () => useSetting("new-grid", false);
+
 export const useDeveloperSettingsTab = () =>
   useSetting("developer-settings-tab", false);

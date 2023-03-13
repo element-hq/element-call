@@ -16,7 +16,7 @@ limitations under the License.
 
 import React from "react";
 import { Item } from "@react-stately/collections";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -39,8 +39,8 @@ import {
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
 import { useDownloadDebugLog } from "./submit-rageshake";
-import { Body } from "../typography/Typography";
-import { optInDescription } from "../analytics/AnalyticsOptInDescription";
+import { Body, Caption } from "../typography/Typography";
+import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 
 interface Props {
   isOpen: boolean;
@@ -70,6 +70,17 @@ export const SettingsModal = (props: Props) => {
   const [newGrid, setNewGrid] = useNewGrid();
 
   const downloadDebugLog = useDownloadDebugLog();
+
+  const optInDescription = (
+    <Caption>
+      <Trans>
+        <AnalyticsNotice />
+        <br />
+        You may withdraw consent by unchecking this box. If you are currently in
+        a call, this setting will take effect at the end of the call.
+      </Trans>
+    </Caption>
+  );
 
   return (
     <Modal
@@ -187,7 +198,7 @@ export const SettingsModal = (props: Props) => {
               id="optInAnalytics"
               type="checkbox"
               checked={optInAnalytics}
-              description={optInDescription()}
+              description={optInDescription}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setOptInAnalytics(event.target.checked)
               }
