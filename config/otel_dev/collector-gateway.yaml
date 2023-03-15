@@ -1,38 +1,38 @@
 receivers:
- otlp:
-   protocols:
-     http:
-       endpoint: 0.0.0.0:4318
-       cors:
-         allowed_origins:
-           - "http://*"
-         allowed_headers:
-           - "*"
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+        cors:
+          allowed_origins:
+            - "http://*"
+          allowed_headers:
+            - "*"
 processors:
- batch:
-   timeout: 1s
- resource:
-   attributes:
-     - key: test.key
-       value: "test-value"
-       action: insert
+  batch:
+    timeout: 1s
+  resource:
+    attributes:
+      - key: test.key
+        value: "test-value"
+        action: insert
 exporters:
- logging:
-   loglevel: info
- jaeger:
-   endpoint: jaeger-all-in-one:14250
-   tls:
-     insecure: true
+  logging:
+    loglevel: info
+  jaeger:
+    endpoint: jaeger-all-in-one:14250
+    tls:
+      insecure: true
 extensions:
- health_check:
- pprof:
-   endpoint: :1888
- zpages:
-   endpoint: :55679
+  health_check:
+  pprof:
+    endpoint: :1888
+  zpages:
+    endpoint: :55679
 service:
- extensions: [pprof, zpages, health_check]
- pipelines:
-   traces:
-     receivers: [otlp]
-     processors: [batch, resource]
-     exporters: [logging, jaeger]
+  extensions: [pprof, zpages, health_check]
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [batch, resource]
+      exporters: [logging, jaeger]
