@@ -32,7 +32,6 @@ import { usePageUnload } from "./usePageUnload";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
-import { callTracer } from "../telemetry/otel";
 
 export enum ConnectionState {
   EstablishingCall = "establishing call", // call hasn't been established yet
@@ -376,7 +375,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     ) {
       return;
     }
-    callTracer.startCall(groupCall.groupCallId);
 
     PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
     PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
@@ -401,7 +399,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
   const setMicrophoneMuted = useCallback(
     (setMuted) => {
       groupCall.setMicrophoneMuted(setMuted);
-      callTracer.muteMic(setMuted);
       PosthogAnalytics.instance.eventMuteMicrophone.track(
         setMuted,
         groupCall.groupCallId

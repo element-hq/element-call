@@ -15,17 +15,47 @@ limitations under the License.
 */
 
 import opentelemetry, { Context, Span } from "@opentelemetry/api";
-import {
-  ClientEvent,
-  GroupCall,
-  MatrixClient,
-  MatrixEvent,
-  RoomStateEvent,
-} from "matrix-js-sdk";
-import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
-import { useCallback, useEffect, useState } from "react";
+import { GroupCall, MatrixEvent } from "matrix-js-sdk";
+import { VoipEvent } from "matrix-js-sdk/src/webrtc/call";
 
 import { tracer } from "./otel";
+
+/**
+ * Recursively sets the contents of a todevice event object as attributes on a span
+ */
+function setNestedAttributesFromToDeviceEvent(span: Span, event: VoipEvent) {
+  setSpanEventAttributesRecursive(
+    span,
+    event as unknown as Record<string, unknown>, // XXX Types
+    "matrix.",
+    0
+  );
+}
+
+function setSpanEventAttributesRecursive(
+  span: Span,
+  obj: Record<string, unknown>,
+  prefix: string,
+  depth: number
+) {
+  if (depth > 10)
+    throw new Error(
+      "Depth limit exceeded: aborting VoipEvent recursion. Prefix is " + prefix
+    );
+
+  for (const [k, v] of Object.entries(obj)) {
+    if (["string", "number"].includes(typeof v)) {
+      span.setAttribute(prefix + k, v as string | number);
+    } else if (typeof v === "object") {
+      setSpanEventAttributesRecursive(
+        span,
+        v as Record<string, unknown>,
+        prefix + k + ".",
+        depth + 1
+      );
+    }
+  }
+}
 
 /**
  * Represent the span of time which we intend to be joined to a group call
@@ -34,7 +64,7 @@ export class OTelGroupCallMembership {
   private context: Context;
   private callMembershipSpan: Span;
 
-  constructor(private groupCall: GroupCall) {
+  constructor(groupCall: GroupCall) {
     const callIdContext = opentelemetry.context
       .active()
       .setValue(Symbol("confId"), groupCall.groupCallId);
@@ -82,125 +112,19 @@ export class OTelGroupCallMembership {
 
   public onSendStateEvent(stateEvent: MatrixEvent) {}
 
-  public onSendToDeviceEvent(toDeviceEvent: Record<string, unknown>) {
-    const eventType = toDeviceEvent.eventType as string;
+  public onSendEvent(event: VoipEvent) {
+    const eventType = event.eventType as string;
     if (!eventType.startsWith("m.call")) return;
 
-    const span = tracer.startSpan(
-      `otel_sendToDeviceEvent_${toDeviceEvent.eventType}`,
-      undefined,
-      this.context
-    );
+    if (event.type === "toDevice") {
+      const span = tracer.startSpan(
+        `otel_sendToDeviceEvent_${event.eventType}`,
+        undefined,
+        this.context
+      );
 
-    for (const [k, v] of Object.entries(toDeviceEvent)) {
-      if (["string", "number"].includes(typeof v))
-        span.setAttribute(k, v as string | number);
+      setNestedAttributesFromToDeviceEvent(span, event);
+      span.end();
     }
   }
 }
-
-export const useCallEventInstrumentation = (
-  client: MatrixClient,
-  groupCall: GroupCall
-): void => {
-  const [groupCallSpan, setGroupCallSpan] = useState<Span | undefined>();
-  const [groupCallId, setGroupCallId] = useState<string | undefined>();
-
-  const startChildSpan = useCallback(
-    (name: string, groupCallId: string): Span => {
-      const traceId = "7b78c1f568312cb288e55a9bc3c28cc5";
-      const spanId = "7d31f3e430d90882";
-
-      const ctx = opentelemetry.trace.setSpanContext(context.active(), {
-        traceId,
-        spanId,
-        traceFlags: 1,
-        isRemote: true,
-      });
-
-      console.log("LOG context", ctx);
-      console.log(
-        "LOG context valid",
-        trace.isSpanContextValid(trace.getSpan(ctx).spanContext())
-      );
-      console.log("LOG parent span", trace.getSpan(ctx));
-
-      return tracer.startSpan(name, undefined, ctx);
-    },
-    []
-  );
-
-  const onUpdateRoomState = useCallback((event?: MatrixEvent) => {
-    /*const callStateEvent = groupCall.room.currentState.getStateEvents(
-        "org.matrix.msc3401.call",
-        groupCall.groupCallId
-      );*/
-    /*const memberStateEvents = groupCall.room.currentState.getStateEvents(
-        "org.matrix.msc3401.call.member"
-      );*/
-  }, []);
-
-  const onReceivedVoipEvent = (event: MatrixEvent) => {};
-
-  const onUndecryptableToDevice = (event: MatrixEvent) => {};
-
-  const onSendVoipEvent = useCallback(
-    (event: Record<string, unknown>) => {
-      const span = startChildSpan(
-        `element-call:send-voip-event:${event.eventType}`,
-        groupCall.groupCallId
-      );
-      span.setAttribute("groupCallId", groupCall.groupCallId);
-
-      console.log("LOG span", span);
-
-      span.end();
-    },
-    [groupCall.groupCallId, startChildSpan]
-  );
-
-  useEffect(() => {
-    return;
-    if (groupCallId === groupCall.groupCallId) return;
-
-    console.log("LOG starting span", groupCall.groupCallId, groupCallId);
-
-    groupCallSpan?.end();
-
-    const newSpan = tracer.startSpan("element-call:group-call");
-    newSpan.setAttribute("groupCallId", groupCall.groupCallId);
-    setGroupCallSpan(newSpan);
-    setGroupCallId(groupCall.groupCallId);
-  }, [groupCallSpan, groupCallId, groupCall.groupCallId]);
-
-  useEffect(() => () => {
-    console.log("LOG ending span");
-
-    groupCallSpan?.end();
-  });
-
-  useEffect(() => {
-    client.on(RoomStateEvent.Events, onUpdateRoomState);
-    //groupCall.on("calls_changed", onCallsChanged);
-    groupCall.on(CallEvent.SendVoipEvent, onSendVoipEvent);
-    //client.on("state", onCallsChanged);
-    //client.on("hangup", onCallHangup);
-    client.on(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
-    client.on(ClientEvent.UndecryptableToDeviceEvent, onUndecryptableToDevice);
-
-    onUpdateRoomState();
-
-    return () => {
-      client.removeListener(RoomStateEvent.Events, onUpdateRoomState);
-      //groupCall.removeListener("calls_changed", onCallsChanged);
-      groupCall.removeListener(CallEvent.SendVoipEvent, onSendVoipEvent);
-      //client.removeListener("state", onCallsChanged);
-      //client.removeListener("hangup", onCallHangup);
-      client.removeListener(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
-      client.removeListener(
-        ClientEvent.UndecryptableToDeviceEvent,
-        onUndecryptableToDevice
-      );
-    };
-  }, [client, groupCall, onSendVoipEvent, onUpdateRoomState]);
-};

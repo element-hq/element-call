@@ -6,7 +6,6 @@ import {
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
 import opentelemetry from "@opentelemetry/api";
-import { Context } from "@opentelemetry/api";
 import { Resource } from "@opentelemetry/resources";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
 
@@ -29,12 +28,14 @@ const provider = new WebTracerProvider(providerConfig);
 provider.addSpanProcessor(new SimpleSpanProcessor(otlpExporter));
 provider.addSpanProcessor(new SimpleSpanProcessor(posthogExporter));
 provider.addSpanProcessor(new SimpleSpanProcessor(consoleExporter));
+opentelemetry.trace.setGlobalTracerProvider(provider);
 
 // This is not the serviceName shown in jaeger
 export const tracer = opentelemetry.trace.getTracer(
   "my-element-call-otl-tracer"
 );
 
+/*
 class CallTracer {
   // We create one tracer class for each main context.
   // Even if differnt tracer classes overlap in time space, we might want to visulaize them seperately.
@@ -47,7 +48,7 @@ class CallTracer {
 
   public startGroupCall(groupCallId: string) {}
 
-  public startCall(callId: string): Context {
+  public startCall(callId: string) {
     // The main context will be set when initiating the main/parent span.
 
     // Create an initial context with the callId param
@@ -94,3 +95,4 @@ class CallTracer {
 }
 
 export const callTracer = new CallTracer();
+*/
