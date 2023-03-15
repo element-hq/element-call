@@ -31,11 +31,12 @@ import { MatrixEvent, IContent } from "matrix-js-sdk/src/models/event";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
-import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
+import { CallEvent, VoipEvent } from "matrix-js-sdk/src/webrtc/call";
 
 import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 
 interface InspectorContextState {
   eventsByUserId?: { [userId: string]: SequenceDiagramMatrixEvent[] };
@@ -235,7 +236,7 @@ function reducer(
   action: {
     type?: CallEvent | ClientEvent | RoomStateEvent;
     event?: MatrixEvent;
-    rawEvent?: Record<string, unknown>;
+    rawEvent?: VoipEvent;
     callStateEvent?: MatrixEvent;
     memberStateEvents?: MatrixEvent[];
   }
@@ -355,6 +356,18 @@ function useGroupCallState(
   groupCall: GroupCall,
   showPollCallStats: boolean
 ): InspectorContextState {
+  const [otelMembership] = useState(
+    () => new OTelGroupCallMembership(groupCall)
+  );
+
+  useEffect(() => {
+    otelMembership.onJoinCall();
+
+    return () => {
+      otelMembership.onLeaveCall();
+    };
+  }, [otelMembership]);
+
   const [state, dispatch] = useReducer(reducer, {
     localUserId: client.getUserId(),
     localSessionId: client.getSessionId(),
@@ -387,8 +400,10 @@ function useGroupCallState(
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
     }
 
-    function onSendVoipEvent(event: Record<string, unknown>) {
+    function onSendVoipEvent(event: VoipEvent) {
       dispatch({ type: CallEvent.SendVoipEvent, rawEvent: event });
+
+      otelMembership.onSendEvent(event);
     }
 
     function onUndecryptableToDevice(event: MatrixEvent) {
@@ -422,7 +437,7 @@ function useGroupCallState(
         onUndecryptableToDevice
       );
     };
-  }, [client, groupCall]);
+  }, [client, groupCall, otelMembership]);
 
   return state;
 }

@@ -1956,16 +1956,6 @@
     "@opentelemetry/resources" "1.9.1"
     "@opentelemetry/sdk-trace-base" "1.9.1"
 
-"@opentelemetry/exporter-zipkin@^1.9.1":
-  version "1.9.1"
-  resolved "https://registry.yarnpkg.com/@opentelemetry/exporter-zipkin/-/exporter-zipkin-1.9.1.tgz#0bcddf2f3bcb1b26b94a090c953996a28087d21f"
-  integrity sha512-KBgf3w84luP5vWLlrqVFKmbwFK4lXM//t6K7H4nsg576htbz1RpBbQfybADjPdXTjGHqDTtLiC5MC90hxS7Z2w==
-  dependencies:
-    "@opentelemetry/core" "1.9.1"
-    "@opentelemetry/resources" "1.9.1"
-    "@opentelemetry/sdk-trace-base" "1.9.1"
-    "@opentelemetry/semantic-conventions" "1.9.1"
-
 "@opentelemetry/instrumentation-document-load@^0.31.1":
   version "0.31.1"
   resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation-document-load/-/instrumentation-document-load-0.31.1.tgz#a535a5d1d71706701d3ff560a700b9dd03e4fb59"

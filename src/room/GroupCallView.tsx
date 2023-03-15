@@ -35,7 +35,6 @@ import { useLocationNavigation } from "../useLocationNavigation";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useMediaHandler } from "../settings/useMediaHandler";
 import { findDeviceByName, getDevices } from "../media-utils";
-import { callTracer } from "../telemetry/otel";
 
 declare global {
   interface Window {
@@ -144,7 +143,6 @@ export function GroupCallView({
         ]);
 
         await groupCall.enter();
-        callTracer.startCall(groupCall.groupCallId);
         PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
         PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
 
@@ -165,7 +163,6 @@ export function GroupCallView({
     if (isEmbedded && !preload) {
       // In embedded mode, bypass the lobby and just enter the call straight away
       groupCall.enter();
-      callTracer.startCall(groupCall.groupCallId);
 
       PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
       PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
@@ -189,7 +186,6 @@ export function GroupCallView({
 
     // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
     // therefore we want the event to be sent instantly without getting queued/batched.
-    callTracer.endCall();
     const sendInstantly = !!widget;
     PosthogAnalytics.instance.eventCallEnded.track(
       groupCall.groupCallId,
