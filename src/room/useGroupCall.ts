@@ -27,11 +27,13 @@ import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useTranslation } from "react-i18next";
 import { IWidgetApiRequest } from "matrix-widget-api";
+import { MatrixClient } from "matrix-js-sdk";
 
 import { usePageUnload } from "./usePageUnload";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
+import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 
 export enum ConnectionState {
   EstablishingCall = "establishing call", // call hasn't been established yet
@@ -66,6 +68,7 @@ export interface UseGroupCallReturnType {
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   hasLocalParticipant: boolean;
   unencryptedEventsFromUsers: Set<string>;
+  otelGroupCallMembership: OTelGroupCallMembership;
 }
 
 interface State {
@@ -83,6 +86,13 @@ interface State {
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   hasLocalParticipant: boolean;
 }
+
+// This is a bit of a hack, but we keep the opentelemetry tracker object at the file
+// level so that it doesn't pop in & out of existence as react mounts & unmounts
+// components. The right solution is probably for this to live in the js-sdk and have
+// the same lifetime as groupcalls themselves.
+let groupCallOTelMembership: OTelGroupCallMembership;
+let groupCallOTelMembershipGroupCallId: string;
 
 function getParticipants(
   groupCall: GroupCall
@@ -112,7 +122,10 @@ function getParticipants(
   return participants;
 }
 
-export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
+export function useGroupCall(
+  groupCall: GroupCall,
+  client: MatrixClient
+): UseGroupCallReturnType {
   const [
     {
       state,
@@ -145,6 +158,11 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     participants: new Map(),
     hasLocalParticipant: false,
   });
+
+  if (groupCallOTelMembershipGroupCallId !== groupCall.groupCallId) {
+    groupCallOTelMembership = new OTelGroupCallMembership(groupCall, client);
+    groupCallOTelMembershipGroupCallId = groupCall.groupCallId;
+  }
 
   const [unencryptedEventsFromUsers, addUnencryptedEventUser] = useReducer(
     (state: Set<string>, newVal: string) => {
@@ -383,9 +401,14 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
       console.error(error);
       updateState({ error });
     });
+
+    groupCallOTelMembership.onJoinCall();
   }, [groupCall, updateState]);
 
-  const leave = useCallback(() => groupCall.leave(), [groupCall]);
+  const leave = useCallback(() => {
+    groupCallOTelMembership.onLeaveCall();
+    groupCall.leave();
+  }, [groupCall]);
 
   const toggleLocalVideoMuted = useCallback(() => {
     const toggleToMute = !groupCall.isLocalVideoMuted();
@@ -525,5 +548,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     participants,
     hasLocalParticipant,
     unencryptedEventsFromUsers,
+    otelGroupCallMembership: groupCallOTelMembership,
   };
 }

@@ -81,7 +81,8 @@ export function GroupCallView({
     screenshareFeeds,
     participants,
     unencryptedEventsFromUsers,
-  } = useGroupCall(groupCall);
+    otelGroupCallMembership,
+  } = useGroupCall(groupCall, client);
 
   const { t } = useTranslation();
   const { setAudioInput, setVideoInput } = useMediaHandler();
@@ -237,6 +238,7 @@ export function GroupCallView({
           onLeave={onLeave}
           isEmbedded={isEmbedded}
           hideHeader={hideHeader}
+          otelGroupCallMembership={otelGroupCallMembership}
         />
       );
     } else {
@@ -261,6 +263,7 @@ export function GroupCallView({
           roomIdOrAlias={roomIdOrAlias}
           unencryptedEventsFromUsers={unencryptedEventsFromUsers}
           hideHeader={hideHeader}
+          otelGroupCallMembership={otelGroupCallMembership}
         />
       );
     }
