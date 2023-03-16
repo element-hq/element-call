@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import opentelemetry, { Context, Span } from "@opentelemetry/api";
-import { GroupCall, MatrixEvent } from "matrix-js-sdk";
+import { GroupCall, MatrixClient, MatrixEvent } from "matrix-js-sdk";
 import { VoipEvent } from "matrix-js-sdk/src/webrtc/call";
 
 import { tracer } from "./otel";
@@ -27,7 +27,7 @@ function setNestedAttributesFromToDeviceEvent(span: Span, event: VoipEvent) {
   setSpanEventAttributesRecursive(
     span,
     event as unknown as Record<string, unknown>, // XXX Types
-    "matrix.",
+    "matrix.event.",
     0
   );
 }
@@ -64,28 +64,27 @@ export class OTelGroupCallMembership {
   private context: Context;
   private callMembershipSpan: Span;
 
-  constructor(groupCall: GroupCall) {
-    const callIdContext = opentelemetry.context
-      .active()
-      .setValue(Symbol("confId"), groupCall.groupCallId);
+  constructor(groupCall: GroupCall, client: MatrixClient) {
+    // Create a new call based on the callIdContext. This context also has a span assigned to it.
+    // Other spans can use this context to extract the parent span.
+    // (When passing this context to startSpan the started span will use the span set in the context (in this case the callSpan) as the parent)
 
+    const myMember = groupCall.room.getMember(client.getUserId());
+    this.context = opentelemetry.trace
+      .setSpan(opentelemetry.context.active(), this.callMembershipSpan)
+      .setValue(Symbol("confId"), groupCall.groupCallId)
+      .setValue(Symbol("matrix.userId"), client.getUserId())
+      .setValue(Symbol("matrix.displayName"), myMember.name);
+  }
+
+  public onJoinCall() {
     // Create the main span that tracks the time we intend to be in the call
     this.callMembershipSpan = tracer.startSpan(
       "otel_groupCallMembershipSpan",
       undefined,
-      callIdContext
+      this.context
     );
 
-    // Create a new call based on the callIdContext. This context also has a span assigned to it.
-    // Other spans can use this context to extract the parent span.
-    // (When passing this context to startSpan the started span will use the span set in the context (in this case the callSpan) as the parent)
-    this.context = opentelemetry.trace.setSpan(
-      opentelemetry.context.active(),
-      this.callMembershipSpan
-    );
-  }
-
-  public onJoinCall() {
     // Here we start a very short span. This is a hack to trigger the posthog exporter.
     // Only ended spans are processed by the exporter.
     // We want the exporter to know that a call has started
@@ -107,7 +106,7 @@ export class OTelGroupCallMembership {
     startCallSpan.end();
 
     // and end the main span to indicate we've left
-    this.callMembershipSpan.end();
+    if (this.callMembershipSpan) this.callMembershipSpan.end();
   }
 
   public onSendStateEvent(stateEvent: MatrixEvent) {}

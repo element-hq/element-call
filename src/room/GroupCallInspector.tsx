@@ -354,20 +354,8 @@ function reducer(
 function useGroupCallState(
   client: MatrixClient,
   groupCall: GroupCall,
-  showPollCallStats: boolean
+  otelGroupCallMembership: OTelGroupCallMembership
 ): InspectorContextState {
-  const [otelMembership] = useState(
-    () => new OTelGroupCallMembership(groupCall)
-  );
-
-  useEffect(() => {
-    otelMembership.onJoinCall();
-
-    return () => {
-      otelMembership.onLeaveCall();
-    };
-  }, [otelMembership]);
-
   const [state, dispatch] = useReducer(reducer, {
     localUserId: client.getUserId(),
     localSessionId: client.getSessionId(),
@@ -403,7 +391,7 @@ function useGroupCallState(
     function onSendVoipEvent(event: VoipEvent) {
       dispatch({ type: CallEvent.SendVoipEvent, rawEvent: event });
 
-      otelMembership.onSendEvent(event);
+      otelGroupCallMembership.onSendEvent(event);
     }
 
     function onUndecryptableToDevice(event: MatrixEvent) {
@@ -437,7 +425,7 @@ function useGroupCallState(
         onUndecryptableToDevice
       );
     };
-  }, [client, groupCall, otelMembership]);
+  }, [client, groupCall, otelGroupCallMembership]);
 
   return state;
 }
@@ -445,17 +433,19 @@ function useGroupCallState(
 interface GroupCallInspectorProps {
   client: MatrixClient;
   groupCall: GroupCall;
+  otelGroupCallMembership: OTelGroupCallMembership;
   show: boolean;
 }
 
 export function GroupCallInspector({
   client,
   groupCall,
+  otelGroupCallMembership,
   show,
 }: GroupCallInspectorProps) {
   const [currentTab, setCurrentTab] = useState("sequence-diagrams");
   const [selectedUserId, setSelectedUserId] = useState<string>();
-  const state = useGroupCallState(client, groupCall, show);
+  const state = useGroupCallState(client, groupCall, otelGroupCallMembership);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setState] = useContext(InspectorContext);
