@@ -382,6 +382,8 @@ function useGroupCallState(
         callStateEvent,
         memberStateEvents,
       });
+
+      otelGroupCallMembership.onUpdateRoomState(event);
     }
 
     function onReceivedVoipEvent(event: MatrixEvent) {

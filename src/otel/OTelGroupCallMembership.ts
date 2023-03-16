@@ -23,7 +23,7 @@ import { tracer } from "./otel";
 /**
  * Recursively sets the contents of a todevice event object as attributes on a span
  */
-function setNestedAttributesFromToDeviceEvent(span: Span, event: VoipEvent) {
+function setNestedAttributesFromEvent(span: Span, event: VoipEvent) {
   setSpanEventAttributesRecursive(
     span,
     event as unknown as Record<string, unknown>, // XXX Types
@@ -109,7 +109,23 @@ export class OTelGroupCallMembership {
     if (this.callMembershipSpan) this.callMembershipSpan.end();
   }
 
-  public onSendStateEvent(stateEvent: MatrixEvent) {}
+  public onUpdateRoomState(event: MatrixEvent) {
+    if (
+      !event ||
+      (!event.getType().startsWith("m.call") &&
+        !event.getType().startsWith("org.matrix.msc3401.call"))
+    )
+      return;
+
+    const span = tracer.startSpan(
+      `otel_onRoomStateEvent_${event.getType()}`,
+      undefined,
+      this.context
+    );
+
+    setNestedAttributesFromEvent(span, event.getContent());
+    span.end();
+  }
 
   public onSendEvent(event: VoipEvent) {
     const eventType = event.eventType as string;
@@ -122,7 +138,16 @@ export class OTelGroupCallMembership {
         this.context
       );
 
-      setNestedAttributesFromToDeviceEvent(span, event);
+      setNestedAttributesFromEvent(span, event);
+      span.end();
+    } else if (event.type === "sendEvent") {
+      const span = tracer.startSpan(
+        `otel_sendToRoomEvent_${event.eventType}`,
+        undefined,
+        this.context
+      );
+
+      setNestedAttributesFromEvent(span, event);
       span.end();
     }
   }
