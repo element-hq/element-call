@@ -84,11 +84,20 @@ export class OTelGroupCallMembership {
     // Create the main span that tracks the time we intend to be in the call
     this.callMembershipSpan = tracer.startSpan("otel_groupCallMembershipSpan");
 
-    this.context = opentelemetry.trace
-      .setSpan(opentelemetry.context.active(), this.callMembershipSpan)
-      .setValue(Symbol("confId"), this.groupCall.groupCallId)
-      .setValue(Symbol("matrix.userId"), this.myUserId)
-      .setValue(Symbol("matrix.displayName"), this.myMember.name);
+    this.callMembershipSpan.setAttribute(
+      "matrix.confId",
+      this.groupCall.groupCallId
+    );
+    this.callMembershipSpan.setAttribute("matrix.userId", this.myUserId);
+    this.callMembershipSpan.setAttribute(
+      "matrix.displayName",
+      this.myMember.name
+    );
+
+    this.context = opentelemetry.trace.setSpan(
+      opentelemetry.context.active(),
+      this.callMembershipSpan
+    );
 
     // Here we start a very short span. This is a hack to trigger the posthog exporter.
     // Only ended spans are processed by the exporter.
