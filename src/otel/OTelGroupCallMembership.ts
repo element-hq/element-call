@@ -15,7 +15,12 @@ limitations under the License.
 */
 
 import opentelemetry, { Context, Span } from "@opentelemetry/api";
-import { GroupCall, MatrixClient, MatrixEvent } from "matrix-js-sdk";
+import {
+  GroupCall,
+  MatrixClient,
+  MatrixEvent,
+  RoomMember,
+} from "matrix-js-sdk";
 import { VoipEvent } from "matrix-js-sdk/src/webrtc/call";
 
 import { tracer } from "./otel";
@@ -63,27 +68,27 @@ function setSpanEventAttributesRecursive(
 export class OTelGroupCallMembership {
   private context: Context;
   private callMembershipSpan: Span;
+  private myUserId: string;
+  private myMember: RoomMember;
 
-  constructor(groupCall: GroupCall, client: MatrixClient) {
+  constructor(private groupCall: GroupCall, client: MatrixClient) {
+    this.myUserId = client.getUserId();
+    this.myMember = groupCall.room.getMember(client.getUserId());
+  }
+
+  public onJoinCall() {
     // Create a new call based on the callIdContext. This context also has a span assigned to it.
     // Other spans can use this context to extract the parent span.
     // (When passing this context to startSpan the started span will use the span set in the context (in this case the callSpan) as the parent)
 
-    const myMember = groupCall.room.getMember(client.getUserId());
+    // Create the main span that tracks the time we intend to be in the call
+    this.callMembershipSpan = tracer.startSpan("otel_groupCallMembershipSpan");
+
     this.context = opentelemetry.trace
       .setSpan(opentelemetry.context.active(), this.callMembershipSpan)
-      .setValue(Symbol("confId"), groupCall.groupCallId)
-      .setValue(Symbol("matrix.userId"), client.getUserId())
-      .setValue(Symbol("matrix.displayName"), myMember.name);
-  }
-
-  public onJoinCall() {
-    // Create the main span that tracks the time we intend to be in the call
-    this.callMembershipSpan = tracer.startSpan(
-      "otel_groupCallMembershipSpan",
-      undefined,
-      this.context
-    );
+      .setValue(Symbol("confId"), this.groupCall.groupCallId)
+      .setValue(Symbol("matrix.userId"), this.myUserId)
+      .setValue(Symbol("matrix.displayName"), this.myMember.name);
 
     // Here we start a very short span. This is a hack to trigger the posthog exporter.
     // Only ended spans are processed by the exporter.
