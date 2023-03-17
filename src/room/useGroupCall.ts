@@ -189,7 +189,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     ];
 
     for (const mediaAction of mediaActions) {
-      navigator.mediaSession.setActionHandler(
+      navigator.mediaSession?.setActionHandler(
         mediaAction,
         doNothingMediaActionCallback
       );
@@ -197,7 +197,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
 
     return () => {
       for (const mediaAction of mediaActions) {
-        navigator.mediaSession.setActionHandler(mediaAction, null);
+        navigator.mediaSession?.setActionHandler(mediaAction, null);
       }
     };
   }, [doNothingMediaActionCallback]);
