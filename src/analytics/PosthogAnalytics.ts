@@ -19,8 +19,8 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixClient } from "matrix-js-sdk";
 import { Buffer } from "buffer";
 
-import { widget } from "./widget";
-import { getSetting, setSetting, settingsBus } from "./settings/useSetting";
+import { widget } from "../widget";
+import { getSetting, setSetting, settingsBus } from "../settings/useSetting";
 import {
   CallEndedTracker,
   CallStartedTracker,
@@ -30,8 +30,8 @@ import {
   MuteMicrophoneTracker,
   UndecryptableToDeviceEventTracker,
 } from "./PosthogEvents";
-import { Config } from "./config/Config";
-import { getUrlParams } from "./UrlParams";
+import { Config } from "../config/Config";
+import { getUrlParams } from "../UrlParams";
 
 /* Posthog analytics tracking.
  *
@@ -94,9 +94,9 @@ export class PosthogAnalytics {
   private static ANALYTICS_EVENT_TYPE = "im.vector.analytics";
 
   // set true during the constructor if posthog config is present, otherwise false
-  private static internalInstance = null;
+  private static internalInstance: PosthogAnalytics | null = null;
 
-  private identificationPromise: Promise<void>;
+  private identificationPromise: Promise<void> = Promise.resolve();
   private readonly enabled: boolean = false;
   private anonymity = Anonymity.Disabled;
   private platformSuperProperties = {};
@@ -137,6 +137,9 @@ export class PosthogAnalytics {
       });
       this.enabled = true;
     } else {
+      logger.info(
+        "Posthog is not enabled because there is no api key or no host given in the config"
+      );
       this.enabled = false;
     }
     this.startListeningToSettingsChanges();
@@ -225,9 +228,7 @@ export class PosthogAnalytics {
   }
 
   public async identifyUser(analyticsIdGenerator: () => string) {
-    // There might be a better way to get the client here.
-
-    if (this.anonymity == Anonymity.Pseudonymous) {
+    if (this.anonymity == Anonymity.Pseudonymous && this.enabled) {
       // Check the user's account_data for an analytics ID to use. Storing the ID in account_data allows
       // different devices to send the same ID.
       let analyticsID = await this.getAnalyticsId();
@@ -247,7 +248,7 @@ export class PosthogAnalytics {
       } catch (e) {
         // The above could fail due to network requests, but not essential to starting the application,
         // so swallow it.
-        logger.log("Unable to identify user for tracking" + e.toString());
+        logger.log("Unable to identify user for tracking" + e?.toString());
       }
       if (analyticsID) {
         this.posthog.identify(analyticsID);
@@ -370,6 +371,22 @@ export class PosthogAnalytics {
 
   public async trackEvent<E extends IPosthogEvent>(
     { eventName, ...properties }: E,
+    options?: CaptureOptions
+  ): Promise<void> {
+    if (this.identificationPromise) {
+      // only make calls to posthog after the identificaion is done
+      await this.identificationPromise;
+    }
+    if (
+      this.anonymity == Anonymity.Disabled ||
+      this.anonymity == Anonymity.Anonymous
+    )
+      return;
+    this.capture(eventName, properties, options);
+  }
+
+  public async trackFromSpan(
+    { eventName, ...properties },
     options?: CaptureOptions
   ): Promise<void> {
     if (this.identificationPromise) {

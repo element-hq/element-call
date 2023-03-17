@@ -31,11 +31,12 @@ import { MatrixEvent, IContent } from "matrix-js-sdk/src/models/event";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
-import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
+import { CallEvent, VoipEvent } from "matrix-js-sdk/src/webrtc/call";
 
 import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
-import { PosthogAnalytics } from "../PosthogAnalytics";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { MediaViewer } from "../inspectors/MediaInspector";
 
 interface InspectorContextState {
@@ -236,7 +237,7 @@ function reducer(
   action: {
     type?: CallEvent | ClientEvent | RoomStateEvent;
     event?: MatrixEvent;
-    rawEvent?: Record<string, unknown>;
+    rawEvent?: VoipEvent;
     callStateEvent?: MatrixEvent;
     memberStateEvents?: MatrixEvent[];
   }
@@ -354,7 +355,8 @@ function reducer(
 function useGroupCallState(
   client: MatrixClient,
   groupCall: GroupCall,
-  showPollCallStats: boolean
+  otelGroupCallMembership: OTelGroupCallMembership,
+  // showPollCallStats: boolean
 ): InspectorContextState {
   const [state, dispatch] = useReducer(reducer, {
     localUserId: client.getUserId(),
@@ -388,8 +390,10 @@ function useGroupCallState(
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
     }
 
-    function onSendVoipEvent(event: Record<string, unknown>) {
+    function onSendVoipEvent(event: VoipEvent) {
       dispatch({ type: CallEvent.SendVoipEvent, rawEvent: event });
+
+      otelGroupCallMembership.onSendEvent(event);
     }
 
     function onUndecryptableToDevice(event: MatrixEvent) {
@@ -423,7 +427,7 @@ function useGroupCallState(
         onUndecryptableToDevice
       );
     };
-  }, [client, groupCall]);
+  }, [client, groupCall, otelGroupCallMembership]);
 
   return state;
 }
@@ -431,17 +435,19 @@ function useGroupCallState(
 interface GroupCallInspectorProps {
   client: MatrixClient;
   groupCall: GroupCall;
+  otelGroupCallMembership: OTelGroupCallMembership;
   show: boolean;
 }
 
 export function GroupCallInspector({
   client,
   groupCall,
+  otelGroupCallMembership,
   show,
 }: GroupCallInspectorProps) {
   const [currentTab, setCurrentTab] = useState("sequence-diagrams");
   const [selectedUserId, setSelectedUserId] = useState<string>();
-  const state = useGroupCallState(client, groupCall, show);
+  const state = useGroupCallState(client, groupCall, otelGroupCallMembership);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setState] = useContext(InspectorContext);

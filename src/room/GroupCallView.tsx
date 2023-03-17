@@ -32,7 +32,7 @@ import { CallEndedView } from "./CallEndedView";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
-import { PosthogAnalytics } from "../PosthogAnalytics";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useMediaHandler } from "../settings/useMediaHandler";
 import { findDeviceByName, getDevices } from "../media-utils";
 
@@ -81,7 +81,8 @@ export function GroupCallView({
     screenshareFeeds,
     participants,
     unencryptedEventsFromUsers,
-  } = useGroupCall(groupCall);
+    otelGroupCallMembership,
+  } = useGroupCall(groupCall, client);
 
   const { t } = useTranslation();
   const { setAudioInput, setVideoInput } = useMediaHandler();
@@ -143,7 +144,6 @@ export function GroupCallView({
         ]);
 
         await groupCall.enter();
-
         PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
         PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
 
@@ -238,6 +238,7 @@ export function GroupCallView({
           onLeave={onLeave}
           isEmbedded={isEmbedded}
           hideHeader={hideHeader}
+          otelGroupCallMembership={otelGroupCallMembership}
         />
       );
     } else {
@@ -262,6 +263,7 @@ export function GroupCallView({
           roomIdOrAlias={roomIdOrAlias}
           unencryptedEventsFromUsers={unencryptedEventsFromUsers}
           hideHeader={hideHeader}
+          otelGroupCallMembership={otelGroupCallMembership}
         />
       );
     }

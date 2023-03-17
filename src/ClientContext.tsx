@@ -36,7 +36,7 @@ import {
   fallbackICEServerAllowed,
 } from "./matrix-utils";
 import { widget } from "./widget";
-import { PosthogAnalytics, RegistrationType } from "./PosthogAnalytics";
+import { PosthogAnalytics, RegistrationType } from "./analytics/PosthogAnalytics";
 import { translatedError } from "./TranslatedError";
 import { useEventTarget } from "./useEvents";
 import { Config } from "./config/Config";
