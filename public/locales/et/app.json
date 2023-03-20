@@ -129,15 +129,17 @@
   "WebRTC is not supported or is being blocked in this browser.": "WebRTC pole kas selles brauseris toetatud või on keelatud.",
   "This will make a speaker's audio seem as if it is coming from where their tile is positioned on screen. (Experimental feature: this may impact the stability of audio.)": "Muudab kõneleja heli nii, nagu tuleks see sealt, kus on tema pilt ekraanil. (See on katseline funktsionaalsus ja võib mõjutada heli stabiilsust.)",
   "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>Terms and conditions</12>": "Siin saidis on kasutusel ReCAPTCHA ning kehtivad Google <2>privaatsuspoliitika</2> ja <6>teenusetingimused</6>.<9></9>Klikkides „Registreeru“, nõustud meie <12>kasutustingimustega</12>",
-  "Allow analytics": "Luba analüütika",
-  "Advanced": "Lisaseadistused",
   "Element Call Home": "Element Call Home",
   "Copy": "Kopeeri",
-  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Me saadame kõne anonüümsed andmed (nagu kõne kestus ja osalejate arv) meie arendustiimile ja see võimaldab levinud kasutusmustrite alusel arendust optimeerida.",
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Kas kasutame üheklahvilisi kiirklahve, näiteks „m“ mikrofoni sisse/välja lülitamiseks.",
   "Single-key keyboard shortcuts": "Üheklahvilised kiirklahvid",
   "{{name}} (Waiting for video...)": "{{name}} (Ootame videovoo algust...)",
   "This feature is only supported on Firefox.": "See funktsionaalsus on toetatud vaid Firefoxis.",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Kui saadad meile vealogid, siis on lihtsam vea põhjust otsida.</0>",
-  "<0>Oops, something's gone wrong.</0>": "<0>Ohoo, midagi on nüüd katki.</0>"
+  "<0>Oops, something's gone wrong.</0>": "<0>Ohoo, midagi on nüüd katki.</0>",
+  "Use the upcoming grid system": "Kasuta tulevast ruudustiku-põhist paigutust",
+  "Privacy Policy": "Privaatsuspoliitika",
+  "Expose developer settings in the settings window.": "Näita seadistuste aknas arendajale vajalikke seadeid.",
+  "Developer Settings": "Arendaja seadistused",
+  "By ticking this box you consent to the collection of anonymous data, which we use to improve your experience. You can find more information about which data we track in our ": "Selle valiku märkimisel lubad meil koguda anonüümseid andmeid, mida me pruugime sinu kasutajakogemuse parandamiseks. Üksikasjalikumat teavet meie kogutavate andmete kohta leiad siit - "
 }

@@ -375,27 +375,36 @@ export function InCallView({
 
   if (noControls) {
     footer = null;
-  } else if (reducedControls) {
-    footer = (
-      <div className={styles.footer}>
-        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
-        <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
-        <HangupButton onPress={onLeave} />
-      </div>
-    );
   } else {
-    footer = (
-      <div className={styles.footer}>
-        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
-        <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
-        {canScreenshare && !hideScreensharing && !isSafari && (
+    const buttons: JSX.Element[] = [];
+
+    buttons.push(
+      <MicButton
+        key="1"
+        muted={microphoneMuted}
+        onPress={toggleMicrophoneMuted}
+      />,
+      <VideoButton
+        key="2"
+        muted={localVideoMuted}
+        onPress={toggleLocalVideoMuted}
+      />
+    );
+
+    if (!reducedControls) {
+      if (canScreenshare && !hideScreensharing && !isSafari) {
+        buttons.push(
           <ScreenshareButton
+            key="3"
             enabled={isScreensharing}
             onPress={toggleScreensharing}
           />
-        )}
-        {!maximisedParticipant && (
+        );
+      }
+      if (!maximisedParticipant) {
+        buttons.push(
           <OverflowMenu
+            key="4"
             inCall
             roomIdOrAlias={roomIdOrAlias}
             groupCall={groupCall}
@@ -403,10 +412,12 @@ export function InCallView({
             feedbackModalState={feedbackModalState}
             feedbackModalProps={feedbackModalProps}
           />
-        )}
-        <HangupButton onPress={onLeave} />
-      </div>
-    );
+        );
+      }
+    }
+
+    buttons.push(<HangupButton key="6" onPress={onLeave} />);
+    footer = <div className={styles.footer}>{buttons}</div>;
   }
 
   return (

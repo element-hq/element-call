@@ -129,15 +129,17 @@
   "{{count}} people connected|one": "{{count}} під'єднується",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Приєднатися до виклику зараз</0><1>Or</1><2>Скопіювати посилання на виклик і приєднатися пізніше</2>",
   "{{name}} (Connecting...)": "{{name}} (З'єднання...)",
-  "Allow analytics": "Дозволити аналітику",
-  "Advanced": "Розширені",
   "Element Call Home": "Домівка Element Call",
   "Copy": "Копіювати",
-  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Це дозволить надсилати анонімні дані (такі як тривалість виклику та кількість учасників) команді Element Call, щоб допомогти нам оптимізувати роботу застосунку на основі того, як він використовується.",
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Чи вмикати/вимикати мікрофон однією клавішею, наприклад, «m» для ввімкнення/вимкнення мікрофона.",
   "Single-key keyboard shortcuts": "Одноклавішні комбінації клавіш",
   "{{name}} (Waiting for video...)": "{{name}} (Очікування на відео...)",
   "This feature is only supported on Firefox.": "Ця функція підтримується лише в браузері Firefox.",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Надсилання журналів зневадження допоможе нам виявити проблему.</0>",
-  "<0>Oops, something's gone wrong.</0>": "<0>Йой, щось пішло не за планом.</0>"
+  "<0>Oops, something's gone wrong.</0>": "<0>Йой, щось пішло не за планом.</0>",
+  "Use the upcoming grid system": "Використовувати майбутню сіткову систему",
+  "Privacy Policy": "Політика приватності",
+  "Expose developer settings in the settings window.": "Відкрийте налаштування розробника у вікні налаштувань.",
+  "Developer Settings": "Налаштування розробника",
+  "By ticking this box you consent to the collection of anonymous data, which we use to improve your experience. You can find more information about which data we track in our ": "Ставлячи прапорець у цьому полі, ви погоджуєтеся на збір анонімних даних, які ми використовуємо для поліпшення роботи. Ви можете знайти більше інформації про те, які дані ми відстежуємо в нашому "
 }

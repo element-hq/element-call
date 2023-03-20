@@ -127,11 +127,8 @@
   "{{displayName}}, your call is now ended": "{{displayName}}, ваш звонок завершён",
   "{{count}} people connected|other": "{{count}} подключилось",
   "{{count}} people connected|one": "{{count}} подключился",
-  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Это даст разрешение на отправку анонимизированных данных (таких, как продолжительность звонка и количество участников) команде Element Call, чтобы помочь нам оптимизировать работу приложения на основании того как оно используется.",
   "Element Call Home": "Главная Element Call",
   "Copy": "Копировать",
-  "Allow analytics": "Разрешить аналитику",
-  "Advanced": "Расширенные",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Присоединиться сейчас</0><1>или<1><2>cкопировать ссылку на звонок и присоединиться позже</2>",
   "{{name}} (Connecting...)": "{{name}} (Соединение...)",
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Включить горячие клавиши, например 'm' чтобы отключить/включить микрофон.",
@@ -139,5 +136,6 @@
   "Single-key keyboard shortcuts": "Горячие клавиши",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Отправка журналов поможет нам найти и устранить проблему.</0>",
   "<0>Oops, something's gone wrong.</0>": "<0>Упс, что-то пошло не так.</0>",
-  "{{name}} (Waiting for video...)": "{{name}} (Ожидание видео...)"
+  "{{name}} (Waiting for video...)": "{{name}} (Ожидание видео...)",
+  "Use the upcoming grid system": "Использовать сеточный показ"
 }
