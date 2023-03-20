@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import opentelemetry, { Span, Attributes } from "@opentelemetry/api";
+import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
 import {
   GroupCall,
   MatrixClient,
@@ -23,7 +24,7 @@ import {
 } from "matrix-js-sdk";
 import { VoipEvent } from "matrix-js-sdk/src/webrtc/call";
 
-import { tracer } from "./otel";
+import { provider, tracer } from "./otel";
 
 /**
  * Flattens out an object into a single layer with components
@@ -78,15 +79,15 @@ export class OTelGroupCallMembership {
   constructor(private groupCall: GroupCall, client: MatrixClient) {
     this.myUserId = client.getUserId();
     this.myMember = groupCall.room.getMember(client.getUserId());
+
+    provider.resource.attributes[
+      SemanticResourceAttributes.SERVICE_NAME
+    ] = `element-call-${this.myUserId}-${client.getDeviceId()}`;
   }
 
   public onJoinCall() {
-    // Create a new call based on the callIdContext. This context also has a span assigned to it.
-    // Other spans can use this context to extract the parent span.
-    // (When passing this context to startSpan the started span will use the span set in the context (in this case the callSpan) as the parent)
-
     // Create the main span that tracks the time we intend to be in the call
-    this.callMembershipSpan = tracer.startSpan("otel_groupCallMembershipSpan");
+    this.callMembershipSpan = tracer.startSpan("matrix.groupCallMembership");
     this.callMembershipSpan.setAttribute(
       "matrix.confId",
       this.groupCall.groupCallId
@@ -142,5 +143,35 @@ export class OTelGroupCallMembership {
         flattenVoipEvent(event)
       );
     }
+  }
+
+  public onToggleMicrophoneMuted(newValue: boolean) {
+    this.callMembershipSpan.addEvent("matrix.toggleMicMuted", {
+      "matrix.microphone.muted": newValue,
+    });
+  }
+
+  public onSetMicrophoneMuted(setMuted: boolean) {
+    this.callMembershipSpan.addEvent("matrix.setMicMuted", {
+      "matrix.microphone.muted": setMuted,
+    });
+  }
+
+  public onToggleLocalVideoMuted(newValue: boolean) {
+    this.callMembershipSpan.addEvent("matrix.toggleVidMuted", {
+      "matrix.video.muted": newValue,
+    });
+  }
+
+  public onSetLocalVideoMuted(setMuted: boolean) {
+    this.callMembershipSpan.addEvent("matrix.setVidMuted", {
+      "matrix.video.muted": setMuted,
+    });
+  }
+
+  public onToggleScreensharing(newValue: boolean) {
+    this.callMembershipSpan.addEvent("matrix.setVidMuted", {
+      "matrix.screensharing.enabled": newValue,
+    });
   }
 }
