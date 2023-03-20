@@ -108,12 +108,24 @@ function getParticipants(
         (f) => f.userId === member.userId && f.deviceId === deviceId
       );
 
-      participantInfoMap.set(deviceId, {
-        connectionState: feed
+      let connectionState: ConnectionState;
+      // If we allow calls without media, we have no feeds and cannot read the connection status from them.
+      // @TODO: The connection state should generally not be determined by the feed.
+      if (
+        groupCall.allowCallWithoutVideoAndAudio &&
+        !feed &&
+        !participant.screensharing
+      ) {
+        connectionState = ConnectionState.Connected;
+      } else {
+        connectionState = feed
           ? feed.connected
             ? ConnectionState.Connected
             : ConnectionState.WaitMedia
-          : ConnectionState.EstablishingCall,
+          : ConnectionState.EstablishingCall;
+      }
+      participantInfoMap.set(deviceId, {
+        connectionState,
         presenter: participant.screensharing,
       });
     }

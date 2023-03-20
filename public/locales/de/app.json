@@ -129,15 +129,17 @@
   "Sending debug logs…": "Sende Debug-Protokolle …",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Anruf beitreten</0><1>Oder</1><2>Anruflink kopieren und später beitreten</2>",
   "{{name}} (Connecting...)": "{{name}} (verbindet sich …)",
-  "Allow analytics": "Analysedaten senden",
-  "Advanced": "Erweitert",
   "Copy": "Kopieren",
   "Element Call Home": "Element Call-Startseite",
-  "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used.": "Dies wird anonymisierte Daten (wie z. B. die Dauer eines Anrufs und die Zahl der Teilnehmenden) dem Element Call-Team senden, um uns bei der Optimierung der Anwendung basierend auf dem Nutzungsverhalten zu helfen.",
   "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Ob Tastenkürzel mit nur einer Taste aktiviert sein sollen, z. B. „m“ um das Mikrofon stumm/aktiv zu schalten.",
   "Single-key keyboard shortcuts": "Ein-Tasten-Tastenkürzel",
   "{{name}} (Waiting for video...)": "{{name}} (Warte auf Video …)",
   "This feature is only supported on Firefox.": "Diese Funktion wird nur in Firefox unterstützt.",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Übermittelte Problemberichte helfen uns, Fehler zu beheben.</0>",
-  "<0>Oops, something's gone wrong.</0>": "<0>Hoppla, etwas ist schiefgelaufen.</0>"
+  "<0>Oops, something's gone wrong.</0>": "<0>Hoppla, etwas ist schiefgelaufen.</0>",
+  "Use the upcoming grid system": "Nutze das kommende Rastersystem",
+  "Privacy Policy": "Datenschutzerklärung",
+  "Expose developer settings in the settings window.": "Zeige die Entwicklereinstellungen im Einstellungsfenster.",
+  "Developer Settings": "Entwicklereinstellungen",
+  "By ticking this box you consent to the collection of anonymous data, which we use to improve your experience. You can find more information about which data we track in our ": "Mit dem Anwählen dieses Feldes akzeptierst du die Sammlung anonymer Daten, die wir zur Verbesserung deiner Erfahrung verwenden. Weitere Informationen dazu, welche Daten wir sammeln, findest du in unserer "
 }
