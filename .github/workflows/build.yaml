@@ -23,6 +23,7 @@ jobs:
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
           SENTRY_URL: ${{ secrets.SENTRY_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          NODE_OPTIONS: "--max-old-space-size=16384"
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:
