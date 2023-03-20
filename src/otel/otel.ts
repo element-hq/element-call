@@ -38,7 +38,7 @@ const providerConfig = {
     [SemanticResourceAttributes.SERVICE_NAME]: SERVICE_NAME,
   }),
 };
-const provider = new WebTracerProvider(providerConfig);
+export const provider = new WebTracerProvider(providerConfig);
 
 provider.addSpanProcessor(new SimpleSpanProcessor(otlpExporter));
 provider.addSpanProcessor(new SimpleSpanProcessor(posthogExporter));
@@ -49,65 +49,3 @@ opentelemetry.trace.setGlobalTracerProvider(provider);
 export const tracer = opentelemetry.trace.getTracer(
   "my-element-call-otl-tracer"
 );
-
-/*
-class CallTracer {
-  // We create one tracer class for each main context.
-  // Even if differnt tracer classes overlap in time space, we might want to visulaize them seperately.
-  // The Call Tracer should only contain spans/events that are relevant to understand the procedure of the individual candidates.
-  // Another Tracer Class (for example a ConnectionTracer) can contain a very granular list of all steps to connect to a call.
-
-  private callSpan;
-  private callContext;
-  private muteSpan?;
-
-  public startGroupCall(groupCallId: string) {}
-
-  public startCall(callId: string) {
-    // The main context will be set when initiating the main/parent span.
-
-    // Create an initial context with the callId param
-    const callIdContext = opentelemetry.context
-      .active()
-      .setValue(Symbol("callId"), callId);
-
-    // Create the main span that tracks the whole call
-    this.callSpan = tracer.startSpan("otel_callSpan", undefined, callIdContext);
-
-    // Create a new call based on the callIdContext. This context also has a span assigned to it.
-    // Other spans can use this context to extract the parent span.
-    // (When passing this context to startSpan the started span will use the span set in the context (in this case the callSpan) as the parent)
-    this.callContext = opentelemetry.trace.setSpan(
-      opentelemetry.context.active(),
-      this.callSpan
-    );
-
-    // Here we start a very short span. This is a hack to trigger the posthog exporter.
-    // Only ended spans are processed by the exporter.
-    // We want the exporter to know that a call has started
-    const startCallSpan = tracer.startSpan(
-      "otel_startCallSpan",
-      undefined,
-      this.callContext
-    );
-    startCallSpan.end();
-  }
-  public muteMic(muteState: boolean) {
-    if (muteState) {
-      this.muteSpan = tracer.startSpan(
-        "otel_muteSpan",
-        undefined,
-        this.callContext
-      );
-    } else if (this.muteSpan) {
-      this.muteSpan.end();
-      this.muteSpan = null;
-    }
-  }
-  public endCall() {
-    this.callSpan?.end();
-  }
-}
-
-export const callTracer = new CallTracer();
-*/

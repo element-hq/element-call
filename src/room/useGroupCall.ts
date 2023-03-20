@@ -413,6 +413,8 @@ export function useGroupCall(
   const toggleLocalVideoMuted = useCallback(() => {
     const toggleToMute = !groupCall.isLocalVideoMuted();
     groupCall.setLocalVideoMuted(toggleToMute);
+    groupCallOTelMembership.onToggleLocalVideoMuted(toggleToMute);
+    // TODO: These explict posthog calls should be unnecessary now with the posthog otel exporter?
     PosthogAnalytics.instance.eventMuteCamera.track(
       toggleToMute,
       groupCall.groupCallId
@@ -422,6 +424,7 @@ export function useGroupCall(
   const setMicrophoneMuted = useCallback(
     (setMuted) => {
       groupCall.setMicrophoneMuted(setMuted);
+      groupCallOTelMembership.onSetMicrophoneMuted(setMuted);
       PosthogAnalytics.instance.eventMuteMicrophone.track(
         setMuted,
         groupCall.groupCallId
@@ -432,10 +435,13 @@ export function useGroupCall(
 
   const toggleMicrophoneMuted = useCallback(() => {
     const toggleToMute = !groupCall.isMicrophoneMuted();
+    groupCallOTelMembership.onToggleMicrophoneMuted(toggleToMute);
     setMicrophoneMuted(toggleToMute);
   }, [groupCall, setMicrophoneMuted]);
 
   const toggleScreensharing = useCallback(async () => {
+    groupCallOTelMembership.onToggleScreensharing(!groupCall.isScreensharing);
+
     if (!groupCall.isScreensharing()) {
       // toggling on
       updateState({ requestingScreenshare: true });
