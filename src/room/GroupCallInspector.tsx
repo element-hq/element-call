@@ -355,7 +355,7 @@ function reducer(
 function useGroupCallState(
   client: MatrixClient,
   groupCall: GroupCall,
-  otelGroupCallMembership: OTelGroupCallMembership,
+  otelGroupCallMembership: OTelGroupCallMembership
   // showPollCallStats: boolean
 ): InspectorContextState {
   const [state, dispatch] = useReducer(reducer, {
@@ -384,6 +384,8 @@ function useGroupCallState(
         callStateEvent,
         memberStateEvents,
       });
+
+      otelGroupCallMembership.onUpdateRoomState(event);
     }
 
     function onReceivedVoipEvent(event: MatrixEvent) {

@@ -22,6 +22,7 @@ import {
   GroupCallErrorCode,
   GroupCallUnknownDeviceError,
   GroupCallError,
+  GroupCallStatsReportEvent,
 } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
@@ -279,6 +280,20 @@ export function useGroupCall(
       }
     }
 
+    // this workaround works but!
+    groupCall.stats.reports.on("StatsReport.connection_stats", (report) => {
+      window.console.log("#### --xFFFxx ", report);
+    });
+
+    function onConnectionStatsReport(report: any): void {
+      window.console.log("###### Hey :)");
+      groupCallOTelMembership.onConnectionStatsReport(report);
+    }
+
+    function onByteSentStatsReport(report: any): void {
+      groupCallOTelMembership.onByteSentStatsReport(report);
+    }
+
     groupCall.on(GroupCallEvent.GroupCallStateChanged, onGroupCallStateChanged);
     groupCall.on(GroupCallEvent.UserMediaFeedsChanged, onUserMediaFeedsChanged);
     groupCall.on(
@@ -294,6 +309,12 @@ export function useGroupCall(
     groupCall.on(GroupCallEvent.CallsChanged, onCallsChanged);
     groupCall.on(GroupCallEvent.ParticipantsChanged, onParticipantsChanged);
     groupCall.on(GroupCallEvent.Error, onError);
+
+    groupCall.on(GroupCallEvent.ConnectionStats, onConnectionStatsReport);
+    groupCall.on(
+      GroupCallStatsReportEvent.ByteSentStats,
+      onByteSentStatsReport
+    );
 
     updateState({
       error: null,
@@ -341,6 +362,10 @@ export function useGroupCall(
         onParticipantsChanged
       );
       groupCall.removeListener(GroupCallEvent.Error, onError);
+      groupCall.removeListener(
+        GroupCallStatsReportEvent.ConnectionStats,
+        onConnectionStatsReport
+      );
       groupCall.leave();
     };
   }, [groupCall, updateState]);

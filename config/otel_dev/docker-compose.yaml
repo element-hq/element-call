@@ -21,3 +21,9 @@ services:
       - "55670:55679" # zpages extension
     depends_on:
       - jaeger-all-in-one
+#  nginx:
+#    image: nginxinc/nginx-unprivileged:latest
+#    volumes:
+#      - ./nginx_otel.conf:/etc/nginx/conf.d/default.conf:ro
+#    ports:
+#      - "16687:8080"
