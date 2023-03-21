@@ -34,11 +34,23 @@ export class PosthogSpanExporter implements SpanExporter {
     resultCallback: (result: ExportResult) => void
   ): Promise<void> {
     console.log("POSTHOGEXPORTER", spans);
-    for (let i = 0; i < spans.length; i++) {
-      const span = spans[i];
-      const sendInstantly =
-        span.name == "otel_callEnded" ||
-        span.name == "otel_otherSentInstantlyEventName";
+    for (const span of spans) {
+      const sendInstantly = [
+        "otel_callEnded",
+        "otel_otherSentInstantlyEventName",
+      ].includes(span.name);
+
+      for (const spanEvent of span.events) {
+        await PosthogAnalytics.instance.trackFromSpan(
+          {
+            eventName: spanEvent.name,
+            ...spanEvent.attributes,
+          },
+          {
+            send_instantly: sendInstantly,
+          }
+        );
+      }
 
       await PosthogAnalytics.instance.trackFromSpan(
         { eventName: span.name, ...span.attributes },
