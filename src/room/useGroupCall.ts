@@ -23,6 +23,7 @@ import {
   GroupCallUnknownDeviceError,
   GroupCallError,
   GroupCallStatsReportEvent,
+  GroupCallStatsReport,
 } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
@@ -35,6 +36,10 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
+import {
+  ByteSendStatsReport,
+  ConnectionStatsReport,
+} from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 export enum ConnectionState {
   EstablishingCall = "establishing call", // call hasn't been established yet
@@ -280,12 +285,12 @@ export function useGroupCall(
       }
     }
 
-    function onConnectionStatsReport(report: any): void {
+    function onConnectionStatsReport(report: GroupCallStatsReport<ConnectionStatsReport>): void {
       groupCallOTelMembership.onConnectionStatsReport(report);
     }
 
-    function onByteSentStatsReport(report: any): void {
-      groupCallOTelMembership.onByteSentStatsReport(report);
+    function onByteSentStatsReport(report: GroupCallStatsReport<ByteSendStatsReport>): void {
+      groupCallOTelMembership.onByteSendStatsReport(report);
     }
 
     groupCall.on(GroupCallEvent.GroupCallStateChanged, onGroupCallStateChanged);

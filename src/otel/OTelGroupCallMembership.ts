@@ -23,8 +23,11 @@ import {
   RoomMember,
 } from "matrix-js-sdk";
 import { VoipEvent } from "matrix-js-sdk/src/webrtc/call";
+import { GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
+import { ConnectionStatsReport, ByteSendStatsReport } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 import { provider, tracer } from "./otel";
+import { ObjectFlattener } from "./ObjectFlattener";
 
 /**
  * Flattens out an object into a single layer with components
@@ -175,11 +178,11 @@ export class OTelGroupCallMembership {
     });
   }
 
-  public onConnectionStatsReport(report: any) {
-    window.console.log("### Connection stats", report);
+  public onConnectionStatsReport(statsReport: GroupCallStatsReport<ConnectionStatsReport>) {
+    this.callMembershipSpan.addEvent("matrix.stats.connection", ObjectFlattener.flattenConnectionStatsReportObject(statsReport));
   }
 
-  public onByteSentStatsReport(report: any) {
-    window.console.log("### ByteSentStatsReport", report);
+  public onByteSendStatsReport(statsReport: GroupCallStatsReport<ByteSendStatsReport>) {
+    this.callMembershipSpan.addEvent("matrix.stats.byteSend", ObjectFlattener.flattenByteSendStatsReportObject(statsReport));
   }
 }
