@@ -72,7 +72,7 @@ function flattenVoipEventRecursive(
  * Represent the span of time which we intend to be joined to a group call
  */
 export class OTelGroupCallMembership {
-  private callMembershipSpan: Span;
+  private callMembershipSpan?: Span;
   private myUserId: string;
   private myMember: RoomMember;
 
@@ -103,11 +103,11 @@ export class OTelGroupCallMembership {
       this.callMembershipSpan
     );
 
-    this.callMembershipSpan.addEvent("matrix.joinCall");
+    this.callMembershipSpan?.addEvent("matrix.joinCall");
   }
 
   public onLeaveCall() {
-    this.callMembershipSpan.addEvent("matrix.leaveCall");
+    this.callMembershipSpan?.addEvent("matrix.leaveCall");
 
     // and end the main span to indicate we've left
     if (this.callMembershipSpan) this.callMembershipSpan.end();
@@ -122,7 +122,7 @@ export class OTelGroupCallMembership {
       return;
     }
 
-    this.callMembershipSpan.addEvent(
+    this.callMembershipSpan?.addEvent(
       `otel_onRoomStateEvent_${event.getType()}`,
       flattenVoipEvent(event.getContent())
     );
@@ -133,12 +133,12 @@ export class OTelGroupCallMembership {
     if (!eventType.startsWith("m.call")) return;
 
     if (event.type === "toDevice") {
-      this.callMembershipSpan.addEvent(
+      this.callMembershipSpan?.addEvent(
         `matrix.sendToDeviceEvent_${event.eventType}`,
         flattenVoipEvent(event)
       );
     } else if (event.type === "sendEvent") {
-      this.callMembershipSpan.addEvent(
+      this.callMembershipSpan?.addEvent(
         `matrix.sendToRoomEvent_${event.eventType}`,
         flattenVoipEvent(event)
       );
@@ -146,31 +146,31 @@ export class OTelGroupCallMembership {
   }
 
   public onToggleMicrophoneMuted(newValue: boolean) {
-    this.callMembershipSpan.addEvent("matrix.toggleMicMuted", {
+    this.callMembershipSpan?.addEvent("matrix.toggleMicMuted", {
       "matrix.microphone.muted": newValue,
     });
   }
 
   public onSetMicrophoneMuted(setMuted: boolean) {
-    this.callMembershipSpan.addEvent("matrix.setMicMuted", {
+    this.callMembershipSpan?.addEvent("matrix.setMicMuted", {
       "matrix.microphone.muted": setMuted,
     });
   }
 
   public onToggleLocalVideoMuted(newValue: boolean) {
-    this.callMembershipSpan.addEvent("matrix.toggleVidMuted", {
+    this.callMembershipSpan?.addEvent("matrix.toggleVidMuted", {
       "matrix.video.muted": newValue,
     });
   }
 
   public onSetLocalVideoMuted(setMuted: boolean) {
-    this.callMembershipSpan.addEvent("matrix.setVidMuted", {
+    this.callMembershipSpan?.addEvent("matrix.setVidMuted", {
       "matrix.video.muted": setMuted,
     });
   }
 
   public onToggleScreensharing(newValue: boolean) {
-    this.callMembershipSpan.addEvent("matrix.setVidMuted", {
+    this.callMembershipSpan?.addEvent("matrix.setVidMuted", {
       "matrix.screensharing.enabled": newValue,
     });
   }
