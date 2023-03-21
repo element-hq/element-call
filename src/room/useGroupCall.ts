@@ -280,13 +280,7 @@ export function useGroupCall(
       }
     }
 
-    // this workaround works but!
-    groupCall.stats.reports.on("StatsReport.connection_stats", (report) => {
-      window.console.log("#### --xFFFxx ", report);
-    });
-
     function onConnectionStatsReport(report: any): void {
-      window.console.log("###### Hey :)");
       groupCallOTelMembership.onConnectionStatsReport(report);
     }
 
@@ -310,7 +304,10 @@ export function useGroupCall(
     groupCall.on(GroupCallEvent.ParticipantsChanged, onParticipantsChanged);
     groupCall.on(GroupCallEvent.Error, onError);
 
-    groupCall.on(GroupCallEvent.ConnectionStats, onConnectionStatsReport);
+    groupCall.on(
+      GroupCallStatsReportEvent.ConnectionStats,
+      onConnectionStatsReport
+    );
     groupCall.on(
       GroupCallStatsReportEvent.ByteSentStats,
       onByteSentStatsReport
