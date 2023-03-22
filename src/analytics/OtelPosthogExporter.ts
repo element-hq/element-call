@@ -69,16 +69,4 @@ export class PosthogSpanExporter implements SpanExporter {
       resolve();
     });
   }
-  /**
-   * converts span info into more readable format
-   * @param span
-   */
-  // private _exportInfo;
-  /**
-   * Showing spans in console
-   * @param spans
-   * @param done
-   */
-  // private _sendSpans;
 }
-//# sourceMappingURL=ConsoleSpanExporter.d.ts.map
