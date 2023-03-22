@@ -16,6 +16,7 @@ limitations under the License.
 
 import React from "react";
 
+import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { TileDescriptor } from "./TileDescriptor";
 import { useCallFeed } from "./useCallFeed";
 import { useMediaStream } from "./useMediaStream";
@@ -23,6 +24,7 @@ import { useMediaStream } from "./useMediaStream";
 interface Props {
   tileDescriptor: TileDescriptor;
   audioOutput: string;
+  otelGroupCallMembership: OTelGroupCallMembership;
 }
 
 // Renders and <audio> element on the page playing the given stream
@@ -30,8 +32,12 @@ interface Props {
 export const AudioSink: React.FC<Props> = ({
   tileDescriptor,
   audioOutput,
+  otelGroupCallMembership,
 }: Props) => {
-  const { localVolume, stream } = useCallFeed(tileDescriptor.callFeed);
+  const { localVolume, stream } = useCallFeed(
+    tileDescriptor.callFeed,
+    otelGroupCallMembership
+  );
 
   const audioElementRef = useMediaStream(
     stream,
