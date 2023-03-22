@@ -39,6 +39,11 @@ export class ElementCallOpenTelemetry {
   private _tracer: Tracer;
   private _anonymity: Anonymity;
 
+  static globalInit(): void {
+    settingsBus.on("opt-in-analytics", recheckOTelEnabledStatus);
+    recheckOTelEnabledStatus(getSetting("opt-in-analytics", false));
+  }
+
   static get instance(): ElementCallOpenTelemetry {
     return sharedInstance;
   }
@@ -93,6 +98,3 @@ function recheckOTelEnabledStatus(optInAnalayticsEnabled: boolean): void {
     sharedInstance = undefined;
   }
 }
-
-settingsBus.on("opt-in-analytics", recheckOTelEnabledStatus);
-recheckOTelEnabledStatus(getSetting("opt-in-analytics", false));
