@@ -28,7 +28,6 @@ import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useTranslation } from "react-i18next";
 import { IWidgetApiRequest } from "matrix-widget-api";
 import { MatrixClient } from "matrix-js-sdk";
-import { logger } from "@sentry/utils";
 
 import { usePageUnload } from "./usePageUnload";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
