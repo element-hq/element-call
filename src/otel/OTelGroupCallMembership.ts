@@ -28,6 +28,7 @@ import {
   ConnectionStatsReport,
   ByteSentStatsReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
+import { setSpan } from "@opentelemetry/api/build/esm/trace/context-utils";
 
 import { provider, tracer } from "./otel";
 import { ObjectFlattener } from "./ObjectFlattener";
@@ -212,9 +213,15 @@ export class OTelGroupCallMembership {
   }
 
   private buildStatsEventSpan(event: OTelStatsReportEvent): void {
-    if (this.statsReportSpan.span === undefined) {
+    if (this.statsReportSpan.span === undefined && this.callMembershipSpan) {
+      const ctx = setSpan(
+        opentelemetry.context.active(),
+        this.callMembershipSpan
+      );
       this.statsReportSpan.span = tracer.startSpan(
-        "matrix.groupCallMembershipStatsReport"
+        "matrix.groupCallMembership.statsReport",
+        undefined,
+        ctx
       );
       this.statsReportSpan.span.setAttribute(
         "matrix.confId",
@@ -228,7 +235,8 @@ export class OTelGroupCallMembership {
 
       this.statsReportSpan.span.addEvent(event.type, event.data);
       this.statsReportSpan.stats.push(event);
-    } else {
+    }
+    if (this.statsReportSpan.span !== undefined) {
       this.statsReportSpan.span.addEvent(event.type, event.data);
       this.statsReportSpan.span.end();
       this.statsReportSpan = { span: undefined, stats: [] };
