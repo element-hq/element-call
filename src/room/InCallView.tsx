@@ -360,11 +360,11 @@ export function InCallView({
   const audioElements: JSX.Element[] = [];
   if (!spatialAudio || maximisedParticipant) {
     for (const item of items) {
-      if (item.isLocal) continue; // We don't want to render own audio
       audioElements.push(
         <AudioSink
           tileDescriptor={item}
           audioOutput={audioOutput}
+          otelGroupCallMembership={otelGroupCallMembership}
           key={item.id}
         />
       );
