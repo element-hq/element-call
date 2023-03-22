@@ -24,7 +24,7 @@ import {
 } from "matrix-js-sdk";
 import { VoipEvent } from "matrix-js-sdk/src/webrtc/call";
 
-import { provider, tracer } from "./otel";
+import { ElementCallOpenTelemetry } from "./otel";
 
 /**
  * Flattens out an object into a single layer with components
@@ -80,14 +80,17 @@ export class OTelGroupCallMembership {
     this.myUserId = client.getUserId();
     this.myMember = groupCall.room.getMember(client.getUserId());
 
-    provider.resource.attributes[
+    ElementCallOpenTelemetry.instance.provider.resource.attributes[
       SemanticResourceAttributes.SERVICE_NAME
     ] = `element-call-${this.myUserId}-${client.getDeviceId()}`;
   }
 
   public onJoinCall() {
     // Create the main span that tracks the time we intend to be in the call
-    this.callMembershipSpan = tracer.startSpan("matrix.groupCallMembership");
+    this.callMembershipSpan =
+      ElementCallOpenTelemetry.instance.tracer.startSpan(
+        "matrix.groupCallMembership"
+      );
     this.callMembershipSpan.setAttribute(
       "matrix.confId",
       this.groupCall.groupCallId
