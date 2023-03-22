@@ -28,12 +28,14 @@ import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useTranslation } from "react-i18next";
 import { IWidgetApiRequest } from "matrix-widget-api";
 import { MatrixClient } from "matrix-js-sdk";
+import { logger } from "@sentry/utils";
 
 import { usePageUnload } from "./usePageUnload";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
+import { ElementCallOpenTelemetry } from "../otel/otel";
 
 export enum ConnectionState {
   EstablishingCall = "establishing call", // call hasn't been established yet
@@ -172,8 +174,14 @@ export function useGroupCall(
   });
 
   if (groupCallOTelMembershipGroupCallId !== groupCall.groupCallId) {
-    groupCallOTelMembership = new OTelGroupCallMembership(groupCall, client);
-    groupCallOTelMembershipGroupCallId = groupCall.groupCallId;
+    // If the user disables analytics, this will stay around until they leave the call
+    // so analytics will be disabled once they leave.
+    if (ElementCallOpenTelemetry.instance) {
+      groupCallOTelMembership = new OTelGroupCallMembership(groupCall, client);
+      groupCallOTelMembershipGroupCallId = groupCall.groupCallId;
+    } else {
+      groupCallOTelMembership = undefined;
+    }
   }
 
   const [unencryptedEventsFromUsers, addUnencryptedEventUser] = useReducer(
@@ -414,18 +422,18 @@ export function useGroupCall(
       updateState({ error });
     });
 
-    groupCallOTelMembership.onJoinCall();
+    groupCallOTelMembership?.onJoinCall();
   }, [groupCall, updateState]);
 
   const leave = useCallback(() => {
-    groupCallOTelMembership.onLeaveCall();
+    groupCallOTelMembership?.onLeaveCall();
     groupCall.leave();
   }, [groupCall]);
 
   const toggleLocalVideoMuted = useCallback(() => {
     const toggleToMute = !groupCall.isLocalVideoMuted();
     groupCall.setLocalVideoMuted(toggleToMute);
-    groupCallOTelMembership.onToggleLocalVideoMuted(toggleToMute);
+    groupCallOTelMembership?.onToggleLocalVideoMuted(toggleToMute);
     // TODO: These explict posthog calls should be unnecessary now with the posthog otel exporter?
     PosthogAnalytics.instance.eventMuteCamera.track(
       toggleToMute,
@@ -436,7 +444,7 @@ export function useGroupCall(
   const setMicrophoneMuted = useCallback(
     (setMuted) => {
       groupCall.setMicrophoneMuted(setMuted);
-      groupCallOTelMembership.onSetMicrophoneMuted(setMuted);
+      groupCallOTelMembership?.onSetMicrophoneMuted(setMuted);
       PosthogAnalytics.instance.eventMuteMicrophone.track(
         setMuted,
         groupCall.groupCallId
@@ -447,12 +455,12 @@ export function useGroupCall(
 
   const toggleMicrophoneMuted = useCallback(() => {
     const toggleToMute = !groupCall.isMicrophoneMuted();
-    groupCallOTelMembership.onToggleMicrophoneMuted(toggleToMute);
+    groupCallOTelMembership?.onToggleMicrophoneMuted(toggleToMute);
     setMicrophoneMuted(toggleToMute);
   }, [groupCall, setMicrophoneMuted]);
 
   const toggleScreensharing = useCallback(async () => {
-    groupCallOTelMembership.onToggleScreensharing(!groupCall.isScreensharing);
+    groupCallOTelMembership?.onToggleScreensharing(!groupCall.isScreensharing);
 
     if (!groupCall.isScreensharing()) {
       // toggling on

@@ -36,6 +36,13 @@ export interface ConfigOptions {
     submit_url: string;
   };
 
+  /**
+   * Controls whether to to send OpenTelemetry debugging data to collector
+   */
+  opentelemetry?: {
+    collector_url: string;
+  };
+
   // Describes the default homeserver to use. The same format as Element Web
   // (without identity servers as we don't use them).
   default_server_config?: {
