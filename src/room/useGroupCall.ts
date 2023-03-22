@@ -30,7 +30,10 @@ import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useTranslation } from "react-i18next";
 import { IWidgetApiRequest } from "matrix-widget-api";
 import { MatrixClient } from "matrix-js-sdk";
-import { ByteSentStatsReport, ConnectionStatsReport, } from "matrix-js-sdk/src/webrtc/stats/statsReport";
+import {
+  ByteSentStatsReport,
+  ConnectionStatsReport,
+} from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 import { usePageUnload } from "./usePageUnload";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
