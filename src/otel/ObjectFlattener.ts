@@ -16,7 +16,7 @@ limitations under the License.
 import { Attributes } from "@opentelemetry/api";
 import { GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
 import {
-  ByteSendStatsReport,
+  ByteSentStatsReport,
   ConnectionStatsReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
@@ -34,15 +34,15 @@ export class ObjectFlattener {
     return flatObject;
   }
 
-  public static flattenByteSendStatsReportObject(
-    statsReport: GroupCallStatsReport<ByteSendStatsReport>
+  public static flattenByteSentStatsReportObject(
+    statsReport: GroupCallStatsReport<ByteSentStatsReport>
   ): Attributes {
     const flatObject = {};
     ObjectFlattener.flattenObjectRecursive(
-        statsReport.report,
-        flatObject,
-        "matrix.stats.bytesSend.",
-        0
+      statsReport.report,
+      flatObject,
+      "matrix.stats.bytesSent.",
+      0
     );
     return flatObject;
   }
@@ -66,7 +66,10 @@ export class ObjectFlattener {
     }
     for (const [k, v] of entries) {
       if (["string", "number", "boolean"].includes(typeof v) || v === null) {
-        flatObject[prefix + k] = v === null ? "null" : v;
+        let value;
+        value = v === null ? "null" : v;
+        value = typeof v === "number" && Number.isNaN(v) ? "NaN" : value;
+        flatObject[prefix + k] = value;
       } else if (typeof v === "object") {
         ObjectFlattener.flattenObjectRecursive(
           v,

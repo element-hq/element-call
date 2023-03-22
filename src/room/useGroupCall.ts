@@ -30,16 +30,13 @@ import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useTranslation } from "react-i18next";
 import { IWidgetApiRequest } from "matrix-widget-api";
 import { MatrixClient } from "matrix-js-sdk";
+import { ByteSentStatsReport, ConnectionStatsReport, } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 import { usePageUnload } from "./usePageUnload";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
-import {
-  ByteSendStatsReport,
-  ConnectionStatsReport,
-} from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 export enum ConnectionState {
   EstablishingCall = "establishing call", // call hasn't been established yet
@@ -285,12 +282,16 @@ export function useGroupCall(
       }
     }
 
-    function onConnectionStatsReport(report: GroupCallStatsReport<ConnectionStatsReport>): void {
+    function onConnectionStatsReport(
+      report: GroupCallStatsReport<ConnectionStatsReport>
+    ): void {
       groupCallOTelMembership.onConnectionStatsReport(report);
     }
 
-    function onByteSentStatsReport(report: GroupCallStatsReport<ByteSendStatsReport>): void {
-      groupCallOTelMembership.onByteSendStatsReport(report);
+    function onByteSentStatsReport(
+      report: GroupCallStatsReport<ByteSentStatsReport>
+    ): void {
+      groupCallOTelMembership.onByteSentStatsReport(report);
     }
 
     groupCall.on(GroupCallEvent.GroupCallStateChanged, onGroupCallStateChanged);
@@ -309,10 +310,12 @@ export function useGroupCall(
     groupCall.on(GroupCallEvent.ParticipantsChanged, onParticipantsChanged);
     groupCall.on(GroupCallEvent.Error, onError);
 
+    // groupCall.removeListener(GroupCallStatsReportEvent.ConnectionStats, onConnectionStatsReport)
     groupCall.on(
       GroupCallStatsReportEvent.ConnectionStats,
       onConnectionStatsReport
     );
+    // groupCall.removeListener(GroupCallStatsReportEvent.ByteSentStats, onByteSentStatsReport)
     groupCall.on(
       GroupCallStatsReportEvent.ByteSentStats,
       onByteSentStatsReport
@@ -367,6 +370,10 @@ export function useGroupCall(
       groupCall.removeListener(
         GroupCallStatsReportEvent.ConnectionStats,
         onConnectionStatsReport
+      );
+      groupCall.removeListener(
+        GroupCallStatsReportEvent.ByteSentStats,
+        onByteSentStatsReport
       );
       groupCall.leave();
     };

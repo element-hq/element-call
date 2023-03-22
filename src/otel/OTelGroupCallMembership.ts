@@ -24,7 +24,10 @@ import {
 } from "matrix-js-sdk";
 import { VoipEvent } from "matrix-js-sdk/src/webrtc/call";
 import { GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
-import { ConnectionStatsReport, ByteSendStatsReport } from "matrix-js-sdk/src/webrtc/stats/statsReport";
+import {
+  ConnectionStatsReport,
+  ByteSentStatsReport,
+} from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 import { provider, tracer } from "./otel";
 import { ObjectFlattener } from "./ObjectFlattener";
@@ -75,13 +78,26 @@ function flattenVoipEventRecursive(
  * Represent the span of time which we intend to be joined to a group call
  */
 export class OTelGroupCallMembership {
-  private callMembershipSpan: Span;
-  private myUserId: string;
-  private myMember: RoomMember;
+  private callMembershipSpan: Span | undefined;
+  private statsReportSpan: {
+    span: Span | undefined;
+    stats: OTelStatsReportEvent[];
+  } = {
+    span: undefined,
+    stats: [],
+  };
+  private myUserId = "unknown";
+  private myMember: RoomMember | undefined;
 
   constructor(private groupCall: GroupCall, client: MatrixClient) {
-    this.myUserId = client.getUserId();
-    this.myMember = groupCall.room.getMember(client.getUserId());
+    const clientId = client.getUserId();
+    if (clientId) {
+      this.myUserId = clientId;
+      const myMember = groupCall.room.getMember(clientId);
+      if (myMember) {
+        this.myMember = myMember;
+      }
+    }
 
     provider.resource.attributes[
       SemanticResourceAttributes.SERVICE_NAME
@@ -98,7 +114,7 @@ export class OTelGroupCallMembership {
     this.callMembershipSpan.setAttribute("matrix.userId", this.myUserId);
     this.callMembershipSpan.setAttribute(
       "matrix.displayName",
-      this.myMember.name
+      this.myMember ? this.myMember.name : "unknown-name"
     );
 
     opentelemetry.trace.setSpan(
@@ -110,10 +126,10 @@ export class OTelGroupCallMembership {
   }
 
   public onLeaveCall() {
-    this.callMembershipSpan.addEvent("matrix.leaveCall");
+    this.callMembershipSpan?.addEvent("matrix.leaveCall");
 
     // and end the main span to indicate we've left
-    if (this.callMembershipSpan) this.callMembershipSpan.end();
+    this.callMembershipSpan?.end();
   }
 
   public onUpdateRoomState(event: MatrixEvent) {
@@ -125,7 +141,7 @@ export class OTelGroupCallMembership {
       return;
     }
 
-    this.callMembershipSpan.addEvent(
+    this.callMembershipSpan?.addEvent(
       `otel_onRoomStateEvent_${event.getType()}`,
       flattenVoipEvent(event.getContent())
     );
@@ -136,12 +152,12 @@ export class OTelGroupCallMembership {
     if (!eventType.startsWith("m.call")) return;
 
     if (event.type === "toDevice") {
-      this.callMembershipSpan.addEvent(
+      this.callMembershipSpan?.addEvent(
         `matrix.sendToDeviceEvent_${event.eventType}`,
         flattenVoipEvent(event)
       );
     } else if (event.type === "sendEvent") {
-      this.callMembershipSpan.addEvent(
+      this.callMembershipSpan?.addEvent(
         `matrix.sendToRoomEvent_${event.eventType}`,
         flattenVoipEvent(event)
       );
@@ -149,40 +165,83 @@ export class OTelGroupCallMembership {
   }
 
   public onToggleMicrophoneMuted(newValue: boolean) {
-    this.callMembershipSpan.addEvent("matrix.toggleMicMuted", {
+    this.callMembershipSpan?.addEvent("matrix.toggleMicMuted", {
       "matrix.microphone.muted": newValue,
     });
   }
 
   public onSetMicrophoneMuted(setMuted: boolean) {
-    this.callMembershipSpan.addEvent("matrix.setMicMuted", {
+    this.callMembershipSpan?.addEvent("matrix.setMicMuted", {
       "matrix.microphone.muted": setMuted,
     });
   }
 
   public onToggleLocalVideoMuted(newValue: boolean) {
-    this.callMembershipSpan.addEvent("matrix.toggleVidMuted", {
+    this.callMembershipSpan?.addEvent("matrix.toggleVidMuted", {
       "matrix.video.muted": newValue,
     });
   }
 
   public onSetLocalVideoMuted(setMuted: boolean) {
-    this.callMembershipSpan.addEvent("matrix.setVidMuted", {
+    this.callMembershipSpan?.addEvent("matrix.setVidMuted", {
       "matrix.video.muted": setMuted,
     });
   }
 
   public onToggleScreensharing(newValue: boolean) {
-    this.callMembershipSpan.addEvent("matrix.setVidMuted", {
+    this.callMembershipSpan?.addEvent("matrix.setVidMuted", {
       "matrix.screensharing.enabled": newValue,
     });
   }
 
-  public onConnectionStatsReport(statsReport: GroupCallStatsReport<ConnectionStatsReport>) {
-    this.callMembershipSpan.addEvent("matrix.stats.connection", ObjectFlattener.flattenConnectionStatsReportObject(statsReport));
+  public onConnectionStatsReport(
+    statsReport: GroupCallStatsReport<ConnectionStatsReport>
+  ) {
+    const type = OTelStatsReportType.ConnectionStatsReport;
+    const data =
+      ObjectFlattener.flattenConnectionStatsReportObject(statsReport);
+    this.buildStatsEventSpan({ type, data });
   }
 
-  public onByteSendStatsReport(statsReport: GroupCallStatsReport<ByteSendStatsReport>) {
-    this.callMembershipSpan.addEvent("matrix.stats.byteSend", ObjectFlattener.flattenByteSendStatsReportObject(statsReport));
+  public onByteSentStatsReport(
+    statsReport: GroupCallStatsReport<ByteSentStatsReport>
+  ) {
+    const type = OTelStatsReportType.ByteSentStatsReport;
+    const data = ObjectFlattener.flattenByteSentStatsReportObject(statsReport);
+    this.buildStatsEventSpan({ type, data });
   }
+
+  private buildStatsEventSpan(event: OTelStatsReportEvent): void {
+    if (this.statsReportSpan.span === undefined) {
+      this.statsReportSpan.span = tracer.startSpan(
+        "matrix.groupCallMembershipStatsReport"
+      );
+      this.statsReportSpan.span.setAttribute(
+        "matrix.confId",
+        this.groupCall.groupCallId
+      );
+      this.statsReportSpan.span.setAttribute("matrix.userId", this.myUserId);
+      this.statsReportSpan.span.setAttribute(
+        "matrix.displayName",
+        this.myMember ? this.myMember.name : "unknown-name"
+      );
+
+      this.statsReportSpan.span.addEvent(event.type, event.data);
+      this.statsReportSpan.stats.push(event);
+    } else {
+      this.statsReportSpan.span.addEvent(event.type, event.data);
+      this.statsReportSpan.span.end();
+      this.statsReportSpan = { span: undefined, stats: [] };
+    }
+  }
+}
+
+interface OTelStatsReportEvent {
+  type: OTelStatsReportType;
+  data: Attributes;
+}
+
+enum OTelStatsReportType {
+  ConnectionStatsReport = "matrix.stats.connection",
+  ByteSentStatsReport = "matrix.stats.byteSent",
 }

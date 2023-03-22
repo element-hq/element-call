@@ -75,7 +75,7 @@ describe("ObjectFlattener", () => {
           localCandidateType: "host",
           remoteCandidateType: "host",
           networkType: "ethernet",
-          rtt: null,
+          rtt: NaN,
         },
         {
           ip: "10.10.10.2:22222",
@@ -125,12 +125,12 @@ describe("ObjectFlattener", () => {
         "matrix.stats.conn.transport.0.ip": "ff11::5fa:abcd:999c:c5c5:50000",
         "matrix.stats.conn.transport.0.type": "udp",
         "matrix.stats.conn.transport.0.localIp":
-            "2aaa:9999:2aaa:999:8888:2aaa:2aaa:7777:50000",
+          "2aaa:9999:2aaa:999:8888:2aaa:2aaa:7777:50000",
         "matrix.stats.conn.transport.0.isFocus": true,
         "matrix.stats.conn.transport.0.localCandidateType": "host",
         "matrix.stats.conn.transport.0.remoteCandidateType": "host",
         "matrix.stats.conn.transport.0.networkType": "ethernet",
-        "matrix.stats.conn.transport.0.rtt": "null",
+        "matrix.stats.conn.transport.0.rtt": "NaN",
         "matrix.stats.conn.transport.1.ip": "10.10.10.2:22222",
         "matrix.stats.conn.transport.1.type": "tcp",
         "matrix.stats.conn.transport.1.localIp": "10.10.10.100:33333",
@@ -183,7 +183,7 @@ describe("ObjectFlattener", () => {
         "matrix.stats.conn.transport.0.localCandidateType": "host",
         "matrix.stats.conn.transport.0.remoteCandidateType": "host",
         "matrix.stats.conn.transport.0.networkType": "ethernet",
-        "matrix.stats.conn.transport.0.rtt": "null",
+        "matrix.stats.conn.transport.0.rtt": "NaN",
         "matrix.stats.conn.transport.1.ip": "10.10.10.2:22222",
         "matrix.stats.conn.transport.1.type": "tcp",
         "matrix.stats.conn.transport.1.localIp": "10.10.10.100:33333",
@@ -197,17 +197,18 @@ describe("ObjectFlattener", () => {
   });
 
   describe("on flattenByteSendStatsReportObject", () => {
-    const byteSend = {report: new Map([
+    const byteSent = {
+      report: new Map([
         ["4aa92608-04c6-428e-8312-93e17602a959", 132093],
         ["a08e4237-ee30-4015-a932-b676aec894b1", 913448],
       ]),
-    }
+    };
     it("should flatten a Report to otel Attributes Object", () => {
       expect(
-          ObjectFlattener.flattenByteSendStatsReportObject(byteSend)
+        ObjectFlattener.flattenByteSentStatsReportObject(byteSent)
       ).toEqual({
-        "matrix.stats.bytesSend.4aa92608-04c6-428e-8312-93e17602a959": 132093,
-        "matrix.stats.bytesSend.a08e4237-ee30-4015-a932-b676aec894b1": 913448
+        "matrix.stats.bytesSent.4aa92608-04c6-428e-8312-93e17602a959": 132093,
+        "matrix.stats.bytesSent.a08e4237-ee30-4015-a932-b676aec894b1": 913448,
       });
     });
   });
