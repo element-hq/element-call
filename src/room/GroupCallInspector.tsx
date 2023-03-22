@@ -31,7 +31,7 @@ import { MatrixEvent, IContent } from "matrix-js-sdk/src/models/event";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
-import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
+import { CallEvent, VoipEvent } from "matrix-js-sdk/src/webrtc/call";
 
 import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
@@ -235,7 +235,7 @@ function reducer(
   action: {
     type?: CallEvent | ClientEvent | RoomStateEvent;
     event?: MatrixEvent;
-    rawEvent?: Record<string, unknown>;
+    rawEvent?: VoipEvent;
     callStateEvent?: MatrixEvent;
     memberStateEvents?: MatrixEvent[];
   }
@@ -387,7 +387,7 @@ function useGroupCallState(
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
     }
 
-    function onSendVoipEvent(event: Record<string, unknown>) {
+    function onSendVoipEvent(event: VoipEvent) {
       dispatch({ type: CallEvent.SendVoipEvent, rawEvent: event });
     }
 
