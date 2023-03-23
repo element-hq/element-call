@@ -30,7 +30,7 @@ import {
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 import { setSpan } from "@opentelemetry/api/build/esm/trace/context-utils";
 
-import { provider, tracer } from "./otel";
+import { ElementCallOpenTelemetry } from "./otel";
 import { ObjectFlattener } from "./ObjectFlattener";
 
 /**
@@ -79,16 +79,13 @@ function flattenVoipEventRecursive(
  * Represent the span of time which we intend to be joined to a group call
  */
 export class OTelGroupCallMembership {
-  private callMembershipSpan: Span | undefined;
+  private callMembershipSpan?: Span;
+  private myUserId = "unknown";
+  private myMember?: RoomMember;
   private statsReportSpan: {
     span: Span | undefined;
     stats: OTelStatsReportEvent[];
-  } = {
-    span: undefined,
-    stats: [],
   };
-  private myUserId = "unknown";
-  private myMember: RoomMember | undefined;
 
   constructor(private groupCall: GroupCall, client: MatrixClient) {
     const clientId = client.getUserId();
@@ -100,14 +97,19 @@ export class OTelGroupCallMembership {
       }
     }
 
-    provider.resource.attributes[
+    this.statsReportSpan = { span: undefined, stats: [] };
+
+    ElementCallOpenTelemetry.instance.provider.resource.attributes[
       SemanticResourceAttributes.SERVICE_NAME
     ] = `element-call-${this.myUserId}-${client.getDeviceId()}`;
   }
 
   public onJoinCall() {
     // Create the main span that tracks the time we intend to be in the call
-    this.callMembershipSpan = tracer.startSpan("matrix.groupCallMembership");
+    this.callMembershipSpan =
+      ElementCallOpenTelemetry.instance.tracer.startSpan(
+        "matrix.groupCallMembership"
+      );
     this.callMembershipSpan.setAttribute(
       "matrix.confId",
       this.groupCall.groupCallId
@@ -218,11 +220,12 @@ export class OTelGroupCallMembership {
         opentelemetry.context.active(),
         this.callMembershipSpan
       );
-      this.statsReportSpan.span = tracer.startSpan(
-        "matrix.groupCallMembership.statsReport",
-        undefined,
-        ctx
-      );
+      this.statsReportSpan.span =
+        ElementCallOpenTelemetry.instance.tracer.startSpan(
+          "matrix.groupCallMembership.statsReport",
+          undefined,
+          ctx
+        );
       this.statsReportSpan.span.setAttribute(
         "matrix.confId",
         this.groupCall.groupCallId
@@ -235,8 +238,10 @@ export class OTelGroupCallMembership {
 
       this.statsReportSpan.span.addEvent(event.type, event.data);
       this.statsReportSpan.stats.push(event);
-    }
-    if (this.statsReportSpan.span !== undefined) {
+    } else if (
+      this.statsReportSpan.span !== undefined &&
+      this.callMembershipSpan
+    ) {
       this.statsReportSpan.span.addEvent(event.type, event.data);
       this.statsReportSpan.span.end();
       this.statsReportSpan = { span: undefined, stats: [] };

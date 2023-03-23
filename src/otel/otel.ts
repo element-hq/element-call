@@ -20,32 +20,81 @@ import {
 } from "@opentelemetry/sdk-trace-base";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
-import opentelemetry from "@opentelemetry/api";
+import opentelemetry, { Tracer } from "@opentelemetry/api";
 import { Resource } from "@opentelemetry/resources";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
+import { logger } from "@sentry/utils";
 
 import { PosthogSpanExporter } from "../analytics/OtelPosthogExporter";
+import { Anonymity } from "../analytics/PosthogAnalytics";
+import { Config } from "../config/Config";
+import { getSetting, settingsBus } from "../settings/useSetting";
 
-const SERVICE_NAME = "element-call";
+const SERVICE_NAME_BASE = "element-call";
 
-const otlpExporter = new OTLPTraceExporter();
-const consoleExporter = new ConsoleSpanExporter();
-const posthogExporter = new PosthogSpanExporter();
+let sharedInstance: ElementCallOpenTelemetry;
 
-// This is how we can make Jaeger show a reaonsable service in the dropdown on the left.
-const providerConfig = {
-  resource: new Resource({
-    [SemanticResourceAttributes.SERVICE_NAME]: SERVICE_NAME,
-  }),
-};
-export const provider = new WebTracerProvider(providerConfig);
+export class ElementCallOpenTelemetry {
+  private _provider: WebTracerProvider;
+  private _tracer: Tracer;
+  private _anonymity: Anonymity;
 
-provider.addSpanProcessor(new SimpleSpanProcessor(otlpExporter));
-provider.addSpanProcessor(new SimpleSpanProcessor(posthogExporter));
-provider.addSpanProcessor(new SimpleSpanProcessor(consoleExporter));
-opentelemetry.trace.setGlobalTracerProvider(provider);
+  static globalInit(): void {
+    settingsBus.on("opt-in-analytics", recheckOTelEnabledStatus);
+    recheckOTelEnabledStatus(getSetting("opt-in-analytics", false));
+  }
 
-// This is not the serviceName shown in jaeger
-export const tracer = opentelemetry.trace.getTracer(
-  "my-element-call-otl-tracer"
-);
+  static get instance(): ElementCallOpenTelemetry {
+    return sharedInstance;
+  }
+
+  constructor(collectorUrl: string) {
+    const otlpExporter = new OTLPTraceExporter({
+      url: collectorUrl,
+    });
+    const consoleExporter = new ConsoleSpanExporter();
+    const posthogExporter = new PosthogSpanExporter();
+
+    // This is how we can make Jaeger show a reaonsable service in the dropdown on the left.
+    const providerConfig = {
+      resource: new Resource({
+        [SemanticResourceAttributes.SERVICE_NAME]: `${SERVICE_NAME_BASE}-unauthenticated`,
+      }),
+    };
+    this._provider = new WebTracerProvider(providerConfig);
+
+    this._provider.addSpanProcessor(new SimpleSpanProcessor(otlpExporter));
+    this._provider.addSpanProcessor(new SimpleSpanProcessor(posthogExporter));
+    this._provider.addSpanProcessor(new SimpleSpanProcessor(consoleExporter));
+    opentelemetry.trace.setGlobalTracerProvider(this._provider);
+
+    this._tracer = opentelemetry.trace.getTracer(
+      // This is not the serviceName shown in jaeger
+      "my-element-call-otl-tracer"
+    );
+  }
+
+  public get tracer(): Tracer {
+    return this._tracer;
+  }
+
+  public get provider(): WebTracerProvider {
+    return this._provider;
+  }
+
+  public get anonymity(): Anonymity {
+    return this._anonymity;
+  }
+}
+
+function recheckOTelEnabledStatus(optInAnalayticsEnabled: boolean): void {
+  if (optInAnalayticsEnabled && !sharedInstance) {
+    logger.info("Starting OpenTelemetry debug reporting");
+    sharedInstance = new ElementCallOpenTelemetry(
+      Config.get().opentelemetry?.collector_url
+    );
+  } else if (!optInAnalayticsEnabled && sharedInstance) {
+    logger.info("Stopping OpenTelemetry debug reporting");
+    sharedInstance = undefined;
+  }
+}

@@ -96,7 +96,7 @@ export class PosthogAnalytics {
   // set true during the constructor if posthog config is present, otherwise false
   private static internalInstance: PosthogAnalytics | null = null;
 
-  private identificationPromise: Promise<void> = Promise.resolve();
+  private identificationPromise: Promise<void>;
   private readonly enabled: boolean = false;
   private anonymity = Anonymity.Disabled;
   private platformSuperProperties = {};

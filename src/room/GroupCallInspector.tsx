@@ -356,7 +356,6 @@ function useGroupCallState(
   client: MatrixClient,
   groupCall: GroupCall,
   otelGroupCallMembership: OTelGroupCallMembership
-  // showPollCallStats: boolean
 ): InspectorContextState {
   const [state, dispatch] = useReducer(reducer, {
     localUserId: client.getUserId(),
@@ -385,7 +384,7 @@ function useGroupCallState(
         memberStateEvents,
       });
 
-      otelGroupCallMembership.onUpdateRoomState(event);
+      otelGroupCallMembership?.onUpdateRoomState(event);
     }
 
     function onReceivedVoipEvent(event: MatrixEvent) {
@@ -395,7 +394,7 @@ function useGroupCallState(
     function onSendVoipEvent(event: VoipEvent) {
       dispatch({ type: CallEvent.SendVoipEvent, rawEvent: event });
 
-      otelGroupCallMembership.onSendEvent(event);
+      otelGroupCallMembership?.onSendEvent(event);
     }
 
     function onUndecryptableToDevice(event: MatrixEvent) {

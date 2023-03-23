@@ -14,8 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { SpanExporter } from "@opentelemetry/sdk-trace-base";
-import { ReadableSpan } from "@opentelemetry/sdk-trace-base";
+import { SpanExporter, ReadableSpan } from "@opentelemetry/sdk-trace-base";
 import { ExportResult, ExportResultCode } from "@opentelemetry/core";
 
 import { PosthogAnalytics } from "./PosthogAnalytics";
@@ -70,16 +69,4 @@ export class PosthogSpanExporter implements SpanExporter {
       resolve();
     });
   }
-  /**
-   * converts span info into more readable format
-   * @param span
-   */
-  // private _exportInfo;
-  /**
-   * Showing spans in console
-   * @param spans
-   * @param done
-   */
-  // private _sendSpans;
 }
-//# sourceMappingURL=ConsoleSpanExporter.d.ts.map
