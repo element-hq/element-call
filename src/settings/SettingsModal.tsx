@@ -32,7 +32,6 @@ import {
   useSpatialAudio,
   useShowInspector,
   useOptInAnalytics,
-  canEnableSpatialAudio,
   useNewGrid,
   useDeveloperSettingsTab,
 } from "./useSetting";
@@ -133,16 +132,16 @@ export const SettingsModal = (props: Props) => {
               label={t("Spatial audio")}
               type="checkbox"
               checked={spatialAudio}
-              disabled={!canEnableSpatialAudio()}
+              disabled={setSpatialAudio === null}
               description={
-                canEnableSpatialAudio()
-                  ? t(
+                setSpatialAudio === null
+                  ? t("This feature is only supported on Firefox.")
+                  : t(
                       "This will make a speaker's audio seem as if it is coming from where their tile is positioned on screen. (Experimental feature: this may impact the stability of audio.)"
                     )
-                  : t("This feature is only supported on Firefox.")
               }
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setSpatialAudio(event.target.checked)
+                setSpatialAudio!(event.target.checked)
               }
             />
           </FieldRow>
