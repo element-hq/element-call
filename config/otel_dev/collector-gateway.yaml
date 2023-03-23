@@ -5,7 +5,7 @@ receivers:
         endpoint: 0.0.0.0:4318
         cors:
           allowed_origins:
-            - "http://*"
+            - "*"
           allowed_headers:
             - "*"
 processors:
