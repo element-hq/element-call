@@ -50,6 +50,7 @@ export class ElementCallOpenTelemetry {
 
   constructor(collectorUrl: string) {
     const otlpExporter = new OTLPTraceExporter({
+      headers: {},
       url: collectorUrl,
     });
     const consoleExporter = new ConsoleSpanExporter();
