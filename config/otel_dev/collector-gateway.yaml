@@ -5,7 +5,9 @@ receivers:
         endpoint: 0.0.0.0:4318
         cors:
           allowed_origins:
-            - "*"
+            # This can't be '*' because opentelemetry-js uses sendBeacon which always operates
+            # in 'withCredentials' mode, which browsers don't allow with an allow-origin of '*'
+            - "http://*"
           allowed_headers:
             - "*"
 processors:
