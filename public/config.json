@@ -1,0 +1,19 @@
+{
+  "default_server_config": {
+    "m.homeserver": {
+      "base_url": "https://call.ems.host",
+      "server_name": "call.ems.host"
+    }
+  },
+  "posthog": {
+    "api_key": "phc_rXGHx9vDmyEvyRxPziYtdVIv0ahEv8A9uLWFcCi1WcU",
+    "api_host": "https://posthog-element-call.element.io"
+  },
+  "sentry": {
+    "environment": "main-branch-cd",
+    "DSN": "https://b1e328d49be3402ba96101338989fb35@sentry.matrix.org/41"
+  },
+  "rageshake": {
+    "submit_url": "https://element.io/bugreports/submit"
+  }
+}
