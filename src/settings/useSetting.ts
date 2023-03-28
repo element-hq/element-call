@@ -16,6 +16,7 @@ limitations under the License.
 
 import { EventEmitter } from "events";
 import { useMemo, useState, useEffect, useCallback } from "react";
+
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 
 type Setting<T> = [T, (value: T) => void];
