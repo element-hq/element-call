@@ -119,7 +119,12 @@ interface SDPStreamMetadataObject {
 
 ## Distributed Data States
 
-not finished yet..
+Because [Matrix is a distributed system](https://hacks.mozilla.org/2018/10/dweb-decentralised-real-time-interoperable-communication-with-matrix/), this leads us to distributed data states.
+Each Matrix Component can be a data source or data sink.
+The constant exchange of data via event messages between the components lead to temporally inconsistent data states.
+So it makes sense to take a closer look at where data is generated and where it is transported to.
+
+![Start Group Call Sequence](./assets/element-call-group-call.data.svg)
 
 ## Links
 
