@@ -15,13 +15,13 @@ limitations under the License.
 */
 
 import opentelemetry, { Span, Attributes, Context } from "@opentelemetry/api";
-import { logger } from "@sentry/utils";
 import {
   GroupCall,
   MatrixClient,
   MatrixEvent,
   RoomMember,
 } from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/src/logger";
 import {
   CallState,
   MatrixCall,
