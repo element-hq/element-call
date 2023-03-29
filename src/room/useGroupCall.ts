@@ -173,6 +173,8 @@ export function useGroupCall(
   });
 
   if (groupCallOTelMembershipGroupCallId !== groupCall.groupCallId) {
+    if (groupCallOTelMembership) groupCallOTelMembership.dispose();
+
     // If the user disables analytics, this will stay around until they leave the call
     // so analytics will be disabled once they leave.
     if (ElementCallOpenTelemetry.instance) {

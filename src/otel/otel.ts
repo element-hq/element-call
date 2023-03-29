@@ -30,7 +30,7 @@ import { Anonymity } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
 import { getSetting, settingsBus } from "../settings/useSetting";
 
-const SERVICE_NAME_BASE = "element-call";
+const SERVICE_NAME = "element-call";
 
 let sharedInstance: ElementCallOpenTelemetry;
 
@@ -58,7 +58,7 @@ export class ElementCallOpenTelemetry {
     // This is how we can make Jaeger show a reaonsable service in the dropdown on the left.
     const providerConfig = {
       resource: new Resource({
-        [SemanticResourceAttributes.SERVICE_NAME]: `${SERVICE_NAME_BASE}-unauthenticated`,
+        [SemanticResourceAttributes.SERVICE_NAME]: SERVICE_NAME,
       }),
     };
     this._provider = new WebTracerProvider(providerConfig);

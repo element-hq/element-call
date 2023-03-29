@@ -31,7 +31,12 @@ import { MatrixEvent, IContent } from "matrix-js-sdk/src/models/event";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
-import { CallEvent, VoipEvent } from "matrix-js-sdk/src/webrtc/call";
+import {
+  CallEvent,
+  CallState,
+  MatrixCall,
+  VoipEvent,
+} from "matrix-js-sdk/src/webrtc/call";
 
 import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
@@ -390,10 +395,18 @@ function useGroupCallState(
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
     }
 
-    function onSendVoipEvent(event: VoipEvent) {
+    function onSendVoipEvent(event: VoipEvent, call: MatrixCall) {
       dispatch({ type: CallEvent.SendVoipEvent, rawEvent: event });
 
-      otelGroupCallMembership?.onSendEvent(event);
+      otelGroupCallMembership?.onSendEvent(call, event);
+    }
+
+    function onCallStateChange(
+      newState: CallState,
+      _: CallState,
+      call: MatrixCall
+    ) {
+      otelGroupCallMembership?.onCallStateChange(call, newState);
     }
 
     function onUndecryptableToDevice(event: MatrixEvent) {
@@ -406,8 +419,8 @@ function useGroupCallState(
     }
 
     client.on(RoomStateEvent.Events, onUpdateRoomState);
-    //groupCall.on("calls_changed", onCallsChanged);
     groupCall.on(CallEvent.SendVoipEvent, onSendVoipEvent);
+    groupCall.on(CallEvent.State, onCallStateChange);
     //client.on("state", onCallsChanged);
     //client.on("hangup", onCallHangup);
     client.on(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
@@ -417,8 +430,8 @@ function useGroupCallState(
 
     return () => {
       client.removeListener(RoomStateEvent.Events, onUpdateRoomState);
-      //groupCall.removeListener("calls_changed", onCallsChanged);
       groupCall.removeListener(CallEvent.SendVoipEvent, onSendVoipEvent);
+      groupCall.removeListener(CallEvent.State, onCallStateChange);
       //client.removeListener("state", onCallsChanged);
       //client.removeListener("hangup", onCallHangup);
       client.removeListener(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
