@@ -88,12 +88,16 @@ export class ElementCallOpenTelemetry {
 }
 
 function recheckOTelEnabledStatus(optInAnalayticsEnabled: boolean): void {
-  if (optInAnalayticsEnabled && !sharedInstance) {
+  const shouldEnable =
+    optInAnalayticsEnabled &&
+    Boolean(Config.get().opentelemetry?.collector_url);
+
+  if (shouldEnable && !sharedInstance) {
     logger.info("Starting OpenTelemetry debug reporting");
     sharedInstance = new ElementCallOpenTelemetry(
       Config.get().opentelemetry?.collector_url
     );
-  } else if (!optInAnalayticsEnabled && sharedInstance) {
+  } else if (!shouldEnable && sharedInstance) {
     logger.info("Stopping OpenTelemetry debug reporting");
     sharedInstance = undefined;
   }
