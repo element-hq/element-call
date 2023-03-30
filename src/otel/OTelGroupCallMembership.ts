@@ -170,6 +170,9 @@ export class OTelGroupCallMembership {
           // XXX: anonymity
           span.setAttribute("matrix.call.target.userId", userId);
           span.setAttribute("matrix.call.target.deviceId", deviceId);
+
+          const displayName = this.groupCall.room.getMember(userId)?.name;
+          span.setAttribute("matrix.call.target.displayName", displayName);
           this.callsByCallId.set(call.callId, {
             userId,
             deviceId,
