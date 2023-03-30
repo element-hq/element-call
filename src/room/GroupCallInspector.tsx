@@ -28,12 +28,17 @@ import ReactJson, { CollapsedFieldProps } from "react-json-view";
 import mermaid from "mermaid";
 import { Item } from "@react-stately/collections";
 import { MatrixEvent, IContent } from "matrix-js-sdk/src/models/event";
-import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
+import {
+  GroupCall,
+  GroupCallError,
+  GroupCallEvent,
+} from "matrix-js-sdk/src/webrtc/groupCall";
 import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
 import {
   CallEvent,
   CallState,
+  CallError,
   MatrixCall,
   VoipEvent,
 } from "matrix-js-sdk/src/webrtc/call";
@@ -393,6 +398,8 @@ function useGroupCallState(
 
     function onReceivedVoipEvent(event: MatrixEvent) {
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
+
+      otelGroupCallMembership?.onReceivedVoipEvent(event);
     }
 
     function onSendVoipEvent(event: VoipEvent, call: MatrixCall) {
@@ -409,18 +416,31 @@ function useGroupCallState(
       otelGroupCallMembership?.onCallStateChange(call, newState);
     }
 
+    function onCallError(error: CallError, call: MatrixCall) {
+      otelGroupCallMembership.onCallError(error, call);
+    }
+
+    function onGroupCallError(error: GroupCallError) {
+      otelGroupCallMembership.onGroupCallError(error);
+    }
+
     function onUndecryptableToDevice(event: MatrixEvent) {
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
 
       Sentry.captureMessage("Undecryptable to-device Event");
+      // probably unnecessary if it's now captured via otel?
       PosthogAnalytics.instance.eventUndecryptableToDevice.track(
         groupCall.groupCallId
       );
+
+      otelGroupCallMembership.onUndecryptableToDevice(event);
     }
 
     client.on(RoomStateEvent.Events, onUpdateRoomState);
     groupCall.on(CallEvent.SendVoipEvent, onSendVoipEvent);
     groupCall.on(CallEvent.State, onCallStateChange);
+    groupCall.on(CallEvent.Error, onCallError);
+    groupCall.on(GroupCallEvent.Error, onGroupCallError);
     //client.on("state", onCallsChanged);
     //client.on("hangup", onCallHangup);
     client.on(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
@@ -432,6 +452,8 @@ function useGroupCallState(
       client.removeListener(RoomStateEvent.Events, onUpdateRoomState);
       groupCall.removeListener(CallEvent.SendVoipEvent, onSendVoipEvent);
       groupCall.removeListener(CallEvent.State, onCallStateChange);
+      groupCall.removeListener(CallEvent.Error, onCallError);
+      groupCall.removeListener(GroupCallEvent.Error, onGroupCallError);
       //client.removeListener("state", onCallsChanged);
       //client.removeListener("hangup", onCallHangup);
       client.removeListener(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
