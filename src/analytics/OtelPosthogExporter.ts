@@ -18,9 +18,10 @@ import { SpanExporter, ReadableSpan } from "@opentelemetry/sdk-trace-base";
 import { ExportResult, ExportResultCode } from "@opentelemetry/core";
 
 import { PosthogAnalytics } from "./PosthogAnalytics";
+
 /**
- * This is implementation of {@link SpanExporter} that prints spans to the
- * console. This class can be used for diagnostic purposes.
+ * This is implementation of {@link SpanExporter} that sends spans
+ * to Posthog
  */
 export class PosthogSpanExporter implements SpanExporter {
   /**
