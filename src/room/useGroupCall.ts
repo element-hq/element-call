@@ -179,6 +179,8 @@ export function useGroupCall(
   });
 
   if (groupCallOTelMembershipGroupCallId !== groupCall.groupCallId) {
+    if (groupCallOTelMembership) groupCallOTelMembership.dispose();
+
     // If the user disables analytics, this will stay around until they leave the call
     // so analytics will be disabled once they leave.
     if (ElementCallOpenTelemetry.instance) {
@@ -206,6 +208,11 @@ export function useGroupCall(
     []
   );
 
+  const leaveCall = useCallback(() => {
+    groupCallOTelMembership?.onLeaveCall();
+    groupCall.leave();
+  }, [groupCall]);
+
   useEffect(() => {
     // disable the media action keys, otherwise audio elements get paused when
     // the user presses media keys or unplugs headphones, etc.
@@ -220,7 +227,7 @@ export function useGroupCall(
     ];
 
     for (const mediaAction of mediaActions) {
-      navigator.mediaSession.setActionHandler(
+      navigator.mediaSession?.setActionHandler(
         mediaAction,
         doNothingMediaActionCallback
       );
@@ -228,7 +235,7 @@ export function useGroupCall(
 
     return () => {
       for (const mediaAction of mediaActions) {
-        navigator.mediaSession.setActionHandler(mediaAction, null);
+        navigator.mediaSession?.setActionHandler(mediaAction, null);
       }
     };
   }, [doNothingMediaActionCallback]);
@@ -421,19 +428,19 @@ export function useGroupCall(
       );
       groupCall.removeListener(GroupCallEvent.Error, onError);
       groupCall.removeListener(
-        GroupCallStatsReportEvent.ConnectionStats,
-        onConnectionStatsReport
+          GroupCallStatsReportEvent.ConnectionStats,
+          onConnectionStatsReport
       );
       groupCall.removeListener(
-        GroupCallStatsReportEvent.ByteSentStats,
-        onByteSentStatsReport
+          GroupCallStatsReportEvent.ByteSentStats,
+          onByteSentStatsReport
       );
-      groupCall.leave();
+      leaveCall();
     };
-  }, [groupCall, updateState]);
+  }, [groupCall, updateState, leaveCall]);
 
   usePageUnload(() => {
-    groupCall.leave();
+    leaveCall();
   });
 
   const initLocalCallFeed = useCallback(
@@ -452,18 +459,15 @@ export function useGroupCall(
     PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
     PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
 
+    // This must be called before we start trying to join the call, as we need to
+    // have started tracking by the time calls start getting created.
+    groupCallOTelMembership?.onJoinCall();
+
     groupCall.enter().catch((error) => {
       console.error(error);
       updateState({ error });
     });
-
-    groupCallOTelMembership?.onJoinCall();
   }, [groupCall, updateState]);
-
-  const leave = useCallback(() => {
-    groupCallOTelMembership?.onLeaveCall();
-    groupCall.leave();
-  }, [groupCall]);
 
   const toggleLocalVideoMuted = useCallback(() => {
     const toggleToMute = !groupCall.isLocalVideoMuted();
@@ -597,7 +601,7 @@ export function useGroupCall(
     error,
     initLocalCallFeed,
     enter,
-    leave,
+    leave: leaveCall,
     toggleLocalVideoMuted,
     toggleMicrophoneMuted,
     toggleScreensharing,
