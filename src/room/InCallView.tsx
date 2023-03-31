@@ -73,6 +73,7 @@ import { TileDescriptor } from "../video-grid/TileDescriptor";
 import { AudioSink } from "../video-grid/AudioSink";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { NewVideoGrid } from "../video-grid/NewVideoGrid";
+import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -100,6 +101,7 @@ interface Props {
   roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
+  otelGroupCallMembership: OTelGroupCallMembership;
 }
 
 export function InCallView({
@@ -122,6 +124,7 @@ export function InCallView({
   roomIdOrAlias,
   unencryptedEventsFromUsers,
   hideHeader,
+  otelGroupCallMembership,
 }: Props) {
   const { t } = useTranslation();
   usePreventScroll();
@@ -440,6 +443,7 @@ export function InCallView({
       <GroupCallInspector
         client={client}
         groupCall={groupCall}
+        otelGroupCallMembership={otelGroupCallMembership}
         show={showInspector}
       />
       {rageshakeRequestModalState.isOpen && (
