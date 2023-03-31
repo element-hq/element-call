@@ -36,6 +36,14 @@ export interface ConfigOptions {
     submit_url: string;
   };
 
+  /**
+   * Sets the URL to send opentelemetry data to. If unset, opentelemetry will
+   * be disabled.
+   */
+  opentelemetry?: {
+    collector_url: string;
+  };
+
   // Describes the default homeserver to use. The same format as Element Web
   // (without identity servers as we don't use them).
   default_server_config?: {

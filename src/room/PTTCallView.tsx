@@ -44,6 +44,7 @@ import { GroupCallInspector } from "./GroupCallInspector";
 import { OverflowMenu } from "./OverflowMenu";
 import { Size } from "../Avatar";
 import { ParticipantInfo } from "./useGroupCall";
+import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 
 function getPromptText(
   networkWaiting: boolean,
@@ -106,6 +107,7 @@ interface Props {
   onLeave: () => void;
   isEmbedded: boolean;
   hideHeader: boolean;
+  otelGroupCallMembership: OTelGroupCallMembership;
 }
 
 export const PTTCallView: React.FC<Props> = ({
@@ -119,6 +121,7 @@ export const PTTCallView: React.FC<Props> = ({
   onLeave,
   isEmbedded,
   hideHeader,
+  otelGroupCallMembership,
 }) => {
   const { t } = useTranslation();
   const { modalState: inviteModalState, modalProps: inviteModalProps } =
@@ -192,6 +195,7 @@ export const PTTCallView: React.FC<Props> = ({
       <GroupCallInspector
         client={client}
         groupCall={groupCall}
+        otelGroupCallMembership={otelGroupCallMembership}
         // Never shown in PTT mode, but must be present to collect call state
         // https://github.com/vector-im/element-call/issues/328
         show={false}

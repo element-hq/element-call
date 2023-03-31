@@ -27,11 +27,14 @@ import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useTranslation } from "react-i18next";
 import { IWidgetApiRequest } from "matrix-widget-api";
+import { MatrixClient } from "matrix-js-sdk";
 
 import { usePageUnload } from "./usePageUnload";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
+import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
+import { ElementCallOpenTelemetry } from "../otel/otel";
 
 export enum ConnectionState {
   EstablishingCall = "establishing call", // call hasn't been established yet
@@ -66,6 +69,7 @@ export interface UseGroupCallReturnType {
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   hasLocalParticipant: boolean;
   unencryptedEventsFromUsers: Set<string>;
+  otelGroupCallMembership: OTelGroupCallMembership;
 }
 
 interface State {
@@ -83,6 +87,13 @@ interface State {
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   hasLocalParticipant: boolean;
 }
+
+// This is a bit of a hack, but we keep the opentelemetry tracker object at the file
+// level so that it doesn't pop in & out of existence as react mounts & unmounts
+// components. The right solution is probably for this to live in the js-sdk and have
+// the same lifetime as groupcalls themselves.
+let groupCallOTelMembership: OTelGroupCallMembership;
+let groupCallOTelMembershipGroupCallId: string;
 
 function getParticipants(
   groupCall: GroupCall
@@ -124,7 +135,10 @@ function getParticipants(
   return participants;
 }
 
-export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
+export function useGroupCall(
+  groupCall: GroupCall,
+  client: MatrixClient
+): UseGroupCallReturnType {
   const [
     {
       state,
@@ -158,6 +172,19 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     hasLocalParticipant: false,
   });
 
+  if (groupCallOTelMembershipGroupCallId !== groupCall.groupCallId) {
+    if (groupCallOTelMembership) groupCallOTelMembership.dispose();
+
+    // If the user disables analytics, this will stay around until they leave the call
+    // so analytics will be disabled once they leave.
+    if (ElementCallOpenTelemetry.instance) {
+      groupCallOTelMembership = new OTelGroupCallMembership(groupCall, client);
+      groupCallOTelMembershipGroupCallId = groupCall.groupCallId;
+    } else {
+      groupCallOTelMembership = undefined;
+    }
+  }
+
   const [unencryptedEventsFromUsers, addUnencryptedEventUser] = useReducer(
     (state: Set<string>, newVal: string) => {
       return new Set(state).add(newVal);
@@ -174,6 +201,11 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     (details: MediaSessionActionDetails) => {},
     []
   );
+
+  const leaveCall = useCallback(() => {
+    groupCallOTelMembership?.onLeaveCall();
+    groupCall.leave();
+  }, [groupCall]);
 
   useEffect(() => {
     // disable the media action keys, otherwise audio elements get paused when
@@ -367,12 +399,12 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
         onParticipantsChanged
       );
       groupCall.removeListener(GroupCallEvent.Error, onError);
-      groupCall.leave();
+      leaveCall();
     };
-  }, [groupCall, updateState]);
+  }, [groupCall, updateState, leaveCall]);
 
   usePageUnload(() => {
-    groupCall.leave();
+    leaveCall();
   });
 
   const initLocalCallFeed = useCallback(
@@ -391,17 +423,21 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
     PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
 
+    // This must be called before we start trying to join the call, as we need to
+    // have started tracking by the time calls start getting created.
+    groupCallOTelMembership?.onJoinCall();
+
     groupCall.enter().catch((error) => {
       console.error(error);
       updateState({ error });
     });
   }, [groupCall, updateState]);
 
-  const leave = useCallback(() => groupCall.leave(), [groupCall]);
-
   const toggleLocalVideoMuted = useCallback(() => {
     const toggleToMute = !groupCall.isLocalVideoMuted();
     groupCall.setLocalVideoMuted(toggleToMute);
+    groupCallOTelMembership?.onToggleLocalVideoMuted(toggleToMute);
+    // TODO: These explict posthog calls should be unnecessary now with the posthog otel exporter?
     PosthogAnalytics.instance.eventMuteCamera.track(
       toggleToMute,
       groupCall.groupCallId
@@ -411,6 +447,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
   const setMicrophoneMuted = useCallback(
     (setMuted) => {
       groupCall.setMicrophoneMuted(setMuted);
+      groupCallOTelMembership?.onSetMicrophoneMuted(setMuted);
       PosthogAnalytics.instance.eventMuteMicrophone.track(
         setMuted,
         groupCall.groupCallId
@@ -421,10 +458,13 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
 
   const toggleMicrophoneMuted = useCallback(() => {
     const toggleToMute = !groupCall.isMicrophoneMuted();
+    groupCallOTelMembership?.onToggleMicrophoneMuted(toggleToMute);
     setMicrophoneMuted(toggleToMute);
   }, [groupCall, setMicrophoneMuted]);
 
   const toggleScreensharing = useCallback(async () => {
+    groupCallOTelMembership?.onToggleScreensharing(!groupCall.isScreensharing);
+
     if (!groupCall.isScreensharing()) {
       // toggling on
       updateState({ requestingScreenshare: true });
@@ -525,7 +565,7 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     error,
     initLocalCallFeed,
     enter,
-    leave,
+    leave: leaveCall,
     toggleLocalVideoMuted,
     toggleMicrophoneMuted,
     toggleScreensharing,
@@ -537,5 +577,6 @@ export function useGroupCall(groupCall: GroupCall): UseGroupCallReturnType {
     participants,
     hasLocalParticipant,
     unencryptedEventsFromUsers,
+    otelGroupCallMembership: groupCallOTelMembership,
   };
 }
