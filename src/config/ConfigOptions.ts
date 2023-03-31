@@ -37,7 +37,8 @@ export interface ConfigOptions {
   };
 
   /**
-   * Controls whether to to send OpenTelemetry debugging data to collector
+   * Sets the URL to send opentelemetry data to. If unset, opentelemetry will
+   * be disabled.
    */
   opentelemetry?: {
     collector_url: string;

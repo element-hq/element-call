@@ -14,21 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import opentelemetry, { Span, Attributes } from "@opentelemetry/api";
-import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
+import opentelemetry, { Span, Attributes, Context } from "@opentelemetry/api";
 import {
   GroupCall,
   MatrixClient,
   MatrixEvent,
   RoomMember,
 } from "matrix-js-sdk";
-import { VoipEvent } from "matrix-js-sdk/src/webrtc/call";
-import { GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
+import { logger } from "matrix-js-sdk/src/logger";
+import {
+  CallError,
+  CallState,
+  MatrixCall,
+  VoipEvent,
+} from "matrix-js-sdk/src/webrtc/call";
+import {
+  CallsByUserAndDevice,
+  GroupCallError,
+  GroupCallEvent,
+  GroupCallStatsReport,
+} from "matrix-js-sdk/src/webrtc/groupCall";
 import {
   ConnectionStatsReport,
   ByteSentStatsReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 import { setSpan } from "@opentelemetry/api/build/esm/trace/context-utils";
+
 
 import { ElementCallOpenTelemetry } from "./otel";
 import { ObjectFlattener } from "./ObjectFlattener";
@@ -75,13 +86,23 @@ function flattenVoipEventRecursive(
   }
 }
 
+interface CallTrackingInfo {
+  userId: string;
+  deviceId: string;
+  call: MatrixCall;
+  span: Span;
+}
+
 /**
  * Represent the span of time which we intend to be joined to a group call
  */
 export class OTelGroupCallMembership {
   private callMembershipSpan?: Span;
+  private groupCallContext?: Context;
   private myUserId = "unknown";
+  private myDeviceId: string;
   private myMember?: RoomMember;
+  private callsByCallId = new Map<string, CallTrackingInfo>();
   private statsReportSpan: {
     span: Span | undefined;
     stats: OTelStatsReportEvent[];
@@ -96,12 +117,16 @@ export class OTelGroupCallMembership {
         this.myMember = myMember;
       }
     }
-
+    this.myDeviceId = client.getDeviceId();
     this.statsReportSpan = { span: undefined, stats: [] };
+    this.groupCall.on(GroupCallEvent.CallsChanged, this.onCallsChanged);
+  }
 
-    ElementCallOpenTelemetry.instance.provider.resource.attributes[
-      SemanticResourceAttributes.SERVICE_NAME
-    ] = `element-call-${this.myUserId}-${client.getDeviceId()}`;
+  dispose() {
+    this.groupCall.removeListener(
+      GroupCallEvent.CallsChanged,
+      this.onCallsChanged
+    );
   }
 
   public onJoinCall() {
@@ -115,12 +140,13 @@ export class OTelGroupCallMembership {
       this.groupCall.groupCallId
     );
     this.callMembershipSpan.setAttribute("matrix.userId", this.myUserId);
+    this.callMembershipSpan.setAttribute("matrix.deviceId", this.myDeviceId);
     this.callMembershipSpan.setAttribute(
       "matrix.displayName",
       this.myMember ? this.myMember.name : "unknown-name"
     );
 
-    opentelemetry.trace.setSpan(
+    this.groupCallContext = opentelemetry.trace.setSpan(
       opentelemetry.context.active(),
       this.callMembershipSpan
     );
@@ -132,7 +158,7 @@ export class OTelGroupCallMembership {
     this.callMembershipSpan?.addEvent("matrix.leaveCall");
 
     // and end the main span to indicate we've left
-    this.callMembershipSpan?.end();
+    if (this.callMembershipSpan) this.callMembershipSpan.end();
   }
 
   public onUpdateRoomState(event: MatrixEvent) {
@@ -145,12 +171,55 @@ export class OTelGroupCallMembership {
     }
 
     this.callMembershipSpan?.addEvent(
-      `otel_onRoomStateEvent_${event.getType()}`,
+      `matrix.roomStateEvent_${event.getType()}`,
       flattenVoipEvent(event.getContent())
     );
   }
 
-  public onSendEvent(event: VoipEvent) {
+  public onCallsChanged = (calls: CallsByUserAndDevice) => {
+    for (const [userId, userCalls] of calls.entries()) {
+      for (const [deviceId, call] of userCalls.entries()) {
+        if (!this.callsByCallId.has(call.callId)) {
+          const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
+            `matrix.call`,
+            undefined,
+            this.groupCallContext
+          );
+          // XXX: anonymity
+          span.setAttribute("matrix.call.target.userId", userId);
+          span.setAttribute("matrix.call.target.deviceId", deviceId);
+          this.callsByCallId.set(call.callId, {
+            userId,
+            deviceId,
+            call,
+            span,
+          });
+        }
+      }
+    }
+
+    for (const callTrackingInfo of this.callsByCallId.values()) {
+      const userCalls = calls.get(callTrackingInfo.userId);
+      if (!userCalls || !userCalls.has(callTrackingInfo.deviceId)) {
+        callTrackingInfo.span.end();
+        this.callsByCallId.delete(callTrackingInfo.call.callId);
+      }
+    }
+  };
+
+  public onCallStateChange(call: MatrixCall, newState: CallState) {
+    const callTrackingInfo = this.callsByCallId.get(call.callId);
+    if (!callTrackingInfo) {
+      logger.error(`Got call state change for unknown call ID ${call.callId}`);
+      return;
+    }
+
+    callTrackingInfo.span.addEvent("matrix.call.stateChange", {
+      state: newState,
+    });
+  }
+
+  public onSendEvent(call: MatrixCall, event: VoipEvent) {
     const eventType = event.eventType as string;
     if (!eventType.startsWith("m.call")) return;
 
@@ -165,6 +234,37 @@ export class OTelGroupCallMembership {
         flattenVoipEvent(event)
       );
     }
+  }
+
+  public onReceivedVoipEvent(event: MatrixEvent) {
+    // These come straight from CallEventHandler so don't have
+    // a call already associated (in principle we could receive
+    // events for calls we don't know about).
+    const callId = event.getContent().call_id;
+    if (!callId) {
+      this.callMembershipSpan?.addEvent("matrix.receive_voip_event_no_callid", {
+        "sender.userId": event.getSender(),
+      });
+      logger.error("Received call event with no call ID!");
+      return;
+    }
+
+    const call = this.callsByCallId.get(callId);
+    if (!call) {
+      this.callMembershipSpan?.addEvent(
+        "matrix.receive_voip_event_unknown_callid",
+        {
+          "sender.userId": event.getSender(),
+        }
+      );
+      logger.error("Received call event for unknown call ID " + callId);
+      return;
+    }
+
+    call.span.addEvent("matrix.receive_voip_event", {
+      "sender.userId": event.getSender(),
+      ...flattenVoipEvent(event.getContent()),
+    });
   }
 
   public onToggleMicrophoneMuted(newValue: boolean) {
@@ -197,17 +297,38 @@ export class OTelGroupCallMembership {
     });
   }
 
+  public onCallError(error: CallError, call: MatrixCall) {
+    const callTrackingInfo = this.callsByCallId.get(call.callId);
+    if (!callTrackingInfo) {
+      logger.error(`Got error for unknown call ID ${call.callId}`);
+      return;
+    }
+
+    callTrackingInfo.span.recordException(error);
+  }
+
+  public onGroupCallError(error: GroupCallError) {
+    this.callMembershipSpan?.recordException(error);
+  }
+
+  public onUndecryptableToDevice(event: MatrixEvent) {
+    this.callMembershipSpan?.addEvent("matrix.toDevice.undecryptable", {
+      "sender.userId": event.getSender(),
+    });
+  }
+
+
   public onConnectionStatsReport(
-    statsReport: GroupCallStatsReport<ConnectionStatsReport>
+      statsReport: GroupCallStatsReport<ConnectionStatsReport>
   ) {
     const type = OTelStatsReportType.ConnectionStatsReport;
     const data =
-      ObjectFlattener.flattenConnectionStatsReportObject(statsReport);
+        ObjectFlattener.flattenConnectionStatsReportObject(statsReport);
     this.buildStatsEventSpan({ type, data });
   }
 
   public onByteSentStatsReport(
-    statsReport: GroupCallStatsReport<ByteSentStatsReport>
+      statsReport: GroupCallStatsReport<ByteSentStatsReport>
   ) {
     const type = OTelStatsReportType.ByteSentStatsReport;
     const data = ObjectFlattener.flattenByteSentStatsReportObject(statsReport);
@@ -217,30 +338,30 @@ export class OTelGroupCallMembership {
   private buildStatsEventSpan(event: OTelStatsReportEvent): void {
     if (this.statsReportSpan.span === undefined && this.callMembershipSpan) {
       const ctx = setSpan(
-        opentelemetry.context.active(),
-        this.callMembershipSpan
+          opentelemetry.context.active(),
+          this.callMembershipSpan
       );
       this.statsReportSpan.span =
-        ElementCallOpenTelemetry.instance.tracer.startSpan(
-          "matrix.groupCallMembership.statsReport",
-          undefined,
-          ctx
-        );
+          ElementCallOpenTelemetry.instance.tracer.startSpan(
+              "matrix.groupCallMembership.statsReport",
+              undefined,
+              ctx
+          );
       this.statsReportSpan.span.setAttribute(
-        "matrix.confId",
-        this.groupCall.groupCallId
+          "matrix.confId",
+          this.groupCall.groupCallId
       );
       this.statsReportSpan.span.setAttribute("matrix.userId", this.myUserId);
       this.statsReportSpan.span.setAttribute(
-        "matrix.displayName",
-        this.myMember ? this.myMember.name : "unknown-name"
+          "matrix.displayName",
+          this.myMember ? this.myMember.name : "unknown-name"
       );
 
       this.statsReportSpan.span.addEvent(event.type, event.data);
       this.statsReportSpan.stats.push(event);
     } else if (
-      this.statsReportSpan.span !== undefined &&
-      this.callMembershipSpan
+        this.statsReportSpan.span !== undefined &&
+        this.callMembershipSpan
     ) {
       this.statsReportSpan.span.addEvent(event.type, event.data);
       this.statsReportSpan.span.end();
