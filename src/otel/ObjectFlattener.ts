@@ -18,6 +18,7 @@ import { GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
 import {
   ByteSentStatsReport,
   ConnectionStatsReport,
+  SummeryStatsReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 export class ObjectFlattener {
@@ -42,6 +43,19 @@ export class ObjectFlattener {
       statsReport.report,
       flatObject,
       "matrix.stats.bytesSent.",
+      0
+    );
+    return flatObject;
+  }
+
+  static flattenSummeryStatsReportObject(
+    statsReport: GroupCallStatsReport<SummeryStatsReport>
+  ) {
+    const flatObject = {};
+    ObjectFlattener.flattenObjectRecursive(
+      statsReport.report,
+      flatObject,
+      "matrix.stats.summery.",
       0
     );
     return flatObject;
