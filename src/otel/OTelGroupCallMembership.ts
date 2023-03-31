@@ -37,9 +37,9 @@ import {
 import {
   ConnectionStatsReport,
   ByteSentStatsReport,
+  SummeryStatsReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 import { setSpan } from "@opentelemetry/api/build/esm/trace/context-utils";
-
 
 import { ElementCallOpenTelemetry } from "./otel";
 import { ObjectFlattener } from "./ObjectFlattener";
@@ -117,7 +117,7 @@ export class OTelGroupCallMembership {
         this.myMember = myMember;
       }
     }
-    this.myDeviceId = client.getDeviceId();
+    this.myDeviceId = client.getDeviceId() || "unknown";
     this.statsReportSpan = { span: undefined, stats: [] };
     this.groupCall.on(GroupCallEvent.CallsChanged, this.onCallsChanged);
   }
@@ -317,55 +317,68 @@ export class OTelGroupCallMembership {
     });
   }
 
-
   public onConnectionStatsReport(
-      statsReport: GroupCallStatsReport<ConnectionStatsReport>
+    statsReport: GroupCallStatsReport<ConnectionStatsReport>
   ) {
     const type = OTelStatsReportType.ConnectionStatsReport;
     const data =
-        ObjectFlattener.flattenConnectionStatsReportObject(statsReport);
+      ObjectFlattener.flattenConnectionStatsReportObject(statsReport);
     this.buildStatsEventSpan({ type, data });
   }
 
   public onByteSentStatsReport(
-      statsReport: GroupCallStatsReport<ByteSentStatsReport>
+    statsReport: GroupCallStatsReport<ByteSentStatsReport>
   ) {
     const type = OTelStatsReportType.ByteSentStatsReport;
     const data = ObjectFlattener.flattenByteSentStatsReportObject(statsReport);
     this.buildStatsEventSpan({ type, data });
   }
 
+  public onSummeryStatsReport(
+    statsReport: GroupCallStatsReport<SummeryStatsReport>
+  ) {
+    const type = OTelStatsReportType.SummeryStatsReport;
+    const data = ObjectFlattener.flattenSummeryStatsReportObject(statsReport);
+    this.buildStatsEventSpan({ type, data });
+  }
+
   private buildStatsEventSpan(event: OTelStatsReportEvent): void {
+    // @ TODO: fix this - Because on multiple calls we receive multiple stats report spans.
+    // This could be break if stats arrived in same time from different call objects.
     if (this.statsReportSpan.span === undefined && this.callMembershipSpan) {
       const ctx = setSpan(
-          opentelemetry.context.active(),
-          this.callMembershipSpan
+        opentelemetry.context.active(),
+        this.callMembershipSpan
       );
       this.statsReportSpan.span =
-          ElementCallOpenTelemetry.instance.tracer.startSpan(
-              "matrix.groupCallMembership.statsReport",
-              undefined,
-              ctx
-          );
+        ElementCallOpenTelemetry.instance.tracer.startSpan(
+          "matrix.groupCallMembership.statsReport",
+          undefined,
+          ctx
+        );
       this.statsReportSpan.span.setAttribute(
-          "matrix.confId",
-          this.groupCall.groupCallId
+        "matrix.confId",
+        this.groupCall.groupCallId
       );
       this.statsReportSpan.span.setAttribute("matrix.userId", this.myUserId);
       this.statsReportSpan.span.setAttribute(
-          "matrix.displayName",
-          this.myMember ? this.myMember.name : "unknown-name"
+        "matrix.displayName",
+        this.myMember ? this.myMember.name : "unknown-name"
       );
 
       this.statsReportSpan.span.addEvent(event.type, event.data);
       this.statsReportSpan.stats.push(event);
     } else if (
-        this.statsReportSpan.span !== undefined &&
-        this.callMembershipSpan
+      this.statsReportSpan.span !== undefined &&
+      this.callMembershipSpan
     ) {
       this.statsReportSpan.span.addEvent(event.type, event.data);
-      this.statsReportSpan.span.end();
-      this.statsReportSpan = { span: undefined, stats: [] };
+      this.statsReportSpan.stats.push(event);
+      // if received all three types of stats close this
+      if (this.statsReportSpan.stats.length === 3) {
+        this.statsReportSpan.span.end();
+        this.statsReportSpan = { span: undefined, stats: [] };
+      }
     }
   }
 }
@@ -378,4 +391,5 @@ interface OTelStatsReportEvent {
 enum OTelStatsReportType {
   ConnectionStatsReport = "matrix.stats.connection",
   ByteSentStatsReport = "matrix.stats.byteSent",
+  SummeryStatsReport = "matrix.stats.summery",
 }
