@@ -423,12 +423,14 @@ export function useGroupCall(
     PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
     PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
 
+    // This must be called before we start trying to join the call, as we need to
+    // have started tracking by the time calls start getting created.
+    groupCallOTelMembership?.onJoinCall();
+
     groupCall.enter().catch((error) => {
       console.error(error);
       updateState({ error });
     });
-
-    groupCallOTelMembership?.onJoinCall();
   }, [groupCall, updateState]);
 
   const toggleLocalVideoMuted = useCallback(() => {
