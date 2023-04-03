@@ -8,7 +8,7 @@ receivers:
             # This can't be '*' because opentelemetry-js uses sendBeacon which always operates
             # in 'withCredentials' mode, which browsers don't allow with an allow-origin of '*'
             #- "https://pr976--element-call.netlify.app"
-            - "https://*"
+            - "http://*"
           allowed_headers:
             - "*"
 processors:
