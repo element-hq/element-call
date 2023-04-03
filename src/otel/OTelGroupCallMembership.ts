@@ -320,7 +320,7 @@ export class OTelGroupCallMembership {
   public onConnectionStatsReport(
     statsReport: GroupCallStatsReport<ConnectionStatsReport>
   ) {
-    const type = OTelStatsReportType.ConnectionStatsReport;
+    const type = OTelStatsReportType.ConnectionReport;
     const data =
       ObjectFlattener.flattenConnectionStatsReportObject(statsReport);
     this.buildStatsEventSpan({ type, data });
@@ -329,7 +329,7 @@ export class OTelGroupCallMembership {
   public onByteSentStatsReport(
     statsReport: GroupCallStatsReport<ByteSentStatsReport>
   ) {
-    const type = OTelStatsReportType.ByteSentStatsReport;
+    const type = OTelStatsReportType.ByteSentReport;
     const data = ObjectFlattener.flattenByteSentStatsReportObject(statsReport);
     this.buildStatsEventSpan({ type, data });
   }
@@ -337,7 +337,7 @@ export class OTelGroupCallMembership {
   public onSummaryStatsReport(
     statsReport: GroupCallStatsReport<SummaryStatsReport>
   ) {
-    const type = OTelStatsReportType.SummaryStatsReport;
+    const type = OTelStatsReportType.SummaryReport;
     const data = ObjectFlattener.flattenSummaryStatsReportObject(statsReport);
     this.buildStatsEventSpan({ type, data });
   }
@@ -389,7 +389,7 @@ interface OTelStatsReportEvent {
 }
 
 enum OTelStatsReportType {
-  ConnectionStatsReport = "matrix.stats.connection",
-  ByteSentStatsReport = "matrix.stats.byteSent",
-  SummaryStatsReport = "matrix.stats.summary",
+  ConnectionReport = "matrix.stats.connection",
+  ByteSentReport = "matrix.stats.byteSent",
+  SummaryReport = "matrix.stats.summary",
 }
