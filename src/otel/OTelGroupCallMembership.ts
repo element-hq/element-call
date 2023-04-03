@@ -37,7 +37,7 @@ import {
 import {
   ConnectionStatsReport,
   ByteSentStatsReport,
-  SummeryStatsReport,
+  SummaryStatsReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 import { setSpan } from "@opentelemetry/api/build/esm/trace/context-utils";
 
@@ -334,11 +334,11 @@ export class OTelGroupCallMembership {
     this.buildStatsEventSpan({ type, data });
   }
 
-  public onSummeryStatsReport(
-    statsReport: GroupCallStatsReport<SummeryStatsReport>
+  public onSummaryStatsReport(
+    statsReport: GroupCallStatsReport<SummaryStatsReport>
   ) {
-    const type = OTelStatsReportType.SummeryStatsReport;
-    const data = ObjectFlattener.flattenSummeryStatsReportObject(statsReport);
+    const type = OTelStatsReportType.SummaryStatsReport;
+    const data = ObjectFlattener.flattenSummaryStatsReportObject(statsReport);
     this.buildStatsEventSpan({ type, data });
   }
 
@@ -391,5 +391,5 @@ interface OTelStatsReportEvent {
 enum OTelStatsReportType {
   ConnectionStatsReport = "matrix.stats.connection",
   ByteSentStatsReport = "matrix.stats.byteSent",
-  SummeryStatsReport = "matrix.stats.summery",
+  SummaryStatsReport = "matrix.stats.summary",
 }

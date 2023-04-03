@@ -18,7 +18,7 @@ import { GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
 import {
   ByteSentStatsReport,
   ConnectionStatsReport,
-  SummeryStatsReport,
+  SummaryStatsReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 export class ObjectFlattener {
@@ -48,14 +48,14 @@ export class ObjectFlattener {
     return flatObject;
   }
 
-  static flattenSummeryStatsReportObject(
-    statsReport: GroupCallStatsReport<SummeryStatsReport>
+  static flattenSummaryStatsReportObject(
+    statsReport: GroupCallStatsReport<SummaryStatsReport>
   ) {
     const flatObject = {};
     ObjectFlattener.flattenObjectRecursive(
       statsReport.report,
       flatObject,
-      "matrix.stats.summery.",
+      "matrix.stats.summary.",
       0
     );
     return flatObject;

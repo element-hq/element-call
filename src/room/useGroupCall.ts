@@ -33,7 +33,7 @@ import { MatrixClient } from "matrix-js-sdk";
 import {
   ByteSentStatsReport,
   ConnectionStatsReport,
-  SummeryStatsReport,
+  SummaryStatsReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 import { usePageUnload } from "./usePageUnload";
@@ -356,10 +356,10 @@ export function useGroupCall(
       groupCallOTelMembership?.onByteSentStatsReport(report);
     }
 
-    function onSummeryStatsReport(
-      report: GroupCallStatsReport<SummeryStatsReport>
+    function onSummaryStatsReport(
+      report: GroupCallStatsReport<SummaryStatsReport>
     ): void {
-      groupCallOTelMembership?.onSummeryStatsReport(report);
+      groupCallOTelMembership?.onSummaryStatsReport(report);
     }
 
     groupCall.on(GroupCallEvent.GroupCallStateChanged, onGroupCallStateChanged);
@@ -388,7 +388,7 @@ export function useGroupCall(
       onByteSentStatsReport
     );
 
-    groupCall.on(GroupCallStatsReportEvent.SummeryStats, onSummeryStatsReport);
+    groupCall.on(GroupCallStatsReportEvent.SummaryStats, onSummaryStatsReport);
 
     updateState({
       error: null,
@@ -445,8 +445,8 @@ export function useGroupCall(
         onByteSentStatsReport
       );
       groupCall.removeListener(
-        GroupCallStatsReportEvent.SummeryStats,
-        onSummeryStatsReport
+        GroupCallStatsReportEvent.SummaryStats,
+        onSummaryStatsReport
       );
       leaveCall();
     };
