@@ -43,6 +43,7 @@ import { setSpan } from "@opentelemetry/api/build/esm/trace/context-utils";
 
 import { ElementCallOpenTelemetry } from "./otel";
 import { ObjectFlattener } from "./ObjectFlattener";
+import { OTelCall } from "./OTelCall";
 
 /**
  * Flattens out an object into a single layer with components
@@ -86,13 +87,6 @@ function flattenVoipEventRecursive(
   }
 }
 
-interface CallTrackingInfo {
-  userId: string;
-  deviceId: string;
-  call: MatrixCall;
-  span: Span;
-}
-
 /**
  * Represent the span of time which we intend to be joined to a group call
  */
@@ -102,7 +96,7 @@ export class OTelGroupCallMembership {
   private myUserId = "unknown";
   private myDeviceId: string;
   private myMember?: RoomMember;
-  private callsByCallId = new Map<string, CallTrackingInfo>();
+  private callsByCallId = new Map<string, OTelCall>();
   private statsReportSpan: {
     span: Span | undefined;
     stats: OTelStatsReportEvent[];
@@ -188,12 +182,10 @@ export class OTelGroupCallMembership {
           // XXX: anonymity
           span.setAttribute("matrix.call.target.userId", userId);
           span.setAttribute("matrix.call.target.deviceId", deviceId);
-          this.callsByCallId.set(call.callId, {
-            userId,
-            deviceId,
-            call,
-            span,
-          });
+          this.callsByCallId.set(
+            call.callId,
+            new OTelCall(userId, deviceId, call, span)
+          );
         }
       }
     }
