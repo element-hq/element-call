@@ -27,6 +27,7 @@ import { useUrlParams } from "../UrlParams";
 import { MediaHandlerProvider } from "../settings/useMediaHandler";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { translatedError } from "../TranslatedError";
+import { useOptInAnalytics } from "../settings/useSetting";
 
 export const RoomPage: FC = () => {
   const { t } = useTranslation();
@@ -46,8 +47,14 @@ export const RoomPage: FC = () => {
   const roomIdOrAlias = roomId ?? roomAlias;
   if (!roomIdOrAlias) throw translatedError("No room specified", t);
 
+  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const { registerPasswordlessUser } = useRegisterPasswordlessUser();
   const [isRegistering, setIsRegistering] = useState(false);
+
+  useEffect(() => {
+    // During the beta, opt into analytics by default
+    if (optInAnalytics === null) setOptInAnalytics(true);
+  }, [optInAnalytics, setOptInAnalytics]);
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as
