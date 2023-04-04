@@ -206,6 +206,10 @@ export class OTelGroupCallMembership {
     if (!eventType.startsWith("m.call")) return;
 
     const callTrackingInfo = this.callsByCallId.get(call.callId);
+    if (!callTrackingInfo) {
+      logger.error(`Got call send event for unknown call ID ${call.callId}`);
+      return;
+    }
 
     if (event.type === "toDevice") {
       callTrackingInfo.span.addEvent(
