@@ -209,13 +209,19 @@ export class OTelGroupCallMembership {
     const eventType = event.eventType as string;
     if (!eventType.startsWith("m.call")) return;
 
+    const callTrackingInfo = this.callsByCallId.get(call.callId);
+    if (!callTrackingInfo) {
+      logger.error(`Got call send event for unknown call ID ${call.callId}`);
+      return;
+    }
+
     if (event.type === "toDevice") {
-      this.callMembershipSpan?.addEvent(
+      callTrackingInfo.span.addEvent(
         `matrix.sendToDeviceEvent_${event.eventType}`,
         flattenVoipEvent(event)
       );
     } else if (event.type === "sendEvent") {
-      this.callMembershipSpan?.addEvent(
+      callTrackingInfo.span.addEvent(
         `matrix.sendToRoomEvent_${event.eventType}`,
         flattenVoipEvent(event)
       );
