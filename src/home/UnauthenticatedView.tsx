@@ -39,15 +39,15 @@ import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
 import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
+import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { useOptInAnalytics } from "../settings/useSetting";
-import { optInDescription } from "../analytics/AnalyticsOptInDescription";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
   const [callType, setCallType] = useState(CallType.Video);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
-  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
+  const [optInAnalytics] = useOptInAnalytics();
   const [privacyPolicyUrl, recaptchaKey, register] =
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
@@ -155,16 +155,12 @@ export const UnauthenticatedView: FC = () => {
                 autoComplete="off"
               />
             </FieldRow>
-            <InputField
-              id="optInAnalytics"
-              type="checkbox"
-              checked={optInAnalytics}
-              description={optInDescription()}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setOptInAnalytics(event.target.checked)
-              }
-            />
-            <Caption>
+            {optInAnalytics === null && (
+              <Caption className={styles.notice}>
+                <AnalyticsNotice />
+              </Caption>
+            )}
+            <Caption className={styles.notice}>
               <Trans>
                 By clicking "Go", you agree to our{" "}
                 <Link href={privacyPolicyUrl}>Terms and conditions</Link>

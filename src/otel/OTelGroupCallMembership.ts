@@ -74,7 +74,7 @@ function flattenVoipEventRecursive(
     );
 
   for (const [k, v] of Object.entries(obj)) {
-    if (["string", "number"].includes(typeof v)) {
+    if (["string", "number", "boolean"].includes(typeof v)) {
       flatObject[prefix + k] = v;
     } else if (typeof v === "object") {
       flattenVoipEventRecursive(
@@ -182,6 +182,9 @@ export class OTelGroupCallMembership {
           // XXX: anonymity
           span.setAttribute("matrix.call.target.userId", userId);
           span.setAttribute("matrix.call.target.deviceId", deviceId);
+          const displayName =
+            this.groupCall.room.getMember(userId)?.name ?? "unknown";
+          span.setAttribute("matrix.call.target.displayName", displayName);
           this.callsByCallId.set(
             call.callId,
             new OTelCall(userId, deviceId, call, span)
@@ -215,13 +218,19 @@ export class OTelGroupCallMembership {
     const eventType = event.eventType as string;
     if (!eventType.startsWith("m.call")) return;
 
+    const callTrackingInfo = this.callsByCallId.get(call.callId);
+    if (!callTrackingInfo) {
+      logger.error(`Got call send event for unknown call ID ${call.callId}`);
+      return;
+    }
+
     if (event.type === "toDevice") {
-      this.callMembershipSpan?.addEvent(
+      callTrackingInfo.span.addEvent(
         `matrix.sendToDeviceEvent_${event.eventType}`,
         flattenVoipEvent(event)
       );
     } else if (event.type === "sendEvent") {
-      this.callMembershipSpan?.addEvent(
+      callTrackingInfo.span.addEvent(
         `matrix.sendToRoomEvent_${event.eventType}`,
         flattenVoipEvent(event)
       );

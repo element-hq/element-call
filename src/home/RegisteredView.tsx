@@ -39,11 +39,11 @@ import { CallList } from "./CallList";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
-import { Title } from "../typography/Typography";
+import { Caption, Title } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
 import { useOptInAnalytics } from "../settings/useSetting";
-import { optInDescription } from "../analytics/AnalyticsOptInDescription";
+import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 
 interface Props {
   client: MatrixClient;
@@ -54,7 +54,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
   const [callType, setCallType] = useState(CallType.Video);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
-  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
+  const [optInAnalytics] = useOptInAnalytics();
   const history = useHistory();
   const { t } = useTranslation();
   const { modalState, modalProps } = useModalTriggerState();
@@ -144,15 +144,11 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
                 {loading ? t("Loading…") : t("Go")}
               </Button>
             </FieldRow>
-            <InputField
-              id="optInAnalytics"
-              type="checkbox"
-              checked={optInAnalytics}
-              description={optInDescription()}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setOptInAnalytics(event.target.checked)
-              }
-            />
+            {optInAnalytics === null && (
+              <Caption className={styles.notice}>
+                <AnalyticsNotice />
+              </Caption>
+            )}
             {error && (
               <FieldRow className={styles.fieldRow}>
                 <ErrorMessage error={error} />
