@@ -13,6 +13,6 @@
     "submit_url": "https://element.io/bugreports/submit"
   },
   "opentelemetry": {
-      "collector_url": "http://localhost:4318/v1/traces"
+    "collector_url": "http://localhost:4318/v1/traces"
   }
 }
