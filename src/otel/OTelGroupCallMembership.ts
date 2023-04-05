@@ -124,6 +124,8 @@ export class OTelGroupCallMembership {
   }
 
   public onJoinCall() {
+    if (!ElementCallOpenTelemetry.instance) return;
+
     // Create the main span that tracks the time we intend to be in the call
     this.callMembershipSpan =
       ElementCallOpenTelemetry.instance.tracer.startSpan(
@@ -174,21 +176,23 @@ export class OTelGroupCallMembership {
     for (const [userId, userCalls] of calls.entries()) {
       for (const [deviceId, call] of userCalls.entries()) {
         if (!this.callsByCallId.has(call.callId)) {
-          const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
-            `matrix.call`,
-            undefined,
-            this.groupCallContext
-          );
-          // XXX: anonymity
-          span.setAttribute("matrix.call.target.userId", userId);
-          span.setAttribute("matrix.call.target.deviceId", deviceId);
-          const displayName =
-            this.groupCall.room.getMember(userId)?.name ?? "unknown";
-          span.setAttribute("matrix.call.target.displayName", displayName);
-          this.callsByCallId.set(
-            call.callId,
-            new OTelCall(userId, deviceId, call, span)
-          );
+          if (ElementCallOpenTelemetry.instance) {
+            const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
+              `matrix.call`,
+              undefined,
+              this.groupCallContext
+            );
+            // XXX: anonymity
+            span.setAttribute("matrix.call.target.userId", userId);
+            span.setAttribute("matrix.call.target.deviceId", deviceId);
+            const displayName =
+              this.groupCall.room.getMember(userId)?.name ?? "unknown";
+            span.setAttribute("matrix.call.target.displayName", displayName);
+            this.callsByCallId.set(
+              call.callId,
+              new OTelCall(userId, deviceId, call, span)
+            );
+          }
         }
       }
     }
@@ -321,6 +325,8 @@ export class OTelGroupCallMembership {
   public onConnectionStatsReport(
     statsReport: GroupCallStatsReport<ConnectionStatsReport>
   ) {
+    if (!ElementCallOpenTelemetry.instance) return;
+
     const type = OTelStatsReportType.ConnectionReport;
     const data =
       ObjectFlattener.flattenConnectionStatsReportObject(statsReport);
@@ -330,6 +336,8 @@ export class OTelGroupCallMembership {
   public onByteSentStatsReport(
     statsReport: GroupCallStatsReport<ByteSentStatsReport>
   ) {
+    if (!ElementCallOpenTelemetry.instance) return;
+
     const type = OTelStatsReportType.ByteSentReport;
     const data = ObjectFlattener.flattenByteSentStatsReportObject(statsReport);
     this.buildStatsEventSpan({ type, data });
@@ -338,6 +346,8 @@ export class OTelGroupCallMembership {
   public onSummaryStatsReport(
     statsReport: GroupCallStatsReport<SummaryStatsReport>
   ) {
+    if (!ElementCallOpenTelemetry.instance) return;
+
     const type = OTelStatsReportType.SummaryReport;
     const data = ObjectFlattener.flattenSummaryStatsReportObject(statsReport);
     this.buildStatsEventSpan({ type, data });
