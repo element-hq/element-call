@@ -102,6 +102,10 @@ export class PosthogAnalytics {
   private platformSuperProperties = {};
   private registrationType: RegistrationType = RegistrationType.Guest;
 
+  public static hasInstance(): boolean {
+    return Boolean(this.internalInstance);
+  }
+
   public static get instance(): PosthogAnalytics {
     if (!this.internalInstance) {
       this.internalInstance = new PosthogAnalytics(posthog);
