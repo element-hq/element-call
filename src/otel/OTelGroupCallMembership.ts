@@ -176,21 +176,23 @@ export class OTelGroupCallMembership {
     for (const [userId, userCalls] of calls.entries()) {
       for (const [deviceId, call] of userCalls.entries()) {
         if (!this.callsByCallId.has(call.callId)) {
-          const span = ElementCallOpenTelemetry.instance?.tracer.startSpan(
-            `matrix.call`,
-            undefined,
-            this.groupCallContext
-          );
-          // XXX: anonymity
-          span.setAttribute("matrix.call.target.userId", userId);
-          span.setAttribute("matrix.call.target.deviceId", deviceId);
-          const displayName =
-            this.groupCall.room.getMember(userId)?.name ?? "unknown";
-          span.setAttribute("matrix.call.target.displayName", displayName);
-          this.callsByCallId.set(
-            call.callId,
-            new OTelCall(userId, deviceId, call, span)
-          );
+          if (ElementCallOpenTelemetry.instance) {
+            const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
+              `matrix.call`,
+              undefined,
+              this.groupCallContext
+            );
+            // XXX: anonymity
+            span.setAttribute("matrix.call.target.userId", userId);
+            span.setAttribute("matrix.call.target.deviceId", deviceId);
+            const displayName =
+              this.groupCall.room.getMember(userId)?.name ?? "unknown";
+            span.setAttribute("matrix.call.target.displayName", displayName);
+            this.callsByCallId.set(
+              call.callId,
+              new OTelCall(userId, deviceId, call, span)
+            );
+          }
         }
       }
     }
