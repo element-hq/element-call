@@ -22,12 +22,19 @@ import {
   GroupCallErrorCode,
   GroupCallUnknownDeviceError,
   GroupCallError,
+  GroupCallStatsReportEvent,
+  GroupCallStatsReport,
 } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useTranslation } from "react-i18next";
 import { IWidgetApiRequest } from "matrix-widget-api";
 import { MatrixClient } from "matrix-js-sdk";
+import {
+  ByteSentStatsReport,
+  ConnectionStatsReport,
+  SummaryStatsReport,
+} from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 import { usePageUnload } from "./usePageUnload";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
@@ -337,6 +344,24 @@ export function useGroupCall(
       }
     }
 
+    function onConnectionStatsReport(
+      report: GroupCallStatsReport<ConnectionStatsReport>
+    ): void {
+      groupCallOTelMembership?.onConnectionStatsReport(report);
+    }
+
+    function onByteSentStatsReport(
+      report: GroupCallStatsReport<ByteSentStatsReport>
+    ): void {
+      groupCallOTelMembership?.onByteSentStatsReport(report);
+    }
+
+    function onSummaryStatsReport(
+      report: GroupCallStatsReport<SummaryStatsReport>
+    ): void {
+      groupCallOTelMembership?.onSummaryStatsReport(report);
+    }
+
     groupCall.on(GroupCallEvent.GroupCallStateChanged, onGroupCallStateChanged);
     groupCall.on(GroupCallEvent.UserMediaFeedsChanged, onUserMediaFeedsChanged);
     groupCall.on(
@@ -352,6 +377,18 @@ export function useGroupCall(
     groupCall.on(GroupCallEvent.CallsChanged, onCallsChanged);
     groupCall.on(GroupCallEvent.ParticipantsChanged, onParticipantsChanged);
     groupCall.on(GroupCallEvent.Error, onError);
+
+    groupCall.on(
+      GroupCallStatsReportEvent.ConnectionStats,
+      onConnectionStatsReport
+    );
+
+    groupCall.on(
+      GroupCallStatsReportEvent.ByteSentStats,
+      onByteSentStatsReport
+    );
+
+    groupCall.on(GroupCallStatsReportEvent.SummaryStats, onSummaryStatsReport);
 
     updateState({
       error: null,
@@ -399,6 +436,18 @@ export function useGroupCall(
         onParticipantsChanged
       );
       groupCall.removeListener(GroupCallEvent.Error, onError);
+      groupCall.removeListener(
+        GroupCallStatsReportEvent.ConnectionStats,
+        onConnectionStatsReport
+      );
+      groupCall.removeListener(
+        GroupCallStatsReportEvent.ByteSentStats,
+        onByteSentStatsReport
+      );
+      groupCall.removeListener(
+        GroupCallStatsReportEvent.SummaryStats,
+        onSummaryStatsReport
+      );
       leaveCall();
     };
   }, [groupCall, updateState, leaveCall]);

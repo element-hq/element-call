@@ -32,9 +32,17 @@ import {
   CallsByUserAndDevice,
   GroupCallError,
   GroupCallEvent,
+  GroupCallStatsReport,
 } from "matrix-js-sdk/src/webrtc/groupCall";
+import {
+  ConnectionStatsReport,
+  ByteSentStatsReport,
+  SummaryStatsReport,
+} from "matrix-js-sdk/src/webrtc/stats/statsReport";
+import { setSpan } from "@opentelemetry/api/build/esm/trace/context-utils";
 
 import { ElementCallOpenTelemetry } from "./otel";
+import { ObjectFlattener } from "./ObjectFlattener";
 
 /**
  * Flattens out an object into a single layer with components
@@ -91,16 +99,26 @@ interface CallTrackingInfo {
 export class OTelGroupCallMembership {
   private callMembershipSpan?: Span;
   private groupCallContext?: Context;
-  private myUserId: string;
+  private myUserId = "unknown";
   private myDeviceId: string;
-  private myMember: RoomMember;
+  private myMember?: RoomMember;
   private callsByCallId = new Map<string, CallTrackingInfo>();
+  private statsReportSpan: {
+    span: Span | undefined;
+    stats: OTelStatsReportEvent[];
+  };
 
   constructor(private groupCall: GroupCall, client: MatrixClient) {
-    this.myUserId = client.getUserId();
-    this.myDeviceId = client.getDeviceId();
-    this.myMember = groupCall.room.getMember(client.getUserId());
-
+    const clientId = client.getUserId();
+    if (clientId) {
+      this.myUserId = clientId;
+      const myMember = groupCall.room.getMember(clientId);
+      if (myMember) {
+        this.myMember = myMember;
+      }
+    }
+    this.myDeviceId = client.getDeviceId() || "unknown";
+    this.statsReportSpan = { span: undefined, stats: [] };
     this.groupCall.on(GroupCallEvent.CallsChanged, this.onCallsChanged);
   }
 
@@ -125,7 +143,7 @@ export class OTelGroupCallMembership {
     this.callMembershipSpan.setAttribute("matrix.deviceId", this.myDeviceId);
     this.callMembershipSpan.setAttribute(
       "matrix.displayName",
-      this.myMember.name
+      this.myMember ? this.myMember.name : "unknown-name"
     );
 
     this.groupCallContext = opentelemetry.trace.setSpan(
@@ -308,4 +326,80 @@ export class OTelGroupCallMembership {
       "sender.userId": event.getSender(),
     });
   }
+
+  public onConnectionStatsReport(
+    statsReport: GroupCallStatsReport<ConnectionStatsReport>
+  ) {
+    const type = OTelStatsReportType.ConnectionReport;
+    const data =
+      ObjectFlattener.flattenConnectionStatsReportObject(statsReport);
+    this.buildStatsEventSpan({ type, data });
+  }
+
+  public onByteSentStatsReport(
+    statsReport: GroupCallStatsReport<ByteSentStatsReport>
+  ) {
+    const type = OTelStatsReportType.ByteSentReport;
+    const data = ObjectFlattener.flattenByteSentStatsReportObject(statsReport);
+    this.buildStatsEventSpan({ type, data });
+  }
+
+  public onSummaryStatsReport(
+    statsReport: GroupCallStatsReport<SummaryStatsReport>
+  ) {
+    const type = OTelStatsReportType.SummaryReport;
+    const data = ObjectFlattener.flattenSummaryStatsReportObject(statsReport);
+    this.buildStatsEventSpan({ type, data });
+  }
+
+  private buildStatsEventSpan(event: OTelStatsReportEvent): void {
+    // @ TODO: fix this - Because on multiple calls we receive multiple stats report spans.
+    // This could be break if stats arrived in same time from different call objects.
+    if (this.statsReportSpan.span === undefined && this.callMembershipSpan) {
+      const ctx = setSpan(
+        opentelemetry.context.active(),
+        this.callMembershipSpan
+      );
+      this.statsReportSpan.span =
+        ElementCallOpenTelemetry.instance.tracer.startSpan(
+          "matrix.groupCallMembership.statsReport",
+          undefined,
+          ctx
+        );
+      this.statsReportSpan.span.setAttribute(
+        "matrix.confId",
+        this.groupCall.groupCallId
+      );
+      this.statsReportSpan.span.setAttribute("matrix.userId", this.myUserId);
+      this.statsReportSpan.span.setAttribute(
+        "matrix.displayName",
+        this.myMember ? this.myMember.name : "unknown-name"
+      );
+
+      this.statsReportSpan.span.addEvent(event.type, event.data);
+      this.statsReportSpan.stats.push(event);
+    } else if (
+      this.statsReportSpan.span !== undefined &&
+      this.callMembershipSpan
+    ) {
+      this.statsReportSpan.span.addEvent(event.type, event.data);
+      this.statsReportSpan.stats.push(event);
+      // if received all three types of stats close this
+      if (this.statsReportSpan.stats.length === 3) {
+        this.statsReportSpan.span.end();
+        this.statsReportSpan = { span: undefined, stats: [] };
+      }
+    }
+  }
+}
+
+interface OTelStatsReportEvent {
+  type: OTelStatsReportType;
+  data: Attributes;
+}
+
+enum OTelStatsReportType {
+  ConnectionReport = "matrix.stats.connection",
+  ByteSentReport = "matrix.stats.byteSent",
+  SummaryReport = "matrix.stats.summary",
 }

@@ -48,7 +48,7 @@ export class ElementCallOpenTelemetry {
     return sharedInstance;
   }
 
-  constructor(collectorUrl: string) {
+  constructor(collectorUrl: string | undefined) {
     const otlpExporter = new OTLPTraceExporter({
       url: collectorUrl,
     });
