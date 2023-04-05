@@ -126,6 +126,10 @@ export class OTelGroupCallMembership {
 
   public onJoinCall() {
     if (!ElementCallOpenTelemetry.instance) return;
+    if (this.callMembershipSpan !== undefined) {
+      logger.warn("Call membership span is already started");
+      return;
+    }
 
     // Create the main span that tracks the time we intend to be in the call
     this.callMembershipSpan =
@@ -152,9 +156,14 @@ export class OTelGroupCallMembership {
   }
 
   public onLeaveCall() {
-    this.callMembershipSpan!.addEvent("matrix.leaveCall");
+    if (this.callMembershipSpan === undefined) {
+      logger.warn("Call membership span is already ended");
+      return;
+    }
+
+    this.callMembershipSpan.addEvent("matrix.leaveCall");
     // and end the span to indicate we've left
-    this.callMembershipSpan!.end();
+    this.callMembershipSpan.end();
     this.callMembershipSpan = undefined;
     this.groupCallContext = undefined;
   }

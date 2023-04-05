@@ -24,7 +24,7 @@ import { useMediaStream } from "./useMediaStream";
 interface Props {
   tileDescriptor: TileDescriptor;
   audioOutput: string;
-  otelGroupCallMembership: OTelGroupCallMembership;
+  otelGroupCallMembership?: OTelGroupCallMembership;
 }
 
 // Renders and <audio> element on the page playing the given stream
