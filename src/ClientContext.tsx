@@ -342,6 +342,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   useEffect(() => {
     window.matrixclient = client;
     window.isPasswordlessUser = isPasswordlessUser;
+
+    if (PosthogAnalytics.hasInstance())
+      PosthogAnalytics.instance.onLoginStatusChanged();
   }, [client, isPasswordlessUser]);
 
   if (error) {
