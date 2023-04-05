@@ -340,7 +340,28 @@ export class OTelGroupCallMembership {
   ) {
     const type = OTelStatsReportType.SummaryReport;
     const data = ObjectFlattener.flattenSummaryStatsReportObject(statsReport);
-    this.buildStatsEventSpan({ type, data });
+    if (this.statsReportSpan.span === undefined && this.callMembershipSpan) {
+      const ctx = setSpan(
+        opentelemetry.context.active(),
+        this.callMembershipSpan
+      );
+      const span = ElementCallOpenTelemetry.instance?.tracer.startSpan(
+        "matrix.groupCallMembership.summaryReport",
+        undefined,
+        ctx
+      );
+      if (span === undefined) {
+        return;
+      }
+      span.setAttribute("matrix.confId", this.groupCall.groupCallId);
+      span.setAttribute("matrix.userId", this.myUserId);
+      span.setAttribute(
+        "matrix.displayName",
+        this.myMember ? this.myMember.name : "unknown-name"
+      );
+      span.addEvent(type, data);
+      span.end();
+    }
   }
 
   private buildStatsEventSpan(event: OTelStatsReportEvent): void {
@@ -352,11 +373,14 @@ export class OTelGroupCallMembership {
         this.callMembershipSpan
       );
       this.statsReportSpan.span =
-        ElementCallOpenTelemetry.instance.tracer.startSpan(
+        ElementCallOpenTelemetry.instance?.tracer.startSpan(
           "matrix.groupCallMembership.statsReport",
           undefined,
           ctx
         );
+      if (this.statsReportSpan.span === undefined) {
+        return;
+      }
       this.statsReportSpan.span.setAttribute(
         "matrix.confId",
         this.groupCall.groupCallId
@@ -374,12 +398,8 @@ export class OTelGroupCallMembership {
       this.callMembershipSpan
     ) {
       this.statsReportSpan.span.addEvent(event.type, event.data);
-      this.statsReportSpan.stats.push(event);
-      // if received all three types of stats close this
-      if (this.statsReportSpan.stats.length === 3) {
-        this.statsReportSpan.span.end();
-        this.statsReportSpan = { span: undefined, stats: [] };
-      }
+      this.statsReportSpan.span.end();
+      this.statsReportSpan = { span: undefined, stats: [] };
     }
   }
 }
