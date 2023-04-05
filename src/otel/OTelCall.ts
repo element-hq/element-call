@@ -42,8 +42,24 @@ export class OTelCall {
 
   public dispose() {
     this.call.peerConn.removeEventListener(
+      "connectionstatechange",
+      this.onCallConnectionStateChanged
+    );
+    this.call.peerConn.removeEventListener(
+      "signalingstatechange",
+      this.onCallSignalingStateChanged
+    );
+    this.call.peerConn.removeEventListener(
       "iceconnectionstatechange",
       this.onIceConnectionStateChanged
+    );
+    this.call.peerConn.removeEventListener(
+      "icegatheringstatechange",
+      this.onIceGatheringStateChanged
+    );
+    this.call.peerConn.removeEventListener(
+      "icecandidateerror",
+      this.onIceCandidateError
     );
   }
 
