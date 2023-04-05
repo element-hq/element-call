@@ -16,11 +16,29 @@ limitations under the License.
 
 import { SpanExporter, ReadableSpan } from "@opentelemetry/sdk-trace-base";
 import { ExportResult, ExportResultCode } from "@opentelemetry/core";
+import { logger } from "matrix-js-sdk/src/logger";
+import { HrTime } from "@opentelemetry/api";
 
 import { PosthogAnalytics } from "./PosthogAnalytics";
+
+interface PrevCall {
+  callId: string;
+  hangupTs: number;
+}
+
+function hrTimeToMs(time: HrTime): number {
+  return time[0] * 1000 + time[1] * 0.000001;
+}
+
 /**
- * This is implementation of {@link SpanExporter} that prints spans to the
- * console. This class can be used for diagnostic purposes.
+ * The maximum time between hanging up and joining the same call that we would
+ * consider a 'rejoin' on the user's part.
+ */
+const maxRejoinMs = 2 * 60 * 1000; // 2 minutes
+
+/**
+ * This is implementation of {@link SpanExporter} that extracts certain metrics
+ * from spans to send to PostHog
  */
 export class PosthogSpanExporter implements SpanExporter {
   /**
@@ -32,41 +50,68 @@ export class PosthogSpanExporter implements SpanExporter {
     spans: ReadableSpan[],
     resultCallback: (result: ExportResult) => void
   ): Promise<void> {
-    console.log("POSTHOGEXPORTER", spans);
-    for (const span of spans) {
-      const sendInstantly = [
-        "otel_callEnded",
-        "otel_otherSentInstantlyEventName",
-      ].includes(span.name);
-
-      for (const spanEvent of span.events) {
-        await PosthogAnalytics.instance.trackFromSpan(
-          {
-            eventName: spanEvent.name,
-            ...spanEvent.attributes,
-          },
-          {
-            send_instantly: sendInstantly,
-          }
-        );
-      }
-
-      await PosthogAnalytics.instance.trackFromSpan(
-        { eventName: span.name, ...span.attributes },
-        {
-          send_instantly: sendInstantly,
+    await Promise.all(
+      spans.map((span) => {
+        switch (span.name) {
+          case "matrix.groupCallMembership":
+            return this.exportGroupCallMembershipSpan(span);
+          // TBD if there are other spans that we want to process for export to
+          // PostHog
         }
-      );
-      resultCallback({ code: ExportResultCode.SUCCESS });
+      })
+    );
+
+    resultCallback({ code: ExportResultCode.SUCCESS });
+  }
+
+  private get prevCall(): PrevCall | null {
+    // This is stored in localStorage so we can remember the previous call
+    // across app restarts
+    const data = localStorage.getItem("matrix-prev-call");
+    if (data === null) return null;
+
+    try {
+      return JSON.parse(data);
+    } catch (e) {
+      logger.warn("Invalid prev call data", data);
+      return null;
     }
   }
+
+  private set prevCall(data: PrevCall | null) {
+    localStorage.setItem("matrix-prev-call", JSON.stringify(data));
+  }
+
+  async exportGroupCallMembershipSpan(span: ReadableSpan): Promise<void> {
+    const prevCall = this.prevCall;
+    const newPrevCall = (this.prevCall = {
+      callId: span.attributes["matrix.confId"] as string,
+      hangupTs: hrTimeToMs(span.endTime),
+    });
+
+    // If the user joined the same call within a short time frame, log this as a
+    // rejoin. This is interesting as a call quality metric, since rejoins may
+    // indicate that users had to intervene to make the product work.
+    if (prevCall !== null && newPrevCall.callId === prevCall.callId) {
+      const duration = hrTimeToMs(span.startTime) - prevCall.hangupTs;
+      if (duration <= maxRejoinMs) {
+        PosthogAnalytics.instance.trackEvent(
+          {
+            eventName: "Rejoin",
+            callId: prevCall.callId,
+            rejoinDuration: duration,
+          },
+          // Send instantly because the window might be closing
+          { send_instantly: true }
+        );
+      }
+    }
+  }
+
   /**
    * Shutdown the exporter.
    */
   shutdown(): Promise<void> {
-    console.log("POSTHOGEXPORTER shutdown of otelPosthogExporter");
-    return new Promise<void>((resolve, _reject) => {
-      resolve();
-    });
+    return Promise.resolve();
   }
 }
