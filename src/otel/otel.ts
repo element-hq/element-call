@@ -40,7 +40,20 @@ export class ElementCallOpenTelemetry {
   private _otlpExporter: OTLPTraceExporter;
 
   static globalInit(): void {
-    recheckOTelEnabledStatus();
+    // we always enable opentelemetry in general. We only enable the OTLP
+    // collector if a URL is defined (and in future if another setting is defined)
+    // The posthog exporteer is always enabled, posthog reporting is enabled or disabled
+    // within the posthog code.
+    const shouldEnableOtlp = Boolean(Config.get().opentelemetry?.collector_url);
+
+    if (!sharedInstance || sharedInstance.isOtlpEnabled !== shouldEnableOtlp) {
+      logger.info("(Re)starting OpenTelemetry debug reporting");
+      sharedInstance?.dispose();
+
+      sharedInstance = new ElementCallOpenTelemetry(
+        Config.get().opentelemetry?.collector_url
+      );
+    }
   }
 
   static get instance(): ElementCallOpenTelemetry {
@@ -99,22 +112,5 @@ export class ElementCallOpenTelemetry {
 
   public get anonymity(): Anonymity {
     return this._anonymity;
-  }
-}
-
-function recheckOTelEnabledStatus(): void {
-  // we always enable opentelemetry in general. We only enable the OTLP
-  // collector if a URL is defined (and in future if another setting is defined)
-  // The posthog exporteer is always enabled, posthog reporting is enabled or disabled
-  // within the posthog code.
-  const shouldEnableOtlp = Boolean(Config.get().opentelemetry?.collector_url);
-
-  if (!sharedInstance || sharedInstance.isOtlpEnabled !== shouldEnableOtlp) {
-    logger.info("(Re)starting OpenTelemetry debug reporting");
-    sharedInstance?.dispose();
-
-    sharedInstance = new ElementCallOpenTelemetry(
-      Config.get().opentelemetry?.collector_url
-    );
   }
 }
