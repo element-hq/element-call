@@ -128,6 +128,7 @@ export class OTelGroupCallMembership {
     if (!ElementCallOpenTelemetry.instance) return;
     if (this.callMembershipSpan !== undefined) {
       logger.warn("Call membership span is already started");
+      this.callMembershipSpan.addEvent("matrix.doubleJoin");
       return;
     }
 
