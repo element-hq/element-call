@@ -23,12 +23,11 @@ import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
 import opentelemetry, { Tracer } from "@opentelemetry/api";
 import { Resource } from "@opentelemetry/resources";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
-import { logger } from "@sentry/utils";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { PosthogSpanExporter } from "../analytics/OtelPosthogExporter";
 import { Anonymity } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
-import { getSetting, settingsBus } from "../settings/useSetting";
 
 const SERVICE_NAME = "element-call";
 
@@ -38,10 +37,10 @@ export class ElementCallOpenTelemetry {
   private _provider: WebTracerProvider;
   private _tracer: Tracer;
   private _anonymity: Anonymity;
+  private _otlpExporter: OTLPTraceExporter;
 
   static globalInit(): void {
-    settingsBus.on("opt-in-analytics", recheckOTelEnabledStatus);
-    recheckOTelEnabledStatus(getSetting("opt-in-analytics", false));
+    recheckOTelEnabledStatus();
   }
 
   static get instance(): ElementCallOpenTelemetry {
@@ -49,12 +48,6 @@ export class ElementCallOpenTelemetry {
   }
 
   constructor(collectorUrl: string | undefined) {
-    const otlpExporter = new OTLPTraceExporter({
-      url: collectorUrl,
-    });
-    const consoleExporter = new ConsoleSpanExporter();
-    const posthogExporter = new PosthogSpanExporter();
-
     // This is how we can make Jaeger show a reaonsable service in the dropdown on the left.
     const providerConfig = {
       resource: new Resource({
@@ -63,7 +56,20 @@ export class ElementCallOpenTelemetry {
     };
     this._provider = new WebTracerProvider(providerConfig);
 
-    this._provider.addSpanProcessor(new SimpleSpanProcessor(otlpExporter));
+    if (collectorUrl) {
+      logger.info("Enabling OTLP collector with URL " + collectorUrl);
+      this._otlpExporter = new OTLPTraceExporter({
+        url: collectorUrl,
+      });
+      this._provider.addSpanProcessor(
+        new SimpleSpanProcessor(this._otlpExporter)
+      );
+    } else {
+      logger.info("OTLP collector disabled");
+    }
+    const consoleExporter = new ConsoleSpanExporter();
+    const posthogExporter = new PosthogSpanExporter();
+
     this._provider.addSpanProcessor(new SimpleSpanProcessor(posthogExporter));
     this._provider.addSpanProcessor(new SimpleSpanProcessor(consoleExporter));
     opentelemetry.trace.setGlobalTracerProvider(this._provider);
@@ -72,6 +78,15 @@ export class ElementCallOpenTelemetry {
       // This is not the serviceName shown in jaeger
       "my-element-call-otl-tracer"
     );
+  }
+
+  public dispose(): void {
+    opentelemetry.trace.setGlobalTracerProvider(null);
+    this._provider?.shutdown();
+  }
+
+  public get isOtlpEnabled(): boolean {
+    return Boolean(this._otlpExporter);
   }
 
   public get tracer(): Tracer {
@@ -87,18 +102,19 @@ export class ElementCallOpenTelemetry {
   }
 }
 
-function recheckOTelEnabledStatus(optInAnalayticsEnabled: boolean): void {
-  const shouldEnable =
-    optInAnalayticsEnabled &&
-    Boolean(Config.get().opentelemetry?.collector_url);
+function recheckOTelEnabledStatus(): void {
+  // we always enable opentelemetry in general. We only enable the OTLP
+  // collector if a URL is defined (and in future if another setting is defined)
+  // The posthog exporteer is always enabled, posthog reporting is enabled or disabled
+  // within the posthog code.
+  const shouldEnableOtlp = Boolean(Config.get().opentelemetry?.collector_url);
 
-  if (shouldEnable && !sharedInstance) {
-    logger.info("Starting OpenTelemetry debug reporting");
+  if (!sharedInstance || sharedInstance.isOtlpEnabled !== shouldEnableOtlp) {
+    logger.info("(Re)starting OpenTelemetry debug reporting");
+    sharedInstance?.dispose();
+
     sharedInstance = new ElementCallOpenTelemetry(
       Config.get().opentelemetry?.collector_url
     );
-  } else if (!shouldEnable && sharedInstance) {
-    logger.info("Stopping OpenTelemetry debug reporting");
-    sharedInstance = undefined;
   }
 }
