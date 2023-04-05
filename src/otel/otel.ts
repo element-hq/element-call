@@ -32,7 +32,7 @@ import { getSetting, settingsBus } from "../settings/useSetting";
 
 const SERVICE_NAME = "element-call";
 
-let sharedInstance: ElementCallOpenTelemetry;
+let sharedInstance: ElementCallOpenTelemetry | null = null;
 
 export class ElementCallOpenTelemetry {
   private _provider: WebTracerProvider;
@@ -44,7 +44,7 @@ export class ElementCallOpenTelemetry {
     recheckOTelEnabledStatus(getSetting("opt-in-analytics", false));
   }
 
-  static get instance(): ElementCallOpenTelemetry {
+  static get instance(): ElementCallOpenTelemetry | null {
     return sharedInstance;
   }
 
@@ -88,17 +88,13 @@ export class ElementCallOpenTelemetry {
 }
 
 function recheckOTelEnabledStatus(optInAnalayticsEnabled: boolean): void {
-  const shouldEnable =
-    optInAnalayticsEnabled &&
-    Boolean(Config.get().opentelemetry?.collector_url);
-
-  if (shouldEnable && !sharedInstance) {
+  if (optInAnalayticsEnabled && !sharedInstance) {
     logger.info("Starting OpenTelemetry debug reporting");
     sharedInstance = new ElementCallOpenTelemetry(
       Config.get().opentelemetry?.collector_url
     );
-  } else if (!shouldEnable && sharedInstance) {
+  } else if (!optInAnalayticsEnabled && sharedInstance) {
     logger.info("Stopping OpenTelemetry debug reporting");
-    sharedInstance = undefined;
+    sharedInstance = null;
   }
 }
