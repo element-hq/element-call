@@ -134,13 +134,6 @@ export class PosthogSpanExporter implements SpanExporter {
           // Send instantly because the window might be closing
           { send_instantly: true }
         );
-        window.console.log("### span ", {
-          eventName: "MediaReceived",
-          callId: span.attributes["matrix.confId"] as string,
-          mediaReceived: mediaReceived,
-          audioReceived: audioReceived,
-          videoReceived: videoReceived,
-        });
       }
     }
   }
