@@ -101,6 +101,7 @@ export class OTelGroupCallMembership {
     span: Span | undefined;
     stats: OTelStatsReportEvent[];
   };
+  private readonly speakingSpans = new Map<RoomMember, Map<string, Span>>();
 
   constructor(private groupCall: GroupCall, client: MatrixClient) {
     const clientId = client.getUserId();
@@ -124,6 +125,12 @@ export class OTelGroupCallMembership {
   }
 
   public onJoinCall() {
+    if (!ElementCallOpenTelemetry.instance) return;
+    if (this.callMembershipSpan !== undefined) {
+      logger.warn("Call membership span is already started");
+      return;
+    }
+
     // Create the main span that tracks the time we intend to be in the call
     this.callMembershipSpan =
       ElementCallOpenTelemetry.instance.tracer.startSpan(
@@ -149,10 +156,16 @@ export class OTelGroupCallMembership {
   }
 
   public onLeaveCall() {
-    this.callMembershipSpan?.addEvent("matrix.leaveCall");
+    if (this.callMembershipSpan === undefined) {
+      logger.warn("Call membership span is already ended");
+      return;
+    }
 
-    // and end the main span to indicate we've left
-    if (this.callMembershipSpan) this.callMembershipSpan.end();
+    this.callMembershipSpan.addEvent("matrix.leaveCall");
+    // and end the span to indicate we've left
+    this.callMembershipSpan.end();
+    this.callMembershipSpan = undefined;
+    this.groupCallContext = undefined;
   }
 
   public onUpdateRoomState(event: MatrixEvent) {
@@ -174,21 +187,23 @@ export class OTelGroupCallMembership {
     for (const [userId, userCalls] of calls.entries()) {
       for (const [deviceId, call] of userCalls.entries()) {
         if (!this.callsByCallId.has(call.callId)) {
-          const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
-            `matrix.call`,
-            undefined,
-            this.groupCallContext
-          );
-          // XXX: anonymity
-          span.setAttribute("matrix.call.target.userId", userId);
-          span.setAttribute("matrix.call.target.deviceId", deviceId);
-          const displayName =
-            this.groupCall.room.getMember(userId)?.name ?? "unknown";
-          span.setAttribute("matrix.call.target.displayName", displayName);
-          this.callsByCallId.set(
-            call.callId,
-            new OTelCall(userId, deviceId, call, span)
-          );
+          if (ElementCallOpenTelemetry.instance) {
+            const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
+              `matrix.call`,
+              undefined,
+              this.groupCallContext
+            );
+            // XXX: anonymity
+            span.setAttribute("matrix.call.target.userId", userId);
+            span.setAttribute("matrix.call.target.deviceId", deviceId);
+            const displayName =
+              this.groupCall.room.getMember(userId)?.name ?? "unknown";
+            span.setAttribute("matrix.call.target.displayName", displayName);
+            this.callsByCallId.set(
+              call.callId,
+              new OTelCall(userId, deviceId, call, span)
+            );
+          }
         }
       }
     }
@@ -298,6 +313,36 @@ export class OTelGroupCallMembership {
     });
   }
 
+  public onSpeaking(member: RoomMember, deviceId: string, speaking: boolean) {
+    if (speaking) {
+      // Ensure that there's an audio activity span for this speaker
+      let deviceMap = this.speakingSpans.get(member);
+      if (deviceMap === undefined) {
+        deviceMap = new Map();
+        this.speakingSpans.set(member, deviceMap);
+      }
+
+      if (!deviceMap.has(deviceId)) {
+        const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
+          "matrix.audioActivity",
+          undefined,
+          this.groupCallContext
+        );
+        span.setAttribute("matrix.userId", member.userId);
+        span.setAttribute("matrix.displayName", member.rawDisplayName);
+
+        deviceMap.set(deviceId, span);
+      }
+    } else {
+      // End the audio activity span for this speaker, if any
+      const deviceMap = this.speakingSpans.get(member);
+      deviceMap?.get(deviceId)?.end();
+      deviceMap?.delete(deviceId);
+
+      if (deviceMap?.size === 0) this.speakingSpans.delete(member);
+    }
+  }
+
   public onCallError(error: CallError, call: MatrixCall) {
     const callTrackingInfo = this.callsByCallId.get(call.callId);
     if (!callTrackingInfo) {
@@ -321,6 +366,8 @@ export class OTelGroupCallMembership {
   public onConnectionStatsReport(
     statsReport: GroupCallStatsReport<ConnectionStatsReport>
   ) {
+    if (!ElementCallOpenTelemetry.instance) return;
+
     const type = OTelStatsReportType.ConnectionReport;
     const data =
       ObjectFlattener.flattenConnectionStatsReportObject(statsReport);
@@ -330,6 +377,8 @@ export class OTelGroupCallMembership {
   public onByteSentStatsReport(
     statsReport: GroupCallStatsReport<ByteSentStatsReport>
   ) {
+    if (!ElementCallOpenTelemetry.instance) return;
+
     const type = OTelStatsReportType.ByteSentReport;
     const data = ObjectFlattener.flattenByteSentStatsReportObject(statsReport);
     this.buildStatsEventSpan({ type, data });
@@ -338,6 +387,8 @@ export class OTelGroupCallMembership {
   public onSummaryStatsReport(
     statsReport: GroupCallStatsReport<SummaryStatsReport>
   ) {
+    if (!ElementCallOpenTelemetry.instance) return;
+
     const type = OTelStatsReportType.SummaryReport;
     const data = ObjectFlattener.flattenSummaryStatsReportObject(statsReport);
     if (this.statsReportSpan.span === undefined && this.callMembershipSpan) {
