@@ -11,5 +11,5 @@ import sys
 import re
 
 for line in sys.stdin:
-    matches = re.match(r'^\* (.*) by (.*) in (.*)$', line.strip())
+    matches = re.match(r'^\* (.*) by (\S+) in (\S+)$', line.strip())
     print("* %s (%s)" % (matches[1], matches[3]))
