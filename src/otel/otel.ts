@@ -28,6 +28,7 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { PosthogSpanExporter } from "../analytics/OtelPosthogExporter";
 import { Anonymity } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
+import { RageshakeSpanExporter } from "../analytics/RageshakeSpanExporter";
 
 const SERVICE_NAME = "element-call";
 
@@ -37,21 +38,24 @@ export class ElementCallOpenTelemetry {
   private _provider: WebTracerProvider;
   private _tracer: Tracer;
   private _anonymity: Anonymity;
-  private _otlpExporter: OTLPTraceExporter;
+  private otlpExporter: OTLPTraceExporter;
+  public readonly rageshakeExporter?: RageshakeSpanExporter;
 
   static globalInit(): void {
+    const config = Config.get();
     // we always enable opentelemetry in general. We only enable the OTLP
     // collector if a URL is defined (and in future if another setting is defined)
     // The posthog exporteer is always enabled, posthog reporting is enabled or disabled
     // within the posthog code.
-    const shouldEnableOtlp = Boolean(Config.get().opentelemetry?.collector_url);
+    const shouldEnableOtlp = Boolean(config.opentelemetry?.collector_url);
 
     if (!sharedInstance || sharedInstance.isOtlpEnabled !== shouldEnableOtlp) {
       logger.info("(Re)starting OpenTelemetry debug reporting");
       sharedInstance?.dispose();
 
       sharedInstance = new ElementCallOpenTelemetry(
-        Config.get().opentelemetry?.collector_url
+        config.opentelemetry?.collector_url,
+        config.rageshake?.submit_url
       );
     }
   }
@@ -60,7 +64,10 @@ export class ElementCallOpenTelemetry {
     return sharedInstance;
   }
 
-  constructor(collectorUrl: string | undefined) {
+  constructor(
+    collectorUrl: string | undefined,
+    rageshakeUrl: string | undefined
+  ) {
     // This is how we can make Jaeger show a reaonsable service in the dropdown on the left.
     const providerConfig = {
       resource: new Resource({
@@ -71,15 +78,24 @@ export class ElementCallOpenTelemetry {
 
     if (collectorUrl) {
       logger.info("Enabling OTLP collector with URL " + collectorUrl);
-      this._otlpExporter = new OTLPTraceExporter({
+      this.otlpExporter = new OTLPTraceExporter({
         url: collectorUrl,
       });
       this._provider.addSpanProcessor(
-        new SimpleSpanProcessor(this._otlpExporter)
+        new SimpleSpanProcessor(this.otlpExporter)
       );
     } else {
       logger.info("OTLP collector disabled");
     }
+
+    if (rageshakeUrl) {
+      logger.info("Enabling rageshake collector");
+      this.rageshakeExporter = new RageshakeSpanExporter();
+      this._provider.addSpanProcessor(
+        new SimpleSpanProcessor(this.rageshakeExporter)
+      );
+    }
+
     const consoleExporter = new ConsoleSpanExporter();
     const posthogExporter = new PosthogSpanExporter();
 
@@ -99,7 +115,7 @@ export class ElementCallOpenTelemetry {
   }
 
   public get isOtlpEnabled(): boolean {
-    return Boolean(this._otlpExporter);
+    return Boolean(this.otlpExporter);
   }
 
   public get tracer(): Tracer {
