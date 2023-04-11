@@ -15,19 +15,18 @@ limitations under the License.
 */
 
 import { SpanExporter, ReadableSpan } from "@opentelemetry/sdk-trace-base";
-import { ExportResult, ExportResultCode } from "@opentelemetry/core";
+import {
+  ExportResult,
+  ExportResultCode,
+  hrTimeToMilliseconds,
+} from "@opentelemetry/core";
 import { logger } from "matrix-js-sdk/src/logger";
-import { HrTime } from "@opentelemetry/api";
 
 import { PosthogAnalytics } from "./PosthogAnalytics";
 
 interface PrevCall {
   callId: string;
   hangupTs: number;
-}
-
-function hrTimeToMs(time: HrTime): number {
-  return time[0] * 1000 + time[1] * 0.000001;
 }
 
 /**
@@ -86,14 +85,14 @@ export class PosthogSpanExporter implements SpanExporter {
     const prevCall = this.prevCall;
     const newPrevCall = (this.prevCall = {
       callId: span.attributes["matrix.confId"] as string,
-      hangupTs: hrTimeToMs(span.endTime),
+      hangupTs: hrTimeToMilliseconds(span.endTime),
     });
 
     // If the user joined the same call within a short time frame, log this as a
     // rejoin. This is interesting as a call quality metric, since rejoins may
     // indicate that users had to intervene to make the product work.
     if (prevCall !== null && newPrevCall.callId === prevCall.callId) {
-      const duration = hrTimeToMs(span.startTime) - prevCall.hangupTs;
+      const duration = hrTimeToMilliseconds(span.startTime) - prevCall.hangupTs;
       if (duration <= maxRejoinMs) {
         PosthogAnalytics.instance.trackEvent(
           {
