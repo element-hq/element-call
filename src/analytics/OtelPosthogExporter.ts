@@ -55,6 +55,8 @@ export class PosthogSpanExporter implements SpanExporter {
         switch (span.name) {
           case "matrix.groupCallMembership":
             return this.exportGroupCallMembershipSpan(span);
+          case "matrix.groupCallMembership.summaryReport":
+            return this.exportSummaryReportSpan(span);
           // TBD if there are other spans that we want to process for export to
           // PostHog
         }
@@ -100,6 +102,34 @@ export class PosthogSpanExporter implements SpanExporter {
             eventName: "Rejoin",
             callId: prevCall.callId,
             rejoinDuration: duration,
+          },
+          // Send instantly because the window might be closing
+          { send_instantly: true }
+        );
+      }
+    }
+  }
+
+  async exportSummaryReportSpan(span: ReadableSpan): Promise<void> {
+    // Searching for an event like this:
+    //    matrix.stats.summary
+    //    matrix.stats.summary.percentageReceivedAudioMedia: 0.75
+    //    matrix.stats.summary.percentageReceivedMedia: 1
+    //    matrix.stats.summary.percentageReceivedVideoMedia; 0.75
+    const event = span.events.find((e) => e.name === "matrix.stats.summary");
+    if (event !== undefined) {
+      const attributes = event.attributes;
+      if (attributes) {
+        const mediaReceived = `${attributes["matrix.stats.summary.percentageReceivedMedia"]}`;
+        const videoReceived = `${attributes["matrix.stats.summary.percentageReceivedVideoMedia"]}`;
+        const audioReceived = `${attributes["matrix.stats.summary.percentageReceivedAudioMedia"]}`;
+        PosthogAnalytics.instance.trackEvent(
+          {
+            eventName: "MediaReceived",
+            callId: span.attributes["matrix.confId"] as string,
+            mediaReceived: mediaReceived,
+            audioReceived: audioReceived,
+            videoReceived: videoReceived,
           },
           // Send instantly because the window might be closing
           { send_instantly: true }
