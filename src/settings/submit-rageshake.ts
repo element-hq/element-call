@@ -248,7 +248,7 @@ export function useSubmitRageshake(): {
 
           body.append(
             "file",
-            gzip(ElementCallOpenTelemetry.instance.rageshakeExporter!.dump()),
+            gzip(ElementCallOpenTelemetry.instance.rageshakeProcessor!.dump()),
             "traces.json"
           );
 

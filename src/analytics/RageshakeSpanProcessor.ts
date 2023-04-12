@@ -1,10 +1,10 @@
 import { Attributes } from "@opentelemetry/api";
+import { hrTimeToMilliseconds } from "@opentelemetry/core";
 import {
-  ExportResult,
-  ExportResultCode,
-  hrTimeToMilliseconds,
-} from "@opentelemetry/core";
-import { SpanExporter, ReadableSpan } from "@opentelemetry/sdk-trace-base";
+  SpanProcessor,
+  ReadableSpan,
+  Span,
+} from "@opentelemetry/sdk-trace-base";
 
 const dumpAttributes = (attr: Attributes) =>
   Object.entries(attr).map(([key, value]) => ({
@@ -17,21 +17,22 @@ const dumpAttributes = (attr: Attributes) =>
  * Exports spans on demand to the Jaeger JSON format, which can be attached to
  * rageshakes and loaded into analysis tools like Jaeger and Stalk.
  */
-export class RageshakeSpanExporter implements SpanExporter {
+export class RageshakeSpanProcessor implements SpanProcessor {
   private readonly spans: ReadableSpan[] = [];
 
-  export(
-    spans: ReadableSpan[],
-    resultCallback: (result: ExportResult) => void
-  ): void {
-    this.spans.push(...spans);
-    resultCallback({ code: ExportResultCode.SUCCESS });
+  async forceFlush(): Promise<void> {}
+
+  onStart(span: Span): void {
+    this.spans.push(span);
   }
+
+  onEnd(): void {}
 
   /**
    * Dumps the spans collected so far as Jaeger-compatible JSON.
    */
   public dump(): string {
+    const now = Date.now();
     const traces = new Map<string, ReadableSpan[]>();
 
     // Organize spans by their trace IDs
@@ -69,6 +70,12 @@ export class RageshakeSpanExporter implements SpanExporter {
         processes,
         spans: spans.map((span) => {
           const ctx = span.spanContext();
+          const startTime = hrTimeToMilliseconds(span.startTime);
+          // If the span has not yet ended, pretend that it ends now
+          const duration =
+            span.duration[0] === -1
+              ? now - startTime
+              : hrTimeToMilliseconds(span.duration);
 
           return {
             traceID: traceId,
@@ -76,8 +83,8 @@ export class RageshakeSpanExporter implements SpanExporter {
             operationName: span.name,
             processID: processId,
             warnings: null,
-            startTime: hrTimeToMilliseconds(span.startTime),
-            duration: hrTimeToMilliseconds(span.duration),
+            startTime,
+            duration,
             references:
               span.parentSpanId === undefined
                 ? []
