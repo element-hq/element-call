@@ -74,7 +74,7 @@ function flattenVoipEventRecursive(
     );
 
   for (const [k, v] of Object.entries(obj)) {
-    if (["string", "number", "boolean"].includes(typeof v)) {
+    if (["string", "number", "boolean"].includes(typeof v) || v === null) {
       flatObject[prefix + k] = v;
     } else if (typeof v === "object") {
       flattenVoipEventRecursive(
