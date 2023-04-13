@@ -25,7 +25,7 @@ import { Resource } from "@opentelemetry/resources";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
 import { logger } from "matrix-js-sdk/src/logger";
 
-import { PosthogSpanExporter } from "../analytics/OtelPosthogExporter";
+import { PosthogSpanProcessor } from "../analytics/PosthogSpanProcessor";
 import { Anonymity } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
 import { RageshakeSpanExporter } from "../analytics/RageshakeSpanExporter";
@@ -96,11 +96,10 @@ export class ElementCallOpenTelemetry {
       );
     }
 
-    const consoleExporter = new ConsoleSpanExporter();
-    const posthogExporter = new PosthogSpanExporter();
-
-    this._provider.addSpanProcessor(new SimpleSpanProcessor(posthogExporter));
-    this._provider.addSpanProcessor(new SimpleSpanProcessor(consoleExporter));
+    this._provider.addSpanProcessor(
+      new SimpleSpanProcessor(new ConsoleSpanExporter())
+    );
+    this._provider.addSpanProcessor(new PosthogSpanProcessor());
     opentelemetry.trace.setGlobalTracerProvider(this._provider);
 
     this._tracer = opentelemetry.trace.getTracer(

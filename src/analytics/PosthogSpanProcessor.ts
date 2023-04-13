@@ -14,12 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { SpanExporter, ReadableSpan } from "@opentelemetry/sdk-trace-base";
 import {
-  ExportResult,
-  ExportResultCode,
-  hrTimeToMilliseconds,
-} from "@opentelemetry/core";
+  SpanProcessor,
+  ReadableSpan,
+  Span,
+} from "@opentelemetry/sdk-trace-base";
+import { hrTimeToMilliseconds } from "@opentelemetry/core";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { PosthogAnalytics } from "./PosthogAnalytics";
@@ -36,33 +36,31 @@ interface PrevCall {
 const maxRejoinMs = 2 * 60 * 1000; // 2 minutes
 
 /**
- * This is implementation of {@link SpanExporter} that extracts certain metrics
- * from spans to send to PostHog
+ * Span processor that extracts certain metrics from spans to send to PostHog
  */
-export class PosthogSpanExporter implements SpanExporter {
-  /**
-   * Export spans.
-   * @param spans
-   * @param resultCallback
-   */
-  async export(
-    spans: ReadableSpan[],
-    resultCallback: (result: ExportResult) => void
-  ): Promise<void> {
-    await Promise.all(
-      spans.map((span) => {
-        switch (span.name) {
-          case "matrix.groupCallMembership":
-            return this.exportGroupCallMembershipSpan(span);
-          case "matrix.groupCallMembership.summaryReport":
-            return this.exportSummaryReportSpan(span);
-          // TBD if there are other spans that we want to process for export to
-          // PostHog
-        }
-      })
-    );
+export class PosthogSpanProcessor implements SpanProcessor {
+  async forceFlush(): Promise<void> {}
 
-    resultCallback({ code: ExportResultCode.SUCCESS });
+  onStart(span: Span): void {
+    // Hack: Yield to allow attributes to be set before processing
+    Promise.resolve().then(() => {
+      switch (span.name) {
+        case "matrix.groupCallMembership":
+          this.onGroupCallMembershipStart(span);
+          return;
+        case "matrix.groupCallMembership.summaryReport":
+          this.onSummaryReportStart(span);
+          return;
+      }
+    });
+  }
+
+  onEnd(span: ReadableSpan): void {
+    switch (span.name) {
+      case "matrix.groupCallMembership":
+        this.onGroupCallMembershipEnd(span);
+        return;
+    }
   }
 
   private get prevCall(): PrevCall | null {
@@ -83,33 +81,33 @@ export class PosthogSpanExporter implements SpanExporter {
     localStorage.setItem("matrix-prev-call", JSON.stringify(data));
   }
 
-  async exportGroupCallMembershipSpan(span: ReadableSpan): Promise<void> {
+  private onGroupCallMembershipStart(span: ReadableSpan): void {
     const prevCall = this.prevCall;
-    const newPrevCall = (this.prevCall = {
-      callId: span.attributes["matrix.confId"] as string,
-      hangupTs: hrTimeToMilliseconds(span.endTime),
-    });
+    const newCallId = span.attributes["matrix.confId"] as string;
 
     // If the user joined the same call within a short time frame, log this as a
     // rejoin. This is interesting as a call quality metric, since rejoins may
     // indicate that users had to intervene to make the product work.
-    if (prevCall !== null && newPrevCall.callId === prevCall.callId) {
+    if (prevCall !== null && newCallId === prevCall.callId) {
       const duration = hrTimeToMilliseconds(span.startTime) - prevCall.hangupTs;
       if (duration <= maxRejoinMs) {
-        PosthogAnalytics.instance.trackEvent(
-          {
-            eventName: "Rejoin",
-            callId: prevCall.callId,
-            rejoinDuration: duration,
-          },
-          // Send instantly because the window might be closing
-          { send_instantly: true }
-        );
+        PosthogAnalytics.instance.trackEvent({
+          eventName: "Rejoin",
+          callId: prevCall.callId,
+          rejoinDuration: duration,
+        });
       }
     }
   }
 
-  async exportSummaryReportSpan(span: ReadableSpan): Promise<void> {
+  private onGroupCallMembershipEnd(span: ReadableSpan): void {
+    this.prevCall = {
+      callId: span.attributes["matrix.confId"] as string,
+      hangupTs: hrTimeToMilliseconds(span.endTime),
+    };
+  }
+
+  private onSummaryReportStart(span: ReadableSpan): void {
     // Searching for an event like this:
     //    matrix.stats.summary
     //    matrix.stats.summary.percentageReceivedAudioMedia: 0.75
@@ -138,7 +136,7 @@ export class PosthogSpanExporter implements SpanExporter {
   }
 
   /**
-   * Shutdown the exporter.
+   * Shutdown the processor.
    */
   shutdown(): Promise<void> {
     return Promise.resolve();
