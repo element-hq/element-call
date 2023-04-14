@@ -102,6 +102,9 @@ interface State {
 let groupCallOTelMembership: OTelGroupCallMembership;
 let groupCallOTelMembershipGroupCallId: string;
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+declare let window: any;
+
 function getParticipants(
   groupCall: GroupCall
 ): Map<RoomMember, Map<string, ParticipantInfo>> {
@@ -186,9 +189,11 @@ export function useGroupCall(
     // so analytics will be disabled once they leave.
     if (ElementCallOpenTelemetry.instance) {
       groupCallOTelMembership = new OTelGroupCallMembership(groupCall, client);
+      window.groupCallOTelMembership = groupCallOTelMembership;
       groupCallOTelMembershipGroupCallId = groupCall.groupCallId;
     } else {
       groupCallOTelMembership = undefined;
+      window.groupCallOTelMembership = undefined;
     }
   }
 
@@ -347,19 +352,19 @@ export function useGroupCall(
     function onConnectionStatsReport(
       report: GroupCallStatsReport<ConnectionStatsReport>
     ): void {
-      groupCallOTelMembership?.onConnectionStatsReport(report);
+      window.groupCallOTelMembership?.onConnectionStatsReport(report);
     }
 
     function onByteSentStatsReport(
       report: GroupCallStatsReport<ByteSentStatsReport>
     ): void {
-      groupCallOTelMembership?.onByteSentStatsReport(report);
+      window.groupCallOTelMembership?.onByteSentStatsReport(report);
     }
 
     function onSummaryStatsReport(
       report: GroupCallStatsReport<SummaryStatsReport>
     ): void {
-      groupCallOTelMembership?.onSummaryStatsReport(report);
+      window.groupCallOTelMembership?.onSummaryStatsReport(report);
     }
 
     groupCall.on(GroupCallEvent.GroupCallStateChanged, onGroupCallStateChanged);
