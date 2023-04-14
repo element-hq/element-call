@@ -56,6 +56,10 @@ describe("ObjectFlattener", () => {
           ["REMOTE_VIDEO_TRACK_ID", { height: 960, width: 1080 }],
         ]),
       },
+      jitter: new Map([
+        ["REMOTE_AUDIO_TRACK_ID", 2],
+        ["REMOTE_VIDEO_TRACK_ID", 50],
+      ]),
       codec: {
         local: new Map([
           ["LOCAL_AUDIO_TRACK_ID", "opus"],
@@ -164,6 +168,8 @@ describe("ObjectFlattener", () => {
         "matrix.stats.conn.framerate.local.LOCAL_VIDEO_TRACK_ID": 30,
         "matrix.stats.conn.framerate.remote.REMOTE_AUDIO_TRACK_ID": 0,
         "matrix.stats.conn.framerate.remote.REMOTE_VIDEO_TRACK_ID": 60,
+        "matrix.stats.conn.jitter.REMOTE_AUDIO_TRACK_ID": 2,
+        "matrix.stats.conn.jitter.REMOTE_VIDEO_TRACK_ID": 50,
         "matrix.stats.conn.packetLoss.download": 0,
         "matrix.stats.conn.packetLoss.total": 0,
         "matrix.stats.conn.packetLoss.upload": 0,
