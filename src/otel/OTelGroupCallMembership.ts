@@ -389,18 +389,16 @@ export class OTelGroupCallMembership {
   ) {
     window.console.log('##### Summary report ??' );
     if (!ElementCallOpenTelemetry.instance) return;
+    window.console.log('##### Run ??' );
 
     const type = OTelStatsReportType.SummaryReport;
     const data = ObjectFlattener.flattenSummaryStatsReportObject(statsReport);
     if (this.statsReportSpan.span === undefined && this.callMembershipSpan) {
-      const ctx = setSpan(
-        opentelemetry.context.active(),
-        this.callMembershipSpan
-      );
-      const span = ElementCallOpenTelemetry.instance?.tracer.startSpan(
+
+      const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
         "matrix.groupCallMembership.summaryReport",
         undefined,
-        ctx
+          this.groupCallContext
       );
       if (span === undefined) {
         return;
