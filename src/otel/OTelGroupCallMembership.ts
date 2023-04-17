@@ -387,6 +387,7 @@ export class OTelGroupCallMembership {
   public onSummaryStatsReport(
     statsReport: GroupCallStatsReport<SummaryStatsReport>
   ) {
+    window.console.log('##### Summary report ??' );
     if (!ElementCallOpenTelemetry.instance) return;
 
     const type = OTelStatsReportType.SummaryReport;
