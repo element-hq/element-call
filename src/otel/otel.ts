@@ -25,10 +25,10 @@ import { Resource } from "@opentelemetry/resources";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
 import { logger } from "matrix-js-sdk/src/logger";
 
-import { PosthogSpanExporter } from "../analytics/OtelPosthogExporter";
+import { PosthogSpanProcessor } from "../analytics/PosthogSpanProcessor";
 import { Anonymity } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
-import { RageshakeSpanExporter } from "../analytics/RageshakeSpanExporter";
+import { RageshakeSpanProcessor } from "../analytics/RageshakeSpanProcessor";
 
 const SERVICE_NAME = "element-call";
 
@@ -39,7 +39,7 @@ export class ElementCallOpenTelemetry {
   private _tracer: Tracer;
   private _anonymity: Anonymity;
   private otlpExporter: OTLPTraceExporter;
-  public readonly rageshakeExporter?: RageshakeSpanExporter;
+  public readonly rageshakeProcessor?: RageshakeSpanProcessor;
 
   static globalInit(): void {
     const config = Config.get();
@@ -89,18 +89,14 @@ export class ElementCallOpenTelemetry {
     }
 
     if (rageshakeUrl) {
-      logger.info("Enabling rageshake collector");
-      this.rageshakeExporter = new RageshakeSpanExporter();
-      this._provider.addSpanProcessor(
-        new SimpleSpanProcessor(this.rageshakeExporter)
-      );
+      this.rageshakeProcessor = new RageshakeSpanProcessor();
+      this._provider.addSpanProcessor(this.rageshakeProcessor);
     }
 
-    const consoleExporter = new ConsoleSpanExporter();
-    const posthogExporter = new PosthogSpanExporter();
-
-    this._provider.addSpanProcessor(new SimpleSpanProcessor(posthogExporter));
-    this._provider.addSpanProcessor(new SimpleSpanProcessor(consoleExporter));
+    this._provider.addSpanProcessor(
+      new SimpleSpanProcessor(new ConsoleSpanExporter())
+    );
+    this._provider.addSpanProcessor(new PosthogSpanProcessor());
     opentelemetry.trace.setGlobalTracerProvider(this._provider);
 
     this._tracer = opentelemetry.trace.getTracer(
