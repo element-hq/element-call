@@ -143,7 +143,7 @@ export function GroupCallView({
           groupCall.setLocalVideoMuted(videoInput === null),
         ]);
 
-        await groupCall.enter();
+        await enter();
         PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
         PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
 
@@ -158,17 +158,17 @@ export function GroupCallView({
         widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
     }
-  }, [groupCall, preload, setAudioInput, setVideoInput]);
+  }, [groupCall, preload, setAudioInput, setVideoInput, enter]);
 
   useEffect(() => {
     if (isEmbedded && !preload) {
       // In embedded mode, bypass the lobby and just enter the call straight away
-      groupCall.enter();
+      enter();
 
       PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
       PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
     }
-  }, [groupCall, isEmbedded, preload]);
+  }, [groupCall, isEmbedded, preload, enter]);
 
   useSentryGroupCallHandler(groupCall);
 
