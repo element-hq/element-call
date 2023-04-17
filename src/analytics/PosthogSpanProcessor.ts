@@ -44,7 +44,6 @@ export class PosthogSpanProcessor implements SpanProcessor {
   onStart(span: Span): void {
     // Hack: Yield to allow attributes to be set before processing
     Promise.resolve().then(() => {
-      window.console.log("##### Event Name ??", span.name);
       switch (span.name) {
         case "matrix.groupCallMembership":
           this.onGroupCallMembershipStart(span);
@@ -132,7 +131,6 @@ export class PosthogSpanProcessor implements SpanProcessor {
           // Send instantly because the window might be closing
           { send_instantly: true }
         );
-        window.console.log("##### P", attributes);
       }
     }
   }
