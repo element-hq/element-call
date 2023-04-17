@@ -387,30 +387,28 @@ export class OTelGroupCallMembership {
   public onSummaryStatsReport(
     statsReport: GroupCallStatsReport<SummaryStatsReport>
   ) {
-    window.console.log("##### Summary report ??");
     if (!ElementCallOpenTelemetry.instance) return;
-    window.console.log("##### Run ??");
 
     const type = OTelStatsReportType.SummaryReport;
     const data = ObjectFlattener.flattenSummaryStatsReportObject(statsReport);
-    if (this.statsReportSpan.span === undefined && this.callMembershipSpan) {
-      const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
-        "matrix.groupCallMembership.summaryReport",
-        undefined,
-        this.groupCallContext
-      );
-      if (span === undefined) {
-        return;
-      }
-      span.setAttribute("matrix.confId", this.groupCall.groupCallId);
-      span.setAttribute("matrix.userId", this.myUserId);
-      span.setAttribute(
-        "matrix.displayName",
-        this.myMember ? this.myMember.name : "unknown-name"
-      );
-      span.addEvent(type, data);
-      span.end();
+
+    // This is a quick fix. Please figure out `this.callMembershipSpan` not exists in an IFrame. (Why?)
+    const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
+      "matrix.groupCallMembership.summaryReport",
+      undefined,
+      this.groupCallContext
+    );
+    if (span === undefined) {
+      return;
     }
+    span.setAttribute("matrix.confId", this.groupCall.groupCallId);
+    span.setAttribute("matrix.userId", this.myUserId);
+    span.setAttribute(
+      "matrix.displayName",
+      this.myMember ? this.myMember.name : "unknown-name"
+    );
+    span.addEvent(type, data);
+    span.end();
   }
 
   private buildStatsEventSpan(event: OTelStatsReportEvent): void {
