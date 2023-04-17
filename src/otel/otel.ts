@@ -79,6 +79,7 @@ export class ElementCallOpenTelemetry {
     if (collectorUrl) {
       logger.info("Enabling OTLP collector with URL " + collectorUrl);
       this.otlpExporter = new OTLPTraceExporter({
+        headers: undefined,
         url: collectorUrl,
       });
       this._provider.addSpanProcessor(
