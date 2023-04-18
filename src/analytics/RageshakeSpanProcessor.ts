@@ -1,5 +1,5 @@
 import { Attributes } from "@opentelemetry/api";
-import { hrTimeToMilliseconds } from "@opentelemetry/core";
+import { hrTimeToMicroseconds } from "@opentelemetry/core";
 import {
   SpanProcessor,
   ReadableSpan,
@@ -32,7 +32,7 @@ export class RageshakeSpanProcessor implements SpanProcessor {
    * Dumps the spans collected so far as Jaeger-compatible JSON.
    */
   public dump(): string {
-    const now = Date.now();
+    const now = Date.now() * 1000; // Jaeger works in microseconds
     const traces = new Map<string, ReadableSpan[]>();
 
     // Organize spans by their trace IDs
@@ -70,12 +70,12 @@ export class RageshakeSpanProcessor implements SpanProcessor {
         processes,
         spans: spans.map((span) => {
           const ctx = span.spanContext();
-          const startTime = hrTimeToMilliseconds(span.startTime);
+          const startTime = hrTimeToMicroseconds(span.startTime);
           // If the span has not yet ended, pretend that it ends now
           const duration =
             span.duration[0] === -1
               ? now - startTime
-              : hrTimeToMilliseconds(span.duration);
+              : hrTimeToMicroseconds(span.duration);
 
           return {
             traceID: traceId,
@@ -97,7 +97,7 @@ export class RageshakeSpanProcessor implements SpanProcessor {
                   ],
             tags: dumpAttributes(span.attributes),
             logs: span.events.map((event) => ({
-              timestamp: hrTimeToMilliseconds(event.time),
+              timestamp: hrTimeToMicroseconds(event.time),
               fields: dumpAttributes(event.attributes ?? {}),
             })),
           };
