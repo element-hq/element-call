@@ -29,7 +29,7 @@ import { CallFeed, CallFeedEvent } from "matrix-js-sdk/src/webrtc/callFeed";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useTranslation } from "react-i18next";
 import { IWidgetApiRequest } from "matrix-widget-api";
-import { MatrixClient } from "matrix-js-sdk";
+import { MatrixClient, RoomStateEvent } from "matrix-js-sdk";
 import {
   ByteSentStatsReport,
   ConnectionStatsReport,
@@ -42,6 +42,7 @@ import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { ElementCallOpenTelemetry } from "../otel/otel";
+import { checkForParallelCalls } from "./checkForParallelCalls";
 
 export enum ConnectionState {
   EstablishingCall = "establishing call", // call hasn't been established yet
@@ -377,18 +378,19 @@ export function useGroupCall(
     groupCall.on(GroupCallEvent.CallsChanged, onCallsChanged);
     groupCall.on(GroupCallEvent.ParticipantsChanged, onParticipantsChanged);
     groupCall.on(GroupCallEvent.Error, onError);
-
     groupCall.on(
       GroupCallStatsReportEvent.ConnectionStats,
       onConnectionStatsReport
     );
-
     groupCall.on(
       GroupCallStatsReportEvent.ByteSentStats,
       onByteSentStatsReport
     );
-
     groupCall.on(GroupCallStatsReportEvent.SummaryStats, onSummaryStatsReport);
+    groupCall.room.currentState.on(
+      RoomStateEvent.Update,
+      checkForParallelCalls
+    );
 
     updateState({
       error: null,
@@ -447,6 +449,10 @@ export function useGroupCall(
       groupCall.removeListener(
         GroupCallStatsReportEvent.SummaryStats,
         onSummaryStatsReport
+      );
+      groupCall.room.currentState.off(
+        RoomStateEvent.Update,
+        checkForParallelCalls
       );
       leaveCall();
     };
