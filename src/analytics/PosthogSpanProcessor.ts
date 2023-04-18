@@ -137,6 +137,15 @@ export class PosthogSpanProcessor implements SpanProcessor {
           // Send instantly because the window might be closing
           { send_instantly: true }
         );
+        window.console.log("#### p ", {
+          eventName: "MediaReceived",
+          callId: span.attributes["matrix.confId"] as string,
+          mediaReceived: mediaReceived,
+          audioReceived: audioReceived,
+          videoReceived: videoReceived,
+          maxJitter: maxJitter,
+          maxPacketLoss: maxPacketLoss,
+        });
       }
     }
   }
