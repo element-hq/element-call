@@ -16,7 +16,6 @@ limitations under the License.
 
 import { RefObject, useCallback, useRef } from "react";
 
-import { getSetting } from "./settings/useSetting";
 import { useEventTarget } from "./useEvents";
 
 /**
@@ -49,9 +48,6 @@ export function useCallViewKeyboardShortcuts(
       (event: KeyboardEvent) => {
         if (focusElement.current === null) return;
         if (!mayReceiveKeyEvents(focusElement.current)) return;
-        // Check if keyboard shortcuts are enabled
-        const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
-        if (!keyboardShortcuts) return;
 
         if (event.key === "m") {
           toggleMicrophoneMuted();
@@ -78,9 +74,6 @@ export function useCallViewKeyboardShortcuts(
       (event: KeyboardEvent) => {
         if (focusElement.current === null) return;
         if (!mayReceiveKeyEvents(focusElement.current)) return;
-        // Check if keyboard shortcuts are enabled
-        const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
-        if (!keyboardShortcuts) return;
 
         if (event.key === " ") {
           spacebarHeld.current = false;
