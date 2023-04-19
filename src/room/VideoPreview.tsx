@@ -64,7 +64,7 @@ export function VideoPreview({
 
   return (
     <div className={styles.preview} ref={previewRef}>
-      <video ref={videoRef} muted playsInline disablePictureInPicture />
+      <video ref={videoRef} muted playsInline disablePictureInPicture data-testid="preview_video" />
       {state === GroupCallState.LocalCallFeedUninitialized && (
         <Body fontWeight="semiBold" className={styles.cameraPermissions}>
           {t("Camera/microphone permissions needed to join the call.")}

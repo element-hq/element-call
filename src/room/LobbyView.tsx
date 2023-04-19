@@ -137,6 +137,7 @@ export function LobbyView({
               size="lg"
               disabled={state !== GroupCallState.LocalCallFeedInitialized}
               onPress={onEnter}
+              data-testid="lobby_joinCall"
             >
               Join call now
             </Button>
