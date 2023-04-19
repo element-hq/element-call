@@ -24,9 +24,12 @@ import { useEventTarget } from "./useEvents";
  * element (specifically, if an ancestor or descendant of it is focused).
  */
 const mayReceiveKeyEvents = (e: HTMLElement): boolean => {
-  const focusedElement = document.activeElement
-  return focusedElement !== null && (focusedElement.contains(e) || e.contains(focusedElement))
-}
+  const focusedElement = document.activeElement;
+  return (
+    focusedElement !== null &&
+    (focusedElement.contains(e) || e.contains(focusedElement))
+  );
+};
 
 export function useCallViewKeyboardShortcuts(
   focusElement: RefObject<HTMLElement | null>,
@@ -44,7 +47,7 @@ export function useCallViewKeyboardShortcuts(
     "keydown",
     useCallback(
       (event: KeyboardEvent) => {
-        if (focusElement.current === null) return
+        if (focusElement.current === null) return;
         if (!mayReceiveKeyEvents(focusElement.current)) return;
         // Check if keyboard shortcuts are enabled
         const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
@@ -59,11 +62,7 @@ export function useCallViewKeyboardShortcuts(
           setMicrophoneMuted(false);
         }
       },
-      [
-        toggleLocalVideoMuted,
-        toggleMicrophoneMuted,
-        setMicrophoneMuted,
-      ]
+      [toggleLocalVideoMuted, toggleMicrophoneMuted, setMicrophoneMuted]
     )
   );
 
@@ -72,7 +71,7 @@ export function useCallViewKeyboardShortcuts(
     "keyup",
     useCallback(
       (event: KeyboardEvent) => {
-        if (focusElement.current === null) return
+        if (focusElement.current === null) return;
         if (!mayReceiveKeyEvents(focusElement.current)) return;
         // Check if keyboard shortcuts are enabled
         const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
