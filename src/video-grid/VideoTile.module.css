@@ -20,7 +20,8 @@ limitations under the License.
   top: 0;
   width: var(--tileWidth);
   height: var(--tileHeight);
-  border-radius: 8px;
+  --tileRadius: 8px;
+  border-radius: var(--tileRadius);
   overflow: hidden;
   cursor: pointer;
 
@@ -51,7 +52,7 @@ limitations under the License.
   right: -1px;
   bottom: -1px;
   content: "";
-  border-radius: 20px;
+  border-radius: var(--tileRadius);
   box-shadow: inset 0 0 0 4px var(--accent) !important;
 }
 
@@ -174,6 +175,6 @@ limitations under the License.
 
 @media (min-width: 800px) {
   .videoTile {
-    border-radius: 20px;
+    --tileRadius: 20px;
   }
 }
