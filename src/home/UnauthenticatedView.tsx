@@ -142,6 +142,7 @@ export const UnauthenticatedView: FC = () => {
                 type="text"
                 required
                 autoComplete="off"
+                data-testid="home_callName"
               />
             </FieldRow>
             <FieldRow>
@@ -152,6 +153,7 @@ export const UnauthenticatedView: FC = () => {
                 placeholder={t("Display name")}
                 type="text"
                 required
+                data-testid="home_displayName"
                 autoComplete="off"
               />
             </FieldRow>
@@ -171,7 +173,7 @@ export const UnauthenticatedView: FC = () => {
                 <ErrorMessage error={error} />
               </FieldRow>
             )}
-            <Button type="submit" size="lg" disabled={loading}>
+            <Button type="submit" size="lg" disabled={loading} data-testid="home_go">
               {loading ? t("Loading…") : t("Go")}
             </Button>
             <div id={recaptchaId} />
