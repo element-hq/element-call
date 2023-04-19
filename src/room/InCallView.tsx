@@ -438,8 +438,10 @@ export function InCallView({
           </RightNav>
         </Header>
       )}
-      {renderContent()}
-      {footer}
+      <div className={styles.controlsOverlay}>
+        {renderContent()}
+        {footer}
+      </div>
       <GroupCallInspector
         client={client}
         groupCall={groupCall}
