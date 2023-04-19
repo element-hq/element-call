@@ -138,8 +138,6 @@
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Odoslanie záznamov ladenia nám pomôže nájsť problém.</0>",
   "<0>Oops, something's gone wrong.</0>": "<0>Hups, niečo sa pokazilo.</0>",
   "Use the upcoming grid system": "Použiť pripravovaný systém mriežky",
-  "Privacy Policy": "Zásady ochrany osobných údajov",
   "Expose developer settings in the settings window.": "Zobraziť nastavenia pre vývojárov v okne nastavení.",
-  "Developer Settings": "Nastavenia pre vývojárov",
-  "By ticking this box you consent to the collection of anonymous data, which we use to improve your experience. You can find more information about which data we track in our ": "Označením tohto políčka súhlasíte so zhromažďovaním anonymných údajov, ktoré používame na zlepšenie vašich skúseností. Viac informácií o tom, ktoré údaje sledujeme, nájdete v našich "
+  "Developer Settings": "Nastavenia pre vývojárov"
 }
