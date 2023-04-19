@@ -14,30 +14,41 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useRef } from "react";
+import { RefObject, useCallback, useRef } from "react";
 
 import { getSetting } from "./settings/useSetting";
 import { useEventTarget } from "./useEvents";
 
+/**
+ * Determines whether focus is in the same part of the tree as the given
+ * element (specifically, if an ancestor or descendant of it is focused).
+ */
+const mayReceiveKeyEvents = (e: HTMLElement): boolean => {
+  const focusedElement = document.activeElement
+  return focusedElement !== null && (focusedElement.contains(e) || e.contains(focusedElement))
+}
+
 export function useCallViewKeyboardShortcuts(
-  enabled: boolean,
+  focusElement: RefObject<HTMLElement | null>,
   toggleMicrophoneMuted: () => void,
   toggleLocalVideoMuted: () => void,
   setMicrophoneMuted: (muted: boolean) => void
 ) {
   const spacebarHeld = useRef(false);
 
+  // These event handlers are set on the window because we want users to be able
+  // to trigger them without going to the trouble of focusing something
+
   useEventTarget(
     window,
     "keydown",
     useCallback(
       (event: KeyboardEvent) => {
-        if (!enabled) return;
+        if (focusElement.current === null) return
+        if (!mayReceiveKeyEvents(focusElement.current)) return;
         // Check if keyboard shortcuts are enabled
         const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
-        if (!keyboardShortcuts) {
-          return;
-        }
+        if (!keyboardShortcuts) return;
 
         if (event.key === "m") {
           toggleMicrophoneMuted();
@@ -49,8 +60,6 @@ export function useCallViewKeyboardShortcuts(
         }
       },
       [
-        enabled,
-        spacebarHeld,
         toggleLocalVideoMuted,
         toggleMicrophoneMuted,
         setMicrophoneMuted,
@@ -63,19 +72,18 @@ export function useCallViewKeyboardShortcuts(
     "keyup",
     useCallback(
       (event: KeyboardEvent) => {
-        if (!enabled) return;
+        if (focusElement.current === null) return
+        if (!mayReceiveKeyEvents(focusElement.current)) return;
         // Check if keyboard shortcuts are enabled
         const keyboardShortcuts = getSetting("keyboard-shortcuts", true);
-        if (!keyboardShortcuts) {
-          return;
-        }
+        if (!keyboardShortcuts) return;
 
         if (event.key === " ") {
           spacebarHeld.current = false;
           setMicrophoneMuted(true);
         }
       },
-      [enabled, setMicrophoneMuted]
+      [setMicrophoneMuted]
     )
   );
 
