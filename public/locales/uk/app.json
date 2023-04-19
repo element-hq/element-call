@@ -138,8 +138,6 @@
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Надсилання журналів зневадження допоможе нам виявити проблему.</0>",
   "<0>Oops, something's gone wrong.</0>": "<0>Йой, щось пішло не за планом.</0>",
   "Use the upcoming grid system": "Використовувати майбутню сіткову систему",
-  "Privacy Policy": "Політика приватності",
   "Expose developer settings in the settings window.": "Відкрийте налаштування розробника у вікні налаштувань.",
-  "Developer Settings": "Налаштування розробника",
-  "By ticking this box you consent to the collection of anonymous data, which we use to improve your experience. You can find more information about which data we track in our ": "Ставлячи прапорець у цьому полі, ви погоджуєтеся на збір анонімних даних, які ми використовуємо для поліпшення роботи. Ви можете знайти більше інформації про те, які дані ми відстежуємо в нашому "
+  "Developer Settings": "Налаштування розробника"
 }
