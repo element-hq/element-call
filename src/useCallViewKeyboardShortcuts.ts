@@ -62,7 +62,12 @@ export function useCallViewKeyboardShortcuts(
           setMicrophoneMuted(false);
         }
       },
-      [toggleLocalVideoMuted, toggleMicrophoneMuted, setMicrophoneMuted]
+      [
+        focusElement,
+        toggleLocalVideoMuted,
+        toggleMicrophoneMuted,
+        setMicrophoneMuted,
+      ]
     )
   );
 
@@ -82,7 +87,7 @@ export function useCallViewKeyboardShortcuts(
           setMicrophoneMuted(true);
         }
       },
-      [setMicrophoneMuted]
+      [focusElement, setMicrophoneMuted]
     )
   );
 
