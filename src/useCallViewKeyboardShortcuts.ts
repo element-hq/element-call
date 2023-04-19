@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useState } from "react";
+import { useCallback, useRef } from "react";
 
 import { getSetting } from "./settings/useSetting";
 import { useEventTarget } from "./useEvents";
@@ -25,7 +25,7 @@ export function useCallViewKeyboardShortcuts(
   toggleLocalVideoMuted: () => void,
   setMicrophoneMuted: (muted: boolean) => void
 ) {
-  const [spacebarHeld, setSpacebarHeld] = useState(false);
+  const spacebarHeld = useRef(false);
 
   useEventTarget(
     window,
@@ -43,8 +43,8 @@ export function useCallViewKeyboardShortcuts(
           toggleMicrophoneMuted();
         } else if (event.key == "v") {
           toggleLocalVideoMuted();
-        } else if (event.key === " " && !spacebarHeld) {
-          setSpacebarHeld(true);
+        } else if (event.key === " " && !spacebarHeld.current) {
+          spacebarHeld.current = true;
           setMicrophoneMuted(false);
         }
       },
@@ -54,7 +54,6 @@ export function useCallViewKeyboardShortcuts(
         toggleLocalVideoMuted,
         toggleMicrophoneMuted,
         setMicrophoneMuted,
-        setSpacebarHeld,
       ]
     )
   );
@@ -72,11 +71,11 @@ export function useCallViewKeyboardShortcuts(
         }
 
         if (event.key === " ") {
-          setSpacebarHeld(false);
+          spacebarHeld.current = false;
           setMicrophoneMuted(true);
         }
       },
-      [enabled, setMicrophoneMuted, setSpacebarHeld]
+      [enabled, setMicrophoneMuted]
     )
   );
 
@@ -85,9 +84,9 @@ export function useCallViewKeyboardShortcuts(
     "blur",
     useCallback(() => {
       if (spacebarHeld) {
-        setSpacebarHeld(false);
+        spacebarHeld.current = false;
         setMicrophoneMuted(true);
       }
-    }, [setMicrophoneMuted, setSpacebarHeld, spacebarHeld])
+    }, [setMicrophoneMuted, spacebarHeld])
   );
 }
