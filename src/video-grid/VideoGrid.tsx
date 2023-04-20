@@ -23,7 +23,7 @@ import {
   useSprings,
 } from "@react-spring/web";
 import useMeasure from "react-use-measure";
-import { ResizeObserver } from "@juggle/resize-observer";
+import { ResizeObserver as JuggleResizeObserver } from "@juggle/resize-observer";
 import { ReactDOMAttributes } from "@use-gesture/react/dist/declarations/src/types";
 
 import styles from "./VideoGrid.module.css";
@@ -754,7 +754,13 @@ export function VideoGrid({
   const lastLayoutRef = useRef<Layout>(layout);
   const isMounted = useIsMounted();
 
-  const [gridRef, gridBounds] = useMeasure({ polyfill: ResizeObserver });
+  // The 'polyfill' argument to useMeasure is not a polyfill at all but is the impl that is always used
+  // if passed, whether the browser has native support or not, so pass in either the browser native
+  // version or the ponyfill (yes, pony) because Juggle's resizeobserver ponyfill is being weirdly
+  // buggy for me on my dev env my never updating the size until the window resizes.
+  const [gridRef, gridBounds] = useMeasure({
+    polyfill: window.ResizeObserver ?? JuggleResizeObserver,
+  });
 
   useEffect(() => {
     setTileState(({ tiles, ...rest }) => {
