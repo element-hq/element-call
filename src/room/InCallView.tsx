@@ -157,7 +157,7 @@ export function InCallView({
   const { hideScreensharing } = useUrlParams();
 
   useCallViewKeyboardShortcuts(
-    !feedbackModalState.isOpen,
+    containerRef1,
     toggleMicrophoneMuted,
     toggleLocalVideoMuted,
     setMicrophoneMuted
