@@ -117,15 +117,17 @@ export const useLoadGroupCall = (
             createPtt ? "PTT" : "video"
           } call`
         );
-        return await client.createGroupCall(
-          room.roomId,
-          createPtt ? GroupCallType.Voice : GroupCallType.Video,
-          createPtt,
-          GroupCallIntent.Room
-        ).then((groupCall) => {
-          groupCall.statsCollectIntervalTime = STATS_COLLECT_INTERVAL_TIME_MS;
-          return groupCall;
-        });
+        return await client
+          .createGroupCall(
+            room.roomId,
+            createPtt ? GroupCallType.Voice : GroupCallType.Video,
+            createPtt,
+            GroupCallIntent.Room
+          )
+          .then((groupCall) => {
+            groupCall.statsCollectIntervalTime = STATS_COLLECT_INTERVAL_TIME_MS;
+            return groupCall;
+          });
       }
 
       // We don't have permission to create the call, so all we can do is wait
@@ -134,7 +136,7 @@ export const useLoadGroupCall = (
         const onGroupCallIncoming = (groupCall: GroupCall) => {
           if (groupCall?.room.roomId === room.roomId) {
             clearTimeout(timeout);
-            groupCall.statsCollectIntervalTime = STATS_COLLECT_INTERVAL_TIME_MS
+            groupCall.statsCollectIntervalTime = STATS_COLLECT_INTERVAL_TIME_MS;
             client.off(
               GroupCallEventHandlerEvent.Incoming,
               onGroupCallIncoming
