@@ -98,7 +98,11 @@ export class RageshakeSpanProcessor implements SpanProcessor {
             tags: dumpAttributes(span.attributes),
             logs: span.events.map((event) => ({
               timestamp: hrTimeToMicroseconds(event.time),
-              fields: dumpAttributes(event.attributes ?? {}),
+              // The name of the event is in the "event" field, aparently.
+              fields: [
+                ...dumpAttributes(event.attributes ?? {}),
+                { key: "event", type: "string", value: event.name },
+              ],
             })),
           };
         }),
