@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 .inRoom {
-  position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -24,6 +23,12 @@ limitations under the License.
   width: 100%;
   --footerPadding: 8px;
   --footerHeight: calc(50px + 2 * var(--footerPadding));
+}
+
+.controlsOverlay {
+  position: relative;
+  flex: 1;
+  display: flex;
 }
 
 .centerMessage {
