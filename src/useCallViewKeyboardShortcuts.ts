@@ -88,7 +88,7 @@ export function useCallViewKeyboardShortcuts(
     window,
     "blur",
     useCallback(() => {
-      if (spacebarHeld) {
+      if (spacebarHeld.current) {
         spacebarHeld.current = false;
         setMicrophoneMuted(true);
       }
