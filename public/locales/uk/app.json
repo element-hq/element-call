@@ -131,7 +131,6 @@
   "{{name}} (Connecting...)": "{{name}} (З'єднання...)",
   "Element Call Home": "Домівка Element Call",
   "Copy": "Копіювати",
-  "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Чи вмикати/вимикати мікрофон однією клавішею, наприклад, «m» для ввімкнення/вимкнення мікрофона.",
   "Single-key keyboard shortcuts": "Одноклавішні комбінації клавіш",
   "{{name}} (Waiting for video...)": "{{name}} (Очікування на відео...)",
   "This feature is only supported on Firefox.": "Ця функція підтримується лише в браузері Firefox.",
