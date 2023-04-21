@@ -131,12 +131,13 @@
   "{{name}} (Connecting...)": "{{name}} (verbindet sich …)",
   "Copy": "Kopieren",
   "Element Call Home": "Element Call-Startseite",
-  "Single-key keyboard shortcuts": "Ein-Tasten-Tastenkürzel",
   "{{name}} (Waiting for video...)": "{{name}} (Warte auf Video …)",
   "This feature is only supported on Firefox.": "Diese Funktion wird nur in Firefox unterstützt.",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Übermittelte Problemberichte helfen uns, Fehler zu beheben.</0>",
   "<0>Oops, something's gone wrong.</0>": "<0>Hoppla, etwas ist schiefgelaufen.</0>",
   "Use the upcoming grid system": "Nutze das kommende Rastersystem",
   "Expose developer settings in the settings window.": "Zeige die Entwicklereinstellungen im Einstellungsfenster.",
-  "Developer Settings": "Entwicklereinstellungen"
+  "Developer Settings": "Entwicklereinstellungen",
+  "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.": "Mit der Teilnahme an der Beta akzeptierst du die Sammlung von anonymen Daten, die wir zur Verbesserung des Produkts verwenden. Weitere Informationen zu den von uns erhobenen Daten findest du in unserer <2>Datenschutzerklärung</2> und unseren <5>Cookie-Richtlinien</5>.",
+  "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>Du kannst deine Zustimmung durch Abwählen dieses Kästchens zurückziehen. Falls du dich aktuell in einem Anruf befindest, wird diese Einstellung nach dem Ende des Anrufs wirksam."
 }
