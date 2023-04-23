@@ -129,11 +129,15 @@
   "{{count}} people connected|one": "{{count}} подключился",
   "Element Call Home": "Главная Element Call",
   "Copy": "Копировать",
-  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Присоединиться сейчас</0><1>или<1><2>cкопировать ссылку на звонок и присоединиться позже</2>",
+  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Присоединиться сейчас к звонку</0><1>или<1><2>Скопировать ссылку на звонок и присоединиться позже</2>",
   "{{name}} (Connecting...)": "{{name}} (Соединение...)",
   "This feature is only supported on Firefox.": "Эта возможность доступна только в Firefox.",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Отправка журналов поможет нам найти и устранить проблему.</0>",
   "<0>Oops, something's gone wrong.</0>": "<0>Упс, что-то пошло не так.</0>",
   "{{name}} (Waiting for video...)": "{{name}} (Ожидание видео...)",
-  "Use the upcoming grid system": "Использовать сеточный показ"
+  "Use the upcoming grid system": "Использовать сеточный показ",
+  "Expose developer settings in the settings window.": "Раскрыть настройки разработчика в окне настроек.",
+  "Developer Settings": "Настройки Разработчика",
+  "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.": "Участвуя в этой бета-версии, вы соглашаетесь на сбор анонимных данных, которые мы используем для улучшения продукта. Более подробную информацию о том, какие данные мы отслеживаем, вы можете найти в нашей <2> Политике конфиденциальности</2> и нашей <5> Политике использования файлов cookie</5>.",
+  "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>Вы можете отозвать согласие, сняв этот флажок. Если вы в данный момент находитесь в разговоре, эта настройка вступит в силу по окончании разговора."
 }
