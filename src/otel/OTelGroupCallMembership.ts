@@ -210,7 +210,12 @@ export class OTelGroupCallMembership {
 
     for (const callTrackingInfo of this.callsByCallId.values()) {
       const userCalls = calls.get(callTrackingInfo.userId);
-      if (!userCalls || !userCalls.has(callTrackingInfo.deviceId)) {
+      if (
+        !userCalls ||
+        !userCalls.has(callTrackingInfo.deviceId) ||
+        userCalls.get(callTrackingInfo.deviceId).callId !==
+          callTrackingInfo.call.callId
+      ) {
         callTrackingInfo.span.end();
         this.callsByCallId.delete(callTrackingInfo.call.callId);
       }
