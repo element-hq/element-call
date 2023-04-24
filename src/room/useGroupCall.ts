@@ -133,6 +133,7 @@ function getParticipants(
             : ConnectionState.WaitMedia
           : ConnectionState.EstablishingCall;
       }
+      console.log(`${member.userId} conn state is ${connectionState}`);
       participantInfoMap.set(deviceId, {
         connectionState,
         presenter: participant.screensharing,
