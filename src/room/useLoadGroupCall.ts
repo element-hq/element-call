@@ -96,11 +96,11 @@ export const useLoadGroupCall = (
     const fetchOrCreateGroupCall = async (): Promise<GroupCall> => {
       const room = await fetchOrCreateRoom();
       logger.debug(`Fetched / joined room ${roomIdOrAlias}`);
-      const groupCall = client.getGroupCallForRoom(room.roomId);
+      let groupCall = client.getGroupCallForRoom(room.roomId);
       logger.debug("Got group call", groupCall?.groupCallId);
 
       if (groupCall) {
-        groupCall.statsCollectIntervalTime = STATS_COLLECT_INTERVAL_TIME_MS;
+        groupCall.setGroupCallStatsInterval(STATS_COLLECT_INTERVAL_TIME_MS);
         return groupCall;
       }
 
@@ -117,17 +117,14 @@ export const useLoadGroupCall = (
             createPtt ? "PTT" : "video"
           } call`
         );
-        return await client
-          .createGroupCall(
-            room.roomId,
-            createPtt ? GroupCallType.Voice : GroupCallType.Video,
-            createPtt,
-            GroupCallIntent.Room
-          )
-          .then((groupCall) => {
-            groupCall.statsCollectIntervalTime = STATS_COLLECT_INTERVAL_TIME_MS;
-            return groupCall;
-          });
+        groupCall = await client.createGroupCall(
+          room.roomId,
+          createPtt ? GroupCallType.Voice : GroupCallType.Video,
+          createPtt,
+          GroupCallIntent.Room
+        );
+        groupCall.setGroupCallStatsInterval(STATS_COLLECT_INTERVAL_TIME_MS);
+        return groupCall;
       }
 
       // We don't have permission to create the call, so all we can do is wait
@@ -136,7 +133,7 @@ export const useLoadGroupCall = (
         const onGroupCallIncoming = (groupCall: GroupCall) => {
           if (groupCall?.room.roomId === room.roomId) {
             clearTimeout(timeout);
-            groupCall.statsCollectIntervalTime = STATS_COLLECT_INTERVAL_TIME_MS;
+            groupCall.setGroupCallStatsInterval(STATS_COLLECT_INTERVAL_TIME_MS);
             client.off(
               GroupCallEventHandlerEvent.Incoming,
               onGroupCallIncoming
