@@ -131,13 +131,13 @@
   "{{name}} (Connecting...)": "{{name}} (Menghubungkan...)",
   "Element Call Home": "Beranda Element Call",
   "Copy": "Salin",
-  "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Apakah pintasan papan ketik seharusnya diaktifkan, mis. 'm' untuk membisukan/menyuarakan mikrofon.",
-  "Single-key keyboard shortcuts": "Pintasan papan ketik satu tombol",
   "{{name}} (Waiting for video...)": "{{name}} (Menunggu video...)",
   "This feature is only supported on Firefox.": "Fitur ini hanya didukung di Firefox.",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Mengirim catatan pengawakutuan akan membantu kami melacak masalahnya.</0>",
   "<0>Oops, something's gone wrong.</0>": "<0>Aduh, ada yang salah.</0>",
   "Use the upcoming grid system": "Gunakan sistem kisi yang akan segera datang",
   "Expose developer settings in the settings window.": "Ekspos pengaturan pengembang dalam jendela pengaturan.",
-  "Developer Settings": "Pengaturan Pengembang"
+  "Developer Settings": "Pengaturan Pengembang",
+  "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.": "Dengan bergabung dalam beta ini, Anda mengizinkan kami untuk mengumpulkan data anonim, yang kami gunakan untuk meningkatkan produk ini. Anda dapat mempelajari lebih lanjut tentang data apa yang kami lacak dalam <2>Kebijakan Privasi</2> dan <5>Kebijakan Kuki</5> kami.",
+  "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>Anda dapat mengurungkan kembali izin dengan mencentang kotak ini. Jika Anda saat ini dalam panggilan, pengaturan ini akan diterapkan di akhir panggilan."
 }
