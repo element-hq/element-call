@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import { Attributes } from "@opentelemetry/api";
+import { VoipEvent } from "matrix-js-sdk/src/webrtc/call";
 import { GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
 import {
   ByteSentStatsReport,
@@ -58,6 +59,21 @@ export class ObjectFlattener {
       "matrix.stats.summary.",
       0
     );
+    return flatObject;
+  }
+
+  /* Flattens out an object into a single layer with components
+   * of the key separated by dots
+   */
+  public static flattenVoipEvent(event: VoipEvent): Attributes {
+    const flatObject = {};
+    ObjectFlattener.flattenObjectRecursive(
+      event as unknown as Record<string, unknown>, // XXX Types
+      flatObject,
+      "matrix.event.",
+      0
+    );
+
     return flatObject;
   }
 
