@@ -46,48 +46,6 @@ import { ObjectFlattener } from "./ObjectFlattener";
 import { OTelCall } from "./OTelCall";
 
 /**
- * Flattens out an object into a single layer with components
- * of the key separated by dots
- */
-function flattenVoipEvent(event: VoipEvent): Attributes {
-  const flatObject = {};
-
-  flattenVoipEventRecursive(
-    event as unknown as Record<string, unknown>, // XXX Types
-    flatObject,
-    "matrix.event.",
-    0
-  );
-
-  return flatObject;
-}
-
-function flattenVoipEventRecursive(
-  obj: Record<string, unknown>,
-  flatObject: Record<string, unknown>,
-  prefix: string,
-  depth: number
-) {
-  if (depth > 10)
-    throw new Error(
-      "Depth limit exceeded: aborting VoipEvent recursion. Prefix is " + prefix
-    );
-
-  for (const [k, v] of Object.entries(obj)) {
-    if (["string", "number", "boolean"].includes(typeof v) || v === null) {
-      flatObject[prefix + k] = v;
-    } else if (typeof v === "object") {
-      flattenVoipEventRecursive(
-        v as Record<string, unknown>,
-        flatObject,
-        prefix + k + ".",
-        depth + 1
-      );
-    }
-  }
-}
-
-/**
  * Represent the span of time which we intend to be joined to a group call
  */
 export class OTelGroupCallMembership {
@@ -179,7 +137,7 @@ export class OTelGroupCallMembership {
 
     this.callMembershipSpan?.addEvent(
       `matrix.roomStateEvent_${event.getType()}`,
-      flattenVoipEvent(event.getContent())
+      ObjectFlattener.flattenVoipEvent(event.getContent())
     );
   }
 
@@ -247,12 +205,12 @@ export class OTelGroupCallMembership {
     if (event.type === "toDevice") {
       callTrackingInfo.span.addEvent(
         `matrix.sendToDeviceEvent_${event.eventType}`,
-        flattenVoipEvent(event)
+        ObjectFlattener.flattenVoipEvent(event)
       );
     } else if (event.type === "sendEvent") {
       callTrackingInfo.span.addEvent(
         `matrix.sendToRoomEvent_${event.eventType}`,
-        flattenVoipEvent(event)
+        ObjectFlattener.flattenVoipEvent(event)
       );
     }
   }
@@ -284,7 +242,7 @@ export class OTelGroupCallMembership {
 
     call.span.addEvent("matrix.receive_voip_event", {
       "sender.userId": event.getSender(),
-      ...flattenVoipEvent(event.getContent()),
+      ...ObjectFlattener.flattenVoipEvent(event.getContent()),
     });
   }
 
