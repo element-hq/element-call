@@ -236,7 +236,11 @@ export class OTelGroupCallMembership {
 
   public onSendEvent(call: MatrixCall, event: VoipEvent) {
     const eventType = event.eventType as string;
-    if (!eventType.startsWith("m.call")) return;
+    if (
+      !eventType.startsWith("m.call") &&
+      !eventType.startsWith("org.matrix.call")
+    )
+      return;
 
     const callTrackingInfo = this.callsByCallId.get(call.callId);
     if (!callTrackingInfo) {
