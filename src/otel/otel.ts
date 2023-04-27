@@ -42,7 +42,7 @@ export class ElementCallOpenTelemetry {
     const config = Config.get();
     // we always enable opentelemetry in general. We only enable the OTLP
     // collector if a URL is defined (and in future if another setting is defined)
-    // The posthog exporteer is always enabled, posthog reporting is enabled or disabled
+    // The posthog exporter is always enabled, posthog reporting is enabled or disabled
     // within the posthog code.
     const shouldEnableOtlp = Boolean(config.opentelemetry?.collector_url);
 
@@ -65,7 +65,7 @@ export class ElementCallOpenTelemetry {
     collectorUrl: string | undefined,
     rageshakeUrl: string | undefined
   ) {
-    // This is how we can make Jaeger show a reaonsable service in the dropdown on the left.
+    // This is how we can make Jaeger show a reasonable service in the dropdown on the left.
     const providerConfig = {
       resource: new Resource({
         [SemanticResourceAttributes.SERVICE_NAME]: SERVICE_NAME,
