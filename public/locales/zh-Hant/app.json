@@ -19,7 +19,6 @@
   "Your recent calls": "您最近的通話",
   "You can't talk at the same time": "您無法在同一時間發言",
   "Yes, join call": "是，加入對話",
-  "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "是否要啟用快捷鍵，例如：開/關麥克風。",
   "WebRTC is not supported or is being blocked in this browser.": "此瀏覽器未支援 WebRTC 或 WebRTC 被瀏覽器封鎖。",
   "Walkie-talkie call name": "對講機式通話名稱",
   "Walkie-talkie call": "即時通話",
@@ -50,7 +49,6 @@
   "Speaker {{n}}": "發言者{{n}}",
   "Speaker": "發言者",
   "Spatial audio": "空間音效",
-  "Single-key keyboard shortcuts": "快捷鍵",
   "Sign out": "登出",
   "Sign in": "登入",
   "Show call inspector": "顯示通話稽查員",
@@ -139,5 +137,7 @@
   "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.": "這通對話中的另一位使用者遇到了某些問題。為了診斷問題，我們將會建立除錯紀錄。",
   "Accept microphone permissions to join the call.": "請授權使用您的麥克風以加入通話。",
   "Accept camera/microphone permissions to join the call.": "請授權使用您的相機/麥克風以加入對話。",
-  "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>何不設定密碼以保留此帳號？</0><1>您可以保留暱稱並設定頭像，以便未來通話時使用</1>"
+  "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>何不設定密碼以保留此帳號？</0><1>您可以保留暱稱並設定頭像，以便未來通話時使用</1>",
+  "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.": "參與此測試版即表示您同意蒐集匿名資料，我們使用這些資料來改進產品。您可以在我們的<2>隱私政策</2>與我們的 <5>Cookie 政策</5> 中找到關於我們追蹤哪些資料的更多資訊。",
+  "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>您可以透過取消核取此方塊來撤回同意。若您目前正在通話中，此設定將在通話結束時生效。"
 }

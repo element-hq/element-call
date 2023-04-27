@@ -131,8 +131,6 @@
   "{{count}} people connected|one": "{{count}} persona conectada",
   "Element Call Home": "Inicio de Element Call",
   "Copy": "Copiar",
-  "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic.": "Habilita los atajos de teclado de una sola tecla, por ejemplo 'm' para silenciar/desilenciar el micrófono.",
-  "Single-key keyboard shortcuts": "Atajos de teclado de una sola tecla",
   "{{name}} (Waiting for video...)": "{{name}} (Esperando al video...)",
   "This feature is only supported on Firefox.": "Esta característica solo está disponible en Firefox.",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Subir los registros de depuración nos ayudará a encontrar el problema.</0>",

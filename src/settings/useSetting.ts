@@ -98,9 +98,6 @@ export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
   return [false, null];
 };
 
-export const useKeyboardShortcuts = () =>
-  useSetting("keyboard-shortcuts", true);
-
 export const useNewGrid = () => useSetting("new-grid", false);
 
 export const useDeveloperSettingsTab = () =>

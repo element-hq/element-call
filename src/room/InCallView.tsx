@@ -157,7 +157,7 @@ export function InCallView({
   const { hideScreensharing } = useUrlParams();
 
   useCallViewKeyboardShortcuts(
-    !feedbackModalState.isOpen,
+    containerRef1,
     toggleMicrophoneMuted,
     toggleLocalVideoMuted,
     setMicrophoneMuted
@@ -438,8 +438,10 @@ export function InCallView({
           </RightNav>
         </Header>
       )}
-      {renderContent()}
-      {footer}
+      <div className={styles.controlsOverlay}>
+        {renderContent()}
+        {footer}
+      </div>
       <GroupCallInspector
         client={client}
         groupCall={groupCall}

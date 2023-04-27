@@ -14,10 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {
-  ConsoleSpanExporter,
-  SimpleSpanProcessor,
-} from "@opentelemetry/sdk-trace-base";
+import { SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
 import opentelemetry, { Tracer } from "@opentelemetry/api";
@@ -93,9 +90,6 @@ export class ElementCallOpenTelemetry {
       this._provider.addSpanProcessor(this.rageshakeProcessor);
     }
 
-    this._provider.addSpanProcessor(
-      new SimpleSpanProcessor(new ConsoleSpanExporter())
-    );
     this._provider.addSpanProcessor(new PosthogSpanProcessor());
     opentelemetry.trace.setGlobalTracerProvider(this._provider);
 
