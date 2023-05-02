@@ -173,7 +173,12 @@ export const UnauthenticatedView: FC = () => {
                 <ErrorMessage error={error} />
               </FieldRow>
             )}
-            <Button type="submit" size="lg" disabled={loading} data-testid="home_go">
+            <Button
+              type="submit"
+              size="lg"
+              disabled={loading}
+              data-testid="home_go"
+            >
               {loading ? t("Loading…") : t("Go")}
             </Button>
             <div id={recaptchaId} />

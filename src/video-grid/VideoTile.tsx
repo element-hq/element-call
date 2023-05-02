@@ -154,7 +154,7 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
           "--tileHeight": height?.to((h) => `${h}px`),
         }}
         ref={ref as ForwardedRef<HTMLDivElement>}
-        data-testid='videoTile'
+        data-testid="videoTile"
         {...rest}
       >
         {toolbarButtons.length > 0 && !maximised && (
@@ -181,10 +181,17 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
                 audioMuted && !videoMuted && !speaking && <MicMutedIcon />
               }
               {videoMuted && <VideoMutedIcon />}
-              <span data-testid="videoTile_caption" title={caption}>{caption}</span>
+              <span data-testid="videoTile_caption" title={caption}>
+                {caption}
+              </span>
             </div>
           ))}
-        <video data-testid="videoTile_video" ref={mediaRef} playsInline disablePictureInPicture />
+        <video
+          data-testid="videoTile_video"
+          ref={mediaRef}
+          playsInline
+          disablePictureInPicture
+        />
       </animated.div>
     );
   }
