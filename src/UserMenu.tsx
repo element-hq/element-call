@@ -116,8 +116,13 @@ export function UserMenu({
       {(props) => (
         <Menu {...props} label={t("User menu")} onAction={onAction}>
           {items.map(({ key, icon: Icon, label, dataTestid }) => (
-            <Item key={key} textValue={label} data-testid={dataTestid}>
-              <Icon width={24} height={24} className={styles.menuIcon} />
+            <Item key={key} textValue={label}>
+              <Icon
+                width={24}
+                height={24}
+                className={styles.menuIcon}
+                data-testid={dataTestid}
+              />
               <Body overflowEllipsis>{label}</Body>
             </Item>
           ))}
