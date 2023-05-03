@@ -249,7 +249,7 @@ export function useSubmitRageshake(): {
           body.append(
             "file",
             gzip(ElementCallOpenTelemetry.instance.rageshakeProcessor!.dump()),
-            "traces.json"
+            "traces.json.gz"
           );
 
           if (inspectorState) {
