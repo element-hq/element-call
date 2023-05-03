@@ -383,11 +383,13 @@ export function InCallView({
         key="1"
         muted={microphoneMuted}
         onPress={toggleMicrophoneMuted}
+        data-testid="incall_mute"
       />,
       <VideoButton
         key="2"
         muted={localVideoMuted}
         onPress={toggleLocalVideoMuted}
+        data-testid="incall_videomute"
       />
     );
 
@@ -398,6 +400,7 @@ export function InCallView({
             key="3"
             enabled={isScreensharing}
             onPress={toggleScreensharing}
+            data-testid="incall_screenshare"
           />
         );
       }
