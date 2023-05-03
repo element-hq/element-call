@@ -119,6 +119,7 @@ export function ProfileModal({ client, ...rest }: Props) {
               placeholder={t("Display name")}
               value={displayName}
               onChange={onChangeDisplayName}
+              data-testid="profile_displayname"
             />
           </FieldRow>
           {error && (
@@ -130,7 +131,11 @@ export function ProfileModal({ client, ...rest }: Props) {
             <Button type="button" variant="secondary" onPress={onClose}>
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button
+              type="submit"
+              disabled={loading}
+              data-testid="profile_submit"
+            >
               {loading ? t("Saving…") : t("Save")}
             </Button>
           </FieldRow>
