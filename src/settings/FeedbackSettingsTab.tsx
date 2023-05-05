@@ -22,6 +22,7 @@ import { Button } from "../button";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake, useRageshakeRequest } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
+import styles from "../input/SelectInput.module.css";
 
 interface Props {
   roomId?: string;
@@ -58,13 +59,18 @@ export function FeedbackSettingsTab({ roomId }: Props) {
 
   return (
     <div>
-      <Body>{t("Having trouble? Help us fix it.")}</Body>
+      <h4 className={styles.label}>{t("Submit feedback")}</h4>
+      <Body>
+        {t(
+          "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below."
+        )}
+      </Body>
       <form onSubmit={onSubmitFeedback}>
         <FieldRow>
           <InputField
             id="description"
             name="description"
-            label={t("Description (optional)")}
+            label={t("Your feedback")}
             type="textarea"
           />
         </FieldRow>
