@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,23 +15,7 @@ limitations under the License.
 */
 
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-/*
-Copyright 2022 New Vector Ltd
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
-import { MatrixClient } from "matrix-js-sdk/src/client";
 import { MediaHandlerEvent } from "matrix-js-sdk/src/webrtc/mediaHandler";
 import React, {
   useState,
@@ -42,6 +26,8 @@ import React, {
   createContext,
   ReactNode,
 } from "react";
+
+import { useClient } from "../ClientContext";
 
 export interface MediaHandlerContextInterface {
   audioInput: string;
@@ -89,10 +75,10 @@ function updateMediaPreferences(newPreferences: MediaPreferences): void {
   );
 }
 interface Props {
-  client: MatrixClient;
   children: ReactNode;
 }
-export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
+export function MediaHandlerProvider({ children }: Props): JSX.Element {
+  const { client } = useClient();
   const [
     {
       audioInput,
@@ -104,19 +90,21 @@ export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
     },
     setState,
   ] = useState(() => {
-    const mediaPreferences = getMediaPreferences();
-    const mediaHandler = client.getMediaHandler();
+    const mediaHandler = client?.getMediaHandler();
 
-    mediaHandler.restoreMediaSettings(
-      mediaPreferences?.audioInput,
-      mediaPreferences?.videoInput
-    );
+    if (mediaHandler) {
+      const mediaPreferences = getMediaPreferences();
+      mediaHandler?.restoreMediaSettings(
+        mediaPreferences?.audioInput,
+        mediaPreferences?.videoInput
+      );
+    }
 
     return {
       // @ts-ignore, ignore that audioInput is a private members of mediaHandler
-      audioInput: mediaHandler.audioInput,
+      audioInput: mediaHandler?.audioInput,
       // @ts-ignore, ignore that videoInput is a private members of mediaHandler
-      videoInput: mediaHandler.videoInput,
+      videoInput: mediaHandler?.videoInput,
       audioOutput: undefined,
       audioInputs: [],
       videoInputs: [],
@@ -125,6 +113,8 @@ export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
   });
 
   useEffect(() => {
+    if (!client) return;
+
     const mediaHandler = client.getMediaHandler();
 
     function updateDevices(): void {
