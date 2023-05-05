@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import { Menu } from "./Menu";
 import { TooltipTrigger } from "./Tooltip";
 import { Avatar, Size } from "./Avatar";
 import { ReactComponent as UserIcon } from "./icons/User.svg";
+import { ReactComponent as SettingsIcon } from "./icons/Settings.svg";
 import { ReactComponent as LoginIcon } from "./icons/Login.svg";
 import { ReactComponent as LogoutIcon } from "./icons/Logout.svg";
 import { Body } from "./typography/Typography";
@@ -58,6 +59,11 @@ export function UserMenu({
         key: "user",
         icon: UserIcon,
         label: displayName,
+      });
+      arr.push({
+        key: "settings",
+        icon: SettingsIcon,
+        label: t("Settings"),
       });
 
       if (isPasswordlessUser && !preventNavigation) {

@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
+import { OverlayTriggerState } from "@react-stately/overlays";
 import { JoinRule } from "matrix-js-sdk/src/@types/partials";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
@@ -33,6 +34,8 @@ import {
   MicButton,
   VideoButton,
   ScreenshareButton,
+  SettingsButton,
+  InviteButton,
 } from "../button";
 import {
   Header,
@@ -48,12 +51,8 @@ import {
 } from "../video-grid/VideoGrid";
 import { VideoTileContainer } from "../video-grid/VideoTileContainer";
 import { GroupCallInspector } from "./GroupCallInspector";
-import { OverflowMenu } from "./OverflowMenu";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { Avatar } from "../Avatar";
-import { UserMenuContainer } from "../UserMenuContainer";
-import { useRageshakeRequestModal } from "../settings/submit-rageshake";
-import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { useMediaHandler } from "../settings/useMediaHandler";
 import {
   useNewGrid,
@@ -74,6 +73,8 @@ import { AudioSink } from "../video-grid/AudioSink";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
+import { SettingsModal } from "../settings/SettingsModal";
+import { InviteModal } from "./InviteModal";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -128,7 +129,6 @@ export function InCallView({
 }: Props) {
   const { t } = useTranslation();
   usePreventScroll();
-  const joinRule = useJoinRule(groupCall.room);
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure({ polyfill: ResizeObserver });
@@ -151,10 +151,9 @@ export function InCallView({
   const [audioContext, audioDestination] = useAudioContext();
   const [showInspector] = useShowInspector();
 
-  const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
-    useModalTriggerState();
-
   const { hideScreensharing } = useUrlParams();
+
+  const joinRule = useJoinRule(groupCall.room);
 
   useCallViewKeyboardShortcuts(
     containerRef1,
@@ -342,9 +341,34 @@ export function InCallView({
   };
 
   const {
-    modalState: rageshakeRequestModalState,
-    modalProps: rageshakeRequestModalProps,
-  } = useRageshakeRequestModal(groupCall.room.roomId);
+    modalState: settingsModalState,
+    modalProps: settingsModalProps,
+  }: {
+    modalState: OverlayTriggerState;
+    modalProps: {
+      isOpen: boolean;
+      onClose: () => void;
+    };
+  } = useModalTriggerState();
+
+  const openSettings = useCallback(() => {
+    settingsModalState.open();
+  }, [settingsModalState]);
+
+  const {
+    modalState: inviteModalState,
+    modalProps: inviteModalProps,
+  }: {
+    modalState: OverlayTriggerState;
+    modalProps: {
+      isOpen: boolean;
+      onClose: () => void;
+    };
+  } = useModalTriggerState();
+
+  const openInvite = useCallback(() => {
+    inviteModalState.open();
+  }, [inviteModalState]);
 
   const containerClasses = classNames(styles.inRoom, {
     [styles.maximised]: maximisedParticipant,
@@ -402,17 +426,7 @@ export function InCallView({
         );
       }
       if (!maximisedParticipant) {
-        buttons.push(
-          <OverflowMenu
-            key="4"
-            inCall
-            roomIdOrAlias={roomIdOrAlias}
-            groupCall={groupCall}
-            showInvite={joinRule === JoinRule.Public}
-            feedbackModalState={feedbackModalState}
-            feedbackModalProps={feedbackModalProps}
-          />
-        );
+        buttons.push(<SettingsButton key="4" onPress={openSettings} />);
       }
     }
 
@@ -434,7 +448,9 @@ export function InCallView({
           </LeftNav>
           <RightNav>
             <GridLayoutMenu layout={layout} setLayout={setLayout} />
-            <UserMenuContainer preventNavigation />
+            {joinRule === JoinRule.Public && (
+              <InviteButton variant="icon" onClick={openInvite} />
+            )}
           </RightNav>
         </Header>
       )}
@@ -448,11 +464,15 @@ export function InCallView({
         otelGroupCallMembership={otelGroupCallMembership}
         show={showInspector}
       />
-      {rageshakeRequestModalState.isOpen && (
-        <RageshakeRequestModal
-          {...rageshakeRequestModalProps}
-          roomIdOrAlias={roomIdOrAlias}
+      {settingsModalState.isOpen && (
+        <SettingsModal
+          client={client}
+          roomId={roomIdOrAlias}
+          {...settingsModalProps}
         />
+      )}
+      {inviteModalState.isOpen && (
+        <InviteModal roomIdOrAlias={roomIdOrAlias} {...inviteModalProps} />
       )}
     </div>
   );

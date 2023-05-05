@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,27 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ChangeEvent, useCallback, useEffect, useState } from "react";
+import React, { ChangeEvent, useCallback, useState } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 
 import { Button } from "../button";
-import { useProfile } from "./useProfile";
+import { useProfile } from "../profile/useProfile";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { Modal, ModalContent } from "../Modal";
 import { AvatarInputField } from "../input/AvatarInputField";
-import styles from "./ProfileModal.module.css";
+import styles from "./ProfileSettingsTab.module.css";
 
 interface Props {
   client: MatrixClient;
-  onClose: () => void;
-  [rest: string]: unknown;
 }
-export function ProfileModal({ client, ...rest }: Props) {
-  const { onClose } = rest;
+export function ProfileSettingsTab({ client }: Props) {
   const { t } = useTranslation();
   const {
-    success,
     error,
     loading,
     displayName: initialDisplayName,
@@ -78,64 +73,51 @@ export function ProfileModal({ client, ...rest }: Props) {
     [saveProfile, removeAvatar]
   );
 
-  useEffect(() => {
-    if (success) {
-      onClose();
-    }
-  }, [success, onClose]);
-
   return (
-    <Modal title={t("Profile")} isDismissable {...rest}>
-      <ModalContent>
-        <form onSubmit={onSubmit}>
-          <FieldRow className={styles.avatarFieldRow}>
-            <AvatarInputField
-              id="avatar"
-              name="avatar"
-              label={t("Avatar")}
-              avatarUrl={avatarUrl}
-              displayName={displayName}
-              onRemoveAvatar={onRemoveAvatar}
-            />
-          </FieldRow>
-          <FieldRow>
-            <InputField
-              id="userId"
-              name="userId"
-              label={t("User ID")}
-              type="text"
-              disabled
-              value={client.getUserId()}
-            />
-          </FieldRow>
-          <FieldRow>
-            <InputField
-              id="displayName"
-              name="displayName"
-              label={t("Display name")}
-              type="text"
-              required
-              autoComplete="off"
-              placeholder={t("Display name")}
-              value={displayName}
-              onChange={onChangeDisplayName}
-            />
-          </FieldRow>
-          {error && (
-            <FieldRow>
-              <ErrorMessage error={error} />
-            </FieldRow>
-          )}
-          <FieldRow rightAlign>
-            <Button type="button" variant="secondary" onPress={onClose}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? t("Saving…") : t("Save")}
-            </Button>
-          </FieldRow>
-        </form>
-      </ModalContent>
-    </Modal>
+    <form onSubmit={onSubmit}>
+      <FieldRow className={styles.avatarFieldRow}>
+        <AvatarInputField
+          id="avatar"
+          name="avatar"
+          label={t("Avatar")}
+          avatarUrl={avatarUrl}
+          displayName={displayName}
+          onRemoveAvatar={onRemoveAvatar}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="userId"
+          name="userId"
+          label={t("User ID")}
+          type="text"
+          disabled
+          value={client.getUserId()}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="displayName"
+          name="displayName"
+          label={t("Display name")}
+          type="text"
+          required
+          autoComplete="off"
+          placeholder={t("Display name")}
+          value={displayName}
+          onChange={onChangeDisplayName}
+        />
+      </FieldRow>
+      {error && (
+        <FieldRow>
+          <ErrorMessage error={error} />
+        </FieldRow>
+      )}
+      <FieldRow rightAlign>
+        <Button type="submit" disabled={loading}>
+          {loading ? t("Saving…") : t("Save")}
+        </Button>
+      </FieldRow>
+    </form>
   );
 }

@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,13 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback } from "react";
+import React, { useCallback, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 
 import { useClient } from "./ClientContext";
 import { useProfile } from "./profile/useProfile";
 import { useModalTriggerState } from "./Modal";
-import { ProfileModal } from "./profile/ProfileModal";
+import { SettingsModal } from "./settings/SettingsModal";
 import { UserMenu } from "./UserMenu";
 
 interface Props {
@@ -35,10 +35,17 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
   const { displayName, avatarUrl } = useProfile(client);
   const { modalState, modalProps } = useModalTriggerState();
 
+  const [defaultSettingsTab, setDefaultSettingsTab] = useState<string>();
+
   const onAction = useCallback(
-    (value: string) => {
+    async (value: string) => {
       switch (value) {
         case "user":
+          setDefaultSettingsTab("profile");
+          modalState.open();
+          break;
+        case "settings":
+          setDefaultSettingsTab("audio");
           modalState.open();
           break;
         case "logout":
@@ -64,7 +71,13 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
           displayName || (userName ? userName.replace("@", "") : undefined)
         }
       />
-      {modalState.isOpen && <ProfileModal client={client} {...modalProps} />}
+      {modalState.isOpen && (
+        <SettingsModal
+          client={client}
+          defaultTab={defaultSettingsTab}
+          {...modalProps}
+        />
+      )}
     </>
   );
 }
