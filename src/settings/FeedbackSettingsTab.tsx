@@ -30,7 +30,7 @@ interface Props {
 
 export function FeedbackSettingsTab({ roomId }: Props) {
   const { t } = useTranslation();
-  const { submitRageshake, sending, error } = useSubmitRageshake();
+  const { submitRageshake, sending, sent, error } = useSubmitRageshake();
   const sendRageshakeRequest = useRageshakeRequest();
 
   const onSubmitFeedback = useCallback(
@@ -72,27 +72,30 @@ export function FeedbackSettingsTab({ roomId }: Props) {
             name="description"
             label={t("Your feedback")}
             type="textarea"
+            disabled={sending || sent}
           />
         </FieldRow>
-        <FieldRow>
-          <InputField
-            id="sendLogs"
-            name="sendLogs"
-            label={t("Include debug logs")}
-            type="checkbox"
-            defaultChecked
-          />
-        </FieldRow>
-        {error && (
+        {sent ? (
+          <Body> {t("Thanks, we received your feedback!")}</Body>
+        ) : (
           <FieldRow>
-            <ErrorMessage error={error} />
+            <InputField
+              id="sendLogs"
+              name="sendLogs"
+              label={t("Include debug logs")}
+              type="checkbox"
+              defaultChecked
+            />
+            {error && (
+              <FieldRow>
+                <ErrorMessage error={error} />
+              </FieldRow>
+            )}
+            <Button type="submit" disabled={sending}>
+              {sending ? t("Submitting…") : t("Submit")}
+            </Button>
           </FieldRow>
         )}
-        <FieldRow>
-          <Button type="submit" disabled={sending}>
-            {sending ? t("Submitting…") : t("Submit")}
-          </Button>
-        </FieldRow>
       </form>
     </div>
   );
