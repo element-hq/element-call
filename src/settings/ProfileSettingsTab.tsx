@@ -89,7 +89,7 @@ export function ProfileSettingsTab({ client }: Props) {
         <InputField
           id="userId"
           name="userId"
-          label={t("User ID")}
+          label={t("Username")}
           type="text"
           disabled
           value={client.getUserId()}
