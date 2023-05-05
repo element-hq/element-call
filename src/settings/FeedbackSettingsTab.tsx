@@ -84,7 +84,7 @@ export function FeedbackSettingsTab({ roomId }: Props) {
         )}
         <FieldRow>
           <Button type="submit" disabled={sending}>
-            {sending ? t("Submitting feedback…") : t("Submit feedback")}
+            {sending ? t("Submitting…") : t("Submit")}
           </Button>
         </FieldRow>
       </form>
