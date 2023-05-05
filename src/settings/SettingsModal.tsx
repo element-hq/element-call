@@ -205,7 +205,7 @@ export const SettingsModal = (props: Props) => {
           title={
             <>
               <FeedbackIcon width={16} height={16} />
-              <span>{t("feedback")}</span>
+              <span>{t("Feedback")}</span>
             </>
           }
         >
