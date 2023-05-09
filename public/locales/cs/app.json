@@ -134,5 +134,8 @@
   "{{name}} (Waiting for video...)": "{{name}} (Čekání na video...)",
   "This feature is only supported on Firefox.": "Tato funkce je podporována jen ve Firefoxu.",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Odeslání ladících záznamů nám pomůže diagnostikovat problém.</0>",
-  "<0>Oops, something's gone wrong.</0>": "<0>Oops, něco se pokazilo.</0>"
+  "<0>Oops, something's gone wrong.</0>": "<0>Oops, něco se pokazilo.</0>",
+  "Use the upcoming grid system": "Používat nový systém pro zobrazení videí",
+  "Expose developer settings in the settings window.": "Zobrazit vývojářské nastavení.",
+  "Developer Settings": "Vývojářské nastavení"
 }
