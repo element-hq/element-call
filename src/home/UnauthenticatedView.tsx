@@ -186,14 +186,14 @@ export const UnauthenticatedView: FC = () => {
         </main>
         <footer className={styles.footer}>
           <Body className={styles.mobileLoginLink}>
-            <Link color="primary" to="/login">
+            <Link color="primary" to="/login" data-testid="home_login">
               {t("Login to your account")}
             </Link>
           </Body>
           <Body>
             <Trans>
               Not registered yet?{" "}
-              <Link color="primary" to="/register">
+              <Link color="primary" to="/register" data-testid="home_register">
                 Create an account
               </Link>
             </Trans>
