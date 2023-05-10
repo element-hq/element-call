@@ -281,7 +281,7 @@ export function GroupCallView({
   } else if (isEmbedded) {
     return (
       <FullScreenView>
-        <h1>{t("Loading room…")}</h1>
+        <h1>{t("Loading…")}</h1>
       </FullScreenView>
     );
   } else {
