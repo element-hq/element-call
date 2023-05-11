@@ -41,6 +41,7 @@ export const InviteModal: FC<Props> = ({ roomIdOrAlias, ...rest }) => {
         <CopyButton
           className={styles.copyButton}
           value={getRoomUrl(roomIdOrAlias)}
+          data-testid="modal_inviteLink"
         />
       </ModalContent>
     </Modal>
