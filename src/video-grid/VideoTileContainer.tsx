@@ -47,6 +47,7 @@ interface Props {
   opacity?: SpringValue<number>;
   scale?: SpringValue<number>;
   shadow?: SpringValue<number>;
+  shadowSpread?: SpringValue<number>;
   zIndex?: SpringValue<number>;
   x?: SpringValue<number>;
   y?: SpringValue<number>;
