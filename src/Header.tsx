@@ -134,7 +134,9 @@ export function RoomHeaderInfo({ roomName, avatarUrl }: RoomHeaderInfo) {
         />
         <VideoIcon width={16} height={16} />
       </div>
-      <Subtitle fontWeight="semiBold">{roomName}</Subtitle>
+      <Subtitle data-testid="roomHeader_roomName" fontWeight="semiBold">
+        {roomName}
+      </Subtitle>
     </>
   );
 }
