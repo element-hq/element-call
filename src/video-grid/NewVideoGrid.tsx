@@ -245,6 +245,7 @@ export const NewVideoGrid: FC<Props> = ({
         opacity: 0,
         scale: 0,
         shadow: 1,
+        shadowSpread: 0,
         zIndex: 1,
         x,
         y,
