@@ -83,6 +83,12 @@ limitations under the License.
   z-index: 1;
 }
 
+.infoBubble > svg {
+  height: 16px;
+  width: 16px;
+  margin-right: 4px;
+}
+
 .toolbar {
   position: absolute;
   top: 0;
@@ -124,10 +130,6 @@ limitations under the License.
 .memberName {
   left: 16px;
   bottom: 16px;
-}
-
-.memberName > * {
-  margin-right: 6px;
 }
 
 .memberName > :last-child {
