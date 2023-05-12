@@ -42,7 +42,7 @@ export class ElementCallOpenTelemetry {
     const config = Config.get();
     // we always enable opentelemetry in general. We only enable the OTLP
     // collector if a URL is defined (and in future if another setting is defined)
-    // The posthog exporter is always enabled, posthog reporting is enabled or disabled
+    // Posthog reporting is enabled or disabled
     // within the posthog code.
     const shouldEnableOtlp = Boolean(config.opentelemetry?.collector_url);
 
