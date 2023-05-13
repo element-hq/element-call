@@ -173,8 +173,16 @@ function getOneOnOneLayoutTilePositions(
   const gridAspectRatio = gridWidth / gridHeight;
 
   const smallPip = gridAspectRatio < 1 || gridWidth < 700;
-  const pipWidth = smallPip ? 114 : 230;
-  const pipHeight = smallPip ? 163 : 155;
+  const maxPipWidth = smallPip ? 114 : 230;
+  const maxPipHeight = smallPip ? 163 : 155;
+  // Cap the PiP size at 1/3 the remote tile size, preserving aspect ratio
+  const pipScaleFactor = Math.min(
+    1,
+    remotePosition.width / 3 / maxPipWidth,
+    remotePosition.height / 3 / maxPipHeight
+  );
+  const pipWidth = maxPipWidth * pipScaleFactor;
+  const pipHeight = maxPipHeight * pipScaleFactor;
   const pipGap = getPipGap(gridAspectRatio, gridWidth);
 
   const pipMinX = remotePosition.x + pipGap;
