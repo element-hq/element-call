@@ -47,6 +47,7 @@ interface Props {
   opacity?: SpringValue<number>;
   scale?: SpringValue<number>;
   shadow?: SpringValue<number>;
+  shadowSpread?: SpringValue<number>;
   zIndex?: SpringValue<number>;
   x?: SpringValue<number>;
   y?: SpringValue<number>;
@@ -79,6 +80,7 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
       opacity,
       scale,
       shadow,
+      shadowSpread,
       zIndex,
       x,
       y,
@@ -141,9 +143,6 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
         style={{
           opacity,
           scale,
-          boxShadow: shadow?.to(
-            (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
-          ),
           zIndex,
           x,
           y,
@@ -152,6 +151,8 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
           // but React's types say no
           "--tileWidth": width?.to((w) => `${w}px`),
           "--tileHeight": height?.to((h) => `${h}px`),
+          "--tileShadow": shadow?.to((s) => `${s}px`),
+          "--tileShadowSpread": shadowSpread?.to((s) => `${s}px`),
         }}
         ref={ref as ForwardedRef<HTMLDivElement>}
         data-testid="videoTile"

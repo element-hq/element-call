@@ -51,6 +51,7 @@ export interface TileSpring {
   opacity: number;
   scale: number;
   shadow: number;
+  shadowSpread: number;
   zIndex: number;
   x: number;
   y: number;
@@ -892,6 +893,8 @@ export function VideoGrid({
       // Whether the tile positions were valid at the time of the previous
       // animation
       const tilePositionsWereValid = tilePositionsValid.current;
+      const oneOnOneLayout =
+        tiles.length === 2 && !tiles.some((t) => t.presenter || t.focused);
 
       return (tileIndex: number) => {
         const tile = tiles[tileIndex];
@@ -911,12 +914,14 @@ export function VideoGrid({
             opacity: 1,
             zIndex: 2,
             shadow: 15,
+            shadowSpread: 0,
             immediate: (key: string) =>
               disableAnimations ||
               key === "zIndex" ||
               key === "x" ||
               key === "y" ||
-              key === "shadow",
+              key === "shadow" ||
+              key === "shadowSpread",
             from: {
               shadow: 0,
               scale: 0,
@@ -974,10 +979,14 @@ export function VideoGrid({
             opacity: remove ? 0 : 1,
             zIndex: tilePosition.zIndex,
             shadow: 1,
+            shadowSpread: oneOnOneLayout && tile.item.isLocal ? 1 : 0,
             from,
             reset,
             immediate: (key: string) =>
-              disableAnimations || key === "zIndex" || key === "shadow",
+              disableAnimations ||
+              key === "zIndex" ||
+              key === "shadow" ||
+              key === "shadowSpread",
             // If we just stopped dragging a tile, give it time for the
             // animation to settle before pushing its z-index back down
             delay: (key: string) => (key === "zIndex" ? 500 : 0),
