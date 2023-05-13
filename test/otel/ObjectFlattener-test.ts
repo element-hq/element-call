@@ -1,3 +1,8 @@
+import { GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
+import {
+  AudioConcealment,
+  ConnectionStatsReport,
+} from "matrix-js-sdk/src/webrtc/stats/statsReport";
 import { ObjectFlattener } from "../../src/otel/ObjectFlattener";
 
 /*
@@ -16,7 +21,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 describe("ObjectFlattener", () => {
-  const statsReport = {
+  const noConcealment: AudioConcealment = {
+    concealedAudio: 0,
+    totalAudioDuration: 0,
+  };
+
+  const statsReport: GroupCallStatsReport<ConnectionStatsReport> = {
     report: {
       bandwidth: { upload: 426, download: 0 },
       bitrate: {
@@ -92,8 +102,14 @@ describe("ObjectFlattener", () => {
           rtt: null,
         },
       ],
+      audioConcealment: new Map([
+        ["REMOTE_AUDIO_TRACK_ID", noConcealment],
+        ["REMOTE_VIDEO_TRACK_ID", noConcealment],
+      ]),
+      totalAudioConcealment: noConcealment,
     },
   };
+
   describe("on flattenObjectRecursive", () => {
     it("should flatter an Map object", () => {
       const flatObject = {};
