@@ -124,6 +124,7 @@ export class PosthogSpanProcessor implements SpanProcessor {
         const audioReceived = `${attributes["matrix.stats.summary.percentageReceivedAudioMedia"]}`;
         const maxJitter = `${attributes["matrix.stats.summary.maxJitter"]}`;
         const maxPacketLoss = `${attributes["matrix.stats.summary.maxPacketLoss"]}`;
+        const percentageConcealedAudio = `${attributes["matrix.stats.summary.percentageConcealedAudio"]}`;
         PosthogAnalytics.instance.trackEvent(
           {
             eventName: "MediaReceived",
@@ -133,6 +134,7 @@ export class PosthogSpanProcessor implements SpanProcessor {
             videoReceived: videoReceived,
             maxJitter: maxJitter,
             maxPacketLoss: maxPacketLoss,
+            percentageConcealedAudio: percentageConcealedAudio,
           },
           // Send instantly because the window might be closing
           { send_instantly: true }
