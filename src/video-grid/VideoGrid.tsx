@@ -51,6 +51,7 @@ export interface TileSpring {
   opacity: number;
   scale: number;
   shadow: number;
+  shadowSpread: number;
   zIndex: number;
   x: number;
   y: number;
@@ -172,8 +173,16 @@ function getOneOnOneLayoutTilePositions(
   const gridAspectRatio = gridWidth / gridHeight;
 
   const smallPip = gridAspectRatio < 1 || gridWidth < 700;
-  const pipWidth = smallPip ? 114 : 230;
-  const pipHeight = smallPip ? 163 : 155;
+  const maxPipWidth = smallPip ? 114 : 230;
+  const maxPipHeight = smallPip ? 163 : 155;
+  // Cap the PiP size at 1/3 the remote tile size, preserving aspect ratio
+  const pipScaleFactor = Math.min(
+    1,
+    remotePosition.width / 3 / maxPipWidth,
+    remotePosition.height / 3 / maxPipHeight
+  );
+  const pipWidth = maxPipWidth * pipScaleFactor;
+  const pipHeight = maxPipHeight * pipScaleFactor;
   const pipGap = getPipGap(gridAspectRatio, gridWidth);
 
   const pipMinX = remotePosition.x + pipGap;
@@ -892,6 +901,8 @@ export function VideoGrid({
       // Whether the tile positions were valid at the time of the previous
       // animation
       const tilePositionsWereValid = tilePositionsValid.current;
+      const oneOnOneLayout =
+        tiles.length === 2 && !tiles.some((t) => t.presenter || t.focused);
 
       return (tileIndex: number) => {
         const tile = tiles[tileIndex];
@@ -911,12 +922,14 @@ export function VideoGrid({
             opacity: 1,
             zIndex: 2,
             shadow: 15,
+            shadowSpread: 0,
             immediate: (key: string) =>
               disableAnimations ||
               key === "zIndex" ||
               key === "x" ||
               key === "y" ||
-              key === "shadow",
+              key === "shadow" ||
+              key === "shadowSpread",
             from: {
               shadow: 0,
               scale: 0,
@@ -974,10 +987,14 @@ export function VideoGrid({
             opacity: remove ? 0 : 1,
             zIndex: tilePosition.zIndex,
             shadow: 1,
+            shadowSpread: oneOnOneLayout && tile.item.isLocal ? 1 : 0,
             from,
             reset,
             immediate: (key: string) =>
-              disableAnimations || key === "zIndex" || key === "shadow",
+              disableAnimations ||
+              key === "zIndex" ||
+              key === "shadow" ||
+              key === "shadowSpread",
             // If we just stopped dragging a tile, give it time for the
             // animation to settle before pushing its z-index back down
             delay: (key: string) => (key === "zIndex" ? 500 : 0),
