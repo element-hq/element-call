@@ -102,7 +102,7 @@ export function OverflowMenu({
     <>
       <PopoverMenuTrigger disableOnState>
         <TooltipTrigger tooltip={tooltip} placement="top">
-          <Button variant="toolbar">
+          <Button variant="toolbar" data-testid="call_more">
             <OverflowIcon />
           </Button>
         </TooltipTrigger>
@@ -111,7 +111,7 @@ export function OverflowMenu({
             {showInvite && (
               <Item key="invite" textValue={t("Invite people")}>
                 <AddUserIcon />
-                <span>{t("Invite people")}</span>
+                <span data-testid="call_moreInvite">{t("Invite people")}</span>
               </Item>
             )}
             <Item key="settings" textValue={t("Settings")}>
