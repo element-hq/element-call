@@ -214,6 +214,12 @@ describe("ObjectFlattener", () => {
         "matrix.stats.conn.transport.1.remoteCandidateType": "srfx",
         "matrix.stats.conn.transport.1.networkType": "ethernet",
         "matrix.stats.conn.transport.1.rtt": "null",
+        "matrix.stats.conn.audioConcealment.REMOTE_AUDIO_TRACK_ID.concealedAudio": 0,
+        "matrix.stats.conn.audioConcealment.REMOTE_AUDIO_TRACK_ID.totalAudioDuration": 0,
+        "matrix.stats.conn.audioConcealment.REMOTE_VIDEO_TRACK_ID.concealedAudio": 0,
+        "matrix.stats.conn.audioConcealment.REMOTE_VIDEO_TRACK_ID.totalAudioDuration": 0,
+        "matrix.stats.conn.totalAudioConcealment.concealedAudio": 0,
+        "matrix.stats.conn.totalAudioConcealment.totalAudioDuration": 0,
       });
     });
   });
