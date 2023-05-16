@@ -47,7 +47,7 @@ export async function findDeviceByName(
  *
  * @return The available media devices
  */
-export async function getDevices(): Promise<MediaDeviceInfo[]> {
+export async function getNamedDevices(): Promise<MediaDeviceInfo[]> {
   // First get the devices without their labels, to learn what kinds of streams
   // we can request
   let devices: MediaDeviceInfo[];
