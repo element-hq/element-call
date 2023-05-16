@@ -32,7 +32,6 @@ limitations under the License.
 */
 
 import { MatrixClient } from "matrix-js-sdk/src/client";
-import { MediaHandlerEvent } from "matrix-js-sdk/src/webrtc/mediaHandler";
 import React, {
   useState,
   useEffect,
@@ -41,18 +40,26 @@ import React, {
   useContext,
   createContext,
   ReactNode,
+  useRef,
 } from "react";
 
+import { getNamedDevices } from "../media-utils";
+
 export interface MediaHandlerContextInterface {
-  audioInput: string;
+  audioInput: string | undefined;
   audioInputs: MediaDeviceInfo[];
   setAudioInput: (deviceId: string) => void;
-  videoInput: string;
+  videoInput: string | undefined;
   videoInputs: MediaDeviceInfo[];
   setVideoInput: (deviceId: string) => void;
-  audioOutput: string;
+  audioOutput: string | undefined;
   audioOutputs: MediaDeviceInfo[];
   setAudioOutput: (deviceId: string) => void;
+  /**
+   * A hook which requests for devices to be named. This requires media
+   * permissions.
+   */
+  useDeviceNames: () => void;
 }
 
 const MediaHandlerContext =
@@ -70,10 +77,10 @@ function getMediaPreferences(): MediaPreferences {
     try {
       return JSON.parse(mediaPreferences);
     } catch (e) {
-      return undefined;
+      return {};
     }
   } else {
-    return undefined;
+    return {};
   }
 }
 
@@ -103,112 +110,98 @@ export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
       audioOutputs,
     },
     setState,
-  ] = useState(() => {
-    const mediaPreferences = getMediaPreferences();
-    const mediaHandler = client.getMediaHandler();
+  ] = useState(() => ({
+    audioInput: undefined as string | undefined,
+    videoInput: undefined as string | undefined,
+    audioOutput: undefined as string | undefined,
+    audioInputs: [] as MediaDeviceInfo[],
+    videoInputs: [] as MediaDeviceInfo[],
+    audioOutputs: [] as MediaDeviceInfo[],
+  }));
 
-    mediaHandler.restoreMediaSettings(
-      mediaPreferences?.audioInput,
-      mediaPreferences?.videoInput
-    );
+  // A ref counting the number of components currently mounted that want
+  // to know device names
+  const numComponentsWantingNames = useRef(0);
 
-    return {
-      // @ts-ignore, ignore that audioInput is a private members of mediaHandler
-      audioInput: mediaHandler.audioInput,
-      // @ts-ignore, ignore that videoInput is a private members of mediaHandler
-      videoInput: mediaHandler.videoInput,
-      audioOutput: undefined,
-      audioInputs: [],
-      videoInputs: [],
-      audioOutputs: [],
-    };
-  });
+  const updateDevices = useCallback(
+    async (initial: boolean) => {
+      // Only request device names if components actually want them, because it
+      // could trigger an extra permission pop-up
+      const devices = await (numComponentsWantingNames.current > 0
+        ? getNamedDevices()
+        : navigator.mediaDevices.enumerateDevices());
+      const mediaPreferences = getMediaPreferences();
+
+      const audioInputs = devices.filter((d) => d.kind === "audioinput");
+      const videoInputs = devices.filter((d) => d.kind === "videoinput");
+      const audioOutputs = devices.filter((d) => d.kind === "audiooutput");
+
+      const audioInput = (
+        mediaPreferences.audioInput === undefined
+          ? audioInputs.at(0)
+          : audioInputs.find(
+              (d) => d.deviceId === mediaPreferences.audioInput
+            ) ?? audioInputs.at(0)
+      )?.deviceId;
+      const videoInput = (
+        mediaPreferences.videoInput === undefined
+          ? videoInputs.at(0)
+          : videoInputs.find(
+              (d) => d.deviceId === mediaPreferences.videoInput
+            ) ?? videoInputs.at(0)
+      )?.deviceId;
+      const audioOutput =
+        mediaPreferences.audioOutput === undefined
+          ? undefined
+          : audioOutputs.find(
+              (d) => d.deviceId === mediaPreferences.audioOutput
+            )?.deviceId;
+
+      updateMediaPreferences({ audioInput, videoInput, audioOutput });
+      setState({
+        audioInput,
+        videoInput,
+        audioOutput,
+        audioInputs,
+        videoInputs,
+        audioOutputs,
+      });
+
+      if (
+        initial ||
+        audioInput !== mediaPreferences.audioInput ||
+        videoInput !== mediaPreferences.videoInput
+      ) {
+        client.getMediaHandler().setMediaInputs(audioInput, videoInput);
+      }
+    },
+    [client, setState]
+  );
+
+  const useDeviceNames = useCallback(() => {
+    // This is a little weird from React's perspective as it looks like a
+    // dynamic hook, but it works
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      numComponentsWantingNames.current++;
+      if (numComponentsWantingNames.current === 1) updateDevices(false);
+      return () => void numComponentsWantingNames.current--;
+    }, []);
+  }, [updateDevices]);
 
   useEffect(() => {
-    const mediaHandler = client.getMediaHandler();
-
-    function updateDevices(): void {
-      navigator.mediaDevices.enumerateDevices().then((devices) => {
-        const mediaPreferences = getMediaPreferences();
-
-        const audioInputs = devices.filter(
-          (device) => device.kind === "audioinput"
-        );
-        const audioConnected = audioInputs.some(
-          // @ts-ignore
-          (device) => device.deviceId === mediaHandler.audioInput
-        );
-        // @ts-ignore
-        let audioInput = mediaHandler.audioInput;
-
-        if (!audioConnected && audioInputs.length > 0) {
-          audioInput = audioInputs[0].deviceId;
-        }
-
-        const videoInputs = devices.filter(
-          (device) => device.kind === "videoinput"
-        );
-        const videoConnected = videoInputs.some(
-          // @ts-ignore
-          (device) => device.deviceId === mediaHandler.videoInput
-        );
-
-        // @ts-ignore
-        let videoInput = mediaHandler.videoInput;
-
-        if (!videoConnected && videoInputs.length > 0) {
-          videoInput = videoInputs[0].deviceId;
-        }
-
-        const audioOutputs = devices.filter(
-          (device) => device.kind === "audiooutput"
-        );
-        let audioOutput = undefined;
-
-        if (
-          mediaPreferences &&
-          audioOutputs.some(
-            (device) => device.deviceId === mediaPreferences.audioOutput
-          )
-        ) {
-          audioOutput = mediaPreferences.audioOutput;
-        }
-
-        if (
-          // @ts-ignore
-          (mediaHandler.videoInput && mediaHandler.videoInput !== videoInput) ||
-          // @ts-ignore
-          mediaHandler.audioInput !== audioInput
-        ) {
-          mediaHandler.setMediaInputs(audioInput, videoInput);
-        }
-
-        updateMediaPreferences({ audioInput, videoInput, audioOutput });
-
-        setState({
-          audioInput,
-          videoInput,
-          audioOutput,
-          audioInputs,
-          videoInputs,
-          audioOutputs,
-        });
-      });
-    }
-    updateDevices();
-
-    mediaHandler.on(MediaHandlerEvent.LocalStreamsChanged, updateDevices);
-    navigator.mediaDevices.addEventListener("devicechange", updateDevices);
+    updateDevices(true);
+    const onDeviceChange = () => updateDevices(false);
+    navigator.mediaDevices.addEventListener("devicechange", onDeviceChange);
 
     return () => {
-      mediaHandler.removeListener(
-        MediaHandlerEvent.LocalStreamsChanged,
-        updateDevices
+      navigator.mediaDevices.removeEventListener(
+        "devicechange",
+        onDeviceChange
       );
-      navigator.mediaDevices.removeEventListener("devicechange", updateDevices);
-      mediaHandler.stopAllStreams();
+      client.getMediaHandler().stopAllStreams();
     };
-  }, [client]);
+  }, [client, updateDevices]);
 
   const setAudioInput: (deviceId: string) => void = useCallback(
     (deviceId: string) => {
@@ -245,6 +238,7 @@ export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
         audioOutput,
         audioOutputs,
         setAudioOutput,
+        useDeviceNames,
       }),
       [
         audioInput,
@@ -256,6 +250,7 @@ export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
         audioOutput,
         audioOutputs,
         setAudioOutput,
+        useDeviceNames,
       ]
     );
 
