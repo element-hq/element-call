@@ -1828,10 +1828,10 @@
   resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.3.1.tgz#b50a781709c81e10701004214340f25475a171a0"
   integrity sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==
 
-"@matrix-org/matrix-sdk-crypto-js@^0.1.0-alpha.8":
-  version "0.1.0-alpha.8"
-  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-js/-/matrix-sdk-crypto-js-0.1.0-alpha.8.tgz#18dd8e7fb56602d2999d8a502b49e902a2bb3782"
-  integrity sha512-hdmbbGXKrN6JNo3wdBaR5Zs3lXlzllT3U43ViNTlabB3nKkOZQnEAN/Isv+4EQSgz1+8897veI9Q8sqlQX22oA==
+"@matrix-org/matrix-sdk-crypto-js@^0.1.0-alpha.9":
+  version "0.1.0-alpha.9"
+  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-js/-/matrix-sdk-crypto-js-0.1.0-alpha.9.tgz#00bc266781502641a661858a5a521dd4d95275fc"
+  integrity sha512-g5cjpFwA9h0CbEGoAqNVI2QcyDsbI8FHoLo9+OXWHIezEKITsSv78mc5ilIwN+2YpmVlH0KNeQWTHw4vi0BMnw==
 
 "@matrix-org/olm@https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.14.tgz":
   version "3.2.14"
@@ -10557,12 +10557,12 @@ matrix-events-sdk@0.0.1:
   resolved "https://registry.yarnpkg.com/matrix-events-sdk/-/matrix-events-sdk-0.0.1.tgz#c8c38911e2cb29023b0bbac8d6f32e0de2c957dd"
   integrity sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#fcbc195fbe4170251b87f03a69c8dc5bfccfd5ac":
-  version "25.1.0"
-  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/fcbc195fbe4170251b87f03a69c8dc5bfccfd5ac"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#a7b1dcaf9514b2e424a387e266c6f383a5909927":
+  version "25.1.1"
+  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/a7b1dcaf9514b2e424a387e266c6f383a5909927"
   dependencies:
     "@babel/runtime" "^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-js" "^0.1.0-alpha.8"
+    "@matrix-org/matrix-sdk-crypto-js" "^0.1.0-alpha.9"
     another-json "^0.2.0"
     bs58 "^5.0.0"
     content-type "^1.0.4"
