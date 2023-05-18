@@ -171,7 +171,11 @@ export function VideoButton({
       tooltip={() => (muted ? t("Turn on camera") : t("Turn off camera"))}
     >
       <Button variant="toolbar" {...rest} off={muted}>
-        {muted ? <DisableVideoIcon /> : <VideoIcon />}
+        {muted ? (
+          <DisableVideoIcon data-testid="icon_videomute" />
+        ) : (
+          <VideoIcon data-testid="icon_video" />
+        )}
       </Button>
     </TooltipTrigger>
   );

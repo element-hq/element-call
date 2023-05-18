@@ -163,7 +163,10 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
         )}
         {videoMuted && (
           <>
-            <div className={styles.videoMutedOverlay} />
+            <div
+              data-testid="videoTile_avatar"
+              className={styles.videoMutedOverlay}
+            />
             {avatar}
           </>
         )}
