@@ -419,7 +419,9 @@ export function InCallView({
       }
     }
 
-    buttons.push(<HangupButton key="6" onPress={onLeave} />);
+    buttons.push(
+      <HangupButton key="6" onPress={onLeave} data-testid="incall_leave" />
+    );
     footer = <div className={styles.footer}>{buttons}</div>;
   }
 
