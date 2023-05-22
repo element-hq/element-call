@@ -453,7 +453,7 @@ export function InCallView({
         otelGroupCallMembership={otelGroupCallMembership}
         show={showInspector}
       />
-      {rageshakeRequestModalState.isOpen && (
+      {rageshakeRequestModalState.isOpen && !noControls && (
         <RageshakeRequestModal
           {...rageshakeRequestModalProps}
           roomIdOrAlias={roomIdOrAlias}
