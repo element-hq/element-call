@@ -45,6 +45,7 @@ export function ProfileSettingsTab({ client }: Props) {
 
   useEffect(() => {
     const form = formRef.current!;
+    // Auto-save when the user dismisses this component
     return () => {
       if (formChanged.current) {
         const data = new FormData(form);
