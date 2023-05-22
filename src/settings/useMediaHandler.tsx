@@ -14,9 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-
-import { MediaHandlerEvent } from "matrix-js-sdk/src/webrtc/mediaHandler";
+import { MatrixClient } from "matrix-js-sdk/src/client";
 import React, {
   useState,
   useEffect,
@@ -25,20 +23,27 @@ import React, {
   useContext,
   createContext,
   ReactNode,
+  useRef,
 } from "react";
-
 import { useClient } from "../ClientContext";
 
+import { getNamedDevices } from "../media-utils";
+
 export interface MediaHandlerContextInterface {
-  audioInput: string;
+  audioInput: string | undefined;
   audioInputs: MediaDeviceInfo[];
   setAudioInput: (deviceId: string) => void;
-  videoInput: string;
+  videoInput: string | undefined;
   videoInputs: MediaDeviceInfo[];
   setVideoInput: (deviceId: string) => void;
-  audioOutput: string;
+  audioOutput: string | undefined;
   audioOutputs: MediaDeviceInfo[];
   setAudioOutput: (deviceId: string) => void;
+  /**
+   * A hook which requests for devices to be named. This requires media
+   * permissions.
+   */
+  useDeviceNames: () => void;
 }
 
 const MediaHandlerContext =
@@ -49,6 +54,7 @@ interface MediaPreferences {
   videoInput?: string;
   audioOutput?: string;
 }
+
 function getMediaPreferences(): MediaPreferences {
   const mediaPreferences = localStorage.getItem("matrix-media-preferences");
 
@@ -56,10 +62,10 @@ function getMediaPreferences(): MediaPreferences {
     try {
       return JSON.parse(mediaPreferences);
     } catch (e) {
-      return undefined;
+      return {};
     }
   } else {
-    return undefined;
+    return {};
   }
 }
 
@@ -74,9 +80,11 @@ function updateMediaPreferences(newPreferences: MediaPreferences): void {
     })
   );
 }
+
 interface Props {
   children: ReactNode;
 }
+
 export function MediaHandlerProvider({ children }: Props): JSX.Element {
   const { client } = useClient();
   const [
@@ -89,122 +97,109 @@ export function MediaHandlerProvider({ children }: Props): JSX.Element {
       audioOutputs,
     },
     setState,
-  ] = useState(() => {
-    const mediaHandler = client?.getMediaHandler();
+  ] = useState(() => ({
+    audioInput: undefined as string | undefined,
+    videoInput: undefined as string | undefined,
+    audioOutput: undefined as string | undefined,
+    audioInputs: [] as MediaDeviceInfo[],
+    videoInputs: [] as MediaDeviceInfo[],
+    audioOutputs: [] as MediaDeviceInfo[],
+  }));
 
-    if (mediaHandler) {
+  // A ref counting the number of components currently mounted that want
+  // to know device names
+  const numComponentsWantingNames = useRef(0);
+
+  const updateDevices = useCallback(
+    async (client: MatrixClient, initial: boolean) => {
+      // Only request device names if components actually want them, because it
+      // could trigger an extra permission pop-up
+      const devices = await (numComponentsWantingNames.current > 0
+        ? getNamedDevices()
+        : navigator.mediaDevices.enumerateDevices());
       const mediaPreferences = getMediaPreferences();
-      mediaHandler?.restoreMediaSettings(
-        mediaPreferences?.audioInput,
-        mediaPreferences?.videoInput
-      );
-    }
 
-    return {
-      // @ts-ignore, ignore that audioInput is a private members of mediaHandler
-      audioInput: mediaHandler?.audioInput,
-      // @ts-ignore, ignore that videoInput is a private members of mediaHandler
-      videoInput: mediaHandler?.videoInput,
-      audioOutput: undefined,
-      audioInputs: [],
-      videoInputs: [],
-      audioOutputs: [],
-    };
-  });
+      const audioInputs = devices.filter((d) => d.kind === "audioinput");
+      const videoInputs = devices.filter((d) => d.kind === "videoinput");
+      const audioOutputs = devices.filter((d) => d.kind === "audiooutput");
+
+      const audioInput = (
+        mediaPreferences.audioInput === undefined
+          ? audioInputs.at(0)
+          : audioInputs.find(
+              (d) => d.deviceId === mediaPreferences.audioInput
+            ) ?? audioInputs.at(0)
+      )?.deviceId;
+      const videoInput = (
+        mediaPreferences.videoInput === undefined
+          ? videoInputs.at(0)
+          : videoInputs.find(
+              (d) => d.deviceId === mediaPreferences.videoInput
+            ) ?? videoInputs.at(0)
+      )?.deviceId;
+      const audioOutput =
+        mediaPreferences.audioOutput === undefined
+          ? undefined
+          : audioOutputs.find(
+              (d) => d.deviceId === mediaPreferences.audioOutput
+            )?.deviceId;
+
+      updateMediaPreferences({ audioInput, videoInput, audioOutput });
+      setState({
+        audioInput,
+        videoInput,
+        audioOutput,
+        audioInputs,
+        videoInputs,
+        audioOutputs,
+      });
+
+      if (
+        initial ||
+        audioInput !== mediaPreferences.audioInput ||
+        videoInput !== mediaPreferences.videoInput
+      ) {
+        client.getMediaHandler().setMediaInputs(audioInput, videoInput);
+      }
+    },
+    [setState]
+  );
+
+  const useDeviceNames = useCallback(() => {
+    // This is a little weird from React's perspective as it looks like a
+    // dynamic hook, but it works
+    // eslint-disable-next-line react-hooks/rules-of-hooks
+    useEffect(() => {
+      if (client) {
+        numComponentsWantingNames.current++;
+        if (numComponentsWantingNames.current === 1)
+          updateDevices(client, false);
+        return () => void numComponentsWantingNames.current--;
+      }
+    }, []);
+  }, [client, updateDevices]);
 
   useEffect(() => {
-    if (!client) return;
+    if (client) {
+      updateDevices(client, true);
+      const onDeviceChange = () => updateDevices(client, false);
+      navigator.mediaDevices.addEventListener("devicechange", onDeviceChange);
 
-    const mediaHandler = client.getMediaHandler();
-
-    function updateDevices(): void {
-      navigator.mediaDevices.enumerateDevices().then((devices) => {
-        const mediaPreferences = getMediaPreferences();
-
-        const audioInputs = devices.filter(
-          (device) => device.kind === "audioinput"
+      return () => {
+        navigator.mediaDevices.removeEventListener(
+          "devicechange",
+          onDeviceChange
         );
-        const audioConnected = audioInputs.some(
-          // @ts-ignore
-          (device) => device.deviceId === mediaHandler.audioInput
-        );
-        // @ts-ignore
-        let audioInput = mediaHandler.audioInput;
-
-        if (!audioConnected && audioInputs.length > 0) {
-          audioInput = audioInputs[0].deviceId;
-        }
-
-        const videoInputs = devices.filter(
-          (device) => device.kind === "videoinput"
-        );
-        const videoConnected = videoInputs.some(
-          // @ts-ignore
-          (device) => device.deviceId === mediaHandler.videoInput
-        );
-
-        // @ts-ignore
-        let videoInput = mediaHandler.videoInput;
-
-        if (!videoConnected && videoInputs.length > 0) {
-          videoInput = videoInputs[0].deviceId;
-        }
-
-        const audioOutputs = devices.filter(
-          (device) => device.kind === "audiooutput"
-        );
-        let audioOutput = undefined;
-
-        if (
-          mediaPreferences &&
-          audioOutputs.some(
-            (device) => device.deviceId === mediaPreferences.audioOutput
-          )
-        ) {
-          audioOutput = mediaPreferences.audioOutput;
-        }
-
-        if (
-          // @ts-ignore
-          (mediaHandler.videoInput && mediaHandler.videoInput !== videoInput) ||
-          // @ts-ignore
-          mediaHandler.audioInput !== audioInput
-        ) {
-          mediaHandler.setMediaInputs(audioInput, videoInput);
-        }
-
-        updateMediaPreferences({ audioInput, videoInput, audioOutput });
-
-        setState({
-          audioInput,
-          videoInput,
-          audioOutput,
-          audioInputs,
-          videoInputs,
-          audioOutputs,
-        });
-      });
+        client.getMediaHandler().stopAllStreams();
+      };
     }
-    updateDevices();
-
-    mediaHandler.on(MediaHandlerEvent.LocalStreamsChanged, updateDevices);
-    navigator.mediaDevices.addEventListener("devicechange", updateDevices);
-
-    return () => {
-      mediaHandler.removeListener(
-        MediaHandlerEvent.LocalStreamsChanged,
-        updateDevices
-      );
-      navigator.mediaDevices.removeEventListener("devicechange", updateDevices);
-      mediaHandler.stopAllStreams();
-    };
-  }, [client]);
+  }, [client, updateDevices]);
 
   const setAudioInput: (deviceId: string) => void = useCallback(
     (deviceId: string) => {
       updateMediaPreferences({ audioInput: deviceId });
       setState((prevState) => ({ ...prevState, audioInput: deviceId }));
-      client.getMediaHandler().setAudioInput(deviceId);
+      client?.getMediaHandler().setAudioInput(deviceId);
     },
     [client]
   );
@@ -235,6 +230,7 @@ export function MediaHandlerProvider({ children }: Props): JSX.Element {
         audioOutput,
         audioOutputs,
         setAudioOutput,
+        useDeviceNames,
       }),
       [
         audioInput,
@@ -246,6 +242,7 @@ export function MediaHandlerProvider({ children }: Props): JSX.Element {
         audioOutput,
         audioOutputs,
         setAudioOutput,
+        useDeviceNames,
       ]
     );
 

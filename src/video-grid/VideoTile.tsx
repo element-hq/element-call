@@ -20,8 +20,8 @@ import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
 import styles from "./VideoTile.module.css";
+import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
-import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
 import { AudioButton, FullscreenButton } from "../button/Button";
 import { ConnectionState } from "../room/useGroupCall";
 
@@ -47,6 +47,7 @@ interface Props {
   opacity?: SpringValue<number>;
   scale?: SpringValue<number>;
   shadow?: SpringValue<number>;
+  shadowSpread?: SpringValue<number>;
   zIndex?: SpringValue<number>;
   x?: SpringValue<number>;
   y?: SpringValue<number>;
@@ -79,6 +80,7 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
       opacity,
       scale,
       shadow,
+      shadowSpread,
       zIndex,
       x,
       y,
@@ -141,9 +143,6 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
         style={{
           opacity,
           scale,
-          boxShadow: shadow?.to(
-            (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
-          ),
           zIndex,
           x,
           y,
@@ -152,8 +151,11 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
           // but React's types say no
           "--tileWidth": width?.to((w) => `${w}px`),
           "--tileHeight": height?.to((h) => `${h}px`),
+          "--tileShadow": shadow?.to((s) => `${s}px`),
+          "--tileShadowSpread": shadowSpread?.to((s) => `${s}px`),
         }}
         ref={ref as ForwardedRef<HTMLDivElement>}
+        data-testid="videoTile"
         {...rest}
       >
         {toolbarButtons.length > 0 && !maximised && (
@@ -177,13 +179,19 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
                 Mute state is currently sent over to-device messages, which
                 aren't quite real-time, so this is an important kludge to make
                 sure no one appears muted when they've clearly begun talking. */
-                audioMuted && !videoMuted && !speaking && <MicMutedIcon />
+                speaking || !audioMuted ? <MicIcon /> : <MicMutedIcon />
               }
-              {videoMuted && <VideoMutedIcon />}
-              <span title={caption}>{caption}</span>
+              <span data-testid="videoTile_caption" title={caption}>
+                {caption}
+              </span>
             </div>
           ))}
-        <video ref={mediaRef} playsInline disablePictureInPicture />
+        <video
+          data-testid="videoTile_video"
+          ref={mediaRef}
+          playsInline
+          disablePictureInPicture
+        />
       </animated.div>
     );
   }

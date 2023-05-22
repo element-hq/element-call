@@ -65,7 +65,9 @@ export const SettingsModal = (props: Props) => {
     audioOutput,
     audioOutputs,
     setAudioOutput,
+    useDeviceNames,
   } = useMediaHandler();
+  useDeviceNames();
 
   const [spatialAudio, setSpatialAudio] = useSpatialAudio();
   const [showInspector, setShowInspector] = useShowInspector();

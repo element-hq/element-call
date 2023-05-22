@@ -43,7 +43,9 @@ export function JoinExistingCallModal({ onJoin, onClose, ...rest }: Props) {
         <p>{t("This call already exists, would you like to join?")}</p>
         <FieldRow rightAlign className={styles.buttons}>
           <Button onPress={onClose}>{t("No")}</Button>
-          <Button onPress={onJoin}>{t("Yes, join call")}</Button>
+          <Button onPress={onJoin} data-testid="home_joinExistingRoom">
+            {t("Yes, join call")}
+          </Button>
         </FieldRow>
       </ModalContent>
     </Modal>

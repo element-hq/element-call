@@ -40,9 +40,6 @@ jobs:
           SENTRY_URL: ${{ secrets.SENTRY_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
           VITE_APP_VERSION: ${{ github.event.release.tag_name }}
-          # This appears to be necessary to stop Vite from OOMing
-          # https://github.com/vitejs/vite/issues/2433
-          NODE_OPTIONS: "--max-old-space-size=16384"
 
       - name: Create Tarball
         env:

@@ -23,9 +23,6 @@ jobs:
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
           SENTRY_URL: ${{ secrets.SENTRY_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          # This appears to be necessary to stop Vite from OOMing
-          # https://github.com/vitejs/vite/issues/2433
-          NODE_OPTIONS: "--max-old-space-size=16384"
       - name: Upload Artifact
         uses: actions/upload-artifact@v2
         with:

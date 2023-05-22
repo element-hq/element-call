@@ -34,7 +34,7 @@ import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useMediaHandler } from "../settings/useMediaHandler";
-import { findDeviceByName, getDevices } from "../media-utils";
+import { findDeviceByName, getNamedDevices } from "../media-utils";
 
 declare global {
   interface Window {
@@ -102,7 +102,7 @@ export function GroupCallView({
         // Get the available devices so we can match the selected device
         // to its ID. This involves getting a media stream (see docs on
         // the function) so we only do it once and re-use the result.
-        const devices = await getDevices();
+        const devices = await getNamedDevices();
 
         const { audioInput, videoInput } = ev.detail
           .data as unknown as JoinCallData;
@@ -281,7 +281,7 @@ export function GroupCallView({
   } else if (isEmbedded) {
     return (
       <FullScreenView>
-        <h1>{t("Loading room…")}</h1>
+        <h1>{t("Loading…")}</h1>
       </FullScreenView>
     );
   } else {

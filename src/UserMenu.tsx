@@ -59,6 +59,7 @@ export function UserMenu({
         key: "user",
         icon: UserIcon,
         label: displayName,
+        dataTestid: "usermenu_user",
       });
       arr.push({
         key: "settings",
@@ -71,6 +72,7 @@ export function UserMenu({
           key: "login",
           label: t("Sign in"),
           icon: LoginIcon,
+          dataTestid: "usermenu_login",
         });
       }
 
@@ -79,6 +81,7 @@ export function UserMenu({
           key: "logout",
           label: t("Sign out"),
           icon: LogoutIcon,
+          dataTestid: "usermenu_logout",
         });
       }
     }
@@ -99,7 +102,11 @@ export function UserMenu({
   return (
     <PopoverMenuTrigger placement="bottom right">
       <TooltipTrigger tooltip={tooltip} placement="bottom left">
-        <Button variant="icon" className={styles.userButton}>
+        <Button
+          variant="icon"
+          className={styles.userButton}
+          data-testid="usermenu_open"
+        >
           {isAuthenticated && (!isPasswordlessUser || avatarUrl) ? (
             <Avatar
               size={Size.SM}
@@ -114,9 +121,14 @@ export function UserMenu({
       </TooltipTrigger>
       {(props) => (
         <Menu {...props} label={t("User menu")} onAction={onAction}>
-          {items.map(({ key, icon: Icon, label }) => (
+          {items.map(({ key, icon: Icon, label, dataTestid }) => (
             <Item key={key} textValue={label}>
-              <Icon width={24} height={24} className={styles.menuIcon} />
+              <Icon
+                width={24}
+                height={24}
+                className={styles.menuIcon}
+                data-testid={dataTestid}
+              />
               <Body overflowEllipsis>{label}</Body>
             </Item>
           ))}

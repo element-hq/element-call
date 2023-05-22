@@ -32,7 +32,7 @@ import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
 import { translatedError } from "../TranslatedError";
 import { widget } from "../widget";
 
-const STATS_COLLECT_INTERVAL_TIME_MS = 30000;
+const STATS_COLLECT_INTERVAL_TIME_MS = 10000;
 
 export interface GroupCallLoadState {
   loading: boolean;

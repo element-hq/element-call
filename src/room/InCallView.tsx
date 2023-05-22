@@ -407,11 +407,13 @@ export function InCallView({
         key="1"
         muted={microphoneMuted}
         onPress={toggleMicrophoneMuted}
+        data-testid="incall_mute"
       />,
       <VideoButton
         key="2"
         muted={localVideoMuted}
         onPress={toggleLocalVideoMuted}
+        data-testid="incall_videomute"
       />
     );
 
@@ -422,6 +424,7 @@ export function InCallView({
             key="3"
             enabled={isScreensharing}
             onPress={toggleScreensharing}
+            data-testid="incall_screenshare"
           />
         );
       }
@@ -430,7 +433,9 @@ export function InCallView({
       }
     }
 
-    buttons.push(<HangupButton key="6" onPress={onLeave} />);
+    buttons.push(
+      <HangupButton key="6" onPress={onLeave} data-testid="incall_leave" />
+    );
     footer = <div className={styles.footer}>{buttons}</div>;
   }
 

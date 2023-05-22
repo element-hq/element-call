@@ -133,6 +133,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
                 type="text"
                 required
                 autoComplete="off"
+                data-testid="home_callName"
               />
 
               <Button
@@ -140,6 +141,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
                 size="lg"
                 className={styles.button}
                 disabled={loading}
+                data-testid="home_go"
               >
                 {loading ? t("Loading…") : t("Go")}
               </Button>
