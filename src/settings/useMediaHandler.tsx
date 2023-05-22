@@ -25,8 +25,8 @@ import React, {
   ReactNode,
   useRef,
 } from "react";
-import { useClient } from "../ClientContext";
 
+import { useClient } from "../ClientContext";
 import { getNamedDevices } from "../media-utils";
 
 export interface MediaHandlerContextInterface {

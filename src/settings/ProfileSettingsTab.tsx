@@ -14,11 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ChangeEvent, useCallback, useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 
-import { Button } from "../button";
 import { useProfile } from "../profile/useProfile";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { AvatarInputField } from "../input/AvatarInputField";
@@ -29,52 +28,47 @@ interface Props {
 }
 export function ProfileSettingsTab({ client }: Props) {
   const { t } = useTranslation();
-  const {
-    error,
-    loading,
-    displayName: initialDisplayName,
-    avatarUrl,
-    saveProfile,
-  } = useProfile(client);
-  const [displayName, setDisplayName] = useState(initialDisplayName || "");
-  const [removeAvatar, setRemoveAvatar] = useState(false);
+  const { error, displayName, avatarUrl, saveProfile } = useProfile(client);
 
-  const onRemoveAvatar = useCallback(() => {
-    setRemoveAvatar(true);
+  const formRef = useRef<HTMLFormElement | null>(null);
+
+  const formChanged = useRef(false);
+  const onFormChange = useCallback(() => {
+    formChanged.current = true;
   }, []);
 
-  const onChangeDisplayName = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setDisplayName(e.target.value);
-    },
-    [setDisplayName]
-  );
+  const removeAvatar = useRef(false);
+  const onRemoveAvatar = useCallback(() => {
+    removeAvatar.current = true;
+    formChanged.current = true;
+  }, []);
 
-  const onSubmit = useCallback(
-    (e) => {
-      e.preventDefault();
-      const data = new FormData(e.target);
-      const displayNameDataEntry = data.get("displayName");
-      const avatar: File | string = data.get("avatar");
+  useEffect(() => {
+    const form = formRef.current!;
+    return () => {
+      if (formChanged.current) {
+        const data = new FormData(form);
+        const displayNameDataEntry = data.get("displayName");
+        const avatar = data.get("avatar");
 
-      const avatarSize =
-        typeof avatar == "string" ? avatar.length : avatar.size;
-      const displayName =
-        typeof displayNameDataEntry == "string"
-          ? displayNameDataEntry
-          : displayNameDataEntry.name;
+        const avatarSize =
+          typeof avatar == "string" ? avatar.length : avatar?.size ?? 0;
+        const displayName =
+          typeof displayNameDataEntry == "string"
+            ? displayNameDataEntry
+            : displayNameDataEntry?.name ?? null;
 
-      saveProfile({
-        displayName,
-        avatar: avatar && avatarSize > 0 ? avatar : undefined,
-        removeAvatar: removeAvatar && (!avatar || avatarSize === 0),
-      });
-    },
-    [saveProfile, removeAvatar]
-  );
+        saveProfile({
+          displayName,
+          avatar: avatar && avatarSize > 0 ? avatar : undefined,
+          removeAvatar: removeAvatar.current && (!avatar || avatarSize === 0),
+        });
+      }
+    };
+  }, [saveProfile]);
 
   return (
-    <form onSubmit={onSubmit} className={styles.content}>
+    <form onChange={onFormChange} ref={formRef} className={styles.content}>
       <FieldRow className={styles.avatarFieldRow}>
         <AvatarInputField
           id="avatar"
@@ -92,7 +86,7 @@ export function ProfileSettingsTab({ client }: Props) {
           label={t("Username")}
           type="text"
           disabled
-          value={client.getUserId()}
+          value={client.getUserId()!}
         />
       </FieldRow>
       <FieldRow>
@@ -104,8 +98,7 @@ export function ProfileSettingsTab({ client }: Props) {
           required
           autoComplete="off"
           placeholder={t("Display name")}
-          value={displayName}
-          onChange={onChangeDisplayName}
+          defaultValue={displayName}
           data-testid="profile_displayname"
         />
       </FieldRow>
@@ -114,11 +107,6 @@ export function ProfileSettingsTab({ client }: Props) {
           <ErrorMessage error={error} />
         </FieldRow>
       )}
-      <FieldRow rightAlign>
-        <Button type="submit" disabled={loading}>
-          {loading ? t("Saving…") : t("Save")}
-        </Button>
-      </FieldRow>
     </form>
   );
 }

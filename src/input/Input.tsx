@@ -72,6 +72,7 @@ interface InputFieldProps {
   autoCorrect?: string;
   autoCapitalize?: string;
   value?: string;
+  defaultValue?: string;
   placeholder?: string;
   defaultChecked?: boolean;
   onChange?: (event: ChangeEvent) => void;
