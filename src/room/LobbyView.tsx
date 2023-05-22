@@ -137,6 +137,7 @@ export function LobbyView({
               size="lg"
               disabled={state !== GroupCallState.LocalCallFeedInitialized}
               onPress={onEnter}
+              data-testid="lobby_joinCall"
             >
               Join call now
             </Button>
@@ -146,6 +147,7 @@ export function LobbyView({
               value={getRoomUrl(roomIdOrAlias)}
               className={styles.copyButton}
               copiedMessage={t("Call link copied")}
+              data-testid="lobby_inviteLink"
             >
               Copy call link and join later
             </CopyButton>

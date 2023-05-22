@@ -106,6 +106,7 @@ export function ProfileSettingsTab({ client }: Props) {
           placeholder={t("Display name")}
           value={displayName}
           onChange={onChangeDisplayName}
+          data-testid="profile_displayname"
         />
       </FieldRow>
       {error && (
