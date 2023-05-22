@@ -238,7 +238,7 @@ export function SettingsButton({
   return (
     <TooltipTrigger tooltip={tooltip}>
       <Button variant="toolbar" {...rest}>
-        <SettingsIcon />
+        <SettingsIcon width={20} height={20} />
       </Button>
     </TooltipTrigger>
   );
