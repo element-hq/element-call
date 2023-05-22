@@ -195,7 +195,7 @@ export const SettingsModal = (props: Props) => {
           key="profile"
           title={
             <>
-              <UserIcon width={16} height={16} />
+              <UserIcon width={15} height={15} />
               <span>{t("Profile")}</span>
             </>
           }
