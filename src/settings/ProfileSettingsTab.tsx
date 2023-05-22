@@ -74,7 +74,7 @@ export function ProfileSettingsTab({ client }: Props) {
   );
 
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={onSubmit} className={styles.content}>
       <FieldRow className={styles.avatarFieldRow}>
         <AvatarInputField
           id="avatar"
