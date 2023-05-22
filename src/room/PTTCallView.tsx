@@ -309,7 +309,7 @@ export const PTTCallView: React.FC<Props> = ({
       {settingsModalState.isOpen && (
         <SettingsModal
           client={client}
-          roomId={roomIdOrAlias}
+          roomId={groupCall.room.roomId}
           {...settingsModalProps}
         />
       )}

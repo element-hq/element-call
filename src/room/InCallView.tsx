@@ -75,6 +75,8 @@ import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
+import { useRageshakeRequestModal } from "../settings/submit-rageshake";
+import { RageshakeRequestModal } from "./RageshakeRequestModal";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -341,6 +343,11 @@ export function InCallView({
   };
 
   const {
+    modalState: rageshakeRequestModalState,
+    modalProps: rageshakeRequestModalProps,
+  } = useRageshakeRequestModal(groupCall.room.roomId);
+
+  const {
     modalState: settingsModalState,
     modalProps: settingsModalProps,
   }: {
@@ -469,10 +476,16 @@ export function InCallView({
         otelGroupCallMembership={otelGroupCallMembership}
         show={showInspector}
       />
+      {rageshakeRequestModalState.isOpen && !noControls && (
+        <RageshakeRequestModal
+          {...rageshakeRequestModalProps}
+          roomIdOrAlias={roomIdOrAlias}
+        />
+      )}
       {settingsModalState.isOpen && (
         <SettingsModal
           client={client}
-          roomId={roomIdOrAlias}
+          roomId={groupCall.room.roomId}
           {...settingsModalProps}
         />
       )}
