@@ -333,27 +333,39 @@ export class OTelGroupCallMembership {
   public onConnectionStatsReport(
     statsReport: GroupCallStatsReport<ConnectionStatsReport>
   ) {
+    this.buildCallStatsSpan(
+      OTelStatsReportType.ConnectionReport,
+      statsReport.report
+    );
+  }
+
+  public onByteSentStatsReport(
+    statsReport: GroupCallStatsReport<ByteSentStatsReport>
+  ) {
+    this.buildCallStatsSpan(
+      OTelStatsReportType.ByteSentReport,
+      statsReport.report
+    );
+  }
+
+  public buildCallStatsSpan(
+    type: OTelStatsReportType,
+    report: ByteSentStatsReport | ConnectionStatsReport
+  ): void {
     if (!ElementCallOpenTelemetry.instance) return;
 
-    const callId = statsReport.report.callId;
+    const callId = report.callId;
     const call = this.callsByCallId.get(callId);
 
     if (!call) {
-      this.callMembershipSpan?.addEvent(
-        OTelStatsReportType.ConnectionReport + "_unknown_callid",
-        {
-          "call.callId": callId,
-          "call.opponentMemberId": statsReport.report.opponentMemberId,
-        }
-      );
-      logger.error(
-        "Received ConnectionStatsReport with unknown call ID " + callId
-      );
+      this.callMembershipSpan?.addEvent(type + "_unknown_callid", {
+        "call.callId": callId,
+        "call.opponentMemberId": report.opponentMemberId,
+      });
+      logger.error(`Received ${type} with unknown call ID: ${callId}`);
       return;
     }
-    const data =
-      ObjectFlattener.flattenConnectionStatsReportObject(statsReport);
-
+    const data = ObjectFlattener.flattenReportObject(type, report);
     const ctx = opentelemetry.trace.setSpan(
       opentelemetry.context.active(),
       call.span
@@ -368,42 +380,15 @@ export class OTelGroupCallMembership {
     };
 
     const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
-      OTelStatsReportType.ConnectionReport,
+      type,
       options,
       ctx
     );
 
     span.setAttribute("matrix.callId", callId);
-    span.setAttribute(
-      "matrix.opponentMemberId",
-      statsReport.report.opponentMemberId
-    );
+    span.setAttribute("matrix.opponentMemberId", report.opponentMemberId);
     span.addEvent("matrix.call.connection_stats_event", data);
     span.end();
-  }
-
-  public onByteSentStatsReport(
-    statsReport: GroupCallStatsReport<ByteSentStatsReport>
-  ) {
-    if (!ElementCallOpenTelemetry.instance) return;
-
-    const callId = statsReport.report.callId;
-    const call = this.callsByCallId.get(callId);
-
-    if (!call) {
-      this.callMembershipSpan?.addEvent(
-        OTelStatsReportType.ByteSentReport + "_unknown_callid",
-        {
-          "call.callId": callId,
-          "call.opponentMemberId": statsReport.report.opponentMemberId,
-        }
-      );
-      logger.error("Received ByteSentReport with unknown call ID " + callId);
-      return;
-    }
-
-    const data = ObjectFlattener.flattenByteSentStatsReportObject(statsReport);
-    call.span.addEvent(OTelStatsReportType.ByteSentReport, data);
   }
 
   public onSummaryStatsReport(
