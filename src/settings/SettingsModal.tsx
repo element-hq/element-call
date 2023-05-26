@@ -26,7 +26,7 @@ import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
 import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
 import { SelectInput } from "../input/SelectInput";
-import { useMediaHandler } from "./useMediaHandler";
+import { MediaDevicesState } from "../room/devices/useMediaDevices";
 import {
   useKeyboardShortcuts,
   useSpatialAudio,
@@ -40,23 +40,13 @@ import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
 
 interface Props {
+  mediaDevices: MediaDevicesState;
   isOpen: boolean;
   onClose: () => void;
 }
 
 export const SettingsModal = (props: Props) => {
   const { t } = useTranslation();
-  const {
-    audioInput,
-    audioInputs,
-    setAudioInput,
-    videoInput,
-    videoInputs,
-    setVideoInput,
-    audioOutput,
-    audioOutputs,
-    setAudioOutput,
-  } = useMediaHandler();
 
   const [spatialAudio, setSpatialAudio] = useSpatialAudio();
   const [showInspector, setShowInspector] = useShowInspector();
@@ -64,6 +54,30 @@ export const SettingsModal = (props: Props) => {
   const [keyboardShortcuts, setKeyboardShortcuts] = useKeyboardShortcuts();
 
   const downloadDebugLog = useDownloadDebugLog();
+
+  // Generate a `SelectInput` with a list of devices for a given device kind.
+  const generateDeviceSelection = (kind: MediaDeviceKind, caption: string) => {
+    const devices = props.mediaDevices.state.get(kind);
+    if (!devices) return null;
+
+    return (
+      <SelectInput
+        label={caption}
+        selectedKey={devices.available[devices.selected].deviceId}
+        onSelectionChange={(id) =>
+          props.mediaDevices.selectActiveDevice(kind, id.toString())
+        }
+      >
+        {devices.available.map(({ deviceId, label }, index) => (
+          <Item key={deviceId}>
+            {!!label && label.trim().length > 0
+              ? label
+              : `${caption} ${index + 1}`}
+          </Item>
+        ))}
+      </SelectInput>
+    );
+  };
 
   return (
     <Modal
@@ -82,34 +96,8 @@ export const SettingsModal = (props: Props) => {
             </>
           }
         >
-          <SelectInput
-            label={t("Microphone")}
-            selectedKey={audioInput}
-            onSelectionChange={setAudioInput}
-          >
-            {audioInputs.map(({ deviceId, label }, index) => (
-              <Item key={deviceId}>
-                {!!label && label.trim().length > 0
-                  ? label
-                  : t("Microphone {{n}}", { n: index + 1 })}
-              </Item>
-            ))}
-          </SelectInput>
-          {audioOutputs.length > 0 && (
-            <SelectInput
-              label={t("Speaker")}
-              selectedKey={audioOutput}
-              onSelectionChange={setAudioOutput}
-            >
-              {audioOutputs.map(({ deviceId, label }, index) => (
-                <Item key={deviceId}>
-                  {!!label && label.trim().length > 0
-                    ? label
-                    : t("Speaker {{n}}", { n: index + 1 })}
-                </Item>
-              ))}
-            </SelectInput>
-          )}
+          {generateDeviceSelection("audioinput", t("Microphone"))}
+          {generateDeviceSelection("audiooutput", t("Speaker"))}
           <FieldRow>
             <InputField
               id="spatialAudio"
@@ -138,19 +126,7 @@ export const SettingsModal = (props: Props) => {
             </>
           }
         >
-          <SelectInput
-            label={t("Camera")}
-            selectedKey={videoInput}
-            onSelectionChange={setVideoInput}
-          >
-            {videoInputs.map(({ deviceId, label }, index) => (
-              <Item key={deviceId}>
-                {!!label && label.trim().length > 0
-                  ? label
-                  : t("Camera {{n}}", { n: index + 1 })}
-              </Item>
-            ))}
-          </SelectInput>
+          {generateDeviceSelection("videoinput", t("Camera"))}
         </TabItem>
         <TabItem
           title={

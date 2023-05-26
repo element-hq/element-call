@@ -16,7 +16,6 @@ limitations under the License.
 
 import React, { useCallback } from "react";
 import { Item } from "@react-stately/collections";
-import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { OverlayTriggerState } from "@react-stately/overlays";
 import { useTranslation } from "react-i18next";
 
@@ -33,11 +32,13 @@ import { InviteModal } from "./InviteModal";
 import { TooltipTrigger } from "../Tooltip";
 import { FeedbackModal } from "./FeedbackModal";
 import { Config } from "../config/Config";
+import { MediaDevicesState } from "./devices/useMediaDevices";
 
 interface Props {
-  roomIdOrAlias: string;
+  roomId: string;
+  mediaDevices: MediaDevicesState;
+
   inCall: boolean;
-  groupCall: GroupCall;
   showInvite: boolean;
   feedbackModalState: OverlayTriggerState;
   feedbackModalProps: {
@@ -46,16 +47,8 @@ interface Props {
   };
 }
 
-export function OverflowMenu({
-  roomIdOrAlias,
-  inCall,
-  groupCall,
-  showInvite,
-  feedbackModalState,
-  feedbackModalProps,
-}: Props) {
+export function OverflowMenu(props: Props) {
   const { t } = useTranslation();
-
   const {
     modalState: inviteModalState,
     modalProps: inviteModalProps,
@@ -89,11 +82,11 @@ export function OverflowMenu({
           settingsModalState.open();
           break;
         case "feedback":
-          feedbackModalState.open();
+          props.feedbackModalState.open();
           break;
       }
     },
-    [feedbackModalState, inviteModalState, settingsModalState]
+    [props.feedbackModalState, inviteModalState, settingsModalState]
   );
 
   const tooltip = useCallback(() => t("More"), [t]);
@@ -106,9 +99,9 @@ export function OverflowMenu({
             <OverflowIcon />
           </Button>
         </TooltipTrigger>
-        {(props: JSX.IntrinsicAttributes) => (
-          <Menu {...props} label={t("More menu")} onAction={onAction}>
-            {showInvite && (
+        {(attr: JSX.IntrinsicAttributes) => (
+          <Menu {...attr} label={t("More menu")} onAction={onAction}>
+            {props.showInvite && (
               <Item key="invite" textValue={t("Invite people")}>
                 <AddUserIcon />
                 <span>{t("Invite people")}</span>
@@ -127,15 +120,20 @@ export function OverflowMenu({
           </Menu>
         )}
       </PopoverMenuTrigger>
-      {settingsModalState.isOpen && <SettingsModal {...settingsModalProps} />}
-      {inviteModalState.isOpen && (
-        <InviteModal roomIdOrAlias={roomIdOrAlias} {...inviteModalProps} />
+      {settingsModalState.isOpen && (
+        <SettingsModal
+          mediaDevices={props.mediaDevices}
+          {...settingsModalProps}
+        />
       )}
-      {feedbackModalState.isOpen && (
+      {inviteModalState.isOpen && (
+        <InviteModal roomIdOrAlias={props.roomId} {...inviteModalProps} />
+      )}
+      {props.feedbackModalState.isOpen && (
         <FeedbackModal
-          {...feedbackModalProps}
-          roomId={groupCall?.room.roomId}
-          inCall={inCall}
+          roomId={props.roomId}
+          inCall={props.inCall}
+          {...props.feedbackModalProps}
         />
       )}
     </>
