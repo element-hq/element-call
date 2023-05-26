@@ -14,90 +14,50 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useRef } from "react";
-import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import React from "react";
 import { PressEvent } from "@react-types/shared";
-import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import { Trans, useTranslation } from "react-i18next";
 
 import styles from "./LobbyView.module.css";
 import { Button, CopyButton } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import { useCallFeed } from "../video-grid/useCallFeed";
 import { getRoomUrl } from "../matrix-utils";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
-import { useMediaHandler } from "../settings/useMediaHandler";
-import { VideoPreview } from "./VideoPreview";
-import { AudioPreview } from "./AudioPreview";
+import { LocalMediaInfo, MatrixInfo, VideoPreview } from "./VideoPreview";
+import { MediaDevicesState } from "./devices/useMediaDevices";
 
 interface Props {
-  client: MatrixClient;
-  groupCall: GroupCall;
-  roomName: string;
-  avatarUrl: string;
-  state: GroupCallState;
-  onInitLocalCallFeed: () => void;
+  matrixInfo: MatrixInfo;
+  mediaDevices: MediaDevicesState;
+  localMedia: LocalMediaInfo;
+
   onEnter: (e: PressEvent) => void;
-  localCallFeed: CallFeed;
-  microphoneMuted: boolean;
-  toggleLocalVideoMuted: () => void;
-  toggleMicrophoneMuted: () => void;
-  localVideoMuted: boolean;
-  roomIdOrAlias: string;
   isEmbedded: boolean;
   hideHeader: boolean;
 }
-export function LobbyView({
-  client,
-  groupCall,
-  roomName,
-  avatarUrl,
-  state,
-  onInitLocalCallFeed,
-  onEnter,
-  localCallFeed,
-  microphoneMuted,
-  localVideoMuted,
-  toggleLocalVideoMuted,
-  toggleMicrophoneMuted,
-  roomIdOrAlias,
-  isEmbedded,
-  hideHeader,
-}: Props) {
+
+export function LobbyView(props: Props) {
   const { t } = useTranslation();
-  const { stream } = useCallFeed(localCallFeed);
-  const {
-    audioInput,
-    audioInputs,
-    setAudioInput,
-    audioOutput,
-    audioOutputs,
-    setAudioOutput,
-  } = useMediaHandler();
+  useLocationNavigation();
 
-  useEffect(() => {
-    onInitLocalCallFeed();
-  }, [onInitLocalCallFeed]);
-
-  useLocationNavigation(state === GroupCallState.InitializingLocalCallFeed);
-
-  const joinCallButtonRef = useRef<HTMLButtonElement>();
-
-  useEffect(() => {
-    if (state === GroupCallState.LocalCallFeedInitialized) {
+  const joinCallButtonRef = React.useRef<HTMLButtonElement>();
+  React.useEffect(() => {
+    if (joinCallButtonRef.current) {
       joinCallButtonRef.current.focus();
     }
-  }, [state]);
+  }, [joinCallButtonRef]);
 
   return (
     <div className={styles.room}>
-      {!hideHeader && (
+      {!props.hideHeader && (
         <Header>
           <LeftNav>
-            <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
+            <RoomHeaderInfo
+              roomName={props.matrixInfo.roomName}
+              avatarUrl={props.matrixInfo.avatarUrl}
+            />
           </LeftNav>
           <RightNav>
             <UserMenuContainer />
@@ -106,44 +66,24 @@ export function LobbyView({
       )}
       <div className={styles.joinRoom}>
         <div className={styles.joinRoomContent}>
-          {groupCall.isPtt ? (
-            <AudioPreview
-              roomName={roomName}
-              state={state}
-              audioInput={audioInput}
-              audioInputs={audioInputs}
-              setAudioInput={setAudioInput}
-              audioOutput={audioOutput}
-              audioOutputs={audioOutputs}
-              setAudioOutput={setAudioOutput}
-            />
-          ) : (
-            <VideoPreview
-              state={state}
-              client={client}
-              roomIdOrAlias={roomIdOrAlias}
-              microphoneMuted={microphoneMuted}
-              localVideoMuted={localVideoMuted}
-              toggleLocalVideoMuted={toggleLocalVideoMuted}
-              toggleMicrophoneMuted={toggleMicrophoneMuted}
-              stream={stream}
-              audioOutput={audioOutput}
-            />
-          )}
+          <VideoPreview
+            matrixInfo={props.matrixInfo}
+            mediaDevices={props.mediaDevices}
+            localMediaInfo={props.localMedia}
+          />
           <Trans>
             <Button
               ref={joinCallButtonRef}
               className={styles.copyButton}
               size="lg"
-              disabled={state !== GroupCallState.LocalCallFeedInitialized}
-              onPress={onEnter}
+              onPress={props.onEnter}
             >
               Join call now
             </Button>
             <Body>Or</Body>
             <CopyButton
               variant="secondaryCopy"
-              value={getRoomUrl(roomIdOrAlias)}
+              value={getRoomUrl(props.matrixInfo.roomName)}
               className={styles.copyButton}
               copiedMessage={t("Call link copied")}
             >
@@ -151,7 +91,7 @@ export function LobbyView({
             </CopyButton>
           </Trans>
         </div>
-        {!isEmbedded && (
+        {!props.isEmbedded && (
           <Body className={styles.joinRoomFooter}>
             <Link color="primary" to="/">
               {t("Take me Home")}

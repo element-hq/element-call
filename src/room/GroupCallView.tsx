@@ -18,23 +18,21 @@ import React, { useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
-import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
-import { widget, ElementWidgetActions, JoinCallData } from "../widget";
+import { widget, ElementWidgetActions } from "../widget";
 import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
+import { MatrixInfo } from "./VideoPreview";
 import { InCallView } from "./InCallView";
-import { PTTCallView } from "./PTTCallView";
 import { CallEndedView } from "./CallEndedView";
-import { useRoomAvatar } from "./useRoomAvatar";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { PosthogAnalytics } from "../PosthogAnalytics";
-import { useMediaHandler } from "../settings/useMediaHandler";
-import { findDeviceByName, getDevices } from "../media-utils";
+import { useProfile } from "../profile/useProfile";
+import { useLiveKit } from "./useLiveKit";
 
 declare global {
   interface Window {
@@ -68,8 +66,6 @@ export function GroupCallView({
     userMediaFeeds,
     microphoneMuted,
     localVideoMuted,
-    localCallFeed,
-    initLocalCallFeed,
     enter,
     leave,
     toggleLocalVideoMuted,
@@ -84,8 +80,6 @@ export function GroupCallView({
   } = useGroupCall(groupCall);
 
   const { t } = useTranslation();
-  const { setAudioInput, setVideoInput } = useMediaHandler();
-  const avatarUrl = useRoomAvatar(groupCall.room);
 
   useEffect(() => {
     window.groupCall = groupCall;
@@ -94,54 +88,22 @@ export function GroupCallView({
     };
   }, [groupCall]);
 
+  const { displayName, avatarUrl } = useProfile(client);
+
+  const matrixInfo: MatrixInfo = {
+    userName: displayName,
+    avatarUrl,
+    roomName: groupCall.room.name,
+    roomId: roomIdOrAlias,
+  };
+
+  // TODO: Pass the correct URL and the correct JWT token here.
+  const lkState = useLiveKit("<SFU_URL_HERE>", "<JWT_TOKEN_HERE>");
+
   useEffect(() => {
     if (widget && preload) {
       // In preload mode, wait for a join action before entering
       const onJoin = async (ev: CustomEvent<IWidgetApiRequest>) => {
-        // Get the available devices so we can match the selected device
-        // to its ID. This involves getting a media stream (see docs on
-        // the function) so we only do it once and re-use the result.
-        const devices = await getDevices();
-
-        const { audioInput, videoInput } = ev.detail
-          .data as unknown as JoinCallData;
-
-        if (audioInput !== null) {
-          const deviceId = await findDeviceByName(
-            audioInput,
-            "audioinput",
-            devices
-          );
-          if (!deviceId) {
-            logger.warn("Unknown audio input: " + audioInput);
-          } else {
-            logger.debug(
-              `Found audio input ID ${deviceId} for name ${audioInput}`
-            );
-            setAudioInput(deviceId);
-          }
-        }
-
-        if (videoInput !== null) {
-          const deviceId = await findDeviceByName(
-            videoInput,
-            "videoinput",
-            devices
-          );
-          if (!deviceId) {
-            logger.warn("Unknown video input: " + videoInput);
-          } else {
-            logger.debug(
-              `Found video input ID ${deviceId} for name ${videoInput}`
-            );
-            setVideoInput(deviceId);
-          }
-        }
-        await Promise.all([
-          groupCall.setMicrophoneMuted(audioInput === null),
-          groupCall.setLocalVideoMuted(videoInput === null),
-        ]);
-
         await groupCall.enter();
 
         PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
@@ -158,7 +120,7 @@ export function GroupCallView({
         widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
     }
-  }, [groupCall, preload, setAudioInput, setVideoInput]);
+  }, [groupCall, preload]);
 
   useEffect(() => {
     if (isEmbedded && !preload) {
@@ -225,46 +187,30 @@ export function GroupCallView({
   if (error) {
     return <ErrorView error={error} />;
   } else if (state === GroupCallState.Entered) {
-    if (groupCall.isPtt) {
-      return (
-        <PTTCallView
-          client={client}
-          roomIdOrAlias={roomIdOrAlias}
-          roomName={groupCall.room.name}
-          avatarUrl={avatarUrl}
-          groupCall={groupCall}
-          participants={participants}
-          userMediaFeeds={userMediaFeeds}
-          onLeave={onLeave}
-          isEmbedded={isEmbedded}
-          hideHeader={hideHeader}
-        />
-      );
-    } else {
-      return (
-        <InCallView
-          groupCall={groupCall}
-          client={client}
-          roomName={groupCall.room.name}
-          avatarUrl={avatarUrl}
-          participants={participants}
-          microphoneMuted={microphoneMuted}
-          localVideoMuted={localVideoMuted}
-          toggleLocalVideoMuted={toggleLocalVideoMuted}
-          toggleMicrophoneMuted={toggleMicrophoneMuted}
-          setMicrophoneMuted={setMicrophoneMuted}
-          userMediaFeeds={userMediaFeeds}
-          activeSpeaker={activeSpeaker}
-          onLeave={onLeave}
-          toggleScreensharing={toggleScreensharing}
-          isScreensharing={isScreensharing}
-          screenshareFeeds={screenshareFeeds}
-          roomIdOrAlias={roomIdOrAlias}
-          unencryptedEventsFromUsers={unencryptedEventsFromUsers}
-          hideHeader={hideHeader}
-        />
-      );
-    }
+    return (
+      <InCallView
+        groupCall={groupCall}
+        client={client}
+        roomName={groupCall.room.name}
+        avatarUrl={avatarUrl}
+        participants={participants}
+        mediaDevices={lkState.mediaDevices}
+        microphoneMuted={microphoneMuted}
+        localVideoMuted={localVideoMuted}
+        toggleLocalVideoMuted={toggleLocalVideoMuted}
+        toggleMicrophoneMuted={toggleMicrophoneMuted}
+        setMicrophoneMuted={setMicrophoneMuted}
+        userMediaFeeds={userMediaFeeds}
+        activeSpeaker={activeSpeaker}
+        onLeave={onLeave}
+        toggleScreensharing={toggleScreensharing}
+        isScreensharing={isScreensharing}
+        screenshareFeeds={screenshareFeeds}
+        roomIdOrAlias={roomIdOrAlias}
+        unencryptedEventsFromUsers={unencryptedEventsFromUsers}
+        hideHeader={hideHeader}
+      />
+    );
   } else if (left) {
     if (isPasswordlessUser) {
       return <CallEndedView client={client} />;
@@ -282,25 +228,18 @@ export function GroupCallView({
         <h1>{t("Loading room…")}</h1>
       </FullScreenView>
     );
-  } else {
+  } else if (lkState) {
     return (
       <LobbyView
-        client={client}
-        groupCall={groupCall}
-        roomName={groupCall.room.name}
-        avatarUrl={avatarUrl}
-        state={state}
-        onInitLocalCallFeed={initLocalCallFeed}
-        localCallFeed={localCallFeed}
+        matrixInfo={matrixInfo}
+        mediaDevices={lkState.mediaDevices}
+        localMedia={lkState.localMedia}
         onEnter={enter}
-        microphoneMuted={microphoneMuted}
-        localVideoMuted={localVideoMuted}
-        toggleLocalVideoMuted={toggleLocalVideoMuted}
-        toggleMicrophoneMuted={toggleMicrophoneMuted}
-        roomIdOrAlias={roomIdOrAlias}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
       />
     );
+  } else {
+    return null;
   }
 }

@@ -24,7 +24,6 @@ import { RoomAuthView } from "./RoomAuthView";
 import { GroupCallLoader } from "./GroupCallLoader";
 import { GroupCallView } from "./GroupCallView";
 import { useUrlParams } from "../UrlParams";
-import { MediaHandlerProvider } from "../settings/useMediaHandler";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { translatedError } from "../TranslatedError";
 
@@ -94,15 +93,13 @@ export const RoomPage: FC = () => {
   }
 
   return (
-    <MediaHandlerProvider client={client}>
-      <GroupCallLoader
-        client={client}
-        roomIdOrAlias={roomIdOrAlias}
-        viaServers={viaServers}
-        createPtt={isPtt}
-      >
-        {groupCallView}
-      </GroupCallLoader>
-    </MediaHandlerProvider>
+    <GroupCallLoader
+      client={client}
+      roomIdOrAlias={roomIdOrAlias}
+      viaServers={viaServers}
+      createPtt={isPtt}
+    >
+      {groupCallView}
+    </GroupCallLoader>
   );
 };

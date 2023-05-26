@@ -50,7 +50,6 @@ import { Avatar } from "../Avatar";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { useMediaHandler } from "../settings/useMediaHandler";
 import { useShowInspector, useSpatialAudio } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { useAudioContext } from "../video-grid/useMediaStream";
@@ -64,6 +63,7 @@ import { ParticipantInfo } from "./useGroupCall";
 import { TileDescriptor } from "../video-grid/TileDescriptor";
 import { AudioSink } from "../video-grid/AudioSink";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
+import { MediaDevicesState } from "./devices/useMediaDevices";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -77,6 +77,7 @@ interface Props {
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   roomName: string;
   avatarUrl: string;
+  mediaDevices: MediaDevicesState;
   microphoneMuted: boolean;
   localVideoMuted: boolean;
   toggleLocalVideoMuted: () => void;
@@ -99,6 +100,7 @@ export function InCallView({
   participants,
   roomName,
   avatarUrl,
+  mediaDevices,
   microphoneMuted,
   localVideoMuted,
   toggleLocalVideoMuted,
@@ -349,7 +351,6 @@ export function InCallView({
   // audio rendering for feeds that we're displaying, which will need to be fixed
   // once we start having more participants than we can fit on a screen, but this
   // is a workaround for now.
-  const { audioOutput } = useMediaHandler();
   const audioElements: JSX.Element[] = [];
   if (!spatialAudio || maximisedParticipant) {
     for (const item of items) {
@@ -357,7 +358,7 @@ export function InCallView({
       audioElements.push(
         <AudioSink
           tileDescriptor={item}
-          audioOutput={audioOutput}
+          audioOutput="AUDIO OUTPUT?"
           key={item.id}
         />
       );
@@ -389,9 +390,9 @@ export function InCallView({
         )}
         {!maximisedParticipant && (
           <OverflowMenu
+            roomId={roomIdOrAlias}
+            mediaDevices={mediaDevices}
             inCall
-            roomIdOrAlias={roomIdOrAlias}
-            groupCall={groupCall}
             showInvite={joinRule === JoinRule.Public}
             feedbackModalState={feedbackModalState}
             feedbackModalProps={feedbackModalProps}

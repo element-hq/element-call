@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@juggle/resize-observer": "^3.3.1",
+    "@livekit/components-react": "^1.0.3",
     "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.14.tgz",
     "@react-aria/button": "^3.3.4",
     "@react-aria/dialog": "^3.1.4",
@@ -45,7 +46,7 @@
     "i18next": "^21.10.0",
     "i18next-browser-languagedetector": "^6.1.8",
     "i18next-http-backend": "^1.4.4",
-    "livekit-client": "^1.9.6",
+    "livekit-client": "^1.9.7",
     "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#b1757b4f9dfe8a1fbb5b8d9ed697ff8b8516413e",
     "matrix-widget-api": "^1.0.0",
     "mermaid": "^9.4.0-rc.2",
