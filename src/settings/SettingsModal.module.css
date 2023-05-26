@@ -19,19 +19,14 @@ limitations under the License.
   height: 480px;
 }
 
+.settingsModal p {
+  color: var(--secondary-content);
+}
+
 .tabContainer {
   padding: 27px 20px;
 }
 
 .fieldRowText {
   margin-bottom: 0;
-}
-
-/*
-This style guarantees a fixed width of the tab bar in the settings window.
-The "Developer" item in the tab bar can be toggled.
-Without a defined width activating the developer tab makes the tab container jump to the right.
-*/
-.tabLabel {
-  min-width: 80px;
 }

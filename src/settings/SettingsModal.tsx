@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
+import { MatrixClient } from "matrix-js-sdk";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -25,6 +26,8 @@ import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
 import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
+import { ReactComponent as UserIcon } from "../icons/User.svg";
+import { ReactComponent as FeedbackIcon } from "../icons/Feedback.svg";
 import { SelectInput } from "../input/SelectInput";
 import { useMediaHandler } from "./useMediaHandler";
 import {
@@ -39,9 +42,14 @@ import { Button } from "../button";
 import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body, Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
+import { ProfileSettingsTab } from "./ProfileSettingsTab";
+import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 
 interface Props {
   isOpen: boolean;
+  client: MatrixClient;
+  roomId?: string;
+  defaultTab?: string;
   onClose: () => void;
 }
 
@@ -70,6 +78,15 @@ export const SettingsModal = (props: Props) => {
 
   const downloadDebugLog = useDownloadDebugLog();
 
+  const [selectedTab, setSelectedTab] = useState<string | undefined>();
+
+  const onSelectedTabChanged = useCallback(
+    (tab) => {
+      setSelectedTab(tab);
+    },
+    [setSelectedTab]
+  );
+
   const optInDescription = (
     <Caption>
       <Trans>
@@ -89,8 +106,13 @@ export const SettingsModal = (props: Props) => {
       className={styles.settingsModal}
       {...props}
     >
-      <TabContainer className={styles.tabContainer}>
+      <TabContainer
+        onSelectionChange={onSelectedTabChanged}
+        selectedKey={selectedTab ?? props.defaultTab ?? "audio"}
+        className={styles.tabContainer}
+      >
         <TabItem
+          key="audio"
           title={
             <>
               <AudioIcon width={16} height={16} />
@@ -147,6 +169,7 @@ export const SettingsModal = (props: Props) => {
           </FieldRow>
         </TabItem>
         <TabItem
+          key="video"
           title={
             <>
               <VideoIcon width={16} height={16} />
@@ -169,6 +192,29 @@ export const SettingsModal = (props: Props) => {
           </SelectInput>
         </TabItem>
         <TabItem
+          key="profile"
+          title={
+            <>
+              <UserIcon width={15} height={15} />
+              <span>{t("Profile")}</span>
+            </>
+          }
+        >
+          <ProfileSettingsTab client={props.client} />
+        </TabItem>
+        <TabItem
+          key="feedback"
+          title={
+            <>
+              <FeedbackIcon width={16} height={16} />
+              <span>{t("Feedback")}</span>
+            </>
+          }
+        >
+          <FeedbackSettingsTab roomId={props.roomId} />
+        </TabItem>
+        <TabItem
+          key="more"
           title={
             <>
               <OverflowIcon width={16} height={16} />
@@ -176,18 +222,10 @@ export const SettingsModal = (props: Props) => {
             </>
           }
         >
-          <h4>Analytics</h4>
-          <FieldRow>
-            <InputField
-              id="optInAnalytics"
-              type="checkbox"
-              checked={optInAnalytics}
-              description={optInDescription}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setOptInAnalytics(event.target.checked)
-              }
-            />
-          </FieldRow>
+          <h4>Developer</h4>
+          <p>
+            Version: {(import.meta.env.VITE_APP_VERSION as string) || "dev"}
+          </p>
           <FieldRow>
             <InputField
               id="developerSettingsTab"
@@ -202,9 +240,22 @@ export const SettingsModal = (props: Props) => {
               }
             />
           </FieldRow>
+          <h4>Analytics</h4>
+          <FieldRow>
+            <InputField
+              id="optInAnalytics"
+              type="checkbox"
+              checked={optInAnalytics}
+              description={optInDescription}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setOptInAnalytics(event.target.checked)
+              }
+            />
+          </FieldRow>
         </TabItem>
         {developerSettingsTab && (
           <TabItem
+            key="developer"
             title={
               <>
                 <DeveloperIcon width={16} height={16} />

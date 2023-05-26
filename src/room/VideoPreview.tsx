@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,21 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useCallback } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
+import { OverlayTriggerState } from "@react-stately/overlays";
 
-import { MicButton, VideoButton } from "../button";
+import { MicButton, SettingsButton, VideoButton } from "../button";
 import { useMediaStream } from "../video-grid/useMediaStream";
-import { OverflowMenu } from "./OverflowMenu";
 import { Avatar } from "../Avatar";
 import { useProfile } from "../profile/useProfile";
 import styles from "./VideoPreview.module.css";
 import { Body } from "../typography/Typography";
 import { useModalTriggerState } from "../Modal";
+import { SettingsModal } from "../settings/SettingsModal";
 
 interface Props {
   client: MatrixClient;
@@ -59,8 +60,20 @@ export function VideoPreview({
   const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
   const avatarSize = (previewBounds.height - 66) / 2;
 
-  const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
-    useModalTriggerState();
+  const {
+    modalState: settingsModalState,
+    modalProps: settingsModalProps,
+  }: {
+    modalState: OverlayTriggerState;
+    modalProps: {
+      isOpen: boolean;
+      onClose: () => void;
+    };
+  } = useModalTriggerState();
+
+  const openSettings = useCallback(() => {
+    settingsModalState.open();
+  }, [settingsModalState]);
 
   return (
     <div className={styles.preview} ref={previewRef}>
@@ -101,16 +114,12 @@ export function VideoPreview({
               muted={localVideoMuted}
               onPress={toggleLocalVideoMuted}
             />
-            <OverflowMenu
-              roomIdOrAlias={roomIdOrAlias}
-              feedbackModalState={feedbackModalState}
-              feedbackModalProps={feedbackModalProps}
-              inCall={false}
-              groupCall={undefined}
-              showInvite={false}
-            />
+            <SettingsButton onPress={openSettings} />
           </div>
         </>
+      )}
+      {settingsModalState.isOpen && (
+        <SettingsModal client={client} {...settingsModalProps} />
       )}
     </div>
   );

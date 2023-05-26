@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import { useTranslation } from "react-i18next";
 import { useDelayedState } from "../useDelayedState";
 import { useModalTriggerState } from "../Modal";
 import { InviteModal } from "./InviteModal";
-import { HangupButton, InviteButton } from "../button";
+import { HangupButton, InviteButton, SettingsButton } from "../button";
 import { Header, LeftNav, RightNav, RoomSetupHeaderInfo } from "../Header";
 import styles from "./PTTCallView.module.css";
 import { Facepile } from "../Facepile";
@@ -41,10 +41,10 @@ import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { usePTTSounds } from "../sound/usePttSounds";
 import { PTTClips } from "../sound/PTTClips";
 import { GroupCallInspector } from "./GroupCallInspector";
-import { OverflowMenu } from "./OverflowMenu";
 import { Size } from "../Avatar";
 import { ParticipantInfo } from "./useGroupCall";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
+import { SettingsModal } from "../settings/SettingsModal";
 
 function getPromptText(
   networkWaiting: boolean,
@@ -126,8 +126,9 @@ export const PTTCallView: React.FC<Props> = ({
   const { t } = useTranslation();
   const { modalState: inviteModalState, modalProps: inviteModalProps } =
     useModalTriggerState();
-  const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
+  const { modalState: settingsModalState, modalProps: settingsModalProps } =
     useModalTriggerState();
+
   const [containerRef, bounds] = useMeasure({ polyfill: ResizeObserver });
   const facepileSize = bounds.width < 800 ? Size.SM : Size.MD;
   const showControls = bounds.height > 500;
@@ -232,14 +233,7 @@ export const PTTCallView: React.FC<Props> = ({
             />
           </div>
           <div className={styles.footer}>
-            <OverflowMenu
-              inCall
-              roomIdOrAlias={roomIdOrAlias}
-              groupCall={groupCall}
-              showInvite={false}
-              feedbackModalState={feedbackModalState}
-              feedbackModalProps={feedbackModalProps}
-            />
+            <SettingsButton onPress={() => settingsModalState.open()} />
             {!isEmbedded && <HangupButton onPress={onLeave} />}
             <InviteButton onPress={() => inviteModalState.open()} />
           </div>
@@ -265,7 +259,7 @@ export const PTTCallView: React.FC<Props> = ({
               <div className={styles.talkingInfo} />
             ))}
           <PTTButton
-            enabled={!feedbackModalState.isOpen}
+            enabled={!inviteModalState.isOpen && !settingsModalState.isOpen}
             showTalkOverError={showTalkOverError}
             activeSpeakerUserId={activeSpeakerUserId}
             activeSpeakerDisplayName={activeSpeakerDisplayName}
@@ -312,6 +306,13 @@ export const PTTCallView: React.FC<Props> = ({
         </div>
       </div>
 
+      {settingsModalState.isOpen && (
+        <SettingsModal
+          client={client}
+          roomId={groupCall.room.roomId}
+          {...settingsModalProps}
+        />
+      )}
       {inviteModalState.isOpen && showControls && (
         <InviteModal roomIdOrAlias={roomIdOrAlias} {...inviteModalProps} />
       )}

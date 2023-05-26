@@ -1,5 +1,5 @@
 /*
-Copyright 2021-2022 New Vector Ltd
+Copyright 2021-2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -24,7 +24,6 @@ import { RoomAuthView } from "./RoomAuthView";
 import { GroupCallLoader } from "./GroupCallLoader";
 import { GroupCallView } from "./GroupCallView";
 import { useUrlParams } from "../UrlParams";
-import { MediaHandlerProvider } from "../settings/useMediaHandler";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { translatedError } from "../TranslatedError";
 import { useOptInAnalytics } from "../settings/useSetting";
@@ -101,15 +100,13 @@ export const RoomPage: FC = () => {
   }
 
   return (
-    <MediaHandlerProvider client={client}>
-      <GroupCallLoader
-        client={client}
-        roomIdOrAlias={roomIdOrAlias}
-        viaServers={viaServers}
-        createPtt={isPtt}
-      >
-        {groupCallView}
-      </GroupCallLoader>
-    </MediaHandlerProvider>
+    <GroupCallLoader
+      client={client}
+      roomIdOrAlias={roomIdOrAlias}
+      viaServers={viaServers}
+      createPtt={isPtt}
+    >
+      {groupCallView}
+    </GroupCallLoader>
   );
 };
