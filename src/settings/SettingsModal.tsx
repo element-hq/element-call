@@ -26,7 +26,7 @@ import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
 import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
 import { SelectInput } from "../input/SelectInput";
-import { MediaDevicesState } from "../room/devices/useMediaDevices";
+import { MediaDevicesState } from "./mediaDevices";
 import {
   useKeyboardShortcuts,
   useSpatialAudio,
@@ -63,7 +63,7 @@ export const SettingsModal = (props: Props) => {
     return (
       <SelectInput
         label={caption}
-        selectedKey={devices.available[devices.selected].deviceId}
+        selectedKey={devices.selectedId}
         onSelectionChange={(id) =>
           props.mediaDevices.selectActiveDevice(kind, id.toString())
         }

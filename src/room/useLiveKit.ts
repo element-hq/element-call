@@ -1,16 +1,9 @@
-import { EventEmitter } from "events";
-import { Room, RoomEvent, Track } from "livekit-client";
+import { LocalAudioTrack, LocalVideoTrack, Room } from "livekit-client";
 import React from "react";
-import { useLocalParticipant } from "@livekit/components-react";
+import { useMediaDevices, usePreviewDevice } from "@livekit/components-react";
 
-import {
-  MediaDeviceHandlerCallbacks,
-  MediaDeviceHandlerEvents,
-  MediaDevicesManager,
-} from "./devices/mediaDevices";
-import { MediaDevicesState, useMediaDevices } from "./devices/useMediaDevices";
+import { MediaDevicesState, MediaDevices } from "../settings/mediaDevices";
 import { LocalMediaInfo, MediaInfo } from "./VideoPreview";
-import type TypedEmitter from "typed-emitter";
 
 type LiveKitState = {
   mediaDevices: MediaDevicesState;
@@ -33,32 +26,35 @@ export function useLiveKit(
     return new Room();
   });
 
-  const [mediaDevicesManager] = React.useState<MediaDevicesManager>(() => {
-    return new LkMediaDevicesManager(room);
-  });
+  // Create a React state to store the available devices and the selected device for each kind.
+  const mediaDevices = useMediaDevicesState(room);
 
-  const { state: mediaDevicesState, selectActiveDevice: selectDeviceFn } =
-    useMediaDevices(mediaDevicesManager);
+  // Create local video track.
+  const [videoEnabled, setVideoEnabled] = React.useState<boolean>(true);
+  const selectedVideoId = mediaDevices.state.get("videoinput")?.selectedId;
+  const video = usePreviewDevice(
+    videoEnabled,
+    selectedVideoId ?? "",
+    "videoinput"
+  );
 
-  React.useEffect(() => {
-    console.log("media devices changed, mediaDevices:", mediaDevicesState);
-  }, [mediaDevicesState]);
+  // Create local audio track.
+  const [audioEnabled, setAudioEnabled] = React.useState<boolean>(true);
+  const selectedAudioId = mediaDevices.state.get("audioinput")?.selectedId;
+  const audio = usePreviewDevice(
+    audioEnabled,
+    selectedAudioId ?? "",
+    "audioinput"
+  );
 
-  const {
-    microphoneTrack,
-    isMicrophoneEnabled,
-    cameraTrack,
-    isCameraEnabled,
-    localParticipant,
-  } = useLocalParticipant({ room });
-
+  // Create final LiveKit state.
   const [state, setState] = React.useState<LiveKitState | undefined>(undefined);
   React.useEffect(() => {
-    // Helper to create local media without the
+    // Helper to create local media without the copy-paste.
     const createLocalMedia = (
+      track: LocalVideoTrack | LocalAudioTrack | undefined,
       enabled: boolean,
-      track: Track | undefined,
-      setEnabled
+      setEnabled: React.Dispatch<React.SetStateAction<boolean>>
     ): MediaInfo | undefined => {
       if (!track) {
         return undefined;
@@ -67,29 +63,24 @@ export function useLiveKit(
       return {
         track,
         muted: !enabled,
-        setMuted: async (newState: boolean) => {
-          if (enabled != newState) {
-            await setEnabled(newState);
-          }
+        toggle: async () => {
+          setEnabled(!enabled);
         },
       };
     };
 
     const state: LiveKitState = {
-      mediaDevices: {
-        state: mediaDevicesState,
-        selectActiveDevice: selectDeviceFn,
-      },
+      mediaDevices: mediaDevices,
       localMedia: {
         audio: createLocalMedia(
-          isMicrophoneEnabled,
-          microphoneTrack?.track,
-          localParticipant.setMicrophoneEnabled
+          audio.localTrack,
+          audioEnabled,
+          setAudioEnabled
         ),
         video: createLocalMedia(
-          isCameraEnabled,
-          cameraTrack?.track,
-          localParticipant.setCameraEnabled
+          video.localTrack,
+          videoEnabled,
+          setVideoEnabled
         ),
       },
       enterRoom: async () => {
@@ -105,41 +96,188 @@ export function useLiveKit(
   }, [
     url,
     token,
+    mediaDevices,
+    audio.localTrack,
+    video.localTrack,
+    audioEnabled,
+    videoEnabled,
     room,
-    mediaDevicesState,
-    selectDeviceFn,
-    localParticipant,
-    microphoneTrack,
-    cameraTrack,
-    isMicrophoneEnabled,
-    isCameraEnabled,
   ]);
 
   return state;
 }
 
-// Implement the MediaDevicesHandler interface for the LiveKit's Room class by wrapping it, so that
-// we can pass the confined version of the `Room` to the `MediaDevicesHandler` consumers.
-export class LkMediaDevicesManager
-  extends (EventEmitter as new () => TypedEmitter<MediaDeviceHandlerCallbacks>)
-  implements MediaDevicesManager
-{
-  private room: Room;
+function useMediaDevicesState(room: Room): MediaDevicesState {
+  // Video input state.
+  const videoInputDevices = useMediaDevices({ kind: "videoinput" });
+  const [selectedVideoInput, setSelectedVideoInput] =
+    React.useState<string>("");
 
-  constructor(room: Room) {
-    super();
-    this.room = room;
+  // Audio input state.
+  const audioInputDevices = useMediaDevices({ kind: "audioinput" });
+  const [selectedAudioInput, setSelectedAudioInput] =
+    React.useState<string>("");
 
-    this.room.on(RoomEvent.MediaDevicesChanged, () => {
-      this.emit(MediaDeviceHandlerEvents.DevicesChanged);
+  // Audio output state.
+  const audioOutputDevices = useMediaDevices({ kind: "audiooutput" });
+  const [selectedAudioOut, setSelectedAudioOut] = React.useState<string>("");
+
+  // Install hooks, so that we react to changes in the available devices.
+  React.useEffect(() => {
+    // Helper type to make the code more readable.
+    type DeviceHookData = {
+      kind: MediaDeviceKind;
+      available: MediaDeviceInfo[];
+      selected: string;
+      setSelected: React.Dispatch<React.SetStateAction<string>>;
+    };
+
+    const videoInputHook: DeviceHookData = {
+      kind: "videoinput",
+      available: videoInputDevices,
+      selected: selectedVideoInput,
+      setSelected: setSelectedVideoInput,
+    };
+
+    const audioInputHook: DeviceHookData = {
+      kind: "audioinput",
+      available: audioInputDevices,
+      selected: selectedAudioInput,
+      setSelected: setSelectedAudioInput,
+    };
+
+    const audioOutputHook: DeviceHookData = {
+      kind: "audiooutput",
+      available: audioOutputDevices,
+      selected: selectedAudioOut,
+      setSelected: setSelectedAudioOut,
+    };
+
+    const updateDevice = async (kind: MediaDeviceKind, id: string) => {
+      try {
+        await room.switchActiveDevice(kind, id);
+      } catch (e) {
+        console.error("Failed to switch device", e);
+      }
+    };
+
+    for (const hook of [videoInputHook, audioInputHook, audioOutputHook]) {
+      if (hook.available.length === 0) {
+        const newSelected = "";
+        hook.setSelected(newSelected);
+        updateDevice(hook.kind, newSelected);
+        continue;
+      }
+
+      const found = hook.available.find(
+        (device) => device.deviceId === hook.selected
+      );
+
+      if (!found) {
+        const newSelected = hook.available[0].deviceId;
+        hook.setSelected(newSelected);
+        updateDevice(hook.kind, newSelected);
+        continue;
+      }
+    }
+  }, [
+    videoInputDevices,
+    selectedVideoInput,
+    audioInputDevices,
+    selectedAudioInput,
+    audioOutputDevices,
+    selectedAudioOut,
+    room,
+  ]);
+
+  const selectActiveDevice = async (kind: MediaDeviceKind, id: string) => {
+    switch (kind) {
+      case "audioinput":
+        setSelectedAudioInput(id);
+        break;
+      case "videoinput":
+        setSelectedVideoInput(id);
+        break;
+      case "audiooutput":
+        setSelectedAudioOut(id);
+        break;
+    }
+  };
+
+  const [mediaDevicesState, setMediaDevicesState] =
+    React.useState<MediaDevicesState>(() => {
+      const state: MediaDevicesState = {
+        state: new Map(),
+        selectActiveDevice,
+      };
+      return state;
     });
+
+  React.useEffect(() => {
+    // Fill the map of the devices with the current state.
+    const mediaDevices = new Map<MediaDeviceKind, MediaDevices>();
+    mediaDevices.set("audioinput", {
+      available: audioInputDevices,
+      selectedId: selectedAudioInput,
+    });
+    mediaDevices.set("videoinput", {
+      available: videoInputDevices,
+      selectedId: selectedVideoInput,
+    });
+    mediaDevices.set("audiooutput", {
+      available: audioOutputDevices,
+      selectedId: selectedAudioOut,
+    });
+
+    if (devicesChanged(mediaDevicesState.state, mediaDevices)) {
+      const newState: MediaDevicesState = {
+        state: mediaDevices,
+        selectActiveDevice,
+      };
+      setMediaDevicesState(newState);
+    }
+  }, [
+    audioInputDevices,
+    selectedAudioInput,
+    videoInputDevices,
+    selectedVideoInput,
+    audioOutputDevices,
+    selectedAudioOut,
+    mediaDevicesState.state,
+  ]);
+
+  return mediaDevicesState;
+}
+
+// Determine if any devices changed between the old and new state.
+function devicesChanged(
+  map1: Map<MediaDeviceKind, MediaDevices>,
+  map2: Map<MediaDeviceKind, MediaDevices>
+): boolean {
+  if (map1.size !== map2.size) {
+    return true;
   }
 
-  async getDevices(kind: MediaDeviceKind) {
-    return await Room.getLocalDevices(kind);
+  for (const [key, value] of map1) {
+    const newValue = map2.get(key);
+    if (!newValue) {
+      return true;
+    }
+
+    if (value.selectedId !== newValue.selectedId) {
+      return true;
+    }
+
+    if (value.available.length !== newValue.available.length) {
+      return true;
+    }
+
+    for (let i = 0; i < value.available.length; i++) {
+      if (value.available[i].deviceId !== newValue.available[i].deviceId) {
+        return true;
+      }
+    }
   }
 
-  async setActiveDevice(kind: MediaDeviceKind, deviceId: string) {
-    await this.room.switchActiveDevice(kind, deviceId);
-  }
+  return false;
 }

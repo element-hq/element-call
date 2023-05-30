@@ -26,7 +26,7 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { LocalMediaInfo, MatrixInfo, VideoPreview } from "./VideoPreview";
-import { MediaDevicesState } from "./devices/useMediaDevices";
+import { MediaDevicesState } from "../settings/mediaDevices";
 
 interface Props {
   matrixInfo: MatrixInfo;

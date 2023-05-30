@@ -63,7 +63,7 @@ import { ParticipantInfo } from "./useGroupCall";
 import { TileDescriptor } from "../video-grid/TileDescriptor";
 import { AudioSink } from "../video-grid/AudioSink";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
-import { MediaDevicesState } from "./devices/useMediaDevices";
+import { MediaDevicesState } from "../settings/mediaDevices";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
