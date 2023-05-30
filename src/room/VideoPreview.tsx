@@ -24,7 +24,7 @@ import { OverflowMenu } from "./OverflowMenu";
 import { Avatar } from "../Avatar";
 import styles from "./VideoPreview.module.css";
 import { useModalTriggerState } from "../Modal";
-import { MediaDevicesState } from "./devices/useMediaDevices";
+import { MediaDevicesState } from "../settings/mediaDevices";
 
 export type MatrixInfo = {
   userName: string;
@@ -36,7 +36,7 @@ export type MatrixInfo = {
 export type MediaInfo = {
   track: Track; // TODO: Replace it by a more generic `CallFeed` type from JS SDK once we generalise the types.
   muted: boolean;
-  setMuted: (muted: boolean) => void;
+  toggle: () => void;
 };
 
 export type LocalMediaInfo = {
@@ -67,7 +67,7 @@ export function VideoPreview({
     return () => {
       localMediaInfo.video?.track.detach();
     };
-  }, [localMediaInfo]);
+  }, [localMediaInfo.video?.track, mediaElement]);
 
   return (
     <div className={styles.preview} ref={previewRef}>
@@ -86,17 +86,13 @@ export function VideoPreview({
           {localMediaInfo.audio && (
             <MicButton
               muted={localMediaInfo.audio?.muted}
-              onPress={() =>
-                localMediaInfo.audio?.setMuted(!localMediaInfo.audio?.muted)
-              }
+              onPress={localMediaInfo.audio?.toggle}
             />
           )}
           {localMediaInfo.video && (
             <VideoButton
               muted={localMediaInfo.video?.muted}
-              onPress={() =>
-                localMediaInfo.video?.setMuted(!localMediaInfo.video?.muted)
-              }
+              onPress={localMediaInfo.video?.toggle}
             />
           )}
           <OverflowMenu

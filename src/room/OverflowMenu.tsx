@@ -32,7 +32,7 @@ import { InviteModal } from "./InviteModal";
 import { TooltipTrigger } from "../Tooltip";
 import { FeedbackModal } from "./FeedbackModal";
 import { Config } from "../config/Config";
-import { MediaDevicesState } from "./devices/useMediaDevices";
+import { MediaDevicesState } from "../settings/mediaDevices";
 
 interface Props {
   roomId: string;
