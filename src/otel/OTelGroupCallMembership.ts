@@ -356,14 +356,16 @@ export class OTelGroupCallMembership {
     let call: OTelCall | undefined;
     const callId = report?.callId;
 
-    if(callId) {
+    if (callId) {
       call = this.callsByCallId.get(callId);
     }
 
     if (!call) {
       this.callMembershipSpan?.addEvent(type + "_unknown_callid", {
         "call.callId": callId,
-        "call.opponentMemberId": report.opponentMemberId? report.opponentMemberId : "unknown",
+        "call.opponentMemberId": report.opponentMemberId
+          ? report.opponentMemberId
+          : "unknown",
       });
       logger.error(`Received ${type} with unknown call ID: ${callId}`);
       return;
@@ -389,7 +391,10 @@ export class OTelGroupCallMembership {
     );
 
     span.setAttribute("matrix.callId", callId);
-    span.setAttribute("matrix.opponentMemberId", report.opponentMemberId? report.opponentMemberId : "unknown");
+    span.setAttribute(
+      "matrix.opponentMemberId",
+      report.opponentMemberId ? report.opponentMemberId : "unknown"
+    );
     span.addEvent("matrix.call.connection_stats_event", data);
     span.end();
   }
