@@ -1,28 +1,11 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
 http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
-*/
-
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/*
-Copyright 2022 New Vector Ltd
-
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -43,6 +26,7 @@ import React, {
   useRef,
 } from "react";
 
+import { useClient } from "../ClientContext";
 import { getNamedDevices } from "../media-utils";
 
 export interface MediaHandlerContextInterface {
@@ -70,6 +54,7 @@ interface MediaPreferences {
   videoInput?: string;
   audioOutput?: string;
 }
+
 function getMediaPreferences(): MediaPreferences {
   const mediaPreferences = localStorage.getItem("matrix-media-preferences");
 
@@ -95,11 +80,13 @@ function updateMediaPreferences(newPreferences: MediaPreferences): void {
     })
   );
 }
+
 interface Props {
-  client: MatrixClient;
   children: ReactNode;
 }
-export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
+
+export function MediaHandlerProvider({ children }: Props): JSX.Element {
+  const { client } = useClient();
   const [
     {
       audioInput,
@@ -124,7 +111,7 @@ export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
   const numComponentsWantingNames = useRef(0);
 
   const updateDevices = useCallback(
-    async (initial: boolean) => {
+    async (client: MatrixClient, initial: boolean) => {
       // Only request device names if components actually want them, because it
       // could trigger an extra permission pop-up
       const devices = await (numComponentsWantingNames.current > 0
@@ -175,7 +162,7 @@ export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
         client.getMediaHandler().setMediaInputs(audioInput, videoInput);
       }
     },
-    [client, setState]
+    [setState]
   );
 
   const useDeviceNames = useCallback(() => {
@@ -183,31 +170,36 @@ export function MediaHandlerProvider({ client, children }: Props): JSX.Element {
     // dynamic hook, but it works
     // eslint-disable-next-line react-hooks/rules-of-hooks
     useEffect(() => {
-      numComponentsWantingNames.current++;
-      if (numComponentsWantingNames.current === 1) updateDevices(false);
-      return () => void numComponentsWantingNames.current--;
+      if (client) {
+        numComponentsWantingNames.current++;
+        if (numComponentsWantingNames.current === 1)
+          updateDevices(client, false);
+        return () => void numComponentsWantingNames.current--;
+      }
     }, []);
-  }, [updateDevices]);
+  }, [client, updateDevices]);
 
   useEffect(() => {
-    updateDevices(true);
-    const onDeviceChange = () => updateDevices(false);
-    navigator.mediaDevices.addEventListener("devicechange", onDeviceChange);
+    if (client) {
+      updateDevices(client, true);
+      const onDeviceChange = () => updateDevices(client, false);
+      navigator.mediaDevices.addEventListener("devicechange", onDeviceChange);
 
-    return () => {
-      navigator.mediaDevices.removeEventListener(
-        "devicechange",
-        onDeviceChange
-      );
-      client.getMediaHandler().stopAllStreams();
-    };
+      return () => {
+        navigator.mediaDevices.removeEventListener(
+          "devicechange",
+          onDeviceChange
+        );
+        client.getMediaHandler().stopAllStreams();
+      };
+    }
   }, [client, updateDevices]);
 
   const setAudioInput: (deviceId: string) => void = useCallback(
     (deviceId: string) => {
       updateMediaPreferences({ audioInput: deviceId });
       setState((prevState) => ({ ...prevState, audioInput: deviceId }));
-      client.getMediaHandler().setAudioInput(deviceId);
+      client?.getMediaHandler().setAudioInput(deviceId);
     },
     [client]
   );
