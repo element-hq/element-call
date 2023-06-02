@@ -16,9 +16,7 @@ limitations under the License.
 
 import React from "react";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
-import { useTranslation } from "react-i18next";
 
-import { ConnectionState } from "../room/useGroupCall";
 import { useRoomMemberName } from "./useRoomMemberName";
 import { VideoTile } from "./VideoTile";
 import { TileDescriptor } from "./TileDescriptor";
@@ -44,25 +42,10 @@ export function VideoTileContainer({
   ...rest
 }: Props) {
   const { rawDisplayName } = useRoomMemberName(item.member);
-  const { t } = useTranslation();
-
-  let caption: string;
-  switch (item.connectionState) {
-    case ConnectionState.EstablishingCall:
-      caption = t("{{name}} (Connecting...)", { name });
-      break;
-    case ConnectionState.WaitMedia:
-      // not strictly true, but probably easier to understand than, "Waiting for media"
-      caption = t("{{name}} (Waiting for video...)", { name });
-      break;
-    case ConnectionState.Connected:
-      caption = rawDisplayName;
-      break;
-  }
 
   return (
     <>
-      {!item.sfuParticipant && <span title={caption}>{caption}</span>}
+      {!item.sfuParticipant && null}
       {item.sfuParticipant && (
         <VideoTile
           sfuParticipant={item.sfuParticipant}

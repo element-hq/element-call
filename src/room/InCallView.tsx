@@ -240,7 +240,7 @@ export function InCallView({
     // think should be in the call, even if we don't have a call feed for them yet)
     const tileDescriptors: TileDescriptor[] = [];
     for (const [member, participantMap] of participants) {
-      for (const [deviceId, { connectionState, presenter }] of participantMap) {
+      for (const [deviceId, { presenter }] of participantMap) {
         const id = `${member.userId}:${deviceId}`;
         const sfuParticipant = sfuParticipants.find((p) => p.identity === id);
 
@@ -253,7 +253,6 @@ export function InCallView({
           focused: hasScreenShare && !sfuParticipant?.isLocal,
           isLocal: member.userId == localUserId && deviceId == localDeviceId,
           presenter,
-          connectionState,
           sfuParticipant,
         });
       }
