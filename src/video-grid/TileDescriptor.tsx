@@ -17,8 +17,6 @@ limitations under the License.
 import { RoomMember } from "matrix-js-sdk";
 import { LocalParticipant, RemoteParticipant } from "livekit-client";
 
-import { ConnectionState } from "../room/useGroupCall";
-
 // Represents something that should get a tile on the layout,
 // ie. a user's video feed or a screen share feed.
 export interface TileDescriptor {
@@ -27,6 +25,5 @@ export interface TileDescriptor {
   focused: boolean;
   presenter: boolean;
   isLocal?: boolean;
-  connectionState: ConnectionState;
   sfuParticipant?: LocalParticipant | RemoteParticipant;
 }
