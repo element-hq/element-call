@@ -68,7 +68,6 @@ export function VideoTileContainer({
           sfuParticipant={item.sfuParticipant}
           name={rawDisplayName}
           avatar={getAvatar && getAvatar(item.member, width, height)}
-          maximised={maximised}
           {...rest}
         />
       )}

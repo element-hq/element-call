@@ -58,7 +58,7 @@ export const SettingsModal = (props: Props) => {
   // Generate a `SelectInput` with a list of devices for a given device kind.
   const generateDeviceSelection = (kind: MediaDeviceKind, caption: string) => {
     const devices = props.mediaDevices.state.get(kind);
-    if (!devices) return null;
+    if (!devices || devices.available.length == 0) return null;
 
     return (
       <SelectInput
