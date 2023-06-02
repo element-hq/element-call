@@ -1,6 +1,9 @@
 import { LocalAudioTrack, LocalVideoTrack, Room } from "livekit-client";
 import React from "react";
-import { useMediaDevices, usePreviewDevice } from "@livekit/components-react";
+import {
+  useMediaDeviceSelect,
+  usePreviewDevice,
+} from "@livekit/components-react";
 
 import { MediaDevicesState, MediaDevices } from "../settings/mediaDevices";
 import { LocalMediaInfo, MediaInfo } from "./VideoPreview";
@@ -99,101 +102,44 @@ export function useLiveKit(): LiveKitState | undefined {
 }
 
 function useMediaDevicesState(room: Room): MediaDevicesState {
-  // Video input state.
-  const videoInputDevices = useMediaDevices({ kind: "videoinput" });
-  const [selectedVideoInput, setSelectedVideoInput] =
-    React.useState<string>("");
-
-  // Audio input state.
-  const audioInputDevices = useMediaDevices({ kind: "audioinput" });
-  const [selectedAudioInput, setSelectedAudioInput] =
-    React.useState<string>("");
-
-  // Audio output state.
-  const audioOutputDevices = useMediaDevices({ kind: "audiooutput" });
-  const [selectedAudioOut, setSelectedAudioOut] = React.useState<string>("");
-
-  // Install hooks, so that we react to changes in the available devices.
-  React.useEffect(() => {
-    // Helper type to make the code more readable.
-    type DeviceHookData = {
-      kind: MediaDeviceKind;
-      available: MediaDeviceInfo[];
-      selected: string;
-      setSelected: React.Dispatch<React.SetStateAction<string>>;
-    };
-
-    const videoInputHook: DeviceHookData = {
-      kind: "videoinput",
-      available: videoInputDevices,
-      selected: selectedVideoInput,
-      setSelected: setSelectedVideoInput,
-    };
-
-    const audioInputHook: DeviceHookData = {
-      kind: "audioinput",
-      available: audioInputDevices,
-      selected: selectedAudioInput,
-      setSelected: setSelectedAudioInput,
-    };
-
-    const audioOutputHook: DeviceHookData = {
-      kind: "audiooutput",
-      available: audioOutputDevices,
-      selected: selectedAudioOut,
-      setSelected: setSelectedAudioOut,
-    };
-
-    const updateDevice = async (kind: MediaDeviceKind, id: string) => {
-      try {
-        await room.switchActiveDevice(kind, id);
-      } catch (e) {
-        console.error("Failed to switch device", e);
-      }
-    };
-
-    for (const hook of [videoInputHook, audioInputHook, audioOutputHook]) {
-      if (hook.available.length === 0) {
-        const newSelected = "";
-        hook.setSelected(newSelected);
-        updateDevice(hook.kind, newSelected);
-        continue;
-      }
-
-      const found = hook.available.find(
-        (device) => device.deviceId === hook.selected
-      );
-
-      if (!found) {
-        const newSelected = hook.available[0].deviceId;
-        hook.setSelected(newSelected);
-        updateDevice(hook.kind, newSelected);
-        continue;
-      }
-    }
-  }, [
-    videoInputDevices,
-    selectedVideoInput,
-    audioInputDevices,
-    selectedAudioInput,
-    audioOutputDevices,
-    selectedAudioOut,
+  const {
+    devices: videoDevices,
+    activeDeviceId: activeVideoDevice,
+    setActiveMediaDevice: setActiveVideoDevice,
+  } = useMediaDeviceSelect({ kind: "videoinput", room });
+  const {
+    devices: audioDevices,
+    activeDeviceId: activeAudioDevice,
+    setActiveMediaDevice: setActiveAudioDevice,
+  } = useMediaDeviceSelect({
+    kind: "audioinput",
     room,
-  ]);
+  });
+  const {
+    devices: audioOutputDevices,
+    activeDeviceId: activeAudioOutputDevice,
+    setActiveMediaDevice: setActiveAudioOutputDevice,
+  } = useMediaDeviceSelect({
+    kind: "audiooutput",
+    room,
+  });
 
-  const selectActiveDevice = async (kind: MediaDeviceKind, id: string) => {
-    switch (kind) {
-      case "audioinput":
-        setSelectedAudioInput(id);
-        break;
-      case "videoinput":
-        setSelectedVideoInput(id);
-        break;
-      case "audiooutput":
-        setSelectedAudioOut(id);
-        break;
-    }
-  };
+  const selectActiveDevice = React.useCallback(
+    async (kind: MediaDeviceKind, id: string) => {
+      switch (kind) {
+        case "audioinput":
+          setActiveAudioDevice(id);
+          break;
+        case "videoinput":
+          setActiveVideoDevice(id);
+          break;
+        case "audiooutput":
+          setActiveAudioOutputDevice(id);
+          break;
+      }
+    },
+    [setActiveAudioDevice, setActiveVideoDevice, setActiveAudioOutputDevice]
+  );
 
   const [mediaDevicesState, setMediaDevicesState] =
     React.useState<MediaDevicesState>(() => {
@@ -205,70 +151,32 @@ function useMediaDevicesState(room: Room): MediaDevicesState {
     });
 
   React.useEffect(() => {
-    // Fill the map of the devices with the current state.
-    const mediaDevices = new Map<MediaDeviceKind, MediaDevices>();
-    mediaDevices.set("audioinput", {
-      available: audioInputDevices,
-      selectedId: selectedAudioInput,
+    const state = new Map<MediaDeviceKind, MediaDevices>();
+    state.set("videoinput", {
+      available: videoDevices,
+      selectedId: activeVideoDevice,
     });
-    mediaDevices.set("videoinput", {
-      available: videoInputDevices,
-      selectedId: selectedVideoInput,
+    state.set("audioinput", {
+      available: audioDevices,
+      selectedId: activeAudioDevice,
     });
-    mediaDevices.set("audiooutput", {
+    state.set("audiooutput", {
       available: audioOutputDevices,
-      selectedId: selectedAudioOut,
+      selectedId: activeAudioOutputDevice,
     });
-
-    if (devicesChanged(mediaDevicesState.state, mediaDevices)) {
-      const newState: MediaDevicesState = {
-        state: mediaDevices,
-        selectActiveDevice,
-      };
-      setMediaDevicesState(newState);
-    }
+    setMediaDevicesState({
+      state,
+      selectActiveDevice,
+    });
   }, [
-    audioInputDevices,
-    selectedAudioInput,
-    videoInputDevices,
-    selectedVideoInput,
+    videoDevices,
+    activeVideoDevice,
+    audioDevices,
+    activeAudioDevice,
     audioOutputDevices,
-    selectedAudioOut,
-    mediaDevicesState.state,
+    activeAudioOutputDevice,
+    selectActiveDevice,
   ]);
 
   return mediaDevicesState;
-}
-
-// Determine if any devices changed between the old and new state.
-function devicesChanged(
-  map1: Map<MediaDeviceKind, MediaDevices>,
-  map2: Map<MediaDeviceKind, MediaDevices>
-): boolean {
-  if (map1.size !== map2.size) {
-    return true;
-  }
-
-  for (const [key, value] of map1) {
-    const newValue = map2.get(key);
-    if (!newValue) {
-      return true;
-    }
-
-    if (value.selectedId !== newValue.selectedId) {
-      return true;
-    }
-
-    if (value.available.length !== newValue.available.length) {
-      return true;
-    }
-
-    for (let i = 0; i < value.available.length; i++) {
-      if (value.available[i].deviceId !== newValue.available[i].deviceId) {
-        return true;
-      }
-    }
-  }
-
-  return false;
 }
