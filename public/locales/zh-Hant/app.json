@@ -56,7 +56,6 @@
   "Sending debug logs…": "傳送除錯記錄檔中…",
   "Send debug logs": "傳送除錯紀錄",
   "Select an option": "選擇一個選項",
-  "Save": "儲存",
   "Return to home screen": "回到首頁",
   "Remove": "移除",
   "Release to stop": "放開以停止",
@@ -132,5 +131,11 @@
   "Accept camera/microphone permissions to join the call.": "請授權使用您的相機/麥克風以加入對話。",
   "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>何不設定密碼以保留此帳號？</0><1>您可以保留暱稱並設定頭像，以便未來通話時使用</1>",
   "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.": "參與此測試版即表示您同意蒐集匿名資料，我們使用這些資料來改進產品。您可以在我們的<2>隱私政策</2>與我們的 <5>Cookie 政策</5> 中找到關於我們追蹤哪些資料的更多資訊。",
-  "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>您可以透過取消核取此方塊來撤回同意。若您目前正在通話中，此設定將在通話結束時生效。"
+  "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>您可以透過取消核取此方塊來撤回同意。若您目前正在通話中，此設定將在通話結束時生效。",
+  "Your feedback": "您的回饋",
+  "Thanks, we received your feedback!": "感謝，我們已經收到您的回饋了！",
+  "Submitting…": "正在遞交……",
+  "Submit": "遞交",
+  "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "若您遇到問題或只是想提供一些回饋，請在下方傳送簡短說明給我們。",
+  "Feedback": "回饋"
 }
