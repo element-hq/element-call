@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { RoomMember } from "matrix-js-sdk";
-import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
+import { LocalParticipant, RemoteParticipant } from "livekit-client";
 
 import { ConnectionState } from "../room/useGroupCall";
 
@@ -26,7 +26,7 @@ export interface TileDescriptor {
   member: RoomMember;
   focused: boolean;
   presenter: boolean;
-  callFeed?: CallFeed;
   isLocal?: boolean;
   connectionState: ConnectionState;
+  sfuParticipant?: LocalParticipant | RemoteParticipant;
 }

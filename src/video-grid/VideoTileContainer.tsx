@@ -14,17 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { SDPStreamMetadataPurpose } from "matrix-js-sdk/src/webrtc/callEventTypes";
 import React from "react";
-import { useCallback, useEffect } from "react";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { useTranslation } from "react-i18next";
 
-import { useCallFeed } from "./useCallFeed";
-import { useSpatialMediaStream } from "./useMediaStream";
+import { ConnectionState } from "../room/useGroupCall";
 import { useRoomMemberName } from "./useRoomMemberName";
 import { VideoTile } from "./VideoTile";
-import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
-import { useModalTriggerState } from "../Modal";
 import { TileDescriptor } from "./TileDescriptor";
 
 interface Props {
@@ -36,12 +32,7 @@ interface Props {
     width: number,
     height: number
   ) => JSX.Element;
-  audioContext: AudioContext;
-  audioDestination: AudioNode;
-  disableSpeakingIndicator: boolean;
   maximised: boolean;
-  fullscreen: boolean;
-  onFullscreen: (item: TileDescriptor) => void;
 }
 
 export function VideoTileContainer({
@@ -49,87 +40,36 @@ export function VideoTileContainer({
   width,
   height,
   getAvatar,
-  audioContext,
-  audioDestination,
-  disableSpeakingIndicator,
   maximised,
-  fullscreen,
-  onFullscreen,
   ...rest
 }: Props) {
-  const {
-    isLocal,
-    audioMuted,
-    videoMuted,
-    localVolume,
-    hasAudio,
-    speaking,
-    stream,
-    purpose,
-    debugInfo,
-  } = useCallFeed(item.callFeed);
   const { rawDisplayName } = useRoomMemberName(item.member);
-  const [tileRef, mediaRef] = useSpatialMediaStream(
-    stream ?? null,
-    audioContext,
-    audioDestination,
-    localVolume,
-    // The feed is muted if it's local audio (because we don't want our own audio,
-    // but it's a hook and we can't call it conditionally so we're stuck with it)
-    // or if there's a maximised feed in which case we always render audio via audio
-    // elements because we wire it up at the video tile container level and only one
-    // video tile container is displayed.
-    isLocal || maximised
-  );
-  const {
-    modalState: videoTileSettingsModalState,
-    modalProps: videoTileSettingsModalProps,
-  } = useModalTriggerState();
-  const onOptionsPress = () => {
-    videoTileSettingsModalState.open();
-  };
+  const { t } = useTranslation();
 
-  const onFullscreenCallback = useCallback(() => {
-    onFullscreen(item);
-  }, [onFullscreen, item]);
-
-  // Firefox doesn't respect the disablePictureInPicture attribute
-  // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
-
-  useEffect(() => {
-    item.callFeed?.setResolution(width, height);
-  }, [width, height, item.callFeed]);
-
-  useEffect(() => {
-    item.callFeed?.setIsVisible(true);
-  }, [item.callFeed]);
+  let caption: string;
+  switch (item.connectionState) {
+    case ConnectionState.EstablishingCall:
+      caption = t("{{name}} (Connecting...)", { name });
+      break;
+    case ConnectionState.WaitMedia:
+      // not strictly true, but probably easier to understand than, "Waiting for media"
+      caption = t("{{name}} (Waiting for video...)", { name });
+      break;
+    case ConnectionState.Connected:
+      caption = rawDisplayName;
+      break;
+  }
 
   return (
     <>
-      <VideoTile
-        isLocal={isLocal}
-        speaking={speaking && !disableSpeakingIndicator}
-        audioMuted={audioMuted}
-        videoMuted={videoMuted}
-        screenshare={purpose === SDPStreamMetadataPurpose.Screenshare}
-        name={rawDisplayName}
-        connectionState={item.connectionState}
-        ref={tileRef}
-        mediaRef={mediaRef}
-        avatar={getAvatar && getAvatar(item.member, width, height)}
-        onOptionsPress={onOptionsPress}
-        localVolume={localVolume}
-        hasAudio={hasAudio}
-        maximised={maximised}
-        fullscreen={fullscreen}
-        onFullscreen={onFullscreenCallback}
-        debugInfo={debugInfo}
-        {...rest}
-      />
-      {videoTileSettingsModalState.isOpen && !maximised && item.callFeed && (
-        <VideoTileSettingsModal
-          {...videoTileSettingsModalProps}
-          feed={item.callFeed}
+      {!item.sfuParticipant && <span title={caption}>{caption}</span>}
+      {item.sfuParticipant && (
+        <VideoTile
+          sfuParticipant={item.sfuParticipant}
+          name={rawDisplayName}
+          avatar={getAvatar && getAvatar(item.member, width, height)}
+          maximised={maximised}
+          {...rest}
         />
       )}
     </>

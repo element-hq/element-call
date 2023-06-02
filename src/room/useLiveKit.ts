@@ -6,21 +6,20 @@ import { MediaDevicesState, MediaDevices } from "../settings/mediaDevices";
 import { LocalMediaInfo, MediaInfo } from "./VideoPreview";
 
 type LiveKitState = {
+  // The state of the media devices (changing the devices will also change them in the room).
   mediaDevices: MediaDevicesState;
+  // The local media (audio and video) that can be referenced in an e.g. lobby view.
   localMedia: LocalMediaInfo;
-
-  enterRoom: () => Promise<void>;
-  leaveRoom: () => Promise<void>;
+  // A reference to the newly constructed (but not yet entered) room for future use with the LiveKit hooks.
+  // TODO: Abstract this away, so that the user doesn't have to deal with the LiveKit room directly.
+  room: Room;
 };
 
 // Returns the React state for the LiveKit's Room class.
 // The actual return type should be `LiveKitState`, but since this is a React hook, the initialisation is
 // delayed (done after the rendering, not during the rendering), because of that this function may return `undefined`.
 // But soon this state is changed to the actual `LiveKitState` value.
-export function useLiveKit(
-  url: string,
-  token: string
-): LiveKitState | undefined {
+export function useLiveKit(): LiveKitState | undefined {
   // TODO: Pass the proper paramters to configure the room (supported codecs, simulcast, adaptive streaming, etc).
   const [room] = React.useState<Room>(() => {
     return new Room();
@@ -83,19 +82,11 @@ export function useLiveKit(
           setVideoEnabled
         ),
       },
-      enterRoom: async () => {
-        // TODO: Pass connection parameters (autosubscribe, etc.).
-        await room.connect(url, token);
-      },
-      leaveRoom: async () => {
-        await room.disconnect();
-      },
+      room,
     };
 
     setState(state);
   }, [
-    url,
-    token,
     mediaDevices,
     audio.localTrack,
     video.localTrack,

@@ -15,14 +15,9 @@ limitations under the License.
 */
 
 import React, { useState } from "react";
-import { useMemo } from "react";
-import { RoomMember } from "matrix-js-sdk";
 
-import { VideoGrid, useVideoGridLayout } from "./VideoGrid";
-import { VideoTile } from "./VideoTile";
+import { useVideoGridLayout } from "./VideoGrid";
 import { Button } from "../button";
-import { ConnectionState } from "../room/useGroupCall";
-import { TileDescriptor } from "./TileDescriptor";
 
 export default {
   title: "VideoGrid",
@@ -34,18 +29,6 @@ export default {
 export const ParticipantsTest = () => {
   const { layout, setLayout } = useVideoGridLayout(false);
   const [participantCount, setParticipantCount] = useState(1);
-
-  const items: TileDescriptor[] = useMemo(
-    () =>
-      new Array(participantCount).fill(undefined).map((_, i) => ({
-        id: (i + 1).toString(),
-        member: new RoomMember("!fake:room.id", `@user${i}:fake.dummy`),
-        focused: false,
-        presenter: false,
-        connectionState: ConnectionState.Connected,
-      })),
-    [participantCount]
-  );
 
   return (
     <>
@@ -67,26 +50,6 @@ export const ParticipantsTest = () => {
             Remove Participant
           </Button>
         )}
-      </div>
-      <div
-        style={{
-          display: "flex",
-          width: "100vw",
-          height: "calc(100vh - 32px)",
-        }}
-      >
-        <VideoGrid layout={layout} items={items}>
-          {({ item, ...rest }) => (
-            <VideoTile
-              key={item.id}
-              name={`User ${item.id}`}
-              disableSpeakingIndicator={items.length < 3}
-              connectionState={ConnectionState.Connected}
-              debugInfo={{ width: undefined, height: undefined }}
-              {...rest}
-            />
-          )}
-        </VideoGrid>
       </div>
     </>
   );
