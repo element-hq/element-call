@@ -70,16 +70,9 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             </div>
           ) : (
             <div className={classNames(styles.infoBubble, styles.memberName)}>
-              {
-                /* If the user is speaking, it's safe to say they're unmuted.
-                Mute state is currently sent over to-device messages, which
-                aren't quite real-time, so this is an important kludge to make
-                sure no one appears muted when they've clearly begun talking. */
-                microphoneMuted &&
-                  sfuParticipant.isCameraEnabled &&
-                  !sfuParticipant.isSpeaking && <MicMutedIcon />
-              }
+              {microphoneMuted && <MicMutedIcon />}
               {!sfuParticipant.isCameraEnabled && <VideoMutedIcon />}
+              <span title={name}>{name}</span>
             </div>
           ))}
         <VideoTrack participant={sfuParticipant} source={Track.Source.Camera} />
