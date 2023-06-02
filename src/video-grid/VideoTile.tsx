@@ -19,7 +19,7 @@ import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import { LocalParticipant, RemoteParticipant, Track } from "livekit-client";
-import { useMediaTrack } from "@livekit/components-react";
+import { VideoTrack, useMediaTrack } from "@livekit/components-react";
 
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
@@ -28,23 +28,13 @@ import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
 interface Props {
   name: string;
   avatar?: JSX.Element;
-  maximised?: boolean;
   className?: string;
   sfuParticipant: LocalParticipant | RemoteParticipant;
 }
 
 export const VideoTile = forwardRef<HTMLDivElement, Props>(
-  ({ name, avatar, maximised, className, sfuParticipant, ...rest }, ref) => {
+  ({ name, avatar, className, sfuParticipant, ...rest }, ref) => {
     const { t } = useTranslation();
-
-    const videoEl = React.useRef<HTMLVideoElement>(null);
-    const { isMuted: cameraMuted } = useMediaTrack(
-      Track.Source.Camera,
-      sfuParticipant,
-      {
-        element: videoEl,
-      }
-    );
 
     const audioEl = React.useRef<HTMLAudioElement>(null);
     const { isMuted: microphoneMuted } = useMediaTrack(
@@ -62,18 +52,18 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           [styles.speaking]: sfuParticipant.isSpeaking,
           [styles.muted]: microphoneMuted,
           [styles.screenshare]: false,
-          [styles.maximised]: maximised,
+          [styles.maximised]: false,
         })}
         ref={ref}
         {...rest}
       >
-        {cameraMuted && (
+        {!sfuParticipant.isCameraEnabled && (
           <>
             <div className={styles.videoMutedOverlay} />
             {avatar}
           </>
         )}
-        {!maximised &&
+        {!false &&
           (sfuParticipant.isScreenShareEnabled ? (
             <div className={styles.presenterLabel}>
               <span>{t("{{name}} is presenting", { name })}</span>
@@ -86,13 +76,13 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
                 aren't quite real-time, so this is an important kludge to make
                 sure no one appears muted when they've clearly begun talking. */
                 microphoneMuted &&
-                  !cameraMuted &&
+                  sfuParticipant.isCameraEnabled &&
                   !sfuParticipant.isSpeaking && <MicMutedIcon />
               }
-              {cameraMuted && <VideoMutedIcon />}
+              {!sfuParticipant.isCameraEnabled && <VideoMutedIcon />}
             </div>
           ))}
-        <video ref={videoEl} />
+        <VideoTrack participant={sfuParticipant} source={Track.Source.Camera} />
         <audio ref={audioEl} />
       </animated.div>
     );
