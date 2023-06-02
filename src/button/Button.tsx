@@ -30,10 +30,7 @@ import { ReactComponent as ScreenshareIcon } from "../icons/Screenshare.svg";
 import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
 import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
-import { ReactComponent as Fullscreen } from "../icons/Fullscreen.svg";
-import { ReactComponent as FullscreenExit } from "../icons/FullscreenExit.svg";
 import { TooltipTrigger } from "../Tooltip";
-import { VolumeIcon } from "./VolumeIcon";
 
 export type ButtonVariant =
   | "default"
@@ -259,48 +256,6 @@ export function InviteButton({
     <TooltipTrigger tooltip={tooltip}>
       <Button variant="toolbar" {...rest}>
         <AddUserIcon />
-      </Button>
-    </TooltipTrigger>
-  );
-}
-
-interface AudioButtonProps extends Omit<Props, "variant"> {
-  /**
-   * A number between 0 and 1
-   */
-  volume: number;
-}
-
-export function AudioButton({ volume, ...rest }: AudioButtonProps) {
-  const { t } = useTranslation();
-  const tooltip = useCallback(() => t("Local volume"), [t]);
-
-  return (
-    <TooltipTrigger tooltip={tooltip}>
-      <Button variant="icon" {...rest}>
-        <VolumeIcon volume={volume} />
-      </Button>
-    </TooltipTrigger>
-  );
-}
-
-interface FullscreenButtonProps extends Omit<Props, "variant"> {
-  fullscreen?: boolean;
-}
-
-export function FullscreenButton({
-  fullscreen,
-  ...rest
-}: FullscreenButtonProps) {
-  const { t } = useTranslation();
-  const tooltip = useCallback(() => {
-    return fullscreen ? t("Exit full screen") : t("Full screen");
-  }, [fullscreen, t]);
-
-  return (
-    <TooltipTrigger tooltip={tooltip}>
-      <Button variant="icon" {...rest}>
-        {fullscreen ? <FullscreenExit /> : <Fullscreen />}
       </Button>
     </TooltipTrigger>
   );

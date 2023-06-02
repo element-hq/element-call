@@ -29,7 +29,6 @@ import { MatrixInfo } from "./VideoPreview";
 import { InCallView } from "./InCallView";
 import { CallEndedView } from "./CallEndedView";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
-import { useLocationNavigation } from "../useLocationNavigation";
 import { PosthogAnalytics } from "../PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { useLiveKit } from "./useLiveKit";
@@ -62,19 +61,8 @@ export function GroupCallView({
   const {
     state,
     error,
-    activeSpeaker,
-    userMediaFeeds,
-    microphoneMuted,
-    localVideoMuted,
     enter,
     leave,
-    toggleLocalVideoMuted,
-    toggleMicrophoneMuted,
-    toggleScreensharing,
-    setMicrophoneMuted,
-    requestingScreenshare,
-    isScreensharing,
-    screenshareFeeds,
     participants,
     unencryptedEventsFromUsers,
   } = useGroupCall(groupCall);
@@ -97,8 +85,7 @@ export function GroupCallView({
     roomId: roomIdOrAlias,
   };
 
-  // TODO: Pass the correct URL and the correct JWT token here.
-  const lkState = useLiveKit("<SFU_URL_HERE>", "<JWT_TOKEN_HERE>");
+  const lkState = useLiveKit();
 
   useEffect(() => {
     if (widget && preload) {
@@ -133,8 +120,6 @@ export function GroupCallView({
   }, [groupCall, isEmbedded, preload]);
 
   useSentryGroupCallHandler(groupCall);
-
-  useLocationNavigation(requestingScreenshare);
 
   const [left, setLeft] = useState(false);
   const history = useHistory();
@@ -191,24 +176,13 @@ export function GroupCallView({
       <InCallView
         groupCall={groupCall}
         client={client}
-        roomName={groupCall.room.name}
-        avatarUrl={avatarUrl}
         participants={participants}
-        mediaDevices={lkState.mediaDevices}
-        microphoneMuted={microphoneMuted}
-        localVideoMuted={localVideoMuted}
-        toggleLocalVideoMuted={toggleLocalVideoMuted}
-        toggleMicrophoneMuted={toggleMicrophoneMuted}
-        setMicrophoneMuted={setMicrophoneMuted}
-        userMediaFeeds={userMediaFeeds}
-        activeSpeaker={activeSpeaker}
         onLeave={onLeave}
-        toggleScreensharing={toggleScreensharing}
-        isScreensharing={isScreensharing}
-        screenshareFeeds={screenshareFeeds}
-        roomIdOrAlias={roomIdOrAlias}
         unencryptedEventsFromUsers={unencryptedEventsFromUsers}
         hideHeader={hideHeader}
+        matrixInfo={matrixInfo}
+        mediaDevices={lkState.mediaDevices}
+        livekitRoom={lkState.room}
       />
     );
   } else if (left) {

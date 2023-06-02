@@ -21,10 +21,17 @@ import { ResizeObserver } from "@juggle/resize-observer";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import { CallFeed } from "matrix-js-sdk/src/webrtc/callFeed";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import { JoinRule } from "matrix-js-sdk/src/@types/partials";
+import { Room, Track } from "livekit-client";
+import {
+  useLiveKitRoom,
+  useLocalParticipant,
+  useParticipants,
+  useToken,
+  useTracks,
+} from "@livekit/components-react";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import styles from "./InCallView.module.css";
@@ -50,10 +57,8 @@ import { Avatar } from "../Avatar";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { useShowInspector, useSpatialAudio } from "../settings/useSetting";
+import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
-import { useAudioContext } from "../video-grid/useMediaStream";
-import { useFullscreen } from "../video-grid/useFullscreen";
 import { PosthogAnalytics } from "../PosthogAnalytics";
 import { widget, ElementWidgetActions } from "../widget";
 import { useJoinRule } from "./useJoinRule";
@@ -61,9 +66,9 @@ import { useUrlParams } from "../UrlParams";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { ParticipantInfo } from "./useGroupCall";
 import { TileDescriptor } from "../video-grid/TileDescriptor";
-import { AudioSink } from "../video-grid/AudioSink";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { MediaDevicesState } from "../settings/mediaDevices";
+import { MatrixInfo } from "./VideoPreview";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -75,46 +80,25 @@ interface Props {
   client: MatrixClient;
   groupCall: GroupCall;
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
-  roomName: string;
-  avatarUrl: string;
-  mediaDevices: MediaDevicesState;
-  microphoneMuted: boolean;
-  localVideoMuted: boolean;
-  toggleLocalVideoMuted: () => void;
-  toggleMicrophoneMuted: () => void;
-  toggleScreensharing: () => void;
-  setMicrophoneMuted: (muted: boolean) => void;
-  userMediaFeeds: CallFeed[];
-  activeSpeaker: CallFeed | null;
   onLeave: () => void;
-  isScreensharing: boolean;
-  screenshareFeeds: CallFeed[];
-  roomIdOrAlias: string;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
+
+  matrixInfo: MatrixInfo;
+  mediaDevices: MediaDevicesState;
+  livekitRoom: Room;
 }
 
 export function InCallView({
   client,
   groupCall,
   participants,
-  roomName,
-  avatarUrl,
-  mediaDevices,
-  microphoneMuted,
-  localVideoMuted,
-  toggleLocalVideoMuted,
-  toggleMicrophoneMuted,
-  setMicrophoneMuted,
-  userMediaFeeds,
-  activeSpeaker,
   onLeave,
-  toggleScreensharing,
-  isScreensharing,
-  screenshareFeeds,
-  roomIdOrAlias,
   unencryptedEventsFromUsers,
   hideHeader,
+  matrixInfo,
+  mediaDevices,
+  livekitRoom,
 }: Props) {
   const { t } = useTranslation();
   usePreventScroll();
@@ -132,13 +116,49 @@ export function InCallView({
     [containerRef1, containerRef2]
   );
 
-  const { layout, setLayout } = useVideoGridLayout(screenshareFeeds.length > 0);
-  const { toggleFullscreen, fullscreenParticipant } =
-    useFullscreen(containerRef1);
+  const userId = client.getUserId();
+  const deviceId = client.getDeviceId();
+  const options = useMemo(
+    () => ({
+      userInfo: {
+        name: matrixInfo.userName,
+        identity: `${userId}:${deviceId}`,
+      },
+    }),
+    [matrixInfo.userName, userId, deviceId]
+  );
+  const token = useToken(
+    "http://localhost:8080/token",
+    matrixInfo.roomName,
+    options
+  );
 
-  const [spatialAudio] = useSpatialAudio();
+  // Uses a hook to connect to the LiveKit room (on unmount the room will be left) and publish local media tracks (default).
+  useLiveKitRoom({
+    token,
+    serverUrl: "ws://localhost:7880",
+    room: livekitRoom,
+    onConnected: () => {
+      console.log("connected to LiveKit room");
+    },
+    onDisconnected: () => {
+      console.log("disconnected from LiveKit room");
+    },
+    onError: (err) => {
+      console.error("error connecting to LiveKit room", err);
+    },
+  });
 
-  const [audioContext, audioDestination] = useAudioContext();
+  const screenSharingTracks = useTracks(
+    [{ source: Track.Source.ScreenShare, withPlaceholder: false }],
+    {
+      room: livekitRoom,
+    }
+  );
+  const { layout, setLayout } = useVideoGridLayout(
+    screenSharingTracks.length > 0
+  );
+
   const [showInspector] = useShowInspector();
 
   const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
@@ -146,11 +166,28 @@ export function InCallView({
 
   const { hideScreensharing } = useUrlParams();
 
+  const {
+    isMicrophoneEnabled,
+    isCameraEnabled,
+    isScreenShareEnabled,
+    localParticipant,
+  } = useLocalParticipant({ room: livekitRoom });
+
+  const toggleMicrophone = useCallback(async () => {
+    await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
+  }, [localParticipant, isMicrophoneEnabled]);
+  const toggleCamera = useCallback(async () => {
+    await localParticipant.setCameraEnabled(!isCameraEnabled);
+  }, [localParticipant, isCameraEnabled]);
+  const toggleScreenSharing = useCallback(async () => {
+    await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
+  }, [localParticipant, isScreenShareEnabled]);
+
   useCallViewKeyboardShortcuts(
     !feedbackModalState.isOpen,
-    toggleMicrophoneMuted,
-    toggleLocalVideoMuted,
-    setMicrophoneMuted
+    toggleCamera,
+    toggleMicrophone,
+    async (muted) => await localParticipant.setMicrophoneEnabled(!muted)
   );
 
   useEffect(() => {
@@ -189,27 +226,33 @@ export function InCallView({
     }
   }, [setLayout]);
 
+  const sfuParticipants = useParticipants({
+    room: livekitRoom,
+  });
+
   const items = useMemo(() => {
-    const tileDescriptors: TileDescriptor[] = [];
     const localUserId = client.getUserId()!;
     const localDeviceId = client.getDeviceId()!;
 
     // One tile for each participant, to start with (we want a tile for everyone we
     // think should be in the call, even if we don't have a call feed for them yet)
+    const tileDescriptors: TileDescriptor[] = [];
     for (const [member, participantMap] of participants) {
       for (const [deviceId, { connectionState, presenter }] of participantMap) {
-        const callFeed = userMediaFeeds.find(
-          (f) => f.userId === member.userId && f.deviceId === deviceId
-        );
+        const id = `${member.userId}:${deviceId}`;
+        const sfuParticipant = sfuParticipants.find((p) => p.identity === id);
+
+        const hasScreenShare =
+          sfuParticipant?.getTrack(Track.Source.ScreenShare) !== undefined;
 
         tileDescriptors.push({
-          id: `${member.userId} ${deviceId}`,
+          id,
           member,
-          callFeed,
-          focused: screenshareFeeds.length === 0 && callFeed === activeSpeaker,
-          isLocal: member.userId === localUserId && deviceId === localDeviceId,
+          focused: hasScreenShare && !sfuParticipant?.isLocal,
+          isLocal: member.userId == localUserId && deviceId == localDeviceId,
           presenter,
           connectionState,
+          sfuParticipant,
         });
       }
     }
@@ -218,46 +261,17 @@ export function InCallView({
       tileDescriptors.length
     );
 
-    // Add the screenshares too
-    for (const screenshareFeed of screenshareFeeds) {
-      const member = screenshareFeed.getMember()!;
-      const connectionState = participants
-        .get(member)
-        ?.get(screenshareFeed.deviceId!)?.connectionState;
-
-      // If the participant has left, their screenshare feed is stale and we
-      // shouldn't bother showing it
-      if (connectionState !== undefined) {
-        tileDescriptors.push({
-          id: screenshareFeed.id,
-          member,
-          callFeed: screenshareFeed,
-          focused: true,
-          isLocal: screenshareFeed.isLocal,
-          presenter: false,
-          connectionState,
-        });
-      }
-    }
-
     return tileDescriptors;
-  }, [client, participants, userMediaFeeds, activeSpeaker, screenshareFeeds]);
+  }, [client, participants, sfuParticipants]);
 
   const reducedControls = boundsValid && bounds.width <= 400;
   const noControls = reducedControls && bounds.height <= 400;
 
-  // The maximised participant: either the participant that the user has
-  // manually put in fullscreen, or the focused (active) participant if the
-  // window is too small to show everyone
+  // The maximised participant: the focused (active) participant if the
+  // window is too small to show everyone.
   const maximisedParticipant = useMemo(
-    () =>
-      fullscreenParticipant ??
-      (noControls
-        ? items.find((item) => item.focused) ??
-          items.find((item) => item.callFeed) ??
-          null
-        : null),
-    [fullscreenParticipant, noControls, items]
+    () => (noControls ? items.find((item) => item.focused) ?? null : null),
+    [noControls, items]
   );
 
   const renderAvatar = useCallback(
@@ -296,12 +310,7 @@ export function InCallView({
           key={maximisedParticipant.id}
           item={maximisedParticipant}
           getAvatar={renderAvatar}
-          audioContext={audioContext}
-          audioDestination={audioDestination}
-          disableSpeakingIndicator={true}
           maximised={Boolean(maximisedParticipant)}
-          fullscreen={maximisedParticipant === fullscreenParticipant}
-          onFullscreen={toggleFullscreen}
         />
       );
     }
@@ -323,12 +332,7 @@ export function InCallView({
             key={item.id}
             item={item}
             getAvatar={renderAvatar}
-            audioContext={audioContext}
-            audioDestination={audioDestination}
-            disableSpeakingIndicator={items.length < 3}
             maximised={false}
-            fullscreen={false}
-            onFullscreen={toggleFullscreen}
             {...rest}
           />
         )}
@@ -345,26 +349,6 @@ export function InCallView({
     [styles.maximised]: maximisedParticipant,
   });
 
-  // If spatial audio is disabled, we render one audio tag for each participant
-  // (with spatial audio, all the audio goes via the Web Audio API)
-  // We also do this if there's a feed maximised because we only trigger spatial
-  // audio rendering for feeds that we're displaying, which will need to be fixed
-  // once we start having more participants than we can fit on a screen, but this
-  // is a workaround for now.
-  const audioElements: JSX.Element[] = [];
-  if (!spatialAudio || maximisedParticipant) {
-    for (const item of items) {
-      if (item.isLocal) continue; // We don't want to render own audio
-      audioElements.push(
-        <AudioSink
-          tileDescriptor={item}
-          audioOutput="AUDIO OUTPUT?"
-          key={item.id}
-        />
-      );
-    }
-  }
-
   let footer: JSX.Element | null;
 
   if (noControls) {
@@ -372,25 +356,25 @@ export function InCallView({
   } else if (reducedControls) {
     footer = (
       <div className={styles.footer}>
-        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
-        <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
+        <MicButton muted={!isMicrophoneEnabled} onPress={toggleMicrophone} />
+        <VideoButton muted={!isCameraEnabled} onPress={toggleCamera} />
         <HangupButton onPress={onLeave} />
       </div>
     );
   } else {
     footer = (
       <div className={styles.footer}>
-        <MicButton muted={microphoneMuted} onPress={toggleMicrophoneMuted} />
-        <VideoButton muted={localVideoMuted} onPress={toggleLocalVideoMuted} />
+        <MicButton muted={!isMicrophoneEnabled} onPress={toggleMicrophone} />
+        <VideoButton muted={!isCameraEnabled} onPress={toggleCamera} />
         {canScreenshare && !hideScreensharing && !isSafari && (
           <ScreenshareButton
-            enabled={isScreensharing}
-            onPress={toggleScreensharing}
+            enabled={isScreenShareEnabled}
+            onPress={toggleScreenSharing}
           />
         )}
         {!maximisedParticipant && (
           <OverflowMenu
-            roomId={roomIdOrAlias}
+            roomId={matrixInfo.roomId}
             mediaDevices={mediaDevices}
             inCall
             showInvite={joinRule === JoinRule.Public}
@@ -405,11 +389,13 @@ export function InCallView({
 
   return (
     <div className={containerClasses} ref={containerRef}>
-      <>{audioElements}</>
       {!hideHeader && !maximisedParticipant && (
         <Header>
           <LeftNav>
-            <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
+            <RoomHeaderInfo
+              roomName={matrixInfo.roomName}
+              avatarUrl={matrixInfo.avatarUrl}
+            />
             <VersionMismatchWarning
               users={unencryptedEventsFromUsers}
               room={groupCall.room}
@@ -431,7 +417,7 @@ export function InCallView({
       {rageshakeRequestModalState.isOpen && (
         <RageshakeRequestModal
           {...rageshakeRequestModalProps}
-          roomIdOrAlias={roomIdOrAlias}
+          roomIdOrAlias={matrixInfo.roomId}
         />
       )}
     </div>
