@@ -187,8 +187,8 @@ export function InCallView({
 
   useCallViewKeyboardShortcuts(
     !feedbackModalState.isOpen,
-    toggleCamera,
     toggleMicrophone,
+    toggleCamera,
     async (muted) => await localParticipant.setMicrophoneEnabled(!muted)
   );
 
