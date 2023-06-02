@@ -138,6 +138,8 @@ export function InCallView({
     token,
     serverUrl: "ws://localhost:7880",
     room: livekitRoom,
+    audio: true,
+    video: true,
     onConnected: () => {
       console.log("connected to LiveKit room");
     },
