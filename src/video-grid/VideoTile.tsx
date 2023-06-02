@@ -19,7 +19,11 @@ import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import { LocalParticipant, RemoteParticipant, Track } from "livekit-client";
-import { VideoTrack, useMediaTrack } from "@livekit/components-react";
+import {
+  ConnectionQualityIndicator,
+  VideoTrack,
+  useMediaTrack,
+} from "@livekit/components-react";
 
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
@@ -73,6 +77,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
               {microphoneMuted && <MicMutedIcon />}
               {!sfuParticipant.isCameraEnabled && <VideoMutedIcon />}
               <span title={name}>{name}</span>
+              <ConnectionQualityIndicator participant={sfuParticipant} />
             </div>
           ))}
         <VideoTrack participant={sfuParticipant} source={Track.Source.Camera} />
