@@ -124,6 +124,6 @@
   "Call link copied": "链接已复制",
   "By clicking \"Join call now\", you agree to our <2>Terms and conditions</2>": "点击“现在加入”则表示同意我们的<2>条款与条件<2>",
   "Avatar": "头像",
-  "<0>Oops, something's gone wrong.</0>": "",
+  "<0>Oops, something's gone wrong.</0>": "<0>哎哟，出问题了。</0>",
   "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": ""
 }
