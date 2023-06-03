@@ -132,5 +132,10 @@
   "Developer Settings": "Entwicklereinstellungen",
   "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.": "Mit der Teilnahme an der Beta akzeptierst du die Sammlung von anonymen Daten, die wir zur Verbesserung des Produkts verwenden. Weitere Informationen zu den von uns erhobenen Daten findest du in unserer <2>Datenschutzerklärung</2> und unseren <5>Cookie-Richtlinien</5>.",
   "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>Du kannst deine Zustimmung durch Abwählen dieses Kästchens zurückziehen. Falls du dich aktuell in einem Anruf befindest, wird diese Einstellung nach dem Ende des Anrufs wirksam.",
-  "Feedback": "Rückmeldung"
+  "Feedback": "Rückmeldung",
+  "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "Falls du auf Probleme stößt oder einfach nur eine Rückmeldung geben möchtest, sende uns bitte eine kurze Beschreibung.",
+  "Your feedback": "Deine Rückmeldung",
+  "Thanks, we received your feedback!": "Danke, wir haben deine Rückmeldung erhalten!",
+  "Submitting…": "Sende …",
+  "Submit": "Absenden"
 }
