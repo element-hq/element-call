@@ -33,7 +33,7 @@ import { PosthogAnalytics } from "../PosthogAnalytics";
 import { TranslatedError, translatedError } from "../TranslatedError";
 import { ElementWidgetActions, ScreenshareStartData, widget } from "../widget";
 
-export enum ConnectionState {
+enum ConnectionState {
   EstablishingCall = "establishing call", // call hasn't been established yet
   WaitMedia = "wait_media", // call is set up, waiting for ICE to connect
   Connected = "connected", // media is flowing
@@ -44,7 +44,7 @@ export interface ParticipantInfo {
   presenter: boolean;
 }
 
-export interface UseGroupCallReturnType {
+interface UseGroupCallReturnType {
   state: GroupCallState;
   localCallFeed: CallFeed;
   activeSpeaker: CallFeed | null;

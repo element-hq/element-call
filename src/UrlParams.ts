@@ -17,7 +17,7 @@ limitations under the License.
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 
-export interface UrlParams {
+interface UrlParams {
   roomAlias: string | null;
   roomId: string | null;
   viaServers: string[];

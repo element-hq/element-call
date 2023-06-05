@@ -209,10 +209,7 @@ export function roomAliasLocalpartFromRoomName(roomName: string): string {
     .toLowerCase();
 }
 
-export function fullAliasFromRoomName(
-  roomName: string,
-  client: MatrixClient
-): string {
+function fullAliasFromRoomName(roomName: string, client: MatrixClient): string {
   return `#${roomAliasLocalpartFromRoomName(roomName)}:${client.getDomain()}`;
 }
 

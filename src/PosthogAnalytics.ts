@@ -55,7 +55,7 @@ export interface IPosthogEvent {
   $set_once?: void;
 }
 
-export enum Anonymity {
+enum Anonymity {
   Disabled,
   Anonymous,
   Pseudonymous,

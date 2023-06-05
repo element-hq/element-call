@@ -67,7 +67,7 @@ interface LogEntry {
   index?: number;
 }
 
-export class ConsoleLogger extends EventEmitter {
+class ConsoleLogger extends EventEmitter {
   private logs = "";
   private originalFunctions: { [key in LogFunctionName]?: LogFunction } = {};
 
@@ -145,7 +145,7 @@ export class ConsoleLogger extends EventEmitter {
 }
 
 // A class which stores log lines in an IndexedDB instance.
-export class IndexedDBLogStore {
+class IndexedDBLogStore {
   private index = 0;
   private db: IDBDatabase = null;
   private flushPromise: Promise<void> = null;
@@ -511,7 +511,7 @@ export function init(): Promise<void> {
  * then this no-ops.
  * @return {Promise} Resolves when complete.
  */
-export function tryInitStorage(): Promise<void> {
+function tryInitStorage(): Promise<void> {
   if (global.mx_rage_initStoragePromise) {
     return global.mx_rage_initStoragePromise;
   }
@@ -535,24 +535,6 @@ export function tryInitStorage(): Promise<void> {
   }
   global.mx_rage_initStoragePromise = Promise.resolve();
   return global.mx_rage_initStoragePromise;
-}
-
-export function flush(): Promise<void> {
-  if (!global.mx_rage_store) {
-    return;
-  }
-  global.mx_rage_store.flush();
-}
-
-/**
- * Clean up old logs.
- * @return {Promise} Resolves if cleaned logs.
- */
-export async function cleanup(): Promise<void> {
-  if (!global.mx_rage_store) {
-    return;
-  }
-  await global.mx_rage_store.consume();
 }
 
 /**

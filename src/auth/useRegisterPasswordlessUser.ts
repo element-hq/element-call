@@ -22,7 +22,7 @@ import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { generateRandomName } from "../auth/generateRandomName";
 import { useRecaptcha } from "../auth/useRecaptcha";
 
-export interface UseRegisterPasswordlessUserType {
+interface UseRegisterPasswordlessUserType {
   privacyPolicyUrl: string;
   registerPasswordlessUser: (displayName: string) => Promise<void>;
   recaptchaId: string;

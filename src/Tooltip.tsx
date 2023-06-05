@@ -40,7 +40,7 @@ interface TooltipProps {
   children: ReactNode;
 }
 
-export const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
+const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
   (
     { state, className, children, ...rest }: TooltipProps,
     ref: ForwardedRef<HTMLDivElement>
