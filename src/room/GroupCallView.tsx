@@ -203,7 +203,11 @@ export function GroupCallView({
       widget.api.transport.send(ElementWidgetActions.HangupCall, {});
     }
 
-    if (!isPasswordlessUser && !isEmbedded) {
+    if (
+      !isPasswordlessUser &&
+      !isEmbedded &&
+      !PosthogAnalytics.instance.isEnabled()
+    ) {
       history.push("/");
     }
   }, [groupCall, leave, isPasswordlessUser, isEmbedded, history]);
@@ -268,8 +272,13 @@ export function GroupCallView({
       );
     }
   } else if (left) {
-    if (isPasswordlessUser) {
-      return <CallEndedView client={client} />;
+    if (isPasswordlessUser || PosthogAnalytics.instance.isEnabled()) {
+      return (
+        <CallEndedView
+          client={client}
+          isPasswordlessUser={isPasswordlessUser}
+        />
+      );
     } else {
       // If the user is a regular user, we'll have sent them back to the homepage,
       // so just sit here & do nothing: otherwise we would (briefly) mount the

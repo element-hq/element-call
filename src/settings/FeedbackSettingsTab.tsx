@@ -23,6 +23,7 @@ import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake, useRageshakeRequest } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
 import styles from "../input/SelectInput.module.css";
+import feedbackStyles from "../input/FeedbackInput.module.css";
 
 interface Props {
   roomId?: string;
@@ -68,9 +69,10 @@ export function FeedbackSettingsTab({ roomId }: Props) {
       <form onSubmit={onSubmitFeedback}>
         <FieldRow>
           <InputField
+            className={feedbackStyles.feedback}
             id="description"
             name="description"
-            label={t("Your feedback")}
+            placeholder={t("Your feedback")}
             type="textarea"
             disabled={sending || sent}
           />

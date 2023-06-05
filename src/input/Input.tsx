@@ -130,15 +130,17 @@ export const InputField = forwardRef<
             {...rest}
           />
         )}
-
-        <label htmlFor={id}>
-          {type === "checkbox" && (
-            <div className={styles.checkbox}>
-              <CheckIcon />
-            </div>
-          )}
-          {label}
-        </label>
+        {/* Dont create label element if not set -> prohibits broken animation on focus*/}
+        {(label || type === "checkbox") && (
+          <label htmlFor={id}>
+            {type === "checkbox" && (
+              <div className={styles.checkbox}>
+                <CheckIcon />
+              </div>
+            )}
+            {label}
+          </label>
+        )}
         {suffix && <span>{suffix}</span>}
         {description && (
           <p
