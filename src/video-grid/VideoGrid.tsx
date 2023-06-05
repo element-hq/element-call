@@ -23,7 +23,6 @@ import { ReactDOMAttributes } from "@use-gesture/react/dist/declarations/src/typ
 
 import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/GridLayoutMenu";
-import { TileDescriptor } from "./TileDescriptor";
 
 interface TilePosition {
   x: number;
@@ -33,13 +32,12 @@ interface TilePosition {
   zIndex: number;
 }
 
-interface Tile {
+interface Tile<T> {
   key: Key;
   order: number;
-  item: TileDescriptor;
+  item: TileDescriptor<T>;
   remove: boolean;
   focused: boolean;
-  presenter: boolean;
 }
 
 type LayoutDirection = "vertical" | "horizontal";
@@ -112,7 +110,6 @@ const getPipGap = (gridAspectRatio: number, gridWidth: number): number =>
 function getTilePositions(
   tileCount: number,
   focusedTileCount: number,
-  hasPresenter: boolean,
   gridWidth: number,
   gridHeight: number,
   pipXRatio: number,
@@ -120,7 +117,7 @@ function getTilePositions(
   layout: Layout
 ): TilePosition[] {
   if (layout === "freedom") {
-    if (tileCount === 2 && !hasPresenter && focusedTileCount === 0) {
+    if (tileCount === 2 && focusedTileCount === 0) {
       return getOneOnOneLayoutTilePositions(
         gridWidth,
         gridHeight,
@@ -654,7 +651,7 @@ function getSubGridPositions(
 
 // Sets the 'order' property on tiles based on the layout param and
 // other properties of the tiles, eg. 'focused' and 'presenter'
-function reorderTiles(tiles: Tile[], layout: Layout) {
+function reorderTiles<T>(tiles: Tile<T>[], layout: Layout) {
   // We use a special layout for 1:1 to always put the local tile first.
   // We only do this if there are two tiles (obviously) and exactly one
   // of them is local: during startup we can have tiles from other users
@@ -664,16 +661,16 @@ function reorderTiles(tiles: Tile[], layout: Layout) {
   if (
     layout === "freedom" &&
     tiles.length === 2 &&
-    tiles.filter((t) => t.item.isLocal).length === 1 &&
-    !tiles.some((t) => t.presenter || t.focused)
+    tiles.filter((t) => t.item.local).length === 1 &&
+    !tiles.some((t) => t.focused)
   ) {
     // 1:1 layout
-    tiles.forEach((tile) => (tile.order = tile.item.isLocal ? 0 : 1));
+    tiles.forEach((tile) => (tile.order = tile.item.local ? 0 : 1));
   } else {
-    const focusedTiles: Tile[] = [];
-    const otherTiles: Tile[] = [];
+    const focusedTiles: Tile<T>[] = [];
+    const otherTiles: Tile<T>[] = [];
 
-    const orderedTiles: Tile[] = new Array(tiles.length);
+    const orderedTiles: Tile<T>[] = new Array(tiles.length);
     tiles.forEach((tile) => (orderedTiles[tile.order] = tile));
 
     orderedTiles.forEach((tile) =>
@@ -692,8 +689,9 @@ interface DragTileData {
   y: number;
 }
 
-interface ChildrenProperties extends ReactDOMAttributes {
+interface ChildrenProperties<T> extends ReactDOMAttributes {
   key: Key;
+  data: T;
   style: {
     scale: SpringValue<number>;
     opacity: SpringValue<number>;
@@ -701,29 +699,36 @@ interface ChildrenProperties extends ReactDOMAttributes {
   };
   width: number;
   height: number;
-  item: TileDescriptor;
-  [index: string]: unknown;
 }
 
-interface VideoGridProps {
-  items: TileDescriptor[];
+interface VideoGridProps<T> {
+  items: TileDescriptor<T>[];
   layout: Layout;
-  disableAnimations?: boolean;
-  children: (props: ChildrenProperties) => React.ReactNode;
+  disableAnimations: boolean;
+  children: (props: ChildrenProperties<T>) => React.ReactNode;
 }
 
-export function VideoGrid({
+// Represents something that should get a tile on the layout,
+// ie. a user's video feed or a screen share feed.
+export interface TileDescriptor<T> {
+  id: string;
+  focused: boolean;
+  local: boolean;
+  data: T;
+}
+
+export function VideoGrid<T>({
   items,
   layout,
   disableAnimations,
-  children,
-}: VideoGridProps) {
+  children: createChild,
+}: VideoGridProps<T>) {
   // Place the PiP in the bottom right corner by default
   const [pipXRatio, setPipXRatio] = useState(1);
   const [pipYRatio, setPipYRatio] = useState(1);
 
   const [{ tiles, tilePositions }, setTileState] = useState<{
-    tiles: Tile[];
+    tiles: Tile<T>[];
     tilePositions: TilePosition[];
   }>({
     tiles: [],
@@ -739,7 +744,7 @@ export function VideoGrid({
 
   useEffect(() => {
     setTileState(({ tiles, ...rest }) => {
-      const newTiles: Tile[] = [];
+      const newTiles: Tile<T>[] = [];
       const removedTileKeys: Set<Key> = new Set();
 
       for (const tile of tiles) {
@@ -766,7 +771,6 @@ export function VideoGrid({
           item,
           remove,
           focused,
-          presenter: item.presenter,
         });
       }
 
@@ -781,13 +785,12 @@ export function VideoGrid({
           continue;
         }
 
-        const newTile: Tile = {
+        const newTile: Tile<T> = {
           key: item.id,
           order: existingTile?.order ?? newTiles.length,
           item,
           remove: false,
           focused: layout === "spotlight" && item.focused,
-          presenter: item.presenter,
         };
 
         if (existingTile) {
@@ -808,7 +811,7 @@ export function VideoGrid({
           }
 
           setTileState(({ tiles, ...rest }) => {
-            const newTiles: Tile[] = tiles
+            const newTiles: Tile<T>[] = tiles
               .filter((tile) => !removedTileKeys.has(tile.key))
               .map((tile) => ({ ...tile })); // clone before reordering
             reorderTiles(newTiles, layout);
@@ -824,7 +827,6 @@ export function VideoGrid({
               tilePositions: getTilePositions(
                 newTiles.length,
                 focusedTileCount,
-                newTiles.some((t) => t.presenter),
                 gridBounds.width,
                 gridBounds.height,
                 pipXRatio,
@@ -849,7 +851,6 @@ export function VideoGrid({
         tilePositions: getTilePositions(
           newTiles.length,
           focusedTileCount,
-          newTiles.some((t) => t.presenter),
           gridBounds.width,
           gridBounds.height,
           pipXRatio,
@@ -863,7 +864,7 @@ export function VideoGrid({
   const tilePositionsValid = useRef(false);
 
   const animate = useCallback(
-    (tiles: Tile[]) => {
+    (tiles: Tile<T>[]) => {
       // Whether the tile positions were valid at the time of the previous
       // animation
       const tilePositionsWereValid = tilePositionsValid.current;
@@ -1005,7 +1006,6 @@ export function VideoGrid({
           tilePositions: getTilePositions(
             newTiles.length,
             focusedTileCount,
-            newTiles.some((t) => t.presenter),
             gridBounds.width,
             gridBounds.height,
             pipXRatio,
@@ -1037,9 +1037,9 @@ export function VideoGrid({
 
       let newTiles = tiles;
 
-      if (tiles.length === 2 && !tiles.some((t) => t.presenter || t.focused)) {
+      if (tiles.length === 2 && !tiles.some((t) => t.focused)) {
         // We're in 1:1 mode, so only the local tile should be draggable
-        if (!dragTile.item.isLocal) return;
+        if (!dragTile.item.local) return;
 
         // Position should only update on the very last event, to avoid
         // compounding the offset on every drag event
@@ -1179,9 +1179,10 @@ export function VideoGrid({
         const tile = tiles[i];
         const tilePosition = tilePositions[tile.order];
 
-        return children({
+        return createChild({
           ...bindTile(tile.key),
           key: tile.key,
+          data: tile.item.data,
           style: {
             boxShadow: shadow.to(
               (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
@@ -1190,7 +1191,6 @@ export function VideoGrid({
           },
           width: tilePosition.width,
           height: tilePosition.height,
-          item: tile.item,
         });
       })}
     </div>

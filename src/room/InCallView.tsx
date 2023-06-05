@@ -14,17 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useEffect, useCallback, useMemo, useRef } from "react";
-import { usePreventScroll } from "@react-aria/overlays";
-import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
-import { MatrixClient } from "matrix-js-sdk/src/client";
-import { RoomMember } from "matrix-js-sdk/src/models/room-member";
-import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import classNames from "classnames";
-import { useTranslation } from "react-i18next";
-import { JoinRule } from "matrix-js-sdk/src/@types/partials";
-import { Room, Track } from "livekit-client";
 import {
   useLiveKitRoom,
   useLocalParticipant,
@@ -32,15 +22,19 @@ import {
   useToken,
   useTracks,
 } from "@livekit/components-react";
+import { usePreventScroll } from "@react-aria/overlays";
+import classNames from "classnames";
+import { Room, Track } from "livekit-client";
+import { JoinRule } from "matrix-js-sdk/src/@types/partials";
+import { MatrixClient } from "matrix-js-sdk/src/client";
+import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import { useTranslation } from "react-i18next";
+import useMeasure from "react-use-measure";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
-import styles from "./InCallView.module.css";
-import {
-  HangupButton,
-  MicButton,
-  VideoButton,
-  ScreenshareButton,
-} from "../button";
+import { Avatar } from "../Avatar";
 import {
   Header,
   LeftNav,
@@ -48,27 +42,36 @@ import {
   RoomHeaderInfo,
   VersionMismatchWarning,
 } from "../Header";
-import { VideoGrid, useVideoGridLayout } from "../video-grid/VideoGrid";
-import { VideoTileContainer } from "../video-grid/VideoTileContainer";
-import { GroupCallInspector } from "./GroupCallInspector";
-import { OverflowMenu } from "./OverflowMenu";
-import { GridLayoutMenu } from "./GridLayoutMenu";
-import { Avatar } from "../Avatar";
-import { UserMenuContainer } from "../UserMenuContainer";
-import { useRageshakeRequestModal } from "../settings/submit-rageshake";
-import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { PosthogAnalytics } from "../PosthogAnalytics";
-import { widget, ElementWidgetActions } from "../widget";
-import { useJoinRule } from "./useJoinRule";
 import { useUrlParams } from "../UrlParams";
-import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
-import { ParticipantInfo } from "./useGroupCall";
-import { TileDescriptor } from "../video-grid/TileDescriptor";
-import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
+import { UserMenuContainer } from "../UserMenuContainer";
+import {
+  HangupButton,
+  MicButton,
+  ScreenshareButton,
+  VideoButton,
+} from "../button";
 import { MediaDevicesState } from "../settings/mediaDevices";
+import { useRageshakeRequestModal } from "../settings/submit-rageshake";
+import { useShowInspector } from "../settings/useSetting";
+import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
+import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
+import {
+  TileDescriptor,
+  VideoGrid,
+  useVideoGridLayout,
+} from "../video-grid/VideoGrid";
+import { ItemData, VideoTileContainer } from "../video-grid/VideoTileContainer";
+import { ElementWidgetActions, widget } from "../widget";
+import { GridLayoutMenu } from "./GridLayoutMenu";
+import { GroupCallInspector } from "./GroupCallInspector";
+import styles from "./InCallView.module.css";
+import { OverflowMenu } from "./OverflowMenu";
+import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { MatrixInfo } from "./VideoPreview";
+import { useJoinRule } from "./useJoinRule";
+import { ParticipantInfo } from "./useGroupCall";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -228,45 +231,13 @@ export function InCallView({
     }
   }, [setLayout]);
 
-  const sfuParticipants = useParticipants({
-    room: livekitRoom,
-  });
-
-  const items = useMemo(() => {
-    const localUserId = client.getUserId()!;
-    const localDeviceId = client.getDeviceId()!;
-
-    // One tile for each participant, to start with (we want a tile for everyone we
-    // think should be in the call, even if we don't have a call feed for them yet)
-    const tileDescriptors: TileDescriptor[] = [];
-    for (const [member, participantMap] of participants) {
-      for (const [deviceId, { presenter }] of participantMap) {
-        const id = `${member.userId}:${deviceId}`;
-        const sfuParticipant = sfuParticipants.find((p) => p.identity === id);
-
-        const hasScreenShare =
-          sfuParticipant?.getTrack(Track.Source.ScreenShare) !== undefined;
-
-        tileDescriptors.push({
-          id,
-          member,
-          focused: hasScreenShare && !sfuParticipant?.isLocal,
-          isLocal: member.userId == localUserId && deviceId == localDeviceId,
-          presenter,
-          sfuParticipant,
-        });
-      }
-    }
-
-    PosthogAnalytics.instance.eventCallEnded.cacheParticipantCountChanged(
-      tileDescriptors.length
-    );
-
-    return tileDescriptors;
-  }, [client, participants, sfuParticipants]);
-
   const reducedControls = boundsValid && bounds.width <= 400;
   const noControls = reducedControls && bounds.height <= 400;
+
+  const items = useParticipantTiles(livekitRoom, participants, {
+    userId: client.getUserId()!,
+    deviceId: client.getDeviceId()!,
+  });
 
   // The maximised participant: the focused (active) participant if the
   // window is too small to show everyone.
@@ -309,7 +280,7 @@ export function InCallView({
           height={bounds.height}
           width={bounds.width}
           key={maximisedParticipant.id}
-          item={maximisedParticipant}
+          item={maximisedParticipant.data}
           getAvatar={renderAvatar}
           maximised={Boolean(maximisedParticipant)}
         />
@@ -322,19 +293,12 @@ export function InCallView({
         layout={layout}
         disableAnimations={prefersReducedMotion || isSafari}
       >
-        {({
-          item,
-          ...rest
-        }: {
-          item: TileDescriptor;
-          [x: string]: unknown;
-        }) => (
+        {(child) => (
           <VideoTileContainer
-            key={item.id}
-            item={item}
             getAvatar={renderAvatar}
             maximised={false}
-            {...rest}
+            item={child.data}
+            {...child}
           />
         )}
       </VideoGrid>
@@ -423,4 +387,54 @@ export function InCallView({
       )}
     </div>
   );
+}
+
+interface ParticipantID {
+  userId: string;
+  deviceId: string;
+}
+
+function useParticipantTiles(
+  livekitRoom: Room,
+  participants: Map<RoomMember, Map<string, ParticipantInfo>>,
+  local: ParticipantID
+): TileDescriptor<ItemData>[] {
+  const sfuParticipants = useParticipants({
+    room: livekitRoom,
+  });
+
+  const [localUserId, localDeviceId] = [local.userId, local.deviceId];
+
+  const items = useMemo(() => {
+    const tiles: TileDescriptor<ItemData>[] = [];
+    for (const [member, participantMap] of participants) {
+      for (const [deviceId] of participantMap) {
+        const id = `${member.userId}:${deviceId}`;
+        const sfuParticipant = sfuParticipants.find((p) => p.identity === id);
+
+        const hasScreenShare =
+          sfuParticipant?.getTrack(Track.Source.ScreenShare) !== undefined;
+
+        const descriptor = {
+          id,
+          focused: hasScreenShare && !sfuParticipant?.isLocal,
+          local: member.userId == localUserId && deviceId == localDeviceId,
+          data: {
+            member,
+            sfuParticipant,
+          },
+        };
+
+        tiles.push(descriptor);
+      }
+    }
+
+    PosthogAnalytics.instance.eventCallEnded.cacheParticipantCountChanged(
+      tiles.length
+    );
+
+    return tiles;
+  }, [localUserId, localDeviceId, participants, sfuParticipants]);
+
+  return items;
 }
