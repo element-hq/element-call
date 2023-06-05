@@ -79,6 +79,11 @@ export interface UrlParams {
    * The Posthog analytics ID. It is only available if the user has given consent for sharing telemetry in element web.
    */
   analyticsID: string | null;
+  /**
+   * Whether the app is allowed to use fallback STUN servers for ICE in case the
+   * user's homeserver doesn't provide any.
+   */
+  allowIceFallback: boolean;
 }
 
 /**
@@ -135,6 +140,7 @@ export const getUrlParams = (
     fonts: getAllParams("font"),
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
     analyticsID: getParam("analyticsID"),
+    allowIceFallback: hasParam("allowIceFallback"),
   };
 };
 
