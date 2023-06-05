@@ -38,6 +38,7 @@ import {
   ConnectionStatsReport,
   ByteSentStatsReport,
   SummaryStatsReport,
+  CallFeedReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 import { setSpan } from "@opentelemetry/api/build/esm/trace/context-utils";
 
@@ -174,7 +175,7 @@ export class OTelGroupCallMembership {
         userCalls.get(callTrackingInfo.deviceId).callId !==
           callTrackingInfo.call.callId
       ) {
-        callTrackingInfo.span.end();
+        callTrackingInfo.end();
         this.callsByCallId.delete(callTrackingInfo.call.callId);
       }
     }
@@ -330,6 +331,37 @@ export class OTelGroupCallMembership {
     });
   }
 
+  public onCallFeedStatsReport(report: GroupCallStatsReport<CallFeedReport>) {
+    if (!ElementCallOpenTelemetry.instance) return;
+    let call: OTelCall | undefined;
+    const callId = report.report?.callId;
+    console.log("#### callId", callId);
+    console.log("#### callId", report);
+
+    if (callId) {
+      call = this.callsByCallId.get(callId);
+    }
+
+    if (!call) {
+      this.callMembershipSpan?.addEvent(
+        OTelStatsReportType.CallFeedReport + "_unknown_callId",
+        {
+          "call.callId": callId,
+          "call.opponentMemberId": report.report?.opponentMemberId
+            ? report.report?.opponentMemberId
+            : "unknown",
+        }
+      );
+      logger.error(
+        `Received ${OTelStatsReportType.CallFeedReport} with unknown call ID: ${callId}`
+      );
+      return;
+    } else {
+      call.onCallFeedStats(report.report.callFeeds);
+      call.onTransceiverStats(report.report.transceiver);
+    }
+  }
+
   public onConnectionStatsReport(
     statsReport: GroupCallStatsReport<ConnectionStatsReport>
   ) {
@@ -440,4 +472,5 @@ enum OTelStatsReportType {
   ConnectionReport = "matrix.call.stats.connection",
   ByteSentReport = "matrix.call.stats.byteSent",
   SummaryReport = "matrix.stats.summary",
+  CallFeedReport = "matrix.stats.call_feed",
 }
