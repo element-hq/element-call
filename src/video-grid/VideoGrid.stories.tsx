@@ -26,7 +26,7 @@ export default {
   },
 };
 
-export const ParticipantsTest = () => {
+const ParticipantsTest = () => {
   const { layout, setLayout } = useVideoGridLayout(false);
   const [participantCount, setParticipantCount] = useState(1);
 

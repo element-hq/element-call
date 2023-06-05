@@ -27,8 +27,6 @@ import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DisableVideoIcon } from "../icons/DisableVideo.svg";
 import { ReactComponent as HangupIcon } from "../icons/Hangup.svg";
 import { ReactComponent as ScreenshareIcon } from "../icons/Screenshare.svg";
-import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
-import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
 import { TooltipTrigger } from "../Tooltip";
 
@@ -216,46 +214,6 @@ export function HangupButton({
         {...rest}
       >
         <HangupIcon />
-      </Button>
-    </TooltipTrigger>
-  );
-}
-
-export function SettingsButton({
-  className,
-  ...rest
-}: {
-  className?: string;
-  // TODO: add all props for <Button>
-  [index: string]: unknown;
-}) {
-  const { t } = useTranslation();
-  const tooltip = useCallback(() => t("Settings"), [t]);
-
-  return (
-    <TooltipTrigger tooltip={tooltip}>
-      <Button variant="toolbar" {...rest}>
-        <SettingsIcon />
-      </Button>
-    </TooltipTrigger>
-  );
-}
-
-export function InviteButton({
-  className,
-  ...rest
-}: {
-  className?: string;
-  // TODO: add all props for <Button>
-  [index: string]: unknown;
-}) {
-  const { t } = useTranslation();
-  const tooltip = useCallback(() => t("Invite"), [t]);
-
-  return (
-    <TooltipTrigger tooltip={tooltip}>
-      <Button variant="toolbar" {...rest}>
-        <AddUserIcon />
       </Button>
     </TooltipTrigger>
   );

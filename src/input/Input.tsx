@@ -50,7 +50,7 @@ interface FieldProps {
   className?: string;
 }
 
-export function Field({ children, className }: FieldProps): JSX.Element {
+function Field({ children, className }: FieldProps): JSX.Element {
   return <div className={classNames(styles.field, className)}>{children}</div>;
 }
 

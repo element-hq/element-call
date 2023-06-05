@@ -15,10 +15,8 @@ limitations under the License.
 */
 
 import classNames from "classnames";
-import React, { HTMLAttributes, ReactNode, useCallback, useRef } from "react";
+import React, { HTMLAttributes, ReactNode, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { useButton } from "@react-aria/button";
-import { AriaButtonProps } from "@react-types/button";
 import { Room } from "matrix-js-sdk/src/models/room";
 import { useTranslation } from "react-i18next";
 
@@ -30,7 +28,6 @@ import { ReactComponent as VideoIcon } from "./icons/Video.svg";
 import { Subtitle } from "./typography/Typography";
 import { Avatar, Size } from "./Avatar";
 import { IncompatibleVersionModal } from "./IncompatibleVersionModal";
-import { ReactComponent as ArrowLeftIcon } from "./icons/ArrowLeft.svg";
 
 interface HeaderProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
@@ -136,37 +133,6 @@ export function RoomHeaderInfo({ roomName, avatarUrl }: RoomHeaderInfo) {
       </div>
       <Subtitle fontWeight="semiBold">{roomName}</Subtitle>
     </>
-  );
-}
-
-interface RoomSetupHeaderInfoProps extends AriaButtonProps<"button"> {
-  roomName: string;
-  avatarUrl: string;
-  isEmbedded: boolean;
-}
-
-export function RoomSetupHeaderInfo({
-  roomName,
-  avatarUrl,
-  isEmbedded,
-  ...rest
-}: RoomSetupHeaderInfoProps) {
-  const ref = useRef();
-  const { buttonProps } = useButton(rest, ref);
-
-  if (isEmbedded) {
-    return (
-      <div ref={ref}>
-        <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
-      </div>
-    );
-  }
-
-  return (
-    <button className={styles.backButton} ref={ref} {...buttonProps}>
-      <ArrowLeftIcon width={16} height={16} />
-      <RoomHeaderInfo roomName={roomName} avatarUrl={avatarUrl} />
-    </button>
   );
 }
 

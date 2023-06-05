@@ -32,7 +32,7 @@ import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
 import { translatedError } from "../TranslatedError";
 import { widget } from "../widget";
 
-export interface GroupCallLoadState {
+interface GroupCallLoadState {
   loading: boolean;
   error?: Error;
   groupCall?: GroupCall;
