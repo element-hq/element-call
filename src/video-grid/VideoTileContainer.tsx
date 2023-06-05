@@ -16,13 +16,18 @@ limitations under the License.
 
 import React from "react";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { LocalParticipant, RemoteParticipant } from "livekit-client";
 
 import { useRoomMemberName } from "./useRoomMemberName";
 import { VideoTile } from "./VideoTile";
-import { TileDescriptor } from "./TileDescriptor";
+
+export interface ItemData {
+  member: RoomMember;
+  sfuParticipant?: LocalParticipant | RemoteParticipant;
+}
 
 interface Props {
-  item: TileDescriptor;
+  item: ItemData;
   width?: number;
   height?: number;
   getAvatar: (
