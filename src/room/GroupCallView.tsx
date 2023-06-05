@@ -275,6 +275,7 @@ export function GroupCallView({
     if (isPasswordlessUser || PosthogAnalytics.instance.isEnabled()) {
       return (
         <CallEndedView
+          endedCallId={groupCall.groupCallId}
           client={client}
           isPasswordlessUser={isPasswordlessUser}
         />

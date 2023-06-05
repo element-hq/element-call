@@ -32,9 +32,11 @@ import { StarRatingInput } from "../input/StarRatingInput";
 export function CallEndedView({
   client,
   isPasswordlessUser,
+  endedCallId,
 }: {
   client: MatrixClient;
   isPasswordlessUser: boolean;
+  endedCallId: string;
 }) {
   const { t } = useTranslation();
   const history = useHistory();
@@ -51,7 +53,7 @@ export function CallEndedView({
       const feedbackText = data.get("feedbackText") as string;
 
       PosthogAnalytics.instance.eventQualitySurvey.track(
-        "callId",
+        endedCallId,
         feedbackText,
         starRating
       );
