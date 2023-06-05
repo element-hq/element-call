@@ -155,7 +155,9 @@ export function CallEndedView({
                 "\n" +
                 t("How did it go?")}
           </Headline>
-          {surveySubmitted ? createAccountDialog : qualitySurveyDialog}
+          {!surveySubmitted && PosthogAnalytics.instance.isEnabled()
+            ? qualitySurveyDialog
+            : createAccountDialog}
         </main>
         <Body className={styles.footer}>
           <Link color="primary" to="/">
