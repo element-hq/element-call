@@ -42,11 +42,12 @@ export function StarRatingInput({
             className={styles.inputContainer}
             onMouseEnter={() => setHover(index)}
             onMouseLeave={() => setHover(rating)}
+            key={index}
           >
             <input
               className={styles.hideElement}
               type="radio"
-              key={"input" + String(index)}
+              // key={"input" + String(index)}
               id={String(index)}
               value={String(index) + " star"}
               name="star rating"
@@ -58,14 +59,14 @@ export function StarRatingInput({
             />
             <label
               className={styles.hideElement}
-              key={"lbl" + String(index)}
+              // key={"lbl" + String(index)}
               htmlFor={String(index)}
             >
               {index + " " + t("star")}
             </label>
             <label
               className={styles.starIcon}
-              key={"lbl" + String(index)}
+              // key={"icon" + String(index)}
               htmlFor={String(index)}
             >
               {index <= (hover || rating) ? (

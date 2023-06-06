@@ -74,7 +74,7 @@ export function CallEndedView({
         }, 1000);
       }, 1000);
     },
-    [history, isPasswordlessUser, starRating]
+    [endedCallId, history, isPasswordlessUser, starRating]
   );
   const createAccountDialog = isPasswordlessUser && (
     <div className={styles.callEndedContent}>
