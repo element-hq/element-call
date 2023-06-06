@@ -112,6 +112,7 @@ export function CallEndedView({
             className={feedbackStyle.feedback}
             id="feedbackText"
             name="feedbackText"
+            label={t("Your feedback")}
             placeholder={t("Your feedback")}
             type="textarea"
             required
@@ -119,7 +120,9 @@ export function CallEndedView({
         </FieldRow>{" "}
         <FieldRow>
           {submitDone ? (
-            <p>Thanks for your feedback!</p>
+            <Trans>
+              <p>Thanks for your feedback!</p>
+            </Trans>
           ) : (
             <Button
               type="submit"
@@ -128,7 +131,7 @@ export function CallEndedView({
               variant="default"
               data-testid="home_go"
             >
-              {submitting ? t("Submitting...") : t("Submit")}
+              {submitting ? t("Submitting…") : t("Submit")}
             </Button>
           )}
         </FieldRow>

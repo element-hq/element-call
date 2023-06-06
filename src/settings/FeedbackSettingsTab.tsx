@@ -72,6 +72,7 @@ export function FeedbackSettingsTab({ roomId }: Props) {
             className={feedbackStyles.feedback}
             id="description"
             name="description"
+            label={t("Your feedback")}
             placeholder={t("Your feedback")}
             type="textarea"
             disabled={sending || sent}

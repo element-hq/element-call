@@ -21,12 +21,3 @@ limitations under the License.
 .feedback {
   border-radius: 8px;
 }
-
-.feedback textarea::placeholder {
-  transition: color 0.25s ease-in 0s;
-  color: var(--secondary-content);
-}
-.feedback textarea:placeholder-shown:focus::placeholder {
-  transition: color 0.25s ease-in 0.1s;
-  color: var(--tertiary-content);
-}

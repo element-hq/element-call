@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import React, { useState } from "react";
+import { t } from "i18next";
 
 import styles from "./StarRatingInput.module.css";
 import { ReactComponent as StarSelected } from "../icons/StarSelected.svg";
@@ -34,34 +35,46 @@ export function StarRatingInput({
   const [hover, setHover] = useState(0);
   return (
     <div className={styles.starRating}>
-      <input
-        className={styles.fakeInputElement}
-        id="numberInput"
-        type="number"
-        required={required && rating === 0}
-      />
       {[...Array(starCount)].map((_star, index) => {
         index += 1;
         return (
-          <button
-            type="button"
-            key={index}
-            className={styles.star}
-            onClick={() => {
-              setRating(index);
-              onChange(index);
-            }}
+          <div
+            className={styles.inputContainer}
             onMouseEnter={() => setHover(index)}
             onMouseLeave={() => setHover(rating)}
           >
-            <span className="star">
+            <input
+              className={styles.hideElement}
+              type="radio"
+              key={"input" + String(index)}
+              id={String(index)}
+              value={String(index) + " star"}
+              name="star rating"
+              onChange={(_ev) => {
+                setRating(index);
+                onChange(index);
+              }}
+              required
+            />
+            <label
+              className={styles.hideElement}
+              key={"lbl" + String(index)}
+              htmlFor={String(index)}
+            >
+              {index + " " + t("star")}
+            </label>
+            <label
+              className={styles.starIcon}
+              key={"lbl" + String(index)}
+              htmlFor={String(index)}
+            >
               {index <= (hover || rating) ? (
                 <StarSelected />
               ) : (
                 <StarUnselected />
               )}
-            </span>
-          </button>
+            </label>
+          </div>
         );
       })}
     </div>

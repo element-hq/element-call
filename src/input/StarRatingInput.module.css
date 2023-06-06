@@ -14,10 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.star {
-  background-color: transparent;
-  border: none;
-  outline: none;
+.starIcon {
   cursor: pointer;
 }
 
@@ -27,9 +24,18 @@ limitations under the License.
   flex: 1;
 }
 
-.fakeInputElement {
-  width: 0;
-  padding: 0;
+.inputContainer {
+  display: inline-block;
+}
+
+.hideElement {
   border: 0;
-  opacity: 0;
+  clip-path: content-box;
+  height: 0px;
+  width: 0px;
+  margin: -1px;
+  overflow: hidden;
+  padding: 0;
+  width: 1px;
+  display: inline-block;
 }
