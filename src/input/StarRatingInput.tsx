@@ -49,7 +49,7 @@ export function StarRatingInput({
               type="radio"
               // key={"input" + String(index)}
               id={String(index)}
-              value={String(index) + " star"}
+              value={String(index) + "Star"}
               name="star rating"
               onChange={(_ev) => {
                 setRating(index);
@@ -62,7 +62,7 @@ export function StarRatingInput({
               // key={"lbl" + String(index)}
               htmlFor={String(index)}
             >
-              {index + " " + t("star")}
+              {index + " " + t("Star")}
             </label>
             <label
               className={styles.starIcon}
