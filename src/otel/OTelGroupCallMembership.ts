@@ -333,22 +333,70 @@ export class OTelGroupCallMembership {
   public onConnectionStatsReport(
     statsReport: GroupCallStatsReport<ConnectionStatsReport>
   ) {
-    if (!ElementCallOpenTelemetry.instance) return;
-
-    const type = OTelStatsReportType.ConnectionReport;
-    const data =
-      ObjectFlattener.flattenConnectionStatsReportObject(statsReport);
-    this.buildStatsEventSpan({ type, data });
+    this.buildCallStatsSpan(
+      OTelStatsReportType.ConnectionReport,
+      statsReport.report
+    );
   }
 
   public onByteSentStatsReport(
     statsReport: GroupCallStatsReport<ByteSentStatsReport>
   ) {
-    if (!ElementCallOpenTelemetry.instance) return;
+    this.buildCallStatsSpan(
+      OTelStatsReportType.ByteSentReport,
+      statsReport.report
+    );
+  }
 
-    const type = OTelStatsReportType.ByteSentReport;
-    const data = ObjectFlattener.flattenByteSentStatsReportObject(statsReport);
-    this.buildStatsEventSpan({ type, data });
+  public buildCallStatsSpan(
+    type: OTelStatsReportType,
+    report: ByteSentStatsReport | ConnectionStatsReport
+  ): void {
+    if (!ElementCallOpenTelemetry.instance) return;
+    let call: OTelCall | undefined;
+    const callId = report?.callId;
+
+    if (callId) {
+      call = this.callsByCallId.get(callId);
+    }
+
+    if (!call) {
+      this.callMembershipSpan?.addEvent(type + "_unknown_callid", {
+        "call.callId": callId,
+        "call.opponentMemberId": report.opponentMemberId
+          ? report.opponentMemberId
+          : "unknown",
+      });
+      logger.error(`Received ${type} with unknown call ID: ${callId}`);
+      return;
+    }
+    const data = ObjectFlattener.flattenReportObject(type, report);
+    const ctx = opentelemetry.trace.setSpan(
+      opentelemetry.context.active(),
+      call.span
+    );
+
+    const options = {
+      links: [
+        {
+          context: call.span.spanContext(),
+        },
+      ],
+    };
+
+    const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
+      type,
+      options,
+      ctx
+    );
+
+    span.setAttribute("matrix.callId", callId);
+    span.setAttribute(
+      "matrix.opponentMemberId",
+      report.opponentMemberId ? report.opponentMemberId : "unknown"
+    );
+    span.addEvent("matrix.call.connection_stats_event", data);
+    span.end();
   }
 
   public onSummaryStatsReport(
@@ -381,45 +429,6 @@ export class OTelGroupCallMembership {
       span.end();
     }
   }
-
-  private buildStatsEventSpan(event: OTelStatsReportEvent): void {
-    // @ TODO: fix this - Because on multiple calls we receive multiple stats report spans.
-    // This could be break if stats arrived in same time from different call objects.
-    if (this.statsReportSpan.span === undefined && this.callMembershipSpan) {
-      const ctx = setSpan(
-        opentelemetry.context.active(),
-        this.callMembershipSpan
-      );
-      this.statsReportSpan.span =
-        ElementCallOpenTelemetry.instance?.tracer.startSpan(
-          "matrix.groupCallMembership.statsReport",
-          undefined,
-          ctx
-        );
-      if (this.statsReportSpan.span === undefined) {
-        return;
-      }
-      this.statsReportSpan.span.setAttribute(
-        "matrix.confId",
-        this.groupCall.groupCallId
-      );
-      this.statsReportSpan.span.setAttribute("matrix.userId", this.myUserId);
-      this.statsReportSpan.span.setAttribute(
-        "matrix.displayName",
-        this.myMember ? this.myMember.name : "unknown-name"
-      );
-
-      this.statsReportSpan.span.addEvent(event.type, event.data);
-      this.statsReportSpan.stats.push(event);
-    } else if (
-      this.statsReportSpan.span !== undefined &&
-      this.callMembershipSpan
-    ) {
-      this.statsReportSpan.span.addEvent(event.type, event.data);
-      this.statsReportSpan.span.end();
-      this.statsReportSpan = { span: undefined, stats: [] };
-    }
-  }
 }
 
 interface OTelStatsReportEvent {
@@ -428,7 +437,7 @@ interface OTelStatsReportEvent {
 }
 
 enum OTelStatsReportType {
-  ConnectionReport = "matrix.stats.connection",
-  ByteSentReport = "matrix.stats.byteSent",
+  ConnectionReport = "matrix.call.stats.connection",
+  ByteSentReport = "matrix.call.stats.byteSent",
   SummaryReport = "matrix.stats.summary",
 }
