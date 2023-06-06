@@ -19,11 +19,12 @@ import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { LocalParticipant, RemoteParticipant } from "livekit-client";
 
 import { useRoomMemberName } from "./useRoomMemberName";
-import { VideoTile } from "./VideoTile";
+import { TileContent, VideoTile } from "./VideoTile";
 
 export interface ItemData {
   member: RoomMember;
-  sfuParticipant?: LocalParticipant | RemoteParticipant;
+  sfuParticipant: LocalParticipant | RemoteParticipant;
+  content: TileContent;
 }
 
 interface Props {
@@ -35,7 +36,6 @@ interface Props {
     width: number,
     height: number
   ) => JSX.Element;
-  maximised: boolean;
 }
 
 export function VideoTileContainer({
@@ -43,22 +43,19 @@ export function VideoTileContainer({
   width,
   height,
   getAvatar,
-  maximised,
   ...rest
 }: Props) {
   const { rawDisplayName } = useRoomMemberName(item.member);
 
   return (
     <>
-      {!item.sfuParticipant && null}
-      {item.sfuParticipant && (
-        <VideoTile
-          sfuParticipant={item.sfuParticipant}
-          name={rawDisplayName}
-          avatar={getAvatar && getAvatar(item.member, width, height)}
-          {...rest}
-        />
-      )}
+      <VideoTile
+        sfuParticipant={item.sfuParticipant}
+        content={item.content}
+        name={rawDisplayName}
+        avatar={getAvatar && getAvatar(item.member, width, height)}
+        {...rest}
+      />
     </>
   );
 }

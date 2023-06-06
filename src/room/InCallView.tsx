@@ -72,6 +72,7 @@ import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { MatrixInfo } from "./VideoPreview";
 import { useJoinRule } from "./useJoinRule";
 import { ParticipantInfo } from "./useGroupCall";
+import { TileContent } from "../video-grid/VideoTile";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -234,18 +235,6 @@ export function InCallView({
   const reducedControls = boundsValid && bounds.width <= 400;
   const noControls = reducedControls && bounds.height <= 400;
 
-  const items = useParticipantTiles(livekitRoom, participants, {
-    userId: client.getUserId()!,
-    deviceId: client.getDeviceId()!,
-  });
-
-  // The maximised participant: the focused (active) participant if the
-  // window is too small to show everyone.
-  const maximisedParticipant = useMemo(
-    () => (noControls ? items.find((item) => item.focused) ?? null : null),
-    [noControls, items]
-  );
-
   const renderAvatar = useCallback(
     (roomMember: RoomMember, width: number, height: number) => {
       const avatarUrl = roomMember.getMxcAvatarUrl();
@@ -266,24 +255,14 @@ export function InCallView({
 
   const prefersReducedMotion = usePrefersReducedMotion();
 
+  const items = useParticipantTiles(livekitRoom, participants);
+
   const renderContent = (): JSX.Element => {
     if (items.length === 0) {
       return (
         <div className={styles.centerMessage}>
           <p>{t("Waiting for other participants…")}</p>
         </div>
-      );
-    }
-    if (maximisedParticipant) {
-      return (
-        <VideoTileContainer
-          height={bounds.height}
-          width={bounds.width}
-          key={maximisedParticipant.id}
-          item={maximisedParticipant.data}
-          getAvatar={renderAvatar}
-          maximised={Boolean(maximisedParticipant)}
-        />
       );
     }
 
@@ -296,7 +275,6 @@ export function InCallView({
         {(child) => (
           <VideoTileContainer
             getAvatar={renderAvatar}
-            maximised={false}
             item={child.data}
             {...child}
           />
@@ -311,7 +289,7 @@ export function InCallView({
   } = useRageshakeRequestModal(groupCall.room.roomId);
 
   const containerClasses = classNames(styles.inRoom, {
-    [styles.maximised]: maximisedParticipant,
+    [styles.maximised]: undefined,
   });
 
   let footer: JSX.Element | null;
@@ -337,16 +315,14 @@ export function InCallView({
             onPress={toggleScreenSharing}
           />
         )}
-        {!maximisedParticipant && (
-          <OverflowMenu
-            roomId={matrixInfo.roomId}
-            mediaDevices={mediaDevices}
-            inCall
-            showInvite={joinRule === JoinRule.Public}
-            feedbackModalState={feedbackModalState}
-            feedbackModalProps={feedbackModalProps}
-          />
-        )}
+        <OverflowMenu
+          roomId={matrixInfo.roomId}
+          mediaDevices={mediaDevices}
+          inCall
+          showInvite={joinRule === JoinRule.Public}
+          feedbackModalState={feedbackModalState}
+          feedbackModalProps={feedbackModalProps}
+        />
         <HangupButton onPress={onLeave} />
       </div>
     );
@@ -354,7 +330,7 @@ export function InCallView({
 
   return (
     <div className={containerClasses} ref={containerRef}>
-      {!hideHeader && !maximisedParticipant && (
+      {!hideHeader && (
         <Header>
           <LeftNav>
             <RoomHeaderInfo
@@ -389,43 +365,54 @@ export function InCallView({
   );
 }
 
-interface ParticipantID {
-  userId: string;
-  deviceId: string;
-}
-
 function useParticipantTiles(
   livekitRoom: Room,
-  participants: Map<RoomMember, Map<string, ParticipantInfo>>,
-  local: ParticipantID
+  participants: Map<RoomMember, Map<string, ParticipantInfo>>
 ): TileDescriptor<ItemData>[] {
   const sfuParticipants = useParticipants({
     room: livekitRoom,
   });
 
-  const [localUserId, localDeviceId] = [local.userId, local.deviceId];
-
   const items = useMemo(() => {
     const tiles: TileDescriptor<ItemData>[] = [];
+
     for (const [member, participantMap] of participants) {
       for (const [deviceId] of participantMap) {
         const id = `${member.userId}:${deviceId}`;
         const sfuParticipant = sfuParticipants.find((p) => p.identity === id);
 
-        const hasScreenShare =
-          sfuParticipant?.getTrack(Track.Source.ScreenShare) !== undefined;
+        // Skip rendering participants that did not connect to the SFU.
+        if (!sfuParticipant) {
+          continue;
+        }
 
-        const descriptor = {
+        const userMediaTile = {
           id,
-          focused: hasScreenShare && !sfuParticipant?.isLocal,
-          local: member.userId == localUserId && deviceId == localDeviceId,
+          focused: false,
+          local: sfuParticipant.isLocal,
           data: {
             member,
             sfuParticipant,
+            content: TileContent.UserMedia,
           },
         };
 
-        tiles.push(descriptor);
+        // Add a tile for user media.
+        tiles.push(userMediaTile);
+
+        // If there is a screen sharing enabled for this participant, create a tile for it as well.
+        if (sfuParticipant.isScreenShareEnabled) {
+          const screenShareTile = {
+            ...userMediaTile,
+            id: `${id}:screen-share`,
+            focused: true,
+            data: {
+              ...userMediaTile.data,
+              content: TileContent.ScreenShare,
+            },
+          };
+          tiles.push(screenShareTile);
+        }
       }
     }
 
@@ -434,7 +421,7 @@ function useParticipantTiles(
     );
 
     return tiles;
-  }, [localUserId, localDeviceId, participants, sfuParticipants]);
+  }, [participants, sfuParticipants]);
 
   return items;
 }

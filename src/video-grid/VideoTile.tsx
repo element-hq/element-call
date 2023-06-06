@@ -29,20 +29,29 @@ import styles from "./VideoTile.module.css";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
 
+export enum TileContent {
+  UserMedia = "user-media",
+  ScreenShare = "screen-share",
+}
+
 interface Props {
-  name: string;
   avatar?: JSX.Element;
   className?: string;
+
+  name: string;
   sfuParticipant: LocalParticipant | RemoteParticipant;
+  content: TileContent;
 }
 
 export const VideoTile = forwardRef<HTMLDivElement, Props>(
-  ({ name, avatar, className, sfuParticipant, ...rest }, ref) => {
+  ({ name, avatar, className, sfuParticipant, content, ...rest }, ref) => {
     const { t } = useTranslation();
 
     const audioEl = React.useRef<HTMLAudioElement>(null);
     const { isMuted: microphoneMuted } = useMediaTrack(
-      Track.Source.Microphone,
+      content === TileContent.UserMedia
+        ? Track.Source.Microphone
+        : Track.Source.ScreenShareAudio,
       sfuParticipant,
       {
         element: audioEl,
@@ -56,7 +65,6 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           [styles.speaking]: sfuParticipant.isSpeaking,
           [styles.muted]: microphoneMuted,
           [styles.screenshare]: false,
-          [styles.maximised]: false,
         })}
         ref={ref}
         {...rest}
@@ -80,7 +88,14 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
               <ConnectionQualityIndicator participant={sfuParticipant} />
             </div>
           ))}
-        <VideoTrack participant={sfuParticipant} source={Track.Source.Camera} />
+        <VideoTrack
+          participant={sfuParticipant}
+          source={
+            content === TileContent.UserMedia
+              ? Track.Source.Camera
+              : Track.Source.ScreenShare
+          }
+        />
         <audio ref={audioEl} />
       </animated.div>
     );
