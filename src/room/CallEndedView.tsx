@@ -65,7 +65,7 @@ export function CallEndedView({
 
         setTimeout(() => {
           if (isPasswordlessUser) {
-            // setting this renders the callEndedView with the invatation to create an account
+            // setting this renders the callEndedView with the invitation to create an account
             setSurverySubmitted(true);
           } else {
             // if the user already has an account immediately go back to the home screen
