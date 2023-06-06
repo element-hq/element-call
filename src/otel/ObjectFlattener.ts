@@ -23,16 +23,12 @@ import {
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 export class ObjectFlattener {
-  public static flattenConnectionStatsReportObject(
-    statsReport: GroupCallStatsReport<ConnectionStatsReport>
+  public static flattenReportObject(
+    prefix: string,
+    report: ConnectionStatsReport | ByteSentStatsReport
   ): Attributes {
     const flatObject = {};
-    ObjectFlattener.flattenObjectRecursive(
-      statsReport.report,
-      flatObject,
-      "matrix.stats.conn.",
-      0
-    );
+    ObjectFlattener.flattenObjectRecursive(report, flatObject, `${prefix}.`, 0);
     return flatObject;
   }
 
