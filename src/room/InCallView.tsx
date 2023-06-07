@@ -73,6 +73,7 @@ import { MatrixInfo } from "./VideoPreview";
 import { useJoinRule } from "./useJoinRule";
 import { ParticipantInfo } from "./useGroupCall";
 import { TileContent } from "../video-grid/VideoTile";
+import { Config } from "../config/Config";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -132,7 +133,7 @@ export function InCallView({
     [matrixInfo.userName, userId, deviceId]
   );
   const token = useToken(
-    "http://localhost:8080/token",
+    `${Config.get().livekit.jwt_service_url}/token`,
     matrixInfo.roomName,
     options
   );
@@ -140,7 +141,7 @@ export function InCallView({
   // Uses a hook to connect to the LiveKit room (on unmount the room will be left) and publish local media tracks (default).
   useLiveKitRoom({
     token,
-    serverUrl: "ws://localhost:7880",
+    serverUrl: Config.get().livekit.server_url,
     room: livekitRoom,
     audio: true,
     video: true,

@@ -45,13 +45,12 @@ export interface ConfigOptions {
     };
   };
 
-  /**
-   * Sets the client's preferred SFU
-   * TEMPORARY: Will be removed in favour of getting SFUs from the homeserver
-   */
-  temp_sfu?: {
-    user_id: string;
-    device_id: string;
+  // Describes the LiveKit configuration to be used.
+  livekit?: {
+    // The LiveKit server URL to connect to.
+    server_url: string;
+    // The link to the service that generates JWT tokens to join LiveKit rooms.
+    jwt_service_url: string;
   };
 }
 

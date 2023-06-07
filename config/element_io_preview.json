@@ -5,9 +5,9 @@
       "server_name": "call.ems.host"
     }
   },
-  "temp_sfu": {
-    "user_id": "@sfu:call.ems.host",
-    "device_id": "YNZDLSEQMP"
+  "livekit": {
+    "server_url": "wss://ec-test-t5xo1uoy.livekit.cloud",
+    "jwt_service_url": "https://voip-sip-poc.element.io/lk/jwt_service"
   },
   "posthog": {
     "api_key": "phc_rXGHx9vDmyEvyRxPziYtdVIv0ahEv8A9uLWFcCi1WcU",
