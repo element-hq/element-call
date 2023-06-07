@@ -136,5 +136,11 @@
   "Submitting…": "Saadan…",
   "Submit": "Saada",
   "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "Kui selle rakenduse kasutamisel tekib sul probleeme või lihtsalt soovid oma arvamust avaldada, siis palun täida alljärgnev lühike kirjeldus.",
-  "Feedback": "Tagasiside"
+  "Feedback": "Tagasiside",
+  "{{count}} stars|one": "{{count}} tärn",
+  "{{count}} stars|other": "{{count}} tärni",
+  "How did it go?": "Kuidas sujus?",
+  "{{displayName}}, your call has ended.": "{{displayName}}, sinu kõne on lõppenud.",
+  "<0>Thanks for your feedback!</0>": "<0>Täname Sind tagasiside eest!</0>",
+  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Meie rakenduse paremaks muutmiseks me hea meelega ootame Sinu arvamusi.</0>"
 }
