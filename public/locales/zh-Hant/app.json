@@ -8,7 +8,6 @@
   "{{name}} is presenting": "{{name}} 已上線",
   "{{name}} (Waiting for video...)": "{{name}} (等候視訊中...)",
   "{{name}} (Connecting...)": "{{name}} (連結中...)",
-  "{{displayName}}, your call is now ended": "{{displayName}}，您的通話已結束",
   "{{count}} people connected|other": "{{count}} 人已連結",
   "{{count}} people connected|one": "{{count}} 人已連結",
   "Use the upcoming grid system": "使用即將推出的網格系統",

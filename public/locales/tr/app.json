@@ -84,7 +84,6 @@
   "This call already exists, would you like to join?": "Bu arama zaten var, katılmak ister misiniz?",
   "{{count}} people connected|one": "{{count}} kişi bağlı",
   "{{count}} people connected|other": "{{count}} kişi bağlı",
-  "{{displayName}}, your call is now ended": "Aramanız bitti, {{displayName]}!",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "{{name}} is presenting": "{{name}} sunuyor",
   "{{name}} is talking…": "{{name}} konuşuyor…",

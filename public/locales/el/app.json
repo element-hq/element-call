@@ -90,7 +90,6 @@
   "{{name}} is presenting": "{{name}} παρουσιάζει",
   "{{name}} (Waiting for video...)": "{{name}} (Αναμονή για βίντεο...)",
   "{{name}} (Connecting...)": "{{name}} (Συνδέεται...)",
-  "{{displayName}}, your call is now ended": "{{displayName}}, η κλήση σας τερματίστηκε",
   "{{count}} people connected|other": "{{count}} άτομα συνδεδεμένα",
   "{{count}} people connected|one": "{{count}} άτομο συνδεδεμένο"
 }

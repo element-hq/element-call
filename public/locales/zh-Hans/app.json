@@ -45,7 +45,6 @@
   "{{name}} is presenting": "{{name}}正在展示",
   "{{name}} (Waiting for video...)": "{{name}}（等待视频……）",
   "{{name}} (Connecting...)": "{{name}} (正在连接……)",
-  "{{displayName}}, your call is now ended": "{{displayName}}，您的通话已结束",
   "{{count}} people connected|other": "{{count}}人已连接",
   "{{count}} people connected|one": "{{count}}人已连接",
   "Inspector": "检查器",
