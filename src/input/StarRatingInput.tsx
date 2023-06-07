@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 import React, { useState } from "react";
-import { t } from "i18next";
+import { useTranslation } from "react-i18next";
 
 import styles from "./StarRatingInput.module.css";
 import { ReactComponent as StarSelected } from "../icons/StarSelected.svg";
@@ -33,6 +33,7 @@ export function StarRatingInput({
 }: Props): JSX.Element {
   const [rating, setRating] = useState(0);
   const [hover, setHover] = useState(0);
+  const { t } = useTranslation();
   return (
     <div className={styles.starRating}>
       {[...Array(starCount)].map((_star, index) => {
@@ -47,8 +48,7 @@ export function StarRatingInput({
             <input
               className={styles.hideElement}
               type="radio"
-              // key={"input" + String(index)}
-              id={String(index)}
+              id={"starInput" + String(index)}
               value={String(index) + "Star"}
               name="star rating"
               onChange={(_ev) => {
@@ -59,14 +59,17 @@ export function StarRatingInput({
             />
             <label
               className={styles.hideElement}
-              // key={"lbl" + String(index)}
+              id={"starInvisibleLabel" + String(index)}
               htmlFor={String(index)}
             >
-              {index + " " + t("Star")}
+              {t("{{count}} star{{s}}", {
+                count: index,
+                s: index > 1 ? "s" : "",
+              })}
             </label>
             <label
               className={styles.starIcon}
-              // key={"icon" + String(index)}
+              id={"starIcon" + String(index)}
               htmlFor={String(index)}
             >
               {index <= (hover || rating) ? (
