@@ -116,7 +116,6 @@
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "{{name}} is talking…": "{{name}} балакає…",
   "{{name}} is presenting": "{{name}} показує",
-  "{{displayName}}, your call is now ended": "{{displayName}}, ваш виклик завершено",
   "{{count}} people connected|other": "{{count}} під'єдналися",
   "{{count}} people connected|one": "{{count}} під'єднується",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Приєднатися до виклику зараз</0><1>Or</1><2>Скопіювати посилання на виклик і приєднатися пізніше</2>",

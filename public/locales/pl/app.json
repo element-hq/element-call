@@ -115,7 +115,6 @@
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "{{name}} is talking…": "{{name}} mówi…",
   "{{name}} is presenting": "{{name}} prezentuje",
-  "{{displayName}}, your call is now ended": "{{displayName}}, twoje połączenie zostało zakończone",
   "{{count}} people connected|one": "{{count}} osoba połączona",
   "This feature is only supported on Firefox.": "Ta funkcjonalność jest dostępna tylko w Firefox.",
   "Copy": "Kopiuj",

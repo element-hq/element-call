@@ -121,7 +121,6 @@
   "{{name}} is presenting": "{{name}} prezentuje",
   "{{name}} (Waiting for video...)": "{{name}} (Čaká sa na video...)",
   "{{name}} (Connecting...)": "{{name}} (Pripájanie...)",
-  "{{displayName}}, your call is now ended": "{{displayName}}, váš hovor je teraz ukončený",
   "{{count}} people connected|other": "{{count}} osôb pripojených",
   "{{count}} people connected|one": "{{count}} osoba pripojená",
   "This feature is only supported on Firefox.": "Táto funkcia je podporovaná len v prehliadači Firefox.",
