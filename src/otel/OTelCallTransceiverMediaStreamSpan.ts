@@ -10,7 +10,7 @@ import { OTelCallAbstractMediaStreamSpan } from "./OTelCallAbstractMediaStreamSp
 export class OTelCallTransceiverMediaStreamSpan extends OTelCallAbstractMediaStreamSpan {
   private readonly prev: {
     direction: string;
-    currenDirection: string;
+    currentDirection: string;
   };
 
   constructor(
@@ -23,17 +23,17 @@ export class OTelCallTransceiverMediaStreamSpan extends OTelCallAbstractMediaStr
 
     this.prev = {
       direction: stats.direction,
-      currenDirection: stats.currenDirection,
+      currentDirection: stats.currentDirection,
     };
     this.span.addEvent("matrix.call.transceiver.initState", this.prev);
   }
 
   public update(stats: TransceiverStats): void {
-    if (this.prev.currenDirection !== stats.currenDirection) {
-      this.span.addEvent("matrix.call.transceiver.currenDirection", {
-        currenDirection: stats.currenDirection,
+    if (this.prev.currentDirection !== stats.currentDirection) {
+      this.span.addEvent("matrix.call.transceiver.currentDirection", {
+        currentDirection: stats.currentDirection,
       });
-      this.prev.currenDirection = stats.currenDirection;
+      this.prev.currentDirection = stats.currentDirection;
     }
     if (this.prev.direction !== stats.direction) {
       this.span.addEvent("matrix.call.transceiver.direction", {

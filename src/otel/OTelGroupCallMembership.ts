@@ -335,8 +335,6 @@ export class OTelGroupCallMembership {
     if (!ElementCallOpenTelemetry.instance) return;
     let call: OTelCall | undefined;
     const callId = report.report?.callId;
-    console.log("#### callId", callId);
-    console.log("#### callId", report);
 
     if (callId) {
       call = this.callsByCallId.get(callId);
