@@ -131,5 +131,11 @@
   "Expose developer settings in the settings window.": "Ekspos pengaturan pengembang dalam jendela pengaturan.",
   "Developer Settings": "Pengaturan Pengembang",
   "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.": "Dengan bergabung dalam beta ini, Anda mengizinkan kami untuk mengumpulkan data anonim, yang kami gunakan untuk meningkatkan produk ini. Anda dapat mempelajari lebih lanjut tentang data apa yang kami lacak dalam <2>Kebijakan Privasi</2> dan <5>Kebijakan Kuki</5> kami.",
-  "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>Anda dapat mengurungkan kembali izin dengan mencentang kotak ini. Jika Anda saat ini dalam panggilan, pengaturan ini akan diterapkan di akhir panggilan."
+  "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>Anda dapat mengurungkan kembali izin dengan mencentang kotak ini. Jika Anda saat ini dalam panggilan, pengaturan ini akan diterapkan di akhir panggilan.",
+  "Feedback": "Masukan",
+  "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "Jika Anda mengalami masalah atau hanya ingin memberikan masukan, silakan kirimkan kami deskripsi pendek di bawah.",
+  "Submit": "Kirim",
+  "Submitting…": "Mengirim",
+  "Thanks, we received your feedback!": "Terima kasih, kami telah menerima masukan Anda!",
+  "Your feedback": "Masukan Anda"
 }
