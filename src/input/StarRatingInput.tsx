@@ -62,9 +62,8 @@ export function StarRatingInput({
               id={"starInvisibleLabel" + String(index)}
               htmlFor={String(index)}
             >
-              {t("{{count}} star{{s}}", {
+              {t("{{count}} stars", {
                 count: index,
-                s: index > 1 ? "s" : "",
               })}
             </label>
             <label

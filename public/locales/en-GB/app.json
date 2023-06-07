@@ -1,6 +1,8 @@
 {
   "{{count}} people connected|one": "{{count}} person connected",
   "{{count}} people connected|other": "{{count}} people connected",
+  "{{count}} stars|one": "{{count}} star",
+  "{{count}} stars|other": "{{count}} stars",
   "{{displayName}}, your call has ended.": "{{displayName}}, your call has ended.",
   "{{name}} (Connecting...)": "{{name}} (Connecting...)",
   "{{name}} (Waiting for video...)": "{{name}} (Waiting for video...)",
@@ -109,7 +111,6 @@
   "Speaker": "Speaker",
   "Speaker {{n}}": "Speaker {{n}}",
   "Spotlight": "Spotlight",
-  "Star": "Star",
   "Stop sharing screen": "Stop sharing screen",
   "Submit": "Submit",
   "Submit feedback": "Submit feedback",
