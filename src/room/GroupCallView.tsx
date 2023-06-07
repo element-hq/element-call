@@ -272,7 +272,16 @@ export function GroupCallView({
       );
     }
   } else if (left) {
-    if (isPasswordlessUser || PosthogAnalytics.instance.isEnabled()) {
+    // The call ended view is shown for two reasons: prompting guests to create
+    // an account, and prompting users that have opted into analytics to provide
+    // feedback. We don't show a feedback prompt to widget users however (at
+    // least for now), because we don't yet have designs that would allow widget
+    // users to dismiss the feedback prompt and close the call window without
+    // submitting anything.
+    if (
+      isPasswordlessUser ||
+      (PosthogAnalytics.instance.isEnabled() && !isEmbedded)
+    ) {
       return (
         <CallEndedView
           endedCallId={groupCall.groupCallId}
