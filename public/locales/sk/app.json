@@ -136,5 +136,11 @@
   "Submitting…": "Odosielanie…",
   "Submit": "Odoslať",
   "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "Ak máte problémy alebo jednoducho chcete poskytnúť spätnú väzbu, pošlite nám krátky popis nižšie.",
-  "Feedback": "Spätná väzba"
+  "Feedback": "Spätná väzba",
+  "{{count}} stars|one": "{{count}} hviezdička",
+  "How did it go?": "Ako to išlo?",
+  "{{count}} stars|other": "{{count}} hviezdičiek",
+  "{{displayName}}, your call has ended.": "{{displayName}}, váš hovor skončil.",
+  "<0>Thanks for your feedback!</0>": "<0> Ďakujeme za vašu spätnú väzbu!</0>",
+  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0> Radi si vypočujeme vašu spätnú väzbu, aby sme mohli zlepšiť vaše skúsenosti.</0>"
 }
