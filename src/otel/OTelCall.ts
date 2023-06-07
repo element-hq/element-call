@@ -17,13 +17,33 @@ limitations under the License.
 import { Span } from "@opentelemetry/api";
 import { MatrixCall } from "matrix-js-sdk";
 import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
+import {
+  TransceiverStats,
+  CallFeedStats,
+} from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 import { ObjectFlattener } from "./ObjectFlattener";
+import { ElementCallOpenTelemetry } from "./otel";
+import { OTelCallAbstractMediaStreamSpan } from "./OTelCallAbstractMediaStreamSpan";
+import { OTelCallTransceiverMediaStreamSpan } from "./OTelCallTransceiverMediaStreamSpan";
+import { OTelCallFeedMediaStreamSpan } from "./OTelCallFeedMediaStreamSpan";
+
+type StreamId = string;
+type MID = string;
 
 /**
  * Tracks an individual call within a group call, either to a full-mesh peer or a focus
  */
 export class OTelCall {
+  private readonly trackFeedSpan = new Map<
+    StreamId,
+    OTelCallAbstractMediaStreamSpan
+  >();
+  private readonly trackTransceiverSpan = new Map<
+    MID,
+    OTelCallAbstractMediaStreamSpan
+  >();
+
   constructor(
     public userId: string,
     public deviceId: string,
@@ -116,4 +136,62 @@ export class OTelCall {
 
     this.span.addEvent("matrix.call.iceCandidateError", flatObject);
   };
+
+  public onCallFeedStats(callFeeds: CallFeedStats[]): void {
+    let prvFeeds: StreamId[] = [...this.trackFeedSpan.keys()];
+
+    callFeeds.forEach((feed) => {
+      if (!this.trackFeedSpan.has(feed.stream)) {
+        this.trackFeedSpan.set(
+          feed.stream,
+          new OTelCallFeedMediaStreamSpan(
+            ElementCallOpenTelemetry.instance,
+            this.span,
+            feed
+          )
+        );
+      }
+      this.trackFeedSpan.get(feed.stream)?.update(feed);
+      prvFeeds = prvFeeds.filter((prvStreamId) => prvStreamId !== feed.stream);
+    });
+
+    prvFeeds.forEach((prvStreamId) => {
+      this.trackFeedSpan.get(prvStreamId)?.end();
+      this.trackFeedSpan.delete(prvStreamId);
+    });
+  }
+
+  public onTransceiverStats(transceiverStats: TransceiverStats[]): void {
+    let prvTransSpan: MID[] = [...this.trackTransceiverSpan.keys()];
+
+    transceiverStats.forEach((transStats) => {
+      if (!this.trackTransceiverSpan.has(transStats.mid)) {
+        this.trackTransceiverSpan.set(
+          transStats.mid,
+          new OTelCallTransceiverMediaStreamSpan(
+            ElementCallOpenTelemetry.instance,
+            this.span,
+            transStats
+          )
+        );
+      }
+      this.trackTransceiverSpan.get(transStats.mid)?.update(transStats);
+      prvTransSpan = prvTransSpan.filter(
+        (prvStreamId) => prvStreamId !== transStats.mid
+      );
+    });
+
+    prvTransSpan.forEach((prvMID) => {
+      this.trackTransceiverSpan.get(prvMID)?.end();
+      this.trackTransceiverSpan.delete(prvMID);
+    });
+  }
+
+  public end(): void {
+    this.trackFeedSpan.forEach((feedSpan) => feedSpan.end());
+    this.trackTransceiverSpan.forEach((transceiverSpan) =>
+      transceiverSpan.end()
+    );
+    this.span.end();
+  }
 }
