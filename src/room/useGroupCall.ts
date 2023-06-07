@@ -34,6 +34,7 @@ import {
   ByteSentStatsReport,
   ConnectionStatsReport,
   SummaryStatsReport,
+  CallFeedReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 import { usePageUnload } from "./usePageUnload";
@@ -363,6 +364,12 @@ export function useGroupCall(
       groupCallOTelMembership?.onSummaryStatsReport(report);
     }
 
+    function onCallFeedStatsReport(
+      report: GroupCallStatsReport<CallFeedReport>
+    ): void {
+      groupCallOTelMembership?.onCallFeedStatsReport(report);
+    }
+
     groupCall.on(GroupCallEvent.GroupCallStateChanged, onGroupCallStateChanged);
     groupCall.on(GroupCallEvent.UserMediaFeedsChanged, onUserMediaFeedsChanged);
     groupCall.on(
@@ -387,6 +394,11 @@ export function useGroupCall(
       onByteSentStatsReport
     );
     groupCall.on(GroupCallStatsReportEvent.SummaryStats, onSummaryStatsReport);
+    groupCall.on(
+      GroupCallStatsReportEvent.CallFeedStats,
+      onCallFeedStatsReport
+    );
+
     groupCall.room.currentState.on(
       RoomStateEvent.Update,
       checkForParallelCalls
@@ -449,6 +461,10 @@ export function useGroupCall(
       groupCall.removeListener(
         GroupCallStatsReportEvent.SummaryStats,
         onSummaryStatsReport
+      );
+      groupCall.removeListener(
+        GroupCallStatsReportEvent.CallFeedStats,
+        onCallFeedStatsReport
       );
       groupCall.room.currentState.off(
         RoomStateEvent.Update,
