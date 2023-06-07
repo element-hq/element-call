@@ -60,7 +60,7 @@ export function StarRatingInput({
             <label
               className={styles.hideElement}
               id={"starInvisibleLabel" + String(index)}
-              htmlFor={String(index)}
+              htmlFor={"starInput" + String(index)}
             >
               {t("{{count}} stars", {
                 count: index,
@@ -69,7 +69,7 @@ export function StarRatingInput({
             <label
               className={styles.starIcon}
               id={"starIcon" + String(index)}
-              htmlFor={String(index)}
+              htmlFor={"starInput" + String(index)}
             >
               {index <= (hover || rating) ? (
                 <StarSelected />
