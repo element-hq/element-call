@@ -136,5 +136,11 @@
   "Submitting…": "正在遞交……",
   "Submit": "遞交",
   "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "若您遇到問題或只是想提供一些回饋，請在下方傳送簡短說明給我們。",
-  "Feedback": "回饋"
+  "Feedback": "回饋",
+  "{{count}} stars|other": "{{count}} 個星星",
+  "<0>Thanks for your feedback!</0>": "<0>感謝您的回饋！</0>",
+  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>我們想要聽到您的回饋，如此我們才能改善您的體驗。</0>",
+  "{{count}} stars|one": "{{count}} 個星星",
+  "{{displayName}}, your call has ended.": "{{displayName}}，您的通話已結束。",
+  "How did it go?": "進展如何？"
 }
