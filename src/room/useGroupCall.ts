@@ -65,7 +65,7 @@ export interface UseGroupCallReturnType {
   localVideoMuted: boolean;
   error: TranslatedError | null;
   initLocalCallFeed: () => void;
-  enter: () => void;
+  enter: () => Promise<void>;
   leave: () => void;
   toggleLocalVideoMuted: () => void;
   toggleMicrophoneMuted: () => void;
@@ -483,7 +483,7 @@ export function useGroupCall(
     [groupCall]
   );
 
-  const enter = useCallback(() => {
+  const enter = useCallback(async () => {
     if (
       groupCall.state !== GroupCallState.LocalCallFeedUninitialized &&
       groupCall.state !== GroupCallState.LocalCallFeedInitialized
@@ -498,7 +498,7 @@ export function useGroupCall(
     // have started tracking by the time calls start getting created.
     groupCallOTelMembership?.onJoinCall();
 
-    groupCall.enter().catch((error) => {
+    await groupCall.enter().catch((error) => {
       console.error(error);
       updateState({ error });
     });
