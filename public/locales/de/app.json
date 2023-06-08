@@ -111,7 +111,6 @@
   "Your recent calls": "Deine letzten Anrufe",
   "{{count}} people connected|one": "{{count}} Person verbunden",
   "{{count}} people connected|other": "{{count}} Personen verbunden",
-  "{{displayName}}, your call is now ended": "{{displayName}}, dein Anruf wurde beendet",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "{{name}} is presenting": "{{name}} präsentiert",
   "{{name}} is talking…": "{{name}} spricht …",
@@ -137,5 +136,11 @@
   "Your feedback": "Deine Rückmeldung",
   "Thanks, we received your feedback!": "Danke, wir haben deine Rückmeldung erhalten!",
   "Submitting…": "Sende …",
-  "Submit": "Absenden"
+  "Submit": "Absenden",
+  "{{count}} stars|other": "{{count}} Sterne",
+  "{{displayName}}, your call has ended.": "{{displayName}}, dein Anruf wurde beendet.",
+  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Wir würden uns freuen, deine Rückmeldung zu hören, um deine Erfahrung verbessern zu können.</0>",
+  "How did it go?": "Wie ist es gelaufen?",
+  "{{count}} stars|one": "{{count}} Stern",
+  "<0>Thanks for your feedback!</0>": "<0>Danke für deine Rückmeldung!</0>"
 }
