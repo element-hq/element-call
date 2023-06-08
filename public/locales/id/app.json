@@ -136,5 +136,10 @@
   "Submit": "Kirim",
   "Submitting…": "Mengirim",
   "Thanks, we received your feedback!": "Terima kasih, kami telah menerima masukan Anda!",
-  "Your feedback": "Masukan Anda"
+  "Your feedback": "Masukan Anda",
+  "{{displayName}}, your call has ended.": "{{displayName}}, panggilan Anda telah berakhir.",
+  "<0>Thanks for your feedback!</0>": "<0>Terima kasih atas masukan Anda!</0>",
+  "How did it go?": "Bagaimana rasanya?",
+  "{{count}} stars|one": "{{count}} bintang",
+  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Kami ingin mendengar masukan Anda supaya kami bisa meningkatkan pengalaman Anda.</0>"
 }
