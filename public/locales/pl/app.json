@@ -115,7 +115,6 @@
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "{{name}} is talking…": "{{name}} mówi…",
   "{{name}} is presenting": "{{name}} prezentuje",
-  "{{displayName}}, your call is now ended": "{{displayName}}, twoje połączenie zostało zakończone",
   "{{count}} people connected|one": "{{count}} osoba połączona",
   "This feature is only supported on Firefox.": "Ta funkcjonalność jest dostępna tylko w Firefox.",
   "Copy": "Kopiuj",
@@ -131,5 +130,17 @@
   "Use the upcoming grid system": "Użyj nadchodzącego systemu siatek",
   "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>Terms and conditions</12>": "Ta strona jest chroniona przez ReCAPTCHA, więc obowiązują na niej <2>Polityka prywatności</2> i <6>Warunki świadczenia usług</6> Google.<9></9>Klikając \"Zarejestruj się\", zgadzasz się na nasze <12>Warunki świadczenia usług</12>",
   "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>Możesz wycofać swoją zgodę poprzez odznaczenie tego pola. Jeśli już jesteś w trakcie rozmowy, opcja zostanie zastosowana po jej zakończeniu.",
-  "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.": "Uczestnicząc w tej becie, upoważniasz nas do zbierania anonimowych danych, które wykorzystamy do ulepszenia produktu. Dowiedz się więcej na temat danych, które zbieramy w naszej <2>Polityce prywatności</2> i <5>Polityce ciasteczek</5>."
+  "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.": "Uczestnicząc w tej becie, upoważniasz nas do zbierania anonimowych danych, które wykorzystamy do ulepszenia produktu. Dowiedz się więcej na temat danych, które zbieramy w naszej <2>Polityce prywatności</2> i <5>Polityce ciasteczek</5>.",
+  "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "Jeśli posiadasz problemy lub chciałbyś zgłosić swoją opinię, wyślij nam krótki opis.",
+  "Thanks, we received your feedback!": "Dziękujemy, otrzymaliśmy Twoją opinię!",
+  "Feedback": "Opinia użytkownika",
+  "Submitting…": "Wysyłanie…",
+  "Submit": "Wyślij",
+  "Your feedback": "Twoje opinie",
+  "{{count}} stars|other": "{{count}} gwiazdki",
+  "{{count}} stars|one": "{{count}} gwiazdka",
+  "{{displayName}}, your call has ended.": "{{displayName}}, Twoje połączenie zostało zakończone.",
+  "<0>Thanks for your feedback!</0>": "<0>Dziękujemy za Twoją opinię!</0>",
+  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Z przyjemnością wysłuchamy Twojej opinii, aby poprawić Twoje doświadczenia.</0>",
+  "How did it go?": "Jak poszło?"
 }
