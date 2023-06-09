@@ -31,7 +31,7 @@ import { CallEndedView } from "./CallEndedView";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { PosthogAnalytics } from "../PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
-import { useLiveKit } from "./useLiveKit";
+import { useLiveKit } from "../livekit/useLiveKit";
 
 declare global {
   interface Window {

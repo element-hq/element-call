@@ -6,7 +6,7 @@ import {
 } from "@livekit/components-react";
 
 import { MediaDevicesState, MediaDevices } from "../settings/mediaDevices";
-import { LocalMediaInfo, MediaInfo } from "./VideoPreview";
+import { LocalMediaInfo, MediaInfo } from "../room/VideoPreview";
 
 type LiveKitState = {
   // The state of the media devices (changing the devices will also change them in the room).
