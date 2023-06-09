@@ -25,9 +25,10 @@ import React, {
   useRef,
 } from "react";
 import { useHistory } from "react-router-dom";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
+import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 
 import { ErrorView } from "./FullScreenView";
 import {
@@ -70,7 +71,8 @@ const loadSession = (): Session => {
 const saveSession = (session: Session) =>
   localStorage.setItem("matrix-auth-store", JSON.stringify(session));
 const clearSession = () => localStorage.removeItem("matrix-auth-store");
-
+const isDisconnected = (syncState, syncData) =>
+  syncState === "ERROR" && syncData?.error?.name === "ConnectionError";
 interface ClientState {
   loading: boolean;
   isAuthenticated: boolean;
@@ -81,6 +83,7 @@ interface ClientState {
   logout: () => void;
   setClient: (client: MatrixClient, session: Session) => void;
   error?: Error;
+  disconnected: boolean;
 }
 
 const ClientContext = createContext<ClientState>(null);
@@ -98,7 +101,15 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   const history = useHistory();
   const initializing = useRef(false);
   const [
-    { loading, isAuthenticated, isPasswordlessUser, client, userName, error },
+    {
+      loading,
+      isAuthenticated,
+      isPasswordlessUser,
+      client,
+      userName,
+      error,
+      disconnected,
+    },
     setState,
   ] = useState<ClientProviderState>({
     loading: true,
@@ -107,7 +118,19 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     client: undefined,
     userName: null,
     error: undefined,
+    disconnected: false,
   });
+
+  const onSync = (state: SyncState, _old: SyncState, data: ISyncStateData) => {
+    setState((currentState) => {
+      logger.log("syntData.name", data?.error?.name, "state:", state);
+      console.log("Current state:", currentState);
+      return {
+        ...currentState,
+        disconnected: isDisconnected(state, data),
+      };
+    });
+  };
 
   useEffect(() => {
     // In case the component is mounted, unmounted, and remounted quickly (as
@@ -183,9 +206,10 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         }
       }
     };
-
+    let clientWithListener;
     init()
       .then(({ client, isPasswordlessUser }) => {
+        clientWithListener = client;
         setState({
           client,
           loading: false,
@@ -193,7 +217,12 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           isPasswordlessUser,
           userName: client?.getUserIdLocalpart(),
           error: undefined,
+          disconnected: isDisconnected(
+            client?.getSyncState,
+            client?.getSyncStateData
+          ),
         });
+        clientWithListener?.on(ClientEvent.Sync, onSync);
       })
       .catch((err) => {
         logger.error(err);
@@ -204,9 +233,13 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           isPasswordlessUser: false,
           userName: null,
           error: undefined,
+          disconnected: false,
         });
       })
       .finally(() => (initializing.current = false));
+    return () => {
+      clientWithListener?.removeListener(ClientEvent.Sync, onSync);
+    };
   }, []);
 
   const changePassword = useCallback(
@@ -235,6 +268,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         isPasswordlessUser: false,
         userName: client.getUserIdLocalpart(),
         error: undefined,
+        disconnected: false,
       });
     },
     [client]
@@ -256,6 +290,10 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           isPasswordlessUser: session.passwordlessUser,
           userName: newClient.getUserIdLocalpart(),
           error: undefined,
+          disconnected: isDisconnected(
+            newClient.getSyncState(),
+            newClient.getSyncStateData()
+          ),
         });
       } else {
         clearSession();
@@ -267,6 +305,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           isPasswordlessUser: false,
           userName: null,
           error: undefined,
+          disconnected: false,
         });
       }
     },
@@ -284,6 +323,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       isPasswordlessUser: true,
       userName: "",
       error: undefined,
+      disconnected: false,
     });
     history.push("/");
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
@@ -326,6 +366,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       userName,
       setClient,
       error: undefined,
+      disconnected,
     }),
     [
       loading,
@@ -336,6 +377,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       logout,
       userName,
       setClient,
+      disconnected,
     ]
   );
 

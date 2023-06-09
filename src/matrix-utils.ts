@@ -61,11 +61,11 @@ function waitForSync(client: MatrixClient) {
       data: ISyncStateData
     ) => {
       if (state === "PREPARED") {
+        client.removeListener(ClientEvent.Sync, onSync);
         resolve();
-        client.removeListener(ClientEvent.Sync, onSync);
       } else if (state === "ERROR") {
-        reject(data?.error);
         client.removeListener(ClientEvent.Sync, onSync);
+        reject(data?.error);
       }
     };
     client.on(ClientEvent.Sync, onSync);

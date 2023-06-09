@@ -29,6 +29,7 @@ import { usePageFocusStyle } from "./usePageFocusStyle";
 import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
 import { InspectorContextProvider } from "./room/GroupCallInspector";
 import { CrashView, LoadingView } from "./FullScreenView";
+import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
 import { MediaHandlerProvider } from "./settings/useMediaHandler";
 
@@ -60,6 +61,7 @@ export default function App({ history }: AppProps) {
               <InspectorContextProvider>
                 <Sentry.ErrorBoundary fallback={errorPage}>
                   <OverlayProvider>
+                    <DisconnectedBanner />
                     <Switch>
                       <SentryRoute exact path="/">
                         <HomePage />
