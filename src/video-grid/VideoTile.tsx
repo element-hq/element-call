@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { forwardRef } from "react";
-import { animated } from "@react-spring/web";
+import React, { ForwardedRef, forwardRef } from "react";
+import { animated, SpringValue } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import { LocalParticipant, RemoteParticipant, Track } from "livekit-client";
@@ -26,8 +26,8 @@ import {
 } from "@livekit/components-react";
 
 import styles from "./VideoTile.module.css";
+import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
-import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
 
 export enum TileContent {
   UserMedia = "user-media",
@@ -37,14 +37,48 @@ export enum TileContent {
 interface Props {
   avatar?: JSX.Element;
   className?: string;
-
   name: string;
   sfuParticipant: LocalParticipant | RemoteParticipant;
   content: TileContent;
+  showOptions?: boolean;
+  isLocal?: boolean;
+  disableSpeakingIndicator?: boolean;
+  opacity?: SpringValue<number>;
+  scale?: SpringValue<number>;
+  shadow?: SpringValue<number>;
+  shadowSpread?: SpringValue<number>;
+  zIndex?: SpringValue<number>;
+  x?: SpringValue<number>;
+  y?: SpringValue<number>;
+  width?: SpringValue<number>;
+  height?: SpringValue<number>;
 }
 
-export const VideoTile = forwardRef<HTMLDivElement, Props>(
-  ({ name, avatar, className, sfuParticipant, content, ...rest }, ref) => {
+export const VideoTile = forwardRef<HTMLElement, Props>(
+  (
+    {
+      name,
+      sfuParticipant,
+      content,
+      avatar,
+      className,
+      showOptions,
+      isLocal,
+      // TODO: disableSpeakingIndicator is not used atm.
+      disableSpeakingIndicator,
+      opacity,
+      scale,
+      shadow,
+      shadowSpread,
+      zIndex,
+      x,
+      y,
+      width,
+      height,
+      ...rest
+    },
+    ref
+  ) => {
     const { t } = useTranslation();
 
     const audioEl = React.useRef<HTMLAudioElement>(null);
@@ -66,7 +100,22 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           [styles.muted]: microphoneMuted,
           [styles.screenshare]: false,
         })}
-        ref={ref}
+        style={{
+          opacity,
+          scale,
+          zIndex,
+          x,
+          y,
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore React does in fact support assigning custom properties,
+          // but React's types say no
+          "--tileWidth": width?.to((w) => `${w}px`),
+          "--tileHeight": height?.to((h) => `${h}px`),
+          "--tileShadow": shadow?.to((s) => `${s}px`),
+          "--tileShadowSpread": shadowSpread?.to((s) => `${s}px`),
+        }}
+        ref={ref as ForwardedRef<HTMLDivElement>}
+        data-testid="videoTile"
         {...rest}
       >
         {!sfuParticipant.isCameraEnabled && (
@@ -82,8 +131,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             </div>
           ) : (
             <div className={classNames(styles.infoBubble, styles.memberName)}>
-              {microphoneMuted && <MicMutedIcon />}
-              {!sfuParticipant.isCameraEnabled && <VideoMutedIcon />}
+              {microphoneMuted ? <MicMutedIcon /> : <MicIcon />}
               <span title={name}>{name}</span>
               <ConnectionQualityIndicator participant={sfuParticipant} />
             </div>

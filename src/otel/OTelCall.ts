@@ -1,0 +1,197 @@
+/*
+Copyright 2023 New Vector Ltd
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+import { Span } from "@opentelemetry/api";
+import { MatrixCall } from "matrix-js-sdk";
+import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
+import {
+  TransceiverStats,
+  CallFeedStats,
+} from "matrix-js-sdk/src/webrtc/stats/statsReport";
+
+import { ObjectFlattener } from "./ObjectFlattener";
+import { ElementCallOpenTelemetry } from "./otel";
+import { OTelCallAbstractMediaStreamSpan } from "./OTelCallAbstractMediaStreamSpan";
+import { OTelCallTransceiverMediaStreamSpan } from "./OTelCallTransceiverMediaStreamSpan";
+import { OTelCallFeedMediaStreamSpan } from "./OTelCallFeedMediaStreamSpan";
+
+type StreamId = string;
+type MID = string;
+
+/**
+ * Tracks an individual call within a group call, either to a full-mesh peer or a focus
+ */
+export class OTelCall {
+  private readonly trackFeedSpan = new Map<
+    StreamId,
+    OTelCallAbstractMediaStreamSpan
+  >();
+  private readonly trackTransceiverSpan = new Map<
+    MID,
+    OTelCallAbstractMediaStreamSpan
+  >();
+
+  constructor(
+    public userId: string,
+    public deviceId: string,
+    public call: MatrixCall,
+    public span: Span
+  ) {
+    if (call.peerConn) {
+      this.addCallPeerConnListeners();
+    } else {
+      this.call.once(
+        CallEvent.PeerConnectionCreated,
+        this.addCallPeerConnListeners
+      );
+    }
+  }
+
+  public dispose() {
+    this.call.peerConn.removeEventListener(
+      "connectionstatechange",
+      this.onCallConnectionStateChanged
+    );
+    this.call.peerConn.removeEventListener(
+      "signalingstatechange",
+      this.onCallSignalingStateChanged
+    );
+    this.call.peerConn.removeEventListener(
+      "iceconnectionstatechange",
+      this.onIceConnectionStateChanged
+    );
+    this.call.peerConn.removeEventListener(
+      "icegatheringstatechange",
+      this.onIceGatheringStateChanged
+    );
+    this.call.peerConn.removeEventListener(
+      "icecandidateerror",
+      this.onIceCandidateError
+    );
+  }
+
+  private addCallPeerConnListeners = (): void => {
+    this.call.peerConn.addEventListener(
+      "connectionstatechange",
+      this.onCallConnectionStateChanged
+    );
+    this.call.peerConn.addEventListener(
+      "signalingstatechange",
+      this.onCallSignalingStateChanged
+    );
+    this.call.peerConn.addEventListener(
+      "iceconnectionstatechange",
+      this.onIceConnectionStateChanged
+    );
+    this.call.peerConn.addEventListener(
+      "icegatheringstatechange",
+      this.onIceGatheringStateChanged
+    );
+    this.call.peerConn.addEventListener(
+      "icecandidateerror",
+      this.onIceCandidateError
+    );
+  };
+
+  public onCallConnectionStateChanged = (): void => {
+    this.span.addEvent("matrix.call.callConnectionStateChange", {
+      callConnectionState: this.call.peerConn.connectionState,
+    });
+  };
+
+  public onCallSignalingStateChanged = (): void => {
+    this.span.addEvent("matrix.call.callSignalingStateChange", {
+      callSignalingState: this.call.peerConn.signalingState,
+    });
+  };
+
+  public onIceConnectionStateChanged = (): void => {
+    this.span.addEvent("matrix.call.iceConnectionStateChange", {
+      iceConnectionState: this.call.peerConn.iceConnectionState,
+    });
+  };
+
+  public onIceGatheringStateChanged = (): void => {
+    this.span.addEvent("matrix.call.iceGatheringStateChange", {
+      iceGatheringState: this.call.peerConn.iceGatheringState,
+    });
+  };
+
+  public onIceCandidateError = (ev: Event): void => {
+    const flatObject = {};
+    ObjectFlattener.flattenObjectRecursive(ev, flatObject, "error.", 0);
+
+    this.span.addEvent("matrix.call.iceCandidateError", flatObject);
+  };
+
+  public onCallFeedStats(callFeeds: CallFeedStats[]): void {
+    let prvFeeds: StreamId[] = [...this.trackFeedSpan.keys()];
+
+    callFeeds.forEach((feed) => {
+      if (!this.trackFeedSpan.has(feed.stream)) {
+        this.trackFeedSpan.set(
+          feed.stream,
+          new OTelCallFeedMediaStreamSpan(
+            ElementCallOpenTelemetry.instance,
+            this.span,
+            feed
+          )
+        );
+      }
+      this.trackFeedSpan.get(feed.stream)?.update(feed);
+      prvFeeds = prvFeeds.filter((prvStreamId) => prvStreamId !== feed.stream);
+    });
+
+    prvFeeds.forEach((prvStreamId) => {
+      this.trackFeedSpan.get(prvStreamId)?.end();
+      this.trackFeedSpan.delete(prvStreamId);
+    });
+  }
+
+  public onTransceiverStats(transceiverStats: TransceiverStats[]): void {
+    let prvTransSpan: MID[] = [...this.trackTransceiverSpan.keys()];
+
+    transceiverStats.forEach((transStats) => {
+      if (!this.trackTransceiverSpan.has(transStats.mid)) {
+        this.trackTransceiverSpan.set(
+          transStats.mid,
+          new OTelCallTransceiverMediaStreamSpan(
+            ElementCallOpenTelemetry.instance,
+            this.span,
+            transStats
+          )
+        );
+      }
+      this.trackTransceiverSpan.get(transStats.mid)?.update(transStats);
+      prvTransSpan = prvTransSpan.filter(
+        (prvStreamId) => prvStreamId !== transStats.mid
+      );
+    });
+
+    prvTransSpan.forEach((prvMID) => {
+      this.trackTransceiverSpan.get(prvMID)?.end();
+      this.trackTransceiverSpan.delete(prvMID);
+    });
+  }
+
+  public end(): void {
+    this.trackFeedSpan.forEach((feedSpan) => feedSpan.end());
+    this.trackTransceiverSpan.forEach((transceiverSpan) =>
+      transceiverSpan.end()
+    );
+    this.span.end();
+  }
+}

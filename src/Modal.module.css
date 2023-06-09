@@ -40,7 +40,7 @@ limitations under the License.
 .modalHeader {
   display: flex;
   justify-content: space-between;
-  padding: 34px 34px 0 34px;
+  padding: 34px 32px 0 32px;
 }
 
 .modalHeader h3 {
@@ -72,7 +72,7 @@ limitations under the License.
   .modalHeader {
     display: flex;
     justify-content: space-between;
-    padding: 24px 24px 0 24px;
+    padding: 32px 20px 0 20px;
   }
 
   .modal.mobileFullScreen {

@@ -39,10 +39,10 @@ limitations under the License.
 .secondaryHangup,
 .button,
 .copyButton {
-  padding: 7px 15px;
+  padding: 8px 20px;
   border-radius: 8px;
   font-size: var(--font-size-body);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .button {

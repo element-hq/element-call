@@ -28,15 +28,25 @@ import ReactJson, { CollapsedFieldProps } from "react-json-view";
 import mermaid from "mermaid";
 import { Item } from "@react-stately/collections";
 import { MatrixEvent, IContent } from "matrix-js-sdk/src/models/event";
-import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
+import {
+  GroupCall,
+  GroupCallError,
+  GroupCallEvent,
+} from "matrix-js-sdk/src/webrtc/groupCall";
 import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomStateEvent } from "matrix-js-sdk/src/models/room-state";
-import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
+import {
+  CallEvent,
+  CallState,
+  CallError,
+  MatrixCall,
+  VoipEvent,
+} from "matrix-js-sdk/src/webrtc/call";
 
 import styles from "./GroupCallInspector.module.css";
 import { SelectInput } from "../input/SelectInput";
-import { PosthogAnalytics } from "../PosthogAnalytics";
-import { MediaViewer } from "../inspectors/MediaInspector";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 
 interface InspectorContextState {
   eventsByUserId?: { [userId: string]: SequenceDiagramMatrixEvent[] };
@@ -236,7 +246,7 @@ function reducer(
   action: {
     type?: CallEvent | ClientEvent | RoomStateEvent;
     event?: MatrixEvent;
-    rawEvent?: Record<string, unknown>;
+    rawEvent?: VoipEvent;
     callStateEvent?: MatrixEvent;
     memberStateEvents?: MatrixEvent[];
   }
@@ -354,7 +364,7 @@ function reducer(
 function useGroupCallState(
   client: MatrixClient,
   groupCall: GroupCall,
-  showPollCallStats: boolean
+  otelGroupCallMembership: OTelGroupCallMembership
 ): InspectorContextState {
   const [state, dispatch] = useReducer(reducer, {
     localUserId: client.getUserId(),
@@ -382,28 +392,55 @@ function useGroupCallState(
         callStateEvent,
         memberStateEvents,
       });
+
+      otelGroupCallMembership?.onUpdateRoomState(event);
     }
 
     function onReceivedVoipEvent(event: MatrixEvent) {
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
+
+      otelGroupCallMembership?.onReceivedVoipEvent(event);
     }
 
-    function onSendVoipEvent(event: Record<string, unknown>) {
+    function onSendVoipEvent(event: VoipEvent, call: MatrixCall) {
       dispatch({ type: CallEvent.SendVoipEvent, rawEvent: event });
+
+      otelGroupCallMembership?.onSendEvent(call, event);
+    }
+
+    function onCallStateChange(
+      newState: CallState,
+      _: CallState,
+      call: MatrixCall
+    ) {
+      otelGroupCallMembership?.onCallStateChange(call, newState);
+    }
+
+    function onCallError(error: CallError, call: MatrixCall) {
+      otelGroupCallMembership.onCallError(error, call);
+    }
+
+    function onGroupCallError(error: GroupCallError) {
+      otelGroupCallMembership.onGroupCallError(error);
     }
 
     function onUndecryptableToDevice(event: MatrixEvent) {
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
 
       Sentry.captureMessage("Undecryptable to-device Event");
+      // probably unnecessary if it's now captured via otel?
       PosthogAnalytics.instance.eventUndecryptableToDevice.track(
         groupCall.groupCallId
       );
+
+      otelGroupCallMembership.onUndecryptableToDevice(event);
     }
 
     client.on(RoomStateEvent.Events, onUpdateRoomState);
-    //groupCall.on("calls_changed", onCallsChanged);
     groupCall.on(CallEvent.SendVoipEvent, onSendVoipEvent);
+    groupCall.on(CallEvent.State, onCallStateChange);
+    groupCall.on(CallEvent.Error, onCallError);
+    groupCall.on(GroupCallEvent.Error, onGroupCallError);
     //client.on("state", onCallsChanged);
     //client.on("hangup", onCallHangup);
     client.on(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
@@ -413,8 +450,10 @@ function useGroupCallState(
 
     return () => {
       client.removeListener(RoomStateEvent.Events, onUpdateRoomState);
-      //groupCall.removeListener("calls_changed", onCallsChanged);
       groupCall.removeListener(CallEvent.SendVoipEvent, onSendVoipEvent);
+      groupCall.removeListener(CallEvent.State, onCallStateChange);
+      groupCall.removeListener(CallEvent.Error, onCallError);
+      groupCall.removeListener(GroupCallEvent.Error, onGroupCallError);
       //client.removeListener("state", onCallsChanged);
       //client.removeListener("hangup", onCallHangup);
       client.removeListener(ClientEvent.ReceivedVoipEvent, onReceivedVoipEvent);
@@ -423,7 +462,7 @@ function useGroupCallState(
         onUndecryptableToDevice
       );
     };
-  }, [client, groupCall]);
+  }, [client, groupCall, otelGroupCallMembership]);
 
   return state;
 }
@@ -431,17 +470,19 @@ function useGroupCallState(
 interface GroupCallInspectorProps {
   client: MatrixClient;
   groupCall: GroupCall;
+  otelGroupCallMembership: OTelGroupCallMembership;
   show: boolean;
 }
 
 export function GroupCallInspector({
   client,
   groupCall,
+  otelGroupCallMembership,
   show,
 }: GroupCallInspectorProps) {
   const [currentTab, setCurrentTab] = useState("sequence-diagrams");
   const [selectedUserId, setSelectedUserId] = useState<string>();
-  const state = useGroupCallState(client, groupCall, show);
+  const state = useGroupCallState(client, groupCall, otelGroupCallMembership);
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [_, setState] = useContext(InspectorContext);
@@ -465,7 +506,6 @@ export function GroupCallInspector({
           Sequence Diagrams
         </button>
         <button onClick={() => setCurrentTab("inspector")}>Inspector</button>
-        <button onClick={() => setCurrentTab("voip")}>Media</button>
       </div>
       {currentTab === "sequence-diagrams" && (
         <SequenceDiagramViewer
@@ -487,14 +527,6 @@ export function GroupCallInspector({
           displayObjectSize={false}
           enableClipboard
           style={{ height: "100%", overflowY: "scroll" }}
-        />
-      )}
-      {currentTab === "voip" && (
-        <MediaViewer
-          client={client}
-          groupCall={groupCall}
-          userMediaFeeds={groupCall.userMediaFeeds}
-          screenshareFeeds={groupCall.screenshareFeeds}
         />
       )}
     </Resizable>

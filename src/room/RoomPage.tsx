@@ -1,5 +1,5 @@
 /*
-Copyright 2021-2022 New Vector Ltd
+Copyright 2021-2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import { GroupCallView } from "./GroupCallView";
 import { useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { translatedError } from "../TranslatedError";
+import { useOptInAnalytics } from "../settings/useSetting";
 
 export const RoomPage: FC = () => {
   const { t } = useTranslation();
@@ -45,8 +46,14 @@ export const RoomPage: FC = () => {
   const roomIdOrAlias = roomId ?? roomAlias;
   if (!roomIdOrAlias) throw translatedError("No room specified", t);
 
+  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const { registerPasswordlessUser } = useRegisterPasswordlessUser();
   const [isRegistering, setIsRegistering] = useState(false);
+
+  useEffect(() => {
+    // During the beta, opt into analytics by default
+    if (optInAnalytics === null) setOptInAnalytics(true);
+  }, [optInAnalytics, setOptInAnalytics]);
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as

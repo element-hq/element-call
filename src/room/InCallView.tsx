@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -25,16 +25,24 @@ import {
 import { usePreventScroll } from "@react-aria/overlays";
 import classNames from "classnames";
 import { Room, Track } from "livekit-client";
-import { JoinRule } from "matrix-js-sdk/src/@types/partials";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
+import { OverlayTriggerState } from "@react-stately/overlays";
+import { JoinRule } from "matrix-js-sdk/src/@types/partials";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
-import { Avatar } from "../Avatar";
+import {
+  HangupButton,
+  MicButton,
+  VideoButton,
+  ScreenshareButton,
+  SettingsButton,
+  InviteButton,
+} from "../button";
 import {
   Header,
   LeftNav,
@@ -42,38 +50,35 @@ import {
   RoomHeaderInfo,
   VersionMismatchWarning,
 } from "../Header";
-import { useModalTriggerState } from "../Modal";
-import { PosthogAnalytics } from "../PosthogAnalytics";
-import { useUrlParams } from "../UrlParams";
-import { UserMenuContainer } from "../UserMenuContainer";
 import {
-  HangupButton,
-  MicButton,
-  ScreenshareButton,
-  VideoButton,
-} from "../button";
-import { MediaDevicesState } from "../settings/mediaDevices";
-import { useRageshakeRequestModal } from "../settings/submit-rageshake";
-import { useShowInspector } from "../settings/useSetting";
-import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
-import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
-import {
-  TileDescriptor,
   VideoGrid,
   useVideoGridLayout,
+  TileDescriptor,
 } from "../video-grid/VideoGrid";
+import { Avatar } from "../Avatar";
+import { useNewGrid, useShowInspector } from "../settings/useSetting";
+import { useModalTriggerState } from "../Modal";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+import { useUrlParams } from "../UrlParams";
+import { MediaDevicesState } from "../settings/mediaDevices";
+import { useRageshakeRequestModal } from "../settings/submit-rageshake";
+import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
+import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { ItemData, VideoTileContainer } from "../video-grid/VideoTileContainer";
 import { ElementWidgetActions, widget } from "../widget";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { GroupCallInspector } from "./GroupCallInspector";
 import styles from "./InCallView.module.css";
-import { OverflowMenu } from "./OverflowMenu";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { MatrixInfo } from "./VideoPreview";
 import { useJoinRule } from "./useJoinRule";
 import { ParticipantInfo } from "./useGroupCall";
 import { TileContent } from "../video-grid/VideoTile";
 import { Config } from "../config/Config";
+import { NewVideoGrid } from "../video-grid/NewVideoGrid";
+import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
+import { SettingsModal } from "../settings/SettingsModal";
+import { InviteModal } from "./InviteModal";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -88,10 +93,10 @@ interface Props {
   onLeave: () => void;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
-
   matrixInfo: MatrixInfo;
   mediaDevices: MediaDevicesState;
   livekitRoom: Room;
+  otelGroupCallMembership: OTelGroupCallMembership;
 }
 
 export function InCallView({
@@ -104,10 +109,10 @@ export function InCallView({
   matrixInfo,
   mediaDevices,
   livekitRoom,
+  otelGroupCallMembership,
 }: Props) {
   const { t } = useTranslation();
   usePreventScroll();
-  const joinRule = useJoinRule(groupCall.room);
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure({ polyfill: ResizeObserver });
@@ -168,9 +173,6 @@ export function InCallView({
 
   const [showInspector] = useShowInspector();
 
-  const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
-    useModalTriggerState();
-
   const { hideScreensharing } = useUrlParams();
 
   const {
@@ -186,12 +188,14 @@ export function InCallView({
   const toggleCamera = useCallback(async () => {
     await localParticipant.setCameraEnabled(!isCameraEnabled);
   }, [localParticipant, isCameraEnabled]);
-  const toggleScreenSharing = useCallback(async () => {
+  const toggleScreensharing = useCallback(async () => {
     await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
   }, [localParticipant, isScreenShareEnabled]);
 
+  const joinRule = useJoinRule(groupCall.room);
+
   useCallViewKeyboardShortcuts(
-    !feedbackModalState.isOpen,
+    containerRef1,
     toggleMicrophone,
     toggleCamera,
     async (muted) => await localParticipant.setMicrophoneEnabled(!muted)
@@ -236,6 +240,18 @@ export function InCallView({
   const reducedControls = boundsValid && bounds.width <= 400;
   const noControls = reducedControls && bounds.height <= 400;
 
+  const items = useParticipantTiles(livekitRoom, participants);
+
+  // The maximised participant is the focused (active) participant, given the
+  // window is too small to show everyone
+  const maximisedParticipant = useMemo(
+    () =>
+      noControls
+        ? items.find((item) => item.focused) ?? items.at(0) ?? null
+        : null,
+    [noControls, items]
+  );
+
   const renderAvatar = useCallback(
     (roomMember: RoomMember, width: number, height: number) => {
       const avatarUrl = roomMember.getMxcAvatarUrl();
@@ -254,9 +270,9 @@ export function InCallView({
     []
   );
 
+  const [newGrid] = useNewGrid();
+  const Grid = newGrid ? NewVideoGrid : VideoGrid;
   const prefersReducedMotion = usePrefersReducedMotion();
-
-  const items = useParticipantTiles(livekitRoom, participants);
 
   const renderContent = (): JSX.Element => {
     if (items.length === 0) {
@@ -266,9 +282,22 @@ export function InCallView({
         </div>
       );
     }
+    if (maximisedParticipant) {
+      return (
+        <VideoTileContainer
+          targetHeight={bounds.height}
+          targetWidth={bounds.width}
+          key={maximisedParticipant.id}
+          item={maximisedParticipant.data}
+          getAvatar={renderAvatar}
+          disableSpeakingIndicator={true}
+          maximised={Boolean(maximisedParticipant)}
+        />
+      );
+    }
 
     return (
-      <VideoGrid
+      <Grid
         items={items}
         layout={layout}
         disableAnimations={prefersReducedMotion || isSafari}
@@ -280,7 +309,7 @@ export function InCallView({
             {...child}
           />
         )}
-      </VideoGrid>
+      </Grid>
     );
   };
 
@@ -288,6 +317,36 @@ export function InCallView({
     modalState: rageshakeRequestModalState,
     modalProps: rageshakeRequestModalProps,
   } = useRageshakeRequestModal(groupCall.room.roomId);
+
+  const {
+    modalState: settingsModalState,
+    modalProps: settingsModalProps,
+  }: {
+    modalState: OverlayTriggerState;
+    modalProps: {
+      isOpen: boolean;
+      onClose: () => void;
+    };
+  } = useModalTriggerState();
+
+  const openSettings = useCallback(() => {
+    settingsModalState.open();
+  }, [settingsModalState]);
+
+  const {
+    modalState: inviteModalState,
+    modalProps: inviteModalProps,
+  }: {
+    modalState: OverlayTriggerState;
+    modalProps: {
+      isOpen: boolean;
+      onClose: () => void;
+    };
+  } = useModalTriggerState();
+
+  const openInvite = useCallback(() => {
+    inviteModalState.open();
+  }, [inviteModalState]);
 
   const containerClasses = classNames(styles.inRoom, {
     [styles.maximised]: undefined,
@@ -297,36 +356,44 @@ export function InCallView({
 
   if (noControls) {
     footer = null;
-  } else if (reducedControls) {
-    footer = (
-      <div className={styles.footer}>
-        <MicButton muted={!isMicrophoneEnabled} onPress={toggleMicrophone} />
-        <VideoButton muted={!isCameraEnabled} onPress={toggleCamera} />
-        <HangupButton onPress={onLeave} />
-      </div>
-    );
   } else {
-    footer = (
-      <div className={styles.footer}>
-        <MicButton muted={!isMicrophoneEnabled} onPress={toggleMicrophone} />
-        <VideoButton muted={!isCameraEnabled} onPress={toggleCamera} />
-        {canScreenshare && !hideScreensharing && !isSafari && (
-          <ScreenshareButton
-            enabled={isScreenShareEnabled}
-            onPress={toggleScreenSharing}
-          />
-        )}
-        <OverflowMenu
-          roomId={matrixInfo.roomId}
-          mediaDevices={mediaDevices}
-          inCall
-          showInvite={joinRule === JoinRule.Public}
-          feedbackModalState={feedbackModalState}
-          feedbackModalProps={feedbackModalProps}
-        />
-        <HangupButton onPress={onLeave} />
-      </div>
+    const buttons: JSX.Element[] = [];
+
+    buttons.push(
+      <MicButton
+        key="1"
+        muted={!isMicrophoneEnabled}
+        onPress={toggleMicrophone}
+        data-testid="incall_mute"
+      />,
+      <VideoButton
+        key="2"
+        muted={!isCameraEnabled}
+        onPress={toggleCamera}
+        data-testid="incall_videomute"
+      />
     );
+
+    if (!reducedControls) {
+      if (canScreenshare && !hideScreensharing && !isSafari) {
+        buttons.push(
+          <ScreenshareButton
+            key="3"
+            enabled={isScreenShareEnabled}
+            onPress={toggleScreensharing}
+            data-testid="incall_screenshare"
+          />
+        );
+      }
+      if (!maximisedParticipant) {
+        buttons.push(<SettingsButton key="4" onPress={openSettings} />);
+      }
+    }
+
+    buttons.push(
+      <HangupButton key="6" onPress={onLeave} data-testid="incall_leave" />
+    );
+    footer = <div className={styles.footer}>{buttons}</div>;
   }
 
   return (
@@ -345,21 +412,40 @@ export function InCallView({
           </LeftNav>
           <RightNav>
             <GridLayoutMenu layout={layout} setLayout={setLayout} />
-            <UserMenuContainer preventNavigation />
+            {joinRule === JoinRule.Public && (
+              <InviteButton variant="icon" onClick={openInvite} />
+            )}
           </RightNav>
         </Header>
       )}
-      {renderContent()}
-      {footer}
+      <div className={styles.controlsOverlay}>
+        {renderContent()}
+        {footer}
+      </div>
       <GroupCallInspector
         client={client}
         groupCall={groupCall}
+        otelGroupCallMembership={otelGroupCallMembership}
         show={showInspector}
       />
-      {rageshakeRequestModalState.isOpen && (
+      {rageshakeRequestModalState.isOpen && !noControls && (
         <RageshakeRequestModal
           {...rageshakeRequestModalProps}
-          roomIdOrAlias={matrixInfo.roomId}
+          roomIdOrAlias={matrixInfo.roomIdOrAlias}
+        />
+      )}
+      {settingsModalState.isOpen && (
+        <SettingsModal
+          client={client}
+          roomId={groupCall.room.roomId}
+          mediaDevices={mediaDevices}
+          {...settingsModalProps}
+        />
+      )}
+      {inviteModalState.isOpen && (
+        <InviteModal
+          roomIdOrAlias={matrixInfo.roomIdOrAlias}
+          {...inviteModalProps}
         />
       )}
     </div>
@@ -392,6 +478,7 @@ function useParticipantTiles(
           focused: false,
           local: sfuParticipant.isLocal,
           data: {
+            id,
             member,
             sfuParticipant,
             content: TileContent.UserMedia,
