@@ -54,4 +54,6 @@ limitations under the License.
 
 .removeButton {
   color: var(--accent);
+  font-size: var(--font-size-caption);
+  padding: 6px 0;
 }

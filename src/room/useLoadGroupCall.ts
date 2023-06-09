@@ -32,7 +32,9 @@ import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
 import { translatedError } from "../TranslatedError";
 import { widget } from "../widget";
 
-interface GroupCallLoadState {
+const STATS_COLLECT_INTERVAL_TIME_MS = 10000;
+
+export interface GroupCallLoadState {
   loading: boolean;
   error?: Error;
   groupCall?: GroupCall;
@@ -94,10 +96,13 @@ export const useLoadGroupCall = (
     const fetchOrCreateGroupCall = async (): Promise<GroupCall> => {
       const room = await fetchOrCreateRoom();
       logger.debug(`Fetched / joined room ${roomIdOrAlias}`);
-      const groupCall = client.getGroupCallForRoom(room.roomId);
+      let groupCall = client.getGroupCallForRoom(room.roomId);
       logger.debug("Got group call", groupCall?.groupCallId);
 
-      if (groupCall) return groupCall;
+      if (groupCall) {
+        groupCall.setGroupCallStatsInterval(STATS_COLLECT_INTERVAL_TIME_MS);
+        return groupCall;
+      }
 
       if (
         !widget &&
@@ -112,12 +117,14 @@ export const useLoadGroupCall = (
             createPtt ? "PTT" : "video"
           } call`
         );
-        return await client.createGroupCall(
+        groupCall = await client.createGroupCall(
           room.roomId,
           createPtt ? GroupCallType.Voice : GroupCallType.Video,
           createPtt,
           GroupCallIntent.Room
         );
+        groupCall.setGroupCallStatsInterval(STATS_COLLECT_INTERVAL_TIME_MS);
+        return groupCall;
       }
 
       // We don't have permission to create the call, so all we can do is wait
@@ -126,6 +133,7 @@ export const useLoadGroupCall = (
         const onGroupCallIncoming = (groupCall: GroupCall) => {
           if (groupCall?.room.roomId === room.roomId) {
             clearTimeout(timeout);
+            groupCall.setGroupCallStatsInterval(STATS_COLLECT_INTERVAL_TIME_MS);
             client.off(
               GroupCallEventHandlerEvent.Incoming,
               onGroupCallIncoming

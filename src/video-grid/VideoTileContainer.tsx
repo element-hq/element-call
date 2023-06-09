@@ -14,14 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
-import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { LocalParticipant, RemoteParticipant } from "livekit-client";
+import React, { FC, memo, RefObject, useRef } from "react";
+import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { SpringValue } from "@react-spring/web";
+import { EventTypes, Handler, useDrag } from "@use-gesture/react";
 
 import { useRoomMemberName } from "./useRoomMemberName";
 import { TileContent, VideoTile } from "./VideoTile";
 
 export interface ItemData {
+  id: string;
   member: RoomMember;
   sfuParticipant: LocalParticipant | RemoteParticipant;
   content: TileContent;
@@ -29,33 +32,64 @@ export interface ItemData {
 
 interface Props {
   item: ItemData;
-  width?: number;
-  height?: number;
+  targetWidth: number;
+  targetHeight: number;
   getAvatar: (
     roomMember: RoomMember,
     width: number,
     height: number
   ) => JSX.Element;
+  disableSpeakingIndicator: boolean;
+  maximised: boolean;
+  opacity?: SpringValue<number>;
+  scale?: SpringValue<number>;
+  shadow?: SpringValue<number>;
+  shadowSpread?: SpringValue<number>;
+  zIndex?: SpringValue<number>;
+  x?: SpringValue<number>;
+  y?: SpringValue<number>;
+  width?: SpringValue<number>;
+  height?: SpringValue<number>;
+  onDragRef?: RefObject<
+    (
+      tileId: string,
+      state: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
+    ) => void
+  >;
 }
 
-export function VideoTileContainer({
-  item,
-  width,
-  height,
-  getAvatar,
-  ...rest
-}: Props) {
-  const { rawDisplayName } = useRoomMemberName(item.member);
+export const VideoTileContainer: FC<Props> = memo(
+  ({
+    item,
+    width,
+    height,
+    targetWidth,
+    targetHeight,
+    getAvatar,
+    onDragRef,
+    ...rest
+  }) => {
+    const { rawDisplayName } = useRoomMemberName(item.member);
+    const tileRef = useRef<HTMLElement | null>(null);
 
-  return (
-    <>
+    useDrag((state) => onDragRef?.current!(item.id, state), {
+      target: tileRef,
+      filterTaps: true,
+      preventScroll: true,
+    });
+
+    // Firefox doesn't respect the disablePictureInPicture attribute
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
+
+    return (
       <VideoTile
+        ref={tileRef}
         sfuParticipant={item.sfuParticipant}
         content={item.content}
         name={rawDisplayName}
-        avatar={getAvatar && getAvatar(item.member, width, height)}
+        avatar={getAvatar && getAvatar(item.member, targetWidth, targetHeight)}
         {...rest}
       />
-    </>
-  );
-}
+    );
+  }
+);

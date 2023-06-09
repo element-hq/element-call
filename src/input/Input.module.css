@@ -209,3 +209,7 @@ limitations under the License.
   margin-left: 26px;
   width: 100%; /* Ensure that it breaks onto the next row */
 }
+
+.description.noLabel {
+  margin-top: -20px; /* Ensures that there is no weired spacing if the checkbox doesn't have a label */
+}
