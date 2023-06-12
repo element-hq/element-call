@@ -15,14 +15,18 @@ limitations under the License.
 */
 
 import React from "react";
-import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import {
+  RoomMember,
+  RoomMemberEvent,
+} from "matrix-js-sdk/src/models/room-member";
 import { LocalParticipant, RemoteParticipant } from "livekit-client";
 
-import { useRoomMemberName } from "./useRoomMemberName";
 import { TileContent, VideoTile } from "./VideoTile";
+import { Avatar } from "../Avatar";
+import Styles from "../room/InCallView.module.css";
 
 export interface ItemData {
-  member: RoomMember;
+  member?: RoomMember;
   sfuParticipant: LocalParticipant | RemoteParticipant;
   content: TileContent;
 }
@@ -31,29 +35,45 @@ interface Props {
   item: ItemData;
   width?: number;
   height?: number;
-  getAvatar: (
-    roomMember: RoomMember,
-    width: number,
-    height: number
-  ) => JSX.Element;
 }
 
-export function VideoTileContainer({
-  item,
-  width,
-  height,
-  getAvatar,
-  ...rest
-}: Props) {
-  const { rawDisplayName } = useRoomMemberName(item.member);
+export function VideoTileContainer({ item, width, height, ...rest }: Props) {
+  const [displayName, setDisplayName] = React.useState<string>("[👻]");
+
+  React.useEffect(() => {
+    const member = item.member;
+
+    if (member) {
+      setDisplayName(member.rawDisplayName);
+
+      const updateName = () => {
+        setDisplayName(member.rawDisplayName);
+      };
+
+      member!.on(RoomMemberEvent.Name, updateName);
+      return () => {
+        member!.removeListener(RoomMemberEvent.Name, updateName);
+      };
+    }
+  }, [item.member]);
+
+  const avatar = (
+    <Avatar
+      key={item.member?.userId}
+      size={Math.round(Math.min(width ?? 0, height ?? 0) / 2)}
+      src={item.member?.getMxcAvatarUrl()}
+      fallback={displayName.slice(0, 1).toUpperCase()}
+      className={Styles.avatar}
+    />
+  );
 
   return (
     <>
       <VideoTile
         sfuParticipant={item.sfuParticipant}
         content={item.content}
-        name={rawDisplayName}
-        avatar={getAvatar && getAvatar(item.member, width, height)}
+        name={displayName}
+        avatar={avatar}
         {...rest}
       />
     </>

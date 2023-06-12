@@ -34,7 +34,6 @@ import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
-import { Avatar } from "../Avatar";
 import {
   Header,
   LeftNav,
@@ -236,24 +235,6 @@ export function InCallView({
   const reducedControls = boundsValid && bounds.width <= 400;
   const noControls = reducedControls && bounds.height <= 400;
 
-  const renderAvatar = useCallback(
-    (roomMember: RoomMember, width: number, height: number) => {
-      const avatarUrl = roomMember.getMxcAvatarUrl();
-      const size = Math.round(Math.min(width, height) / 2);
-
-      return (
-        <Avatar
-          key={roomMember.userId}
-          size={size}
-          src={avatarUrl ?? undefined}
-          fallback={roomMember.name.slice(0, 1).toUpperCase()}
-          className={styles.avatar}
-        />
-      );
-    },
-    []
-  );
-
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const items = useParticipantTiles(livekitRoom, participants);
@@ -273,13 +254,7 @@ export function InCallView({
         layout={layout}
         disableAnimations={prefersReducedMotion || isSafari}
       >
-        {(child) => (
-          <VideoTileContainer
-            getAvatar={renderAvatar}
-            item={child.data}
-            {...child}
-          />
-        )}
+        {(child) => <VideoTileContainer item={child.data} {...child} />}
       </VideoGrid>
     );
   };
@@ -375,17 +350,21 @@ function useParticipantTiles(
   });
 
   const items = useMemo(() => {
-    const tiles: TileDescriptor<ItemData>[] = [];
+    // The IDs of the participants who published membership event to the room (i.e. are present from Matrix perspective).
+    const matrixParticipants: Map<string, RoomMember> = new Map(
+      [...participants.entries()].flatMap(([user, devicesMap]) => {
+        return [...devicesMap.keys()].map((deviceId) => [
+          `${user.userId}:${deviceId}`,
+          user,
+        ]);
+      })
+    );
 
-    for (const [member, participantMap] of participants) {
-      for (const [deviceId] of participantMap) {
-        const id = `${member.userId}:${deviceId}`;
-        const sfuParticipant = sfuParticipants.find((p) => p.identity === id);
-
-        // Skip rendering participants that did not connect to the SFU.
-        if (!sfuParticipant) {
-          continue;
-        }
+    // Iterate over SFU participants (those who actually are present from the SFU perspective) and create tiles for them.
+    const tiles: TileDescriptor<ItemData>[] = sfuParticipants.flatMap(
+      (sfuParticipant) => {
+        const id = sfuParticipant.identity;
+        const member = matrixParticipants.get(id);
 
         const userMediaTile = {
           id,
@@ -398,12 +377,10 @@ function useParticipantTiles(
           },
         };
 
-        // Add a tile for user media.
-        tiles.push(userMediaTile);
-
         // If there is a screen sharing enabled for this participant, create a tile for it as well.
+        let screenShareTile: TileDescriptor<ItemData> | undefined;
         if (sfuParticipant.isScreenShareEnabled) {
-          const screenShareTile = {
+          screenShareTile = {
             ...userMediaTile,
             id: `${id}:screen-share`,
             focused: true,
@@ -412,10 +389,13 @@ function useParticipantTiles(
               content: TileContent.ScreenShare,
             },
           };
-          tiles.push(screenShareTile);
         }
+
+        return screenShareTile
+          ? [userMediaTile, screenShareTile]
+          : [userMediaTile];
       }
-    }
+    );
 
     PosthogAnalytics.instance.eventCallEnded.cacheParticipantCountChanged(
       tiles.length
