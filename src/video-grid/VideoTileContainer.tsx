@@ -61,8 +61,6 @@ interface Props {
 export const VideoTileContainer: FC<Props> = memo(
   ({
     item,
-    width,
-    height,
     targetWidth,
     targetHeight,
     getAvatar,
