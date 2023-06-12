@@ -59,14 +59,7 @@ interface Props {
 }
 
 export const VideoTileContainer: FC<Props> = memo(
-  ({
-    item,
-    targetWidth,
-    targetHeight,
-    getAvatar,
-    onDragRef,
-    ...rest
-  }) => {
+  ({ item, targetWidth, targetHeight, getAvatar, onDragRef, ...rest }) => {
     const { rawDisplayName } = useRoomMemberName(item.member);
     const tileRef = useRef<HTMLElement | null>(null);
 
