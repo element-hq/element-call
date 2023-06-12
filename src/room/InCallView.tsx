@@ -86,6 +86,11 @@ const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
+interface LocalUserChoices {
+  videoMuted: boolean;
+  audioMuted: boolean;
+}
+
 interface Props {
   client: MatrixClient;
   groupCall: GroupCall;
@@ -96,6 +101,7 @@ interface Props {
   matrixInfo: MatrixInfo;
   mediaDevices: MediaDevicesState;
   livekitRoom: Room;
+  userChoices: LocalUserChoices;
   otelGroupCallMembership: OTelGroupCallMembership;
 }
 
@@ -109,6 +115,7 @@ export function InCallView({
   matrixInfo,
   mediaDevices,
   livekitRoom,
+  userChoices,
   otelGroupCallMembership,
 }: Props) {
   const { t } = useTranslation();
@@ -148,8 +155,8 @@ export function InCallView({
     token,
     serverUrl: Config.get().livekit.server_url,
     room: livekitRoom,
-    audio: true,
-    video: true,
+    audio: !userChoices.audioMuted,
+    video: !userChoices.videoMuted,
     onConnected: () => {
       console.log("connected to LiveKit room");
     },
