@@ -126,6 +126,11 @@ export class PosthogSpanProcessor implements SpanProcessor {
         const maxPacketLoss = `${attributes["matrix.stats.summary.maxPacketLoss"]}`;
         const peerConnections = `${attributes["matrix.stats.summary.peerConnections"]}`;
         const percentageConcealedAudio = `${attributes["matrix.stats.summary.percentageConcealedAudio"]}`;
+        const opponentUsersInCall = `${attributes["matrix.stats.summary.opponentUsersInCall"]}`;
+        const opponentDevicesInCall = `${attributes["matrix.stats.summary.opponentDevicesInCall"]}`;
+        const diffDevicesToPeerConnections = `${attributes["matrix.stats.summary.diffDevicesToPeerConnections"]}`;
+        const ratioPeerConnectionToDevices = `${attributes["matrix.stats.summary.ratioPeerConnectionToDevices"]}`;
+
         PosthogAnalytics.instance.trackEvent(
           {
             eventName: "MediaReceived",
@@ -137,6 +142,10 @@ export class PosthogSpanProcessor implements SpanProcessor {
             maxPacketLoss: maxPacketLoss,
             peerConnections: peerConnections,
             percentageConcealedAudio: percentageConcealedAudio,
+            opponentUsersInCall: opponentUsersInCall,
+            opponentDevicesInCall: opponentDevicesInCall,
+            diffDevicesToPeerConnections: diffDevicesToPeerConnections,
+            ratioPeerConnectionToDevices: ratioPeerConnectionToDevices,
           },
           // Send instantly because the window might be closing
           { send_instantly: true }

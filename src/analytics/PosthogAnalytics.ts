@@ -29,6 +29,7 @@ import {
   MuteCameraTracker,
   MuteMicrophoneTracker,
   UndecryptableToDeviceEventTracker,
+  QualitySurveyEventTracker,
 } from "./PosthogEvents";
 import { Config } from "../config/Config";
 import { getUrlParams } from "../UrlParams";
@@ -431,4 +432,5 @@ export class PosthogAnalytics {
   public eventMuteMicrophone = new MuteMicrophoneTracker();
   public eventMuteCamera = new MuteCameraTracker();
   public eventUndecryptableToDevice = new UndecryptableToDeviceEventTracker();
+  public eventQualitySurvey = new QualitySurveyEventTracker();
 }

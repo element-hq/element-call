@@ -62,7 +62,6 @@
   "{{roomName}} - Walkie-talkie call": "{{roomName}} - تماس واکی-تاکی",
   "{{name}} is talking…": "{{name}} در حال صحبت است…",
   "{{name}} is presenting": "{{name}} حاضر است",
-  "{{displayName}}, your call is now ended": "{{displayName}} تماس شما پایان یافت",
   "{{count}} people connected|other": "{{count}} نفر متصل هستند",
   "{{count}} people connected|one": "{{count}} فرد متصل هستند",
   "Local volume": "حجم داخلی",
