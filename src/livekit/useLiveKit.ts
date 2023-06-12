@@ -6,7 +6,8 @@ import {
 } from "@livekit/components-react";
 
 import { MediaDevicesState, MediaDevices } from "../settings/mediaDevices";
-import { LocalMediaInfo, MediaInfo } from "./VideoPreview";
+import { LocalMediaInfo, MediaInfo } from "../room/VideoPreview";
+import { roomOptions } from "./options";
 
 type LiveKitState = {
   // The state of the media devices (changing the devices will also change them in the room).
@@ -25,7 +26,7 @@ type LiveKitState = {
 export function useLiveKit(): LiveKitState | undefined {
   // TODO: Pass the proper paramters to configure the room (supported codecs, simulcast, adaptive streaming, etc).
   const [room] = React.useState<Room>(() => {
-    return new Room();
+    return new Room(roomOptions);
   });
 
   // Create a React state to store the available devices and the selected device for each kind.
