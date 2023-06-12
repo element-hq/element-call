@@ -44,12 +44,7 @@ import {
   RoomHeaderInfo,
   VersionMismatchWarning,
 } from "../Header";
-import {
-  VideoGrid,
-  useVideoGridLayout,
-  ChildrenProperties,
-} from "../video-grid/VideoGrid";
-import { VideoTileContainer } from "../video-grid/VideoTileContainer";
+import { VideoGrid, useVideoGridLayout } from "../video-grid/VideoGrid";
 import { GroupCallInspector } from "./GroupCallInspector";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { Avatar } from "../Avatar";
@@ -77,6 +72,7 @@ import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
+import { VideoTile } from "../video-grid/VideoTile";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -303,7 +299,7 @@ export function InCallView({
     }
     if (maximisedParticipant) {
       return (
-        <VideoTileContainer
+        <VideoTile
           targetHeight={bounds.height}
           targetWidth={bounds.width}
           key={maximisedParticipant.id}
@@ -311,10 +307,10 @@ export function InCallView({
           getAvatar={renderAvatar}
           audioContext={audioContext}
           audioDestination={audioDestination}
-          disableSpeakingIndicator={true}
           maximised={Boolean(maximisedParticipant)}
           fullscreen={maximisedParticipant === fullscreenParticipant}
           onFullscreen={toggleFullscreen}
+          showSpeakingIndicator={false}
         />
       );
     }
@@ -325,17 +321,16 @@ export function InCallView({
         layout={layout}
         disableAnimations={prefersReducedMotion || isSafari}
       >
-        {({ item, ...rest }: ChildrenProperties) => (
-          <VideoTileContainer
-            item={item}
+        {(props) => (
+          <VideoTile
             getAvatar={renderAvatar}
             audioContext={audioContext}
             audioDestination={audioDestination}
-            disableSpeakingIndicator={items.length < 3}
             maximised={false}
             fullscreen={false}
             onFullscreen={toggleFullscreen}
-            {...rest}
+            showSpeakingIndicator={items.length > 2}
+            {...props}
           />
         )}
       </Grid>
