@@ -16,8 +16,7 @@ limitations under the License.
 
 import classNames from "classnames";
 import React, { HTMLAttributes, ReactNode } from "react";
-import { logger } from "@sentry/utils";
-import { Trans } from "react-i18next";
+import { useTranslation } from "react-i18next";
 
 import styles from "./DisconnectedBanner.module.css";
 import { useClient } from "./ClientContext";
@@ -32,18 +31,16 @@ export function DisconnectedBanner({
   className,
   ...rest
 }: DisconnectedBannerProps) {
-  const clientrp = useClient();
-  logger.log(clientrp);
-  const disconnected = clientrp.disconnected;
+  const { t } = useTranslation();
+  const { disconnected } = useClient();
+
   return (
     <>
       {disconnected && (
-        <Trans>
-          <div className={classNames(styles.banner, className)} {...rest}>
-            {children}
-            Connectivity to the server has been lost.
-          </div>
-        </Trans>
+        <div className={classNames(styles.banner, className)} {...rest}>
+          {children}
+          {t("Connectivity to the server has been lost.")}
+        </div>
       )}
     </>
   );
