@@ -75,6 +75,13 @@ yarn dev
 ```
 
 ### Local Backend
+#### JWT keys
+Add in you `.env` in root dir with:
+```yaml
+# Develop backend settings:
+LIVEKIT_KEY="devkey"
+LIVEKIT_SECRET="secret"
+```
 
 #### Add SFU parameter in your local config `./public/config.yml`
 
