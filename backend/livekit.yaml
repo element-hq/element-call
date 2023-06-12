@@ -7,11 +7,11 @@ rtc:
     port_range_start: 50100
     port_range_end: 50200
     use_external_ip: false
-redis:
-    address: redis:6379
-    username: ""
-    password: ""
-    db: 0
+#redis:
+#    address: redis:6379
+#    username: ""
+#    password: ""
+#    db: 0
 turn:
     enabled: false
     domain: localhost
