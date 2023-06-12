@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -27,8 +27,13 @@ import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DisableVideoIcon } from "../icons/DisableVideo.svg";
 import { ReactComponent as HangupIcon } from "../icons/Hangup.svg";
 import { ReactComponent as ScreenshareIcon } from "../icons/Screenshare.svg";
+import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
+import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
 import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
+import { ReactComponent as Fullscreen } from "../icons/Fullscreen.svg";
+import { ReactComponent as FullscreenExit } from "../icons/FullscreenExit.svg";
 import { TooltipTrigger } from "../Tooltip";
+import { VolumeIcon } from "./VolumeIcon";
 
 export type ButtonVariant =
   | "default"
@@ -214,6 +219,90 @@ export function HangupButton({
         {...rest}
       >
         <HangupIcon />
+      </Button>
+    </TooltipTrigger>
+  );
+}
+
+export function SettingsButton({
+  className,
+  ...rest
+}: {
+  className?: string;
+  // TODO: add all props for <Button>
+  [index: string]: unknown;
+}) {
+  const { t } = useTranslation();
+  const tooltip = useCallback(() => t("Settings"), [t]);
+
+  return (
+    <TooltipTrigger tooltip={tooltip}>
+      <Button variant="toolbar" {...rest}>
+        <SettingsIcon width={20} height={20} />
+      </Button>
+    </TooltipTrigger>
+  );
+}
+
+export function InviteButton({
+  className,
+  variant = "toolbar",
+  ...rest
+}: {
+  className?: string;
+  variant?: string;
+  // TODO: add all props for <Button>
+  [index: string]: unknown;
+}) {
+  const { t } = useTranslation();
+  const tooltip = useCallback(() => t("Invite"), [t]);
+
+  return (
+    <TooltipTrigger tooltip={tooltip}>
+      <Button variant={variant} {...rest}>
+        <AddUserIcon />
+      </Button>
+    </TooltipTrigger>
+  );
+}
+
+interface AudioButtonProps extends Omit<Props, "variant"> {
+  /**
+   * A number between 0 and 1
+   */
+  volume: number;
+}
+
+export function AudioButton({ volume, ...rest }: AudioButtonProps) {
+  const { t } = useTranslation();
+  const tooltip = useCallback(() => t("Local volume"), [t]);
+
+  return (
+    <TooltipTrigger tooltip={tooltip}>
+      <Button variant="icon" {...rest}>
+        <VolumeIcon volume={volume} />
+      </Button>
+    </TooltipTrigger>
+  );
+}
+
+interface FullscreenButtonProps extends Omit<Props, "variant"> {
+  fullscreen?: boolean;
+}
+
+export function FullscreenButton({
+  fullscreen,
+  ...rest
+}: FullscreenButtonProps) {
+  const { t } = useTranslation();
+  const tooltip = useCallback(() => {
+    return fullscreen ? t("Exit full screen") : t("Full screen");
+  }, [fullscreen, t]);
+
+  return (
+    <TooltipTrigger tooltip={tooltip}>
+      <Button variant="icon" {...rest}>
+        {fullscreen ? <FullscreenExit /> : <Fullscreen />}
       </Button>
     </TooltipTrigger>
   );

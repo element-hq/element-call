@@ -92,6 +92,7 @@ export function Modal({
                 {...closeButtonProps}
                 ref={closeButtonRef}
                 className={styles.closeButton}
+                data-testid="modal_close"
                 title={t("Close")}
               >
                 <CloseIcon />

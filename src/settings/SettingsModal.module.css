@@ -19,8 +19,12 @@ limitations under the License.
   height: 480px;
 }
 
+.settingsModal p {
+  color: var(--secondary-content);
+}
+
 .tabContainer {
-  margin: 27px 16px;
+  padding: 27px 20px;
 }
 
 .fieldRowText {

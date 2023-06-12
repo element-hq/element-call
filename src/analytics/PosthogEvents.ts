@@ -163,3 +163,21 @@ export class UndecryptableToDeviceEventTracker {
     });
   }
 }
+
+interface QualitySurveyEvent {
+  eventName: "QualitySurvey";
+  callId: string;
+  feedbackText: string;
+  stars: number;
+}
+
+export class QualitySurveyEventTracker {
+  track(callId: string, feedbackText: string, stars: number) {
+    PosthogAnalytics.instance.trackEvent<QualitySurveyEvent>({
+      eventName: "QualitySurvey",
+      callId,
+      feedbackText,
+      stars,
+    });
+  }
+}
