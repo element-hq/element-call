@@ -73,6 +73,7 @@ const saveSession = (session: Session) =>
 const clearSession = () => localStorage.removeItem("matrix-auth-store");
 const isDisconnected = (syncState, syncData) =>
   syncState === "ERROR" && syncData?.error?.name === "ConnectionError";
+
 interface ClientState {
   loading: boolean;
   isAuthenticated: boolean;
@@ -123,8 +124,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
   const onSync = (state: SyncState, _old: SyncState, data: ISyncStateData) => {
     setState((currentState) => {
-      logger.log("syntData.name", data?.error?.name, "state:", state);
-      console.log("Current state:", currentState);
       return {
         ...currentState,
         disconnected: isDisconnected(state, data),
