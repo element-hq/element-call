@@ -266,10 +266,15 @@ export const NewVideoGrid: FC<Props> = ({
             },
       leave: { opacity: 0, scale: 0, immediate: disableAnimations },
       config: { mass: 0.7, tension: 252, friction: 25 },
-    }),
-    [tiles, disableAnimations]
+    })
     // react-spring's types are bugged and can't infer the spring type
   ) as unknown as [TransitionFn<Tile, TileSpring>, SpringRef<TileSpring>];
+
+  // Because we're using react-spring in imperative mode, we're responsible for
+  // firing animations manually whenever the tiles array updates
+  useEffect(() => {
+    springRef.start();
+  }, [tiles, springRef]);
 
   const animateDraggedTile = (endOfGesture: boolean) => {
     const { tileId, tileX, tileY, cursorX, cursorY } = dragState.current!;

@@ -203,7 +203,11 @@ export function GroupCallView({
       widget.api.transport.send(ElementWidgetActions.HangupCall, {});
     }
 
-    if (!isPasswordlessUser && !isEmbedded) {
+    if (
+      !isPasswordlessUser &&
+      !isEmbedded &&
+      !PosthogAnalytics.instance.isEnabled()
+    ) {
       history.push("/");
     }
   }, [groupCall, leave, isPasswordlessUser, isEmbedded, history]);
@@ -268,8 +272,23 @@ export function GroupCallView({
       );
     }
   } else if (left) {
-    if (isPasswordlessUser) {
-      return <CallEndedView client={client} />;
+    // The call ended view is shown for two reasons: prompting guests to create
+    // an account, and prompting users that have opted into analytics to provide
+    // feedback. We don't show a feedback prompt to widget users however (at
+    // least for now), because we don't yet have designs that would allow widget
+    // users to dismiss the feedback prompt and close the call window without
+    // submitting anything.
+    if (
+      isPasswordlessUser ||
+      (PosthogAnalytics.instance.isEnabled() && !isEmbedded)
+    ) {
+      return (
+        <CallEndedView
+          endedCallId={groupCall.groupCallId}
+          client={client}
+          isPasswordlessUser={isPasswordlessUser}
+        />
+      );
     } else {
       // If the user is a regular user, we'll have sent them back to the homepage,
       // so just sit here & do nothing: otherwise we would (briefly) mount the

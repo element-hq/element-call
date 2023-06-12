@@ -91,7 +91,6 @@
   "{{roomName}} - Walkie-talkie call": "{{roomName}} — Appel talkie-walkie",
   "{{name}} is talking…": "{{name}} est en train de parler…",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
-  "{{displayName}}, your call is now ended": "{{displayName}}, votre appel est désormais terminé",
   "{{count}} people connected|other": "{{count}} personnes connectées",
   "{{count}} people connected|one": "{{count}} personne connectée",
   "Your recent calls": "Appels récents",
@@ -137,5 +136,11 @@
   "Submitting…": "Envoi…",
   "Submit": "Envoyer",
   "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "Si vous rencontrez des problèmes, ou vous voulez simplement faire un commentaire, veuillez nous envoyer une courte description ci-dessous.",
-  "Feedback": "Commentaires"
+  "Feedback": "Commentaires",
+  "{{count}} stars|other": "{{count}} favoris",
+  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Nous aimerions avoir vos commentaires afin que nous puissions améliorer votre expérience.</0>",
+  "{{count}} stars|one": "{{count}} favori",
+  "{{displayName}}, your call has ended.": "{{displayName}}, votre appel est terminé.",
+  "<0>Thanks for your feedback!</0>": "<0>Merci pour votre commentaire !</0>",
+  "How did it go?": "Comment cela s’est-il passé ?"
 }
