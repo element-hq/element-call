@@ -1,0 +1,47 @@
+# LiveKit requires host networking, which is only available on Linux
+# This compose will not function correctly on Mac or Windows
+version: "3.9"
+
+networks:
+  lkbackend:
+
+services:
+  auth-service:
+    build:
+      context: ./backend/auth
+    container_name: auth-server
+    hostname: auth-server
+    ports:
+      - 8881:8080
+    environment:
+      - LIVEKIT_KEY=${LIVEKIT_KEY}
+      - LIVEKIT_SECRET=${LIVEKIT_SECRET}
+    deploy:
+      restart_policy:
+        condition: on-failure
+    networks:
+      - lkbackend
+
+  livekit:
+    image: livekit/livekit-server:latest
+    command: --dev --config /etc/livekit.yaml
+    restart: unless-stopped
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+      - "7882:7882"
+      - "50100-50200:50100-50200"
+    volumes:
+      - ./backend/livekit.yaml:/etc/livekit.yaml
+    networks:
+      - lkbackend
+
+  redis:
+    image: redis:6-alpine
+    command: redis-server /etc/redis.conf
+    ports:
+      - 6379:6379
+    volumes:
+      - ./backend/redis.conf:/etc/redis.conf
+    networks:
+      - lkbackend

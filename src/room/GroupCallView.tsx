@@ -188,6 +188,10 @@ export function GroupCallView({
         matrixInfo={matrixInfo}
         mediaDevices={lkState.mediaDevices}
         livekitRoom={lkState.room}
+        userChoices={{
+          videoMuted: lkState.localMedia.video.muted,
+          audioMuted: lkState.localMedia.audio.muted,
+        }}
         otelGroupCallMembership={otelGroupCallMembership}
       />
     );

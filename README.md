@@ -90,6 +90,37 @@ You're now ready to launch the development server:
 yarn dev
 ```
 
+### Local Backend
+
+#### JWT keys
+
+Add in you `.env` in root dir with:
+
+```yaml
+# Develop backend settings:
+LIVEKIT_KEY="devkey"
+LIVEKIT_SECRET="secret"
+```
+
+#### Add SFU parameter in your local config `./public/config.yml`
+
+```yaml
+"livekit": {
+    "server_url": "ws://localhost:7880",
+    "jwt_service_url": "http:/localhost:8881"
+  },
+```
+
+#### Run Backend
+
+```
+yarn backend
+```
+
+##### Services
+
+JWT Service: http://localhost:8881/token?name=Name&identity=1234&roomName=room
+
 ## Configuration
 
 There are currently two different config files. `.env` holds variables that are used at build time, while `public/config.json` holds variables that are used at runtime. Documentation and default values for `public/config.json` can be found in [ConfigOptions.ts](src/config/ConfigOptions.ts).

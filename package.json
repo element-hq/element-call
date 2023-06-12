@@ -14,7 +14,8 @@
     "lint:types": "tsc",
     "i18n": "node_modules/i18next-parser/bin/cli.js",
     "i18n:check": "node_modules/i18next-parser/bin/cli.js --fail-on-warnings --fail-on-update",
-    "test": "jest"
+    "test": "jest",
+    "backend": "docker-compose -f backend-docker-compose.yml up"
   },
   "dependencies": {
     "@juggle/resize-observer": "^3.3.1",
