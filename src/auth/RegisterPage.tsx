@@ -38,7 +38,7 @@ import { LoadingView } from "../FullScreenView";
 import { useRecaptcha } from "./useRecaptcha";
 import { Caption, Link } from "../typography/Typography";
 import { usePageTitle } from "../usePageTitle";
-import { PosthogAnalytics } from "../PosthogAnalytics";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
 
 export const RegisterPage: FC = () => {
@@ -166,6 +166,7 @@ export const RegisterPage: FC = () => {
                   autoCapitalize="none"
                   prefix="@"
                   suffix={`:${Config.defaultServerName()}`}
+                  data-testid="register_username"
                 />
               </FieldRow>
               <FieldRow>
@@ -179,6 +180,7 @@ export const RegisterPage: FC = () => {
                   value={password}
                   placeholder={t("Password")}
                   label={t("Password")}
+                  data-testid="register_password"
                 />
               </FieldRow>
               <FieldRow>
@@ -193,6 +195,7 @@ export const RegisterPage: FC = () => {
                   placeholder={t("Confirm password")}
                   label={t("Confirm password")}
                   ref={confirmPasswordRef}
+                  data-testid="register_confirm_password"
                 />
               </FieldRow>
               <Caption>
@@ -217,7 +220,11 @@ export const RegisterPage: FC = () => {
                 </FieldRow>
               )}
               <FieldRow>
-                <Button type="submit" disabled={registering}>
+                <Button
+                  type="submit"
+                  disabled={registering}
+                  data-testid="register_register"
+                >
                   {registering ? t("Registering…") : t("Register")}
                 </Button>
               </FieldRow>

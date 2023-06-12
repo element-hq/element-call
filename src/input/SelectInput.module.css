@@ -22,8 +22,6 @@ limitations under the License.
 }
 
 .label {
-  font-weight: 600;
-  font-size: var(--font-size-subtitle);
   margin-top: 0;
   margin-bottom: 12px;
 }

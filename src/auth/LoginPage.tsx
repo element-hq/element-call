@@ -25,7 +25,7 @@ import { Button } from "../button";
 import styles from "./LoginPage.module.css";
 import { useInteractiveLogin } from "./useInteractiveLogin";
 import { usePageTitle } from "../usePageTitle";
-import { PosthogAnalytics } from "../PosthogAnalytics";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
 
 export const LoginPage: FC = () => {
@@ -88,6 +88,7 @@ export const LoginPage: FC = () => {
                   autoCapitalize="none"
                   prefix="@"
                   suffix={`:${Config.defaultServerName()}`}
+                  data-testid="login_username"
                 />
               </FieldRow>
               <FieldRow>
@@ -96,6 +97,7 @@ export const LoginPage: FC = () => {
                   ref={passwordRef}
                   placeholder={t("Password")}
                   label={t("Password")}
+                  data-testid="login_password"
                 />
               </FieldRow>
               {error && (
@@ -104,7 +106,11 @@ export const LoginPage: FC = () => {
                 </FieldRow>
               )}
               <FieldRow>
-                <Button type="submit" disabled={loading}>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  data-testid="login_login"
+                >
                   {loading ? t("Logging in…") : t("Login")}
                 </Button>
               </FieldRow>

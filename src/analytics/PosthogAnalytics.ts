@@ -19,8 +19,8 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixClient } from "matrix-js-sdk";
 import { Buffer } from "buffer";
 
-import { widget } from "./widget";
-import { getSetting, setSetting, settingsBus } from "./settings/useSetting";
+import { widget } from "../widget";
+import { getSetting, setSetting, settingsBus } from "../settings/useSetting";
 import {
   CallEndedTracker,
   CallStartedTracker,
@@ -29,9 +29,10 @@ import {
   MuteCameraTracker,
   MuteMicrophoneTracker,
   UndecryptableToDeviceEventTracker,
+  QualitySurveyEventTracker,
 } from "./PosthogEvents";
-import { Config } from "./config/Config";
-import { getUrlParams } from "./UrlParams";
+import { Config } from "../config/Config";
+import { getUrlParams } from "../UrlParams";
 
 /* Posthog analytics tracking.
  *
@@ -55,7 +56,7 @@ export interface IPosthogEvent {
   $set_once?: void;
 }
 
-enum Anonymity {
+export enum Anonymity {
   Disabled,
   Anonymous,
   Pseudonymous,
@@ -94,13 +95,17 @@ export class PosthogAnalytics {
   private static ANALYTICS_EVENT_TYPE = "im.vector.analytics";
 
   // set true during the constructor if posthog config is present, otherwise false
-  private static internalInstance = null;
+  private static internalInstance: PosthogAnalytics | null = null;
 
   private identificationPromise: Promise<void>;
   private readonly enabled: boolean = false;
   private anonymity = Anonymity.Disabled;
   private platformSuperProperties = {};
   private registrationType: RegistrationType = RegistrationType.Guest;
+
+  public static hasInstance(): boolean {
+    return Boolean(this.internalInstance);
+  }
 
   public static get instance(): PosthogAnalytics {
     if (!this.internalInstance) {
@@ -137,6 +142,9 @@ export class PosthogAnalytics {
       });
       this.enabled = true;
     } else {
+      logger.info(
+        "Posthog is not enabled because there is no api key or no host given in the config"
+      );
       this.enabled = false;
     }
     this.startListeningToSettingsChanges();
@@ -224,10 +232,8 @@ export class PosthogAnalytics {
       .join("");
   }
 
-  public async identifyUser(analyticsIdGenerator: () => string) {
-    // There might be a better way to get the client here.
-
-    if (this.anonymity == Anonymity.Pseudonymous) {
+  private async identifyUser(analyticsIdGenerator: () => string) {
+    if (this.anonymity == Anonymity.Pseudonymous && this.enabled) {
       // Check the user's account_data for an analytics ID to use. Storing the ID in account_data allows
       // different devices to send the same ID.
       let analyticsID = await this.getAnalyticsId();
@@ -318,7 +324,12 @@ export class PosthogAnalytics {
     this.setAnonymity(Anonymity.Disabled);
   }
 
-  public updateSuperProperties() {
+  public onLoginStatusChanged(): void {
+    const optInAnalytics = getSetting("opt-in-analytics", false);
+    this.updateAnonymityAndIdentifyUser(optInAnalytics);
+  }
+
+  private updateSuperProperties() {
     // Update super properties in posthog with our platform (app version, platform).
     // These properties will be subsequently passed in every event.
     //
@@ -338,7 +349,7 @@ export class PosthogAnalytics {
     return this.eventSignup.getSignupEndTime() > new Date(0);
   }
 
-  public async updateAnonymityAndIdentifyUser(
+  private async updateAnonymityAndIdentifyUser(
     pseudonymousOptIn: boolean
   ): Promise<void> {
     // Update this.anonymity based on the user's analytics opt-in settings
@@ -346,6 +357,10 @@ export class PosthogAnalytics {
       ? Anonymity.Pseudonymous
       : Anonymity.Disabled;
     this.setAnonymity(anonymity);
+
+    // We may not yet have a Matrix client at this point, if not, bail. This should get
+    // triggered again by onLoginStatusChanged once we do have a client.
+    if (!window.matrixclient) return;
 
     if (anonymity === Anonymity.Pseudonymous) {
       this.setRegistrationType(
@@ -384,7 +399,7 @@ export class PosthogAnalytics {
     this.capture(eventName, properties, options);
   }
 
-  public startListeningToSettingsChanges(): void {
+  private startListeningToSettingsChanges(): void {
     // Listen to account data changes from sync so we can observe changes to relevant flags and update.
     // This is called -
     //  * On page load, when the account data is first received by sync
@@ -417,4 +432,5 @@ export class PosthogAnalytics {
   public eventMuteMicrophone = new MuteMicrophoneTracker();
   public eventMuteCamera = new MuteCameraTracker();
   public eventUndecryptableToDevice = new UndecryptableToDeviceEventTracker();
+  public eventQualitySurvey = new QualitySurveyEventTracker();
 }

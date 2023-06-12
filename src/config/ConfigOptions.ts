@@ -36,6 +36,14 @@ export interface ConfigOptions {
     submit_url: string;
   };
 
+  /**
+   * Sets the URL to send opentelemetry data to. If unset, opentelemetry will
+   * be disabled.
+   */
+  opentelemetry?: {
+    collector_url: string;
+  };
+
   // Describes the default homeserver to use. The same format as Element Web
   // (without identity servers as we don't use them).
   default_server_config?: {
@@ -51,6 +59,14 @@ export interface ConfigOptions {
     server_url: string;
     // The link to the service that generates JWT tokens to join LiveKit rooms.
     jwt_service_url: string;
+  };
+
+  /**
+   * Allow to join a group calls without audio and video.
+   * TEMPORARY: Is a feature that's not proved and experimental
+   */
+  features?: {
+    feature_group_calls_without_video_and_audio: boolean;
   };
 }
 
