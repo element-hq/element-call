@@ -115,7 +115,6 @@ export function CallEndedView({
             label={t("Your feedback")}
             placeholder={t("Your feedback")}
             type="textarea"
-            required
           />
         </FieldRow>{" "}
         <FieldRow>
