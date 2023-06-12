@@ -75,8 +75,11 @@ yarn dev
 ```
 
 ### Local Backend
+
 #### JWT keys
+
 Add in you `.env` in root dir with:
+
 ```yaml
 # Develop backend settings:
 LIVEKIT_KEY="devkey"
@@ -91,6 +94,7 @@ LIVEKIT_SECRET="secret"
     "jwt_service_url": "http:/localhost:8881"
   },
 ```
+
 #### Run Backend
 
 ```
@@ -98,6 +102,7 @@ yarn backend
 ```
 
 ##### Services
+
 JWT Service: http://localhost:8881/token?name=Name&identity=1234&roomName=room
 
 ## Configuration
