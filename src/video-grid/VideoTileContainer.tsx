@@ -20,6 +20,8 @@ import {
   RoomMemberEvent,
 } from "matrix-js-sdk/src/models/room-member";
 import { LocalParticipant, RemoteParticipant } from "livekit-client";
+import { SpringValue } from "@react-spring/web";
+import { EventTypes, Handler, useDrag } from "@use-gesture/react";
 
 import { TileContent, VideoTile } from "./VideoTile";
 import { Avatar } from "../Avatar";
@@ -33,49 +35,81 @@ export interface ItemData {
 
 interface Props {
   item: ItemData;
-  width?: number;
-  height?: number;
+
+  // TODO: Refactor this set of props.
+  // See https://github.com/vector-im/element-call/pull/1099#discussion_r1226863404
+  id: string;
+  targetWidth: number;
+  targetHeight: number;
+  opacity?: SpringValue<number>;
+  scale?: SpringValue<number>;
+  shadow?: SpringValue<number>;
+  shadowSpread?: SpringValue<number>;
+  zIndex?: SpringValue<number>;
+  x?: SpringValue<number>;
+  y?: SpringValue<number>;
+  width?: SpringValue<number>;
+  height?: SpringValue<number>;
+  onDragRef?: React.RefObject<
+    (
+      tileId: string,
+      state: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
+    ) => void
+  >;
 }
 
-export function VideoTileContainer({ item, width, height, ...rest }: Props) {
-  const [displayName, setDisplayName] = React.useState<string>("[👻]");
+export const VideoTileContainer: React.FC<Props> = React.memo(
+  ({ item, id, targetWidth, targetHeight, onDragRef, ...rest }) => {
+    // Handle display name changes.
+    const [displayName, setDisplayName] = React.useState<string>("[👻]");
+    React.useEffect(() => {
+      const member = item.member;
 
-  React.useEffect(() => {
-    const member = item.member;
-
-    if (member) {
-      setDisplayName(member.rawDisplayName);
-
-      const updateName = () => {
+      if (member) {
         setDisplayName(member.rawDisplayName);
-      };
 
-      member!.on(RoomMemberEvent.Name, updateName);
-      return () => {
-        member!.removeListener(RoomMemberEvent.Name, updateName);
-      };
-    }
-  }, [item.member]);
+        const updateName = () => {
+          setDisplayName(member.rawDisplayName);
+        };
 
-  const avatar = (
-    <Avatar
-      key={item.member?.userId}
-      size={Math.round(Math.min(width ?? 0, height ?? 0) / 2)}
-      src={item.member?.getMxcAvatarUrl()}
-      fallback={displayName.slice(0, 1).toUpperCase()}
-      className={Styles.avatar}
-    />
-  );
+        member!.on(RoomMemberEvent.Name, updateName);
+        return () => {
+          member!.removeListener(RoomMemberEvent.Name, updateName);
+        };
+      }
+    }, [item.member]);
 
-  return (
-    <>
+    // Create an avatar.
+    const avatar = (
+      <Avatar
+        key={item.member?.userId}
+        size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
+        src={item.member?.getMxcAvatarUrl()}
+        fallback={displayName.slice(0, 1).toUpperCase()}
+        className={Styles.avatar}
+      />
+    );
+
+    // Make sure that the tile is draggable and work well within video grid layout.
+    //
+    // Firefox doesn't respect the disablePictureInPicture attribute
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
+    const tileRef = React.useRef<HTMLElement | null>(null);
+    useDrag((state) => onDragRef?.current!(id, state), {
+      target: tileRef,
+      filterTaps: true,
+      preventScroll: true,
+    });
+
+    return (
       <VideoTile
+        ref={tileRef}
         sfuParticipant={item.sfuParticipant}
         content={item.content}
         name={displayName}
         avatar={avatar}
         {...rest}
       />
-    </>
-  );
-}
+    );
+  }
+);

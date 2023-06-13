@@ -36,7 +36,10 @@ import {
   fallbackICEServerAllowed,
 } from "./matrix-utils";
 import { widget } from "./widget";
-import { PosthogAnalytics, RegistrationType } from "./PosthogAnalytics";
+import {
+  PosthogAnalytics,
+  RegistrationType,
+} from "./analytics/PosthogAnalytics";
 import { translatedError } from "./TranslatedError";
 import { useEventTarget } from "./useEvents";
 import { Config } from "./config/Config";
@@ -339,6 +342,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   useEffect(() => {
     window.matrixclient = client;
     window.isPasswordlessUser = isPasswordlessUser;
+
+    if (PosthogAnalytics.hasInstance())
+      PosthogAnalytics.instance.onLoginStatusChanged();
   }, [client, isPasswordlessUser]);
 
   if (error) {

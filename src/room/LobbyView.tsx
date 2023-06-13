@@ -77,6 +77,7 @@ export function LobbyView(props: Props) {
               className={styles.copyButton}
               size="lg"
               onPress={props.onEnter}
+              data-testid="lobby_joinCall"
             >
               Join call now
             </Button>
@@ -86,6 +87,7 @@ export function LobbyView(props: Props) {
               value={getRoomUrl(props.matrixInfo.roomName)}
               className={styles.copyButton}
               copiedMessage={t("Call link copied")}
+              data-testid="lobby_inviteLink"
             >
               Copy call link and join later
             </CopyButton>
