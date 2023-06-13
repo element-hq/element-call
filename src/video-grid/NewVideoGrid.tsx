@@ -45,6 +45,7 @@ import {
   cycleTileSize,
   appendItems,
 } from "./model";
+import { TileWrapper } from "./TileWrapper";
 
 interface GridState extends Grid {
   /**
@@ -452,16 +453,19 @@ export const NewVideoGrid: FC<Props> = ({
       >
         {slots}
       </div>
-      {tileTransitions((style, tile) =>
-        children({
-          ...style,
-          key: tile.item.id,
-          targetWidth: tile.width,
-          targetHeight: tile.height,
-          item: tile.item,
-          onDragRef: onTileDragRef,
-        })
-      )}
+      {tileTransitions((spring, tile) => (
+        <TileWrapper
+          key={tile.item.id}
+          id={tile.item.id}
+          onDragRef={onTileDragRef}
+          targetWidth={tile.width}
+          targetHeight={tile.height}
+          item={tile.item}
+          {...spring}
+        >
+          {children}
+        </TileWrapper>
+      ))}
     </div>
   );
 };
