@@ -124,10 +124,10 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
   const onSync = (state: SyncState, _old: SyncState, data: ISyncStateData) => {
     setState((currentState) => {
-      return {
-        ...currentState,
-        disconnected: isDisconnected(state, data),
-      };
+      const disconnected = isDisconnected(state, data);
+      return disconnected === currentState.disconnected
+        ? currentState
+        : { ...currentState, disconnected };
     });
   };
 
@@ -205,7 +205,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         }
       }
     };
-    let clientWithListener;
+    let clientWithListener: MatrixClient;
     init()
       .then(({ client, isPasswordlessUser }) => {
         clientWithListener = client;

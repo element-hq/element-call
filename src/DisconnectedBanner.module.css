@@ -23,5 +23,5 @@ limitations under the License.
   text-align: center;
   z-index: 1;
   top: 76px;
-  width: 100%;
+  width: calc(100% - 58px);
 }
