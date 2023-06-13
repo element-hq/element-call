@@ -98,7 +98,7 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
           [styles.isLocal]: sfuParticipant.isLocal,
           [styles.speaking]: sfuParticipant.isSpeaking,
           [styles.muted]: microphoneMuted,
-          [styles.screenshare]: false,
+          [styles.screenshare]: content === TileContent.ScreenShare,
         })}
         style={{
           opacity,
