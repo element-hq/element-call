@@ -48,7 +48,7 @@ export class Initializer {
   private isInitialized = false;
 
   public static isInitialized(): boolean {
-    return Boolean(Initializer.internalInstance?.isInitialized);
+    return Initializer.internalInstance?.isInitialized;
   }
 
   public static initBeforeReact() {
