@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,23 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useCallback } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { Track } from "livekit-client";
+import { OverlayTriggerState } from "@react-stately/overlays";
 
-import { MicButton, VideoButton } from "../button";
-import { OverflowMenu } from "./OverflowMenu";
+import { MicButton, SettingsButton, VideoButton } from "../button";
 import { Avatar } from "../Avatar";
 import styles from "./VideoPreview.module.css";
 import { useModalTriggerState } from "../Modal";
+import { SettingsModal } from "../settings/SettingsModal";
 import { MediaDevicesState } from "../settings/mediaDevices";
+import { useClient } from "../ClientContext";
 
 export type MatrixInfo = {
   userName: string;
   avatarUrl: string;
   roomName: string;
-  roomId: string;
+  roomIdOrAlias: string;
 };
 
 export type MediaInfo = {
@@ -55,9 +57,23 @@ export function VideoPreview({
   mediaDevices,
   localMediaInfo,
 }: Props) {
+  const { client } = useClient();
   const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
-  const { modalState: feedbackModalState, modalProps: feedbackModalProps } =
-    useModalTriggerState();
+
+  const {
+    modalState: settingsModalState,
+    modalProps: settingsModalProps,
+  }: {
+    modalState: OverlayTriggerState;
+    modalProps: {
+      isOpen: boolean;
+      onClose: () => void;
+    };
+  } = useModalTriggerState();
+
+  const openSettings = useCallback(() => {
+    settingsModalState.open();
+  }, [settingsModalState]);
 
   const mediaElement = React.useRef(null);
   React.useEffect(() => {
@@ -95,16 +111,16 @@ export function VideoPreview({
               onPress={localMediaInfo.video?.toggle}
             />
           )}
-          <OverflowMenu
-            roomId={matrixInfo.roomId}
-            mediaDevices={mediaDevices}
-            feedbackModalState={feedbackModalState}
-            feedbackModalProps={feedbackModalProps}
-            inCall={false}
-            showInvite={false}
-          />
+          <SettingsButton onPress={openSettings} />
         </div>
       </>
+      {settingsModalState.isOpen && (
+        <SettingsModal
+          client={client}
+          mediaDevices={mediaDevices}
+          {...settingsModalProps}
+        />
+      )}
     </div>
   );
 }

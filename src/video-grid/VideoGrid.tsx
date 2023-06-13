@@ -14,11 +14,29 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { Key, useCallback, useEffect, useRef, useState } from "react";
-import { FullGestureState, useDrag, useGesture } from "@use-gesture/react";
-import { Interpolation, SpringValue, useSprings } from "@react-spring/web";
+import React, {
+  Key,
+  RefObject,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
+import {
+  EventTypes,
+  FullGestureState,
+  Handler,
+  useDrag,
+  useGesture,
+} from "@use-gesture/react";
+import {
+  SpringRef,
+  SpringValue,
+  SpringValues,
+  useSprings,
+} from "@react-spring/web";
 import useMeasure from "react-use-measure";
-import { ResizeObserver } from "@juggle/resize-observer";
+import { ResizeObserver as JuggleResizeObserver } from "@juggle/resize-observer";
 import { ReactDOMAttributes } from "@use-gesture/react/dist/declarations/src/types";
 
 import styles from "./VideoGrid.module.css";
@@ -38,6 +56,18 @@ interface Tile<T> {
   item: TileDescriptor<T>;
   remove: boolean;
   focused: boolean;
+}
+
+export interface TileSpring {
+  opacity: number;
+  scale: number;
+  shadow: number;
+  shadowSpread: number;
+  zIndex: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
 }
 
 type LayoutDirection = "vertical" | "horizontal";
@@ -153,8 +183,16 @@ function getOneOnOneLayoutTilePositions(
   const gridAspectRatio = gridWidth / gridHeight;
 
   const smallPip = gridAspectRatio < 1 || gridWidth < 700;
-  const pipWidth = smallPip ? 114 : 230;
-  const pipHeight = smallPip ? 163 : 155;
+  const maxPipWidth = smallPip ? 114 : 230;
+  const maxPipHeight = smallPip ? 163 : 155;
+  // Cap the PiP size at 1/3 the remote tile size, preserving aspect ratio
+  const pipScaleFactor = Math.min(
+    1,
+    remotePosition.width / 3 / maxPipWidth,
+    remotePosition.height / 3 / maxPipHeight
+  );
+  const pipWidth = maxPipWidth * pipScaleFactor;
+  const pipHeight = maxPipHeight * pipScaleFactor;
   const pipGap = getPipGap(gridAspectRatio, gridWidth);
 
   const pipMinX = remotePosition.x + pipGap;
@@ -689,19 +727,28 @@ interface DragTileData {
   y: number;
 }
 
-interface ChildrenProperties<T> extends ReactDOMAttributes {
+export interface ChildrenProperties<T> extends ReactDOMAttributes {
   key: Key;
   data: T;
-  style: {
-    scale: SpringValue<number>;
-    opacity: SpringValue<number>;
-    boxShadow: Interpolation<number, string>;
-  };
-  width: number;
-  height: number;
+  targetWidth: number;
+  targetHeight: number;
+  opacity: SpringValue<number>;
+  scale: SpringValue<number>;
+  shadow: SpringValue<number>;
+  zIndex: SpringValue<number>;
+  x: SpringValue<number>;
+  y: SpringValue<number>;
+  width: SpringValue<number>;
+  height: SpringValue<number>;
+  onDragRef?: RefObject<
+    (
+      tileId: string,
+      state: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
+    ) => void
+  >;
 }
 
-interface VideoGridProps<T> {
+export interface VideoGridProps<T> {
   items: TileDescriptor<T>[];
   layout: Layout;
   disableAnimations: boolean;
@@ -740,7 +787,13 @@ export function VideoGrid<T>({
   const lastLayoutRef = useRef<Layout>(layout);
   const isMounted = useIsMounted();
 
-  const [gridRef, gridBounds] = useMeasure({ polyfill: ResizeObserver });
+  // The 'polyfill' argument to useMeasure is not a polyfill at all but is the impl that is always used
+  // if passed, whether the browser has native support or not, so pass in either the browser native
+  // version or the ponyfill (yes, pony) because Juggle's resizeobserver ponyfill is being weirdly
+  // buggy for me on my dev env my never updating the size until the window resizes.
+  const [gridRef, gridBounds] = useMeasure({
+    polyfill: window.ResizeObserver ?? JuggleResizeObserver,
+  });
 
   useEffect(() => {
     setTileState(({ tiles, ...rest }) => {
@@ -868,6 +921,8 @@ export function VideoGrid<T>({
       // Whether the tile positions were valid at the time of the previous
       // animation
       const tilePositionsWereValid = tilePositionsValid.current;
+      const oneOnOneLayout =
+        tiles.length === 2 && !tiles.some((t) => t.focused);
 
       return (tileIndex: number) => {
         const tile = tiles[tileIndex];
@@ -887,16 +942,19 @@ export function VideoGrid<T>({
             opacity: 1,
             zIndex: 2,
             shadow: 15,
+            shadowSpread: 0,
             immediate: (key: string) =>
               disableAnimations ||
               key === "zIndex" ||
               key === "x" ||
               key === "y" ||
-              key === "shadow",
+              key === "shadow" ||
+              key === "shadowSpread",
             from: {
               shadow: 0,
               scale: 0,
               opacity: 0,
+              zIndex: 0,
             },
             reset: false,
           };
@@ -920,6 +978,7 @@ export function VideoGrid<T>({
             shadow: number;
             scale: number;
             opacity: number;
+            zIndex?: number;
             x?: number;
             y?: number;
             width?: number;
@@ -948,10 +1007,14 @@ export function VideoGrid<T>({
             opacity: remove ? 0 : 1,
             zIndex: tilePosition.zIndex,
             shadow: 1,
+            shadowSpread: oneOnOneLayout && tile.item.local ? 1 : 0,
             from,
             reset,
             immediate: (key: string) =>
-              disableAnimations || key === "zIndex" || key === "shadow",
+              disableAnimations ||
+              key === "zIndex" ||
+              key === "shadow" ||
+              key === "shadowSpread",
             // If we just stopped dragging a tile, give it time for the
             // animation to settle before pushing its z-index back down
             delay: (key: string) => (key === "zIndex" ? 500 : 0),
@@ -966,7 +1029,8 @@ export function VideoGrid<T>({
     tilePositions,
     tiles,
     scrollPosition,
-  ]);
+    // react-spring's types are bugged and can't infer the spring type
+  ]) as unknown as [SpringValues<TileSpring>[], SpringRef<TileSpring>];
 
   const onTap = useCallback(
     (tileKey: Key) => {
@@ -1175,22 +1239,17 @@ export function VideoGrid<T>({
 
   return (
     <div className={styles.videoGrid} ref={gridRef} {...bindGrid()}>
-      {springs.map(({ shadow, ...style }, i) => {
+      {springs.map((style, i) => {
         const tile = tiles[i];
         const tilePosition = tilePositions[tile.order];
 
         return createChild({
           ...bindTile(tile.key),
+          ...style,
           key: tile.key,
           data: tile.item.data,
-          style: {
-            boxShadow: shadow.to(
-              (s) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px 0px`
-            ),
-            ...style,
-          },
-          width: tilePosition.width,
-          height: tilePosition.height,
+          targetWidth: tilePosition.width,
+          targetHeight: tilePosition.height,
         });
       })}
     </div>

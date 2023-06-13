@@ -74,6 +74,7 @@ export function RoomAuthView() {
                 name="displayName"
                 label={t("Display name")}
                 placeholder={t("Display name")}
+                data-testid="joincall_displayName"
                 type="text"
                 required
                 autoComplete="off"
@@ -90,7 +91,12 @@ export function RoomAuthView() {
                 <ErrorMessage error={error} />
               </FieldRow>
             )}
-            <Button type="submit" size="lg" disabled={loading}>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={loading}
+              data-testid="joincall_joincall"
+            >
               {loading ? t("Loading…") : t("Join call now")}
             </Button>
             <div id={recaptchaId} />
