@@ -21,14 +21,14 @@ import { MutableRefObject, RefCallback, useCallback } from "react";
  * same DOM node.
  */
 export const useMergedRefs = <T>(
-  ...refs: (MutableRefObject<T | null> | RefCallback<T | null>)[]
+  ...refs: (MutableRefObject<T | null> | RefCallback<T | null> | null)[]
 ): RefCallback<T | null> =>
   useCallback(
     (value) =>
       refs.forEach((ref) => {
         if (typeof ref === "function") {
           ref(value);
-        } else {
+        } else if (ref !== null) {
           ref.current = value;
         }
       }),
