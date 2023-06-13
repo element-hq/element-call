@@ -56,7 +56,7 @@ import {
   TileDescriptor,
 } from "../video-grid/VideoGrid";
 import { Avatar } from "../Avatar";
-import { useNewGrid, useShowInspector } from "../settings/useSetting";
+import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useUrlParams } from "../UrlParams";
@@ -277,8 +277,8 @@ export function InCallView({
     []
   );
 
-  const [newGrid] = useNewGrid();
-  const Grid = newGrid ? NewVideoGrid : VideoGrid;
+  const Grid =
+    items.length > 12 && layout === "freedom" ? NewVideoGrid : VideoGrid;
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const renderContent = (): JSX.Element => {
