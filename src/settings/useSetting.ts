@@ -98,7 +98,5 @@ export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
   return [false, null];
 };
 
-export const useNewGrid = () => useSetting("new-grid", false);
-
 export const useDeveloperSettingsTab = () =>
   useSetting("developer-settings-tab", false);
