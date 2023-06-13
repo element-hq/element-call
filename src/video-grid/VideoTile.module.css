@@ -18,12 +18,10 @@ limitations under the License.
   position: absolute;
   contain: strict;
   top: 0;
-  width: var(--tileWidth);
-  height: var(--tileHeight);
+  container-name: videoTile;
+  container-type: size;
   --tileRadius: 8px;
   border-radius: var(--tileRadius);
-  box-shadow: rgba(0, 0, 0, 0.5) 0px var(--tileShadow)
-    calc(2 * var(--tileShadow)) var(--tileShadowSpread);
   overflow: hidden;
   cursor: pointer;
 
