@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ForwardedRef, forwardRef } from "react";
-import { animated, SpringValue } from "@react-spring/web";
+import React, { ComponentProps, forwardRef } from "react";
+import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import { LocalParticipant, RemoteParticipant, Track } from "livekit-client";
@@ -24,10 +24,19 @@ import {
   VideoTrack,
   useMediaTrack,
 } from "@livekit/components-react";
+import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
+import { useRoomMemberName } from "./useRoomMemberName";
+
+export interface ItemData {
+  id: string;
+  member: RoomMember;
+  sfuParticipant: LocalParticipant | RemoteParticipant;
+  content: TileContent;
+}
 
 export enum TileContent {
   UserMedia = "user-media",
@@ -35,51 +44,36 @@ export enum TileContent {
 }
 
 interface Props {
-  avatar?: JSX.Element;
+  data: ItemData;
   className?: string;
-  name: string;
-  sfuParticipant: LocalParticipant | RemoteParticipant;
-  content: TileContent;
-  showOptions?: boolean;
-  isLocal?: boolean;
-  disableSpeakingIndicator?: boolean;
-  opacity?: SpringValue<number>;
-  scale?: SpringValue<number>;
-  shadow?: SpringValue<number>;
-  shadowSpread?: SpringValue<number>;
-  zIndex?: SpringValue<number>;
-  x?: SpringValue<number>;
-  y?: SpringValue<number>;
-  width?: SpringValue<number>;
-  height?: SpringValue<number>;
+  showSpeakingIndicator: boolean;
+  style?: ComponentProps<typeof animated.div>["style"];
+  targetWidth: number;
+  targetHeight: number;
+  getAvatar: (
+    roomMember: RoomMember,
+    width: number,
+    height: number
+  ) => JSX.Element;
 }
 
-export const VideoTile = forwardRef<HTMLElement, Props>(
+export const VideoTile = forwardRef<HTMLDivElement, Props>(
   (
     {
-      name,
-      sfuParticipant,
-      content,
-      avatar,
+      data,
       className,
-      showOptions,
-      isLocal,
-      // TODO: disableSpeakingIndicator is not used atm.
-      disableSpeakingIndicator,
-      opacity,
-      scale,
-      shadow,
-      shadowSpread,
-      zIndex,
-      x,
-      y,
-      width,
-      height,
-      ...rest
+      showSpeakingIndicator,
+      style,
+      targetWidth,
+      targetHeight,
+      getAvatar,
     },
-    ref
+    tileRef
   ) => {
     const { t } = useTranslation();
+
+    const { content, sfuParticipant } = data;
+    const { rawDisplayName: name } = useRoomMemberName(data.member);
 
     const audioEl = React.useRef<HTMLAudioElement>(null);
     const { isMuted: microphoneMuted } = useMediaTrack(
@@ -92,36 +86,25 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
       }
     );
 
+    // Firefox doesn't respect the disablePictureInPicture attribute
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
+
     return (
       <animated.div
         className={classNames(styles.videoTile, className, {
           [styles.isLocal]: sfuParticipant.isLocal,
-          [styles.speaking]: sfuParticipant.isSpeaking,
+          [styles.speaking]: sfuParticipant.isSpeaking && showSpeakingIndicator,
           [styles.muted]: microphoneMuted,
           [styles.screenshare]: content === TileContent.ScreenShare,
         })}
-        style={{
-          opacity,
-          scale,
-          zIndex,
-          x,
-          y,
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore React does in fact support assigning custom properties,
-          // but React's types say no
-          "--tileWidth": width?.to((w) => `${w}px`),
-          "--tileHeight": height?.to((h) => `${h}px`),
-          "--tileShadow": shadow?.to((s) => `${s}px`),
-          "--tileShadowSpread": shadowSpread?.to((s) => `${s}px`),
-        }}
-        ref={ref as ForwardedRef<HTMLDivElement>}
+        style={style}
+        ref={tileRef}
         data-testid="videoTile"
-        {...rest}
       >
         {!sfuParticipant.isCameraEnabled && (
           <>
             <div className={styles.videoMutedOverlay} />
-            {avatar}
+            {getAvatar(data.member, targetWidth, targetHeight)}
           </>
         )}
         {!false &&
