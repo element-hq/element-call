@@ -33,7 +33,6 @@ import { MediaDevicesState } from "./mediaDevices";
 import {
   useShowInspector,
   useOptInAnalytics,
-  useNewGrid,
   useDeveloperSettingsTab,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
@@ -60,7 +59,6 @@ export const SettingsModal = (props: Props) => {
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const [developerSettingsTab, setDeveloperSettingsTab] =
     useDeveloperSettingsTab();
-  const [newGrid, setNewGrid] = useNewGrid();
 
   const downloadDebugLog = useDownloadDebugLog();
 
@@ -232,17 +230,6 @@ export const SettingsModal = (props: Props) => {
                 checked={showInspector}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setShowInspector(e.target.checked)
-                }
-              />
-            </FieldRow>
-            <FieldRow>
-              <InputField
-                id="newGrid"
-                label={t("Use the upcoming grid system")}
-                type="checkbox"
-                checked={newGrid}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                  setNewGrid(e.target.checked)
                 }
               />
             </FieldRow>
