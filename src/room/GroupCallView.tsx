@@ -32,8 +32,6 @@ import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { useLiveKit } from "../livekit/useLiveKit";
-import { useLiveKitRoom } from "@livekit/components-react";
-import { Config } from "../config/Config";
 
 declare global {
   interface Window {

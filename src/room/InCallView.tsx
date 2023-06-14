@@ -87,7 +87,15 @@ const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-let isLivekitRoomInnit = false;
+const onConnectedCallback = (): void => {
+  console.log("connected to LiveKit room");
+};
+const onDisconnectedCallback = (): void => {
+  console.log("disconnected from LiveKit room");
+};
+const onErrorCallback = (err: Error): void => {
+  console.error("error connecting to LiveKit room", err);
+};
 
 interface LocalUserChoices {
   videoMuted: boolean;
@@ -121,7 +129,6 @@ export function InCallView({
   livekitRoom,
   userChoices,
   otelGroupCallMembership,
-  initComponent,
 }: Props) {
   const { t } = useTranslation();
   usePreventScroll();
@@ -161,15 +168,10 @@ export function InCallView({
     room: livekitRoom,
     audio: !userChoices.audioMuted,
     video: !userChoices.videoMuted,
-    onConnected: () => {
-      console.log("connected to LiveKit room");
-    },
-    onDisconnected: () => {
-      console.log("disconnected from LiveKit room");
-    },
-    onError: (err) => {
-      console.error("error connecting to LiveKit room", err);
-    },
+    simulateParticipants: 10,
+    onConnected: onConnectedCallback,
+    onDisconnected: onDisconnectedCallback,
+    onError: onErrorCallback,
   });
 
   const screenSharingTracks = useTracks(

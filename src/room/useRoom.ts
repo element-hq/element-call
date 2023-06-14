@@ -6,6 +6,7 @@ import {
   RoomEvent,
 } from "livekit-client";
 import { LiveKitRoomProps } from "@livekit/components-react/src/components/LiveKitRoom";
+import { logger } from "matrix-js-sdk/src/logger";
 
 const defaultRoomProps: Partial<LiveKitRoomProps> = {
   connect: true,
@@ -28,12 +29,11 @@ export function useRoom(props: LiveKitRoomProps) {
     onDisconnected,
     onError,
     onMediaDeviceFailure,
-    simulateParticipants,
   } = { ...defaultRoomProps, ...props };
   if (options && passedRoom) {
-    // log.warn(
-    //   "when using a manually created room, the options object will be ignored. set the desired options directly when creating the room instead."
-    // );
+    logger.warn(
+      "when using a manually created room, the options object will be ignored. set the desired options directly when creating the room instead."
+    );
   }
 
   const [room, setRoom] = React.useState<Room | undefined>();
@@ -47,7 +47,7 @@ export function useRoom(props: LiveKitRoomProps) {
     const onSignalConnected = () => {
       const localP = room.localParticipant;
       try {
-        // log.debug("trying to publish local tracks");
+        logger.debug("trying to publish local tracks");
         localP.setMicrophoneEnabled(
           !!audio,
           typeof audio !== "boolean" ? audio : undefined
@@ -61,7 +61,7 @@ export function useRoom(props: LiveKitRoomProps) {
           typeof screen !== "boolean" ? screen : undefined
         );
       } catch (e) {
-        // log.warn(e);
+        logger.warn(e);
         onError?.(e as Error);
       }
     };
@@ -81,49 +81,26 @@ export function useRoom(props: LiveKitRoomProps) {
 
   React.useEffect(() => {
     if (!room) return;
-
-    // if (simulateParticipants) {
-    //   room.simulateParticipants({
-    //     participants: {
-    //       count: simulateParticipants,
-    //     },
-    //     publish: {
-    //       audio: true,
-    //       useRealTracks: true,
-    //     },
-    //   });
-    //   return;
-    // }
     if (!token) {
-      // log.debug("no token yet");
+      logger.debug("no token yet");
       return;
     }
     if (!serverUrl) {
-      // log.warn("no livekit url provided");
-      // onError?.(Error("no livekit url provided"));
+      logger.warn("no livekit url provided");
+      onError?.(Error("no livekit url provided"));
       return;
     }
     if (connect) {
-      // log.debug("connecting");
+      logger.debug("connecting");
       room.connect(serverUrl, token, connectOptions).catch((e) => {
-        // log.warn(e);
-        // onError?.(e as Error);
-        console.log("Connect", e as Error);
+        logger.warn(e);
+        onError?.(e as Error);
       });
     } else {
-      // log.debug("disconnecting because connect is false");
-      console.log("Disconnect!!!!!");
+      logger.debug("disconnecting because connect is false");
       room.disconnect();
     }
-  }, [
-    connect,
-    token,
-    connectOptions,
-    room,
-    // onError,
-    serverUrl,
-    // simulateParticipants,
-  ]);
+  }, [connect, token, connectOptions, room, onError, serverUrl]);
 
   React.useEffect(() => {
     if (!room) return;
@@ -149,7 +126,7 @@ export function useRoom(props: LiveKitRoomProps) {
   React.useEffect(() => {
     if (!room) return;
     return () => {
-      // log.info("disconnecting on onmount");
+      logger.info("disconnecting on onmount");
       room.disconnect();
     };
   }, [room]);
