@@ -16,7 +16,6 @@ limitations under the License.
 
 import { ResizeObserver } from "@juggle/resize-observer";
 import {
-  useLiveKitRoom,
   useLocalParticipant,
   useParticipants,
   useToken,
@@ -78,12 +77,23 @@ import { InviteModal } from "./InviteModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { VideoTile } from "../video-grid/VideoTile";
+import { useRoom } from "./useRoom";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
 // or with getUsermedia and getDisplaymedia being used within the same session.
 // For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+const onConnectedCallback = (): void => {
+  console.log("connected to LiveKit room");
+};
+const onDisconnectedCallback = (): void => {
+  console.log("disconnected from LiveKit room");
+};
+const onErrorCallback = (err: Error): void => {
+  console.error("error connecting to LiveKit room", err);
+};
 
 interface LocalUserChoices {
   videoMuted: boolean;
@@ -149,22 +159,23 @@ export function InCallView({
     options
   );
 
+  // TODO: move the room creation into the useRoom hook and out of the useLiveKit hook.
+  // This would than allow to not have those 4 lines
+  livekitRoom.options.audioCaptureDefaults.deviceId =
+    mediaDevices.state.get("audioinput").selectedId;
+  livekitRoom.options.videoCaptureDefaults.deviceId =
+    mediaDevices.state.get("videoinput").selectedId;
   // Uses a hook to connect to the LiveKit room (on unmount the room will be left) and publish local media tracks (default).
-  useLiveKitRoom({
+  useRoom({
     token,
     serverUrl: Config.get().livekit.server_url,
     room: livekitRoom,
     audio: !userChoices.audioMuted,
     video: !userChoices.videoMuted,
-    onConnected: () => {
-      console.log("connected to LiveKit room");
-    },
-    onDisconnected: () => {
-      console.log("disconnected from LiveKit room");
-    },
-    onError: (err) => {
-      console.error("error connecting to LiveKit room", err);
-    },
+    simulateParticipants: 10,
+    onConnected: onConnectedCallback,
+    onDisconnected: onDisconnectedCallback,
+    onError: onErrorCallback,
   });
 
   const screenSharingTracks = useTracks(
@@ -453,6 +464,10 @@ function useParticipantTiles(
       })
     );
 
+    const someoneIsPresenting = sfuParticipants.some((p) => {
+      !p.isLocal && p.isScreenShareEnabled;
+    });
+
     // Iterate over SFU participants (those who actually are present from the SFU perspective) and create tiles for them.
     const tiles: TileDescriptor<ItemData>[] = sfuParticipants.flatMap(
       (sfuParticipant) => {
@@ -461,7 +476,7 @@ function useParticipantTiles(
 
         const userMediaTile = {
           id,
-          focused: false,
+          focused: !someoneIsPresenting && sfuParticipant.isSpeaking,
           local: sfuParticipant.isLocal,
           data: {
             member,
