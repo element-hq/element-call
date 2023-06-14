@@ -24,7 +24,11 @@ import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
-import { createRoom, roomAliasLocalpartFromRoomName } from "../matrix-utils";
+import {
+  createRoom,
+  roomAliasLocalpartFromRoomName,
+  sanitiseRoomNameInput,
+} from "../matrix-utils";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
@@ -35,12 +39,15 @@ import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
 import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
+import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
+import { useOptInAnalytics } from "../settings/useSetting";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
   const [callType, setCallType] = useState(CallType.Video);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
+  const [optInAnalytics] = useOptInAnalytics();
   const [privacyPolicyUrl, recaptchaKey, register] =
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
@@ -54,7 +61,7 @@ export const UnauthenticatedView: FC = () => {
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target as HTMLFormElement);
-      const roomName = data.get("callName") as string;
+      const roomName = sanitiseRoomNameInput(data.get("callName") as string);
       const displayName = data.get("displayName") as string;
       const ptt = callType === CallType.Radio;
 
@@ -135,6 +142,7 @@ export const UnauthenticatedView: FC = () => {
                 type="text"
                 required
                 autoComplete="off"
+                data-testid="home_callName"
               />
             </FieldRow>
             <FieldRow>
@@ -145,10 +153,16 @@ export const UnauthenticatedView: FC = () => {
                 placeholder={t("Display name")}
                 type="text"
                 required
+                data-testid="home_displayName"
                 autoComplete="off"
               />
             </FieldRow>
-            <Caption>
+            {optInAnalytics === null && (
+              <Caption className={styles.notice}>
+                <AnalyticsNotice />
+              </Caption>
+            )}
+            <Caption className={styles.notice}>
               <Trans>
                 By clicking "Go", you agree to our{" "}
                 <Link href={privacyPolicyUrl}>Terms and conditions</Link>
@@ -159,7 +173,12 @@ export const UnauthenticatedView: FC = () => {
                 <ErrorMessage error={error} />
               </FieldRow>
             )}
-            <Button type="submit" size="lg" disabled={loading}>
+            <Button
+              type="submit"
+              size="lg"
+              disabled={loading}
+              data-testid="home_go"
+            >
               {loading ? t("Loading…") : t("Go")}
             </Button>
             <div id={recaptchaId} />
@@ -167,14 +186,14 @@ export const UnauthenticatedView: FC = () => {
         </main>
         <footer className={styles.footer}>
           <Body className={styles.mobileLoginLink}>
-            <Link color="primary" to="/login">
+            <Link color="primary" to="/login" data-testid="home_login">
               {t("Login to your account")}
             </Link>
           </Body>
           <Body>
             <Trans>
               Not registered yet?{" "}
-              <Link color="primary" to="/register">
+              <Link color="primary" to="/register" data-testid="home_register">
                 Create an account
               </Link>
             </Trans>

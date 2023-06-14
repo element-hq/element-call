@@ -45,3 +45,7 @@ limitations under the License.
     display: none;
   }
 }
+
+.notice {
+  color: var(--secondary-content);
+}

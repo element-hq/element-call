@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,28 +14,22 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
 
-import { Modal, ModalContent } from "../Modal";
 import { Button } from "../button";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import {
-  useSubmitRageshake,
-  useRageshakeRequest,
-} from "../settings/submit-rageshake";
+import { useSubmitRageshake, useRageshakeRequest } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
+import styles from "../input/SelectInput.module.css";
+import feedbackStyles from "../input/FeedbackInput.module.css";
 
 interface Props {
-  inCall: boolean;
-  roomId: string;
-  onClose?: () => void;
-  // TODO: add all props for for <Modal>
-  [index: string]: unknown;
+  roomId?: string;
 }
 
-export function FeedbackModal({ inCall, roomId, onClose, ...rest }: Props) {
+export function FeedbackSettingsTab({ roomId }: Props) {
   const { t } = useTranslation();
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
   const sendRageshakeRequest = useRageshakeRequest();
@@ -57,37 +51,36 @@ export function FeedbackModal({ inCall, roomId, onClose, ...rest }: Props) {
         roomId,
       });
 
-      if (inCall && sendLogs) {
+      if (roomId && sendLogs) {
         sendRageshakeRequest(roomId, rageshakeRequestId);
       }
     },
-    [inCall, submitRageshake, roomId, sendRageshakeRequest]
+    [submitRageshake, roomId, sendRageshakeRequest]
   );
 
-  useEffect(() => {
-    if (sent) {
-      onClose();
-    }
-  }, [sent, onClose]);
-
   return (
-    <Modal
-      title={t("Submit feedback")}
-      isDismissable
-      onClose={onClose}
-      {...rest}
-    >
-      <ModalContent>
-        <Body>{t("Having trouble? Help us fix it.")}</Body>
-        <form onSubmit={onSubmitFeedback}>
-          <FieldRow>
-            <InputField
-              id="description"
-              name="description"
-              label={t("Description (optional)")}
-              type="textarea"
-            />
-          </FieldRow>
+    <div>
+      <h4 className={styles.label}>{t("Submit feedback")}</h4>
+      <Body>
+        {t(
+          "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below."
+        )}
+      </Body>
+      <form onSubmit={onSubmitFeedback}>
+        <FieldRow>
+          <InputField
+            className={feedbackStyles.feedback}
+            id="description"
+            name="description"
+            label={t("Your feedback")}
+            placeholder={t("Your feedback")}
+            type="textarea"
+            disabled={sending || sent}
+          />
+        </FieldRow>
+        {sent ? (
+          <Body> {t("Thanks, we received your feedback!")}</Body>
+        ) : (
           <FieldRow>
             <InputField
               id="sendLogs"
@@ -96,19 +89,17 @@ export function FeedbackModal({ inCall, roomId, onClose, ...rest }: Props) {
               type="checkbox"
               defaultChecked
             />
-          </FieldRow>
-          {error && (
-            <FieldRow>
-              <ErrorMessage error={error} />
-            </FieldRow>
-          )}
-          <FieldRow>
+            {error && (
+              <FieldRow>
+                <ErrorMessage error={error} />
+              </FieldRow>
+            )}
             <Button type="submit" disabled={sending}>
-              {sending ? t("Submitting feedback…") : t("Submit feedback")}
+              {sending ? t("Submitting…") : t("Submit")}
             </Button>
           </FieldRow>
-        </form>
-      </ModalContent>
-    </Modal>
+        )}
+      </form>
+    </div>
   );
 }

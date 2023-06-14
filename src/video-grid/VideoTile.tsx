@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { forwardRef } from "react";
+import React, { ComponentProps, forwardRef } from "react";
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
@@ -24,10 +24,19 @@ import {
   VideoTrack,
   useMediaTrack,
 } from "@livekit/components-react";
+import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 
 import styles from "./VideoTile.module.css";
+import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
-import { ReactComponent as VideoMutedIcon } from "../icons/VideoMuted.svg";
+import { useRoomMemberName } from "./useRoomMemberName";
+
+export interface ItemData {
+  id: string;
+  member: RoomMember;
+  sfuParticipant: LocalParticipant | RemoteParticipant;
+  content: TileContent;
+}
 
 export enum TileContent {
   UserMedia = "user-media",
@@ -35,17 +44,36 @@ export enum TileContent {
 }
 
 interface Props {
-  avatar?: JSX.Element;
+  data: ItemData;
   className?: string;
-
-  name: string;
-  sfuParticipant: LocalParticipant | RemoteParticipant;
-  content: TileContent;
+  showSpeakingIndicator: boolean;
+  style?: ComponentProps<typeof animated.div>["style"];
+  targetWidth: number;
+  targetHeight: number;
+  getAvatar: (
+    roomMember: RoomMember,
+    width: number,
+    height: number
+  ) => JSX.Element;
 }
 
 export const VideoTile = forwardRef<HTMLDivElement, Props>(
-  ({ name, avatar, className, sfuParticipant, content, ...rest }, ref) => {
+  (
+    {
+      data,
+      className,
+      showSpeakingIndicator,
+      style,
+      targetWidth,
+      targetHeight,
+      getAvatar,
+    },
+    tileRef
+  ) => {
     const { t } = useTranslation();
+
+    const { content, sfuParticipant } = data;
+    const { rawDisplayName: name } = useRoomMemberName(data.member);
 
     const audioEl = React.useRef<HTMLAudioElement>(null);
     const { isMuted: microphoneMuted } = useMediaTrack(
@@ -58,21 +86,25 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       }
     );
 
+    // Firefox doesn't respect the disablePictureInPicture attribute
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
+
     return (
       <animated.div
         className={classNames(styles.videoTile, className, {
           [styles.isLocal]: sfuParticipant.isLocal,
-          [styles.speaking]: sfuParticipant.isSpeaking,
+          [styles.speaking]: sfuParticipant.isSpeaking && showSpeakingIndicator,
           [styles.muted]: microphoneMuted,
-          [styles.screenshare]: false,
+          [styles.screenshare]: content === TileContent.ScreenShare,
         })}
-        ref={ref}
-        {...rest}
+        style={style}
+        ref={tileRef}
+        data-testid="videoTile"
       >
         {!sfuParticipant.isCameraEnabled && (
           <>
             <div className={styles.videoMutedOverlay} />
-            {avatar}
+            {getAvatar(data.member, targetWidth, targetHeight)}
           </>
         )}
         {!false &&
@@ -82,8 +114,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             </div>
           ) : (
             <div className={classNames(styles.infoBubble, styles.memberName)}>
-              {microphoneMuted && <MicMutedIcon />}
-              {!sfuParticipant.isCameraEnabled && <VideoMutedIcon />}
+              {microphoneMuted ? <MicMutedIcon /> : <MicIcon />}
               <span title={name}>{name}</span>
               <ConnectionQualityIndicator participant={sfuParticipant} />
             </div>

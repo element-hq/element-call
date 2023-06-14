@@ -6,7 +6,7 @@
     }
   },
   "livekit": {
-    "server_url": "wss://ec-test-t5xo1uoy.livekit.cloud",
+    "server_url": "wss://sfu.call.element.dev",
     "jwt_service_url": "https://voip-sip-poc.element.io/lk/jwt_service"
   },
   "posthog": {

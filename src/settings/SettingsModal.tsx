@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { Item } from "@react-stately/collections";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
+import { MatrixClient } from "matrix-js-sdk";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -25,33 +26,39 @@ import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
 import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
 import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
+import { ReactComponent as UserIcon } from "../icons/User.svg";
+import { ReactComponent as FeedbackIcon } from "../icons/Feedback.svg";
 import { SelectInput } from "../input/SelectInput";
 import { MediaDevicesState } from "./mediaDevices";
 import {
-  useKeyboardShortcuts,
-  useSpatialAudio,
   useShowInspector,
   useOptInAnalytics,
-  canEnableSpatialAudio,
+  useDeveloperSettingsTab,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
 import { useDownloadDebugLog } from "./submit-rageshake";
-import { Body } from "../typography/Typography";
+import { Body, Caption } from "../typography/Typography";
+import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
+import { ProfileSettingsTab } from "./ProfileSettingsTab";
+import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 
 interface Props {
   mediaDevices: MediaDevicesState;
   isOpen: boolean;
+  client: MatrixClient;
+  roomId?: string;
+  defaultTab?: string;
   onClose: () => void;
 }
 
 export const SettingsModal = (props: Props) => {
   const { t } = useTranslation();
 
-  const [spatialAudio, setSpatialAudio] = useSpatialAudio();
   const [showInspector, setShowInspector] = useShowInspector();
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
-  const [keyboardShortcuts, setKeyboardShortcuts] = useKeyboardShortcuts();
+  const [developerSettingsTab, setDeveloperSettingsTab] =
+    useDeveloperSettingsTab();
 
   const downloadDebugLog = useDownloadDebugLog();
 
@@ -79,6 +86,26 @@ export const SettingsModal = (props: Props) => {
     );
   };
 
+  const [selectedTab, setSelectedTab] = useState<string | undefined>();
+
+  const onSelectedTabChanged = useCallback(
+    (tab) => {
+      setSelectedTab(tab);
+    },
+    [setSelectedTab]
+  );
+
+  const optInDescription = (
+    <Caption>
+      <Trans>
+        <AnalyticsNotice />
+        <br />
+        You may withdraw consent by unchecking this box. If you are currently in
+        a call, this setting will take effect at the end of the call.
+      </Trans>
+    </Caption>
+  );
+
   return (
     <Modal
       title={t("Settings")}
@@ -87,38 +114,25 @@ export const SettingsModal = (props: Props) => {
       className={styles.settingsModal}
       {...props}
     >
-      <TabContainer className={styles.tabContainer}>
+      <TabContainer
+        onSelectionChange={onSelectedTabChanged}
+        selectedKey={selectedTab ?? props.defaultTab ?? "audio"}
+        className={styles.tabContainer}
+      >
         <TabItem
+          key="audio"
           title={
             <>
               <AudioIcon width={16} height={16} />
-              <span>{t("Audio")}</span>
+              <span className={styles.tabLabel}>{t("Audio")}</span>
             </>
           }
         >
           {generateDeviceSelection("audioinput", t("Microphone"))}
           {generateDeviceSelection("audiooutput", t("Speaker"))}
-          <FieldRow>
-            <InputField
-              id="spatialAudio"
-              label={t("Spatial audio")}
-              type="checkbox"
-              checked={spatialAudio}
-              disabled={!canEnableSpatialAudio()}
-              description={
-                canEnableSpatialAudio()
-                  ? t(
-                      "This will make a speaker's audio seem as if it is coming from where their tile is positioned on screen. (Experimental feature: this may impact the stability of audio.)"
-                    )
-                  : t("This feature is only supported on Firefox.")
-              }
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setSpatialAudio(event.target.checked)
-              }
-            />
-          </FieldRow>
         </TabItem>
         <TabItem
+          key="video"
           title={
             <>
               <VideoIcon width={16} height={16} />
@@ -129,75 +143,103 @@ export const SettingsModal = (props: Props) => {
           {generateDeviceSelection("videoinput", t("Camera"))}
         </TabItem>
         <TabItem
+          key="profile"
           title={
             <>
-              <OverflowIcon width={16} height={16} />
-              <span>{t("Advanced")}</span>
+              <UserIcon width={15} height={15} />
+              <span>{t("Profile")}</span>
             </>
           }
         >
+          <ProfileSettingsTab client={props.client} />
+        </TabItem>
+        <TabItem
+          key="feedback"
+          title={
+            <>
+              <FeedbackIcon width={16} height={16} />
+              <span>{t("Feedback")}</span>
+            </>
+          }
+        >
+          <FeedbackSettingsTab roomId={props.roomId} />
+        </TabItem>
+        <TabItem
+          key="more"
+          title={
+            <>
+              <OverflowIcon width={16} height={16} />
+              <span>{t("More")}</span>
+            </>
+          }
+        >
+          <h4>Developer</h4>
+          <p>
+            Version: {(import.meta.env.VITE_APP_VERSION as string) || "dev"}
+          </p>
+          <FieldRow>
+            <InputField
+              id="developerSettingsTab"
+              type="checkbox"
+              checked={developerSettingsTab}
+              label={t("Developer Settings")}
+              description={t(
+                "Expose developer settings in the settings window."
+              )}
+              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+                setDeveloperSettingsTab(event.target.checked)
+              }
+            />
+          </FieldRow>
+          <h4>Analytics</h4>
           <FieldRow>
             <InputField
               id="optInAnalytics"
-              label={t("Allow analytics")}
               type="checkbox"
               checked={optInAnalytics}
-              description={t(
-                "This will send anonymised data (such as the duration of a call and the number of participants) to the Element Call team to help us optimise the application based on how it is used."
-              )}
+              description={optInDescription}
               onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
                 setOptInAnalytics(event.target.checked)
               }
             />
           </FieldRow>
-          <FieldRow>
-            <InputField
-              id="keyboardShortcuts"
-              label={t("Single-key keyboard shortcuts")}
-              type="checkbox"
-              checked={keyboardShortcuts}
-              description={t(
-                "Whether to enable single-key keyboard shortcuts, e.g. 'm' to mute/unmute the mic."
-              )}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
-                setKeyboardShortcuts(event.target.checked)
-              }
-            />
-          </FieldRow>
         </TabItem>
-        <TabItem
-          title={
-            <>
-              <DeveloperIcon width={16} height={16} />
-              <span>{t("Developer")}</span>
-            </>
-          }
-        >
-          <FieldRow>
-            <Body className={styles.fieldRowText}>
-              {t("Version: {{version}}", {
-                version: import.meta.env.VITE_APP_VERSION || "dev",
-              })}
-            </Body>
-          </FieldRow>
-          <FieldRow>
-            <InputField
-              id="showInspector"
-              name="inspector"
-              label={t("Show call inspector")}
-              type="checkbox"
-              checked={showInspector}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                setShowInspector(e.target.checked)
-              }
-            />
-          </FieldRow>
-          <FieldRow>
-            <Button onPress={downloadDebugLog}>
-              {t("Download debug logs")}
-            </Button>
-          </FieldRow>
-        </TabItem>
+        {developerSettingsTab && (
+          <TabItem
+            key="developer"
+            title={
+              <>
+                <DeveloperIcon width={16} height={16} />
+                <span>{t("Developer")}</span>
+              </>
+            }
+          >
+            <FieldRow>
+              <Body className={styles.fieldRowText}>
+                {t("Version: {{version}}", {
+                  version: import.meta.env.VITE_APP_VERSION || "dev",
+                })}
+              </Body>
+            </FieldRow>
+            <FieldRow>
+              <InputField
+                id="showInspector"
+                name="inspector"
+                label={t("Show call inspector")}
+                type="checkbox"
+                checked={showInspector}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setShowInspector(e.target.checked)
+                }
+              />
+            </FieldRow>
+            <FieldRow>
+              <Button onPress={downloadDebugLog}>
+                {t("Download debug logs")}
+              </Button>
+            </FieldRow>
+          </TabItem>
+        )}
       </TabContainer>
     </Modal>
   );

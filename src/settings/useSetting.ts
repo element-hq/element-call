@@ -17,6 +17,11 @@ limitations under the License.
 import { EventEmitter } from "events";
 import { useMemo, useState, useEffect, useCallback } from "react";
 
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+
+type Setting<T> = [T, (value: T) => void];
+type DisableableSetting<T> = [T, ((value: T) => void) | null];
+
 // Bus to notify other useSetting consumers when a setting is changed
 export const settingsBus = new EventEmitter();
 
@@ -24,10 +29,7 @@ const getSettingKey = (name: string): string => {
   return `matrix-setting-${name}`;
 };
 // Like useState, but reads from and persists the value to localStorage
-const useSetting = <T>(
-  name: string,
-  defaultValue: T
-): [T, (value: T) => void] => {
+const useSetting = <T>(name: string, defaultValue: T): Setting<T> => {
   const key = useMemo(() => getSettingKey(name), [name]);
 
   const [value, setValue] = useState<T>(() => {
@@ -65,7 +67,7 @@ export const setSetting = <T>(name: string, newValue: T) => {
   settingsBus.emit(name, newValue);
 };
 
-export const canEnableSpatialAudio = () => {
+const canEnableSpatialAudio = () => {
   const { userAgent } = navigator;
   // Spatial audio means routing audio through audio contexts. On Chrome,
   // this bypasses the AEC processor and so breaks echo cancellation.
@@ -79,17 +81,26 @@ export const canEnableSpatialAudio = () => {
   return userAgent.includes("Firefox");
 };
 
-export const useSpatialAudio = (): [boolean, (val: boolean) => void] => {
+export const useSpatialAudio = (): DisableableSetting<boolean> => {
   const settingVal = useSetting("spatial-audio", false);
   if (canEnableSpatialAudio()) return settingVal;
 
-  return [false, (_: boolean) => {}];
+  return [false, null];
 };
 
 export const useShowInspector = () => useSetting("show-inspector", false);
-export const useOptInAnalytics = () => useSetting("opt-in-analytics", false);
-export const useKeyboardShortcuts = () =>
-  useSetting("keyboard-shortcuts", true);
+
+// null = undecided
+export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
+  const settingVal = useSetting<boolean | null>("opt-in-analytics", null);
+  if (PosthogAnalytics.instance.isEnabled()) return settingVal;
+
+  return [false, null];
+};
+
+export const useDeveloperSettingsTab = () =>
+  useSetting("developer-settings-tab", false);
+
 export const useDefaultDevices = () =>
   useSetting("defaultDevices", {
     audioinput: "",

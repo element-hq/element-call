@@ -95,6 +95,8 @@ export async function initClient(
   // options we always pass to the client (stuff that we need in order to work)
   const baseOpts = {
     fallbackICEServerAllowed: fallbackICEServerAllowed,
+    isVoipWithNoMediaAllowed:
+      Config.get().features?.feature_group_calls_without_video_and_audio,
   } as ICreateClientOpts;
 
   if (indexedDB && localStorage) {
@@ -171,6 +173,7 @@ export async function initClient(
     localTimeoutMs: 5000,
     useE2eForGroupCall: e2eEnabled,
     fallbackICEServerAllowed: fallbackICEServerAllowed,
+    useLivekitForGroupCalls: true,
   });
 
   try {
@@ -209,6 +212,31 @@ export function roomAliasLocalpartFromRoomName(roomName: string): string {
 
 function fullAliasFromRoomName(roomName: string, client: MatrixClient): string {
   return `#${roomAliasLocalpartFromRoomName(roomName)}:${client.getDomain()}`;
+}
+
+/**
+ * Applies some basic sanitisation to a room name that the user
+ * has given us
+ * @param input The room name from the user
+ * @param client A matrix client object
+ */
+export function sanitiseRoomNameInput(input: string): string {
+  // check to see if the user has enetered a fully qualified room
+  // alias. If so, turn it into just the localpart because that's what
+  // we use
+  const parts = input.split(":", 2);
+  if (parts.length === 2 && parts[0][0] === "#") {
+    // looks like a room alias
+    if (parts[1] === Config.defaultServerName()) {
+      // it's local to our own homeserver
+      return parts[0];
+    } else {
+      throw new Error("Unsupported remote room alias");
+    }
+  }
+
+  // that's all we do here right now
+  return input;
 }
 
 /**
@@ -308,7 +336,8 @@ export async function createRoom(
     result.room_id,
     ptt ? GroupCallType.Voice : GroupCallType.Video,
     ptt,
-    GroupCallIntent.Room
+    GroupCallIntent.Room,
+    true
   );
 
   return [fullAliasFromRoomName(name, client), result.room_id];
