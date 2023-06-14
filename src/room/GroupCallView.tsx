@@ -189,8 +189,8 @@ export function GroupCallView({
         mediaDevices={lkState.mediaDevices}
         livekitRoom={lkState.room}
         userChoices={{
-          videoMuted: lkState.localMedia.video.muted,
-          audioMuted: lkState.localMedia.audio.muted,
+          videoMuted: lkState?.localMedia.video?.muted ?? true,
+          audioMuted: lkState?.localMedia.audio?.muted ?? true,
         }}
         otelGroupCallMembership={otelGroupCallMembership}
       />
