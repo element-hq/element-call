@@ -1,9 +1,6 @@
 import { LocalAudioTrack, LocalVideoTrack, Room } from "livekit-client";
-import React from "react";
-import {
-  useMediaDeviceSelect,
-  usePreviewDevice,
-} from "@livekit/components-react";
+import React, { useState } from "react";
+import { usePreviewDevice } from "@livekit/components-react";
 
 import { MediaDevicesState, MediaDevices } from "../settings/mediaDevices";
 import { LocalMediaInfo, MediaInfo } from "../room/VideoPreview";
@@ -103,30 +100,34 @@ export function useLiveKit(): LiveKitState | undefined {
 }
 
 function useMediaDevicesState(room: Room): MediaDevicesState {
-  const {
-    devices: videoDevices,
-    activeDeviceId: activeVideoDevice,
-    setActiveMediaDevice: setActiveVideoDevice,
-  } = useMediaDeviceSelect({ kind: "videoinput", room });
-  const {
-    devices: audioDevices,
-    activeDeviceId: activeAudioDevice,
-    setActiveMediaDevice: setActiveAudioDevice,
-  } = useMediaDeviceSelect({
-    kind: "audioinput",
-    room,
-  });
-  const {
-    devices: audioOutputDevices,
-    activeDeviceId: activeAudioOutputDevice,
-    setActiveMediaDevice: setActiveAudioOutputDevice,
-  } = useMediaDeviceSelect({
-    kind: "audiooutput",
-    room,
-  });
+  const [devices, setDevices] = useState<MediaDeviceInfo[]>([]);
+
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
+  const [videoDevices, setVideoDevices] = useState<MediaDeviceInfo[]>([]);
+  const [audioOutputDevices, setAudioOutputDevices] = useState<
+    MediaDeviceInfo[]
+  >([]);
+
+  const [activeAudioDevice, setActiveAudioDevice] = useState<string>();
+  const [activeVideoDevice, setActiveVideoDevice] = useState<string>();
+  const [activeAudioOutputDevice, setActiveAudioOutputDevice] =
+    useState<string>();
+
+  React.useEffect(() => {
+    Room.getLocalDevices(undefined, true).then((devices) => {
+      setDevices(devices);
+    });
+  }, []);
+
+  React.useEffect(() => {
+    setAudioDevices(devices.filter((d) => d.kind === "audioinput"));
+    setVideoDevices(devices.filter((d) => d.kind === "videoinput"));
+    setAudioOutputDevices(devices.filter((d) => d.kind === "audiooutput"));
+  }, [devices]);
 
   const selectActiveDevice = React.useCallback(
     async (kind: MediaDeviceKind, id: string) => {
+      room.switchActiveDevice(kind, id);
       switch (kind) {
         case "audioinput":
           setActiveAudioDevice(id);
@@ -139,7 +140,7 @@ function useMediaDevicesState(room: Room): MediaDevicesState {
           break;
       }
     },
-    [setActiveAudioDevice, setActiveVideoDevice, setActiveAudioOutputDevice]
+    [room]
   );
 
   const [mediaDevicesState, setMediaDevicesState] =
