@@ -18,7 +18,6 @@ import { SpringRef, TransitionFn, useTransition } from "@react-spring/web";
 import { EventTypes, Handler, useScroll } from "@use-gesture/react";
 import React, {
   Dispatch,
-  FC,
   ReactNode,
   SetStateAction,
   useCallback,
@@ -35,6 +34,7 @@ import {
   VideoGridProps as Props,
   TileSpring,
   TileDescriptor,
+  ChildrenProperties,
 } from "./VideoGrid";
 import { useReactiveState } from "../useReactiveState";
 import { useMergedRefs } from "../useMergedRefs";
@@ -48,6 +48,7 @@ import {
   cycleTileSize,
   appendItems,
 } from "./model";
+import { TileWrapper } from "./TileWrapper";
 
 interface GridState extends Grid {
   /**
@@ -144,11 +145,11 @@ interface DragState {
 /**
  * An interactive, animated grid of video tiles.
  */
-export const NewVideoGrid: FC<Props<unknown>> = ({
+export function NewVideoGrid<T>({
   items,
   disableAnimations,
   children,
-}) => {
+}: Props<T>) {
   // Overview: This component lays out tiles by rendering an invisible template
   // grid of "slots" for tiles to go in. Once rendered, it uses the DOM API to
   // get the dimensions of each slot, feeding these numbers back into
@@ -455,16 +456,19 @@ export const NewVideoGrid: FC<Props<unknown>> = ({
       >
         {slots}
       </div>
-      {tileTransitions((style, tile) =>
-        children({
-          ...style,
-          key: tile.item.id,
-          targetWidth: tile.width,
-          targetHeight: tile.height,
-          data: tile.item.data,
-          onDragRef: onTileDragRef,
-        })
-      )}
+      {tileTransitions((spring, tile) => (
+        <TileWrapper
+          key={tile.item.id}
+          id={tile.item.id}
+          onDragRef={onTileDragRef}
+          targetWidth={tile.width}
+          targetHeight={tile.height}
+          data={tile.item.data}
+          {...spring}
+        >
+          {children as (props: ChildrenProperties<unknown>) => ReactNode}
+        </TileWrapper>
+      ))}
     </div>
   );
-};
+}

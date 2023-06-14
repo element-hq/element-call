@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ForwardedRef, forwardRef } from "react";
-import { animated, SpringValue } from "@react-spring/web";
+import React from "react";
+import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import { LocalParticipant, RemoteParticipant, Track } from "livekit-client";
@@ -24,10 +24,21 @@ import {
   VideoTrack,
   useMediaTrack,
 } from "@livekit/components-react";
+import {
+  RoomMember,
+  RoomMemberEvent,
+} from "matrix-js-sdk/src/models/room-member";
 
+import { Avatar } from "../Avatar";
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
+
+export interface ItemData {
+  member?: RoomMember;
+  sfuParticipant: LocalParticipant | RemoteParticipant;
+  content: TileContent;
+}
 
 export enum TileContent {
   UserMedia = "user-media",
@@ -35,47 +46,37 @@ export enum TileContent {
 }
 
 interface Props {
-  name: string;
-  sfuParticipant: LocalParticipant | RemoteParticipant;
-  content: TileContent;
+  data: ItemData;
 
-  // TODO: Refactor this set of props.
-  // See https://github.com/vector-im/element-call/pull/1099#discussion_r1226863404
-  avatar?: JSX.Element;
+  // TODO: Refactor these props.
+  targetWidth: number;
+  targetHeight: number;
   className?: string;
-  opacity?: SpringValue<number>;
-  scale?: SpringValue<number>;
-  shadow?: SpringValue<number>;
-  shadowSpread?: SpringValue<number>;
-  zIndex?: SpringValue<number>;
-  x?: SpringValue<number>;
-  y?: SpringValue<number>;
-  width?: SpringValue<number>;
-  height?: SpringValue<number>;
+  style?: React.ComponentProps<typeof animated.div>["style"];
 }
 
-export const VideoTile = forwardRef<HTMLElement, Props>(
-  (
-    {
-      name,
-      sfuParticipant,
-      content,
-      avatar,
-      className,
-      opacity,
-      scale,
-      shadow,
-      shadowSpread,
-      zIndex,
-      x,
-      y,
-      width,
-      height,
-      ...rest
-    },
-    ref
-  ) => {
+export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
+  ({ data, className, style, targetWidth, targetHeight }, tileRef) => {
     const { t } = useTranslation();
+
+    const { content, sfuParticipant, member } = data;
+
+    // Handle display name changes.
+    const [displayName, setDisplayName] = React.useState<string>("[👻]");
+    React.useEffect(() => {
+      if (member) {
+        setDisplayName(member.rawDisplayName);
+
+        const updateName = () => {
+          setDisplayName(member.rawDisplayName);
+        };
+
+        member!.on(RoomMemberEvent.Name, updateName);
+        return () => {
+          member!.removeListener(RoomMemberEvent.Name, updateName);
+        };
+      }
+    }, [member]);
 
     const audioEl = React.useRef<HTMLAudioElement>(null);
     const { isMuted: microphoneMuted } = useMediaTrack(
@@ -88,6 +89,9 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
       }
     );
 
+    // Firefox doesn't respect the disablePictureInPicture attribute
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
+
     return (
       <animated.div
         className={classNames(styles.videoTile, className, {
@@ -96,38 +100,30 @@ export const VideoTile = forwardRef<HTMLElement, Props>(
           [styles.muted]: microphoneMuted,
           [styles.screenshare]: content === TileContent.ScreenShare,
         })}
-        style={{
-          opacity,
-          scale,
-          zIndex,
-          x,
-          y,
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore React does in fact support assigning custom properties,
-          // but React's types say no
-          "--tileWidth": width?.to((w) => `${w}px`),
-          "--tileHeight": height?.to((h) => `${h}px`),
-          "--tileShadow": shadow?.to((s) => `${s}px`),
-          "--tileShadowSpread": shadowSpread?.to((s) => `${s}px`),
-        }}
-        ref={ref as ForwardedRef<HTMLDivElement>}
+        style={style}
+        ref={tileRef}
         data-testid="videoTile"
-        {...rest}
       >
-        {!sfuParticipant.isCameraEnabled && (
+        {content === TileContent.UserMedia && !sfuParticipant.isCameraEnabled && (
           <>
             <div className={styles.videoMutedOverlay} />
-            {avatar}
+            <Avatar
+              key={member?.userId}
+              size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
+              src={member?.getMxcAvatarUrl()}
+              fallback={displayName.slice(0, 1).toUpperCase()}
+              className={styles.avatar}
+            />
           </>
         )}
-        {sfuParticipant.isScreenShareEnabled ? (
+        {content == TileContent.ScreenShare ? (
           <div className={styles.presenterLabel}>
-            <span>{t("{{name}} is presenting", { name })}</span>
+            <span>{t("{{displayName}} is presenting", { displayName })}</span>
           </div>
         ) : (
           <div className={classNames(styles.infoBubble, styles.memberName)}>
             {microphoneMuted ? <MicMutedIcon /> : <MicIcon />}
-            <span title={name}>{name}</span>
+            <span title={displayName}>{displayName}</span>
             <ConnectionQualityIndicator participant={sfuParticipant} />
           </div>
         )}
