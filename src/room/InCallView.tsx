@@ -23,7 +23,12 @@ import {
 } from "@livekit/components-react";
 import { usePreventScroll } from "@react-aria/overlays";
 import classNames from "classnames";
-import { Room, Track } from "livekit-client";
+import {
+  LocalParticipant,
+  RemoteParticipant,
+  Room,
+  Track,
+} from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
@@ -473,11 +478,19 @@ function useParticipantTiles(
 
   const items = useMemo(() => {
     const tiles: TileDescriptor<ItemData>[] = [];
+    const screenshareExists = sfuParticipants.some(
+      (p) => p.isScreenShareEnabled
+    );
+    const participantsById = new Map<
+      string,
+      LocalParticipant | RemoteParticipant
+    >();
+    for (const p of sfuParticipants) participantsById.set(p.identity, p);
 
     for (const [member, participantMap] of participants) {
       for (const [deviceId] of participantMap) {
         const id = `${member.userId}:${deviceId}`;
-        const sfuParticipant = sfuParticipants.find((p) => p.identity === id);
+        const sfuParticipant = participantsById.get(id);
 
         // Skip rendering participants that did not connect to the SFU.
         if (!sfuParticipant) {
@@ -486,10 +499,13 @@ function useParticipantTiles(
 
         const userMediaTile = {
           id,
-          focused: false,
+          // Screenshare feeds take precedence for focus
+          focused:
+            !screenshareExists &&
+            sfuParticipant.isSpeaking &&
+            !sfuParticipant.isLocal,
           local: sfuParticipant.isLocal,
           data: {
-            id,
             member,
             sfuParticipant,
             content: TileContent.UserMedia,
