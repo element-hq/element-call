@@ -1,4 +1,9 @@
-import { LocalAudioTrack, LocalVideoTrack, Room } from "livekit-client";
+import {
+  ConnectionState,
+  LocalAudioTrack,
+  LocalVideoTrack,
+  Room,
+} from "livekit-client";
 import React from "react";
 import {
   useMediaDeviceSelect,
@@ -50,6 +55,28 @@ export function useLiveKit(): LiveKitState | undefined {
     "audioinput"
   );
 
+  React.useEffect(() => {
+    if (
+      audio.selectedDevice?.deviceId !==
+      mediaDevices.state.get("audioinput")?.selectedId
+    ) {
+      mediaDevices.selectActiveDevice(
+        "audioinput",
+        audio.selectedDevice?.deviceId ?? ""
+      );
+    }
+    if (
+      video.selectedDevice?.deviceId !==
+      mediaDevices.state.get("videoinput")?.selectedId
+    ) {
+      mediaDevices.selectActiveDevice(
+        "videoinput",
+        video.selectedDevice?.deviceId ?? ""
+      );
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audio.selectedDevice?.deviceId, video.selectedDevice?.deviceId]);
+
   // Create final LiveKit state.
   const [state, setState] = React.useState<LiveKitState | undefined>(undefined);
   React.useEffect(() => {
@@ -71,7 +98,6 @@ export function useLiveKit(): LiveKitState | undefined {
         },
       };
     };
-
     const state: LiveKitState = {
       mediaDevices: mediaDevices,
       localMedia: {
@@ -97,24 +123,31 @@ export function useLiveKit(): LiveKitState | undefined {
     audioEnabled,
     videoEnabled,
     room,
+    audio.selectedDevice?.deviceId,
+    video.selectedDevice?.deviceId,
   ]);
 
   return state;
 }
 
+// if a room is passed this only affects the device selection inside a call. Without room it changes what we see in the lobby
 function useMediaDevicesState(room: Room): MediaDevicesState {
+  let connectedRoom: Room;
+  if (room.state !== ConnectionState.Disconnected) {
+    connectedRoom = room;
+  }
   const {
     devices: videoDevices,
     activeDeviceId: activeVideoDevice,
     setActiveMediaDevice: setActiveVideoDevice,
-  } = useMediaDeviceSelect({ kind: "videoinput", room });
+  } = useMediaDeviceSelect({ kind: "videoinput", room: connectedRoom });
   const {
     devices: audioDevices,
     activeDeviceId: activeAudioDevice,
     setActiveMediaDevice: setActiveAudioDevice,
   } = useMediaDeviceSelect({
     kind: "audioinput",
-    room,
+    room: connectedRoom,
   });
   const {
     devices: audioOutputDevices,
@@ -122,7 +155,7 @@ function useMediaDevicesState(room: Room): MediaDevicesState {
     setActiveMediaDevice: setActiveAudioOutputDevice,
   } = useMediaDeviceSelect({
     kind: "audiooutput",
-    room,
+    room: connectedRoom,
   });
 
   const selectActiveDevice = React.useCallback(
@@ -139,7 +172,7 @@ function useMediaDevicesState(room: Room): MediaDevicesState {
           break;
       }
     },
-    [setActiveAudioDevice, setActiveVideoDevice, setActiveAudioOutputDevice]
+    [setActiveVideoDevice, setActiveAudioOutputDevice, setActiveAudioDevice]
   );
 
   const [mediaDevicesState, setMediaDevicesState] =

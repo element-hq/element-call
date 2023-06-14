@@ -147,6 +147,10 @@ export function InCallView({
   );
 
   // Uses a hook to connect to the LiveKit room (on unmount the room will be left) and publish local media tracks (default).
+  livekitRoom.options.audioCaptureDefaults.deviceId =
+    mediaDevices.state.get("audioinput").selectedId;
+  livekitRoom.options.videoCaptureDefaults.deviceId =
+    mediaDevices.state.get("videoinput").selectedId;
   useLiveKitRoom({
     token,
     serverUrl: Config.get().livekit.server_url,
