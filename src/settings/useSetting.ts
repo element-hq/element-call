@@ -90,3 +90,9 @@ export const useShowInspector = () => useSetting("show-inspector", false);
 export const useOptInAnalytics = () => useSetting("opt-in-analytics", false);
 export const useKeyboardShortcuts = () =>
   useSetting("keyboard-shortcuts", true);
+export const useDefaultDevices = () =>
+  useSetting("defaultDevices", {
+    audioinput: "",
+    videoinput: "",
+    audiooutput: "",
+  });

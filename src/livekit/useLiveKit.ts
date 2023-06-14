@@ -13,6 +13,7 @@ import {
 import { MediaDevicesState, MediaDevices } from "../settings/mediaDevices";
 import { LocalMediaInfo, MediaInfo } from "../room/VideoPreview";
 import { roomOptions } from "./options";
+import { useDefaultDevices } from "../settings/useSetting";
 
 type LiveKitState = {
   // The state of the media devices (changing the devices will also change them in the room).
@@ -37,9 +38,13 @@ export function useLiveKit(): LiveKitState | undefined {
   // Create a React state to store the available devices and the selected device for each kind.
   const mediaDevices = useMediaDevicesState(room);
 
+  const [settingsDefaultDevices] = useDefaultDevices();
+
   // Create local video track.
   const [videoEnabled, setVideoEnabled] = React.useState<boolean>(true);
-  const selectedVideoId = mediaDevices.state.get("videoinput")?.selectedId;
+  const selectedVideoId =
+    mediaDevices.state.get("videoinput")?.selectedId ??
+    settingsDefaultDevices.videoinput;
   const video = usePreviewDevice(
     videoEnabled,
     selectedVideoId ?? "",
@@ -62,7 +67,7 @@ export function useLiveKit(): LiveKitState | undefined {
     ) {
       mediaDevices.selectActiveDevice(
         "audioinput",
-        audio.selectedDevice?.deviceId ?? ""
+        audio.selectedDevice?.deviceId ?? settingsDefaultDevices.audioinput
       );
     }
     if (
@@ -184,6 +189,7 @@ function useMediaDevicesState(room: Room): MediaDevicesState {
       return state;
     });
 
+  const [, setDefaultDevices] = useDefaultDevices();
   React.useEffect(() => {
     const state = new Map<MediaDeviceKind, MediaDevices>();
     state.set("videoinput", {
@@ -198,6 +204,11 @@ function useMediaDevicesState(room: Room): MediaDevicesState {
       available: audioOutputDevices,
       selectedId: activeAudioOutputDevice,
     });
+    setDefaultDevices({
+      audioinput: activeAudioDevice,
+      audiooutput: activeAudioOutputDevice,
+      videoinput: activeVideoDevice,
+    });
     setMediaDevicesState({
       state,
       selectActiveDevice,
@@ -210,6 +221,7 @@ function useMediaDevicesState(room: Room): MediaDevicesState {
     audioOutputDevices,
     activeAudioOutputDevice,
     selectActiveDevice,
+    setDefaultDevices,
   ]);
 
   return mediaDevicesState;
