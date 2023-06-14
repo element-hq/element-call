@@ -16,7 +16,6 @@ limitations under the License.
 
 import { ResizeObserver } from "@juggle/resize-observer";
 import {
-  useLiveKitRoom,
   useLocalParticipant,
   useParticipants,
   useToken,
