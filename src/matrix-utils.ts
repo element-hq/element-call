@@ -173,6 +173,7 @@ export async function initClient(
     localTimeoutMs: 5000,
     useE2eForGroupCall: e2eEnabled,
     fallbackICEServerAllowed: fallbackICEServerAllowed,
+    useLivekitForGroupCalls: true,
   });
 
   try {
@@ -335,7 +336,8 @@ export async function createRoom(
     result.room_id,
     ptt ? GroupCallType.Voice : GroupCallType.Video,
     ptt,
-    GroupCallIntent.Room
+    GroupCallIntent.Room,
+    true
   );
 
   return [fullAliasFromRoomName(name, client), result.room_id];
