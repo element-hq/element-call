@@ -79,12 +79,15 @@ import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
+import { useRoom } from "./useRoom";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
 // or with getUsermedia and getDisplaymedia being used within the same session.
 // For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+let isLivekitRoomInnit = false;
 
 interface LocalUserChoices {
   videoMuted: boolean;
@@ -103,6 +106,7 @@ interface Props {
   livekitRoom: Room;
   userChoices: LocalUserChoices;
   otelGroupCallMembership: OTelGroupCallMembership;
+  initComponent: string;
 }
 
 export function InCallView({
@@ -117,6 +121,7 @@ export function InCallView({
   livekitRoom,
   userChoices,
   otelGroupCallMembership,
+  initComponent,
 }: Props) {
   const { t } = useTranslation();
   usePreventScroll();
@@ -150,8 +155,7 @@ export function InCallView({
     options
   );
 
-  // Uses a hook to connect to the LiveKit room (on unmount the room will be left) and publish local media tracks (default).
-  useLiveKitRoom({
+  useRoom({
     token,
     serverUrl: Config.get().livekit.server_url,
     room: livekitRoom,
