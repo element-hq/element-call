@@ -165,6 +165,13 @@ export function InCallView({
     options
   );
 
+  // TODO: move the room creation into the useRoom hook and out of the useLiveKit hook.
+  // This would than allow to not have those 4 lines
+  livekitRoom.options.audioCaptureDefaults.deviceId =
+    mediaDevices.state.get("audioinput").selectedId;
+  livekitRoom.options.videoCaptureDefaults.deviceId =
+    mediaDevices.state.get("videoinput").selectedId;
+  // Uses a hook to connect to the LiveKit room (on unmount the room will be left) and publish local media tracks (default).
   useRoom({
     token,
     serverUrl: Config.get().livekit.server_url,
