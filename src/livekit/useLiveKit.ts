@@ -1,5 +1,10 @@
-import { LocalAudioTrack, LocalVideoTrack, Room } from "livekit-client";
-import React from "react";
+import {
+  ConnectionState,
+  LocalAudioTrack,
+  LocalVideoTrack,
+  Room,
+} from "livekit-client";
+import React, { useEffect } from "react";
 import {
   useMediaDeviceSelect,
   usePreviewDevice,
@@ -8,6 +13,7 @@ import {
 import { MediaDevicesState, MediaDevices } from "../settings/mediaDevices";
 import { LocalMediaInfo, MediaInfo } from "../room/VideoPreview";
 import { roomOptions } from "./options";
+import { useDefaultDevices } from "../settings/useSetting";
 
 type LiveKitState = {
   // The state of the media devices (changing the devices will also change them in the room).
@@ -18,6 +24,10 @@ type LiveKitState = {
   // TODO: Abstract this away, so that the user doesn't have to deal with the LiveKit room directly.
   room: Room;
 };
+
+function emptyToUndef(str) {
+  return str === "" ? undefined : str;
+}
 
 // Returns the React state for the LiveKit's Room class.
 // The actual return type should be `LiveKitState`, but since this is a React hook, the initialisation is
@@ -32,21 +42,35 @@ export function useLiveKit(): LiveKitState | undefined {
   // Create a React state to store the available devices and the selected device for each kind.
   const mediaDevices = useMediaDevicesState(room);
 
-  // Create local video track.
+  const [settingsDefaultDevices] = useDefaultDevices();
+
   const [videoEnabled, setVideoEnabled] = React.useState<boolean>(true);
   const selectedVideoId = mediaDevices.state.get("videoinput")?.selectedId;
+
+  const [audioEnabled, setAudioEnabled] = React.useState<boolean>(true);
+  const selectedAudioId = mediaDevices.state.get("audioinput")?.selectedId;
+
+  // trigger permission popup first,
+  useEffect(() => {
+    navigator.mediaDevices.getUserMedia({
+      video: { deviceId: selectedVideoId ?? settingsDefaultDevices.videoinput },
+      audio: { deviceId: selectedAudioId ?? settingsDefaultDevices.audioinput },
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // then start the preview device (no permsssion should be triggered agian)
+  // Create local video track.
   const video = usePreviewDevice(
     videoEnabled,
-    selectedVideoId ?? "",
+    selectedVideoId ?? settingsDefaultDevices.videoinput,
     "videoinput"
   );
 
   // Create local audio track.
-  const [audioEnabled, setAudioEnabled] = React.useState<boolean>(true);
-  const selectedAudioId = mediaDevices.state.get("audioinput")?.selectedId;
   const audio = usePreviewDevice(
     audioEnabled,
-    selectedAudioId ?? "",
+    selectedAudioId ?? settingsDefaultDevices.audioinput,
     "audioinput"
   );
 
@@ -71,7 +95,6 @@ export function useLiveKit(): LiveKitState | undefined {
         },
       };
     };
-
     const state: LiveKitState = {
       mediaDevices: mediaDevices,
       localMedia: {
@@ -102,19 +125,24 @@ export function useLiveKit(): LiveKitState | undefined {
   return state;
 }
 
+// if a room is passed this only affects the device selection inside a call. Without room it changes what we see in the lobby
 function useMediaDevicesState(room: Room): MediaDevicesState {
+  let connectedRoom: Room;
+  if (room.state !== ConnectionState.Disconnected) {
+    connectedRoom = room;
+  }
   const {
     devices: videoDevices,
     activeDeviceId: activeVideoDevice,
     setActiveMediaDevice: setActiveVideoDevice,
-  } = useMediaDeviceSelect({ kind: "videoinput", room });
+  } = useMediaDeviceSelect({ kind: "videoinput", room: connectedRoom });
   const {
     devices: audioDevices,
     activeDeviceId: activeAudioDevice,
     setActiveMediaDevice: setActiveAudioDevice,
   } = useMediaDeviceSelect({
     kind: "audioinput",
-    room,
+    room: connectedRoom,
   });
   const {
     devices: audioOutputDevices,
@@ -122,7 +150,7 @@ function useMediaDevicesState(room: Room): MediaDevicesState {
     setActiveMediaDevice: setActiveAudioOutputDevice,
   } = useMediaDeviceSelect({
     kind: "audiooutput",
-    room,
+    room: connectedRoom,
   });
 
   const selectActiveDevice = React.useCallback(
@@ -139,7 +167,7 @@ function useMediaDevicesState(room: Room): MediaDevicesState {
           break;
       }
     },
-    [setActiveAudioDevice, setActiveVideoDevice, setActiveAudioOutputDevice]
+    [setActiveVideoDevice, setActiveAudioOutputDevice, setActiveAudioDevice]
   );
 
   const [mediaDevicesState, setMediaDevicesState] =
@@ -151,19 +179,35 @@ function useMediaDevicesState(room: Room): MediaDevicesState {
       return state;
     });
 
+  const [settingsDefaultDevices, setDefaultDevices] = useDefaultDevices();
+
   React.useEffect(() => {
     const state = new Map<MediaDeviceKind, MediaDevices>();
     state.set("videoinput", {
       available: videoDevices,
-      selectedId: activeVideoDevice,
+      selectedId:
+        emptyToUndef(activeVideoDevice) ??
+        emptyToUndef(settingsDefaultDevices.videoinput) ??
+        videoDevices[0]?.deviceId,
     });
     state.set("audioinput", {
       available: audioDevices,
-      selectedId: activeAudioDevice,
+      selectedId:
+        emptyToUndef(activeAudioDevice) ??
+        emptyToUndef(settingsDefaultDevices.audioinput) ??
+        audioDevices[0]?.deviceId,
     });
     state.set("audiooutput", {
       available: audioOutputDevices,
-      selectedId: activeAudioOutputDevice,
+      selectedId:
+        emptyToUndef(activeAudioOutputDevice) ??
+        emptyToUndef(settingsDefaultDevices.audiooutput) ??
+        audioOutputDevices[0]?.deviceId,
+    });
+    setDefaultDevices({
+      audioinput: state.get("audioinput").selectedId,
+      videoinput: state.get("videoinput").selectedId,
+      audiooutput: state.get("audiooutput").selectedId,
     });
     setMediaDevicesState({
       state,
@@ -177,6 +221,10 @@ function useMediaDevicesState(room: Room): MediaDevicesState {
     audioOutputDevices,
     activeAudioOutputDevice,
     selectActiveDevice,
+    setDefaultDevices,
+    settingsDefaultDevices.audioinput,
+    settingsDefaultDevices.videoinput,
+    settingsDefaultDevices.audiooutput,
   ]);
 
   return mediaDevicesState;
