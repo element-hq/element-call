@@ -100,14 +100,14 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         ref={tileRef}
         data-testid="videoTile"
       >
-        {!sfuParticipant.isCameraEnabled && (
+        {content === TileContent.UserMedia && !sfuParticipant.isCameraEnabled && (
           <>
             <div className={styles.videoMutedOverlay} />
             {getAvatar(data.member, targetWidth, targetHeight)}
           </>
         )}
         {!false &&
-          (sfuParticipant.isScreenShareEnabled ? (
+          (content === TileContent.ScreenShare ? (
             <div className={styles.presenterLabel}>
               <span>{t("{{name}} is presenting", { name })}</span>
             </div>
