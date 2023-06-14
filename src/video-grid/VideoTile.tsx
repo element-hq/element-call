@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ComponentProps, forwardRef } from "react";
+import React from "react";
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
@@ -24,15 +24,18 @@ import {
   VideoTrack,
   useMediaTrack,
 } from "@livekit/components-react";
-import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import {
+  RoomMember,
+  RoomMemberEvent,
+} from "matrix-js-sdk/src/models/room-member";
 
+import { Avatar } from "../Avatar";
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
-import { useRoomMemberName } from "./useRoomMemberName";
 
 export interface ItemData {
-  member: RoomMember;
+  member?: RoomMember;
   sfuParticipant: LocalParticipant | RemoteParticipant;
   content: TileContent;
 }
@@ -44,35 +47,36 @@ export enum TileContent {
 
 interface Props {
   data: ItemData;
-  className?: string;
-  showSpeakingIndicator: boolean;
-  style?: ComponentProps<typeof animated.div>["style"];
+
+  // TODO: Refactor these props.
   targetWidth: number;
   targetHeight: number;
-  getAvatar: (
-    roomMember: RoomMember,
-    width: number,
-    height: number
-  ) => JSX.Element;
+  className?: string;
+  style?: React.ComponentProps<typeof animated.div>["style"];
 }
 
-export const VideoTile = forwardRef<HTMLDivElement, Props>(
-  (
-    {
-      data,
-      className,
-      showSpeakingIndicator,
-      style,
-      targetWidth,
-      targetHeight,
-      getAvatar,
-    },
-    tileRef
-  ) => {
+export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
+  ({ data, className, style, targetWidth, targetHeight }, tileRef) => {
     const { t } = useTranslation();
 
-    const { content, sfuParticipant } = data;
-    const { rawDisplayName: name } = useRoomMemberName(data.member);
+    const { content, sfuParticipant, member } = data;
+
+    // Handle display name changes.
+    const [displayName, setDisplayName] = React.useState<string>("[👻]");
+    React.useEffect(() => {
+      if (member) {
+        setDisplayName(member.rawDisplayName);
+
+        const updateName = () => {
+          setDisplayName(member.rawDisplayName);
+        };
+
+        member!.on(RoomMemberEvent.Name, updateName);
+        return () => {
+          member!.removeListener(RoomMemberEvent.Name, updateName);
+        };
+      }
+    }, [member]);
 
     const audioEl = React.useRef<HTMLAudioElement>(null);
     const { isMuted: microphoneMuted } = useMediaTrack(
@@ -92,7 +96,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       <animated.div
         className={classNames(styles.videoTile, className, {
           [styles.isLocal]: sfuParticipant.isLocal,
-          [styles.speaking]: sfuParticipant.isSpeaking && showSpeakingIndicator,
+          [styles.speaking]: sfuParticipant.isSpeaking,
           [styles.muted]: microphoneMuted,
           [styles.screenshare]: content === TileContent.ScreenShare,
         })}
@@ -103,21 +107,26 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         {content === TileContent.UserMedia && !sfuParticipant.isCameraEnabled && (
           <>
             <div className={styles.videoMutedOverlay} />
-            {getAvatar(data.member, targetWidth, targetHeight)}
+            <Avatar
+              key={member?.userId}
+              size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
+              src={member?.getMxcAvatarUrl()}
+              fallback={displayName.slice(0, 1).toUpperCase()}
+              className={styles.avatar}
+            />
           </>
         )}
-        {!false &&
-          (content === TileContent.ScreenShare ? (
-            <div className={styles.presenterLabel}>
-              <span>{t("{{name}} is presenting", { name })}</span>
-            </div>
-          ) : (
-            <div className={classNames(styles.infoBubble, styles.memberName)}>
-              {microphoneMuted ? <MicMutedIcon /> : <MicIcon />}
-              <span title={name}>{name}</span>
-              <ConnectionQualityIndicator participant={sfuParticipant} />
-            </div>
-          ))}
+        {content == TileContent.ScreenShare ? (
+          <div className={styles.presenterLabel}>
+            <span>{t("{{displayName}} is presenting", { displayName })}</span>
+          </div>
+        ) : (
+          <div className={classNames(styles.infoBubble, styles.memberName)}>
+            {microphoneMuted ? <MicMutedIcon /> : <MicIcon />}
+            <span title={displayName}>{displayName}</span>
+            <ConnectionQualityIndicator participant={sfuParticipant} />
+          </div>
+        )}
         <VideoTrack
           participant={sfuParticipant}
           source={

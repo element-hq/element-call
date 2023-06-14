@@ -82,23 +82,6 @@ limitations under the License.
   bottom: 0;
 }
 
-/* CSS makes us put a condition here, even though all we want to do is
-unconditionally select the container so we can use cqmin units */
-@container videoTile (width > 0) {
-  .avatar {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    /* To make avatars scale smoothly with their tiles during animations, we
-    override the styles set on the element */
-    --avatarSize: 50cqmin; /* Half of the smallest dimension of the tile */
-    width: var(--avatarSize) !important;
-    height: var(--avatarSize) !important;
-    border-radius: 10000px !important;
-  }
-}
-
 @media (min-height: 300px) {
   .inRoom {
     --footerPadding: 24px;

@@ -23,12 +23,7 @@ import {
 } from "@livekit/components-react";
 import { usePreventScroll } from "@react-aria/overlays";
 import classNames from "classnames";
-import {
-  LocalParticipant,
-  RemoteParticipant,
-  Room,
-  Track,
-} from "livekit-client";
+import { Room, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
@@ -59,7 +54,6 @@ import {
   useVideoGridLayout,
   TileDescriptor,
 } from "../video-grid/VideoGrid";
-import { Avatar } from "../Avatar";
 import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
@@ -275,26 +269,9 @@ export function InCallView({
     [noControls, items]
   );
 
-  const renderAvatar = useCallback(
-    (roomMember: RoomMember, width: number, height: number) => {
-      const avatarUrl = roomMember.getMxcAvatarUrl();
-      const size = Math.round(Math.min(width, height) / 2);
-
-      return (
-        <Avatar
-          key={roomMember.userId}
-          size={size}
-          src={avatarUrl ?? undefined}
-          fallback={roomMember.name.slice(0, 1).toUpperCase()}
-          className={styles.avatar}
-        />
-      );
-    },
-    []
-  );
-
   const Grid =
     items.length > 12 && layout === "freedom" ? NewVideoGrid : VideoGrid;
+
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const renderContent = (): JSX.Element => {
@@ -312,8 +289,6 @@ export function InCallView({
           targetWidth={bounds.width}
           key={maximisedParticipant.id}
           data={maximisedParticipant.data}
-          getAvatar={renderAvatar}
-          showSpeakingIndicator={false}
         />
       );
     }
@@ -325,12 +300,7 @@ export function InCallView({
         disableAnimations={prefersReducedMotion || isSafari}
       >
         {(props) => (
-          <VideoTile
-            getAvatar={renderAvatar}
-            showSpeakingIndicator={items.length > 2}
-            {...props}
-            ref={props.ref as Ref<HTMLDivElement>}
-          />
+          <VideoTile {...props} ref={props.ref as Ref<HTMLDivElement>} />
         )}
       </Grid>
     );
@@ -484,33 +454,29 @@ function useParticipantTiles(
   });
 
   const items = useMemo(() => {
-    const tiles: TileDescriptor<ItemData>[] = [];
-    const screenshareExists = sfuParticipants.some(
-      (p) => p.isScreenShareEnabled
+    // The IDs of the participants who published membership event to the room (i.e. are present from Matrix perspective).
+    const matrixParticipants: Map<string, RoomMember> = new Map(
+      [...participants.entries()].flatMap(([user, devicesMap]) => {
+        return [...devicesMap.keys()].map((deviceId) => [
+          `${user.userId}:${deviceId}`,
+          user,
+        ]);
+      })
     );
-    const participantsById = new Map<
-      string,
-      LocalParticipant | RemoteParticipant
-    >();
-    for (const p of sfuParticipants) participantsById.set(p.identity, p);
 
-    for (const [member, participantMap] of participants) {
-      for (const [deviceId] of participantMap) {
-        const id = `${member.userId}:${deviceId}`;
-        const sfuParticipant = participantsById.get(id);
+    const someoneIsPresenting = sfuParticipants.some((p) => {
+      !p.isLocal && p.isScreenShareEnabled;
+    });
 
-        // Skip rendering participants that did not connect to the SFU.
-        if (!sfuParticipant) {
-          continue;
-        }
+    // Iterate over SFU participants (those who actually are present from the SFU perspective) and create tiles for them.
+    const tiles: TileDescriptor<ItemData>[] = sfuParticipants.flatMap(
+      (sfuParticipant) => {
+        const id = sfuParticipant.identity;
+        const member = matrixParticipants.get(id);
 
         const userMediaTile = {
           id,
-          // Screenshare feeds take precedence for focus
-          focused:
-            !screenshareExists &&
-            sfuParticipant.isSpeaking &&
-            !sfuParticipant.isLocal,
+          focused: !someoneIsPresenting && sfuParticipant.isSpeaking,
           local: sfuParticipant.isLocal,
           data: {
             member,
@@ -519,12 +485,10 @@ function useParticipantTiles(
           },
         };
 
-        // Add a tile for user media.
-        tiles.push(userMediaTile);
-
         // If there is a screen sharing enabled for this participant, create a tile for it as well.
+        let screenShareTile: TileDescriptor<ItemData> | undefined;
         if (sfuParticipant.isScreenShareEnabled) {
-          const screenShareTile = {
+          screenShareTile = {
             ...userMediaTile,
             id: `${id}:screen-share`,
             focused: true,
@@ -533,10 +497,13 @@ function useParticipantTiles(
               content: TileContent.ScreenShare,
             },
           };
-          tiles.push(screenShareTile);
         }
+
+        return screenShareTile
+          ? [userMediaTile, screenShareTile]
+          : [userMediaTile];
       }
-    }
+    );
 
     PosthogAnalytics.instance.eventCallEnded.cacheParticipantCountChanged(
       tiles.length
