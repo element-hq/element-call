@@ -114,7 +114,7 @@ function useMediaDevicesState(room: Room): MediaDevicesState {
     useState<string>();
 
   React.useEffect(() => {
-    Room.getLocalDevices(undefined, true).then((devices) => {
+    navigator.mediaDevices.enumerateDevices().then((devices) => {
       setDevices(devices);
     });
   }, []);
