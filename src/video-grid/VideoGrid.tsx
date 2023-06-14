@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,8 +15,10 @@ limitations under the License.
 */
 
 import React, {
+  ComponentProps,
   Key,
-  RefObject,
+  ReactNode,
+  Ref,
   useCallback,
   useEffect,
   useRef,
@@ -26,21 +28,20 @@ import {
   EventTypes,
   FullGestureState,
   Handler,
-  useDrag,
   useGesture,
 } from "@use-gesture/react";
 import {
+  animated,
   SpringRef,
-  SpringValue,
   SpringValues,
   useSprings,
 } from "@react-spring/web";
 import useMeasure from "react-use-measure";
 import { ResizeObserver as JuggleResizeObserver } from "@juggle/resize-observer";
-import { ReactDOMAttributes } from "@use-gesture/react/dist/declarations/src/types";
 
 import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/GridLayoutMenu";
+import { TileWrapper } from "./TileWrapper";
 
 interface TilePosition {
   x: number;
@@ -51,7 +52,7 @@ interface TilePosition {
 }
 
 interface Tile<T> {
-  key: Key;
+  key: string;
   order: number;
   item: TileDescriptor<T>;
   remove: boolean;
@@ -727,25 +728,18 @@ interface DragTileData {
   y: number;
 }
 
-export interface ChildrenProperties<T> extends ReactDOMAttributes {
-  key: Key;
-  data: T;
+export interface ChildrenProperties<T> {
+  ref: Ref<HTMLElement>;
+  style: ComponentProps<typeof animated.div>["style"];
+  /**
+   * The width this tile will have once its animations have settled.
+   */
   targetWidth: number;
+  /**
+   * The height this tile will have once its animations have settled.
+   */
   targetHeight: number;
-  opacity: SpringValue<number>;
-  scale: SpringValue<number>;
-  shadow: SpringValue<number>;
-  zIndex: SpringValue<number>;
-  x: SpringValue<number>;
-  y: SpringValue<number>;
-  width: SpringValue<number>;
-  height: SpringValue<number>;
-  onDragRef?: RefObject<
-    (
-      tileId: string,
-      state: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
-    ) => void
-  >;
+  data: T;
 }
 
 export interface VideoGridProps<T> {
@@ -768,7 +762,7 @@ export function VideoGrid<T>({
   items,
   layout,
   disableAnimations,
-  children: createChild,
+  children,
 }: VideoGridProps<T>) {
   // Place the PiP in the bottom right corner by default
   const [pipXRatio, setPipXRatio] = useState(1);
@@ -1082,117 +1076,132 @@ export function VideoGrid<T>({
     [tiles, layout, gridBounds.width, gridBounds.height, pipXRatio, pipYRatio]
   );
 
-  const bindTile = useDrag(
-    ({ args: [key], active, xy, movement, tap, last, event }) => {
-      event.preventDefault();
+  // Callback for useDrag. We could call useDrag here, but the default
+  // pattern of spreading {...bind()} across the children to bind the gesture
+  // ends up breaking memoization and ruining this component's performance.
+  // Instead, we pass this callback to each tile via a ref, to let them bind the
+  // gesture using the much more sensible ref-based method.
+  const onTileDrag = (
+    tileId: string,
+    {
+      active,
+      xy,
+      movement,
+      tap,
+      last,
+      event,
+    }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
+  ) => {
+    event.preventDefault();
 
-      if (tap) {
-        onTap(key);
-        return;
-      }
+    if (tap) {
+      onTap(tileId);
+      return;
+    }
 
-      if (layout !== "freedom") return;
+    if (layout !== "freedom") return;
 
-      const dragTileIndex = tiles.findIndex((tile) => tile.key === key);
-      const dragTile = tiles[dragTileIndex];
-      const dragTilePosition = tilePositions[dragTile.order];
+    const dragTileIndex = tiles.findIndex((tile) => tile.key === tileId);
+    const dragTile = tiles[dragTileIndex];
+    const dragTilePosition = tilePositions[dragTile.order];
 
-      const cursorPosition = [xy[0] - gridBounds.left, xy[1] - gridBounds.top];
+    const cursorPosition = [xy[0] - gridBounds.left, xy[1] - gridBounds.top];
 
-      let newTiles = tiles;
+    let newTiles = tiles;
 
-      if (tiles.length === 2 && !tiles.some((t) => t.focused)) {
-        // We're in 1:1 mode, so only the local tile should be draggable
-        if (!dragTile.item.local) return;
+    if (tiles.length === 2 && !tiles.some((t) => t.focused)) {
+      // We're in 1:1 mode, so only the local tile should be draggable
+      if (!dragTile.item.local) return;
 
-        // Position should only update on the very last event, to avoid
-        // compounding the offset on every drag event
-        if (last) {
-          const remotePosition = tilePositions[1];
+      // Position should only update on the very last event, to avoid
+      // compounding the offset on every drag event
+      if (last) {
+        const remotePosition = tilePositions[1];
 
-          const pipGap = getPipGap(
-            gridBounds.width / gridBounds.height,
-            gridBounds.width
-          );
-          const pipMinX = remotePosition.x + pipGap;
-          const pipMinY = remotePosition.y + pipGap;
-          const pipMaxX =
-            remotePosition.x +
-            remotePosition.width -
-            dragTilePosition.width -
-            pipGap;
-          const pipMaxY =
-            remotePosition.y +
-            remotePosition.height -
-            dragTilePosition.height -
-            pipGap;
-
-          const newPipXRatio =
-            (dragTilePosition.x + movement[0] - pipMinX) / (pipMaxX - pipMinX);
-          const newPipYRatio =
-            (dragTilePosition.y + movement[1] - pipMinY) / (pipMaxY - pipMinY);
-
-          setPipXRatio(Math.max(0, Math.min(1, newPipXRatio)));
-          setPipYRatio(Math.max(0, Math.min(1, newPipYRatio)));
-        }
-      } else {
-        const hoverTile = tiles.find(
-          (tile) =>
-            tile.key !== key &&
-            isInside(cursorPosition, tilePositions[tile.order])
+        const pipGap = getPipGap(
+          gridBounds.width / gridBounds.height,
+          gridBounds.width
         );
+        const pipMinX = remotePosition.x + pipGap;
+        const pipMinY = remotePosition.y + pipGap;
+        const pipMaxX =
+          remotePosition.x +
+          remotePosition.width -
+          dragTilePosition.width -
+          pipGap;
+        const pipMaxY =
+          remotePosition.y +
+          remotePosition.height -
+          dragTilePosition.height -
+          pipGap;
 
-        if (hoverTile) {
-          // Shift the tiles into their new order
-          newTiles = newTiles.map((tile) => {
-            let order = tile.order;
-            if (order < dragTile.order) {
-              if (order >= hoverTile.order) order++;
-            } else if (order > dragTile.order) {
-              if (order <= hoverTile.order) order--;
-            } else {
-              order = hoverTile.order;
-            }
+        const newPipXRatio =
+          (dragTilePosition.x + movement[0] - pipMinX) / (pipMaxX - pipMinX);
+        const newPipYRatio =
+          (dragTilePosition.y + movement[1] - pipMinY) / (pipMaxY - pipMinY);
 
-            let focused;
-            if (tile === hoverTile) {
-              focused = dragTile.focused;
-            } else if (tile === dragTile) {
-              focused = hoverTile.focused;
-            } else {
-              focused = tile.focused;
-            }
-
-            return { ...tile, order, focused };
-          });
-
-          reorderTiles(newTiles, layout);
-
-          setTileState((state) => ({ ...state, tiles: newTiles }));
-        }
+        setPipXRatio(Math.max(0, Math.min(1, newPipXRatio)));
+        setPipYRatio(Math.max(0, Math.min(1, newPipYRatio)));
       }
+    } else {
+      const hoverTile = tiles.find(
+        (tile) =>
+          tile.key !== tileId &&
+          isInside(cursorPosition, tilePositions[tile.order])
+      );
 
-      if (active) {
-        if (!draggingTileRef.current) {
-          draggingTileRef.current = {
-            key: dragTile.key,
-            offsetX: dragTilePosition.x,
-            offsetY: dragTilePosition.y,
-            x: movement[0],
-            y: movement[1],
-          };
-        } else {
-          draggingTileRef.current.x = movement[0];
-          draggingTileRef.current.y = movement[1];
-        }
+      if (hoverTile) {
+        // Shift the tiles into their new order
+        newTiles = newTiles.map((tile) => {
+          let order = tile.order;
+          if (order < dragTile.order) {
+            if (order >= hoverTile.order) order++;
+          } else if (order > dragTile.order) {
+            if (order <= hoverTile.order) order--;
+          } else {
+            order = hoverTile.order;
+          }
+
+          let focused;
+          if (tile === hoverTile) {
+            focused = dragTile.focused;
+          } else if (tile === dragTile) {
+            focused = hoverTile.focused;
+          } else {
+            focused = tile.focused;
+          }
+
+          return { ...tile, order, focused };
+        });
+
+        reorderTiles(newTiles, layout);
+
+        setTileState((state) => ({ ...state, tiles: newTiles }));
+      }
+    }
+
+    if (active) {
+      if (!draggingTileRef.current) {
+        draggingTileRef.current = {
+          key: dragTile.key,
+          offsetX: dragTilePosition.x,
+          offsetY: dragTilePosition.y,
+          x: movement[0],
+          y: movement[1],
+        };
       } else {
-        draggingTileRef.current = null;
+        draggingTileRef.current.x = movement[0];
+        draggingTileRef.current.y = movement[1];
       }
+    } else {
+      draggingTileRef.current = null;
+    }
 
-      api.start(animate(newTiles));
-    },
-    { filterTaps: true, pointer: { buttons: [1] } }
-  );
+    api.start(animate(newTiles));
+  };
+
+  const onTileDragRef = useRef(onTileDrag);
+  onTileDragRef.current = onTileDrag;
 
   const onGridGesture = useCallback(
     (
@@ -1239,18 +1248,23 @@ export function VideoGrid<T>({
 
   return (
     <div className={styles.videoGrid} ref={gridRef} {...bindGrid()}>
-      {springs.map((style, i) => {
+      {springs.map((spring, i) => {
         const tile = tiles[i];
         const tilePosition = tilePositions[tile.order];
 
-        return createChild({
-          ...bindTile(tile.key),
-          ...style,
-          key: tile.key,
-          data: tile.item.data,
-          targetWidth: tilePosition.width,
-          targetHeight: tilePosition.height,
-        });
+        return (
+          <TileWrapper
+            key={tile.key}
+            id={tile.key}
+            onDragRef={onTileDragRef}
+            targetWidth={tilePosition.width}
+            targetHeight={tilePosition.height}
+            data={tile.item.data}
+            {...spring}
+          >
+            {children as (props: ChildrenProperties<unknown>) => ReactNode}
+          </TileWrapper>
+        );
       })}
     </div>
   );

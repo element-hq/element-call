@@ -28,7 +28,7 @@ import { Room, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import React, { useCallback, useEffect, useMemo, useRef } from "react";
+import React, { Ref, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
 import { OverlayTriggerState } from "@react-stately/overlays";
@@ -56,29 +56,29 @@ import {
   TileDescriptor,
 } from "../video-grid/VideoGrid";
 import { Avatar } from "../Avatar";
-import { useNewGrid, useShowInspector } from "../settings/useSetting";
+import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useUrlParams } from "../UrlParams";
 import { MediaDevicesState } from "../settings/mediaDevices";
-import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
-import { ItemData, VideoTileContainer } from "../video-grid/VideoTileContainer";
 import { ElementWidgetActions, widget } from "../widget";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { GroupCallInspector } from "./GroupCallInspector";
 import styles from "./InCallView.module.css";
-import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { MatrixInfo } from "./VideoPreview";
 import { useJoinRule } from "./useJoinRule";
 import { ParticipantInfo } from "./useGroupCall";
-import { TileContent } from "../video-grid/VideoTile";
+import { ItemData, TileContent } from "../video-grid/VideoTile";
 import { Config } from "../config/Config";
 import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
+import { useRageshakeRequestModal } from "../settings/submit-rageshake";
+import { RageshakeRequestModal } from "./RageshakeRequestModal";
+import { VideoTile } from "../video-grid/VideoTile";
 import { useRoom } from "./useRoom";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
@@ -114,7 +114,6 @@ interface Props {
   livekitRoom: Room;
   userChoices: LocalUserChoices;
   otelGroupCallMembership: OTelGroupCallMembership;
-  initComponent: string;
 }
 
 export function InCallView({
@@ -283,8 +282,8 @@ export function InCallView({
     []
   );
 
-  const [newGrid] = useNewGrid();
-  const Grid = newGrid ? NewVideoGrid : VideoGrid;
+  const Grid =
+    items.length > 12 && layout === "freedom" ? NewVideoGrid : VideoGrid;
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const renderContent = (): JSX.Element => {
@@ -297,14 +296,13 @@ export function InCallView({
     }
     if (maximisedParticipant) {
       return (
-        <VideoTileContainer
+        <VideoTile
           targetHeight={bounds.height}
           targetWidth={bounds.width}
           key={maximisedParticipant.id}
-          item={maximisedParticipant.data}
+          data={maximisedParticipant.data}
           getAvatar={renderAvatar}
-          disableSpeakingIndicator={true}
-          maximised={Boolean(maximisedParticipant)}
+          showSpeakingIndicator={false}
         />
       );
     }
@@ -315,11 +313,12 @@ export function InCallView({
         layout={layout}
         disableAnimations={prefersReducedMotion || isSafari}
       >
-        {(child) => (
-          <VideoTileContainer
+        {(props) => (
+          <VideoTile
             getAvatar={renderAvatar}
-            item={child.data}
-            {...child}
+            showSpeakingIndicator={items.length > 2}
+            {...props}
+            ref={props.ref as Ref<HTMLDivElement>}
           />
         )}
       </Grid>
