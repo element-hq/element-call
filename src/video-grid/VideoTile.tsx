@@ -32,7 +32,6 @@ import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { useRoomMemberName } from "./useRoomMemberName";
 
 export interface ItemData {
-  id: string;
   member: RoomMember;
   sfuParticipant: LocalParticipant | RemoteParticipant;
   content: TileContent;
