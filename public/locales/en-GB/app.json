@@ -1,8 +1,8 @@
 {
   "{{count}} stars|one": "{{count}} star",
   "{{count}} stars|other": "{{count}} stars",
+  "{{displayName}} is presenting": "{{displayName}} is presenting",
   "{{displayName}}, your call has ended.": "{{displayName}}, your call has ended.",
-  "{{name}} is presenting": "{{name}} is presenting",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>",
@@ -102,7 +102,6 @@
   "Turn off camera": "Turn off camera",
   "Turn on camera": "Turn on camera",
   "Unmute microphone": "Unmute microphone",
-  "Use the upcoming grid system": "Use the upcoming grid system",
   "User menu": "User menu",
   "Username": "Username",
   "Version: {{version}}": "Version: {{version}}",
