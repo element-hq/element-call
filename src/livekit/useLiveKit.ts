@@ -4,7 +4,7 @@ import {
   LocalVideoTrack,
   Room,
 } from "livekit-client";
-import React, { useEffect } from "react";
+import React from "react";
 import {
   useMediaDeviceSelect,
   usePreviewDevice,
@@ -59,7 +59,7 @@ export function useLiveKit(): LiveKitState | undefined {
   //   // eslint-disable-next-line react-hooks/exhaustive-deps
   // }, []);
 
-  // then start the preview device (no permsission should be triggered agian)
+  // then start the preview device (no permission should be triggered agian)
   // Create local video track.
   const video = usePreviewDevice(
     videoEnabled,
