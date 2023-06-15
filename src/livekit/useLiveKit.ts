@@ -51,15 +51,15 @@ export function useLiveKit(): LiveKitState | undefined {
   const selectedAudioId = mediaDevices.state.get("audioinput")?.selectedId;
 
   // trigger permission popup first,
-  useEffect(() => {
-    navigator.mediaDevices.getUserMedia({
-      video: { deviceId: selectedVideoId ?? settingsDefaultDevices.videoinput },
-      audio: { deviceId: selectedAudioId ?? settingsDefaultDevices.audioinput },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  // useEffect(() => {
+  //   navigator.mediaDevices.getUserMedia({
+  //     video: { deviceId: selectedVideoId ?? settingsDefaultDevices.videoinput },
+  //     audio: { deviceId: selectedAudioId ?? settingsDefaultDevices.audioinput },
+  //   });
+  //   // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, []);
 
-  // then start the preview device (no permsssion should be triggered agian)
+  // then start the preview device (no permsission should be triggered agian)
   // Create local video track.
   const video = usePreviewDevice(
     videoEnabled,
