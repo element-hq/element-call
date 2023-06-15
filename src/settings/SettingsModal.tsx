@@ -29,7 +29,6 @@ import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
 import { ReactComponent as UserIcon } from "../icons/User.svg";
 import { ReactComponent as FeedbackIcon } from "../icons/Feedback.svg";
 import { SelectInput } from "../input/SelectInput";
-import { MediaDevicesState } from "./mediaDevices";
 import {
   useShowInspector,
   useOptInAnalytics,
@@ -42,9 +41,10 @@ import { Body, Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
+import { MediaDevices, MediaDevicesState } from "../livekit/useMediaDevices";
 
 interface Props {
-  mediaDevices: MediaDevicesState;
+  mediaDevices?: MediaDevicesState;
   isOpen: boolean;
   client: MatrixClient;
   roomId?: string;
@@ -63,17 +63,19 @@ export const SettingsModal = (props: Props) => {
   const downloadDebugLog = useDownloadDebugLog();
 
   // Generate a `SelectInput` with a list of devices for a given device kind.
-  const generateDeviceSelection = (kind: MediaDeviceKind, caption: string) => {
-    const devices = props.mediaDevices.state.get(kind);
-    if (!devices || devices.available.length == 0) return null;
+  const generateDeviceSelection = (devices: MediaDevices, caption: string) => {
+    if (devices.available.length == 0) return null;
 
     return (
       <SelectInput
         label={caption}
         selectedKey={devices.selectedId}
-        onSelectionChange={(id) =>
-          props.mediaDevices.selectActiveDevice(kind, id.toString())
-        }
+        onSelectionChange={(id) => {
+          const deviceId = id.toString();
+          if (deviceId != devices.selectedId) {
+            devices.setSelected(deviceId);
+          }
+        }}
       >
         {devices.available.map(({ deviceId, label }, index) => (
           <Item key={deviceId}>
@@ -106,6 +108,8 @@ export const SettingsModal = (props: Props) => {
     </Caption>
   );
 
+  const devices = props.mediaDevices;
+
   return (
     <Modal
       title={t("Settings")}
@@ -128,8 +132,8 @@ export const SettingsModal = (props: Props) => {
             </>
           }
         >
-          {generateDeviceSelection("audioinput", t("Microphone"))}
-          {generateDeviceSelection("audiooutput", t("Speaker"))}
+          {devices && generateDeviceSelection(devices.audioIn, t("Microphone"))}
+          {devices && generateDeviceSelection(devices.audioOut, t("Speaker"))}
         </TabItem>
         <TabItem
           key="video"
@@ -140,7 +144,7 @@ export const SettingsModal = (props: Props) => {
             </>
           }
         >
-          {generateDeviceSelection("videoinput", t("Camera"))}
+          {devices && generateDeviceSelection(devices.videoIn, t("Camera"))}
         </TabItem>
         <TabItem
           key="profile"

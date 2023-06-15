@@ -18,7 +18,6 @@ import { ResizeObserver } from "@juggle/resize-observer";
 import {
   useLocalParticipant,
   useParticipants,
-  useToken,
   useTracks,
 } from "@livekit/components-react";
 import { usePreventScroll } from "@react-aria/overlays";
@@ -58,7 +57,6 @@ import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useUrlParams } from "../UrlParams";
-import { MediaDevicesState } from "../settings/mediaDevices";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { ElementWidgetActions, widget } from "../widget";
@@ -77,7 +75,8 @@ import { InviteModal } from "./InviteModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { VideoTile } from "../video-grid/VideoTile";
-import { useRoom } from "./useRoom";
+import { UserChoices, useLiveKit } from "../livekit/useLiveKit";
+import { useMediaDevices } from "../livekit/useMediaDevices";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -85,46 +84,43 @@ const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-const onConnectedCallback = (): void => {
-  console.log("connected to LiveKit room");
-};
-const onDisconnectedCallback = (): void => {
-  console.log("disconnected from LiveKit room");
-};
-const onErrorCallback = (err: Error): void => {
-  console.error("error connecting to LiveKit room", err);
-};
+interface ActiveCallProps extends Omit<Props, "livekitRoom"> {
+  userChoices: UserChoices;
+}
 
-interface LocalUserChoices {
-  videoMuted: boolean;
-  audioMuted: boolean;
+export function ActiveCall(props: ActiveCallProps) {
+  const livekitRoom = useLiveKit(props.userChoices, {
+    sfuUrl: Config.get().livekit.server_url,
+    jwtUrl: `${Config.get().livekit.jwt_service_url}/token`,
+    roomName: props.matrixInfo.roomName,
+    userName: props.matrixInfo.userName,
+    userIdentity: `${props.client.getUserId()}:${props.client.getDeviceId()}`,
+  });
+
+  return livekitRoom && <InCallView {...props} livekitRoom={livekitRoom} />;
 }
 
 interface Props {
   client: MatrixClient;
   groupCall: GroupCall;
+  livekitRoom: Room;
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   onLeave: () => void;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
   matrixInfo: MatrixInfo;
-  mediaDevices: MediaDevicesState;
-  livekitRoom: Room;
-  userChoices: LocalUserChoices;
   otelGroupCallMembership: OTelGroupCallMembership;
 }
 
 export function InCallView({
   client,
   groupCall,
+  livekitRoom,
   participants,
   onLeave,
   unencryptedEventsFromUsers,
   hideHeader,
   matrixInfo,
-  mediaDevices,
-  livekitRoom,
-  userChoices,
   otelGroupCallMembership,
 }: Props) {
   const { t } = useTranslation();
@@ -142,41 +138,8 @@ export function InCallView({
     [containerRef1, containerRef2]
   );
 
-  const userId = client.getUserId();
-  const deviceId = client.getDeviceId();
-  const options = useMemo(
-    () => ({
-      userInfo: {
-        name: matrixInfo.userName,
-        identity: `${userId}:${deviceId}`,
-      },
-    }),
-    [matrixInfo.userName, userId, deviceId]
-  );
-  const token = useToken(
-    `${Config.get().livekit.jwt_service_url}/token`,
-    matrixInfo.roomName,
-    options
-  );
-
-  // TODO: move the room creation into the useRoom hook and out of the useLiveKit hook.
-  // This would than allow to not have those 4 lines
-  livekitRoom.options.audioCaptureDefaults.deviceId =
-    mediaDevices.state.get("audioinput").selectedId;
-  livekitRoom.options.videoCaptureDefaults.deviceId =
-    mediaDevices.state.get("videoinput").selectedId;
-  // Uses a hook to connect to the LiveKit room (on unmount the room will be left) and publish local media tracks (default).
-  useRoom({
-    token,
-    serverUrl: Config.get().livekit.server_url,
-    room: livekitRoom,
-    audio: !userChoices.audioMuted,
-    video: !userChoices.videoMuted,
-    simulateParticipants: 10,
-    onConnected: onConnectedCallback,
-    onDisconnected: onDisconnectedCallback,
-    onError: onErrorCallback,
-  });
+  // Managed media devices state coupled with an active room.
+  const roomMediaDevices = useMediaDevices(livekitRoom);
 
   const screenSharingTracks = useTracks(
     [{ source: Track.Source.ScreenShare, withPlaceholder: false }],
@@ -211,6 +174,8 @@ export function InCallView({
 
   const joinRule = useJoinRule(groupCall.room);
 
+  // This function incorrectly assumes that there is a camera and microphone, which is not always the case.
+  // TODO: Make sure that this module is resilient when it comes to camera/microphone availability!
   useCallViewKeyboardShortcuts(
     containerRef1,
     toggleMicrophone,
@@ -431,7 +396,7 @@ export function InCallView({
         <SettingsModal
           client={client}
           roomId={groupCall.room.roomId}
-          mediaDevices={mediaDevices}
+          mediaDevices={roomMediaDevices}
           {...settingsModalProps}
         />
       )}
