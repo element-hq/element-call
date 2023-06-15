@@ -464,19 +464,16 @@ function useParticipantTiles(
       })
     );
 
-    const someoneIsPresenting = sfuParticipants.some((p) => {
-      !p.isLocal && p.isScreenShareEnabled;
-    });
-
     // Iterate over SFU participants (those who actually are present from the SFU perspective) and create tiles for them.
     const tiles: TileDescriptor<ItemData>[] = sfuParticipants.flatMap(
       (sfuParticipant) => {
         const id = sfuParticipant.identity;
         const member = matrixParticipants.get(id);
-
         const userMediaTile = {
           id,
-          focused: !someoneIsPresenting && sfuParticipant.isSpeaking,
+          focused: false,
+          presenter: sfuParticipant.isScreenShareEnabled,
+          speaker: sfuParticipant.isSpeaking && !sfuParticipant.isLocal,
           local: sfuParticipant.isLocal,
           data: {
             member,

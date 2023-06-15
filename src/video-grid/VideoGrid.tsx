@@ -57,6 +57,8 @@ interface Tile<T> {
   item: TileDescriptor<T>;
   remove: boolean;
   focused: boolean;
+  presenter: boolean;
+  speaker: boolean;
 }
 
 export interface TileSpring {
@@ -707,16 +709,31 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout) {
     tiles.forEach((tile) => (tile.order = tile.item.local ? 0 : 1));
   } else {
     const focusedTiles: Tile<T>[] = [];
+    const presenterTiles: Tile<T>[] = [];
+    const speakerTiles: Tile<T>[] = [];
     const otherTiles: Tile<T>[] = [];
 
     const orderedTiles: Tile<T>[] = new Array(tiles.length);
     tiles.forEach((tile) => (orderedTiles[tile.order] = tile));
 
-    orderedTiles.forEach((tile) =>
-      (tile.focused ? focusedTiles : otherTiles).push(tile)
-    );
+    orderedTiles.forEach((tile) => {
+      if (tile.focused) {
+        focusedTiles.push(tile);
+      } else if (tile.presenter) {
+        presenterTiles.push(tile);
+      } else if (tile.speaker) {
+        speakerTiles.push(tile);
+      } else {
+        otherTiles.push(tile);
+      }
+    });
 
-    [...focusedTiles, ...otherTiles].forEach((tile, i) => (tile.order = i));
+    [
+      ...focusedTiles,
+      ...presenterTiles,
+      ...speakerTiles,
+      ...otherTiles,
+    ].forEach((tile, i) => (tile.order = i));
   }
 }
 
@@ -754,6 +771,8 @@ export interface VideoGridProps<T> {
 export interface TileDescriptor<T> {
   id: string;
   focused: boolean;
+  presenter: boolean;
+  speaker: boolean;
   local: boolean;
   data: T;
 }
@@ -806,10 +825,16 @@ export function VideoGrid<T>({
         }
 
         let focused: boolean;
+        let speaker: boolean;
+        let presenter: boolean;
         if (layout === "spotlight") {
           focused = item.focused;
+          presenter = item.presenter;
+          speaker = item.speaker;
         } else {
           focused = layout === lastLayoutRef.current ? tile.focused : false;
+          presenter = false;
+          speaker = false;
         }
 
         newTiles.push({
@@ -818,6 +843,8 @@ export function VideoGrid<T>({
           item,
           remove,
           focused,
+          speaker,
+          presenter,
         });
       }
 
