@@ -16,35 +16,37 @@ limitations under the License.
 
 import React, { useCallback, useState } from "react";
 import { Item } from "@react-stately/collections";
-import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
+import { Trans, useTranslation } from "react-i18next";
+import { SetMediaDeviceOptions } from "@livekit/components-core";
 
 import { Modal } from "../Modal";
-import styles from "./SettingsModal.module.css";
-import { TabContainer, TabItem } from "../tabs/Tabs";
+import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
+import { Button } from "../button";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
-import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
+import { ReactComponent as FeedbackIcon } from "../icons/Feedback.svg";
 import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
 import { ReactComponent as UserIcon } from "../icons/User.svg";
-import { ReactComponent as FeedbackIcon } from "../icons/Feedback.svg";
-import { SelectInput } from "../input/SelectInput";
-import { MediaDevicesState } from "./mediaDevices";
-import {
-  useShowInspector,
-  useOptInAnalytics,
-  useDeveloperSettingsTab,
-} from "./useSetting";
+import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { FieldRow, InputField } from "../input/Input";
-import { Button } from "../button";
-import { useDownloadDebugLog } from "./submit-rageshake";
+import { SelectInput } from "../input/SelectInput";
+import { LocalUserChoices, MediaDevicesList } from "../livekit/useLiveKit";
+import { TabContainer, TabItem } from "../tabs/Tabs";
 import { Body, Caption } from "../typography/Typography";
-import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
-import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
+import { ProfileSettingsTab } from "./ProfileSettingsTab";
+import styles from "./SettingsModal.module.css";
+import { useDownloadDebugLog } from "./submit-rageshake";
+import {
+  useDeveloperSettingsTab,
+  useOptInAnalytics,
+  useShowInspector,
+} from "./useSetting";
 
 interface Props {
-  mediaDevices: MediaDevicesState;
+  mediaDevices: MediaDevicesList;
+  userChoices: LocalUserChoices;
   isOpen: boolean;
   client: MatrixClient;
   roomId?: string;
@@ -64,18 +66,48 @@ export const SettingsModal = (props: Props) => {
 
   // Generate a `SelectInput` with a list of devices for a given device kind.
   const generateDeviceSelection = (kind: MediaDeviceKind, caption: string) => {
-    const devices = props.mediaDevices.state.get(kind);
-    if (!devices || devices.available.length == 0) return null;
+    let devices: MediaDeviceInfo[];
+    let selectedId: string;
+    let selectActiveDevice: (
+      id: string,
+      options?: SetMediaDeviceOptions
+    ) => Promise<void>;
+    switch (kind) {
+      case "audioinput":
+        devices = props.mediaDevices.audioDevices;
+        selectedId = props.userChoices.activeAudioDeviceId;
+        selectActiveDevice = props.userChoices.setActiveAudioDevice;
+        break;
+      case "videoinput":
+        devices = props.mediaDevices.videoDevices;
+        selectedId = props.userChoices.activeAudioDeviceId;
+        selectActiveDevice = props.userChoices.setActiveVideoDevice;
+
+        break;
+      case "audiooutput":
+        devices = props.mediaDevices.audioOutputDevices;
+        selectedId = props.userChoices.activeAudioOutputDeviceId;
+        selectActiveDevice = props.userChoices.setActiveAudioOutputDevice;
+        break;
+    }
+    switch (kind) {
+      case "audioinput":
+        break;
+      case "videoinput":
+        break;
+      case "audiooutput":
+        break;
+    }
+
+    if (!devices || devices.length == 0) return null;
 
     return (
       <SelectInput
         label={caption}
-        selectedKey={devices.selectedId}
-        onSelectionChange={(id) =>
-          props.mediaDevices.selectActiveDevice(kind, id.toString())
-        }
+        selectedKey={selectedId}
+        onSelectionChange={(id) => selectActiveDevice(id.toString())}
       >
-        {devices.available.map(({ deviceId, label }, index) => (
+        {devices.map(({ deviceId, label }, index) => (
           <Item key={deviceId}>
             {!!label && label.trim().length > 0
               ? label

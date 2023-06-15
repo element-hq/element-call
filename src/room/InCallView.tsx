@@ -58,7 +58,6 @@ import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useUrlParams } from "../UrlParams";
-import { MediaDevicesState } from "../settings/mediaDevices";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { ElementWidgetActions, widget } from "../widget";
@@ -78,6 +77,7 @@ import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { VideoTile } from "../video-grid/VideoTile";
 import { useRoom } from "./useRoom";
+import { LocalUserChoices, MediaDevicesList } from "../livekit/useLiveKit";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -95,11 +95,6 @@ const onErrorCallback = (err: Error): void => {
   console.error("error connecting to LiveKit room", err);
 };
 
-interface LocalUserChoices {
-  videoMuted: boolean;
-  audioMuted: boolean;
-}
-
 interface Props {
   client: MatrixClient;
   groupCall: GroupCall;
@@ -108,7 +103,7 @@ interface Props {
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
   matrixInfo: MatrixInfo;
-  mediaDevices: MediaDevicesState;
+  mediaDevices: MediaDevicesList;
   livekitRoom: Room;
   userChoices: LocalUserChoices;
   otelGroupCallMembership: OTelGroupCallMembership;
@@ -162,16 +157,16 @@ export function InCallView({
   // TODO: move the room creation into the useRoom hook and out of the useLiveKit hook.
   // This would than allow to not have those 4 lines
   livekitRoom.options.audioCaptureDefaults.deviceId =
-    mediaDevices.state.get("audioinput").selectedId;
+    userChoices.activeAudioDeviceId;
   livekitRoom.options.videoCaptureDefaults.deviceId =
-    mediaDevices.state.get("videoinput").selectedId;
+    userChoices.activeVideoDeviceId;
   // Uses a hook to connect to the LiveKit room (on unmount the room will be left) and publish local media tracks (default).
   useRoom({
     token,
     serverUrl: Config.get().livekit.server_url,
     room: livekitRoom,
-    audio: !userChoices.audioMuted,
-    video: !userChoices.videoMuted,
+    audio: userChoices.audioEnabled,
+    video: userChoices.videoEnabled,
     simulateParticipants: 10,
     onConnected: onConnectedCallback,
     onDisconnected: onDisconnectedCallback,
@@ -432,6 +427,7 @@ export function InCallView({
           client={client}
           roomId={groupCall.room.roomId}
           mediaDevices={mediaDevices}
+          userChoices={userChoices}
           {...settingsModalProps}
         />
       )}

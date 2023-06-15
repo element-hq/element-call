@@ -25,8 +25,12 @@ import { Avatar } from "../Avatar";
 import styles from "./VideoPreview.module.css";
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
-import { MediaDevicesState } from "../settings/mediaDevices";
 import { useClient } from "../ClientContext";
+import {
+  LocalMediaTracks,
+  LocalUserChoices,
+  MediaDevicesList,
+} from "../livekit/useLiveKit";
 
 export type MatrixInfo = {
   userName: string;
@@ -41,21 +45,18 @@ export type MediaInfo = {
   toggle: () => void;
 };
 
-export type LocalMediaInfo = {
-  audio?: MediaInfo;
-  video?: MediaInfo;
-};
-
 interface Props {
   matrixInfo: MatrixInfo;
-  mediaDevices: MediaDevicesState;
-  localMediaInfo: LocalMediaInfo;
+  mediaDevices: MediaDevicesList;
+  mediaTracks: LocalMediaTracks;
+  userChoices: LocalUserChoices;
 }
 
 export function VideoPreview({
   matrixInfo,
   mediaDevices,
-  localMediaInfo,
+  mediaTracks,
+  userChoices,
 }: Props) {
   const { client } = useClient();
   const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
@@ -78,18 +79,18 @@ export function VideoPreview({
   const mediaElement = React.useRef(null);
   React.useEffect(() => {
     if (mediaElement.current) {
-      localMediaInfo.video?.track.attach(mediaElement.current);
+      mediaTracks.video?.attach(mediaElement.current);
     }
     return () => {
-      localMediaInfo.video?.track.detach();
+      mediaTracks.video?.detach();
     };
-  }, [localMediaInfo.video?.track, mediaElement]);
+  }, [mediaTracks.video, mediaElement]);
 
   return (
     <div className={styles.preview} ref={previewRef}>
       <video ref={mediaElement} muted playsInline disablePictureInPicture />
       <>
-        {(localMediaInfo.video?.muted ?? true) && (
+        {(!userChoices.videoEnabled ?? true) && (
           <div className={styles.avatarContainer}>
             <Avatar
               size={(previewBounds.height - 66) / 2}
@@ -99,16 +100,20 @@ export function VideoPreview({
           </div>
         )}
         <div className={styles.previewButtons}>
-          {localMediaInfo.audio && (
+          {mediaTracks.audio && (
             <MicButton
-              muted={localMediaInfo.audio?.muted}
-              onPress={localMediaInfo.audio?.toggle}
+              muted={!userChoices.audioEnabled}
+              onPress={() => {
+                userChoices.setAudioEnabled(!userChoices.audioEnabled);
+              }}
             />
           )}
-          {localMediaInfo.video && (
+          {mediaTracks.video && (
             <VideoButton
-              muted={localMediaInfo.video?.muted}
-              onPress={localMediaInfo.video?.toggle}
+              muted={!userChoices.videoEnabled}
+              onPress={() => {
+                userChoices.setVideoEnabled(!userChoices.videoEnabled);
+              }}
             />
           )}
           <SettingsButton onPress={openSettings} />
@@ -116,6 +121,7 @@ export function VideoPreview({
       </>
       {settingsModalState.isOpen && (
         <SettingsModal
+          userChoices={userChoices}
           client={client}
           mediaDevices={mediaDevices}
           {...settingsModalProps}

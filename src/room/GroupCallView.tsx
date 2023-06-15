@@ -21,7 +21,7 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
-import { widget, ElementWidgetActions } from "../widget";
+import { ElementWidgetActions, widget } from "../widget";
 import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
@@ -86,7 +86,7 @@ export function GroupCallView({
     roomIdOrAlias,
   };
 
-  const lkState = useLiveKit();
+  const deviceChoices = useLiveKit();
 
   useEffect(() => {
     if (widget && preload) {
@@ -186,12 +186,9 @@ export function GroupCallView({
         unencryptedEventsFromUsers={unencryptedEventsFromUsers}
         hideHeader={hideHeader}
         matrixInfo={matrixInfo}
-        mediaDevices={lkState.mediaDevices}
-        livekitRoom={lkState.room}
-        userChoices={{
-          videoMuted: lkState?.localMedia.video?.muted ?? true,
-          audioMuted: lkState?.localMedia.audio?.muted ?? true,
-        }}
+        mediaDevices={deviceChoices.mediaDevices}
+        livekitRoom={deviceChoices.room}
+        userChoices={deviceChoices.userChoices}
         otelGroupCallMembership={otelGroupCallMembership}
       />
     );
@@ -227,12 +224,13 @@ export function GroupCallView({
         <h1>{t("Loading…")}</h1>
       </FullScreenView>
     );
-  } else if (lkState) {
+  } else if (deviceChoices) {
     return (
       <LobbyView
         matrixInfo={matrixInfo}
-        mediaDevices={lkState.mediaDevices}
-        localMedia={lkState.localMedia}
+        mediaDevices={deviceChoices.mediaDevices}
+        userChoices={deviceChoices.userChoices}
+        localMediaTracks={deviceChoices.localMediaTracks}
         onEnter={enter}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}

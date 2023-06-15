@@ -16,23 +16,28 @@ limitations under the License.
 
 import React from "react";
 import { PressEvent } from "@react-types/shared";
+import { useEffect, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
-import styles from "./LobbyView.module.css";
-import { Button, CopyButton } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import { getRoomUrl } from "../matrix-utils";
 import { UserMenuContainer } from "../UserMenuContainer";
+import { Button, CopyButton } from "../button";
+import {
+  LocalMediaTracks,
+  LocalUserChoices,
+  MediaDevicesList,
+} from "../livekit/useLiveKit";
+import { getRoomUrl } from "../matrix-utils";
 import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
-import { LocalMediaInfo, MatrixInfo, VideoPreview } from "./VideoPreview";
-import { MediaDevicesState } from "../settings/mediaDevices";
+import styles from "./LobbyView.module.css";
+import { MatrixInfo, VideoPreview } from "./VideoPreview";
 
 interface Props {
   matrixInfo: MatrixInfo;
-  mediaDevices: MediaDevicesState;
-  localMedia: LocalMediaInfo;
-
+  mediaDevices: MediaDevicesList;
+  userChoices: LocalUserChoices;
+  localMediaTracks: LocalMediaTracks;
   onEnter: (e: PressEvent) => void;
   isEmbedded: boolean;
   hideHeader: boolean;
@@ -42,13 +47,12 @@ export function LobbyView(props: Props) {
   const { t } = useTranslation();
   useLocationNavigation();
 
-  const joinCallButtonRef = React.useRef<HTMLButtonElement>();
-  React.useEffect(() => {
+  const joinCallButtonRef = useRef<HTMLButtonElement>();
+  useEffect(() => {
     if (joinCallButtonRef.current) {
       joinCallButtonRef.current.focus();
     }
   }, [joinCallButtonRef]);
-
   return (
     <div className={styles.room}>
       {!props.hideHeader && (
@@ -69,7 +73,8 @@ export function LobbyView(props: Props) {
           <VideoPreview
             matrixInfo={props.matrixInfo}
             mediaDevices={props.mediaDevices}
-            localMediaInfo={props.localMedia}
+            mediaTracks={props.localMediaTracks}
+            userChoices={props.userChoices}
           />
           <Trans>
             <Button
