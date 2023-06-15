@@ -865,6 +865,8 @@ export function VideoGrid<T>({
           item,
           remove: false,
           focused: layout === "spotlight" && item.focused,
+          presenter: item.presenter,
+          speaker: item.speaker
         };
 
         if (existingTile) {

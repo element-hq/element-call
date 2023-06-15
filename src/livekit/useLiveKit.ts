@@ -4,7 +4,7 @@ import {
   LocalVideoTrack,
   Room,
 } from "livekit-client";
-import React, { useEffect } from "react";
+import React from "react";
 import {
   useMediaDeviceSelect,
   usePreviewDevice,
