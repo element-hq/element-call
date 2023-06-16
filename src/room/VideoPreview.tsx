@@ -17,16 +17,18 @@ limitations under the License.
 import React, { useCallback } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
-import { Track } from "livekit-client";
 import { OverlayTriggerState } from "@react-stately/overlays";
+import { usePreviewDevice } from "@livekit/components-react";
 
 import { MicButton, SettingsButton, VideoButton } from "../button";
 import { Avatar } from "../Avatar";
 import styles from "./VideoPreview.module.css";
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
-import { MediaDevicesState } from "../settings/mediaDevices";
 import { useClient } from "../ClientContext";
+import { useMediaDevices } from "../livekit/useMediaDevices";
+import { DeviceChoices, UserChoices } from "../livekit/useLiveKit";
+import { useDefaultDevices } from "../settings/useSetting";
 
 export type MatrixInfo = {
   userName: string;
@@ -35,28 +37,12 @@ export type MatrixInfo = {
   roomIdOrAlias: string;
 };
 
-export type MediaInfo = {
-  track: Track; // TODO: Replace it by a more generic `CallFeed` type from JS SDK once we generalise the types.
-  muted: boolean;
-  toggle: () => void;
-};
-
-export type LocalMediaInfo = {
-  audio?: MediaInfo;
-  video?: MediaInfo;
-};
-
 interface Props {
   matrixInfo: MatrixInfo;
-  mediaDevices: MediaDevicesState;
-  localMediaInfo: LocalMediaInfo;
+  onUserChoicesChanged: (choices: UserChoices) => void;
 }
 
-export function VideoPreview({
-  matrixInfo,
-  mediaDevices,
-  localMediaInfo,
-}: Props) {
+export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
   const { client } = useClient();
   const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
 
@@ -75,21 +61,85 @@ export function VideoPreview({
     settingsModalState.open();
   }, [settingsModalState]);
 
+  // Fetch user media devices.
+  const mediaDevices = useMediaDevices();
+
+  // Create local media tracks.
+  const [videoEnabled, setVideoEnabled] = React.useState<boolean>(true);
+  const [audioEnabled, setAudioEnabled] = React.useState<boolean>(true);
+  const [videoId, audioId] = [
+    mediaDevices.videoIn.selectedId,
+    mediaDevices.audioIn.selectedId,
+  ];
+  const [defaultDevices] = useDefaultDevices();
+  const video = usePreviewDevice(
+    videoEnabled,
+    videoId != "" ? videoId : defaultDevices.videoinput,
+    "videoinput"
+  );
+  const audio = usePreviewDevice(
+    audioEnabled,
+    audioId != "" ? audioId : defaultDevices.audiooutput,
+    "audioinput"
+  );
+
+  const activeVideoId = video?.selectedDevice?.deviceId;
+  const activeAudioId = audio?.selectedDevice?.deviceId;
+  React.useEffect(() => {
+    const createChoices = (
+      enabled: boolean,
+      deviceId?: string
+    ): DeviceChoices | undefined => {
+      if (deviceId === undefined) {
+        return undefined;
+      }
+
+      return {
+        selectedId: deviceId,
+        enabled,
+      };
+    };
+
+    onUserChoicesChanged({
+      video: createChoices(videoEnabled, activeVideoId),
+      audio: createChoices(audioEnabled, activeAudioId),
+    });
+  }, [
+    onUserChoicesChanged,
+    activeVideoId,
+    videoEnabled,
+    activeAudioId,
+    audioEnabled,
+  ]);
+
+  const [selectVideo, selectAudio] = [
+    mediaDevices.videoIn.setSelected,
+    mediaDevices.audioIn.setSelected,
+  ];
+  React.useEffect(() => {
+    if (activeVideoId && activeVideoId !== "") {
+      selectVideo(activeVideoId);
+    }
+    if (activeAudioId && activeAudioId !== "") {
+      selectAudio(activeAudioId);
+    }
+  }, [selectVideo, selectAudio, activeVideoId, activeAudioId]);
+
   const mediaElement = React.useRef(null);
   React.useEffect(() => {
     if (mediaElement.current) {
-      localMediaInfo.video?.track.attach(mediaElement.current);
+      video?.localTrack?.attach(mediaElement.current);
     }
     return () => {
-      localMediaInfo.video?.track.detach();
+      video?.localTrack?.detach();
     };
-  }, [localMediaInfo.video?.track, mediaElement]);
+  }, [video?.localTrack, mediaElement]);
 
   return (
     <div className={styles.preview} ref={previewRef}>
       <video ref={mediaElement} muted playsInline disablePictureInPicture />
       <>
-        {(localMediaInfo.video?.muted ?? true) && (
+        {(video ? !videoEnabled : true) && (
           <div className={styles.avatarContainer}>
             <Avatar
               size={(previewBounds.height - 66) / 2}
@@ -99,16 +149,16 @@ export function VideoPreview({
           </div>
         )}
         <div className={styles.previewButtons}>
-          {localMediaInfo.audio && (
+          {audio.localTrack && (
             <MicButton
-              muted={localMediaInfo.audio?.muted}
-              onPress={localMediaInfo.audio?.toggle}
+              muted={!audioEnabled}
+              onPress={() => setAudioEnabled(!audioEnabled)}
             />
           )}
-          {localMediaInfo.video && (
+          {video.localTrack && (
             <VideoButton
-              muted={localMediaInfo.video?.muted}
-              onPress={localMediaInfo.video?.toggle}
+              muted={!videoEnabled}
+              onPress={() => setVideoEnabled(!videoEnabled)}
             />
           )}
           <SettingsButton onPress={openSettings} />
