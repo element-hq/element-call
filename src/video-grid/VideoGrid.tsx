@@ -57,9 +57,9 @@ interface Tile<T> {
   item: TileDescriptor<T>;
   remove: boolean;
   focused: boolean;
-  presenter: boolean;
-  speaker: boolean;
-  onlyVideo: boolean;
+  isPresenter: boolean;
+  isSpeaker: boolean;
+  hasVideo: boolean;
 }
 
 export interface TileSpring {
@@ -753,11 +753,11 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout, displayedTile = -1) {
     orderedTiles.forEach((tile) => {
       if (tile.focused) {
         focusedTiles.push(tile);
-      } else if (tile.presenter) {
+      } else if (tile.isPresenter) {
         presenterTiles.push(tile);
-      } else if (tile.speaker && displayedTile < tile.order) {
+      } else if (tile.isSpeaker && displayedTile < tile.order) {
         speakerTiles.push(tile);
-      } else if (tile.onlyVideo) {
+      } else if (tile.hasVideo) {
         onlyVideoTiles.push(tile);
       } else {
         otherTiles.push(tile);
@@ -808,9 +808,9 @@ export interface VideoGridProps<T> {
 export interface TileDescriptor<T> {
   id: string;
   focused: boolean;
-  presenter: boolean;
-  speaker: boolean;
-  onlyVideo: boolean;
+  isPresenter: boolean;
+  isSpeaker: boolean;
+  hasVideo: boolean;
   local: boolean;
   data: T;
 }
@@ -863,19 +863,19 @@ export function VideoGrid<T>({
         }
 
         let focused: boolean;
-        let speaker: boolean;
-        let presenter: boolean;
-        let onlyVideo: boolean;
+        let isSpeaker: boolean;
+        let isPresenter: boolean;
+        let hasVideo: boolean;
         if (layout === "spotlight") {
           focused = item.focused;
-          presenter = item.presenter;
-          speaker = item.speaker;
-          onlyVideo = item.onlyVideo;
+          isPresenter = item.isPresenter;
+          isSpeaker = item.isSpeaker;
+          hasVideo = item.hasVideo;
         } else {
           focused = layout === lastLayoutRef.current ? tile.focused : false;
-          presenter = false;
-          speaker = false;
-          onlyVideo = false;
+          isPresenter = false;
+          isSpeaker = false;
+          hasVideo = false;
         }
 
         newTiles.push({
@@ -884,9 +884,9 @@ export function VideoGrid<T>({
           item,
           remove,
           focused,
-          speaker,
-          presenter,
-          onlyVideo,
+          isSpeaker: isSpeaker,
+          isPresenter: isPresenter,
+          hasVideo: hasVideo,
         });
       }
 
@@ -907,9 +907,9 @@ export function VideoGrid<T>({
           item,
           remove: false,
           focused: layout === "spotlight" && item.focused,
-          presenter: item.presenter,
-          speaker: item.speaker,
-          onlyVideo: item.onlyVideo,
+          isPresenter: item.isPresenter,
+          isSpeaker: item.isSpeaker,
+          hasVideo: item.hasVideo,
         };
 
         if (existingTile) {
@@ -921,7 +921,7 @@ export function VideoGrid<T>({
         }
       }
 
-      const presenter = newTiles.find((t) => t.presenter);
+      const presenter = newTiles.find((t) => t.isPresenter);
       let displayedTile = -1;
       // Only on screen share we will not move active displayed speaker
       if (presenter !== undefined) {
