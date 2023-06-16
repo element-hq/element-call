@@ -54,6 +54,7 @@ interface Props {
   className?: string;
   style?: React.ComponentProps<typeof animated.div>["style"];
   showSpeakingIndicator: boolean;
+  showConnectionStats: boolean;
 }
 
 export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
@@ -65,6 +66,7 @@ export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
       targetWidth,
       targetHeight,
       showSpeakingIndicator,
+      showConnectionStats,
     },
     tileRef
   ) => {
@@ -138,7 +140,9 @@ export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
           <div className={classNames(styles.infoBubble, styles.memberName)}>
             {microphoneMuted ? <MicMutedIcon /> : <MicIcon />}
             <span title={displayName}>{displayName}</span>
-            <ConnectionQualityIndicator participant={sfuParticipant} />
+            {showConnectionStats && (
+              <ConnectionQualityIndicator participant={sfuParticipant} />
+            )}
           </div>
         )}
         <VideoTrack

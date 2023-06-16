@@ -54,7 +54,10 @@ import {
   useVideoGridLayout,
   TileDescriptor,
 } from "../video-grid/VideoGrid";
-import { useShowInspector } from "../settings/useSetting";
+import {
+  useShowInspector,
+  useShowConnectionStats,
+} from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useUrlParams } from "../UrlParams";
@@ -189,6 +192,7 @@ export function InCallView({
   );
 
   const [showInspector] = useShowInspector();
+  const [showConnectionStats] = useShowConnectionStats();
 
   const { hideScreensharing } = useUrlParams();
 
@@ -290,6 +294,7 @@ export function InCallView({
           key={maximisedParticipant.id}
           data={maximisedParticipant.data}
           showSpeakingIndicator={false}
+          showConnectionStats={showConnectionStats}
         />
       );
     }
@@ -303,6 +308,7 @@ export function InCallView({
         {(props) => (
           <VideoTile
             showSpeakingIndicator={items.length > 2}
+            showConnectionStats={showConnectionStats}
             {...props}
             ref={props.ref as Ref<HTMLDivElement>}
           />
