@@ -755,11 +755,7 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout, displayedTile = -1) {
         focusedTiles.push(tile);
       } else if (tile.presenter) {
         presenterTiles.push(tile);
-      } else if (
-        tile.speaker &&
-        displayedTile > -1 &&
-        displayedTile < tile.order
-      ) {
+      } else if (tile.speaker && displayedTile < tile.order) {
         speakerTiles.push(tile);
       } else if (tile.onlyVideo) {
         onlyVideoTiles.push(tile);
@@ -925,14 +921,18 @@ export function VideoGrid<T>({
         }
       }
 
-      const tileCount = displayedTileCount(
-        layout,
-        newTiles.length,
-        gridBounds.width,
-        gridBounds.height
-      );
+      const presenter = newTiles.find((t) => t.presenter);
+      let displayedTile = -1;
+      if (presenter !== undefined) {
+        displayedTile = displayedTileCount(
+          layout,
+          newTiles.length,
+          gridBounds.width,
+          gridBounds.height
+        );
+      }
 
-      reorderTiles(newTiles, layout, tileCount);
+      reorderTiles(newTiles, layout, displayedTile);
 
       if (removedTileKeys.size > 0) {
         setTimeout(() => {
