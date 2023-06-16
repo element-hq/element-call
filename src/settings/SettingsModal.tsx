@@ -34,6 +34,7 @@ import {
   useShowInspector,
   useOptInAnalytics,
   useDeveloperSettingsTab,
+  useShowConnectionStats,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
@@ -59,6 +60,8 @@ export const SettingsModal = (props: Props) => {
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const [developerSettingsTab, setDeveloperSettingsTab] =
     useDeveloperSettingsTab();
+  const [showConnectionStats, setShowConnectionStats] =
+    useShowConnectionStats();
 
   const downloadDebugLog = useDownloadDebugLog();
 
@@ -230,6 +233,18 @@ export const SettingsModal = (props: Props) => {
                 checked={showInspector}
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                   setShowInspector(e.target.checked)
+                }
+              />
+            </FieldRow>
+            <FieldRow>
+              <InputField
+                id="showConnectionStats"
+                name="connection-stats"
+                label={t("Show connection stats")}
+                type="checkbox"
+                checked={showConnectionStats}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setShowConnectionStats(e.target.checked)
                 }
               />
             </FieldRow>

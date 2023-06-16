@@ -101,6 +101,9 @@ export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
 export const useDeveloperSettingsTab = () =>
   useSetting("developer-settings-tab", false);
 
+export const useShowConnectionStats = () =>
+  useSetting("show-connection-stats", false);
+
 export const useDefaultDevices = () =>
   useSetting("defaultDevices", {
     audioinput: "",
