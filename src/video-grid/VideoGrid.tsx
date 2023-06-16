@@ -59,6 +59,7 @@ interface Tile<T> {
   focused: boolean;
   presenter: boolean;
   speaker: boolean;
+  onlyVideo: boolean;
 }
 
 export interface TileSpring {
@@ -711,6 +712,7 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout) {
     const focusedTiles: Tile<T>[] = [];
     const presenterTiles: Tile<T>[] = [];
     const speakerTiles: Tile<T>[] = [];
+    const onlyVideoTiles: Tile<T>[] = [];
     const otherTiles: Tile<T>[] = [];
 
     const orderedTiles: Tile<T>[] = new Array(tiles.length);
@@ -723,6 +725,8 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout) {
         presenterTiles.push(tile);
       } else if (tile.speaker) {
         speakerTiles.push(tile);
+      } else if (tile.onlyVideo) {
+        onlyVideoTiles.push(tile);
       } else {
         otherTiles.push(tile);
       }
@@ -732,6 +736,7 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout) {
       ...focusedTiles,
       ...presenterTiles,
       ...speakerTiles,
+      ...onlyVideoTiles,
       ...otherTiles,
     ].forEach((tile, i) => (tile.order = i));
   }
@@ -773,6 +778,7 @@ export interface TileDescriptor<T> {
   focused: boolean;
   presenter: boolean;
   speaker: boolean;
+  onlyVideo: boolean;
   local: boolean;
   data: T;
 }
@@ -827,14 +833,17 @@ export function VideoGrid<T>({
         let focused: boolean;
         let speaker: boolean;
         let presenter: boolean;
+        let onlyVideo: boolean;
         if (layout === "spotlight") {
           focused = item.focused;
           presenter = item.presenter;
           speaker = item.speaker;
+          onlyVideo = item.onlyVideo;
         } else {
           focused = layout === lastLayoutRef.current ? tile.focused : false;
           presenter = false;
           speaker = false;
+          onlyVideo = false;
         }
 
         newTiles.push({
@@ -845,6 +854,7 @@ export function VideoGrid<T>({
           focused,
           speaker,
           presenter,
+          onlyVideo,
         });
       }
 
@@ -867,6 +877,7 @@ export function VideoGrid<T>({
           focused: layout === "spotlight" && item.focused,
           presenter: item.presenter,
           speaker: item.speaker,
+          onlyVideo: item.onlyVideo,
         };
 
         if (existingTile) {

@@ -474,6 +474,7 @@ function useParticipantTiles(
           focused: false,
           presenter: sfuParticipant.isScreenShareEnabled,
           speaker: sfuParticipant.isSpeaking && !sfuParticipant.isLocal,
+          onlyVideo: sfuParticipant.isCameraEnabled,
           local: sfuParticipant.isLocal,
           data: {
             member,
