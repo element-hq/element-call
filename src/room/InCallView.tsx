@@ -289,6 +289,7 @@ export function InCallView({
           targetWidth={bounds.width}
           key={maximisedParticipant.id}
           data={maximisedParticipant.data}
+          showSpeakingIndicator={false}
         />
       );
     }
@@ -300,7 +301,11 @@ export function InCallView({
         disableAnimations={prefersReducedMotion || isSafari}
       >
         {(props) => (
-          <VideoTile {...props} ref={props.ref as Ref<HTMLDivElement>} />
+          <VideoTile
+            showSpeakingIndicator={items.length > 2}
+            {...props}
+            ref={props.ref as Ref<HTMLDivElement>}
+          />
         )}
       </Grid>
     );
