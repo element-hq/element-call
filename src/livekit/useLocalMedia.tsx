@@ -1,35 +1,27 @@
 import {
   LocalAudioTrack,
-  LocalTrack,
   LocalVideoTrack,
   VideoPresets,
   createLocalTracks,
 } from "livekit-client";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
+import { usePreviewDevice } from "@livekit/components-react";
 
 import { LocalUserChoices } from "./useMediaDevicesChoices";
-import { usePreviewDevice } from "@livekit/components-react";
-// import { usePreviewDevice } from "./usePreviewDevice";
 
-export interface LocalMediaTracks {
+export interface LocalPrevieTracks {
   video: LocalVideoTrack | LocalAudioTrack;
   audio: LocalVideoTrack | LocalAudioTrack;
 }
 
-export function useLocalMediaTracks(
+export function useLocalPreviewTracks(
   userChoices: LocalUserChoices
-): LocalMediaTracks | undefined {
-  // trigger permission popup first,
-  // useEffect(() => {
-  //   navigator.mediaDevices.getUserMedia({
-  //     video: { deviceId: selectedVideoId ?? settingsDefaultDevices.videoinput },
-  //     audio: { deviceId: selectedAudioId ?? settingsDefaultDevices.audioinput },
-  //   });
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
-
-  // const [tracks, setTracks] = useState<LocalTrack[]>();
+): LocalPrevieTracks | undefined {
   useEffect(() => {
+    // This effect is run only once and triggers the permissions gui with a combined video and audio request
+    // The usePreviewDevice hook will await until the permissions are granted so this does not break track creation inside usePreview
+    // TODO: query if the permissions are already granted an skip this check (navigator.permissions.query({ name: "camera" }) is only available on chrome)
+
     const videoOptions = {
       deviceId: userChoices.activeVideoDeviceId,
       resolution: VideoPresets.h720.resolution,
@@ -42,19 +34,7 @@ export function useLocalMediaTracks(
         audio: audioOptions,
       });
 
-      // const { videoUnchanged, audioUnchanged } = await checkForNewTracks();
-      // const createdTracks = await createLocalTracks({
-      //   video: videoUnchanged ? false : videoOptions,
-      //   audio: audioUnchanged ? false : audioOptions,
-      // });
-      // const mergedTracks = [
-      //   createdTracks.find((t) => t.kind == "video") ??
-      //     tracks.find((t) => t.kind == "video"),
-      //   createdTracks.find((t) => t.kind == "audio") ??
-      //     tracks.find((t) => t.kind == "audio"),
-      // ];
       createdTracks.forEach((t) => t.stop());
-      // setTracks(createdTracks); //mergedTracks.filter((t) => t));
     };
 
     createRequiredTracks();
@@ -66,30 +46,12 @@ export function useLocalMediaTracks(
     userChoices.videoEnabled,
     userChoices.activeVideoDeviceId,
     "videoinput"
-    // tracks?.find((t) => t.kind === "video") as LocalVideoTrack
   );
   const audio = usePreviewDevice(
     userChoices.audioEnabled,
     userChoices.activeAudioDeviceId,
     "audioinput"
-    // tracks?.find((track) => track.kind === "audio") as LocalAudioTrack
   );
-
-  // useEffect(() => {
-  //   if (audio.localTrack) {
-  //     setTracks((currentTracks) =>
-  //       currentTracks?.filter((t) => t.kind === "audio")
-  //     );
-  //   }
-  // }, [audio.localTrack]);
-
-  // useEffect(() => {
-  //   if (video?.localTrack) {
-  //     setTracks((currentTracks) =>
-  //       currentTracks?.filter((t) => t.kind === "video")
-  //     );
-  //   }
-  // }, [video.localTrack]);
 
   return {
     video: video?.localTrack,

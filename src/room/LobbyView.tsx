@@ -27,7 +27,7 @@ import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
 import styles from "./LobbyView.module.css";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
-import { useLocalMediaTracks } from "../livekit/useLocalMedia";
+import { useLocalPreviewTracks } from "../livekit/useLocalMedia";
 import {
   LocalUserChoices,
   MediaDevicesList,
@@ -46,7 +46,7 @@ export function LobbyView(props: Props) {
   const { t } = useTranslation();
   useLocationNavigation();
 
-  const mediaTracks = useLocalMediaTracks(props.userChoices);
+  const mediaTracks = useLocalPreviewTracks(props.userChoices);
 
   const joinCallButtonRef = useRef<HTMLButtonElement>();
   useEffect(() => {
