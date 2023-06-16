@@ -90,8 +90,8 @@ interface ActiveCallProps extends Omit<Props, "livekitRoom"> {
 
 export function ActiveCall(props: ActiveCallProps) {
   const livekitRoom = useLiveKit(props.userChoices, {
-    sfuUrl: Config.get().livekit.server_url,
-    jwtUrl: `${Config.get().livekit.jwt_service_url}/token`,
+    sfuUrl: Config.get().livekit!.server_url,
+    jwtUrl: `${Config.get().livekit!.jwt_service_url}/token`,
     roomName: props.matrixInfo.roomName,
     userName: props.matrixInfo.userName,
     userIdentity: `${props.client.getUserId()}:${props.client.getDeviceId()}`,

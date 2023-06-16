@@ -89,7 +89,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     const createChoices = (
       enabled: boolean,
       deviceId?: string
-    ): DeviceChoices => {
+    ): DeviceChoices | undefined => {
       if (deviceId === undefined) {
         return undefined;
       }
@@ -117,10 +117,10 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     mediaDevices.audioIn.setSelected,
   ];
   React.useEffect(() => {
-    if (activeVideoId != "") {
+    if (activeVideoId && activeVideoId !== "") {
       selectVideo(activeVideoId);
     }
-    if (activeAudioId != "") {
+    if (activeAudioId && activeAudioId !== "") {
       selectAudio(activeAudioId);
     }
   }, [selectVideo, selectAudio, activeVideoId, activeAudioId]);
