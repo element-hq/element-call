@@ -42,7 +42,6 @@ import { ResizeObserver as JuggleResizeObserver } from "@juggle/resize-observer"
 import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/GridLayoutMenu";
 import { TileWrapper } from "./TileWrapper";
-import { round } from "lodash";
 
 interface TilePosition {
   x: number;
@@ -713,12 +712,12 @@ function displayedTileCount(
     // Vertical layout (mobile)
     const spotlightTileHeight = (gridHeight - GAP * 3) * (4 / 5);
     const spectatorTileSize = gridHeight - GAP * 3 - spotlightTileHeight;
-    displayedTile = round(gridWidth / spectatorTileSize, 0);
+    displayedTile = Math.round(gridWidth / spectatorTileSize);
   } else {
     const spotlightTileWidth = ((gridWidth - GAP * 3) * 4) / 5;
     const spectatorTileWidth = gridWidth - GAP * 3 - spotlightTileWidth;
     const spectatorTileHeight = spectatorTileWidth * (9 / 16);
-    displayedTile = round(gridHeight / spectatorTileHeight, 0);
+    displayedTile = Math.round(gridHeight / spectatorTileHeight);
   }
 
   return displayedTile;
