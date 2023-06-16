@@ -31,7 +31,6 @@ import { ReactComponent as UserIcon } from "../icons/User.svg";
 import { ReactComponent as VideoIcon } from "../icons/Video.svg";
 import { FieldRow, InputField } from "../input/Input";
 import { SelectInput } from "../input/SelectInput";
-import { LocalUserChoices, MediaDevicesList } from "../livekit/useLiveKit";
 import { TabContainer, TabItem } from "../tabs/Tabs";
 import { Body, Caption } from "../typography/Typography";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
@@ -43,6 +42,11 @@ import {
   useOptInAnalytics,
   useShowInspector,
 } from "./useSetting";
+import {
+  LocalUserChoices,
+  MediaDevicesList,
+  emptyToUndefined,
+} from "../livekit/useMediaDevicesChoices";
 
 interface Props {
   mediaDevices: MediaDevicesList;
@@ -75,12 +79,16 @@ export const SettingsModal = (props: Props) => {
     switch (kind) {
       case "audioinput":
         devices = props.mediaDevices.audioDevices;
-        selectedId = props.userChoices.activeAudioDeviceId;
+        selectedId =
+          emptyToUndefined(props.userChoices.activeAudioDeviceId) ??
+          props.mediaDevices.audioDevices[0]?.deviceId;
         selectActiveDevice = props.userChoices.setActiveAudioDevice;
         break;
       case "videoinput":
         devices = props.mediaDevices.videoDevices;
-        selectedId = props.userChoices.activeAudioDeviceId;
+        selectedId =
+          emptyToUndefined(props.userChoices.activeVideoDeviceId) ??
+          props.mediaDevices.videoDevices[0]?.deviceId;
         selectActiveDevice = props.userChoices.setActiveVideoDevice;
 
         break;
@@ -88,14 +96,6 @@ export const SettingsModal = (props: Props) => {
         devices = props.mediaDevices.audioOutputDevices;
         selectedId = props.userChoices.activeAudioOutputDeviceId;
         selectActiveDevice = props.userChoices.setActiveAudioOutputDevice;
-        break;
-    }
-    switch (kind) {
-      case "audioinput":
-        break;
-      case "videoinput":
-        break;
-      case "audiooutput":
         break;
     }
 

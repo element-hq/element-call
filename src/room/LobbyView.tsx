@@ -22,22 +22,21 @@ import { Trans, useTranslation } from "react-i18next";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { Button, CopyButton } from "../button";
-import {
-  LocalMediaTracks,
-  LocalUserChoices,
-  MediaDevicesList,
-} from "../livekit/useLiveKit";
 import { getRoomUrl } from "../matrix-utils";
 import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
 import styles from "./LobbyView.module.css";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
+import { useLocalMediaTracks } from "../livekit/useLocalMedia";
+import {
+  LocalUserChoices,
+  MediaDevicesList,
+} from "../livekit/useMediaDevicesChoices";
 
 interface Props {
   matrixInfo: MatrixInfo;
   mediaDevices: MediaDevicesList;
   userChoices: LocalUserChoices;
-  localMediaTracks: LocalMediaTracks;
   onEnter: (e: PressEvent) => void;
   isEmbedded: boolean;
   hideHeader: boolean;
@@ -46,6 +45,8 @@ interface Props {
 export function LobbyView(props: Props) {
   const { t } = useTranslation();
   useLocationNavigation();
+
+  const mediaTracks = useLocalMediaTracks(props.userChoices);
 
   const joinCallButtonRef = useRef<HTMLButtonElement>();
   useEffect(() => {
@@ -73,7 +74,7 @@ export function LobbyView(props: Props) {
           <VideoPreview
             matrixInfo={props.matrixInfo}
             mediaDevices={props.mediaDevices}
-            mediaTracks={props.localMediaTracks}
+            mediaTracks={mediaTracks}
             userChoices={props.userChoices}
           />
           <Trans>

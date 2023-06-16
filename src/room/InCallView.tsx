@@ -13,35 +13,28 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
+import React from "react";
 import { ResizeObserver } from "@juggle/resize-observer";
 import {
+  useLiveKitRoom,
   useLocalParticipant,
   useParticipants,
   useToken,
   useTracks,
 } from "@livekit/components-react";
 import { usePreventScroll } from "@react-aria/overlays";
+import { OverlayTriggerState } from "@react-stately/overlays";
 import classNames from "classnames";
 import { Room, Track } from "livekit-client";
+import { JoinRule } from "matrix-js-sdk/src/@types/partials";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import React, { Ref, useCallback, useEffect, useMemo, useRef } from "react";
+import { Ref, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
-import { OverlayTriggerState } from "@react-stately/overlays";
-import { JoinRule } from "matrix-js-sdk/src/@types/partials";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
-import {
-  HangupButton,
-  MicButton,
-  VideoButton,
-  ScreenshareButton,
-  SettingsButton,
-  InviteButton,
-} from "../button";
 import {
   Header,
   LeftNav,
@@ -49,35 +42,44 @@ import {
   RoomHeaderInfo,
   VersionMismatchWarning,
 } from "../Header";
-import {
-  VideoGrid,
-  useVideoGridLayout,
-  TileDescriptor,
-} from "../video-grid/VideoGrid";
-import { useShowInspector } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
-import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useUrlParams } from "../UrlParams";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+import {
+  HangupButton,
+  InviteButton,
+  MicButton,
+  ScreenshareButton,
+  SettingsButton,
+  VideoButton,
+} from "../button";
+import { Config } from "../config/Config";
+import {
+  LocalUserChoices,
+  MediaDevicesList,
+} from "../livekit/useMediaDevicesChoices";
+import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
+import { SettingsModal } from "../settings/SettingsModal";
+import { useRageshakeRequestModal } from "../settings/submit-rageshake";
+import { useShowInspector } from "../settings/useSetting";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
+import { NewVideoGrid } from "../video-grid/NewVideoGrid";
+import {
+  TileDescriptor,
+  VideoGrid,
+  useVideoGridLayout,
+} from "../video-grid/VideoGrid";
+import { ItemData, TileContent, VideoTile } from "../video-grid/VideoTile";
 import { ElementWidgetActions, widget } from "../widget";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { GroupCallInspector } from "./GroupCallInspector";
 import styles from "./InCallView.module.css";
-import { MatrixInfo } from "./VideoPreview";
-import { useJoinRule } from "./useJoinRule";
-import { ParticipantInfo } from "./useGroupCall";
-import { ItemData, TileContent } from "../video-grid/VideoTile";
-import { Config } from "../config/Config";
-import { NewVideoGrid } from "../video-grid/NewVideoGrid";
-import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
-import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
-import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { VideoTile } from "../video-grid/VideoTile";
-import { useRoom } from "./useRoom";
-import { LocalUserChoices, MediaDevicesList } from "../livekit/useLiveKit";
+import { MatrixInfo } from "./VideoPreview";
+import { ParticipantInfo } from "./useGroupCall";
+import { useJoinRule } from "./useJoinRule";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -104,9 +106,9 @@ interface Props {
   hideHeader: boolean;
   matrixInfo: MatrixInfo;
   mediaDevices: MediaDevicesList;
-  livekitRoom: Room;
   userChoices: LocalUserChoices;
   otelGroupCallMembership: OTelGroupCallMembership;
+  livekitRoom: Room;
 }
 
 export function InCallView({
@@ -118,9 +120,9 @@ export function InCallView({
   hideHeader,
   matrixInfo,
   mediaDevices,
-  livekitRoom,
   userChoices,
   otelGroupCallMembership,
+  livekitRoom,
 }: Props) {
   const { t } = useTranslation();
   usePreventScroll();
@@ -161,13 +163,14 @@ export function InCallView({
   livekitRoom.options.videoCaptureDefaults.deviceId =
     userChoices.activeVideoDeviceId;
   // Uses a hook to connect to the LiveKit room (on unmount the room will be left) and publish local media tracks (default).
-  useRoom({
+
+  useLiveKitRoom({
     token,
     serverUrl: Config.get().livekit.server_url,
     room: livekitRoom,
     audio: userChoices.audioEnabled,
     video: userChoices.videoEnabled,
-    simulateParticipants: 10,
+    // simulateParticipants: 10,
     onConnected: onConnectedCallback,
     onDisconnected: onDisconnectedCallback,
     onError: onErrorCallback,
@@ -192,7 +195,9 @@ export function InCallView({
     isCameraEnabled,
     isScreenShareEnabled,
     localParticipant,
-  } = useLocalParticipant({ room: livekitRoom });
+  } = useLocalParticipant({
+    room: livekitRoom,
+  });
 
   const toggleMicrophone = useCallback(async () => {
     await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
@@ -251,7 +256,6 @@ export function InCallView({
 
   const reducedControls = boundsValid && bounds.width <= 400;
   const noControls = reducedControls && bounds.height <= 400;
-
   const items = useParticipantTiles(livekitRoom, participants);
 
   // The maximised participant is the focused (active) participant, given the

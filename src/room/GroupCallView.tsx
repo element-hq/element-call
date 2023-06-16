@@ -14,24 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useEffect, useState } from "react";
-import { useHistory } from "react-router-dom";
-import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
+import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
+import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useHistory } from "react-router-dom";
+import { Room } from "livekit-client";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
-import { ElementWidgetActions, widget } from "../widget";
-import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+import { roomOptions } from "../livekit/options";
+import { useMediaDevicesChoices } from "../livekit/useMediaDevicesChoices";
+import { useProfile } from "../profile/useProfile";
+import { ElementWidgetActions, widget } from "../widget";
+import { CallEndedView } from "./CallEndedView";
+import { InCallView } from "./InCallView";
 import { LobbyView } from "./LobbyView";
 import { MatrixInfo } from "./VideoPreview";
-import { InCallView } from "./InCallView";
-import { CallEndedView } from "./CallEndedView";
+import { useGroupCall } from "./useGroupCall";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
-import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
-import { useProfile } from "../profile/useProfile";
-import { useLiveKit } from "../livekit/useLiveKit";
 
 declare global {
   interface Window {
@@ -86,7 +88,13 @@ export function GroupCallView({
     roomIdOrAlias,
   };
 
-  const deviceChoices = useLiveKit();
+  const [livekitRoom] = useState<Room>(() => {
+    const userChoicesRoomOptions = {
+      ...roomOptions,
+    };
+    return new Room(userChoicesRoomOptions);
+  });
+  const { userChoices, mediaDevices } = useMediaDevicesChoices(livekitRoom);
 
   useEffect(() => {
     if (widget && preload) {
@@ -186,10 +194,10 @@ export function GroupCallView({
         unencryptedEventsFromUsers={unencryptedEventsFromUsers}
         hideHeader={hideHeader}
         matrixInfo={matrixInfo}
-        mediaDevices={deviceChoices.mediaDevices}
-        livekitRoom={deviceChoices.room}
-        userChoices={deviceChoices.userChoices}
+        mediaDevices={mediaDevices}
+        userChoices={userChoices}
         otelGroupCallMembership={otelGroupCallMembership}
+        livekitRoom={livekitRoom}
       />
     );
   } else if (left) {
@@ -224,13 +232,12 @@ export function GroupCallView({
         <h1>{t("Loading…")}</h1>
       </FullScreenView>
     );
-  } else if (deviceChoices) {
+  } else if (userChoices) {
     return (
       <LobbyView
         matrixInfo={matrixInfo}
-        mediaDevices={deviceChoices.mediaDevices}
-        userChoices={deviceChoices.userChoices}
-        localMediaTracks={deviceChoices.localMediaTracks}
+        mediaDevices={mediaDevices}
+        userChoices={userChoices}
         onEnter={enter}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}

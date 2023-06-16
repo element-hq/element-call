@@ -1,9 +1,6 @@
 import { SetMediaDeviceOptions } from "@livekit/components-core";
 import React, { SetStateAction, useEffect, useState } from "react";
-import {
-  useMediaDeviceSelect,
-  usePreviewDevice,
-} from "@livekit/components-react";
+import { useMediaDeviceSelect } from "@livekit/components-react";
 import {
   ConnectionState,
   LocalAudioTrack,
@@ -12,7 +9,6 @@ import {
 } from "livekit-client";
 
 import { useDefaultDevices } from "../settings/useSetting";
-import { roomOptions } from "./options";
 
 export interface LocalUserChoices {
   activeVideoDeviceId: string;
@@ -50,39 +46,19 @@ type DeviceChoices = {
   userChoices: LocalUserChoices;
 
   mediaDevices: MediaDevicesList;
-
-  // The state of the media devices (changing the devices will also change them in the room).
-
-  // The local media (audio and video) that can be referenced in an e.g. lobby view.
-  localMediaTracks: LocalMediaTracks;
-  // A reference to the newly constructed (but not yet entered) room for future use with the LiveKit hooks.
-  // TODO: Abstract this away, so that the user doesn't have to deal with the LiveKit room directly.
-  room: Room;
 };
 
-// function emptyToUndef(str) {
-//   return str === "" ? undefined : str;
-// }
+export function emptyToUndefined(str) {
+  return str === "" ? undefined : str;
+}
 
 // Returns the React state for the LiveKit's Room class.
 // The actual return type should be `LiveKitState`, but since this is a React hook, the initialisation is
 // delayed (done after the rendering, not during the rendering), because of that this function may return `undefined`.
 // But soon this state is changed to the actual `LiveKitState` value.
-export function useLiveKit(): DeviceChoices | undefined {
-  // TODO: Pass the proper paramters to configure the room (supported codecs, simulcast, adaptive streaming, etc).
-  const [room] = useState<Room>(() => {
-    return new Room(roomOptions);
-  });
-
-  // const useEffect()
-  // Create a React state to store the available devices and the selected device for each kind.
-  // const mediaDevices = useMediaDevicesState(room);
-
-  let connectedRoom: Room;
-  if (room.state !== ConnectionState.Disconnected) {
-    connectedRoom = room;
-  }
-
+export function useMediaDevicesChoices(room: Room): DeviceChoices | undefined {
+  const connectedRoom =
+    room.state === ConnectionState.Connected ? room : undefined;
   const {
     devices: videoDevices,
     activeDeviceId: activeVideoDeviceId,
@@ -104,53 +80,36 @@ export function useLiveKit(): DeviceChoices | undefined {
     kind: "audiooutput",
     room: connectedRoom,
   });
-  useEffect(() => {
-    // setActiveVideoDevice(videoDevices[0]?.deviceId);
-  });
   // update the settings inside an effect whenever the mediaDevicesChange
   const [settingsDefaultDevices, setSettingsDefaultDevices] =
     useDefaultDevices();
+
   useEffect(() => {
     setSettingsDefaultDevices({
-      audioinput: activeVideoDeviceId,
-      videoinput: activeAudioDeviceId,
-      audiooutput: activeAudioOutputDeviceId,
+      audioinput:
+        emptyToUndefined(activeAudioDeviceId) ??
+        settingsDefaultDevices.audioinput,
+      videoinput:
+        emptyToUndefined(activeVideoDeviceId) ??
+        settingsDefaultDevices.videoinput,
+      audiooutput:
+        emptyToUndefined(activeAudioOutputDeviceId) ??
+        settingsDefaultDevices.audiooutput,
     });
   }, [
     activeAudioDeviceId,
     activeAudioOutputDeviceId,
     activeVideoDeviceId,
     setSettingsDefaultDevices,
+    settingsDefaultDevices.audioinput,
+    settingsDefaultDevices.audiooutput,
+    settingsDefaultDevices.videoinput,
   ]);
 
   const [videoEnabled, setVideoEnabled] = useState<boolean>(true);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
 
-  // trigger permission popup first,
-  // useEffect(() => {
-  //   navigator.mediaDevices.getUserMedia({
-  //     video: { deviceId: selectedVideoId ?? settingsDefaultDevices.videoinput },
-  //     audio: { deviceId: selectedAudioId ?? settingsDefaultDevices.audioinput },
-  //   });
-  //   // eslint-disable-next-line react-hooks/exhaustive-deps
-  // }, []);
-
-  // then start the preview device (no permission should be triggered agian)
-  // Create local video track.
-  const video = usePreviewDevice(
-    videoEnabled,
-    activeVideoDeviceId ?? settingsDefaultDevices.videoinput,
-    "videoinput"
-  );
-
-  // Create local audio track.
-  const audio = usePreviewDevice(
-    audioEnabled,
-    activeAudioDeviceId ?? settingsDefaultDevices.audioinput,
-    "audioinput"
-  );
-
-  return {
+  const finalVal = {
     mediaDevices: {
       videoDevices,
       audioDevices,
@@ -158,8 +117,12 @@ export function useLiveKit(): DeviceChoices | undefined {
     },
 
     userChoices: {
-      activeVideoDeviceId,
-      activeAudioDeviceId,
+      activeVideoDeviceId:
+        emptyToUndefined(activeVideoDeviceId) ??
+        settingsDefaultDevices.videoinput,
+      activeAudioDeviceId:
+        emptyToUndefined(activeAudioDeviceId) ??
+        settingsDefaultDevices.audioinput,
       activeAudioOutputDeviceId,
       setActiveVideoDevice,
       setActiveAudioDevice,
@@ -170,13 +133,8 @@ export function useLiveKit(): DeviceChoices | undefined {
       setVideoEnabled,
       setAudioEnabled,
     },
-
-    localMediaTracks: {
-      video: video.localTrack,
-      audio: audio.localTrack,
-    },
-    room,
   };
+  return finalVal;
   // React.useEffect(() => {
   //   // Helper to create local media without the copy-paste.
   //   const createLocalMedia = (

@@ -30,7 +30,7 @@ import {
   LocalMediaTracks,
   LocalUserChoices,
   MediaDevicesList,
-} from "../livekit/useLiveKit";
+} from "../livekit/useMediaDevicesChoices";
 
 export type MatrixInfo = {
   userName: string;
