@@ -1,5 +1,8 @@
 import { useMediaDeviceSelect } from "@livekit/components-react";
 import { Room } from "livekit-client";
+import { useEffect } from "react";
+
+import { useDefaultDevices } from "../settings/useSetting";
 
 export type MediaDevices = {
   available: MediaDeviceInfo[];
@@ -38,6 +41,34 @@ export function useMediaDevices(room?: Room): MediaDevicesState {
     kind: "audiooutput",
     room,
   });
+
+  const [settingsDefaultDevices, setSettingsDefaultDevices] =
+    useDefaultDevices();
+
+  useEffect(() => {
+    setSettingsDefaultDevices({
+      audioinput:
+        activeAudioDevice != ""
+          ? activeAudioDevice
+          : settingsDefaultDevices.audioinput,
+      videoinput:
+        activeVideoDevice != ""
+          ? activeVideoDevice
+          : settingsDefaultDevices.videoinput,
+      audiooutput:
+        activeAudioOutputDevice != ""
+          ? activeAudioOutputDevice
+          : settingsDefaultDevices.audiooutput,
+    });
+  }, [
+    activeAudioDevice,
+    activeAudioOutputDevice,
+    activeVideoDevice,
+    setSettingsDefaultDevices,
+    settingsDefaultDevices.audioinput,
+    settingsDefaultDevices.audiooutput,
+    settingsDefaultDevices.videoinput,
+  ]);
 
   return {
     audioIn: {

@@ -28,6 +28,7 @@ import { SettingsModal } from "../settings/SettingsModal";
 import { useClient } from "../ClientContext";
 import { useMediaDevices } from "../livekit/useMediaDevices";
 import { DeviceChoices, UserChoices } from "../livekit/useLiveKit";
+import { useDefaultDevices } from "../settings/useSetting";
 
 export type MatrixInfo = {
   userName: string;
@@ -70,8 +71,17 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     mediaDevices.videoIn.selectedId,
     mediaDevices.audioIn.selectedId,
   ];
-  const video = usePreviewDevice(videoEnabled, videoId ?? "", "videoinput");
-  const audio = usePreviewDevice(audioEnabled, audioId ?? "", "audioinput");
+  const [defaultDevices] = useDefaultDevices();
+  const video = usePreviewDevice(
+    videoEnabled,
+    videoId != "" ? videoId : defaultDevices.videoinput,
+    "videoinput"
+  );
+  const audio = usePreviewDevice(
+    audioEnabled,
+    audioId != "" ? audioId : defaultDevices.audiooutput,
+    "audioinput"
+  );
 
   const activeVideoId = video?.selectedDevice?.deviceId;
   const activeAudioId = audio?.selectedDevice?.deviceId;
