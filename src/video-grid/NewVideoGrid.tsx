@@ -257,7 +257,7 @@ export const NewVideoGrid: FC<Props> = ({
       enter: { opacity: 1, scale: 1, immediate: disableAnimations },
       update: ({ item, x, y, width, height }: Tile) =>
         item.id === dragState.current?.tileId
-          ? {}
+          ? null
           : {
               x,
               y,
@@ -281,38 +281,34 @@ export const NewVideoGrid: FC<Props> = ({
     const { tileId, tileX, tileY, cursorX, cursorY } = dragState.current!;
     const tile = tiles.find((t) => t.item.id === tileId)!;
 
-    springRef.start((_i, controller) => {
-      if ((controller.item as Tile).item.id === tileId) {
-        if (endOfGesture) {
-          return {
-            scale: 1,
-            zIndex: 1,
-            shadow: 1,
-            x: tile.x,
-            y: tile.y,
-            width: tile.width,
-            height: tile.height,
-            immediate: disableAnimations || ((key) => key === "zIndex"),
-            // Allow the tile's position to settle before pushing its
-            // z-index back down
-            delay: (key) => (key === "zIndex" ? 500 : 0),
-          };
-        } else {
-          return {
-            scale: 1.1,
-            zIndex: 2,
-            shadow: 15,
-            x: tileX,
-            y: tileY,
-            immediate:
-              disableAnimations ||
-              ((key) => key === "zIndex" || key === "x" || key === "y"),
-          };
-        }
-      } else {
-        return {};
-      }
-    });
+    springRef.current
+      .find((c) => (c.item as Tile).item.id === tileId)
+      ?.start(
+        endOfGesture
+          ? {
+              scale: 1,
+              zIndex: 1,
+              shadow: 1,
+              x: tile.x,
+              y: tile.y,
+              width: tile.width,
+              height: tile.height,
+              immediate: disableAnimations || ((key) => key === "zIndex"),
+              // Allow the tile's position to settle before pushing its
+              // z-index back down
+              delay: (key) => (key === "zIndex" ? 500 : 0),
+            }
+          : {
+              scale: 1.1,
+              zIndex: 2,
+              shadow: 15,
+              x: tileX,
+              y: tileY,
+              immediate:
+                disableAnimations ||
+                ((key) => key === "zIndex" || key === "x" || key === "y"),
+            }
+      );
 
     const overTile = tiles.find(
       (t) =>
