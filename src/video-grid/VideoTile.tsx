@@ -53,10 +53,21 @@ interface Props {
   targetHeight: number;
   className?: string;
   style?: React.ComponentProps<typeof animated.div>["style"];
+  showSpeakingIndicator: boolean;
 }
 
 export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
-  ({ data, className, style, targetWidth, targetHeight }, tileRef) => {
+  (
+    {
+      data,
+      className,
+      style,
+      targetWidth,
+      targetHeight,
+      showSpeakingIndicator,
+    },
+    tileRef
+  ) => {
     const { t } = useTranslation();
 
     const { content, sfuParticipant, member } = data;
@@ -96,7 +107,10 @@ export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
       <animated.div
         className={classNames(styles.videoTile, className, {
           [styles.isLocal]: sfuParticipant.isLocal,
-          [styles.speaking]: sfuParticipant.isSpeaking,
+          [styles.speaking]:
+            sfuParticipant.isSpeaking &&
+            content === TileContent.UserMedia &&
+            showSpeakingIndicator,
           [styles.muted]: microphoneMuted,
           [styles.screenshare]: content === TileContent.ScreenShare,
         })}

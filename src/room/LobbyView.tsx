@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import React from "react";
-import { PressEvent } from "@react-types/shared";
 import { Trans, useTranslation } from "react-i18next";
 
 import styles from "./LobbyView.module.css";
@@ -25,15 +24,13 @@ import { getRoomUrl } from "../matrix-utils";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
-import { LocalMediaInfo, MatrixInfo, VideoPreview } from "./VideoPreview";
-import { MediaDevicesState } from "../settings/mediaDevices";
+import { MatrixInfo, VideoPreview } from "./VideoPreview";
+import { UserChoices } from "../livekit/useLiveKit";
 
 interface Props {
   matrixInfo: MatrixInfo;
-  mediaDevices: MediaDevicesState;
-  localMedia: LocalMediaInfo;
 
-  onEnter: (e: PressEvent) => void;
+  onEnter: (userChoices: UserChoices) => void;
   isEmbedded: boolean;
   hideHeader: boolean;
 }
@@ -48,6 +45,10 @@ export function LobbyView(props: Props) {
       joinCallButtonRef.current.focus();
     }
   }, [joinCallButtonRef]);
+
+  const [userChoices, setUserChoices] = React.useState<UserChoices | undefined>(
+    undefined
+  );
 
   return (
     <div className={styles.room}>
@@ -68,15 +69,14 @@ export function LobbyView(props: Props) {
         <div className={styles.joinRoomContent}>
           <VideoPreview
             matrixInfo={props.matrixInfo}
-            mediaDevices={props.mediaDevices}
-            localMediaInfo={props.localMedia}
+            onUserChoicesChanged={setUserChoices}
           />
           <Trans>
             <Button
               ref={joinCallButtonRef}
               className={styles.copyButton}
               size="lg"
-              onPress={props.onEnter}
+              onPress={() => props.onEnter(userChoices!)}
               data-testid="lobby_joinCall"
             >
               Join call now

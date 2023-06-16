@@ -8,7 +8,7 @@ import {
   VideoPresets,
 } from "livekit-client";
 
-const publishOptions: TrackPublishDefaults = {
+const defaultLiveKitPublishOptions: TrackPublishDefaults = {
   audioPreset: AudioPresets.music,
   dtx: true,
   red: true,
@@ -22,7 +22,7 @@ const publishOptions: TrackPublishDefaults = {
   backupCodec: { codec: "vp8", encoding: VideoPresets.h360.encoding },
 } as const;
 
-export const roomOptions: RoomOptions = {
+export const defaultLiveKitOptions: RoomOptions = {
   // automatically manage subscribed video quality
   adaptiveStream: true,
 
@@ -35,7 +35,7 @@ export const roomOptions: RoomOptions = {
   },
 
   // publish settings
-  publishDefaults: publishOptions,
+  publishDefaults: defaultLiveKitPublishOptions,
 
   // default LiveKit options that seem to be sane
   stopLocalTrackOnUnpublish: true,
