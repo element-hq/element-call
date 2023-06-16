@@ -22,16 +22,10 @@ import { useProfile } from "./profile/useProfile";
 import { useModalTriggerState } from "./Modal";
 import { SettingsModal } from "./settings/SettingsModal";
 import { UserMenu } from "./UserMenu";
-import { MediaDevicesState } from "./settings/mediaDevices";
 
 interface Props {
   preventNavigation?: boolean;
 }
-
-const mediaDevicesStub: MediaDevicesState = {
-  state: new Map(),
-  selectActiveDevice: () => Promise.resolve(),
-};
 
 export function UserMenuContainer({ preventNavigation = false }: Props) {
   const location = useLocation();
@@ -81,9 +75,6 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
         <SettingsModal
           client={client}
           defaultTab={defaultSettingsTab}
-          // TODO Replace this with real media devices, while making sure this
-          // doesn't cause unnecessary device permission pop-ups
-          mediaDevices={mediaDevicesStub}
           {...modalProps}
         />
       )}

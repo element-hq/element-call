@@ -26,12 +26,12 @@ import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { MatrixInfo } from "./VideoPreview";
-import { InCallView } from "./InCallView";
+import { ActiveCall } from "./InCallView";
 import { CallEndedView } from "./CallEndedView";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
-import { useLiveKit } from "../livekit/useLiveKit";
+import { UserChoices } from "../livekit/useLiveKit";
 
 declare global {
   interface Window {
@@ -85,8 +85,6 @@ export function GroupCallView({
     roomName: groupCall.room.name,
     roomIdOrAlias,
   };
-
-  const lkState = useLiveKit();
 
   useEffect(() => {
     if (widget && preload) {
@@ -174,11 +172,15 @@ export function GroupCallView({
     }
   }, [groupCall, state, leave]);
 
+  const [userChoices, setUserChoices] = useState<UserChoices | undefined>(
+    undefined
+  );
+
   if (error) {
     return <ErrorView error={error} />;
-  } else if (state === GroupCallState.Entered) {
+  } else if (state === GroupCallState.Entered && userChoices) {
     return (
-      <InCallView
+      <ActiveCall
         groupCall={groupCall}
         client={client}
         participants={participants}
@@ -186,12 +188,7 @@ export function GroupCallView({
         unencryptedEventsFromUsers={unencryptedEventsFromUsers}
         hideHeader={hideHeader}
         matrixInfo={matrixInfo}
-        mediaDevices={lkState.mediaDevices}
-        livekitRoom={lkState.room}
-        userChoices={{
-          videoMuted: lkState?.localMedia.video?.muted ?? true,
-          audioMuted: lkState?.localMedia.audio?.muted ?? true,
-        }}
+        userChoices={userChoices}
         otelGroupCallMembership={otelGroupCallMembership}
       />
     );
@@ -227,18 +224,17 @@ export function GroupCallView({
         <h1>{t("Loading…")}</h1>
       </FullScreenView>
     );
-  } else if (lkState) {
+  } else {
     return (
       <LobbyView
         matrixInfo={matrixInfo}
-        mediaDevices={lkState.mediaDevices}
-        localMedia={lkState.localMedia}
-        onEnter={enter}
+        onEnter={(choices: UserChoices) => {
+          setUserChoices(choices);
+          enter();
+        }}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
       />
     );
-  } else {
-    return null;
   }
 }
