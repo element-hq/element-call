@@ -923,6 +923,7 @@ export function VideoGrid<T>({
 
       const presenter = newTiles.find((t) => t.presenter);
       let displayedTile = -1;
+      // Only on screen share we will not move active displayed speaker
       if (presenter !== undefined) {
         displayedTile = displayedTileCount(
           layout,
