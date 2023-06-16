@@ -42,6 +42,7 @@ import { ResizeObserver as JuggleResizeObserver } from "@juggle/resize-observer"
 import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/GridLayoutMenu";
 import { TileWrapper } from "./TileWrapper";
+import { round } from "lodash";
 
 interface TilePosition {
   x: number;
@@ -691,9 +692,41 @@ function getSubGridPositions(
   return newTilePositions;
 }
 
+// Calculates the number of possible tiles that can be displayed
+function displayedTileCount(
+  layout: Layout,
+  tileCount,
+  gridWidth: number,
+  gridHeight: number
+): number {
+  let displayedTile = -1;
+  if (layout === "freedom") {
+    return displayedTile;
+  }
+  if (tileCount < 2) {
+    return displayedTile;
+  }
+
+  const gridAspectRatio = gridWidth / gridHeight;
+
+  if (gridAspectRatio < 1) {
+    // Vertical layout (mobile)
+    const spotlightTileHeight = (gridHeight - GAP * 3) * (4 / 5);
+    const spectatorTileSize = gridHeight - GAP * 3 - spotlightTileHeight;
+    displayedTile = round(gridWidth / spectatorTileSize, 0);
+  } else {
+    const spotlightTileWidth = ((gridWidth - GAP * 3) * 4) / 5;
+    const spectatorTileWidth = gridWidth - GAP * 3 - spotlightTileWidth;
+    const spectatorTileHeight = spectatorTileWidth * (9 / 16);
+    displayedTile = round(gridHeight / spectatorTileHeight, 0);
+  }
+
+  return displayedTile;
+}
+
 // Sets the 'order' property on tiles based on the layout param and
 // other properties of the tiles, eg. 'focused' and 'presenter'
-function reorderTiles<T>(tiles: Tile<T>[], layout: Layout) {
+function reorderTiles<T>(tiles: Tile<T>[], layout: Layout, displayedTile = -1) {
   // We use a special layout for 1:1 to always put the local tile first.
   // We only do this if there are two tiles (obviously) and exactly one
   // of them is local: during startup we can have tiles from other users
@@ -723,7 +756,11 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout) {
         focusedTiles.push(tile);
       } else if (tile.presenter) {
         presenterTiles.push(tile);
-      } else if (tile.speaker) {
+      } else if (
+        tile.speaker &&
+        displayedTile > -1 &&
+        displayedTile < tile.order
+      ) {
         speakerTiles.push(tile);
       } else if (tile.onlyVideo) {
         onlyVideoTiles.push(tile);
@@ -889,7 +926,14 @@ export function VideoGrid<T>({
         }
       }
 
-      reorderTiles(newTiles, layout);
+      const tileCount = displayedTileCount(
+        layout,
+        newTiles.length,
+        gridBounds.width,
+        gridBounds.height
+      );
+
+      reorderTiles(newTiles, layout, tileCount);
 
       if (removedTileKeys.size > 0) {
         setTimeout(() => {
