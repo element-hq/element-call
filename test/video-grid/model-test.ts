@@ -22,6 +22,7 @@ import {
   forEachCellInArea,
   Grid,
   row,
+  tryMoveTile,
 } from "../../src/video-grid/model";
 import { TileDescriptor } from "../../src/video-grid/TileDescriptor";
 
@@ -325,3 +326,63 @@ def`;
   );
   expect(showGrid(appendItems(newItems, mkGrid(grid1)))).toBe(grid2);
 });
+
+function testTryMoveTile(
+  title: string,
+  from: number,
+  to: number,
+  input: string,
+  output: string
+): void {
+  test(`tryMoveTile ${title}`, () => {
+    expect(showGrid(tryMoveTile(mkGrid(input), from, to))).toBe(output);
+  });
+}
+
+testTryMoveTile(
+  "refuses to move a tile too far to the left",
+  1,
+  -1,
+  `
+abc`,
+  `
+abc`
+);
+
+testTryMoveTile(
+  "refuses to move a tile too far to the right",
+  1,
+  3,
+  `
+abc`,
+  `
+abc`
+);
+
+testTryMoveTile(
+  "moves a large tile to an unoccupied space",
+  3,
+  1,
+  `
+a b
+ccd
+cce`,
+  `
+acc
+bcc
+d e`
+);
+
+testTryMoveTile(
+  "refuses to move a large tile to an occupied space",
+  3,
+  1,
+  `
+abb
+ccd
+cce`,
+  `
+abb
+ccd
+cce`
+);
