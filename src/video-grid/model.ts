@@ -175,6 +175,8 @@ const areaEnd = (
   g: Grid
 ): number => start + columns - 1 + g.columns * (rows - 1);
 
+const cloneGrid = (g: Grid): Grid => ({ ...g, cells: [...g.cells] });
+
 /**
  * Gets the index of the next gap in the grid that should be backfilled by 1×1
  * tiles.
@@ -258,6 +260,39 @@ function moveTile(g: Grid, from: number, to: number) {
 }
 
 /**
+ * Moves the tile at index "from" over to index "to", if there is space.
+ */
+export function tryMoveTile(g: Grid, from: number, to: number): Grid {
+  const tile = g.cells[from]!;
+
+  if (
+    to > 0 &&
+    to < g.cells.length &&
+    column(to, g) <= g.columns - tile.columns
+  ) {
+    const fromEnd = areaEnd(from, tile.columns, tile.rows, g);
+    const toEnd = areaEnd(to, tile.columns, tile.rows, g);
+
+    // The contents of a given cell are 'displaceable' if it's empty, holds a
+    // 1×1 tile, or is part of the original tile we're trying to reposition
+    const displaceable = (c: Cell | undefined, i: number): boolean =>
+      c === undefined ||
+      (c.columns === 1 && c.rows === 1) ||
+      inArea(i, from, fromEnd, g);
+
+    if (allCellsInArea(to, toEnd, g, displaceable)) {
+      // The target space is free; move
+      const gClone = cloneGrid(g);
+      moveTile(gClone, from, to);
+      return gClone;
+    }
+  }
+
+  // The target space isn't free; don't move
+  return g;
+}
+
+/**
  * Attempts to push a tile upwards by one row, displacing 1×1 tiles and shifting
  * enlarged tiles around when necessary.
  * @returns Whether the tile was actually pushed
@@ -291,7 +326,7 @@ function pushTileUp(g: Grid, from: number): boolean {
  * Backfill any gaps in the grid.
  */
 export function fillGaps(g: Grid): Grid {
-  const result: Grid = { ...g, cells: [...g.cells] };
+  const result = cloneGrid(g);
 
   // This will hopefully be the size of the grid after we're done here, assuming
   // that we can pack the large tiles tightly enough
