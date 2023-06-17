@@ -17,6 +17,7 @@ limitations under the License.
 import TinyQueue from "tinyqueue";
 
 import { TileDescriptor } from "./TileDescriptor";
+import { count, findLastIndex } from "../array-utils";
 
 /**
  * A 1×1 cell in a grid which belongs to a tile.
@@ -103,17 +104,6 @@ export function getPaths(dest: number, g: Grid): (number | null)[] {
 
   // The heap is empty, so we've generated all paths
   return edges as (number | null)[];
-}
-
-function findLastIndex<T>(
-  array: T[],
-  predicate: (item: T) => boolean
-): number | null {
-  for (let i = array.length - 1; i >= 0; i--) {
-    if (predicate(array[i])) return i;
-  }
-
-  return null;
 }
 
 const findLast1By1Index = (g: Grid): number | null =>
@@ -210,10 +200,116 @@ function getNextGap(g: Grid): number | null {
 }
 
 /**
+ * Gets the index of the origin of the tile to which the given cell belongs.
+ */
+function getOrigin(g: Grid, index: number): number {
+  const initialColumn = column(index, g);
+
+  for (
+    let i = index;
+    i >= 0;
+    i = column(i, g) === 0 ? i - g.columns + initialColumn : i - 1
+  ) {
+    const cell = g.cells[i];
+    if (
+      cell !== undefined &&
+      cell.origin &&
+      inArea(index, i, areaEnd(i, cell.columns, cell.rows, g), g)
+    )
+      return i;
+  }
+
+  throw new Error("Tile is broken");
+}
+
+/**
+ * Moves the tile at index "from" over to index "to", displacing other tiles
+ * along the way.
+ * Precondition: the destination area must consist of only 1×1 tiles.
+ */
+function moveTile(g: Grid, from: number, to: number) {
+  const tile = g.cells[from]!;
+  const fromEnd = areaEnd(from, tile.columns, tile.rows, g);
+  const toEnd = areaEnd(to, tile.columns, tile.rows, g);
+
+  const displacedTiles: Cell[] = [];
+  forEachCellInArea(to, toEnd, g, (c, i) => {
+    if (c !== undefined && !inArea(i, from, fromEnd, g)) displacedTiles.push(c);
+  });
+
+  const movingCells: Cell[] = [];
+  forEachCellInArea(from, fromEnd, g, (c, i) => {
+    movingCells.push(c!);
+    g.cells[i] = undefined;
+  });
+
+  forEachCellInArea(
+    to,
+    toEnd,
+    g,
+    (_c, i) => (g.cells[i] = movingCells.shift())
+  );
+  forEachCellInArea(
+    from,
+    fromEnd,
+    g,
+    (_c, i) => (g.cells[i] ??= displacedTiles.shift())
+  );
+}
+
+/**
+ * Attempts to push a tile upwards by one row, displacing 1×1 tiles and shifting
+ * enlarged tiles around when necessary.
+ * @returns Whether the tile was actually pushed
+ */
+function pushTileUp(g: Grid, from: number): boolean {
+  const tile = g.cells[from]!;
+
+  // TODO: pushing large tiles sideways might be more successful in some
+  // situations
+  const cellsAboveAreDisplacable =
+    from - g.columns >= 0 &&
+    allCellsInArea(
+      from - g.columns,
+      from - g.columns + tile.columns - 1,
+      g,
+      (c, i) =>
+        c === undefined ||
+        (c.columns === 1 && c.rows === 1) ||
+        pushTileUp(g, getOrigin(g, i))
+    );
+
+  if (cellsAboveAreDisplacable) {
+    moveTile(g, from, from - g.columns);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+/**
  * Backfill any gaps in the grid.
  */
 export function fillGaps(g: Grid): Grid {
   const result: Grid = { ...g, cells: [...g.cells] };
+
+  // This will hopefully be the size of the grid after we're done here, assuming
+  // that we can pack the large tiles tightly enough
+  const idealLength = count(result.cells, (c) => c !== undefined);
+
+  // Step 1: Take any large tiles hanging off the bottom of the grid, and push
+  // them upwards
+  for (let i = result.cells.length - 1; i >= idealLength; i--) {
+    const cell = result.cells[i];
+    if (cell !== undefined && (cell.columns > 1 || cell.rows > 1)) {
+      const originIndex =
+        i - (cell.columns - 1) - result.columns * (cell.rows - 1);
+      // If it's not possible to pack the large tiles any tighter, give up
+      if (!pushTileUp(result, originIndex)) break;
+    }
+  }
+
+  // Step 2: Fill all 1×1 gaps
   let gap = getNextGap(result);
 
   if (gap !== null) {
@@ -262,9 +358,6 @@ export function fillGaps(g: Grid): Grid {
       gap = getNextGap(result);
     } while (gap !== null);
   }
-
-  // TODO: If there are any large tiles on the last row, shuffle them back
-  // upwards into a full row
 
   // Shrink the array to remove trailing gaps
   const finalLength =
@@ -381,13 +474,18 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
 
   // Copy tiles from the original grid to the new one, with the new rows
   // inserted at the target location
-  g.cells.forEach((c, src) => {
+  g.cells.forEach((c, from) => {
     if (c?.origin && c.item.id !== tileId) {
       const offset =
-        row(src, g) > toRow + candidateHeight - 1 ? g.columns * newRows : 0;
-      forEachCellInArea(src, areaEnd(src, c.columns, c.rows, g), g, (c, i) => {
-        gappyGrid.cells[i + offset] = c;
-      });
+        row(from, g) > toRow + candidateHeight - 1 ? g.columns * newRows : 0;
+      forEachCellInArea(
+        from,
+        areaEnd(from, c.columns, c.rows, g),
+        g,
+        (c, i) => {
+          gappyGrid.cells[i + offset] = c;
+        }
+      );
     }
   });
 

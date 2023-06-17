@@ -169,6 +169,50 @@ dddd
 iegh`
 );
 
+testFillGaps(
+  "keeps a large tile from hanging off the bottom",
+  `
+abcd
+efgh
+    
+ii  
+ii`,
+  `
+abcd
+iigh
+iief`
+);
+
+testFillGaps(
+  "pushes a chain of large tiles upwards",
+  `
+abcd
+e fg
+hh  
+hh  
+ ii 
+ ii`,
+  `
+hhcd
+hhfg
+aiib
+eii`
+);
+
+testFillGaps(
+  "gives up on pushing large tiles upwards when not possible",
+  `
+aabb
+aabb
+cc  
+cc`,
+  `
+aabb
+aabb
+cc  
+cc`
+);
+
 function testCycleTileSize(
   title: string,
   tileId: string,
