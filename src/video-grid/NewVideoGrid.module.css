@@ -18,7 +18,7 @@ limitations under the License.
   contain: strict;
   position: relative;
   flex-grow: 1;
-  padding: 0 20px;
+  padding: 0 20px var(--footerHeight);
   overflow-y: auto;
   overflow-x: hidden;
 }
@@ -28,7 +28,6 @@ limitations under the License.
   display: grid;
   grid-auto-rows: 163px;
   gap: 8px;
-  padding-bottom: var(--footerHeight);
 }
 
 .slot {
@@ -37,7 +36,7 @@ limitations under the License.
 
 @media (min-width: 800px) {
   .grid {
-    padding: 0 22px;
+    padding: 0 22px var(--footerHeight);
   }
 
   .slotGrid {

@@ -17,6 +17,7 @@ limitations under the License.
 import TinyQueue from "tinyqueue";
 
 import { TileDescriptor } from "./VideoGrid";
+import { count, findLastIndex } from "../array-utils";
 
 /**
  * A 1×1 cell in a grid which belongs to a tile.
@@ -105,17 +106,6 @@ export function getPaths(dest: number, g: Grid): (number | null)[] {
   return edges as (number | null)[];
 }
 
-function findLastIndex<T>(
-  array: T[],
-  predicate: (item: T) => boolean
-): number | null {
-  for (let i = array.length - 1; i >= 0; i--) {
-    if (predicate(array[i])) return i;
-  }
-
-  return null;
-}
-
 const findLast1By1Index = (g: Grid): number | null =>
   findLastIndex(g.cells, (c) => c?.rows === 1 && c?.columns === 1);
 
@@ -185,6 +175,8 @@ const areaEnd = (
   g: Grid
 ): number => start + columns - 1 + g.columns * (rows - 1);
 
+const cloneGrid = (g: Grid): Grid => ({ ...g, cells: [...g.cells] });
+
 /**
  * Gets the index of the next gap in the grid that should be backfilled by 1×1
  * tiles.
@@ -210,10 +202,149 @@ function getNextGap(g: Grid): number | null {
 }
 
 /**
+ * Gets the index of the origin of the tile to which the given cell belongs.
+ */
+function getOrigin(g: Grid, index: number): number {
+  const initialColumn = column(index, g);
+
+  for (
+    let i = index;
+    i >= 0;
+    i = column(i, g) === 0 ? i - g.columns + initialColumn : i - 1
+  ) {
+    const cell = g.cells[i];
+    if (
+      cell !== undefined &&
+      cell.origin &&
+      inArea(index, i, areaEnd(i, cell.columns, cell.rows, g), g)
+    )
+      return i;
+  }
+
+  throw new Error("Tile is broken");
+}
+
+/**
+ * Moves the tile at index "from" over to index "to", displacing other tiles
+ * along the way.
+ * Precondition: the destination area must consist of only 1×1 tiles.
+ */
+function moveTile(g: Grid, from: number, to: number) {
+  const tile = g.cells[from]!;
+  const fromEnd = areaEnd(from, tile.columns, tile.rows, g);
+  const toEnd = areaEnd(to, tile.columns, tile.rows, g);
+
+  const displacedTiles: Cell[] = [];
+  forEachCellInArea(to, toEnd, g, (c, i) => {
+    if (c !== undefined && !inArea(i, from, fromEnd, g)) displacedTiles.push(c);
+  });
+
+  const movingCells: Cell[] = [];
+  forEachCellInArea(from, fromEnd, g, (c, i) => {
+    movingCells.push(c!);
+    g.cells[i] = undefined;
+  });
+
+  forEachCellInArea(
+    to,
+    toEnd,
+    g,
+    (_c, i) => (g.cells[i] = movingCells.shift())
+  );
+  forEachCellInArea(
+    from,
+    fromEnd,
+    g,
+    (_c, i) => (g.cells[i] ??= displacedTiles.shift())
+  );
+}
+
+/**
+ * Moves the tile at index "from" over to index "to", if there is space.
+ */
+export function tryMoveTile(g: Grid, from: number, to: number): Grid {
+  const tile = g.cells[from]!;
+
+  if (
+    to > 0 &&
+    to < g.cells.length &&
+    column(to, g) <= g.columns - tile.columns
+  ) {
+    const fromEnd = areaEnd(from, tile.columns, tile.rows, g);
+    const toEnd = areaEnd(to, tile.columns, tile.rows, g);
+
+    // The contents of a given cell are 'displaceable' if it's empty, holds a
+    // 1×1 tile, or is part of the original tile we're trying to reposition
+    const displaceable = (c: Cell | undefined, i: number): boolean =>
+      c === undefined ||
+      (c.columns === 1 && c.rows === 1) ||
+      inArea(i, from, fromEnd, g);
+
+    if (allCellsInArea(to, toEnd, g, displaceable)) {
+      // The target space is free; move
+      const gClone = cloneGrid(g);
+      moveTile(gClone, from, to);
+      return gClone;
+    }
+  }
+
+  // The target space isn't free; don't move
+  return g;
+}
+
+/**
+ * Attempts to push a tile upwards by one row, displacing 1×1 tiles and shifting
+ * enlarged tiles around when necessary.
+ * @returns Whether the tile was actually pushed
+ */
+function pushTileUp(g: Grid, from: number): boolean {
+  const tile = g.cells[from]!;
+
+  // TODO: pushing large tiles sideways might be more successful in some
+  // situations
+  const cellsAboveAreDisplacable =
+    from - g.columns >= 0 &&
+    allCellsInArea(
+      from - g.columns,
+      from - g.columns + tile.columns - 1,
+      g,
+      (c, i) =>
+        c === undefined ||
+        (c.columns === 1 && c.rows === 1) ||
+        pushTileUp(g, getOrigin(g, i))
+    );
+
+  if (cellsAboveAreDisplacable) {
+    moveTile(g, from, from - g.columns);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+/**
  * Backfill any gaps in the grid.
  */
 export function fillGaps(g: Grid): Grid {
-  const result: Grid = { ...g, cells: [...g.cells] };
+  const result = cloneGrid(g);
+
+  // This will hopefully be the size of the grid after we're done here, assuming
+  // that we can pack the large tiles tightly enough
+  const idealLength = count(result.cells, (c) => c !== undefined);
+
+  // Step 1: Take any large tiles hanging off the bottom of the grid, and push
+  // them upwards
+  for (let i = result.cells.length - 1; i >= idealLength; i--) {
+    const cell = result.cells[i];
+    if (cell !== undefined && (cell.columns > 1 || cell.rows > 1)) {
+      const originIndex =
+        i - (cell.columns - 1) - result.columns * (cell.rows - 1);
+      // If it's not possible to pack the large tiles any tighter, give up
+      if (!pushTileUp(result, originIndex)) break;
+    }
+  }
+
+  // Step 2: Fill all 1×1 gaps
   let gap = getNextGap(result);
 
   if (gap !== null) {
@@ -263,9 +394,6 @@ export function fillGaps(g: Grid): Grid {
     } while (gap !== null);
   }
 
-  // TODO: If there are any large tiles on the last row, shuffle them back
-  // upwards into a full row
-
   // Shrink the array to remove trailing gaps
   const finalLength =
     (findLastIndex(result.cells, (c) => c !== undefined) ?? -1) + 1;
@@ -290,6 +418,11 @@ export function appendItems(items: TileDescriptor<unknown>[], g: Grid): Grid {
   };
 }
 
+const largeTileDimensions = (g: Grid): [number, number] => [
+  Math.min(3, Math.max(2, g.columns - 1)),
+  2,
+];
+
 /**
  * Changes the size of a tile, rearranging the grid to make space.
  * @param tileId The ID of the tile to modify.
@@ -305,9 +438,7 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
 
   // The target dimensions, which toggle between 1×1 and larger than 1×1
   const [toWidth, toHeight] =
-    fromWidth === 1 && fromHeight === 1
-      ? [Math.min(3, Math.max(2, g.columns - 1)), 2]
-      : [1, 1];
+    fromWidth === 1 && fromHeight === 1 ? largeTileDimensions(g) : [1, 1];
 
   // If we're expanding the tile, we want to create enough new rows at the
   // tile's target position such that every new unit of grid area created during
@@ -381,13 +512,18 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
 
   // Copy tiles from the original grid to the new one, with the new rows
   // inserted at the target location
-  g.cells.forEach((c, src) => {
+  g.cells.forEach((c, from) => {
     if (c?.origin && c.item.id !== tileId) {
       const offset =
-        row(src, g) > toRow + candidateHeight - 1 ? g.columns * newRows : 0;
-      forEachCellInArea(src, areaEnd(src, c.columns, c.rows, g), g, (c, i) => {
-        gappyGrid.cells[i + offset] = c;
-      });
+        row(from, g) > toRow + candidateHeight - 1 ? g.columns * newRows : 0;
+      forEachCellInArea(
+        from,
+        areaEnd(from, c.columns, c.rows, g),
+        g,
+        (c, i) => {
+          gappyGrid.cells[i + offset] = c;
+        }
+      );
     }
   });
 
@@ -413,4 +549,47 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
 
   // Fill any gaps that remain
   return fillGaps(gappyGrid);
+}
+
+/**
+ * Resizes the grid to a new column width.
+ */
+export function resize(g: Grid, columns: number): Grid {
+  const result: Grid = { columns, cells: [] };
+  const [largeColumns, largeRows] = largeTileDimensions(result);
+
+  // Copy each tile from the old grid to the resized one in the same order
+
+  // The next index in the result grid to copy a tile to
+  let next = 0;
+
+  for (const cell of g.cells) {
+    if (cell?.origin) {
+      const [nextColumns, nextRows] =
+        cell.columns > 1 || cell.rows > 1 ? [largeColumns, largeRows] : [1, 1];
+
+      // If there isn't enough space left on this row, jump to the next row
+      if (columns - column(next, result) < nextColumns)
+        next = columns * (Math.floor(next / columns) + 1);
+      const nextEnd = areaEnd(next, nextColumns, nextRows, result);
+
+      // Expand the cells array as necessary
+      if (result.cells.length <= nextEnd)
+        result.cells.push(...new Array(nextEnd + 1 - result.cells.length));
+
+      // Copy the tile into place
+      forEachCellInArea(next, nextEnd, result, (_c, i) => {
+        result.cells[i] = {
+          item: cell.item,
+          origin: i === next,
+          columns: nextColumns,
+          rows: nextRows,
+        };
+      });
+
+      next = nextEnd + 1;
+    }
+  }
+
+  return fillGaps(result);
 }
