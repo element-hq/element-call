@@ -668,3 +668,31 @@ export function resize(g: Grid, columns: number): Grid {
 
   return fillGaps(result);
 }
+
+/**
+ * Promotes speakers to the first page of the grid.
+ */
+export function promoteSpeakers(g: Grid) {
+  // This is all a bit of a hack right now, because we don't know if the designs
+  // will stick with this approach in the long run
+  // We assume that 4 rows are probably about 1 page
+  const firstPageEnd = g.columns * 4;
+
+  for (let from = firstPageEnd; from < g.cells.length; from++) {
+    const fromCell = g.cells[from];
+    // Don't bother trying to promote enlarged tiles
+    if (
+      fromCell?.item.isSpeaker &&
+      fromCell.columns === 1 &&
+      fromCell.rows === 1
+    ) {
+      // Promote this tile by making 10 attempts to place it on the first page
+      for (let j = 0; j < 10; j++) {
+        const to = Math.floor(Math.random() * firstPageEnd);
+        const toCell = g.cells[to];
+        if (toCell === undefined || (toCell.columns === 1 && toCell.rows === 1))
+          moveTile(g, from, to);
+      }
+    }
+  }
+}
