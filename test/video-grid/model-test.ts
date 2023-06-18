@@ -33,7 +33,7 @@ import { TileDescriptor } from "../../src/video-grid/TileDescriptor";
 function mkGrid(spec: string): Grid {
   const secondNewline = spec.indexOf("\n", 1);
   const columns = secondNewline === -1 ? spec.length : secondNewline - 1;
-  const cells = spec.match(/[a-z ]/g) ?? [];
+  const cells = spec.match(/[a-z ]/g) ?? ([] as string[]);
   const areas = new Set(cells);
   areas.delete(" "); // Space represents an empty cell, not an area
   const grid: Grid = { columns, cells: new Array(cells.length) };

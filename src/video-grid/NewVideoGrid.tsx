@@ -46,6 +46,7 @@ import {
   addItems,
   tryMoveTile,
   resize,
+  promoteSpeakers,
 } from "./model";
 import { TileWrapper } from "./TileWrapper";
 
@@ -95,6 +96,9 @@ const useGridState = (
       );
       const newItems = items.filter((i) => !existingItemIds.has(i.id));
       const grid3 = addItems(newItems, grid2);
+
+      // Step 4: Promote speakers to the top
+      promoteSpeakers(grid3);
 
       return { ...grid3, generation: prevGrid.generation + 1 };
     },

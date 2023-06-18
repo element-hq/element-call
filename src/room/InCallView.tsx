@@ -216,6 +216,7 @@ export function InCallView({
           focused: screenshareFeeds.length === 0 && callFeed === activeSpeaker,
           isLocal: member.userId === localUserId && deviceId === localDeviceId,
           presenter,
+          isSpeaker: callFeed === activeSpeaker,
           largeBaseSize: false,
           connectionState,
         });
@@ -244,6 +245,7 @@ export function InCallView({
           focused: true,
           isLocal: screenshareFeed.isLocal(),
           presenter: false,
+          isSpeaker: screenshareFeed === activeSpeaker,
           largeBaseSize: true,
           placeNear: `${member.userId} ${deviceId}`,
           connectionState,
