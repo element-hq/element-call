@@ -45,6 +45,7 @@ import {
   cycleTileSize,
   appendItems,
   tryMoveTile,
+  resize,
 } from "./model";
 import { TileWrapper } from "./TileWrapper";
 
@@ -82,8 +83,11 @@ const useGridState = (
         }),
       };
 
-      // Step 2: Backfill gaps left behind by removed tiles
-      const grid2 = fillGaps(grid1);
+      // Step 2: Resize the grid if necessary and backfill gaps left behind by
+      // removed tiles
+      // Resizing already takes care of backfilling gaps
+      const grid2 =
+        columns !== grid1.columns ? resize(grid1, columns!) : fillGaps(grid1);
 
       // Step 3: Add new tiles to the end of the grid
       const existingItemIds = new Set(
@@ -205,14 +209,10 @@ export const NewVideoGrid: FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slotGrid, slotGridGeneration, gridBounds]);
 
-  const [columns] = useReactiveState<number | null>(
-    // Since grid resizing isn't implemented yet, pick a column count on mount
-    // and stick to it
-    (prevColumns) =>
-      prevColumns !== undefined && prevColumns !== null
-        ? prevColumns
-        : // The grid bounds might not be known yet
-        gridBounds.width === 0
+  const columns = useMemo(
+    () =>
+      // The grid bounds might not be known yet
+      gridBounds.width === 0
         ? null
         : Math.max(2, Math.floor(gridBounds.width * 0.0045)),
     [gridBounds]

@@ -21,6 +21,7 @@ import {
   fillGaps,
   forEachCellInArea,
   Grid,
+  resize,
   row,
   tryMoveTile,
 } from "../../src/video-grid/model";
@@ -385,4 +386,53 @@ cce`,
 abb
 ccd
 cce`
+);
+
+function testResize(
+  title: string,
+  columns: number,
+  input: string,
+  output: string
+): void {
+  test(`resize ${title}`, () => {
+    expect(showGrid(resize(mkGrid(input), columns))).toBe(output);
+  });
+}
+
+testResize(
+  "contracts the grid",
+  2,
+  `
+abbb
+cbbb
+ddde
+dddf
+gh`,
+  `
+af
+bb
+bb
+ch
+dd
+dd
+eg`
+);
+
+testResize(
+  "expands the grid",
+  4,
+  `
+af
+bb
+bb
+ch
+dd
+dd
+eg`,
+  `
+bbbc
+bbbf
+addd
+hddd
+ge`
 );
