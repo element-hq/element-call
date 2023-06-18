@@ -79,7 +79,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
   );
   const audio = usePreviewDevice(
     audioEnabled,
-    audioId != "" ? audioId : defaultDevices.audiooutput,
+    audioId != "" ? audioId : defaultDevices.audioinput,
     "audioinput"
   );
 
