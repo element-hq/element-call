@@ -464,6 +464,7 @@ function useParticipantTiles(
             !sfuParticipant.isLocal,
           hasVideo: sfuParticipant.isCameraEnabled,
           local: sfuParticipant.isLocal,
+          largeBaseSize: false,
           data: {
             member,
             sfuParticipant,
@@ -478,6 +479,8 @@ function useParticipantTiles(
             ...userMediaTile,
             id: `${id}:screen-share`,
             focused: true,
+            largeBaseSize: true,
+            placeNear: id,
             data: {
               ...userMediaTile.data,
               content: TileContent.ScreenShare,
