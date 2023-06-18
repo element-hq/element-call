@@ -442,6 +442,7 @@ function useParticipantTiles(
 
     const hasPresenter =
       sfuParticipants.find((p) => p.isScreenShareEnabled) !== undefined;
+    let allGhosts = true;
 
     const speakActiveTime = new Date();
     speakActiveTime.setSeconds(speakActiveTime.getSeconds() - 10);
@@ -455,6 +456,8 @@ function useParticipantTiles(
 
         const id = sfuParticipant.identity;
         const member = matrixParticipants.get(id);
+        allGhosts &&= member === undefined;
+
         const userMediaTile = {
           id,
           focused: false,
@@ -498,7 +501,9 @@ function useParticipantTiles(
       tiles.length
     );
 
-    return tiles;
+    // If every item is a ghost, that probably means we're still connecting and
+    // shouldn't bother showing anything yet
+    return allGhosts ? [] : tiles;
   }, [participants, sfuParticipants]);
 
   return items;
