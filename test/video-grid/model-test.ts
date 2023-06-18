@@ -273,9 +273,9 @@ dbbe
 fghi
 jk`,
   `
-abhc
-djge
-fik`
+akbc
+djhe
+fig`
 );
 
 testCycleTileSize(
