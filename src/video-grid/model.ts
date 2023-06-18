@@ -690,8 +690,13 @@ export function promoteSpeakers(g: Grid) {
       for (let j = 0; j < 10; j++) {
         const to = Math.floor(Math.random() * firstPageEnd);
         const toCell = g.cells[to];
-        if (toCell === undefined || (toCell.columns === 1 && toCell.rows === 1))
+        if (
+          toCell === undefined ||
+          (toCell.columns === 1 && toCell.rows === 1)
+        ) {
           moveTile(g, from, to);
+          break;
+        }
       }
     }
   }
