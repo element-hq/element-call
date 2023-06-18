@@ -43,7 +43,7 @@ import {
   fillGaps,
   forEachCellInArea,
   cycleTileSize,
-  appendItems,
+  addItems,
   tryMoveTile,
   resize,
 } from "./model";
@@ -94,7 +94,7 @@ const useGridState = (
         grid2.cells.filter((c) => c !== undefined).map((c) => c!.item.id)
       );
       const newItems = items.filter((i) => !existingItemIds.has(i.id));
-      const grid3 = appendItems(newItems, grid2);
+      const grid3 = addItems(newItems, grid2);
 
       return { ...grid3, generation: prevGrid.generation + 1 };
     },
