@@ -266,7 +266,7 @@ export function tryMoveTile(g: Grid, from: number, to: number): Grid {
   const tile = g.cells[from]!;
 
   if (
-    to > 0 &&
+    to >= 0 &&
     to < g.cells.length &&
     column(to, g) <= g.columns - tile.columns
   ) {
@@ -403,25 +403,103 @@ export function fillGaps(g: Grid): Grid {
   return result;
 }
 
-export function appendItems(items: TileDescriptor<unknown>[], g: Grid): Grid {
-  return {
-    ...g,
-    cells: [
-      ...g.cells,
-      ...items.map((i) => ({
-        item: i,
-        origin: true,
-        columns: 1,
-        rows: 1,
-      })),
-    ],
+function createRows(g: Grid, count: number, atRow: number): Grid {
+  const result = {
+    columns: g.columns,
+    cells: new Array(g.cells.length + g.columns * count),
   };
+  const offsetAfterNewRows = g.columns * count;
+
+  // Copy tiles from the original grid to the new one, with the new rows
+  // inserted at the target location
+  g.cells.forEach((c, from) => {
+    if (c?.origin) {
+      const offset = row(from, g) >= atRow ? offsetAfterNewRows : 0;
+      forEachCellInArea(
+        from,
+        areaEnd(from, c.columns, c.rows, g),
+        g,
+        (c, i) => {
+          result.cells[i + offset] = c;
+        }
+      );
+    }
+  });
+
+  return result;
+}
+
+/**
+ * Adds a set of new items into the grid.
+ */
+export function addItems(items: TileDescriptor<unknown>[], g: Grid): Grid {
+  let result = cloneGrid(g);
+
+  for (const item of items) {
+    const cell = {
+      item,
+      origin: true,
+      columns: 1,
+      rows: 1,
+    };
+
+    let placeAt: number;
+    let hasGaps: boolean;
+
+    if (item.placeNear === undefined) {
+      // This item has no special placement requests, so let's put it
+      // uneventfully at the end of the grid
+      placeAt = result.cells.length;
+      hasGaps = false;
+    } else {
+      // This item wants to be placed near another; let's put it on a row
+      // directly below the related tile
+      const placeNear = result.cells.findIndex(
+        (c) => c?.item.id === item.placeNear
+      );
+      if (placeNear === -1) {
+        // Can't find the related tile, so let's give up and place it at the end
+        placeAt = result.cells.length;
+        hasGaps = false;
+      } else {
+        const placeNearCell = result.cells[placeNear]!;
+        const placeNearEnd = areaEnd(
+          placeNear,
+          placeNearCell.columns,
+          placeNearCell.rows,
+          result
+        );
+
+        result = createRows(result, 1, row(placeNearEnd, result) + 1);
+        placeAt =
+          placeNear +
+          Math.floor(placeNearCell.columns / 2) +
+          result.columns * placeNearCell.rows;
+        hasGaps = true;
+      }
+    }
+
+    result.cells[placeAt] = cell;
+
+    if (item.largeBaseSize) {
+      // Cycle the tile size once to set up the tile with its larger base size
+      // This also fills any gaps in the grid, hence no extra call to fillGaps
+      result = cycleTileSize(item.id, result);
+    } else if (hasGaps) {
+      result = fillGaps(result);
+    }
+  }
+
+  return result;
 }
 
 const largeTileDimensions = (g: Grid): [number, number] => [
   Math.min(3, Math.max(2, g.columns - 1)),
   2,
 ];
+
+const extraLargeTileDimensions = (g: Grid): [number, number] =>
+  g.columns > 3 ? [4, 3] : [g.columns, 2];
 
 /**
  * Changes the size of a tile, rearranging the grid to make space.
@@ -432,13 +510,19 @@ const largeTileDimensions = (g: Grid): [number, number] => [
 export function cycleTileSize(tileId: string, g: Grid): Grid {
   const from = g.cells.findIndex((c) => c?.item.id === tileId);
   if (from === -1) return g; // Tile removed, no change
-  const fromWidth = g.cells[from]!.columns;
-  const fromHeight = g.cells[from]!.rows;
+  const fromCell = g.cells[from]!;
+  const fromWidth = fromCell.columns;
+  const fromHeight = fromCell.rows;
   const fromEnd = areaEnd(from, fromWidth, fromHeight, g);
 
-  // The target dimensions, which toggle between 1×1 and larger than 1×1
+  const [baseDimensions, enlargedDimensions] = fromCell.item.largeBaseSize
+    ? [largeTileDimensions(g), extraLargeTileDimensions(g)]
+    : [[1, 1], largeTileDimensions(g)];
+  // The target dimensions, which toggle between the base and enlarged sizes
   const [toWidth, toHeight] =
-    fromWidth === 1 && fromHeight === 1 ? largeTileDimensions(g) : [1, 1];
+    fromWidth === baseDimensions[0] && fromHeight === baseDimensions[1]
+      ? enlargedDimensions
+      : baseDimensions;
 
   // If we're expanding the tile, we want to create enough new rows at the
   // tile's target position such that every new unit of grid area created during
@@ -450,12 +534,6 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
     Math.ceil((toWidth * toHeight - fromWidth * fromHeight) / g.columns)
   );
 
-  // This is the grid with the new rows added
-  const gappyGrid: Grid = {
-    ...g,
-    cells: new Array(g.cells.length + newRows * g.columns),
-  };
-
   // The next task is to scan for a spot to place the modified tile. Since we
   // might be creating new rows at the target position, this spot can be shorter
   // than the target height.
@@ -465,8 +543,8 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
   // To make the tile appear to expand outwards from its center, we're actually
   // scanning for locations to put the *center* of the tile. These numbers are
   // the offsets between the tile's origin and its center.
-  const scanColumnOffset = Math.floor((toWidth - 1) / 2);
-  const scanRowOffset = Math.floor((toHeight - 1) / 2);
+  const scanColumnOffset = Math.floor((toWidth - fromWidth) / 2);
+  const scanRowOffset = Math.floor((toHeight - fromHeight) / 2);
 
   const nextScanLocations = new Set<number>([from]);
   const rows = row(g.cells.length - 1, g) + 1;
@@ -510,22 +588,19 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
 
   const toRow = row(to, g);
 
-  // Copy tiles from the original grid to the new one, with the new rows
-  // inserted at the target location
-  g.cells.forEach((c, from) => {
-    if (c?.origin && c.item.id !== tileId) {
-      const offset =
-        row(from, g) > toRow + candidateHeight - 1 ? g.columns * newRows : 0;
-      forEachCellInArea(
-        from,
-        areaEnd(from, c.columns, c.rows, g),
-        g,
-        (c, i) => {
-          gappyGrid.cells[i + offset] = c;
-        }
-      );
-    }
-  });
+  // This is the grid with the new rows added
+  const gappyGrid = createRows(g, newRows, toRow + candidateHeight);
+
+  // Remove the original tile
+  const fromInGappyGrid =
+    from + (row(from, g) >= toRow + candidateHeight ? g.columns * newRows : 0);
+  const fromEndInGappyGrid = fromInGappyGrid - from + fromEnd;
+  forEachCellInArea(
+    fromInGappyGrid,
+    fromEndInGappyGrid,
+    gappyGrid,
+    (_c, i) => (gappyGrid.cells[i] = undefined)
+  );
 
   // Place the tile in its target position, making a note of the tiles being
   // overwritten

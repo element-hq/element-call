@@ -812,6 +812,8 @@ export interface TileDescriptor<T> {
   isSpeaker: boolean;
   hasVideo: boolean;
   local: boolean;
+  largeBaseSize: boolean;
+  placeNear?: string;
   data: T;
 }
 
