@@ -140,7 +140,7 @@ export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
           </div>
         ) : (
           <div className={classNames(styles.infoBubble, styles.memberName)}>
-            {microphoneMuted ? <MicMutedIcon /> : <MicIcon />}
+            {microphoneMuted === false ? <MicIcon /> : <MicMutedIcon />}
             <span title={displayName}>{displayName}</span>
             {showConnectionStats && (
               <ConnectionQualityIndicator participant={sfuParticipant} />
