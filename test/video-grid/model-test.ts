@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import {
-  appendItems,
+  addItems,
   column,
   cycleTileSize,
   fillGaps,
@@ -313,20 +313,54 @@ dde
 ddf`
 );
 
-test("appendItems appends 1×1 tiles", () => {
-  const grid1 = `
+function testAddItems(
+  title: string,
+  items: TileDescriptor[],
+  input: string,
+  output: string
+): void {
+  test(`addItems ${title}`, () => {
+    expect(showGrid(addItems(items, mkGrid(input)))).toBe(output);
+  });
+}
+
+testAddItems(
+  "appends 1×1 tiles",
+  ["e", "f"].map((i) => ({ id: i } as unknown as TileDescriptor)),
+  `
 aab
 aac
-d`;
-  const grid2 = `
+d`,
+  `
 aab
 aac
-def`;
-  const newItems = ["e", "f"].map(
-    (i) => ({ id: i } as unknown as TileDescriptor)
-  );
-  expect(showGrid(appendItems(newItems, mkGrid(grid1)))).toBe(grid2);
-});
+def`
+);
+
+testAddItems(
+  "places one tile near another on request",
+  [{ id: "g", placeNear: "b" } as unknown as TileDescriptor],
+  `
+abc
+def`,
+  `
+abc
+gfe
+d`
+);
+
+testAddItems(
+  "places items with a large base size",
+  [{ id: "g", largeBaseSize: true } as unknown as TileDescriptor],
+  `
+abc
+def`,
+  `
+abc
+ggf
+gge
+d`
+);
 
 function testTryMoveTile(
   title: string,

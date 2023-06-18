@@ -28,5 +28,7 @@ export interface TileDescriptor {
   presenter: boolean;
   callFeed?: CallFeed;
   isLocal?: boolean;
+  largeBaseSize: boolean;
+  placeNear?: string;
   connectionState: ConnectionState;
 }

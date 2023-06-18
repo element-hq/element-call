@@ -216,6 +216,7 @@ export function InCallView({
           focused: screenshareFeeds.length === 0 && callFeed === activeSpeaker,
           isLocal: member.userId === localUserId && deviceId === localDeviceId,
           presenter,
+          largeBaseSize: false,
           connectionState,
         });
       }
@@ -228,6 +229,7 @@ export function InCallView({
     // Add the screenshares too
     for (const screenshareFeed of screenshareFeeds) {
       const member = screenshareFeed.getMember()!;
+      const deviceId = screenshareFeed.deviceId!;
       const connectionState = participants
         .get(member)
         ?.get(screenshareFeed.deviceId!)?.connectionState;
@@ -242,6 +244,8 @@ export function InCallView({
           focused: true,
           isLocal: screenshareFeed.isLocal(),
           presenter: false,
+          largeBaseSize: true,
+          placeNear: `${member.userId} ${deviceId}`,
           connectionState,
         });
       }
