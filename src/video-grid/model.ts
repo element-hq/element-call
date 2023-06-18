@@ -418,6 +418,11 @@ export function appendItems(items: TileDescriptor[], g: Grid): Grid {
   };
 }
 
+const largeTileDimensions = (g: Grid): [number, number] => [
+  Math.min(3, Math.max(2, g.columns - 1)),
+  2,
+];
+
 /**
  * Changes the size of a tile, rearranging the grid to make space.
  * @param tileId The ID of the tile to modify.
@@ -433,9 +438,7 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
 
   // The target dimensions, which toggle between 1×1 and larger than 1×1
   const [toWidth, toHeight] =
-    fromWidth === 1 && fromHeight === 1
-      ? [Math.min(3, Math.max(2, g.columns - 1)), 2]
-      : [1, 1];
+    fromWidth === 1 && fromHeight === 1 ? largeTileDimensions(g) : [1, 1];
 
   // If we're expanding the tile, we want to create enough new rows at the
   // tile's target position such that every new unit of grid area created during
@@ -546,4 +549,47 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
 
   // Fill any gaps that remain
   return fillGaps(gappyGrid);
+}
+
+/**
+ * Resizes the grid to a new column width.
+ */
+export function resize(g: Grid, columns: number): Grid {
+  const result: Grid = { columns, cells: [] };
+  const [largeColumns, largeRows] = largeTileDimensions(result);
+
+  // Copy each tile from the old grid to the resized one in the same order
+
+  // The next index in the result grid to copy a tile to
+  let next = 0;
+
+  for (const cell of g.cells) {
+    if (cell?.origin) {
+      const [nextColumns, nextRows] =
+        cell.columns > 1 || cell.rows > 1 ? [largeColumns, largeRows] : [1, 1];
+
+      // If there isn't enough space left on this row, jump to the next row
+      if (columns - column(next, result) < nextColumns)
+        next = columns * (Math.floor(next / columns) + 1);
+      const nextEnd = areaEnd(next, nextColumns, nextRows, result);
+
+      // Expand the cells array as necessary
+      if (result.cells.length <= nextEnd)
+        result.cells.push(...new Array(nextEnd + 1 - result.cells.length));
+
+      // Copy the tile into place
+      forEachCellInArea(next, nextEnd, result, (_c, i) => {
+        result.cells[i] = {
+          item: cell.item,
+          origin: i === next,
+          columns: nextColumns,
+          rows: nextRows,
+        };
+      });
+
+      next = nextEnd + 1;
+    }
+  }
+
+  return fillGaps(result);
 }
