@@ -266,7 +266,7 @@ export function tryMoveTile(g: Grid, from: number, to: number): Grid {
   const tile = g.cells[from]!;
 
   if (
-    to > 0 &&
+    to >= 0 &&
     to < g.cells.length &&
     column(to, g) <= g.columns - tile.columns
   ) {
