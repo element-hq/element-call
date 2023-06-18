@@ -543,8 +543,8 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
   // To make the tile appear to expand outwards from its center, we're actually
   // scanning for locations to put the *center* of the tile. These numbers are
   // the offsets between the tile's origin and its center.
-  const scanColumnOffset = Math.floor((toWidth - 1) / 2);
-  const scanRowOffset = Math.floor((toHeight - 1) / 2);
+  const scanColumnOffset = Math.floor((toWidth - fromWidth) / 2);
+  const scanRowOffset = Math.floor((toHeight - fromHeight) / 2);
 
   const nextScanLocations = new Set<number>([from]);
   const rows = row(g.cells.length - 1, g) + 1;
