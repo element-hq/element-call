@@ -26,6 +26,7 @@ export interface TileDescriptor {
   member: RoomMember;
   focused: boolean;
   presenter: boolean;
+  isSpeaker: boolean;
   callFeed?: CallFeed;
   isLocal?: boolean;
   largeBaseSize: boolean;
