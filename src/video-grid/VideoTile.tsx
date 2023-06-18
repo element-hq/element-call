@@ -33,6 +33,7 @@ import { Avatar } from "../Avatar";
 import styles from "./VideoTile.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
+import { useReactiveState } from "../useReactiveState";
 
 export interface ItemData {
   member?: RoomMember;
@@ -75,11 +76,12 @@ export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
     const { content, sfuParticipant, member } = data;
 
     // Handle display name changes.
-    const [displayName, setDisplayName] = React.useState<string>("[👻]");
+    const [displayName, setDisplayName] = useReactiveState(
+      () => member?.rawDisplayName ?? "[👻]",
+      [member]
+    );
     React.useEffect(() => {
       if (member) {
-        setDisplayName(member.rawDisplayName);
-
         const updateName = () => {
           setDisplayName(member.rawDisplayName);
         };
