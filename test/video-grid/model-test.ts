@@ -15,13 +15,15 @@ limitations under the License.
 */
 
 import {
-  appendItems,
+  addItems,
   column,
   cycleTileSize,
   fillGaps,
   forEachCellInArea,
   Grid,
+  resize,
   row,
+  tryMoveTile,
 } from "../../src/video-grid/model";
 import { TileDescriptor } from "../../src/video-grid/TileDescriptor";
 
@@ -31,7 +33,7 @@ import { TileDescriptor } from "../../src/video-grid/TileDescriptor";
 function mkGrid(spec: string): Grid {
   const secondNewline = spec.indexOf("\n", 1);
   const columns = secondNewline === -1 ? spec.length : secondNewline - 1;
-  const cells = spec.match(/[a-z ]/g) ?? [];
+  const cells = spec.match(/[a-z ]/g) ?? ([] as string[]);
   const areas = new Set(cells);
   areas.delete(" "); // Space represents an empty cell, not an area
   const grid: Grid = { columns, cells: new Array(cells.length) };
@@ -169,6 +171,50 @@ dddd
 iegh`
 );
 
+testFillGaps(
+  "keeps a large tile from hanging off the bottom",
+  `
+abcd
+efgh
+    
+ii  
+ii`,
+  `
+abcd
+iigh
+iief`
+);
+
+testFillGaps(
+  "pushes a chain of large tiles upwards",
+  `
+abcd
+e fg
+hh  
+hh  
+ ii 
+ ii`,
+  `
+hhcd
+hhfg
+aiib
+eii`
+);
+
+testFillGaps(
+  "gives up on pushing large tiles upwards when not possible",
+  `
+aabb
+aabb
+cc  
+cc`,
+  `
+aabb
+aabb
+cc  
+cc`
+);
+
 function testCycleTileSize(
   title: string,
   tileId: string,
@@ -227,9 +273,9 @@ dbbe
 fghi
 jk`,
   `
-abhc
-djge
-fik`
+akbc
+djhe
+fig`
 );
 
 testCycleTileSize(
@@ -267,17 +313,160 @@ dde
 ddf`
 );
 
-test("appendItems appends 1×1 tiles", () => {
-  const grid1 = `
+function testAddItems(
+  title: string,
+  items: TileDescriptor[],
+  input: string,
+  output: string
+): void {
+  test(`addItems ${title}`, () => {
+    expect(showGrid(addItems(items, mkGrid(input)))).toBe(output);
+  });
+}
+
+testAddItems(
+  "appends 1×1 tiles",
+  ["e", "f"].map((i) => ({ id: i } as unknown as TileDescriptor)),
+  `
 aab
 aac
-d`;
-  const grid2 = `
+d`,
+  `
 aab
 aac
-def`;
-  const newItems = ["e", "f"].map(
-    (i) => ({ id: i } as unknown as TileDescriptor)
-  );
-  expect(showGrid(appendItems(newItems, mkGrid(grid1)))).toBe(grid2);
-});
+def`
+);
+
+testAddItems(
+  "places one tile near another on request",
+  [{ id: "g", placeNear: "b" } as unknown as TileDescriptor],
+  `
+abc
+def`,
+  `
+abc
+gfe
+d`
+);
+
+testAddItems(
+  "places items with a large base size",
+  [{ id: "g", largeBaseSize: true } as unknown as TileDescriptor],
+  `
+abc
+def`,
+  `
+abc
+ggf
+gge
+d`
+);
+
+function testTryMoveTile(
+  title: string,
+  from: number,
+  to: number,
+  input: string,
+  output: string
+): void {
+  test(`tryMoveTile ${title}`, () => {
+    expect(showGrid(tryMoveTile(mkGrid(input), from, to))).toBe(output);
+  });
+}
+
+testTryMoveTile(
+  "refuses to move a tile too far to the left",
+  1,
+  -1,
+  `
+abc`,
+  `
+abc`
+);
+
+testTryMoveTile(
+  "refuses to move a tile too far to the right",
+  1,
+  3,
+  `
+abc`,
+  `
+abc`
+);
+
+testTryMoveTile(
+  "moves a large tile to an unoccupied space",
+  3,
+  1,
+  `
+a b
+ccd
+cce`,
+  `
+acc
+bcc
+d e`
+);
+
+testTryMoveTile(
+  "refuses to move a large tile to an occupied space",
+  3,
+  1,
+  `
+abb
+ccd
+cce`,
+  `
+abb
+ccd
+cce`
+);
+
+function testResize(
+  title: string,
+  columns: number,
+  input: string,
+  output: string
+): void {
+  test(`resize ${title}`, () => {
+    expect(showGrid(resize(mkGrid(input), columns))).toBe(output);
+  });
+}
+
+testResize(
+  "contracts the grid",
+  2,
+  `
+abbb
+cbbb
+ddde
+dddf
+gh`,
+  `
+af
+bb
+bb
+ch
+dd
+dd
+eg`
+);
+
+testResize(
+  "expands the grid",
+  4,
+  `
+af
+bb
+bb
+ch
+dd
+dd
+eg`,
+  `
+bbbc
+bbbf
+addd
+hddd
+ge`
+);

@@ -43,7 +43,10 @@ import {
   fillGaps,
   forEachCellInArea,
   cycleTileSize,
-  appendItems,
+  addItems,
+  tryMoveTile,
+  resize,
+  promoteSpeakers,
 } from "./model";
 import { TileWrapper } from "./TileWrapper";
 
@@ -81,15 +84,21 @@ const useGridState = (
         }),
       };
 
-      // Step 2: Backfill gaps left behind by removed tiles
-      const grid2 = fillGaps(grid1);
+      // Step 2: Resize the grid if necessary and backfill gaps left behind by
+      // removed tiles
+      // Resizing already takes care of backfilling gaps
+      const grid2 =
+        columns !== grid1.columns ? resize(grid1, columns!) : fillGaps(grid1);
 
       // Step 3: Add new tiles to the end of the grid
       const existingItemIds = new Set(
         grid2.cells.filter((c) => c !== undefined).map((c) => c!.item.id)
       );
       const newItems = items.filter((i) => !existingItemIds.has(i.id));
-      const grid3 = appendItems(newItems, grid2);
+      const grid3 = addItems(newItems, grid2);
+
+      // Step 4: Promote speakers to the top
+      promoteSpeakers(grid3);
 
       return { ...grid3, generation: prevGrid.generation + 1 };
     },
@@ -204,14 +213,10 @@ export const NewVideoGrid: FC<Props> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slotGrid, slotGridGeneration, gridBounds]);
 
-  const [columns] = useReactiveState<number | null>(
-    // Since grid resizing isn't implemented yet, pick a column count on mount
-    // and stick to it
-    (prevColumns) =>
-      prevColumns !== undefined && prevColumns !== null
-        ? prevColumns
-        : // The grid bounds might not be known yet
-        gridBounds.width === 0
+  const columns = useMemo(
+    () =>
+      // The grid bounds might not be known yet
+      gridBounds.width === 0
         ? null
         : Math.max(2, Math.floor(gridBounds.width * 0.0045)),
     [gridBounds]
@@ -280,6 +285,8 @@ export const NewVideoGrid: FC<Props> = ({
   const animateDraggedTile = (endOfGesture: boolean) => {
     const { tileId, tileX, tileY, cursorX, cursorY } = dragState.current!;
     const tile = tiles.find((t) => t.item.id === tileId)!;
+    const originIndex = grid!.cells.findIndex((c) => c?.item.id === tileId);
+    const originCell = grid!.cells[originIndex]!;
 
     springRef.current
       .find((c) => (c.item as Tile).item.id === tileId)
@@ -310,23 +317,36 @@ export const NewVideoGrid: FC<Props> = ({
             }
       );
 
-    const overTile = tiles.find(
-      (t) =>
-        cursorX >= t.x &&
-        cursorX < t.x + t.width &&
-        cursorY >= t.y &&
-        cursorY < t.y + t.height
+    const columns = grid!.columns;
+    const rows = row(grid!.cells.length - 1, grid!) + 1;
+
+    const cursorColumn = Math.floor(
+      (cursorX / slotGrid!.clientWidth) * columns
     );
-    if (overTile !== undefined && overTile.item.id !== tileId) {
-      setGrid((g) => ({
-        ...g!,
-        cells: g!.cells.map((c) => {
-          if (c?.item === overTile.item) return { ...c, item: tile.item };
-          if (c?.item === tile.item) return { ...c, item: overTile.item };
-          return c;
-        }),
-      }));
-    }
+    const cursorRow = Math.floor((cursorY / slotGrid!.clientHeight) * rows);
+
+    const cursorColumnOnTile = Math.floor(
+      ((cursorX - tileX) / tile.width) * originCell.columns
+    );
+    const cursorRowOnTile = Math.floor(
+      ((cursorY - tileY) / tile.height) * originCell.rows
+    );
+
+    const dest =
+      Math.max(
+        0,
+        Math.min(
+          columns - originCell.columns,
+          cursorColumn - cursorColumnOnTile
+        )
+      ) +
+      grid!.columns *
+        Math.max(
+          0,
+          Math.min(rows - originCell.rows, cursorRow - cursorRowOnTile)
+        );
+
+    if (dest !== originIndex) setGrid((g) => tryMoveTile(g, originIndex, dest));
   };
 
   // Callback for useDrag. We could call useDrag here, but the default
