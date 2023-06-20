@@ -91,7 +91,7 @@ export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
           member!.removeListener(RoomMemberEvent.Name, updateName);
         };
       }
-    }, [member]);
+    }, [member, setDisplayName]);
 
     const audioEl = React.useRef<HTMLAudioElement>(null);
     const { isMuted: microphoneMuted } = useMediaTrack(
