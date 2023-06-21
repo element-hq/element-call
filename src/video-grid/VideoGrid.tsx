@@ -59,6 +59,7 @@ interface Tile<T> {
   focused: boolean;
   isPresenter: boolean;
   isSpeaker: boolean;
+  startedSpeakingAt: Date | undefined;
   hasVideo: boolean;
 }
 
@@ -750,12 +751,23 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout, displayedTile = -1) {
     const orderedTiles: Tile<T>[] = new Array(tiles.length);
     tiles.forEach((tile) => (orderedTiles[tile.order] = tile));
 
+    // We don't want that's noise to put the user in the speaker area.
+    // So we wait at least 2 seconds before we move the tile.
+    const speakActivationTime = new Date();
+    speakActivationTime.setSeconds(speakActivationTime.getSeconds() - 2);
+
     orderedTiles.forEach((tile) => {
+      const isARealSpeaker = isRealSpeaker(tile, speakActivationTime);
+
       if (tile.focused) {
         focusedTiles.push(tile);
       } else if (tile.isPresenter) {
         presenterTiles.push(tile);
-      } else if (tile.isSpeaker && displayedTile < tile.order) {
+      } else if (
+        tile.isSpeaker &&
+        displayedTile < tile.order &&
+        isARealSpeaker
+      ) {
         speakerTiles.push(tile);
       } else if (tile.hasVideo) {
         onlyVideoTiles.push(tile);
@@ -772,6 +784,27 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout, displayedTile = -1) {
       ...otherTiles,
     ].forEach((tile, i) => (tile.order = i));
   }
+}
+
+function isRealSpeaker<T>(tile: Tile<T>, speakInterval: Date): boolean {
+  if (tile.isSpeaker && tile.startedSpeakingAt === undefined) {
+    tile.startedSpeakingAt = new Date();
+    return false;
+  }
+
+  if (!tile.isSpeaker && tile.startedSpeakingAt !== undefined) {
+    tile.startedSpeakingAt = undefined;
+    return false;
+  }
+
+  if (!tile.isSpeaker) {
+    return false;
+  }
+
+  return (
+    tile.startedSpeakingAt !== undefined &&
+    tile.startedSpeakingAt > speakInterval
+  );
 }
 
 interface DragTileData {
@@ -868,16 +901,19 @@ export function VideoGrid<T>({
         let isSpeaker: boolean;
         let isPresenter: boolean;
         let hasVideo: boolean;
+        let startedSpeakingAt: Date | undefined;
         if (layout === "spotlight") {
           focused = item.focused;
           isPresenter = item.isPresenter;
           isSpeaker = item.isSpeaker;
           hasVideo = item.hasVideo;
+          startedSpeakingAt = tile.startedSpeakingAt;
         } else {
           focused = layout === lastLayoutRef.current ? tile.focused : false;
           isPresenter = false;
           isSpeaker = false;
           hasVideo = false;
+          startedSpeakingAt = undefined;
         }
 
         newTiles.push({
@@ -887,6 +923,7 @@ export function VideoGrid<T>({
           remove,
           focused,
           isSpeaker: isSpeaker,
+          startedSpeakingAt: startedSpeakingAt,
           isPresenter: isPresenter,
           hasVideo: hasVideo,
         });
@@ -912,6 +949,7 @@ export function VideoGrid<T>({
           isPresenter: item.isPresenter,
           isSpeaker: item.isSpeaker,
           hasVideo: item.hasVideo,
+          startedSpeakingAt: undefined,
         };
 
         if (existingTile) {
