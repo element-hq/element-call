@@ -18,4 +18,5 @@ jobs:
         run: "yarn run test"
       - name: Upload to codecov
         uses: codecov/codecov-action@v3
-        flags: unittests
+        with:
+          flags: unittests
