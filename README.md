@@ -3,7 +3,9 @@
 [![Chat](https://img.shields.io/matrix/webrtc:matrix.org)](https://matrix.to/#/#webrtc:matrix.org)
 [![Translate](https://translate.element.io/widgets/element-call/-/element-call/svg-badge.svg)](https://translate.element.io/engage/element-call/)
 
-Full mesh group calls powered by [Matrix](https://matrix.org), implementing [MatrixRTC](https://github.com/matrix-org/matrix-spec-proposals/blob/matthew/group-voip/proposals/3401-group-voip.md).
+Group calls with WebRTC that leverage [Matrix](https://matrix.org) and an open-source WebRTC toolkit from [LiveKit](https://livekit.io/).
+
+For prior version of the Element Call that relied solely on full-mesh logic, check [`full-mesh`](https://github.com/vector-im/element-call/tree/full-mesh) branch.
 
 ![A demo of Element Call with six people](demo.jpg)
 
@@ -48,23 +50,17 @@ Element Call requires a homeserver with registration enabled without any 3pid or
 
 Therefore, to use a self-hosted homeserver, this is recommended to be a new server where any user account created has not joined any normal rooms anywhere in the Matrix federated network. The homeserver used can be setup to disable federation, so as to prevent spam registrations (if you keep registrations open) and to ensure Element Call continues to work in case any user decides to log in to their Element Call account using the standard Element app and joins normal rooms that Element Call cannot handle.
 
-### Features
+## Configuration
 
-#### Allow joining group calls without a camera and a microphone
+There are currently two different config files. `.env` holds variables that are used at build time, while `public/config.json` holds variables that are used at runtime. Documentation and default values for `public/config.json` can be found in [ConfigOptions.ts](src/config/ConfigOptions.ts).
 
-You can allow joining a group call without video and audio enabling this feature in your `config.json`:
+## Translation
 
-```json
-{
-  ...
-
-  "features": {
-    "feature_group_calls_without_video_and_audio": true
-  }
-}
-```
+If you'd like to help translate Element Call, head over to [translate.element.io](https://translate.element.io/engage/element-call/). You're also encouraged to join the [Element Translators](https://matrix.to/#/#translators:element.io) space to discuss and coordinate translation efforts.
 
 ## Development
+
+### Frontend
 
 Element Call is built against [matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk/pull/2553). To get started, clone, install, and link the package:
 
@@ -90,9 +86,7 @@ You're now ready to launch the development server:
 yarn dev
 ```
 
-### Local Backend
-
-#### JWT keys
+### Backend
 
 Add in you `.env` in root dir with:
 
@@ -102,7 +96,7 @@ LIVEKIT_KEY="devkey"
 LIVEKIT_SECRET="secret"
 ```
 
-#### Add SFU parameter in your local config `./public/config.yml`
+Add SFU parameter in your local config `./public/config.yml`:
 
 ```yaml
 "livekit": {
@@ -111,20 +105,7 @@ LIVEKIT_SECRET="secret"
   },
 ```
 
-#### Run Backend
-
+Run backend components:
 ```
 yarn backend
 ```
-
-##### Services
-
-JWT Service: http://localhost:8881/token?name=Name&identity=1234&roomName=room
-
-## Configuration
-
-There are currently two different config files. `.env` holds variables that are used at build time, while `public/config.json` holds variables that are used at runtime. Documentation and default values for `public/config.json` can be found in [ConfigOptions.ts](src/config/ConfigOptions.ts).
-
-## Translation
-
-If you'd like to help translate Element Call, head over to [translate.element.io](https://translate.element.io/engage/element-call/). You're also encouraged to join the [Element Translators](https://matrix.to/#/#translators:element.io) space to discuss and coordinate translation efforts.
