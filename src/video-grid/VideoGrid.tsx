@@ -756,6 +756,7 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout, displayedTile = -1) {
     const speakActivationTime = new Date();
     speakActivationTime.setSeconds(speakActivationTime.getSeconds() - 2);
 
+    let firstLocalTile: Tile<T> | undefined;
     orderedTiles.forEach((tile) => {
       const isARealSpeaker = isRealSpeaker(tile, speakActivationTime);
 
@@ -770,11 +771,27 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout, displayedTile = -1) {
       ) {
         speakerTiles.push(tile);
       } else if (tile.hasVideo) {
-        onlyVideoTiles.push(tile);
+        if (tile.order === 0 && tile.item.local) {
+          firstLocalTile = tile;
+        } else {
+          onlyVideoTiles.push(tile);
+        }
       } else {
-        otherTiles.push(tile);
+        if (tile.order === 0 && tile.item.local) {
+          firstLocalTile = tile;
+        } else {
+          otherTiles.push(tile);
+        }
       }
     });
+
+    if (firstLocalTile) {
+      if (firstLocalTile.hasVideo) {
+        onlyVideoTiles.push(firstLocalTile);
+      } else {
+        otherTiles.push(firstLocalTile);
+      }
+    }
 
     [
       ...focusedTiles,
