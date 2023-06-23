@@ -57,7 +57,7 @@ export function LobbyView(props: Props) {
           <LeftNav>
             <RoomHeaderInfo
               roomName={props.matrixInfo.roomName}
-              avatarUrl={props.matrixInfo.avatarUrl}
+              avatarUrl={props.matrixInfo.roomAvatarUrl}
             />
           </LeftNav>
           <RightNav>
