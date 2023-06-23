@@ -102,7 +102,8 @@ export function GroupCallView({
         // Get the available devices so we can match the selected device
         // to its ID. This involves getting a media stream (see docs on
         // the function) so we only do it once and re-use the result.
-        const devices = await getNamedDevices();
+        // const devices = await getNamedDevices();
+        const devices = [];
 
         const { audioInput, videoInput } = ev.detail
           .data as unknown as JoinCallData;
