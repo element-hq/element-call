@@ -70,6 +70,7 @@ export enum RegistrationType {
 interface PlatformProperties {
   appVersion: string;
   matrixBackend: "embedded" | "jssdk";
+  callBackend: "livekit" | "full-mesh";
 }
 
 interface PosthogSettings {
@@ -191,6 +192,7 @@ export class PosthogAnalytics {
     return {
       appVersion,
       matrixBackend: widget ? "embedded" : "jssdk",
+      callBackend: "livekit",
     };
   }
 
