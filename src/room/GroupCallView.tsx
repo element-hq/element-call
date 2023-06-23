@@ -19,9 +19,11 @@ import { useHistory } from "react-router-dom";
 import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
+import { Room } from "livekit-client";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
-import { widget, ElementWidgetActions } from "../widget";
+import { widget, ElementWidgetActions, JoinCallData } from "../widget";
 import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
@@ -32,6 +34,7 @@ import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { UserChoices } from "../livekit/useLiveKit";
+import { findDeviceByName } from "../media-utils";
 
 declare global {
   interface Window {
@@ -90,6 +93,45 @@ export function GroupCallView({
     if (widget && preload) {
       // In preload mode, wait for a join action before entering
       const onJoin = async (ev: CustomEvent<IWidgetApiRequest>) => {
+        const devices = await Room.getLocalDevices();
+
+        const { audioInput, videoInput } = ev.detail
+          .data as unknown as JoinCallData;
+        const newChoices = {} as UserChoices;
+
+        if (audioInput !== null) {
+          const deviceId = await findDeviceByName(
+            audioInput,
+            "audioinput",
+            devices
+          );
+          if (!deviceId) {
+            logger.warn("Unknown audio input: " + audioInput);
+          } else {
+            logger.debug(
+              `Found audio input ID ${deviceId} for name ${audioInput}`
+            );
+            newChoices.audio = { selectedId: deviceId, enabled: true };
+          }
+        }
+
+        if (videoInput !== null) {
+          const deviceId = await findDeviceByName(
+            videoInput,
+            "videoinput",
+            devices
+          );
+          if (!deviceId) {
+            logger.warn("Unknown video input: " + videoInput);
+          } else {
+            logger.debug(
+              `Found video input ID ${deviceId} for name ${videoInput}`
+            );
+            newChoices.video = { selectedId: deviceId, enabled: true };
+          }
+        }
+
+        setUserChoices(newChoices);
         await enter();
 
         PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
