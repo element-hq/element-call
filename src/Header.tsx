@@ -116,7 +116,7 @@ export function HeaderLogo({ className }: HeaderLogoProps) {
 
 interface RoomHeaderInfo {
   roomName: string;
-  avatarUrl: string;
+  avatarUrl: string | null;
 }
 
 export function RoomHeaderInfo({ roomName, avatarUrl }: RoomHeaderInfo) {
@@ -125,7 +125,7 @@ export function RoomHeaderInfo({ roomName, avatarUrl }: RoomHeaderInfo) {
       <div className={styles.roomAvatar}>
         <Avatar
           size={Size.MD}
-          src={avatarUrl}
+          src={avatarUrl ?? undefined}
           bgKey={roomName}
           fallback={roomName.slice(0, 1).toUpperCase()}
         />

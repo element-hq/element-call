@@ -372,7 +372,7 @@ export function InCallView({
           <LeftNav>
             <RoomHeaderInfo
               roomName={matrixInfo.roomName}
-              avatarUrl={matrixInfo.avatarUrl}
+              avatarUrl={matrixInfo.roomAvatarUrl}
             />
             <VersionMismatchWarning
               users={unencryptedEventsFromUsers}
