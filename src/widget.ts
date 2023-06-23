@@ -47,6 +47,11 @@ export enum ElementWidgetActions {
   ScreenshareStop = "io.element.screenshare_stop",
 }
 
+export interface JoinCallData {
+  audioInput: string | null;
+  videoInput: string | null;
+}
+
 export interface ScreenshareStartData {
   desktopCapturerSourceId: string;
 }
