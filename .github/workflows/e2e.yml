@@ -5,7 +5,7 @@ on:
     types:
       - completed
     branches-ignore:
-      - "main"
+      - "livekit"
 jobs:
   e2e:
     name: E2E tests runs on Element Call
