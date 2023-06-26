@@ -1,11 +1,11 @@
-name: Netlify LiveKit Experiment
+name: Netlify LiveKit
 on:
   workflow_run:
     workflows: ["Build"]
     types:
       - completed
     branches:
-      - "livekit-experiment"
+      - "livekit"
 
 jobs:
   deploy:
@@ -16,7 +16,7 @@ jobs:
     # so we need to check the head repo too in order to not run on PRs from forks
     # We check the branch name again too just for completeness
     # (Is there a nicer way to see if a PR is from a fork?)
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == 'vector-im/element-call' && github.event.workflow_run.head_branch == 'livekit-experiment'
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == 'vector-im/element-call' && github.event.workflow_run.head_branch == 'livekit'
     steps:
       - name: Create Deployment
         uses: bobheadxi/deployments@v1
@@ -64,12 +64,11 @@ jobs:
         with:
           publish-dir: dist
           deploy-message: "Deploy from GitHub Actions"
-          production-branch: livekit-experiment
+          production-branch: livekit
           production-deploy: true
           # These don't work because we're in workflow_run
           enable-pull-request-comment: false
           enable-commit-comment: false
-          github-deployment-environment: livekit-experiment
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: e3b9fa82-c040-4db6-b4bf-42b524d57423
