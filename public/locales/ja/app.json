@@ -1,5 +1,4 @@
 {
-  "{{count}} people connected|other": "{{count}}人が接続済",
   "{{name}} (Waiting for video...)": "{{name}}（ビデオを待機しています…）",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>既にアカウントをお持ちですか？</0><1><0>ログイン</0>または<2>ゲストとしてアクセス</2></1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>アカウントを作成</0>または<2>ゲストとしてアクセス</2>",
@@ -73,7 +72,6 @@
   "Waiting for other participants…": "他の参加者を待機しています…",
   "Walkie-talkie call name": "トランシーバー通話の名称",
   "Walkie-talkie call": "トランシーバー通話",
-  "{{name}} is talking…": "{{name}}が話しています…",
   "Yes, join call": "はい、通話に参加",
   "Select an option": "オプションを選択",
   "Debug log request": "デバッグログを要求",
@@ -85,6 +83,5 @@
   "No": "いいえ",
   "This call already exists, would you like to join?": "この通話は既に存在します。参加しますか？",
   "Take me Home": "ホームに戻る",
-  "{{name}} is presenting": "{{name}}が画面を共有しています",
   "{{names}}, {{name}}": "{{names}}、{{name}}"
 }

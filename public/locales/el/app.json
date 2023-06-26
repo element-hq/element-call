@@ -23,7 +23,6 @@
   "Debug log request": "Αίτημα αρχείου καταγραφής",
   "Call link copied": "Ο σύνδεσμος κλήσης αντιγράφηκε",
   "Avatar": "Avatar",
-  "Accept camera/microphone permissions to join the call.": "Αποδεχτείτε τα δικαιώματα κάμερας/μικροφώνου για να συμμετάσχετε στην κλήση.",
   "<0>Oops, something's gone wrong.</0>": "<0>Ωχ, κάτι πήγε στραβά.</0>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Δημιουργήστε λογαριασμό</0> Ή <2>Συμμετέχετε ως επισκέπτης</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Έχετε ήδη λογαριασμό;</0><1><0>Συνδεθείτε</0> Ή <2>Συμμετέχετε ως επισκέπτης</2></1>",
@@ -53,7 +52,6 @@
   "No": "Όχι",
   "Mute microphone": "Σίγαση μικροφώνου",
   "More": "Περισσότερα",
-  "Microphone {{n}}": "Μικρόφωνο {{n}}",
   "Microphone": "Μικρόφωνο",
   "Login": "Σύνδεση",
   "Loading…": "Φόρτωση…",
@@ -72,10 +70,7 @@
   "Confirm password": "Επιβεβαίωση κωδικού",
   "Close": "Κλείσιμο",
   "Change layout": "Αλλαγή διάταξης",
-  "Camera {{n}}": "Κάμερα {{n}}",
   "Camera": "Κάμερα",
   "Audio": "Ήχος",
-  "{{name}} is presenting": "{{name}} παρουσιάζει",
-  "{{name}} (Connecting...)": "{{name}} (Συνδέεται...)",
-  "{{count}} people connected|one": "{{count}} άτομο συνδεδεμένο"
+  "{{name}} (Connecting...)": "{{name}} (Συνδέεται...)"
 }
