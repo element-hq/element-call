@@ -5,7 +5,7 @@ on:
     types:
       - completed
     branches:
-      - "main"
+      - "full-mesh"
 
 jobs:
   deploy:
@@ -16,7 +16,7 @@ jobs:
     # so we need to check the head repo too in order to not run on PRs from forks
     # We check the branch name again too just for completeness
     # (Is there a nicer way to see if a PR is from a fork?)
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == 'vector-im/element-call' && github.event.workflow_run.head_branch == 'main'
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == 'vector-im/element-call' && github.event.workflow_run.head_branch == 'full-mesh'
     steps:
       - name: Create Deployment
         uses: bobheadxi/deployments@v1
