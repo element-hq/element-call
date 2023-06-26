@@ -2,7 +2,7 @@ name: Run jest tests
 on:
   pull_request: {}
   push:
-    branches: [main]
+    branches: [livekit]
 jobs:
   jest:
     name: Run jest tests
