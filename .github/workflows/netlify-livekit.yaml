@@ -1,0 +1,88 @@
+name: Netlify LiveKit Experiment
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+    branches:
+      - "livekit-experiment"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      deployments: write
+    # Important: the 'branches' filter above will match the 'livekit-experiment' branch on forks,
+    # so we need to check the head repo too in order to not run on PRs from forks
+    # We check the branch name again too just for completeness
+    # (Is there a nicer way to see if a PR is from a fork?)
+    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_repository.full_name == 'vector-im/element-call' && github.event.workflow_run.head_branch == 'livekit-experiment'
+    steps:
+      - name: Create Deployment
+        uses: bobheadxi/deployments@v1
+        id: deployment
+        with:
+          step: start
+          token: ${{ secrets.GITHUB_TOKEN }}
+          env: livekit-experiment-branch-cd
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: "Download artifact"
+        uses: actions/github-script@v3.1.0
+        with:
+          script: |
+            const artifacts = await github.actions.listWorkflowRunArtifacts({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                run_id: ${{ github.event.workflow_run.id }},
+            });
+            const matchArtifact = artifacts.data.artifacts.filter((artifact) => {
+                return artifact.name == "build"
+            })[0];
+            const download = await github.actions.downloadArtifact({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                artifact_id: matchArtifact.id,
+                archive_format: 'zip',
+            });
+            const fs = require('fs');
+            fs.writeFileSync('${{github.workspace}}/build.zip', Buffer.from(download.data));
+
+      - name: Extract Artifacts
+        run: unzip -d dist build.zip && rm build.zip
+
+      - name: Add redirects file
+        # We fetch from github directly as we don't bother checking out the repo
+        run: curl -s https://raw.githubusercontent.com/vector-im/element-call/livekit-experiment/config/netlify_redirects > dist/_redirects
+
+      - name: Add config file
+        run: curl -s https://raw.githubusercontent.com/vector-im/element-call/livekit-experiment/config/element_io_preview.json > dist/config.json
+
+      - name: Deploy to Netlify
+        id: netlify
+        uses: nwtgck/actions-netlify@v1.2.3
+        with:
+          publish-dir: dist
+          deploy-message: "Deploy from GitHub Actions"
+          production-branch: livekit-experiment
+          production-deploy: true
+          # These don't work because we're in workflow_run
+          enable-pull-request-comment: false
+          enable-commit-comment: false
+          github-deployment-environment: livekit-experiment
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: e3b9fa82-c040-4db6-b4bf-42b524d57423
+        timeout-minutes: 1
+
+      - name: Update deployment status
+        uses: bobheadxi/deployments@v1
+        if: always()
+        with:
+          step: finish
+          override: false
+          token: ${{ secrets.GITHUB_TOKEN }}
+          status: ${{ job.status }}
+          env: ${{ steps.deployment.outputs.env }}
+          deployment_id: ${{ steps.deployment.outputs.deployment_id }}
+          env_url: ${{ steps.netlify.outputs.deploy-url }}
