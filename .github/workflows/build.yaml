@@ -2,7 +2,7 @@ name: Build
 on:
   pull_request: {}
   push:
-    branches: [livekit]
+    branches: [livekit, full-mesh]
 jobs:
   build:
     name: Build
