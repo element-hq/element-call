@@ -108,6 +108,7 @@ export const widget: WidgetHelpers | null = (() => {
         baseUrl,
         e2eEnabled,
         allowIceFallback,
+        allowVoipWithNoMedia,
       } = getUrlParams();
       if (!roomId) throw new Error("Room ID must be supplied");
       if (!userId) throw new Error("User ID must be supplied");
@@ -156,6 +157,7 @@ export const widget: WidgetHelpers | null = (() => {
           timelineSupport: true,
           useE2eForGroupCall: e2eEnabled,
           fallbackICEServerAllowed: allowIceFallback,
+          isVoipWithNoMediaAllowed: allowVoipWithNoMedia,
         }
       );
       const clientPromise = client.startClient().then(() => client);
