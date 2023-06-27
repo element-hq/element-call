@@ -16,6 +16,8 @@ limitations under the License.
 
 import { ResizeObserver } from "@juggle/resize-observer";
 import {
+  RoomAudioRenderer,
+  RoomContext,
   useLocalParticipant,
   useParticipants,
   useTracks,
@@ -80,6 +82,7 @@ import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { VideoTile } from "../video-grid/VideoTile";
 import { UserChoices, useLiveKit } from "../livekit/useLiveKit";
 import { useMediaDevices } from "../livekit/useMediaDevices";
+import { useFullscreen } from "./useFullscreen";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -100,7 +103,13 @@ export function ActiveCall(props: ActiveCallProps) {
     userIdentity: `${props.client.getUserId()}:${props.client.getDeviceId()}`,
   });
 
-  return livekitRoom && <InCallView {...props} livekitRoom={livekitRoom} />;
+  return (
+    livekitRoom && (
+      <RoomContext.Provider value={livekitRoom}>
+        <InCallView {...props} livekitRoom={livekitRoom} />
+      </RoomContext.Provider>
+    )
+  );
 }
 
 interface Props {
@@ -172,9 +181,6 @@ export function InCallView({
   const toggleCamera = useCallback(async () => {
     await localParticipant.setCameraEnabled(!isCameraEnabled);
   }, [localParticipant, isCameraEnabled]);
-  const toggleScreensharing = useCallback(async () => {
-    await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
-  }, [localParticipant, isScreenShareEnabled]);
 
   const joinRule = useJoinRule(groupCall.room);
 
@@ -227,15 +233,19 @@ export function InCallView({
   const noControls = reducedControls && bounds.height <= 400;
 
   const items = useParticipantTiles(livekitRoom, participants);
+  const { fullscreenItem, toggleFullscreen, exitFullscreen } =
+    useFullscreen(items);
 
-  // The maximised participant is the focused (active) participant, given the
+  // The maximised participant: either the participant that the user has
+  // manually put in fullscreen, or the focused (active) participant if the
   // window is too small to show everyone
   const maximisedParticipant = useMemo(
     () =>
-      noControls
-        ? items.find((item) => item.focused) ?? items.at(0) ?? null
-        : null,
-    [noControls, items]
+      fullscreenItem ??
+      (noControls
+        ? items.find((item) => item.isSpeaker) ?? items.at(0) ?? null
+        : null),
+    [fullscreenItem, noControls, items]
   );
 
   const Grid =
@@ -254,6 +264,9 @@ export function InCallView({
     if (maximisedParticipant) {
       return (
         <VideoTile
+          maximised={true}
+          fullscreen={maximisedParticipant === fullscreenItem}
+          onToggleFullscreen={toggleFullscreen}
           targetHeight={bounds.height}
           targetWidth={bounds.width}
           key={maximisedParticipant.id}
@@ -272,6 +285,9 @@ export function InCallView({
       >
         {(props) => (
           <VideoTile
+            maximised={false}
+            fullscreen={false}
+            onToggleFullscreen={toggleFullscreen}
             showSpeakingIndicator={items.length > 2}
             showConnectionStats={showConnectionStats}
             {...props}
@@ -321,6 +337,11 @@ export function InCallView({
     [styles.maximised]: undefined,
   });
 
+  const toggleScreensharing = useCallback(async () => {
+    exitFullscreen();
+    await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
+  }, [localParticipant, isScreenShareEnabled, exitFullscreen]);
+
   let footer: JSX.Element | null;
 
   if (noControls) {
@@ -354,9 +375,7 @@ export function InCallView({
           />
         );
       }
-      if (!maximisedParticipant) {
-        buttons.push(<SettingsButton key="4" onPress={openSettings} />);
-      }
+      buttons.push(<SettingsButton key="4" onPress={openSettings} />);
     }
 
     buttons.push(
@@ -367,7 +386,7 @@ export function InCallView({
 
   return (
     <div className={containerClasses} ref={containerRef}>
-      {!hideHeader && (
+      {!hideHeader && maximisedParticipant === null && (
         <Header>
           <LeftNav>
             <RoomHeaderInfo
@@ -388,6 +407,7 @@ export function InCallView({
         </Header>
       )}
       <div className={styles.controlsOverlay}>
+        <RoomAudioRenderer />
         {renderContent()}
         {footer}
       </div>
@@ -469,6 +489,7 @@ function useParticipantTiles(
           local: sfuParticipant.isLocal,
           largeBaseSize: false,
           data: {
+            id,
             member,
             sfuParticipant,
             content: TileContent.UserMedia,
@@ -478,14 +499,16 @@ function useParticipantTiles(
         // If there is a screen sharing enabled for this participant, create a tile for it as well.
         let screenShareTile: TileDescriptor<ItemData> | undefined;
         if (sfuParticipant.isScreenShareEnabled) {
+          const screenShareId = `${id}:screen-share`;
           screenShareTile = {
             ...userMediaTile,
-            id: `${id}:screen-share`,
+            id: screenShareId,
             focused: true,
             largeBaseSize: true,
             placeNear: id,
             data: {
               ...userMediaTile.data,
+              id: screenShareId,
               content: TileContent.ScreenShare,
             },
           };
