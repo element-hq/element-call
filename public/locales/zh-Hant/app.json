@@ -3,7 +3,6 @@
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>建立帳號</0> 或<2>以訪客身份登入</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>已經有帳號?</0><1><0>登入</0> 或<2>以訪客身份登入</2></1>",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
-  "{{name}} (Connecting...)": "{{name}} (連結中...)",
   "Expose developer settings in the settings window.": "在設定視窗中顯示開發者設定。",
   "Developer Settings": "開發者設定",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>送出除錯紀錄，可幫助我們修正問題。</0>",
@@ -47,7 +46,6 @@
   "Recaptcha not loaded": "驗證碼未載入",
   "Recaptcha dismissed": "略過驗證碼",
   "Profile": "個人檔案",
-  "Press and hold spacebar to talk": "說話時請按住空白鍵",
   "Passwords must match": "密碼必須相符",
   "Password": "密碼",
   "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "有使用者試著加入通話，但他們的軟體版本不相容。這些使用者需要確認已將瀏覽器更新到最新版本：<1>{userLis}</1>",
@@ -115,5 +113,7 @@
   "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>我們想要聽到您的回饋，如此我們才能改善您的體驗。</0>",
   "{{count}} stars|one": "{{count}} 個星星",
   "{{displayName}}, your call has ended.": "{{displayName}}，您的通話已結束。",
-  "How did it go?": "進展如何？"
+  "How did it go?": "進展如何？",
+  "{{displayName}} is presenting": "{{displayName}} 正在展示",
+  "Show connection stats": "顯示連線統計資料"
 }
