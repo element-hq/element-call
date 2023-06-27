@@ -73,7 +73,7 @@ import { useJoinRule } from "./useJoinRule";
 import { ParticipantInfo } from "./useGroupCall";
 import { ItemData, TileContent } from "../video-grid/VideoTile";
 import { Config } from "../config/Config";
-import { NewVideoGrid } from "../video-grid/NewVideoGrid";
+import { NewVideoGrid, useLayoutStates } from "../video-grid/NewVideoGrid";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
@@ -253,6 +253,10 @@ export function InCallView({
 
   const prefersReducedMotion = usePrefersReducedMotion();
 
+  // This state is lifted out of NewVideoGrid so that layout states can be
+  // restored after a layout switch or upon exiting fullscreen
+  const layoutStates = useLayoutStates();
+
   const renderContent = (): JSX.Element => {
     if (items.length === 0) {
       return (
@@ -282,6 +286,7 @@ export function InCallView({
         items={items}
         layout={layout}
         disableAnimations={prefersReducedMotion || isSafari}
+        layoutStates={layoutStates}
       >
         {(props) => (
           <VideoTile
