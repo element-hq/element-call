@@ -1,5 +1,4 @@
 {
-  "{{name}} (Waiting for video...)": "{{name}}（ビデオを待機しています…）",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>既にアカウントをお持ちですか？</0><1><0>ログイン</0>または<2>ゲストとしてアクセス</2></1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>アカウントを作成</0>または<2>ゲストとしてアクセス</2>",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>今すぐ通話に参加</0><1>または</1><2>通話リンクをコピーし、後で参加</2>",
