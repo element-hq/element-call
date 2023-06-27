@@ -39,7 +39,6 @@
   "Recaptcha not loaded": "Recaptcha не завантажено",
   "Recaptcha dismissed": "Recaptcha не пройдено",
   "Profile": "Профіль",
-  "Press and hold spacebar to talk": "Затисніть пробіл, щоб говорити",
   "Passwords must match": "Паролі відрізняються",
   "Password": "Пароль",
   "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "Інші користувачі намагаються приєднатися до цього виклику з несумісних версій. Ці користувачі повинні переконатися, що вони оновили сторінки своїх браузерів:<1>{userLis}</1>",
@@ -94,7 +93,6 @@
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Створити обліковий запис</0> або <2>Отримати доступ як гість</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Уже маєте обліковий запис?</0><1><0>Увійти</0> Or <2>Отримати доступ як гість</2></1>",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
-  "{{count}} people connected|one": "{{count}} під'єднується",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Приєднатися до виклику зараз</0><1>Or</1><2>Скопіювати посилання на виклик і приєднатися пізніше</2>",
   "Element Call Home": "Домівка Element Call",
   "Copy": "Копіювати",
@@ -115,5 +113,7 @@
   "{{count}} stars|other": "{{count}} зірок",
   "{{displayName}}, your call has ended.": "{{displayName}}, ваш виклик завершено.",
   "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Ми будемо раді почути ваші відгуки, щоб поліпшити роботу застосунку.</0>",
-  "How did it go?": "Вам усе сподобалось?"
+  "How did it go?": "Вам усе сподобалось?",
+  "{{displayName}} is presenting": "{{displayName}} представляє",
+  "Show connection stats": "Показати стан з'єднання"
 }

@@ -53,7 +53,6 @@
   "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "Pengguna lain sedang mencoba bergabung ke panggilan ini dari versi yang tidak kompatibel. Pengguna berikut seharusnya memastikan bahwa mereka telah memuat ulang peramban mereka: <1>{userLis}</1>",
   "Password": "Kata sandi",
   "Passwords must match": "Kata sandi harus cocok",
-  "Press and hold to talk over {{name}}": "Tekan dan tahan untuk berbicara pada {{name}}",
   "Profile": "Profil",
   "Recaptcha dismissed": "Recaptcha ditutup",
   "Recaptcha not loaded": "Recaptcha tidak dimuat",
@@ -113,5 +112,8 @@
   "<0>Thanks for your feedback!</0>": "<0>Terima kasih atas masukan Anda!</0>",
   "How did it go?": "Bagaimana rasanya?",
   "{{count}} stars|one": "{{count}} bintang",
-  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Kami ingin mendengar masukan Anda supaya kami bisa meningkatkan pengalaman Anda.</0>"
+  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Kami ingin mendengar masukan Anda supaya kami bisa meningkatkan pengalaman Anda.</0>",
+  "Show connection stats": "Tampilkan statistik koneksi",
+  "{{displayName}} is presenting": "{{displayName}} sedang menampilkan",
+  "{{count}} stars|other": "{{count}} bintang"
 }
