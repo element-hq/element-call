@@ -102,13 +102,17 @@ export function GroupCallView({
         // Get the available devices so we can match the selected device
         // to its ID. This involves getting a media stream (see docs on
         // the function) so we only do it once and re-use the result.
-        // const devices = await getNamedDevices();
-        const devices = [];
+        //
+        // But we only want to preload the devices if we get audio or video devices included in the widget request!
+        // By default, the device list is null!
+        let devices: MediaDeviceInfo[] | null = null;
 
         const { audioInput, videoInput } = ev.detail
           .data as unknown as JoinCallData;
 
         if (audioInput !== null) {
+          // we load the devices because w have an audio device in the widget request
+          devices = await getNamedDevices();
           const deviceId = await findDeviceByName(
             audioInput,
             "audioinput",
@@ -125,6 +129,11 @@ export function GroupCallView({
         }
 
         if (videoInput !== null) {
+          // we only need to load the devices once time
+          if (devices === null) {
+            // we load the devices because w have a video device in the widget request
+            devices = await getNamedDevices();
+          }
           const deviceId = await findDeviceByName(
             videoInput,
             "videoinput",
