@@ -72,7 +72,6 @@ import { MatrixInfo } from "./VideoPreview";
 import { useJoinRule } from "./useJoinRule";
 import { ParticipantInfo } from "./useGroupCall";
 import { ItemData, TileContent } from "../video-grid/VideoTile";
-import { Config } from "../config/Config";
 import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal } from "../settings/SettingsModal";
@@ -96,8 +95,8 @@ interface ActiveCallProps extends Omit<Props, "livekitRoom"> {
 
 export function ActiveCall(props: ActiveCallProps) {
   const livekitRoom = useLiveKit(props.userChoices, {
-    sfuUrl: Config.get().livekit!.server_url,
-    jwtUrl: `${Config.get().livekit!.jwt_service_url}/token`,
+    sfuUrl: props.groupCall.foci[0]!.url,
+    jwtUrl: `${props.groupCall.foci[0]!.jwtServiceUrl}/token`,
     roomName: props.matrixInfo.roomName,
     userDisplayName: props.matrixInfo.displayName,
     userIdentity: `${props.client.getUserId()}:${props.client.getDeviceId()}`,
