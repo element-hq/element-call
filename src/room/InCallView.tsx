@@ -96,7 +96,7 @@ export function ActiveCall(props: ActiveCallProps) {
     sfuUrl: Config.get().livekit!.server_url,
     jwtUrl: `${Config.get().livekit!.jwt_service_url}/token`,
     roomName: props.matrixInfo.roomName,
-    userName: props.matrixInfo.userName,
+    userDisplayName: props.matrixInfo.displayName,
     userIdentity: `${props.client.getUserId()}:${props.client.getDeviceId()}`,
   });
 

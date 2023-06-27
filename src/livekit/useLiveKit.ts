@@ -18,7 +18,7 @@ export type LiveKitConfig = {
   sfuUrl: string;
   jwtUrl: string;
   roomName: string;
-  userName: string;
+  userDisplayName: string;
   userIdentity: string;
 };
 
@@ -29,11 +29,11 @@ export function useLiveKit(
   const tokenOptions = React.useMemo(
     () => ({
       userInfo: {
-        name: config.userName,
+        name: config.userDisplayName,
         identity: config.userIdentity,
       },
     }),
-    [config.userName, config.userIdentity]
+    [config.userDisplayName, config.userIdentity]
   );
   const token = useToken(config.jwtUrl, config.roomName, tokenOptions);
 

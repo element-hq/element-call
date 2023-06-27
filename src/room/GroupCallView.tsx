@@ -85,7 +85,7 @@ export function GroupCallView({
   const roomAvatarUrl = useRoomAvatar(groupCall.room);
 
   const matrixInfo: MatrixInfo = {
-    userName: displayName,
+    displayName,
     avatarUrl,
     roomName: groupCall.room.name,
     roomIdOrAlias,
