@@ -79,7 +79,7 @@ import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { VideoTile } from "../video-grid/VideoTile";
 import { UserChoices, useLiveKit } from "../livekit/useLiveKit";
-import { useMediaDevices } from "../livekit/useMediaDevices";
+import { useMediaAllDevicesWithLocalStorage } from "../livekit/useMediaAllDevicesWithLocalStorage";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -142,7 +142,7 @@ export function InCallView({
   );
 
   // Managed media devices state coupled with an active room.
-  const roomMediaDevices = useMediaDevices(livekitRoom);
+  const roomMediaDevices = useMediaAllDevicesWithLocalStorage(livekitRoom);
 
   const screenSharingTracks = useTracks(
     [{ source: Track.Source.ScreenShare, withPlaceholder: false }],

@@ -18,6 +18,7 @@ import React, { useCallback, useState } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
+import { MediaDevices, MediaDevicesSelection } from "@livekit/components-react";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -42,10 +43,9 @@ import { Body, Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
-import { MediaDevices, MediaDevicesState } from "../livekit/useMediaDevices";
 
 interface Props {
-  mediaDevices?: MediaDevicesState;
+  mediaDevices?: MediaDevicesSelection;
   isOpen: boolean;
   client: MatrixClient;
   roomId?: string;

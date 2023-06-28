@@ -26,9 +26,8 @@ import styles from "./VideoPreview.module.css";
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
 import { useClient } from "../ClientContext";
-import { useMediaDevices } from "../livekit/useMediaDevices";
+import { useMediaAllDevicesWithLocalStorage } from "../livekit/useMediaAllDevicesWithLocalStorage";
 import { DeviceChoices, UserChoices } from "../livekit/useLiveKit";
-import { useDefaultDevices } from "../settings/useSetting";
 
 export type MatrixInfo = {
   userName: string;
@@ -62,25 +61,33 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
   }, [settingsModalState]);
 
   // Fetch user media devices.
-  const mediaDevices = useMediaDevices();
-
+  const mediaDevices = useMediaAllDevicesWithLocalStorage();
+  const { permittedDevices, videoIn, audioIn } = mediaDevices;
   // Create local media tracks.
   const [videoEnabled, setVideoEnabled] = React.useState<boolean>(true);
   const [audioEnabled, setAudioEnabled] = React.useState<boolean>(true);
-  const [videoId, audioId] = [
-    mediaDevices.videoIn.selectedId,
-    mediaDevices.audioIn.selectedId,
-  ];
-  const [defaultDevices] = useDefaultDevices();
+
+  const permissionsAvailable =
+    !!permittedDevices.audioDeviceId &&
+    !!permittedDevices.videoDeviceId &&
+    videoIn.selectedId != "" &&
+    audioIn.selectedId != "";
+
+  // Use preview device only creates tracks if permissions are available.
+  // useMediaAllDevicesWithLocalStorage will respect the user selection
+  // and audioIn/videoIn.selectedId will be updated to reflect what the user has selected in the permission dialog.
+  // => useMediaAllDevicesWithLocalStorage abstracts all user selection logic and is what we actually want to use inside the call/preview
   const video = usePreviewDevice(
     videoEnabled,
-    videoId != "" ? videoId : defaultDevices.videoinput,
-    "videoinput"
+    videoIn.selectedId,
+    "videoinput",
+    permissionsAvailable
   );
   const audio = usePreviewDevice(
     audioEnabled,
-    audioId != "" ? audioId : defaultDevices.audioinput,
-    "audioinput"
+    audioIn.selectedId,
+    "audioinput",
+    permissionsAvailable
   );
 
   const activeVideoId = video?.selectedDevice?.deviceId;
