@@ -14,25 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.grid {
-  contain: strict;
-  position: relative;
-  flex-grow: 1;
-  padding: 0 20px var(--footerHeight);
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.slots {
-  position: relative;
-}
-
-.slot {
-  contain: strict;
+.bigGrid {
+  display: grid;
+  grid-auto-rows: 163px;
+  gap: 8px;
 }
 
 @media (min-width: 800px) {
-  .grid {
-    padding: 0 22px var(--footerHeight);
+  .bigGrid {
+    grid-auto-rows: 183px;
+    column-gap: 18px;
+    row-gap: 21px;
   }
 }
