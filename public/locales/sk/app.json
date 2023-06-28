@@ -113,5 +113,7 @@
   "{{count}} stars|other": "{{count}} hviezdičiek",
   "{{displayName}}, your call has ended.": "{{displayName}}, váš hovor skončil.",
   "<0>Thanks for your feedback!</0>": "<0> Ďakujeme za vašu spätnú väzbu!</0>",
-  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0> Radi si vypočujeme vašu spätnú väzbu, aby sme mohli zlepšiť vaše skúsenosti.</0>"
+  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0> Radi si vypočujeme vašu spätnú väzbu, aby sme mohli zlepšiť vaše skúsenosti.</0>",
+  "{{displayName}} is presenting": "{{displayName}} prezentuje",
+  "Show connection stats": "Zobraziť štatistiky pripojenia"
 }
