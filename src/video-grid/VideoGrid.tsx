@@ -42,6 +42,7 @@ import { ResizeObserver as JuggleResizeObserver } from "@juggle/resize-observer"
 import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/GridLayoutMenu";
 import { TileWrapper } from "./TileWrapper";
+import { LayoutStatesMap } from "./Layout";
 
 interface TilePosition {
   x: number;
@@ -817,6 +818,7 @@ export interface VideoGridProps<T> {
   items: TileDescriptor<T>[];
   layout: Layout;
   disableAnimations: boolean;
+  layoutStates: LayoutStatesMap;
   children: (props: ChildrenProperties<T>) => React.ReactNode;
 }
 

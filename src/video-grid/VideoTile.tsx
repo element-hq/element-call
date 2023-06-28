@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import React, { useCallback } from "react";
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
@@ -34,8 +34,10 @@ import styles from "./VideoTile.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { useReactiveState } from "../useReactiveState";
+import { FullscreenButton } from "../button/Button";
 
 export interface ItemData {
+  id: string;
   member?: RoomMember;
   sfuParticipant: LocalParticipant | RemoteParticipant;
   content: TileContent;
@@ -48,7 +50,9 @@ export enum TileContent {
 
 interface Props {
   data: ItemData;
-
+  maximised: boolean;
+  fullscreen: boolean;
+  onToggleFullscreen: (itemId: string) => void;
   // TODO: Refactor these props.
   targetWidth: number;
   targetHeight: number;
@@ -62,6 +66,9 @@ export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
   (
     {
       data,
+      maximised,
+      fullscreen,
+      onToggleFullscreen,
       className,
       style,
       targetWidth,
@@ -93,16 +100,32 @@ export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
       }
     }, [member, setDisplayName]);
 
-    const audioEl = React.useRef<HTMLAudioElement>(null);
     const { isMuted: microphoneMuted } = useMediaTrack(
       content === TileContent.UserMedia
         ? Track.Source.Microphone
         : Track.Source.ScreenShareAudio,
-      sfuParticipant,
-      {
-        element: audioEl,
-      }
+      sfuParticipant
     );
+
+    const onFullscreen = useCallback(() => {
+      onToggleFullscreen(data.id);
+    }, [data, onToggleFullscreen]);
+
+    const toolbarButtons: JSX.Element[] = [];
+    if (!sfuParticipant.isLocal) {
+      // TODO local volume option, which would also go here
+
+      if (content === TileContent.ScreenShare) {
+        toolbarButtons.push(
+          <FullscreenButton
+            key="fullscreen"
+            className={styles.button}
+            fullscreen={fullscreen}
+            onPress={onFullscreen}
+          />
+        );
+      }
+    }
 
     // Firefox doesn't respect the disablePictureInPicture attribute
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
@@ -117,11 +140,15 @@ export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
             showSpeakingIndicator,
           [styles.muted]: microphoneMuted,
           [styles.screenshare]: content === TileContent.ScreenShare,
+          [styles.maximised]: maximised,
         })}
         style={style}
         ref={tileRef}
         data-testid="videoTile"
       >
+        {toolbarButtons.length > 0 && (!maximised || fullscreen) && (
+          <div className={classNames(styles.toolbar)}>{toolbarButtons}</div>
+        )}
         {content === TileContent.UserMedia && !sfuParticipant.isCameraEnabled && (
           <>
             <div className={styles.videoMutedOverlay} />
@@ -134,7 +161,7 @@ export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
             />
           </>
         )}
-        {content == TileContent.ScreenShare ? (
+        {content === TileContent.ScreenShare ? (
           <div className={styles.presenterLabel}>
             <span>{t("{{displayName}} is presenting", { displayName })}</span>
           </div>
@@ -155,7 +182,6 @@ export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
               : Track.Source.ScreenShare
           }
         />
-        <audio ref={audioEl} />
       </animated.div>
     );
   }
