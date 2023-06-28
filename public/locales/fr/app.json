@@ -113,5 +113,7 @@
   "{{count}} stars|one": "{{count}} favori",
   "{{displayName}}, your call has ended.": "{{displayName}}, votre appel est terminé.",
   "<0>Thanks for your feedback!</0>": "<0>Merci pour votre commentaire !</0>",
-  "How did it go?": "Comment cela s’est-il passé ?"
+  "How did it go?": "Comment cela s’est-il passé ?",
+  "{{displayName}} is presenting": "{{displayName}} est à l’écran",
+  "Show connection stats": "Afficher les statistiques de la connexion"
 }
