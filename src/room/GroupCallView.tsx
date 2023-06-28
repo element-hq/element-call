@@ -28,7 +28,6 @@ import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { MatrixInfo } from "./VideoPreview";
-import { ActiveCall } from "./InCallView";
 import { CallEndedView } from "./CallEndedView";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
@@ -36,6 +35,7 @@ import { useProfile } from "../profile/useProfile";
 import { UserChoices } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
 import { useRoomAvatar } from "./useRoomAvatar";
+import { OpenIDLoader } from "../livekit/OpenIDLoader";
 
 declare global {
   interface Window {
@@ -225,9 +225,10 @@ export function GroupCallView({
     return <ErrorView error={error} />;
   } else if (state === GroupCallState.Entered && userChoices) {
     return (
-      <ActiveCall
-        groupCall={groupCall}
+      <OpenIDLoader
         client={client}
+        roomName={matrixInfo.roomName}
+        groupCall={groupCall}
         participants={participants}
         onLeave={onLeave}
         unencryptedEventsFromUsers={unencryptedEventsFromUsers}
