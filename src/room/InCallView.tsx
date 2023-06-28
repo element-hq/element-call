@@ -73,7 +73,7 @@ import { useJoinRule } from "./useJoinRule";
 import { ParticipantInfo } from "./useGroupCall";
 import { ItemData, TileContent } from "../video-grid/VideoTile";
 import { Config } from "../config/Config";
-import { NewVideoGrid, useLayoutStates } from "../video-grid/NewVideoGrid";
+import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
@@ -83,6 +83,7 @@ import { VideoTile } from "../video-grid/VideoTile";
 import { UserChoices, useLiveKit } from "../livekit/useLiveKit";
 import { useMediaDevices } from "../livekit/useMediaDevices";
 import { useFullscreen } from "./useFullscreen";
+import { useLayoutStates } from "../video-grid/Layout";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
