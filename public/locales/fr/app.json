@@ -50,7 +50,6 @@
   "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "Des utilisateurs essayent de rejoindre cet appel à partir de versions incompatibles. Ces utilisateurs doivent rafraîchir la page dans leur navigateur : <1>{userLis}</1>",
   "Password": "Mot de passe",
   "Passwords must match": "Les mots de passe doivent correspondre",
-  "Press and hold to talk over {{name}}": "Appuyez et maintenez enfoncé pour parler par dessus {{name}}",
   "Profile": "Profil",
   "Recaptcha dismissed": "Recaptcha refusé",
   "Recaptcha not loaded": "Recaptcha non chargé",
@@ -114,5 +113,7 @@
   "{{count}} stars|one": "{{count}} favori",
   "{{displayName}}, your call has ended.": "{{displayName}}, votre appel est terminé.",
   "<0>Thanks for your feedback!</0>": "<0>Merci pour votre commentaire !</0>",
-  "How did it go?": "Comment cela s’est-il passé ?"
+  "How did it go?": "Comment cela s’est-il passé ?",
+  "{{displayName}} is presenting": "{{displayName}} est à l’écran",
+  "Show connection stats": "Afficher les statistiques de la connexion"
 }

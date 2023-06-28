@@ -52,7 +52,6 @@
   "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "Andere Benutzer versuchen, diesem Aufruf von einer inkompatiblen Softwareversion aus beizutreten. Diese Benutzer sollten ihre Web-Browser Seite neu laden:<1>{userLis}</1>",
   "Password": "Passwort",
   "Passwords must match": "Passwörter müssen übereinstimmen",
-  "Press and hold to talk over {{name}}": "Zum Verdrängen von {{name}} und Sprechen gedrückt halten",
   "Profile": "Profil",
   "Recaptcha dismissed": "Recaptcha abgelehnt",
   "Recaptcha not loaded": "Recaptcha nicht geladen",
