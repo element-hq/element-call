@@ -20,13 +20,12 @@ import React, {
   CSSProperties,
   FC,
   ReactNode,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import useMeasure, { RectReadOnly } from "react-use-measure";
+import useMeasure from "react-use-measure";
 import { zip } from "lodash";
 
 import styles from "./NewVideoGrid.module.css";
@@ -40,84 +39,7 @@ import { useReactiveState } from "../useReactiveState";
 import { useMergedRefs } from "../useMergedRefs";
 import { TileWrapper } from "./TileWrapper";
 import { BigGrid } from "./BigGrid";
-import { Layout } from "./Layout";
-
-export const useLayoutStates = () => {
-  const layoutStates = useRef<Map<Layout<unknown>, unknown>>();
-  if (layoutStates.current === undefined) layoutStates.current = new Map();
-  return layoutStates.current;
-};
-
-const useGrid = (
-  layout: Layout<unknown>,
-  items: TileDescriptor<unknown>[],
-  bounds: RectReadOnly,
-  layoutStates: Map<Layout<unknown>, unknown>
-) => {
-  const prevLayout = useRef<Layout<unknown>>(layout);
-  const prevState = layoutStates.get(layout);
-
-  const [state, setState] = useReactiveState<unknown>(() => {
-    // If the bounds aren't known yet, don't add anything to the layout
-    if (bounds.width === 0) {
-      return layout.emptyState;
-    } else {
-      if (layout !== prevLayout.current && !prevLayout.current.rememberState)
-        layoutStates.delete(prevLayout.current);
-
-      const baseState = layoutStates.get(layout) ?? layout.emptyState;
-      return layout.updateTiles(layout.updateBounds(baseState, bounds), items);
-    }
-  }, [layout, items, bounds]);
-
-  const generation = useRef<number>(0);
-  if (state !== prevState) generation.current++;
-
-  prevLayout.current = layout;
-  // No point in remembering an empty state, plus it would end up clobbering the
-  // real saved state while restoring a layout
-  if (state !== layout.emptyState) layoutStates.set(layout, state);
-
-  return {
-    grid: state,
-    orderedItems: useMemo(() => layout.getTiles(state), [layout, state]),
-    generation: generation.current,
-    canDragTile: useCallback(
-      (tile: TileDescriptor<unknown>) => layout.canDragTile(state, tile),
-      [layout, state]
-    ),
-    dragTile: useCallback(
-      (
-        from: TileDescriptor<unknown>,
-        to: TileDescriptor<unknown>,
-        xPositionOnFrom: number,
-        yPositionOnFrom: number,
-        xPositionOnTo: number,
-        yPositionOnTo: number
-      ) =>
-        setState((s) =>
-          layout.dragTile(
-            s,
-            from,
-            to,
-            xPositionOnFrom,
-            yPositionOnFrom,
-            xPositionOnTo,
-            yPositionOnTo
-          )
-        ),
-      [layout, setState]
-    ),
-    toggleFocus: useMemo(
-      () =>
-        layout.toggleFocus &&
-        ((tile: TileDescriptor<unknown>) =>
-          setState((s) => layout.toggleFocus!(s, tile))),
-      [layout, setState]
-    ),
-    slots: <layout.Slots s={state} />,
-  };
-};
+import { useLayout } from "./Layout";
 
 interface Rect {
   x: number;
@@ -126,8 +48,8 @@ interface Rect {
   height: number;
 }
 
-interface Tile extends Rect {
-  item: TileDescriptor<unknown>;
+interface Tile<T> extends Rect {
+  item: TileDescriptor<T>;
 }
 
 interface DragState {
@@ -215,23 +137,23 @@ export function NewVideoGrid<T>({
   // TODO: Implement more layouts and select the right one here
   const layout = BigGrid;
   const {
-    grid,
+    state: grid,
     orderedItems,
     generation,
     canDragTile,
     dragTile,
     toggleFocus,
     slots,
-  } = useGrid(layout as Layout<unknown>, items, gridBounds, layoutStates);
+  } = useLayout(layout, items, gridBounds, layoutStates);
 
-  const [tiles] = useReactiveState<Tile[]>(
+  const [tiles] = useReactiveState<Tile<T>[]>(
     (prevTiles) => {
       // If React hasn't yet rendered the current generation of the grid, skip
       // the update, because grid and slotRects will be out of sync
       if (renderedGeneration !== generation) return prevTiles ?? [];
 
-      const tileRects = new Map<TileDescriptor<unknown>, Rect>(
-        zip(orderedItems, slotRects) as [TileDescriptor<unknown>, Rect][]
+      const tileRects = new Map(
+        zip(orderedItems, slotRects) as [TileDescriptor<T>, Rect][]
       );
       // In order to not break drag gestures, it's critical that we render tiles
       // in a stable order (that of 'items')
@@ -247,8 +169,8 @@ export function NewVideoGrid<T>({
   const [tileTransitions, springRef] = useTransition(
     tiles,
     () => ({
-      key: ({ item }: Tile) => item.id,
-      from: ({ x, y, width, height }: Tile) => ({
+      key: ({ item }: Tile<T>) => item.id,
+      from: ({ x, y, width, height }: Tile<T>) => ({
         opacity: 0,
         scale: 0,
         shadow: 1,
@@ -261,7 +183,7 @@ export function NewVideoGrid<T>({
         immediate: disableAnimations,
       }),
       enter: { opacity: 1, scale: 1, immediate: disableAnimations },
-      update: ({ item, x, y, width, height }: Tile) =>
+      update: ({ item, x, y, width, height }: Tile<T>) =>
         item.id === dragState.current?.tileId
           ? null
           : {
@@ -275,7 +197,7 @@ export function NewVideoGrid<T>({
       config: { mass: 0.7, tension: 252, friction: 25 },
     })
     // react-spring's types are bugged and can't infer the spring type
-  ) as unknown as [TransitionFn<Tile, TileSpring>, SpringRef<TileSpring>];
+  ) as unknown as [TransitionFn<Tile<T>, TileSpring>, SpringRef<TileSpring>];
 
   // Because we're using react-spring in imperative mode, we're responsible for
   // firing animations manually whenever the tiles array updates
@@ -288,7 +210,7 @@ export function NewVideoGrid<T>({
     const tile = tiles.find((t) => t.item.id === tileId)!;
 
     springRef.current
-      .find((c) => (c.item as Tile).item.id === tileId)
+      .find((c) => (c.item as Tile<T>).item.id === tileId)
       ?.start(
         endOfGesture
           ? {
@@ -353,10 +275,10 @@ export function NewVideoGrid<T>({
       toggleFocus?.(items.find((i) => i.id === tileId)!);
     } else {
       const tileController = springRef.current.find(
-        (c) => (c.item as Tile).item.id === tileId
+        (c) => (c.item as Tile<T>).item.id === tileId
       )!;
 
-      if (canDragTile((tileController.item as Tile).item)) {
+      if (canDragTile((tileController.item as Tile<T>).item)) {
         if (dragState.current === null) {
           const tileSpring = tileController.get();
           dragState.current = {
@@ -422,7 +344,7 @@ export function NewVideoGrid<T>({
           data={tile.item.data}
           {...spring}
         >
-          {children as (props: ChildrenProperties<unknown>) => ReactNode}
+          {children as (props: ChildrenProperties<T>) => ReactNode}
         </TileWrapper>
       ))}
     </div>
