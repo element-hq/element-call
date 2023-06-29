@@ -35,7 +35,6 @@ export type MatrixInfo = {
   avatarUrl: string;
   roomName: string;
   roomIdOrAlias: string;
-  roomAvatarUrl: string | null;
 };
 
 interface Props {
