@@ -257,6 +257,11 @@ export function NewVideoGrid<T>({
       );
   };
 
+  const [lastTappedTileId, setLastTappedTileId] = useState<string | undefined>(
+    undefined
+  );
+  const [lastTapTime, setLastTapTime] = useState<number>(0);
+
   // Callback for useDrag. We could call useDrag here, but the default
   // pattern of spreading {...bind()} across the children to bind the gesture
   // ends up breaking memoization and ruining this component's performance.
@@ -272,7 +277,14 @@ export function NewVideoGrid<T>({
     }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
   ) => {
     if (tap) {
-      toggleFocus?.(items.find((i) => i.id === tileId)!);
+      const now = Date.now();
+
+      if (tileId === lastTappedTileId && now - lastTapTime < 500) {
+        toggleFocus?.(items.find((i) => i.id === tileId)!);
+      }
+
+      setLastTappedTileId(tileId);
+      setLastTapTime(now);
     } else {
       const tileController = springRef.current.find(
         (c) => (c.item as Tile<T>).item.id === tileId
