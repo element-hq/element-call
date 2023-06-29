@@ -11,8 +11,5 @@
   },
   "rageshake": {
     "submit_url": "https://element.io/bugreports/submit"
-  },
-  "features": {
-    "feature_group_calls_without_video_and_audio": true
   }
 }
