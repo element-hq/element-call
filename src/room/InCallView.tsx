@@ -389,10 +389,7 @@ export function InCallView({
       {!hideHeader && maximisedParticipant === null && (
         <Header>
           <LeftNav>
-            <RoomHeaderInfo
-              roomName={matrixInfo.roomName}
-              avatarUrl={matrixInfo.roomAvatarUrl}
-            />
+            <RoomHeaderInfo roomName={matrixInfo.roomName} />
             <VersionMismatchWarning
               users={unencryptedEventsFromUsers}
               room={groupCall.room}

@@ -114,10 +114,9 @@ export function HeaderLogo({ className }: HeaderLogoProps) {
 
 interface RoomHeaderInfo {
   roomName: string;
-  avatarUrl: string | null;
 }
 
-export function RoomHeaderInfo({ roomName, avatarUrl }: RoomHeaderInfo) {
+export function RoomHeaderInfo({ roomName }: RoomHeaderInfo) {
   return (
     <>
       <Subtitle data-testid="roomHeader_roomName" fontWeight="semiBold">
