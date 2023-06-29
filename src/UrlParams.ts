@@ -84,6 +84,10 @@ export interface UrlParams {
    * user's homeserver doesn't provide any.
    */
   allowIceFallback: boolean;
+  /**
+   * Whether the app is allowed screen share only mode
+   */
+  allowVoipWithNoMedia: boolean;
 }
 
 /**
@@ -141,6 +145,7 @@ export const getUrlParams = (
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
     analyticsID: getParam("analyticsID"),
     allowIceFallback: hasParam("allowIceFallback"),
+    allowVoipWithNoMedia: hasParam("allowVoipWithNoMedia"),
   };
 };
 
