@@ -35,6 +35,8 @@ export function FeedbackSettingsTab({ roomId }: Props) {
   const sendRageshakeRequest = useRageshakeRequest();
 
   const onSubmitFeedback = useCallback(
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);

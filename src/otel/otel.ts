@@ -23,7 +23,6 @@ import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions"
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { PosthogSpanProcessor } from "../analytics/PosthogSpanProcessor";
-import { Anonymity } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
 import { RageshakeSpanProcessor } from "../analytics/RageshakeSpanProcessor";
 
@@ -34,8 +33,7 @@ let sharedInstance: ElementCallOpenTelemetry;
 export class ElementCallOpenTelemetry {
   private _provider: WebTracerProvider;
   private _tracer: Tracer;
-  private _anonymity: Anonymity;
-  private otlpExporter: OTLPTraceExporter;
+  private otlpExporter?: OTLPTraceExporter;
   public readonly rageshakeProcessor?: RageshakeSpanProcessor;
 
   static globalInit(): void {
@@ -100,7 +98,7 @@ export class ElementCallOpenTelemetry {
   }
 
   public dispose(): void {
-    opentelemetry.trace.setGlobalTracerProvider(null);
+    opentelemetry.trace.disable();
     this._provider?.shutdown();
   }
 
@@ -114,9 +112,5 @@ export class ElementCallOpenTelemetry {
 
   public get provider(): WebTracerProvider {
     return this._provider;
-  }
-
-  public get anonymity(): Anonymity {
-    return this._anonymity;
   }
 }

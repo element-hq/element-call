@@ -17,7 +17,7 @@ limitations under the License.
 import { useCallback, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 
-import { useClient } from "./ClientContext";
+import { useClientLegacy } from "./ClientContext";
 import { useProfile } from "./profile/useProfile";
 import { useModalTriggerState } from "./Modal";
 import { SettingsModal } from "./settings/SettingsModal";
@@ -30,8 +30,7 @@ interface Props {
 export function UserMenuContainer({ preventNavigation = false }: Props) {
   const location = useLocation();
   const history = useHistory();
-  const { isAuthenticated, isPasswordlessUser, logout, userName, client } =
-    useClient();
+  const { client, logout, authenticated, passwordlessUser } = useClientLegacy();
   const { displayName, avatarUrl } = useProfile(client);
   const { modalState, modalProps } = useModalTriggerState();
 
@@ -49,7 +48,9 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
           modalState.open();
           break;
         case "logout":
-          logout();
+          if (logout) {
+            logout();
+          }
           break;
         case "login":
           history.push("/login", { state: { from: location } });
@@ -59,19 +60,22 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
     [history, location, logout, modalState]
   );
 
+  const userName = client?.getUserIdLocalpart() ?? "";
   return (
     <>
-      <UserMenu
-        preventNavigation={preventNavigation}
-        isAuthenticated={isAuthenticated}
-        isPasswordlessUser={isPasswordlessUser}
-        avatarUrl={avatarUrl}
-        onAction={onAction}
-        displayName={
-          displayName || (userName ? userName.replace("@", "") : undefined)
-        }
-      />
-      {modalState.isOpen && (
+      {avatarUrl && (
+        <UserMenu
+          preventNavigation={preventNavigation}
+          isAuthenticated={authenticated}
+          isPasswordlessUser={passwordlessUser}
+          avatarUrl={avatarUrl}
+          onAction={onAction}
+          displayName={
+            displayName || (userName ? userName.replace("@", "") : "")
+          }
+        />
+      )}
+      {modalState.isOpen && client && (
         <SettingsModal
           client={client}
           defaultTab={defaultSettingsTab}

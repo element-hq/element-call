@@ -102,7 +102,7 @@ describe("ObjectFlattener", () => {
           localCandidateType: "srfx",
           remoteCandidateType: "srfx",
           networkType: "ethernet",
-          rtt: null,
+          rtt: 0,
         },
       ],
       audioConcealment: new Map([

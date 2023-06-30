@@ -41,8 +41,10 @@ export const useInteractiveLogin = () =>
           },
           password,
         }),
-      stateUpdated: null,
-      requestEmailToken: null,
+      stateUpdated: (...args) => {},
+      requestEmailToken: (...args): Promise<{ sid: string }> => {
+        return Promise.resolve({ sid: "" });
+      },
     });
 
     // XXX: This claims to return an IAuthData which contains none of these

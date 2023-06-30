@@ -99,10 +99,10 @@ export const Avatar: FC<Props> = ({
     [size]
   );
 
-  const resolvedSrc = useMemo(
-    () => resolveAvatarSrc(client, src, sizePx),
-    [client, src, sizePx]
-  );
+  const resolvedSrc = useMemo(() => {
+    if (!client || !src || !sizePx) return undefined;
+    return resolveAvatarSrc(client, src, sizePx);
+  }, [client, src, sizePx]);
 
   const backgroundColor = useMemo(() => {
     const index = hashStringToArrIndex(

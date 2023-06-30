@@ -74,8 +74,14 @@ export const useLoadGroupCall = (
       } catch (error) {
         if (
           isLocalRoomId(roomIdOrAlias, client) &&
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           (error.errcode === "M_NOT_FOUND" ||
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             (error.message &&
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
               error.message.indexOf("Failed to fetch alias") !== -1))
         ) {
           // The room doesn't exist, but we can create it
@@ -86,7 +92,7 @@ export const useLoadGroupCall = (
           );
           // likewise, wait for the room
           await client.waitUntilRoomReadyForGroupCalls(roomId);
-          return client.getRoom(roomId);
+          return client.getRoom(roomId)!;
         } else {
           throw error;
         }

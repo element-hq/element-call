@@ -209,7 +209,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
           <SettingsButton onPress={openSettings} />
         </div>
       </>
-      {settingsModalState.isOpen && (
+      {settingsModalState.isOpen && client && (
         <SettingsModal
           client={client}
           mediaDevicesSwitcher={mediaSwitcher}

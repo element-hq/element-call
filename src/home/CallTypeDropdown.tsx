@@ -52,7 +52,15 @@ export const CallTypeDropdown: FC<Props> = ({ callType, setCallType }) => {
         </Headline>
       </Button>
       {(props: JSX.IntrinsicAttributes) => (
-        <Menu {...props} label={t("Call type menu")} onAction={setCallType}>
+        <Menu
+          {...props}
+          label={t("Call type menu")}
+          onAction={(key) => {
+            const callType = key.toString();
+            setCallType(callType as CallType);
+          }}
+          onClose={() => {}}
+        >
           <Item key={CallType.Video} textValue={t("Video call")}>
             <VideoIcon />
             <span>{t("Video call")}</span>

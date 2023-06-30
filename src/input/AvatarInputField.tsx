@@ -15,10 +15,14 @@ limitations under the License.
 */
 
 import { useObjectRef } from "@react-aria/utils";
-import { AllHTMLAttributes, ChangeEvent, useEffect } from "react";
-import { useCallback } from "react";
-import { useState } from "react";
-import { forwardRef } from "react";
+import {
+  AllHTMLAttributes,
+  useEffect,
+  useCallback,
+  useState,
+  forwardRef,
+  ChangeEvent,
+} from "react";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 
@@ -43,7 +47,7 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
     const { t } = useTranslation();
 
     const [removed, setRemoved] = useState(false);
-    const [objUrl, setObjUrl] = useState<string>(null);
+    const [objUrl, setObjUrl] = useState<string | undefined>(undefined);
 
     const fileInputRef = useObjectRef(ref);
 
@@ -52,11 +56,11 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
 
       const onChange = (e: Event) => {
         const inputEvent = e as unknown as ChangeEvent<HTMLInputElement>;
-        if (inputEvent.target.files.length > 0) {
+        if (inputEvent.target.files && inputEvent.target.files.length > 0) {
           setObjUrl(URL.createObjectURL(inputEvent.target.files[0]));
           setRemoved(false);
         } else {
-          setObjUrl(null);
+          setObjUrl(undefined);
         }
       };
 
@@ -77,7 +81,7 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
         <div className={styles.avatarContainer}>
           <Avatar
             size={Size.XL}
-            src={removed ? null : objUrl || avatarUrl}
+            src={removed ? undefined : objUrl || avatarUrl}
             fallback={displayName.slice(0, 1).toUpperCase()}
           />
           <input

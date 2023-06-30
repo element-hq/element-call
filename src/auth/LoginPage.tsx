@@ -35,8 +35,8 @@ export const LoginPage: FC = () => {
   const { setClient } = useClient();
   const login = useInteractiveLogin();
   const homeserver = Config.defaultHomeserverUrl(); // TODO: Make this configurable
-  const usernameRef = useRef<HTMLInputElement>();
-  const passwordRef = useRef<HTMLInputElement>();
+  const usernameRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
   const history = useHistory();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
@@ -49,12 +49,27 @@ export const LoginPage: FC = () => {
       e.preventDefault();
       setLoading(true);
 
+      if (!homeserver || !usernameRef.current || !passwordRef.current) {
+        setError(Error("Login parameters are undefined"));
+        setLoading(false);
+        return;
+      }
+
       login(homeserver, usernameRef.current.value, passwordRef.current.value)
         .then(([client, session]) => {
-          setClient(client, session);
+          if (!setClient) {
+            return;
+          }
 
-          if (location.state && location.state.from) {
-            history.push(location.state.from);
+          setClient({ client, session });
+
+          const locationState = location.state;
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
+          if (locationState && locationState.from) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
+            history.push(locationState.from);
           } else {
             history.push("/");
           }

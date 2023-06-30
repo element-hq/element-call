@@ -21,10 +21,10 @@ import { FileType } from "matrix-js-sdk/src/http-api";
 import { useState, useCallback, useEffect } from "react";
 
 interface ProfileLoadState {
-  success?: boolean;
-  loading?: boolean;
-  displayName: string;
-  avatarUrl: string;
+  success: boolean;
+  loading: boolean;
+  displayName?: string;
+  avatarUrl?: string;
   error?: Error;
 }
 
@@ -38,23 +38,26 @@ type ProfileSaveCallback = ({
   removeAvatar: boolean;
 }) => Promise<void>;
 
-export function useProfile(client: MatrixClient) {
-  const [{ loading, displayName, avatarUrl, error, success }, setState] =
+export function useProfile(client?: MatrixClient) {
+  const [{ success, loading, displayName, avatarUrl, error }, setState] =
     useState<ProfileLoadState>(() => {
-      const user = client?.getUser(client.getUserId());
+      let user: User | undefined = undefined;
+      if (client) {
+        user = client.getUser(client.getUserId()!) ?? undefined;
+      }
 
       return {
         success: false,
         loading: false,
         displayName: user?.rawDisplayName,
         avatarUrl: user?.avatarUrl,
-        error: null,
+        error: undefined,
       };
     });
 
   useEffect(() => {
     const onChangeUser = (
-      _event: MatrixEvent,
+      _event: MatrixEvent | undefined,
       { displayName, avatarUrl }: User
     ) => {
       setState({
@@ -62,17 +65,16 @@ export function useProfile(client: MatrixClient) {
         loading: false,
         displayName,
         avatarUrl,
-        error: null,
+        error: undefined,
       });
     };
 
-    let user: User;
-
+    let user: User | null;
     if (client) {
-      const userId = client.getUserId();
+      const userId = client.getUserId()!;
       user = client.getUser(userId);
-      user.on(UserEvent.DisplayName, onChangeUser);
-      user.on(UserEvent.AvatarUrl, onChangeUser);
+      user?.on(UserEvent.DisplayName, onChangeUser);
+      user?.on(UserEvent.AvatarUrl, onChangeUser);
     }
 
     return () => {
@@ -89,7 +91,7 @@ export function useProfile(client: MatrixClient) {
         setState((prev) => ({
           ...prev,
           loading: true,
-          error: null,
+          error: undefined,
           success: false,
         }));
 
@@ -110,7 +112,9 @@ export function useProfile(client: MatrixClient) {
           setState((prev) => ({
             ...prev,
             displayName,
-            avatarUrl: removeAvatar ? null : mxcAvatarUrl ?? prev.avatarUrl,
+            avatarUrl: removeAvatar
+              ? undefined
+              : mxcAvatarUrl ?? prev.avatarUrl,
             loading: false,
             success: true,
           }));

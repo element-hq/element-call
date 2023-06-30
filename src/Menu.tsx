@@ -26,7 +26,7 @@ import styles from "./Menu.module.css";
 
 interface MenuProps<T> extends AriaMenuOptions<T> {
   className?: String;
-  onClose?: () => void;
+  onClose: () => void;
   onAction: (value: Key) => void;
   label?: string;
 }
@@ -39,7 +39,7 @@ export function Menu<T extends object>({
   ...rest
 }: MenuProps<T>) {
   const state = useTreeState<T>({ ...rest, selectionMode: "none" });
-  const menuRef = useRef();
+  const menuRef = useRef(null);
   const { menuProps } = useMenu<T>(rest, state, menuRef);
 
   return (
@@ -69,7 +69,7 @@ interface MenuItemProps<T> {
 }
 
 function MenuItem<T>({ item, state, onAction, onClose }: MenuItemProps<T>) {
-  const ref = useRef();
+  const ref = useRef(null);
   const { menuItemProps } = useMenuItem(
     {
       key: item.key,
