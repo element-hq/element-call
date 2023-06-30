@@ -85,8 +85,8 @@ export function GroupCallView({
   const { displayName, avatarUrl } = useProfile(client);
 
   const matrixInfo: MatrixInfo = {
-    displayName,
-    avatarUrl,
+    displayName: displayName!,
+    avatarUrl: avatarUrl!,
     roomName: groupCall.room.name,
     roomIdOrAlias,
   };
@@ -140,14 +140,14 @@ export function GroupCallView({
         PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
 
         await Promise.all([
-          widget.api.setAlwaysOnScreen(true),
-          widget.api.transport.reply(ev.detail, {}),
+          widget?.api.setAlwaysOnScreen(true),
+          widget?.api.transport.reply(ev.detail, {}),
         ]);
       };
 
       widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
       return () => {
-        widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
+        widget?.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
     }
   }, [groupCall, preload, enter]);
@@ -206,12 +206,12 @@ export function GroupCallView({
     if (widget && state === GroupCallState.Entered) {
       const onHangup = async (ev: CustomEvent<IWidgetApiRequest>) => {
         leave();
-        await widget.api.transport.reply(ev.detail, {});
-        widget.api.setAlwaysOnScreen(false);
+        await widget?.api.transport.reply(ev.detail, {});
+        widget?.api.setAlwaysOnScreen(false);
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
       return () => {
-        widget.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
+        widget?.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
       };
     }
   }, [groupCall, state, leave]);
@@ -222,7 +222,7 @@ export function GroupCallView({
 
   const livekitServiceURL =
     groupCall.foci[0]?.livekitServiceUrl ??
-    Config.get().livekit.livekit_service_url;
+    Config.get().livekit?.livekit_service_url;
   if (!livekitServiceURL) {
     return <ErrorView error={new Error("No livekit_service_url defined")} />;
   }

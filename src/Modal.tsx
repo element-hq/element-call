@@ -55,7 +55,7 @@ export function Modal({
   ...rest
 }: ModalProps) {
   const { t } = useTranslation();
-  const modalRef = useRef();
+  const modalRef = useRef(null);
   const { overlayProps, underlayProps } = useOverlay(
     { ...rest, onClose },
     modalRef
@@ -63,7 +63,7 @@ export function Modal({
   usePreventScroll();
   const { modalProps } = useModal();
   const { dialogProps, titleProps } = useDialog(rest, modalRef);
-  const closeButtonRef = useRef();
+  const closeButtonRef = useRef(null);
   const { buttonProps: closeButtonProps } = useButton(
     {
       onPress: () => onClose(),

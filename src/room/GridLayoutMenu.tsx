@@ -46,7 +46,12 @@ export function GridLayoutMenu({ layout, setLayout }: Props) {
         </Button>
       </TooltipTrigger>
       {(props: JSX.IntrinsicAttributes) => (
-        <Menu {...props} label={t("Grid layout menu")} onAction={setLayout}>
+        <Menu
+          {...props}
+          label={t("Grid layout menu")}
+          onAction={(key) => setLayout(key.toString() as Layout)}
+          onClose={() => {}}
+        >
           <Item key="freedom" textValue={t("Freedom")}>
             <FreedomIcon />
             <span>Freedom</span>

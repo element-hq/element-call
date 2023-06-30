@@ -61,46 +61,46 @@ export class OTelCall {
   }
 
   public dispose() {
-    this.call.peerConn.removeEventListener(
+    this.call.peerConn?.removeEventListener(
       "connectionstatechange",
       this.onCallConnectionStateChanged
     );
-    this.call.peerConn.removeEventListener(
+    this.call.peerConn?.removeEventListener(
       "signalingstatechange",
       this.onCallSignalingStateChanged
     );
-    this.call.peerConn.removeEventListener(
+    this.call.peerConn?.removeEventListener(
       "iceconnectionstatechange",
       this.onIceConnectionStateChanged
     );
-    this.call.peerConn.removeEventListener(
+    this.call.peerConn?.removeEventListener(
       "icegatheringstatechange",
       this.onIceGatheringStateChanged
     );
-    this.call.peerConn.removeEventListener(
+    this.call.peerConn?.removeEventListener(
       "icecandidateerror",
       this.onIceCandidateError
     );
   }
 
   private addCallPeerConnListeners = (): void => {
-    this.call.peerConn.addEventListener(
+    this.call.peerConn?.addEventListener(
       "connectionstatechange",
       this.onCallConnectionStateChanged
     );
-    this.call.peerConn.addEventListener(
+    this.call.peerConn?.addEventListener(
       "signalingstatechange",
       this.onCallSignalingStateChanged
     );
-    this.call.peerConn.addEventListener(
+    this.call.peerConn?.addEventListener(
       "iceconnectionstatechange",
       this.onIceConnectionStateChanged
     );
-    this.call.peerConn.addEventListener(
+    this.call.peerConn?.addEventListener(
       "icegatheringstatechange",
       this.onIceGatheringStateChanged
     );
-    this.call.peerConn.addEventListener(
+    this.call.peerConn?.addEventListener(
       "icecandidateerror",
       this.onIceCandidateError
     );
@@ -108,25 +108,25 @@ export class OTelCall {
 
   public onCallConnectionStateChanged = (): void => {
     this.span.addEvent("matrix.call.callConnectionStateChange", {
-      callConnectionState: this.call.peerConn.connectionState,
+      callConnectionState: this.call.peerConn?.connectionState,
     });
   };
 
   public onCallSignalingStateChanged = (): void => {
     this.span.addEvent("matrix.call.callSignalingStateChange", {
-      callSignalingState: this.call.peerConn.signalingState,
+      callSignalingState: this.call.peerConn?.signalingState,
     });
   };
 
   public onIceConnectionStateChanged = (): void => {
     this.span.addEvent("matrix.call.iceConnectionStateChange", {
-      iceConnectionState: this.call.peerConn.iceConnectionState,
+      iceConnectionState: this.call.peerConn?.iceConnectionState,
     });
   };
 
   public onIceGatheringStateChanged = (): void => {
     this.span.addEvent("matrix.call.iceGatheringStateChange", {
-      iceGatheringState: this.call.peerConn.iceGatheringState,
+      iceGatheringState: this.call.peerConn?.iceGatheringState,
     });
   };
 

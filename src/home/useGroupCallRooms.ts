@@ -42,7 +42,7 @@ function getLastTs(client: MatrixClient, r: Room) {
     return ts;
   }
 
-  const myUserId = client.getUserId();
+  const myUserId = client.getUserId()!;
 
   if (r.getMyMembership() !== "join") {
     const membershipEvent = r.currentState.getStateEvents(
@@ -79,25 +79,30 @@ function sortRooms(client: MatrixClient, rooms: Room[]): Room[] {
 }
 
 export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
-  const [rooms, setRooms] = useState([]);
+  const [rooms, setRooms] = useState<GroupCallRoom[]>([]);
 
   useEffect(() => {
     function updateRooms() {
+      if (!client.groupCallEventHandler) {
+        return;
+      }
+
       const groupCalls = client.groupCallEventHandler.groupCalls.values();
       const rooms = Array.from(groupCalls).map((groupCall) => groupCall.room);
       const sortedRooms = sortRooms(client, rooms);
       const items = sortedRooms.map((room) => {
-        const groupCall = client.getGroupCallForRoom(room.roomId);
+        const groupCall = client.getGroupCallForRoom(room.roomId)!;
 
         return {
           roomId: room.getCanonicalAlias() || room.roomId,
           roomName: room.name,
-          avatarUrl: room.getMxcAvatarUrl(),
+          avatarUrl: room.getMxcAvatarUrl()!,
           room,
           groupCall,
-          participants: [...groupCall.participants],
+          participants: [...groupCall!.participants.keys()],
         };
       });
+
       setRooms(items);
     }
 

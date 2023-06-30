@@ -55,14 +55,22 @@ export function usePageUnload(callback: () => void) {
     // iOS doesn't fire beforeunload event, so leave the call when you hide the page.
     if (isIOS()) {
       window.addEventListener("pagehide", onBeforeUnload);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       document.addEventListener("visibilitychange", onBeforeUnload);
     }
 
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     window.addEventListener("beforeunload", onBeforeUnload);
 
     return () => {
       window.removeEventListener("pagehide", onBeforeUnload);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       document.removeEventListener("visibilitychange", onBeforeUnload);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       window.removeEventListener("beforeunload", onBeforeUnload);
       clearTimeout(pageVisibilityTimeout);
     };

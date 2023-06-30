@@ -695,7 +695,7 @@ function getSubGridPositions(
 // Calculates the number of possible tiles that can be displayed
 function displayedTileCount(
   layout: Layout,
-  tileCount,
+  tileCount: number,
   gridWidth: number,
   gridHeight: number
 ): number {
@@ -854,7 +854,7 @@ export function VideoGrid<T>({
     tilePositions: [],
   });
   const [scrollPosition, setScrollPosition] = useState<number>(0);
-  const draggingTileRef = useRef<DragTileData>(null);
+  const draggingTileRef = useRef<DragTileData | null>(null);
   const lastTappedRef = useRef<{ [index: Key]: number }>({});
   const lastLayoutRef = useRef<Layout>(layout);
   const isMounted = useIsMounted();
@@ -1189,11 +1189,23 @@ export function VideoGrid<T>({
   const onTileDrag = (
     tileId: string,
     {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       active,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       xy,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       movement,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       tap,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       last,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       event,
     }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
   ) => {
@@ -1345,7 +1357,11 @@ export function VideoGrid<T>({
 
   const bindGrid = useGesture(
     {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       onWheel: (e) => onGridGesture(e, true),
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       onDrag: (e) => onGridGesture(e, false),
     },
     {}

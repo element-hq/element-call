@@ -16,7 +16,7 @@ limitations under the License.
 
 import { useTranslation } from "react-i18next";
 
-import { useClient } from "../ClientContext";
+import { useClientState } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
 import { UnauthenticatedView } from "./UnauthenticatedView";
 import { RegisteredView } from "./RegisteredView";
@@ -26,16 +26,18 @@ export function HomePage() {
   const { t } = useTranslation();
   usePageTitle(t("Home"));
 
-  const { isAuthenticated, isPasswordlessUser, loading, error, client } =
-    useClient();
+  const clientState = useClientState();
 
-  if (loading) {
+  if (!clientState) {
     return <LoadingView />;
-  } else if (error) {
-    return <ErrorView error={error} />;
+  } else if (clientState.state === "error") {
+    return <ErrorView error={clientState.error} />;
   } else {
-    return isAuthenticated ? (
-      <RegisteredView isPasswordlessUser={isPasswordlessUser} client={client} />
+    return clientState.authenticated ? (
+      <RegisteredView
+        isPasswordlessUser={clientState.authenticated.isPasswordlessUser}
+        client={clientState.authenticated.client}
+      />
     ) : (
       <UnauthenticatedView />
     );

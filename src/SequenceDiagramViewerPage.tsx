@@ -36,6 +36,9 @@ export function SequenceDiagramViewerPage() {
 
   const [debugLog, setDebugLog] = useState<DebugLog>();
   const [selectedUserId, setSelectedUserId] = useState<string>();
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
   const onChangeDebugLog = useCallback((e) => {
     if (e.target.files && e.target.files.length > 0) {
       e.target.files[0].text().then((text: string) => {
@@ -55,7 +58,7 @@ export function SequenceDiagramViewerPage() {
           onChange={onChangeDebugLog}
         />
       </FieldRow>
-      {debugLog && (
+      {debugLog && selectedUserId && (
         <SequenceDiagramViewer
           localUserId={debugLog.localUserId}
           selectedUserId={selectedUserId}

@@ -47,8 +47,8 @@ export function Facepile({
 }: Props) {
   const { t } = useTranslation();
 
-  const _size = sizes.get(size);
-  const _overlap = overlapMap[size];
+  const _size = sizes.get(size)!;
+  const _overlap = overlapMap[size]!;
 
   const title = useMemo(() => {
     return members.reduce<string | null>(

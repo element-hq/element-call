@@ -1,26 +1,34 @@
 {
   "compilerOptions": {
     "target": "es2016",
-    "esModuleInterop": true,
     "module": "es2020",
-    "moduleResolution": "node",
-    "noEmit": true,
-    "noImplicitAny": false,
-    "noUnusedLocals": true,
     "jsx": "react-jsx",
     "lib": ["es2020", "dom", "dom.iterable"],
-    "strict": false,
-    "plugins": [
-      {
-        "name": "typescript-strict-plugin",
-        "paths": ["src"]
-      }
-    ]
+
+    // From Matrix-JS-SDK
+    "strict": true,
+    "noEmit": true,
+    "noEmitOnError": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "noUnusedLocals": true,
+    "moduleResolution": "node",
+    "declaration": true
+
+    // TODO: Enable the following options later.
+    // "forceConsistentCasingInFileNames": true,
+    // "noFallthroughCasesInSwitch": true,
+    // "noImplicitOverride": true,
+    // "noImplicitReturns": true,
+    // "noPropertyAccessFromIndexSignature": true,
+    // "noUncheckedIndexedAccess": true,
+    // "noUnusedParameters": true,
   },
   "include": [
     "./src/**/*.ts",
     "./src/**/*.tsx",
     "./test/**/*.ts",
     "./test/**/*.tsx"
-  ]
+  ],
+  "exclude": ["node_modules"]
 }

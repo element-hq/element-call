@@ -119,7 +119,7 @@ export function UserMenu({
           )}
         </Button>
       </TooltipTrigger>
-      {(props) => (
+      {(props: any) => (
         <Menu {...props} label={t("User menu")} onAction={onAction}>
           {items.map(({ key, icon: Icon, label, dataTestid }) => (
             <Item key={key} textValue={label}>
