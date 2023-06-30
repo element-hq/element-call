@@ -15,21 +15,29 @@ limitations under the License.
 */
 
 import { MatrixClient } from "matrix-js-sdk";
-import React, { useEffect, useState } from "react";
+import React, {
+  ReactNode,
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { SFUConfig, getSFUConfigWithOpenID } from "./openIDSFU";
 import { ErrorView, LoadingView } from "../FullScreenView";
-import { ActiveCall, InCallViewProps } from "../room/InCallView";
-import { UserChoices } from "./useLiveKit";
 
-interface Props extends Omit<InCallViewProps, "livekitRoom"> {
+interface Props {
   client: MatrixClient;
   roomName: string;
-  userChoices: UserChoices;
+  children: ReactNode;
 }
 
-export function OpenIDLoader({ client, roomName, ...rest }: Props) {
+const SFUConfigContext = createContext<SFUConfig>(undefined);
+
+export const useSFUConfig = () => useContext(SFUConfigContext);
+
+export function OpenIDLoader({ client, roomName, children }: Props) {
   const [sfuConfig, setSFUConfig] = useState<SFUConfig>();
   const [error, setError] = useState<Error>();
 
@@ -48,7 +56,11 @@ export function OpenIDLoader({ client, roomName, ...rest }: Props) {
   if (error) {
     return <ErrorView error={error} />;
   } else if (sfuConfig) {
-    return <ActiveCall client={client} sfuConfig={sfuConfig} {...rest} />;
+    return (
+      <SFUConfigContext.Provider value={sfuConfig}>
+        {children}
+      </SFUConfigContext.Provider>
+    );
   } else {
     return <LoadingView />;
   }

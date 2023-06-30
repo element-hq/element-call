@@ -81,9 +81,9 @@ import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { VideoTile } from "../video-grid/VideoTile";
 import { UserChoices, useLiveKit } from "../livekit/useLiveKit";
 import { useMediaDevices } from "../livekit/useMediaDevices";
-import { SFUConfig } from "../livekit/openIDSFU";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
+import { useSFUConfig } from "../livekit/OpenIDLoader";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -93,11 +93,11 @@ const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 export interface ActiveCallProps extends Omit<InCallViewProps, "livekitRoom"> {
   userChoices: UserChoices;
-  sfuConfig: SFUConfig;
 }
 
 export function ActiveCall(props: ActiveCallProps) {
-  const livekitRoom = useLiveKit(props.userChoices, props.sfuConfig);
+  const sfuConfig = useSFUConfig();
+  const livekitRoom = useLiveKit(props.userChoices, sfuConfig);
 
   return (
     livekitRoom && (

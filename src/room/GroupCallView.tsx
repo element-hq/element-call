@@ -35,6 +35,7 @@ import { useProfile } from "../profile/useProfile";
 import { UserChoices } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
 import { OpenIDLoader } from "../livekit/OpenIDLoader";
+import { ActiveCall } from "./InCallView";
 
 declare global {
   interface Window {
@@ -222,18 +223,19 @@ export function GroupCallView({
     return <ErrorView error={error} />;
   } else if (state === GroupCallState.Entered && userChoices) {
     return (
-      <OpenIDLoader
-        client={client}
-        roomName={matrixInfo.roomName}
-        groupCall={groupCall}
-        participants={participants}
-        onLeave={onLeave}
-        unencryptedEventsFromUsers={unencryptedEventsFromUsers}
-        hideHeader={hideHeader}
-        matrixInfo={matrixInfo}
-        userChoices={userChoices}
-        otelGroupCallMembership={otelGroupCallMembership}
-      />
+      <OpenIDLoader client={client} roomName={matrixInfo.roomName}>
+        <ActiveCall
+          client={client}
+          groupCall={groupCall}
+          participants={participants}
+          onLeave={onLeave}
+          unencryptedEventsFromUsers={unencryptedEventsFromUsers}
+          hideHeader={hideHeader}
+          matrixInfo={matrixInfo}
+          userChoices={userChoices}
+          otelGroupCallMembership={otelGroupCallMembership}
+        />
+      </OpenIDLoader>
     );
   } else if (left) {
     // The call ended view is shown for two reasons: prompting guests to create
