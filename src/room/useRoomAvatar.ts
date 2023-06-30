@@ -1,5 +1,5 @@
 /*
-Copyright 2023 New Vector Ltd
+Copyright 2022 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,25 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.grid {
-  contain: strict;
-  position: relative;
-  flex-grow: 1;
-  padding: 0 20px var(--footerHeight);
-  overflow-y: auto;
-  overflow-x: hidden;
-}
+import { useCallback } from "react";
+import { Room } from "matrix-js-sdk/src/models/room";
 
-.slots {
-  position: relative;
-}
+import { useRoomState } from "./useRoomState";
 
-.slot {
-  contain: strict;
-}
-
-@media (min-width: 800px) {
-  .grid {
-    padding: 0 22px var(--footerHeight);
-  }
-}
+export const useRoomAvatar = (room: Room) =>
+  useRoomState(
+    room,
+    useCallback(() => room.getMxcAvatarUrl(), [room])
+  );

@@ -30,7 +30,7 @@ import { useMediaAllDevicesWithLocalStorage } from "../livekit/useMediaAllDevice
 import { DeviceChoices, UserChoices } from "../livekit/useLiveKit";
 
 export type MatrixInfo = {
-  userName: string;
+  displayName: string;
   avatarUrl: string;
   roomName: string;
   roomIdOrAlias: string;
@@ -158,7 +158,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
             <Avatar
               size={(previewBounds.height - 66) / 2}
               src={matrixInfo.avatarUrl}
-              fallback={matrixInfo.userName.slice(0, 1).toUpperCase()}
+              fallback={matrixInfo.displayName.slice(0, 1).toUpperCase()}
             />
           </div>
         )}

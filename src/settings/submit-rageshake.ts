@@ -101,6 +101,7 @@ export function useSubmitRageshake(): {
         body.append("user_agent", userAgent);
         body.append("installed_pwa", "false");
         body.append("touch_input", touchInput);
+        body.append("call_backend", "livekit");
 
         if (client) {
           const userId = client.getUserId();

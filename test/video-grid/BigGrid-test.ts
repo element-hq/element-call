@@ -20,23 +20,23 @@ import {
   cycleTileSize,
   fillGaps,
   forEachCellInArea,
-  Grid,
+  BigGridState,
   resize,
   row,
-  tryMoveTile,
-} from "../../src/video-grid/model";
+  moveTile,
+} from "../../src/video-grid/BigGrid";
 import { TileDescriptor } from "../../src/video-grid/VideoGrid";
 
 /**
  * Builds a grid from a string specifying the contents of each cell as a letter.
  */
-function mkGrid(spec: string): Grid {
+function mkGrid(spec: string): BigGridState {
   const secondNewline = spec.indexOf("\n", 1);
   const columns = secondNewline === -1 ? spec.length : secondNewline - 1;
   const cells = spec.match(/[a-z ]/g) ?? ([] as string[]);
   const areas = new Set(cells);
   areas.delete(" "); // Space represents an empty cell, not an area
-  const grid: Grid = { columns, cells: new Array(cells.length) };
+  const grid: BigGridState = { columns, cells: new Array(cells.length) };
 
   for (const area of areas) {
     const start = cells.indexOf(area);
@@ -60,12 +60,12 @@ function mkGrid(spec: string): Grid {
 /**
  * Turns a grid into a string showing the contents of each cell as a letter.
  */
-function showGrid(g: Grid): string {
+function showGrid(g: BigGridState): string {
   let result = "\n";
-  g.cells.forEach((c, i) => {
+  for (let i = 0; i < g.cells.length; i++) {
     if (i > 0 && i % g.columns == 0) result += "\n";
-    result += c?.item.id ?? " ";
-  });
+    result += g.cells[i]?.item.id ?? " ";
+  }
   return result;
 }
 
@@ -222,20 +222,11 @@ function testCycleTileSize(
   output: string
 ): void {
   test(`cycleTileSize ${title}`, () => {
-    expect(showGrid(cycleTileSize(tileId, mkGrid(input)))).toBe(output);
+    const grid = mkGrid(input);
+    const tile = grid.cells.find((c) => c?.item.id === tileId)!.item;
+    expect(showGrid(cycleTileSize(grid, tile))).toBe(output);
   });
 }
-
-testCycleTileSize(
-  "does nothing if the tile is not present",
-  "z",
-  `
-abcd
-efgh`,
-  `
-abcd
-efgh`
-);
 
 testCycleTileSize(
   "expands a tile to 2×2 in a 3 column layout",
@@ -345,8 +336,8 @@ abc
 def`,
   `
 abc
-gfe
-d`
+ g 
+def`
 );
 
 testAddItems(
@@ -362,19 +353,19 @@ gge
 d`
 );
 
-function testTryMoveTile(
+function testMoveTile(
   title: string,
   from: number,
   to: number,
   input: string,
   output: string
 ): void {
-  test(`tryMoveTile ${title}`, () => {
-    expect(showGrid(tryMoveTile(mkGrid(input), from, to))).toBe(output);
+  test(`moveTile ${title}`, () => {
+    expect(showGrid(moveTile(mkGrid(input), from, to))).toBe(output);
   });
 }
 
-testTryMoveTile(
+testMoveTile(
   "refuses to move a tile too far to the left",
   1,
   -1,
@@ -384,7 +375,7 @@ abc`,
 abc`
 );
 
-testTryMoveTile(
+testMoveTile(
   "refuses to move a tile too far to the right",
   1,
   3,
@@ -394,7 +385,7 @@ abc`,
 abc`
 );
 
-testTryMoveTile(
+testMoveTile(
   "moves a large tile to an unoccupied space",
   3,
   1,
@@ -408,7 +399,7 @@ bcc
 d e`
 );
 
-testTryMoveTile(
+testMoveTile(
   "refuses to move a large tile to an occupied space",
   3,
   1,

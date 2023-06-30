@@ -55,10 +55,7 @@ export function LobbyView(props: Props) {
       {!props.hideHeader && (
         <Header>
           <LeftNav>
-            <RoomHeaderInfo
-              roomName={props.matrixInfo.roomName}
-              avatarUrl={props.matrixInfo.avatarUrl}
-            />
+            <RoomHeaderInfo roomName={props.matrixInfo.roomName} />
           </LeftNav>
           <RightNav>
             <UserMenuContainer />

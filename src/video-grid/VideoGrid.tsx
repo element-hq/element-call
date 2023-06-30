@@ -42,6 +42,7 @@ import { ResizeObserver as JuggleResizeObserver } from "@juggle/resize-observer"
 import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/GridLayoutMenu";
 import { TileWrapper } from "./TileWrapper";
+import { LayoutStatesMap } from "./Layout";
 
 interface TilePosition {
   x: number;
@@ -750,6 +751,7 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout, displayedTile = -1) {
     const orderedTiles: Tile<T>[] = new Array(tiles.length);
     tiles.forEach((tile) => (orderedTiles[tile.order] = tile));
 
+    let firstLocalTile: Tile<T> | undefined;
     orderedTiles.forEach((tile) => {
       if (tile.focused) {
         focusedTiles.push(tile);
@@ -758,11 +760,27 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout, displayedTile = -1) {
       } else if (tile.isSpeaker && displayedTile < tile.order) {
         speakerTiles.push(tile);
       } else if (tile.hasVideo) {
-        onlyVideoTiles.push(tile);
+        if (tile.order === 0 && tile.item.local) {
+          firstLocalTile = tile;
+        } else {
+          onlyVideoTiles.push(tile);
+        }
       } else {
-        otherTiles.push(tile);
+        if (tile.order === 0 && tile.item.local) {
+          firstLocalTile = tile;
+        } else {
+          otherTiles.push(tile);
+        }
       }
     });
+
+    if (firstLocalTile) {
+      if (firstLocalTile.hasVideo) {
+        onlyVideoTiles.push(firstLocalTile);
+      } else {
+        otherTiles.push(firstLocalTile);
+      }
+    }
 
     [
       ...focusedTiles,
@@ -800,6 +818,7 @@ export interface VideoGridProps<T> {
   items: TileDescriptor<T>[];
   layout: Layout;
   disableAnimations: boolean;
+  layoutStates: LayoutStatesMap;
   children: (props: ChildrenProperties<T>) => React.ReactNode;
 }
 
