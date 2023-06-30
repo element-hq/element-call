@@ -16,7 +16,7 @@ limitations under the License.
 
 import { SpringRef, TransitionFn, useTransition } from "@react-spring/web";
 import { EventTypes, Handler, useScroll } from "@use-gesture/react";
-import React, {
+import {
   CSSProperties,
   FC,
   ReactNode,

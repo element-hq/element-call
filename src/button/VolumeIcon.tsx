@@ -15,8 +15,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
-
 import { ReactComponent as AudioMuted } from "../icons/AudioMuted.svg";
 import { ReactComponent as AudioLow } from "../icons/AudioLow.svg";
 import { ReactComponent as Audio } from "../icons/Audio.svg";
