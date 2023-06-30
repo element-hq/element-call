@@ -864,7 +864,7 @@ export const BigGrid: Layout<BigGridState> = {
   emptyState: { columns: 4, cells: [] },
   updateTiles,
   updateBounds,
-  getTiles: <T,>(g) =>
+  getTiles: <T,>(g: BigGridState) =>
     g.cells.filter((c) => c?.origin).map((c) => c!.item as T),
   canDragTile: () => true,
   dragTile,

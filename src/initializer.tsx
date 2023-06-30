@@ -225,5 +225,6 @@ export class Initializer {
       resolve();
     }
   }
-  private initPromise: Promise<void> | null;
+
+  private initPromise?: Promise<void>;
 }

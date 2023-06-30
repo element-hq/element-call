@@ -98,7 +98,7 @@ export class PosthogAnalytics {
   // set true during the constructor if posthog config is present, otherwise false
   private static internalInstance: PosthogAnalytics | null = null;
 
-  private identificationPromise: Promise<void>;
+  private identificationPromise?: Promise<void>;
   private readonly enabled: boolean = false;
   private anonymity = Anonymity.Disabled;
   private platformSuperProperties = {};
@@ -255,7 +255,9 @@ export class PosthogAnalytics {
       } catch (e) {
         // The above could fail due to network requests, but not essential to starting the application,
         // so swallow it.
-        logger.log("Unable to identify user for tracking" + e.toString());
+        logger.log(
+          "Unable to identify user for tracking" + (e as Error)?.toString()
+        );
       }
       if (analyticsID) {
         this.posthog.identify(analyticsID);
@@ -366,7 +368,7 @@ export class PosthogAnalytics {
 
     if (anonymity === Anonymity.Pseudonymous) {
       this.setRegistrationType(
-        window.matrixclient.isGuest() || window.isPasswordlessUser
+        window.matrixclient.isGuest() || window.passwordlessUser
           ? RegistrationType.Guest
           : RegistrationType.Registered
       );

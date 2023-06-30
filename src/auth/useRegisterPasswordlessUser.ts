@@ -36,6 +36,10 @@ export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
 
   const registerPasswordlessUser = useCallback(
     async (displayName: string) => {
+      if (!setClient) {
+        throw new Error("No client context");
+      }
+
       try {
         const recaptchaResponse = await execute();
         const userName = generateRandomName();
@@ -46,7 +50,7 @@ export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
           recaptchaResponse,
           true
         );
-        setClient(client, session);
+        setClient({ client, session });
       } catch (e) {
         reset();
         throw e;

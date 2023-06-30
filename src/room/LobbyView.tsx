@@ -39,7 +39,7 @@ export function LobbyView(props: Props) {
   const { t } = useTranslation();
   useLocationNavigation();
 
-  const joinCallButtonRef = useRef<HTMLButtonElement>();
+  const joinCallButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (joinCallButtonRef.current) {
       joinCallButtonRef.current.focus();

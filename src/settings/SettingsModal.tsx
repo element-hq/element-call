@@ -89,7 +89,7 @@ export const SettingsModal = (props: Props) => {
   const [selectedTab, setSelectedTab] = useState<string | undefined>();
 
   const onSelectedTabChanged = useCallback(
-    (tab) => {
+    (tab: string) => {
       setSelectedTab(tab);
     },
     [setSelectedTab]
@@ -117,7 +117,7 @@ export const SettingsModal = (props: Props) => {
       {...props}
     >
       <TabContainer
-        onSelectionChange={onSelectedTabChanged}
+        onSelectionChange={(key) => onSelectedTabChanged(key.toString())}
         selectedKey={selectedTab ?? props.defaultTab ?? "audio"}
         className={styles.tabContainer}
       >
@@ -198,15 +198,15 @@ export const SettingsModal = (props: Props) => {
             <InputField
               id="optInAnalytics"
               type="checkbox"
-              checked={optInAnalytics}
+              checked={optInAnalytics ? optInAnalytics : undefined}
               description={optInDescription}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                setOptInAnalytics(event.target.checked)
-              }
+              onChange={(event: ChangeEvent<HTMLInputElement>) => {
+                if (setOptInAnalytics) setOptInAnalytics(event.target.checked);
+              }}
             />
           </FieldRow>
         </TabItem>
-        {developerSettingsTab && (
+        {developerSettingsTab ? (
           <TabItem
             key="developer"
             title={
@@ -253,6 +253,8 @@ export const SettingsModal = (props: Props) => {
               </Button>
             </FieldRow>
           </TabItem>
+        ) : (
+          <></>
         )}
       </TabContainer>
     </Modal>

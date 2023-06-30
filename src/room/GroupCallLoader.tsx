@@ -60,5 +60,5 @@ export function GroupCallLoader({
     return <ErrorView error={error} />;
   }
 
-  return <>{children(groupCall)}</>;
+  return groupCall ? <>{children(groupCall)}</> : <></>;
 }

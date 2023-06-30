@@ -1,6 +1,16 @@
 module.exports = {
   plugins: ["matrix-org"],
-  extends: ["plugin:matrix-org/react", "plugin:matrix-org/a11y", "prettier"],
+  extends: [
+    "prettier",
+    "plugin:matrix-org/react",
+    "plugin:matrix-org/a11y",
+    "plugin:matrix-org/typescript",
+  ],
+  parserOptions: {
+    ecmaVersion: 2018,
+    sourceType: "module",
+    project: ["./tsconfig.json"],
+  },
   env: {
     browser: true,
     node: true,

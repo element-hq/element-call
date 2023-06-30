@@ -68,9 +68,9 @@ export const useRecaptcha = (sitekey: string) => {
     }
   }, [recaptchaId, sitekey]);
 
-  const execute = useCallback(() => {
+  const execute = useCallback((): Promise<string> => {
     if (!sitekey) {
-      return Promise.resolve(null);
+      return Promise.reject(translatedError("Recaptcha not configured", t));
     }
 
     if (!window.grecaptcha) {
