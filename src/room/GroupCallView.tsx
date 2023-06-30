@@ -34,7 +34,6 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { UserChoices } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
-import { useRoomAvatar } from "./useRoomAvatar";
 import { OpenIDLoader } from "../livekit/OpenIDLoader";
 
 declare global {
@@ -82,14 +81,12 @@ export function GroupCallView({
   }, [groupCall]);
 
   const { displayName, avatarUrl } = useProfile(client);
-  const roomAvatarUrl = useRoomAvatar(groupCall.room);
 
   const matrixInfo: MatrixInfo = {
     displayName,
     avatarUrl,
     roomName: groupCall.room.name,
     roomIdOrAlias,
-    roomAvatarUrl,
   };
 
   useEffect(() => {

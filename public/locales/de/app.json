@@ -113,5 +113,7 @@
   "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Wir würden uns freuen, deine Rückmeldung zu hören, um deine Erfahrung verbessern zu können.</0>",
   "How did it go?": "Wie ist es gelaufen?",
   "{{count}} stars|one": "{{count}} Stern",
-  "<0>Thanks for your feedback!</0>": "<0>Danke für deine Rückmeldung!</0>"
+  "<0>Thanks for your feedback!</0>": "<0>Danke für deine Rückmeldung!</0>",
+  "{{displayName}} is presenting": "{{displayName}} präsentiert",
+  "Show connection stats": "Verbindungsstatistiken zeigen"
 }
