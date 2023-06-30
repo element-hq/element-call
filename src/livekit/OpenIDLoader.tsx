@@ -48,7 +48,7 @@ export function OpenIDLoader({ client, roomName, ...rest }: Props) {
   if (error) {
     return <ErrorView error={error} />;
   } else if (sfuConfig) {
-    return <ActiveCall client={client} {...rest} sfuConfig={sfuConfig} />;
+    return <ActiveCall client={client} sfuConfig={sfuConfig} {...rest} />;
   } else {
     return <LoadingView />;
   }
