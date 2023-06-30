@@ -120,7 +120,8 @@
       "/node_modules/(?!internmap)+$"
     ],
     "moduleNameMapper": {
-      "\\.(css|less|svg)+$": "identity-obj-proxy",
+      "\\.css$": "identity-obj-proxy",
+      "\\.svg$": "<rootDir>/test/mocks/svgr.ts",
       "^\\./IndexedDBWorker\\?worker$": "<rootDir>/test/mocks/workerMock.ts",
       "^\\./olm$": "<rootDir>/test/mocks/olmMock.ts"
     },
