@@ -72,7 +72,6 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     !!permittedDevices.videoDeviceId &&
     videoIn.selectedId != "" &&
     audioIn.selectedId != "";
-
   // Use preview device only creates tracks if permissions are available.
   // useMediaAllDevicesWithLocalStorage will respect the user selection
   // and audioIn/videoIn.selectedId will be updated to reflect what the user has selected in the permission dialog.
@@ -119,18 +118,26 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     audioEnabled,
   ]);
 
-  const [selectVideo, selectAudio] = [
-    mediaDevices.videoIn.setSelected,
-    mediaDevices.audioIn.setSelected,
-  ];
   React.useEffect(() => {
-    if (activeVideoId && activeVideoId !== "") {
-      selectVideo(activeVideoId);
+    // update the input in this hook ONLY for the case where usePreviewDevice (videoIn.selectedId != activeVideoId)
+    // changes the device (the user giving permission to a different device than what was requested).
+    // The hook needs to only update on activeVideoId/activeAudioId to not end up in a loop
+    if (
+      activeVideoId &&
+      activeVideoId !== "" &&
+      videoIn.selectedId != activeVideoId
+    ) {
+      videoIn.setSelected(activeVideoId);
     }
-    if (activeAudioId && activeAudioId !== "") {
-      selectAudio(activeAudioId);
+    if (
+      activeAudioId &&
+      activeAudioId !== "" &&
+      audioIn.selectedId != activeAudioId
+    ) {
+      audioIn.setSelected(activeAudioId);
     }
-  }, [selectVideo, selectAudio, activeVideoId, activeAudioId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeVideoId, activeAudioId]);
 
   const mediaElement = React.useRef(null);
   React.useEffect(() => {
