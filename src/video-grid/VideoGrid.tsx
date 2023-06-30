@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, {
+import {
   ComponentProps,
   Key,
   ReactNode,
@@ -819,7 +819,7 @@ export interface VideoGridProps<T> {
   layout: Layout;
   disableAnimations: boolean;
   layoutStates: LayoutStatesMap;
-  children: (props: ChildrenProperties<T>) => React.ReactNode;
+  children: (props: ChildrenProperties<T>) => ReactNode;
 }
 
 // Represents something that should get a tile on the layout,

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { forwardRef, useRef } from "react";
+import { forwardRef, useRef } from "react";
 import { useMenuTriggerState } from "@react-stately/menu";
 import { useMenuTrigger } from "@react-aria/menu";
 import { OverlayContainer, useOverlayPosition } from "@react-aria/overlays";

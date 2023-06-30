@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ReactNode } from "react";
+import { ReactNode } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { useTranslation } from "react-i18next";
