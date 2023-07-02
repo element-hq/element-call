@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import classNames from "classnames";
-import React, { FormEventHandler, forwardRef, ReactNode } from "react";
+import { FormEventHandler, forwardRef, ReactNode } from "react";
 
 import styles from "./Form.module.css";
 

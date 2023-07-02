@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import { useRef, useEffect, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import styles from "./LobbyView.module.css";
@@ -39,14 +39,14 @@ export function LobbyView(props: Props) {
   const { t } = useTranslation();
   useLocationNavigation();
 
-  const joinCallButtonRef = React.useRef<HTMLButtonElement>();
-  React.useEffect(() => {
+  const joinCallButtonRef = useRef<HTMLButtonElement>();
+  useEffect(() => {
     if (joinCallButtonRef.current) {
       joinCallButtonRef.current.focus();
     }
   }, [joinCallButtonRef]);
 
-  const [userChoices, setUserChoices] = React.useState<UserChoices | undefined>(
+  const [userChoices, setUserChoices] = useState<UserChoices | undefined>(
     undefined
   );
 

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { FormEventHandler, useCallback, useState } from "react";
+import { FormEventHandler, useCallback, useState } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { Trans, useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";

@@ -7,7 +7,7 @@
     "noEmit": true,
     "noImplicitAny": false,
     "noUnusedLocals": true,
-    "jsx": "preserve",
+    "jsx": "react-jsx",
     "lib": ["es2020", "dom", "dom.iterable"],
     "strict": false,
     "plugins": [

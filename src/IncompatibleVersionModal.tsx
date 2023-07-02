@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { Room } from "matrix-js-sdk/src/models/room";
-import React, { useMemo } from "react";
+import { FC, useMemo } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import { Modal, ModalContent } from "./Modal";
@@ -27,7 +27,7 @@ interface Props {
   onClose: () => void;
 }
 
-export const IncompatibleVersionModal: React.FC<Props> = ({
+export const IncompatibleVersionModal: FC<Props> = ({
   userIds,
   room,
   onClose,

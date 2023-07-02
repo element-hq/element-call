@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
+import { FC } from "react";
 
 import { TabContainer, TabItem } from "./Tabs";
 import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
@@ -30,7 +30,7 @@ export default {
   },
 };
 
-export const Tabs: React.FC<{}> = () => (
+export const Tabs: FC = () => (
   <TabContainer>
     <TabItem
       title={

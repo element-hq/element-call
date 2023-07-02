@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import classNames from "classnames";
-import React, { HTMLAttributes, ReactNode, useCallback } from "react";
+import { HTMLAttributes, ReactNode, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Room } from "matrix-js-sdk/src/models/room";
 import { useTranslation } from "react-i18next";

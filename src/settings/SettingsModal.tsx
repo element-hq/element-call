@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useState } from "react";
+import { ChangeEvent, useCallback, useState } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
@@ -188,7 +188,7 @@ export const SettingsModal = (props: Props) => {
               description={t(
                 "Expose developer settings in the settings window."
               )}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
                 setDeveloperSettingsTab(event.target.checked)
               }
             />
@@ -200,7 +200,7 @@ export const SettingsModal = (props: Props) => {
               type="checkbox"
               checked={optInAnalytics}
               description={optInDescription}
-              onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+              onChange={(event: ChangeEvent<HTMLInputElement>) =>
                 setOptInAnalytics(event.target.checked)
               }
             />
@@ -230,7 +230,7 @@ export const SettingsModal = (props: Props) => {
                 label={t("Show call inspector")}
                 type="checkbox"
                 checked={showInspector}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setShowInspector(e.target.checked)
                 }
               />
@@ -242,7 +242,7 @@ export const SettingsModal = (props: Props) => {
                 label={t("Show connection stats")}
                 type="checkbox"
                 checked={showConnectionStats}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
                   setShowConnectionStats(e.target.checked)
                 }
               />

@@ -17,7 +17,6 @@ limitations under the License.
 import TinyQueue from "tinyqueue";
 import { RectReadOnly } from "react-use-measure";
 import { FC, memo, ReactNode } from "react";
-import React from "react";
 
 import { TileDescriptor } from "./VideoGrid";
 import { Slot } from "./NewVideoGrid";

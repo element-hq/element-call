@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback } from "react";
+import { ComponentProps, forwardRef, useCallback, useEffect } from "react";
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
@@ -57,12 +57,12 @@ interface Props {
   targetWidth: number;
   targetHeight: number;
   className?: string;
-  style?: React.ComponentProps<typeof animated.div>["style"];
+  style?: ComponentProps<typeof animated.div>["style"];
   showSpeakingIndicator: boolean;
   showConnectionStats: boolean;
 }
 
-export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
+export const VideoTile = forwardRef<HTMLDivElement, Props>(
   (
     {
       data,
@@ -87,7 +87,7 @@ export const VideoTile = React.forwardRef<HTMLDivElement, Props>(
       () => member?.rawDisplayName ?? "[👻]",
       [member]
     );
-    React.useEffect(() => {
+    useEffect(() => {
       if (member) {
         const updateName = () => {
           setDisplayName(member.rawDisplayName);
