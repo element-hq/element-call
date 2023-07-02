@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { Item } from "@react-stately/collections";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";

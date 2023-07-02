@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { OverlayTriggerState } from "@react-stately/overlays";
@@ -65,8 +65,8 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
   const mediaDevices = useMediaDevices();
 
   // Create local media tracks.
-  const [videoEnabled, setVideoEnabled] = React.useState<boolean>(true);
-  const [audioEnabled, setAudioEnabled] = React.useState<boolean>(true);
+  const [videoEnabled, setVideoEnabled] = useState<boolean>(true);
+  const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
   const [videoId, audioId] = [
     mediaDevices.videoIn.selectedId,
     mediaDevices.audioIn.selectedId,
@@ -85,7 +85,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
 
   const activeVideoId = video?.selectedDevice?.deviceId;
   const activeAudioId = audio?.selectedDevice?.deviceId;
-  React.useEffect(() => {
+  useEffect(() => {
     const createChoices = (
       enabled: boolean,
       deviceId?: string
@@ -116,7 +116,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     mediaDevices.videoIn.setSelected,
     mediaDevices.audioIn.setSelected,
   ];
-  React.useEffect(() => {
+  useEffect(() => {
     if (activeVideoId && activeVideoId !== "") {
       selectVideo(activeVideoId);
     }
@@ -125,8 +125,8 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     }
   }, [selectVideo, selectAudio, activeVideoId, activeAudioId]);
 
-  const mediaElement = React.useRef(null);
-  React.useEffect(() => {
+  const mediaElement = useRef(null);
+  useEffect(() => {
     if (mediaElement.current) {
       video?.localTrack?.attach(mediaElement.current);
     }

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useRef } from "react";
+import { MutableRefObject, PointerEvent, useCallback, useRef } from "react";
 import { useListBox, useOption, AriaListBoxOptions } from "@react-aria/listbox";
 import { ListState } from "@react-stately/list";
 import { Node } from "@react-types/shared";
@@ -26,7 +26,7 @@ interface ListBoxProps<T> extends AriaListBoxOptions<T> {
   optionClassName: string;
   state: ListState<T>;
   className?: string;
-  listBoxRef?: React.MutableRefObject<HTMLUListElement>;
+  listBoxRef?: MutableRefObject<HTMLUListElement>;
 }
 
 export function ListBox<T>({
@@ -84,7 +84,7 @@ function Option<T>({ item, state, className }: OptionProps<T>) {
   delete optionProps.onPointerUp;
   optionProps.onClick = useCallback(
     (e) => {
-      origPointerUp(e as unknown as React.PointerEvent<HTMLElement>);
+      origPointerUp(e as unknown as PointerEvent<HTMLElement>);
     },
     [origPointerUp]
   );
