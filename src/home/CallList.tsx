@@ -35,13 +35,13 @@ export function CallList({ rooms, client, disableFacepile }: CallListProps) {
   return (
     <>
       <div className={styles.callList}>
-        {rooms.map(({ roomId, roomName, avatarUrl, participants }) => (
+        {rooms.map(({ roomAlias, roomName, avatarUrl, participants }) => (
           <CallTile
-            key={roomId}
+            key={roomAlias}
             client={client}
             name={roomName}
             avatarUrl={avatarUrl}
-            roomId={roomId}
+            roomAlias={roomAlias}
             participants={participants}
             disableFacepile={disableFacepile}
           />
@@ -59,7 +59,7 @@ export function CallList({ rooms, client, disableFacepile }: CallListProps) {
 interface CallTileProps {
   name: string;
   avatarUrl: string;
-  roomId: string;
+  roomAlias: string;
   participants: RoomMember[];
   client: MatrixClient;
   disableFacepile?: boolean;
@@ -67,7 +67,7 @@ interface CallTileProps {
 function CallTile({
   name,
   avatarUrl,
-  roomId,
+  roomAlias,
   participants,
   client,
   disableFacepile,
@@ -75,7 +75,7 @@ function CallTile({
   return (
     <div className={styles.callTile}>
       <Link
-        to={`/${roomId.substring(1).split(":")[0]}`}
+        to={`/${roomAlias.substring(1).split(":")[0]}`}
         className={styles.callTileLink}
       >
         <Avatar
@@ -89,7 +89,7 @@ function CallTile({
           <Body overflowEllipsis fontWeight="semiBold">
             {name}
           </Body>
-          <Caption overflowEllipsis>{getRoomUrl(roomId)}</Caption>
+          <Caption overflowEllipsis>{getRoomUrl(roomAlias)}</Caption>
           {participants && !disableFacepile && (
             <Facepile
               className={styles.facePile}
@@ -103,7 +103,7 @@ function CallTile({
       <CopyButton
         className={styles.copyButton}
         variant="icon"
-        value={getRoomUrl(roomId)}
+        value={getRoomUrl(roomAlias)}
       />
     </div>
   );

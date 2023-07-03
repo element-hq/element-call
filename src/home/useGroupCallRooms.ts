@@ -22,7 +22,7 @@ import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEv
 import { useState, useEffect } from "react";
 
 export interface GroupCallRoom {
-  roomId: string;
+  roomAlias: string;
   roomName: string;
   avatarUrl: string;
   room: Room;
@@ -79,23 +79,24 @@ function sortRooms(client: MatrixClient, rooms: Room[]): Room[] {
 }
 
 export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
-  const [rooms, setRooms] = useState([]);
+  const [rooms, setRooms] = useState<GroupCallRoom[]>([]);
 
   useEffect(() => {
     function updateRooms() {
       const groupCalls = client.groupCallEventHandler.groupCalls.values();
       const rooms = Array.from(groupCalls).map((groupCall) => groupCall.room);
-      const sortedRooms = sortRooms(client, rooms);
-      const items = sortedRooms.map((room) => {
+      const filteredRooms = rooms.filter((r) => r.getCanonicalAlias()); // We don't display rooms without an alias
+      const sortedRooms = sortRooms(client, filteredRooms);
+      const items: GroupCallRoom[] = sortedRooms.map((room) => {
         const groupCall = client.getGroupCallForRoom(room.roomId);
 
         return {
-          roomId: room.getCanonicalAlias() || room.roomId,
+          roomAlias: room.getCanonicalAlias(),
           roomName: room.name,
           avatarUrl: room.getMxcAvatarUrl(),
           room,
           groupCall,
-          participants: [...groupCall.participants],
+          participants: [...groupCall.participants.keys()],
         };
       });
       setRooms(items);
