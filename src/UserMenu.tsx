@@ -36,7 +36,7 @@ interface UserMenuProps {
   isAuthenticated: boolean;
   isPasswordlessUser: boolean;
   displayName: string;
-  avatarUrl: string;
+  avatarUrl?: string;
   onAction: (value: string) => void;
 }
 
