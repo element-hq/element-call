@@ -50,7 +50,11 @@ import {
   RoomHeaderInfo,
   VersionMismatchWarning,
 } from "../Header";
-import { useVideoGridLayout, TileDescriptor } from "../video-grid/VideoGrid";
+import {
+  useVideoGridLayout,
+  TileDescriptor,
+  VideoGrid,
+} from "../video-grid/VideoGrid";
 import {
   useShowInspector,
   useShowConnectionStats,
@@ -245,7 +249,8 @@ export function InCallView({
     [fullscreenItem, noControls, items]
   );
 
-  const Grid = NewVideoGrid;
+  const Grid =
+    items.length > 12 && layout === "freedom" ? NewVideoGrid : VideoGrid;
 
   const prefersReducedMotion = usePrefersReducedMotion();
 
