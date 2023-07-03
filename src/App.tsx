@@ -67,9 +67,6 @@ export default function App({ history }: AppProps) {
                     <SentryRoute exact path="/register">
                       <RegisterPage />
                     </SentryRoute>
-                    <SentryRoute path="/room/:roomId?">
-                      <RoomPage />
-                    </SentryRoute>
                     <SentryRoute path="/inspector">
                       <SequenceDiagramViewerPage />
                     </SentryRoute>
