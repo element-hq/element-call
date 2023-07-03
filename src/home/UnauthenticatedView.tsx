@@ -78,9 +78,9 @@ export const UnauthenticatedView: FC = () => {
           true
         );
 
-        let roomIdOrAlias: string;
+        let roomAlias: string;
         try {
-          [roomIdOrAlias] = await createRoom(client, roomName, ptt);
+          [roomAlias] = await createRoom(client, roomName, ptt);
         } catch (error) {
           if (error.errcode === "M_ROOM_IN_USE") {
             setOnFinished(() => {
@@ -99,7 +99,7 @@ export const UnauthenticatedView: FC = () => {
 
         // Only consider the registration successful if we managed to create the room, too
         setClient(client, session);
-        history.push(`/${roomIdOrAlias.substring(1).split(":")[0]}`);
+        history.push(`/${roomAlias.substring(1).split(":")[0]}`);
       }
 
       submit().catch((error) => {
