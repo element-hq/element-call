@@ -1,6 +1,5 @@
 import { Room, RoomOptions } from "livekit-client";
 import { useLiveKitRoom } from "@livekit/components-react";
-import React from "react";
 import { useMemo } from "react";
 
 import { defaultLiveKitOptions } from "./options";
