@@ -45,7 +45,6 @@ export async function getSFUConfigWithOpenID(
     body: JSON.stringify({
       room: roomName,
       openid_token: openIdToken,
-      remove_me_user_id: client.getUserId(), // the service will get this from the openid request
       device_id: client.getDeviceId(),
     }),
   });
