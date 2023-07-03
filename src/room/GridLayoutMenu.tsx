@@ -38,6 +38,15 @@ export function GridLayoutMenu({ layout, setLayout }: Props) {
   const { t } = useTranslation();
   const tooltip = useCallback(() => t("Change layout"), [t]);
 
+  const onAction = useCallback(
+    (key: React.Key) => {
+      setLayout(key.toString() as Layout);
+    },
+    [setLayout]
+  );
+
+  const onClose = useCallback(() => {}, []);
+
   return (
     <PopoverMenuTrigger placement="bottom right">
       <TooltipTrigger tooltip={tooltip}>
@@ -49,8 +58,8 @@ export function GridLayoutMenu({ layout, setLayout }: Props) {
         <Menu
           {...props}
           label={t("Grid layout menu")}
-          onAction={(key) => setLayout(key.toString() as Layout)}
-          onClose={() => {}}
+          onAction={onAction}
+          onClose={onClose}
         >
           <Item key="freedom" textValue={t("Freedom")}>
             <FreedomIcon />
