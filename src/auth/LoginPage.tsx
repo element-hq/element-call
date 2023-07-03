@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { FC, FormEvent, useCallback, useRef, useState } from "react";
+import { FC, FormEvent, useCallback, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 
