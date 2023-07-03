@@ -28,7 +28,7 @@ import { Room, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import React, { Ref, useCallback, useEffect, useMemo, useRef } from "react";
+import { Ref, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
 import { OverlayTriggerState } from "@react-stately/overlays";
@@ -51,9 +51,9 @@ import {
   VersionMismatchWarning,
 } from "../Header";
 import {
-  VideoGrid,
   useVideoGridLayout,
   TileDescriptor,
+  VideoGrid,
 } from "../video-grid/VideoGrid";
 import {
   useShowInspector,

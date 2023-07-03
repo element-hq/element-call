@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { useObjectRef } from "@react-aria/utils";
-import React, { AllHTMLAttributes, useEffect } from "react";
+import { AllHTMLAttributes, ChangeEvent, useEffect } from "react";
 import { useCallback } from "react";
 import { useState } from "react";
 import { forwardRef } from "react";
@@ -51,7 +51,7 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
       const currentInput = fileInputRef.current;
 
       const onChange = (e: Event) => {
-        const inputEvent = e as unknown as React.ChangeEvent<HTMLInputElement>;
+        const inputEvent = e as unknown as ChangeEvent<HTMLInputElement>;
         if (inputEvent.target.files.length > 0) {
           setObjUrl(URL.createObjectURL(inputEvent.target.files[0]));
           setRemoved(false);

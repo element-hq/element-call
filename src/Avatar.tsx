@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useMemo, CSSProperties } from "react";
+import { useMemo, CSSProperties, HTMLAttributes, FC } from "react";
 import classNames from "classnames";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 
@@ -62,7 +62,7 @@ function hashStringToArrIndex(str: string, arrLength: number) {
 const resolveAvatarSrc = (client: MatrixClient, src: string, size: number) =>
   src?.startsWith("mxc://") ? client && getAvatarUrl(client, src, size) : src;
 
-interface Props extends React.HTMLAttributes<HTMLDivElement> {
+interface Props extends HTMLAttributes<HTMLDivElement> {
   bgKey?: string;
   src?: string;
   size?: Size | number;
@@ -71,7 +71,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement> {
   fallback: string;
 }
 
-export const Avatar: React.FC<Props> = ({
+export const Avatar: FC<Props> = ({
   bgKey,
   src,
   fallback,

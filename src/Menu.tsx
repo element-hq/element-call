@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { Key, useRef, useState } from "react";
+import { Key, useRef, useState } from "react";
 import { AriaMenuOptions, useMenu, useMenuItem } from "@react-aria/menu";
 import { TreeState, useTreeState } from "@react-stately/tree";
 import { mergeProps } from "@react-aria/utils";

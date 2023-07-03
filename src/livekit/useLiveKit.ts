@@ -1,6 +1,7 @@
 import { Room, RoomOptions } from "livekit-client";
 import { useLiveKitRoom } from "@livekit/components-react";
 import React from "react";
+import { useMemo } from "react";
 
 import { defaultLiveKitOptions } from "./options";
 import { SFUConfig } from "./openIDSFU";
@@ -19,7 +20,7 @@ export function useLiveKit(
   userChoices: UserChoices,
   sfuConfig: SFUConfig
 ): Room | undefined {
-  const roomOptions = React.useMemo((): RoomOptions => {
+  const roomOptions = useMemo((): RoomOptions => {
     const options = defaultLiveKitOptions;
     options.videoCaptureDefaults = {
       ...options.videoCaptureDefaults,

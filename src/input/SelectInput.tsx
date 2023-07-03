@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useRef } from "react";
+import { useRef } from "react";
 import { AriaSelectOptions, HiddenSelect, useSelect } from "@react-aria/select";
 import { useButton } from "@react-aria/button";
 import { useSelectState } from "@react-stately/select";

@@ -1,4 +1,4 @@
-import React, { FC } from "react";
+import { FC } from "react";
 import { Trans } from "react-i18next";
 
 import { Link } from "../typography/Typography";

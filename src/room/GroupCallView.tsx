@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
