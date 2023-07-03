@@ -86,8 +86,7 @@ export const UnauthenticatedView: FC = () => {
             setOnFinished(() => {
               setClient(client, session);
               const aliasLocalpart = roomAliasLocalpartFromRoomName(roomName);
-              const [, serverName] = client.getUserId().split(":");
-              history.push(`/room/#${aliasLocalpart}:${serverName}`);
+              history.push(`/${aliasLocalpart}`);
             });
 
             setLoading(false);
@@ -100,7 +99,7 @@ export const UnauthenticatedView: FC = () => {
 
         // Only consider the registration successful if we managed to create the room, too
         setClient(client, session);
-        history.push(`/room/${roomIdOrAlias}`);
+        history.push(`/${roomIdOrAlias.substring(1).split(":")[0]}`);
       }
 
       submit().catch((error) => {

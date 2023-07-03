@@ -74,7 +74,10 @@ function CallTile({
 }: CallTileProps) {
   return (
     <div className={styles.callTile}>
-      <Link to={`/room/${roomId}`} className={styles.callTileLink}>
+      <Link
+        to={`/${roomId.substring(1).split(":")[0]}`}
+        className={styles.callTileLink}
+      >
         <Avatar
           size={Size.LG}
           bgKey={name}
