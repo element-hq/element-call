@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,8 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
  */
 
-import { useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+
+import { Config } from "./config/Config";
 
 interface UrlParams {
   roomAlias: string | null;
@@ -93,14 +95,38 @@ interface UrlParams {
  * @returns The app parameters encoded in the URL
  */
 export const getUrlParams = (
-  query: string = window.location.search,
-  fragment: string = window.location.hash
+  ignoreRoomAlias?: boolean,
+  location: Location = window.location
 ): UrlParams => {
-  const fragmentQueryStart = fragment.indexOf("?");
+  const { href, origin, search, hash } = location;
+
+  let roomAlias: string | undefined;
+  if (!ignoreRoomAlias) {
+    roomAlias = href.substring(origin.length + 1);
+
+    // If we have none, we throw
+    if (!roomAlias) {
+      throw Error("No pathname");
+    }
+    // Delete "/room/" and "?", if present
+    if (roomAlias.startsWith("room/")) {
+      roomAlias = roomAlias.substring("room/".length).split("?")[0];
+    }
+    // Add "#", if not present
+    if (!roomAlias.includes("#")) {
+      roomAlias = `#${roomAlias}`;
+    }
+    // Add server part, if missing
+    if (!roomAlias.includes(":")) {
+      roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
+    }
+  }
+
+  const fragmentQueryStart = hash.indexOf("?");
   const fragmentParams = new URLSearchParams(
-    fragmentQueryStart === -1 ? "" : fragment.substring(fragmentQueryStart)
+    fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart)
   );
-  const queryParams = new URLSearchParams(query);
+  const queryParams = new URLSearchParams(search);
 
   // Normally, URL params should be encoded in the fragment so as to avoid
   // leaking them to the server. However, we also check the normal query
@@ -114,16 +140,10 @@ export const getUrlParams = (
     ...queryParams.getAll(name),
   ];
 
-  // The part of the fragment before the ?
-  const fragmentRoute =
-    fragmentQueryStart === -1
-      ? fragment
-      : fragment.substring(0, fragmentQueryStart);
-
   const fontScale = parseFloat(getParam("fontScale") ?? "");
 
   return {
-    roomAlias: fragmentRoute.length > 1 ? fragmentRoute : null,
+    roomAlias: !roomAlias || roomAlias.includes("!") ? null : roomAlias,
     roomId: getParam("roomId"),
     viaServers: getAllParams("via"),
     isEmbedded: hasParam("embed"),
@@ -149,6 +169,18 @@ export const getUrlParams = (
  * @returns The app parameters for the current URL
  */
 export const useUrlParams = (): UrlParams => {
-  const { hash, search } = useLocation();
-  return useMemo(() => getUrlParams(search, hash), [search, hash]);
+  const getParams = useCallback(() => {
+    return getUrlParams(false, window.location);
+  }, []);
+
+  const reactDomLocation = useLocation();
+  const [urlParams, setUrlParams] = useState(getParams());
+
+  useEffect(() => {
+    if (window.location !== reactDomLocation) {
+      setUrlParams(getParams());
+    }
+  }, [getParams, reactDomLocation]);
+
+  return urlParams;
 };
