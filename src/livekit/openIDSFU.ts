@@ -47,7 +47,7 @@ export async function getSFUConfigWithOpenID(
       device_id: client.getDeviceId(),
     }),
   });
-  if (res.status / 100 !== 2) {
+  if (!res.ok) {
     throw new Error("SFO Config fetch failed with status code " + res.status);
   }
   const sfuConfig = await res.json();
