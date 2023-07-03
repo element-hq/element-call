@@ -46,7 +46,7 @@ export function LinkButton({
     <Link
       className={classNames(
         variantToClassName[variant || "secondary"],
-        size ? sizeToClassName.lg : [],
+        size ? sizeToClassName[size] : [],
         className
       )}
       to={to}
