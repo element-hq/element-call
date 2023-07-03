@@ -22,6 +22,7 @@ import {
   createContext,
   useContext,
   useRef,
+  useMemo,
 } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
@@ -263,11 +264,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     }, [initClientState?.client, setAlreadyOpenedErr, t])
   );
 
-  const [state, setState] = useState<ClientState | undefined>(undefined);
-  useEffect(() => {
+  const state: ClientState = useMemo(() => {
     if (alreadyOpenedErr) {
-      setState({ state: "error", error: alreadyOpenedErr });
-      return;
+      return { state: "error", error: alreadyOpenedErr };
     }
 
     let authenticated = undefined;
@@ -280,7 +279,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       };
     }
 
-    setState({ state: "valid", authenticated, setClient });
+    return { state: "valid", authenticated, setClient };
   }, [alreadyOpenedErr, changePassword, initClientState, logout, setClient]);
 
   useEffect(() => {
