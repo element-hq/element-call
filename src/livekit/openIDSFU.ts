@@ -17,27 +17,26 @@ limitations under the License.
 import { MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/src/logger";
 
-import { Config } from "../config/Config";
-
 export interface SFUConfig {
   url: string;
   jwt: string;
 }
 
+// The bits we need from MatrixClient
+export type OpenIDClientParts = Pick<
+  MatrixClient,
+  "getOpenIdToken" | "getDeviceId"
+>;
+
 export async function getSFUConfigWithOpenID(
-  client: MatrixClient,
+  client: OpenIDClientParts,
+  livekitServiceURL: string,
   roomName: string
 ): Promise<SFUConfig> {
   const openIdToken = await client.getOpenIdToken();
   logger.debug("Got openID token", openIdToken);
 
-  const livekitCfg = Config.get().livekit;
-
-  if (!livekitCfg?.livekit_service_url) {
-    throw new Error("No livekit service URL defined");
-  }
-
-  const res = await fetch(livekitCfg.livekit_service_url + "/sfu/get", {
+  const res = await fetch(livekitServiceURL + "/sfu/get", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient } from "matrix-js-sdk";
 import React, {
   ReactNode,
   createContext,
@@ -24,11 +23,16 @@ import React, {
 } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 
-import { SFUConfig, getSFUConfigWithOpenID } from "./openIDSFU";
+import {
+  OpenIDClientParts,
+  SFUConfig,
+  getSFUConfigWithOpenID,
+} from "./openIDSFU";
 import { ErrorView, LoadingView } from "../FullScreenView";
 
 interface Props {
-  client: MatrixClient;
+  client: OpenIDClientParts;
+  livekitServiceURL: string;
   roomName: string;
   children: ReactNode;
 }
@@ -37,21 +41,30 @@ const SFUConfigContext = createContext<SFUConfig>(undefined);
 
 export const useSFUConfig = () => useContext(SFUConfigContext);
 
-export function OpenIDLoader({ client, roomName, children }: Props) {
+export function OpenIDLoader({
+  client,
+  livekitServiceURL,
+  roomName,
+  children,
+}: Props) {
   const [sfuConfig, setSFUConfig] = useState<SFUConfig>();
   const [error, setError] = useState<Error>();
 
   useEffect(() => {
     (async () => {
       try {
-        const result = await getSFUConfigWithOpenID(client, roomName);
+        const result = await getSFUConfigWithOpenID(
+          client,
+          livekitServiceURL,
+          roomName
+        );
         setSFUConfig(result);
       } catch (e) {
         logger.error("Failed to fetch SFU config: ", e);
         setError(new Error("Failed to fetch SFU config"));
       }
     })();
-  }, [client, roomName]);
+  }, [client, livekitServiceURL, roomName]);
 
   if (error) {
     return <ErrorView error={error} />;
