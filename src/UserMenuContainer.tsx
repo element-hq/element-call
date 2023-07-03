@@ -61,18 +61,14 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
   const userName = client?.getUserIdLocalpart() ?? "";
   return (
     <>
-      {avatarUrl && (
-        <UserMenu
-          preventNavigation={preventNavigation}
-          isAuthenticated={authenticated}
-          isPasswordlessUser={passwordlessUser}
-          avatarUrl={avatarUrl}
-          onAction={onAction}
-          displayName={
-            displayName || (userName ? userName.replace("@", "") : "")
-          }
-        />
-      )}
+      <UserMenu
+        preventNavigation={preventNavigation}
+        isAuthenticated={authenticated}
+        isPasswordlessUser={passwordlessUser}
+        avatarUrl={avatarUrl}
+        onAction={onAction}
+        displayName={displayName || (userName ? userName.replace("@", "") : "")}
+      />
       {modalState.isOpen && client && (
         <SettingsModal
           client={client}
