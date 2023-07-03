@@ -55,7 +55,7 @@ export class Initializer {
     languageDetector.addDetector({
       name: "urlFragment",
       // Look for a language code in the URL's fragment
-      lookup: () => getUrlParams().lang ?? undefined,
+      lookup: () => getUrlParams(true).lang ?? undefined,
     });
 
     i18n
@@ -136,7 +136,7 @@ export class Initializer {
     }
 
     // Custom fonts
-    const { fonts, fontScale } = getUrlParams();
+    const { fonts, fontScale } = getUrlParams(true);
     if (fontScale !== null) {
       document.documentElement.style.setProperty(
         "--font-scale",
