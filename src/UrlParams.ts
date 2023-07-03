@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
 
 import { Config } from "./config/Config";
@@ -96,27 +96,28 @@ interface UrlParams {
  */
 export const getUrlParams = (
   ignoreRoomAlias?: boolean,
-  location: Location = window.location
+  search = window.location.search,
+  pathname = window.location.pathname,
+  hash = window.location.hash
 ): UrlParams => {
-  const { href, origin, search, hash } = location;
-
   let roomAlias: string | undefined;
   if (!ignoreRoomAlias) {
-    roomAlias = href.substring(origin.length + 1);
+    if (hash === "") {
+      roomAlias = pathname.substring(1); // Strip the "/"
 
-    // If we have none, we throw
-    if (!roomAlias) {
-      throw Error("No pathname");
+      // Delete "/room/" and "?", if present
+      if (roomAlias.startsWith("room/")) {
+        roomAlias = roomAlias.substring("room/".length);
+      }
+      // Add "#", if not present
+      if (!roomAlias.startsWith("#")) {
+        roomAlias = `#${roomAlias}`;
+      }
+    } else {
+      roomAlias = hash;
     }
-    // Delete "/room/" and "?", if present
-    if (roomAlias.startsWith("room/")) {
-      roomAlias = roomAlias.substring("room/".length).split("?")[0];
-    }
-    // Add "#", if not present
-    if (!roomAlias.includes("#")) {
-      roomAlias = `#${roomAlias}`;
-    }
-    // Add server part, if missing
+
+    // Add server part, if not present
     if (!roomAlias.includes(":")) {
       roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
     }
@@ -169,18 +170,9 @@ export const getUrlParams = (
  * @returns The app parameters for the current URL
  */
 export const useUrlParams = (): UrlParams => {
-  const getParams = useCallback(() => {
-    return getUrlParams(false, window.location);
-  }, []);
-
-  const reactDomLocation = useLocation();
-  const [urlParams, setUrlParams] = useState(getParams());
-
-  useEffect(() => {
-    if (window.location !== reactDomLocation) {
-      setUrlParams(getParams());
-    }
-  }, [getParams, reactDomLocation]);
-
-  return urlParams;
+  const { search, pathname, hash } = useLocation();
+  return useMemo(
+    () => getUrlParams(false, search, pathname, hash),
+    [search, pathname, hash]
+  );
 };

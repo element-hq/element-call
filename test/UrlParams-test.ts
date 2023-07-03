@@ -32,115 +32,67 @@ describe("UrlParams", () => {
 
   describe("handles URL with /room/", () => {
     it("and nothing else", () => {
-      expect(
-        getUrlParams(false, {
-          origin: ORIGIN,
-          href: `${ORIGIN}/room/${ROOM_NAME}`,
-          search: "",
-          hash: "",
-        } as Location).roomAlias
-      ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
+      expect(getUrlParams(false, "", `/room/${ROOM_NAME}`, "").roomAlias).toBe(
+        `#${ROOM_NAME}:${HOMESERVER}`
+      );
     });
 
     it("and #", () => {
       expect(
-        getUrlParams(false, {
-          origin: ORIGIN,
-          href: `${ORIGIN}/room/#${ROOM_NAME}`,
-          search: "",
-          hash: "",
-        } as Location).roomAlias
+        getUrlParams(false, "", `${ORIGIN}/room/`, `#${ROOM_NAME}`).roomAlias
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
 
     it("and # and server part", () => {
       expect(
-        getUrlParams(false, {
-          origin: ORIGIN,
-          href: `${ORIGIN}/room/#${ROOM_NAME}:${HOMESERVER}`,
-          search: "",
-          hash: "",
-        } as Location).roomAlias
+        getUrlParams(false, "", `/room/`, `#${ROOM_NAME}:${HOMESERVER}`)
+          .roomAlias
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
 
     it("and server part", () => {
       expect(
-        getUrlParams(false, {
-          origin: ORIGIN,
-          href: `${ORIGIN}/room/${ROOM_NAME}:${HOMESERVER}`,
-          search: "",
-          hash: "",
-        } as Location).roomAlias
+        getUrlParams(false, "", `/room/${ROOM_NAME}:${HOMESERVER}`, "")
+          .roomAlias
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
   });
 
   describe("handles URL without /room/", () => {
     it("and nothing else", () => {
-      expect(
-        getUrlParams(false, {
-          origin: ORIGIN,
-          href: `${ORIGIN}/${ROOM_NAME}`,
-          search: "",
-          hash: "",
-        } as Location).roomAlias
-      ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
+      expect(getUrlParams(false, "", `/${ROOM_NAME}`, "").roomAlias).toBe(
+        `#${ROOM_NAME}:${HOMESERVER}`
+      );
     });
 
     it("and with #", () => {
-      expect(
-        getUrlParams(false, {
-          origin: ORIGIN,
-          href: `${ORIGIN}/room/#${ROOM_NAME}`,
-          search: "",
-          hash: "",
-        } as Location).roomAlias
-      ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
+      expect(getUrlParams(false, "", "", `#${ROOM_NAME}`).roomAlias).toBe(
+        `#${ROOM_NAME}:${HOMESERVER}`
+      );
     });
 
     it("and with # and server part", () => {
       expect(
-        getUrlParams(false, {
-          origin: ORIGIN,
-          href: `${ORIGIN}/room/#${ROOM_NAME}:${HOMESERVER}`,
-          search: "",
-          hash: "",
-        } as Location).roomAlias
+        getUrlParams(false, "", "", `#${ROOM_NAME}:${HOMESERVER}`).roomAlias
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
 
     it("and with server part", () => {
       expect(
-        getUrlParams(false, {
-          origin: ORIGIN,
-          href: `${ORIGIN}/room/${ROOM_NAME}:${HOMESERVER}`,
-          search: "",
-          hash: "",
-        } as Location).roomAlias
+        getUrlParams(false, "", `/${ROOM_NAME}:${HOMESERVER}`, "").roomAlias
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
   });
 
   describe("handles search params", () => {
     it("(roomId)", () => {
-      expect(
-        getUrlParams(true, {
-          search: `?roomId=${ROOM_ID}`,
-          hash: "",
-        } as Location).roomId
-      ).toBe(ROOM_ID);
+      expect(getUrlParams(true, `?roomId=${ROOM_ID}`).roomId).toBe(ROOM_ID);
     });
   });
 
   it("ignores room alias", () => {
     expect(
-      getUrlParams(true, {
-        origin: ORIGIN,
-        href: `${ORIGIN}/room/${ROOM_NAME}:${HOMESERVER}`,
-        hash: "",
-        search: "",
-      } as Location).roomAlias
+      getUrlParams(true, "", `/room/${ROOM_NAME}:${HOMESERVER}`).roomAlias
     ).toBeFalsy();
   });
 });
