@@ -42,6 +42,12 @@ interface Props {
 export const CallTypeDropdown: FC<Props> = ({ callType, setCallType }) => {
   const { t } = useTranslation();
 
+  const onAction = (key: React.Key) => {
+    setCallType(key.toString() as CallType);
+  };
+
+  const onClose = () => {};
+
   return (
     <PopoverMenuTrigger placement="bottom">
       <Button variant="dropdown" className={commonStyles.headline}>
@@ -55,11 +61,8 @@ export const CallTypeDropdown: FC<Props> = ({ callType, setCallType }) => {
         <Menu
           {...props}
           label={t("Call type menu")}
-          onAction={(key) => {
-            const callType = key.toString();
-            setCallType(callType as CallType);
-          }}
-          onClose={() => {}}
+          onAction={onAction}
+          onClose={onClose}
         >
           <Item key={CallType.Video} textValue={t("Video call")}>
             <VideoIcon />
