@@ -48,9 +48,7 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
           modalState.open();
           break;
         case "logout":
-          if (logout) {
-            logout();
-          }
+          logout?.();
           break;
         case "login":
           history.push("/login", { state: { from: location } });
