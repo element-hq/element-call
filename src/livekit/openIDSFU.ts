@@ -50,7 +50,5 @@ export async function getSFUConfigWithOpenID(
   if (!res.ok) {
     throw new Error("SFO Config fetch failed with status code " + res.status);
   }
-  const sfuConfig = await res.json();
-
-  return sfuConfig;
+  return await res.json();
 }
