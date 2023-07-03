@@ -38,7 +38,7 @@ type ProfileSaveCallback = ({
   removeAvatar: boolean;
 }) => Promise<void>;
 
-export function useProfile(client?: MatrixClient) {
+export function useProfile(client: MatrixClient | undefined) {
   const [{ success, loading, displayName, avatarUrl, error }, setState] =
     useState<ProfileLoadState>(() => {
       const user = client?.getUser(client.getUserId()!);
