@@ -142,8 +142,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           const foci = livekit
             ? [
                 {
-                  url: livekit.server_url,
-                  jwtServiceUrl: livekit.jwt_service_url,
+                  livekitServiceUrl: livekit.livekit_service_url,
                 },
               ]
             : undefined;

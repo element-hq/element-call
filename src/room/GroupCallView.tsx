@@ -28,13 +28,14 @@ import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { MatrixInfo } from "./VideoPreview";
-import { ActiveCall } from "./InCallView";
 import { CallEndedView } from "./CallEndedView";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { UserChoices } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
+import { OpenIDLoader } from "../livekit/OpenIDLoader";
+import { ActiveCall } from "./InCallView";
 
 declare global {
   interface Window {
@@ -218,21 +219,39 @@ export function GroupCallView({
     undefined
   );
 
+  const [livekitServiceURL, setLivekitServiceURL] = useState<
+    string | undefined
+  >(groupCall.foci[0]?.livekitServiceUrl);
+
+  useEffect(() => {
+    setLivekitServiceURL(groupCall.foci[0]?.livekitServiceUrl);
+  }, [setLivekitServiceURL, groupCall]);
+
+  if (!livekitServiceURL) {
+    return <ErrorView error={new Error("No livekit_service_url defined")} />;
+  }
+
   if (error) {
     return <ErrorView error={error} />;
   } else if (state === GroupCallState.Entered && userChoices) {
     return (
-      <ActiveCall
-        groupCall={groupCall}
+      <OpenIDLoader
         client={client}
-        participants={participants}
-        onLeave={onLeave}
-        unencryptedEventsFromUsers={unencryptedEventsFromUsers}
-        hideHeader={hideHeader}
-        matrixInfo={matrixInfo}
-        userChoices={userChoices}
-        otelGroupCallMembership={otelGroupCallMembership}
-      />
+        livekitServiceURL={livekitServiceURL}
+        roomName={matrixInfo.roomName}
+      >
+        <ActiveCall
+          client={client}
+          groupCall={groupCall}
+          participants={participants}
+          onLeave={onLeave}
+          unencryptedEventsFromUsers={unencryptedEventsFromUsers}
+          hideHeader={hideHeader}
+          matrixInfo={matrixInfo}
+          userChoices={userChoices}
+          otelGroupCallMembership={otelGroupCallMembership}
+        />
+      </OpenIDLoader>
     );
   } else if (left) {
     // The call ended view is shown for two reasons: prompting guests to create
