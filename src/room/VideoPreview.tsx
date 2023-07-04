@@ -34,8 +34,8 @@ import { useDefaultDevices } from "../settings/useSetting";
 export type MatrixInfo = {
   displayName: string;
   avatarUrl: string;
+  roomId: string;
   roomName: string;
-  roomIdOrAlias: string;
 };
 
 interface Props {
