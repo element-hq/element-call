@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       deployments: write
-    # Important: the 'branches' filter above will match the 'livekit-experiment' branch on forks,
+    # Important: the 'branches' filter above will match the 'livekit' branch on forks,
     # so we need to check the head repo too in order to not run on PRs from forks
     # We check the branch name again too just for completeness
     # (Is there a nicer way to see if a PR is from a fork?)
@@ -24,7 +24,6 @@ jobs:
         with:
           step: start
           token: ${{ secrets.GITHUB_TOKEN }}
-          env: livekit-experiment-branch-cd
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: "Download artifact"
@@ -53,10 +52,10 @@ jobs:
 
       - name: Add redirects file
         # We fetch from github directly as we don't bother checking out the repo
-        run: curl -s https://raw.githubusercontent.com/vector-im/element-call/livekit-experiment/config/netlify_redirects > dist/_redirects
+        run: curl -s https://raw.githubusercontent.com/vector-im/element-call/livekit/config/netlify_redirects > dist/_redirects
 
       - name: Add config file
-        run: curl -s https://raw.githubusercontent.com/vector-im/element-call/livekit-experiment/config/element_io_preview.json > dist/config.json
+        run: curl -s https://raw.githubusercontent.com/vector-im/element-call/livekit/config/element_io_preview.json > dist/config.json
 
       - name: Deploy to Netlify
         id: netlify
