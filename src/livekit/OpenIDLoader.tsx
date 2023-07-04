@@ -47,8 +47,9 @@ export function OpenIDLoader({
   roomName,
   children,
 }: Props) {
-  const [sfuConfig, setSFUConfig] = useState<SFUConfig>();
-  const [error, setError] = useState<Error>();
+  const [state, setState] = useState<
+    SFUConfigLoading | SFUConfigLoaded | SFUConfigFailed
+  >({ kind: "loading" });
 
   useEffect(() => {
     (async () => {
@@ -58,23 +59,38 @@ export function OpenIDLoader({
           livekitServiceURL,
           roomName
         );
-        setSFUConfig(result);
+        setState({ kind: "loaded", sfuConfig: result });
       } catch (e) {
         logger.error("Failed to fetch SFU config: ", e);
-        setError(new Error("Failed to fetch SFU config"));
+        setState({ kind: "failed", error: e });
       }
     })();
   }, [client, livekitServiceURL, roomName]);
 
-  if (error) {
-    return <ErrorView error={error} />;
-  } else if (sfuConfig) {
-    return (
-      <SFUConfigContext.Provider value={sfuConfig}>
-        {children}
-      </SFUConfigContext.Provider>
-    );
-  } else {
-    return <LoadingView />;
+  switch (state.kind) {
+    case "loading":
+      return <LoadingView />;
+    case "failed":
+      return <ErrorView error={state.error} />;
+    case "loaded":
+      return (
+        <SFUConfigContext.Provider value={state.sfuConfig}>
+          {children}
+        </SFUConfigContext.Provider>
+      );
   }
 }
+
+type SFUConfigLoading = {
+  kind: "loading";
+};
+
+type SFUConfigLoaded = {
+  kind: "loaded";
+  sfuConfig: SFUConfig;
+};
+
+type SFUConfigFailed = {
+  kind: "failed";
+  error: Error;
+};
