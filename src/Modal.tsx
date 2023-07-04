@@ -16,7 +16,7 @@ limitations under the License.
 
 /* eslint-disable jsx-a11y/no-autofocus */
 
-import React, { useRef, useMemo, ReactNode } from "react";
+import { useRef, useMemo, ReactNode } from "react";
 import {
   useOverlay,
   usePreventScroll,

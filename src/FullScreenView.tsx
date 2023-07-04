@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ReactNode, useCallback, useEffect } from "react";
+import { ReactNode, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import classNames from "classnames";
 import { Trans, useTranslation } from "react-i18next";

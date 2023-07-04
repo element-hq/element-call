@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { FC, memo, ReactNode, RefObject, useRef } from "react";
+import { memo, ReactNode, RefObject, useRef } from "react";
 import { EventTypes, Handler, useDrag } from "@use-gesture/react";
 import { SpringValue, to } from "@react-spring/web";
 
@@ -47,7 +47,7 @@ interface Props<T> {
  * A wrapper around a tile in a video grid. This component exists to decouple
  * child components from the grid.
  */
-export const TileWrapper: FC<Props<unknown>> = memo(
+export const TileWrapper = memo(
   ({
     id,
     onDragRef,
@@ -97,4 +97,7 @@ export const TileWrapper: FC<Props<unknown>> = memo(
       </>
     );
   }
-);
+  // We pretend this component is a simple function rather than a
+  // NamedExoticComponent, because that's the only way we can fit in a type
+  // parameter
+) as <T>(props: Props<T>) => JSX.Element;

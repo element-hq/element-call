@@ -7,3 +7,4 @@ dist-ssr
 .idea/
 public/config.json
 /coverage
+yarn-error.log

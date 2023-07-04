@@ -15,33 +15,47 @@ limitations under the License.
 */
 
 import TinyQueue from "tinyqueue";
+import { RectReadOnly } from "react-use-measure";
+import { FC, memo, ReactNode } from "react";
 
 import { TileDescriptor } from "./VideoGrid";
+import { Slot } from "./NewVideoGrid";
+import { Layout } from "./Layout";
 import { count, findLastIndex } from "../array-utils";
+import styles from "./BigGrid.module.css";
 
 /**
  * A 1×1 cell in a grid which belongs to a tile.
  */
-export interface Cell {
+interface Cell {
   /**
    * The item displayed on the tile.
    */
-  item: TileDescriptor<unknown>;
+  readonly item: TileDescriptor<unknown>;
   /**
    * Whether this cell is the origin (top left corner) of the tile.
    */
-  origin: boolean;
+  readonly origin: boolean;
   /**
    * The width, in columns, of the tile.
    */
-  columns: number;
+  readonly columns: number;
   /**
    * The height, in rows, of the tile.
    */
-  rows: number;
+  readonly rows: number;
 }
 
-export interface Grid {
+export interface BigGridState {
+  readonly columns: number;
+  /**
+   * The cells of the grid, in left-to-right top-to-bottom order.
+   * undefined = empty.
+   */
+  readonly cells: (Cell | undefined)[];
+}
+
+interface MutableBigGridState {
   columns: number;
   /**
    * The cells of the grid, in left-to-right top-to-bottom order.
@@ -58,7 +72,7 @@ export interface Grid {
  * @returns An array in which each cell holds the index of the next cell to move
  *   to to reach the destination, or null if it is the destination.
  */
-export function getPaths(dest: number, g: Grid): (number | null)[] {
+export function getPaths(dest: number, g: BigGridState): (number | null)[] {
   const destRow = row(dest, g);
   const destColumn = column(dest, g);
 
@@ -106,18 +120,23 @@ export function getPaths(dest: number, g: Grid): (number | null)[] {
   return edges as (number | null)[];
 }
 
-const findLast1By1Index = (g: Grid): number | null =>
+const findLast1By1Index = (g: BigGridState): number | null =>
   findLastIndex(g.cells, (c) => c?.rows === 1 && c?.columns === 1);
 
-export function row(index: number, g: Grid): number {
+export function row(index: number, g: BigGridState): number {
   return Math.floor(index / g.columns);
 }
 
-export function column(index: number, g: Grid): number {
+export function column(index: number, g: BigGridState): number {
   return ((index % g.columns) + g.columns) % g.columns;
 }
 
-function inArea(index: number, start: number, end: number, g: Grid): boolean {
+function inArea(
+  index: number,
+  start: number,
+  end: number,
+  g: BigGridState
+): boolean {
   const indexColumn = column(index, g);
   const indexRow = row(index, g);
   return (
@@ -131,7 +150,7 @@ function inArea(index: number, start: number, end: number, g: Grid): boolean {
 function* cellsInArea(
   start: number,
   end: number,
-  g: Grid
+  g: BigGridState
 ): Generator<number, void, unknown> {
   const startColumn = column(start, g);
   const endColumn = column(end, g);
@@ -149,7 +168,7 @@ function* cellsInArea(
 export function forEachCellInArea(
   start: number,
   end: number,
-  g: Grid,
+  g: BigGridState,
   fn: (c: Cell | undefined, i: number) => void
 ): void {
   for (const i of cellsInArea(start, end, g)) fn(g.cells[i], i);
@@ -158,7 +177,7 @@ export function forEachCellInArea(
 function allCellsInArea(
   start: number,
   end: number,
-  g: Grid,
+  g: BigGridState,
   fn: (c: Cell | undefined, i: number) => boolean
 ): boolean {
   for (const i of cellsInArea(start, end, g)) {
@@ -172,16 +191,19 @@ const areaEnd = (
   start: number,
   columns: number,
   rows: number,
-  g: Grid
+  g: BigGridState
 ): number => start + columns - 1 + g.columns * (rows - 1);
 
-const cloneGrid = (g: Grid): Grid => ({ ...g, cells: [...g.cells] });
+const cloneGrid = (g: BigGridState): BigGridState => ({
+  ...g,
+  cells: [...g.cells],
+});
 
 /**
  * Gets the index of the next gap in the grid that should be backfilled by 1×1
  * tiles.
  */
-function getNextGap(g: Grid): number | null {
+function getNextGap(g: BigGridState): number | null {
   const last1By1Index = findLast1By1Index(g);
   if (last1By1Index === null) return null;
 
@@ -204,7 +226,7 @@ function getNextGap(g: Grid): number | null {
 /**
  * Gets the index of the origin of the tile to which the given cell belongs.
  */
-function getOrigin(g: Grid, index: number): number {
+function getOrigin(g: BigGridState, index: number): number {
   const initialColumn = column(index, g);
 
   for (
@@ -229,7 +251,7 @@ function getOrigin(g: Grid, index: number): number {
  * along the way.
  * Precondition: the destination area must consist of only 1×1 tiles.
  */
-function moveTile(g: Grid, from: number, to: number) {
+function moveTileUnchecked(g: BigGridState, from: number, to: number) {
   const tile = g.cells[from]!;
   const fromEnd = areaEnd(from, tile.columns, tile.rows, g);
   const toEnd = areaEnd(to, tile.columns, tile.rows, g);
@@ -262,10 +284,15 @@ function moveTile(g: Grid, from: number, to: number) {
 /**
  * Moves the tile at index "from" over to index "to", if there is space.
  */
-export function tryMoveTile(g: Grid, from: number, to: number): Grid {
+export function moveTile(
+  g: BigGridState,
+  from: number,
+  to: number
+): BigGridState {
   const tile = g.cells[from]!;
 
   if (
+    to !== from && // Skip the operation if nothing would move
     to >= 0 &&
     to < g.cells.length &&
     column(to, g) <= g.columns - tile.columns
@@ -283,7 +310,7 @@ export function tryMoveTile(g: Grid, from: number, to: number): Grid {
     if (allCellsInArea(to, toEnd, g, displaceable)) {
       // The target space is free; move
       const gClone = cloneGrid(g);
-      moveTile(gClone, from, to);
+      moveTileUnchecked(gClone, from, to);
       return gClone;
     }
   }
@@ -297,7 +324,7 @@ export function tryMoveTile(g: Grid, from: number, to: number): Grid {
  * enlarged tiles around when necessary.
  * @returns Whether the tile was actually pushed
  */
-function pushTileUp(g: Grid, from: number): boolean {
+function pushTileUp(g: BigGridState, from: number): boolean {
   const tile = g.cells[from]!;
 
   // TODO: pushing large tiles sideways might be more successful in some
@@ -315,7 +342,7 @@ function pushTileUp(g: Grid, from: number): boolean {
     );
 
   if (cellsAboveAreDisplacable) {
-    moveTile(g, from, from - g.columns);
+    moveTileUnchecked(g, from, from - g.columns);
     return true;
   } else {
     return false;
@@ -325,8 +352,8 @@ function pushTileUp(g: Grid, from: number): boolean {
 /**
  * Backfill any gaps in the grid.
  */
-export function fillGaps(g: Grid): Grid {
-  const result = cloneGrid(g);
+export function fillGaps(g: BigGridState): BigGridState {
+  const result = cloneGrid(g) as MutableBigGridState;
 
   // This will hopefully be the size of the grid after we're done here, assuming
   // that we can pack the large tiles tightly enough
@@ -403,7 +430,11 @@ export function fillGaps(g: Grid): Grid {
   return result;
 }
 
-function createRows(g: Grid, count: number, atRow: number): Grid {
+function createRows(
+  g: BigGridState,
+  count: number,
+  atRow: number
+): BigGridState {
   const result = {
     columns: g.columns,
     cells: new Array(g.cells.length + g.columns * count),
@@ -430,9 +461,12 @@ function createRows(g: Grid, count: number, atRow: number): Grid {
 }
 
 /**
- * Adds a set of new items into the grid.
+ * Adds a set of new items into the grid. (May leave gaps.)
  */
-export function addItems(items: TileDescriptor<unknown>[], g: Grid): Grid {
+export function addItems(
+  items: TileDescriptor<unknown>[],
+  g: BigGridState
+): BigGridState {
   let result = cloneGrid(g);
 
   for (const item of items) {
@@ -444,13 +478,11 @@ export function addItems(items: TileDescriptor<unknown>[], g: Grid): Grid {
     };
 
     let placeAt: number;
-    let hasGaps: boolean;
 
     if (item.placeNear === undefined) {
       // This item has no special placement requests, so let's put it
       // uneventfully at the end of the grid
       placeAt = result.cells.length;
-      hasGaps = false;
     } else {
       // This item wants to be placed near another; let's put it on a row
       // directly below the related tile
@@ -460,7 +492,6 @@ export function addItems(items: TileDescriptor<unknown>[], g: Grid): Grid {
       if (placeNear === -1) {
         // Can't find the related tile, so let's give up and place it at the end
         placeAt = result.cells.length;
-        hasGaps = false;
       } else {
         const placeNearCell = result.cells[placeNear]!;
         const placeNearEnd = areaEnd(
@@ -475,7 +506,6 @@ export function addItems(items: TileDescriptor<unknown>[], g: Grid): Grid {
           placeNear +
           Math.floor(placeNearCell.columns / 2) +
           result.columns * placeNearCell.rows;
-        hasGaps = true;
       }
     }
 
@@ -484,21 +514,19 @@ export function addItems(items: TileDescriptor<unknown>[], g: Grid): Grid {
     if (item.largeBaseSize) {
       // Cycle the tile size once to set up the tile with its larger base size
       // This also fills any gaps in the grid, hence no extra call to fillGaps
-      result = cycleTileSize(item.id, result);
-    } else if (hasGaps) {
-      result = fillGaps(result);
+      result = cycleTileSize(result, item);
     }
   }
 
   return result;
 }
 
-const largeTileDimensions = (g: Grid): [number, number] => [
+const largeTileDimensions = (g: BigGridState): [number, number] => [
   Math.min(3, Math.max(2, g.columns - 1)),
   2,
 ];
 
-const extraLargeTileDimensions = (g: Grid): [number, number] =>
+const extraLargeTileDimensions = (g: BigGridState): [number, number] =>
   g.columns > 3 ? [4, 3] : [g.columns, 2];
 
 /**
@@ -507,8 +535,11 @@ const extraLargeTileDimensions = (g: Grid): [number, number] =>
  * @param g The grid.
  * @returns The updated grid.
  */
-export function cycleTileSize(tileId: string, g: Grid): Grid {
-  const from = g.cells.findIndex((c) => c?.item.id === tileId);
+export function cycleTileSize(
+  g: BigGridState,
+  tile: TileDescriptor<unknown>
+): BigGridState {
+  const from = g.cells.findIndex((c) => c?.item === tile);
   if (from === -1) return g; // Tile removed, no change
   const fromCell = g.cells[from]!;
   const fromWidth = fromCell.columns;
@@ -629,8 +660,8 @@ export function cycleTileSize(tileId: string, g: Grid): Grid {
 /**
  * Resizes the grid to a new column width.
  */
-export function resize(g: Grid, columns: number): Grid {
-  const result: Grid = { columns, cells: [] };
+export function resize(g: BigGridState, columns: number): BigGridState {
+  const result: BigGridState = { columns, cells: [] };
   const [largeColumns, largeRows] = largeTileDimensions(result);
 
   // Copy each tile from the old grid to the resized one in the same order
@@ -640,6 +671,7 @@ export function resize(g: Grid, columns: number): Grid {
 
   for (const cell of g.cells) {
     if (cell?.origin) {
+      // TODO make aware of extra large tiles
       const [nextColumns, nextRows] =
         cell.columns > 1 || cell.rows > 1 ? [largeColumns, largeRows] : [1, 1];
 
@@ -672,7 +704,7 @@ export function resize(g: Grid, columns: number): Grid {
 /**
  * Promotes speakers to the first page of the grid.
  */
-export function promoteSpeakers(g: Grid) {
+export function promoteSpeakers(g: BigGridState) {
   // This is all a bit of a hack right now, because we don't know if the designs
   // will stick with this approach in the long run
   // We assume that 4 rows are probably about 1 page
@@ -694,10 +726,149 @@ export function promoteSpeakers(g: Grid) {
           toCell === undefined ||
           (toCell.columns === 1 && toCell.rows === 1)
         ) {
-          moveTile(g, from, to);
+          moveTileUnchecked(g, from, to);
           break;
         }
       }
     }
   }
 }
+
+/**
+ * The algorithm for updating a grid with a new set of tiles.
+ */
+function updateTiles(
+  g: BigGridState,
+  tiles: TileDescriptor<unknown>[]
+): BigGridState {
+  // Step 1: Update tiles that still exist, and remove tiles that have left
+  // the grid
+  const itemsById = new Map(tiles.map((i) => [i.id, i]));
+  const grid1: BigGridState = {
+    ...g,
+    cells: g.cells.map((c) => {
+      if (c === undefined) return undefined;
+      const item = itemsById.get(c.item.id);
+      return item === undefined ? undefined : { ...c, item };
+    }),
+  };
+
+  // Step 2: Add new tiles
+  const existingItemIds = new Set(
+    grid1.cells.filter((c) => c !== undefined).map((c) => c!.item.id)
+  );
+  const newItems = tiles.filter((i) => !existingItemIds.has(i.id));
+  const grid2 = addItems(newItems, grid1);
+
+  // Step 3: Promote speakers to the top
+  promoteSpeakers(grid2);
+
+  return fillGaps(grid2);
+}
+
+function updateBounds(g: BigGridState, bounds: RectReadOnly): BigGridState {
+  const columns = Math.max(2, Math.floor(bounds.width * 0.0045));
+  return columns === g.columns ? g : resize(g, columns);
+}
+
+const Slots: FC<{ s: BigGridState }> = memo(({ s: g }) => {
+  const areas = new Array<(number | null)[]>(
+    Math.ceil(g.cells.length / g.columns)
+  );
+  for (let i = 0; i < areas.length; i++)
+    areas[i] = new Array<number | null>(g.columns).fill(null);
+
+  let slotCount = 0;
+  for (let i = 0; i < g.cells.length; i++) {
+    const cell = g.cells[i];
+    if (cell?.origin) {
+      const slotEnd = i + cell.columns - 1 + g.columns * (cell.rows - 1);
+      forEachCellInArea(
+        i,
+        slotEnd,
+        g,
+        (_c, j) => (areas[row(j, g)][column(j, g)] = slotCount)
+      );
+      slotCount++;
+    }
+  }
+
+  const style = {
+    gridTemplateAreas: areas
+      .map(
+        (row) =>
+          `'${row
+            .map((slotId) => (slotId === null ? "." : `s${slotId}`))
+            .join(" ")}'`
+      )
+      .join(" "),
+    gridTemplateColumns: `repeat(${g.columns}, 1fr)`,
+  };
+
+  const slots = new Array<ReactNode>(slotCount);
+  for (let i = 0; i < slotCount; i++)
+    slots[i] = <Slot key={i} style={{ gridArea: `s${i}` }} />;
+
+  return (
+    <div className={styles.bigGrid} style={style}>
+      {slots}
+    </div>
+  );
+});
+
+/**
+ * Given a tile and numbers in the range [0, 1) describing a position within the
+ * tile, this returns the index of the specific cell in which that position
+ * lies.
+ */
+function positionOnTileToCell(
+  g: BigGridState,
+  tileOriginIndex: number,
+  xPositionOnTile: number,
+  yPositionOnTile: number
+): number {
+  const tileOrigin = g.cells[tileOriginIndex]!;
+  const columnOnTile = Math.floor(xPositionOnTile * tileOrigin.columns);
+  const rowOnTile = Math.floor(yPositionOnTile * tileOrigin.rows);
+  return tileOriginIndex + columnOnTile + g.columns * rowOnTile;
+}
+
+function dragTile(
+  g: BigGridState,
+  from: TileDescriptor<unknown>,
+  to: TileDescriptor<unknown>,
+  xPositionOnFrom: number,
+  yPositionOnFrom: number,
+  xPositionOnTo: number,
+  yPositionOnTo: number
+): BigGridState {
+  const fromOrigin = g.cells.findIndex((c) => c?.item === from);
+  const toOrigin = g.cells.findIndex((c) => c?.item === to);
+  const fromCell = positionOnTileToCell(
+    g,
+    fromOrigin,
+    xPositionOnFrom,
+    yPositionOnFrom
+  );
+  const toCell = positionOnTileToCell(
+    g,
+    toOrigin,
+    xPositionOnTo,
+    yPositionOnTo
+  );
+
+  return moveTile(g, fromOrigin, fromOrigin + toCell - fromCell);
+}
+
+export const BigGrid: Layout<BigGridState> = {
+  emptyState: { columns: 4, cells: [] },
+  updateTiles,
+  updateBounds,
+  getTiles: <T,>(g) =>
+    g.cells.filter((c) => c?.origin).map((c) => c!.item as T),
+  canDragTile: () => true,
+  dragTile,
+  toggleFocus: cycleTileSize,
+  Slots,
+  rememberState: false,
+};

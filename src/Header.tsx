@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import classNames from "classnames";
-import React, { HTMLAttributes, ReactNode, useCallback } from "react";
+import { HTMLAttributes, ReactNode, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Room } from "matrix-js-sdk/src/models/room";
 import { useTranslation } from "react-i18next";
@@ -24,9 +24,7 @@ import styles from "./Header.module.css";
 import { useModalTriggerState } from "./Modal";
 import { Button } from "./button";
 import { ReactComponent as Logo } from "./icons/Logo.svg";
-import { ReactComponent as VideoIcon } from "./icons/Video.svg";
 import { Subtitle } from "./typography/Typography";
-import { Avatar, Size } from "./Avatar";
 import { IncompatibleVersionModal } from "./IncompatibleVersionModal";
 
 interface HeaderProps extends HTMLAttributes<HTMLElement> {
@@ -116,21 +114,11 @@ export function HeaderLogo({ className }: HeaderLogoProps) {
 
 interface RoomHeaderInfo {
   roomName: string;
-  avatarUrl: string | null;
 }
 
-export function RoomHeaderInfo({ roomName, avatarUrl }: RoomHeaderInfo) {
+export function RoomHeaderInfo({ roomName }: RoomHeaderInfo) {
   return (
     <>
-      <div className={styles.roomAvatar}>
-        <Avatar
-          size={Size.MD}
-          src={avatarUrl ?? undefined}
-          bgKey={roomName}
-          fallback={roomName.slice(0, 1).toUpperCase()}
-        />
-        <VideoIcon width={16} height={16} />
-      </div>
       <Subtitle data-testid="roomHeader_roomName" fontWeight="semiBold">
         {roomName}
       </Subtitle>

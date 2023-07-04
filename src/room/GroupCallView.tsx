@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
@@ -35,7 +35,6 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { UserChoices } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
-import { useRoomAvatar } from "./useRoomAvatar";
 
 declare global {
   interface Window {
@@ -82,14 +81,12 @@ export function GroupCallView({
   }, [groupCall]);
 
   const { displayName, avatarUrl } = useProfile(client);
-  const roomAvatarUrl = useRoomAvatar(groupCall.room);
 
   const matrixInfo: MatrixInfo = {
     displayName,
     avatarUrl,
     roomName: groupCall.room.name,
     roomIdOrAlias,
-    roomAvatarUrl,
   };
 
   useEffect(() => {

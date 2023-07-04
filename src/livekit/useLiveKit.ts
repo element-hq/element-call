@@ -1,6 +1,6 @@
 import { Room, RoomOptions } from "livekit-client";
 import { useLiveKitRoom, useToken } from "@livekit/components-react";
-import React from "react";
+import { useMemo } from "react";
 
 import { defaultLiveKitOptions } from "./options";
 
@@ -26,7 +26,7 @@ export function useLiveKit(
   userChoices: UserChoices,
   config: LiveKitConfig
 ): Room | undefined {
-  const tokenOptions = React.useMemo(
+  const tokenOptions = useMemo(
     () => ({
       userInfo: {
         name: config.userDisplayName,
@@ -37,7 +37,7 @@ export function useLiveKit(
   );
   const token = useToken(config.jwtUrl, config.roomName, tokenOptions);
 
-  const roomOptions = React.useMemo((): RoomOptions => {
+  const roomOptions = useMemo((): RoomOptions => {
     const options = defaultLiveKitOptions;
     options.videoCaptureDefaults = {
       ...options.videoCaptureDefaults,

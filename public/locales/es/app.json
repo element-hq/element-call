@@ -94,7 +94,6 @@
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Crear una cuenta</0> o <2>Acceder como invitado</2>",
   "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Unirse ahora</0><1>Or</1><2>Copiar el enlace y unirse más tarde</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>¿Ya tienes una cuenta?</0><1><0>Iniciar sesión</0> o <2>Acceder como invitado</2></1>",
-  "{{name}} (Connecting...)": "{{name}} (Conectando...)",
   "Element Call Home": "Inicio de Element Call",
   "Copy": "Copiar",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Subir los registros de depuración nos ayudará a encontrar el problema.</0>",

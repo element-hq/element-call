@@ -4,7 +4,6 @@
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Loo konto</0> Või <2>Sisene külalisena</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>On sul juba konto?</0><1><0>Logi sisse</0> Või <2>Logi sisse külalisena</2></1>",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
-  "{{count}} people connected|other": "{{count}} osalejat liitunud",
   "Invite people": "Kutsu inimesi",
   "Invite": "Kutsu",
   "Inspector": "Inspektor",
@@ -114,5 +113,7 @@
   "How did it go?": "Kuidas sujus?",
   "{{displayName}}, your call has ended.": "{{displayName}}, sinu kõne on lõppenud.",
   "<0>Thanks for your feedback!</0>": "<0>Täname Sind tagasiside eest!</0>",
-  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Meie rakenduse paremaks muutmiseks me hea meelega ootame Sinu arvamusi.</0>"
+  "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Meie rakenduse paremaks muutmiseks me hea meelega ootame Sinu arvamusi.</0>",
+  "Show connection stats": "Näita ühenduse statistikat",
+  "{{displayName}} is presenting": "{{displayName}} on esitlemas"
 }

@@ -28,7 +28,7 @@ import { Room, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import React, { Ref, useCallback, useEffect, useMemo, useRef } from "react";
+import { Ref, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
 import { OverlayTriggerState } from "@react-stately/overlays";
@@ -51,9 +51,9 @@ import {
   VersionMismatchWarning,
 } from "../Header";
 import {
-  VideoGrid,
   useVideoGridLayout,
   TileDescriptor,
+  VideoGrid,
 } from "../video-grid/VideoGrid";
 import {
   useShowInspector,
@@ -82,6 +82,7 @@ import { VideoTile } from "../video-grid/VideoTile";
 import { UserChoices, useLiveKit } from "../livekit/useLiveKit";
 import { useMediaDevices } from "../livekit/useMediaDevices";
 import { useFullscreen } from "./useFullscreen";
+import { useLayoutStates } from "../video-grid/Layout";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -252,6 +253,10 @@ export function InCallView({
 
   const prefersReducedMotion = usePrefersReducedMotion();
 
+  // This state is lifted out of NewVideoGrid so that layout states can be
+  // restored after a layout switch or upon exiting fullscreen
+  const layoutStates = useLayoutStates();
+
   const renderContent = (): JSX.Element => {
     if (items.length === 0) {
       return (
@@ -281,6 +286,7 @@ export function InCallView({
         items={items}
         layout={layout}
         disableAnimations={prefersReducedMotion || isSafari}
+        layoutStates={layoutStates}
       >
         {(props) => (
           <VideoTile
@@ -388,10 +394,7 @@ export function InCallView({
       {!hideHeader && maximisedParticipant === null && (
         <Header>
           <LeftNav>
-            <RoomHeaderInfo
-              roomName={matrixInfo.roomName}
-              avatarUrl={matrixInfo.roomAvatarUrl}
-            />
+            <RoomHeaderInfo roomName={matrixInfo.roomName} />
             <VersionMismatchWarning
               users={unencryptedEventsFromUsers}
               room={groupCall.room}

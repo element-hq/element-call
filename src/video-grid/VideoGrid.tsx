@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, {
+import {
   ComponentProps,
   Key,
   ReactNode,
@@ -42,6 +42,7 @@ import { ResizeObserver as JuggleResizeObserver } from "@juggle/resize-observer"
 import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/GridLayoutMenu";
 import { TileWrapper } from "./TileWrapper";
+import { LayoutStatesMap } from "./Layout";
 
 interface TilePosition {
   x: number;
@@ -817,7 +818,8 @@ export interface VideoGridProps<T> {
   items: TileDescriptor<T>[];
   layout: Layout;
   disableAnimations: boolean;
-  children: (props: ChildrenProperties<T>) => React.ReactNode;
+  layoutStates: LayoutStatesMap;
+  children: (props: ChildrenProperties<T>) => ReactNode;
 }
 
 // Represents something that should get a tile on the layout,
