@@ -204,11 +204,11 @@ export function InCallView({
     if (widget) {
       const onTileLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
         setLayout("freedom");
-        await widget?.api.transport.reply(ev.detail, {});
+        await widget!.api.transport.reply(ev.detail, {});
       };
       const onSpotlightLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
         setLayout("spotlight");
-        await widget?.api.transport.reply(ev.detail, {});
+        await widget!.api.transport.reply(ev.detail, {});
       };
 
       widget.lazyActions.on(ElementWidgetActions.TileLayout, onTileLayout);
@@ -218,8 +218,8 @@ export function InCallView({
       );
 
       return () => {
-        widget?.lazyActions.off(ElementWidgetActions.TileLayout, onTileLayout);
-        widget?.lazyActions.off(
+        widget!.lazyActions.off(ElementWidgetActions.TileLayout, onTileLayout);
+        widget!.lazyActions.off(
           ElementWidgetActions.SpotlightLayout,
           onSpotlightLayout
         );
