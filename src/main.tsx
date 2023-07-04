@@ -20,7 +20,7 @@ limitations under the License.
 // dependency references.
 import "matrix-js-sdk/src/browser-index";
 
-import React, { StrictMode } from "react";
+import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserHistory } from "history";
 

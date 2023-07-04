@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { FC, useCallback, useState, FormEventHandler } from "react";
+import { FC, useCallback, useState, FormEventHandler } from "react";
 import { useHistory } from "react-router-dom";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { Trans, useTranslation } from "react-i18next";

@@ -1,6 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
-
+Copyright 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,19 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ReactComponent as AudioMuted } from "../icons/AudioMuted.svg";
-import { ReactComponent as AudioLow } from "../icons/AudioLow.svg";
-import { ReactComponent as Audio } from "../icons/Audio.svg";
-
-interface Props {
-  /**
-   * Number between 0 and 1
-   */
-  volume: number;
+.bigGrid {
+  display: grid;
+  grid-auto-rows: 163px;
+  gap: 8px;
 }
 
-export function VolumeIcon({ volume }: Props) {
-  if (volume <= 0) return <AudioMuted />;
-  if (volume <= 0.5) return <AudioLow />;
-  return <Audio />;
+@media (min-width: 800px) {
+  .bigGrid {
+    grid-auto-rows: 183px;
+    column-gap: 18px;
+    row-gap: 21px;
+  }
 }

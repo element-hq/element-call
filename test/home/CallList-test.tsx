@@ -14,8 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React from "react";
-
 import { render, RenderResult } from "@testing-library/react";
 import { CallList } from "../../src/home/CallList";
 import { MatrixClient } from "matrix-js-sdk";

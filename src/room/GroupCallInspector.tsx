@@ -16,13 +16,16 @@ limitations under the License.
 
 import * as Sentry from "@sentry/react";
 import { Resizable } from "re-resizable";
-import React, {
+import {
   useEffect,
   useState,
   useReducer,
   useRef,
   createContext,
   useContext,
+  Dispatch,
+  SetStateAction,
+  ReactNode,
 } from "react";
 import ReactJson, { CollapsedFieldProps } from "react-json-view";
 import mermaid from "mermaid";
@@ -136,16 +139,13 @@ function lineForEvent(event: SequenceDiagramMatrixEvent): string {
 
 export const InspectorContext =
   createContext<
-    [
-      InspectorContextState,
-      React.Dispatch<React.SetStateAction<InspectorContextState>>
-    ]
+    [InspectorContextState, Dispatch<SetStateAction<InspectorContextState>>]
   >(undefined);
 
 export function InspectorContextProvider({
   children,
 }: {
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   // We take the tuple of [currentState, setter] and stick
   // it straight into the context for other things to call

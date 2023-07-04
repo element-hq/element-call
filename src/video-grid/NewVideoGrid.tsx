@@ -16,18 +16,17 @@ limitations under the License.
 
 import { SpringRef, TransitionFn, useTransition } from "@react-spring/web";
 import { EventTypes, Handler, useScroll } from "@use-gesture/react";
-import React, {
-  Dispatch,
+import {
+  CSSProperties,
+  FC,
   ReactNode,
-  SetStateAction,
-  useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
 import useMeasure from "react-use-measure";
-import { zipWith } from "lodash";
+import { zip } from "lodash";
 
 import styles from "./NewVideoGrid.module.css";
 import {
@@ -38,99 +37,9 @@ import {
 } from "./VideoGrid";
 import { useReactiveState } from "../useReactiveState";
 import { useMergedRefs } from "../useMergedRefs";
-import {
-  Grid,
-  Cell,
-  row,
-  column,
-  fillGaps,
-  forEachCellInArea,
-  cycleTileSize,
-  addItems,
-  tryMoveTile,
-  resize,
-  promoteSpeakers,
-} from "./model";
 import { TileWrapper } from "./TileWrapper";
-
-interface GridState extends Grid {
-  /**
-   * The ID of the current state of the grid.
-   */
-  generation: number;
-}
-
-const useGridState = (
-  columns: number | null,
-  items: TileDescriptor<unknown>[]
-): [GridState | null, Dispatch<SetStateAction<Grid>>] => {
-  const [grid, setGrid_] = useReactiveState<GridState | null>(
-    (prevGrid = null) => {
-      if (prevGrid === null) {
-        // We can't do anything if the column count isn't known yet
-        if (columns === null) {
-          return null;
-        } else {
-          prevGrid = { generation: 0, columns, cells: [] };
-        }
-      }
-
-      // Step 1: Update tiles that still exist, and remove tiles that have left
-      // the grid
-      const itemsById = new Map(items.map((i) => [i.id, i]));
-      const grid1: Grid = {
-        ...prevGrid,
-        cells: prevGrid.cells.map((c) => {
-          if (c === undefined) return undefined;
-          const item = itemsById.get(c.item.id);
-          return item === undefined ? undefined : { ...c, item };
-        }),
-      };
-
-      // Step 2: Resize the grid if necessary and backfill gaps left behind by
-      // removed tiles
-      // Resizing already takes care of backfilling gaps
-      const grid2 =
-        columns !== grid1.columns ? resize(grid1, columns!) : fillGaps(grid1);
-
-      // Step 3: Add new tiles to the end of the grid
-      const existingItemIds = new Set(
-        grid2.cells.filter((c) => c !== undefined).map((c) => c!.item.id)
-      );
-      const newItems = items.filter((i) => !existingItemIds.has(i.id));
-      const grid3 = addItems(newItems, grid2);
-
-      // Step 4: Promote speakers to the top
-      promoteSpeakers(grid3);
-
-      return { ...grid3, generation: prevGrid.generation + 1 };
-    },
-    [columns, items]
-  );
-
-  const setGrid: Dispatch<SetStateAction<Grid>> = useCallback(
-    (action) => {
-      if (typeof action === "function") {
-        setGrid_((prevGrid) =>
-          prevGrid === null
-            ? null
-            : {
-                ...(action as (prev: Grid) => Grid)(prevGrid),
-                generation: prevGrid.generation + 1,
-              }
-        );
-      } else {
-        setGrid_((prevGrid) => ({
-          ...action,
-          generation: prevGrid?.generation ?? 1,
-        }));
-      }
-    },
-    [setGrid_]
-  );
-
-  return [grid, setGrid];
-};
+import { BigGrid } from "./BigGrid";
+import { useLayout } from "./Layout";
 
 interface Rect {
   x: number;
@@ -139,8 +48,8 @@ interface Rect {
   height: number;
 }
 
-interface Tile extends Rect {
-  item: TileDescriptor<unknown>;
+interface Tile<T> extends Rect {
+  item: TileDescriptor<T>;
 }
 
 interface DragState {
@@ -151,12 +60,21 @@ interface DragState {
   cursorY: number;
 }
 
+interface SlotProps {
+  style?: CSSProperties;
+}
+
+export const Slot: FC<SlotProps> = ({ style }) => (
+  <div className={styles.slot} style={style} />
+);
+
 /**
  * An interactive, animated grid of video tiles.
  */
 export function NewVideoGrid<T>({
   items,
   disableAnimations,
+  layoutStates,
   children,
 }: Props<T>) {
   // Overview: This component lays out tiles by rendering an invisible template
@@ -169,36 +87,36 @@ export function NewVideoGrid<T>({
   // most recently rendered generation of the grid, and watch it with a
   // MutationObserver.
 
-  const [slotGrid, setSlotGrid] = useState<HTMLDivElement | null>(null);
-  const [slotGridGeneration, setSlotGridGeneration] = useState(0);
+  const [slotsRoot, setSlotsRoot] = useState<HTMLDivElement | null>(null);
+  const [renderedGeneration, setRenderedGeneration] = useState(0);
 
   useEffect(() => {
-    if (slotGrid !== null) {
-      setSlotGridGeneration(
-        parseInt(slotGrid.getAttribute("data-generation")!)
+    if (slotsRoot !== null) {
+      setRenderedGeneration(
+        parseInt(slotsRoot.getAttribute("data-generation")!)
       );
 
       const observer = new MutationObserver((mutations) => {
         if (mutations.some((m) => m.type === "attributes")) {
-          setSlotGridGeneration(
-            parseInt(slotGrid.getAttribute("data-generation")!)
+          setRenderedGeneration(
+            parseInt(slotsRoot.getAttribute("data-generation")!)
           );
         }
       });
 
-      observer.observe(slotGrid, { attributes: true });
+      observer.observe(slotsRoot, { attributes: true });
       return () => observer.disconnect();
     }
-  }, [slotGrid, setSlotGridGeneration]);
+  }, [slotsRoot, setRenderedGeneration]);
 
   const [gridRef1, gridBounds] = useMeasure();
   const gridRef2 = useRef<HTMLDivElement | null>(null);
   const gridRef = useMergedRefs(gridRef1, gridRef2);
 
   const slotRects = useMemo(() => {
-    if (slotGrid === null) return [];
+    if (slotsRoot === null) return [];
 
-    const slots = slotGrid.getElementsByClassName(styles.slot);
+    const slots = slotsRoot.getElementsByClassName(styles.slot);
     const rects = new Array<Rect>(slots.length);
     for (let i = 0; i < slots.length; i++) {
       const slot = slots[i] as HTMLElement;
@@ -214,32 +132,34 @@ export function NewVideoGrid<T>({
     // The rects may change due to the grid being resized or rerendered, but
     // eslint can't statically verify this
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slotGrid, slotGridGeneration, gridBounds]);
+  }, [slotsRoot, renderedGeneration, gridBounds]);
 
-  const columns = useMemo(
-    () =>
-      // The grid bounds might not be known yet
-      gridBounds.width === 0
-        ? null
-        : Math.max(2, Math.floor(gridBounds.width * 0.0045)),
-    [gridBounds]
-  );
+  // TODO: Implement more layouts and select the right one here
+  const layout = BigGrid;
+  const {
+    state: grid,
+    orderedItems,
+    generation,
+    canDragTile,
+    dragTile,
+    toggleFocus,
+    slots,
+  } = useLayout(layout, items, gridBounds, layoutStates);
 
-  const [grid, setGrid] = useGridState(columns, items);
-
-  const [tiles] = useReactiveState<Tile[]>(
+  const [tiles] = useReactiveState<Tile<T>[]>(
     (prevTiles) => {
       // If React hasn't yet rendered the current generation of the grid, skip
       // the update, because grid and slotRects will be out of sync
-      if (slotGridGeneration !== grid?.generation) return prevTiles ?? [];
+      if (renderedGeneration !== generation) return prevTiles ?? [];
 
-      const tileCells = grid.cells.filter((c) => c?.origin) as Cell[];
-      const tileRects = new Map<TileDescriptor<unknown>, Rect>(
-        zipWith(tileCells, slotRects, (cell, rect) => [cell.item, rect])
+      const tileRects = new Map(
+        zip(orderedItems, slotRects) as [TileDescriptor<T>, Rect][]
       );
+      // In order to not break drag gestures, it's critical that we render tiles
+      // in a stable order (that of 'items')
       return items.map((item) => ({ ...tileRects.get(item)!, item }));
     },
-    [slotRects, grid, slotGridGeneration]
+    [slotRects, grid, renderedGeneration]
   );
 
   // Drag state is stored in a ref rather than component state, because we use
@@ -249,8 +169,8 @@ export function NewVideoGrid<T>({
   const [tileTransitions, springRef] = useTransition(
     tiles,
     () => ({
-      key: ({ item }: Tile) => item.id,
-      from: ({ x, y, width, height }: Tile) => ({
+      key: ({ item }: Tile<T>) => item.id,
+      from: ({ x, y, width, height }: Tile<T>) => ({
         opacity: 0,
         scale: 0,
         shadow: 1,
@@ -263,7 +183,7 @@ export function NewVideoGrid<T>({
         immediate: disableAnimations,
       }),
       enter: { opacity: 1, scale: 1, immediate: disableAnimations },
-      update: ({ item, x, y, width, height }: Tile) =>
+      update: ({ item, x, y, width, height }: Tile<T>) =>
         item.id === dragState.current?.tileId
           ? null
           : {
@@ -277,7 +197,7 @@ export function NewVideoGrid<T>({
       config: { mass: 0.7, tension: 252, friction: 25 },
     })
     // react-spring's types are bugged and can't infer the spring type
-  ) as unknown as [TransitionFn<Tile, TileSpring>, SpringRef<TileSpring>];
+  ) as unknown as [TransitionFn<Tile<T>, TileSpring>, SpringRef<TileSpring>];
 
   // Because we're using react-spring in imperative mode, we're responsible for
   // firing animations manually whenever the tiles array updates
@@ -288,11 +208,9 @@ export function NewVideoGrid<T>({
   const animateDraggedTile = (endOfGesture: boolean) => {
     const { tileId, tileX, tileY, cursorX, cursorY } = dragState.current!;
     const tile = tiles.find((t) => t.item.id === tileId)!;
-    const originIndex = grid!.cells.findIndex((c) => c?.item.id === tileId);
-    const originCell = grid!.cells[originIndex]!;
 
     springRef.current
-      .find((c) => (c.item as Tile).item.id === tileId)
+      .find((c) => (c.item as Tile<T>).item.id === tileId)
       ?.start(
         endOfGesture
           ? {
@@ -320,37 +238,29 @@ export function NewVideoGrid<T>({
             }
       );
 
-    const columns = grid!.columns;
-    const rows = row(grid!.cells.length - 1, grid!) + 1;
-
-    const cursorColumn = Math.floor(
-      (cursorX / slotGrid!.clientWidth) * columns
-    );
-    const cursorRow = Math.floor((cursorY / slotGrid!.clientHeight) * rows);
-
-    const cursorColumnOnTile = Math.floor(
-      ((cursorX - tileX) / tile.width) * originCell.columns
-    );
-    const cursorRowOnTile = Math.floor(
-      ((cursorY - tileY) / tile.height) * originCell.rows
+    const overTile = tiles.find(
+      (t) =>
+        cursorX >= t.x &&
+        cursorX < t.x + t.width &&
+        cursorY >= t.y &&
+        cursorY < t.y + t.height
     );
 
-    const dest =
-      Math.max(
-        0,
-        Math.min(
-          columns - originCell.columns,
-          cursorColumn - cursorColumnOnTile
-        )
-      ) +
-      grid!.columns *
-        Math.max(
-          0,
-          Math.min(rows - originCell.rows, cursorRow - cursorRowOnTile)
-        );
-
-    if (dest !== originIndex) setGrid((g) => tryMoveTile(g, originIndex, dest));
+    if (overTile !== undefined)
+      dragTile(
+        tile.item,
+        overTile.item,
+        (cursorX - tileX) / tile.width,
+        (cursorY - tileY) / tile.height,
+        (cursorX - overTile.x) / overTile.width,
+        (cursorY - overTile.y) / overTile.height
+      );
   };
+
+  const [lastTappedTileId, setLastTappedTileId] = useState<string | undefined>(
+    undefined
+  );
+  const [lastTapTime, setLastTapTime] = useState<number>(0);
 
   // Callback for useDrag. We could call useDrag here, but the default
   // pattern of spreading {...bind()} across the children to bind the gesture
@@ -367,29 +277,40 @@ export function NewVideoGrid<T>({
     }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
   ) => {
     if (tap) {
-      setGrid((g) => cycleTileSize(tileId, g!));
-    } else {
-      const tileSpring = springRef.current
-        .find((c) => (c.item as Tile).item.id === tileId)!
-        .get();
+      const now = Date.now();
 
-      if (dragState.current === null) {
-        dragState.current = {
-          tileId,
-          tileX: tileSpring.x,
-          tileY: tileSpring.y,
-          cursorX: initialX - gridBounds.x,
-          cursorY: initialY - gridBounds.y + scrollOffset.current,
-        };
+      if (tileId === lastTappedTileId && now - lastTapTime < 500) {
+        toggleFocus?.(items.find((i) => i.id === tileId)!);
       }
-      dragState.current.tileX += dx;
-      dragState.current.tileY += dy;
-      dragState.current.cursorX += dx;
-      dragState.current.cursorY += dy;
 
-      animateDraggedTile(last);
+      setLastTappedTileId(tileId);
+      setLastTapTime(now);
+    } else {
+      const tileController = springRef.current.find(
+        (c) => (c.item as Tile<T>).item.id === tileId
+      )!;
 
-      if (last) dragState.current = null;
+      if (canDragTile((tileController.item as Tile<T>).item)) {
+        if (dragState.current === null) {
+          const tileSpring = tileController.get();
+          dragState.current = {
+            tileId,
+            tileX: tileSpring.x,
+            tileY: tileSpring.y,
+            cursorX: initialX - gridBounds.x,
+            cursorY: initialY - gridBounds.y + scrollOffset.current,
+          };
+        }
+
+        dragState.current.tileX += dx;
+        dragState.current.tileY += dy;
+        dragState.current.cursorX += dx;
+        dragState.current.cursorY += dy;
+
+        animateDraggedTile(last);
+
+        if (last) dragState.current = null;
+      }
     }
   };
 
@@ -411,52 +332,6 @@ export function NewVideoGrid<T>({
     { target: gridRef2 }
   );
 
-  const slotGridStyle = useMemo(() => {
-    if (grid === null) return {};
-
-    const areas = new Array<(number | null)[]>(
-      Math.ceil(grid.cells.length / grid.columns)
-    );
-    for (let i = 0; i < areas.length; i++)
-      areas[i] = new Array<number | null>(grid.columns).fill(null);
-
-    let slotId = 0;
-    for (let i = 0; i < grid.cells.length; i++) {
-      const cell = grid.cells[i];
-      if (cell?.origin) {
-        const slotEnd = i + cell.columns - 1 + grid.columns * (cell.rows - 1);
-        forEachCellInArea(
-          i,
-          slotEnd,
-          grid,
-          (_c, j) => (areas[row(j, grid)][column(j, grid)] = slotId)
-        );
-        slotId++;
-      }
-    }
-
-    return {
-      gridTemplateAreas: areas
-        .map(
-          (row) =>
-            `'${row
-              .map((slotId) => (slotId === null ? "." : `s${slotId}`))
-              .join(" ")}'`
-        )
-        .join(" "),
-      gridTemplateColumns: `repeat(${columns}, 1fr)`,
-    };
-  }, [grid, columns]);
-
-  const slots = useMemo(() => {
-    const slots = new Array<ReactNode>(items.length);
-    for (let i = 0; i < items.length; i++)
-      slots[i] = (
-        <div className={styles.slot} key={i} style={{ gridArea: `s${i}` }} />
-      );
-    return slots;
-  }, [items.length]);
-
   // Render nothing if the grid has yet to be generated
   if (grid === null) {
     return <div ref={gridRef} className={styles.grid} />;
@@ -465,10 +340,9 @@ export function NewVideoGrid<T>({
   return (
     <div ref={gridRef} className={styles.grid}>
       <div
-        style={slotGridStyle}
-        ref={setSlotGrid}
-        className={styles.slotGrid}
-        data-generation={grid.generation}
+        ref={setSlotsRoot}
+        className={styles.slots}
+        data-generation={generation}
       >
         {slots}
       </div>
@@ -482,7 +356,7 @@ export function NewVideoGrid<T>({
           data={tile.item.data}
           {...spring}
         >
-          {children as (props: ChildrenProperties<unknown>) => ReactNode}
+          {children as (props: ChildrenProperties<T>) => ReactNode}
         </TileWrapper>
       ))}
     </div>

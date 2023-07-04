@@ -23,11 +23,8 @@ limitations under the License.
   overflow-x: hidden;
 }
 
-.slotGrid {
+.slots {
   position: relative;
-  display: grid;
-  grid-auto-rows: 163px;
-  gap: 8px;
 }
 
 .slot {
@@ -37,11 +34,5 @@ limitations under the License.
 @media (min-width: 800px) {
   .grid {
     padding: 0 22px var(--footerHeight);
-  }
-
-  .slotGrid {
-    grid-auto-rows: 183px;
-    column-gap: 18px;
-    row-gap: 21px;
   }
 }

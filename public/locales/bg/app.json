@@ -53,7 +53,6 @@
   "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "Други потребители се опитват да се присъединят в разговора от несъвместими версии. Следните потребители трябва да проверят дали са презаредили браузърите си<1>{userLis}</1>",
   "Password": "Парола",
   "Passwords must match": "Паролите не съвпадат",
-  "Press and hold to talk over {{name}}": "Натиснете и задръжте за да говорите заедно с {{name}}",
   "Profile": "Профил",
   "Recaptcha dismissed": "Recaptcha отхвърлена",
   "Recaptcha not loaded": "Recaptcha не е заредена",
