@@ -77,7 +77,6 @@ export const RoomPage: FC = () => {
     (groupCall: GroupCall) => (
       <GroupCallView
         client={client!}
-        roomIdOrAlias={roomIdOrAlias}
         groupCall={groupCall}
         isPasswordlessUser={passwordlessUser}
         isEmbedded={isEmbedded}
@@ -85,7 +84,7 @@ export const RoomPage: FC = () => {
         hideHeader={hideHeader}
       />
     ),
-    [client, roomIdOrAlias, passwordlessUser, isEmbedded, preload, hideHeader]
+    [client, passwordlessUser, isEmbedded, preload, hideHeader]
   );
 
   if (loading || isRegistering) {

@@ -79,9 +79,9 @@ export const UnauthenticatedView: FC = () => {
           true
         );
 
-        let roomIdOrAlias: string;
+        let roomAlias: string;
         try {
-          [roomIdOrAlias] = await createRoom(client, roomName, ptt);
+          [roomAlias] = await createRoom(client, roomName, ptt);
         } catch (error) {
           if (!setClient) {
             throw error;
@@ -111,7 +111,7 @@ export const UnauthenticatedView: FC = () => {
         }
 
         setClient({ client, session });
-        history.push(`/room/${roomIdOrAlias}`);
+        history.push(`/room/${roomAlias}`);
       }
 
       submit().catch((error) => {
