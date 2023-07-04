@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
@@ -49,7 +49,6 @@ interface Props {
   isEmbedded: boolean;
   preload: boolean;
   hideHeader: boolean;
-  roomIdOrAlias: string;
   groupCall: GroupCall;
 }
 
@@ -59,7 +58,6 @@ export function GroupCallView({
   isEmbedded,
   preload,
   hideHeader,
-  roomIdOrAlias,
   groupCall,
 }: Props) {
   const {
@@ -82,13 +80,14 @@ export function GroupCallView({
   }, [groupCall]);
 
   const { displayName, avatarUrl } = useProfile(client);
-
-  const matrixInfo: MatrixInfo = {
-    displayName: displayName!,
-    avatarUrl: avatarUrl!,
-    roomName: groupCall.room.name,
-    roomIdOrAlias,
-  };
+  const matrixInfo = useMemo((): MatrixInfo => {
+    return {
+      displayName: displayName!,
+      avatarUrl: avatarUrl!,
+      roomId: groupCall.room.roomId,
+      roomName: groupCall.room.name,
+    };
+  }, [displayName, avatarUrl, groupCall]);
 
   useEffect(() => {
     if (widget && preload) {
@@ -240,7 +239,6 @@ export function GroupCallView({
           onLeave={onLeave}
           unencryptedEventsFromUsers={unencryptedEventsFromUsers}
           hideHeader={hideHeader}
-          matrixInfo={matrixInfo}
           userChoices={userChoices}
           otelGroupCallMembership={otelGroupCallMembership}
         />

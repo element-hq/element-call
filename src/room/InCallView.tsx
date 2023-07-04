@@ -68,7 +68,6 @@ import { ElementWidgetActions, widget } from "../widget";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { GroupCallInspector } from "./GroupCallInspector";
 import styles from "./InCallView.module.css";
-import { MatrixInfo } from "./VideoPreview";
 import { useJoinRule } from "./useJoinRule";
 import { ParticipantInfo } from "./useGroupCall";
 import { ItemData, TileContent, VideoTile } from "../video-grid/VideoTile";
@@ -117,7 +116,6 @@ export interface InCallViewProps {
   onLeave: () => void;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
-  matrixInfo: MatrixInfo;
   otelGroupCallMembership?: OTelGroupCallMembership;
 }
 
@@ -129,7 +127,6 @@ export function InCallView({
   onLeave,
   unencryptedEventsFromUsers,
   hideHeader,
-  matrixInfo,
   otelGroupCallMembership,
 }: InCallViewProps) {
   const { t } = useTranslation();
@@ -391,7 +388,7 @@ export function InCallView({
       {!hideHeader && maximisedParticipant === null && (
         <Header>
           <LeftNav>
-            <RoomHeaderInfo roomName={matrixInfo.roomName} />
+            <RoomHeaderInfo roomName={groupCall.room.name} />
             <VersionMismatchWarning
               users={unencryptedEventsFromUsers}
               room={groupCall.room}
@@ -421,7 +418,7 @@ export function InCallView({
       {rageshakeRequestModalState.isOpen && !noControls && (
         <RageshakeRequestModal
           {...rageshakeRequestModalProps}
-          roomIdOrAlias={matrixInfo.roomIdOrAlias}
+          roomId={groupCall.room.roomId}
         />
       )}
       {settingsModalState.isOpen && (
@@ -433,10 +430,7 @@ export function InCallView({
         />
       )}
       {inviteModalState.isOpen && (
-        <InviteModal
-          roomIdOrAlias={matrixInfo.roomIdOrAlias}
-          {...inviteModalProps}
-        />
+        <InviteModal roomId={groupCall.room.roomId} {...inviteModalProps} />
       )}
     </div>
   );
