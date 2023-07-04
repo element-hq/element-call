@@ -28,15 +28,13 @@ import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { MatrixInfo } from "./VideoPreview";
+import { ActiveCall } from "./InCallView";
 import { CallEndedView } from "./CallEndedView";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { UserChoices } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
-import { OpenIDLoader } from "../livekit/OpenIDLoader";
-import { ActiveCall } from "./InCallView";
-import { Config } from "../config/Config";
 
 declare global {
   interface Window {
@@ -220,33 +218,21 @@ export function GroupCallView({
     undefined
   );
 
-  const lkServiceURL = Config.get().livekit?.livekit_service_url;
-
-  if (!lkServiceURL) {
-    return <ErrorView error={new Error("No livekit_service_url defined")} />;
-  }
-
   if (error) {
     return <ErrorView error={error} />;
   } else if (state === GroupCallState.Entered && userChoices) {
     return (
-      <OpenIDLoader
+      <ActiveCall
+        groupCall={groupCall}
         client={client}
-        livekitServiceURL={lkServiceURL}
-        roomName={matrixInfo.roomName}
-      >
-        <ActiveCall
-          client={client}
-          groupCall={groupCall}
-          participants={participants}
-          onLeave={onLeave}
-          unencryptedEventsFromUsers={unencryptedEventsFromUsers}
-          hideHeader={hideHeader}
-          matrixInfo={matrixInfo}
-          userChoices={userChoices}
-          otelGroupCallMembership={otelGroupCallMembership}
-        />
-      </OpenIDLoader>
+        participants={participants}
+        onLeave={onLeave}
+        unencryptedEventsFromUsers={unencryptedEventsFromUsers}
+        hideHeader={hideHeader}
+        matrixInfo={matrixInfo}
+        userChoices={userChoices}
+        otelGroupCallMembership={otelGroupCallMembership}
+      />
     );
   } else if (left) {
     // The call ended view is shown for two reasons: prompting guests to create
