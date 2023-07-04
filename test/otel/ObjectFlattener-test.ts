@@ -167,7 +167,7 @@ describe("ObjectFlattener", () => {
         "matrix.call.stats.connection.transport.1.localCandidateType": "srfx",
         "matrix.call.stats.connection.transport.1.remoteCandidateType": "srfx",
         "matrix.call.stats.connection.transport.1.networkType": "ethernet",
-        "matrix.call.stats.connection.transport.1.rtt": "null",
+        "matrix.call.stats.connection.transport.1.rtt": 0,
       });
     });
   });
@@ -234,7 +234,7 @@ describe("ObjectFlattener", () => {
         "matrix.call.stats.connection.transport.1.localCandidateType": "srfx",
         "matrix.call.stats.connection.transport.1.remoteCandidateType": "srfx",
         "matrix.call.stats.connection.transport.1.networkType": "ethernet",
-        "matrix.call.stats.connection.transport.1.rtt": "null",
+        "matrix.call.stats.connection.transport.1.rtt": 0,
         "matrix.call.stats.connection.audioConcealment.REMOTE_AUDIO_TRACK_ID.concealedAudio": 0,
         "matrix.call.stats.connection.audioConcealment.REMOTE_AUDIO_TRACK_ID.totalAudioDuration": 0,
         "matrix.call.stats.connection.audioConcealment.REMOTE_VIDEO_TRACK_ID.concealedAudio": 0,
