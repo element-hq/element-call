@@ -6,7 +6,8 @@
     }
   },
   "livekit": {
-    "livekit_service_url": "https://lk-jwt-service.lab.element.dev"
+    "server_url": "wss://sfu.call.element.dev",
+    "jwt_service_url": "https://voip-sip-poc.element.io/lk/jwt_service"
   },
   "posthog": {
     "api_key": "phc_rXGHx9vDmyEvyRxPziYtdVIv0ahEv8A9uLWFcCi1WcU",
