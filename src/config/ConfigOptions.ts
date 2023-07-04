@@ -55,8 +55,10 @@ export interface ConfigOptions {
 
   // Describes the LiveKit configuration to be used.
   livekit?: {
-    // The link to the service that returns a livekit url and token to use it
-    livekit_service_url: string;
+    // The LiveKit server URL to connect to.
+    server_url: string;
+    // The link to the service that generates JWT tokens to join LiveKit rooms.
+    jwt_service_url: string;
   };
 
   /**
