@@ -36,7 +36,6 @@ import { UserChoices } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
 import { OpenIDLoader } from "../livekit/OpenIDLoader";
 import { ActiveCall } from "./InCallView";
-import { Config } from "../config/Config";
 
 declare global {
   interface Window {
@@ -220,9 +219,15 @@ export function GroupCallView({
     undefined
   );
 
-  const lkServiceURL = Config.get().livekit?.livekit_service_url;
+  const [livekitServiceURL, setLivekitServiceURL] = useState<
+    string | undefined
+  >(groupCall.foci[0]?.livekitServiceUrl);
 
-  if (!lkServiceURL) {
+  useEffect(() => {
+    setLivekitServiceURL(groupCall.foci[0]?.livekitServiceUrl);
+  }, [setLivekitServiceURL, groupCall]);
+
+  if (!livekitServiceURL) {
     return <ErrorView error={new Error("No livekit_service_url defined")} />;
   }
 
@@ -232,7 +237,7 @@ export function GroupCallView({
     return (
       <OpenIDLoader
         client={client}
-        livekitServiceURL={lkServiceURL}
+        livekitServiceURL={livekitServiceURL}
         roomName={matrixInfo.roomName}
       >
         <ActiveCall
