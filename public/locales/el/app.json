@@ -111,5 +111,9 @@
   "Download debug logs": "Λήψη αρχείων καταγραφής",
   "Sending debug logs…": "Αποστολή αρχείων καταγραφής…",
   "Submit": "Υποβολή",
-  "Your feedback": "Τα σχόλιά σας"
+  "Your feedback": "Τα σχόλιά σας",
+  "Fetching group call timed out.": "Η ομαδική κλήση έληξε από τέλος χρόνου.",
+  "Freedom": "Ελευθερία",
+  "Spotlight": "Spotlight",
+  "Element Call Home": "Element Κεντρική Οθόνη Κλήσεων"
 }
