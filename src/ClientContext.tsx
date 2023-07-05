@@ -138,6 +138,15 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           const { user_id, device_id, access_token, passwordlessUser } =
             session;
 
+          const livekit = Config.get().livekit;
+          const foci = livekit
+            ? [
+                {
+                  livekitServiceUrl: livekit.livekit_service_url,
+                },
+              ]
+            : undefined;
+
           try {
             return {
               client: await initClient(
@@ -147,6 +156,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
                   userId: user_id,
                   deviceId: device_id,
                   fallbackICEServerAllowed: fallbackICEServerAllowed,
+                  foci,
                 },
                 true
               ),
@@ -163,6 +173,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
                     userId: user_id,
                     deviceId: device_id,
                     fallbackICEServerAllowed: fallbackICEServerAllowed,
+                    foci,
                   },
                   false // Don't need the crypto store just to log out
                 );
