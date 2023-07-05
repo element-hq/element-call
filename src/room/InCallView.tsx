@@ -72,7 +72,6 @@ import { MatrixInfo } from "./VideoPreview";
 import { useJoinRule } from "./useJoinRule";
 import { ParticipantInfo } from "./useGroupCall";
 import { ItemData, TileContent } from "../video-grid/VideoTile";
-import { Config } from "../config/Config";
 import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal } from "../settings/SettingsModal";
@@ -84,6 +83,7 @@ import { UserChoices, useLiveKit } from "../livekit/useLiveKit";
 import { useMediaDevices } from "../livekit/useMediaDevices";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
+import { useSFUConfig } from "../livekit/OpenIDLoader";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -91,18 +91,13 @@ const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-interface ActiveCallProps extends Omit<Props, "livekitRoom"> {
+export interface ActiveCallProps extends Omit<InCallViewProps, "livekitRoom"> {
   userChoices: UserChoices;
 }
 
 export function ActiveCall(props: ActiveCallProps) {
-  const livekitRoom = useLiveKit(props.userChoices, {
-    sfuUrl: Config.get().livekit!.server_url,
-    jwtUrl: `${Config.get().livekit!.jwt_service_url}/token`,
-    roomName: props.matrixInfo.roomName,
-    userDisplayName: props.matrixInfo.displayName,
-    userIdentity: `${props.client.getUserId()}:${props.client.getDeviceId()}`,
-  });
+  const sfuConfig = useSFUConfig();
+  const livekitRoom = useLiveKit(props.userChoices, sfuConfig);
 
   return (
     livekitRoom && (
@@ -113,7 +108,7 @@ export function ActiveCall(props: ActiveCallProps) {
   );
 }
 
-interface Props {
+export interface InCallViewProps {
   client: MatrixClient;
   groupCall: GroupCall;
   livekitRoom: Room;
@@ -135,7 +130,7 @@ export function InCallView({
   hideHeader,
   matrixInfo,
   otelGroupCallMembership,
-}: Props) {
+}: InCallViewProps) {
   const { t } = useTranslation();
   usePreventScroll();
 
