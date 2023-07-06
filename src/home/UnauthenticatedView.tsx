@@ -48,9 +48,7 @@ export const UnauthenticatedView: FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
-  const interactiveRegistration = useInteractiveRegistration();
-  const recaptchaKey = interactiveRegistration[1];
-  const register = interactiveRegistration[2];
+  const { recaptchaKey, register } = useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const { modalState, modalProps } = useModalTriggerState();

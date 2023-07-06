@@ -54,9 +54,7 @@ export const RegisterPage: FC = () => {
   const [error, setError] = useState<Error>();
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const interactiveRegistration = useInteractiveRegistration();
-  const recaptchaKey = interactiveRegistration[1];
-  const register = interactiveRegistration[2];
+  const { recaptchaKey, register } = useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const onSubmitRegisterForm = useCallback(
