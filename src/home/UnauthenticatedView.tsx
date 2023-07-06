@@ -48,8 +48,9 @@ export const UnauthenticatedView: FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
-  const [privacyPolicyUrl, recaptchaKey, register] =
-    useInteractiveRegistration();
+  const interactiveRegistration = useInteractiveRegistration();
+  const recaptchaKey = interactiveRegistration[1];
+  const register = interactiveRegistration[2];
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const { modalState, modalProps } = useModalTriggerState();
@@ -165,7 +166,7 @@ export const UnauthenticatedView: FC = () => {
             <Caption className={styles.notice}>
               <Trans>
                 By clicking "Go", you agree to our{" "}
-                <Link href={privacyPolicyUrl}>
+                <Link href="https://static.element.io/legal/online-EULA.pdf">
                   End User Licensing Agreement (EULA)
                 </Link>
               </Trans>

@@ -54,8 +54,9 @@ export const RegisterPage: FC = () => {
   const [error, setError] = useState<Error>();
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [privacyPolicyUrl, recaptchaKey, register] =
-    useInteractiveRegistration();
+  const interactiveRegistration = useInteractiveRegistration();
+  const recaptchaKey = interactiveRegistration[1];
+  const register = interactiveRegistration[2];
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const onSubmitRegisterForm = useCallback(
@@ -211,7 +212,7 @@ export const RegisterPage: FC = () => {
                   apply.
                   <br />
                   By clicking "Register", you agree to our{" "}
-                  <Link href={privacyPolicyUrl}>
+                  <Link href="https://static.element.io/legal/online-EULA.pdf">
                     End User Licensing Agreement (EULA)
                   </Link>
                 </Trans>
