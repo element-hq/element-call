@@ -211,7 +211,9 @@ export const RegisterPage: FC = () => {
                   apply.
                   <br />
                   By clicking "Register", you agree to our{" "}
-                  <Link href={privacyPolicyUrl}>Terms and conditions</Link>
+                  <Link href={privacyPolicyUrl}>
+                    End User Licensing Agreement (EULA)
+                  </Link>
                 </Trans>
               </Caption>
               {error && (
