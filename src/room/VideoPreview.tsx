@@ -65,34 +65,32 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
   // Create local media tracks.
   const [videoEnabled, setVideoEnabled] = useState<boolean>(true);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
-  const [defaultDevices] = useDefaultDevices();
-  const initialDefaultDevices = useRef(defaultDevices);
+
+  // The settings are updated as soon as the device changes. We wrap the settings value in a ref to store their initial value.
+  // Not changing the device options prohibits the usePreviewTracks hook to recreate the tracks.
+  const initialDefaultDevices = useRef(useDefaultDevices()[0]);
 
   const tracks = usePreviewTracks(
     {
       audio: { deviceId: initialDefaultDevices.current.audioinput },
       video: { deviceId: initialDefaultDevices.current.videoinput },
     },
-    () => {
-      console.log("TODO handle error");
+    (error) => {
+      console.error("Error while creating preview Tracks:", error);
     }
   );
   const videoTrack = React.useMemo(
     () =>
-      tracks?.filter(
-        (track) => track.kind === Track.Kind.Video
-      )[0] as LocalVideoTrack,
+      tracks?.filter((t) => t.kind === Track.Kind.Video)[0] as LocalVideoTrack,
     [tracks]
   );
   const audioTrack = React.useMemo(
     () =>
-      tracks?.filter(
-        (track) => track.kind === Track.Kind.Audio
-      )[0] as LocalAudioTrack,
+      tracks?.filter((t) => t.kind === Track.Kind.Audio)[0] as LocalAudioTrack,
     [tracks]
   );
-  // Only let the MediaDeviceSwitcher request permissions if a video track is already available
-  // Otherwise we would end up to ask for permissions in usePreviewTracks and in useMediaDevicesSwitcher
+  // Only let the MediaDeviceSwitcher request permissions if a video track is already available.
+  // Otherwise we would end up asking for permissions in usePreviewTracks and in useMediaDevicesSwitcher.
   const requestPermissions = !!videoTrack;
   const mediaSwitcher = useMediaDevicesSwitcher(
     undefined,
@@ -107,6 +105,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
   const videoEl = React.useRef(null);
 
   useEffect(() => {
+    // Effect to update the settings
     const createChoices = (
       enabled: boolean,
       deviceId?: string
@@ -131,7 +130,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
   ]);
 
   useEffect(() => {
-    // update initial selection based on the current preview track
+    // Effect to update the initial device selection for the ui elements based on the current preview track.
     if (!videoIn.selectedId || videoIn.selectedId == "") {
       videoTrack?.getDeviceId().then((videoId) => {
         if (videoId) {
@@ -149,6 +148,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
   }, [videoIn, audioIn, videoTrack, audioTrack]);
 
   useEffect(() => {
+    // Effect to connect the videoTrack with the video element.
     if (videoEl.current) {
       videoTrack?.unmute();
       videoTrack?.attach(videoEl.current);
