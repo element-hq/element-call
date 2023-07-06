@@ -83,7 +83,9 @@ export function RoomAuthView() {
             <Caption>
               <Trans>
                 By clicking "Join call now", you agree to our{" "}
-                <Link href={privacyPolicyUrl}>Terms and conditions</Link>
+                <Link href={privacyPolicyUrl}>
+                  End User Licensing Agreement (EULA)
+                </Link>
               </Trans>
             </Caption>
             {error && (
