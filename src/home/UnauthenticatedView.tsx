@@ -41,6 +41,7 @@ import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { useOptInAnalytics } from "../settings/useSetting";
+import { E2EEBanner } from "../E2EEBanner";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
@@ -168,6 +169,7 @@ export const UnauthenticatedView: FC = () => {
                 <Link href={privacyPolicyUrl}>Terms and conditions</Link>
               </Trans>
             </Caption>
+            <E2EEBanner />
             {error && (
               <FieldRow>
                 <ErrorMessage error={error} />
