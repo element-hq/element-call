@@ -164,7 +164,9 @@ export const UnauthenticatedView: FC = () => {
             <Caption className={styles.notice}>
               <Trans>
                 By clicking "Go", you agree to our{" "}
-                <Link href={privacyPolicyUrl}>Terms and conditions</Link>
+                <Link href={privacyPolicyUrl}>
+                  End User Licensing Agreement (EULA)
+                </Link>
               </Trans>
             </Caption>
             {error && (

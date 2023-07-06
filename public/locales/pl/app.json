@@ -113,5 +113,7 @@
   "{{displayName}}, your call has ended.": "{{displayName}}, Twoje połączenie zostało zakończone.",
   "<0>Thanks for your feedback!</0>": "<0>Dziękujemy za Twoją opinię!</0>",
   "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Z przyjemnością wysłuchamy Twojej opinii, aby poprawić Twoje doświadczenia.</0>",
-  "How did it go?": "Jak poszło?"
+  "How did it go?": "Jak poszło?",
+  "{{displayName}} is presenting": "{{displayName}} prezentuje",
+  "Show connection stats": "Pokaż statystyki połączenia"
 }
