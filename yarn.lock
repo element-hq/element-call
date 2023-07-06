@@ -2166,23 +2166,23 @@
   resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.3.1.tgz#b50a781709c81e10701004214340f25475a171a0"
   integrity sha512-zMM9Ds+SawiUkakS7y94Ymqx+S0ORzpG3frZirN3l+UlXUmSUR7hF4wxCVqW+ei94JzV5kt0uXBcoOEAuiydrw==
 
-"@livekit/components-core@0.6.7":
-  version "0.6.7"
-  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.6.7.tgz#e6fdbdf0feade66f6c187dc8b7f1b54e2fbe4b85"
-  integrity sha512-Nc+HMvIhMRuZUYkUWxHobVH+ZpQNSwzdeVZpWOVea0hUGh7A3WeOY5rS0LY3zrvCAseRooOK+pQHna9KSFf2RQ==
+"@livekit/components-core@0.6.10":
+  version "0.6.10"
+  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.6.10.tgz#5d05cc096e43b9caff6e363d03ecd388febc9108"
+  integrity sha512-UG96mKcdHWSAqFT9J9j5D4R2d78Q7O4RGK7GYLBLqwvnmGJc1rbCYWezte2GZwZNa4RtbLfDKTD9M6Z78xGDLg==
   dependencies:
     "@floating-ui/dom" "^1.1.0"
     email-regex "^5.0.0"
-    global-tld-list "^0.0.1093"
+    global-tld-list "^0.0.1139"
     loglevel "^1.8.1"
     rxjs "^7.8.0"
 
-"@livekit/components-react@^1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-1.0.3.tgz#03a32c200fae6a386cdcaaab77226abab00c8673"
-  integrity sha512-HJxsEdApjQa5fa/qXXkixw2V6MRziWHKow7oRi1ZPsmxt/Xls9vbbsMFaUYPh6bXiBm8Fz4RznmdvMOPk1YIPg==
+"@livekit/components-react@^1.0.7":
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-1.0.7.tgz#bce1d32be155eb5c02465de846c8fbb0e7c5f481"
+  integrity sha512-xPgOwEFp4M4oH8QGlHYHiU75Q8lrcMiH1CVC0yAVJhmqDcn8ihj5S5iziP0CMhXSv1zYJNjkGaBK+P11NtNLjQ==
   dependencies:
-    "@livekit/components-core" "0.6.7"
+    "@livekit/components-core" "0.6.10"
     "@react-hook/latest" "^1.0.3"
     clsx "^1.2.1"
 
@@ -8066,6 +8066,11 @@ etag@~1.8.1:
   resolved "https://registry.yarnpkg.com/etag/-/etag-1.8.1.tgz#41ae2eeb65efa62268aebfea83ac7d79299b0887"
   integrity sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==
 
+eventemitter3@^5.0.1:
+  version "5.0.1"
+  resolved "https://registry.yarnpkg.com/eventemitter3/-/eventemitter3-5.0.1.tgz#53f5ffd0a492ac800721bb42c66b841de96423c4"
+  integrity sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==
+
 events@^3.0.0, events@^3.2.0, events@^3.3.0:
   version "3.3.0"
   resolved "https://registry.yarnpkg.com/events/-/events-3.3.0.tgz#31a95ad0a924e2d2c419a813aeb2c4e878ea7400"
@@ -8850,10 +8855,10 @@ glob@^7.0.0, glob@^7.1.1, glob@^7.1.3, glob@^7.1.4, glob@^7.1.6, glob@^7.2.0:
     once "^1.3.0"
     path-is-absolute "^1.0.0"
 
-global-tld-list@^0.0.1093:
-  version "0.0.1093"
-  resolved "https://registry.yarnpkg.com/global-tld-list/-/global-tld-list-0.0.1093.tgz#223c3e82e1673f36f8d874d42a30f3b8463508de"
-  integrity sha512-V6ZI9rzpsiVQdEZyMgt4ujKPkR82a+IxmPdMGO7oHc+iBfhdxTTO3nk8+pNUyGCXOHeOCrk7icOKcBMxBMEKkg==
+global-tld-list@^0.0.1139:
+  version "0.0.1139"
+  resolved "https://registry.yarnpkg.com/global-tld-list/-/global-tld-list-0.0.1139.tgz#70400a3f3ccac1a19a8184274a1b117bc8a27969"
+  integrity sha512-TCWjAwHPzFV6zbQ5jnJvJTctesHGJr9BppxivRuIxTiIFUzaxy1F0674cxjoJecW5s8V32Q5i35dBFqvAy7eGQ==
 
 global@^4.4.0:
   version "4.4.0"
@@ -10710,17 +10715,16 @@ lines-and-columns@^1.1.6:
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz#eca284f75d2965079309dc0ad9255abb2ebc1632"
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
-livekit-client@^1.9.7:
-  version "1.9.7"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-1.9.7.tgz#51e7d8975ce7dcbfd51e91a8f9221f5868a1e606"
-  integrity sha512-w0WjLat0qF76l71esjTXam5JE+7vCpBF6WW+oloHFNBIVtEzEnBZa2JUo/e2oWN2YypEO5MjCIDPo7Tuvo9clA==
+livekit-client@^1.11.4:
+  version "1.11.4"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-1.11.4.tgz#e222afc111f36a28a7171755cdcfe6b8fa2ca2dc"
+  integrity sha512-TX53HRrtz7ZPWLasnrUOkrGN8EL22/IDwg39uLT7aJcSBWtgKlCueQkwjW4nn7KVWRF8mv00g8WiPDE9jyS8fQ==
   dependencies:
-    events "^3.3.0"
+    eventemitter3 "^5.0.1"
     loglevel "^1.8.0"
     protobufjs "^7.0.0"
     sdp-transform "^2.14.1"
     ts-debounce "^4.0.0"
-    typed-emitter "^2.1.0"
     webrtc-adapter "^8.1.1"
 
 load-json-file@^1.0.0:
@@ -10968,9 +10972,9 @@ matrix-events-sdk@0.0.1:
   resolved "https://registry.yarnpkg.com/matrix-events-sdk/-/matrix-events-sdk-0.0.1.tgz#c8c38911e2cb29023b0bbac8d6f32e0de2c957dd"
   integrity sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#af10b0c44b4a427c8d2224bfd6feb03a12cfd27e":
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#426d29d6b9a9d71a3c0d7fe6f7bac3473cd10832":
   version "26.0.1"
-  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/af10b0c44b4a427c8d2224bfd6feb03a12cfd27e"
+  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/426d29d6b9a9d71a3c0d7fe6f7bac3473cd10832"
   dependencies:
     "@babel/runtime" "^7.12.5"
     "@matrix-org/matrix-sdk-crypto-js" "^0.1.0-alpha.10"
@@ -13496,7 +13500,7 @@ rw@1:
   resolved "https://registry.yarnpkg.com/rw/-/rw-1.3.3.tgz#3f862dfa91ab766b14885ef4d01124bfda074fb4"
   integrity sha512-PdhdWy89SiZogBLaw42zdeqtRJ//zFd2PgQavcICDUgJT5oW10QCRKbJ6bg4r0/UY2M6BWd5tkxuGFRvCkgfHQ==
 
-rxjs@^7.5.2, rxjs@^7.8.0:
+rxjs@^7.8.0:
   version "7.8.1"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.8.1.tgz#6f6f3d99ea8044291efd92e7c7fcf562c4057543"
   integrity sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==
@@ -14638,13 +14642,6 @@ type-is@~1.6.18:
   dependencies:
     media-typer "0.3.0"
     mime-types "~2.1.24"
-
-typed-emitter@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/typed-emitter/-/typed-emitter-2.1.0.tgz#ca78e3d8ef1476f228f548d62e04e3d4d3fd77fb"
-  integrity sha512-g/KzbYKbH5C2vPkaXGu8DJlHrGKHLsM25Zg9WuC9pMGfuvT+X25tZQWo5fK1BjBm8+UrVE9LDCvaY0CQk+fXDA==
-  optionalDependencies:
-    rxjs "^7.5.2"
 
 typedarray@^0.0.6:
   version "0.0.6"
