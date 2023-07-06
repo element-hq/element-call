@@ -350,7 +350,7 @@ export function getRoomUrl(roomIdOrAlias: string): string {
       roomIdOrAlias.substring(1).split(":")[0]
     }`;
   } else {
-    return `${window.location.protocol}//${window.location.host}?roomId=${roomIdOrAlias}`;
+    return `${window.location.protocol}//${window.location.host}/room?roomId=${roomIdOrAlias}`;
   }
 }
 
