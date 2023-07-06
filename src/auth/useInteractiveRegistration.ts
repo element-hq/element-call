@@ -22,17 +22,17 @@ import { initClient } from "../matrix-utils";
 import { Session } from "../ClientContext";
 import { Config } from "../config/Config";
 
-export const useInteractiveRegistration = (): [
-  string,
-  string,
-  (
+export const useInteractiveRegistration = (): {
+  privacyPolicyUrl: string;
+  recaptchaKey: string;
+  register: (
     username: string,
     password: string,
     displayName: string,
     recaptchaResponse: string,
     passwordlessUser?: boolean
-  ) => Promise<[MatrixClient, Session]>
-] => {
+  ) => Promise<[MatrixClient, Session]>;
+} => {
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState<string>();
   const [recaptchaKey, setRecaptchaKey] = useState<string>();
 
@@ -126,5 +126,5 @@ export const useInteractiveRegistration = (): [
     []
   );
 
-  return [privacyPolicyUrl, recaptchaKey, register];
+  return { privacyPolicyUrl, recaptchaKey, register };
 };

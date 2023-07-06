@@ -30,7 +30,7 @@ interface UseRegisterPasswordlessUserType {
 
 export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
   const { setClient } = useClient();
-  const [privacyPolicyUrl, recaptchaKey, register] =
+  const { privacyPolicyUrl, recaptchaKey, register } =
     useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 

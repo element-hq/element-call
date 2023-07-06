@@ -66,6 +66,11 @@ export interface ConfigOptions {
   features?: {
     feature_group_calls_without_video_and_audio: boolean;
   };
+
+  /**
+   * A link to the end-user license agreement (EULA)
+   */
+  eula: string;
 }
 
 // Overrides members from ConfigOptions that are always provided by the
@@ -86,4 +91,5 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
       server_name: "localhost",
     },
   },
+  eula: "https://static.element.io/legal/online-EULA.pdf",
 };
