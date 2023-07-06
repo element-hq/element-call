@@ -20,7 +20,7 @@ import {
   cycleTileSize,
   fillGaps,
   forEachCellInArea,
-  BigGridState,
+  Grid,
   resize,
   row,
   moveTile,
@@ -30,13 +30,13 @@ import { TileDescriptor } from "../../src/video-grid/VideoGrid";
 /**
  * Builds a grid from a string specifying the contents of each cell as a letter.
  */
-function mkGrid(spec: string): BigGridState {
+function mkGrid(spec: string): Grid {
   const secondNewline = spec.indexOf("\n", 1);
   const columns = secondNewline === -1 ? spec.length : secondNewline - 1;
   const cells = spec.match(/[a-z ]/g) ?? ([] as string[]);
   const areas = new Set(cells);
   areas.delete(" "); // Space represents an empty cell, not an area
-  const grid: BigGridState = { columns, cells: new Array(cells.length) };
+  const grid: Grid = { columns, cells: new Array(cells.length) };
 
   for (const area of areas) {
     const start = cells.indexOf(area);
@@ -60,7 +60,7 @@ function mkGrid(spec: string): BigGridState {
 /**
  * Turns a grid into a string showing the contents of each cell as a letter.
  */
-function showGrid(g: BigGridState): string {
+function showGrid(g: Grid): string {
   let result = "\n";
   for (let i = 0; i < g.cells.length; i++) {
     if (i > 0 && i % g.columns == 0) result += "\n";
@@ -116,11 +116,11 @@ mno`,
   `
 aebch
 difgl
-monjk`
+mjnok`
 );
 
 testFillGaps(
-  "fills a big gap",
+  "fills a big gap with 1×1 tiles",
   `
 abcd
 e  f
@@ -128,19 +128,19 @@ g  h
 ijkl`,
   `
 abcd
-elhf
-gkji`
+ehkf
+glji`
 );
 
 testFillGaps(
-  "only moves 1×1 tiles",
+  "fills a big gap with a large tile",
   `
   
 aa
 bc`,
   `
-bc
-aa`
+aa
+cb`
 );
 
 testFillGaps(
@@ -186,7 +186,7 @@ iief`
 );
 
 testFillGaps(
-  "pushes a chain of large tiles upwards",
+  "collapses large tiles trapped at the bottom",
   `
 abcd
 e fg
@@ -195,24 +195,24 @@ hh
  ii 
  ii`,
   `
-hhcd
+abcd
 hhfg
-aiib
-eii`
+hhie`
 );
 
 testFillGaps(
   "gives up on pushing large tiles upwards when not possible",
   `
-aabb
-aabb
-cc  
-cc`,
+aa  
+aa  
+bccd
+eccf
+ghij`,
   `
-aabb
-aabb
-cc  
-cc`
+aadf
+aaji
+bcch
+eccg`
 );
 
 function testCycleTileSize(
@@ -237,9 +237,9 @@ def
 ghi`,
   `
 acc
-bcc
-def
-ghi`
+dcc
+gbe
+ifh`
 );
 
 testCycleTileSize(
@@ -249,10 +249,10 @@ testCycleTileSize(
 abcd
 efgh`,
   `
-abcd
-eggg
+acdh
+bggg
 fggg
-h`
+e`
 );
 
 testCycleTileSize(
@@ -264,9 +264,9 @@ dbbe
 fghi
 jk`,
   `
-akbc
-djhe
-fig`
+abhc
+djge
+fik`
 );
 
 testCycleTileSize(
@@ -284,9 +284,9 @@ abb
 gbb
 dde
 ddf
-cci
+ccm
 cch
-klm`
+lik`
 );
 
 testCycleTileSize(
@@ -303,6 +303,34 @@ cbb
 dde
 ddf`
 );
+
+test("cycleTileSize is its own inverse", () => {
+  const input = `
+abc
+def
+ghi
+jk`;
+
+  const grid = mkGrid(input);
+  let gridAfter = grid;
+
+  const toggle = (tileId: string) => {
+    const tile = grid.cells.find((c) => c?.item.id === tileId)!.item;
+    gridAfter = cycleTileSize(gridAfter, tile);
+  };
+
+  // Toggle a series of tiles
+  toggle("j");
+  toggle("h");
+  toggle("a");
+  // Now do the same thing in reverse
+  toggle("a");
+  toggle("h");
+  toggle("j");
+
+  // The grid should be back to its original state
+  expect(showGrid(gridAfter)).toBe(input);
+});
 
 function testAddItems(
   title: string,
@@ -437,9 +465,9 @@ gh`,
 af
 bb
 bb
+dd
+dd
 ch
-dd
-dd
 eg`
 );
 
@@ -455,9 +483,8 @@ dd
 dd
 eg`,
   `
-bbbc
-bbbf
-addd
-hddd
-ge`
+afcd
+bbbg
+bbbe
+h`
 );
