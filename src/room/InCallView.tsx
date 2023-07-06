@@ -80,7 +80,7 @@ import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { VideoTile } from "../video-grid/VideoTile";
 import { UserChoices, useLiveKit } from "../livekit/useLiveKit";
-import { useMediaDevices } from "../livekit/useMediaDevices";
+import { useMediaDevicesSwitcher } from "../livekit/useMediaDevices";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
 import { useSFUConfig } from "../livekit/OpenIDLoader";
@@ -147,7 +147,7 @@ export function InCallView({
   );
 
   // Managed media devices state coupled with an active room.
-  const roomMediaDevices = useMediaDevices(livekitRoom);
+  const roomMediaSwitcher = useMediaDevicesSwitcher(livekitRoom);
 
   const screenSharingTracks = useTracks(
     [{ source: Track.Source.ScreenShare, withPlaceholder: false }],
@@ -425,7 +425,7 @@ export function InCallView({
         <SettingsModal
           client={client}
           roomId={groupCall.room.roomId}
-          mediaDevices={roomMediaDevices}
+          mediaDevicesSwitcher={roomMediaSwitcher}
           {...settingsModalProps}
         />
       )}

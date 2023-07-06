@@ -1,0 +1,19 @@
+{
+  "default_server_config": {
+    "m.homeserver": {
+      "base_url": "https://call.ems.host",
+      "server_name": "call.ems.host"
+    }
+  },
+  "livekit": {
+    "server_url": "wss://ec-test-t5xo1uoy.livekit.cloud",
+    "jwt_service_url": "https://voip-sip-poc.element.io/lk/jwt_service"
+  },
+  "posthog": {
+    "api_key": "phc_rXGHx9vDmyEvyRxPziYtdVIv0ahEv8A9uLWFcCi1WcU",
+    "api_host": "https://posthog-element-call.element.io"
+  },
+  "rageshake": {
+    "submit_url": "https://element.io/bugreports/submit"
+  }
+}
