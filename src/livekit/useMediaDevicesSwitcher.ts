@@ -19,7 +19,7 @@ export type MediaDevicesState = {
 // if a room is passed this only affects the device selection inside a call. Without room it changes what we see in the lobby
 export function useMediaDevicesSwitcher(
   room?: Room,
-  tracks?: { videoTrack: LocalVideoTrack; audioTrack: LocalAudioTrack },
+  tracks?: { videoTrack?: LocalVideoTrack; audioTrack?: LocalAudioTrack },
   requestPermissions = true
 ): MediaDevicesState {
   const {

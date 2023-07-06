@@ -42,7 +42,10 @@ import { Body, Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
-import { MediaDevices, MediaDevicesState } from "../livekit/useMediaDevices";
+import {
+  MediaDevices,
+  MediaDevicesState,
+} from "../livekit/useMediaDevicesSwitcher";
 
 interface Props {
   mediaDevicesSwitcher?: MediaDevicesState;

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { OverlayTriggerState } from "@react-stately/overlays";
@@ -27,7 +27,7 @@ import styles from "./VideoPreview.module.css";
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
 import { useClient } from "../ClientContext";
-import { useMediaDevicesSwitcher } from "../livekit/useMediaDevices";
+import { useMediaDevicesSwitcher } from "../livekit/useMediaDevicesSwitcher";
 import { DeviceChoices, UserChoices } from "../livekit/useLiveKit";
 import { useDefaultDevices } from "../settings/useSetting";
 
@@ -66,21 +66,12 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
   const [videoEnabled, setVideoEnabled] = useState<boolean>(true);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
   const [defaultDevices] = useDefaultDevices();
-  // const video = usePreviewDevice(
-  //   videoEnabled,
-  //   videoId != "" ? videoId : defaultDevices.videoinput,
-  //   "videoinput"
-  // );
-  // const audio = usePreviewDevice(
-  //   audioEnabled,
-  //   audioId != "" ? audioId : defaultDevices.audioinput,
-  //   "audioinput"
-  // );
+  const initialDefaultDevices = useRef(defaultDevices);
 
   const tracks = usePreviewTracks(
     {
-      audio: audioEnabled ? { deviceId: defaultDevices.videoinput } : false,
-      video: videoEnabled ? { deviceId: defaultDevices.audioinput } : false,
+      audio: { deviceId: initialDefaultDevices.current.audioinput },
+      video: { deviceId: initialDefaultDevices.current.videoinput },
     },
     () => {
       console.log("TODO handle error");
@@ -100,64 +91,66 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
       )[0] as LocalAudioTrack,
     [tracks]
   );
-  // Fetch user media devices.
-  const mediaSwitcher = useMediaDevicesSwitcher(undefined, {
-    videoTrack,
-    audioTrack,
-  });
-  const [activeVideoId, activeAudioId] = [
-    mediaSwitcher.videoIn.selectedId,
-    mediaSwitcher.audioIn.selectedId,
-  ];
+  // Only let the MediaDeviceSwitcher request permissions if a video track is already available
+  // Otherwise we would end up to ask for permissions in usePreviewTracks and in useMediaDevicesSwitcher
+  const requestPermissions = !!videoTrack;
+  const mediaSwitcher = useMediaDevicesSwitcher(
+    undefined,
+    {
+      videoTrack,
+      audioTrack,
+    },
+    requestPermissions
+  );
+  const { videoIn, audioIn } = mediaSwitcher;
 
   const videoEl = React.useRef(null);
 
-  // const activeVideoId = videoTrack?.selectedDevice?.deviceId;
-  // const activeAudioId = audio?.selectedDevice?.deviceId;
   useEffect(() => {
     const createChoices = (
       enabled: boolean,
       deviceId?: string
     ): DeviceChoices | undefined => {
-      if (deviceId === undefined) {
-        return undefined;
-      }
-
-      return {
-        selectedId: deviceId,
-        enabled,
-      };
+      return deviceId
+        ? {
+            selectedId: deviceId,
+            enabled,
+          }
+        : undefined;
     };
-
     onUserChoicesChanged({
-      video: createChoices(videoEnabled, activeVideoId),
-      audio: createChoices(audioEnabled, activeAudioId),
+      video: createChoices(videoEnabled, videoIn.selectedId),
+      audio: createChoices(audioEnabled, audioIn.selectedId),
     });
   }, [
     onUserChoicesChanged,
-    activeVideoId,
+    videoIn.selectedId,
     videoEnabled,
-    activeAudioId,
+    audioIn.selectedId,
     audioEnabled,
   ]);
 
-  const [selectVideo, selectAudio] = [
-    mediaSwitcher.videoIn.setSelected,
-    mediaSwitcher.audioIn.setSelected,
-  ];
   useEffect(() => {
-    if (activeVideoId && activeVideoId !== "") {
-      selectVideo(activeVideoId);
+    // update initial selection based on the current preview track
+    if (!videoIn.selectedId || videoIn.selectedId == "") {
+      videoTrack?.getDeviceId().then((videoId) => {
+        if (videoId) {
+          videoIn.setSelected(videoId);
+        }
+      });
     }
-    if (activeAudioId && activeAudioId !== "") {
-      selectAudio(activeAudioId);
+    if (!audioIn.selectedId || audioIn.selectedId == "") {
+      audioTrack?.getDeviceId().then((audioId) => {
+        if (audioId) {
+          audioIn.setSelected(audioId);
+        }
+      });
     }
-  }, [selectVideo, selectAudio, activeVideoId, activeAudioId]);
+  }, [videoIn, audioIn, videoTrack, audioTrack]);
 
   useEffect(() => {
     if (videoEl.current) {
-      videoTrack.unmute();
-
+      videoTrack?.unmute();
       videoTrack?.attach(videoEl.current);
     }
     return () => {
@@ -179,18 +172,14 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
           </div>
         )}
         <div className={styles.previewButtons}>
-          {audioTrack && (
-            <MicButton
-              muted={!audioEnabled}
-              onPress={() => setAudioEnabled(!audioEnabled)}
-            />
-          )}
-          {videoTrack && (
-            <VideoButton
-              muted={!videoEnabled}
-              onPress={() => setVideoEnabled(!videoEnabled)}
-            />
-          )}
+          <MicButton
+            muted={!audioEnabled}
+            onPress={() => setAudioEnabled(!audioEnabled)}
+          />
+          <VideoButton
+            muted={!videoEnabled}
+            onPress={() => setVideoEnabled(!videoEnabled)}
+          />
           <SettingsButton onPress={openSettings} />
         </div>
       </>

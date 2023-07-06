@@ -80,7 +80,7 @@ import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { VideoTile } from "../video-grid/VideoTile";
 import { UserChoices, useLiveKit } from "../livekit/useLiveKit";
-import { useMediaDevicesSwitcher } from "../livekit/useMediaDevices";
+import { useMediaDevicesSwitcher } from "../livekit/useMediaDevicesSwitcher";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
 import { useSFUConfig } from "../livekit/OpenIDLoader";
