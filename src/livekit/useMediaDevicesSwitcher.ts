@@ -29,7 +29,7 @@ export function useMediaDevicesSwitcher(
   } = useMediaDeviceSelect({
     kind: "videoinput",
     room,
-    track: tracks.videoTrack,
+    track: tracks?.videoTrack,
     requestPermissions,
   });
 
@@ -40,7 +40,7 @@ export function useMediaDevicesSwitcher(
   } = useMediaDeviceSelect({
     kind: "audioinput",
     room,
-    track: tracks.audioTrack,
+    track: tracks?.audioTrack,
     requestPermissions,
   });
 
