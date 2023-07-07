@@ -130,5 +130,8 @@
       "text",
       "cobertura"
     ]
+  },
+  "resolutions": {
+    "@types/react": "^18.2.12"
   }
 }
