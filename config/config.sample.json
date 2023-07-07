@@ -4,5 +4,6 @@
       "base_url": "https://call.ems.host",
       "server_name": "call.ems.host"
     }
-  }
+  },
+  "eula": "https://static.element.io/legal/online-EULA.pdf"
 }
