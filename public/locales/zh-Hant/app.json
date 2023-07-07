@@ -93,7 +93,6 @@
   "Camera": "相機",
   "Call type menu": "通話類型選單",
   "Call link copied": "已複製通話連結",
-  "By clicking \"Go\", you agree to our <2>Terms and conditions</2>": "當您按下「前往」，你也同意了我們的條款與細則",
   "Avatar": "大頭照",
   "Audio": "語音",
   "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.": "這通對話中的另一位使用者遇到了某些問題。為了診斷問題，我們將會建立除錯紀錄。",
@@ -113,5 +112,8 @@
   "{{displayName}}, your call has ended.": "{{displayName}}，您的通話已結束。",
   "How did it go?": "進展如何？",
   "{{displayName}} is presenting": "{{displayName}} 正在展示",
-  "Show connection stats": "顯示連線統計資料"
+  "Show connection stats": "顯示連線統計資料",
+  "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "點擊「前往」即表示您同意我們的<2>終端使用者授權協議 (EULA)</2>",
+  "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "點擊「立刻加入通話」即表示您同意我們的<2>終端使用者授權協議 (EULA)</2>",
+  "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>": "此網站被 ReCAPTCHA 保護，並適用 Google 的<2>隱私權政策</2>與<6>服務條款</6>。<9></9>點擊「註冊」即表示您同意我們的<12>終端使用者授權協議 (EULA)</12>"
 }
