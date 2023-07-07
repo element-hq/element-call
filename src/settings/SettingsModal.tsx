@@ -42,10 +42,13 @@ import { Body, Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
-import { MediaDevices, MediaDevicesState } from "../livekit/useMediaDevices";
+import {
+  MediaDevices,
+  MediaDevicesState,
+} from "../livekit/useMediaDevicesSwitcher";
 
 interface Props {
-  mediaDevices?: MediaDevicesState;
+  mediaDevicesSwitcher?: MediaDevicesState;
   isOpen: boolean;
   client: MatrixClient;
   roomId?: string;
@@ -106,7 +109,7 @@ export const SettingsModal = (props: Props) => {
     </Caption>
   );
 
-  const devices = props.mediaDevices;
+  const devices = props.mediaDevicesSwitcher;
 
   return (
     <Modal
