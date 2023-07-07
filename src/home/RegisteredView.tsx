@@ -39,6 +39,7 @@ import { Form } from "../form/Form";
 import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
 import { useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
+import { E2EEBanner } from "../E2EEBanner";
 
 interface Props {
   client: MatrixClient;
@@ -146,6 +147,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
                 <AnalyticsNotice />
               </Caption>
             )}
+            <E2EEBanner />
             {error && (
               <FieldRow className={styles.fieldRow}>
                 <ErrorMessage error={error} />
