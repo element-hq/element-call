@@ -133,6 +133,10 @@ export class Initializer {
         "--background-85",
         import.meta.env.VITE_THEME_BACKGROUND_85 as string
       );
+      style.setProperty(
+        "--subtle-primary",
+        import.meta.env.VITE_THEME_SUBTLE_PRIMARY as string
+      );
     }
 
     // Custom fonts

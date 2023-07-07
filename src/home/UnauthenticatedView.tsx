@@ -42,6 +42,7 @@ import { generateRandomName } from "../auth/generateRandomName";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { useOptInAnalytics } from "../settings/useSetting";
 import { Config } from "../config/Config";
+import { E2EEBanner } from "../E2EEBanner";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
@@ -170,6 +171,7 @@ export const UnauthenticatedView: FC = () => {
                 </Link>
               </Trans>
             </Caption>
+            <E2EEBanner />
             {error && (
               <FieldRow>
                 <ErrorMessage error={error} />

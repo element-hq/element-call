@@ -219,14 +219,7 @@ export function GroupCallView({
     undefined
   );
 
-  const [livekitServiceURL, setLivekitServiceURL] = useState<
-    string | undefined
-  >(groupCall.foci[0]?.livekitServiceUrl);
-
-  useEffect(() => {
-    setLivekitServiceURL(groupCall.foci[0]?.livekitServiceUrl);
-  }, [setLivekitServiceURL, groupCall]);
-
+  const livekitServiceURL = groupCall.foci[0]?.livekitServiceUrl;
   if (!livekitServiceURL) {
     return <ErrorView error={new Error("No livekit_service_url defined")} />;
   }
