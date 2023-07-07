@@ -231,7 +231,7 @@ export function GroupCallView({
       <OpenIDLoader
         client={client}
         livekitServiceURL={livekitServiceURL}
-        roomName={matrixInfo.roomName}
+        roomName={`${groupCall.room.roomId}-${groupCall.groupCallId}`}
       >
         <ActiveCall
           client={client}
