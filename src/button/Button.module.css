@@ -61,6 +61,17 @@ limitations under the License.
   outline: auto;
 }
 
+.button:disabled,
+.toolbarButton:disabled,
+.toolbarButtonSecondary:disabled,
+.iconButton:disabled,
+.iconCopyButton:disabled,
+.secondary:disabled,
+.secondaryHangup:disabled,
+.copyButton:disabled {
+  opacity: 0.55;
+}
+
 .toolbarButton,
 .toolbarButtonSecondary {
   width: 50px;
