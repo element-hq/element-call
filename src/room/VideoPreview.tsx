@@ -152,6 +152,11 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
         setInitializingAudio(false);
       }
       audioTrack?.getDeviceId().then((audioId) => {
+        // getDeviceId() can return undefined for audio devices. This happens if
+        // the devices list uses "default" as the device id for the current
+        // device and the device set on the track also uses the deviceId
+        // "default". Check `normalizeDeviceId` in  `getDeviceId` for more
+        // details.
         audioIn.setSelected(audioId ?? "default");
       });
     }
