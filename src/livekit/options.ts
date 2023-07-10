@@ -14,12 +14,12 @@ const defaultLiveKitPublishOptions: TrackPublishDefaults = {
   red: true,
   forceStereo: false,
   simulcast: true,
-  videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h216] as VideoPreset[],
+  videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360] as VideoPreset[],
   screenShareEncoding: ScreenSharePresets.h1080fps30.encoding,
   stopMicTrackOnMute: false,
   videoCodec: "vp8",
-  videoEncoding: VideoPresets.h360.encoding,
-  backupCodec: { codec: "vp8", encoding: VideoPresets.h360.encoding },
+  videoEncoding: VideoPresets.h720.encoding,
+  backupCodec: { codec: "vp8", encoding: VideoPresets.h720.encoding },
 } as const;
 
 export const defaultLiveKitOptions: RoomOptions = {
@@ -31,7 +31,7 @@ export const defaultLiveKitOptions: RoomOptions = {
 
   // capture settings
   videoCaptureDefaults: {
-    resolution: VideoPresets.h360.resolution,
+    resolution: VideoPresets.h720.resolution,
   },
 
   // publish settings
