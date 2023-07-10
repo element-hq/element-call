@@ -46,6 +46,7 @@ import {
   MediaDevices,
   MediaDevicesState,
 } from "../livekit/useMediaDevicesSwitcher";
+import { useUrlParams } from "../UrlParams";
 
 interface Props {
   mediaDevicesSwitcher?: MediaDevicesState;
@@ -58,6 +59,8 @@ interface Props {
 
 export const SettingsModal = (props: Props) => {
   const { t } = useTranslation();
+
+  const { isEmbedded } = useUrlParams();
 
   const [showInspector, setShowInspector] = useShowInspector();
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
@@ -147,17 +150,19 @@ export const SettingsModal = (props: Props) => {
         >
           {devices && generateDeviceSelection(devices.videoIn, t("Camera"))}
         </TabItem>
-        <TabItem
-          key="profile"
-          title={
-            <>
-              <UserIcon width={15} height={15} />
-              <span>{t("Profile")}</span>
-            </>
-          }
-        >
-          <ProfileSettingsTab client={props.client} />
-        </TabItem>
+        {!isEmbedded && (
+          <TabItem
+            key="profile"
+            title={
+              <>
+                <UserIcon width={15} height={15} />
+                <span>{t("Profile")}</span>
+              </>
+            }
+          >
+            <ProfileSettingsTab client={props.client} />
+          </TabItem>
+        )}
         <TabItem
           key="feedback"
           title={
