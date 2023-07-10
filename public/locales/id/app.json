@@ -5,8 +5,6 @@
   "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.": "Pengguna yang lain di panggilan ini sedang mengalami masalah. Supaya dapat mendiagnosa masalah ini, kami ingin mengumpulkan sebuah catatan pengawakutuan.",
   "Audio": "Audio",
   "Avatar": "Avatar",
-  "By clicking \"Go\", you agree to our <2>Terms and conditions</2>": "Dengan mengeklik \"Bergabung\", Anda terima <2>syarat dan ketentuan</2> kami",
-  "By clicking \"Join call now\", you agree to our <2>Terms and conditions</2>": "Dengan mengeklik \"Bergabung ke panggilan sekarang\", Anda terima <2>syarat dan ketentuan</2> kami",
   "Call link copied": "Tautan panggilan disalin",
   "Call type menu": "Menu jenis panggilan",
   "Camera": "Kamera",
@@ -75,7 +73,6 @@
   "Take me Home": "Bawa saya ke Beranda",
   "Thanks! We'll get right on it.": "Terima kasih! Kami akan melihatnya.",
   "This call already exists, would you like to join?": "Panggilan ini sudah ada, apakah Anda ingin bergabung?",
-  "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>Terms and conditions</12>": "Situs ini dilindungi oleh ReCAPTCHA dan <2>Kebijakan Privasi</2> dan <6>Ketentuan Layanan</6> Google berlaku.<9>Dengan mengeklik \"Daftar\", Anda terima <12>syarat dan ketentuan</12> kami",
   "Turn off camera": "Matikan kamera",
   "Turn on camera": "Nyalakan kamera",
   "Unmute microphone": "Suarakan mikrofon",
@@ -93,7 +90,7 @@
   "Your recent calls": "Panggilan Anda terkini",
   "{{names}}, {{name}}": "{{names}}, {{name}}",
   "Sending debug logs…": "Mengirimkan catatan pengawakutuan…",
-  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Bergabung panggilan sekarang</0><1>Atau</1><2>Salin tautan dan bergabung nanti</2>",
+  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>Bergabung ke panggilan sekarang</0><1>Atau</1><2>Salin tautan dan bergabung nanti</2>",
   "Element Call Home": "Beranda Element Call",
   "Copy": "Salin",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>Mengirim catatan pengawakutuan akan membantu kami melacak masalahnya.</0>",
@@ -115,5 +112,8 @@
   "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Kami ingin mendengar masukan Anda supaya kami bisa meningkatkan pengalaman Anda.</0>",
   "Show connection stats": "Tampilkan statistik koneksi",
   "{{displayName}} is presenting": "{{displayName}} sedang menampilkan",
-  "{{count}} stars|other": "{{count}} bintang"
+  "{{count}} stars|other": "{{count}} bintang",
+  "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Dengan mengeklik \"Bergabung\", Anda menyetujui <2>Perjanjian Lisensi Pengguna Akhir (EULA)</2>",
+  "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>": "Situs ini dilindungi oleh reCAPTCHA dan <2>Kebijakan Privasi</2> dan <6>Ketentuan Layanan</6> Google berlaku.<9></9>Dengan mengeklik \"Daftar\", Anda menyetujui <12>Perjanjian Lisensi Pengguna Akhir (EULA)</12> kami",
+  "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Dengan mengeklik \"Bergabung ke panggilan sekarang\", Anda menyetujui <2>Perjanjian Lisensi Pengguna Akhir (EULA)</2> kami"
 }

@@ -84,6 +84,7 @@ import { useMediaDevicesSwitcher } from "../livekit/useMediaDevicesSwitcher";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
 import { useSFUConfig } from "../livekit/OpenIDLoader";
+import { E2EELock } from "../E2EELock";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -395,6 +396,7 @@ export function InCallView({
               users={unencryptedEventsFromUsers}
               room={groupCall.room}
             />
+            <E2EELock />
           </LeftNav>
           <RightNav>
             <GridLayoutMenu layout={layout} setLayout={setLayout} />

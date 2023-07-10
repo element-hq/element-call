@@ -41,6 +41,8 @@ import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { useOptInAnalytics } from "../settings/useSetting";
+import { Config } from "../config/Config";
+import { E2EEBanner } from "../E2EEBanner";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
@@ -48,8 +50,7 @@ export const UnauthenticatedView: FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
-  const [privacyPolicyUrl, recaptchaKey, register] =
-    useInteractiveRegistration();
+  const { recaptchaKey, register } = useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const { modalState, modalProps } = useModalTriggerState();
@@ -165,11 +166,12 @@ export const UnauthenticatedView: FC = () => {
             <Caption className={styles.notice}>
               <Trans>
                 By clicking "Go", you agree to our{" "}
-                <Link href={privacyPolicyUrl}>
+                <Link href={Config.get().eula}>
                   End User Licensing Agreement (EULA)
                 </Link>
               </Trans>
             </Caption>
+            <E2EEBanner />
             {error && (
               <FieldRow>
                 <ErrorMessage error={error} />

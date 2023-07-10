@@ -54,8 +54,7 @@ export const RegisterPage: FC = () => {
   const [error, setError] = useState<Error>();
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const [privacyPolicyUrl, recaptchaKey, register] =
-    useInteractiveRegistration();
+  const { recaptchaKey, register } = useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const onSubmitRegisterForm = useCallback(
@@ -211,7 +210,7 @@ export const RegisterPage: FC = () => {
                   apply.
                   <br />
                   By clicking "Register", you agree to our{" "}
-                  <Link href={privacyPolicyUrl}>
+                  <Link href={Config.get().eula}>
                     End User Licensing Agreement (EULA)
                   </Link>
                 </Trans>
