@@ -66,10 +66,14 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
   const [videoEnabled, setVideoEnabled] = useState<boolean>(true);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
 
+  // we store if the tracks are currently initializing to not show them as muted.
+  // showing them as muted while they are not yet available makes the buttons flicker undesirable during startup.
+  const [initializingVideo, setInitializingVideo] = useState<boolean>(true);
+  const [initializingAudio, setInitializingAudio] = useState<boolean>(true);
+
   // The settings are updated as soon as the device changes. We wrap the settings value in a ref to store their initial value.
   // Not changing the device options prohibits the usePreviewTracks hook to recreate the tracks.
   const initialDefaultDevices = useRef(useDefaultDevices()[0]);
-
   const tracks = usePreviewTracks(
     {
       audio: { deviceId: initialDefaultDevices.current.audioinput },
@@ -89,6 +93,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
       tracks?.filter((t) => t.kind === Track.Kind.Audio)[0] as LocalAudioTrack,
     [tracks]
   );
+
   // Only let the MediaDeviceSwitcher request permissions if a video track is already available.
   // Otherwise we would end up asking for permissions in usePreviewTracks and in useMediaDevicesSwitcher.
   const requestPermissions = !!videoTrack;
@@ -104,6 +109,12 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
 
   const videoEl = React.useRef(null);
 
+  // pretend the video is available until the initialization is over
+  const videoAvailableAndEndabled =
+    videoEnabled && (!!videoTrack || initializingVideo);
+  const audioAvailableAndEndabled =
+    audioEnabled && (!!videoTrack || initializingAudio);
+
   useEffect(() => {
     // Effect to update the settings
     const createChoices = (
@@ -118,8 +129,8 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
         : undefined;
     };
     onUserChoicesChanged({
-      video: createChoices(videoEnabled, videoIn.selectedId),
-      audio: createChoices(audioEnabled, audioIn.selectedId),
+      video: createChoices(videoAvailableAndEndabled, videoIn.selectedId),
+      audio: createChoices(audioAvailableAndEndabled, audioIn.selectedId),
     });
   }, [
     onUserChoicesChanged,
@@ -127,11 +138,16 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     videoEnabled,
     audioIn.selectedId,
     audioEnabled,
+    videoAvailableAndEndabled,
+    audioAvailableAndEndabled,
   ]);
 
   useEffect(() => {
     // Effect to update the initial device selection for the ui elements based on the current preview track.
     if (!videoIn.selectedId || videoIn.selectedId == "") {
+      if (videoTrack) {
+        setInitializingVideo(false);
+      }
       videoTrack?.getDeviceId().then((videoId) => {
         if (videoId) {
           videoIn.setSelected(videoId);
@@ -139,6 +155,9 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
       });
     }
     if (!audioIn.selectedId || audioIn.selectedId == "") {
+      if (audioTrack) {
+        setInitializingAudio(false);
+      }
       audioTrack?.getDeviceId().then((audioId) => {
         if (audioId) {
           audioIn.setSelected(audioId);
@@ -158,6 +177,15 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     };
   }, [videoTrack]);
 
+  useEffect(() => {
+    // Effect to mute/unmute video track. (This has to be done, so that the hardware camera indicator does not confuse the user)
+    if (videoTrack && videoEnabled) {
+      videoTrack?.unmute();
+    } else if (videoTrack) {
+      videoTrack?.mute();
+    }
+  }, [videoEnabled, videoTrack]);
+
   return (
     <div className={styles.preview} ref={previewRef}>
       <video ref={videoEl} muted playsInline disablePictureInPicture />
@@ -173,12 +201,14 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
         )}
         <div className={styles.previewButtons}>
           <MicButton
-            muted={!audioEnabled}
-            onPress={() => setAudioEnabled(!audioEnabled)}
+            muted={!audioAvailableAndEndabled}
+            onPress={() => setAudioEnabled(!audioAvailableAndEndabled)}
+            disabled={!audioTrack}
           />
           <VideoButton
-            muted={!videoEnabled}
-            onPress={() => setVideoEnabled(!videoEnabled)}
+            muted={!videoAvailableAndEndabled}
+            onPress={() => setVideoEnabled(!videoAvailableAndEndabled)}
+            disabled={!videoTrack}
           />
           <SettingsButton onPress={openSettings} />
         </div>
