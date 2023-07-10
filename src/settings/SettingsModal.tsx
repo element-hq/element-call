@@ -78,7 +78,11 @@ export const SettingsModal = (props: Props) => {
     return (
       <SelectInput
         label={caption}
-        selectedKey={devices.selectedId}
+        selectedKey={
+          devices.selectedId === "" || !devices.selectedId
+            ? "default"
+            : devices.selectedId
+        }
         onSelectionChange={(id) => devices.setSelected(id.toString())}
       >
         {devices.available.map(({ deviceId, label }, index) => (
