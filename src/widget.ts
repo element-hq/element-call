@@ -170,6 +170,8 @@ export const widget: WidgetHelpers | null = (() => {
 
       const clientPromise = new Promise<MatrixClient>((resolve) => {
         (async () => {
+          // wait for the config file to be ready (we load very early on so it might not
+          // be otherwise)
           await Config.init();
           const livekit = Config.get().livekit;
           const focus = livekit?.livekit_service_url;
