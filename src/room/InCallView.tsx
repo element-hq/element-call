@@ -341,7 +341,12 @@ export function InCallView({
 
   const toggleScreensharing = useCallback(async () => {
     exitFullscreen();
-    await localParticipant.setScreenShareEnabled(!isScreenShareEnabled);
+    await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, {
+      audio: true,
+      selfBrowserSurface: "include",
+      surfaceSwitching: "include",
+      systemAudio: "include",
+    });
   }, [localParticipant, isScreenShareEnabled, exitFullscreen]);
 
   let footer: JSX.Element | null;
