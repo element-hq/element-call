@@ -168,7 +168,7 @@ export const widget: WidgetHelpers | null = (() => {
         }
       );
 
-      const clientPromise = new Promise((resolve) => {
+      const clientPromise = new Promise<MatrixClient>((resolve) => {
         (async () => {
           await Config.init();
           const livekit = Config.get().livekit;
