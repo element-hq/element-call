@@ -26,7 +26,8 @@ export const E2EEBanner = () => {
       <div className={styles.e2eeBanner}>
         <LockOffIcon width={24} height={24} />
         <Trans>
-          Element Call is temporarily not encrypted while we test scalability.
+          Element Call is temporarily not end-to-end encrypted while we test
+          scalability.
         </Trans>
       </div>
     </Banner>
