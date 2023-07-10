@@ -77,6 +77,7 @@ interface Props {
   children: Element[];
   onPress: (e: PressEvent) => void;
   onPressStart: (e: PressEvent) => void;
+  disabled: boolean;
   // TODO: add all props for <Button>
   [index: string]: unknown;
 }
