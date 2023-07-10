@@ -102,7 +102,7 @@
   "Feedback": "Masukan",
   "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "Jika Anda mengalami masalah atau hanya ingin memberikan masukan, silakan kirimkan kami deskripsi pendek di bawah.",
   "Submit": "Kirim",
-  "Submitting…": "Mengirim",
+  "Submitting…": "Mengirim…",
   "Thanks, we received your feedback!": "Terima kasih, kami telah menerima masukan Anda!",
   "Your feedback": "Masukan Anda",
   "{{displayName}}, your call has ended.": "{{displayName}}, panggilan Anda telah berakhir.",
@@ -115,5 +115,6 @@
   "{{count}} stars|other": "{{count}} bintang",
   "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Dengan mengeklik \"Bergabung\", Anda menyetujui <2>Perjanjian Lisensi Pengguna Akhir (EULA)</2>",
   "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>": "Situs ini dilindungi oleh reCAPTCHA dan <2>Kebijakan Privasi</2> dan <6>Ketentuan Layanan</6> Google berlaku.<9></9>Dengan mengeklik \"Daftar\", Anda menyetujui <12>Perjanjian Lisensi Pengguna Akhir (EULA)</12> kami",
-  "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Dengan mengeklik \"Bergabung ke panggilan sekarang\", Anda menyetujui <2>Perjanjian Lisensi Pengguna Akhir (EULA)</2> kami"
+  "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Dengan mengeklik \"Bergabung ke panggilan sekarang\", Anda menyetujui <2>Perjanjian Lisensi Pengguna Akhir (EULA)</2> kami",
+  "Element Call is temporarily not encrypted while we test scalability.": "Element Call sementara tidak dienkripsi selagi kami menguji skalabilitas."
 }
