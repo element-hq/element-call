@@ -28,7 +28,7 @@ import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
 import { useClient } from "../ClientContext";
 import { useMediaDevicesSwitcher } from "../livekit/useMediaDevicesSwitcher";
-import { DeviceChoices, UserChoices } from "../livekit/useLiveKit";
+import { UserChoices } from "../livekit/useLiveKit";
 import { useDefaultDevices } from "../settings/useSetting";
 
 export type MatrixInfo = {
@@ -96,7 +96,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
 
   // Only let the MediaDeviceSwitcher request permissions if a video track is already available.
   // Otherwise we would end up asking for permissions in usePreviewTracks and in useMediaDevicesSwitcher.
-  const requestPermissions = !!videoTrack;
+  const requestPermissions = !!audioTrack && !!videoTrack;
   const mediaSwitcher = useMediaDevicesSwitcher(
     undefined,
     {
@@ -110,27 +110,22 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
   const videoEl = React.useRef(null);
 
   // pretend the video is available until the initialization is over
-  const videoAvailableAndEndabled =
+  const videoAvailableAndEnabled =
     videoEnabled && (!!videoTrack || initializingVideo);
-  const audioAvailableAndEndabled =
+  const audioAvailableAndEnabled =
     audioEnabled && (!!videoTrack || initializingAudio);
 
   useEffect(() => {
     // Effect to update the settings
-    const createChoices = (
-      enabled: boolean,
-      deviceId?: string
-    ): DeviceChoices | undefined => {
-      return deviceId
-        ? {
-            selectedId: deviceId,
-            enabled,
-          }
-        : undefined;
-    };
     onUserChoicesChanged({
-      video: createChoices(videoAvailableAndEndabled, videoIn.selectedId),
-      audio: createChoices(audioAvailableAndEndabled, audioIn.selectedId),
+      video: {
+        selectedId: videoIn.selectedId,
+        enabled: videoAvailableAndEnabled,
+      },
+      audio: {
+        selectedId: audioIn.selectedId,
+        enabled: audioAvailableAndEnabled,
+      },
     });
   }, [
     onUserChoicesChanged,
@@ -138,8 +133,8 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     videoEnabled,
     audioIn.selectedId,
     audioEnabled,
-    videoAvailableAndEndabled,
-    audioAvailableAndEndabled,
+    videoAvailableAndEnabled,
+    audioAvailableAndEnabled,
   ]);
 
   useEffect(() => {
@@ -149,9 +144,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
         setInitializingVideo(false);
       }
       videoTrack?.getDeviceId().then((videoId) => {
-        if (videoId) {
-          videoIn.setSelected(videoId);
-        }
+        videoIn.setSelected(videoId ?? "default");
       });
     }
     if (!audioIn.selectedId || audioIn.selectedId == "") {
@@ -159,9 +152,12 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
         setInitializingAudio(false);
       }
       audioTrack?.getDeviceId().then((audioId) => {
-        if (audioId) {
-          audioIn.setSelected(audioId);
-        }
+        // getDeviceId() can return undefined for audio devices. This happens if
+        // the devices list uses "default" as the device id for the current
+        // device and the device set on the track also uses the deviceId
+        // "default". Check `normalizeDeviceId` in  `getDeviceId` for more
+        // details.
+        audioIn.setSelected(audioId ?? "default");
       });
     }
   }, [videoIn, audioIn, videoTrack, audioTrack]);
@@ -201,13 +197,13 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
         )}
         <div className={styles.previewButtons}>
           <MicButton
-            muted={!audioAvailableAndEndabled}
-            onPress={() => setAudioEnabled(!audioAvailableAndEndabled)}
+            muted={!audioAvailableAndEnabled}
+            onPress={() => setAudioEnabled(!audioAvailableAndEnabled)}
             disabled={!audioTrack}
           />
           <VideoButton
-            muted={!videoAvailableAndEndabled}
-            onPress={() => setVideoEnabled(!videoAvailableAndEndabled)}
+            muted={!videoAvailableAndEnabled}
+            onPress={() => setVideoEnabled(!videoAvailableAndEnabled)}
             disabled={!videoTrack}
           />
           <SettingsButton onPress={openSettings} />
