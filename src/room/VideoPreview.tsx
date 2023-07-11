@@ -103,7 +103,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
 
   // pretend the video is available until the initialization is over
   const videoAvailableAndEnabled = videoEnabled && !!videoTrack;
-  const audioAvailableAndEnabled = audioEnabled && !!videoTrack;
+  const audioAvailableAndEnabled = audioEnabled && !!audioTrack;
 
   useEffect(() => {
     // Effect to update the settings
