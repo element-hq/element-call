@@ -48,7 +48,7 @@ export async function getSFUConfigWithOpenID(
     }),
   });
   if (!res.ok) {
-    throw new Error("SFO Config fetch failed with status code " + res.status);
+    throw new Error("SFU Config fetch failed with status code " + res.status);
   }
   return await res.json();
 }
