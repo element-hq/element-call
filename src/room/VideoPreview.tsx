@@ -101,20 +101,16 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
 
   const videoEl = React.useRef(null);
 
-  // pretend the video is available until the initialization is over
-  const videoAvailableAndEnabled = videoEnabled && !!videoTrack;
-  const audioAvailableAndEnabled = audioEnabled && !!audioTrack;
-
   useEffect(() => {
     // Effect to update the settings
     onUserChoicesChanged({
       video: {
         selectedId: videoIn.selectedId,
-        enabled: videoAvailableAndEnabled,
+        enabled: videoEnabled && !!videoTrack,
       },
       audio: {
         selectedId: audioIn.selectedId,
-        enabled: audioAvailableAndEnabled,
+        enabled: audioEnabled && !!audioTrack,
       },
     });
   }, [
@@ -123,8 +119,8 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     videoEnabled,
     audioIn.selectedId,
     audioEnabled,
-    videoAvailableAndEnabled,
-    audioAvailableAndEnabled,
+    videoTrack,
+    audioTrack,
   ]);
 
   useEffect(() => {
@@ -182,12 +178,12 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
         <div className={styles.previewButtons}>
           <MicButton
             muted={!audioEnabled}
-            onPress={() => setAudioEnabled(!audioAvailableAndEnabled)}
+            onPress={() => setAudioEnabled(!audioEnabled)}
             disabled={!audioTrack}
           />
           <VideoButton
             muted={!videoEnabled}
-            onPress={() => setVideoEnabled(!videoAvailableAndEnabled)}
+            onPress={() => setVideoEnabled(!videoEnabled)}
             disabled={!videoTrack}
           />
           <SettingsButton onPress={openSettings} />
