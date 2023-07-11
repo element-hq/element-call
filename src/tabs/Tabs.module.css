@@ -26,7 +26,7 @@ limitations under the License.
   padding: 0;
   margin: 0 auto 24px auto;
   gap: 16px;
-  overflow: scroll;
+  overflow-y: auto;
   max-width: 100%;
 }
 
