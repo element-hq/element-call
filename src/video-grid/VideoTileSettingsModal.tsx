@@ -16,13 +16,13 @@ limitations under the License.
 
 import React, { ChangeEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { RemoteParticipant } from "livekit-client";
 
 import { FieldRow } from "../input/Input";
 import { Modal } from "../Modal";
 import styles from "./VideoTileSettingsModal.module.css";
 import { VolumeIcon } from "../button/VolumeIcon";
 import { ItemData } from "./VideoTile";
-import { RemoteParticipant } from "livekit-client";
 
 interface LocalVolumeProps {
   participant: RemoteParticipant;
@@ -78,7 +78,7 @@ export const VideoTileSettingsModal = ({ data, onClose, ...rest }: Props) => {
       {...rest}
     >
       <div className={styles.content}>
-        {<LocalVolume participant={data.sfuParticipant as RemoteParticipant} />}
+        <LocalVolume participant={data.sfuParticipant as RemoteParticipant} />
       </div>
     </Modal>
   );
