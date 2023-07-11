@@ -34,7 +34,9 @@ import styles from "./VideoTile.module.css";
 import { ReactComponent as MicIcon } from "../icons/Mic.svg";
 import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { useReactiveState } from "../useReactiveState";
-import { FullscreenButton } from "../button/Button";
+import { AudioButton, FullscreenButton } from "../button/Button";
+import { useModalTriggerState } from "../Modal";
+import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 
 export interface ItemData {
   id: string;
@@ -111,10 +113,14 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       onToggleFullscreen(data.id);
     }, [data, onToggleFullscreen]);
 
+    const {
+      modalState: videoTileSettingsModalState,
+      modalProps: videoTileSettingsModalProps,
+    } = useModalTriggerState();
+    const onOptionsPress = videoTileSettingsModalState.open;
+
     const toolbarButtons: JSX.Element[] = [];
     if (!sfuParticipant.isLocal) {
-      // TODO local volume option, which would also go here
-
       if (content === TileContent.ScreenShare) {
         toolbarButtons.push(
           <FullscreenButton
@@ -122,6 +128,16 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             className={styles.button}
             fullscreen={fullscreen}
             onPress={onFullscreen}
+          />
+        );
+      } else {
+        // Due to the LK SDK this sadly only works for user-media atm
+        toolbarButtons.push(
+          <AudioButton
+            key="localVolume"
+            className={styles.button}
+            volume={(sfuParticipant as RemoteParticipant).getVolume()}
+            onPress={onOptionsPress}
           />
         );
       }
@@ -182,6 +198,12 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
               : Track.Source.ScreenShare
           }
         />
+        {videoTileSettingsModalState.isOpen && !maximised && (
+          <VideoTileSettingsModal
+            {...videoTileSettingsModalProps}
+            data={data}
+          />
+        )}
       </animated.div>
     );
   }
