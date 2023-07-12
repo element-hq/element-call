@@ -14,8 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MatrixClient } from "matrix-js-sdk";
+import { GroupCall, IOpenIDToken, MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/src/logger";
+
+import { Config } from "../config/Config";
 
 export interface SFUConfig {
   url: string;
@@ -30,25 +32,84 @@ export type OpenIDClientParts = Pick<
 
 export async function getSFUConfigWithOpenID(
   client: OpenIDClientParts,
-  livekitServiceURL: string,
+  groupCall: GroupCall,
   roomName: string
 ): Promise<SFUConfig> {
   const openIdToken = await client.getOpenIdToken();
   logger.debug("Got openID token", openIdToken);
 
-  const res = await fetch(livekitServiceURL + "/sfu/get", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      room: roomName,
-      openid_token: openIdToken,
-      device_id: client.getDeviceId(),
-    }),
-  });
-  if (!res.ok) {
-    throw new Error("SFU Config fetch failed with status code " + res.status);
+  // if the call has a livekit service URL, try it.
+  if (groupCall.livekitServiceURL) {
+    try {
+      logger.info(`Trying to get JWT from ${groupCall.livekitServiceURL}...`);
+      const sfuConfig = await getLiveKitJWT(
+        client,
+        groupCall.livekitServiceURL,
+        roomName,
+        openIdToken
+      );
+
+      return sfuConfig;
+    } catch (e) {
+      logger.warn(
+        `Failed to get JWT from group call's configured URL of ${groupCall.livekitServiceURL}.`,
+        e
+      );
+    }
   }
-  return await res.json();
+
+  // otherwise, try our configured one and, if it works, update the call's service URL in the state event
+  // NB. This wuill update it for everyone so we may end up with multiple clients updating this when they
+  // join at similar times, but we don't have a huge number of options here.
+  const urlFromConf = Config.get().livekit!.livekit_service_url;
+  logger.info(`Trying livekit service URL from our config: ${urlFromConf}...`);
+  try {
+    const sfuConfig = await getLiveKitJWT(
+      client,
+      urlFromConf,
+      roomName,
+      openIdToken
+    );
+
+    logger.info(`Updating call livekit service URL with: ${urlFromConf}...`);
+    try {
+      await groupCall.updateLivekitServiceURL(urlFromConf);
+    } catch (e) {
+      logger.warn(
+        `Failed to update call livekit service URL: continuing anyway.`
+      );
+    }
+
+    return sfuConfig;
+  } catch (e) {
+    logger.error("Failed to get JWT from URL defined in Config.", e);
+    throw e;
+  }
+}
+
+async function getLiveKitJWT(
+  client: OpenIDClientParts,
+  livekitServiceURL: string,
+  roomName: string,
+  openIDToken: IOpenIDToken
+): Promise<SFUConfig> {
+  try {
+    const res = await fetch(livekitServiceURL + "/sfu/get", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        room: roomName,
+        openid_token: openIDToken,
+        device_id: client.getDeviceId(),
+      }),
+    });
+    if (!res.ok) {
+      throw new Error("SFU Config fetch failed with status code " + res.status);
+    }
+    return await res.json();
+  } catch (e) {
+    throw new Error("SFU Config fetch failed with exception " + e);
+  }
 }
