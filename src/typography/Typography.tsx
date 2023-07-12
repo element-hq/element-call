@@ -46,7 +46,7 @@ export const Headline = forwardRef<HTMLHeadingElement, TypographyProps>(
       {
         ...rest,
         className: classNames(
-          styles[fontWeight],
+          styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
         ),
@@ -74,7 +74,7 @@ export const Title = forwardRef<HTMLHeadingElement, TypographyProps>(
       {
         ...rest,
         className: classNames(
-          styles[fontWeight],
+          styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
         ),
@@ -102,7 +102,7 @@ export const Subtitle = forwardRef<HTMLParagraphElement, TypographyProps>(
       {
         ...rest,
         className: classNames(
-          styles[fontWeight],
+          styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
         ),
@@ -130,7 +130,7 @@ export const Body = forwardRef<HTMLParagraphElement, TypographyProps>(
       {
         ...rest,
         className: classNames(
-          styles[fontWeight],
+          styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
         ),
@@ -159,7 +159,7 @@ export const Caption = forwardRef<HTMLParagraphElement, TypographyProps>(
         ...rest,
         className: classNames(
           styles.caption,
-          styles[fontWeight],
+          styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
         ),
@@ -188,7 +188,7 @@ export const Micro = forwardRef<HTMLParagraphElement, TypographyProps>(
         ...rest,
         className: classNames(
           styles.micro,
-          styles[fontWeight],
+          styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
         ),
@@ -219,6 +219,8 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
     },
     ref
   ) => {
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     const Component: string | RouterLink = as || (to ? RouterLink : "a");
     let externalLinkProps: { href: string; target: string; rel: string };
 
@@ -233,12 +235,16 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
     return createElement(
       Component,
       {
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         ...externalLinkProps,
         ...rest,
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+        // @ts-ignore
         to: to,
         className: classNames(
           styles[color],
-          styles[fontWeight],
+          styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
           className
         ),

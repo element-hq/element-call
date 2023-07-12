@@ -32,7 +32,7 @@ export function TabContainer<T extends object>(
   props: TabContainerProps<T>
 ): JSX.Element {
   const state = useTabListState<T>(props);
-  const ref = useRef<HTMLUListElement>();
+  const ref = useRef<HTMLUListElement>(null);
   const { tabListProps } = useTabList(props, state, ref);
   return (
     <div className={classNames(styles.tabContainer, props.className)}>
@@ -53,7 +53,7 @@ interface TabProps<T> {
 
 function Tab<T>({ item, state }: TabProps<T>): JSX.Element {
   const { key, rendered } = item;
-  const ref = useRef<HTMLLIElement>();
+  const ref = useRef<HTMLLIElement>(null);
   const { tabProps } = useTab({ key }, state, ref);
 
   return (
@@ -75,7 +75,7 @@ interface TabPanelProps<T> extends AriaTabPanelProps {
 }
 
 function TabPanel<T>({ state, ...props }: TabPanelProps<T>): JSX.Element {
-  const ref = useRef<HTMLDivElement>();
+  const ref = useRef<HTMLDivElement>(null);
   const { tabPanelProps } = useTabPanel(props, state, ref);
   return (
     <div {...tabPanelProps} ref={ref} className={styles.tabPanel}>

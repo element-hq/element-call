@@ -46,7 +46,7 @@ export const PopoverMenuTrigger = forwardRef<
     buttonRef
   );
 
-  const popoverRef = useRef();
+  const popoverRef = useRef(null);
 
   const { overlayProps } = useOverlayPosition({
     targetRef: buttonRef,

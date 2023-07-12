@@ -32,7 +32,7 @@ const LocalVolume: React.FC<LocalVolumeProps> = ({
   participant,
 }: LocalVolumeProps) => {
   const [localVolume, setLocalVolume] = useState<number>(
-    participant.getVolume()
+    participant.getVolume() ?? 0
   );
 
   const onLocalVolumeChanged = (event: ChangeEvent<HTMLInputElement>) => {

@@ -34,8 +34,8 @@ import { useDefaultDevices } from "../settings/useSetting";
 export type MatrixInfo = {
   displayName: string;
   avatarUrl: string;
+  roomId: string;
   roomName: string;
-  roomIdOrAlias: string;
 };
 
 interface Props {
@@ -209,7 +209,7 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
           <SettingsButton onPress={openSettings} />
         </div>
       </>
-      {settingsModalState.isOpen && (
+      {settingsModalState.isOpen && client && (
         <SettingsModal
           client={client}
           mediaDevicesSwitcher={mediaSwitcher}

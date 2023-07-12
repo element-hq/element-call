@@ -17,7 +17,7 @@ export type DeviceChoices = {
 
 export function useLiveKit(
   userChoices: UserChoices,
-  sfuConfig: SFUConfig
+  sfuConfig?: SFUConfig
 ): Room | undefined {
   const roomOptions = useMemo((): RoomOptions => {
     const options = defaultLiveKitOptions;
@@ -33,8 +33,8 @@ export function useLiveKit(
   }, [userChoices.video, userChoices.audio]);
 
   const { room } = useLiveKitRoom({
-    token: sfuConfig.jwt,
-    serverUrl: sfuConfig.url,
+    token: sfuConfig?.jwt,
+    serverUrl: sfuConfig?.url,
     audio: userChoices.audio?.enabled ?? false,
     video: userChoices.video?.enabled ?? false,
     options: roomOptions,

@@ -74,7 +74,7 @@ export const TooltipTrigger = forwardRef<HTMLElement, TooltipTriggerProps>(
     const tooltipTriggerProps = { delay: 250, ...rest };
     const tooltipState = useTooltipTriggerState(tooltipTriggerProps);
     const triggerRef = useObjectRef<HTMLElement>(ref);
-    const overlayRef = useRef();
+    const overlayRef = useRef<HTMLDivElement>(null);
     const { triggerProps, tooltipProps } = useTooltipTrigger(
       tooltipTriggerProps,
       tooltipState,

@@ -271,10 +271,19 @@ export function NewVideoGrid<T>({
   // gesture using the much more sensible ref-based method.
   const onTileDrag = (
     tileId: string,
+
     {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       tap,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       initial: [initialX, initialY],
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       delta: [dx, dy],
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       last,
     }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
   ) => {
@@ -325,6 +334,8 @@ export function NewVideoGrid<T>({
   const scrollOffset = useRef(0);
 
   useScroll(
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     ({ xy: [, y], delta: [, dy] }) => {
       scrollOffset.current = y;
 

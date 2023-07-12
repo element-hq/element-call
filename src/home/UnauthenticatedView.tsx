@@ -79,15 +79,21 @@ export const UnauthenticatedView: FC = () => {
           true
         );
 
-        let roomIdOrAlias: string;
+        let roomAlias: string;
         try {
-          [roomIdOrAlias] = await createRoom(client, roomName, ptt);
+          [roomAlias] = await createRoom(client, roomName, ptt);
         } catch (error) {
+          if (!setClient) {
+            throw error;
+          }
+
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           if (error.errcode === "M_ROOM_IN_USE") {
             setOnFinished(() => {
-              setClient(client, session);
+              setClient({ client, session });
               const aliasLocalpart = roomAliasLocalpartFromRoomName(roomName);
-              const [, serverName] = client.getUserId().split(":");
+              const [, serverName] = client.getUserId()!.split(":");
               history.push(`/room/#${aliasLocalpart}:${serverName}`);
             });
 
@@ -100,8 +106,12 @@ export const UnauthenticatedView: FC = () => {
         }
 
         // Only consider the registration successful if we managed to create the room, too
-        setClient(client, session);
-        history.push(`/room/${roomIdOrAlias}`);
+        if (!setClient) {
+          throw new Error("setClient is undefined");
+        }
+
+        setClient({ client, session });
+        history.push(`/room/${roomAlias}`);
       }
 
       submit().catch((error) => {
@@ -204,7 +214,7 @@ export const UnauthenticatedView: FC = () => {
           </Body>
         </footer>
       </div>
-      {modalState.isOpen && (
+      {modalState.isOpen && onFinished && (
         <JoinExistingCallModal onJoin={onFinished} {...modalProps} />
       )}
     </>
