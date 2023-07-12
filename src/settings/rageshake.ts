@@ -79,11 +79,17 @@ class ConsoleLogger extends EventEmitter {
       warn: "W",
       error: "E",
     };
-    Object.keys(consoleFunctionsToLevels).forEach((fnName) => {
-      const level = consoleFunctionsToLevels[fnName];
-      const originalFn = consoleObj[fnName].bind(consoleObj);
-      this.originalFunctions[fnName] = originalFn;
-      consoleObj[fnName] = (...args) => {
+
+    Object.entries(consoleFunctionsToLevels).forEach(([name, level]) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      const originalFn = consoleObj[name].bind(consoleObj);
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      this.originalFunctions[name] = originalFn;
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      consoleObj[name] = (...args) => {
         this.log(level, ...args);
         originalFn(...args);
       };
@@ -147,9 +153,9 @@ class ConsoleLogger extends EventEmitter {
 // A class which stores log lines in an IndexedDB instance.
 class IndexedDBLogStore {
   private index = 0;
-  private db: IDBDatabase = null;
-  private flushPromise: Promise<void> = null;
-  private flushAgainPromise: Promise<void> = null;
+  private db?: IDBDatabase;
+  private flushPromise?: Promise<void>;
+  private flushAgainPromise?: Promise<void>;
   private id: string;
 
   constructor(
@@ -175,7 +181,7 @@ class IndexedDBLogStore {
       };
 
       req.onerror = () => {
-        const err = "Failed to open log database: " + req.error.name;
+        const err = "Failed to open log database: " + req?.error?.name;
         logger.error(err);
         reject(new Error(err));
       };
@@ -264,7 +270,7 @@ class IndexedDBLogStore {
           return this.flush();
         })
         .then(() => {
-          this.flushAgainPromise = null;
+          this.flushAgainPromise = undefined;
         });
       return this.flushAgainPromise;
     }
@@ -288,13 +294,13 @@ class IndexedDBLogStore {
       };
       txn.onerror = (event) => {
         logger.error("Failed to flush logs : ", event);
-        reject(new Error("Failed to write logs: " + txn.error.message));
+        reject(new Error("Failed to write logs: " + txn?.error?.message));
       };
       objStore.add(this.generateLogEntry(lines));
       const lastModStore = txn.objectStore("logslastmod");
       lastModStore.put(this.generateLastModifiedTime());
     }).then(() => {
-      this.flushPromise = null;
+      this.flushPromise = undefined;
     });
     return this.flushPromise;
   };
@@ -311,11 +317,14 @@ class IndexedDBLogStore {
    */
   public async consume(): Promise<LogEntry[]> {
     const db = this.db;
+    if (!db) {
+      return Promise.reject(new Error("No connected database"));
+    }
 
     // Returns: a string representing the concatenated logs for this ID.
     // Stops adding log fragments when the size exceeds maxSize
     function fetchLogs(id: string, maxSize: number): Promise<string> {
-      const objectStore = db
+      const objectStore = db!
         .transaction("logs", "readonly")
         .objectStore("logs");
 
@@ -325,7 +334,7 @@ class IndexedDBLogStore {
           .openCursor(IDBKeyRange.only(id), "prev");
         let lines = "";
         query.onerror = () => {
-          reject(new Error("Query failed: " + query.error.message));
+          reject(new Error("Query failed: " + query?.error?.message));
         };
         query.onsuccess = () => {
           const cursor = query.result;
@@ -346,7 +355,7 @@ class IndexedDBLogStore {
     // Returns: A sorted array of log IDs. (newest first)
     function fetchLogIds(): Promise<string[]> {
       // To gather all the log IDs, query for all records in logslastmod.
-      const o = db
+      const o = db!
         .transaction("logslastmod", "readonly")
         .objectStore("logslastmod");
       return selectQuery<{ ts: number; id: string }>(o, undefined, (cursor) => {
@@ -366,7 +375,7 @@ class IndexedDBLogStore {
 
     function deleteLogs(id: number): Promise<void> {
       return new Promise<void>((resolve, reject) => {
-        const txn = db.transaction(["logs", "logslastmod"], "readwrite");
+        const txn = db!.transaction(["logs", "logslastmod"], "readwrite");
         const o = txn.objectStore("logs");
         // only load the key path, not the data which may be huge
         const query = o.index("id").openKeyCursor(IDBKeyRange.only(id));
@@ -384,7 +393,7 @@ class IndexedDBLogStore {
         txn.onerror = () => {
           reject(
             new Error(
-              "Failed to delete logs for " + `'${id}' : ${txn.error.message}`
+              "Failed to delete logs for " + `'${id}' : ${txn?.error?.message}`
             )
           );
         };
@@ -395,7 +404,7 @@ class IndexedDBLogStore {
     }
 
     const allLogIds = await fetchLogIds();
-    let removeLogIds = [];
+    let removeLogIds: number[] = [];
     const logs: LogEntry[] = [];
     let size = 0;
     for (let i = 0; i < allLogIds.length; i++) {
@@ -414,7 +423,7 @@ class IndexedDBLogStore {
       if (size >= MAX_LOG_SIZE) {
         // the remaining log IDs should be removed. If we go out of
         // bounds this is just []
-        removeLogIds = allLogIds.slice(i + 1);
+        removeLogIds = allLogIds.slice(i + 1).map((id) => parseInt(id, 10));
         break;
       }
     }
@@ -462,14 +471,14 @@ class IndexedDBLogStore {
  */
 function selectQuery<T>(
   store: IDBObjectStore,
-  keyRange: IDBKeyRange,
+  keyRange: IDBKeyRange | undefined,
   resultMapper: (cursor: IDBCursorWithValue) => T
 ): Promise<T[]> {
   const query = store.openCursor(keyRange);
   return new Promise((resolve, reject) => {
-    const results = [];
+    const results: T[] = [];
     query.onerror = () => {
-      reject(new Error("Query failed: " + query.error.message));
+      reject(new Error("Query failed: " + query?.error?.message));
     };
     // collect results
     query.onsuccess = () => {

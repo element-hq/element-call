@@ -136,7 +136,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           <AudioButton
             key="localVolume"
             className={styles.button}
-            volume={(sfuParticipant as RemoteParticipant).getVolume()}
+            volume={(sfuParticipant as RemoteParticipant).getVolume() ?? 0}
             onPress={onOptionsPress}
           />
         );

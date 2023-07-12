@@ -39,7 +39,7 @@ export function LobbyView(props: Props) {
   const { t } = useTranslation();
   useLocationNavigation();
 
-  const joinCallButtonRef = useRef<HTMLButtonElement>();
+  const joinCallButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
     if (joinCallButtonRef.current) {
       joinCallButtonRef.current.focus();
@@ -81,7 +81,7 @@ export function LobbyView(props: Props) {
             <Body>Or</Body>
             <CopyButton
               variant="secondaryCopy"
-              value={getRoomUrl(props.matrixInfo.roomName)}
+              value={getRoomUrl(props.matrixInfo.roomId)}
               className={styles.copyButton}
               copiedMessage={t("Call link copied")}
               data-testid="lobby_inviteLink"

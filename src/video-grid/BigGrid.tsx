@@ -55,7 +55,7 @@ export interface Grid {
   cells: Cell[];
 }
 
-interface SparseGrid {
+export interface SparseGrid {
   columns: number;
   /**
    * The cells of the grid, in left-to-right top-to-bottom order.
@@ -803,7 +803,7 @@ export function setTileSize<G extends Grid | SparseGrid>(
 
     const result: SparseGrid = gridWithoutTile;
     placeTile(to, toEnd, result);
-    return fillGaps(result, true, (i) => inArea(i, to, toEnd, g)) as G;
+    return fillGaps(result, true, (i: number) => inArea(i, to, toEnd, g)) as G;
   } else if (toWidth >= fromWidth && toHeight >= fromHeight) {
     // The tile is growing, which might be able to happen in-place
     const to = findNearestCell(
@@ -1054,7 +1054,8 @@ export const BigGrid: Layout<Grid> = {
   emptyState: { columns: 4, cells: [] },
   updateTiles,
   updateBounds,
-  getTiles: <T,>(g) => g.cells.filter((c) => c.origin).map((c) => c!.item as T),
+  getTiles: <T,>(g: Grid) =>
+    g.cells.filter((c) => c.origin).map((c) => c!.item as T),
   canDragTile: () => true,
   dragTile,
   toggleFocus: cycleTileSize,

@@ -23,28 +23,32 @@ import { Session } from "../ClientContext";
 import { Config } from "../config/Config";
 
 export const useInteractiveRegistration = (): {
-  privacyPolicyUrl: string;
-  recaptchaKey: string;
+  privacyPolicyUrl?: string;
+  recaptchaKey?: string;
   register: (
     username: string,
     password: string,
     displayName: string,
     recaptchaResponse: string,
-    passwordlessUser?: boolean
+    passwordlessUser: boolean
   ) => Promise<[MatrixClient, Session]>;
 } => {
-  const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState<string>();
-  const [recaptchaKey, setRecaptchaKey] = useState<string>();
+  const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState<string | undefined>(
+    undefined
+  );
+  const [recaptchaKey, setRecaptchaKey] = useState<string | undefined>(
+    undefined
+  );
 
   const authClient = useRef<MatrixClient>();
   if (!authClient.current) {
     authClient.current = createClient({
-      baseUrl: Config.defaultHomeserverUrl(),
+      baseUrl: Config.defaultHomeserverUrl()!,
     });
   }
 
   useEffect(() => {
-    authClient.current.registerRequest({}).catch((error) => {
+    authClient.current!.registerRequest({}).catch((error) => {
       setPrivacyPolicyUrl(
         error.data?.params["m.login.terms"]?.policies?.privacy_policy?.en?.url
       );
@@ -58,12 +62,12 @@ export const useInteractiveRegistration = (): {
       password: string,
       displayName: string,
       recaptchaResponse: string,
-      passwordlessUser?: boolean
+      passwordlessUser: boolean
     ): Promise<[MatrixClient, Session]> => {
       const interactiveAuth = new InteractiveAuth({
-        matrixClient: authClient.current,
+        matrixClient: authClient.current!,
         doRequest: (auth) =>
-          authClient.current.registerRequest({
+          authClient.current!.registerRequest({
             username,
             password,
             auth: auth || undefined,
@@ -84,7 +88,9 @@ export const useInteractiveRegistration = (): {
             });
           }
         },
-        requestEmailToken: null,
+        requestEmailToken: (...args) => {
+          return Promise.resolve({ sid: "dummy" });
+        },
       });
 
       // XXX: This claims to return an IAuthData which contains none of these
@@ -95,7 +101,7 @@ export const useInteractiveRegistration = (): {
 
       const client = await initClient(
         {
-          baseUrl: Config.defaultHomeserverUrl(),
+          baseUrl: Config.defaultHomeserverUrl()!,
           accessToken: access_token,
           userId: user_id,
           deviceId: device_id,
@@ -117,7 +123,7 @@ export const useInteractiveRegistration = (): {
         session.tempPassword = password;
       }
 
-      const user = client.getUser(client.getUserId());
+      const user = client.getUser(client.getUserId()!)!;
       user.setRawDisplayName(displayName);
       user.setDisplayName(displayName);
 

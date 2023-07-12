@@ -30,7 +30,7 @@ import { Trans, useTranslation } from "react-i18next";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
-import { useClient } from "../ClientContext";
+import { useClientLegacy } from "../ClientContext";
 import { useInteractiveRegistration } from "./useInteractiveRegistration";
 import styles from "./LoginPage.module.css";
 import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
@@ -45,9 +45,10 @@ export const RegisterPage: FC = () => {
   const { t } = useTranslation();
   usePageTitle(t("Register"));
 
-  const { loading, isAuthenticated, isPasswordlessUser, client, setClient } =
-    useClient();
-  const confirmPasswordRef = useRef<HTMLInputElement>();
+  const { loading, authenticated, passwordlessUser, client, setClient } =
+    useClientLegacy();
+
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
   const history = useHistory();
   const location = useLocation();
   const [registering, setRegistering] = useState(false);
@@ -75,10 +76,15 @@ export const RegisterPage: FC = () => {
           userName,
           password,
           userName,
-          recaptchaResponse
+          recaptchaResponse,
+          passwordlessUser
         );
 
-        if (client && isPasswordlessUser) {
+        if (!client || !client.groupCallEventHandler || !setClient) {
+          return;
+        }
+
+        if (passwordlessUser) {
           // Migrate the user's rooms
           for (const groupCall of client.groupCallEventHandler.groupCalls.values()) {
             const roomId = groupCall.room.roomId;
@@ -86,7 +92,11 @@ export const RegisterPage: FC = () => {
             try {
               await newClient.joinRoom(roomId);
             } catch (error) {
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
               if (error.errcode === "M_LIMIT_EXCEEDED") {
+                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+                // @ts-ignore
                 await sleep(error.data.retry_after_ms);
                 await newClient.joinRoom(roomId);
               } else {
@@ -97,13 +107,17 @@ export const RegisterPage: FC = () => {
           }
         }
 
-        setClient(newClient, session);
+        setClient({ client: newClient, session });
         PosthogAnalytics.instance.eventSignup.cacheSignupEnd(new Date());
       };
 
       submit()
         .then(() => {
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           if (location.state?.from) {
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             history.push(location.state?.from);
           } else {
             history.push("/");
@@ -119,7 +133,7 @@ export const RegisterPage: FC = () => {
       register,
       location,
       history,
-      isPasswordlessUser,
+      passwordlessUser,
       reset,
       execute,
       client,
@@ -136,10 +150,10 @@ export const RegisterPage: FC = () => {
   }, [password, passwordConfirmation, t]);
 
   useEffect(() => {
-    if (!loading && isAuthenticated && !isPasswordlessUser && !registering) {
+    if (!loading && authenticated && !passwordlessUser && !registering) {
       history.push("/");
     }
-  }, [loading, history, isAuthenticated, isPasswordlessUser, registering]);
+  }, [loading, history, authenticated, passwordlessUser, registering]);
 
   if (loading) {
     return <LoadingView />;

@@ -25,13 +25,13 @@ import { Body } from "../typography/Typography";
 
 interface Props extends Omit<ModalProps, "title" | "children"> {
   rageshakeRequestId: string;
-  roomIdOrAlias: string;
+  roomId: string;
   onClose: () => void;
 }
 
 export const RageshakeRequestModal: FC<Props> = ({
   rageshakeRequestId,
-  roomIdOrAlias,
+  roomId,
   ...rest
 }) => {
   const { t } = useTranslation();
@@ -57,7 +57,7 @@ export const RageshakeRequestModal: FC<Props> = ({
               submitRageshake({
                 sendLogs: true,
                 rageshakeRequestId,
-                roomId: roomIdOrAlias, // Possibly not a room ID, but oh well
+                roomId,
               })
             }
             disabled={sending}

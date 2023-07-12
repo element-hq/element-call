@@ -20,9 +20,9 @@ import {
   useEffect,
   useState,
   createContext,
-  useMemo,
   useContext,
   useRef,
+  useMemo,
 } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
@@ -31,9 +31,9 @@ import { useTranslation } from "react-i18next";
 
 import { ErrorView } from "./FullScreenView";
 import {
-  initClient,
   CryptoStoreIntegrityError,
   fallbackICEServerAllowed,
+  initClient,
 } from "./matrix-utils";
 import { widget } from "./widget";
 import {
@@ -47,48 +47,100 @@ import { Config } from "./config/Config";
 declare global {
   interface Window {
     matrixclient: MatrixClient;
-    isPasswordlessUser: boolean;
+    passwordlessUser: boolean;
   }
 }
 
-export interface Session {
-  user_id: string;
-  device_id: string;
-  access_token: string;
+export type ClientState = ValidClientState | ErrorState;
+
+export type ValidClientState = {
+  state: "valid";
+  authenticated?: AuthenticatedClient;
+  setClient: (params?: SetClientParams) => void;
+};
+
+export type AuthenticatedClient = {
+  client: MatrixClient;
+  isPasswordlessUser: boolean;
+  changePassword: (password: string) => Promise<void>;
+  logout: () => void;
+};
+
+export type ErrorState = {
+  state: "error";
+  error: Error;
+};
+
+export type SetClientParams = {
+  client: MatrixClient;
+  session: Session;
+};
+
+const ClientContext = createContext<ClientState | undefined>(undefined);
+
+export const useClientState = () => useContext(ClientContext);
+
+export function useClient(): {
+  client?: MatrixClient;
+  setClient?: (params?: SetClientParams) => void;
+} {
+  let client;
+  let setClient;
+
+  const clientState = useClientState();
+  if (clientState?.state === "valid") {
+    client = clientState.authenticated?.client;
+    setClient = clientState.setClient;
+  }
+
+  return { client, setClient };
+}
+
+// Plain representation of the `ClientContext` as a helper for old components that expected an object with multiple fields.
+export function useClientLegacy(): {
+  client?: MatrixClient;
+  setClient?: (params?: SetClientParams) => void;
   passwordlessUser: boolean;
-  tempPassword?: string;
+  loading: boolean;
+  authenticated: boolean;
+  logout?: () => void;
+  error?: Error;
+} {
+  const clientState = useClientState();
+
+  let client;
+  let setClient;
+  let passwordlessUser = false;
+  let loading = true;
+  let error;
+  let authenticated = false;
+  let logout;
+
+  if (clientState?.state === "valid") {
+    client = clientState.authenticated?.client;
+    setClient = clientState.setClient;
+    passwordlessUser = clientState.authenticated?.isPasswordlessUser ?? false;
+    loading = false;
+    authenticated = client !== undefined;
+    logout = clientState.authenticated?.logout;
+  } else if (clientState?.state === "error") {
+    error = clientState.error;
+    loading = false;
+  }
+
+  return {
+    client,
+    setClient,
+    passwordlessUser,
+    loading,
+    authenticated,
+    logout,
+    error,
+  };
 }
 
 const loadChannel =
   "BroadcastChannel" in window ? new BroadcastChannel("load") : null;
-
-const loadSession = (): Session => {
-  const data = localStorage.getItem("matrix-auth-store");
-  if (data) return JSON.parse(data);
-  return null;
-};
-const saveSession = (session: Session) =>
-  localStorage.setItem("matrix-auth-store", JSON.stringify(session));
-const clearSession = () => localStorage.removeItem("matrix-auth-store");
-
-interface ClientState {
-  loading: boolean;
-  isAuthenticated: boolean;
-  isPasswordlessUser: boolean;
-  client: MatrixClient;
-  userName: string;
-  changePassword: (password: string) => Promise<void>;
-  logout: () => void;
-  setClient: (client: MatrixClient, session: Session) => void;
-  error?: Error;
-}
-
-const ClientContext = createContext<ClientState>(null);
-
-type ClientProviderState = Omit<
-  ClientState,
-  "changePassword" | "logout" | "setClient"
-> & { error?: Error };
 
 interface Props {
   children: JSX.Element;
@@ -96,135 +148,40 @@ interface Props {
 
 export const ClientProvider: FC<Props> = ({ children }) => {
   const history = useHistory();
-  const initializing = useRef(false);
-  const [
-    { loading, isAuthenticated, isPasswordlessUser, client, userName, error },
-    setState,
-  ] = useState<ClientProviderState>({
-    loading: true,
-    isAuthenticated: false,
-    isPasswordlessUser: false,
-    client: undefined,
-    userName: null,
-    error: undefined,
-  });
 
+  const [initClientState, setInitClientState] = useState<
+    InitResult | undefined
+  >(undefined);
+
+  const initializing = useRef(false);
   useEffect(() => {
     // In case the component is mounted, unmounted, and remounted quickly (as
     // React does in strict mode), we need to make sure not to doubly initialize
-    // the client
+    // the client.
     if (initializing.current) return;
     initializing.current = true;
 
-    const init = async (): Promise<
-      Pick<ClientProviderState, "client" | "isPasswordlessUser">
-    > => {
-      if (widget) {
-        // We're inside a widget, so let's engage *matryoshka mode*
-        logger.log("Using a matryoshka client");
-        return {
-          client: await widget.client,
-          isPasswordlessUser: false,
-        };
-      } else {
-        // We're running as a standalone application
-        try {
-          const session = loadSession();
-          if (!session) return { client: undefined, isPasswordlessUser: false };
-
-          logger.log("Using a standalone client");
-
-          /* eslint-disable camelcase */
-          const { user_id, device_id, access_token, passwordlessUser } =
-            session;
-
-          const livekit = Config.get().livekit;
-          const foci = livekit
-            ? [
-                {
-                  livekitServiceUrl: livekit.livekit_service_url,
-                },
-              ]
-            : undefined;
-
-          try {
-            return {
-              client: await initClient(
-                {
-                  baseUrl: Config.defaultHomeserverUrl(),
-                  accessToken: access_token,
-                  userId: user_id,
-                  deviceId: device_id,
-                  fallbackICEServerAllowed: fallbackICEServerAllowed,
-                  foci,
-                },
-                true
-              ),
-              isPasswordlessUser: passwordlessUser,
-            };
-          } catch (err) {
-            if (err instanceof CryptoStoreIntegrityError) {
-              // We can't use this session anymore, so let's log it out
-              try {
-                const client = await initClient(
-                  {
-                    baseUrl: Config.defaultHomeserverUrl(),
-                    accessToken: access_token,
-                    userId: user_id,
-                    deviceId: device_id,
-                    fallbackICEServerAllowed: fallbackICEServerAllowed,
-                    foci,
-                  },
-                  false // Don't need the crypto store just to log out
-                );
-                await client.logout(true);
-              } catch (err_) {
-                logger.warn(
-                  "The previous session was lost, and we couldn't log it out, " +
-                    "either"
-                );
-              }
-            }
-            throw err;
-          }
-          /* eslint-enable camelcase */
-        } catch (err) {
-          clearSession();
-          throw err;
+    loadClient()
+      .then((maybeClient) => {
+        if (!maybeClient) {
+          logger.error("Failed to initialize client");
+          return;
         }
-      }
-    };
 
-    init()
-      .then(({ client, isPasswordlessUser }) => {
-        setState({
-          client,
-          loading: false,
-          isAuthenticated: Boolean(client),
-          isPasswordlessUser,
-          userName: client?.getUserIdLocalpart(),
-          error: undefined,
-        });
+        setInitClientState(maybeClient);
       })
-      .catch((err) => {
-        logger.error(err);
-        setState({
-          client: undefined,
-          loading: false,
-          isAuthenticated: false,
-          isPasswordlessUser: false,
-          userName: null,
-          error: undefined,
-        });
-      })
+      .catch((err) => logger.error(err))
       .finally(() => (initializing.current = false));
   }, []);
 
   const changePassword = useCallback(
     async (password: string) => {
-      const { tempPassword, ...session } = loadSession();
+      const session = loadSession();
+      if (!initClientState?.client || !session) {
+        return;
+      }
 
-      await client.setPassword(
+      await initClientState.client.setPassword(
         {
           type: "m.login.password",
           identifier: {
@@ -232,73 +189,56 @@ export const ClientProvider: FC<Props> = ({ children }) => {
             user: session.user_id,
           },
           user: session.user_id,
-          password: tempPassword,
+          password: session.tempPassword,
         },
         password
       );
 
       saveSession({ ...session, passwordlessUser: false });
 
-      setState({
-        client,
-        loading: false,
-        isAuthenticated: true,
-        isPasswordlessUser: false,
-        userName: client.getUserIdLocalpart(),
-        error: undefined,
+      setInitClientState({
+        client: initClientState.client,
+        passwordlessUser: false,
       });
     },
-    [client]
+    [initClientState?.client]
   );
 
   const setClient = useCallback(
-    (newClient: MatrixClient, session: Session) => {
-      if (client && client !== newClient) {
-        client.stopClient();
+    (clientParams?: SetClientParams) => {
+      const oldClient = initClientState?.client;
+      const newClient = clientParams?.client;
+      if (oldClient && oldClient !== newClient) {
+        oldClient.stopClient();
       }
 
-      if (newClient) {
-        saveSession(session);
-
-        setState({
-          client: newClient,
-          loading: false,
-          isAuthenticated: true,
-          isPasswordlessUser: session.passwordlessUser,
-          userName: newClient.getUserIdLocalpart(),
-          error: undefined,
+      if (clientParams) {
+        saveSession(clientParams.session);
+        setInitClientState({
+          client: clientParams.client,
+          passwordlessUser: clientParams.session.passwordlessUser,
         });
       } else {
         clearSession();
-
-        setState({
-          client: undefined,
-          loading: false,
-          isAuthenticated: false,
-          isPasswordlessUser: false,
-          userName: null,
-          error: undefined,
-        });
+        setInitClientState(undefined);
       }
     },
-    [client]
+    [initClientState?.client]
   );
 
   const logout = useCallback(async () => {
+    const client = initClientState?.client;
+    if (!client) {
+      return;
+    }
+
     await client.logout(true);
     await client.clearStores();
     clearSession();
-    setState({
-      client: undefined,
-      loading: false,
-      isAuthenticated: false,
-      isPasswordlessUser: true,
-      userName: "",
-      error: undefined,
-    });
+    setInitClientState(undefined);
     history.push("/");
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
-  }, [history, client]);
+  }, [history, initClientState?.client]);
 
   const { t } = useTranslation();
 
@@ -310,61 +250,144 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     if (!widget) loadChannel?.postMessage({});
   }, []);
 
+  const [alreadyOpenedErr, setAlreadyOpenedErr] = useState<Error | undefined>(
+    undefined
+  );
   useEventTarget(
     loadChannel,
     "message",
     useCallback(() => {
-      client?.stopClient();
-
-      setState((prev) => ({
-        ...prev,
-        error: translatedError(
-          "This application has been opened in another tab.",
-          t
-        ),
-      }));
-    }, [client, setState, t])
+      initClientState?.client.stopClient();
+      setAlreadyOpenedErr(
+        translatedError("This application has been opened in another tab.", t)
+      );
+    }, [initClientState?.client, setAlreadyOpenedErr, t])
   );
 
-  const context = useMemo<ClientState>(
-    () => ({
-      loading,
-      isAuthenticated,
-      isPasswordlessUser,
-      client,
-      changePassword,
-      logout,
-      userName,
-      setClient,
-      error: undefined,
-    }),
-    [
-      loading,
-      isAuthenticated,
-      isPasswordlessUser,
-      client,
-      changePassword,
-      logout,
-      userName,
-      setClient,
-    ]
-  );
+  const state: ClientState = useMemo(() => {
+    if (alreadyOpenedErr) {
+      return { state: "error", error: alreadyOpenedErr };
+    }
+
+    let authenticated = undefined;
+    if (initClientState) {
+      authenticated = {
+        client: initClientState.client,
+        isPasswordlessUser: initClientState.passwordlessUser,
+        changePassword,
+        logout,
+      };
+    }
+
+    return { state: "valid", authenticated, setClient };
+  }, [alreadyOpenedErr, changePassword, initClientState, logout, setClient]);
 
   useEffect(() => {
-    window.matrixclient = client;
-    window.isPasswordlessUser = isPasswordlessUser;
+    if (!initClientState) {
+      return;
+    }
+
+    window.matrixclient = initClientState.client;
+    window.passwordlessUser = initClientState.passwordlessUser;
 
     if (PosthogAnalytics.hasInstance())
       PosthogAnalytics.instance.onLoginStatusChanged();
-  }, [client, isPasswordlessUser]);
+  }, [initClientState]);
 
-  if (error) {
-    return <ErrorView error={error} />;
+  if (alreadyOpenedErr) {
+    return <ErrorView error={alreadyOpenedErr} />;
   }
 
   return (
-    <ClientContext.Provider value={context}>{children}</ClientContext.Provider>
+    <ClientContext.Provider value={state}>{children}</ClientContext.Provider>
   );
 };
 
-export const useClient = () => useContext(ClientContext);
+type InitResult = {
+  client: MatrixClient;
+  passwordlessUser: boolean;
+};
+
+async function loadClient(): Promise<InitResult> {
+  if (widget) {
+    // We're inside a widget, so let's engage *matryoshka mode*
+    logger.log("Using a matryoshka client");
+    const client = await widget.client;
+    return {
+      client,
+      passwordlessUser: false,
+    };
+  } else {
+    // We're running as a standalone application
+    try {
+      const session = loadSession();
+      if (!session) {
+        throw new Error("No session stored");
+      }
+
+      logger.log("Using a standalone client");
+
+      const foci = Config.get().livekit
+        ? [{ livekitServiceUrl: Config.get().livekit!.livekit_service_url }]
+        : undefined;
+
+      /* eslint-disable camelcase */
+      const { user_id, device_id, access_token, passwordlessUser } = session;
+      const initClientParams = {
+        baseUrl: Config.defaultHomeserverUrl()!,
+        accessToken: access_token,
+        userId: user_id,
+        deviceId: device_id,
+        fallbackICEServerAllowed: fallbackICEServerAllowed,
+        foci,
+      };
+
+      try {
+        const client = await initClient(initClientParams, true);
+        return {
+          client,
+          passwordlessUser,
+        };
+      } catch (err) {
+        if (err instanceof CryptoStoreIntegrityError) {
+          // We can't use this session anymore, so let's log it out
+          try {
+            const client = await initClient(initClientParams, false); // Don't need the crypto store just to log out)
+            await client.logout(true);
+          } catch (err) {
+            logger.warn(
+              "The previous session was lost, and we couldn't log it out, " +
+                err +
+                "either"
+            );
+          }
+        }
+        throw err;
+      }
+      /* eslint-enable camelcase */
+    } catch (err) {
+      clearSession();
+      throw err;
+    }
+  }
+}
+
+export interface Session {
+  user_id: string;
+  device_id: string;
+  access_token: string;
+  passwordlessUser: boolean;
+  tempPassword?: string;
+}
+
+const clearSession = () => localStorage.removeItem("matrix-auth-store");
+const saveSession = (s: Session) =>
+  localStorage.setItem("matrix-auth-store", JSON.stringify(s));
+const loadSession = (): Session | undefined => {
+  const data = localStorage.getItem("matrix-auth-store");
+  if (!data) {
+    return undefined;
+  }
+
+  return JSON.parse(data);
+};

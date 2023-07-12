@@ -68,17 +68,15 @@ import { ElementWidgetActions, widget } from "../widget";
 import { GridLayoutMenu } from "./GridLayoutMenu";
 import { GroupCallInspector } from "./GroupCallInspector";
 import styles from "./InCallView.module.css";
-import { MatrixInfo } from "./VideoPreview";
 import { useJoinRule } from "./useJoinRule";
 import { ParticipantInfo } from "./useGroupCall";
-import { ItemData, TileContent } from "../video-grid/VideoTile";
+import { ItemData, TileContent, VideoTile } from "../video-grid/VideoTile";
 import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { VideoTile } from "../video-grid/VideoTile";
 import { UserChoices, useLiveKit } from "../livekit/useLiveKit";
 import { useMediaDevicesSwitcher } from "../livekit/useMediaDevicesSwitcher";
 import { useFullscreen } from "./useFullscreen";
@@ -100,12 +98,14 @@ export function ActiveCall(props: ActiveCallProps) {
   const sfuConfig = useSFUConfig();
   const livekitRoom = useLiveKit(props.userChoices, sfuConfig);
 
+  if (!livekitRoom) {
+    return null;
+  }
+
   return (
-    livekitRoom && (
-      <RoomContext.Provider value={livekitRoom}>
-        <InCallView {...props} livekitRoom={livekitRoom} />
-      </RoomContext.Provider>
-    )
+    <RoomContext.Provider value={livekitRoom}>
+      <InCallView {...props} livekitRoom={livekitRoom} />
+    </RoomContext.Provider>
   );
 }
 
@@ -117,8 +117,7 @@ export interface InCallViewProps {
   onLeave: () => void;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
-  matrixInfo: MatrixInfo;
-  otelGroupCallMembership: OTelGroupCallMembership;
+  otelGroupCallMembership?: OTelGroupCallMembership;
 }
 
 export function InCallView({
@@ -129,7 +128,6 @@ export function InCallView({
   onLeave,
   unencryptedEventsFromUsers,
   hideHeader,
-  matrixInfo,
   otelGroupCallMembership,
 }: InCallViewProps) {
   const { t } = useTranslation();
@@ -203,11 +201,11 @@ export function InCallView({
     if (widget) {
       const onTileLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
         setLayout("freedom");
-        await widget.api.transport.reply(ev.detail, {});
+        await widget!.api.transport.reply(ev.detail, {});
       };
       const onSpotlightLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
         setLayout("spotlight");
-        await widget.api.transport.reply(ev.detail, {});
+        await widget!.api.transport.reply(ev.detail, {});
       };
 
       widget.lazyActions.on(ElementWidgetActions.TileLayout, onTileLayout);
@@ -217,8 +215,8 @@ export function InCallView({
       );
 
       return () => {
-        widget.lazyActions.off(ElementWidgetActions.TileLayout, onTileLayout);
-        widget.lazyActions.off(
+        widget!.lazyActions.off(ElementWidgetActions.TileLayout, onTileLayout);
+        widget!.lazyActions.off(
           ElementWidgetActions.SpotlightLayout,
           onSpotlightLayout
         );
@@ -396,7 +394,7 @@ export function InCallView({
       {!hideHeader && maximisedParticipant === null && (
         <Header>
           <LeftNav>
-            <RoomHeaderInfo roomName={matrixInfo.roomName} />
+            <RoomHeaderInfo roomName={groupCall.room.name} />
             <VersionMismatchWarning
               users={unencryptedEventsFromUsers}
               room={groupCall.room}
@@ -416,16 +414,18 @@ export function InCallView({
         {renderContent()}
         {footer}
       </div>
-      <GroupCallInspector
-        client={client}
-        groupCall={groupCall}
-        otelGroupCallMembership={otelGroupCallMembership}
-        show={showInspector}
-      />
+      {otelGroupCallMembership && (
+        <GroupCallInspector
+          client={client}
+          groupCall={groupCall}
+          otelGroupCallMembership={otelGroupCallMembership}
+          show={showInspector}
+        />
+      )}
       {rageshakeRequestModalState.isOpen && !noControls && (
         <RageshakeRequestModal
           {...rageshakeRequestModalProps}
-          roomIdOrAlias={matrixInfo.roomIdOrAlias}
+          roomId={groupCall.room.roomId}
         />
       )}
       {settingsModalState.isOpen && (
@@ -437,10 +437,7 @@ export function InCallView({
         />
       )}
       {inviteModalState.isOpen && (
-        <InviteModal
-          roomIdOrAlias={matrixInfo.roomIdOrAlias}
-          {...inviteModalProps}
-        />
+        <InviteModal roomId={groupCall.room.roomId} {...inviteModalProps} />
       )}
     </div>
   );

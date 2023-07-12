@@ -37,7 +37,7 @@ interface Props {
   children: ReactNode;
 }
 
-const SFUConfigContext = createContext<SFUConfig>(undefined);
+const SFUConfigContext = createContext<SFUConfig | undefined>(undefined);
 
 export const useSFUConfig = () => useContext(SFUConfigContext);
 
@@ -62,7 +62,7 @@ export function OpenIDLoader({
         setState({ kind: "loaded", sfuConfig: result });
       } catch (e) {
         logger.error("Failed to fetch SFU config: ", e);
-        setState({ kind: "failed", error: e });
+        setState({ kind: "failed", error: e as Error });
       }
     })();
   }, [client, livekitServiceURL, roomName]);

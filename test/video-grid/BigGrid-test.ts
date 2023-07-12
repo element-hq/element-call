@@ -21,6 +21,7 @@ import {
   fillGaps,
   forEachCellInArea,
   Grid,
+  SparseGrid,
   resize,
   row,
   moveTile,
@@ -339,7 +340,9 @@ function testAddItems(
   output: string
 ): void {
   test(`addItems ${title}`, () => {
-    expect(showGrid(addItems(items, mkGrid(input)))).toBe(output);
+    expect(showGrid(addItems(items, mkGrid(input) as SparseGrid) as Grid)).toBe(
+      output
+    );
   });
 }
 

@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ChangeEvent, useCallback, useState } from "react";
+import { ChangeEvent, Key, useCallback, useState } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
@@ -99,8 +99,8 @@ export const SettingsModal = (props: Props) => {
   const [selectedTab, setSelectedTab] = useState<string | undefined>();
 
   const onSelectedTabChanged = useCallback(
-    (tab) => {
-      setSelectedTab(tab);
+    (tab: Key) => {
+      setSelectedTab(tab.toString());
     },
     [setSelectedTab]
   );
@@ -118,6 +118,144 @@ export const SettingsModal = (props: Props) => {
 
   const devices = props.mediaDevicesSwitcher;
 
+  const tabs = [
+    <TabItem
+      key="audio"
+      title={
+        <>
+          <AudioIcon width={16} height={16} />
+          <span className={styles.tabLabel}>{t("Audio")}</span>
+        </>
+      }
+    >
+      {devices && generateDeviceSelection(devices.audioIn, t("Microphone"))}
+      {devices && generateDeviceSelection(devices.audioOut, t("Speaker"))}
+    </TabItem>,
+    <TabItem
+      key="video"
+      title={
+        <>
+          <VideoIcon width={16} height={16} />
+          <span>{t("Video")}</span>
+        </>
+      }
+    >
+      {devices && generateDeviceSelection(devices.videoIn, t("Camera"))}
+    </TabItem>,
+    <TabItem
+      key="feedback"
+      title={
+        <>
+          <FeedbackIcon width={16} height={16} />
+          <span>{t("Feedback")}</span>
+        </>
+      }
+    >
+      <FeedbackSettingsTab roomId={props.roomId} />
+    </TabItem>,
+    <TabItem
+      key="more"
+      title={
+        <>
+          <OverflowIcon width={16} height={16} />
+          <span>{t("More")}</span>
+        </>
+      }
+    >
+      <h4>Developer</h4>
+      <p>Version: {(import.meta.env.VITE_APP_VERSION as string) || "dev"}</p>
+      <FieldRow>
+        <InputField
+          id="developerSettingsTab"
+          type="checkbox"
+          checked={developerSettingsTab}
+          label={t("Developer Settings")}
+          description={t("Expose developer settings in the settings window.")}
+          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+            setDeveloperSettingsTab(event.target.checked)
+          }
+        />
+      </FieldRow>
+      <h4>Analytics</h4>
+      <FieldRow>
+        <InputField
+          id="optInAnalytics"
+          type="checkbox"
+          checked={optInAnalytics ?? undefined}
+          description={optInDescription}
+          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+            setOptInAnalytics?.(event.target.checked);
+          }}
+        />
+      </FieldRow>
+    </TabItem>,
+  ];
+
+  if (!isEmbedded) {
+    tabs.push(
+      <TabItem
+        key="profile"
+        title={
+          <>
+            <UserIcon width={15} height={15} />
+            <span>{t("Profile")}</span>
+          </>
+        }
+      >
+        <ProfileSettingsTab client={props.client} />
+      </TabItem>
+    );
+  }
+
+  if (developerSettingsTab) {
+    tabs.push(
+      <TabItem
+        key="developer"
+        title={
+          <>
+            <DeveloperIcon width={16} height={16} />
+            <span>{t("Developer")}</span>
+          </>
+        }
+      >
+        <FieldRow>
+          <Body className={styles.fieldRowText}>
+            {t("Version: {{version}}", {
+              version: import.meta.env.VITE_APP_VERSION || "dev",
+            })}
+          </Body>
+        </FieldRow>
+        <FieldRow>
+          <InputField
+            id="showInspector"
+            name="inspector"
+            label={t("Show call inspector")}
+            type="checkbox"
+            checked={showInspector}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setShowInspector(e.target.checked)
+            }
+          />
+        </FieldRow>
+        <FieldRow>
+          <InputField
+            id="showConnectionStats"
+            name="connection-stats"
+            label={t("Show connection stats")}
+            type="checkbox"
+            checked={showConnectionStats}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setShowConnectionStats(e.target.checked)
+            }
+          />
+        </FieldRow>
+        <FieldRow>
+          <Button onPress={downloadDebugLog}>{t("Download debug logs")}</Button>
+        </FieldRow>
+      </TabItem>
+    );
+  }
+
   return (
     <Modal
       title={t("Settings")}
@@ -131,141 +269,7 @@ export const SettingsModal = (props: Props) => {
         selectedKey={selectedTab ?? props.defaultTab ?? "audio"}
         className={styles.tabContainer}
       >
-        <TabItem
-          key="audio"
-          title={
-            <>
-              <AudioIcon width={16} height={16} />
-              <span className={styles.tabLabel}>{t("Audio")}</span>
-            </>
-          }
-        >
-          {devices && generateDeviceSelection(devices.audioIn, t("Microphone"))}
-          {devices && generateDeviceSelection(devices.audioOut, t("Speaker"))}
-        </TabItem>
-        <TabItem
-          key="video"
-          title={
-            <>
-              <VideoIcon width={16} height={16} />
-              <span>{t("Video")}</span>
-            </>
-          }
-        >
-          {devices && generateDeviceSelection(devices.videoIn, t("Camera"))}
-        </TabItem>
-        {!isEmbedded && (
-          <TabItem
-            key="profile"
-            title={
-              <>
-                <UserIcon width={15} height={15} />
-                <span>{t("Profile")}</span>
-              </>
-            }
-          >
-            <ProfileSettingsTab client={props.client} />
-          </TabItem>
-        )}
-        <TabItem
-          key="feedback"
-          title={
-            <>
-              <FeedbackIcon width={16} height={16} />
-              <span>{t("Feedback")}</span>
-            </>
-          }
-        >
-          <FeedbackSettingsTab roomId={props.roomId} />
-        </TabItem>
-        <TabItem
-          key="more"
-          title={
-            <>
-              <OverflowIcon width={16} height={16} />
-              <span>{t("More")}</span>
-            </>
-          }
-        >
-          <h4>Developer</h4>
-          <p>
-            Version: {(import.meta.env.VITE_APP_VERSION as string) || "dev"}
-          </p>
-          <FieldRow>
-            <InputField
-              id="developerSettingsTab"
-              type="checkbox"
-              checked={developerSettingsTab}
-              label={t("Developer Settings")}
-              description={t(
-                "Expose developer settings in the settings window."
-              )}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                setDeveloperSettingsTab(event.target.checked)
-              }
-            />
-          </FieldRow>
-          <h4>Analytics</h4>
-          <FieldRow>
-            <InputField
-              id="optInAnalytics"
-              type="checkbox"
-              checked={optInAnalytics}
-              description={optInDescription}
-              onChange={(event: ChangeEvent<HTMLInputElement>) =>
-                setOptInAnalytics(event.target.checked)
-              }
-            />
-          </FieldRow>
-        </TabItem>
-        {developerSettingsTab && (
-          <TabItem
-            key="developer"
-            title={
-              <>
-                <DeveloperIcon width={16} height={16} />
-                <span>{t("Developer")}</span>
-              </>
-            }
-          >
-            <FieldRow>
-              <Body className={styles.fieldRowText}>
-                {t("Version: {{version}}", {
-                  version: import.meta.env.VITE_APP_VERSION || "dev",
-                })}
-              </Body>
-            </FieldRow>
-            <FieldRow>
-              <InputField
-                id="showInspector"
-                name="inspector"
-                label={t("Show call inspector")}
-                type="checkbox"
-                checked={showInspector}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setShowInspector(e.target.checked)
-                }
-              />
-            </FieldRow>
-            <FieldRow>
-              <InputField
-                id="showConnectionStats"
-                name="connection-stats"
-                label={t("Show connection stats")}
-                type="checkbox"
-                checked={showConnectionStats}
-                onChange={(e: ChangeEvent<HTMLInputElement>) =>
-                  setShowConnectionStats(e.target.checked)
-                }
-              />
-            </FieldRow>
-            <FieldRow>
-              <Button onPress={downloadDebugLog}>
-                {t("Download debug logs")}
-              </Button>
-            </FieldRow>
-          </TabItem>
-        )}
+        {tabs}
       </TabContainer>
     </Modal>
   );

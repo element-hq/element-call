@@ -34,8 +34,26 @@ import { widget } from "../widget";
 
 const STATS_COLLECT_INTERVAL_TIME_MS = 10000;
 
+export type GroupCallLoaded = {
+  kind: "loaded";
+  groupCall: GroupCall;
+};
+
+export type GroupCallLoadFailed = {
+  kind: "failed";
+  error: Error;
+};
+
+export type GroupCallLoading = {
+  kind: "loading";
+};
+
+export type GroupCallStatus =
+  | GroupCallLoaded
+  | GroupCallLoadFailed
+  | GroupCallLoading;
+
 export interface GroupCallLoadState {
-  loading: boolean;
   error?: Error;
   groupCall?: GroupCall;
 }
@@ -45,13 +63,11 @@ export const useLoadGroupCall = (
   roomIdOrAlias: string,
   viaServers: string[],
   createPtt: boolean
-): GroupCallLoadState => {
+): GroupCallStatus => {
   const { t } = useTranslation();
-  const [state, setState] = useState<GroupCallLoadState>({ loading: true });
+  const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
 
   useEffect(() => {
-    setState({ loading: true });
-
     const fetchOrCreateRoom = async (): Promise<Room> => {
       try {
         // We lowercase the localpart when we create the room, so we must lowercase
@@ -74,8 +90,14 @@ export const useLoadGroupCall = (
       } catch (error) {
         if (
           isLocalRoomId(roomIdOrAlias, client) &&
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           (error.errcode === "M_NOT_FOUND" ||
+            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+            // @ts-ignore
             (error.message &&
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
               error.message.indexOf("Failed to fetch alias") !== -1))
         ) {
           // The room doesn't exist, but we can create it
@@ -86,7 +108,7 @@ export const useLoadGroupCall = (
           );
           // likewise, wait for the room
           await client.waitUntilRoomReadyForGroupCalls(roomId);
-          return client.getRoom(roomId);
+          return client.getRoom(roomId)!;
         } else {
           throw error;
         }
@@ -170,12 +192,8 @@ export const useLoadGroupCall = (
 
     waitForClientSyncing()
       .then(fetchOrCreateGroupCall)
-      .then((groupCall) =>
-        setState((prevState) => ({ ...prevState, loading: false, groupCall }))
-      )
-      .catch((error) =>
-        setState((prevState) => ({ ...prevState, loading: false, error }))
-      );
+      .then((groupCall) => setState({ kind: "loaded", groupCall }))
+      .catch((error) => setState({ kind: "failed", error }));
   }, [client, roomIdOrAlias, viaServers, createPtt, t]);
 
   return state;
