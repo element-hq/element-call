@@ -139,13 +139,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
             session;
 
           const livekit = Config.get().livekit;
-          const foci = livekit
-            ? [
-                {
-                  livekitServiceUrl: livekit.livekit_service_url,
-                },
-              ]
-            : undefined;
 
           try {
             return {
@@ -156,7 +149,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
                   userId: user_id,
                   deviceId: device_id,
                   fallbackICEServerAllowed: fallbackICEServerAllowed,
-                  foci,
+                  livekitServiceURL: livekit?.livekit_service_url,
                 },
                 true
               ),
@@ -173,7 +166,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
                     userId: user_id,
                     deviceId: device_id,
                     fallbackICEServerAllowed: fallbackICEServerAllowed,
-                    foci,
+                    livekitServiceURL: livekit?.livekit_service_url,
                   },
                   false // Don't need the crypto store just to log out
                 );
