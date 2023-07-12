@@ -19,6 +19,7 @@ import svgrPlugin from "vite-plugin-svgr";
 import htmlTemplate from "vite-plugin-html-template";
 import sentryVitePlugin from "@sentry/vite-plugin";
 import react from "@vitejs/plugin-react";
+import basicSsl from "@vitejs/plugin-basic-ssl";
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
@@ -26,6 +27,7 @@ export default defineConfig(({ mode }) => {
 
   const plugins = [
     react(),
+    basicSsl(),
     svgrPlugin(),
     htmlTemplate.default({
       data: {
