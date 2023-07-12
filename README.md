@@ -85,7 +85,8 @@ You're now ready to launch the development server:
 ```
 yarn dev
 ```
-
+Optionally, you can use `yarn dev --host` to start the dev server so it is accessible in the local network.
+This is helpful in case you want to test the app on a mobile device.
 ### Backend
 
 Add in you `.env` in root dir with:
