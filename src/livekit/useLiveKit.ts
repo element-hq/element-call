@@ -32,12 +32,14 @@ export function useLiveKit(
     return options;
   }, [userChoices.video, userChoices.audio]);
 
+  const roomWithoutProps = useMemo(() => new Room(roomOptions), [roomOptions]);
+
   const { room } = useLiveKitRoom({
     token: sfuConfig?.jwt,
     serverUrl: sfuConfig?.url,
     audio: userChoices.audio?.enabled ?? false,
     video: userChoices.video?.enabled ?? false,
-    options: roomOptions,
+    room: roomWithoutProps,
   });
 
   return room;

@@ -102,6 +102,8 @@ export function ActiveCall(props: ActiveCallProps) {
     return null;
   }
 
+  livekitRoom.setE2EEEnabled(true);
+
   return (
     <RoomContext.Provider value={livekitRoom}>
       <InCallView {...props} livekitRoom={livekitRoom} />
