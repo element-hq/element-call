@@ -6,7 +6,7 @@
     }
   },
   "livekit": {
-    "livekit_service_url": "https://livekit.element.dev"
+    "livekit_service_url": "https://livekit-jwt.call.element.dev"
   },
   "posthog": {
     "api_key": "phc_rXGHx9vDmyEvyRxPziYtdVIv0ahEv8A9uLWFcCi1WcU",
