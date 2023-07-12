@@ -164,7 +164,7 @@ export const widget: WidgetHelpers | null = (() => {
           // message so that we can use the widget API in less racy mode, but we need to change
           // element-web to use waitForIFrameLoad=false. Once that change has rolled out,
           // we can just start the client after we've fetched the config.
-          foci: [],
+          livekitServiceURL: undefined,
         }
       );
 
@@ -178,9 +178,7 @@ export const widget: WidgetHelpers | null = (() => {
           // Now we've fetched the config, be evil and use the getter to inject the focus
           // into the client (see above XXX).
           if (focus) {
-            client.getFoci().push({
-              livekitServiceUrl: livekit.livekit_service_url,
-            });
+            client.setLivekitServiceURL(livekit.livekit_service_url);
           }
           await client.startClient();
           resolve(client);

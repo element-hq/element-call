@@ -327,10 +327,6 @@ async function loadClient(): Promise<InitResult> {
 
       logger.log("Using a standalone client");
 
-      const foci = Config.get().livekit
-        ? [{ livekitServiceUrl: Config.get().livekit!.livekit_service_url }]
-        : undefined;
-
       /* eslint-disable camelcase */
       const { user_id, device_id, access_token, passwordlessUser } = session;
       const initClientParams = {
@@ -339,7 +335,7 @@ async function loadClient(): Promise<InitResult> {
         userId: user_id,
         deviceId: device_id,
         fallbackICEServerAllowed: fallbackICEServerAllowed,
-        foci,
+        livekitServiceURL: Config.get().livekit!.livekit_service_url,
       };
 
       try {
