@@ -91,7 +91,7 @@ yarn dev
 A docker compose file is provided to start a LiveKit server and auth
 service for development. These use a test 'secret' published in this
 repository, so this must be used only for local development and
-***never be exposed to the public Internet.***
+**_never be exposed to the public Internet._**
 
 To use it, add SFU parameter in your local config `./public/config.yml`:
 
