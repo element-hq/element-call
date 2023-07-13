@@ -88,15 +88,12 @@ yarn dev
 
 ### Backend
 
-Add in you `.env` in root dir with:
+A docker compose file is provided to start a LiveKit server and auth
+service for development. These use a test 'secret' published in this
+repository, so this must be used only for local development and
+***never be exposed to the public Internet.***
 
-```yaml
-# Develop backend settings:
-LIVEKIT_KEY="devkey"
-LIVEKIT_SECRET="secret"
-```
-
-Add SFU parameter in your local config `./public/config.yml`:
+To use it, add SFU parameter in your local config `./public/config.yml`:
 
 ```yaml
 "livekit": {
