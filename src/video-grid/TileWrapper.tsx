@@ -19,6 +19,7 @@ import { EventTypes, Handler, useDrag } from "@use-gesture/react";
 import { SpringValue, to } from "@react-spring/web";
 
 import { ChildrenProperties } from "./VideoGrid";
+import styles from "./TileWrapper.module.css"
 
 interface Props<T> {
   id: string;
@@ -77,6 +78,7 @@ export const TileWrapper = memo(
       <>
         {children({
           ref,
+          className: styles.tile,
           style: {
             opacity,
             scale,

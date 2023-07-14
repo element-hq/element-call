@@ -802,6 +802,7 @@ interface DragTileData {
 
 export interface ChildrenProperties<T> {
   ref: Ref<HTMLElement>;
+  className?: string;
   style: ComponentProps<typeof animated.div>["style"];
   /**
    * The width this tile will have once its animations have settled.

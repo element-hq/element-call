@@ -16,11 +16,12 @@ limitations under the License.
 */
 
 import { logger } from "matrix-js-sdk/src/logger";
-import { useCallback, useLayoutEffect, useRef } from "react";
+import { useCallback, useLayoutEffect } from "react";
 
 import { TileDescriptor } from "../video-grid/VideoGrid";
 import { useReactiveState } from "../useReactiveState";
 import { useEventTarget } from "../useEvents";
+import { useLatest } from "../useLatest";
 
 const isFullscreen = () =>
   Boolean(document.fullscreenElement) ||
@@ -69,11 +70,8 @@ export function useFullscreen<T>(items: TileDescriptor<T>[]): {
       [items]
     );
 
-  const latestItems = useRef<TileDescriptor<T>[]>(items);
-  latestItems.current = items;
-
-  const latestFullscreenItem = useRef<TileDescriptor<T> | null>(fullscreenItem);
-  latestFullscreenItem.current = fullscreenItem;
+  const latestItems = useLatest(items)
+  const latestFullscreenItem = useLatest(fullscreenItem)
 
   const toggleFullscreen = useCallback(
     (itemId: string) => {

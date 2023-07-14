@@ -245,6 +245,23 @@ export function SettingsButton({
   );
 }
 
+export function SimulateJoinButton(props: {
+  className?: string;
+  // TODO: add all props for <Button>
+  [index: string]: unknown;
+}) {
+  const { t } = useTranslation();
+  const tooltip = useCallback(() => "Add a fake participant", [t]);
+
+  return (
+    <TooltipTrigger tooltip={tooltip}>
+      <Button variant="toolbar" {...props}>
+        <AddUserIcon width={20} height={20} />
+      </Button>
+    </TooltipTrigger>
+  );
+}
+
 export function InviteButton({
   className,
   variant = "toolbar",

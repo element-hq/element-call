@@ -42,6 +42,7 @@ import {
   ScreenshareButton,
   SettingsButton,
   InviteButton,
+  SimulateJoinButton,
 } from "../button";
 import {
   Header,
@@ -58,6 +59,7 @@ import {
 import {
   useShowInspector,
   useShowConnectionStats,
+  useVideoGridSandboxMode,
 } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
@@ -83,6 +85,8 @@ import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
 import { useSFUConfig } from "../livekit/OpenIDLoader";
 import { E2EELock } from "../E2EELock";
+import { useFakeTiles } from "./useFakeTiles";
+import { FakeItemData, FakeVideoTile } from "../video-grid/FakeVideoTile";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -160,6 +164,9 @@ export function InCallView({
 
   const [showInspector] = useShowInspector();
   const [showConnectionStats] = useShowConnectionStats();
+  const [videoGridSandboxMode] = useVideoGridSandboxMode()
+
+  const { fakeTiles: fakeItems, simulateJoin } = useFakeTiles()
 
   const { hideScreensharing } = useUrlParams();
 
@@ -227,9 +234,11 @@ export function InCallView({
   const reducedControls = boundsValid && bounds.width <= 400;
   const noControls = reducedControls && bounds.height <= 400;
 
-  const items = useParticipantTiles(livekitRoom, participants);
+  const realItems = useParticipantTiles(livekitRoom, participants);
   const { fullscreenItem, toggleFullscreen, exitFullscreen } =
-    useFullscreen(items);
+    useFullscreen(realItems);
+
+  const items = useMemo<TileDescriptor<ItemData | FakeItemData>[]>(() => videoGridSandboxMode ? [...realItems, ...fakeItems] : realItems, [videoGridSandboxMode, realItems, fakeItems])
 
   // The maximised participant: either the participant that the user has
   // manually put in fullscreen, or the focused (active) participant if the
@@ -238,9 +247,9 @@ export function InCallView({
     () =>
       fullscreenItem ??
       (noControls
-        ? items.find((item) => item.isSpeaker) ?? items.at(0) ?? null
+        ? realItems.find((item) => item.isSpeaker) ?? realItems.at(0) ?? null
         : null),
-    [fullscreenItem, noControls, items]
+    [fullscreenItem, noControls, realItems]
   );
 
   const Grid =
@@ -283,16 +292,19 @@ export function InCallView({
         disableAnimations={prefersReducedMotion || isSafari}
         layoutStates={layoutStates}
       >
-        {(props) => (
+        {(props) => props.data.type === "real" ? (
           <VideoTile
             maximised={false}
             fullscreen={false}
             onToggleFullscreen={toggleFullscreen}
-            showSpeakingIndicator={items.length > 2}
+            showSpeakingIndicator={realItems.length > 2}
             showConnectionStats={showConnectionStats}
             {...props}
+            data={props.data}
             ref={props.ref as Ref<HTMLDivElement>}
           />
+        ) : (
+          <FakeVideoTile {...props} data={props.data} />
         )}
       </Grid>
     );
@@ -381,6 +393,8 @@ export function InCallView({
         );
       }
       buttons.push(<SettingsButton key="4" onPress={openSettings} />);
+      if (videoGridSandboxMode)
+        buttons.push(<SimulateJoinButton key="5" onPress={simulateJoin} />)
     }
 
     buttons.push(
@@ -480,7 +494,7 @@ function useParticipantTiles(
         const member = matrixParticipants.get(id);
         allGhosts &&= member === undefined;
 
-        const userMediaTile = {
+        const userMediaTile: TileDescriptor<ItemData> = {
           id,
           focused: false,
           isPresenter: sfuParticipant.isScreenShareEnabled,
@@ -491,6 +505,7 @@ function useParticipantTiles(
           local: sfuParticipant.isLocal,
           largeBaseSize: false,
           data: {
+            type: "real",
             id,
             member,
             sfuParticipant,

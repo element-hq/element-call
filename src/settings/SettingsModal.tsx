@@ -34,6 +34,7 @@ import {
   useOptInAnalytics,
   useDeveloperSettingsTab,
   useShowConnectionStats,
+  useVideoGridSandboxMode,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
@@ -68,6 +69,7 @@ export const SettingsModal = (props: Props) => {
     useDeveloperSettingsTab();
   const [showConnectionStats, setShowConnectionStats] =
     useShowConnectionStats();
+  const [videoGridSandboxMode, setVideoGridSandboxMode] = useVideoGridSandboxMode()
 
   const downloadDebugLog = useDownloadDebugLog();
 
@@ -246,6 +248,18 @@ export const SettingsModal = (props: Props) => {
             checked={showConnectionStats}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setShowConnectionStats(e.target.checked)
+            }
+          />
+        </FieldRow>
+        <FieldRow>
+          <InputField
+            id="videoGridSandboxMode"
+            name="video-grid-sandbox-mode"
+            label="Video grid sandbox mode"
+            type="checkbox"
+            checked={videoGridSandboxMode}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setVideoGridSandboxMode(e.target.checked)
             }
           />
         </FieldRow>

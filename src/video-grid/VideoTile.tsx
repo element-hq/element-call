@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ComponentProps, forwardRef, useCallback, useEffect } from "react";
+import { ComponentProps, forwardRef, Ref, useCallback, useEffect } from "react";
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
@@ -39,6 +39,7 @@ import { useModalTriggerState } from "../Modal";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 
 export interface ItemData {
+  type: "real", // To differentiate from FakeItemData
   id: string;
   member?: RoomMember;
   sfuParticipant: LocalParticipant | RemoteParticipant;
@@ -64,7 +65,7 @@ interface Props {
   showConnectionStats: boolean;
 }
 
-export const VideoTile = forwardRef<HTMLDivElement, Props>(
+export const VideoTile = forwardRef<HTMLElement, Props>(
   (
     {
       data,
@@ -159,7 +160,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           [styles.maximised]: maximised,
         })}
         style={style}
-        ref={tileRef}
+        ref={tileRef as Ref<HTMLDivElement>}
         data-testid="videoTile"
       >
         {toolbarButtons.length > 0 && (!maximised || fullscreen) && (

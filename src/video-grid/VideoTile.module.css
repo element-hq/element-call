@@ -15,15 +15,11 @@ limitations under the License.
 */
 
 .videoTile {
-  position: absolute;
-  contain: strict;
-  top: 0;
   container-name: videoTile;
   container-type: size;
   --tileRadius: 8px;
   border-radius: var(--tileRadius);
   overflow: hidden;
-  cursor: pointer;
 
   /* HACK: This has no visual effect due to the short duration, but allows the
   JS to detect movement via the transform property for audio spatialization */
@@ -154,7 +150,7 @@ limitations under the License.
 .videoMutedOverlay {
   width: 100%;
   height: 100%;
-  background-color: #21262c;
+  background-color: var(--system);
 }
 
 .presenterLabel {
