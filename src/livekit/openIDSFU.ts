@@ -41,13 +41,16 @@ export async function getSFUConfigWithOpenID(
   // if the call has a livekit service URL, try it.
   if (groupCall.livekitServiceURL) {
     try {
-      logger.info(`Trying to get JWT from ${groupCall.livekitServiceURL}...`);
+      logger.info(
+        `Trying to get JWT from call's configured URL of ${groupCall.livekitServiceURL}...`
+      );
       const sfuConfig = await getLiveKitJWT(
         client,
         groupCall.livekitServiceURL,
         roomName,
         openIdToken
       );
+      logger.info(`Got JWT from call state event URL.`);
 
       return sfuConfig;
     } catch (e) {
@@ -71,9 +74,12 @@ export async function getSFUConfigWithOpenID(
       openIdToken
     );
 
-    logger.info(`Updating call livekit service URL with: ${urlFromConf}...`);
+    logger.info(
+      `Got JWT, updating call livekit service URL with: ${urlFromConf}...`
+    );
     try {
       await groupCall.updateLivekitServiceURL(urlFromConf);
+      logger.info(`Call livekit service URL updated.`);
     } catch (e) {
       logger.warn(
         `Failed to update call livekit service URL: continuing anyway.`
