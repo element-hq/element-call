@@ -77,7 +77,7 @@ export function ProfileSettingsTab({ client }: Props) {
   return (
     <form onChange={onFormChange} ref={formRef} className={styles.content}>
       <FieldRow className={styles.avatarFieldRow}>
-        {avatarUrl && displayName && (
+        {displayName && (
           <AvatarInputField
             id="avatar"
             name="avatar"
