@@ -80,11 +80,7 @@ export const RegisterPage: FC = () => {
           passwordlessUser
         );
 
-        if (!client || !client.groupCallEventHandler || !setClient) {
-          return;
-        }
-
-        if (passwordlessUser) {
+        if (client && client?.groupCallEventHandler && passwordlessUser) {
           // Migrate the user's rooms
           for (const groupCall of client.groupCallEventHandler.groupCalls.values()) {
             const roomId = groupCall.room.roomId;
@@ -107,7 +103,7 @@ export const RegisterPage: FC = () => {
           }
         }
 
-        setClient({ client: newClient, session });
+        setClient?.({ client: newClient, session });
         PosthogAnalytics.instance.eventSignup.cacheSignupEnd(new Date());
       };
 
