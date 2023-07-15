@@ -65,7 +65,6 @@
   "Unmute microphone": "Zrušiť stlmenie mikrofónu",
   "Turn on camera": "Zapnúť kameru",
   "Turn off camera": "Vypnúť kameru",
-  "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>Terms and conditions</12>": "Táto stránka je chránená systémom ReCAPTCHA a platia na ňu <2>Pravidlá ochrany osobných údajov</2> a <6>Podmienky poskytovania služieb</6> spoločnosti Google.<9></9>Kliknutím na tlačidlo \"Registrovať sa\" vyjadrujete súhlas s našimi <12>Podmienkami poskytovania služieb</12>",
   "This call already exists, would you like to join?": "Tento hovor už existuje, chceli by ste sa k nemu pripojiť?",
   "Speaker": "Reproduktor",
   "Sign out": "Odhlásiť sa",
@@ -86,8 +85,6 @@
   "Camera": "Kamera",
   "Call type menu": "Ponuka typu hovoru",
   "Call link copied": "Odkaz na hovor skopírovaný",
-  "By clicking \"Join call now\", you agree to our <2>Terms and conditions</2>": "Kliknutím na \"Pripojiť sa k hovoru\" súhlasíte s našimi <2>Podmienkami</2>",
-  "By clicking \"Go\", you agree to our <2>Terms and conditions</2>": "Kliknutím na tlačidlo \"Prejsť\" súhlasíte s našimi <2>Podmienkami</2>",
   "Avatar": "Obrázok",
   "Audio": "Audio",
   "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.": "Ďalší používateľ v tomto hovore má problém. Aby sme mohli lepšie diagnostikovať tieto problémy, chceli by sme získať záznam o ladení.",
@@ -115,5 +112,9 @@
   "<0>Thanks for your feedback!</0>": "<0> Ďakujeme za vašu spätnú väzbu!</0>",
   "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0> Radi si vypočujeme vašu spätnú väzbu, aby sme mohli zlepšiť vaše skúsenosti.</0>",
   "{{displayName}} is presenting": "{{displayName}} prezentuje",
-  "Show connection stats": "Zobraziť štatistiky pripojenia"
+  "Show connection stats": "Zobraziť štatistiky pripojenia",
+  "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Kliknutím na \"Pripojiť sa k hovoru teraz\" súhlasíte s našou <2>Licenčnou zmluvou s koncovým používateľom (EULA)</2>",
+  "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Kliknutím na tlačidlo \"Prejsť\" vyjadrujete súhlas s našou <2>Licenčnou zmluvou s koncovým používateľom (EULA)</2>",
+  "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>": "Táto stránka je chránená systémom ReCAPTCHA a platia na ňu <2>Pravidlá ochrany osobných údajov spoločnosti Google</2> a <6>Podmienky poskytovania služieb</6>.<9></9>Kliknutím na tlačidlo \"Registrovať sa\" súhlasíte s našou <12>Licenčnou zmluvou s koncovým používateľom (EULA)</12>",
+  "Element Call is temporarily not end-to-end encrypted while we test scalability.": "Element Call nie je dočasne šifrovaný, kým testujeme škálovateľnosť."
 }

@@ -15,7 +15,6 @@
   "Unmute microphone": "Увімкнути мікрофон",
   "Turn on camera": "Увімкнути камеру",
   "Turn off camera": "Вимкнути камеру",
-  "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>Terms and conditions</12>": "Цей сайт захищений ReCAPTCHA і до нього застосовується <2>Політика приватності</2> і <6>Умови надання послуг</6> Google.<9></9>Натискаючи кнопку «Зареєструватися», ви погоджуєтеся з нашими <12>Умовами та положеннями</12>",
   "This call already exists, would you like to join?": "Цей виклик уже існує, бажаєте приєднатися?",
   "Thanks! We'll get right on it.": "Дякуємо! Ми зараз же візьмемося за це.",
   "Take me Home": "Перейти до Домівки",
@@ -84,8 +83,6 @@
   "Camera": "Камера",
   "Call type menu": "Меню типу виклику",
   "Call link copied": "Посилання на виклик скопійовано",
-  "By clicking \"Join call now\", you agree to our <2>Terms and conditions</2>": "Натиснувши «Приєднатися до виклику зараз», ви погодитеся з нашими <2>Умовами та положеннями</2>",
-  "By clicking \"Go\", you agree to our <2>Terms and conditions</2>": "Натиснувши «Далі», ви погодитеся з нашими <2>Умовами та положеннями</2>",
   "Avatar": "Аватар",
   "Audio": "Звук",
   "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.": "Інший користувач у цьому виклику має проблему. Щоб краще визначити ці проблеми, ми хотіли б зібрати журнал налагодження.",
@@ -115,5 +112,9 @@
   "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Ми будемо раді почути ваші відгуки, щоб поліпшити роботу застосунку.</0>",
   "How did it go?": "Вам усе сподобалось?",
   "{{displayName}} is presenting": "{{displayName}} представляє",
-  "Show connection stats": "Показати стан з'єднання"
+  "Show connection stats": "Показати стан з'єднання",
+  "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Натискаючи \"Далі\", ви погоджуєтеся з нашою <2>Ліцензійною угодою з кінцевим користувачем (EULA)</2>",
+  "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Натискаючи \"Приєднатися до виклику зараз\", ви погоджуєтеся з нашою <2>Ліцензійною угодою з кінцевим користувачем (EULA)</2>",
+  "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>": "Цей сайт захищений ReCAPTCHA і до нього застосовується <2>Політика приватності</2> і <6>Умови надання послуг</6> Google.<9></9>Натискаючи \"Зареєструватися\", ви погоджуєтеся з нашою <12>Ліцензійною угодою з кінцевим користувачем (EULA)</12>",
+  "Element Call is temporarily not end-to-end encrypted while we test scalability.": "Виклики Element тимчасово не захищаються наскрізним шифруванням, поки ми тестуємо масштабованість."
 }

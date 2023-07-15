@@ -21,7 +21,9 @@ export function useLocationNavigation(enabled = false): void {
   const history = useHistory();
 
   useEffect(() => {
-    let unblock;
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    let unblock = undefined;
 
     if (enabled) {
       unblock = history.block((tx) => {
@@ -33,6 +35,8 @@ export function useLocationNavigation(enabled = false): void {
     }
 
     return () => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       if (unblock) {
         unblock();
       }

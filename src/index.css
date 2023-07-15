@@ -52,6 +52,7 @@ limitations under the License.
   --background: #15191e;
   --background-85: rgba(23, 25, 28, 0.85);
   --bgColor3: #444; /* This isn't found anywhere in the designs or Compound */
+  --subtle-primary: #26282d;
 }
 
 @font-face {

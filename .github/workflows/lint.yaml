@@ -19,6 +19,6 @@ jobs:
       - name: i18n
         run: "yarn run i18n:check"
       - name: ESLint
-        run: "yarn run lint:js"
+        run: "yarn run lint:eslint"
       - name: Type check
         run: "yarn run lint:types"

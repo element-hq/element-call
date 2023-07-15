@@ -36,7 +36,7 @@ interface UserMenuProps {
   isAuthenticated: boolean;
   isPasswordlessUser: boolean;
   displayName: string;
-  avatarUrl: string;
+  avatarUrl?: string;
   onAction: (value: string) => void;
 }
 
@@ -119,21 +119,24 @@ export function UserMenu({
           )}
         </Button>
       </TooltipTrigger>
-      {(props) => (
-        <Menu {...props} label={t("User menu")} onAction={onAction}>
-          {items.map(({ key, icon: Icon, label, dataTestid }) => (
-            <Item key={key} textValue={label}>
-              <Icon
-                width={24}
-                height={24}
-                className={styles.menuIcon}
-                data-testid={dataTestid}
-              />
-              <Body overflowEllipsis>{label}</Body>
-            </Item>
-          ))}
-        </Menu>
-      )}
+      {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (props: any) => (
+          <Menu {...props} label={t("User menu")} onAction={onAction}>
+            {items.map(({ key, icon: Icon, label, dataTestid }) => (
+              <Item key={key} textValue={label}>
+                <Icon
+                  width={24}
+                  height={24}
+                  className={styles.menuIcon}
+                  data-testid={dataTestid}
+                />
+                <Body overflowEllipsis>{label}</Body>
+              </Item>
+            ))}
+          </Menu>
+        )
+      }
     </PopoverMenuTrigger>
   );
 }

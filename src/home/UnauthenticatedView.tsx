@@ -41,6 +41,8 @@ import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { useOptInAnalytics } from "../settings/useSetting";
+import { Config } from "../config/Config";
+import { E2EEBanner } from "../E2EEBanner";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
@@ -48,8 +50,7 @@ export const UnauthenticatedView: FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
-  const [privacyPolicyUrl, recaptchaKey, register] =
-    useInteractiveRegistration();
+  const { recaptchaKey, register } = useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const { modalState, modalProps } = useModalTriggerState();
@@ -82,9 +83,15 @@ export const UnauthenticatedView: FC = () => {
         try {
           [roomAlias] = await createRoom(client, roomName, ptt);
         } catch (error) {
+          if (!setClient) {
+            throw error;
+          }
+
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           if (error.errcode === "M_ROOM_IN_USE") {
             setOnFinished(() => {
-              setClient(client, session);
+              setClient({ client, session });
               const aliasLocalpart = roomAliasLocalpartFromRoomName(roomName);
               history.push(`/${aliasLocalpart}`);
             });
@@ -98,7 +105,11 @@ export const UnauthenticatedView: FC = () => {
         }
 
         // Only consider the registration successful if we managed to create the room, too
-        setClient(client, session);
+        if (!setClient) {
+          throw new Error("setClient is undefined");
+        }
+
+        setClient({ client, session });
         history.push(`/${roomAlias.substring(1).split(":")[0]}`);
       }
 
@@ -164,11 +175,12 @@ export const UnauthenticatedView: FC = () => {
             <Caption className={styles.notice}>
               <Trans>
                 By clicking "Go", you agree to our{" "}
-                <Link href={privacyPolicyUrl}>
+                <Link href={Config.get().eula}>
                   End User Licensing Agreement (EULA)
                 </Link>
               </Trans>
             </Caption>
+            <E2EEBanner />
             {error && (
               <FieldRow>
                 <ErrorMessage error={error} />
@@ -201,7 +213,7 @@ export const UnauthenticatedView: FC = () => {
           </Body>
         </footer>
       </div>
-      {modalState.isOpen && (
+      {modalState.isOpen && onFinished && (
         <JoinExistingCallModal onJoin={onFinished} {...modalProps} />
       )}
     </>

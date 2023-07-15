@@ -14,11 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { OverlayTriggerState } from "@react-stately/overlays";
-import { usePreviewDevice } from "@livekit/components-react";
+import { usePreviewTracks } from "@livekit/components-react";
+import { LocalAudioTrack, LocalVideoTrack, Track } from "livekit-client";
 
 import { MicButton, SettingsButton, VideoButton } from "../button";
 import { Avatar } from "../Avatar";
@@ -26,15 +27,15 @@ import styles from "./VideoPreview.module.css";
 import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
 import { useClient } from "../ClientContext";
-import { useMediaDevices } from "../livekit/useMediaDevices";
-import { DeviceChoices, UserChoices } from "../livekit/useLiveKit";
+import { useMediaDevicesSwitcher } from "../livekit/useMediaDevicesSwitcher";
+import { UserChoices } from "../livekit/useLiveKit";
 import { useDefaultDevices } from "../settings/useSetting";
 
 export type MatrixInfo = {
   displayName: string;
   avatarUrl: string;
+  roomId: string;
   roomName: string;
-  roomIdOrAlias: string;
 };
 
 interface Props {
@@ -61,85 +62,111 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     settingsModalState.open();
   }, [settingsModalState]);
 
-  // Fetch user media devices.
-  const mediaDevices = useMediaDevices();
-
   // Create local media tracks.
   const [videoEnabled, setVideoEnabled] = useState<boolean>(true);
   const [audioEnabled, setAudioEnabled] = useState<boolean>(true);
-  const [videoId, audioId] = [
-    mediaDevices.videoIn.selectedId,
-    mediaDevices.audioIn.selectedId,
-  ];
-  const [defaultDevices] = useDefaultDevices();
-  const video = usePreviewDevice(
-    videoEnabled,
-    videoId != "" ? videoId : defaultDevices.videoinput,
-    "videoinput"
+
+  // The settings are updated as soon as the device changes. We wrap the settings value in a ref to store their initial value.
+  // Not changing the device options prohibits the usePreviewTracks hook to recreate the tracks.
+  const initialDefaultDevices = useRef(useDefaultDevices()[0]);
+  const tracks = usePreviewTracks(
+    {
+      audio: { deviceId: initialDefaultDevices.current.audioinput },
+      video: { deviceId: initialDefaultDevices.current.videoinput },
+    },
+    (error) => {
+      console.error("Error while creating preview Tracks:", error);
+    }
   );
-  const audio = usePreviewDevice(
-    audioEnabled,
-    audioId != "" ? audioId : defaultDevices.audioinput,
-    "audioinput"
+  const videoTrack = React.useMemo(
+    () =>
+      tracks?.filter((t) => t.kind === Track.Kind.Video)[0] as LocalVideoTrack,
+    [tracks]
+  );
+  const audioTrack = React.useMemo(
+    () =>
+      tracks?.filter((t) => t.kind === Track.Kind.Audio)[0] as LocalAudioTrack,
+    [tracks]
   );
 
-  const activeVideoId = video?.selectedDevice?.deviceId;
-  const activeAudioId = audio?.selectedDevice?.deviceId;
+  // Only let the MediaDeviceSwitcher request permissions if a video track is already available.
+  // Otherwise we would end up asking for permissions in usePreviewTracks and in useMediaDevicesSwitcher.
+  const requestPermissions = !!audioTrack && !!videoTrack;
+  const mediaSwitcher = useMediaDevicesSwitcher(
+    undefined,
+    { videoTrack, audioTrack },
+    requestPermissions
+  );
+  const { videoIn, audioIn } = mediaSwitcher;
+
+  const videoEl = React.useRef(null);
+
   useEffect(() => {
-    const createChoices = (
-      enabled: boolean,
-      deviceId?: string
-    ): DeviceChoices | undefined => {
-      if (deviceId === undefined) {
-        return undefined;
-      }
-
-      return {
-        selectedId: deviceId,
-        enabled,
-      };
-    };
-
+    // Effect to update the settings
     onUserChoicesChanged({
-      video: createChoices(videoEnabled, activeVideoId),
-      audio: createChoices(audioEnabled, activeAudioId),
+      video: {
+        selectedId: videoIn.selectedId,
+        enabled: videoEnabled && !!videoTrack,
+      },
+      audio: {
+        selectedId: audioIn.selectedId,
+        enabled: audioEnabled && !!audioTrack,
+      },
     });
   }, [
     onUserChoicesChanged,
-    activeVideoId,
+    videoIn.selectedId,
     videoEnabled,
-    activeAudioId,
+    audioIn.selectedId,
     audioEnabled,
+    videoTrack,
+    audioTrack,
   ]);
 
-  const [selectVideo, selectAudio] = [
-    mediaDevices.videoIn.setSelected,
-    mediaDevices.audioIn.setSelected,
-  ];
   useEffect(() => {
-    if (activeVideoId && activeVideoId !== "") {
-      selectVideo(activeVideoId);
+    // Effect to update the initial device selection for the ui elements based on the current preview track.
+    if (!videoIn.selectedId || videoIn.selectedId == "") {
+      videoTrack?.getDeviceId().then((videoId) => {
+        videoIn.setSelected(videoId ?? "default");
+      });
     }
-    if (activeAudioId && activeAudioId !== "") {
-      selectAudio(activeAudioId);
+    if (!audioIn.selectedId || audioIn.selectedId == "") {
+      audioTrack?.getDeviceId().then((audioId) => {
+        // getDeviceId() can return undefined for audio devices. This happens if
+        // the devices list uses "default" as the device id for the current
+        // device and the device set on the track also uses the deviceId
+        // "default". Check `normalizeDeviceId` in  `getDeviceId` for more
+        // details.
+        audioIn.setSelected(audioId ?? "default");
+      });
     }
-  }, [selectVideo, selectAudio, activeVideoId, activeAudioId]);
+  }, [videoIn, audioIn, videoTrack, audioTrack]);
 
-  const mediaElement = useRef(null);
   useEffect(() => {
-    if (mediaElement.current) {
-      video?.localTrack?.attach(mediaElement.current);
+    // Effect to connect the videoTrack with the video element.
+    if (videoEl.current) {
+      videoTrack?.unmute();
+      videoTrack?.attach(videoEl.current);
     }
     return () => {
-      video?.localTrack?.detach();
+      videoTrack?.detach();
     };
-  }, [video?.localTrack, mediaElement]);
+  }, [videoTrack]);
+
+  useEffect(() => {
+    // Effect to mute/unmute video track. (This has to be done, so that the hardware camera indicator does not confuse the user)
+    if (videoTrack && videoEnabled) {
+      videoTrack?.unmute();
+    } else if (videoTrack) {
+      videoTrack?.mute();
+    }
+  }, [videoEnabled, videoTrack]);
 
   return (
     <div className={styles.preview} ref={previewRef}>
-      <video ref={mediaElement} muted playsInline disablePictureInPicture />
+      <video ref={videoEl} muted playsInline disablePictureInPicture />
       <>
-        {(video ? !videoEnabled : true) && (
+        {(videoTrack ? !videoEnabled : true) && (
           <div className={styles.avatarContainer}>
             <Avatar
               size={(previewBounds.height - 66) / 2}
@@ -149,25 +176,23 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
           </div>
         )}
         <div className={styles.previewButtons}>
-          {audio.localTrack && (
-            <MicButton
-              muted={!audioEnabled}
-              onPress={() => setAudioEnabled(!audioEnabled)}
-            />
-          )}
-          {video.localTrack && (
-            <VideoButton
-              muted={!videoEnabled}
-              onPress={() => setVideoEnabled(!videoEnabled)}
-            />
-          )}
+          <MicButton
+            muted={!audioEnabled}
+            onPress={() => setAudioEnabled(!audioEnabled)}
+            disabled={!audioTrack}
+          />
+          <VideoButton
+            muted={!videoEnabled}
+            onPress={() => setVideoEnabled(!videoEnabled)}
+            disabled={!videoTrack}
+          />
           <SettingsButton onPress={openSettings} />
         </div>
       </>
-      {settingsModalState.isOpen && (
+      {settingsModalState.isOpen && client && (
         <SettingsModal
           client={client}
-          mediaDevices={mediaDevices}
+          mediaDevicesSwitcher={mediaSwitcher}
           {...settingsModalProps}
         />
       )}

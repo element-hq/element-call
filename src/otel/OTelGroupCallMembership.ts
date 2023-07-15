@@ -172,7 +172,7 @@ export class OTelGroupCallMembership {
       if (
         !userCalls ||
         !userCalls.has(callTrackingInfo.deviceId) ||
-        userCalls.get(callTrackingInfo.deviceId).callId !==
+        userCalls.get(callTrackingInfo.deviceId)?.callId !==
           callTrackingInfo.call.callId
       ) {
         callTrackingInfo.end();
@@ -420,7 +420,7 @@ export class OTelGroupCallMembership {
       ctx
     );
 
-    span.setAttribute("matrix.callId", callId);
+    span.setAttribute("matrix.callId", callId ?? "unknown");
     span.setAttribute(
       "matrix.opponentMemberId",
       report.opponentMemberId ? report.opponentMemberId : "unknown"

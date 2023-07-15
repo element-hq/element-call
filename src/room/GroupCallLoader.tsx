@@ -21,7 +21,6 @@ import { useTranslation } from "react-i18next";
 
 import { useLoadGroupCall } from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
-import { usePageTitle } from "../usePageTitle";
 
 interface Props {
   client: MatrixClient;
@@ -39,26 +38,23 @@ export function GroupCallLoader({
   createPtt,
 }: Props): JSX.Element {
   const { t } = useTranslation();
-  const { loading, error, groupCall } = useLoadGroupCall(
+  const groupCallState = useLoadGroupCall(
     client,
     roomIdOrAlias,
     viaServers,
     createPtt
   );
 
-  usePageTitle(groupCall ? groupCall.room.name : t("Loading…"));
-
-  if (loading) {
-    return (
-      <FullScreenView>
-        <h1>{t("Loading…")}</h1>
-      </FullScreenView>
-    );
+  switch (groupCallState.kind) {
+    case "loading":
+      return (
+        <FullScreenView>
+          <h1>{t("Loading…")}</h1>
+        </FullScreenView>
+      );
+    case "loaded":
+      return <>{children(groupCallState.groupCall)}</>;
+    case "failed":
+      return <ErrorView error={groupCallState.error} />;
   }
-
-  if (error) {
-    return <ErrorView error={error} />;
-  }
-
-  return <>{children(groupCall)}</>;
 }

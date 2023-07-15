@@ -22,6 +22,7 @@ import {
   useState,
 } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
+import { GroupCall } from "matrix-js-sdk";
 
 import {
   OpenIDClientParts,
@@ -32,21 +33,16 @@ import { ErrorView, LoadingView } from "../FullScreenView";
 
 interface Props {
   client: OpenIDClientParts;
-  livekitServiceURL: string;
+  groupCall: GroupCall;
   roomName: string;
   children: ReactNode;
 }
 
-const SFUConfigContext = createContext<SFUConfig>(undefined);
+const SFUConfigContext = createContext<SFUConfig | undefined>(undefined);
 
 export const useSFUConfig = () => useContext(SFUConfigContext);
 
-export function OpenIDLoader({
-  client,
-  livekitServiceURL,
-  roomName,
-  children,
-}: Props) {
+export function OpenIDLoader({ client, groupCall, roomName, children }: Props) {
   const [state, setState] = useState<
     SFUConfigLoading | SFUConfigLoaded | SFUConfigFailed
   >({ kind: "loading" });
@@ -56,16 +52,16 @@ export function OpenIDLoader({
       try {
         const result = await getSFUConfigWithOpenID(
           client,
-          livekitServiceURL,
+          groupCall,
           roomName
         );
         setState({ kind: "loaded", sfuConfig: result });
       } catch (e) {
         logger.error("Failed to fetch SFU config: ", e);
-        setState({ kind: "failed", error: e });
+        setState({ kind: "failed", error: e as Error });
       }
     })();
-  }, [client, livekitServiceURL, roomName]);
+  }, [client, groupCall, roomName]);
 
   switch (state.kind) {
     case "loading":

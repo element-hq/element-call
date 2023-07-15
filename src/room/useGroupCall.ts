@@ -58,12 +58,12 @@ export interface ParticipantInfo {
 
 interface UseGroupCallReturnType {
   state: GroupCallState;
-  localCallFeed: CallFeed;
-  activeSpeaker: CallFeed | null;
+  localCallFeed?: CallFeed;
+  activeSpeaker?: CallFeed;
   userMediaFeeds: CallFeed[];
   microphoneMuted: boolean;
   localVideoMuted: boolean;
-  error: TranslatedError | null;
+  error?: TranslatedError;
   initLocalCallFeed: () => void;
   enter: () => Promise<void>;
   leave: () => void;
@@ -74,23 +74,21 @@ interface UseGroupCallReturnType {
   requestingScreenshare: boolean;
   isScreensharing: boolean;
   screenshareFeeds: CallFeed[];
-  localDesktopCapturerSourceId: string; // XXX: This looks unused?
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   hasLocalParticipant: boolean;
   unencryptedEventsFromUsers: Set<string>;
-  otelGroupCallMembership: OTelGroupCallMembership;
+  otelGroupCallMembership?: OTelGroupCallMembership;
 }
 
 interface State {
   state: GroupCallState;
-  localCallFeed: CallFeed;
-  activeSpeaker: CallFeed | null;
+  localCallFeed?: CallFeed;
+  activeSpeaker?: CallFeed;
   userMediaFeeds: CallFeed[];
-  error: TranslatedError | null;
+  error?: TranslatedError;
   microphoneMuted: boolean;
   localVideoMuted: boolean;
   screenshareFeeds: CallFeed[];
-  localDesktopCapturerSourceId: string;
   isScreensharing: boolean;
   requestingScreenshare: boolean;
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
@@ -101,7 +99,7 @@ interface State {
 // level so that it doesn't pop in & out of existence as react mounts & unmounts
 // components. The right solution is probably for this to live in the js-sdk and have
 // the same lifetime as groupcalls themselves.
-let groupCallOTelMembership: OTelGroupCallMembership;
+let groupCallOTelMembership: OTelGroupCallMembership | undefined;
 let groupCallOTelMembershipGroupCallId: string;
 
 function getParticipants(
@@ -159,7 +157,6 @@ export function useGroupCall(
       localVideoMuted,
       isScreensharing,
       screenshareFeeds,
-      localDesktopCapturerSourceId,
       participants,
       hasLocalParticipant,
       requestingScreenshare,
@@ -167,15 +164,11 @@ export function useGroupCall(
     setState,
   ] = useState<State>({
     state: GroupCallState.LocalCallFeedUninitialized,
-    localCallFeed: null,
-    activeSpeaker: null,
     userMediaFeeds: [],
-    error: null,
     microphoneMuted: false,
     localVideoMuted: false,
     isScreensharing: false,
     screenshareFeeds: [],
-    localDesktopCapturerSourceId: null,
     requestingScreenshare: false,
     participants: new Map(),
     hasLocalParticipant: false,
@@ -248,12 +241,11 @@ export function useGroupCall(
       updateState({
         state: groupCall.state,
         localCallFeed: groupCall.localCallFeed,
-        activeSpeaker: groupCall.activeSpeaker ?? null,
+        activeSpeaker: groupCall.activeSpeaker,
         userMediaFeeds: [...groupCall.userMediaFeeds],
         microphoneMuted: groupCall.isMicrophoneMuted(),
         localVideoMuted: groupCall.isLocalVideoMuted(),
         isScreensharing: groupCall.isScreensharing(),
-        localDesktopCapturerSourceId: groupCall.localDesktopCapturerSourceId,
         screenshareFeeds: [...groupCall.screenshareFeeds],
       });
     }
@@ -303,7 +295,7 @@ export function useGroupCall(
 
     function onActiveSpeakerChanged(activeSpeaker: CallFeed | undefined): void {
       updateState({
-        activeSpeaker: activeSpeaker ?? null,
+        activeSpeaker: activeSpeaker,
       });
     }
 
@@ -319,12 +311,11 @@ export function useGroupCall(
 
     function onLocalScreenshareStateChanged(
       isScreensharing: boolean,
-      _localScreenshareFeed: CallFeed,
-      localDesktopCapturerSourceId: string
+      _localScreenshareFeed?: CallFeed,
+      localDesktopCapturerSourceId?: string
     ): void {
       updateState({
         isScreensharing,
-        localDesktopCapturerSourceId,
       });
     }
 
@@ -405,15 +396,14 @@ export function useGroupCall(
     );
 
     updateState({
-      error: null,
+      error: undefined,
       state: groupCall.state,
       localCallFeed: groupCall.localCallFeed,
-      activeSpeaker: groupCall.activeSpeaker ?? null,
+      activeSpeaker: groupCall.activeSpeaker,
       userMediaFeeds: [...groupCall.userMediaFeeds],
       microphoneMuted: groupCall.isMicrophoneMuted(),
       localVideoMuted: groupCall.isLocalVideoMuted(),
       isScreensharing: groupCall.isScreensharing(),
-      localDesktopCapturerSourceId: groupCall.localDesktopCapturerSourceId,
       screenshareFeeds: [...groupCall.screenshareFeeds],
       participants: getParticipants(groupCall),
       hasLocalParticipant: groupCall.hasLocalParticipant(),
@@ -516,7 +506,7 @@ export function useGroupCall(
   }, [groupCall]);
 
   const setMicrophoneMuted = useCallback(
-    (setMuted) => {
+    (setMuted: boolean) => {
       groupCall.setMicrophoneMuted(setMuted);
       groupCallOTelMembership?.onSetMicrophoneMuted(setMuted);
       PosthogAnalytics.instance.eventMuteMicrophone.track(
@@ -575,7 +565,7 @@ export function useGroupCall(
         desktopCapturerSourceId: data.desktopCapturerSourceId as string,
         audio: !data.desktopCapturerSourceId,
       });
-      await widget.api.transport.reply(ev.detail, {});
+      await widget?.api.transport.reply(ev.detail, {});
     },
     [groupCall, updateState]
   );
@@ -584,7 +574,7 @@ export function useGroupCall(
     async (ev: CustomEvent<IWidgetApiRequest>) => {
       updateState({ requestingScreenshare: false });
       await groupCall.setScreensharingEnabled(false);
-      await widget.api.transport.reply(ev.detail, {});
+      await widget?.api.transport.reply(ev.detail, {});
     },
     [groupCall, updateState]
   );
@@ -601,11 +591,11 @@ export function useGroupCall(
       );
 
       return () => {
-        widget.lazyActions.off(
+        widget?.lazyActions.off(
           ElementWidgetActions.ScreenshareStart,
           onScreenshareStart
         );
-        widget.lazyActions.off(
+        widget?.lazyActions.off(
           ElementWidgetActions.ScreenshareStop,
           onScreenshareStop
         );
@@ -644,7 +634,6 @@ export function useGroupCall(
     requestingScreenshare,
     isScreensharing,
     screenshareFeeds,
-    localDesktopCapturerSourceId,
     participants,
     hasLocalParticipant,
     unencryptedEventsFromUsers,

@@ -1,5 +1,5 @@
 import { useMediaDeviceSelect } from "@livekit/components-react";
-import { Room } from "livekit-client";
+import { LocalAudioTrack, LocalVideoTrack, Room } from "livekit-client";
 import { useEffect } from "react";
 
 import { useDefaultDevices } from "../settings/useSetting";
@@ -17,12 +17,21 @@ export type MediaDevicesState = {
 };
 
 // if a room is passed this only affects the device selection inside a call. Without room it changes what we see in the lobby
-export function useMediaDevices(room?: Room): MediaDevicesState {
+export function useMediaDevicesSwitcher(
+  room?: Room,
+  tracks?: { videoTrack?: LocalVideoTrack; audioTrack?: LocalAudioTrack },
+  requestPermissions = true
+): MediaDevicesState {
   const {
     devices: videoDevices,
     activeDeviceId: activeVideoDevice,
     setActiveMediaDevice: setActiveVideoDevice,
-  } = useMediaDeviceSelect({ kind: "videoinput", room });
+  } = useMediaDeviceSelect({
+    kind: "videoinput",
+    room,
+    track: tracks?.videoTrack,
+    requestPermissions,
+  });
 
   const {
     devices: audioDevices,
@@ -31,6 +40,8 @@ export function useMediaDevices(room?: Room): MediaDevicesState {
   } = useMediaDeviceSelect({
     kind: "audioinput",
     room,
+    track: tracks?.audioTrack,
+    requestPermissions,
   });
 
   const {

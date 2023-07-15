@@ -18,7 +18,7 @@ import { FC, useEffect, useState, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import { useClient } from "../ClientContext";
+import { useClientLegacy } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
 import { GroupCallLoader } from "./GroupCallLoader";
@@ -30,8 +30,6 @@ import { useOptInAnalytics } from "../settings/useSetting";
 
 export const RoomPage: FC = () => {
   const { t } = useTranslation();
-  const { loading, isAuthenticated, error, client, isPasswordlessUser } =
-    useClient();
 
   const {
     roomAlias,
@@ -52,39 +50,41 @@ export const RoomPage: FC = () => {
 
   useEffect(() => {
     // During the beta, opt into analytics by default
-    if (optInAnalytics === null) setOptInAnalytics(true);
+    if (optInAnalytics === null && setOptInAnalytics) setOptInAnalytics(true);
   }, [optInAnalytics, setOptInAnalytics]);
+
+  const { loading, authenticated, client, error, passwordlessUser } =
+    useClientLegacy();
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as
     // a URL param, automatically register a passwordless user
-    if (!loading && !isAuthenticated && displayName) {
+    if (!loading && !authenticated && displayName) {
       setIsRegistering(true);
       registerPasswordlessUser(displayName).finally(() => {
         setIsRegistering(false);
       });
     }
   }, [
-    isAuthenticated,
+    loading,
+    authenticated,
     displayName,
     setIsRegistering,
     registerPasswordlessUser,
-    loading,
   ]);
 
   const groupCallView = useCallback(
     (groupCall: GroupCall) => (
       <GroupCallView
-        client={client}
-        roomIdOrAlias={roomIdOrAlias}
+        client={client!}
         groupCall={groupCall}
-        isPasswordlessUser={isPasswordlessUser}
+        isPasswordlessUser={passwordlessUser}
         isEmbedded={isEmbedded}
         preload={preload}
         hideHeader={hideHeader}
       />
     ),
-    [client, roomIdOrAlias, isPasswordlessUser, isEmbedded, preload, hideHeader]
+    [client, passwordlessUser, isEmbedded, preload, hideHeader]
   );
 
   if (loading || isRegistering) {
@@ -95,7 +95,7 @@ export const RoomPage: FC = () => {
     return <ErrorView error={error} />;
   }
 
-  if (!isAuthenticated) {
+  if (!client) {
     return <RoomAuthView />;
   }
 

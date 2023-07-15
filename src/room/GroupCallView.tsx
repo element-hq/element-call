@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
@@ -49,7 +49,6 @@ interface Props {
   isEmbedded: boolean;
   preload: boolean;
   hideHeader: boolean;
-  roomIdOrAlias: string;
   groupCall: GroupCall;
 }
 
@@ -59,7 +58,6 @@ export function GroupCallView({
   isEmbedded,
   preload,
   hideHeader,
-  roomIdOrAlias,
   groupCall,
 }: Props) {
   const {
@@ -82,13 +80,14 @@ export function GroupCallView({
   }, [groupCall]);
 
   const { displayName, avatarUrl } = useProfile(client);
-
-  const matrixInfo: MatrixInfo = {
-    displayName,
-    avatarUrl,
-    roomName: groupCall.room.name,
-    roomIdOrAlias,
-  };
+  const matrixInfo = useMemo((): MatrixInfo => {
+    return {
+      displayName: displayName!,
+      avatarUrl: avatarUrl!,
+      roomId: groupCall.room.roomId,
+      roomName: groupCall.room.name,
+    };
+  }, [displayName, avatarUrl, groupCall]);
 
   useEffect(() => {
     if (widget && preload) {
@@ -139,14 +138,14 @@ export function GroupCallView({
         PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
 
         await Promise.all([
-          widget.api.setAlwaysOnScreen(true),
-          widget.api.transport.reply(ev.detail, {}),
+          widget!.api.setAlwaysOnScreen(true),
+          widget!.api.transport.reply(ev.detail, {}),
         ]);
       };
 
       widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
       return () => {
-        widget.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
+        widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
     }
   }, [groupCall, preload, enter]);
@@ -205,12 +204,12 @@ export function GroupCallView({
     if (widget && state === GroupCallState.Entered) {
       const onHangup = async (ev: CustomEvent<IWidgetApiRequest>) => {
         leave();
-        await widget.api.transport.reply(ev.detail, {});
-        widget.api.setAlwaysOnScreen(false);
+        await widget!.api.transport.reply(ev.detail, {});
+        widget!.api.setAlwaysOnScreen(false);
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
       return () => {
-        widget.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
+        widget!.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
       };
     }
   }, [groupCall, state, leave]);
@@ -219,26 +218,14 @@ export function GroupCallView({
     undefined
   );
 
-  const [livekitServiceURL, setLivekitServiceURL] = useState<
-    string | undefined
-  >(groupCall.foci[0]?.livekitServiceUrl);
-
-  useEffect(() => {
-    setLivekitServiceURL(groupCall.foci[0]?.livekitServiceUrl);
-  }, [setLivekitServiceURL, groupCall]);
-
-  if (!livekitServiceURL) {
-    return <ErrorView error={new Error("No livekit_service_url defined")} />;
-  }
-
   if (error) {
     return <ErrorView error={error} />;
   } else if (state === GroupCallState.Entered && userChoices) {
     return (
       <OpenIDLoader
         client={client}
-        livekitServiceURL={livekitServiceURL}
-        roomName={matrixInfo.roomName}
+        groupCall={groupCall}
+        roomName={`${groupCall.room.roomId}-${groupCall.groupCallId}`}
       >
         <ActiveCall
           client={client}
@@ -247,7 +234,6 @@ export function GroupCallView({
           onLeave={onLeave}
           unencryptedEventsFromUsers={unencryptedEventsFromUsers}
           hideHeader={hideHeader}
-          matrixInfo={matrixInfo}
           userChoices={userChoices}
           otelGroupCallMembership={otelGroupCallMembership}
         />

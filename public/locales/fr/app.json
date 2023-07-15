@@ -4,8 +4,6 @@
   "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.": "Un autre utilisateur dans cet appel a un problème. Pour nous permettre de résoudre le problème, nous aimerions récupérer un journal de débogage.",
   "Audio": "Audio",
   "Avatar": "Avatar",
-  "By clicking \"Go\", you agree to our <2>Terms and conditions</2>": "En cliquant sur « Commencer » vous acceptez nos <2>conditions d’utilisation</2>",
-  "By clicking \"Join call now\", you agree to our <2>Terms and conditions</2>": "En cliquant sur « Rejoindre l’appel » vous acceptez nos <2>conditions d’utilisation</2>",
   "Call link copied": "Lien de l’appel copié",
   "Call type menu": "Menu de type d’appel",
   "Camera": "Caméra",
@@ -88,7 +86,6 @@
   "Unmute microphone": "Allumer le micro",
   "Turn on camera": "Allumer la caméra",
   "Turn off camera": "Couper la caméra",
-  "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>Terms and conditions</12>": "Ce site est protégé par ReCAPTCHA, la <2>politique de confidentialité</2> et les <6>conditions d’utilisation</6> de Google s’appliquent.<9></9>En cliquant sur « S’enregistrer » vous acceptez également nos <12>conditions d’utilisation</12>",
   "Speaker": "Intervenant",
   "Invite": "Inviter",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Vous avez déjà un compte ?</0><1><0>Se connecter</0> Ou <2>Accès invité</2></1>",
@@ -115,5 +112,9 @@
   "<0>Thanks for your feedback!</0>": "<0>Merci pour votre commentaire !</0>",
   "How did it go?": "Comment cela s’est-il passé ?",
   "{{displayName}} is presenting": "{{displayName}} est à l’écran",
-  "Show connection stats": "Afficher les statistiques de la connexion"
+  "Show connection stats": "Afficher les statistiques de la connexion",
+  "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "En cliquant sur « Rejoindre l’appel maintenant », vous acceptez notre <2>Contrat de Licence Utilisateur Final (CLUF)</2>",
+  "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "En cliquant sur « Commencer », vous acceptez notre <2>Contrat de Licence Utilisateur Final (CLUF)</2>",
+  "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>": "Ce site est protégé par ReCAPTCHA, la <2>politique de confidentialité</2> et les <6>conditions d’utilisation</6> de Google s’appliquent.<9></9>En cliquant sur « S’enregistrer » vous acceptez également notre <12>Contrat de Licence Utilisateur Final (CLUF)</12>",
+  "Element Call is temporarily not end-to-end encrypted while we test scalability.": "Element Call n’est temporairement plus chiffré de bout en bout le temps de tester l’extensibilité."
 }
