@@ -26,15 +26,18 @@ import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Form } from "../form/Form";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
+import { Config } from "../config/Config";
 
 export function RoomAuthView() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
 
-  const { registerPasswordlessUser, recaptchaId, privacyPolicyUrl } =
+  const { registerPasswordlessUser, recaptchaId } =
     useRegisterPasswordlessUser();
 
   const onSubmit = useCallback(
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target);
@@ -83,7 +86,7 @@ export function RoomAuthView() {
             <Caption>
               <Trans>
                 By clicking "Join call now", you agree to our{" "}
-                <Link href={privacyPolicyUrl}>
+                <Link href={Config.get().eula}>
                   End User Licensing Agreement (EULA)
                 </Link>
               </Trans>

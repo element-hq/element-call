@@ -17,6 +17,7 @@ limitations under the License.
 import TinyQueue from "tinyqueue";
 import { RectReadOnly } from "react-use-measure";
 import { FC, memo, ReactNode } from "react";
+import { zip } from "lodash";
 
 import { TileDescriptor } from "./VideoGrid";
 import { Slot } from "./NewVideoGrid";
@@ -46,20 +47,19 @@ interface Cell {
   readonly rows: number;
 }
 
-export interface BigGridState {
-  readonly columns: number;
-  /**
-   * The cells of the grid, in left-to-right top-to-bottom order.
-   * undefined = empty.
-   */
-  readonly cells: (Cell | undefined)[];
-}
-
-interface MutableBigGridState {
+export interface Grid {
   columns: number;
   /**
    * The cells of the grid, in left-to-right top-to-bottom order.
-   * undefined = empty.
+   */
+  cells: Cell[];
+}
+
+export interface SparseGrid {
+  columns: number;
+  /**
+   * The cells of the grid, in left-to-right top-to-bottom order.
+   * undefined = a gap in the grid.
    */
   cells: (Cell | undefined)[];
 }
@@ -67,12 +67,19 @@ interface MutableBigGridState {
 /**
  * Gets the paths that tiles should travel along in the grid to reach a
  * particular destination.
- * @param dest The destination index.
  * @param g The grid.
+ * @param dest The destination index.
+ * @param avoid A predicate defining the cells that paths should avoid going
+ *   through.
  * @returns An array in which each cell holds the index of the next cell to move
- *   to to reach the destination, or null if it is the destination.
+ *   to to reach the destination, or null if it is the destination or otherwise
+ *   immovable.
  */
-export function getPaths(dest: number, g: BigGridState): (number | null)[] {
+export function getPaths(
+  g: SparseGrid,
+  dest: number,
+  avoid: (cell: number) => boolean = () => false
+): (number | null)[] {
   const destRow = row(dest, g);
   const destColumn = column(dest, g);
 
@@ -80,18 +87,11 @@ export function getPaths(dest: number, g: BigGridState): (number | null)[] {
 
   const distances = new Array<number>(dest + 1).fill(Infinity);
   distances[dest] = 0;
-  const edges = new Array<number | null | undefined>(dest).fill(undefined);
+  const edges = new Array<number | null>(dest).fill(null);
   edges[dest] = null;
   const heap = new TinyQueue([dest], (i) => distances[i]);
 
-  const visit = (curr: number, via: number) => {
-    const viaCell = g.cells[via];
-    const viaLargeTile =
-      viaCell !== undefined && (viaCell.rows > 1 || viaCell.columns > 1);
-    // Since it looks nicer to have paths go around large tiles, we impose an
-    // increased cost for moving through them
-    const distanceVia = distances[via] + (viaLargeTile ? 8 : 1);
-
+  const visit = (curr: number, via: number, distanceVia: number) => {
     if (distanceVia < distances[curr]) {
       distances[curr] = distanceVia;
       edges[curr] = via;
@@ -101,33 +101,43 @@ export function getPaths(dest: number, g: BigGridState): (number | null)[] {
 
   while (heap.length > 0) {
     const via = heap.pop()!;
-    const viaRow = row(via, g);
-    const viaColumn = column(via, g);
 
-    // Visit each neighbor
-    if (viaRow > 0) visit(via - g.columns, via);
-    if (viaColumn > 0) visit(via - 1, via);
-    if (viaColumn < (viaRow === destRow ? destColumn : g.columns - 1))
-      visit(via + 1, via);
-    if (
-      viaRow < destRow - 1 ||
-      (viaRow === destRow - 1 && viaColumn <= destColumn)
-    )
-      visit(via + g.columns, via);
+    if (!avoid(via)) {
+      const viaRow = row(via, g);
+      const viaColumn = column(via, g);
+      const viaCell = g.cells[via];
+      const viaLargeTile = viaCell !== undefined && !is1By1(viaCell);
+      // Since it looks nicer to have paths go around large tiles, we impose an
+      // increased cost for moving through them
+      const distanceVia = distances[via] + (viaLargeTile ? 8 : 1);
+
+      // Visit each neighbor
+      if (viaRow > 0) visit(via - g.columns, via, distanceVia);
+      if (viaColumn > 0) visit(via - 1, via, distanceVia);
+      if (viaColumn < (viaRow === destRow ? destColumn : g.columns - 1))
+        visit(via + 1, via, distanceVia);
+      if (
+        viaRow < destRow - 1 ||
+        (viaRow === destRow - 1 && viaColumn <= destColumn)
+      )
+        visit(via + g.columns, via, distanceVia);
+    }
   }
 
   // The heap is empty, so we've generated all paths
-  return edges as (number | null)[];
+  return edges;
 }
 
-const findLast1By1Index = (g: BigGridState): number | null =>
-  findLastIndex(g.cells, (c) => c?.rows === 1 && c?.columns === 1);
+const is1By1 = (c: Cell) => c.columns === 1 && c.rows === 1;
 
-export function row(index: number, g: BigGridState): number {
+const findLast1By1Index = (g: SparseGrid): number | null =>
+  findLastIndex(g.cells, (c) => c !== undefined && is1By1(c));
+
+export function row(index: number, g: SparseGrid): number {
   return Math.floor(index / g.columns);
 }
 
-export function column(index: number, g: BigGridState): number {
+export function column(index: number, g: SparseGrid): number {
   return ((index % g.columns) + g.columns) % g.columns;
 }
 
@@ -135,7 +145,7 @@ function inArea(
   index: number,
   start: number,
   end: number,
-  g: BigGridState
+  g: SparseGrid
 ): boolean {
   const indexColumn = column(index, g);
   const indexRow = row(index, g);
@@ -150,7 +160,7 @@ function inArea(
 function* cellsInArea(
   start: number,
   end: number,
-  g: BigGridState
+  g: SparseGrid
 ): Generator<number, void, unknown> {
   const startColumn = column(start, g);
   const endColumn = column(end, g);
@@ -165,20 +175,20 @@ function* cellsInArea(
     yield i;
 }
 
-export function forEachCellInArea(
+export function forEachCellInArea<G extends Grid | SparseGrid>(
   start: number,
   end: number,
-  g: BigGridState,
-  fn: (c: Cell | undefined, i: number) => void
+  g: G,
+  fn: (c: G["cells"][0], i: number) => void
 ): void {
   for (const i of cellsInArea(start, end, g)) fn(g.cells[i], i);
 }
 
-function allCellsInArea(
+function allCellsInArea<G extends Grid | SparseGrid>(
   start: number,
   end: number,
-  g: BigGridState,
-  fn: (c: Cell | undefined, i: number) => boolean
+  g: G,
+  fn: (c: G["cells"][0], i: number) => boolean
 ): boolean {
   for (const i of cellsInArea(start, end, g)) {
     if (!fn(g.cells[i], i)) return false;
@@ -187,14 +197,30 @@ function allCellsInArea(
   return true;
 }
 
+/**
+ * Counts the number of cells in the area that satsify the given predicate.
+ */
+function countCellsInArea<G extends Grid | SparseGrid>(
+  start: number,
+  end: number,
+  g: G,
+  predicate: (c: G["cells"][0], i: number) => boolean
+): number {
+  let count = 0;
+  for (const i of cellsInArea(start, end, g)) {
+    if (predicate(g.cells[i], i)) count++;
+  }
+  return count;
+}
+
 const areaEnd = (
   start: number,
   columns: number,
   rows: number,
-  g: BigGridState
+  g: SparseGrid
 ): number => start + columns - 1 + g.columns * (rows - 1);
 
-const cloneGrid = (g: BigGridState): BigGridState => ({
+const cloneGrid = <G extends Grid | SparseGrid>(g: G): G => ({
   ...g,
   cells: [...g.cells],
 });
@@ -203,47 +229,27 @@ const cloneGrid = (g: BigGridState): BigGridState => ({
  * Gets the index of the next gap in the grid that should be backfilled by 1×1
  * tiles.
  */
-function getNextGap(g: BigGridState): number | null {
+function getNextGap(
+  g: SparseGrid,
+  ignoreGap: (cell: number) => boolean
+): number | null {
   const last1By1Index = findLast1By1Index(g);
   if (last1By1Index === null) return null;
 
   for (let i = 0; i < last1By1Index; i++) {
     // To make the backfilling process look natural when there are multiple
     // gaps, we actually scan each row from right to left
-    const j =
+    const j = i; /*
       (row(i, g) === row(last1By1Index, g)
         ? last1By1Index
         : (row(i, g) + 1) * g.columns) -
       1 -
-      column(i, g);
+      column(i, g);*/
 
-    if (g.cells[j] === undefined) return j;
+    if (!ignoreGap(j) && g.cells[j] === undefined) return j;
   }
 
   return null;
-}
-
-/**
- * Gets the index of the origin of the tile to which the given cell belongs.
- */
-function getOrigin(g: BigGridState, index: number): number {
-  const initialColumn = column(index, g);
-
-  for (
-    let i = index;
-    i >= 0;
-    i = column(i, g) === 0 ? i - g.columns + initialColumn : i - 1
-  ) {
-    const cell = g.cells[i];
-    if (
-      cell !== undefined &&
-      cell.origin &&
-      inArea(index, i, areaEnd(i, cell.columns, cell.rows, g), g)
-    )
-      return i;
-  }
-
-  throw new Error("Tile is broken");
 }
 
 /**
@@ -251,14 +257,15 @@ function getOrigin(g: BigGridState, index: number): number {
  * along the way.
  * Precondition: the destination area must consist of only 1×1 tiles.
  */
-function moveTileUnchecked(g: BigGridState, from: number, to: number) {
+function moveTileUnchecked(g: SparseGrid, from: number, to: number) {
   const tile = g.cells[from]!;
   const fromEnd = areaEnd(from, tile.columns, tile.rows, g);
   const toEnd = areaEnd(to, tile.columns, tile.rows, g);
 
   const displacedTiles: Cell[] = [];
   forEachCellInArea(to, toEnd, g, (c, i) => {
-    if (c !== undefined && !inArea(i, from, fromEnd, g)) displacedTiles.push(c);
+    if (c !== undefined && !inArea(i, from, fromEnd, g))
+      displacedTiles.push(c!);
   });
 
   const movingCells: Cell[] = [];
@@ -284,11 +291,11 @@ function moveTileUnchecked(g: BigGridState, from: number, to: number) {
 /**
  * Moves the tile at index "from" over to index "to", if there is space.
  */
-export function moveTile(
-  g: BigGridState,
+export function moveTile<G extends Grid | SparseGrid>(
+  g: G,
   from: number,
   to: number
-): BigGridState {
+): G {
   const tile = g.cells[from]!;
 
   if (
@@ -303,9 +310,7 @@ export function moveTile(
     // The contents of a given cell are 'displaceable' if it's empty, holds a
     // 1×1 tile, or is part of the original tile we're trying to reposition
     const displaceable = (c: Cell | undefined, i: number): boolean =>
-      c === undefined ||
-      (c.columns === 1 && c.rows === 1) ||
-      inArea(i, from, fromEnd, g);
+      c === undefined || is1By1(c) || inArea(i, from, fromEnd, g);
 
     if (allCellsInArea(to, toEnd, g, displaceable)) {
       // The target space is free; move
@@ -320,62 +325,236 @@ export function moveTile(
 }
 
 /**
- * Attempts to push a tile upwards by one row, displacing 1×1 tiles and shifting
- * enlarged tiles around when necessary.
- * @returns Whether the tile was actually pushed
+ * Attempts to push a tile upwards by a number of rows, displacing 1×1 tiles.
+ * @returns The number of rows the tile was successfully pushed (may be less
+ *   than requested if there are obstacles blocking movement).
  */
-function pushTileUp(g: BigGridState, from: number): boolean {
+function pushTileUp(
+  g: SparseGrid,
+  from: number,
+  rows: number,
+  avoid: (cell: number) => boolean = () => false
+): number {
   const tile = g.cells[from]!;
 
-  // TODO: pushing large tiles sideways might be more successful in some
-  // situations
-  const cellsAboveAreDisplacable =
-    from - g.columns >= 0 &&
-    allCellsInArea(
-      from - g.columns,
-      from - g.columns + tile.columns - 1,
-      g,
-      (c, i) =>
-        c === undefined ||
-        (c.columns === 1 && c.rows === 1) ||
-        pushTileUp(g, getOrigin(g, i))
-    );
+  for (let tryRows = rows; tryRows > 0; tryRows--) {
+    const to = from - tryRows * g.columns;
+    const toEnd = areaEnd(to, tile.columns, tile.rows, g);
 
-  if (cellsAboveAreDisplacable) {
-    moveTileUnchecked(g, from, from - g.columns);
-    return true;
-  } else {
-    return false;
+    const cellsAboveAreDisplacable =
+      from - g.columns >= 0 &&
+      allCellsInArea(
+        to,
+        Math.min(from - g.columns + tile.columns - 1, toEnd),
+        g,
+        (c, i) => (c === undefined || is1By1(c)) && !avoid(i)
+      );
+
+    if (cellsAboveAreDisplacable) {
+      moveTileUnchecked(g, from, to);
+      return tryRows;
+    }
   }
+
+  return 0;
+}
+
+function trimTrailingGaps(g: SparseGrid) {
+  // Shrink the array to remove trailing gaps
+  const newLength = (findLastIndex(g.cells, (c) => c !== undefined) ?? -1) + 1;
+  if (newLength !== g.cells.length) g.cells = g.cells.slice(0, newLength);
+}
+
+/**
+ * Determines whether the given area is sufficiently clear of obstacles for
+ * vacateArea to work.
+ */
+function canVacateArea(g: SparseGrid, start: number, end: number): boolean {
+  const newCellCount = countCellsInArea(start, end, g, (c) => c !== undefined);
+  const newFullRows = Math.floor(newCellCount / g.columns);
+  return allCellsInArea(
+    start,
+    end - newFullRows * g.columns,
+    g,
+    (c) => c === undefined || is1By1(c)
+  );
+}
+
+/**
+ * Clears away all the tiles in a given area by pushing them elsewhere.
+ * Precondition: the area must first be checked with canVacateArea, and the only
+ * gaps in the given grid must lie either within the area being cleared, or
+ * after the last 1×1 tile.
+ */
+function vacateArea(g: SparseGrid, start: number, end: number): SparseGrid {
+  const newCellCount = countCellsInArea(
+    start,
+    end,
+    g,
+    (c, i) => c !== undefined || i >= g.cells.length
+  );
+  const newFullRows = Math.floor(newCellCount / g.columns);
+  const endRow = row(end, g);
+
+  // To avoid subverting users' expectations, this operation should be the exact
+  // inverse of fillGaps. We do this by reverse-engineering a grid G with the
+  // area cleared out and structured such that fillGaps(G) = g.
+
+  // A grid that will have the same structure as the final result, but be filled
+  // with fake data
+  const outputStructure: SparseGrid = {
+    columns: g.columns,
+    cells: new Array(g.cells.length + newCellCount),
+  };
+
+  // The first step in populating outputStructure is to copy over all the large
+  // tiles, pushing those tiles downwards that fillGaps would push upwards
+  g.cells.forEach((cell, fromStart) => {
+    if (cell?.origin && !is1By1(cell)) {
+      const fromEnd = areaEnd(fromStart, cell.columns, cell.rows, g);
+      const offset =
+        row(fromStart, g) + newFullRows > endRow ? newFullRows * g.columns : 0;
+      forEachCellInArea(fromStart, fromEnd, g, (c, i) => {
+        outputStructure.cells[i + offset] = c;
+      });
+    }
+  });
+
+  // Then, we need to fill it in with the same number of 1×1 tiles as appear in
+  // the input
+  const oneByOneTileCount = count(g.cells, (c) => c !== undefined && is1By1(c));
+  let oneByOneTilesDistributed = 0;
+
+  for (let i = 0; i < outputStructure.cells.length; i++) {
+    if (outputStructure.cells[i] === undefined) {
+      if (inArea(i, start, end, g)) {
+        // Leave the requested area clear
+        outputStructure.cells[i] = undefined;
+      } else if (oneByOneTilesDistributed < oneByOneTileCount) {
+        outputStructure.cells[i] = {
+          // Fake data because we only care about the grid's structure
+          item: {} as unknown as TileDescriptor<unknown>,
+          origin: true,
+          columns: 1,
+          rows: 1,
+        };
+        oneByOneTilesDistributed++;
+      }
+    }
+  }
+
+  // Lastly, handle the edge case where there were gaps in the input after the
+  // last 1×1 tile by resizing the cells array to delete these gaps
+  trimTrailingGaps(outputStructure);
+
+  // outputStructure is now fully populated, and so running fillGaps on it
+  // should produce a grid with the same structure as the input
+  const inputStructure = fillGaps(
+    outputStructure,
+    false,
+    (i) => inArea(i, start, end, g) && g.cells[i] === undefined
+  );
+
+  // We exploit the fact that g and inputStructure have the same structure to
+  // create a mapping between cells in the structure grids and cells in g
+  const structureMapping = new Map(zip(inputStructure.cells, g.cells));
+
+  // And finally, we can use that mapping to swap the fake data in
+  // outputStructure with the real thing
+  return {
+    columns: g.columns,
+    cells: outputStructure.cells.map((placeholder) =>
+      structureMapping.get(placeholder)
+    ),
+  };
 }
 
 /**
  * Backfill any gaps in the grid.
  */
-export function fillGaps(g: BigGridState): BigGridState {
-  const result = cloneGrid(g) as MutableBigGridState;
+export function fillGaps(
+  g: SparseGrid,
+  packLargeTiles?: true,
+  ignoreGap?: () => false
+): Grid;
+export function fillGaps(
+  g: SparseGrid,
+  packLargeTiles?: boolean,
+  ignoreGap?: (cell: number) => boolean
+): SparseGrid;
+export function fillGaps(
+  g: SparseGrid,
+  packLargeTiles = true,
+  ignoreGap: (cell: number) => boolean = () => false
+): SparseGrid {
+  const lastGap = findLastIndex(
+    g.cells,
+    (c, i) => c === undefined && !ignoreGap(i)
+  );
+  if (lastGap === null) return g; // There are no gaps to fill
+  const lastGapRow = row(lastGap, g);
 
-  // This will hopefully be the size of the grid after we're done here, assuming
-  // that we can pack the large tiles tightly enough
-  const idealLength = count(result.cells, (c) => c !== undefined);
+  const result = cloneGrid(g);
 
-  // Step 1: Take any large tiles hanging off the bottom of the grid, and push
-  // them upwards
-  for (let i = result.cells.length - 1; i >= idealLength; i--) {
-    const cell = result.cells[i];
-    if (cell !== undefined && (cell.columns > 1 || cell.rows > 1)) {
-      const originIndex =
-        i - (cell.columns - 1) - result.columns * (cell.rows - 1);
-      // If it's not possible to pack the large tiles any tighter, give up
-      if (!pushTileUp(result, originIndex)) break;
+  // This will be the size of the grid after we're done here (assuming we're
+  // allowed to pack the large tiles into the rest of the grid as necessary)
+  let idealLength = count(
+    result.cells,
+    (c, i) => c !== undefined || ignoreGap(i)
+  );
+  const fullRowsRemoved = Math.floor(
+    (g.cells.length - idealLength) / g.columns
+  );
+
+  // Step 1: Push all large tiles below the last gap upwards, so that they move
+  // roughly the same distance that we're expecting 1×1 tiles to move
+  if (fullRowsRemoved > 0) {
+    for (
+      let i = (lastGapRow + 1) * result.columns;
+      i < result.cells.length;
+      i++
+    ) {
+      const cell = result.cells[i];
+      if (cell?.origin && !is1By1(cell))
+        pushTileUp(result, i, fullRowsRemoved, ignoreGap);
     }
   }
 
-  // Step 2: Fill all 1×1 gaps
-  let gap = getNextGap(result);
+  // Step 2: Deal with any large tiles that are still hanging off the bottom
+  if (packLargeTiles) {
+    for (let i = result.cells.length - 1; i >= idealLength; i--) {
+      const cell = result.cells[i];
+      if (cell !== undefined && !is1By1(cell)) {
+        // First, try to just push it upwards a bit more
+        const originIndex =
+          i - (cell.columns - 1) - result.columns * (cell.rows - 1);
+        const pushed = pushTileUp(result, originIndex, 1, ignoreGap) === 1;
+
+        // If that failed, collapse the tile to 1×1 so it can be dealt with in
+        // step 3
+        if (!pushed) {
+          const collapsedTile: Cell = {
+            item: cell.item,
+            origin: true,
+            columns: 1,
+            rows: 1,
+          };
+          forEachCellInArea(originIndex, i, result, (_c, j) => {
+            result.cells[j] = undefined;
+          });
+          result.cells[i] = collapsedTile;
+          // Collapsing the tile makes the final grid size smaller
+          idealLength -= cell.columns * cell.rows - 1;
+        }
+      }
+    }
+  }
+
+  // Step 3: Fill all remaining gaps with 1×1 tiles
+  let gap = getNextGap(result, ignoreGap);
 
   if (gap !== null) {
-    const pathsToEnd = getPaths(findLast1By1Index(result)!, result);
+    const pathsToEnd = getPaths(result, findLast1By1Index(result)!, ignoreGap);
 
     do {
       let filled = false;
@@ -385,8 +564,8 @@ export function fillGaps(g: BigGridState): BigGridState {
       // First, attempt to fill the gap by moving 1×1 tiles backwards from the
       // end of the grid along a set path
       while (from !== null) {
-        const toCell = result.cells[to];
-        const fromCell = result.cells[from];
+        const toCell = result.cells[to] as Cell | undefined;
+        const fromCell = result.cells[from] as Cell | undefined;
 
         // Skip over slots that are already full
         if (toCell !== undefined) {
@@ -394,11 +573,7 @@ export function fillGaps(g: BigGridState): BigGridState {
           // Skip over large tiles. Also, we might run into gaps along the path
           // created during the filling of previous gaps. Skip over those too;
           // they'll be picked up on the next iteration of the outer loop.
-        } else if (
-          fromCell === undefined ||
-          fromCell.rows > 1 ||
-          fromCell.columns > 1
-        ) {
+        } else if (fromCell === undefined || !is1By1(fromCell)) {
           from = pathsToEnd[from];
         } else {
           result.cells[to] = result.cells[from];
@@ -417,24 +592,17 @@ export function fillGaps(g: BigGridState): BigGridState {
         result.cells[last1By1Index] = undefined;
       }
 
-      gap = getNextGap(result);
+      gap = getNextGap(result, ignoreGap);
     } while (gap !== null);
   }
 
-  // Shrink the array to remove trailing gaps
-  const finalLength =
-    (findLastIndex(result.cells, (c) => c !== undefined) ?? -1) + 1;
-  if (finalLength < result.cells.length)
-    result.cells = result.cells.slice(0, finalLength);
-
+  trimTrailingGaps(result);
   return result;
 }
 
-function createRows(
-  g: BigGridState,
-  count: number,
-  atRow: number
-): BigGridState {
+// TODO: replace all usages of this function with vacateArea, as this results in
+// somewhat unpredictable movement
+function createRows(g: SparseGrid, count: number, atRow: number): SparseGrid {
   const result = {
     columns: g.columns,
     cells: new Array(g.cells.length + g.columns * count),
@@ -461,13 +629,13 @@ function createRows(
 }
 
 /**
- * Adds a set of new items into the grid. (May leave gaps.)
+ * Adds a set of new items into the grid.
  */
 export function addItems(
   items: TileDescriptor<unknown>[],
-  g: BigGridState
-): BigGridState {
-  let result = cloneGrid(g);
+  g: SparseGrid
+): SparseGrid {
+  let result: SparseGrid = cloneGrid(g);
 
   for (const item of items) {
     const cell = {
@@ -521,30 +689,23 @@ export function addItems(
   return result;
 }
 
-const largeTileDimensions = (g: BigGridState): [number, number] => [
+const largeTileDimensions = (g: SparseGrid): [number, number] => [
   Math.min(3, Math.max(2, g.columns - 1)),
   2,
 ];
 
-const extraLargeTileDimensions = (g: BigGridState): [number, number] =>
+const extraLargeTileDimensions = (g: SparseGrid): [number, number] =>
   g.columns > 3 ? [4, 3] : [g.columns, 2];
 
-/**
- * Changes the size of a tile, rearranging the grid to make space.
- * @param tileId The ID of the tile to modify.
- * @param g The grid.
- * @returns The updated grid.
- */
-export function cycleTileSize(
-  g: BigGridState,
+export function cycleTileSize<G extends Grid | SparseGrid>(
+  g: G,
   tile: TileDescriptor<unknown>
-): BigGridState {
+): G {
   const from = g.cells.findIndex((c) => c?.item === tile);
   if (from === -1) return g; // Tile removed, no change
   const fromCell = g.cells[from]!;
   const fromWidth = fromCell.columns;
   const fromHeight = fromCell.rows;
-  const fromEnd = areaEnd(from, fromWidth, fromHeight, g);
 
   const [baseDimensions, enlargedDimensions] = fromCell.item.largeBaseSize
     ? [largeTileDimensions(g), extraLargeTileDimensions(g)]
@@ -555,113 +716,151 @@ export function cycleTileSize(
       ? enlargedDimensions
       : baseDimensions;
 
-  // If we're expanding the tile, we want to create enough new rows at the
-  // tile's target position such that every new unit of grid area created during
-  // the expansion can fit within the new rows.
-  // We do it this way, since it's easier to backfill gaps in the grid than it
-  // is to push colliding tiles outwards.
-  const newRows = Math.max(
-    0,
-    Math.ceil((toWidth * toHeight - fromWidth * fromHeight) / g.columns)
-  );
+  return setTileSize(g, from, toWidth, toHeight);
+}
 
-  // The next task is to scan for a spot to place the modified tile. Since we
-  // might be creating new rows at the target position, this spot can be shorter
-  // than the target height.
-  const candidateWidth = toWidth;
-  const candidateHeight = toHeight - newRows;
+/**
+ * Finds the cell nearest to 'nearestTo' that satsifies the given predicate.
+ * @param shouldScan A predicate constraining the bounds of the search.
+ */
+function findNearestCell<G extends Grid | SparseGrid>(
+  g: G,
+  nearestTo: number,
+  shouldScan: (index: number) => boolean,
+  predicate: (cell: G["cells"][0], index: number) => boolean
+): number | null {
+  const scanLocations = new Set([nearestTo]);
 
-  // To make the tile appear to expand outwards from its center, we're actually
-  // scanning for locations to put the *center* of the tile. These numbers are
-  // the offsets between the tile's origin and its center.
-  const scanColumnOffset = Math.floor((toWidth - fromWidth) / 2);
-  const scanRowOffset = Math.floor((toHeight - fromHeight) / 2);
+  for (const scanLocation of scanLocations) {
+    if (shouldScan(scanLocation)) {
+      if (predicate(g.cells[scanLocation], scanLocation)) return scanLocation;
 
-  const nextScanLocations = new Set<number>([from]);
-  const rows = row(g.cells.length - 1, g) + 1;
-  let to: number | null = null;
-
-  // The contents of a given cell are 'displaceable' if it's empty, holds a 1×1
-  // tile, or is part of the original tile we're trying to reposition
-  const displaceable = (c: Cell | undefined, i: number): boolean =>
-    c === undefined ||
-    (c.columns === 1 && c.rows === 1) ||
-    inArea(i, from, fromEnd, g);
-
-  // Do the scanning
-  for (const scanLocation of nextScanLocations) {
-    const start = scanLocation - scanColumnOffset - g.columns * scanRowOffset;
-    const end = areaEnd(start, candidateWidth, candidateHeight, g);
-    const startColumn = column(start, g);
-    const startRow = row(start, g);
-    const endColumn = column(end, g);
-    const endRow = row(end, g);
-
-    if (
-      start >= 0 &&
-      endColumn - startColumn + 1 === candidateWidth &&
-      allCellsInArea(start, end, g, displaceable)
-    ) {
-      // This location works!
-      to = start;
-      break;
+      // Scan outwards in all directions
+      const scanColumn = column(scanLocation, g);
+      const scanRow = row(scanLocation, g);
+      if (scanColumn > 0) scanLocations.add(scanLocation - 1);
+      if (scanColumn < g.columns - 1) scanLocations.add(scanLocation + 1);
+      if (scanRow > 0) scanLocations.add(scanLocation - g.columns);
+      scanLocations.add(scanLocation + g.columns);
     }
-
-    // Scan outwards in all directions
-    if (startColumn > 0) nextScanLocations.add(scanLocation - 1);
-    if (endColumn < g.columns - 1) nextScanLocations.add(scanLocation + 1);
-    if (startRow > 0) nextScanLocations.add(scanLocation - g.columns);
-    if (endRow < rows - 1) nextScanLocations.add(scanLocation + g.columns);
   }
 
-  // If there is no space in the grid, give up
-  if (to === null) return g;
+  return null;
+}
 
-  const toRow = row(to, g);
+/**
+ * Changes the size of a tile, rearranging the grid to make space.
+ * @param tileId The ID of the tile to modify.
+ * @param g The grid.
+ * @returns The updated grid.
+ */
+export function setTileSize<G extends Grid | SparseGrid>(
+  g: G,
+  from: number,
+  toWidth: number,
+  toHeight: number
+): G {
+  const fromCell = g.cells[from]!;
+  const fromWidth = fromCell.columns;
+  const fromHeight = fromCell.rows;
+  const fromEnd = areaEnd(from, fromWidth, fromHeight, g);
+  const newGridSize =
+    g.cells.length + toWidth * toHeight - fromWidth * fromHeight;
 
-  // This is the grid with the new rows added
-  const gappyGrid = createRows(g, newRows, toRow + candidateHeight);
-
-  // Remove the original tile
-  const fromInGappyGrid =
-    from + (row(from, g) >= toRow + candidateHeight ? g.columns * newRows : 0);
-  const fromEndInGappyGrid = fromInGappyGrid - from + fromEnd;
-  forEachCellInArea(
-    fromInGappyGrid,
-    fromEndInGappyGrid,
-    gappyGrid,
-    (_c, i) => (gappyGrid.cells[i] = undefined)
+  const toColumn = Math.max(
+    0,
+    Math.min(
+      g.columns - toWidth,
+      column(from, g) + Math.trunc((fromWidth - toWidth) / 2)
+    )
   );
+  const toRow = Math.max(
+    0,
+    row(from, g) + Math.trunc((fromHeight - toHeight) / 2)
+  );
+  const targetDest = toColumn + toRow * g.columns;
 
-  // Place the tile in its target position, making a note of the tiles being
-  // overwritten
-  const displacedTiles: Cell[] = [];
-  const toEnd = areaEnd(to, toWidth, toHeight, g);
-  forEachCellInArea(to, toEnd, gappyGrid, (c, i) => {
-    if (c !== undefined) displacedTiles.push(c);
-    gappyGrid.cells[i] = {
-      item: g.cells[from]!.item,
-      origin: i === to,
-      columns: toWidth,
-      rows: toHeight,
-    };
+  const gridWithoutTile = cloneGrid(g);
+  forEachCellInArea(from, fromEnd, gridWithoutTile, (_c, i) => {
+    gridWithoutTile.cells[i] = undefined;
   });
 
-  // Place the displaced tiles in the remaining space
-  for (let i = 0; displacedTiles.length > 0; i++) {
-    if (gappyGrid.cells[i] === undefined)
-      gappyGrid.cells[i] = displacedTiles.shift();
+  const placeTile = (to: number, toEnd: number, grid: Grid | SparseGrid) => {
+    forEachCellInArea(to, toEnd, grid, (_c, i) => {
+      grid.cells[i] = {
+        item: fromCell.item,
+        origin: i === to,
+        columns: toWidth,
+        rows: toHeight,
+      };
+    });
+  };
+
+  if (toWidth <= fromWidth && toHeight <= fromHeight) {
+    // The tile is shrinking, which can always happen in-place
+    const to = targetDest;
+    const toEnd = areaEnd(to, toWidth, toHeight, g);
+
+    const result: SparseGrid = gridWithoutTile;
+    placeTile(to, toEnd, result);
+    return fillGaps(result, true, (i: number) => inArea(i, to, toEnd, g)) as G;
+  } else if (toWidth >= fromWidth && toHeight >= fromHeight) {
+    // The tile is growing, which might be able to happen in-place
+    const to = findNearestCell(
+      gridWithoutTile,
+      targetDest,
+      (i) => {
+        const end = areaEnd(i, toWidth, toHeight, g);
+        return (
+          column(i, g) + toWidth - 1 < g.columns &&
+          inArea(from, i, end, g) &&
+          inArea(fromEnd, i, end, g)
+        );
+      },
+      (_c, i) => {
+        const end = areaEnd(i, toWidth, toHeight, g);
+        return end < newGridSize && canVacateArea(gridWithoutTile, i, end);
+      }
+    );
+
+    if (to !== null) {
+      const toEnd = areaEnd(to, toWidth, toHeight, g);
+      const result = vacateArea(gridWithoutTile, to, toEnd);
+
+      placeTile(to, toEnd, result);
+      return result as G;
+    }
   }
 
-  // Fill any gaps that remain
-  return fillGaps(gappyGrid);
+  // Catch-all path for when the tile is neither strictly shrinking nor
+  // growing, or when there's not enough space for it to grow in-place
+
+  const packedGridWithoutTile = fillGaps(gridWithoutTile, false);
+
+  const to = findNearestCell(
+    packedGridWithoutTile,
+    targetDest,
+    (i) => i < newGridSize && column(i, g) + toWidth - 1 < g.columns,
+    (_c, i) => {
+      const end = areaEnd(i, toWidth, toHeight, g);
+      return end < newGridSize && canVacateArea(packedGridWithoutTile, i, end);
+    }
+  );
+
+  if (to === null) return g; // There's no space anywhere; give up
+
+  const toEnd = areaEnd(to, toWidth, toHeight, g);
+  const result = vacateArea(packedGridWithoutTile, to, toEnd);
+
+  placeTile(to, toEnd, result);
+  return result as G;
 }
 
 /**
  * Resizes the grid to a new column width.
  */
-export function resize(g: BigGridState, columns: number): BigGridState {
-  const result: BigGridState = { columns, cells: [] };
+export function resize(g: Grid, columns: number): Grid {
+  const result: SparseGrid = { columns, cells: [] };
   const [largeColumns, largeRows] = largeTileDimensions(result);
 
   // Copy each tile from the old grid to the resized one in the same order
@@ -670,10 +869,11 @@ export function resize(g: BigGridState, columns: number): BigGridState {
   let next = 0;
 
   for (const cell of g.cells) {
-    if (cell?.origin) {
+    if (cell.origin) {
       // TODO make aware of extra large tiles
-      const [nextColumns, nextRows] =
-        cell.columns > 1 || cell.rows > 1 ? [largeColumns, largeRows] : [1, 1];
+      const [nextColumns, nextRows] = is1By1(cell)
+        ? [1, 1]
+        : [largeColumns, largeRows];
 
       // If there isn't enough space left on this row, jump to the next row
       if (columns - column(next, result) < nextColumns)
@@ -704,7 +904,7 @@ export function resize(g: BigGridState, columns: number): BigGridState {
 /**
  * Promotes speakers to the first page of the grid.
  */
-export function promoteSpeakers(g: BigGridState) {
+export function promoteSpeakers(g: SparseGrid) {
   // This is all a bit of a hack right now, because we don't know if the designs
   // will stick with this approach in the long run
   // We assume that 4 rows are probably about 1 page
@@ -713,19 +913,12 @@ export function promoteSpeakers(g: BigGridState) {
   for (let from = firstPageEnd; from < g.cells.length; from++) {
     const fromCell = g.cells[from];
     // Don't bother trying to promote enlarged tiles
-    if (
-      fromCell?.item.isSpeaker &&
-      fromCell.columns === 1 &&
-      fromCell.rows === 1
-    ) {
+    if (fromCell?.item.isSpeaker && is1By1(fromCell)) {
       // Promote this tile by making 10 attempts to place it on the first page
       for (let j = 0; j < 10; j++) {
         const to = Math.floor(Math.random() * firstPageEnd);
         const toCell = g.cells[to];
-        if (
-          toCell === undefined ||
-          (toCell.columns === 1 && toCell.rows === 1)
-        ) {
+        if (toCell === undefined || is1By1(toCell)) {
           moveTileUnchecked(g, from, to);
           break;
         }
@@ -737,14 +930,11 @@ export function promoteSpeakers(g: BigGridState) {
 /**
  * The algorithm for updating a grid with a new set of tiles.
  */
-function updateTiles(
-  g: BigGridState,
-  tiles: TileDescriptor<unknown>[]
-): BigGridState {
+function updateTiles(g: Grid, tiles: TileDescriptor<unknown>[]): Grid {
   // Step 1: Update tiles that still exist, and remove tiles that have left
   // the grid
   const itemsById = new Map(tiles.map((i) => [i.id, i]));
-  const grid1: BigGridState = {
+  const grid1: SparseGrid = {
     ...g,
     cells: g.cells.map((c) => {
       if (c === undefined) return undefined;
@@ -766,12 +956,12 @@ function updateTiles(
   return fillGaps(grid2);
 }
 
-function updateBounds(g: BigGridState, bounds: RectReadOnly): BigGridState {
+function updateBounds(g: Grid, bounds: RectReadOnly): Grid {
   const columns = Math.max(2, Math.floor(bounds.width * 0.0045));
   return columns === g.columns ? g : resize(g, columns);
 }
 
-const Slots: FC<{ s: BigGridState }> = memo(({ s: g }) => {
+const Slots: FC<{ s: Grid }> = memo(({ s: g }) => {
   const areas = new Array<(number | null)[]>(
     Math.ceil(g.cells.length / g.columns)
   );
@@ -781,7 +971,7 @@ const Slots: FC<{ s: BigGridState }> = memo(({ s: g }) => {
   let slotCount = 0;
   for (let i = 0; i < g.cells.length; i++) {
     const cell = g.cells[i];
-    if (cell?.origin) {
+    if (cell.origin) {
       const slotEnd = i + cell.columns - 1 + g.columns * (cell.rows - 1);
       forEachCellInArea(
         i,
@@ -822,7 +1012,7 @@ const Slots: FC<{ s: BigGridState }> = memo(({ s: g }) => {
  * lies.
  */
 function positionOnTileToCell(
-  g: BigGridState,
+  g: SparseGrid,
   tileOriginIndex: number,
   xPositionOnTile: number,
   yPositionOnTile: number
@@ -834,16 +1024,16 @@ function positionOnTileToCell(
 }
 
 function dragTile(
-  g: BigGridState,
+  g: Grid,
   from: TileDescriptor<unknown>,
   to: TileDescriptor<unknown>,
   xPositionOnFrom: number,
   yPositionOnFrom: number,
   xPositionOnTo: number,
   yPositionOnTo: number
-): BigGridState {
-  const fromOrigin = g.cells.findIndex((c) => c?.item === from);
-  const toOrigin = g.cells.findIndex((c) => c?.item === to);
+): Grid {
+  const fromOrigin = g.cells.findIndex((c) => c.item === from);
+  const toOrigin = g.cells.findIndex((c) => c.item === to);
   const fromCell = positionOnTileToCell(
     g,
     fromOrigin,
@@ -860,12 +1050,12 @@ function dragTile(
   return moveTile(g, fromOrigin, fromOrigin + toCell - fromCell);
 }
 
-export const BigGrid: Layout<BigGridState> = {
+export const BigGrid: Layout<Grid> = {
   emptyState: { columns: 4, cells: [] },
   updateTiles,
   updateBounds,
-  getTiles: <T,>(g) =>
-    g.cells.filter((c) => c?.origin).map((c) => c!.item as T),
+  getTiles: <T,>(g: Grid) =>
+    g.cells.filter((c) => c.origin).map((c) => c!.item as T),
   canDragTile: () => true,
   dragTile,
   toggleFocus: cycleTileSize,

@@ -31,8 +31,13 @@ export const useEventTarget = <T extends Event>(
 ) => {
   useEffect(() => {
     if (target) {
-      target.addEventListener(eventType, listener, options);
-      return () => target.removeEventListener(eventType, listener, options);
+      target.addEventListener(eventType, listener as EventListener, options);
+      return () =>
+        target.removeEventListener(
+          eventType,
+          listener as EventListener,
+          options
+        );
     }
   }, [target, eventType, listener, options]);
 };

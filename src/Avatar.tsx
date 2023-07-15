@@ -16,7 +16,6 @@ limitations under the License.
 
 import { useMemo, CSSProperties, HTMLAttributes, FC } from "react";
 import classNames from "classnames";
-import { MatrixClient } from "matrix-js-sdk/src/client";
 
 import { getAvatarUrl } from "./matrix-utils";
 import { useClient } from "./ClientContext";
@@ -59,9 +58,6 @@ function hashStringToArrIndex(str: string, arrLength: number) {
   return sum % arrLength;
 }
 
-const resolveAvatarSrc = (client: MatrixClient, src: string, size: number) =>
-  src?.startsWith("mxc://") ? client && getAvatarUrl(client, src, size) : src;
-
 interface Props extends HTMLAttributes<HTMLDivElement> {
   bgKey?: string;
   src?: string;
@@ -99,10 +95,10 @@ export const Avatar: FC<Props> = ({
     [size]
   );
 
-  const resolvedSrc = useMemo(
-    () => resolveAvatarSrc(client, src, sizePx),
-    [client, src, sizePx]
-  );
+  const resolvedSrc = useMemo(() => {
+    if (!client || !src || !sizePx) return undefined;
+    return src.startsWith("mxc://") ? getAvatarUrl(client, src, sizePx) : src;
+  }, [client, src, sizePx]);
 
   const backgroundColor = useMemo(() => {
     const index = hashStringToArrIndex(

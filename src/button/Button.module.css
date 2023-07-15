@@ -61,6 +61,10 @@ limitations under the License.
   outline: auto;
 }
 
+.toolbarButton:disabled {
+  opacity: 0.55;
+}
+
 .toolbarButton,
 .toolbarButtonSecondary {
   width: 50px;

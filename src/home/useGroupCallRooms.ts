@@ -42,7 +42,7 @@ function getLastTs(client: MatrixClient, r: Room) {
     return ts;
   }
 
-  const myUserId = client.getUserId();
+  const myUserId = client.getUserId()!;
 
   if (r.getMyMembership() !== "join") {
     const membershipEvent = r.currentState.getStateEvents(
@@ -83,23 +83,28 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
 
   useEffect(() => {
     function updateRooms() {
+      if (!client.groupCallEventHandler) {
+        return;
+      }
+
       const groupCalls = client.groupCallEventHandler.groupCalls.values();
       const rooms = Array.from(groupCalls).map((groupCall) => groupCall.room);
       const filteredRooms = rooms.filter((r) => r.getCanonicalAlias()); // We don't display rooms without an alias
       const sortedRooms = sortRooms(client, filteredRooms);
-      const items: GroupCallRoom[] = sortedRooms.map((room) => {
-        const groupCall = client.getGroupCallForRoom(room.roomId);
+      const items = sortedRooms.map((room) => {
+        const groupCall = client.getGroupCallForRoom(room.roomId)!;
 
         return {
           roomAlias: room.getCanonicalAlias(),
           roomName: room.name,
-          avatarUrl: room.getMxcAvatarUrl(),
+          avatarUrl: room.getMxcAvatarUrl()!,
           room,
           groupCall,
-          participants: [...groupCall.participants.keys()],
+          participants: [...groupCall!.participants.keys()],
         };
       });
-      setRooms(items);
+
+      setRooms(items as GroupCallRoom[]);
     }
 
     updateRooms();

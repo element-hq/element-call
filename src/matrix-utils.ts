@@ -19,8 +19,7 @@ import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
 import { LocalStorageCryptoStore } from "matrix-js-sdk/src/crypto/store/localStorage-crypto-store";
 import { MemoryCryptoStore } from "matrix-js-sdk/src/crypto/store/memory-crypto-store";
-import { createClient } from "matrix-js-sdk/src/matrix";
-import { ICreateClientOpts } from "matrix-js-sdk/src/matrix";
+import { createClient, ICreateClientOpts } from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
 import { Visibility, Preset } from "matrix-js-sdk/src/@types/partials";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
@@ -57,8 +56,8 @@ function waitForSync(client: MatrixClient) {
   return new Promise<void>((resolve, reject) => {
     const onSync = (
       state: SyncState,
-      _old: SyncState,
-      data: ISyncStateData
+      _old: SyncState | null,
+      data?: ISyncStateData
     ) => {
       if (state === "PREPARED") {
         resolve();
@@ -87,7 +86,7 @@ export async function initClient(
 ): Promise<MatrixClient> {
   await loadOlm();
 
-  let indexedDB: IDBFactory;
+  let indexedDB: IDBFactory | undefined;
   try {
     indexedDB = window.indexedDB;
   } catch (e) {}
@@ -247,7 +246,7 @@ export function sanitiseRoomNameInput(input: string): string {
  */
 export function roomNameFromRoomId(roomId: string): string {
   return roomId
-    .match(/([^:]+):.*$/)[1]
+    .match(/([^:]+):.*$/)![1]
     .substring(1)
     .split("-")
     .map((part) =>
@@ -262,7 +261,7 @@ export function isLocalRoomId(roomId: string, client: MatrixClient): boolean {
     return false;
   }
 
-  const parts = roomId.match(/[^:]+:(.*)$/);
+  const parts = roomId.match(/[^:]+:(.*)$/)!;
 
   if (parts.length < 2) {
     return false;
@@ -302,7 +301,7 @@ export async function createRoom(
         "org.matrix.msc3401.call.member": 0,
       },
       users: {
-        [client.getUserId()]: 100,
+        [client.getUserId()!]: 100,
       },
     },
   });

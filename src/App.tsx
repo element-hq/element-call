@@ -18,6 +18,7 @@ import { Suspense, useEffect, useState } from "react";
 import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
+import { History } from "history";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
@@ -50,6 +51,8 @@ export default function App({ history }: AppProps) {
   const errorPage = <CrashView />;
 
   return (
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     <Router history={history}>
       {loaded ? (
         <Suspense fallback={null}>

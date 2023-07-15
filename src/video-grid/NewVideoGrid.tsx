@@ -60,6 +60,11 @@ interface DragState {
   cursorY: number;
 }
 
+interface TapData {
+  tileId: string;
+  ts: number;
+}
+
 interface SlotProps {
   style?: CSSProperties;
 }
@@ -257,10 +262,7 @@ export function NewVideoGrid<T>({
       );
   };
 
-  const [lastTappedTileId, setLastTappedTileId] = useState<string | undefined>(
-    undefined
-  );
-  const [lastTapTime, setLastTapTime] = useState<number>(0);
+  const lastTap = useRef<TapData | null>(null);
 
   // Callback for useDrag. We could call useDrag here, but the default
   // pattern of spreading {...bind()} across the children to bind the gesture
@@ -269,22 +271,34 @@ export function NewVideoGrid<T>({
   // gesture using the much more sensible ref-based method.
   const onTileDrag = (
     tileId: string,
+
     {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       tap,
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       initial: [initialX, initialY],
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       delta: [dx, dy],
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       last,
     }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
   ) => {
     if (tap) {
       const now = Date.now();
 
-      if (tileId === lastTappedTileId && now - lastTapTime < 500) {
+      if (
+        tileId === lastTap.current?.tileId &&
+        now - lastTap.current.ts < 500
+      ) {
         toggleFocus?.(items.find((i) => i.id === tileId)!);
+        lastTap.current = null;
+      } else {
+        lastTap.current = { tileId, ts: now };
       }
-
-      setLastTappedTileId(tileId);
-      setLastTapTime(now);
     } else {
       const tileController = springRef.current.find(
         (c) => (c.item as Tile<T>).item.id === tileId
@@ -320,6 +334,8 @@ export function NewVideoGrid<T>({
   const scrollOffset = useRef(0);
 
   useScroll(
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     ({ xy: [, y], delta: [, dy] }) => {
       scrollOffset.current = y;
 

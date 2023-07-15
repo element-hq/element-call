@@ -15,10 +15,12 @@ limitations under the License.
 */
 
 import { useCallback, useContext, useEffect, useState } from "react";
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore
 import pako from "pako";
 import { MatrixEvent } from "matrix-js-sdk/src/models/event";
 import { OverlayTriggerState } from "@react-stately/overlays";
-import { MatrixClient, ClientEvent } from "matrix-js-sdk/src/client";
+import { ClientEvent } from "matrix-js-sdk/src/client";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
@@ -46,20 +48,27 @@ export function useSubmitRageshake(): {
   submitRageshake: (opts: RageShakeSubmitOptions) => Promise<void>;
   sending: boolean;
   sent: boolean;
-  error: Error;
+  error?: Error;
 } {
-  const client: MatrixClient = useClient().client;
+  const { client } = useClient();
+
   // The value of the context is the whole tuple returned from setState,
   // so we just want the current state.
   const [inspectorState] = useContext(InspectorContext);
 
-  const [{ sending, sent, error }, setState] = useState({
+  const [{ sending, sent, error }, setState] = useState<{
+    sending: boolean;
+    sent: boolean;
+    error?: Error;
+  }>({
     sending: false,
     sent: false,
-    error: null,
+    error: undefined,
   });
 
   const submitRageshake = useCallback(
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     async (opts) => {
       if (!Config.get().rageshake?.submit_url) {
         throw new Error("No rageshake URL is configured");
@@ -70,7 +79,7 @@ export function useSubmitRageshake(): {
       }
 
       try {
-        setState({ sending: true, sent: false, error: null });
+        setState({ sending: true, sent: false, error: undefined });
 
         let userAgent = "UNKNOWN";
         if (window.navigator && window.navigator.userAgent) {
@@ -104,11 +113,11 @@ export function useSubmitRageshake(): {
         body.append("call_backend", "livekit");
 
         if (client) {
-          const userId = client.getUserId();
+          const userId = client.getUserId()!;
           const user = client.getUser(userId);
-          body.append("display_name", user?.displayName);
-          body.append("user_id", client.credentials.userId);
-          body.append("device_id", client.deviceId);
+          body.append("display_name", user?.displayName ?? "");
+          body.append("user_id", client.credentials.userId ?? "");
+          body.append("device_id", client.deviceId ?? "");
 
           if (opts.roomId) {
             body.append("room_id", opts.roomId);
@@ -120,11 +129,11 @@ export function useSubmitRageshake(): {
               keys.push(`curve25519:${client.getDeviceCurve25519Key()}`);
             }
             body.append("device_keys", keys.join(", "));
-            body.append("cross_signing_key", client.getCrossSigningId());
+            body.append("cross_signing_key", client.getCrossSigningId()!);
 
             // add cross-signing status information
-            const crossSigning = client.crypto.crossSigningInfo;
-            const secretStorage = client.crypto.secretStorage;
+            const crossSigning = client.crypto!.crossSigningInfo;
+            const secretStorage = client.crypto!.secretStorage;
 
             body.append(
               "cross_signing_ready",
@@ -138,7 +147,7 @@ export function useSubmitRageshake(): {
                 )
               )
             );
-            body.append("cross_signing_key", crossSigning.getId());
+            body.append("cross_signing_key", crossSigning.getId()!);
             body.append(
               "cross_signing_privkey_in_secret_storage",
               String(
@@ -150,14 +159,17 @@ export function useSubmitRageshake(): {
             body.append(
               "cross_signing_master_privkey_cached",
               String(
-                !!(pkCache && (await pkCache.getCrossSigningKeyCache("master")))
+                !!(
+                  pkCache?.getCrossSigningKeyCache &&
+                  (await pkCache.getCrossSigningKeyCache("master"))
+                )
               )
             );
             body.append(
               "cross_signing_self_signing_privkey_cached",
               String(
                 !!(
-                  pkCache &&
+                  pkCache?.getCrossSigningKeyCache &&
                   (await pkCache.getCrossSigningKeyCache("self_signing"))
                 )
               )
@@ -166,7 +178,7 @@ export function useSubmitRageshake(): {
               "cross_signing_user_signing_privkey_cached",
               String(
                 !!(
-                  pkCache &&
+                  pkCache?.getCrossSigningKeyCache &&
                   (await pkCache.getCrossSigningKeyCache("user_signing"))
                 )
               )
@@ -186,7 +198,7 @@ export function useSubmitRageshake(): {
               String(!!(await client.isKeyBackupKeyStored()))
             );
             const sessionBackupKeyFromCache =
-              await client.crypto.getSessionBackupPrivateKey();
+              await client.crypto!.getSessionBackupPrivateKey();
             body.append(
               "session_backup_key_cached",
               String(!!sessionBackupKeyFromCache)
@@ -233,7 +245,7 @@ export function useSubmitRageshake(): {
               Object.keys(estimate.usageDetails).forEach((k) => {
                 body.append(
                   `storageManager_usage_${k}`,
-                  String(estimate.usageDetails[k])
+                  String(estimate.usageDetails![k])
                 );
               });
             }
@@ -271,14 +283,14 @@ export function useSubmitRageshake(): {
           );
         }
 
-        await fetch(Config.get().rageshake?.submit_url, {
+        await fetch(Config.get().rageshake!.submit_url, {
           method: "POST",
           body,
         });
 
-        setState({ sending: false, sent: true, error: null });
+        setState({ sending: false, sent: true, error: undefined });
       } catch (error) {
-        setState({ sending: false, sent: false, error });
+        setState({ sending: false, sent: false, error: error as Error });
         console.error(error);
       }
     },
@@ -307,7 +319,7 @@ export function useDownloadDebugLog(): () => void {
     el.click();
     setTimeout(() => {
       URL.revokeObjectURL(url);
-      el.parentNode.removeChild(el);
+      el.parentNode!.removeChild(el);
     }, 0);
   }, [json]);
 
@@ -321,8 +333,8 @@ export function useRageshakeRequest(): (
   const { client } = useClient();
 
   const sendRageshakeRequest = useCallback(
-    (roomId, rageshakeRequestId) => {
-      client.sendEvent(roomId, "org.matrix.rageshake_request", {
+    (roomId: string, rageshakeRequestId: string) => {
+      client!.sendEvent(roomId, "org.matrix.rageshake_request", {
         request_id: rageshakeRequestId,
       });
     },
@@ -347,10 +359,12 @@ export function useRageshakeRequestModal(roomId: string): {
     modalState: OverlayTriggerState;
     modalProps: ModalProps;
   };
-  const client: MatrixClient = useClient().client;
+  const { client } = useClient();
   const [rageshakeRequestId, setRageshakeRequestId] = useState<string>();
 
   useEffect(() => {
+    if (!client) return;
+
     const onEvent = (event: MatrixEvent) => {
       const type = event.getType();
 
@@ -371,5 +385,8 @@ export function useRageshakeRequestModal(roomId: string): {
     };
   }, [modalState.open, roomId, client, modalState]);
 
-  return { modalState, modalProps: { ...modalProps, rageshakeRequestId } };
+  return {
+    modalState,
+    modalProps: { ...modalProps, rageshakeRequestId: rageshakeRequestId ?? "" },
+  };
 }

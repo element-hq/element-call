@@ -82,7 +82,7 @@ interface InputFieldProps {
   defaultValue?: string;
   placeholder?: string;
   defaultChecked?: boolean;
-  onChange?: (event: ChangeEvent) => void;
+  onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
 export const InputField = forwardRef<
@@ -119,6 +119,8 @@ export const InputField = forwardRef<
       >
         {prefix && <span>{prefix}</span>}
         {type === "textarea" ? (
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           <textarea
             id={id}
             ref={ref as ForwardedRef<HTMLTextAreaElement>}

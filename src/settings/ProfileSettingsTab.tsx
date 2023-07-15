@@ -59,8 +59,14 @@ export function ProfileSettingsTab({ client }: Props) {
             ? displayNameDataEntry
             : displayNameDataEntry?.name ?? null;
 
+        if (!displayName) {
+          return;
+        }
+
         saveProfile({
           displayName,
+          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+          // @ts-ignore
           avatar: avatar && avatarSize > 0 ? avatar : undefined,
           removeAvatar: removeAvatar.current && (!avatar || avatarSize === 0),
         });
@@ -71,14 +77,16 @@ export function ProfileSettingsTab({ client }: Props) {
   return (
     <form onChange={onFormChange} ref={formRef} className={styles.content}>
       <FieldRow className={styles.avatarFieldRow}>
-        <AvatarInputField
-          id="avatar"
-          name="avatar"
-          label={t("Avatar")}
-          avatarUrl={avatarUrl}
-          displayName={displayName}
-          onRemoveAvatar={onRemoveAvatar}
-        />
+        {avatarUrl && displayName && (
+          <AvatarInputField
+            id="avatar"
+            name="avatar"
+            label={t("Avatar")}
+            avatarUrl={avatarUrl}
+            displayName={displayName}
+            onRemoveAvatar={onRemoveAvatar}
+          />
+        )}
       </FieldRow>
       <FieldRow>
         <InputField

@@ -34,7 +34,7 @@ export function SelectInput(props: Props): JSX.Element {
   const { t } = useTranslation();
   const state = useSelectState(props);
 
-  const ref = useRef();
+  const ref = useRef(null);
   const { labelProps, triggerProps, valueProps, menuProps } = useSelect(
     props,
     state,

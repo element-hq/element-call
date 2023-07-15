@@ -34,7 +34,7 @@ interface RecaptchaPromiseRef {
   reject: (error: Error) => void;
 }
 
-export const useRecaptcha = (sitekey: string) => {
+export const useRecaptcha = (sitekey?: string) => {
   const { t } = useTranslation();
   const [recaptchaId] = useState(() => randomString(16));
   const promiseRef = useRef<RecaptchaPromiseRef>();
@@ -68,9 +68,9 @@ export const useRecaptcha = (sitekey: string) => {
     }
   }, [recaptchaId, sitekey]);
 
-  const execute = useCallback(() => {
+  const execute = useCallback((): Promise<string> => {
     if (!sitekey) {
-      return Promise.resolve(null);
+      return Promise.resolve("");
     }
 
     if (!window.grecaptcha) {

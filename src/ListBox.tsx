@@ -36,15 +36,16 @@ export function ListBox<T>({
   listBoxRef,
   ...rest
 }: ListBoxProps<T>) {
-  const ref = useRef<HTMLUListElement>();
-  if (!listBoxRef) listBoxRef = ref;
+  const ref = useRef<HTMLUListElement>(null);
 
-  const { listBoxProps } = useListBox(rest, state, listBoxRef);
+  const listRef = listBoxRef ?? ref;
+
+  const { listBoxProps } = useListBox(rest, state, listRef);
 
   return (
     <ul
       {...listBoxProps}
-      ref={listBoxRef}
+      ref={listRef}
       className={classNames(styles.listBox, className)}
     >
       {[...state.collection].map((item) => (
@@ -66,7 +67,7 @@ interface OptionProps<T> {
 }
 
 function Option<T>({ item, state, className }: OptionProps<T>) {
-  const ref = useRef();
+  const ref = useRef(null);
   const { optionProps, isSelected, isFocused, isDisabled } = useOption(
     { key: item.key },
     state,
@@ -83,7 +84,11 @@ function Option<T>({ item, state, className }: OptionProps<T>) {
   const origPointerUp = optionProps.onPointerUp;
   delete optionProps.onPointerUp;
   optionProps.onClick = useCallback(
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     (e) => {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
       origPointerUp(e as unknown as PointerEvent<HTMLElement>);
     },
     [origPointerUp]
