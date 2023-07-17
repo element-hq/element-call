@@ -27,7 +27,7 @@ export default defineConfig(({ mode }) => {
 
   const plugins = [
     react(),
-    basicSsl(),
+    //basicSsl(),
     svgrPlugin(),
     htmlTemplate.default({
       data: {
