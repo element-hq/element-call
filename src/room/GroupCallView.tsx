@@ -32,7 +32,7 @@ import { CallEndedView } from "./CallEndedView";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
-import { UserChoices } from "../livekit/useLiveKit";
+import { E2EEConfig, UserChoices } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
 import { OpenIDLoader } from "../livekit/OpenIDLoader";
 import { ActiveCall } from "./InCallView";
@@ -218,10 +218,12 @@ export function GroupCallView({
   const [userChoices, setUserChoices] = useState<UserChoices | undefined>(
     undefined
   );
+  const [e2eeConfig, setE2EEConfig] = useState<E2EEConfig | undefined>(
+    undefined
+  );
 
   const livekitServiceURL =
-    groupCall.foci[0]?.livekitServiceUrl ??
-    Config.get().livekit?.livekit_service_url;
+    groupCall.livekitServiceURL ?? Config.get().livekit?.livekit_service_url;
   if (!livekitServiceURL) {
     return <ErrorView error={new Error("No livekit_service_url defined")} />;
   }
@@ -243,6 +245,7 @@ export function GroupCallView({
           unencryptedEventsFromUsers={unencryptedEventsFromUsers}
           hideHeader={hideHeader}
           userChoices={userChoices}
+          e2eeConfig={e2eeConfig}
           otelGroupCallMembership={otelGroupCallMembership}
         />
       </OpenIDLoader>
@@ -283,8 +286,9 @@ export function GroupCallView({
     return (
       <LobbyView
         matrixInfo={matrixInfo}
-        onEnter={(choices: UserChoices) => {
+        onEnter={(choices: UserChoices, e2eeConfig?: E2EEConfig) => {
           setUserChoices(choices);
+          setE2EEConfig(e2eeConfig);
           enter();
         }}
         isEmbedded={isEmbedded}

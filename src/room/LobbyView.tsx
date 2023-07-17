@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useRef, useEffect, useState } from "react";
+import { useRef, useEffect, useState, useCallback, ChangeEvent } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import styles from "./LobbyView.module.css";
@@ -25,12 +25,13 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
-import { UserChoices } from "../livekit/useLiveKit";
+import { E2EEConfig, UserChoices } from "../livekit/useLiveKit";
+import { InputField } from "../input/Input";
 
 interface Props {
   matrixInfo: MatrixInfo;
 
-  onEnter: (userChoices: UserChoices) => void;
+  onEnter: (userChoices: UserChoices, e2eeConfig?: E2EEConfig) => void;
   isEmbedded: boolean;
   hideHeader: boolean;
 }
@@ -48,6 +49,17 @@ export function LobbyView(props: Props) {
 
   const [userChoices, setUserChoices] = useState<UserChoices | undefined>(
     undefined
+  );
+  const [e2eeSharedKey, setE2EESharedKey] = useState<string | undefined>(
+    undefined
+  );
+
+  const onE2EESharedKeyChanged = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const value = event.target.value;
+      setE2EESharedKey(value === "" ? undefined : value);
+    },
+    [setE2EESharedKey]
   );
 
   return (
@@ -68,12 +80,24 @@ export function LobbyView(props: Props) {
             matrixInfo={props.matrixInfo}
             onUserChoicesChanged={setUserChoices}
           />
+          <InputField
+            className={styles.passwordField}
+            label={t("Password (if none E2EE, is disabled)")}
+            type="text"
+            onChange={onE2EESharedKeyChanged}
+            value={e2eeSharedKey}
+          />
           <Trans>
             <Button
               ref={joinCallButtonRef}
               className={styles.copyButton}
               size="lg"
-              onPress={() => props.onEnter(userChoices!)}
+              onPress={() =>
+                props.onEnter(
+                  userChoices!,
+                  e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined
+                )
+              }
               data-testid="lobby_joinCall"
             >
               Join call now
