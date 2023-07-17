@@ -1,4 +1,4 @@
-import { Room, RoomOptions } from "livekit-client";
+import { Room, RoomOptions, setLogLevel } from "livekit-client";
 import { useLiveKitRoom } from "@livekit/components-react";
 import { useMemo } from "react";
 
@@ -14,6 +14,8 @@ export type DeviceChoices = {
   selectedId: string;
   enabled: boolean;
 };
+
+setLogLevel("debug");
 
 export function useLiveKit(
   userChoices: UserChoices,
