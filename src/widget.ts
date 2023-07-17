@@ -109,7 +109,7 @@ export const widget: WidgetHelpers | null = (() => {
         baseUrl,
         e2eEnabled,
         allowIceFallback,
-      } = getUrlParams();
+      } = getUrlParams(true);
       if (!roomId) throw new Error("Room ID must be supplied");
       if (!userId) throw new Error("User ID must be supplied");
       if (!deviceId) throw new Error("Device ID must be supplied");
