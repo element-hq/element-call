@@ -77,7 +77,7 @@ import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { UserChoices, useLiveKit } from "../livekit/useLiveKit";
+import { E2EEConfig, UserChoices, useLiveKit } from "../livekit/useLiveKit";
 import { useMediaDevicesSwitcher } from "../livekit/useMediaDevicesSwitcher";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
@@ -92,11 +92,16 @@ const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 export interface ActiveCallProps extends Omit<InCallViewProps, "livekitRoom"> {
   userChoices: UserChoices;
+  e2eeConfig?: E2EEConfig;
 }
 
 export function ActiveCall(props: ActiveCallProps) {
   const sfuConfig = useSFUConfig();
-  const livekitRoom = useLiveKit(props.userChoices, sfuConfig);
+  const livekitRoom = useLiveKit(
+    props.userChoices,
+    sfuConfig,
+    props.e2eeConfig
+  );
 
   if (!livekitRoom) {
     return null;
