@@ -90,8 +90,10 @@ interface UrlParams {
 
 /**
  * Gets the app parameters for the current URL.
- * @param query The URL query string
- * @param fragment The URL fragment string
+ * @param ignoreRoomAlias If true, does not try to parse a room alias from the URL
+ * @param search The URL search string
+ * @param pathname The URL path name
+ * @param hash The URL hash
  * @returns The app parameters encoded in the URL
  */
 export const getUrlParams = (
