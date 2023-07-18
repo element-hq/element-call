@@ -106,11 +106,11 @@ export function VideoPreview({ matrixInfo, onUserChoicesChanged }: Props) {
     onUserChoicesChanged({
       video: {
         selectedId: videoIn.selectedId,
-        enabled: videoEnabled && !!videoTrack,
+        enabled: videoEnabled,
       },
       audio: {
         selectedId: audioIn.selectedId,
-        enabled: audioEnabled && !!audioTrack,
+        enabled: audioEnabled,
       },
     });
   }, [
