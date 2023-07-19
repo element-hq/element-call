@@ -58,6 +58,7 @@ import {
 import {
   useShowInspector,
   useShowConnectionStats,
+  useShowGhosts,
 } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
@@ -451,6 +452,8 @@ function useParticipantTiles(
     room: livekitRoom,
   });
 
+  const [showGhosts] = useShowGhosts();
+
   const items = useMemo(() => {
     // The IDs of the participants who published membership event to the room (i.e. are present from Matrix perspective).
     const matrixParticipants: Map<string, RoomMember> = new Map(
@@ -464,7 +467,6 @@ function useParticipantTiles(
 
     const hasPresenter =
       sfuParticipants.find((p) => p.isScreenShareEnabled) !== undefined;
-    let allGhosts = true;
 
     const speakActiveTime = new Date();
     speakActiveTime.setSeconds(speakActiveTime.getSeconds() - 10);
@@ -478,7 +480,7 @@ function useParticipantTiles(
 
         const id = sfuParticipant.identity;
         const member = matrixParticipants.get(id);
-        allGhosts &&= member === undefined;
+        if (member === undefined && !showGhosts) return []; // Hide the ghost
 
         const userMediaTile = {
           id,
@@ -526,10 +528,8 @@ function useParticipantTiles(
       tiles.length
     );
 
-    // If every item is a ghost, that probably means we're still connecting and
-    // shouldn't bother showing anything yet
-    return allGhosts ? [] : tiles;
-  }, [participants, sfuParticipants]);
+    return tiles;
+  }, [participants, sfuParticipants, showGhosts]);
 
   return items;
 }

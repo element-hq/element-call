@@ -104,6 +104,8 @@ export const useDeveloperSettingsTab = () =>
 export const useShowConnectionStats = () =>
   useSetting("show-connection-stats", false);
 
+export const useShowGhosts = () => useSetting("show-ghosts", false);
+
 export const useDefaultDevices = () =>
   useSetting("defaultDevices", {
     audioinput: "",

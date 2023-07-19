@@ -34,6 +34,7 @@ import {
   useOptInAnalytics,
   useDeveloperSettingsTab,
   useShowConnectionStats,
+  useShowGhosts,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
@@ -68,6 +69,7 @@ export const SettingsModal = (props: Props) => {
     useDeveloperSettingsTab();
   const [showConnectionStats, setShowConnectionStats] =
     useShowConnectionStats();
+  const [showGhosts, setShowGhosts] = useShowGhosts();
 
   const downloadDebugLog = useDownloadDebugLog();
 
@@ -246,6 +248,19 @@ export const SettingsModal = (props: Props) => {
             checked={showConnectionStats}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setShowConnectionStats(e.target.checked)
+            }
+          />
+        </FieldRow>
+        <FieldRow>
+          <InputField
+            id="showGhosts"
+            name="show-ghosts"
+            label="Show ghost participants"
+            description="Shows participants that are present in the LiveKit room but not in the Matrix call, for load testing purposes"
+            type="checkbox"
+            checked={showGhosts}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setShowGhosts(e.target.checked)
             }
           />
         </FieldRow>
