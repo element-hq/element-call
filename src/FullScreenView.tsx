@@ -21,11 +21,10 @@ import { Trans, useTranslation } from "react-i18next";
 
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import { LinkButton, Button } from "./button";
-import { useSubmitRageshake } from "./settings/submit-rageshake";
-import { ErrorMessage } from "./input/Input";
 import styles from "./FullScreenView.module.css";
-import { translatedError, TranslatedError } from "./TranslatedError";
+import { TranslatedError } from "./TranslatedError";
 import { Config } from "./config/Config";
+import { RageshakeButton } from "./settings/RageshakeButton";
 
 interface FullScreenViewProps {
   className?: string;
@@ -97,36 +96,10 @@ export function ErrorView({ error }: ErrorViewProps) {
 
 export function CrashView() {
   const { t } = useTranslation();
-  const { submitRageshake, sending, sent, error } = useSubmitRageshake();
-
-  const sendDebugLogs = useCallback(() => {
-    submitRageshake({
-      description: "**Soft Crash**",
-      sendLogs: true,
-    });
-  }, [submitRageshake]);
 
   const onReload = useCallback(() => {
     window.location.href = "/";
   }, []);
-
-  let logsComponent: JSX.Element | null = null;
-  if (sent) {
-    logsComponent = <div>{t("Thanks! We'll get right on it.")}</div>;
-  } else if (sending) {
-    logsComponent = <div>{t("Sending…")}</div>;
-  } else if (Config.get().rageshake?.submit_url) {
-    logsComponent = (
-      <Button
-        size="lg"
-        variant="default"
-        onPress={sendDebugLogs}
-        className={styles.wideButton}
-      >
-        {t("Send debug logs")}
-      </Button>
-    );
-  }
 
   return (
     <FullScreenView>
@@ -139,10 +112,7 @@ export function CrashView() {
         </Trans>
       )}
 
-      <div className={styles.sendLogsSection}>{logsComponent}</div>
-      {error && (
-        <ErrorMessage error={translatedError("Couldn't send debug logs!", t)} />
-      )}
+      <RageshakeButton description="***Soft Crash***" />
       <Button
         size="lg"
         variant="default"
