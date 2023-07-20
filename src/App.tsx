@@ -1,5 +1,5 @@
 /*
-Copyright 2021 New Vector Ltd
+Copyright 2021 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -29,7 +29,9 @@ import { usePageFocusStyle } from "./usePageFocusStyle";
 import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
 import { InspectorContextProvider } from "./room/GroupCallInspector";
 import { CrashView, LoadingView } from "./FullScreenView";
+import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
+import { MediaHandlerProvider } from "./settings/useMediaHandler";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -55,32 +57,35 @@ export default function App({ history }: AppProps) {
       {loaded ? (
         <Suspense fallback={null}>
           <ClientProvider>
-            <InspectorContextProvider>
-              <Sentry.ErrorBoundary fallback={errorPage}>
-                <OverlayProvider>
-                  <Switch>
-                    <SentryRoute exact path="/">
-                      <HomePage />
-                    </SentryRoute>
-                    <SentryRoute exact path="/login">
-                      <LoginPage />
-                    </SentryRoute>
-                    <SentryRoute exact path="/register">
-                      <RegisterPage />
-                    </SentryRoute>
-                    <SentryRoute path="/room/:roomId?">
-                      <RoomPage />
-                    </SentryRoute>
-                    <SentryRoute path="/inspector">
-                      <SequenceDiagramViewerPage />
-                    </SentryRoute>
-                    <SentryRoute path="*">
-                      <RoomRedirect />
-                    </SentryRoute>
-                  </Switch>
-                </OverlayProvider>
-              </Sentry.ErrorBoundary>
-            </InspectorContextProvider>
+            <MediaHandlerProvider>
+              <InspectorContextProvider>
+                <Sentry.ErrorBoundary fallback={errorPage}>
+                  <OverlayProvider>
+                    <DisconnectedBanner />
+                    <Switch>
+                      <SentryRoute exact path="/">
+                        <HomePage />
+                      </SentryRoute>
+                      <SentryRoute exact path="/login">
+                        <LoginPage />
+                      </SentryRoute>
+                      <SentryRoute exact path="/register">
+                        <RegisterPage />
+                      </SentryRoute>
+                      <SentryRoute path="/room/:roomId?">
+                        <RoomPage />
+                      </SentryRoute>
+                      <SentryRoute path="/inspector">
+                        <SequenceDiagramViewerPage />
+                      </SentryRoute>
+                      <SentryRoute path="*">
+                        <RoomRedirect />
+                      </SentryRoute>
+                    </Switch>
+                  </OverlayProvider>
+                </Sentry.ErrorBoundary>
+              </InspectorContextProvider>
+            </MediaHandlerProvider>
           </ClientProvider>
         </Suspense>
       ) : (

@@ -1,6 +1,8 @@
 name: Run jest tests
 on:
   pull_request: {}
+  push:
+    branches: [livekit]
 jobs:
   jest:
     name: Run jest tests
@@ -16,3 +18,7 @@ jobs:
         run: "yarn install"
       - name: Jest
         run: "yarn run test"
+      - name: Upload to codecov
+        uses: codecov/codecov-action@v3
+        with:
+          flags: unittests

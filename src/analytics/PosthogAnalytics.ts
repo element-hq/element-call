@@ -29,6 +29,7 @@ import {
   MuteCameraTracker,
   MuteMicrophoneTracker,
   UndecryptableToDeviceEventTracker,
+  QualitySurveyEventTracker,
 } from "./PosthogEvents";
 import { Config } from "../config/Config";
 import { getUrlParams } from "../UrlParams";
@@ -69,6 +70,7 @@ export enum RegistrationType {
 interface PlatformProperties {
   appVersion: string;
   matrixBackend: "embedded" | "jssdk";
+  callBackend: "livekit" | "full-mesh";
 }
 
 interface PosthogSettings {
@@ -190,6 +192,7 @@ export class PosthogAnalytics {
     return {
       appVersion,
       matrixBackend: widget ? "embedded" : "jssdk",
+      callBackend: "full-mesh",
     };
   }
 
@@ -431,4 +434,5 @@ export class PosthogAnalytics {
   public eventMuteMicrophone = new MuteMicrophoneTracker();
   public eventMuteCamera = new MuteCameraTracker();
   public eventUndecryptableToDevice = new UndecryptableToDeviceEventTracker();
+  public eventQualitySurvey = new QualitySurveyEventTracker();
 }

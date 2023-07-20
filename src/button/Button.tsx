@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -242,7 +242,7 @@ export function SettingsButton({
   return (
     <TooltipTrigger tooltip={tooltip}>
       <Button variant="toolbar" {...rest}>
-        <SettingsIcon />
+        <SettingsIcon width={20} height={20} />
       </Button>
     </TooltipTrigger>
   );
@@ -250,9 +250,11 @@ export function SettingsButton({
 
 export function InviteButton({
   className,
+  variant = "toolbar",
   ...rest
 }: {
   className?: string;
+  variant?: string;
   // TODO: add all props for <Button>
   [index: string]: unknown;
 }) {
@@ -261,7 +263,7 @@ export function InviteButton({
 
   return (
     <TooltipTrigger tooltip={tooltip}>
-      <Button variant="toolbar" {...rest}>
+      <Button variant={variant} {...rest}>
         <AddUserIcon />
       </Button>
     </TooltipTrigger>

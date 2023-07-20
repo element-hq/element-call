@@ -53,7 +53,7 @@
     "i18next-browser-languagedetector": "^6.1.8",
     "i18next-http-backend": "^1.4.4",
     "lodash": "^4.17.21",
-    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#a7b1dcaf9514b2e424a387e266c6f383a5909927",
+    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#f884c78579c336a03bc20ff8f4e92c46582822b6",
     "matrix-widget-api": "^1.3.1",
     "mermaid": "^8.13.8",
     "normalize.css": "^8.0.1",
@@ -118,6 +118,11 @@
       "\\.(css|less|svg)+$": "identity-obj-proxy",
       "^\\./IndexedDBWorker\\?worker$": "<rootDir>/test/mocks/workerMock.ts",
       "^\\./olm$": "<rootDir>/test/mocks/olmMock.ts"
-    }
+    },
+    "collectCoverage": true,
+    "coverageReporters": [
+      "text",
+      "cobertura"
+    ]
   }
 }

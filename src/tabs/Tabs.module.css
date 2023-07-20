@@ -25,12 +25,14 @@ limitations under the License.
   list-style: none;
   padding: 0;
   margin: 0 auto 24px auto;
+  gap: 16px;
+  overflow: scroll;
+  max-width: 100%;
 }
 
 .tab {
-  max-width: 190px;
-  min-width: fit-content;
   height: 32px;
+  box-sizing: border-box;
   border-radius: 8px;
   background-color: transparent;
   display: flex;
@@ -38,6 +40,7 @@ limitations under the License.
   padding: 0 8px;
   border: none;
   cursor: pointer;
+  font-size: var(--font-size-body);
 }
 
 .tab > * {
@@ -78,17 +81,18 @@ limitations under the License.
 
 @media (min-width: 800px) {
   .tab {
+    width: 200px;
     padding: 0 16px;
   }
 
   .tab > * {
-    margin: 0 16px 0 0;
+    margin: 0 12px 0 0;
   }
 
   .tabContainer {
     width: 100%;
     flex-direction: row;
-    padding: 27px 20px;
+    padding: 20px 18px;
     box-sizing: border-box;
     overflow: hidden;
   }
@@ -96,6 +100,7 @@ limitations under the License.
   .tabList {
     flex-direction: column;
     margin-bottom: 0;
+    gap: 0;
   }
 
   .tabPanel {

@@ -34,6 +34,7 @@ import {
   ByteSentStatsReport,
   ConnectionStatsReport,
   SummaryStatsReport,
+  CallFeedReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 import { usePageUnload } from "./usePageUnload";
@@ -64,7 +65,7 @@ export interface UseGroupCallReturnType {
   localVideoMuted: boolean;
   error: TranslatedError | null;
   initLocalCallFeed: () => void;
-  enter: () => void;
+  enter: () => Promise<void>;
   leave: () => void;
   toggleLocalVideoMuted: () => void;
   toggleMicrophoneMuted: () => void;
@@ -363,6 +364,12 @@ export function useGroupCall(
       groupCallOTelMembership?.onSummaryStatsReport(report);
     }
 
+    function onCallFeedStatsReport(
+      report: GroupCallStatsReport<CallFeedReport>
+    ): void {
+      groupCallOTelMembership?.onCallFeedStatsReport(report);
+    }
+
     groupCall.on(GroupCallEvent.GroupCallStateChanged, onGroupCallStateChanged);
     groupCall.on(GroupCallEvent.UserMediaFeedsChanged, onUserMediaFeedsChanged);
     groupCall.on(
@@ -387,6 +394,11 @@ export function useGroupCall(
       onByteSentStatsReport
     );
     groupCall.on(GroupCallStatsReportEvent.SummaryStats, onSummaryStatsReport);
+    groupCall.on(
+      GroupCallStatsReportEvent.CallFeedStats,
+      onCallFeedStatsReport
+    );
+
     groupCall.room.currentState.on(
       RoomStateEvent.Update,
       checkForParallelCalls
@@ -450,6 +462,10 @@ export function useGroupCall(
         GroupCallStatsReportEvent.SummaryStats,
         onSummaryStatsReport
       );
+      groupCall.removeListener(
+        GroupCallStatsReportEvent.CallFeedStats,
+        onCallFeedStatsReport
+      );
       groupCall.room.currentState.off(
         RoomStateEvent.Update,
         checkForParallelCalls
@@ -467,7 +483,7 @@ export function useGroupCall(
     [groupCall]
   );
 
-  const enter = useCallback(() => {
+  const enter = useCallback(async () => {
     if (
       groupCall.state !== GroupCallState.LocalCallFeedUninitialized &&
       groupCall.state !== GroupCallState.LocalCallFeedInitialized
@@ -482,7 +498,7 @@ export function useGroupCall(
     // have started tracking by the time calls start getting created.
     groupCallOTelMembership?.onJoinCall();
 
-    groupCall.enter().catch((error) => {
+    await groupCall.enter().catch((error) => {
       console.error(error);
       updateState({ error });
     });
