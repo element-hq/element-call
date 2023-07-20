@@ -90,19 +90,19 @@ yarn dev
 
 Add in you `.env` in root dir with:
 
-```yaml
+```shell
 # Develop backend settings:
 LIVEKIT_KEY="devkey"
 LIVEKIT_SECRET="secret"
 ```
 
-Add SFU parameter in your local config `./public/config.yml`:
+Add SFU parameter in your local config `./public/config.json`:
 
-```yaml
-"livekit": {
-    "server_url": "ws://localhost:7880",
-    "jwt_service_url": "http:/localhost:8881"
-  },
+```json
+,
+  "livekit": {
+      "livekit_service_url": "http://localhost:7881"
+    }
 ```
 
 Run backend components:
