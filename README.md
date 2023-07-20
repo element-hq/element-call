@@ -97,7 +97,7 @@ To use it, add SFU parameter in your local config `./public/config.yml`:
 
 ```yaml
 "livekit": {
-    "jwt_service_url": "http:/localhost:8881"
+    "jwt_service_url": "http://localhost:8881"
   },
 ```
 
