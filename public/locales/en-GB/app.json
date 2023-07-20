@@ -76,9 +76,11 @@
   "Profile": "Profile",
   "Recaptcha dismissed": "Recaptcha dismissed",
   "Recaptcha not loaded": "Recaptcha not loaded",
+  "Reconnect": "Reconnect",
   "Register": "Register",
   "Registering…": "Registering…",
   "Remove": "Remove",
+  "Retry sending logs": "Retry sending logs",
   "Return to home screen": "Return to home screen",
   "Select an option": "Select an option",
   "Send debug logs": "Send debug logs",
@@ -98,7 +100,7 @@
   "Submitting…": "Submitting…",
   "Take me Home": "Take me Home",
   "Thanks, we received your feedback!": "Thanks, we received your feedback!",
-  "Thanks! We'll get right on it.": "Thanks! We'll get right on it.",
+  "Thanks!": "Thanks!",
   "This call already exists, would you like to join?": "This call already exists, would you like to join?",
   "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>": "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>",
   "Turn off camera": "Turn off camera",
@@ -115,6 +117,7 @@
   "Walkie-talkie call name": "Walkie-talkie call name",
   "WebRTC is not supported or is being blocked in this browser.": "WebRTC is not supported or is being blocked in this browser.",
   "Yes, join call": "Yes, join call",
+  "You were disconnected from the call": "You were disconnected from the call",
   "Your feedback": "Your feedback",
   "Your recent calls": "Your recent calls"
 }
