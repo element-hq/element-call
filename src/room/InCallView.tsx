@@ -191,6 +191,7 @@ export function InCallView({
 
   const onDisconnected = useCallback(
     (reason?: DisconnectReason) => {
+      PosthogAnalytics.instance.eventCallDisconnected.track(reason);
       logger.info("Disconnected from livekit call with reason ", reason);
       onLeave(
         new Error("Disconnected from LiveKit call with reason " + reason)
