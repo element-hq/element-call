@@ -149,8 +149,9 @@ interface Props {
 export const ClientProvider: FC<Props> = ({ children }) => {
   const history = useHistory();
 
+  // null = signed out, undefined = loading
   const [initClientState, setInitClientState] = useState<
-    InitResult | undefined
+    InitResult | null | undefined
   >(undefined);
 
   const initializing = useRef(false);
@@ -162,14 +163,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     initializing.current = true;
 
     loadClient()
-      .then((maybeClient) => {
-        if (!maybeClient) {
-          logger.error("Failed to initialize client");
-          return;
-        }
-
-        setInitClientState(maybeClient);
-      })
+      .then(setInitClientState)
       .catch((err) => logger.error(err))
       .finally(() => (initializing.current = false));
   }, []);
@@ -264,20 +258,22 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     }, [initClientState?.client, setAlreadyOpenedErr, t])
   );
 
-  const state: ClientState = useMemo(() => {
+  const state: ClientState | undefined = useMemo(() => {
     if (alreadyOpenedErr) {
       return { state: "error", error: alreadyOpenedErr };
     }
 
-    let authenticated = undefined;
-    if (initClientState) {
-      authenticated = {
-        client: initClientState.client,
-        isPasswordlessUser: initClientState.passwordlessUser,
-        changePassword,
-        logout,
-      };
-    }
+    if (initClientState === undefined) return undefined;
+
+    const authenticated =
+      initClientState === null
+        ? undefined
+        : {
+            client: initClientState.client,
+            isPasswordlessUser: initClientState.passwordlessUser,
+            changePassword,
+            logout,
+          };
 
     return { state: "valid", authenticated, setClient };
   }, [alreadyOpenedErr, changePassword, initClientState, logout, setClient]);
@@ -308,7 +304,7 @@ type InitResult = {
   passwordlessUser: boolean;
 };
 
-async function loadClient(): Promise<InitResult> {
+async function loadClient(): Promise<InitResult | null> {
   if (widget) {
     // We're inside a widget, so let's engage *matryoshka mode*
     logger.log("Using a matryoshka client");
@@ -322,7 +318,8 @@ async function loadClient(): Promise<InitResult> {
     try {
       const session = loadSession();
       if (!session) {
-        throw new Error("No session stored");
+        logger.log("No session stored; continuing without a client");
+        return null;
       }
 
       logger.log("Using a standalone client");
