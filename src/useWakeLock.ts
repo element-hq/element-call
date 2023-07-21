@@ -26,10 +26,14 @@ export const useWakeLock = () => {
       let mounted = true;
       let lock: WakeLockSentinel | null = null;
 
+      // The lock is automatically released whenever the window goes invisible,
+      // so we need to reacquire it on visiblity changes
       const onVisiblityChange = async () => {
         if (document.visibilityState === "visible") {
           try {
             lock = await navigator.wakeLock.request("screen");
+            // Handle the edge case where this component unmounts before the
+            // promise resolves
             if (!mounted)
               lock
                 .release()
