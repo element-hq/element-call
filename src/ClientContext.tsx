@@ -25,9 +25,10 @@ import {
   useMemo,
 } from "react";
 import { useHistory } from "react-router-dom";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
+import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 
 import { ErrorView } from "./FullScreenView";
 import {
@@ -56,6 +57,9 @@ export type ClientState = ValidClientState | ErrorState;
 export type ValidClientState = {
   state: "valid";
   authenticated?: AuthenticatedClient;
+  // 'Disconnected' rather than 'connected' because it tracks specifically
+  // whether the client is supposed to be connected but is not
+  disconnected: boolean;
   setClient: (params?: SetClientParams) => void;
 };
 
@@ -264,6 +268,8 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     }, [initClientState?.client, setAlreadyOpenedErr, t])
   );
 
+  const [isDisconnected, setIsDisconnected] = useState(false);
+
   const state: ClientState = useMemo(() => {
     if (alreadyOpenedErr) {
       return { state: "error", error: alreadyOpenedErr };
@@ -279,8 +285,27 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       };
     }
 
-    return { state: "valid", authenticated, setClient };
-  }, [alreadyOpenedErr, changePassword, initClientState, logout, setClient]);
+    return {
+      state: "valid",
+      authenticated,
+      setClient,
+      disconnected: isDisconnected,
+    };
+  }, [
+    alreadyOpenedErr,
+    changePassword,
+    initClientState,
+    logout,
+    setClient,
+    isDisconnected,
+  ]);
+
+  const onSync = useCallback(
+    (state: SyncState, _old: SyncState | null, data?: ISyncStateData) => {
+      setIsDisconnected(clientIsDisconnected(state, data));
+    },
+    []
+  );
 
   useEffect(() => {
     if (!initClientState) {
@@ -292,7 +317,17 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
     if (PosthogAnalytics.hasInstance())
       PosthogAnalytics.instance.onLoginStatusChanged();
-  }, [initClientState]);
+
+    if (initClientState.client) {
+      initClientState.client.on(ClientEvent.Sync, onSync);
+    }
+
+    return () => {
+      if (initClientState.client) {
+        initClientState.client.removeListener(ClientEvent.Sync, onSync);
+      }
+    };
+  }, [initClientState, onSync]);
 
   if (alreadyOpenedErr) {
     return <ErrorView error={alreadyOpenedErr} />;
@@ -387,3 +422,8 @@ const loadSession = (): Session | undefined => {
 
   return JSON.parse(data);
 };
+
+const clientIsDisconnected = (
+  syncState: SyncState,
+  syncData?: ISyncStateData
+) => syncState === "ERROR" && syncData?.error?.name === "ConnectionError";
