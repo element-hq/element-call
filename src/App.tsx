@@ -24,7 +24,6 @@ import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
-import { RoomRedirect } from "./room/RoomRedirect";
 import { ClientProvider } from "./ClientContext";
 import { usePageFocusStyle } from "./usePageFocusStyle";
 import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
@@ -71,14 +70,11 @@ export default function App({ history }: AppProps) {
                     <SentryRoute exact path="/register">
                       <RegisterPage />
                     </SentryRoute>
-                    <SentryRoute path="/room/:roomId?">
-                      <RoomPage />
-                    </SentryRoute>
                     <SentryRoute path="/inspector">
                       <SequenceDiagramViewerPage />
                     </SentryRoute>
                     <SentryRoute path="*">
-                      <RoomRedirect />
+                      <RoomPage />
                     </SentryRoute>
                   </Switch>
                 </OverlayProvider>

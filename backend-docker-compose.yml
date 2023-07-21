@@ -1,5 +1,3 @@
-# LiveKit requires host networking, which is only available on Linux
-# This compose will not function correctly on Mac or Windows
 version: "3.9"
 
 networks:
@@ -7,15 +5,14 @@ networks:
 
 services:
   auth-service:
-    build:
-      context: ./backend/auth
-    container_name: auth-server
+    image: ghcr.io/vector-im/lk-jwt-service:latest-ci
     hostname: auth-server
     ports:
       - 8881:8080
     environment:
-      - LIVEKIT_KEY=${LIVEKIT_KEY}
-      - LIVEKIT_SECRET=${LIVEKIT_SECRET}
+      - LIVEKIT_URL=ws://localhost:7880
+      - LIVEKIT_KEY=devkey
+      - LIVEKIT_SECRET=secret
     deploy:
       restart_policy:
         condition: on-failure
