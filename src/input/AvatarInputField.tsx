@@ -34,7 +34,7 @@ import styles from "./AvatarInputField.module.css";
 interface Props extends AllHTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
-  avatarUrl: string;
+  avatarUrl: string | undefined;
   displayName: string;
   onRemoveAvatar: () => void;
 }

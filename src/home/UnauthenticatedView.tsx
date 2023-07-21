@@ -93,8 +93,7 @@ export const UnauthenticatedView: FC = () => {
             setOnFinished(() => {
               setClient({ client, session });
               const aliasLocalpart = roomAliasLocalpartFromRoomName(roomName);
-              const [, serverName] = client.getUserId()!.split(":");
-              history.push(`/room/#${aliasLocalpart}:${serverName}`);
+              history.push(`/${aliasLocalpart}`);
             });
 
             setLoading(false);
@@ -111,7 +110,7 @@ export const UnauthenticatedView: FC = () => {
         }
 
         setClient({ client, session });
-        history.push(`/room/${roomAlias}`);
+        history.push(`/${roomAlias.substring(1).split(":")[0]}`);
       }
 
       submit().catch((error) => {
