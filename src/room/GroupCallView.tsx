@@ -279,6 +279,7 @@ export function GroupCallView({
           setUserChoices(choices);
           enter();
         }}
+        muteAudio={participants.size > 8}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
       />

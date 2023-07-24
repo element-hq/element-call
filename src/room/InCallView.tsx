@@ -97,20 +97,7 @@ export interface ActiveCallProps extends Omit<InCallViewProps, "livekitRoom"> {
 
 export function ActiveCall(props: ActiveCallProps) {
   const sfuConfig = useSFUConfig();
-  const livekitRoom = useLiveKit(
-    {
-      audio: {
-        selectedId: props.userChoices.audio?.selectedId,
-        enabled:
-          (props.userChoices.audio?.enabled ?? false) &&
-          // Automatically mute the user, if there is more than 8 participants
-          // in the call
-          props.groupCall.participants.size <= 8,
-      },
-      video: props.userChoices.video,
-    },
-    sfuConfig
-  );
+  const livekitRoom = useLiveKit(props.userChoices, sfuConfig);
 
   if (!livekitRoom) {
     return null;
