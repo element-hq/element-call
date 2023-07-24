@@ -40,14 +40,14 @@ export const RageshakeButton = ({ description }: Props) => {
   if (!Config.get().rageshake?.submit_url) return null;
 
   let logsComponent: JSX.Element | null = null;
-  if (sent) {
+  if (sending) {
+    logsComponent = <span>{t("Sending…")}</span>;
+  } else if (sent) {
     logsComponent = <div>{t("Thanks!")}</div>;
   } else {
     let caption = t("Send debug logs");
     if (error) {
       caption = t("Retry sending logs");
-    } else if (sending) {
-      logsComponent = <span>{t("Sending…")}</span>;
     }
 
     logsComponent = (
