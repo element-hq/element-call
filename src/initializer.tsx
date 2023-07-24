@@ -45,6 +45,12 @@ class DependencyLoadStates {
 
 export class Initializer {
   private static internalInstance: Initializer;
+  private isInitialized = false;
+
+  public static isInitialized(): boolean {
+    return Initializer.internalInstance?.isInitialized;
+  }
+
   public static initBeforeReact() {
     // this maybe also needs to return a promise in the future,
     // if we have to do async inits before showing the loading screen
@@ -227,6 +233,7 @@ export class Initializer {
     if (this.loadStates.allDepsAreLoaded()) {
       // resolve if there is no dependency that is not loaded
       resolve();
+      this.isInitialized = true;
     }
   }
 
