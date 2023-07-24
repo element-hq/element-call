@@ -439,7 +439,12 @@ export function InCallView({
         />
       )}
       {inviteModalState.isOpen && (
-        <InviteModal roomId={groupCall.room.roomId} {...inviteModalProps} />
+        <InviteModal
+          roomAlias={
+            groupCall.room.getCanonicalAlias() ?? groupCall.room.roomId
+          }
+          {...inviteModalProps}
+        />
       )}
     </div>
   );

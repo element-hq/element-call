@@ -86,6 +86,7 @@ export function GroupCallView({
       avatarUrl: avatarUrl!,
       roomId: groupCall.room.roomId,
       roomName: groupCall.room.name,
+      roomAlias: groupCall.room.getCanonicalAlias(),
     };
   }, [displayName, avatarUrl, groupCall]);
 
