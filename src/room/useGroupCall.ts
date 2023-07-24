@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import { useCallback, useEffect, useReducer, useState } from "react";
+import * as Sentry from "@sentry/react";
 import {
   GroupCallEvent,
   GroupCallState,
@@ -331,6 +332,7 @@ export function useGroupCall(
     }
 
     function onError(e: GroupCallError): void {
+      Sentry.captureException(e);
       if (e.code === GroupCallErrorCode.UnknownDevice) {
         const unknownDeviceError = e as GroupCallUnknownDeviceError;
         addUnencryptedEventUser(unknownDeviceError.userId);
