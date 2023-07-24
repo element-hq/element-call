@@ -9,7 +9,7 @@ For prior version of the Element Call that relied solely on full-mesh logic, che
 
 ![A demo of Element Call with six people](demo.jpg)
 
-To try it out, visit our hosted version at [call.element.io](https://call.element.io). You can also find the latest development version continuously deployed to [element-call.netlify.app](https://element-call.netlify.app).
+To try it out, visit our hosted version at [call.element.io](https://call.element.io). You can also find the latest development version continuously deployed to [call.element.dev](https://call.element.dev/).
 
 ## Host it yourself
 
