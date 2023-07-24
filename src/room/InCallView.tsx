@@ -84,6 +84,7 @@ import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
 import { useSFUConfig } from "../livekit/OpenIDLoader";
 import { E2EELock } from "../E2EELock";
+import { useEventEmitterThree } from "../useEvents";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -204,13 +205,7 @@ export function InCallView({
     onLeave();
   }, [onLeave]);
 
-  useEffect(() => {
-    livekitRoom.on(RoomEvent.Disconnected, onDisconnected);
-
-    return () => {
-      livekitRoom.off(RoomEvent.Disconnected, onDisconnected);
-    };
-  }, [onDisconnected, livekitRoom]);
+  useEventEmitterThree(livekitRoom, RoomEvent.Disconnected, onDisconnected);
 
   useEffect(() => {
     widget?.api.transport.send(
