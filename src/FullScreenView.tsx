@@ -18,6 +18,7 @@ import { ReactNode, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import classNames from "classnames";
 import { Trans, useTranslation } from "react-i18next";
+import * as Sentry from "@sentry/react";
 
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import { LinkButton, Button } from "./button";
@@ -57,6 +58,7 @@ export function ErrorView({ error }: ErrorViewProps) {
 
   useEffect(() => {
     console.error(error);
+    Sentry.captureException(error);
   }, [error]);
 
   const onReload = useCallback(() => {

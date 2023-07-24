@@ -11,7 +11,7 @@ export type UserChoices = {
 };
 
 export type DeviceChoices = {
-  selectedId: string;
+  selectedId?: string;
   enabled: boolean;
 };
 

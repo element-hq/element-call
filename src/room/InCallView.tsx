@@ -85,6 +85,7 @@ import { useLayoutStates } from "../video-grid/Layout";
 import { useSFUConfig } from "../livekit/OpenIDLoader";
 import { E2EELock } from "../E2EELock";
 import { useEventEmitterThree } from "../useEvents";
+import { useWakeLock } from "../useWakeLock";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -134,6 +135,7 @@ export function InCallView({
 }: InCallViewProps) {
   const { t } = useTranslation();
   usePreventScroll();
+  useWakeLock();
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure({ polyfill: ResizeObserver });

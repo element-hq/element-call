@@ -25,9 +25,10 @@ import {
   useMemo,
 } from "react";
 import { useHistory } from "react-router-dom";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
+import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 
 import { ErrorView } from "./FullScreenView";
 import {
@@ -56,6 +57,9 @@ export type ClientState = ValidClientState | ErrorState;
 export type ValidClientState = {
   state: "valid";
   authenticated?: AuthenticatedClient;
+  // 'Disconnected' rather than 'connected' because it tracks specifically
+  // whether the client is supposed to be connected but is not
+  disconnected: boolean;
   setClient: (params?: SetClientParams) => void;
 };
 
@@ -149,8 +153,9 @@ interface Props {
 export const ClientProvider: FC<Props> = ({ children }) => {
   const history = useHistory();
 
+  // null = signed out, undefined = loading
   const [initClientState, setInitClientState] = useState<
-    InitResult | undefined
+    InitResult | null | undefined
   >(undefined);
 
   const initializing = useRef(false);
@@ -162,14 +167,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     initializing.current = true;
 
     loadClient()
-      .then((maybeClient) => {
-        if (!maybeClient) {
-          logger.error("Failed to initialize client");
-          return;
-        }
-
-        setInitClientState(maybeClient);
-      })
+      .then(setInitClientState)
       .catch((err) => logger.error(err))
       .finally(() => (initializing.current = false));
   }, []);
@@ -264,23 +262,46 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     }, [initClientState?.client, setAlreadyOpenedErr, t])
   );
 
-  const state: ClientState = useMemo(() => {
+  const [isDisconnected, setIsDisconnected] = useState(false);
+
+  const state: ClientState | undefined = useMemo(() => {
     if (alreadyOpenedErr) {
       return { state: "error", error: alreadyOpenedErr };
     }
 
-    let authenticated = undefined;
-    if (initClientState) {
-      authenticated = {
-        client: initClientState.client,
-        isPasswordlessUser: initClientState.passwordlessUser,
-        changePassword,
-        logout,
-      };
-    }
+    if (initClientState === undefined) return undefined;
 
-    return { state: "valid", authenticated, setClient };
-  }, [alreadyOpenedErr, changePassword, initClientState, logout, setClient]);
+    const authenticated =
+      initClientState === null
+        ? undefined
+        : {
+            client: initClientState.client,
+            isPasswordlessUser: initClientState.passwordlessUser,
+            changePassword,
+            logout,
+          };
+
+    return {
+      state: "valid",
+      authenticated,
+      setClient,
+      disconnected: isDisconnected,
+    };
+  }, [
+    alreadyOpenedErr,
+    changePassword,
+    initClientState,
+    logout,
+    setClient,
+    isDisconnected,
+  ]);
+
+  const onSync = useCallback(
+    (state: SyncState, _old: SyncState | null, data?: ISyncStateData) => {
+      setIsDisconnected(clientIsDisconnected(state, data));
+    },
+    []
+  );
 
   useEffect(() => {
     if (!initClientState) {
@@ -292,7 +313,17 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
     if (PosthogAnalytics.hasInstance())
       PosthogAnalytics.instance.onLoginStatusChanged();
-  }, [initClientState]);
+
+    if (initClientState.client) {
+      initClientState.client.on(ClientEvent.Sync, onSync);
+    }
+
+    return () => {
+      if (initClientState.client) {
+        initClientState.client.removeListener(ClientEvent.Sync, onSync);
+      }
+    };
+  }, [initClientState, onSync]);
 
   if (alreadyOpenedErr) {
     return <ErrorView error={alreadyOpenedErr} />;
@@ -308,7 +339,7 @@ type InitResult = {
   passwordlessUser: boolean;
 };
 
-async function loadClient(): Promise<InitResult> {
+async function loadClient(): Promise<InitResult | null> {
   if (widget) {
     // We're inside a widget, so let's engage *matryoshka mode*
     logger.log("Using a matryoshka client");
@@ -322,7 +353,8 @@ async function loadClient(): Promise<InitResult> {
     try {
       const session = loadSession();
       if (!session) {
-        throw new Error("No session stored");
+        logger.log("No session stored; continuing without a client");
+        return null;
       }
 
       logger.log("Using a standalone client");
@@ -387,3 +419,8 @@ const loadSession = (): Session | undefined => {
 
   return JSON.parse(data);
 };
+
+const clientIsDisconnected = (
+  syncState: SyncState,
+  syncData?: ISyncStateData
+) => syncState === "ERROR" && syncData?.error?.name === "ConnectionError";
