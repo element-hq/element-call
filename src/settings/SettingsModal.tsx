@@ -262,7 +262,7 @@ export const SettingsModal = (props: Props) => {
   );
 
   const tabs: JSX.Element[] = [];
-  tabs.push(audioTab, videoTab);
+  if (devices) tabs.push(audioTab, videoTab);
   if (!isEmbedded) tabs.push(profileTab);
   tabs.push(feedbackTab, moreTab);
   if (developerSettingsTab) tabs.push(developerTab);
