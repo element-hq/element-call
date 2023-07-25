@@ -1,6 +1,12 @@
-import { Room, RoomOptions } from "livekit-client";
+import {
+  E2EEOptions,
+  ExternalE2EEKeyProvider,
+  Room,
+  RoomOptions,
+} from "livekit-client";
 import { useLiveKitRoom } from "@livekit/components-react";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
+import E2EEWorker from "livekit-client/e2ee-worker?worker";
 
 import { defaultLiveKitOptions } from "./options";
 import { SFUConfig } from "./openIDSFU";
@@ -15,10 +21,32 @@ export type DeviceChoices = {
   enabled: boolean;
 };
 
+export type E2EEConfig = {
+  sharedKey: string;
+};
+
 export function useLiveKit(
   userChoices: UserChoices,
-  sfuConfig?: SFUConfig
+  sfuConfig?: SFUConfig,
+  e2eeConfig?: E2EEConfig
 ): Room | undefined {
+  const e2eeOptions = useMemo(() => {
+    if (!e2eeConfig?.sharedKey) return undefined;
+
+    return {
+      keyProvider: new ExternalE2EEKeyProvider(),
+      worker: new E2EEWorker(),
+    } as E2EEOptions;
+  }, [e2eeConfig]);
+
+  useEffect(() => {
+    if (!e2eeConfig?.sharedKey || !e2eeOptions) return;
+
+    (e2eeOptions.keyProvider as ExternalE2EEKeyProvider).setKey(
+      e2eeConfig?.sharedKey
+    );
+  }, [e2eeOptions, e2eeConfig?.sharedKey]);
+
   const roomOptions = useMemo((): RoomOptions => {
     const options = defaultLiveKitOptions;
     options.videoCaptureDefaults = {
@@ -29,8 +57,11 @@ export function useLiveKit(
       ...options.audioCaptureDefaults,
       deviceId: userChoices.audio?.selectedId,
     };
+
+    options.e2ee = e2eeOptions;
+
     return options;
-  }, [userChoices.video, userChoices.audio]);
+  }, [userChoices.video, userChoices.audio, e2eeOptions]);
 
   const roomWithoutProps = useMemo(() => new Room(roomOptions), [roomOptions]);
 

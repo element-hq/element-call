@@ -34,6 +34,7 @@ import {
   useOptInAnalytics,
   useDeveloperSettingsTab,
   useShowConnectionStats,
+  useEnableE2EE,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
@@ -68,6 +69,7 @@ export const SettingsModal = (props: Props) => {
     useDeveloperSettingsTab();
   const [showConnectionStats, setShowConnectionStats] =
     useShowConnectionStats();
+  const [enableE2EE, setEnableE2EE] = useEnableE2EE();
 
   const downloadDebugLog = useDownloadDebugLog();
 
@@ -246,6 +248,18 @@ export const SettingsModal = (props: Props) => {
             checked={showConnectionStats}
             onChange={(e: ChangeEvent<HTMLInputElement>) =>
               setShowConnectionStats(e.target.checked)
+            }
+          />
+        </FieldRow>
+        <FieldRow>
+          <InputField
+            id="enableE2EE"
+            name="end-to-end-encryption"
+            label={t("Enable end-to-end encryption (password protected calls)")}
+            type="checkbox"
+            checked={enableE2EE}
+            onChange={(e: ChangeEvent<HTMLInputElement>) =>
+              setEnableE2EE(e.target.checked)
             }
           />
         </FieldRow>
