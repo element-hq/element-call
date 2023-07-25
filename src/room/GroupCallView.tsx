@@ -229,6 +229,8 @@ export function GroupCallView({
     groupCall.enter();
   }, [groupCall]);
 
+  console.log("LOG participant size", participants.size);
+
   if (error) {
     return <ErrorView error={error} />;
   } else if (state === GroupCallState.Entered && userChoices) {
@@ -293,7 +295,7 @@ export function GroupCallView({
           setUserChoices(choices);
           enter();
         }}
-        muteAudio={participants.size > 8}
+        initWithMutedAudio={participants.size > 0}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
       />
