@@ -36,7 +36,12 @@ import { E2EEConfig, UserChoices } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
 import { OpenIDLoader } from "../livekit/OpenIDLoader";
 import { ActiveCall } from "./InCallView";
-import { Config } from "../config/Config";
+
+/**
+ * If there already is this many participants in the call, we automatically mute
+ * the user
+ */
+const MUTE_PARTICIPANT_COUNT = 8;
 
 declare global {
   interface Window {
@@ -164,42 +169,47 @@ export function GroupCallView({
   useSentryGroupCallHandler(groupCall);
 
   const [left, setLeft] = useState(false);
+  const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
   const history = useHistory();
 
-  const onLeave = useCallback(async () => {
-    setLeft(true);
+  const onLeave = useCallback(
+    async (leaveError?: Error) => {
+      setLeaveError(leaveError);
+      setLeft(true);
 
-    let participantCount = 0;
-    for (const deviceMap of groupCall.participants.values()) {
-      participantCount += deviceMap.size;
-    }
+      let participantCount = 0;
+      for (const deviceMap of groupCall.participants.values()) {
+        participantCount += deviceMap.size;
+      }
 
-    // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
-    // therefore we want the event to be sent instantly without getting queued/batched.
-    const sendInstantly = !!widget;
-    PosthogAnalytics.instance.eventCallEnded.track(
-      groupCall.groupCallId,
-      participantCount,
-      sendInstantly
-    );
+      // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
+      // therefore we want the event to be sent instantly without getting queued/batched.
+      const sendInstantly = !!widget;
+      PosthogAnalytics.instance.eventCallEnded.track(
+        groupCall.groupCallId,
+        participantCount,
+        sendInstantly
+      );
 
-    leave();
-    if (widget) {
-      // we need to wait until the callEnded event is tracked. Otherwise the iFrame gets killed before the callEnded event got tracked.
-      await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
-      widget.api.setAlwaysOnScreen(false);
-      PosthogAnalytics.instance.logout();
-      widget.api.transport.send(ElementWidgetActions.HangupCall, {});
-    }
+      leave();
+      if (widget) {
+        // we need to wait until the callEnded event is tracked. Otherwise the iFrame gets killed before the callEnded event got tracked.
+        await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
+        widget.api.setAlwaysOnScreen(false);
+        PosthogAnalytics.instance.logout();
+        widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+      }
 
-    if (
-      !isPasswordlessUser &&
-      !isEmbedded &&
-      !PosthogAnalytics.instance.isEnabled()
-    ) {
-      history.push("/");
-    }
-  }, [groupCall, leave, isPasswordlessUser, isEmbedded, history]);
+      if (
+        !isPasswordlessUser &&
+        !isEmbedded &&
+        !PosthogAnalytics.instance.isEnabled()
+      ) {
+        history.push("/");
+      }
+    },
+    [groupCall, leave, isPasswordlessUser, isEmbedded, history]
+  );
 
   useEffect(() => {
     if (widget && state === GroupCallState.Entered) {
@@ -222,6 +232,12 @@ export function GroupCallView({
     undefined
   );
 
+  const onReconnect = useCallback(() => {
+    setLeft(false);
+    setLeaveError(undefined);
+    groupCall.enter();
+  }, [groupCall]);
+
   const livekitServiceURL =
     groupCall.livekitServiceURL ?? Config.get().livekit?.livekit_service_url;
   if (!livekitServiceURL) {
@@ -234,7 +250,7 @@ export function GroupCallView({
     return (
       <OpenIDLoader
         client={client}
-        livekitServiceURL={livekitServiceURL}
+        groupCall={groupCall}
         roomName={`${groupCall.room.roomId}-${groupCall.groupCallId}`}
       >
         <ActiveCall
@@ -259,13 +275,16 @@ export function GroupCallView({
     // submitting anything.
     if (
       isPasswordlessUser ||
-      (PosthogAnalytics.instance.isEnabled() && !isEmbedded)
+      (PosthogAnalytics.instance.isEnabled() && !isEmbedded) ||
+      leaveError
     ) {
       return (
         <CallEndedView
           endedCallId={groupCall.groupCallId}
           client={client}
           isPasswordlessUser={isPasswordlessUser}
+          leaveError={leaveError}
+          reconnect={onReconnect}
         />
       );
     } else {
@@ -291,6 +310,7 @@ export function GroupCallView({
           setE2EEConfig(e2eeConfig);
           enter();
         }}
+        initWithMutedAudio={participants.size > MUTE_PARTICIPANT_COUNT}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
       />

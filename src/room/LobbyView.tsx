@@ -35,6 +35,7 @@ interface Props {
   onEnter: (userChoices: UserChoices, e2eeConfig?: E2EEConfig) => void;
   isEmbedded: boolean;
   hideHeader: boolean;
+  initWithMutedAudio: boolean;
 }
 
 export function LobbyView(props: Props) {
@@ -81,6 +82,7 @@ export function LobbyView(props: Props) {
         <div className={styles.joinRoomContent}>
           <VideoPreview
             matrixInfo={props.matrixInfo}
+            initWithMutedAudio={props.initWithMutedAudio}
             onUserChoicesChanged={setUserChoices}
           />
           {enableE2EE && (

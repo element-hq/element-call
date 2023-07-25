@@ -31,6 +31,15 @@ limitations under the License.
   margin-bottom: 32px;
 }
 
+.disconnectedButtons {
+  display: grid;
+  gap: 50px;
+}
+
+.rageshakeButton {
+  grid-column: 2;
+}
+
 .callEndedButton {
   margin-top: 54px;
   margin-left: 30px;

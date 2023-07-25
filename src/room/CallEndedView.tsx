@@ -28,15 +28,20 @@ import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { FieldRow, InputField } from "../input/Input";
 import { StarRatingInput } from "../input/StarRatingInput";
+import { RageshakeButton } from "../settings/RageshakeButton";
 
 export function CallEndedView({
   client,
   isPasswordlessUser,
   endedCallId,
+  leaveError,
+  reconnect,
 }: {
   client: MatrixClient;
   isPasswordlessUser: boolean;
   endedCallId: string;
+  leaveError?: Error;
+  reconnect: () => void;
 }) {
   const { t } = useTranslation();
   const history = useHistory();
@@ -76,6 +81,7 @@ export function CallEndedView({
     },
     [endedCallId, history, isPasswordlessUser, starRating]
   );
+
   const createAccountDialog = isPasswordlessUser && (
     <div className={styles.callEndedContent}>
       <Trans>
@@ -138,6 +144,59 @@ export function CallEndedView({
     </div>
   );
 
+  const renderBody = () => {
+    if (leaveError) {
+      return (
+        <>
+          <main className={styles.main}>
+            <Headline className={styles.headline}>
+              <Trans>You were disconnected from the call</Trans>
+            </Headline>
+            <div className={styles.disconnectedButtons}>
+              <Button size="lg" variant="default" onClick={reconnect}>
+                {t("Reconnect")}
+              </Button>
+              <div className={styles.rageshakeButton}>
+                <RageshakeButton description="***Call disconnected***" />
+              </div>
+            </div>
+          </main>
+          <Body className={styles.footer}>
+            <Link color="primary" to="/">
+              {t("Return to home screen")}
+            </Link>
+          </Body>
+        </>
+      );
+    } else {
+      return (
+        <>
+          <main className={styles.main}>
+            <Headline className={styles.headline}>
+              {surveySubmitted
+                ? t("{{displayName}}, your call has ended.", {
+                    displayName,
+                  })
+                : t("{{displayName}}, your call has ended.", {
+                    displayName,
+                  }) +
+                  "\n" +
+                  t("How did it go?")}
+            </Headline>
+            {!surveySubmitted && PosthogAnalytics.instance.isEnabled()
+              ? qualitySurveyDialog
+              : createAccountDialog}
+          </main>
+          <Body className={styles.footer}>
+            <Link color="primary" to="/">
+              {t("Not now, return to home screen")}
+            </Link>
+          </Body>
+        </>
+      );
+    }
+  };
+
   return (
     <>
       <Header>
@@ -146,29 +205,7 @@ export function CallEndedView({
         </LeftNav>
         <RightNav />
       </Header>
-      <div className={styles.container}>
-        <main className={styles.main}>
-          <Headline className={styles.headline}>
-            {surveySubmitted
-              ? t("{{displayName}}, your call has ended.", {
-                  displayName,
-                })
-              : t("{{displayName}}, your call has ended.", {
-                  displayName,
-                }) +
-                "\n" +
-                t("How did it go?")}
-          </Headline>
-          {!surveySubmitted && PosthogAnalytics.instance.isEnabled()
-            ? qualitySurveyDialog
-            : createAccountDialog}
-        </main>
-        <Body className={styles.footer}>
-          <Link color="primary" to="/">
-            {t("Not now, return to home screen")}
-          </Link>
-        </Body>
-      </div>
+      <div className={styles.container}>{renderBody()}</div>
     </>
   );
 }
