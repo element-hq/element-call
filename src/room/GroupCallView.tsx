@@ -295,7 +295,7 @@ export function GroupCallView({
           setUserChoices(choices);
           enter();
         }}
-        initWithMutedAudio={participants.size > 0}
+        initWithMutedAudio={participants.size > 8}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
       />
