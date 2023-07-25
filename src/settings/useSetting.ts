@@ -104,6 +104,9 @@ export const useDeveloperSettingsTab = () =>
 export const useShowConnectionStats = () =>
   useSetting("show-connection-stats", false);
 
+export const useEnableE2EE = () =>
+  useSetting("enable-end-to-end-encryption", false);
+
 export const useDefaultDevices = () =>
   useSetting("defaultDevices", {
     audioinput: "",

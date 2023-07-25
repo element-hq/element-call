@@ -27,6 +27,7 @@ import { useLocationNavigation } from "../useLocationNavigation";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
 import { E2EEConfig, UserChoices } from "../livekit/useLiveKit";
 import { InputField } from "../input/Input";
+import { useEnableE2EE } from "../settings/useSetting";
 
 interface Props {
   matrixInfo: MatrixInfo;
@@ -39,6 +40,8 @@ interface Props {
 export function LobbyView(props: Props) {
   const { t } = useTranslation();
   useLocationNavigation();
+
+  const [enableE2EE] = useEnableE2EE();
 
   const joinCallButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -80,13 +83,15 @@ export function LobbyView(props: Props) {
             matrixInfo={props.matrixInfo}
             onUserChoicesChanged={setUserChoices}
           />
-          <InputField
-            className={styles.passwordField}
-            label={t("Password (if none E2EE, is disabled)")}
-            type="text"
-            onChange={onE2EESharedKeyChanged}
-            value={e2eeSharedKey}
-          />
+          {enableE2EE && (
+            <InputField
+              className={styles.passwordField}
+              label={t("Password (if none E2EE, is disabled)")}
+              type="text"
+              onChange={onE2EESharedKeyChanged}
+              value={e2eeSharedKey}
+            />
+          )}
           <Trans>
             <Button
               ref={joinCallButtonRef}
