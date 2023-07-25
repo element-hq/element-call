@@ -37,6 +37,12 @@ import { findDeviceByName } from "../media-utils";
 import { OpenIDLoader } from "../livekit/OpenIDLoader";
 import { ActiveCall } from "./InCallView";
 
+/**
+ * If there already is this many participants in the call, we automatically mute
+ * the user
+ */
+const MUTE_PARTICIPANT_COUNT = 8;
+
 declare global {
   interface Window {
     groupCall?: GroupCall;
@@ -229,6 +235,8 @@ export function GroupCallView({
     groupCall.enter();
   }, [groupCall]);
 
+  console.log("LOG participant size", participants.size);
+
   if (error) {
     return <ErrorView error={error} />;
   } else if (state === GroupCallState.Entered && userChoices) {
@@ -293,7 +301,7 @@ export function GroupCallView({
           setUserChoices(choices);
           enter();
         }}
-        muteAudio={participants.size > 8}
+        initWithMutedAudio={participants.size > MUTE_PARTICIPANT_COUNT}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
       />
