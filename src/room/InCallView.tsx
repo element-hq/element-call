@@ -24,7 +24,7 @@ import {
 } from "@livekit/components-react";
 import { usePreventScroll } from "@react-aria/overlays";
 import classNames from "classnames";
-import { Room, Track } from "livekit-client";
+import { DisconnectReason, Room, RoomEvent, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
@@ -33,6 +33,7 @@ import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
 import { OverlayTriggerState } from "@react-stately/overlays";
 import { JoinRule } from "matrix-js-sdk/src/@types/partials";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -83,6 +84,7 @@ import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
 import { useSFUConfig } from "../livekit/OpenIDLoader";
 import { E2EELock } from "../E2EELock";
+import { useEventEmitterThree } from "../useEvents";
 import { useWakeLock } from "../useWakeLock";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
@@ -115,7 +117,7 @@ export interface InCallViewProps {
   groupCall: GroupCall;
   livekitRoom: Room;
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
-  onLeave: () => void;
+  onLeave: (error?: Error) => void;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
@@ -189,6 +191,23 @@ export function InCallView({
     toggleCamera,
     async (muted) => await localParticipant.setMicrophoneEnabled(!muted)
   );
+
+  const onDisconnected = useCallback(
+    (reason?: DisconnectReason) => {
+      PosthogAnalytics.instance.eventCallDisconnected.track(reason);
+      logger.info("Disconnected from livekit call with reason ", reason);
+      onLeave(
+        new Error("Disconnected from LiveKit call with reason " + reason)
+      );
+    },
+    [onLeave]
+  );
+
+  const onLeavePress = useCallback(() => {
+    onLeave();
+  }, [onLeave]);
+
+  useEventEmitterThree(livekitRoom, RoomEvent.Disconnected, onDisconnected);
 
   useEffect(() => {
     widget?.api.transport.send(
@@ -386,7 +405,7 @@ export function InCallView({
     }
 
     buttons.push(
-      <HangupButton key="6" onPress={onLeave} data-testid="incall_leave" />
+      <HangupButton key="6" onPress={onLeavePress} data-testid="incall_leave" />
     );
     footer = <div className={styles.footer}>{buttons}</div>;
   }
