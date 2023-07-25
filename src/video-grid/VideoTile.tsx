@@ -121,6 +121,15 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
 
     const toolbarButtons: JSX.Element[] = [];
     if (!sfuParticipant.isLocal) {
+      toolbarButtons.push(
+        <AudioButton
+          key="localVolume"
+          className={styles.button}
+          volume={(sfuParticipant as RemoteParticipant).getVolume() ?? 0}
+          onPress={onOptionsPress}
+        />
+      );
+
       if (content === TileContent.ScreenShare) {
         toolbarButtons.push(
           <FullscreenButton
@@ -128,16 +137,6 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             className={styles.button}
             fullscreen={fullscreen}
             onPress={onFullscreen}
-          />
-        );
-      } else {
-        // Due to the LK SDK this sadly only works for user-media atm
-        toolbarButtons.push(
-          <AudioButton
-            key="localVolume"
-            className={styles.button}
-            volume={(sfuParticipant as RemoteParticipant).getVolume() ?? 0}
-            onPress={onOptionsPress}
           />
         );
       }

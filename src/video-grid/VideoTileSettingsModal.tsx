@@ -16,29 +16,36 @@ limitations under the License.
 
 import React, { ChangeEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { RemoteParticipant } from "livekit-client";
+import { RemoteParticipant, Track } from "livekit-client";
 
 import { FieldRow } from "../input/Input";
 import { Modal } from "../Modal";
 import styles from "./VideoTileSettingsModal.module.css";
 import { VolumeIcon } from "../button/VolumeIcon";
-import { ItemData } from "./VideoTile";
+import { ItemData, TileContent } from "./VideoTile";
 
 interface LocalVolumeProps {
   participant: RemoteParticipant;
+  content: TileContent;
 }
 
 const LocalVolume: React.FC<LocalVolumeProps> = ({
   participant,
+  content,
 }: LocalVolumeProps) => {
+  const source =
+    content === TileContent.UserMedia
+      ? Track.Source.Microphone
+      : Track.Source.ScreenShareAudio;
+
   const [localVolume, setLocalVolume] = useState<number>(
-    participant.getVolume() ?? 0
+    participant.getVolume(source) ?? 0
   );
 
   const onLocalVolumeChanged = (event: ChangeEvent<HTMLInputElement>) => {
     const value: number = +event.target.value;
     setLocalVolume(value);
-    participant.setVolume(value);
+    participant.setVolume(value, source);
   };
 
   return (
@@ -78,7 +85,10 @@ export const VideoTileSettingsModal = ({ data, onClose, ...rest }: Props) => {
       {...rest}
     >
       <div className={styles.content}>
-        <LocalVolume participant={data.sfuParticipant as RemoteParticipant} />
+        <LocalVolume
+          participant={data.sfuParticipant as RemoteParticipant}
+          content={data.content}
+        />
       </div>
     </Modal>
   );
