@@ -171,7 +171,7 @@ export function useGroupCall(
     isScreensharing: false,
     screenshareFeeds: [],
     requestingScreenshare: false,
-    participants: new Map(),
+    participants: getParticipants(groupCall),
     hasLocalParticipant: false,
   });
 
