@@ -116,5 +116,9 @@
   "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Натискаючи \"Приєднатися до виклику зараз\", ви погоджуєтеся з нашою <2>Ліцензійною угодою з кінцевим користувачем (EULA)</2>",
   "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>": "Цей сайт захищений ReCAPTCHA і до нього застосовується <2>Політика приватності</2> і <6>Умови надання послуг</6> Google.<9></9>Натискаючи \"Зареєструватися\", ви погоджуєтеся з нашою <12>Ліцензійною угодою з кінцевим користувачем (EULA)</12>",
   "Element Call is temporarily not end-to-end encrypted while we test scalability.": "Виклики Element тимчасово не захищаються наскрізним шифруванням, поки ми тестуємо масштабованість.",
-  "Connectivity to the server has been lost.": "Втрачено зв'язок з сервером."
+  "Connectivity to the server has been lost.": "Втрачено зв'язок з сервером.",
+  "Reconnect": "Під'єднати повторно",
+  "Retry sending logs": "Повторити надсилання журналів",
+  "You were disconnected from the call": "Вас від'єднано від виклику",
+  "Thanks!": "Дякуємо!"
 }
