@@ -73,7 +73,7 @@
   "Not registered yet? <2>Create an account</2>": "Not registered yet? <2>Create an account</2>",
   "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>",
   "Password": "Password",
-  "Password (if none E2EE, is disabled)": "Password (if none E2EE, is disabled)",
+  "Password (if none, E2EE is disabled)": "Password (if none, E2EE is disabled)",
   "Passwords must match": "Passwords must match",
   "Profile": "Profile",
   "Recaptcha dismissed": "Recaptcha dismissed",

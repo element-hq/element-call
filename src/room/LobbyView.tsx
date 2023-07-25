@@ -86,7 +86,7 @@ export function LobbyView(props: Props) {
           {enableE2EE && (
             <InputField
               className={styles.passwordField}
-              label={t("Password (if none E2EE, is disabled)")}
+              label={t("Password (if none, E2EE is disabled)")}
               type="text"
               onChange={onE2EESharedKeyChanged}
               value={e2eeSharedKey}
