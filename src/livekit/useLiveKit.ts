@@ -63,8 +63,10 @@ export function useLiveKit(
     return options;
   }, [userChoices.video, userChoices.audio, e2eeOptions]);
 
+  // We have to create the room manually here due to a bug inside
+  // @livekit/components-react. JSON.stringify() is used in deps of a
+  // useEffect() with an argument that references itself, if E2EE is enabled
   const roomWithoutProps = useMemo(() => new Room(roomOptions), [roomOptions]);
-
   const { room } = useLiveKitRoom({
     token: sfuConfig?.jwt,
     serverUrl: sfuConfig?.url,
