@@ -110,7 +110,9 @@ export function ActiveCall(props: ActiveCallProps) {
     return null;
   }
 
-  livekitRoom.setE2EEEnabled(true);
+  if (props.e2eeConfig && !livekitRoom.isE2EEEnabled) {
+    livekitRoom.setE2EEEnabled(!!props.e2eeConfig);
+  }
 
   return (
     <RoomContext.Provider value={livekitRoom}>
