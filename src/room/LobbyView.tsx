@@ -33,7 +33,7 @@ interface Props {
   onEnter: (userChoices: UserChoices) => void;
   isEmbedded: boolean;
   hideHeader: boolean;
-  muteAudio: boolean;
+  initWithMutedAudio: boolean;
 }
 
 export function LobbyView(props: Props) {
@@ -67,7 +67,7 @@ export function LobbyView(props: Props) {
         <div className={styles.joinRoomContent}>
           <VideoPreview
             matrixInfo={props.matrixInfo}
-            muteAudio={props.muteAudio}
+            initWithMutedAudio={props.initWithMutedAudio}
             onUserChoicesChanged={setUserChoices}
           />
           <Trans>
