@@ -116,5 +116,6 @@
   "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "點擊「前往」即表示您同意我們的<2>終端使用者授權協議 (EULA)</2>",
   "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "點擊「立刻加入通話」即表示您同意我們的<2>終端使用者授權協議 (EULA)</2>",
   "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>": "此網站被 ReCAPTCHA 保護，並適用 Google 的<2>隱私權政策</2>與<6>服務條款</6>。<9></9>點擊「註冊」即表示您同意我們的<12>終端使用者授權協議 (EULA)</12>",
-  "Element Call is temporarily not end-to-end encrypted while we test scalability.": "在我們測試可擴展性時，Element Call 暫時未進行端到端加密。"
+  "Element Call is temporarily not end-to-end encrypted while we test scalability.": "在我們測試可擴展性時，Element Call 暫時未進行端到端加密。",
+  "Connectivity to the server has been lost.": "到伺服器的連線已遺失。"
 }
