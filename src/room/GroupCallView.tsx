@@ -36,6 +36,7 @@ import { E2EEConfig, UserChoices } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
 import { OpenIDLoader } from "../livekit/OpenIDLoader";
 import { ActiveCall } from "./InCallView";
+import { Config } from "../config/Config";
 
 /**
  * If there already is this many participants in the call, we automatically mute
