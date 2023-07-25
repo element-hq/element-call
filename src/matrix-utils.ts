@@ -60,11 +60,11 @@ function waitForSync(client: MatrixClient) {
       data?: ISyncStateData
     ) => {
       if (state === "PREPARED") {
+        client.removeListener(ClientEvent.Sync, onSync);
         resolve();
-        client.removeListener(ClientEvent.Sync, onSync);
       } else if (state === "ERROR") {
-        reject(data?.error);
         client.removeListener(ClientEvent.Sync, onSync);
+        reject(data?.error);
       }
     };
     client.on(ClientEvent.Sync, onSync);
@@ -345,15 +345,11 @@ export async function createRoom(
 // Returns a URL to that will load Element Call with the given room
 export function getRoomUrl(roomIdOrAlias: string): string {
   if (roomIdOrAlias.startsWith("#")) {
-    const [localPart, host] = roomIdOrAlias.replace("#", "").split(":");
-
-    if (host !== Config.defaultServerName()) {
-      return `${window.location.protocol}//${window.location.host}/room/${roomIdOrAlias}`;
-    } else {
-      return `${window.location.protocol}//${window.location.host}/${localPart}`;
-    }
+    return `${window.location.protocol}//${window.location.host}/${
+      roomIdOrAlias.substring(1).split(":")[0]
+    }`;
   } else {
-    return `${window.location.protocol}//${window.location.host}/room/#?roomId=${roomIdOrAlias}`;
+    return `${window.location.protocol}//${window.location.host}/room?roomId=${roomIdOrAlias}`;
   }
 }
 

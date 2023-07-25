@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { DisconnectReason } from "livekit-client";
+
 import {
   IPosthogEvent,
   PosthogAnalytics,
@@ -178,6 +180,20 @@ export class QualitySurveyEventTracker {
       callId,
       feedbackText,
       stars,
+    });
+  }
+}
+
+interface CallDisconnectedEvent {
+  eventName: "CallDisconnected";
+  reason?: DisconnectReason;
+}
+
+export class CallDisconnectedEventTracker {
+  track(reason?: DisconnectReason) {
+    PosthogAnalytics.instance.trackEvent<CallDisconnectedEvent>({
+      eventName: "CallDisconnected",
+      reason,
     });
   }
 }

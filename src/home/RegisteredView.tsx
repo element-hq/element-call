@@ -71,8 +71,9 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
         setLoading(true);
 
         const [roomAlias] = await createRoom(client, roomName, ptt);
+
         if (roomAlias) {
-          history.push(`/room/${roomAlias}`);
+          history.push(`/${roomAlias.substring(1).split(":")[0]}`);
         }
       }
 
