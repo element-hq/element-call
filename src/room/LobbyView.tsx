@@ -112,7 +112,9 @@ export function LobbyView(props: Props) {
             <Body>Or</Body>
             <CopyButton
               variant="secondaryCopy"
-              value={getRoomUrl(props.matrixInfo.roomId)}
+              value={getRoomUrl(
+                props.matrixInfo.roomAlias ?? props.matrixInfo.roomId
+              )}
               className={styles.copyButton}
               copiedMessage={t("Call link copied")}
               data-testid="lobby_inviteLink"
