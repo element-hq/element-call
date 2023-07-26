@@ -23,10 +23,10 @@ import { getRoomUrl } from "../matrix-utils";
 import styles from "./InviteModal.module.css";
 
 interface Props extends Omit<ModalProps, "title" | "children"> {
-  roomId: string;
+  roomIdOrAlias: string;
 }
 
-export const InviteModal: FC<Props> = ({ roomId, ...rest }) => {
+export const InviteModal: FC<Props> = ({ roomIdOrAlias, ...rest }) => {
   const { t } = useTranslation();
 
   return (
@@ -40,7 +40,7 @@ export const InviteModal: FC<Props> = ({ roomId, ...rest }) => {
         <p>{t("Copy and share this call link")}</p>
         <CopyButton
           className={styles.copyButton}
-          value={getRoomUrl(roomId)}
+          value={getRoomUrl(roomIdOrAlias)}
           data-testid="modal_inviteLink"
         />
       </ModalContent>
