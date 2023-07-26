@@ -24,7 +24,7 @@ import {
 } from "@livekit/components-react";
 import { usePreventScroll } from "@react-aria/overlays";
 import classNames from "classnames";
-import { Room, Track } from "livekit-client";
+import { DisconnectReason, Room, RoomEvent, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
@@ -33,6 +33,7 @@ import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
 import { OverlayTriggerState } from "@react-stately/overlays";
 import { JoinRule } from "matrix-js-sdk/src/@types/partials";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -77,12 +78,13 @@ import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { UserChoices, useLiveKit } from "../livekit/useLiveKit";
+import { E2EEConfig, UserChoices, useLiveKit } from "../livekit/useLiveKit";
 import { useMediaDevicesSwitcher } from "../livekit/useMediaDevicesSwitcher";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
 import { useSFUConfig } from "../livekit/OpenIDLoader";
 import { E2EELock } from "../E2EELock";
+import { useEventEmitterThree } from "../useEvents";
 import { useWakeLock } from "../useWakeLock";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
@@ -93,14 +95,23 @@ const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 export interface ActiveCallProps extends Omit<InCallViewProps, "livekitRoom"> {
   userChoices: UserChoices;
+  e2eeConfig?: E2EEConfig;
 }
 
 export function ActiveCall(props: ActiveCallProps) {
   const sfuConfig = useSFUConfig();
-  const livekitRoom = useLiveKit(props.userChoices, sfuConfig);
+  const livekitRoom = useLiveKit(
+    props.userChoices,
+    sfuConfig,
+    props.e2eeConfig
+  );
 
   if (!livekitRoom) {
     return null;
+  }
+
+  if (props.e2eeConfig && !livekitRoom.isE2EEEnabled) {
+    livekitRoom.setE2EEEnabled(!!props.e2eeConfig);
   }
 
   return (
@@ -115,7 +126,7 @@ export interface InCallViewProps {
   groupCall: GroupCall;
   livekitRoom: Room;
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
-  onLeave: () => void;
+  onLeave: (error?: Error) => void;
   unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
@@ -189,6 +200,23 @@ export function InCallView({
     toggleCamera,
     async (muted) => await localParticipant.setMicrophoneEnabled(!muted)
   );
+
+  const onDisconnected = useCallback(
+    (reason?: DisconnectReason) => {
+      PosthogAnalytics.instance.eventCallDisconnected.track(reason);
+      logger.info("Disconnected from livekit call with reason ", reason);
+      onLeave(
+        new Error("Disconnected from LiveKit call with reason " + reason)
+      );
+    },
+    [onLeave]
+  );
+
+  const onLeavePress = useCallback(() => {
+    onLeave();
+  }, [onLeave]);
+
+  useEventEmitterThree(livekitRoom, RoomEvent.Disconnected, onDisconnected);
 
   useEffect(() => {
     widget?.api.transport.send(
@@ -386,7 +414,7 @@ export function InCallView({
     }
 
     buttons.push(
-      <HangupButton key="6" onPress={onLeave} data-testid="incall_leave" />
+      <HangupButton key="6" onPress={onLeavePress} data-testid="incall_leave" />
     );
     footer = <div className={styles.footer}>{buttons}</div>;
   }
