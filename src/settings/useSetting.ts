@@ -16,6 +16,7 @@ limitations under the License.
 
 import { EventEmitter } from "events";
 import { useMemo, useState, useEffect, useCallback } from "react";
+import { isE2EESupported } from "livekit-client";
 
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 
@@ -98,14 +99,21 @@ export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
   return [false, null];
 };
 
+export const useEnableE2EE = (): DisableableSetting<boolean | null> => {
+  const settingVal = useSetting<boolean | null>(
+    "enable-end-to-end-encryption",
+    false
+  );
+  if (isE2EESupported()) return settingVal;
+
+  return [false, null];
+};
+
 export const useDeveloperSettingsTab = () =>
   useSetting("developer-settings-tab", false);
 
 export const useShowConnectionStats = () =>
   useSetting("show-connection-stats", false);
-
-export const useEnableE2EE = () =>
-  useSetting("enable-end-to-end-encryption", false);
 
 export const useDefaultDevices = () =>
   useSetting("defaultDevices", {
