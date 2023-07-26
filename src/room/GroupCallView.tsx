@@ -32,10 +32,11 @@ import { CallEndedView } from "./CallEndedView";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
-import { UserChoices } from "../livekit/useLiveKit";
+import { E2EEConfig, UserChoices } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
 import { OpenIDLoader } from "../livekit/OpenIDLoader";
 import { ActiveCall } from "./InCallView";
+import { Config } from "../config/Config";
 
 /**
  * If there already is this many participants in the call, we automatically mute
@@ -228,6 +229,9 @@ export function GroupCallView({
   const [userChoices, setUserChoices] = useState<UserChoices | undefined>(
     undefined
   );
+  const [e2eeConfig, setE2EEConfig] = useState<E2EEConfig | undefined>(
+    undefined
+  );
 
   const onReconnect = useCallback(() => {
     setLeft(false);
@@ -235,7 +239,11 @@ export function GroupCallView({
     groupCall.enter();
   }, [groupCall]);
 
-  console.log("LOG participant size", participants.size);
+  const livekitServiceURL =
+    groupCall.livekitServiceURL ?? Config.get().livekit?.livekit_service_url;
+  if (!livekitServiceURL) {
+    return <ErrorView error={new Error("No livekit_service_url defined")} />;
+  }
 
   if (error) {
     return <ErrorView error={error} />;
@@ -254,6 +262,7 @@ export function GroupCallView({
           unencryptedEventsFromUsers={unencryptedEventsFromUsers}
           hideHeader={hideHeader}
           userChoices={userChoices}
+          e2eeConfig={e2eeConfig}
           otelGroupCallMembership={otelGroupCallMembership}
         />
       </OpenIDLoader>
@@ -297,8 +306,9 @@ export function GroupCallView({
     return (
       <LobbyView
         matrixInfo={matrixInfo}
-        onEnter={(choices: UserChoices) => {
+        onEnter={(choices: UserChoices, e2eeConfig?: E2EEConfig) => {
           setUserChoices(choices);
+          setE2EEConfig(e2eeConfig);
           enter();
         }}
         initWithMutedAudio={participants.size > MUTE_PARTICIPANT_COUNT}
