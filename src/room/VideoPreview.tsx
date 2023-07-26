@@ -41,13 +41,13 @@ export type MatrixInfo = {
 
 interface Props {
   matrixInfo: MatrixInfo;
-  muteAudio: boolean;
+  initWithMutedAudio: boolean;
   onUserChoicesChanged: (choices: UserChoices) => void;
 }
 
 export function VideoPreview({
   matrixInfo,
-  muteAudio,
+  initWithMutedAudio,
   onUserChoicesChanged,
 }: Props) {
   const { client } = useClient();
@@ -70,13 +70,9 @@ export function VideoPreview({
 
   // Create local media tracks.
   const [videoEnabled, setVideoEnabled] = useState<boolean>(true);
-  const [audioEnabled, setAudioEnabled] = useState<boolean>(!muteAudio);
-
-  useEffect(() => {
-    if (muteAudio) {
-      setAudioEnabled(false);
-    }
-  }, [muteAudio]);
+  const [audioEnabled, setAudioEnabled] = useState<boolean>(
+    !initWithMutedAudio
+  );
 
   // The settings are updated as soon as the device changes. We wrap the settings value in a ref to store their initial value.
   // Not changing the device options prohibits the usePreviewTracks hook to recreate the tracks.

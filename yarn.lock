@@ -2217,7 +2217,7 @@
     "@react-hook/latest" "^1.0.3"
     clsx "^1.2.1"
 
-"@matrix-org/matrix-sdk-crypto-js@^0.1.0":
+"@matrix-org/matrix-sdk-crypto-js@^0.1.1":
   version "0.1.4"
   resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-js/-/matrix-sdk-crypto-js-0.1.4.tgz#c13c7c8c3a1d8da08e6ad195d25e5e61cc402df7"
   integrity sha512-OxG84iSeR89zYLFeb+DCaFtZT+DDiIu+kTkqY8OYfhE5vpGLFX2sDVBRrAdos1IUqEoboDloDBR9+yU7hNRyog==
@@ -6449,6 +6449,11 @@ crypto-browserify@^3.11.0:
     public-encrypt "^4.0.0"
     randombytes "^2.0.0"
     randomfill "^1.0.3"
+
+crypto-js@^4.1.1:
+  version "4.1.1"
+  resolved "https://registry.yarnpkg.com/crypto-js/-/crypto-js-4.1.1.tgz#9e485bcf03521041bd85844786b83fb7619736cf"
+  integrity sha512-o2JlM7ydqd3Qk9CA0L4NL6mTzU2sdx96a+oOfPu8Mkl/PK51vSyoi8/rQ8NknZtk44vq15lmhAj9CIAGwgeWKw==
 
 css-blank-pseudo@^3.0.3:
   version "3.0.3"
@@ -10751,10 +10756,10 @@ lines-and-columns@^1.1.6:
   resolved "https://registry.yarnpkg.com/lines-and-columns/-/lines-and-columns-1.2.4.tgz#eca284f75d2965079309dc0ad9255abb2ebc1632"
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
-livekit-client@1.12.0:
-  version "1.12.0"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-1.12.0.tgz#4b4f18087331d4893adaccb148e33fe870eb9a2e"
-  integrity sha512-G1KHNMSaEMXtPIKxTQt+WH/uRvhkQ0tQaZ5Kkem2CvB/5I4KPrV4DSmhBKP1P+8reHcaBBiye8V9bfpD69aHyQ==
+livekit-client@1.12.1:
+  version "1.12.1"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-1.12.1.tgz#b927b4fb07d2d64543d25a99db36ffbb7caa23e6"
+  integrity sha512-/mob04a/Mb0D+4sIzB7/pqakpJMCORSK+Qu5oTIcuSpgL+eBYGzHPE2sutGCGoe3Ns9sITAqUTyiui5+GN3i2w==
   dependencies:
     eventemitter3 "^5.0.1"
     loglevel "^1.8.0"
@@ -11005,7 +11010,7 @@ matrix-events-sdk@0.0.1:
   resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/b698217445318f453e0b1086364a33113eaa85d9"
   dependencies:
     "@babel/runtime" "^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-js" "^0.1.0"
+    "@matrix-org/matrix-sdk-crypto-js" "^0.1.1"
     another-json "^0.2.0"
     bs58 "^5.0.0"
     content-type "^1.0.4"
@@ -11699,6 +11704,14 @@ objectorarray@^1.0.5:
   version "1.0.5"
   resolved "https://registry.yarnpkg.com/objectorarray/-/objectorarray-1.0.5.tgz#2c05248bbefabd8f43ad13b41085951aac5e68a5"
   integrity sha512-eJJDYkhJFFbBBAxeh8xW+weHlkI28n2ZdQV/J/DNfWfSKlGEf2xcfAbZTv3riEXHAhL9SVOTs2pRmXiSTf78xg==
+
+oidc-client-ts@^2.2.4:
+  version "2.2.4"
+  resolved "https://registry.yarnpkg.com/oidc-client-ts/-/oidc-client-ts-2.2.4.tgz#7d86b5efe2248f3637a6f3a0ee1af86764aea125"
+  integrity sha512-nOZwIomju+AmXObl5Oq5PjrES/qTt8bLsENJCIydVgi9TEWk7SCkOU6X3RNkY7yfySRM1OJJvDKdREZdmnDT2g==
+  dependencies:
+    crypto-js "^4.1.1"
+    jwt-decode "^3.1.2"
 
 on-finished@2.4.1:
   version "2.4.1"
