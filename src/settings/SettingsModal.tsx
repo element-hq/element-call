@@ -262,10 +262,15 @@ export const SettingsModal = (props: Props) => {
           id="enableE2EE"
           name="end-to-end-encryption"
           label={t("Enable end-to-end encryption (password protected calls)")}
+          description={
+            !setEnableE2EE &&
+            t("End-to-end encryption isn't supported on your browser.")
+          }
+          disabled={!setEnableE2EE}
           type="checkbox"
-          checked={enableE2EE}
+          checked={enableE2EE ?? undefined}
           onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setEnableE2EE(e.target.checked)
+            setEnableE2EE?.(e.target.checked)
           }
         />
       </FieldRow>
