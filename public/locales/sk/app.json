@@ -5,7 +5,6 @@
   "Fetching group call timed out.": "Vypršal čas načítania skupinového volania.",
   "Element Call Home": "Domov Element Call",
   "Waiting for other participants…": "Čaká sa na ďalších účastníkov…",
-  "Thanks! We'll get right on it.": "Vďaka! Hneď sa do toho pustíme.",
   "Take me Home": "Zober ma domov",
   "Submit feedback": "Odoslať spätnú väzbu",
   "Stop sharing screen": "Zastaviť zdieľanie obrazovky",
@@ -117,5 +116,9 @@
   "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Kliknutím na tlačidlo \"Prejsť\" vyjadrujete súhlas s našou <2>Licenčnou zmluvou s koncovým používateľom (EULA)</2>",
   "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>": "Táto stránka je chránená systémom ReCAPTCHA a platia na ňu <2>Pravidlá ochrany osobných údajov spoločnosti Google</2> a <6>Podmienky poskytovania služieb</6>.<9></9>Kliknutím na tlačidlo \"Registrovať sa\" súhlasíte s našou <12>Licenčnou zmluvou s koncovým používateľom (EULA)</12>",
   "Element Call is temporarily not end-to-end encrypted while we test scalability.": "Element Call nie je dočasne šifrovaný, kým testujeme škálovateľnosť.",
-  "Connectivity to the server has been lost.": "Spojenie so serverom sa stratilo."
+  "Connectivity to the server has been lost.": "Spojenie so serverom sa stratilo.",
+  "Retry sending logs": "Opakovať odoslanie záznamov",
+  "Reconnect": "Znovu pripojiť",
+  "Thanks!": "Ďakujeme!",
+  "You were disconnected from the call": "Boli ste odpojení z hovoru"
 }
