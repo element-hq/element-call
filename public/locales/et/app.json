@@ -120,5 +120,8 @@
   "Retry sending logs": "Proovi uuesti logisid saata",
   "You were disconnected from the call": "Sinu ühendus kõnega katkes",
   "Reconnect": "Ühenda uuesti",
-  "Thanks!": "Tänud!"
+  "Thanks!": "Tänud!",
+  "End-to-end encryption isn't supported on your browser.": "Sinu brauser ei toeta läbivat krüptimist.",
+  "Enable end-to-end encryption (password protected calls)": "Võta kasutusele läbiv krüptimine (salasõnaga kaitstud kõned)",
+  "Password (if none, E2EE is disabled)": "Salasõna (tühja väärtuse puhul läbivat krüptimist ei kasutata)"
 }
