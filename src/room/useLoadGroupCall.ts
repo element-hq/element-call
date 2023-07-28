@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { EventType } from "matrix-js-sdk/src/@types/event";
 import {
   GroupCallType,
@@ -31,6 +31,7 @@ import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
 import { translatedError } from "../TranslatedError";
 import { widget } from "../widget";
+import { useTypedEventEmitter } from "../useEvents";
 
 const STATS_COLLECT_INTERVAL_TIME_MS = 10000;
 
@@ -66,6 +67,17 @@ export const useLoadGroupCall = (
 ): GroupCallStatus => {
   const { t } = useTranslation();
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
+
+  const onGroupCallIncoming = useCallback((groupCall: GroupCall) => {
+    // update if a new group call arrives for this room
+    setState({ kind: "loaded", groupCall });
+  }, []);
+
+  useTypedEventEmitter(
+    client,
+    GroupCallEventHandlerEvent.Incoming,
+    onGroupCallIncoming
+  );
 
   useEffect(() => {
     const fetchOrCreateRoom = async (): Promise<Room> => {

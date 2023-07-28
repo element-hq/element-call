@@ -94,6 +94,8 @@ interface State {
   requestingScreenshare: boolean;
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   hasLocalParticipant: boolean;
+  // whether we think we should be joined to the call (irrespective of whether or not we actually are)
+  joined: boolean;
 }
 
 // This is a bit of a hack, but we keep the opentelemetry tracker object at the file
@@ -161,6 +163,7 @@ export function useGroupCall(
       participants,
       hasLocalParticipant,
       requestingScreenshare,
+      joined,
     },
     setState,
   ] = useState<State>({
@@ -173,6 +176,7 @@ export function useGroupCall(
     requestingScreenshare: false,
     participants: getParticipants(groupCall),
     hasLocalParticipant: false,
+    joined: false,
   });
 
   if (groupCallOTelMembershipGroupCallId !== groupCall.groupCallId) {
@@ -208,7 +212,8 @@ export function useGroupCall(
   const leaveCall = useCallback(() => {
     groupCallOTelMembership?.onLeaveCall();
     groupCall.leave();
-  }, [groupCall]);
+    updateState({ joined: false });
+  }, [groupCall, updateState]);
 
   useEffect(() => {
     // disable the media action keys, otherwise audio elements get paused when
@@ -238,6 +243,15 @@ export function useGroupCall(
   }, [doNothingMediaActionCallback]);
 
   useEffect(() => {
+    if (joined && groupCall.state !== GroupCallState.Entered) {
+      groupCall.enter().catch((error) => {
+        console.error(error);
+        updateState({ error });
+      });
+    } else if (!joined && groupCall.state === GroupCallState.Entered) {
+      groupCall.leave();
+    }
+
     function onGroupCallStateChanged() {
       updateState({
         state: groupCall.state,
@@ -462,9 +476,8 @@ export function useGroupCall(
         RoomStateEvent.Update,
         checkForParallelCalls
       );
-      leaveCall();
     };
-  }, [groupCall, updateState, leaveCall]);
+  }, [groupCall, updateState, leaveCall, joined]);
 
   usePageUnload(() => {
     leaveCall();
@@ -490,10 +503,7 @@ export function useGroupCall(
     // have started tracking by the time calls start getting created.
     groupCallOTelMembership?.onJoinCall();
 
-    await groupCall.enter().catch((error) => {
-      console.error(error);
-      updateState({ error });
-    });
+    updateState({ joined: true });
   }, [groupCall, updateState]);
 
   const toggleLocalVideoMuted = useCallback(() => {
