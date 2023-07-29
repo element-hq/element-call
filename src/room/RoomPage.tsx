@@ -25,11 +25,9 @@ import { GroupCallView } from "./GroupCallView";
 import { useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { useOptInAnalytics } from "../settings/useSetting";
-import { useHistory } from "react-router-dom";
+import { HomePage } from "../home/HomePage";
 
 export const RoomPage: FC = () => {
-  const history = useHistory();
-
   const {
     roomAlias,
     roomId,
@@ -42,9 +40,7 @@ export const RoomPage: FC = () => {
   } = useUrlParams();
   const roomIdOrAlias = roomId ?? roomAlias;
   if (!roomIdOrAlias) {
-    history.push("/");
     console.error("No room specified");
-    return null;
   }
 
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
@@ -100,6 +96,10 @@ export const RoomPage: FC = () => {
 
   if (!client) {
     return <RoomAuthView />;
+  }
+
+  if (!roomIdOrAlias) {
+    return <HomePage />;
   }
 
   return (
