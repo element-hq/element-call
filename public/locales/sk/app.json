@@ -120,5 +120,8 @@
   "Retry sending logs": "Opakovať odoslanie záznamov",
   "Reconnect": "Znovu pripojiť",
   "Thanks!": "Ďakujeme!",
-  "You were disconnected from the call": "Boli ste odpojení z hovoru"
+  "You were disconnected from the call": "Boli ste odpojení z hovoru",
+  "Enable end-to-end encryption (password protected calls)": "Povoliť end-to-end šifrovanie (hovory chránené heslom)",
+  "End-to-end encryption isn't supported on your browser.": "End-to-end šifrovanie nie je vo vašom prehliadači podporované.",
+  "Password (if none, E2EE is disabled)": "Heslo (ak nie je, šifrovanie je vypnuté)"
 }

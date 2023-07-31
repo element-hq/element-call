@@ -120,5 +120,8 @@
   "Reconnect": "Під'єднати повторно",
   "Retry sending logs": "Повторити надсилання журналів",
   "You were disconnected from the call": "Вас від'єднано від виклику",
-  "Thanks!": "Дякуємо!"
+  "Thanks!": "Дякуємо!",
+  "Enable end-to-end encryption (password protected calls)": "Увімкнути наскрізне шифрування (захищені паролем виклики)",
+  "End-to-end encryption isn't supported on your browser.": "Наскрізне шифрування не підтримується вашим переглядачем.",
+  "Password (if none, E2EE is disabled)": "Пароль (якщо немає, наскрізне шифрування вимкнено)"
 }

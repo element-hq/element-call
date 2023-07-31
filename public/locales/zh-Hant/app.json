@@ -120,5 +120,8 @@
   "Reconnect": "重新連線",
   "Retry sending logs": "重試傳送紀錄檔",
   "Thanks!": "感謝！",
-  "You were disconnected from the call": "您已從通話斷線"
+  "You were disconnected from the call": "您已從通話斷線",
+  "Enable end-to-end encryption (password protected calls)": "啟用端到端加密（密碼保護通話）",
+  "End-to-end encryption isn't supported on your browser.": "您的瀏覽器不支援端到端加密。",
+  "Password (if none, E2EE is disabled)": "密碼（若無，就會停用端到端加密）"
 }
