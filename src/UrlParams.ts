@@ -102,12 +102,12 @@ export const getUrlParams = (
   pathname = window.location.pathname,
   hash = window.location.hash
 ): UrlParams => {
-  let roomAlias: string | undefined;
+  let roomAlias: string | null = null;
   if (!ignoreRoomAlias) {
     if (hash === "") {
       roomAlias = pathname.substring(1); // Strip the "/"
 
-      // Delete "/room/" and "?", if present
+      // Delete "/room/", if present
       if (roomAlias.startsWith("room/")) {
         roomAlias = roomAlias.substring("room/".length);
       }
@@ -122,6 +122,14 @@ export const getUrlParams = (
     // Add server part, if not present
     if (!roomAlias.includes(":")) {
       roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
+    }
+
+    // Delete "?" and what comes afterwards
+    roomAlias = roomAlias.split("?")[0];
+
+    // Make roomAlias undefined, if empty
+    if (roomAlias.length <= 1) {
+      roomAlias = null;
     }
   }
 
@@ -145,9 +153,17 @@ export const getUrlParams = (
 
   const fontScale = parseFloat(getParam("fontScale") ?? "");
 
+  // Make sure roomId is valid
+  let roomId: string | null = getParam("roomId");
+  if (!roomId?.startsWith("!")) {
+    roomId = null;
+  } else if (!roomId.includes("")) {
+    roomId = null;
+  }
+
   return {
-    roomAlias: !roomAlias || roomAlias.includes("!") ? null : roomAlias,
-    roomId: getParam("roomId"),
+    roomAlias,
+    roomId,
     viaServers: getAllParams("via"),
     isEmbedded: hasParam("embed"),
     preload: hasParam("preload"),

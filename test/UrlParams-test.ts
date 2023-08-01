@@ -19,7 +19,7 @@ import { getUrlParams } from "../src/UrlParams";
 import { Config } from "../src/config/Config";
 
 const ROOM_NAME = "roomNameHere";
-const ROOM_ID = "d45f138fsd";
+const ROOM_ID = "!d45f138fsd";
 const ORIGIN = "https://call.element.io";
 const HOMESERVER = "call.ems.host";
 

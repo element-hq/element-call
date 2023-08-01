@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { FC, useEffect, useState, useCallback } from "react";
-import { useTranslation } from "react-i18next";
 
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { useClientLegacy } from "../ClientContext";
@@ -25,12 +24,10 @@ import { GroupCallLoader } from "./GroupCallLoader";
 import { GroupCallView } from "./GroupCallView";
 import { useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
-import { translatedError } from "../TranslatedError";
 import { useOptInAnalytics } from "../settings/useSetting";
+import { HomePage } from "../home/HomePage";
 
 export const RoomPage: FC = () => {
-  const { t } = useTranslation();
-
   const {
     roomAlias,
     roomId,
@@ -42,7 +39,9 @@ export const RoomPage: FC = () => {
     displayName,
   } = useUrlParams();
   const roomIdOrAlias = roomId ?? roomAlias;
-  if (!roomIdOrAlias) throw translatedError("No room specified", t);
+  if (!roomIdOrAlias) {
+    console.error("No room specified");
+  }
 
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const { registerPasswordlessUser } = useRegisterPasswordlessUser();
@@ -97,6 +96,10 @@ export const RoomPage: FC = () => {
 
   if (!client) {
     return <RoomAuthView />;
+  }
+
+  if (!roomIdOrAlias) {
+    return <HomePage />;
   }
 
   return (
