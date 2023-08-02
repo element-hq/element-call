@@ -43,14 +43,14 @@ import { Body, Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
-import {
-  MediaDevices,
-  MediaDevicesState,
-} from "../livekit/useMediaDevicesSwitcher";
 import { useUrlParams } from "../UrlParams";
+import {
+  useMediaDevices,
+  MediaDevice,
+  useMediaDeviceNames,
+} from "../livekit/MediaDevicesContext";
 
 interface Props {
-  mediaDevicesSwitcher?: MediaDevicesState;
   isOpen: boolean;
   client: MatrixClient;
   roomId?: string;
@@ -74,7 +74,7 @@ export const SettingsModal = (props: Props) => {
   const downloadDebugLog = useDownloadDebugLog();
 
   // Generate a `SelectInput` with a list of devices for a given device kind.
-  const generateDeviceSelection = (devices: MediaDevices, caption: string) => {
+  const generateDeviceSelection = (devices: MediaDevice, caption: string) => {
     if (devices.available.length == 0) return null;
 
     return (
@@ -85,7 +85,7 @@ export const SettingsModal = (props: Props) => {
             ? "default"
             : devices.selectedId
         }
-        onSelectionChange={(id) => devices.setSelected(id.toString())}
+        onSelectionChange={(id) => devices.select(id.toString())}
       >
         {devices.available.map(({ deviceId, label }, index) => (
           <Item key={deviceId}>
@@ -118,7 +118,8 @@ export const SettingsModal = (props: Props) => {
     </Caption>
   );
 
-  const devices = props.mediaDevicesSwitcher;
+  const devices = useMediaDevices();
+  useMediaDeviceNames(devices);
 
   const audioTab = (
     <TabItem
@@ -130,8 +131,8 @@ export const SettingsModal = (props: Props) => {
         </>
       }
     >
-      {devices && generateDeviceSelection(devices.audioIn, t("Microphone"))}
-      {devices && generateDeviceSelection(devices.audioOut, t("Speaker"))}
+      {generateDeviceSelection(devices.audioInput, t("Microphone"))}
+      {generateDeviceSelection(devices.audioOutput, t("Speaker"))}
     </TabItem>
   );
 
@@ -145,7 +146,7 @@ export const SettingsModal = (props: Props) => {
         </>
       }
     >
-      {devices && generateDeviceSelection(devices.videoIn, t("Camera"))}
+      {generateDeviceSelection(devices.videoInput, t("Camera"))}
     </TabItem>
   );
 
@@ -280,8 +281,7 @@ export const SettingsModal = (props: Props) => {
     </TabItem>
   );
 
-  const tabs: JSX.Element[] = [];
-  if (devices) tabs.push(audioTab, videoTab);
+  const tabs = [audioTab, videoTab];
   if (!isEmbedded) tabs.push(profileTab);
   tabs.push(feedbackTab, moreTab);
   if (developerSettingsTab) tabs.push(developerTab);
