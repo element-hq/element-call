@@ -117,5 +117,11 @@
   "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>": "Diese Seite wird durch reCAPTCHA geschützt und es gelten Googles <2>Datenschutzerklärung</2> und <6>Nutzungsbedingungen</6>. <9></9>Mit einem Klick auf „Registrieren“ akzeptierst du unseren <2>Endbenutzer-Lizenzvertrag (EULA)</2>",
   "Element Call is temporarily not end-to-end encrypted while we test scalability.": "Element Call ist temporär nicht Ende-zu-Ende-verschlüsselt, während wir die Skalierbarkeit testen.",
   "Connectivity to the server has been lost.": "Die Verbindung zum Server wurde getrennt.",
-  "Enable end-to-end encryption (password protected calls)": "Ende-zu-Ende-Verschlüsselung aktivieren (Passwort geschützte Anrufe)"
+  "Enable end-to-end encryption (password protected calls)": "Ende-zu-Ende-Verschlüsselung aktivieren (Passwort geschützte Anrufe)",
+  "Password (if none, E2EE is disabled)": "Passwort (falls leer, wird E2EE deaktiviert)",
+  "End-to-end encryption isn't supported on your browser.": "Ende-zu-Ende-Verschlüsselung wird in deinem Browser nicht unterstützt.",
+  "Thanks!": "Danke!",
+  "You were disconnected from the call": "Deine Verbindung wurde getrennt",
+  "Reconnect": "Erneut verbinden",
+  "Retry sending logs": "Protokolle erneut senden"
 }
