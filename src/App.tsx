@@ -31,6 +31,7 @@ import { InspectorContextProvider } from "./room/GroupCallInspector";
 import { CrashView, LoadingView } from "./FullScreenView";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
+import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -58,30 +59,32 @@ export default function App({ history }: AppProps) {
       {loaded ? (
         <Suspense fallback={null}>
           <ClientProvider>
-            <InspectorContextProvider>
-              <Sentry.ErrorBoundary fallback={errorPage}>
-                <OverlayProvider>
-                  <DisconnectedBanner />
-                  <Switch>
-                    <SentryRoute exact path="/">
-                      <HomePage />
-                    </SentryRoute>
-                    <SentryRoute exact path="/login">
-                      <LoginPage />
-                    </SentryRoute>
-                    <SentryRoute exact path="/register">
-                      <RegisterPage />
-                    </SentryRoute>
-                    <SentryRoute path="/inspector">
-                      <SequenceDiagramViewerPage />
-                    </SentryRoute>
-                    <SentryRoute path="*">
-                      <RoomPage />
-                    </SentryRoute>
-                  </Switch>
-                </OverlayProvider>
-              </Sentry.ErrorBoundary>
-            </InspectorContextProvider>
+            <MediaDevicesProvider>
+              <InspectorContextProvider>
+                <Sentry.ErrorBoundary fallback={errorPage}>
+                  <OverlayProvider>
+                    <DisconnectedBanner />
+                    <Switch>
+                      <SentryRoute exact path="/">
+                        <HomePage />
+                      </SentryRoute>
+                      <SentryRoute exact path="/login">
+                        <LoginPage />
+                      </SentryRoute>
+                      <SentryRoute exact path="/register">
+                        <RegisterPage />
+                      </SentryRoute>
+                      <SentryRoute path="/inspector">
+                        <SequenceDiagramViewerPage />
+                      </SentryRoute>
+                      <SentryRoute path="*">
+                        <RoomPage />
+                      </SentryRoute>
+                    </Switch>
+                  </OverlayProvider>
+                </Sentry.ErrorBoundary>
+              </InspectorContextProvider>
+            </MediaDevicesProvider>
           </ClientProvider>
         </Suspense>
       ) : (

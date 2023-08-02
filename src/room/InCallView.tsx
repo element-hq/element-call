@@ -78,14 +78,15 @@ import { SettingsModal } from "../settings/SettingsModal";
 import { InviteModal } from "./InviteModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { E2EEConfig, UserChoices, useLiveKit } from "../livekit/useLiveKit";
-import { useMediaDevicesSwitcher } from "../livekit/useMediaDevicesSwitcher";
+import { E2EEConfig, useLiveKit } from "../livekit/useLiveKit";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
 import { useSFUConfig } from "../livekit/OpenIDLoader";
 import { E2EELock } from "../E2EELock";
 import { useEventEmitterThree } from "../useEvents";
 import { useWakeLock } from "../useWakeLock";
+import { useMergedRefs } from "../useMergedRefs";
+import { MuteStates } from "./MuteStates";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -94,17 +95,12 @@ const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 export interface ActiveCallProps extends Omit<InCallViewProps, "livekitRoom"> {
-  userChoices: UserChoices;
   e2eeConfig?: E2EEConfig;
 }
 
 export function ActiveCall(props: ActiveCallProps) {
   const sfuConfig = useSFUConfig();
-  const livekitRoom = useLiveKit(
-    props.userChoices,
-    sfuConfig,
-    props.e2eeConfig
-  );
+  const livekitRoom = useLiveKit(props.muteStates, sfuConfig, props.e2eeConfig);
 
   if (!livekitRoom) {
     return null;
@@ -125,6 +121,7 @@ export interface InCallViewProps {
   client: MatrixClient;
   groupCall: GroupCall;
   livekitRoom: Room;
+  muteStates: MuteStates;
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   onLeave: (error?: Error) => void;
   unencryptedEventsFromUsers: Set<string>;
@@ -136,6 +133,7 @@ export function InCallView({
   client,
   groupCall,
   livekitRoom,
+  muteStates,
   participants,
   onLeave,
   unencryptedEventsFromUsers,
@@ -150,16 +148,7 @@ export function InCallView({
   const [containerRef2, bounds] = useMeasure({ polyfill: ResizeObserver });
   const boundsValid = bounds.height > 0;
   // Merge the refs so they can attach to the same element
-  const containerRef = useCallback(
-    (el: HTMLDivElement) => {
-      containerRef1.current = el;
-      containerRef2(el);
-    },
-    [containerRef1, containerRef2]
-  );
-
-  // Managed media devices state coupled with an active room.
-  const roomMediaSwitcher = useMediaDevicesSwitcher(livekitRoom);
+  const containerRef = useMergedRefs(containerRef1, containerRef2);
 
   const screenSharingTracks = useTracks(
     [{ source: Track.Source.ScreenShare, withPlaceholder: false }],
@@ -176,19 +165,18 @@ export function InCallView({
 
   const { hideScreensharing } = useUrlParams();
 
-  const {
-    isMicrophoneEnabled,
-    isCameraEnabled,
-    isScreenShareEnabled,
-    localParticipant,
-  } = useLocalParticipant({ room: livekitRoom });
+  const { isScreenShareEnabled, localParticipant } = useLocalParticipant({
+    room: livekitRoom,
+  });
 
-  const toggleMicrophone = useCallback(async () => {
-    await localParticipant.setMicrophoneEnabled(!isMicrophoneEnabled);
-  }, [localParticipant, isMicrophoneEnabled]);
-  const toggleCamera = useCallback(async () => {
-    await localParticipant.setCameraEnabled(!isCameraEnabled);
-  }, [localParticipant, isCameraEnabled]);
+  const toggleMicrophone = useCallback(
+    () => muteStates.audio.setEnabled?.((e) => !e),
+    [muteStates]
+  );
+  const toggleCamera = useCallback(
+    () => muteStates.video.setEnabled?.((e) => !e),
+    [muteStates]
+  );
 
   const joinRule = useJoinRule(groupCall.room);
 
@@ -387,14 +375,16 @@ export function InCallView({
     buttons.push(
       <MicButton
         key="1"
-        muted={!isMicrophoneEnabled}
+        muted={!muteStates.audio.enabled}
         onPress={toggleMicrophone}
+        disabled={muteStates.audio.setEnabled === null}
         data-testid="incall_mute"
       />,
       <VideoButton
         key="2"
-        muted={!isCameraEnabled}
+        muted={!muteStates.video.enabled}
         onPress={toggleCamera}
+        disabled={muteStates.video.setEnabled === null}
         data-testid="incall_videomute"
       />
     );
@@ -462,7 +452,6 @@ export function InCallView({
         <SettingsModal
           client={client}
           roomId={groupCall.room.roomId}
-          mediaDevicesSwitcher={roomMediaSwitcher}
           {...settingsModalProps}
         />
       )}
