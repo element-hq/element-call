@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
@@ -32,17 +32,13 @@ import { CallEndedView } from "./CallEndedView";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
-import { E2EEConfig, UserChoices } from "../livekit/useLiveKit";
+import { E2EEConfig } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
 import { OpenIDLoader } from "../livekit/OpenIDLoader";
 import { ActiveCall } from "./InCallView";
 import { Config } from "../config/Config";
-
-/**
- * If there already is this many participants in the call, we automatically mute
- * the user
- */
-const MUTE_PARTICIPANT_COUNT = 8;
+import { MuteStates, useMuteStates } from "./MuteStates";
+import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
 
 declare global {
   interface Window {
@@ -97,17 +93,30 @@ export function GroupCallView({
     };
   }, [displayName, avatarUrl, groupCall]);
 
+  const deviceContext = useMediaDevices();
+  const latestDevices = useRef<MediaDevices>();
+  latestDevices.current = deviceContext;
+
+  const muteStates = useMuteStates(participants.size);
+  const latestMuteStates = useRef<MuteStates>();
+  latestMuteStates.current = muteStates;
+
   useEffect(() => {
     if (widget && preload) {
       // In preload mode, wait for a join action before entering
       const onJoin = async (ev: CustomEvent<IWidgetApiRequest>) => {
-        const devices = await Room.getLocalDevices();
+        // XXX: I think this is broken currently - LiveKit *won't* request
+        // permissions and give you device names unless you specify a kind, but
+        // here we want all kinds of devices. This needs a fix in livekit-client
+        // for the following name-matching logic to do anything useful.
+        const devices = await Room.getLocalDevices(undefined, true);
 
         const { audioInput, videoInput } = ev.detail
           .data as unknown as JoinCallData;
-        const newChoices = {} as UserChoices;
 
-        if (audioInput !== null) {
+        if (audioInput === null) {
+          latestMuteStates.current!.audio.setEnabled?.(false);
+        } else {
           const deviceId = await findDeviceByName(
             audioInput,
             "audioinput",
@@ -115,15 +124,19 @@ export function GroupCallView({
           );
           if (!deviceId) {
             logger.warn("Unknown audio input: " + audioInput);
+            latestMuteStates.current!.audio.setEnabled?.(false);
           } else {
             logger.debug(
               `Found audio input ID ${deviceId} for name ${audioInput}`
             );
-            newChoices.audio = { selectedId: deviceId, enabled: true };
+            latestDevices.current!.audioInput.select(deviceId);
+            latestMuteStates.current!.audio.setEnabled?.(true);
           }
         }
 
-        if (videoInput !== null) {
+        if (videoInput === null) {
+          latestMuteStates.current!.video.setEnabled?.(true);
+        } else {
           const deviceId = await findDeviceByName(
             videoInput,
             "videoinput",
@@ -131,15 +144,16 @@ export function GroupCallView({
           );
           if (!deviceId) {
             logger.warn("Unknown video input: " + videoInput);
+            latestMuteStates.current!.video.setEnabled?.(false);
           } else {
             logger.debug(
               `Found video input ID ${deviceId} for name ${videoInput}`
             );
-            newChoices.video = { selectedId: deviceId, enabled: true };
+            latestDevices.current!.videoInput.select(deviceId);
+            latestMuteStates.current!.video.setEnabled?.(true);
           }
         }
 
-        setUserChoices(newChoices);
         await enter();
 
         PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
@@ -227,9 +241,6 @@ export function GroupCallView({
     }
   }, [groupCall, state, leave]);
 
-  const [userChoices, setUserChoices] = useState<UserChoices | undefined>(
-    undefined
-  );
   const [e2eeConfig, setE2EEConfig] = useState<E2EEConfig | undefined>(
     undefined
   );
@@ -248,7 +259,7 @@ export function GroupCallView({
 
   if (error) {
     return <ErrorView error={error} />;
-  } else if (state === GroupCallState.Entered && userChoices) {
+  } else if (state === GroupCallState.Entered) {
     return (
       <OpenIDLoader
         client={client}
@@ -262,7 +273,7 @@ export function GroupCallView({
           onLeave={onLeave}
           unencryptedEventsFromUsers={unencryptedEventsFromUsers}
           hideHeader={hideHeader}
-          userChoices={userChoices}
+          muteStates={muteStates}
           e2eeConfig={e2eeConfig}
           otelGroupCallMembership={otelGroupCallMembership}
         />
@@ -307,12 +318,11 @@ export function GroupCallView({
     return (
       <LobbyView
         matrixInfo={matrixInfo}
-        onEnter={(choices: UserChoices, e2eeConfig?: E2EEConfig) => {
-          setUserChoices(choices);
+        muteStates={muteStates}
+        onEnter={(e2eeConfig?: E2EEConfig) => {
           setE2EEConfig(e2eeConfig);
           enter();
         }}
-        initWithMutedAudio={participants.size > MUTE_PARTICIPANT_COUNT}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
       />

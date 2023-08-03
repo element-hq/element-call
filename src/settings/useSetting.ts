@@ -115,9 +115,9 @@ export const useDeveloperSettingsTab = () =>
 export const useShowConnectionStats = () =>
   useSetting("show-connection-stats", false);
 
-export const useDefaultDevices = () =>
-  useSetting("defaultDevices", {
-    audioinput: "",
-    videoinput: "",
-    audiooutput: "",
-  });
+export const useAudioInput = () =>
+  useSetting<string | undefined>("audio-input", undefined);
+export const useAudioOutput = () =>
+  useSetting<string | undefined>("audio-output", undefined);
+export const useVideoInput = () =>
+  useSetting<string | undefined>("video-input", undefined);

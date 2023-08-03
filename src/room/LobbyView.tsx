@@ -14,7 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useRef, useEffect, useState, useCallback, ChangeEvent } from "react";
+import {
+  useRef,
+  useEffect,
+  useState,
+  useCallback,
+  ChangeEvent,
+  FC,
+} from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import styles from "./LobbyView.module.css";
@@ -25,20 +32,26 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
-import { E2EEConfig, UserChoices } from "../livekit/useLiveKit";
+import { E2EEConfig } from "../livekit/useLiveKit";
 import { InputField } from "../input/Input";
 import { useEnableE2EE } from "../settings/useSetting";
+import { MuteStates } from "./MuteStates";
 
 interface Props {
   matrixInfo: MatrixInfo;
-
-  onEnter: (userChoices: UserChoices, e2eeConfig?: E2EEConfig) => void;
+  muteStates: MuteStates;
+  onEnter: (e2eeConfig?: E2EEConfig) => void;
   isEmbedded: boolean;
   hideHeader: boolean;
-  initWithMutedAudio: boolean;
 }
 
-export function LobbyView(props: Props) {
+export const LobbyView: FC<Props> = ({
+  matrixInfo,
+  muteStates,
+  onEnter,
+  isEmbedded,
+  hideHeader,
+}) => {
   const { t } = useTranslation();
   useLocationNavigation();
 
@@ -51,9 +64,6 @@ export function LobbyView(props: Props) {
     }
   }, [joinCallButtonRef]);
 
-  const [userChoices, setUserChoices] = useState<UserChoices | undefined>(
-    undefined
-  );
   const [e2eeSharedKey, setE2EESharedKey] = useState<string | undefined>(
     undefined
   );
@@ -68,10 +78,10 @@ export function LobbyView(props: Props) {
 
   return (
     <div className={styles.room}>
-      {!props.hideHeader && (
+      {!hideHeader && (
         <Header>
           <LeftNav>
-            <RoomHeaderInfo roomName={props.matrixInfo.roomName} />
+            <RoomHeaderInfo roomName={matrixInfo.roomName} />
           </LeftNav>
           <RightNav>
             <UserMenuContainer />
@@ -80,11 +90,7 @@ export function LobbyView(props: Props) {
       )}
       <div className={styles.joinRoom}>
         <div className={styles.joinRoomContent}>
-          <VideoPreview
-            matrixInfo={props.matrixInfo}
-            initWithMutedAudio={props.initWithMutedAudio}
-            onUserChoicesChanged={setUserChoices}
-          />
+          <VideoPreview matrixInfo={matrixInfo} muteStates={muteStates} />
           {enableE2EE && (
             <InputField
               className={styles.passwordField}
@@ -100,8 +106,7 @@ export function LobbyView(props: Props) {
               className={styles.copyButton}
               size="lg"
               onPress={() =>
-                props.onEnter(
-                  userChoices!,
+                onEnter(
                   e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined
                 )
               }
@@ -112,9 +117,7 @@ export function LobbyView(props: Props) {
             <Body>Or</Body>
             <CopyButton
               variant="secondaryCopy"
-              value={getRoomUrl(
-                props.matrixInfo.roomAlias ?? props.matrixInfo.roomId
-              )}
+              value={getRoomUrl(matrixInfo.roomAlias ?? matrixInfo.roomId)}
               className={styles.copyButton}
               copiedMessage={t("Call link copied")}
               data-testid="lobby_inviteLink"
@@ -123,7 +126,7 @@ export function LobbyView(props: Props) {
             </CopyButton>
           </Trans>
         </div>
-        {!props.isEmbedded && (
+        {!isEmbedded && (
           <Body className={styles.joinRoomFooter}>
             <Link color="primary" to="/">
               {t("Take me Home")}
@@ -133,4 +136,4 @@ export function LobbyView(props: Props) {
       </div>
     </div>
   );
-}
+};
