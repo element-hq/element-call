@@ -19,6 +19,8 @@ import { useLocation } from "react-router-dom";
 
 import { Config } from "./config/Config";
 
+const PASSWORD_STRING = "?password=";
+
 interface UrlParams {
   roomAlias: string | null;
   roomId: string | null;
@@ -86,6 +88,10 @@ interface UrlParams {
    * user's homeserver doesn't provide any.
    */
   allowIceFallback: boolean;
+  /**
+   * E2EE password
+   */
+  password: string | null;
 }
 
 /**
@@ -103,8 +109,17 @@ export const getUrlParams = (
   hash = window.location.hash
 ): UrlParams => {
   let roomAlias: string | null = null;
+  let password: string | null = null;
+
+  const passwordIndex = hash.indexOf(PASSWORD_STRING);
+  const passwordStart =
+    passwordIndex === -1 ? null : passwordIndex + PASSWORD_STRING.length;
+  if (passwordStart) {
+    password = hash.substring(passwordStart);
+  }
+
   if (!ignoreRoomAlias) {
-    if (hash === "") {
+    if (hash === "" || hash.startsWith("#" + PASSWORD_STRING)) {
       roomAlias = pathname.substring(1); // Strip the "/"
 
       // Delete "/room/", if present
@@ -164,6 +179,7 @@ export const getUrlParams = (
   return {
     roomAlias,
     roomId,
+    password,
     viaServers: getAllParams("via"),
     isEmbedded: hasParam("embed"),
     preload: hasParam("preload"),
