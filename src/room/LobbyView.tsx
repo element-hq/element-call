@@ -36,6 +36,7 @@ import { E2EEConfig } from "../livekit/useLiveKit";
 import { InputField } from "../input/Input";
 import { useEnableE2EE } from "../settings/useSetting";
 import { MuteStates } from "./MuteStates";
+import { useUrlParams } from "../UrlParams";
 
 interface Props {
   matrixInfo: MatrixInfo;
@@ -52,6 +53,8 @@ export const LobbyView: FC<Props> = ({
   isEmbedded,
   hideHeader,
 }) => {
+  const { password } = useUrlParams();
+
   const { t } = useTranslation();
   useLocationNavigation();
 
@@ -65,7 +68,7 @@ export const LobbyView: FC<Props> = ({
   }, [joinCallButtonRef]);
 
   const [e2eeSharedKey, setE2EESharedKey] = useState<string | undefined>(
-    undefined
+    password ?? undefined
   );
 
   const onE2EESharedKeyChanged = useCallback(
