@@ -79,6 +79,17 @@ export const LobbyView: FC<Props> = ({
     [setE2EESharedKey]
   );
 
+  useEffect(() => {
+    const originalHash = location.hash;
+    let hash = originalHash === "" ? "#" : originalHash;
+    hash = hash.split("?password=")[0];
+    hash += `?password=${e2eeSharedKey ?? ""}`;
+
+    if (originalHash !== hash) {
+      location.replace(hash);
+    }
+  }, [e2eeSharedKey]);
+
   return (
     <div className={styles.room}>
       {!hideHeader && (
