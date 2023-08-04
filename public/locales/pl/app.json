@@ -115,5 +115,13 @@
   "Element Call is temporarily not end-to-end encrypted while we test scalability.": "Usługa Element Call tymczasowo nie jest szyfrowana end-to-end w trakcie, gdy testujemy możliwość jej rozszerzenia.",
   "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Klikając \"Przejdź\", zgadzasz się na naszą <2>Umowę licencyjną (EULA)</2>",
   "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>": "Ta witryna jest chroniona przez ReCAPTCHA, więc obowiązują <2>Polityka prywatności</2> i <6>Warunki usług</6> Google. Klikając \"Zarejestruj\", zgadzasz się na naszą <12>Umowę licencyjną (EULA)</12>",
-  "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Klikając \"Dołącz teraz do rozmowy\", zgadzasz się na naszą <2>Umowę licencyjną (EULA)</2>"
+  "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Klikając \"Dołącz teraz do rozmowy\", zgadzasz się na naszą <2>Umowę licencyjną (EULA)</2>",
+  "End-to-end encryption isn't supported on your browser.": "Szyfrowanie end-to-end nie jest wspierane przez Twoją przeglądarkę.",
+  "Password (if none, E2EE is disabled)": "Hasło (brak oznacza, że E2EE jest włączone)",
+  "Retry sending logs": "Wyślij logi ponownie",
+  "Thanks!": "Dziękujemy!",
+  "You were disconnected from the call": "Rozłączono Cię z połączenia",
+  "Connectivity to the server has been lost.": "Utracono połączenie z serwerem.",
+  "Reconnect": "Połącz ponownie",
+  "Enable end-to-end encryption (password protected calls)": "Włącz szyfrowanie end-to-end (połączenia chronione hasłem)"
 }
