@@ -15,13 +15,14 @@ limitations under the License.
 */
 
 import {
+  ConnectionState,
   E2EEOptions,
   ExternalE2EEKeyProvider,
   Room,
   RoomOptions,
   setLogLevel,
 } from "livekit-client";
-import { useLiveKitRoom } from "@livekit/components-react";
+import { useConnectionState, useLiveKitRoom } from "@livekit/components-react";
 import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/src/logger";
@@ -100,11 +101,16 @@ export function useLiveKit(
     room: roomWithoutProps,
   });
 
+  const connectionState = useConnectionState(roomWithoutProps);
+
   useEffect(() => {
     // Sync the requested mute states with LiveKit's mute states. We do it this
     // way around rather than using LiveKit as the source of truth, so that the
     // states can be consistent throughout the lobby and loading screens.
-    if (room !== undefined) {
+    // It's important that we only do this in the connected state, because
+    // LiveKit's internal mute states aren't consistent during connection setup,
+    // and setting tracks to be enabled during this time causes errors.
+    if (room !== undefined && connectionState === ConnectionState.Connected) {
       const participant = room.localParticipant;
       if (participant.isMicrophoneEnabled !== muteStates.audio.enabled) {
         participant
@@ -121,11 +127,11 @@ export function useLiveKit(
           );
       }
     }
-  }, [room, muteStates]);
+  }, [room, muteStates, connectionState]);
 
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
-    if (room !== undefined) {
+    if (room !== undefined && connectionState === ConnectionState.Connected) {
       const syncDevice = (kind: MediaDeviceKind, device: MediaDevice) => {
         const id = device.selectedId;
         if (id !== undefined && room.getActiveDevice(kind) !== id) {
@@ -141,7 +147,7 @@ export function useLiveKit(
       syncDevice("audiooutput", devices.audioOutput);
       syncDevice("videoinput", devices.videoInput);
     }
-  }, [room, devices]);
+  }, [room, devices, connectionState]);
 
   return room;
 }
