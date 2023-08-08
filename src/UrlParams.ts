@@ -19,7 +19,7 @@ import { useLocation } from "react-router-dom";
 
 import { Config } from "./config/Config";
 
-const PASSWORD_STRING = "?password=";
+export const PASSWORD_STRING = "?password=";
 
 interface UrlParams {
   roomAlias: string | null;
