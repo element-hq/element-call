@@ -54,7 +54,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          asset_paths: '["element-call-*.tar.gz"]'
+          asset_paths: '["element-call-${{ github.event.release.tag_name || github.sha }}.tar.gz"]'
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
