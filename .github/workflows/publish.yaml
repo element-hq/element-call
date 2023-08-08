@@ -45,15 +45,16 @@ jobs:
 
       - name: Create Tarball
         env:
-          GITHUB_TAG_NAME: ${{ github.event.release.tag_name }}
+          TARBALL_VERSION: ${{ github.event.release.tag_name ?? github.sha }}
         run: |
-          tar --numeric-owner --transform "s/dist/element-call-${GITHUB_TAG_NAME}/" -cvzf element-call-${GITHUB_TAG_NAME}.tar.gz dist
+          tar --numeric-owner --transform "s/dist/element-call-${TARBALL_VERSION}/" -cvzf element-call-${TARBALL_VERSION}.tar.gz dist
+
       - name: Upload
         uses: alexellis/upload-assets@0.4.0
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          asset_paths: '["element-call-${{ github.event.release.tag_name }}.tar.gz"]'
+          asset_paths: '["element-call-*.tar.gz"]'
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
