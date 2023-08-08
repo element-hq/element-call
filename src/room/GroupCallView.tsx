@@ -39,7 +39,7 @@ import { Config } from "../config/Config";
 import { MuteStates, useMuteStates } from "./MuteStates";
 import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
 import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
-import { useUrlParams } from "../UrlParams";
+import { PASSWORD_STRING, useUrlParams } from "../UrlParams";
 
 declare global {
   interface Window {
@@ -258,7 +258,7 @@ export function GroupCallView({
   useEffect(() => {
     const originalHash = location.hash;
     const hash = originalHash === "" ? "#" : originalHash;
-    const [hashStart, password] = hash.split("?password=");
+    const [hashStart, password] = hash.split(PASSWORD_STRING);
 
     if (password !== e2eeSharedKey) return;
 
