@@ -50,15 +50,15 @@ jobs:
           tar --numeric-owner --transform "s/dist/element-call-${TARBALL_VERSION}/" -cvzf element-call-${TARBALL_VERSION}.tar.gz dist
 
       - name: Upload
-        uses: alexellis/upload-assets@0.4.0
+        uses: actions/upload-artifact@0b7f8abb1508181956e8e162db84b466c27e18ce
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          asset_paths: '["element-call-${{ github.event.release.tag_name || github.sha }}.tar.gz"]'
+          path: "./element-call-*.tar.gz"
 
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@98669ae865ea3cffbcbaa878cf57c20bbf1c6c38
+        uses: docker/metadata-action@818d4b7b91585d195f67373fd9cb0332e31a7175
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
