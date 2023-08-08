@@ -34,6 +34,7 @@ import useMeasure from "react-use-measure";
 import { OverlayTriggerState } from "@react-stately/overlays";
 import { JoinRule } from "matrix-js-sdk/src/@types/partials";
 import { logger } from "matrix-js-sdk/src/logger";
+import { RoomEventCallbacks } from "livekit-client/dist/src/room/Room";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -204,7 +205,11 @@ export function InCallView({
     onLeave();
   }, [onLeave]);
 
-  useEventEmitterThree(livekitRoom, RoomEvent.Disconnected, onDisconnected);
+  useEventEmitterThree<RoomEvent.Disconnected, RoomEventCallbacks>(
+    livekitRoom,
+    RoomEvent.Disconnected,
+    onDisconnected
+  );
 
   useEffect(() => {
     widget?.api.transport.send(
