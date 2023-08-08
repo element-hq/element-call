@@ -26,6 +26,7 @@ import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
 import { MuteStates } from "./MuteStates";
+import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 
 interface Props {
   matrixInfo: MatrixInfo;
@@ -43,6 +44,7 @@ export const LobbyView: FC<Props> = ({
   hideHeader,
 }) => {
   const { t } = useTranslation();
+  const [roomSharedKey] = useRoomSharedKey(matrixInfo.roomId);
   useLocationNavigation();
 
   const joinCallButtonRef = useRef<HTMLButtonElement>(null);
@@ -80,7 +82,10 @@ export const LobbyView: FC<Props> = ({
             <Body>Or</Body>
             <CopyButton
               variant="secondaryCopy"
-              value={getRoomUrl(matrixInfo.roomAlias ?? matrixInfo.roomId)}
+              value={getRoomUrl(
+                matrixInfo.roomAlias ?? matrixInfo.roomId,
+                roomSharedKey
+              )}
               className={styles.copyButton}
               copiedMessage={t("Call link copied")}
               data-testid="lobby_inviteLink"
