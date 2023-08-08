@@ -257,14 +257,13 @@ export function GroupCallView({
 
   useEffect(() => {
     const originalHash = location.hash;
-    let hash = originalHash === "" ? "#" : originalHash;
-    hash = hash.split("?password=")[0];
-    hash += `?password=${e2eeSharedKey ?? ""}`;
+    const hash = originalHash === "" ? "#" : originalHash;
+    const [hashStart, password] = hash.split("?password=");
 
-    if (originalHash !== hash) {
-      location.replace(hash);
-    }
-  }, [e2eeSharedKey]);
+    if (password !== e2eeSharedKey) return;
+
+    location.replace(hashStart);
+  }, [password, e2eeSharedKey]);
 
   const e2eeConfig = useMemo(
     () => (e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined),
