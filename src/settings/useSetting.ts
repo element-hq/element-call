@@ -30,7 +30,7 @@ const getSettingKey = (name: string): string => {
   return `matrix-setting-${name}`;
 };
 // Like useState, but reads from and persists the value to localStorage
-const useSetting = <T>(name: string, defaultValue: T): Setting<T> => {
+export const useSetting = <T>(name: string, defaultValue: T): Setting<T> => {
   const key = useMemo(() => getSettingKey(name), [name]);
 
   const [value, setValue] = useState<T>(() => {
