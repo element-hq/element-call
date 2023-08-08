@@ -32,7 +32,7 @@ import {
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import IndexedDBWorker from "./IndexedDBWorker?worker";
-import { getUrlParams } from "./UrlParams";
+import { getUrlParams, PASSWORD_STRING } from "./UrlParams";
 import { loadOlm } from "./olm";
 import { Config } from "./config/Config";
 
@@ -343,13 +343,20 @@ export async function createRoom(
 }
 
 // Returns a URL to that will load Element Call with the given room
-export function getRoomUrl(roomIdOrAlias: string): string {
+export function getRoomUrl(
+  roomIdOrAlias: string,
+  password: string = ""
+): string {
   if (roomIdOrAlias.startsWith("#")) {
     return `${window.location.protocol}//${window.location.host}/${
       roomIdOrAlias.substring(1).split(":")[0]
-    }`;
+    }${password === "" ? "" : PASSWORD_STRING + password}`;
   } else {
-    return `${window.location.protocol}//${window.location.host}/room?roomId=${roomIdOrAlias}`;
+    return `${window.location.protocol}//${
+      window.location.host
+    }/room?roomId=${roomIdOrAlias}${
+      password === "" ? "" : "#" + PASSWORD_STRING + password
+    }`;
   }
 }
 
