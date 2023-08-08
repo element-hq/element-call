@@ -45,7 +45,7 @@ jobs:
 
       - name: Create Tarball
         env:
-          TARBALL_VERSION: ${{ github.event.release.tag_name ?? github.sha }}
+          TARBALL_VERSION: ${{ github.event.release.tag_name || github.sha }}
         run: |
           tar --numeric-owner --transform "s/dist/element-call-${TARBALL_VERSION}/" -cvzf element-call-${TARBALL_VERSION}.tar.gz dist
 
