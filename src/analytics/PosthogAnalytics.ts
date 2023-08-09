@@ -20,7 +20,7 @@ import { MatrixClient } from "matrix-js-sdk";
 import { Buffer } from "buffer";
 
 import { widget } from "../widget";
-import { getSetting, setSetting, settingsBus } from "../settings/useSetting";
+import { getSetting, setSetting, getSettingKey } from "../settings/useSetting";
 import {
   CallEndedTracker,
   CallStartedTracker,
@@ -34,6 +34,7 @@ import {
 } from "./PosthogEvents";
 import { Config } from "../config/Config";
 import { getUrlParams } from "../UrlParams";
+import { localStorageBus } from "../useLocalStorage";
 
 /* Posthog analytics tracking.
  *
@@ -413,7 +414,7 @@ export class PosthogAnalytics {
     //  * When the user changes their preferences on this device
     // Note that for new accounts, pseudonymousAnalyticsOptIn won't be set, so updateAnonymityFromSettings
     // won't be called (i.e. this.anonymity will be left as the default, until the setting changes)
-    settingsBus.on("opt-in-analytics", (optInAnalytics) => {
+    localStorageBus.on(getSettingKey("opt-in-analytics"), (optInAnalytics) => {
       this.updateAnonymityAndIdentifyUser(optInAnalytics);
     });
   }
