@@ -347,16 +347,14 @@ export function getRoomUrl(
   roomIdOrAlias: string,
   password: string = ""
 ): string {
+  password = password === "" ? "" : "#" + PASSWORD_STRING + password;
+
   if (roomIdOrAlias.startsWith("#")) {
     return `${window.location.protocol}//${window.location.host}/${
       roomIdOrAlias.substring(1).split(":")[0]
-    }${password === "" ? "" : PASSWORD_STRING + password}`;
+    }${password}`;
   } else {
-    return `${window.location.protocol}//${
-      window.location.host
-    }/room?roomId=${roomIdOrAlias}${
-      password === "" ? "" : "#" + PASSWORD_STRING + password
-    }`;
+    return `${window.location.protocol}//${window.location.host}/room?roomId=${roomIdOrAlias}${password}`;
   }
 }
 
