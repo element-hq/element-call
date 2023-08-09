@@ -40,6 +40,7 @@ import { MuteStates, useMuteStates } from "./MuteStates";
 import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
 import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 import { PASSWORD_STRING, useUrlParams } from "../UrlParams";
+import { useEnableE2EE } from "../settings/useSetting";
 
 declare global {
   interface Window {
@@ -244,6 +245,7 @@ export function GroupCallView({
     }
   }, [groupCall, state, leave]);
 
+  const [e2eeEnabled] = useEnableE2EE();
   const [e2eeSharedKey, setE2EESharedKey] = useRoomSharedKey(
     groupCall.room.roomId
   );
@@ -274,6 +276,18 @@ export function GroupCallView({
     setLeaveError(undefined);
     groupCall.enter();
   }, [groupCall]);
+
+  if (!password && !e2eeSharedKey && e2eeEnabled) {
+    return (
+      <ErrorView
+        error={
+          new Error(
+            "No E2EE key provided: please make sure the URL you're using to join this call has been retrieved using the in-app button."
+          )
+        }
+      />
+    );
+  }
 
   const livekitServiceURL =
     groupCall.livekitServiceURL ?? Config.get().livekit?.livekit_service_url;

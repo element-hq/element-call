@@ -17,6 +17,7 @@ limitations under the License.
 import { useState, useCallback, FormEvent, FormEventHandler } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
+import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -40,6 +41,8 @@ import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
 import { useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { E2EEBanner } from "../E2EEBanner";
+import { setLocalStorageItem } from "../useLocalStorage";
+import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
 
 interface Props {
   client: MatrixClient;
@@ -70,11 +73,14 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
         setError(undefined);
         setLoading(true);
 
-        const [roomAlias] = await createRoom(client, roomName, ptt);
+        const [roomAlias, roomId] = await createRoom(client, roomName, ptt);
 
-        if (roomAlias) {
-          history.push(`/${roomAlias.substring(1).split(":")[0]}`);
-        }
+        setLocalStorageItem(
+          getRoomSharedKeyLocalStorageKey(roomId),
+          randomString(32)
+        );
+
+        history.push(`/${roomAlias.substring(1).split(":")[0]}`);
       }
 
       submit().catch((error) => {
