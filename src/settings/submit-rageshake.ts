@@ -54,7 +54,7 @@ export function useSubmitRageshake(): {
 
   // The value of the context is the whole tuple returned from setState,
   // so we just want the current state.
-  const [inspectorState] = useContext(InspectorContext);
+  const [inspectorState] = useContext(InspectorContext) ?? [];
 
   const [{ sending, sent, error }, setState] = useState<{
     sending: boolean;
