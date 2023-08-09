@@ -21,6 +21,7 @@ import { Modal, ModalContent } from "../Modal";
 import { Button } from "../button";
 import { FieldRow } from "../input/Input";
 import styles from "./JoinExistingCallModal.module.css";
+import { useEnableE2EE } from "../settings/useSetting";
 
 interface Props {
   onJoin: (e: PressEvent) => void;
@@ -30,21 +31,36 @@ interface Props {
 }
 export function JoinExistingCallModal({ onJoin, onClose, ...rest }: Props) {
   const { t } = useTranslation();
+  const [e2eeEnabled] = useEnableE2EE();
 
   return (
     <Modal
-      title={t("Join existing call?")}
+      title={
+        e2eeEnabled ? t("This call already exists") : t("Join existing call?")
+      }
       isDismissable
       {...rest}
       onClose={onClose}
     >
       <ModalContent>
-        <p>{t("This call already exists, would you like to join?")}</p>
+        <p>
+          {e2eeEnabled
+            ? t(
+                "This call already exists, please join using a URL retrieved using the in-app copy link button"
+              )
+            : t("This call already exists, would you like to join?")}
+        </p>
         <FieldRow rightAlign className={styles.buttons}>
-          <Button onPress={onClose}>{t("No")}</Button>
-          <Button onPress={onJoin} data-testid="home_joinExistingRoom">
-            {t("Yes, join call")}
-          </Button>
+          {e2eeEnabled ? (
+            <Button onPress={onClose}>{t("Ok")}</Button>
+          ) : (
+            <>
+              <Button onPress={onClose}>{t("No")}</Button>
+              <Button onPress={onJoin} data-testid="home_joinExistingRoom">
+                {t("Yes, join call")}
+              </Button>
+            </>
+          )}
         </FieldRow>
       </ModalContent>
     </Modal>
