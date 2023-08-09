@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { useEffect } from "react";
-import EventEmitter from "eventemitter3";
+import EventEmitter, { EventMap } from "typed-emitter";
 
 import type {
   Listener,
@@ -63,12 +63,12 @@ export const useTypedEventEmitter = <
 
 // Shortcut for registering a listener on an eventemitter3 EventEmitter (ie. what the LiveKit SDK uses)
 export const useEventEmitterThree = <
-  EventType extends EventEmitter.ValidEventTypes,
-  T extends EventEmitter.EventNames<EventType>
+  EventType extends keyof T,
+  T extends EventMap
 >(
-  emitter: EventEmitter<EventType>,
-  eventType: T,
-  listener: EventEmitter.EventListener<EventType, T>
+  emitter: EventEmitter<T>,
+  eventType: EventType,
+  listener: T[EventType]
 ) => {
   useEffect(() => {
     emitter.on(eventType, listener);
