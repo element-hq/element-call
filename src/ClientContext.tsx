@@ -218,7 +218,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         });
       } else {
         clearSession();
-        setInitClientState(undefined);
+        setInitClientState(null);
       }
     },
     [initClientState?.client]
@@ -233,7 +233,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     await client.logout(true);
     await client.clearStores();
     clearSession();
-    setInitClientState(undefined);
+    setInitClientState(null);
     history.push("/");
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
   }, [history, initClientState?.client]);
