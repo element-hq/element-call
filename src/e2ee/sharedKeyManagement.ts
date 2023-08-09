@@ -14,13 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useEffect, useMemo } from "react";
-import { randomString } from "matrix-js-sdk/src/randomstring";
+import { useMemo } from "react";
 
 import { useEnableE2EE } from "../settings/useSetting";
 import { useLocalStorage } from "../useLocalStorage";
 
-const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
+export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
   `room-shared-key-${roomId}`;
 
 export const useRoomSharedKey = (
@@ -29,12 +28,6 @@ export const useRoomSharedKey = (
   const key = useMemo(() => getRoomSharedKeyLocalStorageKey(roomId), [roomId]);
   const [e2eeEnabled] = useEnableE2EE();
   const [roomSharedKey, setRoomSharedKey] = useLocalStorage(key);
-
-  useEffect(() => {
-    if ((roomSharedKey && roomSharedKey !== "") || !e2eeEnabled) return;
-
-    setRoomSharedKey(randomString(32));
-  }, [roomSharedKey, e2eeEnabled, setRoomSharedKey]);
 
   return e2eeEnabled ? [roomSharedKey, setRoomSharedKey] : [null, null];
 };
