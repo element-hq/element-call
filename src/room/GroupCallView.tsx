@@ -245,14 +245,13 @@ export function GroupCallView({
   }, [groupCall, state, leave]);
 
   const [e2eeSharedKey, setE2EESharedKey] = useRoomSharedKey(
-    groupCall.room.roomId,
-    password ?? undefined
+    groupCall.room.roomId
   );
 
   useEffect(() => {
-    if (!password || password === e2eeSharedKey) return;
+    if (!password || password === "" || password === e2eeSharedKey) return;
 
-    setE2EESharedKey(password);
+    setE2EESharedKey?.(password);
   }, [password, e2eeSharedKey, setE2EESharedKey]);
 
   useEffect(() => {

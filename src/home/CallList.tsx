@@ -109,7 +109,7 @@ function CallTile({
       <CopyButton
         className={styles.copyButton}
         variant="icon"
-        value={getRoomUrl(roomAlias, roomSharedKey)}
+        value={getRoomUrl(roomAlias, roomSharedKey ?? undefined)}
       />
     </div>
   );
