@@ -43,7 +43,7 @@ export const InviteModal: FC<Props> = ({ roomAlias, roomId, ...rest }) => {
         <p>{t("Copy and share this call link")}</p>
         <CopyButton
           className={styles.copyButton}
-          value={getRoomUrl(roomAlias ?? roomId, roomSharedKey)}
+          value={getRoomUrl(roomAlias ?? roomId, roomSharedKey ?? undefined)}
           data-testid="modal_inviteLink"
         />
       </ModalContent>
