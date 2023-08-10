@@ -18,6 +18,10 @@ jobs:
       contents: write # required to upload release asset
       packages: write
     steps:
+      - name: Get current time
+        id: current-time
+        run: echo "unix_time=$(date +'%s')" >> $GITHUB_OUTPUT
+
       - name: Check it out
         uses: actions/checkout@v2
 
@@ -65,6 +69,7 @@ jobs:
             type=sha,format=short,event=branch
             type=semver,pattern={{version}}
             type=raw,value=latest-ci,enable={{is_default_branch}}
+            type=raw,value=latest-ci_${{steps.current-time.outputs.unix_time}},enable={{is_default_branch}}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@dc7b9719a96d48369863986a06765841d7ea23f6

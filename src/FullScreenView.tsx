@@ -73,6 +73,7 @@ export function ErrorView({ error }: ErrorViewProps) {
           ? error.translatedMessage
           : error.message}
       </p>
+      <RageshakeButton description={`***Error View***: ${error.message}`} />
       {location.pathname === "/" ? (
         <Button
           size="lg"
