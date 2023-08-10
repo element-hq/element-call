@@ -165,6 +165,7 @@ export const widget: WidgetHelpers | null = (() => {
           // element-web to use waitForIFrameLoad=false. Once that change has rolled out,
           // we can just start the client after we've fetched the config.
           livekitServiceURL: undefined,
+          useLivekitForGroupCalls: true,
         }
       );
 

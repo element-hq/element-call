@@ -139,7 +139,7 @@ export function GroupCallView({
         }
 
         if (videoInput === null) {
-          latestMuteStates.current!.video.setEnabled?.(true);
+          latestMuteStates.current!.video.setEnabled?.(false);
         } else {
           const deviceId = await findDeviceByName(
             videoInput,
