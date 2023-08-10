@@ -19,7 +19,7 @@ import { useLocation } from "react-router-dom";
 
 import { Config } from "./config/Config";
 
-export const PASSWORD_STRING = "?password=";
+export const PASSWORD_STRING = "password=";
 
 interface UrlParams {
   roomAlias: string | null;
@@ -109,17 +109,8 @@ export const getUrlParams = (
   hash = window.location.hash
 ): UrlParams => {
   let roomAlias: string | null = null;
-  let password: string | null = null;
-
-  const passwordIndex = hash.indexOf(PASSWORD_STRING);
-  const passwordStart =
-    passwordIndex === -1 ? null : passwordIndex + PASSWORD_STRING.length;
-  if (passwordStart) {
-    password = hash.substring(passwordStart);
-  }
-
   if (!ignoreRoomAlias) {
-    if (hash === "" || hash.startsWith("#" + PASSWORD_STRING)) {
+    if (hash === "" || hash.startsWith("#?")) {
       roomAlias = pathname.substring(1); // Strip the "/"
 
       // Delete "/room/", if present
@@ -179,7 +170,7 @@ export const getUrlParams = (
   return {
     roomAlias,
     roomId,
-    password,
+    password: getParam("password"),
     viaServers: getAllParams("via"),
     isEmbedded: hasParam("embed"),
     preload: hasParam("preload"),
