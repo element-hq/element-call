@@ -347,7 +347,7 @@ export function getRoomUrl(
   roomIdOrAlias: string,
   password: string = ""
 ): string {
-  password = password === "" ? "" : "#" + PASSWORD_STRING + password;
+  password = password === "" ? "" : "#?" + PASSWORD_STRING + password;
 
   if (roomIdOrAlias.startsWith("#")) {
     return `${window.location.protocol}//${window.location.host}/${
