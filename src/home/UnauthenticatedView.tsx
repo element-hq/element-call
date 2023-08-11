@@ -110,7 +110,7 @@ export const UnauthenticatedView: FC = () => {
         }
 
         setClient({ client, session });
-        history.push(`/${roomAlias.substring(1).split(":")[0]}`);
+        history.push(`/room/#?roomId=${roomId}`);
       }
 
       submit().catch((error) => {

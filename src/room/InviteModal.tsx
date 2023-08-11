@@ -24,11 +24,10 @@ import styles from "./InviteModal.module.css";
 import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 
 interface Props extends Omit<ModalProps, "title" | "children"> {
-  roomAlias?: string;
   roomId: string;
 }
 
-export const InviteModal: FC<Props> = ({ roomAlias, roomId, ...rest }) => {
+export const InviteModal: FC<Props> = ({ roomId, ...rest }) => {
   const { t } = useTranslation();
   const [roomSharedKey] = useRoomSharedKey(roomId);
 
@@ -43,7 +42,7 @@ export const InviteModal: FC<Props> = ({ roomAlias, roomId, ...rest }) => {
         <p>{t("Copy and share this call link")}</p>
         <CopyButton
           className={styles.copyButton}
-          value={getRoomUrl(roomAlias ?? roomId, roomSharedKey ?? undefined)}
+          value={getRoomUrl(roomId, roomSharedKey ?? undefined)}
           data-testid="modal_inviteLink"
         />
       </ModalContent>
