@@ -88,6 +88,7 @@ import { useEventEmitterThree } from "../useEvents";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { MuteStates } from "./MuteStates";
+import { useIsRoomE2EE } from "../e2ee/sharedKeyManagement";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -144,6 +145,8 @@ export function InCallView({
   const { t } = useTranslation();
   usePreventScroll();
   useWakeLock();
+
+  const isRoomE2EE = useIsRoomE2EE(groupCall.room.roomId);
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure({ polyfill: ResizeObserver });
@@ -424,7 +427,7 @@ export function InCallView({
               users={unencryptedEventsFromUsers}
               room={groupCall.room}
             />
-            <E2EELock />
+            {!isRoomE2EE && <E2EELock />}
           </LeftNav>
           <RightNav>
             <GridLayoutMenu layout={layout} setLayout={setLayout} />
