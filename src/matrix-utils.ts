@@ -273,14 +273,15 @@ export function isLocalRoomId(roomId: string, client: MatrixClient): boolean {
 export async function createRoom(
   client: MatrixClient,
   name: string,
-  ptt: boolean
+  ptt: boolean,
+  e2ee: boolean
 ): Promise<[string, string]> {
   logger.log(`Creating room for group call`);
   const createPromise = client.createRoom({
     visibility: Visibility.Private,
     preset: Preset.PublicChat,
     name,
-    room_alias_name: roomAliasLocalpartFromRoomName(name),
+    room_alias_name: e2ee ? undefined : roomAliasLocalpartFromRoomName(name),
     power_level_content_override: {
       invite: 100,
       kick: 100,
@@ -342,20 +343,16 @@ export async function createRoom(
   return [fullAliasFromRoomName(name, client), result.room_id];
 }
 
-// Returns a URL to that will load Element Call with the given room
-export function getRoomUrl(
-  roomIdOrAlias: string,
-  password: string = ""
-): string {
-  password = password === "" ? "" : "#?" + PASSWORD_STRING + password;
-
-  if (roomIdOrAlias.startsWith("#")) {
-    return `${window.location.protocol}//${window.location.host}/${
-      roomIdOrAlias.substring(1).split(":")[0]
-    }${password}`;
-  } else {
-    return `${window.location.protocol}//${window.location.host}/room?roomId=${roomIdOrAlias}${password}`;
-  }
+/**
+ * Returns a URL to that will load Element Call with the given room
+ * @param roomId of the room
+ * @param password
+ * @returns
+ */
+export function getRoomUrl(roomId: string, password?: string): string {
+  return `${window.location.protocol}//${
+    window.location.host
+  }/room/#?roomId=${roomId}${password ? "&" + PASSWORD_STRING + password : ""}`;
 }
 
 export function getAvatarUrl(
