@@ -80,7 +80,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
           randomString(32)
         );
 
-        history.push(`/${roomAlias.substring(1).split(":")[0]}`);
+        history.push(`/room/#?roomId=${roomId}`);
       }
 
       submit().catch((error) => {
@@ -103,7 +103,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
 
   const [existingRoomId, setExistingRoomId] = useState<string>();
   const onJoinExistingRoom = useCallback(() => {
-    history.push(`/${existingRoomId}`);
+    history.push(`/room/#?roomId=${existingRoomId}`);
   }, [history, existingRoomId]);
 
   const callNameLabel =

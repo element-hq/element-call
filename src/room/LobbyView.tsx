@@ -82,10 +82,7 @@ export const LobbyView: FC<Props> = ({
             <Body>Or</Body>
             <CopyButton
               variant="secondaryCopy"
-              value={getRoomUrl(
-                matrixInfo.roomAlias ?? matrixInfo.roomId,
-                roomSharedKey ?? undefined
-              )}
+              value={getRoomUrl(matrixInfo.roomId, roomSharedKey ?? undefined)}
               className={styles.copyButton}
               copiedMessage={t("Call link copied")}
               data-testid="lobby_inviteLink"
