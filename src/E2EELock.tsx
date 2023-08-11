@@ -26,10 +26,7 @@ import { TooltipTrigger } from "./Tooltip";
 export const E2EELock = () => {
   const { t } = useTranslation();
   const tooltip = useCallback(
-    () =>
-      t(
-        "Element Call is temporarily not end-to-end encrypted while we test scalability."
-      ),
+    () => t("This call is not end-to-end encrypted."),
     [t]
   );
 

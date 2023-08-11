@@ -19,8 +19,12 @@ import { Trans } from "react-i18next";
 import { Banner } from "./Banner";
 import styles from "./E2EEBanner.module.css";
 import { ReactComponent as LockOffIcon } from "./icons/LockOff.svg";
+import { useEnableE2EE } from "./settings/useSetting";
 
 export const E2EEBanner = () => {
+  const [e2eeEnabled] = useEnableE2EE();
+  if (e2eeEnabled) return null;
+
   return (
     <Banner>
       <div className={styles.e2eeBanner}>
