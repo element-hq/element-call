@@ -45,7 +45,7 @@ jobs:
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
           SENTRY_URL: ${{ secrets.SENTRY_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          VITE_APP_VERSION: ${{ github.event.release.tag_name }}
+          VITE_APP_VERSION: ${{ github.event.release.tag_name || github.sha }}
 
       - name: Create Tarball
         env:
