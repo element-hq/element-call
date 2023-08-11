@@ -44,7 +44,7 @@ export const LobbyView: FC<Props> = ({
   hideHeader,
 }) => {
   const { t } = useTranslation();
-  const [roomSharedKey] = useRoomSharedKey(matrixInfo.roomId);
+  const roomSharedKey = useRoomSharedKey(matrixInfo.roomId);
   useLocationNavigation();
 
   const joinCallButtonRef = useRef<HTMLButtonElement>(null);

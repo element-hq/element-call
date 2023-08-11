@@ -29,7 +29,7 @@ interface Props extends Omit<ModalProps, "title" | "children"> {
 
 export const InviteModal: FC<Props> = ({ roomId, ...rest }) => {
   const { t } = useTranslation();
-  const [roomSharedKey] = useRoomSharedKey(roomId);
+  const roomSharedKey = useRoomSharedKey(roomId);
 
   return (
     <Modal
