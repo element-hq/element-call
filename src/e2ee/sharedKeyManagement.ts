@@ -14,20 +14,56 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 
 import { useEnableE2EE } from "../settings/useSetting";
 import { useLocalStorage } from "../useLocalStorage";
+import { PASSWORD_STRING, useUrlParams } from "../UrlParams";
 
 export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
   `room-shared-key-${roomId}`;
 
-export const useRoomSharedKey = (
+export const useInternalRoomSharedKey = (
   roomId: string
 ): [string | null, ((value: string) => void) | null] => {
   const key = useMemo(() => getRoomSharedKeyLocalStorageKey(roomId), [roomId]);
   const [e2eeEnabled] = useEnableE2EE();
   const [roomSharedKey, setRoomSharedKey] = useLocalStorage(key);
 
+  console.log("LOG useRoomSharedKey return:", key, roomSharedKey);
   return e2eeEnabled ? [roomSharedKey, setRoomSharedKey] : [null, null];
+};
+
+export const useRoomSharedKey = (roomId: string): string | null => {
+  return useInternalRoomSharedKey(roomId)[0];
+};
+
+export const useManageRoomSharedKey = (roomId: string): string | null => {
+  const { password } = useUrlParams();
+  const [e2eeSharedKey, setE2EESharedKey] = useInternalRoomSharedKey(roomId);
+
+  useEffect(() => {
+    if (!password) return;
+    if (password === "") return;
+    if (password === e2eeSharedKey) return;
+
+    setE2EESharedKey?.(password);
+  }, [password, e2eeSharedKey, setE2EESharedKey]);
+
+  useEffect(() => {
+    const hash = location.hash;
+
+    if (!hash.includes("?")) return;
+    if (!hash.includes(PASSWORD_STRING)) return;
+    if (password !== e2eeSharedKey) return;
+
+    const [hashStart, passwordStart] = hash.split(PASSWORD_STRING);
+    const hashEnd = passwordStart.split("&")[1];
+
+    location.replace((hashStart ?? "") + (hashEnd ?? ""));
+  }, [password, e2eeSharedKey]);
+
+  return e2eeSharedKey;
+};
+
 };

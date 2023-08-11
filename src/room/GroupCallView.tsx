@@ -38,8 +38,10 @@ import { ActiveCall } from "./InCallView";
 import { Config } from "../config/Config";
 import { MuteStates, useMuteStates } from "./MuteStates";
 import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
-import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
-import { PASSWORD_STRING, useUrlParams } from "../UrlParams";
+import {
+  useManageRoomSharedKey,
+  useRoomSharedKey,
+} from "../e2ee/sharedKeyManagement";
 import { useEnableE2EE } from "../settings/useSetting";
 
 declare global {
@@ -75,7 +77,7 @@ export function GroupCallView({
     otelGroupCallMembership,
   } = useGroupCall(groupCall, client);
 
-  const { password } = useUrlParams();
+  const e2eeSharedKey = useManageRoomSharedKey(groupCall.room.roomId);
 
   const { t } = useTranslation();
 
@@ -246,27 +248,6 @@ export function GroupCallView({
   }, [groupCall, state, leave]);
 
   const [e2eeEnabled] = useEnableE2EE();
-  const [e2eeSharedKey, setE2EESharedKey] = useRoomSharedKey(
-    groupCall.room.roomId
-  );
-
-  useEffect(() => {
-    if (!password || password === "" || password === e2eeSharedKey) return;
-
-    setE2EESharedKey?.(password);
-  }, [password, e2eeSharedKey, setE2EESharedKey]);
-
-  useEffect(() => {
-    const hash = location.hash;
-    if (!hash.includes("?")) return;
-
-    const [hashStart, passwordStart] = hash.split(PASSWORD_STRING);
-    const [password, hashEnd] = passwordStart ? passwordStart.split("&") : [];
-
-    if (password !== e2eeSharedKey) return;
-
-    location.replace((hashStart ?? "") + (hashEnd ?? ""));
-  }, [password, e2eeSharedKey]);
 
   const e2eeConfig = useMemo(
     () => (e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined),
@@ -279,7 +260,7 @@ export function GroupCallView({
     groupCall.enter();
   }, [groupCall]);
 
-  if (!password && !e2eeSharedKey && e2eeEnabled) {
+  if (e2eeEnabled && isRoomE2EE && !e2eeSharedKey) {
     return (
       <ErrorView
         error={

@@ -73,7 +73,7 @@ function CallTile({
   client,
   disableFacepile,
 }: CallTileProps) {
-  const [roomSharedKey] = useRoomSharedKey(roomId);
+  const roomSharedKey = useRoomSharedKey(roomId);
 
   return (
     <div className={styles.callTile}>
