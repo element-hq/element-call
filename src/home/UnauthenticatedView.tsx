@@ -40,9 +40,11 @@ import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
-import { useOptInAnalytics } from "../settings/useSetting";
+import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
 import { Config } from "../config/Config";
 import { E2EEBanner } from "../E2EEBanner";
+import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
+import { setLocalStorageItem } from "../useLocalStorage";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
@@ -57,6 +59,8 @@ export const UnauthenticatedView: FC = () => {
   const [onFinished, setOnFinished] = useState<() => void>();
   const history = useHistory();
   const { t } = useTranslation();
+
+  const [e2eeEnabled] = useEnableE2EE();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     (e) => {
@@ -79,9 +83,18 @@ export const UnauthenticatedView: FC = () => {
           true
         );
 
-        let roomAlias: string;
+        let roomId: string;
         try {
-          [roomAlias] = await createRoom(client, roomName, ptt);
+          roomId = (
+            await createRoom(client, roomName, ptt, e2eeEnabled ?? false)
+          )[1];
+
+          if (e2eeEnabled) {
+            setLocalStorageItem(
+              getRoomSharedKeyLocalStorageKey(roomId),
+              randomString(32)
+            );
+          }
         } catch (error) {
           if (!setClient) {
             throw error;
@@ -120,7 +133,16 @@ export const UnauthenticatedView: FC = () => {
         reset();
       });
     },
-    [register, reset, execute, history, callType, modalState, setClient]
+    [
+      register,
+      reset,
+      execute,
+      history,
+      callType,
+      modalState,
+      setClient,
+      e2eeEnabled,
+    ]
   );
 
   const callNameLabel =

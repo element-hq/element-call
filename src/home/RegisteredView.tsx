@@ -38,7 +38,7 @@ import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { Caption, Title } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
-import { useOptInAnalytics } from "../settings/useSetting";
+import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { E2EEBanner } from "../E2EEBanner";
 import { setLocalStorageItem } from "../useLocalStorage";
@@ -57,6 +57,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
   const history = useHistory();
   const { t } = useTranslation();
   const { modalState, modalProps } = useModalTriggerState();
+  const [e2eeEnabled] = useEnableE2EE();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     (e: FormEvent) => {
@@ -73,12 +74,16 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
         setError(undefined);
         setLoading(true);
 
-        const [roomAlias, roomId] = await createRoom(client, roomName, ptt);
+        const roomId = (
+          await createRoom(client, roomName, ptt, e2eeEnabled ?? false)
+        )[1];
 
-        setLocalStorageItem(
-          getRoomSharedKeyLocalStorageKey(roomId),
-          randomString(32)
-        );
+        if (e2eeEnabled) {
+          setLocalStorageItem(
+            getRoomSharedKeyLocalStorageKey(roomId),
+            randomString(32)
+          );
+        }
 
         history.push(`/room/#?roomId=${roomId}`);
       }
@@ -96,7 +101,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
         }
       });
     },
-    [client, history, modalState, callType]
+    [client, history, modalState, callType, e2eeEnabled]
   );
 
   const recentRooms = useGroupCallRooms(client);
