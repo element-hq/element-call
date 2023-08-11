@@ -18,6 +18,7 @@ import { useEffect, useMemo } from "react";
 
 import { useEnableE2EE } from "../settings/useSetting";
 import { useLocalStorage } from "../useLocalStorage";
+import { useClient } from "../ClientContext";
 import { PASSWORD_STRING, useUrlParams } from "../UrlParams";
 
 export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
@@ -66,4 +67,16 @@ export const useManageRoomSharedKey = (roomId: string): string | null => {
   return e2eeSharedKey;
 };
 
+export const useIsRoomE2EE = (roomId: string): boolean | null => {
+  const client = useClient();
+  const room = useMemo(
+    () => client.client?.getRoom(roomId) ?? null,
+    [roomId, client.client]
+  );
+  const isE2EE = useMemo(
+    () => (room ? !room?.getCanonicalAlias() : null),
+    [room]
+  );
+
+  return isE2EE;
 };

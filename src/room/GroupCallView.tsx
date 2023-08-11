@@ -40,7 +40,7 @@ import { MuteStates, useMuteStates } from "./MuteStates";
 import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
 import {
   useManageRoomSharedKey,
-  useRoomSharedKey,
+  useIsRoomE2EE,
 } from "../e2ee/sharedKeyManagement";
 import { useEnableE2EE } from "../settings/useSetting";
 
@@ -78,6 +78,7 @@ export function GroupCallView({
   } = useGroupCall(groupCall, client);
 
   const e2eeSharedKey = useManageRoomSharedKey(groupCall.room.roomId);
+  const isRoomE2EE = useIsRoomE2EE(groupCall.room.roomId);
 
   const { t } = useTranslation();
 
@@ -270,6 +271,10 @@ export function GroupCallView({
         }
       />
     );
+  }
+
+  if (!e2eeEnabled && isRoomE2EE) {
+    return <ErrorView error={new Error("You need to enable E2EE to join.")} />;
   }
 
   const livekitServiceURL =
