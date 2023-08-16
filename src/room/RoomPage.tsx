@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 import { FC, useEffect, useState, useCallback } from "react";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
-import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { useClientLegacy } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
@@ -73,10 +73,10 @@ export const RoomPage: FC = () => {
   ]);
 
   const groupCallView = useCallback(
-    (groupCall: GroupCall) => (
+    (rtcSession: MatrixRTCSession) => (
       <GroupCallView
         client={client!}
-        groupCall={groupCall}
+        rtcSession={rtcSession}
         isPasswordlessUser={passwordlessUser}
         isEmbedded={isEmbedded}
         preload={preload}

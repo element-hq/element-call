@@ -172,7 +172,6 @@ export async function initClient(
     localTimeoutMs: 5000,
     useE2eForGroupCall: e2eEnabled,
     fallbackICEServerAllowed: fallbackICEServerAllowed,
-    useLivekitForGroupCalls: true,
   });
 
   try {

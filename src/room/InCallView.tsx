@@ -27,7 +27,6 @@ import classNames from "classnames";
 import { DisconnectReason, Room, RoomEvent, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
-import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { Ref, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
@@ -35,6 +34,8 @@ import { OverlayTriggerState } from "@react-stately/overlays";
 import { JoinRule } from "matrix-js-sdk/src/@types/partials";
 import { logger } from "matrix-js-sdk/src/logger";
 import { RoomEventCallbacks } from "livekit-client/dist/src/room/Room";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { CallMembership } from "matrix-js-sdk/src/matrixrtc/CallMembership";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -45,22 +46,13 @@ import {
   SettingsButton,
   InviteButton,
 } from "../button";
-import {
-  Header,
-  LeftNav,
-  RightNav,
-  RoomHeaderInfo,
-  VersionMismatchWarning,
-} from "../Header";
+import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import {
   useVideoGridLayout,
   TileDescriptor,
   VideoGrid,
 } from "../video-grid/VideoGrid";
-import {
-  useShowInspector,
-  useShowConnectionStats,
-} from "../settings/useSetting";
+import { useShowConnectionStats } from "../settings/useSetting";
 import { useModalTriggerState } from "../Modal";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useUrlParams } from "../UrlParams";
@@ -68,10 +60,8 @@ import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { ElementWidgetActions, widget } from "../widget";
 import { GridLayoutMenu } from "./GridLayoutMenu";
-import { GroupCallInspector } from "./GroupCallInspector";
 import styles from "./InCallView.module.css";
 import { useJoinRule } from "./useJoinRule";
-import { ParticipantInfo } from "./useGroupCall";
 import { ItemData, TileContent, VideoTile } from "../video-grid/VideoTile";
 import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
@@ -120,24 +110,22 @@ export function ActiveCall(props: ActiveCallProps) {
 
 export interface InCallViewProps {
   client: MatrixClient;
-  groupCall: GroupCall;
+  rtcSession: MatrixRTCSession;
   livekitRoom: Room;
   muteStates: MuteStates;
-  participants: Map<RoomMember, Map<string, ParticipantInfo>>;
+  memberships: CallMembership[];
   onLeave: (error?: Error) => void;
-  unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
 }
 
 export function InCallView({
   client,
-  groupCall,
+  rtcSession,
   livekitRoom,
   muteStates,
-  participants,
+  memberships,
   onLeave,
-  unencryptedEventsFromUsers,
   hideHeader,
   otelGroupCallMembership,
 }: InCallViewProps) {
@@ -161,7 +149,7 @@ export function InCallView({
     screenSharingTracks.length > 0
   );
 
-  const [showInspector] = useShowInspector();
+  //const [showInspector] = useShowInspector();
   const [showConnectionStats] = useShowConnectionStats();
 
   const { hideScreensharing } = useUrlParams();
@@ -179,7 +167,7 @@ export function InCallView({
     [muteStates]
   );
 
-  const joinRule = useJoinRule(groupCall.room);
+  const joinRule = useJoinRule(rtcSession.room);
 
   // This function incorrectly assumes that there is a camera and microphone, which is not always the case.
   // TODO: Make sure that this module is resilient when it comes to camera/microphone availability!
@@ -250,7 +238,7 @@ export function InCallView({
   const reducedControls = boundsValid && bounds.width <= 400;
   const noControls = reducedControls && bounds.height <= 400;
 
-  const items = useParticipantTiles(livekitRoom, participants);
+  const items = useParticipantTiles(livekitRoom, memberships);
   const { fullscreenItem, toggleFullscreen, exitFullscreen } =
     useFullscreen(items);
 
@@ -324,7 +312,7 @@ export function InCallView({
   const {
     modalState: rageshakeRequestModalState,
     modalProps: rageshakeRequestModalProps,
-  } = useRageshakeRequestModal(groupCall.room.roomId);
+  } = useRageshakeRequestModal(rtcSession.room.roomId);
 
   const {
     modalState: settingsModalState,
@@ -419,11 +407,7 @@ export function InCallView({
       {!hideHeader && maximisedParticipant === null && (
         <Header>
           <LeftNav>
-            <RoomHeaderInfo roomName={groupCall.room.name} />
-            <VersionMismatchWarning
-              users={unencryptedEventsFromUsers}
-              room={groupCall.room}
-            />
+            <RoomHeaderInfo roomName={rtcSession.room.name} />
             <E2EELock />
           </LeftNav>
           <RightNav>
@@ -439,31 +423,31 @@ export function InCallView({
         {renderContent()}
         {footer}
       </div>
-      {otelGroupCallMembership && (
+      {/*otelGroupCallMembership && (
         <GroupCallInspector
           client={client}
           groupCall={groupCall}
           otelGroupCallMembership={otelGroupCallMembership}
           show={showInspector}
         />
-      )}
+      )*/}
       {rageshakeRequestModalState.isOpen && !noControls && (
         <RageshakeRequestModal
           {...rageshakeRequestModalProps}
-          roomId={groupCall.room.roomId}
+          roomId={rtcSession.room.roomId}
         />
       )}
       {settingsModalState.isOpen && (
         <SettingsModal
           client={client}
-          roomId={groupCall.room.roomId}
+          roomId={rtcSession.room.roomId}
           {...settingsModalProps}
         />
       )}
       {inviteModalState.isOpen && (
         <InviteModal
           roomIdOrAlias={
-            groupCall.room.getCanonicalAlias() ?? groupCall.room.roomId
+            rtcSession.room.getCanonicalAlias() ?? rtcSession.room.roomId
           }
           {...inviteModalProps}
         />
@@ -474,22 +458,26 @@ export function InCallView({
 
 function useParticipantTiles(
   livekitRoom: Room,
-  participants: Map<RoomMember, Map<string, ParticipantInfo>>
+  memberships: CallMembership[]
 ): TileDescriptor<ItemData>[] {
   const sfuParticipants = useParticipants({
     room: livekitRoom,
   });
 
   const items = useMemo(() => {
-    // The IDs of the participants who published membership event to the room (i.e. are present from Matrix perspective).
     const matrixParticipants: Map<string, RoomMember> = new Map(
+      memberships.map((m) => [`${m.member.userId}:${m.deviceId}`, m.member])
+    );
+
+    // The IDs of the participants who published membership event to the room (i.e. are present from Matrix perspective).
+    /*const matrixParticipants: Map<string, RoomMember> = new Map(
       [...participants.entries()].flatMap(([user, devicesMap]) => {
         return [...devicesMap.keys()].map((deviceId) => [
           `${user.userId}:${deviceId}`,
           user,
         ]);
       })
-    );
+    );*/
 
     const hasPresenter =
       sfuParticipants.find((p) => p.isScreenShareEnabled) !== undefined;
@@ -558,7 +546,7 @@ function useParticipantTiles(
     // If every item is a ghost, that probably means we're still connecting and
     // shouldn't bother showing anything yet
     return allGhosts ? [] : tiles;
-  }, [participants, sfuParticipants]);
+  }, [memberships, sfuParticipants]);
 
   return items;
 }

@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -37,6 +37,7 @@ import {
   SummaryStatsReport,
   CallFeedReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import { usePageUnload } from "./usePageUnload";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
@@ -77,7 +78,6 @@ interface UseGroupCallReturnType {
   screenshareFeeds: CallFeed[];
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   hasLocalParticipant: boolean;
-  unencryptedEventsFromUsers: Set<string>;
   otelGroupCallMembership?: OTelGroupCallMembership;
 }
 
@@ -103,14 +103,14 @@ interface State {
 let groupCallOTelMembership: OTelGroupCallMembership | undefined;
 let groupCallOTelMembershipGroupCallId: string;
 
-function getParticipants(
-  groupCall: GroupCall
+/*function getParticipants(
+  rtcSession: MatrixRTCSession
 ): Map<RoomMember, Map<string, ParticipantInfo>> {
   const participants = new Map<RoomMember, Map<string, ParticipantInfo>>();
 
-  for (const [member, participantsStateMap] of groupCall.participants) {
+  for (const membership of rtcSession.memberships) {
     const participantInfoMap = new Map<string, ParticipantInfo>();
-    participants.set(member, participantInfoMap);
+    participants.set(membership.member, participantInfoMap);
 
     for (const [deviceId, participant] of participantsStateMap) {
       const feed = groupCall.userMediaFeeds.find(
@@ -141,10 +141,10 @@ function getParticipants(
   }
 
   return participants;
-}
+}*/
 
 export function useGroupCall(
-  groupCall: GroupCall,
+  rtcSession: MatrixRTCSession,
   client: MatrixClient
 ): UseGroupCallReturnType {
   const [
@@ -171,7 +171,7 @@ export function useGroupCall(
     isScreensharing: false,
     screenshareFeeds: [],
     requestingScreenshare: false,
-    participants: getParticipants(groupCall),
+    participants: getParticipants(rtcSession),
     hasLocalParticipant: false,
   });
 
