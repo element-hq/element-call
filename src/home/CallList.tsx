@@ -23,8 +23,9 @@ import { Facepile } from "../Facepile";
 import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
 import { getRoomUrl } from "../matrix-utils";
-import { Body, Caption } from "../typography/Typography";
+import { Body } from "../typography/Typography";
 import { GroupCallRoom } from "./useGroupCallRooms";
+import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 
 interface CallListProps {
   rooms: GroupCallRoom[];
@@ -35,13 +36,13 @@ export function CallList({ rooms, client, disableFacepile }: CallListProps) {
   return (
     <>
       <div className={styles.callList}>
-        {rooms.map(({ roomAlias, roomName, avatarUrl, participants }) => (
+        {rooms.map(({ room, roomAlias, roomName, avatarUrl, participants }) => (
           <CallTile
             key={roomAlias}
             client={client}
             name={roomName}
             avatarUrl={avatarUrl}
-            roomAlias={roomAlias}
+            roomId={room.roomId}
             participants={participants}
             disableFacepile={disableFacepile}
           />
@@ -59,7 +60,7 @@ export function CallList({ rooms, client, disableFacepile }: CallListProps) {
 interface CallTileProps {
   name: string;
   avatarUrl: string;
-  roomAlias: string;
+  roomId: string;
   participants: RoomMember[];
   client: MatrixClient;
   disableFacepile?: boolean;
@@ -67,17 +68,16 @@ interface CallTileProps {
 function CallTile({
   name,
   avatarUrl,
-  roomAlias,
+  roomId,
   participants,
   client,
   disableFacepile,
 }: CallTileProps) {
+  const roomSharedKey = useRoomSharedKey(roomId);
+
   return (
     <div className={styles.callTile}>
-      <Link
-        to={`/${roomAlias.substring(1).split(":")[0]}`}
-        className={styles.callTileLink}
-      >
+      <Link to={`/room/#?roomId=${roomId}`} className={styles.callTileLink}>
         <Avatar
           size={Size.LG}
           bgKey={name}
@@ -89,7 +89,6 @@ function CallTile({
           <Body overflowEllipsis fontWeight="semiBold">
             {name}
           </Body>
-          <Caption overflowEllipsis>{getRoomUrl(roomAlias)}</Caption>
           {participants && !disableFacepile && (
             <Facepile
               className={styles.facePile}
@@ -103,7 +102,7 @@ function CallTile({
       <CopyButton
         className={styles.copyButton}
         variant="icon"
-        value={getRoomUrl(roomAlias)}
+        value={getRoomUrl(roomId, roomSharedKey ?? undefined)}
       />
     </div>
   );

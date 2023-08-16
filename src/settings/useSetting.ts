@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,59 +14,49 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { EventEmitter } from "events";
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { isE2EESupported } from "livekit-client";
 
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+import {
+  getLocalStorageItem,
+  setLocalStorageItem,
+  useLocalStorage,
+} from "../useLocalStorage";
 
 type Setting<T> = [T, (value: T) => void];
 type DisableableSetting<T> = [T, ((value: T) => void) | null];
 
-// Bus to notify other useSetting consumers when a setting is changed
-export const settingsBus = new EventEmitter();
-
-const getSettingKey = (name: string): string => {
+export const getSettingKey = (name: string): string => {
   return `matrix-setting-${name}`;
 };
 // Like useState, but reads from and persists the value to localStorage
-const useSetting = <T>(name: string, defaultValue: T): Setting<T> => {
+export const useSetting = <T>(name: string, defaultValue: T): Setting<T> => {
   const key = useMemo(() => getSettingKey(name), [name]);
 
-  const [value, setValue] = useState<T>(() => {
-    const item = localStorage.getItem(key);
-    return item == null ? defaultValue : JSON.parse(item);
-  });
+  const [item, setItem] = useLocalStorage(key);
 
-  useEffect(() => {
-    settingsBus.on(name, setValue);
-    return () => {
-      settingsBus.off(name, setValue);
-    };
-  }, [name, setValue]);
+  const value = useMemo(
+    () => (item == null ? defaultValue : JSON.parse(item)),
+    [item, defaultValue]
+  );
+  const setValue = useCallback(
+    (value: T) => {
+      setItem(JSON.stringify(value));
+    },
+    [setItem]
+  );
 
-  return [
-    value,
-    useCallback(
-      (newValue: T) => {
-        setValue(newValue);
-        localStorage.setItem(key, JSON.stringify(newValue));
-        settingsBus.emit(name, newValue);
-      },
-      [name, key, setValue]
-    ),
-  ];
+  return [value, setValue];
 };
 
 export const getSetting = <T>(name: string, defaultValue: T): T => {
-  const item = localStorage.getItem(getSettingKey(name));
+  const item = getLocalStorageItem(getSettingKey(name));
   return item === null ? defaultValue : JSON.parse(item);
 };
 
-export const setSetting = <T>(name: string, newValue: T) => {
-  localStorage.setItem(getSettingKey(name), JSON.stringify(newValue));
-  settingsBus.emit(name, newValue);
-};
+export const setSetting = <T>(name: string, newValue: T) =>
+  setLocalStorageItem(getSettingKey(name), JSON.stringify(newValue));
 
 const canEnableSpatialAudio = () => {
   const { userAgent } = navigator;
