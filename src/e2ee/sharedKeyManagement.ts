@@ -31,7 +31,6 @@ export const useInternalRoomSharedKey = (
   const [e2eeEnabled] = useEnableE2EE();
   const [roomSharedKey, setRoomSharedKey] = useLocalStorage(key);
 
-  console.log("LOG useRoomSharedKey return:", key, roomSharedKey);
   return e2eeEnabled ? [roomSharedKey, setRoomSharedKey] : [null, null];
 };
 
