@@ -20,10 +20,14 @@ import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { SyncState } from "matrix-js-sdk/src/sync";
 import { useTranslation } from "react-i18next";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { randomString } from "matrix-js-sdk/src/randomstring";
 
 import type { Room } from "matrix-js-sdk/src/models/room";
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
+import { setLocalStorageItem } from "../useLocalStorage";
 import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
+import { useEnableE2EE } from "../settings/useSetting";
+import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
 
 export type GroupCallLoaded = {
   kind: "loaded";
@@ -57,6 +61,8 @@ export const useLoadGroupCall = (
 ): GroupCallStatus => {
   const { t } = useTranslation();
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
+
+  const [e2eeEnabled] = useEnableE2EE();
 
   useEffect(() => {
     const fetchOrCreateRoom = async (): Promise<Room> => {
@@ -95,8 +101,17 @@ export const useLoadGroupCall = (
           const [, roomId] = await createRoom(
             client,
             roomNameFromRoomId(roomIdOrAlias),
-            createPtt
+            createPtt,
+            e2eeEnabled ?? false
           );
+
+          if (e2eeEnabled) {
+            setLocalStorageItem(
+              getRoomSharedKeyLocalStorageKey(roomId),
+              randomString(32)
+            );
+          }
+
           // likewise, wait for the room
           await client.waitUntilRoomReadyForGroupCalls(roomId);
           return client.getRoom(roomId)!;
@@ -136,7 +151,7 @@ export const useLoadGroupCall = (
       .then(fetchOrCreateGroupCall)
       .then((rtcSession) => setState({ kind: "loaded", rtcSession }))
       .catch((error) => setState({ kind: "failed", error }));
-  }, [client, roomIdOrAlias, viaServers, createPtt, t]);
+  }, [client, roomIdOrAlias, viaServers, createPtt, t, e2eeEnabled]);
 
   return state;
 };

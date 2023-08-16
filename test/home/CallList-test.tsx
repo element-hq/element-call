@@ -34,7 +34,13 @@ describe("CallList", () => {
 
   it("should show room", async () => {
     const rooms = [
-      { roomName: "Room #1", roomAlias: "#room-name:server.org" },
+      {
+        roomName: "Room #1",
+        roomAlias: "#room-name:server.org",
+        room: {
+          roomId: "!roomId",
+        },
+      },
     ] as GroupCallRoom[];
 
     const result = renderComponent(rooms);

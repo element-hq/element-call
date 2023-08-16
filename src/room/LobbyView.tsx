@@ -14,14 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {
-  useRef,
-  useEffect,
-  useState,
-  useCallback,
-  ChangeEvent,
-  FC,
-} from "react";
+import { useRef, useEffect, FC } from "react";
 import { Trans, useTranslation } from "react-i18next";
 
 import styles from "./LobbyView.module.css";
@@ -32,15 +25,13 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
-import { E2EEConfig } from "../livekit/useLiveKit";
-import { InputField } from "../input/Input";
-import { useEnableE2EE } from "../settings/useSetting";
 import { MuteStates } from "./MuteStates";
+import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 
 interface Props {
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
-  onEnter: (e2eeConfig?: E2EEConfig) => void;
+  onEnter: () => void;
   isEmbedded: boolean;
   hideHeader: boolean;
 }
@@ -53,9 +44,8 @@ export const LobbyView: FC<Props> = ({
   hideHeader,
 }) => {
   const { t } = useTranslation();
+  const roomSharedKey = useRoomSharedKey(matrixInfo.roomId);
   useLocationNavigation();
-
-  const [enableE2EE] = useEnableE2EE();
 
   const joinCallButtonRef = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -63,18 +53,6 @@ export const LobbyView: FC<Props> = ({
       joinCallButtonRef.current.focus();
     }
   }, [joinCallButtonRef]);
-
-  const [e2eeSharedKey, setE2EESharedKey] = useState<string | undefined>(
-    undefined
-  );
-
-  const onE2EESharedKeyChanged = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const value = event.target.value;
-      setE2EESharedKey(value === "" ? undefined : value);
-    },
-    [setE2EESharedKey]
-  );
 
   return (
     <div className={styles.room}>
@@ -91,25 +69,12 @@ export const LobbyView: FC<Props> = ({
       <div className={styles.joinRoom}>
         <div className={styles.joinRoomContent}>
           <VideoPreview matrixInfo={matrixInfo} muteStates={muteStates} />
-          {enableE2EE && (
-            <InputField
-              className={styles.passwordField}
-              label={t("Password (if none, E2EE is disabled)")}
-              type="text"
-              onChange={onE2EESharedKeyChanged}
-              value={e2eeSharedKey}
-            />
-          )}
           <Trans>
             <Button
               ref={joinCallButtonRef}
               className={styles.copyButton}
               size="lg"
-              onPress={() =>
-                onEnter(
-                  e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined
-                )
-              }
+              onPress={() => onEnter()}
               data-testid="lobby_joinCall"
             >
               Join call now
@@ -117,7 +82,7 @@ export const LobbyView: FC<Props> = ({
             <Body>Or</Body>
             <CopyButton
               variant="secondaryCopy"
-              value={getRoomUrl(matrixInfo.roomAlias ?? matrixInfo.roomId)}
+              value={getRoomUrl(matrixInfo.roomId, roomSharedKey ?? undefined)}
               className={styles.copyButton}
               copiedMessage={t("Call link copied")}
               data-testid="lobby_inviteLink"

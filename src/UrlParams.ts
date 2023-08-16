@@ -19,6 +19,8 @@ import { useLocation } from "react-router-dom";
 
 import { Config } from "./config/Config";
 
+export const PASSWORD_STRING = "password=";
+
 interface UrlParams {
   roomAlias: string | null;
   roomId: string | null;
@@ -86,6 +88,10 @@ interface UrlParams {
    * user's homeserver doesn't provide any.
    */
   allowIceFallback: boolean;
+  /**
+   * E2EE password
+   */
+  password: string | null;
 }
 
 /**
@@ -102,9 +108,12 @@ export const getUrlParams = (
   pathname = window.location.pathname,
   hash = window.location.hash
 ): UrlParams => {
+  // This is legacy code - we're moving away from using aliases
   let roomAlias: string | null = null;
   if (!ignoreRoomAlias) {
-    if (hash === "") {
+    // Here we handle the beginning of the alias and make sure it starts with a
+    // "#"
+    if (hash === "" || hash.startsWith("#?")) {
       roomAlias = pathname.substring(1); // Strip the "/"
 
       // Delete "/room/", if present
@@ -119,17 +128,17 @@ export const getUrlParams = (
       roomAlias = hash;
     }
 
-    // Add server part, if not present
-    if (!roomAlias.includes(":")) {
-      roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
-    }
-
     // Delete "?" and what comes afterwards
     roomAlias = roomAlias.split("?")[0];
 
-    // Make roomAlias undefined, if empty
     if (roomAlias.length <= 1) {
+      // Make roomAlias is null, if it only is a "#"
       roomAlias = null;
+    } else {
+      // Add server part, if not present
+      if (!roomAlias.includes(":")) {
+        roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
+      }
     }
   }
 
@@ -164,6 +173,7 @@ export const getUrlParams = (
   return {
     roomAlias,
     roomId,
+    password: getParam("password"),
     viaServers: getAllParams("via"),
     isEmbedded: hasParam("embed"),
     preload: hasParam("preload"),

@@ -17,6 +17,7 @@ limitations under the License.
 import { useState, useCallback, FormEvent, FormEventHandler } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
+import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -37,9 +38,11 @@ import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { Caption, Title } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
-import { useOptInAnalytics } from "../settings/useSetting";
+import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { E2EEBanner } from "../E2EEBanner";
+import { setLocalStorageItem } from "../useLocalStorage";
+import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
 
 interface Props {
   client: MatrixClient;
@@ -54,6 +57,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
   const history = useHistory();
   const { t } = useTranslation();
   const { modalState, modalProps } = useModalTriggerState();
+  const [e2eeEnabled] = useEnableE2EE();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     (e: FormEvent) => {
@@ -70,16 +74,23 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
         setError(undefined);
         setLoading(true);
 
-        const [roomAlias] = await createRoom(client, roomName, ptt);
+        const roomId = (
+          await createRoom(client, roomName, ptt, e2eeEnabled ?? false)
+        )[1];
 
-        if (roomAlias) {
-          history.push(`/${roomAlias.substring(1).split(":")[0]}`);
+        if (e2eeEnabled) {
+          setLocalStorageItem(
+            getRoomSharedKeyLocalStorageKey(roomId),
+            randomString(32)
+          );
         }
+
+        history.push(`/room/#?roomId=${roomId}`);
       }
 
       submit().catch((error) => {
         if (error.errcode === "M_ROOM_IN_USE") {
-          setExistingRoomId(roomAliasLocalpartFromRoomName(roomName));
+          setExistingAlias(roomAliasLocalpartFromRoomName(roomName));
           setLoading(false);
           setError(undefined);
           modalState.open();
@@ -90,15 +101,15 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
         }
       });
     },
-    [client, history, modalState, callType]
+    [client, history, modalState, callType, e2eeEnabled]
   );
 
   const recentRooms = useGroupCallRooms(client);
 
-  const [existingRoomId, setExistingRoomId] = useState<string>();
+  const [existingAlias, setExistingAlias] = useState<string>();
   const onJoinExistingRoom = useCallback(() => {
-    history.push(`/${existingRoomId}`);
-  }, [history, existingRoomId]);
+    history.push(`/${existingAlias}`);
+  }, [history, existingAlias]);
 
   const callNameLabel =
     callType === CallType.Video

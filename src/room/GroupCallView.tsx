@@ -31,7 +31,6 @@ import { MatrixInfo } from "./VideoPreview";
 import { CallEndedView } from "./CallEndedView";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
-import { E2EEConfig } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
 //import { OpenIDLoader } from "../livekit/OpenIDLoader";
 import { ActiveCall } from "./InCallView";
@@ -41,6 +40,11 @@ import { LivekitFocus } from "../livekit/LivekitFocus";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
+import {
+  useManageRoomSharedKey,
+  useIsRoomE2EE,
+} from "../e2ee/sharedKeyManagement";
+import { useEnableE2EE } from "../settings/useSetting";
 
 declare global {
   interface Window {
@@ -77,6 +81,9 @@ export function GroupCallView({
 
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
+
+  const e2eeSharedKey = useManageRoomSharedKey(groupCall.room.roomId);
+  const isRoomE2EE = useIsRoomE2EE(groupCall.room.roomId);
 
   const { t } = useTranslation();
 
@@ -243,8 +250,11 @@ export function GroupCallView({
     }
   }, [isJoined, rtcSession]);
 
-  const [e2eeConfig, setE2EEConfig] = useState<E2EEConfig | undefined>(
-    undefined
+  const [e2eeEnabled] = useEnableE2EE();
+
+  const e2eeConfig = useMemo(
+    () => (e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined),
+    [e2eeSharedKey]
   );
 
   const onReconnect = useCallback(() => {
@@ -264,6 +274,22 @@ export function GroupCallView({
   ) {
     logger.error("Incompatible focus on call", focus);
     return <ErrorView error={new Error("Call focus is not compatible!")} />;
+  }
+
+  if (e2eeEnabled && isRoomE2EE && !e2eeSharedKey) {
+    return (
+      <ErrorView
+        error={
+          new Error(
+            "No E2EE key provided: please make sure the URL you're using to join this call has been retrieved using the in-app button."
+          )
+        }
+      />
+    );
+  }
+
+  if (!e2eeEnabled && isRoomE2EE) {
+    return <ErrorView error={new Error("You need to enable E2EE to join.")} />;
   }
 
   if (isJoined) {
@@ -325,10 +351,7 @@ export function GroupCallView({
       <LobbyView
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={(e2eeConfig?: E2EEConfig) => {
-          setE2EEConfig(e2eeConfig);
-          enterRTCSession(rtcSession);
-        }}
+        onEnter={() => enter()}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
       />
