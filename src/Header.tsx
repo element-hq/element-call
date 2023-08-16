@@ -15,17 +15,13 @@ limitations under the License.
 */
 
 import classNames from "classnames";
-import { HTMLAttributes, ReactNode, useCallback } from "react";
+import { HTMLAttributes, ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Room } from "matrix-js-sdk/src/models/room";
 import { useTranslation } from "react-i18next";
 
 import styles from "./Header.module.css";
-import { useModalTriggerState } from "./Modal";
-import { Button } from "./button";
 import { ReactComponent as Logo } from "./icons/Logo.svg";
 import { Subtitle } from "./typography/Typography";
-import { IncompatibleVersionModal } from "./IncompatibleVersionModal";
 
 interface HeaderProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
@@ -123,36 +119,5 @@ export function RoomHeaderInfo({ roomName }: RoomHeaderInfo) {
         {roomName}
       </Subtitle>
     </>
-  );
-}
-
-interface VersionMismatchWarningProps {
-  users: Set<string>;
-  room: Room;
-}
-
-export function VersionMismatchWarning({
-  users,
-  room,
-}: VersionMismatchWarningProps) {
-  const { t } = useTranslation();
-  const { modalState, modalProps } = useModalTriggerState();
-
-  const onDetailsClick = useCallback(() => {
-    modalState.open();
-  }, [modalState]);
-
-  if (users.size === 0) return null;
-
-  return (
-    <span className={styles.versionMismatchWarning}>
-      {t("Incompatible versions!")}
-      <Button variant="link" onClick={onDetailsClick}>
-        {t("Details")}
-      </Button>
-      {modalState.isOpen && (
-        <IncompatibleVersionModal userIds={users} room={room} {...modalProps} />
-      )}
-    </span>
   );
 }

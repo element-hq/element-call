@@ -16,8 +16,8 @@ limitations under the License.
 
 import { ReactNode } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
-import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { useTranslation } from "react-i18next";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import { useLoadGroupCall } from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
@@ -26,7 +26,7 @@ interface Props {
   client: MatrixClient;
   roomIdOrAlias: string;
   viaServers: string[];
-  children: (groupCall: GroupCall) => ReactNode;
+  children: (rtcSession: MatrixRTCSession) => ReactNode;
   createPtt: boolean;
 }
 
@@ -53,7 +53,7 @@ export function GroupCallLoader({
         </FullScreenView>
       );
     case "loaded":
-      return <>{children(groupCallState.groupCall)}</>;
+      return <>{children(groupCallState.rtcSession)}</>;
     case "failed":
       return <ErrorView error={groupCallState.error} />;
   }
