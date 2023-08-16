@@ -90,7 +90,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
 
       submit().catch((error) => {
         if (error.errcode === "M_ROOM_IN_USE") {
-          setExistingRoomId(roomAliasLocalpartFromRoomName(roomName));
+          setExistingAlias(roomAliasLocalpartFromRoomName(roomName));
           setLoading(false);
           setError(undefined);
           modalState.open();
@@ -106,10 +106,10 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
 
   const recentRooms = useGroupCallRooms(client);
 
-  const [existingRoomId, setExistingRoomId] = useState<string>();
+  const [existingAlias, setExistingAlias] = useState<string>();
   const onJoinExistingRoom = useCallback(() => {
-    history.push(`/room/#?roomId=${existingRoomId}`);
-  }, [history, existingRoomId]);
+    history.push(`/${existingAlias}`);
+  }, [history, existingAlias]);
 
   const callNameLabel =
     callType === CallType.Video
