@@ -47,7 +47,7 @@ export const useManageRoomSharedKey = (roomId: string): string | null => {
     if (password === "") return;
     if (password === e2eeSharedKey) return;
 
-    setE2EESharedKey(password);
+    setE2EESharedKey?.(password);
   }, [password, e2eeSharedKey, setE2EESharedKey]);
 
   useEffect(() => {
