@@ -26,12 +26,12 @@ export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
 
 export const useInternalRoomSharedKey = (
   roomId: string
-): [string | null, ((value: string) => void) | null] => {
+): [string | null, (value: string) => void] => {
   const key = useMemo(() => getRoomSharedKeyLocalStorageKey(roomId), [roomId]);
   const [e2eeEnabled] = useEnableE2EE();
   const [roomSharedKey, setRoomSharedKey] = useLocalStorage(key);
 
-  return e2eeEnabled ? [roomSharedKey, setRoomSharedKey] : [null, null];
+  return [e2eeEnabled ? roomSharedKey : null, setRoomSharedKey];
 };
 
 export const useRoomSharedKey = (roomId: string): string | null => {
@@ -47,7 +47,7 @@ export const useManageRoomSharedKey = (roomId: string): string | null => {
     if (password === "") return;
     if (password === e2eeSharedKey) return;
 
-    setE2EESharedKey?.(password);
+    setE2EESharedKey(password);
   }, [password, e2eeSharedKey, setE2EESharedKey]);
 
   useEffect(() => {
