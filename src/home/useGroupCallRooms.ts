@@ -89,8 +89,7 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
 
       const groupCalls = client.groupCallEventHandler.groupCalls.values();
       const rooms = Array.from(groupCalls).map((groupCall) => groupCall.room);
-      const filteredRooms = rooms.filter((r) => r.getCanonicalAlias()); // We don't display rooms without an alias
-      const sortedRooms = sortRooms(client, filteredRooms);
+      const sortedRooms = sortRooms(client, rooms);
       const items = sortedRooms.map((room) => {
         const groupCall = client.getGroupCallForRoom(room.roomId)!;
 

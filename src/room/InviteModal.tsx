@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,13 +21,15 @@ import { Modal, ModalContent, ModalProps } from "../Modal";
 import { CopyButton } from "../button";
 import { getRoomUrl } from "../matrix-utils";
 import styles from "./InviteModal.module.css";
+import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 
 interface Props extends Omit<ModalProps, "title" | "children"> {
-  roomIdOrAlias: string;
+  roomId: string;
 }
 
-export const InviteModal: FC<Props> = ({ roomIdOrAlias, ...rest }) => {
+export const InviteModal: FC<Props> = ({ roomId, ...rest }) => {
   const { t } = useTranslation();
+  const roomSharedKey = useRoomSharedKey(roomId);
 
   return (
     <Modal
@@ -40,7 +42,7 @@ export const InviteModal: FC<Props> = ({ roomIdOrAlias, ...rest }) => {
         <p>{t("Copy and share this call link")}</p>
         <CopyButton
           className={styles.copyButton}
-          value={getRoomUrl(roomIdOrAlias)}
+          value={getRoomUrl(roomId, roomSharedKey ?? undefined)}
           data-testid="modal_inviteLink"
         />
       </ModalContent>

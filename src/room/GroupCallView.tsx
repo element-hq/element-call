@@ -32,13 +32,17 @@ import { CallEndedView } from "./CallEndedView";
 import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
-import { E2EEConfig } from "../livekit/useLiveKit";
 import { findDeviceByName } from "../media-utils";
 import { OpenIDLoader } from "../livekit/OpenIDLoader";
 import { ActiveCall } from "./InCallView";
 import { Config } from "../config/Config";
 import { MuteStates, useMuteStates } from "./MuteStates";
 import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
+import {
+  useManageRoomSharedKey,
+  useIsRoomE2EE,
+} from "../e2ee/sharedKeyManagement";
+import { useEnableE2EE } from "../settings/useSetting";
 
 declare global {
   interface Window {
@@ -72,6 +76,9 @@ export function GroupCallView({
     unencryptedEventsFromUsers,
     otelGroupCallMembership,
   } = useGroupCall(groupCall, client);
+
+  const e2eeSharedKey = useManageRoomSharedKey(groupCall.room.roomId);
+  const isRoomE2EE = useIsRoomE2EE(groupCall.room.roomId);
 
   const { t } = useTranslation();
 
@@ -241,8 +248,11 @@ export function GroupCallView({
     }
   }, [groupCall, state, leave]);
 
-  const [e2eeConfig, setE2EEConfig] = useState<E2EEConfig | undefined>(
-    undefined
+  const [e2eeEnabled] = useEnableE2EE();
+
+  const e2eeConfig = useMemo(
+    () => (e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined),
+    [e2eeSharedKey]
   );
 
   const onReconnect = useCallback(() => {
@@ -250,6 +260,22 @@ export function GroupCallView({
     setLeaveError(undefined);
     groupCall.enter();
   }, [groupCall]);
+
+  if (e2eeEnabled && isRoomE2EE && !e2eeSharedKey) {
+    return (
+      <ErrorView
+        error={
+          new Error(
+            "No E2EE key provided: please make sure the URL you're using to join this call has been retrieved using the in-app button."
+          )
+        }
+      />
+    );
+  }
+
+  if (!e2eeEnabled && isRoomE2EE) {
+    return <ErrorView error={new Error("You need to enable E2EE to join.")} />;
+  }
 
   const livekitServiceURL =
     groupCall.livekitServiceURL ?? Config.get().livekit?.livekit_service_url;
@@ -319,10 +345,7 @@ export function GroupCallView({
       <LobbyView
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={(e2eeConfig?: E2EEConfig) => {
-          setE2EEConfig(e2eeConfig);
-          enter();
-        }}
+        onEnter={() => enter()}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
       />
