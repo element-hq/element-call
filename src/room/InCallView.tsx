@@ -72,13 +72,13 @@ import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { E2EEConfig, useLiveKit } from "../livekit/useLiveKit";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
-import { useSFUConfig } from "../livekit/OpenIDLoader";
 import { E2EELock } from "../E2EELock";
 import { useEventEmitterThree } from "../useEvents";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { MuteStates } from "./MuteStates";
 import { useIsRoomE2EE } from "../e2ee/sharedKeyManagement";
+import { useOpenIDSFU } from "../livekit/openIDSFU";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -91,7 +91,7 @@ export interface ActiveCallProps extends Omit<InCallViewProps, "livekitRoom"> {
 }
 
 export function ActiveCall(props: ActiveCallProps) {
-  const sfuConfig = useSFUConfig();
+  const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
   const livekitRoom = useLiveKit(props.muteStates, sfuConfig, props.e2eeConfig);
 
   if (!livekitRoom) {
