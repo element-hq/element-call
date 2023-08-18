@@ -14,25 +14,41 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { logger } from "matrix-js-sdk/src/logger";
-import { CallMembership } from "matrix-js-sdk/src/matrixrtc/CallMembership";
 import {
   MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { useCallback, useEffect, useState } from "react";
+import { deepCompare } from "matrix-js-sdk/src/utils";
 
-export function useMatrixRTCSessionMemberships(
+import { LivekitFocus } from "../livekit/LivekitFocus";
+
+function getActiveFocus(
   rtcSession: MatrixRTCSession
-): CallMembership[] {
-  const [memberships, setMemberships] = useState(rtcSession.memberships);
+): LivekitFocus | undefined {
+  const oldestMembership = rtcSession.getOldestMembership();
+  return oldestMembership?.getActiveFoci()[0] as LivekitFocus;
+}
+
+/**
+ * Gets the currently active (livekit) focus for a MatrixRTC session
+ * This logic is specific to livekit foci where the whole call must use one
+ * and the same focus.
+ */
+export function useActiveFocus(
+  rtcSession: MatrixRTCSession
+): LivekitFocus | undefined {
+  const [activeFocus, setActiveFocus] = useState(() =>
+    getActiveFocus(rtcSession)
+  );
 
   const onMembershipsChanged = useCallback(() => {
-    logger.info(
-      `Memberships changed for call in room ${rtcSession.room.roomId} (${rtcSession.memberships.length} members)`
-    );
-    setMemberships(rtcSession.memberships);
-  }, [rtcSession]);
+    const newActiveFocus = getActiveFocus(rtcSession);
+
+    if (!deepCompare(activeFocus, newActiveFocus)) {
+      setActiveFocus(newActiveFocus);
+    }
+  }, [activeFocus, rtcSession]);
 
   useEffect(() => {
     rtcSession.on(
@@ -46,7 +62,7 @@ export function useMatrixRTCSessionMemberships(
         onMembershipsChanged
       );
     };
-  }, [rtcSession, onMembershipsChanged]);
+  });
 
-  return memberships;
+  return activeFocus;
 }

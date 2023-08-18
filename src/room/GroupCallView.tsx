@@ -21,7 +21,6 @@ import { useTranslation } from "react-i18next";
 import { Room } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { Focus } from "matrix-js-sdk/src/matrixrtc/focus";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { widget, ElementWidgetActions, JoinCallData } from "../widget";
@@ -32,11 +31,9 @@ import { CallEndedView } from "./CallEndedView";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../media-utils";
-//import { OpenIDLoader } from "../livekit/OpenIDLoader";
 import { ActiveCall } from "./InCallView";
 import { MuteStates, useMuteStates } from "./MuteStates";
 import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
-import { LivekitFocus } from "../livekit/LivekitFocus";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
@@ -69,21 +66,11 @@ export function GroupCallView({
   hideHeader,
   rtcSession,
 }: Props) {
-  /*const {
-    state,
-    error,
-    enter,
-    leave,
-    participants,
-    unencryptedEventsFromUsers,
-    otelGroupCallMembership,
-  } = useGroupCall(groupCall, client);*/
-
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
 
-  const e2eeSharedKey = useManageRoomSharedKey(groupCall.room.roomId);
-  const isRoomE2EE = useIsRoomE2EE(groupCall.room.roomId);
+  const e2eeSharedKey = useManageRoomSharedKey(rtcSession.room.roomId);
+  const isRoomE2EE = useIsRoomE2EE(rtcSession.room.roomId);
 
   const { t } = useTranslation();
 
@@ -260,21 +247,8 @@ export function GroupCallView({
   const onReconnect = useCallback(() => {
     setLeft(false);
     setLeaveError(undefined);
-    rtcSession.joinRoomSession();
+    enterRTCSession(rtcSession);
   }, [rtcSession]);
-
-  const focus: Focus | undefined = rtcSession
-    .getOldestMembership()
-    ?.getActiveFoci()?.[0];
-  if (
-    !focus ||
-    focus.type !== "livekit" ||
-    !(focus as LivekitFocus).livekit_alias ||
-    !(focus as LivekitFocus).livekit_service_url
-  ) {
-    logger.error("Incompatible focus on call", focus);
-    return <ErrorView error={new Error("Call focus is not compatible!")} />;
-  }
 
   if (e2eeEnabled && isRoomE2EE && !e2eeSharedKey) {
     return (
@@ -294,11 +268,6 @@ export function GroupCallView({
 
   if (isJoined) {
     return (
-      /*<OpenIDLoader
-        client={client}
-        groupCall={groupCall}
-        roomName={`${groupCall.room.roomId}-${groupCall.groupCallId}`}
-      >*/
       <ActiveCall
         client={client}
         rtcSession={rtcSession}
@@ -309,7 +278,6 @@ export function GroupCallView({
         e2eeConfig={e2eeConfig}
         //otelGroupCallMembership={otelGroupCallMembership}
       />
-      //</OpenIDLoader>
     );
   } else if (left) {
     // The call ended view is shown for two reasons: prompting guests to create
@@ -351,7 +319,7 @@ export function GroupCallView({
       <LobbyView
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={() => enter()}
+        onEnter={() => enterRTCSession(rtcSession)}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
       />
