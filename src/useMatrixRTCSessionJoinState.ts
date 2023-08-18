@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { logger } from "matrix-js-sdk/src/logger";
 import {
   MatrixRTCSession,
   MatrixRTCSessionEvent,
@@ -26,6 +27,11 @@ export function useMatrixRTCSessionJoinState(
   const [isJoined, setJoined] = useState(rtcSession.isJoined());
 
   const onJoinStateChanged = useCallback(() => {
+    logger.info(
+      `Session in room ${rtcSession.room.roomId} changed to ${
+        rtcSession.isJoined() ? "joined" : "left"
+      }`
+    );
     setJoined(rtcSession.isJoined());
   }, [rtcSession]);
 
