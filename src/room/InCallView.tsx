@@ -95,6 +95,7 @@ export function ActiveCall(props: ActiveCallProps) {
   const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
   const { livekitRoom, connState } = useLiveKit(
     props.muteStates,
+    props.rtcSession,
     sfuConfig,
     props.e2eeConfig
   );

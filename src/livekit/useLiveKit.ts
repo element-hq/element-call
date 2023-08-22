@@ -17,7 +17,6 @@ limitations under the License.
 import {
   ConnectionState,
   E2EEOptions,
-  ExternalE2EEKeyProvider,
   Room,
   RoomOptions,
   setLogLevel,
@@ -26,6 +25,8 @@ import { useLiveKitRoom } from "@livekit/components-react";
 import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/src/logger";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { ExternalE2EEKeyProvider } from "livekit-client/dist/src/e2ee/KeyProvider";
 
 import { defaultLiveKitOptions } from "./options";
 import { SFUConfig } from "./openIDSFU";
@@ -39,6 +40,7 @@ import {
   ECConnectionState,
   useECConnectionState,
 } from "./useECConnectionState";
+import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
 
 export type E2EEConfig = {
   sharedKey: string;
@@ -53,6 +55,7 @@ interface UseLivekitResult {
 
 export function useLiveKit(
   muteStates: MuteStates,
+  rtcSession: MatrixRTCSession,
   sfuConfig?: SFUConfig,
   e2eeConfig?: E2EEConfig
 ): UseLivekitResult {
