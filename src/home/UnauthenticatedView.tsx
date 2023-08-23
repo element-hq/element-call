@@ -40,7 +40,7 @@ import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
-import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
+import { useEnableSPAE2EE, useOptInAnalytics } from "../settings/useSetting";
 import { Config } from "../config/Config";
 import { E2EEBanner } from "../E2EEBanner";
 import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
@@ -60,7 +60,7 @@ export const UnauthenticatedView: FC = () => {
   const history = useHistory();
   const { t } = useTranslation();
 
-  const [e2eeEnabled] = useEnableE2EE();
+  const [e2eeEnabled] = useEnableSPAE2EE();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     (e) => {

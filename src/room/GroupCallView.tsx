@@ -40,8 +40,12 @@ import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
 import {
   useManageRoomSharedKey,
   useIsRoomE2EE,
+  useEnableEmbeddedE2EE,
+  useEnableE2EE,
 } from "../e2ee/sharedKeyManagement";
-import { useEnableE2EE } from "../settings/useSetting";
+import { useEnableSPAE2EE } from "../settings/useSetting";
+import { E2EEConfig, E2EEMode } from "../livekit/useLiveKit";
+import { useUrlParams } from "../UrlParams";
 
 declare global {
   interface Window {
@@ -71,6 +75,10 @@ export function GroupCallView({
 
   const e2eeSharedKey = useManageRoomSharedKey(rtcSession.room.roomId);
   const isRoomE2EE = useIsRoomE2EE(rtcSession.room.roomId);
+  const [spaE2EEEnabled] = useEnableSPAE2EE();
+  const embeddedE2EEEnabled = useEnableEmbeddedE2EE();
+  const e2eeEnabled = useEnableE2EE();
+  const { perParticipantE2EE } = useUrlParams();
 
   const { t } = useTranslation();
 
@@ -153,7 +161,7 @@ export function GroupCallView({
           }
         }
 
-        enterRTCSession(rtcSession);
+        enterRTCSession(rtcSession, embeddedE2EEEnabled);
 
         PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
         // we only have room sessions right now, so call ID is the emprty string - we use the room ID
@@ -172,18 +180,18 @@ export function GroupCallView({
         widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
     }
-  }, [rtcSession, preload]);
+  }, [rtcSession, preload, embeddedE2EEEnabled]);
 
   useEffect(() => {
     if (isEmbedded && !preload) {
       // In embedded mode, bypass the lobby and just enter the call straight away
-      enterRTCSession(rtcSession);
+      enterRTCSession(rtcSession, embeddedE2EEEnabled);
 
       PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
       // use the room ID as above
       PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
     }
-  }, [rtcSession, isEmbedded, preload]);
+  }, [rtcSession, isEmbedded, preload, embeddedE2EEEnabled]);
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
@@ -237,20 +245,21 @@ export function GroupCallView({
     }
   }, [isJoined, rtcSession]);
 
-  const [e2eeEnabled] = useEnableE2EE();
-
-  const e2eeConfig = useMemo(
-    () => (e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined),
-    [e2eeSharedKey]
-  );
+  const e2eeConfig = useMemo((): E2EEConfig | undefined => {
+    if (perParticipantE2EE) {
+      return { mode: E2EEMode.PerParticipantKey };
+    } else if (e2eeSharedKey) {
+      return { mode: E2EEMode.SharedKey, sharedKey: e2eeSharedKey };
+    }
+  }, [perParticipantE2EE, e2eeSharedKey]);
 
   const onReconnect = useCallback(() => {
     setLeft(false);
     setLeaveError(undefined);
-    enterRTCSession(rtcSession);
-  }, [rtcSession]);
+    enterRTCSession(rtcSession, embeddedE2EEEnabled);
+  }, [rtcSession, embeddedE2EEEnabled]);
 
-  if (e2eeEnabled && isRoomE2EE && !e2eeSharedKey) {
+  if (spaE2EEEnabled && isRoomE2EE && !e2eeSharedKey) {
     return (
       <ErrorView
         error={
@@ -319,7 +328,7 @@ export function GroupCallView({
       <LobbyView
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={() => enterRTCSession(rtcSession)}
+        onEnter={() => enterRTCSession(rtcSession, embeddedE2EEEnabled)}
         isEmbedded={isEmbedded}
         hideHeader={hideHeader}
       />

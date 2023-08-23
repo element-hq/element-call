@@ -15,11 +15,7 @@ limitations under the License.
 */
 
 import { logger } from "@sentry/utils";
-import {
-  BaseKeyProvider,
-  KeyProviderOptions,
-  createKeyMaterialFromString,
-} from "livekit-client";
+import { BaseKeyProvider, createKeyMaterialFromString } from "livekit-client";
 import { CallMembership } from "matrix-js-sdk/src/matrixrtc/CallMembership";
 import {
   MatrixRTCSession,
@@ -27,18 +23,28 @@ import {
 } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 export class MatrixKeyProvider extends BaseKeyProvider {
-  constructor(
-    private rtcSession: MatrixRTCSession,
-    keyProviderOptions: Partial<KeyProviderOptions> = {}
-  ) {
-    super(keyProviderOptions);
+  private rtcSession?: MatrixRTCSession;
 
-    const encryptionKey = this.rtcSession.activeEncryptionKey;
+  public setRTCSession(rtcSession: MatrixRTCSession) {
+    const encryptionKey = rtcSession.activeEncryptionKey;
     if (!encryptionKey) {
       throw new Error(
         "MatrixKeyProvider requires the given MatrixRTCSession to have an activeEncryptionKey"
       );
     }
+
+    if (this.rtcSession) {
+      this.rtcSession.off(
+        MatrixRTCSessionEvent.MembershipsChanged,
+        this.onMemberShipsChanged
+      );
+      this.rtcSession.off(
+        MatrixRTCSessionEvent.ActiveEncryptionKeyChanged,
+        this.onEncryptionKeyChanged
+      );
+    }
+
+    this.rtcSession = rtcSession;
 
     this.rtcSession.on(
       MatrixRTCSessionEvent.MembershipsChanged,

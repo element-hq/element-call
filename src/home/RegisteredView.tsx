@@ -38,7 +38,7 @@ import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { Caption, Title } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
-import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
+import { useEnableSPAE2EE, useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { E2EEBanner } from "../E2EEBanner";
 import { setLocalStorageItem } from "../useLocalStorage";
@@ -57,7 +57,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
   const history = useHistory();
   const { t } = useTranslation();
   const { modalState, modalProps } = useModalTriggerState();
-  const [e2eeEnabled] = useEnableE2EE();
+  const [e2eeEnabled] = useEnableSPAE2EE();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     (e: FormEvent) => {

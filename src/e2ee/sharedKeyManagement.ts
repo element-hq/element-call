@@ -15,8 +15,9 @@ limitations under the License.
 */
 
 import { useEffect, useMemo } from "react";
+import { isE2EESupported } from "livekit-client";
 
-import { useEnableE2EE } from "../settings/useSetting";
+import { useEnableSPAE2EE } from "../settings/useSetting";
 import { useLocalStorage } from "../useLocalStorage";
 import { useClient } from "../ClientContext";
 import { PASSWORD_STRING, useUrlParams } from "../UrlParams";
@@ -28,7 +29,7 @@ export const useInternalRoomSharedKey = (
   roomId: string
 ): [string | null, (value: string) => void] => {
   const key = useMemo(() => getRoomSharedKeyLocalStorageKey(roomId), [roomId]);
-  const [e2eeEnabled] = useEnableE2EE();
+  const [e2eeEnabled] = useEnableSPAE2EE();
   const [roomSharedKey, setRoomSharedKey] = useLocalStorage(key);
 
   return [e2eeEnabled ? roomSharedKey : null, setRoomSharedKey];
@@ -67,7 +68,7 @@ export const useManageRoomSharedKey = (roomId: string): string | null => {
 };
 
 export const useIsRoomE2EE = (roomId: string): boolean | null => {
-  const { isEmbedded } = useUrlParams();
+  const { isEmbedded, perParticipantE2EE } = useUrlParams();
   const client = useClient();
   const room = useMemo(
     () => client.client?.getRoom(roomId) ?? null,
@@ -75,11 +76,32 @@ export const useIsRoomE2EE = (roomId: string): boolean | null => {
   );
   const isE2EE = useMemo(() => {
     if (isEmbedded) {
-      return false;
+      return perParticipantE2EE;
     } else {
       return room ? !room?.getCanonicalAlias() : null;
     }
-  }, [isEmbedded, room]);
+  }, [room, isEmbedded, perParticipantE2EE]);
 
   return isE2EE;
+};
+
+export const useEnableEmbeddedE2EE = (): boolean => {
+  const { isEmbedded, perParticipantE2EE } = useUrlParams();
+
+  if (!isEmbedded) return false;
+  if (!isE2EESupported()) return false;
+
+  return perParticipantE2EE;
+};
+
+export const useEnableE2EE = (): boolean => {
+  const [spaE2EEEnabled] = useEnableSPAE2EE();
+  const embeddedE2EEEnabled = useEnableEmbeddedE2EE();
+
+  const e2eeEnabled = useMemo(
+    () => spaE2EEEnabled || embeddedE2EEEnabled,
+    [spaE2EEEnabled, embeddedE2EEEnabled]
+  );
+
+  return e2eeEnabled;
 };

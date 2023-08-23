@@ -26,7 +26,7 @@ import type { Room } from "matrix-js-sdk/src/models/room";
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { setLocalStorageItem } from "../useLocalStorage";
 import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
-import { useEnableE2EE } from "../settings/useSetting";
+import { useEnableSPAE2EE } from "../settings/useSetting";
 import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
 
 export type GroupCallLoaded = {
@@ -62,7 +62,7 @@ export const useLoadGroupCall = (
   const { t } = useTranslation();
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
 
-  const [e2eeEnabled] = useEnableE2EE();
+  const [e2eeEnabled] = useEnableSPAE2EE();
 
   useEffect(() => {
     const fetchOrCreateRoom = async (): Promise<Room> => {

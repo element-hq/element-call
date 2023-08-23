@@ -92,6 +92,10 @@ interface UrlParams {
    * E2EE password
    */
   password: string | null;
+  /**
+   * Whether we the app should use per participant keys for E2EE.
+   */
+  perParticipantE2EE: boolean;
 }
 
 /**
@@ -190,6 +194,7 @@ export const getUrlParams = (
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
     analyticsID: getParam("analyticsID"),
     allowIceFallback: hasParam("allowIceFallback"),
+    perParticipantE2EE: hasParam("perParticipantE2EE"),
   };
 };
 

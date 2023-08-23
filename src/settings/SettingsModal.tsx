@@ -34,7 +34,7 @@ import {
   useOptInAnalytics,
   useDeveloperSettingsTab,
   useShowConnectionStats,
-  useEnableE2EE,
+  useEnableSPAE2EE,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
@@ -69,7 +69,7 @@ export const SettingsModal = (props: Props) => {
     useDeveloperSettingsTab();
   const [showConnectionStats, setShowConnectionStats] =
     useShowConnectionStats();
-  const [enableE2EE, setEnableE2EE] = useEnableE2EE();
+  const [enableE2EE, setEnableE2EE] = useEnableSPAE2EE();
 
   const downloadDebugLog = useDownloadDebugLog();
 

@@ -16,7 +16,7 @@ limitations under the License.
 
 import {
   ConnectionState,
-  E2EEOptions,
+  ExternalE2EEKeyProvider,
   Room,
   RoomOptions,
   setLogLevel,
@@ -42,8 +42,14 @@ import {
 } from "./useECConnectionState";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
 
+export enum E2EEMode {
+  PerParticipantKey = "per_participant_key",
+  SharedKey = "shared_key",
+}
+
 export type E2EEConfig = {
-  sharedKey: string;
+  mode: E2EEMode;
+  sharedKey?: string;
 };
 
 setLogLevel("debug");
@@ -60,21 +66,33 @@ export function useLiveKit(
   e2eeConfig?: E2EEConfig
 ): UseLivekitResult {
   const e2eeOptions = useMemo(() => {
-    if (!e2eeConfig?.sharedKey) return undefined;
+    if (!e2eeConfig) return undefined;
 
-    return {
-      keyProvider: new ExternalE2EEKeyProvider(),
-      worker: new E2EEWorker(),
-    } as E2EEOptions;
+    if (e2eeConfig.mode === E2EEMode.PerParticipantKey) {
+      return {
+        keyProvider: new MatrixKeyProvider(),
+        worker: new E2EEWorker(),
+      };
+    } else if (e2eeConfig.mode === E2EEMode.SharedKey && e2eeConfig.sharedKey) {
+      return {
+        keyProvider: new ExternalE2EEKeyProvider(),
+        worker: new E2EEWorker(),
+      };
+    }
   }, [e2eeConfig]);
 
   useEffect(() => {
-    if (!e2eeConfig?.sharedKey || !e2eeOptions) return;
+    if (!e2eeOptions) return;
+    if (!e2eeConfig) return;
 
-    (e2eeOptions.keyProvider as ExternalE2EEKeyProvider).setKey(
-      e2eeConfig?.sharedKey
-    );
-  }, [e2eeOptions, e2eeConfig?.sharedKey]);
+    if (e2eeConfig.mode === E2EEMode.PerParticipantKey) {
+      (e2eeOptions.keyProvider as MatrixKeyProvider).setRTCSession(rtcSession);
+    } else if (e2eeConfig.mode === E2EEMode.SharedKey && e2eeConfig.sharedKey) {
+      (e2eeOptions.keyProvider as ExternalE2EEKeyProvider).setKey(
+        e2eeConfig.sharedKey
+      );
+    }
+  }, [e2eeOptions, e2eeConfig, rtcSession]);
 
   const initialMuteStates = useRef<MuteStates>(muteStates);
   const devices = useMediaDevices();

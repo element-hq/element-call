@@ -89,14 +89,15 @@ export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
   return [false, null];
 };
 
-export const useEnableE2EE = (): DisableableSetting<boolean | null> => {
+export const useEnableSPAE2EE = (): DisableableSetting<boolean | null> => {
   const settingVal = useSetting<boolean | null>(
     "enable-end-to-end-encryption",
     false
   );
-  if (isE2EESupported()) return settingVal;
 
-  return [false, null];
+  if (!isE2EESupported()) return [false, null];
+
+  return settingVal;
 };
 
 export const useDeveloperSettingsTab = () =>
