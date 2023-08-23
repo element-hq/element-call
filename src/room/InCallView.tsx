@@ -467,16 +467,6 @@ function useParticipantTiles(
       memberships.map((m) => [`${m.member.userId}:${m.deviceId}`, m.member])
     );
 
-    // The IDs of the participants who published membership event to the room (i.e. are present from Matrix perspective).
-    /*const matrixParticipants: Map<string, RoomMember> = new Map(
-      [...participants.entries()].flatMap(([user, devicesMap]) => {
-        return [...devicesMap.keys()].map((deviceId) => [
-          `${user.userId}:${deviceId}`,
-          user,
-        ]);
-      })
-    );*/
-
     const hasPresenter =
       sfuParticipants.find((p) => p.isScreenShareEnabled) !== undefined;
     let allGhosts = true;
@@ -493,6 +483,11 @@ function useParticipantTiles(
 
         const id = sfuParticipant.identity;
         const member = matrixParticipants.get(id);
+        if (member === undefined) {
+          logger.warn(
+            `Ruh, roh! No matrix member found for SFU participant ${id}: creating g-g-g-ghost!`
+          );
+        }
         allGhosts &&= member === undefined;
 
         const userMediaTile = {
