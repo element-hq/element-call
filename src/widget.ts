@@ -23,7 +23,6 @@ import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { LazyEventEmitter } from "./LazyEventEmitter";
 import { getUrlParams } from "./UrlParams";
-import { Config } from "./config/Config";
 
 // Subset of the actions in matrix-react-sdk
 export enum ElementWidgetActions {
@@ -164,9 +163,6 @@ export const widget: WidgetHelpers | null = (() => {
 
       const clientPromise = new Promise<MatrixClient>((resolve) => {
         (async () => {
-          // wait for the config file to be ready (we load very early on so it might not
-          // be otherwise)
-          await Config.init();
           await client.startClient();
           resolve(client);
         })();
