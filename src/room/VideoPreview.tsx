@@ -119,7 +119,7 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
 
   return (
     <div className={styles.preview} ref={previewRef}>
-      <video ref={videoEl} muted playsInline disablePictureInPicture />
+      <video data-testid="preview_video" ref={videoEl} muted playsInline disablePictureInPicture />
       <>
         {!muteStates.video.enabled && (
           <div className={styles.avatarContainer}>
@@ -135,11 +135,13 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
             muted={!muteStates.audio.enabled}
             onPress={onAudioPress}
             disabled={muteStates.audio.setEnabled === null}
+            data-testid="preview_mute"
           />
           <VideoButton
             muted={!muteStates.video.enabled}
             onPress={onVideoPress}
             disabled={muteStates.video.setEnabled === null}
+            data-testid="preview_videomute"
           />
           <SettingsButton onPress={openSettings} />
         </div>

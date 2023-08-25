@@ -432,7 +432,7 @@ export function InCallView({
           <RightNav>
             <GridLayoutMenu layout={layout} setLayout={setLayout} />
             {joinRule === JoinRule.Public && (
-              <InviteButton variant="icon" onClick={openInvite} />
+              <InviteButton data-testid="call_invite" variant="icon" onClick={openInvite} />
             )}
           </RightNav>
         </Header>

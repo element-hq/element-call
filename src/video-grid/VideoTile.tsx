@@ -183,7 +183,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         ) : (
           <div className={classNames(styles.infoBubble, styles.memberName)}>
             {microphoneMuted === false ? <MicIcon /> : <MicMutedIcon />}
-            <span title={displayName}>{displayName}</span>
+            <span data-testid="videoTile_caption" title={displayName}>{displayName}</span>
             {showConnectionStats && (
               <ConnectionQualityIndicator participant={sfuParticipant} />
             )}
@@ -191,6 +191,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         )}
         <VideoTrack
           participant={sfuParticipant}
+          data-testid="videoTile_video"
           source={
             content === TileContent.UserMedia
               ? Track.Source.Camera
