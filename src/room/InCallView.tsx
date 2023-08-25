@@ -27,6 +27,7 @@ import classNames from "classnames";
 import { DisconnectReason, Room, RoomEvent, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { Room as MatrixRoom } from "matrix-js-sdk/src/models/room";
 import { Ref, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
@@ -241,7 +242,7 @@ export function InCallView({
   const reducedControls = boundsValid && bounds.width <= 400;
   const noControls = reducedControls && bounds.height <= 400;
 
-  const items = useParticipantTiles(livekitRoom, memberships);
+  const items = useParticipantTiles(livekitRoom, rtcSession.room);
   const { fullscreenItem, toggleFullscreen, exitFullscreen } =
     useFullscreen(items);
 
@@ -454,19 +455,33 @@ export function InCallView({
   );
 }
 
+function findMatrixMember(
+  room: MatrixRoom,
+  id: string
+): RoomMember | undefined {
+  const parts = id.split(":");
+  if (parts.length < 2) {
+    logger.warn(
+      "Livekit participants ID doesn't look like a userId:deviceId combination"
+    );
+    return undefined;
+  }
+
+  parts.pop();
+  const userId = parts.join(":");
+
+  return room.getMember(userId) ?? undefined;
+}
+
 function useParticipantTiles(
   livekitRoom: Room,
-  memberships: CallMembership[]
+  matrixRoom: MatrixRoom
 ): TileDescriptor<ItemData>[] {
   const sfuParticipants = useParticipants({
     room: livekitRoom,
   });
 
   const items = useMemo(() => {
-    const matrixParticipants: Map<string, RoomMember> = new Map(
-      memberships.map((m) => [`${m.member.userId}:${m.deviceId}`, m.member])
-    );
-
     const hasPresenter =
       sfuParticipants.find((p) => p.isScreenShareEnabled) !== undefined;
     let allGhosts = true;
@@ -482,10 +497,12 @@ function useParticipantTiles(
             : false;
 
         const id = sfuParticipant.identity;
-        const member = matrixParticipants.get(id);
-        if (member === undefined) {
+        const member = findMatrixMember(matrixRoom, id);
+        // We always start with a local participant wit the empty string as their ID before we're
+        // connected, this is fine and we'll be in "all ghosts" mode.
+        if (id !== "" && member === undefined) {
           logger.warn(
-            `Ruh, roh! No matrix member found for SFU participant ${id}: creating g-g-g-ghost!`
+            `Ruh, roh! No matrix member found for SFU participant '${id}': creating g-g-g-ghost!`
           );
         }
         allGhosts &&= member === undefined;
@@ -539,7 +556,7 @@ function useParticipantTiles(
     // If every item is a ghost, that probably means we're still connecting and
     // shouldn't bother showing anything yet
     return allGhosts ? [] : tiles;
-  }, [memberships, sfuParticipants]);
+  }, [matrixRoom, sfuParticipants]);
 
   return items;
 }
