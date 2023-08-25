@@ -67,15 +67,19 @@ export const useManageRoomSharedKey = (roomId: string): string | null => {
 };
 
 export const useIsRoomE2EE = (roomId: string): boolean | null => {
+  const { isEmbedded } = useUrlParams();
   const client = useClient();
   const room = useMemo(
     () => client.client?.getRoom(roomId) ?? null,
     [roomId, client.client]
   );
-  const isE2EE = useMemo(
-    () => (room ? !room?.getCanonicalAlias() : null),
-    [room]
-  );
+  const isE2EE = useMemo(() => {
+    if (isEmbedded) {
+      return false;
+    } else {
+      return room ? !room?.getCanonicalAlias() : null;
+    }
+  }, [isEmbedded, room]);
 
   return isE2EE;
 };
