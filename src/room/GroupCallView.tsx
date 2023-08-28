@@ -42,7 +42,7 @@ import {
   useIsRoomE2EE,
   useEnableEmbeddedE2EE,
   useEnableE2EE,
-} from "../e2ee/sharedKeyManagement";
+} from "../e2ee/e2eeHooks";
 import { useEnableSPAE2EE } from "../settings/useSetting";
 import { E2EEConfig, E2EEMode } from "../livekit/useLiveKit";
 import { useUrlParams } from "../UrlParams";

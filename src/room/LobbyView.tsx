@@ -26,7 +26,7 @@ import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
 import { MuteStates } from "./MuteStates";
-import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
+import { useRoomSharedKey } from "../e2ee/e2eeHooks";
 
 interface Props {
   matrixInfo: MatrixInfo;

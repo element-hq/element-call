@@ -25,7 +25,7 @@ import styles from "./CallList.module.css";
 import { getRoomUrl } from "../matrix-utils";
 import { Body } from "../typography/Typography";
 import { GroupCallRoom } from "./useGroupCallRooms";
-import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
+import { useRoomSharedKey } from "../e2ee/e2eeHooks";
 
 interface CallListProps {
   rooms: GroupCallRoom[];

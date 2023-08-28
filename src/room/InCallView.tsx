@@ -76,7 +76,7 @@ import { E2EELock } from "../E2EELock";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { MuteStates } from "./MuteStates";
-import { useIsRoomE2EE } from "../e2ee/sharedKeyManagement";
+import { useIsRoomE2EE } from "../e2ee/e2eeHooks";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
 import { ECConnectionState } from "../livekit/useECConnectionState";
 

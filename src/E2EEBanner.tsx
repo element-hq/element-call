@@ -19,7 +19,7 @@ import { Trans } from "react-i18next";
 import { Banner } from "./Banner";
 import styles from "./E2EEBanner.module.css";
 import { ReactComponent as LockOffIcon } from "./icons/LockOff.svg";
-import { useEnableE2EE } from "./e2ee/sharedKeyManagement";
+import { useEnableE2EE } from "./e2ee/e2eeHooks";
 
 export const E2EEBanner = () => {
   const e2eeEnabled = useEnableE2EE();

@@ -42,7 +42,7 @@ import { useEnableSPAE2EE, useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { E2EEBanner } from "../E2EEBanner";
 import { setLocalStorageItem } from "../useLocalStorage";
-import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
+import { getRoomSharedKeyLocalStorageKey } from "../e2ee/e2eeHooks";
 
 interface Props {
   client: MatrixClient;

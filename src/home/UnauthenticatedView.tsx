@@ -43,7 +43,7 @@ import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { useEnableSPAE2EE, useOptInAnalytics } from "../settings/useSetting";
 import { Config } from "../config/Config";
 import { E2EEBanner } from "../E2EEBanner";
-import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
+import { getRoomSharedKeyLocalStorageKey } from "../e2ee/e2eeHooks";
 import { setLocalStorageItem } from "../useLocalStorage";
 
 export const UnauthenticatedView: FC = () => {

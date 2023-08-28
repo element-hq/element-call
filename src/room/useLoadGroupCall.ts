@@ -27,7 +27,7 @@ import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { setLocalStorageItem } from "../useLocalStorage";
 import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
 import { useEnableSPAE2EE } from "../settings/useSetting";
-import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
+import { getRoomSharedKeyLocalStorageKey } from "../e2ee/e2eeHooks";
 
 export type GroupCallLoaded = {
   kind: "loaded";
