@@ -2,7 +2,7 @@
   "default_server_config": {
     "m.homeserver": {
       "base_url": "https://call.ems.host",
-      "server_name": "call.ems.host"
+      "server_name": "call-unstable.ems.host"
     }
   },
   "livekit": {
