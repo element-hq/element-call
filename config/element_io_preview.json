@@ -1,7 +1,7 @@
 {
   "default_server_config": {
     "m.homeserver": {
-      "base_url": "https://call.ems.host",
+      "base_url": "https://call-unstable.ems.host",
       "server_name": "call-unstable.ems.host"
     }
   },
