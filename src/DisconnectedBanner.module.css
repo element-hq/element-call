@@ -17,7 +17,7 @@ limitations under the License.
 .banner {
   position: absolute;
   padding: 29px;
-  background-color: var(--quaternary-content);
+  background-color: var(--cpd-color-bg-subtle-primary);
   vertical-align: middle;
   font-size: var(--font-size-body);
   text-align: center;

@@ -20,7 +20,7 @@ limitations under the License.
 }
 
 .settingsModal p {
-  color: var(--secondary-content);
+  color: var(--cpd-color-text-secondary);
 }
 
 .tabContainer {

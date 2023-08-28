@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 .inspector {
-  background-color: var(--system);
+  background-color: var(--cpd-color-bg-subtle-secondary);
 }
 
 .scrollContainer {
@@ -36,6 +36,6 @@ limitations under the License.
 
 .sequenceDiagramViewer :global(.messageText) {
   font-size: var(--font-size-caption);
-  fill: var(--primary-content) !important;
-  stroke: var(--primary-content) !important;
+  fill: var(--cpd-color-text-primary) !important;
+  stroke: var(--cpd-color-text-primary) !important;
 }

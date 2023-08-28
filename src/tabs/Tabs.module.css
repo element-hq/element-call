@@ -44,12 +44,12 @@ limitations under the License.
 }
 
 .tab > * {
-  color: var(--secondary-content);
+  color: var(--cpd-color-text-secondary);
   margin: 0 8px 0 0;
 }
 
 .tab svg * {
-  fill: var(--secondary-content);
+  fill: var(--cpd-color-text-secondary);
 }
 
 .tab > :last-child {
@@ -57,15 +57,15 @@ limitations under the License.
 }
 
 .tab.selected {
-  background-color: var(--accent);
+  background-color: var(--cpd-color-text-action-accent);
 }
 
 .tab.selected * {
-  color: var(--primary-content);
+  color: var(--stopgap-color-on-solid-accent);
 }
 
 .tab.selected svg * {
-  fill: var(--primary-content);
+  fill: var(--stopgap-color-on-solid-accent);
 }
 
 .tab.disabled {
