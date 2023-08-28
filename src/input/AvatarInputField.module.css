@@ -42,7 +42,7 @@ limitations under the License.
   position: absolute;
   bottom: 11px;
   right: -4px;
-  background-color: var(--quinary-content);
+  background-color: var(--cpd-color-subtle-primary);
   width: 20px;
   height: 20px;
   border-radius: 10px;
@@ -53,7 +53,7 @@ limitations under the License.
 }
 
 .removeButton {
-  color: var(--accent);
+  color: var(--cpd-color-text-action-accent);
   font-size: var(--font-size-caption);
   padding: 6px 0;
 }
