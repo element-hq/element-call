@@ -27,6 +27,13 @@ export interface SFUConfig {
   jwt: string;
 }
 
+export function sfuConfigEquals(a?: SFUConfig, b?: SFUConfig): boolean {
+  if (a === undefined && b === undefined) return true;
+  if (a === undefined || b === undefined) return false;
+
+  return a.jwt === b.jwt && a.url === b.url;
+}
+
 // The bits we need from MatrixClient
 export type OpenIDClientParts = Pick<
   MatrixClient,

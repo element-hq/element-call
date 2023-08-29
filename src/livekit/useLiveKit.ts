@@ -22,7 +22,7 @@ import {
   RoomOptions,
   setLogLevel,
 } from "livekit-client";
-import { useConnectionState, useLiveKitRoom } from "@livekit/components-react";
+import { useLiveKitRoom } from "@livekit/components-react";
 import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/src/logger";
@@ -35,6 +35,10 @@ import {
   MediaDevices,
   useMediaDevices,
 } from "./MediaDevicesContext";
+import {
+  ECConnectionState,
+  useECConnectionState,
+} from "./useECConnectionState";
 
 export type E2EEConfig = {
   sharedKey: string;
@@ -42,11 +46,16 @@ export type E2EEConfig = {
 
 setLogLevel("debug");
 
+interface UseLivekitResult {
+  livekitRoom?: Room;
+  connState: ECConnectionState;
+}
+
 export function useLiveKit(
   muteStates: MuteStates,
   sfuConfig?: SFUConfig,
   e2eeConfig?: E2EEConfig
-): Room | undefined {
+): UseLivekitResult {
   const e2eeOptions = useMemo(() => {
     if (!e2eeConfig?.sharedKey) return undefined;
 
@@ -101,7 +110,7 @@ export function useLiveKit(
     room: roomWithoutProps,
   });
 
-  const connectionState = useConnectionState(roomWithoutProps);
+  const connectionState = useECConnectionState(room, sfuConfig);
 
   useEffect(() => {
     // Sync the requested mute states with LiveKit's mute states. We do it this
@@ -149,5 +158,8 @@ export function useLiveKit(
     }
   }, [room, devices, connectionState]);
 
-  return room;
+  return {
+    connState: connectionState,
+    livekitRoom: room,
+  };
 }

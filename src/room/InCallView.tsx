@@ -24,7 +24,7 @@ import {
 } from "@livekit/components-react";
 import { usePreventScroll } from "@react-aria/overlays";
 import classNames from "classnames";
-import { DisconnectReason, Room, RoomEvent, Track } from "livekit-client";
+import { Room, Track, ConnectionState } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room as MatrixRoom } from "matrix-js-sdk/src/models/room";
@@ -34,7 +34,6 @@ import useMeasure from "react-use-measure";
 import { OverlayTriggerState } from "@react-stately/overlays";
 import { JoinRule } from "matrix-js-sdk/src/@types/partials";
 import { logger } from "matrix-js-sdk/src/logger";
-import { RoomEventCallbacks } from "livekit-client/dist/src/room/Room";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { CallMembership } from "matrix-js-sdk/src/matrixrtc/CallMembership";
 
@@ -74,12 +73,12 @@ import { E2EEConfig, useLiveKit } from "../livekit/useLiveKit";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
 import { E2EELock } from "../E2EELock";
-import { useEventEmitterThree } from "../useEvents";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { MuteStates } from "./MuteStates";
 import { useIsRoomE2EE } from "../e2ee/sharedKeyManagement";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
+import { ECConnectionState } from "../livekit/useECConnectionState";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -87,13 +86,18 @@ const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
-export interface ActiveCallProps extends Omit<InCallViewProps, "livekitRoom"> {
+export interface ActiveCallProps
+  extends Omit<InCallViewProps, "livekitRoom" | "connState"> {
   e2eeConfig?: E2EEConfig;
 }
 
 export function ActiveCall(props: ActiveCallProps) {
   const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
-  const livekitRoom = useLiveKit(props.muteStates, sfuConfig, props.e2eeConfig);
+  const { livekitRoom, connState } = useLiveKit(
+    props.muteStates,
+    sfuConfig,
+    props.e2eeConfig
+  );
 
   if (!livekitRoom) {
     return null;
@@ -105,7 +109,7 @@ export function ActiveCall(props: ActiveCallProps) {
 
   return (
     <RoomContext.Provider value={livekitRoom}>
-      <InCallView {...props} livekitRoom={livekitRoom} />
+      <InCallView {...props} livekitRoom={livekitRoom} connState={connState} />
     </RoomContext.Provider>
   );
 }
@@ -119,6 +123,7 @@ export interface InCallViewProps {
   onLeave: (error?: Error) => void;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
+  connState: ECConnectionState;
 }
 
 export function InCallView({
@@ -130,10 +135,19 @@ export function InCallView({
   onLeave,
   hideHeader,
   otelGroupCallMembership,
+  connState,
 }: InCallViewProps) {
   const { t } = useTranslation();
   usePreventScroll();
   useWakeLock();
+
+  useEffect(() => {
+    if (connState === ConnectionState.Disconnected) {
+      // annoyingly we don't get the disconnection reason this way,
+      // only by listening for the emitted event
+      onLeave(new Error("Disconnected from call server"));
+    }
+  }, [connState, onLeave]);
 
   const isRoomE2EE = useIsRoomE2EE(rtcSession.room.roomId);
 
@@ -182,26 +196,9 @@ export function InCallView({
     async (muted) => await localParticipant.setMicrophoneEnabled(!muted)
   );
 
-  const onDisconnected = useCallback(
-    (reason?: DisconnectReason) => {
-      PosthogAnalytics.instance.eventCallDisconnected.track(reason);
-      logger.info("Disconnected from livekit call with reason ", reason);
-      onLeave(
-        new Error("Disconnected from LiveKit call with reason " + reason)
-      );
-    },
-    [onLeave]
-  );
-
   const onLeavePress = useCallback(() => {
     onLeave();
   }, [onLeave]);
-
-  useEventEmitterThree<RoomEvent.Disconnected, RoomEventCallbacks>(
-    livekitRoom,
-    RoomEvent.Disconnected,
-    onDisconnected
-  );
 
   useEffect(() => {
     widget?.api.transport.send(
@@ -459,6 +456,8 @@ function findMatrixMember(
   room: MatrixRoom,
   id: string
 ): RoomMember | undefined {
+  if (!id) return undefined;
+
   const parts = id.split(":");
   if (parts.length < 2) {
     logger.warn(
