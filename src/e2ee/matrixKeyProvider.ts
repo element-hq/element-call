@@ -14,9 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { logger } from "@sentry/utils";
 import { BaseKeyProvider, createKeyMaterialFromString } from "livekit-client";
-import { CallMembership } from "matrix-js-sdk/src/matrixrtc/CallMembership";
 import {
   MatrixRTCSession,
   MatrixRTCSessionEvent,
@@ -26,20 +24,9 @@ export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;
 
   public setRTCSession(rtcSession: MatrixRTCSession) {
-    const encryptionKey = rtcSession.activeEncryptionKey;
-    if (!encryptionKey) {
-      throw new Error(
-        "MatrixKeyProvider requires the given MatrixRTCSession to have an activeEncryptionKey"
-      );
-    }
-
     if (this.rtcSession) {
       this.rtcSession.off(
-        MatrixRTCSessionEvent.MembershipsChanged,
-        this.onMemberShipsChanged
-      );
-      this.rtcSession.off(
-        MatrixRTCSessionEvent.ActiveEncryptionKeyChanged,
+        MatrixRTCSessionEvent.EncryptionKeyChanged,
         this.onEncryptionKeyChanged
       );
     }
@@ -47,41 +34,30 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     this.rtcSession = rtcSession;
 
     this.rtcSession.on(
-      MatrixRTCSessionEvent.MembershipsChanged,
-      this.onMemberShipsChanged
-    );
-    this.rtcSession.on(
-      MatrixRTCSessionEvent.ActiveEncryptionKeyChanged,
+      MatrixRTCSessionEvent.EncryptionKeyChanged,
       this.onEncryptionKeyChanged
     );
 
-    this.onEncryptionKeyChanged(encryptionKey);
-    this.onMemberShipsChanged([], this.rtcSession.memberships);
-  }
-
-  private onEncryptionKeyChanged = async (key: string) => {
-    this.onSetEncryptionKey(await createKeyMaterialFromString(key), undefined);
-  };
-
-  private onMemberShipsChanged = async (
-    _: CallMembership[],
-    newMemberships: CallMembership[]
-  ) => {
-    for (const membership of newMemberships) {
-      const participantId = `${membership.member.userId}:${membership.deviceId}`;
-      const encryptionKey = await membership.getActiveEncryptionKey();
-
-      if (!encryptionKey) {
-        logger.warn(
-          `Participant ${participantId} did not share a key over Matrix`
-        );
-        continue;
-      }
-
-      this.onSetEncryptionKey(
-        await createKeyMaterialFromString(encryptionKey),
-        participantId
+    for (const [
+      participant,
+      encryptionKey,
+    ] of this.rtcSession.encryptionKeys.entries()) {
+      this.onEncryptionKeyChanged(
+        encryptionKey,
+        participant.userId,
+        participant.deviceId
       );
     }
+  }
+
+  private onEncryptionKeyChanged = async (
+    encryptionKey: string,
+    userId: string,
+    deviceId: string
+  ) => {
+    this.onSetEncryptionKey(
+      await createKeyMaterialFromString(encryptionKey),
+      `${userId}:${deviceId}`
+    );
   };
 }

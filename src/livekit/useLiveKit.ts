@@ -26,7 +26,6 @@ import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { ExternalE2EEKeyProvider } from "livekit-client/dist/src/e2ee/KeyProvider";
 
 import { defaultLiveKitOptions } from "./options";
 import { SFUConfig } from "./openIDSFU";
