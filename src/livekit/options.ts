@@ -11,7 +11,9 @@ import {
 const defaultLiveKitPublishOptions: TrackPublishDefaults = {
   audioPreset: AudioPresets.music,
   dtx: true,
-  red: true,
+  // disable red because the livekit server strips out red packets for clients
+  // that don't support it (firefox) but of course that doesn't work with e2ee.
+  red: false,
   forceStereo: false,
   simulcast: true,
   videoSimulcastLayers: [VideoPresets.h180, VideoPresets.h360] as VideoPreset[],
