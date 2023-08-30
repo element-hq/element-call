@@ -37,7 +37,7 @@ limitations under the License.
 }
 
 .link {
-  color: var(--links);
+  color: var(--cpd-color-text-link-external);
 }
 
 .link:hover {
@@ -46,7 +46,7 @@ limitations under the License.
 }
 
 .primary {
-  color: var(--accent);
+  color: var(--cpd-color-text-action-accent);
 }
 
 .overflowEllipsis {

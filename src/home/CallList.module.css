@@ -26,7 +26,7 @@ limitations under the License.
 .callTile {
   height: 95px;
   padding: 12px;
-  background-color: var(--system);
+  background-color: var(--cpd-color-bg-subtle-secondary);
   border-radius: 8px;
   overflow: hidden;
   box-sizing: border-box;
@@ -52,7 +52,7 @@ limitations under the License.
   flex-direction: column;
   flex: 1;
   padding: 0 16px;
-  color: var(--primary-content);
+  color: var(--cpd-color-text-primary);
   min-width: 0;
 }
 

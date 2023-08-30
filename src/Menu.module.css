@@ -27,7 +27,7 @@ limitations under the License.
   display: flex;
   align-items: center;
   padding: 0 12px;
-  color: var(--primary-content);
+  color: var(--cpd-color-text-primary);
   font-size: var(--font-size-body);
   text-overflow: ellipsis;
   overflow: hidden;
@@ -44,7 +44,11 @@ limitations under the License.
 
 .menuItem.focused,
 .menuItem:hover {
-  background-color: var(--quinary-content);
+  background-color: var(--cpd-color-bg-action-secondary-hovered);
+}
+
+.menuItem:active {
+  background-color: var(--cpd-color-bg-action-secondary-pressed);
 }
 
 .menuItem.focused:first-child,
@@ -65,5 +69,5 @@ limitations under the License.
 }
 
 .checkIcon * {
-  stroke: var(--primary-content);
+  stroke: var(--cpd-color-text-primary);
 }

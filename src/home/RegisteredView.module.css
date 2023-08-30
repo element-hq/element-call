@@ -39,5 +39,5 @@ limitations under the License.
 }
 
 .notice {
-  color: var(--secondary-content);
+  color: var(--cpd-color-text-secondary);
 }
