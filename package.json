@@ -20,7 +20,7 @@
   },
   "dependencies": {
     "@juggle/resize-observer": "^3.3.1",
-    "@livekit/components-react": "1.1.0",
+    "@livekit/components-react": "^1.1.0",
     "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.14.tgz",
     "@opentelemetry/api": "^1.4.0",
     "@opentelemetry/context-zone": "^1.9.1",
@@ -55,7 +55,7 @@
     "i18next": "^21.10.0",
     "i18next-browser-languagedetector": "^6.1.8",
     "i18next-http-backend": "^1.4.4",
-    "livekit-client": "1.12.3",
+    "livekit-client": "^1.12.3",
     "lodash": "^4.17.21",
     "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#c444e374407cee40643438e01270e1e6e2835e82",
     "mermaid": "^8.13.8",
