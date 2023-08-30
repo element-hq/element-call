@@ -82,42 +82,12 @@ limitations under the License.
   stroke: white;
 }
 
-.backButton {
-  background: transparent;
-  border: none;
-  display: flex;
-  color: var(--primary-content);
-  cursor: pointer;
-  align-items: center;
-}
-
-.backButton h3 {
-  margin: 0;
-}
-
-.backButton > * {
-  margin-right: 12px;
-}
-
-.backButton > :last-child {
-  margin-right: 0;
-}
-
 .userName {
   font-weight: 600;
   margin-right: 8px;
   text-overflow: ellipsis;
   overflow: hidden;
   flex-shrink: 1;
-}
-
-.signOutButton {
-  background: transparent;
-  border: none;
-  color: rgb(255, 75, 85);
-  cursor: pointer;
-  font-weight: 600;
-  flex-shrink: 0;
 }
 
 .versionMismatchWarning {
@@ -134,7 +104,7 @@ limitations under the License.
   mask-image: url("./icons/AlertTriangleFilled.svg");
   mask-repeat: no-repeat;
   mask-size: contain;
-  background-color: var(--alert);
+  background-color: var(--cpd-color-icon-critical-primary);
   padding-right: 5px;
 }
 

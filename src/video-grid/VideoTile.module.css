@@ -53,7 +53,7 @@ limitations under the License.
   bottom: -1px;
   content: "";
   border-radius: var(--tileRadius);
-  box-shadow: inset 0 0 0 4px var(--accent) !important;
+  box-shadow: inset 0 0 0 4px var(--cpd-color-border-accent) !important;
   opacity: 0;
   transition: opacity ease 0.15s;
 }
@@ -77,8 +77,8 @@ limitations under the License.
   position: absolute;
   height: 24px;
   padding: 0 8px;
-  color: var(--primary-content);
-  background-color: var(--background-85);
+  color: var(--cpd-color-text-primary);
+  background-color: var(--stopgap-background-85);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -95,6 +95,10 @@ limitations under the License.
   margin-right: 4px;
 }
 
+.infoBubble > svg * {
+  fill: var(--cpd-color-icon-primary);
+}
+
 .toolbar {
   position: absolute;
   top: 0;
@@ -103,8 +107,8 @@ limitations under the License.
   width: 100%;
   height: 42px;
 
-  color: var(--primary-content);
-  background-color: var(--background-85);
+  color: var(--cpd-color-text-primary);
+  background-color: var(--stopgap-background-85);
 
   display: flex;
   align-items: center;
@@ -154,7 +158,7 @@ limitations under the License.
 .videoMutedOverlay {
   width: 100%;
   height: 100%;
-  background-color: #21262c;
+  background-color: var(--cpd-color-bg-subtle-secondary);
 }
 
 .presenterLabel {
@@ -162,7 +166,7 @@ limitations under the License.
   top: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background-color: #17191c;
+  background-color: var(--stopgap-background-85);
   border-radius: 4px;
   display: flex;
   justify-content: center;

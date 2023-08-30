@@ -87,62 +87,10 @@ export class Initializer {
       });
 
     // Custom Themeing
-    if (import.meta.env.VITE_CUSTOM_THEME) {
-      const style = document.documentElement.style;
-      style.setProperty(
-        "--accent",
-        import.meta.env.VITE_THEME_ACCENT as string
-      );
-      style.setProperty(
-        "--accent-20",
-        import.meta.env.VITE_THEME_ACCENT_20 as string
-      );
-      style.setProperty("--alert", import.meta.env.VITE_THEME_ALERT as string);
-      style.setProperty(
-        "--alert-20",
-        import.meta.env.VITE_THEME_ALERT_20 as string
-      );
-      style.setProperty("--links", import.meta.env.VITE_THEME_LINKS as string);
-      style.setProperty(
-        "--primary-content",
-        import.meta.env.VITE_THEME_PRIMARY_CONTENT as string
-      );
-      style.setProperty(
-        "--secondary-content",
-        import.meta.env.VITE_THEME_SECONDARY_CONTENT as string
-      );
-      style.setProperty(
-        "--tertiary-content",
-        import.meta.env.VITE_THEME_TERTIARY_CONTENT as string
-      );
-      style.setProperty(
-        "--tertiary-content-20",
-        import.meta.env.VITE_THEME_TERTIARY_CONTENT_20 as string
-      );
-      style.setProperty(
-        "--quaternary-content",
-        import.meta.env.VITE_THEME_QUATERNARY_CONTENT as string
-      );
-      style.setProperty(
-        "--quinary-content",
-        import.meta.env.VITE_THEME_QUINARY_CONTENT as string
-      );
-      style.setProperty(
-        "--system",
-        import.meta.env.VITE_THEME_SYSTEM as string
-      );
-      style.setProperty(
-        "--background",
-        import.meta.env.VITE_THEME_BACKGROUND as string
-      );
-      style.setProperty(
-        "--background-85",
-        import.meta.env.VITE_THEME_BACKGROUND_85 as string
-      );
-      style.setProperty(
-        "--subtle-primary",
-        import.meta.env.VITE_THEME_SUBTLE_PRIMARY as string
-      );
+    if (import.meta.env.VITE_CUSTOM_CSS) {
+      const style = document.createElement("style");
+      style.textContent = import.meta.env.VITE_CUSTOM_CSS;
+      document.head.appendChild(style);
     }
 
     // Custom fonts

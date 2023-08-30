@@ -40,9 +40,9 @@ limitations under the License.
   appearance: none;
 
   background-color: transparent;
-  --slider-color: var(--quinary-content);
+  --slider-color: var(--cpd-color-bg-subtle-primary);
   --slider-height: 4px;
-  --thumb-color: var(--accent);
+  --thumb-color: var(--cpd-color-text-action-accent);
   --thumb-radius: 100%;
   --thumb-size: 16px;
   --thumb-margin-top: -6px;
