@@ -408,7 +408,13 @@ export function InCallView({
           />
         );
       }
-      buttons.push(<SettingsButton key="4" onPress={openSettings} data-testid="incall_settings" />);
+      buttons.push(
+        <SettingsButton
+          key="4"
+          onPress={openSettings}
+          data-testid="incall_settings"
+        />
+      );
     }
 
     buttons.push(
@@ -432,7 +438,11 @@ export function InCallView({
           <RightNav>
             <GridLayoutMenu layout={layout} setLayout={setLayout} />
             {joinRule === JoinRule.Public && (
-              <InviteButton data-testid="call_invite" variant="icon" onClick={openInvite} />
+              <InviteButton
+                data-testid="call_invite"
+                variant="icon"
+                onClick={openInvite}
+              />
             )}
           </RightNav>
         </Header>

@@ -119,7 +119,13 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
 
   return (
     <div className={styles.preview} ref={previewRef}>
-      <video data-testid="preview_video" ref={videoEl} muted playsInline disablePictureInPicture />
+      <video
+        data-testid="preview_video"
+        ref={videoEl}
+        muted
+        playsInline
+        disablePictureInPicture
+      />
       <>
         {!muteStates.video.enabled && (
           <div className={styles.avatarContainer}>
