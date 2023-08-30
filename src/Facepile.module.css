@@ -34,7 +34,7 @@ limitations under the License.
 .facepile .avatar {
   position: absolute;
   top: 0;
-  border: 1px solid var(--system);
+  border: 1px solid var(--cpd-color-bg-canvas-default);
 }
 
 .facepile.md .avatar {
