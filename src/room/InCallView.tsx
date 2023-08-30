@@ -408,7 +408,7 @@ export function InCallView({
           />
         );
       }
-      buttons.push(<SettingsButton key="4" onPress={openSettings} />);
+      buttons.push(<SettingsButton key="4" onPress={openSettings} data-testid="incall_settings" />);
     }
 
     buttons.push(

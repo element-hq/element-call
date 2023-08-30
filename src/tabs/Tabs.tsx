@@ -55,11 +55,12 @@ function Tab<T>({ item, state }: TabProps<T>): JSX.Element {
   const { key, rendered } = item;
   const ref = useRef<HTMLLIElement>(null);
   const { tabProps } = useTab({ key }, state, ref);
-
+  const testid = "tab_" + key;
   return (
     <li
       {...tabProps}
       ref={ref}
+      data-testid={testid}
       className={classNames(styles.tab, {
         [styles.selected]: state.selectedKey === key,
         [styles.disabled]: state.disabledKeys.has(key),

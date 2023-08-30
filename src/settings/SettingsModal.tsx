@@ -124,6 +124,7 @@ export const SettingsModal = (props: Props) => {
   const audioTab = (
     <TabItem
       key="audio"
+      data-testid="settings_audio"
       title={
         <>
           <AudioIcon width={16} height={16} />
@@ -139,6 +140,7 @@ export const SettingsModal = (props: Props) => {
   const videoTab = (
     <TabItem
       key="video"
+      data-testid="settings_video"
       title={
         <>
           <VideoIcon width={16} height={16} />
@@ -153,6 +155,7 @@ export const SettingsModal = (props: Props) => {
   const profileTab = (
     <TabItem
       key="profile"
+      data-testid="settings_profile"
       title={
         <>
           <UserIcon width={15} height={15} />
@@ -167,6 +170,7 @@ export const SettingsModal = (props: Props) => {
   const feedbackTab = (
     <TabItem
       key="feedback"
+      data-testid="settings_feedback"
       title={
         <>
           <FeedbackIcon width={16} height={16} />
