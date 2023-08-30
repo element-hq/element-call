@@ -42,7 +42,7 @@ limitations under the License.
 .inputField {
   border-radius: 4px;
   transition: border-color 0.25s;
-  border: 1px solid var(--quinary-content);
+  border: 1px solid var(--cpd-color-border-interactive-primary);
 }
 
 .inputField input,
@@ -52,8 +52,8 @@ limitations under the License.
   border: none;
   border-radius: 4px;
   padding: 12px 9px 10px 9px;
-  color: var(--primary-content);
-  background-color: var(--background);
+  color: var(--cpd-color-text-primary);
+  background-color: var(--cpd-color-bg-canvas-default);
   flex: 1;
   min-width: 0;
 }
@@ -61,7 +61,7 @@ limitations under the License.
 .inputField.disabled input,
 .inputField.disabled textarea,
 .inputField.disabled span {
-  color: var(--quaternary-content);
+  color: var(--cpd-color-text-disabled);
 }
 
 .inputField span {
@@ -81,13 +81,13 @@ limitations under the License.
 .inputField input:placeholder-shown:focus::placeholder,
 .inputField textarea:placeholder-shown:focus::placeholder {
   transition: color 0.25s ease-in 0.1s;
-  color: var(--quaternary-content);
+  color: var(--cpd-color-text-placeholder);
 }
 
 .inputField label {
   transition: font-size 0.25s ease-out 0.1s, color 0.25s ease-out 0.1s,
     top 0.25s ease-out 0.1s, background-color 0.25s ease-out 0.1s;
-  color: var(--tertiary-content);
+  color: var(--cpd-color-text-secondary);
   background-color: transparent;
   font-size: var(--font-size-body);
   position: absolute;
@@ -103,7 +103,7 @@ limitations under the License.
 }
 
 .inputField:focus-within {
-  border-color: var(--links);
+  border-color: var(--cpd-color-text-link-external);
 }
 
 .inputField input:focus,
@@ -117,7 +117,7 @@ limitations under the License.
 .inputField textarea:focus + label,
 .inputField textarea:not(:placeholder-shown) + label,
 .inputField.prefix textarea + label {
-  background-color: var(--system);
+  background-color: var(--cpd-color-bg-canvas-default);
   transition: font-size 0.25s ease-out 0s, color 0.25s ease-out 0s,
     top 0.25s ease-out 0s, background-color 0.25s ease-out 0s;
   font-size: var(--font-size-micro);
@@ -128,7 +128,7 @@ limitations under the License.
 
 .inputField input:focus + label,
 .inputField textarea:focus + label {
-  color: var(--links);
+  color: var(--cpd-color-border-focused);
 }
 
 .checkboxField {
@@ -169,11 +169,11 @@ limitations under the License.
 
 .checkboxField.disabled,
 .checkboxField.disabled .description {
-  color: var(--quinary-content);
+  color: var(--cpd-color-text-disabled);
 }
 
 .checkboxField.disabled .checkbox {
-  border-color: var(--quinary-content);
+  border-color: var(--cpd-color-border-disabled);
 }
 
 .checkbox svg {
@@ -181,12 +181,12 @@ limitations under the License.
 }
 
 .checkbox svg * {
-  stroke: var(--primary-content);
+  stroke: var(--stopgap-color-on-solid-accent);
 }
 
 .checkboxField input[type="checkbox"]:checked + label > .checkbox {
-  background: var(--accent);
-  border-color: var(--accent);
+  background: var(--cpd-color-text-action-accent);
+  border-color: var(--cpd-color-text-action-accent);
 }
 
 .checkboxField input[type="checkbox"]:checked + label > .checkbox svg {
@@ -194,18 +194,18 @@ limitations under the License.
 }
 
 .checkboxField:focus-within .checkbox {
-  border: 1.5px solid var(--links) !important;
+  border: 1.5px solid var(--cpd-color-text-link-external) !important;
 }
 
 .errorMessage {
   margin: 0;
   font-size: var(--font-size-caption);
-  color: var(--alert);
+  color: var(--cpd-color-text-critical-primary);
   font-weight: 600;
 }
 
 .description {
-  color: var(--secondary-content);
+  color: var(--cpd-color-text-secondary);
   margin-left: 26px;
   width: 100%; /* Ensure that it breaks onto the next row */
 }

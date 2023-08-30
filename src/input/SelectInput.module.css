@@ -31,11 +31,11 @@ limitations under the License.
   align-items: center;
   justify-content: space-between;
   padding: 0 12px;
-  background-color: var(--background);
+  background-color: var(--cpd-color-bg-canvas-default);
   border-radius: 8px;
-  border: 1px solid var(--quinary-content);
+  border: 1px solid var(--cpd-color-border-interactive-primary);
   font-size: var(--font-size-body);
-  color: var(--primary-content);
+  color: var(--cpd-color-text-primary);
   height: 40px;
   max-width: 100%;
   width: 100%;
