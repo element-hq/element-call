@@ -25,7 +25,7 @@ import { Node } from "@react-types/shared";
 import styles from "./Menu.module.css";
 
 interface MenuProps<T> extends AriaMenuOptions<T> {
-  className?: String;
+  className?: string;
   onClose: () => void;
   onAction: (value: Key) => void;
   label?: string;
