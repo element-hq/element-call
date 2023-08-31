@@ -75,7 +75,9 @@ export const widget: WidgetHelpers | null = (() => {
     const parentUrl = query.get("parentUrl");
 
     if (widgetId && parentUrl) {
-      const parentOrigin = new URL(parentUrl).origin;
+      // Allow * (wildcard) as the parentOrigin. This is needed if the widget does
+      // not run in an IFrame and instead needs to send the messages to the webview itself.
+      const parentOrigin = parentUrl === "*" ? "*" : new URL(parentUrl).origin;
       logger.info("Widget API is available");
       const api = new WidgetApi(widgetId, parentOrigin);
       api.requestCapability(MatrixCapabilities.AlwaysOnScreen);
