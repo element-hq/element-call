@@ -4357,17 +4357,17 @@
     "@typescript-eslint/types" "6.1.0"
     eslint-visitor-keys "^3.4.1"
 
-"@use-gesture/core@10.2.16":
-  version "10.2.16"
-  resolved "https://registry.yarnpkg.com/@use-gesture/core/-/core-10.2.16.tgz#6c8db02955dca405b2544bf78f3ba1f094b6a551"
-  integrity sha512-2J2GICmrSA6RwcowqzL0TY6S8bJY35KhLnE0YjBIVobQL2RilSDefXTKMxxyontp2mALDeeYAHh9ZLu+vMaq8Q==
+"@use-gesture/core@10.2.27":
+  version "10.2.27"
+  resolved "https://registry.yarnpkg.com/@use-gesture/core/-/core-10.2.27.tgz#0f24b17c036cd828ba07e3451ff45e2df959c6f5"
+  integrity sha512-V4XV7hn9GAD2MYu8yBBVi5iuWBsAMfjPRMsEVzoTNGYH72tf0kFP+OKqGKc8YJFQIJx6yj+AOqxmEHOmx2/MEA==
 
 "@use-gesture/react@^10.2.11":
-  version "10.2.16"
-  resolved "https://registry.yarnpkg.com/@use-gesture/react/-/react-10.2.16.tgz#467b4001c335905d35324ee147a2bb93b4f908e2"
-  integrity sha512-kkWi97SHzj/F6XqRXSyrk5pLoSiuRgqvnQl2Bawmf05dWo2q6DL7v5LhnnyPNZRVkCm+WEb3e1nsR+iVza1vmg==
+  version "10.2.27"
+  resolved "https://registry.yarnpkg.com/@use-gesture/react/-/react-10.2.27.tgz#7fbd50d14449ec5bc49c9b6cfef8a2845f5e0608"
+  integrity sha512-7E5vnWCxeslWlxwZ8uKIcnUZVMTRMZ8cvSnLLKF1NkyNb3PnNiAzoXM4G1vTKJKRhgOTeI6wK1YsEpwo9ABV5w==
   dependencies:
-    "@use-gesture/core" "10.2.16"
+    "@use-gesture/core" "10.2.27"
 
 "@vector-im/compound-design-tokens@^0.0.5":
   version "0.0.5"
