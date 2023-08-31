@@ -92,7 +92,7 @@ export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
 export const useEnableE2EE = (): DisableableSetting<boolean | null> => {
   const settingVal = useSetting<boolean | null>(
     "enable-end-to-end-encryption",
-    false
+    true
   );
   if (isE2EESupported()) return settingVal;
 
