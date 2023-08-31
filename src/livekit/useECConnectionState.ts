@@ -36,6 +36,12 @@ export enum ECAddonConnectionState {
 
 export type ECConnectionState = ConnectionState | ECAddonConnectionState;
 
+// This is mostly necessary because an empty useRef is an empty object
+// which is truthy, so we can't just use Boolean(currentSFUConfig.current)
+function sfuConfigValid(sfuConfig?: SFUConfig): boolean {
+  return Boolean(sfuConfig?.url) && Boolean(sfuConfig?.jwt);
+}
+
 export function useECConnectionState(
   livekitRoom?: Room,
   sfuConfig?: SFUConfig
@@ -68,18 +74,22 @@ export function useECConnectionState(
 
   const currentSFUConfig = useRef(Object.assign({}, sfuConfig));
 
+  // Id we are transitioning from a valid config to another valid one, we need
+  // to explicitly switch focus
   useEffect(() => {
     if (
-      sfuConfig &&
-      currentSFUConfig.current &&
+      sfuConfigValid(sfuConfig) &&
+      sfuConfigValid(currentSFUConfig.current) &&
       !sfuConfigEquals(currentSFUConfig.current, sfuConfig)
     ) {
-      logger.info("JWT changed!");
+      logger.info(
+        `SFU config changed! URL was ${currentSFUConfig.current?.url} now ${sfuConfig?.url}`
+      );
 
       (async () => {
         setSwitchingFocus(true);
         await livekitRoom?.disconnect();
-        await livekitRoom?.connect(sfuConfig.url, sfuConfig.jwt);
+        await livekitRoom?.connect(sfuConfig!.url, sfuConfig!.jwt);
       })();
     }
 
