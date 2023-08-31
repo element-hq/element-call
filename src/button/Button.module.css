@@ -193,7 +193,7 @@ limitations under the License.
 }
 
 .iconCopyButton svg * {
-  fill: var(--cpd-color-icon-accent-tertiary);
+  fill: var(--cpd-color-icon-secondary);
 }
 
 .iconCopyButton:hover svg * {
