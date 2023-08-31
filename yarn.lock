@@ -2487,23 +2487,14 @@
     "@opentelemetry/sdk-trace-web" "^1.15.0"
     "@opentelemetry/semantic-conventions" "^1.0.0"
 
-"@opentelemetry/instrumentation-user-interaction@^0.32.1":
-  version "0.32.1"
-  resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation-user-interaction/-/instrumentation-user-interaction-0.32.1.tgz#654c0352c2f7d5bb6cc21f07f9ec56f18f2cc854"
-  integrity sha512-27we7cENzEtO2oCRiEkYG4cFe1v94ybeLvM+5jqNDkZF7UY0GlctCW+jvqf569Z3Gs7yHrakO2sZf4EMEfTFWg==
+"@opentelemetry/instrumentation-user-interaction@^0.33.0":
+  version "0.33.1"
+  resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation-user-interaction/-/instrumentation-user-interaction-0.33.1.tgz#0528056df612177e0b5a379e3e5b07d6e91bc126"
+  integrity sha512-2oun4gwWpqtCW+qydC51jqSSUZSOuNCBXOWinTuTmO6w/sd4DJaQ6kEboSx5gENT/56qnCM9jQZlHI+zKbL63w==
   dependencies:
     "@opentelemetry/core" "^1.8.0"
-    "@opentelemetry/instrumentation" "^0.35.1"
+    "@opentelemetry/instrumentation" "^0.41.2"
     "@opentelemetry/sdk-trace-web" "^1.8.0"
-
-"@opentelemetry/instrumentation@^0.35.1":
-  version "0.35.1"
-  resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation/-/instrumentation-0.35.1.tgz#065bdbc4771137347e648eb4c6c6de6e9e97e4d1"
-  integrity sha512-EZsvXqxenbRTSNsft6LDcrT4pjAiyZOx3rkDNeqKpwZZe6GmZtsXaZZKuDkJtz9fTjOGjDHjZj9/h80Ya9iIJw==
-  dependencies:
-    require-in-the-middle "^5.0.3"
-    semver "^7.3.2"
-    shimmer "^1.2.1"
 
 "@opentelemetry/instrumentation@^0.41.2":
   version "0.41.2"
@@ -13597,15 +13588,6 @@ require-directory@^2.1.1:
   version "2.1.1"
   resolved "https://registry.yarnpkg.com/require-directory/-/require-directory-2.1.1.tgz#8c64ad5fd30dab1c976e2344ffe7f792a6a6df42"
   integrity sha512-fGxEI7+wsG9xrvdjsrlmL22OMTTiHRwAMroiEeMgq8gzoLC/PQr7RsRDSTLUg/bZAZtF+TVIkHc6/4RIKrui+Q==
-
-require-in-the-middle@^5.0.3:
-  version "5.2.0"
-  resolved "https://registry.yarnpkg.com/require-in-the-middle/-/require-in-the-middle-5.2.0.tgz#4b71e3cc7f59977100af9beb76bf2d056a5a6de2"
-  integrity sha512-efCx3b+0Z69/LGJmm9Yvi4cqEdxnoGnxYxGxBghkkTTFeXRtTCmmhO0AnAfHz59k957uTSuy8WaHqOs8wbYUWg==
-  dependencies:
-    debug "^4.1.1"
-    module-details-from-path "^1.0.3"
-    resolve "^1.22.1"
 
 require-in-the-middle@^7.1.1:
   version "7.2.0"
