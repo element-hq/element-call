@@ -22,6 +22,7 @@ limitations under the License.
 
 @import "normalize.css/normalize.css";
 @import "@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css";
+@import "@vector-im/compound-web/dist/style.css";
 
 :root {
   --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",

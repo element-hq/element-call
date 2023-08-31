@@ -19,17 +19,18 @@ import classNames from "classnames";
 import { useButton } from "@react-aria/button";
 import { mergeProps, useObjectRef } from "@react-aria/utils";
 import { useTranslation } from "react-i18next";
+import { Tooltip } from "@vector-im/compound-web";
+import { ReactComponent as MicOnSolidIcon } from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg";
+import { ReactComponent as MicOffSolidIcon } from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg";
+import { ReactComponent as VideoCallIcon } from "@vector-im/compound-design-tokens/icons/video-call.svg";
+import { ReactComponent as VideoCallOffIcon } from "@vector-im/compound-design-tokens/icons/video-call-off.svg";
+import { ReactComponent as EndCallIcon } from "@vector-im/compound-design-tokens/icons/end-call.svg";
+import { ReactComponent as ShareScreenSolidIcon } from "@vector-im/compound-design-tokens/icons/share-screen-solid.svg";
+import { ReactComponent as SettingsSolidIcon } from "@vector-im/compound-design-tokens/icons/settings-solid.svg";
+import { ReactComponent as UserAddSolidIcon } from "@vector-im/compound-design-tokens/icons/user-add-solid.svg";
+import { ReactComponent as ChevronDownIcon } from "@vector-im/compound-design-tokens/icons/chevron-down.svg";
 
 import styles from "./Button.module.css";
-import { ReactComponent as MicIcon } from "../icons/Mic.svg";
-import { ReactComponent as MuteMicIcon } from "../icons/MuteMic.svg";
-import { ReactComponent as VideoIcon } from "../icons/Video.svg";
-import { ReactComponent as DisableVideoIcon } from "../icons/DisableVideo.svg";
-import { ReactComponent as HangupIcon } from "../icons/Hangup.svg";
-import { ReactComponent as ScreenshareIcon } from "../icons/Screenshare.svg";
-import { ReactComponent as SettingsIcon } from "../icons/Settings.svg";
-import { ReactComponent as AddUserIcon } from "../icons/AddUser.svg";
-import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
 import { ReactComponent as Fullscreen } from "../icons/Fullscreen.svg";
 import { ReactComponent as FullscreenExit } from "../icons/FullscreenExit.svg";
 import { TooltipTrigger } from "../Tooltip";
@@ -129,7 +130,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
       >
         <>
           {children}
-          {variant === "dropdown" && <ArrowDownIcon />}
+          {variant === "dropdown" && <ChevronDownIcon />}
         </>
       </button>
     );
@@ -147,13 +148,11 @@ export function MicButton({
   const { t } = useTranslation();
 
   return (
-    <TooltipTrigger
-      tooltip={() => (muted ? t("Unmute microphone") : t("Mute microphone"))}
-    >
-      <Button variant="toolbar" {...rest} off={muted}>
-        {muted ? <MuteMicIcon /> : <MicIcon />}
+    <Tooltip label={muted ? t("Microphone off") : t("Microphone on")}>
+      <Button variant="toolbar" {...rest} on={!muted}>
+        {muted ? <MicOffSolidIcon /> : <MicOnSolidIcon />}
       </Button>
-    </TooltipTrigger>
+    </Tooltip>
   );
 }
 
@@ -168,13 +167,11 @@ export function VideoButton({
   const { t } = useTranslation();
 
   return (
-    <TooltipTrigger
-      tooltip={() => (muted ? t("Turn on camera") : t("Turn off camera"))}
-    >
-      <Button variant="toolbar" {...rest} off={muted}>
-        {muted ? <DisableVideoIcon /> : <VideoIcon />}
+    <Tooltip label={muted ? t("Video off") : t("Video on")}>
+      <Button variant="toolbar" {...rest} on={!muted}>
+        {muted ? <VideoCallOffIcon /> : <VideoCallIcon />}
       </Button>
-    </TooltipTrigger>
+    </Tooltip>
   );
 }
 
@@ -191,13 +188,11 @@ export function ScreenshareButton({
   const { t } = useTranslation();
 
   return (
-    <TooltipTrigger
-      tooltip={() => (enabled ? t("Stop sharing screen") : t("Share screen"))}
-    >
-      <Button variant="toolbarSecondary" {...rest} on={enabled}>
-        <ScreenshareIcon />
+    <Tooltip label={enabled ? t("Sharing screen") : t("Share screen")}>
+      <Button variant="toolbar" {...rest} on={enabled}>
+        <ShareScreenSolidIcon />
       </Button>
-    </TooltipTrigger>
+    </Tooltip>
   );
 }
 
@@ -210,18 +205,17 @@ export function HangupButton({
   [index: string]: unknown;
 }) {
   const { t } = useTranslation();
-  const tooltip = useCallback(() => t("Leave"), [t]);
 
   return (
-    <TooltipTrigger tooltip={tooltip}>
+    <Tooltip label={t("End call")}>
       <Button
         variant="toolbar"
         className={classNames(styles.hangupButton, className)}
         {...rest}
       >
-        <HangupIcon />
+        <EndCallIcon />
       </Button>
-    </TooltipTrigger>
+    </Tooltip>
   );
 }
 
@@ -234,14 +228,13 @@ export function SettingsButton({
   [index: string]: unknown;
 }) {
   const { t } = useTranslation();
-  const tooltip = useCallback(() => t("Settings"), [t]);
 
   return (
-    <TooltipTrigger tooltip={tooltip}>
+    <Tooltip label={t("Settings")}>
       <Button variant="toolbar" {...rest}>
-        <SettingsIcon width={20} height={20} />
+        <SettingsSolidIcon />
       </Button>
-    </TooltipTrigger>
+    </Tooltip>
   );
 }
 
@@ -256,14 +249,13 @@ export function InviteButton({
   [index: string]: unknown;
 }) {
   const { t } = useTranslation();
-  const tooltip = useCallback(() => t("Invite"), [t]);
 
   return (
-    <TooltipTrigger tooltip={tooltip}>
+    <Tooltip label={t("Invite")}>
       <Button variant={variant} {...rest}>
-        <AddUserIcon />
+        <UserAddSolidIcon />
       </Button>
-    </TooltipTrigger>
+    </Tooltip>
   );
 }
 
