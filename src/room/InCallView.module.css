@@ -52,6 +52,7 @@ limitations under the License.
   display: flex;
   justify-content: center;
   align-items: center;
+  gap: 12px;
   padding: var(--footerPadding) 0;
   /* TODO: Un-hardcode these colors */
   background: linear-gradient(
@@ -68,14 +69,6 @@ limitations under the License.
   );
 }
 
-.footer > * {
-  margin-right: 30px;
-}
-
-.footer > :last-child {
-  margin-right: 0px;
-}
-
 .maximised .footer {
   position: absolute;
   width: 100%;
@@ -84,12 +77,16 @@ limitations under the License.
 
 @media (min-height: 300px) {
   .inRoom {
-    --footerPadding: 24px;
+    --footerPadding: 40px;
   }
 }
 
 @media (min-width: 800px) {
   .inRoom {
-    --footerPadding: 32px;
+    --footerPadding: 60px;
+  }
+
+  .footer {
+    gap: 16px;
   }
 }
