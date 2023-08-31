@@ -145,6 +145,8 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     // Firefox doesn't respect the disablePictureInPicture attribute
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
 
+    console.log(`LOG VideoTIle mxcSrc=${member?.getMxcAvatarUrl()}`);
+
     return (
       <animated.div
         className={classNames(styles.videoTile, className, {
@@ -169,9 +171,10 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             <div className={styles.videoMutedOverlay} />
             <Avatar
               key={member?.userId}
+              id={member?.userId ?? displayName}
+              name={displayName}
               size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
               src={member?.getMxcAvatarUrl()}
-              fallback={displayName.slice(0, 1).toUpperCase()}
               className={styles.avatar}
             />
           </>

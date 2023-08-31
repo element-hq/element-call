@@ -92,13 +92,14 @@ export function GroupCallView({
   const { displayName, avatarUrl } = useProfile(client);
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
+      userId: client.getUserId()!,
       displayName: displayName!,
       avatarUrl: avatarUrl!,
       roomId: groupCall.room.roomId,
       roomName: groupCall.room.name,
       roomAlias: groupCall.room.getCanonicalAlias(),
     };
-  }, [displayName, avatarUrl, groupCall]);
+  }, [client, displayName, avatarUrl, groupCall]);
 
   const deviceContext = useMediaDevices();
   const latestDevices = useRef<MediaDevices>();

@@ -24,17 +24,3 @@ limitations under the License.
 .userButton svg * {
   fill: var(--cpd-color-icon-primary);
 }
-
-.avatar {
-  width: 24px;
-  height: 24px;
-  font-size: var(--font-size-caption);
-}
-
-@media (min-width: 800px) {
-  .avatar {
-    width: 32px;
-    height: 32px;
-    font-size: var(--font-size-body);
-  }
-}
