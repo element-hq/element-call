@@ -271,7 +271,6 @@ export function GroupCallView({
       <ActiveCall
         client={client}
         rtcSession={rtcSession}
-        memberships={memberships}
         onLeave={onLeave}
         hideHeader={hideHeader}
         muteStates={muteStates}
