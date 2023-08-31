@@ -67,13 +67,7 @@ function CallTile({ name, avatarUrl, roomId }: CallTileProps) {
   return (
     <div className={styles.callTile}>
       <Link to={`/room/#?roomId=${roomId}`} className={styles.callTileLink}>
-        <Avatar
-          size={Size.LG}
-          bgKey={name}
-          src={avatarUrl}
-          fallback={name.slice(0, 1).toUpperCase()}
-          className={styles.avatar}
-        />
+        <Avatar id={roomId} name={name} size={Size.LG} src={avatarUrl} />
         <div className={styles.callInfo}>
           <Body overflowEllipsis fontWeight="semiBold">
             {name}
