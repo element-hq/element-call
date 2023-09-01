@@ -131,15 +131,15 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
           </div>
         )}
         <div className={styles.previewButtons}>
-          <MicButton
-            muted={!muteStates.audio.enabled}
-            onPress={onAudioPress}
-            disabled={muteStates.audio.setEnabled === null}
-          />
           <VideoButton
             muted={!muteStates.video.enabled}
             onPress={onVideoPress}
             disabled={muteStates.video.setEnabled === null}
+          />
+          <MicButton
+            muted={!muteStates.audio.enabled}
+            onPress={onAudioPress}
+            disabled={muteStates.audio.setEnabled === null}
           />
           <SettingsButton onPress={openSettings} />
         </div>
