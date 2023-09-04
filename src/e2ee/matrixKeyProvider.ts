@@ -41,25 +41,20 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     for (const [
       participant,
       encryptionKey,
-    ] of this.rtcSession.encryptionKeys.entries()) {
+    ] of this.rtcSession.getEncryptionKeys()) {
       // The new session could be aware of keys of which the old session wasn't,
       // so emit a key changed event.
-      this.onEncryptionKeyChanged(
-        encryptionKey,
-        participant.userId,
-        participant.deviceId
-      );
+      this.onEncryptionKeyChanged(encryptionKey, participant);
     }
   }
 
   private onEncryptionKeyChanged = async (
     encryptionKey: string,
-    userId: string,
-    deviceId: string
+    participantId: string
   ) => {
     this.onSetEncryptionKey(
       await createKeyMaterialFromString(encryptionKey),
-      `${userId}:${deviceId}`
+      participantId
     );
   };
 }
