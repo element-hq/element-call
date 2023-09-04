@@ -28,7 +28,7 @@ import { Room, Track, ConnectionState } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room as MatrixRoom } from "matrix-js-sdk/src/models/room";
-import { Ref, useCallback, useEffect, useMemo, useRef } from "react";
+import { Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
 import { OverlayTriggerState } from "@react-stately/overlays";
@@ -77,13 +77,19 @@ import { useMergedRefs } from "../useMergedRefs";
 import { MuteStates } from "./MuteStates";
 import { useIsRoomE2EE } from "../e2ee/sharedKeyManagement";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
-import { ECConnectionState } from "../livekit/useECConnectionState";
+import {
+  ECAddonConnectionState,
+  ECConnectionState,
+} from "../livekit/useECConnectionState";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
 // or with getUsermedia and getDisplaymedia being used within the same session.
 // For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+// How long we wait after a focus switch before showing the real participant list again
+const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 
 export interface ActiveCallProps
   extends Omit<InCallViewProps, "livekitRoom" | "connState"> {
@@ -236,7 +242,7 @@ export function InCallView({
   const reducedControls = boundsValid && bounds.width <= 400;
   const noControls = reducedControls && bounds.height <= 400;
 
-  const items = useParticipantTiles(livekitRoom, rtcSession.room);
+  const items = useParticipantTiles(livekitRoom, rtcSession.room, connState);
   const { fullscreenItem, toggleFullscreen, exitFullscreen } =
     useFullscreen(items);
 
@@ -471,8 +477,11 @@ function findMatrixMember(
 
 function useParticipantTiles(
   livekitRoom: Room,
-  matrixRoom: MatrixRoom
+  matrixRoom: MatrixRoom,
+  connState: ECConnectionState
 ): TileDescriptor<ItemData>[] {
+  const previousTiles = useRef<TileDescriptor<ItemData>[]>([]);
+
   const sfuParticipants = useParticipants({
     room: livekitRoom,
   });
@@ -553,6 +562,41 @@ function useParticipantTiles(
     // shouldn't bother showing anything yet
     return allGhosts ? [] : tiles;
   }, [matrixRoom, sfuParticipants]);
+
+  // We carry over old tiles from the previous focus for some time after a focus switch
+  // so that the video tiles don't all disappear and reappear.
+  const [isSwitchingFocus, setIsSwitchingFocus] = useState(false);
+
+  useEffect(() => {
+    if (connState === ECAddonConnectionState.ECSwitchingFocus) {
+      setIsSwitchingFocus(true);
+    } else if (isSwitchingFocus) {
+      setTimeout(() => {
+        setIsSwitchingFocus(false);
+      }, POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS);
+    }
+  }, [connState, setIsSwitchingFocus, isSwitchingFocus]);
+
+  if (
+    connState === ECAddonConnectionState.ECSwitchingFocus ||
+    isSwitchingFocus
+  ) {
+    logger.debug("Switching focus: injecting previous tiles");
+
+    // inject the previous tile for members that haven't rejoined yet
+    const newItems = items.slice(0);
+    const rejoined = new Set(newItems.map((p) => p.id));
+
+    for (const prevTile of previousTiles.current) {
+      if (!rejoined.has(prevTile.id)) {
+        newItems.push(prevTile);
+      }
+    }
+
+    return newItems;
+  }
+
+  previousTiles.current = items;
 
   return items;
 }
