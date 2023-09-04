@@ -16,7 +16,7 @@ limitations under the License.
 
 .avatar {
   position: relative;
-  color: var(--primary-content);
+  color: var(--stopgap-color-on-solid-accent);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -33,7 +33,7 @@ limitations under the License.
 }
 
 .avatar svg * {
-  fill: var(--primary-content);
+  fill: var(--cpd-color-text-primary);
 }
 
 .avatar span {

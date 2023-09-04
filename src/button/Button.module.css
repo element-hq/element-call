@@ -46,8 +46,8 @@ limitations under the License.
 }
 
 .button {
-  color: var(--primary-content);
-  background-color: var(--accent);
+  color: var(--stopgap-color-on-solid-accent);
+  background-color: var(--cpd-color-text-action-accent);
 }
 
 .button:focus,
@@ -62,7 +62,7 @@ limitations under the License.
 }
 
 .toolbarButton:disabled {
-  opacity: 0.55;
+  background-color: var(--cpd-color-bg-action-primary-disabled);
 }
 
 .toolbarButton,
@@ -70,72 +70,89 @@ limitations under the License.
   width: 50px;
   height: 50px;
   border-radius: 50px;
-  background-color: var(--system);
+  background-color: var(--cpd-color-bg-subtle-secondary);
 }
 
 .toolbarButton:hover,
 .toolbarButtonSecondary:hover {
-  background-color: var(--quinary-content);
+  background-color: var(--cpd-color-bg-action-secondary-hovered);
+}
+
+.toolbarButton:active,
+.toolbarButtonSecondary:active {
+  background-color: var(--cpd-color-bg-action-secondary-pressed);
 }
 
 .toolbarButton.on,
 .toolbarButton.off {
-  background-color: var(--primary-content);
+  background-color: var(--cpd-color-bg-action-primary-rest);
 }
 
 .toolbarButtonSecondary.on {
-  background-color: var(--accent);
+  background-color: var(--cpd-color-text-success-primary);
 }
 
 .iconButton:not(.stroke) svg * {
-  fill: var(--primary-content);
+  fill: var(--cpd-color-bg-action-primary-rest);
 }
 
 .iconButton:not(.stroke):hover svg * {
-  fill: var(--accent);
+  fill: var(--cpd-color-icon-accent-tertiary);
 }
 
 .iconButton.on:not(.stroke) svg * {
-  fill: var(--accent);
+  fill: var(--cpd-color-icon-accent-tertiary);
 }
 
 .iconButton.on.stroke svg * {
-  stroke: var(--accent);
+  stroke: var(--cpd-color-icon-accent-tertiary);
 }
 
-.hangupButton,
+.hangupButton {
+  background-color: var(--cpd-color-bg-critical-primary);
+}
+
 .hangupButton:hover {
-  background-color: var(--alert);
+  background-color: var(--cpd-color-bg-critical-hovered);
+}
+
+.toolbarButton.hangupButton svg * {
+  fill: var(--stopgap-color-on-solid-accent);
+}
+
+.toolbarButton svg *,
+.toolbarButtonSecondary svg * {
+  fill: var(--cpd-color-icon-primary);
 }
 
 .toolbarButton.on svg * {
-  fill: var(--accent);
+  fill: var(--cpd-color-icon-accent-tertiary);
 }
 
 .toolbarButton.off svg * {
-  fill: #21262c;
+  fill: var(--cpd-color-icon-on-solid-primary);
 }
 
 .toolbarButtonSecondary.on svg * {
-  fill: var(--primary-content);
+  fill: var(--stopgap-color-on-solid-accent);
 }
 
 .secondary,
 .copyButton {
-  color: var(--accent);
-  border: 2px solid var(--accent);
+  color: var(--cpd-color-text-action-accent);
+  border: 2px solid var(--cpd-color-text-action-accent);
   background-color: transparent;
 }
 
 .secondaryHangup {
-  color: var(--alert);
-  border: 2px solid var(--alert);
+  color: var(--cpd-color-text-critical-primary);
+  border: 2px solid var(--cpd-color-border-critical-primary);
   background-color: transparent;
 }
 
 .copyButton.secondaryCopy {
-  color: var(--primary-content);
-  border-color: var(--primary-content);
+  color: var(--cpd-color-text-primary);
+  border-color: var(--cpd-color-border-interactive-primary);
 }
 
 .copyButton {
@@ -158,12 +175,12 @@ limitations under the License.
 }
 
 .copyButton:not(.on) svg * {
-  fill: var(--accent);
+  fill: var(--cpd-color-icon-accent-tertiary);
 }
 
 .copyButton.on {
   border-color: transparent;
-  background-color: var(--accent);
+  background-color: var(--cpd-color-text-action-accent);
   color: white;
 }
 
@@ -172,32 +189,36 @@ limitations under the License.
 }
 
 .copyButton.secondaryCopy:not(.on) svg * {
-  fill: var(--primary-content);
+  fill: var(--cpd-color-bg-action-primary-rest);
 }
 
 .iconCopyButton svg * {
-  fill: var(--tertiary-content);
+  fill: var(--cpd-color-icon-secondary);
 }
 
 .iconCopyButton:hover svg * {
-  fill: var(--accent);
+  fill: var(--cpd-color-icon-accent-tertiary);
 }
 
 .iconCopyButton.on svg *,
 .iconCopyButton.on:hover svg * {
   fill: transparent;
-  stroke: var(--accent);
+  stroke: var(--cpd-color-text-action-accent);
 }
 
 .dropdownButton {
-  color: var(--primary-content);
+  color: var(--cpd-color-text-primary);
   padding: 2px 8px;
   border-radius: 8px;
 }
 
-.dropdownButton:hover,
+.dropdownButton:hover {
+  background-color: var(--cpd-color-bg-action-secondary-hovered);
+}
+
+.dropdownButton:active,
 .dropdownButton.on {
-  background-color: var(--quinary-content);
+  background-color: var(--cpd-color-bg-action-secondary-pressed);
 }
 
 .dropdownButton svg {
@@ -205,7 +226,7 @@ limitations under the License.
 }
 
 .dropdownButton svg * {
-  fill: var(--primary-content);
+  fill: var(--cpd-color-icon-primary);
 }
 
 .lg {
@@ -215,6 +236,6 @@ limitations under the License.
 .linkButton {
   background-color: transparent;
   border: none;
-  color: var(--accent);
+  color: var(--cpd-color-text-action-accent);
   cursor: pointer;
 }

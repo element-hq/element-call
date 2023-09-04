@@ -35,7 +35,6 @@ import { OverlayTriggerState } from "@react-stately/overlays";
 import { JoinRule } from "matrix-js-sdk/src/@types/partials";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { CallMembership } from "matrix-js-sdk/src/matrixrtc/CallMembership";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -120,7 +119,6 @@ export interface InCallViewProps {
   rtcSession: MatrixRTCSession;
   livekitRoom: Room;
   muteStates: MuteStates;
-  memberships: CallMembership[];
   onLeave: (error?: Error) => void;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
@@ -132,7 +130,6 @@ export function InCallView({
   rtcSession,
   livekitRoom,
   muteStates,
-  memberships,
   onLeave,
   hideHeader,
   otelGroupCallMembership,

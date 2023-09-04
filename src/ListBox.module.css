@@ -21,8 +21,8 @@ limitations under the License.
   overflow-y: auto;
   list-style: none;
   background-color: transparent;
-  border: 1px solid var(--quinary-content);
-  background-color: var(--background);
+  border: 1px solid var(--cpd-color-border-interactive-secondary);
+  background-color: var(--cpd-color-bg-canvas-default);
   border-radius: 8px;
 }
 
@@ -31,7 +31,7 @@ limitations under the License.
   align-items: center;
   justify-content: space-between;
   background-color: transparent;
-  color: var(--primary-content);
+  color: var(--cpd-color-text-primary);
   padding: 8px 16px;
   outline: none;
   cursor: pointer;
@@ -44,6 +44,6 @@ limitations under the License.
 }
 
 .option.disabled {
-  color: var(--quaternary-content);
-  background-color: var(--bgColor3);
+  color: var(--cpd-color-text-disabled);
+  background-color: var(--stopgap-bgColor3);
 }
