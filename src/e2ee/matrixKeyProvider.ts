@@ -42,6 +42,8 @@ export class MatrixKeyProvider extends BaseKeyProvider {
       participant,
       encryptionKey,
     ] of this.rtcSession.encryptionKeys.entries()) {
+      // The new session could be aware of keys of which the old session wasn't,
+      // so emit a key changed event.
       this.onEncryptionKeyChanged(
         encryptionKey,
         participant.userId,
