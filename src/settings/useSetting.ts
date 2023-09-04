@@ -23,6 +23,7 @@ import {
   setLocalStorageItem,
   useLocalStorage,
 } from "../useLocalStorage";
+import { useEnableEmbeddedE2EE } from "../e2ee/e2eeHooks";
 
 type Setting<T> = [T, (value: T) => void];
 type DisableableSetting<T> = [T, ((value: T) => void) | null];
@@ -90,11 +91,13 @@ export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
 };
 
 export const useEnableSPAE2EE = (): DisableableSetting<boolean | null> => {
+  const embeddedE2EEEnabled = useEnableEmbeddedE2EE();
   const settingVal = useSetting<boolean | null>(
     "enable-end-to-end-encryption",
     true
   );
 
+  if (embeddedE2EEEnabled) return [false, null];
   if (!isE2EESupported()) return [false, null];
 
   return settingVal;
