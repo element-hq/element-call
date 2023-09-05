@@ -81,7 +81,7 @@ limitations under the License.
 }
 
 .authLinks a {
-  color: var(--accent);
+  color: var(--cpd-color-text-action-accent);
   text-decoration: none;
   font-weight: normal;
 }

@@ -20,7 +20,7 @@ limitations under the License.
   height: 50vh;
   border-radius: 24px;
   overflow: hidden;
-  background-color: var(--bgColor3);
+  background-color: var(--stopgap-bgColor3);
   margin: 20px;
 }
 
@@ -41,7 +41,7 @@ limitations under the License.
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: var(--bgColor3);
+  background-color: var(--stopgap-bgColor3);
 }
 
 .cameraPermissions {
@@ -62,7 +62,7 @@ limitations under the License.
   display: flex;
   justify-content: center;
   align-items: center;
-  background-color: rgba(23, 25, 28, 0.9);
+  background-color: var(--stopgap-background-85);
 }
 
 .previewButtons > * {

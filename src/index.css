@@ -21,6 +21,8 @@ limitations under the License.
    (to avoid having to maintain a fork of Inter). */
 
 @import "normalize.css/normalize.css";
+@import "@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css";
+@import "@vector-im/compound-web/dist/style.css";
 
 :root {
   --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
@@ -37,22 +39,17 @@ limitations under the License.
   --font-size-title: calc(24px * var(--font-scale));
   --font-size-headline: calc(32px * var(--font-scale));
 
-  --accent: #0dbd8b;
-  --accent-20: #0dbd8b33;
-  --alert: #ff5b55;
-  --alert-20: #ff5b5533;
-  --links: #0086e6;
-  --primary-content: #ffffff;
-  --secondary-content: #a9b2bc;
-  --tertiary-content: #8e99a4;
-  --tertiary-content-20: #8e99a433;
-  --quaternary-content: #6f7882;
-  --quinary-content: #394049;
-  --system: #21262c;
-  --background: #15191e;
-  --background-85: rgba(23, 25, 28, 0.85);
-  --bgColor3: #444; /* This isn't found anywhere in the designs or Compound */
-  --subtle-primary: #26282d;
+  --cpd-color-border-accent: var(--cpd-color-green-1100);
+  /* These colors are needed during the transitionary period between the old and
+  new Compound design systems, but should be removed ASAP */
+  --stopgap-color-on-solid-accent: var(--cpd-color-bg-canvas-default);
+  --stopgap-background-85: rgba(255, 255, 255, 0.85);
+  --stopgap-bgColor3: #444;
+}
+
+.cpd-theme-dark {
+  --stopgap-color-on-solid-accent: var(--cpd-color-text-primary);
+  --stopgap-background-85: rgba(16, 19, 23, 0.85);
 }
 
 @font-face {
@@ -136,8 +133,8 @@ limitations under the License.
 }
 
 body {
-  background-color: var(--background);
-  color: var(--primary-content);
+  background-color: var(--cpd-color-bg-canvas-default);
+  color: var(--cpd-color-text-primary);
   color-scheme: dark;
   margin: 0;
   font-family: var(--font-family);
@@ -204,7 +201,7 @@ p {
 }
 
 a {
-  color: var(--accent);
+  color: var(--cpd-color-text-action-accent);
   text-decoration: none;
 }
 
@@ -216,8 +213,8 @@ a:active {
 hr {
   width: calc(100% - 24px);
   border: none;
-  border-top: 1px solid var(--quinary-content);
-  color: var(--quaternary-content);
+  border-top: 1px solid var(--cpd-color-border-interactive-secondary);
+  color: var(--cpd-color-border-interactive-secondary);
   overflow: visible;
   text-align: center;
   height: 5px;

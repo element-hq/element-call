@@ -22,7 +22,7 @@ limitations under the License.
 }
 
 .userButton svg * {
-  fill: var(--primary-content);
+  fill: var(--cpd-color-icon-primary);
 }
 
 .avatar {

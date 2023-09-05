@@ -15,12 +15,12 @@ limitations under the License.
 */
 
 .tooltip {
-  background-color: var(--system);
+  background-color: var(--cpd-color-bg-subtle-secondary);
   flex-direction: row;
   justify-content: center;
   align-items: center;
   padding: 10px;
-  color: var(--primary-content);
+  color: var(--cpd-color-text-primary);
   border-radius: 8px;
   max-width: 135px;
   width: max-content;
