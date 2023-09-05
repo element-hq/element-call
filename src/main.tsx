@@ -57,7 +57,7 @@ Initializer.initBeforeReact();
 const history = createBrowserHistory();
 
 root.render(
-  //<StrictMode>
-  <App history={history} />
-  //</StrictMode>
+  <StrictMode>
+    <App history={history} />
+  </StrictMode>
 );
