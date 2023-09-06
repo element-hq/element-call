@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "io.element.android.x.debug",
+      "sha256_cert_fingerprints": [
+        "BC:9D:56:30:0C:3C:DB:80:16:EE:0D:3F:40:E6:65:C0:78:CA:B8:99:2E:DD:6E:FB:2B:CA:FB:60:48:FE:BF:58"
+      ]
+    }
+  }
+]
