@@ -190,7 +190,8 @@ export function InCallView({
     containerRef1,
     toggleMicrophone,
     toggleCamera,
-    async (muted) => await localParticipant.setMicrophoneEnabled(!muted)
+    (muted) =>
+      muteStates?.audio?.setEnabled && muteStates.audio.setEnabled(!muted)
   );
 
   const onDisconnected = useCallback(
