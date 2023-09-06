@@ -364,19 +364,19 @@ export function InCallView({
     const buttons: JSX.Element[] = [];
 
     buttons.push(
-      <MicButton
-        key="1"
-        muted={!muteStates.audio.enabled}
-        onPress={toggleMicrophone}
-        disabled={muteStates.audio.setEnabled === null}
-        data-testid="incall_mute"
-      />,
       <VideoButton
         key="2"
         muted={!muteStates.video.enabled}
         onPress={toggleCamera}
         disabled={muteStates.video.setEnabled === null}
         data-testid="incall_videomute"
+      />,
+      <MicButton
+        key="1"
+        muted={!muteStates.audio.enabled}
+        onPress={toggleMicrophone}
+        disabled={muteStates.audio.setEnabled === null}
+        data-testid="incall_mute"
       />
     );
 
