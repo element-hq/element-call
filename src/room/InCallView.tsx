@@ -456,7 +456,8 @@ function findMatrixMember(
   if (!id) return undefined;
 
   const parts = id.split(":");
-  if (parts.length < 2) {
+  // must be at least 3 parts because we know the first part is a userId which must necessarily contain a colon
+  if (parts.length < 3) {
     logger.warn(
       "Livekit participants ID doesn't look like a userId:deviceId combination"
     );
