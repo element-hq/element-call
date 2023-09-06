@@ -1,17 +1,15 @@
 {
-    "applinks": {
-        "apps": [],
-        "details": [
-            {
-                "appIDs":[
-                    "7J4U792NQT.io.element.elementx",
-                    "7J4U792NQT.io.element.elementx.nightly",
-                    "7J4U792NQT.io.element.elementx.pr"
-                ],
-                "paths": [
-                    "*"
-                ]
-            }
-        ]
-    }
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appIDs": [
+          "7J4U792NQT.io.element.elementx",
+          "7J4U792NQT.io.element.elementx.nightly",
+          "7J4U792NQT.io.element.elementx.pr"
+        ],
+        "paths": ["*"]
+      }
+    ]
+  }
 }
