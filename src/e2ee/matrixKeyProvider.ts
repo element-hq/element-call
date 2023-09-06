@@ -52,6 +52,10 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     encryptionKey: string,
     participantId: string
   ) => {
+    console.log(
+      `Embedded-E2EE-LOG onEncryptionKeyChanged participantId=${participantId} encryptionKey=${encryptionKey}`
+    );
+
     this.onSetEncryptionKey(
       await createKeyMaterialFromString(encryptionKey),
       participantId
