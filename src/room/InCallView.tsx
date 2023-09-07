@@ -174,14 +174,14 @@ export function InCallView({
     room: livekitRoom,
   });
 
-  const toggleMicrophone = useCallback(
-    () => muteStates.audio.setEnabled?.((e) => !e),
-    [muteStates]
-  );
-  const toggleCamera = useCallback(
-    () => muteStates.video.setEnabled?.((e) => !e),
-    [muteStates]
-  );
+  const toggleMicrophone = useCallback(() => {
+    muteStates.audio.setEnabled?.((e) => !e);
+    rtcSession.updateEncryptionKeyEvent();
+  }, [muteStates, rtcSession]);
+  const toggleCamera = useCallback(() => {
+    muteStates.video.setEnabled?.((e) => !e);
+    rtcSession.updateEncryptionKeyEvent();
+  }, [muteStates, rtcSession]);
 
   const joinRule = useJoinRule(rtcSession.room);
 
