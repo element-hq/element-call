@@ -145,8 +145,6 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     // Firefox doesn't respect the disablePictureInPicture attribute
     // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
 
-    console.log(`LOG VideoTIle mxcSrc=${member?.getMxcAvatarUrl()}`);
-
     return (
       <animated.div
         className={classNames(styles.videoTile, className, {
