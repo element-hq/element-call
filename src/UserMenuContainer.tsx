@@ -67,6 +67,7 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
         isPasswordlessUser={passwordlessUser}
         avatarUrl={avatarUrl}
         onAction={onAction}
+        userId={client?.getUserId() ?? ""}
         displayName={displayName || (userName ? userName.replace("@", "") : "")}
       />
       {modalState.isOpen && client && (
