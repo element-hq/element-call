@@ -176,12 +176,10 @@ export function InCallView({
 
   const toggleMicrophone = useCallback(() => {
     muteStates.audio.setEnabled?.((e) => !e);
-    rtcSession.updateEncryptionKeyEvent();
-  }, [muteStates, rtcSession]);
+  }, [muteStates]);
   const toggleCamera = useCallback(() => {
     muteStates.video.setEnabled?.((e) => !e);
-    rtcSession.updateEncryptionKeyEvent();
-  }, [muteStates, rtcSession]);
+  }, [muteStates]);
 
   const joinRule = useJoinRule(rtcSession.room);
 

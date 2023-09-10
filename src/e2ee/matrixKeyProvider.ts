@@ -38,27 +38,32 @@ export class MatrixKeyProvider extends BaseKeyProvider {
       this.onEncryptionKeyChanged
     );
 
+    // The new session could be aware of keys of which the old session wasn't,
+    // so emit a key changed event.
     for (const [
       participant,
-      encryptionKey,
+      encryptionKeys,
     ] of this.rtcSession.getEncryptionKeys()) {
-      // The new session could be aware of keys of which the old session wasn't,
-      // so emit a key changed event.
-      this.onEncryptionKeyChanged(encryptionKey, participant);
+      for (const [index, encryptionKey] of encryptionKeys.entries()) {
+        this.onEncryptionKeyChanged(encryptionKey, index, participant);
+      }
     }
   }
 
   private onEncryptionKeyChanged = async (
     encryptionKey: string,
+    encryptionKeyIndex: number,
     participantId: string
   ) => {
-    console.log(
-      `Embedded-E2EE-LOG onEncryptionKeyChanged participantId=${participantId} encryptionKey=${encryptionKey}`
-    );
-
     this.onSetEncryptionKey(
       await createKeyMaterialFromString(encryptionKey),
-      participantId
+      participantId,
+      encryptionKeyIndex
+    );
+
+    console.log(
+      `Embedded-E2EE-LOG onEncryptionKeyChanged participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex} encryptionKey=${encryptionKey}`,
+      this.getKeys()
     );
   };
 }
