@@ -35,11 +35,14 @@ import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { MuteStates } from "./MuteStates";
 
 export type MatrixInfo = {
+  userId: string;
   displayName: string;
   avatarUrl: string;
   roomId: string;
   roomName: string;
   roomAlias: string | null;
+  roomAvatar: string | null;
+  roomEncrypted: boolean;
 };
 
 interface Props {
@@ -129,9 +132,10 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
         {!muteStates.video.enabled && (
           <div className={styles.avatarContainer}>
             <Avatar
+              id={matrixInfo.userId}
+              name={matrixInfo.displayName}
               size={(previewBounds.height - 66) / 2}
               src={matrixInfo.avatarUrl}
-              fallback={matrixInfo.displayName.slice(0, 1).toUpperCase()}
             />
           </div>
         )}
