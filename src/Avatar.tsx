@@ -14,23 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useMemo, CSSProperties, HTMLAttributes, FC } from "react";
-import classNames from "classnames";
+import { useMemo, FC } from "react";
+import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
 
 import { getAvatarUrl } from "./matrix-utils";
 import { useClient } from "./ClientContext";
-import styles from "./Avatar.module.css";
-
-const backgroundColors = [
-  "#5C56F5",
-  "#03B381",
-  "#368BD6",
-  "#AC3BA8",
-  "#E64F7A",
-  "#FF812D",
-  "#2DC2C5",
-  "#74D12C",
-];
 
 export enum Size {
   XS = "xs",
@@ -48,50 +36,28 @@ export const sizes = new Map([
   [Size.XL, 90],
 ]);
 
-function hashStringToArrIndex(str: string, arrLength: number) {
-  let sum = 0;
-
-  for (let i = 0; i < str.length; i++) {
-    sum += str.charCodeAt(i);
-  }
-
-  return sum % arrLength;
-}
-
-interface Props extends HTMLAttributes<HTMLDivElement> {
-  bgKey?: string;
+interface Props {
+  id: string;
+  name: string;
+  className?: string;
   src?: string;
   size?: Size | number;
-  className?: string;
-  style?: CSSProperties;
-  fallback: string;
 }
 
 export const Avatar: FC<Props> = ({
-  bgKey,
-  src,
-  fallback,
-  size = Size.MD,
   className,
-  style = {},
-  ...rest
+  id,
+  name,
+  src,
+  size = Size.MD,
 }) => {
   const { client } = useClient();
 
-  const [sizeClass, sizePx, sizeStyle] = useMemo(
+  const sizePx = useMemo(
     () =>
       Object.values(Size).includes(size as Size)
-        ? [styles[size as string], sizes.get(size as Size), {}]
-        : [
-            null,
-            size as number,
-            {
-              width: size,
-              height: size,
-              borderRadius: size,
-              fontSize: Math.round((size as number) / 2),
-            },
-          ],
+        ? sizes.get(size as Size)
+        : (size as number),
     [size]
   );
 
@@ -100,28 +66,13 @@ export const Avatar: FC<Props> = ({
     return src.startsWith("mxc://") ? getAvatarUrl(client, src, sizePx) : src;
   }, [client, src, sizePx]);
 
-  const backgroundColor = useMemo(() => {
-    const index = hashStringToArrIndex(
-      bgKey || fallback || src || "",
-      backgroundColors.length
-    );
-    return backgroundColors[index];
-  }, [bgKey, src, fallback]);
-
-  /* eslint-disable jsx-a11y/alt-text */
   return (
-    <div
-      className={classNames(styles.avatar, sizeClass, className)}
-      style={{ backgroundColor, ...sizeStyle, ...style }}
-      {...rest}
-    >
-      {resolvedSrc ? (
-        <img src={resolvedSrc} />
-      ) : typeof fallback === "string" ? (
-        <span>{fallback}</span>
-      ) : (
-        fallback
-      )}
-    </div>
+    <CompoundAvatar
+      className={className}
+      id={id}
+      name={name}
+      size={`${sizePx}px`}
+      src={resolvedSrc}
+    />
   );
 };

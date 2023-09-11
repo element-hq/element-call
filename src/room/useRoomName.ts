@@ -1,11 +1,11 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-http://www.apache.org/licenses/LICENSE-2.0
+    http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,29 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.facepile {
-  width: 100%;
-  position: relative;
-}
+import { Room, RoomEvent } from "matrix-js-sdk/src/matrix";
+import { useState } from "react";
 
-.facepile.xs {
-  height: 24px;
-}
+import { useTypedEventEmitter } from "../useEvents";
 
-.facepile.sm {
-  height: 32px;
-}
-
-.facepile.md {
-  height: 36px;
-}
-
-.facepile .avatar {
-  position: absolute;
-  top: 0;
-  border: 1px solid var(--cpd-color-bg-canvas-default);
-}
-
-.facepile.md .avatar {
-  border-width: 2px;
+export function useRoomName(room: Room): string {
+  const [, setNumUpdates] = useState(0);
+  // Whenever the name changes, force an update
+  useTypedEventEmitter(room, RoomEvent.Name, () => setNumUpdates((n) => n + 1));
+  return room.name;
 }
