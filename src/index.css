@@ -45,6 +45,10 @@ limitations under the License.
   --stopgap-color-on-solid-accent: var(--cpd-color-bg-canvas-default);
   --stopgap-background-85: rgba(255, 255, 255, 0.85);
   --stopgap-bgColor3: #444;
+
+  /* The distance to inset non-full-width content from the edge of the window
+  along the inline axis */
+  --inline-content-inset: max(var(--cpd-space-4x), calc((100vw - 1180px) / 2));
 }
 
 .cpd-theme-dark {
@@ -239,4 +243,14 @@ details[open] > summary {
 #root > [data-overlay-container] {
   position: relative;
   height: 100%;
+}
+
+/* normalize.css sets the focus rings on buttons in Firefox to an unusual custom
+outline, which is inconsistent with our other components and is not sufficiently
+visible to be accessible. This resets it back to 'auto'. */
+button:-moz-focusring,
+[type="button"]:-moz-focusring,
+[type="reset"]:-moz-focusring,
+[type="submit"]:-moz-focusring {
+  outline: auto;
 }

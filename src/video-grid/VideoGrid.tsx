@@ -40,7 +40,7 @@ import useMeasure from "react-use-measure";
 import { ResizeObserver as JuggleResizeObserver } from "@juggle/resize-observer";
 
 import styles from "./VideoGrid.module.css";
-import { Layout } from "../room/GridLayoutMenu";
+import { Layout } from "../room/LayoutToggle";
 import { TileWrapper } from "./TileWrapper";
 import { LayoutStatesMap } from "./Layout";
 
@@ -81,8 +81,8 @@ export function useVideoGridLayout(hasScreenshareFeeds: boolean): {
   layout: Layout;
   setLayout: (layout: Layout) => void;
 } {
-  const layoutRef = useRef<Layout>("freedom");
-  const revertLayoutRef = useRef<Layout>("freedom");
+  const layoutRef = useRef<Layout>("grid");
+  const revertLayoutRef = useRef<Layout>("grid");
   const prevHasScreenshareFeeds = useRef(hasScreenshareFeeds);
   const [, forceUpdate] = useState({});
 
@@ -151,7 +151,7 @@ function getTilePositions(
   pipYRatio: number,
   layout: Layout
 ): TilePosition[] {
-  if (layout === "freedom") {
+  if (layout === "grid") {
     if (tileCount === 2 && focusedTileCount === 0) {
       return getOneOnOneLayoutTilePositions(
         gridWidth,
@@ -700,7 +700,7 @@ function displayedTileCount(
   gridHeight: number
 ): number {
   let displayedTile = -1;
-  if (layout === "freedom") {
+  if (layout === "grid") {
     return displayedTile;
   }
   if (tileCount < 2) {
@@ -734,7 +734,7 @@ function reorderTiles<T>(tiles: Tile<T>[], layout: Layout, displayedTile = -1) {
   // can assign multiple remote tiles order '1' and this persists through
   // subsequent reorders because we preserve the order of the tiles.
   if (
-    layout === "freedom" &&
+    layout === "grid" &&
     tiles.length === 2 &&
     tiles.filter((t) => t.item.local).length === 1 &&
     !tiles.some((t) => t.focused)
@@ -1143,7 +1143,7 @@ export function VideoGrid<T>({
       lastTappedRef.current[tileKey] = 0;
 
       const tile = tiles.find((tile) => tile.key === tileKey);
-      if (!tile || layout !== "freedom") return;
+      if (!tile || layout !== "grid") return;
       const item = tile.item;
 
       setTileState(({ tiles, ...state }) => {
@@ -1216,7 +1216,7 @@ export function VideoGrid<T>({
       return;
     }
 
-    if (layout !== "freedom") return;
+    if (layout !== "grid") return;
 
     const dragTileIndex = tiles.findIndex((tile) => tile.key === tileId);
     const dragTile = tiles[dragTileIndex];
@@ -1392,5 +1392,5 @@ export function VideoGrid<T>({
 }
 
 VideoGrid.defaultProps = {
-  layout: "freedom",
+  layout: "grid",
 };

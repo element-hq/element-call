@@ -20,20 +20,20 @@ import { useTranslation } from "react-i18next";
 import { Modal, ModalContent, ModalProps } from "../Modal";
 import { CopyButton } from "../button";
 import { getRoomUrl } from "../matrix-utils";
-import styles from "./InviteModal.module.css";
+import styles from "./ShareModal.module.css";
 import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 
 interface Props extends Omit<ModalProps, "title" | "children"> {
   roomId: string;
 }
 
-export const InviteModal: FC<Props> = ({ roomId, ...rest }) => {
+export const ShareModal: FC<Props> = ({ roomId, ...rest }) => {
   const { t } = useTranslation();
   const roomSharedKey = useRoomSharedKey(roomId);
 
   return (
     <Modal
-      title={t("Invite people")}
+      title={t("Share this call")}
       isDismissable
       className={styles.inviteModal}
       {...rest}

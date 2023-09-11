@@ -21,6 +21,7 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 import { Room } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
+import { JoinRule, RoomMember } from "matrix-js-sdk/src/matrix";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { widget, ElementWidgetActions, JoinCallData } from "../widget";
@@ -43,6 +44,11 @@ import {
   useIsRoomE2EE,
 } from "../e2ee/sharedKeyManagement";
 import { useEnableE2EE } from "../settings/useSetting";
+import { useRoomAvatar } from "./useRoomAvatar";
+import { useRoomName } from "./useRoomName";
+import { useModalTriggerState } from "../Modal";
+import { useJoinRule } from "./useJoinRule";
+import { ShareModal } from "./ShareModal";
 
 declare global {
   interface Window {
@@ -67,15 +73,8 @@ export function GroupCallView({
   hideHeader,
   groupCall,
 }: Props) {
-  const {
-    state,
-    error,
-    enter,
-    leave,
-    participants,
-    unencryptedEventsFromUsers,
-    otelGroupCallMembership,
-  } = useGroupCall(groupCall, client);
+  const { state, error, enter, leave, participants, otelGroupCallMembership } =
+    useGroupCall(groupCall, client);
 
   const e2eeSharedKey = useManageRoomSharedKey(groupCall.room.roomId);
   const isRoomE2EE = useIsRoomE2EE(groupCall.room.roomId);
@@ -90,16 +89,39 @@ export function GroupCallView({
   }, [groupCall]);
 
   const { displayName, avatarUrl } = useProfile(client);
+  const roomName = useRoomName(groupCall.room);
+  const roomAvatar = useRoomAvatar(groupCall.room);
+  const roomEncrypted = useIsRoomE2EE(groupCall.room.roomId)!;
+
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
       userId: client.getUserId()!,
       displayName: displayName!,
       avatarUrl: avatarUrl!,
       roomId: groupCall.room.roomId,
-      roomName: groupCall.room.name,
+      roomName,
       roomAlias: groupCall.room.getCanonicalAlias(),
+      roomAvatar,
+      roomEncrypted,
     };
-  }, [client, displayName, avatarUrl, groupCall]);
+  }, [
+    displayName,
+    avatarUrl,
+    groupCall,
+    roomName,
+    roomAvatar,
+    roomEncrypted,
+    client,
+  ]);
+
+  const participatingMembers = useMemo(() => {
+    const members: RoomMember[] = [];
+    for (const [member, deviceMap] of participants.entries()) {
+      // Count each member only once, regardless of how many devices they use
+      if (deviceMap.size > 0) members.push(member);
+    }
+    return members;
+  }, [participants]);
 
   const deviceContext = useMediaDevices();
   const latestDevices = useRef<MediaDevices>();
@@ -262,6 +284,17 @@ export function GroupCallView({
     groupCall.enter();
   }, [groupCall]);
 
+  const joinRule = useJoinRule(groupCall.room);
+
+  const { modalState: shareModalState, modalProps: shareModalProps } =
+    useModalTriggerState();
+
+  const onShareClickFn = useCallback(
+    () => shareModalState.open(),
+    [shareModalState]
+  );
+  const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
+
   if (e2eeEnabled && isRoomE2EE && !e2eeSharedKey) {
     return (
       <ErrorView
@@ -284,6 +317,10 @@ export function GroupCallView({
     return <ErrorView error={new Error("No livekit_service_url defined")} />;
   }
 
+  const shareModal = shareModalState.isOpen && (
+    <ShareModal roomId={groupCall.room.roomId} {...shareModalProps} />
+  );
+
   if (error) {
     return <ErrorView error={error} />;
   } else if (state === GroupCallState.Entered) {
@@ -293,16 +330,19 @@ export function GroupCallView({
         groupCall={groupCall}
         roomName={`${groupCall.room.roomId}-${groupCall.groupCallId}`}
       >
+        {shareModal}
         <ActiveCall
           client={client}
+          matrixInfo={matrixInfo}
           groupCall={groupCall}
           participants={participants}
+          participatingMembers={participatingMembers}
           onLeave={onLeave}
-          unencryptedEventsFromUsers={unencryptedEventsFromUsers}
           hideHeader={hideHeader}
           muteStates={muteStates}
           e2eeConfig={e2eeConfig}
           otelGroupCallMembership={otelGroupCallMembership}
+          onShareClick={onShareClick}
         />
       </OpenIDLoader>
     );
@@ -343,13 +383,19 @@ export function GroupCallView({
     );
   } else {
     return (
-      <LobbyView
-        matrixInfo={matrixInfo}
-        muteStates={muteStates}
-        onEnter={() => enter()}
-        isEmbedded={isEmbedded}
-        hideHeader={hideHeader}
-      />
+      <>
+        {shareModal}
+        <LobbyView
+          client={client}
+          matrixInfo={matrixInfo}
+          muteStates={muteStates}
+          onEnter={() => enter()}
+          isEmbedded={isEmbedded}
+          hideHeader={hideHeader}
+          participatingMembers={participatingMembers}
+          onShareClick={onShareClick}
+        />
+      </>
     );
   }
 }

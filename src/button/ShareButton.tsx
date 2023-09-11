@@ -14,15 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.e2eeLock {
-  width: 24px;
-  height: 24px;
+import { ComponentPropsWithoutRef, FC } from "react";
+import { Button } from "@vector-im/compound-web";
+import { useTranslation } from "react-i18next";
+import { ReactComponent as UserAddSolidIcon } from "@vector-im/compound-design-tokens/icons/user-add-solid.svg";
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin: 8px;
-
-  border-radius: 100%;
-  background-color: var(--cpd-color-bg-subtle-primary);
-}
+export const ShareButton: FC<
+  Omit<ComponentPropsWithoutRef<"button">, "children">
+> = (props) => {
+  const { t } = useTranslation();
+  return (
+    <Button kind="secondary" size="sm" Icon={UserAddSolidIcon} {...props}>
+      {t("Share")}
+    </Button>
+  );
+};

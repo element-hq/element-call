@@ -15,19 +15,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { ComponentPropsWithoutRef, FC } from "react";
+
 import { ReactComponent as AudioMuted } from "../icons/AudioMuted.svg";
 import { ReactComponent as AudioLow } from "../icons/AudioLow.svg";
 import { ReactComponent as Audio } from "../icons/Audio.svg";
 
-interface Props {
+interface Props extends ComponentPropsWithoutRef<"svg"> {
   /**
    * Number between 0 and 1
    */
   volume: number;
 }
 
-export function VolumeIcon({ volume }: Props) {
-  if (volume <= 0) return <AudioMuted />;
-  if (volume <= 0.5) return <AudioLow />;
-  return <Audio />;
-}
+export const VolumeIcon: FC<Props> = ({ volume, ...rest }) => {
+  if (volume <= 0) return <AudioMuted {...rest} />;
+  if (volume <= 0.5) return <AudioLow {...rest} />;
+  return <Audio {...rest} />;
+};
