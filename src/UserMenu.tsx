@@ -35,6 +35,7 @@ interface UserMenuProps {
   preventNavigation: boolean;
   isAuthenticated: boolean;
   isPasswordlessUser: boolean;
+  userId: string;
   displayName: string;
   avatarUrl?: string;
   onAction: (value: string) => void;
@@ -44,6 +45,7 @@ export function UserMenu({
   preventNavigation,
   isAuthenticated,
   isPasswordlessUser,
+  userId,
   displayName,
   avatarUrl,
   onAction,
@@ -109,10 +111,10 @@ export function UserMenu({
         >
           {isAuthenticated && (!isPasswordlessUser || avatarUrl) ? (
             <Avatar
+              id={userId}
+              name={displayName}
               size={Size.SM}
-              className={styles.avatar}
               src={avatarUrl}
-              fallback={displayName.slice(0, 1).toUpperCase()}
             />
           ) : (
             <UserIcon />

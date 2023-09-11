@@ -169,9 +169,10 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             <div className={styles.videoMutedOverlay} />
             <Avatar
               key={member?.userId}
+              id={member?.userId ?? displayName}
+              name={displayName}
               size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
               src={member?.getMxcAvatarUrl()}
-              fallback={displayName.slice(0, 1).toUpperCase()}
               className={styles.avatar}
             />
           </>

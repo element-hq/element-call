@@ -3,7 +3,6 @@
   "{{count}} stars|other": "{{count}} stars",
   "{{displayName}} is presenting": "{{displayName}} is presenting",
   "{{displayName}}, your call has ended.": "{{displayName}}, your call has ended.",
-  "{{names}}, {{name}}": "{{names}}, {{name}}",
   "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Create an account</0> Or <2>Access as a guest</2>",
