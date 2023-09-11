@@ -117,8 +117,8 @@ export function GroupCallView({
   const participatingMembers = useMemo(() => {
     const members: RoomMember[] = [];
     for (const [member, deviceMap] of participants.entries()) {
-      // Repeat the member for as many devices as they're using
-      for (let i = 0; i < deviceMap.size; i++) members.push(member);
+      // Count each member only once, regardless of how many devices they use
+      if (deviceMap.size > 0) members.push(member);
     }
     return members;
   }, [participants]);
