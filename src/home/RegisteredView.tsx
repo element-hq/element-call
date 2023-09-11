@@ -170,7 +170,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
               <Title className={styles.recentCallsTitle}>
                 {t("Your recent calls")}
               </Title>
-              <CallList rooms={recentRooms} client={client} disableFacepile />
+              <CallList rooms={recentRooms} client={client} />
             </>
           )}
         </main>

@@ -35,13 +35,23 @@ interface Props extends AllHTMLAttributes<HTMLInputElement> {
   id: string;
   label: string;
   avatarUrl: string | undefined;
+  userId: string;
   displayName: string;
   onRemoveAvatar: () => void;
 }
 
 export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
   (
-    { id, label, className, avatarUrl, displayName, onRemoveAvatar, ...rest },
+    {
+      id,
+      label,
+      className,
+      avatarUrl,
+      userId,
+      displayName,
+      onRemoveAvatar,
+      ...rest
+    },
     ref
   ) => {
     const { t } = useTranslation();
@@ -80,9 +90,10 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
       <div className={classNames(styles.avatarInputField, className)}>
         <div className={styles.avatarContainer}>
           <Avatar
+            id={userId}
+            name={displayName}
             size={Size.XL}
             src={removed ? undefined : objUrl || avatarUrl}
-            fallback={displayName.slice(0, 1).toUpperCase()}
           />
           <input
             id={id}
