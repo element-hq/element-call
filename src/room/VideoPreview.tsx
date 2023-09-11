@@ -71,6 +71,9 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
 
   const devices = useMediaDevices();
 
+  // Capture the audio options as they were when we first mounted, because
+  // we're not doing anything with the audio anyway so we don't need to
+  // re-open the devices when they change (see below).
   const initialAudioOptions = useRef<CreateLocalTracksOptions["audio"]>();
   initialAudioOptions.current ??= muteStates.audio.enabled && {
     deviceId: devices.audioInput.selectedId,
@@ -82,7 +85,9 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
       // request over with at the same time. But changing the audio settings
       // shouldn't cause this hook to recreate the track, which is why we
       // reference the initial values here.
-      audio: initialAudioOptions.current,
+      // We also pass in a clone because livekit mutates the object passed in,
+      // which would cause the devices to be re-opened on the next render.
+      audio: Object.assign({}, initialAudioOptions.current),
       video: muteStates.video.enabled && {
         deviceId: devices.videoInput.selectedId,
       },
