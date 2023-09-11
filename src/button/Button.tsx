@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import { forwardRef, useCallback } from "react";
+import { forwardRef } from "react";
 import { PressEvent } from "@react-types/shared";
 import classNames from "classnames";
 import { useButton } from "@react-aria/button";
@@ -27,13 +27,11 @@ import { ReactComponent as VideoCallOffIcon } from "@vector-im/compound-design-t
 import { ReactComponent as EndCallIcon } from "@vector-im/compound-design-tokens/icons/end-call.svg";
 import { ReactComponent as ShareScreenSolidIcon } from "@vector-im/compound-design-tokens/icons/share-screen-solid.svg";
 import { ReactComponent as SettingsSolidIcon } from "@vector-im/compound-design-tokens/icons/settings-solid.svg";
-import { ReactComponent as UserAddSolidIcon } from "@vector-im/compound-design-tokens/icons/user-add-solid.svg";
 import { ReactComponent as ChevronDownIcon } from "@vector-im/compound-design-tokens/icons/chevron-down.svg";
 
 import styles from "./Button.module.css";
 import { ReactComponent as Fullscreen } from "../icons/Fullscreen.svg";
 import { ReactComponent as FullscreenExit } from "../icons/FullscreenExit.svg";
-import { TooltipTrigger } from "../Tooltip";
 import { VolumeIcon } from "./VolumeIcon";
 
 export type ButtonVariant =
@@ -146,11 +144,13 @@ export function MicButton({
   [index: string]: unknown;
 }) {
   const { t } = useTranslation();
+  const Icon = muted ? MicOffSolidIcon : MicOnSolidIcon;
+  const label = muted ? t("Microphone off") : t("Microphone on");
 
   return (
-    <Tooltip label={muted ? t("Microphone off") : t("Microphone on")}>
+    <Tooltip label={label}>
       <Button variant="toolbar" {...rest} on={!muted}>
-        {muted ? <MicOffSolidIcon /> : <MicOnSolidIcon />}
+        <Icon aria-label={label} />
       </Button>
     </Tooltip>
   );
@@ -165,11 +165,13 @@ export function VideoButton({
   [index: string]: unknown;
 }) {
   const { t } = useTranslation();
+  const Icon = muted ? VideoCallOffIcon : VideoCallIcon;
+  const label = muted ? t("Video off") : t("Video on");
 
   return (
-    <Tooltip label={muted ? t("Video off") : t("Video on")}>
+    <Tooltip label={label}>
       <Button variant="toolbar" {...rest} on={!muted}>
-        {muted ? <VideoCallOffIcon /> : <VideoCallIcon />}
+        <Icon aria-label={label} />
       </Button>
     </Tooltip>
   );
@@ -186,11 +188,12 @@ export function ScreenshareButton({
   [index: string]: unknown;
 }) {
   const { t } = useTranslation();
+  const label = enabled ? t("Sharing screen") : t("Share screen");
 
   return (
-    <Tooltip label={enabled ? t("Sharing screen") : t("Share screen")}>
+    <Tooltip label={label}>
       <Button variant="toolbar" {...rest} on={enabled}>
-        <ShareScreenSolidIcon />
+        <ShareScreenSolidIcon aria-label={label} />
       </Button>
     </Tooltip>
   );
@@ -213,7 +216,7 @@ export function HangupButton({
         className={classNames(styles.hangupButton, className)}
         {...rest}
       >
-        <EndCallIcon />
+        <EndCallIcon aria-label={t("End call")} />
       </Button>
     </Tooltip>
   );
@@ -232,28 +235,7 @@ export function SettingsButton({
   return (
     <Tooltip label={t("Settings")}>
       <Button variant="toolbar" {...rest}>
-        <SettingsSolidIcon />
-      </Button>
-    </Tooltip>
-  );
-}
-
-export function InviteButton({
-  className,
-  variant = "toolbar",
-  ...rest
-}: {
-  className?: string;
-  variant?: string;
-  // TODO: add all props for <Button>
-  [index: string]: unknown;
-}) {
-  const { t } = useTranslation();
-
-  return (
-    <Tooltip label={t("Invite")}>
-      <Button variant={variant} {...rest}>
-        <UserAddSolidIcon />
+        <SettingsSolidIcon aria-label={t("Settings")} />
       </Button>
     </Tooltip>
   );
@@ -268,14 +250,13 @@ interface AudioButtonProps extends Omit<Props, "variant"> {
 
 export function AudioButton({ volume, ...rest }: AudioButtonProps) {
   const { t } = useTranslation();
-  const tooltip = useCallback(() => t("Local volume"), [t]);
 
   return (
-    <TooltipTrigger tooltip={tooltip}>
+    <Tooltip label={t("Local volume")}>
       <Button variant="icon" {...rest}>
-        <VolumeIcon volume={volume} />
+        <VolumeIcon volume={volume} aria-label={t("Local volume")} />
       </Button>
-    </TooltipTrigger>
+    </Tooltip>
   );
 }
 
@@ -288,15 +269,14 @@ export function FullscreenButton({
   ...rest
 }: FullscreenButtonProps) {
   const { t } = useTranslation();
-  const tooltip = useCallback(() => {
-    return fullscreen ? t("Exit full screen") : t("Full screen");
-  }, [fullscreen, t]);
+  const Icon = fullscreen ? FullscreenExit : Fullscreen;
+  const label = fullscreen ? t("Exit full screen") : t("Full screen");
 
   return (
-    <TooltipTrigger tooltip={tooltip}>
+    <Tooltip label={label}>
       <Button variant="icon" {...rest}>
-        {fullscreen ? <FullscreenExit /> : <Fullscreen />}
+        <Icon aria-label={label} />
       </Button>
-    </TooltipTrigger>
+    </Tooltip>
   );
 }
