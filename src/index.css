@@ -244,3 +244,13 @@ details[open] > summary {
   position: relative;
   height: 100%;
 }
+
+/* normalize.css sets the focus rings on buttons in Firefox to an unusual custom
+outline, which is inconsistent with our other components and is not sufficiently
+visible to be accessible. This resets it back to 'auto'. */
+button:-moz-focusring,
+[type="button"]:-moz-focusring,
+[type="reset"]:-moz-focusring,
+[type="submit"]:-moz-focusring {
+  outline: auto;
+}
