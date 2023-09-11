@@ -14,14 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useEffect, useReducer, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import * as Sentry from "@sentry/react";
 import {
   GroupCallEvent,
   GroupCallState,
   GroupCall,
-  GroupCallErrorCode,
-  GroupCallUnknownDeviceError,
   GroupCallError,
   GroupCallStatsReportEvent,
   GroupCallStatsReport,
@@ -77,7 +75,6 @@ interface UseGroupCallReturnType {
   screenshareFeeds: CallFeed[];
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
   hasLocalParticipant: boolean;
-  unencryptedEventsFromUsers: Set<string>;
   otelGroupCallMembership?: OTelGroupCallMembership;
 }
 
@@ -187,13 +184,6 @@ export function useGroupCall(
       groupCallOTelMembership = undefined;
     }
   }
-
-  const [unencryptedEventsFromUsers, addUnencryptedEventUser] = useReducer(
-    (state: Set<string>, newVal: string) => {
-      return new Set(state).add(newVal);
-    },
-    new Set<string>()
-  );
 
   const updateState = useCallback(
     (state: Partial<State>) => setState((prev) => ({ ...prev, ...state })),
@@ -333,10 +323,6 @@ export function useGroupCall(
 
     function onError(e: GroupCallError): void {
       Sentry.captureException(e);
-      if (e.code === GroupCallErrorCode.UnknownDevice) {
-        const unknownDeviceError = e as GroupCallUnknownDeviceError;
-        addUnencryptedEventUser(unknownDeviceError.userId);
-      }
     }
 
     function onConnectionStatsReport(
@@ -638,7 +624,6 @@ export function useGroupCall(
     screenshareFeeds,
     participants,
     hasLocalParticipant,
-    unencryptedEventsFromUsers,
     otelGroupCallMembership: groupCallOTelMembership,
   };
 }

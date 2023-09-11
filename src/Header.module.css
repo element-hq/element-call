@@ -28,8 +28,8 @@ limitations under the License.
   flex: 1;
   align-items: center;
   white-space: nowrap;
-  padding: 0 20px;
-  height: 64px;
+  padding-inline: var(--inline-content-inset);
+  height: 80px;
 }
 
 .headerLogo {
@@ -66,51 +66,56 @@ limitations under the License.
   margin-right: 0;
 }
 
+.roomHeaderInfo {
+  display: grid;
+  column-gap: var(--cpd-space-4x);
+  grid-template-columns: auto auto;
+  grid-template-rows: 1fr auto;
+}
+
+.roomHeaderInfo[data-size="sm"] {
+  grid-template-areas: "avatar name" ". participants";
+}
+
+.roomHeaderInfo[data-size="lg"] {
+  grid-template-areas: "avatar name" "avatar participants";
+}
+
 .roomAvatar {
-  position: relative;
-  display: none;
-  justify-content: center;
+  align-self: flex-start;
+  grid-area: avatar;
+}
+
+.nameLine {
+  grid-area: name;
+  flex-grow: 1;
+  display: flex;
   align-items: center;
-  width: 36px;
-  height: 36px;
-  border-radius: 36px;
-  background-color: #5c56f5;
+  gap: var(--cpd-space-1x);
 }
 
-.roomAvatar > * {
-  fill: white;
-  stroke: white;
-}
-
-.userName {
-  font-weight: 600;
-  margin-right: 8px;
-  text-overflow: ellipsis;
+.nameLine > h1 {
+  margin: 0;
+  /* XXX I can't actually get this ellipsis overflow to trigger, because
+  constraint propagation in a nested flexbox layout is a massive pain */
   overflow: hidden;
-  flex-shrink: 1;
+  text-overflow: ellipsis;
 }
 
-.versionMismatchWarning {
-  padding-left: 15px;
+.nameLine > svg {
+  flex-shrink: 0;
 }
 
-.versionMismatchWarning::before {
-  content: "";
-  display: inline-block;
-  position: relative;
-  top: 1px;
-  width: 16px;
-  height: 16px;
-  mask-image: url("./icons/AlertTriangleFilled.svg");
-  mask-repeat: no-repeat;
-  mask-size: contain;
-  background-color: var(--cpd-color-icon-critical-primary);
-  padding-right: 5px;
+.participantsLine {
+  grid-area: participants;
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-1-5x);
+  font: var(--cpd-font-body-sm-medium);
 }
 
 @media (min-width: 800px) {
   .headerLogo,
-  .roomAvatar,
   .leftNav.hideMobile,
   .rightNav.hideMobile {
     display: flex;
@@ -118,9 +123,5 @@ limitations under the License.
 
   .leftNav h3 {
     font-size: var(--font-size-subtitle);
-  }
-
-  .nav {
-    height: 76px;
   }
 }

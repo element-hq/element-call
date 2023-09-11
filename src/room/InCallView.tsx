@@ -23,7 +23,6 @@ import {
   useTracks,
 } from "@livekit/components-react";
 import { usePreventScroll } from "@react-aria/overlays";
-import classNames from "classnames";
 import { DisconnectReason, Room, RoomEvent, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
@@ -32,10 +31,11 @@ import { Ref, useCallback, useEffect, useMemo, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
 import { OverlayTriggerState } from "@react-stately/overlays";
-import { JoinRule } from "matrix-js-sdk/src/@types/partials";
 import { logger } from "matrix-js-sdk/src/logger";
 import { RoomEventCallbacks } from "livekit-client/dist/src/room/Room";
 
+import { ReactComponent as LogoMark } from "../icons/LogoMark.svg";
+import { ReactComponent as LogoType } from "../icons/LogoType.svg";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
   HangupButton,
@@ -43,15 +43,8 @@ import {
   VideoButton,
   ScreenshareButton,
   SettingsButton,
-  InviteButton,
 } from "../button";
-import {
-  Header,
-  LeftNav,
-  RightNav,
-  RoomHeaderInfo,
-  VersionMismatchWarning,
-} from "../Header";
+import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import {
   useVideoGridLayout,
   TileDescriptor,
@@ -67,28 +60,26 @@ import { useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { ElementWidgetActions, widget } from "../widget";
-import { GridLayoutMenu } from "./GridLayoutMenu";
 import { GroupCallInspector } from "./GroupCallInspector";
 import styles from "./InCallView.module.css";
-import { useJoinRule } from "./useJoinRule";
 import { ParticipantInfo } from "./useGroupCall";
 import { ItemData, TileContent, VideoTile } from "../video-grid/VideoTile";
 import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal } from "../settings/SettingsModal";
-import { InviteModal } from "./InviteModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { E2EEConfig, useLiveKit } from "../livekit/useLiveKit";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
 import { useSFUConfig } from "../livekit/OpenIDLoader";
-import { E2EELock } from "../E2EELock";
 import { useEventEmitterThree } from "../useEvents";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { MuteStates } from "./MuteStates";
-import { useIsRoomE2EE } from "../e2ee/sharedKeyManagement";
+import { MatrixInfo } from "./VideoPreview";
+import { ShareButton } from "../button/ShareButton";
+import { LayoutToggle } from "./LayoutToggle";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -121,32 +112,34 @@ export function ActiveCall(props: ActiveCallProps) {
 
 export interface InCallViewProps {
   client: MatrixClient;
+  matrixInfo: MatrixInfo;
   groupCall: GroupCall;
   livekitRoom: Room;
   muteStates: MuteStates;
   participants: Map<RoomMember, Map<string, ParticipantInfo>>;
+  participatingMembers: RoomMember[];
   onLeave: (error?: Error) => void;
-  unencryptedEventsFromUsers: Set<string>;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
+  onShareClick: (() => void) | null;
 }
 
 export function InCallView({
   client,
+  matrixInfo,
   groupCall,
   livekitRoom,
   muteStates,
   participants,
+  participatingMembers,
   onLeave,
-  unencryptedEventsFromUsers,
   hideHeader,
   otelGroupCallMembership,
+  onShareClick,
 }: InCallViewProps) {
   const { t } = useTranslation();
   usePreventScroll();
   useWakeLock();
-
-  const isRoomE2EE = useIsRoomE2EE(groupCall.room.roomId);
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure({ polyfill: ResizeObserver });
@@ -182,8 +175,6 @@ export function InCallView({
     [muteStates]
   );
 
-  const joinRule = useJoinRule(groupCall.room);
-
   // This function incorrectly assumes that there is a camera and microphone, which is not always the case.
   // TODO: Make sure that this module is resilient when it comes to camera/microphone availability!
   useCallViewKeyboardShortcuts(
@@ -216,7 +207,7 @@ export function InCallView({
 
   useEffect(() => {
     widget?.api.transport.send(
-      layout === "freedom"
+      layout === "grid"
         ? ElementWidgetActions.TileLayout
         : ElementWidgetActions.SpotlightLayout,
       {}
@@ -226,7 +217,7 @@ export function InCallView({
   useEffect(() => {
     if (widget) {
       const onTileLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
-        setLayout("freedom");
+        setLayout("grid");
         await widget!.api.transport.reply(ev.detail, {});
       };
       const onSpotlightLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
@@ -250,7 +241,8 @@ export function InCallView({
     }
   }, [setLayout]);
 
-  const reducedControls = boundsValid && bounds.width <= 400;
+  const mobile = boundsValid && bounds.width <= 660;
+  const reducedControls = boundsValid && bounds.width <= 340;
   const noControls = reducedControls && bounds.height <= 400;
 
   const items = useParticipantTiles(livekitRoom, participants);
@@ -270,7 +262,7 @@ export function InCallView({
   );
 
   const Grid =
-    items.length > 12 && layout === "freedom" ? NewVideoGrid : VideoGrid;
+    items.length > 12 && layout === "grid" ? NewVideoGrid : VideoGrid;
 
   const prefersReducedMotion = usePrefersReducedMotion();
 
@@ -344,25 +336,6 @@ export function InCallView({
     settingsModalState.open();
   }, [settingsModalState]);
 
-  const {
-    modalState: inviteModalState,
-    modalProps: inviteModalProps,
-  }: {
-    modalState: OverlayTriggerState;
-    modalProps: {
-      isOpen: boolean;
-      onClose: () => void;
-    };
-  } = useModalTriggerState();
-
-  const openInvite = useCallback(() => {
-    inviteModalState.open();
-  }, [inviteModalState]);
-
-  const containerClasses = classNames(styles.inRoom, {
-    [styles.maximised]: undefined,
-  });
-
   const toggleScreensharing = useCallback(async () => {
     exitFullscreen();
     await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, {
@@ -414,25 +387,43 @@ export function InCallView({
     buttons.push(
       <HangupButton key="6" onPress={onLeavePress} data-testid="incall_leave" />
     );
-    footer = <div className={styles.footer}>{buttons}</div>;
+    footer = (
+      <div className={styles.footer}>
+        {!mobile && !hideHeader && (
+          <div className={styles.logo}>
+            <LogoMark width={24} height={24} />
+            <LogoType width={80} height={11} />
+          </div>
+        )}
+        <div className={styles.buttons}>{buttons}</div>
+        {!mobile && !hideHeader && (
+          <LayoutToggle
+            className={styles.layout}
+            layout={layout}
+            setLayout={setLayout}
+          />
+        )}
+      </div>
+    );
   }
 
   return (
-    <div className={containerClasses} ref={containerRef}>
+    <div className={styles.inRoom} ref={containerRef}>
       {!hideHeader && maximisedParticipant === null && (
         <Header>
           <LeftNav>
-            <RoomHeaderInfo roomName={groupCall.room.name} />
-            <VersionMismatchWarning
-              users={unencryptedEventsFromUsers}
-              room={groupCall.room}
+            <RoomHeaderInfo
+              id={matrixInfo.roomId}
+              name={matrixInfo.roomName}
+              avatarUrl={matrixInfo.roomAvatar}
+              encrypted={matrixInfo.roomEncrypted}
+              participants={participatingMembers}
+              client={client}
             />
-            {!isRoomE2EE && <E2EELock />}
           </LeftNav>
           <RightNav>
-            <GridLayoutMenu layout={layout} setLayout={setLayout} />
-            {joinRule === JoinRule.Public && (
-              <InviteButton variant="icon" onClick={openInvite} />
+            {!reducedControls && onShareClick !== null && (
+              <ShareButton onClick={onShareClick} />
             )}
           </RightNav>
         </Header>
@@ -462,9 +453,6 @@ export function InCallView({
           roomId={groupCall.room.roomId}
           {...settingsModalProps}
         />
-      )}
-      {inviteModalState.isOpen && (
-        <InviteModal roomId={groupCall.room.roomId} {...inviteModalProps} />
       )}
     </div>
   );
