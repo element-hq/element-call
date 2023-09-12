@@ -108,5 +108,19 @@
   "Thanks!": "Ďakujeme!",
   "You were disconnected from the call": "Boli ste odpojení z hovoru",
   "Enable end-to-end encryption (password protected calls)": "Povoliť end-to-end šifrovanie (hovory chránené heslom)",
-  "End-to-end encryption isn't supported on your browser.": "End-to-end šifrovanie nie je vo vašom prehliadači podporované."
+  "End-to-end encryption isn't supported on your browser.": "End-to-end šifrovanie nie je vo vašom prehliadači podporované.",
+  "{{count, number}}|other": "{{count, number}}",
+  "Encrypted": "Šifrované",
+  "End call": "Ukončiť hovor",
+  "Microphone off": "Mikrofón vypnutý",
+  "Microphone on": "Mikrofón zapnutý",
+  "Grid": "Sieť",
+  "Not encrypted": "Nie je zašifrované",
+  "Share": "Zdieľať",
+  "Sharing screen": "Zdieľanie obrazovky",
+  "Video off": "Video vypnuté",
+  "Video on": "Video zapnuté",
+  "{{count, number}}|one": "{{count, number}}",
+  "Share this call": "Zdieľať tento hovor",
+  "{{names, list(style: short;)}}": "{{names, list(style: short;)}}"
 }
