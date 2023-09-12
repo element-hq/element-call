@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import { Modal, ModalContent, ModalProps } from "../Modal";
 import { CopyButton } from "../button";
 import { getRoomUrl } from "../matrix-utils";
-import styles from "./InviteModal.module.css";
+import styles from "./ShareModal.module.css";
 import { useRoomSharedKey } from "../e2ee/e2eeHooks";
 
 interface Props extends Omit<ModalProps, "title" | "children"> {
