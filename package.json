@@ -48,7 +48,7 @@
     "@sentry/tracing": "^6.13.3",
     "@use-gesture/react": "^10.2.11",
     "@vector-im/compound-design-tokens": "^0.0.5",
-    "@vector-im/compound-web": "^0.2.15",
+    "@vector-im/compound-web": "^0.4.0",
     "@vitejs/plugin-basic-ssl": "^1.0.1",
     "@vitejs/plugin-react": "^4.0.1",
     "classnames": "^2.3.1",

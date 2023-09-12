@@ -1,5 +1,5 @@
 /*
-Copyright 2022 - 2023 New Vector Ltd
+Copyright 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,10 +14,21 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useMediaQuery } from "./useMediaQuery";
+.lock {
+  padding: var(--cpd-space-1x);
+  border-radius: var(--cpd-radius-pill-effect);
+}
 
-/**
- * @returns Whether the user has requested reduced motion.
- */
-export const usePrefersReducedMotion = () =>
-  useMediaQuery("(prefers-reduced-motion)");
+.lock[data-encrypted="true"] {
+  color: var(--cpd-color-icon-success-primary);
+}
+
+.lock[data-encrypted="false"] {
+  color: var(--cpd-color-icon-secondary);
+}
+
+@media (hover: hover) {
+  .lock:hover {
+    background: var(--cpd-color-bg-subtle-primary);
+  }
+}
