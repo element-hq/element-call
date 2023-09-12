@@ -35,11 +35,14 @@ import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { MuteStates } from "./MuteStates";
 
 export type MatrixInfo = {
+  userId: string;
   displayName: string;
   avatarUrl: string;
   roomId: string;
   roomName: string;
   roomAlias: string | null;
+  roomAvatar: string | null;
+  roomEncrypted: boolean;
 };
 
 interface Props {
@@ -68,6 +71,9 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
 
   const devices = useMediaDevices();
 
+  // Capture the audio options as they were when we first mounted, because
+  // we're not doing anything with the audio anyway so we don't need to
+  // re-open the devices when they change (see below).
   const initialAudioOptions = useRef<CreateLocalTracksOptions["audio"]>();
   initialAudioOptions.current ??= muteStates.audio.enabled && {
     deviceId: devices.audioInput.selectedId,
@@ -79,7 +85,9 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
       // request over with at the same time. But changing the audio settings
       // shouldn't cause this hook to recreate the track, which is why we
       // reference the initial values here.
-      audio: initialAudioOptions.current,
+      // We also pass in a clone because livekit mutates the object passed in,
+      // which would cause the devices to be re-opened on the next render.
+      audio: Object.assign({}, initialAudioOptions.current),
       video: muteStates.video.enabled && {
         deviceId: devices.videoInput.selectedId,
       },
@@ -124,22 +132,23 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
         {!muteStates.video.enabled && (
           <div className={styles.avatarContainer}>
             <Avatar
+              id={matrixInfo.userId}
+              name={matrixInfo.displayName}
               size={(previewBounds.height - 66) / 2}
               src={matrixInfo.avatarUrl}
-              fallback={matrixInfo.displayName.slice(0, 1).toUpperCase()}
             />
           </div>
         )}
         <div className={styles.previewButtons}>
-          <MicButton
-            muted={!muteStates.audio.enabled}
-            onPress={onAudioPress}
-            disabled={muteStates.audio.setEnabled === null}
-          />
           <VideoButton
             muted={!muteStates.video.enabled}
             onPress={onVideoPress}
             disabled={muteStates.video.setEnabled === null}
+          />
+          <MicButton
+            muted={!muteStates.audio.enabled}
+            onPress={onAudioPress}
+            disabled={muteStates.audio.setEnabled === null}
           />
           <SettingsButton onPress={openSettings} />
         </div>

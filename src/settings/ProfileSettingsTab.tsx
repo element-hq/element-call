@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 
@@ -29,6 +29,7 @@ interface Props {
 export function ProfileSettingsTab({ client }: Props) {
   const { t } = useTranslation();
   const { error, displayName, avatarUrl, saveProfile } = useProfile(client);
+  const userId = useMemo(() => client.getUserId(), [client]);
 
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -77,12 +78,13 @@ export function ProfileSettingsTab({ client }: Props) {
   return (
     <form onChange={onFormChange} ref={formRef} className={styles.content}>
       <FieldRow className={styles.avatarFieldRow}>
-        {displayName && (
+        {userId && displayName && (
           <AvatarInputField
             id="avatar"
             name="avatar"
             label={t("Avatar")}
             avatarUrl={avatarUrl}
+            userId={userId}
             displayName={displayName}
             onRemoveAvatar={onRemoveAvatar}
           />

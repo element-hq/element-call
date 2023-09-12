@@ -147,7 +147,7 @@ export const widget: WidgetHelpers | null = (() => {
           receiveState,
           sendToDevice: sendRecvToDevice,
           receiveToDevice: sendRecvToDevice,
-          turnServers: true,
+          turnServers: false,
         },
         roomId,
         {

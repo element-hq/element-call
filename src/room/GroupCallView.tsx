@@ -21,6 +21,7 @@ import { useTranslation } from "react-i18next";
 import { Room } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { JoinRule, RoomMember } from "matrix-js-sdk/src/matrix";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { widget, ElementWidgetActions, JoinCallData } from "../widget";
@@ -42,6 +43,11 @@ import {
   useIsRoomE2EE,
 } from "../e2ee/sharedKeyManagement";
 import { useEnableE2EE } from "../settings/useSetting";
+import { useRoomAvatar } from "./useRoomAvatar";
+import { useRoomName } from "./useRoomName";
+import { useModalTriggerState } from "../Modal";
+import { useJoinRule } from "./useJoinRule";
+import { ShareModal } from "./ShareModal";
 
 declare global {
   interface Window {
@@ -82,15 +88,43 @@ export function GroupCallView({
   }, [rtcSession]);
 
   const { displayName, avatarUrl } = useProfile(client);
+  const roomName = useRoomName(rtcSession.room);
+  const roomAvatar = useRoomAvatar(rtcSession.room);
+  const roomEncrypted = useIsRoomE2EE(rtcSession.room.roomId)!;
+
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
+      userId: client.getUserId()!,
       displayName: displayName!,
       avatarUrl: avatarUrl!,
       roomId: rtcSession.room.roomId,
-      roomName: rtcSession.room.name,
+      roomName,
       roomAlias: rtcSession.room.getCanonicalAlias(),
+      roomAvatar,
+      roomEncrypted,
     };
-  }, [displayName, avatarUrl, rtcSession]);
+  }, [
+    displayName,
+    avatarUrl,
+    rtcSession,
+    roomName,
+    roomAvatar,
+    roomEncrypted,
+    client,
+  ]);
+
+  const participatingMembers = useMemo(() => {
+    const members: RoomMember[] = [];
+    // Count each member only once, regardless of how many devices they use
+    const addedUserIds = new Set<string>();
+    for (const membership of memberships) {
+      if (!addedUserIds.has(membership.member.userId)) {
+        addedUserIds.add(membership.member.userId);
+        members.push(membership.member);
+      }
+    }
+    return members;
+  }, [memberships]);
 
   const deviceContext = useMediaDevices();
   const latestDevices = useRef<MediaDevices>();
@@ -250,6 +284,17 @@ export function GroupCallView({
     enterRTCSession(rtcSession);
   }, [rtcSession]);
 
+  const joinRule = useJoinRule(rtcSession.room);
+
+  const { modalState: shareModalState, modalProps: shareModalProps } =
+    useModalTriggerState();
+
+  const onShareClickFn = useCallback(
+    () => shareModalState.open(),
+    [shareModalState]
+  );
+  const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
+
   if (e2eeEnabled && isRoomE2EE && !e2eeSharedKey) {
     return (
       <ErrorView
@@ -266,17 +311,27 @@ export function GroupCallView({
     return <ErrorView error={new Error("You need to enable E2EE to join.")} />;
   }
 
+  const shareModal = shareModalState.isOpen && (
+    <ShareModal roomId={rtcSession.room.roomId} {...shareModalProps} />
+  );
+
   if (isJoined) {
     return (
-      <ActiveCall
-        client={client}
-        rtcSession={rtcSession}
-        onLeave={onLeave}
-        hideHeader={hideHeader}
-        muteStates={muteStates}
-        e2eeConfig={e2eeConfig}
-        //otelGroupCallMembership={otelGroupCallMembership}
-      />
+      <>
+        {shareModal}
+        <ActiveCall
+          client={client}
+          matrixInfo={matrixInfo}
+          rtcSession={rtcSession}
+          participatingMembers={participatingMembers}
+          onLeave={onLeave}
+          hideHeader={hideHeader}
+          muteStates={muteStates}
+          e2eeConfig={e2eeConfig}
+          //otelGroupCallMembership={otelGroupCallMembership}
+          onShareClick={onShareClick}
+        />
+      </>
     );
   } else if (left) {
     // The call ended view is shown for two reasons: prompting guests to create
@@ -315,13 +370,19 @@ export function GroupCallView({
     );
   } else {
     return (
-      <LobbyView
-        matrixInfo={matrixInfo}
-        muteStates={muteStates}
-        onEnter={() => enterRTCSession(rtcSession)}
-        isEmbedded={isEmbedded}
-        hideHeader={hideHeader}
-      />
+      <>
+        {shareModal}
+        <LobbyView
+          client={client}
+          matrixInfo={matrixInfo}
+          muteStates={muteStates}
+          onEnter={() => enterRTCSession(rtcSession)}
+          isEmbedded={isEmbedded}
+          hideHeader={hideHeader}
+          participatingMembers={participatingMembers}
+          onShareClick={onShareClick}
+        />
+      </>
     );
   }
 }
