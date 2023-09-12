@@ -2288,10 +2288,10 @@
     clsx "^2.0.0"
     usehooks-ts "^2.9.1"
 
-"@matrix-org/matrix-sdk-crypto-js@^0.1.1":
-  version "0.1.4"
-  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-js/-/matrix-sdk-crypto-js-0.1.4.tgz#c13c7c8c3a1d8da08e6ad195d25e5e61cc402df7"
-  integrity sha512-OxG84iSeR89zYLFeb+DCaFtZT+DDiIu+kTkqY8OYfhE5vpGLFX2sDVBRrAdos1IUqEoboDloDBR9+yU7hNRyog==
+"@matrix-org/matrix-sdk-crypto-wasm@^1.2.3-alpha.0":
+  version "1.2.3-alpha.0"
+  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-1.2.3-alpha.0.tgz#f6f93e3ee44c5f1e0e255badd26f4a7d3fb1dab8"
+  integrity sha512-BFLqfq/WbYZ+83r4UWLhwtBYvTp5DKTHNeWUSDBVvudFtqBvkntNAAUz+xmhmO1XkyNm+sBaElxF8IS9S8zdww==
 
 "@matrix-org/olm@https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.14.tgz":
   version "3.2.14"
@@ -11624,29 +11624,29 @@ matrix-events-sdk@0.0.1:
   resolved "https://registry.yarnpkg.com/matrix-events-sdk/-/matrix-events-sdk-0.0.1.tgz#c8c38911e2cb29023b0bbac8d6f32e0de2c957dd"
   integrity sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#b698217445318f453e0b1086364a33113eaa85d9":
-  version "26.2.0"
-  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/b698217445318f453e0b1086364a33113eaa85d9"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#6836720e1e1c2cb01d49d6e5fcfc01afc14834ca":
+  version "28.0.0"
+  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/6836720e1e1c2cb01d49d6e5fcfc01afc14834ca"
   dependencies:
     "@babel/runtime" "^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-js" "^0.1.1"
+    "@matrix-org/matrix-sdk-crypto-wasm" "^1.2.3-alpha.0"
     another-json "^0.2.0"
     bs58 "^5.0.0"
     content-type "^1.0.4"
     jwt-decode "^3.1.2"
     loglevel "^1.7.1"
     matrix-events-sdk "0.0.1"
-    matrix-widget-api "^1.3.1"
+    matrix-widget-api "^1.6.0"
     oidc-client-ts "^2.2.4"
     p-retry "4"
     sdp-transform "^2.14.1"
     unhomoglyph "^1.0.6"
     uuid "9"
 
-matrix-widget-api@^1.3.1:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/matrix-widget-api/-/matrix-widget-api-1.4.0.tgz#e426ec16a013897f3a4a9c2bff423f54ab0ba745"
-  integrity sha512-dw0dRylGQzDUoiaY/g5xx1tBbS7aoov31PRtFMAvG58/4uerYllV9Gfou7w+I1aglwB6hihTREzKltVjARWV6A==
+matrix-widget-api@^1.3.1, matrix-widget-api@^1.6.0:
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/matrix-widget-api/-/matrix-widget-api-1.6.0.tgz#f0075411edffc6de339580ade7e6e6e6edb01af4"
+  integrity sha512-VXIJyAZ/WnBmT4C7ePqevgMYGneKMCP/0JuCOqntSsaNlCRHJvwvTxmqUU+ufOpzIF5gYNyIrAjbgrEbK3iqJQ==
   dependencies:
     "@types/events" "^3.0.0"
     events "^3.2.0"

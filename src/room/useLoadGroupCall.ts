@@ -15,32 +15,23 @@ limitations under the License.
 */
 
 import { useState, useEffect } from "react";
-import { EventType } from "matrix-js-sdk/src/@types/event";
-import {
-  GroupCallType,
-  GroupCallIntent,
-} from "matrix-js-sdk/src/webrtc/groupCall";
-import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
 import { logger } from "matrix-js-sdk/src/logger";
 import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { SyncState } from "matrix-js-sdk/src/sync";
 import { useTranslation } from "react-i18next";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 
 import type { Room } from "matrix-js-sdk/src/models/room";
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { setLocalStorageItem } from "../useLocalStorage";
 import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
-import { translatedError } from "../TranslatedError";
-import { widget } from "../widget";
 import { useEnableE2EE } from "../settings/useSetting";
 import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
 
-const STATS_COLLECT_INTERVAL_TIME_MS = 10000;
-
 export type GroupCallLoaded = {
   kind: "loaded";
-  groupCall: GroupCall;
+  rtcSession: MatrixRTCSession;
 };
 
 export type GroupCallLoadFailed = {
@@ -130,61 +121,12 @@ export const useLoadGroupCall = (
       }
     };
 
-    const fetchOrCreateGroupCall = async (): Promise<GroupCall> => {
+    const fetchOrCreateGroupCall = async (): Promise<MatrixRTCSession> => {
       const room = await fetchOrCreateRoom();
       logger.debug(`Fetched / joined room ${roomIdOrAlias}`);
-      let groupCall = client.getGroupCallForRoom(room.roomId);
-      logger.debug("Got group call", groupCall?.groupCallId);
 
-      if (groupCall) {
-        groupCall.setGroupCallStatsInterval(STATS_COLLECT_INTERVAL_TIME_MS);
-        return groupCall;
-      }
-
-      if (
-        !widget &&
-        room.currentState.mayClientSendStateEvent(
-          EventType.GroupCallPrefix,
-          client
-        )
-      ) {
-        // The call doesn't exist, but we can create it
-        console.log(
-          `No call found in ${roomIdOrAlias}: creating ${
-            createPtt ? "PTT" : "video"
-          } call`
-        );
-        groupCall = await client.createGroupCall(
-          room.roomId,
-          createPtt ? GroupCallType.Voice : GroupCallType.Video,
-          createPtt,
-          GroupCallIntent.Room
-        );
-        groupCall.setGroupCallStatsInterval(STATS_COLLECT_INTERVAL_TIME_MS);
-        return groupCall;
-      }
-
-      // We don't have permission to create the call, so all we can do is wait
-      // for one to come in
-      return new Promise((resolve, reject) => {
-        const onGroupCallIncoming = (groupCall: GroupCall) => {
-          if (groupCall?.room.roomId === room.roomId) {
-            clearTimeout(timeout);
-            groupCall.setGroupCallStatsInterval(STATS_COLLECT_INTERVAL_TIME_MS);
-            client.off(
-              GroupCallEventHandlerEvent.Incoming,
-              onGroupCallIncoming
-            );
-            resolve(groupCall);
-          }
-        };
-        client.on(GroupCallEventHandlerEvent.Incoming, onGroupCallIncoming);
-
-        const timeout = setTimeout(() => {
-          client.off(GroupCallEventHandlerEvent.Incoming, onGroupCallIncoming);
-          reject(translatedError("Fetching group call timed out.", t));
-        }, 30000);
-      });
+      const rtcSession = client.matrixRTC.getRoomSession(room);
+      return rtcSession;
     };
 
     const waitForClientSyncing = async () => {
@@ -207,7 +149,7 @@ export const useLoadGroupCall = (
 
     waitForClientSyncing()
       .then(fetchOrCreateGroupCall)
-      .then((groupCall) => setState({ kind: "loaded", groupCall }))
+      .then((rtcSession) => setState({ kind: "loaded", rtcSession }))
       .catch((error) => setState({ kind: "failed", error }));
   }, [client, roomIdOrAlias, viaServers, createPtt, t, e2eeEnabled]);
 

@@ -14,14 +14,24 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { GroupCall, IOpenIDToken, MatrixClient } from "matrix-js-sdk";
+import { IOpenIDToken, MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/src/logger";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { useEffect, useState } from "react";
 
-import { Config } from "../config/Config";
+import { LivekitFocus } from "./LivekitFocus";
+import { useActiveFocus } from "../room/useActiveFocus";
 
 export interface SFUConfig {
   url: string;
   jwt: string;
+}
+
+export function sfuConfigEquals(a?: SFUConfig, b?: SFUConfig): boolean {
+  if (a === undefined && b === undefined) return true;
+  if (a === undefined || b === undefined) return false;
+
+  return a.jwt === b.jwt && a.url === b.url;
 }
 
 // The bits we need from MatrixClient
@@ -30,66 +40,52 @@ export type OpenIDClientParts = Pick<
   "getOpenIdToken" | "getDeviceId"
 >;
 
+export function useOpenIDSFU(
+  client: OpenIDClientParts,
+  rtcSession: MatrixRTCSession
+) {
+  const [sfuConfig, setSFUConfig] = useState<SFUConfig | undefined>(undefined);
+
+  const activeFocus = useActiveFocus(rtcSession);
+
+  useEffect(() => {
+    (async () => {
+      const sfuConfig = activeFocus
+        ? await getSFUConfigWithOpenID(client, activeFocus)
+        : undefined;
+      setSFUConfig(sfuConfig);
+    })();
+  }, [client, activeFocus]);
+
+  return sfuConfig;
+}
+
 export async function getSFUConfigWithOpenID(
   client: OpenIDClientParts,
-  groupCall: GroupCall,
-  roomName: string
-): Promise<SFUConfig> {
+  activeFocus: LivekitFocus
+): Promise<SFUConfig | undefined> {
   const openIdToken = await client.getOpenIdToken();
   logger.debug("Got openID token", openIdToken);
 
-  // if the call has a livekit service URL, try it.
-  if (groupCall.livekitServiceURL) {
-    try {
-      logger.info(
-        `Trying to get JWT from call's configured URL of ${groupCall.livekitServiceURL}...`
-      );
-      const sfuConfig = await getLiveKitJWT(
-        client,
-        groupCall.livekitServiceURL,
-        roomName,
-        openIdToken
-      );
-      logger.info(`Got JWT from call state event URL.`);
-
-      return sfuConfig;
-    } catch (e) {
-      logger.warn(
-        `Failed to get JWT from group call's configured URL of ${groupCall.livekitServiceURL}.`,
-        e
-      );
-    }
-  }
-
-  // otherwise, try our configured one and, if it works, update the call's service URL in the state event
-  // NB. This wuill update it for everyone so we may end up with multiple clients updating this when they
-  // join at similar times, but we don't have a huge number of options here.
-  const urlFromConf = Config.get().livekit!.livekit_service_url;
-  logger.info(`Trying livekit service URL from our config: ${urlFromConf}...`);
   try {
+    logger.info(
+      `Trying to get JWT from call's active focus URL of ${activeFocus.livekit_service_url}...`
+    );
     const sfuConfig = await getLiveKitJWT(
       client,
-      urlFromConf,
-      roomName,
+      activeFocus.livekit_service_url,
+      activeFocus.livekit_alias,
       openIdToken
     );
-
-    logger.info(
-      `Got JWT, updating call livekit service URL with: ${urlFromConf}...`
-    );
-    try {
-      await groupCall.updateLivekitServiceURL(urlFromConf);
-      logger.info(`Call livekit service URL updated.`);
-    } catch (e) {
-      logger.warn(
-        `Failed to update call livekit service URL: continuing anyway.`
-      );
-    }
+    logger.info(`Got JWT from call's active focus URL.`);
 
     return sfuConfig;
   } catch (e) {
-    logger.error("Failed to get JWT from URL defined in Config.", e);
-    throw e;
+    logger.warn(
+      `Failed to get JWT from RTC session's active focus URL of ${activeFocus.livekit_service_url}.`,
+      e
+    );
+    return undefined;
   }
 }
 
