@@ -14,27 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { HTMLAttributes, useMemo } from "react";
-import classNames from "classnames";
+import { HTMLAttributes } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useTranslation } from "react-i18next";
+import { AvatarStack } from "@vector-im/compound-web";
 
-import styles from "./Facepile.module.css";
-import { Avatar, Size, sizes } from "./Avatar";
-
-const overlapMap: Partial<Record<Size, number>> = {
-  [Size.XS]: 2,
-  [Size.SM]: 4,
-  [Size.MD]: 8,
-};
+import { Avatar, Size } from "./Avatar";
 
 interface Props extends HTMLAttributes<HTMLDivElement> {
-  className: string;
+  className?: string;
   client: MatrixClient;
   members: RoomMember[];
   max?: number;
-  size?: Size;
+  size?: Size | number;
 }
 
 export function Facepile({
@@ -47,51 +40,27 @@ export function Facepile({
 }: Props) {
   const { t } = useTranslation();
 
-  const _size = sizes.get(size)!;
-  const _overlap = overlapMap[size]!;
-
-  const title = useMemo(() => {
-    return members.reduce<string | null>(
-      (prev, curr) =>
-        prev === null
-          ? curr.name
-          : t("{{names}}, {{name}}", { names: prev, name: curr.name }),
-      null
-    ) as string;
-  }, [members, t]);
+  const displayedMembers = members.slice(0, max);
 
   return (
-    <div
-      className={classNames(styles.facepile, styles[size], className)}
-      title={title}
-      style={{
-        width:
-          Math.min(members.length, max + 1) * (_size - _overlap) + _overlap,
-      }}
+    <AvatarStack
+      title={t("{{names, list(style: short;)}}", {
+        list: displayedMembers.map((m) => m.name),
+      })}
       {...rest}
     >
-      {members.slice(0, max).map((member, i) => {
+      {displayedMembers.map((member, i) => {
         const avatarUrl = member.getMxcAvatarUrl();
         return (
           <Avatar
-            key={member.userId}
+            key={i}
+            id={member.userId}
+            name={member.name}
             size={size}
             src={avatarUrl ?? undefined}
-            fallback={member.name.slice(0, 1).toUpperCase()}
-            className={styles.avatar}
-            style={{ left: i * (_size - _overlap) }}
           />
         );
       })}
-      {members.length > max && (
-        <Avatar
-          key="additional"
-          size={size}
-          fallback={`+${members.length - max}`}
-          className={styles.avatar}
-          style={{ left: max * (_size - _overlap) }}
-        />
-      )}
-    </div>
+    </AvatarStack>
   );
 }

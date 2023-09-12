@@ -15,13 +15,18 @@ limitations under the License.
 */
 
 import classNames from "classnames";
-import { HTMLAttributes, ReactNode } from "react";
+import { FC, HTMLAttributes, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { MatrixClient, RoomMember } from "matrix-js-sdk/src/matrix";
+import { Heading } from "@vector-im/compound-web";
 
 import styles from "./Header.module.css";
 import { ReactComponent as Logo } from "./icons/Logo.svg";
-import { Subtitle } from "./typography/Typography";
+import { Avatar, Size } from "./Avatar";
+import { Facepile } from "./Facepile";
+import { EncryptionLock } from "./room/EncryptionLock";
+import { useMediaQuery } from "./useMediaQuery";
 
 interface HeaderProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
@@ -108,16 +113,52 @@ export function HeaderLogo({ className }: HeaderLogoProps) {
   );
 }
 
-interface RoomHeaderInfo {
-  roomName: string;
+interface RoomHeaderInfoProps {
+  id: string;
+  name: string;
+  avatarUrl: string | null;
+  encrypted: boolean;
+  participants: RoomMember[];
+  client: MatrixClient;
 }
 
-export function RoomHeaderInfo({ roomName }: RoomHeaderInfo) {
+export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
+  id,
+  name,
+  avatarUrl,
+  encrypted,
+  participants,
+  client,
+}) => {
+  const { t } = useTranslation();
+  const size = useMediaQuery("(max-width: 550px)") ? "sm" : "lg";
+
   return (
-    <>
-      <Subtitle data-testid="roomHeader_roomName" fontWeight="semiBold">
-        {roomName}
-      </Subtitle>
-    </>
+    <div className={styles.roomHeaderInfo} data-size={size}>
+      <Avatar
+        className={styles.roomAvatar}
+        id={id}
+        name={name}
+        size={size === "sm" ? Size.SM : 56}
+        src={avatarUrl ?? undefined}
+      />
+      <div className={styles.nameLine}>
+        <Heading
+          type={size === "sm" ? "body" : "heading"}
+          size={size === "sm" ? "lg" : "md"}
+          weight="semibold"
+          data-testid="roomHeader_roomName"
+        >
+          {name}
+        </Heading>
+        <EncryptionLock encrypted={encrypted} />
+      </div>
+      {participants.length > 0 && (
+        <div className={styles.participantsLine}>
+          <Facepile client={client} members={participants} size={20} />
+          {t("{{count, number}}", { count: participants.length })}
+        </div>
+      )}
+    </div>
   );
-}
+};

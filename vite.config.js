@@ -28,7 +28,13 @@ export default defineConfig(({ mode }) => {
   const plugins = [
     react(),
     basicSsl(),
-    svgrPlugin(),
+    svgrPlugin({
+      svgrOptions: {
+        // This enables ref forwarding on SVGR components, which is needed, for
+        // example, to make tooltips on icons work
+        ref: true,
+      },
+    }),
     htmlTemplate.default({
       data: {
         title: env.VITE_PRODUCT_NAME || "Element Call",
