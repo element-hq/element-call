@@ -49,30 +49,38 @@ limitations under the License.
   left: 0;
   bottom: 0;
   width: 100%;
-  display: flex;
-  justify-content: center;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  grid-template-areas: "logo buttons layout";
   align-items: center;
-  gap: 12px;
-  padding: var(--footerPadding) 0;
-  /* TODO: Un-hardcode these colors */
+  gap: var(--cpd-space-3x);
+  padding: var(--footerPadding) var(--inline-content-inset);
   background: linear-gradient(
-    360deg,
-    #15191e 0%,
-    rgba(16, 19, 23, 0.9) 37%,
-    rgba(16, 19, 23, 0.8) 49.68%,
-    rgba(16, 19, 23, 0.7) 56.68%,
-    rgba(16, 19, 23, 0.427397) 72.92%,
-    rgba(16, 19, 23, 0.257534) 81.06%,
-    rgba(16, 19, 23, 0.136986) 87.29%,
-    rgba(16, 19, 23, 0.0658079) 92.4%,
-    rgba(16, 19, 23, 0) 100%
+    180deg,
+    rgba(0, 0, 0, 0) 0%,
+    var(--cpd-color-bg-canvas-default) 100%
   );
 }
 
-.maximised .footer {
-  position: absolute;
-  width: 100%;
-  bottom: 0;
+.logo {
+  grid-area: logo;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-2x);
+  padding-inline-start: var(--cpd-space-1x);
+}
+
+.buttons {
+  grid-area: buttons;
+  display: flex;
+  gap: var(--cpd-space-3x);
+}
+
+.layout {
+  grid-area: layout;
+  justify-self: end;
 }
 
 @media (min-height: 300px) {
@@ -86,7 +94,7 @@ limitations under the License.
     --footerPadding: 60px;
   }
 
-  .footer {
-    gap: 16px;
+  .buttons {
+    gap: var(--cpd-space-4x);
   }
 }
