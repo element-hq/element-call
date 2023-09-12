@@ -48,6 +48,7 @@
     "@sentry/tracing": "^6.13.3",
     "@use-gesture/react": "^10.2.11",
     "@vector-im/compound-design-tokens": "^0.0.5",
+    "@vector-im/compound-web": "^0.4.0",
     "@vitejs/plugin-basic-ssl": "^1.0.1",
     "@vitejs/plugin-react": "^4.0.1",
     "classnames": "^2.3.1",
@@ -58,8 +59,9 @@
     "i18next-http-backend": "^1.4.4",
     "livekit-client": "^1.12.3",
     "lodash": "^4.17.21",
-    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#72093c8cb020a52ba67c97137e687ae65ed5c9b6",
-    "mermaid": "^8.13.8",
+    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#0b72baada1dc9c14fb4ebe1b0595cef0acf4f2c8",
+    "matrix-widget-api": "^1.3.1",
+    "mermaid": "^9.0.0",
     "normalize.css": "^8.0.1",
     "pako": "^2.0.4",
     "postcss-preset-env": "^7",
@@ -120,7 +122,7 @@
     "vite-plugin-svgr": "^3.2.0"
   },
   "jest": {
-    "testEnvironment": "jsdom",
+    "testEnvironment": "./test/environment.ts",
     "testMatch": [
       "<rootDir>/test/**/*-test.[jt]s?(x)"
     ],

@@ -16,32 +16,39 @@ limitations under the License.
 
 import { useRef, useEffect, FC } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { MatrixClient, RoomMember } from "matrix-js-sdk/src/matrix";
 
 import styles from "./LobbyView.module.css";
 import { Button, CopyButton } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { getRoomUrl } from "../matrix-utils";
-import { UserMenuContainer } from "../UserMenuContainer";
 import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
 import { MuteStates } from "./MuteStates";
 import { useRoomSharedKey } from "../e2ee/e2eeHooks";
+import { ShareButton } from "../button/ShareButton";
 
 interface Props {
+  client: MatrixClient;
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
   onEnter: () => void;
   isEmbedded: boolean;
   hideHeader: boolean;
+  participatingMembers: RoomMember[];
+  onShareClick: (() => void) | null;
 }
 
 export const LobbyView: FC<Props> = ({
+  client,
   matrixInfo,
   muteStates,
   onEnter,
   isEmbedded,
   hideHeader,
+  participatingMembers,
+  onShareClick,
 }) => {
   const { t } = useTranslation();
   const roomSharedKey = useRoomSharedKey(matrixInfo.roomId);
@@ -59,10 +66,17 @@ export const LobbyView: FC<Props> = ({
       {!hideHeader && (
         <Header>
           <LeftNav>
-            <RoomHeaderInfo roomName={matrixInfo.roomName} />
+            <RoomHeaderInfo
+              id={matrixInfo.roomId}
+              name={matrixInfo.roomName}
+              avatarUrl={matrixInfo.roomAvatar}
+              encrypted={matrixInfo.roomEncrypted}
+              participants={participatingMembers}
+              client={client}
+            />
           </LeftNav>
           <RightNav>
-            <UserMenuContainer />
+            {onShareClick !== null && <ShareButton onClick={onShareClick} />}
           </RightNav>
         </Header>
       )}

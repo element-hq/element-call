@@ -27,13 +27,13 @@ interface Props extends Omit<ModalProps, "title" | "children"> {
   roomId: string;
 }
 
-export const InviteModal: FC<Props> = ({ roomId, ...rest }) => {
+export const ShareModal: FC<Props> = ({ roomId, ...rest }) => {
   const { t } = useTranslation();
   const roomSharedKey = useRoomSharedKey(roomId);
 
   return (
     <Modal
-      title={t("Invite people")}
+      title={t("Share this call")}
       isDismissable
       className={styles.inviteModal}
       {...rest}

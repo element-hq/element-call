@@ -19,7 +19,6 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 
 import { CopyButton } from "../button";
-import { Facepile } from "../Facepile";
 import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
 import { getRoomUrl } from "../matrix-utils";
@@ -30,9 +29,8 @@ import { useRoomSharedKey } from "../e2ee/e2eeHooks";
 interface CallListProps {
   rooms: GroupCallRoom[];
   client: MatrixClient;
-  disableFacepile?: boolean;
 }
-export function CallList({ rooms, client, disableFacepile }: CallListProps) {
+export function CallList({ rooms, client }: CallListProps) {
   return (
     <>
       <div className={styles.callList}>
@@ -44,7 +42,6 @@ export function CallList({ rooms, client, disableFacepile }: CallListProps) {
             avatarUrl={avatarUrl}
             roomId={room.roomId}
             participants={participants}
-            disableFacepile={disableFacepile}
           />
         ))}
         {rooms.length > 3 && (
@@ -63,39 +60,18 @@ interface CallTileProps {
   roomId: string;
   participants: RoomMember[];
   client: MatrixClient;
-  disableFacepile?: boolean;
 }
-function CallTile({
-  name,
-  avatarUrl,
-  roomId,
-  participants,
-  client,
-  disableFacepile,
-}: CallTileProps) {
+function CallTile({ name, avatarUrl, roomId }: CallTileProps) {
   const roomSharedKey = useRoomSharedKey(roomId);
 
   return (
     <div className={styles.callTile}>
       <Link to={`/room/#?roomId=${roomId}`} className={styles.callTileLink}>
-        <Avatar
-          size={Size.LG}
-          bgKey={name}
-          src={avatarUrl}
-          fallback={name.slice(0, 1).toUpperCase()}
-          className={styles.avatar}
-        />
+        <Avatar id={roomId} name={name} size={Size.LG} src={avatarUrl} />
         <div className={styles.callInfo}>
           <Body overflowEllipsis fontWeight="semiBold">
             {name}
           </Body>
-          {participants && !disableFacepile && (
-            <Facepile
-              className={styles.facePile}
-              client={client}
-              members={participants}
-            />
-          )}
         </div>
         <div className={styles.copyButtonSpacer} />
       </Link>
