@@ -595,9 +595,8 @@ function useParticipantTiles(
     }
 
     return newItems;
-  }
-
-  previousTiles.current = items;
-
-  return items;
+  } else {
+   previousTiles.current = items;
+   return items;
+}
 }
