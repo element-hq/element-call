@@ -566,6 +566,11 @@ function useParticipantTiles(
 
   // We carry over old tiles from the previous focus for some time after a focus switch
   // so that the video tiles don't all disappear and reappear.
+  // This is set to true when the state transitions to Switching Focus and remains
+  // true for a short time after it changes (ie. connState is only switching focus for
+  // the time it takes us to reconnect to the conference).
+  // If there are still members that haven't reconnected after that time, they'll just
+  // appear to disconnect and will reappear once they reconnect.
   const [isSwitchingFocus, setIsSwitchingFocus] = useState(false);
 
   useEffect(() => {
@@ -596,7 +601,7 @@ function useParticipantTiles(
 
     return newItems;
   } else {
-   previousTiles.current = items;
-   return items;
-}
+    previousTiles.current = items;
+    return items;
+  }
 }
