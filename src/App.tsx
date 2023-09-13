@@ -15,7 +15,12 @@ limitations under the License.
 */
 
 import { Suspense, useEffect, useState } from "react";
-import { BrowserRouter as Router, Switch, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Switch,
+  Route,
+  useLocation,
+} from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
 import { History } from "history";
@@ -34,6 +39,26 @@ import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
+
+interface BackgroundProviderProps {
+  children: JSX.Element;
+}
+
+const BackgroundProvider = ({ children }: BackgroundProviderProps) => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    let backgroundImage = "";
+    if (!["/login", "/register"].includes(pathname)) {
+      backgroundImage = "var(--background-gradient)";
+    }
+
+    document.getElementsByTagName("body")[0].style.backgroundImage =
+      backgroundImage;
+  }, [pathname]);
+
+  return <>{children}</>;
+};
 
 interface AppProps {
   history: History;
@@ -56,40 +81,42 @@ export default function App({ history }: AppProps) {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     <Router history={history}>
-      {loaded ? (
-        <Suspense fallback={null}>
-          <ClientProvider>
-            <MediaDevicesProvider>
-              <InspectorContextProvider>
-                <Sentry.ErrorBoundary fallback={errorPage}>
-                  <OverlayProvider>
-                    <DisconnectedBanner />
-                    <Switch>
-                      <SentryRoute exact path="/">
-                        <HomePage />
-                      </SentryRoute>
-                      <SentryRoute exact path="/login">
-                        <LoginPage />
-                      </SentryRoute>
-                      <SentryRoute exact path="/register">
-                        <RegisterPage />
-                      </SentryRoute>
-                      <SentryRoute path="/inspector">
-                        <SequenceDiagramViewerPage />
-                      </SentryRoute>
-                      <SentryRoute path="*">
-                        <RoomPage />
-                      </SentryRoute>
-                    </Switch>
-                  </OverlayProvider>
-                </Sentry.ErrorBoundary>
-              </InspectorContextProvider>
-            </MediaDevicesProvider>
-          </ClientProvider>
-        </Suspense>
-      ) : (
-        <LoadingView />
-      )}
+      <BackgroundProvider>
+        {loaded ? (
+          <Suspense fallback={null}>
+            <ClientProvider>
+              <MediaDevicesProvider>
+                <InspectorContextProvider>
+                  <Sentry.ErrorBoundary fallback={errorPage}>
+                    <OverlayProvider>
+                      <DisconnectedBanner />
+                      <Switch>
+                        <SentryRoute exact path="/">
+                          <HomePage />
+                        </SentryRoute>
+                        <SentryRoute exact path="/login">
+                          <LoginPage />
+                        </SentryRoute>
+                        <SentryRoute exact path="/register">
+                          <RegisterPage />
+                        </SentryRoute>
+                        <SentryRoute path="/inspector">
+                          <SequenceDiagramViewerPage />
+                        </SentryRoute>
+                        <SentryRoute path="*">
+                          <RoomPage />
+                        </SentryRoute>
+                      </Switch>
+                    </OverlayProvider>
+                  </Sentry.ErrorBoundary>
+                </InspectorContextProvider>
+              </MediaDevicesProvider>
+            </ClientProvider>
+          </Suspense>
+        ) : (
+          <LoadingView />
+        )}
+      </BackgroundProvider>
     </Router>
   );
 }
