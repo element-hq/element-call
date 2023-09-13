@@ -50,14 +50,14 @@ limitations under the License.
   background-color: var(--cpd-color-text-action-accent);
 }
 
-.button:focus,
-.toolbarButton:focus,
-.toolbarButtonSecondary:focus,
-.iconButton:focus,
-.iconCopyButton:focus,
-.secondary:focus,
-.secondaryHangup:focus,
-.copyButton:focus {
+.button:focus-visible,
+.toolbarButton:focus-visible,
+.toolbarButtonSecondary:focus-visible,
+.iconButton:focus-visible,
+.iconCopyButton:focus-visible,
+.secondary:focus-visible,
+.secondaryHangup:focus-visible,
+.copyButton:focus-visible {
   outline: auto;
 }
 
@@ -74,7 +74,7 @@ limitations under the License.
   background-color: var(--cpd-color-bg-canvas-default);
   color: var(--cpd-color-icon-primary);
   border: 1px solid var(--cpd-color-gray-400);
-  box-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+  box-shadow: var(--subtle-drop-shadow);
 }
 
 .toolbarButton.on,

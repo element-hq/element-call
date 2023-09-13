@@ -34,7 +34,7 @@ limitations under the License.
   border-radius: var(--cpd-radius-pill-effect);
   color: var(--cpd-color-icon-primary);
   background: var(--cpd-color-bg-action-secondary-rest);
-  box-shadow: 0px 1.2px 2.4px 0px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--small-drop-shadow);
 }
 
 @media (hover: hover) {
