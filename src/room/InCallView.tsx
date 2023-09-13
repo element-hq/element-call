@@ -382,8 +382,12 @@ export function InCallView({
       <div className={styles.footer}>
         {!mobile && !hideHeader && (
           <div className={styles.logo}>
-            <LogoMark width={24} height={24} />
-            <LogoType width={80} height={11} />
+            <LogoMark width={24} height={24} aria-hidden />
+            <LogoType
+              width={80}
+              height={11}
+              aria-label={import.meta.env.VITE_PRODUCT_NAME || "Element Call"}
+            />
           </div>
         )}
         <div className={styles.buttons}>{buttons}</div>
