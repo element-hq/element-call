@@ -108,5 +108,19 @@
   "Reconnect": "Ühenda uuesti",
   "Thanks!": "Tänud!",
   "End-to-end encryption isn't supported on your browser.": "Sinu brauser ei toeta läbivat krüptimist.",
-  "Enable end-to-end encryption (password protected calls)": "Võta kasutusele läbiv krüptimine (salasõnaga kaitstud kõned)"
+  "Enable end-to-end encryption (password protected calls)": "Võta kasutusele läbiv krüptimine (salasõnaga kaitstud kõned)",
+  "Encrypted": "Krüptitud",
+  "End call": "Lõpeta kõne",
+  "Grid": "Ruudustik",
+  "Microphone off": "Mikrofon ei tööta",
+  "Microphone on": "Mikrofon töötab",
+  "Not encrypted": "Krüptimata",
+  "Share": "Jaga",
+  "Share this call": "Jaga seda kõnet",
+  "Sharing screen": "Ekraanivaade on jagamisel",
+  "Video on": "Video on kasutusel",
+  "{{count, number}}|one": "{{count, number}}",
+  "{{count, number}}|other": "{{count, number}}",
+  "{{names, list(style: short;)}}": "{{names, list(style: short;)}}",
+  "Video off": "Video ei ole kasutusel"
 }
