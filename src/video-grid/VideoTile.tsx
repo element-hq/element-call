@@ -28,11 +28,12 @@ import {
   RoomMember,
   RoomMemberEvent,
 } from "matrix-js-sdk/src/models/room-member";
+import { ReactComponent as MicOnSolidIcon } from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg";
+import { ReactComponent as MicOffSolidIcon } from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg";
+import { Text } from "@vector-im/compound-web";
 
 import { Avatar } from "../Avatar";
 import styles from "./VideoTile.module.css";
-import { ReactComponent as MicIcon } from "../icons/Mic.svg";
-import { ReactComponent as MicMutedIcon } from "../icons/MicMuted.svg";
 import { useReactiveState } from "../useReactiveState";
 import { AudioButton, FullscreenButton } from "../button/Button";
 import { useModalTriggerState } from "../Modal";
@@ -102,12 +103,15 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       }
     }, [member, setDisplayName]);
 
-    const { isMuted: microphoneMuted } = useMediaTrack(
-      content === TileContent.UserMedia
-        ? Track.Source.Microphone
-        : Track.Source.ScreenShareAudio,
-      sfuParticipant
-    );
+    const muted =
+      useMediaTrack(
+        content === TileContent.UserMedia
+          ? Track.Source.Microphone
+          : Track.Source.ScreenShareAudio,
+        sfuParticipant
+      ).isMuted !== false;
+
+    const MicIcon = muted ? MicOffSolidIcon : MicOnSolidIcon;
 
     const onFullscreen = useCallback(() => {
       onToggleFullscreen(data.id);
@@ -153,7 +157,6 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             sfuParticipant.isSpeaking &&
             content === TileContent.UserMedia &&
             showSpeakingIndicator,
-          [styles.muted]: microphoneMuted,
           [styles.screenshare]: content === TileContent.ScreenShare,
           [styles.maximised]: maximised,
         })}
@@ -182,9 +185,16 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             <span>{t("{{displayName}} is presenting", { displayName })}</span>
           </div>
         ) : (
-          <div className={classNames(styles.infoBubble, styles.memberName)}>
-            {microphoneMuted === false ? <MicIcon /> : <MicMutedIcon />}
-            <span title={displayName}>{displayName}</span>
+          <div className={styles.nameTag}>
+            <MicIcon
+              width={20}
+              height={20}
+              aria-label={muted ? t("Microphone off") : t("Microphone on")}
+              data-muted={muted}
+            />
+            <Text as="span" size="sm" weight="medium">
+              {sfuParticipant.isLocal ? t("You") : displayName}
+            </Text>
             {showConnectionStats && (
               <ConnectionQualityIndicator participant={sfuParticipant} />
             )}
