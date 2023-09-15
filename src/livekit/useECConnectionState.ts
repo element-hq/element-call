@@ -14,7 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ConnectionState, Room, RoomEvent } from "livekit-client";
+import {
+  AudioCaptureOptions,
+  ConnectionState,
+  Room,
+  RoomEvent,
+} from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 
@@ -42,7 +47,28 @@ function sfuConfigValid(sfuConfig?: SFUConfig): boolean {
   return Boolean(sfuConfig?.url) && Boolean(sfuConfig?.jwt);
 }
 
+async function doConnect(
+  livekitRoom: Room,
+  sfuConfig: SFUConfig,
+  audioEnabled: boolean,
+  audioOptions: AudioCaptureOptions
+): Promise<void> {
+  await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt);
+  const audioTracks = await livekitRoom!.localParticipant.createTracks({
+    audio: audioOptions,
+  });
+  if (audioTracks.length < 1) {
+    logger.info("Tried to pre-create local audio track but got no tracks");
+    return;
+  }
+  if (!audioEnabled) await audioTracks[0].mute();
+
+  await livekitRoom?.localParticipant.publishTrack(audioTracks[0]);
+}
+
 export function useECConnectionState(
+  initialAudioOptions: AudioCaptureOptions,
+  initialAudioEnabled: boolean,
   livekitRoom?: Room,
   sfuConfig?: SFUConfig
 ): ECConnectionState {
@@ -89,12 +115,33 @@ export function useECConnectionState(
       (async () => {
         setSwitchingFocus(true);
         await livekitRoom?.disconnect();
-        await livekitRoom?.connect(sfuConfig!.url, sfuConfig!.jwt);
+        await doConnect(
+          livekitRoom!,
+          sfuConfig!,
+          initialAudioEnabled,
+          initialAudioOptions
+        );
       })();
+    } else if (
+      !sfuConfigValid(currentSFUConfig.current) &&
+      sfuConfigValid(sfuConfig)
+    ) {
+      // if we're transitioning from an invalid config to a valid one (ie. connecting)
+      // then do an initial connection, including publishing the microphone track:
+      // livekit (by default) keeps the mic track open when you mute, but if you start muted,
+      // doesn't publish it until you unmute. We want to publish it from the start so we're
+      // always capturing audio: it helps keep bluetooth headsets in the right mode and
+      // mobile browsers to know we're doing a call.
+      doConnect(
+        livekitRoom!,
+        sfuConfig!,
+        initialAudioEnabled,
+        initialAudioOptions
+      );
     }
 
     currentSFUConfig.current = Object.assign({}, sfuConfig);
-  }, [sfuConfig, livekitRoom]);
+  }, [sfuConfig, livekitRoom, initialAudioOptions, initialAudioEnabled]);
 
   return isSwitchingFocus ? ECAddonConnectionState.ECSwitchingFocus : connState;
 }

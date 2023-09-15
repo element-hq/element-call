@@ -957,7 +957,7 @@ function updateTiles(g: Grid, tiles: TileDescriptor<unknown>[]): Grid {
 }
 
 function updateBounds(g: Grid, bounds: RectReadOnly): Grid {
-  const columns = Math.max(2, Math.floor(bounds.width * 0.0045));
+  const columns = Math.max(2, Math.floor(bounds.width * 0.0055));
   return columns === g.columns ? g : resize(g, columns);
 }
 

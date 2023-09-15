@@ -20,14 +20,11 @@ limitations under the License.
   top: 0;
   container-name: videoTile;
   container-type: size;
-  --tileRadius: 8px;
-  border-radius: var(--tileRadius);
+  border-radius: var(--cpd-space-4x);
   overflow: hidden;
   cursor: pointer;
-
-  /* HACK: This has no visual effect due to the short duration, but allows the
-  JS to detect movement via the transform property for audio spatialization */
-  transition: transform 0.000000001s;
+  outline: 2px solid rgba(0, 0, 0, 0);
+  transition: outline-radius ease 0.15s, outline-color ease 0.15s;
 }
 
 .videoTile * {
@@ -45,21 +42,14 @@ limitations under the License.
   transform: scaleX(-1);
 }
 
-.videoTile::after {
-  position: absolute;
-  top: -1px;
-  left: -1px;
-  right: -1px;
-  bottom: -1px;
-  content: "";
-  border-radius: var(--tileRadius);
-  box-shadow: inset 0 0 0 4px var(--cpd-color-border-accent) !important;
-  opacity: 0;
-  transition: opacity ease 0.15s;
+.videoTile.speaking {
+  outline: 4px solid var(--cpd-color-border-accent);
 }
 
-.videoTile.speaking::after {
-  opacity: 1;
+@media (hover: hover) {
+  .videoTile:hover {
+    outline: 2px solid var(--cpd-color-gray-1400);
+  }
 }
 
 .videoTile.maximised {
@@ -73,30 +63,47 @@ limitations under the License.
   object-fit: contain;
 }
 
-.infoBubble {
+.nameTag {
   position: absolute;
-  height: 24px;
-  padding: 0 8px;
+  inset-inline-start: var(--cpd-space-1x);
+  inset-block-end: var(--cpd-space-1x);
+  padding: var(--cpd-space-1x);
+  padding-block: var(--cpd-space-1x);
   color: var(--cpd-color-text-primary);
-  background-color: var(--stopgap-background-85);
+  /* TODO: un-hardcode this color. It comes from the dark theme. */
+  background-color: rgba(237, 244, 252, 0.79);
   display: flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 4px;
+  border-radius: var(--cpd-radius-pill-effect);
   user-select: none;
   max-width: calc(100% - 48px);
   overflow: hidden;
   z-index: 1;
+  box-shadow: var(--small-drop-shadow);
 }
 
-.infoBubble > svg {
-  height: 16px;
-  width: 16px;
-  margin-right: 4px;
+:global(.cpd-theme-dark) .nameTag {
+  /* TODO: un-hardcode this color. It comes from the light theme. */
+  background-color: rgba(2, 7, 13, 0.77);
 }
 
-.infoBubble > svg * {
-  fill: var(--cpd-color-icon-primary);
+.nameTag > svg {
+  flex-shrink: 0;
+}
+
+.nameTag > svg[data-muted="true"] {
+  color: var(--cpd-color-icon-secondary);
+}
+
+.nameTag > svg[data-muted="false"] {
+  color: var(--cpd-color-icon-primary);
+}
+
+.nameTag span {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+  padding-inline: var(--cpd-space-2x);
 }
 
 .toolbar {
@@ -137,24 +144,6 @@ limitations under the License.
   height: 16px;
 }
 
-.memberName {
-  left: 16px;
-  bottom: 16px;
-}
-
-.memberName > :last-child {
-  margin-right: 0px;
-}
-
-.memberName span {
-  font-size: var(--font-size-caption);
-  font-weight: 400;
-  line-height: var(--font-size-body);
-  text-overflow: ellipsis;
-  overflow: hidden;
-  white-space: nowrap;
-}
-
 .videoMutedOverlay {
   width: 100%;
   height: 100%;
@@ -190,12 +179,6 @@ limitations under the License.
   top: 16px;
   left: 16px;
   background-color: rgba(0, 0, 0, 0.5);
-}
-
-@media (min-width: 800px) {
-  .videoTile {
-    --tileRadius: 20px;
-  }
 }
 
 /* CSS makes us put a condition here, even though all we want to do is

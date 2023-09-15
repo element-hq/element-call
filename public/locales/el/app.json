@@ -13,7 +13,6 @@
   "Login to your account": "Συνδεθείτε στον λογαριασμό σας",
   "Logging in…": "Σύνδεση…",
   "Inspector": "Επιθεωρητής",
-  "Incompatible versions": "Μη συμβατές εκδόσεις",
   "Display name": "Εμφανιζόμενο όνομα",
   "Developer Settings": "Ρυθμίσεις προγραμματιστή",
   "Debug log request": "Αίτημα αρχείου καταγραφής",
@@ -24,7 +23,6 @@
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Έχετε ήδη λογαριασμό;</0><1><0>Συνδεθείτε</0> Ή <2>Συμμετέχετε ως επισκέπτης</2></1>",
   "Your recent calls": "Οι πρόσφατες κλήσεις σας",
   "Yes, join call": "Ναι, συμμετοχή στην κλήση",
-  "WebRTC is not supported or is being blocked in this browser.": "Το WebRTC δεν υποστηρίζεται ή έχει αποκλειστεί σε αυτό το πρόγραμμα περιήγησης.",
   "Walkie-talkie call name": "Όνομα κλήσης walkie-talkie",
   "Walkie-talkie call": "Κλήση walkie-talkie",
   "Waiting for other participants…": "Αναμονή για άλλους συμμετέχοντες…",
@@ -77,7 +75,6 @@
   "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.": "Ένας άλλος χρήστης σε αυτή την κλήση έχει ένα πρόβλημα. Για την καλύτερη διάγνωση αυτών των προβλημάτων θα θέλαμε να συλλέξουμε ένα αρχείο καταγραφής σφαλμάτων.",
   "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.": "Συμμετέχοντας σε αυτή τη δοκιμαστική έκδοση, συναινείτε στη συλλογή ανώνυμων δεδομένων, τα οποία χρησιμοποιούμε για τη βελτίωση του προϊόντος. Μπορείτε να βρείτε περισσότερες πληροφορίες σχετικά με το ποια δεδομένα καταγράφουμε στην <2>Πολιτική απορρήτου</2> και στην <5>Πολιτική cookies</5>.",
   "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "Εάν αντιμετωπίζετε προβλήματα ή απλά θέλετε να μας δώσετε κάποια σχόλια, παρακαλούμε στείλτε μας μια σύντομη περιγραφή παρακάτω.",
-  "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "Κάποιοι άλλοι χρήστες προσπαθούν να συμμετάσχουν σε αυτή την κλήση από ασύμβατες εκδόσεις. Αυτοί οι χρήστες θα πρέπει να βεβαιωθούν ότι έχουν κάνει ανανέωση (refresh) την καρτέλα του περιηγητή τους:<1>{userLis}</1>",
   "Expose developer settings in the settings window.": "Εμφάνιση ρυθμίσεων προγραμματιστή στο παράθυρο ρυθμίσεων.",
   "Feedback": "Ανατροφοδότηση",
   "Submitting…": "Υποβολή…",
@@ -95,7 +92,6 @@
   "Sending debug logs…": "Αποστολή αρχείων καταγραφής…",
   "Submit": "Υποβολή",
   "Your feedback": "Τα σχόλιά σας",
-  "Fetching group call timed out.": "Η ομαδική κλήση έληξε από τέλος χρόνου.",
   "Spotlight": "Spotlight",
   "Element Call Home": "Element Κεντρική Οθόνη Κλήσεων"
 }

@@ -108,9 +108,17 @@ export function useLiveKit(
     audio: initialMuteStates.current.audio.enabled,
     video: initialMuteStates.current.video.enabled,
     room: roomWithoutProps,
+    connect: false,
   });
 
-  const connectionState = useECConnectionState(room, sfuConfig);
+  const connectionState = useECConnectionState(
+    {
+      deviceId: initialDevices.current.audioOutput.selectedId,
+    },
+    initialMuteStates.current.audio.enabled,
+    room,
+    sfuConfig
+  );
 
   useEffect(() => {
     // Sync the requested mute states with LiveKit's mute states. We do it this
