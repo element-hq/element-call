@@ -1082,7 +1082,7 @@ export function VideoGrid<T>({
             y?: number;
             width?: number;
             height?: number;
-          } = { shadow: 1, scale: 0, opacity: 0 };
+          } = { shadow: 0, scale: 0, opacity: 0 };
           let reset = false;
 
           if (!tilePositionsWereValid) {
@@ -1105,7 +1105,7 @@ export function VideoGrid<T>({
             scale: remove ? 0 : 1,
             opacity: remove ? 0 : 1,
             zIndex: tilePosition.zIndex,
-            shadow: 1,
+            shadow: oneOnOneLayout && tile.item.local ? 1 : 0,
             shadowSpread: oneOnOneLayout && tile.item.local ? 1 : 0,
             from,
             reset,

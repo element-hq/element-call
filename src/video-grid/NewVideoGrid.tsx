@@ -178,7 +178,7 @@ export function NewVideoGrid<T>({
       from: ({ x, y, width, height }: Tile<T>) => ({
         opacity: 0,
         scale: 0,
-        shadow: 1,
+        shadow: 0,
         shadowSpread: 0,
         zIndex: 1,
         x,
@@ -221,7 +221,7 @@ export function NewVideoGrid<T>({
           ? {
               scale: 1,
               zIndex: 1,
-              shadow: 1,
+              shadow: 0,
               x: tile.x,
               y: tile.y,
               width: tile.width,

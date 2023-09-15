@@ -30,7 +30,6 @@ import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
 import { ClientProvider } from "./ClientContext";
-import { usePageFocusStyle } from "./usePageFocusStyle";
 import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
 import { InspectorContextProvider } from "./room/GroupCallInspector";
 import { CrashView, LoadingView } from "./FullScreenView";
@@ -72,8 +71,6 @@ export default function App({ history }: AppProps) {
       setLoaded(true);
     });
   });
-
-  usePageFocusStyle();
 
   const errorPage = <CrashView />;
 
