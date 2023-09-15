@@ -19,12 +19,10 @@
   "Display name": "Име/псевдоним",
   "Download debug logs": "Изтеглете debug логове",
   "Exit full screen": "Излез от цял екран",
-  "Fetching group call timed out.": "Изтече времето за взимане на груповия разговор.",
   "Full screen": "Цял екран",
   "Go": "Напред",
   "Home": "Начало",
   "Include debug logs": "Включи debug логове",
-  "Incompatible versions": "Несъвместими версии",
   "Inspector": "Инспектор",
   "Join call": "Влез в разговора",
   "Join call now": "Влез в разговора сега",
@@ -39,7 +37,6 @@
   "No": "Не",
   "Not now, return to home screen": "Не сега, върни се на началния екран",
   "Not registered yet? <2>Create an account</2>": "Все още не сте регистрирани? <2>Създайте акаунт</2>",
-  "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "Други потребители се опитват да се присъединят в разговора от несъвместими версии. Следните потребители трябва да проверят дали са презаредили браузърите си<1>{userLis}</1>",
   "Password": "Парола",
   "Passwords must match": "Паролите не съвпадат",
   "Profile": "Профил",
@@ -71,7 +68,6 @@
   "Waiting for other participants…": "Изчакване на други участници…",
   "Walkie-talkie call": "Уоки-токи разговор",
   "Walkie-talkie call name": "Име на уоки-токи разговора",
-  "WebRTC is not supported or is being blocked in this browser.": "WebRTC не се поддържа или се блокира от браузъра.",
   "Yes, join call": "Да, присъедини се",
   "Your recent calls": "Скорошните ви разговори"
 }

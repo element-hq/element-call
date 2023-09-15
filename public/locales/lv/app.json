@@ -31,7 +31,6 @@
   "Exit full screen": "Iziet no pilnekrāna",
   "Expose developer settings in the settings window.": "Izstādīt izstrādātāja iestatījumus iestatījumu logā.",
   "Feedback": "Atsauksmes",
-  "Fetching group call timed out.": "Grupas zvana iegūšanā iestājās noildze.",
   "Full screen": "Pilnekrāns",
   "Go": "Aiziet",
   "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Klikšķināšana uz \"Pievienoties zvanam tagad\" apliecina piekrišanu mūsu <2>galalietotāja licencēšanas nolīgumam (GLLN)</2>",
@@ -52,7 +51,6 @@
   "Your recent calls": "Nesenie zvani",
   "How did it go?": "Kā Tev veicās?",
   "Include debug logs": "Iekļaut atkļūdošanas žurnāla ierakstus",
-  "Incompatible versions": "Nesaderīgas versijas",
   "Inspector": "Inspektors",
   "Join call": "Pievienoties zvanam",
   "Join call now": "Pievienoties zvanam tagad",
@@ -105,8 +103,6 @@
   "You were disconnected from the call": "Tu tiki atvienots no zvana",
   "Version: {{version}}": "Versija: {{version}}",
   "Walkie-talkie call name": "Rācijas zvana nosaukums",
-  "WebRTC is not supported or is being blocked in this browser.": "Šajā pārlūkā nav nodrošināts WebRTC vai tiek liegta tā izmantošana.",
   "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "Ja tiek piedzīvoti sarežģījumi vai vienkārši ir vēlme sniegt kādu atsauksmi, lūgums zemāk nosūtīt mums īsu aprakstu.",
-  "Not registered yet? <2>Create an account</2>": "Vēl neesi reģistrējies? <2>Izveidot kontu</2>",
-  "Other users are trying to join this call from incompatible versions. These users should ensure that they have refreshed their browsers:<1>{userLis}</1>": "Citi lietotāji mēģina pievienoties šim zvanam no nesaderīgām versijām. Šiem lietotājiem vajadzētu nodrošināt, ka viņi ir atsvaidzinājuši savus pārlūkus: <1>{userLis}</1>"
+  "Not registered yet? <2>Create an account</2>": "Vēl neesi reģistrējies? <2>Izveidot kontu</2>"
 }
