@@ -147,7 +147,7 @@ export const widget: WidgetHelpers | null = (() => {
           receiveState,
           sendToDevice: sendRecvToDevice,
           receiveToDevice: sendRecvToDevice,
-          turnServers: true,
+          turnServers: false,
         },
         roomId,
         {
@@ -157,15 +157,6 @@ export const widget: WidgetHelpers | null = (() => {
           timelineSupport: true,
           useE2eForGroupCall: e2eEnabled,
           fallbackICEServerAllowed: allowIceFallback,
-          // XXX: The client expects the list of foci in its constructor, but we don't
-          // know this until we fetch the config file. However, we can't wait to construct
-          // the client object or we'll miss the 'capabilities' request from the host app.
-          // As of writing this, I have made the embedded widget client send the 'contentLoaded'
-          // message so that we can use the widget API in less racy mode, but we need to change
-          // element-web to use waitForIFrameLoad=false. Once that change has rolled out,
-          // we can just start the client after we've fetched the config.
-          livekitServiceURL: undefined,
-          useLivekitForGroupCalls: true,
         }
       );
 
@@ -174,13 +165,6 @@ export const widget: WidgetHelpers | null = (() => {
           // wait for the config file to be ready (we load very early on so it might not
           // be otherwise)
           await Config.init();
-          const livekit = Config.get().livekit;
-          const focus = livekit?.livekit_service_url;
-          // Now we've fetched the config, be evil and use the getter to inject the focus
-          // into the client (see above XXX).
-          if (focus) {
-            client.setLivekitServiceURL(livekit.livekit_service_url);
-          }
           await client.startClient();
           resolve(client);
         })();

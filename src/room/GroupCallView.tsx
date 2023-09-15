@@ -16,37 +16,42 @@ limitations under the License.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
-import { GroupCall, GroupCallState } from "matrix-js-sdk/src/webrtc/groupCall";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 import { Room } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { JoinRule, RoomMember } from "matrix-js-sdk/src/matrix";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { widget, ElementWidgetActions, JoinCallData } from "../widget";
-import { useGroupCall } from "./useGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { MatrixInfo } from "./VideoPreview";
 import { CallEndedView } from "./CallEndedView";
-import { useSentryGroupCallHandler } from "./useSentryGroupCallHandler";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../media-utils";
-import { OpenIDLoader } from "../livekit/OpenIDLoader";
 import { ActiveCall } from "./InCallView";
-import { Config } from "../config/Config";
 import { MuteStates, useMuteStates } from "./MuteStates";
 import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
+import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
+import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
+import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
 import {
   useManageRoomSharedKey,
   useIsRoomE2EE,
 } from "../e2ee/sharedKeyManagement";
 import { useEnableE2EE } from "../settings/useSetting";
+import { useRoomAvatar } from "./useRoomAvatar";
+import { useRoomName } from "./useRoomName";
+import { useModalTriggerState } from "../Modal";
+import { useJoinRule } from "./useJoinRule";
+import { ShareModal } from "./ShareModal";
 
 declare global {
   interface Window {
-    groupCall?: GroupCall;
+    rtcSession?: MatrixRTCSession;
   }
 }
 
@@ -56,7 +61,7 @@ interface Props {
   isEmbedded: boolean;
   preload: boolean;
   hideHeader: boolean;
-  groupCall: GroupCall;
+  rtcSession: MatrixRTCSession;
 }
 
 export function GroupCallView({
@@ -65,46 +70,67 @@ export function GroupCallView({
   isEmbedded,
   preload,
   hideHeader,
-  groupCall,
+  rtcSession,
 }: Props) {
-  const {
-    state,
-    error,
-    enter,
-    leave,
-    participants,
-    unencryptedEventsFromUsers,
-    otelGroupCallMembership,
-  } = useGroupCall(groupCall, client);
+  const memberships = useMatrixRTCSessionMemberships(rtcSession);
+  const isJoined = useMatrixRTCSessionJoinState(rtcSession);
 
-  const e2eeSharedKey = useManageRoomSharedKey(groupCall.room.roomId);
-  const isRoomE2EE = useIsRoomE2EE(groupCall.room.roomId);
+  const e2eeSharedKey = useManageRoomSharedKey(rtcSession.room.roomId);
+  const isRoomE2EE = useIsRoomE2EE(rtcSession.room.roomId);
 
   const { t } = useTranslation();
 
   useEffect(() => {
-    window.groupCall = groupCall;
+    window.rtcSession = rtcSession;
     return () => {
-      delete window.groupCall;
+      delete window.rtcSession;
     };
-  }, [groupCall]);
+  }, [rtcSession]);
 
   const { displayName, avatarUrl } = useProfile(client);
+  const roomName = useRoomName(rtcSession.room);
+  const roomAvatar = useRoomAvatar(rtcSession.room);
+  const roomEncrypted = useIsRoomE2EE(rtcSession.room.roomId)!;
+
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
+      userId: client.getUserId()!,
       displayName: displayName!,
       avatarUrl: avatarUrl!,
-      roomId: groupCall.room.roomId,
-      roomName: groupCall.room.name,
-      roomAlias: groupCall.room.getCanonicalAlias(),
+      roomId: rtcSession.room.roomId,
+      roomName,
+      roomAlias: rtcSession.room.getCanonicalAlias(),
+      roomAvatar,
+      roomEncrypted,
     };
-  }, [displayName, avatarUrl, groupCall]);
+  }, [
+    displayName,
+    avatarUrl,
+    rtcSession,
+    roomName,
+    roomAvatar,
+    roomEncrypted,
+    client,
+  ]);
+
+  const participatingMembers = useMemo(() => {
+    const members: RoomMember[] = [];
+    // Count each member only once, regardless of how many devices they use
+    const addedUserIds = new Set<string>();
+    for (const membership of memberships) {
+      if (!addedUserIds.has(membership.member.userId)) {
+        addedUserIds.add(membership.member.userId);
+        members.push(membership.member);
+      }
+    }
+    return members;
+  }, [memberships]);
 
   const deviceContext = useMediaDevices();
   const latestDevices = useRef<MediaDevices>();
   latestDevices.current = deviceContext;
 
-  const muteStates = useMuteStates(participants.size);
+  const muteStates = useMuteStates(memberships.length);
   const latestMuteStates = useRef<MuteStates>();
   latestMuteStates.current = muteStates;
 
@@ -161,10 +187,13 @@ export function GroupCallView({
           }
         }
 
-        await enter();
+        enterRTCSession(rtcSession);
 
         PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
-        PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
+        // we only have room sessions right now, so call ID is the emprty string - we use the room ID
+        PosthogAnalytics.instance.eventCallStarted.track(
+          rtcSession.room.roomId
+        );
 
         await Promise.all([
           widget!.api.setAlwaysOnScreen(true),
@@ -177,19 +206,18 @@ export function GroupCallView({
         widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
     }
-  }, [groupCall, preload, enter]);
+  }, [rtcSession, preload]);
 
   useEffect(() => {
     if (isEmbedded && !preload) {
       // In embedded mode, bypass the lobby and just enter the call straight away
-      enter();
+      enterRTCSession(rtcSession);
 
       PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
-      PosthogAnalytics.instance.eventCallStarted.track(groupCall.groupCallId);
+      // use the room ID as above
+      PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
     }
-  }, [groupCall, isEmbedded, preload, enter]);
-
-  useSentryGroupCallHandler(groupCall);
+  }, [rtcSession, isEmbedded, preload]);
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
@@ -200,21 +228,16 @@ export function GroupCallView({
       setLeaveError(leaveError);
       setLeft(true);
 
-      let participantCount = 0;
-      for (const deviceMap of groupCall.participants.values()) {
-        participantCount += deviceMap.size;
-      }
-
       // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
       // therefore we want the event to be sent instantly without getting queued/batched.
       const sendInstantly = !!widget;
       PosthogAnalytics.instance.eventCallEnded.track(
-        groupCall.groupCallId,
-        participantCount,
+        rtcSession.room.roomId,
+        rtcSession.memberships.length,
         sendInstantly
       );
 
-      leave();
+      leaveRTCSession(rtcSession);
       if (widget) {
         // we need to wait until the callEnded event is tracked. Otherwise the iFrame gets killed before the callEnded event got tracked.
         await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
@@ -231,13 +254,13 @@ export function GroupCallView({
         history.push("/");
       }
     },
-    [groupCall, leave, isPasswordlessUser, isEmbedded, history]
+    [rtcSession, isPasswordlessUser, isEmbedded, history]
   );
 
   useEffect(() => {
-    if (widget && state === GroupCallState.Entered) {
+    if (widget && isJoined) {
       const onHangup = async (ev: CustomEvent<IWidgetApiRequest>) => {
-        leave();
+        leaveRTCSession(rtcSession);
         await widget!.api.transport.reply(ev.detail, {});
         widget!.api.setAlwaysOnScreen(false);
       };
@@ -246,7 +269,7 @@ export function GroupCallView({
         widget!.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
       };
     }
-  }, [groupCall, state, leave]);
+  }, [isJoined, rtcSession]);
 
   const [e2eeEnabled] = useEnableE2EE();
 
@@ -258,8 +281,19 @@ export function GroupCallView({
   const onReconnect = useCallback(() => {
     setLeft(false);
     setLeaveError(undefined);
-    groupCall.enter();
-  }, [groupCall]);
+    enterRTCSession(rtcSession);
+  }, [rtcSession]);
+
+  const joinRule = useJoinRule(rtcSession.room);
+
+  const { modalState: shareModalState, modalProps: shareModalProps } =
+    useModalTriggerState();
+
+  const onShareClickFn = useCallback(
+    () => shareModalState.open(),
+    [shareModalState]
+  );
+  const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
 
   if (e2eeEnabled && isRoomE2EE && !e2eeSharedKey) {
     return (
@@ -277,33 +311,27 @@ export function GroupCallView({
     return <ErrorView error={new Error("You need to enable E2EE to join.")} />;
   }
 
-  const livekitServiceURL =
-    groupCall.livekitServiceURL ?? Config.get().livekit?.livekit_service_url;
-  if (!livekitServiceURL) {
-    return <ErrorView error={new Error("No livekit_service_url defined")} />;
-  }
+  const shareModal = shareModalState.isOpen && (
+    <ShareModal roomId={rtcSession.room.roomId} {...shareModalProps} />
+  );
 
-  if (error) {
-    return <ErrorView error={error} />;
-  } else if (state === GroupCallState.Entered) {
+  if (isJoined) {
     return (
-      <OpenIDLoader
-        client={client}
-        groupCall={groupCall}
-        roomName={`${groupCall.room.roomId}-${groupCall.groupCallId}`}
-      >
+      <>
+        {shareModal}
         <ActiveCall
           client={client}
-          groupCall={groupCall}
-          participants={participants}
+          matrixInfo={matrixInfo}
+          rtcSession={rtcSession}
+          participatingMembers={participatingMembers}
           onLeave={onLeave}
-          unencryptedEventsFromUsers={unencryptedEventsFromUsers}
           hideHeader={hideHeader}
           muteStates={muteStates}
           e2eeConfig={e2eeConfig}
-          otelGroupCallMembership={otelGroupCallMembership}
+          //otelGroupCallMembership={otelGroupCallMembership}
+          onShareClick={onShareClick}
         />
-      </OpenIDLoader>
+      </>
     );
   } else if (left) {
     // The call ended view is shown for two reasons: prompting guests to create
@@ -319,7 +347,7 @@ export function GroupCallView({
     ) {
       return (
         <CallEndedView
-          endedCallId={groupCall.groupCallId}
+          endedCallId={rtcSession.room.roomId}
           client={client}
           isPasswordlessUser={isPasswordlessUser}
           leaveError={leaveError}
@@ -342,13 +370,19 @@ export function GroupCallView({
     );
   } else {
     return (
-      <LobbyView
-        matrixInfo={matrixInfo}
-        muteStates={muteStates}
-        onEnter={() => enter()}
-        isEmbedded={isEmbedded}
-        hideHeader={hideHeader}
-      />
+      <>
+        {shareModal}
+        <LobbyView
+          client={client}
+          matrixInfo={matrixInfo}
+          muteStates={muteStates}
+          onEnter={() => enterRTCSession(rtcSession)}
+          isEmbedded={isEmbedded}
+          hideHeader={hideHeader}
+          participatingMembers={participatingMembers}
+          onShareClick={onShareClick}
+        />
+      </>
     );
   }
 }
