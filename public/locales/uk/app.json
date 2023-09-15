@@ -87,7 +87,7 @@
   "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "Якщо у вас виникли проблеми або ви просто хочете залишити відгук, надішліть нам короткий опис нижче.",
   "Feedback": "Відгук",
   "<0>Thanks for your feedback!</0>": "<0>Дякуємо за ваш відгук!</0>",
-  "{{count}} stars|one": "{{count}} зірка",
+  "{{count}} stars|one": "{{count}} зірок",
   "{{count}} stars|other": "{{count}} зірок",
   "{{displayName}}, your call has ended.": "{{displayName}}, ваш виклик завершено.",
   "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Ми будемо раді почути ваші відгуки, щоб поліпшити роботу застосунку.</0>",
