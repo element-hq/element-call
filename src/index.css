@@ -51,12 +51,17 @@ limitations under the License.
   --inline-content-inset: max(var(--cpd-space-4x), calc((100vw - 1180px) / 2));
   --small-drop-shadow: 0px 1.2px 2.4px 0px rgba(0, 0, 0, 0.15);
   --subtle-drop-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+  --background-gradient: url("graphics/backgroundGradient.svg");
 }
 
 .cpd-theme-dark {
   --cpd-color-border-accent: var(--cpd-color-green-1100);
   --stopgap-color-on-solid-accent: var(--cpd-color-text-primary);
   --stopgap-background-85: rgba(16, 19, 23, 0.85);
+
+  background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 @font-face {
