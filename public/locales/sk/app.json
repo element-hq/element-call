@@ -118,5 +118,6 @@
   "Video on": "Video zapnuté",
   "{{count, number}}|one": "{{count, number}}",
   "Share this call": "Zdieľať tento hovor",
-  "{{names, list(style: short;)}}": "{{names, list(style: short;)}}"
+  "{{names, list(style: short;)}}": "{{names, list(style: short;)}}",
+  "You": "Vy"
 }
