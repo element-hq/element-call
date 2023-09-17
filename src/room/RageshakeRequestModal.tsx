@@ -17,7 +17,7 @@ limitations under the License.
 import { FC, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Modal, ModalContent, ModalProps } from "../Modal";
+import { Modal, ModalProps } from "../Modal";
 import { Button } from "../button";
 import { FieldRow, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake } from "../settings/submit-rageshake";
@@ -26,51 +26,49 @@ import { Body } from "../typography/Typography";
 interface Props extends Omit<ModalProps, "title" | "children"> {
   rageshakeRequestId: string;
   roomId: string;
-  onClose: () => void;
+  open: boolean;
+  onDismiss: () => void;
 }
 
 export const RageshakeRequestModal: FC<Props> = ({
   rageshakeRequestId,
   roomId,
-  ...rest
+  open,
+  onDismiss,
 }) => {
   const { t } = useTranslation();
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
 
   useEffect(() => {
-    if (sent) {
-      rest.onClose();
-    }
-  }, [sent, rest]);
+    if (sent) onDismiss();
+  }, [sent, onDismiss]);
 
   return (
-    <Modal title={t("Debug log request")} isDismissable {...rest}>
-      <ModalContent>
-        <Body>
-          {t(
-            "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log."
-          )}
-        </Body>
-        <FieldRow>
-          <Button
-            onPress={() =>
-              submitRageshake({
-                sendLogs: true,
-                rageshakeRequestId,
-                roomId,
-              })
-            }
-            disabled={sending}
-          >
-            {sending ? t("Sending debug logs…") : t("Send debug logs")}
-          </Button>
-        </FieldRow>
-        {error && (
-          <FieldRow>
-            <ErrorMessage error={error} />
-          </FieldRow>
+    <Modal title={t("Debug log request")} open={open} onDismiss={onDismiss}>
+      <Body>
+        {t(
+          "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log."
         )}
-      </ModalContent>
+      </Body>
+      <FieldRow>
+        <Button
+          onPress={() =>
+            submitRageshake({
+              sendLogs: true,
+              rageshakeRequestId,
+              roomId,
+            })
+          }
+          disabled={sending}
+        >
+          {sending ? t("Sending debug logs…") : t("Send debug logs")}
+        </Button>
+      </FieldRow>
+      {error && (
+        <FieldRow>
+          <ErrorMessage error={error} />
+        </FieldRow>
+      )}
     </Modal>
   );
 };

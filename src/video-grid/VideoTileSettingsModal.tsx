@@ -66,23 +66,21 @@ const LocalVolume: React.FC<LocalVolumeProps> = ({
   );
 };
 
-// TODO: Extend ModalProps
 interface Props {
   data: ItemData;
-  onClose: () => void;
+  open: boolean;
+  onDismiss: () => void;
 }
 
-export const VideoTileSettingsModal = ({ data, onClose, ...rest }: Props) => {
+export const VideoTileSettingsModal = ({ data, open, onDismiss }: Props) => {
   const { t } = useTranslation();
 
   return (
     <Modal
       className={styles.videoTileSettingsModal}
       title={t("Local volume")}
-      isDismissable
-      mobileFullScreen
-      onClose={onClose}
-      {...rest}
+      open={open}
+      onDismiss={onDismiss}
     >
       <div className={styles.content}>
         <LocalVolume
