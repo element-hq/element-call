@@ -1,7 +1,7 @@
 {
   "{{count, number}}|one": "{{count, number}}",
   "{{count, number}}|other": "{{count, number}}",
-  "{{count}} stars|one": "{{count}} stella",
+  "{{count}} stars|one": "{{count}} stelle",
   "{{count}} stars|other": "{{count}} stelle",
   "{{displayName}} is presenting": "{{displayName}} sta presentando",
   "{{names, list(style: short;)}}": "{{names, list(style: short;)}}",
