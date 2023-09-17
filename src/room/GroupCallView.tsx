@@ -45,7 +45,6 @@ import {
 import { useEnableE2EE } from "../settings/useSetting";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
-import { useModalTriggerState } from "../Modal";
 import { useJoinRule } from "./useJoinRule";
 import { ShareModal } from "./ShareModal";
 
@@ -286,12 +285,15 @@ export function GroupCallView({
 
   const joinRule = useJoinRule(rtcSession.room);
 
-  const { modalState: shareModalState, modalProps: shareModalProps } =
-    useModalTriggerState();
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const onDismissShareModal = useCallback(
+    () => setShareModalOpen(false),
+    [setShareModalOpen]
+  );
 
   const onShareClickFn = useCallback(
-    () => shareModalState.open(),
-    [shareModalState]
+    () => setShareModalOpen(true),
+    [setShareModalOpen]
   );
   const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
 
@@ -311,8 +313,12 @@ export function GroupCallView({
     return <ErrorView error={new Error("You need to enable E2EE to join.")} />;
   }
 
-  const shareModal = shareModalState.isOpen && (
-    <ShareModal roomId={rtcSession.room.roomId} {...shareModalProps} />
+  const shareModal = (
+    <ShareModal
+      roomId={rtcSession.room.roomId}
+      open={shareModalOpen}
+      onDismiss={onDismissShareModal}
+    />
   );
 
   if (isJoined) {
