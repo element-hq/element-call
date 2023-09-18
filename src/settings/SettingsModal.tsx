@@ -44,11 +44,7 @@ import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 import { useUrlParams } from "../UrlParams";
-import {
-  useMediaDevices,
-  MediaDevice,
-  useMediaDeviceNames,
-} from "../livekit/MediaDevicesContext";
+import { useMediaDevices, MediaDevice } from "../livekit/MediaDevicesContext";
 
 interface Props {
   isOpen: boolean;
@@ -119,7 +115,11 @@ export const SettingsModal = (props: Props) => {
   );
 
   const devices = useMediaDevices();
-  useMediaDeviceNames(devices);
+  // We skip useMediaDeviceNames, since it will create a track in the background
+  // and might be the source for echo cancellation issues on firefox.
+  // TODO this should be put behind a condition.
+  // we should only call useMediaDeviceNames if enumerateDevices fails.
+  // useMediaDeviceNames(devices);
 
   const audioTab = (
     <TabItem
