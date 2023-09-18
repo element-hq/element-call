@@ -30,7 +30,6 @@ import { Room as MatrixRoom } from "matrix-js-sdk/src/models/room";
 import { Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
-import { OverlayTriggerState } from "@react-stately/overlays";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
@@ -51,7 +50,6 @@ import {
   VideoGrid,
 } from "../video-grid/VideoGrid";
 import { useShowConnectionStats } from "../settings/useSetting";
-import { useModalTriggerState } from "../Modal";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
@@ -313,25 +311,20 @@ export function InCallView({
     );
   };
 
-  const {
-    modalState: rageshakeRequestModalState,
-    modalProps: rageshakeRequestModalProps,
-  } = useRageshakeRequestModal(rtcSession.room.roomId);
+  const rageshakeRequestModalProps = useRageshakeRequestModal(
+    rtcSession.room.roomId
+  );
 
-  const {
-    modalState: settingsModalState,
-    modalProps: settingsModalProps,
-  }: {
-    modalState: OverlayTriggerState;
-    modalProps: {
-      isOpen: boolean;
-      onClose: () => void;
-    };
-  } = useModalTriggerState();
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
-  const openSettings = useCallback(() => {
-    settingsModalState.open();
-  }, [settingsModalState]);
+  const openSettings = useCallback(
+    () => setSettingsModalOpen(true),
+    [setSettingsModalOpen]
+  );
+  const closeSettings = useCallback(
+    () => setSettingsModalOpen(false),
+    [setSettingsModalOpen]
+  );
 
   const toggleScreensharing = useCallback(async () => {
     exitFullscreen();
@@ -442,19 +435,13 @@ export function InCallView({
           show={showInspector}
         />
       )*/}
-      {rageshakeRequestModalState.isOpen && !noControls && (
-        <RageshakeRequestModal
-          {...rageshakeRequestModalProps}
-          roomId={rtcSession.room.roomId}
-        />
-      )}
-      {settingsModalState.isOpen && (
-        <SettingsModal
-          client={client}
-          roomId={rtcSession.room.roomId}
-          {...settingsModalProps}
-        />
-      )}
+      {!noControls && <RageshakeRequestModal {...rageshakeRequestModalProps} />}
+      <SettingsModal
+        client={client}
+        roomId={rtcSession.room.roomId}
+        open={settingsModalOpen}
+        onDismiss={closeSettings}
+      />
     </div>
   );
 }

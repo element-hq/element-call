@@ -56,8 +56,7 @@ export interface GroupCallLoadState {
 export const useLoadGroupCall = (
   client: MatrixClient,
   roomIdOrAlias: string,
-  viaServers: string[],
-  createPtt: boolean
+  viaServers: string[]
 ): GroupCallStatus => {
   const { t } = useTranslation();
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
@@ -101,7 +100,6 @@ export const useLoadGroupCall = (
           const [, roomId] = await createRoom(
             client,
             roomNameFromRoomId(roomIdOrAlias),
-            createPtt,
             e2eeEnabled ?? false
           );
 
@@ -151,7 +149,7 @@ export const useLoadGroupCall = (
       .then(fetchOrCreateGroupCall)
       .then((rtcSession) => setState({ kind: "loaded", rtcSession }))
       .catch((error) => setState({ kind: "failed", error }));
-  }, [client, roomIdOrAlias, viaServers, createPtt, t, e2eeEnabled]);
+  }, [client, roomIdOrAlias, viaServers, t, e2eeEnabled]);
 
   return state;
 };

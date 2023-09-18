@@ -27,7 +27,6 @@ interface Props {
   roomIdOrAlias: string;
   viaServers: string[];
   children: (rtcSession: MatrixRTCSession) => ReactNode;
-  createPtt: boolean;
 }
 
 export function GroupCallLoader({
@@ -35,15 +34,9 @@ export function GroupCallLoader({
   roomIdOrAlias,
   viaServers,
   children,
-  createPtt,
 }: Props): JSX.Element {
   const { t } = useTranslation();
-  const groupCallState = useLoadGroupCall(
-    client,
-    roomIdOrAlias,
-    viaServers,
-    createPtt
-  );
+  const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);
 
   switch (groupCallState.kind) {
     case "loading":
