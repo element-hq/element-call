@@ -17,35 +17,30 @@ limitations under the License.
 import { FC } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Modal, ModalContent, ModalProps } from "../Modal";
+import { Modal } from "../Modal";
 import { CopyButton } from "../button";
 import { getRoomUrl } from "../matrix-utils";
 import styles from "./ShareModal.module.css";
 import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 
-interface Props extends Omit<ModalProps, "title" | "children"> {
+interface Props {
   roomId: string;
+  open: boolean;
+  onDismiss: () => void;
 }
 
-export const ShareModal: FC<Props> = ({ roomId, ...rest }) => {
+export const ShareModal: FC<Props> = ({ roomId, open, onDismiss }) => {
   const { t } = useTranslation();
   const roomSharedKey = useRoomSharedKey(roomId);
 
   return (
-    <Modal
-      title={t("Share this call")}
-      isDismissable
-      className={styles.inviteModal}
-      {...rest}
-    >
-      <ModalContent>
-        <p>{t("Copy and share this call link")}</p>
-        <CopyButton
-          className={styles.copyButton}
-          value={getRoomUrl(roomId, roomSharedKey ?? undefined)}
-          data-testid="modal_inviteLink"
-        />
-      </ModalContent>
+    <Modal title={t("Share this call")} open={open} onDismiss={onDismiss}>
+      <p>{t("Copy and share this call link")}</p>
+      <CopyButton
+        className={styles.copyButton}
+        value={getRoomUrl(roomId, roomSharedKey ?? undefined)}
+        data-testid="modal_inviteLink"
+      />
     </Modal>
   );
 };

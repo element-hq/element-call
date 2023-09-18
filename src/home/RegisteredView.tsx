@@ -33,7 +33,6 @@ import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { CallList } from "./CallList";
 import { UserMenuContainer } from "../UserMenuContainer";
-import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { Caption, Title } from "../typography/Typography";
 import { Form } from "../form/Form";
@@ -56,7 +55,12 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
   const [optInAnalytics] = useOptInAnalytics();
   const history = useHistory();
   const { t } = useTranslation();
-  const { modalState, modalProps } = useModalTriggerState();
+  const [joinExistingCallModalOpen, setJoinExistingCallModalOpen] =
+    useState(false);
+  const onDismissJoinExistingCallModal = useCallback(
+    () => setJoinExistingCallModalOpen(false),
+    [setJoinExistingCallModalOpen]
+  );
   const [e2eeEnabled] = useEnableE2EE();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
@@ -93,7 +97,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
           setExistingAlias(roomAliasLocalpartFromRoomName(roomName));
           setLoading(false);
           setError(undefined);
-          modalState.open();
+          setJoinExistingCallModalOpen(true);
         } else {
           console.error(error);
           setLoading(false);
@@ -101,7 +105,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
         }
       });
     },
-    [client, history, modalState, callType, e2eeEnabled]
+    [client, history, setJoinExistingCallModalOpen, callType, e2eeEnabled]
   );
 
   const recentRooms = useGroupCallRooms(client);
@@ -175,9 +179,11 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
           )}
         </main>
       </div>
-      {modalState.isOpen && (
-        <JoinExistingCallModal onJoin={onJoinExistingRoom} {...modalProps} />
-      )}
+      <JoinExistingCallModal
+        onJoin={onJoinExistingRoom}
+        open={joinExistingCallModalOpen}
+        onDismiss={onDismissJoinExistingCallModal}
+      />
     </>
   );
 }
