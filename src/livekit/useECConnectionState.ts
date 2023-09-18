@@ -17,8 +17,10 @@ limitations under the License.
 import {
   AudioCaptureOptions,
   ConnectionState,
+  LocalTrackPublication,
   Room,
   RoomEvent,
+  Track,
 } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
@@ -54,16 +56,24 @@ async function doConnect(
   audioOptions: AudioCaptureOptions
 ): Promise<void> {
   await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt);
-  const audioTracks = await livekitRoom!.localParticipant.createTracks({
-    audio: audioOptions,
+  const hasMicrofonTrack = Array.from(
+    livekitRoom?.localParticipant.audioTracks.values()
+  ).some((track: LocalTrackPublication) => {
+    return track.options?.source == Track.Source.Microphone;
   });
-  if (audioTracks.length < 1) {
-    logger.info("Tried to pre-create local audio track but got no tracks");
-    return;
-  }
-  if (!audioEnabled) await audioTracks[0].mute();
+  // We create a track in case there isn't any.
+  if (!hasMicrofonTrack) {
+    const audioTracks = await livekitRoom!.localParticipant.createTracks({
+      audio: audioOptions,
+    });
+    if (audioTracks.length < 1) {
+      logger.info("Tried to pre-create local audio track but got no tracks");
+      return;
+    }
+    if (!audioEnabled) await audioTracks[0].mute();
 
-  await livekitRoom?.localParticipant.publishTrack(audioTracks[0]);
+    await livekitRoom?.localParticipant.publishTrack(audioTracks[0]);
+  }
 }
 
 export function useECConnectionState(
