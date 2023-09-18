@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { FC, useEffect, useState, useCallback } from "react";
+import { FC, useEffect, useState, useCallback, ReactNode } from "react";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import { useClientLegacy } from "../ClientContext";
@@ -26,6 +26,8 @@ import { useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { useOptInAnalytics } from "../settings/useSetting";
 import { HomePage } from "../home/HomePage";
+import { platform } from "../Platform";
+import { AppSelectionModal } from "./AppSelectionModal";
 
 export const RoomPage: FC = () => {
   const {
@@ -85,29 +87,36 @@ export const RoomPage: FC = () => {
     [client, passwordlessUser, isEmbedded, preload, hideHeader]
   );
 
+  let content: ReactNode;
   if (loading || isRegistering) {
-    return <LoadingView />;
-  }
-
-  if (error) {
-    return <ErrorView error={error} />;
-  }
-
-  if (!client) {
-    return <RoomAuthView />;
-  }
-
-  if (!roomIdOrAlias) {
-    return <HomePage />;
+    content = <LoadingView />;
+  } else if (error) {
+    content = <ErrorView error={error} />;
+  } else if (!client) {
+    content = <RoomAuthView />;
+  } else if (!roomIdOrAlias) {
+    // TODO: This doesn't belong here, the app routes need to be reworked
+    content = <HomePage />;
+  } else {
+    content = (
+      <GroupCallLoader
+        client={client}
+        roomIdOrAlias={roomIdOrAlias}
+        viaServers={viaServers}
+      >
+        {groupCallView}
+      </GroupCallLoader>
+    );
   }
 
   return (
-    <GroupCallLoader
-      client={client}
-      roomIdOrAlias={roomIdOrAlias}
-      viaServers={viaServers}
-    >
-      {groupCallView}
-    </GroupCallLoader>
+    <>
+      {content}
+      {/* On mobile, show a prompt to launch the mobile app. If in embedded mode,
+    that means we *are* in the mobile app and should show no further prompt. */}
+      {(platform === "android" || platform === "ios") && !isEmbedded && (
+        <AppSelectionModal roomId={roomId} />
+      )}
+    </>
   );
 };

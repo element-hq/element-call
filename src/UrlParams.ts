@@ -90,6 +90,22 @@ interface UrlParams {
   password: string | null;
 }
 
+export function editFragmentQuery(
+  hash: string,
+  edit: (params: URLSearchParams) => URLSearchParams
+): string {
+  const fragmentQueryStart = hash.indexOf("?");
+  const fragmentParams = edit(
+    new URLSearchParams(
+      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart)
+    )
+  );
+  return `${hash.substring(
+    0,
+    fragmentQueryStart
+  )}?${fragmentParams.toString()}`;
+}
+
 /**
  * Gets the app parameters for the current URL.
  * @param ignoreRoomAlias If true, does not try to parse a room alias from the URL
