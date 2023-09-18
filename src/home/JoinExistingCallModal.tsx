@@ -17,36 +17,29 @@ limitations under the License.
 import { PressEvent } from "@react-types/shared";
 import { useTranslation } from "react-i18next";
 
-import { Modal, ModalContent } from "../Modal";
+import { Modal } from "../Modal";
 import { Button } from "../button";
 import { FieldRow } from "../input/Input";
 import styles from "./JoinExistingCallModal.module.css";
 
 interface Props {
+  open: boolean;
+  onDismiss: () => void;
   onJoin: (e: PressEvent) => void;
-  onClose: () => void;
-  // TODO: add used parameters for <Modal>
-  [index: string]: unknown;
 }
-export function JoinExistingCallModal({ onJoin, onClose, ...rest }: Props) {
+
+export function JoinExistingCallModal({ onJoin, open, onDismiss }: Props) {
   const { t } = useTranslation();
 
   return (
-    <Modal
-      title={t("Join existing call?")}
-      isDismissable
-      {...rest}
-      onClose={onClose}
-    >
-      <ModalContent>
-        <p>{t("This call already exists, would you like to join?")}</p>
-        <FieldRow rightAlign className={styles.buttons}>
-          <Button onPress={onClose}>{t("No")}</Button>
-          <Button onPress={onJoin} data-testid="home_joinExistingRoom">
-            {t("Yes, join call")}
-          </Button>
-        </FieldRow>
-      </ModalContent>
+    <Modal title={t("Join existing call?")} open={open} onDismiss={onDismiss}>
+      <p>{t("This call already exists, would you like to join?")}</p>
+      <FieldRow rightAlign className={styles.buttons}>
+        <Button onPress={onDismiss}>{t("No")}</Button>
+        <Button onPress={onJoin} data-testid="home_joinExistingRoom">
+          {t("Yes, join call")}
+        </Button>
+      </FieldRow>
     </Modal>
   );
 }

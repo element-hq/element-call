@@ -200,8 +200,10 @@ export const useMediaDevices = () => useContext(MediaDevicesContext);
  * default because it may involve requesting additional permissions from the
  * user.
  */
-export const useMediaDeviceNames = (context: MediaDevices) =>
+export const useMediaDeviceNames = (context: MediaDevices, enabled = true) =>
   useEffect(() => {
-    context.startUsingDeviceNames();
-    return context.stopUsingDeviceNames;
-  }, [context]);
+    if (enabled) {
+      context.startUsingDeviceNames();
+      return context.stopUsingDeviceNames;
+    }
+  }, [context, enabled]);

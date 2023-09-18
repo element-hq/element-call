@@ -19,7 +19,6 @@ import { useHistory, useLocation } from "react-router-dom";
 
 import { useClientLegacy } from "./ClientContext";
 import { useProfile } from "./profile/useProfile";
-import { useModalTriggerState } from "./Modal";
 import { SettingsModal } from "./settings/SettingsModal";
 import { UserMenu } from "./UserMenu";
 
@@ -32,7 +31,11 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
   const history = useHistory();
   const { client, logout, authenticated, passwordlessUser } = useClientLegacy();
   const { displayName, avatarUrl } = useProfile(client);
-  const { modalState, modalProps } = useModalTriggerState();
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const onDismissSettingsModal = useCallback(
+    () => setSettingsModalOpen(false),
+    [setSettingsModalOpen]
+  );
 
   const [defaultSettingsTab, setDefaultSettingsTab] = useState<string>();
 
@@ -41,11 +44,11 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
       switch (value) {
         case "user":
           setDefaultSettingsTab("profile");
-          modalState.open();
+          setSettingsModalOpen(true);
           break;
         case "settings":
           setDefaultSettingsTab("audio");
-          modalState.open();
+          setSettingsModalOpen(true);
           break;
         case "logout":
           logout?.();
@@ -55,7 +58,7 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
           break;
       }
     },
-    [history, location, logout, modalState]
+    [history, location, logout, setSettingsModalOpen]
   );
 
   const userName = client?.getUserIdLocalpart() ?? "";
@@ -70,11 +73,12 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
         userId={client?.getUserId() ?? ""}
         displayName={displayName || (userName ? userName.replace("@", "") : "")}
       />
-      {modalState.isOpen && client && (
+      {client && (
         <SettingsModal
           client={client}
           defaultTab={defaultSettingsTab}
-          {...modalProps}
+          open={settingsModalOpen}
+          onDismiss={onDismissSettingsModal}
         />
       )}
     </>

@@ -51,11 +51,11 @@ import {
 } from "../livekit/MediaDevicesContext";
 
 interface Props {
-  isOpen: boolean;
+  open: boolean;
+  onDismiss: () => void;
   client: MatrixClient;
   roomId?: string;
   defaultTab?: string;
-  onClose: () => void;
 }
 
 export const SettingsModal = (props: Props) => {
@@ -119,7 +119,7 @@ export const SettingsModal = (props: Props) => {
   );
 
   const devices = useMediaDevices();
-  useMediaDeviceNames(devices);
+  useMediaDeviceNames(devices, props.open);
 
   const audioTab = (
     <TabItem
@@ -289,10 +289,9 @@ export const SettingsModal = (props: Props) => {
   return (
     <Modal
       title={t("Settings")}
-      isDismissable
-      mobileFullScreen
       className={styles.settingsModal}
-      {...props}
+      open={props.open}
+      onDismiss={props.onDismiss}
     >
       <TabContainer
         onSelectionChange={onSelectedTabChanged}

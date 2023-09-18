@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,123 +14,128 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-/* eslint-disable jsx-a11y/no-autofocus */
-
-import { useRef, useMemo, ReactNode } from "react";
-import {
-  useOverlay,
-  usePreventScroll,
-  useModal,
-  OverlayContainer,
-  OverlayProps,
-} from "@react-aria/overlays";
-import {
-  OverlayTriggerState,
-  useOverlayTriggerState,
-} from "@react-stately/overlays";
-import { useDialog } from "@react-aria/dialog";
-import { FocusScope } from "@react-aria/focus";
-import { useButton } from "@react-aria/button";
-import classNames from "classnames";
+import { ReactNode, useCallback } from "react";
 import { AriaDialogProps } from "@react-types/dialog";
 import { useTranslation } from "react-i18next";
+import {
+  Root as DialogRoot,
+  Portal as DialogPortal,
+  Overlay as DialogOverlay,
+  Content as DialogContent,
+  Title as DialogTitle,
+  Close as DialogClose,
+} from "@radix-ui/react-dialog";
+import { Drawer } from "vaul";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { ReactComponent as CloseIcon } from "@vector-im/compound-design-tokens/icons/close.svg";
+import classNames from "classnames";
+import { Heading } from "@vector-im/compound-web";
 
-import { ReactComponent as CloseIcon } from "./icons/Close.svg";
-import styles from "./Modal.module.css";
+import styles from "./NewModal.module.css";
+import { useMediaQuery } from "./useMediaQuery";
+import { Glass } from "./Glass";
 
-export interface ModalProps extends OverlayProps, AriaDialogProps {
+// TODO: Support tabs
+export interface ModalProps extends AriaDialogProps {
   title: string;
   children: ReactNode;
   className?: string;
-  mobileFullScreen?: boolean;
-  onClose: () => void;
+  /**
+   * The controlled open state of the modal.
+   */
+  // An option to leave the open state uncontrolled is intentionally not
+  // provided, since modals are always opened due to external triggers, and it
+  // is the author's belief that controlled components lead to more obvious code.
+  open: boolean;
+  /**
+   * Callback for when the user dismisses the modal. If undefined, the modal
+   * will be non-dismissable.
+   */
+  onDismiss?: () => void;
 }
 
+/**
+ * A modal, taking the form of a drawer / bottom sheet on touchscreen devices,
+ * and a dialog box on desktop.
+ */
 export function Modal({
   title,
   children,
   className,
-  mobileFullScreen,
-  onClose,
+  open,
+  onDismiss,
   ...rest
 }: ModalProps) {
   const { t } = useTranslation();
-  const modalRef = useRef(null);
-  const { overlayProps, underlayProps } = useOverlay(
-    { ...rest, onClose },
-    modalRef
-  );
-  usePreventScroll();
-  const { modalProps } = useModal();
-  const { dialogProps, titleProps } = useDialog(rest, modalRef);
-  const closeButtonRef = useRef(null);
-  const { buttonProps: closeButtonProps } = useButton(
-    {
-      onPress: () => onClose(),
+  const touchscreen = useMediaQuery("(hover: none)");
+  const onOpenChange = useCallback(
+    (open: boolean) => {
+      if (!open) onDismiss?.();
     },
-    closeButtonRef
+    [onDismiss]
   );
 
-  return (
-    <OverlayContainer>
-      <div className={styles.modalOverlay} {...underlayProps}>
-        <FocusScope contain restoreFocus autoFocus>
-          <div
-            {...overlayProps}
-            {...dialogProps}
-            {...modalProps}
-            ref={modalRef}
-            className={classNames(
-              styles.modal,
-              { [styles.mobileFullScreen]: mobileFullScreen },
-              className
-            )}
+  if (touchscreen) {
+    return (
+      <Drawer.Root
+        open={open}
+        onOpenChange={onOpenChange}
+        dismissible={onDismiss !== undefined}
+      >
+        <Drawer.Portal>
+          <Drawer.Overlay className={styles.overlay} />
+          <Drawer.Content
+            className={classNames(className, styles.modal, styles.drawer)}
+            {...rest}
           >
-            <div className={styles.modalHeader}>
-              <h3 {...titleProps}>{title}</h3>
-              <button
-                {...closeButtonProps}
-                ref={closeButtonRef}
-                className={styles.closeButton}
-                data-testid="modal_close"
-                title={t("Close")}
-              >
-                <CloseIcon />
-              </button>
+            <div className={styles.content}>
+              <div className={styles.header}>
+                <div className={styles.handle} />
+                <VisuallyHidden asChild>
+                  <Drawer.Title>{title}</Drawer.Title>
+                </VisuallyHidden>
+              </div>
+              <div className={styles.body}>{children}</div>
             </div>
-            {children}
-          </div>
-        </FocusScope>
-      </div>
-    </OverlayContainer>
-  );
-}
-
-interface ModalContentProps {
-  children: ReactNode;
-  className?: string;
-}
-
-export function ModalContent({
-  children,
-  className,
-  ...rest
-}: ModalContentProps) {
-  return (
-    <div className={classNames(styles.content, className)} {...rest}>
-      {children}
-    </div>
-  );
-}
-
-export function useModalTriggerState(): {
-  modalState: OverlayTriggerState;
-  modalProps: { isOpen: boolean; onClose: () => void };
-} {
-  const modalState = useOverlayTriggerState({});
-  const modalProps = useMemo(
-    () => ({ isOpen: modalState.isOpen, onClose: modalState.close }),
-    [modalState]
-  );
-  return { modalState, modalProps };
+          </Drawer.Content>
+        </Drawer.Portal>
+      </Drawer.Root>
+    );
+  } else {
+    return (
+      <DialogRoot open={open} onOpenChange={onOpenChange}>
+        <DialogPortal>
+          <DialogOverlay
+            className={classNames(styles.overlay, styles.dialogOverlay)}
+          />
+          <DialogContent asChild {...rest}>
+            <Glass
+              frosted
+              className={classNames(className, styles.modal, styles.dialog)}
+            >
+              <div className={styles.content}>
+                <div className={styles.header}>
+                  <DialogTitle asChild>
+                    <Heading as="h2" weight="semibold" size="md">
+                      {title}
+                    </Heading>
+                  </DialogTitle>
+                  {onDismiss !== undefined && (
+                    <DialogClose
+                      className={styles.close}
+                      data-testid="modal_close"
+                      aria-label={t("Close")}
+                    >
+                      <CloseIcon width={20} height={20} />
+                    </DialogClose>
+                  )}
+                </div>
+                <div className={styles.body}>{children}</div>
+              </div>
+            </Glass>
+          </DialogContent>
+        </DialogPortal>
+      </DialogRoot>
+    );
+  }
 }
