@@ -148,15 +148,15 @@ export const UnauthenticatedView: FC = () => {
 
   return (
     <>
-      <Header>
-        <LeftNav>
-          <HeaderLogo />
-        </LeftNav>
-        <RightNav hideMobile>
-          <UserMenuContainer />
-        </RightNav>
-      </Header>
       <div className={commonStyles.container}>
+        <Header>
+          <LeftNav>
+            <HeaderLogo />
+          </LeftNav>
+          <RightNav hideMobile>
+            <UserMenuContainer />
+          </RightNav>
+        </Header>
         <main className={commonStyles.main}>
           <HeaderLogo className={commonStyles.logo} />
           <Heading size="lg" weight="semibold">
