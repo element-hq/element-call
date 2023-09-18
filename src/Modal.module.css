@@ -195,6 +195,10 @@ body[data-platform="ios"] .drawer {
   grid-area: close;
 }
 
+.body {
+  flex-grow: 1;
+}
+
 .dialog .body {
   padding-inline: var(--cpd-space-10x);
   padding-block: var(--cpd-space-10x) var(--cpd-space-12x);
