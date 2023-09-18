@@ -1,9 +1,7 @@
 {
   "Loading…": "Завантаження…",
   "Yes, join call": "Так, приєднатися до виклику",
-  "Walkie-talkie call": "Виклик-рація",
   "Waiting for other participants…": "Очікування на інших учасників…",
-  "Video call": "Відеовиклик",
   "Video": "Відео",
   "Version: {{version}}": "Версія: {{version}}",
   "Username": "Ім'я користувача",
@@ -108,11 +106,20 @@
   "Not encrypted": "Не зашифровано",
   "Share": "Поділитися",
   "Sharing screen": "Презентація екрана",
-  "Video on": "Відео ввімкнено",
   "{{count, number}}|one": "{{count, number}}",
   "End call": "Завершити виклик",
   "Grid": "Сітка",
   "Microphone off": "Мікрофон вимкнено",
   "Share this call": "Поділитися цим викликом",
-  "You": "Ви"
+  "You": "Ви",
+  "Mute microphone": "Вимкнути мікрофон",
+  "Open in the app": "Відкрити у застосунку",
+  "Ready to join?": "Готові приєднатися?",
+  "Select app": "Вибрати застосунок",
+  "Start video": "Розпочати відео",
+  "Stop video": "Зупинити відео",
+  "Unmute microphone": "Увімкнути мікрофон",
+  "Continue in browser": "Продовжити у браузері",
+  "Name of call": "Назва виклику",
+  "Start new call": "Розпочати новий виклик"
 }
