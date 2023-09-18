@@ -15,7 +15,8 @@ limitations under the License.
 */
 
 import { mocked } from "jest-mock";
-import { getUrlParams } from "../src/UrlParams";
+
+import { getRoomIdentifierFromUrl } from "../src/UrlParams";
 import { Config } from "../src/config/Config";
 
 const ROOM_NAME = "roomNameHere";
@@ -32,27 +33,28 @@ describe("UrlParams", () => {
 
   describe("handles URL with /room/", () => {
     it("and nothing else", () => {
-      expect(getUrlParams(false, "", `/room/${ROOM_NAME}`, "").roomAlias).toBe(
-        `#${ROOM_NAME}:${HOMESERVER}`
-      );
+      expect(
+        getRoomIdentifierFromUrl(`/room/${ROOM_NAME}`, "", "").roomAlias
+      ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
 
     it("and #", () => {
       expect(
-        getUrlParams(false, "", `${ORIGIN}/room/`, `#${ROOM_NAME}`).roomAlias
+        getRoomIdentifierFromUrl("", `${ORIGIN}/room/`, `#${ROOM_NAME}`)
+          .roomAlias
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
 
     it("and # and server part", () => {
       expect(
-        getUrlParams(false, "", `/room/`, `#${ROOM_NAME}:${HOMESERVER}`)
+        getRoomIdentifierFromUrl("", `/room/`, `#${ROOM_NAME}:${HOMESERVER}`)
           .roomAlias
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
 
     it("and server part", () => {
       expect(
-        getUrlParams(false, "", `/room/${ROOM_NAME}:${HOMESERVER}`, "")
+        getRoomIdentifierFromUrl(`/room/${ROOM_NAME}:${HOMESERVER}`, "", "")
           .roomAlias
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
@@ -60,39 +62,44 @@ describe("UrlParams", () => {
 
   describe("handles URL without /room/", () => {
     it("and nothing else", () => {
-      expect(getUrlParams(false, "", `/${ROOM_NAME}`, "").roomAlias).toBe(
+      expect(getRoomIdentifierFromUrl(`/${ROOM_NAME}`, "", "").roomAlias).toBe(
         `#${ROOM_NAME}:${HOMESERVER}`
       );
     });
 
     it("and with #", () => {
-      expect(getUrlParams(false, "", "", `#${ROOM_NAME}`).roomAlias).toBe(
+      expect(getRoomIdentifierFromUrl("", "", `#${ROOM_NAME}`).roomAlias).toBe(
         `#${ROOM_NAME}:${HOMESERVER}`
       );
     });
 
     it("and with # and server part", () => {
       expect(
-        getUrlParams(false, "", "", `#${ROOM_NAME}:${HOMESERVER}`).roomAlias
+        getRoomIdentifierFromUrl("", "", `#${ROOM_NAME}:${HOMESERVER}`)
+          .roomAlias
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
 
     it("and with server part", () => {
       expect(
-        getUrlParams(false, "", `/${ROOM_NAME}:${HOMESERVER}`, "").roomAlias
+        getRoomIdentifierFromUrl(`/${ROOM_NAME}:${HOMESERVER}`, "", "")
+          .roomAlias
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
   });
 
   describe("handles search params", () => {
     it("(roomId)", () => {
-      expect(getUrlParams(true, `?roomId=${ROOM_ID}`).roomId).toBe(ROOM_ID);
+      expect(
+        getRoomIdentifierFromUrl("", `?roomId=${ROOM_ID}`, "").roomId
+      ).toBe(ROOM_ID);
     });
   });
 
   it("ignores room alias", () => {
     expect(
-      getUrlParams(true, "", `/room/${ROOM_NAME}:${HOMESERVER}`).roomAlias
+      getRoomIdentifierFromUrl("", `/room/${ROOM_NAME}:${HOMESERVER}`, "")
+        .roomAlias
     ).toBeFalsy();
   });
 });
