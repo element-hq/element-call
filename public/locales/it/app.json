@@ -1,7 +1,7 @@
 {
   "{{count, number}}|one": "{{count, number}}",
   "{{count, number}}|other": "{{count, number}}",
-  "{{count}} stars|one": "{{count}} stella",
+  "{{count}} stars|one": "{{count}} stelle",
   "{{count}} stars|other": "{{count}} stelle",
   "{{displayName}} is presenting": "{{displayName}} sta presentando",
   "{{names, list(style: short;)}}": "{{names, list(style: short;)}}",
@@ -118,5 +118,6 @@
   "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.": "Un altro utente in questa chiamata sta avendo problemi. Per diagnosticare meglio questi problemi, vorremmo raccogliere un registro di debug.",
   "End-to-end encryption isn't supported on your browser.": "La crittografia end-to-end non è supportata nel tuo browser.",
   "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>": "Cliccando \"Entra in chiamata ora\", accetti il nostro <2>accordo di licenza con l'utente finale (EULA)</2>",
-  "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.": "Partecipando a questa beta, acconsenti alla raccolta di dati anonimi che usiamo per migliorare il prodotto. Puoi trovare più informazioni su quali dati monitoriamo nella nostra <2>informativa sulla privacy</2> e nell'<5>informativa sui cookie</5>."
+  "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.": "Partecipando a questa beta, acconsenti alla raccolta di dati anonimi che usiamo per migliorare il prodotto. Puoi trovare più informazioni su quali dati monitoriamo nella nostra <2>informativa sulla privacy</2> e nell'<5>informativa sui cookie</5>.",
+  "You": "Tu"
 }

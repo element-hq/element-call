@@ -118,5 +118,6 @@
   "Video off": "Vidéo éteinte",
   "Video on": "Vidéo allumée",
   "{{count, number}}|one": "{{count, number}}",
-  "Not encrypted": "Non chiffré"
+  "Not encrypted": "Non chiffré",
+  "You": "Vous"
 }
