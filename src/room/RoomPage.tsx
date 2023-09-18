@@ -35,7 +35,6 @@ export const RoomPage: FC = () => {
     isEmbedded,
     preload,
     hideHeader,
-    isPtt,
     displayName,
   } = useUrlParams();
   const roomIdOrAlias = roomId ?? roomAlias;
@@ -107,7 +106,6 @@ export const RoomPage: FC = () => {
       client={client}
       roomIdOrAlias={roomIdOrAlias}
       viaServers={viaServers}
-      createPtt={isPtt}
     >
       {groupCallView}
     </GroupCallLoader>

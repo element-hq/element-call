@@ -34,10 +34,7 @@ export function HomePage() {
     return <ErrorView error={clientState.error} />;
   } else {
     return clientState.authenticated ? (
-      <RegisteredView
-        isPasswordlessUser={clientState.authenticated.isPasswordlessUser}
-        client={clientState.authenticated.client}
-      />
+      <RegisteredView client={clientState.authenticated.client} />
     ) : (
       <UnauthenticatedView />
     );
