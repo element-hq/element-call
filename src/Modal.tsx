@@ -31,7 +31,7 @@ import { ReactComponent as CloseIcon } from "@vector-im/compound-design-tokens/i
 import classNames from "classnames";
 import { Heading } from "@vector-im/compound-web";
 
-import styles from "./Modal.module.css";
+import styles from "./NewModal.module.css";
 import { useMediaQuery } from "./useMediaQuery";
 import { Glass } from "./Glass";
 
@@ -45,7 +45,7 @@ export interface ModalProps extends AriaDialogProps {
    */
   // An option to leave the open state uncontrolled is intentionally not
   // provided, since modals are always opened due to external triggers, and it
-  // is the author's belief that controlled components lead to more obvious code
+  // is the author's belief that controlled components lead to more obvious code.
   open: boolean;
   /**
    * Callback for when the user dismisses the modal. If undefined, the modal
