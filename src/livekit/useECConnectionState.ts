@@ -59,7 +59,7 @@ async function doConnect(
   const hasMicrophoneTrack = Array.from(
     livekitRoom?.localParticipant.audioTracks.values()
   ).some((track: LocalTrackPublication) => {
-    return track.options?.source == Track.Source.Microphone;
+    return track.source == Track.Source.Microphone;
   });
   // We create a track in case there isn't any.
   if (!hasMicrophoneTrack) {
