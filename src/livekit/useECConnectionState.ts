@@ -56,13 +56,13 @@ async function doConnect(
   audioOptions: AudioCaptureOptions
 ): Promise<void> {
   await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt);
-  const hasMicrofonTrack = Array.from(
+  const hasMicrophoneTrack = Array.from(
     livekitRoom?.localParticipant.audioTracks.values()
   ).some((track: LocalTrackPublication) => {
     return track.options?.source == Track.Source.Microphone;
   });
   // We create a track in case there isn't any.
-  if (!hasMicrofonTrack) {
+  if (!hasMicrophoneTrack) {
     const audioTracks = await livekitRoom!.localParticipant.createTracks({
       audio: audioOptions,
     });
