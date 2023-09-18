@@ -1,10 +1,7 @@
 {
-  "Your recent calls": "最近通话",
   "Yes, join call": "是，加入通话",
-  "Walkie-talkie call name": "对讲机通话名称",
   "Walkie-talkie call": "对讲机通话",
   "Waiting for other participants…": "等待其他参与者……",
-  "Video call name": "视频通话名称",
   "Video call": "视频通话",
   "Video": "视频",
   "Version: {{version}}": "版本：{{version}}",
@@ -71,7 +68,6 @@
   "Confirm password": "确认密码",
   "Close": "关闭",
   "Camera": "摄像头",
-  "Call type menu": "通话类型菜单",
   "Call link copied": "链接已复制",
   "Avatar": "头像",
   "<0>Oops, something's gone wrong.</0>": "<0>哎哟，出问题了。</0>",

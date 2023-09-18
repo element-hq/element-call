@@ -6,7 +6,6 @@
   "Audio": "Звук",
   "Avatar": "Аватар",
   "Call link copied": "Връзка към разговора бе копирана",
-  "Call type menu": "Меню \"тип на разговора\"",
   "Camera": "Камера",
   "Close": "Затвори",
   "Confirm password": "Потвърди паролата",
@@ -63,11 +62,8 @@
   "Username": "Потребителско име",
   "Version: {{version}}": "Версия: {{version}}",
   "Video": "Видео",
-  "Video call": "Видео разговор",
   "Video call name": "Име на видео разговора",
   "Waiting for other participants…": "Изчакване на други участници…",
-  "Walkie-talkie call": "Уоки-токи разговор",
   "Walkie-talkie call name": "Име на уоки-токи разговора",
-  "Yes, join call": "Да, присъедини се",
-  "Your recent calls": "Скорошните ви разговори"
+  "Yes, join call": "Да, присъедини се"
 }
