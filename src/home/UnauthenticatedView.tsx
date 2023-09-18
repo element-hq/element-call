@@ -18,6 +18,7 @@ import { FC, useCallback, useState, FormEventHandler } from "react";
 import { useHistory } from "react-router-dom";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { Trans, useTranslation } from "react-i18next";
+import { Heading } from "@vector-im/compound-web";
 
 import { useClient } from "../ClientContext";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
@@ -34,7 +35,6 @@ import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { useRecaptcha } from "../auth/useRecaptcha";
 import { Body, Caption, Link } from "../typography/Typography";
 import { Form } from "../form/Form";
-import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
 import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
@@ -47,7 +47,6 @@ import { setLocalStorageItem } from "../useLocalStorage";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
-  const [callType, setCallType] = useState(CallType.Video);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
@@ -72,7 +71,6 @@ export const UnauthenticatedView: FC = () => {
       const data = new FormData(e.target as HTMLFormElement);
       const roomName = sanitiseRoomNameInput(data.get("callName") as string);
       const displayName = data.get("displayName") as string;
-      const ptt = callType === CallType.Radio;
 
       async function submit() {
         setError(undefined);
@@ -90,7 +88,7 @@ export const UnauthenticatedView: FC = () => {
         let roomId: string;
         try {
           roomId = (
-            await createRoom(client, roomName, ptt, e2eeEnabled ?? false)
+            await createRoom(client, roomName, e2eeEnabled ?? false)
           )[1];
 
           if (e2eeEnabled) {
@@ -142,17 +140,11 @@ export const UnauthenticatedView: FC = () => {
       reset,
       execute,
       history,
-      callType,
       setJoinExistingCallModalOpen,
       setClient,
       e2eeEnabled,
     ]
   );
-
-  const callNameLabel =
-    callType === CallType.Video
-      ? t("Video call name")
-      : t("Walkie-talkie call name");
 
   return (
     <>
@@ -167,14 +159,16 @@ export const UnauthenticatedView: FC = () => {
       <div className={commonStyles.container}>
         <main className={commonStyles.main}>
           <HeaderLogo className={commonStyles.logo} />
-          <CallTypeDropdown callType={callType} setCallType={setCallType} />
+          <Heading size="lg" weight="semibold">
+            {t("Start new call")}
+          </Heading>
           <Form className={styles.form} onSubmit={onSubmit}>
             <FieldRow>
               <InputField
                 id="callName"
                 name="callName"
-                label={callNameLabel}
-                placeholder={callNameLabel}
+                label={t("Name of call")}
+                placeholder={t("Name of call")}
                 type="text"
                 required
                 autoComplete="off"
