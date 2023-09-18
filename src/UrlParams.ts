@@ -44,10 +44,6 @@ interface UrlParams {
    */
   hideScreensharing: boolean;
   /**
-   * Whether to start a walkie-talkie call instead of a video call.
-   */
-  isPtt: boolean;
-  /**
    * Whether to use end-to-end encryption.
    */
   e2eEnabled: boolean;
@@ -195,7 +191,6 @@ export const getUrlParams = (
     preload: hasParam("preload"),
     hideHeader: hasParam("hideHeader"),
     hideScreensharing: hasParam("hideScreensharing"),
-    isPtt: hasParam("ptt"),
     e2eEnabled: getParam("enableE2e") !== "false", // Defaults to true
     userId: getParam("userId"),
     displayName: getParam("displayName"),
