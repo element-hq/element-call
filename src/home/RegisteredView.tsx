@@ -19,6 +19,7 @@ import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
+import { Heading } from "@vector-im/compound-web";
 
 import {
   createRoom,
@@ -35,9 +36,8 @@ import { CallList } from "./CallList";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
-import { Caption, Title } from "../typography/Typography";
+import { Caption } from "../typography/Typography";
 import { Form } from "../form/Form";
-import { CallType, CallTypeDropdown } from "./CallTypeDropdown";
 import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { E2EEBanner } from "../E2EEBanner";
@@ -46,11 +46,9 @@ import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
 
 interface Props {
   client: MatrixClient;
-  isPasswordlessUser: boolean;
 }
 
-export function RegisteredView({ client, isPasswordlessUser }: Props) {
-  const [callType, setCallType] = useState(CallType.Video);
+export function RegisteredView({ client }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
@@ -68,14 +66,13 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
         typeof roomNameData === "string"
           ? sanitiseRoomNameInput(roomNameData)
           : "";
-      const ptt = callType === CallType.Radio;
 
       async function submit() {
         setError(undefined);
         setLoading(true);
 
         const roomId = (
-          await createRoom(client, roomName, ptt, e2eeEnabled ?? false)
+          await createRoom(client, roomName, e2eeEnabled ?? false)
         )[1];
 
         if (e2eeEnabled) {
@@ -101,7 +98,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
         }
       });
     },
-    [client, history, modalState, callType, e2eeEnabled]
+    [client, history, modalState, e2eeEnabled]
   );
 
   const recentRooms = useGroupCallRooms(client);
@@ -110,11 +107,6 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
   const onJoinExistingRoom = useCallback(() => {
     history.push(`/${existingAlias}`);
   }, [history, existingAlias]);
-
-  const callNameLabel =
-    callType === CallType.Video
-      ? t("Video call name")
-      : t("Walkie-talkie call name");
 
   return (
     <>
@@ -129,14 +121,16 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
       <div className={commonStyles.container}>
         <main className={commonStyles.main}>
           <HeaderLogo className={commonStyles.logo} />
-          <CallTypeDropdown callType={callType} setCallType={setCallType} />
+          <Heading size="lg" weight="semibold">
+            {t("Start new call")}
+          </Heading>
           <Form className={styles.form} onSubmit={onSubmit}>
             <FieldRow className={styles.fieldRow}>
               <InputField
                 id="callName"
                 name="callName"
-                label={callNameLabel}
-                placeholder={callNameLabel}
+                label={t("Name of call")}
+                placeholder={t("Name of call")}
                 type="text"
                 required
                 autoComplete="off"
@@ -166,12 +160,7 @@ export function RegisteredView({ client, isPasswordlessUser }: Props) {
             )}
           </Form>
           {recentRooms.length > 0 && (
-            <>
-              <Title className={styles.recentCallsTitle}>
-                {t("Your recent calls")}
-              </Title>
-              <CallList rooms={recentRooms} client={client} />
-            </>
+            <CallList rooms={recentRooms} client={client} />
           )}
         </main>
       </div>

@@ -272,7 +272,6 @@ export function isLocalRoomId(roomId: string, client: MatrixClient): boolean {
 export async function createRoom(
   client: MatrixClient,
   name: string,
-  ptt: boolean,
   e2ee: boolean
 ): Promise<[string, string]> {
   logger.log(`Creating room for group call`);
@@ -327,14 +326,12 @@ export async function createRoom(
 
   const result = await createPromise;
 
-  logger.log(
-    `Creating ${ptt ? "PTT" : "video"} group call in ${result.room_id}`
-  );
+  logger.log(`Creating group call in ${result.room_id}`);
 
   await client.createGroupCall(
     result.room_id,
-    ptt ? GroupCallType.Voice : GroupCallType.Video,
-    ptt,
+    GroupCallType.Video,
+    false,
     GroupCallIntent.Room,
     true
   );
