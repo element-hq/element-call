@@ -31,7 +31,6 @@ import {
   sanitiseRoomNameInput,
 } from "../matrix-utils";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
-import { useModalTriggerState } from "../Modal";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { useRecaptcha } from "../auth/useRecaptcha";
 import { Body, Caption, Link } from "../typography/Typography";
@@ -54,7 +53,12 @@ export const UnauthenticatedView: FC = () => {
   const { recaptchaKey, register } = useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
-  const { modalState, modalProps } = useModalTriggerState();
+  const [joinExistingCallModalOpen, setJoinExistingCallModalOpen] =
+    useState(false);
+  const onDismissJoinExistingCallModal = useCallback(
+    () => setJoinExistingCallModalOpen(false),
+    [setJoinExistingCallModalOpen]
+  );
   const [onFinished, setOnFinished] = useState<() => void>();
   const history = useHistory();
   const { t } = useTranslation();
@@ -108,7 +112,7 @@ export const UnauthenticatedView: FC = () => {
             });
 
             setLoading(false);
-            modalState.open();
+            setJoinExistingCallModalOpen(true);
             return;
           } else {
             throw error;
@@ -131,7 +135,15 @@ export const UnauthenticatedView: FC = () => {
         reset();
       });
     },
-    [register, reset, execute, history, modalState, setClient, e2eeEnabled]
+    [
+      register,
+      reset,
+      execute,
+      history,
+      setJoinExistingCallModalOpen,
+      setClient,
+      e2eeEnabled,
+    ]
   );
 
   return (
@@ -221,8 +233,12 @@ export const UnauthenticatedView: FC = () => {
           </Body>
         </footer>
       </div>
-      {modalState.isOpen && onFinished && (
-        <JoinExistingCallModal onJoin={onFinished} {...modalProps} />
+      {onFinished && (
+        <JoinExistingCallModal
+          onJoin={onFinished}
+          open={joinExistingCallModalOpen}
+          onDismiss={onDismissJoinExistingCallModal}
+        />
       )}
     </>
   );
