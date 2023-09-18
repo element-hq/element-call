@@ -21,7 +21,7 @@ limitations under the License.
   min-height: 100%;
   height: 100%;
   width: 100%;
-  --footerPadding: 8px;
+  --footerPadding: var(--cpd-space-4x);
   --footerHeight: calc(50px + 2 * var(--footerPadding));
 }
 
@@ -83,17 +83,19 @@ limitations under the License.
   justify-self: end;
 }
 
-@media (min-height: 300px) {
+@media (min-height: 400px) {
   .inRoom {
-    --footerPadding: 40px;
+    --footerPadding: var(--cpd-space-10x);
+  }
+}
+
+@media (min-height: 800px) {
+  .inRoom {
+    --footerPadding: var(--cpd-space-15x);
   }
 }
 
 @media (min-width: 800px) {
-  .inRoom {
-    --footerPadding: 60px;
-  }
-
   .buttons {
     gap: var(--cpd-space-4x);
   }
