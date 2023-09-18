@@ -22,7 +22,7 @@ import { ErrorView, LoadingView } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
 import { GroupCallLoader } from "./GroupCallLoader";
 import { GroupCallView } from "./GroupCallView";
-import { useUrlParams } from "../UrlParams";
+import { useRoomIdentifier, useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { useOptInAnalytics } from "../settings/useSetting";
 import { HomePage } from "../home/HomePage";
@@ -30,15 +30,10 @@ import { platform } from "../Platform";
 import { AppSelectionModal } from "./AppSelectionModal";
 
 export const RoomPage: FC = () => {
-  const {
-    roomAlias,
-    roomId,
-    viaServers,
-    isEmbedded,
-    preload,
-    hideHeader,
-    displayName,
-  } = useUrlParams();
+  const { isEmbedded, preload, hideHeader, displayName } = useUrlParams();
+
+  const { roomAlias, roomId, viaServers } = useRoomIdentifier();
+
   const roomIdOrAlias = roomId ?? roomAlias;
   if (!roomIdOrAlias) {
     console.error("No room specified");
