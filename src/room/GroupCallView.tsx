@@ -17,7 +17,6 @@ limitations under the License.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
-import { useTranslation } from "react-i18next";
 import { Room } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
@@ -25,7 +24,7 @@ import { JoinRule, RoomMember } from "matrix-js-sdk/src/matrix";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { widget, ElementWidgetActions, JoinCallData } from "../widget";
-import { ErrorView, FullScreenView } from "../FullScreenView";
+import { ErrorView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { MatrixInfo } from "./VideoPreview";
 import { CallEndedView } from "./CallEndedView";
@@ -76,8 +75,6 @@ export function GroupCallView({
 
   const e2eeSharedKey = useManageRoomSharedKey(rtcSession.room.roomId);
   const isRoomE2EE = useIsRoomE2EE(rtcSession.room.roomId);
-
-  const { t } = useTranslation();
 
   useEffect(() => {
     window.rtcSession = rtcSession;
@@ -206,17 +203,6 @@ export function GroupCallView({
       };
     }
   }, [rtcSession, preload]);
-
-  useEffect(() => {
-    if (isEmbedded && !preload) {
-      // In embedded mode, bypass the lobby and just enter the call straight away
-      enterRTCSession(rtcSession);
-
-      PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
-      // use the room ID as above
-      PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
-    }
-  }, [rtcSession, isEmbedded, preload]);
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
@@ -368,12 +354,6 @@ export function GroupCallView({
     }
   } else if (preload) {
     return null;
-  } else if (isEmbedded) {
-    return (
-      <FullScreenView>
-        <h1>{t("Loading…")}</h1>
-      </FullScreenView>
-    );
   } else {
     return (
       <>
