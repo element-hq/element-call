@@ -4615,9 +4615,9 @@
   integrity sha512-Mnq3O9Xz52exs3mlxMcQuA7/9VFe/dXcrgAyfjLkABIqxXKOgBRjyazTxUbjsxDa4BP7hhPliyjVTP9RDP14xg==
 
 "@types/node@^18.13.0":
-  version "18.13.0"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.13.0.tgz#0400d1e6ce87e9d3032c19eb6c58205b0d3f7850"
-  integrity sha512-gC3TazRzGoOnoKAhUx+Q0t8S9Tzs74z7m0ipwGpSqQrleP14hKxP4/JUeEQcD3W1/aIpnWl8pHowI7WokuZpXg==
+  version "18.17.17"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.17.17.tgz#53cc07ce582c9d7c5850702a3c2cb0af0d7b0ca1"
+  integrity sha512-cOxcXsQ2sxiwkykdJqvyFS+MLQPLvIdwh5l6gNg8qF6s+C7XSkEWOZjK+XhUZd+mYvHV/180g2cnCcIl4l06Pw==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.1"
@@ -4650,9 +4650,9 @@
   integrity sha512-JCB8C6SnDoQf0cNycqd/35A7MjcnK+ZTqE7judS6o7utxUCg6imJg3QK2qzHKszlTjcj2cn+NwMB2i96ubpj7w==
 
 "@types/q@^1.5.1":
-  version "1.5.5"
-  resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.5.tgz#75a2a8e7d8ab4b230414505d92335d1dcb53a6df"
-  integrity sha512-L28j2FcJfSZOnL1WBjDYp2vUHCeIFlyYI/53EwD/rKUBQ7MtUUfbQWiyKJGpcnv4/WgrhWsFKrcPstcAt/J0tQ==
+  version "1.5.6"
+  resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.6.tgz#a6edffe8283910e46dc7a573621f928e6b47fa56"
+  integrity sha512-IKjZ8RjTSwD4/YG+2gtj7BPFRB/lNbWKTiSj3M7U/TD2B7HfYCxvp2Zz6xA2WIY7pAuL1QOUPw8gQRbUrrq4fQ==
 
 "@types/qs@^6.9.5":
   version "6.9.8"
@@ -4660,9 +4660,9 @@
   integrity sha512-u95svzDlTysU5xecFNTgfFG5RUWu1A9P0VzgpcIiGZA9iraHOdSzcxMxQ55DyeRaGCSxQi7LxXDI4rzq/MYfdg==
 
 "@types/react-dom@^18.0.0":
-  version "18.0.7"
-  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-18.0.7.tgz#ee7cf8ec4e6977e3f0a7b1d38bd89c75aa2aec28"
-  integrity sha512-HaXc+BbqAZE1RdsK3tC8SbkFy6UL2xF76lT9rQs5JkPrJg3rWA3Ou/Lhw3YJQzEDkBpmJ79nBsfnd05WrBd2QQ==
+  version "18.2.7"
+  resolved "https://registry.yarnpkg.com/@types/react-dom/-/react-dom-18.2.7.tgz#67222a08c0a6ae0a0da33c3532348277c70abb63"
+  integrity sha512-GRaAEriuT4zp9N4p1i8BDBYmEyfo+xQ3yHjJU4eiK5NDa1RmUZG+unZABUTK4/Ox/M+GaHwb6Ow8rUITrtjszA==
   dependencies:
     "@types/react" "*"
 
