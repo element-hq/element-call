@@ -16,21 +16,7 @@ limitations under the License.
 
 import { useEffect } from "react";
 
-// https://stackoverflow.com/a/9039885
-function isIOS() {
-  return (
-    [
-      "iPad Simulator",
-      "iPhone Simulator",
-      "iPod Simulator",
-      "iPad",
-      "iPhone",
-      "iPod",
-    ].includes(navigator.platform) ||
-    // iPad on iOS 13 detection
-    (navigator.userAgent.includes("Mac") && "ontouchend" in document)
-  );
-}
+import { platform } from "../Platform";
 
 export function usePageUnload(callback: () => void) {
   useEffect(() => {
@@ -53,7 +39,7 @@ export function usePageUnload(callback: () => void) {
     }
 
     // iOS doesn't fire beforeunload event, so leave the call when you hide the page.
-    if (isIOS()) {
+    if (platform === "ios") {
       window.addEventListener("pagehide", onBeforeUnload);
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
