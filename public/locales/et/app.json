@@ -20,7 +20,6 @@
   "Confirm password": "Kinnita salasõna",
   "Close": "Sulge",
   "Camera": "Kaamera",
-  "Call type menu": "Kõnetüübi valik",
   "Call link copied": "Kõne link on kopeeritud",
   "Avatar": "Tunnuspilt",
   "Audio": "Heli",
@@ -30,7 +29,6 @@
   "Not registered yet? <2>Create an account</2>": "Sa pole veel registreerunud? <2>Loo kasutajakonto</2>",
   "Not now, return to home screen": "Mitte praegu, mine tagasi avalehele",
   "No": "Ei",
-  "Your recent calls": "Hiljutised kõned",
   "More": "Rohkem",
   "Microphone": "Mikrofon",
   "Login to your account": "Logi oma kontosse sisse",
@@ -62,7 +60,6 @@
   "Recaptcha dismissed": "Robotilõks on vahele jäetud",
   "Profile": "Profiil",
   "Waiting for other participants…": "Ootame teiste osalejate lisandumist…",
-  "Video call name": "Videokõne nimi",
   "Video call": "Videokõne",
   "Video": "Video",
   "Version: {{version}}": "Versioon: {{version}}",
@@ -70,7 +67,6 @@
   "This call already exists, would you like to join?": "See kõne on juba olemas, kas soovid liituda?",
   "User menu": "Kasutajamenüü",
   "Yes, join call": "Jah, liitu kõnega",
-  "Walkie-talkie call": "Walkie-talkie stiilis kõne",
   "Walkie-talkie call name": "Walkie-talkie stiilis kõne nimi",
   "Element Call Home": "Element Call Home",
   "Copy": "Kopeeri",
@@ -114,9 +110,7 @@
   "Share": "Jaga",
   "Share this call": "Jaga seda kõnet",
   "Sharing screen": "Ekraanivaade on jagamisel",
-  "Video on": "Video on kasutusel",
   "{{count, number}}|one": "{{count, number}}",
   "{{count, number}}|other": "{{count, number}}",
-  "{{names, list(style: short;)}}": "{{names, list(style: short;)}}",
-  "Video off": "Video ei ole kasutusel"
+  "{{names, list(style: short;)}}": "{{names, list(style: short;)}}"
 }
