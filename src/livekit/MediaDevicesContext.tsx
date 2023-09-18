@@ -33,6 +33,8 @@ import {
   useVideoInput,
 } from "../settings/useSetting";
 
+import { logger } from "matrix-js-sdk/src/logger";
+
 export interface MediaDevice {
   available: MediaDeviceInfo[];
   selectedId: string | undefined;
@@ -200,8 +202,20 @@ export const useMediaDevices = () => useContext(MediaDevicesContext);
  * default because it may involve requesting additional permissions from the
  * user.
  */
-export const useMediaDeviceNames = (context: MediaDevices) =>
+export const useMediaDeviceNames = (context: MediaDevices, isOpen: boolean) =>
   useEffect(() => {
-    context.startUsingDeviceNames();
+    navigator.mediaDevices.enumerateDevices().then((devices) => {
+      const devicesHaveIds = devices.every((d) => d.deviceId.length > 0);
+      if (devicesHaveIds) {
+        // If all the devices have an id permissions we know that the permissions have been granted.
+        // We only start using the device names then. Otherwise additional tracks would be created.
+        // Those additional tracks result in audio/echo issue because multiple tracks are allowed in LK.
+        context.startUsingDeviceNames();
+      } else {
+        logger.warn(
+          "device names were requested but permissions are not yet granted."
+        );
+      }
+    });
     return context.stopUsingDeviceNames;
-  }, [context]);
+  }, [context, isOpen]);

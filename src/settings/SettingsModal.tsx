@@ -44,7 +44,11 @@ import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 import { useUrlParams } from "../UrlParams";
-import { useMediaDevices, MediaDevice } from "../livekit/MediaDevicesContext";
+import {
+  useMediaDevices,
+  MediaDevice,
+  useMediaDeviceNames,
+} from "../livekit/MediaDevicesContext";
 
 interface Props {
   isOpen: boolean;
@@ -115,11 +119,10 @@ export const SettingsModal = (props: Props) => {
   );
 
   const devices = useMediaDevices();
-  // We skip useMediaDeviceNames, since it will create a track in the background
-  // and might be the source for echo cancellation issues on firefox.
-  // TODO this should be put behind a condition.
-  // we should only call useMediaDeviceNames if enumerateDevices fails.
-  // useMediaDeviceNames(devices);
+  // we pass isOpen so that the hook is calling enumerate devices whenever we open the settings.
+  // It would be desirable if this hook would get updated as soon as the permissions are granted
+  // Is there a state storing an approval of the device permissions triggered by the livekit room/lobby?
+  useMediaDeviceNames(devices, props.isOpen);
 
   const audioTab = (
     <TabItem
