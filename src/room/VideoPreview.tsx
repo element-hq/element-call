@@ -14,10 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useEffect, useCallback, useMemo, useRef, FC } from "react";
+import { useEffect, useCallback, useMemo, useRef, FC, useState } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
-import { OverlayTriggerState } from "@react-stately/overlays";
 import { usePreviewTracks } from "@livekit/components-react";
 import {
   CreateLocalTracksOptions,
@@ -28,7 +27,6 @@ import {
 import { MicButton, SettingsButton, VideoButton } from "../button";
 import { Avatar } from "../Avatar";
 import styles from "./VideoPreview.module.css";
-import { useModalTriggerState } from "../Modal";
 import { SettingsModal } from "../settings/SettingsModal";
 import { useClient } from "../ClientContext";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
@@ -54,20 +52,16 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
   const { client } = useClient();
   const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
 
-  const {
-    modalState: settingsModalState,
-    modalProps: settingsModalProps,
-  }: {
-    modalState: OverlayTriggerState;
-    modalProps: {
-      isOpen: boolean;
-      onClose: () => void;
-    };
-  } = useModalTriggerState();
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
-  const openSettings = useCallback(() => {
-    settingsModalState.open();
-  }, [settingsModalState]);
+  const openSettings = useCallback(
+    () => setSettingsModalOpen(true),
+    [setSettingsModalOpen]
+  );
+  const closeSettings = useCallback(
+    () => setSettingsModalOpen(false),
+    [setSettingsModalOpen]
+  );
 
   const devices = useMediaDevices();
 
@@ -153,8 +147,12 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
           <SettingsButton onPress={openSettings} />
         </div>
       </>
-      {settingsModalState.isOpen && client && (
-        <SettingsModal client={client} {...settingsModalProps} />
+      {client && (
+        <SettingsModal
+          client={client}
+          open={settingsModalOpen}
+          onDismiss={closeSettings}
+        />
       )}
     </div>
   );
