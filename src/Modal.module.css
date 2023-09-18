@@ -124,9 +124,10 @@ limitations under the License.
   inset-block-end: 0;
   inset-inline: max(0px, calc((100% - 520px) / 2));
   max-block-size: 90%;
-  border-start-start-radius: 20px;
-  border-start-end-radius: 20px;
-  /* Drawer handle comes in the Android style by default */
+  border-start-start-radius: var(--border-radius);
+  border-start-end-radius: var(--border-radius);
+  /* Drawer comes in the Android style by default */
+  --border-radius: 28px;
   --handle-block-size: 4px;
   --handle-inline-size: 32px;
   --handle-inset-block-start: var(--cpd-space-4x);
@@ -134,6 +135,7 @@ limitations under the License.
 }
 
 body[data-platform="ios"] .drawer {
+  --border-radius: 10px;
   --handle-block-size: 5px;
   --handle-inline-size: 36px;
   --handle-inset-block-start: var(--cpd-space-1-5x);
