@@ -14,61 +14,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.room {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  min-height: 100%;
-}
-
-.joinRoom {
+.content {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  gap: var(--cpd-space-6x);
   flex: 1;
   overflow: hidden;
   height: 100%;
+  padding-block-end: var(--footerHeight);
 }
 
-.joinRoomContent {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
+@media (max-width: 500px) {
+  .join {
+    width: 100%;
+  }
 }
 
-.joinRoomFooter {
-  margin: 20px 0;
-}
-
-.homeLink {
-  margin-top: 50px;
-}
-
-.joinCallButton {
-  position: absolute;
-  width: 100%;
-  max-width: 222px;
-  height: 40px;
-  bottom: 86px;
-  left: 50%;
-  font-weight: 600;
-  font-size: var(--font-size-body);
-  transform: translateX(-50%);
-}
-
-.copyButton {
-  width: 320px !important;
-  margin-bottom: 15px;
-}
-
-.copyButton:last-child {
-  margin-bottom: 0;
-}
-
-.passwordField {
-  width: 320px !important;
-  margin-bottom: 20px;
-  flex: 0;
+@media (min-height: 650px) {
+  .content {
+    gap: var(--cpd-space-10x);
+  }
 }
