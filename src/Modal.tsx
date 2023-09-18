@@ -31,7 +31,7 @@ import { ReactComponent as CloseIcon } from "@vector-im/compound-design-tokens/i
 import classNames from "classnames";
 import { Heading } from "@vector-im/compound-web";
 
-import styles from "./NewModal.module.css";
+import styles from "./Modal.module.css";
 import { useMediaQuery } from "./useMediaQuery";
 import { Glass } from "./Glass";
 
