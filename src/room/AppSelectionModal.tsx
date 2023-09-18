@@ -55,7 +55,7 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
     // room in question, and it prevents this app selection prompt from being
     // shown a second time.
     url.hash = editFragmentQuery(url.hash, (params) => {
-      params.set("isEmbedded", "");
+      params.set("embed", "");
       return params;
     });
 
