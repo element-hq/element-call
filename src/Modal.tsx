@@ -67,7 +67,7 @@ export function Modal({
   ...rest
 }: ModalProps) {
   const { t } = useTranslation();
-  const touchscreen = useMediaQuery("(hover: none)");
+  const touchscreen = useMediaQuery("(hover: none) or (pointer: coarse)");
   const onOpenChange = useCallback(
     (open: boolean) => {
       if (!open) onDismiss?.();
