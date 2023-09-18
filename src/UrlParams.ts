@@ -55,10 +55,6 @@ interface UrlParams {
    */
   hideScreensharing: boolean;
   /**
-   * Whether to start a walkie-talkie call instead of a video call.
-   */
-  isPtt: boolean;
-  /**
    * Whether to use end-to-end encryption.
    */
   e2eEnabled: boolean;
@@ -103,6 +99,22 @@ interface UrlParams {
    * E2EE password
    */
   password: string | null;
+}
+
+export function editFragmentQuery(
+  hash: string,
+  edit: (params: URLSearchParams) => URLSearchParams
+): string {
+  const fragmentQueryStart = hash.indexOf("?");
+  const fragmentParams = edit(
+    new URLSearchParams(
+      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart)
+    )
+  );
+  return `${hash.substring(
+    0,
+    fragmentQueryStart
+  )}?${fragmentParams.toString()}`;
 }
 
 class ParamParser {
@@ -161,7 +173,6 @@ export const getUrlParams = (
     preload: parser.hasParam("preload"),
     hideHeader: parser.hasParam("hideHeader"),
     hideScreensharing: parser.hasParam("hideScreensharing"),
-    isPtt: parser.hasParam("ptt"),
     e2eEnabled: parser.getParam("enableE2e") !== "false", // Defaults to true
     userId: parser.getParam("userId"),
     displayName: parser.getParam("displayName"),

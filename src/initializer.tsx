@@ -24,6 +24,7 @@ import * as Sentry from "@sentry/react";
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { ElementCallOpenTelemetry } from "./otel/otel";
+import { platform } from "./Platform";
 
 enum LoadState {
   None,
@@ -107,6 +108,9 @@ export class Initializer {
         fonts.map((f) => `"${f}"`).join(", ")
       );
     }
+
+    // Add the platform to the DOM, so CSS can query it
+    document.body.setAttribute("data-platform", platform);
   }
 
   public static init(): Promise<void> | null {

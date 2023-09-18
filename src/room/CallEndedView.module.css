@@ -17,7 +17,8 @@ limitations under the License.
 .headline {
   text-align: center;
   margin-bottom: 60px;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
 }
 
 .callEndedContent {
@@ -66,6 +67,7 @@ limitations under the License.
   flex: 1;
   flex-direction: column;
   align-items: center;
+  padding-inline: var(--inline-content-inset);
 }
 
 .logo {

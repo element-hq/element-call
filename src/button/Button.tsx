@@ -145,11 +145,11 @@ export function MicButton({
 }) {
   const { t } = useTranslation();
   const Icon = muted ? MicOffSolidIcon : MicOnSolidIcon;
-  const label = muted ? t("Microphone off") : t("Microphone on");
+  const label = muted ? t("Unmute microphone") : t("Mute microphone");
 
   return (
     <Tooltip label={label}>
-      <Button variant="toolbar" {...rest} on={!muted}>
+      <Button variant="toolbar" {...rest} on={muted}>
         <Icon aria-label={label} />
       </Button>
     </Tooltip>
@@ -166,11 +166,11 @@ export function VideoButton({
 }) {
   const { t } = useTranslation();
   const Icon = muted ? VideoCallOffIcon : VideoCallIcon;
-  const label = muted ? t("Video off") : t("Video on");
+  const label = muted ? t("Start video") : t("Stop video");
 
   return (
     <Tooltip label={label}>
-      <Button variant="toolbar" {...rest} on={!muted}>
+      <Button variant="toolbar" {...rest} on={muted}>
         <Icon aria-label={label} />
       </Button>
     </Tooltip>
