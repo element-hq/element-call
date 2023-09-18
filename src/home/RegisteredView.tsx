@@ -114,15 +114,15 @@ export function RegisteredView({ client }: Props) {
 
   return (
     <>
-      <Header>
-        <LeftNav>
-          <HeaderLogo />
-        </LeftNav>
-        <RightNav>
-          <UserMenuContainer />
-        </RightNav>
-      </Header>
       <div className={commonStyles.container}>
+        <Header>
+          <LeftNav>
+            <HeaderLogo />
+          </LeftNav>
+          <RightNav>
+            <UserMenuContainer />
+          </RightNav>
+        </Header>
         <main className={commonStyles.main}>
           <HeaderLogo className={commonStyles.logo} />
           <Heading size="lg" weight="semibold">
