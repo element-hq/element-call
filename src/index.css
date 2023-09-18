@@ -150,7 +150,9 @@ body {
 html,
 body,
 #root {
-  height: 100%;
+  /* We use !important here to override vaul drawers, which have a side effect
+  of setting height: auto; on the body element and messing up our layouts */
+  height: 100% !important;
 }
 
 #root {

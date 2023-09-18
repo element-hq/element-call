@@ -29,6 +29,8 @@
     "@opentelemetry/instrumentation-document-load": "^0.33.0",
     "@opentelemetry/instrumentation-user-interaction": "^0.33.0",
     "@opentelemetry/sdk-trace-web": "^1.9.1",
+    "@radix-ui/react-dialog": "^1.0.4",
+    "@radix-ui/react-visually-hidden": "^1.0.3",
     "@react-aria/button": "^3.3.4",
     "@react-aria/dialog": "^3.1.4",
     "@react-aria/focus": "^3.5.0",
@@ -52,7 +54,6 @@
     "@vitejs/plugin-basic-ssl": "^1.0.1",
     "@vitejs/plugin-react": "^4.0.1",
     "classnames": "^2.3.1",
-    "color-hash": "^2.0.1",
     "events": "^3.3.0",
     "i18next": "^21.10.0",
     "i18next-browser-languagedetector": "^6.1.8",
@@ -77,7 +78,8 @@
     "sdp-transform": "^2.14.1",
     "tinyqueue": "^2.0.3",
     "unique-names-generator": "^4.6.0",
-    "uuid": "9"
+    "uuid": "9",
+    "vaul": "^0.6.1"
   },
   "devDependencies": {
     "@babel/core": "^7.16.5",
