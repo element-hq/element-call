@@ -6,12 +6,9 @@
   "Developer Settings": "開發者設定",
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>送出除錯紀錄，可幫助我們修正問題。</0>",
   "<0>Oops, something's gone wrong.</0>": "<0>喔喔，有些地方怪怪的。</0>",
-  "Your recent calls": "您最近的通話",
   "Yes, join call": "是，加入對話",
-  "Walkie-talkie call name": "對講機式通話名稱",
   "Walkie-talkie call": "即時通話",
   "Waiting for other participants…": "等待其他參加者…",
-  "Video call name": "視訊通話姓名",
   "Video call": "視訊通話",
   "Video": "視訊",
   "Version: {{version}}": "版本： {{version}}",
@@ -72,7 +69,6 @@
   "Confirm password": "確認密碼",
   "Close": "關閉",
   "Camera": "相機",
-  "Call type menu": "通話類型選單",
   "Call link copied": "已複製通話連結",
   "Avatar": "大頭照",
   "Audio": "語音",
@@ -117,7 +113,6 @@
   "Share": "分享",
   "Share this call": "分享此通話",
   "Sharing screen": "分享畫面",
-  "Video off": "視訊關閉",
   "Video on": "視訊開啟",
   "You": "您"
 }

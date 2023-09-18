@@ -1,12 +1,9 @@
 {
   "Login": "Zaloguj się",
   "Go": "Przejdź",
-  "Your recent calls": "Twoje ostatnie połączenia",
   "Yes, join call": "Tak, dołącz do połączenia",
-  "Walkie-talkie call name": "Nazwa połączenia walkie-talkie",
   "Walkie-talkie call": "Połączenie walkie-talkie",
   "Waiting for other participants…": "Oczekiwanie na pozostałych uczestników…",
-  "Video call name": "Nazwa połączenia wideo",
   "Video call": "Połączenie wideo",
   "Video": "Wideo",
   "Version: {{version}}": "Wersja: {{version}}",
@@ -63,7 +60,6 @@
   "Confirm password": "Potwierdź hasło",
   "Close": "Zamknij",
   "Camera": "Kamera",
-  "Call type menu": "Menu typu połączenia",
   "Call link copied": "Skopiowano link do połączenia",
   "Avatar": "Awatar",
   "Audio": "Dźwięk",
@@ -115,8 +111,6 @@
   "Share": "Udostępnij",
   "Share this call": "Udostępnij to połączenie",
   "Sharing screen": "Udostępnianie ekranu",
-  "Video off": "Wideo wyłączone",
   "{{count, number}}|one": "{{count, number}}",
-  "{{names, list(style: short;)}}": "{{names, list(style: short;)}}",
-  "Video on": "Wideo włączone"
+  "{{names, list(style: short;)}}": "{{names, list(style: short;)}}"
 }
