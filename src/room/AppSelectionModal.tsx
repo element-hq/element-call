@@ -19,7 +19,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Text } from "@vector-im/compound-web";
 import { ReactComponent as PopOutIcon } from "@vector-im/compound-design-tokens/icons/pop-out.svg";
 
-import { Modal } from "../NewModal";
+import { Modal } from "../Modal";
 import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 import { getRoomUrl } from "../matrix-utils";
 import styles from "./AppSelectionModal.module.css";

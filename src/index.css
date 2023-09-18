@@ -160,7 +160,9 @@ body,
   flex-direction: column;
 }
 
-/* On Android and iOS, prefer native system fonts */
+/* On Android and iOS, prefer native system fonts. The global.css file of
+Compound Web is where these variables ultimately get consumed to set the page's
+font-family. */
 body[data-platform="android"] {
   --cpd-font-family-sans: "Roboto", "Noto", "Inter", sans-serif;
 }

@@ -14,20 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useContext, useEffect, useState } from "react";
+import {
+  ComponentProps,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import pako from "pako";
 import { MatrixEvent } from "matrix-js-sdk/src/models/event";
-import { OverlayTriggerState } from "@react-stately/overlays";
 import { ClientEvent } from "matrix-js-sdk/src/client";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
 import { InspectorContext } from "../room/GroupCallInspector";
-import { useModalTriggerState } from "../Modal";
 import { Config } from "../config/Config";
 import { ElementCallOpenTelemetry } from "../otel/otel";
+import { RageshakeRequestModal } from "../room/RageshakeRequestModal";
 
 const gzip = (text: string): Blob => {
   // encode as UTF-8
@@ -343,22 +348,12 @@ export function useRageshakeRequest(): (
 
   return sendRageshakeRequest;
 }
-interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-interface ModalPropsWithId extends ModalProps {
-  rageshakeRequestId: string;
-}
 
-export function useRageshakeRequestModal(roomId: string): {
-  modalState: OverlayTriggerState;
-  modalProps: ModalPropsWithId;
-} {
-  const { modalState, modalProps } = useModalTriggerState() as {
-    modalState: OverlayTriggerState;
-    modalProps: ModalProps;
-  };
+export function useRageshakeRequestModal(
+  roomId: string
+): ComponentProps<typeof RageshakeRequestModal> {
+  const [open, setOpen] = useState(false);
+  const onDismiss = useCallback(() => setOpen(false), [setOpen]);
   const { client } = useClient();
   const [rageshakeRequestId, setRageshakeRequestId] = useState<string>();
 
@@ -374,7 +369,7 @@ export function useRageshakeRequestModal(roomId: string): {
         client.getUserId() !== event.getSender()
       ) {
         setRageshakeRequestId(event.getContent().request_id);
-        modalState.open();
+        setOpen(true);
       }
     };
 
@@ -383,10 +378,12 @@ export function useRageshakeRequestModal(roomId: string): {
     return () => {
       client.removeListener(ClientEvent.Event, onEvent);
     };
-  }, [modalState.open, roomId, client, modalState]);
+  }, [setOpen, roomId, client]);
 
   return {
-    modalState,
-    modalProps: { ...modalProps, rageshakeRequestId: rageshakeRequestId ?? "" },
+    rageshakeRequestId: rageshakeRequestId ?? "",
+    roomId,
+    open,
+    onDismiss,
   };
 }
