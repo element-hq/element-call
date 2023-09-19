@@ -177,19 +177,20 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         {toolbarButtons.length > 0 && (!maximised || fullscreen) && (
           <div className={classNames(styles.toolbar)}>{toolbarButtons}</div>
         )}
-        {content === TileContent.UserMedia && !sfuParticipant.isCameraEnabled && (
-          <>
-            <div className={styles.videoMutedOverlay} />
-            <Avatar
-              key={member?.userId}
-              id={member?.userId ?? displayName}
-              name={displayName}
-              size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
-              src={member?.getMxcAvatarUrl()}
-              className={styles.avatar}
-            />
-          </>
-        )}
+        {content === TileContent.UserMedia &&
+          !sfuParticipant.isCameraEnabled && (
+            <>
+              <div className={styles.videoMutedOverlay} />
+              <Avatar
+                key={member?.userId}
+                id={member?.userId ?? displayName}
+                name={displayName}
+                size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
+                src={member?.getMxcAvatarUrl()}
+                className={styles.avatar}
+              />
+            </>
+          )}
         {content === TileContent.ScreenShare ? (
           <div className={styles.presenterLabel}>
             <span>{t("{{displayName}} is presenting", { displayName })}</span>
