@@ -125,7 +125,7 @@ interface Props {
 export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   // Counts the number of callers currently using device names
   const [numCallersUsingNames, setNumCallersUsingNames] = useState(0);
-  const usingNames = numCallersUsingNames > 0 && !isFireFox();
+  const usingNames = numCallersUsingNames > 0;
 
   // Use output device names for output devices on all platforms except FF.
   const useOutputNames = usingNames && !isFireFox();
