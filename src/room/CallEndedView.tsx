@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { FormEventHandler, useCallback, useState } from "react";
+import { FC, FormEventHandler, useCallback, useState } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { Trans, useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
@@ -30,19 +30,23 @@ import { FieldRow, InputField } from "../input/Input";
 import { StarRatingInput } from "../input/StarRatingInput";
 import { RageshakeButton } from "../settings/RageshakeButton";
 
-export function CallEndedView({
-  client,
-  isPasswordlessUser,
-  endedCallId,
-  leaveError,
-  reconnect,
-}: {
+interface Props {
   client: MatrixClient;
   isPasswordlessUser: boolean;
+  confineToRoom: boolean;
   endedCallId: string;
   leaveError?: Error;
   reconnect: () => void;
-}) {
+}
+
+export const CallEndedView: FC<Props> = ({
+  client,
+  isPasswordlessUser,
+  confineToRoom,
+  endedCallId,
+  leaveError,
+  reconnect,
+}) => {
   const { t } = useTranslation();
   const history = useHistory();
 
@@ -72,14 +76,14 @@ export function CallEndedView({
           if (isPasswordlessUser) {
             // setting this renders the callEndedView with the invitation to create an account
             setSurverySubmitted(true);
-          } else {
+          } else if (!confineToRoom) {
             // if the user already has an account immediately go back to the home screen
             history.push("/");
           }
         }, 1000);
       }, 1000);
     },
-    [endedCallId, history, isPasswordlessUser, starRating]
+    [endedCallId, history, isPasswordlessUser, confineToRoom, starRating]
   );
 
   const createAccountDialog = isPasswordlessUser && (
@@ -161,11 +165,13 @@ export function CallEndedView({
               </div>
             </div>
           </main>
-          <Body className={styles.footer}>
-            <Link color="primary" to="/">
-              {t("Return to home screen")}
-            </Link>
-          </Body>
+          {!confineToRoom && (
+            <Body className={styles.footer}>
+              <Link color="primary" to="/">
+                {t("Return to home screen")}
+              </Link>
+            </Body>
+          )}
         </>
       );
     } else {
@@ -183,15 +189,18 @@ export function CallEndedView({
                   "\n" +
                   t("How did it go?")}
             </Headline>
-            {!surveySubmitted && PosthogAnalytics.instance.isEnabled()
+            {(!surveySubmitted || confineToRoom) &&
+            PosthogAnalytics.instance.isEnabled()
               ? qualitySurveyDialog
               : createAccountDialog}
           </main>
-          <Body className={styles.footer}>
-            <Link color="primary" to="/">
-              {t("Not now, return to home screen")}
-            </Link>
-          </Body>
+          {!confineToRoom && (
+            <Body className={styles.footer}>
+              <Link color="primary" to="/">
+                {t("Not now, return to home screen")}
+              </Link>
+            </Body>
+          )}
         </>
       );
     }
@@ -200,12 +209,10 @@ export function CallEndedView({
   return (
     <>
       <Header>
-        <LeftNav>
-          <HeaderLogo />
-        </LeftNav>
+        <LeftNav>{!confineToRoom && <HeaderLogo />}</LeftNav>
         <RightNav />
       </Header>
       <div className={styles.container}>{renderBody()}</div>
     </>
   );
-}
+};

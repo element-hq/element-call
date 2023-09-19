@@ -56,7 +56,7 @@ declare global {
 interface Props {
   client: MatrixClient;
   isPasswordlessUser: boolean;
-  isEmbedded: boolean;
+  confineToRoom: boolean;
   preload: boolean;
   hideHeader: boolean;
   rtcSession: MatrixRTCSession;
@@ -65,7 +65,7 @@ interface Props {
 export function GroupCallView({
   client,
   isPasswordlessUser,
-  isEmbedded,
+  confineToRoom,
   preload,
   hideHeader,
   rtcSession,
@@ -233,13 +233,13 @@ export function GroupCallView({
 
       if (
         !isPasswordlessUser &&
-        !isEmbedded &&
+        !confineToRoom &&
         !PosthogAnalytics.instance.isEnabled()
       ) {
         history.push("/");
       }
     },
-    [rtcSession, isPasswordlessUser, isEmbedded, history]
+    [rtcSession, isPasswordlessUser, confineToRoom, history]
   );
 
   useEffect(() => {
@@ -334,7 +334,7 @@ export function GroupCallView({
     // submitting anything.
     if (
       isPasswordlessUser ||
-      (PosthogAnalytics.instance.isEnabled() && !isEmbedded) ||
+      (PosthogAnalytics.instance.isEnabled() && widget === null) ||
       leaveError
     ) {
       return (
@@ -342,6 +342,7 @@ export function GroupCallView({
           endedCallId={rtcSession.room.roomId}
           client={client}
           isPasswordlessUser={isPasswordlessUser}
+          confineToRoom={confineToRoom}
           leaveError={leaveError}
           reconnect={onReconnect}
         />
@@ -363,7 +364,7 @@ export function GroupCallView({
           matrixInfo={matrixInfo}
           muteStates={muteStates}
           onEnter={() => enterRTCSession(rtcSession)}
-          isEmbedded={isEmbedded}
+          confineToRoom={confineToRoom}
           hideHeader={hideHeader}
           participatingMembers={participatingMembers}
           onShareClick={onShareClick}

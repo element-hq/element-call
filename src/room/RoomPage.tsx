@@ -30,7 +30,8 @@ import { platform } from "../Platform";
 import { AppSelectionModal } from "./AppSelectionModal";
 
 export const RoomPage: FC = () => {
-  const { isEmbedded, preload, hideHeader, displayName } = useUrlParams();
+  const { confineToRoom, appPrompt, preload, hideHeader, displayName } =
+    useUrlParams();
 
   const { roomAlias, roomId, viaServers } = useRoomIdentifier();
 
@@ -74,12 +75,12 @@ export const RoomPage: FC = () => {
         client={client!}
         rtcSession={rtcSession}
         isPasswordlessUser={passwordlessUser}
-        isEmbedded={isEmbedded}
+        confineToRoom={confineToRoom}
         preload={preload}
         hideHeader={hideHeader}
       />
     ),
-    [client, passwordlessUser, isEmbedded, preload, hideHeader]
+    [client, passwordlessUser, confineToRoom, preload, hideHeader]
   );
 
   let content: ReactNode;
@@ -107,9 +108,8 @@ export const RoomPage: FC = () => {
   return (
     <>
       {content}
-      {/* On mobile, show a prompt to launch the mobile app. If in embedded mode,
-    that means we *are* in the mobile app and should show no further prompt. */}
-      {(platform === "android" || platform === "ios") && !isEmbedded && (
+      {/* On Android and iOS, show a prompt to launch the mobile app. */}
+      {appPrompt && (platform === "android" || platform === "ios") && (
         <AppSelectionModal roomId={roomId} />
       )}
     </>
