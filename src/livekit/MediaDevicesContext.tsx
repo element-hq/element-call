@@ -127,7 +127,7 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   const [numCallersUsingNames, setNumCallersUsingNames] = useState(0);
   const usingNames = numCallersUsingNames > 0;
 
-  // Setting the audio device to sthomething other than 'undefined' breaks echo-cancellation
+  // Setting the audio device to something other than 'undefined' breaks echo-cancellation
   // and even can introduce multiple different output devices for one call.
   const alwaysUseDefaultAudio = isFirefox();
 

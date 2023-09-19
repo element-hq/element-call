@@ -42,7 +42,7 @@ interface Props {
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
   onEnter: () => void;
-  isEmbedded: boolean;
+  confineToRoom: boolean;
   hideHeader: boolean;
   participatingMembers: RoomMember[];
   onShareClick: (() => void) | null;
@@ -53,7 +53,7 @@ export const LobbyView: FC<Props> = ({
   matrixInfo,
   muteStates,
   onEnter,
-  isEmbedded,
+  confineToRoom,
   hideHeader,
   participatingMembers,
   onShareClick,
@@ -85,7 +85,7 @@ export const LobbyView: FC<Props> = ({
   const onLeaveClick = useCallback(() => history.push("/"), [history]);
 
   const recentsButtonInFooter = useMediaQuery("(max-height: 500px)");
-  const recentsButton = !isEmbedded && (
+  const recentsButton = !confineToRoom && (
     <Link className={styles.recents} href="#" onClick={onLeaveClick}>
       {t("Back to recents")}
     </Link>
@@ -140,7 +140,7 @@ export const LobbyView: FC<Props> = ({
               disabled={muteStates.audio.setEnabled === null}
             />
             <SettingsButton onPress={openSettings} />
-            {!isEmbedded && <HangupButton onPress={onLeaveClick} />}
+            {!confineToRoom && <HangupButton onPress={onLeaveClick} />}
           </div>
         </div>
       </div>

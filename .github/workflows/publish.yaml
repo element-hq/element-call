@@ -23,7 +23,7 @@ jobs:
         run: echo "unix_time=$(date +'%s')" >> $GITHUB_OUTPUT
 
       - name: Check it out
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Log in to container registry
         uses: docker/login-action@b4bedf8053341df3b5a9f9e0f2cf4e79e27360c6
