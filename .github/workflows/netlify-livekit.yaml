@@ -28,7 +28,7 @@ jobs:
           ref: ${{ github.event.workflow_run.head_sha }}
 
       - name: "Download artifact"
-        uses: actions/github-script@v3.2.0
+        uses: actions/github-script@v6.4.1
         with:
           script: |
             const artifacts = await github.actions.listWorkflowRunArtifacts({
