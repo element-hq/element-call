@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { MatrixError } from "matrix-js-sdk";
 import { useHistory } from "react-router-dom";
-import { Link } from "@vector-im/compound-web";
+import { Heading, Link, Text } from "@vector-im/compound-web";
 
 import { useLoadGroupCall } from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
@@ -42,7 +42,13 @@ export function GroupCallLoader({
   const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);
 
   const history = useHistory();
-  const onHomeClick = useCallback(() => history.push("/"), [history]);
+  const onHomeClick = useCallback(
+    (ev: React.MouseEvent) => {
+      ev.preventDefault();
+      history.push("/");
+    },
+    [history]
+  );
 
   switch (groupCallState.kind) {
     case "loading":
@@ -57,12 +63,12 @@ export function GroupCallLoader({
       if ((groupCallState.error as MatrixError).errcode === "M_NOT_FOUND") {
         return (
           <FullScreenView>
-            <h1>{t("Call not found")}</h1>
-            <p>
+            <Heading>{t("Call not found")}</Heading>
+            <Text>
               {t(
-                "Element Calls are now end-to-end encrypted and need to be explicitly created. This helps make sure everyone's using the same encryption key."
+                "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key."
               )}
-            </p>
+            </Text>
             {/* XXX: A 'create it for me' button would be the obvious UX here. Two screens already have
             dupes of this flow, let's make a common component and put it here. */}
             <Link href="/" onClick={onHomeClick}>
