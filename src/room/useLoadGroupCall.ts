@@ -20,14 +20,10 @@ import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { SyncState } from "matrix-js-sdk/src/sync";
 import { useTranslation } from "react-i18next";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { randomString } from "matrix-js-sdk/src/randomstring";
 
 import type { Room } from "matrix-js-sdk/src/models/room";
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import { setLocalStorageItem } from "../useLocalStorage";
-import { isLocalRoomId, createRoom, roomNameFromRoomId } from "../matrix-utils";
 import { useEnableE2EE } from "../settings/useSetting";
-import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
 
 export type GroupCallLoaded = {
   kind: "loaded";
@@ -65,58 +61,21 @@ export const useLoadGroupCall = (
 
   useEffect(() => {
     const fetchOrCreateRoom = async (): Promise<Room> => {
-      try {
-        // We lowercase the localpart when we create the room, so we must lowercase
-        // it here too (we just do the whole alias). We can't do the same to room IDs
-        // though.
-        const sanitisedIdOrAlias =
-          roomIdOrAlias[0] === "#"
-            ? roomIdOrAlias.toLowerCase()
-            : roomIdOrAlias;
+      // We lowercase the localpart when we create the room, so we must lowercase
+      // it here too (we just do the whole alias). We can't do the same to room IDs
+      // though.
+      const sanitisedIdOrAlias =
+        roomIdOrAlias[0] === "#" ? roomIdOrAlias.toLowerCase() : roomIdOrAlias;
 
-        const room = await client.joinRoom(sanitisedIdOrAlias, {
-          viaServers,
-        });
-        logger.info(
-          `Joined ${sanitisedIdOrAlias}, waiting room to be ready for group calls`
-        );
-        await client.waitUntilRoomReadyForGroupCalls(room.roomId);
-        logger.info(`${sanitisedIdOrAlias}, is ready for group calls`);
-        return room;
-      } catch (error) {
-        if (
-          isLocalRoomId(roomIdOrAlias, client) &&
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-ignore
-          (error.errcode === "M_NOT_FOUND" ||
-            // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-            // @ts-ignore
-            (error.message &&
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              error.message.indexOf("Failed to fetch alias") !== -1))
-        ) {
-          // The room doesn't exist, but we can create it
-          const [, roomId] = await createRoom(
-            client,
-            roomNameFromRoomId(roomIdOrAlias),
-            e2eeEnabled ?? false
-          );
-
-          if (e2eeEnabled) {
-            setLocalStorageItem(
-              getRoomSharedKeyLocalStorageKey(roomId),
-              randomString(32)
-            );
-          }
-
-          // likewise, wait for the room
-          await client.waitUntilRoomReadyForGroupCalls(roomId);
-          return client.getRoom(roomId)!;
-        } else {
-          throw error;
-        }
-      }
+      const room = await client.joinRoom(sanitisedIdOrAlias, {
+        viaServers,
+      });
+      logger.info(
+        `Joined ${sanitisedIdOrAlias}, waiting room to be ready for group calls`
+      );
+      await client.waitUntilRoomReadyForGroupCalls(room.roomId);
+      logger.info(`${sanitisedIdOrAlias}, is ready for group calls`);
+      return room;
     };
 
     const fetchOrCreateGroupCall = async (): Promise<MatrixRTCSession> => {
