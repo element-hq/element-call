@@ -42,7 +42,13 @@ export function GroupCallLoader({
   const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);
 
   const history = useHistory();
-  const onHomeClick = useCallback(() => history.push("/"), [history]);
+  const onHomeClick = useCallback(
+    (ev: Event) => {
+      ev.preventDefault();
+      history.push("/");
+    },
+    [history]
+  );
 
   switch (groupCallState.kind) {
     case "loading":
