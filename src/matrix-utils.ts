@@ -19,7 +19,11 @@ import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
 import { LocalStorageCryptoStore } from "matrix-js-sdk/src/crypto/store/localStorage-crypto-store";
 import { MemoryCryptoStore } from "matrix-js-sdk/src/crypto/store/memory-crypto-store";
-import { createClient, ICreateClientOpts } from "matrix-js-sdk/src/matrix";
+import {
+  createClient,
+  ICreateClientOpts,
+  MatrixError,
+} from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
 import { Visibility, Preset } from "matrix-js-sdk/src/@types/partials";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
@@ -28,11 +32,12 @@ import {
   GroupCallIntent,
   GroupCallType,
 } from "matrix-js-sdk/src/webrtc/groupCall";
+import { randomLowercaseString } from "matrix-js-sdk/src/randomstring";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import IndexedDBWorker from "./IndexedDBWorker?worker";
-import { getUrlParams, PASSWORD_STRING } from "./UrlParams";
+import { getUrlParams, PASSWORD_PARAM } from "./UrlParams";
 import { loadOlm } from "./olm";
 import { Config } from "./config/Config";
 
@@ -208,10 +213,6 @@ export function roomAliasLocalpartFromRoomName(roomName: string): string {
     .toLowerCase();
 }
 
-function fullAliasFromRoomName(roomName: string, client: MatrixClient): string {
-  return `#${roomAliasLocalpartFromRoomName(roomName)}:${client.getDomain()}`;
-}
-
 /**
  * Applies some basic sanitisation to a room name that the user
  * has given us
@@ -269,46 +270,79 @@ export function isLocalRoomId(roomId: string, client: MatrixClient): boolean {
   return parts[1] === client.getDomain();
 }
 
+export interface CreateRoomResult {
+  roomAlias: string;
+  roomId: string;
+}
+
+async function createRoomWrapper(
+  client: MatrixClient,
+  name: string,
+  e2ee: boolean
+): Promise<CreateRoomResult> {
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    try {
+      const aliasLocalpart = e2ee
+        ? randomLowercaseString(16)
+        : roomAliasLocalpartFromRoomName(name);
+
+      const result = await client.createRoom({
+        visibility: Visibility.Private,
+        preset: Preset.PublicChat,
+        name,
+        room_alias_name: aliasLocalpart,
+        power_level_content_override: {
+          invite: 100,
+          kick: 100,
+          ban: 100,
+          redact: 50,
+          state_default: 0,
+          events_default: 0,
+          users_default: 0,
+          events: {
+            "m.room.power_levels": 100,
+            "m.room.history_visibility": 100,
+            "m.room.tombstone": 100,
+            "m.room.encryption": 100,
+            "m.room.name": 50,
+            "m.room.message": 0,
+            "m.room.encrypted": 50,
+            "m.sticker": 50,
+            "org.matrix.msc3401.call.member": 0,
+          },
+          users: {
+            [client.getUserId()!]: 100,
+          },
+        },
+      });
+
+      return {
+        roomAlias: `#${aliasLocalpart}:${client.getDomain()}`,
+        roomId: result.room_id,
+      };
+    } catch (e) {
+      if (e2ee && (e as MatrixError).errcode === "M_ROOM_IN_USE") {
+        logger.info("Alias is taken, trying a different alias");
+        continue;
+      } else {
+        throw e;
+      }
+    }
+  }
+}
+
 export async function createRoom(
   client: MatrixClient,
   name: string,
   e2ee: boolean
-): Promise<[string, string]> {
+): Promise<CreateRoomResult> {
   logger.log(`Creating room for group call`);
-  const createPromise = client.createRoom({
-    visibility: Visibility.Private,
-    preset: Preset.PublicChat,
-    name,
-    room_alias_name: e2ee ? undefined : roomAliasLocalpartFromRoomName(name),
-    power_level_content_override: {
-      invite: 100,
-      kick: 100,
-      ban: 100,
-      redact: 50,
-      state_default: 0,
-      events_default: 0,
-      users_default: 0,
-      events: {
-        "m.room.power_levels": 100,
-        "m.room.history_visibility": 100,
-        "m.room.tombstone": 100,
-        "m.room.encryption": 100,
-        "m.room.name": 50,
-        "m.room.message": 0,
-        "m.room.encrypted": 50,
-        "m.sticker": 50,
-        "org.matrix.msc3401.call.member": 0,
-      },
-      users: {
-        [client.getUserId()!]: 100,
-      },
-    },
-  });
-
+  const createPromise = createRoomWrapper(client, name, e2ee);
   // Wait for the room to arrive
   await new Promise<void>((resolve, reject) => {
     const onRoom = async (room: Room) => {
-      if (room.roomId === (await createPromise).room_id) {
+      if (room.roomId === (await createPromise).roomId) {
         resolve();
         cleanUp();
       }
@@ -326,29 +360,108 @@ export async function createRoom(
 
   const result = await createPromise;
 
-  logger.log(`Creating group call in ${result.room_id}`);
+  logger.log(`Creating group call in ${result.roomId}`);
 
   await client.createGroupCall(
-    result.room_id,
+    result.roomId,
     GroupCallType.Video,
     false,
     GroupCallIntent.Room,
     true
   );
 
-  return [fullAliasFromRoomName(name, client), result.room_id];
+  return result;
 }
 
 /**
- * Returns a URL to that will load Element Call with the given room
- * @param roomId of the room
- * @param password
- * @returns
+ * Returns an absolute URL to that will load Element Call with the given room
+ * @param room The room object
+ * @param password The shared key for the room, or undefined if none
  */
-export function getRoomUrl(roomId: string, password?: string): string {
+export function getAbsoluteRoomUrlForRoom(room: Room, password?: string) {
+  return getAbsoluteRoomUrl(
+    room.roomId,
+    room.name,
+    room.getCanonicalAlias() ?? undefined,
+    password
+  );
+}
+
+export function getAbsoluteRoomUrl(
+  roomId?: string,
+  roomName?: string,
+  roomAlias?: string,
+  password?: string
+): string {
   return `${window.location.protocol}//${
     window.location.host
-  }/room/#?roomId=${roomId}${password ? "&" + PASSWORD_STRING + password : ""}`;
+  }${getRelativeRoomUrl(roomId, roomName, roomAlias, password)}`;
+}
+
+/**
+ * Gets a relative URL to a room (convenience wrapper around getRelativeRoomUrl)
+ * @param room The room object
+ * @param password The shared key for the room, or undefined if none
+ */
+export function getRelativeRoomUrlForRoom(
+  room: Room,
+  password?: string
+): string {
+  return getRelativeRoomUrl(
+    room.roomId,
+    room.name,
+    room.getCanonicalAlias() ?? undefined,
+    password
+  );
+}
+
+/**
+ * Gets a relative URL to a room
+ * @param roomId The room's ID'
+ * @param roomName The room's name, if known, otherwise undefined
+ * @param roomAlias The room alias string to use for the link
+ * @param password The shared key for the room, or undefined if none
+ */
+export function getRelativeRoomUrl(
+  roomId?: string,
+  roomName?: string,
+  roomAlias?: string,
+  password?: string
+): string {
+  let url = "";
+  let queryAdded = false;
+
+  if (roomAlias) {
+    const aliasParts = roomAlias.substring(1).split(":");
+    const aliasBase = aliasParts.shift();
+    const aliasServerPart = aliasParts.join(":");
+
+    const compressedRoomName = roomName
+      ? roomAliasLocalpartFromRoomName(roomName)
+      : undefined;
+
+    url += "/c/";
+
+    if (compressedRoomName !== undefined && compressedRoomName !== aliasBase) {
+      url += compressedRoomName + "/";
+    }
+
+    if (aliasServerPart === Config.defaultServerName()) {
+      url += aliasBase;
+    } else {
+      url += `#?${roomAlias.substring(1)}}`;
+      queryAdded = true;
+    }
+  } else {
+    url += `/c/#?roomId=${roomId}`;
+    queryAdded = true;
+  }
+
+  if (password) {
+    url += `${queryAdded ? "&" : "#?"}${PASSWORD_PARAM}=${password}`;
+  }
+
+  return url;
 }
 
 export function getAvatarUrl(

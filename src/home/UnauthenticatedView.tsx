@@ -26,7 +26,9 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import {
+  CreateRoomResult,
   createRoom,
+  getRelativeRoomUrl,
   roomAliasLocalpartFromRoomName,
   sanitiseRoomNameInput,
 } from "../matrix-utils";
@@ -85,15 +87,17 @@ export const UnauthenticatedView: FC = () => {
           true
         );
 
-        let roomId: string;
+        let createResult: CreateRoomResult;
         try {
-          roomId = (
-            await createRoom(client, roomName, e2eeEnabled ?? false)
-          )[1];
+          createResult = await createRoom(
+            client,
+            roomName,
+            e2eeEnabled ?? false
+          );
 
           if (e2eeEnabled) {
             setLocalStorageItem(
-              getRoomSharedKeyLocalStorageKey(roomId),
+              getRoomSharedKeyLocalStorageKey(createResult.roomId),
               randomString(32)
             );
           }
@@ -125,7 +129,13 @@ export const UnauthenticatedView: FC = () => {
         }
 
         setClient({ client, session });
-        history.push(`/room/#?roomId=${roomId}`);
+        history.push(
+          getRelativeRoomUrl(
+            createResult.roomId,
+            roomName,
+            createResult.roomAlias
+          )
+        );
       }
 
       submit().catch((error) => {

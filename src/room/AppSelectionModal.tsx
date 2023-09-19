@@ -21,15 +21,16 @@ import { ReactComponent as PopOutIcon } from "@vector-im/compound-design-tokens/
 
 import { Modal } from "../Modal";
 import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
-import { getRoomUrl } from "../matrix-utils";
+import { getAbsoluteRoomUrl } from "../matrix-utils";
 import styles from "./AppSelectionModal.module.css";
 import { editFragmentQuery } from "../UrlParams";
 
 interface Props {
-  roomId: string | null;
+  roomId?: string;
+  roomAlias?: string;
 }
 
-export const AppSelectionModal: FC<Props> = ({ roomId }) => {
+export const AppSelectionModal: FC<Props> = ({ roomId, roomAlias }) => {
   const { t } = useTranslation();
 
   const [open, setOpen] = useState(true);
@@ -46,9 +47,12 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
   const appUrl = useMemo(() => {
     // If the room ID is not known, fall back to the URL of the current page
     const url = new URL(
-      roomId === null
-        ? window.location.href
-        : getRoomUrl(roomId, roomSharedKey ?? undefined)
+      getAbsoluteRoomUrl(
+        roomId,
+        undefined,
+        roomAlias,
+        roomSharedKey ?? undefined
+      )
     );
     // Edit the URL so that it opens in embedded mode. We do this for two
     // reasons: It causes the mobile app to limit the user to only visiting the
@@ -62,7 +66,7 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
     const result = new URL("element://call");
     result.searchParams.set("url", url.toString());
     return result.toString();
-  }, [roomId, roomSharedKey]);
+  }, [roomId, roomAlias, roomSharedKey]);
 
   return (
     <Modal className={styles.modal} title={t("Select app")} open={open}>

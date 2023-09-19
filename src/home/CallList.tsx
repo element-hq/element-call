@@ -16,12 +16,15 @@ limitations under the License.
 
 import { Link } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
-import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { Room } from "matrix-js-sdk";
 
 import { CopyButton } from "../button";
 import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
-import { getRoomUrl } from "../matrix-utils";
+import {
+  getAbsoluteRoomUrlForRoom,
+  getRelativeRoomUrlForRoom,
+} from "../matrix-utils";
 import { Body } from "../typography/Typography";
 import { GroupCallRoom } from "./useGroupCallRooms";
 import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
@@ -34,14 +37,14 @@ export function CallList({ rooms, client }: CallListProps) {
   return (
     <>
       <div className={styles.callList}>
-        {rooms.map(({ room, roomAlias, roomName, avatarUrl, participants }) => (
+        {rooms.map(({ room, roomName, avatarUrl }) => (
           <CallTile
-            key={roomAlias}
+            key={room.roomId}
             client={client}
             name={roomName}
             avatarUrl={avatarUrl}
-            roomId={room.roomId}
-            participants={participants}
+            room={room}
+            //participants={participants}
           />
         ))}
         {rooms.length > 3 && (
@@ -57,17 +60,20 @@ export function CallList({ rooms, client }: CallListProps) {
 interface CallTileProps {
   name: string;
   avatarUrl: string;
-  roomId: string;
-  participants: RoomMember[];
+  room: Room;
+  //participants: RoomMember[];
   client: MatrixClient;
 }
-function CallTile({ name, avatarUrl, roomId }: CallTileProps) {
-  const roomSharedKey = useRoomSharedKey(roomId);
+function CallTile({ name, avatarUrl, room }: CallTileProps) {
+  const roomSharedKey = useRoomSharedKey(room.roomId) ?? undefined;
 
   return (
     <div className={styles.callTile}>
-      <Link to={`/room/#?roomId=${roomId}`} className={styles.callTileLink}>
-        <Avatar id={roomId} name={name} size={Size.LG} src={avatarUrl} />
+      <Link
+        to={getRelativeRoomUrlForRoom(room, roomSharedKey)}
+        className={styles.callTileLink}
+      >
+        <Avatar id={room.roomId} name={name} size={Size.LG} src={avatarUrl} />
         <div className={styles.callInfo}>
           <Body overflowEllipsis fontWeight="semiBold">
             {name}
@@ -78,7 +84,7 @@ function CallTile({ name, avatarUrl, roomId }: CallTileProps) {
       <CopyButton
         className={styles.copyButton}
         variant="icon"
-        value={getRoomUrl(roomId, roomSharedKey ?? undefined)}
+        value={getAbsoluteRoomUrlForRoom(room, roomSharedKey)}
       />
     </div>
   );

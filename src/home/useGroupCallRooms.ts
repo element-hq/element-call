@@ -15,19 +15,16 @@ limitations under the License.
 */
 
 import { MatrixClient } from "matrix-js-sdk/src/client";
-import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { Room } from "matrix-js-sdk/src/models/room";
-import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
 import { useState, useEffect } from "react";
 
 export interface GroupCallRoom {
-  roomAlias: string;
+  roomAlias?: string;
   roomName: string;
   avatarUrl: string;
   room: Room;
-  groupCall: GroupCall;
-  participants: RoomMember[];
+  //participants: RoomMember[];
 }
 const tsCache: { [index: string]: number } = {};
 
@@ -87,23 +84,22 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
         return;
       }
 
+      // XXX: This should use client.matrixRTC.getActiveRoomSessions() not the old
+      // group call stuff!
       const groupCalls = client.groupCallEventHandler.groupCalls.values();
       const rooms = Array.from(groupCalls).map((groupCall) => groupCall.room);
       const sortedRooms = sortRooms(client, rooms);
       const items = sortedRooms.map((room) => {
-        const groupCall = client.getGroupCallForRoom(room.roomId)!;
-
         return {
-          roomAlias: room.getCanonicalAlias(),
+          roomAlias: room.getCanonicalAlias() ?? undefined,
           roomName: room.name,
           avatarUrl: room.getMxcAvatarUrl()!,
           room,
-          groupCall,
-          participants: [...groupCall!.participants.keys()],
+          //participants: [...groupCall!.participants.keys()],
         };
       });
 
-      setRooms(items as GroupCallRoom[]);
+      setRooms(items);
     }
 
     updateRooms();

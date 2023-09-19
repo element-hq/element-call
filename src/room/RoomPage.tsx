@@ -110,7 +110,10 @@ export const RoomPage: FC = () => {
       {/* On mobile, show a prompt to launch the mobile app. If in embedded mode,
     that means we *are* in the mobile app and should show no further prompt. */}
       {(platform === "android" || platform === "ios") && !isEmbedded && (
-        <AppSelectionModal roomId={roomId} />
+        <AppSelectionModal
+          roomId={roomId ?? undefined}
+          roomAlias={roomAlias ?? undefined}
+        />
       )}
     </>
   );

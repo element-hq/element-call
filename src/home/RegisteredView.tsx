@@ -23,6 +23,7 @@ import { Heading } from "@vector-im/compound-web";
 
 import {
   createRoom,
+  getRelativeRoomUrl,
   roomAliasLocalpartFromRoomName,
   sanitiseRoomNameInput,
 } from "../matrix-utils";
@@ -75,18 +76,25 @@ export function RegisteredView({ client }: Props) {
         setError(undefined);
         setLoading(true);
 
-        const roomId = (
-          await createRoom(client, roomName, e2eeEnabled ?? false)
-        )[1];
-
+        const createResult = await createRoom(
+          client,
+          roomName,
+          e2eeEnabled ?? false
+        );
         if (e2eeEnabled) {
           setLocalStorageItem(
-            getRoomSharedKeyLocalStorageKey(roomId),
+            getRoomSharedKeyLocalStorageKey(createResult.roomId),
             randomString(32)
           );
         }
 
-        history.push(`/room/#?roomId=${roomId}`);
+        history.push(
+          getRelativeRoomUrl(
+            createResult.roomId,
+            roomName,
+            createResult.roomAlias
+          )
+        );
       }
 
       submit().catch((error) => {

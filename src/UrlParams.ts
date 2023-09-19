@@ -16,10 +16,11 @@ limitations under the License.
 
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { Config } from "./config/Config";
 
-export const PASSWORD_STRING = "password=";
+export const PASSWORD_PARAM = "password";
 
 interface RoomIdentifier {
   roomAlias: string | null;
@@ -134,10 +135,20 @@ class ParamParser {
   // leaking them to the server. However, we also check the normal query
   // string for backwards compatibility with versions that only used that.
   hasParam(name: string): boolean {
+    if (!this.fragmentParams.has(name) && this.queryParams.has(name)) {
+      logger.warn(
+        `Parameter ${name} loaded from query param (not hash). This is unsupported and will soon be removed.`
+      );
+    }
     return this.fragmentParams.has(name) || this.queryParams.has(name);
   }
 
   getParam(name: string): string | null {
+    if (!this.fragmentParams.has(name) && this.queryParams.has(name)) {
+      logger.warn(
+        `Parameter ${name} loaded from query param (not hash). This is unsupported and will soon be removed.`
+      );
+    }
     return this.fragmentParams.get(name) ?? this.queryParams.get(name);
   }
 
@@ -168,7 +179,7 @@ export const getUrlParams = (
     // what would we do if it were invalid? If the widget API says that's what
     // the room ID is, then that's what it is.
     roomId: parser.getParam("roomId"),
-    password: parser.getParam("password"),
+    password: parser.getParam(PASSWORD_PARAM),
     isEmbedded: parser.hasParam("embed"),
     preload: parser.hasParam("preload"),
     hideHeader: parser.hasParam("hideHeader"),
@@ -200,34 +211,24 @@ export function getRoomIdentifierFromUrl(
   search: string,
   hash: string
 ): RoomIdentifier {
-  let roomAlias: string | null = null;
-
-  // Here we handle the beginning of the alias and make sure it starts with a "#"
+  let baseRoomString: string | undefined;
   if (hash === "" || hash.startsWith("#?")) {
-    roomAlias = pathname.substring(1); // Strip the "/"
-
-    // Delete "/room/", if present
-    if (roomAlias.startsWith("room/")) {
-      roomAlias = roomAlias.substring("room/".length);
-    }
-    // Add "#", if not present
-    if (!roomAlias.startsWith("#")) {
-      roomAlias = `#${roomAlias}`;
-    }
+    // if the hash is absent or being used as a query string, the alias is the last
+    // path component.
+    baseRoomString = pathname.split("/").pop();
   } else {
-    roomAlias = hash;
+    baseRoomString = hash;
+    logger.warn(
+      "Using whole hash as room name: this is deprecated and will be removed soon."
+    );
   }
 
-  // Delete "?" and what comes afterwards
-  roomAlias = roomAlias.split("?")[0];
-
-  if (roomAlias.length <= 1) {
-    // Make roomAlias is null, if it only is a "#"
-    roomAlias = null;
-  } else {
-    // Add server part, if not present
+  let roomAlias: string | null = null;
+  if (baseRoomString !== undefined) {
+    // ensure exactly one hash on the start
+    roomAlias = `${baseRoomString.replace(/^#*/, "#")}`;
     if (!roomAlias.includes(":")) {
-      roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
+      roomAlias += ":" + Config.defaultServerName();
     }
   }
 
@@ -239,6 +240,12 @@ export function getRoomIdentifierFromUrl(
     roomId = null;
   } else if (!roomId.includes("")) {
     roomId = null;
+  }
+
+  if (roomId) {
+    logger.warn(
+      "Room loaded by room ID: this is not supported and will be removed soon."
+    );
   }
 
   return {
