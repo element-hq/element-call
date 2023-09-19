@@ -146,10 +146,6 @@ class ParamParser {
   // Normally, URL params should be encoded in the fragment so as to avoid
   // leaking them to the server. However, we also check the normal query
   // string for backwards compatibility with versions that only used that.
-  hasParam(name: string): boolean {
-    return this.fragmentParams.has(name) || this.queryParams.has(name);
-  }
-
   getParam(name: string): string | null {
     return this.fragmentParams.get(name) ?? this.queryParams.get(name);
   }
@@ -159,6 +155,11 @@ class ParamParser {
       ...this.fragmentParams.getAll(name),
       ...this.queryParams.getAll(name),
     ];
+  }
+
+  getFlagParam(name: string, defaultValue = false): boolean {
+    const param = this.getParam(name);
+    return param === null ? defaultValue : param !== "false";
   }
 }
 
@@ -183,14 +184,13 @@ export const getUrlParams = (
     roomId: parser.getParam("roomId"),
     password: parser.getParam("password"),
     // This flag has 'embed' as an alias for historical reasons
-    confineToRoom: parser.hasParam("confineToRoom") || parser.hasParam("embed"),
-    // Defaults to true
-    appPrompt: parser.getParam("appPrompt") !== "false",
-    preload: parser.hasParam("preload"),
-    hideHeader: parser.hasParam("hideHeader"),
-    hideScreensharing: parser.hasParam("hideScreensharing"),
-    // Defaults to true
-    e2eEnabled: parser.getParam("enableE2e") !== "false",
+    confineToRoom:
+      parser.getFlagParam("confineToRoom") || parser.getFlagParam("embed"),
+    appPrompt: parser.getFlagParam("appPrompt", true),
+    preload: parser.getFlagParam("preload"),
+    hideHeader: parser.getFlagParam("hideHeader"),
+    hideScreensharing: parser.getFlagParam("hideScreensharing"),
+    e2eEnabled: parser.getFlagParam("enableE2e", true),
     userId: parser.getParam("userId"),
     displayName: parser.getParam("displayName"),
     deviceId: parser.getParam("deviceId"),
@@ -199,7 +199,7 @@ export const getUrlParams = (
     fonts: parser.getAllParams("font"),
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
     analyticsID: parser.getParam("analyticsID"),
-    allowIceFallback: parser.hasParam("allowIceFallback"),
+    allowIceFallback: parser.getFlagParam("allowIceFallback"),
   };
 };
 
