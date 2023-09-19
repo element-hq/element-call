@@ -22,7 +22,7 @@ import { Room } from "matrix-js-sdk";
 import { CopyButton } from "../button";
 import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
-import { getRoomUrl } from "../matrix-utils";
+import { getAbsoluteRoomUrl, getRelativeRoomUrl } from "../matrix-utils";
 import { Body } from "../typography/Typography";
 import { GroupCallRoom } from "./useGroupCallRooms";
 import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
@@ -68,7 +68,9 @@ function CallTile({ name, avatarUrl, room }: CallTileProps) {
   return (
     <div className={styles.callTile}>
       <Link
-        to={`/room/#?roomId=${room.roomId}`}
+        // note we explicitly omit the password here as we don't want it on this link because
+        // it's just for the user to navigate around and not for sharing
+        to={getRelativeRoomUrl(room.roomId, room.name)}
         className={styles.callTileLink}
       >
         <Avatar id={room.roomId} name={name} size={Size.LG} src={avatarUrl} />
@@ -82,7 +84,11 @@ function CallTile({ name, avatarUrl, room }: CallTileProps) {
       <CopyButton
         className={styles.copyButton}
         variant="icon"
-        value={getRoomUrl(room.roomId, room.name, roomSharedKey ?? undefined)}
+        value={getAbsoluteRoomUrl(
+          room.roomId,
+          room.name,
+          roomSharedKey ?? undefined
+        )}
       />
     </div>
   );

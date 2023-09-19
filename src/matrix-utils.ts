@@ -340,17 +340,33 @@ export async function createRoom(
 }
 
 /**
- * Returns a URL to that will load Element Call with the given room
- * @param roomId of the room
- * @param password
- * @returns
+ * Returns an absolute URL to that will load Element Call with the given room
+ * @param roomId ID of the room
+ * @param roomName Name of the room
+ * @param password e2e key for the room
  */
-export function getRoomUrl(
+export function getAbsoluteRoomUrl(
   roomId: string,
   roomName?: string,
   password?: string
 ): string {
-  return `${window.location.protocol}//${window.location.host}/#${
+  return `${window.location.protocol}//${
+    window.location.host
+  }${getRelativeRoomUrl(roomId, roomName, password)}`;
+}
+
+/**
+ * Returns a relative URL to that will load Element Call with the given room
+ * @param roomId ID of the room
+ * @param roomName Name of the room
+ * @param password e2e key for the room
+ */
+export function getRelativeRoomUrl(
+  roomId: string,
+  roomName?: string,
+  password?: string
+): string {
+  return `/room/#${
     roomName ? "/" + roomAliasLocalpartFromRoomName(roomName) : ""
   }?roomId=${roomId}${password ? "&" + PASSWORD_STRING + password : ""}`;
 }

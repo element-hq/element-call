@@ -20,7 +20,7 @@ import { Room } from "matrix-js-sdk";
 
 import { Modal } from "../Modal";
 import { CopyButton } from "../button";
-import { getRoomUrl } from "../matrix-utils";
+import { getAbsoluteRoomUrl } from "../matrix-utils";
 import styles from "./ShareModal.module.css";
 import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 
@@ -39,7 +39,11 @@ export const ShareModal: FC<Props> = ({ room, open, onDismiss }) => {
       <p>{t("Copy and share this call link")}</p>
       <CopyButton
         className={styles.copyButton}
-        value={getRoomUrl(room.roomId, room.name, roomSharedKey ?? undefined)}
+        value={getAbsoluteRoomUrl(
+          room.roomId,
+          room.name,
+          roomSharedKey ?? undefined
+        )}
         data-testid="modal_inviteLink"
       />
     </Modal>
