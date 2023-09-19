@@ -131,7 +131,8 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   // and even can introduce multiple different output devices for one call.
   const alwaysUseDefaultAudio = isFirefox();
 
-  // On FF we dont need to query the names (call enumerateDevices + create meadia stream to trigger permissions)
+  // On FF we dont need to query the names
+  // (call enumerateDevices + create meadia stream to trigger permissions)
   // for ouput devices because the selector wont be shown on FF.
   const useOutputNames = usingNames && !isFirefox();
 
