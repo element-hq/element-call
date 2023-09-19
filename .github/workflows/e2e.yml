@@ -12,7 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out test private repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           repository: vector-im/static-call-participant
           ref: refs/heads/main
