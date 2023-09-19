@@ -224,7 +224,8 @@ export function GroupCallView({
 
       leaveRTCSession(rtcSession);
       if (widget) {
-        // we need to wait until the callEnded event is tracked. Otherwise the iFrame gets killed before the callEnded event got tracked.
+        // we need to wait until the callEnded event is tracked on posthog.
+        // Otherwise the iFrame gets killed before the callEnded event got tracked.
         await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
         widget.api.setAlwaysOnScreen(false);
         PosthogAnalytics.instance.logout();
