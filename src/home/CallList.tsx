@@ -34,9 +34,9 @@ export function CallList({ rooms, client }: CallListProps) {
   return (
     <>
       <div className={styles.callList}>
-        {rooms.map(({ room, roomAlias, roomName, avatarUrl, participants }) => (
+        {rooms.map(({ room, roomName, avatarUrl, participants }) => (
           <CallTile
-            key={roomAlias}
+            key={room.roomId}
             client={client}
             name={roomName}
             avatarUrl={avatarUrl}
