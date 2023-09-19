@@ -17,7 +17,7 @@ limitations under the License.
 import { Link } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
-import { Room } from "matrix-js-sdk";
+import { Room } from "matrix-js-sdk/src/models/room";
 
 import { CopyButton } from "../button";
 import { Avatar, Size } from "../Avatar";
