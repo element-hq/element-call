@@ -17,6 +17,7 @@ limitations under the License.
 import { Link } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { Room } from "matrix-js-sdk";
 
 import { CopyButton } from "../button";
 import { Avatar, Size } from "../Avatar";
@@ -40,7 +41,7 @@ export function CallList({ rooms, client }: CallListProps) {
             client={client}
             name={roomName}
             avatarUrl={avatarUrl}
-            roomId={room.roomId}
+            room={room}
             participants={participants}
           />
         ))}
@@ -57,17 +58,20 @@ export function CallList({ rooms, client }: CallListProps) {
 interface CallTileProps {
   name: string;
   avatarUrl: string;
-  roomId: string;
+  room: Room;
   participants: RoomMember[];
   client: MatrixClient;
 }
-function CallTile({ name, avatarUrl, roomId }: CallTileProps) {
-  const roomSharedKey = useRoomSharedKey(roomId);
+function CallTile({ name, avatarUrl, room }: CallTileProps) {
+  const roomSharedKey = useRoomSharedKey(room.roomId);
 
   return (
     <div className={styles.callTile}>
-      <Link to={`/room/#?roomId=${roomId}`} className={styles.callTileLink}>
-        <Avatar id={roomId} name={name} size={Size.LG} src={avatarUrl} />
+      <Link
+        to={`/room/#?roomId=${room.roomId}`}
+        className={styles.callTileLink}
+      >
+        <Avatar id={room.roomId} name={name} size={Size.LG} src={avatarUrl} />
         <div className={styles.callInfo}>
           <Body overflowEllipsis fontWeight="semiBold">
             {name}
@@ -78,7 +82,7 @@ function CallTile({ name, avatarUrl, roomId }: CallTileProps) {
       <CopyButton
         className={styles.copyButton}
         variant="icon"
-        value={getRoomUrl(roomId, roomSharedKey ?? undefined)}
+        value={getRoomUrl(room.roomId, room.name, roomSharedKey ?? undefined)}
       />
     </div>
   );
