@@ -50,12 +50,11 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
         ? window.location.href
         : getRoomUrl(roomId, roomSharedKey ?? undefined)
     );
-    // Edit the URL so that it opens in embedded mode. We do this for two
-    // reasons: It causes the mobile app to limit the user to only visiting the
-    // room in question, and it prevents this app selection prompt from being
-    // shown a second time.
+    // Edit the URL to prevent the app selection prompt from appearing a second
+    // time within the app, and to keep the user confined to the current room
     url.hash = editFragmentQuery(url.hash, (params) => {
-      params.set("embed", "");
+      params.set("appPrompt", "false");
+      params.set("confineToRoom", "");
       return params;
     });
 

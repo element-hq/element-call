@@ -20,6 +20,7 @@ import { useEnableE2EE } from "../settings/useSetting";
 import { useLocalStorage } from "../useLocalStorage";
 import { useClient } from "../ClientContext";
 import { PASSWORD_STRING, useUrlParams } from "../UrlParams";
+import { widget } from "../widget";
 
 export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
   `room-shared-key-${roomId}`;
@@ -67,19 +68,13 @@ export const useManageRoomSharedKey = (roomId: string): string | null => {
 };
 
 export const useIsRoomE2EE = (roomId: string): boolean | null => {
-  const { isEmbedded } = useUrlParams();
-  const client = useClient();
-  const room = useMemo(
-    () => client.client?.getRoom(roomId) ?? null,
-    [roomId, client.client]
+  const { client } = useClient();
+  const room = useMemo(() => client?.getRoom(roomId) ?? null, [roomId, client]);
+  // For now, rooms in widget mode are never considered encrypted.
+  // In the future, when widget mode gains encryption support, then perhaps we
+  // should inspect the e2eEnabled URL parameter here?
+  return useMemo(
+    () => widget === null && (room === null || !room.getCanonicalAlias()),
+    [room]
   );
-  const isE2EE = useMemo(() => {
-    if (isEmbedded) {
-      return false;
-    } else {
-      return room ? !room?.getCanonicalAlias() : null;
-    }
-  }, [isEmbedded, room]);
-
-  return isE2EE;
 };
