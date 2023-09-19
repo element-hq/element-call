@@ -127,12 +127,13 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   const [numCallersUsingNames, setNumCallersUsingNames] = useState(0);
   const usingNames = numCallersUsingNames > 0;
 
-  // Use output device names for output devices on all platforms except FF.
-  const useOutputNames = usingNames && !isFirefox();
-
-  // Setting the audio device to sth. else than 'undefined' breaks echo-cancellation
+  // Setting the audio device to sthomething other than 'undefined' breaks echo-cancellation
   // and even can introduce multiple different output devices for one call.
   const alwaysUseDefaultAudio = isFirefox();
+
+  // On FF we dont need to query the names (call enumerateDevices + create meadia stream to trigger permissions)
+  // for ouput devices because the selector wont be shown on FF.
+  const useOutputNames = usingNames && !isFirefox();
 
   const [audioInputSetting, setAudioInputSetting] = useAudioInput();
   const [audioOutputSetting, setAudioOutputSetting] = useAudioOutput();
