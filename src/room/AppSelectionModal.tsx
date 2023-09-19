@@ -54,7 +54,7 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
     // time within the app, and to keep the user confined to the current room
     url.hash = editFragmentQuery(url.hash, (params) => {
       params.set("appPrompt", "false");
-      params.set("confineToRoom", "");
+      params.set("confineToRoom", "true");
       return params;
     });
 
