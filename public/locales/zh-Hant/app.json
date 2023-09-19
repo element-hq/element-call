@@ -108,5 +108,16 @@
   "Share": "分享",
   "Share this call": "分享此通話",
   "Sharing screen": "分享畫面",
-  "You": "您"
+  "You": "您",
+  "Continue in browser": "在瀏覽器中繼續",
+  "Mute microphone": "將麥克風靜音",
+  "Name of call": "通話名稱",
+  "Open in the app": "在應用程式中開啟",
+  "Ready to join?": "準備好加入了？",
+  "Select app": "選取應用程式",
+  "Start new call": "開始新通話",
+  "Start video": "開始影片",
+  "Back to recents": "回到最近的通話",
+  "Stop video": "停止影片",
+  "Unmute microphone": "將麥克風取消靜音"
 }
