@@ -1,5 +1,4 @@
 {
-  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>現在加入通話</0><1>或</1><2>複製通話連結，稍後再加入</2>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>建立帳號</0> 或<2>以訪客身份登入</2>",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>已經有帳號?</0><1><0>登入</0> 或<2>以訪客身份登入</2></1>",
   "Expose developer settings in the settings window.": "在設定視窗中顯示開發者設定。",
@@ -7,15 +6,12 @@
   "<0>Submitting debug logs will help us track down the problem.</0>": "<0>送出除錯紀錄，可幫助我們修正問題。</0>",
   "<0>Oops, something's gone wrong.</0>": "<0>喔喔，有些地方怪怪的。</0>",
   "Yes, join call": "是，加入對話",
-  "Walkie-talkie call": "即時通話",
   "Waiting for other participants…": "等待其他參加者…",
-  "Video call": "視訊通話",
   "Video": "視訊",
   "Version: {{version}}": "版本： {{version}}",
   "Username": "使用者名稱",
   "User menu": "使用者選單",
   "This call already exists, would you like to join?": "通話已經開始，請問您要加入嗎？",
-  "Take me Home": "帶我回主畫面",
   "Submit feedback": "遞交回覆",
   "Spotlight": "聚焦",
   "Speaker": "發言者",
@@ -69,7 +65,6 @@
   "Confirm password": "確認密碼",
   "Close": "關閉",
   "Camera": "相機",
-  "Call link copied": "已複製通話連結",
   "Avatar": "大頭照",
   "Audio": "語音",
   "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.": "這通對話中的另一位使用者遇到了某些問題。為了診斷問題，我們將會建立除錯紀錄。",
@@ -113,6 +108,5 @@
   "Share": "分享",
   "Share this call": "分享此通話",
   "Sharing screen": "分享畫面",
-  "Video on": "視訊開啟",
   "You": "您"
 }
