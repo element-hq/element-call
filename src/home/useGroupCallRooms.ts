@@ -22,7 +22,7 @@ import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEv
 import { useState, useEffect } from "react";
 
 export interface GroupCallRoom {
-  roomAlias: string;
+  roomAlias?: string;
   roomName: string;
   avatarUrl: string;
   room: Room;
@@ -94,7 +94,7 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
         const groupCall = client.getGroupCallForRoom(room.roomId)!;
 
         return {
-          roomAlias: room.getCanonicalAlias(),
+          roomAlias: room.getCanonicalAlias() ?? undefined,
           roomName: room.name,
           avatarUrl: room.getMxcAvatarUrl()!,
           room,
@@ -103,7 +103,7 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
         };
       });
 
-      setRooms(items as GroupCallRoom[]);
+      setRooms(items);
     }
 
     updateRooms();
