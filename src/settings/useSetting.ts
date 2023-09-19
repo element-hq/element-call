@@ -16,7 +16,6 @@ limitations under the License.
 
 import { useCallback, useMemo } from "react";
 import { isE2EESupported } from "livekit-client";
-import { isFireFox } from "livekit-client/dist/src/room/utils";
 
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import {
@@ -59,6 +58,11 @@ export const getSetting = <T>(name: string, defaultValue: T): T => {
 export const setSetting = <T>(name: string, newValue: T) =>
   setLocalStorageItem(getSettingKey(name), JSON.stringify(newValue));
 
+export const isFirefox = () => {
+  const { userAgent } = navigator;
+  return userAgent.includes("Firefox");
+};
+
 const canEnableSpatialAudio = () => {
   // Spatial audio means routing audio through audio contexts. On Chrome,
   // this bypasses the AEC processor and so breaks echo cancellation.
@@ -69,7 +73,7 @@ const canEnableSpatialAudio = () => {
   // widely enough, we can allow spatial audio everywhere. It's currently in a
   // chrome flag, so we could enable this in Electron if we enabled the chrome flag
   // in the Electron wrapper.
-  return isFireFox();
+  return isFirefox();
 };
 
 export const useSpatialAudio = (): DisableableSetting<boolean> => {

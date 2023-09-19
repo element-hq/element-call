@@ -26,9 +26,9 @@ import {
 } from "react";
 import { createMediaDeviceObserver } from "@livekit/components-core";
 import { Observable } from "rxjs";
-import { isFireFox } from "livekit-client/dist/src/room/utils";
 
 import {
+  isFirefox,
   useAudioInput,
   useAudioOutput,
   useVideoInput,
@@ -128,11 +128,11 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   const usingNames = numCallersUsingNames > 0;
 
   // Use output device names for output devices on all platforms except FF.
-  const useOutputNames = usingNames && !isFireFox();
+  const useOutputNames = usingNames && !isFirefox();
 
   // Setting the audio device to sth. else than 'undefined' breaks echo-cancellation
   // and even can introduce multiple different output devices for one call.
-  const alwaysUseDefaultAudio = isFireFox();
+  const alwaysUseDefaultAudio = isFirefox();
 
   const [audioInputSetting, setAudioInputSetting] = useAudioInput();
   const [audioOutputSetting, setAudioOutputSetting] = useAudioOutput();
@@ -163,7 +163,7 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   useEffect(() => {
     // Skip setting state for ff output. Redundent since it is set to always return 'undefined'
     // but makes it clear while debugging that this is not happening on FF. + perf ;)
-    if (audioOutput.selectedId !== undefined && !isFireFox())
+    if (audioOutput.selectedId !== undefined && !isFirefox())
       setAudioOutputSetting(audioOutput.selectedId);
   }, [setAudioOutputSetting, audioOutput.selectedId]);
 
