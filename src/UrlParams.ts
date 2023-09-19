@@ -27,6 +27,11 @@ interface RoomIdentifier {
   viaServers: string[];
 }
 
+// If you need to add a new flag to this interface, prefer a name that describes
+// a specific behavior (such as 'confineToRoom'), rather than one that describes
+// the situations that call for this behavior ('isEmbedded'). This makes it
+// clearer what each flag means, and helps us avoid coupling Element Call's
+// behavior to the needs of specific consumers.
 interface UrlParams {
   /**
    * Anything about what room we're pointed to should be from useRoomIdentifier which
@@ -37,10 +42,14 @@ interface UrlParams {
    */
   roomId: string | null;
   /**
-   * Whether the app is running in embedded mode, and should keep the user
-   * confined to the current room.
+   * Whether the app should keep the user confined to the current call/room.
    */
-  isEmbedded: boolean;
+  confineToRoom: boolean;
+  /**
+   * Whether upon entering a room, the user should be prompted to launch the
+   * native mobile app. (Affects only Android and iOS.)
+   */
+  appPrompt: boolean;
   /**
    * Whether the app should pause before joining the call until it sees an
    * io.element.join widget action, allowing it to be preloaded.
@@ -101,6 +110,10 @@ interface UrlParams {
   password: string | null;
 }
 
+// This is here as a stopgap, but what would be far nicer is a function that
+// takes a UrlParams and returns a query string. That would enable us to
+// consolidate all the data about URL parameters and their meanings to this one
+// file.
 export function editFragmentQuery(
   hash: string,
   edit: (params: URLSearchParams) => URLSearchParams
@@ -133,10 +146,6 @@ class ParamParser {
   // Normally, URL params should be encoded in the fragment so as to avoid
   // leaking them to the server. However, we also check the normal query
   // string for backwards compatibility with versions that only used that.
-  hasParam(name: string): boolean {
-    return this.fragmentParams.has(name) || this.queryParams.has(name);
-  }
-
   getParam(name: string): string | null {
     return this.fragmentParams.get(name) ?? this.queryParams.get(name);
   }
@@ -146,6 +155,11 @@ class ParamParser {
       ...this.fragmentParams.getAll(name),
       ...this.queryParams.getAll(name),
     ];
+  }
+
+  getFlagParam(name: string, defaultValue = false): boolean {
+    const param = this.getParam(name);
+    return param === null ? defaultValue : param !== "false";
   }
 }
 
@@ -169,11 +183,14 @@ export const getUrlParams = (
     // the room ID is, then that's what it is.
     roomId: parser.getParam("roomId"),
     password: parser.getParam("password"),
-    isEmbedded: parser.hasParam("embed"),
-    preload: parser.hasParam("preload"),
-    hideHeader: parser.hasParam("hideHeader"),
-    hideScreensharing: parser.hasParam("hideScreensharing"),
-    e2eEnabled: parser.getParam("enableE2e") !== "false", // Defaults to true
+    // This flag has 'embed' as an alias for historical reasons
+    confineToRoom:
+      parser.getFlagParam("confineToRoom") || parser.getFlagParam("embed"),
+    appPrompt: parser.getFlagParam("appPrompt", true),
+    preload: parser.getFlagParam("preload"),
+    hideHeader: parser.getFlagParam("hideHeader"),
+    hideScreensharing: parser.getFlagParam("hideScreensharing"),
+    e2eEnabled: parser.getFlagParam("enableE2e", true),
     userId: parser.getParam("userId"),
     displayName: parser.getParam("displayName"),
     deviceId: parser.getParam("deviceId"),
@@ -182,7 +199,7 @@ export const getUrlParams = (
     fonts: parser.getAllParams("font"),
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
     analyticsID: parser.getParam("analyticsID"),
-    allowIceFallback: parser.hasParam("allowIceFallback"),
+    allowIceFallback: parser.getFlagParam("allowIceFallback"),
   };
 };
 
