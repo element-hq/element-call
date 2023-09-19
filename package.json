@@ -103,7 +103,7 @@
     "babel-plugin-transform-vite-meta-env": "^1.0.3",
     "eslint": "^8.14.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-config-prettier": "^8.5.0",
+    "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-jsx-a11y": "^6.5.1",
     "eslint-plugin-matrix-org": "^0.4.0",
