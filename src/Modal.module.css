@@ -108,10 +108,10 @@ limitations under the License.
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  flex-grow: 1;
 }
 
 .dialog .content {
-  flex-grow: 1;
   background: var(--cpd-color-bg-canvas-default);
 }
 
