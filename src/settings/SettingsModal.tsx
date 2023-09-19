@@ -43,12 +43,12 @@ import { Body, Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
-import { useUrlParams } from "../UrlParams";
 import {
   useMediaDevices,
   MediaDevice,
   useMediaDeviceNames,
 } from "../livekit/MediaDevicesContext";
+import { widget } from "../widget";
 
 interface Props {
   open: boolean;
@@ -60,8 +60,6 @@ interface Props {
 
 export const SettingsModal = (props: Props) => {
   const { t } = useTranslation();
-
-  const { isEmbedded } = useUrlParams();
 
   const [showInspector, setShowInspector] = useShowInspector();
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
@@ -282,7 +280,7 @@ export const SettingsModal = (props: Props) => {
   );
 
   const tabs = [audioTab, videoTab];
-  if (!isEmbedded) tabs.push(profileTab);
+  if (widget === null) tabs.push(profileTab);
   tabs.push(feedbackTab, moreTab);
   if (developerSettingsTab) tabs.push(developerTab);
 
