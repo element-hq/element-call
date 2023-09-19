@@ -27,6 +27,7 @@ import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import {
   createRoom,
+  getRelativeRoomUrl,
   roomAliasLocalpartFromRoomName,
   sanitiseRoomNameInput,
 } from "../matrix-utils";
@@ -125,7 +126,7 @@ export const UnauthenticatedView: FC = () => {
         }
 
         setClient({ client, session });
-        history.push(`/room/#?roomId=${roomId}`);
+        history.push(getRelativeRoomUrl(roomId, roomName));
       }
 
       submit().catch((error) => {
