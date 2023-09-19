@@ -5,7 +5,6 @@
   "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.": "Друг потребител в този разговор има проблем. За да диагностицираме този проблем по-добре ни се иска да съберем debug логове.",
   "Audio": "Звук",
   "Avatar": "Аватар",
-  "Call link copied": "Връзка към разговора бе копирана",
   "Camera": "Камера",
   "Close": "Затвори",
   "Confirm password": "Потвърди паролата",
@@ -56,14 +55,11 @@
   "Speaker": "Говорител",
   "Spotlight": "Прожектор",
   "Submit feedback": "Изпрати обратна връзка",
-  "Take me Home": "Отиди в Начало",
   "This call already exists, would you like to join?": "Този разговор вече съществува, искате ли да се присъедините?",
   "User menu": "Потребителско меню",
   "Username": "Потребителско име",
   "Version: {{version}}": "Версия: {{version}}",
   "Video": "Видео",
-  "Video call name": "Име на видео разговора",
   "Waiting for other participants…": "Изчакване на други участници…",
-  "Walkie-talkie call name": "Име на уоки-токи разговора",
   "Yes, join call": "Да, присъедини се"
 }

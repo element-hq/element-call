@@ -1,10 +1,8 @@
 {
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>既にアカウントをお持ちですか？</0><1><0>ログイン</0>または<2>ゲストとしてアクセス</2></1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>アカウントを作成</0>または<2>ゲストとしてアクセス</2>",
-  "<0>Join call now</0><1>Or</1><2>Copy call link and join later</2>": "<0>今すぐ通話に参加</0><1>または</1><2>通話リンクをコピーし、後で参加</2>",
   "<0>Oops, something's gone wrong.</0>": "<0>何かがうまく行きませんでした。</0>",
   "Camera": "カメラ",
-  "Call link copied": "通話リンクをコピーしました",
   "Avatar": "アバター",
   "Audio": "音声",
   "Confirm password": "パスワードを確認",
@@ -50,16 +48,13 @@
   "Passwords must match": "パスワードが一致する必要があります",
   "Password": "パスワード",
   "Speaker": "スピーカー",
-  "Video call": "ビデオ通話",
   "Video": "ビデオ",
   "Waiting for other participants…": "他の参加者を待機しています…",
-  "Walkie-talkie call": "トランシーバー通話",
   "Yes, join call": "はい、通話に参加",
   "Select an option": "オプションを選択",
   "Debug log request": "デバッグログを要求",
   "Login to your account": "アカウントにログイン",
   "Remove": "削除",
   "No": "いいえ",
-  "This call already exists, would you like to join?": "この通話は既に存在します。参加しますか？",
-  "Take me Home": "ホームに戻る"
+  "This call already exists, would you like to join?": "この通話は既に存在します。参加しますか？"
 }
