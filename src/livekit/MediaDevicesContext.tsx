@@ -65,7 +65,8 @@ function useObservableState<T>(
 function useMediaDevice(
   kind: MediaDeviceKind,
   fallbackDevice: string | undefined,
-  usingNames: boolean
+  usingNames: boolean,
+  alwaysDefault: boolean = false
 ): MediaDevice {
   // Make sure we don't needlessly reset to a device observer without names,
   // once permissions are already given
@@ -86,18 +87,19 @@ function useMediaDevice(
   const available = useObservableState(deviceObserver, []);
   const [selectedId, select] = useState(fallbackDevice);
 
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    const devId = available.some((d) => d.deviceId === selectedId)
+      ? selectedId
+      : available.some((d) => d.deviceId === fallbackDevice)
+      ? fallbackDevice
+      : available.at(0)?.deviceId;
+
+    return {
       available,
-      selectedId: available.some((d) => d.deviceId === selectedId)
-        ? selectedId
-        : available.some((d) => d.deviceId === fallbackDevice)
-        ? fallbackDevice
-        : available.at(0)?.deviceId,
+      selectedId: alwaysDefault ? undefined : devId,
       select,
-    }),
-    [available, selectedId, fallbackDevice, select]
-  );
+    };
+  }, [available, selectedId, fallbackDevice, select, alwaysDefault]);
 }
 
 const deviceStub: MediaDevice = {
@@ -136,7 +138,8 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   const audioOutput = useMediaDevice(
     "audiooutput",
     audioOutputSetting,
-    usingNames
+    false,
+    true
   );
   const videoInput = useMediaDevice(
     "videoinput",
@@ -149,10 +152,10 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
       setAudioInputSetting(audioInput.selectedId);
   }, [setAudioInputSetting, audioInput.selectedId]);
 
-  useEffect(() => {
-    if (audioOutput.selectedId !== undefined)
-      setAudioOutputSetting(audioOutput.selectedId);
-  }, [setAudioOutputSetting, audioOutput.selectedId]);
+  // useEffect(() => {
+  //   if (audioOutput.selectedId !== undefined)
+  //     setAudioOutputSetting(audioOutput.selectedId);
+  // }, [setAudioOutputSetting, audioOutput.selectedId]);
 
   useEffect(() => {
     if (videoInput.selectedId !== undefined)
