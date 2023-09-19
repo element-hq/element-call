@@ -43,7 +43,7 @@ export function GroupCallLoader({
 
   const history = useHistory();
   const onHomeClick = useCallback(
-    (ev: Event) => {
+    (ev: React.MouseEvent) => {
       ev.preventDefault();
       history.push("/");
     },
