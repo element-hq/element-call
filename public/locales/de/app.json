@@ -108,5 +108,16 @@
   "Share": "Teilen",
   "Share this call": "Diesen Anruf teilen",
   "Sharing screen": "Bildschirm wird geteilt",
-  "You": "Du"
+  "You": "Du",
+  "Continue in browser": "Weiter im Browser",
+  "Name of call": "Name des Anrufs",
+  "Open in the app": "In der App öffnen",
+  "Ready to join?": "Bereit, beizutreten?",
+  "Unmute microphone": "Mikrofon aktivieren",
+  "Start video": "Video aktivieren",
+  "Stop video": "Video deaktivieren",
+  "Back to recents": "Zurück zu kürzlichen Anrufen",
+  "Select app": "App auswählen",
+  "Mute microphone": "Mikrofon deaktivieren",
+  "Start new call": "Neuen Anruf beginnen"
 }
