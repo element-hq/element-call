@@ -132,7 +132,7 @@ export const SettingsModal = (props: Props) => {
       }
     >
       {generateDeviceSelection(devices.audioInput, t("Microphone"))}
-      {generateDeviceSelection(devices.audioOutput, t("Speaker"))}
+      {/* {generateDeviceSelection(devices.audioOutput, t("Speaker"))} */}
     </TabItem>
   );
 
