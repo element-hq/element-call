@@ -26,6 +26,7 @@ import {
 } from "react";
 import { createMediaDeviceObserver } from "@livekit/components-core";
 import { Observable } from "rxjs";
+import { isFireFox } from "livekit-client/dist/src/room/utils";
 
 import {
   useAudioInput,
@@ -124,7 +125,14 @@ interface Props {
 export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   // Counts the number of callers currently using device names
   const [numCallersUsingNames, setNumCallersUsingNames] = useState(0);
-  const usingNames = numCallersUsingNames > 0;
+  const usingNames = numCallersUsingNames > 0 && !isFireFox();
+
+  // Use output device names for output devices on all platforms except FF.
+  const useOutputNames = usingNames && !isFireFox();
+
+  // Setting the audio device to sth. else than 'undefined' breaks echo-cancellation
+  // and even can introduce multiple different output devices for one call.
+  const alwaysUseDefaultAudio = isFireFox();
 
   const [audioInputSetting, setAudioInputSetting] = useAudioInput();
   const [audioOutputSetting, setAudioOutputSetting] = useAudioOutput();
@@ -138,8 +146,8 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   const audioOutput = useMediaDevice(
     "audiooutput",
     audioOutputSetting,
-    false,
-    true
+    useOutputNames,
+    alwaysUseDefaultAudio
   );
   const videoInput = useMediaDevice(
     "videoinput",
@@ -152,10 +160,12 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
       setAudioInputSetting(audioInput.selectedId);
   }, [setAudioInputSetting, audioInput.selectedId]);
 
-  // useEffect(() => {
-  //   if (audioOutput.selectedId !== undefined)
-  //     setAudioOutputSetting(audioOutput.selectedId);
-  // }, [setAudioOutputSetting, audioOutput.selectedId]);
+  useEffect(() => {
+    // Skip setting state for ff output. Redundent since it is set to always return 'undefined'
+    // But makes it clear while debugging that this is not happening on FF. + perf ;)
+    if (audioOutput.selectedId !== undefined && !isFireFox())
+      setAudioOutputSetting(audioOutput.selectedId);
+  }, [setAudioOutputSetting, audioOutput.selectedId]);
 
   useEffect(() => {
     if (videoInput.selectedId !== undefined)
