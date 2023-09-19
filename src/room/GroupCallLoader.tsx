@@ -60,7 +60,7 @@ export function GroupCallLoader({
             <h1>{t("Call not found")}</h1>
             <p>
               {t(
-                "Element Calls are now end-to-end encrypted and need to be explicitly created. This helps make sure everyone's using the same encryption key."
+                "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key."
               )}
             </p>
             {/* XXX: A 'create it for me' button would be the obvious UX here. Two screens already have
