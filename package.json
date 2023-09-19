@@ -99,7 +99,7 @@
     "@types/uuid": "9",
     "@typescript-eslint/eslint-plugin": "^6.1.0",
     "@typescript-eslint/parser": "^6.1.0",
-    "babel-loader": "^8.2.3",
+    "babel-loader": "^9.0.0",
     "babel-plugin-transform-vite-meta-env": "^1.0.3",
     "eslint": "^8.14.0",
     "eslint-config-google": "^0.14.0",
