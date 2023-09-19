@@ -18,6 +18,7 @@ import { ChangeEvent, Key, useCallback, useState } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
+import { isFireFox } from "livekit-client/dist/src/room/utils";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -132,7 +133,8 @@ export const SettingsModal = (props: Props) => {
       }
     >
       {generateDeviceSelection(devices.audioInput, t("Microphone"))}
-      {/* {generateDeviceSelection(devices.audioOutput, t("Speaker"))} */}
+      {!isFireFox() &&
+        generateDeviceSelection(devices.audioOutput, t("Speaker"))}
     </TabItem>
   );
 
