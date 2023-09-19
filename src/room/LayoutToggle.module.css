@@ -24,6 +24,8 @@ limitations under the License.
 
 .toggle input {
   appearance: none;
+  /* Safari puts a margin on these, which is not removed via appearance: none */
+  margin: 0;
   outline: none !important;
 }
 
