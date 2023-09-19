@@ -123,7 +123,7 @@ interface Props {
 }
 
 export const MediaDevicesProvider: FC<Props> = ({ children }) => {
-  // Counts the number of callers currently using device names
+  // Counts the number of callers currently using device names.
   const [numCallersUsingNames, setNumCallersUsingNames] = useState(0);
   const usingNames = numCallersUsingNames > 0;
 
@@ -162,7 +162,7 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
 
   useEffect(() => {
     // Skip setting state for ff output. Redundent since it is set to always return 'undefined'
-    // But makes it clear while debugging that this is not happening on FF. + perf ;)
+    // but makes it clear while debugging that this is not happening on FF. + perf ;)
     if (audioOutput.selectedId !== undefined && !isFireFox())
       setAudioOutputSetting(audioOutput.selectedId);
   }, [setAudioOutputSetting, audioOutput.selectedId]);
