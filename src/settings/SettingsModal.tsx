@@ -35,6 +35,7 @@ import {
   useDeveloperSettingsTab,
   useShowConnectionStats,
   useEnableE2EE,
+  isFirefox,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
@@ -130,7 +131,8 @@ export const SettingsModal = (props: Props) => {
       }
     >
       {generateDeviceSelection(devices.audioInput, t("Microphone"))}
-      {generateDeviceSelection(devices.audioOutput, t("Speaker"))}
+      {!isFirefox() &&
+        generateDeviceSelection(devices.audioOutput, t("Speaker"))}
     </TabItem>
   );
 
