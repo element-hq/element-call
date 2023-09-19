@@ -302,7 +302,7 @@ export function GroupCallView({
 
   const shareModal = (
     <ShareModal
-      roomId={rtcSession.room.roomId}
+      room={rtcSession.room}
       open={shareModalOpen}
       onDismiss={onDismissShareModal}
     />

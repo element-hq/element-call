@@ -345,10 +345,14 @@ export async function createRoom(
  * @param password
  * @returns
  */
-export function getRoomUrl(roomId: string, password?: string): string {
-  return `${window.location.protocol}//${
-    window.location.host
-  }/room/#?roomId=${roomId}${password ? "&" + PASSWORD_STRING + password : ""}`;
+export function getRoomUrl(
+  roomId: string,
+  roomName?: string,
+  password?: string
+): string {
+  return `${window.location.protocol}//${window.location.host}/#${
+    roomName ? "/" + roomAliasLocalpartFromRoomName(roomName) : ""
+  }?roomId=${roomId}${password ? "&" + PASSWORD_STRING + password : ""}`;
 }
 
 export function getAvatarUrl(

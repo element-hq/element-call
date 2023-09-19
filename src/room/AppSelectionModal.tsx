@@ -45,10 +45,14 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
   const roomSharedKey = useRoomSharedKey(roomId ?? "");
   const appUrl = useMemo(() => {
     // If the room ID is not known, fall back to the URL of the current page
+    // Also, we don't really know the room name at this stage as we haven't
+    // started a client and synced to get the room details. We could take the one
+    // we got in our own URL and use that, but it's not a string that a human
+    // ever sees so it's somewhat redundant. We just don't pass a name.
     const url = new URL(
       roomId === null
         ? window.location.href
-        : getRoomUrl(roomId, roomSharedKey ?? undefined)
+        : getRoomUrl(roomId, undefined, roomSharedKey ?? undefined)
     );
     // Edit the URL to prevent the app selection prompt from appearing a second
     // time within the app, and to keep the user confined to the current room
