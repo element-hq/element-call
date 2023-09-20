@@ -119,5 +119,7 @@
   "Start video": "開始影片",
   "Back to recents": "回到最近的通話",
   "Stop video": "停止影片",
-  "Unmute microphone": "將麥克風取消靜音"
+  "Unmute microphone": "將麥克風取消靜音",
+  "Call not found": "找不到通話",
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "通話現在是端對端加密的，必須從首頁建立。這有助於確保每個人都使用相同的加密金鑰。"
 }
