@@ -18,9 +18,10 @@ import { FC, MouseEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Text } from "@vector-im/compound-web";
 import { ReactComponent as PopOutIcon } from "@vector-im/compound-design-tokens/icons/pop-out.svg";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { Modal } from "../Modal";
-import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
+import { useIsRoomE2EE, useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 import { getAbsoluteRoomUrl } from "../matrix-utils";
 import styles from "./AppSelectionModal.module.css";
 import { editFragmentQuery } from "../UrlParams";
@@ -43,6 +44,13 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
   );
 
   const roomSharedKey = useRoomSharedKey(roomId ?? "");
+  const roomIsEncrypted = useIsRoomE2EE(roomId ?? "");
+  if (roomIsEncrypted && roomSharedKey === undefined) {
+    logger.error(
+      "Generating app redirect URL for encrypted room but don't have key available!"
+    );
+  }
+
   const appUrl = useMemo(() => {
     // If the room ID is not known, fall back to the URL of the current page
     // Also, we don't really know the room name at this stage as we haven't
