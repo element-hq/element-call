@@ -23,7 +23,7 @@ import {
   setLogLevel,
 } from "livekit-client";
 import { useLiveKitRoom } from "@livekit/components-react";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/src/logger";
 
@@ -98,6 +98,8 @@ export function useLiveKit(
     [e2eeOptions]
   );
 
+  const [blockAudioTrackCreation, setBlockAudioTrackCreation] = useState(true)
+
   // We have to create the room manually here due to a bug inside
   // @livekit/components-react. JSON.stringify() is used in deps of a
   // useEffect() with an argument that references itself, if E2EE is enabled
@@ -105,7 +107,7 @@ export function useLiveKit(
   const { room } = useLiveKitRoom({
     token: sfuConfig?.jwt,
     serverUrl: sfuConfig?.url,
-    audio: initialMuteStates.current.audio.enabled,
+    audio: initialMuteStates.current.audio.enabled && !blockAudioTrackCreation,
     video: initialMuteStates.current.video.enabled,
     room: roomWithoutProps,
     connect: false,
@@ -119,6 +121,10 @@ export function useLiveKit(
     room,
     sfuConfig
   );
+
+  useEffect(() => {
+    if (connectionState === ConnectionState.Connected) setBlockAudioTrackCreation(false)
+  }, [connectionState, setBlockAudioTrackCreation])
 
   useEffect(() => {
     // Sync the requested mute states with LiveKit's mute states. We do it this

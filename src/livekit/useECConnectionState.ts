@@ -89,6 +89,7 @@ export function useECConnectionState(
   );
 
   const [isSwitchingFocus, setSwitchingFocus] = useState(false);
+  const [isInDoConnect, setIsInDoConnect] = useState(false)
 
   const onConnStateChanged = useCallback((state: ConnectionState) => {
     if (state == ConnectionState.Connected) setSwitchingFocus(false);
@@ -125,12 +126,17 @@ export function useECConnectionState(
       (async () => {
         setSwitchingFocus(true);
         await livekitRoom?.disconnect();
-        await doConnect(
-          livekitRoom!,
-          sfuConfig!,
-          initialAudioEnabled,
-          initialAudioOptions
-        );
+        setIsInDoConnect(true)
+        try {
+          await doConnect(
+            livekitRoom!,
+            sfuConfig!,
+            initialAudioEnabled,
+            initialAudioOptions
+          );
+        } finally {
+          setIsInDoConnect(false)
+        }
       })();
     } else if (
       !sfuConfigValid(currentSFUConfig.current) &&
@@ -142,16 +148,17 @@ export function useECConnectionState(
       // doesn't publish it until you unmute. We want to publish it from the start so we're
       // always capturing audio: it helps keep bluetooth headsets in the right mode and
       // mobile browsers to know we're doing a call.
+      setIsInDoConnect(true)
       doConnect(
         livekitRoom!,
         sfuConfig!,
         initialAudioEnabled,
         initialAudioOptions
-      );
+      ).finally(() => setIsInDoConnect(false));
     }
 
     currentSFUConfig.current = Object.assign({}, sfuConfig);
   }, [sfuConfig, livekitRoom, initialAudioOptions, initialAudioEnabled]);
 
-  return isSwitchingFocus ? ECAddonConnectionState.ECSwitchingFocus : connState;
+  return isSwitchingFocus ? ECAddonConnectionState.ECSwitchingFocus : isInDoConnect ? ConnectionState.Connecting : connState;
 }
