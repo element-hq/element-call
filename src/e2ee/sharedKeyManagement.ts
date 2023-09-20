@@ -35,7 +35,7 @@ const useInternalRoomSharedKey = (
   return [e2eeEnabled ? roomSharedKey : null, setRoomSharedKey];
 };
 
-const useKeyFromUrl = (roomId: string) => {
+const useKeyFromUrl = (roomId: string): string | null => {
   const urlParams = useUrlParams();
   const [e2eeSharedKey, setE2EESharedKey] = useInternalRoomSharedKey(roomId);
 
@@ -46,13 +46,18 @@ const useKeyFromUrl = (roomId: string) => {
 
     setE2EESharedKey(urlParams.password);
   }, [urlParams, e2eeSharedKey, setE2EESharedKey]);
+
+  return urlParams.password ?? null;
 };
 
 export const useRoomSharedKey = (roomId: string): string | null => {
   // make sure we've extracted the key from the URL first
-  useKeyFromUrl(roomId);
+  // (and we still need to take the value it returns because
+  // the effect won't run in time for it to save to localstorage in
+  // time for us to read it out again).
+  const passwordFormUrl = useKeyFromUrl(roomId);
 
-  return useInternalRoomSharedKey(roomId)[0];
+  return useInternalRoomSharedKey(roomId)[0] ?? passwordFormUrl;
 };
 
 export const useManageRoomSharedKey = (roomId: string): string | null => {
