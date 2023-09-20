@@ -121,5 +121,6 @@
   "Yes, join call": "Yes, join call",
   "You": "You",
   "You were disconnected from the call": "You were disconnected from the call",
-  "Your feedback": "Your feedback"
+  "Your feedback": "Your feedback",
+  "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117": "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117"
 }
