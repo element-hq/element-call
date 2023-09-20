@@ -23,6 +23,7 @@ import { Heading } from "@vector-im/compound-web";
 
 import {
   createRoom,
+  getRelativeRoomUrl,
   roomAliasLocalpartFromRoomName,
   sanitiseRoomNameInput,
 } from "../matrix-utils";
@@ -86,7 +87,7 @@ export function RegisteredView({ client }: Props) {
           );
         }
 
-        history.push(`/room/#?roomId=${roomId}`);
+        history.push(getRelativeRoomUrl(roomId, roomName));
       }
 
       submit().catch((error) => {
