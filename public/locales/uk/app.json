@@ -119,5 +119,7 @@
   "Continue in browser": "Продовжити у браузері",
   "Name of call": "Назва виклику",
   "Start new call": "Розпочати новий виклик",
-  "Back to recents": "Повернутися до недавніх"
+  "Back to recents": "Повернутися до недавніх",
+  "Call not found": "Виклик не знайдено",
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Відтепер виклики захищено наскрізним шифруванням, і їх потрібно створювати з домашньої сторінки. Це допомагає переконатися, що всі користувачі використовують один і той самий ключ шифрування."
 }
