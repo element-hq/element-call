@@ -63,9 +63,7 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
     });
 
     const result = new URL("element://call");
-    // Everything after the last & stripped away making us loose the last param. Most likely while removing the pwd.
-    // TODO fix the pwd removal function (or wherever this happens) to not delete everything after the last &.
-    result.searchParams.set("url", url.toString() + "&");
+    result.searchParams.set("url", url.toString());
     return result.toString();
   }, [roomId, roomSharedKey]);
 
