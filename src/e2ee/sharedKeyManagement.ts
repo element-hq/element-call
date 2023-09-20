@@ -25,7 +25,7 @@ import { widget } from "../widget";
 export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
   `room-shared-key-${roomId}`;
 
-export const useInternalRoomSharedKey = (
+const useInternalRoomSharedKey = (
   roomId: string
 ): [string | null, (value: string) => void] => {
   const key = useMemo(() => getRoomSharedKeyLocalStorageKey(roomId), [roomId]);
@@ -35,34 +35,45 @@ export const useInternalRoomSharedKey = (
   return [e2eeEnabled ? roomSharedKey : null, setRoomSharedKey];
 };
 
+const useKeyFromUrl = (roomId: string) => {
+  const urlParams = useUrlParams();
+  const [e2eeSharedKey, setE2EESharedKey] = useInternalRoomSharedKey(roomId);
+
+  useEffect(() => {
+    if (!urlParams.password) return;
+    if (urlParams.password === "") return;
+    if (urlParams.password === e2eeSharedKey) return;
+
+    setE2EESharedKey(urlParams.password);
+  }, [urlParams, e2eeSharedKey, setE2EESharedKey]);
+};
+
 export const useRoomSharedKey = (roomId: string): string | null => {
+  // make sure we've extracted the key from the URL first
+  useKeyFromUrl(roomId);
+
   return useInternalRoomSharedKey(roomId)[0];
 };
 
 export const useManageRoomSharedKey = (roomId: string): string | null => {
-  const { password } = useUrlParams();
-  const [e2eeSharedKey, setE2EESharedKey] = useInternalRoomSharedKey(roomId);
+  const urlParams = useUrlParams();
 
-  useEffect(() => {
-    if (!password) return;
-    if (password === "") return;
-    if (password === e2eeSharedKey) return;
+  useKeyFromUrl(roomId);
 
-    setE2EESharedKey(password);
-  }, [password, e2eeSharedKey, setE2EESharedKey]);
+  const [e2eeSharedKey] = useInternalRoomSharedKey(roomId);
 
   useEffect(() => {
     const hash = location.hash;
 
     if (!hash.includes("?")) return;
     if (!hash.includes(PASSWORD_STRING)) return;
-    if (password !== e2eeSharedKey) return;
+    if (urlParams.password !== e2eeSharedKey) return;
 
     const [hashStart, passwordStart] = hash.split(PASSWORD_STRING);
     const hashEnd = passwordStart.split("&")[1];
 
     location.replace((hashStart ?? "") + (hashEnd ?? ""));
-  }, [password, e2eeSharedKey]);
+  }, [urlParams, e2eeSharedKey]);
 
   return e2eeSharedKey;
 };
