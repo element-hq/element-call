@@ -108,5 +108,18 @@
   "Sharing screen": "L’écran est partagé",
   "{{count, number}}|one": "{{count, number}}",
   "Not encrypted": "Non chiffré",
-  "You": "Vous"
+  "You": "Vous",
+  "Continue in browser": "Continuer dans le navigateur",
+  "Mute microphone": "Couper le microphone",
+  "Name of call": "Nom de l’appel",
+  "Open in the app": "Ouvrir dans l’application",
+  "Ready to join?": "Prêt à rejoindre ?",
+  "Select app": "Choisissez l’application",
+  "Start new call": "Démarrer un nouvel appel",
+  "Back to recents": "Revenir aux récents",
+  "Start video": "Démarrer la vidéo",
+  "Stop video": "Arrêter la vidéo",
+  "Unmute microphone": "Allumer le microphone",
+  "Call not found": "Appel non trouvé",
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Les appels sont maintenant chiffrés de bout-en-bout et doivent être créés depuis la page d’accueil. Cela permet d’être sûr que tout le monde utilise la même clé de chiffrement."
 }
