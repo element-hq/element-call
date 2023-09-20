@@ -59,7 +59,7 @@ export const useManageRoomSharedKey = (roomId: string): string | null => {
     if (password !== e2eeSharedKey) return;
 
     const [hashStart, passwordStart] = hash.split(PASSWORD_STRING);
-    const hashEnd = passwordStart.split("&")[1];
+    const hashEnd = passwordStart.split("&").slice(1).join("&");
 
     location.replace((hashStart ?? "") + (hashEnd ?? ""));
   }, [password, e2eeSharedKey]);
