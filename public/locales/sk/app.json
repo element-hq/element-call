@@ -108,5 +108,18 @@
   "{{count, number}}|one": "{{count, number}}",
   "Share this call": "Zdieľať tento hovor",
   "{{names, list(style: short;)}}": "{{names, list(style: short;)}}",
-  "You": "Vy"
+  "You": "Vy",
+  "Continue in browser": "Pokračovať v prehliadači",
+  "Mute microphone": "Stlmiť mikrofón",
+  "Name of call": "Názov hovoru",
+  "Open in the app": "Otvoriť v aplikácii",
+  "Ready to join?": "Ste pripravení sa pridať?",
+  "Select app": "Vybrať aplikáciu",
+  "Start new call": "Spustiť nový hovor",
+  "Start video": "Spustiť video",
+  "Stop video": "Zastaviť video",
+  "Back to recents": "Späť k nedávnym",
+  "Unmute microphone": "Zrušiť stlmenie mikrofónu",
+  "Call not found": "Hovor nebol nájdený",
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Hovory sú teraz end-to-end šifrované a je potrebné ich vytvoriť z domovskej stránky. To pomáha zabezpečiť, aby všetci používali rovnaký šifrovací kľúč."
 }
