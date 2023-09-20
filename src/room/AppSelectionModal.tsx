@@ -70,7 +70,7 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
       return params;
     });
 
-    const result = new URL("element://call");
+    const result = new URL("io.element.call:/");
     result.searchParams.set("url", url.toString());
     return result.toString();
   }, [roomId, roomSharedKey]);
