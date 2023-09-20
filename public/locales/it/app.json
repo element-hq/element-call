@@ -119,5 +119,7 @@
   "Stop video": "Ferma video",
   "Unmute microphone": "Riaccendi il microfono",
   "Back to recents": "Torna ai recenti",
-  "Start new call": "Inizia nuova chiamata"
+  "Start new call": "Inizia nuova chiamata",
+  "Call not found": "Chiamata non trovata",
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Le chiamate ora sono cifrate end-to-end e devono essere create dalla pagina principale. Ciò assicura che chiunque usi la stessa chiave di crittografia."
 }

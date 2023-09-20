@@ -119,5 +119,7 @@
   "Back to recents": "Zurück zu kürzlichen Anrufen",
   "Select app": "App auswählen",
   "Mute microphone": "Mikrofon deaktivieren",
-  "Start new call": "Neuen Anruf beginnen"
+  "Start new call": "Neuen Anruf beginnen",
+  "Call not found": "Anruf nicht gefunden",
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Anrufe sind nun Ende-zu-Ende-verschlüsselt und müssen auf der Startseite erstellt werden. Damit stellen wir sicher, dass alle denselben Schlüssel verwenden."
 }
