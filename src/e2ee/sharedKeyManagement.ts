@@ -63,7 +63,7 @@ export const useRoomSharedKey = (roomId: string): string | null => {
 export const useManageRoomSharedKey = (roomId: string): string | null => {
   const urlParams = useUrlParams();
 
-  useKeyFromUrl(roomId);
+  const urlPassword = useKeyFromUrl(roomId);
 
   const [e2eeSharedKey] = useInternalRoomSharedKey(roomId);
 
@@ -80,7 +80,7 @@ export const useManageRoomSharedKey = (roomId: string): string | null => {
     location.replace((hashStart ?? "") + (hashEnd ?? ""));
   }, [urlParams, e2eeSharedKey]);
 
-  return e2eeSharedKey;
+  return e2eeSharedKey ?? urlPassword;
 };
 
 export const useIsRoomE2EE = (roomId: string): boolean | null => {
