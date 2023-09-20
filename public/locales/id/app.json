@@ -108,5 +108,18 @@
   "Sharing screen": "Berbagi layar",
   "{{count, number}}|one": "{{count, number}}",
   "{{names, list(style: short;)}}": "{{names, list(style: short;)}}",
-  "You": "Anda"
+  "You": "Anda",
+  "Continue in browser": "Lanjutkan dalam peramban",
+  "Mute microphone": "Matikan mikrofon",
+  "Name of call": "Nama panggilan",
+  "Open in the app": "Buka dalam aplikasi",
+  "Ready to join?": "Siap untuk bergabung?",
+  "Select app": "Pilih plikasi",
+  "Start new call": "Mulai panggilan baru",
+  "Start video": "Nyalakan video",
+  "Stop video": "Matikan video",
+  "Unmute microphone": "Nyalakan mikrofon",
+  "Back to recents": "Kembali ke terkini",
+  "Call not found": "Panggilan tidak ditemukan",
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Panggilan sekarang terenkripsi secara ujung ke ujung dan harus dibuat dari laman beranda. Ini memastikan bahwa semuanya menggunakan kunci enkripsi yang sama."
 }
