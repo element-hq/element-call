@@ -17,14 +17,16 @@ limitations under the License.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
-import { Room } from "livekit-client";
+import { Room, isE2EESupported } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { JoinRule, RoomMember } from "matrix-js-sdk/src/matrix";
+import { Heading, Link, Text } from "@vector-im/compound-web";
+import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { widget, ElementWidgetActions, JoinCallData } from "../widget";
-import { ErrorView } from "../FullScreenView";
+import { ErrorView, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { MatrixInfo } from "./VideoPreview";
 import { CallEndedView } from "./CallEndedView";
@@ -284,6 +286,16 @@ export function GroupCallView({
   );
   const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
 
+  const onHomeClick = useCallback(
+    (ev: React.MouseEvent) => {
+      ev.preventDefault();
+      history.push("/");
+    },
+    [history]
+  );
+
+  const { t } = useTranslation();
+
   if (e2eeEnabled && isRoomE2EE && !e2eeSharedKey) {
     return (
       <ErrorView
@@ -294,9 +306,21 @@ export function GroupCallView({
         }
       />
     );
-  }
-
-  if (!e2eeEnabled && isRoomE2EE) {
+  } else if (!isE2EESupported() && isRoomE2EE) {
+    return (
+      <FullScreenView>
+        <Heading>Incompatible Browser</Heading>
+        <Text>
+          {t(
+            "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117"
+          )}
+        </Text>
+        <Link href="/" onClick={onHomeClick}>
+          {t("Home")}
+        </Link>
+      </FullScreenView>
+    );
+  } else if (!e2eeEnabled && isRoomE2EE) {
     return <ErrorView error={new Error("You need to enable E2EE to join.")} />;
   }
 
