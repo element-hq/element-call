@@ -44,8 +44,6 @@ export type E2EEConfig = {
   sharedKey: string;
 };
 
-setLogLevel("debug");
-
 interface UseLivekitResult {
   livekitRoom?: Room;
   connState: ECConnectionState;
