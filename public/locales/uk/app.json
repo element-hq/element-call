@@ -121,5 +121,6 @@
   "Start new call": "Розпочати новий виклик",
   "Back to recents": "Повернутися до недавніх",
   "Call not found": "Виклик не знайдено",
-  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Відтепер виклики захищено наскрізним шифруванням, і їх потрібно створювати з домашньої сторінки. Це допомагає переконатися, що всі користувачі використовують один і той самий ключ шифрування."
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Відтепер виклики захищено наскрізним шифруванням, і їх потрібно створювати з домашньої сторінки. Це допомагає переконатися, що всі користувачі використовують один і той самий ключ шифрування.",
+  "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117": "Ваш браузер не підтримує наскрізне шифрування мультимедійних даних. Підтримувані браузери: Chrome, Safari, Firefox >=117"
 }
