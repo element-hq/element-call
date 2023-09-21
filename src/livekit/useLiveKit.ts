@@ -20,7 +20,6 @@ import {
   ExternalE2EEKeyProvider,
   Room,
   RoomOptions,
-  setLogLevel,
 } from "livekit-client";
 import { useLiveKitRoom } from "@livekit/components-react";
 import { useEffect, useMemo, useRef, useState } from "react";
