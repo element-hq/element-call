@@ -121,5 +121,6 @@
   "Mute microphone": "Mikrofon deaktivieren",
   "Start new call": "Neuen Anruf beginnen",
   "Call not found": "Anruf nicht gefunden",
-  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Anrufe sind nun Ende-zu-Ende-verschlüsselt und müssen auf der Startseite erstellt werden. Damit stellen wir sicher, dass alle denselben Schlüssel verwenden."
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Anrufe sind nun Ende-zu-Ende-verschlüsselt und müssen auf der Startseite erstellt werden. Damit stellen wir sicher, dass alle denselben Schlüssel verwenden.",
+  "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117": "Dein Webbrowser unterstützt keine Medien-Ende-zu-Ende-Verschlüsselung. Unterstützte Browser sind Chrome, Safari, Firefox >=117"
 }
