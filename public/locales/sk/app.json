@@ -121,5 +121,6 @@
   "Back to recents": "Späť k nedávnym",
   "Unmute microphone": "Zrušiť stlmenie mikrofónu",
   "Call not found": "Hovor nebol nájdený",
-  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Hovory sú teraz end-to-end šifrované a je potrebné ich vytvoriť z domovskej stránky. To pomáha zabezpečiť, aby všetci používali rovnaký šifrovací kľúč."
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Hovory sú teraz end-to-end šifrované a je potrebné ich vytvoriť z domovskej stránky. To pomáha zabezpečiť, aby všetci používali rovnaký šifrovací kľúč.",
+  "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117": "Váš webový prehliadač nepodporuje end-to-end šifrovanie médií. Podporované prehliadače sú Chrome, Safari, Firefox >=117"
 }
