@@ -52,7 +52,7 @@
   "Sign in": "Connexion",
   "Sign out": "Déconnexion",
   "Spotlight": "Premier plan",
-  "Submit feedback": "Envoyer des retours",
+  "Submit feedback": "Envoyer un commentaire",
   "This call already exists, would you like to join?": "Cet appel existe déjà, voulez-vous le rejoindre ?",
   "Yes, join call": "Oui, rejoindre l’appel",
   "Waiting for other participants…": "En attente d’autres participants…",
@@ -75,7 +75,7 @@
   "Thanks, we received your feedback!": "Merci, nous avons reçu vos commentaires !",
   "Submitting…": "Envoi…",
   "Submit": "Envoyer",
-  "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "Si vous rencontrez des problèmes, ou vous voulez simplement faire un commentaire, veuillez nous envoyer une courte description ci-dessous.",
+  "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.": "Si vous rencontrez des problèmes, ou vous voulez simplement faire un commentaire, faites-en une courte description ci-dessous.",
   "Feedback": "Commentaires",
   "{{count}} stars|other": "{{count}} favoris",
   "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Nous aimerions avoir vos commentaires afin que nous puissions améliorer votre expérience.</0>",
@@ -116,10 +116,11 @@
   "Ready to join?": "Prêt à rejoindre ?",
   "Select app": "Choisissez l’application",
   "Start new call": "Démarrer un nouvel appel",
-  "Back to recents": "Revenir aux récents",
+  "Back to recents": "Revenir à l’historique des appels",
   "Start video": "Démarrer la vidéo",
   "Stop video": "Arrêter la vidéo",
   "Unmute microphone": "Allumer le microphone",
   "Call not found": "Appel non trouvé",
-  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Les appels sont maintenant chiffrés de bout-en-bout et doivent être créés depuis la page d’accueil. Cela permet d’être sûr que tout le monde utilise la même clé de chiffrement."
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Les appels sont maintenant chiffrés de bout-en-bout et doivent être créés depuis la page d’accueil. Cela permet d’être sûr que tout le monde utilise la même clé de chiffrement.",
+  "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117": "Votre navigateur web ne prend pas en charge le chiffrement de bout-en-bout des médias. Les navigateurs pris en charge sont Chrome, Safari, Firefox >= 117"
 }
