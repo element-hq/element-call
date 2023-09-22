@@ -20,7 +20,7 @@ import { useEffect } from "react";
 /**
  * React hook that inhibits the device from automatically going to sleep.
  */
-export const useWakeLock = () => {
+export function useWakeLock(): void {
   useEffect(() => {
     if ("wakeLock" in navigator) {
       let mounted = true;
@@ -28,7 +28,7 @@ export const useWakeLock = () => {
 
       // The lock is automatically released whenever the window goes invisible,
       // so we need to reacquire it on visiblity changes
-      const onVisiblityChange = async () => {
+      const onVisiblityChange = async (): Promise<void> => {
         if (document.visibilityState === "visible") {
           try {
             lock = await navigator.wakeLock.request("screen");
@@ -57,4 +57,4 @@ export const useWakeLock = () => {
       };
     }
   }, []);
-};
+}

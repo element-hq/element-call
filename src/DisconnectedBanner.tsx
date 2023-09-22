@@ -15,22 +15,22 @@ limitations under the License.
 */
 
 import classNames from "classnames";
-import { HTMLAttributes, ReactNode } from "react";
+import { FC, HTMLAttributes, ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import styles from "./DisconnectedBanner.module.css";
 import { ValidClientState, useClientState } from "./ClientContext";
 
-interface DisconnectedBannerProps extends HTMLAttributes<HTMLElement> {
+interface Props extends HTMLAttributes<HTMLElement> {
   children?: ReactNode;
   className?: string;
 }
 
-export function DisconnectedBanner({
+export const DisconnectedBanner: FC<Props> = ({
   children,
   className,
   ...rest
-}: DisconnectedBannerProps) {
+}) => {
   const { t } = useTranslation();
   const clientState = useClientState();
   let shouldShowBanner = false;
@@ -50,4 +50,4 @@ export function DisconnectedBanner({
       )}
     </>
   );
-}
+};

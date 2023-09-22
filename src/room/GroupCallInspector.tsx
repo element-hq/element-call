@@ -28,7 +28,8 @@ import {
   useContext,
   Dispatch,
   SetStateAction,
-  ReactNode,
+  FC,
+  PropsWithChildren,
 } from "react";
 import ReactJson, { CollapsedFieldProps } from "react-json-view";
 import mermaid from "mermaid";
@@ -72,11 +73,11 @@ const defaultCollapsedFields = [
   "content",
 ];
 
-function shouldCollapse({ name }: CollapsedFieldProps) {
+function shouldCollapse({ name }: CollapsedFieldProps): boolean {
   return name ? defaultCollapsedFields.includes(name) : false;
 }
 
-function getUserName(userId: string) {
+function getUserName(userId: string): string {
   const match = userId.match(/@([^:]+):/);
 
   return match && match.length > 0
@@ -84,7 +85,7 @@ function getUserName(userId: string) {
     : userId.replace(/\W/g, "");
 }
 
-function formatContent(type: string, content: CallEventContent) {
+function formatContent(type: string, content: CallEventContent): string {
   if (type === "m.call.hangup") {
     return `callId: ${content.call_id.slice(-4)} reason: ${
       content.reason
@@ -123,7 +124,7 @@ const dateFormatter = new Intl.DateTimeFormat([], {
   fractionalSecondDigits: 3,
 });
 
-function formatTimestamp(timestamp: number | Date) {
+function formatTimestamp(timestamp: number | Date): string {
   return dateFormatter.format(timestamp);
 }
 
@@ -145,11 +146,9 @@ export const InspectorContext =
     [InspectorContextState, Dispatch<SetStateAction<InspectorContextState>>]
   >(undefined);
 
-export function InspectorContextProvider({
+export const InspectorContextProvider: FC<PropsWithChildren<{}>> = ({
   children,
-}: {
-  children: ReactNode;
-}) {
+}) => {
   // We take the tuple of [currentState, setter] and stick
   // it straight into the context for other things to call
   // the setState method... this feels like a fairly severe
@@ -161,7 +160,7 @@ export function InspectorContextProvider({
       {children}
     </InspectorContext.Provider>
   );
-}
+};
 
 type CallEventContent = {
   ["m.calls"]: {
@@ -192,13 +191,13 @@ interface SequenceDiagramViewerProps {
   events: SequenceDiagramMatrixEvent[];
 }
 
-export function SequenceDiagramViewer({
+export const SequenceDiagramViewer: FC<SequenceDiagramViewerProps> = ({
   localUserId,
   remoteUserIds,
   selectedUserId,
   onSelectUserId,
   events,
-}: SequenceDiagramViewerProps) {
+}) => {
   const mermaidElRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -232,7 +231,7 @@ export function SequenceDiagramViewer({
           className={styles.selectInput}
           label="Remote User"
           selectedKey={selectedUserId}
-          onSelectionChange={(key) => onSelectUserId(key.toString())}
+          onSelectionChange={(key): void => onSelectUserId(key.toString())}
         >
           {remoteUserIds.map((userId) => (
             <Item key={userId}>{userId}</Item>
@@ -243,7 +242,7 @@ export function SequenceDiagramViewer({
       </div>
     </div>
   );
-}
+};
 
 function reducer(
   state: InspectorContextState,
@@ -254,7 +253,7 @@ function reducer(
     callStateEvent?: MatrixEvent;
     memberStateEvents?: MatrixEvent[];
   }
-) {
+): InspectorContextState {
   switch (action.type) {
     case RoomStateEvent.Events: {
       const { event, callStateEvent, memberStateEvents } = action;
@@ -380,7 +379,7 @@ function useGroupCallState(
   });
 
   useEffect(() => {
-    function onUpdateRoomState(event?: MatrixEvent) {
+    function onUpdateRoomState(event?: MatrixEvent): void {
       const callStateEvent = groupCall.room.currentState.getStateEvents(
         "org.matrix.msc3401.call",
         groupCall.groupCallId
@@ -400,13 +399,13 @@ function useGroupCallState(
       otelGroupCallMembership?.onUpdateRoomState(event);
     }
 
-    function onReceivedVoipEvent(event: MatrixEvent) {
+    function onReceivedVoipEvent(event: MatrixEvent): void {
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
 
       otelGroupCallMembership?.onReceivedVoipEvent(event);
     }
 
-    function onSendVoipEvent(event: VoipEvent, call: MatrixCall) {
+    function onSendVoipEvent(event: VoipEvent, call: MatrixCall): void {
       dispatch({ type: CallEvent.SendVoipEvent, rawEvent: event });
 
       otelGroupCallMembership?.onSendEvent(call, event);
@@ -416,19 +415,19 @@ function useGroupCallState(
       newState: CallState,
       _: CallState,
       call: MatrixCall
-    ) {
+    ): void {
       otelGroupCallMembership?.onCallStateChange(call, newState);
     }
 
-    function onCallError(error: CallError, call: MatrixCall) {
+    function onCallError(error: CallError, call: MatrixCall): void {
       otelGroupCallMembership.onCallError(error, call);
     }
 
-    function onGroupCallError(error: GroupCallError) {
+    function onGroupCallError(error: GroupCallError): void {
       otelGroupCallMembership.onGroupCallError(error);
     }
 
-    function onUndecryptableToDevice(event: MatrixEvent) {
+    function onUndecryptableToDevice(event: MatrixEvent): void {
       dispatch({ type: ClientEvent.ReceivedVoipEvent, event });
 
       Sentry.captureMessage("Undecryptable to-device Event");
@@ -478,12 +477,12 @@ interface GroupCallInspectorProps {
   show: boolean;
 }
 
-export function GroupCallInspector({
+export const GroupCallInspector: FC<GroupCallInspectorProps> = ({
   client,
   groupCall,
   otelGroupCallMembership,
   show,
-}: GroupCallInspectorProps) {
+}) => {
   const [currentTab, setCurrentTab] = useState("sequence-diagrams");
   const [selectedUserId, setSelectedUserId] = useState<string>();
   const state = useGroupCallState(client, groupCall, otelGroupCallMembership);
@@ -506,10 +505,12 @@ export function GroupCallInspector({
       className={styles.inspector}
     >
       <div className={styles.toolbar}>
-        <button onClick={() => setCurrentTab("sequence-diagrams")}>
+        <button onClick={(): void => setCurrentTab("sequence-diagrams")}>
           Sequence Diagrams
         </button>
-        <button onClick={() => setCurrentTab("inspector")}>Inspector</button>
+        <button onClick={(): void => setCurrentTab("inspector")}>
+          Inspector
+        </button>
       </div>
       {currentTab === "sequence-diagrams" &&
         state.localUserId &&
@@ -539,4 +540,4 @@ export function GroupCallInspector({
       )}
     </Resizable>
   );
-}
+};

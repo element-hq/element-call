@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback } from "react";
+import { FC, useCallback } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
 
@@ -29,7 +29,7 @@ interface Props {
   roomId?: string;
 }
 
-export function FeedbackSettingsTab({ roomId }: Props) {
+export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
   const { t } = useTranslation();
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
   const sendRageshakeRequest = useRageshakeRequest();
@@ -104,4 +104,4 @@ export function FeedbackSettingsTab({ roomId }: Props) {
       </form>
     </div>
   );
-}
+};

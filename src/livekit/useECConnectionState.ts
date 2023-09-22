@@ -119,7 +119,7 @@ export function useECConnectionState(
         `SFU config changed! URL was ${currentSFUConfig.current?.url} now ${sfuConfig?.url}`
       );
 
-      (async () => {
+      (async (): Promise<void> => {
         setSwitchingFocus(true);
         await livekitRoom?.disconnect();
         setIsInDoConnect(true);

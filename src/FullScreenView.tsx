@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ReactNode, useCallback, useEffect } from "react";
+import { FC, ReactNode, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import classNames from "classnames";
 import { Trans, useTranslation } from "react-i18next";
@@ -32,7 +32,10 @@ interface FullScreenViewProps {
   children: ReactNode;
 }
 
-export function FullScreenView({ className, children }: FullScreenViewProps) {
+export const FullScreenView: FC<FullScreenViewProps> = ({
+  className,
+  children,
+}) => {
   return (
     <div className={classNames(styles.page, className)}>
       <Header>
@@ -46,13 +49,13 @@ export function FullScreenView({ className, children }: FullScreenViewProps) {
       </div>
     </div>
   );
-}
+};
 
 interface ErrorViewProps {
   error: Error;
 }
 
-export function ErrorView({ error }: ErrorViewProps) {
+export const ErrorView: FC<ErrorViewProps> = ({ error }) => {
   const location = useLocation();
   const { t } = useTranslation();
 
@@ -95,9 +98,9 @@ export function ErrorView({ error }: ErrorViewProps) {
       )}
     </FullScreenView>
   );
-}
+};
 
-export function CrashView() {
+export const CrashView: FC = () => {
   const { t } = useTranslation();
 
   const onReload = useCallback(() => {
@@ -126,9 +129,9 @@ export function CrashView() {
       </Button>
     </FullScreenView>
   );
-}
+};
 
-export function LoadingView() {
+export const LoadingView: FC = () => {
   const { t } = useTranslation();
 
   return (
@@ -136,4 +139,4 @@ export function LoadingView() {
       <h1>{t("Loading…")}</h1>
     </FullScreenView>
   );
-}
+};

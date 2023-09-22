@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useState } from "react";
+import { FC, useCallback, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 
@@ -28,7 +28,7 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { Config } from "../config/Config";
 
-export function RoomAuthView() {
+export const RoomAuthView: FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
 
@@ -121,4 +121,4 @@ export function RoomAuthView() {
       </div>
     </>
   );
-}
+};

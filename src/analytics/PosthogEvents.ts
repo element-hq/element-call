@@ -36,18 +36,22 @@ export class CallEndedTracker {
     maxParticipantsCount: 0,
   };
 
-  cacheStartCall(time: Date) {
+  public cacheStartCall(time: Date): void {
     this.cache.startTime = time;
   }
 
-  cacheParticipantCountChanged(count: number) {
+  public cacheParticipantCountChanged(count: number): void {
     this.cache.maxParticipantsCount = Math.max(
       count,
       this.cache.maxParticipantsCount
     );
   }
 
-  track(callId: string, callParticipantsNow: number, sendInstantly: boolean) {
+  public track(
+    callId: string,
+    callParticipantsNow: number,
+    sendInstantly: boolean
+  ): void {
     PosthogAnalytics.instance.trackEvent<CallEnded>(
       {
         eventName: "CallEnded",
@@ -67,7 +71,7 @@ interface CallStarted extends IPosthogEvent {
 }
 
 export class CallStartedTracker {
-  track(callId: string) {
+  public track(callId: string): void {
     PosthogAnalytics.instance.trackEvent<CallStarted>({
       eventName: "CallStarted",
       callId: callId,
@@ -86,19 +90,19 @@ export class SignupTracker {
     signupEnd: new Date(0),
   };
 
-  cacheSignupStart(time: Date) {
+  public cacheSignupStart(time: Date): void {
     this.cache.signupStart = time;
   }
 
-  getSignupEndTime() {
+  public getSignupEndTime(): Date {
     return this.cache.signupEnd;
   }
 
-  cacheSignupEnd(time: Date) {
+  public cacheSignupEnd(time: Date): void {
     this.cache.signupEnd = time;
   }
 
-  track() {
+  public track(): void {
     PosthogAnalytics.instance.trackEvent<Signup>({
       eventName: "Signup",
       signupDuration: Date.now() - this.cache.signupStart.getTime(),
@@ -112,7 +116,7 @@ interface Login extends IPosthogEvent {
 }
 
 export class LoginTracker {
-  track() {
+  public track(): void {
     PosthogAnalytics.instance.trackEvent<Login>({
       eventName: "Login",
     });
@@ -127,7 +131,7 @@ interface MuteMicrophone {
 }
 
 export class MuteMicrophoneTracker {
-  track(targetIsMute: boolean, callId: string) {
+  public track(targetIsMute: boolean, callId: string): void {
     PosthogAnalytics.instance.trackEvent<MuteMicrophone>({
       eventName: "MuteMicrophone",
       targetMuteState: targetIsMute ? "mute" : "unmute",
@@ -143,7 +147,7 @@ interface MuteCamera {
 }
 
 export class MuteCameraTracker {
-  track(targetIsMute: boolean, callId: string) {
+  public track(targetIsMute: boolean, callId: string): void {
     PosthogAnalytics.instance.trackEvent<MuteCamera>({
       eventName: "MuteCamera",
       targetMuteState: targetIsMute ? "mute" : "unmute",
@@ -158,7 +162,7 @@ interface UndecryptableToDeviceEvent {
 }
 
 export class UndecryptableToDeviceEventTracker {
-  track(callId: string) {
+  public track(callId: string): void {
     PosthogAnalytics.instance.trackEvent<UndecryptableToDeviceEvent>({
       eventName: "UndecryptableToDeviceEvent",
       callId,
@@ -174,7 +178,7 @@ interface QualitySurveyEvent {
 }
 
 export class QualitySurveyEventTracker {
-  track(callId: string, feedbackText: string, stars: number) {
+  public track(callId: string, feedbackText: string, stars: number): void {
     PosthogAnalytics.instance.trackEvent<QualitySurveyEvent>({
       eventName: "QualitySurvey",
       callId,
@@ -190,7 +194,7 @@ interface CallDisconnectedEvent {
 }
 
 export class CallDisconnectedEventTracker {
-  track(reason?: DisconnectReason) {
+  public track(reason?: DisconnectReason): void {
     PosthogAnalytics.instance.trackEvent<CallDisconnectedEvent>({
       eventName: "CallDisconnected",
       reason,

@@ -31,7 +31,7 @@ export interface GroupCallRoom {
 }
 const tsCache: { [index: string]: number } = {};
 
-function getLastTs(client: MatrixClient, r: Room) {
+function getLastTs(client: MatrixClient, r: Room): number {
   if (tsCache[r.roomId]) {
     return tsCache[r.roomId];
   }
@@ -82,7 +82,7 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
   const [rooms, setRooms] = useState<GroupCallRoom[]>([]);
 
   useEffect(() => {
-    function updateRooms() {
+    function updateRooms(): void {
       if (!client.groupCallEventHandler) {
         return;
       }

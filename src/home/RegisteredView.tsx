@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useState, useCallback, FormEvent, FormEventHandler } from "react";
+import { useState, useCallback, FormEvent, FormEventHandler, FC } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { randomString } from "matrix-js-sdk/src/randomstring";
@@ -48,7 +48,7 @@ interface Props {
   client: MatrixClient;
 }
 
-export function RegisteredView({ client }: Props) {
+export const RegisteredView: FC<Props> = ({ client }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
@@ -72,7 +72,7 @@ export function RegisteredView({ client }: Props) {
           ? sanitiseRoomNameInput(roomNameData)
           : "";
 
-      async function submit() {
+      async function submit(): Promise<void> {
         setError(undefined);
         setLoading(true);
 
@@ -176,4 +176,4 @@ export function RegisteredView({ client }: Props) {
       />
     </>
   );
-}
+};

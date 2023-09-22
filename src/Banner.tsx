@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ReactNode } from "react";
+import { FC, ReactNode } from "react";
 
 import styles from "./Banner.module.css";
 
@@ -22,6 +22,6 @@ interface Props {
   children: ReactNode;
 }
 
-export const Banner = ({ children }: Props) => {
+export const Banner: FC<Props> = ({ children }) => {
   return <div className={styles.banner}>{children}</div>;
 };

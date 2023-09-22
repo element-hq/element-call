@@ -156,7 +156,7 @@ export function useLiveKit(
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
     if (room !== undefined && connectionState === ConnectionState.Connected) {
-      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice) => {
+      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice): void => {
         const id = device.selectedId;
         if (id !== undefined && room.getActiveDevice(kind) !== id) {
           room

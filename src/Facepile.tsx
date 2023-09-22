@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { HTMLAttributes } from "react";
+import { FC, HTMLAttributes } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useTranslation } from "react-i18next";
@@ -30,14 +30,14 @@ interface Props extends HTMLAttributes<HTMLDivElement> {
   size?: Size | number;
 }
 
-export function Facepile({
+export const Facepile: FC<Props> = ({
   className,
   client,
   members,
   max = 3,
   size = Size.XS,
   ...rest
-}: Props) {
+}) => {
   const { t } = useTranslation();
 
   const displayedMembers = members.slice(0, max);
@@ -63,4 +63,4 @@ export function Facepile({
       })}
     </AvatarStack>
   );
-}
+};

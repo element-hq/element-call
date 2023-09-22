@@ -40,7 +40,7 @@ export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
 
 export class CryptoStoreIntegrityError extends Error {
-  constructor() {
+  public constructor() {
     super("Crypto store data was expected, but none was found");
   }
 }
@@ -52,13 +52,13 @@ const SYNC_STORE_NAME = "element-call-sync";
 // (It's a good opportunity to make the database names consistent.)
 const CRYPTO_STORE_NAME = "element-call-crypto";
 
-function waitForSync(client: MatrixClient) {
+function waitForSync(client: MatrixClient): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const onSync = (
       state: SyncState,
       _old: SyncState | null,
       data?: ISyncStateData
-    ) => {
+    ): void => {
       if (state === "PREPARED") {
         client.removeListener(ClientEvent.Sync, onSync);
         resolve();
@@ -108,7 +108,7 @@ export async function initClient(
       // Chrome supports it. (It bundles them fine in production mode.)
       workerFactory: import.meta.env.DEV
         ? undefined
-        : () => new IndexedDBWorker(),
+        : (): Worker => new IndexedDBWorker(),
     });
   } else if (localStorage) {
     baseOpts.store = new MemoryStore({ localStorage });
@@ -307,7 +307,7 @@ export async function createRoom(
 
   // Wait for the room to arrive
   await new Promise<void>((resolve, reject) => {
-    const onRoom = async (room: Room) => {
+    const onRoom = async (room: Room): Promise<void> => {
       if (room.roomId === (await createPromise).room_id) {
         resolve();
         cleanUp();
@@ -318,7 +318,7 @@ export async function createRoom(
       cleanUp();
     });
 
-    const cleanUp = () => {
+    const cleanUp = (): void => {
       client.off(ClientEvent.Room, onRoom);
     };
     client.on(ClientEvent.Room, onRoom);

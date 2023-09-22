@@ -14,7 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MutableRefObject, PointerEvent, useCallback, useRef } from "react";
+import {
+  MutableRefObject,
+  PointerEvent,
+  ReactNode,
+  useCallback,
+  useRef,
+} from "react";
 import { useListBox, useOption, AriaListBoxOptions } from "@react-aria/listbox";
 import { ListState } from "@react-stately/list";
 import { Node } from "@react-types/shared";
@@ -35,7 +41,7 @@ export function ListBox<T>({
   className,
   listBoxRef,
   ...rest
-}: ListBoxProps<T>) {
+}: ListBoxProps<T>): ReactNode {
   const ref = useRef<HTMLUListElement>(null);
 
   const listRef = listBoxRef ?? ref;
@@ -66,7 +72,7 @@ interface OptionProps<T> {
   item: Node<T>;
 }
 
-function Option<T>({ item, state, className }: OptionProps<T>) {
+function Option<T>({ item, state, className }: OptionProps<T>): ReactNode {
   const ref = useRef(null);
   const { optionProps, isSelected, isFocused, isDisabled } = useOption(
     { key: item.key },

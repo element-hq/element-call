@@ -72,7 +72,7 @@ export const useInteractiveRegistration = (): {
             password,
             auth: auth || undefined,
           }),
-        stateUpdated: (nextStage, status) => {
+        stateUpdated: (nextStage, status): void => {
           if (status.error) {
             throw new Error(status.error);
           }
@@ -88,7 +88,7 @@ export const useInteractiveRegistration = (): {
             });
           }
         },
-        requestEmailToken: (...args) => {
+        requestEmailToken: (): Promise<{ sid: string }> => {
           return Promise.resolve({ sid: "dummy" });
         },
       });
