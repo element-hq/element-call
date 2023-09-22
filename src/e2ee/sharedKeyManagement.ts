@@ -15,10 +15,11 @@ limitations under the License.
 */
 
 import { useEffect, useMemo } from "react";
+import { Room } from "matrix-js-sdk/src/models/room";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { useEnableE2EE } from "../settings/useSetting";
 import { useLocalStorage } from "../useLocalStorage";
-import { useClient } from "../ClientContext";
 import { PASSWORD_STRING, useUrlParams } from "../UrlParams";
 import { widget } from "../widget";
 
@@ -83,14 +84,19 @@ export const useManageRoomSharedKey = (roomId: string): string | null => {
   return e2eeSharedKey ?? urlPassword;
 };
 
-export const useIsRoomE2EE = (roomId: string): boolean | null => {
-  const { client } = useClient();
-  const room = useMemo(() => client?.getRoom(roomId) ?? null, [roomId, client]);
+export const useIsRoomE2EE = (room?: Room): boolean | null => {
   // For now, rooms in widget mode are never considered encrypted.
   // In the future, when widget mode gains encryption support, then perhaps we
   // should inspect the e2eEnabled URL parameter here?
-  return useMemo(
-    () => widget === null && (room === null || !room.getCanonicalAlias()),
+  const canonAlias = useMemo(
+    () => (room ? room.getCanonicalAlias() : null),
     [room]
   );
+
+  const result = room ? !canonAlias && !widget : null;
+  logger.debug(
+    `Room ${room?.roomId} has canon alias ${canonAlias}. Is E2EE: ${result}`
+  );
+
+  return result;
 };
