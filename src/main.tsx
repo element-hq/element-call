@@ -23,13 +23,19 @@ import "matrix-js-sdk/src/browser-index";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserHistory } from "history";
-
 import "./index.css";
+import { setLogLevel as setLKLogLevel } from "livekit-client";
+
 import App from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
 
 initRageshake();
+// set livekit's log level: we do this after initialising rageshakes because
+// we need rageshake to do its monkey patching first, so the livekit
+// logger gets the patched log funxction, so it picks up livekit's
+// logs.
+setLKLogLevel("debug");
 
 console.info(`Element Call ${import.meta.env.VITE_APP_VERSION || "dev"}`);
 
