@@ -25,9 +25,10 @@ import { useIsRoomE2EE, useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 import { getAbsoluteRoomUrl } from "../matrix-utils";
 import styles from "./AppSelectionModal.module.css";
 import { editFragmentQuery } from "../UrlParams";
+import { useClient } from "../ClientContext";
 
 interface Props {
-  roomId: string | null;
+  roomId: string | undefined;
 }
 
 export const AppSelectionModal: FC<Props> = ({ roomId }) => {
@@ -43,8 +44,11 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
     [setOpen]
   );
 
+  const { client } = useClient();
+  const room = useMemo(() => client?.getRoom(roomId) ?? null, [roomId, client]);
+
   const roomSharedKey = useRoomSharedKey(roomId ?? "");
-  const roomIsEncrypted = useIsRoomE2EE(roomId ?? "");
+  const roomIsEncrypted = useIsRoomE2EE(room ?? undefined);
   if (roomIsEncrypted && roomSharedKey === undefined) {
     logger.error(
       "Generating app redirect URL for encrypted room but don't have key available!"
@@ -58,7 +62,7 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
     // we got in our own URL and use that, but it's not a string that a human
     // ever sees so it's somewhat redundant. We just don't pass a name.
     const url = new URL(
-      roomId === null
+      !roomId
         ? window.location.href
         : getAbsoluteRoomUrl(roomId, undefined, roomSharedKey ?? undefined)
     );
