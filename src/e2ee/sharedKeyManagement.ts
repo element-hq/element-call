@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { useEffect, useMemo } from "react";
-import { Room } from "matrix-js-sdk";
+import { Room } from "matrix-js-sdk/src/models/room";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { useEnableE2EE } from "../settings/useSetting";
