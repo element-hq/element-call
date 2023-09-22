@@ -61,20 +61,41 @@ export const useLoadGroupCall = (
 
   useEffect(() => {
     const fetchOrCreateRoom = async (): Promise<Room> => {
-      // We lowercase the localpart when we create the room, so we must lowercase
-      // it here too (we just do the whole alias). We can't do the same to room IDs
-      // though.
-      const sanitisedIdOrAlias =
-        roomIdOrAlias[0] === "#" ? roomIdOrAlias.toLowerCase() : roomIdOrAlias;
+      let room: Room | null = null;
+      if (roomIdOrAlias[0] === "#") {
+        // We lowercase the localpart when we create the room, so we must lowercase
+        // it here too (we just do the whole alias). We can't do the same to room IDs
+        // though.
+        // Also, we explicitly look up the room alias here. We previously just tried to
+        // join anyway but the js-sdk recreates the room if you pass the alias for a
+        // room you're already joined to (which it probably ought not to).
+        const lookupResult = await client.getRoomIdForAlias(
+          roomIdOrAlias.toLowerCase()
+        );
+        logger.info(`${roomIdOrAlias} resolved to ${lookupResult.room_id}`);
+        room = client.getRoom(lookupResult.room_id);
+        if (!room) {
+          logger.info(`Room ${lookupResult.room_id} not found, joining.`);
+          room = await client.joinRoom(lookupResult.room_id, {
+            viaServers: lookupResult.servers,
+          });
+        } else {
+          logger.info(
+            `Already in room ${lookupResult.room_id}, not rejoining.`
+          );
+        }
+      } else {
+        // room IDs we just try to join by their ID, which will not work in the
+        // general case without providing some servers to join via. We could provide
+        // our own server, but in practice that is implicit.
+        room = await client.joinRoom(roomIdOrAlias);
+      }
 
-      const room = await client.joinRoom(sanitisedIdOrAlias, {
-        viaServers,
-      });
       logger.info(
-        `Joined ${sanitisedIdOrAlias}, waiting room to be ready for group calls`
+        `Joined ${roomIdOrAlias}, waiting room to be ready for group calls`
       );
       await client.waitUntilRoomReadyForGroupCalls(room.roomId);
-      logger.info(`${sanitisedIdOrAlias}, is ready for group calls`);
+      logger.info(`${roomIdOrAlias}, is ready for group calls`);
       return room;
     };
 
