@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useState } from "react";
+import { FC, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -30,7 +30,7 @@ interface DebugLog {
   remoteUserIds: string[];
 }
 
-export function SequenceDiagramViewerPage() {
+export const SequenceDiagramViewerPage: FC = () => {
   const { t } = useTranslation();
   usePageTitle(t("Inspector"));
 
@@ -69,4 +69,4 @@ export function SequenceDiagramViewerPage() {
       )}
     </div>
   );
-}
+};

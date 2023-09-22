@@ -43,13 +43,13 @@ export type OpenIDClientParts = Pick<
 export function useOpenIDSFU(
   client: OpenIDClientParts,
   rtcSession: MatrixRTCSession
-) {
+): SFUConfig | undefined {
   const [sfuConfig, setSFUConfig] = useState<SFUConfig | undefined>(undefined);
 
   const activeFocus = useActiveFocus(rtcSession);
 
   useEffect(() => {
-    (async () => {
+    (async (): Promise<void> => {
       const sfuConfig = activeFocus
         ? await getSFUConfigWithOpenID(client, activeFocus)
         : undefined;

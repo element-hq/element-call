@@ -16,6 +16,7 @@ limitations under the License.
 
 import { PressEvent } from "@react-types/shared";
 import { useTranslation } from "react-i18next";
+import { FC } from "react";
 
 import { Modal } from "../Modal";
 import { Button } from "../button";
@@ -28,7 +29,11 @@ interface Props {
   onJoin: (e: PressEvent) => void;
 }
 
-export function JoinExistingCallModal({ onJoin, open, onDismiss }: Props) {
+export const JoinExistingCallModal: FC<Props> = ({
+  onJoin,
+  open,
+  onDismiss,
+}) => {
   const { t } = useTranslation();
 
   return (
@@ -42,4 +47,4 @@ export function JoinExistingCallModal({ onJoin, open, onDismiss }: Props) {
       </FieldRow>
     </Modal>
   );
-}
+};

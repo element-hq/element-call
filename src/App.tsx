@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Suspense, useEffect, useState } from "react";
+import { FC, Suspense, useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Switch,
@@ -43,7 +43,7 @@ interface BackgroundProviderProps {
   children: JSX.Element;
 }
 
-const BackgroundProvider = ({ children }: BackgroundProviderProps) => {
+const BackgroundProvider: FC<BackgroundProviderProps> = ({ children }) => {
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -63,7 +63,7 @@ interface AppProps {
   history: History;
 }
 
-export default function App({ history }: AppProps) {
+export const App: FC<AppProps> = ({ history }) => {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -116,4 +116,4 @@ export default function App({ history }: AppProps) {
       </BackgroundProvider>
     </Router>
   );
-}
+};

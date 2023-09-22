@@ -33,13 +33,13 @@ interface HeaderProps extends HTMLAttributes<HTMLElement> {
   className?: string;
 }
 
-export function Header({ children, className, ...rest }: HeaderProps) {
+export const Header: FC<HeaderProps> = ({ children, className, ...rest }) => {
   return (
     <header className={classNames(styles.header, className)} {...rest}>
       {children}
     </header>
   );
-}
+};
 
 interface LeftNavProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
@@ -47,12 +47,12 @@ interface LeftNavProps extends HTMLAttributes<HTMLElement> {
   hideMobile?: boolean;
 }
 
-export function LeftNav({
+export const LeftNav: FC<LeftNavProps> = ({
   children,
   className,
   hideMobile,
   ...rest
-}: LeftNavProps) {
+}) => {
   return (
     <div
       className={classNames(
@@ -66,7 +66,7 @@ export function LeftNav({
       {children}
     </div>
   );
-}
+};
 
 interface RightNavProps extends HTMLAttributes<HTMLElement> {
   children?: ReactNode;
@@ -74,12 +74,12 @@ interface RightNavProps extends HTMLAttributes<HTMLElement> {
   hideMobile?: boolean;
 }
 
-export function RightNav({
+export const RightNav: FC<RightNavProps> = ({
   children,
   className,
   hideMobile,
   ...rest
-}: RightNavProps) {
+}) => {
   return (
     <div
       className={classNames(
@@ -93,13 +93,13 @@ export function RightNav({
       {children}
     </div>
   );
-}
+};
 
 interface HeaderLogoProps {
   className?: string;
 }
 
-export function HeaderLogo({ className }: HeaderLogoProps) {
+export const HeaderLogo: FC<HeaderLogoProps> = ({ className }) => {
   const { t } = useTranslation();
 
   return (
@@ -111,7 +111,7 @@ export function HeaderLogo({ className }: HeaderLogoProps) {
       <Logo />
     </Link>
   );
-}
+};
 
 interface RoomHeaderInfoProps {
   id: string;

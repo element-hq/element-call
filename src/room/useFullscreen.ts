@@ -22,11 +22,11 @@ import { TileDescriptor } from "../video-grid/VideoGrid";
 import { useReactiveState } from "../useReactiveState";
 import { useEventTarget } from "../useEvents";
 
-const isFullscreen = () =>
+const isFullscreen = (): boolean =>
   Boolean(document.fullscreenElement) ||
   Boolean(document.webkitFullscreenElement);
 
-function enterFullscreen() {
+function enterFullscreen(): void {
   if (document.body.requestFullscreen) {
     document.body.requestFullscreen();
   } else if (document.body.webkitRequestFullscreen) {
@@ -36,7 +36,7 @@ function enterFullscreen() {
   }
 }
 
-function exitFullscreen() {
+function exitFullscreen(): void {
   if (document.exitFullscreen) {
     document.exitFullscreen();
   } else if (document.webkitExitFullscreen) {
@@ -46,7 +46,7 @@ function exitFullscreen() {
   }
 }
 
-function useFullscreenChange(onFullscreenChange: () => void) {
+function useFullscreenChange(onFullscreenChange: () => void): void {
   useEventTarget(document.body, "fullscreenchange", onFullscreenChange);
   useEventTarget(document.body, "webkitfullscreenchange", onFullscreenChange);
 }

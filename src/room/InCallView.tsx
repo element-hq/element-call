@@ -27,7 +27,16 @@ import { ConnectionState, Room, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room as MatrixRoom } from "matrix-js-sdk/src/models/room";
-import { Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FC,
+  ReactNode,
+  Ref,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
 import { logger } from "matrix-js-sdk/src/logger";
@@ -91,7 +100,7 @@ export interface ActiveCallProps
   e2eeConfig?: E2EEConfig;
 }
 
-export function ActiveCall(props: ActiveCallProps) {
+export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
   const { livekitRoom, connState } = useLiveKit(
     props.muteStates,
@@ -112,7 +121,7 @@ export function ActiveCall(props: ActiveCallProps) {
       <InCallView {...props} livekitRoom={livekitRoom} connState={connState} />
     </RoomContext.Provider>
   );
-}
+};
 
 export interface InCallViewProps {
   client: MatrixClient;
@@ -128,7 +137,7 @@ export interface InCallViewProps {
   onShareClick: (() => void) | null;
 }
 
-export function InCallView({
+export const InCallView: FC<InCallViewProps> = ({
   client,
   matrixInfo,
   rtcSession,
@@ -140,7 +149,7 @@ export function InCallView({
   otelGroupCallMembership,
   connState,
   onShareClick,
-}: InCallViewProps) {
+}) => {
   const { t } = useTranslation();
   usePreventScroll();
   useWakeLock();
@@ -211,13 +220,13 @@ export function InCallView({
 
   useEffect(() => {
     if (widget) {
-      const onTileLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
+      const onTileLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
         setLayout("grid");
-        await widget!.api.transport.reply(ev.detail, {});
+        widget!.api.transport.reply(ev.detail, {});
       };
-      const onSpotlightLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
+      const onSpotlightLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
         setLayout("spotlight");
-        await widget!.api.transport.reply(ev.detail, {});
+        widget!.api.transport.reply(ev.detail, {});
       };
 
       widget.lazyActions.on(ElementWidgetActions.TileLayout, onTileLayout);
@@ -296,7 +305,7 @@ export function InCallView({
         disableAnimations={prefersReducedMotion || isSafari}
         layoutStates={layoutStates}
       >
-        {(props) => (
+        {(props): ReactNode => (
           <VideoTile
             maximised={false}
             fullscreen={false}
@@ -444,7 +453,7 @@ export function InCallView({
       />
     </div>
   );
-}
+};
 
 function findMatrixMember(
   room: MatrixRoom,

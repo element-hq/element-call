@@ -35,7 +35,7 @@ export function useCallViewKeyboardShortcuts(
   toggleMicrophoneMuted: () => void,
   toggleLocalVideoMuted: () => void,
   setMicrophoneMuted: (muted: boolean) => void
-) {
+): void {
   const spacebarHeld = useRef(false);
 
   // These event handlers are set on the window because we want users to be able

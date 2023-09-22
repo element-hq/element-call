@@ -78,7 +78,7 @@ export interface SparseGrid {
 export function getPaths(
   g: SparseGrid,
   dest: number,
-  avoid: (cell: number) => boolean = () => false
+  avoid: (cell: number) => boolean = (): boolean => false
 ): (number | null)[] {
   const destRow = row(dest, g);
   const destColumn = column(dest, g);
@@ -91,7 +91,7 @@ export function getPaths(
   edges[dest] = null;
   const heap = new TinyQueue([dest], (i) => distances[i]);
 
-  const visit = (curr: number, via: number, distanceVia: number) => {
+  const visit = (curr: number, via: number, distanceVia: number): void => {
     if (distanceVia < distances[curr]) {
       distances[curr] = distanceVia;
       edges[curr] = via;
@@ -128,7 +128,7 @@ export function getPaths(
   return edges;
 }
 
-const is1By1 = (c: Cell) => c.columns === 1 && c.rows === 1;
+const is1By1 = (c: Cell): boolean => c.columns === 1 && c.rows === 1;
 
 const findLast1By1Index = (g: SparseGrid): number | null =>
   findLastIndex(g.cells, (c) => c !== undefined && is1By1(c));
@@ -257,7 +257,7 @@ function getNextGap(
  * along the way.
  * Precondition: the destination area must consist of only 1×1 tiles.
  */
-function moveTileUnchecked(g: SparseGrid, from: number, to: number) {
+function moveTileUnchecked(g: SparseGrid, from: number, to: number): void {
   const tile = g.cells[from]!;
   const fromEnd = areaEnd(from, tile.columns, tile.rows, g);
   const toEnd = areaEnd(to, tile.columns, tile.rows, g);
@@ -333,7 +333,7 @@ function pushTileUp(
   g: SparseGrid,
   from: number,
   rows: number,
-  avoid: (cell: number) => boolean = () => false
+  avoid: (cell: number) => boolean = (): boolean => false
 ): number {
   const tile = g.cells[from]!;
 
@@ -359,7 +359,7 @@ function pushTileUp(
   return 0;
 }
 
-function trimTrailingGaps(g: SparseGrid) {
+function trimTrailingGaps(g: SparseGrid): void {
   // Shrink the array to remove trailing gaps
   const newLength = (findLastIndex(g.cells, (c) => c !== undefined) ?? -1) + 1;
   if (newLength !== g.cells.length) g.cells = g.cells.slice(0, newLength);
@@ -485,7 +485,7 @@ export function fillGaps(
 export function fillGaps(
   g: SparseGrid,
   packLargeTiles = true,
-  ignoreGap: (cell: number) => boolean = () => false
+  ignoreGap: (cell: number) => boolean = (): boolean => false
 ): SparseGrid {
   const lastGap = findLastIndex(
     g.cells,
@@ -785,7 +785,11 @@ export function setTileSize<G extends Grid | SparseGrid>(
     gridWithoutTile.cells[i] = undefined;
   });
 
-  const placeTile = (to: number, toEnd: number, grid: Grid | SparseGrid) => {
+  const placeTile = (
+    to: number,
+    toEnd: number,
+    grid: Grid | SparseGrid
+  ): void => {
     forEachCellInArea(to, toEnd, grid, (_c, i) => {
       grid.cells[i] = {
         item: fromCell.item,
@@ -904,7 +908,7 @@ export function resize(g: Grid, columns: number): Grid {
 /**
  * Promotes speakers to the first page of the grid.
  */
-export function promoteSpeakers(g: SparseGrid) {
+export function promoteSpeakers(g: SparseGrid): void {
   // This is all a bit of a hack right now, because we don't know if the designs
   // will stick with this approach in the long run
   // We assume that 4 rows are probably about 1 page

@@ -360,7 +360,7 @@ export function useRageshakeRequestModal(
   useEffect(() => {
     if (!client) return;
 
-    const onEvent = (event: MatrixEvent) => {
+    const onEvent = (event: MatrixEvent): void => {
       const type = event.getType();
 
       if (

@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import { forwardRef } from "react";
+import { FC, forwardRef } from "react";
 import { PressEvent } from "@react-types/shared";
 import classNames from "classnames";
 import { useButton } from "@react-aria/button";
@@ -135,14 +135,11 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
   }
 );
 
-export function MicButton({
-  muted,
-  ...rest
-}: {
+export const MicButton: FC<{
   muted: boolean;
   // TODO: add all props for <Button>
   [index: string]: unknown;
-}) {
+}> = ({ muted, ...rest }) => {
   const { t } = useTranslation();
   const Icon = muted ? MicOffSolidIcon : MicOnSolidIcon;
   const label = muted ? t("Unmute microphone") : t("Mute microphone");
@@ -154,16 +151,13 @@ export function MicButton({
       </Button>
     </Tooltip>
   );
-}
+};
 
-export function VideoButton({
-  muted,
-  ...rest
-}: {
+export const VideoButton: FC<{
   muted: boolean;
   // TODO: add all props for <Button>
   [index: string]: unknown;
-}) {
+}> = ({ muted, ...rest }) => {
   const { t } = useTranslation();
   const Icon = muted ? VideoCallOffIcon : VideoCallIcon;
   const label = muted ? t("Start video") : t("Stop video");
@@ -175,18 +169,14 @@ export function VideoButton({
       </Button>
     </Tooltip>
   );
-}
+};
 
-export function ScreenshareButton({
-  enabled,
-  className,
-  ...rest
-}: {
+export const ScreenshareButton: FC<{
   enabled: boolean;
   className?: string;
   // TODO: add all props for <Button>
   [index: string]: unknown;
-}) {
+}> = ({ enabled, className, ...rest }) => {
   const { t } = useTranslation();
   const label = enabled ? t("Sharing screen") : t("Share screen");
 
@@ -197,16 +187,13 @@ export function ScreenshareButton({
       </Button>
     </Tooltip>
   );
-}
+};
 
-export function HangupButton({
-  className,
-  ...rest
-}: {
+export const HangupButton: FC<{
   className?: string;
   // TODO: add all props for <Button>
   [index: string]: unknown;
-}) {
+}> = ({ className, ...rest }) => {
   const { t } = useTranslation();
 
   return (
@@ -220,16 +207,13 @@ export function HangupButton({
       </Button>
     </Tooltip>
   );
-}
+};
 
-export function SettingsButton({
-  className,
-  ...rest
-}: {
+export const SettingsButton: FC<{
   className?: string;
   // TODO: add all props for <Button>
   [index: string]: unknown;
-}) {
+}> = ({ className, ...rest }) => {
   const { t } = useTranslation();
 
   return (
@@ -239,7 +223,7 @@ export function SettingsButton({
       </Button>
     </Tooltip>
   );
-}
+};
 
 interface AudioButtonProps extends Omit<Props, "variant"> {
   /**
@@ -248,7 +232,7 @@ interface AudioButtonProps extends Omit<Props, "variant"> {
   volume: number;
 }
 
-export function AudioButton({ volume, ...rest }: AudioButtonProps) {
+export const AudioButton: FC<AudioButtonProps> = ({ volume, ...rest }) => {
   const { t } = useTranslation();
 
   return (
@@ -258,16 +242,16 @@ export function AudioButton({ volume, ...rest }: AudioButtonProps) {
       </Button>
     </Tooltip>
   );
-}
+};
 
 interface FullscreenButtonProps extends Omit<Props, "variant"> {
   fullscreen?: boolean;
 }
 
-export function FullscreenButton({
+export const FullscreenButton: FC<FullscreenButtonProps> = ({
   fullscreen,
   ...rest
-}: FullscreenButtonProps) {
+}) => {
   const { t } = useTranslation();
   const Icon = fullscreen ? FullscreenExit : Fullscreen;
   const label = fullscreen ? t("Exit full screen") : t("Full screen");
@@ -279,4 +263,4 @@ export function FullscreenButton({
       </Button>
     </Tooltip>
   );
-}
+};

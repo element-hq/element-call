@@ -17,6 +17,7 @@ limitations under the License.
 import {
   ComponentProps,
   Key,
+  MutableRefObject,
   ReactNode,
   Ref,
   useCallback,
@@ -112,7 +113,7 @@ export function useVideoGridLayout(hasScreenshareFeeds: boolean): {
 
 const GAP = 8;
 
-function useIsMounted() {
+function useIsMounted(): MutableRefObject<boolean> {
   const isMountedRef = useRef<boolean>(false);
 
   useEffect(() => {
@@ -478,7 +479,7 @@ function centerTiles(
   gridHeight: number,
   offsetLeft: number,
   offsetTop: number
-) {
+): TilePosition[] {
   const bounds = getSubGridBoundingBox(positions);
 
   const leftOffset = Math.round((gridWidth - bounds.width) / 2) + offsetLeft;
@@ -493,7 +494,7 @@ function applyTileOffsets(
   positions: TilePosition[],
   leftOffset: number,
   topOffset: number
-) {
+): TilePosition[] {
   for (const position of positions) {
     position.x += leftOffset;
     position.y += topOffset;
@@ -623,7 +624,7 @@ function getSubGridPositions(
   tileAspectRatio: number,
   gridWidth: number,
   gridHeight: number
-) {
+): TilePosition[] {
   if (tileCount === 0) {
     return [];
   }
@@ -726,7 +727,11 @@ function displayedTileCount(
 
 // Sets the 'order' property on tiles based on the layout param and
 // other properties of the tiles, eg. 'focused' and 'presenter'
-function reorderTiles<T>(tiles: Tile<T>[], layout: Layout, displayedTile = -1) {
+function reorderTiles<T>(
+  tiles: Tile<T>[],
+  layout: Layout,
+  displayedTile = -1
+): void {
   // We use a special layout for 1:1 to always put the local tile first.
   // We only do this if there are two tiles (obviously) and exactly one
   // of them is local: during startup we can have tiles from other users
@@ -841,7 +846,7 @@ export function VideoGrid<T>({
   layout,
   disableAnimations,
   children,
-}: VideoGridProps<T>) {
+}: VideoGridProps<T>): ReactNode {
   // Place the PiP in the bottom right corner by default
   const [pipXRatio, setPipXRatio] = useState(1);
   const [pipYRatio, setPipYRatio] = useState(1);
@@ -1208,7 +1213,7 @@ export function VideoGrid<T>({
       // @ts-ignore
       event,
     }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
-  ) => {
+  ): void => {
     event.preventDefault();
 
     if (tap) {

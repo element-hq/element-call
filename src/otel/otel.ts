@@ -36,7 +36,7 @@ export class ElementCallOpenTelemetry {
   private otlpExporter?: OTLPTraceExporter;
   public readonly rageshakeProcessor?: RageshakeSpanProcessor;
 
-  static globalInit(): void {
+  public static globalInit(): void {
     const config = Config.get();
     // we always enable opentelemetry in general. We only enable the OTLP
     // collector if a URL is defined (and in future if another setting is defined)
@@ -55,11 +55,11 @@ export class ElementCallOpenTelemetry {
     }
   }
 
-  static get instance(): ElementCallOpenTelemetry {
+  public static get instance(): ElementCallOpenTelemetry {
     return sharedInstance;
   }
 
-  constructor(
+  private constructor(
     collectorUrl: string | undefined,
     rageshakeUrl: string | undefined
   ) {

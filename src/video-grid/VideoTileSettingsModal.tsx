@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import React, { ChangeEvent, useState } from "react";
+import { ChangeEvent, FC, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RemoteParticipant, Track } from "livekit-client";
 
@@ -29,7 +29,7 @@ interface LocalVolumeProps {
   content: TileContent;
 }
 
-const LocalVolume: React.FC<LocalVolumeProps> = ({
+const LocalVolume: FC<LocalVolumeProps> = ({
   participant,
   content,
 }: LocalVolumeProps) => {
@@ -42,7 +42,7 @@ const LocalVolume: React.FC<LocalVolumeProps> = ({
     participant.getVolume(source) ?? 0
   );
 
-  const onLocalVolumeChanged = (event: ChangeEvent<HTMLInputElement>) => {
+  const onLocalVolumeChanged = (event: ChangeEvent<HTMLInputElement>): void => {
     const value: number = +event.target.value;
     setLocalVolume(value);
     participant.setVolume(value, source);
@@ -72,7 +72,11 @@ interface Props {
   onDismiss: () => void;
 }
 
-export const VideoTileSettingsModal = ({ data, open, onDismiss }: Props) => {
+export const VideoTileSettingsModal: FC<Props> = ({
+  data,
+  open,
+  onDismiss,
+}) => {
   const { t } = useTranslation();
 
   return (

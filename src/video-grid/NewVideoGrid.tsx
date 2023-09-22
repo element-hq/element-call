@@ -81,7 +81,7 @@ export function NewVideoGrid<T>({
   disableAnimations,
   layoutStates,
   children,
-}: Props<T>) {
+}: Props<T>): ReactNode {
   // Overview: This component lays out tiles by rendering an invisible template
   // grid of "slots" for tiles to go in. Once rendered, it uses the DOM API to
   // get the dimensions of each slot, feeding these numbers back into
@@ -210,7 +210,7 @@ export function NewVideoGrid<T>({
     springRef.start();
   }, [tiles, springRef]);
 
-  const animateDraggedTile = (endOfGesture: boolean) => {
+  const animateDraggedTile = (endOfGesture: boolean): void => {
     const { tileId, tileX, tileY, cursorX, cursorY } = dragState.current!;
     const tile = tiles.find((t) => t.item.id === tileId)!;
 
@@ -226,7 +226,8 @@ export function NewVideoGrid<T>({
               y: tile.y,
               width: tile.width,
               height: tile.height,
-              immediate: disableAnimations || ((key) => key === "zIndex"),
+              immediate:
+                disableAnimations || ((key): boolean => key === "zIndex"),
               // Allow the tile's position to settle before pushing its
               // z-index back down
               delay: (key) => (key === "zIndex" ? 500 : 0),
@@ -239,7 +240,8 @@ export function NewVideoGrid<T>({
               y: tileY,
               immediate:
                 disableAnimations ||
-                ((key) => key === "zIndex" || key === "x" || key === "y"),
+                ((key): boolean =>
+                  key === "zIndex" || key === "x" || key === "y"),
             }
       );
 
@@ -286,7 +288,7 @@ export function NewVideoGrid<T>({
       // @ts-ignore
       last,
     }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
-  ) => {
+  ): void => {
     if (tap) {
       const now = Date.now();
 

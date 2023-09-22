@@ -45,9 +45,9 @@ export class ObjectFlattener {
     return flatObject;
   }
 
-  static flattenSummaryStatsReportObject(
+  public static flattenSummaryStatsReportObject(
     statsReport: GroupCallStatsReport<SummaryStatsReport>
-  ) {
+  ): Attributes {
     const flatObject = {};
     ObjectFlattener.flattenObjectRecursive(
       statsReport.report,

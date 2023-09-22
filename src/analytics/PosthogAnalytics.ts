@@ -117,7 +117,7 @@ export class PosthogAnalytics {
     return this.internalInstance;
   }
 
-  constructor(private readonly posthog: PostHog) {
+  private constructor(private readonly posthog: PostHog) {
     const posthogConfig: PosthogSettings = {
       project_api_key: Config.get().posthog?.api_key,
       api_host: Config.get().posthog?.api_host,
@@ -183,7 +183,7 @@ export class PosthogAnalytics {
     return properties;
   };
 
-  private registerSuperProperties(properties: Properties) {
+  private registerSuperProperties(properties: Properties): void {
     if (this.enabled) {
       this.posthog.register(properties);
     }
@@ -202,7 +202,7 @@ export class PosthogAnalytics {
     eventName: string,
     properties: Properties,
     options?: CaptureOptions
-  ) {
+  ): void {
     if (!this.enabled) {
       return;
     }
@@ -213,7 +213,7 @@ export class PosthogAnalytics {
     return this.enabled;
   }
 
-  setAnonymity(anonymity: Anonymity): void {
+  private setAnonymity(anonymity: Anonymity): void {
     // Update this.anonymity.
     // To update the anonymity typically you want to call updateAnonymityFromSettings
     // to ensure this value is in step with the user's settings.
@@ -236,7 +236,9 @@ export class PosthogAnalytics {
       .join("");
   }
 
-  private async identifyUser(analyticsIdGenerator: () => string) {
+  private async identifyUser(
+    analyticsIdGenerator: () => string
+  ): Promise<void> {
     if (this.anonymity == Anonymity.Pseudonymous && this.enabled) {
       // Check the user's account_data for an analytics ID to use. Storing the ID in account_data allows
       // different devices to send the same ID.
@@ -271,7 +273,7 @@ export class PosthogAnalytics {
     }
   }
 
-  async getAnalyticsId() {
+  private async getAnalyticsId(): Promise<string | null> {
     const client: MatrixClient = window.matrixclient;
     let accountAnalyticsId;
     if (widget) {
@@ -291,7 +293,9 @@ export class PosthogAnalytics {
     return null;
   }
 
-  async hashedEcAnalyticsId(accountAnalyticsId: string): Promise<string> {
+  private async hashedEcAnalyticsId(
+    accountAnalyticsId: string
+  ): Promise<string> {
     const client: MatrixClient = window.matrixclient;
     const posthogIdMaterial = "ec" + accountAnalyticsId + client.getUserId();
     const bufferForPosthogId = await crypto.subtle.digest(
@@ -304,7 +308,7 @@ export class PosthogAnalytics {
       .join("");
   }
 
-  async setAccountAnalyticsId(analyticsID: string) {
+  private async setAccountAnalyticsId(analyticsID: string): Promise<void> {
     if (!widget) {
       const client = window.matrixclient;
 
@@ -335,7 +339,7 @@ export class PosthogAnalytics {
     this.updateAnonymityAndIdentifyUser(optInAnalytics);
   }
 
-  private updateSuperProperties() {
+  private updateSuperProperties(): void {
     // Update super properties in posthog with our platform (app version, platform).
     // These properties will be subsequently passed in every event.
     //

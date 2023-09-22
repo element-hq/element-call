@@ -26,7 +26,7 @@ import { createBrowserHistory } from "history";
 import "./index.css";
 import { setLogLevel as setLKLogLevel } from "livekit-client";
 
-import App from "./App";
+import { App } from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
 

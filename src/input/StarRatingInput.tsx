@@ -41,8 +41,8 @@ export function StarRatingInput({
         return (
           <div
             className={styles.inputContainer}
-            onMouseEnter={() => setHover(index)}
-            onMouseLeave={() => setHover(rating)}
+            onMouseEnter={(): void => setHover(index)}
+            onMouseLeave={(): void => setHover(rating)}
             key={index}
           >
             <input
@@ -51,7 +51,7 @@ export function StarRatingInput({
               id={"starInput" + String(index)}
               value={String(index) + "Star"}
               name="star rating"
-              onChange={(_ev) => {
+              onChange={(_ev): void => {
                 setRating(index);
                 onChange(index);
               }}

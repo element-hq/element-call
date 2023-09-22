@@ -73,7 +73,7 @@ export const UnauthenticatedView: FC = () => {
       const roomName = sanitiseRoomNameInput(data.get("callName") as string);
       const displayName = data.get("displayName") as string;
 
-      async function submit() {
+      async function submit(): Promise<void> {
         setError(undefined);
         setLoading(true);
         const recaptchaResponse = await execute();
