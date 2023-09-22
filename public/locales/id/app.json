@@ -121,5 +121,6 @@
   "Unmute microphone": "Nyalakan mikrofon",
   "Back to recents": "Kembali ke terkini",
   "Call not found": "Panggilan tidak ditemukan",
-  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Panggilan sekarang terenkripsi secara ujung ke ujung dan harus dibuat dari laman beranda. Ini memastikan bahwa semuanya menggunakan kunci enkripsi yang sama."
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Panggilan sekarang terenkripsi secara ujung ke ujung dan harus dibuat dari laman beranda. Ini memastikan bahwa semuanya menggunakan kunci enkripsi yang sama.",
+  "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117": "Peramban web Anda tidak mendukung enkripsi media ujung ke ujung. Peramban yang didukung adalah Chrome, Safari, dan Firefox >=117"
 }
