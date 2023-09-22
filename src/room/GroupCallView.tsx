@@ -76,7 +76,7 @@ export function GroupCallView({
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
 
   const e2eeSharedKey = useManageRoomSharedKey(rtcSession.room.roomId);
-  const isRoomE2EE = useIsRoomE2EE(rtcSession.room.roomId);
+  const isRoomE2EE = useIsRoomE2EE(rtcSession.room);
 
   useEffect(() => {
     window.rtcSession = rtcSession;
@@ -88,7 +88,6 @@ export function GroupCallView({
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(rtcSession.room);
   const roomAvatar = useRoomAvatar(rtcSession.room);
-  const roomEncrypted = useIsRoomE2EE(rtcSession.room.roomId)!;
 
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
@@ -99,7 +98,7 @@ export function GroupCallView({
       roomName,
       roomAlias: rtcSession.room.getCanonicalAlias(),
       roomAvatar,
-      roomEncrypted,
+      roomEncrypted: isRoomE2EE!,
     };
   }, [
     displayName,
@@ -107,7 +106,7 @@ export function GroupCallView({
     rtcSession,
     roomName,
     roomAvatar,
-    roomEncrypted,
+    isRoomE2EE,
     client,
   ]);
 
