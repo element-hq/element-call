@@ -60,6 +60,7 @@ interface Props {
   isPasswordlessUser: boolean;
   confineToRoom: boolean;
   preload: boolean;
+  skipLobby: boolean;
   hideHeader: boolean;
   rtcSession: MatrixRTCSession;
 }
@@ -69,6 +70,7 @@ export function GroupCallView({
   isPasswordlessUser,
   confineToRoom,
   preload,
+  skipLobby,
   hideHeader,
   rtcSession,
 }: Props) {
@@ -133,18 +135,17 @@ export function GroupCallView({
   latestMuteStates.current = muteStates;
 
   useEffect(() => {
-    if (widget && preload) {
-      // In preload mode, wait for a join action before entering
-      const onJoin = async (ev: CustomEvent<IWidgetApiRequest>) => {
+    if (skipLobby) {
+      // widget && preload
+      const defaultDeviceSetup = async (
+        requestedDeviceData: JoinCallData
+      ): Promise<void> => {
         // XXX: I think this is broken currently - LiveKit *won't* request
         // permissions and give you device names unless you specify a kind, but
         // here we want all kinds of devices. This needs a fix in livekit-client
         // for the following name-matching logic to do anything useful.
         const devices = await Room.getLocalDevices(undefined, true);
-
-        const { audioInput, videoInput } = ev.detail
-          .data as unknown as JoinCallData;
-
+        const { audioInput, videoInput } = requestedDeviceData;
         if (audioInput === null) {
           latestMuteStates.current!.audio.setEnabled?.(false);
         } else {
@@ -184,27 +185,27 @@ export function GroupCallView({
             latestMuteStates.current!.video.setEnabled?.(true);
           }
         }
-
+      };
+      // In preload mode, wait for a join action before entering
+      if (widget && preload) {
+        const onJoin = async (ev: CustomEvent<IWidgetApiRequest>) => {
+          defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
+          enterRTCSession(rtcSession);
+          await Promise.all([
+            widget!.api.setAlwaysOnScreen(true),
+            widget!.api.transport.reply(ev.detail, {}),
+          ]);
+        };
+        widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
+        return () => {
+          widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
+        };
+      } else {
+        defaultDeviceSetup({ audioInput: null, videoInput: null });
         enterRTCSession(rtcSession);
-
-        PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
-        // we only have room sessions right now, so call ID is the emprty string - we use the room ID
-        PosthogAnalytics.instance.eventCallStarted.track(
-          rtcSession.room.roomId
-        );
-
-        await Promise.all([
-          widget!.api.setAlwaysOnScreen(true),
-          widget!.api.transport.reply(ev.detail, {}),
-        ]);
-      };
-
-      widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
-      return () => {
-        widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
-      };
+      }
     }
-  }, [rtcSession, preload]);
+  }, [rtcSession, preload, skipLobby]);
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);

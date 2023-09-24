@@ -112,6 +112,12 @@ interface UrlParams {
    * Token for a user for instance login. This is used for bridge gosts.
    */
   token: string | null;
+  /**
+   * Setting this flag skips the lobby and brings you in the call directly.
+   * In the widget this can be combined with preload to pass the device settings
+   * with the join widget action.
+   */
+  skipLobby: boolean;
 }
 
 // This is here as a stopgap, but what would be far nicer is a function that
@@ -205,6 +211,7 @@ export const getUrlParams = (
     analyticsID: parser.getParam("analyticsID"),
     allowIceFallback: parser.getFlagParam("allowIceFallback"),
     token: parser.getParam("token"),
+    skipLobby: parser.getFlagParam("skipLobby"),
   };
 };
 

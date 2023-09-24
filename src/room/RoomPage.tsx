@@ -30,8 +30,14 @@ import { platform } from "../Platform";
 import { AppSelectionModal } from "./AppSelectionModal";
 
 export const RoomPage: FC = () => {
-  const { confineToRoom, appPrompt, preload, hideHeader, displayName } =
-    useUrlParams();
+  const {
+    confineToRoom,
+    appPrompt,
+    preload,
+    hideHeader,
+    displayName,
+    skipLobby,
+  } = useUrlParams();
 
   const { roomAlias, roomId, viaServers } = useRoomIdentifier();
 
@@ -77,10 +83,11 @@ export const RoomPage: FC = () => {
         isPasswordlessUser={passwordlessUser}
         confineToRoom={confineToRoom}
         preload={preload}
+        skipLobby={skipLobby}
         hideHeader={hideHeader}
       />
     ),
-    [client, passwordlessUser, confineToRoom, preload, hideHeader]
+    [client, passwordlessUser, confineToRoom, preload, hideHeader, skipLobby]
   );
 
   let content: ReactNode;
