@@ -85,12 +85,17 @@ export const useManageRoomSharedKey = (roomId: string): string | null => {
 
 export const useIsRoomE2EE = (roomId: string): boolean | null => {
   const { client } = useClient();
+  const { token } = useUrlParams();
+  const isRoomForBridgedCall = !!token;
   const room = useMemo(() => client?.getRoom(roomId) ?? null, [roomId, client]);
   // For now, rooms in widget mode are never considered encrypted.
   // In the future, when widget mode gains encryption support, then perhaps we
   // should inspect the e2eEnabled URL parameter here?
   return useMemo(
-    () => widget === null && (room === null || !room.getCanonicalAlias()),
-    [room]
+    () =>
+      !isRoomForBridgedCall &&
+      widget === null &&
+      (room === null || !room.getCanonicalAlias()),
+    [room, isRoomForBridgedCall]
   );
 };
