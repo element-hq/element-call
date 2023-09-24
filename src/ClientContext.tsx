@@ -153,7 +153,7 @@ interface Props {
 
 export const ClientProvider: FC<Props> = ({ children }) => {
   const history = useHistory();
-  const { token, userId, deviceId } = useUrlParams();
+  const { token, userId, deviceId, baseUrl } = useUrlParams();
   // null = signed out, undefined = loading
   const [initClientState, setInitClientState] = useState<
     InitResult | null | undefined
@@ -173,13 +173,19 @@ export const ClientProvider: FC<Props> = ({ children }) => {
             token,
             userId,
             deviceId,
-          } as { token: string; userId: string });
+            homeserver: baseUrl,
+          } as {
+            token: string;
+            userId: string;
+            deviceId: string;
+            homeserver: string;
+          });
 
     loadClient(tokenLogin)
       .then(setInitClientState)
       .catch((err) => logger.error(err))
       .finally(() => (initializing.current = false));
-  }, [token, userId, deviceId]);
+  }, [token, userId, deviceId, baseUrl]);
 
   const changePassword = useCallback(
     async (password: string) => {
@@ -352,6 +358,7 @@ async function loadClient(tokenLogin?: {
   token: string;
   userId: string;
   deviceId: string;
+  homeserver: string;
 }): Promise<InitResult | null> {
   if (widget) {
     // We're inside a widget, so let's engage *matryoshka mode*
@@ -383,7 +390,7 @@ async function loadClient(tokenLogin?: {
       /* eslint-disable camelcase */
       const { user_id, device_id, access_token, passwordlessUser } = session;
       const initClientParams = {
-        baseUrl: Config.defaultHomeserverUrl()!,
+        baseUrl: tokenLogin?.homeserver ?? Config.defaultHomeserverUrl()!,
         accessToken: access_token,
         userId: user_id,
         deviceId: device_id,
