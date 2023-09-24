@@ -44,6 +44,7 @@ import {
 import { translatedError } from "./TranslatedError";
 import { useEventTarget } from "./useEvents";
 import { Config } from "./config/Config";
+import { useUrlParams } from "./UrlParams";
 
 declare global {
   interface Window {
@@ -152,7 +153,7 @@ interface Props {
 
 export const ClientProvider: FC<Props> = ({ children }) => {
   const history = useHistory();
-
+  const { token, userId, deviceId } = useUrlParams();
   // null = signed out, undefined = loading
   const [initClientState, setInitClientState] = useState<
     InitResult | null | undefined
@@ -165,12 +166,20 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     // the client.
     if (initializing.current) return;
     initializing.current = true;
+    const tokenLogin =
+      !token && !userId
+        ? undefined
+        : ({
+            token,
+            userId,
+            deviceId,
+          } as { token: string; userId: string });
 
-    loadClient()
+    loadClient(tokenLogin)
       .then(setInitClientState)
       .catch((err) => logger.error(err))
       .finally(() => (initializing.current = false));
-  }, []);
+  }, [token, userId, deviceId]);
 
   const changePassword = useCallback(
     async (password: string) => {
@@ -339,7 +348,11 @@ type InitResult = {
   passwordlessUser: boolean;
 };
 
-async function loadClient(): Promise<InitResult | null> {
+async function loadClient(tokenLogin?: {
+  token: string;
+  userId: string;
+  deviceId: string;
+}): Promise<InitResult | null> {
   if (widget) {
     // We're inside a widget, so let's engage *matryoshka mode*
     logger.log("Using a matryoshka client");
@@ -351,7 +364,15 @@ async function loadClient(): Promise<InitResult | null> {
   } else {
     // We're running as a standalone application
     try {
-      const session = loadSession();
+      let session = loadSession();
+      if (tokenLogin) {
+        session = {
+          user_id: tokenLogin.userId,
+          device_id: tokenLogin.deviceId, //"TOKEN_DEVICE",
+          access_token: tokenLogin.token,
+          passwordlessUser: false,
+        };
+      }
       if (!session) {
         logger.log("No session stored; continuing without a client");
         return null;
@@ -371,7 +392,7 @@ async function loadClient(): Promise<InitResult | null> {
       };
 
       try {
-        const client = await initClient(initClientParams, true);
+        const client = await initClient(initClientParams, !tokenLogin);
         return {
           client,
           passwordlessUser,
