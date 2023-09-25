@@ -24,7 +24,7 @@ module.exports = {
   },
   overrides: [
     {
-      files: ["src/**/*.{ts,tsx}"],
+      files: ["src/**/*.{ts,tsx}", "test/**/*.{ts,tsx}"],
       extends: [
         "plugin:matrix-org/typescript",
         "plugin:matrix-org/react",

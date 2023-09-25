@@ -27,10 +27,9 @@ import { ConnectionState, Room, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room as MatrixRoom } from "matrix-js-sdk/src/models/room";
-import { Ref, useCallback, useEffect, useMemo, useRef } from "react";
+import { Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
-import { OverlayTriggerState } from "@react-stately/overlays";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
@@ -51,7 +50,6 @@ import {
   VideoGrid,
 } from "../video-grid/VideoGrid";
 import { useShowConnectionStats } from "../settings/useSetting";
-import { useModalTriggerState } from "../Modal";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
@@ -73,7 +71,10 @@ import { MuteStates } from "./MuteStates";
 import { MatrixInfo } from "./VideoPreview";
 import { ShareButton } from "../button/ShareButton";
 import { LayoutToggle } from "./LayoutToggle";
-import { ECConnectionState } from "../livekit/useECConnectionState";
+import {
+  ECAddonConnectionState,
+  ECConnectionState,
+} from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
@@ -81,6 +82,9 @@ const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // or with getUsermedia and getDisplaymedia being used within the same session.
 // For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+// How long we wait after a focus switch before showing the real participant list again
+const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 
 export interface ActiveCallProps
   extends Omit<InCallViewProps, "livekitRoom" | "connState"> {
@@ -236,7 +240,7 @@ export function InCallView({
   const reducedControls = boundsValid && bounds.width <= 340;
   const noControls = reducedControls && bounds.height <= 400;
 
-  const items = useParticipantTiles(livekitRoom, rtcSession.room);
+  const items = useParticipantTiles(livekitRoom, rtcSession.room, connState);
   const { fullscreenItem, toggleFullscreen, exitFullscreen } =
     useFullscreen(items);
 
@@ -307,25 +311,20 @@ export function InCallView({
     );
   };
 
-  const {
-    modalState: rageshakeRequestModalState,
-    modalProps: rageshakeRequestModalProps,
-  } = useRageshakeRequestModal(rtcSession.room.roomId);
+  const rageshakeRequestModalProps = useRageshakeRequestModal(
+    rtcSession.room.roomId
+  );
 
-  const {
-    modalState: settingsModalState,
-    modalProps: settingsModalProps,
-  }: {
-    modalState: OverlayTriggerState;
-    modalProps: {
-      isOpen: boolean;
-      onClose: () => void;
-    };
-  } = useModalTriggerState();
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
-  const openSettings = useCallback(() => {
-    settingsModalState.open();
-  }, [settingsModalState]);
+  const openSettings = useCallback(
+    () => setSettingsModalOpen(true),
+    [setSettingsModalOpen]
+  );
+  const closeSettings = useCallback(
+    () => setSettingsModalOpen(false),
+    [setSettingsModalOpen]
+  );
 
   const toggleScreensharing = useCallback(async () => {
     exitFullscreen();
@@ -442,19 +441,13 @@ export function InCallView({
           show={showInspector}
         />
       )*/}
-      {rageshakeRequestModalState.isOpen && !noControls && (
-        <RageshakeRequestModal
-          {...rageshakeRequestModalProps}
-          roomId={rtcSession.room.roomId}
-        />
-      )}
-      {settingsModalState.isOpen && (
-        <SettingsModal
-          client={client}
-          roomId={rtcSession.room.roomId}
-          {...settingsModalProps}
-        />
-      )}
+      {!noControls && <RageshakeRequestModal {...rageshakeRequestModalProps} />}
+      <SettingsModal
+        client={client}
+        roomId={rtcSession.room.roomId}
+        open={settingsModalOpen}
+        onDismiss={closeSettings}
+      />
     </div>
   );
 }
@@ -482,8 +475,11 @@ function findMatrixMember(
 
 function useParticipantTiles(
   livekitRoom: Room,
-  matrixRoom: MatrixRoom
+  matrixRoom: MatrixRoom,
+  connState: ECConnectionState
 ): TileDescriptor<ItemData>[] {
+  const previousTiles = useRef<TileDescriptor<ItemData>[]>([]);
+
   const sfuParticipants = useParticipants({
     room: livekitRoom,
   });
@@ -565,5 +561,44 @@ function useParticipantTiles(
     return allGhosts ? [] : tiles;
   }, [matrixRoom, sfuParticipants]);
 
-  return items;
+  // We carry over old tiles from the previous focus for some time after a focus switch
+  // so that the video tiles don't all disappear and reappear.
+  // This is set to true when the state transitions to Switching Focus and remains
+  // true for a short time after it changes (ie. connState is only switching focus for
+  // the time it takes us to reconnect to the conference).
+  // If there are still members that haven't reconnected after that time, they'll just
+  // appear to disconnect and will reappear once they reconnect.
+  const [isSwitchingFocus, setIsSwitchingFocus] = useState(false);
+
+  useEffect(() => {
+    if (connState === ECAddonConnectionState.ECSwitchingFocus) {
+      setIsSwitchingFocus(true);
+    } else if (isSwitchingFocus) {
+      setTimeout(() => {
+        setIsSwitchingFocus(false);
+      }, POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS);
+    }
+  }, [connState, setIsSwitchingFocus, isSwitchingFocus]);
+
+  if (
+    connState === ECAddonConnectionState.ECSwitchingFocus ||
+    isSwitchingFocus
+  ) {
+    logger.debug("Switching focus: injecting previous tiles");
+
+    // inject the previous tile for members that haven't rejoined yet
+    const newItems = items.slice(0);
+    const rejoined = new Set(newItems.map((p) => p.id));
+
+    for (const prevTile of previousTiles.current) {
+      if (!rejoined.has(prevTile.id)) {
+        newItems.push(prevTile);
+      }
+    }
+
+    return newItems;
+  } else {
+    previousTiles.current = items;
+    return items;
+  }
 }

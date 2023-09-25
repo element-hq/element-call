@@ -24,6 +24,7 @@ import * as Sentry from "@sentry/react";
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { ElementCallOpenTelemetry } from "./otel/otel";
+import { platform } from "./Platform";
 
 enum LoadState {
   None,
@@ -61,7 +62,7 @@ export class Initializer {
     languageDetector.addDetector({
       name: "urlFragment",
       // Look for a language code in the URL's fragment
-      lookup: () => getUrlParams(true).lang ?? undefined,
+      lookup: () => getUrlParams().lang ?? undefined,
     });
 
     i18n
@@ -94,7 +95,7 @@ export class Initializer {
     }
 
     // Custom fonts
-    const { fonts, fontScale } = getUrlParams(true);
+    const { fonts, fontScale } = getUrlParams();
     if (fontScale !== null) {
       document.documentElement.style.setProperty(
         "--font-scale",
@@ -107,6 +108,9 @@ export class Initializer {
         fonts.map((f) => `"${f}"`).join(", ")
       );
     }
+
+    // Add the platform to the DOM, so CSS can query it
+    document.body.setAttribute("data-platform", platform);
   }
 
   public static init(): Promise<void> | null {

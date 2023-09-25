@@ -21,15 +21,35 @@ import { Config } from "./config/Config";
 
 export const PASSWORD_STRING = "password=";
 
-interface UrlParams {
+interface RoomIdentifier {
   roomAlias: string | null;
   roomId: string | null;
   viaServers: string[];
+}
+
+// If you need to add a new flag to this interface, prefer a name that describes
+// a specific behavior (such as 'confineToRoom'), rather than one that describes
+// the situations that call for this behavior ('isEmbedded'). This makes it
+// clearer what each flag means, and helps us avoid coupling Element Call's
+// behavior to the needs of specific consumers.
+interface UrlParams {
   /**
-   * Whether the app is running in embedded mode, and should keep the user
-   * confined to the current room.
+   * Anything about what room we're pointed to should be from useRoomIdentifier which
+   * parses the path and resolves alias with respect to the default server name, however
+   * roomId is an exception as we need the room ID in embedded (matroyska) mode, and not
+   * the room alias (or even the via params because we are not trying to join it). This
+   * is also not validated, where it is in useRoomIdentifier().
    */
-  isEmbedded: boolean;
+  roomId: string | null;
+  /**
+   * Whether the app should keep the user confined to the current call/room.
+   */
+  confineToRoom: boolean;
+  /**
+   * Whether upon entering a room, the user should be prompted to launch the
+   * native mobile app. (Affects only Android and iOS.)
+   */
+  appPrompt: boolean;
   /**
    * Whether the app should pause before joining the call until it sees an
    * io.element.join widget action, allowing it to be preloaded.
@@ -43,10 +63,6 @@ interface UrlParams {
    * Whether to hide the screen-sharing button.
    */
   hideScreensharing: boolean;
-  /**
-   * Whether to start a walkie-talkie call instead of a video call.
-   */
-  isPtt: boolean;
   /**
    * Whether to use end-to-end encryption.
    */
@@ -94,76 +110,148 @@ interface UrlParams {
   password: string | null;
 }
 
-/**
- * Gets the app parameters for the current URL.
- * @param ignoreRoomAlias If true, does not try to parse a room alias from the URL
- * @param search The URL search string
- * @param pathname The URL path name
- * @param hash The URL hash
- * @returns The app parameters encoded in the URL
- */
-export const getUrlParams = (
-  ignoreRoomAlias?: boolean,
-  search = window.location.search,
-  pathname = window.location.pathname,
-  hash = window.location.hash
-): UrlParams => {
-  // This is legacy code - we're moving away from using aliases
-  let roomAlias: string | null = null;
-  if (!ignoreRoomAlias) {
-    // Here we handle the beginning of the alias and make sure it starts with a
-    // "#"
-    if (hash === "" || hash.startsWith("#?")) {
-      roomAlias = pathname.substring(1); // Strip the "/"
-
-      // Delete "/room/", if present
-      if (roomAlias.startsWith("room/")) {
-        roomAlias = roomAlias.substring("room/".length);
-      }
-      // Add "#", if not present
-      if (!roomAlias.startsWith("#")) {
-        roomAlias = `#${roomAlias}`;
-      }
-    } else {
-      roomAlias = hash;
-    }
-
-    // Delete "?" and what comes afterwards
-    roomAlias = roomAlias.split("?")[0];
-
-    if (roomAlias.length <= 1) {
-      // Make roomAlias is null, if it only is a "#"
-      roomAlias = null;
-    } else {
-      // Add server part, if not present
-      if (!roomAlias.includes(":")) {
-        roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
-      }
-    }
-  }
-
+// This is here as a stopgap, but what would be far nicer is a function that
+// takes a UrlParams and returns a query string. That would enable us to
+// consolidate all the data about URL parameters and their meanings to this one
+// file.
+export function editFragmentQuery(
+  hash: string,
+  edit: (params: URLSearchParams) => URLSearchParams
+): string {
   const fragmentQueryStart = hash.indexOf("?");
-  const fragmentParams = new URLSearchParams(
-    fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart)
+  const fragmentParams = edit(
+    new URLSearchParams(
+      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart)
+    )
   );
-  const queryParams = new URLSearchParams(search);
+  return `${hash.substring(
+    0,
+    fragmentQueryStart
+  )}?${fragmentParams.toString()}`;
+}
+
+class ParamParser {
+  private fragmentParams: URLSearchParams;
+  private queryParams: URLSearchParams;
+
+  constructor(search: string, hash: string) {
+    this.queryParams = new URLSearchParams(search);
+
+    const fragmentQueryStart = hash.indexOf("?");
+    this.fragmentParams = new URLSearchParams(
+      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart)
+    );
+  }
 
   // Normally, URL params should be encoded in the fragment so as to avoid
   // leaking them to the server. However, we also check the normal query
   // string for backwards compatibility with versions that only used that.
-  const hasParam = (name: string): boolean =>
-    fragmentParams.has(name) || queryParams.has(name);
-  const getParam = (name: string): string | null =>
-    fragmentParams.get(name) ?? queryParams.get(name);
-  const getAllParams = (name: string): string[] => [
-    ...fragmentParams.getAll(name),
-    ...queryParams.getAll(name),
-  ];
+  getParam(name: string): string | null {
+    return this.fragmentParams.get(name) ?? this.queryParams.get(name);
+  }
 
-  const fontScale = parseFloat(getParam("fontScale") ?? "");
+  getAllParams(name: string): string[] {
+    return [
+      ...this.fragmentParams.getAll(name),
+      ...this.queryParams.getAll(name),
+    ];
+  }
+
+  getFlagParam(name: string, defaultValue = false): boolean {
+    const param = this.getParam(name);
+    return param === null ? defaultValue : param !== "false";
+  }
+}
+
+/**
+ * Gets the app parameters for the current URL.
+ * @param search The URL search string
+ * @param hash The URL hash
+ * @returns The app parameters encoded in the URL
+ */
+export const getUrlParams = (
+  search = window.location.search,
+  hash = window.location.hash
+): UrlParams => {
+  const parser = new ParamParser(search, hash);
+
+  const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
+
+  return {
+    // NB. we don't validate roomId here as we do in getRoomIdentifierFromUrl:
+    // what would we do if it were invalid? If the widget API says that's what
+    // the room ID is, then that's what it is.
+    roomId: parser.getParam("roomId"),
+    password: parser.getParam("password"),
+    // This flag has 'embed' as an alias for historical reasons
+    confineToRoom:
+      parser.getFlagParam("confineToRoom") || parser.getFlagParam("embed"),
+    appPrompt: parser.getFlagParam("appPrompt", true),
+    preload: parser.getFlagParam("preload"),
+    hideHeader: parser.getFlagParam("hideHeader"),
+    hideScreensharing: parser.getFlagParam("hideScreensharing"),
+    e2eEnabled: parser.getFlagParam("enableE2e", true),
+    userId: parser.getParam("userId"),
+    displayName: parser.getParam("displayName"),
+    deviceId: parser.getParam("deviceId"),
+    baseUrl: parser.getParam("baseUrl"),
+    lang: parser.getParam("lang"),
+    fonts: parser.getAllParams("font"),
+    fontScale: Number.isNaN(fontScale) ? null : fontScale,
+    analyticsID: parser.getParam("analyticsID"),
+    allowIceFallback: parser.getFlagParam("allowIceFallback"),
+  };
+};
+
+/**
+ * Hook to simplify use of getUrlParams.
+ * @returns The app parameters for the current URL
+ */
+export const useUrlParams = (): UrlParams => {
+  const { search, hash } = useLocation();
+  return useMemo(() => getUrlParams(search, hash), [search, hash]);
+};
+
+export function getRoomIdentifierFromUrl(
+  pathname: string,
+  search: string,
+  hash: string
+): RoomIdentifier {
+  let roomAlias: string | null = null;
+
+  // Here we handle the beginning of the alias and make sure it starts with a "#"
+  if (hash === "" || hash.startsWith("#?")) {
+    roomAlias = pathname.substring(1); // Strip the "/"
+
+    // Delete "/room/", if present
+    if (roomAlias.startsWith("room/")) {
+      roomAlias = roomAlias.substring("room/".length);
+    }
+    // Add "#", if not present
+    if (!roomAlias.startsWith("#")) {
+      roomAlias = `#${roomAlias}`;
+    }
+  } else {
+    roomAlias = hash;
+  }
+
+  // Delete "?" and what comes afterwards
+  roomAlias = roomAlias.split("?")[0];
+
+  if (roomAlias.length <= 1) {
+    // Make roomAlias is null, if it only is a "#"
+    roomAlias = null;
+  } else {
+    // Add server part, if not present
+    if (!roomAlias.includes(":")) {
+      roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
+    }
+  }
+
+  const parser = new ParamParser(search, hash);
 
   // Make sure roomId is valid
-  let roomId: string | null = getParam("roomId");
+  let roomId: string | null = parser.getParam("roomId");
   if (!roomId?.startsWith("!")) {
     roomId = null;
   } else if (!roomId.includes("")) {
@@ -173,34 +261,14 @@ export const getUrlParams = (
   return {
     roomAlias,
     roomId,
-    password: getParam("password"),
-    viaServers: getAllParams("via"),
-    isEmbedded: hasParam("embed"),
-    preload: hasParam("preload"),
-    hideHeader: hasParam("hideHeader"),
-    hideScreensharing: hasParam("hideScreensharing"),
-    isPtt: hasParam("ptt"),
-    e2eEnabled: getParam("enableE2e") !== "false", // Defaults to true
-    userId: getParam("userId"),
-    displayName: getParam("displayName"),
-    deviceId: getParam("deviceId"),
-    baseUrl: getParam("baseUrl"),
-    lang: getParam("lang"),
-    fonts: getAllParams("font"),
-    fontScale: Number.isNaN(fontScale) ? null : fontScale,
-    analyticsID: getParam("analyticsID"),
-    allowIceFallback: hasParam("allowIceFallback"),
+    viaServers: parser.getAllParams("viaServers"),
   };
-};
+}
 
-/**
- * Hook to simplify use of getUrlParams.
- * @returns The app parameters for the current URL
- */
-export const useUrlParams = (): UrlParams => {
-  const { search, pathname, hash } = useLocation();
+export const useRoomIdentifier = (): RoomIdentifier => {
+  const { pathname, search, hash } = useLocation();
   return useMemo(
-    () => getUrlParams(false, search, pathname, hash),
-    [search, pathname, hash]
+    () => getRoomIdentifierFromUrl(pathname, search, hash),
+    [pathname, search, hash]
   );
 };

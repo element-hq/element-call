@@ -16,7 +16,7 @@ limitations under the License.
 
 .container {
   display: flex;
-  min-height: calc(100% - 64px);
+  min-height: 100%;
   flex-direction: column;
   justify-content: space-between;
 }
@@ -41,9 +41,5 @@ limitations under the License.
 @media (min-width: 800px) {
   .logo {
     display: none;
-  }
-
-  .container {
-    min-height: calc(100% - 76px);
   }
 }

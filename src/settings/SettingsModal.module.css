@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022 - 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,16 +15,11 @@ limitations under the License.
 */
 
 .settingsModal {
-  width: 774px;
-  height: 480px;
+  block-size: 550px;
 }
 
 .settingsModal p {
   color: var(--cpd-color-text-secondary);
-}
-
-.tabContainer {
-  padding: 27px 20px;
 }
 
 .fieldRowText {

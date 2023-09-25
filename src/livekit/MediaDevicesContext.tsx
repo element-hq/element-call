@@ -28,6 +28,7 @@ import { createMediaDeviceObserver } from "@livekit/components-core";
 import { Observable } from "rxjs";
 
 import {
+  isFirefox,
   useAudioInput,
   useAudioOutput,
   useVideoInput,
@@ -65,7 +66,8 @@ function useObservableState<T>(
 function useMediaDevice(
   kind: MediaDeviceKind,
   fallbackDevice: string | undefined,
-  usingNames: boolean
+  usingNames: boolean,
+  alwaysDefault: boolean = false
 ): MediaDevice {
   // Make sure we don't needlessly reset to a device observer without names,
   // once permissions are already given
@@ -86,18 +88,19 @@ function useMediaDevice(
   const available = useObservableState(deviceObserver, []);
   const [selectedId, select] = useState(fallbackDevice);
 
-  return useMemo(
-    () => ({
+  return useMemo(() => {
+    const devId = available.some((d) => d.deviceId === selectedId)
+      ? selectedId
+      : available.some((d) => d.deviceId === fallbackDevice)
+      ? fallbackDevice
+      : available.at(0)?.deviceId;
+
+    return {
       available,
-      selectedId: available.some((d) => d.deviceId === selectedId)
-        ? selectedId
-        : available.some((d) => d.deviceId === fallbackDevice)
-        ? fallbackDevice
-        : available.at(0)?.deviceId,
+      selectedId: alwaysDefault ? undefined : devId,
       select,
-    }),
-    [available, selectedId, fallbackDevice, select]
-  );
+    };
+  }, [available, selectedId, fallbackDevice, select, alwaysDefault]);
 }
 
 const deviceStub: MediaDevice = {
@@ -120,9 +123,18 @@ interface Props {
 }
 
 export const MediaDevicesProvider: FC<Props> = ({ children }) => {
-  // Counts the number of callers currently using device names
+  // Counts the number of callers currently using device names.
   const [numCallersUsingNames, setNumCallersUsingNames] = useState(0);
   const usingNames = numCallersUsingNames > 0;
+
+  // Setting the audio device to something other than 'undefined' breaks echo-cancellation
+  // and even can introduce multiple different output devices for one call.
+  const alwaysUseDefaultAudio = isFirefox();
+
+  // On FF we dont need to query the names
+  // (call enumerateDevices + create meadia stream to trigger permissions)
+  // for ouput devices because the selector wont be shown on FF.
+  const useOutputNames = usingNames && !isFirefox();
 
   const [audioInputSetting, setAudioInputSetting] = useAudioInput();
   const [audioOutputSetting, setAudioOutputSetting] = useAudioOutput();
@@ -136,7 +148,8 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   const audioOutput = useMediaDevice(
     "audiooutput",
     audioOutputSetting,
-    usingNames
+    useOutputNames,
+    alwaysUseDefaultAudio
   );
   const videoInput = useMediaDevice(
     "videoinput",
@@ -150,7 +163,9 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   }, [setAudioInputSetting, audioInput.selectedId]);
 
   useEffect(() => {
-    if (audioOutput.selectedId !== undefined)
+    // Skip setting state for ff output. Redundent since it is set to always return 'undefined'
+    // but makes it clear while debugging that this is not happening on FF. + perf ;)
+    if (audioOutput.selectedId !== undefined && !isFirefox())
       setAudioOutputSetting(audioOutput.selectedId);
   }, [setAudioOutputSetting, audioOutput.selectedId]);
 
@@ -200,8 +215,10 @@ export const useMediaDevices = () => useContext(MediaDevicesContext);
  * default because it may involve requesting additional permissions from the
  * user.
  */
-export const useMediaDeviceNames = (context: MediaDevices) =>
+export const useMediaDeviceNames = (context: MediaDevices, enabled = true) =>
   useEffect(() => {
-    context.startUsingDeviceNames();
-    return context.stopUsingDeviceNames;
-  }, [context]);
+    if (enabled) {
+      context.startUsingDeviceNames();
+      return context.stopUsingDeviceNames;
+    }
+  }, [context, enabled]);

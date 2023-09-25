@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { FC, useEffect, useState, useCallback } from "react";
+import { FC, useEffect, useState, useCallback, ReactNode } from "react";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import { useClientLegacy } from "../ClientContext";
@@ -22,22 +22,19 @@ import { ErrorView, LoadingView } from "../FullScreenView";
 import { RoomAuthView } from "./RoomAuthView";
 import { GroupCallLoader } from "./GroupCallLoader";
 import { GroupCallView } from "./GroupCallView";
-import { useUrlParams } from "../UrlParams";
+import { useRoomIdentifier, useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { useOptInAnalytics } from "../settings/useSetting";
 import { HomePage } from "../home/HomePage";
+import { platform } from "../Platform";
+import { AppSelectionModal } from "./AppSelectionModal";
 
 export const RoomPage: FC = () => {
-  const {
-    roomAlias,
-    roomId,
-    viaServers,
-    isEmbedded,
-    preload,
-    hideHeader,
-    isPtt,
-    displayName,
-  } = useUrlParams();
+  const { confineToRoom, appPrompt, preload, hideHeader, displayName } =
+    useUrlParams();
+
+  const { roomAlias, roomId, viaServers } = useRoomIdentifier();
+
   const roomIdOrAlias = roomId ?? roomAlias;
   if (!roomIdOrAlias) {
     console.error("No room specified");
@@ -78,38 +75,43 @@ export const RoomPage: FC = () => {
         client={client!}
         rtcSession={rtcSession}
         isPasswordlessUser={passwordlessUser}
-        isEmbedded={isEmbedded}
+        confineToRoom={confineToRoom}
         preload={preload}
         hideHeader={hideHeader}
       />
     ),
-    [client, passwordlessUser, isEmbedded, preload, hideHeader]
+    [client, passwordlessUser, confineToRoom, preload, hideHeader]
   );
 
+  let content: ReactNode;
   if (loading || isRegistering) {
-    return <LoadingView />;
-  }
-
-  if (error) {
-    return <ErrorView error={error} />;
-  }
-
-  if (!client) {
-    return <RoomAuthView />;
-  }
-
-  if (!roomIdOrAlias) {
-    return <HomePage />;
+    content = <LoadingView />;
+  } else if (error) {
+    content = <ErrorView error={error} />;
+  } else if (!client) {
+    content = <RoomAuthView />;
+  } else if (!roomIdOrAlias) {
+    // TODO: This doesn't belong here, the app routes need to be reworked
+    content = <HomePage />;
+  } else {
+    content = (
+      <GroupCallLoader
+        client={client}
+        roomIdOrAlias={roomIdOrAlias}
+        viaServers={viaServers}
+      >
+        {groupCallView}
+      </GroupCallLoader>
+    );
   }
 
   return (
-    <GroupCallLoader
-      client={client}
-      roomIdOrAlias={roomIdOrAlias}
-      viaServers={viaServers}
-      createPtt={isPtt}
-    >
-      {groupCallView}
-    </GroupCallLoader>
+    <>
+      {content}
+      {/* On Android and iOS, show a prompt to launch the mobile app. */}
+      {appPrompt && (platform === "android" || platform === "ios") && (
+        <AppSelectionModal roomId={roomId} />
+      )}
+    </>
   );
 };

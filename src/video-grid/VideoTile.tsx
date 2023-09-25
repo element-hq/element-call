@@ -14,7 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ComponentProps, forwardRef, useCallback, useEffect } from "react";
+import {
+  ComponentProps,
+  forwardRef,
+  useCallback,
+  useEffect,
+  useState,
+} from "react";
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
@@ -36,7 +42,6 @@ import { Avatar } from "../Avatar";
 import styles from "./VideoTile.module.css";
 import { useReactiveState } from "../useReactiveState";
 import { AudioButton, FullscreenButton } from "../button/Button";
-import { useModalTriggerState } from "../Modal";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 
 export interface ItemData {
@@ -117,11 +122,16 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       onToggleFullscreen(data.id);
     }, [data, onToggleFullscreen]);
 
-    const {
-      modalState: videoTileSettingsModalState,
-      modalProps: videoTileSettingsModalProps,
-    } = useModalTriggerState();
-    const onOptionsPress = videoTileSettingsModalState.open;
+    const [videoTileSettingsModalOpen, setVideoTileSettingsModalOpen] =
+      useState(false);
+    const openVideoTileSettingsModal = useCallback(
+      () => setVideoTileSettingsModalOpen(true),
+      [setVideoTileSettingsModalOpen]
+    );
+    const closeVideoTileSettingsModal = useCallback(
+      () => setVideoTileSettingsModalOpen(false),
+      [setVideoTileSettingsModalOpen]
+    );
 
     const toolbarButtons: JSX.Element[] = [];
     if (!sfuParticipant.isLocal) {
@@ -130,7 +140,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           key="localVolume"
           className={styles.button}
           volume={(sfuParticipant as RemoteParticipant).getVolume() ?? 0}
-          onPress={onOptionsPress}
+          onPress={openVideoTileSettingsModal}
         />
       );
 
@@ -167,19 +177,20 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         {toolbarButtons.length > 0 && (!maximised || fullscreen) && (
           <div className={classNames(styles.toolbar)}>{toolbarButtons}</div>
         )}
-        {content === TileContent.UserMedia && !sfuParticipant.isCameraEnabled && (
-          <>
-            <div className={styles.videoMutedOverlay} />
-            <Avatar
-              key={member?.userId}
-              id={member?.userId ?? displayName}
-              name={displayName}
-              size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
-              src={member?.getMxcAvatarUrl()}
-              className={styles.avatar}
-            />
-          </>
-        )}
+        {content === TileContent.UserMedia &&
+          !sfuParticipant.isCameraEnabled && (
+            <>
+              <div className={styles.videoMutedOverlay} />
+              <Avatar
+                key={member?.userId}
+                id={member?.userId ?? displayName}
+                name={displayName}
+                size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
+                src={member?.getMxcAvatarUrl()}
+                className={styles.avatar}
+              />
+            </>
+          )}
         {content === TileContent.ScreenShare ? (
           <div className={styles.presenterLabel}>
             <span>{t("{{displayName}} is presenting", { displayName })}</span>
@@ -210,10 +221,11 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
               : Track.Source.ScreenShare
           }
         />
-        {videoTileSettingsModalState.isOpen && !maximised && (
+        {!maximised && (
           <VideoTileSettingsModal
-            {...videoTileSettingsModalProps}
             data={data}
+            open={videoTileSettingsModalOpen}
+            onDismiss={closeVideoTileSettingsModal}
           />
         )}
       </animated.div>

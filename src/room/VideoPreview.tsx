@@ -14,25 +14,23 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useEffect, useCallback, useMemo, useRef, FC } from "react";
+import { useEffect, useMemo, useRef, FC, ReactNode } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
-import { OverlayTriggerState } from "@react-stately/overlays";
 import { usePreviewTracks } from "@livekit/components-react";
 import {
   CreateLocalTracksOptions,
   LocalVideoTrack,
   Track,
 } from "livekit-client";
+import classNames from "classnames";
 
-import { MicButton, SettingsButton, VideoButton } from "../button";
 import { Avatar } from "../Avatar";
 import styles from "./VideoPreview.module.css";
-import { useModalTriggerState } from "../Modal";
-import { SettingsModal } from "../settings/SettingsModal";
-import { useClient } from "../ClientContext";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { MuteStates } from "./MuteStates";
+import { Glass } from "../Glass";
+import { useMediaQuery } from "../useMediaQuery";
 
 export type MatrixInfo = {
   userId: string;
@@ -48,26 +46,15 @@ export type MatrixInfo = {
 interface Props {
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
+  children: ReactNode;
 }
 
-export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
-  const { client } = useClient();
+export const VideoPreview: FC<Props> = ({
+  matrixInfo,
+  muteStates,
+  children,
+}) => {
   const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
-
-  const {
-    modalState: settingsModalState,
-    modalProps: settingsModalProps,
-  }: {
-    modalState: OverlayTriggerState;
-    modalProps: {
-      isOpen: boolean;
-      onClose: () => void;
-    };
-  } = useModalTriggerState();
-
-  const openSettings = useCallback(() => {
-    settingsModalState.open();
-  }, [settingsModalState]);
 
   const devices = useMediaDevices();
 
@@ -116,54 +103,35 @@ export const VideoPreview: FC<Props> = ({ matrixInfo, muteStates }) => {
     };
   }, [videoTrack]);
 
-  const onAudioPress = useCallback(
-    () => muteStates.audio.setEnabled?.((e) => !e),
-    [muteStates]
-  );
-  const onVideoPress = useCallback(
-    () => muteStates.video.setEnabled?.((e) => !e),
-    [muteStates]
+  const content = (
+    <>
+      <video data-testid="preview_video" ref={videoEl} muted playsInline disablePictureInPicture />
+      {!muteStates.video.enabled && (
+        <div className={styles.avatarContainer}>
+          <Avatar
+            id={matrixInfo.userId}
+            name={matrixInfo.displayName}
+            size={Math.min(previewBounds.width, previewBounds.height) / 2}
+            src={matrixInfo.avatarUrl}
+          />
+        </div>
+      )}
+      <div className={styles.buttonBar}>{children}</div>
+    </>
   );
 
-  return (
-    <div className={styles.preview} ref={previewRef}>
-      <video
-        data-testid="preview_video"
-        ref={videoEl}
-        muted
-        playsInline
-        disablePictureInPicture
-      />
-      <>
-        {!muteStates.video.enabled && (
-          <div className={styles.avatarContainer}>
-            <Avatar
-              id={matrixInfo.userId}
-              name={matrixInfo.displayName}
-              size={(previewBounds.height - 66) / 2}
-              src={matrixInfo.avatarUrl}
-            />
-          </div>
-        )}
-        <div className={styles.previewButtons}>
-          <VideoButton
-            muted={!muteStates.video.enabled}
-            onPress={onVideoPress}
-            disabled={muteStates.video.setEnabled === null}
-            data-testid="preview_videomute"
-          />
-          <MicButton
-            muted={!muteStates.audio.enabled}
-            onPress={onAudioPress}
-            disabled={muteStates.audio.setEnabled === null}
-            data-testid="preview_mute"
-          />
-          <SettingsButton onPress={openSettings} />
-        </div>
-      </>
-      {settingsModalState.isOpen && client && (
-        <SettingsModal client={client} {...settingsModalProps} />
-      )}
+  return useMediaQuery("(max-width: 550px)") ? (
+    <div
+      className={classNames(styles.preview, styles.content)}
+      ref={previewRef}
+    >
+      {content}
     </div>
+  ) : (
+    <Glass className={styles.preview}>
+      <div className={styles.content} ref={previewRef}>
+        {content}
+      </div>
+    </Glass>
   );
 };

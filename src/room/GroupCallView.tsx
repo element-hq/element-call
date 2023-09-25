@@ -17,11 +17,12 @@ limitations under the License.
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
-import { useTranslation } from "react-i18next";
-import { Room } from "livekit-client";
+import { Room, isE2EESupported } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { JoinRule, RoomMember } from "matrix-js-sdk/src/matrix";
+import { Heading, Link, Text } from "@vector-im/compound-web";
+import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { widget, ElementWidgetActions, JoinCallData } from "../widget";
@@ -45,7 +46,6 @@ import {
 import { useEnableE2EE } from "../settings/useSetting";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
-import { useModalTriggerState } from "../Modal";
 import { useJoinRule } from "./useJoinRule";
 import { ShareModal } from "./ShareModal";
 
@@ -58,7 +58,7 @@ declare global {
 interface Props {
   client: MatrixClient;
   isPasswordlessUser: boolean;
-  isEmbedded: boolean;
+  confineToRoom: boolean;
   preload: boolean;
   hideHeader: boolean;
   rtcSession: MatrixRTCSession;
@@ -67,7 +67,7 @@ interface Props {
 export function GroupCallView({
   client,
   isPasswordlessUser,
-  isEmbedded,
+  confineToRoom,
   preload,
   hideHeader,
   rtcSession,
@@ -77,8 +77,6 @@ export function GroupCallView({
 
   const e2eeSharedKey = useManageRoomSharedKey(rtcSession.room.roomId);
   const isRoomE2EE = useIsRoomE2EE(rtcSession.room.roomId);
-
-  const { t } = useTranslation();
 
   useEffect(() => {
     window.rtcSession = rtcSession;
@@ -208,17 +206,6 @@ export function GroupCallView({
     }
   }, [rtcSession, preload]);
 
-  useEffect(() => {
-    if (isEmbedded && !preload) {
-      // In embedded mode, bypass the lobby and just enter the call straight away
-      enterRTCSession(rtcSession);
-
-      PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
-      // use the room ID as above
-      PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
-    }
-  }, [rtcSession, isEmbedded, preload]);
-
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
   const history = useHistory();
@@ -239,7 +226,8 @@ export function GroupCallView({
 
       leaveRTCSession(rtcSession);
       if (widget) {
-        // we need to wait until the callEnded event is tracked. Otherwise the iFrame gets killed before the callEnded event got tracked.
+        // we need to wait until the callEnded event is tracked on posthog.
+        // Otherwise the iFrame gets killed before the callEnded event got tracked.
         await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
         widget.api.setAlwaysOnScreen(false);
         PosthogAnalytics.instance.logout();
@@ -248,13 +236,13 @@ export function GroupCallView({
 
       if (
         !isPasswordlessUser &&
-        !isEmbedded &&
+        !confineToRoom &&
         !PosthogAnalytics.instance.isEnabled()
       ) {
         history.push("/");
       }
     },
-    [rtcSession, isPasswordlessUser, isEmbedded, history]
+    [rtcSession, isPasswordlessUser, confineToRoom, history]
   );
 
   useEffect(() => {
@@ -286,14 +274,27 @@ export function GroupCallView({
 
   const joinRule = useJoinRule(rtcSession.room);
 
-  const { modalState: shareModalState, modalProps: shareModalProps } =
-    useModalTriggerState();
+  const [shareModalOpen, setShareModalOpen] = useState(false);
+  const onDismissShareModal = useCallback(
+    () => setShareModalOpen(false),
+    [setShareModalOpen]
+  );
 
   const onShareClickFn = useCallback(
-    () => shareModalState.open(),
-    [shareModalState]
+    () => setShareModalOpen(true),
+    [setShareModalOpen]
   );
   const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
+
+  const onHomeClick = useCallback(
+    (ev: React.MouseEvent) => {
+      ev.preventDefault();
+      history.push("/");
+    },
+    [history]
+  );
+
+  const { t } = useTranslation();
 
   if (e2eeEnabled && isRoomE2EE && !e2eeSharedKey) {
     return (
@@ -305,14 +306,30 @@ export function GroupCallView({
         }
       />
     );
-  }
-
-  if (!e2eeEnabled && isRoomE2EE) {
+  } else if (!isE2EESupported() && isRoomE2EE) {
+    return (
+      <FullScreenView>
+        <Heading>Incompatible Browser</Heading>
+        <Text>
+          {t(
+            "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117"
+          )}
+        </Text>
+        <Link href="/" onClick={onHomeClick}>
+          {t("Home")}
+        </Link>
+      </FullScreenView>
+    );
+  } else if (!e2eeEnabled && isRoomE2EE) {
     return <ErrorView error={new Error("You need to enable E2EE to join.")} />;
   }
 
-  const shareModal = shareModalState.isOpen && (
-    <ShareModal roomId={rtcSession.room.roomId} {...shareModalProps} />
+  const shareModal = (
+    <ShareModal
+      room={rtcSession.room}
+      open={shareModalOpen}
+      onDismiss={onDismissShareModal}
+    />
   );
 
   if (isJoined) {
@@ -342,7 +359,7 @@ export function GroupCallView({
     // submitting anything.
     if (
       isPasswordlessUser ||
-      (PosthogAnalytics.instance.isEnabled() && !isEmbedded) ||
+      (PosthogAnalytics.instance.isEnabled() && widget === null) ||
       leaveError
     ) {
       return (
@@ -350,6 +367,7 @@ export function GroupCallView({
           endedCallId={rtcSession.room.roomId}
           client={client}
           isPasswordlessUser={isPasswordlessUser}
+          confineToRoom={confineToRoom}
           leaveError={leaveError}
           reconnect={onReconnect}
         />
@@ -362,12 +380,6 @@ export function GroupCallView({
     }
   } else if (preload) {
     return null;
-  } else if (isEmbedded) {
-    return (
-      <FullScreenView>
-        <h1>{t("Loading…")}</h1>
-      </FullScreenView>
-    );
   } else {
     return (
       <>
@@ -377,7 +389,7 @@ export function GroupCallView({
           matrixInfo={matrixInfo}
           muteStates={muteStates}
           onEnter={() => enterRTCSession(rtcSession)}
-          isEmbedded={isEmbedded}
+          confineToRoom={confineToRoom}
           hideHeader={hideHeader}
           participatingMembers={participatingMembers}
           onShareClick={onShareClick}

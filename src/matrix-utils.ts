@@ -272,7 +272,6 @@ export function isLocalRoomId(roomId: string, client: MatrixClient): boolean {
 export async function createRoom(
   client: MatrixClient,
   name: string,
-  ptt: boolean,
   e2ee: boolean
 ): Promise<[string, string]> {
   logger.log(`Creating room for group call`);
@@ -327,14 +326,12 @@ export async function createRoom(
 
   const result = await createPromise;
 
-  logger.log(
-    `Creating ${ptt ? "PTT" : "video"} group call in ${result.room_id}`
-  );
+  logger.log(`Creating group call in ${result.room_id}`);
 
   await client.createGroupCall(
     result.room_id,
-    ptt ? GroupCallType.Voice : GroupCallType.Video,
-    ptt,
+    GroupCallType.Video,
+    false,
     GroupCallIntent.Room,
     true
   );
@@ -343,15 +340,35 @@ export async function createRoom(
 }
 
 /**
- * Returns a URL to that will load Element Call with the given room
- * @param roomId of the room
- * @param password
- * @returns
+ * Returns an absolute URL to that will load Element Call with the given room
+ * @param roomId ID of the room
+ * @param roomName Name of the room
+ * @param password e2e key for the room
  */
-export function getRoomUrl(roomId: string, password?: string): string {
+export function getAbsoluteRoomUrl(
+  roomId: string,
+  roomName?: string,
+  password?: string
+): string {
   return `${window.location.protocol}//${
     window.location.host
-  }/room/#?roomId=${roomId}${password ? "&" + PASSWORD_STRING + password : ""}`;
+  }${getRelativeRoomUrl(roomId, roomName, password)}`;
+}
+
+/**
+ * Returns a relative URL to that will load Element Call with the given room
+ * @param roomId ID of the room
+ * @param roomName Name of the room
+ * @param password e2e key for the room
+ */
+export function getRelativeRoomUrl(
+  roomId: string,
+  roomName?: string,
+  password?: string
+): string {
+  return `/room/#${
+    roomName ? "/" + roomAliasLocalpartFromRoomName(roomName) : ""
+  }?roomId=${roomId}${password ? "&" + PASSWORD_STRING + password : ""}`;
 }
 
 export function getAvatarUrl(

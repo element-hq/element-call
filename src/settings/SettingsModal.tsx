@@ -35,6 +35,7 @@ import {
   useDeveloperSettingsTab,
   useShowConnectionStats,
   useEnableE2EE,
+  isFirefox,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Button } from "../button";
@@ -43,25 +44,23 @@ import { Body, Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
-import { useUrlParams } from "../UrlParams";
 import {
   useMediaDevices,
   MediaDevice,
   useMediaDeviceNames,
 } from "../livekit/MediaDevicesContext";
+import { widget } from "../widget";
 
 interface Props {
-  isOpen: boolean;
+  open: boolean;
+  onDismiss: () => void;
   client: MatrixClient;
   roomId?: string;
   defaultTab?: string;
-  onClose: () => void;
 }
 
 export const SettingsModal = (props: Props) => {
   const { t } = useTranslation();
-
-  const { isEmbedded } = useUrlParams();
 
   const [showInspector, setShowInspector] = useShowInspector();
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
@@ -119,7 +118,7 @@ export const SettingsModal = (props: Props) => {
   );
 
   const devices = useMediaDevices();
-  useMediaDeviceNames(devices);
+  useMediaDeviceNames(devices, props.open);
 
   const audioTab = (
     <TabItem
@@ -132,7 +131,8 @@ export const SettingsModal = (props: Props) => {
       }
     >
       {generateDeviceSelection(devices.audioInput, t("Microphone"))}
-      {generateDeviceSelection(devices.audioOutput, t("Speaker"))}
+      {!isFirefox() &&
+        generateDeviceSelection(devices.audioOutput, t("Speaker"))}
     </TabItem>
   );
 
@@ -282,17 +282,16 @@ export const SettingsModal = (props: Props) => {
   );
 
   const tabs = [audioTab, videoTab];
-  if (!isEmbedded) tabs.push(profileTab);
+  if (widget === null) tabs.push(profileTab);
   tabs.push(feedbackTab, moreTab);
   if (developerSettingsTab) tabs.push(developerTab);
 
   return (
     <Modal
       title={t("Settings")}
-      isDismissable
-      mobileFullScreen
       className={styles.settingsModal}
-      {...props}
+      open={props.open}
+      onDismiss={props.onDismiss}
     >
       <TabContainer
         onSelectionChange={onSelectedTabChanged}

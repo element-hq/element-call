@@ -20,11 +20,12 @@ import { useEnableE2EE } from "../settings/useSetting";
 import { useLocalStorage } from "../useLocalStorage";
 import { useClient } from "../ClientContext";
 import { PASSWORD_STRING, useUrlParams } from "../UrlParams";
+import { widget } from "../widget";
 
 export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
   `room-shared-key-${roomId}`;
 
-export const useInternalRoomSharedKey = (
+const useInternalRoomSharedKey = (
   roomId: string
 ): [string | null, (value: string) => void] => {
   const key = useMemo(() => getRoomSharedKeyLocalStorageKey(roomId), [roomId]);
@@ -34,52 +35,62 @@ export const useInternalRoomSharedKey = (
   return [e2eeEnabled ? roomSharedKey : null, setRoomSharedKey];
 };
 
-export const useRoomSharedKey = (roomId: string): string | null => {
-  return useInternalRoomSharedKey(roomId)[0];
-};
-
-export const useManageRoomSharedKey = (roomId: string): string | null => {
-  const { password } = useUrlParams();
+const useKeyFromUrl = (roomId: string): string | null => {
+  const urlParams = useUrlParams();
   const [e2eeSharedKey, setE2EESharedKey] = useInternalRoomSharedKey(roomId);
 
   useEffect(() => {
-    if (!password) return;
-    if (password === "") return;
-    if (password === e2eeSharedKey) return;
+    if (!urlParams.password) return;
+    if (urlParams.password === "") return;
+    if (urlParams.password === e2eeSharedKey) return;
 
-    setE2EESharedKey(password);
-  }, [password, e2eeSharedKey, setE2EESharedKey]);
+    setE2EESharedKey(urlParams.password);
+  }, [urlParams, e2eeSharedKey, setE2EESharedKey]);
+
+  return urlParams.password ?? null;
+};
+
+export const useRoomSharedKey = (roomId: string): string | null => {
+  // make sure we've extracted the key from the URL first
+  // (and we still need to take the value it returns because
+  // the effect won't run in time for it to save to localstorage in
+  // time for us to read it out again).
+  const passwordFormUrl = useKeyFromUrl(roomId);
+
+  return useInternalRoomSharedKey(roomId)[0] ?? passwordFormUrl;
+};
+
+export const useManageRoomSharedKey = (roomId: string): string | null => {
+  const urlParams = useUrlParams();
+
+  const urlPassword = useKeyFromUrl(roomId);
+
+  const [e2eeSharedKey] = useInternalRoomSharedKey(roomId);
 
   useEffect(() => {
     const hash = location.hash;
 
     if (!hash.includes("?")) return;
     if (!hash.includes(PASSWORD_STRING)) return;
-    if (password !== e2eeSharedKey) return;
+    if (urlParams.password !== e2eeSharedKey) return;
 
     const [hashStart, passwordStart] = hash.split(PASSWORD_STRING);
-    const hashEnd = passwordStart.split("&")[1];
+    const hashEnd = passwordStart.split("&").slice(1).join("&");
 
     location.replace((hashStart ?? "") + (hashEnd ?? ""));
-  }, [password, e2eeSharedKey]);
+  }, [urlParams, e2eeSharedKey]);
 
-  return e2eeSharedKey;
+  return e2eeSharedKey ?? urlPassword;
 };
 
 export const useIsRoomE2EE = (roomId: string): boolean | null => {
-  const { isEmbedded } = useUrlParams();
-  const client = useClient();
-  const room = useMemo(
-    () => client.client?.getRoom(roomId) ?? null,
-    [roomId, client.client]
+  const { client } = useClient();
+  const room = useMemo(() => client?.getRoom(roomId) ?? null, [roomId, client]);
+  // For now, rooms in widget mode are never considered encrypted.
+  // In the future, when widget mode gains encryption support, then perhaps we
+  // should inspect the e2eEnabled URL parameter here?
+  return useMemo(
+    () => widget === null && (room === null || !room.getCanonicalAlias()),
+    [room]
   );
-  const isE2EE = useMemo(() => {
-    if (isEmbedded) {
-      return false;
-    } else {
-      return room ? !room?.getCanonicalAlias() : null;
-    }
-  }, [isEmbedded, room]);
-
-  return isE2EE;
 };

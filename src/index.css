@@ -25,12 +25,6 @@ limitations under the License.
 @import "@vector-im/compound-web/dist/style.css";
 
 :root {
-  --font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
-    "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans",
-    "Helvetica Neue", sans-serif;
-  --inter-unicode-range: U+0000-20e2, U+20e4-23ce, U+23d0-24c1, U+24c3-259f,
-    U+25c2-2664, U+2666-2763, U+2765-2b05, U+2b07-2b1b, U+2b1d-10FFFF;
-
   --font-scale: 1;
   --font-size-micro: calc(10px * var(--font-scale));
   --font-size-caption: calc(12px * var(--font-scale));
@@ -51,12 +45,17 @@ limitations under the License.
   --inline-content-inset: max(var(--cpd-space-4x), calc((100vw - 1180px) / 2));
   --small-drop-shadow: 0px 1.2px 2.4px 0px rgba(0, 0, 0, 0.15);
   --subtle-drop-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
+  --background-gradient: url("graphics/backgroundGradient.svg");
 }
 
 .cpd-theme-dark {
   --cpd-color-border-accent: var(--cpd-color-green-1100);
   --stopgap-color-on-solid-accent: var(--cpd-color-text-primary);
   --stopgap-background-85: rgba(16, 19, 23, 0.85);
+
+  background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 @font-face {
@@ -144,7 +143,6 @@ body {
   color: var(--cpd-color-text-primary);
   color-scheme: dark;
   margin: 0;
-  font-family: var(--font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -152,12 +150,29 @@ body {
 html,
 body,
 #root {
-  height: 100%;
+  /* We use !important here to override vaul drawers, which have a side effect
+  of setting height: auto; on the body element and messing up our layouts */
+  height: 100% !important;
 }
 
 #root {
   display: flex;
   flex-direction: column;
+}
+
+/* On Android and iOS, prefer native system fonts. The global.css file of
+Compound Web is where these variables ultimately get consumed to set the page's
+font-family. */
+body[data-platform="android"] {
+  --cpd-font-family-sans: "Roboto", "Noto", "Inter", sans-serif;
+}
+
+body[data-platform="ios"] {
+  --cpd-font-family-sans: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+}
+
+body[data-platform="desktop"] {
+  --cpd-font-family-sans: "Inter", sans-serif;
 }
 
 h1,

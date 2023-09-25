@@ -14,27 +14,35 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useRef, useEffect, FC } from "react";
-import { Trans, useTranslation } from "react-i18next";
+import { FC, useCallback, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { MatrixClient, RoomMember } from "matrix-js-sdk/src/matrix";
+import { Button, Link } from "@vector-im/compound-web";
+import classNames from "classnames";
+import { useHistory } from "react-router-dom";
 
 import styles from "./LobbyView.module.css";
-import { Button, CopyButton } from "../button";
+import inCallStyles from "./InCallView.module.css";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import { getRoomUrl } from "../matrix-utils";
-import { Body, Link } from "../typography/Typography";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
 import { MuteStates } from "./MuteStates";
-import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 import { ShareButton } from "../button/ShareButton";
+import {
+  HangupButton,
+  MicButton,
+  SettingsButton,
+  VideoButton,
+} from "../button/Button";
+import { SettingsModal } from "../settings/SettingsModal";
+import { useMediaQuery } from "../useMediaQuery";
 
 interface Props {
   client: MatrixClient;
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
   onEnter: () => void;
-  isEmbedded: boolean;
+  confineToRoom: boolean;
   hideHeader: boolean;
   participatingMembers: RoomMember[];
   onShareClick: (() => void) | null;
@@ -45,74 +53,104 @@ export const LobbyView: FC<Props> = ({
   matrixInfo,
   muteStates,
   onEnter,
-  isEmbedded,
+  confineToRoom,
   hideHeader,
   participatingMembers,
   onShareClick,
 }) => {
   const { t } = useTranslation();
-  const roomSharedKey = useRoomSharedKey(matrixInfo.roomId);
   useLocationNavigation();
 
-  const joinCallButtonRef = useRef<HTMLButtonElement>(null);
-  useEffect(() => {
-    if (joinCallButtonRef.current) {
-      joinCallButtonRef.current.focus();
-    }
-  }, [joinCallButtonRef]);
+  const onAudioPress = useCallback(
+    () => muteStates.audio.setEnabled?.((e) => !e),
+    [muteStates]
+  );
+  const onVideoPress = useCallback(
+    () => muteStates.video.setEnabled?.((e) => !e),
+    [muteStates]
+  );
 
+  const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+
+  const openSettings = useCallback(
+    () => setSettingsModalOpen(true),
+    [setSettingsModalOpen]
+  );
+  const closeSettings = useCallback(
+    () => setSettingsModalOpen(false),
+    [setSettingsModalOpen]
+  );
+
+  const history = useHistory();
+  const onLeaveClick = useCallback(() => history.push("/"), [history]);
+
+  const recentsButtonInFooter = useMediaQuery("(max-height: 500px)");
+  const recentsButton = !confineToRoom && (
+    <Link className={styles.recents} href="#" onClick={onLeaveClick}>
+      {t("Back to recents")}
+    </Link>
+  );
+
+  // TODO: Unify this component with InCallView, so we can get slick joining
+  // animations and don't have to feel bad about reusing its CSS
   return (
-    <div className={styles.room}>
-      {!hideHeader && (
-        <Header>
-          <LeftNav>
-            <RoomHeaderInfo
-              id={matrixInfo.roomId}
-              name={matrixInfo.roomName}
-              avatarUrl={matrixInfo.roomAvatar}
-              encrypted={matrixInfo.roomEncrypted}
-              participants={participatingMembers}
-              client={client}
-            />
-          </LeftNav>
-          <RightNav>
-            {onShareClick !== null && <ShareButton onClick={onShareClick} />}
-          </RightNav>
-        </Header>
-      )}
-      <div className={styles.joinRoom}>
-        <div className={styles.joinRoomContent}>
-          <VideoPreview matrixInfo={matrixInfo} muteStates={muteStates} />
-          <Trans>
+    <>
+      <div className={classNames(styles.room, inCallStyles.inRoom)}>
+        {!hideHeader && (
+          <Header>
+            <LeftNav>
+              <RoomHeaderInfo
+                id={matrixInfo.roomId}
+                name={matrixInfo.roomName}
+                avatarUrl={matrixInfo.roomAvatar}
+                encrypted={matrixInfo.roomEncrypted}
+                participants={participatingMembers}
+                client={client}
+              />
+            </LeftNav>
+            <RightNav>
+              {onShareClick !== null && <ShareButton onClick={onShareClick} />}
+            </RightNav>
+          </Header>
+        )}
+        <div className={styles.content}>
+          <VideoPreview matrixInfo={matrixInfo} muteStates={muteStates}>
             <Button
-              ref={joinCallButtonRef}
-              className={styles.copyButton}
+              className={styles.join}
               size="lg"
-              onPress={() => onEnter()}
+              onClick={onEnter}
               data-testid="lobby_joinCall"
             >
-              Join call now
+              {t("Join call")}
             </Button>
-            <Body>Or</Body>
-            <CopyButton
-              variant="secondaryCopy"
-              value={getRoomUrl(matrixInfo.roomId, roomSharedKey ?? undefined)}
-              className={styles.copyButton}
-              copiedMessage={t("Call link copied")}
-              data-testid="lobby_inviteLink"
-            >
-              Copy call link and join later
-            </CopyButton>
-          </Trans>
+          </VideoPreview>
+          {!recentsButtonInFooter && recentsButton}
         </div>
-        {!isEmbedded && (
-          <Body className={styles.joinRoomFooter}>
-            <Link color="primary" to="/">
-              {t("Take me Home")}
-            </Link>
-          </Body>
-        )}
+        <div className={inCallStyles.footer}>
+          {recentsButtonInFooter && recentsButton}
+          <div className={inCallStyles.buttons}>
+            <VideoButton
+              muted={!muteStates.video.enabled}
+              onPress={onVideoPress}
+              disabled={muteStates.video.setEnabled === null}
+            />
+            <MicButton
+              muted={!muteStates.audio.enabled}
+              onPress={onAudioPress}
+              disabled={muteStates.audio.setEnabled === null}
+            />
+            <SettingsButton onPress={openSettings} />
+            {!confineToRoom && <HangupButton onPress={onLeaveClick} />}
+          </div>
+        </div>
       </div>
-    </div>
+      {client && (
+        <SettingsModal
+          client={client}
+          open={settingsModalOpen}
+          onDismiss={closeSettings}
+        />
+      )}
+    </>
   );
 };

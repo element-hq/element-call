@@ -15,8 +15,8 @@ limitations under the License.
 */
 
 .tabContainer {
+  min-height: 100%;
   display: flex;
-  flex: 1;
   flex-direction: column;
 }
 
@@ -77,33 +77,4 @@ limitations under the License.
   flex: 1;
   padding: 0;
   overflow-y: auto;
-}
-
-@media (min-width: 800px) {
-  .tab {
-    width: 200px;
-    padding: 0 16px;
-  }
-
-  .tab > * {
-    margin: 0 12px 0 0;
-  }
-
-  .tabContainer {
-    width: 100%;
-    flex-direction: row;
-    padding: 20px 18px;
-    box-sizing: border-box;
-    overflow: hidden;
-  }
-
-  .tabList {
-    flex-direction: column;
-    margin-bottom: 0;
-    gap: 0;
-  }
-
-  .tabPanel {
-    padding: 0 40px;
-  }
 }

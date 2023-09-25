@@ -24,6 +24,12 @@ limitations under the License.
 
 .toggle input {
   appearance: none;
+  /*
+   * Safari puts a margin on these, which is not removed via appearance: none
+   * mobile safari also has them take up space in the DOM, so set width 0
+   */
+  margin: 0;
+  width: 0;
   outline: none !important;
 }
 

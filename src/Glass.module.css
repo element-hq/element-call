@@ -1,5 +1,5 @@
 /*
-Copyright 2021 New Vector Ltd
+Copyright 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,26 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.content {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: var(--cpd-space-6x);
-  flex: 1;
-  overflow: hidden;
-  height: 100%;
-  padding-block-end: var(--footerHeight);
+.glass {
+  border-radius: 36px;
+  padding: 11px;
+  border: 1px solid var(--cpd-color-alpha-gray-400);
+  background: var(--cpd-color-alpha-gray-400);
+  backdrop-filter: blur(10px);
 }
 
-@media (max-width: 500px) {
-  .join {
-    width: 100%;
-  }
+.glass > * {
+  border-radius: 24px;
 }
 
-@media (min-height: 650px) {
-  .content {
-    gap: var(--cpd-space-10x);
-  }
+.glass.frosted {
+  backdrop-filter: blur(20px);
 }
