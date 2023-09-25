@@ -24,6 +24,7 @@ import {
   Track,
 } from "livekit-client";
 import classNames from "classnames";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { Avatar } from "../Avatar";
 import styles from "./VideoPreview.module.css";
@@ -80,7 +81,7 @@ export const VideoPreview: FC<Props> = ({
       },
     },
     (error) => {
-      console.error("Error while creating preview Tracks:", error);
+      logger.error("Error while creating preview Tracks:", error);
     }
   );
   const videoTrack = useMemo(

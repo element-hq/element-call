@@ -177,7 +177,7 @@ export async function initClient(
   try {
     await client.store.startup();
   } catch (error) {
-    console.error(
+    logger.error(
       "Error starting matrix client store. Falling back to memory store.",
       error
     );
