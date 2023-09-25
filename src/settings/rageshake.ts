@@ -577,7 +577,7 @@ type LogExtensionFunc = (
 type LogLevelString = keyof typeof LogLevel;
 
 /**
- * This method borrowed from livekit (who also ise loglevel and in turn essentially
+ * This method borrowed from livekit (who also use loglevel and in turn essentially
  * took loglevel's example honouring log levels). Adds a loglevel logging extension
  * in the recommended way.
  */
