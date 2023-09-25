@@ -20,6 +20,7 @@ import {
   ExternalE2EEKeyProvider,
   Room,
   RoomOptions,
+  setLogLevel,
 } from "livekit-client";
 import { useLiveKitRoom } from "@livekit/components-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -42,6 +43,8 @@ import {
 export type E2EEConfig = {
   sharedKey: string;
 };
+
+setLogLevel("debug");
 
 interface UseLivekitResult {
   livekitRoom?: Room;
