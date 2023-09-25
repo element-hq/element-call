@@ -23,7 +23,6 @@ limitations under the License.
   flex: 1;
   overflow: hidden;
   height: 100%;
-  padding-block-end: var(--footerHeight);
 }
 
 @media (max-width: 500px) {
