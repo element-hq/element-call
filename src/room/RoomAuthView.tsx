@@ -17,6 +17,7 @@ limitations under the License.
 import { useCallback, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import styles from "./RoomAuthView.module.css";
 import { Button } from "../button";
@@ -46,7 +47,7 @@ export function RoomAuthView() {
         typeof dataForDisplayName === "string" ? dataForDisplayName : "";
 
       registerPasswordlessUser(displayName).catch((error) => {
-        console.error("Failed to register passwordless user", e);
+        logger.error("Failed to register passwordless user", e);
         setLoading(false);
         setError(error);
       });

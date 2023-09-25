@@ -23,15 +23,16 @@ import "matrix-js-sdk/src/browser-index";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserHistory } from "history";
-
 import "./index.css";
+import { logger } from "matrix-js-sdk/src/logger";
+
 import App from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
 
 initRageshake();
 
-console.info(`Element Call ${import.meta.env.VITE_APP_VERSION || "dev"}`);
+logger.info(`Element Call ${import.meta.env.VITE_APP_VERSION || "dev"}`);
 
 const root = createRoot(document.getElementById("root")!);
 

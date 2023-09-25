@@ -20,6 +20,7 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
 import { Heading } from "@vector-im/compound-web";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import {
   createRoom,
@@ -97,7 +98,7 @@ export function RegisteredView({ client }: Props) {
           setError(undefined);
           setJoinExistingCallModalOpen(true);
         } else {
-          console.error(error);
+          logger.error(error);
           setLoading(false);
           setError(error);
         }
