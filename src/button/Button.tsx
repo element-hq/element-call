@@ -32,6 +32,7 @@ import { ReactComponent as ChevronDownIcon } from "@vector-im/compound-design-to
 import styles from "./Button.module.css";
 import { ReactComponent as Fullscreen } from "../icons/Fullscreen.svg";
 import { ReactComponent as FullscreenExit } from "../icons/FullscreenExit.svg";
+import { ReactComponent as RemoveIcon } from "../icons/Remove.svg";
 import { VolumeIcon } from "./VolumeIcon";
 
 export type ButtonVariant =
@@ -255,6 +256,18 @@ export function AudioButton({ volume, ...rest }: AudioButtonProps) {
     <Tooltip label={t("Local volume")}>
       <Button variant="icon" {...rest}>
         <VolumeIcon volume={volume} aria-label={t("Local volume")} />
+      </Button>
+    </Tooltip>
+  );
+}
+
+export function RemoveButton({ ...rest }: Omit<Props, "variant">) {
+  const { t } = useTranslation();
+
+  return (
+    <Tooltip label={t("Remove")}>
+      <Button className={styles.removeButton} variant="icon" {...rest}>
+        <RemoveIcon aria-label={t("Remove")} />
       </Button>
     </Tooltip>
   );
