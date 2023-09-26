@@ -17,6 +17,7 @@ limitations under the License.
 import { useEffect, useCallback, useRef, useState } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { translatedError } from "../TranslatedError";
 
@@ -74,7 +75,7 @@ export const useRecaptcha = (sitekey?: string) => {
     }
 
     if (!window.grecaptcha) {
-      console.log("Recaptcha not loaded");
+      logger.log("Recaptcha not loaded");
       return Promise.reject(translatedError("Recaptcha not loaded", t));
     }
 

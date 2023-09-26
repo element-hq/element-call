@@ -33,6 +33,8 @@ module.exports = {
       rules: {
         // We're aiming to convert this code to strict mode
         "@typescript-eslint/no-non-null-assertion": "off",
+        // We should use the js-sdk logger, never console directly.
+        "no-console": ["error"],
       },
     },
   ],

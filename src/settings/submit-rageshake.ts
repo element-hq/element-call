@@ -26,6 +26,7 @@ import {
 import pako from "pako";
 import { MatrixEvent } from "matrix-js-sdk/src/models/event";
 import { ClientEvent } from "matrix-js-sdk/src/client";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
@@ -296,7 +297,7 @@ export function useSubmitRageshake(): {
         setState({ sending: false, sent: true, error: undefined });
       } catch (error) {
         setState({ sending: false, sent: false, error: error as Error });
-        console.error(error);
+        logger.error(error);
       }
     },
     [client, inspectorState, sending]

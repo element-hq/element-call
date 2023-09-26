@@ -54,11 +54,6 @@ enum ConsoleLoggerEvent {
   Log = "log",
 }
 
-type LogFunction = (
-  ...args: (Error | DOMException | object | string)[]
-) => void;
-type LogFunctionName = "log" | "info" | "warn" | "error";
-
 // A class which monkey-patches the global console and stores log lines.
 
 interface LogEntry {
@@ -69,37 +64,11 @@ interface LogEntry {
 
 class ConsoleLogger extends EventEmitter {
   private logs = "";
-  private originalFunctions: { [key in LogFunctionName]?: LogFunction } = {};
 
-  public monkeyPatch(consoleObj: Console): void {
-    // Monkey-patch console logging
-    const consoleFunctionsToLevels = {
-      log: "I",
-      info: "I",
-      warn: "W",
-      error: "E",
-    };
-
-    Object.entries(consoleFunctionsToLevels).forEach(([name, level]) => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const originalFn = consoleObj[name].bind(consoleObj);
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      this.originalFunctions[name] = originalFn;
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      consoleObj[name] = (...args) => {
-        this.log(level, ...args);
-        originalFn(...args);
-      };
-    });
-  }
-
-  public log(
-    level: string,
+  public log = (
+    level: LogLevel,
     ...args: (Error | DOMException | object | string)[]
-  ): void {
+  ): void => {
     // We don't know what locale the user may be running so use ISO strings
     const ts = new Date().toISOString();
 
@@ -129,7 +98,7 @@ class ConsoleLogger extends EventEmitter {
     this.logs += line;
 
     this.emit(ConsoleLoggerEvent.Log);
-  }
+  };
 
   /**
    * Returns the log lines to flush to disk and empties the internal log buffer
@@ -510,7 +479,7 @@ declare global {
  */
 export function init(): Promise<void> {
   global.mx_rage_logger = new ConsoleLogger();
-  global.mx_rage_logger.monkeyPatch(window.console);
+  setLogExtension(global.mx_rage_logger.log);
 
   return tryInitStorage();
 }
@@ -591,3 +560,42 @@ const getCircularReplacer = (): StringifyReplacer => {
     return value;
   };
 };
+
+enum LogLevel {
+  trace = 0,
+  debug = 1,
+  info = 2,
+  warn = 3,
+  error = 4,
+  silent = 5,
+}
+
+type LogExtensionFunc = (
+  level: LogLevel,
+  ...rest: (Error | DOMException | object | string)[]
+) => void;
+type LogLevelString = keyof typeof LogLevel;
+
+/**
+ * This method borrowed from livekit (who also use loglevel and in turn essentially
+ * took loglevel's example honouring log levels). Adds a loglevel logging extension
+ * in the recommended way.
+ */
+export function setLogExtension(extension: LogExtensionFunc) {
+  const originalFactory = logger.methodFactory;
+
+  logger.methodFactory = function (methodName, configLevel, loggerName) {
+    const rawMethod = originalFactory(methodName, configLevel, loggerName);
+
+    const logLevel = LogLevel[methodName as LogLevelString];
+    const needLog = logLevel >= configLevel && logLevel < LogLevel.silent;
+
+    return (...args) => {
+      rawMethod.apply(this, args);
+      if (needLog) {
+        extension(logLevel, ...args);
+      }
+    };
+  };
+  logger.setLevel(logger.getLevel()); // Be sure to call setLevel method in order to apply plugin
+}
