@@ -63,7 +63,7 @@
     "mermaid": "^9.0.0",
     "normalize.css": "^8.0.1",
     "pako": "^2.0.4",
-    "postcss-preset-env": "^7",
+    "postcss-preset-env": "^9.0.0",
     "posthog-js": "^1.29.0",
     "re-resizable": "^6.9.0",
     "react": "18",
