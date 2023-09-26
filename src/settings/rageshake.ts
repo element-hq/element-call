@@ -551,10 +551,10 @@ type StringifyReplacer = (
 
 // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#circular_references
 // Injects `<$ cycle-trimmed $>` wherever it cuts a cyclical object relationship
-const getCircularReplacer = function (): StringifyReplacer {
+const getCircularReplacer = (): StringifyReplacer => {
   const seen = new WeakSet();
   const depthMap = new WeakMap<object, number>();
-  return (key: string, value: unknown): unknown => {
+  return function (this: unknown, key: string, value: unknown): unknown {
     if (typeof value === "object" && value !== null) {
       if (seen.has(value)) {
         return "<$ cycle-trimmed $>";
@@ -562,17 +562,10 @@ const getCircularReplacer = function (): StringifyReplacer {
       seen.add(value);
 
       let depth = 0;
-      if (key) {
-        depth = depthMap.get(value) ?? 0;
+      if (this) {
+        depth = depthMap.get(this) ?? 0;
       }
-
-      // 'this' is supposed to be the object the value was found in, according to
-      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
-      // but that doesn't seem to be the case. Instead, we do a pre-pass on the children here to
-      // remember what depth we saw them at.
-      for (const v of Object.values(value)) {
-        if (typeof v === "object") depthMap.set(v, depth + 1);
-      }
+      depthMap.set(value, depth + 1);
 
       if (depth > DEPTH_LIMIT) return "<$ object-pruned $>";
     }
