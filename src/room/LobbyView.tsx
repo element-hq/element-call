@@ -129,15 +129,15 @@ export const LobbyView: FC<Props> = ({
         <div className={inCallStyles.footer}>
           {recentsButtonInFooter && recentsButton}
           <div className={inCallStyles.buttons}>
-            <VideoButton
-              muted={!muteStates.video.enabled}
-              onPress={onVideoPress}
-              disabled={muteStates.video.setEnabled === null}
-            />
             <MicButton
               muted={!muteStates.audio.enabled}
               onPress={onAudioPress}
               disabled={muteStates.audio.setEnabled === null}
+            />
+            <VideoButton
+              muted={!muteStates.video.enabled}
+              onPress={onVideoPress}
+              disabled={muteStates.video.setEnabled === null}
             />
             <SettingsButton onPress={openSettings} />
             {!confineToRoom && <HangupButton onPress={onLeaveClick} />}
