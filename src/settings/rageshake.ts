@@ -566,7 +566,7 @@ const getCircularReplacer = function (): StringifyReplacer {
         depth = depthMap.get(value) ?? 0;
       }
 
-      // 'this' is supposed to be the object the value was foudn in, according to
+      // 'this' is supposed to be the object the value was found in, according to
       // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
       // but that doesn't seem to be the case. Instead, we do a pre-pass on the children here to
       // remember what depth we saw them at.
