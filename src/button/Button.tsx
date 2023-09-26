@@ -33,6 +33,7 @@ import styles from "./Button.module.css";
 import { ReactComponent as Fullscreen } from "../icons/Fullscreen.svg";
 import { ReactComponent as FullscreenExit } from "../icons/FullscreenExit.svg";
 import { ReactComponent as RemoveIcon } from "../icons/Remove.svg";
+import { ReactComponent as BreakoutRoomIcon } from "../icons/BreakoutRoom.svg";
 import { VolumeIcon } from "./VolumeIcon";
 
 export type ButtonVariant =
@@ -237,6 +238,23 @@ export function SettingsButton({
     <Tooltip label={t("Settings")}>
       <Button variant="toolbar" {...rest}>
         <SettingsSolidIcon aria-label={t("Settings")} />
+      </Button>
+    </Tooltip>
+  );
+}
+
+export function BreakoutRoomButton({
+  ...rest
+}: {
+  // TODO: add all props for <Button>
+  [index: string]: unknown;
+}) {
+  const { t } = useTranslation();
+
+  return (
+    <Tooltip label={t("Break-out room")}>
+      <Button variant="toolbar" {...rest}>
+        <BreakoutRoomIcon aria-label={t("Break-out room")} />
       </Button>
     </Tooltip>
   );
