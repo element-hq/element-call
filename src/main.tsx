@@ -25,12 +25,18 @@ import { createRoot } from "react-dom/client";
 import { createBrowserHistory } from "history";
 import "./index.css";
 import { logger } from "matrix-js-sdk/src/logger";
+import {
+  setLogExtension as setLKLogExtension,
+  setLogLevel,
+} from "livekit-client";
 
 import App from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
 
 initRageshake();
+setLogLevel("debug");
+setLKLogExtension(global.mx_rage_logger.log);
 
 logger.info(`Element Call ${import.meta.env.VITE_APP_VERSION || "dev"}`);
 

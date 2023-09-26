@@ -50,6 +50,9 @@ const MAX_LOG_SIZE = 1024 * 1024 * 5; // 5 MB
 // we can batch the writes a little.
 const MAX_FLUSH_INTERVAL_MS = 2 * 1000;
 
+// only descend this far into nested object trees
+const DEPTH_LIMIT = 3;
+
 enum ConsoleLoggerEvent {
   Log = "log",
 }
@@ -67,7 +70,7 @@ class ConsoleLogger extends EventEmitter {
 
   public log = (
     level: LogLevel,
-    ...args: (Error | DOMException | object | string)[]
+    ...args: (Error | DOMException | object | string | undefined)[]
   ): void => {
     // We don't know what locale the user may be running so use ISO strings
     const ts = new Date().toISOString();
@@ -548,14 +551,30 @@ type StringifyReplacer = (
 
 // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#circular_references
 // Injects `<$ cycle-trimmed $>` wherever it cuts a cyclical object relationship
-const getCircularReplacer = (): StringifyReplacer => {
+const getCircularReplacer = function (): StringifyReplacer {
   const seen = new WeakSet();
+  const depthMap = new WeakMap<object, number>();
   return (key: string, value: unknown): unknown => {
     if (typeof value === "object" && value !== null) {
       if (seen.has(value)) {
         return "<$ cycle-trimmed $>";
       }
       seen.add(value);
+
+      let depth = 0;
+      if (key) {
+        depth = depthMap.get(value) ?? 0;
+      }
+
+      // 'this' is supposed to be the object the value was foudn in, according to
+      // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/JSON/stringify
+      // but that doesn't seem to be the case. Instead, we do a pre-pass on the children here to
+      // remember what depth we saw them at.
+      for (const v of Object.values(value)) {
+        if (typeof v === "object") depthMap.set(v, depth + 1);
+      }
+
+      if (depth > DEPTH_LIMIT) return "<$ object-pruned $>";
     }
     return value;
   };
