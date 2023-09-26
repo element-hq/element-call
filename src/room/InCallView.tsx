@@ -42,6 +42,7 @@ import {
   VideoButton,
   ScreenshareButton,
   SettingsButton,
+  BreakoutRoomButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import {
@@ -76,6 +77,7 @@ import {
   ECConnectionState,
 } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
+import { BreakoutRoomModal } from "./BreakoutRoomModal";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -326,6 +328,18 @@ export function InCallView({
     [setSettingsModalOpen]
   );
 
+  const [breakoutRoomModalModalOpen, setBreakoutRoomModalModalOpen] =
+    useState(false);
+
+  const openBreakoutRoomModal = useCallback(
+    () => setBreakoutRoomModalModalOpen(true),
+    [setBreakoutRoomModalModalOpen]
+  );
+  const closeBreakoutRoomModal = useCallback(
+    () => setBreakoutRoomModalModalOpen(false),
+    [setBreakoutRoomModalModalOpen]
+  );
+
   const toggleScreensharing = useCallback(async () => {
     exitFullscreen();
     await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, {
@@ -371,7 +385,10 @@ export function InCallView({
           />
         );
       }
-      buttons.push(<SettingsButton key="4" onPress={openSettings} />);
+      buttons.push(
+        <BreakoutRoomButton key="4" onPress={openBreakoutRoomModal} />
+      );
+      buttons.push(<SettingsButton key="5" onPress={openSettings} />);
     }
 
     buttons.push(
@@ -436,6 +453,12 @@ export function InCallView({
         />
       )*/}
       {!noControls && <RageshakeRequestModal {...rageshakeRequestModalProps} />}
+      <BreakoutRoomModal
+        client={client}
+        roomId={matrixInfo.roomId}
+        open={breakoutRoomModalModalOpen}
+        onDismiss={closeBreakoutRoomModal}
+      />
       <SettingsModal
         client={client}
         roomId={rtcSession.room.roomId}
