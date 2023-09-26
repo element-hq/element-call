@@ -19,6 +19,7 @@ import { useHistory } from "react-router-dom";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { Trans, useTranslation } from "react-i18next";
 import { Heading } from "@vector-im/compound-web";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { useClient } from "../ClientContext";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
@@ -130,7 +131,7 @@ export const UnauthenticatedView: FC = () => {
       }
 
       submit().catch((error) => {
-        console.error(error);
+        logger.error(error);
         setLoading(false);
         setError(error);
         reset();
