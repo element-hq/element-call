@@ -20,7 +20,7 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { Room, isE2EESupported } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { JoinRule, RoomMember } from "matrix-js-sdk/src/matrix";
+import { JoinRule } from "matrix-js-sdk/src/matrix";
 import { Heading, Link, Text } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
 
@@ -111,18 +111,11 @@ export function GroupCallView({
     client,
   ]);
 
-  const participatingMembers = useMemo(() => {
-    const members: RoomMember[] = [];
-    // Count each member only once, regardless of how many devices they use
-    const addedUserIds = new Set<string>();
-    for (const membership of memberships) {
-      if (!addedUserIds.has(membership.member.userId)) {
-        addedUserIds.add(membership.member.userId);
-        members.push(membership.member);
-      }
-    }
-    return members;
-  }, [memberships]);
+  // Count each member only once, regardless of how many devices they use
+  const participantCount = useMemo(
+    () => new Set<string>(memberships.map((m) => m.member.userId)).size,
+    [memberships]
+  );
 
   const deviceContext = useMediaDevices();
   const latestDevices = useRef<MediaDevices>();
@@ -340,7 +333,7 @@ export function GroupCallView({
           client={client}
           matrixInfo={matrixInfo}
           rtcSession={rtcSession}
-          participatingMembers={participatingMembers}
+          participantCount={participantCount}
           onLeave={onLeave}
           hideHeader={hideHeader}
           muteStates={muteStates}
@@ -391,7 +384,7 @@ export function GroupCallView({
           onEnter={() => enterRTCSession(rtcSession)}
           confineToRoom={confineToRoom}
           hideHeader={hideHeader}
-          participatingMembers={participatingMembers}
+          participantCount={participantCount}
           onShareClick={onShareClick}
         />
       </>

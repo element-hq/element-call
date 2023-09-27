@@ -16,7 +16,7 @@ limitations under the License.
 
 import { FC, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MatrixClient, RoomMember } from "matrix-js-sdk/src/matrix";
+import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Button, Link } from "@vector-im/compound-web";
 import classNames from "classnames";
 import { useHistory } from "react-router-dom";
@@ -44,7 +44,7 @@ interface Props {
   onEnter: () => void;
   confineToRoom: boolean;
   hideHeader: boolean;
-  participatingMembers: RoomMember[];
+  participantCount: number;
   onShareClick: (() => void) | null;
 }
 
@@ -55,7 +55,7 @@ export const LobbyView: FC<Props> = ({
   onEnter,
   confineToRoom,
   hideHeader,
-  participatingMembers,
+  participantCount,
   onShareClick,
 }) => {
   const { t } = useTranslation();
@@ -104,8 +104,7 @@ export const LobbyView: FC<Props> = ({
                 name={matrixInfo.roomName}
                 avatarUrl={matrixInfo.roomAvatar}
                 encrypted={matrixInfo.roomEncrypted}
-                participants={participatingMembers}
-                client={client}
+                participantCount={participantCount}
               />
             </LeftNav>
             <RightNav>
