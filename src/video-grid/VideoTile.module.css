@@ -43,7 +43,8 @@ limitations under the License.
 }
 
 .videoTile.speaking {
-  outline: 4px solid var(--cpd-color-border-accent);
+  /* !important because speaking border should take priority over hover */
+  outline: 4px solid var(--cpd-color-border-accent) !important;
 }
 
 @media (hover: hover) {
