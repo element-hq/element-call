@@ -423,7 +423,7 @@ export function InCallView({
           </LeftNav>
           <RightNav>
             {!reducedControls && onShareClick !== null && (
-              <ShareButton data-testid= "call_invite" onClick={onShareClick} />
+              <ShareButton data-testid="call_invite" onClick={onShareClick} />
             )}
           </RightNav>
         </Header>

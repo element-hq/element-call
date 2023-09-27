@@ -106,7 +106,13 @@ export const VideoPreview: FC<Props> = ({
 
   const content = (
     <>
-      <video data-testid="preview_video" ref={videoEl} muted playsInline disablePictureInPicture />
+      <video
+        data-testid="preview_video"
+        ref={videoEl}
+        muted
+        playsInline
+        disablePictureInPicture
+      />
       {!muteStates.video.enabled && (
         <div className={styles.avatarContainer}>
           <Avatar

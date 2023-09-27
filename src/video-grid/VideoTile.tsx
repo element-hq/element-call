@@ -203,7 +203,12 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
               aria-label={muted ? t("Microphone off") : t("Microphone on")}
               data-muted={muted}
             />
-            <Text as="span" size="sm" weight="medium" data-testid="videoTile_caption">
+            <Text
+              as="span"
+              size="sm"
+              weight="medium"
+              data-testid="videoTile_caption"
+            >
               {sfuParticipant.isLocal ? t("You") : displayName}
             </Text>
 

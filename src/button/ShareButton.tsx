@@ -24,7 +24,13 @@ export const ShareButton: FC<
 > = (props) => {
   const { t } = useTranslation();
   return (
-    <Button data-testid="open_share_modal" kind="secondary" size="sm" Icon={UserAddSolidIcon} {...props}>
+    <Button
+      data-testid="open_share_modal"
+      kind="secondary"
+      size="sm"
+      Icon={UserAddSolidIcon}
+      {...props}
+    >
       {t("Share")}
     </Button>
   );
