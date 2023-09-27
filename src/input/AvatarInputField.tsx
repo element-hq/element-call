@@ -28,7 +28,7 @@ import { useTranslation } from "react-i18next";
 
 import { Avatar, Size } from "../Avatar";
 import { Button } from "../button";
-import { ReactComponent as EditIcon } from "../icons/Edit.svg";
+import EditIcon from "../icons/Edit.svg?react";
 import styles from "./AvatarInputField.module.css";
 
 interface Props extends AllHTMLAttributes<HTMLInputElement> {
