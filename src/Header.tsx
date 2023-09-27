@@ -22,7 +22,7 @@ import { MatrixClient, RoomMember } from "matrix-js-sdk/src/matrix";
 import { Heading } from "@vector-im/compound-web";
 
 import styles from "./Header.module.css";
-import { ReactComponent as Logo } from "./icons/Logo.svg";
+import Logo from "./icons/Logo.svg?react";
 import { Avatar, Size } from "./Avatar";
 import { Facepile } from "./Facepile";
 import { EncryptionLock } from "./room/EncryptionLock";

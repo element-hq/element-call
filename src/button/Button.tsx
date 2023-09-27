@@ -20,18 +20,18 @@ import { useButton } from "@react-aria/button";
 import { mergeProps, useObjectRef } from "@react-aria/utils";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "@vector-im/compound-web";
-import { ReactComponent as MicOnSolidIcon } from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg";
-import { ReactComponent as MicOffSolidIcon } from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg";
-import { ReactComponent as VideoCallIcon } from "@vector-im/compound-design-tokens/icons/video-call.svg";
-import { ReactComponent as VideoCallOffIcon } from "@vector-im/compound-design-tokens/icons/video-call-off.svg";
-import { ReactComponent as EndCallIcon } from "@vector-im/compound-design-tokens/icons/end-call.svg";
-import { ReactComponent as ShareScreenSolidIcon } from "@vector-im/compound-design-tokens/icons/share-screen-solid.svg";
-import { ReactComponent as SettingsSolidIcon } from "@vector-im/compound-design-tokens/icons/settings-solid.svg";
-import { ReactComponent as ChevronDownIcon } from "@vector-im/compound-design-tokens/icons/chevron-down.svg";
+import MicOnSolidIcon from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg?react";
+import MicOffSolidIcon from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg?react";
+import VideoCallIcon from "@vector-im/compound-design-tokens/icons/video-call.svg?react";
+import VideoCallOffIcon from "@vector-im/compound-design-tokens/icons/video-call-off.svg?react";
+import EndCallIcon from "@vector-im/compound-design-tokens/icons/end-call.svg?react";
+import ShareScreenSolidIcon from "@vector-im/compound-design-tokens/icons/share-screen-solid.svg?react";
+import SettingsSolidIcon from "@vector-im/compound-design-tokens/icons/settings-solid.svg?react";
+import ChevronDownIcon from "@vector-im/compound-design-tokens/icons/chevron-down.svg?react";
 
 import styles from "./Button.module.css";
-import { ReactComponent as Fullscreen } from "../icons/Fullscreen.svg";
-import { ReactComponent as FullscreenExit } from "../icons/FullscreenExit.svg";
+import Fullscreen from "../icons/Fullscreen.svg?react";
+import FullscreenExit from "../icons/FullscreenExit.svg?react";
 import { VolumeIcon } from "./VolumeIcon";
 
 export type ButtonVariant =
