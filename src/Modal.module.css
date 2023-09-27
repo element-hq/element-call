@@ -14,94 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.overlay {
-  position: fixed;
-  z-index: 100;
-  inset: 0;
-  background: rgba(3, 12, 27, 0.528);
-}
-
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.dialogOverlay[data-state="open"] {
-  animation: fade-in 200ms;
-}
-
-@keyframes fade-out {
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
-}
-
-.dialogOverlay[data-state="closed"] {
-  animation: fade-out 130ms;
-}
-
 .modal {
-  position: fixed;
-  z-index: 101;
   display: flex;
   flex-direction: column;
 }
 
 .dialog {
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
   box-sizing: border-box;
   inline-size: 520px;
   max-inline-size: 90%;
   max-block-size: 600px;
-}
-
-@keyframes zoom-in {
-  from {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(80%);
-  }
-  to {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(100%);
-  }
-}
-
-@keyframes zoom-out {
-  from {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(100%);
-  }
-  to {
-    opacity: 0;
-    transform: translate(-50%, -50%) scale(80%);
-  }
-}
-
-.dialog[data-state="open"] {
-  animation: zoom-in 200ms;
-}
-
-.dialog[data-state="closed"] {
-  animation: zoom-out 130ms;
-}
-
-@media (prefers-reduced-motion) {
-  .dialog[data-state="open"] {
-    animation-name: fade-in;
-  }
-
-  .dialog[data-state="closed"] {
-    animation-name: fade-out;
-  }
 }
 
 .content {
