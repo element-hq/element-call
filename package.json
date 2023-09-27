@@ -121,7 +121,7 @@
     "typescript": "^5.1.6",
     "vite": "^4.2.0",
     "vite-plugin-html-template": "^1.1.0",
-    "vite-plugin-svgr": "^3.2.0"
+    "vite-plugin-svgr": "^4.0.0"
   },
   "jest": {
     "testEnvironment": "./test/environment.ts",
@@ -134,7 +134,7 @@
     ],
     "moduleNameMapper": {
       "\\.css$": "identity-obj-proxy",
-      "\\.svg$": "<rootDir>/test/mocks/svgr.ts",
+      "\\.svg\\?react$": "<rootDir>/test/mocks/svgr.ts",
       "^\\./IndexedDBWorker\\?worker$": "<rootDir>/test/mocks/workerMock.ts",
       "^\\./olm$": "<rootDir>/test/mocks/olmMock.ts"
     },

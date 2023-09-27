@@ -17,7 +17,7 @@ limitations under the License.
 import { ComponentPropsWithoutRef, FC } from "react";
 import { Button } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
-import { ReactComponent as UserAddSolidIcon } from "@vector-im/compound-design-tokens/icons/user-add-solid.svg";
+import UserAddSolidIcon from "@vector-im/compound-design-tokens/icons/user-add-solid.svg?react";
 
 export const ShareButton: FC<
   Omit<ComponentPropsWithoutRef<"button">, "children">
