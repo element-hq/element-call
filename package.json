@@ -84,7 +84,7 @@
     "@react-spring/rafz": "^9.7.3",
     "@react-types/dialog": "^3.5.5",
     "@sentry/vite-plugin": "^2.0.0",
-    "@storybook/react": "^6.5.0-alpha.5",
+    "@storybook/react": "^7.0.0",
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^14.0.0",
     "@types/content-type": "^1.1.5",
