@@ -69,7 +69,7 @@ import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { MuteStates } from "./MuteStates";
 import { MatrixInfo } from "./VideoPreview";
-import { ShareButton } from "../button/ShareButton";
+import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
 import {
   ECAddonConnectionState,
@@ -417,7 +417,7 @@ export function InCallView({
           </LeftNav>
           <RightNav>
             {!reducedControls && onShareClick !== null && (
-              <ShareButton onClick={onShareClick} />
+              <InviteButton onClick={onShareClick} />
             )}
           </RightNav>
         </Header>

@@ -27,7 +27,7 @@ import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
 import { MuteStates } from "./MuteStates";
-import { ShareButton } from "../button/ShareButton";
+import { InviteButton } from "../button/InviteButton";
 import {
   HangupButton,
   MicButton,
@@ -109,7 +109,7 @@ export const LobbyView: FC<Props> = ({
               />
             </LeftNav>
             <RightNav>
-              {onShareClick !== null && <ShareButton onClick={onShareClick} />}
+              {onShareClick !== null && <InviteButton onClick={onShareClick} />}
             </RightNav>
           </Header>
         )}
