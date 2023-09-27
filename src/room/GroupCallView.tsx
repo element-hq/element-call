@@ -47,7 +47,7 @@ import { useEnableE2EE } from "../settings/useSetting";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
-import { ShareModal } from "./ShareModal";
+import { InviteModal } from "./InviteModal";
 
 declare global {
   interface Window {
@@ -274,15 +274,15 @@ export function GroupCallView({
 
   const joinRule = useJoinRule(rtcSession.room);
 
-  const [shareModalOpen, setShareModalOpen] = useState(false);
-  const onDismissShareModal = useCallback(
-    () => setShareModalOpen(false),
-    [setShareModalOpen]
+  const [shareModalOpen, setInviteModalOpen] = useState(false);
+  const onDismissInviteModal = useCallback(
+    () => setInviteModalOpen(false),
+    [setInviteModalOpen]
   );
 
   const onShareClickFn = useCallback(
-    () => setShareModalOpen(true),
-    [setShareModalOpen]
+    () => setInviteModalOpen(true),
+    [setInviteModalOpen]
   );
   const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
 
@@ -325,10 +325,10 @@ export function GroupCallView({
   }
 
   const shareModal = (
-    <ShareModal
+    <InviteModal
       room={rtcSession.room}
       open={shareModalOpen}
-      onDismiss={onDismissShareModal}
+      onDismiss={onDismissInviteModal}
     />
   );
 
