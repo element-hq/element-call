@@ -107,5 +107,20 @@
   "Share this call": "Udostępnij to połączenie",
   "Sharing screen": "Udostępnianie ekranu",
   "{{count, number}}|one": "{{count, number}}",
-  "{{names, list(style: short;)}}": "{{names, list(style: short;)}}"
+  "{{names, list(style: short;)}}": "{{names, list(style: short;)}}",
+  "Continue in browser": "Kontynuuj w przeglądarce",
+  "Mute microphone": "Wycisz mikrofon",
+  "Name of call": "Nazwa połączenia",
+  "Open in the app": "Otwórz w aplikacji",
+  "Ready to join?": "Gotowy, by dołączyć?",
+  "Select app": "Wybierz aplikację",
+  "Start new call": "Rozpocznij nowe połączenie",
+  "Start video": "Rozpocznij wideo",
+  "Back to recents": "Wróć do ostatnie",
+  "Stop video": "Zakończ wideo",
+  "Unmute microphone": "Odcisz mikrofon",
+  "Call not found": "Nie znaleziono połączenia",
+  "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Połączenia są teraz szyfrowane end-to-end i muszą zostać utworzone ze strony głównej. Pomaga to upewnić się, że każdy korzysta z tego samego klucza szyfrującego.",
+  "You": "Ty",
+  "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117": "Twoja przeglądarka nie wspiera szyfrowania end-to-end. Wspierane przeglądarki to Chrome, Safari, Firefox >=117"
 }
