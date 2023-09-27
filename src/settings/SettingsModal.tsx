@@ -22,12 +22,12 @@ import { MatrixClient } from "matrix-js-sdk";
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
 import { TabContainer, TabItem } from "../tabs/Tabs";
-import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
-import { ReactComponent as VideoIcon } from "../icons/Video.svg";
-import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
-import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
-import { ReactComponent as UserIcon } from "../icons/User.svg";
-import { ReactComponent as FeedbackIcon } from "../icons/Feedback.svg";
+import AudioIcon from "../icons/Audio.svg?react";
+import VideoIcon from "../icons/Video.svg?react";
+import DeveloperIcon from "../icons/Developer.svg?react";
+import OverflowIcon from "../icons/Overflow.svg?react";
+import UserIcon from "../icons/User.svg?react";
+import FeedbackIcon from "../icons/Feedback.svg?react";
 import { SelectInput } from "../input/SelectInput";
 import {
   useShowInspector,

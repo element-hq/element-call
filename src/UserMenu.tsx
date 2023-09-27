@@ -24,10 +24,10 @@ import { PopoverMenuTrigger } from "./popover/PopoverMenu";
 import { Menu } from "./Menu";
 import { TooltipTrigger } from "./Tooltip";
 import { Avatar, Size } from "./Avatar";
-import { ReactComponent as UserIcon } from "./icons/User.svg";
-import { ReactComponent as SettingsIcon } from "./icons/Settings.svg";
-import { ReactComponent as LoginIcon } from "./icons/Login.svg";
-import { ReactComponent as LogoutIcon } from "./icons/Logout.svg";
+import UserIcon from "./icons/User.svg?react";
+import SettingsIcon from "./icons/Settings.svg?react";
+import LoginIcon from "./icons/Login.svg?react";
+import LogoutIcon from "./icons/Logout.svg?react";
 import { Body } from "./typography/Typography";
 import styles from "./UserMenu.module.css";
 
