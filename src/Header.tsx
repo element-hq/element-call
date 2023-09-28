@@ -18,13 +18,12 @@ import classNames from "classnames";
 import { FC, HTMLAttributes, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { MatrixClient, RoomMember } from "matrix-js-sdk/src/matrix";
-import { Heading } from "@vector-im/compound-web";
+import { Heading, Text } from "@vector-im/compound-web";
+import { ReactComponent as UserProfileIcon } from "@vector-im/compound-design-tokens/icons/user-profile.svg";
 
 import styles from "./Header.module.css";
 import Logo from "./icons/Logo.svg?react";
 import { Avatar, Size } from "./Avatar";
-import { Facepile } from "./Facepile";
 import { EncryptionLock } from "./room/EncryptionLock";
 import { useMediaQuery } from "./useMediaQuery";
 
@@ -118,8 +117,7 @@ interface RoomHeaderInfoProps {
   name: string;
   avatarUrl: string | null;
   encrypted: boolean;
-  participants: RoomMember[];
-  client: MatrixClient;
+  participantCount: number;
 }
 
 export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
@@ -127,8 +125,7 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
   name,
   avatarUrl,
   encrypted,
-  participants,
-  client,
+  participantCount,
 }) => {
   const { t } = useTranslation();
   const size = useMediaQuery("(max-width: 550px)") ? "sm" : "lg";
@@ -153,10 +150,16 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
         </Heading>
         <EncryptionLock encrypted={encrypted} />
       </div>
-      {participants.length > 0 && (
+      {participantCount > 0 && (
         <div className={styles.participantsLine}>
-          <Facepile client={client} members={participants} size={20} />
-          {t("{{count, number}}", { count: participants.length })}
+          <UserProfileIcon
+            width={20}
+            height={20}
+            aria-label={t("Participants")}
+          />
+          <Text as="span" size="sm" weight="medium">
+            {t("{{count, number}}", { count: participantCount })}
+          </Text>
         </div>
       )}
     </div>
