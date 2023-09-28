@@ -33,8 +33,8 @@ import useMeasure from "react-use-measure";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
-import { ReactComponent as LogoMark } from "../icons/LogoMark.svg";
-import { ReactComponent as LogoType } from "../icons/LogoType.svg";
+import LogoMark from "../icons/LogoMark.svg?react";
+import LogoType from "../icons/LogoType.svg?react";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
   HangupButton,
@@ -69,7 +69,7 @@ import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { MuteStates } from "./MuteStates";
 import { MatrixInfo } from "./VideoPreview";
-import { ShareButton } from "../button/ShareButton";
+import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
 import {
   ECAddonConnectionState,
@@ -120,7 +120,7 @@ export interface InCallViewProps {
   rtcSession: MatrixRTCSession;
   livekitRoom: Room;
   muteStates: MuteStates;
-  participatingMembers: RoomMember[];
+  participantCount: number;
   onLeave: (error?: Error) => void;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
@@ -134,7 +134,7 @@ export function InCallView({
   rtcSession,
   livekitRoom,
   muteStates,
-  participatingMembers,
+  participantCount,
   onLeave,
   hideHeader,
   otelGroupCallMembership,
@@ -169,7 +169,6 @@ export function InCallView({
     screenSharingTracks.length > 0
   );
 
-  //const [showInspector] = useShowInspector();
   const [showConnectionStats] = useShowConnectionStats();
 
   const { hideScreensharing } = useUrlParams();
@@ -417,13 +416,12 @@ export function InCallView({
               name={matrixInfo.roomName}
               avatarUrl={matrixInfo.roomAvatar}
               encrypted={matrixInfo.roomEncrypted}
-              participants={participatingMembers}
-              client={client}
+              participantCount={participantCount}
             />
           </LeftNav>
           <RightNav>
             {!reducedControls && onShareClick !== null && (
-              <ShareButton data-testid="call_invite" onClick={onShareClick} />
+              <InviteButton data-testid="call_invite" onClick={onShareClick} />
             )}
           </RightNav>
         </Header>
@@ -433,14 +431,6 @@ export function InCallView({
         {renderContent()}
         {footer}
       </div>
-      {/*otelGroupCallMembership && (
-        <GroupCallInspector
-          client={client}
-          groupCall={groupCall}
-          otelGroupCallMembership={otelGroupCallMembership}
-          show={showInspector}
-        />
-      )*/}
       {!noControls && <RageshakeRequestModal {...rageshakeRequestModalProps} />}
       <SettingsModal
         client={client}

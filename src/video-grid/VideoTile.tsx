@@ -34,8 +34,8 @@ import {
   RoomMember,
   RoomMemberEvent,
 } from "matrix-js-sdk/src/models/room-member";
-import { ReactComponent as MicOnSolidIcon } from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg";
-import { ReactComponent as MicOffSolidIcon } from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg";
+import MicOnSolidIcon from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg?react";
+import MicOffSolidIcon from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg?react";
 import { Text } from "@vector-im/compound-web";
 
 import { Avatar } from "../Avatar";
