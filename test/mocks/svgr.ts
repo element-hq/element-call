@@ -1,3 +1,3 @@
 // Mock file for SVG imports
-export default "SvgrURL";
-export const ReactComponent = "div";
+const ReactComponent = "svg";
+export default ReactComponent;
