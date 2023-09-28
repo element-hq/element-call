@@ -32,6 +32,7 @@ import classNames from "classnames";
 import { Heading } from "@vector-im/compound-web";
 
 import styles from "./Modal.module.css";
+import overlayStyles from "./Overlay.module.css";
 import { useMediaQuery } from "./useMediaQuery";
 import { Glass } from "./Glass";
 
@@ -85,9 +86,14 @@ export function Modal({
         dismissible={onDismiss !== undefined}
       >
         <Drawer.Portal>
-          <Drawer.Overlay className={styles.overlay} />
+          <Drawer.Overlay className={classNames(overlayStyles.bg)} />
           <Drawer.Content
-            className={classNames(className, styles.modal, styles.drawer)}
+            className={classNames(
+              className,
+              overlayStyles.overlay,
+              styles.modal,
+              styles.drawer
+            )}
             {...rest}
           >
             <div className={styles.content}>
@@ -108,12 +114,18 @@ export function Modal({
       <DialogRoot open={open} onOpenChange={onOpenChange}>
         <DialogPortal>
           <DialogOverlay
-            className={classNames(styles.overlay, styles.dialogOverlay)}
+            className={classNames(overlayStyles.bg, overlayStyles.animate)}
           />
           <DialogContent asChild {...rest}>
             <Glass
               frosted
-              className={classNames(className, styles.modal, styles.dialog)}
+              className={classNames(
+                className,
+                overlayStyles.overlay,
+                overlayStyles.animate,
+                styles.modal,
+                styles.dialog
+              )}
             >
               <div className={styles.content}>
                 <div className={styles.header}>

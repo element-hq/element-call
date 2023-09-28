@@ -19,13 +19,13 @@ import { Button } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
 import UserAddSolidIcon from "@vector-im/compound-design-tokens/icons/user-add-solid.svg?react";
 
-export const ShareButton: FC<
+export const InviteButton: FC<
   Omit<ComponentPropsWithoutRef<"button">, "children">
 > = (props) => {
   const { t } = useTranslation();
   return (
     <Button kind="secondary" size="sm" Icon={UserAddSolidIcon} {...props}>
-      {t("Share")}
+      {t("Invite")}
     </Button>
   );
 };
