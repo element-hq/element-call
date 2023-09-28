@@ -5443,10 +5443,10 @@ eslint-plugin-jsx-a11y@^6.5.1:
     object.fromentries "^2.0.6"
     semver "^6.3.0"
 
-eslint-plugin-matrix-org@^0.4.0:
-  version "0.4.0"
-  resolved "https://registry.yarnpkg.com/eslint-plugin-matrix-org/-/eslint-plugin-matrix-org-0.4.0.tgz#de2d2db1cd471d637728133ce9a2b921690e5cd1"
-  integrity sha512-yVkNwtc33qtrQB4PPzpU+PUdFzdkENPan3JF4zhtAQJRUYXyvKEXnYSrXLUWYRXoYFxs9LbyI2CnhJL/RnHJaQ==
+eslint-plugin-matrix-org@^0.10.0:
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/eslint-plugin-matrix-org/-/eslint-plugin-matrix-org-0.10.0.tgz#8d0998641a4d276343cae2abf253a01bb4d4cc60"
+  integrity sha512-L7ail0x1yUlF006kn4mHc+OT8/aYZI++i852YXPHxCbM1EY7jeg/fYAQ8tCx5+x08LyqXeS7inAVSL784m0C6Q==
 
 eslint-plugin-react-hooks@^4.5.0:
   version "4.6.0"
