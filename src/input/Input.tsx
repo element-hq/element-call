@@ -25,7 +25,7 @@ import {
 import classNames from "classnames";
 
 import styles from "./Input.module.css";
-import { ReactComponent as CheckIcon } from "../icons/Check.svg";
+import CheckIcon from "../icons/Check.svg?react";
 import { TranslatedError } from "../TranslatedError";
 
 interface FieldRowProps {

@@ -111,7 +111,6 @@ limitations under the License.
   display: flex;
   align-items: center;
   gap: var(--cpd-space-1-5x);
-  font: var(--cpd-font-body-sm-medium);
 }
 
 @media (min-width: 800px) {

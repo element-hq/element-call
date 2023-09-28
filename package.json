@@ -44,8 +44,8 @@
     "@react-stately/select": "^3.1.3",
     "@react-stately/tooltip": "^3.0.5",
     "@react-stately/tree": "^3.2.0",
-    "@sentry/react": "^6.13.3",
-    "@sentry/tracing": "^6.13.3",
+    "@sentry/react": "^7.0.0",
+    "@sentry/tracing": "^7.0.0",
     "@use-gesture/react": "^10.2.11",
     "@vector-im/compound-design-tokens": "^0.0.6",
     "@vector-im/compound-web": "^0.4.0",
@@ -84,6 +84,7 @@
     "@storybook/react": "^6.5.0-alpha.5",
     "@testing-library/jest-dom": "^6.0.0",
     "@testing-library/react": "^14.0.0",
+    "@testing-library/user-event": "^14.5.1",
     "@types/content-type": "^1.1.5",
     "@types/d3": "^7.4.0",
     "@types/dom-screen-wake-lock": "^1.0.1",
@@ -118,7 +119,7 @@
     "typescript": "^5.1.6",
     "vite": "^4.2.0",
     "vite-plugin-html-template": "^1.1.0",
-    "vite-plugin-svgr": "^3.2.0"
+    "vite-plugin-svgr": "^4.0.0"
   },
   "jest": {
     "testEnvironment": "./test/environment.ts",
@@ -131,7 +132,7 @@
     ],
     "moduleNameMapper": {
       "\\.css$": "identity-obj-proxy",
-      "\\.svg$": "<rootDir>/test/mocks/svgr.ts",
+      "\\.svg\\?react$": "<rootDir>/test/mocks/svgr.ts",
       "^\\./IndexedDBWorker\\?worker$": "<rootDir>/test/mocks/workerMock.ts",
       "^\\./olm$": "<rootDir>/test/mocks/olmMock.ts"
     },
