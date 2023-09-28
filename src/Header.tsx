@@ -19,7 +19,7 @@ import { FC, HTMLAttributes, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@vector-im/compound-web";
-import { ReactComponent as UserProfileIcon } from "@vector-im/compound-design-tokens/icons/user-profile.svg";
+import UserProfileIcon from "@vector-im/compound-design-tokens/icons/user-profile.svg?react";
 
 import styles from "./Header.module.css";
 import Logo from "./icons/Logo.svg?react";
