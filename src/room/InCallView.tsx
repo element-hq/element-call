@@ -169,7 +169,6 @@ export function InCallView({
     screenSharingTracks.length > 0
   );
 
-  //const [showInspector] = useShowInspector();
   const [showConnectionStats] = useShowConnectionStats();
 
   const { hideScreensharing } = useUrlParams();
@@ -426,14 +425,6 @@ export function InCallView({
         {renderContent()}
         {footer}
       </div>
-      {/*otelGroupCallMembership && (
-        <GroupCallInspector
-          client={client}
-          groupCall={groupCall}
-          otelGroupCallMembership={otelGroupCallMembership}
-          show={showInspector}
-        />
-      )*/}
       {!noControls && <RageshakeRequestModal {...rageshakeRequestModalProps} />}
       <SettingsModal
         client={client}
