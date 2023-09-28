@@ -17,7 +17,7 @@ limitations under the License.
 import { FC, MouseEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Text } from "@vector-im/compound-web";
-import { ReactComponent as PopOutIcon } from "@vector-im/compound-design-tokens/icons/pop-out.svg";
+import PopOutIcon from "@vector-im/compound-design-tokens/icons/pop-out.svg?react";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { Modal } from "../Modal";

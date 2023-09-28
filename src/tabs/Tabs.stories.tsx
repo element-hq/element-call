@@ -17,9 +17,9 @@ limitations under the License.
 import { FC } from "react";
 
 import { TabContainer, TabItem } from "./Tabs";
-import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
-import { ReactComponent as VideoIcon } from "../icons/Video.svg";
-import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
+import AudioIcon from "../icons/Audio.svg?react";
+import VideoIcon from "../icons/Video.svg?react";
+import DeveloperIcon from "../icons/Developer.svg?react";
 import { Body } from "../typography/Typography";
 
 export default {

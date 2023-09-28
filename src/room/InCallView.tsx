@@ -33,8 +33,8 @@ import useMeasure from "react-use-measure";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
-import { ReactComponent as LogoMark } from "../icons/LogoMark.svg";
-import { ReactComponent as LogoType } from "../icons/LogoType.svg";
+import LogoMark from "../icons/LogoMark.svg?react";
+import LogoType from "../icons/LogoType.svg?react";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
   HangupButton,
