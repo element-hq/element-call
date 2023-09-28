@@ -34,7 +34,7 @@ import { Button } from "../button";
 import { useClientLegacy } from "../ClientContext";
 import { useInteractiveRegistration } from "./useInteractiveRegistration";
 import styles from "./LoginPage.module.css";
-import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
+import Logo from "../icons/LogoLarge.svg?react";
 import { LoadingView } from "../FullScreenView";
 import { useRecaptcha } from "./useRecaptcha";
 import { Caption, Link } from "../typography/Typography";
