@@ -120,7 +120,7 @@ export interface InCallViewProps {
   rtcSession: MatrixRTCSession;
   livekitRoom: Room;
   muteStates: MuteStates;
-  participatingMembers: RoomMember[];
+  participantCount: number;
   onLeave: (error?: Error) => void;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
@@ -134,7 +134,7 @@ export function InCallView({
   rtcSession,
   livekitRoom,
   muteStates,
-  participatingMembers,
+  participantCount,
   onLeave,
   hideHeader,
   otelGroupCallMembership,
@@ -411,8 +411,7 @@ export function InCallView({
               name={matrixInfo.roomName}
               avatarUrl={matrixInfo.roomAvatar}
               encrypted={matrixInfo.roomEncrypted}
-              participants={participatingMembers}
-              client={client}
+              participantCount={participantCount}
             />
           </LeftNav>
           <RightNav>
