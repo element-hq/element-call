@@ -1,6 +1,5 @@
 {
   "applinks": {
-    "apps": [],
     "details": [
       {
         "appIDs": [
@@ -8,7 +7,19 @@
           "7J4U792NQT.io.element.elementx.nightly",
           "7J4U792NQT.io.element.elementx.pr"
         ],
-        "paths": ["*"]
+        "components": [
+          {
+            "?": {
+              "no_universal_links": "*"
+            },
+            "exclude": true,
+            "comment": "Opt out of universal links"
+          },
+          {
+            "/": "/*",
+            "comment": "Matches any URL"
+          }
+        ]
       }
     ]
   }
