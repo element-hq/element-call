@@ -114,5 +114,10 @@
   "Unmute microphone": "Lülita mikrofon sisse",
   "Call not found": "Kõnet ei leidu",
   "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "Kõned on nüüd läbivalt krüptitud ning need pead looma kodulehelt. Sellega tagad, et kõik kasutavad samu krüptovõtmeid.",
-  "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117": "Sinu veebibrauser ei toeta meedia läbivat krüptimist. Toetatud brauserid on Chrome, Chromium, Safari ja Firefox >=117"
+  "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117": "Sinu veebibrauser ei toeta meedia läbivat krüptimist. Toetatud brauserid on Chrome, Chromium, Safari ja Firefox >=117",
+  "Invite": "Kutsu",
+  "Link copied to clipboard": "Link on kopeeritud lõikelauale",
+  "Participants": "Osalejad",
+  "Copy link": "Kopeeri link",
+  "Invite to this call": "Kutsu liituma selle kõnaga"
 }
