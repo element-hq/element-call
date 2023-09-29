@@ -42,7 +42,7 @@ import {
   VideoButton,
   ScreenshareButton,
   SettingsButton,
-  BreakoutRoomButton,
+  AddBreakoutRoomButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import {
@@ -386,7 +386,7 @@ export function InCallView({
         );
       }
       buttons.push(
-        <BreakoutRoomButton key="4" onPress={openBreakoutRoomModal} />
+        <AddBreakoutRoomButton key="4" onPress={openBreakoutRoomModal} />
       );
       buttons.push(<SettingsButton key="5" onPress={openSettings} />);
     }
