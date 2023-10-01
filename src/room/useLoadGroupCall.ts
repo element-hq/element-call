@@ -55,12 +55,17 @@ export const useLoadGroupCall = (
   viaServers: string[]
 ): GroupCallStatus => {
   const { t } = useTranslation();
+  const [lastRoomId, setLastRoomId] = useState<string | undefined>();
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
 
   const [e2eeEnabled] = useEnableE2EE();
 
   useEffect(() => {
     const fetchOrCreateRoom = async (): Promise<Room> => {
+      if (lastRoomId !== roomIdOrAlias) {
+        setState({ kind: "loading" });
+      }
+
       let room: Room | null = null;
       if (roomIdOrAlias[0] === "#") {
         // We lowercase the localpart when we create the room, so we must lowercase
@@ -127,9 +132,15 @@ export const useLoadGroupCall = (
 
     waitForClientSyncing()
       .then(fetchOrCreateGroupCall)
-      .then((rtcSession) => setState({ kind: "loaded", rtcSession }))
-      .catch((error) => setState({ kind: "failed", error }));
-  }, [client, roomIdOrAlias, viaServers, t, e2eeEnabled]);
+      .then((rtcSession) => {
+        setLastRoomId(roomIdOrAlias);
+        setState({ kind: "loaded", rtcSession });
+      })
+      .catch((error) => {
+        setLastRoomId(roomIdOrAlias);
+        setState({ kind: "failed", error });
+      });
+  }, [client, roomIdOrAlias, viaServers, t, e2eeEnabled, lastRoomId]);
 
   return state;
 };
