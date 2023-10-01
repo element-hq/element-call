@@ -16,7 +16,7 @@ limitations under the License.
 
 import { ChangeEvent, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MatrixClient } from "matrix-js-sdk";
+import { GroupCallIntent, GroupCallType, MatrixClient } from "matrix-js-sdk";
 import { BreakoutRoomBase } from "matrix-js-sdk/src/@types/breakout";
 import { NewBreakoutRoom } from "matrix-js-sdk/src/@types/breakout";
 import { randomString } from "matrix-js-sdk/src/randomstring";
@@ -148,6 +148,13 @@ export const BreakoutRoomModal = ({
         setLocalStorageItem(
           getRoomSharedKeyLocalStorageKey(room.roomId),
           randomString(32)
+        );
+        await client.createGroupCall(
+          room.roomId,
+          GroupCallType.Video,
+          false,
+          GroupCallIntent.Room,
+          true
         );
       }
     }
