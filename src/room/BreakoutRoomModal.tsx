@@ -19,12 +19,16 @@ import { useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
 import { BreakoutRoomBase } from "matrix-js-sdk/src/@types/breakout";
 import { NewBreakoutRoom } from "matrix-js-sdk/src/@types/breakout";
+import { randomString } from "matrix-js-sdk/src/randomstring";
 
 import { Modal } from "../Modal";
 import { Button, RemoveButton } from "../button/Button";
 import { FieldRow, InputField } from "../input/Input";
 import { arrayFastClone } from "../utils";
 import styles from "./BreakoutRoomModal.module.css";
+import { setLocalStorageItem } from "../useLocalStorage";
+import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
+import { useEnableE2EE } from "../settings/useSetting";
 
 interface BreakoutRoom extends BreakoutRoomBase {
   roomName: string;
@@ -92,6 +96,7 @@ export const BreakoutRoomModal = ({
   onDismiss,
 }: Props) => {
   const { t } = useTranslation();
+  const [e2eeEnabled] = useEnableE2EE();
 
   const [submitting, setSubmitting] = useState(false);
   const [breakoutRooms, setBreakoutRooms] = useState<BreakoutRoom[]>(() => [
@@ -134,9 +139,20 @@ export const BreakoutRoomModal = ({
 
   const onSubmit = useCallback(async () => {
     setSubmitting(true);
-    await client.createBreakoutRooms(roomId, breakoutRooms);
+    const { newRooms } = await client.createBreakoutRooms(
+      roomId,
+      breakoutRooms
+    );
+    for (const room of newRooms) {
+      if (e2eeEnabled) {
+        setLocalStorageItem(
+          getRoomSharedKeyLocalStorageKey(room.roomId),
+          randomString(32)
+        );
+      }
+    }
     onDismiss();
-  }, [client, roomId, breakoutRooms, onDismiss]);
+  }, [client, roomId, breakoutRooms, e2eeEnabled, onDismiss]);
 
   return (
     <Modal title={t("Break-out room")} open={open} onDismiss={onDismiss}>
