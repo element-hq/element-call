@@ -78,6 +78,7 @@ import {
 } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
 import { BreakoutRoomModal } from "./BreakoutRoomModal";
+import { BreakoutRoomsOverlay } from "./BreakoutRoomsOverlay";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 // There is currently a bug in Safari our our code with cloning and sending MediaStreams
@@ -465,6 +466,7 @@ export function InCallView({
         open={settingsModalOpen}
         onDismiss={closeSettings}
       />
+      <BreakoutRoomsOverlay room={rtcSession.room} />
     </div>
   );
 }
