@@ -224,8 +224,12 @@ export function getRoomIdentifierFromUrl(
     roomAlias = pathname.substring(1); // Strip the "/"
 
     // Delete "/room/", if present
-    if (roomAlias.startsWith("room/")) {
-      roomAlias = roomAlias.substring("room/".length);
+    if (roomAlias.startsWith("room")) {
+      roomAlias = roomAlias.substring("room".length);
+    }
+    // We separate `room` and `/` because in widget mode we use room without providing an alias `.../room#?...`
+    if (roomAlias.startsWith("/")) {
+      roomAlias = roomAlias.substring("/".length);
     }
     // Add "#", if not present
     if (!roomAlias.startsWith("#")) {
