@@ -370,7 +370,13 @@ export function InCallView({
           />
         );
       }
-      buttons.push(<SettingsButton key="4" onPress={openSettings} />);
+      buttons.push(
+        <SettingsButton
+          key="4"
+          onPress={openSettings}
+          data-testid="incall_settings"
+        />
+      );
     }
 
     buttons.push(
@@ -415,7 +421,7 @@ export function InCallView({
           </LeftNav>
           <RightNav>
             {!reducedControls && onShareClick !== null && (
-              <InviteButton onClick={onShareClick} />
+              <InviteButton data-testid="call_invite" onClick={onShareClick} />
             )}
           </RightNav>
         </Header>

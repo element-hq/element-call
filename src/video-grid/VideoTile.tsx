@@ -203,9 +203,15 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
               aria-label={muted ? t("Microphone off") : t("Microphone on")}
               data-muted={muted}
             />
-            <Text as="span" size="sm" weight="medium">
+            <Text
+              as="span"
+              size="sm"
+              weight="medium"
+              data-testid="videoTile_caption"
+            >
               {sfuParticipant.isLocal ? t("You") : displayName}
             </Text>
+
             {showConnectionStats && (
               <ConnectionQualityIndicator participant={sfuParticipant} />
             )}
@@ -213,6 +219,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         )}
         <VideoTrack
           participant={sfuParticipant}
+          data-testid="videoTile_video"
           source={
             content === TileContent.UserMedia
               ? Track.Source.Camera
