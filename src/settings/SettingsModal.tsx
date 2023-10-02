@@ -18,6 +18,9 @@ import { ChangeEvent, Key, useCallback, useState } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
+import { useMaybeRoomContext } from "@livekit/components-react";
+import { LocalTrack } from "livekit-client";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -66,26 +69,79 @@ export const SettingsModal = (props: Props) => {
     useShowConnectionStats();
   const [enableE2EE, setEnableE2EE] = useEnableE2EE();
 
-  // Generate a `SelectInput` with a list of devices for a given device kind.
-  const generateDeviceSelection = (devices: MediaDevice, caption: string) => {
+  const lkRoom = useMaybeRoomContext();
+
+  const getTrackInUse = (sourceName: string): LocalTrack | undefined => {
+    if (!lkRoom) return undefined;
+
+    const t = Array.from(lkRoom.localParticipant.audioTracks.values()).find(
+      (d) => d.source === sourceName
+    );
+
+    return t?.track;
+  };
+
+  /**
+   * Generate a `SelectInput` with a list of devices for a given device kind.
+   * @param devices Info about the available & selected devices from MediaDevicesContext
+   * @param caption Device caption to be used if no labels available
+   * @param lkSource The livekit source name for this device type, eg. 'microphone': used to match up
+   *                 devices used by tracks in a current room (if any).
+   */
+  const generateDeviceSelection = (
+    devices: MediaDevice,
+    caption: string,
+    lkSource?: string
+  ) => {
     if (devices.available.length == 0) return null;
+
+    const trackUsedByRoom = lkSource ? getTrackInUse(lkSource) : undefined;
+
+    let selectedKey = devices.selectedId;
+    // We may present a different device as the currently selected one if we have an active track
+    // from the default device, because the default device may have changed since we acquired the
+    // track, in which case we want to display the one we're actually using rather than what the
+    // default is now.
+    if (
+      trackUsedByRoom &&
+      (devices.selectedId === "" ||
+        !devices.selectedId ||
+        devices.selectedId === "default")
+    ) {
+      // we work out what the actual device is based on groupId, but this only works if
+      // there is only one such device with the same group ID, which there won't be if
+      // we're using hardware with multiple sub-devices (eg. a multitrack soundcard)
+      const usedGroupId =
+        trackUsedByRoom?.mediaStreamTrack.getSettings().groupId;
+      const devicesWithMatchingGroupId = devices.available.filter(
+        (d) => d.groupId === usedGroupId && d.groupId !== "default"
+      );
+
+      if (devicesWithMatchingGroupId.length === 1) {
+        logger.info(
+          `Current default device doesn't appear to match device in use: selecting ${devicesWithMatchingGroupId[0].label}`
+        );
+        selectedKey = devicesWithMatchingGroupId[0].deviceId;
+      }
+    }
+
+    const getLabel = (device: MediaDeviceInfo, index: number) => {
+      /*if (selected && trackUsedByRoom) {
+        return trackUsedByRoom.label.trim();
+      }*/
+      return !!device.label && device.label.trim().length > 0
+        ? device.label
+        : `${caption} ${index + 1}`;
+    };
 
     return (
       <SelectInput
         label={caption}
-        selectedKey={
-          devices.selectedId === "" || !devices.selectedId
-            ? "default"
-            : devices.selectedId
-        }
+        selectedKey={selectedKey}
         onSelectionChange={(id) => devices.select(id.toString())}
       >
-        {devices.available.map(({ deviceId, label }, index) => (
-          <Item key={deviceId}>
-            {!!label && label.trim().length > 0
-              ? label
-              : `${caption} ${index + 1}`}
-          </Item>
+        {devices.available.map((d, index) => (
+          <Item key={d.deviceId}>{getLabel(d, index)}</Item>
         ))}
       </SelectInput>
     );
@@ -124,7 +180,11 @@ export const SettingsModal = (props: Props) => {
         </>
       }
     >
-      {generateDeviceSelection(devices.audioInput, t("Microphone"))}
+      {generateDeviceSelection(
+        devices.audioInput,
+        t("Microphone"),
+        "microphone"
+      )}
       {!isFirefox() &&
         generateDeviceSelection(devices.audioOutput, t("Speaker"))}
     </TabItem>
