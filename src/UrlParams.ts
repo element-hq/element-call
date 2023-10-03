@@ -33,6 +33,9 @@ interface RoomIdentifier {
 // clearer what each flag means, and helps us avoid coupling Element Call's
 // behavior to the needs of specific consumers.
 interface UrlParams {
+  // Widget api related params
+  widgetId: string | null;
+  parentUrl: string | null;
   /**
    * Anything about what room we're pointed to should be from useRoomIdentifier which
    * parses the path and resolves alias with respect to the default server name, however
@@ -178,6 +181,9 @@ export const getUrlParams = (
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
 
   return {
+    widgetId: parser.getParam("widgetId"),
+    parentUrl: parser.getParam("parentUrl"),
+
     // NB. we don't validate roomId here as we do in getRoomIdentifierFromUrl:
     // what would we do if it were invalid? If the widget API says that's what
     // the room ID is, then that's what it is.
