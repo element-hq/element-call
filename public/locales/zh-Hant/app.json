@@ -114,5 +114,10 @@
   "Unmute microphone": "將麥克風取消靜音",
   "Call not found": "找不到通話",
   "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.": "通話現在是端對端加密的，必須從首頁建立。這有助於確保每個人都使用相同的加密金鑰。",
-  "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117": "您的網路瀏覽器不支援媒體端到端加密。支援的瀏覽器包含了 Chrome、Safari、Firefox >=117"
+  "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117": "您的網路瀏覽器不支援媒體端到端加密。支援的瀏覽器包含了 Chrome、Safari、Firefox >=117",
+  "Copy link": "複製連結",
+  "Invite": "邀請",
+  "Invite to this call": "邀請到此通話",
+  "Link copied to clipboard": "連結已複製到剪貼簿",
+  "Participants": "參與者"
 }
