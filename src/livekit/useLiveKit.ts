@@ -164,6 +164,10 @@ export function useLiveKit(
         // we need to to see if the default device has changed to a different device
         // by comparing the group ID of the device we're using against the group ID
         // of what the default device is *now*.
+        // This is special-cased for only audio inputs because we need to dig around
+        // in the LocalParticipant object for the track object and there's not a nice
+        // way to do that generically. There is usually no OS-level default video capture
+        // device anyway, and audio outputs work differently.
         if (
           id === "default" &&
           kind === "audioinput" &&
