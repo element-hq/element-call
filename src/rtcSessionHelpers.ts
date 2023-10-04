@@ -47,7 +47,9 @@ export function enterRTCSession(rtcSession: MatrixRTCSession) {
   rtcSession.joinRoomSession([makeFocus(livekitAlias)]);
 }
 
-export function leaveRTCSession(rtcSession: MatrixRTCSession) {
+export async function leaveRTCSession(
+  rtcSession: MatrixRTCSession
+): Promise<void> {
   //groupCallOTelMembership?.onLeaveCall();
-  rtcSession.leaveRoomSession();
+  await rtcSession.leaveRoomSession();
 }
