@@ -10,7 +10,7 @@
         "components": [
           {
             "?": {
-              "no_universal_links": "*"
+              "no_universal_links": "?*"
             },
             "exclude": true,
             "comment": "Opt out of universal links"
