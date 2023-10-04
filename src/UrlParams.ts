@@ -218,37 +218,39 @@ export function getRoomIdentifierFromUrl(
   hash: string
 ): RoomIdentifier {
   let roomAlias: string | null = null;
+  pathname = pathname.substring(1); // Strip the "/"
+  const pathComponents = pathname.split("/");
+  const pathHasRoom = pathComponents[0] == "room";
+  const hasRoomAlias = pathComponents.length > 1;
 
-  // Here we handle the beginning of the alias and make sure it starts with a "#"
+  // What type is our url: roomAlias in hash, room alias as the search path, roomAlias after /room/
   if (hash === "" || hash.startsWith("#?")) {
-    roomAlias = pathname.substring(1); // Strip the "/"
-
-    // Delete "/room/", if present
-    if (roomAlias.startsWith("room")) {
-      roomAlias = roomAlias.substring("room".length);
+    if (hasRoomAlias && pathHasRoom) {
+      roomAlias = pathComponents[1];
     }
-    // We separate `room` and `/` because in widget mode we use room without providing an alias `.../room#?...`
-    if (roomAlias.startsWith("/")) {
-      roomAlias = roomAlias.substring("/".length);
-    }
-    // Add "#", if not present
-    if (!roomAlias.startsWith("#")) {
-      roomAlias = `#${roomAlias}`;
+    if (!pathHasRoom) {
+      roomAlias = pathComponents[0];
     }
   } else {
     roomAlias = hash;
   }
 
   // Delete "?" and what comes afterwards
-  roomAlias = roomAlias.split("?")[0];
+  roomAlias = roomAlias?.split("?")[0] ?? null;
 
-  if (roomAlias.length <= 1) {
+  if (roomAlias) {
     // Make roomAlias is null, if it only is a "#"
-    roomAlias = null;
-  } else {
-    // Add server part, if not present
-    if (!roomAlias.includes(":")) {
-      roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
+    if (roomAlias.length <= 1) {
+      roomAlias = null;
+    } else {
+      // Add "#", if not present
+      if (!roomAlias.startsWith("#")) {
+        roomAlias = `#${roomAlias}`;
+      }
+      // Add server part, if not present
+      if (!roomAlias.includes(":")) {
+        roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
+      }
     }
   }
 
