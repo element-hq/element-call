@@ -74,7 +74,7 @@
     "tinyqueue": "^2.0.3",
     "unique-names-generator": "^4.6.0",
     "uuid": "9",
-    "vaul": "^0.6.1"
+    "vaul": "^0.7.0"
   },
   "devDependencies": {
     "@babel/core": "^7.16.5",
