@@ -28,7 +28,7 @@ import {
   GroupCallIntent,
   GroupCallType,
 } from "matrix-js-sdk/src/webrtc/groupCall";
-import { randomString } from "matrix-js-sdk/src/randomstring";
+import { encodeUnpaddedBase64 } from "matrix-js-sdk/src/common-crypto/base64";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
@@ -72,6 +72,12 @@ function waitForSync(client: MatrixClient) {
     };
     client.on(ClientEvent.Sync, onSync);
   });
+}
+
+function secureRandomString(entropyBytes: number): string {
+  const key = new Uint8Array(entropyBytes);
+  crypto.getRandomValues(key);
+  return encodeUnpaddedBase64(key);
 }
 
 /**
@@ -347,7 +353,7 @@ export async function createRoom(
 
   let password;
   if (e2ee) {
-    password = randomString(32);
+    password = secureRandomString(16);
     setLocalStorageItem(
       getRoomSharedKeyLocalStorageKey(result.room_id),
       password
