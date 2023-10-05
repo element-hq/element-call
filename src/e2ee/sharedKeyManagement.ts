@@ -60,14 +60,6 @@ export const useRoomSharedKey = (roomId: string): string | null => {
   return useInternalRoomSharedKey(roomId)[0] ?? passwordFormUrl;
 };
 
-export const useManageRoomSharedKey = (roomId: string): string | null => {
-  const urlPassword = useKeyFromUrl(roomId);
-
-  const [e2eeSharedKey] = useInternalRoomSharedKey(roomId);
-
-  return e2eeSharedKey ?? urlPassword;
-};
-
 export const useIsRoomE2EE = (roomId: string): boolean | null => {
   const { client } = useClient();
   const room = useMemo(() => client?.getRoom(roomId) ?? null, [roomId, client]);
