@@ -99,8 +99,8 @@ export const SettingsModal = (props: Props) => {
 
     let selectedKey = devices.selectedId;
     // We may present a different device as the currently selected one if we have an active track
-    // from the default device, because the default device may have changed since we acquired the
-    // track, in which case we want to display the one we're actually using rather than what the
+    // from the default device, because the default device of the OS may have changed since we acquired the
+    // track, but EC did not update the track to match the new default, in which case we want to display the one we're actually using rather than what the
     // default is now.
     if (
       trackUsedByRoom &&
