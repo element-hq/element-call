@@ -28,7 +28,6 @@ import {
   GroupCallIntent,
   GroupCallType,
 } from "matrix-js-sdk/src/webrtc/groupCall";
-import { encodeUnpaddedBase64 } from "matrix-js-sdk/src/common-crypto/base64";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
@@ -77,7 +76,9 @@ function waitForSync(client: MatrixClient) {
 function secureRandomString(entropyBytes: number): string {
   const key = new Uint8Array(entropyBytes);
   crypto.getRandomValues(key);
-  return encodeUnpaddedBase64(key);
+  return btoa(
+    key.reduce((acc, current) => acc + String.fromCharCode(current), "")
+  ).replace(/=*$/, "");
 }
 
 /**
