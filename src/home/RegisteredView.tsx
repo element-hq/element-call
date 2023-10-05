@@ -81,14 +81,16 @@ export function RegisteredView({ client }: Props) {
           await createRoom(client, roomName, e2eeEnabled ?? false)
         )[1];
 
+        const roomPassword = randomString(32);
+
         if (e2eeEnabled) {
           setLocalStorageItem(
             getRoomSharedKeyLocalStorageKey(roomId),
-            randomString(32)
+            roomPassword
           );
         }
 
-        history.push(getRelativeRoomUrl(roomId, roomName));
+        history.push(getRelativeRoomUrl(roomId, roomName, roomPassword));
       }
 
       submit().catch((error) => {
