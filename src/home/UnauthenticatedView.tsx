@@ -44,8 +44,6 @@ import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
 import { Config } from "../config/Config";
 import { E2EEBanner } from "../E2EEBanner";
-import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
-import { setLocalStorageItem } from "../useLocalStorage";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
@@ -87,19 +85,13 @@ export const UnauthenticatedView: FC = () => {
           true
         );
 
-        let roomId: string;
-        const roomPassword = randomString(32);
+        let createRoomResult;
         try {
-          roomId = (
-            await createRoom(client, roomName, e2eeEnabled ?? false)
-          )[1];
-
-          if (e2eeEnabled) {
-            setLocalStorageItem(
-              getRoomSharedKeyLocalStorageKey(roomId),
-              roomPassword
-            );
-          }
+          createRoomResult = await createRoom(
+            client,
+            roomName,
+            e2eeEnabled ?? false
+          );
         } catch (error) {
           if (!setClient) {
             throw error;
@@ -128,7 +120,13 @@ export const UnauthenticatedView: FC = () => {
         }
 
         setClient({ client, session });
-        history.push(getRelativeRoomUrl(roomId, roomName, roomPassword));
+        history.push(
+          getRelativeRoomUrl(
+            createRoomResult.roomId,
+            roomName,
+            createRoomResult.password
+          )
+        );
       }
 
       submit().catch((error) => {

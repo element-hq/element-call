@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import {
   GroupCallIntent,
   GroupCallType,
 } from "matrix-js-sdk/src/webrtc/groupCall";
+import { randomString } from "matrix-js-sdk/src/randomstring";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
@@ -35,6 +36,8 @@ import IndexedDBWorker from "./IndexedDBWorker?worker";
 import { getUrlParams, PASSWORD_STRING } from "./UrlParams";
 import { loadOlm } from "./olm";
 import { Config } from "./config/Config";
+import { setLocalStorageItem } from "./useLocalStorage";
+import { getRoomSharedKeyLocalStorageKey } from "./e2ee/sharedKeyManagement";
 
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
@@ -269,11 +272,17 @@ export function isLocalRoomId(roomId: string, client: MatrixClient): boolean {
   return parts[1] === client.getDomain();
 }
 
+interface CreateRoomResult {
+  roomId: string;
+  alias?: string;
+  password?: string;
+}
+
 export async function createRoom(
   client: MatrixClient,
   name: string,
   e2ee: boolean
-): Promise<[string, string]> {
+): Promise<CreateRoomResult> {
   logger.log(`Creating room for group call`);
   const createPromise = client.createRoom({
     visibility: Visibility.Private,
@@ -336,7 +345,20 @@ export async function createRoom(
     true
   );
 
-  return [fullAliasFromRoomName(name, client), result.room_id];
+  let password;
+  if (e2ee) {
+    password = randomString(32);
+    setLocalStorageItem(
+      getRoomSharedKeyLocalStorageKey(result.room_id),
+      password
+    );
+  }
+
+  return {
+    roomId: result.room_id,
+    alias: e2ee ? undefined : fullAliasFromRoomName(name, client),
+    password,
+  };
 }
 
 /**
