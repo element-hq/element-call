@@ -68,9 +68,11 @@ function CallTile({ name, avatarUrl, room }: CallTileProps) {
   return (
     <div className={styles.callTile}>
       <Link
-        // note we explicitly omit the password here as we don't want it on this link because
-        // it's just for the user to navigate around and not for sharing
-        to={getRelativeRoomUrl(room.roomId, room.name)}
+        to={getRelativeRoomUrl(
+          room.roomId,
+          room.name,
+          roomSharedKey ?? undefined
+        )}
         className={styles.callTileLink}
       >
         <Avatar id={room.roomId} name={name} size={Size.LG} src={avatarUrl} />

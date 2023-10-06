@@ -39,10 +39,7 @@ import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
-import {
-  useManageRoomSharedKey,
-  useIsRoomE2EE,
-} from "../e2ee/sharedKeyManagement";
+import { useIsRoomE2EE, useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 import { useEnableE2EE } from "../settings/useSetting";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
@@ -75,7 +72,7 @@ export function GroupCallView({
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
 
-  const e2eeSharedKey = useManageRoomSharedKey(rtcSession.room.roomId);
+  const e2eeSharedKey = useRoomSharedKey(rtcSession.room.roomId);
   const isRoomE2EE = useIsRoomE2EE(rtcSession.room.roomId);
 
   useEffect(() => {

@@ -88,6 +88,7 @@ export const UnauthenticatedView: FC = () => {
         );
 
         let roomId: string;
+        const roomPassword = randomString(32);
         try {
           roomId = (
             await createRoom(client, roomName, e2eeEnabled ?? false)
@@ -96,7 +97,7 @@ export const UnauthenticatedView: FC = () => {
           if (e2eeEnabled) {
             setLocalStorageItem(
               getRoomSharedKeyLocalStorageKey(roomId),
-              randomString(32)
+              roomPassword
             );
           }
         } catch (error) {
@@ -127,7 +128,7 @@ export const UnauthenticatedView: FC = () => {
         }
 
         setClient({ client, session });
-        history.push(getRelativeRoomUrl(roomId, roomName));
+        history.push(getRelativeRoomUrl(roomId, roomName, roomPassword));
       }
 
       submit().catch((error) => {
