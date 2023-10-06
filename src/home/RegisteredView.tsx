@@ -17,7 +17,6 @@ limitations under the License.
 import { useState, useCallback, FormEvent, FormEventHandler } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
-import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
 import { Heading } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
@@ -42,8 +41,6 @@ import { Form } from "../form/Form";
 import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { E2EEBanner } from "../E2EEBanner";
-import { setLocalStorageItem } from "../useLocalStorage";
-import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
 
 interface Props {
   client: MatrixClient;
@@ -77,20 +74,19 @@ export function RegisteredView({ client }: Props) {
         setError(undefined);
         setLoading(true);
 
-        const roomId = (
-          await createRoom(client, roomName, e2eeEnabled ?? false)
-        )[1];
+        const createRoomResult = await createRoom(
+          client,
+          roomName,
+          e2eeEnabled ?? false
+        );
 
-        const roomPassword = randomString(32);
-
-        if (e2eeEnabled) {
-          setLocalStorageItem(
-            getRoomSharedKeyLocalStorageKey(roomId),
-            roomPassword
-          );
-        }
-
-        history.push(getRelativeRoomUrl(roomId, roomName, roomPassword));
+        history.push(
+          getRelativeRoomUrl(
+            createRoomResult.roomId,
+            roomName,
+            createRoomResult.password
+          )
+        );
       }
 
       submit().catch((error) => {
