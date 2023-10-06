@@ -188,8 +188,9 @@ export function useLiveKit(
             // Plus, we need to avoid restarting again if the track is already in
             // the process of being restarted.
             activeMicTrack.mediaStreamTrack.readyState !== "ended" &&
-            defaultDevice.groupId !==
-              activeMicTrack.mediaStreamTrack.getSettings().groupId
+            (defaultDevice.groupId !==
+              activeMicTrack.mediaStreamTrack.getSettings().groupId ||
+              defaultDevice.label !== activeMicTrack.mediaStreamTrack.label)
           ) {
             // It's different, so restart the track, ie. cause Livekit to do another
             // getUserMedia() call with deviceId: default to get the *new* default device.
