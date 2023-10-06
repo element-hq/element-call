@@ -85,9 +85,9 @@ export const UnauthenticatedView: FC = () => {
           true
         );
 
-        let roomCreateResult;
+        let createRoomResult;
         try {
-          roomCreateResult = await createRoom(
+          createRoomResult = await createRoom(
             client,
             roomName,
             e2eeEnabled ?? false
@@ -122,9 +122,9 @@ export const UnauthenticatedView: FC = () => {
         setClient({ client, session });
         history.push(
           getRelativeRoomUrl(
-            roomCreateResult.roomId,
+            createRoomResult.roomId,
             roomName,
-            roomCreateResult.password
+            createRoomResult.password
           )
         );
       }
