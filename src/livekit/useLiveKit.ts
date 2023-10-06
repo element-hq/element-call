@@ -20,6 +20,7 @@ import {
   ExternalE2EEKeyProvider,
   Room,
   RoomOptions,
+  Track,
 } from "livekit-client";
 import { useLiveKitRoom } from "@livekit/components-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -158,12 +159,54 @@ export function useLiveKit(
     if (room !== undefined && connectionState === ConnectionState.Connected) {
       const syncDevice = (kind: MediaDeviceKind, device: MediaDevice) => {
         const id = device.selectedId;
-        if (id !== undefined && room.getActiveDevice(kind) !== id) {
-          room
-            .switchActiveDevice(kind, id)
-            .catch((e) =>
-              logger.error(`Failed to sync ${kind} device with LiveKit`, e)
-            );
+
+        // Detect if we're trying to use chrome's default device, in which case
+        // we need to to see if the default device has changed to a different device
+        // by comparing the group ID of the device we're using against the group ID
+        // of what the default device is *now*.
+        // This is special-cased for only audio inputs because we need to dig around
+        // in the LocalParticipant object for the track object and there's not a nice
+        // way to do that generically. There is usually no OS-level default video capture
+        // device anyway, and audio outputs work differently.
+        if (
+          id === "default" &&
+          kind === "audioinput" &&
+          room.options.audioCaptureDefaults?.deviceId === "default"
+        ) {
+          const activeMicTrack = Array.from(
+            room.localParticipant.audioTracks.values()
+          ).find((d) => d.source === Track.Source.Microphone)?.track;
+
+          const defaultDevice = device.available.find(
+            (d) => d.deviceId === "default"
+          );
+          if (
+            defaultDevice &&
+            activeMicTrack &&
+            // only restart if the stream is still running: LiveKit will detect
+            // when a track stops & restart appropriately, so this is not our job.
+            // Plus, we need to avoid restarting again if the track is already in
+            // the process of being restarted.
+            activeMicTrack.mediaStreamTrack.readyState !== "ended" &&
+            defaultDevice.groupId !==
+              activeMicTrack.mediaStreamTrack.getSettings().groupId
+          ) {
+            // It's different, so restart the track, ie. cause Livekit to do another
+            // getUserMedia() call with deviceId: default to get the *new* default device.
+            // Note that room.switchActiveDevice() won't work: Livekit will ignore it because
+            // the deviceId hasn't changed (was & still is default).
+            room.localParticipant
+              .getTrack(Track.Source.Microphone)
+              ?.audioTrack?.restartTrack();
+          }
+        } else {
+          if (id !== undefined && room.getActiveDevice(kind) !== id) {
+            room
+              .switchActiveDevice(kind, id)
+              .catch((e) =>
+                logger.error(`Failed to sync ${kind} device with LiveKit`, e)
+              );
+          }
         }
       };
 
