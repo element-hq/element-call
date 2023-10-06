@@ -101,27 +101,38 @@ export const SettingsModal = (props: Props) => {
     // We may present a different device as the currently selected one if we have an active track
     // from the default device, because the default device may have changed since we acquired the
     // track, in which case we want to display the one we're actually using rather than what the
-    // default is now.
+    // default is now. We only do this if we've selected, and are using, the default device
     if (
       trackUsedByRoom &&
       (devices.selectedId === "" ||
         !devices.selectedId ||
-        devices.selectedId === "default")
+        devices.selectedId === "default") &&
+      trackUsedByRoom.mediaStreamTrack.getSettings().deviceId === "default"
     ) {
       // we work out what the actual device is based on groupId, but this only works if
       // there is only one such device with the same group ID, which there won't be if
       // we're using hardware with multiple sub-devices (eg. a multitrack soundcard)
       const usedGroupId =
         trackUsedByRoom?.mediaStreamTrack.getSettings().groupId;
-      const devicesWithMatchingGroupId = devices.available.filter(
-        (d) => d.groupId === usedGroupId && d.groupId !== "default"
-      );
+      const defaultGroupId = devices.available.find(
+        (d) => d.deviceId === "default"
+      )?.groupId;
 
-      if (devicesWithMatchingGroupId.length === 1) {
-        logger.info(
-          `Current default device doesn't appear to match device in use: selecting ${devicesWithMatchingGroupId[0].label}`
+      // If the device we're actually using doesn't match tne group ID of what the default is
+      // now, then display a different one.
+      if (usedGroupId !== defaultGroupId) {
+        const devicesWithMatchingGroupId = devices.available.filter(
+          (d) => d.groupId === usedGroupId && d.deviceId !== "default"
         );
-        selectedKey = devicesWithMatchingGroupId[0].deviceId;
+
+        // One final check: check that there is only one such device matching the group ID.
+        // If not, we simply can't match up the device correctly: we don't have enough info.
+        if (devicesWithMatchingGroupId.length === 1) {
+          logger.info(
+            `Current default device doesn't appear to match device in use: selecting ${devicesWithMatchingGroupId[0].label}`
+          );
+          selectedKey = devicesWithMatchingGroupId[0].deviceId;
+        }
       }
     }
 
