@@ -41,7 +41,7 @@ import {
 } from "./useECConnectionState";
 
 export type E2EEConfig = {
-  sharedKey: string;
+  sharedKey: Uint8Array | string;
 };
 
 interface UseLivekitResult {

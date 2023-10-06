@@ -45,6 +45,7 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
+import { useE2eeConfig } from "../useE2eeConfig";
 
 declare global {
   interface Window {
@@ -254,10 +255,7 @@ export function GroupCallView({
 
   const [e2eeEnabled] = useEnableE2EE();
 
-  const e2eeConfig = useMemo(
-    () => (e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined),
-    [e2eeSharedKey]
-  );
+  const e2eeConfig = useE2eeConfig(e2eeSharedKey);
 
   const onReconnect = useCallback(() => {
     setLeft(false);
