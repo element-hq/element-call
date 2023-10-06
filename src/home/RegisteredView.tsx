@@ -74,7 +74,7 @@ export function RegisteredView({ client }: Props) {
         setError(undefined);
         setLoading(true);
 
-        const roomCreateResult = await createRoom(
+        const createRoomResult = await createRoom(
           client,
           roomName,
           e2eeEnabled ?? false
@@ -82,9 +82,9 @@ export function RegisteredView({ client }: Props) {
 
         history.push(
           getRelativeRoomUrl(
-            roomCreateResult.roomId,
+            createRoomResult.roomId,
             roomName,
-            roomCreateResult.password
+            createRoomResult.password
           )
         );
       }
