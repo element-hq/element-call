@@ -159,6 +159,12 @@ export function useLiveKit(
       const syncDevice = (kind: MediaDeviceKind, device: MediaDevice) => {
         const id = device.selectedId;
         if (id !== undefined && room.getActiveDevice(kind) !== id) {
+          logger.info(
+            `Switching ${kind} device to ${
+              device.available.find((d) => d.deviceId === device.selectedId)
+                ?.label
+            } (${id})`
+          );
           room
             .switchActiveDevice(kind, id)
             .catch((e) =>
