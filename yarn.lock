@@ -5958,11 +5958,9 @@ has-tostringtag@^1.0.0:
     has-symbols "^1.0.2"
 
 has@^1.0.3:
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/has/-/has-1.0.3.tgz#722d7cbfc1f6aa8241f16dd814e011e1f41e8796"
-  integrity sha512-f2dvO0VU6Oej7RkWJGrehjbzMAjFp5/VKPp5tTpWIV4JHHZK1/BxbFRtf/siA2SWTe09caDmVtYYzWEIbBS4zw==
-  dependencies:
-    function-bind "^1.1.1"
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/has/-/has-1.0.4.tgz#2eb2860e000011dae4f1406a86fe80e530fb2ec6"
+  integrity sha512-qdSAmqLF6209RFj4VVItywPMbm3vWylknmB3nvNiUIs72xAimcM8nVYxYr7ncvZq5qzk9MKIZR8ijqD/1QuYjQ==
 
 he@^1.2.0:
   version "1.2.0"
@@ -9478,9 +9476,9 @@ vinyl@~3.0.0:
     teex "^1.0.1"
 
 vite-plugin-html-template@^1.1.0:
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/vite-plugin-html-template/-/vite-plugin-html-template-1.2.0.tgz#a3ec598a118870f3a295c92adb6a678811fad44e"
-  integrity sha512-q1n7P2IV3kmXjTNW5f9Z/n2RcwXtfMaqdZ4uEOMH2ErLvrQ1UhtPOIzw5s04GkBZAdGed3eR4s5DHOYupzJtLA==
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/vite-plugin-html-template/-/vite-plugin-html-template-1.2.1.tgz#ef1ac5236a5a4bc51547be371a6d8f9023f40307"
+  integrity sha512-5OP2iEz8wCLdk7D1ioLKcDZf7Jf3GxVGy5/fE/+j5FBg8X7YP7Gn/ORSL5rA+x9FtoH/iwRzVvZD4744ZFOZgg==
   dependencies:
     shelljs "0.8.4"
 
