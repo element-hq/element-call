@@ -32,7 +32,10 @@ export const useE2eeConfig = (
     // as such. Otherwise, we assume it's an old-style password and use it as a string.
     try {
       const itFunc = function* () {
-        const decoded = atob(passwordString);
+        const decoded = atob(
+          // built-in atob doesn't support base64url, so convert
+          passwordString.replace("-", "+").replace("_", "/")
+        );
         for (let i = 0; i < decoded.length; ++i) {
           yield decoded.charCodeAt(i);
         }
