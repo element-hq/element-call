@@ -76,9 +76,13 @@ function waitForSync(client: MatrixClient) {
 function secureRandomString(entropyBytes: number): string {
   const key = new Uint8Array(entropyBytes);
   crypto.getRandomValues(key);
+  // encode to base64url as this value goes into URLs
   return btoa(
     key.reduce((acc, current) => acc + String.fromCharCode(current), "")
-  ).replace(/=*$/, "");
+  )
+    .replace("+", "-")
+    .replace("/", "_")
+    .replace(/=*$/, "");
 }
 
 /**
@@ -395,9 +399,13 @@ export function getRelativeRoomUrl(
   roomName?: string,
   password?: string
 ): string {
+  // The password shouldn't need URL encoding here (we generate URL-safe ones) but encode
+  // it in case it came from another client that generated a non url-safe one
   return `/room/#${
     roomName ? "/" + roomAliasLocalpartFromRoomName(roomName) : ""
-  }?roomId=${roomId}${password ? "&" + PASSWORD_STRING + password : ""}`;
+  }?roomId=${roomId}${
+    password ? "&" + PASSWORD_STRING + encodeURIComponent(password) : ""
+  }`;
 }
 
 export function getAvatarUrl(
