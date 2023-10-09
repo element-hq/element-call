@@ -137,20 +137,32 @@ export function useLiveKit(
     // and setting tracks to be enabled during this time causes errors.
     if (room !== undefined && connectionState === ConnectionState.Connected) {
       const participant = room.localParticipant;
-      if (participant.isMicrophoneEnabled !== muteStates.audio.enabled) {
-        participant
-          .setMicrophoneEnabled(muteStates.audio.enabled)
-          .catch((e) =>
-            logger.error("Failed to sync audio mute state with LiveKit", e)
-          );
-      }
-      if (participant.isCameraEnabled !== muteStates.video.enabled) {
-        participant
-          .setCameraEnabled(muteStates.video.enabled)
-          .catch((e) =>
-            logger.error("Failed to sync video mute state with LiveKit", e)
-          );
-      }
+
+      const syncMuteStateAudio = () => {
+        if (participant.isCameraEnabled !== muteStates.video.enabled) {
+          participant
+            .setCameraEnabled(muteStates.video.enabled)
+            .catch((e) =>
+              logger.error("Failed to sync video mute state with LiveKit", e)
+            )
+            // Run the check recursively. Because the user can update the state (presses mute button)
+            // while the device is enabling itself we need to check after we are done if its still in sync.
+            .then(() => syncMuteStateAudio());
+        }
+      };
+      const syncMuteStateVideo = () => {
+        if (participant.isMicrophoneEnabled !== muteStates.audio.enabled) {
+          participant
+            .setMicrophoneEnabled(muteStates.audio.enabled)
+            .catch((e) =>
+              logger.error("Failed to sync audio mute state with LiveKit", e)
+            )
+            // see above
+            .then(() => syncMuteStateVideo());
+        }
+      };
+      syncMuteStateAudio();
+      syncMuteStateVideo();
     }
   }, [room, muteStates, connectionState]);
 
