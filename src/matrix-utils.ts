@@ -77,6 +77,11 @@ function secureRandomString(entropyBytes: number): string {
   const key = new Uint8Array(entropyBytes);
   crypto.getRandomValues(key);
   // encode to base64url as this value goes into URLs
+  // base64url is just base64 with thw two non-alphanum characters swapped out for
+  // ones that can be put in a URL without encoding. Browser JS has a native impl
+  // for base64 encoding but only a string (there isn't one that takes a UInt8Array
+  // yet) so just use the built-in one and convert, replace the chars and strip the
+  // padding from the end (otherwise we'd need to pull in another dependency).
   return btoa(
     key.reduce((acc, current) => acc + String.fromCharCode(current), "")
   )
