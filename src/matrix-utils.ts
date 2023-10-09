@@ -401,11 +401,14 @@ export function getRelativeRoomUrl(
 ): string {
   // The password shouldn't need URL encoding here (we generate URL-safe ones) but encode
   // it in case it came from another client that generated a non url-safe one
+  const encodedPassword = password ? encodeURIComponent(password) : undefined;
+  if (password && encodedPassword !== password) {
+    logger.info("Encoded call password used non URL-safe chars: buggy client?");
+  }
+
   return `/room/#${
     roomName ? "/" + roomAliasLocalpartFromRoomName(roomName) : ""
-  }?roomId=${roomId}${
-    password ? "&" + PASSWORD_STRING + encodeURIComponent(password) : ""
-  }`;
+  }?roomId=${roomId}${password ? "&" + PASSWORD_STRING + encodedPassword : ""}`;
 }
 
 export function getAvatarUrl(
