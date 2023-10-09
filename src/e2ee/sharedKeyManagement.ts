@@ -17,7 +17,7 @@ limitations under the License.
 import { useEffect, useMemo } from "react";
 
 import { useEnableE2EE } from "../settings/useSetting";
-import { useLocalStorage } from "../useLocalStorage";
+import { setLocalStorageItem, useLocalStorage } from "../useLocalStorage";
 import { useClient } from "../ClientContext";
 import { useUrlParams } from "../UrlParams";
 import { widget } from "../widget";
@@ -25,27 +25,29 @@ import { widget } from "../widget";
 export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
   `room-shared-key-${roomId}`;
 
-const useInternalRoomSharedKey = (
-  roomId: string
-): [string | null, (value: string) => void] => {
+const useInternalRoomSharedKey = (roomId: string): string | null => {
   const key = useMemo(() => getRoomSharedKeyLocalStorageKey(roomId), [roomId]);
   const [e2eeEnabled] = useEnableE2EE();
-  const [roomSharedKey, setRoomSharedKey] = useLocalStorage(key);
+  const roomSharedKey = useLocalStorage(key)[0];
 
-  return [e2eeEnabled ? roomSharedKey : null, setRoomSharedKey];
+  return e2eeEnabled ? roomSharedKey : null;
 };
 
 const useKeyFromUrl = (roomId: string): string | null => {
   const urlParams = useUrlParams();
-  const [e2eeSharedKey, setE2EESharedKey] = useInternalRoomSharedKey(roomId);
+  const e2eeSharedKey = useInternalRoomSharedKey(roomId);
 
   useEffect(() => {
     if (!urlParams.password) return;
     if (urlParams.password === "") return;
     if (urlParams.password === e2eeSharedKey) return;
+    if (!urlParams.roomId) return;
 
-    setE2EESharedKey(urlParams.password);
-  }, [urlParams, e2eeSharedKey, setE2EESharedKey]);
+    setLocalStorageItem(
+      getRoomSharedKeyLocalStorageKey(urlParams.roomId),
+      urlParams.password
+    );
+  }, [urlParams, e2eeSharedKey]);
 
   return urlParams.password ?? null;
 };
@@ -57,7 +59,7 @@ export const useRoomSharedKey = (roomId: string): string | null => {
   // time for us to read it out again).
   const passwordFormUrl = useKeyFromUrl(roomId);
 
-  return useInternalRoomSharedKey(roomId)[0] ?? passwordFormUrl;
+  return useInternalRoomSharedKey(roomId) ?? passwordFormUrl;
 };
 
 export const useIsRoomE2EE = (roomId: string): boolean | null => {
