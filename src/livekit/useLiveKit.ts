@@ -143,44 +143,40 @@ export function useLiveKit(
     if (room !== undefined && connectionState === ConnectionState.Connected) {
       const participant = room.localParticipant;
 
-      const syncMuteStateAudio = () => {
+      const syncMuteStateAudio = async () => {
         if (
           participant.isMicrophoneEnabled !== muteStates.audio.enabled &&
           !audioMuteUpdating
         ) {
           setAudioMuteUpdating(true);
-          participant
+          await participant
             .setMicrophoneEnabled(muteStates.audio.enabled)
             .catch((e) =>
               logger.error("Failed to sync audio mute state with LiveKit", e)
-            )
-            // Run the check again after the change is done. Because the user
-            // can update the state (presses mute button) while the device is enabling
-            // itself we need might need to update the mute state right away.
-            // This async recursion makes sure that setCamera/MicrophoneEnabled is
-            // called as little times as possible.
-            .then(() => {
-              setAudioMuteUpdating(false);
-              syncMuteStateAudio();
-            });
+            );
+          // Run the check again after the change is done. Because the user
+          // can update the state (presses mute button) while the device is enabling
+          // itself we need might need to update the mute state right away.
+          // This async recursion makes sure that setCamera/MicrophoneEnabled is
+          // called as little times as possible.
+          setAudioMuteUpdating(false);
+          syncMuteStateAudio();
         }
       };
-      const syncMuteStateVideo = () => {
+      const syncMuteStateVideo = async () => {
         if (
           participant.isCameraEnabled !== muteStates.video.enabled &&
           !videoMuteUpdating
         ) {
           setVideoMuteUpdating(true);
-          participant
+          await participant
             .setCameraEnabled(muteStates.video.enabled)
             .catch((e) =>
               logger.error("Failed to sync video mute state with LiveKit", e)
-            )
-            // see above
-            .then(() => {
-              setVideoMuteUpdating(false);
-              syncMuteStateVideo();
-            });
+            );
+          // see above
+          setVideoMuteUpdating(false);
+          syncMuteStateVideo();
         }
       };
       syncMuteStateAudio();
