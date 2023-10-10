@@ -20,10 +20,12 @@ import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { SyncState } from "matrix-js-sdk/src/sync";
 import { useTranslation } from "react-i18next";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { MatrixError } from "matrix-js-sdk";
 
 import type { Room } from "matrix-js-sdk/src/models/room";
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { useEnableE2EE } from "../settings/useSetting";
+import { createRoom, isLocalRoomId, roomNameFromRoomId } from "../matrix-utils";
 
 export type GroupCallLoaded = {
   kind: "loaded";
@@ -69,20 +71,40 @@ export const useLoadGroupCall = (
         // Also, we explicitly look up the room alias here. We previously just tried to
         // join anyway but the js-sdk recreates the room if you pass the alias for a
         // room you're already joined to (which it probably ought not to).
-        const lookupResult = await client.getRoomIdForAlias(
-          roomIdOrAlias.toLowerCase()
-        );
-        logger.info(`${roomIdOrAlias} resolved to ${lookupResult.room_id}`);
-        room = client.getRoom(lookupResult.room_id);
-        if (!room) {
-          logger.info(`Room ${lookupResult.room_id} not found, joining.`);
-          room = await client.joinRoom(lookupResult.room_id, {
-            viaServers: lookupResult.servers,
-          });
-        } else {
-          logger.info(
-            `Already in room ${lookupResult.room_id}, not rejoining.`
+        try {
+          const lookupResult = await client.getRoomIdForAlias(
+            roomIdOrAlias.toLowerCase()
           );
+          logger.info(`${roomIdOrAlias} resolved to ${lookupResult.room_id}`);
+          room = client.getRoom(lookupResult.room_id);
+          if (!room) {
+            logger.info(`Room ${lookupResult.room_id} not found, joining.`);
+            room = await client.joinRoom(lookupResult.room_id, {
+              viaServers: lookupResult.servers,
+            });
+          } else {
+            logger.info(
+              `Already in room ${lookupResult.room_id}, not rejoining.`
+            );
+          }
+        } catch (e) {
+          if (
+            isLocalRoomId(roomIdOrAlias, client) &&
+            (e as MatrixError).errcode === "M_NOT_FOUND"
+          ) {
+            // legacy path: create an unencrypted room if the user lands on a URL for a room that
+            // doesn't exist
+            const result = await createRoom(
+              client,
+              roomNameFromRoomId(roomIdOrAlias),
+              false
+            );
+
+            await client.waitUntilRoomReadyForGroupCalls(result.roomId);
+            return client.getRoom(result.roomId)!;
+          }
+
+          throw e;
         }
       } else {
         // room IDs we just try to join by their ID, which will not work in the
