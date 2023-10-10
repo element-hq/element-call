@@ -41,7 +41,7 @@ export function enterRTCSession(rtcSession: MatrixRTCSession) {
   // have started tracking by the time calls start getting created.
   //groupCallOTelMembership?.onJoinCall();
 
-  // right now we asume everything is a room-scoped call
+  // right now we assume everything is a room-scoped call
   const livekitAlias = rtcSession.room.roomId;
 
   rtcSession.joinRoomSession([makeFocus(livekitAlias)]);
