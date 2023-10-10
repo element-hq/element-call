@@ -145,8 +145,11 @@ export function useLiveKit(
             .catch((e) =>
               logger.error("Failed to sync video mute state with LiveKit", e)
             )
-            // Run the check recursively. Because the user can update the state (presses mute button)
-            // while the device is enabling itself we need to check after we are done if its still in sync.
+            // Run the check again after the change is done. Because the user
+            // can update the state (presses mute button) while the device is enabling
+            // itself we need might need to update the mute state right away.
+            // This async recursion makes sure that setCamera/MicrophoneEnabled is
+            // called as little times as possible.
             .then(() => syncMuteStateAudio());
         }
       };
