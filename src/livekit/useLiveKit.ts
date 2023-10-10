@@ -101,6 +101,17 @@ export function useLiveKit(
   // block audio from being enabled until the connection is finished.
   const [blockAudio, setBlockAudio] = useState(true);
 
+  // Store if audio/video are currently updating. If to prohibit unnecessary calls
+  // to setMicrophoneEnabled/setCameraEnabled
+  const audioMuteUpdating = useRef(false);
+  const videoMuteUpdating = useRef(false);
+  // Store the current button mute state that gets passed to this hook via props.
+  // We need to store it for awaited code that relies on the current value.
+  const buttonEnabled = useRef({
+    audio: initialMuteStates.current.audio.enabled,
+    video: initialMuteStates.current.video.enabled,
+  });
+
   // We have to create the room manually here due to a bug inside
   // @livekit/components-react. JSON.stringify() is used in deps of a
   // useEffect() with an argument that references itself, if E2EE is enabled
@@ -137,20 +148,50 @@ export function useLiveKit(
     // and setting tracks to be enabled during this time causes errors.
     if (room !== undefined && connectionState === ConnectionState.Connected) {
       const participant = room.localParticipant;
-      if (participant.isMicrophoneEnabled !== muteStates.audio.enabled) {
-        participant
-          .setMicrophoneEnabled(muteStates.audio.enabled)
-          .catch((e) =>
-            logger.error("Failed to sync audio mute state with LiveKit", e)
-          );
-      }
-      if (participant.isCameraEnabled !== muteStates.video.enabled) {
-        participant
-          .setCameraEnabled(muteStates.video.enabled)
-          .catch((e) =>
-            logger.error("Failed to sync video mute state with LiveKit", e)
-          );
-      }
+      // Always update the muteButtonState Ref so that we can read the current
+      // state in awaited blocks.
+      buttonEnabled.current = {
+        audio: muteStates.audio.enabled,
+        video: muteStates.video.enabled,
+      };
+      const syncMuteStateAudio = async () => {
+        if (
+          participant.isMicrophoneEnabled !== buttonEnabled.current.audio &&
+          !audioMuteUpdating.current
+        ) {
+          audioMuteUpdating.current = true;
+          try {
+            await participant.setMicrophoneEnabled(buttonEnabled.current.audio);
+          } catch (e) {
+            logger.error("Failed to sync audio mute state with LiveKit", e);
+          }
+          audioMuteUpdating.current = false;
+          // Run the check again after the change is done. Because the user
+          // can update the state (presses mute button) while the device is enabling
+          // itself we need might need to update the mute state right away.
+          // This async recursion makes sure that setCamera/MicrophoneEnabled is
+          // called as little times as possible.
+          syncMuteStateAudio();
+        }
+      };
+      const syncMuteStateVideo = async () => {
+        if (
+          participant.isCameraEnabled !== buttonEnabled.current.video &&
+          !videoMuteUpdating.current
+        ) {
+          videoMuteUpdating.current = true;
+          try {
+            await participant.setCameraEnabled(buttonEnabled.current.video);
+          } catch (e) {
+            logger.error("Failed to sync audio mute state with LiveKit", e);
+          }
+          videoMuteUpdating.current = false;
+          // see above
+          syncMuteStateVideo();
+        }
+      };
+      syncMuteStateAudio();
+      syncMuteStateVideo();
     }
   }, [room, muteStates, connectionState]);
 
