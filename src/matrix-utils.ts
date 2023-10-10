@@ -76,9 +76,18 @@ function waitForSync(client: MatrixClient) {
 function secureRandomString(entropyBytes: number): string {
   const key = new Uint8Array(entropyBytes);
   crypto.getRandomValues(key);
+  // encode to base64url as this value goes into URLs
+  // base64url is just base64 with thw two non-alphanum characters swapped out for
+  // ones that can be put in a URL without encoding. Browser JS has a native impl
+  // for base64 encoding but only a string (there isn't one that takes a UInt8Array
+  // yet) so just use the built-in one and convert, replace the chars and strip the
+  // padding from the end (otherwise we'd need to pull in another dependency).
   return btoa(
     key.reduce((acc, current) => acc + String.fromCharCode(current), "")
-  ).replace(/=*$/, "");
+  )
+    .replace("+", "-")
+    .replace("/", "_")
+    .replace(/=*$/, "");
 }
 
 /**
@@ -395,9 +404,16 @@ export function getRelativeRoomUrl(
   roomName?: string,
   password?: string
 ): string {
+  // The password shouldn't need URL encoding here (we generate URL-safe ones) but encode
+  // it in case it came from another client that generated a non url-safe one
+  const encodedPassword = password ? encodeURIComponent(password) : undefined;
+  if (password && encodedPassword !== password) {
+    logger.info("Encoded call password used non URL-safe chars: buggy client?");
+  }
+
   return `/room/#${
     roomName ? "/" + roomAliasLocalpartFromRoomName(roomName) : ""
-  }?roomId=${roomId}${password ? "&" + PASSWORD_STRING + password : ""}`;
+  }?roomId=${roomId}${password ? "&" + PASSWORD_STRING + encodedPassword : ""}`;
 }
 
 export function getAvatarUrl(
