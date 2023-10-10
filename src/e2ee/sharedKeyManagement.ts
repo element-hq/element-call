@@ -44,6 +44,9 @@ const useKeyFromUrl = (roomId: string): string | null => {
     if (!urlParams.roomId) return;
 
     setLocalStorageItem(
+      // We set the Item by only using data from the url. This way we
+      // make sure, we always have matching pairs in the LocalStorage,
+      // as they occur in the call links.
       getRoomSharedKeyLocalStorageKey(urlParams.roomId),
       urlParams.password
     );
