@@ -101,6 +101,11 @@ export function useLiveKit(
   // block audio from being enabled until the connection is finished.
   const [blockAudio, setBlockAudio] = useState(true);
 
+  // Store if audio/video are currently updating. If to prohibit unnecessary calls
+  // to setMicrophoneEnabled/setCameraEnabled
+  const [audioMuteUpdating, setAudioMuteUpdating] = useState(false);
+  const [videoMuteUpdating, setVideoMuteUpdating] = useState(false);
+
   // We have to create the room manually here due to a bug inside
   // @livekit/components-react. JSON.stringify() is used in deps of a
   // useEffect() with an argument that references itself, if E2EE is enabled
@@ -139,7 +144,11 @@ export function useLiveKit(
       const participant = room.localParticipant;
 
       const syncMuteStateAudio = () => {
-        if (participant.isMicrophoneEnabled !== muteStates.audio.enabled) {
+        if (
+          participant.isMicrophoneEnabled !== muteStates.audio.enabled &&
+          !audioMuteUpdating
+        ) {
+          setAudioMuteUpdating(true);
           participant
             .setMicrophoneEnabled(muteStates.audio.enabled)
             .catch((e) =>
@@ -150,24 +159,34 @@ export function useLiveKit(
             // itself we need might need to update the mute state right away.
             // This async recursion makes sure that setCamera/MicrophoneEnabled is
             // called as little times as possible.
-            .then(() => syncMuteStateAudio());
+            .then(() => {
+              setAudioMuteUpdating(false);
+              syncMuteStateAudio();
+            });
         }
       };
       const syncMuteStateVideo = () => {
-        if (participant.isCameraEnabled !== muteStates.video.enabled) {
+        if (
+          participant.isCameraEnabled !== muteStates.video.enabled &&
+          !videoMuteUpdating
+        ) {
+          setVideoMuteUpdating(true);
           participant
             .setCameraEnabled(muteStates.video.enabled)
             .catch((e) =>
               logger.error("Failed to sync video mute state with LiveKit", e)
             )
             // see above
-            .then(() => syncMuteStateVideo());
+            .then(() => {
+              setVideoMuteUpdating(false);
+              syncMuteStateVideo();
+            });
         }
       };
       syncMuteStateAudio();
       syncMuteStateVideo();
     }
-  }, [room, muteStates, connectionState]);
+  }, [room, muteStates, connectionState, audioMuteUpdating, videoMuteUpdating]);
 
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
