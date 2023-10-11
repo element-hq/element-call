@@ -19,7 +19,7 @@ import { useEffect, useMemo } from "react";
 import { useEnableE2EE } from "../settings/useSetting";
 import { useLocalStorage } from "../useLocalStorage";
 import { useClient } from "../ClientContext";
-import { PASSWORD_STRING, useUrlParams } from "../UrlParams";
+import { useUrlParams } from "../UrlParams";
 import { widget } from "../widget";
 
 export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
@@ -58,29 +58,6 @@ export const useRoomSharedKey = (roomId: string): string | null => {
   const passwordFormUrl = useKeyFromUrl(roomId);
 
   return useInternalRoomSharedKey(roomId)[0] ?? passwordFormUrl;
-};
-
-export const useManageRoomSharedKey = (roomId: string): string | null => {
-  const urlParams = useUrlParams();
-
-  const urlPassword = useKeyFromUrl(roomId);
-
-  const [e2eeSharedKey] = useInternalRoomSharedKey(roomId);
-
-  useEffect(() => {
-    const hash = location.hash;
-
-    if (!hash.includes("?")) return;
-    if (!hash.includes(PASSWORD_STRING)) return;
-    if (urlParams.password !== e2eeSharedKey) return;
-
-    const [hashStart, passwordStart] = hash.split(PASSWORD_STRING);
-    const hashEnd = passwordStart.split("&").slice(1).join("&");
-
-    location.replace((hashStart ?? "") + (hashEnd ?? ""));
-  }, [urlParams, e2eeSharedKey]);
-
-  return e2eeSharedKey ?? urlPassword;
 };
 
 export const useIsRoomE2EE = (roomId: string): boolean | null => {

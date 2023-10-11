@@ -19,6 +19,7 @@ import { useHistory } from "react-router-dom";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { Trans, useTranslation } from "react-i18next";
 import { Heading } from "@vector-im/compound-web";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { useClient } from "../ClientContext";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
@@ -43,8 +44,6 @@ import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
 import { Config } from "../config/Config";
 import { E2EEBanner } from "../E2EEBanner";
-import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
-import { setLocalStorageItem } from "../useLocalStorage";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
@@ -86,18 +85,13 @@ export const UnauthenticatedView: FC = () => {
           true
         );
 
-        let roomId: string;
+        let createRoomResult;
         try {
-          roomId = (
-            await createRoom(client, roomName, e2eeEnabled ?? false)
-          )[1];
-
-          if (e2eeEnabled) {
-            setLocalStorageItem(
-              getRoomSharedKeyLocalStorageKey(roomId),
-              randomString(32)
-            );
-          }
+          createRoomResult = await createRoom(
+            client,
+            roomName,
+            e2eeEnabled ?? false
+          );
         } catch (error) {
           if (!setClient) {
             throw error;
@@ -126,11 +120,17 @@ export const UnauthenticatedView: FC = () => {
         }
 
         setClient({ client, session });
-        history.push(getRelativeRoomUrl(roomId, roomName));
+        history.push(
+          getRelativeRoomUrl(
+            createRoomResult.roomId,
+            roomName,
+            createRoomResult.password
+          )
+        );
       }
 
       submit().catch((error) => {
-        console.error(error);
+        logger.error(error);
         setLoading(false);
         setError(error);
         reset();

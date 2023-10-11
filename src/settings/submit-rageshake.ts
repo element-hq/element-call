@@ -14,22 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {
-  ComponentProps,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from "react";
+import { ComponentProps, useCallback, useEffect, useState } from "react";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import pako from "pako";
 import { MatrixEvent } from "matrix-js-sdk/src/models/event";
 import { ClientEvent } from "matrix-js-sdk/src/client";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
-import { InspectorContext } from "../room/GroupCallInspector";
 import { Config } from "../config/Config";
 import { ElementCallOpenTelemetry } from "../otel/otel";
 import { RageshakeRequestModal } from "../room/RageshakeRequestModal";
@@ -56,10 +50,6 @@ export function useSubmitRageshake(): {
   error?: Error;
 } {
   const { client } = useClient();
-
-  // The value of the context is the whole tuple returned from setState,
-  // so we just want the current state.
-  const [inspectorState] = useContext(InspectorContext) ?? [];
 
   const [{ sending, sent, error }, setState] = useState<{
     sending: boolean;
@@ -269,16 +259,6 @@ export function useSubmitRageshake(): {
             gzip(ElementCallOpenTelemetry.instance.rageshakeProcessor!.dump()),
             "traces.json.gz"
           );
-
-          if (inspectorState) {
-            body.append(
-              "file",
-              new Blob([JSON.stringify(inspectorState)], {
-                type: "text/plain",
-              }),
-              "groupcall.txt"
-            );
-          }
         }
 
         if (opts.rageshakeRequestId) {
@@ -296,10 +276,10 @@ export function useSubmitRageshake(): {
         setState({ sending: false, sent: true, error: undefined });
       } catch (error) {
         setState({ sending: false, sent: false, error: error as Error });
-        console.error(error);
+        logger.error(error);
       }
     },
-    [client, inspectorState, sending]
+    [client, sending]
   );
 
   return {
@@ -308,27 +288,6 @@ export function useSubmitRageshake(): {
     sent,
     error,
   };
-}
-
-export function useDownloadDebugLog(): () => void {
-  const json = useContext(InspectorContext);
-
-  const downloadDebugLog = useCallback(() => {
-    const blob = new Blob([JSON.stringify(json)], { type: "application/json" });
-    const url = URL.createObjectURL(blob);
-    const el = document.createElement("a");
-    el.href = url;
-    el.download = "groupcall.json";
-    el.style.display = "none";
-    document.body.appendChild(el);
-    el.click();
-    setTimeout(() => {
-      URL.revokeObjectURL(url);
-      el.parentNode!.removeChild(el);
-    }, 0);
-  }, [json]);
-
-  return downloadDebugLog;
 }
 
 export function useRageshakeRequest(): (

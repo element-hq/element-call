@@ -14,28 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.inspector {
-  background-color: var(--cpd-color-bg-subtle-secondary);
+.url {
+  text-align: center;
+  color: var(--cpd-color-text-secondary);
+  margin-block-end: var(--cpd-space-8x);
 }
 
-.scrollContainer {
-  height: 100%;
-  overflow-y: auto;
-}
-
-.sequenceDiagramViewer {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 20px;
-}
-
-.selectInput {
-  align-self: flex-start;
-}
-
-.sequenceDiagramViewer :global(.messageText) {
-  font-size: var(--font-size-caption);
-  fill: var(--cpd-color-text-primary) !important;
-  stroke: var(--cpd-color-text-primary) !important;
+.button {
+  width: 100%;
 }

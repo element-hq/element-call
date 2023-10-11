@@ -22,15 +22,14 @@ import { MatrixClient } from "matrix-js-sdk";
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
 import { TabContainer, TabItem } from "../tabs/Tabs";
-import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
-import { ReactComponent as VideoIcon } from "../icons/Video.svg";
-import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
-import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
-import { ReactComponent as UserIcon } from "../icons/User.svg";
-import { ReactComponent as FeedbackIcon } from "../icons/Feedback.svg";
+import AudioIcon from "../icons/Audio.svg?react";
+import VideoIcon from "../icons/Video.svg?react";
+import DeveloperIcon from "../icons/Developer.svg?react";
+import OverflowIcon from "../icons/Overflow.svg?react";
+import UserIcon from "../icons/User.svg?react";
+import FeedbackIcon from "../icons/Feedback.svg?react";
 import { SelectInput } from "../input/SelectInput";
 import {
-  useShowInspector,
   useOptInAnalytics,
   useDeveloperSettingsTab,
   useShowConnectionStats,
@@ -38,8 +37,6 @@ import {
   isFirefox,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
-import { Button } from "../button";
-import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body, Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
@@ -62,15 +59,12 @@ interface Props {
 export const SettingsModal: FC<Props> = (props) => {
   const { t } = useTranslation();
 
-  const [showInspector, setShowInspector] = useShowInspector();
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const [developerSettingsTab, setDeveloperSettingsTab] =
     useDeveloperSettingsTab();
   const [showConnectionStats, setShowConnectionStats] =
     useShowConnectionStats();
   const [enableE2EE, setEnableE2EE] = useEnableE2EE();
-
-  const downloadDebugLog = useDownloadDebugLog();
 
   // Generate a `SelectInput` with a list of devices for a given device kind.
   const generateDeviceSelection = (
@@ -239,18 +233,6 @@ export const SettingsModal: FC<Props> = (props) => {
       </FieldRow>
       <FieldRow>
         <InputField
-          id="showInspector"
-          name="inspector"
-          label={t("Show call inspector")}
-          type="checkbox"
-          checked={showInspector}
-          onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-            setShowInspector(e.target.checked)
-          }
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
           id="showConnectionStats"
           name="connection-stats"
           label={t("Show connection stats")}
@@ -277,9 +259,6 @@ export const SettingsModal: FC<Props> = (props) => {
             setEnableE2EE?.(e.target.checked)
           }
         />
-      </FieldRow>
-      <FieldRow>
-        <Button onPress={downloadDebugLog}>{t("Download debug logs")}</Button>
       </FieldRow>
     </TabItem>
   );

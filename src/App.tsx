@@ -30,8 +30,6 @@ import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
 import { ClientProvider } from "./ClientContext";
-import { SequenceDiagramViewerPage } from "./SequenceDiagramViewerPage";
-import { InspectorContextProvider } from "./room/GroupCallInspector";
 import { CrashView, LoadingView } from "./FullScreenView";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
@@ -83,30 +81,25 @@ export const App: FC<AppProps> = ({ history }) => {
           <Suspense fallback={null}>
             <ClientProvider>
               <MediaDevicesProvider>
-                <InspectorContextProvider>
-                  <Sentry.ErrorBoundary fallback={errorPage}>
-                    <OverlayProvider>
-                      <DisconnectedBanner />
-                      <Switch>
-                        <SentryRoute exact path="/">
-                          <HomePage />
-                        </SentryRoute>
-                        <SentryRoute exact path="/login">
-                          <LoginPage />
-                        </SentryRoute>
-                        <SentryRoute exact path="/register">
-                          <RegisterPage />
-                        </SentryRoute>
-                        <SentryRoute path="/inspector">
-                          <SequenceDiagramViewerPage />
-                        </SentryRoute>
-                        <SentryRoute path="*">
-                          <RoomPage />
-                        </SentryRoute>
-                      </Switch>
-                    </OverlayProvider>
-                  </Sentry.ErrorBoundary>
-                </InspectorContextProvider>
+                <Sentry.ErrorBoundary fallback={errorPage}>
+                  <OverlayProvider>
+                    <DisconnectedBanner />
+                    <Switch>
+                      <SentryRoute exact path="/">
+                        <HomePage />
+                      </SentryRoute>
+                      <SentryRoute exact path="/login">
+                        <LoginPage />
+                      </SentryRoute>
+                      <SentryRoute exact path="/register">
+                        <RegisterPage />
+                      </SentryRoute>
+                      <SentryRoute path="*">
+                        <RoomPage />
+                      </SentryRoute>
+                    </Switch>
+                  </OverlayProvider>
+                </Sentry.ErrorBoundary>
               </MediaDevicesProvider>
             </ClientProvider>
           </Suspense>

@@ -39,6 +39,7 @@ import {
 } from "@react-spring/web";
 import useMeasure from "react-use-measure";
 import { ResizeObserver as JuggleResizeObserver } from "@juggle/resize-observer";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/LayoutToggle";
@@ -299,7 +300,7 @@ function getFreedomLayoutTilePositions(
   }
 
   if (tileCount > 12) {
-    console.warn("Over 12 tiles is not currently supported");
+    logger.warn("Over 12 tiles is not currently supported");
   }
 
   const { layoutDirection, itemGridRatio } = getGridLayout(

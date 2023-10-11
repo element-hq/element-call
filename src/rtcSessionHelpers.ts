@@ -41,13 +41,15 @@ export function enterRTCSession(rtcSession: MatrixRTCSession): void {
   // have started tracking by the time calls start getting created.
   //groupCallOTelMembership?.onJoinCall();
 
-  // right now we asume everything is a room-scoped call
+  // right now we assume everything is a room-scoped call
   const livekitAlias = rtcSession.room.roomId;
 
   rtcSession.joinRoomSession([makeFocus(livekitAlias)]);
 }
 
-export function leaveRTCSession(rtcSession: MatrixRTCSession): void {
+export async function leaveRTCSession(
+  rtcSession: MatrixRTCSession
+): Promise<void> {
   //groupCallOTelMembership?.onLeaveCall();
-  rtcSession.leaveRoomSession();
+  await rtcSession.leaveRoomSession();
 }

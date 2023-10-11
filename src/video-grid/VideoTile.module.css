@@ -43,7 +43,8 @@ limitations under the License.
 }
 
 .videoTile.speaking {
-  outline: 4px solid var(--cpd-color-border-accent);
+  /* !important because speaking border should take priority over hover */
+  outline: 4px solid var(--cpd-color-border-accent) !important;
 }
 
 @media (hover: hover) {
@@ -70,8 +71,7 @@ limitations under the License.
   padding: var(--cpd-space-1x);
   padding-block: var(--cpd-space-1x);
   color: var(--cpd-color-text-primary);
-  /* TODO: un-hardcode this color. It comes from the dark theme. */
-  background-color: rgba(237, 244, 252, 0.79);
+  background-color: var(--cpd-color-bg-canvas-default);
   display: flex;
   align-items: center;
   border-radius: var(--cpd-radius-pill-effect);
@@ -80,11 +80,6 @@ limitations under the License.
   overflow: hidden;
   z-index: 1;
   box-shadow: var(--small-drop-shadow);
-}
-
-:global(.cpd-theme-dark) .nameTag {
-  /* TODO: un-hardcode this color. It comes from the light theme. */
-  background-color: rgba(2, 7, 13, 0.77);
 }
 
 .nameTag > svg {

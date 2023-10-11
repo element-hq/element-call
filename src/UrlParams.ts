@@ -33,6 +33,9 @@ interface RoomIdentifier {
 // clearer what each flag means, and helps us avoid coupling Element Call's
 // behavior to the needs of specific consumers.
 interface UrlParams {
+  // Widget api related params
+  widgetId: string | null;
+  parentUrl: string | null;
   /**
    * Anything about what room we're pointed to should be from useRoomIdentifier which
    * parses the path and resolves alias with respect to the default server name, however
@@ -178,6 +181,9 @@ export const getUrlParams = (
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
 
   return {
+    widgetId: parser.getParam("widgetId"),
+    parentUrl: parser.getParam("parentUrl"),
+
     // NB. we don't validate roomId here as we do in getRoomIdentifierFromUrl:
     // what would we do if it were invalid? If the widget API says that's what
     // the room ID is, then that's what it is.
@@ -218,33 +224,39 @@ export function getRoomIdentifierFromUrl(
   hash: string
 ): RoomIdentifier {
   let roomAlias: string | null = null;
+  pathname = pathname.substring(1); // Strip the "/"
+  const pathComponents = pathname.split("/");
+  const pathHasRoom = pathComponents[0] == "room";
+  const hasRoomAlias = pathComponents.length > 1;
 
-  // Here we handle the beginning of the alias and make sure it starts with a "#"
+  // What type is our url: roomAlias in hash, room alias as the search path, roomAlias after /room/
   if (hash === "" || hash.startsWith("#?")) {
-    roomAlias = pathname.substring(1); // Strip the "/"
-
-    // Delete "/room/", if present
-    if (roomAlias.startsWith("room/")) {
-      roomAlias = roomAlias.substring("room/".length);
+    if (hasRoomAlias && pathHasRoom) {
+      roomAlias = pathComponents[1];
     }
-    // Add "#", if not present
-    if (!roomAlias.startsWith("#")) {
-      roomAlias = `#${roomAlias}`;
+    if (!pathHasRoom) {
+      roomAlias = pathComponents[0];
     }
   } else {
     roomAlias = hash;
   }
 
   // Delete "?" and what comes afterwards
-  roomAlias = roomAlias.split("?")[0];
+  roomAlias = roomAlias?.split("?")[0] ?? null;
 
-  if (roomAlias.length <= 1) {
+  if (roomAlias) {
     // Make roomAlias is null, if it only is a "#"
-    roomAlias = null;
-  } else {
-    // Add server part, if not present
-    if (!roomAlias.includes(":")) {
-      roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
+    if (roomAlias.length <= 1) {
+      roomAlias = null;
+    } else {
+      // Add "#", if not present
+      if (!roomAlias.startsWith("#")) {
+        roomAlias = `#${roomAlias}`;
+      }
+      // Add server part, if not present
+      if (!roomAlias.includes(":")) {
+        roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
+      }
     }
   }
 
