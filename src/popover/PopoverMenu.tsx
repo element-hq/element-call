@@ -43,7 +43,7 @@ export const PopoverMenuTrigger = forwardRef<
   const { menuTriggerProps, menuProps } = useMenuTrigger(
     {},
     popoverMenuState,
-    buttonRef
+    buttonRef,
   );
 
   const popoverRef = useRef(null);
@@ -62,7 +62,7 @@ export const PopoverMenuTrigger = forwardRef<
     typeof children[1] !== "function"
   ) {
     throw new Error(
-      "PopoverMenu must have two props. The first being a button and the second being a render prop."
+      "PopoverMenu must have two props. The first being a button and the second being a render prop.",
     );
   }
 

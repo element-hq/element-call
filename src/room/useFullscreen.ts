@@ -66,7 +66,7 @@ export function useFullscreen<T>(items: TileDescriptor<T>[]): {
         prevItem == null
           ? null
           : items.find((i) => i.id === prevItem.id) ?? null,
-      [items]
+      [items],
     );
 
   const latestItems = useRef<TileDescriptor<T>[]>(items);
@@ -80,15 +80,15 @@ export function useFullscreen<T>(items: TileDescriptor<T>[]): {
       setFullscreenItem(
         latestFullscreenItem.current === null
           ? latestItems.current.find((i) => i.id === itemId) ?? null
-          : null
+          : null,
       );
     },
-    [setFullscreenItem]
+    [setFullscreenItem],
   );
 
   const exitFullscreenCallback = useCallback(
     () => setFullscreenItem(null),
-    [setFullscreenItem]
+    [setFullscreenItem],
   );
 
   useLayoutEffect(() => {
@@ -103,7 +103,7 @@ export function useFullscreen<T>(items: TileDescriptor<T>[]): {
   useFullscreenChange(
     useCallback(() => {
       if (!isFullscreen()) setFullscreenItem(null);
-    }, [setFullscreenItem])
+    }, [setFullscreenItem]),
   );
 
   return {

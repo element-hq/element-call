@@ -120,7 +120,7 @@ describe("ObjectFlattener", () => {
         statsReport.report.resolution,
         flatObject,
         "matrix.call.stats.connection.resolution.",
-        0
+        0,
       );
       expect(flatObject).toEqual({
         "matrix.call.stats.connection.resolution.local.LOCAL_AUDIO_TRACK_ID.height":
@@ -146,7 +146,7 @@ describe("ObjectFlattener", () => {
         statsReport.report.transport,
         flatObject,
         "matrix.call.stats.connection.transport.",
-        0
+        0,
       );
       expect(flatObject).toEqual({
         "matrix.call.stats.connection.transport.0.ip":
@@ -177,8 +177,8 @@ describe("ObjectFlattener", () => {
       expect(
         ObjectFlattener.flattenReportObject(
           "matrix.call.stats.connection",
-          statsReport.report
-        )
+          statsReport.report,
+        ),
       ).toEqual({
         "matrix.call.stats.connection.callId": "callId",
         "matrix.call.stats.connection.opponentMemberId": "opponentMemberId",
@@ -259,8 +259,8 @@ describe("ObjectFlattener", () => {
       expect(
         ObjectFlattener.flattenReportObject(
           "matrix.call.stats.bytesSend",
-          byteSentStatsReport
-        )
+          byteSentStatsReport,
+        ),
       ).toEqual({
         "matrix.call.stats.bytesSend.4aa92608-04c6-428e-8312-93e17602a959": 132093,
         "matrix.call.stats.bytesSend.a08e4237-ee30-4015-a932-b676aec894b1": 913448,

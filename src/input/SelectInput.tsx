@@ -38,7 +38,7 @@ export function SelectInput(props: Props): JSX.Element {
   const { labelProps, triggerProps, valueProps, menuProps } = useSelect(
     props,
     state,
-    ref
+    ref,
   );
 
   const { buttonProps } = useButton(triggerProps, ref);

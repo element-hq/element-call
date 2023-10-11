@@ -23,7 +23,7 @@ import {
 } from "@opentelemetry/sdk-trace-base";
 
 const dumpAttributes = (
-  attr: Attributes
+  attr: Attributes,
 ): {
   key: string;
   type:

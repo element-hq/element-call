@@ -68,7 +68,8 @@ limitations under the License.
   font-weight: 400;
   font-display: swap;
   unicode-range: var(--inter-unicode-range);
-  src: url("/fonts/Inter/Inter-Regular.woff2") format("woff2"),
+  src:
+    url("/fonts/Inter/Inter-Regular.woff2") format("woff2"),
     url("/fonts/Inter/Inter-Regular.woff") format("woff");
 }
 
@@ -78,7 +79,8 @@ limitations under the License.
   font-weight: 400;
   font-display: swap;
   unicode-range: var(--inter-unicode-range);
-  src: url("/fonts/Inter/Inter-Italic.woff2") format("woff2"),
+  src:
+    url("/fonts/Inter/Inter-Italic.woff2") format("woff2"),
     url("/fonts/Inter/Inter-Italic.woff") format("woff");
 }
 
@@ -88,7 +90,8 @@ limitations under the License.
   font-weight: 500;
   font-display: swap;
   unicode-range: var(--inter-unicode-range);
-  src: url("/fonts/Inter/Inter-Medium.woff2") format("woff2"),
+  src:
+    url("/fonts/Inter/Inter-Medium.woff2") format("woff2"),
     url("/fonts/Inter/Inter-Medium.woff") format("woff");
 }
 
@@ -98,7 +101,8 @@ limitations under the License.
   font-weight: 500;
   font-display: swap;
   unicode-range: var(--inter-unicode-range);
-  src: url("/fonts/Inter/Inter-MediumItalic.woff2") format("woff2"),
+  src:
+    url("/fonts/Inter/Inter-MediumItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter-MediumItalic.woff") format("woff");
 }
 
@@ -108,7 +112,8 @@ limitations under the License.
   font-weight: 600;
   font-display: swap;
   unicode-range: var(--inter-unicode-range);
-  src: url("/fonts/Inter/Inter-SemiBold.woff2") format("woff2"),
+  src:
+    url("/fonts/Inter/Inter-SemiBold.woff2") format("woff2"),
     url("/fonts/Inter/Inter-SemiBold.woff") format("woff");
 }
 
@@ -118,7 +123,8 @@ limitations under the License.
   font-weight: 600;
   font-display: swap;
   unicode-range: var(--inter-unicode-range);
-  src: url("/fonts/Inter/Inter-SemiBoldItalic.woff2") format("woff2"),
+  src:
+    url("/fonts/Inter/Inter-SemiBoldItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter-SemiBoldItalic.woff") format("woff");
 }
 
@@ -128,7 +134,8 @@ limitations under the License.
   font-weight: 700;
   font-display: swap;
   unicode-range: var(--inter-unicode-range);
-  src: url("/fonts/Inter/Inter-Bold.woff2") format("woff2"),
+  src:
+    url("/fonts/Inter/Inter-Bold.woff2") format("woff2"),
     url("/fonts/Inter/Inter-Bold.woff") format("woff");
 }
 
@@ -138,7 +145,8 @@ limitations under the License.
   font-weight: 700;
   font-display: swap;
   unicode-range: var(--inter-unicode-range);
-  src: url("/fonts/Inter/Inter-BoldItalic.woff2") format("woff2"),
+  src:
+    url("/fonts/Inter/Inter-BoldItalic.woff2") format("woff2"),
     url("/fonts/Inter/Inter-BoldItalic.woff") format("woff");
 }
 

@@ -36,7 +36,7 @@ export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
 
   const onChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => setLayout(e.target.value as Layout),
-    [setLayout]
+    [setLayout],
   );
 
   const spotlightId = useId();

@@ -44,7 +44,7 @@ export function FieldRow({
       className={classNames(
         styles.fieldRow,
         { [styles.rightAlign]: rightAlign },
-        className
+        className,
       )}
     >
       {children}
@@ -102,7 +102,7 @@ export const InputField = forwardRef<
       disabled,
       ...rest
     },
-    ref
+    ref,
   ) => {
     const descriptionId = useId();
 
@@ -114,7 +114,7 @@ export const InputField = forwardRef<
             [styles.prefix]: !!prefix,
             [styles.disabled]: disabled,
           },
-          className
+          className,
         )}
       >
         {prefix && <span>{prefix}</span>}
@@ -163,7 +163,7 @@ export const InputField = forwardRef<
         )}
       </Field>
     );
-  }
+  },
 );
 
 interface ErrorMessageProps {

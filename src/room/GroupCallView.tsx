@@ -111,7 +111,7 @@ export const GroupCallView: FC<Props> = ({
   // Count each member only once, regardless of how many devices they use
   const participantCount = useMemo(
     () => new Set<string>(memberships.map((m) => m.sender!)).size,
-    [memberships]
+    [memberships],
   );
 
   const deviceContext = useMediaDevices();
@@ -126,7 +126,7 @@ export const GroupCallView: FC<Props> = ({
     if (widget && preload) {
       // In preload mode, wait for a join action before entering
       const onJoin = async (
-        ev: CustomEvent<IWidgetApiRequest>
+        ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
         // XXX: I think this is broken currently - LiveKit *won't* request
         // permissions and give you device names unless you specify a kind, but
@@ -143,14 +143,14 @@ export const GroupCallView: FC<Props> = ({
           const deviceId = await findDeviceByName(
             audioInput,
             "audioinput",
-            devices
+            devices,
           );
           if (!deviceId) {
             logger.warn("Unknown audio input: " + audioInput);
             latestMuteStates.current!.audio.setEnabled?.(false);
           } else {
             logger.debug(
-              `Found audio input ID ${deviceId} for name ${audioInput}`
+              `Found audio input ID ${deviceId} for name ${audioInput}`,
             );
             latestDevices.current!.audioInput.select(deviceId);
             latestMuteStates.current!.audio.setEnabled?.(true);
@@ -163,14 +163,14 @@ export const GroupCallView: FC<Props> = ({
           const deviceId = await findDeviceByName(
             videoInput,
             "videoinput",
-            devices
+            devices,
           );
           if (!deviceId) {
             logger.warn("Unknown video input: " + videoInput);
             latestMuteStates.current!.video.setEnabled?.(false);
           } else {
             logger.debug(
-              `Found video input ID ${deviceId} for name ${videoInput}`
+              `Found video input ID ${deviceId} for name ${videoInput}`,
             );
             latestDevices.current!.videoInput.select(deviceId);
             latestMuteStates.current!.video.setEnabled?.(true);
@@ -182,7 +182,7 @@ export const GroupCallView: FC<Props> = ({
         PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
         // we only have room sessions right now, so call ID is the emprty string - we use the room ID
         PosthogAnalytics.instance.eventCallStarted.track(
-          rtcSession.room.roomId
+          rtcSession.room.roomId,
         );
 
         await Promise.all([
@@ -213,7 +213,7 @@ export const GroupCallView: FC<Props> = ({
       PosthogAnalytics.instance.eventCallEnded.track(
         rtcSession.room.roomId,
         rtcSession.memberships.length,
-        sendInstantly
+        sendInstantly,
       );
 
       await leaveRTCSession(rtcSession);
@@ -237,13 +237,13 @@ export const GroupCallView: FC<Props> = ({
         history.push("/");
       }
     },
-    [rtcSession, isPasswordlessUser, confineToRoom, history]
+    [rtcSession, isPasswordlessUser, confineToRoom, history],
   );
 
   useEffect(() => {
     if (widget && isJoined) {
       const onHangup = async (
-        ev: CustomEvent<IWidgetApiRequest>
+        ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
         leaveRTCSession(rtcSession);
         widget!.api.transport.reply(ev.detail, {});
@@ -260,7 +260,7 @@ export const GroupCallView: FC<Props> = ({
 
   const e2eeConfig = useMemo(
     () => (e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined),
-    [e2eeSharedKey]
+    [e2eeSharedKey],
   );
 
   const onReconnect = useCallback(() => {
@@ -274,12 +274,12 @@ export const GroupCallView: FC<Props> = ({
   const [shareModalOpen, setInviteModalOpen] = useState(false);
   const onDismissInviteModal = useCallback(
     () => setInviteModalOpen(false),
-    [setInviteModalOpen]
+    [setInviteModalOpen],
   );
 
   const onShareClickFn = useCallback(
     () => setInviteModalOpen(true),
-    [setInviteModalOpen]
+    [setInviteModalOpen],
   );
   const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
 
@@ -288,7 +288,7 @@ export const GroupCallView: FC<Props> = ({
       ev.preventDefault();
       history.push("/");
     },
-    [history]
+    [history],
   );
 
   const { t } = useTranslation();
@@ -298,7 +298,7 @@ export const GroupCallView: FC<Props> = ({
       <ErrorView
         error={
           new Error(
-            "No E2EE key provided: please make sure the URL you're using to join this call has been retrieved using the in-app button."
+            "No E2EE key provided: please make sure the URL you're using to join this call has been retrieved using the in-app button.",
           )
         }
       />
@@ -309,7 +309,7 @@ export const GroupCallView: FC<Props> = ({
         <Heading>Incompatible Browser</Heading>
         <Text>
           {t(
-            "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117"
+            "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117",
           )}
         </Text>
         <Link href="/" onClick={onHomeClick}>

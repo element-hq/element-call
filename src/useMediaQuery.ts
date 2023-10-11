@@ -28,7 +28,7 @@ export function useMediaQuery(query: string): boolean {
   useEventTarget(
     mediaQuery,
     "change",
-    useCallback(() => setNumChanges((n) => n + 1), [setNumChanges])
+    useCallback(() => setNumChanges((n) => n + 1), [setNumChanges]),
   );
 
   // We want any change to the update counter to trigger an update here

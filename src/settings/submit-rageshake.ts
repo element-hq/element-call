@@ -95,12 +95,12 @@ export function useSubmitRageshake(): {
         const body = new FormData();
         body.append(
           "text",
-          description ?? "User did not supply any additional text."
+          description ?? "User did not supply any additional text.",
         );
         body.append("app", "matrix-video-chat");
         body.append(
           "version",
-          (import.meta.env.VITE_APP_VERSION as string) || "dev"
+          (import.meta.env.VITE_APP_VERSION as string) || "dev",
         );
         body.append("user_agent", userAgent);
         body.append("installed_pwa", "false");
@@ -132,22 +132,22 @@ export function useSubmitRageshake(): {
 
             body.append(
               "cross_signing_ready",
-              String(await client.isCrossSigningReady())
+              String(await client.isCrossSigningReady()),
             );
             body.append(
               "cross_signing_supported_by_hs",
               String(
                 await client.doesServerSupportUnstableFeature(
-                  "org.matrix.e2e_cross_signing"
-                )
-              )
+                  "org.matrix.e2e_cross_signing",
+                ),
+              ),
             );
             body.append("cross_signing_key", crossSigning.getId()!);
             body.append(
               "cross_signing_privkey_in_secret_storage",
               String(
-                !!(await crossSigning.isStoredInSecretStorage(secretStorage))
-              )
+                !!(await crossSigning.isStoredInSecretStorage(secretStorage)),
+              ),
             );
 
             const pkCache = client.getCrossSigningCacheCallbacks();
@@ -157,8 +157,8 @@ export function useSubmitRageshake(): {
                 !!(
                   pkCache?.getCrossSigningKeyCache &&
                   (await pkCache.getCrossSigningKeyCache("master"))
-                )
-              )
+                ),
+              ),
             );
             body.append(
               "cross_signing_self_signing_privkey_cached",
@@ -166,8 +166,8 @@ export function useSubmitRageshake(): {
                 !!(
                   pkCache?.getCrossSigningKeyCache &&
                   (await pkCache.getCrossSigningKeyCache("self_signing"))
-                )
-              )
+                ),
+              ),
             );
             body.append(
               "cross_signing_user_signing_privkey_cached",
@@ -175,32 +175,32 @@ export function useSubmitRageshake(): {
                 !!(
                   pkCache?.getCrossSigningKeyCache &&
                   (await pkCache.getCrossSigningKeyCache("user_signing"))
-                )
-              )
+                ),
+              ),
             );
 
             body.append(
               "secret_storage_ready",
-              String(await client.isSecretStorageReady())
+              String(await client.isSecretStorageReady()),
             );
             body.append(
               "secret_storage_key_in_account",
-              String(!!(await secretStorage.hasKey()))
+              String(!!(await secretStorage.hasKey())),
             );
 
             body.append(
               "session_backup_key_in_secret_storage",
-              String(!!(await client.isKeyBackupKeyStored()))
+              String(!!(await client.isKeyBackupKeyStored())),
             );
             const sessionBackupKeyFromCache =
               await client.crypto!.getSessionBackupPrivateKey();
             body.append(
               "session_backup_key_cached",
-              String(!!sessionBackupKeyFromCache)
+              String(!!sessionBackupKeyFromCache),
             );
             body.append(
               "session_backup_key_well_formed",
-              String(sessionBackupKeyFromCache instanceof Uint8Array)
+              String(sessionBackupKeyFromCache instanceof Uint8Array),
             );
           }
         }
@@ -214,7 +214,7 @@ export function useSubmitRageshake(): {
           try {
             body.append(
               "storageManager_persisted",
-              String(await navigator.storage.persisted())
+              String(await navigator.storage.persisted()),
             );
           } catch (e) {}
         } else if (document.hasStorageAccess) {
@@ -222,7 +222,7 @@ export function useSubmitRageshake(): {
           try {
             body.append(
               "storageManager_persisted",
-              String(await document.hasStorageAccess())
+              String(await document.hasStorageAccess()),
             );
           } catch (e) {}
         }
@@ -240,7 +240,7 @@ export function useSubmitRageshake(): {
               Object.keys(estimate.usageDetails).forEach((k) => {
                 body.append(
                   `storageManager_usage_${k}`,
-                  String(estimate.usageDetails![k])
+                  String(estimate.usageDetails![k]),
                 );
               });
             }
@@ -257,14 +257,14 @@ export function useSubmitRageshake(): {
           body.append(
             "file",
             gzip(ElementCallOpenTelemetry.instance.rageshakeProcessor!.dump()),
-            "traces.json.gz"
+            "traces.json.gz",
           );
         }
 
         if (opts.rageshakeRequestId) {
           body.append(
             "group_call_rageshake_request_id",
-            opts.rageshakeRequestId
+            opts.rageshakeRequestId,
           );
         }
 
@@ -279,7 +279,7 @@ export function useSubmitRageshake(): {
         logger.error(error);
       }
     },
-    [client, sending]
+    [client, sending],
   );
 
   return {
@@ -292,7 +292,7 @@ export function useSubmitRageshake(): {
 
 export function useRageshakeRequest(): (
   roomId: string,
-  rageshakeRequestId: string
+  rageshakeRequestId: string,
 ) => void {
   const { client } = useClient();
 
@@ -302,14 +302,14 @@ export function useRageshakeRequest(): (
         request_id: rageshakeRequestId,
       });
     },
-    [client]
+    [client],
   );
 
   return sendRageshakeRequest;
 }
 
 export function useRageshakeRequestModal(
-  roomId: string
+  roomId: string,
 ): ComponentProps<typeof RageshakeRequestModal> {
   const [open, setOpen] = useState(false);
   const onDismiss = useCallback(() => setOpen(false), [setOpen]);

@@ -34,28 +34,28 @@ describe("UrlParams", () => {
   describe("handles URL with /room/", () => {
     it("and nothing else", () => {
       expect(
-        getRoomIdentifierFromUrl(`/room/${ROOM_NAME}`, "", "").roomAlias
+        getRoomIdentifierFromUrl(`/room/${ROOM_NAME}`, "", "").roomAlias,
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
 
     it("and #", () => {
       expect(
         getRoomIdentifierFromUrl("", `${ORIGIN}/room/`, `#${ROOM_NAME}`)
-          .roomAlias
+          .roomAlias,
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
 
     it("and # and server part", () => {
       expect(
         getRoomIdentifierFromUrl("", `/room/`, `#${ROOM_NAME}:${HOMESERVER}`)
-          .roomAlias
+          .roomAlias,
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
 
     it("and server part", () => {
       expect(
         getRoomIdentifierFromUrl(`/room/${ROOM_NAME}:${HOMESERVER}`, "", "")
-          .roomAlias
+          .roomAlias,
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
   });
@@ -63,27 +63,27 @@ describe("UrlParams", () => {
   describe("handles URL without /room/", () => {
     it("and nothing else", () => {
       expect(getRoomIdentifierFromUrl(`/${ROOM_NAME}`, "", "").roomAlias).toBe(
-        `#${ROOM_NAME}:${HOMESERVER}`
+        `#${ROOM_NAME}:${HOMESERVER}`,
       );
     });
 
     it("and with #", () => {
       expect(getRoomIdentifierFromUrl("", "", `#${ROOM_NAME}`).roomAlias).toBe(
-        `#${ROOM_NAME}:${HOMESERVER}`
+        `#${ROOM_NAME}:${HOMESERVER}`,
       );
     });
 
     it("and with # and server part", () => {
       expect(
         getRoomIdentifierFromUrl("", "", `#${ROOM_NAME}:${HOMESERVER}`)
-          .roomAlias
+          .roomAlias,
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
 
     it("and with server part", () => {
       expect(
         getRoomIdentifierFromUrl(`/${ROOM_NAME}:${HOMESERVER}`, "", "")
-          .roomAlias
+          .roomAlias,
       ).toBe(`#${ROOM_NAME}:${HOMESERVER}`);
     });
   });
@@ -91,7 +91,7 @@ describe("UrlParams", () => {
   describe("handles search params", () => {
     it("(roomId)", () => {
       expect(
-        getRoomIdentifierFromUrl("", `?roomId=${ROOM_ID}`, "").roomId
+        getRoomIdentifierFromUrl("", `?roomId=${ROOM_ID}`, "").roomId,
       ).toBe(ROOM_ID);
     });
   });
@@ -99,7 +99,7 @@ describe("UrlParams", () => {
   it("ignores room alias", () => {
     expect(
       getRoomIdentifierFromUrl("", `/room/${ROOM_NAME}:${HOMESERVER}`, "")
-        .roomAlias
+        .roomAlias,
     ).toBeFalsy();
   });
 });

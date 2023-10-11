@@ -57,7 +57,7 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
         sendRageshakeRequest(roomId, rageshakeRequestId);
       }
     },
-    [submitRageshake, roomId, sendRageshakeRequest]
+    [submitRageshake, roomId, sendRageshakeRequest],
   );
 
   return (
@@ -65,7 +65,7 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
       <h4 className={styles.label}>{t("Submit feedback")}</h4>
       <Body>
         {t(
-          "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below."
+          "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
         )}
       </Body>
       <form onSubmit={onSubmitFeedback}>

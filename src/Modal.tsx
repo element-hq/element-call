@@ -75,7 +75,7 @@ export const Modal: FC<Props> = ({
     (open: boolean) => {
       if (!open) onDismiss?.();
     },
-    [onDismiss]
+    [onDismiss],
   );
 
   if (touchscreen) {
@@ -92,7 +92,7 @@ export const Modal: FC<Props> = ({
               className,
               overlayStyles.overlay,
               styles.modal,
-              styles.drawer
+              styles.drawer,
             )}
             {...rest}
           >
@@ -124,7 +124,7 @@ export const Modal: FC<Props> = ({
                 overlayStyles.overlay,
                 overlayStyles.animate,
                 styles.modal,
-                styles.dialog
+                styles.dialog,
               )}
             >
               <div className={styles.content}>

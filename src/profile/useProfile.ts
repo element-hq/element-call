@@ -63,7 +63,7 @@ export function useProfile(client: MatrixClient | undefined): UseProfile {
   useEffect(() => {
     const onChangeUser = (
       _event: MatrixEvent | undefined,
-      { displayName, avatarUrl }: User
+      { displayName, avatarUrl }: User,
     ): void => {
       setState({
         success: false,
@@ -108,9 +108,8 @@ export function useProfile(client: MatrixClient | undefined): UseProfile {
           if (removeAvatar) {
             await client.setAvatarUrl("");
           } else if (avatar) {
-            ({ content_uri: mxcAvatarUrl } = await client.uploadContent(
-              avatar
-            ));
+            ({ content_uri: mxcAvatarUrl } =
+              await client.uploadContent(avatar));
             await client.setAvatarUrl(mxcAvatarUrl);
           }
 
@@ -135,7 +134,7 @@ export function useProfile(client: MatrixClient | undefined): UseProfile {
         logger.error("Client not initialized before calling saveProfile");
       }
     },
-    [client]
+    [client],
   );
 
   return {

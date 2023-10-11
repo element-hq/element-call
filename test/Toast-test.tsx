@@ -23,13 +23,13 @@ test("Toast renders", () => {
   render(
     <Toast open={false} onDismiss={() => {}}>
       Hello world!
-    </Toast>
+    </Toast>,
   );
   expect(screen.queryByRole("dialog")).toBe(null);
   render(
     <Toast open={true} onDismiss={() => {}}>
       Hello world!
-    </Toast>
+    </Toast>,
   );
   expect(screen.getByRole("dialog")).toMatchSnapshot();
 });
@@ -39,7 +39,7 @@ test("Toast dismisses when clicked", async () => {
   render(
     <Toast open={true} onDismiss={onDismiss}>
       Hello world!
-    </Toast>
+    </Toast>,
   );
   await userEvent.click(screen.getByRole("dialog"));
   expect(onDismiss).toHaveBeenCalled();
@@ -51,7 +51,7 @@ test("Toast dismisses itself after the specified timeout", async () => {
     render(
       <Toast open={true} onDismiss={onDismiss} autoDismiss={2000}>
         Hello world!
-      </Toast>
+      </Toast>,
     );
     jest.advanceTimersByTime(2000);
     expect(onDismiss).toHaveBeenCalled();

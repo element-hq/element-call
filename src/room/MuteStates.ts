@@ -49,18 +49,18 @@ export interface MuteStates {
 
 function useMuteState(
   device: MediaDevice,
-  enabledByDefault: () => boolean
+  enabledByDefault: () => boolean,
 ): MuteState {
   const [enabled, setEnabled] = useReactiveState<boolean>(
     (prev) => device.available.length > 0 && (prev ?? enabledByDefault()),
-    [device]
+    [device],
   );
   return useMemo(
     () =>
       device.available.length === 0
         ? deviceUnavailable
         : { enabled, setEnabled },
-    [device, enabled, setEnabled]
+    [device, enabled, setEnabled],
   );
 }
 
@@ -69,7 +69,7 @@ export function useMuteStates(participantCount: number): MuteStates {
 
   const audio = useMuteState(
     devices.audioInput,
-    () => participantCount <= MUTE_PARTICIPANT_COUNT
+    () => participantCount <= MUTE_PARTICIPANT_COUNT,
   );
   const video = useMuteState(devices.videoInput, () => true);
 

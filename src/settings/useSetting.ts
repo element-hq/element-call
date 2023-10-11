@@ -38,13 +38,13 @@ export const useSetting = <T>(name: string, defaultValue: T): Setting<T> => {
 
   const value = useMemo(
     () => (item == null ? defaultValue : JSON.parse(item)),
-    [item, defaultValue]
+    [item, defaultValue],
   );
   const setValue = useCallback(
     (value: T) => {
       setItem(JSON.stringify(value));
     },
-    [setItem]
+    [setItem],
   );
 
   return [value, setValue];
@@ -94,7 +94,7 @@ export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
 export const useEnableE2EE = (): DisableableSetting<boolean | null> => {
   const settingVal = useSetting<boolean | null>(
     "enable-end-to-end-encryption",
-    true
+    true,
   );
   if (isE2EESupported()) return settingVal;
 

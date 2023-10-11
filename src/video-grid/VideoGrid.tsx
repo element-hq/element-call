@@ -151,7 +151,7 @@ function getTilePositions(
   gridHeight: number,
   pipXRatio: number,
   pipYRatio: number,
-  layout: Layout
+  layout: Layout,
 ): TilePosition[] {
   if (layout === "grid") {
     if (tileCount === 2 && focusedTileCount === 0) {
@@ -159,7 +159,7 @@ function getTilePositions(
         gridWidth,
         gridHeight,
         pipXRatio,
-        pipYRatio
+        pipYRatio,
       );
     }
 
@@ -167,7 +167,7 @@ function getTilePositions(
       tileCount,
       focusedTileCount,
       gridWidth,
-      gridHeight
+      gridHeight,
     );
   } else {
     return getSpotlightLayoutTilePositions(tileCount, gridWidth, gridHeight);
@@ -178,13 +178,13 @@ function getOneOnOneLayoutTilePositions(
   gridWidth: number,
   gridHeight: number,
   pipXRatio: number,
-  pipYRatio: number
+  pipYRatio: number,
 ): TilePosition[] {
   const [remotePosition] = getFreedomLayoutTilePositions(
     1,
     0,
     gridWidth,
-    gridHeight
+    gridHeight,
   );
 
   const gridAspectRatio = gridWidth / gridHeight;
@@ -196,7 +196,7 @@ function getOneOnOneLayoutTilePositions(
   const pipScaleFactor = Math.min(
     1,
     remotePosition.width / 3 / maxPipWidth,
-    remotePosition.height / 3 / maxPipHeight
+    remotePosition.height / 3 / maxPipHeight,
   );
   const pipWidth = maxPipWidth * pipScaleFactor;
   const pipHeight = maxPipHeight * pipScaleFactor;
@@ -223,7 +223,7 @@ function getOneOnOneLayoutTilePositions(
 function getSpotlightLayoutTilePositions(
   tileCount: number,
   gridWidth: number,
-  gridHeight: number
+  gridHeight: number,
 ): TilePosition[] {
   const tilePositions: TilePosition[] = [];
 
@@ -293,7 +293,7 @@ function getFreedomLayoutTilePositions(
   tileCount: number,
   focusedTileCount: number,
   gridWidth: number,
-  gridHeight: number
+  gridHeight: number,
 ): TilePosition[] {
   if (tileCount === 0) {
     return [];
@@ -307,7 +307,7 @@ function getFreedomLayoutTilePositions(
     tileCount,
     focusedTileCount,
     gridWidth,
-    gridHeight
+    gridHeight,
   );
 
   let itemGridWidth;
@@ -335,7 +335,7 @@ function getFreedomLayoutTilePositions(
     itemRowCount,
     itemTileAspectRatio,
     itemGridWidth,
-    itemGridHeight
+    itemGridHeight,
   );
   const itemGridBounds = getSubGridBoundingBox(itemGridPositions);
 
@@ -367,7 +367,7 @@ function getFreedomLayoutTilePositions(
     focusedRowCount,
     focusedTileAspectRatio,
     focusedGridWidth,
-    focusedGridHeight
+    focusedGridHeight,
   );
 
   const tilePositions = [...focusedGridPositions, ...itemGridPositions];
@@ -380,7 +380,7 @@ function getFreedomLayoutTilePositions(
       gridWidth,
       gridHeight - focusedGridHeight,
       0,
-      focusedGridHeight
+      focusedGridHeight,
     );
   } else {
     centerTiles(
@@ -388,7 +388,7 @@ function getFreedomLayoutTilePositions(
       gridWidth - focusedGridWidth,
       gridHeight,
       focusedGridWidth,
-      0
+      0,
     );
   }
 
@@ -454,7 +454,7 @@ function getGridLayout(
   tileCount: number,
   focusedTileCount: number,
   gridWidth: number,
-  gridHeight: number
+  gridHeight: number,
 ): { itemGridRatio: number; layoutDirection: LayoutDirection } {
   let layoutDirection: LayoutDirection = "horizontal";
   let itemGridRatio = 1;
@@ -479,7 +479,7 @@ function centerTiles(
   gridWidth: number,
   gridHeight: number,
   offsetLeft: number,
-  offsetTop: number
+  offsetTop: number,
 ): TilePosition[] {
   const bounds = getSubGridBoundingBox(positions);
 
@@ -494,7 +494,7 @@ function centerTiles(
 function applyTileOffsets(
   positions: TilePosition[],
   leftOffset: number,
-  topOffset: number
+  topOffset: number,
 ): TilePosition[] {
   for (const position of positions) {
     position.x += leftOffset;
@@ -507,7 +507,7 @@ function applyTileOffsets(
 function getSubGridLayout(
   tileCount: number,
   gridWidth: number,
-  gridHeight: number
+  gridHeight: number,
 ): { columnCount: number; rowCount: number; tileAspectRatio: number } {
   const gridAspectRatio = gridWidth / gridHeight;
 
@@ -624,7 +624,7 @@ function getSubGridPositions(
   rowCount: number,
   tileAspectRatio: number,
   gridWidth: number,
-  gridHeight: number
+  gridHeight: number,
 ): TilePosition[] {
   if (tileCount === 0) {
     return [];
@@ -633,7 +633,7 @@ function getSubGridPositions(
   const newTilePositions: TilePosition[] = [];
 
   const boxWidth = Math.round(
-    (gridWidth - GAP * (columnCount + 1)) / columnCount
+    (gridWidth - GAP * (columnCount + 1)) / columnCount,
   );
   const boxHeight = Math.round((gridHeight - GAP * (rowCount + 1)) / rowCount);
 
@@ -675,7 +675,7 @@ function getSubGridPositions(
       const subgridWidth = tileWidth * columnCount + (GAP * columnCount - 1);
       centeringPadding = Math.round(
         (subgridWidth - (tileWidth * rowItemCount + (GAP * rowItemCount - 1))) /
-          2
+          2,
       );
     }
 
@@ -699,7 +699,7 @@ function displayedTileCount(
   layout: Layout,
   tileCount: number,
   gridWidth: number,
-  gridHeight: number
+  gridHeight: number,
 ): number {
   let displayedTile = -1;
   if (layout === "grid") {
@@ -731,7 +731,7 @@ function displayedTileCount(
 function reorderTiles<T>(
   tiles: Tile<T>[],
   layout: Layout,
-  displayedTile = -1
+  displayedTile = -1,
 ): void {
   // We use a special layout for 1:1 to always put the local tile first.
   // We only do this if there are two tiles (obviously) and exactly one
@@ -919,7 +919,7 @@ export function VideoGrid<T>({
 
       for (const item of items) {
         const existingTileIndex = newTiles.findIndex(
-          ({ key }) => item.id === key
+          ({ key }) => item.id === key,
         );
 
         const existingTile = newTiles[existingTileIndex];
@@ -956,7 +956,7 @@ export function VideoGrid<T>({
           layout,
           newTiles.length,
           gridBounds.width,
-          gridBounds.height
+          gridBounds.height,
         );
       }
 
@@ -976,7 +976,7 @@ export function VideoGrid<T>({
 
             const focusedTileCount = newTiles.reduce(
               (count, tile) => count + (tile.focused ? 1 : 0),
-              0
+              0,
             );
 
             return {
@@ -989,7 +989,7 @@ export function VideoGrid<T>({
                 gridBounds.height,
                 pipXRatio,
                 pipYRatio,
-                layout
+                layout,
               ),
             };
           });
@@ -998,7 +998,7 @@ export function VideoGrid<T>({
 
       const focusedTileCount = newTiles.reduce(
         (count, tile) => count + (tile.focused ? 1 : 0),
-        0
+        0,
       );
 
       lastLayoutRef.current = layout;
@@ -1013,7 +1013,7 @@ export function VideoGrid<T>({
           gridBounds.height,
           pipXRatio,
           pipYRatio,
-          layout
+          layout,
         ),
       };
     });
@@ -1066,7 +1066,7 @@ export function VideoGrid<T>({
         } else {
           const isMobile = isMobileBreakpoint(
             gridBounds.width,
-            gridBounds.height
+            gridBounds.height,
           );
 
           const x =
@@ -1127,7 +1127,7 @@ export function VideoGrid<T>({
         }
       };
     },
-    [tilePositions, disableAnimations, scrollPosition, layout, gridBounds]
+    [tilePositions, disableAnimations, scrollPosition, layout, gridBounds],
   );
 
   const [springs, api] = useSprings(tiles.length, animate(tiles), [
@@ -1179,12 +1179,12 @@ export function VideoGrid<T>({
             gridBounds.height,
             pipXRatio,
             pipYRatio,
-            layout
+            layout,
           ),
         };
       });
     },
-    [tiles, layout, gridBounds.width, gridBounds.height, pipXRatio, pipYRatio]
+    [tiles, layout, gridBounds.width, gridBounds.height, pipXRatio, pipYRatio],
   );
 
   // Callback for useDrag. We could call useDrag here, but the default
@@ -1213,7 +1213,7 @@ export function VideoGrid<T>({
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       event,
-    }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
+    }: Parameters<Handler<"drag", EventTypes["drag"]>>[0],
   ): void => {
     event.preventDefault();
 
@@ -1243,7 +1243,7 @@ export function VideoGrid<T>({
 
         const pipGap = getPipGap(
           gridBounds.width / gridBounds.height,
-          gridBounds.width
+          gridBounds.width,
         );
         const pipMinX = remotePosition.x + pipGap;
         const pipMinY = remotePosition.y + pipGap;
@@ -1270,7 +1270,7 @@ export function VideoGrid<T>({
       const hoverTile = tiles.find(
         (tile) =>
           tile.key !== tileId &&
-          isInside(cursorPosition, tilePositions[tile.order])
+          isInside(cursorPosition, tilePositions[tile.order]),
       );
 
       if (hoverTile) {
@@ -1331,7 +1331,7 @@ export function VideoGrid<T>({
       e:
         | Omit<FullGestureState<"wheel">, "event">
         | Omit<FullGestureState<"drag">, "event">,
-      isWheel: boolean
+      isWheel: boolean,
     ) => {
       if (layout !== "spotlight") {
         return;
@@ -1355,10 +1355,10 @@ export function VideoGrid<T>({
       }
 
       setScrollPosition((scrollPosition) =>
-        Math.min(Math.max(movement + scrollPosition, min), 0)
+        Math.min(Math.max(movement + scrollPosition, min), 0),
       );
     },
-    [layout, gridBounds, tilePositions]
+    [layout, gridBounds, tilePositions],
   );
 
   const bindGrid = useGesture(
@@ -1370,7 +1370,7 @@ export function VideoGrid<T>({
       // @ts-ignore
       onDrag: (e) => onGridGesture(e, false),
     },
-    {}
+    {},
   );
 
   return (

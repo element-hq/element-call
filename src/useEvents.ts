@@ -28,7 +28,7 @@ export function useEventTarget<T extends Event>(
   target: EventTarget | null | undefined,
   eventType: string,
   listener: (event: T) => void,
-  options?: AddEventListenerOptions
+  options?: AddEventListenerOptions,
 ): void {
   useEffect(() => {
     if (target) {
@@ -37,7 +37,7 @@ export function useEventTarget<T extends Event>(
         target.removeEventListener(
           eventType,
           listener as EventListener,
-          options
+          options,
         );
     }
   }, [target, eventType, listener, options]);
@@ -47,11 +47,11 @@ export function useEventTarget<T extends Event>(
 export function useTypedEventEmitter<
   Events extends string,
   Arguments extends ListenerMap<Events>,
-  T extends Events
+  T extends Events,
 >(
   emitter: TypedEventEmitter<Events, Arguments>,
   eventType: T,
-  listener: Listener<Events, Arguments, T>
+  listener: Listener<Events, Arguments, T>,
 ): void {
   useEffect(() => {
     emitter.on(eventType, listener);
@@ -64,11 +64,11 @@ export function useTypedEventEmitter<
 // Shortcut for registering a listener on an eventemitter3 EventEmitter (ie. what the LiveKit SDK uses)
 export function useEventEmitterThree<
   EventType extends keyof T,
-  T extends EventMap
+  T extends EventMap,
 >(
   emitter: EventEmitter<T>,
   eventType: EventType,
-  listener: T[EventType]
+  listener: T[EventType],
 ): void {
   useEffect(() => {
     emitter.on(eventType, listener);

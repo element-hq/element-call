@@ -29,7 +29,7 @@ export class OTelCallFeedMediaStreamSpan extends OTelCallAbstractMediaStreamSpan
   public constructor(
     protected readonly oTel: ElementCallOpenTelemetry,
     protected readonly callSpan: Span,
-    callFeed: CallFeedStats
+    callFeed: CallFeedStats,
   ) {
     const postFix =
       callFeed.type === "local" && callFeed.prefix === "from-call-feed"

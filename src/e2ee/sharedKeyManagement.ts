@@ -26,7 +26,7 @@ export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
   `room-shared-key-${roomId}`;
 
 const useInternalRoomSharedKey = (
-  roomId: string
+  roomId: string,
 ): [string | null, (value: string) => void] => {
   const key = useMemo(() => getRoomSharedKeyLocalStorageKey(roomId), [roomId]);
   const [e2eeEnabled] = useEnableE2EE();
@@ -68,6 +68,6 @@ export const useIsRoomE2EE = (roomId: string): boolean | null => {
   // should inspect the e2eEnabled URL parameter here?
   return useMemo(
     () => widget === null && (room === null || !room.getCanonicalAlias()),
-    [room]
+    [room],
   );
 };

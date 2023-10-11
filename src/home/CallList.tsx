@@ -74,7 +74,7 @@ const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room }) => {
         to={getRelativeRoomUrl(
           room.roomId,
           room.name,
-          roomSharedKey ?? undefined
+          roomSharedKey ?? undefined,
         )}
         className={styles.callTileLink}
       >
@@ -92,7 +92,7 @@ const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room }) => {
         value={getAbsoluteRoomUrl(
           room.roomId,
           room.name,
-          roomSharedKey ?? undefined
+          roomSharedKey ?? undefined,
         )}
       />
     </div>

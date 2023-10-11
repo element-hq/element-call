@@ -52,7 +52,7 @@ export const RoomAuthView: FC = () => {
         setError(error);
       });
     },
-    [registerPasswordlessUser]
+    [registerPasswordlessUser],
   );
 
   const { t } = useTranslation();

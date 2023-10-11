@@ -61,7 +61,7 @@ export interface Layout<State> {
     xPositionOnFrom: number,
     yPositionOnFrom: number,
     xPositionOnTo: number,
-    yPositionOnTo: number
+    yPositionOnTo: number,
   ) => State;
   /**
    * Toggles the focus of the given tile (if this layout has the concept of
@@ -109,7 +109,7 @@ interface UseLayout<State, T> {
     xPositionOnFrom: number,
     yPositionOnFrom: number,
     xPositionOnTo: number,
-    yPositionOnTo: number
+    yPositionOnTo: number,
   ) => void;
   toggleFocus: ((tile: TileDescriptor<T>) => void) | undefined;
   slots: ReactNode;
@@ -123,7 +123,7 @@ export function useLayout<State, T>(
   layout: Layout<State>,
   items: TileDescriptor<T>[],
   bounds: RectReadOnly,
-  layoutStates: LayoutStatesMap
+  layoutStates: LayoutStatesMap,
 ): UseLayout<State, T> {
   const prevLayout = useRef<Layout<unknown>>();
   const prevState = layoutStates.get(layout);
@@ -159,7 +159,7 @@ export function useLayout<State, T>(
     generation: generation.current,
     canDragTile: useCallback(
       (tile: TileDescriptor<T>) => layout.canDragTile(state, tile),
-      [layout, state]
+      [layout, state],
     ),
     dragTile: useCallback(
       (
@@ -168,7 +168,7 @@ export function useLayout<State, T>(
         xPositionOnFrom: number,
         yPositionOnFrom: number,
         xPositionOnTo: number,
-        yPositionOnTo: number
+        yPositionOnTo: number,
       ) =>
         setState((s) =>
           layout.dragTile(
@@ -178,17 +178,17 @@ export function useLayout<State, T>(
             xPositionOnFrom,
             yPositionOnFrom,
             xPositionOnTo,
-            yPositionOnTo
-          )
+            yPositionOnTo,
+          ),
         ),
-      [layout, setState]
+      [layout, setState],
     ),
     toggleFocus: useMemo(
       () =>
         layout.toggleFocus &&
         ((tile: TileDescriptor<T>): void =>
           setState((s) => layout.toggleFocus!(s, tile))),
-      [layout, setState]
+      [layout, setState],
     ),
     slots: <layout.Slots s={state} />,
   };

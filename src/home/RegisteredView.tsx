@@ -56,7 +56,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
     useState(false);
   const onDismissJoinExistingCallModal = useCallback(
     () => setJoinExistingCallModalOpen(false),
-    [setJoinExistingCallModalOpen]
+    [setJoinExistingCallModalOpen],
   );
   const [e2eeEnabled] = useEnableE2EE();
 
@@ -77,15 +77,15 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         const createRoomResult = await createRoom(
           client,
           roomName,
-          e2eeEnabled ?? false
+          e2eeEnabled ?? false,
         );
 
         history.push(
           getRelativeRoomUrl(
             createRoomResult.roomId,
             roomName,
-            createRoomResult.password
-          )
+            createRoomResult.password,
+          ),
         );
       }
 
@@ -102,7 +102,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         }
       });
     },
-    [client, history, setJoinExistingCallModalOpen, e2eeEnabled]
+    [client, history, setJoinExistingCallModalOpen, e2eeEnabled],
   );
 
   const recentRooms = useGroupCallRooms(client);
