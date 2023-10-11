@@ -44,7 +44,7 @@ export class OTelCall {
     OTelCallAbstractMediaStreamSpan
   >();
 
-  constructor(
+  public constructor(
     public userId: string,
     public deviceId: string,
     public call: MatrixCall,
@@ -60,7 +60,7 @@ export class OTelCall {
     }
   }
 
-  public dispose() {
+  public dispose(): void {
     this.call.peerConn?.removeEventListener(
       "connectionstatechange",
       this.onCallConnectionStateChanged

@@ -24,12 +24,12 @@ import type {
 } from "matrix-js-sdk/src/models/typed-event-emitter";
 
 // Shortcut for registering a listener on an EventTarget
-export const useEventTarget = <T extends Event>(
+export function useEventTarget<T extends Event>(
   target: EventTarget | null | undefined,
   eventType: string,
   listener: (event: T) => void,
   options?: AddEventListenerOptions
-) => {
+): void {
   useEffect(() => {
     if (target) {
       target.addEventListener(eventType, listener as EventListener, options);
@@ -41,10 +41,10 @@ export const useEventTarget = <T extends Event>(
         );
     }
   }, [target, eventType, listener, options]);
-};
+}
 
 // Shortcut for registering a listener on a TypedEventEmitter
-export const useTypedEventEmitter = <
+export function useTypedEventEmitter<
   Events extends string,
   Arguments extends ListenerMap<Events>,
   T extends Events
@@ -52,28 +52,28 @@ export const useTypedEventEmitter = <
   emitter: TypedEventEmitter<Events, Arguments>,
   eventType: T,
   listener: Listener<Events, Arguments, T>
-) => {
+): void {
   useEffect(() => {
     emitter.on(eventType, listener);
     return () => {
       emitter.off(eventType, listener);
     };
   }, [emitter, eventType, listener]);
-};
+}
 
 // Shortcut for registering a listener on an eventemitter3 EventEmitter (ie. what the LiveKit SDK uses)
-export const useEventEmitterThree = <
+export function useEventEmitterThree<
   EventType extends keyof T,
   T extends EventMap
 >(
   emitter: EventEmitter<T>,
   eventType: EventType,
   listener: T[EventType]
-) => {
+): void {
   useEffect(() => {
     emitter.on(eventType, listener);
     return () => {
       emitter.off(eventType, listener);
     };
   }, [emitter, eventType, listener]);
-};
+}

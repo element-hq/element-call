@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ReactNode, useCallback } from "react";
+import { FC, ReactNode, useCallback } from "react";
 import { AriaDialogProps } from "@react-types/dialog";
 import { useTranslation } from "react-i18next";
 import {
@@ -37,7 +37,7 @@ import { useMediaQuery } from "./useMediaQuery";
 import { Glass } from "./Glass";
 
 // TODO: Support tabs
-export interface ModalProps extends AriaDialogProps {
+export interface Props extends AriaDialogProps {
   title: string;
   children: ReactNode;
   className?: string;
@@ -59,14 +59,14 @@ export interface ModalProps extends AriaDialogProps {
  * A modal, taking the form of a drawer / bottom sheet on touchscreen devices,
  * and a dialog box on desktop.
  */
-export function Modal({
+export const Modal: FC<Props> = ({
   title,
   children,
   className,
   open,
   onDismiss,
   ...rest
-}: ModalProps) {
+}) => {
   const { t } = useTranslation();
   // Empirically, Chrome on Android can end up not matching (hover: none), but
   // still matching (pointer: coarse) :/
@@ -152,4 +152,4 @@ export function Modal({
       </DialogRoot>
     );
   }
-}
+};

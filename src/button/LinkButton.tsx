@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { HTMLAttributes } from "react";
+import { FC, HTMLAttributes } from "react";
 import { Link } from "react-router-dom";
 import classNames from "classnames";
 import * as H from "history";
@@ -34,14 +34,14 @@ interface Props extends HTMLAttributes<HTMLAnchorElement> {
   className?: string;
 }
 
-export function LinkButton({
+export const LinkButton: FC<Props> = ({
   children,
   to,
   size,
   variant,
   className,
   ...rest
-}: Props) {
+}) => {
   return (
     <Link
       className={classNames(
@@ -55,4 +55,4 @@ export function LinkButton({
       {children}
     </Link>
   );
-}
+};

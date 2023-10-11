@@ -97,12 +97,12 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     );
     useEffect(() => {
       if (member) {
-        const updateName = () => {
+        const updateName = (): void => {
           setDisplayName(member.rawDisplayName);
         };
 
         member!.on(RoomMemberEvent.Name, updateName);
-        return () => {
+        return (): void => {
           member!.removeListener(RoomMemberEvent.Name, updateName);
         };
       }

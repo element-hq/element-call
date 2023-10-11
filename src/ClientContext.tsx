@@ -82,7 +82,8 @@ export type SetClientParams = {
 
 const ClientContext = createContext<ClientState | undefined>(undefined);
 
-export const useClientState = () => useContext(ClientContext);
+export const useClientState = (): ClientState | undefined =>
+  useContext(ClientContext);
 
 export function useClient(): {
   client?: MatrixClient;
@@ -408,8 +409,8 @@ export interface Session {
   tempPassword?: string;
 }
 
-const clearSession = () => localStorage.removeItem("matrix-auth-store");
-const saveSession = (s: Session) =>
+const clearSession = (): void => localStorage.removeItem("matrix-auth-store");
+const saveSession = (s: Session): void =>
   localStorage.setItem("matrix-auth-store", JSON.stringify(s));
 const loadSession = (): Session | undefined => {
   const data = localStorage.getItem("matrix-auth-store");
@@ -423,4 +424,5 @@ const loadSession = (): Session | undefined => {
 const clientIsDisconnected = (
   syncState: SyncState,
   syncData?: ISyncStateData
-) => syncState === "ERROR" && syncData?.error?.name === "ConnectionError";
+): boolean =>
+  syncState === "ERROR" && syncData?.error?.name === "ConnectionError";

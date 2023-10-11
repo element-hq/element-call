@@ -33,7 +33,7 @@ function makeFocus(livekitAlias: string): LivekitFocus {
   };
 }
 
-export function enterRTCSession(rtcSession: MatrixRTCSession) {
+export function enterRTCSession(rtcSession: MatrixRTCSession): void {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 

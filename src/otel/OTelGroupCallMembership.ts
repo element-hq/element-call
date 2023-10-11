@@ -62,7 +62,7 @@ export class OTelGroupCallMembership {
   };
   private readonly speakingSpans = new Map<RoomMember, Map<string, Span>>();
 
-  constructor(private groupCall: GroupCall, client: MatrixClient) {
+  public constructor(private groupCall: GroupCall, client: MatrixClient) {
     const clientId = client.getUserId();
     if (clientId) {
       this.myUserId = clientId;
@@ -76,14 +76,14 @@ export class OTelGroupCallMembership {
     this.groupCall.on(GroupCallEvent.CallsChanged, this.onCallsChanged);
   }
 
-  dispose() {
+  public dispose(): void {
     this.groupCall.removeListener(
       GroupCallEvent.CallsChanged,
       this.onCallsChanged
     );
   }
 
-  public onJoinCall() {
+  public onJoinCall(): void {
     if (!ElementCallOpenTelemetry.instance) return;
     if (this.callMembershipSpan !== undefined) {
       logger.warn("Call membership span is already started");
@@ -114,7 +114,7 @@ export class OTelGroupCallMembership {
     this.callMembershipSpan?.addEvent("matrix.joinCall");
   }
 
-  public onLeaveCall() {
+  public onLeaveCall(): void {
     if (this.callMembershipSpan === undefined) {
       logger.warn("Call membership span is already ended");
       return;
@@ -127,7 +127,7 @@ export class OTelGroupCallMembership {
     this.groupCallContext = undefined;
   }
 
-  public onUpdateRoomState(event: MatrixEvent) {
+  public onUpdateRoomState(event: MatrixEvent): void {
     if (
       !event ||
       (!event.getType().startsWith("m.call") &&
@@ -142,7 +142,7 @@ export class OTelGroupCallMembership {
     );
   }
 
-  public onCallsChanged = (calls: CallsByUserAndDevice) => {
+  public onCallsChanged(calls: CallsByUserAndDevice): void {
     for (const [userId, userCalls] of calls.entries()) {
       for (const [deviceId, call] of userCalls.entries()) {
         if (!this.callsByCallId.has(call.callId)) {
@@ -179,9 +179,9 @@ export class OTelGroupCallMembership {
         this.callsByCallId.delete(callTrackingInfo.call.callId);
       }
     }
-  };
+  }
 
-  public onCallStateChange(call: MatrixCall, newState: CallState) {
+  public onCallStateChange(call: MatrixCall, newState: CallState): void {
     const callTrackingInfo = this.callsByCallId.get(call.callId);
     if (!callTrackingInfo) {
       logger.error(`Got call state change for unknown call ID ${call.callId}`);
@@ -193,7 +193,7 @@ export class OTelGroupCallMembership {
     });
   }
 
-  public onSendEvent(call: MatrixCall, event: VoipEvent) {
+  public onSendEvent(call: MatrixCall, event: VoipEvent): void {
     const eventType = event.eventType as string;
     if (
       !eventType.startsWith("m.call") &&
@@ -220,7 +220,7 @@ export class OTelGroupCallMembership {
     }
   }
 
-  public onReceivedVoipEvent(event: MatrixEvent) {
+  public onReceivedVoipEvent(event: MatrixEvent): void {
     // These come straight from CallEventHandler so don't have
     // a call already associated (in principle we could receive
     // events for calls we don't know about).
@@ -251,37 +251,41 @@ export class OTelGroupCallMembership {
     });
   }
 
-  public onToggleMicrophoneMuted(newValue: boolean) {
+  public onToggleMicrophoneMuted(newValue: boolean): void {
     this.callMembershipSpan?.addEvent("matrix.toggleMicMuted", {
       "matrix.microphone.muted": newValue,
     });
   }
 
-  public onSetMicrophoneMuted(setMuted: boolean) {
+  public onSetMicrophoneMuted(setMuted: boolean): void {
     this.callMembershipSpan?.addEvent("matrix.setMicMuted", {
       "matrix.microphone.muted": setMuted,
     });
   }
 
-  public onToggleLocalVideoMuted(newValue: boolean) {
+  public onToggleLocalVideoMuted(newValue: boolean): void {
     this.callMembershipSpan?.addEvent("matrix.toggleVidMuted", {
       "matrix.video.muted": newValue,
     });
   }
 
-  public onSetLocalVideoMuted(setMuted: boolean) {
+  public onSetLocalVideoMuted(setMuted: boolean): void {
     this.callMembershipSpan?.addEvent("matrix.setVidMuted", {
       "matrix.video.muted": setMuted,
     });
   }
 
-  public onToggleScreensharing(newValue: boolean) {
+  public onToggleScreensharing(newValue: boolean): void {
     this.callMembershipSpan?.addEvent("matrix.setVidMuted", {
       "matrix.screensharing.enabled": newValue,
     });
   }
 
-  public onSpeaking(member: RoomMember, deviceId: string, speaking: boolean) {
+  public onSpeaking(
+    member: RoomMember,
+    deviceId: string,
+    speaking: boolean
+  ): void {
     if (speaking) {
       // Ensure that there's an audio activity span for this speaker
       let deviceMap = this.speakingSpans.get(member);
@@ -311,7 +315,7 @@ export class OTelGroupCallMembership {
     }
   }
 
-  public onCallError(error: CallError, call: MatrixCall) {
+  public onCallError(error: CallError, call: MatrixCall): void {
     const callTrackingInfo = this.callsByCallId.get(call.callId);
     if (!callTrackingInfo) {
       logger.error(`Got error for unknown call ID ${call.callId}`);
@@ -321,17 +325,19 @@ export class OTelGroupCallMembership {
     callTrackingInfo.span.recordException(error);
   }
 
-  public onGroupCallError(error: GroupCallError) {
+  public onGroupCallError(error: GroupCallError): void {
     this.callMembershipSpan?.recordException(error);
   }
 
-  public onUndecryptableToDevice(event: MatrixEvent) {
+  public onUndecryptableToDevice(event: MatrixEvent): void {
     this.callMembershipSpan?.addEvent("matrix.toDevice.undecryptable", {
       "sender.userId": event.getSender(),
     });
   }
 
-  public onCallFeedStatsReport(report: GroupCallStatsReport<CallFeedReport>) {
+  public onCallFeedStatsReport(
+    report: GroupCallStatsReport<CallFeedReport>
+  ): void {
     if (!ElementCallOpenTelemetry.instance) return;
     let call: OTelCall | undefined;
     const callId = report.report?.callId;
@@ -362,7 +368,7 @@ export class OTelGroupCallMembership {
 
   public onConnectionStatsReport(
     statsReport: GroupCallStatsReport<ConnectionStatsReport>
-  ) {
+  ): void {
     this.buildCallStatsSpan(
       OTelStatsReportType.ConnectionReport,
       statsReport.report
@@ -371,7 +377,7 @@ export class OTelGroupCallMembership {
 
   public onByteSentStatsReport(
     statsReport: GroupCallStatsReport<ByteSentStatsReport>
-  ) {
+  ): void {
     this.buildCallStatsSpan(
       OTelStatsReportType.ByteSentReport,
       statsReport.report
@@ -431,7 +437,7 @@ export class OTelGroupCallMembership {
 
   public onSummaryStatsReport(
     statsReport: GroupCallStatsReport<SummaryStatsReport>
-  ) {
+  ): void {
     if (!ElementCallOpenTelemetry.instance) return;
 
     const type = OTelStatsReportType.SummaryReport;

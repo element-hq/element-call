@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { Room, isE2EESupported } from "livekit-client";
@@ -61,14 +61,14 @@ interface Props {
   rtcSession: MatrixRTCSession;
 }
 
-export function GroupCallView({
+export const GroupCallView: FC<Props> = ({
   client,
   isPasswordlessUser,
   confineToRoom,
   preload,
   hideHeader,
   rtcSession,
-}: Props) {
+}) => {
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
 
@@ -125,7 +125,9 @@ export function GroupCallView({
   useEffect(() => {
     if (widget && preload) {
       // In preload mode, wait for a join action before entering
-      const onJoin = async (ev: CustomEvent<IWidgetApiRequest>) => {
+      const onJoin = async (
+        ev: CustomEvent<IWidgetApiRequest>
+      ): Promise<void> => {
         // XXX: I think this is broken currently - LiveKit *won't* request
         // permissions and give you device names unless you specify a kind, but
         // here we want all kinds of devices. This needs a fix in livekit-client
@@ -240,9 +242,11 @@ export function GroupCallView({
 
   useEffect(() => {
     if (widget && isJoined) {
-      const onHangup = async (ev: CustomEvent<IWidgetApiRequest>) => {
+      const onHangup = async (
+        ev: CustomEvent<IWidgetApiRequest>
+      ): Promise<void> => {
         leaveRTCSession(rtcSession);
-        await widget!.api.transport.reply(ev.detail, {});
+        widget!.api.transport.reply(ev.detail, {});
         widget!.api.setAlwaysOnScreen(false);
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
@@ -381,7 +385,7 @@ export function GroupCallView({
           client={client}
           matrixInfo={matrixInfo}
           muteStates={muteStates}
-          onEnter={() => enterRTCSession(rtcSession)}
+          onEnter={(): void => enterRTCSession(rtcSession)}
           confineToRoom={confineToRoom}
           hideHeader={hideHeader}
           participantCount={participantCount}
@@ -390,4 +394,4 @@ export function GroupCallView({
       </>
     );
   }
-}
+};

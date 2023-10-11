@@ -107,13 +107,13 @@ export const useLoadGroupCall = (
       return rtcSession;
     };
 
-    const waitForClientSyncing = async () => {
+    const waitForClientSyncing = async (): Promise<void> => {
       if (client.getSyncState() !== SyncState.Syncing) {
         logger.debug(
           "useLoadGroupCall: waiting for client to start syncing..."
         );
         await new Promise<void>((resolve) => {
-          const onSync = () => {
+          const onSync = (): void => {
             if (client.getSyncState() === SyncState.Syncing) {
               client.off(ClientEvent.Sync, onSync);
               return resolve();

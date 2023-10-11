@@ -18,6 +18,7 @@ import { Link } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room } from "matrix-js-sdk/src/models/room";
+import { FC } from "react";
 
 import { CopyButton } from "../button";
 import { Avatar, Size } from "../Avatar";
@@ -31,7 +32,8 @@ interface CallListProps {
   rooms: GroupCallRoom[];
   client: MatrixClient;
 }
-export function CallList({ rooms, client }: CallListProps) {
+
+export const CallList: FC<CallListProps> = ({ rooms, client }) => {
   return (
     <>
       <div className={styles.callList}>
@@ -54,7 +56,7 @@ export function CallList({ rooms, client }: CallListProps) {
       </div>
     </>
   );
-}
+};
 interface CallTileProps {
   name: string;
   avatarUrl: string;
@@ -62,7 +64,8 @@ interface CallTileProps {
   participants: RoomMember[];
   client: MatrixClient;
 }
-function CallTile({ name, avatarUrl, room }: CallTileProps) {
+
+const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room }) => {
   const roomSharedKey = useRoomSharedKey(room.roomId);
 
   return (
@@ -94,4 +97,4 @@ function CallTile({ name, avatarUrl, room }: CallTileProps) {
       />
     </div>
   );
-}
+};
