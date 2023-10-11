@@ -52,7 +52,7 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
       onRemoveAvatar,
       ...rest
     },
-    ref
+    ref,
   ) => {
     const { t } = useTranslation();
 
@@ -64,7 +64,7 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
     useEffect(() => {
       const currentInput = fileInputRef.current;
 
-      const onChange = (e: Event) => {
+      const onChange = (e: Event): void => {
         const inputEvent = e as unknown as ChangeEvent<HTMLInputElement>;
         if (inputEvent.target.files && inputEvent.target.files.length > 0) {
           setObjUrl(URL.createObjectURL(inputEvent.target.files[0]));
@@ -76,7 +76,7 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
 
       currentInput.addEventListener("change", onChange);
 
-      return () => {
+      return (): void => {
         currentInput?.removeEventListener("change", onChange);
       };
     });
@@ -120,5 +120,5 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
         )}
       </div>
     );
-  }
+  },
 );

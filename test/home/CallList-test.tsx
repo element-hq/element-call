@@ -28,7 +28,7 @@ describe("CallList", () => {
         <MemoryRouter>
           <CallList client={{} as MatrixClient} rooms={rooms} />
         </MemoryRouter>
-      </ClientProvider>
+      </ClientProvider>,
     );
   };
 

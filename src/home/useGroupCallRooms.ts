@@ -31,7 +31,7 @@ export interface GroupCallRoom {
 }
 const tsCache: { [index: string]: number } = {};
 
-function getLastTs(client: MatrixClient, r: Room) {
+function getLastTs(client: MatrixClient, r: Room): number {
   if (tsCache[r.roomId]) {
     return tsCache[r.roomId];
   }
@@ -47,7 +47,7 @@ function getLastTs(client: MatrixClient, r: Room) {
   if (r.getMyMembership() !== "join") {
     const membershipEvent = r.currentState.getStateEvents(
       "m.room.member",
-      myUserId
+      myUserId,
     );
 
     if (membershipEvent && !Array.isArray(membershipEvent)) {
@@ -82,7 +82,7 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
   const [rooms, setRooms] = useState<GroupCallRoom[]>([]);
 
   useEffect(() => {
-    function updateRooms() {
+    function updateRooms(): void {
       if (!client.groupCallEventHandler) {
         return;
       }
@@ -115,7 +115,7 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
       client.removeListener(GroupCallEventHandlerEvent.Incoming, updateRooms);
       client.removeListener(
         GroupCallEventHandlerEvent.Participants,
-        updateRooms
+        updateRooms,
       );
     };
   }, [client]);

@@ -82,7 +82,8 @@ export type SetClientParams = {
 
 const ClientContext = createContext<ClientState | undefined>(undefined);
 
-export const useClientState = () => useContext(ClientContext);
+export const useClientState = (): ClientState | undefined =>
+  useContext(ClientContext);
 
 export function useClient(): {
   client?: MatrixClient;
@@ -189,7 +190,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           user: session.user_id,
           password: session.tempPassword,
         },
-        password
+        password,
       );
 
       saveSession({ ...session, passwordlessUser: false });
@@ -199,7 +200,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         passwordlessUser: false,
       });
     },
-    [initClientState?.client]
+    [initClientState?.client],
   );
 
   const setClient = useCallback(
@@ -221,7 +222,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         setInitClientState(null);
       }
     },
-    [initClientState?.client]
+    [initClientState?.client],
   );
 
   const logout = useCallback(async () => {
@@ -249,7 +250,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   }, []);
 
   const [alreadyOpenedErr, setAlreadyOpenedErr] = useState<Error | undefined>(
-    undefined
+    undefined,
   );
   useEventTarget(
     loadChannel,
@@ -257,9 +258,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     useCallback(() => {
       initClientState?.client.stopClient();
       setAlreadyOpenedErr(
-        translatedError("This application has been opened in another tab.", t)
+        translatedError("This application has been opened in another tab.", t),
       );
-    }, [initClientState?.client, setAlreadyOpenedErr, t])
+    }, [initClientState?.client, setAlreadyOpenedErr, t]),
   );
 
   const [isDisconnected, setIsDisconnected] = useState(false);
@@ -300,7 +301,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     (state: SyncState, _old: SyncState | null, data?: ISyncStateData) => {
       setIsDisconnected(clientIsDisconnected(state, data));
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -386,7 +387,7 @@ async function loadClient(): Promise<InitResult | null> {
             logger.warn(
               "The previous session was lost, and we couldn't log it out, " +
                 err +
-                "either"
+                "either",
             );
           }
         }
@@ -408,8 +409,8 @@ export interface Session {
   tempPassword?: string;
 }
 
-const clearSession = () => localStorage.removeItem("matrix-auth-store");
-const saveSession = (s: Session) =>
+const clearSession = (): void => localStorage.removeItem("matrix-auth-store");
+const saveSession = (s: Session): void =>
   localStorage.setItem("matrix-auth-store", JSON.stringify(s));
 const loadSession = (): Session | undefined => {
   const data = localStorage.getItem("matrix-auth-store");
@@ -422,5 +423,6 @@ const loadSession = (): Session | undefined => {
 
 const clientIsDisconnected = (
   syncState: SyncState,
-  syncData?: ISyncStateData
-) => syncState === "ERROR" && syncData?.error?.name === "ConnectionError";
+  syncData?: ISyncStateData,
+): boolean =>
+  syncState === "ERROR" && syncData?.error?.name === "ConnectionError";

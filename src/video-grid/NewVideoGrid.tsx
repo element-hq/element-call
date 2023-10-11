@@ -81,7 +81,7 @@ export function NewVideoGrid<T>({
   disableAnimations,
   layoutStates,
   children,
-}: Props<T>) {
+}: Props<T>): ReactNode {
   // Overview: This component lays out tiles by rendering an invisible template
   // grid of "slots" for tiles to go in. Once rendered, it uses the DOM API to
   // get the dimensions of each slot, feeding these numbers back into
@@ -98,13 +98,13 @@ export function NewVideoGrid<T>({
   useEffect(() => {
     if (slotsRoot !== null) {
       setRenderedGeneration(
-        parseInt(slotsRoot.getAttribute("data-generation")!)
+        parseInt(slotsRoot.getAttribute("data-generation")!),
       );
 
       const observer = new MutationObserver((mutations) => {
         if (mutations.some((m) => m.type === "attributes")) {
           setRenderedGeneration(
-            parseInt(slotsRoot.getAttribute("data-generation")!)
+            parseInt(slotsRoot.getAttribute("data-generation")!),
           );
         }
       });
@@ -158,13 +158,13 @@ export function NewVideoGrid<T>({
       if (renderedGeneration !== generation) return prevTiles ?? [];
 
       const tileRects = new Map(
-        zip(orderedItems, slotRects) as [TileDescriptor<T>, Rect][]
+        zip(orderedItems, slotRects) as [TileDescriptor<T>, Rect][],
       );
       // In order to not break drag gestures, it's critical that we render tiles
       // in a stable order (that of 'items')
       return items.map((item) => ({ ...tileRects.get(item)!, item }));
     },
-    [slotRects, grid, renderedGeneration]
+    [slotRects, grid, renderedGeneration],
   );
 
   // Drag state is stored in a ref rather than component state, because we use
@@ -200,7 +200,7 @@ export function NewVideoGrid<T>({
             },
       leave: { opacity: 0, scale: 0, immediate: disableAnimations },
       config: { mass: 0.7, tension: 252, friction: 25 },
-    })
+    }),
     // react-spring's types are bugged and can't infer the spring type
   ) as unknown as [TransitionFn<Tile<T>, TileSpring>, SpringRef<TileSpring>];
 
@@ -210,7 +210,7 @@ export function NewVideoGrid<T>({
     springRef.start();
   }, [tiles, springRef]);
 
-  const animateDraggedTile = (endOfGesture: boolean) => {
+  const animateDraggedTile = (endOfGesture: boolean): void => {
     const { tileId, tileX, tileY, cursorX, cursorY } = dragState.current!;
     const tile = tiles.find((t) => t.item.id === tileId)!;
 
@@ -226,7 +226,8 @@ export function NewVideoGrid<T>({
               y: tile.y,
               width: tile.width,
               height: tile.height,
-              immediate: disableAnimations || ((key) => key === "zIndex"),
+              immediate:
+                disableAnimations || ((key): boolean => key === "zIndex"),
               // Allow the tile's position to settle before pushing its
               // z-index back down
               delay: (key) => (key === "zIndex" ? 500 : 0),
@@ -239,8 +240,9 @@ export function NewVideoGrid<T>({
               y: tileY,
               immediate:
                 disableAnimations ||
-                ((key) => key === "zIndex" || key === "x" || key === "y"),
-            }
+                ((key): boolean =>
+                  key === "zIndex" || key === "x" || key === "y"),
+            },
       );
 
     const overTile = tiles.find(
@@ -248,7 +250,7 @@ export function NewVideoGrid<T>({
         cursorX >= t.x &&
         cursorX < t.x + t.width &&
         cursorY >= t.y &&
-        cursorY < t.y + t.height
+        cursorY < t.y + t.height,
     );
 
     if (overTile !== undefined)
@@ -258,7 +260,7 @@ export function NewVideoGrid<T>({
         (cursorX - tileX) / tile.width,
         (cursorY - tileY) / tile.height,
         (cursorX - overTile.x) / overTile.width,
-        (cursorY - overTile.y) / overTile.height
+        (cursorY - overTile.y) / overTile.height,
       );
   };
 
@@ -285,8 +287,8 @@ export function NewVideoGrid<T>({
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       last,
-    }: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
-  ) => {
+    }: Parameters<Handler<"drag", EventTypes["drag"]>>[0],
+  ): void => {
     if (tap) {
       const now = Date.now();
 
@@ -301,7 +303,7 @@ export function NewVideoGrid<T>({
       }
     } else {
       const tileController = springRef.current.find(
-        (c) => (c.item as Tile<T>).item.id === tileId
+        (c) => (c.item as Tile<T>).item.id === tileId,
       )!;
 
       if (canDragTile((tileController.item as Tile<T>).item)) {
@@ -345,7 +347,7 @@ export function NewVideoGrid<T>({
         animateDraggedTile(false);
       }
     },
-    { target: gridRef2 }
+    { target: gridRef2 },
   );
 
   // Render nothing if the grid has yet to be generated

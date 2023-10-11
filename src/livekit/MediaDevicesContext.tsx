@@ -51,8 +51,8 @@ export interface MediaDevices {
 // Cargo-culted from @livekit/components-react
 function useObservableState<T>(
   observable: Observable<T> | undefined,
-  startWith: T
-) {
+  startWith: T,
+): T {
   const [state, setState] = useState<T>(startWith);
   useEffect(() => {
     // observable state doesn't run in SSR
@@ -67,7 +67,7 @@ function useMediaDevice(
   kind: MediaDeviceKind,
   fallbackDevice: string | undefined,
   usingNames: boolean,
-  alwaysDefault: boolean = false
+  alwaysDefault: boolean = false,
 ): MediaDevice {
   // Make sure we don't needlessly reset to a device observer without names,
   // once permissions are already given
@@ -83,7 +83,7 @@ function useMediaDevice(
   // kind, which then results in multiple permissions requests.
   const deviceObserver = useMemo(
     () => createMediaDeviceObserver(kind, requestPermissions),
-    [kind, requestPermissions]
+    [kind, requestPermissions],
   );
   const available = useObservableState(deviceObserver, []);
   const [selectedId, select] = useState(fallbackDevice);
@@ -143,18 +143,18 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   const audioInput = useMediaDevice(
     "audioinput",
     audioInputSetting,
-    usingNames
+    usingNames,
   );
   const audioOutput = useMediaDevice(
     "audiooutput",
     audioOutputSetting,
     useOutputNames,
-    alwaysUseDefaultAudio
+    alwaysUseDefaultAudio,
   );
   const videoInput = useMediaDevice(
     "videoinput",
     videoInputSetting,
-    usingNames
+    usingNames,
   );
 
   useEffect(() => {
@@ -176,11 +176,11 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
 
   const startUsingDeviceNames = useCallback(
     () => setNumCallersUsingNames((n) => n + 1),
-    [setNumCallersUsingNames]
+    [setNumCallersUsingNames],
   );
   const stopUsingDeviceNames = useCallback(
     () => setNumCallersUsingNames((n) => n - 1),
-    [setNumCallersUsingNames]
+    [setNumCallersUsingNames],
   );
 
   const context: MediaDevices = useMemo(
@@ -197,7 +197,7 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
       videoInput,
       startUsingDeviceNames,
       stopUsingDeviceNames,
-    ]
+    ],
   );
 
   return (
@@ -207,7 +207,8 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   );
 };
 
-export const useMediaDevices = () => useContext(MediaDevicesContext);
+export const useMediaDevices = (): MediaDevices =>
+  useContext(MediaDevicesContext);
 
 /**
  * React hook that requests for the media devices context to be populated with
@@ -215,7 +216,10 @@ export const useMediaDevices = () => useContext(MediaDevicesContext);
  * default because it may involve requesting additional permissions from the
  * user.
  */
-export const useMediaDeviceNames = (context: MediaDevices, enabled = true) =>
+export const useMediaDeviceNames = (
+  context: MediaDevices,
+  enabled = true,
+): void =>
   useEffect(() => {
     if (enabled) {
       context.startUsingDeviceNames();

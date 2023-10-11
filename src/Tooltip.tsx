@@ -43,7 +43,7 @@ interface TooltipProps {
 const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
   (
     { state, className, children, ...rest }: TooltipProps,
-    ref: ForwardedRef<HTMLDivElement>
+    ref: ForwardedRef<HTMLDivElement>,
   ) => {
     const { tooltipProps } = useTooltip(rest, state);
 
@@ -56,7 +56,7 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
         {children}
       </div>
     );
-  }
+  },
 );
 
 interface TooltipTriggerProps {
@@ -69,7 +69,7 @@ interface TooltipTriggerProps {
 export const TooltipTrigger = forwardRef<HTMLElement, TooltipTriggerProps>(
   (
     { children, placement, tooltip, ...rest }: TooltipTriggerProps,
-    ref: ForwardedRef<HTMLElement>
+    ref: ForwardedRef<HTMLElement>,
   ) => {
     const tooltipTriggerProps = { delay: 250, ...rest };
     const tooltipState = useTooltipTriggerState(tooltipTriggerProps);
@@ -78,7 +78,7 @@ export const TooltipTrigger = forwardRef<HTMLElement, TooltipTriggerProps>(
     const { triggerProps, tooltipProps } = useTooltipTrigger(
       tooltipTriggerProps,
       tooltipState,
-      triggerRef
+      triggerRef,
     );
 
     const { overlayProps } = useOverlayPosition({
@@ -94,7 +94,7 @@ export const TooltipTrigger = forwardRef<HTMLElement, TooltipTriggerProps>(
         <children.type
           {...mergeProps<typeof children.props | typeof rest>(
             children.props,
-            rest
+            rest,
           )}
         />
         {tooltipState.isOpen && (
@@ -110,5 +110,5 @@ export const TooltipTrigger = forwardRef<HTMLElement, TooltipTriggerProps>(
         )}
       </FocusableProvider>
     );
-  }
+  },
 );

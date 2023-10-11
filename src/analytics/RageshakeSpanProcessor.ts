@@ -1,4 +1,20 @@
-import { Attributes } from "@opentelemetry/api";
+/*
+Copyright 2023 New Vector Ltd
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+import { AttributeValue, Attributes } from "@opentelemetry/api";
 import { hrTimeToMicroseconds } from "@opentelemetry/core";
 import {
   SpanProcessor,
@@ -6,7 +22,21 @@ import {
   Span,
 } from "@opentelemetry/sdk-trace-base";
 
-const dumpAttributes = (attr: Attributes) =>
+const dumpAttributes = (
+  attr: Attributes,
+): {
+  key: string;
+  type:
+    | "string"
+    | "number"
+    | "bigint"
+    | "boolean"
+    | "symbol"
+    | "undefined"
+    | "object"
+    | "function";
+  value: AttributeValue | undefined;
+}[] =>
   Object.entries(attr).map(([key, value]) => ({
     key,
     type: typeof value,
@@ -20,13 +50,13 @@ const dumpAttributes = (attr: Attributes) =>
 export class RageshakeSpanProcessor implements SpanProcessor {
   private readonly spans: ReadableSpan[] = [];
 
-  async forceFlush(): Promise<void> {}
+  public async forceFlush(): Promise<void> {}
 
-  onStart(span: Span): void {
+  public onStart(span: Span): void {
     this.spans.push(span);
   }
 
-  onEnd(): void {}
+  public onEnd(): void {}
 
   /**
    * Dumps the spans collected so far as Jaeger-compatible JSON.
@@ -110,5 +140,5 @@ export class RageshakeSpanProcessor implements SpanProcessor {
     });
   }
 
-  async shutdown(): Promise<void> {}
+  public async shutdown(): Promise<void> {}
 }

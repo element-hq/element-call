@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback } from "react";
+import { FC, useCallback } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
 
@@ -29,7 +29,7 @@ interface Props {
   roomId?: string;
 }
 
-export function FeedbackSettingsTab({ roomId }: Props) {
+export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
   const { t } = useTranslation();
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
   const sendRageshakeRequest = useRageshakeRequest();
@@ -57,7 +57,7 @@ export function FeedbackSettingsTab({ roomId }: Props) {
         sendRageshakeRequest(roomId, rageshakeRequestId);
       }
     },
-    [submitRageshake, roomId, sendRageshakeRequest]
+    [submitRageshake, roomId, sendRageshakeRequest],
   );
 
   return (
@@ -65,7 +65,7 @@ export function FeedbackSettingsTab({ roomId }: Props) {
       <h4 className={styles.label}>{t("Submit feedback")}</h4>
       <Body>
         {t(
-          "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below."
+          "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
         )}
       </Body>
       <form onSubmit={onSubmitFeedback}>
@@ -104,4 +104,4 @@ export function FeedbackSettingsTab({ roomId }: Props) {
       </form>
     </div>
   );
-}
+};

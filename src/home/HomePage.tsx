@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import { useTranslation } from "react-i18next";
+import { FC } from "react";
 
 import { useClientState } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
@@ -22,7 +23,7 @@ import { UnauthenticatedView } from "./UnauthenticatedView";
 import { RegisteredView } from "./RegisteredView";
 import { usePageTitle } from "../usePageTitle";
 
-export function HomePage() {
+export const HomePage: FC = () => {
   const { t } = useTranslation();
   usePageTitle(t("Home"));
 
@@ -39,4 +40,4 @@ export function HomePage() {
       <UnauthenticatedView />
     );
   }
-}
+};

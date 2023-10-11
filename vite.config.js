@@ -52,7 +52,7 @@ export default defineConfig(({ mode }) => {
       sentryVitePlugin({
         include: "./dist",
         release: process.env.VITE_APP_VERSION,
-      })
+      }),
     );
   }
 

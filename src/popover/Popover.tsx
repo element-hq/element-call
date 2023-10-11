@@ -40,7 +40,7 @@ export const Popover = forwardRef<HTMLDivElement, Props>(
         shouldCloseOnBlur: true,
         isDismissable: true,
       },
-      popoverRef
+      popoverRef,
     );
 
     return (
@@ -56,5 +56,5 @@ export const Popover = forwardRef<HTMLDivElement, Props>(
         </div>
       </FocusScope>
     );
-  }
+  },
 );

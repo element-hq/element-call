@@ -19,8 +19,9 @@ import { Room } from "matrix-js-sdk/src/models/room";
 
 import { useRoomState } from "./useRoomState";
 
-export const useRoomAvatar = (room: Room) =>
-  useRoomState(
+export function useRoomAvatar(room: Room): string | null {
+  return useRoomState(
     room,
-    useCallback(() => room.getMxcAvatarUrl(), [room])
+    useCallback(() => room.getMxcAvatarUrl(), [room]),
   );
+}

@@ -82,14 +82,14 @@ export const VideoPreview: FC<Props> = ({
     },
     (error) => {
       logger.error("Error while creating preview Tracks:", error);
-    }
+    },
   );
   const videoTrack = useMemo(
     () =>
       tracks?.find((t) => t.kind === Track.Kind.Video) as
         | LocalVideoTrack
         | undefined,
-    [tracks]
+    [tracks],
   );
 
   const videoEl = useRef<HTMLVideoElement | null>(null);

@@ -13,7 +13,7 @@
     "esModuleInterop": true,
     "noUnusedLocals": true,
     "moduleResolution": "node",
-    "declaration": true
+    "declaration": true,
 
     // TODO: Enable the following options later.
     // "forceConsistentCasingInFileNames": true,
@@ -23,6 +23,8 @@
     // "noPropertyAccessFromIndexSignature": true,
     // "noUncheckedIndexedAccess": true,
     // "noUnusedParameters": true,
+
+    "plugins": [{ "name": "typescript-eslint-language-service" }]
   },
   "include": [
     "./node_modules/matrix-js-sdk/src/@types/*.d.ts",

@@ -58,7 +58,7 @@ export const Avatar: FC<Props> = ({
       Object.values(Size).includes(size as Size)
         ? sizes.get(size as Size)
         : (size as number),
-    [size]
+    [size],
   );
 
   const resolvedSrc = useMemo(() => {

@@ -21,12 +21,16 @@ import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
 import { initClient } from "../matrix-utils";
 import { Session } from "../ClientContext";
 
-export const useInteractiveLogin = () =>
-  useCallback<
+export function useInteractiveLogin(): (
+  homeserver: string,
+  username: string,
+  password: string,
+) => Promise<[MatrixClient, Session]> {
+  return useCallback<
     (
       homeserver: string,
       username: string,
-      password: string
+      password: string,
     ) => Promise<[MatrixClient, Session]>
   >(async (homeserver: string, username: string, password: string) => {
     const authClient = createClient({ baseUrl: homeserver });
@@ -41,8 +45,8 @@ export const useInteractiveLogin = () =>
           },
           password,
         }),
-      stateUpdated: (...args) => {},
-      requestEmailToken: (...args): Promise<{ sid: string }> => {
+      stateUpdated: (): void => {},
+      requestEmailToken: (): Promise<{ sid: string }> => {
         return Promise.resolve({ sid: "" });
       },
     });
@@ -66,9 +70,9 @@ export const useInteractiveLogin = () =>
         userId: user_id,
         deviceId: device_id,
       },
-      false
+      false,
     );
     /* eslint-enable camelcase */
-
     return [client, session];
   }, []);
+}

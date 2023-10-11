@@ -19,5 +19,5 @@ import { useMediaQuery } from "./useMediaQuery";
 /**
  * @returns Whether the user has requested reduced motion.
  */
-export const usePrefersReducedMotion = () =>
+export const usePrefersReducedMotion = (): boolean =>
   useMediaQuery("(prefers-reduced-motion)");

@@ -24,10 +24,10 @@ export const localStorageBus = new EventEmitter();
 
 // Like useState, but reads from and persists the value to localStorage
 export const useLocalStorage = (
-  key: string
+  key: string,
 ): [LocalStorageItem, (value: string) => void] => {
   const [value, setValue] = useState<LocalStorageItem>(() =>
-    localStorage.getItem(key)
+    localStorage.getItem(key),
   );
 
   useEffect(() => {
@@ -45,7 +45,7 @@ export const useLocalStorage = (
         localStorage.setItem(key, newValue);
         localStorageBus.emit(key, newValue);
       },
-      [key, setValue]
+      [key, setValue],
     ),
   ];
 };

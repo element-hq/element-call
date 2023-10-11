@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useState } from "react";
+import { FC, useCallback, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 
 import { useClientLegacy } from "./ClientContext";
@@ -26,7 +26,7 @@ interface Props {
   preventNavigation?: boolean;
 }
 
-export function UserMenuContainer({ preventNavigation = false }: Props) {
+export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
   const location = useLocation();
   const history = useHistory();
   const { client, logout, authenticated, passwordlessUser } = useClientLegacy();
@@ -34,7 +34,7 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const onDismissSettingsModal = useCallback(
     () => setSettingsModalOpen(false),
-    [setSettingsModalOpen]
+    [setSettingsModalOpen],
   );
 
   const [defaultSettingsTab, setDefaultSettingsTab] = useState<string>();
@@ -58,7 +58,7 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
           break;
       }
     },
-    [history, location, logout, setSettingsModalOpen]
+    [history, location, logout, setSettingsModalOpen],
   );
 
   const userName = client?.getUserIdLocalpart() ?? "";
@@ -83,4 +83,4 @@ export function UserMenuContainer({ preventNavigation = false }: Props) {
       )}
     </>
   );
-}
+};

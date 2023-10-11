@@ -81,7 +81,7 @@ testFillGaps(
   `
 `,
   `
-`
+`,
 );
 
 testFillGaps(
@@ -93,7 +93,7 @@ ef`,
   `
 ab
 cd
-ef`
+ef`,
 );
 
 testFillGaps(
@@ -104,7 +104,7 @@ cde
 f`,
   `
 cab
-fde`
+fde`,
 );
 
 testFillGaps(
@@ -117,7 +117,7 @@ mno`,
   `
 aebch
 difgl
-mjnok`
+mjnok`,
 );
 
 testFillGaps(
@@ -130,7 +130,7 @@ ijkl`,
   `
 abcd
 ehkf
-glji`
+glji`,
 );
 
 testFillGaps(
@@ -141,7 +141,7 @@ aa
 bc`,
   `
 aa
-cb`
+cb`,
 );
 
 testFillGaps(
@@ -156,7 +156,7 @@ k`,
 abce
 dddf
 dddj
-kghi`
+kghi`,
 );
 
 testFillGaps(
@@ -169,7 +169,7 @@ i`,
   `
 afbc
 dddd
-iegh`
+iegh`,
 );
 
 testFillGaps(
@@ -183,7 +183,7 @@ ii`,
   `
 abcd
 iigh
-iief`
+iief`,
 );
 
 testFillGaps(
@@ -198,7 +198,7 @@ hh
   `
 abcd
 hhfg
-hhie`
+hhie`,
 );
 
 testFillGaps(
@@ -213,14 +213,14 @@ ghij`,
 aadf
 aaji
 bcch
-eccg`
+eccg`,
 );
 
 function testCycleTileSize(
   title: string,
   tileId: string,
   input: string,
-  output: string
+  output: string,
 ): void {
   test(`cycleTileSize ${title}`, () => {
     const grid = mkGrid(input);
@@ -240,7 +240,7 @@ ghi`,
 acc
 dcc
 gbe
-ifh`
+ifh`,
 );
 
 testCycleTileSize(
@@ -253,7 +253,7 @@ efgh`,
 acdh
 bggg
 fggg
-e`
+e`,
 );
 
 testCycleTileSize(
@@ -267,7 +267,7 @@ jk`,
   `
 abhc
 djge
-fik`
+fik`,
 );
 
 testCycleTileSize(
@@ -287,7 +287,7 @@ dde
 ddf
 ccm
 cch
-lik`
+lik`,
 );
 
 testCycleTileSize(
@@ -302,7 +302,7 @@ ddf`,
 abb
 cbb
 dde
-ddf`
+ddf`,
 );
 
 test("cycleTileSize is its own inverse", () => {
@@ -337,18 +337,18 @@ function testAddItems(
   title: string,
   items: TileDescriptor<unknown>[],
   input: string,
-  output: string
+  output: string,
 ): void {
   test(`addItems ${title}`, () => {
     expect(showGrid(addItems(items, mkGrid(input) as SparseGrid) as Grid)).toBe(
-      output
+      output,
     );
   });
 }
 
 testAddItems(
   "appends 1×1 tiles",
-  ["e", "f"].map((i) => ({ id: i } as unknown as TileDescriptor<unknown>)),
+  ["e", "f"].map((i) => ({ id: i }) as unknown as TileDescriptor<unknown>),
   `
 aab
 aac
@@ -356,7 +356,7 @@ d`,
   `
 aab
 aac
-def`
+def`,
 );
 
 testAddItems(
@@ -368,7 +368,7 @@ def`,
   `
 abc
  g 
-def`
+def`,
 );
 
 testAddItems(
@@ -381,7 +381,7 @@ def`,
 abc
 ggf
 gge
-d`
+d`,
 );
 
 function testMoveTile(
@@ -389,7 +389,7 @@ function testMoveTile(
   from: number,
   to: number,
   input: string,
-  output: string
+  output: string,
 ): void {
   test(`moveTile ${title}`, () => {
     expect(showGrid(moveTile(mkGrid(input), from, to))).toBe(output);
@@ -403,7 +403,7 @@ testMoveTile(
   `
 abc`,
   `
-abc`
+abc`,
 );
 
 testMoveTile(
@@ -413,7 +413,7 @@ testMoveTile(
   `
 abc`,
   `
-abc`
+abc`,
 );
 
 testMoveTile(
@@ -427,7 +427,7 @@ cce`,
   `
 acc
 bcc
-d e`
+d e`,
 );
 
 testMoveTile(
@@ -441,14 +441,14 @@ cce`,
   `
 abb
 ccd
-cce`
+cce`,
 );
 
 function testResize(
   title: string,
   columns: number,
   input: string,
-  output: string
+  output: string,
 ): void {
   test(`resize ${title}`, () => {
     expect(showGrid(resize(mkGrid(input), columns))).toBe(output);
@@ -471,7 +471,7 @@ bb
 dd
 dd
 ch
-eg`
+eg`,
 );
 
 testResize(
@@ -489,5 +489,5 @@ eg`,
 afcd
 bbbg
 bbbe
-h`
+h`,
 );

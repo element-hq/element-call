@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ComponentType, useCallback, useMemo, useRef } from "react";
+import { ComponentType, ReactNode, useCallback, useMemo, useRef } from "react";
 
 import type { RectReadOnly } from "react-use-measure";
 import { useReactiveState } from "../useReactiveState";
@@ -61,7 +61,7 @@ export interface Layout<State> {
     xPositionOnFrom: number,
     yPositionOnFrom: number,
     xPositionOnTo: number,
-    yPositionOnTo: number
+    yPositionOnTo: number,
   ) => State;
   /**
    * Toggles the focus of the given tile (if this layout has the concept of
@@ -98,16 +98,33 @@ export const useLayoutStates = (): LayoutStatesMap => {
   return layoutStates.current as LayoutStatesMap;
 };
 
+interface UseLayout<State, T> {
+  state: State;
+  orderedItems: TileDescriptor<T>[];
+  generation: number;
+  canDragTile: (tile: TileDescriptor<T>) => boolean;
+  dragTile: (
+    from: TileDescriptor<T>,
+    to: TileDescriptor<T>,
+    xPositionOnFrom: number,
+    yPositionOnFrom: number,
+    xPositionOnTo: number,
+    yPositionOnTo: number,
+  ) => void;
+  toggleFocus: ((tile: TileDescriptor<T>) => void) | undefined;
+  slots: ReactNode;
+}
+
 /**
  * Hook which uses the provided layout system to arrange a set of items into a
  * concrete layout state, and provides callbacks for user interaction.
  */
-export const useLayout = <State, T>(
+export function useLayout<State, T>(
   layout: Layout<State>,
   items: TileDescriptor<T>[],
   bounds: RectReadOnly,
-  layoutStates: LayoutStatesMap
-) => {
+  layoutStates: LayoutStatesMap,
+): UseLayout<State, T> {
   const prevLayout = useRef<Layout<unknown>>();
   const prevState = layoutStates.get(layout);
 
@@ -142,7 +159,7 @@ export const useLayout = <State, T>(
     generation: generation.current,
     canDragTile: useCallback(
       (tile: TileDescriptor<T>) => layout.canDragTile(state, tile),
-      [layout, state]
+      [layout, state],
     ),
     dragTile: useCallback(
       (
@@ -151,7 +168,7 @@ export const useLayout = <State, T>(
         xPositionOnFrom: number,
         yPositionOnFrom: number,
         xPositionOnTo: number,
-        yPositionOnTo: number
+        yPositionOnTo: number,
       ) =>
         setState((s) =>
           layout.dragTile(
@@ -161,18 +178,18 @@ export const useLayout = <State, T>(
             xPositionOnFrom,
             yPositionOnFrom,
             xPositionOnTo,
-            yPositionOnTo
-          )
+            yPositionOnTo,
+          ),
         ),
-      [layout, setState]
+      [layout, setState],
     ),
     toggleFocus: useMemo(
       () =>
         layout.toggleFocus &&
-        ((tile: TileDescriptor<T>) =>
+        ((tile: TileDescriptor<T>): void =>
           setState((s) => layout.toggleFocus!(s, tile))),
-      [layout, setState]
+      [layout, setState],
     ),
     slots: <layout.Slots s={state} />,
   };
-};
+}

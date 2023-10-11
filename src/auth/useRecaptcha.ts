@@ -35,7 +35,11 @@ interface RecaptchaPromiseRef {
   reject: (error: Error) => void;
 }
 
-export const useRecaptcha = (sitekey?: string) => {
+export function useRecaptcha(sitekey?: string): {
+  execute: () => Promise<string>;
+  reset: () => void;
+  recaptchaId: string;
+} {
   const { t } = useTranslation();
   const [recaptchaId] = useState(() => randomString(16));
   const promiseRef = useRef<RecaptchaPromiseRef>();
@@ -43,7 +47,7 @@ export const useRecaptcha = (sitekey?: string) => {
   useEffect(() => {
     if (!sitekey) return;
 
-    const onRecaptchaLoaded = () => {
+    const onRecaptchaLoaded = (): void => {
       if (!document.getElementById(recaptchaId)) return;
 
       window.grecaptcha.render(recaptchaId, {
@@ -91,11 +95,11 @@ export const useRecaptcha = (sitekey?: string) => {
       });
 
       promiseRef.current = {
-        resolve: (value) => {
+        resolve: (value): void => {
           resolve(value);
           observer.disconnect();
         },
-        reject: (error) => {
+        reject: (error): void => {
           reject(error);
           observer.disconnect();
         },
@@ -104,7 +108,7 @@ export const useRecaptcha = (sitekey?: string) => {
       window.grecaptcha.execute();
 
       const iframe = document.querySelector<HTMLIFrameElement>(
-        'iframe[src*="recaptcha/api2/bframe"]'
+        'iframe[src*="recaptcha/api2/bframe"]',
       );
 
       if (iframe?.parentNode?.parentNode) {
@@ -120,4 +124,4 @@ export const useRecaptcha = (sitekey?: string) => {
   }, []);
 
   return { execute, reset, recaptchaId };
-};
+}

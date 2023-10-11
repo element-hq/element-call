@@ -21,7 +21,7 @@ import { checkForParallelCalls } from "../../src/room/checkForParallelCalls";
 import { withFakeTimers } from "../utils";
 
 const withMockedPosthog = (
-  continuation: (posthog: Mocked<PosthogAnalytics>) => void
+  continuation: (posthog: Mocked<PosthogAnalytics>) => void,
 ) => {
   const posthog = mocked({
     trackEvent: jest.fn(),
@@ -37,7 +37,7 @@ const withMockedPosthog = (
 };
 
 const mockRoomState = (
-  groupCallMemberContents: Record<string, unknown>[]
+  groupCallMemberContents: Record<string, unknown>[],
 ): RoomState => {
   const stateEvents = groupCallMemberContents.map((content) => ({
     getContent: () => content,

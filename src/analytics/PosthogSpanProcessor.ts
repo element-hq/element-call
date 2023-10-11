@@ -39,9 +39,9 @@ const maxRejoinMs = 2 * 60 * 1000; // 2 minutes
  * Span processor that extracts certain metrics from spans to send to PostHog
  */
 export class PosthogSpanProcessor implements SpanProcessor {
-  async forceFlush(): Promise<void> {}
+  public async forceFlush(): Promise<void> {}
 
-  onStart(span: Span): void {
+  public onStart(span: Span): void {
     // Hack: Yield to allow attributes to be set before processing
     Promise.resolve().then(() => {
       switch (span.name) {
@@ -55,7 +55,7 @@ export class PosthogSpanProcessor implements SpanProcessor {
     });
   }
 
-  onEnd(span: ReadableSpan): void {
+  public onEnd(span: ReadableSpan): void {
     switch (span.name) {
       case "matrix.groupCallMembership":
         this.onGroupCallMembershipEnd(span);
@@ -148,7 +148,7 @@ export class PosthogSpanProcessor implements SpanProcessor {
             ratioPeerConnectionToDevices: ratioPeerConnectionToDevices,
           },
           // Send instantly because the window might be closing
-          { send_instantly: true }
+          { send_instantly: true },
         );
       }
     }
@@ -157,7 +157,7 @@ export class PosthogSpanProcessor implements SpanProcessor {
   /**
    * Shutdown the processor.
    */
-  shutdown(): Promise<void> {
+  public shutdown(): Promise<void> {
     return Promise.resolve();
   }
 }

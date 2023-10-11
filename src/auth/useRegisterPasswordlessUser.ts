@@ -48,7 +48,7 @@ export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
           randomString(16),
           displayName,
           recaptchaResponse,
-          true
+          true,
         );
         setClient({ client, session });
       } catch (e) {
@@ -56,7 +56,7 @@ export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
         throw e;
       }
     },
-    [execute, reset, register, setClient]
+    [execute, reset, register, setClient],
   );
 
   return { privacyPolicyUrl, registerPasswordlessUser, recaptchaId };

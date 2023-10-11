@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { FC, useCallback, useEffect, useMemo, useRef } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 
@@ -26,7 +26,7 @@ import styles from "./ProfileSettingsTab.module.css";
 interface Props {
   client: MatrixClient;
 }
-export function ProfileSettingsTab({ client }: Props) {
+export const ProfileSettingsTab: FC<Props> = ({ client }) => {
   const { t } = useTranslation();
   const { error, displayName, avatarUrl, saveProfile } = useProfile(client);
   const userId = useMemo(() => client.getUserId(), [client]);
@@ -120,4 +120,4 @@ export function ProfileSettingsTab({ client }: Props) {
       )}
     </form>
   );
-}
+};

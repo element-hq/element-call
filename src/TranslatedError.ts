@@ -37,5 +37,7 @@ class TranslatedErrorImpl extends TranslatedError {}
 
 // i18next-parser can't detect calls to a constructor, so we expose a bare
 // function instead
-export const translatedError = (messageKey: string, t: typeof i18n.t) =>
-  new TranslatedErrorImpl(messageKey, t);
+export const translatedError = (
+  messageKey: string,
+  t: typeof i18n.t,
+): TranslatedError => new TranslatedErrorImpl(messageKey, t);
