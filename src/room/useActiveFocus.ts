@@ -33,7 +33,7 @@ function getActiveFocus(
   if (focus) {
     logger.info(
       `Got active focus for call from ${oldestMembership?.sender}/${oldestMembership?.deviceId}`,
-      focus
+      focus,
     );
   }
 
