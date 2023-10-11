@@ -19,6 +19,7 @@ import { useLocation } from "react-router-dom";
 import classNames from "classnames";
 import { Trans, useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
 import { LinkButton, Button } from "./button";
@@ -60,7 +61,7 @@ export const ErrorView: FC<ErrorViewProps> = ({ error }) => {
   const { t } = useTranslation();
 
   useEffect(() => {
-    console.error(error);
+    logger.error(error);
     Sentry.captureException(error);
   }, [error]);
 

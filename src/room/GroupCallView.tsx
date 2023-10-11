@@ -20,7 +20,7 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { Room, isE2EESupported } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { JoinRule, RoomMember } from "matrix-js-sdk/src/matrix";
+import { JoinRule } from "matrix-js-sdk/src/matrix";
 import { Heading, Link, Text } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
 
@@ -39,15 +39,12 @@ import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
-import {
-  useManageRoomSharedKey,
-  useIsRoomE2EE,
-} from "../e2ee/sharedKeyManagement";
+import { useIsRoomE2EE, useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 import { useEnableE2EE } from "../settings/useSetting";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
-import { ShareModal } from "./ShareModal";
+import { InviteModal } from "./InviteModal";
 
 declare global {
   interface Window {
@@ -75,7 +72,7 @@ export const GroupCallView: FC<Props> = ({
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
 
-  const e2eeSharedKey = useManageRoomSharedKey(rtcSession.room.roomId);
+  const e2eeSharedKey = useRoomSharedKey(rtcSession.room.roomId);
   const isRoomE2EE = useIsRoomE2EE(rtcSession.room.roomId);
 
   useEffect(() => {
@@ -111,18 +108,11 @@ export const GroupCallView: FC<Props> = ({
     client,
   ]);
 
-  const participatingMembers = useMemo(() => {
-    const members: RoomMember[] = [];
-    // Count each member only once, regardless of how many devices they use
-    const addedUserIds = new Set<string>();
-    for (const membership of memberships) {
-      if (!addedUserIds.has(membership.member.userId)) {
-        addedUserIds.add(membership.member.userId);
-        members.push(membership.member);
-      }
-    }
-    return members;
-  }, [memberships]);
+  // Count each member only once, regardless of how many devices they use
+  const participantCount = useMemo(
+    () => new Set<string>(memberships.map((m) => m.sender!)).size,
+    [memberships]
+  );
 
   const deviceContext = useMediaDevices();
   const latestDevices = useRef<MediaDevices>();
@@ -226,13 +216,16 @@ export const GroupCallView: FC<Props> = ({
         sendInstantly
       );
 
-      leaveRTCSession(rtcSession);
+      await leaveRTCSession(rtcSession);
       if (widget) {
         // we need to wait until the callEnded event is tracked on posthog.
         // Otherwise the iFrame gets killed before the callEnded event got tracked.
         await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
         widget.api.setAlwaysOnScreen(false);
         PosthogAnalytics.instance.logout();
+
+        // we will always send the hangup event after the memberships have been updated
+        // calling leaveRTCSession.
         widget.api.transport.send(ElementWidgetActions.HangupCall, {});
       }
 
@@ -278,15 +271,15 @@ export const GroupCallView: FC<Props> = ({
 
   const joinRule = useJoinRule(rtcSession.room);
 
-  const [shareModalOpen, setShareModalOpen] = useState(false);
-  const onDismissShareModal = useCallback(
-    () => setShareModalOpen(false),
-    [setShareModalOpen]
+  const [shareModalOpen, setInviteModalOpen] = useState(false);
+  const onDismissInviteModal = useCallback(
+    () => setInviteModalOpen(false),
+    [setInviteModalOpen]
   );
 
   const onShareClickFn = useCallback(
-    () => setShareModalOpen(true),
-    [setShareModalOpen]
+    () => setInviteModalOpen(true),
+    [setInviteModalOpen]
   );
   const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
 
@@ -329,10 +322,10 @@ export const GroupCallView: FC<Props> = ({
   }
 
   const shareModal = (
-    <ShareModal
+    <InviteModal
       room={rtcSession.room}
       open={shareModalOpen}
-      onDismiss={onDismissShareModal}
+      onDismiss={onDismissInviteModal}
     />
   );
 
@@ -344,7 +337,7 @@ export const GroupCallView: FC<Props> = ({
           client={client}
           matrixInfo={matrixInfo}
           rtcSession={rtcSession}
-          participatingMembers={participatingMembers}
+          participantCount={participantCount}
           onLeave={onLeave}
           hideHeader={hideHeader}
           muteStates={muteStates}
@@ -395,7 +388,7 @@ export const GroupCallView: FC<Props> = ({
           onEnter={(): void => enterRTCSession(rtcSession)}
           confineToRoom={confineToRoom}
           hideHeader={hideHeader}
-          participatingMembers={participatingMembers}
+          participantCount={participantCount}
           onShareClick={onShareClick}
         />
       </>

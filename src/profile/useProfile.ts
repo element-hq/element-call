@@ -19,6 +19,7 @@ import { MatrixEvent } from "matrix-js-sdk/src/models/event";
 import { User, UserEvent } from "matrix-js-sdk/src/models/user";
 import { FileType } from "matrix-js-sdk/src/http-api";
 import { useState, useCallback, useEffect } from "react";
+import { logger } from "matrix-js-sdk/src/logger";
 
 interface ProfileLoadState {
   success: boolean;
@@ -131,7 +132,7 @@ export function useProfile(client: MatrixClient | undefined): UseProfile {
           }));
         }
       } else {
-        console.error("Client not initialized before calling saveProfile");
+        logger.error("Client not initialized before calling saveProfile");
       }
     },
     [client]

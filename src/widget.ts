@@ -70,9 +70,7 @@ interface WidgetHelpers {
  */
 export const widget = ((): WidgetHelpers | null => {
   try {
-    const query = new URLSearchParams(window.location.search);
-    const widgetId = query.get("widgetId");
-    const parentUrl = query.get("parentUrl");
+    const { widgetId, parentUrl } = getUrlParams();
 
     if (widgetId && parentUrl) {
       const parentOrigin = new URL(parentUrl).origin;

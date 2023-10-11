@@ -18,8 +18,8 @@ import { useTranslation } from "react-i18next";
 import useClipboard from "react-use-clipboard";
 import { FC } from "react";
 
-import { ReactComponent as CheckIcon } from "../icons/Check.svg";
-import { ReactComponent as CopyIcon } from "../icons/Copy.svg";
+import CheckIcon from "../icons/Check.svg?react";
+import CopyIcon from "../icons/Copy.svg?react";
 import { Button, ButtonVariant } from "./Button";
 
 interface Props {

@@ -83,9 +83,6 @@ export const useSpatialAudio = (): DisableableSetting<boolean> => {
   return [false, null];
 };
 
-export const useShowInspector = (): Setting<boolean> =>
-  useSetting("show-inspector", false);
-
 // null = undecided
 export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
   const settingVal = useSetting<boolean | null>("opt-in-analytics", null);

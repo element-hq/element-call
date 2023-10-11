@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,6 +35,8 @@ import IndexedDBWorker from "./IndexedDBWorker?worker";
 import { getUrlParams, PASSWORD_STRING } from "./UrlParams";
 import { loadOlm } from "./olm";
 import { Config } from "./config/Config";
+import { setLocalStorageItem } from "./useLocalStorage";
+import { getRoomSharedKeyLocalStorageKey } from "./e2ee/sharedKeyManagement";
 
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
@@ -69,6 +71,23 @@ function waitForSync(client: MatrixClient): Promise<void> {
     };
     client.on(ClientEvent.Sync, onSync);
   });
+}
+
+function secureRandomString(entropyBytes: number): string {
+  const key = new Uint8Array(entropyBytes);
+  crypto.getRandomValues(key);
+  // encode to base64url as this value goes into URLs
+  // base64url is just base64 with thw two non-alphanum characters swapped out for
+  // ones that can be put in a URL without encoding. Browser JS has a native impl
+  // for base64 encoding but only a string (there isn't one that takes a UInt8Array
+  // yet) so just use the built-in one and convert, replace the chars and strip the
+  // padding from the end (otherwise we'd need to pull in another dependency).
+  return btoa(
+    key.reduce((acc, current) => acc + String.fromCharCode(current), "")
+  )
+    .replace("+", "-")
+    .replace("/", "_")
+    .replace(/=*$/, "");
 }
 
 /**
@@ -177,7 +196,7 @@ export async function initClient(
   try {
     await client.store.startup();
   } catch (error) {
-    console.error(
+    logger.error(
       "Error starting matrix client store. Falling back to memory store.",
       error
     );
@@ -269,11 +288,17 @@ export function isLocalRoomId(roomId: string, client: MatrixClient): boolean {
   return parts[1] === client.getDomain();
 }
 
+interface CreateRoomResult {
+  roomId: string;
+  alias?: string;
+  password?: string;
+}
+
 export async function createRoom(
   client: MatrixClient,
   name: string,
   e2ee: boolean
-): Promise<[string, string]> {
+): Promise<CreateRoomResult> {
   logger.log(`Creating room for group call`);
   const createPromise = client.createRoom({
     visibility: Visibility.Private,
@@ -336,7 +361,20 @@ export async function createRoom(
     true
   );
 
-  return [fullAliasFromRoomName(name, client), result.room_id];
+  let password;
+  if (e2ee) {
+    password = secureRandomString(16);
+    setLocalStorageItem(
+      getRoomSharedKeyLocalStorageKey(result.room_id),
+      password
+    );
+  }
+
+  return {
+    roomId: result.room_id,
+    alias: e2ee ? undefined : fullAliasFromRoomName(name, client),
+    password,
+  };
 }
 
 /**
@@ -366,9 +404,16 @@ export function getRelativeRoomUrl(
   roomName?: string,
   password?: string
 ): string {
+  // The password shouldn't need URL encoding here (we generate URL-safe ones) but encode
+  // it in case it came from another client that generated a non url-safe one
+  const encodedPassword = password ? encodeURIComponent(password) : undefined;
+  if (password && encodedPassword !== password) {
+    logger.info("Encoded call password used non URL-safe chars: buggy client?");
+  }
+
   return `/room/#${
     roomName ? "/" + roomAliasLocalpartFromRoomName(roomName) : ""
-  }?roomId=${roomId}${password ? "&" + PASSWORD_STRING + password : ""}`;
+  }?roomId=${roomId}${password ? "&" + PASSWORD_STRING + encodedPassword : ""}`;
 }
 
 export function getAvatarUrl(

@@ -41,8 +41,12 @@ limitations under the License.
 
   --cpd-color-border-accent: var(--cpd-color-green-800);
   /* The distance to inset non-full-width content from the edge of the window
-  along the inline axis */
-  --inline-content-inset: max(var(--cpd-space-4x), calc((100vw - 1180px) / 2));
+  along the inline axis. This ramps up from 16px for typical mobile windows, to
+  96px for typical desktop windows. */
+  --inline-content-inset: min(
+    var(--cpd-space-24x),
+    max(var(--cpd-space-4x), calc((100vw - 900px) / 3))
+  );
   --small-drop-shadow: 0px 1.2px 2.4px 0px rgba(0, 0, 0, 0.15);
   --subtle-drop-shadow: 0px 1px 2px 0px rgba(16, 24, 40, 0.05);
   --background-gradient: url("graphics/backgroundGradient.svg");

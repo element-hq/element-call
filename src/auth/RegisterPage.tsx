@@ -27,13 +27,14 @@ import { useHistory, useLocation } from "react-router-dom";
 import { captureException } from "@sentry/react";
 import { sleep } from "matrix-js-sdk/src/utils";
 import { Trans, useTranslation } from "react-i18next";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { useClientLegacy } from "../ClientContext";
 import { useInteractiveRegistration } from "./useInteractiveRegistration";
 import styles from "./LoginPage.module.css";
-import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
+import Logo from "../icons/LogoLarge.svg?react";
 import { LoadingView } from "../FullScreenView";
 import { useRecaptcha } from "./useRecaptcha";
 import { Caption, Link } from "../typography/Typography";
@@ -97,7 +98,7 @@ export const RegisterPage: FC = () => {
                 await newClient.joinRoom(roomId);
               } else {
                 captureException(error);
-                console.error(`Couldn't join room ${roomId}`, error);
+                logger.error(`Couldn't join room ${roomId}`, error);
               }
             }
           }
