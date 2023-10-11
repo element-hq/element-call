@@ -58,7 +58,7 @@ export const LeftNav: FC<LeftNavProps> = ({
         styles.nav,
         styles.leftNav,
         { [styles.hideMobile]: hideMobile },
-        className
+        className,
       )}
       {...rest}
     >
@@ -85,7 +85,7 @@ export const RightNav: FC<RightNavProps> = ({
         styles.nav,
         styles.rightNav,
         { [styles.hideMobile]: hideMobile },
-        className
+        className,
       )}
       {...rest}
     >

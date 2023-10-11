@@ -39,5 +39,5 @@ class TranslatedErrorImpl extends TranslatedError {}
 // function instead
 export const translatedError = (
   messageKey: string,
-  t: typeof i18n.t
+  t: typeof i18n.t,
 ): TranslatedError => new TranslatedErrorImpl(messageKey, t);

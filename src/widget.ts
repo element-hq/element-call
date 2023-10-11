@@ -155,7 +155,7 @@ export const widget = ((): WidgetHelpers | null => {
           timelineSupport: true,
           useE2eForGroupCall: e2eEnabled,
           fallbackICEServerAllowed: allowIceFallback,
-        }
+        },
       );
 
       const clientPromise = new Promise<MatrixClient>((resolve) => {

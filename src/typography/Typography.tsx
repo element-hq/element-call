@@ -39,7 +39,7 @@ export const Headline = forwardRef<HTMLHeadingElement, TypographyProps>(
       overflowEllipsis,
       ...rest
     },
-    ref
+    ref,
   ) => {
     return createElement(
       Component,
@@ -48,13 +48,13 @@ export const Headline = forwardRef<HTMLHeadingElement, TypographyProps>(
         className: classNames(
           styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
-          className
+          className,
         ),
         ref,
       },
-      children
+      children,
     );
-  }
+  },
 );
 
 export const Title = forwardRef<HTMLHeadingElement, TypographyProps>(
@@ -67,7 +67,7 @@ export const Title = forwardRef<HTMLHeadingElement, TypographyProps>(
       overflowEllipsis,
       ...rest
     },
-    ref
+    ref,
   ) => {
     return createElement(
       Component,
@@ -76,13 +76,13 @@ export const Title = forwardRef<HTMLHeadingElement, TypographyProps>(
         className: classNames(
           styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
-          className
+          className,
         ),
         ref,
       },
-      children
+      children,
     );
-  }
+  },
 );
 
 export const Subtitle = forwardRef<HTMLParagraphElement, TypographyProps>(
@@ -95,7 +95,7 @@ export const Subtitle = forwardRef<HTMLParagraphElement, TypographyProps>(
       overflowEllipsis,
       ...rest
     },
-    ref
+    ref,
   ) => {
     return createElement(
       Component,
@@ -104,13 +104,13 @@ export const Subtitle = forwardRef<HTMLParagraphElement, TypographyProps>(
         className: classNames(
           styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
-          className
+          className,
         ),
         ref,
       },
-      children
+      children,
     );
-  }
+  },
 );
 
 export const Body = forwardRef<HTMLParagraphElement, TypographyProps>(
@@ -123,7 +123,7 @@ export const Body = forwardRef<HTMLParagraphElement, TypographyProps>(
       overflowEllipsis,
       ...rest
     },
-    ref
+    ref,
   ) => {
     return createElement(
       Component,
@@ -132,13 +132,13 @@ export const Body = forwardRef<HTMLParagraphElement, TypographyProps>(
         className: classNames(
           styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
-          className
+          className,
         ),
         ref,
       },
-      children
+      children,
     );
-  }
+  },
 );
 
 export const Caption = forwardRef<HTMLParagraphElement, TypographyProps>(
@@ -151,7 +151,7 @@ export const Caption = forwardRef<HTMLParagraphElement, TypographyProps>(
       overflowEllipsis,
       ...rest
     },
-    ref
+    ref,
   ) => {
     return createElement(
       Component,
@@ -161,13 +161,13 @@ export const Caption = forwardRef<HTMLParagraphElement, TypographyProps>(
           styles.caption,
           styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
-          className
+          className,
         ),
         ref,
       },
-      children
+      children,
     );
-  }
+  },
 );
 
 export const Micro = forwardRef<HTMLParagraphElement, TypographyProps>(
@@ -180,7 +180,7 @@ export const Micro = forwardRef<HTMLParagraphElement, TypographyProps>(
       overflowEllipsis,
       ...rest
     },
-    ref
+    ref,
   ) => {
     return createElement(
       Component,
@@ -190,13 +190,13 @@ export const Micro = forwardRef<HTMLParagraphElement, TypographyProps>(
           styles.micro,
           styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
-          className
+          className,
         ),
         ref,
       },
-      children
+      children,
     );
-  }
+  },
 );
 
 interface LinkProps extends TypographyProps {
@@ -217,7 +217,7 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
       overflowEllipsis,
       ...rest
     },
-    ref
+    ref,
   ) => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -246,11 +246,11 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
           styles[color],
           styles[fontWeight ?? ""],
           { [styles.overflowEllipsis]: overflowEllipsis },
-          className
+          className,
         ),
         ref: ref,
       },
-      children
+      children,
     );
-  }
+  },
 );

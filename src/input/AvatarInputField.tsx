@@ -52,7 +52,7 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
       onRemoveAvatar,
       ...rest
     },
-    ref
+    ref,
   ) => {
     const { t } = useTranslation();
 
@@ -120,5 +120,5 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
         )}
       </div>
     );
-  }
+  },
 );

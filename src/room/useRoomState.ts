@@ -31,7 +31,7 @@ export const useRoomState = <T>(room: Room, f: (state: RoomState) => T): T => {
   useTypedEventEmitter(
     room,
     RoomStateEvent.Update,
-    useCallback(() => setNumUpdates((n) => n + 1), [setNumUpdates])
+    useCallback(() => setNumUpdates((n) => n + 1), [setNumUpdates]),
   );
   // We want any change to the update counter to trigger an update here
   // eslint-disable-next-line react-hooks/exhaustive-deps

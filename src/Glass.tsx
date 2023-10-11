@@ -48,5 +48,5 @@ export const Glass = forwardRef<HTMLDivElement, Props>(
     >
       {Children.only(children)}
     </div>
-  )
+  ),
 );

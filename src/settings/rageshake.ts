@@ -133,7 +133,7 @@ class IndexedDBLogStore {
 
   public constructor(
     private indexedDB: IDBFactory,
-    private loggerInstance: ConsoleLogger
+    private loggerInstance: ConsoleLogger,
   ) {
     this.id = "instance-" + randomString(16);
 
@@ -177,7 +177,7 @@ class IndexedDBLogStore {
         logObjStore.createIndex("id", "id", { unique: false });
 
         logObjStore.add(
-          this.generateLogEntry(new Date() + " ::: Log database was created.")
+          this.generateLogEntry(new Date() + " ::: Log database was created."),
         );
 
         // This records the last time each instance ID generated a log message, such
@@ -208,7 +208,7 @@ class IndexedDBLogStore {
     {
       leading: false,
       trailing: true,
-    }
+    },
   );
 
   /**
@@ -366,8 +366,8 @@ class IndexedDBLogStore {
         txn.onerror = (): void => {
           reject(
             new Error(
-              "Failed to delete logs for " + `'${id}' : ${txn?.error?.message}`
-            )
+              "Failed to delete logs for " + `'${id}' : ${txn?.error?.message}`,
+            ),
           );
         };
         // delete last modified entries
@@ -410,7 +410,7 @@ class IndexedDBLogStore {
         },
         (err) => {
           logger.error(err);
-        }
+        },
       );
     }
     return logs;
@@ -445,7 +445,7 @@ class IndexedDBLogStore {
 function selectQuery<T>(
   store: IDBObjectStore,
   keyRange: IDBKeyRange | undefined,
-  resultMapper: (cursor: IDBCursorWithValue) => T
+  resultMapper: (cursor: IDBCursorWithValue) => T,
 ): Promise<T[]> {
   const query = store.openCursor(keyRange);
   return new Promise((resolve, reject) => {
@@ -510,7 +510,7 @@ function tryInitStorage(): Promise<void> {
   if (indexedDB) {
     global.mx_rage_store = new IndexedDBLogStore(
       indexedDB,
-      global.mx_rage_logger
+      global.mx_rage_logger,
     );
     global.mx_rage_initStoragePromise = global.mx_rage_store.connect();
     return global.mx_rage_initStoragePromise;
@@ -547,7 +547,7 @@ export async function getLogsForReport(): Promise<LogEntry[]> {
 type StringifyReplacer = (
   this: unknown,
   key: string,
-  value: unknown
+  value: unknown,
 ) => unknown;
 
 // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#circular_references
@@ -600,7 +600,7 @@ export function setLogExtension(extension: LogExtensionFunc): void {
   logger.methodFactory = function (
     methodName,
     configLevel,
-    loggerName
+    loggerName,
   ): LoggingMethod {
     const rawMethod = originalFactory(methodName, configLevel, loggerName);
 

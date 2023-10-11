@@ -48,7 +48,7 @@ export function enterRTCSession(rtcSession: MatrixRTCSession): void {
 }
 
 export async function leaveRTCSession(
-  rtcSession: MatrixRTCSession
+  rtcSession: MatrixRTCSession,
 ): Promise<void> {
   //groupCallOTelMembership?.onLeaveCall();
   await rtcSession.leaveRoomSession();

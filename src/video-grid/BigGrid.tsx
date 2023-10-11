@@ -78,7 +78,7 @@ export interface SparseGrid {
 export function getPaths(
   g: SparseGrid,
   dest: number,
-  avoid: (cell: number) => boolean = (): boolean => false
+  avoid: (cell: number) => boolean = (): boolean => false,
 ): (number | null)[] {
   const destRow = row(dest, g);
   const destColumn = column(dest, g);
@@ -145,7 +145,7 @@ function inArea(
   index: number,
   start: number,
   end: number,
-  g: SparseGrid
+  g: SparseGrid,
 ): boolean {
   const indexColumn = column(index, g);
   const indexRow = row(index, g);
@@ -160,7 +160,7 @@ function inArea(
 function* cellsInArea(
   start: number,
   end: number,
-  g: SparseGrid
+  g: SparseGrid,
 ): Generator<number, void, unknown> {
   const startColumn = column(start, g);
   const endColumn = column(end, g);
@@ -179,7 +179,7 @@ export function forEachCellInArea<G extends Grid | SparseGrid>(
   start: number,
   end: number,
   g: G,
-  fn: (c: G["cells"][0], i: number) => void
+  fn: (c: G["cells"][0], i: number) => void,
 ): void {
   for (const i of cellsInArea(start, end, g)) fn(g.cells[i], i);
 }
@@ -188,7 +188,7 @@ function allCellsInArea<G extends Grid | SparseGrid>(
   start: number,
   end: number,
   g: G,
-  fn: (c: G["cells"][0], i: number) => boolean
+  fn: (c: G["cells"][0], i: number) => boolean,
 ): boolean {
   for (const i of cellsInArea(start, end, g)) {
     if (!fn(g.cells[i], i)) return false;
@@ -204,7 +204,7 @@ function countCellsInArea<G extends Grid | SparseGrid>(
   start: number,
   end: number,
   g: G,
-  predicate: (c: G["cells"][0], i: number) => boolean
+  predicate: (c: G["cells"][0], i: number) => boolean,
 ): number {
   let count = 0;
   for (const i of cellsInArea(start, end, g)) {
@@ -217,7 +217,7 @@ const areaEnd = (
   start: number,
   columns: number,
   rows: number,
-  g: SparseGrid
+  g: SparseGrid,
 ): number => start + columns - 1 + g.columns * (rows - 1);
 
 const cloneGrid = <G extends Grid | SparseGrid>(g: G): G => ({
@@ -231,7 +231,7 @@ const cloneGrid = <G extends Grid | SparseGrid>(g: G): G => ({
  */
 function getNextGap(
   g: SparseGrid,
-  ignoreGap: (cell: number) => boolean
+  ignoreGap: (cell: number) => boolean,
 ): number | null {
   const last1By1Index = findLast1By1Index(g);
   if (last1By1Index === null) return null;
@@ -278,13 +278,13 @@ function moveTileUnchecked(g: SparseGrid, from: number, to: number): void {
     to,
     toEnd,
     g,
-    (_c, i) => (g.cells[i] = movingCells.shift())
+    (_c, i) => (g.cells[i] = movingCells.shift()),
   );
   forEachCellInArea(
     from,
     fromEnd,
     g,
-    (_c, i) => (g.cells[i] ??= displacedTiles.shift())
+    (_c, i) => (g.cells[i] ??= displacedTiles.shift()),
   );
 }
 
@@ -294,7 +294,7 @@ function moveTileUnchecked(g: SparseGrid, from: number, to: number): void {
 export function moveTile<G extends Grid | SparseGrid>(
   g: G,
   from: number,
-  to: number
+  to: number,
 ): G {
   const tile = g.cells[from]!;
 
@@ -333,7 +333,7 @@ function pushTileUp(
   g: SparseGrid,
   from: number,
   rows: number,
-  avoid: (cell: number) => boolean = (): boolean => false
+  avoid: (cell: number) => boolean = (): boolean => false,
 ): number {
   const tile = g.cells[from]!;
 
@@ -347,7 +347,7 @@ function pushTileUp(
         to,
         Math.min(from - g.columns + tile.columns - 1, toEnd),
         g,
-        (c, i) => (c === undefined || is1By1(c)) && !avoid(i)
+        (c, i) => (c === undefined || is1By1(c)) && !avoid(i),
       );
 
     if (cellsAboveAreDisplacable) {
@@ -376,7 +376,7 @@ function canVacateArea(g: SparseGrid, start: number, end: number): boolean {
     start,
     end - newFullRows * g.columns,
     g,
-    (c) => c === undefined || is1By1(c)
+    (c) => c === undefined || is1By1(c),
   );
 }
 
@@ -391,7 +391,7 @@ function vacateArea(g: SparseGrid, start: number, end: number): SparseGrid {
     start,
     end,
     g,
-    (c, i) => c !== undefined || i >= g.cells.length
+    (c, i) => c !== undefined || i >= g.cells.length,
   );
   const newFullRows = Math.floor(newCellCount / g.columns);
   const endRow = row(end, g);
@@ -452,7 +452,7 @@ function vacateArea(g: SparseGrid, start: number, end: number): SparseGrid {
   const inputStructure = fillGaps(
     outputStructure,
     false,
-    (i) => inArea(i, start, end, g) && g.cells[i] === undefined
+    (i) => inArea(i, start, end, g) && g.cells[i] === undefined,
   );
 
   // We exploit the fact that g and inputStructure have the same structure to
@@ -464,7 +464,7 @@ function vacateArea(g: SparseGrid, start: number, end: number): SparseGrid {
   return {
     columns: g.columns,
     cells: outputStructure.cells.map((placeholder) =>
-      structureMapping.get(placeholder)
+      structureMapping.get(placeholder),
     ),
   };
 }
@@ -475,21 +475,21 @@ function vacateArea(g: SparseGrid, start: number, end: number): SparseGrid {
 export function fillGaps(
   g: SparseGrid,
   packLargeTiles?: true,
-  ignoreGap?: () => false
+  ignoreGap?: () => false,
 ): Grid;
 export function fillGaps(
   g: SparseGrid,
   packLargeTiles?: boolean,
-  ignoreGap?: (cell: number) => boolean
+  ignoreGap?: (cell: number) => boolean,
 ): SparseGrid;
 export function fillGaps(
   g: SparseGrid,
   packLargeTiles = true,
-  ignoreGap: (cell: number) => boolean = (): boolean => false
+  ignoreGap: (cell: number) => boolean = (): boolean => false,
 ): SparseGrid {
   const lastGap = findLastIndex(
     g.cells,
-    (c, i) => c === undefined && !ignoreGap(i)
+    (c, i) => c === undefined && !ignoreGap(i),
   );
   if (lastGap === null) return g; // There are no gaps to fill
   const lastGapRow = row(lastGap, g);
@@ -500,10 +500,10 @@ export function fillGaps(
   // allowed to pack the large tiles into the rest of the grid as necessary)
   let idealLength = count(
     result.cells,
-    (c, i) => c !== undefined || ignoreGap(i)
+    (c, i) => c !== undefined || ignoreGap(i),
   );
   const fullRowsRemoved = Math.floor(
-    (g.cells.length - idealLength) / g.columns
+    (g.cells.length - idealLength) / g.columns,
   );
 
   // Step 1: Push all large tiles below the last gap upwards, so that they move
@@ -620,7 +620,7 @@ function createRows(g: SparseGrid, count: number, atRow: number): SparseGrid {
         g,
         (c, i) => {
           result.cells[i + offset] = c;
-        }
+        },
       );
     }
   });
@@ -633,7 +633,7 @@ function createRows(g: SparseGrid, count: number, atRow: number): SparseGrid {
  */
 export function addItems(
   items: TileDescriptor<unknown>[],
-  g: SparseGrid
+  g: SparseGrid,
 ): SparseGrid {
   let result: SparseGrid = cloneGrid(g);
 
@@ -655,7 +655,7 @@ export function addItems(
       // This item wants to be placed near another; let's put it on a row
       // directly below the related tile
       const placeNear = result.cells.findIndex(
-        (c) => c?.item.id === item.placeNear
+        (c) => c?.item.id === item.placeNear,
       );
       if (placeNear === -1) {
         // Can't find the related tile, so let's give up and place it at the end
@@ -666,7 +666,7 @@ export function addItems(
           placeNear,
           placeNearCell.columns,
           placeNearCell.rows,
-          result
+          result,
         );
 
         result = createRows(result, 1, row(placeNearEnd, result) + 1);
@@ -699,7 +699,7 @@ const extraLargeTileDimensions = (g: SparseGrid): [number, number] =>
 
 export function cycleTileSize<G extends Grid | SparseGrid>(
   g: G,
-  tile: TileDescriptor<unknown>
+  tile: TileDescriptor<unknown>,
 ): G {
   const from = g.cells.findIndex((c) => c?.item === tile);
   if (from === -1) return g; // Tile removed, no change
@@ -727,7 +727,7 @@ function findNearestCell<G extends Grid | SparseGrid>(
   g: G,
   nearestTo: number,
   shouldScan: (index: number) => boolean,
-  predicate: (cell: G["cells"][0], index: number) => boolean
+  predicate: (cell: G["cells"][0], index: number) => boolean,
 ): number | null {
   const scanLocations = new Set([nearestTo]);
 
@@ -758,7 +758,7 @@ export function setTileSize<G extends Grid | SparseGrid>(
   g: G,
   from: number,
   toWidth: number,
-  toHeight: number
+  toHeight: number,
 ): G {
   const fromCell = g.cells[from]!;
   const fromWidth = fromCell.columns;
@@ -771,12 +771,12 @@ export function setTileSize<G extends Grid | SparseGrid>(
     0,
     Math.min(
       g.columns - toWidth,
-      column(from, g) + Math.trunc((fromWidth - toWidth) / 2)
-    )
+      column(from, g) + Math.trunc((fromWidth - toWidth) / 2),
+    ),
   );
   const toRow = Math.max(
     0,
-    row(from, g) + Math.trunc((fromHeight - toHeight) / 2)
+    row(from, g) + Math.trunc((fromHeight - toHeight) / 2),
   );
   const targetDest = toColumn + toRow * g.columns;
 
@@ -788,7 +788,7 @@ export function setTileSize<G extends Grid | SparseGrid>(
   const placeTile = (
     to: number,
     toEnd: number,
-    grid: Grid | SparseGrid
+    grid: Grid | SparseGrid,
   ): void => {
     forEachCellInArea(to, toEnd, grid, (_c, i) => {
       grid.cells[i] = {
@@ -824,7 +824,7 @@ export function setTileSize<G extends Grid | SparseGrid>(
       (_c, i) => {
         const end = areaEnd(i, toWidth, toHeight, g);
         return end < newGridSize && canVacateArea(gridWithoutTile, i, end);
-      }
+      },
     );
 
     if (to !== null) {
@@ -848,7 +848,7 @@ export function setTileSize<G extends Grid | SparseGrid>(
     (_c, i) => {
       const end = areaEnd(i, toWidth, toHeight, g);
       return end < newGridSize && canVacateArea(packedGridWithoutTile, i, end);
-    }
+    },
   );
 
   if (to === null) return g; // There's no space anywhere; give up
@@ -949,7 +949,7 @@ function updateTiles(g: Grid, tiles: TileDescriptor<unknown>[]): Grid {
 
   // Step 2: Add new tiles
   const existingItemIds = new Set(
-    grid1.cells.filter((c) => c !== undefined).map((c) => c!.item.id)
+    grid1.cells.filter((c) => c !== undefined).map((c) => c!.item.id),
   );
   const newItems = tiles.filter((i) => !existingItemIds.has(i.id));
   const grid2 = addItems(newItems, grid1);
@@ -967,7 +967,7 @@ function updateBounds(g: Grid, bounds: RectReadOnly): Grid {
 
 const Slots: FC<{ s: Grid }> = memo(({ s: g }) => {
   const areas = new Array<(number | null)[]>(
-    Math.ceil(g.cells.length / g.columns)
+    Math.ceil(g.cells.length / g.columns),
   );
   for (let i = 0; i < areas.length; i++)
     areas[i] = new Array<number | null>(g.columns).fill(null);
@@ -981,7 +981,7 @@ const Slots: FC<{ s: Grid }> = memo(({ s: g }) => {
         i,
         slotEnd,
         g,
-        (_c, j) => (areas[row(j, g)][column(j, g)] = slotCount)
+        (_c, j) => (areas[row(j, g)][column(j, g)] = slotCount),
       );
       slotCount++;
     }
@@ -993,7 +993,7 @@ const Slots: FC<{ s: Grid }> = memo(({ s: g }) => {
         (row) =>
           `'${row
             .map((slotId) => (slotId === null ? "." : `s${slotId}`))
-            .join(" ")}'`
+            .join(" ")}'`,
       )
       .join(" "),
     gridTemplateColumns: `repeat(${g.columns}, 1fr)`,
@@ -1019,7 +1019,7 @@ function positionOnTileToCell(
   g: SparseGrid,
   tileOriginIndex: number,
   xPositionOnTile: number,
-  yPositionOnTile: number
+  yPositionOnTile: number,
 ): number {
   const tileOrigin = g.cells[tileOriginIndex]!;
   const columnOnTile = Math.floor(xPositionOnTile * tileOrigin.columns);
@@ -1034,7 +1034,7 @@ function dragTile(
   xPositionOnFrom: number,
   yPositionOnFrom: number,
   xPositionOnTo: number,
-  yPositionOnTo: number
+  yPositionOnTo: number,
 ): Grid {
   const fromOrigin = g.cells.findIndex((c) => c.item === from);
   const toOrigin = g.cells.findIndex((c) => c.item === to);
@@ -1042,13 +1042,13 @@ function dragTile(
     g,
     fromOrigin,
     xPositionOnFrom,
-    yPositionOnFrom
+    yPositionOnFrom,
   );
   const toCell = positionOnTileToCell(
     g,
     toOrigin,
     xPositionOnTo,
-    yPositionOnTo
+    yPositionOnTo,
   );
 
   return moveTile(g, fromOrigin, fromOrigin + toCell - fromCell);

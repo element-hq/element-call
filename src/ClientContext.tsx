@@ -190,7 +190,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
           user: session.user_id,
           password: session.tempPassword,
         },
-        password
+        password,
       );
 
       saveSession({ ...session, passwordlessUser: false });
@@ -200,7 +200,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         passwordlessUser: false,
       });
     },
-    [initClientState?.client]
+    [initClientState?.client],
   );
 
   const setClient = useCallback(
@@ -222,7 +222,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         setInitClientState(null);
       }
     },
-    [initClientState?.client]
+    [initClientState?.client],
   );
 
   const logout = useCallback(async () => {
@@ -250,7 +250,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   }, []);
 
   const [alreadyOpenedErr, setAlreadyOpenedErr] = useState<Error | undefined>(
-    undefined
+    undefined,
   );
   useEventTarget(
     loadChannel,
@@ -258,9 +258,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     useCallback(() => {
       initClientState?.client.stopClient();
       setAlreadyOpenedErr(
-        translatedError("This application has been opened in another tab.", t)
+        translatedError("This application has been opened in another tab.", t),
       );
-    }, [initClientState?.client, setAlreadyOpenedErr, t])
+    }, [initClientState?.client, setAlreadyOpenedErr, t]),
   );
 
   const [isDisconnected, setIsDisconnected] = useState(false);
@@ -301,7 +301,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     (state: SyncState, _old: SyncState | null, data?: ISyncStateData) => {
       setIsDisconnected(clientIsDisconnected(state, data));
     },
-    []
+    [],
   );
 
   useEffect(() => {
@@ -387,7 +387,7 @@ async function loadClient(): Promise<InitResult | null> {
             logger.warn(
               "The previous session was lost, and we couldn't log it out, " +
                 err +
-                "either"
+                "either",
             );
           }
         }
@@ -423,6 +423,6 @@ const loadSession = (): Session | undefined => {
 
 const clientIsDisconnected = (
   syncState: SyncState,
-  syncData?: ISyncStateData
+  syncData?: ISyncStateData,
 ): boolean =>
   syncState === "ERROR" && syncData?.error?.name === "ConnectionError";

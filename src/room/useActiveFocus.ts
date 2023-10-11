@@ -24,7 +24,7 @@ import { deepCompare } from "matrix-js-sdk/src/utils";
 import { LivekitFocus } from "../livekit/LivekitFocus";
 
 function getActiveFocus(
-  rtcSession: MatrixRTCSession
+  rtcSession: MatrixRTCSession,
 ): LivekitFocus | undefined {
   const oldestMembership = rtcSession.getOldestMembership();
   return oldestMembership?.getActiveFoci()[0] as LivekitFocus;
@@ -36,10 +36,10 @@ function getActiveFocus(
  * and the same focus.
  */
 export function useActiveFocus(
-  rtcSession: MatrixRTCSession
+  rtcSession: MatrixRTCSession,
 ): LivekitFocus | undefined {
   const [activeFocus, setActiveFocus] = useState(() =>
-    getActiveFocus(rtcSession)
+    getActiveFocus(rtcSession),
   );
 
   const onMembershipsChanged = useCallback(() => {
@@ -53,13 +53,13 @@ export function useActiveFocus(
   useEffect(() => {
     rtcSession.on(
       MatrixRTCSessionEvent.MembershipsChanged,
-      onMembershipsChanged
+      onMembershipsChanged,
     );
 
     return () => {
       rtcSession.off(
         MatrixRTCSessionEvent.MembershipsChanged,
-        onMembershipsChanged
+        onMembershipsChanged,
       );
     };
   });

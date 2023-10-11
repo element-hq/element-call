@@ -63,22 +63,22 @@ export const LobbyView: FC<Props> = ({
 
   const onAudioPress = useCallback(
     () => muteStates.audio.setEnabled?.((e) => !e),
-    [muteStates]
+    [muteStates],
   );
   const onVideoPress = useCallback(
     () => muteStates.video.setEnabled?.((e) => !e),
-    [muteStates]
+    [muteStates],
   );
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   const openSettings = useCallback(
     () => setSettingsModalOpen(true),
-    [setSettingsModalOpen]
+    [setSettingsModalOpen],
   );
   const closeSettings = useCallback(
     () => setSettingsModalOpen(false),
-    [setSettingsModalOpen]
+    [setSettingsModalOpen],
   );
 
   const history = useHistory();

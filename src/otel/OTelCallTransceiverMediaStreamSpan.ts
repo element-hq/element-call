@@ -32,7 +32,7 @@ export class OTelCallTransceiverMediaStreamSpan extends OTelCallAbstractMediaStr
   public constructor(
     protected readonly oTel: ElementCallOpenTelemetry,
     protected readonly callSpan: Span,
-    stats: TransceiverStats
+    stats: TransceiverStats,
   ) {
     super(oTel, callSpan, `matrix.call.transceiver.${stats.mid}`);
     this.span.setAttribute("transceiver.mid", stats.mid);

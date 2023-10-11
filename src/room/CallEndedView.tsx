@@ -64,7 +64,7 @@ export const CallEndedView: FC<Props> = ({
       PosthogAnalytics.instance.eventQualitySurvey.track(
         endedCallId,
         feedbackText,
-        starRating
+        starRating,
       );
 
       setSubmitting(true);
@@ -83,7 +83,7 @@ export const CallEndedView: FC<Props> = ({
         }, 1000);
       }, 1000);
     },
-    [endedCallId, history, isPasswordlessUser, confineToRoom, starRating]
+    [endedCallId, history, isPasswordlessUser, confineToRoom, starRating],
   );
 
   const createAccountDialog = isPasswordlessUser && (

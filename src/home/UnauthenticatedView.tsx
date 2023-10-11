@@ -57,7 +57,7 @@ export const UnauthenticatedView: FC = () => {
     useState(false);
   const onDismissJoinExistingCallModal = useCallback(
     () => setJoinExistingCallModalOpen(false),
-    [setJoinExistingCallModalOpen]
+    [setJoinExistingCallModalOpen],
   );
   const [onFinished, setOnFinished] = useState<() => void>();
   const history = useHistory();
@@ -82,7 +82,7 @@ export const UnauthenticatedView: FC = () => {
           randomString(16),
           displayName,
           recaptchaResponse,
-          true
+          true,
         );
 
         let createRoomResult;
@@ -90,7 +90,7 @@ export const UnauthenticatedView: FC = () => {
           createRoomResult = await createRoom(
             client,
             roomName,
-            e2eeEnabled ?? false
+            e2eeEnabled ?? false,
           );
         } catch (error) {
           if (!setClient) {
@@ -124,8 +124,8 @@ export const UnauthenticatedView: FC = () => {
           getRelativeRoomUrl(
             createRoomResult.roomId,
             roomName,
-            createRoomResult.password
-          )
+            createRoomResult.password,
+          ),
         );
       }
 
@@ -144,7 +144,7 @@ export const UnauthenticatedView: FC = () => {
       setJoinExistingCallModalOpen,
       setClient,
       e2eeEnabled,
-    ]
+    ],
   );
 
   return (
