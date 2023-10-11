@@ -63,7 +63,7 @@ async function doConnect(
   // mobile browsers to know we're doing a call.
   if (livekitRoom!.localParticipant.getTrack(Track.Source.Microphone)) {
     logger.warn(
-      "Pre-creating audio track but participant already appears to have an microphone track: this shouldn't happen!"
+      "Pre-creating audio track but participant already appears to have an microphone track: this shouldn't happen!",
     );
     return;
   }
@@ -81,7 +81,7 @@ async function doConnect(
   // check again having awaited for the track to create
   if (livekitRoom!.localParticipant.getTrack(Track.Source.Microphone)) {
     logger.warn(
-      "Publishing pre-created audio track but participant already appears to have an microphone track: this shouldn't happen!"
+      "Publishing pre-created audio track but participant already appears to have an microphone track: this shouldn't happen!",
     );
     return;
   }
