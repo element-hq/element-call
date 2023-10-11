@@ -43,8 +43,7 @@ const useKeyFromUrl = (): [string, string] | [undefined, undefined] => {
   const urlParams = useUrlParams();
 
   useEffect(() => {
-    if (!urlParams.password) return;
-    if (urlParams.password === "") return;
+    if (!urlParams.password || !urlParams.roomId) return;
     if (!urlParams.roomId) return;
 
     setLocalStorageItem(
