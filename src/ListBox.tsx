@@ -77,7 +77,7 @@ function Option<T>({ item, state, className }: OptionProps<T>): ReactNode {
   const { optionProps, isSelected, isFocused, isDisabled } = useOption(
     { key: item.key },
     state,
-    ref
+    ref,
   );
 
   // Hack: remove the onPointerUp event handler and re-wire it to
@@ -97,7 +97,7 @@ function Option<T>({ item, state, className }: OptionProps<T>): ReactNode {
       // @ts-ignore
       origPointerUp(e as unknown as PointerEvent<HTMLElement>);
     },
-    [origPointerUp]
+    [origPointerUp],
   );
 
   return (

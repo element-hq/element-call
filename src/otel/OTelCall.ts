@@ -48,14 +48,14 @@ export class OTelCall {
     public userId: string,
     public deviceId: string,
     public call: MatrixCall,
-    public span: Span
+    public span: Span,
   ) {
     if (call.peerConn) {
       this.addCallPeerConnListeners();
     } else {
       this.call.once(
         CallEvent.PeerConnectionCreated,
-        this.addCallPeerConnListeners
+        this.addCallPeerConnListeners,
       );
     }
   }
@@ -63,46 +63,46 @@ export class OTelCall {
   public dispose(): void {
     this.call.peerConn?.removeEventListener(
       "connectionstatechange",
-      this.onCallConnectionStateChanged
+      this.onCallConnectionStateChanged,
     );
     this.call.peerConn?.removeEventListener(
       "signalingstatechange",
-      this.onCallSignalingStateChanged
+      this.onCallSignalingStateChanged,
     );
     this.call.peerConn?.removeEventListener(
       "iceconnectionstatechange",
-      this.onIceConnectionStateChanged
+      this.onIceConnectionStateChanged,
     );
     this.call.peerConn?.removeEventListener(
       "icegatheringstatechange",
-      this.onIceGatheringStateChanged
+      this.onIceGatheringStateChanged,
     );
     this.call.peerConn?.removeEventListener(
       "icecandidateerror",
-      this.onIceCandidateError
+      this.onIceCandidateError,
     );
   }
 
   private addCallPeerConnListeners = (): void => {
     this.call.peerConn?.addEventListener(
       "connectionstatechange",
-      this.onCallConnectionStateChanged
+      this.onCallConnectionStateChanged,
     );
     this.call.peerConn?.addEventListener(
       "signalingstatechange",
-      this.onCallSignalingStateChanged
+      this.onCallSignalingStateChanged,
     );
     this.call.peerConn?.addEventListener(
       "iceconnectionstatechange",
-      this.onIceConnectionStateChanged
+      this.onIceConnectionStateChanged,
     );
     this.call.peerConn?.addEventListener(
       "icegatheringstatechange",
-      this.onIceGatheringStateChanged
+      this.onIceGatheringStateChanged,
     );
     this.call.peerConn?.addEventListener(
       "icecandidateerror",
-      this.onIceCandidateError
+      this.onIceCandidateError,
     );
   };
 
@@ -147,8 +147,8 @@ export class OTelCall {
           new OTelCallFeedMediaStreamSpan(
             ElementCallOpenTelemetry.instance,
             this.span,
-            feed
-          )
+            feed,
+          ),
         );
       }
       this.trackFeedSpan.get(feed.stream)?.update(feed);
@@ -171,13 +171,13 @@ export class OTelCall {
           new OTelCallTransceiverMediaStreamSpan(
             ElementCallOpenTelemetry.instance,
             this.span,
-            transStats
-          )
+            transStats,
+          ),
         );
       }
       this.trackTransceiverSpan.get(transStats.mid)?.update(transStats);
       prvTransSpan = prvTransSpan.filter(
-        (prvStreamId) => prvStreamId !== transStats.mid
+        (prvStreamId) => prvStreamId !== transStats.mid,
       );
     });
 
@@ -190,7 +190,7 @@ export class OTelCall {
   public end(): void {
     this.trackFeedSpan.forEach((feedSpan) => feedSpan.end());
     this.trackTransceiverSpan.forEach((transceiverSpan) =>
-      transceiverSpan.end()
+      transceiverSpan.end(),
     );
     this.span.end();
   }

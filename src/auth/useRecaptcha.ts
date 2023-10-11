@@ -108,7 +108,7 @@ export function useRecaptcha(sitekey?: string): {
       window.grecaptcha.execute();
 
       const iframe = document.querySelector<HTMLIFrameElement>(
-        'iframe[src*="recaptcha/api2/bframe"]'
+        'iframe[src*="recaptcha/api2/bframe"]',
       );
 
       if (iframe?.parentNode?.parentNode) {

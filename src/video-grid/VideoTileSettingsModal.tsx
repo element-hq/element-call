@@ -39,7 +39,7 @@ const LocalVolume: FC<LocalVolumeProps> = ({
       : Track.Source.ScreenShareAudio;
 
   const [localVolume, setLocalVolume] = useState<number>(
-    participant.getVolume(source) ?? 0
+    participant.getVolume(source) ?? 0,
   );
 
   const onLocalVolumeChanged = (event: ChangeEvent<HTMLInputElement>): void => {

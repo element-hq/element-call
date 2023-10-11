@@ -78,7 +78,7 @@ export const RegisterPage: FC = () => {
           password,
           userName,
           recaptchaResponse,
-          passwordlessUser
+          passwordlessUser,
         );
 
         if (client && client?.groupCallEventHandler && passwordlessUser) {
@@ -135,7 +135,7 @@ export const RegisterPage: FC = () => {
       execute,
       client,
       setClient,
-    ]
+    ],
   );
 
   useEffect(() => {

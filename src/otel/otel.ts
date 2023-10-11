@@ -50,7 +50,7 @@ export class ElementCallOpenTelemetry {
 
       sharedInstance = new ElementCallOpenTelemetry(
         config.opentelemetry?.collector_url,
-        config.rageshake?.submit_url
+        config.rageshake?.submit_url,
       );
     }
   }
@@ -61,7 +61,7 @@ export class ElementCallOpenTelemetry {
 
   private constructor(
     collectorUrl: string | undefined,
-    rageshakeUrl: string | undefined
+    rageshakeUrl: string | undefined,
   ) {
     // This is how we can make Jaeger show a reasonable service in the dropdown on the left.
     const providerConfig = {
@@ -77,7 +77,7 @@ export class ElementCallOpenTelemetry {
         url: collectorUrl,
       });
       this._provider.addSpanProcessor(
-        new SimpleSpanProcessor(this.otlpExporter)
+        new SimpleSpanProcessor(this.otlpExporter),
       );
     } else {
       logger.info("OTLP collector disabled");
@@ -93,7 +93,7 @@ export class ElementCallOpenTelemetry {
 
     this._tracer = opentelemetry.trace.getTracer(
       // This is not the serviceName shown in jaeger
-      "my-element-call-otl-tracer"
+      "my-element-call-otl-tracer",
     );
   }
 

@@ -81,7 +81,7 @@ export const RoomPage: FC = () => {
         hideHeader={hideHeader}
       />
     ),
-    [client, passwordlessUser, confineToRoom, preload, hideHeader]
+    [client, passwordlessUser, confineToRoom, preload, hideHeader],
   );
 
   let content: ReactNode;

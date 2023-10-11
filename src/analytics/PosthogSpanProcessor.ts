@@ -148,7 +148,7 @@ export class PosthogSpanProcessor implements SpanProcessor {
             ratioPeerConnectionToDevices: ratioPeerConnectionToDevices,
           },
           // Send instantly because the window might be closing
-          { send_instantly: true }
+          { send_instantly: true },
         );
       }
     }

@@ -99,13 +99,13 @@ export class Initializer {
     if (fontScale !== null) {
       document.documentElement.style.setProperty(
         "--font-scale",
-        fontScale.toString()
+        fontScale.toString(),
       );
     }
     if (fonts.length > 0) {
       document.documentElement.style.setProperty(
         "--font-family",
-        fonts.map((f) => `"${f}"`).join(", ")
+        fonts.map((f) => `"${f}"`).join(", "),
       );
     }
 

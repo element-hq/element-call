@@ -59,7 +59,7 @@ function waitForSync(client: MatrixClient): Promise<void> {
     const onSync = (
       state: SyncState,
       _old: SyncState | null,
-      data?: ISyncStateData
+      data?: ISyncStateData,
     ): void => {
       if (state === "PREPARED") {
         client.removeListener(ClientEvent.Sync, onSync);
@@ -83,7 +83,7 @@ function secureRandomString(entropyBytes: number): string {
   // yet) so just use the built-in one and convert, replace the chars and strip the
   // padding from the end (otherwise we'd need to pull in another dependency).
   return btoa(
-    key.reduce((acc, current) => acc + String.fromCharCode(current), "")
+    key.reduce((acc, current) => acc + String.fromCharCode(current), ""),
   )
     .replace("+", "-")
     .replace("/", "_")
@@ -101,7 +101,7 @@ function secureRandomString(entropyBytes: number): string {
  */
 export async function initClient(
   clientOptions: ICreateClientOpts,
-  restore: boolean
+  restore: boolean,
 ): Promise<MatrixClient> {
   await loadOlm();
 
@@ -148,7 +148,7 @@ export async function initClient(
     if (indexedDB) {
       const cryptoStoreExists = await IndexedDBCryptoStore.exists(
         indexedDB,
-        CRYPTO_STORE_NAME
+        CRYPTO_STORE_NAME,
       );
       if (!cryptoStoreExists) throw new CryptoStoreIntegrityError();
     } else if (localStorage) {
@@ -164,7 +164,7 @@ export async function initClient(
   if (indexedDB) {
     baseOpts.cryptoStore = new IndexedDBCryptoStore(
       indexedDB,
-      CRYPTO_STORE_NAME
+      CRYPTO_STORE_NAME,
     );
   } else if (localStorage) {
     baseOpts.cryptoStore = new LocalStorageCryptoStore(localStorage);
@@ -198,7 +198,7 @@ export async function initClient(
   } catch (error) {
     logger.error(
       "Error starting matrix client store. Falling back to memory store.",
-      error
+      error,
     );
     client.store = new MemoryStore({ localStorage });
     await client.store.startup();
@@ -268,7 +268,7 @@ export function roomNameFromRoomId(roomId: string): string {
     .substring(1)
     .split("-")
     .map((part) =>
-      part.length > 0 ? part.charAt(0).toUpperCase() + part.slice(1) : part
+      part.length > 0 ? part.charAt(0).toUpperCase() + part.slice(1) : part,
     )
     .join(" ")
     .toLowerCase();
@@ -297,7 +297,7 @@ interface CreateRoomResult {
 export async function createRoom(
   client: MatrixClient,
   name: string,
-  e2ee: boolean
+  e2ee: boolean,
 ): Promise<CreateRoomResult> {
   logger.log(`Creating room for group call`);
   const createPromise = client.createRoom({
@@ -358,7 +358,7 @@ export async function createRoom(
     GroupCallType.Video,
     false,
     GroupCallIntent.Room,
-    true
+    true,
   );
 
   let password;
@@ -366,7 +366,7 @@ export async function createRoom(
     password = secureRandomString(16);
     setLocalStorageItem(
       getRoomSharedKeyLocalStorageKey(result.room_id),
-      password
+      password,
     );
   }
 
@@ -386,7 +386,7 @@ export async function createRoom(
 export function getAbsoluteRoomUrl(
   roomId: string,
   roomName?: string,
-  password?: string
+  password?: string,
 ): string {
   return `${window.location.protocol}//${
     window.location.host
@@ -402,7 +402,7 @@ export function getAbsoluteRoomUrl(
 export function getRelativeRoomUrl(
   roomId: string,
   roomName?: string,
-  password?: string
+  password?: string,
 ): string {
   // The password shouldn't need URL encoding here (we generate URL-safe ones) but encode
   // it in case it came from another client that generated a non url-safe one
@@ -419,7 +419,7 @@ export function getRelativeRoomUrl(
 export function getAvatarUrl(
   client: MatrixClient,
   mxcUrl: string,
-  avatarSize = 96
+  avatarSize = 96,
 ): string {
   const width = Math.floor(avatarSize * window.devicePixelRatio);
   const height = Math.floor(avatarSize * window.devicePixelRatio);

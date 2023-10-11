@@ -25,7 +25,7 @@ import {
 export class ObjectFlattener {
   public static flattenReportObject(
     prefix: string,
-    report: ConnectionStatsReport | ByteSentStatsReport
+    report: ConnectionStatsReport | ByteSentStatsReport,
   ): Attributes {
     const flatObject = {};
     ObjectFlattener.flattenObjectRecursive(report, flatObject, `${prefix}.`, 0);
@@ -33,27 +33,27 @@ export class ObjectFlattener {
   }
 
   public static flattenByteSentStatsReportObject(
-    statsReport: GroupCallStatsReport<ByteSentStatsReport>
+    statsReport: GroupCallStatsReport<ByteSentStatsReport>,
   ): Attributes {
     const flatObject = {};
     ObjectFlattener.flattenObjectRecursive(
       statsReport.report,
       flatObject,
       "matrix.stats.bytesSent.",
-      0
+      0,
     );
     return flatObject;
   }
 
   public static flattenSummaryStatsReportObject(
-    statsReport: GroupCallStatsReport<SummaryStatsReport>
+    statsReport: GroupCallStatsReport<SummaryStatsReport>,
   ): Attributes {
     const flatObject = {};
     ObjectFlattener.flattenObjectRecursive(
       statsReport.report,
       flatObject,
       "matrix.stats.summary.",
-      0
+      0,
     );
     return flatObject;
   }
@@ -67,7 +67,7 @@ export class ObjectFlattener {
       event as unknown as Record<string, unknown>, // XXX Types
       flatObject,
       "matrix.event.",
-      0
+      0,
     );
 
     return flatObject;
@@ -77,12 +77,12 @@ export class ObjectFlattener {
     obj: Object,
     flatObject: Attributes,
     prefix: string,
-    depth: number
+    depth: number,
   ): void {
     if (depth > 10)
       throw new Error(
         "Depth limit exceeded: aborting VoipEvent recursion. Prefix is " +
-          prefix
+          prefix,
       );
     let entries;
     if (obj instanceof Map) {
@@ -101,7 +101,7 @@ export class ObjectFlattener {
           v,
           flatObject,
           prefix + k + ".",
-          depth + 1
+          depth + 1,
         );
       }
     }

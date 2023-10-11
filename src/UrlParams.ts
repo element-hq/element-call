@@ -119,17 +119,17 @@ interface UrlParams {
 // file.
 export function editFragmentQuery(
   hash: string,
-  edit: (params: URLSearchParams) => URLSearchParams
+  edit: (params: URLSearchParams) => URLSearchParams,
 ): string {
   const fragmentQueryStart = hash.indexOf("?");
   const fragmentParams = edit(
     new URLSearchParams(
-      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart)
-    )
+      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart),
+    ),
   );
   return `${hash.substring(
     0,
-    fragmentQueryStart
+    fragmentQueryStart,
   )}?${fragmentParams.toString()}`;
 }
 
@@ -142,7 +142,7 @@ class ParamParser {
 
     const fragmentQueryStart = hash.indexOf("?");
     this.fragmentParams = new URLSearchParams(
-      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart)
+      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart),
     );
   }
 
@@ -174,7 +174,7 @@ class ParamParser {
  */
 export const getUrlParams = (
   search = window.location.search,
-  hash = window.location.hash
+  hash = window.location.hash,
 ): UrlParams => {
   const parser = new ParamParser(search, hash);
 
@@ -221,7 +221,7 @@ export const useUrlParams = (): UrlParams => {
 export function getRoomIdentifierFromUrl(
   pathname: string,
   search: string,
-  hash: string
+  hash: string,
 ): RoomIdentifier {
   let roomAlias: string | null = null;
   pathname = pathname.substring(1); // Strip the "/"
@@ -281,6 +281,6 @@ export const useRoomIdentifier = (): RoomIdentifier => {
   const { pathname, search, hash } = useLocation();
   return useMemo(
     () => getRoomIdentifierFromUrl(pathname, search, hash),
-    [pathname, search, hash]
+    [pathname, search, hash],
   );
 };
