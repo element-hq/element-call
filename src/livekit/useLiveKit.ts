@@ -52,7 +52,7 @@ interface UseLivekitResult {
 export function useLiveKit(
   muteStates: MuteStates,
   sfuConfig?: SFUConfig,
-  e2eeConfig?: E2EEConfig
+  e2eeConfig?: E2EEConfig,
 ): UseLivekitResult {
   const e2eeOptions = useMemo(() => {
     if (!e2eeConfig?.sharedKey) return undefined;
@@ -67,7 +67,7 @@ export function useLiveKit(
     if (!e2eeConfig?.sharedKey || !e2eeOptions) return;
 
     (e2eeOptions.keyProvider as ExternalE2EEKeyProvider).setKey(
-      e2eeConfig?.sharedKey
+      e2eeConfig?.sharedKey,
     );
   }, [e2eeOptions, e2eeConfig?.sharedKey]);
 
@@ -93,7 +93,7 @@ export function useLiveKit(
       },
       e2ee: e2eeOptions,
     }),
-    [e2eeOptions]
+    [e2eeOptions],
   );
 
   // useECConnectionState creates and publishes an audio track by hand. To keep
@@ -131,7 +131,7 @@ export function useLiveKit(
     },
     initialMuteStates.current.audio.enabled,
     room,
-    sfuConfig
+    sfuConfig,
   );
 
   // Unblock audio once the connection is finished
@@ -154,7 +154,7 @@ export function useLiveKit(
         audio: muteStates.audio.enabled,
         video: muteStates.video.enabled,
       };
-      const syncMuteStateAudio = async () => {
+      const syncMuteStateAudio = async (): Promise<void> => {
         if (
           participant.isMicrophoneEnabled !== buttonEnabled.current.audio &&
           !audioMuteUpdating.current
@@ -174,7 +174,7 @@ export function useLiveKit(
           syncMuteStateAudio();
         }
       };
-      const syncMuteStateVideo = async () => {
+      const syncMuteStateVideo = async (): Promise<void> => {
         if (
           participant.isCameraEnabled !== buttonEnabled.current.video &&
           !videoMuteUpdating.current
@@ -198,7 +198,7 @@ export function useLiveKit(
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
     if (room !== undefined && connectionState === ConnectionState.Connected) {
-      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice) => {
+      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice): void => {
         const id = device.selectedId;
 
         // Detect if we're trying to use chrome's default device, in which case
@@ -215,11 +215,11 @@ export function useLiveKit(
           room.options.audioCaptureDefaults?.deviceId === "default"
         ) {
           const activeMicTrack = Array.from(
-            room.localParticipant.audioTracks.values()
+            room.localParticipant.audioTracks.values(),
           ).find((d) => d.source === Track.Source.Microphone)?.track;
 
           const defaultDevice = device.available.find(
-            (d) => d.deviceId === "default"
+            (d) => d.deviceId === "default",
           );
           if (
             defaultDevice &&
@@ -245,7 +245,7 @@ export function useLiveKit(
             room
               .switchActiveDevice(kind, id)
               .catch((e) =>
-                logger.error(`Failed to sync ${kind} device with LiveKit`, e)
+                logger.error(`Failed to sync ${kind} device with LiveKit`, e),
               );
           }
         }

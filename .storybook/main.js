@@ -14,7 +14,7 @@ module.exports = {
           Array.isArray(item) &&
           item.length > 0 &&
           item[0].name === "vite-plugin-mdx"
-        )
+        ),
     );
     config.plugins.push(svgrPlugin());
     config.resolve = config.resolve || {};

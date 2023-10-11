@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { useTranslation } from "react-i18next";
-import { useCallback } from "react";
+import { FC, useCallback } from "react";
 
 import { Button } from "../button";
 import { Config } from "../config/Config";
@@ -26,7 +26,7 @@ interface Props {
   description: string;
 }
 
-export const RageshakeButton = ({ description }: Props) => {
+export const RageshakeButton: FC<Props> = ({ description }) => {
   const { submitRageshake, sending, sent, error } = useSubmitRageshake();
   const { t } = useTranslation();
 

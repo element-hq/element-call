@@ -70,7 +70,7 @@ export const Toast: FC<Props> = ({
     (open: boolean) => {
       if (!open) onDismiss();
     },
-    [onDismiss]
+    [onDismiss],
   );
 
   useEffect(() => {
@@ -91,7 +91,7 @@ export const Toast: FC<Props> = ({
             className={classNames(
               overlayStyles.overlay,
               overlayStyles.animate,
-              styles.toast
+              styles.toast,
             )}
           >
             <DialogTitle asChild>

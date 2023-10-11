@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useMemo } from "react";
+import { FC, ReactNode, useCallback, useMemo } from "react";
 import { Item } from "@react-stately/collections";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -31,7 +31,7 @@ import LogoutIcon from "./icons/Logout.svg?react";
 import { Body } from "./typography/Typography";
 import styles from "./UserMenu.module.css";
 
-interface UserMenuProps {
+interface Props {
   preventNavigation: boolean;
   isAuthenticated: boolean;
   isPasswordlessUser: boolean;
@@ -41,7 +41,7 @@ interface UserMenuProps {
   onAction: (value: string) => void;
 }
 
-export function UserMenu({
+export const UserMenu: FC<Props> = ({
   preventNavigation,
   isAuthenticated,
   isPasswordlessUser,
@@ -49,7 +49,7 @@ export function UserMenu({
   displayName,
   avatarUrl,
   onAction,
-}: UserMenuProps) {
+}) => {
   const { t } = useTranslation();
   const location = useLocation();
 
@@ -123,7 +123,7 @@ export function UserMenu({
       </TooltipTrigger>
       {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (props: any) => (
+        (props: any): ReactNode => (
           <Menu {...props} label={t("User menu")} onAction={onAction}>
             {items.map(({ key, icon: Icon, label, dataTestid }) => (
               <Item key={key} textValue={label}>
@@ -141,4 +141,4 @@ export function UserMenu({
       }
     </PopoverMenuTrigger>
   );
-}
+};

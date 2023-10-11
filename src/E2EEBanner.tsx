@@ -15,13 +15,14 @@ limitations under the License.
 */
 
 import { Trans } from "react-i18next";
+import { FC } from "react";
 
 import { Banner } from "./Banner";
 import styles from "./E2EEBanner.module.css";
 import LockOffIcon from "./icons/LockOff.svg?react";
 import { useEnableE2EE } from "./settings/useSetting";
 
-export const E2EEBanner = () => {
+export const E2EEBanner: FC = () => {
   const [e2eeEnabled] = useEnableE2EE();
   if (e2eeEnabled) return null;
 

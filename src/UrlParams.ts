@@ -119,17 +119,17 @@ interface UrlParams {
 // file.
 export function editFragmentQuery(
   hash: string,
-  edit: (params: URLSearchParams) => URLSearchParams
+  edit: (params: URLSearchParams) => URLSearchParams,
 ): string {
   const fragmentQueryStart = hash.indexOf("?");
   const fragmentParams = edit(
     new URLSearchParams(
-      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart)
-    )
+      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart),
+    ),
   );
   return `${hash.substring(
     0,
-    fragmentQueryStart
+    fragmentQueryStart,
   )}?${fragmentParams.toString()}`;
 }
 
@@ -137,30 +137,30 @@ class ParamParser {
   private fragmentParams: URLSearchParams;
   private queryParams: URLSearchParams;
 
-  constructor(search: string, hash: string) {
+  public constructor(search: string, hash: string) {
     this.queryParams = new URLSearchParams(search);
 
     const fragmentQueryStart = hash.indexOf("?");
     this.fragmentParams = new URLSearchParams(
-      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart)
+      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart),
     );
   }
 
   // Normally, URL params should be encoded in the fragment so as to avoid
   // leaking them to the server. However, we also check the normal query
   // string for backwards compatibility with versions that only used that.
-  getParam(name: string): string | null {
+  public getParam(name: string): string | null {
     return this.fragmentParams.get(name) ?? this.queryParams.get(name);
   }
 
-  getAllParams(name: string): string[] {
+  public getAllParams(name: string): string[] {
     return [
       ...this.fragmentParams.getAll(name),
       ...this.queryParams.getAll(name),
     ];
   }
 
-  getFlagParam(name: string, defaultValue = false): boolean {
+  public getFlagParam(name: string, defaultValue = false): boolean {
     const param = this.getParam(name);
     return param === null ? defaultValue : param !== "false";
   }
@@ -174,7 +174,7 @@ class ParamParser {
  */
 export const getUrlParams = (
   search = window.location.search,
-  hash = window.location.hash
+  hash = window.location.hash,
 ): UrlParams => {
   const parser = new ParamParser(search, hash);
 
@@ -221,7 +221,7 @@ export const useUrlParams = (): UrlParams => {
 export function getRoomIdentifierFromUrl(
   pathname: string,
   search: string,
-  hash: string
+  hash: string,
 ): RoomIdentifier {
   let roomAlias: string | null = null;
   pathname = pathname.substring(1); // Strip the "/"
@@ -281,6 +281,6 @@ export const useRoomIdentifier = (): RoomIdentifier => {
   const { pathname, search, hash } = useLocation();
   return useMemo(
     () => getRoomIdentifierFromUrl(pathname, search, hash),
-    [pathname, search, hash]
+    [pathname, search, hash],
   );
 };

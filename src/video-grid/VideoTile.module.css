@@ -24,7 +24,9 @@ limitations under the License.
   overflow: hidden;
   cursor: pointer;
   outline: 2px solid rgba(0, 0, 0, 0);
-  transition: outline-radius ease 0.15s, outline-color ease 0.15s;
+  transition:
+    outline-radius ease 0.15s,
+    outline-color ease 0.15s;
 }
 
 .videoTile * {

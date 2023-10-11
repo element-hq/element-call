@@ -63,7 +63,7 @@ export class LazyEventEmitter extends EventEmitter {
   public addListener(
     type: string | symbol,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    listener: (...args: any[]) => void
+    listener: (...args: any[]) => void,
   ): this {
     return this.on(type, listener);
   }
