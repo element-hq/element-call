@@ -51,7 +51,7 @@ const useKeyFromUrl = (): [string, string] | [undefined, undefined] => {
       // make sure, we always have matching pairs in the LocalStorage,
       // as they occur in the call links.
       getRoomSharedKeyLocalStorageKey(urlParams.roomId),
-      urlParams.password
+      urlParams.password,
     );
   }, [urlParams]);
 
@@ -82,6 +82,6 @@ export const useIsRoomE2EE = (roomId: string): boolean | null => {
   // should inspect the e2eEnabled URL parameter here?
   return useMemo(
     () => widget === null && (room === null || !room.getCanonicalAlias()),
-    [room]
+    [room],
   );
 };
