@@ -47,7 +47,7 @@ function getLastTs(client: MatrixClient, r: Room): number {
   if (r.getMyMembership() !== "join") {
     const membershipEvent = r.currentState.getStateEvents(
       "m.room.member",
-      myUserId
+      myUserId,
     );
 
     if (membershipEvent && !Array.isArray(membershipEvent)) {
@@ -115,7 +115,7 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
       client.removeListener(GroupCallEventHandlerEvent.Incoming, updateRooms);
       client.removeListener(
         GroupCallEventHandlerEvent.Participants,
-        updateRooms
+        updateRooms,
       );
     };
   }, [client]);

@@ -94,12 +94,12 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
       onPressStart,
       ...rest
     },
-    ref
+    ref,
   ) => {
     const buttonRef = useObjectRef<HTMLButtonElement>(ref);
     const { buttonProps } = useButton(
       { onPress, onPressStart, ...rest },
-      buttonRef
+      buttonRef,
     );
 
     // TODO: react-aria's useButton hook prevents form submission via keyboard
@@ -121,7 +121,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
           {
             [styles.on]: on,
             [styles.off]: off,
-          }
+          },
         )}
         {...mergeProps(rest, filteredButtonProps)}
         ref={buttonRef}
@@ -132,7 +132,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
         </>
       </button>
     );
-  }
+  },
 );
 
 export const MicButton: FC<{

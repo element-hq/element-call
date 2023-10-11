@@ -82,7 +82,7 @@ function MenuItem<T>({
       onClose,
     },
     state,
-    ref
+    ref,
   );
 
   const [isFocused, setFocused] = useState(false);

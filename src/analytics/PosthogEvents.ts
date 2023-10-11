@@ -43,14 +43,14 @@ export class CallEndedTracker {
   public cacheParticipantCountChanged(count: number): void {
     this.cache.maxParticipantsCount = Math.max(
       count,
-      this.cache.maxParticipantsCount
+      this.cache.maxParticipantsCount,
     );
   }
 
   public track(
     callId: string,
     callParticipantsNow: number,
-    sendInstantly: boolean
+    sendInstantly: boolean,
   ): void {
     PosthogAnalytics.instance.trackEvent<CallEnded>(
       {
@@ -60,7 +60,7 @@ export class CallEndedTracker {
         callParticipantsOnLeave: callParticipantsNow,
         callDuration: (Date.now() - this.cache.startTime.getTime()) / 1000,
       },
-      { send_instantly: sendInstantly }
+      { send_instantly: sendInstantly },
     );
   }
 }

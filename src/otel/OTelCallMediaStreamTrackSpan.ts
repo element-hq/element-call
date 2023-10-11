@@ -26,11 +26,11 @@ export class OTelCallMediaStreamTrackSpan {
   public constructor(
     protected readonly oTel: ElementCallOpenTelemetry,
     protected readonly streamSpan: Span,
-    data: TrackStats
+    data: TrackStats,
   ) {
     const ctx = opentelemetry.trace.setSpan(
       opentelemetry.context.active(),
-      streamSpan
+      streamSpan,
     );
     const options = {
       links: [

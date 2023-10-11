@@ -24,13 +24,13 @@ import { Session } from "../ClientContext";
 export function useInteractiveLogin(): (
   homeserver: string,
   username: string,
-  password: string
+  password: string,
 ) => Promise<[MatrixClient, Session]> {
   return useCallback<
     (
       homeserver: string,
       username: string,
-      password: string
+      password: string,
     ) => Promise<[MatrixClient, Session]>
   >(async (homeserver: string, username: string, password: string) => {
     const authClient = createClient({ baseUrl: homeserver });
@@ -70,7 +70,7 @@ export function useInteractiveLogin(): (
         userId: user_id,
         deviceId: device_id,
       },
-      false
+      false,
     );
     /* eslint-enable camelcase */
     return [client, session];

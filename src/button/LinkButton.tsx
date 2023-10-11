@@ -47,7 +47,7 @@ export const LinkButton: FC<Props> = ({
       className={classNames(
         variantToClassName[variant || "secondary"],
         size ? sizeToClassName[size] : [],
-        className
+        className,
       )}
       to={to}
       {...rest}

@@ -23,13 +23,13 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 export function useMatrixRTCSessionMemberships(
-  rtcSession: MatrixRTCSession
+  rtcSession: MatrixRTCSession,
 ): CallMembership[] {
   const [memberships, setMemberships] = useState(rtcSession.memberships);
 
   const onMembershipsChanged = useCallback(() => {
     logger.info(
-      `Memberships changed for call in room ${rtcSession.room.roomId} (${rtcSession.memberships.length} members)`
+      `Memberships changed for call in room ${rtcSession.room.roomId} (${rtcSession.memberships.length} members)`,
     );
     setMemberships(rtcSession.memberships);
   }, [rtcSession]);
@@ -37,13 +37,13 @@ export function useMatrixRTCSessionMemberships(
   useEffect(() => {
     rtcSession.on(
       MatrixRTCSessionEvent.MembershipsChanged,
-      onMembershipsChanged
+      onMembershipsChanged,
     );
 
     return () => {
       rtcSession.off(
         MatrixRTCSessionEvent.MembershipsChanged,
-        onMembershipsChanged
+        onMembershipsChanged,
       );
     };
   }, [rtcSession, onMembershipsChanged]);

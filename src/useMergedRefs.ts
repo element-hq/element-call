@@ -35,5 +35,5 @@ export const useMergedRefs = <T>(
     // Since this isn't an array literal, we can't use the static dependency
     // checker, but that's okay
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    refs
+    refs,
   );

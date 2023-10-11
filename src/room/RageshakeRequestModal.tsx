@@ -47,7 +47,7 @@ export const RageshakeRequestModal: FC<Props> = ({
     <Modal title={t("Debug log request")} open={open} onDismiss={onDismiss}>
       <Body>
         {t(
-          "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log."
+          "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.",
         )}
       </Body>
       <FieldRow>

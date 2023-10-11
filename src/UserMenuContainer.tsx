@@ -34,7 +34,7 @@ export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const onDismissSettingsModal = useCallback(
     () => setSettingsModalOpen(false),
-    [setSettingsModalOpen]
+    [setSettingsModalOpen],
   );
 
   const [defaultSettingsTab, setDefaultSettingsTab] = useState<string>();
@@ -58,7 +58,7 @@ export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
           break;
       }
     },
-    [history, location, logout, setSettingsModalOpen]
+    [history, location, logout, setSettingsModalOpen],
   );
 
   const userName = client?.getUserIdLocalpart() ?? "";

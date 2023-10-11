@@ -22,7 +22,7 @@ import {
 import { useCallback, useEffect, useState } from "react";
 
 export function useMatrixRTCSessionJoinState(
-  rtcSession: MatrixRTCSession
+  rtcSession: MatrixRTCSession,
 ): boolean {
   const [isJoined, setJoined] = useState(rtcSession.isJoined());
 
@@ -30,7 +30,7 @@ export function useMatrixRTCSessionJoinState(
     logger.info(
       `Session in room ${rtcSession.room.roomId} changed to ${
         rtcSession.isJoined() ? "joined" : "left"
-      }`
+      }`,
     );
     setJoined(rtcSession.isJoined());
   }, [rtcSession]);
@@ -41,7 +41,7 @@ export function useMatrixRTCSessionJoinState(
     return () => {
       rtcSession.off(
         MatrixRTCSessionEvent.JoinStateChanged,
-        onJoinStateChanged
+        onJoinStateChanged,
       );
     };
   }, [rtcSession, onJoinStateChanged]);

@@ -32,11 +32,11 @@ export abstract class OTelCallAbstractMediaStreamSpan {
   public constructor(
     protected readonly oTel: ElementCallOpenTelemetry,
     protected readonly callSpan: Span,
-    protected readonly type: string
+    protected readonly type: string,
   ) {
     const ctx = opentelemetry.trace.setSpan(
       opentelemetry.context.active(),
-      callSpan
+      callSpan,
     );
     const options = {
       links: [
@@ -54,7 +54,7 @@ export abstract class OTelCallAbstractMediaStreamSpan {
       if (!this.trackSpans.has(t.id)) {
         this.trackSpans.set(
           t.id,
-          new OTelCallMediaStreamTrackSpan(this.oTel, this.span, t)
+          new OTelCallMediaStreamTrackSpan(this.oTel, this.span, t),
         );
       }
       this.trackSpans.get(t.id)?.update(t);

@@ -22,7 +22,7 @@ limitations under the License.
 // Array.prototype.findLastIndex
 export function findLastIndex<T>(
   array: T[],
-  predicate: (item: T, index: number) => boolean
+  predicate: (item: T, index: number) => boolean,
 ): number | null {
   for (let i = array.length - 1; i >= 0; i--) {
     if (predicate(array[i], i)) return i;
@@ -36,9 +36,9 @@ export function findLastIndex<T>(
  */
 export const count = <T>(
   array: T[],
-  predicate: (item: T, index: number) => boolean
+  predicate: (item: T, index: number) => boolean,
 ): number =>
   array.reduce(
     (acc, item, index) => (predicate(item, index) ? acc + 1 : acc),
-    0
+    0,
   );

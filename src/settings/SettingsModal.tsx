@@ -69,7 +69,7 @@ export const SettingsModal: FC<Props> = (props) => {
   // Generate a `SelectInput` with a list of devices for a given device kind.
   const generateDeviceSelection = (
     devices: MediaDevice,
-    caption: string
+    caption: string,
   ): ReactNode => {
     if (devices.available.length == 0) return null;
 
@@ -100,7 +100,7 @@ export const SettingsModal: FC<Props> = (props) => {
     (tab: Key) => {
       setSelectedTab(tab.toString());
     },
-    [setSelectedTab]
+    [setSelectedTab],
   );
 
   const optInDescription = (

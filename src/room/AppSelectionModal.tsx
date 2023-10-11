@@ -40,14 +40,14 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
       e.stopPropagation();
       setOpen(false);
     },
-    [setOpen]
+    [setOpen],
   );
 
   const roomSharedKey = useRoomSharedKey(roomId ?? "");
   const roomIsEncrypted = useIsRoomE2EE(roomId ?? "");
   if (roomIsEncrypted && roomSharedKey === undefined) {
     logger.error(
-      "Generating app redirect URL for encrypted room but don't have key available!"
+      "Generating app redirect URL for encrypted room but don't have key available!",
     );
   }
 
@@ -60,7 +60,7 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
     const url = new URL(
       roomId === null
         ? window.location.href
-        : getAbsoluteRoomUrl(roomId, undefined, roomSharedKey ?? undefined)
+        : getAbsoluteRoomUrl(roomId, undefined, roomSharedKey ?? undefined),
     );
     // Edit the URL to prevent the app selection prompt from appearing a second
     // time within the app, and to keep the user confined to the current room

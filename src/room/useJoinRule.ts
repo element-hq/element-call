@@ -23,6 +23,6 @@ import { useRoomState } from "./useRoomState";
 export function useJoinRule(room: Room): JoinRule {
   return useRoomState(
     room,
-    useCallback((state) => state.getJoinRule(), [])
+    useCallback((state) => state.getJoinRule(), []),
   );
 }

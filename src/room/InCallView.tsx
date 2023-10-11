@@ -105,7 +105,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const { livekitRoom, connState } = useLiveKit(
     props.muteStates,
     sfuConfig,
-    props.e2eeConfig
+    props.e2eeConfig,
   );
 
   if (!livekitRoom) {
@@ -172,10 +172,10 @@ export const InCallView: FC<InCallViewProps> = ({
     [{ source: Track.Source.ScreenShare, withPlaceholder: false }],
     {
       room: livekitRoom,
-    }
+    },
   );
   const { layout, setLayout } = useVideoGridLayout(
-    screenSharingTracks.length > 0
+    screenSharingTracks.length > 0,
   );
 
   const [showConnectionStats] = useShowConnectionStats();
@@ -188,11 +188,11 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const toggleMicrophone = useCallback(
     () => muteStates.audio.setEnabled?.((e) => !e),
-    [muteStates]
+    [muteStates],
   );
   const toggleCamera = useCallback(
     () => muteStates.video.setEnabled?.((e) => !e),
-    [muteStates]
+    [muteStates],
   );
 
   // This function incorrectly assumes that there is a camera and microphone, which is not always the case.
@@ -201,7 +201,7 @@ export const InCallView: FC<InCallViewProps> = ({
     containerRef1,
     toggleMicrophone,
     toggleCamera,
-    (muted) => muteStates.audio.setEnabled?.(!muted)
+    (muted) => muteStates.audio.setEnabled?.(!muted),
   );
 
   const onLeavePress = useCallback(() => {
@@ -213,7 +213,7 @@ export const InCallView: FC<InCallViewProps> = ({
       layout === "grid"
         ? ElementWidgetActions.TileLayout
         : ElementWidgetActions.SpotlightLayout,
-      {}
+      {},
     );
   }, [layout]);
 
@@ -231,14 +231,14 @@ export const InCallView: FC<InCallViewProps> = ({
       widget.lazyActions.on(ElementWidgetActions.TileLayout, onTileLayout);
       widget.lazyActions.on(
         ElementWidgetActions.SpotlightLayout,
-        onSpotlightLayout
+        onSpotlightLayout,
       );
 
       return () => {
         widget!.lazyActions.off(ElementWidgetActions.TileLayout, onTileLayout);
         widget!.lazyActions.off(
           ElementWidgetActions.SpotlightLayout,
-          onSpotlightLayout
+          onSpotlightLayout,
         );
       };
     }
@@ -261,7 +261,7 @@ export const InCallView: FC<InCallViewProps> = ({
       (noControls
         ? items.find((item) => item.isSpeaker) ?? items.at(0) ?? null
         : null),
-    [fullscreenItem, noControls, items]
+    [fullscreenItem, noControls, items],
   );
 
   const Grid =
@@ -320,18 +320,18 @@ export const InCallView: FC<InCallViewProps> = ({
   };
 
   const rageshakeRequestModalProps = useRageshakeRequestModal(
-    rtcSession.room.roomId
+    rtcSession.room.roomId,
   );
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   const openSettings = useCallback(
     () => setSettingsModalOpen(true),
-    [setSettingsModalOpen]
+    [setSettingsModalOpen],
   );
   const closeSettings = useCallback(
     () => setSettingsModalOpen(false),
-    [setSettingsModalOpen]
+    [setSettingsModalOpen],
   );
 
   const toggleScreensharing = useCallback(async () => {
@@ -365,7 +365,7 @@ export const InCallView: FC<InCallViewProps> = ({
         onPress={toggleCamera}
         disabled={muteStates.video.setEnabled === null}
         data-testid="incall_videomute"
-      />
+      />,
     );
 
     if (!reducedControls) {
@@ -376,14 +376,18 @@ export const InCallView: FC<InCallViewProps> = ({
             enabled={isScreenShareEnabled}
             onPress={toggleScreensharing}
             data-testid="incall_screenshare"
-          />
+          />,
         );
       }
       buttons.push(<SettingsButton key="4" onPress={openSettings} />);
     }
 
     buttons.push(
-      <HangupButton key="6" onPress={onLeavePress} data-testid="incall_leave" />
+      <HangupButton
+        key="6"
+        onPress={onLeavePress}
+        data-testid="incall_leave"
+      />,
     );
     footer = (
       <div className={styles.footer}>
@@ -447,7 +451,7 @@ export const InCallView: FC<InCallViewProps> = ({
 
 function findMatrixMember(
   room: MatrixRoom,
-  id: string
+  id: string,
 ): RoomMember | undefined {
   if (!id) return undefined;
 
@@ -455,7 +459,7 @@ function findMatrixMember(
   // must be at least 3 parts because we know the first part is a userId which must necessarily contain a colon
   if (parts.length < 3) {
     logger.warn(
-      "Livekit participants ID doesn't look like a userId:deviceId combination"
+      "Livekit participants ID doesn't look like a userId:deviceId combination",
     );
     return undefined;
   }
@@ -469,7 +473,7 @@ function findMatrixMember(
 function useParticipantTiles(
   livekitRoom: Room,
   matrixRoom: MatrixRoom,
-  connState: ECConnectionState
+  connState: ECConnectionState,
 ): TileDescriptor<ItemData>[] {
   const previousTiles = useRef<TileDescriptor<ItemData>[]>([]);
 
@@ -498,7 +502,7 @@ function useParticipantTiles(
         // connected, this is fine and we'll be in "all ghosts" mode.
         if (id !== "" && member === undefined) {
           logger.warn(
-            `Ruh, roh! No matrix member found for SFU participant '${id}': creating g-g-g-ghost!`
+            `Ruh, roh! No matrix member found for SFU participant '${id}': creating g-g-g-ghost!`,
           );
         }
         allGhosts &&= member === undefined;
@@ -542,11 +546,11 @@ function useParticipantTiles(
         return screenShareTile
           ? [userMediaTile, screenShareTile]
           : [userMediaTile];
-      }
+      },
     );
 
     PosthogAnalytics.instance.eventCallEnded.cacheParticipantCountChanged(
-      tiles.length
+      tiles.length,
     );
 
     // If every item is a ghost, that probably means we're still connecting and

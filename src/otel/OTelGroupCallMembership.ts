@@ -62,7 +62,10 @@ export class OTelGroupCallMembership {
   };
   private readonly speakingSpans = new Map<RoomMember, Map<string, Span>>();
 
-  public constructor(private groupCall: GroupCall, client: MatrixClient) {
+  public constructor(
+    private groupCall: GroupCall,
+    client: MatrixClient,
+  ) {
     const clientId = client.getUserId();
     if (clientId) {
       this.myUserId = clientId;
@@ -79,7 +82,7 @@ export class OTelGroupCallMembership {
   public dispose(): void {
     this.groupCall.removeListener(
       GroupCallEvent.CallsChanged,
-      this.onCallsChanged
+      this.onCallsChanged,
     );
   }
 
@@ -93,22 +96,22 @@ export class OTelGroupCallMembership {
     // Create the main span that tracks the time we intend to be in the call
     this.callMembershipSpan =
       ElementCallOpenTelemetry.instance.tracer.startSpan(
-        "matrix.groupCallMembership"
+        "matrix.groupCallMembership",
       );
     this.callMembershipSpan.setAttribute(
       "matrix.confId",
-      this.groupCall.groupCallId
+      this.groupCall.groupCallId,
     );
     this.callMembershipSpan.setAttribute("matrix.userId", this.myUserId);
     this.callMembershipSpan.setAttribute("matrix.deviceId", this.myDeviceId);
     this.callMembershipSpan.setAttribute(
       "matrix.displayName",
-      this.myMember ? this.myMember.name : "unknown-name"
+      this.myMember ? this.myMember.name : "unknown-name",
     );
 
     this.groupCallContext = opentelemetry.trace.setSpan(
       opentelemetry.context.active(),
-      this.callMembershipSpan
+      this.callMembershipSpan,
     );
 
     this.callMembershipSpan?.addEvent("matrix.joinCall");
@@ -138,7 +141,7 @@ export class OTelGroupCallMembership {
 
     this.callMembershipSpan?.addEvent(
       `matrix.roomStateEvent_${event.getType()}`,
-      ObjectFlattener.flattenVoipEvent(event.getContent())
+      ObjectFlattener.flattenVoipEvent(event.getContent()),
     );
   }
 
@@ -150,7 +153,7 @@ export class OTelGroupCallMembership {
             const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
               `matrix.call`,
               undefined,
-              this.groupCallContext
+              this.groupCallContext,
             );
             // XXX: anonymity
             span.setAttribute("matrix.call.target.userId", userId);
@@ -160,7 +163,7 @@ export class OTelGroupCallMembership {
             span.setAttribute("matrix.call.target.displayName", displayName);
             this.callsByCallId.set(
               call.callId,
-              new OTelCall(userId, deviceId, call, span)
+              new OTelCall(userId, deviceId, call, span),
             );
           }
         }
@@ -210,12 +213,12 @@ export class OTelGroupCallMembership {
     if (event.type === "toDevice") {
       callTrackingInfo.span.addEvent(
         `matrix.sendToDeviceEvent_${event.eventType}`,
-        ObjectFlattener.flattenVoipEvent(event)
+        ObjectFlattener.flattenVoipEvent(event),
       );
     } else if (event.type === "sendEvent") {
       callTrackingInfo.span.addEvent(
         `matrix.sendToRoomEvent_${event.eventType}`,
-        ObjectFlattener.flattenVoipEvent(event)
+        ObjectFlattener.flattenVoipEvent(event),
       );
     }
   }
@@ -239,7 +242,7 @@ export class OTelGroupCallMembership {
         "matrix.receive_voip_event_unknown_callid",
         {
           "sender.userId": event.getSender(),
-        }
+        },
       );
       logger.error("Received call event for unknown call ID " + callId);
       return;
@@ -284,7 +287,7 @@ export class OTelGroupCallMembership {
   public onSpeaking(
     member: RoomMember,
     deviceId: string,
-    speaking: boolean
+    speaking: boolean,
   ): void {
     if (speaking) {
       // Ensure that there's an audio activity span for this speaker
@@ -298,7 +301,7 @@ export class OTelGroupCallMembership {
         const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
           "matrix.audioActivity",
           undefined,
-          this.groupCallContext
+          this.groupCallContext,
         );
         span.setAttribute("matrix.userId", member.userId);
         span.setAttribute("matrix.displayName", member.rawDisplayName);
@@ -336,7 +339,7 @@ export class OTelGroupCallMembership {
   }
 
   public onCallFeedStatsReport(
-    report: GroupCallStatsReport<CallFeedReport>
+    report: GroupCallStatsReport<CallFeedReport>,
   ): void {
     if (!ElementCallOpenTelemetry.instance) return;
     let call: OTelCall | undefined;
@@ -354,10 +357,10 @@ export class OTelGroupCallMembership {
           "call.opponentMemberId": report.report?.opponentMemberId
             ? report.report?.opponentMemberId
             : "unknown",
-        }
+        },
       );
       logger.error(
-        `Received ${OTelStatsReportType.CallFeedReport} with unknown call ID: ${callId}`
+        `Received ${OTelStatsReportType.CallFeedReport} with unknown call ID: ${callId}`,
       );
       return;
     } else {
@@ -367,26 +370,26 @@ export class OTelGroupCallMembership {
   }
 
   public onConnectionStatsReport(
-    statsReport: GroupCallStatsReport<ConnectionStatsReport>
+    statsReport: GroupCallStatsReport<ConnectionStatsReport>,
   ): void {
     this.buildCallStatsSpan(
       OTelStatsReportType.ConnectionReport,
-      statsReport.report
+      statsReport.report,
     );
   }
 
   public onByteSentStatsReport(
-    statsReport: GroupCallStatsReport<ByteSentStatsReport>
+    statsReport: GroupCallStatsReport<ByteSentStatsReport>,
   ): void {
     this.buildCallStatsSpan(
       OTelStatsReportType.ByteSentReport,
-      statsReport.report
+      statsReport.report,
     );
   }
 
   public buildCallStatsSpan(
     type: OTelStatsReportType,
-    report: ByteSentStatsReport | ConnectionStatsReport
+    report: ByteSentStatsReport | ConnectionStatsReport,
   ): void {
     if (!ElementCallOpenTelemetry.instance) return;
     let call: OTelCall | undefined;
@@ -409,7 +412,7 @@ export class OTelGroupCallMembership {
     const data = ObjectFlattener.flattenReportObject(type, report);
     const ctx = opentelemetry.trace.setSpan(
       opentelemetry.context.active(),
-      call.span
+      call.span,
     );
 
     const options = {
@@ -423,20 +426,20 @@ export class OTelGroupCallMembership {
     const span = ElementCallOpenTelemetry.instance.tracer.startSpan(
       type,
       options,
-      ctx
+      ctx,
     );
 
     span.setAttribute("matrix.callId", callId ?? "unknown");
     span.setAttribute(
       "matrix.opponentMemberId",
-      report.opponentMemberId ? report.opponentMemberId : "unknown"
+      report.opponentMemberId ? report.opponentMemberId : "unknown",
     );
     span.addEvent("matrix.call.connection_stats_event", data);
     span.end();
   }
 
   public onSummaryStatsReport(
-    statsReport: GroupCallStatsReport<SummaryStatsReport>
+    statsReport: GroupCallStatsReport<SummaryStatsReport>,
   ): void {
     if (!ElementCallOpenTelemetry.instance) return;
 
@@ -445,12 +448,12 @@ export class OTelGroupCallMembership {
     if (this.statsReportSpan.span === undefined && this.callMembershipSpan) {
       const ctx = setSpan(
         opentelemetry.context.active(),
-        this.callMembershipSpan
+        this.callMembershipSpan,
       );
       const span = ElementCallOpenTelemetry.instance?.tracer.startSpan(
         "matrix.groupCallMembership.summaryReport",
         undefined,
-        ctx
+        ctx,
       );
       if (span === undefined) {
         return;
@@ -459,7 +462,7 @@ export class OTelGroupCallMembership {
       span.setAttribute("matrix.userId", this.myUserId);
       span.setAttribute(
         "matrix.displayName",
-        this.myMember ? this.myMember.name : "unknown-name"
+        this.myMember ? this.myMember.name : "unknown-name",
       );
       span.addEvent(type, data);
       span.end();

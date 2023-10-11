@@ -22,6 +22,6 @@ import { useRoomState } from "./useRoomState";
 export function useRoomAvatar(room: Room): string | null {
   return useRoomState(
     room,
-    useCallback(() => room.getMxcAvatarUrl(), [room])
+    useCallback(() => room.getMxcAvatarUrl(), [room]),
   );
 }
