@@ -171,6 +171,7 @@ export function useLiveKit(
           // itself we need might need to update the mute state right away.
           // This async recursion makes sure that setCamera/MicrophoneEnabled is
           // called as little times as possible.
+          await new Promise((r) => setTimeout(r, 20));
           syncMuteStateAudio();
         }
       };
@@ -187,6 +188,7 @@ export function useLiveKit(
           }
           videoMuteUpdating.current = false;
           // see above
+          await new Promise((r) => setTimeout(r, 20));
           syncMuteStateVideo();
         }
       };
