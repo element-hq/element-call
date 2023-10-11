@@ -154,7 +154,7 @@ export function useLiveKit(
         audio: muteStates.audio.enabled,
         video: muteStates.video.enabled,
       };
-      const syncMuteStateAudio = async () => {
+      const syncMuteStateAudio = async (): Promise<void> => {
         if (
           participant.isMicrophoneEnabled !== buttonEnabled.current.audio &&
           !audioMuteUpdating.current
@@ -174,7 +174,7 @@ export function useLiveKit(
           syncMuteStateAudio();
         }
       };
-      const syncMuteStateVideo = async () => {
+      const syncMuteStateVideo = async (): Promise<void> => {
         if (
           participant.isCameraEnabled !== buttonEnabled.current.video &&
           !videoMuteUpdating.current
@@ -198,7 +198,7 @@ export function useLiveKit(
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
     if (room !== undefined && connectionState === ConnectionState.Connected) {
-      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice) => {
+      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice): void => {
         const id = device.selectedId;
 
         // Detect if we're trying to use chrome's default device, in which case

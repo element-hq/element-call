@@ -30,7 +30,7 @@ import {
   setLogLevel,
 } from "livekit-client";
 
-import App from "./App";
+import { App } from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
 

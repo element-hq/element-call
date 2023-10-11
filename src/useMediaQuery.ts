@@ -21,7 +21,7 @@ import { useEventTarget } from "./useEvents";
 /**
  * React hook that tracks whether the given media query matches.
  */
-export const useMediaQuery = (query: string) => {
+export function useMediaQuery(query: string): boolean {
   const mediaQuery = useMemo(() => matchMedia(query), [query]);
 
   const [numChanges, setNumChanges] = useState(0);
@@ -34,4 +34,4 @@ export const useMediaQuery = (query: string) => {
   // We want any change to the update counter to trigger an update here
   // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => mediaQuery.matches, [mediaQuery, numChanges]);
-};
+}

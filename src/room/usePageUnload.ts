@@ -18,11 +18,11 @@ import { useEffect } from "react";
 
 import { platform } from "../Platform";
 
-export function usePageUnload(callback: () => void) {
+export function usePageUnload(callback: () => void): void {
   useEffect(() => {
     let pageVisibilityTimeout: ReturnType<typeof setTimeout>;
 
-    function onBeforeUnload(event: PageTransitionEvent) {
+    function onBeforeUnload(event: PageTransitionEvent): void {
       if (event.type === "visibilitychange") {
         if (document.visibilityState === "visible") {
           clearTimeout(pageVisibilityTimeout);

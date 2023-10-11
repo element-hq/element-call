@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Key, useRef, useState } from "react";
+import { Key, ReactNode, useRef, useState } from "react";
 import { AriaMenuOptions, useMenu, useMenuItem } from "@react-aria/menu";
 import { TreeState, useTreeState } from "@react-stately/tree";
 import { mergeProps } from "@react-aria/utils";
@@ -37,7 +37,7 @@ export function Menu<T extends object>({
   onClose,
   label,
   ...rest
-}: MenuProps<T>) {
+}: MenuProps<T>): ReactNode {
   const state = useTreeState<T>({ ...rest, selectionMode: "none" });
   const menuRef = useRef(null);
   const { menuProps } = useMenu<T>(rest, state, menuRef);
@@ -68,7 +68,12 @@ interface MenuItemProps<T> {
   onClose: () => void;
 }
 
-function MenuItem<T>({ item, state, onAction, onClose }: MenuItemProps<T>) {
+function MenuItem<T>({
+  item,
+  state,
+  onAction,
+  onClose,
+}: MenuItemProps<T>): ReactNode {
   const ref = useRef(null);
   const { menuItemProps } = useMenuItem(
     {

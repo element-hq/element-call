@@ -69,7 +69,7 @@ export const RegisterPage: FC = () => {
 
       if (password !== passwordConfirmation) return;
 
-      const submit = async () => {
+      const submit = async (): Promise<void> => {
         setRegistering(true);
 
         const recaptchaResponse = await execute();
@@ -184,7 +184,7 @@ export const RegisterPage: FC = () => {
                   required
                   name="password"
                   type="password"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
                     setPassword(e.target.value)
                   }
                   value={password}
@@ -198,7 +198,7 @@ export const RegisterPage: FC = () => {
                   required
                   type="password"
                   name="passwordConfirmation"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
                     setPasswordConfirmation(e.target.value)
                   }
                   value={passwordConfirmation}

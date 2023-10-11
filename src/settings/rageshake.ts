@@ -41,6 +41,7 @@ import EventEmitter from "events";
 import { throttle } from "lodash";
 import { logger } from "matrix-js-sdk/src/logger";
 import { randomString } from "matrix-js-sdk/src/randomstring";
+import { LoggingMethod } from "loglevel";
 
 // the length of log data we keep in indexeddb (and include in the reports)
 const MAX_LOG_SIZE = 1024 * 1024 * 5; // 5 MB
@@ -130,7 +131,7 @@ class IndexedDBLogStore {
   private flushAgainPromise?: Promise<void>;
   private id: string;
 
-  constructor(
+  public constructor(
     private indexedDB: IDBFactory,
     private loggerInstance: ConsoleLogger
   ) {
@@ -146,20 +147,20 @@ class IndexedDBLogStore {
   public connect(): Promise<void> {
     const req = this.indexedDB.open("logs");
     return new Promise((resolve, reject) => {
-      req.onsuccess = () => {
+      req.onsuccess = (): void => {
         this.db = req.result;
 
         resolve();
       };
 
-      req.onerror = () => {
+      req.onerror = (): void => {
         const err = "Failed to open log database: " + req?.error?.name;
         logger.error(err);
         reject(new Error(err));
       };
 
       // First time: Setup the object store
-      req.onupgradeneeded = () => {
+      req.onupgradeneeded = (): void => {
         const db = req.result;
         // This is the log entries themselves. Each entry is a chunk of
         // logs (ie multiple lines). 'id' is the instance ID (so logs with
@@ -190,7 +191,7 @@ class IndexedDBLogStore {
     });
   }
 
-  private onLoggerLog = () => {
+  private onLoggerLog = (): void => {
     if (!this.db) return;
 
     this.throttledFlush();
@@ -261,10 +262,10 @@ class IndexedDBLogStore {
       }
       const txn = this.db.transaction(["logs", "logslastmod"], "readwrite");
       const objStore = txn.objectStore("logs");
-      txn.oncomplete = () => {
+      txn.oncomplete = (): void => {
         resolve();
       };
-      txn.onerror = (event) => {
+      txn.onerror = (event): void => {
         logger.error("Failed to flush logs : ", event);
         reject(new Error("Failed to write logs: " + txn?.error?.message));
       };
@@ -305,10 +306,10 @@ class IndexedDBLogStore {
           .index("id")
           .openCursor(IDBKeyRange.only(id), "prev");
         let lines = "";
-        query.onerror = () => {
+        query.onerror = (): void => {
           reject(new Error("Query failed: " + query?.error?.message));
         };
-        query.onsuccess = () => {
+        query.onsuccess = (): void => {
           const cursor = query.result;
           if (!cursor) {
             resolve(lines);
@@ -351,7 +352,7 @@ class IndexedDBLogStore {
         const o = txn.objectStore("logs");
         // only load the key path, not the data which may be huge
         const query = o.index("id").openKeyCursor(IDBKeyRange.only(id));
-        query.onsuccess = () => {
+        query.onsuccess = (): void => {
           const cursor = query.result;
           if (!cursor) {
             return;
@@ -359,10 +360,10 @@ class IndexedDBLogStore {
           o.delete(cursor.primaryKey);
           cursor.continue();
         };
-        txn.oncomplete = () => {
+        txn.oncomplete = (): void => {
           resolve();
         };
-        txn.onerror = () => {
+        txn.onerror = (): void => {
           reject(
             new Error(
               "Failed to delete logs for " + `'${id}' : ${txn?.error?.message}`
@@ -449,11 +450,11 @@ function selectQuery<T>(
   const query = store.openCursor(keyRange);
   return new Promise((resolve, reject) => {
     const results: T[] = [];
-    query.onerror = () => {
+    query.onerror = (): void => {
       reject(new Error("Query failed: " + query?.error?.message));
     };
     // collect results
-    query.onsuccess = () => {
+    query.onsuccess = (): void => {
       const cursor = query.result;
       if (!cursor) {
         resolve(results);
@@ -593,10 +594,14 @@ type LogLevelString = keyof typeof LogLevel;
  * took loglevel's example honouring log levels). Adds a loglevel logging extension
  * in the recommended way.
  */
-export function setLogExtension(extension: LogExtensionFunc) {
+export function setLogExtension(extension: LogExtensionFunc): void {
   const originalFactory = logger.methodFactory;
 
-  logger.methodFactory = function (methodName, configLevel, loggerName) {
+  logger.methodFactory = function (
+    methodName,
+    configLevel,
+    loggerName
+  ): LoggingMethod {
     const rawMethod = originalFactory(methodName, configLevel, loggerName);
 
     const logLevel = LogLevel[methodName as LogLevelString];

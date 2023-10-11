@@ -68,7 +68,7 @@ interface WidgetHelpers {
  * is declared and initialized on the top level because the widget messaging
  * needs to be set up ASAP on load to ensure it doesn't miss any requests.
  */
-export const widget: WidgetHelpers | null = (() => {
+export const widget = ((): WidgetHelpers | null => {
   try {
     const { widgetId, parentUrl } = getUrlParams();
 
@@ -159,7 +159,7 @@ export const widget: WidgetHelpers | null = (() => {
       );
 
       const clientPromise = new Promise<MatrixClient>((resolve) => {
-        (async () => {
+        (async (): Promise<void> => {
           // wait for the config file to be ready (we load very early on so it might not
           // be otherwise)
           await Config.init();
