@@ -106,3 +106,9 @@ Run backend components:
 ```
 yarn backend
 ```
+
+## Documentation
+
+Usage and other technical details about the project can be found here:
+
+[**Docs**](./docs/README.md)
