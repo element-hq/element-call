@@ -36,7 +36,6 @@ module.exports = {
   rules: {
     "matrix-org/require-copyright-header": ["error", COPYRIGHT_HEADER],
     "jsx-a11y/media-has-caption": "off",
-    "deprecate/import": "off", // Disabled because it crashes the linter
     // We should use the js-sdk logger, never console directly.
     "no-console": ["error"],
   },
