@@ -166,6 +166,12 @@ export function useLiveKit(
             logger.error("Failed to sync audio mute state with LiveKit", e);
           }
           audioMuteUpdating.current = false;
+          // await participant.setMicrophoneEnabled can return immediately in some instances,
+          // so that participant.isMicrophoneEnabled !== buttonEnabled.current.audio still holds true.
+          // This happens if the device is still in a pending state
+          // "sleeping" here makes sure we let react do its thing so that participant.isMicrophoneEnabled is updated,
+          // so we do not end up in a recursion loop.
+          await new Promise((r) => setTimeout(r, 20));
           // Run the check again after the change is done. Because the user
           // can update the state (presses mute button) while the device is enabling
           // itself we need might need to update the mute state right away.
@@ -186,6 +192,8 @@ export function useLiveKit(
             logger.error("Failed to sync audio mute state with LiveKit", e);
           }
           videoMuteUpdating.current = false;
+          // see above
+          await new Promise((r) => setTimeout(r, 20));
           // see above
           syncMuteStateVideo();
         }
