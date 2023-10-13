@@ -29,12 +29,11 @@ import { Drawer } from "vaul";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import CloseIcon from "@vector-im/compound-design-tokens/icons/close.svg?react";
 import classNames from "classnames";
-import { Heading } from "@vector-im/compound-web";
+import { Heading, Glass } from "@vector-im/compound-web";
 
 import styles from "./Modal.module.css";
 import overlayStyles from "./Overlay.module.css";
 import { useMediaQuery } from "./useMediaQuery";
-import { Glass } from "./Glass";
 
 // TODO: Support tabs
 export interface Props extends AriaDialogProps {
@@ -118,7 +117,6 @@ export const Modal: FC<Props> = ({
           />
           <DialogContent asChild {...rest}>
             <Glass
-              frosted
               className={classNames(
                 className,
                 overlayStyles.overlay,
