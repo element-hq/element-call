@@ -40,7 +40,6 @@ import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMembership
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
 import { useIsRoomE2EE, useRoomSharedKey } from "../e2ee/sharedKeyManagement";
-import { useEnableE2EE } from "../settings/useSetting";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
@@ -256,8 +255,6 @@ export const GroupCallView: FC<Props> = ({
     }
   }, [isJoined, rtcSession]);
 
-  const [e2eeEnabled] = useEnableE2EE();
-
   const e2eeConfig = useMemo(
     () => (e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined),
     [e2eeSharedKey],
@@ -293,7 +290,7 @@ export const GroupCallView: FC<Props> = ({
 
   const { t } = useTranslation();
 
-  if (e2eeEnabled && isRoomE2EE && !e2eeSharedKey) {
+  if (isRoomE2EE && !e2eeSharedKey) {
     return (
       <ErrorView
         error={
@@ -317,8 +314,6 @@ export const GroupCallView: FC<Props> = ({
         </Link>
       </FullScreenView>
     );
-  } else if (!e2eeEnabled && isRoomE2EE) {
-    return <ErrorView error={new Error("You need to enable E2EE to join.")} />;
   }
 
   const shareModal = (

@@ -23,7 +23,6 @@ import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import type { Room } from "matrix-js-sdk/src/models/room";
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import { useEnableE2EE } from "../settings/useSetting";
 
 export type GroupCallLoaded = {
   kind: "loaded";
@@ -56,8 +55,6 @@ export const useLoadGroupCall = (
 ): GroupCallStatus => {
   const { t } = useTranslation();
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
-
-  const [e2eeEnabled] = useEnableE2EE();
 
   useEffect(() => {
     const fetchOrCreateRoom = async (): Promise<Room> => {
@@ -129,7 +126,7 @@ export const useLoadGroupCall = (
       .then(fetchOrCreateGroupCall)
       .then((rtcSession) => setState({ kind: "loaded", rtcSession }))
       .catch((error) => setState({ kind: "failed", error }));
-  }, [client, roomIdOrAlias, viaServers, t, e2eeEnabled]);
+  }, [client, roomIdOrAlias, viaServers, t]);
 
   return state;
 };
