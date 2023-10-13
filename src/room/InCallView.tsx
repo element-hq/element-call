@@ -87,9 +87,6 @@ import {
 import { useOpenIDSFU } from "../livekit/openIDSFU";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
-// There is currently a bug in Safari our our code with cloning and sending MediaStreams
-// or with getUsermedia and getDisplaymedia being used within the same session.
-// For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 // How long we wait after a focus switch before showing the real participant list again
@@ -369,7 +366,7 @@ export const InCallView: FC<InCallViewProps> = ({
     );
 
     if (!reducedControls) {
-      if (canScreenshare && !hideScreensharing && !isSafari) {
+      if (canScreenshare && !hideScreensharing) {
         buttons.push(
           <ScreenshareButton
             key="3"
