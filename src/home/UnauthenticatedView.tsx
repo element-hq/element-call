@@ -41,7 +41,7 @@ import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
-import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
+import { useOptInAnalytics } from "../settings/useSetting";
 import { Config } from "../config/Config";
 
 export const UnauthenticatedView: FC = () => {
@@ -61,8 +61,6 @@ export const UnauthenticatedView: FC = () => {
   const [onFinished, setOnFinished] = useState<() => void>();
   const history = useHistory();
   const { t } = useTranslation();
-
-  const [e2eeEnabled] = useEnableE2EE();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     (e) => {
@@ -86,11 +84,7 @@ export const UnauthenticatedView: FC = () => {
 
         let createRoomResult;
         try {
-          createRoomResult = await createRoom(
-            client,
-            roomName,
-            e2eeEnabled ?? false,
-          );
+          createRoomResult = await createRoom(client, roomName, true);
         } catch (error) {
           if (!setClient) {
             throw error;
@@ -142,7 +136,6 @@ export const UnauthenticatedView: FC = () => {
       history,
       setJoinExistingCallModalOpen,
       setClient,
-      e2eeEnabled,
     ],
   );
 

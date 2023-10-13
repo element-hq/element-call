@@ -38,7 +38,7 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { Caption } from "../typography/Typography";
 import { Form } from "../form/Form";
-import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
+import { useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 
 interface Props {
@@ -57,7 +57,6 @@ export const RegisteredView: FC<Props> = ({ client }) => {
     () => setJoinExistingCallModalOpen(false),
     [setJoinExistingCallModalOpen],
   );
-  const [e2eeEnabled] = useEnableE2EE();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     (e: FormEvent) => {
@@ -73,11 +72,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         setError(undefined);
         setLoading(true);
 
-        const createRoomResult = await createRoom(
-          client,
-          roomName,
-          e2eeEnabled ?? false,
-        );
+        const createRoomResult = await createRoom(client, roomName, true);
 
         history.push(
           getRelativeRoomUrl(
@@ -101,7 +96,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         }
       });
     },
-    [client, history, setJoinExistingCallModalOpen, e2eeEnabled],
+    [client, history, setJoinExistingCallModalOpen],
   );
 
   const recentRooms = useGroupCallRooms(client);

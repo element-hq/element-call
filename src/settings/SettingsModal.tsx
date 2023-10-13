@@ -33,7 +33,6 @@ import {
   useOptInAnalytics,
   useDeveloperSettingsTab,
   useShowConnectionStats,
-  useEnableE2EE,
   isFirefox,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
@@ -64,7 +63,6 @@ export const SettingsModal: FC<Props> = (props) => {
     useDeveloperSettingsTab();
   const [showConnectionStats, setShowConnectionStats] =
     useShowConnectionStats();
-  const [enableE2EE, setEnableE2EE] = useEnableE2EE();
 
   // Generate a `SelectInput` with a list of devices for a given device kind.
   const generateDeviceSelection = (
@@ -240,23 +238,6 @@ export const SettingsModal: FC<Props> = (props) => {
           checked={showConnectionStats}
           onChange={(e: ChangeEvent<HTMLInputElement>): void =>
             setShowConnectionStats(e.target.checked)
-          }
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
-          id="enableE2EE"
-          name="end-to-end-encryption"
-          label={t("Enable end-to-end encryption (password protected calls)")}
-          description={
-            !setEnableE2EE &&
-            t("End-to-end encryption isn't supported on your browser.")
-          }
-          disabled={!setEnableE2EE}
-          type="checkbox"
-          checked={enableE2EE ?? undefined}
-          onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-            setEnableE2EE?.(e.target.checked)
           }
         />
       </FieldRow>
