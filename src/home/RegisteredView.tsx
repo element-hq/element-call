@@ -40,7 +40,6 @@ import { Caption } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
-import { E2EEBanner } from "../E2EEBanner";
 
 interface Props {
   client: MatrixClient;
@@ -156,7 +155,6 @@ export const RegisteredView: FC<Props> = ({ client }) => {
                 <AnalyticsNotice />
               </Caption>
             )}
-            <E2EEBanner />
             {error && (
               <FieldRow className={styles.fieldRow}>
                 <ErrorMessage error={error} />
