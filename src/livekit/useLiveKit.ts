@@ -127,7 +127,7 @@ export function useLiveKit(
 
   const connectionState = useECConnectionState(
     {
-      deviceId: initialDevices.current.audioOutput.selectedId,
+      deviceId: initialDevices.current.audioInput.selectedId,
     },
     initialMuteStates.current.audio.enabled,
     room,
