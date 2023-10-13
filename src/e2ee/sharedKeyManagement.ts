@@ -16,7 +16,6 @@ limitations under the License.
 
 import { useEffect, useMemo } from "react";
 
-import { useEnableE2EE } from "../settings/useSetting";
 import { setLocalStorageItem, useLocalStorage } from "../useLocalStorage";
 import { useClient } from "../ClientContext";
 import { useUrlParams } from "../UrlParams";
@@ -27,10 +26,9 @@ export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
 
 const useInternalRoomSharedKey = (roomId: string): string | null => {
   const key = getRoomSharedKeyLocalStorageKey(roomId);
-  const [e2eeEnabled] = useEnableE2EE();
   const roomSharedKey = useLocalStorage(key)[0];
 
-  return e2eeEnabled ? roomSharedKey : null;
+  return roomSharedKey;
 };
 
 /**
