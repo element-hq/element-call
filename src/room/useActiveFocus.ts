@@ -20,6 +20,7 @@ import {
 } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { useCallback, useEffect, useState } from "react";
 import { deepCompare } from "matrix-js-sdk/src/utils";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { LivekitFocus } from "../livekit/LivekitFocus";
 
@@ -27,7 +28,16 @@ function getActiveFocus(
   rtcSession: MatrixRTCSession,
 ): LivekitFocus | undefined {
   const oldestMembership = rtcSession.getOldestMembership();
-  return oldestMembership?.getActiveFoci()[0] as LivekitFocus;
+  const focus = oldestMembership?.getActiveFoci()[0] as LivekitFocus;
+
+  if (focus) {
+    logger.info(
+      `Got active focus for call from ${oldestMembership?.sender}/${oldestMembership?.deviceId}`,
+      focus,
+    );
+  }
+
+  return focus;
 }
 
 /**
