@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { useCallback, useMemo } from "react";
-import { isE2EESupported } from "livekit-client";
 
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import {
@@ -87,16 +86,6 @@ export const useSpatialAudio = (): DisableableSetting<boolean> => {
 export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
   const settingVal = useSetting<boolean | null>("opt-in-analytics", null);
   if (PosthogAnalytics.instance.isEnabled()) return settingVal;
-
-  return [false, null];
-};
-
-export const useEnableE2EE = (): DisableableSetting<boolean | null> => {
-  const settingVal = useSetting<boolean | null>(
-    "enable-end-to-end-encryption",
-    true,
-  );
-  if (isE2EESupported()) return settingVal;
 
   return [false, null];
 };
