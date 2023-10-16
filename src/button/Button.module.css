@@ -230,6 +230,13 @@ limitations under the License.
   border-radius: 100%;
 }
 
+.buttonWithDropdown {
+  display: flex;
+  flex-direction: row;
+
+  gap: 8px;
+}
+
 @media (hover: hover) {
   .toolbarButton:hover,
   .toolbarButtonSecondary:hover {

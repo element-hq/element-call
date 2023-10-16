@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import { forwardRef } from "react";
+import { forwardRef, useCallback, useState } from "react";
 import { PressEvent } from "@react-types/shared";
 import classNames from "classnames";
 import { useButton } from "@react-aria/button";
@@ -28,6 +28,7 @@ import { ReactComponent as EndCallIcon } from "@vector-im/compound-design-tokens
 import { ReactComponent as ShareScreenSolidIcon } from "@vector-im/compound-design-tokens/icons/share-screen-solid.svg";
 import { ReactComponent as SettingsSolidIcon } from "@vector-im/compound-design-tokens/icons/settings-solid.svg";
 import { ReactComponent as ChevronDownIcon } from "@vector-im/compound-design-tokens/icons/chevron-down.svg";
+import { ChangeEvent } from "react";
 
 import styles from "./Button.module.css";
 import { ReactComponent as Fullscreen } from "../icons/Fullscreen.svg";
@@ -137,6 +138,47 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
     );
   }
 );
+
+export function ButtonWithDropdown({
+  label,
+  options,
+  onOptionSelect,
+  ...rest
+}: {
+  label: string;
+  options: { label: string; id: string }[];
+  onOptionSelect: (id: string) => void;
+}) {
+  const [selectedUserId, setSelectedUserId] = useState<string>(options[0].id);
+
+  const onPress = useCallback(() => {
+    if (!selectedUserId) return;
+
+    onOptionSelect(selectedUserId);
+  }, [onOptionSelect, selectedUserId]);
+
+  const onSelectedOptionChange = useCallback(
+    (event: ChangeEvent<HTMLSelectElement>) => {
+      setSelectedUserId(event.target.value);
+    },
+    [setSelectedUserId]
+  );
+
+  return (
+    <div className={styles.buttonWithDropdown}>
+      <Tooltip label={label}>
+        <Button onPress={onPress} {...rest}>
+          {label}
+        </Button>
+      </Tooltip>
+      <select onChange={onSelectedOptionChange}>
+        {options.map((o) => (
+          <option id={o.id}> {o.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+}
 
 export function MicButton({
   muted,
