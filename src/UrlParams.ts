@@ -210,7 +210,7 @@ export const getUrlParams = (
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
     analyticsID: parser.getParam("analyticsID"),
     allowIceFallback: parser.getFlagParam("allowIceFallback"),
-    perParticipantE2EE: true /*parser.getFlagParam("perParticipantE2EE")*/,
+    perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
   };
 };
 
