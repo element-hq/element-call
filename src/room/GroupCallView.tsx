@@ -44,6 +44,8 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
+import { E2EEConfig, E2EEMode } from "../livekit/useLiveKit";
+import { useUrlParams } from "../UrlParams";
 
 declare global {
   interface Window {
@@ -85,6 +87,7 @@ export const GroupCallView: FC<Props> = ({
   const roomName = useRoomName(rtcSession.room);
   const roomAvatar = useRoomAvatar(rtcSession.room);
   const roomEncrypted = useIsRoomE2EE(rtcSession.room.roomId)!;
+  const { perParticipantE2EE } = useUrlParams();
 
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
@@ -176,7 +179,7 @@ export const GroupCallView: FC<Props> = ({
           }
         }
 
-        enterRTCSession(rtcSession);
+        enterRTCSession(rtcSession, perParticipantE2EE);
 
         PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
         // we only have room sessions right now, so call ID is the emprty string - we use the room ID
@@ -195,7 +198,7 @@ export const GroupCallView: FC<Props> = ({
         widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
     }
-  }, [rtcSession, preload]);
+  }, [rtcSession, preload, perParticipantE2EE]);
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
@@ -255,16 +258,19 @@ export const GroupCallView: FC<Props> = ({
     }
   }, [isJoined, rtcSession]);
 
-  const e2eeConfig = useMemo(
-    () => (e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined),
-    [e2eeSharedKey],
-  );
+  const e2eeConfig = useMemo((): E2EEConfig | undefined => {
+    if (perParticipantE2EE) {
+      return { mode: E2EEMode.PerParticipantKey };
+    } else if (e2eeSharedKey) {
+      return { mode: E2EEMode.SharedKey, sharedKey: e2eeSharedKey };
+    }
+  }, [perParticipantE2EE, e2eeSharedKey]);
 
   const onReconnect = useCallback(() => {
     setLeft(false);
     setLeaveError(undefined);
-    enterRTCSession(rtcSession);
-  }, [rtcSession]);
+    enterRTCSession(rtcSession, perParticipantE2EE);
+  }, [rtcSession, perParticipantE2EE]);
 
   const joinRule = useJoinRule(rtcSession.room);
 
@@ -380,7 +386,7 @@ export const GroupCallView: FC<Props> = ({
           client={client}
           matrixInfo={matrixInfo}
           muteStates={muteStates}
-          onEnter={(): void => enterRTCSession(rtcSession)}
+          onEnter={(): void => enterRTCSession(rtcSession, perParticipantE2EE)}
           confineToRoom={confineToRoom}
           hideHeader={hideHeader}
           participantCount={participantCount}

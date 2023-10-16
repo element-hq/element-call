@@ -100,6 +100,7 @@ export interface ActiveCallProps
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
   const { livekitRoom, connState } = useLiveKit(
+    props.rtcSession,
     props.muteStates,
     sfuConfig,
     props.e2eeConfig,
