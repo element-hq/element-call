@@ -14,15 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ChangeEvent, useCallback, useState } from "react";
+import { ChangeEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { GroupCallIntent, GroupCallType, MatrixClient } from "matrix-js-sdk";
+import {
+  GroupCallIntent,
+  GroupCallType,
+  MatrixClient,
+  RoomMember,
+} from "matrix-js-sdk";
 import { BreakoutRoomBase } from "matrix-js-sdk/src/@types/breakout";
 import { NewBreakoutRoom } from "matrix-js-sdk/src/@types/breakout";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 
 import { Modal } from "../Modal";
-import { Button, RemoveButton } from "../button/Button";
+import { Button, ButtonWithDropdown, RemoveButton } from "../button/Button";
 import { FieldRow, InputField } from "../input/Input";
 import { arrayFastClone } from "../utils";
 import styles from "./BreakoutRoomModal.module.css";
@@ -35,19 +40,44 @@ interface BreakoutRoom extends BreakoutRoomBase {
   roomId?: string;
 }
 
+interface BreakoutRoomUserProps {
+  userId: string;
+  label: string;
+  onRemove: (id: string) => void;
+}
+
+const BreakoutRoomUser = ({
+  userId,
+  label,
+  onRemove,
+}: BreakoutRoomUserProps) => {
+  const onRemoveButtonPress = useCallback(() => {
+    onRemove(userId);
+  }, [onRemove, userId]);
+
+  return (
+    <div className={styles.breakoutRoomUser}>
+      {label}
+      <RemoveButton onPress={onRemoveButtonPress} />
+    </div>
+  );
+};
+
 interface BreakoutRoomRowProps {
-  index: number;
+  roomIndex: number;
   roomName: string;
-  users: string[];
+  members: RoomMember[];
+  parentRoomMembers: RoomMember[];
   onRoomNameChanged: (index: number, newRoomName: string) => void;
   onUsersChanged: (index: number, newUsers: string[]) => void;
   onRemove: (index: number) => void;
 }
 
 const BreakoutRoomRow = ({
-  index,
+  roomIndex,
   roomName,
-  users,
+  members,
+  parentRoomMembers,
   onRoomNameChanged,
   onUsersChanged,
   onRemove,
@@ -56,29 +86,71 @@ const BreakoutRoomRow = ({
 
   const onRoomNameFieldChange = useCallback(
     (ev: ChangeEvent<HTMLInputElement>) => {
-      onRoomNameChanged(index, ev.currentTarget.value);
+      onRoomNameChanged(roomIndex, ev.currentTarget.value);
     },
-    [onRoomNameChanged, index]
+    [onRoomNameChanged, roomIndex]
   );
 
   const onRemoveClick = useCallback(() => {
-    onRemove(index);
-  }, [onRemove, index]);
+    onRemove(roomIndex);
+  }, [onRemove, roomIndex]);
+
+  const onAddUser = useCallback(
+    (userId: string) => {
+      onUsersChanged(roomIndex, [...members.map((m) => m.userId), userId]);
+    },
+    [onUsersChanged, roomIndex, members]
+  );
+
+  const onRemoveUser = useCallback(
+    (userId: string) => {
+      onUsersChanged(
+        roomIndex,
+        members.filter((m) => m.userId !== userId).map((m) => m.userId)
+      );
+    },
+    [onUsersChanged, roomIndex, members]
+  );
 
   return (
-    <FieldRow className={styles.breakoutRoomNameFieldRow}>
-      <InputField
-        className={styles.breakoutRoomNameField}
-        id="roomName"
-        name="roomName"
-        label={t("Room name")}
-        placeholder={t("Room name")}
-        type="text"
-        onChange={onRoomNameFieldChange}
-        value={roomName}
-      />
-      <RemoveButton onPress={onRemoveClick} />
-    </FieldRow>
+    <div className={styles.breakoutRoom}>
+      <FieldRow className={styles.breakoutRoomNameFieldRow}>
+        <InputField
+          className={styles.breakoutRoomNameField}
+          id="roomName"
+          name="roomName"
+          label={t("Room name")}
+          placeholder={t("Room name")}
+          type="text"
+          onChange={onRoomNameFieldChange}
+          value={roomName}
+        />
+        <RemoveButton onPress={onRemoveClick} />
+      </FieldRow>
+      <div>
+        {members.map((m) => (
+          <BreakoutRoomUser
+            userId={m.userId}
+            label={m.name}
+            onRemove={onRemoveUser}
+          />
+        ))}
+        {parentRoomMembers.find(
+          (rm) => !members.find((m) => rm.userId === m.userId)
+        ) && (
+          <ButtonWithDropdown
+            label={t("Add user")}
+            options={parentRoomMembers
+              .filter((m) => !members.includes(m))
+              .map((m) => ({
+                label: m.name,
+                id: m.userId,
+              }))}
+            onOptionSelect={onAddUser}
+          />
+        )}
+      </div>
+    </div>
   );
 };
 
@@ -97,6 +169,9 @@ export const BreakoutRoomModal = ({
 }: Props) => {
   const { t } = useTranslation();
   const [e2eeEnabled] = useEnableE2EE();
+
+  const room = useMemo(() => client.getRoom(roomId), [client, roomId]);
+  const roomMembers = useMemo(() => room?.getMembers() ?? [], [room]);
 
   const [submitting, setSubmitting] = useState(false);
   const [breakoutRooms, setBreakoutRooms] = useState<BreakoutRoom[]>(() => [
@@ -167,9 +242,12 @@ export const BreakoutRoomModal = ({
         {breakoutRooms.map((r, index) => (
           <BreakoutRoomRow
             key={index}
-            index={index}
+            roomIndex={index}
             roomName={r.roomName}
-            users={r.users}
+            members={(
+              r.users.map((u) => room?.getMember(u)) as RoomMember[]
+            ).filter((m) => !!m)}
+            parentRoomMembers={roomMembers}
             onRoomNameChanged={onRoomNameChanged}
             onUsersChanged={onUsersChanged}
             onRemove={onRemoveRoom}

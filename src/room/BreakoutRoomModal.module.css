@@ -21,6 +21,12 @@ limitations under the License.
   margin-bottom: 24px;
 }
 
+.breakoutRoom {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
 .breakoutRoomNameFieldRow {
   display: flex;
   flex-direction: row;
@@ -34,6 +40,16 @@ limitations under the License.
 
 .breakoutRoomNameField {
   margin-right: 0;
+}
+
+.breakoutRoomUser {
+  display: flex;
+  flex-direction: row;
+}
+
+.breakoutRoomUser button {
+  margin: 0;
+  margin-left: 6px;
 }
 
 .breakoutRoomsButtons {
