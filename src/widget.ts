@@ -77,6 +77,8 @@ export const widget = ((): WidgetHelpers | null => {
       logger.info("Widget API is available");
       const api = new WidgetApi(widgetId, parentOrigin);
       api.requestCapability(MatrixCapabilities.AlwaysOnScreen);
+      api.requestCapabilityToSendEvent(EventType.CallEncryptionPrefix);
+      api.requestCapabilityToReceiveEvent(EventType.CallEncryptionPrefix);
 
       // Set up the lazy action emitter, but only for select actions that we
       // intend for the app to handle

@@ -111,6 +111,10 @@ interface UrlParams {
    * E2EE password
    */
   password: string | null;
+  /**
+   * Whether we the app should use per participant keys for E2EE.
+   */
+  perParticipantE2EE: boolean;
 }
 
 // This is here as a stopgap, but what would be far nicer is a function that
@@ -206,6 +210,7 @@ export const getUrlParams = (
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
     analyticsID: parser.getParam("analyticsID"),
     allowIceFallback: parser.getFlagParam("allowIceFallback"),
+    perParticipantE2EE: true /*parser.getFlagParam("perParticipantE2EE")*/,
   };
 };
 
