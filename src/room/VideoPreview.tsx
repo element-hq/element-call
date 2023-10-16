@@ -25,12 +25,12 @@ import {
 } from "livekit-client";
 import classNames from "classnames";
 import { logger } from "matrix-js-sdk/src/logger";
+import { Glass } from "@vector-im/compound-web";
 
 import { Avatar } from "../Avatar";
 import styles from "./VideoPreview.module.css";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { MuteStates } from "./MuteStates";
-import { Glass } from "../Glass";
 import { useMediaQuery } from "../useMediaQuery";
 
 export type MatrixInfo = {
