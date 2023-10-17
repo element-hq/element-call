@@ -71,20 +71,25 @@ export const BreakoutRoomsOverlay = ({ room }: Props) => {
             // note we explicitly omit the password here as we don't want it on this link because
             // it's just for the user to navigate around and not for sharing
             to={getRelativeRoomUrl(r.roomId, room.name)}
-            className={callListStyles.callTileLink}
+            className={styles.callTileLink}
           >
-            <Avatar
-              id={r.roomId}
-              name={r.roomSummary.name!}
-              size={Size.LG}
-              src={r.roomSummary.avatar_url}
-            />
-            <div className={callListStyles.callInfo}>
-              <Body overflowEllipsis fontWeight="semiBold">
-                {r.roomSummary.name}
-              </Body>
+            <div className={styles.callTileHead}>
+              <Avatar
+                id={r.roomId}
+                name={r.roomSummary.name!}
+                size={Size.XS}
+                src={r.roomSummary.avatar_url}
+                className={styles.callTileAvatar}
+              />
+              <div className={`${callListStyles.callInfo} ${styles.callInfo}`}>
+                <Body overflowEllipsis fontWeight="semiBold">
+                  {r.roomSummary.name}
+                </Body>
+              </div>
             </div>
-            <div className={callListStyles.copyButtonSpacer} />
+            <div className={styles.callTileUsers}>
+              {r.users.map((u) => room.getMember(u)?.name)}
+            </div>
           </Link>
         </div>
       ))}
