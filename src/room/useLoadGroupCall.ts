@@ -23,7 +23,6 @@ import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import type { Room } from "matrix-js-sdk/src/models/room";
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import { useEnableE2EE } from "../settings/useSetting";
 
 export type GroupCallLoaded = {
   kind: "loaded";
@@ -52,12 +51,10 @@ export interface GroupCallLoadState {
 export const useLoadGroupCall = (
   client: MatrixClient,
   roomIdOrAlias: string,
-  viaServers: string[]
+  viaServers: string[],
 ): GroupCallStatus => {
   const { t } = useTranslation();
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
-
-  const [e2eeEnabled] = useEnableE2EE();
 
   useEffect(() => {
     const fetchOrCreateRoom = async (): Promise<Room> => {
@@ -70,7 +67,7 @@ export const useLoadGroupCall = (
         // join anyway but the js-sdk recreates the room if you pass the alias for a
         // room you're already joined to (which it probably ought not to).
         const lookupResult = await client.getRoomIdForAlias(
-          roomIdOrAlias.toLowerCase()
+          roomIdOrAlias.toLowerCase(),
         );
         logger.info(`${roomIdOrAlias} resolved to ${lookupResult.room_id}`);
         room = client.getRoom(lookupResult.room_id);
@@ -81,7 +78,7 @@ export const useLoadGroupCall = (
           });
         } else {
           logger.info(
-            `Already in room ${lookupResult.room_id}, not rejoining.`
+            `Already in room ${lookupResult.room_id}, not rejoining.`,
           );
         }
       } else {
@@ -92,7 +89,7 @@ export const useLoadGroupCall = (
       }
 
       logger.info(
-        `Joined ${roomIdOrAlias}, waiting room to be ready for group calls`
+        `Joined ${roomIdOrAlias}, waiting room to be ready for group calls`,
       );
       await client.waitUntilRoomReadyForGroupCalls(room.roomId);
       logger.info(`${roomIdOrAlias}, is ready for group calls`);
@@ -107,13 +104,13 @@ export const useLoadGroupCall = (
       return rtcSession;
     };
 
-    const waitForClientSyncing = async () => {
+    const waitForClientSyncing = async (): Promise<void> => {
       if (client.getSyncState() !== SyncState.Syncing) {
         logger.debug(
-          "useLoadGroupCall: waiting for client to start syncing..."
+          "useLoadGroupCall: waiting for client to start syncing...",
         );
         await new Promise<void>((resolve) => {
-          const onSync = () => {
+          const onSync = (): void => {
             if (client.getSyncState() === SyncState.Syncing) {
               client.off(ClientEvent.Sync, onSync);
               return resolve();
@@ -129,7 +126,7 @@ export const useLoadGroupCall = (
       .then(fetchOrCreateGroupCall)
       .then((rtcSession) => setState({ kind: "loaded", rtcSession }))
       .catch((error) => setState({ kind: "failed", error }));
-  }, [client, roomIdOrAlias, viaServers, t, e2eeEnabled]);
+  }, [client, roomIdOrAlias, viaServers, t]);
 
   return state;
 };

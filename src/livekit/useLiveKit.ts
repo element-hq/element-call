@@ -127,7 +127,7 @@ export function useLiveKit(
 
   const connectionState = useECConnectionState(
     {
-      deviceId: initialDevices.current.audioOutput.selectedId,
+      deviceId: initialDevices.current.audioInput.selectedId,
     },
     initialMuteStates.current.audio.enabled,
     room,
@@ -252,7 +252,7 @@ export function useLiveKit(
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
     if (room !== undefined && connectionState === ConnectionState.Connected) {
-      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice) => {
+      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice): void => {
         const id = device.selectedId;
 
         // Detect if we're trying to use chrome's default device, in which case

@@ -17,14 +17,14 @@ limitations under the License.
 import { ComponentPropsWithoutRef, FC } from "react";
 import { Button } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
-import UserAddSolidIcon from "@vector-im/compound-design-tokens/icons/user-add-solid.svg?react";
+import UserAddIcon from "@vector-im/compound-design-tokens/icons/user-add.svg?react";
 
 export const InviteButton: FC<
   Omit<ComponentPropsWithoutRef<"button">, "children">
 > = (props) => {
   const { t } = useTranslation();
   return (
-    <Button kind="secondary" size="sm" Icon={UserAddSolidIcon} {...props}>
+    <Button kind="secondary" size="sm" Icon={UserAddIcon} {...props}>
       {t("Invite")}
     </Button>
   );

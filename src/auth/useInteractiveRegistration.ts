@@ -30,14 +30,14 @@ export const useInteractiveRegistration = (): {
     password: string,
     displayName: string,
     recaptchaResponse: string,
-    passwordlessUser: boolean
+    passwordlessUser: boolean,
   ) => Promise<[MatrixClient, Session]>;
 } => {
   const [privacyPolicyUrl, setPrivacyPolicyUrl] = useState<string | undefined>(
-    undefined
+    undefined,
   );
   const [recaptchaKey, setRecaptchaKey] = useState<string | undefined>(
-    undefined
+    undefined,
   );
 
   const authClient = useRef<MatrixClient>();
@@ -50,7 +50,7 @@ export const useInteractiveRegistration = (): {
   useEffect(() => {
     authClient.current!.registerRequest({}).catch((error) => {
       setPrivacyPolicyUrl(
-        error.data?.params["m.login.terms"]?.policies?.privacy_policy?.en?.url
+        error.data?.params["m.login.terms"]?.policies?.privacy_policy?.en?.url,
       );
       setRecaptchaKey(error.data?.params["m.login.recaptcha"]?.public_key);
     });
@@ -62,7 +62,7 @@ export const useInteractiveRegistration = (): {
       password: string,
       displayName: string,
       recaptchaResponse: string,
-      passwordlessUser: boolean
+      passwordlessUser: boolean,
     ): Promise<[MatrixClient, Session]> => {
       const interactiveAuth = new InteractiveAuth({
         matrixClient: authClient.current!,
@@ -72,7 +72,7 @@ export const useInteractiveRegistration = (): {
             password,
             auth: auth || undefined,
           }),
-        stateUpdated: (nextStage, status) => {
+        stateUpdated: (nextStage, status): void => {
           if (status.error) {
             throw new Error(status.error);
           }
@@ -88,7 +88,7 @@ export const useInteractiveRegistration = (): {
             });
           }
         },
-        requestEmailToken: (...args) => {
+        requestEmailToken: (): Promise<{ sid: string }> => {
           return Promise.resolve({ sid: "dummy" });
         },
       });
@@ -106,7 +106,7 @@ export const useInteractiveRegistration = (): {
           userId: user_id,
           deviceId: device_id,
         },
-        false
+        false,
       );
 
       await client.setDisplayName(displayName);
@@ -129,7 +129,7 @@ export const useInteractiveRegistration = (): {
 
       return [client, session];
     },
-    []
+    [],
   );
 
   return { privacyPolicyUrl, recaptchaKey, register };

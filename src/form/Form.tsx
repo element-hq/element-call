@@ -36,5 +36,5 @@ export const Form = forwardRef<HTMLFormElement, FormProps>(
         {children}
       </form>
     );
-  }
+  },
 );

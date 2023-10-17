@@ -30,7 +30,7 @@ import {
   setLogLevel,
 } from "livekit-client";
 
-import App from "./App";
+import { App } from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
 
@@ -48,7 +48,7 @@ if (!window.isSecureContext) {
   fatalError = new Error(
     "This app cannot run in an insecure context. To fix this, access the app " +
       "via a local loopback address, or serve it over HTTPS.\n" +
-      "https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts"
+      "https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts",
   );
 } else if (!navigator.mediaDevices) {
   fatalError = new Error("Your browser does not support WebRTC.");
@@ -66,5 +66,5 @@ const history = createBrowserHistory();
 root.render(
   <StrictMode>
     <App history={history} />
-  </StrictMode>
+  </StrictMode>,
 );

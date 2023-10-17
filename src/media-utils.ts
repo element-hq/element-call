@@ -23,10 +23,10 @@ limitations under the License.
 export async function findDeviceByName(
   deviceName: string,
   kind: MediaDeviceKind,
-  devices: MediaDeviceInfo[]
+  devices: MediaDeviceInfo[],
 ): Promise<string | undefined> {
   const deviceInfo = devices.find(
-    (d) => d.kind === kind && d.label === deviceName
+    (d) => d.kind === kind && d.label === deviceName,
   );
   return deviceInfo?.deviceId;
 }

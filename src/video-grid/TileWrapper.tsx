@@ -25,7 +25,7 @@ interface Props<T> {
   onDragRef: RefObject<
     (
       tileId: string,
-      state: Parameters<Handler<"drag", EventTypes["drag"]>>[0]
+      state: Parameters<Handler<"drag", EventTypes["drag"]>>[0],
     ) => void
   >;
   targetWidth: number;
@@ -87,7 +87,7 @@ export const TileWrapper = memo(
             height,
             boxShadow: to(
               [shadow, shadowSpread],
-              (s, ss) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px ${ss}px`
+              (s, ss) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px ${ss}px`,
             ),
           },
           targetWidth,
@@ -96,7 +96,7 @@ export const TileWrapper = memo(
         })}
       </>
     );
-  }
+  },
   // We pretend this component is a simple function rather than a
   // NamedExoticComponent, because that's the only way we can fit in a type
   // parameter

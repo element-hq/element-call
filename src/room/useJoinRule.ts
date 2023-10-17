@@ -15,12 +15,14 @@ limitations under the License.
 */
 
 import { useCallback } from "react";
+import { JoinRule } from "matrix-js-sdk/src/matrix";
 
 import type { Room } from "matrix-js-sdk/src/models/room";
 import { useRoomState } from "./useRoomState";
 
-export const useJoinRule = (room: Room) =>
-  useRoomState(
+export function useJoinRule(room: Room): JoinRule {
+  return useRoomState(
     room,
-    useCallback((state) => state.getJoinRule(), [])
+    useCallback((state) => state.getJoinRule(), []),
   );
+}
