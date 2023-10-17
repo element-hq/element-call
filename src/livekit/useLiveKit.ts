@@ -52,7 +52,7 @@ interface UseLivekitResult {
 export function useLiveKit(
   muteStates: MuteStates,
   sfuConfig?: SFUConfig,
-  e2eeConfig?: E2EEConfig
+  e2eeConfig?: E2EEConfig,
 ): UseLivekitResult {
   const e2eeOptions = useMemo(() => {
     if (!e2eeConfig?.sharedKey) return undefined;
@@ -67,7 +67,7 @@ export function useLiveKit(
     if (!e2eeConfig?.sharedKey || !e2eeOptions) return;
 
     (e2eeOptions.keyProvider as ExternalE2EEKeyProvider).setKey(
-      e2eeConfig?.sharedKey
+      e2eeConfig?.sharedKey,
     );
   }, [e2eeOptions, e2eeConfig?.sharedKey]);
 
@@ -93,7 +93,7 @@ export function useLiveKit(
       },
       e2ee: e2eeOptions,
     }),
-    [e2eeOptions]
+    [e2eeOptions],
   );
 
   // useECConnectionState creates and publishes an audio track by hand. To keep
@@ -131,7 +131,7 @@ export function useLiveKit(
     },
     initialMuteStates.current.audio.enabled,
     room,
-    sfuConfig
+    sfuConfig,
   );
 
   // Unblock audio once the connection is finished
@@ -175,7 +175,7 @@ export function useLiveKit(
 
         if (iterCount > 10) {
           logger.error(
-            "Stop trying to sync the input device with current mute state after 10 failed tries"
+            "Stop trying to sync the input device with current mute state after 10 failed tries",
           );
           return;
         }
@@ -201,14 +201,14 @@ export function useLiveKit(
               case MuteDevice.Microphone:
                 audioMuteUpdating.current = true;
                 trackPublication = await participant.setMicrophoneEnabled(
-                  buttonEnabled.current.audio
+                  buttonEnabled.current.audio,
                 );
                 audioMuteUpdating.current = false;
                 break;
               case MuteDevice.Camera:
                 videoMuteUpdating.current = true;
                 trackPublication = await participant.setCameraEnabled(
-                  buttonEnabled.current.video
+                  buttonEnabled.current.video,
                 );
                 videoMuteUpdating.current = false;
                 break;
@@ -231,13 +231,13 @@ export function useLiveKit(
               syncMuteState(iterCount + 1, type);
             } else {
               throw new Error(
-                "track with new mute state could not be published"
+                "track with new mute state could not be published",
               );
             }
           } catch (e) {
             logger.error(
               "Failed to sync audio mute state with LiveKit (will retry to sync in 1s):",
-              e
+              e,
             );
             setTimeout(() => syncMuteState(iterCount + 1, type), 1000);
           }
@@ -269,11 +269,11 @@ export function useLiveKit(
           room.options.audioCaptureDefaults?.deviceId === "default"
         ) {
           const activeMicTrack = Array.from(
-            room.localParticipant.audioTracks.values()
+            room.localParticipant.audioTracks.values(),
           ).find((d) => d.source === Track.Source.Microphone)?.track;
 
           const defaultDevice = device.available.find(
-            (d) => d.deviceId === "default"
+            (d) => d.deviceId === "default",
           );
           if (
             defaultDevice &&
@@ -299,7 +299,7 @@ export function useLiveKit(
             room
               .switchActiveDevice(kind, id)
               .catch((e) =>
-                logger.error(`Failed to sync ${kind} device with LiveKit`, e)
+                logger.error(`Failed to sync ${kind} device with LiveKit`, e),
               );
           }
         }
