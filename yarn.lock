@@ -3455,9 +3455,9 @@
   integrity sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew==
 
 "@types/sdp-transform@^2.4.5":
-  version "2.4.7"
-  resolved "https://registry.yarnpkg.com/@types/sdp-transform/-/sdp-transform-2.4.7.tgz#8b6629a7e599e1794ab1441b02118e521b97b5c7"
-  integrity sha512-HZOdGccXbxWe06ATFUBd1icnuhqF5CzHK9sRW9AQB9tNYqq3bCWlkXLiqt5RgSXKOpQfNWb4H4rf2bviZTo64A==
+  version "2.4.8"
+  resolved "https://registry.yarnpkg.com/@types/sdp-transform/-/sdp-transform-2.4.8.tgz#1a59a6b66423d96c3aa6683bf3e0b60bd59a14d4"
+  integrity sha512-mmsb0R0IARu7/H4wWbPq7yPC9K2hXNIECJ/8y+CM9/2LA6axlr0TKLko4BEt4k5MK7SmGm+pvNs1u01OmIM77g==
 
 "@types/semver@^7.5.0":
   version "7.5.3"
@@ -3465,9 +3465,9 @@
   integrity sha512-OxepLK9EuNEIPxWNME+C6WwbRAOOI2o2BaQEGzz5Lu2e4Z5eDnEo+/aVEDMIXywoJitJ7xWd641wrGLZdtwRyw==
 
 "@types/shimmer@^1.0.2":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@types/shimmer/-/shimmer-1.0.3.tgz#2259274874392a4413fb6f6717a7ec209a8651a7"
-  integrity sha512-F/IjUGnV6pIN7R4ZV4npHJVoNtaLZWvb+2/9gctxjb99wkpI7Ozg8VPogwDiTRyjLwZXAYxjvdg1KS8LTHKdDA==
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/@types/shimmer/-/shimmer-1.0.4.tgz#8fa2317517280ecdd64078afc010809cb67c37b7"
+  integrity sha512-hsughtxFsdJ9+Gxd/qH8zHE+KT6YEAxx9hJLoSXhxTBKHMQ2NMhN23fRJ75M9RRn2hDMNn13H3gS1EktA9VgDA==
 
 "@types/stack-utils@^2.0.0":
   version "2.0.2"
@@ -3475,9 +3475,9 @@
   integrity sha512-g7CK9nHdwjK2n0ymT2CW698FuWJRIx+RP6embAzZ2Qi8/ilIrA1Imt2LVSeHUzKvpoi7BhmmQcXz95eS0f2JXw==
 
 "@types/symlink-or-copy@^1.2.0":
-  version "1.2.0"
-  resolved "https://registry.yarnpkg.com/@types/symlink-or-copy/-/symlink-or-copy-1.2.0.tgz#4151a81b4052c80bc2becbae09f3a9ec010a9c7a"
-  integrity sha512-Lja2xYuuf2B3knEsga8ShbOdsfNOtzT73GyJmZyY7eGl2+ajOqrs8yM5ze0fsSoYwvA6bw7/Qr7OZ7PEEmYwWg==
+  version "1.2.1"
+  resolved "https://registry.yarnpkg.com/@types/symlink-or-copy/-/symlink-or-copy-1.2.1.tgz#9696b4620e59fd613f2895535c498be5d536bb02"
+  integrity sha512-8LQKxlJ8zXQ5U0wFXTSBXLHg8+oBbLMJXEC6vOqhL+iz8EfVvSxfdwtvq8ufkT9pumab0ntnvYXQBF/+cxzl9w==
 
 "@types/tough-cookie@*":
   version "4.0.3"
