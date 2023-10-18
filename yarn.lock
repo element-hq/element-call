@@ -3490,14 +3490,14 @@
     "@types/d3-zoom" "*"
 
 "@types/dom-screen-wake-lock@^1.0.1":
-  version "1.0.1"
-  resolved "https://registry.yarnpkg.com/@types/dom-screen-wake-lock/-/dom-screen-wake-lock-1.0.1.tgz#8f125f91821d49f51feee95e6db128eb6974aea9"
-  integrity sha512-WJQas3OFGcC8AeMzaa7FwzzbNNfanuV2R12kQYNp4BkUMghsRz5JxJ5RgVhJifhw7t0s6LvRSWZArmKbMDZ+5g==
+  version "1.0.2"
+  resolved "https://registry.yarnpkg.com/@types/dom-screen-wake-lock/-/dom-screen-wake-lock-1.0.2.tgz#df0f77b1a653f66fba7ab38e962ff8440682fb61"
+  integrity sha512-fgOIOXxoa3bHb4dPWrRA8xMCccrxRpqIOXBA0KAFR+/j11fYRGgJUh7qoyF38UAwn8//xwgUHKMvNKDfVGydAQ==
 
 "@types/dompurify@^3.0.2":
-  version "3.0.3"
-  resolved "https://registry.yarnpkg.com/@types/dompurify/-/dompurify-3.0.3.tgz#d34ba1cf4f8b8f2cbfe5d3118dc3b7d81858fa42"
-  integrity sha512-odiGr/9/qMqjcBOe5UhcNLOFHSYmKFOyr+bJ/Xu3Qp4k1pNPAlNLUVNNLcLfjQI7+W7ObX58EdD3H+3p3voOvA==
+  version "3.0.4"
+  resolved "https://registry.yarnpkg.com/@types/dompurify/-/dompurify-3.0.4.tgz#8a6369dec2dd0c397d01751adf3364be035b40d8"
+  integrity sha512-1Jk8S/IRzNSbwQRbuGuLFHviwxQ8pX81ZEW3INY9432Cwb4VedkBYan8gSIXVLOLHBtimOmUTEYphjRVmo+30g==
   dependencies:
     "@types/trusted-types" "*"
 
