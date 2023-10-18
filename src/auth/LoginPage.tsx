@@ -80,7 +80,7 @@ export const LoginPage: FC = () => {
           setLoading(false);
         });
     },
-    [login, location, history, homeserver, setClient]
+    [login, location, history, homeserver, setClient],
   );
 
   return (

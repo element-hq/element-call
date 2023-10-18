@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { Room, isE2EESupported } from "livekit-client";
@@ -40,7 +40,6 @@ import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMembership
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
 import { useIsRoomE2EE, useRoomSharedKey } from "../e2ee/sharedKeyManagement";
-import { useEnableE2EE } from "../settings/useSetting";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
@@ -62,7 +61,7 @@ interface Props {
   rtcSession: MatrixRTCSession;
 }
 
-export function GroupCallView({
+export const GroupCallView: FC<Props> = ({
   client,
   isPasswordlessUser,
   confineToRoom,
@@ -70,7 +69,7 @@ export function GroupCallView({
   skipLobby,
   hideHeader,
   rtcSession,
-}: Props) {
+}) => {
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
 
@@ -113,7 +112,7 @@ export function GroupCallView({
   // Count each member only once, regardless of how many devices they use
   const participantCount = useMemo(
     () => new Set<string>(memberships.map((m) => m.sender!)).size,
-    [memberships]
+    [memberships],
   );
 
   const deviceContext = useMediaDevices();
@@ -125,7 +124,7 @@ export function GroupCallView({
   latestMuteStates.current = muteStates;
 
   useEffect(() => {
-    // this effect is only if we don't want to show the lobby
+    // this effect is only if we don't want to show the lobby (skipLobby = true)
     if (!skipLobby) return;
 
     const defaultDeviceSetup = async (
@@ -213,7 +212,7 @@ export function GroupCallView({
       PosthogAnalytics.instance.eventCallEnded.track(
         rtcSession.room.roomId,
         rtcSession.memberships.length,
-        sendInstantly
+        sendInstantly,
       );
 
       await leaveRTCSession(rtcSession);
@@ -237,14 +236,16 @@ export function GroupCallView({
         history.push("/");
       }
     },
-    [rtcSession, isPasswordlessUser, confineToRoom, history]
+    [rtcSession, isPasswordlessUser, confineToRoom, history],
   );
 
   useEffect(() => {
     if (widget && isJoined) {
-      const onHangup = async (ev: CustomEvent<IWidgetApiRequest>) => {
+      const onHangup = async (
+        ev: CustomEvent<IWidgetApiRequest>,
+      ): Promise<void> => {
         leaveRTCSession(rtcSession);
-        await widget!.api.transport.reply(ev.detail, {});
+        widget!.api.transport.reply(ev.detail, {});
         widget!.api.setAlwaysOnScreen(false);
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
@@ -254,11 +255,9 @@ export function GroupCallView({
     }
   }, [isJoined, rtcSession]);
 
-  const [e2eeEnabled] = useEnableE2EE();
-
   const e2eeConfig = useMemo(
     () => (e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined),
-    [e2eeSharedKey]
+    [e2eeSharedKey],
   );
 
   const onReconnect = useCallback(() => {
@@ -272,12 +271,12 @@ export function GroupCallView({
   const [shareModalOpen, setInviteModalOpen] = useState(false);
   const onDismissInviteModal = useCallback(
     () => setInviteModalOpen(false),
-    [setInviteModalOpen]
+    [setInviteModalOpen],
   );
 
   const onShareClickFn = useCallback(
     () => setInviteModalOpen(true),
-    [setInviteModalOpen]
+    [setInviteModalOpen],
   );
   const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
 
@@ -286,17 +285,17 @@ export function GroupCallView({
       ev.preventDefault();
       history.push("/");
     },
-    [history]
+    [history],
   );
 
   const { t } = useTranslation();
 
-  if (e2eeEnabled && isRoomE2EE && !e2eeSharedKey) {
+  if (isRoomE2EE && !e2eeSharedKey) {
     return (
       <ErrorView
         error={
           new Error(
-            "No E2EE key provided: please make sure the URL you're using to join this call has been retrieved using the in-app button."
+            "No E2EE key provided: please make sure the URL you're using to join this call has been retrieved using the in-app button.",
           )
         }
       />
@@ -307,7 +306,7 @@ export function GroupCallView({
         <Heading>Incompatible Browser</Heading>
         <Text>
           {t(
-            "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117"
+            "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117",
           )}
         </Text>
         <Link href="/" onClick={onHomeClick}>
@@ -315,8 +314,6 @@ export function GroupCallView({
         </Link>
       </FullScreenView>
     );
-  } else if (!e2eeEnabled && isRoomE2EE) {
-    return <ErrorView error={new Error("You need to enable E2EE to join.")} />;
   }
 
   const shareModal = (
@@ -383,7 +380,7 @@ export function GroupCallView({
           client={client}
           matrixInfo={matrixInfo}
           muteStates={muteStates}
-          onEnter={() => enterRTCSession(rtcSession)}
+          onEnter={(): void => enterRTCSession(rtcSession)}
           confineToRoom={confineToRoom}
           hideHeader={hideHeader}
           participantCount={participantCount}
@@ -392,4 +389,4 @@ export function GroupCallView({
       </>
     );
   }
-}
+};

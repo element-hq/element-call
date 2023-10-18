@@ -117,7 +117,7 @@ export class PosthogAnalytics {
     return this.internalInstance;
   }
 
-  constructor(private readonly posthog: PostHog) {
+  private constructor(private readonly posthog: PostHog) {
     const posthogConfig: PosthogSettings = {
       project_api_key: Config.get().posthog?.api_key,
       api_host: Config.get().posthog?.api_host,
@@ -146,7 +146,7 @@ export class PosthogAnalytics {
       this.enabled = true;
     } else {
       logger.info(
-        "Posthog is not enabled because there is no api key or no host given in the config"
+        "Posthog is not enabled because there is no api key or no host given in the config",
       );
       this.enabled = false;
     }
@@ -157,7 +157,7 @@ export class PosthogAnalytics {
 
   private sanitizeProperties = (
     properties: Properties,
-    _eventName: string
+    _eventName: string,
   ): Properties => {
     // Callback from posthog to sanitize properties before sending them to the server.
     // Here we sanitize posthog's built in properties which leak PII e.g. url reporting.
@@ -183,7 +183,7 @@ export class PosthogAnalytics {
     return properties;
   };
 
-  private registerSuperProperties(properties: Properties) {
+  private registerSuperProperties(properties: Properties): void {
     if (this.enabled) {
       this.posthog.register(properties);
     }
@@ -201,8 +201,8 @@ export class PosthogAnalytics {
   private capture(
     eventName: string,
     properties: Properties,
-    options?: CaptureOptions
-  ) {
+    options?: CaptureOptions,
+  ): void {
     if (!this.enabled) {
       return;
     }
@@ -213,7 +213,7 @@ export class PosthogAnalytics {
     return this.enabled;
   }
 
-  setAnonymity(anonymity: Anonymity): void {
+  private setAnonymity(anonymity: Anonymity): void {
     // Update this.anonymity.
     // To update the anonymity typically you want to call updateAnonymityFromSettings
     // to ensure this value is in step with the user's settings.
@@ -236,7 +236,9 @@ export class PosthogAnalytics {
       .join("");
   }
 
-  private async identifyUser(analyticsIdGenerator: () => string) {
+  private async identifyUser(
+    analyticsIdGenerator: () => string,
+  ): Promise<void> {
     if (this.anonymity == Anonymity.Pseudonymous && this.enabled) {
       // Check the user's account_data for an analytics ID to use. Storing the ID in account_data allows
       // different devices to send the same ID.
@@ -258,27 +260,27 @@ export class PosthogAnalytics {
         // The above could fail due to network requests, but not essential to starting the application,
         // so swallow it.
         logger.log(
-          "Unable to identify user for tracking" + (e as Error)?.toString()
+          "Unable to identify user for tracking" + (e as Error)?.toString(),
         );
       }
       if (analyticsID) {
         this.posthog.identify(analyticsID);
       } else {
         logger.info(
-          "No analyticsID is availble. Should not try to setup posthog"
+          "No analyticsID is availble. Should not try to setup posthog",
         );
       }
     }
   }
 
-  async getAnalyticsId() {
+  private async getAnalyticsId(): Promise<string | null> {
     const client: MatrixClient = window.matrixclient;
     let accountAnalyticsId;
     if (widget) {
       accountAnalyticsId = getUrlParams().analyticsID;
     } else {
       const accountData = await client.getAccountDataFromServer(
-        PosthogAnalytics.ANALYTICS_EVENT_TYPE
+        PosthogAnalytics.ANALYTICS_EVENT_TYPE,
       );
       accountAnalyticsId = accountData?.id;
     }
@@ -291,12 +293,14 @@ export class PosthogAnalytics {
     return null;
   }
 
-  async hashedEcAnalyticsId(accountAnalyticsId: string): Promise<string> {
+  private async hashedEcAnalyticsId(
+    accountAnalyticsId: string,
+  ): Promise<string> {
     const client: MatrixClient = window.matrixclient;
     const posthogIdMaterial = "ec" + accountAnalyticsId + client.getUserId();
     const bufferForPosthogId = await crypto.subtle.digest(
       "sha-256",
-      Buffer.from(posthogIdMaterial, "utf-8")
+      Buffer.from(posthogIdMaterial, "utf-8"),
     );
     const view = new Int32Array(bufferForPosthogId);
     return Array.from(view)
@@ -304,17 +308,17 @@ export class PosthogAnalytics {
       .join("");
   }
 
-  async setAccountAnalyticsId(analyticsID: string) {
+  private async setAccountAnalyticsId(analyticsID: string): Promise<void> {
     if (!widget) {
       const client = window.matrixclient;
 
       // the analytics ID only needs to be set in the standalone version.
       const accountData = await client.getAccountDataFromServer(
-        PosthogAnalytics.ANALYTICS_EVENT_TYPE
+        PosthogAnalytics.ANALYTICS_EVENT_TYPE,
       );
       await client.setAccountData(
         PosthogAnalytics.ANALYTICS_EVENT_TYPE,
-        Object.assign({ id: analyticsID }, accountData)
+        Object.assign({ id: analyticsID }, accountData),
       );
     }
   }
@@ -335,7 +339,7 @@ export class PosthogAnalytics {
     this.updateAnonymityAndIdentifyUser(optInAnalytics);
   }
 
-  private updateSuperProperties() {
+  private updateSuperProperties(): void {
     // Update super properties in posthog with our platform (app version, platform).
     // These properties will be subsequently passed in every event.
     //
@@ -356,7 +360,7 @@ export class PosthogAnalytics {
   }
 
   private async updateAnonymityAndIdentifyUser(
-    pseudonymousOptIn: boolean
+    pseudonymousOptIn: boolean,
   ): Promise<void> {
     // Update this.anonymity based on the user's analytics opt-in settings
     const anonymity = pseudonymousOptIn
@@ -372,11 +376,11 @@ export class PosthogAnalytics {
       this.setRegistrationType(
         window.matrixclient.isGuest() || window.passwordlessUser
           ? RegistrationType.Guest
-          : RegistrationType.Registered
+          : RegistrationType.Registered,
       );
       // store the promise to await posthog-tracking-events until the identification is done.
       this.identificationPromise = this.identifyUser(
-        PosthogAnalytics.getRandomAnalyticsId
+        PosthogAnalytics.getRandomAnalyticsId,
       );
       await this.identificationPromise;
       if (this.userRegisteredInThisSession()) {
@@ -391,7 +395,7 @@ export class PosthogAnalytics {
 
   public async trackEvent<E extends IPosthogEvent>(
     { eventName, ...properties }: E,
-    options?: CaptureOptions
+    options?: CaptureOptions,
   ): Promise<void> {
     if (this.identificationPromise) {
       // only make calls to posthog after the identificaion is done

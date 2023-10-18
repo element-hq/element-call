@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ChangeEvent, Key, useCallback, useState } from "react";
+import { ChangeEvent, FC, Key, ReactNode, useCallback, useState } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
@@ -33,7 +33,6 @@ import {
   useOptInAnalytics,
   useDeveloperSettingsTab,
   useShowConnectionStats,
-  useEnableE2EE,
   isFirefox,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
@@ -56,7 +55,7 @@ interface Props {
   defaultTab?: string;
 }
 
-export const SettingsModal = (props: Props) => {
+export const SettingsModal: FC<Props> = (props) => {
   const { t } = useTranslation();
 
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
@@ -64,10 +63,12 @@ export const SettingsModal = (props: Props) => {
     useDeveloperSettingsTab();
   const [showConnectionStats, setShowConnectionStats] =
     useShowConnectionStats();
-  const [enableE2EE, setEnableE2EE] = useEnableE2EE();
 
   // Generate a `SelectInput` with a list of devices for a given device kind.
-  const generateDeviceSelection = (devices: MediaDevice, caption: string) => {
+  const generateDeviceSelection = (
+    devices: MediaDevice,
+    caption: string,
+  ): ReactNode => {
     if (devices.available.length == 0) return null;
 
     return (
@@ -78,7 +79,7 @@ export const SettingsModal = (props: Props) => {
             ? "default"
             : devices.selectedId
         }
-        onSelectionChange={(id) => devices.select(id.toString())}
+        onSelectionChange={(id): void => devices.select(id.toString())}
       >
         {devices.available.map(({ deviceId, label }, index) => (
           <Item key={deviceId}>
@@ -97,7 +98,7 @@ export const SettingsModal = (props: Props) => {
     (tab: Key) => {
       setSelectedTab(tab.toString());
     },
-    [setSelectedTab]
+    [setSelectedTab],
   );
 
   const optInDescription = (
@@ -191,7 +192,7 @@ export const SettingsModal = (props: Props) => {
           checked={developerSettingsTab}
           label={t("Developer Settings")}
           description={t("Expose developer settings in the settings window.")}
-          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+          onChange={(event: ChangeEvent<HTMLInputElement>): void =>
             setDeveloperSettingsTab(event.target.checked)
           }
         />
@@ -203,7 +204,7 @@ export const SettingsModal = (props: Props) => {
           type="checkbox"
           checked={optInAnalytics ?? undefined}
           description={optInDescription}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+          onChange={(event: ChangeEvent<HTMLInputElement>): void => {
             setOptInAnalytics?.(event.target.checked);
           }}
         />
@@ -235,25 +236,8 @@ export const SettingsModal = (props: Props) => {
           label={t("Show connection stats")}
           type="checkbox"
           checked={showConnectionStats}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          onChange={(e: ChangeEvent<HTMLInputElement>): void =>
             setShowConnectionStats(e.target.checked)
-          }
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
-          id="enableE2EE"
-          name="end-to-end-encryption"
-          label={t("Enable end-to-end encryption (password protected calls)")}
-          description={
-            !setEnableE2EE &&
-            t("End-to-end encryption isn't supported on your browser.")
-          }
-          disabled={!setEnableE2EE}
-          type="checkbox"
-          checked={enableE2EE ?? undefined}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setEnableE2EE?.(e.target.checked)
           }
         />
       </FieldRow>

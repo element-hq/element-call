@@ -20,7 +20,9 @@ test("initBeforeReact sets font family from URL param", () => {
   window.location.hash = "#?font=DejaVu Sans";
   Initializer.initBeforeReact();
   expect(
-    getComputedStyle(document.documentElement).getPropertyValue("--font-family")
+    getComputedStyle(document.documentElement).getPropertyValue(
+      "--font-family",
+    ),
   ).toBe('"DejaVu Sans"');
 });
 
@@ -28,6 +30,6 @@ test("initBeforeReact sets font scale from URL param", () => {
   window.location.hash = "#?fontScale=1.2";
   Initializer.initBeforeReact();
   expect(
-    getComputedStyle(document.documentElement).getPropertyValue("--font-scale")
+    getComputedStyle(document.documentElement).getPropertyValue("--font-scale"),
   ).toBe("1.2");
 });

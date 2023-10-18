@@ -19,6 +19,7 @@ import {
   ConnectionState,
   Room,
   RoomEvent,
+  Track,
 } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
@@ -51,7 +52,7 @@ async function doConnect(
   livekitRoom: Room,
   sfuConfig: SFUConfig,
   audioEnabled: boolean,
-  audioOptions: AudioCaptureOptions
+  audioOptions: AudioCaptureOptions,
 ): Promise<void> {
   await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt);
 
@@ -60,6 +61,14 @@ async function doConnect(
   // doesn't publish it until you unmute. We want to publish it from the start so we're
   // always capturing audio: it helps keep bluetooth headsets in the right mode and
   // mobile browsers to know we're doing a call.
+  if (livekitRoom!.localParticipant.getTrack(Track.Source.Microphone)) {
+    logger.warn(
+      "Pre-creating audio track but participant already appears to have an microphone track: this shouldn't happen!",
+    );
+    return;
+  }
+
+  logger.info("Pre-creating microphone track");
   const audioTracks = await livekitRoom!.localParticipant.createTracks({
     audio: audioOptions,
   });
@@ -69,6 +78,14 @@ async function doConnect(
   }
   if (!audioEnabled) await audioTracks[0].mute();
 
+  // check again having awaited for the track to create
+  if (livekitRoom!.localParticipant.getTrack(Track.Source.Microphone)) {
+    logger.warn(
+      "Publishing pre-created audio track but participant already appears to have an microphone track: this shouldn't happen!",
+    );
+    return;
+  }
+  logger.info("Publishing pre-created mic track");
   await livekitRoom?.localParticipant.publishTrack(audioTracks[0]);
 }
 
@@ -76,12 +93,12 @@ export function useECConnectionState(
   initialAudioOptions: AudioCaptureOptions,
   initialAudioEnabled: boolean,
   livekitRoom?: Room,
-  sfuConfig?: SFUConfig
+  sfuConfig?: SFUConfig,
 ): ECConnectionState {
   const [connState, setConnState] = useState(
     sfuConfig && livekitRoom
       ? livekitRoom.state
-      : ECAddonConnectionState.ECWaiting
+      : ECAddonConnectionState.ECWaiting,
   );
 
   const [isSwitchingFocus, setSwitchingFocus] = useState(false);
@@ -116,10 +133,10 @@ export function useECConnectionState(
       !sfuConfigEquals(currentSFUConfig.current, sfuConfig)
     ) {
       logger.info(
-        `SFU config changed! URL was ${currentSFUConfig.current?.url} now ${sfuConfig?.url}`
+        `SFU config changed! URL was ${currentSFUConfig.current?.url} now ${sfuConfig?.url}`,
       );
 
-      (async () => {
+      (async (): Promise<void> => {
         setSwitchingFocus(true);
         await livekitRoom?.disconnect();
         setIsInDoConnect(true);
@@ -128,7 +145,7 @@ export function useECConnectionState(
             livekitRoom!,
             sfuConfig!,
             initialAudioEnabled,
-            initialAudioOptions
+            initialAudioOptions,
           );
         } finally {
           setIsInDoConnect(false);
@@ -149,7 +166,7 @@ export function useECConnectionState(
         livekitRoom!,
         sfuConfig!,
         initialAudioEnabled,
-        initialAudioOptions
+        initialAudioOptions,
       ).finally(() => setIsInDoConnect(false));
     }
 

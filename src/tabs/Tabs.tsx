@@ -29,7 +29,7 @@ interface TabContainerProps<T> extends TabListProps<T> {
 }
 
 export function TabContainer<T extends object>(
-  props: TabContainerProps<T>
+  props: TabContainerProps<T>,
 ): JSX.Element {
   const state = useTabListState<T>(props);
   const ref = useRef<HTMLUListElement>(null);

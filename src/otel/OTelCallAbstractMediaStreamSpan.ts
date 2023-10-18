@@ -1,3 +1,19 @@
+/*
+Copyright 2023 New Vector Ltd
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
 import opentelemetry, { Span } from "@opentelemetry/api";
 import { TrackStats } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
@@ -14,13 +30,13 @@ export abstract class OTelCallAbstractMediaStreamSpan {
   public readonly span;
 
   public constructor(
-    readonly oTel: ElementCallOpenTelemetry,
-    readonly callSpan: Span,
-    protected readonly type: string
+    protected readonly oTel: ElementCallOpenTelemetry,
+    protected readonly callSpan: Span,
+    protected readonly type: string,
   ) {
     const ctx = opentelemetry.trace.setSpan(
       opentelemetry.context.active(),
-      callSpan
+      callSpan,
     );
     const options = {
       links: [
@@ -32,13 +48,13 @@ export abstract class OTelCallAbstractMediaStreamSpan {
     this.span = oTel.tracer.startSpan(this.type, options, ctx);
   }
 
-  protected upsertTrackSpans(tracks: TrackStats[]) {
+  protected upsertTrackSpans(tracks: TrackStats[]): void {
     let prvTracks: TrackId[] = [...this.trackSpans.keys()];
     tracks.forEach((t) => {
       if (!this.trackSpans.has(t.id)) {
         this.trackSpans.set(
           t.id,
-          new OTelCallMediaStreamTrackSpan(this.oTel, this.span, t)
+          new OTelCallMediaStreamTrackSpan(this.oTel, this.span, t),
         );
       }
       this.trackSpans.get(t.id)?.update(t);

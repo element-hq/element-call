@@ -52,7 +52,7 @@ interface UseLivekitResult {
 export function useLiveKit(
   muteStates: MuteStates,
   sfuConfig?: SFUConfig,
-  e2eeConfig?: E2EEConfig
+  e2eeConfig?: E2EEConfig,
 ): UseLivekitResult {
   const e2eeOptions = useMemo(() => {
     if (!e2eeConfig?.sharedKey) return undefined;
@@ -67,7 +67,7 @@ export function useLiveKit(
     if (!e2eeConfig?.sharedKey || !e2eeOptions) return;
 
     (e2eeOptions.keyProvider as ExternalE2EEKeyProvider).setKey(
-      e2eeConfig?.sharedKey
+      e2eeConfig?.sharedKey,
     );
   }, [e2eeOptions, e2eeConfig?.sharedKey]);
 
@@ -93,7 +93,7 @@ export function useLiveKit(
       },
       e2ee: e2eeOptions,
     }),
-    [e2eeOptions]
+    [e2eeOptions],
   );
 
   // useECConnectionState creates and publishes an audio track by hand. To keep
@@ -127,11 +127,11 @@ export function useLiveKit(
 
   const connectionState = useECConnectionState(
     {
-      deviceId: initialDevices.current.audioOutput.selectedId,
+      deviceId: initialDevices.current.audioInput.selectedId,
     },
     initialMuteStates.current.audio.enabled,
     room,
-    sfuConfig
+    sfuConfig,
   );
 
   // Unblock audio once the connection is finished
@@ -154,7 +154,7 @@ export function useLiveKit(
         audio: muteStates.audio.enabled,
         video: muteStates.video.enabled,
       };
-      const syncMuteStateAudio = async () => {
+      const syncMuteStateAudio = async (): Promise<void> => {
         if (
           participant.isMicrophoneEnabled !== buttonEnabled.current.audio &&
           !audioMuteUpdating.current
@@ -166,6 +166,12 @@ export function useLiveKit(
             logger.error("Failed to sync audio mute state with LiveKit", e);
           }
           audioMuteUpdating.current = false;
+          // await participant.setMicrophoneEnabled can return immediately in some instances,
+          // so that participant.isMicrophoneEnabled !== buttonEnabled.current.audio still holds true.
+          // This happens if the device is still in a pending state
+          // "sleeping" here makes sure we let react do its thing so that participant.isMicrophoneEnabled is updated,
+          // so we do not end up in a recursion loop.
+          await new Promise((r) => setTimeout(r, 20));
           // Run the check again after the change is done. Because the user
           // can update the state (presses mute button) while the device is enabling
           // itself we need might need to update the mute state right away.
@@ -174,7 +180,7 @@ export function useLiveKit(
           syncMuteStateAudio();
         }
       };
-      const syncMuteStateVideo = async () => {
+      const syncMuteStateVideo = async (): Promise<void> => {
         if (
           participant.isCameraEnabled !== buttonEnabled.current.video &&
           !videoMuteUpdating.current
@@ -187,6 +193,8 @@ export function useLiveKit(
           }
           videoMuteUpdating.current = false;
           // see above
+          await new Promise((r) => setTimeout(r, 20));
+          // see above
           syncMuteStateVideo();
         }
       };
@@ -198,7 +206,7 @@ export function useLiveKit(
   useEffect(() => {
     // Sync the requested devices with LiveKit's devices
     if (room !== undefined && connectionState === ConnectionState.Connected) {
-      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice) => {
+      const syncDevice = (kind: MediaDeviceKind, device: MediaDevice): void => {
         const id = device.selectedId;
 
         // Detect if we're trying to use chrome's default device, in which case
@@ -215,11 +223,11 @@ export function useLiveKit(
           room.options.audioCaptureDefaults?.deviceId === "default"
         ) {
           const activeMicTrack = Array.from(
-            room.localParticipant.audioTracks.values()
+            room.localParticipant.audioTracks.values(),
           ).find((d) => d.source === Track.Source.Microphone)?.track;
 
           const defaultDevice = device.available.find(
-            (d) => d.deviceId === "default"
+            (d) => d.deviceId === "default",
           );
           if (
             defaultDevice &&
@@ -245,7 +253,7 @@ export function useLiveKit(
             room
               .switchActiveDevice(kind, id)
               .catch((e) =>
-                logger.error(`Failed to sync ${kind} device with LiveKit`, e)
+                logger.error(`Failed to sync ${kind} device with LiveKit`, e),
               );
           }
         }

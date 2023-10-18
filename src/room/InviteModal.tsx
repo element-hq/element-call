@@ -40,7 +40,7 @@ export const InviteModal: FC<Props> = ({ room, open, onDismiss }) => {
   const url = useMemo(
     () =>
       getAbsoluteRoomUrl(room.roomId, room.name, roomSharedKey ?? undefined),
-    [room, roomSharedKey]
+    [room, roomSharedKey],
   );
   const [, setCopied] = useClipboard(url);
   const [toastOpen, setToastOpen] = useState(false);
@@ -53,7 +53,7 @@ export const InviteModal: FC<Props> = ({ room, open, onDismiss }) => {
       onDismiss();
       setToastOpen(true);
     },
-    [setCopied, onDismiss]
+    [setCopied, onDismiss],
   );
 
   return (

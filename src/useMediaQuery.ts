@@ -21,17 +21,17 @@ import { useEventTarget } from "./useEvents";
 /**
  * React hook that tracks whether the given media query matches.
  */
-export const useMediaQuery = (query: string) => {
+export function useMediaQuery(query: string): boolean {
   const mediaQuery = useMemo(() => matchMedia(query), [query]);
 
   const [numChanges, setNumChanges] = useState(0);
   useEventTarget(
     mediaQuery,
     "change",
-    useCallback(() => setNumChanges((n) => n + 1), [setNumChanges])
+    useCallback(() => setNumChanges((n) => n + 1), [setNumChanges]),
   );
 
   // We want any change to the update counter to trigger an update here
   // eslint-disable-next-line react-hooks/exhaustive-deps
   return useMemo(() => mediaQuery.matches, [mediaQuery, numChanges]);
-};
+}

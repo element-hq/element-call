@@ -35,11 +35,11 @@ enum LoadState {
 class DependencyLoadStates {
   // TODO: decide where olm should be initialized (see TODO comment below)
   // olm: LoadState = LoadState.None;
-  config: LoadState = LoadState.None;
-  sentry: LoadState = LoadState.None;
-  openTelemetry: LoadState = LoadState.None;
+  public config: LoadState = LoadState.None;
+  public sentry: LoadState = LoadState.None;
+  public openTelemetry: LoadState = LoadState.None;
 
-  allDepsAreLoaded() {
+  public allDepsAreLoaded(): boolean {
     return !Object.values(this).some((s) => s !== LoadState.Loaded);
   }
 }
@@ -52,7 +52,7 @@ export class Initializer {
     return Initializer.internalInstance?.isInitialized;
   }
 
-  public static initBeforeReact() {
+  public static initBeforeReact(): void {
     // this maybe also needs to return a promise in the future,
     // if we have to do async inits before showing the loading screen
     // but this should be avioded if possible
@@ -99,13 +99,13 @@ export class Initializer {
     if (fontScale !== null) {
       document.documentElement.style.setProperty(
         "--font-scale",
-        fontScale.toString()
+        fontScale.toString(),
       );
     }
     if (fonts.length > 0) {
       document.documentElement.style.setProperty(
         "--font-family",
-        fonts.map((f) => `"${f}"`).join(", ")
+        fonts.map((f) => `"${f}"`).join(", "),
       );
     }
 
@@ -126,9 +126,9 @@ export class Initializer {
     return Initializer.internalInstance.initPromise;
   }
 
-  loadStates = new DependencyLoadStates();
+  private loadStates = new DependencyLoadStates();
 
-  initStep(resolve: (value: void | PromiseLike<void>) => void) {
+  private initStep(resolve: (value: void | PromiseLike<void>) => void): void {
     // TODO: Olm is initialized with the client currently (see `initClient()` and `olm.ts`)
     // we need to decide if we want to init it here or keep it in initClient
     // if (this.loadStates.olm === LoadState.None) {

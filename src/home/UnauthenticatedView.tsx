@@ -41,9 +41,8 @@ import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
 import { generateRandomName } from "../auth/generateRandomName";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
-import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
+import { useOptInAnalytics } from "../settings/useSetting";
 import { Config } from "../config/Config";
-import { E2EEBanner } from "../E2EEBanner";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
@@ -57,13 +56,11 @@ export const UnauthenticatedView: FC = () => {
     useState(false);
   const onDismissJoinExistingCallModal = useCallback(
     () => setJoinExistingCallModalOpen(false),
-    [setJoinExistingCallModalOpen]
+    [setJoinExistingCallModalOpen],
   );
   const [onFinished, setOnFinished] = useState<() => void>();
   const history = useHistory();
   const { t } = useTranslation();
-
-  const [e2eeEnabled] = useEnableE2EE();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     (e) => {
@@ -72,7 +69,7 @@ export const UnauthenticatedView: FC = () => {
       const roomName = sanitiseRoomNameInput(data.get("callName") as string);
       const displayName = data.get("displayName") as string;
 
-      async function submit() {
+      async function submit(): Promise<void> {
         setError(undefined);
         setLoading(true);
         const recaptchaResponse = await execute();
@@ -82,16 +79,12 @@ export const UnauthenticatedView: FC = () => {
           randomString(16),
           displayName,
           recaptchaResponse,
-          true
+          true,
         );
 
         let createRoomResult;
         try {
-          createRoomResult = await createRoom(
-            client,
-            roomName,
-            e2eeEnabled ?? false
-          );
+          createRoomResult = await createRoom(client, roomName, true);
         } catch (error) {
           if (!setClient) {
             throw error;
@@ -124,8 +117,8 @@ export const UnauthenticatedView: FC = () => {
           getRelativeRoomUrl(
             createRoomResult.roomId,
             roomName,
-            createRoomResult.password
-          )
+            createRoomResult.password,
+          ),
         );
       }
 
@@ -143,8 +136,7 @@ export const UnauthenticatedView: FC = () => {
       history,
       setJoinExistingCallModalOpen,
       setClient,
-      e2eeEnabled,
-    ]
+    ],
   );
 
   return (
@@ -201,7 +193,6 @@ export const UnauthenticatedView: FC = () => {
                 </Link>
               </Trans>
             </Caption>
-            <E2EEBanner />
             {error && (
               <FieldRow>
                 <ErrorMessage error={error} />

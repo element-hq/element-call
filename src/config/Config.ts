@@ -57,7 +57,7 @@ export class Config {
 }
 
 async function downloadConfig(
-  configJsonFilename: string
+  configJsonFilename: string,
 ): Promise<ConfigOptions> {
   const url = new URL(configJsonFilename, window.location.href);
   url.searchParams.set("cachebuster", Date.now().toString());

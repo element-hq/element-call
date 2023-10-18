@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useState, useCallback, FormEvent, FormEventHandler } from "react";
+import { useState, useCallback, FormEvent, FormEventHandler, FC } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
@@ -38,15 +38,14 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { Caption } from "../typography/Typography";
 import { Form } from "../form/Form";
-import { useEnableE2EE, useOptInAnalytics } from "../settings/useSetting";
+import { useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
-import { E2EEBanner } from "../E2EEBanner";
 
 interface Props {
   client: MatrixClient;
 }
 
-export function RegisteredView({ client }: Props) {
+export const RegisteredView: FC<Props> = ({ client }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
   const [optInAnalytics] = useOptInAnalytics();
@@ -56,9 +55,8 @@ export function RegisteredView({ client }: Props) {
     useState(false);
   const onDismissJoinExistingCallModal = useCallback(
     () => setJoinExistingCallModalOpen(false),
-    [setJoinExistingCallModalOpen]
+    [setJoinExistingCallModalOpen],
   );
-  const [e2eeEnabled] = useEnableE2EE();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     (e: FormEvent) => {
@@ -70,22 +68,18 @@ export function RegisteredView({ client }: Props) {
           ? sanitiseRoomNameInput(roomNameData)
           : "";
 
-      async function submit() {
+      async function submit(): Promise<void> {
         setError(undefined);
         setLoading(true);
 
-        const createRoomResult = await createRoom(
-          client,
-          roomName,
-          e2eeEnabled ?? false
-        );
+        const createRoomResult = await createRoom(client, roomName, true);
 
         history.push(
           getRelativeRoomUrl(
             createRoomResult.roomId,
             roomName,
-            createRoomResult.password
-          )
+            createRoomResult.password,
+          ),
         );
       }
 
@@ -102,7 +96,7 @@ export function RegisteredView({ client }: Props) {
         }
       });
     },
-    [client, history, setJoinExistingCallModalOpen, e2eeEnabled]
+    [client, history, setJoinExistingCallModalOpen],
   );
 
   const recentRooms = useGroupCallRooms(client);
@@ -156,7 +150,6 @@ export function RegisteredView({ client }: Props) {
                 <AnalyticsNotice />
               </Caption>
             )}
-            <E2EEBanner />
             {error && (
               <FieldRow className={styles.fieldRow}>
                 <ErrorMessage error={error} />
@@ -175,4 +168,4 @@ export function RegisteredView({ client }: Props) {
       />
     </>
   );
-}
+};

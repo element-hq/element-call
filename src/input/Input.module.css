@@ -85,8 +85,11 @@ limitations under the License.
 }
 
 .inputField label {
-  transition: font-size 0.25s ease-out 0.1s, color 0.25s ease-out 0.1s,
-    top 0.25s ease-out 0.1s, background-color 0.25s ease-out 0.1s;
+  transition:
+    font-size 0.25s ease-out 0.1s,
+    color 0.25s ease-out 0.1s,
+    top 0.25s ease-out 0.1s,
+    background-color 0.25s ease-out 0.1s;
   color: var(--cpd-color-text-secondary);
   background-color: transparent;
   font-size: var(--font-size-body);
@@ -118,8 +121,11 @@ limitations under the License.
 .inputField textarea:not(:placeholder-shown) + label,
 .inputField.prefix textarea + label {
   background-color: var(--cpd-color-bg-canvas-default);
-  transition: font-size 0.25s ease-out 0s, color 0.25s ease-out 0s,
-    top 0.25s ease-out 0s, background-color 0.25s ease-out 0s;
+  transition:
+    font-size 0.25s ease-out 0s,
+    color 0.25s ease-out 0s,
+    top 0.25s ease-out 0s,
+    background-color 0.25s ease-out 0s;
   font-size: var(--font-size-micro);
   top: -13px;
   padding: 0 2px;
