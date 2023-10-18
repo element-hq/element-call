@@ -3275,19 +3275,19 @@
   integrity sha512-ZD/NsIJYq/2RH+hY7lXmstfp/v9djGt9ah+xRQ3pcgR79qiKsG4pLl25AI7IcXxVO8dH9GiBE5rAknC0ePntlw==
 
 "@types/content-type@^1.1.5":
-  version "1.1.6"
-  resolved "https://registry.yarnpkg.com/@types/content-type/-/content-type-1.1.6.tgz#f0150cbb12a63729bc4241d4ffdde8a0d0b694a3"
-  integrity sha512-WFHg/KFLCdUQl3m27WSQu0NEaLzoHGmgZHlsSYr0Y0iIvItMcBq7opZc6AGXPXqf+btIM6vTBJyLvuDAihB+zQ==
+  version "1.1.7"
+  resolved "https://registry.yarnpkg.com/@types/content-type/-/content-type-1.1.7.tgz#1e74d573f0d0bd5a6076ff44c6080212fca55a5b"
+  integrity sha512-dSM/IQ1fgM1aSQ2PlHR4uWQGDjs9SY+/ilm228CIs9hwlyIfW+q5asThulBforWR6ktt/o8L8m6GPW/Fz1dk2A==
 
 "@types/d3-array@*":
-  version "3.0.8"
-  resolved "https://registry.yarnpkg.com/@types/d3-array/-/d3-array-3.0.8.tgz#a5d0687a12b48142c6f124d5e3796054e91bcea5"
-  integrity sha512-2xAVyAUgaXHX9fubjcCbGAUOqYfRJN1em1EKR2HfzWBpObZhwfnZKvofTN4TplMqJdFQao61I+NVSai/vnBvDQ==
+  version "3.0.9"
+  resolved "https://registry.yarnpkg.com/@types/d3-array/-/d3-array-3.0.9.tgz#54feabd29d1f15940d422c16008c63c1e4e3d188"
+  integrity sha512-mZowFN3p64ajCJJ4riVYlOjNlBJv3hctgAY01pjw3qTnJePD8s9DZmYDzhHKvzfCYvdjwylkU38+Vdt7Cu2FDA==
 
 "@types/d3-axis@*":
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/@types/d3-axis/-/d3-axis-3.0.4.tgz#0e1b380ca92b825f8b07402c8ba88b702e7de0b1"
-  integrity sha512-ySnjI/7qm+J602VjcejXcqs1hEuu5UBbGaJGp+Cn/yKVc1iS3JueLVpToGdQsS2sqta7tqA/kG4ore/+LH90UA==
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/@types/d3-axis/-/d3-axis-3.0.5.tgz#39e2f355da2cde9a8e8bb71907cdf6f4005f6a7b"
+  integrity sha512-ufDAV3SQzju+uB3Jlty7SUb/jMigjpIlvDDcSGvGmmO6OT/sNO93UE0dRzwWOZeBLzrLSA0CQM4bf3iq1std3A==
   dependencies:
     "@types/d3-selection" "*"
 
