@@ -23,7 +23,6 @@ import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import type { Room } from "matrix-js-sdk/src/models/room";
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import { useEnableE2EE } from "../settings/useSetting";
 
 export type GroupCallLoaded = {
   kind: "loaded";
@@ -57,8 +56,6 @@ export const useLoadGroupCall = (
   const { t } = useTranslation();
   const [lastRoomId, setLastRoomId] = useState<string | undefined>();
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
-
-  const [e2eeEnabled] = useEnableE2EE();
 
   useEffect(() => {
     const fetchOrCreateRoom = async (): Promise<Room> => {
@@ -112,13 +109,13 @@ export const useLoadGroupCall = (
       return rtcSession;
     };
 
-    const waitForClientSyncing = async () => {
+    const waitForClientSyncing = async (): Promise<void> => {
       if (client.getSyncState() !== SyncState.Syncing) {
         logger.debug(
           "useLoadGroupCall: waiting for client to start syncing..."
         );
         await new Promise<void>((resolve) => {
-          const onSync = () => {
+          const onSync = (): void => {
             if (client.getSyncState() === SyncState.Syncing) {
               client.off(ClientEvent.Sync, onSync);
               return resolve();
@@ -140,7 +137,7 @@ export const useLoadGroupCall = (
         setLastRoomId(roomIdOrAlias);
         setState({ kind: "failed", error });
       });
-  }, [client, roomIdOrAlias, viaServers, t, e2eeEnabled, lastRoomId]);
+  }, [client, roomIdOrAlias, viaServers, t, lastRoomId]);
 
   return state;
 };

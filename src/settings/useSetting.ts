@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { useCallback, useMemo } from "react";
-import { isE2EESupported } from "livekit-client";
 
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import {
@@ -38,13 +37,13 @@ export const useSetting = <T>(name: string, defaultValue: T): Setting<T> => {
 
   const value = useMemo(
     () => (item == null ? defaultValue : JSON.parse(item)),
-    [item, defaultValue]
+    [item, defaultValue],
   );
   const setValue = useCallback(
     (value: T) => {
       setItem(JSON.stringify(value));
     },
-    [setItem]
+    [setItem],
   );
 
   return [value, setValue];
@@ -55,15 +54,15 @@ export const getSetting = <T>(name: string, defaultValue: T): T => {
   return item === null ? defaultValue : JSON.parse(item);
 };
 
-export const setSetting = <T>(name: string, newValue: T) =>
+export const setSetting = <T>(name: string, newValue: T): void =>
   setLocalStorageItem(getSettingKey(name), JSON.stringify(newValue));
 
-export const isFirefox = () => {
+export const isFirefox = (): boolean => {
   const { userAgent } = navigator;
   return userAgent.includes("Firefox");
 };
 
-const canEnableSpatialAudio = () => {
+const canEnableSpatialAudio = (): boolean => {
   // Spatial audio means routing audio through audio contexts. On Chrome,
   // this bypasses the AEC processor and so breaks echo cancellation.
   // We only allow spatial audio to be enabled on Firefox which we know
@@ -83,8 +82,6 @@ export const useSpatialAudio = (): DisableableSetting<boolean> => {
   return [false, null];
 };
 
-export const useShowInspector = () => useSetting("show-inspector", false);
-
 // null = undecided
 export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
   const settingVal = useSetting<boolean | null>("opt-in-analytics", null);
@@ -93,25 +90,15 @@ export const useOptInAnalytics = (): DisableableSetting<boolean | null> => {
   return [false, null];
 };
 
-export const useEnableE2EE = (): DisableableSetting<boolean | null> => {
-  const settingVal = useSetting<boolean | null>(
-    "enable-end-to-end-encryption",
-    true
-  );
-  if (isE2EESupported()) return settingVal;
-
-  return [false, null];
-};
-
-export const useDeveloperSettingsTab = () =>
+export const useDeveloperSettingsTab = (): Setting<boolean> =>
   useSetting("developer-settings-tab", false);
 
-export const useShowConnectionStats = () =>
+export const useShowConnectionStats = (): Setting<boolean> =>
   useSetting("show-connection-stats", false);
 
-export const useAudioInput = () =>
+export const useAudioInput = (): Setting<string | undefined> =>
   useSetting<string | undefined>("audio-input", undefined);
-export const useAudioOutput = () =>
+export const useAudioOutput = (): Setting<string | undefined> =>
   useSetting<string | undefined>("audio-output", undefined);
-export const useVideoInput = () =>
+export const useVideoInput = (): Setting<string | undefined> =>
   useSetting<string | undefined>("video-input", undefined);

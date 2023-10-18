@@ -30,7 +30,7 @@ import {
  */
 export const useReactiveState = <T>(
   updateFn: (prevState?: T) => T,
-  deps: DependencyList
+  deps: DependencyList,
 ): [T, Dispatch<SetStateAction<T>>] => {
   const state = useRef<T>();
   if (state.current === undefined) state.current = updateFn();
@@ -61,7 +61,7 @@ export const useReactiveState = <T>(
         }
         setNumUpdates((n) => n + 1); // Force an update
       },
-      [setNumUpdates]
+      [setNumUpdates],
     ),
   ];
 };

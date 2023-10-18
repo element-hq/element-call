@@ -24,7 +24,7 @@ import { useTranslation } from "react-i18next";
 import { Popover } from "../popover/Popover";
 import { ListBox } from "../ListBox";
 import styles from "./SelectInput.module.css";
-import { ReactComponent as ArrowDownIcon } from "../icons/ArrowDown.svg";
+import ArrowDownIcon from "../icons/ArrowDown.svg?react";
 
 interface Props extends AriaSelectOptions<object> {
   className?: string;
@@ -38,7 +38,7 @@ export function SelectInput(props: Props): JSX.Element {
   const { labelProps, triggerProps, valueProps, menuProps } = useSelect(
     props,
     state,
-    ref
+    ref,
   );
 
   const { buttonProps } = useButton(triggerProps, ref);

@@ -14,18 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.glass {
-  border-radius: 36px;
-  padding: 11px;
-  border: 1px solid var(--cpd-color-alpha-gray-400);
-  background: var(--cpd-color-alpha-gray-400);
-  backdrop-filter: blur(10px);
-}
-
-.glass > * {
-  border-radius: 24px;
-}
-
-.glass.frosted {
-  backdrop-filter: blur(20px);
+export function withFakeTimers(continuation: () => void): void {
+  jest.useFakeTimers();
+  try {
+    continuation();
+  } finally {
+    jest.useRealTimers();
+  }
 }

@@ -41,6 +41,7 @@ import EventEmitter from "events";
 import { throttle } from "lodash";
 import { logger } from "matrix-js-sdk/src/logger";
 import { randomString } from "matrix-js-sdk/src/randomstring";
+import { LoggingMethod } from "loglevel";
 
 // the length of log data we keep in indexeddb (and include in the reports)
 const MAX_LOG_SIZE = 1024 * 1024 * 5; // 5 MB
@@ -50,14 +51,12 @@ const MAX_LOG_SIZE = 1024 * 1024 * 5; // 5 MB
 // we can batch the writes a little.
 const MAX_FLUSH_INTERVAL_MS = 2 * 1000;
 
+// only descend this far into nested object trees
+const DEPTH_LIMIT = 3;
+
 enum ConsoleLoggerEvent {
   Log = "log",
 }
-
-type LogFunction = (
-  ...args: (Error | DOMException | object | string)[]
-) => void;
-type LogFunctionName = "log" | "info" | "warn" | "error";
 
 // A class which monkey-patches the global console and stores log lines.
 
@@ -69,37 +68,11 @@ interface LogEntry {
 
 class ConsoleLogger extends EventEmitter {
   private logs = "";
-  private originalFunctions: { [key in LogFunctionName]?: LogFunction } = {};
 
-  public monkeyPatch(consoleObj: Console): void {
-    // Monkey-patch console logging
-    const consoleFunctionsToLevels = {
-      log: "I",
-      info: "I",
-      warn: "W",
-      error: "E",
-    };
-
-    Object.entries(consoleFunctionsToLevels).forEach(([name, level]) => {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      const originalFn = consoleObj[name].bind(consoleObj);
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      this.originalFunctions[name] = originalFn;
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      consoleObj[name] = (...args) => {
-        this.log(level, ...args);
-        originalFn(...args);
-      };
-    });
-  }
-
-  public log(
-    level: string,
-    ...args: (Error | DOMException | object | string)[]
-  ): void {
+  public log = (
+    level: LogLevel,
+    ...args: (Error | DOMException | object | string | undefined)[]
+  ): void => {
     // We don't know what locale the user may be running so use ISO strings
     const ts = new Date().toISOString();
 
@@ -129,7 +102,7 @@ class ConsoleLogger extends EventEmitter {
     this.logs += line;
 
     this.emit(ConsoleLoggerEvent.Log);
-  }
+  };
 
   /**
    * Returns the log lines to flush to disk and empties the internal log buffer
@@ -158,9 +131,9 @@ class IndexedDBLogStore {
   private flushAgainPromise?: Promise<void>;
   private id: string;
 
-  constructor(
+  public constructor(
     private indexedDB: IDBFactory,
-    private loggerInstance: ConsoleLogger
+    private loggerInstance: ConsoleLogger,
   ) {
     this.id = "instance-" + randomString(16);
 
@@ -174,20 +147,20 @@ class IndexedDBLogStore {
   public connect(): Promise<void> {
     const req = this.indexedDB.open("logs");
     return new Promise((resolve, reject) => {
-      req.onsuccess = () => {
+      req.onsuccess = (): void => {
         this.db = req.result;
 
         resolve();
       };
 
-      req.onerror = () => {
+      req.onerror = (): void => {
         const err = "Failed to open log database: " + req?.error?.name;
         logger.error(err);
         reject(new Error(err));
       };
 
       // First time: Setup the object store
-      req.onupgradeneeded = () => {
+      req.onupgradeneeded = (): void => {
         const db = req.result;
         // This is the log entries themselves. Each entry is a chunk of
         // logs (ie multiple lines). 'id' is the instance ID (so logs with
@@ -204,7 +177,7 @@ class IndexedDBLogStore {
         logObjStore.createIndex("id", "id", { unique: false });
 
         logObjStore.add(
-          this.generateLogEntry(new Date() + " ::: Log database was created.")
+          this.generateLogEntry(new Date() + " ::: Log database was created."),
         );
 
         // This records the last time each instance ID generated a log message, such
@@ -218,7 +191,7 @@ class IndexedDBLogStore {
     });
   }
 
-  private onLoggerLog = () => {
+  private onLoggerLog = (): void => {
     if (!this.db) return;
 
     this.throttledFlush();
@@ -235,7 +208,7 @@ class IndexedDBLogStore {
     {
       leading: false,
       trailing: true,
-    }
+    },
   );
 
   /**
@@ -289,10 +262,10 @@ class IndexedDBLogStore {
       }
       const txn = this.db.transaction(["logs", "logslastmod"], "readwrite");
       const objStore = txn.objectStore("logs");
-      txn.oncomplete = () => {
+      txn.oncomplete = (): void => {
         resolve();
       };
-      txn.onerror = (event) => {
+      txn.onerror = (event): void => {
         logger.error("Failed to flush logs : ", event);
         reject(new Error("Failed to write logs: " + txn?.error?.message));
       };
@@ -333,10 +306,10 @@ class IndexedDBLogStore {
           .index("id")
           .openCursor(IDBKeyRange.only(id), "prev");
         let lines = "";
-        query.onerror = () => {
+        query.onerror = (): void => {
           reject(new Error("Query failed: " + query?.error?.message));
         };
-        query.onsuccess = () => {
+        query.onsuccess = (): void => {
           const cursor = query.result;
           if (!cursor) {
             resolve(lines);
@@ -379,7 +352,7 @@ class IndexedDBLogStore {
         const o = txn.objectStore("logs");
         // only load the key path, not the data which may be huge
         const query = o.index("id").openKeyCursor(IDBKeyRange.only(id));
-        query.onsuccess = () => {
+        query.onsuccess = (): void => {
           const cursor = query.result;
           if (!cursor) {
             return;
@@ -387,14 +360,14 @@ class IndexedDBLogStore {
           o.delete(cursor.primaryKey);
           cursor.continue();
         };
-        txn.oncomplete = () => {
+        txn.oncomplete = (): void => {
           resolve();
         };
-        txn.onerror = () => {
+        txn.onerror = (): void => {
           reject(
             new Error(
-              "Failed to delete logs for " + `'${id}' : ${txn?.error?.message}`
-            )
+              "Failed to delete logs for " + `'${id}' : ${txn?.error?.message}`,
+            ),
           );
         };
         // delete last modified entries
@@ -437,7 +410,7 @@ class IndexedDBLogStore {
         },
         (err) => {
           logger.error(err);
-        }
+        },
       );
     }
     return logs;
@@ -472,16 +445,16 @@ class IndexedDBLogStore {
 function selectQuery<T>(
   store: IDBObjectStore,
   keyRange: IDBKeyRange | undefined,
-  resultMapper: (cursor: IDBCursorWithValue) => T
+  resultMapper: (cursor: IDBCursorWithValue) => T,
 ): Promise<T[]> {
   const query = store.openCursor(keyRange);
   return new Promise((resolve, reject) => {
     const results: T[] = [];
-    query.onerror = () => {
+    query.onerror = (): void => {
       reject(new Error("Query failed: " + query?.error?.message));
     };
     // collect results
-    query.onsuccess = () => {
+    query.onsuccess = (): void => {
       const cursor = query.result;
       if (!cursor) {
         resolve(results);
@@ -510,7 +483,7 @@ declare global {
  */
 export function init(): Promise<void> {
   global.mx_rage_logger = new ConsoleLogger();
-  global.mx_rage_logger.monkeyPatch(window.console);
+  setLogExtension(global.mx_rage_logger.log);
 
   return tryInitStorage();
 }
@@ -537,7 +510,7 @@ function tryInitStorage(): Promise<void> {
   if (indexedDB) {
     global.mx_rage_store = new IndexedDBLogStore(
       indexedDB,
-      global.mx_rage_logger
+      global.mx_rage_logger,
     );
     global.mx_rage_initStoragePromise = global.mx_rage_store.connect();
     return global.mx_rage_initStoragePromise;
@@ -574,20 +547,72 @@ export async function getLogsForReport(): Promise<LogEntry[]> {
 type StringifyReplacer = (
   this: unknown,
   key: string,
-  value: unknown
+  value: unknown,
 ) => unknown;
 
 // From https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Errors/Cyclic_object_value#circular_references
 // Injects `<$ cycle-trimmed $>` wherever it cuts a cyclical object relationship
 const getCircularReplacer = (): StringifyReplacer => {
   const seen = new WeakSet();
-  return (key: string, value: unknown): unknown => {
+  const depthMap = new WeakMap<object, number>();
+  return function (this: unknown, key: string, value: unknown): unknown {
     if (typeof value === "object" && value !== null) {
       if (seen.has(value)) {
         return "<$ cycle-trimmed $>";
       }
       seen.add(value);
+
+      let depth = 0;
+      if (this) {
+        depth = depthMap.get(this) ?? 0;
+      }
+      depthMap.set(value, depth + 1);
+
+      if (depth > DEPTH_LIMIT) return "<$ object-pruned $>";
     }
     return value;
   };
 };
+
+enum LogLevel {
+  trace = 0,
+  debug = 1,
+  info = 2,
+  warn = 3,
+  error = 4,
+  silent = 5,
+}
+
+type LogExtensionFunc = (
+  level: LogLevel,
+  ...rest: (Error | DOMException | object | string)[]
+) => void;
+type LogLevelString = keyof typeof LogLevel;
+
+/**
+ * This method borrowed from livekit (who also use loglevel and in turn essentially
+ * took loglevel's example honouring log levels). Adds a loglevel logging extension
+ * in the recommended way.
+ */
+export function setLogExtension(extension: LogExtensionFunc): void {
+  const originalFactory = logger.methodFactory;
+
+  logger.methodFactory = function (
+    methodName,
+    configLevel,
+    loggerName,
+  ): LoggingMethod {
+    const rawMethod = originalFactory(methodName, configLevel, loggerName);
+
+    const logLevel = LogLevel[methodName as LogLevelString];
+    const needLog = logLevel >= configLevel && logLevel < LogLevel.silent;
+
+    return (...args) => {
+      rawMethod.apply(this, args);
+      if (needLog) {
+        extension(logLevel, ...args);
+      }
+    };
+  };
+  logger.setLevel(logger.getLevel()); // Be sure to call setLevel method in order to apply plugin
+}

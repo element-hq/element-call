@@ -18,18 +18,10 @@ import { Mocked, mocked } from "jest-mock";
 import { RoomState } from "matrix-js-sdk/src/models/room-state";
 import { PosthogAnalytics } from "../../src/analytics/PosthogAnalytics";
 import { checkForParallelCalls } from "../../src/room/checkForParallelCalls";
-
-const withFakeTimers = (continuation: () => void) => {
-  jest.useFakeTimers();
-  try {
-    continuation();
-  } finally {
-    jest.useRealTimers();
-  }
-};
+import { withFakeTimers } from "../utils";
 
 const withMockedPosthog = (
-  continuation: (posthog: Mocked<PosthogAnalytics>) => void
+  continuation: (posthog: Mocked<PosthogAnalytics>) => void,
 ) => {
   const posthog = mocked({
     trackEvent: jest.fn(),
@@ -45,7 +37,7 @@ const withMockedPosthog = (
 };
 
 const mockRoomState = (
-  groupCallMemberContents: Record<string, unknown>[]
+  groupCallMemberContents: Record<string, unknown>[],
 ): RoomState => {
   const stateEvents = groupCallMemberContents.map((content) => ({
     getContent: () => content,

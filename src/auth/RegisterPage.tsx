@@ -27,13 +27,14 @@ import { useHistory, useLocation } from "react-router-dom";
 import { captureException } from "@sentry/react";
 import { sleep } from "matrix-js-sdk/src/utils";
 import { Trans, useTranslation } from "react-i18next";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
 import { useClientLegacy } from "../ClientContext";
 import { useInteractiveRegistration } from "./useInteractiveRegistration";
 import styles from "./LoginPage.module.css";
-import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
+import Logo from "../icons/LogoLarge.svg?react";
 import { LoadingView } from "../FullScreenView";
 import { useRecaptcha } from "./useRecaptcha";
 import { Caption, Link } from "../typography/Typography";
@@ -68,7 +69,7 @@ export const RegisterPage: FC = () => {
 
       if (password !== passwordConfirmation) return;
 
-      const submit = async () => {
+      const submit = async (): Promise<void> => {
         setRegistering(true);
 
         const recaptchaResponse = await execute();
@@ -77,7 +78,7 @@ export const RegisterPage: FC = () => {
           password,
           userName,
           recaptchaResponse,
-          passwordlessUser
+          passwordlessUser,
         );
 
         if (client && client?.groupCallEventHandler && passwordlessUser) {
@@ -97,7 +98,7 @@ export const RegisterPage: FC = () => {
                 await newClient.joinRoom(roomId);
               } else {
                 captureException(error);
-                console.error(`Couldn't join room ${roomId}`, error);
+                logger.error(`Couldn't join room ${roomId}`, error);
               }
             }
           }
@@ -134,7 +135,7 @@ export const RegisterPage: FC = () => {
       execute,
       client,
       setClient,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -183,7 +184,7 @@ export const RegisterPage: FC = () => {
                   required
                   name="password"
                   type="password"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
                     setPassword(e.target.value)
                   }
                   value={password}
@@ -197,7 +198,7 @@ export const RegisterPage: FC = () => {
                   required
                   type="password"
                   name="passwordConfirmation"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  onChange={(e: ChangeEvent<HTMLInputElement>): void =>
                     setPasswordConfirmation(e.target.value)
                   }
                   value={passwordConfirmation}

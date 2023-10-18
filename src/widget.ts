@@ -68,11 +68,9 @@ interface WidgetHelpers {
  * is declared and initialized on the top level because the widget messaging
  * needs to be set up ASAP on load to ensure it doesn't miss any requests.
  */
-export const widget: WidgetHelpers | null = (() => {
+export const widget = ((): WidgetHelpers | null => {
   try {
-    const query = new URLSearchParams(window.location.search);
-    const widgetId = query.get("widgetId");
-    const parentUrl = query.get("parentUrl");
+    const { widgetId, parentUrl } = getUrlParams();
 
     if (widgetId && parentUrl) {
       const parentOrigin = new URL(parentUrl).origin;
@@ -157,11 +155,11 @@ export const widget: WidgetHelpers | null = (() => {
           timelineSupport: true,
           useE2eForGroupCall: e2eEnabled,
           fallbackICEServerAllowed: allowIceFallback,
-        }
+        },
       );
 
       const clientPromise = new Promise<MatrixClient>((resolve) => {
-        (async () => {
+        (async (): Promise<void> => {
           // wait for the config file to be ready (we load very early on so it might not
           // be otherwise)
           await Config.init();

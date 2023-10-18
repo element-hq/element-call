@@ -15,14 +15,11 @@ limitations under the License.
 */
 
 .grid {
-  contain: strict;
+  contain: layout style;
   position: relative;
   flex-grow: 1;
   margin-inline: var(--inline-content-inset);
-  padding-block-end: var(--footerHeight);
-  margin-block-start: var(--cpd-space-4x);
-  overflow-y: auto;
-  overflow-x: hidden;
+  margin-block: var(--cpd-space-4x);
 }
 
 .slots {

@@ -47,7 +47,7 @@ export function GroupCallLoader({
       ev.preventDefault();
       history.push("/");
     },
-    [history]
+    [history],
   );
 
   switch (groupCallState.kind) {
@@ -66,7 +66,7 @@ export function GroupCallLoader({
             <Heading>{t("Call not found")}</Heading>
             <Text>
               {t(
-                "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key."
+                "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.",
               )}
             </Text>
             {/* XXX: A 'create it for me' button would be the obvious UX here. Two screens already have

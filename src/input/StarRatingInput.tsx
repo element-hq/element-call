@@ -17,8 +17,8 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import styles from "./StarRatingInput.module.css";
-import { ReactComponent as StarSelected } from "../icons/StarSelected.svg";
-import { ReactComponent as StarUnselected } from "../icons/StarUnselected.svg";
+import StarSelected from "../icons/StarSelected.svg?react";
+import StarUnselected from "../icons/StarUnselected.svg?react";
 
 interface Props {
   starCount: number;
@@ -41,8 +41,8 @@ export function StarRatingInput({
         return (
           <div
             className={styles.inputContainer}
-            onMouseEnter={() => setHover(index)}
-            onMouseLeave={() => setHover(rating)}
+            onMouseEnter={(): void => setHover(index)}
+            onMouseLeave={(): void => setHover(rating)}
             key={index}
           >
             <input
@@ -51,7 +51,7 @@ export function StarRatingInput({
               id={"starInput" + String(index)}
               value={String(index) + "Star"}
               name="star rating"
-              onChange={(_ev) => {
+              onChange={(_ev): void => {
                 setRating(index);
                 onChange(index);
               }}

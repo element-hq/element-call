@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ReactNode, useCallback } from "react";
+import { FC, ReactNode, useCallback } from "react";
 import { AriaDialogProps } from "@react-types/dialog";
 import { useTranslation } from "react-i18next";
 import {
@@ -27,16 +27,16 @@ import {
 } from "@radix-ui/react-dialog";
 import { Drawer } from "vaul";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { ReactComponent as CloseIcon } from "@vector-im/compound-design-tokens/icons/close.svg";
+import CloseIcon from "@vector-im/compound-design-tokens/icons/close.svg?react";
 import classNames from "classnames";
-import { Heading } from "@vector-im/compound-web";
+import { Heading, Glass } from "@vector-im/compound-web";
 
 import styles from "./Modal.module.css";
+import overlayStyles from "./Overlay.module.css";
 import { useMediaQuery } from "./useMediaQuery";
-import { Glass } from "./Glass";
 
 // TODO: Support tabs
-export interface ModalProps extends AriaDialogProps {
+export interface Props extends AriaDialogProps {
   title: string;
   children: ReactNode;
   className?: string;
@@ -58,14 +58,14 @@ export interface ModalProps extends AriaDialogProps {
  * A modal, taking the form of a drawer / bottom sheet on touchscreen devices,
  * and a dialog box on desktop.
  */
-export function Modal({
+export const Modal: FC<Props> = ({
   title,
   children,
   className,
   open,
   onDismiss,
   ...rest
-}: ModalProps) {
+}) => {
   const { t } = useTranslation();
   // Empirically, Chrome on Android can end up not matching (hover: none), but
   // still matching (pointer: coarse) :/
@@ -74,7 +74,7 @@ export function Modal({
     (open: boolean) => {
       if (!open) onDismiss?.();
     },
-    [onDismiss]
+    [onDismiss],
   );
 
   if (touchscreen) {
@@ -85,9 +85,14 @@ export function Modal({
         dismissible={onDismiss !== undefined}
       >
         <Drawer.Portal>
-          <Drawer.Overlay className={styles.overlay} />
+          <Drawer.Overlay className={classNames(overlayStyles.bg)} />
           <Drawer.Content
-            className={classNames(className, styles.modal, styles.drawer)}
+            className={classNames(
+              className,
+              overlayStyles.overlay,
+              styles.modal,
+              styles.drawer,
+            )}
             {...rest}
           >
             <div className={styles.content}>
@@ -108,12 +113,17 @@ export function Modal({
       <DialogRoot open={open} onOpenChange={onOpenChange}>
         <DialogPortal>
           <DialogOverlay
-            className={classNames(styles.overlay, styles.dialogOverlay)}
+            className={classNames(overlayStyles.bg, overlayStyles.animate)}
           />
           <DialogContent asChild {...rest}>
             <Glass
-              frosted
-              className={classNames(className, styles.modal, styles.dialog)}
+              className={classNames(
+                className,
+                overlayStyles.overlay,
+                overlayStyles.animate,
+                styles.modal,
+                styles.dialog,
+              )}
             >
               <div className={styles.content}>
                 <div className={styles.header}>
@@ -140,4 +150,4 @@ export function Modal({
       </DialogRoot>
     );
   }
-}
+};

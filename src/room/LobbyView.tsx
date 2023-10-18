@@ -16,7 +16,7 @@ limitations under the License.
 
 import { FC, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MatrixClient, RoomMember } from "matrix-js-sdk/src/matrix";
+import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Button, Link } from "@vector-im/compound-web";
 import classNames from "classnames";
 import { useHistory } from "react-router-dom";
@@ -27,7 +27,7 @@ import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
 import { MuteStates } from "./MuteStates";
-import { ShareButton } from "../button/ShareButton";
+import { InviteButton } from "../button/InviteButton";
 import {
   HangupButton,
   MicButton,
@@ -44,7 +44,7 @@ interface Props {
   onEnter: () => void;
   confineToRoom: boolean;
   hideHeader: boolean;
-  participatingMembers: RoomMember[];
+  participantCount: number;
   onShareClick: (() => void) | null;
 }
 
@@ -55,7 +55,7 @@ export const LobbyView: FC<Props> = ({
   onEnter,
   confineToRoom,
   hideHeader,
-  participatingMembers,
+  participantCount,
   onShareClick,
 }) => {
   const { t } = useTranslation();
@@ -63,22 +63,22 @@ export const LobbyView: FC<Props> = ({
 
   const onAudioPress = useCallback(
     () => muteStates.audio.setEnabled?.((e) => !e),
-    [muteStates]
+    [muteStates],
   );
   const onVideoPress = useCallback(
     () => muteStates.video.setEnabled?.((e) => !e),
-    [muteStates]
+    [muteStates],
   );
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   const openSettings = useCallback(
     () => setSettingsModalOpen(true),
-    [setSettingsModalOpen]
+    [setSettingsModalOpen],
   );
   const closeSettings = useCallback(
     () => setSettingsModalOpen(false),
-    [setSettingsModalOpen]
+    [setSettingsModalOpen],
   );
 
   const history = useHistory();
@@ -104,12 +104,11 @@ export const LobbyView: FC<Props> = ({
                 name={matrixInfo.roomName}
                 avatarUrl={matrixInfo.roomAvatar}
                 encrypted={matrixInfo.roomEncrypted}
-                participants={participatingMembers}
-                client={client}
+                participantCount={participantCount}
               />
             </LeftNav>
             <RightNav>
-              {onShareClick !== null && <ShareButton onClick={onShareClick} />}
+              {onShareClick !== null && <InviteButton onClick={onShareClick} />}
             </RightNav>
           </Header>
         )}
@@ -129,15 +128,15 @@ export const LobbyView: FC<Props> = ({
         <div className={inCallStyles.footer}>
           {recentsButtonInFooter && recentsButton}
           <div className={inCallStyles.buttons}>
-            <VideoButton
-              muted={!muteStates.video.enabled}
-              onPress={onVideoPress}
-              disabled={muteStates.video.setEnabled === null}
-            />
             <MicButton
               muted={!muteStates.audio.enabled}
               onPress={onAudioPress}
               disabled={muteStates.audio.setEnabled === null}
+            />
+            <VideoButton
+              muted={!muteStates.video.enabled}
+              onPress={onVideoPress}
+              disabled={muteStates.video.setEnabled === null}
             />
             <SettingsButton onPress={openSettings} />
             {!confineToRoom && <HangupButton onPress={onLeaveClick} />}

@@ -14,18 +14,25 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ComponentPropsWithoutRef, FC } from "react";
-import { Button } from "@vector-im/compound-web";
-import { useTranslation } from "react-i18next";
-import { ReactComponent as UserAddSolidIcon } from "@vector-im/compound-design-tokens/icons/user-add-solid.svg";
+.toast {
+  color: var(--cpd-color-text-on-solid-primary);
+  background: var(--cpd-color-alpha-gray-1200);
+  padding-inline: var(--cpd-space-3x);
+  padding-block: var(--cpd-space-1x);
+  border: none;
+  border-radius: var(--cpd-radius-pill-effect);
+  box-shadow: var(--small-drop-shadow);
+  display: flex;
+  align-items: center;
+  gap: var(--cpd-space-1x);
+}
 
-export const ShareButton: FC<
-  Omit<ComponentPropsWithoutRef<"button">, "children">
-> = (props) => {
-  const { t } = useTranslation();
-  return (
-    <Button kind="secondary" size="sm" Icon={UserAddSolidIcon} {...props}>
-      {t("Share")}
-    </Button>
-  );
-};
+.toast > h3 {
+  margin: 0;
+}
+
+.toast > svg {
+  color: var(--cpd-color-icon-on-solid-primary);
+  flex-shrink: 0;
+  margin-inline-end: calc(-1 * var(--cpd-space-1x));
+}

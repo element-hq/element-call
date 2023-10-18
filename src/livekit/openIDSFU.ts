@@ -42,14 +42,14 @@ export type OpenIDClientParts = Pick<
 
 export function useOpenIDSFU(
   client: OpenIDClientParts,
-  rtcSession: MatrixRTCSession
-) {
+  rtcSession: MatrixRTCSession,
+): SFUConfig | undefined {
   const [sfuConfig, setSFUConfig] = useState<SFUConfig | undefined>(undefined);
 
   const activeFocus = useActiveFocus(rtcSession);
 
   useEffect(() => {
-    (async () => {
+    (async (): Promise<void> => {
       const sfuConfig = activeFocus
         ? await getSFUConfigWithOpenID(client, activeFocus)
         : undefined;
@@ -62,20 +62,20 @@ export function useOpenIDSFU(
 
 export async function getSFUConfigWithOpenID(
   client: OpenIDClientParts,
-  activeFocus: LivekitFocus
+  activeFocus: LivekitFocus,
 ): Promise<SFUConfig | undefined> {
   const openIdToken = await client.getOpenIdToken();
   logger.debug("Got openID token", openIdToken);
 
   try {
     logger.info(
-      `Trying to get JWT from call's active focus URL of ${activeFocus.livekit_service_url}...`
+      `Trying to get JWT from call's active focus URL of ${activeFocus.livekit_service_url}...`,
     );
     const sfuConfig = await getLiveKitJWT(
       client,
       activeFocus.livekit_service_url,
       activeFocus.livekit_alias,
-      openIdToken
+      openIdToken,
     );
     logger.info(`Got JWT from call's active focus URL.`);
 
@@ -83,7 +83,7 @@ export async function getSFUConfigWithOpenID(
   } catch (e) {
     logger.warn(
       `Failed to get JWT from RTC session's active focus URL of ${activeFocus.livekit_service_url}.`,
-      e
+      e,
     );
     return undefined;
   }
@@ -93,7 +93,7 @@ async function getLiveKitJWT(
   client: OpenIDClientParts,
   livekitServiceURL: string,
   roomName: string,
-  openIDToken: IOpenIDToken
+  openIDToken: IOpenIDToken,
 ): Promise<SFUConfig> {
   try {
     const res = await fetch(livekitServiceURL + "/sfu/get", {

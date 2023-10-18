@@ -17,6 +17,7 @@ limitations under the License.
 import { useEffect, useCallback, useRef, useState } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { translatedError } from "../TranslatedError";
 
@@ -34,7 +35,11 @@ interface RecaptchaPromiseRef {
   reject: (error: Error) => void;
 }
 
-export const useRecaptcha = (sitekey?: string) => {
+export function useRecaptcha(sitekey?: string): {
+  execute: () => Promise<string>;
+  reset: () => void;
+  recaptchaId: string;
+} {
   const { t } = useTranslation();
   const [recaptchaId] = useState(() => randomString(16));
   const promiseRef = useRef<RecaptchaPromiseRef>();
@@ -42,7 +47,7 @@ export const useRecaptcha = (sitekey?: string) => {
   useEffect(() => {
     if (!sitekey) return;
 
-    const onRecaptchaLoaded = () => {
+    const onRecaptchaLoaded = (): void => {
       if (!document.getElementById(recaptchaId)) return;
 
       window.grecaptcha.render(recaptchaId, {
@@ -74,7 +79,7 @@ export const useRecaptcha = (sitekey?: string) => {
     }
 
     if (!window.grecaptcha) {
-      console.log("Recaptcha not loaded");
+      logger.log("Recaptcha not loaded");
       return Promise.reject(translatedError("Recaptcha not loaded", t));
     }
 
@@ -90,11 +95,11 @@ export const useRecaptcha = (sitekey?: string) => {
       });
 
       promiseRef.current = {
-        resolve: (value) => {
+        resolve: (value): void => {
           resolve(value);
           observer.disconnect();
         },
-        reject: (error) => {
+        reject: (error): void => {
           reject(error);
           observer.disconnect();
         },
@@ -103,7 +108,7 @@ export const useRecaptcha = (sitekey?: string) => {
       window.grecaptcha.execute();
 
       const iframe = document.querySelector<HTMLIFrameElement>(
-        'iframe[src*="recaptcha/api2/bframe"]'
+        'iframe[src*="recaptcha/api2/bframe"]',
       );
 
       if (iframe?.parentNode?.parentNode) {
@@ -119,4 +124,4 @@ export const useRecaptcha = (sitekey?: string) => {
   }, []);
 
   return { execute, reset, recaptchaId };
-};
+}

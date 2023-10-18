@@ -34,8 +34,8 @@ import {
   RoomMember,
   RoomMemberEvent,
 } from "matrix-js-sdk/src/models/room-member";
-import { ReactComponent as MicOnSolidIcon } from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg";
-import { ReactComponent as MicOffSolidIcon } from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg";
+import MicOnSolidIcon from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg?react";
+import MicOffSolidIcon from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg?react";
 import { Text } from "@vector-im/compound-web";
 
 import { Avatar } from "../Avatar";
@@ -84,7 +84,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       showSpeakingIndicator,
       showConnectionStats,
     },
-    tileRef
+    tileRef,
   ) => {
     const { t } = useTranslation();
 
@@ -93,16 +93,16 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     // Handle display name changes.
     const [displayName, setDisplayName] = useReactiveState(
       () => member?.rawDisplayName ?? "[👻]",
-      [member]
+      [member],
     );
     useEffect(() => {
       if (member) {
-        const updateName = () => {
+        const updateName = (): void => {
           setDisplayName(member.rawDisplayName);
         };
 
         member!.on(RoomMemberEvent.Name, updateName);
-        return () => {
+        return (): void => {
           member!.removeListener(RoomMemberEvent.Name, updateName);
         };
       }
@@ -113,7 +113,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         content === TileContent.UserMedia
           ? Track.Source.Microphone
           : Track.Source.ScreenShareAudio,
-        sfuParticipant
+        sfuParticipant,
       ).isMuted !== false;
 
     const MicIcon = muted ? MicOffSolidIcon : MicOnSolidIcon;
@@ -126,11 +126,11 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       useState(false);
     const openVideoTileSettingsModal = useCallback(
       () => setVideoTileSettingsModalOpen(true),
-      [setVideoTileSettingsModalOpen]
+      [setVideoTileSettingsModalOpen],
     );
     const closeVideoTileSettingsModal = useCallback(
       () => setVideoTileSettingsModalOpen(false),
-      [setVideoTileSettingsModalOpen]
+      [setVideoTileSettingsModalOpen],
     );
 
     const toolbarButtons: JSX.Element[] = [];
@@ -141,7 +141,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           className={styles.button}
           volume={(sfuParticipant as RemoteParticipant).getVolume() ?? 0}
           onPress={openVideoTileSettingsModal}
-        />
+        />,
       );
 
       if (content === TileContent.ScreenShare) {
@@ -151,7 +151,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
             className={styles.button}
             fullscreen={fullscreen}
             onPress={onFullscreen}
-          />
+          />,
         );
       }
     }
@@ -228,5 +228,5 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         )}
       </animated.div>
     );
-  }
+  },
 );

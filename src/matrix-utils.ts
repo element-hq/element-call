@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -35,12 +35,14 @@ import IndexedDBWorker from "./IndexedDBWorker?worker";
 import { getUrlParams, PASSWORD_STRING } from "./UrlParams";
 import { loadOlm } from "./olm";
 import { Config } from "./config/Config";
+import { setLocalStorageItem } from "./useLocalStorage";
+import { getRoomSharedKeyLocalStorageKey } from "./e2ee/sharedKeyManagement";
 
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
 
 export class CryptoStoreIntegrityError extends Error {
-  constructor() {
+  public constructor() {
     super("Crypto store data was expected, but none was found");
   }
 }
@@ -52,13 +54,13 @@ const SYNC_STORE_NAME = "element-call-sync";
 // (It's a good opportunity to make the database names consistent.)
 const CRYPTO_STORE_NAME = "element-call-crypto";
 
-function waitForSync(client: MatrixClient) {
+function waitForSync(client: MatrixClient): Promise<void> {
   return new Promise<void>((resolve, reject) => {
     const onSync = (
       state: SyncState,
       _old: SyncState | null,
-      data?: ISyncStateData
-    ) => {
+      data?: ISyncStateData,
+    ): void => {
       if (state === "PREPARED") {
         client.removeListener(ClientEvent.Sync, onSync);
         resolve();
@@ -69,6 +71,23 @@ function waitForSync(client: MatrixClient) {
     };
     client.on(ClientEvent.Sync, onSync);
   });
+}
+
+function secureRandomString(entropyBytes: number): string {
+  const key = new Uint8Array(entropyBytes);
+  crypto.getRandomValues(key);
+  // encode to base64url as this value goes into URLs
+  // base64url is just base64 with thw two non-alphanum characters swapped out for
+  // ones that can be put in a URL without encoding. Browser JS has a native impl
+  // for base64 encoding but only a string (there isn't one that takes a UInt8Array
+  // yet) so just use the built-in one and convert, replace the chars and strip the
+  // padding from the end (otherwise we'd need to pull in another dependency).
+  return btoa(
+    key.reduce((acc, current) => acc + String.fromCharCode(current), ""),
+  )
+    .replace("+", "-")
+    .replace("/", "_")
+    .replace(/=*$/, "");
 }
 
 /**
@@ -82,7 +101,7 @@ function waitForSync(client: MatrixClient) {
  */
 export async function initClient(
   clientOptions: ICreateClientOpts,
-  restore: boolean
+  restore: boolean,
 ): Promise<MatrixClient> {
   await loadOlm();
 
@@ -108,7 +127,7 @@ export async function initClient(
       // Chrome supports it. (It bundles them fine in production mode.)
       workerFactory: import.meta.env.DEV
         ? undefined
-        : () => new IndexedDBWorker(),
+        : (): Worker => new IndexedDBWorker(),
     });
   } else if (localStorage) {
     baseOpts.store = new MemoryStore({ localStorage });
@@ -129,7 +148,7 @@ export async function initClient(
     if (indexedDB) {
       const cryptoStoreExists = await IndexedDBCryptoStore.exists(
         indexedDB,
-        CRYPTO_STORE_NAME
+        CRYPTO_STORE_NAME,
       );
       if (!cryptoStoreExists) throw new CryptoStoreIntegrityError();
     } else if (localStorage) {
@@ -145,7 +164,7 @@ export async function initClient(
   if (indexedDB) {
     baseOpts.cryptoStore = new IndexedDBCryptoStore(
       indexedDB,
-      CRYPTO_STORE_NAME
+      CRYPTO_STORE_NAME,
     );
   } else if (localStorage) {
     baseOpts.cryptoStore = new LocalStorageCryptoStore(localStorage);
@@ -177,9 +196,9 @@ export async function initClient(
   try {
     await client.store.startup();
   } catch (error) {
-    console.error(
+    logger.error(
       "Error starting matrix client store. Falling back to memory store.",
-      error
+      error,
     );
     client.store = new MemoryStore({ localStorage });
     await client.store.startup();
@@ -249,7 +268,7 @@ export function roomNameFromRoomId(roomId: string): string {
     .substring(1)
     .split("-")
     .map((part) =>
-      part.length > 0 ? part.charAt(0).toUpperCase() + part.slice(1) : part
+      part.length > 0 ? part.charAt(0).toUpperCase() + part.slice(1) : part,
     )
     .join(" ")
     .toLowerCase();
@@ -269,11 +288,17 @@ export function isLocalRoomId(roomId: string, client: MatrixClient): boolean {
   return parts[1] === client.getDomain();
 }
 
+interface CreateRoomResult {
+  roomId: string;
+  alias?: string;
+  password?: string;
+}
+
 export async function createRoom(
   client: MatrixClient,
   name: string,
-  e2ee: boolean
-): Promise<[string, string]> {
+  e2ee: boolean,
+): Promise<CreateRoomResult> {
   logger.log(`Creating room for group call`);
   const createPromise = client.createRoom({
     visibility: Visibility.Private,
@@ -307,7 +332,7 @@ export async function createRoom(
 
   // Wait for the room to arrive
   await new Promise<void>((resolve, reject) => {
-    const onRoom = async (room: Room) => {
+    const onRoom = async (room: Room): Promise<void> => {
       if (room.roomId === (await createPromise).room_id) {
         resolve();
         cleanUp();
@@ -318,7 +343,7 @@ export async function createRoom(
       cleanUp();
     });
 
-    const cleanUp = () => {
+    const cleanUp = (): void => {
       client.off(ClientEvent.Room, onRoom);
     };
     client.on(ClientEvent.Room, onRoom);
@@ -333,10 +358,23 @@ export async function createRoom(
     GroupCallType.Video,
     false,
     GroupCallIntent.Room,
-    true
+    true,
   );
 
-  return [fullAliasFromRoomName(name, client), result.room_id];
+  let password;
+  if (e2ee) {
+    password = secureRandomString(16);
+    setLocalStorageItem(
+      getRoomSharedKeyLocalStorageKey(result.room_id),
+      password,
+    );
+  }
+
+  return {
+    roomId: result.room_id,
+    alias: e2ee ? undefined : fullAliasFromRoomName(name, client),
+    password,
+  };
 }
 
 /**
@@ -348,7 +386,7 @@ export async function createRoom(
 export function getAbsoluteRoomUrl(
   roomId: string,
   roomName?: string,
-  password?: string
+  password?: string,
 ): string {
   return `${window.location.protocol}//${
     window.location.host
@@ -364,17 +402,24 @@ export function getAbsoluteRoomUrl(
 export function getRelativeRoomUrl(
   roomId: string,
   roomName?: string,
-  password?: string
+  password?: string,
 ): string {
+  // The password shouldn't need URL encoding here (we generate URL-safe ones) but encode
+  // it in case it came from another client that generated a non url-safe one
+  const encodedPassword = password ? encodeURIComponent(password) : undefined;
+  if (password && encodedPassword !== password) {
+    logger.info("Encoded call password used non URL-safe chars: buggy client?");
+  }
+
   return `/room/#${
     roomName ? "/" + roomAliasLocalpartFromRoomName(roomName) : ""
-  }?roomId=${roomId}${password ? "&" + PASSWORD_STRING + password : ""}`;
+  }?roomId=${roomId}${password ? "&" + PASSWORD_STRING + encodedPassword : ""}`;
 }
 
 export function getAvatarUrl(
   client: MatrixClient,
   mxcUrl: string,
-  avatarSize = 96
+  avatarSize = 96,
 ): string {
   const width = Math.floor(avatarSize * window.devicePixelRatio);
   const height = Math.floor(avatarSize * window.devicePixelRatio);

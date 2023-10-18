@@ -34,8 +34,8 @@ export function useCallViewKeyboardShortcuts(
   focusElement: RefObject<HTMLElement | null>,
   toggleMicrophoneMuted: () => void,
   toggleLocalVideoMuted: () => void,
-  setMicrophoneMuted: (muted: boolean) => void
-) {
+  setMicrophoneMuted: (muted: boolean) => void,
+): void {
   const spacebarHeld = useRef(false);
 
   // These event handlers are set on the window because we want users to be able
@@ -63,8 +63,8 @@ export function useCallViewKeyboardShortcuts(
         toggleLocalVideoMuted,
         toggleMicrophoneMuted,
         setMicrophoneMuted,
-      ]
-    )
+      ],
+    ),
   );
 
   useEventTarget(
@@ -80,8 +80,8 @@ export function useCallViewKeyboardShortcuts(
           setMicrophoneMuted(true);
         }
       },
-      [focusElement, setMicrophoneMuted]
-    )
+      [focusElement, setMicrophoneMuted],
+    ),
   );
 
   useEventTarget(
@@ -92,6 +92,6 @@ export function useCallViewKeyboardShortcuts(
         spacebarHeld.current = false;
         setMicrophoneMuted(true);
       }
-    }, [setMicrophoneMuted, spacebarHeld])
+    }, [setMicrophoneMuted, spacebarHeld]),
   );
 }

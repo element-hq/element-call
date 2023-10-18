@@ -17,9 +17,9 @@ limitations under the License.
 
 import { ComponentPropsWithoutRef, FC } from "react";
 
-import { ReactComponent as AudioMuted } from "../icons/AudioMuted.svg";
-import { ReactComponent as AudioLow } from "../icons/AudioLow.svg";
-import { ReactComponent as Audio } from "../icons/Audio.svg";
+import AudioMuted from "../icons/AudioMuted.svg?react";
+import AudioLow from "../icons/AudioLow.svg?react";
+import Audio from "../icons/Audio.svg?react";
 
 interface Props extends ComponentPropsWithoutRef<"svg"> {
   /**

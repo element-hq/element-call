@@ -13,30 +13,30 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import { forwardRef, useCallback, useState } from "react";
+import { FC, forwardRef, useCallback, useState } from "react";
 import { PressEvent } from "@react-types/shared";
 import classNames from "classnames";
 import { useButton } from "@react-aria/button";
 import { mergeProps, useObjectRef } from "@react-aria/utils";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "@vector-im/compound-web";
-import { ReactComponent as MicOnSolidIcon } from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg";
-import { ReactComponent as MicOffSolidIcon } from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg";
-import { ReactComponent as VideoCallIcon } from "@vector-im/compound-design-tokens/icons/video-call.svg";
-import { ReactComponent as VideoCallOffIcon } from "@vector-im/compound-design-tokens/icons/video-call-off.svg";
-import { ReactComponent as EndCallIcon } from "@vector-im/compound-design-tokens/icons/end-call.svg";
-import { ReactComponent as ShareScreenSolidIcon } from "@vector-im/compound-design-tokens/icons/share-screen-solid.svg";
-import { ReactComponent as SettingsSolidIcon } from "@vector-im/compound-design-tokens/icons/settings-solid.svg";
-import { ReactComponent as ChevronDownIcon } from "@vector-im/compound-design-tokens/icons/chevron-down.svg";
 import { ChangeEvent } from "react";
+import MicOnSolidIcon from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg?react";
+import MicOffSolidIcon from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg?react";
+import VideoCallIcon from "@vector-im/compound-design-tokens/icons/video-call.svg?react";
+import VideoCallOffIcon from "@vector-im/compound-design-tokens/icons/video-call-off.svg?react";
+import EndCallIcon from "@vector-im/compound-design-tokens/icons/end-call.svg?react";
+import ShareScreenSolidIcon from "@vector-im/compound-design-tokens/icons/share-screen-solid.svg?react";
+import SettingsSolidIcon from "@vector-im/compound-design-tokens/icons/settings-solid.svg?react";
+import ChevronDownIcon from "@vector-im/compound-design-tokens/icons/chevron-down.svg?react";
 
-import styles from "./Button.module.css";
-import { ReactComponent as Fullscreen } from "../icons/Fullscreen.svg";
-import { ReactComponent as FullscreenExit } from "../icons/FullscreenExit.svg";
-import { ReactComponent as RemoveIcon } from "../icons/Remove.svg";
-import { ReactComponent as AddBreakoutRoomIcon } from "../icons/AddBreakoutRoom.svg";
-import { ReactComponent as BreakoutRoomsIcon } from "../icons/BreakoutRooms.svg";
 import { VolumeIcon } from "./VolumeIcon";
+import styles from "./Button.module.css";
+import Fullscreen from "../icons/Fullscreen.svg?react";
+import FullscreenExit from "../icons/FullscreenExit.svg?react";
+import RemoveIcon from "../icons/Remove.svg";
+import AddBreakoutRoomIcon from "../icons/AddBreakoutRoom.svg?react";
+import BreakoutRoomsIcon from "../icons/BreakoutRooms.svg?react";
 
 export type ButtonVariant =
   | "default"
@@ -139,7 +139,7 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
   }
 );
 
-export function ButtonWithDropdown({
+export const ButtonWithDropdown = ({
   label,
   options,
   onOptionSelect,
@@ -148,7 +148,7 @@ export function ButtonWithDropdown({
   label: string;
   options: { label: string; id: string }[];
   onOptionSelect: (id: string) => void;
-}) {
+}) => {
   const [selectedUserId, setSelectedUserId] = useState<string>(options[0].id);
 
   const onPress = useCallback(() => {
@@ -178,16 +178,13 @@ export function ButtonWithDropdown({
       </select>
     </div>
   );
-}
+};
 
-export function MicButton({
-  muted,
-  ...rest
-}: {
+export const MicButton: FC<{
   muted: boolean;
   // TODO: add all props for <Button>
   [index: string]: unknown;
-}) {
+}> = ({ muted, ...rest }) => {
   const { t } = useTranslation();
   const Icon = muted ? MicOffSolidIcon : MicOnSolidIcon;
   const label = muted ? t("Unmute microphone") : t("Mute microphone");
@@ -199,16 +196,13 @@ export function MicButton({
       </Button>
     </Tooltip>
   );
-}
+};
 
-export function VideoButton({
-  muted,
-  ...rest
-}: {
+export const VideoButton: FC<{
   muted: boolean;
   // TODO: add all props for <Button>
   [index: string]: unknown;
-}) {
+}> = ({ muted, ...rest }) => {
   const { t } = useTranslation();
   const Icon = muted ? VideoCallOffIcon : VideoCallIcon;
   const label = muted ? t("Start video") : t("Stop video");
@@ -220,18 +214,14 @@ export function VideoButton({
       </Button>
     </Tooltip>
   );
-}
+};
 
-export function ScreenshareButton({
-  enabled,
-  className,
-  ...rest
-}: {
+export const ScreenshareButton: FC<{
   enabled: boolean;
   className?: string;
   // TODO: add all props for <Button>
   [index: string]: unknown;
-}) {
+}> = ({ enabled, className, ...rest }) => {
   const { t } = useTranslation();
   const label = enabled ? t("Sharing screen") : t("Share screen");
 
@@ -242,16 +232,13 @@ export function ScreenshareButton({
       </Button>
     </Tooltip>
   );
-}
+};
 
-export function HangupButton({
-  className,
-  ...rest
-}: {
+export const HangupButton: FC<{
   className?: string;
   // TODO: add all props for <Button>
   [index: string]: unknown;
-}) {
+}> = ({ className, ...rest }) => {
   const { t } = useTranslation();
 
   return (
@@ -265,16 +252,13 @@ export function HangupButton({
       </Button>
     </Tooltip>
   );
-}
+};
 
-export function SettingsButton({
-  className,
-  ...rest
-}: {
+export const SettingsButton: FC<{
   className?: string;
   // TODO: add all props for <Button>
   [index: string]: unknown;
-}) {
+}> = ({ className, ...rest }) => {
   const { t } = useTranslation();
 
   return (
@@ -284,7 +268,7 @@ export function SettingsButton({
       </Button>
     </Tooltip>
   );
-}
+};
 
 export function AddBreakoutRoomButton({
   ...rest
@@ -327,7 +311,7 @@ interface AudioButtonProps extends Omit<Props, "variant"> {
   volume: number;
 }
 
-export function AudioButton({ volume, ...rest }: AudioButtonProps) {
+export const AudioButton: FC<AudioButtonProps> = ({ volume, ...rest }) => {
   const { t } = useTranslation();
 
   return (
@@ -337,7 +321,7 @@ export function AudioButton({ volume, ...rest }: AudioButtonProps) {
       </Button>
     </Tooltip>
   );
-}
+};
 
 export function RemoveButton({ ...rest }: Omit<Props, "variant">) {
   const { t } = useTranslation();
@@ -355,10 +339,10 @@ interface FullscreenButtonProps extends Omit<Props, "variant"> {
   fullscreen?: boolean;
 }
 
-export function FullscreenButton({
+export const FullscreenButton: FC<FullscreenButtonProps> = ({
   fullscreen,
   ...rest
-}: FullscreenButtonProps) {
+}) => {
   const { t } = useTranslation();
   const Icon = fullscreen ? FullscreenExit : Fullscreen;
   const label = fullscreen ? t("Exit full screen") : t("Full screen");
@@ -370,4 +354,4 @@ export function FullscreenButton({
       </Button>
     </Tooltip>
   );
-}
+};

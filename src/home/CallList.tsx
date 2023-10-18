@@ -18,6 +18,7 @@ import { Link } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room } from "matrix-js-sdk/src/models/room";
+import { FC } from "react";
 
 import { CopyButton } from "../button";
 import { Avatar, Size } from "../Avatar";
@@ -31,7 +32,8 @@ interface CallListProps {
   rooms: GroupCallRoom[];
   client: MatrixClient;
 }
-export function CallList({ rooms, client }: CallListProps) {
+
+export const CallList: FC<CallListProps> = ({ rooms, client }) => {
   return (
     <>
       <div className={styles.callList}>
@@ -54,7 +56,7 @@ export function CallList({ rooms, client }: CallListProps) {
       </div>
     </>
   );
-}
+};
 interface CallTileProps {
   name: string;
   avatarUrl: string;
@@ -62,15 +64,18 @@ interface CallTileProps {
   participants: RoomMember[];
   client: MatrixClient;
 }
-function CallTile({ name, avatarUrl, room }: CallTileProps) {
+
+const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room }) => {
   const roomSharedKey = useRoomSharedKey(room.roomId);
 
   return (
     <div className={styles.callTile}>
       <Link
-        // note we explicitly omit the password here as we don't want it on this link because
-        // it's just for the user to navigate around and not for sharing
-        to={getRelativeRoomUrl(room.roomId, room.name)}
+        to={getRelativeRoomUrl(
+          room.roomId,
+          room.name,
+          roomSharedKey ?? undefined,
+        )}
         className={styles.callTileLink}
       >
         <Avatar id={room.roomId} name={name} size={Size.LG} src={avatarUrl} />
@@ -87,9 +92,9 @@ function CallTile({ name, avatarUrl, room }: CallTileProps) {
         value={getAbsoluteRoomUrl(
           room.roomId,
           room.name,
-          roomSharedKey ?? undefined
+          roomSharedKey ?? undefined,
         )}
       />
     </div>
   );
-}
+};

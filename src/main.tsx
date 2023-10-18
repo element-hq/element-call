@@ -24,20 +24,21 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import { createBrowserHistory } from "history";
 import "./index.css";
-import { setLogLevel as setLKLogLevel } from "livekit-client";
+import { logger } from "matrix-js-sdk/src/logger";
+import {
+  setLogExtension as setLKLogExtension,
+  setLogLevel,
+} from "livekit-client";
 
-import App from "./App";
+import { App } from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
 
 initRageshake();
-// set livekit's log level: we do this after initialising rageshakes because
-// we need rageshake to do its monkey patching first, so the livekit
-// logger gets the patched log funxction, so it picks up livekit's
-// logs.
-setLKLogLevel("debug");
+setLogLevel("debug");
+setLKLogExtension(global.mx_rage_logger.log);
 
-console.info(`Element Call ${import.meta.env.VITE_APP_VERSION || "dev"}`);
+logger.info(`Element Call ${import.meta.env.VITE_APP_VERSION || "dev"}`);
 
 const root = createRoot(document.getElementById("root")!);
 
@@ -47,7 +48,7 @@ if (!window.isSecureContext) {
   fatalError = new Error(
     "This app cannot run in an insecure context. To fix this, access the app " +
       "via a local loopback address, or serve it over HTTPS.\n" +
-      "https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts"
+      "https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts",
   );
 } else if (!navigator.mediaDevices) {
   fatalError = new Error("Your browser does not support WebRTC.");
@@ -65,5 +66,5 @@ const history = createBrowserHistory();
 root.render(
   <StrictMode>
     <App history={history} />
-  </StrictMode>
+  </StrictMode>,
 );

@@ -16,6 +16,7 @@ limitations under the License.
 
 import { FC, useEffect, useState, useCallback, ReactNode } from "react";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { useClientLegacy } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
@@ -37,7 +38,7 @@ export const RoomPage: FC = () => {
 
   const roomIdOrAlias = roomId ?? roomAlias;
   if (!roomIdOrAlias) {
-    console.error("No room specified");
+    logger.error("No room specified");
   }
 
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
@@ -80,7 +81,7 @@ export const RoomPage: FC = () => {
         hideHeader={hideHeader}
       />
     ),
-    [client, passwordlessUser, confineToRoom, preload, hideHeader]
+    [client, passwordlessUser, confineToRoom, preload, hideHeader],
   );
 
   let content: ReactNode;

@@ -19,6 +19,7 @@ import { MatrixEvent } from "matrix-js-sdk/src/models/event";
 import { User, UserEvent } from "matrix-js-sdk/src/models/user";
 import { FileType } from "matrix-js-sdk/src/http-api";
 import { useState, useCallback, useEffect } from "react";
+import { logger } from "matrix-js-sdk/src/logger";
 
 interface ProfileLoadState {
   success: boolean;
@@ -38,7 +39,11 @@ type ProfileSaveCallback = ({
   removeAvatar: boolean;
 }) => Promise<void>;
 
-export function useProfile(client: MatrixClient | undefined) {
+interface UseProfile extends ProfileLoadState {
+  saveProfile: ProfileSaveCallback;
+}
+
+export function useProfile(client: MatrixClient | undefined): UseProfile {
   const [{ success, loading, displayName, avatarUrl, error }, setState] =
     useState<ProfileLoadState>(() => {
       let user: User | undefined = undefined;
@@ -58,8 +63,8 @@ export function useProfile(client: MatrixClient | undefined) {
   useEffect(() => {
     const onChangeUser = (
       _event: MatrixEvent | undefined,
-      { displayName, avatarUrl }: User
-    ) => {
+      { displayName, avatarUrl }: User,
+    ): void => {
       setState({
         success: false,
         loading: false,
@@ -103,9 +108,8 @@ export function useProfile(client: MatrixClient | undefined) {
           if (removeAvatar) {
             await client.setAvatarUrl("");
           } else if (avatar) {
-            ({ content_uri: mxcAvatarUrl } = await client.uploadContent(
-              avatar
-            ));
+            ({ content_uri: mxcAvatarUrl } =
+              await client.uploadContent(avatar));
             await client.setAvatarUrl(mxcAvatarUrl);
           }
 
@@ -127,10 +131,10 @@ export function useProfile(client: MatrixClient | undefined) {
           }));
         }
       } else {
-        console.error("Client not initialized before calling saveProfile");
+        logger.error("Client not initialized before calling saveProfile");
       }
     },
-    [client]
+    [client],
   );
 
   return {

@@ -33,7 +33,7 @@ function makeFocus(livekitAlias: string): LivekitFocus {
   };
 }
 
-export function enterRTCSession(rtcSession: MatrixRTCSession) {
+export function enterRTCSession(rtcSession: MatrixRTCSession): void {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 
@@ -41,13 +41,15 @@ export function enterRTCSession(rtcSession: MatrixRTCSession) {
   // have started tracking by the time calls start getting created.
   //groupCallOTelMembership?.onJoinCall();
 
-  // right now we asume everything is a room-scoped call
+  // right now we assume everything is a room-scoped call
   const livekitAlias = rtcSession.room.roomId;
 
   rtcSession.joinRoomSession([makeFocus(livekitAlias)]);
 }
 
-export function leaveRTCSession(rtcSession: MatrixRTCSession) {
+export async function leaveRTCSession(
+  rtcSession: MatrixRTCSession,
+): Promise<void> {
   //groupCallOTelMembership?.onLeaveCall();
-  rtcSession.leaveRoomSession();
+  await rtcSession.leaveRoomSession();
 }

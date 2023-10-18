@@ -14,10 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.e2eeBanner {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 12px;
-  font-size: var(--font-size-caption);
-}
+import { ComponentPropsWithoutRef, FC } from "react";
+import { Button } from "@vector-im/compound-web";
+import { useTranslation } from "react-i18next";
+import UserAddIcon from "@vector-im/compound-design-tokens/icons/user-add.svg?react";
+
+export const InviteButton: FC<
+  Omit<ComponentPropsWithoutRef<"button">, "children">
+> = (props) => {
+  const { t } = useTranslation();
+  return (
+    <Button kind="secondary" size="sm" Icon={UserAddIcon} {...props}>
+      {t("Invite")}
+    </Button>
+  );
+};

@@ -14,9 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useState } from "react";
+import { FC, useCallback, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import styles from "./RoomAuthView.module.css";
 import { Button } from "../button";
@@ -28,7 +29,7 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
 import { Config } from "../config/Config";
 
-export function RoomAuthView() {
+export const RoomAuthView: FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
 
@@ -46,12 +47,12 @@ export function RoomAuthView() {
         typeof dataForDisplayName === "string" ? dataForDisplayName : "";
 
       registerPasswordlessUser(displayName).catch((error) => {
-        console.error("Failed to register passwordless user", e);
+        logger.error("Failed to register passwordless user", e);
         setLoading(false);
         setError(error);
       });
     },
-    [registerPasswordlessUser]
+    [registerPasswordlessUser],
   );
 
   const { t } = useTranslation();
@@ -121,4 +122,4 @@ export function RoomAuthView() {
       </div>
     </>
   );
-}
+};

@@ -1,1 +1,8 @@
-{}
+{
+  "{{count}} stars|one": "{{count}} stjärna",
+  "{{count}} stars|other": "{{count}} stjärnor",
+  "{{count, number}}|one": "{{count, number}}",
+  "{{count, number}}|other": "{{count, number}}",
+  "{{displayName}} is presenting": "{{displayName}} presenterar",
+  "{{displayName}}, your call has ended.": "{{displayName}}, ditt samtal har avslutats."
+}

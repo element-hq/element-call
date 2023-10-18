@@ -18,13 +18,12 @@ import classNames from "classnames";
 import { FC, HTMLAttributes, ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { MatrixClient, RoomMember } from "matrix-js-sdk/src/matrix";
-import { Heading } from "@vector-im/compound-web";
+import { Heading, Text } from "@vector-im/compound-web";
+import UserProfileIcon from "@vector-im/compound-design-tokens/icons/user-profile.svg?react";
 
 import styles from "./Header.module.css";
-import { ReactComponent as Logo } from "./icons/Logo.svg";
+import Logo from "./icons/Logo.svg?react";
 import { Avatar, Size } from "./Avatar";
-import { Facepile } from "./Facepile";
 import { EncryptionLock } from "./room/EncryptionLock";
 import { useMediaQuery } from "./useMediaQuery";
 
@@ -33,13 +32,13 @@ interface HeaderProps extends HTMLAttributes<HTMLElement> {
   className?: string;
 }
 
-export function Header({ children, className, ...rest }: HeaderProps) {
+export const Header: FC<HeaderProps> = ({ children, className, ...rest }) => {
   return (
     <header className={classNames(styles.header, className)} {...rest}>
       {children}
     </header>
   );
-}
+};
 
 interface LeftNavProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
@@ -47,26 +46,26 @@ interface LeftNavProps extends HTMLAttributes<HTMLElement> {
   hideMobile?: boolean;
 }
 
-export function LeftNav({
+export const LeftNav: FC<LeftNavProps> = ({
   children,
   className,
   hideMobile,
   ...rest
-}: LeftNavProps) {
+}) => {
   return (
     <div
       className={classNames(
         styles.nav,
         styles.leftNav,
         { [styles.hideMobile]: hideMobile },
-        className
+        className,
       )}
       {...rest}
     >
       {children}
     </div>
   );
-}
+};
 
 interface RightNavProps extends HTMLAttributes<HTMLElement> {
   children?: ReactNode;
@@ -74,32 +73,32 @@ interface RightNavProps extends HTMLAttributes<HTMLElement> {
   hideMobile?: boolean;
 }
 
-export function RightNav({
+export const RightNav: FC<RightNavProps> = ({
   children,
   className,
   hideMobile,
   ...rest
-}: RightNavProps) {
+}) => {
   return (
     <div
       className={classNames(
         styles.nav,
         styles.rightNav,
         { [styles.hideMobile]: hideMobile },
-        className
+        className,
       )}
       {...rest}
     >
       {children}
     </div>
   );
-}
+};
 
 interface HeaderLogoProps {
   className?: string;
 }
 
-export function HeaderLogo({ className }: HeaderLogoProps) {
+export const HeaderLogo: FC<HeaderLogoProps> = ({ className }) => {
   const { t } = useTranslation();
 
   return (
@@ -111,15 +110,14 @@ export function HeaderLogo({ className }: HeaderLogoProps) {
       <Logo />
     </Link>
   );
-}
+};
 
 interface RoomHeaderInfoProps {
   id: string;
   name: string;
   avatarUrl: string | null;
   encrypted: boolean;
-  participants: RoomMember[];
-  client: MatrixClient;
+  participantCount: number;
 }
 
 export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
@@ -127,8 +125,7 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
   name,
   avatarUrl,
   encrypted,
-  participants,
-  client,
+  participantCount,
 }) => {
   const { t } = useTranslation();
   const size = useMediaQuery("(max-width: 550px)") ? "sm" : "lg";
@@ -153,10 +150,16 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
         </Heading>
         <EncryptionLock encrypted={encrypted} />
       </div>
-      {participants.length > 0 && (
+      {participantCount > 0 && (
         <div className={styles.participantsLine}>
-          <Facepile client={client} members={participants} size={20} />
-          {t("{{count, number}}", { count: participants.length })}
+          <UserProfileIcon
+            width={20}
+            height={20}
+            aria-label={t("Participants")}
+          />
+          <Text as="span" size="sm" weight="medium">
+            {t("{{count, number}}", { count: participantCount })}
+          </Text>
         </div>
       )}
     </div>

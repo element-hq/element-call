@@ -17,8 +17,8 @@ limitations under the License.
 import { ChangeEvent, FC, useCallback, useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "@vector-im/compound-web";
-import { ReactComponent as SpotlightViewIcon } from "@vector-im/compound-design-tokens/icons/spotlight-view.svg";
-import { ReactComponent as GridViewIcon } from "@vector-im/compound-design-tokens/icons/grid-view.svg";
+import SpotlightViewIcon from "@vector-im/compound-design-tokens/icons/spotlight-view.svg?react";
+import GridViewIcon from "@vector-im/compound-design-tokens/icons/grid-view.svg?react";
 import classNames from "classnames";
 
 import styles from "./LayoutToggle.module.css";
@@ -36,7 +36,7 @@ export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
 
   const onChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => setLayout(e.target.value as Layout),
-    [setLayout]
+    [setLayout],
   );
 
   const spotlightId = useId();

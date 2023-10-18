@@ -33,6 +33,9 @@ interface RoomIdentifier {
 // clearer what each flag means, and helps us avoid coupling Element Call's
 // behavior to the needs of specific consumers.
 interface UrlParams {
+  // Widget api related params
+  widgetId: string | null;
+  parentUrl: string | null;
   /**
    * Anything about what room we're pointed to should be from useRoomIdentifier which
    * parses the path and resolves alias with respect to the default server name, however
@@ -116,17 +119,17 @@ interface UrlParams {
 // file.
 export function editFragmentQuery(
   hash: string,
-  edit: (params: URLSearchParams) => URLSearchParams
+  edit: (params: URLSearchParams) => URLSearchParams,
 ): string {
   const fragmentQueryStart = hash.indexOf("?");
   const fragmentParams = edit(
     new URLSearchParams(
-      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart)
-    )
+      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart),
+    ),
   );
   return `${hash.substring(
     0,
-    fragmentQueryStart
+    fragmentQueryStart,
   )}?${fragmentParams.toString()}`;
 }
 
@@ -134,30 +137,30 @@ class ParamParser {
   private fragmentParams: URLSearchParams;
   private queryParams: URLSearchParams;
 
-  constructor(search: string, hash: string) {
+  public constructor(search: string, hash: string) {
     this.queryParams = new URLSearchParams(search);
 
     const fragmentQueryStart = hash.indexOf("?");
     this.fragmentParams = new URLSearchParams(
-      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart)
+      fragmentQueryStart === -1 ? "" : hash.substring(fragmentQueryStart),
     );
   }
 
   // Normally, URL params should be encoded in the fragment so as to avoid
   // leaking them to the server. However, we also check the normal query
   // string for backwards compatibility with versions that only used that.
-  getParam(name: string): string | null {
+  public getParam(name: string): string | null {
     return this.fragmentParams.get(name) ?? this.queryParams.get(name);
   }
 
-  getAllParams(name: string): string[] {
+  public getAllParams(name: string): string[] {
     return [
       ...this.fragmentParams.getAll(name),
       ...this.queryParams.getAll(name),
     ];
   }
 
-  getFlagParam(name: string, defaultValue = false): boolean {
+  public getFlagParam(name: string, defaultValue = false): boolean {
     const param = this.getParam(name);
     return param === null ? defaultValue : param !== "false";
   }
@@ -171,13 +174,16 @@ class ParamParser {
  */
 export const getUrlParams = (
   search = window.location.search,
-  hash = window.location.hash
+  hash = window.location.hash,
 ): UrlParams => {
   const parser = new ParamParser(search, hash);
 
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
 
   return {
+    widgetId: parser.getParam("widgetId"),
+    parentUrl: parser.getParam("parentUrl"),
+
     // NB. we don't validate roomId here as we do in getRoomIdentifierFromUrl:
     // what would we do if it were invalid? If the widget API says that's what
     // the room ID is, then that's what it is.
@@ -215,36 +221,42 @@ export const useUrlParams = (): UrlParams => {
 export function getRoomIdentifierFromUrl(
   pathname: string,
   search: string,
-  hash: string
+  hash: string,
 ): RoomIdentifier {
   let roomAlias: string | null = null;
+  pathname = pathname.substring(1); // Strip the "/"
+  const pathComponents = pathname.split("/");
+  const pathHasRoom = pathComponents[0] == "room";
+  const hasRoomAlias = pathComponents.length > 1;
 
-  // Here we handle the beginning of the alias and make sure it starts with a "#"
+  // What type is our url: roomAlias in hash, room alias as the search path, roomAlias after /room/
   if (hash === "" || hash.startsWith("#?")) {
-    roomAlias = pathname.substring(1); // Strip the "/"
-
-    // Delete "/room/", if present
-    if (roomAlias.startsWith("room/")) {
-      roomAlias = roomAlias.substring("room/".length);
+    if (hasRoomAlias && pathHasRoom) {
+      roomAlias = pathComponents[1];
     }
-    // Add "#", if not present
-    if (!roomAlias.startsWith("#")) {
-      roomAlias = `#${roomAlias}`;
+    if (!pathHasRoom) {
+      roomAlias = pathComponents[0];
     }
   } else {
     roomAlias = hash;
   }
 
   // Delete "?" and what comes afterwards
-  roomAlias = roomAlias.split("?")[0];
+  roomAlias = roomAlias?.split("?")[0] ?? null;
 
-  if (roomAlias.length <= 1) {
+  if (roomAlias) {
     // Make roomAlias is null, if it only is a "#"
-    roomAlias = null;
-  } else {
-    // Add server part, if not present
-    if (!roomAlias.includes(":")) {
-      roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
+    if (roomAlias.length <= 1) {
+      roomAlias = null;
+    } else {
+      // Add "#", if not present
+      if (!roomAlias.startsWith("#")) {
+        roomAlias = `#${roomAlias}`;
+      }
+      // Add server part, if not present
+      if (!roomAlias.includes(":")) {
+        roomAlias = `${roomAlias}:${Config.defaultServerName()}`;
+      }
     }
   }
 
@@ -269,6 +281,6 @@ export const useRoomIdentifier = (): RoomIdentifier => {
   const { pathname, search, hash } = useLocation();
   return useMemo(
     () => getRoomIdentifierFromUrl(pathname, search, hash),
-    [pathname, search, hash]
+    [pathname, search, hash],
   );
 };

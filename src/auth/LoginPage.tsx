@@ -18,7 +18,7 @@ import { FC, FormEvent, useCallback, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 
-import { ReactComponent as Logo } from "../icons/LogoLarge.svg";
+import Logo from "../icons/LogoLarge.svg?react";
 import { useClient } from "../ClientContext";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { Button } from "../button";
@@ -80,7 +80,7 @@ export const LoginPage: FC = () => {
           setLoading(false);
         });
     },
-    [login, location, history, homeserver, setClient]
+    [login, location, history, homeserver, setClient],
   );
 
   return (

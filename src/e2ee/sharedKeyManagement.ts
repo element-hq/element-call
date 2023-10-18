@@ -16,71 +16,60 @@ limitations under the License.
 
 import { useEffect, useMemo } from "react";
 
-import { useEnableE2EE } from "../settings/useSetting";
-import { useLocalStorage } from "../useLocalStorage";
+import { setLocalStorageItem, useLocalStorage } from "../useLocalStorage";
 import { useClient } from "../ClientContext";
-import { PASSWORD_STRING, useUrlParams } from "../UrlParams";
+import { useUrlParams } from "../UrlParams";
 import { widget } from "../widget";
 
 export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
   `room-shared-key-${roomId}`;
 
-const useInternalRoomSharedKey = (
-  roomId: string
-): [string | null, (value: string) => void] => {
-  const key = useMemo(() => getRoomSharedKeyLocalStorageKey(roomId), [roomId]);
-  const [e2eeEnabled] = useEnableE2EE();
-  const [roomSharedKey, setRoomSharedKey] = useLocalStorage(key);
+const useInternalRoomSharedKey = (roomId: string): string | null => {
+  const key = getRoomSharedKeyLocalStorageKey(roomId);
+  const roomSharedKey = useLocalStorage(key)[0];
 
-  return [e2eeEnabled ? roomSharedKey : null, setRoomSharedKey];
+  return roomSharedKey;
 };
 
-const useKeyFromUrl = (roomId: string): string | null => {
+/**
+ * Extracts the room password from the URL if one is present, saving it in localstorage
+ * and returning it in a tuple with the corresponding room ID from the URL.
+ * @returns A tuple of the roomId and password from the URL if the URL has both,
+ *          otherwise [undefined, undefined]
+ */
+const useKeyFromUrl = (): [string, string] | [undefined, undefined] => {
   const urlParams = useUrlParams();
-  const [e2eeSharedKey, setE2EESharedKey] = useInternalRoomSharedKey(roomId);
 
   useEffect(() => {
-    if (!urlParams.password) return;
-    if (urlParams.password === "") return;
-    if (urlParams.password === e2eeSharedKey) return;
+    if (!urlParams.password || !urlParams.roomId) return;
+    if (!urlParams.roomId) return;
 
-    setE2EESharedKey(urlParams.password);
-  }, [urlParams, e2eeSharedKey, setE2EESharedKey]);
+    setLocalStorageItem(
+      // We set the Item by only using data from the url. This way we
+      // make sure, we always have matching pairs in the LocalStorage,
+      // as they occur in the call links.
+      getRoomSharedKeyLocalStorageKey(urlParams.roomId),
+      urlParams.password,
+    );
+  }, [urlParams]);
 
-  return urlParams.password ?? null;
+  return urlParams.roomId && urlParams.password
+    ? [urlParams.roomId, urlParams.password]
+    : [undefined, undefined];
 };
 
-export const useRoomSharedKey = (roomId: string): string | null => {
+export const useRoomSharedKey = (roomId: string): string | undefined => {
   // make sure we've extracted the key from the URL first
   // (and we still need to take the value it returns because
   // the effect won't run in time for it to save to localstorage in
   // time for us to read it out again).
-  const passwordFormUrl = useKeyFromUrl(roomId);
+  const [urlRoomId, passwordFormUrl] = useKeyFromUrl();
 
-  return useInternalRoomSharedKey(roomId)[0] ?? passwordFormUrl;
-};
+  const storedPassword = useInternalRoomSharedKey(roomId);
 
-export const useManageRoomSharedKey = (roomId: string): string | null => {
-  const urlParams = useUrlParams();
-
-  const urlPassword = useKeyFromUrl(roomId);
-
-  const [e2eeSharedKey] = useInternalRoomSharedKey(roomId);
-
-  useEffect(() => {
-    const hash = location.hash;
-
-    if (!hash.includes("?")) return;
-    if (!hash.includes(PASSWORD_STRING)) return;
-    if (urlParams.password !== e2eeSharedKey) return;
-
-    const [hashStart, passwordStart] = hash.split(PASSWORD_STRING);
-    const hashEnd = passwordStart.split("&").slice(1).join("&");
-
-    location.replace((hashStart ?? "") + (hashEnd ?? ""));
-  }, [urlParams, e2eeSharedKey]);
-
-  return e2eeSharedKey ?? urlPassword;
+  if (storedPassword) return storedPassword;
+  if (urlRoomId === roomId) return passwordFormUrl;
+  return undefined;
 };
 
 export const useIsRoomE2EE = (roomId: string): boolean | null => {
@@ -91,6 +80,6 @@ export const useIsRoomE2EE = (roomId: string): boolean | null => {
   // should inspect the e2eEnabled URL parameter here?
   return useMemo(
     () => widget === null && (room === null || !room.getCanonicalAlias()),
-    [room]
+    [room],
   );
 };

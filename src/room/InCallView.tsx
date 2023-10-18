@@ -27,14 +27,23 @@ import { ConnectionState, Room, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room as MatrixRoom } from "matrix-js-sdk/src/models/room";
-import { Ref, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FC,
+  ReactNode,
+  Ref,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
-import { ReactComponent as LogoMark } from "../icons/LogoMark.svg";
-import { ReactComponent as LogoType } from "../icons/LogoType.svg";
+import LogoMark from "../icons/LogoMark.svg?react";
+import LogoType from "../icons/LogoType.svg?react";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
   HangupButton,
@@ -70,7 +79,7 @@ import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { MuteStates } from "./MuteStates";
 import { MatrixInfo } from "./VideoPreview";
-import { ShareButton } from "../button/ShareButton";
+import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
 import {
   ECAddonConnectionState,
@@ -81,9 +90,6 @@ import { BreakoutRoomModal } from "./BreakoutRoomModal";
 import { BreakoutRoomsOverlay } from "./BreakoutRoomsOverlay";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
-// There is currently a bug in Safari our our code with cloning and sending MediaStreams
-// or with getUsermedia and getDisplaymedia being used within the same session.
-// For now we can disable screensharing in Safari.
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 // How long we wait after a focus switch before showing the real participant list again
@@ -94,12 +100,12 @@ export interface ActiveCallProps
   e2eeConfig?: E2EEConfig;
 }
 
-export function ActiveCall(props: ActiveCallProps) {
+export const ActiveCall: FC<ActiveCallProps> = (props) => {
   const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
   const { livekitRoom, connState } = useLiveKit(
     props.muteStates,
     sfuConfig,
-    props.e2eeConfig
+    props.e2eeConfig,
   );
 
   if (!livekitRoom) {
@@ -115,7 +121,7 @@ export function ActiveCall(props: ActiveCallProps) {
       <InCallView {...props} livekitRoom={livekitRoom} connState={connState} />
     </RoomContext.Provider>
   );
-}
+};
 
 export interface InCallViewProps {
   client: MatrixClient;
@@ -123,7 +129,7 @@ export interface InCallViewProps {
   rtcSession: MatrixRTCSession;
   livekitRoom: Room;
   muteStates: MuteStates;
-  participatingMembers: RoomMember[];
+  participantCount: number;
   onLeave: (error?: Error) => void;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
@@ -131,19 +137,19 @@ export interface InCallViewProps {
   onShareClick: (() => void) | null;
 }
 
-export function InCallView({
+export const InCallView: FC<InCallViewProps> = ({
   client,
   matrixInfo,
   rtcSession,
   livekitRoom,
   muteStates,
-  participatingMembers,
+  participantCount,
   onLeave,
   hideHeader,
   otelGroupCallMembership,
   connState,
   onShareClick,
-}: InCallViewProps) {
+}) => {
   const { t } = useTranslation();
   usePreventScroll();
   useWakeLock();
@@ -166,13 +172,12 @@ export function InCallView({
     [{ source: Track.Source.ScreenShare, withPlaceholder: false }],
     {
       room: livekitRoom,
-    }
+    },
   );
   const { layout, setLayout } = useVideoGridLayout(
-    screenSharingTracks.length > 0
+    screenSharingTracks.length > 0,
   );
 
-  //const [showInspector] = useShowInspector();
   const [showConnectionStats] = useShowConnectionStats();
 
   const { hideScreensharing } = useUrlParams();
@@ -183,11 +188,11 @@ export function InCallView({
 
   const toggleMicrophone = useCallback(
     () => muteStates.audio.setEnabled?.((e) => !e),
-    [muteStates]
+    [muteStates],
   );
   const toggleCamera = useCallback(
     () => muteStates.video.setEnabled?.((e) => !e),
-    [muteStates]
+    [muteStates],
   );
 
   // This function incorrectly assumes that there is a camera and microphone, which is not always the case.
@@ -196,7 +201,7 @@ export function InCallView({
     containerRef1,
     toggleMicrophone,
     toggleCamera,
-    (muted) => muteStates.audio.setEnabled?.(!muted)
+    (muted) => muteStates.audio.setEnabled?.(!muted),
   );
 
   const onLeavePress = useCallback(() => {
@@ -208,32 +213,32 @@ export function InCallView({
       layout === "grid"
         ? ElementWidgetActions.TileLayout
         : ElementWidgetActions.SpotlightLayout,
-      {}
+      {},
     );
   }, [layout]);
 
   useEffect(() => {
     if (widget) {
-      const onTileLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
+      const onTileLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
         setLayout("grid");
-        await widget!.api.transport.reply(ev.detail, {});
+        widget!.api.transport.reply(ev.detail, {});
       };
-      const onSpotlightLayout = async (ev: CustomEvent<IWidgetApiRequest>) => {
+      const onSpotlightLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
         setLayout("spotlight");
-        await widget!.api.transport.reply(ev.detail, {});
+        widget!.api.transport.reply(ev.detail, {});
       };
 
       widget.lazyActions.on(ElementWidgetActions.TileLayout, onTileLayout);
       widget.lazyActions.on(
         ElementWidgetActions.SpotlightLayout,
-        onSpotlightLayout
+        onSpotlightLayout,
       );
 
       return () => {
         widget!.lazyActions.off(ElementWidgetActions.TileLayout, onTileLayout);
         widget!.lazyActions.off(
           ElementWidgetActions.SpotlightLayout,
-          onSpotlightLayout
+          onSpotlightLayout,
         );
       };
     }
@@ -256,7 +261,7 @@ export function InCallView({
       (noControls
         ? items.find((item) => item.isSpeaker) ?? items.at(0) ?? null
         : null),
-    [fullscreenItem, noControls, items]
+    [fullscreenItem, noControls, items],
   );
 
   const Grid =
@@ -299,7 +304,7 @@ export function InCallView({
         disableAnimations={prefersReducedMotion || isSafari}
         layoutStates={layoutStates}
       >
-        {(props) => (
+        {(props): ReactNode => (
           <VideoTile
             maximised={false}
             fullscreen={false}
@@ -315,18 +320,18 @@ export function InCallView({
   };
 
   const rageshakeRequestModalProps = useRageshakeRequestModal(
-    rtcSession.room.roomId
+    rtcSession.room.roomId,
   );
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
 
   const openSettings = useCallback(
     () => setSettingsModalOpen(true),
-    [setSettingsModalOpen]
+    [setSettingsModalOpen],
   );
   const closeSettings = useCallback(
     () => setSettingsModalOpen(false),
-    [setSettingsModalOpen]
+    [setSettingsModalOpen],
   );
 
   const [breakoutRoomModalModalOpen, setBreakoutRoomModalModalOpen] =
@@ -359,6 +364,13 @@ export function InCallView({
     const buttons: JSX.Element[] = [];
 
     buttons.push(
+      <MicButton
+        key="1"
+        muted={!muteStates.audio.enabled}
+        onPress={toggleMicrophone}
+        disabled={muteStates.audio.setEnabled === null}
+        data-testid="incall_mute"
+      />,
       <VideoButton
         key="2"
         muted={!muteStates.video.enabled}
@@ -366,24 +378,17 @@ export function InCallView({
         disabled={muteStates.video.setEnabled === null}
         data-testid="incall_videomute"
       />,
-      <MicButton
-        key="1"
-        muted={!muteStates.audio.enabled}
-        onPress={toggleMicrophone}
-        disabled={muteStates.audio.setEnabled === null}
-        data-testid="incall_mute"
-      />
     );
 
     if (!reducedControls) {
-      if (canScreenshare && !hideScreensharing && !isSafari) {
+      if (canScreenshare && !hideScreensharing) {
         buttons.push(
           <ScreenshareButton
             key="3"
             enabled={isScreenShareEnabled}
             onPress={toggleScreensharing}
             data-testid="incall_screenshare"
-          />
+          />,
         );
       }
       buttons.push(
@@ -393,7 +398,11 @@ export function InCallView({
     }
 
     buttons.push(
-      <HangupButton key="6" onPress={onLeavePress} data-testid="incall_leave" />
+      <HangupButton
+        key="6"
+        onPress={onLeavePress}
+        data-testid="incall_leave"
+      />,
     );
     footer = (
       <div className={styles.footer}>
@@ -429,13 +438,12 @@ export function InCallView({
               name={matrixInfo.roomName}
               avatarUrl={matrixInfo.roomAvatar}
               encrypted={matrixInfo.roomEncrypted}
-              participants={participatingMembers}
-              client={client}
+              participantCount={participantCount}
             />
           </LeftNav>
           <RightNav>
             {!reducedControls && onShareClick !== null && (
-              <ShareButton onClick={onShareClick} />
+              <InviteButton onClick={onShareClick} />
             )}
           </RightNav>
         </Header>
@@ -445,14 +453,6 @@ export function InCallView({
         {renderContent()}
         {footer}
       </div>
-      {/*otelGroupCallMembership && (
-        <GroupCallInspector
-          client={client}
-          groupCall={groupCall}
-          otelGroupCallMembership={otelGroupCallMembership}
-          show={showInspector}
-        />
-      )*/}
       {!noControls && <RageshakeRequestModal {...rageshakeRequestModalProps} />}
       <BreakoutRoomModal
         client={client}
@@ -469,11 +469,11 @@ export function InCallView({
       <BreakoutRoomsOverlay room={rtcSession.room} />
     </div>
   );
-}
+};
 
 function findMatrixMember(
   room: MatrixRoom,
-  id: string
+  id: string,
 ): RoomMember | undefined {
   if (!id) return undefined;
 
@@ -481,7 +481,7 @@ function findMatrixMember(
   // must be at least 3 parts because we know the first part is a userId which must necessarily contain a colon
   if (parts.length < 3) {
     logger.warn(
-      "Livekit participants ID doesn't look like a userId:deviceId combination"
+      "Livekit participants ID doesn't look like a userId:deviceId combination",
     );
     return undefined;
   }
@@ -495,7 +495,7 @@ function findMatrixMember(
 function useParticipantTiles(
   livekitRoom: Room,
   matrixRoom: MatrixRoom,
-  connState: ECConnectionState
+  connState: ECConnectionState,
 ): TileDescriptor<ItemData>[] {
   const previousTiles = useRef<TileDescriptor<ItemData>[]>([]);
 
@@ -524,7 +524,7 @@ function useParticipantTiles(
         // connected, this is fine and we'll be in "all ghosts" mode.
         if (id !== "" && member === undefined) {
           logger.warn(
-            `Ruh, roh! No matrix member found for SFU participant '${id}': creating g-g-g-ghost!`
+            `Ruh, roh! No matrix member found for SFU participant '${id}': creating g-g-g-ghost!`,
           );
         }
         allGhosts &&= member === undefined;
@@ -568,11 +568,11 @@ function useParticipantTiles(
         return screenShareTile
           ? [userMediaTile, screenShareTile]
           : [userMediaTile];
-      }
+      },
     );
 
     PosthogAnalytics.instance.eventCallEnded.cacheParticipantCountChanged(
-      tiles.length
+      tiles.length,
     );
 
     // If every item is a ghost, that probably means we're still connecting and

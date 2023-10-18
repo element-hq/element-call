@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ChangeEvent, Key, useCallback, useState } from "react";
+import { ChangeEvent, FC, Key, ReactNode, useCallback, useState } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
@@ -22,24 +22,20 @@ import { MatrixClient } from "matrix-js-sdk";
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
 import { TabContainer, TabItem } from "../tabs/Tabs";
-import { ReactComponent as AudioIcon } from "../icons/Audio.svg";
-import { ReactComponent as VideoIcon } from "../icons/Video.svg";
-import { ReactComponent as DeveloperIcon } from "../icons/Developer.svg";
-import { ReactComponent as OverflowIcon } from "../icons/Overflow.svg";
-import { ReactComponent as UserIcon } from "../icons/User.svg";
-import { ReactComponent as FeedbackIcon } from "../icons/Feedback.svg";
+import AudioIcon from "../icons/Audio.svg?react";
+import VideoIcon from "../icons/Video.svg?react";
+import DeveloperIcon from "../icons/Developer.svg?react";
+import OverflowIcon from "../icons/Overflow.svg?react";
+import UserIcon from "../icons/User.svg?react";
+import FeedbackIcon from "../icons/Feedback.svg?react";
 import { SelectInput } from "../input/SelectInput";
 import {
-  useShowInspector,
   useOptInAnalytics,
   useDeveloperSettingsTab,
   useShowConnectionStats,
-  useEnableE2EE,
   isFirefox,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
-import { Button } from "../button";
-import { useDownloadDebugLog } from "./submit-rageshake";
 import { Body, Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
@@ -59,21 +55,20 @@ interface Props {
   defaultTab?: string;
 }
 
-export const SettingsModal = (props: Props) => {
+export const SettingsModal: FC<Props> = (props) => {
   const { t } = useTranslation();
 
-  const [showInspector, setShowInspector] = useShowInspector();
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const [developerSettingsTab, setDeveloperSettingsTab] =
     useDeveloperSettingsTab();
   const [showConnectionStats, setShowConnectionStats] =
     useShowConnectionStats();
-  const [enableE2EE, setEnableE2EE] = useEnableE2EE();
-
-  const downloadDebugLog = useDownloadDebugLog();
 
   // Generate a `SelectInput` with a list of devices for a given device kind.
-  const generateDeviceSelection = (devices: MediaDevice, caption: string) => {
+  const generateDeviceSelection = (
+    devices: MediaDevice,
+    caption: string,
+  ): ReactNode => {
     if (devices.available.length == 0) return null;
 
     return (
@@ -84,7 +79,7 @@ export const SettingsModal = (props: Props) => {
             ? "default"
             : devices.selectedId
         }
-        onSelectionChange={(id) => devices.select(id.toString())}
+        onSelectionChange={(id): void => devices.select(id.toString())}
       >
         {devices.available.map(({ deviceId, label }, index) => (
           <Item key={deviceId}>
@@ -103,7 +98,7 @@ export const SettingsModal = (props: Props) => {
     (tab: Key) => {
       setSelectedTab(tab.toString());
     },
-    [setSelectedTab]
+    [setSelectedTab],
   );
 
   const optInDescription = (
@@ -197,7 +192,7 @@ export const SettingsModal = (props: Props) => {
           checked={developerSettingsTab}
           label={t("Developer Settings")}
           description={t("Expose developer settings in the settings window.")}
-          onChange={(event: ChangeEvent<HTMLInputElement>) =>
+          onChange={(event: ChangeEvent<HTMLInputElement>): void =>
             setDeveloperSettingsTab(event.target.checked)
           }
         />
@@ -209,7 +204,7 @@ export const SettingsModal = (props: Props) => {
           type="checkbox"
           checked={optInAnalytics ?? undefined}
           description={optInDescription}
-          onChange={(event: ChangeEvent<HTMLInputElement>) => {
+          onChange={(event: ChangeEvent<HTMLInputElement>): void => {
             setOptInAnalytics?.(event.target.checked);
           }}
         />
@@ -236,47 +231,15 @@ export const SettingsModal = (props: Props) => {
       </FieldRow>
       <FieldRow>
         <InputField
-          id="showInspector"
-          name="inspector"
-          label={t("Show call inspector")}
-          type="checkbox"
-          checked={showInspector}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setShowInspector(e.target.checked)
-          }
-        />
-      </FieldRow>
-      <FieldRow>
-        <InputField
           id="showConnectionStats"
           name="connection-stats"
           label={t("Show connection stats")}
           type="checkbox"
           checked={showConnectionStats}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
+          onChange={(e: ChangeEvent<HTMLInputElement>): void =>
             setShowConnectionStats(e.target.checked)
           }
         />
-      </FieldRow>
-      <FieldRow>
-        <InputField
-          id="enableE2EE"
-          name="end-to-end-encryption"
-          label={t("Enable end-to-end encryption (password protected calls)")}
-          description={
-            !setEnableE2EE &&
-            t("End-to-end encryption isn't supported on your browser.")
-          }
-          disabled={!setEnableE2EE}
-          type="checkbox"
-          checked={enableE2EE ?? undefined}
-          onChange={(e: ChangeEvent<HTMLInputElement>) =>
-            setEnableE2EE?.(e.target.checked)
-          }
-        />
-      </FieldRow>
-      <FieldRow>
-        <Button onPress={downloadDebugLog}>{t("Download debug logs")}</Button>
       </FieldRow>
     </TabItem>
   );
