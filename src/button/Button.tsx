@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import { FC, forwardRef, useCallback, useState } from "react";
+import { FC, forwardRef, useCallback, useEffect, useState } from "react";
 import { PressEvent } from "@react-types/shared";
 import classNames from "classnames";
 import { useButton } from "@react-aria/button";
@@ -147,17 +147,21 @@ export const ButtonWithDropdown: FC<{
   const [selectedUserId, setSelectedUserId] = useState<string>(options[0].id);
 
   const onPress = useCallback(() => {
-    if (!selectedUserId) return;
-
     onOptionSelect(selectedUserId);
   }, [onOptionSelect, selectedUserId]);
 
   const onSelectedOptionChange = useCallback(
     (event: ChangeEvent<HTMLSelectElement>) => {
-      setSelectedUserId(event.target.value);
+      setSelectedUserId(event.target.options[event.target.selectedIndex].id);
     },
     [setSelectedUserId],
   );
+
+  useEffect(() => {
+    if (!options.find((o) => o.id === selectedUserId)) {
+      setSelectedUserId(options[0].id);
+    }
+  }, [options, selectedUserId, setSelectedUserId]);
 
   return (
     <div className={styles.buttonWithDropdown}>

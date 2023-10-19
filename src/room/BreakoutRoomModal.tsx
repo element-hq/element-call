@@ -109,6 +109,14 @@ const BreakoutRoomRow: FC<BreakoutRoomRowProps> = ({
     [onUsersChanged, roomIndex, members],
   );
 
+  const notAlreadyMembers = useMemo(
+    () =>
+      parentRoomMembers.filter(
+        (rm) => !members.find((m) => rm.userId === m.userId),
+      ),
+    [parentRoomMembers, members],
+  );
+
   return (
     <div className={styles.breakoutRoom}>
       <FieldRow className={styles.breakoutRoomNameFieldRow}>
@@ -132,17 +140,13 @@ const BreakoutRoomRow: FC<BreakoutRoomRowProps> = ({
             onRemove={onRemoveUser}
           />
         ))}
-        {parentRoomMembers.find(
-          (rm) => !members.find((m) => rm.userId === m.userId),
-        ) && (
+        {notAlreadyMembers.length > 0 && (
           <ButtonWithDropdown
             label={t("Add user")}
-            options={parentRoomMembers
-              .filter((m) => !members.includes(m))
-              .map((m) => ({
-                label: m.name,
-                id: m.userId,
-              }))}
+            options={notAlreadyMembers.map((m) => ({
+              label: m.name,
+              id: m.userId,
+            }))}
             onOptionSelect={onAddUser}
           />
         )}
@@ -252,7 +256,9 @@ export const BreakoutRoomModal: FC<Props> = ({
             members={(
               r.users.map((u) => room?.getMember(u)) as RoomMember[]
             ).filter((m) => !!m)}
-            parentRoomMembers={roomMembers}
+            parentRoomMembers={roomMembers.filter(
+              (m) => client.getUserId() !== m.userId,
+            )}
             onRoomNameChanged={onRoomNameChanged}
             onUsersChanged={onUsersChanged}
             onRemove={onRemoveRoom}
