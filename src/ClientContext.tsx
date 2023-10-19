@@ -347,7 +347,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
         );
       }
     };
-  }, [initClientState, onSync]);
+  }, [initClientState, onSync, onToDevice]);
 
   if (alreadyOpenedErr) {
     return <ErrorView error={alreadyOpenedErr} />;

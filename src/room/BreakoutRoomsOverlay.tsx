@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useCallback, useState } from "react";
+import { FC, useCallback, useState } from "react";
 import { Room } from "matrix-js-sdk";
 import { BreakoutRoomsEvent } from "matrix-js-sdk/src/models/breakoutRooms";
 import { BreakoutRoomWithSummary } from "matrix-js-sdk/src/@types/breakout";
@@ -33,7 +33,7 @@ interface Props {
   room: Room;
 }
 
-export const BreakoutRoomsOverlay = ({ room }: Props) => {
+export const BreakoutRoomsOverlay: FC<Props> = ({ room }) => {
   const [breakoutRooms, setBreakoutRooms] = useState(room?.getBreakoutRooms());
   const [expanded, setExpanded] = useState(false);
 

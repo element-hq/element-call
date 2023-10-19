@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ChangeEvent, useCallback, useMemo, useState } from "react";
+import { ChangeEvent, FC, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MatrixClient, RoomMember } from "matrix-js-sdk";
 import { BreakoutRoom } from "matrix-js-sdk/src/@types/breakout";
@@ -43,11 +43,11 @@ interface BreakoutRoomUserProps {
   onRemove: (id: string) => void;
 }
 
-const BreakoutRoomUser = ({
+const BreakoutRoomUser: FC<BreakoutRoomUserProps> = ({
   userId,
   label,
   onRemove,
-}: BreakoutRoomUserProps) => {
+}) => {
   const onRemoveButtonPress = useCallback(() => {
     onRemove(userId);
   }, [onRemove, userId]);
@@ -70,7 +70,7 @@ interface BreakoutRoomRowProps {
   onRemove: (index: number) => void;
 }
 
-const BreakoutRoomRow = ({
+const BreakoutRoomRow: FC<BreakoutRoomRowProps> = ({
   roomIndex,
   roomName,
   members,
@@ -78,7 +78,7 @@ const BreakoutRoomRow = ({
   onRoomNameChanged,
   onUsersChanged,
   onRemove,
-}: BreakoutRoomRowProps) => {
+}) => {
   const { t } = useTranslation();
 
   const onRoomNameFieldChange = useCallback(
@@ -158,12 +158,12 @@ interface Props {
   onDismiss: () => void;
 }
 
-export const BreakoutRoomModal = ({
+export const BreakoutRoomModal: FC<Props> = ({
   client,
   roomId,
   open,
   onDismiss,
-}: Props) => {
+}) => {
   const { t } = useTranslation();
 
   const room = useMemo(() => client.getRoom(roomId), [client, roomId]);
@@ -239,7 +239,7 @@ export const BreakoutRoomModal = ({
     await client.createBreakoutRooms(roomId, newBreakoutRooms);
 
     onDismiss();
-  }, [client, roomId, breakoutRooms, onDismiss]);
+  }, [client, roomId, room, breakoutRooms, onDismiss]);
 
   return (
     <Modal title={t("Break-out room")} open={open} onDismiss={onDismiss}>

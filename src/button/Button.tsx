@@ -139,16 +139,11 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
   },
 );
 
-export const ButtonWithDropdown = ({
-  label,
-  options,
-  onOptionSelect,
-  ...rest
-}: {
+export const ButtonWithDropdown: FC<{
   label: string;
   options: { label: string; id: string }[];
   onOptionSelect: (id: string) => void;
-}) => {
+}> = ({ label, options, onOptionSelect, ...rest }) => {
   const [selectedUserId, setSelectedUserId] = useState<string>(options[0].id);
 
   const onPress = useCallback(() => {
@@ -270,12 +265,10 @@ export const SettingsButton: FC<{
   );
 };
 
-export function AddBreakoutRoomButton({
-  ...rest
-}: {
+export const AddBreakoutRoomButton: FC<{
   // TODO: add all props for <Button>
   [index: string]: unknown;
-}) {
+}> = ({ ...rest }) => {
   const { t } = useTranslation();
 
   return (
@@ -285,14 +278,12 @@ export function AddBreakoutRoomButton({
       </Button>
     </Tooltip>
   );
-}
+};
 
-export function BreakoutRoomsButton({
-  ...rest
-}: {
+export const BreakoutRoomsButton: FC<{
   // TODO: add all props for <Button>
   [index: string]: unknown;
-}) {
+}> = ({ ...rest }) => {
   const { t } = useTranslation();
 
   return (
@@ -302,7 +293,7 @@ export function BreakoutRoomsButton({
       </Button>
     </Tooltip>
   );
-}
+};
 
 interface AudioButtonProps extends Omit<Props, "variant"> {
   /**
@@ -323,7 +314,7 @@ export const AudioButton: FC<AudioButtonProps> = ({ volume, ...rest }) => {
   );
 };
 
-export function RemoveButton({ ...rest }: Omit<Props, "variant">) {
+export const RemoveButton: FC<Omit<Props, "variant">> = ({ ...rest }) => {
   const { t } = useTranslation();
 
   return (
@@ -333,7 +324,7 @@ export function RemoveButton({ ...rest }: Omit<Props, "variant">) {
       </Button>
     </Tooltip>
   );
-}
+};
 
 interface FullscreenButtonProps extends Omit<Props, "variant"> {
   fullscreen?: boolean;
