@@ -29,6 +29,7 @@ import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
+import { MatrixEvent } from "matrix-js-sdk";
 
 import { ErrorView } from "./FullScreenView";
 import {
@@ -44,7 +45,6 @@ import {
 import { translatedError } from "./TranslatedError";
 import { useEventTarget } from "./useEvents";
 import { Config } from "./config/Config";
-import { MatrixEvent } from "matrix-js-sdk";
 import {
   SHARE_ROOM_KEY_EVENT_TYPE,
   getRoomSharedKeyLocalStorageKey,
