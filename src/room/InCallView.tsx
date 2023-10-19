@@ -339,11 +339,11 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const openBreakoutRoomModal = useCallback(
     () => setBreakoutRoomModalModalOpen(true),
-    [setBreakoutRoomModalModalOpen]
+    [setBreakoutRoomModalModalOpen],
   );
   const closeBreakoutRoomModal = useCallback(
     () => setBreakoutRoomModalModalOpen(false),
-    [setBreakoutRoomModalModalOpen]
+    [setBreakoutRoomModalModalOpen],
   );
 
   const toggleScreensharing = useCallback(async () => {
@@ -392,7 +392,7 @@ export const InCallView: FC<InCallViewProps> = ({
         );
       }
       buttons.push(
-        <AddBreakoutRoomButton key="4" onPress={openBreakoutRoomModal} />
+        <AddBreakoutRoomButton key="4" onPress={openBreakoutRoomModal} />,
       );
       buttons.push(<SettingsButton key="5" onPress={openSettings} />);
     }
