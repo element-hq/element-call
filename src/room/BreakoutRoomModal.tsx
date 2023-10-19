@@ -25,6 +25,12 @@ import { FieldRow, InputField } from "../input/Input";
 import { arrayFastClone } from "../utils";
 import styles from "./BreakoutRoomModal.module.css";
 import { createRoom } from "../matrix-utils";
+import { getLocalStorageItem } from "../useLocalStorage";
+import {
+  SHARE_ROOM_KEY_EVENT_TYPE,
+  ShareRoomKeyEventContent,
+  getRoomSharedKeyLocalStorageKey,
+} from "../e2ee/sharedKeyManagement";
 
 interface NewBreakoutRoom {
   roomName: string;
@@ -205,11 +211,31 @@ export const BreakoutRoomModal = ({
   const onSubmit = useCallback(async () => {
     setSubmitting(true);
 
+    const roomMembers = room?.getMembers();
+
+    const content: ShareRoomKeyEventContent = {};
     const newBreakoutRooms: BreakoutRoom[] = [];
     for (const breakoutRoom of breakoutRooms) {
       const { roomId } = await createRoom(client, breakoutRoom.roomName, true);
+      const key = getLocalStorageItem(getRoomSharedKeyLocalStorageKey(roomId));
+      if (key) {
+        content[roomId] = key;
+      }
       newBreakoutRooms.push({ roomId, users: breakoutRoom.users });
     }
+
+    if (roomMembers) {
+      const contentMap = new Map();
+      for (const roomMember of roomMembers) {
+        if (roomMember.userId === client.getUserId()) continue;
+
+        const deviceMap = new Map();
+        deviceMap.set("*", content);
+        contentMap.set(roomMember.userId, deviceMap);
+      }
+      client.sendToDevice(SHARE_ROOM_KEY_EVENT_TYPE, contentMap);
+    }
+
     await client.createBreakoutRooms(roomId, newBreakoutRooms);
 
     onDismiss();

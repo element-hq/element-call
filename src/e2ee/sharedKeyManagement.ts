@@ -21,6 +21,9 @@ import { useClient } from "../ClientContext";
 import { useUrlParams } from "../UrlParams";
 import { widget } from "../widget";
 
+export type ShareRoomKeyEventContent = Record<string, string>;
+export const SHARE_ROOM_KEY_EVENT_TYPE = "io.element.share_room_key";
+
 export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
   `room-shared-key-${roomId}`;
 
