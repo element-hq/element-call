@@ -242,6 +242,7 @@ export const BreakoutRoomModal: FC<Props> = ({
 
     await client.createBreakoutRooms(roomId, newBreakoutRooms);
 
+    setSubmitting(false);
     onDismiss();
   }, [client, roomId, room, breakoutRooms, onDismiss]);
 
