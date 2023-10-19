@@ -296,7 +296,7 @@ export const GroupCallView: FC<Props> = ({
 
   const { t } = useTranslation();
 
-  if (isRoomE2EE && !e2eeSharedKey) {
+  if (isRoomE2EE && !perParticipantE2EE && !e2eeSharedKey) {
     return (
       <ErrorView
         error={
