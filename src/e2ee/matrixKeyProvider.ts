@@ -24,6 +24,10 @@ import {
 export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;
 
+  public constructor() {
+    super({ ratchetWindowSize: 0 });
+  }
+
   public setRTCSession(rtcSession: MatrixRTCSession): void {
     if (this.rtcSession) {
       this.rtcSession.off(
@@ -63,7 +67,7 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     );
 
     logger.debug(
-      `Embedded-E2EE-LOG onEncryptionKeyChanged participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex} encryptionKey=${encryptionKey}`,
+      `Embedded-E2EE-LOG onEncryptionKeyChanged room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex} encryptionKey=${encryptionKey}`,
       this.getKeys(),
     );
   };
