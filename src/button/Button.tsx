@@ -34,7 +34,7 @@ import { VolumeIcon } from "./VolumeIcon";
 import styles from "./Button.module.css";
 import Fullscreen from "../icons/Fullscreen.svg?react";
 import FullscreenExit from "../icons/FullscreenExit.svg?react";
-import RemoveIcon from "../icons/Remove.svg";
+import RemoveIcon from "../icons/Remove.svg?react";
 import AddBreakoutRoomIcon from "../icons/AddBreakoutRoom.svg?react";
 import BreakoutRoomsIcon from "../icons/BreakoutRooms.svg?react";
 
