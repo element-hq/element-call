@@ -17,7 +17,7 @@ limitations under the License.
 import { useCallback, useState } from "react";
 import { Room } from "matrix-js-sdk";
 import { BreakoutRoomsEvent } from "matrix-js-sdk/src/models/breakoutRooms";
-import { ExistingBreakoutRoomWithSummary } from "matrix-js-sdk/src/@types/breakout";
+import { BreakoutRoomWithSummary } from "matrix-js-sdk/src/@types/breakout";
 import { Avatar } from "@vector-im/compound-web";
 import { Link } from "react-router-dom";
 
@@ -45,7 +45,7 @@ export const BreakoutRoomsOverlay = ({ room }: Props) => {
     setExpanded(false);
   }, [setExpanded]);
 
-  const onEvent = useCallback((rooms: ExistingBreakoutRoomWithSummary[]) => {
+  const onEvent = useCallback((rooms: BreakoutRoomWithSummary[]) => {
     setBreakoutRooms(rooms);
     setExpanded(true);
   }, []);

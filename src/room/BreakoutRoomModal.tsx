@@ -16,27 +16,19 @@ limitations under the License.
 
 import { ChangeEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import {
-  GroupCallIntent,
-  GroupCallType,
-  MatrixClient,
-  RoomMember,
-} from "matrix-js-sdk";
-import { BreakoutRoomBase } from "matrix-js-sdk/src/@types/breakout";
-import { NewBreakoutRoom } from "matrix-js-sdk/src/@types/breakout";
+import { MatrixClient, RoomMember } from "matrix-js-sdk";
+import { BreakoutRoom } from "matrix-js-sdk/src/@types/breakout";
 
 import { Modal } from "../Modal";
 import { Button, ButtonWithDropdown, RemoveButton } from "../button/Button";
 import { FieldRow, InputField } from "../input/Input";
 import { arrayFastClone } from "../utils";
 import styles from "./BreakoutRoomModal.module.css";
-import { setLocalStorageItem } from "../useLocalStorage";
-import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
-import { secureRandomString } from "../matrix-utils";
+import { createRoom } from "../matrix-utils";
 
-interface BreakoutRoom extends BreakoutRoomBase {
+interface NewBreakoutRoom {
   roomName: string;
-  roomId?: string;
+  users: string[];
 }
 
 interface BreakoutRoomUserProps {
@@ -172,7 +164,7 @@ export const BreakoutRoomModal = ({
   const roomMembers = useMemo(() => room?.getMembers() ?? [], [room]);
 
   const [submitting, setSubmitting] = useState(false);
-  const [breakoutRooms, setBreakoutRooms] = useState<BreakoutRoom[]>(() => [
+  const [breakoutRooms, setBreakoutRooms] = useState<NewBreakoutRoom[]>(() => [
     { roomName: t("Break-out room 1"), users: [] },
     { roomName: t("Break-out room 2"), users: [] },
   ]);
@@ -212,23 +204,14 @@ export const BreakoutRoomModal = ({
 
   const onSubmit = useCallback(async () => {
     setSubmitting(true);
-    const { newRooms } = await client.createBreakoutRooms(
-      roomId,
-      breakoutRooms,
-    );
-    for (const room of newRooms) {
-      setLocalStorageItem(
-        getRoomSharedKeyLocalStorageKey(room.roomId),
-        secureRandomString(16),
-      );
-      await client.createGroupCall(
-        room.roomId,
-        GroupCallType.Video,
-        false,
-        GroupCallIntent.Room,
-        true,
-      );
+
+    const newBreakoutRooms: BreakoutRoom[] = [];
+    for (const breakoutRoom of breakoutRooms) {
+      const { roomId } = await createRoom(client, breakoutRoom.roomName, true);
+      newBreakoutRooms.push({ roomId, users: breakoutRoom.users });
     }
+    await client.createBreakoutRooms(roomId, newBreakoutRooms);
+
     onDismiss();
   }, [client, roomId, breakoutRooms, onDismiss]);
 
