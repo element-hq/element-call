@@ -17,7 +17,10 @@ limitations under the License.
 import { ChangeEvent, FC, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MatrixClient, RoomMember } from "matrix-js-sdk";
-import { BreakoutRoom } from "matrix-js-sdk/src/@types/breakout";
+import {
+  BreakoutRoom,
+  BreakoutRoomWithSummary,
+} from "matrix-js-sdk/src/@types/breakout";
 
 import { Modal } from "../Modal";
 import { Button, ButtonWithDropdown, RemoveButton } from "../button/Button";
@@ -35,6 +38,10 @@ import {
 interface NewBreakoutRoom {
   roomName: string;
   users: string[];
+}
+
+interface BreakoutRoomWithName extends BreakoutRoom {
+  roomName: string;
 }
 
 interface BreakoutRoomUserProps {
@@ -172,12 +179,38 @@ export const BreakoutRoomModal: FC<Props> = ({
 
   const room = useMemo(() => client.getRoom(roomId), [client, roomId]);
   const roomMembers = useMemo(() => room?.getMembers() ?? [], [room]);
+  const existingBreakoutRooms: NewBreakoutRoom[] = useMemo(
+    () =>
+      room
+        ?.getBreakoutRooms()
+        ?.reduce(
+          (rooms: BreakoutRoomWithName[], room: BreakoutRoomWithSummary) => {
+            const name = room.roomSummary.name;
+            if (name) {
+              rooms.push({
+                roomId: room.roomId,
+                users: room.users,
+                roomName: name,
+              });
+            }
+            return rooms;
+          },
+          [],
+        ) ?? [],
+    [room],
+  );
 
   const [submitting, setSubmitting] = useState(false);
-  const [breakoutRooms, setBreakoutRooms] = useState<NewBreakoutRoom[]>(() => [
-    { roomName: t("Break-out room 1"), users: [] },
-    { roomName: t("Break-out room 2"), users: [] },
-  ]);
+  const [breakoutRooms, setBreakoutRooms] = useState<
+    (NewBreakoutRoom | BreakoutRoomWithName)[]
+  >(() =>
+    existingBreakoutRooms.length > 0
+      ? existingBreakoutRooms
+      : [
+          { roomName: t("Break-out room 1"), users: [] },
+          { roomName: t("Break-out room 2"), users: [] },
+        ],
+  );
 
   const onRoomNameChanged = useCallback(
     (index: number, newRoomName: string) => {
@@ -220,12 +253,16 @@ export const BreakoutRoomModal: FC<Props> = ({
     const content: ShareRoomKeyEventContent = {};
     const newBreakoutRooms: BreakoutRoom[] = [];
     for (const breakoutRoom of breakoutRooms) {
-      const { roomId } = await createRoom(client, breakoutRoom.roomName, true);
+      const roomId = breakoutRoom.hasOwnProperty("roomId")
+        ? (breakoutRoom as BreakoutRoomWithName).roomId
+        : (await createRoom(client, breakoutRoom.roomName, true)).roomId;
+
+      newBreakoutRooms.push({ roomId, users: breakoutRoom.users });
+
       const key = getLocalStorageItem(getRoomSharedKeyLocalStorageKey(roomId));
       if (key) {
         content[roomId] = key;
       }
-      newBreakoutRooms.push({ roomId, users: breakoutRoom.users });
     }
 
     if (roomMembers) {
