@@ -73,7 +73,7 @@ function waitForSync(client: MatrixClient): Promise<void> {
   });
 }
 
-function secureRandomString(entropyBytes: number): string {
+export function secureRandomString(entropyBytes: number): string {
   const key = new Uint8Array(entropyBytes);
   crypto.getRandomValues(key);
   // encode to base64url as this value goes into URLs

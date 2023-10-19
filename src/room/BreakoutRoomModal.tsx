@@ -24,7 +24,6 @@ import {
 } from "matrix-js-sdk";
 import { BreakoutRoomBase } from "matrix-js-sdk/src/@types/breakout";
 import { NewBreakoutRoom } from "matrix-js-sdk/src/@types/breakout";
-import { randomString } from "matrix-js-sdk/src/randomstring";
 
 import { Modal } from "../Modal";
 import { Button, ButtonWithDropdown, RemoveButton } from "../button/Button";
@@ -33,7 +32,7 @@ import { arrayFastClone } from "../utils";
 import styles from "./BreakoutRoomModal.module.css";
 import { setLocalStorageItem } from "../useLocalStorage";
 import { getRoomSharedKeyLocalStorageKey } from "../e2ee/sharedKeyManagement";
-import { useEnableE2EE } from "../settings/useSetting";
+import { secureRandomString } from "../matrix-utils";
 
 interface BreakoutRoom extends BreakoutRoomBase {
   roomName: string;
@@ -88,7 +87,7 @@ const BreakoutRoomRow = ({
     (ev: ChangeEvent<HTMLInputElement>) => {
       onRoomNameChanged(roomIndex, ev.currentTarget.value);
     },
-    [onRoomNameChanged, roomIndex]
+    [onRoomNameChanged, roomIndex],
   );
 
   const onRemoveClick = useCallback(() => {
@@ -99,17 +98,17 @@ const BreakoutRoomRow = ({
     (userId: string) => {
       onUsersChanged(roomIndex, [...members.map((m) => m.userId), userId]);
     },
-    [onUsersChanged, roomIndex, members]
+    [onUsersChanged, roomIndex, members],
   );
 
   const onRemoveUser = useCallback(
     (userId: string) => {
       onUsersChanged(
         roomIndex,
-        members.filter((m) => m.userId !== userId).map((m) => m.userId)
+        members.filter((m) => m.userId !== userId).map((m) => m.userId),
       );
     },
-    [onUsersChanged, roomIndex, members]
+    [onUsersChanged, roomIndex, members],
   );
 
   return (
@@ -136,7 +135,7 @@ const BreakoutRoomRow = ({
           />
         ))}
         {parentRoomMembers.find(
-          (rm) => !members.find((m) => rm.userId === m.userId)
+          (rm) => !members.find((m) => rm.userId === m.userId),
         ) && (
           <ButtonWithDropdown
             label={t("Add user")}
@@ -168,7 +167,6 @@ export const BreakoutRoomModal = ({
   onDismiss,
 }: Props) => {
   const { t } = useTranslation();
-  const [e2eeEnabled] = useEnableE2EE();
 
   const room = useMemo(() => client.getRoom(roomId), [client, roomId]);
   const roomMembers = useMemo(() => room?.getMembers() ?? [], [room]);
@@ -185,7 +183,7 @@ export const BreakoutRoomModal = ({
       rooms[index].roomName = newRoomName;
       setBreakoutRooms(rooms);
     },
-    [breakoutRooms, setBreakoutRooms]
+    [breakoutRooms, setBreakoutRooms],
   );
 
   const onUsersChanged = useCallback(
@@ -194,7 +192,7 @@ export const BreakoutRoomModal = ({
       rooms[index].users = newUsers;
       setBreakoutRooms(rooms);
     },
-    [breakoutRooms, setBreakoutRooms]
+    [breakoutRooms, setBreakoutRooms],
   );
 
   const onRemoveRoom = useCallback(
@@ -203,7 +201,7 @@ export const BreakoutRoomModal = ({
       rooms.splice(index, 1);
       setBreakoutRooms(rooms);
     },
-    [breakoutRooms, setBreakoutRooms]
+    [breakoutRooms, setBreakoutRooms],
   );
 
   const onAddBreakoutRoom = useCallback(() => {
@@ -216,25 +214,23 @@ export const BreakoutRoomModal = ({
     setSubmitting(true);
     const { newRooms } = await client.createBreakoutRooms(
       roomId,
-      breakoutRooms
+      breakoutRooms,
     );
     for (const room of newRooms) {
-      if (e2eeEnabled) {
-        setLocalStorageItem(
-          getRoomSharedKeyLocalStorageKey(room.roomId),
-          randomString(32)
-        );
-        await client.createGroupCall(
-          room.roomId,
-          GroupCallType.Video,
-          false,
-          GroupCallIntent.Room,
-          true
-        );
-      }
+      setLocalStorageItem(
+        getRoomSharedKeyLocalStorageKey(room.roomId),
+        secureRandomString(16),
+      );
+      await client.createGroupCall(
+        room.roomId,
+        GroupCallType.Video,
+        false,
+        GroupCallIntent.Room,
+        true,
+      );
     }
     onDismiss();
-  }, [client, roomId, breakoutRooms, e2eeEnabled, onDismiss]);
+  }, [client, roomId, breakoutRooms, onDismiss]);
 
   return (
     <Modal title={t("Break-out room")} open={open} onDismiss={onDismiss}>
