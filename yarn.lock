@@ -7960,9 +7960,9 @@ react-dom@18:
     scheduler "^0.23.0"
 
 react-i18next@^13.0.0:
-  version "13.3.0"
-  resolved "https://registry.yarnpkg.com/react-i18next/-/react-i18next-13.3.0.tgz#8e39c0101f654db7eb971f159bb55067a78925c3"
-  integrity sha512-FlR9xjYHSPIJfQspEmkN0yOlxgRyNuiJKJ8gCaZH08UJ7SZHG+VrptEPcpEMEchjNoCOZdKcvJ3PnmHEZhkeXg==
+  version "13.3.1"
+  resolved "https://registry.yarnpkg.com/react-i18next/-/react-i18next-13.3.1.tgz#9b072bf4dd4cafb028e92315a8a1415f8034bdca"
+  integrity sha512-JAtYREK879JXaN9GdzfBI4yJeo/XyLeXWUsRABvYXiFUakhZJ40l+kaTo+i+A/3cKIED41kS/HAbZ5BzFtq/Og==
   dependencies:
     "@babel/runtime" "^7.22.5"
     html-parse-stringify "^3.0.1"
