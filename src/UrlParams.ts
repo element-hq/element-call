@@ -63,6 +63,10 @@ interface UrlParams {
    */
   hideHeader: boolean;
   /**
+   * Whether the controls should be shown. For screen recording no controls can be desired.
+   */
+  hideControls:boolean;
+  /**
    * Whether to hide the screen-sharing button.
    */
   hideScreensharing: boolean;
@@ -195,6 +199,7 @@ export const getUrlParams = (
     appPrompt: parser.getFlagParam("appPrompt", true),
     preload: parser.getFlagParam("preload"),
     hideHeader: parser.getFlagParam("hideHeader"),
+    hideControls: parser.getFlagParam("hideControls"),
     hideScreensharing: parser.getFlagParam("hideScreensharing"),
     e2eEnabled: parser.getFlagParam("enableE2e", true),
     userId: parser.getParam("userId"),
