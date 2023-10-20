@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { BaseKeyProvider, createKeyMaterialFromString } from "livekit-client";
+import { BaseKeyProvider, createKeyMaterialFromBuffer } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
   MatrixRTCSession,
@@ -56,12 +56,12 @@ export class MatrixKeyProvider extends BaseKeyProvider {
   }
 
   private onEncryptionKeyChanged = async (
-    encryptionKey: string,
+    encryptionKey: Uint8Array,
     encryptionKeyIndex: number,
     participantId: string,
   ): Promise<void> => {
     this.onSetEncryptionKey(
-      await createKeyMaterialFromString(encryptionKey),
+      await createKeyMaterialFromBuffer(encryptionKey),
       participantId,
       encryptionKeyIndex,
     );
