@@ -67,7 +67,7 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     );
 
     logger.debug(
-      `Embedded-E2EE-LOG onEncryptionKeyChanged room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex} encryptionKey=${encryptionKey}`,
+      `Embedded-E2EE-LOG onEncryptionKeyChanged room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
       this.getKeys(),
     );
   };
