@@ -38,6 +38,7 @@ import { loadOlm } from "./olm";
 import { Config } from "./config/Config";
 import { setLocalStorageItem } from "./useLocalStorage";
 import { getRoomSharedKeyLocalStorageKey } from "./e2ee/sharedKeyManagement";
+import { E2eeType } from "./e2ee/e2eeType";
 
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
@@ -278,10 +279,20 @@ interface CreateRoomResult {
   password?: string;
 }
 
+/**
+ * Create a new room ready for calls
+ *
+ * @param client Matrix client to use
+ * @param name The name of the room
+ * @param e2ee The type of e2ee call to create. Note that we would currently never
+ *             create a room for per-participant e2ee calls: since it's used in
+ *             embedded mode, we use the existing room.
+ * @returns Object holding information about the new room
+ */
 export async function createRoom(
   client: MatrixClient,
   name: string,
-  e2ee: boolean,
+  e2ee: E2eeType,
 ): Promise<CreateRoomResult> {
   logger.log(`Creating room for group call`);
   const createPromise = client.createRoom({
@@ -346,7 +357,7 @@ export async function createRoom(
   );
 
   let password;
-  if (e2ee) {
+  if (e2ee == E2eeType.SHARED_KEY) {
     password = secureRandomBase64(16);
     setLocalStorageItem(
       getRoomSharedKeyLocalStorageKey(result.room_id),
