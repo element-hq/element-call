@@ -178,7 +178,7 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const [showConnectionStats] = useShowConnectionStats();
 
-  const { hideScreensharing, hideControls } = useUrlParams();
+  const { hideScreensharing, showControls } = useUrlParams();
 
   const { isScreenShareEnabled, localParticipant } = useLocalParticipant({
     room: livekitRoom,
@@ -390,7 +390,7 @@ export const InCallView: FC<InCallViewProps> = ({
     footer = (
       <div
         className={classNames(
-          hideControls
+          showControls
             ? hideHeader
               ? [styles.footer, styles.footerHidden]
               : [styles.footer, styles.footerThin]
@@ -407,8 +407,8 @@ export const InCallView: FC<InCallViewProps> = ({
             />
           </div>
         )}
-        {!hideControls && <div className={styles.buttons}>{buttons}</div>}
-        {!mobile && !hideHeader && !hideControls && (
+        {!showControls && <div className={styles.buttons}>{buttons}</div>}
+        {!mobile && !hideHeader && !showControls && (
           <LayoutToggle
             className={styles.layout}
             layout={layout}
@@ -433,7 +433,7 @@ export const InCallView: FC<InCallViewProps> = ({
             />
           </LeftNav>
           <RightNav>
-            {!reducedControls && !hideControls && onShareClick !== null && (
+            {!reducedControls && !showControls && onShareClick !== null && (
               <InviteButton onClick={onShareClick} />
             )}
           </RightNav>
