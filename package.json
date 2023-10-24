@@ -92,7 +92,7 @@
     "@types/dompurify": "^3.0.2",
     "@types/grecaptcha": "^3.0.4",
     "@types/jest": "^29.5.5",
-    "@types/node": "^18.13.0",
+    "@types/node": "^20.0.0",
     "@types/react-router-dom": "^5.3.3",
     "@types/request": "^2.48.8",
     "@types/sdp-transform": "^2.4.5",
