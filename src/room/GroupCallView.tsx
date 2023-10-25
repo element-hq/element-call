@@ -128,7 +128,7 @@ export const GroupCallView: FC<Props> = ({
     if (!skipLobby) return;
 
     const defaultDeviceSetup = async (
-      requestedDeviceData: JoinCallData
+      requestedDeviceData: JoinCallData,
     ): Promise<void> => {
       // XXX: I think this is broken currently - LiveKit *won't* request
       // permissions and give you device names unless you specify a kind, but
@@ -142,14 +142,14 @@ export const GroupCallView: FC<Props> = ({
         const deviceId = await findDeviceByName(
           audioInput,
           "audioinput",
-          devices
+          devices,
         );
         if (!deviceId) {
           logger.warn("Unknown audio input: " + audioInput);
           latestMuteStates.current!.audio.setEnabled?.(false);
         } else {
           logger.debug(
-            `Found audio input ID ${deviceId} for name ${audioInput}`
+            `Found audio input ID ${deviceId} for name ${audioInput}`,
           );
           latestDevices.current!.audioInput.select(deviceId);
           latestMuteStates.current!.audio.setEnabled?.(true);
@@ -162,14 +162,14 @@ export const GroupCallView: FC<Props> = ({
         const deviceId = await findDeviceByName(
           videoInput,
           "videoinput",
-          devices
+          devices,
         );
         if (!deviceId) {
           logger.warn("Unknown video input: " + videoInput);
           latestMuteStates.current!.video.setEnabled?.(false);
         } else {
           logger.debug(
-            `Found video input ID ${deviceId} for name ${videoInput}`
+            `Found video input ID ${deviceId} for name ${videoInput}`,
           );
           latestDevices.current!.videoInput.select(deviceId);
           latestMuteStates.current!.video.setEnabled?.(true);
