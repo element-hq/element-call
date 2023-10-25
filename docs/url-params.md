@@ -72,7 +72,7 @@ roomId: string | null;
 Whether the app should keep the user confined to the current call/room.
 
 ```
-confineToRoom: boolean;
+confineToRoom: boolean; (default: false)
 ```
 
 **appPrompt**
@@ -80,7 +80,7 @@ Whether upon entering a room, the user should be prompted to launch the
 native mobile app. (Affects only Android and iOS.)
 
 ```
-appPrompt: boolean;
+appPrompt: boolean; (default: true)
 ```
 
 **preload**
@@ -88,28 +88,42 @@ Whether the app should pause before joining the call until it sees an
 io.element.join widget action, allowing it to be preloaded.
 
 ```
-preload: boolean;
+preload: boolean; (default: false)
 ```
 
 **hideHeader**
 Whether to hide the room header when in a call.
 
 ```
-hideHeader: boolean;
+hideHeader: boolean; (default: false)
+```
+
+**showControls**
+Whether to show the buttons to mute, screen-share, invite, hangup are shown when in a call.
+
+```
+showControls: boolean; (default: true)
 ```
 
 **hideScreensharing**
 Whether to hide the screen-sharing button.
 
 ```
-hideScreensharing: boolean;
+hideScreensharing: boolean; (default: false)
 ```
 
 **e2eEnabled**
 Whether to use end-to-end encryption.
 
 ```
-e2eEnabled: boolean;
+e2eEnabled: boolean; (default: true)
+```
+
+**password**
+E2EE password when using a shared secret. (For individual sender keys in embedded mode this is not required.)
+
+```
+password: string | null;
 ```
 
 **displayName**
@@ -152,14 +166,7 @@ Whether the app is allowed to use fallback STUN servers for ICE in case the
 user's homeserver doesn't provide any.
 
 ```
-allowIceFallback: boolean;
-```
-
-**password**
-E2EE password
-
-```
-password: string | null;
+allowIceFallback: boolean; (default: false)
 ```
 
 **skipLobby**
@@ -168,5 +175,5 @@ In the widget this can be combined with preload to pass the device settings
 with the join widget action.
 
 ```
-skipLobby: boolean;
+skipLobby: boolean; (default: false)
 ```
