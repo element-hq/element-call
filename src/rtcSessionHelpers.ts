@@ -39,7 +39,7 @@ export function enterRTCSession(rtcSession: MatrixRTCSession): void {
 
   // This must be called before we start trying to join the call, as we need to
   // have started tracking by the time calls start getting created.
-  //groupCallOTelMembership?.onJoinCall();
+  // groupCallOTelMembership?.onJoinCall();
 
   // right now we assume everything is a room-scoped call
   const livekitAlias = rtcSession.room.roomId;
