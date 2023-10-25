@@ -72,7 +72,7 @@ jobs:
             type=raw,value=latest-ci_${{steps.current-time.outputs.unix_time}},enable={{is_default_branch}}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@5d9862498505fcac67b9f455d6e94ec0339f7b90
+        uses: docker/setup-buildx-action@3762d454f382a89982d79f33e1ff246835322c4d
 
       - name: Build and push Docker image
         uses: docker/build-push-action@fdf7f43ecf7c1a5c7afe936410233728a8c2d9c2
