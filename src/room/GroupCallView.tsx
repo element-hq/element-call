@@ -178,7 +178,9 @@ export const GroupCallView: FC<Props> = ({
     };
     if (widget && preload) {
       // In preload mode, wait for a join action before entering
-      const onJoin = async (ev: CustomEvent<IWidgetApiRequest>) => {
+      const onJoin = async (
+        ev: CustomEvent<IWidgetApiRequest>,
+      ): Promise<void> => {
         defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
         enterRTCSession(rtcSession);
         await Promise.all([
