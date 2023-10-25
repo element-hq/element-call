@@ -3604,10 +3604,10 @@
   dependencies:
     "@use-gesture/core" "10.3.0"
 
-"@vector-im/compound-design-tokens@^0.0.6":
-  version "0.0.6"
-  resolved "https://registry.yarnpkg.com/@vector-im/compound-design-tokens/-/compound-design-tokens-0.0.6.tgz#dd25364e947d0f06b404f9bfba69daa0f7cda998"
-  integrity sha512-Jij7Vfzed7UL+AfVK4ykuJhufbzWu/aaEYn9swOS7Rhy9wJFp35CaUY32Du51lwg7Rkt3OwSWXSYeHKcZAsEEA==
+"@vector-im/compound-design-tokens@^0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@vector-im/compound-design-tokens/-/compound-design-tokens-0.0.7.tgz#b0716dd4782dd95900491e45b003b58f93748024"
+  integrity sha512-RCQc6qr+s8cp4xKbNi/I3OL43uPCH+N4L9vYf0r+qwRy4WCKdI4QL0TBTV4bOo8hF49z8e+BgU5ZIu5TVQXNMQ==
   dependencies:
     svg2vectordrawable "^2.9.1"
 
