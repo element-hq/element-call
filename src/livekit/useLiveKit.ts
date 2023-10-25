@@ -160,9 +160,12 @@ export function useLiveKit(
         Camera,
       }
 
-      const syncMuteState = async (iterCount: number, type: MuteDevice) => {
+      const syncMuteState = async (
+        iterCount: number,
+        type: MuteDevice,
+      ): Promise<void> => {
         // The approach for muting is to always bring the actual livekit state in sync with the button
-        // This allows for a very predictable and reactive behaviour for the user.
+        // This allows for a very predictable and reactive behavior for the user.
         // (the new state is the old state when pressing the button n times (where n is even))
         // (the new state is different to the old state when pressing the button n times (where n is uneven))
         // In case there are issues with the device there might be situations where setMicrophoneEnabled/setCameraEnabled
