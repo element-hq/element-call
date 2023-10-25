@@ -141,10 +141,13 @@ lang: string | null;
 ```
 
 **fonts**
-The fonts which the interface should use, if not empty.
+The font/fonts which the interface should use.
+There can be multiple font url parameters: `?font=font-one&font=font-two...`
 
 ```
-fonts: string[];
+font: string;
+font: string;
+...
 ```
 
 **fontScale**
