@@ -174,52 +174,101 @@ export function useLiveKit(
         audio: muteStates.audio.enabled,
         video: muteStates.video.enabled,
       };
-      const syncMuteStateAudio = async (): Promise<void> => {
-        if (
-          participant.isMicrophoneEnabled !== buttonEnabled.current.audio &&
-          !audioMuteUpdating.current
-        ) {
-          audioMuteUpdating.current = true;
+
+      enum MuteDevice {
+        Microphone,
+        Camera,
+      }
+
+      const syncMuteState = async (
+        iterCount: number,
+        type: MuteDevice,
+      ): Promise<void> => {
+        // The approach for muting is to always bring the actual livekit state in sync with the button
+        // This allows for a very predictable and reactive behavior for the user.
+        // (the new state is the old state when pressing the button n times (where n is even))
+        // (the new state is different to the old state when pressing the button n times (where n is uneven))
+        // In case there are issues with the device there might be situations where setMicrophoneEnabled/setCameraEnabled
+        // return immediately. This should be caught with the Error("track with new mute state could not be published").
+        // For now we are still using an iterCount to limit the recursion loop to 10.
+        // This could happen if the device just really does not want to turn on (hardware based issue)
+        // but the mute button is in unmute state.
+        // For now our fail mode is to just stay in this state.
+        // TODO: decide for a UX on how that fail mode should be treated (disable button, hide button, sync button back to muted without user input)
+
+        if (iterCount > 10) {
+          logger.error(
+            "Stop trying to sync the input device with current mute state after 10 failed tries",
+          );
+          return;
+        }
+        let devEnabled;
+        let btnEnabled;
+        let updating;
+        switch (type) {
+          case MuteDevice.Microphone:
+            devEnabled = participant.isMicrophoneEnabled;
+            btnEnabled = buttonEnabled.current.audio;
+            updating = audioMuteUpdating.current;
+            break;
+          case MuteDevice.Camera:
+            devEnabled = participant.isCameraEnabled;
+            btnEnabled = buttonEnabled.current.video;
+            updating = videoMuteUpdating.current;
+            break;
+        }
+        if (devEnabled !== btnEnabled && !updating) {
           try {
-            await participant.setMicrophoneEnabled(buttonEnabled.current.audio);
+            let trackPublication;
+            switch (type) {
+              case MuteDevice.Microphone:
+                audioMuteUpdating.current = true;
+                trackPublication = await participant.setMicrophoneEnabled(
+                  buttonEnabled.current.audio,
+                );
+                audioMuteUpdating.current = false;
+                break;
+              case MuteDevice.Camera:
+                videoMuteUpdating.current = true;
+                trackPublication = await participant.setCameraEnabled(
+                  buttonEnabled.current.video,
+                );
+                videoMuteUpdating.current = false;
+                break;
+            }
+
+            if (trackPublication) {
+              // await participant.setMicrophoneEnabled can return immediately in some instances,
+              // so that participant.isMicrophoneEnabled !== buttonEnabled.current.audio still holds true.
+              // This happens if the device is still in a pending state
+              // "sleeping" here makes sure we let react do its thing so that participant.isMicrophoneEnabled is updated,
+              // so we do not end up in a recursion loop.
+              await new Promise((r) => setTimeout(r, 100));
+
+              // track got successfully changed to mute/unmute
+              // Run the check again after the change is done. Because the user
+              // can update the state (presses mute button) while the device is enabling
+              // itself we need might need to update the mute state right away.
+              // This async recursion makes sure that setCamera/MicrophoneEnabled is
+              // called as little times as possible.
+              syncMuteState(iterCount + 1, type);
+            } else {
+              throw new Error(
+                "track with new mute state could not be published",
+              );
+            }
           } catch (e) {
-            logger.error("Failed to sync audio mute state with LiveKit", e);
+            logger.error(
+              "Failed to sync audio mute state with LiveKit (will retry to sync in 1s):",
+              e,
+            );
+            setTimeout(() => syncMuteState(iterCount + 1, type), 1000);
           }
-          audioMuteUpdating.current = false;
-          // await participant.setMicrophoneEnabled can return immediately in some instances,
-          // so that participant.isMicrophoneEnabled !== buttonEnabled.current.audio still holds true.
-          // This happens if the device is still in a pending state
-          // "sleeping" here makes sure we let react do its thing so that participant.isMicrophoneEnabled is updated,
-          // so we do not end up in a recursion loop.
-          await new Promise((r) => setTimeout(r, 20));
-          // Run the check again after the change is done. Because the user
-          // can update the state (presses mute button) while the device is enabling
-          // itself we need might need to update the mute state right away.
-          // This async recursion makes sure that setCamera/MicrophoneEnabled is
-          // called as little times as possible.
-          syncMuteStateAudio();
         }
       };
-      const syncMuteStateVideo = async (): Promise<void> => {
-        if (
-          participant.isCameraEnabled !== buttonEnabled.current.video &&
-          !videoMuteUpdating.current
-        ) {
-          videoMuteUpdating.current = true;
-          try {
-            await participant.setCameraEnabled(buttonEnabled.current.video);
-          } catch (e) {
-            logger.error("Failed to sync audio mute state with LiveKit", e);
-          }
-          videoMuteUpdating.current = false;
-          // see above
-          await new Promise((r) => setTimeout(r, 20));
-          // see above
-          syncMuteStateVideo();
-        }
-      };
-      syncMuteStateAudio();
-      syncMuteStateVideo();
+
+      syncMuteState(0, MuteDevice.Microphone);
+      syncMuteState(0, MuteDevice.Camera);
     }
   }, [room, muteStates, connectionState]);
 

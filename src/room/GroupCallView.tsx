@@ -58,6 +58,7 @@ interface Props {
   isPasswordlessUser: boolean;
   confineToRoom: boolean;
   preload: boolean;
+  skipLobby: boolean;
   hideHeader: boolean;
   rtcSession: MatrixRTCSession;
 }
@@ -67,6 +68,7 @@ export const GroupCallView: FC<Props> = ({
   isPasswordlessUser,
   confineToRoom,
   preload,
+  skipLobby,
   hideHeader,
   rtcSession,
 }) => {
@@ -125,80 +127,80 @@ export const GroupCallView: FC<Props> = ({
   latestMuteStates.current = muteStates;
 
   useEffect(() => {
+    // this effect is only if we don't want to show the lobby (skipLobby = true)
+    if (!skipLobby) return;
+
+    const defaultDeviceSetup = async (
+      requestedDeviceData: JoinCallData,
+    ): Promise<void> => {
+      // XXX: I think this is broken currently - LiveKit *won't* request
+      // permissions and give you device names unless you specify a kind, but
+      // here we want all kinds of devices. This needs a fix in livekit-client
+      // for the following name-matching logic to do anything useful.
+      const devices = await Room.getLocalDevices(undefined, true);
+      const { audioInput, videoInput } = requestedDeviceData;
+      if (audioInput === null) {
+        latestMuteStates.current!.audio.setEnabled?.(false);
+      } else {
+        const deviceId = await findDeviceByName(
+          audioInput,
+          "audioinput",
+          devices,
+        );
+        if (!deviceId) {
+          logger.warn("Unknown audio input: " + audioInput);
+          latestMuteStates.current!.audio.setEnabled?.(false);
+        } else {
+          logger.debug(
+            `Found audio input ID ${deviceId} for name ${audioInput}`,
+          );
+          latestDevices.current!.audioInput.select(deviceId);
+          latestMuteStates.current!.audio.setEnabled?.(true);
+        }
+      }
+
+      if (videoInput === null) {
+        latestMuteStates.current!.video.setEnabled?.(false);
+      } else {
+        const deviceId = await findDeviceByName(
+          videoInput,
+          "videoinput",
+          devices,
+        );
+        if (!deviceId) {
+          logger.warn("Unknown video input: " + videoInput);
+          latestMuteStates.current!.video.setEnabled?.(false);
+        } else {
+          logger.debug(
+            `Found video input ID ${deviceId} for name ${videoInput}`,
+          );
+          latestDevices.current!.videoInput.select(deviceId);
+          latestMuteStates.current!.video.setEnabled?.(true);
+        }
+      }
+    };
     if (widget && preload) {
       // In preload mode, wait for a join action before entering
       const onJoin = async (
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
-        // XXX: I think this is broken currently - LiveKit *won't* request
-        // permissions and give you device names unless you specify a kind, but
-        // here we want all kinds of devices. This needs a fix in livekit-client
-        // for the following name-matching logic to do anything useful.
-        const devices = await Room.getLocalDevices(undefined, true);
-
-        const { audioInput, videoInput } = ev.detail
-          .data as unknown as JoinCallData;
-
-        if (audioInput === null) {
-          latestMuteStates.current!.audio.setEnabled?.(false);
-        } else {
-          const deviceId = await findDeviceByName(
-            audioInput,
-            "audioinput",
-            devices,
-          );
-          if (!deviceId) {
-            logger.warn("Unknown audio input: " + audioInput);
-            latestMuteStates.current!.audio.setEnabled?.(false);
-          } else {
-            logger.debug(
-              `Found audio input ID ${deviceId} for name ${audioInput}`,
-            );
-            latestDevices.current!.audioInput.select(deviceId);
-            latestMuteStates.current!.audio.setEnabled?.(true);
-          }
-        }
-
-        if (videoInput === null) {
-          latestMuteStates.current!.video.setEnabled?.(false);
-        } else {
-          const deviceId = await findDeviceByName(
-            videoInput,
-            "videoinput",
-            devices,
-          );
-          if (!deviceId) {
-            logger.warn("Unknown video input: " + videoInput);
-            latestMuteStates.current!.video.setEnabled?.(false);
-          } else {
-            logger.debug(
-              `Found video input ID ${deviceId} for name ${videoInput}`,
-            );
-            latestDevices.current!.videoInput.select(deviceId);
-            latestMuteStates.current!.video.setEnabled?.(true);
-          }
-        }
-
+        defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
         enterRTCSession(rtcSession, perParticipantE2EE);
-
-        PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
-        // we only have room sessions right now, so call ID is the emprty string - we use the room ID
-        PosthogAnalytics.instance.eventCallStarted.track(
-          rtcSession.room.roomId,
-        );
-
         await Promise.all([
           widget!.api.setAlwaysOnScreen(true),
           widget!.api.transport.reply(ev.detail, {}),
         ]);
       };
-
       widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
       return () => {
         widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
+    } else {
+      // if we don't use preload and only skipLobby we enter the rtc session right away
+      defaultDeviceSetup({ audioInput: null, videoInput: null });
+      enterRTCSession(rtcSession, perParticipantE2EE);
     }
-  }, [rtcSession, preload, perParticipantE2EE]);
+  }, [rtcSession, preload, skipLobby, perParticipantE2EE]);
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
