@@ -41,6 +41,7 @@ import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import classNames from "classnames";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -178,7 +179,7 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const [showConnectionStats] = useShowConnectionStats();
 
-  const { hideScreensharing } = useUrlParams();
+  const { hideScreensharing, showControls } = useUrlParams();
 
   const { isScreenShareEnabled, localParticipant } = useLocalParticipant({
     room: livekitRoom,
@@ -388,7 +389,15 @@ export const InCallView: FC<InCallViewProps> = ({
       />,
     );
     footer = (
-      <div className={styles.footer}>
+      <div
+        className={classNames(
+          showControls
+            ? hideHeader
+              ? [styles.footer, styles.footerHidden]
+              : [styles.footer, styles.footerThin]
+            : styles.footer,
+        )}
+      >
         {!mobile && !hideHeader && (
           <div className={styles.logo}>
             <LogoMark width={24} height={24} aria-hidden />
@@ -399,8 +408,8 @@ export const InCallView: FC<InCallViewProps> = ({
             />
           </div>
         )}
-        <div className={styles.buttons}>{buttons}</div>
-        {!mobile && !hideHeader && (
+        {!showControls && <div className={styles.buttons}>{buttons}</div>}
+        {!mobile && !hideHeader && !showControls && (
           <LayoutToggle
             className={styles.layout}
             layout={layout}
@@ -425,7 +434,7 @@ export const InCallView: FC<InCallViewProps> = ({
             />
           </LeftNav>
           <RightNav>
-            {!reducedControls && onShareClick !== null && (
+            {!reducedControls && !showControls && onShareClick !== null && (
               <InviteButton onClick={onShareClick} />
             )}
           </RightNav>
