@@ -23,6 +23,7 @@ import {
 } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
+import * as Sentry from "@sentry/react";
 
 import { SFUConfig, sfuConfigEquals } from "./openIDSFU";
 
@@ -64,6 +65,9 @@ async function doConnect(
   if (livekitRoom!.localParticipant.getTrack(Track.Source.Microphone)) {
     logger.warn(
       "Pre-creating audio track but participant already appears to have an microphone track: this shouldn't happen!",
+    );
+    Sentry.captureMessage(
+      "Pre-creating audio track but participant already appears to have an microphone track!",
     );
     return;
   }
