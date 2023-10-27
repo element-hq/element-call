@@ -63,6 +63,10 @@ interface UrlParams {
    */
   hideHeader: boolean;
   /**
+   * Whether the controls should be shown. For screen recording no controls can be desired.
+   */
+  showControls: boolean;
+  /**
    * Whether to hide the screen-sharing button.
    */
   hideScreensharing: boolean;
@@ -115,6 +119,12 @@ interface UrlParams {
    * Whether we the app should use per participant keys for E2EE.
    */
   perParticipantE2EE: boolean;
+  /*
+   * Setting this flag skips the lobby and brings you in the call directly.
+   * In the widget this can be combined with preload to pass the device settings
+   * with the join widget action.
+   */
+  skipLobby: boolean;
 }
 
 // This is here as a stopgap, but what would be far nicer is a function that
@@ -199,6 +209,7 @@ export const getUrlParams = (
     appPrompt: parser.getFlagParam("appPrompt", true),
     preload: parser.getFlagParam("preload"),
     hideHeader: parser.getFlagParam("hideHeader"),
+    showControls: parser.getFlagParam("showControls"),
     hideScreensharing: parser.getFlagParam("hideScreensharing"),
     e2eEnabled: parser.getFlagParam("enableE2e", true),
     userId: parser.getParam("userId"),
@@ -211,6 +222,7 @@ export const getUrlParams = (
     analyticsID: parser.getParam("analyticsID"),
     allowIceFallback: parser.getFlagParam("allowIceFallback"),
     perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
+    skipLobby: parser.getFlagParam("skipLobby"),
   };
 };
 
