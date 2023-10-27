@@ -98,3 +98,12 @@ limitations under the License.
     gap: var(--cpd-space-4x);
   }
 }
+
+.footerThin {
+  padding-top: var(--cpd-space-3x);
+  padding-bottom: var(--cpd-space-5x);
+}
+
+.footerHidden {
+  display: none;
+}
