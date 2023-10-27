@@ -119,7 +119,7 @@ interface UrlParams {
    * Whether we the app should use per participant keys for E2EE.
    */
   perParticipantE2EE: boolean;
-  /*
+  /**
    * Setting this flag skips the lobby and brings you in the call directly.
    * In the widget this can be combined with preload to pass the device settings
    * with the join widget action.
