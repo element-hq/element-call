@@ -7855,9 +7855,9 @@ postcss@^8.4.27:
     source-map-js "^1.0.2"
 
 posthog-js@^1.29.0:
-  version "1.87.4"
-  resolved "https://registry.yarnpkg.com/posthog-js/-/posthog-js-1.87.4.tgz#2bdbd74701bcc46c6e01f8907ea80ad92b7ec14e"
-  integrity sha512-JINzUjsDzajws0DL3Mwp5GO8i3+oTcQYPRTNAUJVFpC4A5S1pTB8hBqbZjcaUzxTtJ0UQbBbnDGW9mXtctHqkg==
+  version "1.87.5"
+  resolved "https://registry.yarnpkg.com/posthog-js/-/posthog-js-1.87.5.tgz#a279fc2016984008f2378a451bbbe33d9c89b857"
+  integrity sha512-GvSOX9oA1iPPaZSwFkuA333PDDo9yCKj4yqFYjxf/dU2mBIOuIMjdPLTiCvoVmsf2UL/2/9c7AwlnFAG4iRZuQ==
   dependencies:
     fflate "^0.4.1"
 
