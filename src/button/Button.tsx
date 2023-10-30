@@ -22,8 +22,8 @@ import { useTranslation } from "react-i18next";
 import { Tooltip } from "@vector-im/compound-web";
 import MicOnSolidIcon from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg?react";
 import MicOffSolidIcon from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg?react";
-import VideoCallIcon from "@vector-im/compound-design-tokens/icons/video-call.svg?react";
-import VideoCallOffIcon from "@vector-im/compound-design-tokens/icons/video-call-off.svg?react";
+import VideoCallSolidIcon from "@vector-im/compound-design-tokens/icons/video-call-solid.svg?react";
+import VideoCallOffSolidIcon from "@vector-im/compound-design-tokens/icons/video-call-off-solid.svg?react";
 import EndCallIcon from "@vector-im/compound-design-tokens/icons/end-call.svg?react";
 import ShareScreenSolidIcon from "@vector-im/compound-design-tokens/icons/share-screen-solid.svg?react";
 import SettingsSolidIcon from "@vector-im/compound-design-tokens/icons/settings-solid.svg?react";
@@ -159,7 +159,7 @@ export const VideoButton: FC<{
   [index: string]: unknown;
 }> = ({ muted, ...rest }) => {
   const { t } = useTranslation();
-  const Icon = muted ? VideoCallOffIcon : VideoCallIcon;
+  const Icon = muted ? VideoCallOffSolidIcon : VideoCallSolidIcon;
   const label = muted ? t("Start video") : t("Stop video");
 
   return (
