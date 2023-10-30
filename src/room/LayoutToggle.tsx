@@ -17,8 +17,8 @@ limitations under the License.
 import { ChangeEvent, FC, useCallback, useId } from "react";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "@vector-im/compound-web";
-import SpotlightViewIcon from "@vector-im/compound-design-tokens/icons/spotlight-view.svg?react";
-import GridViewIcon from "@vector-im/compound-design-tokens/icons/grid-view.svg?react";
+import SpotlightIcon from "@vector-im/compound-design-tokens/icons/spotlight.svg?react";
+import GridIcon from "@vector-im/compound-design-tokens/icons/grid.svg?react";
 import classNames from "classnames";
 
 import styles from "./LayoutToggle.module.css";
@@ -54,7 +54,7 @@ export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
       />
       <Tooltip label={t("Spotlight")}>
         <label htmlFor={spotlightId}>
-          <SpotlightViewIcon aria-label={t("Spotlight")} />
+          <SpotlightIcon aria-label={t("Spotlight")} />
         </label>
       </Tooltip>
       <input
@@ -67,7 +67,7 @@ export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
       />
       <Tooltip label={t("Grid")}>
         <label htmlFor={gridId}>
-          <GridViewIcon aria-label={t("Grid")} />
+          <GridIcon aria-label={t("Grid")} />
         </label>
       </Tooltip>
     </div>
