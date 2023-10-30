@@ -244,7 +244,7 @@ export const GroupCallView: FC<Props> = ({
       const onHangup = async (
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
-        leaveRTCSession(rtcSession);
+        await leaveRTCSession(rtcSession);
         widget!.api.transport.reply(ev.detail, {});
         widget!.api.setAlwaysOnScreen(false);
       };
