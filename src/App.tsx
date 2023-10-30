@@ -25,6 +25,7 @@ import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
 import { History } from "history";
 import { TooltipProvider } from "@vector-im/compound-web";
+import WebConsole from "f-twelve";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
@@ -39,6 +40,7 @@ import { widget } from "./widget";
 import { useTheme } from "./useTheme";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
+WebConsole.enable({ show: false });
 
 interface SimpleProviderProps {
   children: JSX.Element;

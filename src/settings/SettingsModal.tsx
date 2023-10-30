@@ -13,8 +13,8 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
-import { ChangeEvent, FC, Key, ReactNode } from "react";
+import WebConsole from "f-twelve";
+import { ChangeEvent, FC, Key, ReactNode, useEffect } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
@@ -34,6 +34,7 @@ import {
   useDeveloperSettingsTab,
   useShowConnectionStats,
   isFirefox,
+  useShowInlineWebConsole,
 } from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Body, Caption } from "../typography/Typography";
@@ -228,6 +229,15 @@ export const SettingsModal: FC<Props> = ({
     </TabItem>
   );
 
+  const [webConsoleShown, setWebConsoleShown] = useShowInlineWebConsole();
+  useEffect(() => {
+    if (webConsoleShown) {
+      WebConsole.show();
+    } else {
+      WebConsole.hide();
+    }
+  });
+
   const developerTab = (
     <TabItem
       key="developer"
@@ -254,6 +264,21 @@ export const SettingsModal: FC<Props> = ({
           checked={showConnectionStats}
           onChange={(e: ChangeEvent<HTMLInputElement>): void =>
             setShowConnectionStats(e.target.checked)
+          }
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="showInlineWebConsole"
+          name="web-console"
+          label={t("Show web console")}
+          description={t(
+            "Show a console to observe the webapp log without the need of browser devtools.",
+          )}
+          type="checkbox"
+          checked={webConsoleShown}
+          onChange={(e: ChangeEvent<HTMLInputElement>): void =>
+            setWebConsoleShown(e.target.checked)
           }
         />
       </FieldRow>
