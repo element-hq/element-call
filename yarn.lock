@@ -2361,6 +2361,14 @@
     "@babel/runtime" "^7.13.10"
     "@radix-ui/react-slot" "1.0.2"
 
+"@radix-ui/react-separator@^1.0.3":
+  version "1.0.3"
+  resolved "https://registry.yarnpkg.com/@radix-ui/react-separator/-/react-separator-1.0.3.tgz#be5a931a543d5726336b112f465f58585c04c8aa"
+  integrity sha512-itYmTy/kokS21aiV5+Z56MZB54KrhPgn6eHDKkFeOLR34HMN2s8PaN47qZZAGnvupcjxHaFZnW4pQEh0BvvVuw==
+  dependencies:
+    "@babel/runtime" "^7.13.10"
+    "@radix-ui/react-primitive" "1.0.3"
+
 "@radix-ui/react-slot@1.0.2":
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/@radix-ui/react-slot/-/react-slot-1.0.2.tgz#a9ff4423eade67f501ffb32ec22064bc9d3099ab"
@@ -3606,11 +3614,12 @@
     svg2vectordrawable "^2.9.1"
 
 "@vector-im/compound-web@^0.6.0":
-  version "0.6.0"
-  resolved "https://registry.yarnpkg.com/@vector-im/compound-web/-/compound-web-0.6.0.tgz#94f99fc7bf197513012efb54fb52f106277de34f"
-  integrity sha512-eGbl3FofxR9hC2dCs531o/5DleKyh0ANY1v1C9cuF5kfBaQHwwt+e9tJoTqiVRDwH4widJ+o4tluDYEGIDGaHg==
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/@vector-im/compound-web/-/compound-web-0.6.1.tgz#562819ff55133bddd3dd78e5aa70e12f53861e71"
+  integrity sha512-weTfCSu1xvbblslmvTjy9dxXWyaWrSsQfv1MhP9UNzH/ninJ/m14zCId28liY+OmxdtyiMKnxerUwjr9TnVcMQ==
   dependencies:
     "@radix-ui/react-form" "^0.0.3"
+    "@radix-ui/react-separator" "^1.0.3"
     "@radix-ui/react-tooltip" "^1.0.6"
     classnames "^2.3.2"
     graphemer "^1.4.0"
