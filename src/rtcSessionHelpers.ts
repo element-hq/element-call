@@ -19,6 +19,7 @@ import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { LivekitFocus } from "./livekit/LivekitFocus";
 import { Config } from "./config/Config";
+import { ElementWidgetActions, WidgetHelpers, widget } from "./widget";
 
 function makeFocus(livekitAlias: string): LivekitFocus {
   const urlFromConf = Config.get().livekit!.livekit_service_url;
@@ -47,9 +48,26 @@ export function enterRTCSession(rtcSession: MatrixRTCSession): void {
   rtcSession.joinRoomSession([makeFocus(livekitAlias)]);
 }
 
+const widgetPostHangupProcedure = async (
+  widget: WidgetHelpers,
+): Promise<void> => {
+  // we need to wait until the callEnded event is tracked on posthog.
+  // Otherwise the iFrame gets killed before the callEnded event got tracked.
+  await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
+  widget.api.setAlwaysOnScreen(false);
+  PosthogAnalytics.instance.logout();
+
+  // We send the hangup event after the memberships have been updated
+  // calling leaveRTCSession.
+  // We need to wait because this makes the client hosting this widget killing the IFrame.
+  widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+};
+
 export async function leaveRTCSession(
   rtcSession: MatrixRTCSession,
 ): Promise<void> {
-  //groupCallOTelMembership?.onLeaveCall();
   await rtcSession.leaveRoomSession();
+  if (widget) {
+    await widgetPostHangupProcedure(widget);
+  }
 }
