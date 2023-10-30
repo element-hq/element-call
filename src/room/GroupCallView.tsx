@@ -201,6 +201,22 @@ export const GroupCallView: FC<Props> = ({
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
   const history = useHistory();
 
+  const widgetPostHangupProcedure = async (): Promise<void> => {
+    if (!widget) {
+      logger.warn("called widgetPostHangupProcedure without a widget.");
+      return;
+    }
+    // we need to wait until the callEnded event is tracked on posthog.
+    // Otherwise the iFrame gets killed before the callEnded event got tracked.
+    await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
+    widget.api.setAlwaysOnScreen(false);
+    PosthogAnalytics.instance.logout();
+
+    // we will always send the hangup event after the memberships have been updated
+    // calling leaveRTCSession.
+    widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+  };
+
   const onLeave = useCallback(
     async (leaveError?: Error) => {
       setLeaveError(leaveError);
@@ -217,15 +233,7 @@ export const GroupCallView: FC<Props> = ({
 
       await leaveRTCSession(rtcSession);
       if (widget) {
-        // we need to wait until the callEnded event is tracked on posthog.
-        // Otherwise the iFrame gets killed before the callEnded event got tracked.
-        await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
-        widget.api.setAlwaysOnScreen(false);
-        PosthogAnalytics.instance.logout();
-
-        // we will always send the hangup event after the memberships have been updated
-        // calling leaveRTCSession.
-        widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+        widgetPostHangupProcedure();
       }
 
       if (
@@ -244,9 +252,9 @@ export const GroupCallView: FC<Props> = ({
       const onHangup = async (
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
-        await leaveRTCSession(rtcSession);
         widget!.api.transport.reply(ev.detail, {});
-        widget!.api.setAlwaysOnScreen(false);
+        await leaveRTCSession(rtcSession);
+        widgetPostHangupProcedure();
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
       return () => {
