@@ -28,7 +28,7 @@ import {
   GroupCallIntent,
   GroupCallType,
 } from "matrix-js-sdk/src/webrtc/groupCall";
-import { secureRandomBase64 } from "matrix-js-sdk/src/randomstring";
+import { secureRandomBase64Url } from "matrix-js-sdk/src/randomstring";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
@@ -358,7 +358,7 @@ export async function createRoom(
 
   let password;
   if (e2ee == E2eeType.SHARED_KEY) {
-    password = secureRandomBase64(16);
+    password = secureRandomBase64Url(16);
     setLocalStorageItem(
       getRoomSharedKeyLocalStorageKey(result.room_id),
       password,
