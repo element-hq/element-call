@@ -57,8 +57,9 @@ const widgetPostHangupProcedure = async (
   widget.api.setAlwaysOnScreen(false);
   PosthogAnalytics.instance.logout();
 
-  // we will always send the hangup event after the memberships have been updated
+  // We send the hangup event after the memberships have been updated
   // calling leaveRTCSession.
+  // We need to wait because this makes the client hosting this widget killing the IFrame.
   widget.api.transport.send(ElementWidgetActions.HangupCall, {});
 };
 
