@@ -57,7 +57,7 @@ export interface ScreenshareStartData {
   desktopCapturerSourceId: string;
 }
 
-interface WidgetHelpers {
+export interface WidgetHelpers {
   api: WidgetApi;
   lazyActions: LazyEventEmitter;
   client: Promise<MatrixClient>;
