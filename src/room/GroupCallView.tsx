@@ -44,8 +44,9 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import { E2EEConfig, E2EEMode } from "../livekit/useLiveKit";
+import { E2EEConfig } from "../livekit/useLiveKit";
 import { useUrlParams } from "../UrlParams";
+import { E2eeType } from "../e2ee/e2eeType";
 
 declare global {
   interface Window {
@@ -262,9 +263,9 @@ export const GroupCallView: FC<Props> = ({
 
   const e2eeConfig = useMemo((): E2EEConfig | undefined => {
     if (perParticipantE2EE) {
-      return { mode: E2EEMode.PerParticipantKey };
+      return { mode: E2eeType.PER_PARTICIPANT };
     } else if (e2eeSharedKey) {
-      return { mode: E2EEMode.SharedKey, sharedKey: e2eeSharedKey };
+      return { mode: E2eeType.SHARED_KEY, sharedKey: e2eeSharedKey };
     }
   }, [perParticipantE2EE, e2eeSharedKey]);
 

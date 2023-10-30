@@ -41,14 +41,10 @@ import {
   useECConnectionState,
 } from "./useECConnectionState";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
-
-export enum E2EEMode {
-  PerParticipantKey = "per_participant_key",
-  SharedKey = "shared_key",
-}
+import { E2eeType } from "../e2ee/e2eeType";
 
 export type E2EEConfig = {
-  mode: E2EEMode;
+  mode: E2eeType;
   sharedKey?: string;
 };
 
@@ -64,14 +60,17 @@ export function useLiveKit(
   e2eeConfig?: E2EEConfig,
 ): UseLivekitResult {
   const e2eeOptions = useMemo((): E2EEOptions | undefined => {
-    if (!e2eeConfig) return undefined;
+    if (!e2eeConfig || e2eeConfig.mode === E2eeType.NONE) return undefined;
 
-    if (e2eeConfig.mode === E2EEMode.PerParticipantKey) {
+    if (e2eeConfig.mode === E2eeType.PER_PARTICIPANT) {
       return {
         keyProvider: new MatrixKeyProvider(),
         worker: new E2EEWorker(),
       };
-    } else if (e2eeConfig.mode === E2EEMode.SharedKey && e2eeConfig.sharedKey) {
+    } else if (
+      e2eeConfig.mode === E2eeType.SHARED_KEY &&
+      e2eeConfig.sharedKey
+    ) {
       return {
         keyProvider: new ExternalE2EEKeyProvider(),
         worker: new E2EEWorker(),
@@ -82,9 +81,12 @@ export function useLiveKit(
   useEffect(() => {
     if (!e2eeConfig || !e2eeOptions) return;
 
-    if (e2eeConfig.mode === E2EEMode.PerParticipantKey) {
+    if (e2eeConfig.mode === E2eeType.PER_PARTICIPANT) {
       (e2eeOptions.keyProvider as MatrixKeyProvider).setRTCSession(rtcSession);
-    } else if (e2eeConfig.mode === E2EEMode.SharedKey && e2eeConfig.sharedKey) {
+    } else if (
+      e2eeConfig.mode === E2eeType.SHARED_KEY &&
+      e2eeConfig.sharedKey
+    ) {
       (e2eeOptions.keyProvider as ExternalE2EEKeyProvider).setKey(
         e2eeConfig.sharedKey,
       );
