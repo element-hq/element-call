@@ -28,6 +28,7 @@ import {
   GroupCallIntent,
   GroupCallType,
 } from "matrix-js-sdk/src/webrtc/groupCall";
+import { secureRandomBase64Url } from "matrix-js-sdk/src/randomstring";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
@@ -37,6 +38,7 @@ import { loadOlm } from "./olm";
 import { Config } from "./config/Config";
 import { setLocalStorageItem } from "./useLocalStorage";
 import { getRoomSharedKeyLocalStorageKey } from "./e2ee/sharedKeyManagement";
+import { E2eeType } from "./e2ee/e2eeType";
 
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
@@ -71,23 +73,6 @@ function waitForSync(client: MatrixClient): Promise<void> {
     };
     client.on(ClientEvent.Sync, onSync);
   });
-}
-
-function secureRandomString(entropyBytes: number): string {
-  const key = new Uint8Array(entropyBytes);
-  crypto.getRandomValues(key);
-  // encode to base64url as this value goes into URLs
-  // base64url is just base64 with thw two non-alphanum characters swapped out for
-  // ones that can be put in a URL without encoding. Browser JS has a native impl
-  // for base64 encoding but only a string (there isn't one that takes a UInt8Array
-  // yet) so just use the built-in one and convert, replace the chars and strip the
-  // padding from the end (otherwise we'd need to pull in another dependency).
-  return btoa(
-    key.reduce((acc, current) => acc + String.fromCharCode(current), ""),
-  )
-    .replace("+", "-")
-    .replace("/", "_")
-    .replace(/=*$/, "");
 }
 
 /**
@@ -294,10 +279,20 @@ interface CreateRoomResult {
   password?: string;
 }
 
+/**
+ * Create a new room ready for calls
+ *
+ * @param client Matrix client to use
+ * @param name The name of the room
+ * @param e2ee The type of e2ee call to create. Note that we would currently never
+ *             create a room for per-participant e2ee calls: since it's used in
+ *             embedded mode, we use the existing room.
+ * @returns Object holding information about the new room
+ */
 export async function createRoom(
   client: MatrixClient,
   name: string,
-  e2ee: boolean,
+  e2ee: E2eeType,
 ): Promise<CreateRoomResult> {
   logger.log(`Creating room for group call`);
   const createPromise = client.createRoom({
@@ -362,8 +357,8 @@ export async function createRoom(
   );
 
   let password;
-  if (e2ee) {
-    password = secureRandomString(16);
+  if (e2ee == E2eeType.SHARED_KEY) {
+    password = secureRandomBase64Url(16);
     setLocalStorageItem(
       getRoomSharedKeyLocalStorageKey(result.room_id),
       password,
