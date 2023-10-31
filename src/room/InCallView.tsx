@@ -407,8 +407,8 @@ export const InCallView: FC<InCallViewProps> = ({
             />
           </div>
         )}
-        {!showControls && <div className={styles.buttons}>{buttons}</div>}
-        {!mobile && !hideHeader && !showControls && (
+        {showControls && <div className={styles.buttons}>{buttons}</div>}
+        {!mobile && !hideHeader && showControls && (
           <LayoutToggle
             className={styles.layout}
             layout={layout}
@@ -433,7 +433,7 @@ export const InCallView: FC<InCallViewProps> = ({
             />
           </LeftNav>
           <RightNav>
-            {!reducedControls && !showControls && onShareClick !== null && (
+            {!reducedControls && showControls && onShareClick !== null && (
               <InviteButton onClick={onShareClick} />
             )}
           </RightNav>

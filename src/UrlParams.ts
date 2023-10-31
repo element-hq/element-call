@@ -205,7 +205,7 @@ export const getUrlParams = (
     appPrompt: parser.getFlagParam("appPrompt", true),
     preload: parser.getFlagParam("preload"),
     hideHeader: parser.getFlagParam("hideHeader"),
-    showControls: parser.getFlagParam("showControls"),
+    showControls: parser.getFlagParam("showControls", true),
     hideScreensharing: parser.getFlagParam("hideScreensharing"),
     e2eEnabled: parser.getFlagParam("enableE2e", true),
     userId: parser.getParam("userId"),
