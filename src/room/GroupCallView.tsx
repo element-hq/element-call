@@ -44,6 +44,9 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
+import { E2EEConfig } from "../livekit/useLiveKit";
+import { useUrlParams } from "../UrlParams";
+import { E2eeType } from "../e2ee/e2eeType";
 
 declare global {
   interface Window {
@@ -87,6 +90,7 @@ export const GroupCallView: FC<Props> = ({
   const roomName = useRoomName(rtcSession.room);
   const roomAvatar = useRoomAvatar(rtcSession.room);
   const roomEncrypted = useIsRoomE2EE(rtcSession.room.roomId)!;
+  const { perParticipantE2EE } = useUrlParams();
 
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
@@ -182,7 +186,7 @@ export const GroupCallView: FC<Props> = ({
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
         defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
-        enterRTCSession(rtcSession);
+        enterRTCSession(rtcSession, perParticipantE2EE);
         await Promise.all([
           widget!.api.setAlwaysOnScreen(true),
           widget!.api.transport.reply(ev.detail, {}),
@@ -195,9 +199,9 @@ export const GroupCallView: FC<Props> = ({
     } else {
       // if we don't use preload and only skipLobby we enter the rtc session right away
       defaultDeviceSetup({ audioInput: null, videoInput: null });
-      enterRTCSession(rtcSession);
+      enterRTCSession(rtcSession, perParticipantE2EE);
     }
-  }, [rtcSession, preload, skipLobby]);
+  }, [rtcSession, preload, skipLobby, perParticipantE2EE]);
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
@@ -245,16 +249,19 @@ export const GroupCallView: FC<Props> = ({
     }
   }, [isJoined, rtcSession]);
 
-  const e2eeConfig = useMemo(
-    () => (e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined),
-    [e2eeSharedKey],
-  );
+  const e2eeConfig = useMemo((): E2EEConfig | undefined => {
+    if (perParticipantE2EE) {
+      return { mode: E2eeType.PER_PARTICIPANT };
+    } else if (e2eeSharedKey) {
+      return { mode: E2eeType.SHARED_KEY, sharedKey: e2eeSharedKey };
+    }
+  }, [perParticipantE2EE, e2eeSharedKey]);
 
   const onReconnect = useCallback(() => {
     setLeft(false);
     setLeaveError(undefined);
-    enterRTCSession(rtcSession);
-  }, [rtcSession]);
+    enterRTCSession(rtcSession, perParticipantE2EE);
+  }, [rtcSession, perParticipantE2EE]);
 
   const joinRule = useJoinRule(rtcSession.room);
 
@@ -280,7 +287,7 @@ export const GroupCallView: FC<Props> = ({
 
   const { t } = useTranslation();
 
-  if (isRoomE2EE && !e2eeSharedKey) {
+  if (isRoomE2EE && !perParticipantE2EE && !e2eeSharedKey) {
     return (
       <ErrorView
         error={
@@ -370,7 +377,7 @@ export const GroupCallView: FC<Props> = ({
           client={client}
           matrixInfo={matrixInfo}
           muteStates={muteStates}
-          onEnter={(): void => enterRTCSession(rtcSession)}
+          onEnter={(): void => enterRTCSession(rtcSession, perParticipantE2EE)}
           confineToRoom={confineToRoom}
           hideHeader={hideHeader}
           participantCount={participantCount}

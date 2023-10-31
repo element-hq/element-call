@@ -40,6 +40,7 @@ import { Caption } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
+import { E2eeType } from "../e2ee/e2eeType";
 
 interface Props {
   client: MatrixClient;
@@ -72,7 +73,11 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         setError(undefined);
         setLoading(true);
 
-        const createRoomResult = await createRoom(client, roomName, true);
+        const createRoomResult = await createRoom(
+          client,
+          roomName,
+          E2eeType.SHARED_KEY,
+        );
 
         history.push(
           getRelativeRoomUrl(
