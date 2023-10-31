@@ -391,10 +391,10 @@ export const InCallView: FC<InCallViewProps> = ({
       <div
         className={classNames(
           showControls
-            ? hideHeader
-              ? [styles.footer, styles.footerHidden]
-              : [styles.footer, styles.footerThin]
-            : styles.footer,
+            ? styles.footer
+            : hideHeader
+            ? [styles.footer, styles.footerHidden]
+            : [styles.footer, styles.footerThin],
         )}
       >
         {!mobile && !hideHeader && (
