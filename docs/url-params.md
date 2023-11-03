@@ -112,11 +112,19 @@ Whether to hide the screen-sharing button.
 hideScreensharing: boolean; (default: false)
 ```
 
-**e2eEnabled**
+**enableE2EE**
 Whether to use end-to-end encryption.
 
 ```
-e2eEnabled: boolean; (default: true)
+enableE2EE: boolean; (default: true)
+```
+
+**perParticipantE2EE**
+Whether to use per participant encryption.
+Keys will be exchanged over encrypted matrix room messages.
+
+```
+perParticipantE2EE: boolean; (default: false)
 ```
 
 **password**
