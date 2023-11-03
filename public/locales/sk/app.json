@@ -88,7 +88,6 @@
   "Reconnect": "Znovu pripojiť",
   "Thanks!": "Ďakujeme!",
   "You were disconnected from the call": "Boli ste odpojení z hovoru",
-  "End-to-end encryption isn't supported on your browser.": "End-to-end šifrovanie nie je vo vašom prehliadači podporované.",
   "{{count, number}}|other": "{{count, number}}",
   "Encrypted": "Šifrované",
   "End call": "Ukončiť hovor",

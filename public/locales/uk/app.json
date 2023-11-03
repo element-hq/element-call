@@ -88,7 +88,6 @@
   "Retry sending logs": "Повторити надсилання журналів",
   "You were disconnected from the call": "Вас від'єднано від виклику",
   "Thanks!": "Дякуємо!",
-  "End-to-end encryption isn't supported on your browser.": "Наскрізне шифрування не підтримується вашим переглядачем.",
   "{{count, number}}|other": "{{count, number}}",
   "Encrypted": "Зашифровано",
   "Microphone on": "Мікрофон увімкнено",
