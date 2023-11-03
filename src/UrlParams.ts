@@ -211,7 +211,7 @@ export const getUrlParams = (
     hideHeader: parser.getFlagParam("hideHeader"),
     showControls: parser.getFlagParam("showControls", true),
     hideScreensharing: parser.getFlagParam("hideScreensharing"),
-    e2eEnabled: parser.getFlagParam("enableE2e", true),
+    e2eEnabled: parser.getFlagParam("enableE2EE", true),
     userId: parser.getParam("userId"),
     displayName: parser.getParam("displayName"),
     deviceId: parser.getParam("deviceId"),
