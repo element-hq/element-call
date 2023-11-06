@@ -88,7 +88,6 @@
   "Retry sending logs": "重試傳送紀錄檔",
   "Thanks!": "感謝！",
   "You were disconnected from the call": "您已從通話斷線",
-  "End-to-end encryption isn't supported on your browser.": "您的瀏覽器不支援端到端加密。",
   "{{count, number}}|one": "{{count, number}}",
   "{{count, number}}|other": "{{count, number}}",
   "Encrypted": "已加密",

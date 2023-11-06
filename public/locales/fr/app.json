@@ -88,7 +88,6 @@
   "Thanks!": "Merci !",
   "You were disconnected from the call": "Vous avez été déconnecté de l’appel",
   "Connectivity to the server has been lost.": "La connexion avec le serveur a été perdue.",
-  "Enable end-to-end encryption (password protected calls)": "Activer le chiffrement de bout-en-bout (appels protégés par mot de passe)",
   "{{count, number}}|other": "{{count, number}}",
   "Encrypted": "Chiffré",
   "End call": "Terminer l’appel",
