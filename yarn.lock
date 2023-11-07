@@ -3319,9 +3319,9 @@
   integrity sha512-fgOIOXxoa3bHb4dPWrRA8xMCccrxRpqIOXBA0KAFR+/j11fYRGgJUh7qoyF38UAwn8//xwgUHKMvNKDfVGydAQ==
 
 "@types/dompurify@^3.0.2":
-  version "3.0.4"
-  resolved "https://registry.yarnpkg.com/@types/dompurify/-/dompurify-3.0.4.tgz#8a6369dec2dd0c397d01751adf3364be035b40d8"
-  integrity sha512-1Jk8S/IRzNSbwQRbuGuLFHviwxQ8pX81ZEW3INY9432Cwb4VedkBYan8gSIXVLOLHBtimOmUTEYphjRVmo+30g==
+  version "3.0.5"
+  resolved "https://registry.yarnpkg.com/@types/dompurify/-/dompurify-3.0.5.tgz#02069a2fcb89a163bacf1a788f73cb415dd75cb7"
+  integrity sha512-1Wg0g3BtQF7sSb27fJQAKck1HECM6zV1EB66j8JH9i3LCjYabJa0FSdiSgsD5K/RbrsR0SiraKacLB+T8ZVYAg==
   dependencies:
     "@types/trusted-types" "*"
 
@@ -3519,9 +3519,9 @@
   integrity sha512-THo502dA5PzG/sfQH+42Lw3fvmYkceefOspdCwpHRul8ik2Jv1K8I5OZz1AT3/rs46kwgMCe9bSBmDLYkkOMGg==
 
 "@types/trusted-types@*":
-  version "2.0.4"
-  resolved "https://registry.yarnpkg.com/@types/trusted-types/-/trusted-types-2.0.4.tgz#2b38784cd16957d3782e8e2b31c03bc1d13b4d65"
-  integrity sha512-IDaobHimLQhjwsQ/NMwRVfa/yL7L/wriQPMhw1ZJall0KX6E1oxk29XMDeilW5qTIg5aoiqf5Udy8U/51aNoQQ==
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/@types/trusted-types/-/trusted-types-2.0.5.tgz#5cac7e7df3275bb95f79594f192d97da3b4fd5fe"
+  integrity sha512-I3pkr8j/6tmQtKV/ZzHtuaqYSQvyjGRKH4go60Rr0IDLlFxuRT5V32uvB1mecM5G1EVAUyF/4r4QZ1GHgz+mxA==
 
 "@types/uuid@9":
   version "9.0.6"
