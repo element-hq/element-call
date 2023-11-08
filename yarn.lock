@@ -3304,9 +3304,9 @@
     "@babel/types" "^7.20.7"
 
 "@types/caseless@*":
-  version "0.12.4"
-  resolved "https://registry.yarnpkg.com/@types/caseless/-/caseless-0.12.4.tgz#1326429a519cc077028150343fd502b04686bd6f"
-  integrity sha512-2in/lrHRNmDvHPgyormtEralhPcN3An1gLjJzj2Bw145VBxkQ75JEXW6CTdMAwShiHQcYsl2d10IjQSdJSJz4g==
+  version "0.12.5"
+  resolved "https://registry.yarnpkg.com/@types/caseless/-/caseless-0.12.5.tgz#db9468cb1b1b5a925b8f34822f1669df0c5472f5"
+  integrity sha512-hWtVTC2q7hc7xZ/RLbxapMvDMgUnDvKvMOpKal4DrMyfGBUfB1oKaZlIRr6mJL+If3bAP6sV/QneGzF6tJjZDg==
 
 "@types/content-type@^1.1.5":
   version "1.1.7"
@@ -3481,9 +3481,9 @@
     csstype "^3.0.2"
 
 "@types/request@^2.48.8":
-  version "2.48.11"
-  resolved "https://registry.yarnpkg.com/@types/request/-/request-2.48.11.tgz#04b597ea308418422f7901c9a52b24967a2c4ed2"
-  integrity sha512-HuihY1+Vss5RS9ZHzRyTGIzwPTdrJBkCm/mAeLRYrOQu/MGqyezKXWOK1VhCnR+SDbp9G2mRUP+OVEqCrzpcfA==
+  version "2.48.12"
+  resolved "https://registry.yarnpkg.com/@types/request/-/request-2.48.12.tgz#0f590f615a10f87da18e9790ac94c29ec4c5ef30"
+  integrity sha512-G3sY+NpsA9jnwm0ixhAFQSJ3Q9JkpLZpJbI3GMv0mIAT0y3mRabYeINzal5WOChIiaTEGQYlHOKgkaM9EisWHw==
   dependencies:
     "@types/caseless" "*"
     "@types/node" "*"
@@ -3526,9 +3526,9 @@
   integrity sha512-8LQKxlJ8zXQ5U0wFXTSBXLHg8+oBbLMJXEC6vOqhL+iz8EfVvSxfdwtvq8ufkT9pumab0ntnvYXQBF/+cxzl9w==
 
 "@types/tough-cookie@*":
-  version "4.0.3"
-  resolved "https://registry.yarnpkg.com/@types/tough-cookie/-/tough-cookie-4.0.3.tgz#3d06b6769518450871fbc40770b7586334bdfd90"
-  integrity sha512-THo502dA5PzG/sfQH+42Lw3fvmYkceefOspdCwpHRul8ik2Jv1K8I5OZz1AT3/rs46kwgMCe9bSBmDLYkkOMGg==
+  version "4.0.4"
+  resolved "https://registry.yarnpkg.com/@types/tough-cookie/-/tough-cookie-4.0.4.tgz#cf2f0c7c51b985b6afecea73eb2cd65421ecb717"
+  integrity sha512-95Sfz4nvMAb0Nl9DTxN3j64adfwfbBPEYq14VN7zT5J5O2M9V6iZMIIQU1U+pJyl9agHYHNCqhCXgyEtIRRa5A==
 
 "@types/trusted-types@*":
   version "2.0.5"
