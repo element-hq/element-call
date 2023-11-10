@@ -249,11 +249,13 @@ export const GroupCallView: FC<Props> = ({
     }
   }, [isJoined, rtcSession]);
 
-  const e2eeConfig = useMemo((): E2EEConfig | undefined => {
+  const e2eeConfig = useMemo((): E2EEConfig => {
     if (perParticipantE2EE) {
       return { mode: E2eeType.PER_PARTICIPANT };
     } else if (e2eeSharedKey) {
       return { mode: E2eeType.SHARED_KEY, sharedKey: e2eeSharedKey };
+    } else {
+      return { mode: E2eeType.NONE };
     }
   }, [perParticipantE2EE, e2eeSharedKey]);
 
