@@ -200,8 +200,9 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   const onLeavePress = useCallback(() => {
+    livekitRoom.disconnect();
     onLeave();
-  }, [onLeave]);
+  }, [livekitRoom, onLeave]);
 
   useEffect(() => {
     widget?.api.transport.send(
