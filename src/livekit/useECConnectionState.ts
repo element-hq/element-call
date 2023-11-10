@@ -17,6 +17,7 @@ limitations under the License.
 import {
   AudioCaptureOptions,
   ConnectionState,
+  LocalTrack,
   Room,
   RoomEvent,
   Track,
@@ -55,8 +56,6 @@ async function doConnect(
   audioEnabled: boolean,
   audioOptions: AudioCaptureOptions,
 ): Promise<void> {
-  await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt);
-
   // Always create an audio track manually.
   // livekit (by default) keeps the mic track open when you mute, but if you start muted,
   // doesn't publish it until you unmute. We want to publish it from the start so we're
@@ -82,6 +81,8 @@ async function doConnect(
   }
   if (!audioEnabled) await audioTracks[0].mute();
 
+  logger.info("Pre-created microphone track");
+
   // check again having awaited for the track to create
   if (livekitRoom!.localParticipant.getTrack(Track.Source.Microphone)) {
     logger.warn(
@@ -89,8 +90,48 @@ async function doConnect(
     );
     return;
   }
-  logger.info("Publishing pre-created mic track");
-  await livekitRoom?.localParticipant.publishTrack(audioTracks[0]);
+
+  logger.info("Connecting & publishing");
+  try {
+    await connectAndPublish(livekitRoom, sfuConfig, audioTracks[0], []);
+  } catch (e) {
+    for (const t of audioTracks) {
+      t.stop();
+    }
+  }
+}
+
+/**
+ * Connect to the SFU and publish specific tracks, if provided.
+ * This is very specific to what we need to do: for instance, we don't
+ * currently have a need to prepublish video tracks. We just prepublish
+ * a mic track at the start of a call and copy any srceenshare tracks over
+ * when switching focus (because we can't re-acquire them without the user
+ * going through the dialog to choose them again).
+ */
+async function connectAndPublish(
+  livekitRoom: Room,
+  sfuConfig: SFUConfig,
+  micTrack: LocalTrack | undefined,
+  screenshareTracks: MediaStreamTrack[],
+): Promise<void> {
+  await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt);
+
+  if (micTrack) {
+    logger.info(`Publishing precreated mic track`);
+    await livekitRoom.localParticipant.publishTrack(micTrack, {
+      source: Track.Source.Microphone,
+    });
+  }
+
+  logger.info(
+    `Publishing ${screenshareTracks.length} precreated screenshare tracks`,
+  );
+  for (const st of screenshareTracks) {
+    livekitRoom.localParticipant.publishTrack(st, {
+      source: Track.Source.ScreenShare,
+    });
+  }
 }
 
 export function useECConnectionState(
@@ -126,6 +167,31 @@ export function useECConnectionState(
     };
   }, [livekitRoom, onConnStateChanged]);
 
+  const doFocusSwitch = useCallback(async (): Promise<void> => {
+    const screenshareTracks: MediaStreamTrack[] = [];
+    for (const t of livekitRoom!.localParticipant.videoTracks.values()) {
+      if (t.track && t.source == Track.Source.ScreenShare) {
+        const newTrack = t.track.mediaStreamTrack.clone();
+        newTrack.enabled = true;
+        screenshareTracks.push(newTrack);
+      }
+    }
+
+    setSwitchingFocus(true);
+    await livekitRoom?.disconnect();
+    setIsInDoConnect(true);
+    try {
+      await connectAndPublish(
+        livekitRoom!,
+        sfuConfig!,
+        undefined,
+        screenshareTracks,
+      );
+    } finally {
+      setIsInDoConnect(false);
+    }
+  }, [livekitRoom, sfuConfig]);
+
   const currentSFUConfig = useRef(Object.assign({}, sfuConfig));
 
   // Id we are transitioning from a valid config to another valid one, we need
@@ -140,21 +206,7 @@ export function useECConnectionState(
         `SFU config changed! URL was ${currentSFUConfig.current?.url} now ${sfuConfig?.url}`,
       );
 
-      (async (): Promise<void> => {
-        setSwitchingFocus(true);
-        await livekitRoom?.disconnect();
-        setIsInDoConnect(true);
-        try {
-          await doConnect(
-            livekitRoom!,
-            sfuConfig!,
-            initialAudioEnabled,
-            initialAudioOptions,
-          );
-        } finally {
-          setIsInDoConnect(false);
-        }
-      })();
+      doFocusSwitch();
     } else if (
       !sfuConfigValid(currentSFUConfig.current) &&
       sfuConfigValid(sfuConfig)
@@ -175,7 +227,13 @@ export function useECConnectionState(
     }
 
     currentSFUConfig.current = Object.assign({}, sfuConfig);
-  }, [sfuConfig, livekitRoom, initialAudioOptions, initialAudioEnabled]);
+  }, [
+    sfuConfig,
+    livekitRoom,
+    initialAudioOptions,
+    initialAudioEnabled,
+    doFocusSwitch,
+  ]);
 
   // Because we create audio tracks by hand, there's more to connecting than
   // just what LiveKit does in room.connect, and we should continue to return
