@@ -95,7 +95,7 @@ const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 
 export interface ActiveCallProps
   extends Omit<InCallViewProps, "livekitRoom" | "connState"> {
-  e2eeConfig?: E2EEConfig;
+  e2eeConfig: E2EEConfig;
 }
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
@@ -109,10 +109,6 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   if (!livekitRoom) {
     return null;
-  }
-
-  if (props.e2eeConfig && !livekitRoom.isE2EEEnabled) {
-    livekitRoom.setE2EEEnabled(!!props.e2eeConfig);
   }
 
   return (
