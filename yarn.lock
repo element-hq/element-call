@@ -9286,9 +9286,9 @@ value-or-function@^4.0.0:
   integrity sha512-aeVK81SIuT6aMJfNo9Vte8Dw0/FZINGBV8BfCraGtqVxIeLAEhJyoWs8SmvRVmXfGss2PmmOwZCuBPbZR+IYWg==
 
 vaul@^0.7.0:
-  version "0.7.7"
-  resolved "https://registry.yarnpkg.com/vaul/-/vaul-0.7.7.tgz#a9b746d31d17b1f588ee4e863e16780f680dbc21"
-  integrity sha512-NAQTE8836Daxq+VC74srRfGqiOLQft4yc0x8YsO6Vowti0RC7LWzSpIxKd7RGegzgMMZOho+9ysH+uI6o+tUVw==
+  version "0.7.9"
+  resolved "https://registry.yarnpkg.com/vaul/-/vaul-0.7.9.tgz#365dfe8f6c1df3a81a26508474db0e0ceb98ac8c"
+  integrity sha512-RrcnGOHOq/cEU3YpyyZrnjh0H79xMpF3IrHZs9ichvHlpKjLDc4Vwjn4VkuGzeUGrmQ3wamfm/cpdKWpvBIgQw==
   dependencies:
     "@radix-ui/react-dialog" "^1.0.4"
 
