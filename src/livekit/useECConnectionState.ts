@@ -87,6 +87,9 @@ async function doConnect(
     logger.warn(
       "Publishing pre-created audio track but participant already appears to have an microphone track: this shouldn't happen!",
     );
+    for (const t of audioTracks) {
+      t.stop();
+    }
     return;
   }
   logger.info("Publishing pre-created mic track");
