@@ -24,6 +24,7 @@ import {
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
 import { History } from "history";
+import WebConsole from "f-twelve";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
@@ -36,6 +37,7 @@ import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
+WebConsole.enable({ show: false });
 
 interface BackgroundProviderProps {
   children: JSX.Element;
