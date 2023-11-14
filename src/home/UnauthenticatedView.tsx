@@ -43,7 +43,6 @@ import { generateRandomName } from "../auth/generateRandomName";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { useOptInAnalytics } from "../settings/useSetting";
 import { Config } from "../config/Config";
-import { E2eeType } from "../e2ee/e2eeType";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
@@ -85,11 +84,7 @@ export const UnauthenticatedView: FC = () => {
 
         let createRoomResult;
         try {
-          createRoomResult = await createRoom(
-            client,
-            roomName,
-            E2eeType.SHARED_KEY,
-          );
+          createRoomResult = await createRoom(client, roomName, true);
         } catch (error) {
           if (!setClient) {
             throw error;

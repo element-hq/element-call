@@ -34,10 +34,7 @@ function makeFocus(livekitAlias: string): LivekitFocus {
   };
 }
 
-export function enterRTCSession(
-  rtcSession: MatrixRTCSession,
-  encryptMedia: boolean,
-): void {
+export function enterRTCSession(rtcSession: MatrixRTCSession): void {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 
@@ -48,7 +45,7 @@ export function enterRTCSession(
   // right now we assume everything is a room-scoped call
   const livekitAlias = rtcSession.room.roomId;
 
-  rtcSession.joinRoomSession([makeFocus(livekitAlias)], encryptMedia);
+  rtcSession.joinRoomSession([makeFocus(livekitAlias)]);
 }
 
 const widgetPostHangupProcedure = async (
