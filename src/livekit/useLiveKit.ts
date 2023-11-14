@@ -26,7 +26,6 @@ import { useLiveKitRoom } from "@livekit/components-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/src/logger";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import { defaultLiveKitOptions } from "./options";
 import { SFUConfig } from "./openIDSFU";
@@ -40,12 +39,9 @@ import {
   ECConnectionState,
   useECConnectionState,
 } from "./useECConnectionState";
-import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
-import { E2eeType } from "../e2ee/e2eeType";
 
 export type E2EEConfig = {
-  mode: E2eeType;
-  sharedKey?: string;
+  sharedKey: string;
 };
 
 interface UseLivekitResult {
@@ -54,44 +50,26 @@ interface UseLivekitResult {
 }
 
 export function useLiveKit(
-  rtcSession: MatrixRTCSession,
   muteStates: MuteStates,
   sfuConfig?: SFUConfig,
   e2eeConfig?: E2EEConfig,
 ): UseLivekitResult {
-  const e2eeOptions = useMemo((): E2EEOptions | undefined => {
-    if (!e2eeConfig || e2eeConfig.mode === E2eeType.NONE) return undefined;
+  const e2eeOptions = useMemo(() => {
+    if (!e2eeConfig?.sharedKey) return undefined;
 
-    if (e2eeConfig.mode === E2eeType.PER_PARTICIPANT) {
-      return {
-        keyProvider: new MatrixKeyProvider(),
-        worker: new E2EEWorker(),
-      };
-    } else if (
-      e2eeConfig.mode === E2eeType.SHARED_KEY &&
-      e2eeConfig.sharedKey
-    ) {
-      return {
-        keyProvider: new ExternalE2EEKeyProvider(),
-        worker: new E2EEWorker(),
-      };
-    }
+    return {
+      keyProvider: new ExternalE2EEKeyProvider(),
+      worker: new E2EEWorker(),
+    } as E2EEOptions;
   }, [e2eeConfig]);
 
   useEffect(() => {
-    if (!e2eeConfig || !e2eeOptions) return;
+    if (!e2eeConfig?.sharedKey || !e2eeOptions) return;
 
-    if (e2eeConfig.mode === E2eeType.PER_PARTICIPANT) {
-      (e2eeOptions.keyProvider as MatrixKeyProvider).setRTCSession(rtcSession);
-    } else if (
-      e2eeConfig.mode === E2eeType.SHARED_KEY &&
-      e2eeConfig.sharedKey
-    ) {
-      (e2eeOptions.keyProvider as ExternalE2EEKeyProvider).setKey(
-        e2eeConfig.sharedKey,
-      );
-    }
-  }, [e2eeOptions, e2eeConfig, rtcSession]);
+    (e2eeOptions.keyProvider as ExternalE2EEKeyProvider).setKey(
+      e2eeConfig?.sharedKey,
+    );
+  }, [e2eeOptions, e2eeConfig?.sharedKey]);
 
   const initialMuteStates = useRef<MuteStates>(muteStates);
   const devices = useMediaDevices();
