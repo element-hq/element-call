@@ -177,6 +177,8 @@ export function useECConnectionState(
       }
     }
 
+    // Flag that we're currently switching focus. This will get reset when the
+    // connection state changes back to connected in onConnStateChanged above.
     setSwitchingFocus(true);
     await livekitRoom?.disconnect();
     setIsInDoConnect(true);
