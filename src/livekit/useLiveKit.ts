@@ -56,11 +56,11 @@ interface UseLivekitResult {
 export function useLiveKit(
   rtcSession: MatrixRTCSession,
   muteStates: MuteStates,
-  sfuConfig?: SFUConfig,
-  e2eeConfig?: E2EEConfig,
+  sfuConfig: SFUConfig | undefined,
+  e2eeConfig: E2EEConfig,
 ): UseLivekitResult {
   const e2eeOptions = useMemo((): E2EEOptions | undefined => {
-    if (!e2eeConfig || e2eeConfig.mode === E2eeType.NONE) return undefined;
+    if (e2eeConfig.mode === E2eeType.NONE) return undefined;
 
     if (e2eeConfig.mode === E2eeType.PER_PARTICIPANT) {
       return {
@@ -79,7 +79,7 @@ export function useLiveKit(
   }, [e2eeConfig]);
 
   useEffect(() => {
-    if (!e2eeConfig || !e2eeOptions) return;
+    if (e2eeConfig.mode === E2eeType.NONE || !e2eeOptions) return;
 
     if (e2eeConfig.mode === E2eeType.PER_PARTICIPANT) {
       (e2eeOptions.keyProvider as MatrixKeyProvider).setRTCSession(rtcSession);
@@ -137,7 +137,11 @@ export function useLiveKit(
   // We have to create the room manually here due to a bug inside
   // @livekit/components-react. JSON.stringify() is used in deps of a
   // useEffect() with an argument that references itself, if E2EE is enabled
-  const roomWithoutProps = useMemo(() => new Room(roomOptions), [roomOptions]);
+  const roomWithoutProps = useMemo(() => {
+    const r = new Room(roomOptions);
+    r.setE2EEEnabled(e2eeConfig.mode !== E2eeType.NONE);
+    return r;
+  }, [roomOptions, e2eeConfig]);
   const { room } = useLiveKitRoom({
     token: sfuConfig?.jwt,
     serverUrl: sfuConfig?.url,
