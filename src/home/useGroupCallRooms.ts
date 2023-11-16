@@ -21,6 +21,8 @@ import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
 import { useState, useEffect } from "react";
 
+import { getKeyForRoom, isRoomE2EE } from "../e2ee/sharedKeyManagement";
+
 export interface GroupCallRoom {
   roomAlias?: string;
   roomName: string;
@@ -78,6 +80,14 @@ function sortRooms(client: MatrixClient, rooms: Room[]): Room[] {
   });
 }
 
+function roomIsJoinable(room: Room): boolean {
+  if (isRoomE2EE(room)) {
+    return Boolean(getKeyForRoom(room.roomId));
+  } else {
+    return true;
+  }
+}
+
 export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
   const [rooms, setRooms] = useState<GroupCallRoom[]>([]);
 
@@ -88,7 +98,9 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
       }
 
       const groupCalls = client.groupCallEventHandler.groupCalls.values();
-      const rooms = Array.from(groupCalls).map((groupCall) => groupCall.room);
+      const rooms = Array.from(groupCalls)
+        .map((groupCall) => groupCall.room)
+        .filter(roomIsJoinable);
       const sortedRooms = sortRooms(client, rooms);
       const items = sortedRooms.map((room) => {
         const groupCall = client.getGroupCallForRoom(room.roomId)!;

@@ -36,9 +36,8 @@ import IndexedDBWorker from "./IndexedDBWorker?worker";
 import { getUrlParams, PASSWORD_STRING } from "./UrlParams";
 import { loadOlm } from "./olm";
 import { Config } from "./config/Config";
-import { setLocalStorageItem } from "./useLocalStorage";
-import { getRoomSharedKeyLocalStorageKey } from "./e2ee/sharedKeyManagement";
 import { E2eeType } from "./e2ee/e2eeType";
+import { saveKeyForRoom } from "./e2ee/sharedKeyManagement";
 
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
@@ -359,10 +358,7 @@ export async function createRoom(
   let password;
   if (e2ee == E2eeType.SHARED_KEY) {
     password = secureRandomBase64Url(16);
-    setLocalStorageItem(
-      getRoomSharedKeyLocalStorageKey(result.room_id),
-      password,
-    );
+    saveKeyForRoom(result.room_id, password);
   }
 
   return {

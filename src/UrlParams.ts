@@ -32,7 +32,7 @@ interface RoomIdentifier {
 // the situations that call for this behavior ('isEmbedded'). This makes it
 // clearer what each flag means, and helps us avoid coupling Element Call's
 // behavior to the needs of specific consumers.
-interface UrlParams {
+export interface UrlParams {
   // Widget api related params
   widgetId: string | null;
   parentUrl: string | null;
