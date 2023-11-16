@@ -200,8 +200,12 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   const onLeavePress = useCallback(() => {
+    // Disconnect from the room. We don't do this in onLeave because that's
+    // also called on an unintentional disconnect. Plus we don't have the
+    // livekit room in onLeave anyway.
+    livekitRoom.disconnect();
     onLeave();
-  }, [onLeave]);
+  }, [livekitRoom, onLeave]);
 
   useEffect(() => {
     widget?.api.transport.send(

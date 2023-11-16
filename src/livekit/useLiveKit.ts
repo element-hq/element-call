@@ -22,8 +22,7 @@ import {
   RoomOptions,
   Track,
 } from "livekit-client";
-import { useLiveKitRoom } from "@livekit/components-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
@@ -118,11 +117,6 @@ export function useLiveKit(
     [e2eeOptions],
   );
 
-  // useECConnectionState creates and publishes an audio track by hand. To keep
-  // this from racing with LiveKit's automatic creation of the audio track, we
-  // block audio from being enabled until the connection is finished.
-  const [blockAudio, setBlockAudio] = useState(true);
-
   // Store if audio/video are currently updating. If to prohibit unnecessary calls
   // to setMicrophoneEnabled/setCameraEnabled
   const audioMuteUpdating = useRef(false);
@@ -137,19 +131,11 @@ export function useLiveKit(
   // We have to create the room manually here due to a bug inside
   // @livekit/components-react. JSON.stringify() is used in deps of a
   // useEffect() with an argument that references itself, if E2EE is enabled
-  const roomWithoutProps = useMemo(() => {
+  const room = useMemo(() => {
     const r = new Room(roomOptions);
     r.setE2EEEnabled(e2eeConfig.mode !== E2eeType.NONE);
     return r;
   }, [roomOptions, e2eeConfig]);
-  const { room } = useLiveKitRoom({
-    token: sfuConfig?.jwt,
-    serverUrl: sfuConfig?.url,
-    audio: initialMuteStates.current.audio.enabled && !blockAudio,
-    video: initialMuteStates.current.video.enabled,
-    room: roomWithoutProps,
-    connect: false,
-  });
 
   const connectionState = useECConnectionState(
     {
@@ -159,11 +145,6 @@ export function useLiveKit(
     room,
     sfuConfig,
   );
-
-  // Unblock audio once the connection is finished
-  useEffect(() => {
-    if (connectionState === ConnectionState.Connected) setBlockAudio(false);
-  }, [connectionState, setBlockAudio]);
 
   useEffect(() => {
     // Sync the requested mute states with LiveKit's mute states. We do it this
