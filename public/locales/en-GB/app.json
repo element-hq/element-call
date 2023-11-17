@@ -1,8 +1,8 @@
 {
-  "{{count, number}}|one": "{{count, number}}",
-  "{{count, number}}|other": "{{count, number}}",
-  "{{count}} stars|one": "{{count}} stars",
-  "{{count}} stars|other": "{{count}} stars",
+  "{{count, number}}_one": "",
+  "{{count, number}}_other": "",
+  "{{count}} stars_one": "",
+  "{{count}} stars_other": "",
   "{{displayName}} is presenting": "{{displayName}} is presenting",
   "{{displayName}}, your call has ended.": "{{displayName}}, your call has ended.",
   "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",

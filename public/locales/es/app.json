@@ -78,8 +78,8 @@
   "<0>We'd love to hear your feedback so we can improve your experience.</0>": "<0>Nos encantaría conocer tu opinión para que podamos mejorar tu experiencia</0>",
   "Feedback": "Danos tu opinión",
   "Submit": "Enviar",
-  "{{count}} stars|one": "{{count}} estrella",
-  "{{count}} stars|other": "{{count}} estrellas",
+  "{{count}} stars_one": "{{count}} estrella",
+  "{{count}} stars_other": "{{count}} estrellas",
   "{{displayName}}, your call has ended.": "{{displayName}}, tu llamada ha finalizado.",
   "Submitting…": "Enviando…",
   "Your feedback": "Tus comentarios"
