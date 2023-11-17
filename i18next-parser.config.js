@@ -10,7 +10,14 @@ export default {
       {
         lexer: "JavascriptLexer",
         functions: ["t", "translatedError"],
-        functionsNamespace: ["useTranslation", "withTranslation"],
+        namespaceFunctions: ["useTranslation", "withTranslation"],
+      },
+    ],
+    tsx: [
+      {
+        lexer: "JsxLexer",
+        functions: ["t", "translatedError"],
+        namespaceFunctions: ["useTranslation", "withTranslation"],
       },
     ],
   },
