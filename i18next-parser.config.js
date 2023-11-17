@@ -2,7 +2,7 @@ export default {
   keySeparator: false,
   namespaceSeparator: false,
   contextSeparator: "|",
-  pluralSeparator: "|",
+  pluralSeparator: "_",
   createOldCatalogs: false,
   defaultNamespace: "app",
   lexers: {
