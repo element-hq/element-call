@@ -1,6 +1,6 @@
 {
-  "{{count}} stars|one": "{{count}} zvaigzne",
-  "{{count}} stars|other": "{{count}} zvaigznes",
+  "{{count}} stars_one": "{{count}} zvaigzne",
+  "{{count}} stars_other": "{{count}} zvaigznes",
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Jau ir konts?</0><1><0>Pieteikties</0> vai <2>Piekļūt kā viesim</2></1>",
   "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Izveidot kontu</0> vai <2>Piekļūt kā viesim</2>",
   "<0>Oops, something's gone wrong.</0>": "<0>Ak vai, kaut kas nogāja greizi!</0>",
