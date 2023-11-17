@@ -74,7 +74,7 @@ export class Initializer {
         defaultNS: "app",
         keySeparator: false,
         nsSeparator: false,
-        pluralSeparator: "|",
+        pluralSeparator: "_",
         contextSeparator: "|",
         interpolation: {
           escapeValue: false, // React has built-in XSS protections
