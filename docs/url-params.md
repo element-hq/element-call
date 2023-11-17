@@ -112,8 +112,9 @@ Whether to hide the screen-sharing button.
 hideScreensharing: boolean; (default: false)
 ```
 
-**enableE2EE**
-Whether to use end-to-end encryption.
+**enableE2EE** (Deprecated)
+Whether to use end-to-end encryption. This is a legacy flag for the full mesh branch.
+It is not used on the livekit branch and has no impact there!
 
 ```
 enableE2EE: boolean; (default: true)
