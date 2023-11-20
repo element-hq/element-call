@@ -76,15 +76,19 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
   }, [roomId, roomSharedKey]);
 
   return (
-    <Modal className={styles.modal} title={t("Select app")} open={open}>
+    <Modal
+      className={styles.modal}
+      title={t("app_selection_modal.title")}
+      open={open}
+    >
       <Text size="md" weight="semibold">
-        {t("Ready to join?")}
+        {t("app_selection_modal.text")}
       </Text>
       <Button kind="secondary" onClick={onBrowserClick}>
-        {t("Continue in browser")}
+        {t("app_selection_modal.continue_in_browser")}
       </Button>
       <Button as="a" href={appUrl} Icon={PopOutIcon}>
-        {t("Open in the app")}
+        {t("app_selection_modal.open_in_app")}
       </Button>
     </Modal>
   );

@@ -30,7 +30,7 @@ import { Config } from "../config/Config";
 
 export const LoginPage: FC = () => {
   const { t } = useTranslation();
-  usePageTitle(t("Login"));
+  usePageTitle(t("login_title"));
 
   const { setClient } = useClient();
   const login = useInteractiveLogin();
@@ -97,8 +97,8 @@ export const LoginPage: FC = () => {
                 <InputField
                   type="text"
                   ref={usernameRef}
-                  placeholder={t("Username")}
-                  label={t("Username")}
+                  placeholder={t("common.username")}
+                  label={t("common.username")}
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
@@ -110,8 +110,8 @@ export const LoginPage: FC = () => {
                 <InputField
                   type="password"
                   ref={passwordRef}
-                  placeholder={t("Password")}
-                  label={t("Password")}
+                  placeholder={t("common.password")}
+                  label={t("common.password")}
                   data-testid="login_password"
                 />
               </FieldRow>
@@ -126,7 +126,7 @@ export const LoginPage: FC = () => {
                   disabled={loading}
                   data-testid="login_login"
                 >
-                  {loading ? t("Logging in…") : t("Login")}
+                  {loading ? t("logging_in") : t("login_title")}
                 </Button>
               </FieldRow>
             </form>
@@ -134,7 +134,7 @@ export const LoginPage: FC = () => {
           <div className={styles.authLinks}>
             <p>Not registered yet?</p>
             <p>
-              <Trans>
+              <Trans i18nKey="login_auth_links">
                 <Link to="/register">Create an account</Link>
                 {" Or "}
                 <Link to="/">Access as a guest</Link>

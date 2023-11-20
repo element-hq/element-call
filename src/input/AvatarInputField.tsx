@@ -115,7 +115,7 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
             variant="icon"
             onPress={onPressRemoveAvatar}
           >
-            {t("Remove")}
+            {t("action.remove")}
           </Button>
         )}
       </div>

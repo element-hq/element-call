@@ -105,7 +105,7 @@ export const HeaderLogo: FC<HeaderLogoProps> = ({ className }) => {
     <Link
       className={classNames(styles.headerLogo, className)}
       to="/"
-      aria-label={t("Element Call Home")}
+      aria-label={t("header_label")}
     >
       <Logo />
     </Link>
@@ -155,10 +155,10 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
           <UserProfileIcon
             width={20}
             height={20}
-            aria-label={t("Participants")}
+            aria-label={t("header_participants_label")}
           />
           <Text as="span" size="sm" weight="medium">
-            {t("{{count, number}}", { count: participantCount })}
+            {t("participant_count", { count: participantCount })}
           </Text>
         </div>
       )}

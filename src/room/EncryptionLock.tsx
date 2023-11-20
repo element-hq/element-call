@@ -32,7 +32,7 @@ export const EncryptionLock: FC<Props> = ({ encrypted }) => {
 
   return (
     <Tooltip
-      label={encrypted ? t("Encrypted") : t("Not encrypted")}
+      label={encrypted ? t("common.encrypted") : t("common.unencrypted")}
       side="right"
     >
       <Icon

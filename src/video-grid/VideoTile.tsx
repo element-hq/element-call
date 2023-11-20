@@ -193,18 +193,20 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           )}
         {content === TileContent.ScreenShare ? (
           <div className={styles.presenterLabel}>
-            <span>{t("{{displayName}} is presenting", { displayName })}</span>
+            <span>{t("video_tile.presenter_label", { displayName })}</span>
           </div>
         ) : (
           <div className={styles.nameTag}>
             <MicIcon
               width={20}
               height={20}
-              aria-label={muted ? t("Microphone off") : t("Microphone on")}
+              aria-label={muted ? t("microphone_off") : t("microphone_on")}
               data-muted={muted}
             />
             <Text as="span" size="sm" weight="medium">
-              {sfuParticipant.isLocal ? t("You") : displayName}
+              {sfuParticipant.isLocal
+                ? t("video_tile.sfu_participant_local")
+                : displayName}
             </Text>
             {showConnectionStats && (
               <ConnectionQualityIndicator participant={sfuParticipant} />

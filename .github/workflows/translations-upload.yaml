@@ -1,0 +1,20 @@
+name: Upload translation files to Localazy
+on:
+  push:
+    branches:
+      - livekit
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - name: Upload
+        uses: localazy/upload@v1
+        with:
+          write_key: ${{ secrets.LOCALAZY_WRITE_KEY }}

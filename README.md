@@ -1,7 +1,7 @@
 # Element Call
 
 [![Chat](https://img.shields.io/matrix/webrtc:matrix.org)](https://matrix.to/#/#webrtc:matrix.org)
-[![Translate](https://translate.element.io/widgets/element-call/-/element-call/svg-badge.svg)](https://translate.element.io/engage/element-call/)
+[![Localazy](https://img.shields.io/endpoint?url=https%3A%2F%2Fconnect.localazy.com%2Fstatus%2Felement-call%2Fdata%3Fcontent%3Dall%26title%3Dlocalazy%26logo%3Dtrue)](https://localazy.com/p/element-call)
 
 Group calls with WebRTC that leverage [Matrix](https://matrix.org) and an open-source WebRTC toolkit from [LiveKit](https://livekit.io/).
 
@@ -56,7 +56,7 @@ There are currently two different config files. `.env` holds variables that are 
 
 ## Translation
 
-If you'd like to help translate Element Call, head over to [translate.element.io](https://translate.element.io/engage/element-call/). You're also encouraged to join the [Element Translators](https://matrix.to/#/#translators:element.io) space to discuss and coordinate translation efforts.
+If you'd like to help translate Element Call, head over to [Localazy](https://localazy.com/p/element-call). You're also encouraged to join the [Element Translators](https://matrix.to/#/#translators:element.io) space to discuss and coordinate translation efforts.
 
 ## Development
 

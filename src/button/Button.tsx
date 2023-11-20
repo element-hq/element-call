@@ -142,7 +142,9 @@ export const MicButton: FC<{
 }> = ({ muted, ...rest }) => {
   const { t } = useTranslation();
   const Icon = muted ? MicOffSolidIcon : MicOnSolidIcon;
-  const label = muted ? t("Unmute microphone") : t("Mute microphone");
+  const label = muted
+    ? t("unmute_microphone_button_label")
+    : t("mute_microphone_button_label");
 
   return (
     <Tooltip label={label}>
@@ -160,7 +162,9 @@ export const VideoButton: FC<{
 }> = ({ muted, ...rest }) => {
   const { t } = useTranslation();
   const Icon = muted ? VideoCallOffSolidIcon : VideoCallSolidIcon;
-  const label = muted ? t("Start video") : t("Stop video");
+  const label = muted
+    ? t("start_video_button_label")
+    : t("stop_video_button_label");
 
   return (
     <Tooltip label={label}>
@@ -178,7 +182,9 @@ export const ScreenshareButton: FC<{
   [index: string]: unknown;
 }> = ({ enabled, className, ...rest }) => {
   const { t } = useTranslation();
-  const label = enabled ? t("Sharing screen") : t("Share screen");
+  const label = enabled
+    ? t("stop_screenshare_button_label")
+    : t("screenshare_button_label");
 
   return (
     <Tooltip label={label}>
@@ -197,13 +203,13 @@ export const HangupButton: FC<{
   const { t } = useTranslation();
 
   return (
-    <Tooltip label={t("End call")}>
+    <Tooltip label={t("hangup_button_label")}>
       <Button
         variant="toolbar"
         className={classNames(styles.hangupButton, className)}
         {...rest}
       >
-        <EndCallIcon aria-label={t("End call")} />
+        <EndCallIcon aria-label={t("hangup_button_label")} />
       </Button>
     </Tooltip>
   );
@@ -217,9 +223,9 @@ export const SettingsButton: FC<{
   const { t } = useTranslation();
 
   return (
-    <Tooltip label={t("Settings")}>
+    <Tooltip label={t("common.settings")}>
       <Button variant="toolbar" {...rest}>
-        <SettingsSolidIcon aria-label={t("Settings")} />
+        <SettingsSolidIcon aria-label={t("common.settings")} />
       </Button>
     </Tooltip>
   );
@@ -236,9 +242,9 @@ export const AudioButton: FC<AudioButtonProps> = ({ volume, ...rest }) => {
   const { t } = useTranslation();
 
   return (
-    <Tooltip label={t("Local volume")}>
+    <Tooltip label={t("local_volume_label")}>
       <Button variant="icon" {...rest}>
-        <VolumeIcon volume={volume} aria-label={t("Local volume")} />
+        <VolumeIcon volume={volume} aria-label={t("local_volume_label")} />
       </Button>
     </Tooltip>
   );
@@ -254,7 +260,9 @@ export const FullscreenButton: FC<FullscreenButtonProps> = ({
 }) => {
   const { t } = useTranslation();
   const Icon = fullscreen ? FullscreenExit : Fullscreen;
-  const label = fullscreen ? t("Exit full screen") : t("Full screen");
+  const label = fullscreen
+    ? t("exit_fullscreen_button_label")
+    : t("fullscreen_button_label");
 
   return (
     <Tooltip label={label}>

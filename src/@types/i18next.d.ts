@@ -21,6 +21,7 @@ import app from "../../public/locales/en-GB/app.json";
 declare module "i18next" {
   interface CustomTypeOptions {
     defaultNS: "app";
+    keySeparator: ".";
     resources: {
       app: typeof app;
     };

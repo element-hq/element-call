@@ -52,9 +52,9 @@ export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
         checked={layout === "spotlight"}
         onChange={onChange}
       />
-      <Tooltip label={t("Spotlight")}>
+      <Tooltip label={t("layout_spotlight_label")}>
         <label htmlFor={spotlightId}>
-          <SpotlightIcon aria-label={t("Spotlight")} />
+          <SpotlightIcon aria-label={t("layout_spotlight_label")} />
         </label>
       </Tooltip>
       <input
@@ -65,9 +65,9 @@ export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
         checked={layout === "grid"}
         onChange={onChange}
       />
-      <Tooltip label={t("Grid")}>
+      <Tooltip label={t("layout_grid_label")}>
         <label htmlFor={gridId}>
-          <GridIcon aria-label={t("Grid")} />
+          <GridIcon aria-label={t("layout_grid_label")} />
         </label>
       </Tooltip>
     </div>
