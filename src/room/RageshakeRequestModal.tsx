@@ -44,7 +44,11 @@ export const RageshakeRequestModal: FC<Props> = ({
   }, [sent, onDismiss]);
 
   return (
-    <Modal title={t("rageshake_request_modal.title")} open={open} onDismiss={onDismiss}>
+    <Modal
+      title={t("rageshake_request_modal.title")}
+      open={open}
+      onDismiss={onDismiss}
+    >
       <Body>{t("rageshake_request_modal.body")}</Body>
       <FieldRow>
         <Button

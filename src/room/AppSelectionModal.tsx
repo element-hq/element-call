@@ -76,7 +76,11 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
   }, [roomId, roomSharedKey]);
 
   return (
-    <Modal className={styles.modal} title={t("app_selection_modal.title")} open={open}>
+    <Modal
+      className={styles.modal}
+      title={t("app_selection_modal.title")}
+      open={open}
+    >
       <Text size="md" weight="semibold">
         {t("app_selection_modal.text")}
       </Text>
