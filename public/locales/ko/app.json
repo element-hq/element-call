@@ -1,4 +1,7 @@
 {
   "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "",
-  "<0>Create an account</0> Or <2>Access as a guest</2>": ""
+  "<0>Create an account</0> Or <2>Access as a guest</2>": "",
+  "common": {},
+  "action": {},
+  "a11y": {}
 }

@@ -177,8 +177,8 @@ export const UnauthenticatedView: FC = () => {
               <InputField
                 id="displayName"
                 name="displayName"
-                label={t("Display name")}
-                placeholder={t("Display name")}
+                label={t("common.display_name")}
+                placeholder={t("common.display_name")}
                 type="text"
                 required
                 data-testid="home_displayName"
@@ -209,7 +209,7 @@ export const UnauthenticatedView: FC = () => {
               disabled={loading}
               data-testid="home_go"
             >
-              {loading ? t("Loading…") : t("Go")}
+              {loading ? t("common.loading") : t("action.go")}
             </Button>
             <div id={recaptchaId} />
           </Form>

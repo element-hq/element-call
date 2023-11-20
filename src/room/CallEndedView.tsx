@@ -140,7 +140,7 @@ export const CallEndedView: FC<Props> = ({
               variant="default"
               data-testid="home_go"
             >
-              {submitting ? t("Submitting…") : t("Submit")}
+              {submitting ? t("Submitting…") : ("action.submit")}
             </Button>
           )}
         </FieldRow>

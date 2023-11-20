@@ -147,7 +147,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
                 disabled={loading}
                 data-testid="home_go"
               >
-                {loading ? t("Loading…") : t("Go")}
+                {loading ? t("common.loading") : t("action.go")}
               </Button>
             </FieldRow>
             {optInAnalytics === null && (

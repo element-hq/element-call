@@ -309,7 +309,7 @@ export const GroupCallView: FC<Props> = ({
           )}
         </Text>
         <Link href="/" onClick={onHomeClick}>
-          {t("Home")}
+          {t("common.home")}
         </Link>
       </FullScreenView>
     );

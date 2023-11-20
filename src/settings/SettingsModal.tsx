@@ -121,11 +121,11 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <AudioIcon width={16} height={16} />
-          <span className={styles.tabLabel}>{t("Audio")}</span>
+          <span className={styles.tabLabel}>{t("common.audio")}</span>
         </>
       }
     >
-      {generateDeviceSelection(devices.audioInput, t("Microphone"))}
+      {generateDeviceSelection(devices.audioInput, t("common.microphone"))}
       {!isFirefox() &&
         generateDeviceSelection(devices.audioOutput, t("Speaker"))}
     </TabItem>
@@ -137,11 +137,11 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <VideoIcon width={16} height={16} />
-          <span>{t("Video")}</span>
+          <span>{t("common.video")}</span>
         </>
       }
     >
-      {generateDeviceSelection(devices.videoInput, t("Camera"))}
+      {generateDeviceSelection(devices.videoInput, t("common.camera"))}
     </TabItem>
   );
 
@@ -151,7 +151,7 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <UserIcon width={15} height={15} />
-          <span>{t("Profile")}</span>
+          <span>{t("common.profile")}</span>
         </>
       }
     >
@@ -251,7 +251,7 @@ export const SettingsModal: FC<Props> = (props) => {
 
   return (
     <Modal
-      title={t("Settings")}
+      title={t("common.settings")}
       className={styles.settingsModal}
       open={props.open}
       onDismiss={props.onDismiss}

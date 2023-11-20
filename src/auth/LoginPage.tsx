@@ -97,8 +97,8 @@ export const LoginPage: FC = () => {
                 <InputField
                   type="text"
                   ref={usernameRef}
-                  placeholder={t("Username")}
-                  label={t("Username")}
+                  placeholder={t("common.username")}
+                  label={t("common.username")}
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
@@ -110,8 +110,8 @@ export const LoginPage: FC = () => {
                 <InputField
                   type="password"
                   ref={passwordRef}
-                  placeholder={t("Password")}
-                  label={t("Password")}
+                  placeholder={t("common.password")}
+                  label={t("common.password")}
                   data-testid="login_password"
                 />
               </FieldRow>

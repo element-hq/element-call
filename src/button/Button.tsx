@@ -217,9 +217,9 @@ export const SettingsButton: FC<{
   const { t } = useTranslation();
 
   return (
-    <Tooltip label={t("Settings")}>
+    <Tooltip label={t("common.settings")}>
       <Button variant="toolbar" {...rest}>
-        <SettingsSolidIcon aria-label={t("Settings")} />
+        <SettingsSolidIcon aria-label={t("common.settings")} />
       </Button>
     </Tooltip>
   );
