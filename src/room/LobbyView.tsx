@@ -87,7 +87,7 @@ export const LobbyView: FC<Props> = ({
   const recentsButtonInFooter = useMediaQuery("(max-height: 500px)");
   const recentsButton = !confineToRoom && (
     <Link className={styles.recents} href="#" onClick={onLeaveClick}>
-      {t("Back to recents")}
+      {t("lobby.leave_button")}
     </Link>
   );
 
@@ -120,7 +120,7 @@ export const LobbyView: FC<Props> = ({
               onClick={onEnter}
               data-testid="lobby_joinCall"
             >
-              {t("Join call")}
+              {t("lobby.join_button")}
             </Button>
           </VideoPreview>
           {!recentsButtonInFooter && recentsButton}

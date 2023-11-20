@@ -80,14 +80,14 @@ export function useRecaptcha(sitekey?: string): {
 
     if (!window.grecaptcha) {
       logger.log("Recaptcha not loaded");
-      return Promise.reject(translatedError("Recaptcha not loaded", t));
+      return Promise.reject(translatedError("recaptcha_not_loaded", t));
     }
 
     return new Promise((resolve, reject) => {
       const observer = new MutationObserver((mutationsList) => {
         for (const item of mutationsList) {
           if ((item.target as HTMLElement)?.style?.visibility !== "visible") {
-            reject(translatedError("Recaptcha dismissed", t));
+            reject(translatedError("recaptcha_dismissed", t));
             observer.disconnect();
             return;
           }

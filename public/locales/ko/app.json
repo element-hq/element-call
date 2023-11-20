@@ -1,7 +1,16 @@
 {
-  "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "",
-  "<0>Create an account</0> Or <2>Access as a guest</2>": "",
   "common": {},
   "action": {},
-  "a11y": {}
+  "a11y": {},
+  "video_tile": {},
+  "call_ended_view": {},
+  "settings": {},
+  "register_auth_links": "",
+  "login_auth_links": "",
+  "rageshake_request_modal": {},
+  "lobby": {},
+  "app_selection_modal": {},
+  "invite_modal": {},
+  "join_existing_call_modal": {},
+  "register": {}
 }

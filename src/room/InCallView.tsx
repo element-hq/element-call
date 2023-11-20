@@ -276,7 +276,7 @@ export const InCallView: FC<InCallViewProps> = ({
     if (items.length === 0) {
       return (
         <div className={styles.centerMessage}>
-          <p>{t("Waiting for other participants…")}</p>
+          <p>{t("waiting_for_participants")}</p>
         </div>
       );
     }

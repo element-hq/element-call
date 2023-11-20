@@ -1,36 +1,4 @@
 {
-  "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>": "<0>Hesabınızı tutmak için niye bir parola açmıyorsunuz?</0><1>Böylece ileriki aramalarda adınızı ve avatarınızı kullanabileceksiniz</1>",
-  "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.": "Bu aramadaki başka bir kullanıcı sorun yaşıyor. Sorunu daha iyi çözebilmemiz için hata ayıklama kütüğünü almak isteriz.",
-  "Confirm password": "Parolayı tekrar edin",
-  "Create account": "Hesap aç",
-  "Debug log request": "Hata ayıklama kütük istemi",
-  "Developer": "Geliştirici",
-  "Exit full screen": "Tam ekranı terk et",
-  "Full screen": "Tam ekran",
-  "Include debug logs": "Hata ayıklama kütüğünü dahil et",
-  "Join call": "Aramaya katıl",
-  "Join call now": "Aramaya katıl",
-  "Join existing call?": "Mevcut aramaya katıl?",
-  "Local volume": "Yerel ses seviyesi",
-  "Logging in…": "Giriliyor…",
-  "Login": "Gir",
-  "Login to your account": "Hesabınıza girin",
-  "More": "Daha",
-  "Not now, return to home screen": "Şimdi değil, ev ekranına dön",
-  "Not registered yet? <2>Create an account</2>": "Kaydolmadınız mı? <2>Hesap açın</2>",
-  "Passwords must match": "Parolalar aynı olmalı",
-  "Recaptcha dismissed": "reCAPTCHA atlandı",
-  "Recaptcha not loaded": "reCAPTCHA yüklenmedi",
-  "Registering…": "Kaydediyor…",
-  "Return to home screen": "Ev ekranına geri dön",
-  "Select an option": "Bir seçenek seç",
-  "Send debug logs": "Hata ayıklama kütüğünü gönder",
-  "Sending…": "Gönderiliyor…",
-  "Share screen": "Ekran paylaş",
-  "Submit feedback": "Geri bildirim ver",
-  "This call already exists, would you like to join?": "Bu arama zaten var, katılmak ister misiniz?",
-  "<0>Create an account</0> Or <2>Access as a guest</2>": "<0>Hesap oluştur</0> yahut <2>Konuk olarak gir</2>",
-  "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>": "<0>Mevcut hesabınız mı var?</0><1><0>Gir</0> yahut <2>Konuk girişi</2></1>",
   "common": {
     "avatar": "Avatar",
     "camera": "Kamera",
@@ -52,5 +20,52 @@
     "sign_in": "Gir",
     "sign_out": "Çık"
   },
-  "a11y": {}
+  "a11y": {},
+  "video_tile": {},
+  "call_ended_view": {
+    "create_account_prompt": "<0>Hesabınızı tutmak için niye bir parola açmıyorsunuz?</0><1>Böylece ileriki aramalarda adınızı ve avatarınızı kullanabileceksiniz</1>",
+    "create_account_button": "Hesap aç",
+    "not_now_button": "Şimdi değil, ev ekranına dön"
+  },
+  "settings": {
+    "developer_tab_title": "Geliştirici",
+    "feedback_tab_send_logs_label": "Hata ayıklama kütüğünü dahil et",
+    "more_tab_title": "Daha",
+    "feedback_tab_h4": "Geri bildirim ver"
+  },
+  "register_auth_links": "<0>Mevcut hesabınız mı var?</0><1><0>Gir</0> yahut <2>Konuk girişi</2></1>",
+  "login_auth_links": "<0>Hesap oluştur</0> yahut <2>Konuk olarak gir</2>",
+  "rageshake_request_modal": {
+    "body": "Bu aramadaki başka bir kullanıcı sorun yaşıyor. Sorunu daha iyi çözebilmemiz için hata ayıklama kütüğünü almak isteriz.",
+    "title": "Hata ayıklama kütük istemi"
+  },
+  "lobby": {
+    "join_button": "Aramaya katıl"
+  },
+  "register_confirm_password_label": "Parolayı tekrar edin",
+  "app_selection_modal": {},
+  "fullscreen_button_label": "Tam ekran",
+  "exit_fullscreen_button_label": "Tam ekranı terk et",
+  "invite_modal": {},
+  "room_auth_view_join_button": "Aramaya katıl",
+  "join_existing_call_modal": {
+    "title": "Mevcut aramaya katıl?",
+    "text": "Bu arama zaten var, katılmak ister misiniz?"
+  },
+  "local_volume_label": "Yerel ses seviyesi",
+  "logging_in": "Giriliyor…",
+  "login_title": "Gir",
+  "unauthenticated_view_login_button": "Hesabınıza girin",
+  "unauthenticated_view_body": "Kaydolmadınız mı? <2>Hesap açın</2>",
+  "register": {
+    "passwords_must_match": "Parolalar aynı olmalı",
+    "registering": "Kaydediyor…"
+  },
+  "recaptcha_dismissed": "reCAPTCHA atlandı",
+  "recaptcha_not_loaded": "reCAPTCHA yüklenmedi",
+  "return_home_button": "Ev ekranına geri dön",
+  "select_input_unset_button": "Bir seçenek seç",
+  "rageshake_send_logs": "Hata ayıklama kütüğünü gönder",
+  "rageshake_sending": "Gönderiliyor…",
+  "screenshare_button_label": "Ekran paylaş"
 }

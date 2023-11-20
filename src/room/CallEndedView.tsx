@@ -88,7 +88,7 @@ export const CallEndedView: FC<Props> = ({
 
   const createAccountDialog = isPasswordlessUser && (
     <div className={styles.callEndedContent}>
-      <Trans>
+      <Trans i18nKey="call_ended_view.create_account_prompt">
         <p>Why not finish by setting up a password to keep your account?</p>
         <p>
           You'll be able to keep your name and set an avatar for use on future
@@ -101,14 +101,14 @@ export const CallEndedView: FC<Props> = ({
         variant="default"
         to="/register"
       >
-        {t("Create account")}
+        {t("call_ended_view.create_account_button")}
       </LinkButton>
     </div>
   );
 
   const qualitySurveyDialog = (
     <div className={styles.callEndedContent}>
-      <Trans>
+      <Trans i18nKey="call_ended_view.feedback_prompt">
         <p>
           We'd love to hear your feedback so we can improve your experience.
         </p>
@@ -122,14 +122,14 @@ export const CallEndedView: FC<Props> = ({
             className={feedbackStyle.feedback}
             id="feedbackText"
             name="feedbackText"
-            label={t("Your feedback")}
-            placeholder={t("Your feedback")}
+            label={t("settings.feedback_tab_description_label")}
+            placeholder={t("settings.feedback_tab_description_label")}
             type="textarea"
           />
         </FieldRow>{" "}
         <FieldRow>
           {submitDone ? (
-            <Trans>
+            <Trans i18nKey="call_ended_view.feedback_done">
               <p>Thanks for your feedback!</p>
             </Trans>
           ) : (
@@ -140,7 +140,7 @@ export const CallEndedView: FC<Props> = ({
               variant="default"
               data-testid="home_go"
             >
-              {submitting ? t("Submitting…") : ("action.submit")}
+              {submitting ? t("submitting") : t("action.submit")}
             </Button>
           )}
         </FieldRow>
@@ -154,11 +154,13 @@ export const CallEndedView: FC<Props> = ({
         <>
           <main className={styles.main}>
             <Headline className={styles.headline}>
-              <Trans>You were disconnected from the call</Trans>
+              <Trans i18nKey="call_ended_view.body">
+                You were disconnected from the call
+              </Trans>
             </Headline>
             <div className={styles.disconnectedButtons}>
               <Button size="lg" variant="default" onClick={reconnect}>
-                {t("Reconnect")}
+                {t("call_ended_view.reconnect_button")}
               </Button>
               <div className={styles.rageshakeButton}>
                 <RageshakeButton description="***Call disconnected***" />
@@ -168,7 +170,7 @@ export const CallEndedView: FC<Props> = ({
           {!confineToRoom && (
             <Body className={styles.footer}>
               <Link color="primary" to="/">
-                {t("Return to home screen")}
+                {t("return_home_button")}
               </Link>
             </Body>
           )}
@@ -180,14 +182,14 @@ export const CallEndedView: FC<Props> = ({
           <main className={styles.main}>
             <Headline className={styles.headline}>
               {surveySubmitted
-                ? t("{{displayName}}, your call has ended.", {
+                ? t("call_ended_view.headline", {
                     displayName,
                   })
-                : t("{{displayName}}, your call has ended.", {
+                : t("call_ended_view.headline", {
                     displayName,
                   }) +
                   "\n" +
-                  t("How did it go?")}
+                  t("call_ended_view.survey_prompt")}
             </Headline>
             {(!surveySubmitted || confineToRoom) &&
             PosthogAnalytics.instance.isEnabled()
@@ -197,7 +199,7 @@ export const CallEndedView: FC<Props> = ({
           {!confineToRoom && (
             <Body className={styles.footer}>
               <Link color="primary" to="/">
-                {t("Not now, return to home screen")}
+                {t("call_ended_view.not_now_button")}
               </Link>
             </Body>
           )}

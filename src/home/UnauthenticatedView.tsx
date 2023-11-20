@@ -158,15 +158,15 @@ export const UnauthenticatedView: FC = () => {
         <main className={commonStyles.main}>
           <HeaderLogo className={commonStyles.logo} />
           <Heading size="lg" weight="semibold">
-            {t("Start new call")}
+            {t("start_new_call")}
           </Heading>
           <Form className={styles.form} onSubmit={onSubmit}>
             <FieldRow>
               <InputField
                 id="callName"
                 name="callName"
-                label={t("Name of call")}
-                placeholder={t("Name of call")}
+                label={t("call_name")}
+                placeholder={t("call_name")}
                 type="text"
                 required
                 autoComplete="off"
@@ -191,7 +191,7 @@ export const UnauthenticatedView: FC = () => {
               </Caption>
             )}
             <Caption className={styles.notice}>
-              <Trans>
+              <Trans i18nKey="unauthenticated_view_eula_caption">
                 By clicking "Go", you agree to our{" "}
                 <Link href={Config.get().eula}>
                   End User Licensing Agreement (EULA)
@@ -217,11 +217,11 @@ export const UnauthenticatedView: FC = () => {
         <footer className={styles.footer}>
           <Body className={styles.mobileLoginLink}>
             <Link color="primary" to="/login" data-testid="home_login">
-              {t("Login to your account")}
+              {t("unauthenticated_view_login_button")}
             </Link>
           </Body>
           <Body>
-            <Trans>
+            <Trans i18nKey="unauthenticated_view_body">
               Not registered yet?{" "}
               <Link color="primary" to="/register" data-testid="home_register">
                 Create an account

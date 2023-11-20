@@ -37,12 +37,12 @@ export const JoinExistingCallModal: FC<Props> = ({
   const { t } = useTranslation();
 
   return (
-    <Modal title={t("Join existing call?")} open={open} onDismiss={onDismiss}>
-      <p>{t("This call already exists, would you like to join?")}</p>
+    <Modal title={t("join_existing_call_modal.title")} open={open} onDismiss={onDismiss}>
+      <p>{t("join_existing_call_modal.text")}</p>
       <FieldRow rightAlign className={styles.buttons}>
         <Button onPress={onDismiss}>{t("action.no")}</Button>
         <Button onPress={onJoin} data-testid="home_joinExistingRoom">
-          {t("Yes, join call")}
+          {t("join_existing_call_modal.join_button")}
         </Button>
       </FieldRow>
     </Modal>

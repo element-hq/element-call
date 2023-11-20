@@ -82,7 +82,7 @@ export const VideoTileSettingsModal: FC<Props> = ({
   return (
     <Modal
       className={styles.videoTileSettingsModal}
-      title={t("Local volume")}
+      title={t("local_volume_label")}
       open={open}
       onDismiss={onDismiss}
     >

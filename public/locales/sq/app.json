@@ -1,5 +1,14 @@
 {
   "common": {},
   "action": {},
-  "a11y": {}
+  "a11y": {},
+  "video_tile": {},
+  "call_ended_view": {},
+  "settings": {},
+  "rageshake_request_modal": {},
+  "lobby": {},
+  "app_selection_modal": {},
+  "invite_modal": {},
+  "join_existing_call_modal": {},
+  "register": {}
 }
