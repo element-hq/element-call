@@ -1,23 +1,6 @@
 {
-  "unauthenticated_view_eula_caption": "Натискаючи \"Далі\", ви погоджуєтеся з нашою <2>Ліцензійною угодою з кінцевим користувачем (EULA)</2>",
-  "room_auth_view_eula_caption": "Натискаючи \"Приєднатися до виклику зараз\", ви погоджуєтеся з нашою <2>Ліцензійною угодою з кінцевим користувачем (EULA)</2>",
-  "recaptcha_caption": "Цей сайт захищений ReCAPTCHA і до нього застосовується <2>Політика приватності</2> і <6>Умови надання послуг</6> Google.<9></9>Натискаючи \"Зареєструватися\", ви погоджуєтеся з нашою <12>Ліцензійною угодою з кінцевим користувачем (EULA)</12>",
-  "common": {
-    "avatar": "Аватар",
-    "camera": "Камера",
-    "copied": "Скопійовано!",
-    "encrypted": "Зашифровано",
-    "home": "Домівка",
-    "loading": "Завантаження…",
-    "microphone": "Мікрофон",
-    "unencrypted": "Не зашифровано",
-    "password": "Пароль",
-    "profile": "Профіль",
-    "username": "Ім'я користувача",
-    "video": "Відео",
-    "settings": "Налаштування",
-    "audio": "Звук",
-    "display_name": "Псевдонім"
+  "a11y": {
+    "user_menu": "Меню користувача"
   },
   "action": {
     "close": "Закрити",
@@ -32,113 +15,128 @@
     "sign_out": "Вийти",
     "submit": "Надіслати"
   },
-  "a11y": {
-    "user_menu": "Меню користувача"
-  },
-  "participant_count_one": "{{count, number}}",
-  "participant_count_other": "{{count, number}}",
-  "star_rating_input_label_one": "{{count}} зірок",
-  "star_rating_input_label_other": "{{count}} зірок",
-  "video_tile": {
-    "presenter_label": "{{displayName}} представляє",
-    "sfu_participant_local": "Ви"
-  },
-  "call_ended_view": {
-    "headline": "{{displayName}}, ваш виклик завершено.",
-    "feedback_done": "<0>Дякуємо за ваш відгук!</0>",
-    "feedback_prompt": "<0>Ми будемо раді почути ваші відгуки, щоб поліпшити роботу застосунку.</0>",
-    "create_account_prompt": "<0>Чому б не завершити, налаштувавши пароль для збереження свого облікового запису?</0><1>Ви зможете зберегти своє ім'я та встановити аватарку для подальшого користування під час майбутніх викликів</1>",
-    "create_account_button": "Створити обліковий запис",
-    "survey_prompt": "Вам усе сподобалось?",
-    "not_now_button": "Не зараз, повернутися на екран домівки",
-    "reconnect_button": "Під'єднати повторно",
-    "body": "Вас від'єднано від виклику"
-  },
-  "settings": {
-    "opt_in_description": "<0></0><1></1>Ви можете відкликати згоду, прибравши цей прапорець. Якщо ви зараз розмовляєте, це налаштування застосується після завершення виклику.",
-    "developer_tab_title": "Розробнику",
-    "developer_settings_label": "Налаштування розробника",
-    "developer_settings_label_description": "Відкрийте налаштування розробника у вікні налаштувань.",
-    "feedback_tab_title": "Відгук",
-    "feedback_tab_body": "Якщо у вас виникли проблеми або ви просто хочете залишити відгук, надішліть нам короткий опис нижче.",
-    "feedback_tab_send_logs_label": "Долучити журнали налагодження",
-    "more_tab_title": "Докладніше",
-    "show_connection_stats_label": "Показати стан з'єднання",
-    "speaker_device_selection_label": "Динамік",
-    "feedback_tab_h4": "Надіслати відгук",
-    "feedback_tab_thank_you": "Дякуємо, ми отримали ваш відгук!",
-    "feedback_tab_description_label": "Ваш відгук"
-  },
-  "register_auth_links": "<0>Уже маєте обліковий запис?</0><1><0>Увійти</0> Or <2>Отримати доступ як гість</2></1>",
-  "login_auth_links": "<0>Створити обліковий запис</0> або <2>Отримати доступ як гість</2>",
-  "full_screen_view_h1": "<0>Йой, щось пішло не за планом.</0>",
-  "full_screen_view_description": "<0>Надсилання журналів налагодження допоможе нам виявити проблему.</0>",
-  "rageshake_request_modal": {
-    "body": "Інший користувач у цьому виклику має проблему. Щоб краще визначити ці проблеми, ми хотіли б зібрати журнал налагодження.",
-    "title": "Запит журналу налагодження"
-  },
-  "lobby": {
-    "leave_button": "Повернутися до недавніх",
-    "join_button": "Приєднатися до виклику"
-  },
   "analytics_notice": "Користуючись дочасним доступом, ви даєте згоду на збір анонімних даних, які ми використовуємо для вдосконалення продукту. Ви можете знайти більше інформації про те, які дані ми відстежуємо в нашій <2>Політиці Приватності</2> і нашій <5>Політиці про куки</5>.",
-  "group_call_loader_failed_heading": "Виклик не знайдено",
-  "group_call_loader_failed_text": "Відтепер виклики захищено наскрізним шифруванням, і їх потрібно створювати з домашньої сторінки. Це допомагає переконатися, що всі користувачі використовують один і той самий ключ шифрування.",
-  "register_confirm_password_label": "Підтвердити пароль",
-  "disconnected_banner": "Втрачено зв'язок з сервером.",
   "app_selection_modal": {
     "continue_in_browser": "Продовжити у браузері",
     "open_in_app": "Відкрити у застосунку",
     "text": "Готові приєднатися?",
     "title": "Вибрати застосунок"
   },
-  "header_label": "Домівка Element Call",
-  "hangup_button_label": "Завершити виклик",
-  "fullscreen_button_label": "Повноекранний режим",
+  "browser_media_e2ee_unsupported": "Ваш браузер не підтримує наскрізне шифрування мультимедійних даних. Підтримувані браузери: Chrome, Safari, Firefox >=117",
+  "call_ended_view": {
+    "body": "Вас від'єднано від виклику",
+    "create_account_button": "Створити обліковий запис",
+    "create_account_prompt": "<0>Чому б не завершити, налаштувавши пароль для збереження свого облікового запису?</0><1>Ви зможете зберегти своє ім'я та встановити аватарку для подальшого користування під час майбутніх викликів</1>",
+    "feedback_done": "<0>Дякуємо за ваш відгук!</0>",
+    "feedback_prompt": "<0>Ми будемо раді почути ваші відгуки, щоб поліпшити роботу застосунку.</0>",
+    "headline": "{{displayName}}, ваш виклик завершено.",
+    "not_now_button": "Не зараз, повернутися на екран домівки",
+    "reconnect_button": "Під'єднати повторно",
+    "survey_prompt": "Вам усе сподобалось?"
+  },
+  "call_name": "Назва виклику",
+  "common": {
+    "audio": "Звук",
+    "avatar": "Аватар",
+    "camera": "Камера",
+    "copied": "Скопійовано!",
+    "display_name": "Псевдонім",
+    "encrypted": "Зашифровано",
+    "home": "Домівка",
+    "loading": "Завантаження…",
+    "microphone": "Мікрофон",
+    "password": "Пароль",
+    "profile": "Профіль",
+    "settings": "Налаштування",
+    "unencrypted": "Не зашифровано",
+    "username": "Ім'я користувача",
+    "video": "Відео"
+  },
+  "disconnected_banner": "Втрачено зв'язок з сервером.",
   "exit_fullscreen_button_label": "Вийти з повноекранного режиму",
+  "full_screen_view_description": "<0>Надсилання журналів налагодження допоможе нам виявити проблему.</0>",
+  "full_screen_view_h1": "<0>Йой, щось пішло не за планом.</0>",
+  "fullscreen_button_label": "Повноекранний режим",
+  "group_call_loader_failed_heading": "Виклик не знайдено",
+  "group_call_loader_failed_text": "Відтепер виклики захищено наскрізним шифруванням, і їх потрібно створювати з домашньої сторінки. Це допомагає переконатися, що всі користувачі використовують один і той самий ключ шифрування.",
+  "hangup_button_label": "Завершити виклик",
+  "header_label": "Домівка Element Call",
+  "header_participants_label": "Учасники",
+  "invite_modal": {
+    "link_copied_toast": "Посилання скопійовано до буфера обміну",
+    "title": "Запросити до цього виклику"
+  },
+  "join_existing_call_modal": {
+    "join_button": "Так, приєднатися до виклику",
+    "text": "Цей виклик уже існує, бажаєте приєднатися?",
+    "title": "Приєднатися до наявного виклику?"
+  },
   "layout_grid_label": "Сітка",
   "layout_spotlight_label": "У центрі уваги",
-  "invite_modal": {
-    "title": "Запросити до цього виклику",
-    "link_copied_toast": "Посилання скопійовано до буфера обміну"
-  },
-  "room_auth_view_join_button": "Приєднатися до виклику зараз",
-  "join_existing_call_modal": {
-    "title": "Приєднатися до наявного виклику?",
-    "text": "Цей виклик уже існує, бажаєте приєднатися?",
-    "join_button": "Так, приєднатися до виклику"
+  "lobby": {
+    "join_button": "Приєднатися до виклику",
+    "leave_button": "Повернутися до недавніх"
   },
   "local_volume_label": "Локальна гучність",
   "logging_in": "Вхід…",
+  "login_auth_links": "<0>Створити обліковий запис</0> або <2>Отримати доступ як гість</2>",
   "login_title": "Увійти",
-  "unauthenticated_view_login_button": "Увійдіть до свого облікового запису",
   "microphone_off": "Мікрофон вимкнено",
   "microphone_on": "Мікрофон увімкнено",
   "mute_microphone_button_label": "Вимкнути мікрофон",
-  "call_name": "Назва виклику",
-  "unauthenticated_view_body": "Ще не зареєстровані? <2>Створіть обліковий запис</2>",
-  "header_participants_label": "Учасники",
+  "rageshake_button_error_caption": "Повторити надсилання журналів",
+  "rageshake_request_modal": {
+    "body": "Інший користувач у цьому виклику має проблему. Щоб краще визначити ці проблеми, ми хотіли б зібрати журнал налагодження.",
+    "title": "Запит журналу налагодження"
+  },
+  "rageshake_send_logs": "Надіслати журнал налагодження",
+  "rageshake_sending": "Надсилання…",
+  "rageshake_sending_logs": "Надсилання журналу налагодження…",
+  "rageshake_sent": "Дякуємо!",
+  "recaptcha_caption": "Цей сайт захищений ReCAPTCHA і до нього застосовується <2>Політика приватності</2> і <6>Умови надання послуг</6> Google.<9></9>Натискаючи \"Зареєструватися\", ви погоджуєтеся з нашою <12>Ліцензійною угодою з кінцевим користувачем (EULA)</12>",
+  "recaptcha_dismissed": "Recaptcha не пройдено",
+  "recaptcha_not_loaded": "Recaptcha не завантажено",
   "register": {
     "passwords_must_match": "Паролі відрізняються",
     "registering": "Реєстрація…"
   },
-  "recaptcha_dismissed": "Recaptcha не пройдено",
-  "recaptcha_not_loaded": "Recaptcha не завантажено",
-  "rageshake_button_error_caption": "Повторити надсилання журналів",
+  "register_auth_links": "<0>Уже маєте обліковий запис?</0><1><0>Увійти</0> Or <2>Отримати доступ як гість</2></1>",
+  "register_confirm_password_label": "Підтвердити пароль",
   "return_home_button": "Повернутися на екран домівки",
-  "select_input_unset_button": "Вибрати опцію",
-  "rageshake_send_logs": "Надіслати журнал налагодження",
-  "rageshake_sending_logs": "Надсилання журналу налагодження…",
-  "rageshake_sending": "Надсилання…",
+  "room_auth_view_eula_caption": "Натискаючи \"Приєднатися до виклику зараз\", ви погоджуєтеся з нашою <2>Ліцензійною угодою з кінцевим користувачем (EULA)</2>",
+  "room_auth_view_join_button": "Приєднатися до виклику зараз",
   "screenshare_button_label": "Поділитися екраном",
-  "stop_screenshare_button_label": "Презентація екрана",
+  "select_input_unset_button": "Вибрати опцію",
+  "settings": {
+    "developer_settings_label": "Налаштування розробника",
+    "developer_settings_label_description": "Відкрийте налаштування розробника у вікні налаштувань.",
+    "developer_tab_title": "Розробнику",
+    "feedback_tab_body": "Якщо у вас виникли проблеми або ви просто хочете залишити відгук, надішліть нам короткий опис нижче.",
+    "feedback_tab_description_label": "Ваш відгук",
+    "feedback_tab_h4": "Надіслати відгук",
+    "feedback_tab_send_logs_label": "Долучити журнали налагодження",
+    "feedback_tab_thank_you": "Дякуємо, ми отримали ваш відгук!",
+    "feedback_tab_title": "Відгук",
+    "more_tab_title": "Докладніше",
+    "opt_in_description": "<0></0><1></1>Ви можете відкликати згоду, прибравши цей прапорець. Якщо ви зараз розмовляєте, це налаштування застосується після завершення виклику.",
+    "show_connection_stats_label": "Показати стан з'єднання",
+    "speaker_device_selection_label": "Динамік"
+  },
+  "star_rating_input_label_one": "{{count}} зірок",
+  "star_rating_input_label_other": "{{count}} зірок",
   "start_new_call": "Розпочати новий виклик",
   "start_video_button_label": "Розпочати відео",
+  "stop_screenshare_button_label": "Презентація екрана",
   "stop_video_button_label": "Зупинити відео",
   "submitting": "Надсилання…",
-  "rageshake_sent": "Дякуємо!",
+  "unauthenticated_view_body": "Ще не зареєстровані? <2>Створіть обліковий запис</2>",
+  "unauthenticated_view_eula_caption": "Натискаючи \"Далі\", ви погоджуєтеся з нашою <2>Ліцензійною угодою з кінцевим користувачем (EULA)</2>",
+  "unauthenticated_view_login_button": "Увійдіть до свого облікового запису",
   "unmute_microphone_button_label": "Увімкнути мікрофон",
   "version": "Версія: {{version}}",
-  "waiting_for_participants": "Очікування на інших учасників…",
-  "browser_media_e2ee_unsupported": "Ваш браузер не підтримує наскрізне шифрування мультимедійних даних. Підтримувані браузери: Chrome, Safari, Firefox >=117"
+  "video_tile": {
+    "presenter_label": "{{displayName}} представляє",
+    "sfu_participant_local": "Ви"
+  },
+  "waiting_for_participants": "Очікування на інших учасників…"
 }

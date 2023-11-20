@@ -1,22 +1,10 @@
 {
-  "common": {},
-  "action": {},
-  "a11y": {},
-  "participant_count_one": "{{count, number}}",
-  "participant_count_other": "{{count, number}}",
+  "call_ended_view": {
+    "headline": "{{displayName}}, ditt samtal har avslutats."
+  },
   "star_rating_input_label_one": "{{count}} stjärna",
   "star_rating_input_label_other": "{{count}} stjärnor",
   "video_tile": {
     "presenter_label": "{{displayName}} presenterar"
-  },
-  "call_ended_view": {
-    "headline": "{{displayName}}, ditt samtal har avslutats."
-  },
-  "settings": {},
-  "rageshake_request_modal": {},
-  "lobby": {},
-  "app_selection_modal": {},
-  "invite_modal": {},
-  "join_existing_call_modal": {},
-  "register": {}
+  }
 }

@@ -1,23 +1,6 @@
 {
-  "unauthenticated_view_eula_caption": "Klikając \"Przejdź\", zgadzasz się na naszą <2>Umowę licencyjną (EULA)</2>",
-  "recaptcha_caption": "Ta witryna jest chroniona przez ReCAPTCHA, więc obowiązują <2>Polityka prywatności</2> i <6>Warunki usług</6> Google. Klikając \"Zarejestruj\", zgadzasz się na naszą <12>Umowę licencyjną (EULA)</12>",
-  "room_auth_view_eula_caption": "Klikając \"Dołącz teraz do rozmowy\", zgadzasz się na naszą <2>Umowę licencyjną (EULA)</2>",
-  "common": {
-    "avatar": "Awatar",
-    "camera": "Kamera",
-    "copied": "Skopiowano!",
-    "encrypted": "Szyfrowane",
-    "home": "Strona domowa",
-    "loading": "Ładowanie…",
-    "microphone": "Mikrofon",
-    "unencrypted": "Nie szyfrowane",
-    "password": "Hasło",
-    "profile": "Profil",
-    "username": "Nazwa użytkownika",
-    "video": "Wideo",
-    "settings": "Ustawienia",
-    "audio": "Dźwięk",
-    "display_name": "Nazwa wyświetlana"
+  "a11y": {
+    "user_menu": "Menu użytkownika"
   },
   "action": {
     "close": "Zamknij",
@@ -32,113 +15,128 @@
     "sign_out": "Wyloguj się",
     "submit": "Wyślij"
   },
-  "a11y": {
-    "user_menu": "Menu użytkownika"
-  },
-  "participant_count_one": "{{count, number}}",
-  "participant_count_other": "{{count, number}}",
-  "star_rating_input_label_one": "{{count}} gwiazdki",
-  "star_rating_input_label_other": "{{count}} gwiazdki",
-  "video_tile": {
-    "presenter_label": "{{displayName}} prezentuje",
-    "sfu_participant_local": "Ty"
-  },
-  "call_ended_view": {
-    "headline": "{{displayName}}, Twoje połączenie zostało zakończone.",
-    "feedback_done": "<0>Dziękujemy za Twoją opinię!</0>",
-    "feedback_prompt": "<0>Z przyjemnością wysłuchamy Twojej opinii, aby poprawić Twoje doświadczenia.</0>",
-    "create_account_prompt": "<0>Może zechcesz ustawić hasło, aby zachować swoje konto?</0><1>Będziesz w stanie utrzymać swoją nazwę i ustawić awatar do wyświetlania podczas połączeń w przyszłości</1>",
-    "create_account_button": "Utwórz konto",
-    "survey_prompt": "Jak poszło?",
-    "not_now_button": "Nie teraz, powróć do ekranu domowego",
-    "reconnect_button": "Połącz ponownie",
-    "body": "Rozłączono Cię z połączenia"
-  },
-  "settings": {
-    "opt_in_description": "<0></0><1></1>Możesz wycofać swoją zgodę poprzez odznaczenie tego pola. Jeśli już jesteś w trakcie rozmowy, opcja zostanie zastosowana po jej zakończeniu.",
-    "developer_tab_title": "Programista",
-    "developer_settings_label": "Opcje programisty",
-    "developer_settings_label_description": "Wyświetl opcje programisty w oknie ustawień.",
-    "feedback_tab_title": "Opinia użytkownika",
-    "feedback_tab_body": "Jeśli posiadasz problemy lub chciałbyś zgłosić swoją opinię, wyślij nam krótki opis.",
-    "feedback_tab_send_logs_label": "Dołącz dzienniki debugowania",
-    "more_tab_title": "Więcej",
-    "show_connection_stats_label": "Pokaż statystyki połączenia",
-    "speaker_device_selection_label": "Głośnik",
-    "feedback_tab_h4": "Prześlij opinię",
-    "feedback_tab_thank_you": "Dziękujemy, otrzymaliśmy Twoją opinię!",
-    "feedback_tab_description_label": "Twoje opinie"
-  },
-  "register_auth_links": "<0>Masz już konto?</0><1><0>Zaloguj się</0> lub <2>Dołącz jako gość</2></1>",
-  "login_auth_links": "<0>Utwórz konto</0> lub <2>Dołącz jako gość</2>",
-  "full_screen_view_h1": "<0>Ojej, coś poszło nie tak.</0>",
-  "full_screen_view_description": "<0>Wysłanie dzienników debuggowania pomoże nam ustalić przyczynę problemu.</0>",
-  "rageshake_request_modal": {
-    "body": "Inny użytkownik w tym połączeniu napotkał problem. Aby lepiej zdiagnozować tę usterkę, chcielibyśmy zebrać dzienniki debugowania.",
-    "title": "Prośba o dzienniki debugowania"
-  },
-  "lobby": {
-    "leave_button": "Wróć do ostatnie",
-    "join_button": "Dołącz do połączenia"
-  },
   "analytics_notice": "Uczestnicząc w tej becie, upoważniasz nas do zbierania anonimowych danych, które wykorzystamy do ulepszenia produktu. Dowiedz się więcej na temat danych, które zbieramy w naszej <2>Polityce prywatności</2> i <5>Polityce ciasteczek</5>.",
-  "group_call_loader_failed_heading": "Nie znaleziono połączenia",
-  "group_call_loader_failed_text": "Połączenia są teraz szyfrowane end-to-end i muszą zostać utworzone ze strony głównej. Pomaga to upewnić się, że każdy korzysta z tego samego klucza szyfrującego.",
-  "register_confirm_password_label": "Potwierdź hasło",
-  "disconnected_banner": "Utracono połączenie z serwerem.",
   "app_selection_modal": {
     "continue_in_browser": "Kontynuuj w przeglądarce",
     "open_in_app": "Otwórz w aplikacji",
     "text": "Gotowy, by dołączyć?",
     "title": "Wybierz aplikację"
   },
-  "header_label": "Strona główna Element Call",
-  "hangup_button_label": "Zakończ połączenie",
-  "fullscreen_button_label": "Pełny ekran",
+  "browser_media_e2ee_unsupported": "Twoja przeglądarka nie wspiera szyfrowania end-to-end. Wspierane przeglądarki to Chrome, Safari, Firefox >=117",
+  "call_ended_view": {
+    "body": "Rozłączono Cię z połączenia",
+    "create_account_button": "Utwórz konto",
+    "create_account_prompt": "<0>Może zechcesz ustawić hasło, aby zachować swoje konto?</0><1>Będziesz w stanie utrzymać swoją nazwę i ustawić awatar do wyświetlania podczas połączeń w przyszłości</1>",
+    "feedback_done": "<0>Dziękujemy za Twoją opinię!</0>",
+    "feedback_prompt": "<0>Z przyjemnością wysłuchamy Twojej opinii, aby poprawić Twoje doświadczenia.</0>",
+    "headline": "{{displayName}}, Twoje połączenie zostało zakończone.",
+    "not_now_button": "Nie teraz, powróć do ekranu domowego",
+    "reconnect_button": "Połącz ponownie",
+    "survey_prompt": "Jak poszło?"
+  },
+  "call_name": "Nazwa połączenia",
+  "common": {
+    "audio": "Dźwięk",
+    "avatar": "Awatar",
+    "camera": "Kamera",
+    "copied": "Skopiowano!",
+    "display_name": "Nazwa wyświetlana",
+    "encrypted": "Szyfrowane",
+    "home": "Strona domowa",
+    "loading": "Ładowanie…",
+    "microphone": "Mikrofon",
+    "password": "Hasło",
+    "profile": "Profil",
+    "settings": "Ustawienia",
+    "unencrypted": "Nie szyfrowane",
+    "username": "Nazwa użytkownika",
+    "video": "Wideo"
+  },
+  "disconnected_banner": "Utracono połączenie z serwerem.",
   "exit_fullscreen_button_label": "Opuść pełny ekran",
+  "full_screen_view_description": "<0>Wysłanie dzienników debuggowania pomoże nam ustalić przyczynę problemu.</0>",
+  "full_screen_view_h1": "<0>Ojej, coś poszło nie tak.</0>",
+  "fullscreen_button_label": "Pełny ekran",
+  "group_call_loader_failed_heading": "Nie znaleziono połączenia",
+  "group_call_loader_failed_text": "Połączenia są teraz szyfrowane end-to-end i muszą zostać utworzone ze strony głównej. Pomaga to upewnić się, że każdy korzysta z tego samego klucza szyfrującego.",
+  "hangup_button_label": "Zakończ połączenie",
+  "header_label": "Strona główna Element Call",
+  "header_participants_label": "Uczestnicy",
+  "invite_modal": {
+    "link_copied_toast": "Skopiowano link do schowka",
+    "title": "Zaproś do połączenia"
+  },
+  "join_existing_call_modal": {
+    "join_button": "Tak, dołącz do połączenia",
+    "text": "Te połączenie już istnieje, czy chcesz do niego dołączyć?",
+    "title": "Dołączyć do istniejącego połączenia?"
+  },
   "layout_grid_label": "Siatka",
   "layout_spotlight_label": "Centrum uwagi",
-  "invite_modal": {
-    "title": "Zaproś do połączenia",
-    "link_copied_toast": "Skopiowano link do schowka"
-  },
-  "room_auth_view_join_button": "Dołącz do połączenia teraz",
-  "join_existing_call_modal": {
-    "title": "Dołączyć do istniejącego połączenia?",
-    "text": "Te połączenie już istnieje, czy chcesz do niego dołączyć?",
-    "join_button": "Tak, dołącz do połączenia"
+  "lobby": {
+    "join_button": "Dołącz do połączenia",
+    "leave_button": "Wróć do ostatnie"
   },
   "local_volume_label": "Głośność lokalna",
   "logging_in": "Logowanie…",
+  "login_auth_links": "<0>Utwórz konto</0> lub <2>Dołącz jako gość</2>",
   "login_title": "Zaloguj się",
-  "unauthenticated_view_login_button": "Zaloguj się do swojego konta",
   "microphone_off": "Mikrofon wyłączony",
   "microphone_on": "Mikrofon włączony",
   "mute_microphone_button_label": "Wycisz mikrofon",
-  "call_name": "Nazwa połączenia",
-  "unauthenticated_view_body": "Nie masz konta? <2>Utwórz je</2>",
-  "header_participants_label": "Uczestnicy",
+  "rageshake_button_error_caption": "Wyślij logi ponownie",
+  "rageshake_request_modal": {
+    "body": "Inny użytkownik w tym połączeniu napotkał problem. Aby lepiej zdiagnozować tę usterkę, chcielibyśmy zebrać dzienniki debugowania.",
+    "title": "Prośba o dzienniki debugowania"
+  },
+  "rageshake_send_logs": "Wyślij dzienniki debugowania",
+  "rageshake_sending": "Wysyłanie…",
+  "rageshake_sending_logs": "Wysyłanie dzienników debugowania…",
+  "rageshake_sent": "Dziękujemy!",
+  "recaptcha_caption": "Ta witryna jest chroniona przez ReCAPTCHA, więc obowiązują <2>Polityka prywatności</2> i <6>Warunki usług</6> Google. Klikając \"Zarejestruj\", zgadzasz się na naszą <12>Umowę licencyjną (EULA)</12>",
+  "recaptcha_dismissed": "Recaptcha odrzucona",
+  "recaptcha_not_loaded": "Recaptcha nie została załadowana",
   "register": {
     "passwords_must_match": "Hasła muszą pasować",
     "registering": "Rejestrowanie…"
   },
-  "recaptcha_dismissed": "Recaptcha odrzucona",
-  "recaptcha_not_loaded": "Recaptcha nie została załadowana",
-  "rageshake_button_error_caption": "Wyślij logi ponownie",
+  "register_auth_links": "<0>Masz już konto?</0><1><0>Zaloguj się</0> lub <2>Dołącz jako gość</2></1>",
+  "register_confirm_password_label": "Potwierdź hasło",
   "return_home_button": "Powróć do strony głównej",
-  "select_input_unset_button": "Wybierz opcję",
-  "rageshake_send_logs": "Wyślij dzienniki debugowania",
-  "rageshake_sending_logs": "Wysyłanie dzienników debugowania…",
-  "rageshake_sending": "Wysyłanie…",
+  "room_auth_view_eula_caption": "Klikając \"Dołącz teraz do rozmowy\", zgadzasz się na naszą <2>Umowę licencyjną (EULA)</2>",
+  "room_auth_view_join_button": "Dołącz do połączenia teraz",
   "screenshare_button_label": "Udostępnij ekran",
-  "stop_screenshare_button_label": "Udostępnianie ekranu",
+  "select_input_unset_button": "Wybierz opcję",
+  "settings": {
+    "developer_settings_label": "Opcje programisty",
+    "developer_settings_label_description": "Wyświetl opcje programisty w oknie ustawień.",
+    "developer_tab_title": "Programista",
+    "feedback_tab_body": "Jeśli posiadasz problemy lub chciałbyś zgłosić swoją opinię, wyślij nam krótki opis.",
+    "feedback_tab_description_label": "Twoje opinie",
+    "feedback_tab_h4": "Prześlij opinię",
+    "feedback_tab_send_logs_label": "Dołącz dzienniki debugowania",
+    "feedback_tab_thank_you": "Dziękujemy, otrzymaliśmy Twoją opinię!",
+    "feedback_tab_title": "Opinia użytkownika",
+    "more_tab_title": "Więcej",
+    "opt_in_description": "<0></0><1></1>Możesz wycofać swoją zgodę poprzez odznaczenie tego pola. Jeśli już jesteś w trakcie rozmowy, opcja zostanie zastosowana po jej zakończeniu.",
+    "show_connection_stats_label": "Pokaż statystyki połączenia",
+    "speaker_device_selection_label": "Głośnik"
+  },
+  "star_rating_input_label_one": "{{count}} gwiazdki",
+  "star_rating_input_label_other": "{{count}} gwiazdki",
   "start_new_call": "Rozpocznij nowe połączenie",
   "start_video_button_label": "Rozpocznij wideo",
+  "stop_screenshare_button_label": "Udostępnianie ekranu",
   "stop_video_button_label": "Zakończ wideo",
   "submitting": "Wysyłanie…",
-  "rageshake_sent": "Dziękujemy!",
+  "unauthenticated_view_body": "Nie masz konta? <2>Utwórz je</2>",
+  "unauthenticated_view_eula_caption": "Klikając \"Przejdź\", zgadzasz się na naszą <2>Umowę licencyjną (EULA)</2>",
+  "unauthenticated_view_login_button": "Zaloguj się do swojego konta",
   "unmute_microphone_button_label": "Odcisz mikrofon",
   "version": "Wersja: {{version}}",
-  "waiting_for_participants": "Oczekiwanie na pozostałych uczestników…",
-  "browser_media_e2ee_unsupported": "Twoja przeglądarka nie wspiera szyfrowania end-to-end. Wspierane przeglądarki to Chrome, Safari, Firefox >=117"
+  "video_tile": {
+    "presenter_label": "{{displayName}} prezentuje",
+    "sfu_participant_local": "Ty"
+  },
+  "waiting_for_participants": "Oczekiwanie na pozostałych uczestników…"
 }
