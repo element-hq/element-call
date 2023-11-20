@@ -40,6 +40,12 @@ export const EncryptionLock: FC<Props> = ({ encrypted }) => {
         height={16}
         className={styles.lock}
         data-encrypted={encrypted}
+        // Make the icon focusable so that the tooltip can be opened
+        // with keyboard navigation
+        // TODO: Replace this with the solution from
+        // https://github.com/vector-im/compound-web/pull/130 once it
+        // lands
+        tabIndex={0}
       />
     </Tooltip>
   );
