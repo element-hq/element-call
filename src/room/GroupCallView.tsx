@@ -303,11 +303,7 @@ export const GroupCallView: FC<Props> = ({
     return (
       <FullScreenView>
         <Heading>Incompatible Browser</Heading>
-        <Text>
-          {t(
-            "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117",
-          )}
-        </Text>
+        <Text>{t("browser_media_e2ee_unsupported")}</Text>
         <Link href="/" onClick={onHomeClick}>
           {t("common.home")}
         </Link>

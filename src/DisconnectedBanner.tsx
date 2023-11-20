@@ -45,7 +45,7 @@ export const DisconnectedBanner: FC<Props> = ({
       {shouldShowBanner && (
         <div className={classNames(styles.banner, className)} {...rest}>
           {children}
-          {t("Connectivity to the server has been lost.")}
+          {t("disconnected_banner")}
         </div>
       )}
     </>

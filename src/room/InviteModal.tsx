@@ -58,7 +58,7 @@ export const InviteModal: FC<Props> = ({ room, open, onDismiss }) => {
 
   return (
     <>
-      <Modal title={t("Invite to this call")} open={open} onDismiss={onDismiss}>
+      <Modal title={t("invite_modal.title")} open={open} onDismiss={onDismiss}>
         <Text className={styles.url} size="sm" weight="semibold">
           {url}
         </Text>
@@ -77,7 +77,7 @@ export const InviteModal: FC<Props> = ({ room, open, onDismiss }) => {
         autoDismiss={2000}
         Icon={CheckIcon}
       >
-        {t("Link copied to clipboard")}
+        {t("invite_modal.link_copied_toast")}
       </Toast>
     </>
   );

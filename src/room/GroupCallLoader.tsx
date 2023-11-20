@@ -63,12 +63,8 @@ export function GroupCallLoader({
       if ((groupCallState.error as MatrixError).errcode === "M_NOT_FOUND") {
         return (
           <FullScreenView>
-            <Heading>{t("Call not found")}</Heading>
-            <Text>
-              {t(
-                "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.",
-              )}
-            </Text>
+            <Heading>{t("group_call_loader_failed_heading")}</Heading>
+            <Text>{t("group_call_loader_failed_text")}</Text>
             {/* XXX: A 'create it for me' button would be the obvious UX here. Two screens already have
             dupes of this flow, let's make a common component and put it here. */}
             <Link href="/" onClick={onHomeClick}>

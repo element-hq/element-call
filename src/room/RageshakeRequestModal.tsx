@@ -44,12 +44,8 @@ export const RageshakeRequestModal: FC<Props> = ({
   }, [sent, onDismiss]);
 
   return (
-    <Modal title={t("Debug log request")} open={open} onDismiss={onDismiss}>
-      <Body>
-        {t(
-          "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.",
-        )}
-      </Body>
+    <Modal title={t("rageshake_request_modal.title")} open={open} onDismiss={onDismiss}>
+      <Body>{t("rageshake_request_modal.body")}</Body>
       <FieldRow>
         <Button
           onPress={(): void =>
@@ -61,7 +57,7 @@ export const RageshakeRequestModal: FC<Props> = ({
           }
           disabled={sending}
         >
-          {sending ? t("Sending debug logs…") : t("Send debug logs")}
+          {sending ? t("rageshake_sending_logs") : t("rageshake_send_logs")}
         </Button>
       </FieldRow>
       {error && (
