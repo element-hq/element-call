@@ -1,0 +1,33 @@
+{
+  "readKey": "a7580769542256117579-70975387172511848f4c6533943d776547bad4853931ba352ee684b738f4494e",
+
+  "upload": {
+    "type": "json",
+    "deprecate": "file",
+    "features": ["plural_postfix_us", "filter_untranslated"],
+    "files": [
+      {
+        "pattern": "public/locales/en-GB/*.json",
+        "lang": "inherited"
+      },
+      {
+        "group": "existing",
+        "pattern": "public/locales/*/*.json",
+        "excludes": ["public/locales/en-GB/*.json"],
+        "lang": "${autodetectLang}"
+      }
+    ]
+  },
+
+  "download": {
+    "files": [
+      {
+        "output": "public/locales/${langLsrDash}/${file}"
+      }
+    ],
+    "includeSourceLang": "${includeSourceLang|false}",
+    "langAliases": {
+      "en": "en_GB"
+    }
+  }
+}
