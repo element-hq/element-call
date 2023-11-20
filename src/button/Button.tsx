@@ -142,7 +142,9 @@ export const MicButton: FC<{
 }> = ({ muted, ...rest }) => {
   const { t } = useTranslation();
   const Icon = muted ? MicOffSolidIcon : MicOnSolidIcon;
-  const label = muted ? t("unmute_microphone_button_label") : t("mute_microphone_button_label");
+  const label = muted
+    ? t("unmute_microphone_button_label")
+    : t("mute_microphone_button_label");
 
   return (
     <Tooltip label={label}>
@@ -160,7 +162,9 @@ export const VideoButton: FC<{
 }> = ({ muted, ...rest }) => {
   const { t } = useTranslation();
   const Icon = muted ? VideoCallOffSolidIcon : VideoCallSolidIcon;
-  const label = muted ? t("start_video_button_label") : t("stop_video_button_label");
+  const label = muted
+    ? t("start_video_button_label")
+    : t("stop_video_button_label");
 
   return (
     <Tooltip label={label}>
@@ -178,7 +182,9 @@ export const ScreenshareButton: FC<{
   [index: string]: unknown;
 }> = ({ enabled, className, ...rest }) => {
   const { t } = useTranslation();
-  const label = enabled ? t("stop_screenshare_button_label") : t("screenshare_button_label");
+  const label = enabled
+    ? t("stop_screenshare_button_label")
+    : t("screenshare_button_label");
 
   return (
     <Tooltip label={label}>
@@ -254,7 +260,9 @@ export const FullscreenButton: FC<FullscreenButtonProps> = ({
 }) => {
   const { t } = useTranslation();
   const Icon = fullscreen ? FullscreenExit : Fullscreen;
-  const label = fullscreen ? t("exit_fullscreen_button_label") : t("fullscreen_button_label");
+  const label = fullscreen
+    ? t("exit_fullscreen_button_label")
+    : t("fullscreen_button_label");
 
   return (
     <Tooltip label={label}>

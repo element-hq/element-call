@@ -204,7 +204,9 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
               data-muted={muted}
             />
             <Text as="span" size="sm" weight="medium">
-              {sfuParticipant.isLocal ? t("video_tile.sfu_participant_local") : displayName}
+              {sfuParticipant.isLocal
+                ? t("video_tile.sfu_participant_local")
+                : displayName}
             </Text>
             {showConnectionStats && (
               <ConnectionQualityIndicator participant={sfuParticipant} />
