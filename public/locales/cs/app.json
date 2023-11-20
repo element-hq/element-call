@@ -1,18 +1,6 @@
 {
-  "common": {
-    "avatar": "Avatar",
-    "camera": "Kamera",
-    "copied": "Zkopírováno!",
-    "home": "Domov",
-    "loading": "Načítání…",
-    "microphone": "Mikrofon",
-    "password": "Heslo",
-    "profile": "Profil",
-    "username": "Uživatelské jméno",
-    "video": "Video",
-    "settings": "Nastavení",
-    "audio": "Audio",
-    "display_name": "Zobrazované jméno"
+  "a11y": {
+    "user_menu": "Uživatelské menu"
   },
   "action": {
     "close": "Zavřít",
@@ -24,65 +12,71 @@
     "sign_in": "Přihlásit se",
     "sign_out": "Odhlásit se"
   },
-  "a11y": {
-    "user_menu": "Uživatelské menu"
-  },
-  "video_tile": {},
   "call_ended_view": {
-    "create_account_prompt": "<0>Proč neskončit nastavením hesla, abyste mohli účet použít znovu?</0><1>Budete si moci nechat své jméno a nastavit si avatar pro budoucí hovory </1>",
     "create_account_button": "Vytvořit účet",
+    "create_account_prompt": "<0>Proč neskončit nastavením hesla, abyste mohli účet použít znovu?</0><1>Budete si moci nechat své jméno a nastavit si avatar pro budoucí hovory </1>",
     "not_now_button": "Teď ne, vrátit se na domovskou obrazovku"
   },
-  "settings": {
-    "developer_tab_title": "Vývojář",
-    "developer_settings_label": "Vývojářské nastavení",
-    "developer_settings_label_description": "Zobrazit vývojářské nastavení.",
-    "feedback_tab_send_logs_label": "Zahrnout ladící záznamy",
-    "more_tab_title": "Více",
-    "speaker_device_selection_label": "Reproduktor",
-    "feedback_tab_h4": "Dát feedback"
+  "common": {
+    "camera": "Kamera",
+    "copied": "Zkopírováno!",
+    "display_name": "Zobrazované jméno",
+    "home": "Domov",
+    "loading": "Načítání…",
+    "microphone": "Mikrofon",
+    "password": "Heslo",
+    "profile": "Profil",
+    "settings": "Nastavení",
+    "username": "Uživatelské jméno"
   },
-  "register_auth_links": "<0>Už máte účet?</0><1><0>Přihlásit se</0> Or <2>Jako host</2></1>",
-  "login_auth_links": "<0>Vytvořit účet</0> Or <2>Jako host</2>",
-  "full_screen_view_h1": "<0>Oops, něco se pokazilo.</0>",
+  "exit_fullscreen_button_label": "Ukončit režim celé obrazovky",
   "full_screen_view_description": "<0>Odeslání ladících záznamů nám pomůže diagnostikovat problém.</0>",
+  "full_screen_view_h1": "<0>Oops, něco se pokazilo.</0>",
+  "fullscreen_button_label": "Zvětšit na celou obrazovku",
+  "header_label": "Domov Element Call",
+  "join_existing_call_modal": {
+    "join_button": "Ano, připojit se",
+    "text": "Tento hovor již existuje, chcete se připojit?",
+    "title": "Připojit se k existujícimu hovoru?"
+  },
+  "layout_spotlight_label": "Soustředěný mód",
+  "lobby": {
+    "join_button": "Připojit se k hovoru"
+  },
+  "local_volume_label": "Lokální hlasitost",
+  "logging_in": "Přihlašování se…",
+  "login_auth_links": "<0>Vytvořit účet</0> Or <2>Jako host</2>",
+  "login_title": "Přihlášení",
   "rageshake_request_modal": {
     "body": "Jiný uživatel v tomto hovoru má problémy. Abychom mohli diagnostikovat problém, rádi bychom shromáždili protokoly ladění.",
     "title": "Žádost o protokoly ladění"
   },
-  "lobby": {
-    "join_button": "Připojit se k hovoru"
-  },
-  "register_confirm_password_label": "Potvrdit heslo",
-  "app_selection_modal": {},
-  "header_label": "Domov Element Call",
-  "fullscreen_button_label": "Zvětšit na celou obrazovku",
-  "exit_fullscreen_button_label": "Ukončit režim celé obrazovky",
-  "layout_spotlight_label": "Soustředěný mód",
-  "invite_modal": {},
-  "room_auth_view_join_button": "Připojit se k hovoru",
-  "join_existing_call_modal": {
-    "title": "Připojit se k existujícimu hovoru?",
-    "text": "Tento hovor již existuje, chcete se připojit?",
-    "join_button": "Ano, připojit se"
-  },
-  "local_volume_label": "Lokální hlasitost",
-  "logging_in": "Přihlašování se…",
-  "login_title": "Přihlášení",
-  "unauthenticated_view_login_button": "Přihlásit se ke svému účtu",
-  "unauthenticated_view_body": "Nejste registrovaní? <2>Vytvořit účet</2>",
+  "rageshake_send_logs": "Poslat ladící záznam",
+  "rageshake_sending": "Posílání…",
+  "rageshake_sending_logs": "Posílání ladícího záznamu…",
+  "recaptcha_dismissed": "Recaptcha byla zamítnuta",
+  "recaptcha_not_loaded": "Recaptcha se nenačetla",
   "register": {
     "passwords_must_match": "Hesla se musí shodovat",
     "registering": "Registrování…"
   },
-  "recaptcha_dismissed": "Recaptcha byla zamítnuta",
-  "recaptcha_not_loaded": "Recaptcha se nenačetla",
+  "register_auth_links": "<0>Už máte účet?</0><1><0>Přihlásit se</0> Or <2>Jako host</2></1>",
+  "register_confirm_password_label": "Potvrdit heslo",
   "return_home_button": "Vrátit se na domácí obrazovku",
-  "select_input_unset_button": "Vyberte možnost",
-  "rageshake_send_logs": "Poslat ladící záznam",
-  "rageshake_sending_logs": "Posílání ladícího záznamu…",
-  "rageshake_sending": "Posílání…",
+  "room_auth_view_join_button": "Připojit se k hovoru",
   "screenshare_button_label": "Sdílet obrazovku",
+  "select_input_unset_button": "Vyberte možnost",
+  "settings": {
+    "developer_settings_label": "Vývojářské nastavení",
+    "developer_settings_label_description": "Zobrazit vývojářské nastavení.",
+    "developer_tab_title": "Vývojář",
+    "feedback_tab_h4": "Dát feedback",
+    "feedback_tab_send_logs_label": "Zahrnout ladící záznamy",
+    "more_tab_title": "Více",
+    "speaker_device_selection_label": "Reproduktor"
+  },
+  "unauthenticated_view_body": "Nejste registrovaní? <2>Vytvořit účet</2>",
+  "unauthenticated_view_login_button": "Přihlásit se ke svému účtu",
   "version": "Verze: {{version}}",
   "waiting_for_participants": "Čekání na další účastníky…"
 }
