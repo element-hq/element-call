@@ -76,8 +76,8 @@ export const RoomAuthView: FC = () => {
               <InputField
                 id="displayName"
                 name="displayName"
-                label={t("Display name")}
-                placeholder={t("Display name")}
+                label={t("common.display_name")}
+                placeholder={t("common.display_name")}
                 data-testid="joincall_displayName"
                 type="text"
                 required
@@ -103,7 +103,7 @@ export const RoomAuthView: FC = () => {
               disabled={loading}
               data-testid="joincall_joincall"
             >
-              {loading ? t("Loading…") : t("Join call now")}
+              {loading ? t("common.loading") : t("Join call now")}
             </Button>
             <div id={recaptchaId} />
           </Form>

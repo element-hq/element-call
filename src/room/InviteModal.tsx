@@ -68,7 +68,7 @@ export const InviteModal: FC<Props> = ({ room, open, onDismiss }) => {
           onClick={onButtonClick}
           data-testid="modal_inviteLink"
         >
-          {t("Copy link")}
+          {t("action.copy_link")}
         </Button>
       </Modal>
       <Toast

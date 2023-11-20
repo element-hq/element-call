@@ -4,5 +4,8 @@
   "{{count, number}}_one": "{{count, number}}",
   "{{count, number}}_other": "{{count, number}}",
   "{{displayName}} is presenting": "{{displayName}} presenterar",
-  "{{displayName}}, your call has ended.": "{{displayName}}, ditt samtal har avslutats."
+  "{{displayName}}, your call has ended.": "{{displayName}}, ditt samtal har avslutats.",
+  "common": {},
+  "action": {},
+  "a11y": {}
 }

@@ -44,7 +44,7 @@ import { Config } from "../config/Config";
 
 export const RegisterPage: FC = () => {
   const { t } = useTranslation();
-  usePageTitle(t("Register"));
+  usePageTitle(("action.register"));
 
   const { loading, authenticated, passwordlessUser, client, setClient } =
     useClientLegacy();
@@ -170,8 +170,8 @@ export const RegisterPage: FC = () => {
                 <InputField
                   type="text"
                   name="userName"
-                  placeholder={t("Username")}
-                  label={t("Username")}
+                  placeholder={t("common.username")}
+                  label={t("common.username")}
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
@@ -188,8 +188,8 @@ export const RegisterPage: FC = () => {
                     setPassword(e.target.value)
                   }
                   value={password}
-                  placeholder={t("Password")}
-                  label={t("Password")}
+                  placeholder={t("common.password")}
+                  label={t("common.password")}
                   data-testid="register_password"
                 />
               </FieldRow>
@@ -237,7 +237,7 @@ export const RegisterPage: FC = () => {
                   disabled={registering}
                   data-testid="register_register"
                 >
-                  {registering ? t("Registering…") : t("Register")}
+                  {registering ? t("Registering…") : ("action.register")}
                 </Button>
               </FieldRow>
               <div id={recaptchaId} />

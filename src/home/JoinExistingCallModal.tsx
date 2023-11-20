@@ -40,7 +40,7 @@ export const JoinExistingCallModal: FC<Props> = ({
     <Modal title={t("Join existing call?")} open={open} onDismiss={onDismiss}>
       <p>{t("This call already exists, would you like to join?")}</p>
       <FieldRow rightAlign className={styles.buttons}>
-        <Button onPress={onDismiss}>{t("No")}</Button>
+        <Button onPress={onDismiss}>{t("action.no")}</Button>
         <Button onPress={onJoin} data-testid="home_joinExistingRoom">
           {t("Yes, join call")}
         </Button>

@@ -25,6 +25,4 @@ export default {
   output: "public/locales/$LOCALE/$NAMESPACE.json",
   input: ["src/**/*.{ts,tsx}"],
   sort: true,
-  // The key becomes the English version of the string
-  defaultValue: (_l, _ns, key) => key,
 };

@@ -49,11 +49,13 @@ export const CopyButton: FC<Props> = ({
       className={className}
       onPress={setCopied}
       iconStyle={isCopied ? "stroke" : "fill"}
-      aria-label={t("Copy")}
+      aria-label={t("action.copy")}
     >
       {isCopied ? (
         <>
-          {variant !== "icon" && <span>{copiedMessage || t("Copied!")}</span>}
+          {variant !== "icon" && (
+            <span>{copiedMessage || t("common.copied")}</span>
+          )}
           <CheckIcon />
         </>
       ) : (

@@ -54,7 +54,7 @@ export function GroupCallLoader({
     case "loading":
       return (
         <FullScreenView>
-          <h1>{t("Loading…")}</h1>
+          <h1>{t("common.loading")}</h1>
         </FullScreenView>
       );
     case "loaded":
@@ -72,7 +72,7 @@ export function GroupCallLoader({
             {/* XXX: A 'create it for me' button would be the obvious UX here. Two screens already have
             dupes of this flow, let's make a common component and put it here. */}
             <Link href="/" onClick={onHomeClick}>
-              {t("Home")}
+              {t("common.home")}
             </Link>
           </FullScreenView>
         );

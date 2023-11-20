@@ -137,7 +137,7 @@ export const LoadingView: FC = () => {
 
   return (
     <FullScreenView>
-      <h1>{t("Loading…")}</h1>
+      <h1>{t("common.loading")}</h1>
     </FullScreenView>
   );
 };

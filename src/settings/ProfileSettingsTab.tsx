@@ -82,7 +82,7 @@ export const ProfileSettingsTab: FC<Props> = ({ client }) => {
           <AvatarInputField
             id="avatar"
             name="avatar"
-            label={t("Avatar")}
+            label={t("common.avatar")}
             avatarUrl={avatarUrl}
             userId={userId}
             displayName={displayName}
@@ -94,7 +94,7 @@ export const ProfileSettingsTab: FC<Props> = ({ client }) => {
         <InputField
           id="userId"
           name="userId"
-          label={t("Username")}
+          label={t("common.username")}
           type="text"
           disabled
           value={client.getUserId()!}
@@ -104,11 +104,11 @@ export const ProfileSettingsTab: FC<Props> = ({ client }) => {
         <InputField
           id="displayName"
           name="displayName"
-          label={t("Display name")}
+          label={t("common.display_name")}
           type="text"
           required
           autoComplete="off"
-          placeholder={t("Display name")}
+          placeholder={t("common.display_name")}
           defaultValue={displayName}
           data-testid="profile_displayname"
         />
