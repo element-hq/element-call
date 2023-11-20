@@ -72,7 +72,7 @@ export const UserMenu: FC<Props> = ({
       if (isPasswordlessUser && !preventNavigation) {
         arr.push({
           key: "login",
-          label: "action.sign_in",
+          label: t("action.sign_in"),
           icon: LoginIcon,
           dataTestid: "usermenu_login",
         });
@@ -81,7 +81,7 @@ export const UserMenu: FC<Props> = ({
       if (!isPasswordlessUser && !preventNavigation) {
         arr.push({
           key: "logout",
-          label: "action.sign_out",
+          label: t("action.sign_out"),
           icon: LogoutIcon,
           dataTestid: "usermenu_logout",
         });
