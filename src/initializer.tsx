@@ -72,7 +72,7 @@ export class Initializer {
       .init({
         fallbackLng: "en-GB",
         defaultNS: "app",
-        keySeparator: false,
+        keySeparator: ".",
         nsSeparator: false,
         pluralSeparator: "_",
         contextSeparator: "|",
