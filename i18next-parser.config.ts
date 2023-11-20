@@ -1,5 +1,5 @@
 export default {
-  keySeparator: false,
+  keySeparator: ".",
   namespaceSeparator: false,
   contextSeparator: "|",
   pluralSeparator: "_",

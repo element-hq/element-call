@@ -1,23 +1,6 @@
 {
-  "unauthenticated_view_eula_caption": "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>",
-  "room_auth_view_eula_caption": "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>",
-  "recaptcha_caption": "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>",
-  "common": {
-    "avatar": "Avatar",
-    "camera": "Camera",
-    "copied": "Copied!",
-    "encrypted": "Encrypted",
-    "home": "Home",
-    "loading": "Loading…",
-    "microphone": "Microphone",
-    "unencrypted": "Not encrypted",
-    "password": "Password",
-    "profile": "Profile",
-    "username": "Username",
-    "video": "Video",
-    "settings": "Settings",
-    "audio": "Audio",
-    "display_name": "Display name"
+  "a11y": {
+    "user_menu": "User menu"
   },
   "action": {
     "close": "Close",
@@ -32,114 +15,131 @@
     "sign_out": "Sign out",
     "submit": "Submit"
   },
-  "a11y": {
-    "user_menu": "User menu"
-  },
-  "participant_count_one": "{{count, number}}",
-  "participant_count_other": "{{count, number}}",
-  "star_rating_input_label_one": "{{count}} stars",
-  "star_rating_input_label_other": "{{count}} stars",
-  "video_tile": {
-    "presenter_label": "{{displayName}} is presenting",
-    "sfu_participant_local": "You"
-  },
-  "call_ended_view": {
-    "headline": "{{displayName}}, your call has ended.",
-    "feedback_done": "<0>Thanks for your feedback!</0>",
-    "feedback_prompt": "<0>We'd love to hear your feedback so we can improve your experience.</0>",
-    "create_account_prompt": "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>",
-    "create_account_button": "Create account",
-    "survey_prompt": "How did it go?",
-    "not_now_button": "Not now, return to home screen",
-    "reconnect_button": "Reconnect",
-    "body": "You were disconnected from the call"
-  },
-  "settings": {
-    "opt_in_description": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",
-    "developer_tab_title": "Developer",
-    "developer_settings_label": "Developer Settings",
-    "developer_settings_label_description": "Expose developer settings in the settings window.",
-    "feedback_tab_title": "Feedback",
-    "feedback_tab_body": "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
-    "feedback_tab_send_logs_label": "Include debug logs",
-    "more_tab_title": "More",
-    "show_connection_stats_label": "Show connection stats",
-    "speaker_device_selection_label": "Speaker",
-    "feedback_tab_h4": "Submit feedback",
-    "feedback_tab_thank_you": "Thanks, we received your feedback!",
-    "feedback_tab_description_label": "Your feedback"
-  },
-  "register_auth_links": "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>",
-  "login_auth_links": "<0>Create an account</0> Or <2>Access as a guest</2>",
-  "full_screen_view_h1": "<0>Oops, something's gone wrong.</0>",
-  "full_screen_view_description": "<0>Submitting debug logs will help us track down the problem.</0>",
-  "rageshake_request_modal": {
-    "body": "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.",
-    "title": "Debug log request"
-  },
-  "lobby": {
-    "leave_button": "Back to recents",
-    "join_button": "Join call"
-  },
   "analytics_notice": "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.",
-  "group_call_loader_failed_heading": "Call not found",
-  "group_call_loader_failed_text": "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.",
-  "register_confirm_password_label": "Confirm password",
-  "disconnected_banner": "Connectivity to the server has been lost.",
   "app_selection_modal": {
     "continue_in_browser": "Continue in browser",
     "open_in_app": "Open in the app",
     "text": "Ready to join?",
     "title": "Select app"
   },
-  "header_label": "Element Call Home",
-  "hangup_button_label": "End call",
-  "fullscreen_button_label": "Full screen",
+  "application_opened_another_tab": "This application has been opened in another tab.",
+  "browser_media_e2ee_unsupported": "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117",
+  "call_ended_view": {
+    "body": "You were disconnected from the call",
+    "create_account_button": "Create account",
+    "create_account_prompt": "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>",
+    "feedback_done": "<0>Thanks for your feedback!</0>",
+    "feedback_prompt": "<0>We'd love to hear your feedback so we can improve your experience.</0>",
+    "headline": "{{displayName}}, your call has ended.",
+    "not_now_button": "Not now, return to home screen",
+    "reconnect_button": "Reconnect",
+    "survey_prompt": "How did it go?"
+  },
+  "call_name": "Name of call",
+  "common": {
+    "audio": "Audio",
+    "avatar": "Avatar",
+    "camera": "Camera",
+    "copied": "Copied!",
+    "display_name": "Display name",
+    "encrypted": "Encrypted",
+    "home": "Home",
+    "loading": "Loading…",
+    "microphone": "Microphone",
+    "password": "Password",
+    "profile": "Profile",
+    "settings": "Settings",
+    "unencrypted": "Not encrypted",
+    "username": "Username",
+    "video": "Video"
+  },
+  "disconnected_banner": "Connectivity to the server has been lost.",
   "exit_fullscreen_button_label": "Exit full screen",
+  "full_screen_view_description": "<0>Submitting debug logs will help us track down the problem.</0>",
+  "full_screen_view_h1": "<0>Oops, something's gone wrong.</0>",
+  "fullscreen_button_label": "Full screen",
+  "group_call_loader_failed_heading": "Call not found",
+  "group_call_loader_failed_text": "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.",
+  "hangup_button_label": "End call",
+  "header_label": "Element Call Home",
+  "header_participants_label": "Participants",
+  "invite_modal": {
+    "link_copied_toast": "Link copied to clipboard",
+    "title": "Invite to this call"
+  },
+  "join_existing_call_modal": {
+    "join_button": "Yes, join call",
+    "text": "This call already exists, would you like to join?",
+    "title": "Join existing call?"
+  },
   "layout_grid_label": "Grid",
   "layout_spotlight_label": "Spotlight",
-  "invite_modal": {
-    "title": "Invite to this call",
-    "link_copied_toast": "Link copied to clipboard"
-  },
-  "room_auth_view_join_button": "Join call now",
-  "join_existing_call_modal": {
-    "title": "Join existing call?",
-    "text": "This call already exists, would you like to join?",
-    "join_button": "Yes, join call"
+  "lobby": {
+    "join_button": "Join call",
+    "leave_button": "Back to recents"
   },
   "local_volume_label": "Local volume",
   "logging_in": "Logging in…",
+  "login_auth_links": "<0>Create an account</0> Or <2>Access as a guest</2>",
   "login_title": "Login",
-  "unauthenticated_view_login_button": "Login to your account",
   "microphone_off": "Microphone off",
   "microphone_on": "Microphone on",
   "mute_microphone_button_label": "Mute microphone",
-  "call_name": "Name of call",
-  "unauthenticated_view_body": "Not registered yet? <2>Create an account</2>",
-  "header_participants_label": "Participants",
+  "participant_count_one": "{{count, number}}",
+  "participant_count_other": "{{count, number}}",
+  "rageshake_button_error_caption": "Retry sending logs",
+  "rageshake_request_modal": {
+    "body": "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.",
+    "title": "Debug log request"
+  },
+  "rageshake_send_logs": "Send debug logs",
+  "rageshake_sending": "Sending…",
+  "rageshake_sending_logs": "Sending debug logs…",
+  "rageshake_sent": "Thanks!",
+  "recaptcha_caption": "This site is protected by ReCAPTCHA and the Google <2>Privacy Policy</2> and <6>Terms of Service</6> apply.<9></9>By clicking \"Register\", you agree to our <12>End User Licensing Agreement (EULA)</12>",
+  "recaptcha_dismissed": "Recaptcha dismissed",
+  "recaptcha_not_loaded": "Recaptcha not loaded",
   "register": {
     "passwords_must_match": "Passwords must match",
     "registering": "Registering…"
   },
-  "recaptcha_dismissed": "Recaptcha dismissed",
-  "recaptcha_not_loaded": "Recaptcha not loaded",
-  "rageshake_button_error_caption": "Retry sending logs",
+  "register_auth_links": "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>",
+  "register_confirm_password_label": "Confirm password",
   "return_home_button": "Return to home screen",
-  "select_input_unset_button": "Select an option",
-  "rageshake_send_logs": "Send debug logs",
-  "rageshake_sending_logs": "Sending debug logs…",
-  "rageshake_sending": "Sending…",
+  "room_auth_view_eula_caption": "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>",
+  "room_auth_view_join_button": "Join call now",
   "screenshare_button_label": "Share screen",
-  "stop_screenshare_button_label": "Sharing screen",
+  "select_input_unset_button": "Select an option",
+  "settings": {
+    "developer_settings_label": "Developer Settings",
+    "developer_settings_label_description": "Expose developer settings in the settings window.",
+    "developer_tab_title": "Developer",
+    "feedback_tab_body": "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
+    "feedback_tab_description_label": "Your feedback",
+    "feedback_tab_h4": "Submit feedback",
+    "feedback_tab_send_logs_label": "Include debug logs",
+    "feedback_tab_thank_you": "Thanks, we received your feedback!",
+    "feedback_tab_title": "Feedback",
+    "more_tab_title": "More",
+    "opt_in_description": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",
+    "show_connection_stats_label": "Show connection stats",
+    "speaker_device_selection_label": "Speaker"
+  },
+  "star_rating_input_label_one": "{{count}} stars",
+  "star_rating_input_label_other": "{{count}} stars",
   "start_new_call": "Start new call",
   "start_video_button_label": "Start video",
+  "stop_screenshare_button_label": "Sharing screen",
   "stop_video_button_label": "Stop video",
   "submitting": "Submitting…",
-  "rageshake_sent": "Thanks!",
-  "application_opened_another_tab": "This application has been opened in another tab.",
+  "unauthenticated_view_body": "Not registered yet? <2>Create an account</2>",
+  "unauthenticated_view_eula_caption": "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>",
+  "unauthenticated_view_login_button": "Login to your account",
   "unmute_microphone_button_label": "Unmute microphone",
   "version": "Version: {{version}}",
-  "waiting_for_participants": "Waiting for other participants…",
-  "browser_media_e2ee_unsupported": "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117"
+  "video_tile": {
+    "presenter_label": "{{displayName}} is presenting",
+    "sfu_participant_local": "You"
+  },
+  "waiting_for_participants": "Waiting for other participants…"
 }
