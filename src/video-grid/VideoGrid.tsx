@@ -54,7 +54,7 @@ interface TilePosition {
   zIndex: number;
 }
 
-interface Tile<T> {
+export interface Tile<T> {
   key: string;
   order: number;
   item: TileDescriptor<T>;
@@ -728,7 +728,7 @@ function displayedTileCount(
 
 // Sets the 'order' property on tiles based on the layout param and
 // other properties of the tiles, eg. 'focused' and 'presenter'
-function reorderTiles<T>(
+export function reorderTiles<T>(
   tiles: Tile<T>[],
   layout: Layout,
   displayedTile = -1,
@@ -750,7 +750,6 @@ function reorderTiles<T>(
   } else {
     const focusedTiles: Tile<T>[] = [];
     const presenterTiles: Tile<T>[] = [];
-    const speakerTiles: Tile<T>[] = [];
     const onlyVideoTiles: Tile<T>[] = [];
     const otherTiles: Tile<T>[] = [];
 
@@ -763,8 +762,6 @@ function reorderTiles<T>(
         focusedTiles.push(tile);
       } else if (tile.isPresenter) {
         presenterTiles.push(tile);
-      } else if (tile.isSpeaker && displayedTile < tile.order) {
-        speakerTiles.push(tile);
       } else if (tile.hasVideo) {
         if (tile.order === 0 && tile.item.local) {
           firstLocalTile = tile;
@@ -788,13 +785,27 @@ function reorderTiles<T>(
       }
     }
 
-    [
+    const reorderedTiles = [
       ...focusedTiles,
       ...presenterTiles,
-      ...speakerTiles,
       ...onlyVideoTiles,
       ...otherTiles,
-    ].forEach((tile, i) => (tile.order = i));
+    ];
+    let nextSpeakerTileIndex = focusedTiles.length + presenterTiles.length;
+
+    reorderedTiles.forEach((tile, i) => {
+      // If a speaker's natural ordering would place it outside the default
+      // visible area, promote them to the section dedicated to speakers
+      if (tile.isSpeaker && displayedTile <= i && nextSpeakerTileIndex < i) {
+        // Remove the tile from its current section
+        reorderedTiles.splice(i, 1);
+        // Insert it into the speaker section
+        reorderedTiles.splice(nextSpeakerTileIndex, 0, tile);
+        nextSpeakerTileIndex++;
+      }
+    });
+
+    reorderedTiles.forEach((tile, i) => (tile.order = i));
   }
 }
 

@@ -489,8 +489,6 @@ function useParticipantTiles(
   });
 
   const items = useMemo(() => {
-    const hasPresenter =
-      sfuParticipants.find((p) => p.isScreenShareEnabled) !== undefined;
     let allGhosts = true;
 
     const speakActiveTime = new Date();
@@ -498,10 +496,9 @@ function useParticipantTiles(
     // Iterate over SFU participants (those who actually are present from the SFU perspective) and create tiles for them.
     const tiles: TileDescriptor<ItemData>[] = sfuParticipants.flatMap(
       (sfuParticipant) => {
-        const hadSpokedInTime =
-          !hasPresenter && sfuParticipant.lastSpokeAt
-            ? sfuParticipant.lastSpokeAt > speakActiveTime
-            : false;
+        const spokeRecently =
+          sfuParticipant.lastSpokeAt !== undefined &&
+          sfuParticipant.lastSpokeAt > speakActiveTime;
 
         const id = sfuParticipant.identity;
         const member = findMatrixMember(matrixRoom, id);
@@ -519,7 +516,7 @@ function useParticipantTiles(
           focused: false,
           isPresenter: sfuParticipant.isScreenShareEnabled,
           isSpeaker:
-            (sfuParticipant.isSpeaking || hadSpokedInTime) &&
+            (sfuParticipant.isSpeaking || spokeRecently) &&
             !sfuParticipant.isLocal,
           hasVideo: sfuParticipant.isCameraEnabled,
           local: sfuParticipant.isLocal,
