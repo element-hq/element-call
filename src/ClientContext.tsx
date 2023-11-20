@@ -257,9 +257,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     "message",
     useCallback(() => {
       initClientState?.client.stopClient();
-      setAlreadyOpenedErr(
-        translatedError("This application has been opened in another tab.", t),
-      );
+      setAlreadyOpenedErr(translatedError("application_opened_another_tab", t));
     }, [initClientState?.client, setAlreadyOpenedErr, t]),
   );
 

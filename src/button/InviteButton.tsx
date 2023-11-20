@@ -25,7 +25,7 @@ export const InviteButton: FC<
   const { t } = useTranslation();
   return (
     <Button kind="secondary" size="sm" Icon={UserAddIcon} {...props}>
-      {t("Invite")}
+      {t("action.invite")}
     </Button>
   );
 };

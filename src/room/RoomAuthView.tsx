@@ -70,14 +70,16 @@ export const RoomAuthView: FC = () => {
       </Header>
       <div className={styles.container}>
         <main className={styles.main}>
-          <Headline className={styles.headline}>{t("Join call")}</Headline>
+          <Headline className={styles.headline}>
+            {t("lobby.join_button")}
+          </Headline>
           <Form className={styles.form} onSubmit={onSubmit}>
             <FieldRow>
               <InputField
                 id="displayName"
                 name="displayName"
-                label={t("Display name")}
-                placeholder={t("Display name")}
+                label={t("common.display_name")}
+                placeholder={t("common.display_name")}
                 data-testid="joincall_displayName"
                 type="text"
                 required
@@ -85,7 +87,7 @@ export const RoomAuthView: FC = () => {
               />
             </FieldRow>
             <Caption>
-              <Trans>
+              <Trans i18nKey="room_auth_view_eula_caption">
                 By clicking "Join call now", you agree to our{" "}
                 <Link href={Config.get().eula}>
                   End User Licensing Agreement (EULA)
@@ -103,13 +105,13 @@ export const RoomAuthView: FC = () => {
               disabled={loading}
               data-testid="joincall_joincall"
             >
-              {loading ? t("Loading…") : t("Join call now")}
+              {loading ? t("common.loading") : t("room_auth_view_join_button")}
             </Button>
             <div id={recaptchaId} />
           </Form>
         </main>
         <Body className={styles.footer}>
-          <Trans>
+          <Trans i18nKey="unauthenticated_view_body">
             Not registered yet?{" "}
             <Link
               color="primary"

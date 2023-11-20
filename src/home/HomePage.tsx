@@ -25,7 +25,7 @@ import { usePageTitle } from "../usePageTitle";
 
 export const HomePage: FC = () => {
   const { t } = useTranslation();
-  usePageTitle(t("Home"));
+  usePageTitle(t("common.home"));
 
   const clientState = useClientState();
 

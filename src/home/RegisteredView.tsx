@@ -125,15 +125,15 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         <main className={commonStyles.main}>
           <HeaderLogo className={commonStyles.logo} />
           <Heading size="lg" weight="semibold">
-            {t("Start new call")}
+            {t("start_new_call")}
           </Heading>
           <Form className={styles.form} onSubmit={onSubmit}>
             <FieldRow className={styles.fieldRow}>
               <InputField
                 id="callName"
                 name="callName"
-                label={t("Name of call")}
-                placeholder={t("Name of call")}
+                label={t("call_name")}
+                placeholder={t("call_name")}
                 type="text"
                 required
                 autoComplete="off"
@@ -147,7 +147,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
                 disabled={loading}
                 data-testid="home_go"
               >
-                {loading ? t("Loading…") : t("Go")}
+                {loading ? t("common.loading") : t("action.go")}
               </Button>
             </FieldRow>
             {optInAnalytics === null && (

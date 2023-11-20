@@ -103,7 +103,7 @@ export const SettingsModal: FC<Props> = (props) => {
 
   const optInDescription = (
     <Caption>
-      <Trans>
+      <Trans i18nKey="settings.opt_in_description">
         <AnalyticsNotice />
         <br />
         You may withdraw consent by unchecking this box. If you are currently in
@@ -121,13 +121,16 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <AudioIcon width={16} height={16} />
-          <span className={styles.tabLabel}>{t("Audio")}</span>
+          <span className={styles.tabLabel}>{t("common.audio")}</span>
         </>
       }
     >
-      {generateDeviceSelection(devices.audioInput, t("Microphone"))}
+      {generateDeviceSelection(devices.audioInput, t("common.microphone"))}
       {!isFirefox() &&
-        generateDeviceSelection(devices.audioOutput, t("Speaker"))}
+        generateDeviceSelection(
+          devices.audioOutput,
+          t("settings.speaker_device_selection_label"),
+        )}
     </TabItem>
   );
 
@@ -137,11 +140,11 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <VideoIcon width={16} height={16} />
-          <span>{t("Video")}</span>
+          <span>{t("common.video")}</span>
         </>
       }
     >
-      {generateDeviceSelection(devices.videoInput, t("Camera"))}
+      {generateDeviceSelection(devices.videoInput, t("common.camera"))}
     </TabItem>
   );
 
@@ -151,7 +154,7 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <UserIcon width={15} height={15} />
-          <span>{t("Profile")}</span>
+          <span>{t("common.profile")}</span>
         </>
       }
     >
@@ -165,7 +168,7 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <FeedbackIcon width={16} height={16} />
-          <span>{t("Feedback")}</span>
+          <span>{t("settings.feedback_tab_title")}</span>
         </>
       }
     >
@@ -179,7 +182,7 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <OverflowIcon width={16} height={16} />
-          <span>{t("More")}</span>
+          <span>{t("settings.more_tab_title")}</span>
         </>
       }
     >
@@ -190,8 +193,8 @@ export const SettingsModal: FC<Props> = (props) => {
           id="developerSettingsTab"
           type="checkbox"
           checked={developerSettingsTab}
-          label={t("Developer Settings")}
-          description={t("Expose developer settings in the settings window.")}
+          label={t("settings.developer_settings_label")}
+          description={t("settings.developer_settings_label_description")}
           onChange={(event: ChangeEvent<HTMLInputElement>): void =>
             setDeveloperSettingsTab(event.target.checked)
           }
@@ -218,13 +221,13 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <DeveloperIcon width={16} height={16} />
-          <span>{t("Developer")}</span>
+          <span>{t("settings.developer_tab_title")}</span>
         </>
       }
     >
       <FieldRow>
         <Body className={styles.fieldRowText}>
-          {t("Version: {{version}}", {
+          {t("version", {
             version: import.meta.env.VITE_APP_VERSION || "dev",
           })}
         </Body>
@@ -233,7 +236,7 @@ export const SettingsModal: FC<Props> = (props) => {
         <InputField
           id="showConnectionStats"
           name="connection-stats"
-          label={t("Show connection stats")}
+          label={t("settings.show_connection_stats_label")}
           type="checkbox"
           checked={showConnectionStats}
           onChange={(e: ChangeEvent<HTMLInputElement>): void =>
@@ -251,7 +254,7 @@ export const SettingsModal: FC<Props> = (props) => {
 
   return (
     <Modal
-      title={t("Settings")}
+      title={t("common.settings")}
       className={styles.settingsModal}
       open={props.open}
       onDismiss={props.onDismiss}
