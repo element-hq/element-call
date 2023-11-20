@@ -72,35 +72,37 @@ async function doConnect(
   }
 
   logger.info("Pre-creating microphone track");
-  const audioTracks = await livekitRoom!.localParticipant.createTracks({
-    audio: audioOptions,
-  });
-  if (audioTracks.length < 1) {
-    logger.info("Tried to pre-create local audio track but got no tracks");
-    return;
+  let preCreatedAudioTrack: LocalTrack | undefined;
+  try {
+    const audioTracks = await livekitRoom!.localParticipant.createTracks({
+      audio: audioOptions,
+    });
+    if (audioTracks.length < 1) {
+      logger.info("Tried to pre-create local audio track but got no tracks");
+    } else {
+      preCreatedAudioTrack = audioTracks[0];
+    }
+    logger.info("Pre-created microphone track");
+  } catch (e) {
+    logger.error("Failed to pre-create microphone track", e);
   }
-  if (!audioEnabled) await audioTracks[0].mute();
 
-  logger.info("Pre-created microphone track");
+  if (!audioEnabled) await preCreatedAudioTrack?.mute();
 
   // check again having awaited for the track to create
   if (livekitRoom!.localParticipant.getTrack(Track.Source.Microphone)) {
     logger.warn(
-      "Publishing pre-created audio track but participant already appears to have an microphone track: this shouldn't happen!",
+      "Pre-created audio track but participant already appears to have an microphone track: this shouldn't happen!",
     );
-    for (const t of audioTracks) {
-      t.stop();
-    }
+    preCreatedAudioTrack?.stop();
     return;
   }
 
   logger.info("Connecting & publishing");
   try {
-    await connectAndPublish(livekitRoom, sfuConfig, audioTracks[0], []);
+    await connectAndPublish(livekitRoom, sfuConfig, preCreatedAudioTrack, []);
   } catch (e) {
-    for (const t of audioTracks) {
-      t.stop();
-    }
+    preCreatedAudioTrack?.stop();
   }
 }
 

@@ -82,6 +82,8 @@ export const VideoPreview: FC<Props> = ({
     },
     (error) => {
       logger.error("Error while creating preview Tracks:", error);
+      muteStates.audio.setEnabled?.(false);
+      muteStates.video.setEnabled?.(false);
     },
   );
   const videoTrack = useMemo(
