@@ -245,11 +245,25 @@ export function useLiveKit(
               );
             }
           } catch (e) {
-            logger.error(
-              "Failed to sync audio mute state with LiveKit (will retry to sync in 1s):",
-              e,
-            );
-            setTimeout(() => syncMuteState(iterCount + 1, type), 1000);
+            if ((e as DOMException).name === "NotAllowedError") {
+              logger.error(
+                "Fatal errror while syncing mute state: resetting",
+                e,
+              );
+              if (type === MuteDevice.Microphone) {
+                audioMuteUpdating.current = false;
+                muteStates.audio.setEnabled?.(false);
+              } else {
+                videoMuteUpdating.current = false;
+                muteStates.video.setEnabled?.(false);
+              }
+            } else {
+              logger.error(
+                "Failed to sync audio mute state with LiveKit (will retry to sync in 1s):",
+                e,
+              );
+              setTimeout(() => syncMuteState(iterCount + 1, type), 1000);
+            }
           }
         }
       };
