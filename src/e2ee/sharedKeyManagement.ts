@@ -45,9 +45,10 @@ export function getKeyForRoom(roomId: string): string | null {
 function saveKeyFromUrlParams(urlParams: UrlParams): void {
   if (!urlParams.password || !urlParams.roomId) return;
 
-  // We set the Item by only using data from the url. This way we
-  // make sure, we always have matching pairs in the LocalStorage,
-  // as they occur in the call links.
+  // Take the key from the URL and save it.
+  // It's important to always use the room ID specified in the URL
+  // when saving keys rather than whatever the current room ID might be,
+  // in case we've moved to a different room but the URL hasn't changed.
   saveKeyForRoom(urlParams.roomId, urlParams.password);
 }
 
