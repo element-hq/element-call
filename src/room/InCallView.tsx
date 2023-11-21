@@ -292,6 +292,7 @@ export const InCallView: FC<InCallViewProps> = ({
           data={maximisedParticipant.data}
           showSpeakingIndicator={false}
           showConnectionStats={showConnectionStats}
+          matrixInfo={matrixInfo}
         />
       );
     }
@@ -310,6 +311,7 @@ export const InCallView: FC<InCallViewProps> = ({
             onToggleFullscreen={toggleFullscreen}
             showSpeakingIndicator={items.length > 2}
             showConnectionStats={showConnectionStats}
+            matrixInfo={matrixInfo}
             {...props}
             ref={props.ref as Ref<HTMLDivElement>}
           />

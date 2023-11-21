@@ -88,11 +88,11 @@ limitations under the License.
   flex-shrink: 0;
 }
 
-.nameTag > svg[data-muted="true"] {
+.muteIcon[data-muted="true"] {
   color: var(--cpd-color-icon-secondary);
 }
 
-.nameTag > svg[data-muted="false"] {
+.muteIcon[data-muted="false"] {
   color: var(--cpd-color-icon-primary);
 }
 
@@ -101,6 +101,10 @@ limitations under the License.
   overflow: hidden;
   white-space: nowrap;
   padding-inline: var(--cpd-space-2x);
+}
+
+.errorIcon {
+  color: var(--cpd-color-icon-critical-primary);
 }
 
 .toolbar {

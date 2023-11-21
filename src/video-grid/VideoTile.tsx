@@ -36,13 +36,15 @@ import {
 } from "matrix-js-sdk/src/models/room-member";
 import MicOnSolidIcon from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg?react";
 import MicOffSolidIcon from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg?react";
-import { Text } from "@vector-im/compound-web";
+import ErrorIcon from "@vector-im/compound-design-tokens/icons/error.svg?react";
+import { Text, Tooltip } from "@vector-im/compound-web";
 
 import { Avatar } from "../Avatar";
 import styles from "./VideoTile.module.css";
 import { useReactiveState } from "../useReactiveState";
 import { AudioButton, FullscreenButton } from "../button/Button";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
+import { MatrixInfo } from "../room/VideoPreview";
 
 export interface ItemData {
   id: string;
@@ -68,6 +70,9 @@ interface Props {
   style?: ComponentProps<typeof animated.div>["style"];
   showSpeakingIndicator: boolean;
   showConnectionStats: boolean;
+  // TODO: This dependency in particular should probably not be here. We can fix
+  // this with a view model.
+  matrixInfo: MatrixInfo;
 }
 
 export const VideoTile = forwardRef<HTMLDivElement, Props>(
@@ -83,6 +88,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       targetHeight,
       showSpeakingIndicator,
       showConnectionStats,
+      matrixInfo,
     },
     tileRef,
   ) => {
@@ -108,13 +114,22 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       }
     }, [member, setDisplayName]);
 
-    const muted =
-      useMediaTrack(
-        content === TileContent.UserMedia
-          ? Track.Source.Microphone
-          : Track.Source.ScreenShareAudio,
-        sfuParticipant,
-      ).isMuted !== false;
+    const audioInfo = useMediaTrack(
+      content === TileContent.UserMedia
+        ? Track.Source.Microphone
+        : Track.Source.ScreenShareAudio,
+      sfuParticipant,
+    );
+    const videoInfo = useMediaTrack(
+      content === TileContent.UserMedia
+        ? Track.Source.Camera
+        : Track.Source.ScreenShare,
+      sfuParticipant,
+    );
+    const muted = audioInfo.isMuted !== false;
+    const encrypted =
+      audioInfo.publication?.isEncrypted !== false &&
+      videoInfo.publication?.isEncrypted !== false;
 
     const MicIcon = muted ? MicOffSolidIcon : MicOnSolidIcon;
 
@@ -202,12 +217,29 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
               height={20}
               aria-label={muted ? t("microphone_off") : t("microphone_on")}
               data-muted={muted}
+              className={styles.muteIcon}
             />
             <Text as="span" size="sm" weight="medium">
               {sfuParticipant.isLocal
                 ? t("video_tile.sfu_participant_local")
                 : displayName}
             </Text>
+            {matrixInfo.roomEncrypted && !encrypted && (
+              <Tooltip label={t("common.unencrypted")} side="bottom">
+                <ErrorIcon
+                  width={20}
+                  height={20}
+                  aria-label={t("common.unencrypted")}
+                  className={styles.errorIcon}
+                  // Make the icon focusable so that the tooltip can be opened
+                  // with keyboard navigation
+                  // TODO: Replace this with the solution from
+                  // https://github.com/vector-im/compound-web/pull/130 once it
+                  // lands
+                  tabIndex={0}
+                />
+              </Tooltip>
+            )}
             {showConnectionStats && (
               <ConnectionQualityIndicator participant={sfuParticipant} />
             )}
