@@ -76,9 +76,6 @@ export const GroupCallView: FC<Props> = ({
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
 
-  const e2eeSharedKey = useRoomSharedKey(rtcSession.room.roomId);
-  const isRoomE2EE = useIsRoomE2EE(rtcSession.room.roomId);
-
   useEffect(() => {
     window.rtcSession = rtcSession;
     return () => {
@@ -89,8 +86,10 @@ export const GroupCallView: FC<Props> = ({
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(rtcSession.room);
   const roomAvatar = useRoomAvatar(rtcSession.room);
-  const roomEncrypted = useIsRoomE2EE(rtcSession.room.roomId)!;
+  const e2eeSharedKey = useRoomSharedKey(rtcSession.room.roomId);
   const { perParticipantE2EE } = useUrlParams();
+  const roomEncrypted =
+    useIsRoomE2EE(rtcSession.room.roomId) || perParticipantE2EE;
 
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
@@ -289,7 +288,7 @@ export const GroupCallView: FC<Props> = ({
 
   const { t } = useTranslation();
 
-  if (isRoomE2EE && !perParticipantE2EE && !e2eeSharedKey) {
+  if (roomEncrypted && !perParticipantE2EE && !e2eeSharedKey) {
     return (
       <ErrorView
         error={
@@ -299,7 +298,7 @@ export const GroupCallView: FC<Props> = ({
         }
       />
     );
-  } else if (!isE2EESupported() && isRoomE2EE) {
+  } else if (!isE2EESupported() && roomEncrypted) {
     return (
       <FullScreenView>
         <Heading>Incompatible Browser</Heading>
