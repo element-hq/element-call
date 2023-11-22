@@ -3342,24 +3342,19 @@
     "@types/node" "*"
 
 "@types/grecaptcha@^3.0.4":
-  version "3.0.6"
-  resolved "https://registry.yarnpkg.com/@types/grecaptcha/-/grecaptcha-3.0.6.tgz#2b03c8afd0d9f0cc4a239a91ae57f11b329155f6"
-  integrity sha512-4BR/3v+pbiRt3cwRwibFnV4+LmuvRUjVVqgeCul9ODAyQhlPKE4tIIRJwZUeWWpmX8e9vo/xXuQTQl8FJPP7KA==
+  version "3.0.7"
+  resolved "https://registry.yarnpkg.com/@types/grecaptcha/-/grecaptcha-3.0.7.tgz#a74e987d4c550765fd805f091f62104c6c52a19a"
+  integrity sha512-ah5GDQfsiK3dnkaCbYcDFZXkZCG3o90VRu9hzXHnSe4kACrRB1KUI/ZyWHvYmqm1W5Tl8B5YxxT98uGTlkbf2Q==
 
 "@types/history@^4.7.11":
   version "4.7.11"
   resolved "https://registry.yarnpkg.com/@types/history/-/history-4.7.11.tgz#56588b17ae8f50c53983a524fc3cc47437969d64"
   integrity sha512-qjDJRrmvBMiTx+jyLxvLfJU7UznFuokDv4f3WRuriHKERccVpFU+8XMQUAbDzoiJCsmexxRExQeMwwCdamSKDA==
 
-"@types/istanbul-lib-coverage@*", "@types/istanbul-lib-coverage@^2.0.0":
+"@types/istanbul-lib-coverage@*", "@types/istanbul-lib-coverage@^2.0.0", "@types/istanbul-lib-coverage@^2.0.1":
   version "2.0.6"
   resolved "https://registry.yarnpkg.com/@types/istanbul-lib-coverage/-/istanbul-lib-coverage-2.0.6.tgz#7739c232a1fee9b4d3ce8985f314c0c6d33549d7"
   integrity sha512-2QF/t/auWm0lsy8XtKVPG19v3sSOQlJe/YHZgfjb/KBBHOGSV+J2q/S671rcq9uTBrLAXmZpqJiaQbMT+zNU1w==
-
-"@types/istanbul-lib-coverage@^2.0.1":
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/@types/istanbul-lib-coverage/-/istanbul-lib-coverage-2.0.5.tgz#fdfdd69fa16d530047d9963635bd77c71a08c068"
-  integrity sha512-zONci81DZYCZjiLe0r6equvZut0b+dBRPBN5kBDjsONnutYNtJMoWQ9uR2RkL1gLG9NMTzvf+29e5RFfPbeKhQ==
 
 "@types/istanbul-lib-report@*":
   version "3.0.3"
