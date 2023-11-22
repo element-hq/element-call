@@ -302,7 +302,7 @@ export const GroupCallView: FC<Props> = ({
   } else if (!isE2EESupported() && isRoomE2EE) {
     return (
       <FullScreenView>
-        <Heading>Incompatible Browser</Heading>
+        <Heading>{t("browser_media_e2ee_unsupported_heading")}</Heading>
         <Text>{t("browser_media_e2ee_unsupported")}</Text>
         <Link href="/" onClick={onHomeClick}>
           {t("common.home")}

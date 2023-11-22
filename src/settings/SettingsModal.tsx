@@ -186,8 +186,12 @@ export const SettingsModal: FC<Props> = (props) => {
         </>
       }
     >
-      <h4>Developer</h4>
-      <p>Version: {(import.meta.env.VITE_APP_VERSION as string) || "dev"}</p>
+      <h4>{t("settings.developer_tab_title")}</h4>
+      <p>
+        {t("version", {
+          version: import.meta.env.VITE_APP_VERSION || "dev",
+        })}
+      </p>
       <FieldRow>
         <InputField
           id="developerSettingsTab"
@@ -200,7 +204,7 @@ export const SettingsModal: FC<Props> = (props) => {
           }
         />
       </FieldRow>
-      <h4>Analytics</h4>
+      <h4>{t("common.analytics")}</h4>
       <FieldRow>
         <InputField
           id="optInAnalytics"
