@@ -90,8 +90,8 @@ export const LoginPage: FC = () => {
           <div className={styles.formContainer}>
             <Logo width="auto" height="auto" className={styles.logo} />
 
-            <h2>Log In</h2>
-            <h4>To continue to Element</h4>
+            <h2>{t("log_in")}</h2>
+            <h4>{t("login_subheading")}</h4>
             <form onSubmit={onSubmitLoginForm}>
               <FieldRow>
                 <InputField
@@ -132,7 +132,7 @@ export const LoginPage: FC = () => {
             </form>
           </div>
           <div className={styles.authLinks}>
-            <p>Not registered yet?</p>
+            <p>{t("login_auth_links_prompt")}</p>
             <p>
               <Trans i18nKey="login_auth_links">
                 <Link to="/register">Create an account</Link>
