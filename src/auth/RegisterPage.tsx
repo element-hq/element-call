@@ -166,7 +166,7 @@ export const RegisterPage: FC = () => {
         <div className={styles.content}>
           <div className={styles.formContainer}>
             <Logo width="auto" height="auto" className={styles.logo} />
-            <h2>Create your account</h2>
+            <h2>{t("register_heading")}</h2>
             <form onSubmit={onSubmitRegisterForm}>
               <FieldRow>
                 <InputField
