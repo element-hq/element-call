@@ -47,7 +47,7 @@
     "@types/lodash": "^4.14.199",
     "@use-gesture/react": "^10.2.11",
     "@vector-im/compound-design-tokens": "^0.1.0",
-    "@vector-im/compound-web": "^0.6.0",
+    "@vector-im/compound-web": "^0.9.0",
     "@vitejs/plugin-basic-ssl": "^1.0.1",
     "@vitejs/plugin-react": "^4.0.1",
     "buffer": "^6.0.3",
