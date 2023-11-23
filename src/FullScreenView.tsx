@@ -71,7 +71,7 @@ export const ErrorView: FC<ErrorViewProps> = ({ error }) => {
 
   return (
     <FullScreenView>
-      <h1>Error</h1>
+      <h1>{t("common.error")}</h1>
       <p>
         {error instanceof TranslatedError
           ? error.translatedMessage
