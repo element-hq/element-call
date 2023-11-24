@@ -44,9 +44,10 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import { E2EEConfig } from "../livekit/useLiveKit";
+import { E2EEConfig, useLiveKit } from "../livekit/useLiveKit";
 import { useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
+import { useOpenIDSFU } from "../livekit/openIDSFU";
 
 declare global {
   interface Window {
@@ -125,6 +126,23 @@ export const GroupCallView: FC<Props> = ({
   const muteStates = useMuteStates(memberships.length);
   const latestMuteStates = useRef<MuteStates>();
   latestMuteStates.current = muteStates;
+
+  const e2eeConfig = useMemo((): E2EEConfig => {
+    if (perParticipantE2EE) {
+      return { mode: E2eeType.PER_PARTICIPANT };
+    } else if (e2eeSharedKey) {
+      return { mode: E2eeType.SHARED_KEY, sharedKey: e2eeSharedKey };
+    } else {
+      return { mode: E2eeType.NONE };
+    }
+  }, [perParticipantE2EE, e2eeSharedKey]);
+  const sfuConfig = useOpenIDSFU(client, rtcSession);
+  const { livekitRoom, connState } = useLiveKit(
+    rtcSession,
+    muteStates,
+    sfuConfig,
+    e2eeConfig,
+  );
 
   useEffect(() => {
     // this effect is only if we don't want to show the lobby (skipLobby = true)
@@ -220,7 +238,7 @@ export const GroupCallView: FC<Props> = ({
         sendInstantly,
       );
 
-      await leaveRTCSession(rtcSession);
+      await leaveRTCSession(rtcSession, livekitRoom);
 
       if (
         !isPasswordlessUser &&
@@ -230,7 +248,7 @@ export const GroupCallView: FC<Props> = ({
         history.push("/");
       }
     },
-    [rtcSession, isPasswordlessUser, confineToRoom, history],
+    [rtcSession, livekitRoom, isPasswordlessUser, confineToRoom, history],
   );
 
   useEffect(() => {
@@ -239,24 +257,14 @@ export const GroupCallView: FC<Props> = ({
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
         widget!.api.transport.reply(ev.detail, {});
-        await leaveRTCSession(rtcSession);
+        await leaveRTCSession(rtcSession, livekitRoom);
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
       return () => {
         widget!.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
       };
     }
-  }, [isJoined, rtcSession]);
-
-  const e2eeConfig = useMemo((): E2EEConfig => {
-    if (perParticipantE2EE) {
-      return { mode: E2eeType.PER_PARTICIPANT };
-    } else if (e2eeSharedKey) {
-      return { mode: E2eeType.SHARED_KEY, sharedKey: e2eeSharedKey };
-    } else {
-      return { mode: E2eeType.NONE };
-    }
-  }, [perParticipantE2EE, e2eeSharedKey]);
+  }, [isJoined, livekitRoom, rtcSession]);
 
   const onReconnect = useCallback(() => {
     setLeft(false);
@@ -318,11 +326,13 @@ export const GroupCallView: FC<Props> = ({
     />
   );
 
-  if (isJoined) {
+  if (isJoined && livekitRoom) {
     return (
       <>
         {shareModal}
         <ActiveCall
+          livekitRoom={livekitRoom}
+          connState={connState}
           client={client}
           matrixInfo={matrixInfo}
           rtcSession={rtcSession}
