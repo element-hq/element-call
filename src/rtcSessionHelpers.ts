@@ -71,8 +71,8 @@ export async function leaveRTCSession(
   rtcSession: MatrixRTCSession,
   livekitRoom: Room | undefined,
 ): Promise<void> {
-  await livekitRoom?.disconnect();
   await rtcSession.leaveRoomSession();
+  await livekitRoom?.disconnect();
   if (widget) {
     await widgetPostHangupProcedure(widget);
   }
