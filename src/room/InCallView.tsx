@@ -72,7 +72,7 @@ import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { E2EEConfig } from "../livekit/useLiveKit";
+import { E2EEConfig, useLiveKit } from "../livekit/useLiveKit";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
 import { useWakeLock } from "../useWakeLock";
@@ -85,6 +85,7 @@ import {
   ECAddonConnectionState,
   ECConnectionState,
 } from "../livekit/useECConnectionState";
+import { useOpenIDSFU } from "../livekit/openIDSFU";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
@@ -92,22 +93,32 @@ const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 // How long we wait after a focus switch before showing the real participant list again
 const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 
-export interface ActiveCallProps extends InCallViewProps {
+export interface ActiveCallProps
+  extends Omit<InCallViewProps, "livekitRoom" | "connState"> {
   e2eeConfig: E2EEConfig;
 }
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
-  if (!props.livekitRoom) {
-    return null;
-  }
+  const sfuConfig = useOpenIDSFU(props.client, props.rtcSession);
+  const { livekitRoom, connState } = useLiveKit(
+    props.rtcSession,
+    props.muteStates,
+    sfuConfig,
+    props.e2eeConfig,
+  );
+
+  useEffect(() => {
+    return () => {
+      livekitRoom?.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  if (!livekitRoom) return null;
 
   return (
-    <RoomContext.Provider value={props.livekitRoom}>
-      <InCallView
-        {...props}
-        livekitRoom={props.livekitRoom}
-        connState={props.connState}
-      />
+    <RoomContext.Provider value={livekitRoom}>
+      <InCallView {...props} livekitRoom={livekitRoom} connState={connState} />
     </RoomContext.Provider>
   );
 };
@@ -192,14 +203,6 @@ export const InCallView: FC<InCallViewProps> = ({
     toggleCamera,
     (muted) => muteStates.audio.setEnabled?.(!muted),
   );
-
-  const onLeavePress = useCallback(() => {
-    // Disconnect from the room. We don't do this in onLeave because that's
-    // also called on an unintentional disconnect. Plus we don't have the
-    // livekit room in onLeave anyway.
-    livekitRoom.disconnect();
-    onLeave();
-  }, [livekitRoom, onLeave]);
 
   useEffect(() => {
     widget?.api.transport.send(
@@ -380,7 +383,9 @@ export const InCallView: FC<InCallViewProps> = ({
     buttons.push(
       <HangupButton
         key="6"
-        onPress={onLeavePress}
+        onPress={function (): void {
+          onLeave();
+        }}
         data-testid="incall_leave"
       />,
     );
