@@ -109,9 +109,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   useEffect(() => {
     return () => {
-      if (connState === ConnectionState.Connected) {
-        livekitRoom?.disconnect();
-      }
+      livekitRoom?.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
