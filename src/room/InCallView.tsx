@@ -109,7 +109,9 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   useEffect(() => {
     return () => {
-      livekitRoom?.disconnect();
+      if (connState === ConnectionState.Connected) {
+        livekitRoom?.disconnect();
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -381,7 +383,13 @@ export const InCallView: FC<InCallViewProps> = ({
     }
 
     buttons.push(
-      <HangupButton key="6" onPress={onLeave} data-testid="incall_leave" />,
+      <HangupButton
+        key="6"
+        onPress={function (): void {
+          onLeave();
+        }}
+        data-testid="incall_leave"
+      />,
     );
     footer = (
       <div
