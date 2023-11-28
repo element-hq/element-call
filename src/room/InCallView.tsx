@@ -107,15 +107,12 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     props.e2eeConfig,
   );
 
-  const cleanup = useCallback(() => {
-    if (connState === ConnectionState.Connected) {
-      livekitRoom?.disconnect();
-    }
-  }, [livekitRoom, connState]);
-
   useEffect(() => {
-    return cleanup;
-  }, [cleanup, livekitRoom]);
+    return () => {
+      livekitRoom?.disconnect();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!livekitRoom) return null;
 
@@ -206,14 +203,6 @@ export const InCallView: FC<InCallViewProps> = ({
     toggleCamera,
     (muted) => muteStates.audio.setEnabled?.(!muted),
   );
-
-  const onLeavePress = useCallback(() => {
-    // Disconnect from the room. We don't do this in onLeave because that's
-    // also called on an unintentional disconnect. Plus we don't have the
-    // livekit room in onLeave anyway.
-    livekitRoom.disconnect();
-    onLeave();
-  }, [livekitRoom, onLeave]);
 
   useEffect(() => {
     widget?.api.transport.send(
@@ -392,11 +381,7 @@ export const InCallView: FC<InCallViewProps> = ({
     }
 
     buttons.push(
-      <HangupButton
-        key="6"
-        onPress={onLeavePress}
-        data-testid="incall_leave"
-      />,
+      <HangupButton key="6" onPress={onLeave} data-testid="incall_leave" />,
     );
     footer = (
       <div
