@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { Room } from "livekit-client";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { LivekitFocus } from "./livekit/LivekitFocus";
@@ -69,9 +68,7 @@ const widgetPostHangupProcedure = async (
 
 export async function leaveRTCSession(
   rtcSession: MatrixRTCSession,
-  livekitRoom: Room | undefined,
 ): Promise<void> {
-  await livekitRoom?.disconnect();
   await rtcSession.leaveRoomSession();
   if (widget) {
     await widgetPostHangupProcedure(widget);

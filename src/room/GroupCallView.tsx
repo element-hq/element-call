@@ -44,10 +44,9 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import { E2EEConfig, useLiveKit } from "../livekit/useLiveKit";
+import { E2EEConfig } from "../livekit/useLiveKit";
 import { useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
-import { useOpenIDSFU } from "../livekit/openIDSFU";
 
 declare global {
   interface Window {
@@ -136,13 +135,6 @@ export const GroupCallView: FC<Props> = ({
       return { mode: E2eeType.NONE };
     }
   }, [perParticipantE2EE, e2eeSharedKey]);
-  const sfuConfig = useOpenIDSFU(client, rtcSession);
-  const { livekitRoom, connState } = useLiveKit(
-    rtcSession,
-    muteStates,
-    sfuConfig,
-    e2eeConfig,
-  );
 
   useEffect(() => {
     // this effect is only if we don't want to show the lobby (skipLobby = true)
@@ -238,7 +230,8 @@ export const GroupCallView: FC<Props> = ({
         sendInstantly,
       );
 
-      await leaveRTCSession(rtcSession, livekitRoom);
+      // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
+      await leaveRTCSession(rtcSession);
 
       if (
         !isPasswordlessUser &&
@@ -248,7 +241,7 @@ export const GroupCallView: FC<Props> = ({
         history.push("/");
       }
     },
-    [rtcSession, livekitRoom, isPasswordlessUser, confineToRoom, history],
+    [rtcSession, isPasswordlessUser, confineToRoom, history],
   );
 
   useEffect(() => {
@@ -257,14 +250,15 @@ export const GroupCallView: FC<Props> = ({
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
         widget!.api.transport.reply(ev.detail, {});
-        await leaveRTCSession(rtcSession, livekitRoom);
+        // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
+        await leaveRTCSession(rtcSession);
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
       return () => {
         widget!.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
       };
     }
-  }, [isJoined, livekitRoom, rtcSession]);
+  }, [isJoined, rtcSession]);
 
   const onReconnect = useCallback(() => {
     setLeft(false);
@@ -326,13 +320,11 @@ export const GroupCallView: FC<Props> = ({
     />
   );
 
-  if (isJoined && livekitRoom) {
+  if (isJoined) {
     return (
       <>
         {shareModal}
         <ActiveCall
-          livekitRoom={livekitRoom}
-          connState={connState}
           client={client}
           matrixInfo={matrixInfo}
           rtcSession={rtcSession}
