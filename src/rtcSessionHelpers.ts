@@ -70,6 +70,7 @@ export async function leaveRTCSession(
   rtcSession: MatrixRTCSession,
 ): Promise<void> {
   await rtcSession.leaveRoomSession();
+  // there is no livekitRoom here...
   if (widget) {
     await widgetPostHangupProcedure(widget);
   }
