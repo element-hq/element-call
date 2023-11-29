@@ -22,7 +22,9 @@
     "text": "Bereit, beizutreten?",
     "title": "App auswählen"
   },
+  "application_opened_another_tab": "Diese Anwendung wurde in einem anderen Tab geöffnet.",
   "browser_media_e2ee_unsupported": "Dein Webbrowser unterstützt keine Medien-Ende-zu-Ende-Verschlüsselung. Unterstützte Browser sind Chrome, Safari, Firefox >=117",
+  "browser_media_e2ee_unsupported_heading": "Inkompatibler Browser",
   "call_ended_view": {
     "body": "Deine Verbindung wurde getrennt",
     "create_account_button": "Konto erstellen",
@@ -36,10 +38,13 @@
   },
   "call_name": "Name des Anrufs",
   "common": {
+    "audio": "Audio",
+    "avatar": "Profilbild",
     "camera": "Kamera",
     "copied": "Kopiert!",
     "display_name": "Anzeigename",
     "encrypted": "Verschlüsselt",
+    "error": "Fehler",
     "home": "Startseite",
     "loading": "Lade …",
     "microphone": "Mikrofon",
@@ -47,7 +52,8 @@
     "profile": "Profil",
     "settings": "Einstellungen",
     "unencrypted": "Nicht verschlüsselt",
-    "username": "Benutzername"
+    "username": "Benutzername",
+    "video": "Video"
   },
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
   "exit_fullscreen_button_label": "Vollbildmodus verlassen",
@@ -75,8 +81,11 @@
     "leave_button": "Zurück zu kürzlichen Anrufen"
   },
   "local_volume_label": "Lokale Lautstärke",
+  "log_in": "Anmelden",
   "logging_in": "Anmelden …",
   "login_auth_links": "<0>Konto erstellen</0> Oder <2>Als Gast betreten</2>",
+  "login_auth_links_prompt": "Noch nicht registriert?",
+  "login_subheading": "Weiter zu Element",
   "login_title": "Anmelden",
   "microphone_off": "Mikrofon aus",
   "microphone_on": "Mikrofon an",
@@ -130,6 +139,7 @@
   "unauthenticated_view_eula_caption": "Mit einem Klick auf „Los geht’s“ akzeptierst du unseren <2>Endbenutzer-Lizenzvertrag (EULA)</2>",
   "unauthenticated_view_login_button": "Melde dich mit deinem Konto an",
   "unmute_microphone_button_label": "Mikrofon aktivieren",
+  "version": "Version: {{version}}",
   "video_tile": {
     "presenter_label": "{{displayName}} präsentiert",
     "sfu_participant_local": "Du"
