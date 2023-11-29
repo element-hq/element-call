@@ -2161,25 +2161,14 @@
     "@opentelemetry/sdk-trace-web" "^1.15.0"
     "@opentelemetry/semantic-conventions" "^1.0.0"
 
-"@opentelemetry/instrumentation-user-interaction@^0.33.0":
-  version "0.33.2"
-  resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation-user-interaction/-/instrumentation-user-interaction-0.33.2.tgz#a4ac68d51fccc93ef3157f7f58747d7fe90a605e"
-  integrity sha512-+9fxN9zlO2YKX5rajw8W9O4aCl9keyjI6VSGnnFiB5+zYDxzE55B7aTa8LAW6unz+kOYalHSwizkDa1mduGLCg==
+"@opentelemetry/instrumentation-user-interaction@^0.34.0":
+  version "0.34.0"
+  resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation-user-interaction/-/instrumentation-user-interaction-0.34.0.tgz#009cd7a8791717c98f1e352adaae2bfeee8381de"
+  integrity sha512-QN/8IwnoAjI92Mtc4vnatI3x+KSAoGOpILhVlm9dyGu9PtXJSdYpGqc9PZleJx4SKuLmVjjktSZTQllXNqgU5A==
   dependencies:
     "@opentelemetry/core" "^1.8.0"
-    "@opentelemetry/instrumentation" "^0.44.0"
+    "@opentelemetry/instrumentation" "^0.45.1"
     "@opentelemetry/sdk-trace-web" "^1.8.0"
-
-"@opentelemetry/instrumentation@^0.44.0":
-  version "0.44.0"
-  resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation/-/instrumentation-0.44.0.tgz#194f16fc96671575b6bd73d3fadffb5aa4497e67"
-  integrity sha512-B6OxJTRRCceAhhnPDBshyQO7K07/ltX3quOLu0icEvPK9QZ7r9P1y0RQX8O5DxB4vTv4URRkxkg+aFU/plNtQw==
-  dependencies:
-    "@types/shimmer" "^1.0.2"
-    import-in-the-middle "1.4.2"
-    require-in-the-middle "^7.1.1"
-    semver "^7.5.2"
-    shimmer "^1.2.1"
 
 "@opentelemetry/instrumentation@^0.45.1":
   version "0.45.1"
