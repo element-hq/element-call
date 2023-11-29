@@ -16,7 +16,6 @@ limitations under the License.
 
 import {
   ComponentProps,
-  Key,
   MutableRefObject,
   ReactNode,
   Ref,
@@ -812,7 +811,7 @@ export function reorderTiles<T>(
 interface DragTileData {
   offsetX: number;
   offsetY: number;
-  key: Key;
+  key: string;
   x: number;
   y: number;
 }
@@ -872,7 +871,7 @@ export function VideoGrid<T>({
   });
   const [scrollPosition, setScrollPosition] = useState<number>(0);
   const draggingTileRef = useRef<DragTileData | null>(null);
-  const lastTappedRef = useRef<{ [index: Key]: number }>({});
+  const lastTappedRef = useRef<{ [index: string]: number }>({});
   const lastLayoutRef = useRef<Layout>(layout);
   const isMounted = useIsMounted();
 
@@ -887,7 +886,7 @@ export function VideoGrid<T>({
   useEffect(() => {
     setTileState(({ tiles, ...rest }) => {
       const newTiles: Tile<T>[] = [];
-      const removedTileKeys: Set<Key> = new Set();
+      const removedTileKeys: Set<string> = new Set();
 
       for (const tile of tiles) {
         let item = items.find((item) => item.id === tile.key);
@@ -1149,7 +1148,7 @@ export function VideoGrid<T>({
   ]) as unknown as [SpringValues<TileSpring>[], SpringRef<TileSpring>];
 
   const onTap = useCallback(
-    (tileKey: Key) => {
+    (tileKey: string) => {
       const lastTapped = lastTappedRef.current[tileKey];
 
       if (!lastTapped || Date.now() - lastTapped > 500) {
