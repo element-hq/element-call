@@ -2083,10 +2083,10 @@
   resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.4.0.tgz#08d6c5e20cf7e4cc02fd181c4b0c225cd31dbb60"
   integrity sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==
 
-"@livekit/components-core@0.8.1":
-  version "0.8.1"
-  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.8.1.tgz#40efb867c9fc5c9c3ee37055fb307a3ed41b24ed"
-  integrity sha512-0pe+xRIuDObJNGv9Khn+RxHVGL2bit45ORLu+u3UoiAEt1V+pR2XldN6lW6pChuEBY1KLUuuS3h1EbcxrIkYOw==
+"@livekit/components-core@0.8.2":
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.8.2.tgz#b5bf5190b742900647b9df49d696bf42f7ab4f02"
+  integrity sha512-vDSbNabKp9NJrjg1HOa+gwwUT2cMYhNWMaojM/XvK0UAJwRjEj6RpJMWxyI1EVdRBnsuipCiRHMQW87HzB50iA==
   dependencies:
     "@floating-ui/dom" "^1.1.0"
     email-regex "^5.0.0"
@@ -2094,11 +2094,11 @@
     rxjs "^7.8.0"
 
 "@livekit/components-react@^1.1.0":
-  version "1.4.1"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-1.4.1.tgz#c17e2ad4162d492ebdb5827a9f9b71d908b61322"
-  integrity sha512-k8zJhr9JfYqClhR6mifpH0z7pO1imKu3/ytjG2P6L1GM4SYT3GGOJV3TPwrNn35glHY2TveHvHjWLh7JHiNF3w==
+  version "1.4.2"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-1.4.2.tgz#f4b09621a244fa832803ca0fc4b200a548dc3b8d"
+  integrity sha512-Na2fMdjVF0Uw/qPa0Z30nDNrw2nZ0nRUzUnTsiBETkIii83yS7HYJ4vSoWPs2TiY2ALXaryJDM0786CdakhHyg==
   dependencies:
-    "@livekit/components-core" "0.8.1"
+    "@livekit/components-core" "0.8.2"
     "@react-hook/latest" "^1.0.3"
     clsx "^2.0.0"
     usehooks-ts "^2.9.1"
