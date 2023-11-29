@@ -7,5 +7,19 @@
       "matchPackagePatterns": ["matrix-js-sdk"],
       "enabled": false
     }
+  ],
+  "ignoreDeps": [
+    "@react-aria/button",
+    "@react-aria/focus",
+    "@react-aria/menu",
+    "@react-aria/overlays",
+    "@react-aria/select",
+    "@react-aria/tabs",
+    "@react-aria/tooltip",
+    "@react-aria/utils",
+    "@react-stately/collections",
+    "@react-stately/select",
+    "@react-stately/tooltip",
+    "@react-stately/tree"
   ]
 }
