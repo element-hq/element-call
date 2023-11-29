@@ -3591,19 +3591,19 @@
   integrity sha512-hppQEBDmlwhFAXKJX2KnWLYu5yMfi91yazPb2l+lbJiwW+wdo1gNeRA+3RgNSO39WYX2euey41KEwnqesU2Jew==
 
 "@types/sdp-transform@^2.4.5":
-  version "2.4.8"
-  resolved "https://registry.yarnpkg.com/@types/sdp-transform/-/sdp-transform-2.4.8.tgz#1a59a6b66423d96c3aa6683bf3e0b60bd59a14d4"
-  integrity sha512-mmsb0R0IARu7/H4wWbPq7yPC9K2hXNIECJ/8y+CM9/2LA6axlr0TKLko4BEt4k5MK7SmGm+pvNs1u01OmIM77g==
+  version "2.4.9"
+  resolved "https://registry.yarnpkg.com/@types/sdp-transform/-/sdp-transform-2.4.9.tgz#26ef39f487a6909b0512f580b80920a366b27f52"
+  integrity sha512-bVr+/OoZZy7wrHlNcEAAa6PAgKA4BoXPYVN2EijMC5WnGgQ4ZEuixmKnVs2roiAvr7RhIFVH17QD27cojgIZCg==
 
 "@types/semver@^7.5.0":
-  version "7.5.4"
-  resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.5.4.tgz#0a41252ad431c473158b22f9bfb9a63df7541cff"
-  integrity sha512-MMzuxN3GdFwskAnb6fz0orFvhfqi752yjaXylr0Rp4oDg5H0Zn1IuyRhDVvYOwAXoJirx2xuS16I3WjxnAIHiQ==
+  version "7.5.5"
+  resolved "https://registry.yarnpkg.com/@types/semver/-/semver-7.5.5.tgz#deed5ab7019756c9c90ea86139106b0346223f35"
+  integrity sha512-+d+WYC1BxJ6yVOgUgzK8gWvp5qF8ssV5r4nsDcZWKRWcDQLQ619tvWAxJQYGgBrO1MnLJC7a5GtiYsAoQ47dJg==
 
 "@types/shimmer@^1.0.2":
-  version "1.0.4"
-  resolved "https://registry.yarnpkg.com/@types/shimmer/-/shimmer-1.0.4.tgz#8fa2317517280ecdd64078afc010809cb67c37b7"
-  integrity sha512-hsughtxFsdJ9+Gxd/qH8zHE+KT6YEAxx9hJLoSXhxTBKHMQ2NMhN23fRJ75M9RRn2hDMNn13H3gS1EktA9VgDA==
+  version "1.0.5"
+  resolved "https://registry.yarnpkg.com/@types/shimmer/-/shimmer-1.0.5.tgz#491d8984d4510e550bfeb02d518791d7f59d2b88"
+  integrity sha512-9Hp0ObzwwO57DpLFF0InUjUm/II8GmKAvzbefxQTihCb7KI6yc9yzf0nLc4mVdby5N4DRCgQM2wCup9KTieeww==
 
 "@types/stack-utils@^2.0.0":
   version "2.0.3"
@@ -3611,19 +3611,19 @@
   integrity sha512-9aEbYZ3TbYMznPdcdr3SmIrLXwC/AKZXQeCf9Pgao5CKb8CyHuEX5jzWPTkvregvhRJHcpRO6BFoGW9ycaOkYw==
 
 "@types/symlink-or-copy@^1.2.0":
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/@types/symlink-or-copy/-/symlink-or-copy-1.2.1.tgz#9696b4620e59fd613f2895535c498be5d536bb02"
-  integrity sha512-8LQKxlJ8zXQ5U0wFXTSBXLHg8+oBbLMJXEC6vOqhL+iz8EfVvSxfdwtvq8ufkT9pumab0ntnvYXQBF/+cxzl9w==
+  version "1.2.2"
+  resolved "https://registry.yarnpkg.com/@types/symlink-or-copy/-/symlink-or-copy-1.2.2.tgz#51b1c00b516a5774ada5d611e65eb123f988ef8d"
+  integrity sha512-MQ1AnmTLOncwEf9IVU+B2e4Hchrku5N67NkgcAHW0p3sdzPe0FNMANxEm6OJUzPniEQGkeT3OROLlCwZJLWFZA==
 
 "@types/tough-cookie@*":
-  version "4.0.4"
-  resolved "https://registry.yarnpkg.com/@types/tough-cookie/-/tough-cookie-4.0.4.tgz#cf2f0c7c51b985b6afecea73eb2cd65421ecb717"
-  integrity sha512-95Sfz4nvMAb0Nl9DTxN3j64adfwfbBPEYq14VN7zT5J5O2M9V6iZMIIQU1U+pJyl9agHYHNCqhCXgyEtIRRa5A==
+  version "4.0.5"
+  resolved "https://registry.yarnpkg.com/@types/tough-cookie/-/tough-cookie-4.0.5.tgz#cb6e2a691b70cb177c6e3ae9c1d2e8b2ea8cd304"
+  integrity sha512-/Ad8+nIOV7Rl++6f1BdKxFSMgmoqEoYbHRpPcx3JEfv8VRsQe9Z4mCXeJBzxs7mbHY/XOZZuXlRNfhpVPbs6ZA==
 
 "@types/trusted-types@*":
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/@types/trusted-types/-/trusted-types-2.0.5.tgz#5cac7e7df3275bb95f79594f192d97da3b4fd5fe"
-  integrity sha512-I3pkr8j/6tmQtKV/ZzHtuaqYSQvyjGRKH4go60Rr0IDLlFxuRT5V32uvB1mecM5G1EVAUyF/4r4QZ1GHgz+mxA==
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/@types/trusted-types/-/trusted-types-2.0.6.tgz#d12451beaeb9c3838f12024580dc500b7e88b0ad"
+  integrity sha512-HYtNooPvUY9WAVRBr4u+4Qa9fYD1ze2IUlAD3HoA6oehn1taGwBx3Oa52U4mTslTS+GAExKpaFu39Y5xUEwfjg==
 
 "@types/uuid@9":
   version "9.0.7"
