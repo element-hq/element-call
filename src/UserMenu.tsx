@@ -66,7 +66,7 @@ export const UserMenu: FC<Props> = ({
       arr.push({
         key: "settings",
         icon: SettingsIcon,
-        label: "common.settings",
+        label: t("common.settings"),
       });
 
       if (isPasswordlessUser && !preventNavigation) {
