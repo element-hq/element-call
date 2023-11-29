@@ -18,6 +18,7 @@ limitations under the License.
   text-align: center;
   color: var(--cpd-color-text-secondary);
   margin-block-end: var(--cpd-space-8x);
+  overflow-wrap: break-word;
 }
 
 .button {
