@@ -93,7 +93,7 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
               </FieldRow>
             )}
             <Button type="submit" disabled={sending}>
-              {sending ? t("submitting") : "action.submit"}
+              {sending ? t("submitting") : t("action.submit")}
             </Button>
           </FieldRow>
         )}
