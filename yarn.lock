@@ -2770,6 +2770,14 @@
     "@react-spring/shared" "~9.7.3"
     "@react-spring/types" "~9.7.3"
 
+"@react-stately/collections@^3.10.3":
+  version "3.10.3"
+  resolved "https://registry.yarnpkg.com/@react-stately/collections/-/collections-3.10.3.tgz#c80bd30df3bf5d2a9c6fdf25f6313c5187d0154d"
+  integrity sha512-fA28HIApAIz9sNGeOVXZJPgV5Kig6M72KI1t9sUbnRUr9Xq9OMJTR6ElDMXNe0iTeZffRFDOPYyqnX9zkxof6Q==
+  dependencies:
+    "@react-types/shared" "^3.22.0"
+    "@swc/helpers" "^0.5.0"
+
 "@react-stately/collections@^3.3.4", "@react-stately/collections@^3.4.1":
   version "3.10.0"
   resolved "https://registry.yarnpkg.com/@react-stately/collections/-/collections-3.10.0.tgz#5c772e5eae8d21ae8d1c023fb9b9ae6fa35b1092"
@@ -2833,6 +2841,16 @@
     "@react-stately/utils" "^3.5.0"
     "@react-types/shared" "^3.13.1"
 
+"@react-stately/selection@^3.14.1":
+  version "3.14.1"
+  resolved "https://registry.yarnpkg.com/@react-stately/selection/-/selection-3.14.1.tgz#798b4fbfda940778ae1dc1f2d2390cee97cce2c6"
+  integrity sha512-96/CerrB6yH4Ad9FkzBzyVerSPjcIj1NBTWTFHo1N+oHECvyGsDxZl7Y4LQR++teFK66FhX5KjCJQGae4IZd6A==
+  dependencies:
+    "@react-stately/collections" "^3.10.3"
+    "@react-stately/utils" "^3.9.0"
+    "@react-types/shared" "^3.22.0"
+    "@swc/helpers" "^0.5.0"
+
 "@react-stately/tabs@^3.1.1":
   version "3.1.1"
   resolved "https://registry.yarnpkg.com/@react-stately/tabs/-/tabs-3.1.1.tgz#778e36bf32e5b11165bc9352f008c3b0e82cfbf0"
@@ -2864,15 +2882,15 @@
     "@react-types/tooltip" "^3.2.1"
 
 "@react-stately/tree@^3.2.0", "@react-stately/tree@^3.3.1":
-  version "3.3.1"
-  resolved "https://registry.yarnpkg.com/@react-stately/tree/-/tree-3.3.1.tgz#1058b168b3c06c45a43a2a7f830aef6e54caaac8"
-  integrity sha512-s/pcafhvUnt2uOIUWRdTpWCBLnGOuG5e9CAzPkwlUCGFXiI7jIJBT8Y4dLP7Iwx6i9U2wZqs22onxH7GHlGgbw==
+  version "3.7.4"
+  resolved "https://registry.yarnpkg.com/@react-stately/tree/-/tree-3.7.4.tgz#57cc57863837092f13b7a3887e1b5c56330b5cac"
+  integrity sha512-0yvVODBS8WnSivLFX5ccEjCl2NA/8lbEt1E48wVcY1xcXgISNpw5MSGK5jC6YrtJPIqVolQIkNSbMreXGBktIg==
   dependencies:
-    "@babel/runtime" "^7.6.2"
-    "@react-stately/collections" "^3.4.1"
-    "@react-stately/selection" "^3.10.1"
-    "@react-stately/utils" "^3.5.0"
-    "@react-types/shared" "^3.13.1"
+    "@react-stately/collections" "^3.10.3"
+    "@react-stately/selection" "^3.14.1"
+    "@react-stately/utils" "^3.9.0"
+    "@react-types/shared" "^3.22.0"
+    "@swc/helpers" "^0.5.0"
 
 "@react-stately/utils@^3.5.0":
   version "3.5.0"
@@ -2880,6 +2898,13 @@
   integrity sha512-WzzwlQtJrf7egaN+lt02/f/wkFKbcscsbinmXs9pL7QyYm+BCQ9xXj01w0juzt93piZgB/kfIYJqInEdpudh1A==
   dependencies:
     "@babel/runtime" "^7.6.2"
+
+"@react-stately/utils@^3.9.0":
+  version "3.9.0"
+  resolved "https://registry.yarnpkg.com/@react-stately/utils/-/utils-3.9.0.tgz#9cb2c8eea5dd1b58256ecb436b963c01526bae37"
+  integrity sha512-yPKFY1F88HxuZ15BG2qwAYxtpE4HnIU0Ofi4CuBE0xC6I8mwo4OQjDzi+DZjxQngM9D6AeTTD6F1V8gkozA0Gw==
+  dependencies:
+    "@swc/helpers" "^0.5.0"
 
 "@react-types/button@^3.5.1":
   version "3.5.1"
@@ -2960,6 +2985,11 @@
   version "3.20.0"
   resolved "https://registry.yarnpkg.com/@react-types/shared/-/shared-3.20.0.tgz#15f0cbe3978831589f083c8e316810669b4fa606"
   integrity sha512-lgTO/S/EMIZKU1EKTg8wT0qYP5x/lZTK2Xw6BZZk5c4nn36JYhGCRb/OoR/jBCIeRb2x9yNbwERO6NYVkoQMSw==
+
+"@react-types/shared@^3.22.0":
+  version "3.22.0"
+  resolved "https://registry.yarnpkg.com/@react-types/shared/-/shared-3.22.0.tgz#70f85aad46cd225f7fcb29f1c2b5213163605074"
+  integrity sha512-yVOekZWbtSmmiThGEIARbBpnmUIuePFlLyctjvCbgJgGhz8JnEJOipLQ/a4anaWfzAgzSceQP8j/K+VOOePleA==
 
 "@react-types/tabs@^3.1.1":
   version "3.1.1"
@@ -3228,9 +3258,9 @@
     svg-parser "^2.0.4"
 
 "@swc/helpers@^0.5.0":
-  version "0.5.1"
-  resolved "https://registry.yarnpkg.com/@swc/helpers/-/helpers-0.5.1.tgz#e9031491aa3f26bfcc974a67f48bd456c8a5357a"
-  integrity sha512-sJ902EfIzn1Fa+qYmjdQqh8tPsoxyBz+8yBKC2HKUxyezKJFwPGOn7pv4WY6QuQW//ySQi5lJjA/ZT9sNWWNTg==
+  version "0.5.3"
+  resolved "https://registry.yarnpkg.com/@swc/helpers/-/helpers-0.5.3.tgz#98c6da1e196f5f08f977658b80d6bd941b5f294f"
+  integrity sha512-FaruWX6KdudYloq1AHD/4nU+UsMTdNE8CKyrseXWEcgjDAbvkwJg2QGPAnfIJLIWsjZOSPLOAykK6fuYp4vp4A==
   dependencies:
     tslib "^2.4.0"
 
