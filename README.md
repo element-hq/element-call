@@ -93,12 +93,12 @@ service for development. These use a test 'secret' published in this
 repository, so this must be used only for local development and
 **_never be exposed to the public Internet._**
 
-To use it, add SFU parameter in your local config `./public/config.yml`:
+To use it, add SFU parameter in your local config `./public/config.json`:
 
-```yaml
+```json
 "livekit": {
-    "jwt_service_url": "http://localhost:8881"
-  },
+  "livekit_service_url": "http://localhost:8881"
+},
 ```
 
 Run backend components:
