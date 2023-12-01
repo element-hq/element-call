@@ -14,11 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {
-  Tile,
-  TileDescriptor,
-  reorderTiles,
-} from "../../src/video-grid/VideoGrid";
+import { TileDescriptor } from "../../src/state/CallViewModel";
+import { Tile, reorderTiles } from "../../src/video-grid/VideoGrid";
 
 const alice: Tile<unknown> = {
   key: "alice",

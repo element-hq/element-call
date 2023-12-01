@@ -44,6 +44,7 @@ import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/LayoutToggle";
 import { TileWrapper } from "./TileWrapper";
 import { LayoutStatesMap } from "./Layout";
+import { TileDescriptor } from "../state/CallViewModel";
 
 interface TilePosition {
   x: number;
@@ -836,20 +837,6 @@ export interface VideoGridProps<T> {
   disableAnimations: boolean;
   layoutStates: LayoutStatesMap;
   children: (props: ChildrenProperties<T>) => ReactNode;
-}
-
-// Represents something that should get a tile on the layout,
-// ie. a user's video feed or a screen share feed.
-export interface TileDescriptor<T> {
-  id: string;
-  focused: boolean;
-  isPresenter: boolean;
-  isSpeaker: boolean;
-  hasVideo: boolean;
-  local: boolean;
-  largeBaseSize: boolean;
-  placeNear?: string;
-  data: T;
 }
 
 export function VideoGrid<T>({

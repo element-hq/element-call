@@ -38,6 +38,15 @@ module.exports = {
     "jsx-a11y/media-has-caption": "off",
     // We should use the js-sdk logger, never console directly.
     "no-console": ["error"],
+    "no-restricted-imports": [
+      "error",
+      {
+        name: "@react-rxjs/core",
+        importNames: ["Subscribe", "RemoveSubscribe"],
+        message:
+          "These components are easy to misuse, please use the 'subscribe' component wrapper instead",
+      },
+    ],
   },
   settings: {
     react: {
