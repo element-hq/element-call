@@ -29,6 +29,7 @@
     "@opentelemetry/instrumentation-user-interaction": "^0.34.0",
     "@opentelemetry/sdk-trace-web": "^1.9.1",
     "@radix-ui/react-dialog": "^1.0.4",
+    "@radix-ui/react-slider": "^1.1.2",
     "@radix-ui/react-visually-hidden": "^1.0.3",
     "@react-aria/button": "^3.3.4",
     "@react-aria/focus": "^3.5.0",

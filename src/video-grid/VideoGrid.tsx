@@ -112,7 +112,7 @@ export function useVideoGridLayout(hasScreenshareFeeds: boolean): {
   return { layout: layoutRef.current, setLayout };
 }
 
-const GAP = 8;
+const GAP = 20;
 
 function useIsMounted(): MutableRefObject<boolean> {
   const isMountedRef = useRef<boolean>(false);

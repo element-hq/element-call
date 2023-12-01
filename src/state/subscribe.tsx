@@ -14,7 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { FC } from "react";
+import {
+  ForwardRefExoticComponent,
+  ForwardRefRenderFunction,
+  PropsWithoutRef,
+  RefAttributes,
+  forwardRef,
+} from "react";
 // eslint-disable-next-line no-restricted-imports
 import { Subscribe, RemoveSubscribe } from "@react-rxjs/core";
 
@@ -23,15 +29,17 @@ import { Subscribe, RemoveSubscribe } from "@react-rxjs/core";
  * that safely subscribes to its Observables before rendering. The component
  * will return null until the subscriptions are created.
  */
-export function subscribe<P>(render: FC<P>): FC<P> {
-  const InnerComponent: FC<{ p: P }> = ({ p }) => (
-    <RemoveSubscribe>{render(p)}</RemoveSubscribe>
-  );
-  const OuterComponent: FC<P> = (p) => (
+export function subscribe<P, R>(
+  render: ForwardRefRenderFunction<R, P>,
+): ForwardRefExoticComponent<PropsWithoutRef<P> & RefAttributes<R>> {
+  const InnerComponent = forwardRef<R, { p: P }>(({ p }, ref) => (
+    <RemoveSubscribe>{render(p, ref)}</RemoveSubscribe>
+  ));
+  const OuterComponent = forwardRef<R, P>((p, ref) => (
     <Subscribe>
-      <InnerComponent p={p} />
+      <InnerComponent ref={ref} p={p} />
     </Subscribe>
-  );
+  ));
   // Copy over the component's display name, default props, etc.
   Object.assign(OuterComponent, render);
   return OuterComponent;

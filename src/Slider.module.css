@@ -1,0 +1,66 @@
+/*
+Copyright 2023 New Vector Ltd
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+.slider {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.track {
+  flex-grow: 1;
+  border-radius: var(--cpd-radius-pill-effect);
+  background: var(--cpd-color-bg-subtle-primary);
+  height: var(--cpd-space-2x);
+  outline: var(--cpd-border-width-1) solid
+    var(--cpd-color-border-interactive-primary);
+  outline-offset: calc(-1 * var(--cpd-border-width-1));
+  cursor: pointer;
+  transition: outline-color ease 0.15s;
+}
+
+.track[data-disabled] {
+  cursor: initial;
+  outline-color: var(--cpd-color-border-disabled);
+}
+
+.highlight {
+  background: var(--cpd-color-bg-action-primary-rest);
+  position: absolute;
+  block-size: 100%;
+  border-radius: var(--cpd-radius-pill-effect);
+  transition: background-color ease 0.15s;
+}
+
+.highlight[data-disabled] {
+  background: var(--cpd-color-bg-action-primary-disabled);
+}
+
+.handle {
+  display: block;
+  block-size: var(--cpd-space-4x);
+  inline-size: var(--cpd-space-4x);
+  border-radius: var(--cpd-radius-pill-effect);
+  background: var(--cpd-color-bg-action-primary-rest);
+  box-shadow: 0 0 0 2px var(--cpd-color-bg-canvas-default);
+  cursor: pointer;
+  transition: background-color ease 0.15s;
+}
+
+.handle[data-disabled] {
+  cursor: initial;
+  background: var(--cpd-color-bg-action-primary-disabled);
+}
