@@ -45,6 +45,11 @@ import { useReactiveState } from "../useReactiveState";
 import { AudioButton, FullscreenButton } from "../button/Button";
 import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
 import { MatrixInfo } from "../room/VideoPreview";
+import {
+  ScreenShareTileViewModel,
+  TileViewModel,
+  UserMediaTileViewModel,
+} from "../state/TileViewModel";
 
 export interface ItemData {
   id: string;
@@ -59,7 +64,7 @@ export enum TileContent {
 }
 
 interface Props {
-  data: ItemData;
+  vm: TileViewModel;
   maximised: boolean;
   fullscreen: boolean;
   onToggleFullscreen: (itemId: string) => void;
@@ -78,7 +83,7 @@ interface Props {
 export const VideoTile = forwardRef<HTMLDivElement, Props>(
   (
     {
-      data,
+      vm,
       maximised,
       fullscreen,
       onToggleFullscreen,
@@ -94,7 +99,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
   ) => {
     const { t } = useTranslation();
 
-    const { content, sfuParticipant, member } = data;
+    const { id, sfuParticipant, member } = vm;
 
     // Handle display name changes.
     const [displayName, setDisplayName] = useReactiveState(
@@ -115,13 +120,13 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     }, [member, setDisplayName]);
 
     const audioInfo = useMediaTrack(
-      content === TileContent.UserMedia
+      vm instanceof UserMediaTileViewModel
         ? Track.Source.Microphone
         : Track.Source.ScreenShareAudio,
       sfuParticipant,
     );
     const videoInfo = useMediaTrack(
-      content === TileContent.UserMedia
+      vm instanceof UserMediaTileViewModel
         ? Track.Source.Camera
         : Track.Source.ScreenShare,
       sfuParticipant,
@@ -134,8 +139,8 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     const MicIcon = muted ? MicOffSolidIcon : MicOnSolidIcon;
 
     const onFullscreen = useCallback(() => {
-      onToggleFullscreen(data.id);
-    }, [data, onToggleFullscreen]);
+      onToggleFullscreen(id);
+    }, [id, onToggleFullscreen]);
 
     const [videoTileSettingsModalOpen, setVideoTileSettingsModalOpen] =
       useState(false);
@@ -159,7 +164,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         />,
       );
 
-      if (content === TileContent.ScreenShare) {
+      if (vm instanceof ScreenShareTileViewModel) {
         toolbarButtons.push(
           <FullscreenButton
             key="fullscreen"
@@ -177,9 +182,9 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           [styles.isLocal]: sfuParticipant.isLocal,
           [styles.speaking]:
             sfuParticipant.isSpeaking &&
-            content === TileContent.UserMedia &&
+            vm instanceof UserMediaTileViewModel &&
             showSpeakingIndicator,
-          [styles.screenshare]: content === TileContent.ScreenShare,
+          [styles.screenshare]: vm instanceof ScreenShareTileViewModel,
           [styles.maximised]: maximised,
         })}
         style={style}
@@ -189,7 +194,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         {toolbarButtons.length > 0 && (!maximised || fullscreen) && (
           <div className={classNames(styles.toolbar)}>{toolbarButtons}</div>
         )}
-        {content === TileContent.UserMedia &&
+        {vm instanceof UserMediaTileViewModel &&
           !sfuParticipant.isCameraEnabled && (
             <>
               <div className={styles.videoMutedOverlay} />
@@ -203,7 +208,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
               />
             </>
           )}
-        {content === TileContent.ScreenShare ? (
+        {vm instanceof ScreenShareTileViewModel ? (
           <div className={styles.presenterLabel}>
             <span>{t("video_tile.presenter_label", { displayName })}</span>
           </div>
@@ -245,7 +250,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
         <VideoTrack
           participant={sfuParticipant}
           source={
-            content === TileContent.UserMedia
+            vm instanceof UserMediaTileViewModel
               ? Track.Source.Camera
               : Track.Source.ScreenShare
           }
@@ -260,9 +265,14 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           // eslint-disable-next-line react/no-unknown-property
           disablepictureinpicture="true"
         />
-        {!maximised && (
+        {!maximised && sfuParticipant instanceof RemoteParticipant && (
           <VideoTileSettingsModal
-            data={data}
+            participant={sfuParticipant}
+            media={
+              vm instanceof UserMediaTileViewModel
+                ? "user media"
+                : "screen share"
+            }
             open={videoTileSettingsModalOpen}
             onDismiss={closeVideoTileSettingsModal}
           />

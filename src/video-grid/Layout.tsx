@@ -18,7 +18,7 @@ import { ComponentType, ReactNode, useCallback, useMemo, useRef } from "react";
 
 import type { RectReadOnly } from "react-use-measure";
 import { useReactiveState } from "../useReactiveState";
-import type { TileDescriptor } from "./VideoGrid";
+import { TileDescriptor } from "../state/CallViewModel";
 
 /**
  * A video grid layout system with concrete states of type State.
