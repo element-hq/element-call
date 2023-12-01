@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,26 +16,63 @@ limitations under the License.
 
 .videoTile {
   position: absolute;
-  contain: strict;
   top: 0;
   container-name: videoTile;
   container-type: size;
   border-radius: var(--cpd-space-4x);
-  overflow: hidden;
-  cursor: pointer;
-  outline: 2px solid rgba(0, 0, 0, 0);
-  transition:
-    outline-radius ease 0.15s,
-    outline-color ease 0.15s;
+  transition: outline-color ease 0.15s;
+  outline: var(--cpd-border-width-2) solid rgb(0 0 0 / 0);
 }
 
-.videoTile * {
-  user-select: none;
+/* Use a pseudo-element to create the expressive speaking border, since CSS
+borders don't support gradients */
+.videoTile::before {
+  content: "";
+  position: absolute;
+  z-index: -1; /* Put it below the outline */
+  opacity: 0; /* Hidden unless speaking */
+  transition: opacity ease 0.15s;
+  inset: calc(-1 * var(--cpd-border-width-4));
+  border-radius: var(--cpd-space-5x);
+  background: linear-gradient(
+      119deg,
+      rgba(13, 92, 189, 0.7) 0%,
+      rgba(13, 189, 168, 0.7) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(13, 92, 189, 0.9) 0%,
+      rgba(13, 189, 168, 0.9) 100%
+    );
+  background-blend-mode: overlay, normal;
+}
+
+.videoTile.speaking {
+  /* !important because speaking border should take priority over hover */
+  outline: var(--cpd-border-width-1) solid var(--cpd-color-bg-canvas-default) !important;
+}
+
+.videoTile.speaking::before {
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .videoTile:hover {
+    outline: var(--cpd-border-width-2) solid
+      var(--cpd-color-border-interactive-hovered);
+  }
+}
+
+.videoTile.maximised {
+  position: relative;
+  border-radius: 0;
+  inline-size: 100%;
+  block-size: 100%;
 }
 
 .videoTile video {
-  width: 100%;
-  height: 100%;
+  inline-size: 100%;
+  block-size: 100%;
   object-fit: cover;
   background-color: var(--cpd-color-bg-subtle-primary);
   /* This transform is a no-op, but it forces Firefox to use a different
@@ -44,36 +81,69 @@ limitations under the License.
   transform: translate(0);
 }
 
-.videoTile.isLocal:not(.screenshare) video {
+.videoTile.mirror video {
   transform: scaleX(-1);
 }
 
-.videoTile.speaking {
-  /* !important because speaking border should take priority over hover */
-  outline: 4px solid var(--cpd-color-border-accent) !important;
-}
-
-@media (hover: hover) {
-  .videoTile:hover {
-    outline: 2px solid var(--cpd-color-gray-1400);
-  }
-}
-
-.videoTile.maximised {
-  position: relative;
-  border-radius: 0;
-  height: 100%;
-  width: 100%;
-}
-
-.videoTile.screenshare > video {
+.videoTile.screenshare video {
   object-fit: contain;
 }
 
-.nameTag {
+.videoTile.videoMuted video {
+  display: none;
+}
+
+.bg {
+  background-color: var(--cpd-color-bg-subtle-secondary);
+  inline-size: 100%;
+  block-size: 100%;
+  border-radius: inherit;
+  contain: strict;
+}
+
+.avatar {
+  display: none;
   position: absolute;
-  inset-inline-start: var(--cpd-space-1x);
-  inset-block-end: var(--cpd-space-1x);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.videoTile.videoMuted .avatar {
+  display: initial;
+}
+
+/* CSS makes us put a condition here, even though all we want to do is
+unconditionally select the container so we can use cqmin units */
+@container videoTile (width > 0) {
+  .avatar {
+    /* Half of the smallest dimension of the tile */
+    inline-size: 50cqmin;
+    block-size: 50cqmin;
+  }
+}
+
+.avatar > img {
+  /* To make avatars scale smoothly with their tiles during animations, we
+  override the styles set on the element */
+  inline-size: 100% !important;
+  block-size: 100% !important;
+}
+
+.fg {
+  position: absolute;
+  inset: var(--cpd-space-1x);
+  display: grid;
+  grid-template-columns: 1fr auto;
+  grid-template-rows: 1fr auto;
+  grid-template-areas: ". button2" "nameTag button1";
+  gap: var(--cpd-space-1x);
+  place-items: start;
+}
+
+.nameTag {
+  grid-area: nameTag;
   padding: var(--cpd-space-1x);
   padding-block: var(--cpd-space-1x);
   color: var(--cpd-color-text-primary);
@@ -82,10 +152,10 @@ limitations under the License.
   align-items: center;
   border-radius: var(--cpd-radius-pill-effect);
   user-select: none;
-  max-width: calc(100% - 48px);
   overflow: hidden;
-  z-index: 1;
   box-shadow: var(--small-drop-shadow);
+  box-sizing: border-box;
+  max-inline-size: 100%;
 }
 
 .nameTag > svg {
@@ -111,94 +181,56 @@ limitations under the License.
   color: var(--cpd-color-icon-critical-primary);
 }
 
-.toolbar {
-  position: absolute;
-  top: 0;
-  left: 0;
-
-  width: 100%;
-  height: 42px;
-
-  color: var(--cpd-color-text-primary);
-  background-color: var(--stopgap-background-85);
-
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-
-  overflow: hidden;
-  z-index: 1;
-
+.fg > button {
+  appearance: none;
+  border: none;
+  border-radius: var(--cpd-radius-pill-effect);
+  padding: var(--cpd-space-1x);
+  background: var(--cpd-color-bg-action-primary-rest);
+  box-shadow: var(--small-drop-shadow);
+  cursor: pointer;
+  opacity: 0;
   transition: opacity ease 0.15s;
 }
 
-.toolbar:not(:hover) {
-  opacity: 0;
+.fg > button:focus-visible,
+.fg > :focus-visible ~ button,
+.fg > button[data-enabled="true"],
+.fg > button[data-state="open"] {
+  opacity: 1;
 }
 
-.toolbar:hover + .presenterLabel {
-  top: calc(42px + 20px); /* toolbar + margin */
-}
-
-.button {
-  margin-right: 16px;
-}
-
-.button svg {
-  width: 16px;
-  height: 16px;
-}
-
-.videoMutedOverlay {
-  width: 100%;
-  height: 100%;
-  background-color: var(--cpd-color-bg-subtle-secondary);
-}
-
-.presenterLabel {
-  position: absolute;
-  top: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: var(--stopgap-background-85);
-  border-radius: 4px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 4px 8px;
-  font-weight: normal;
-  font-size: var(--font-size-caption);
-  line-height: var(--font-size-body);
-}
-
-.screensharePIP {
-  bottom: 8px;
-  right: 8px;
-  width: 25%;
-  max-width: 360px;
-  border-radius: 20px;
-}
-
-.debugInfo {
-  position: absolute;
-  top: 16px;
-  left: 16px;
-  background-color: rgba(0, 0, 0, 0.5);
-}
-
-/* CSS makes us put a condition here, even though all we want to do is
-unconditionally select the container so we can use cqmin units */
-@container videoTile (width > 0) {
-  .avatar {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    /* To make avatars scale smoothly with their tiles during animations, we
-    override the styles set on the element */
-    --avatarSize: 50cqmin; /* Half of the smallest dimension of the tile */
-    width: var(--avatarSize) !important;
-    height: var(--avatarSize) !important;
-    border-radius: 10000px !important;
+@media (hover) {
+  .fg:hover > button {
+    opacity: 1;
   }
+
+  .fg > button:hover {
+    background: var(--cpd-color-bg-action-primary-hovered);
+  }
+}
+
+.fg > button:active {
+  background: var(--cpd-color-bg-action-primary-pressed) !important;
+}
+
+.fg > button[data-state="open"] {
+  background: var(--cpd-color-bg-action-primary-pressed);
+}
+
+.fg > button > svg {
+  display: block;
+  color: var(--cpd-color-icon-on-solid-primary);
+}
+
+.fg > button:first-of-type {
+  grid-area: button1;
+}
+
+.fg > button:nth-of-type(2) {
+  grid-area: button2;
+}
+
+.volumeSlider {
+  width: 100%;
 }

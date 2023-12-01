@@ -30,9 +30,6 @@ import SettingsSolidIcon from "@vector-im/compound-design-tokens/icons/settings-
 import ChevronDownIcon from "@vector-im/compound-design-tokens/icons/chevron-down.svg?react";
 
 import styles from "./Button.module.css";
-import Fullscreen from "../icons/Fullscreen.svg?react";
-import FullscreenExit from "../icons/FullscreenExit.svg?react";
-import { VolumeIcon } from "./VolumeIcon";
 
 export type ButtonVariant =
   | "default"
@@ -226,48 +223,6 @@ export const SettingsButton: FC<{
     <Tooltip label={t("common.settings")}>
       <Button variant="toolbar" {...rest}>
         <SettingsSolidIcon aria-label={t("common.settings")} />
-      </Button>
-    </Tooltip>
-  );
-};
-
-interface AudioButtonProps extends Omit<Props, "variant"> {
-  /**
-   * A number between 0 and 1
-   */
-  volume: number;
-}
-
-export const AudioButton: FC<AudioButtonProps> = ({ volume, ...rest }) => {
-  const { t } = useTranslation();
-
-  return (
-    <Tooltip label={t("local_volume_label")}>
-      <Button variant="icon" {...rest}>
-        <VolumeIcon volume={volume} aria-label={t("local_volume_label")} />
-      </Button>
-    </Tooltip>
-  );
-};
-
-interface FullscreenButtonProps extends Omit<Props, "variant"> {
-  fullscreen?: boolean;
-}
-
-export const FullscreenButton: FC<FullscreenButtonProps> = ({
-  fullscreen,
-  ...rest
-}) => {
-  const { t } = useTranslation();
-  const Icon = fullscreen ? FullscreenExit : Fullscreen;
-  const label = fullscreen
-    ? t("exit_fullscreen_button_label")
-    : t("fullscreen_button_label");
-
-  return (
-    <Tooltip label={label}>
-      <Button variant="icon" {...rest}>
-        <Icon aria-label={label} />
       </Button>
     </Tooltip>
   );
