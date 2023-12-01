@@ -248,6 +248,6 @@ export function useECConnectionState(
   return isSwitchingFocus
     ? ECAddonConnectionState.ECSwitchingFocus
     : isInDoConnect
-    ? ConnectionState.Connecting
-    : connState;
+      ? ConnectionState.Connecting
+      : connState;
 }
