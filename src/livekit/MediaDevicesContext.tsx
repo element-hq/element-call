@@ -102,8 +102,8 @@ function useMediaDevice(
       devId = available.some((d) => d.deviceId === selectedId)
         ? selectedId
         : available.some((d) => d.deviceId === fallbackDevice)
-        ? fallbackDevice
-        : available.at(0)?.deviceId;
+          ? fallbackDevice
+          : available.at(0)?.deviceId;
     }
 
     return {
