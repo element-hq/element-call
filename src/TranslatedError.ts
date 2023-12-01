@@ -14,10 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import i18n from "i18next";
-
-import type { ParseKeys, TFunction } from "i18next/typescript/t";
-import type { DefaultNamespace, TOptions } from "i18next/typescript/options";
+import type { DefaultNamespace, ParseKeys, TFunction, TOptions } from "i18next";
 
 /**
  * An error with messages in both English and the user's preferred language.
@@ -45,5 +42,5 @@ class TranslatedErrorImpl extends TranslatedError {}
 // function instead
 export const translatedError = (
   messageKey: ParseKeys<DefaultNamespace, TOptions>,
-  t: typeof i18n.t,
+  t: TFunction<"app", undefined>,
 ): TranslatedError => new TranslatedErrorImpl(messageKey, t);
