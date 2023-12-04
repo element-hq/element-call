@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { TileDescriptor } from "../../src/state/CallViewModel";
 import {
   addItems,
   column,
@@ -26,7 +27,6 @@ import {
   row,
   moveTile,
 } from "../../src/video-grid/BigGrid";
-import { TileDescriptor } from "../../src/video-grid/VideoGrid";
 
 /**
  * Builds a grid from a string specifying the contents of each cell as a letter.
@@ -315,7 +315,7 @@ jk`;
   const grid = mkGrid(input);
   let gridAfter = grid;
 
-  const toggle = (tileId: string) => {
+  const toggle = (tileId: string): void => {
     const tile = grid.cells.find((c) => c?.item.id === tileId)!.item;
     gridAfter = cycleTileSize(gridAfter, tile);
   };
