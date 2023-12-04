@@ -22,19 +22,18 @@ import { FieldRow } from "../input/Input";
 import { Modal } from "../Modal";
 import styles from "./VideoTileSettingsModal.module.css";
 import { VolumeIcon } from "../button/VolumeIcon";
-import { ItemData, TileContent } from "./VideoTile";
 
 interface LocalVolumeProps {
   participant: RemoteParticipant;
-  content: TileContent;
+  media: "user media" | "screen share";
 }
 
 const LocalVolume: FC<LocalVolumeProps> = ({
   participant,
-  content,
+  media,
 }: LocalVolumeProps) => {
   const source =
-    content === TileContent.UserMedia
+    media === "user media"
       ? Track.Source.Microphone
       : Track.Source.ScreenShareAudio;
 
@@ -67,13 +66,15 @@ const LocalVolume: FC<LocalVolumeProps> = ({
 };
 
 interface Props {
-  data: ItemData;
+  participant: RemoteParticipant;
+  media: "user media" | "screen share";
   open: boolean;
   onDismiss: () => void;
 }
 
 export const VideoTileSettingsModal: FC<Props> = ({
-  data,
+  participant,
+  media,
   open,
   onDismiss,
 }) => {
@@ -87,10 +88,7 @@ export const VideoTileSettingsModal: FC<Props> = ({
       onDismiss={onDismiss}
     >
       <div className={styles.content}>
-        <LocalVolume
-          participant={data.sfuParticipant as RemoteParticipant}
-          content={data.content}
-        />
+        <LocalVolume participant={participant} media={media} />
       </div>
     </Modal>
   );

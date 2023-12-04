@@ -19,11 +19,11 @@ import { RectReadOnly } from "react-use-measure";
 import { FC, memo, ReactNode } from "react";
 import { zip } from "lodash";
 
-import { TileDescriptor } from "./VideoGrid";
 import { Slot } from "./NewVideoGrid";
 import { Layout } from "./Layout";
 import { count, findLastIndex } from "../array-utils";
 import styles from "./BigGrid.module.css";
+import { TileDescriptor } from "../state/CallViewModel";
 
 /**
  * A 1×1 cell in a grid which belongs to a tile.

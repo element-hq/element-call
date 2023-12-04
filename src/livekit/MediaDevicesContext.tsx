@@ -86,9 +86,7 @@ function useMediaDevice(
     () =>
       createMediaDeviceObserver(
         kind,
-        () => {
-          logger.error("Error creating MediaDeviceObserver");
-        },
+        () => logger.error("Error creating MediaDeviceObserver"),
         requestPermissions,
       ),
     [kind, requestPermissions],
