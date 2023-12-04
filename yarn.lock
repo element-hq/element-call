@@ -1674,9 +1674,9 @@
   integrity sha512-qQfo2mxH5yVom1kacMtZZJFVdW+E70mqHMJvVg6WTLo+VBuQJ4TojZlfWBjK0ve5BdEeNAVxOsl/nvNMpJOaJA==
 
 "@floating-ui/core@^1.4.2":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@floating-ui/core/-/core-1.5.0.tgz#5c05c60d5ae2d05101c3021c1a2a350ddc027f8c"
-  integrity sha512-kK1h4m36DQ0UHGj5Ah4db7R0rHemTqqO0QLvUqi1/mUUp3LuAWbWxdxSIf/XsnH9VS6rRVPLJCncjRzUvyCLXg==
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@floating-ui/core/-/core-1.5.1.tgz#62707d7ec585d0929f882321a1b1f4ea9c680da5"
+  integrity sha512-QgcKYwzcc8vvZ4n/5uklchy8KVdjJwcOeI+HnnTNclJjs2nYsy23DOCf+sSV1kBwD9yDAoVKCkv/gEPzgQU3Pw==
   dependencies:
     "@floating-ui/utils" "^0.1.3"
 
@@ -2040,24 +2040,13 @@
   resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.4.0.tgz#08d6c5e20cf7e4cc02fd181c4b0c225cd31dbb60"
   integrity sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==
 
-"@livekit/components-core@0.8.2":
+"@livekit/components-core@0.8.2", "@livekit/components-core@^0.8.0":
   version "0.8.2"
   resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.8.2.tgz#b5bf5190b742900647b9df49d696bf42f7ab4f02"
   integrity sha512-vDSbNabKp9NJrjg1HOa+gwwUT2cMYhNWMaojM/XvK0UAJwRjEj6RpJMWxyI1EVdRBnsuipCiRHMQW87HzB50iA==
   dependencies:
     "@floating-ui/dom" "^1.1.0"
     email-regex "^5.0.0"
-    loglevel "^1.8.1"
-    rxjs "^7.8.0"
-
-"@livekit/components-core@^0.7.0":
-  version "0.7.0"
-  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.7.0.tgz#1283a34753c8f1bb805b987684a3e29d1bc2eb39"
-  integrity sha512-KwzqnW8V9G+4fXc4gOxpXqQFLpL/kFBn82sYO10zHjHfNKSw4pRj1sDLTWc5UF22W2Z461/bqMtB+3WGB/3Dtg==
-  dependencies:
-    "@floating-ui/dom" "^1.1.0"
-    email-regex "^5.0.0"
-    global-tld-list "^0.0.1139"
     loglevel "^1.8.1"
     rxjs "^7.8.0"
 
@@ -5871,11 +5860,6 @@ glob@^7.0.0, glob@^7.1.3, glob@^7.1.4:
     minimatch "^3.1.1"
     once "^1.3.0"
     path-is-absolute "^1.0.0"
-
-global-tld-list@^0.0.1139:
-  version "0.0.1139"
-  resolved "https://registry.yarnpkg.com/global-tld-list/-/global-tld-list-0.0.1139.tgz#70400a3f3ccac1a19a8184274a1b117bc8a27969"
-  integrity sha512-TCWjAwHPzFV6zbQ5jnJvJTctesHGJr9BppxivRuIxTiIFUzaxy1F0674cxjoJecW5s8V32Q5i35dBFqvAy7eGQ==
 
 globals@^11.1.0:
   version "11.12.0"

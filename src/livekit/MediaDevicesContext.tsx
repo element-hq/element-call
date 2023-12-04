@@ -26,6 +26,7 @@ import {
 } from "react";
 import { createMediaDeviceObserver } from "@livekit/components-core";
 import { Observable } from "rxjs";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import {
   isFirefox,
@@ -82,7 +83,12 @@ function useMediaDevice(
   // Tragically, the only way to get device names out of LiveKit is to specify a
   // kind, which then results in multiple permissions requests.
   const deviceObserver = useMemo(
-    () => createMediaDeviceObserver(kind, requestPermissions),
+    () =>
+      createMediaDeviceObserver(
+        kind,
+        () => logger.error("Error creating MediaDeviceObserver"),
+        requestPermissions,
+      ),
     [kind, requestPermissions],
   );
   const available = useObservableState(deviceObserver, []);
