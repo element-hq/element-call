@@ -216,8 +216,8 @@ export class CallViewModel extends ViewModel {
               largeBaseSize: true,
               placeNear: id,
               data:
-                tilesById.get(id)?.data ??
-                new ScreenShareTileViewModel(id, member, p),
+                tilesById.get(screenShareId)?.data ??
+                new ScreenShareTileViewModel(screenShareId, member, p),
             };
             return [userMediaTile, screenShareTile];
           } else {
