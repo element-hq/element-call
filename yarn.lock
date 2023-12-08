@@ -1140,9 +1140,9 @@
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
 "@bufbuild/protobuf@^1.3.0":
-  version "1.5.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.5.0.tgz#6d119e2a562da48aa8cd93f1c0297b9bb32a9c93"
-  integrity sha512-0Jg+B7Vl8YGCi7c3iZ8/38iTbZrwdU7or6QZlsA9lhSrhumaXOTMsGO8gqwDuus/THEkTiY3Uxn+PEJwgsLt0w==
+  version "1.5.1"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.5.1.tgz#5cecbb7d8bc9a5daaff9b8b4d0ef9bbc64c80e73"
+  integrity sha512-LX+MeB1AzlbqgJXkq83lilQpLGnPvsAMj7SH8KtJAmQfBc55ee78Stxuff/HMw0xLMYJN3P1FBh5TENgjJof1w==
 
 "@csstools/cascade-layer-name-parser@^1.0.5":
   version "1.0.5"
@@ -2046,10 +2046,10 @@
     clsx "^2.0.0"
     usehooks-ts "^2.9.1"
 
-"@matrix-org/matrix-sdk-crypto-wasm@^3.0.1":
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-3.0.1.tgz#56a0376f8a389264bcf4d5325b378a71f18b7664"
-  integrity sha512-r0PBfUKlLHm67+fpIV21netX5+DujbY2XjJy7JUGJ55oW4XWBNbSf9vElfaQkrdt/iDscL/8I5PoD5lCuVW6zA==
+"@matrix-org/matrix-sdk-crypto-wasm@^3.4.0":
+  version "3.4.0"
+  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-3.4.0.tgz#fc4474c220320687857e1f54f709944e78d48824"
+  integrity sha512-noO6QnH+ypT//CxewoQdlK/z2iuyQo1Ecp1PDaYyr/NV5yXkWvGfGIIcShXqrQJfL5kuWxg/14edNplXsaXoDQ==
 
 "@matrix-org/olm@https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.14.tgz":
   version "3.2.14"
@@ -7129,9 +7129,9 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^1.12.3:
-  version "1.15.3"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-1.15.3.tgz#149739418cd7ee59d1d9eb88d6ceb7afa49c94c3"
-  integrity sha512-1NPcLgQoBIUkEPxP6ob5wvNS+aphxmayHhpkfFRYmQOsr+AjjN1R5FVYWc/eeXeu6pbOzMSwc4dwH1o2MsPsFg==
+  version "1.15.4"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-1.15.4.tgz#a83c567f707e5fbaaa70ed97abe88d6b587a84e4"
+  integrity sha512-H+5l8PpxnZKI2ZsOt39XaFnmA1Sl10yFd1n4ja5ai4wCIdc3wOdQW6uReGXvOv/JY/oAMHsVnmC070hig1s3Ow==
   dependencies:
     "@bufbuild/protobuf" "^1.3.0"
     events "^3.3.0"
@@ -7260,12 +7260,13 @@ matrix-events-sdk@0.0.1:
   resolved "https://registry.yarnpkg.com/matrix-events-sdk/-/matrix-events-sdk-0.0.1.tgz#c8c38911e2cb29023b0bbac8d6f32e0de2c957dd"
   integrity sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#eca651c0c2ff0600bdae0bb6aba43485e48b69d5":
-  version "30.0.1"
-  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/eca651c0c2ff0600bdae0bb6aba43485e48b69d5"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#2cd63ca4b90eb2e4d22b45ae281a81c4514e757a":
+  version "30.2.0"
+  uid "2cd63ca4b90eb2e4d22b45ae281a81c4514e757a"
+  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/2cd63ca4b90eb2e4d22b45ae281a81c4514e757a"
   dependencies:
     "@babel/runtime" "^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm" "^3.0.1"
+    "@matrix-org/matrix-sdk-crypto-wasm" "^3.4.0"
     another-json "^0.2.0"
     bs58 "^5.0.0"
     content-type "^1.0.4"
