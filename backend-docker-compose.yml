@@ -5,7 +5,7 @@ networks:
 
 services:
   auth-service:
-    image: ghcr.io/vector-im/lk-jwt-service:latest-ci
+    image: ghcr.io/element-hq/lk-jwt-service:latest-ci
     hostname: auth-server
     ports:
       - 8881:8080
