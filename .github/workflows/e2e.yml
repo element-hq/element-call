@@ -14,7 +14,7 @@ jobs:
       - name: Check out test private repo
         uses: actions/checkout@v4
         with:
-          repository: vector-im/static-call-participant
+          repository: element-hq/static-call-participant
           ref: refs/heads/main
           path: static-call-participant
           token: ${{ secrets.GH_E2E_TEST_TOKEN }}

@@ -5,7 +5,7 @@
 
 Group calls with WebRTC that leverage [Matrix](https://matrix.org) and an open-source WebRTC toolkit from [LiveKit](https://livekit.io/).
 
-For prior version of the Element Call that relied solely on full-mesh logic, check [`full-mesh`](https://github.com/vector-im/element-call/tree/full-mesh) branch.
+For prior version of the Element Call that relied solely on full-mesh logic, check [`full-mesh`](https://github.com/element-hq/element-call/tree/full-mesh) branch.
 
 ![A demo of Element Call with six people](demo.jpg)
 
@@ -16,7 +16,7 @@ To try it out, visit our hosted version at [call.element.io](https://call.elemen
 Until prebuilt tarballs are available, you'll need to build Element Call from source. First, clone and install the package:
 
 ```
-git clone https://github.com/vector-im/element-call.git
+git clone https://github.com/element-hq/element-call.git
 cd element-call
 yarn
 yarn build
@@ -74,7 +74,7 @@ yarn link
 Next, we can set up this project:
 
 ```
-git clone https://github.com/vector-im/element-call.git
+git clone https://github.com/element-hq/element-call.git
 cd element-call
 yarn
 yarn link matrix-js-sdk
