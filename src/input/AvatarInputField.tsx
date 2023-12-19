@@ -122,3 +122,5 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
     );
   },
 );
+
+AvatarInputField.displayName = "AvatarInputField";

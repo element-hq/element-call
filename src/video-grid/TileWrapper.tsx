@@ -43,12 +43,8 @@ interface Props<T> {
   children: (props: ChildrenProperties<T>) => ReactNode;
 }
 
-/**
- * A wrapper around a tile in a video grid. This component exists to decouple
- * child components from the grid.
- */
-export const TileWrapper = memo(
-  ({
+const TileWrapper_ = memo(
+  <T,>({
     id,
     onDragRef,
     targetWidth,
@@ -64,7 +60,7 @@ export const TileWrapper = memo(
     width,
     height,
     children,
-  }) => {
+  }: Props<T>) => {
     const ref = useRef<HTMLElement | null>(null);
 
     useDrag((state) => onDragRef?.current!(id, state), {
@@ -97,7 +93,15 @@ export const TileWrapper = memo(
       </>
     );
   },
-  // We pretend this component is a simple function rather than a
-  // NamedExoticComponent, because that's the only way we can fit in a type
-  // parameter
-) as <T>(props: Props<T>) => JSX.Element;
+);
+
+TileWrapper_.displayName = "TileWrapper";
+
+/**
+ * A wrapper around a tile in a video grid. This component exists to decouple
+ * child components from the grid.
+ */
+// We pretend this component is a simple function rather than a
+// NamedExoticComponent, because that's the only way we can fit in a type
+// parameter
+export const TileWrapper = TileWrapper_ as <T>(props: Props<T>) => JSX.Element;

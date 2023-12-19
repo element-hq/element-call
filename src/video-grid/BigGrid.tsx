@@ -1010,6 +1010,8 @@ const Slots: FC<{ s: Grid }> = memo(({ s: g }) => {
   );
 });
 
+Slots.displayName = "Slots";
+
 /**
  * Given a tile and numbers in the range [0, 1) describing a position within the
  * tile, this returns the index of the specific cell in which that position

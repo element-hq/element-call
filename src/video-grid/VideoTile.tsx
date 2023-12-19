@@ -281,3 +281,5 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     );
   },
 );
+
+VideoTile.displayName = "VideoTile";
