@@ -107,8 +107,6 @@ export function useLiveKit(
         ...defaultLiveKitOptions.audioCaptureDefaults,
         deviceId: initialDevices.current.audioInput.selectedId,
       },
-      // XXX Setting the audio output here doesn't seem to do anything… a bug in
-      // LiveKit?
       audioOutput: {
         deviceId: initialDevices.current.audioOutput.selectedId,
       },
