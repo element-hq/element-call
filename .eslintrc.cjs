@@ -47,6 +47,7 @@ module.exports = {
           "These components are easy to misuse, please use the 'subscribe' component wrapper instead",
       },
     ],
+    "react/display-name": "error",
   },
   settings: {
     react: {

@@ -166,6 +166,8 @@ export const InputField = forwardRef<
   },
 );
 
+InputField.displayName = "InputField";
+
 interface ErrorMessageProps {
   error: Error;
 }
