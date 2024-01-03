@@ -80,6 +80,7 @@ interface Props {
   // TODO: add all props for <Button>
   [index: string]: unknown;
 }
+
 export const Button = forwardRef<HTMLButtonElement, Props>(
   (
     {
@@ -134,6 +135,8 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
     );
   },
 );
+
+Button.displayName = "Button";
 
 export const MicButton: FC<{
   muted: boolean;

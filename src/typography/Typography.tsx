@@ -57,6 +57,8 @@ export const Headline = forwardRef<HTMLHeadingElement, TypographyProps>(
   },
 );
 
+Headline.displayName = "Headline";
+
 export const Title = forwardRef<HTMLHeadingElement, TypographyProps>(
   (
     {
@@ -84,6 +86,8 @@ export const Title = forwardRef<HTMLHeadingElement, TypographyProps>(
     );
   },
 );
+
+Title.displayName = "Title";
 
 export const Subtitle = forwardRef<HTMLParagraphElement, TypographyProps>(
   (
@@ -113,6 +117,8 @@ export const Subtitle = forwardRef<HTMLParagraphElement, TypographyProps>(
   },
 );
 
+Subtitle.displayName = "Subtitle";
+
 export const Body = forwardRef<HTMLParagraphElement, TypographyProps>(
   (
     {
@@ -140,6 +146,8 @@ export const Body = forwardRef<HTMLParagraphElement, TypographyProps>(
     );
   },
 );
+
+Body.displayName = "Body";
 
 export const Caption = forwardRef<HTMLParagraphElement, TypographyProps>(
   (
@@ -170,6 +178,8 @@ export const Caption = forwardRef<HTMLParagraphElement, TypographyProps>(
   },
 );
 
+Caption.displayName = "Caption";
+
 export const Micro = forwardRef<HTMLParagraphElement, TypographyProps>(
   (
     {
@@ -199,11 +209,14 @@ export const Micro = forwardRef<HTMLParagraphElement, TypographyProps>(
   },
 );
 
+Micro.displayName = "Micro";
+
 interface LinkProps extends TypographyProps {
   to?: H.LocationDescriptor<unknown>;
   color?: string;
   href?: string;
 }
+
 export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
   (
     {
@@ -254,3 +267,5 @@ export const Link = forwardRef<HTMLAnchorElement, LinkProps>(
     );
   },
 );
+
+Link.displayName = "Link";

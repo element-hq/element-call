@@ -94,3 +94,5 @@ export const PopoverMenuTrigger = forwardRef<
     </div>
   );
 });
+
+PopoverMenuTrigger.displayName = "PopoverMenuTrigger";
