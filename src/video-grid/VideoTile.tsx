@@ -306,7 +306,7 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
     );
 
     return (
-      <ContextMenu title={nameTag} trigger={tile}>
+      <ContextMenu title={nameTag} trigger={tile} hasAccessibleAlternative>
         {menu}
       </ContextMenu>
     );
