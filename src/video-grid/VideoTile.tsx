@@ -176,6 +176,8 @@ const Tile = forwardRef<HTMLDivElement, TileProps>(
   },
 );
 
+Tile.displayName = "Tile";
+
 interface UserMediaTileProps {
   vm: UserMediaTileViewModel;
   className?: string;
@@ -311,6 +313,8 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
   },
 );
 
+UserMediaTile.displayName = "UserMediaTile";
+
 interface ScreenShareTileProps {
   vm: ScreenShareTileViewModel;
   className?: string;
@@ -382,6 +386,8 @@ const ScreenShareTile = subscribe<ScreenShareTileProps, HTMLDivElement>(
     );
   },
 );
+
+ScreenShareTile.displayName = "ScreenShareTile";
 
 interface Props {
   vm: TileViewModel;
@@ -471,3 +477,5 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     }
   },
 );
+
+VideoTile.displayName = "VideoTile";

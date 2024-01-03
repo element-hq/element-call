@@ -32,12 +32,15 @@ import { Subscribe, RemoveSubscribe } from "@react-rxjs/core";
 export function subscribe<P, R>(
   render: ForwardRefRenderFunction<R, P>,
 ): ForwardRefExoticComponent<PropsWithoutRef<P> & RefAttributes<R>> {
-  const InnerComponent = forwardRef<R, { p: P }>(({ p }, ref) => (
+  const Subscriber = forwardRef<R, { p: P }>(({ p }, ref) => (
     <RemoveSubscribe>{render(p, ref)}</RemoveSubscribe>
   ));
+  Subscriber.displayName = "Subscriber";
+
+  // eslint-disable-next-line react/display-name
   const OuterComponent = forwardRef<R, P>((p, ref) => (
     <Subscribe>
-      <InnerComponent ref={ref} p={p} />
+      <Subscriber ref={ref} p={p} />
     </Subscribe>
   ));
   // Copy over the component's display name, default props, etc.
