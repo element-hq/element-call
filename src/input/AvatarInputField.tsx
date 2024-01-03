@@ -105,6 +105,8 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
             aria-label={label}
             {...rest}
           />
+          {/* https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/issues/966 */}
+          {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
           <label htmlFor={id} className={styles.fileInputButton}>
             <EditIcon />
           </label>
@@ -122,3 +124,5 @@ export const AvatarInputField = forwardRef<HTMLInputElement, Props>(
     );
   },
 );
+
+AvatarInputField.displayName = "AvatarInputField";

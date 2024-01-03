@@ -59,6 +59,8 @@ const Tooltip = forwardRef<HTMLDivElement, TooltipProps>(
   },
 );
 
+Tooltip.displayName = "Tooltip";
+
 interface TooltipTriggerProps {
   children: ReactElement;
   placement?: Placement;
@@ -112,3 +114,5 @@ export const TooltipTrigger = forwardRef<HTMLElement, TooltipTriggerProps>(
     );
   },
 );
+
+TooltipTrigger.displayName = "TooltipTrigger";
