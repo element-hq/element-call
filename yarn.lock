@@ -1170,9 +1170,9 @@
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
 "@bufbuild/protobuf@^1.3.0":
-  version "1.5.1"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.5.1.tgz#5cecbb7d8bc9a5daaff9b8b4d0ef9bbc64c80e73"
-  integrity sha512-LX+MeB1AzlbqgJXkq83lilQpLGnPvsAMj7SH8KtJAmQfBc55ee78Stxuff/HMw0xLMYJN3P1FBh5TENgjJof1w==
+  version "1.6.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.6.0.tgz#c33128f70330312e2bd78fd7e988576595b8f74d"
+  integrity sha512-hp19vSFgNw3wBBcVBx5qo5pufCqjaJ0Cfk5H/pfjNOfNWU+4/w0QVOmfAOZNRrNWRrVuaJWxcN8P2vhOkkzbBQ==
 
 "@csstools/cascade-layer-name-parser@^1.0.5":
   version "1.0.5"
@@ -7174,9 +7174,9 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^1.12.3:
-  version "1.15.4"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-1.15.4.tgz#a83c567f707e5fbaaa70ed97abe88d6b587a84e4"
-  integrity sha512-H+5l8PpxnZKI2ZsOt39XaFnmA1Sl10yFd1n4ja5ai4wCIdc3wOdQW6uReGXvOv/JY/oAMHsVnmC070hig1s3Ow==
+  version "1.15.5"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-1.15.5.tgz#633a4d975f2d7ef7a6c2c64d131de17d5f8fd9b1"
+  integrity sha512-Kg2pUXZs/Oi+RdZr7WaBeJ/+IYEpl9qRB4nzVvoTDSxp+cdqC/i9JL7yNE4UdMzAEblLvVsbaAt6yv8H8Pdrog==
   dependencies:
     "@bufbuild/protobuf" "^1.3.0"
     events "^3.3.0"
