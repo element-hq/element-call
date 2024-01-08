@@ -52,7 +52,6 @@ import {
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { useVideoGridLayout, VideoGrid } from "../video-grid/VideoGrid";
-import { useShowConnectionStats } from "../settings/useSetting";
 import { useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
@@ -61,7 +60,7 @@ import styles from "./InCallView.module.css";
 import { VideoTile } from "../video-grid/VideoTile";
 import { NewVideoGrid } from "../video-grid/NewVideoGrid";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
-import { SettingsModal } from "../settings/SettingsModal";
+import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { E2EEConfig, useLiveKit } from "../livekit/useLiveKit";
@@ -167,8 +166,6 @@ export const InCallView: FC<InCallViewProps> = subscribe(
       screenSharingTracks.length > 0,
     );
 
-    const [showConnectionStats] = useShowConnectionStats();
-
     const { hideScreensharing, showControls } = useUrlParams();
 
     const { isScreenShareEnabled, localParticipant } = useLocalParticipant({
@@ -238,7 +235,12 @@ export const InCallView: FC<InCallViewProps> = subscribe(
     const reducedControls = boundsValid && bounds.width <= 340;
     const noControls = reducedControls && bounds.height <= 400;
 
-    const vm = useCallViewModel(rtcSession.room, livekitRoom, connState);
+    const vm = useCallViewModel(
+      rtcSession.room,
+      livekitRoom,
+      matrixInfo.roomEncrypted,
+      connState,
+    );
     const items = useStateObservable(vm.tiles);
     const { fullscreenItem, toggleFullscreen, exitFullscreen } =
       useFullscreen(items);
@@ -283,8 +285,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
             targetWidth={bounds.width}
             key={maximisedParticipant.id}
             showSpeakingIndicator={false}
-            showConnectionStats={showConnectionStats}
-            matrixInfo={matrixInfo}
+            onOpenProfile={openProfile}
           />
         );
       }
@@ -303,8 +304,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
               fullscreen={false}
               onToggleFullscreen={toggleFullscreen}
               showSpeakingIndicator={items.length > 2}
-              showConnectionStats={showConnectionStats}
-              matrixInfo={matrixInfo}
+              onOpenProfile={openProfile}
               {...props}
               ref={props.ref as Ref<HTMLDivElement>}
             />
@@ -318,6 +318,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
     );
 
     const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+    const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
 
     const openSettings = useCallback(
       () => setSettingsModalOpen(true),
@@ -327,6 +328,11 @@ export const InCallView: FC<InCallViewProps> = subscribe(
       () => setSettingsModalOpen(false),
       [setSettingsModalOpen],
     );
+
+    const openProfile = useCallback(() => {
+      setSettingsTab("profile");
+      setSettingsModalOpen(true);
+    }, [setSettingsTab, setSettingsModalOpen]);
 
     const toggleScreensharing = useCallback(async () => {
       exitFullscreen();
@@ -450,6 +456,8 @@ export const InCallView: FC<InCallViewProps> = subscribe(
           roomId={rtcSession.room.roomId}
           open={settingsModalOpen}
           onDismiss={closeSettings}
+          tab={settingsTab}
+          onTabChange={setSettingsTab}
         />
       </div>
     );

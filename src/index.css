@@ -170,6 +170,9 @@ body,
 #root {
   display: flex;
   flex-direction: column;
+  /* The root should be a separate stacking context so that portalled elements
+  like modals and menus always appear over top of it */
+  isolation: isolate;
 }
 
 /* On Android and iOS, prefer native system fonts. The global.css file of

@@ -14,40 +14,219 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { LocalParticipant, RemoteParticipant } from "livekit-client";
+import {
+  AudioSource,
+  TrackReferenceOrPlaceholder,
+  VideoSource,
+  observeParticipantEvents,
+  observeParticipantMedia,
+} from "@livekit/components-core";
+import { StateObservable, state } from "@react-rxjs/core";
+import {
+  LocalParticipant,
+  LocalTrack,
+  Participant,
+  ParticipantEvent,
+  RemoteParticipant,
+  Track,
+  TrackEvent,
+  facingModeFromLocalTrack,
+} from "livekit-client";
 import { RoomMember } from "matrix-js-sdk/src/matrix";
+import {
+  BehaviorSubject,
+  combineLatest,
+  distinctUntilChanged,
+  distinctUntilKeyChanged,
+  fromEvent,
+  map,
+  of,
+  startWith,
+  switchMap,
+  takeUntil,
+} from "rxjs";
 
-export abstract class TileViewModel {
-  // TODO: Properly separate the data layer from the UI layer by keeping the
-  // member and LiveKit participant objects internal. The only LiveKit-specific
-  // thing we need to expose here is a TrackReference for the video, everything
-  // else should be simple strings, flags, and callbacks.
-  public abstract readonly id: string;
-  public abstract readonly member: RoomMember | undefined;
-  public abstract readonly sfuParticipant: LocalParticipant | RemoteParticipant;
+import { ViewModel } from "./ViewModel";
+
+function observeTrackReference(
+  participant: Participant,
+  source: Track.Source,
+): StateObservable<TrackReferenceOrPlaceholder> {
+  return state(
+    observeParticipantMedia(participant).pipe(
+      map(() => ({
+        participant,
+        publication: participant.getTrack(source),
+        source,
+      })),
+      distinctUntilKeyChanged("publication"),
+    ),
+  );
 }
 
-// Right now it looks kind of pointless to have user media and screen share be
-// represented by two classes rather than a single flag, but this will come in
-// handy when we go to move more business logic out of VideoTile and into this
-// file
+abstract class BaseTileViewModel extends ViewModel {
+  /**
+   * Whether the tile belongs to the local user.
+   */
+  public readonly local = this.participant.isLocal;
+  /**
+   * The LiveKit video track to be shown on this tile.
+   */
+  public readonly video: StateObservable<TrackReferenceOrPlaceholder>;
+  /**
+   * Whether there should be a warning that this media is unencrypted.
+   */
+  public readonly unencryptedWarning: StateObservable<boolean>;
 
-export class UserMediaTileViewModel extends TileViewModel {
   public constructor(
+    // TODO: This is only needed for full screen toggling and can be removed as
+    // soon as that code is moved into the view models
     public readonly id: string,
+    /**
+     * The Matrix room member to which this tile belongs.
+     */
+    // TODO: Fully separate the data layer from the UI layer by keeping the
+    // member object internal
     public readonly member: RoomMember | undefined,
-    public readonly sfuParticipant: LocalParticipant | RemoteParticipant,
+    protected readonly participant: LocalParticipant | RemoteParticipant,
+    callEncrypted: boolean,
+    audioSource: AudioSource,
+    videoSource: VideoSource,
   ) {
     super();
+    const audio = observeTrackReference(participant, audioSource);
+    this.video = observeTrackReference(participant, videoSource);
+    this.unencryptedWarning = state(
+      combineLatest(
+        [audio, this.video],
+        (a, v) =>
+          callEncrypted &&
+          (a.publication?.isEncrypted === false ||
+            v.publication?.isEncrypted === false),
+      ).pipe(distinctUntilChanged()),
+    );
   }
 }
 
-export class ScreenShareTileViewModel extends TileViewModel {
+/**
+ * A tile displaying some media.
+ */
+export type TileViewModel = UserMediaTileViewModel | ScreenShareTileViewModel;
+
+/**
+ * A tile displaying some participant's user media.
+ */
+export class UserMediaTileViewModel extends BaseTileViewModel {
+  /**
+   * Whether the video should be mirrored.
+   */
+  public readonly mirror = state(
+    this.video.pipe(
+      switchMap((v) => {
+        const track = v.publication?.track;
+        if (!(track instanceof LocalTrack)) return of(false);
+        // Watch for track restarts, because they indicate a camera switch
+        return fromEvent(track, TrackEvent.Restarted).pipe(
+          startWith(null),
+          // Mirror only front-facing cameras (those that face the user)
+          map(() => facingModeFromLocalTrack(track).facingMode === "user"),
+        );
+      }),
+    ),
+  );
+
+  /**
+   * Whether the participant is speaking.
+   */
+  public readonly speaking = state(
+    observeParticipantEvents(
+      this.participant,
+      ParticipantEvent.IsSpeakingChanged,
+    ).pipe(map((p) => p.isSpeaking)),
+  );
+
+  private readonly _locallyMuted = new BehaviorSubject(false);
+  /**
+   * Whether we've disabled this participant's audio.
+   */
+  public readonly locallyMuted = state(this._locallyMuted);
+
+  private readonly _localVolume = new BehaviorSubject(1);
+  /**
+   * The volume to which we've set this participant's audio, as a scalar
+   * multiplier.
+   */
+  public readonly localVolume = state(this._localVolume);
+
+  /**
+   * Whether this participant is sending audio (i.e. is unmuted on their side).
+   */
+  public readonly audioEnabled: StateObservable<boolean>;
+  /**
+   * Whether this participant is sending video.
+   */
+  public readonly videoEnabled: StateObservable<boolean>;
+
   public constructor(
-    public readonly id: string,
-    public readonly member: RoomMember | undefined,
-    public readonly sfuParticipant: LocalParticipant | RemoteParticipant,
+    id: string,
+    member: RoomMember | undefined,
+    participant: LocalParticipant | RemoteParticipant,
+    callEncrypted: boolean,
   ) {
-    super();
+    super(
+      id,
+      member,
+      participant,
+      callEncrypted,
+      Track.Source.Microphone,
+      Track.Source.Camera,
+    );
+
+    const media = observeParticipantMedia(participant);
+    this.audioEnabled = state(
+      media.pipe(map((m) => m.microphoneTrack?.isMuted === false)),
+    );
+    this.videoEnabled = state(
+      media.pipe(map((m) => m.cameraTrack?.isMuted === false)),
+    );
+
+    // Sync the local mute state and volume with LiveKit
+    if (!this.local)
+      combineLatest([this._locallyMuted, this._localVolume], (muted, volume) =>
+        muted ? 0 : volume,
+      )
+        .pipe(takeUntil(this.destroyed))
+        .subscribe((volume) => {
+          (this.participant as RemoteParticipant).setVolume(volume);
+        });
+  }
+
+  public toggleLocallyMuted(): void {
+    this._locallyMuted.next(!this._locallyMuted.value);
+  }
+
+  public setLocalVolume(value: number): void {
+    this._localVolume.next(value);
+  }
+}
+
+/**
+ * A tile displaying some participant's screen share.
+ */
+export class ScreenShareTileViewModel extends BaseTileViewModel {
+  public constructor(
+    id: string,
+    member: RoomMember | undefined,
+    participant: LocalParticipant | RemoteParticipant,
+    callEncrypted: boolean,
+  ) {
+    super(
+      id,
+      member,
+      participant,
+      callEncrypted,
+      Track.Source.ScreenShareAudio,
+      Track.Source.ScreenShare,
+    );
   }
 }
