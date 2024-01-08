@@ -9494,6 +9494,13 @@ vaul@^0.7.0:
   dependencies:
     "@radix-ui/react-dialog" "^1.0.4"
 
+vaul@^0.8.0:
+  version "0.8.0"
+  resolved "https://registry.yarnpkg.com/vaul/-/vaul-0.8.0.tgz#f2155dcb5561d33df4f0794603e91e35672a8d58"
+  integrity sha512-9nUU2jIObJvJZxeQU1oVr/syKo5XqbRoOMoTEt0hHlWify4QZFlqTh6QSN/yxoKzNrMeEQzxbc3XC/vkPLOIqw==
+  dependencies:
+    "@radix-ui/react-dialog" "^1.0.4"
+
 vinyl-contents@^2.0.0:
   version "2.0.0"
   resolved "https://registry.yarnpkg.com/vinyl-contents/-/vinyl-contents-2.0.0.tgz#cc2ba4db3a36658d069249e9e36d9e2b41935d89"
