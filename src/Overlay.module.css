@@ -16,7 +16,6 @@ limitations under the License.
 
 .bg {
   position: fixed;
-  z-index: 100;
   inset: 0;
   background: rgba(3, 12, 27, 0.528);
 }
@@ -49,7 +48,6 @@ limitations under the License.
 
 .overlay {
   position: fixed;
-  z-index: 101;
 }
 
 .overlay.animate {

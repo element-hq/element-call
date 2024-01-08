@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ChangeEvent, FC, Key, ReactNode, useCallback, useState } from "react";
+import { ChangeEvent, FC, Key, ReactNode } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
@@ -47,15 +47,33 @@ import {
 } from "../livekit/MediaDevicesContext";
 import { widget } from "../widget";
 
+type SettingsTab =
+  | "audio"
+  | "video"
+  | "profile"
+  | "feedback"
+  | "more"
+  | "developer";
+
 interface Props {
   open: boolean;
   onDismiss: () => void;
+  tab: SettingsTab;
+  onTabChange: (tab: SettingsTab) => void;
   client: MatrixClient;
   roomId?: string;
-  defaultTab?: string;
 }
 
-export const SettingsModal: FC<Props> = (props) => {
+export const defaultSettingsTab: SettingsTab = "audio";
+
+export const SettingsModal: FC<Props> = ({
+  open,
+  onDismiss,
+  tab,
+  onTabChange,
+  client,
+  roomId,
+}) => {
   const { t } = useTranslation();
 
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
@@ -92,15 +110,6 @@ export const SettingsModal: FC<Props> = (props) => {
     );
   };
 
-  const [selectedTab, setSelectedTab] = useState<string | undefined>();
-
-  const onSelectedTabChanged = useCallback(
-    (tab: Key) => {
-      setSelectedTab(tab.toString());
-    },
-    [setSelectedTab],
-  );
-
   const optInDescription = (
     <Caption>
       <Trans i18nKey="settings.opt_in_description">
@@ -113,7 +122,7 @@ export const SettingsModal: FC<Props> = (props) => {
   );
 
   const devices = useMediaDevices();
-  useMediaDeviceNames(devices, props.open);
+  useMediaDeviceNames(devices, open);
 
   const audioTab = (
     <TabItem
@@ -158,7 +167,7 @@ export const SettingsModal: FC<Props> = (props) => {
         </>
       }
     >
-      <ProfileSettingsTab client={props.client} />
+      <ProfileSettingsTab client={client} />
     </TabItem>
   );
 
@@ -172,7 +181,7 @@ export const SettingsModal: FC<Props> = (props) => {
         </>
       }
     >
-      <FeedbackSettingsTab roomId={props.roomId} />
+      <FeedbackSettingsTab roomId={roomId} />
     </TabItem>
   );
 
@@ -260,12 +269,12 @@ export const SettingsModal: FC<Props> = (props) => {
     <Modal
       title={t("common.settings")}
       className={styles.settingsModal}
-      open={props.open}
-      onDismiss={props.onDismiss}
+      open={open}
+      onDismiss={onDismiss}
     >
       <TabContainer
-        onSelectionChange={onSelectedTabChanged}
-        selectedKey={selectedTab ?? props.defaultTab ?? "audio"}
+        onSelectionChange={onTabChange as (tab: Key) => void}
+        selectedKey={tab}
         className={styles.tabContainer}
       >
         {tabs}
