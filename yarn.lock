@@ -3592,9 +3592,9 @@
   integrity sha512-mxSnDQxPqsZxmeShFH+uwQ4kO4gcJcGahjjMFeLbKE95IAZiiZyiEepGZjtXJ7hN/yfu0bu9xN2ajcU0JcxX6A==
 
 "@types/q@^1.5.1":
-  version "1.5.7"
-  resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.7.tgz#5fe8cf91556bfb310d17f2e2b4263a7c12c2c2ca"
-  integrity sha512-HBPgtzp44867rkL+IzQ3560/E/BlobwCjeXsuKqogrcE99SKgZR4tvBBCuNJZMhUFMz26M7cjKWZg785lllwpA==
+  version "1.5.8"
+  resolved "https://registry.yarnpkg.com/@types/q/-/q-1.5.8.tgz#95f6c6a08f2ad868ba230ead1d2d7f7be3db3837"
+  integrity sha512-hroOstUScF6zhIi+5+x0dzqrHA1EJi+Irri6b1fxolMTqqHIV/Cg77EtnQcZqZCu8hR3mX2BzIxN4/GzI68Kfw==
 
 "@types/react-dom@^18.0.0":
   version "18.2.15"
@@ -3804,9 +3804,9 @@
     "@use-gesture/core" "10.3.0"
 
 "@vector-im/compound-design-tokens@^0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@vector-im/compound-design-tokens/-/compound-design-tokens-0.1.0.tgz#1a574fba872ff93b1de8490f475e30b922cd02a2"
-  integrity sha512-vnDrd1CPPR7CwQLss/JnIE1ga6QwmCkhgBvXm1huMhCs7nIiqf90Sbgc0WugbHNaRXGEEhMVGrE69DaQIUcqOA==
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@vector-im/compound-design-tokens/-/compound-design-tokens-0.1.1.tgz#4fcf1212e6cc11256c443dc3bb02a9cdd8f2356c"
+  integrity sha512-cZJFQS8FknJB2B9cgLmw1fqU1Dr3x/Bt9ZQu/zgioIRHpwnvhe/5EyBXgZY18UIp/+sks95tt5js+W3tjtcO1A==
   dependencies:
     svg2vectordrawable "^2.9.1"
 
