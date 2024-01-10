@@ -32,19 +32,13 @@ export const EncryptionLock: FC<Props> = ({ encrypted }) => {
   const label = encrypted ? t("common.encrypted") : t("common.unencrypted");
 
   return (
-    <Tooltip label={label} side="right">
+    <Tooltip label={label} side="right" isTriggerInteractive={false}>
       <Icon
         width={16}
         height={16}
         className={styles.lock}
         data-encrypted={encrypted}
         aria-label={label}
-        // Make the icon focusable so that the tooltip can be opened
-        // with keyboard navigation
-        // TODO: Replace this with the solution from
-        // https://github.com/vector-im/compound-web/pull/130 once it
-        // lands
-        tabIndex={0}
       />
     </Tooltip>
   );

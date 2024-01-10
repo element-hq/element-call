@@ -148,22 +148,20 @@ const Tile = forwardRef<HTMLDivElement, TileProps>(
         <div className={styles.fg}>
           <div className={styles.nameTag}>
             {nameTagLeadingIcon}
-            <Text as="span" size="sm" weight="medium">
+            <Text as="span" size="sm" weight="medium" className={styles.name}>
               {nameTag}
             </Text>
             {unencryptedWarning && (
-              <Tooltip label={t("common.unencrypted")} side="bottom">
+              <Tooltip
+                label={t("common.unencrypted")}
+                side="bottom"
+                isTriggerInteractive={false}
+              >
                 <ErrorIcon
                   width={20}
                   height={20}
                   aria-label={t("common.unencrypted")}
                   className={styles.errorIcon}
-                  // Make the icon focusable so that the tooltip can be opened
-                  // with keyboard navigation
-                  // TODO: Replace this with the solution from
-                  // https://github.com/vector-im/compound-web/pull/130 once it
-                  // lands
-                  tabIndex={0}
                 />
               </Tooltip>
             )}

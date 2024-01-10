@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 .lock {
+  display: block;
   padding: var(--cpd-space-1x);
   border-radius: var(--cpd-radius-pill-effect);
 }
