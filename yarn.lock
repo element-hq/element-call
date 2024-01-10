@@ -7124,9 +7124,9 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^1.12.3:
-  version "1.15.6"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-1.15.6.tgz#6e2dcde89e89656a3688ecd4ed46b8e550b03e36"
-  integrity sha512-fwEcM8IK4VUM1vmmJcym4MS3MSfeeRBsfhBjqQJWOYDwnOP51DP6k2fB3BRgc9nBC1aGRW4yA8zKVpjMbdHWag==
+  version "1.15.7"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-1.15.7.tgz#b09e48d4620c6bb8ea4fe97d0f35be878fbd8e1f"
+  integrity sha512-VxXhcFIBolGe7owxfrLhNYDcnEc0bdE/pk9cfdKDyFZwpSTia27zBZnd+i5srRS3Sg6t5STSM86UREC5I36Eww==
   dependencies:
     "@bufbuild/protobuf" "^1.3.0"
     events "^3.3.0"
