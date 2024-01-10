@@ -158,7 +158,8 @@ unconditionally select the container so we can use cqmin units */
   max-inline-size: 100%;
 }
 
-.nameTag > svg {
+.nameTag > svg,
+.nameTag > span {
   flex-shrink: 0;
 }
 
@@ -170,14 +171,16 @@ unconditionally select the container so we can use cqmin units */
   color: var(--cpd-color-icon-primary);
 }
 
-.nameTag span {
+.nameTag > .name {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
   padding-inline: var(--cpd-space-2x);
+  flex-shrink: 1;
 }
 
 .errorIcon {
+  display: block;
   color: var(--cpd-color-icon-critical-primary);
 }
 
