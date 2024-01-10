@@ -24,6 +24,7 @@ import {
 import * as Sentry from "@sentry/react";
 import { OverlayProvider } from "@react-aria/overlays";
 import { History } from "history";
+import { TooltipProvider } from "@vector-im/compound-web";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
@@ -77,35 +78,37 @@ export const App: FC<AppProps> = ({ history }) => {
     // @ts-ignore
     <Router history={history}>
       <BackgroundProvider>
-        {loaded ? (
-          <Suspense fallback={null}>
-            <ClientProvider>
-              <MediaDevicesProvider>
-                <Sentry.ErrorBoundary fallback={errorPage}>
-                  <OverlayProvider>
-                    <DisconnectedBanner />
-                    <Switch>
-                      <SentryRoute exact path="/">
-                        <HomePage />
-                      </SentryRoute>
-                      <SentryRoute exact path="/login">
-                        <LoginPage />
-                      </SentryRoute>
-                      <SentryRoute exact path="/register">
-                        <RegisterPage />
-                      </SentryRoute>
-                      <SentryRoute path="*">
-                        <RoomPage />
-                      </SentryRoute>
-                    </Switch>
-                  </OverlayProvider>
-                </Sentry.ErrorBoundary>
-              </MediaDevicesProvider>
-            </ClientProvider>
-          </Suspense>
-        ) : (
-          <LoadingView />
-        )}
+        <TooltipProvider>
+          {loaded ? (
+            <Suspense fallback={null}>
+              <ClientProvider>
+                <MediaDevicesProvider>
+                  <Sentry.ErrorBoundary fallback={errorPage}>
+                    <OverlayProvider>
+                      <DisconnectedBanner />
+                      <Switch>
+                        <SentryRoute exact path="/">
+                          <HomePage />
+                        </SentryRoute>
+                        <SentryRoute exact path="/login">
+                          <LoginPage />
+                        </SentryRoute>
+                        <SentryRoute exact path="/register">
+                          <RegisterPage />
+                        </SentryRoute>
+                        <SentryRoute path="*">
+                          <RoomPage />
+                        </SentryRoute>
+                      </Switch>
+                    </OverlayProvider>
+                  </Sentry.ErrorBoundary>
+                </MediaDevicesProvider>
+              </ClientProvider>
+            </Suspense>
+          ) : (
+            <LoadingView />
+          )}
+        </TooltipProvider>
       </BackgroundProvider>
     </Router>
   );
