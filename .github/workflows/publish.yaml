@@ -54,7 +54,7 @@ jobs:
           tar --numeric-owner --transform "s/dist/element-call-${TARBALL_VERSION}/" -cvzf element-call-${TARBALL_VERSION}.tar.gz dist
 
       - name: Upload
-        uses: actions/upload-artifact@73d8b66ede50d06e26f1d69f28e1652c702c56d8
+        uses: actions/upload-artifact@1eb3cb2b3e0f29609092a73eb033bb759a334595
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
