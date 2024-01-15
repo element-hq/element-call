@@ -137,9 +137,6 @@ export const GroupCallView: FC<Props> = ({
   }, [perParticipantE2EE, e2eeSharedKey]);
 
   useEffect(() => {
-    // this effect is only if we don't want to show the lobby (skipLobby = true)
-    if (!skipLobby) return;
-
     const defaultDeviceSetup = async (
       requestedDeviceData: JoinCallData,
     ): Promise<void> => {
@@ -189,8 +186,9 @@ export const GroupCallView: FC<Props> = ({
         }
       }
     };
-    if (widget && preload) {
-      // In preload mode, wait for a join action before entering
+
+    if (widget && preload && skipLobby) {
+      // In preload mode without lobby we wait for a join action before entering
       const onJoin = async (
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
@@ -205,10 +203,15 @@ export const GroupCallView: FC<Props> = ({
       return () => {
         widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
-    } else {
-      // if we don't use preload and only skipLobby we enter the rtc session right away
+    } else if (widget && !preload && skipLobby) {
+      // No lobby and no preload: we enter the rtc session right away
+      widget.api.setAlwaysOnScreen(true);
       defaultDeviceSetup({ audioInput: null, videoInput: null });
       enterRTCSession(rtcSession, perParticipantE2EE);
+    } else if (widget && !skipLobby) {
+      // If we show the lobby, we still need to set the widget to sticky
+      // joining will be triggered by the lobby view.
+      widget!.api.setAlwaysOnScreen(true);
     }
   }, [rtcSession, preload, skipLobby, perParticipantE2EE]);
 
@@ -338,7 +341,7 @@ export const GroupCallView: FC<Props> = ({
         />
       </>
     );
-  } else if (left) {
+  } else if (left && widget === null) {
     // The call ended view is shown for two reasons: prompting guests to create
     // an account, and prompting users that have opted into analytics to provide
     // feedback. We don't show a feedback prompt to widget users however (at
@@ -366,7 +369,7 @@ export const GroupCallView: FC<Props> = ({
       // LobbyView again which would open capture devices again.
       return null;
     }
-  } else if (preload) {
+  } else if (preload || skipLobby) {
     return null;
   } else {
     return (
