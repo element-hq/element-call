@@ -1981,9 +1981,9 @@
     rxjs "7.8.1"
 
 "@livekit/components-react@^1.1.0":
-  version "1.5.2"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-1.5.2.tgz#f22662d21a98155127e9debdcb60ff0b960465ad"
-  integrity sha512-1PlvgxxN7vr9YKRBq3dMy5rvLQ6zWpwoxbQ6HFj3oOMDvrcyT6e5rTpLhW9jnTBaT8iqBUPIFi+OsrPvBPeHmQ==
+  version "1.5.3"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-1.5.3.tgz#e26a3bccbc7ff978e7ae89fc439c36c56faef9e1"
+  integrity sha512-OL2BhyltXz4GTEmTPZPMehBMoWWNILTqHClPpFLJyM3KLnk2lLvaH9QWwlbqIJVr6vkm39pvq39ckv6GKa7jJw==
   dependencies:
     "@livekit/components-core" "0.8.3"
     "@react-hook/latest" "1.0.3"
