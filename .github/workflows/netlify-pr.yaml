@@ -47,9 +47,7 @@ jobs:
         run: curl -s https://raw.githubusercontent.com/element-hq/element-call/main/config/netlify_redirects > webapp/_redirects
 
       - name: Add config file
-        env:
-          HEADBRACH: ${{ github.event.workflow_run.head_branch }}
-        run: curl -s "https://raw.githubusercontent.com/element-hq/element-call/${HEADBRACH}/config/element_io_preview.json" > webapp/config.json
+        run: curl -s "https://raw.githubusercontent.com/${{ github.event.workflow_run.head_repository.full_name }}/${{ github.event.workflow_run.head_branch }}/config/element_io_preview.json" > webapp/config.json
 
       - name: ☁️ Deploy to Netlify
         id: netlify
