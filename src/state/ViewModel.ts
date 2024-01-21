@@ -1,5 +1,5 @@
 /*
-Copyright 2023 New Vector Ltd
+Copyright 2023-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,20 +14,19 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Subject } from "rxjs";
+import { ObservableScope } from "./ObservableScope";
 
 /**
  * An MVVM view model.
  */
 export abstract class ViewModel {
-  protected readonly destroyed = new Subject<void>();
+  protected readonly scope = new ObservableScope();
 
   /**
    * Instructs the ViewModel to clean up its resources. If you forget to call
    * this, there may be memory leaks!
    */
   public destroy(): void {
-    this.destroyed.next();
-    this.destroyed.complete();
+    this.scope.end();
   }
 }
