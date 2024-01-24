@@ -21,6 +21,7 @@ import { useClient } from "../ClientContext";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { generateRandomName } from "../auth/generateRandomName";
 import { useRecaptcha } from "../auth/useRecaptcha";
+import { widget } from "../widget";
 
 interface UseRegisterPasswordlessUserType {
   privacyPolicyUrl?: string;
@@ -38,6 +39,9 @@ export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
     async (displayName: string) => {
       if (!setClient) {
         throw new Error("No client context");
+      }
+      if (widget) {
+        throw new Error("We never register passwordless user in widget");
       }
 
       try {
