@@ -397,8 +397,8 @@ export const InCallView: FC<InCallViewProps> = subscribe(
             showControls
               ? styles.footer
               : hideHeader
-              ? [styles.footer, styles.footerHidden]
-              : [styles.footer, styles.footerThin],
+                ? [styles.footer, styles.footerHidden]
+                : [styles.footer, styles.footerThin],
           )}
         >
           {!mobile && !hideHeader && (
