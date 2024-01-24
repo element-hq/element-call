@@ -1983,10 +1983,10 @@
     clsx "2.1.0"
     usehooks-ts "2.9.1"
 
-"@matrix-org/matrix-sdk-crypto-wasm@^3.2.0":
-  version "3.5.0"
-  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-3.5.0.tgz#997d63ae12304142513fe93c5e0872ff10ca30b4"
-  integrity sha512-7as0jJTje+rFu9AF8LEO0tmhtHcou2YQnZOtpiP+lS5rDfIPv5CL8/eb45fzDnbQybt9Jm5zdjBdiLBEaUg2dQ==
+"@matrix-org/matrix-sdk-crypto-wasm@^4.0.0":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-4.0.1.tgz#b1d3848a6adc120622e5225045330d253273b117"
+  integrity sha512-0B4QQ9kop8AocmQDcOfROCQ6QyGZeogpsvTYfEB9ZIBtndCCwy/C3mkxzJD6+gEo1bJ4TdYnblhN7hEQlAG50g==
 
 "@matrix-org/olm@https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.14.tgz":
   version "3.2.14"
@@ -7275,12 +7275,12 @@ matrix-events-sdk@0.0.1:
   resolved "https://registry.yarnpkg.com/matrix-events-sdk/-/matrix-events-sdk-0.0.1.tgz#c8c38911e2cb29023b0bbac8d6f32e0de2c957dd"
   integrity sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#2cd63ca4b90eb2e4d22b45ae281a81c4514e757a":
-  version "30.2.0"
-  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/2cd63ca4b90eb2e4d22b45ae281a81c4514e757a"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#toger5/matrix-rtc-expires_at":
+  version "31.1.0"
+  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/bebcba03a3373a337c74a90b5521d50e967c5ea7"
   dependencies:
     "@babel/runtime" "^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm" "^3.2.0"
+    "@matrix-org/matrix-sdk-crypto-wasm" "^4.0.0"
     another-json "^0.2.0"
     bs58 "^5.0.0"
     content-type "^1.0.4"
