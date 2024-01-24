@@ -87,7 +87,7 @@ export const GroupCallView: FC<Props> = ({
   const roomName = useRoomName(rtcSession.room);
   const roomAvatar = useRoomAvatar(rtcSession.room);
   const e2eeSharedKey = useRoomSharedKey(rtcSession.room.roomId);
-  const { perParticipantE2EE } = useUrlParams();
+  const { perParticipantE2EE, returnToLobby } = useUrlParams();
   const roomEncrypted =
     useIsRoomE2EE(rtcSession.room.roomId) || perParticipantE2EE;
 
@@ -205,13 +205,8 @@ export const GroupCallView: FC<Props> = ({
       };
     } else if (widget && !preload && skipLobby) {
       // No lobby and no preload: we enter the rtc session right away
-      widget.api.setAlwaysOnScreen(true);
       defaultDeviceSetup({ audioInput: null, videoInput: null });
       enterRTCSession(rtcSession, perParticipantE2EE);
-    } else if (widget && !skipLobby) {
-      // If we show the lobby, we still need to set the widget to sticky
-      // joining will be triggered by the lobby view.
-      widget!.api.setAlwaysOnScreen(true);
     }
   }, [rtcSession, preload, skipLobby, perParticipantE2EE]);
 
@@ -249,6 +244,9 @@ export const GroupCallView: FC<Props> = ({
 
   useEffect(() => {
     if (widget && isJoined) {
+      // set widget to sticky once joined.
+      widget!.api.setAlwaysOnScreen(true);
+
       const onHangup = async (
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
@@ -322,6 +320,21 @@ export const GroupCallView: FC<Props> = ({
       onDismiss={onDismissInviteModal}
     />
   );
+  const lobbyView = (
+    <>
+      {shareModal}
+      <LobbyView
+        client={client}
+        matrixInfo={matrixInfo}
+        muteStates={muteStates}
+        onEnter={(): void => enterRTCSession(rtcSession, perParticipantE2EE)}
+        confineToRoom={confineToRoom}
+        hideHeader={hideHeader}
+        participantCount={participantCount}
+        onShareClick={onShareClick}
+      />
+    </>
+  );
 
   if (isJoined) {
     return (
@@ -342,6 +355,8 @@ export const GroupCallView: FC<Props> = ({
       </>
     );
   } else if (left && widget === null) {
+    // Left in SPA mode:
+
     // The call ended view is shown for two reasons: prompting guests to create
     // an account, and prompting users that have opted into analytics to provide
     // feedback. We don't show a feedback prompt to widget users however (at
@@ -369,23 +384,14 @@ export const GroupCallView: FC<Props> = ({
       // LobbyView again which would open capture devices again.
       return null;
     }
+  } else if (left && widget !== null) {
+    // Left in widget mode:
+    if (!returnToLobby) {
+      return null;
+    }
   } else if (preload || skipLobby) {
     return null;
-  } else {
-    return (
-      <>
-        {shareModal}
-        <LobbyView
-          client={client}
-          matrixInfo={matrixInfo}
-          muteStates={muteStates}
-          onEnter={(): void => enterRTCSession(rtcSession, perParticipantE2EE)}
-          confineToRoom={confineToRoom}
-          hideHeader={hideHeader}
-          participantCount={participantCount}
-          onShareClick={onShareClick}
-        />
-      </>
-    );
   }
+
+  return lobbyView;
 };
