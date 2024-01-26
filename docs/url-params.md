@@ -189,3 +189,13 @@ with the join widget action.
 ```
 skipLobby: boolean; (default: false)
 ```
+
+**returnToLobby**
+Setting this flag makes element call show the lobby in widget mode after leaving
+a call.
+This is useful for video rooms.
+If set to false, the widget will show a blank page after leaving the call.
+
+```
+returnToLobby: boolean; (default: false)
+```
