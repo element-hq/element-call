@@ -194,10 +194,7 @@ export const GroupCallView: FC<Props> = ({
       ): Promise<void> => {
         defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
         enterRTCSession(rtcSession, perParticipantE2EE);
-        await Promise.all([
-          widget!.api.setAlwaysOnScreen(true),
-          widget!.api.transport.reply(ev.detail, {}),
-        ]);
+        await widget!.api.transport.reply(ev.detail, {});
       };
       widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
       return () => {
