@@ -73,7 +73,7 @@ borders don't support gradients */
 .videoTile video {
   inline-size: 100%;
   block-size: 100%;
-  object-fit: cover;
+  object-fit: contain;
   background-color: var(--cpd-color-bg-subtle-primary);
   /* This transform is a no-op, but it forces Firefox to use a different
   rendering path, one that actually clips the corners of <video> elements into
@@ -87,6 +87,10 @@ borders don't support gradients */
 
 .videoTile.screenshare video {
   object-fit: contain;
+}
+
+.videoTile.cropVideo video {
+  object-fit: cover;
 }
 
 .videoTile.videoMuted video {
