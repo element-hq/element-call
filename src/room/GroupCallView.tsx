@@ -87,7 +87,7 @@ export const GroupCallView: FC<Props> = ({
   const roomName = useRoomName(rtcSession.room);
   const roomAvatar = useRoomAvatar(rtcSession.room);
   const e2eeSharedKey = useRoomSharedKey(rtcSession.room.roomId);
-  const { perParticipantE2EE } = useUrlParams();
+  const { perParticipantE2EE, returnToLobby } = useUrlParams();
   const roomEncrypted =
     useIsRoomE2EE(rtcSession.room.roomId) || perParticipantE2EE;
 
@@ -137,9 +137,6 @@ export const GroupCallView: FC<Props> = ({
   }, [perParticipantE2EE, e2eeSharedKey]);
 
   useEffect(() => {
-    // this effect is only if we don't want to show the lobby (skipLobby = true)
-    if (!skipLobby) return;
-
     const defaultDeviceSetup = async (
       requestedDeviceData: JoinCallData,
     ): Promise<void> => {
@@ -189,24 +186,22 @@ export const GroupCallView: FC<Props> = ({
         }
       }
     };
-    if (widget && preload) {
-      // In preload mode, wait for a join action before entering
+
+    if (widget && preload && skipLobby) {
+      // In preload mode without lobby we wait for a join action before entering
       const onJoin = async (
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
         defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
         enterRTCSession(rtcSession, perParticipantE2EE);
-        await Promise.all([
-          widget!.api.setAlwaysOnScreen(true),
-          widget!.api.transport.reply(ev.detail, {}),
-        ]);
+        await widget!.api.transport.reply(ev.detail, {});
       };
       widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
       return () => {
         widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
-    } else {
-      // if we don't use preload and only skipLobby we enter the rtc session right away
+    } else if (widget && !preload && skipLobby) {
+      // No lobby and no preload: we enter the rtc session right away
       defaultDeviceSetup({ audioInput: null, videoInput: null });
       enterRTCSession(rtcSession, perParticipantE2EE);
     }
@@ -246,6 +241,9 @@ export const GroupCallView: FC<Props> = ({
 
   useEffect(() => {
     if (widget && isJoined) {
+      // set widget to sticky once joined.
+      widget!.api.setAlwaysOnScreen(true);
+
       const onHangup = async (
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
@@ -319,6 +317,21 @@ export const GroupCallView: FC<Props> = ({
       onDismiss={onDismissInviteModal}
     />
   );
+  const lobbyView = (
+    <>
+      {shareModal}
+      <LobbyView
+        client={client}
+        matrixInfo={matrixInfo}
+        muteStates={muteStates}
+        onEnter={(): void => enterRTCSession(rtcSession, perParticipantE2EE)}
+        confineToRoom={confineToRoom}
+        hideHeader={hideHeader}
+        participantCount={participantCount}
+        onShareClick={onShareClick}
+      />
+    </>
+  );
 
   if (isJoined) {
     return (
@@ -338,7 +351,9 @@ export const GroupCallView: FC<Props> = ({
         />
       </>
     );
-  } else if (left) {
+  } else if (left && widget === null) {
+    // Left in SPA mode:
+
     // The call ended view is shown for two reasons: prompting guests to create
     // an account, and prompting users that have opted into analytics to provide
     // feedback. We don't show a feedback prompt to widget users however (at
@@ -366,23 +381,14 @@ export const GroupCallView: FC<Props> = ({
       // LobbyView again which would open capture devices again.
       return null;
     }
-  } else if (preload) {
+  } else if (left && widget !== null) {
+    // Left in widget mode:
+    if (!returnToLobby) {
+      return null;
+    }
+  } else if (preload || skipLobby) {
     return null;
-  } else {
-    return (
-      <>
-        {shareModal}
-        <LobbyView
-          client={client}
-          matrixInfo={matrixInfo}
-          muteStates={muteStates}
-          onEnter={(): void => enterRTCSession(rtcSession, perParticipantE2EE)}
-          confineToRoom={confineToRoom}
-          hideHeader={hideHeader}
-          participantCount={participantCount}
-          onShareClick={onShareClick}
-        />
-      </>
-    );
   }
+
+  return lobbyView;
 };

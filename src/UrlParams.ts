@@ -125,6 +125,11 @@ export interface UrlParams {
    * with the join widget action.
    */
   skipLobby: boolean;
+  /**
+   * Setting this flag makes element call show the lobby after leaving a call.
+   * This is useful for video rooms.
+   */
+  returnToLobby: boolean;
 }
 
 // This is here as a stopgap, but what would be far nicer is a function that
@@ -223,6 +228,7 @@ export const getUrlParams = (
     allowIceFallback: parser.getFlagParam("allowIceFallback"),
     perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
     skipLobby: parser.getFlagParam("skipLobby"),
+    returnToLobby: parser.getFlagParam("returnToLobby"),
   };
 };
 
