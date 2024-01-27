@@ -64,7 +64,7 @@
     "video": "Video"
   },
   "Create rooms": "Create rooms",
-  "Creating rooms...": "Creating rooms...",
+  "Creating rooms": "Creating rooms",
   "disconnected_banner": "Connectivity to the server has been lost.",
   "full_screen_view_description": "<0>Submitting debug logs will help us track down the problem.</0>",
   "full_screen_view_h1": "<0>Oops, something's gone wrong.</0>",

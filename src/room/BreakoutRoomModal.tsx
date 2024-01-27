@@ -310,7 +310,7 @@ export const BreakoutRoomModal: FC<Props> = ({
           {t("Add break-out room")}
         </Button>
         <Button type="submit" disabled={submitting} onPress={onSubmit}>
-          {submitting ? t("Creating rooms...") : t("Create rooms")}
+          {submitting ? t("Creating rooms") : t("Create rooms")}
         </Button>
       </div>
     </Modal>
