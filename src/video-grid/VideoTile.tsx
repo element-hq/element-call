@@ -16,6 +16,8 @@ limitations under the License.
 
 import {
   ComponentProps,
+  ForwardedRef,
+  ReactNode,
   forwardRef,
   useCallback,
   useEffect,
@@ -24,11 +26,9 @@ import {
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
-import { LocalParticipant, RemoteParticipant, Track } from "livekit-client";
 import {
-  ConnectionQualityIndicator,
+  TrackReferenceOrPlaceholder,
   VideoTrack,
-  useMediaTrack,
 } from "@livekit/components-react";
 import {
   RoomMember,
@@ -36,197 +36,444 @@ import {
 } from "matrix-js-sdk/src/models/room-member";
 import MicOnSolidIcon from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg?react";
 import MicOffSolidIcon from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg?react";
-import { Text } from "@vector-im/compound-web";
+import ErrorIcon from "@vector-im/compound-design-tokens/icons/error.svg?react";
+import MicOffOutlineIcon from "@vector-im/compound-design-tokens/icons/mic-off-outline.svg?react";
+import OverflowHorizontalIcon from "@vector-im/compound-design-tokens/icons/overflow-horizontal.svg?react";
+import VolumeOnIcon from "@vector-im/compound-design-tokens/icons/volume-on.svg?react";
+import VolumeOffIcon from "@vector-im/compound-design-tokens/icons/volume-off.svg?react";
+import UserProfileIcon from "@vector-im/compound-design-tokens/icons/user-profile.svg?react";
+import ExpandIcon from "@vector-im/compound-design-tokens/icons/expand.svg?react";
+import CollapseIcon from "@vector-im/compound-design-tokens/icons/collapse.svg?react";
+import {
+  Text,
+  Tooltip,
+  ContextMenu,
+  MenuItem,
+  ToggleMenuItem,
+  Menu,
+} from "@vector-im/compound-web";
+import { useStateObservable } from "@react-rxjs/core";
 
 import { Avatar } from "../Avatar";
 import styles from "./VideoTile.module.css";
 import { useReactiveState } from "../useReactiveState";
-import { AudioButton, FullscreenButton } from "../button/Button";
-import { VideoTileSettingsModal } from "./VideoTileSettingsModal";
+import {
+  ScreenShareTileViewModel,
+  TileViewModel,
+  UserMediaTileViewModel,
+} from "../state/TileViewModel";
+import { subscribe } from "../state/subscribe";
+import { useMergedRefs } from "../useMergedRefs";
+import { Slider } from "../Slider";
 
-export interface ItemData {
-  id: string;
-  member?: RoomMember;
-  sfuParticipant: LocalParticipant | RemoteParticipant;
-  content: TileContent;
+interface TileProps {
+  tileRef?: ForwardedRef<HTMLDivElement>;
+  className?: string;
+  style?: ComponentProps<typeof animated.div>["style"];
+  targetWidth: number;
+  targetHeight: number;
+  video: TrackReferenceOrPlaceholder;
+  member: RoomMember | undefined;
+  videoEnabled: boolean;
+  maximised: boolean;
+  unencryptedWarning: boolean;
+  nameTagLeadingIcon?: ReactNode;
+  nameTag: string;
+  displayName: string;
+  primaryButton: ReactNode;
+  secondaryButton?: ReactNode;
+  [k: string]: unknown;
 }
 
-export enum TileContent {
-  UserMedia = "user-media",
-  ScreenShare = "screen-share",
+const Tile = forwardRef<HTMLDivElement, TileProps>(
+  (
+    {
+      tileRef = null,
+      className,
+      style,
+      targetWidth,
+      targetHeight,
+      video,
+      member,
+      videoEnabled,
+      maximised,
+      unencryptedWarning,
+      nameTagLeadingIcon,
+      nameTag,
+      displayName,
+      primaryButton,
+      secondaryButton,
+      ...props
+    },
+    ref,
+  ) => {
+    const { t } = useTranslation();
+    const mergedRef = useMergedRefs(tileRef, ref);
+
+    return (
+      <animated.div
+        className={classNames(styles.videoTile, className, {
+          [styles.maximised]: maximised,
+          [styles.videoMuted]: !videoEnabled,
+        })}
+        style={style}
+        ref={mergedRef}
+        data-testid="videoTile"
+        {...props}
+      >
+        <div className={styles.bg}>
+          <Avatar
+            id={member?.userId ?? displayName}
+            name={displayName}
+            size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
+            src={member?.getMxcAvatarUrl()}
+            className={styles.avatar}
+          />
+          {video.publication !== undefined && (
+            <VideoTrack
+              trackRef={video}
+              // There's no reason for this to be focusable
+              tabIndex={-1}
+              // React supports the disablePictureInPicture attribute, but Firefox
+              // only recognizes a value of "true", whereas React sets it to the empty
+              // string. So we need to bypass React and set it specifically to "true".
+              // https://bugzilla.mozilla.org/show_bug.cgi?id=1865748
+              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+              // @ts-ignore
+              // eslint-disable-next-line react/no-unknown-property
+              disablepictureinpicture="true"
+            />
+          )}
+        </div>
+        <div className={styles.fg}>
+          <div className={styles.nameTag}>
+            {nameTagLeadingIcon}
+            <Text as="span" size="sm" weight="medium" className={styles.name}>
+              {nameTag}
+            </Text>
+            {unencryptedWarning && (
+              <Tooltip
+                label={t("common.unencrypted")}
+                side="bottom"
+                isTriggerInteractive={false}
+              >
+                <ErrorIcon
+                  width={20}
+                  height={20}
+                  aria-label={t("common.unencrypted")}
+                  className={styles.errorIcon}
+                />
+              </Tooltip>
+            )}
+          </div>
+          {primaryButton}
+          {secondaryButton}
+        </div>
+      </animated.div>
+    );
+  },
+);
+
+Tile.displayName = "Tile";
+
+interface UserMediaTileProps {
+  vm: UserMediaTileViewModel;
+  className?: string;
+  style?: ComponentProps<typeof animated.div>["style"];
+  targetWidth: number;
+  targetHeight: number;
+  nameTag: string;
+  displayName: string;
+  maximised: boolean;
+  onOpenProfile: () => void;
+  showSpeakingIndicator: boolean;
 }
 
-interface Props {
-  data: ItemData;
+const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
+  (
+    {
+      vm,
+      className,
+      style,
+      targetWidth,
+      targetHeight,
+      nameTag,
+      displayName,
+      maximised,
+      onOpenProfile,
+      showSpeakingIndicator,
+    },
+    ref,
+  ) => {
+    const { t } = useTranslation();
+    const video = useStateObservable(vm.video);
+    const audioEnabled = useStateObservable(vm.audioEnabled);
+    const videoEnabled = useStateObservable(vm.videoEnabled);
+    const unencryptedWarning = useStateObservable(vm.unencryptedWarning);
+    const mirror = useStateObservable(vm.mirror);
+    const speaking = useStateObservable(vm.speaking);
+    const locallyMuted = useStateObservable(vm.locallyMuted);
+    const localVolume = useStateObservable(vm.localVolume);
+    const onChangeMute = useCallback(() => vm.toggleLocallyMuted(), [vm]);
+    const onSelectMute = useCallback((e: Event) => e.preventDefault(), []);
+    const onChangeLocalVolume = useCallback(
+      (v: number) => vm.setLocalVolume(v),
+      [vm],
+    );
+
+    const MicIcon = audioEnabled ? MicOnSolidIcon : MicOffSolidIcon;
+    const VolumeIcon = locallyMuted ? VolumeOffIcon : VolumeOnIcon;
+
+    const [menuOpen, setMenuOpen] = useState(false);
+    const menu = vm.local ? (
+      <>
+        <MenuItem
+          Icon={UserProfileIcon}
+          label={t("common.profile")}
+          onSelect={onOpenProfile}
+        />
+      </>
+    ) : (
+      <>
+        <ToggleMenuItem
+          Icon={MicOffOutlineIcon}
+          label={t("video_tile.mute_for_me")}
+          checked={locallyMuted}
+          onChange={onChangeMute}
+          onSelect={onSelectMute}
+        />
+        {/* TODO: Figure out how to make this slider keyboard accessible */}
+        <MenuItem as="div" Icon={VolumeIcon} label={null} onSelect={null}>
+          <Slider
+            className={styles.volumeSlider}
+            label={t("video_tile.volume")}
+            value={localVolume}
+            onValueChange={onChangeLocalVolume}
+            min={0.1}
+            max={1}
+            step={0.01}
+            disabled={locallyMuted}
+          />
+        </MenuItem>
+      </>
+    );
+
+    const tile = (
+      <Tile
+        tileRef={ref}
+        className={classNames(className, {
+          [styles.mirror]: mirror,
+          [styles.speaking]: showSpeakingIndicator && speaking,
+        })}
+        style={style}
+        targetWidth={targetWidth}
+        targetHeight={targetHeight}
+        video={video}
+        member={vm.member}
+        videoEnabled={videoEnabled}
+        maximised={maximised}
+        unencryptedWarning={unencryptedWarning}
+        nameTagLeadingIcon={
+          <MicIcon
+            width={20}
+            height={20}
+            aria-label={audioEnabled ? t("microphone_on") : t("microphone_off")}
+            data-muted={!audioEnabled}
+            className={styles.muteIcon}
+          />
+        }
+        nameTag={nameTag}
+        displayName={displayName}
+        primaryButton={
+          <Menu
+            open={menuOpen}
+            onOpenChange={setMenuOpen}
+            title={nameTag}
+            trigger={
+              <button aria-label={t("common.options")}>
+                <OverflowHorizontalIcon aria-hidden width={20} height={20} />
+              </button>
+            }
+            side="left"
+            align="start"
+          >
+            {menu}
+          </Menu>
+        }
+      />
+    );
+
+    return (
+      <ContextMenu title={nameTag} trigger={tile} hasAccessibleAlternative>
+        {menu}
+      </ContextMenu>
+    );
+  },
+);
+
+UserMediaTile.displayName = "UserMediaTile";
+
+interface ScreenShareTileProps {
+  vm: ScreenShareTileViewModel;
+  className?: string;
+  style?: ComponentProps<typeof animated.div>["style"];
+  targetWidth: number;
+  targetHeight: number;
+  nameTag: string;
+  displayName: string;
   maximised: boolean;
   fullscreen: boolean;
   onToggleFullscreen: (itemId: string) => void;
-  // TODO: Refactor these props.
+}
+
+const ScreenShareTile = subscribe<ScreenShareTileProps, HTMLDivElement>(
+  (
+    {
+      vm,
+      className,
+      style,
+      targetWidth,
+      targetHeight,
+      nameTag,
+      displayName,
+      maximised,
+      fullscreen,
+      onToggleFullscreen,
+    },
+    ref,
+  ) => {
+    const { t } = useTranslation();
+    const video = useStateObservable(vm.video);
+    const unencryptedWarning = useStateObservable(vm.unencryptedWarning);
+    const onClickFullScreen = useCallback(
+      () => onToggleFullscreen(vm.id),
+      [onToggleFullscreen, vm],
+    );
+
+    const FullScreenIcon = fullscreen ? CollapseIcon : ExpandIcon;
+
+    return (
+      <Tile
+        ref={ref}
+        className={classNames(className, styles.screenshare)}
+        style={style}
+        targetWidth={targetWidth}
+        targetHeight={targetHeight}
+        video={video}
+        member={vm.member}
+        videoEnabled={true}
+        maximised={maximised}
+        unencryptedWarning={unencryptedWarning}
+        nameTag={nameTag}
+        displayName={displayName}
+        primaryButton={
+          !vm.local && (
+            <button
+              aria-label={
+                fullscreen
+                  ? t("video_tile.full_screen")
+                  : t("video_tile.exit_full_screen")
+              }
+              onClick={onClickFullScreen}
+            >
+              <FullScreenIcon aria-hidden width={20} height={20} />
+            </button>
+          )
+        }
+      />
+    );
+  },
+);
+
+ScreenShareTile.displayName = "ScreenShareTile";
+
+interface Props {
+  vm: TileViewModel;
+  maximised: boolean;
+  fullscreen: boolean;
+  onToggleFullscreen: (itemId: string) => void;
+  onOpenProfile: () => void;
   targetWidth: number;
   targetHeight: number;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
   showSpeakingIndicator: boolean;
-  showConnectionStats: boolean;
 }
 
 export const VideoTile = forwardRef<HTMLDivElement, Props>(
   (
     {
-      data,
+      vm,
       maximised,
       fullscreen,
       onToggleFullscreen,
+      onOpenProfile,
       className,
       style,
       targetWidth,
       targetHeight,
       showSpeakingIndicator,
-      showConnectionStats,
     },
-    tileRef,
+    ref,
   ) => {
     const { t } = useTranslation();
 
-    const { content, sfuParticipant, member } = data;
-
     // Handle display name changes.
+    // TODO: Move this into the view model
     const [displayName, setDisplayName] = useReactiveState(
-      () => member?.rawDisplayName ?? "[👻]",
-      [member],
+      () => vm.member?.rawDisplayName ?? "[👻]",
+      [vm.member],
     );
     useEffect(() => {
-      if (member) {
+      if (vm.member) {
         const updateName = (): void => {
-          setDisplayName(member.rawDisplayName);
+          setDisplayName(vm.member!.rawDisplayName);
         };
 
-        member!.on(RoomMemberEvent.Name, updateName);
+        vm.member!.on(RoomMemberEvent.Name, updateName);
         return (): void => {
-          member!.removeListener(RoomMemberEvent.Name, updateName);
+          vm.member!.removeListener(RoomMemberEvent.Name, updateName);
         };
       }
-    }, [member, setDisplayName]);
+    }, [vm.member, setDisplayName]);
+    const nameTag = vm.local
+      ? t("video_tile.sfu_participant_local")
+      : displayName;
 
-    const muted =
-      useMediaTrack(
-        content === TileContent.UserMedia
-          ? Track.Source.Microphone
-          : Track.Source.ScreenShareAudio,
-        sfuParticipant,
-      ).isMuted !== false;
-
-    const MicIcon = muted ? MicOffSolidIcon : MicOnSolidIcon;
-
-    const onFullscreen = useCallback(() => {
-      onToggleFullscreen(data.id);
-    }, [data, onToggleFullscreen]);
-
-    const [videoTileSettingsModalOpen, setVideoTileSettingsModalOpen] =
-      useState(false);
-    const openVideoTileSettingsModal = useCallback(
-      () => setVideoTileSettingsModalOpen(true),
-      [setVideoTileSettingsModalOpen],
-    );
-    const closeVideoTileSettingsModal = useCallback(
-      () => setVideoTileSettingsModalOpen(false),
-      [setVideoTileSettingsModalOpen],
-    );
-
-    const toolbarButtons: JSX.Element[] = [];
-    if (!sfuParticipant.isLocal) {
-      toolbarButtons.push(
-        <AudioButton
-          key="localVolume"
-          className={styles.button}
-          volume={(sfuParticipant as RemoteParticipant).getVolume() ?? 0}
-          onPress={openVideoTileSettingsModal}
-        />,
-      );
-
-      if (content === TileContent.ScreenShare) {
-        toolbarButtons.push(
-          <FullscreenButton
-            key="fullscreen"
-            className={styles.button}
-            fullscreen={fullscreen}
-            onPress={onFullscreen}
-          />,
-        );
-      }
-    }
-
-    // Firefox doesn't respect the disablePictureInPicture attribute
-    // https://bugzilla.mozilla.org/show_bug.cgi?id=1611831
-
-    return (
-      <animated.div
-        className={classNames(styles.videoTile, className, {
-          [styles.isLocal]: sfuParticipant.isLocal,
-          [styles.speaking]:
-            sfuParticipant.isSpeaking &&
-            content === TileContent.UserMedia &&
-            showSpeakingIndicator,
-          [styles.screenshare]: content === TileContent.ScreenShare,
-          [styles.maximised]: maximised,
-        })}
-        style={style}
-        ref={tileRef}
-        data-testid="videoTile"
-      >
-        {toolbarButtons.length > 0 && (!maximised || fullscreen) && (
-          <div className={classNames(styles.toolbar)}>{toolbarButtons}</div>
-        )}
-        {content === TileContent.UserMedia &&
-          !sfuParticipant.isCameraEnabled && (
-            <>
-              <div className={styles.videoMutedOverlay} />
-              <Avatar
-                key={member?.userId}
-                id={member?.userId ?? displayName}
-                name={displayName}
-                size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
-                src={member?.getMxcAvatarUrl()}
-                className={styles.avatar}
-              />
-            </>
-          )}
-        {content === TileContent.ScreenShare ? (
-          <div className={styles.presenterLabel}>
-            <span>{t("{{displayName}} is presenting", { displayName })}</span>
-          </div>
-        ) : (
-          <div className={styles.nameTag}>
-            <MicIcon
-              width={20}
-              height={20}
-              aria-label={muted ? t("Microphone off") : t("Microphone on")}
-              data-muted={muted}
-            />
-            <Text as="span" size="sm" weight="medium">
-              {sfuParticipant.isLocal ? t("You") : displayName}
-            </Text>
-            {showConnectionStats && (
-              <ConnectionQualityIndicator participant={sfuParticipant} />
-            )}
-          </div>
-        )}
-        <VideoTrack
-          participant={sfuParticipant}
-          source={
-            content === TileContent.UserMedia
-              ? Track.Source.Camera
-              : Track.Source.ScreenShare
-          }
+    if (vm instanceof UserMediaTileViewModel) {
+      return (
+        <UserMediaTile
+          ref={ref}
+          className={className}
+          style={style}
+          vm={vm}
+          targetWidth={targetWidth}
+          targetHeight={targetHeight}
+          nameTag={nameTag}
+          displayName={displayName}
+          maximised={maximised}
+          onOpenProfile={onOpenProfile}
+          showSpeakingIndicator={showSpeakingIndicator}
         />
-        {!maximised && (
-          <VideoTileSettingsModal
-            data={data}
-            open={videoTileSettingsModalOpen}
-            onDismiss={closeVideoTileSettingsModal}
-          />
-        )}
-      </animated.div>
-    );
+      );
+    } else {
+      return (
+        <ScreenShareTile
+          ref={ref}
+          className={className}
+          style={style}
+          vm={vm}
+          targetWidth={targetWidth}
+          targetHeight={targetHeight}
+          nameTag={nameTag}
+          displayName={displayName}
+          maximised={maximised}
+          fullscreen={fullscreen}
+          onToggleFullscreen={onToggleFullscreen}
+        />
+      );
+    }
   },
 );
+
+VideoTile.displayName = "VideoTile";

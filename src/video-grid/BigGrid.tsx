@@ -19,11 +19,11 @@ import { RectReadOnly } from "react-use-measure";
 import { FC, memo, ReactNode } from "react";
 import { zip } from "lodash";
 
-import { TileDescriptor } from "./VideoGrid";
 import { Slot } from "./NewVideoGrid";
 import { Layout } from "./Layout";
 import { count, findLastIndex } from "../array-utils";
 import styles from "./BigGrid.module.css";
+import { TileDescriptor } from "../state/CallViewModel";
 
 /**
  * A 1×1 cell in a grid which belongs to a tile.
@@ -1009,6 +1009,8 @@ const Slots: FC<{ s: Grid }> = memo(({ s: g }) => {
     </div>
   );
 });
+
+Slots.displayName = "Slots";
 
 /**
  * Given a tile and numbers in the range [0, 1) describing a position within the

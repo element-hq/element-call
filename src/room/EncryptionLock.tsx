@@ -29,17 +29,16 @@ interface Props {
 export const EncryptionLock: FC<Props> = ({ encrypted }) => {
   const { t } = useTranslation();
   const Icon = encrypted ? LockIcon : LockOffIcon;
+  const label = encrypted ? t("common.encrypted") : t("common.unencrypted");
 
   return (
-    <Tooltip
-      label={encrypted ? t("Encrypted") : t("Not encrypted")}
-      side="right"
-    >
+    <Tooltip label={label} side="right" isTriggerInteractive={false}>
       <Icon
         width={16}
         height={16}
         className={styles.lock}
         data-encrypted={encrypted}
+        aria-label={label}
       />
     </Tooltip>
   );

@@ -66,13 +66,13 @@ export const UserMenu: FC<Props> = ({
       arr.push({
         key: "settings",
         icon: SettingsIcon,
-        label: t("Settings"),
+        label: t("common.settings"),
       });
 
       if (isPasswordlessUser && !preventNavigation) {
         arr.push({
           key: "login",
-          label: t("Sign in"),
+          label: t("action.sign_in"),
           icon: LoginIcon,
           dataTestid: "usermenu_login",
         });
@@ -81,7 +81,7 @@ export const UserMenu: FC<Props> = ({
       if (!isPasswordlessUser && !preventNavigation) {
         arr.push({
           key: "logout",
-          label: t("Sign out"),
+          label: t("action.sign_out"),
           icon: LogoutIcon,
           dataTestid: "usermenu_logout",
         });
@@ -91,12 +91,12 @@ export const UserMenu: FC<Props> = ({
     return arr;
   }, [isAuthenticated, isPasswordlessUser, displayName, preventNavigation, t]);
 
-  const tooltip = useCallback(() => t("Profile"), [t]);
+  const tooltip = useCallback(() => t("common.profile"), [t]);
 
   if (!isAuthenticated) {
     return (
       <LinkButton to={{ pathname: "/login", state: { from: location } }}>
-        Log in
+        {t("log_in")}
       </LinkButton>
     );
   }
@@ -124,7 +124,7 @@ export const UserMenu: FC<Props> = ({
       {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (props: any): ReactNode => (
-          <Menu {...props} label={t("User menu")} onAction={onAction}>
+          <Menu {...props} label={t("a11y.user_menu")} onAction={onAction}>
             {items.map(({ key, icon: Icon, label, dataTestid }) => (
               <Item key={key} textValue={label}>
                 <Icon

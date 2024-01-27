@@ -44,6 +44,9 @@ import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
+import { E2EEConfig } from "../livekit/useLiveKit";
+import { useUrlParams } from "../UrlParams";
+import { E2eeType } from "../e2ee/e2eeType";
 
 declare global {
   interface Window {
@@ -56,6 +59,7 @@ interface Props {
   isPasswordlessUser: boolean;
   confineToRoom: boolean;
   preload: boolean;
+  skipLobby: boolean;
   hideHeader: boolean;
   rtcSession: MatrixRTCSession;
 }
@@ -65,14 +69,12 @@ export const GroupCallView: FC<Props> = ({
   isPasswordlessUser,
   confineToRoom,
   preload,
+  skipLobby,
   hideHeader,
   rtcSession,
 }) => {
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
-
-  const e2eeSharedKey = useRoomSharedKey(rtcSession.room.roomId);
-  const isRoomE2EE = useIsRoomE2EE(rtcSession.room.roomId);
 
   useEffect(() => {
     window.rtcSession = rtcSession;
@@ -84,7 +86,10 @@ export const GroupCallView: FC<Props> = ({
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(rtcSession.room);
   const roomAvatar = useRoomAvatar(rtcSession.room);
-  const roomEncrypted = useIsRoomE2EE(rtcSession.room.roomId)!;
+  const e2eeSharedKey = useRoomSharedKey(rtcSession.room.roomId);
+  const { perParticipantE2EE, returnToLobby } = useUrlParams();
+  const roomEncrypted =
+    useIsRoomE2EE(rtcSession.room.roomId) || perParticipantE2EE;
 
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
@@ -121,81 +126,86 @@ export const GroupCallView: FC<Props> = ({
   const latestMuteStates = useRef<MuteStates>();
   latestMuteStates.current = muteStates;
 
+  const e2eeConfig = useMemo((): E2EEConfig => {
+    if (perParticipantE2EE) {
+      return { mode: E2eeType.PER_PARTICIPANT };
+    } else if (e2eeSharedKey) {
+      return { mode: E2eeType.SHARED_KEY, sharedKey: e2eeSharedKey };
+    } else {
+      return { mode: E2eeType.NONE };
+    }
+  }, [perParticipantE2EE, e2eeSharedKey]);
+
   useEffect(() => {
-    if (widget && preload) {
-      // In preload mode, wait for a join action before entering
+    const defaultDeviceSetup = async (
+      requestedDeviceData: JoinCallData,
+    ): Promise<void> => {
+      // XXX: I think this is broken currently - LiveKit *won't* request
+      // permissions and give you device names unless you specify a kind, but
+      // here we want all kinds of devices. This needs a fix in livekit-client
+      // for the following name-matching logic to do anything useful.
+      const devices = await Room.getLocalDevices(undefined, true);
+      const { audioInput, videoInput } = requestedDeviceData;
+      if (audioInput === null) {
+        latestMuteStates.current!.audio.setEnabled?.(false);
+      } else {
+        const deviceId = await findDeviceByName(
+          audioInput,
+          "audioinput",
+          devices,
+        );
+        if (!deviceId) {
+          logger.warn("Unknown audio input: " + audioInput);
+          latestMuteStates.current!.audio.setEnabled?.(false);
+        } else {
+          logger.debug(
+            `Found audio input ID ${deviceId} for name ${audioInput}`,
+          );
+          latestDevices.current!.audioInput.select(deviceId);
+          latestMuteStates.current!.audio.setEnabled?.(true);
+        }
+      }
+
+      if (videoInput === null) {
+        latestMuteStates.current!.video.setEnabled?.(false);
+      } else {
+        const deviceId = await findDeviceByName(
+          videoInput,
+          "videoinput",
+          devices,
+        );
+        if (!deviceId) {
+          logger.warn("Unknown video input: " + videoInput);
+          latestMuteStates.current!.video.setEnabled?.(false);
+        } else {
+          logger.debug(
+            `Found video input ID ${deviceId} for name ${videoInput}`,
+          );
+          latestDevices.current!.videoInput.select(deviceId);
+          latestMuteStates.current!.video.setEnabled?.(true);
+        }
+      }
+    };
+
+    if (widget && preload && skipLobby) {
+      // In preload mode without lobby we wait for a join action before entering
       const onJoin = async (
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
-        // XXX: I think this is broken currently - LiveKit *won't* request
-        // permissions and give you device names unless you specify a kind, but
-        // here we want all kinds of devices. This needs a fix in livekit-client
-        // for the following name-matching logic to do anything useful.
-        const devices = await Room.getLocalDevices(undefined, true);
-
-        const { audioInput, videoInput } = ev.detail
-          .data as unknown as JoinCallData;
-
-        if (audioInput === null) {
-          latestMuteStates.current!.audio.setEnabled?.(false);
-        } else {
-          const deviceId = await findDeviceByName(
-            audioInput,
-            "audioinput",
-            devices,
-          );
-          if (!deviceId) {
-            logger.warn("Unknown audio input: " + audioInput);
-            latestMuteStates.current!.audio.setEnabled?.(false);
-          } else {
-            logger.debug(
-              `Found audio input ID ${deviceId} for name ${audioInput}`,
-            );
-            latestDevices.current!.audioInput.select(deviceId);
-            latestMuteStates.current!.audio.setEnabled?.(true);
-          }
-        }
-
-        if (videoInput === null) {
-          latestMuteStates.current!.video.setEnabled?.(false);
-        } else {
-          const deviceId = await findDeviceByName(
-            videoInput,
-            "videoinput",
-            devices,
-          );
-          if (!deviceId) {
-            logger.warn("Unknown video input: " + videoInput);
-            latestMuteStates.current!.video.setEnabled?.(false);
-          } else {
-            logger.debug(
-              `Found video input ID ${deviceId} for name ${videoInput}`,
-            );
-            latestDevices.current!.videoInput.select(deviceId);
-            latestMuteStates.current!.video.setEnabled?.(true);
-          }
-        }
-
-        enterRTCSession(rtcSession);
-
-        PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
-        // we only have room sessions right now, so call ID is the emprty string - we use the room ID
-        PosthogAnalytics.instance.eventCallStarted.track(
-          rtcSession.room.roomId,
-        );
-
-        await Promise.all([
-          widget!.api.setAlwaysOnScreen(true),
-          widget!.api.transport.reply(ev.detail, {}),
-        ]);
+        defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
+        enterRTCSession(rtcSession, perParticipantE2EE);
+        await widget!.api.transport.reply(ev.detail, {});
       };
-
       widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
       return () => {
         widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
+    } else if (widget && !preload && skipLobby) {
+      // No lobby and no preload: we enter the rtc session right away
+      defaultDeviceSetup({ audioInput: null, videoInput: null });
+      enterRTCSession(rtcSession, perParticipantE2EE);
     }
-  }, [rtcSession, preload]);
+  }, [rtcSession, preload, skipLobby, perParticipantE2EE]);
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
@@ -215,18 +225,8 @@ export const GroupCallView: FC<Props> = ({
         sendInstantly,
       );
 
+      // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
       await leaveRTCSession(rtcSession);
-      if (widget) {
-        // we need to wait until the callEnded event is tracked on posthog.
-        // Otherwise the iFrame gets killed before the callEnded event got tracked.
-        await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
-        widget.api.setAlwaysOnScreen(false);
-        PosthogAnalytics.instance.logout();
-
-        // we will always send the hangup event after the memberships have been updated
-        // calling leaveRTCSession.
-        widget.api.transport.send(ElementWidgetActions.HangupCall, {});
-      }
 
       if (
         !isPasswordlessUser &&
@@ -241,12 +241,15 @@ export const GroupCallView: FC<Props> = ({
 
   useEffect(() => {
     if (widget && isJoined) {
+      // set widget to sticky once joined.
+      widget!.api.setAlwaysOnScreen(true);
+
       const onHangup = async (
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
-        leaveRTCSession(rtcSession);
         widget!.api.transport.reply(ev.detail, {});
-        widget!.api.setAlwaysOnScreen(false);
+        // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
+        await leaveRTCSession(rtcSession);
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
       return () => {
@@ -255,16 +258,11 @@ export const GroupCallView: FC<Props> = ({
     }
   }, [isJoined, rtcSession]);
 
-  const e2eeConfig = useMemo(
-    () => (e2eeSharedKey ? { sharedKey: e2eeSharedKey } : undefined),
-    [e2eeSharedKey],
-  );
-
   const onReconnect = useCallback(() => {
     setLeft(false);
     setLeaveError(undefined);
-    enterRTCSession(rtcSession);
-  }, [rtcSession]);
+    enterRTCSession(rtcSession, perParticipantE2EE);
+  }, [rtcSession, perParticipantE2EE]);
 
   const joinRule = useJoinRule(rtcSession.room);
 
@@ -290,7 +288,7 @@ export const GroupCallView: FC<Props> = ({
 
   const { t } = useTranslation();
 
-  if (isRoomE2EE && !e2eeSharedKey) {
+  if (roomEncrypted && !perParticipantE2EE && !e2eeSharedKey) {
     return (
       <ErrorView
         error={
@@ -300,17 +298,13 @@ export const GroupCallView: FC<Props> = ({
         }
       />
     );
-  } else if (!isE2EESupported() && isRoomE2EE) {
+  } else if (!isE2EESupported() && roomEncrypted) {
     return (
       <FullScreenView>
-        <Heading>Incompatible Browser</Heading>
-        <Text>
-          {t(
-            "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117",
-          )}
-        </Text>
+        <Heading>{t("browser_media_e2ee_unsupported_heading")}</Heading>
+        <Text>{t("browser_media_e2ee_unsupported")}</Text>
         <Link href="/" onClick={onHomeClick}>
-          {t("Home")}
+          {t("common.home")}
         </Link>
       </FullScreenView>
     );
@@ -322,6 +316,21 @@ export const GroupCallView: FC<Props> = ({
       open={shareModalOpen}
       onDismiss={onDismissInviteModal}
     />
+  );
+  const lobbyView = (
+    <>
+      {shareModal}
+      <LobbyView
+        client={client}
+        matrixInfo={matrixInfo}
+        muteStates={muteStates}
+        onEnter={(): void => enterRTCSession(rtcSession, perParticipantE2EE)}
+        confineToRoom={confineToRoom}
+        hideHeader={hideHeader}
+        participantCount={participantCount}
+        onShareClick={onShareClick}
+      />
+    </>
   );
 
   if (isJoined) {
@@ -342,7 +351,9 @@ export const GroupCallView: FC<Props> = ({
         />
       </>
     );
-  } else if (left) {
+  } else if (left && widget === null) {
+    // Left in SPA mode:
+
     // The call ended view is shown for two reasons: prompting guests to create
     // an account, and prompting users that have opted into analytics to provide
     // feedback. We don't show a feedback prompt to widget users however (at
@@ -370,23 +381,14 @@ export const GroupCallView: FC<Props> = ({
       // LobbyView again which would open capture devices again.
       return null;
     }
-  } else if (preload) {
+  } else if (left && widget !== null) {
+    // Left in widget mode:
+    if (!returnToLobby) {
+      return null;
+    }
+  } else if (preload || skipLobby) {
     return null;
-  } else {
-    return (
-      <>
-        {shareModal}
-        <LobbyView
-          client={client}
-          matrixInfo={matrixInfo}
-          muteStates={muteStates}
-          onEnter={(): void => enterRTCSession(rtcSession)}
-          confineToRoom={confineToRoom}
-          hideHeader={hideHeader}
-          participantCount={participantCount}
-          onShareClick={onShareClick}
-        />
-      </>
-    );
   }
+
+  return lobbyView;
 };

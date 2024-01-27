@@ -16,7 +16,6 @@ limitations under the License.
 
 import {
   ComponentProps,
-  Key,
   MutableRefObject,
   ReactNode,
   Ref,
@@ -45,6 +44,7 @@ import styles from "./VideoGrid.module.css";
 import { Layout } from "../room/LayoutToggle";
 import { TileWrapper } from "./TileWrapper";
 import { LayoutStatesMap } from "./Layout";
+import { TileDescriptor } from "../state/CallViewModel";
 
 interface TilePosition {
   x: number;
@@ -54,7 +54,7 @@ interface TilePosition {
   zIndex: number;
 }
 
-interface Tile<T> {
+export interface Tile<T> {
   key: string;
   order: number;
   item: TileDescriptor<T>;
@@ -112,7 +112,7 @@ export function useVideoGridLayout(hasScreenshareFeeds: boolean): {
   return { layout: layoutRef.current, setLayout };
 }
 
-const GAP = 8;
+const GAP = 20;
 
 function useIsMounted(): MutableRefObject<boolean> {
   const isMountedRef = useRef<boolean>(false);
@@ -728,7 +728,7 @@ function displayedTileCount(
 
 // Sets the 'order' property on tiles based on the layout param and
 // other properties of the tiles, eg. 'focused' and 'presenter'
-function reorderTiles<T>(
+export function reorderTiles<T>(
   tiles: Tile<T>[],
   layout: Layout,
   displayedTile = -1,
@@ -750,7 +750,6 @@ function reorderTiles<T>(
   } else {
     const focusedTiles: Tile<T>[] = [];
     const presenterTiles: Tile<T>[] = [];
-    const speakerTiles: Tile<T>[] = [];
     const onlyVideoTiles: Tile<T>[] = [];
     const otherTiles: Tile<T>[] = [];
 
@@ -763,8 +762,6 @@ function reorderTiles<T>(
         focusedTiles.push(tile);
       } else if (tile.isPresenter) {
         presenterTiles.push(tile);
-      } else if (tile.isSpeaker && displayedTile < tile.order) {
-        speakerTiles.push(tile);
       } else if (tile.hasVideo) {
         if (tile.order === 0 && tile.item.local) {
           firstLocalTile = tile;
@@ -788,20 +785,34 @@ function reorderTiles<T>(
       }
     }
 
-    [
+    const reorderedTiles = [
       ...focusedTiles,
       ...presenterTiles,
-      ...speakerTiles,
       ...onlyVideoTiles,
       ...otherTiles,
-    ].forEach((tile, i) => (tile.order = i));
+    ];
+    let nextSpeakerTileIndex = focusedTiles.length + presenterTiles.length;
+
+    reorderedTiles.forEach((tile, i) => {
+      // If a speaker's natural ordering would place it outside the default
+      // visible area, promote them to the section dedicated to speakers
+      if (tile.isSpeaker && displayedTile <= i && nextSpeakerTileIndex < i) {
+        // Remove the tile from its current section
+        reorderedTiles.splice(i, 1);
+        // Insert it into the speaker section
+        reorderedTiles.splice(nextSpeakerTileIndex, 0, tile);
+        nextSpeakerTileIndex++;
+      }
+    });
+
+    reorderedTiles.forEach((tile, i) => (tile.order = i));
   }
 }
 
 interface DragTileData {
   offsetX: number;
   offsetY: number;
-  key: Key;
+  key: string;
   x: number;
   y: number;
 }
@@ -828,20 +839,6 @@ export interface VideoGridProps<T> {
   children: (props: ChildrenProperties<T>) => ReactNode;
 }
 
-// Represents something that should get a tile on the layout,
-// ie. a user's video feed or a screen share feed.
-export interface TileDescriptor<T> {
-  id: string;
-  focused: boolean;
-  isPresenter: boolean;
-  isSpeaker: boolean;
-  hasVideo: boolean;
-  local: boolean;
-  largeBaseSize: boolean;
-  placeNear?: string;
-  data: T;
-}
-
 export function VideoGrid<T>({
   items,
   layout,
@@ -861,7 +858,7 @@ export function VideoGrid<T>({
   });
   const [scrollPosition, setScrollPosition] = useState<number>(0);
   const draggingTileRef = useRef<DragTileData | null>(null);
-  const lastTappedRef = useRef<{ [index: Key]: number }>({});
+  const lastTappedRef = useRef<{ [index: string]: number }>({});
   const lastLayoutRef = useRef<Layout>(layout);
   const isMounted = useIsMounted();
 
@@ -876,7 +873,7 @@ export function VideoGrid<T>({
   useEffect(() => {
     setTileState(({ tiles, ...rest }) => {
       const newTiles: Tile<T>[] = [];
-      const removedTileKeys: Set<Key> = new Set();
+      const removedTileKeys: Set<string> = new Set();
 
       for (const tile of tiles) {
         let item = items.find((item) => item.id === tile.key);
@@ -1138,7 +1135,7 @@ export function VideoGrid<T>({
   ]) as unknown as [SpringValues<TileSpring>[], SpringRef<TileSpring>];
 
   const onTap = useCallback(
-    (tileKey: Key) => {
+    (tileKey: string) => {
       const lastTapped = lastTappedRef.current[tileKey];
 
       if (!lastTapped || Date.now() - lastTapped > 500) {

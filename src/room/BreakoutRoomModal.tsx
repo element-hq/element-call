@@ -34,6 +34,7 @@ import {
   ShareRoomKeyEventContent,
   getRoomSharedKeyLocalStorageKey,
 } from "../e2ee/sharedKeyManagement";
+import { E2eeType } from "../e2ee/e2eeType";
 
 interface NewBreakoutRoom {
   roomName: string;
@@ -255,7 +256,8 @@ export const BreakoutRoomModal: FC<Props> = ({
     for (const breakoutRoom of breakoutRooms) {
       const roomId = breakoutRoom.hasOwnProperty("roomId")
         ? (breakoutRoom as BreakoutRoomWithName).roomId
-        : (await createRoom(client, breakoutRoom.roomName, true)).roomId;
+        : (await createRoom(client, breakoutRoom.roomName, E2eeType.SHARED_KEY))
+            .roomId;
 
       newBreakoutRooms.push({ roomId, users: breakoutRoom.users });
 

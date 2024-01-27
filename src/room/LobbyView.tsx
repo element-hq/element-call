@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import {
   SettingsButton,
   VideoButton,
 } from "../button/Button";
-import { SettingsModal } from "../settings/SettingsModal";
+import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useMediaQuery } from "../useMediaQuery";
 
 interface Props {
@@ -71,6 +71,7 @@ export const LobbyView: FC<Props> = ({
   );
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
 
   const openSettings = useCallback(
     () => setSettingsModalOpen(true),
@@ -87,7 +88,7 @@ export const LobbyView: FC<Props> = ({
   const recentsButtonInFooter = useMediaQuery("(max-height: 500px)");
   const recentsButton = !confineToRoom && (
     <Link className={styles.recents} href="#" onClick={onLeaveClick}>
-      {t("Back to recents")}
+      {t("lobby.leave_button")}
     </Link>
   );
 
@@ -120,7 +121,7 @@ export const LobbyView: FC<Props> = ({
               onClick={onEnter}
               data-testid="lobby_joinCall"
             >
-              {t("Join call")}
+              {t("lobby.join_button")}
             </Button>
           </VideoPreview>
           {!recentsButtonInFooter && recentsButton}
@@ -148,6 +149,8 @@ export const LobbyView: FC<Props> = ({
           client={client}
           open={settingsModalOpen}
           onDismiss={closeSettings}
+          tab={settingsTab}
+          onTabChange={setSettingsTab}
         />
       )}
     </>

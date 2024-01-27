@@ -1,0 +1,56 @@
+name: Download translation files from Localazy
+on:
+  workflow_dispatch:
+    secrets:
+      ELEMENT_BOT_TOKEN:
+        required: true
+
+jobs:
+  download:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          cache: "yarn"
+
+      - name: Install Deps
+        run: "yarn install --frozen-lockfile"
+
+      - name: Prune i18n
+        run: "rm -R public/locales"
+
+      - name: Download translation files
+        uses: localazy/download@v1.1.0
+        with:
+          groups: "-p includeSourceLang:true"
+
+      - name: Fix the owner of the downloaded files
+        run: "sudo chown runner:docker -R public/locales"
+
+      - name: Prettier
+        run: yarn prettier:format
+
+      - name: Create Pull Request
+        id: cpr
+        uses: peter-evans/create-pull-request@v5.0.2
+        with:
+          token: ${{ secrets.ELEMENT_BOT_TOKEN }}
+          branch: actions/localazy-download
+          delete-branch: true
+          title: Localazy Download
+          commit-message: Translations updates
+          labels: |
+            T-Task
+
+      - name: Enable automerge
+        run: gh pr merge --merge --auto "$PR_NUMBER"
+        if: steps.cpr.outputs.pull-request-operation == 'created'
+        env:
+          GH_TOKEN: ${{ secrets.ELEMENT_BOT_TOKEN }}
+          PR_NUMBER: ${{ steps.cpr.outputs.pull-request-number }}

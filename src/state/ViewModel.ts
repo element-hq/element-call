@@ -1,6 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
-
+Copyright 2023 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,21 +14,20 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ComponentPropsWithoutRef, FC } from "react";
+import { Subject } from "rxjs";
 
-import AudioMuted from "../icons/AudioMuted.svg?react";
-import AudioLow from "../icons/AudioLow.svg?react";
-import Audio from "../icons/Audio.svg?react";
+/**
+ * An MVVM view model.
+ */
+export abstract class ViewModel {
+  protected readonly destroyed = new Subject<void>();
 
-interface Props extends ComponentPropsWithoutRef<"svg"> {
   /**
-   * Number between 0 and 1
+   * Instructs the ViewModel to clean up its resources. If you forget to call
+   * this, there may be memory leaks!
    */
-  volume: number;
+  public destroy(): void {
+    this.destroyed.next();
+    this.destroyed.complete();
+  }
 }
-
-export const VolumeIcon: FC<Props> = ({ volume, ...rest }) => {
-  if (volume <= 0) return <AudioMuted {...rest} />;
-  if (volume <= 0.5) return <AudioLow {...rest} />;
-  return <Audio {...rest} />;
-};

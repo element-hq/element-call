@@ -40,6 +40,7 @@ import { Caption } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
+import { E2eeType } from "../e2ee/e2eeType";
 
 interface Props {
   client: MatrixClient;
@@ -72,7 +73,11 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         setError(undefined);
         setLoading(true);
 
-        const createRoomResult = await createRoom(client, roomName, true);
+        const createRoomResult = await createRoom(
+          client,
+          roomName,
+          E2eeType.SHARED_KEY,
+        );
 
         history.push(
           getRelativeRoomUrl(
@@ -120,15 +125,15 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         <main className={commonStyles.main}>
           <HeaderLogo className={commonStyles.logo} />
           <Heading size="lg" weight="semibold">
-            {t("Start new call")}
+            {t("start_new_call")}
           </Heading>
           <Form className={styles.form} onSubmit={onSubmit}>
             <FieldRow className={styles.fieldRow}>
               <InputField
                 id="callName"
                 name="callName"
-                label={t("Name of call")}
-                placeholder={t("Name of call")}
+                label={t("call_name")}
+                placeholder={t("call_name")}
                 type="text"
                 required
                 autoComplete="off"
@@ -142,7 +147,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
                 disabled={loading}
                 data-testid="home_go"
               >
-                {loading ? t("Loading…") : t("Go")}
+                {loading ? t("common.loading") : t("action.go")}
               </Button>
             </FieldRow>
             {optInAnalytics === null && (

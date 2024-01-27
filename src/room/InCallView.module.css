@@ -28,7 +28,9 @@ limitations under the License.
   flex-direction: column;
   overflow: auto;
   overflow-inline: hidden;
-  contain: strict;
+  /* There used to be a contain: strict here, but due to some bugs in Firefox,
+  this was causing the Z-ordering of modals to glitch out. It can be added back
+  if those issues appear to be resolved. */
 }
 
 .centerMessage {
@@ -97,4 +99,13 @@ limitations under the License.
   .buttons {
     gap: var(--cpd-space-4x);
   }
+}
+
+.footerThin {
+  padding-top: var(--cpd-space-3x);
+  padding-bottom: var(--cpd-space-5x);
+}
+
+.footerHidden {
+  display: none;
 }

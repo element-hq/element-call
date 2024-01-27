@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ChangeEvent, FC, Key, ReactNode, useCallback, useState } from "react";
+import { ChangeEvent, FC, Key, ReactNode } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
@@ -47,15 +47,33 @@ import {
 } from "../livekit/MediaDevicesContext";
 import { widget } from "../widget";
 
+type SettingsTab =
+  | "audio"
+  | "video"
+  | "profile"
+  | "feedback"
+  | "more"
+  | "developer";
+
 interface Props {
   open: boolean;
   onDismiss: () => void;
+  tab: SettingsTab;
+  onTabChange: (tab: SettingsTab) => void;
   client: MatrixClient;
   roomId?: string;
-  defaultTab?: string;
 }
 
-export const SettingsModal: FC<Props> = (props) => {
+export const defaultSettingsTab: SettingsTab = "audio";
+
+export const SettingsModal: FC<Props> = ({
+  open,
+  onDismiss,
+  tab,
+  onTabChange,
+  client,
+  roomId,
+}) => {
   const { t } = useTranslation();
 
   const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
@@ -92,18 +110,9 @@ export const SettingsModal: FC<Props> = (props) => {
     );
   };
 
-  const [selectedTab, setSelectedTab] = useState<string | undefined>();
-
-  const onSelectedTabChanged = useCallback(
-    (tab: Key) => {
-      setSelectedTab(tab.toString());
-    },
-    [setSelectedTab],
-  );
-
   const optInDescription = (
     <Caption>
-      <Trans>
+      <Trans i18nKey="settings.opt_in_description">
         <AnalyticsNotice />
         <br />
         You may withdraw consent by unchecking this box. If you are currently in
@@ -113,7 +122,7 @@ export const SettingsModal: FC<Props> = (props) => {
   );
 
   const devices = useMediaDevices();
-  useMediaDeviceNames(devices, props.open);
+  useMediaDeviceNames(devices, open);
 
   const audioTab = (
     <TabItem
@@ -121,13 +130,16 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <AudioIcon width={16} height={16} />
-          <span className={styles.tabLabel}>{t("Audio")}</span>
+          <span className={styles.tabLabel}>{t("common.audio")}</span>
         </>
       }
     >
-      {generateDeviceSelection(devices.audioInput, t("Microphone"))}
+      {generateDeviceSelection(devices.audioInput, t("common.microphone"))}
       {!isFirefox() &&
-        generateDeviceSelection(devices.audioOutput, t("Speaker"))}
+        generateDeviceSelection(
+          devices.audioOutput,
+          t("settings.speaker_device_selection_label"),
+        )}
     </TabItem>
   );
 
@@ -137,11 +149,11 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <VideoIcon width={16} height={16} />
-          <span>{t("Video")}</span>
+          <span>{t("common.video")}</span>
         </>
       }
     >
-      {generateDeviceSelection(devices.videoInput, t("Camera"))}
+      {generateDeviceSelection(devices.videoInput, t("common.camera"))}
     </TabItem>
   );
 
@@ -151,11 +163,11 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <UserIcon width={15} height={15} />
-          <span>{t("Profile")}</span>
+          <span>{t("common.profile")}</span>
         </>
       }
     >
-      <ProfileSettingsTab client={props.client} />
+      <ProfileSettingsTab client={client} />
     </TabItem>
   );
 
@@ -165,11 +177,11 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <FeedbackIcon width={16} height={16} />
-          <span>{t("Feedback")}</span>
+          <span>{t("settings.feedback_tab_title")}</span>
         </>
       }
     >
-      <FeedbackSettingsTab roomId={props.roomId} />
+      <FeedbackSettingsTab roomId={roomId} />
     </TabItem>
   );
 
@@ -179,25 +191,29 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <OverflowIcon width={16} height={16} />
-          <span>{t("More")}</span>
+          <span>{t("settings.more_tab_title")}</span>
         </>
       }
     >
-      <h4>Developer</h4>
-      <p>Version: {(import.meta.env.VITE_APP_VERSION as string) || "dev"}</p>
+      <h4>{t("settings.developer_tab_title")}</h4>
+      <p>
+        {t("version", {
+          version: import.meta.env.VITE_APP_VERSION || "dev",
+        })}
+      </p>
       <FieldRow>
         <InputField
           id="developerSettingsTab"
           type="checkbox"
           checked={developerSettingsTab}
-          label={t("Developer Settings")}
-          description={t("Expose developer settings in the settings window.")}
+          label={t("settings.developer_settings_label")}
+          description={t("settings.developer_settings_label_description")}
           onChange={(event: ChangeEvent<HTMLInputElement>): void =>
             setDeveloperSettingsTab(event.target.checked)
           }
         />
       </FieldRow>
-      <h4>Analytics</h4>
+      <h4>{t("common.analytics")}</h4>
       <FieldRow>
         <InputField
           id="optInAnalytics"
@@ -218,13 +234,13 @@ export const SettingsModal: FC<Props> = (props) => {
       title={
         <>
           <DeveloperIcon width={16} height={16} />
-          <span>{t("Developer")}</span>
+          <span>{t("settings.developer_tab_title")}</span>
         </>
       }
     >
       <FieldRow>
         <Body className={styles.fieldRowText}>
-          {t("Version: {{version}}", {
+          {t("version", {
             version: import.meta.env.VITE_APP_VERSION || "dev",
           })}
         </Body>
@@ -233,7 +249,7 @@ export const SettingsModal: FC<Props> = (props) => {
         <InputField
           id="showConnectionStats"
           name="connection-stats"
-          label={t("Show connection stats")}
+          label={t("settings.show_connection_stats_label")}
           type="checkbox"
           checked={showConnectionStats}
           onChange={(e: ChangeEvent<HTMLInputElement>): void =>
@@ -251,14 +267,14 @@ export const SettingsModal: FC<Props> = (props) => {
 
   return (
     <Modal
-      title={t("Settings")}
+      title={t("common.settings")}
       className={styles.settingsModal}
-      open={props.open}
-      onDismiss={props.onDismiss}
+      open={open}
+      onDismiss={onDismiss}
     >
       <TabContainer
-        onSelectionChange={onSelectedTabChanged}
-        selectedKey={selectedTab ?? props.defaultTab ?? "audio"}
+        onSelectionChange={onTabChange as (tab: Key) => void}
+        selectedKey={tab}
         className={styles.tabContainer}
       >
         {tabs}

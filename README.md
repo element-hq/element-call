@@ -1,11 +1,11 @@
 # Element Call
 
 [![Chat](https://img.shields.io/matrix/webrtc:matrix.org)](https://matrix.to/#/#webrtc:matrix.org)
-[![Translate](https://translate.element.io/widgets/element-call/-/element-call/svg-badge.svg)](https://translate.element.io/engage/element-call/)
+[![Localazy](https://img.shields.io/endpoint?url=https%3A%2F%2Fconnect.localazy.com%2Fstatus%2Felement-call%2Fdata%3Fcontent%3Dall%26title%3Dlocalazy%26logo%3Dtrue)](https://localazy.com/p/element-call)
 
 Group calls with WebRTC that leverage [Matrix](https://matrix.org) and an open-source WebRTC toolkit from [LiveKit](https://livekit.io/).
 
-For prior version of the Element Call that relied solely on full-mesh logic, check [`full-mesh`](https://github.com/vector-im/element-call/tree/full-mesh) branch.
+For prior version of the Element Call that relied solely on full-mesh logic, check [`full-mesh`](https://github.com/element-hq/element-call/tree/full-mesh) branch.
 
 ![A demo of Element Call with six people](demo.jpg)
 
@@ -16,7 +16,7 @@ To try it out, visit our hosted version at [call.element.io](https://call.elemen
 Until prebuilt tarballs are available, you'll need to build Element Call from source. First, clone and install the package:
 
 ```
-git clone https://github.com/vector-im/element-call.git
+git clone https://github.com/element-hq/element-call.git
 cd element-call
 yarn
 yarn build
@@ -56,7 +56,7 @@ There are currently two different config files. `.env` holds variables that are 
 
 ## Translation
 
-If you'd like to help translate Element Call, head over to [translate.element.io](https://translate.element.io/engage/element-call/). You're also encouraged to join the [Element Translators](https://matrix.to/#/#translators:element.io) space to discuss and coordinate translation efforts.
+If you'd like to help translate Element Call, head over to [Localazy](https://localazy.com/p/element-call). You're also encouraged to join the [Element Translators](https://matrix.to/#/#translators:element.io) space to discuss and coordinate translation efforts.
 
 ## Development
 
@@ -74,7 +74,7 @@ yarn link
 Next, we can set up this project:
 
 ```
-git clone https://github.com/vector-im/element-call.git
+git clone https://github.com/element-hq/element-call.git
 cd element-call
 yarn
 yarn link matrix-js-sdk
@@ -93,12 +93,12 @@ service for development. These use a test 'secret' published in this
 repository, so this must be used only for local development and
 **_never be exposed to the public Internet._**
 
-To use it, add SFU parameter in your local config `./public/config.yml`:
+To use it, add SFU parameter in your local config `./public/config.json`:
 
-```yaml
+```json
 "livekit": {
-    "jwt_service_url": "http://localhost:8881"
-  },
+  "livekit_service_url": "http://localhost:8881"
+},
 ```
 
 Run backend components:
@@ -106,3 +106,9 @@ Run backend components:
 ```
 yarn backend
 ```
+
+## Documentation
+
+Usage and other technical details about the project can be found here:
+
+[**Docs**](./docs/README.md)

@@ -71,7 +71,7 @@ export const ErrorView: FC<ErrorViewProps> = ({ error }) => {
 
   return (
     <FullScreenView>
-      <h1>Error</h1>
+      <h1>{t("common.error")}</h1>
       <p>
         {error instanceof TranslatedError
           ? error.translatedMessage
@@ -85,7 +85,7 @@ export const ErrorView: FC<ErrorViewProps> = ({ error }) => {
           className={styles.homeLink}
           onPress={onReload}
         >
-          {t("Return to home screen")}
+          {t("return_home_button")}
         </Button>
       ) : (
         <LinkButton
@@ -94,7 +94,7 @@ export const ErrorView: FC<ErrorViewProps> = ({ error }) => {
           className={styles.homeLink}
           to="/"
         >
-          {t("Return to home screen")}
+          {t("return_home_button")}
         </LinkButton>
       )}
     </FullScreenView>
@@ -110,11 +110,11 @@ export const CrashView: FC = () => {
 
   return (
     <FullScreenView>
-      <Trans>
+      <Trans i18nKey="full_screen_view_h1">
         <h1>Oops, something's gone wrong.</h1>
       </Trans>
       {Config.get().rageshake?.submit_url && (
-        <Trans>
+        <Trans i18nKey="full_screen_view_description">
           <p>Submitting debug logs will help us track down the problem.</p>
         </Trans>
       )}
@@ -126,7 +126,7 @@ export const CrashView: FC = () => {
         className={styles.wideButton}
         onPress={onReload}
       >
-        {t("Return to home screen")}
+        {t("return_home_button")}
       </Button>
     </FullScreenView>
   );
@@ -137,7 +137,7 @@ export const LoadingView: FC = () => {
 
   return (
     <FullScreenView>
-      <h1>{t("Loading…")}</h1>
+      <h1>{t("common.loading")}</h1>
     </FullScreenView>
   );
 };

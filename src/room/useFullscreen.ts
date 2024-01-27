@@ -18,9 +18,9 @@ limitations under the License.
 import { logger } from "matrix-js-sdk/src/logger";
 import { useCallback, useLayoutEffect, useRef } from "react";
 
-import { TileDescriptor } from "../video-grid/VideoGrid";
 import { useReactiveState } from "../useReactiveState";
 import { useEventTarget } from "../useEvents";
+import { TileDescriptor } from "../state/CallViewModel";
 
 const isFullscreen = (): boolean =>
   Boolean(document.fullscreenElement) ||

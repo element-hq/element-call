@@ -19,7 +19,7 @@ import { useHistory, useLocation } from "react-router-dom";
 
 import { useClientLegacy } from "./ClientContext";
 import { useProfile } from "./profile/useProfile";
-import { SettingsModal } from "./settings/SettingsModal";
+import { defaultSettingsTab, SettingsModal } from "./settings/SettingsModal";
 import { UserMenu } from "./UserMenu";
 
 interface Props {
@@ -37,17 +37,17 @@ export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
     [setSettingsModalOpen],
   );
 
-  const [defaultSettingsTab, setDefaultSettingsTab] = useState<string>();
+  const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
 
   const onAction = useCallback(
     async (value: string) => {
       switch (value) {
         case "user":
-          setDefaultSettingsTab("profile");
+          setSettingsTab("profile");
           setSettingsModalOpen(true);
           break;
         case "settings":
-          setDefaultSettingsTab("audio");
+          setSettingsTab("audio");
           setSettingsModalOpen(true);
           break;
         case "logout":
@@ -76,9 +76,10 @@ export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
       {client && (
         <SettingsModal
           client={client}
-          defaultTab={defaultSettingsTab}
           open={settingsModalOpen}
           onDismiss={onDismissSettingsModal}
+          tab={settingsTab}
+          onTabChange={setSettingsTab}
         />
       )}
     </>

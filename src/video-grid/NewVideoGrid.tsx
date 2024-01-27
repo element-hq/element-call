@@ -32,7 +32,6 @@ import styles from "./NewVideoGrid.module.css";
 import {
   VideoGridProps as Props,
   TileSpring,
-  TileDescriptor,
   ChildrenProperties,
 } from "./VideoGrid";
 import { useReactiveState } from "../useReactiveState";
@@ -40,6 +39,7 @@ import { useMergedRefs } from "../useMergedRefs";
 import { TileWrapper } from "./TileWrapper";
 import { BigGrid } from "./BigGrid";
 import { useLayout } from "./Layout";
+import { TileDescriptor } from "../state/CallViewModel";
 
 interface Rect {
   x: number;

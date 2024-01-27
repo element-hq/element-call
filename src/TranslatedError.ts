@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import i18n from "i18next";
+import type { DefaultNamespace, ParseKeys, TFunction, TOptions } from "i18next";
 
 /**
  * An error with messages in both English and the user's preferred language.
@@ -27,8 +27,11 @@ export abstract class TranslatedError extends Error {
    */
   public readonly translatedMessage: string;
 
-  public constructor(messageKey: string, translationFn: typeof i18n.t) {
-    super(translationFn(messageKey, { lng: "en-GB" }));
+  public constructor(
+    messageKey: ParseKeys<DefaultNamespace, TOptions>,
+    translationFn: TFunction<DefaultNamespace>,
+  ) {
+    super(translationFn(messageKey, { lng: "en-GB" } as TOptions));
     this.translatedMessage = translationFn(messageKey);
   }
 }
@@ -38,6 +41,6 @@ class TranslatedErrorImpl extends TranslatedError {}
 // i18next-parser can't detect calls to a constructor, so we expose a bare
 // function instead
 export const translatedError = (
-  messageKey: string,
-  t: typeof i18n.t,
+  messageKey: ParseKeys<DefaultNamespace, TOptions>,
+  t: TFunction<"app", undefined>,
 ): TranslatedError => new TranslatedErrorImpl(messageKey, t);

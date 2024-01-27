@@ -1,8 +1,8 @@
 export default {
-  keySeparator: false,
+  keySeparator: ".",
   namespaceSeparator: false,
   contextSeparator: "|",
-  pluralSeparator: "|",
+  pluralSeparator: "_",
   createOldCatalogs: false,
   defaultNamespace: "app",
   lexers: {
@@ -10,7 +10,14 @@ export default {
       {
         lexer: "JavascriptLexer",
         functions: ["t", "translatedError"],
-        functionsNamespace: ["useTranslation", "withTranslation"],
+        namespaceFunctions: ["useTranslation", "withTranslation"],
+      },
+    ],
+    tsx: [
+      {
+        lexer: "JsxLexer",
+        functions: ["t", "translatedError"],
+        namespaceFunctions: ["useTranslation", "withTranslation"],
       },
     ],
   },
@@ -18,6 +25,4 @@ export default {
   output: "public/locales/$LOCALE/$NAMESPACE.json",
   input: ["src/**/*.{ts,tsx}"],
   sort: true,
-  // The key becomes the English version of the string
-  defaultValue: (_l, _ns, key) => key,
 };

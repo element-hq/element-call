@@ -44,7 +44,7 @@ import { Config } from "../config/Config";
 
 export const RegisterPage: FC = () => {
   const { t } = useTranslation();
-  usePageTitle(t("Register"));
+  usePageTitle(t("action.register"));
 
   const { loading, authenticated, passwordlessUser, client, setClient } =
     useClientLegacy();
@@ -140,7 +140,9 @@ export const RegisterPage: FC = () => {
 
   useEffect(() => {
     if (password && passwordConfirmation && password !== passwordConfirmation) {
-      confirmPasswordRef.current?.setCustomValidity(t("Passwords must match"));
+      confirmPasswordRef.current?.setCustomValidity(
+        t("register.passwords_must_match"),
+      );
     } else {
       confirmPasswordRef.current?.setCustomValidity("");
     }
@@ -164,14 +166,14 @@ export const RegisterPage: FC = () => {
         <div className={styles.content}>
           <div className={styles.formContainer}>
             <Logo width="auto" height="auto" className={styles.logo} />
-            <h2>Create your account</h2>
+            <h2>{t("register_heading")}</h2>
             <form onSubmit={onSubmitRegisterForm}>
               <FieldRow>
                 <InputField
                   type="text"
                   name="userName"
-                  placeholder={t("Username")}
-                  label={t("Username")}
+                  placeholder={t("common.username")}
+                  label={t("common.username")}
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
@@ -188,8 +190,8 @@ export const RegisterPage: FC = () => {
                     setPassword(e.target.value)
                   }
                   value={password}
-                  placeholder={t("Password")}
-                  label={t("Password")}
+                  placeholder={t("common.password")}
+                  label={t("common.password")}
                   data-testid="register_password"
                 />
               </FieldRow>
@@ -202,14 +204,14 @@ export const RegisterPage: FC = () => {
                     setPasswordConfirmation(e.target.value)
                   }
                   value={passwordConfirmation}
-                  placeholder={t("Confirm password")}
-                  label={t("Confirm password")}
+                  placeholder={t("register_confirm_password_label")}
+                  label={t("register_confirm_password_label")}
                   ref={confirmPasswordRef}
                   data-testid="register_confirm_password"
                 />
               </FieldRow>
               <Caption>
-                <Trans>
+                <Trans i18nKey="recaptcha_caption">
                   This site is protected by ReCAPTCHA and the Google{" "}
                   <Link href="https://www.google.com/policies/privacy/">
                     Privacy Policy
@@ -237,14 +239,16 @@ export const RegisterPage: FC = () => {
                   disabled={registering}
                   data-testid="register_register"
                 >
-                  {registering ? t("Registering…") : t("Register")}
+                  {registering
+                    ? t("register.registering")
+                    : t("action.register")}
                 </Button>
               </FieldRow>
               <div id={recaptchaId} />
             </form>
           </div>
           <div className={styles.authLinks}>
-            <Trans>
+            <Trans i18nKey="register_auth_links">
               <p>Already have an account?</p>
               <p>
                 <Link to="/login">Log in</Link>

@@ -62,32 +62,28 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
 
   return (
     <div>
-      <h4 className={styles.label}>{t("Submit feedback")}</h4>
-      <Body>
-        {t(
-          "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
-        )}
-      </Body>
+      <h4 className={styles.label}>{t("settings.feedback_tab_h4")}</h4>
+      <Body>{t("settings.feedback_tab_body")}</Body>
       <form onSubmit={onSubmitFeedback}>
         <FieldRow>
           <InputField
             className={feedbackStyles.feedback}
             id="description"
             name="description"
-            label={t("Your feedback")}
-            placeholder={t("Your feedback")}
+            label={t("settings.feedback_tab_description_label")}
+            placeholder={t("settings.feedback_tab_description_label")}
             type="textarea"
             disabled={sending || sent}
           />
         </FieldRow>
         {sent ? (
-          <Body> {t("Thanks, we received your feedback!")}</Body>
+          <Body> {t("settings.feedback_tab_thank_you")}</Body>
         ) : (
           <FieldRow>
             <InputField
               id="sendLogs"
               name="sendLogs"
-              label={t("Include debug logs")}
+              label={t("settings.feedback_tab_send_logs_label")}
               type="checkbox"
               defaultChecked
             />
@@ -97,7 +93,7 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
               </FieldRow>
             )}
             <Button type="submit" disabled={sending}>
-              {sending ? t("Submitting…") : t("Submit")}
+              {sending ? t("submitting") : t("action.submit")}
             </Button>
           </FieldRow>
         )}

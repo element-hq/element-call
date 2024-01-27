@@ -58,7 +58,7 @@ export function SelectInput(props: Props): JSX.Element {
         <span {...valueProps} className={styles.selectedItem}>
           {state.selectedItem
             ? state.selectedItem.rendered
-            : t("Select an option")}
+            : t("select_input_unset_button")}
         </span>
         <ArrowDownIcon />
       </button>

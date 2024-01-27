@@ -41,13 +41,13 @@ export const RageshakeButton: FC<Props> = ({ description }) => {
 
   let logsComponent: JSX.Element | null = null;
   if (sending) {
-    logsComponent = <span>{t("Sending…")}</span>;
+    logsComponent = <span>{t("rageshake_sending")}</span>;
   } else if (sent) {
-    logsComponent = <div>{t("Thanks!")}</div>;
+    logsComponent = <div>{t("rageshake_sent")}</div>;
   } else {
-    let caption = t("Send debug logs");
+    let caption = t("rageshake_send_logs");
     if (error) {
-      caption = t("Retry sending logs");
+      caption = t("rageshake_button_error_caption");
     }
 
     logsComponent = (

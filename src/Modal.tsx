@@ -136,7 +136,7 @@ export const Modal: FC<Props> = ({
                     <DialogClose
                       className={styles.close}
                       data-testid="modal_close"
-                      aria-label={t("Close")}
+                      aria-label={t("action.close")}
                     >
                       <CloseIcon width={20} height={20} />
                     </DialogClose>
