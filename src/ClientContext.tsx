@@ -29,6 +29,7 @@ import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
+import { MatrixEvent } from "matrix-js-sdk";
 
 import { ErrorView } from "./FullScreenView";
 import {
@@ -44,6 +45,11 @@ import {
 import { translatedError } from "./TranslatedError";
 import { useEventTarget } from "./useEvents";
 import { Config } from "./config/Config";
+import {
+  SHARE_ROOM_KEY_EVENT_TYPE,
+  getRoomSharedKeyLocalStorageKey,
+} from "./e2ee/sharedKeyManagement";
+import { getLocalStorageItem, setLocalStorageItem } from "./useLocalStorage";
 
 declare global {
   interface Window {
@@ -302,6 +308,18 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     [],
   );
 
+  const onToDevice = useCallback((event: MatrixEvent) => {
+    if (event.getType() !== SHARE_ROOM_KEY_EVENT_TYPE) return;
+
+    for (const [roomId, key] of Object.entries(event.getContent())) {
+      // XXX: We need a better way to prevent injection attacks here!
+      const localStorageKey = getRoomSharedKeyLocalStorageKey(roomId);
+      if (getLocalStorageItem(localStorageKey)) continue;
+
+      setLocalStorageItem(localStorageKey, key);
+    }
+  }, []);
+
   useEffect(() => {
     if (!initClientState) {
       return;
@@ -315,14 +333,19 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
     if (initClientState.client) {
       initClientState.client.on(ClientEvent.Sync, onSync);
+      initClientState.client.on(ClientEvent.ToDeviceEvent, onToDevice);
     }
 
     return () => {
       if (initClientState.client) {
         initClientState.client.removeListener(ClientEvent.Sync, onSync);
+        initClientState.client.removeListener(
+          ClientEvent.ToDeviceEvent,
+          onToDevice,
+        );
       }
     };
-  }, [initClientState, onSync]);
+  }, [initClientState, onSync, onToDevice]);
 
   if (alreadyOpenedErr) {
     return <ErrorView error={alreadyOpenedErr} />;

@@ -13,13 +13,14 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-import { FC, forwardRef } from "react";
+import { FC, forwardRef, useCallback, useEffect, useState } from "react";
 import { PressEvent } from "@react-types/shared";
 import classNames from "classnames";
 import { useButton } from "@react-aria/button";
 import { mergeProps, useObjectRef } from "@react-aria/utils";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "@vector-im/compound-web";
+import { ChangeEvent } from "react";
 import MicOnSolidIcon from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg?react";
 import MicOffSolidIcon from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg?react";
 import VideoCallSolidIcon from "@vector-im/compound-design-tokens/icons/video-call-solid.svg?react";
@@ -30,6 +31,9 @@ import SettingsSolidIcon from "@vector-im/compound-design-tokens/icons/settings-
 import ChevronDownIcon from "@vector-im/compound-design-tokens/icons/chevron-down.svg?react";
 
 import styles from "./Button.module.css";
+import RemoveIcon from "../icons/Remove.svg?react";
+import AddBreakoutRoomIcon from "../icons/AddBreakoutRoom.svg?react";
+import BreakoutRoomsIcon from "../icons/BreakoutRooms.svg?react";
 
 export type ButtonVariant =
   | "default"
@@ -132,8 +136,47 @@ export const Button = forwardRef<HTMLButtonElement, Props>(
     );
   },
 );
-
 Button.displayName = "Button";
+
+export const ButtonWithDropdown: FC<{
+  label: string;
+  options: { label: string; id: string }[];
+  onOptionSelect: (id: string) => void;
+}> = ({ label, options, onOptionSelect, ...rest }) => {
+  const [selectedUserId, setSelectedUserId] = useState<string>(options[0].id);
+
+  const onPress = useCallback(() => {
+    onOptionSelect(selectedUserId);
+  }, [onOptionSelect, selectedUserId]);
+
+  const onSelectedOptionChange = useCallback(
+    (event: ChangeEvent<HTMLSelectElement>) => {
+      setSelectedUserId(event.target.options[event.target.selectedIndex].id);
+    },
+    [setSelectedUserId],
+  );
+
+  useEffect(() => {
+    if (!options.find((o) => o.id === selectedUserId)) {
+      setSelectedUserId(options[0].id);
+    }
+  }, [options, selectedUserId, setSelectedUserId]);
+
+  return (
+    <div className={styles.buttonWithDropdown}>
+      <Tooltip label={label}>
+        <Button onPress={onPress} {...rest}>
+          {label}
+        </Button>
+      </Tooltip>
+      <select onChange={onSelectedOptionChange}>
+        {options.map((o) => (
+          <option id={o.id}> {o.label}</option>
+        ))}
+      </select>
+    </div>
+  );
+};
 
 export const MicButton: FC<{
   muted: boolean;
@@ -225,7 +268,49 @@ export const SettingsButton: FC<{
   return (
     <Tooltip label={t("common.settings")}>
       <Button variant="toolbar" {...rest}>
-        <SettingsSolidIcon aria-label={t("common.settings")} />
+        <SettingsSolidIcon aria-label={t("Settings")} />
+      </Button>
+    </Tooltip>
+  );
+};
+
+export const AddBreakoutRoomButton: FC<{
+  // TODO: add all props for <Button>
+  [index: string]: unknown;
+}> = ({ ...rest }) => {
+  const { t } = useTranslation();
+
+  return (
+    <Tooltip label={t("Break-out room")}>
+      <Button variant="toolbar" {...rest}>
+        <AddBreakoutRoomIcon aria-label={t("Break-out room")} />
+      </Button>
+    </Tooltip>
+  );
+};
+
+export const BreakoutRoomsButton: FC<{
+  // TODO: add all props for <Button>
+  [index: string]: unknown;
+}> = ({ ...rest }) => {
+  const { t } = useTranslation();
+
+  return (
+    <Tooltip label={t("Break-out rooms")}>
+      <Button variant="toolbar" {...rest}>
+        <BreakoutRoomsIcon aria-label={t("Break-out rooms")} />
+      </Button>
+    </Tooltip>
+  );
+};
+
+export const RemoveButton: FC<Omit<Props, "variant">> = ({ ...rest }) => {
+  const { t } = useTranslation();
+
+  return (
+    <Tooltip label={t("Remove")}>
+      <Button className={styles.removeButton} variant="icon" {...rest}>
+        <RemoveIcon aria-label={t("Remove")} />
       </Button>
     </Tooltip>
   );

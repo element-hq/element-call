@@ -22,11 +22,14 @@ import { useClient } from "../ClientContext";
 import { UrlParams, getUrlParams, useUrlParams } from "../UrlParams";
 import { widget } from "../widget";
 
+export type ShareRoomKeyEventContent = Record<string, string>;
+export const SHARE_ROOM_KEY_EVENT_TYPE = "io.element.share_room_key";
+
 export function saveKeyForRoom(roomId: string, password: string): void {
   setLocalStorageItem(getRoomSharedKeyLocalStorageKey(roomId), password);
 }
 
-const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
+export const getRoomSharedKeyLocalStorageKey = (roomId: string): string =>
   `room-shared-key-${roomId}`;
 
 const useInternalRoomSharedKey = (roomId: string): string | null => {

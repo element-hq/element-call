@@ -15,6 +15,8 @@
     "sign_out": "Sign out",
     "submit": "Submit"
   },
+  "Add break-out room": "Add break-out room",
+  "Add user": "Add user",
   "analytics_notice": "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.",
   "app_selection_modal": {
     "continue_in_browser": "Continue in browser",
@@ -23,6 +25,10 @@
     "title": "Select app"
   },
   "application_opened_another_tab": "This application has been opened in another tab.",
+  "Break-out room": "Break-out room",
+  "Break-out room 1": "Break-out room 1",
+  "Break-out room 2": "Break-out room 2",
+  "Break-out rooms": "Break-out rooms",
   "browser_media_e2ee_unsupported": "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117",
   "browser_media_e2ee_unsupported_heading": "Incompatible Browser",
   "call_ended_view": {
@@ -57,6 +63,8 @@
     "username": "Username",
     "video": "Video"
   },
+  "Create rooms": "Create rooms",
+  "Creating rooms": "Creating rooms",
   "disconnected_banner": "Connectivity to the server has been lost.",
   "full_screen_view_description": "<0>Submitting debug logs will help us track down the problem.</0>",
   "full_screen_view_h1": "<0>Oops, something's gone wrong.</0>",
@@ -110,7 +118,9 @@
   "register_auth_links": "<0>Already have an account?</0><1><0>Log in</0> Or <2>Access as a guest</2></1>",
   "register_confirm_password_label": "Confirm password",
   "register_heading": "Create your account",
+  "Remove": "Remove",
   "return_home_button": "Return to home screen",
+  "Room name": "Room name",
   "room_auth_view_eula_caption": "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>",
   "room_auth_view_join_button": "Join call now",
   "screenshare_button_label": "Share screen",
@@ -130,6 +140,7 @@
     "show_connection_stats_label": "Show connection stats",
     "speaker_device_selection_label": "Speaker"
   },
+  "Settings": "Settings",
   "star_rating_input_label_one": "{{count}} stars",
   "star_rating_input_label_other": "{{count}} stars",
   "start_new_call": "Start new call",

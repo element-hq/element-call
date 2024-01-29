@@ -49,6 +49,7 @@ import {
   VideoButton,
   ScreenshareButton,
   SettingsButton,
+  AddBreakoutRoomButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { useVideoGridLayout, VideoGrid } from "../video-grid/VideoGrid";
@@ -74,6 +75,8 @@ import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
 import { ECConnectionState } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
+import { BreakoutRoomModal } from "./BreakoutRoomModal";
+import { BreakoutRoomsOverlay } from "./BreakoutRoomsOverlay";
 import { useCallViewModel } from "../state/CallViewModel";
 import { subscribe } from "../state/subscribe";
 
@@ -329,6 +332,18 @@ export const InCallView: FC<InCallViewProps> = subscribe(
       [setSettingsModalOpen],
     );
 
+    const [breakoutRoomModalModalOpen, setBreakoutRoomModalModalOpen] =
+      useState(false);
+
+    const openBreakoutRoomModal = useCallback(
+      () => setBreakoutRoomModalModalOpen(true),
+      [setBreakoutRoomModalModalOpen],
+    );
+    const closeBreakoutRoomModal = useCallback(
+      () => setBreakoutRoomModalModalOpen(false),
+      [setBreakoutRoomModalModalOpen],
+    );
+
     const openProfile = useCallback(() => {
       setSettingsTab("profile");
       setSettingsModalOpen(true);
@@ -379,7 +394,10 @@ export const InCallView: FC<InCallViewProps> = subscribe(
             />,
           );
         }
-        buttons.push(<SettingsButton key="4" onPress={openSettings} />);
+        buttons.push(
+          <AddBreakoutRoomButton key="4" onPress={openBreakoutRoomModal} />,
+        );
+        buttons.push(<SettingsButton key="5" onPress={openSettings} />);
       }
 
       buttons.push(
@@ -451,6 +469,12 @@ export const InCallView: FC<InCallViewProps> = subscribe(
         {!noControls && (
           <RageshakeRequestModal {...rageshakeRequestModalProps} />
         )}
+        <BreakoutRoomModal
+          client={client}
+          roomId={matrixInfo.roomId}
+          open={breakoutRoomModalModalOpen}
+          onDismiss={closeBreakoutRoomModal}
+        />
         <SettingsModal
           client={client}
           roomId={rtcSession.room.roomId}
@@ -459,6 +483,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
           tab={settingsTab}
           onTabChange={setSettingsTab}
         />
+        <BreakoutRoomsOverlay room={rtcSession.room} />
       </div>
     );
   },

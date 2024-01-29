@@ -222,6 +222,23 @@ limitations under the License.
   cursor: pointer;
 }
 
+.removeButton {
+  width: 24px;
+  height: 24px;
+
+  margin: 12px;
+
+  background-color: var(--cpd-color-bg-subtle-secondary);
+  border-radius: 100%;
+}
+
+.buttonWithDropdown {
+  display: flex;
+  flex-direction: row;
+
+  gap: 8px;
+}
+
 @media (hover: hover) {
   .toolbarButton:hover,
   .toolbarButtonSecondary:hover {
