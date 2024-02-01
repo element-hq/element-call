@@ -17,7 +17,7 @@ limitations under the License.
 import { FC } from "react";
 import { Tooltip } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
-import LockIcon from "@vector-im/compound-design-tokens/icons/lock.svg?react";
+import LockSolidIcon from "@vector-im/compound-design-tokens/icons/lock-solid.svg?react";
 import LockOffIcon from "@vector-im/compound-design-tokens/icons/lock-off.svg?react";
 
 import styles from "./EncryptionLock.module.css";
@@ -28,7 +28,7 @@ interface Props {
 
 export const EncryptionLock: FC<Props> = ({ encrypted }) => {
   const { t } = useTranslation();
-  const Icon = encrypted ? LockIcon : LockOffIcon;
+  const Icon = encrypted ? LockSolidIcon : LockOffIcon;
   const label = encrypted ? t("common.encrypted") : t("common.unencrypted");
 
   return (
