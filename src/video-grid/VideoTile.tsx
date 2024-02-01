@@ -37,7 +37,7 @@ import {
 import MicOnSolidIcon from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg?react";
 import MicOffSolidIcon from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg?react";
 import ErrorIcon from "@vector-im/compound-design-tokens/icons/error.svg?react";
-import MicOffOutlineIcon from "@vector-im/compound-design-tokens/icons/mic-off-outline.svg?react";
+import MicOffIcon from "@vector-im/compound-design-tokens/icons/mic-off.svg?react";
 import OverflowHorizontalIcon from "@vector-im/compound-design-tokens/icons/overflow-horizontal.svg?react";
 import VolumeOnIcon from "@vector-im/compound-design-tokens/icons/volume-on.svg?react";
 import VolumeOffIcon from "@vector-im/compound-design-tokens/icons/volume-off.svg?react";
@@ -236,7 +236,7 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
     ) : (
       <>
         <ToggleMenuItem
-          Icon={MicOffOutlineIcon}
+          Icon={MicOffIcon}
           label={t("video_tile.mute_for_me")}
           checked={locallyMuted}
           onChange={onChangeMute}
