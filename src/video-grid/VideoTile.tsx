@@ -134,14 +134,7 @@ const Tile = forwardRef<HTMLDivElement, TileProps>(
               trackRef={video}
               // There's no reason for this to be focusable
               tabIndex={-1}
-              // React supports the disablePictureInPicture attribute, but Firefox
-              // only recognizes a value of "true", whereas React sets it to the empty
-              // string. So we need to bypass React and set it specifically to "true".
-              // https://bugzilla.mozilla.org/show_bug.cgi?id=1865748
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-ignore
-              // eslint-disable-next-line react/no-unknown-property
-              disablepictureinpicture="true"
+              disablePictureInPicture
             />
           )}
         </div>
