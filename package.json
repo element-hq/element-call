@@ -13,7 +13,9 @@
     "lint:types": "tsc",
     "i18n": "node_modules/i18next-parser/bin/cli.js",
     "i18n:check": "node_modules/i18next-parser/bin/cli.js --fail-on-warnings --fail-on-update",
-    "test": "jest",
+    "test": "vitest watch",
+    "test:no-watch": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "backend": "docker-compose -f backend-docker-compose.yml up"
   },
   "dependencies": {
@@ -101,6 +103,7 @@
     "@types/uuid": "9",
     "@typescript-eslint/eslint-plugin": "^6.1.0",
     "@typescript-eslint/parser": "^6.1.0",
+    "@vitest/coverage-v8": "^1.2.2",
     "babel-loader": "^9.0.0",
     "babel-plugin-transform-vite-meta-env": "^1.0.3",
     "eslint": "^8.14.0",
@@ -115,33 +118,14 @@
     "eslint-plugin-unicorn": "^50.0.0",
     "i18next-parser": "^8.0.0",
     "identity-obj-proxy": "^3.0.0",
+    "jsdom": "^24.0.0",
     "prettier": "^3.0.0",
     "sass": "^1.42.1",
     "typescript": "^5.1.6",
     "typescript-eslint-language-service": "^5.0.5",
     "vite": "^5.0.0",
     "vite-plugin-html-template": "^1.1.0",
-    "vite-plugin-svgr": "^4.0.0"
-  },
-  "jest": {
-    "testEnvironment": "./test/environment.ts",
-    "testMatch": [
-      "<rootDir>/test/**/*-test.[jt]s?(x)"
-    ],
-    "transformIgnorePatterns": [
-      "/node_modules/(?!d3)+$",
-      "/node_modules/(?!internmap)+$"
-    ],
-    "moduleNameMapper": {
-      "\\.css$": "identity-obj-proxy",
-      "\\.svg\\?react$": "<rootDir>/test/mocks/svgr.ts",
-      "^\\./IndexedDBWorker\\?worker$": "<rootDir>/test/mocks/workerMock.ts",
-      "^\\./olm$": "<rootDir>/test/mocks/olmMock.ts"
-    },
-    "collectCoverage": true,
-    "coverageReporters": [
-      "text",
-      "cobertura"
-    ]
+    "vite-plugin-svgr": "^4.0.0",
+    "vitest": "^1.2.2"
   }
 }
