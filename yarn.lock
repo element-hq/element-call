@@ -9534,10 +9534,10 @@ vaul@^0.7.0:
   dependencies:
     "@radix-ui/react-dialog" "^1.0.4"
 
-vaul@^0.8.0:
-  version "0.8.9"
-  resolved "https://registry.yarnpkg.com/vaul/-/vaul-0.8.9.tgz#0b6e4771dbd0e8e330b3c4b0415d4fd15cd47e9b"
-  integrity sha512-gpmtmZRWDPP6niQh14JfRIFUYZVyfvAWyA/7rUINOfNlO/2K7uEvI5rLXEXkxZIRFyUZj+TPHLFMirkegPHjrw==
+vaul@^0.9.0:
+  version "0.9.0"
+  resolved "https://registry.yarnpkg.com/vaul/-/vaul-0.9.0.tgz#e45a653f89d6c5c8b3c32bac29b2ae3457481d9e"
+  integrity sha512-bZSySGbAHiTXmZychprnX/dE0EsSige88xtyyL3/MCRbrFotRPQZo7UdydGXZWw+CKbNOw5Ow8gwAo93/nB/Cg==
   dependencies:
     "@radix-ui/react-dialog" "^1.0.4"
 
