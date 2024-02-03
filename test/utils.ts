@@ -13,12 +13,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
+import { vi } from "vitest";
 
 export function withFakeTimers(continuation: () => void): void {
-  jest.useFakeTimers();
+  vi.useFakeTimers();
   try {
     continuation();
   } finally {
-    jest.useRealTimers();
+    vi.useRealTimers();
   }
 }

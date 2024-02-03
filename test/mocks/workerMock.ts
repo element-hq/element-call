@@ -1,1 +1,3 @@
-module.exports = jest.fn();
+import { vi } from "vitest";
+
+module.exports = vi.fn();
