@@ -12,9 +12,10 @@
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "noUnusedLocals": true,
-    "moduleResolution": "node",
+    "moduleResolution": "Bundler",
     "declaration": true,
     "resolveJsonModule": true,
+    "types": ["vitest/globals"],
 
     // TODO: Enable the following options later.
     // "forceConsistentCasingInFileNames": true,
