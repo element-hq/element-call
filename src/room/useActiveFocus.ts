@@ -56,6 +56,9 @@ export function useActiveFocus(
     const newActiveFocus = getActiveFocus(rtcSession);
 
     if (!deepCompare(activeFocus, newActiveFocus)) {
+      logger.warn(
+        `got new active focus (focus switch) form: ${activeFocus} to ${newActiveFocus}`,
+      );
       setActiveFocus(newActiveFocus);
     }
   }, [activeFocus, rtcSession]);
