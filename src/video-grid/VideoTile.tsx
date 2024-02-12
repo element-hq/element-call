@@ -206,9 +206,16 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
     const mirror = useStateObservable(vm.mirror);
     const speaking = useStateObservable(vm.speaking);
     const locallyMuted = useStateObservable(vm.locallyMuted);
+    const cropVideo = useStateObservable(vm.cropVideo);
     const localVolume = useStateObservable(vm.localVolume);
     const onChangeMute = useCallback(() => vm.toggleLocallyMuted(), [vm]);
+    const onChangeFitContain = useCallback(() => vm.toggleFitContain(), [vm]);
     const onSelectMute = useCallback((e: Event) => e.preventDefault(), []);
+    const onSelectFitContain = useCallback(
+      (e: Event) => e.preventDefault(),
+      [],
+    );
+
     const onChangeLocalVolume = useCallback(
       (v: number) => vm.setLocalVolume(v),
       [vm],
@@ -225,6 +232,13 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
           label={t("common.profile")}
           onSelect={onOpenProfile}
         />
+        <ToggleMenuItem
+          Icon={ExpandIcon}
+          label={t("video_tile.change_fit_contain")}
+          checked={cropVideo}
+          onChange={onChangeFitContain}
+          onSelect={onSelectFitContain}
+        />
       </>
     ) : (
       <>
@@ -234,6 +248,13 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
           checked={locallyMuted}
           onChange={onChangeMute}
           onSelect={onSelectMute}
+        />
+        <ToggleMenuItem
+          Icon={ExpandIcon}
+          label={t("video_tile.change_fit_contain")}
+          checked={cropVideo}
+          onChange={onChangeFitContain}
+          onSelect={onSelectFitContain}
         />
         {/* TODO: Figure out how to make this slider keyboard accessible */}
         <MenuItem as="div" Icon={VolumeIcon} label={null} onSelect={null}>
@@ -257,6 +278,7 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
         className={classNames(className, {
           [styles.mirror]: mirror,
           [styles.speaking]: showSpeakingIndicator && speaking,
+          [styles.cropVideo]: cropVideo,
         })}
         style={style}
         targetWidth={targetWidth}
