@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { vi } from "vitest";
 import { screen, render } from "@testing-library/react";
 import { Toast } from "../src/Toast";
 import userEvent from "@testing-library/user-event";
@@ -35,7 +36,7 @@ test("Toast renders", () => {
 });
 
 test("Toast dismisses when clicked", async () => {
-  const onDismiss = jest.fn();
+  const onDismiss = vi.fn();
   render(
     <Toast open={true} onDismiss={onDismiss}>
       Hello world!
@@ -47,13 +48,13 @@ test("Toast dismisses when clicked", async () => {
 
 test("Toast dismisses itself after the specified timeout", async () => {
   withFakeTimers(() => {
-    const onDismiss = jest.fn();
+    const onDismiss = vi.fn();
     render(
       <Toast open={true} onDismiss={onDismiss} autoDismiss={2000}>
         Hello world!
       </Toast>,
     );
-    jest.advanceTimersByTime(2000);
+    vi.advanceTimersByTime(2000);
     expect(onDismiss).toHaveBeenCalled();
   });
 });
