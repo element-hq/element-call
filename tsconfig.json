@@ -12,10 +12,23 @@
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "noUnusedLocals": true,
-    "moduleResolution": "Bundler",
+    "moduleResolution": "bundler",
     "declaration": true,
     "resolveJsonModule": true,
-    "types": ["vitest/globals"],
+    "paths": {
+      // These imports within @livekit/components-core and
+      // @livekit/components-react are broken under the "bundler" module
+      // resolution mode, so we need to resolve them manually
+      "livekit-client/dist/src/room/Room": [
+        "./node_modules/livekit-client/dist/src/room/Room.d.ts"
+      ],
+      "livekit-client/dist/src/room/participant/Participant": [
+        "./node_modules/livekit-client/dist/src/room/participant/Participant.d.ts"
+      ],
+      "livekit-client/dist/src/proto/livekit_models_pb": [
+        "./node_modules/livekit-client/dist/src/proto/livekit_models_pb.d.ts"
+      ]
+    },
 
     // TODO: Enable the following options later.
     // "forceConsistentCasingInFileNames": true,
@@ -30,6 +43,7 @@
   },
   "include": [
     "./node_modules/matrix-js-sdk/src/@types/*.d.ts",
+    "./node_modules/vitest/globals.d.ts",
     "./src/**/*.ts",
     "./src/**/*.tsx",
     "./test/**/*.ts",
