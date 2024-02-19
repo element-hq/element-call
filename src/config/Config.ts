@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { getUrlParams } from "../UrlParams";
 import {
   DEFAULT_CONFIG,
   ConfigOptions,
@@ -45,10 +46,18 @@ export class Config {
 
   // Convenience accessors
   public static defaultHomeserverUrl(): string | undefined {
-    return Config.get().default_server_config?.["m.homeserver"].base_url;
+    return (
+      getUrlParams().customHomeserver ??
+      Config.get().default_server_config?.["m.homeserver"].base_url
+    );
   }
 
   public static defaultServerName(): string | undefined {
+    const customHomeserver = getUrlParams().customHomeserver;
+    if (customHomeserver) {
+      const url = new URL(customHomeserver);
+      return url.hostname;
+    }
     return Config.get().default_server_config?.["m.homeserver"].server_name;
   }
 
