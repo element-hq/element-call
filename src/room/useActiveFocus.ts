@@ -57,7 +57,7 @@ export function useActiveFocus(
 
     if (!deepCompare(activeFocus, newActiveFocus)) {
       logger.warn(
-        `got new active focus (focus switch) form: ${activeFocus} to ${newActiveFocus}`,
+        `got new active focus (focus switch) from: ${activeFocus} to ${newActiveFocus}`,
       );
       setActiveFocus(newActiveFocus);
     }
