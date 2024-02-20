@@ -188,16 +188,8 @@ export async function initClient(
     await client.store.startup();
   }
 
-  if (client.initCrypto) {
-    await client.initCrypto();
-  }
-
-  await client.startClient({
-    // dirty hack to reduce chance of gappy syncs
-    // should be fixed by spotting gaps and backpaginating
-    initialSyncLimit: 50,
-  });
-
+  await client.initCrypto();
+  await client.startClient();
   await waitForSync(client);
 
   return client;
