@@ -41,7 +41,9 @@ export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
         throw new Error("No client context");
       }
       if (widget) {
-        throw new Error("We never register passwordless user in widget");
+        throw new Error(
+          "Registration was skipped: We should never try to register password-less user in embedded mode.",
+        );
       }
 
       try {
