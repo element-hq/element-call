@@ -36,6 +36,7 @@ import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 import { useUrlParams } from "./UrlParams";
+import { widget } from "./widget";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -48,7 +49,7 @@ const BackgroundProvider: FC<BackgroundProviderProps> = ({ children }) => {
 
   useEffect(() => {
     let backgroundImage = "";
-    if (!["/login", "/register"].includes(pathname)) {
+    if (!["/login", "/register"].includes(pathname) && !widget) {
       backgroundImage = "var(--background-gradient)";
     }
 
