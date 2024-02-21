@@ -35,6 +35,7 @@ import { CrashView, LoadingView } from "./FullScreenView";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
+import { useUrlParams } from "./UrlParams";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -54,6 +55,31 @@ const BackgroundProvider: FC<BackgroundProviderProps> = ({ children }) => {
     document.getElementsByTagName("body")[0].style.backgroundImage =
       backgroundImage;
   }, [pathname]);
+
+  return <>{children}</>;
+};
+
+interface ThemeProviderProps {
+  children: JSX.Element;
+}
+
+const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
+  const { theme } = useUrlParams();
+  const [previousTheme, setCurrentTheme] = useState<string | null>(
+    document.body.classList.item(0),
+  );
+  useEffect(() => {
+    // Don't update the current theme if the url does not contain a theme prop.
+    if (!theme) return;
+    const themeString = "cpd-theme-" + (theme ?? "dark");
+    if (themeString !== previousTheme) {
+      if (previousTheme) {
+        document.body.classList.remove(previousTheme);
+      }
+      document.body.classList.add(themeString);
+      setCurrentTheme(themeString);
+    }
+  }, [previousTheme, theme]);
 
   return <>{children}</>;
 };
@@ -78,37 +104,39 @@ export const App: FC<AppProps> = ({ history }) => {
     // @ts-ignore
     <Router history={history}>
       <BackgroundProvider>
-        <TooltipProvider>
-          {loaded ? (
-            <Suspense fallback={null}>
-              <ClientProvider>
-                <MediaDevicesProvider>
-                  <Sentry.ErrorBoundary fallback={errorPage}>
-                    <OverlayProvider>
-                      <DisconnectedBanner />
-                      <Switch>
-                        <SentryRoute exact path="/">
-                          <HomePage />
-                        </SentryRoute>
-                        <SentryRoute exact path="/login">
-                          <LoginPage />
-                        </SentryRoute>
-                        <SentryRoute exact path="/register">
-                          <RegisterPage />
-                        </SentryRoute>
-                        <SentryRoute path="*">
-                          <RoomPage />
-                        </SentryRoute>
-                      </Switch>
-                    </OverlayProvider>
-                  </Sentry.ErrorBoundary>
-                </MediaDevicesProvider>
-              </ClientProvider>
-            </Suspense>
-          ) : (
-            <LoadingView />
-          )}
-        </TooltipProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            {loaded ? (
+              <Suspense fallback={null}>
+                <ClientProvider>
+                  <MediaDevicesProvider>
+                    <Sentry.ErrorBoundary fallback={errorPage}>
+                      <OverlayProvider>
+                        <DisconnectedBanner />
+                        <Switch>
+                          <SentryRoute exact path="/">
+                            <HomePage />
+                          </SentryRoute>
+                          <SentryRoute exact path="/login">
+                            <LoginPage />
+                          </SentryRoute>
+                          <SentryRoute exact path="/register">
+                            <RegisterPage />
+                          </SentryRoute>
+                          <SentryRoute path="*">
+                            <RoomPage />
+                          </SentryRoute>
+                        </Switch>
+                      </OverlayProvider>
+                    </Sentry.ErrorBoundary>
+                  </MediaDevicesProvider>
+                </ClientProvider>
+              </Suspense>
+            ) : (
+              <LoadingView />
+            )}
+          </TooltipProvider>
+        </ThemeProvider>
       </BackgroundProvider>
     </Router>
   );
