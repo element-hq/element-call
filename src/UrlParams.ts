@@ -143,7 +143,7 @@ export interface UrlParams {
    * This can be user to configure a non default guest user server when
    * creating a spa link.
    */
-  customHomeserver: string | null;
+  homeserver: string | null;
 }
 
 // This is here as a stopgap, but what would be far nicer is a function that
@@ -244,7 +244,7 @@ export const getUrlParams = (
     skipLobby: parser.getFlagParam("skipLobby"),
     returnToLobby: parser.getFlagParam("returnToLobby"),
     viaServers: parser.getParam("viaServers"),
-    customHomeserver: parser.getParam("customHomeserver"),
+    homeserver: parser.getParam("homeserver"),
   };
 };
 

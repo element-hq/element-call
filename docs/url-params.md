@@ -210,12 +210,12 @@ that is in use for the current user.
 viaServers: string; (default: undefined)
 ```
 
-**customHomeserver**
+**homeserver**
 This defines the homeserver that is going to be used when registering
 a new (guest) user.
 This can be user to configure a non default guest user server when
 creating a spa link.
 
 ```
-customHomeserver: string; (default: undefined)
+homeserver: string; (default: undefined)
 ```

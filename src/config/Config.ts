@@ -47,15 +47,15 @@ export class Config {
   // Convenience accessors
   public static defaultHomeserverUrl(): string | undefined {
     return (
-      getUrlParams().customHomeserver ??
+      getUrlParams().homeserver ??
       Config.get().default_server_config?.["m.homeserver"].base_url
     );
   }
 
   public static defaultServerName(): string | undefined {
-    const customHomeserver = getUrlParams().customHomeserver;
-    if (customHomeserver) {
-      const url = new URL(customHomeserver);
+    const homeserver = getUrlParams().homeserver;
+    if (homeserver) {
+      const url = new URL(homeserver);
       return url.hostname;
     }
     return Config.get().default_server_config?.["m.homeserver"].server_name;
