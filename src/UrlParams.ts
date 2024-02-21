@@ -130,6 +130,20 @@ export interface UrlParams {
    * This is useful for video rooms.
    */
   returnToLobby: boolean;
+  /**
+   * This defines the homeserver that is going to be used when joining a room.
+   * It has to be set to a non default value for links to rooms
+   * that are not on the default homeserver,
+   * that is in use for the current user.
+   */
+  viaServers: string | null;
+  /**
+   * This defines the homeserver that is going to be used when registering
+   * a new (guest) user.
+   * This can be user to configure a non default guest user server when
+   * creating a spa link.
+   */
+  homeserver: string | null;
 }
 
 // This is here as a stopgap, but what would be far nicer is a function that
@@ -229,6 +243,8 @@ export const getUrlParams = (
     perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
     skipLobby: parser.getFlagParam("skipLobby"),
     returnToLobby: parser.getFlagParam("returnToLobby"),
+    viaServers: parser.getParam("viaServers"),
+    homeserver: parser.getParam("homeserver"),
   };
 };
 
