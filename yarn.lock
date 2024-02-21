@@ -2968,10 +2968,10 @@
     "@sentry/types" "7.101.1"
     "@sentry/utils" "7.101.1"
 
-"@sentry/babel-plugin-component-annotate@2.14.1":
-  version "2.14.1"
-  resolved "https://registry.yarnpkg.com/@sentry/babel-plugin-component-annotate/-/babel-plugin-component-annotate-2.14.1.tgz#3eb759809e051d341071b9e1d5a2e8cf35b67c56"
-  integrity sha512-NHVOr6m0vOoh1UNSZr+OpWQERjjQM7lO48WN/N/MzobIIxc2pymw2KAq3lNJ1SnVAy1t9RNP8u+g6aEFEMGZ/w==
+"@sentry/babel-plugin-component-annotate@2.14.2":
+  version "2.14.2"
+  resolved "https://registry.yarnpkg.com/@sentry/babel-plugin-component-annotate/-/babel-plugin-component-annotate-2.14.2.tgz#d756bed93495e97a5a2aad56e2a6dc5020305adc"
+  integrity sha512-mFBVnIZmdMrpxo61rG5yf0WFt5VrRpy8cpIpJtT3mYkX9vDmcUZaZaD1ctv73iZF3QwaieVdn05Na5mWzZ8h/A==
 
 "@sentry/browser@7.101.1":
   version "7.101.1"
@@ -2986,16 +2986,14 @@
     "@sentry/types" "7.101.1"
     "@sentry/utils" "7.101.1"
 
-"@sentry/bundler-plugin-core@2.14.1":
-  version "2.14.1"
-  resolved "https://registry.yarnpkg.com/@sentry/bundler-plugin-core/-/bundler-plugin-core-2.14.1.tgz#419fcd2e792f8b4fc6bb6eb735d09c2325ba1697"
-  integrity sha512-JbYkeQQ+FTy4KjuJmnjjRGKv1LOSH+Q9cbcMHkr+vNrwAbdxkQ7WURGEKUCFTciIekToMCOiFk+g3FQlRmzLPg==
+"@sentry/bundler-plugin-core@2.14.2":
+  version "2.14.2"
+  resolved "https://registry.yarnpkg.com/@sentry/bundler-plugin-core/-/bundler-plugin-core-2.14.2.tgz#6750c46fa4836b46ea48556b19f5e6789a428a47"
+  integrity sha512-HgOFWYdq87lSmeVW1w8K2Vf2DGzRPvKzHTajZYLTPlrZ1jbajq9vwuqhrJ9AnDkjl0mjyzSPEy3ZTeG1Z7uRNA==
   dependencies:
     "@babel/core" "7.18.5"
-    "@sentry/babel-plugin-component-annotate" "2.14.1"
+    "@sentry/babel-plugin-component-annotate" "2.14.2"
     "@sentry/cli" "^2.22.3"
-    "@sentry/node" "^7.60.0"
-    "@sentry/utils" "^7.60.0"
     dotenv "^16.3.1"
     find-up "5.0.0"
     glob "9.3.2"
@@ -3064,16 +3062,6 @@
     "@sentry/types" "7.101.1"
     "@sentry/utils" "7.101.1"
 
-"@sentry/node@^7.60.0":
-  version "7.101.1"
-  resolved "https://registry.yarnpkg.com/@sentry/node/-/node-7.101.1.tgz#d652503002be921be5ca042a3ef7457d309cdfa9"
-  integrity sha512-iXSxUT6Zbt/KUY0+fRcW5II6Tgp2zdTfhBW+fQuDt/UUZt7Ypvb+6n4U2oom3LJfttmD7mdjQuT4+vsNImDjTQ==
-  dependencies:
-    "@sentry-internal/tracing" "7.101.1"
-    "@sentry/core" "7.101.1"
-    "@sentry/types" "7.101.1"
-    "@sentry/utils" "7.101.1"
-
 "@sentry/react@^7.0.0":
   version "7.101.1"
   resolved "https://registry.yarnpkg.com/@sentry/react/-/react-7.101.1.tgz#678781d477bb4ff5b24444508168dd899472c1b2"
@@ -3107,7 +3095,7 @@
   resolved "https://registry.yarnpkg.com/@sentry/types/-/types-7.101.1.tgz#7f936022d9b373f85ebf357634bf03a9e433a3d0"
   integrity sha512-bwtkQvrCZ6JGc7vqX7TEAKBgkbQFORt84FFS3JQQb8G3efTt9fZd2ReY4buteKQdlALl8h1QWVngTLmI+kyUuw==
 
-"@sentry/utils@7.101.1", "@sentry/utils@^7.60.0":
+"@sentry/utils@7.101.1":
   version "7.101.1"
   resolved "https://registry.yarnpkg.com/@sentry/utils/-/utils-7.101.1.tgz#97399b1e6a63a15e8f9fec5112ac4834239f1db6"
   integrity sha512-Nrg0nrEI3nrOCd9SLJ/WGzxS5KMQE4cryLOvrDcHJRWpsSyGBF1hLLerk84Nsw/0myMsn7zTYU+xoq7idNsX5A==
@@ -3115,11 +3103,11 @@
     "@sentry/types" "7.101.1"
 
 "@sentry/vite-plugin@^2.0.0":
-  version "2.14.1"
-  resolved "https://registry.yarnpkg.com/@sentry/vite-plugin/-/vite-plugin-2.14.1.tgz#daa9e353990ba141e18f66cd0f80017eb001cfe9"
-  integrity sha512-leNq+hWaKRhp0e+U1LYVbKBUAN4P+RXhG6GyMLvjKZL0LTsbLni05XeWg3Xy364Xoawcj6vgEN2lVvlpUvUnEQ==
+  version "2.14.2"
+  resolved "https://registry.yarnpkg.com/@sentry/vite-plugin/-/vite-plugin-2.14.2.tgz#f17cbd5526a95de3d8a7995b4cd90e2c8a548bf1"
+  integrity sha512-t8IiRZGxivtODgabjgHlgUhOBEIJdOclJGUKLAJjJqPtYeKjPzxYOo/Z5yt7k1rhBAaMhFk3whW5o7SOq4KVOA==
   dependencies:
-    "@sentry/bundler-plugin-core" "2.14.1"
+    "@sentry/bundler-plugin-core" "2.14.2"
     unplugin "1.0.1"
 
 "@sinclair/typebox@^0.27.8":
@@ -4149,9 +4137,9 @@ caniuse-lite@^1.0.30001565:
   integrity sha512-vsJG3V5vgfduaQGVxL53uSX/HUzxyr2eA8xCo36OLal7sRcSZbibJtLeh0qja4sFOr/QQGt4opB4tOy+eOgAxg==
 
 caniuse-lite@^1.0.30001587:
-  version "1.0.30001587"
-  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001587.tgz#a0bce920155fa56a1885a69c74e1163fc34b4881"
-  integrity sha512-HMFNotUmLXn71BQxg8cijvqxnIAofforZOwGsxyXJ0qugTdspUF4sPSJ2vhgprHCB996tIDzEq1ubumPDV8ULA==
+  version "1.0.30001588"
+  resolved "https://registry.yarnpkg.com/caniuse-lite/-/caniuse-lite-1.0.30001588.tgz#07f16b65a7f95dba82377096923947fb25bce6e3"
+  integrity sha512-+hVY9jE44uKLkH0SrUTqxjxqNTOWHsbnQDIKjwkZ3lNTzUUVdBLBGXtj/q5Mp5u98r3droaZAewQuEDzjQdZlQ==
 
 chai@^4.3.10:
   version "4.4.1"
@@ -4723,9 +4711,9 @@ dot-case@^3.0.4:
     tslib "^2.0.3"
 
 dotenv@^16.3.1:
-  version "16.4.4"
-  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.4.4.tgz#a26e7bb95ebd36272ebb56edb80b826aecf224c1"
-  integrity sha512-XvPXc8XAQThSjAbY6cQ/9PcBXmFoWuw1sQ3b8HqUCR6ziGXjkTi//kB9SWa2UwqlgdAIuRqAa/9hVljzPehbYg==
+  version "16.4.5"
+  resolved "https://registry.yarnpkg.com/dotenv/-/dotenv-16.4.5.tgz#cdd3b3b604cb327e286b4762e13502f717cb099f"
+  integrity sha512-ZmdL2rui+eB2YwhsWzjInR8LldtZHGDoQ1ugH85ppHKwpUHL7j7rN0Ti9NCnGiQbhaZ11FpR+7ao1dNsmduNUg==
 
 electron-to-chromium@^1.4.535:
   version "1.4.609"
@@ -4738,9 +4726,9 @@ electron-to-chromium@^1.4.601:
   integrity sha512-hjfFa+Vj4WGLRVTlCQa+IivBkpcp+boGxMQfusOC/me5Y5NfU4wX7wyw+K9p8Cw4tl0BVIZGH2n7y/jMc3w4pg==
 
 electron-to-chromium@^1.4.668:
-  version "1.4.670"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.670.tgz#0fc5ac92ada8371e898ea72d577ffc888167a017"
-  integrity sha512-hcijYOWjOtjKrKPtNA6tuLlA/bTLO3heFG8pQA6mLpq7dRydSWicXova5lyxDzp1iVJaYhK7J2OQlGE52KYn7A==
+  version "1.4.677"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.677.tgz#49ee77713516740bdde32ac2d1443c444f0dafe7"
+  integrity sha512-erDa3CaDzwJOpyvfKhOiJjBVNnMM0qxHq47RheVVwsSQrgBA9ZSGV9kdaOfZDPXcHzhG7lBxhj6A7KvfLJBd6Q==
 
 email-regex@5.0.0:
   version "5.0.0"
