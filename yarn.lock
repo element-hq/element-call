@@ -2781,12 +2781,12 @@
     "@react-types/shared" "^3.13.1"
 
 "@react-types/dialog@^3.5.5":
-  version "3.5.5"
-  resolved "https://registry.yarnpkg.com/@react-types/dialog/-/dialog-3.5.5.tgz#bcd8d40bedc4c704161496d4c19a417ecc753b6a"
-  integrity sha512-XidCDLmbagLQZlnV8QVPhS3a63GdwiSa/0MYsHLDeb81+7P2vc3r+wNgnHWZw64mICWYzyyKxpzV3QpUm4f6+g==
+  version "3.5.8"
+  resolved "https://registry.yarnpkg.com/@react-types/dialog/-/dialog-3.5.8.tgz#03b2248659000db1325961cb67725fa7e8d32628"
+  integrity sha512-RX8JsMvty8ADHRqVEkppoynXLtN4IzUh8d5z88UEBbcvWKlHfd6bOBQjQcBH3AUue5wjfpPIt6brw2VzgBY/3Q==
   dependencies:
-    "@react-types/overlays" "^3.8.2"
-    "@react-types/shared" "^3.20.0"
+    "@react-types/overlays" "^3.8.5"
+    "@react-types/shared" "^3.22.1"
 
 "@react-types/label@^3.6.1":
   version "3.6.1"
@@ -2817,12 +2817,12 @@
   dependencies:
     "@react-types/shared" "^3.13.1"
 
-"@react-types/overlays@^3.8.2":
-  version "3.8.2"
-  resolved "https://registry.yarnpkg.com/@react-types/overlays/-/overlays-3.8.2.tgz#1411e0a1626f4140de0ce67835f24a6a18f8d5de"
-  integrity sha512-HpLYzkNvuvC6nKd06vF9XbcLLv3u55+e7YUFNVpgWq8yVxcnduOcJdRJhPaAqHUl6iVii04mu1GKnCFF8jROyQ==
+"@react-types/overlays@^3.8.5":
+  version "3.8.5"
+  resolved "https://registry.yarnpkg.com/@react-types/overlays/-/overlays-3.8.5.tgz#2dbee3ab6e5ff87d4bd443468ef7c2c6d63b5383"
+  integrity sha512-4D7EEBQigD/m8hE68Ys8eloyyZFHHduqykSIgINJ0edmo0jygRbWlTwuhWFR9USgSP4dK54duN0Mvq0m4HEVEw==
   dependencies:
-    "@react-types/shared" "^3.20.0"
+    "@react-types/shared" "^3.22.1"
 
 "@react-types/select@^3.6.1":
   version "3.6.1"
@@ -2841,10 +2841,10 @@
   resolved "https://registry.yarnpkg.com/@react-types/shared/-/shared-3.19.0.tgz#060e547d6e8c3ec84043d62f61cada1a00df1348"
   integrity sha512-h852l8bWhqUxbXIG8vH3ab7gE19nnP3U1kuWf6SNSMvgmqjiRN9jXKPIFxF/PbfdvnXXm0yZSgSMWfUCARF0Cg==
 
-"@react-types/shared@^3.20.0":
-  version "3.20.0"
-  resolved "https://registry.yarnpkg.com/@react-types/shared/-/shared-3.20.0.tgz#15f0cbe3978831589f083c8e316810669b4fa606"
-  integrity sha512-lgTO/S/EMIZKU1EKTg8wT0qYP5x/lZTK2Xw6BZZk5c4nn36JYhGCRb/OoR/jBCIeRb2x9yNbwERO6NYVkoQMSw==
+"@react-types/shared@^3.22.1":
+  version "3.22.1"
+  resolved "https://registry.yarnpkg.com/@react-types/shared/-/shared-3.22.1.tgz#4e5de032fcb0b7bca50f6a9f8e133fd882821930"
+  integrity sha512-PCpa+Vo6BKnRMuOEzy5zAZ3/H5tnQg1e80khMhK2xys0j6ZqzkgQC+fHMNZ7VDFNLqqNMj/o0eVeSBDh2POjkw==
 
 "@react-types/tabs@^3.1.1":
   version "3.1.1"
