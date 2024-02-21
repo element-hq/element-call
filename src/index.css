@@ -56,10 +56,6 @@ limitations under the License.
   --cpd-color-border-accent: var(--cpd-color-green-1100);
   --stopgap-color-on-solid-accent: var(--cpd-color-text-primary);
   --stopgap-background-85: rgba(16, 19, 23, 0.85);
-
-  background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
-  background-repeat: no-repeat;
-  background-position: center;
 }
 
 @font-face {
@@ -152,6 +148,9 @@ limitations under the License.
 
 body {
   background-color: var(--cpd-color-bg-canvas-default);
+  background-size: calc(max(1440px, 100vw)) calc(max(800px, 100vh));
+  background-repeat: no-repeat;
+  background-position: center;
   color: var(--cpd-color-text-primary);
   color-scheme: dark;
   margin: 0;
