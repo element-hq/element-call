@@ -82,9 +82,6 @@ export const useLoadGroupCall = (
           );
         }
       } else {
-        // room IDs we just try to join by their ID, which will not work in the
-        // general case without providing some servers to join via. We could provide
-        // our own server, but in practice that is implicit.
         room = await client.joinRoom(roomIdOrAlias, { viaServers });
       }
 
