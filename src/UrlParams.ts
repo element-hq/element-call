@@ -130,11 +130,6 @@ export interface UrlParams {
    * This is useful for video rooms.
    */
   returnToLobby: boolean;
-  /**
-   * The theme to use for element call.
-   * can be "light", "dark", "light-hc" or "dark-hc".
-   */
-  theme: string | null;
 }
 
 // This is here as a stopgap, but what would be far nicer is a function that
@@ -234,7 +229,6 @@ export const getUrlParams = (
     perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
     skipLobby: parser.getFlagParam("skipLobby"),
     returnToLobby: parser.getFlagParam("returnToLobby"),
-    theme: parser.getParam("theme"),
   };
 };
 
