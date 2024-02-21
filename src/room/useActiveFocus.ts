@@ -30,13 +30,6 @@ function getActiveFocus(
   const oldestMembership = rtcSession.getOldestMembership();
   const focus = oldestMembership?.getActiveFoci()[0] as LivekitFocus;
 
-  if (focus) {
-    logger.info(
-      `Got active focus for call from ${oldestMembership?.sender}/${oldestMembership?.deviceId}`,
-      focus,
-    );
-  }
-
   return focus;
 }
 
@@ -56,8 +49,10 @@ export function useActiveFocus(
     const newActiveFocus = getActiveFocus(rtcSession);
 
     if (!deepCompare(activeFocus, newActiveFocus)) {
+      const oldestMembership = rtcSession.getOldestMembership();
       logger.warn(
-        `got new active focus (focus switch) from: ${activeFocus} to ${newActiveFocus}`,
+        `Got new active focus from membership: ${oldestMembership?.sender}/${oldestMembership?.deviceId}.
+        Updating focus (focus switch) from ${activeFocus} to ${newActiveFocus}`,
       );
       setActiveFocus(newActiveFocus);
     }
