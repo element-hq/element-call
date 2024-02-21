@@ -41,6 +41,8 @@ export const RoomAuthView: FC = () => {
     // @ts-ignore
     (e) => {
       e.preventDefault();
+      setLoading(true);
+
       const data = new FormData(e.target);
       const dataForDisplayName = data.get("displayName");
       const displayName =
