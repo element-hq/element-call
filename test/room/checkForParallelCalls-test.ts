@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Mocked, mocked } from "jest-mock";
+import { vi, Mocked } from "vitest";
 import { RoomState } from "matrix-js-sdk/src/models/room-state";
 import { PosthogAnalytics } from "../../src/analytics/PosthogAnalytics";
 import { checkForParallelCalls } from "../../src/room/checkForParallelCalls";
@@ -23,10 +23,10 @@ import { withFakeTimers } from "../utils";
 const withMockedPosthog = (
   continuation: (posthog: Mocked<PosthogAnalytics>) => void,
 ) => {
-  const posthog = mocked({
-    trackEvent: jest.fn(),
+  const posthog = vi.mocked({
+    trackEvent: vi.fn(),
   } as unknown as PosthogAnalytics);
-  const instanceSpy = jest
+  const instanceSpy = vi
     .spyOn(PosthogAnalytics, "instance", "get")
     .mockReturnValue(posthog);
   try {
