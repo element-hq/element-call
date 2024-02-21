@@ -167,6 +167,12 @@ export class UserMediaTileViewModel extends BaseTileViewModel {
    */
   public readonly videoEnabled: StateObservable<boolean>;
 
+  private readonly _cropVideo = new BehaviorSubject(true);
+  /**
+   * Whether the tile video should be contained inside the tile or be cropped to fit.
+   */
+  public readonly cropVideo = state(this._cropVideo);
+
   public constructor(
     id: string,
     member: RoomMember | undefined,
@@ -203,6 +209,10 @@ export class UserMediaTileViewModel extends BaseTileViewModel {
 
   public toggleLocallyMuted(): void {
     this._locallyMuted.next(!this._locallyMuted.value);
+  }
+
+  public toggleFitContain(): void {
+    this._cropVideo.next(!this._cropVideo.value);
   }
 
   public setLocalVolume(value: number): void {
