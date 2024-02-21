@@ -199,3 +199,23 @@ If set to false, the widget will show a blank page after leaving the call.
 ```
 returnToLobby: boolean; (default: false)
 ```
+
+**viaServers**
+This defines the homeserver that is going to be used when joining a room.
+It has to be set to a non default value for links to rooms
+that are not on the default homeserver,
+that is in use for the current user.
+
+```
+viaServers: string; (default: undefined)
+```
+
+**homeserver**
+This defines the homeserver that is going to be used when registering
+a new (guest) user.
+This can be user to configure a non default guest user server when
+creating a spa link.
+
+```
+homeserver: string; (default: undefined)
+```
