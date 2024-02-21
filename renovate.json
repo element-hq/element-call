@@ -21,6 +21,7 @@
     "@react-stately/collections",
     "@react-stately/select",
     "@react-stately/tooltip",
-    "@react-stately/tree"
+    "@react-stately/tree",
+    "@react-types/dialog"
   ]
 }
