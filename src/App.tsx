@@ -69,7 +69,7 @@ const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
   const [previousTheme, setCurrentTheme] = useState<string | null>(
     document.body.classList.item(0),
   );
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Don't update the current theme if the url does not contain a theme prop.
     if (!theme) return;
     const themeString = "cpd-theme-" + (theme ?? "dark");
