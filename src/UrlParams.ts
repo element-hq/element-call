@@ -131,7 +131,11 @@ export interface UrlParams {
    */
   returnToLobby: boolean;
   /**
-   * This defines the homeserver that is going to be used when joining a room.
+   * The theme to use for element call.
+   * can be "light", "dark", "light-high-contrast" or "dark-high-contrast".
+   */
+  theme: string | null;
+  /** This defines the homeserver that is going to be used when joining a room.
    * It has to be set to a non default value for links to rooms
    * that are not on the default homeserver,
    * that is in use for the current user.
@@ -243,6 +247,7 @@ export const getUrlParams = (
     perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
     skipLobby: parser.getFlagParam("skipLobby"),
     returnToLobby: parser.getFlagParam("returnToLobby"),
+    theme: parser.getParam("theme"),
     viaServers: parser.getParam("viaServers"),
     homeserver: parser.getParam("homeserver"),
   };
