@@ -33,6 +33,7 @@ limitations under the License.
 }
 
 .headerLogo {
+  color: var(--cpd-color-text-primary);
   display: none;
   align-items: center;
   text-decoration: none;
