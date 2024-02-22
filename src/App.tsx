@@ -35,16 +35,16 @@ import { CrashView, LoadingView } from "./FullScreenView";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
-import { useUrlParams } from "./UrlParams";
 import { widget } from "./widget";
+import { useTheme } from "./useTheme";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
-interface BackgroundProviderProps {
+interface SimpleProviderProps {
   children: JSX.Element;
 }
 
-const BackgroundProvider: FC<BackgroundProviderProps> = ({ children }) => {
+const BackgroundProvider: FC<SimpleProviderProps> = ({ children }) => {
   const { pathname } = useLocation();
 
   useEffect(() => {
@@ -59,29 +59,8 @@ const BackgroundProvider: FC<BackgroundProviderProps> = ({ children }) => {
 
   return <>{children}</>;
 };
-
-interface ThemeProviderProps {
-  children: JSX.Element;
-}
-
-const ThemeProvider: FC<ThemeProviderProps> = ({ children }) => {
-  const { theme } = useUrlParams();
-  const [previousTheme, setCurrentTheme] = useState<string | null>(
-    document.body.classList.item(0),
-  );
-  useLayoutEffect(() => {
-    // Don't update the current theme if the url does not contain a theme prop.
-    if (!theme) return;
-    const themeString = "cpd-theme-" + (theme ?? "dark");
-    if (themeString !== previousTheme) {
-      if (previousTheme) {
-        document.body.classList.remove(previousTheme);
-      }
-      document.body.classList.add(themeString);
-      setCurrentTheme(themeString);
-    }
-  }, [previousTheme, theme]);
-
+const ThemeProvider: FC<SimpleProviderProps> = ({ children }) => {
+  useTheme();
   return <>{children}</>;
 };
 
@@ -91,7 +70,6 @@ interface AppProps {
 
 export const App: FC<AppProps> = ({ history }) => {
   const [loaded, setLoaded] = useState(false);
-
   useEffect(() => {
     Initializer.init()?.then(() => {
       setLoaded(true);
