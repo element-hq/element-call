@@ -61,7 +61,7 @@ const BackgroundProvider: FC<SimpleProviderProps> = ({ children }) => {
 };
 const ThemeProvider: FC<SimpleProviderProps> = ({ children }) => {
   useTheme();
-  return <>{children}</>;
+  return children;
 };
 
 interface AppProps {
