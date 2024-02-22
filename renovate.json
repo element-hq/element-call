@@ -8,6 +8,7 @@
       "enabled": false
     }
   ],
+  "semanticCommits": "disabled",
   "ignoreDeps": [
     "@react-aria/button",
     "@react-aria/focus",
@@ -20,6 +21,7 @@
     "@react-stately/collections",
     "@react-stately/select",
     "@react-stately/tooltip",
-    "@react-stately/tree"
+    "@react-stately/tree",
+    "@react-types/dialog"
   ]
 }
