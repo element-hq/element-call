@@ -189,6 +189,7 @@ export async function initClient(
   }
 
   await client.initCrypto();
+  client.setGlobalErrorOnUnknownDevices(false);
   await client.startClient();
   await waitForSync(client);
 

@@ -291,7 +291,7 @@ export function useLiveKit(
           room.options.audioCaptureDefaults?.deviceId === "default"
         ) {
           const activeMicTrack = Array.from(
-            room.localParticipant.audioTracks.values(),
+            room.localParticipant.audioTrackPublications.values(),
           ).find((d) => d.source === Track.Source.Microphone)?.track;
 
           const defaultDevice = device.available.find(
@@ -313,7 +313,7 @@ export function useLiveKit(
             // Note that room.switchActiveDevice() won't work: Livekit will ignore it because
             // the deviceId hasn't changed (was & still is default).
             room.localParticipant
-              .getTrack(Track.Source.Microphone)
+              .getTrackPublication(Track.Source.Microphone)
               ?.audioTrack?.restartTrack();
           }
         } else {

@@ -55,7 +55,7 @@ function observeTrackReference(
     observeParticipantMedia(participant).pipe(
       map(() => ({
         participant,
-        publication: participant.getTrack(source),
+        publication: participant.getTrackPublication(source),
         source,
       })),
       distinctUntilKeyChanged("publication"),

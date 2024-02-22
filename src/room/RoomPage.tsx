@@ -29,6 +29,7 @@ import { useOptInAnalytics } from "../settings/useSetting";
 import { HomePage } from "../home/HomePage";
 import { platform } from "../Platform";
 import { AppSelectionModal } from "./AppSelectionModal";
+import { widget } from "../widget";
 
 export const RoomPage: FC = () => {
   const {
@@ -62,7 +63,7 @@ export const RoomPage: FC = () => {
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as
     // a URL param, automatically register a passwordless user
-    if (!loading && !authenticated && displayName) {
+    if (!loading && !authenticated && displayName && !widget) {
       setIsRegistering(true);
       registerPasswordlessUser(displayName).finally(() => {
         setIsRegistering(false);

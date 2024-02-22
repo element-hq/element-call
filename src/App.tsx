@@ -35,19 +35,21 @@ import { CrashView, LoadingView } from "./FullScreenView";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
+import { widget } from "./widget";
+import { useTheme } from "./useTheme";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
-interface BackgroundProviderProps {
+interface SimpleProviderProps {
   children: JSX.Element;
 }
 
-const BackgroundProvider: FC<BackgroundProviderProps> = ({ children }) => {
+const BackgroundProvider: FC<SimpleProviderProps> = ({ children }) => {
   const { pathname } = useLocation();
 
   useEffect(() => {
     let backgroundImage = "";
-    if (!["/login", "/register"].includes(pathname)) {
+    if (!["/login", "/register"].includes(pathname) && !widget) {
       backgroundImage = "var(--background-gradient)";
     }
 
@@ -57,6 +59,10 @@ const BackgroundProvider: FC<BackgroundProviderProps> = ({ children }) => {
 
   return <>{children}</>;
 };
+const ThemeProvider: FC<SimpleProviderProps> = ({ children }) => {
+  useTheme();
+  return children;
+};
 
 interface AppProps {
   history: History;
@@ -64,7 +70,6 @@ interface AppProps {
 
 export const App: FC<AppProps> = ({ history }) => {
   const [loaded, setLoaded] = useState(false);
-
   useEffect(() => {
     Initializer.init()?.then(() => {
       setLoaded(true);
@@ -78,37 +83,39 @@ export const App: FC<AppProps> = ({ history }) => {
     // @ts-ignore
     <Router history={history}>
       <BackgroundProvider>
-        <TooltipProvider>
-          {loaded ? (
-            <Suspense fallback={null}>
-              <ClientProvider>
-                <MediaDevicesProvider>
-                  <Sentry.ErrorBoundary fallback={errorPage}>
-                    <OverlayProvider>
-                      <DisconnectedBanner />
-                      <Switch>
-                        <SentryRoute exact path="/">
-                          <HomePage />
-                        </SentryRoute>
-                        <SentryRoute exact path="/login">
-                          <LoginPage />
-                        </SentryRoute>
-                        <SentryRoute exact path="/register">
-                          <RegisterPage />
-                        </SentryRoute>
-                        <SentryRoute path="*">
-                          <RoomPage />
-                        </SentryRoute>
-                      </Switch>
-                    </OverlayProvider>
-                  </Sentry.ErrorBoundary>
-                </MediaDevicesProvider>
-              </ClientProvider>
-            </Suspense>
-          ) : (
-            <LoadingView />
-          )}
-        </TooltipProvider>
+        <ThemeProvider>
+          <TooltipProvider>
+            {loaded ? (
+              <Suspense fallback={null}>
+                <ClientProvider>
+                  <MediaDevicesProvider>
+                    <Sentry.ErrorBoundary fallback={errorPage}>
+                      <OverlayProvider>
+                        <DisconnectedBanner />
+                        <Switch>
+                          <SentryRoute exact path="/">
+                            <HomePage />
+                          </SentryRoute>
+                          <SentryRoute exact path="/login">
+                            <LoginPage />
+                          </SentryRoute>
+                          <SentryRoute exact path="/register">
+                            <RegisterPage />
+                          </SentryRoute>
+                          <SentryRoute path="*">
+                            <RoomPage />
+                          </SentryRoute>
+                        </Switch>
+                      </OverlayProvider>
+                    </Sentry.ErrorBoundary>
+                  </MediaDevicesProvider>
+                </ClientProvider>
+              </Suspense>
+            ) : (
+              <LoadingView />
+            )}
+          </TooltipProvider>
+        </ThemeProvider>
       </BackgroundProvider>
     </Router>
   );
