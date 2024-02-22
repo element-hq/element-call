@@ -132,7 +132,7 @@ export interface UrlParams {
   returnToLobby: boolean;
   /**
    * The theme to use for element call.
-   * can be "light", "dark", "light-hc" or "dark-hc".
+   * can be "light", "dark", "light-high-contrast" or "dark-high-contrast".
    */
   theme: string | null;
   /** This defines the homeserver that is going to be used when joining a room.
