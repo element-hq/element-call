@@ -82,8 +82,8 @@ export const App: FC<AppProps> = ({ history }) => {
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
     <Router history={history}>
-      <BackgroundProvider>
-        <ThemeProvider>
+      <ThemeProvider>
+        <BackgroundProvider>
           <TooltipProvider>
             {loaded ? (
               <Suspense fallback={null}>
@@ -115,8 +115,8 @@ export const App: FC<AppProps> = ({ history }) => {
               <LoadingView />
             )}
           </TooltipProvider>
-        </ThemeProvider>
-      </BackgroundProvider>
+        </BackgroundProvider>
+      </ThemeProvider>
     </Router>
   );
 };
