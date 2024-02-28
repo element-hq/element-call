@@ -157,6 +157,10 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+/* We use this to not render the page at all until we know the theme.*/
+.nodisplay {
+  opacity: 0;
+}
 
 html,
 body,
