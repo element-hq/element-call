@@ -21,6 +21,7 @@ import { widget } from "./widget";
 
 export const useTheme = (): void => {
   const { theme: themeName } = useUrlParams();
+  const contentLoadedSent = useRef<boolean>(false);
   const previousTheme = useRef<string | null>(document.body.classList.item(0));
   useLayoutEffect(() => {
     // If the url does not contain a theme props we default to "dark".
@@ -38,5 +39,9 @@ export const useTheme = (): void => {
       previousTheme.current = themeString;
     }
     document.body.classList.remove("nodisplay");
+    if (!contentLoadedSent.current) {
+      widget?.api.sendContentLoaded();
+      contentLoadedSent.current = true;
+    }
   }, [previousTheme, themeName]);
 };
