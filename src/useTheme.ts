@@ -36,6 +36,6 @@ export const useTheme = (): void => {
       document.body.classList.add(themeString);
       previousTheme.current = themeString;
     }
-    document.body.classList.remove("nodisplay");
+    document.body.classList.remove("no-theme");
   }, [previousTheme, themeName]);
 };
