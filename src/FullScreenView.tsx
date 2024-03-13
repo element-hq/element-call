@@ -27,6 +27,7 @@ import styles from "./FullScreenView.module.css";
 import { TranslatedError } from "./TranslatedError";
 import { Config } from "./config/Config";
 import { RageshakeButton } from "./settings/RageshakeButton";
+import { useUrlParams } from "./UrlParams";
 
 interface FullScreenViewProps {
   className?: string;
@@ -37,12 +38,11 @@ export const FullScreenView: FC<FullScreenViewProps> = ({
   className,
   children,
 }) => {
+  const { hideHeader } = useUrlParams();
   return (
     <div className={classNames(styles.page, className)}>
       <Header>
-        <LeftNav>
-          <HeaderLogo />
-        </LeftNav>
+        <LeftNav>{!hideHeader && <HeaderLogo />}</LeftNav>
         <RightNav />
       </Header>
       <div className={styles.container}>

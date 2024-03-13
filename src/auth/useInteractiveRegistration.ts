@@ -50,6 +50,7 @@ export const useInteractiveRegistration = (): {
 
   useEffect(() => {
     if (widget) return;
+    // An empty registerRequest is used to get the privacy policy and recaptcha key.
     authClient.current!.registerRequest({}).catch((error) => {
       setPrivacyPolicyUrl(
         error.data?.params["m.login.terms"]?.policies?.privacy_policy?.en?.url,

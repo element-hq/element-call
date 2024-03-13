@@ -22,10 +22,9 @@ export const useTheme = (): void => {
   const { theme: themeName } = useUrlParams();
   const previousTheme = useRef<string | null>(document.body.classList.item(0));
   useLayoutEffect(() => {
-    // Don't update the current theme if the url does not contain a theme prop.
-    if (!themeName) return;
-    const theme = themeName.includes("light") ? "light" : "dark";
-    const themeHighContrast = themeName.includes("high-contrast") ? "-hc" : "";
+    // If the url does not contain a theme props we default to "dark".
+    const theme = themeName?.includes("light") ? "light" : "dark";
+    const themeHighContrast = themeName?.includes("high-contrast") ? "-hc" : "";
     const themeString = "cpd-theme-" + theme + themeHighContrast;
     if (themeString !== previousTheme.current) {
       document.body.classList.remove(
@@ -37,5 +36,6 @@ export const useTheme = (): void => {
       document.body.classList.add(themeString);
       previousTheme.current = themeString;
     }
+    document.body.classList.remove("no-theme");
   }, [previousTheme, themeName]);
 };
