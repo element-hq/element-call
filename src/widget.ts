@@ -158,6 +158,8 @@ export const widget = ((): WidgetHelpers | null => {
           useE2eForGroupCall: e2eEnabled,
           fallbackICEServerAllowed: allowIceFallback,
         },
+        // ContentLoaded event will be sent as soon as the theme is set (see useTheme.ts)
+        false,
       );
 
       const clientPromise = new Promise<MatrixClient>((resolve) => {
