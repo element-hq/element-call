@@ -156,7 +156,9 @@ body {
   margin: 0;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  -webkit-tap-highlight-color: transparent;
 }
+
 /* We use this to not render the page at all until we know the theme.*/
 .no-theme {
   opacity: 0;
