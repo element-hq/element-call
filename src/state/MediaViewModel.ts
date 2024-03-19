@@ -1,5 +1,5 @@
 /*
-Copyright 2023 New Vector Ltd
+Copyright 2023-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import {
   of,
   startWith,
   switchMap,
-  takeUntil,
 } from "rxjs";
 
 import { ViewModel } from "./ViewModel";
@@ -64,13 +63,13 @@ function observeTrackReference(
   );
 }
 
-abstract class BaseTileViewModel extends ViewModel {
+abstract class BaseMediaViewModel extends ViewModel {
   /**
-   * Whether the tile belongs to the local user.
+   * Whether the media belongs to the local user.
    */
   public readonly local = this.participant.isLocal;
   /**
-   * The LiveKit video track to be shown on this tile.
+   * The LiveKit video track for this media.
    */
   public readonly video: StateObservable<TrackReferenceOrPlaceholder>;
   /**
@@ -83,7 +82,7 @@ abstract class BaseTileViewModel extends ViewModel {
     // soon as that code is moved into the view models
     public readonly id: string,
     /**
-     * The Matrix room member to which this tile belongs.
+     * The Matrix room member to which this media belongs.
      */
     // TODO: Fully separate the data layer from the UI layer by keeping the
     // member object internal
@@ -109,14 +108,14 @@ abstract class BaseTileViewModel extends ViewModel {
 }
 
 /**
- * A tile displaying some media.
+ * Some participant's media.
  */
-export type TileViewModel = UserMediaTileViewModel | ScreenShareTileViewModel;
+export type MediaViewModel = UserMediaViewModel | ScreenShareViewModel;
 
 /**
- * A tile displaying some participant's user media.
+ * Some participant's user media.
  */
-export class UserMediaTileViewModel extends BaseTileViewModel {
+export class UserMediaViewModel extends BaseMediaViewModel {
   /**
    * Whether the video should be mirrored.
    */
@@ -201,7 +200,7 @@ export class UserMediaTileViewModel extends BaseTileViewModel {
       combineLatest([this._locallyMuted, this._localVolume], (muted, volume) =>
         muted ? 0 : volume,
       )
-        .pipe(takeUntil(this.destroyed))
+        .pipe(this.scope.bind())
         .subscribe((volume) => {
           (this.participant as RemoteParticipant).setVolume(volume);
         });
@@ -221,9 +220,9 @@ export class UserMediaTileViewModel extends BaseTileViewModel {
 }
 
 /**
- * A tile displaying some participant's screen share.
+ * Some participant's screen share media.
  */
-export class ScreenShareTileViewModel extends BaseTileViewModel {
+export class ScreenShareViewModel extends BaseMediaViewModel {
   public constructor(
     id: string,
     member: RoomMember | undefined,

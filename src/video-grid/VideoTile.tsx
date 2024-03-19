@@ -58,10 +58,10 @@ import { Avatar } from "../Avatar";
 import styles from "./VideoTile.module.css";
 import { useReactiveState } from "../useReactiveState";
 import {
-  ScreenShareTileViewModel,
-  TileViewModel,
-  UserMediaTileViewModel,
-} from "../state/TileViewModel";
+  ScreenShareViewModel,
+  MediaViewModel,
+  UserMediaViewModel,
+} from "../state/MediaViewModel";
 import { subscribe } from "../state/subscribe";
 import { useMergedRefs } from "../useMergedRefs";
 import { Slider } from "../Slider";
@@ -170,7 +170,7 @@ const Tile = forwardRef<HTMLDivElement, TileProps>(
 Tile.displayName = "Tile";
 
 interface UserMediaTileProps {
-  vm: UserMediaTileViewModel;
+  vm: UserMediaViewModel;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
@@ -329,7 +329,7 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
 UserMediaTile.displayName = "UserMediaTile";
 
 interface ScreenShareTileProps {
-  vm: ScreenShareTileViewModel;
+  vm: ScreenShareViewModel;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
@@ -403,7 +403,7 @@ const ScreenShareTile = subscribe<ScreenShareTileProps, HTMLDivElement>(
 ScreenShareTile.displayName = "ScreenShareTile";
 
 interface Props {
-  vm: TileViewModel;
+  vm: MediaViewModel;
   maximised: boolean;
   fullscreen: boolean;
   onToggleFullscreen: (itemId: string) => void;
@@ -455,7 +455,7 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
       ? t("video_tile.sfu_participant_local")
       : displayName;
 
-    if (vm instanceof UserMediaTileViewModel) {
+    if (vm instanceof UserMediaViewModel) {
       return (
         <UserMediaTile
           ref={ref}
