@@ -1119,10 +1119,10 @@
     "@babel/helper-validator-identifier" "^7.22.20"
     to-fast-properties "^2.0.0"
 
-"@bufbuild/protobuf@^1.3.0":
-  version "1.7.2"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.7.2.tgz#1b3d6c66ebd987f7da7f1e3f0546cffaa87f8732"
-  integrity sha512-i5GE2Dk5ekdlK1TR7SugY4LWRrKSfb5T1Qn4unpIMbfxoeGKERKQ59HG3iYewacGD10SR7UzevfPnh6my4tNmQ==
+"@bufbuild/protobuf@^1.7.2":
+  version "1.8.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.8.0.tgz#1c8651ea34adb8019b483e09de02aeeb1cd57d79"
+  integrity sha512-qR9FwI8QKIveDnUYutvfzbC21UZJJryYrLuZGjeZ/VGz+vXelUkK+xgkOHsvPEdYEdxtgUUq4313N8QtOehJ1Q==
 
 "@csstools/cascade-layer-name-parser@^1.0.8":
   version "1.0.8"
@@ -1860,6 +1860,13 @@
     "@react-hook/latest" "1.0.3"
     clsx "2.1.0"
     usehooks-ts "2.14.0"
+
+"@livekit/protocol@1.10.4":
+  version "1.10.4"
+  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.10.4.tgz#98951ba72933b071aac32d9b167f4ad5827f86de"
+  integrity sha512-7Occ6l5VqjsKsUjpLeVJXJkip4ce22iG9QR/haOkrDXYwGSY+TwCA4ubbJ81aQBt2z0kHVZuaQWdzJSDLI+Kag==
+  dependencies:
+    "@bufbuild/protobuf" "^1.7.2"
 
 "@matrix-org/matrix-sdk-crypto-wasm@^4.6.0":
   version "4.6.0"
@@ -6289,11 +6296,11 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^2.0.2:
-  version "2.0.5"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.0.5.tgz#64b66f7ed871edfee96905944aa4eb7e5de058d2"
-  integrity sha512-v8qGALpGc8hCKJGiNsMML5F7QB/QBJ1aeox14xkyGpIxhQC4lwIRXRktymTzlDnOiZu5fvgB2KxifiOAzWByzw==
+  version "2.0.8"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.0.8.tgz#398ca388b4d8a9c7f033685ce4c2a4d881432678"
+  integrity sha512-d4x+OgJR/CcwsaGwYHohaCVwZVBk+urb1xZw48iLSbhyKlN39J2NQkHGiHro+l8b3SwMnyP3IWkOwS/dxrWz2g==
   dependencies:
-    "@bufbuild/protobuf" "^1.3.0"
+    "@livekit/protocol" "1.10.4"
     events "^3.3.0"
     loglevel "^1.8.0"
     sdp-transform "^2.14.1"
