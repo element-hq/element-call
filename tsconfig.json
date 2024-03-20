@@ -24,6 +24,9 @@
       ],
       "livekit-client/dist/src/room/participant/Participant": [
         "./node_modules/livekit-client/dist/src/room/participant/Participant.d.ts"
+      ],
+      "livekit-client/dist/src/proto/livekit_models_pb": [
+        "./node_modules/livekit/protocol/dist/src/gen/livekit_models_pb.d.ts"
       ]
     },
 
