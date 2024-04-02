@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { FC, useEffect, useState, useCallback, ReactNode } from "react";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { useClientLegacy } from "../ClientContext";
@@ -30,6 +29,8 @@ import { HomePage } from "../home/HomePage";
 import { platform } from "../Platform";
 import { AppSelectionModal } from "./AppSelectionModal";
 import { widget } from "../widget";
+import { GroupCallStatus } from "./useLoadGroupCall";
+import { WaitForInviteView } from "./WaitForInviteView";
 
 export const RoomPage: FC = () => {
   const {
@@ -78,17 +79,30 @@ export const RoomPage: FC = () => {
   ]);
 
   const groupCallView = useCallback(
-    (rtcSession: MatrixRTCSession) => (
-      <GroupCallView
-        client={client!}
-        rtcSession={rtcSession}
-        isPasswordlessUser={passwordlessUser}
-        confineToRoom={confineToRoom}
-        preload={preload}
-        skipLobby={skipLobby}
-        hideHeader={hideHeader}
-      />
-    ),
+    (groupCallState: GroupCallStatus) => {
+      switch (groupCallState.kind) {
+        case "loaded":
+          return (
+            <GroupCallView
+              client={client!}
+              rtcSession={groupCallState.rtcSession}
+              isPasswordlessUser={passwordlessUser}
+              confineToRoom={confineToRoom}
+              preload={preload}
+              skipLobby={skipLobby}
+              hideHeader={hideHeader}
+            />
+          );
+        case "waitForInvite":
+          return (
+            <WaitForInviteView
+              hideHeader={hideHeader}
+              client={client!}
+              roomSummary={groupCallState.roomSummary}
+            />
+          );
+      }
+    },
     [client, passwordlessUser, confineToRoom, preload, hideHeader, skipLobby],
   );
 

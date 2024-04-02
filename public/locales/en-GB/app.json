@@ -60,8 +60,12 @@
   "disconnected_banner": "Connectivity to the server has been lost.",
   "full_screen_view_description": "<0>Submitting debug logs will help us track down the problem.</0>",
   "full_screen_view_h1": "<0>Oops, something's gone wrong.</0>",
+  "group_call_loader_banned_heading": "Not allowed to join",
+  "group_call_loader_banned_message": "You are banned from this room and therefore cannot send a request to join.",
   "group_call_loader_failed_heading": "Call not found",
   "group_call_loader_failed_text": "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.",
+  "group_call_loader_reject_message": "The room members declined your request to join.",
+  "group_call_loader_rejected_heading": "Not allowed to join",
   "hangup_button_label": "End call",
   "header_label": "Element Call Home",
   "header_participants_label": "Participants",
@@ -149,6 +153,9 @@
     "mute_for_me": "Mute for me",
     "sfu_participant_local": "You",
     "volume": "Volume"
+  },
+  "wait_for_invite": {
+    "wait_message": "Waiting for the meeting host to let you in."
   },
   "waiting_for_participants": "Waiting for other participants…"
 }

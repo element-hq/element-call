@@ -17,19 +17,23 @@ limitations under the License.
 import { ReactNode, useCallback } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { MatrixError } from "matrix-js-sdk";
 import { useHistory } from "react-router-dom";
 import { Heading, Link, Text } from "@vector-im/compound-web";
 
-import { useLoadGroupCall } from "./useLoadGroupCall";
+import {
+  useLoadGroupCall,
+  GroupCallStatus,
+  KnockRejectError,
+  BannedError,
+} from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 
 interface Props {
   client: MatrixClient;
   roomIdOrAlias: string;
   viaServers: string[];
-  children: (rtcSession: MatrixRTCSession) => ReactNode;
+  children: (groupCallState: GroupCallStatus) => ReactNode;
 }
 
 export function GroupCallLoader({
@@ -51,14 +55,15 @@ export function GroupCallLoader({
   );
 
   switch (groupCallState.kind) {
+    case "loaded":
+    case "waitForInvite":
+      return <>{children(groupCallState)}</>;
     case "loading":
       return (
         <FullScreenView>
           <h1>{t("common.loading")}</h1>
         </FullScreenView>
       );
-    case "loaded":
-      return <>{children(groupCallState.rtcSession)}</>;
     case "failed":
       if ((groupCallState.error as MatrixError).errcode === "M_NOT_FOUND") {
         return (
@@ -67,6 +72,26 @@ export function GroupCallLoader({
             <Text>{t("group_call_loader_failed_text")}</Text>
             {/* XXX: A 'create it for me' button would be the obvious UX here. Two screens already have
             dupes of this flow, let's make a common component and put it here. */}
+            <Link href="/" onClick={onHomeClick}>
+              {t("common.home")}
+            </Link>
+          </FullScreenView>
+        );
+      } else if (groupCallState.error instanceof KnockRejectError) {
+        return (
+          <FullScreenView>
+            <Heading>{t("group_call_loader_rejected_heading")}</Heading>
+            <Text>{groupCallState.error.message}</Text>
+            <Link href="/" onClick={onHomeClick}>
+              {t("common.home")}
+            </Link>
+          </FullScreenView>
+        );
+      } else if (groupCallState.error instanceof BannedError) {
+        return (
+          <FullScreenView>
+            <Heading>{t("group_call_loader_banned_heading")}</Heading>
+            <Text>{t("group_call_loader_banned_message")}</Text>
             <Link href="/" onClick={onHomeClick}>
               {t("common.home")}
             </Link>
