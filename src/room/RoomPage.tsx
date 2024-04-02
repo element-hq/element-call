@@ -132,9 +132,9 @@ export const RoomPage: FC = () => {
     <>
       {content}
       {/* On Android and iOS, show a prompt to launch the mobile app. */}
-      {appPrompt && (platform === "android" || platform === "ios") && (
-        <AppSelectionModal roomId={roomId} />
-      )}
+      {appPrompt &&
+        (platform === "android" || platform === "ios") &&
+        roomId && <AppSelectionModal roomId={roomId} />}
     </>
   );
 };

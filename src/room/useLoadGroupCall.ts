@@ -157,7 +157,7 @@ export const useLoadGroupCall = (
         room = client.getRoom(roomSummary.room_id);
         if (room?.getMyMembership() === KnownMembership.Join) {
           // room already joined so we are done here already.
-          return room;
+          return room!;
         } else if (room?.getMyMembership() === KnownMembership.Ban) {
           throw new BannedError();
         } else {
