@@ -53,8 +53,6 @@ export const WaitForInviteView: FC<Props> = ({
     [setSettingsModalOpen],
   );
 
-  // TODO: Unify this component with InCallView, so we can get slick joining
-  // animations and don't have to feel bad about reusing its CSS
   return (
     <>
       <div className={classNames(styles.room, inCallStyles.inRoom)}>

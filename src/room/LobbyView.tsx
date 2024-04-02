@@ -36,6 +36,7 @@ import {
 } from "../button/Button";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useMediaQuery } from "../useMediaQuery";
+import { E2eeType } from "../e2ee/e2eeType";
 
 interface Props {
   client: MatrixClient;
@@ -104,7 +105,7 @@ export const LobbyView: FC<Props> = ({
                 id={matrixInfo.roomId}
                 name={matrixInfo.roomName}
                 avatarUrl={matrixInfo.roomAvatar}
-                encrypted={matrixInfo.roomEncrypted}
+                encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
                 participantCount={participantCount}
               />
             </LeftNav>

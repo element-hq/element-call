@@ -32,6 +32,7 @@ import styles from "./VideoPreview.module.css";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { MuteStates } from "./MuteStates";
 import { useMediaQuery } from "../useMediaQuery";
+import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 
 export type MatrixInfo = {
   userId: string;
@@ -41,7 +42,7 @@ export type MatrixInfo = {
   roomName: string;
   roomAlias: string | null;
   roomAvatar: string | null;
-  roomEncrypted: boolean;
+  e2eeSystem: EncryptionSystem;
 };
 
 interface Props {
