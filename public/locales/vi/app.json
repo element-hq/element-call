@@ -29,10 +29,8 @@
     "username": "Tên người dùng",
     "video": "Truyền hình"
   },
-  "exit_fullscreen_button_label": "Rời chế độ toàn màn hình",
   "full_screen_view_description": "<0>Gửi nhật ký gỡ lỗi sẽ giúp chúng tôi theo dõi vấn đề.</0>",
   "full_screen_view_h1": "<0>Ối, có cái gì đó sai.</0>",
-  "fullscreen_button_label": "Toàn màn hình",
   "join_existing_call_modal": {
     "join_button": "Vâng, tham gia cuộc gọi",
     "text": "Cuộc gọi đã tồn tại, bạn có muốn tham gia không?",
@@ -73,8 +71,5 @@
   "unauthenticated_view_body": "Chưa đăng ký? <2>Tạo tài khoản</2>",
   "unauthenticated_view_login_button": "Đăng nhập vào tài khoản của bạn",
   "version": "Phiên bản: {{version}}",
-  "video_tile": {
-    "presenter_label": "{{displayName}} đang trình bày"
-  },
   "waiting_for_participants": "Đang đợi những người khác…"
 }
