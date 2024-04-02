@@ -20,7 +20,8 @@ import { useLocation } from "react-router-dom";
 import { Config } from "./config/Config";
 
 export const PASSWORD_STRING = "password=";
-
+export const PER_PARTICIPANT_STRING = "perParticipantE2EE=";
+export const VIA_SERVERS_STRING = "viaServers=";
 interface RoomIdentifier {
   roomAlias: string | null;
   roomId: string | null;

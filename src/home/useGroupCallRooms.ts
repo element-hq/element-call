@@ -15,20 +15,22 @@ limitations under the License.
 */
 
 import { MatrixClient } from "matrix-js-sdk/src/client";
-import { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
-import { Room } from "matrix-js-sdk/src/models/room";
+import { Room, RoomEvent } from "matrix-js-sdk/src/models/room";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
-import { GroupCallEventHandlerEvent } from "matrix-js-sdk/src/webrtc/groupCallEventHandler";
 import { useState, useEffect } from "react";
+import { EventTimeline, EventType, JoinRule } from "matrix-js-sdk";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { MatrixRTCSessionManagerEvents } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSessionManager";
+import { KnownMembership } from "matrix-js-sdk/src/types";
 
-import { getKeyForRoom, isRoomE2EE } from "../e2ee/sharedKeyManagement";
+import { getKeyForRoom } from "../e2ee/sharedKeyManagement";
 
 export interface GroupCallRoom {
   roomAlias?: string;
   roomName: string;
   avatarUrl: string;
   room: Room;
-  groupCall: GroupCall;
+  session: MatrixRTCSession;
   participants: RoomMember[];
 }
 const tsCache: { [index: string]: number } = {};
@@ -46,7 +48,7 @@ function getLastTs(client: MatrixClient, r: Room): number {
 
   const myUserId = client.getUserId()!;
 
-  if (r.getMyMembership() !== "join") {
+  if (r.getMyMembership() !== KnownMembership.Join) {
     const membershipEvent = r.currentState.getStateEvents(
       "m.room.member",
       myUserId,
@@ -80,38 +82,51 @@ function sortRooms(client: MatrixClient, rooms: Room[]): Room[] {
   });
 }
 
-function roomIsJoinable(room: Room): boolean {
-  if (isRoomE2EE(room)) {
-    return Boolean(getKeyForRoom(room.roomId));
-  } else {
-    return true;
+const roomIsJoinable = (room: Room): boolean => {
+  if (!room.hasEncryptionStateEvent() && !getKeyForRoom(room.roomId)) {
+    // if we have an non encrypted room (no encryption state event) we need a locally stored shared key.
+    // in case this key also does not exists we cannot join the room.
+    return false;
   }
-}
+  // otherwise we can always join rooms because we will automatically decide if we want to use perParticipant or password
+  const joinRule = room.getJoinRule();
+  return joinRule === JoinRule.Knock || joinRule === JoinRule.Public;
+};
+
+const roomIsJoinedWithCall = (room: Room): boolean => {
+  const roomStateEvents = room
+    .getLiveTimeline()
+    .getState(EventTimeline.FORWARDS)?.events;
+  return (
+    room.getMyMembership() === KnownMembership.Join &&
+    !!roomStateEvents?.get(EventType.GroupCallMemberPrefix)
+  );
+};
 
 export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
   const [rooms, setRooms] = useState<GroupCallRoom[]>([]);
 
   useEffect(() => {
     function updateRooms(): void {
-      if (!client.groupCallEventHandler) {
-        return;
-      }
-
-      const groupCalls = client.groupCallEventHandler.groupCalls.values();
-      const rooms = Array.from(groupCalls)
-        .map((groupCall) => groupCall.room)
+      const rooms = client
+        .getRooms()
+        .filter(roomIsJoinedWithCall)
         .filter(roomIsJoinable);
       const sortedRooms = sortRooms(client, rooms);
       const items = sortedRooms.map((room) => {
-        const groupCall = client.getGroupCallForRoom(room.roomId)!;
-
+        // const groupCall = client.getGroupCallForRoom(room.roomId)!;
+        const session = client.matrixRTC.getRoomSession(room);
+        session.memberships;
         return {
           roomAlias: room.getCanonicalAlias() ?? undefined,
           roomName: room.name,
           avatarUrl: room.getMxcAvatarUrl()!,
           room,
-          groupCall,
-          participants: [...groupCall!.participants.keys()],
+          session,
+          participants: session.memberships
+            .filter((m) => m.sender)
+            .map((m) => room.getMember(m.sender!))
+            .filter((m) => m) as RoomMember[],
         };
       });
 
@@ -120,15 +135,17 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
 
     updateRooms();
 
-    client.on(GroupCallEventHandlerEvent.Incoming, updateRooms);
-    client.on(GroupCallEventHandlerEvent.Participants, updateRooms);
-
+    client.matrixRTC.on(
+      MatrixRTCSessionManagerEvents.SessionStarted,
+      updateRooms,
+    );
+    client.on(RoomEvent.MyMembership, updateRooms);
     return () => {
-      client.removeListener(GroupCallEventHandlerEvent.Incoming, updateRooms);
-      client.removeListener(
-        GroupCallEventHandlerEvent.Participants,
+      client.matrixRTC.off(
+        MatrixRTCSessionManagerEvents.SessionStarted,
         updateRooms,
       );
+      client.off(RoomEvent.MyMembership, updateRooms);
     };
   }, [client]);
 
