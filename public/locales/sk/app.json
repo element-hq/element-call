@@ -51,10 +51,8 @@
     "username": "Meno používateľa"
   },
   "disconnected_banner": "Spojenie so serverom sa stratilo.",
-  "exit_fullscreen_button_label": "Ukončiť zobrazenie na celú obrazovku",
   "full_screen_view_description": "<0>Odoslanie záznamov ladenia nám pomôže nájsť problém.</0>",
   "full_screen_view_h1": "<0>Hups, niečo sa pokazilo.</0>",
-  "fullscreen_button_label": "Zobrazenie na celú obrazovku",
   "group_call_loader_failed_heading": "Hovor nebol nájdený",
   "group_call_loader_failed_text": "Hovory sú teraz end-to-end šifrované a je potrebné ich vytvoriť z domovskej stránky. To pomáha zabezpečiť, aby všetci používali rovnaký šifrovací kľúč.",
   "hangup_button_label": "Ukončiť hovor",
@@ -75,7 +73,6 @@
     "join_button": "Pripojiť sa k hovoru",
     "leave_button": "Späť k nedávnym"
   },
-  "local_volume_label": "Lokálna hlasitosť",
   "logging_in": "Prihlasovanie…",
   "login_auth_links": "<0>Vytvoriť konto</0> Alebo <2>Prihlásiť sa ako hosť</2>",
   "login_title": "Prihlásiť sa",
@@ -133,7 +130,6 @@
   "unmute_microphone_button_label": "Zrušiť stlmenie mikrofónu",
   "version": "Verzia: {{version}}",
   "video_tile": {
-    "presenter_label": "{{displayName}} prezentuje",
     "sfu_participant_local": "Vy"
   },
   "waiting_for_participants": "Čaká sa na ďalších účastníkov…"

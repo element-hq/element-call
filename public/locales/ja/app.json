@@ -30,9 +30,7 @@
     "username": "ユーザー名",
     "video": "ビデオ"
   },
-  "exit_fullscreen_button_label": "全画面表示を終了",
   "full_screen_view_h1": "<0>何かがうまく行きませんでした。</0>",
-  "fullscreen_button_label": "全画面表示",
   "header_label": "Element Call ホーム",
   "join_existing_call_modal": {
     "join_button": "はい、通話に参加",

@@ -53,10 +53,8 @@
     "video": "Wideo"
   },
   "disconnected_banner": "Utracono połączenie z serwerem.",
-  "exit_fullscreen_button_label": "Opuść pełny ekran",
   "full_screen_view_description": "<0>Wysłanie dzienników debuggowania pomoże nam ustalić przyczynę problemu.</0>",
   "full_screen_view_h1": "<0>Ojej, coś poszło nie tak.</0>",
-  "fullscreen_button_label": "Pełny ekran",
   "group_call_loader_failed_heading": "Nie znaleziono połączenia",
   "group_call_loader_failed_text": "Połączenia są teraz szyfrowane end-to-end i muszą zostać utworzone ze strony głównej. Pomaga to upewnić się, że każdy korzysta z tego samego klucza szyfrującego.",
   "hangup_button_label": "Zakończ połączenie",
@@ -77,7 +75,6 @@
     "join_button": "Dołącz do połączenia",
     "leave_button": "Wróć do ostatnie"
   },
-  "local_volume_label": "Głośność lokalna",
   "logging_in": "Logowanie…",
   "login_auth_links": "<0>Utwórz konto</0> lub <2>Dołącz jako gość</2>",
   "login_title": "Zaloguj się",
@@ -135,7 +132,6 @@
   "unmute_microphone_button_label": "Odcisz mikrofon",
   "version": "Wersja: {{version}}",
   "video_tile": {
-    "presenter_label": "{{displayName}} prezentuje",
     "sfu_participant_local": "Ty"
   },
   "waiting_for_participants": "Oczekiwanie na pozostałych uczestników…"
