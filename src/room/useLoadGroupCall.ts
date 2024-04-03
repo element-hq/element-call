@@ -25,6 +25,7 @@ import { JoinRule } from "matrix-js-sdk";
 import { useTranslation } from "react-i18next";
 
 import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
+import { widget } from "../widget";
 
 export type GroupCallLoaded = {
   kind: "loaded";
@@ -146,19 +147,30 @@ export const useLoadGroupCall = (
     const fetchOrCreateRoom = async (): Promise<Room> => {
       let room: Room | null = null;
       if (roomIdOrAlias[0] === "#") {
+        const alias = roomIdOrAlias;
         // The call uses a room alias
-        room = await getRoomByAlias(roomIdOrAlias);
+        room = await getRoomByAlias(alias);
       } else {
         // The call uses a room_id
-        const roomSummary = await client.getRoomSummary(
-          roomIdOrAlias,
-          viaServers,
-        );
-        room = client.getRoom(roomSummary.room_id);
+        const roomId = roomIdOrAlias;
+
+        // first try if the room already exists
+        //  - in widget mode
+        //  - in SPA mode if the user already joined the room
+        room = client.getRoom(roomId);
         if (room?.getMyMembership() === KnownMembership.Join) {
           // room already joined so we are done here already.
           return room!;
-        } else if (room?.getMyMembership() === KnownMembership.Ban) {
+        }
+        if (widget)
+          // in widget mode we never should reach this point. (getRoom should return the room.)
+          throw new Error(
+            "Room not found. The widget-api did not pass over the relevant room events/information.",
+          );
+
+        // if the room does not exist we first search for it with viaServers
+        const roomSummary = await client.getRoomSummary(roomId, viaServers);
+        if (room?.getMyMembership() === KnownMembership.Ban) {
           throw new BannedError();
         } else {
           if (roomSummary.join_rule === JoinRule.Public) {
@@ -170,7 +182,7 @@ export const useLoadGroupCall = (
             room = await getRoomByKnocking(roomSummary.room_id, viaServers);
           } else {
             throw new Error(
-              `Room ${roomIdOrAlias} is not joinable. This likely means, that the conference owner has changed the room settings to private.`,
+              `Room ${roomSummary.room_id} is not joinable. This likely means, that the conference owner has changed the room settings to private.`,
             );
           }
         }
