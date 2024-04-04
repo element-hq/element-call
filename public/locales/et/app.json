@@ -52,10 +52,8 @@
     "username": "Kasutajanimi"
   },
   "disconnected_banner": "Võrguühendus serveriga on katkenud.",
-  "exit_fullscreen_button_label": "Välju täisekraanivaatest",
   "full_screen_view_description": "<0>Kui saadad meile vealogid, siis on lihtsam vea põhjust otsida.</0>",
   "full_screen_view_h1": "<0>Ohoo, midagi on nüüd katki.</0>",
-  "fullscreen_button_label": "Täisekraan",
   "group_call_loader_failed_heading": "Kõnet ei leidu",
   "group_call_loader_failed_text": "Kõned on nüüd läbivalt krüptitud ning need pead looma kodulehelt. Sellega tagad, et kõik kasutavad samu krüptovõtmeid.",
   "hangup_button_label": "Lõpeta kõne",
@@ -75,7 +73,6 @@
     "join_button": "Kõnega liitumine",
     "leave_button": "Tagasi hiljutiste kõnede juurde"
   },
-  "local_volume_label": "Kohalik helitugevus",
   "logging_in": "Sisselogimine …",
   "login_auth_links": "<0>Loo konto</0> Või <2>Sisene külalisena</2>",
   "login_title": "Sisselogimine",
@@ -133,7 +130,6 @@
   "unmute_microphone_button_label": "Lülita mikrofon sisse",
   "version": "Versioon: {{version}}",
   "video_tile": {
-    "presenter_label": "{{displayName}} on esitlemas",
     "sfu_participant_local": "Sina"
   },
   "waiting_for_participants": "Ootame teiste osalejate lisandumist…"

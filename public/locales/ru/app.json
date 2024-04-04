@@ -38,10 +38,8 @@
     "username": "Имя пользователя",
     "video": "Видео"
   },
-  "exit_fullscreen_button_label": "Выйти из полноэкранного режима",
   "full_screen_view_description": "<0>Отправка журналов поможет нам найти и устранить проблему.</0>",
   "full_screen_view_h1": "<0>Упс, что-то пошло не так.</0>",
-  "fullscreen_button_label": "Полноэкранный режим",
   "header_label": "Главная Element Call",
   "join_existing_call_modal": {
     "join_button": "Да, присоединиться",
@@ -52,7 +50,6 @@
   "lobby": {
     "join_button": "Присоединиться"
   },
-  "local_volume_label": "Местная громкость",
   "logging_in": "Вход…",
   "login_auth_links": "<0>Создать аккаунт</0> или <2>Зайти как гость</2>",
   "login_title": "Вход",
@@ -96,8 +93,5 @@
   "unauthenticated_view_body": "Ещё не зарегистрированы? <2>Создайте аккаунт</2>",
   "unauthenticated_view_login_button": "Войдите в свой аккаунт",
   "version": "Версия: {{version}}",
-  "video_tile": {
-    "presenter_label": "{{displayName}} представляет"
-  },
   "waiting_for_participants": "Ожидание других участников…"
 }
