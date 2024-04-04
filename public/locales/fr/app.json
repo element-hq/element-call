@@ -50,10 +50,8 @@
     "video": "Vidéo"
   },
   "disconnected_banner": "La connexion avec le serveur a été perdue.",
-  "exit_fullscreen_button_label": "Quitter le plein écran",
   "full_screen_view_description": "<0>Soumettre les journaux de débogage nous aidera à déterminer le problème.</0>",
   "full_screen_view_h1": "<0>Oups, quelque chose s’est mal passé.</0>",
-  "fullscreen_button_label": "Plein écran",
   "group_call_loader_failed_heading": "Appel non trouvé",
   "group_call_loader_failed_text": "Les appels sont maintenant chiffrés de bout-en-bout et doivent être créés depuis la page d’accueil. Cela permet d’être sûr que tout le monde utilise la même clé de chiffrement.",
   "hangup_button_label": "Terminer l’appel",
@@ -73,7 +71,6 @@
     "join_button": "Rejoindre l’appel",
     "leave_button": "Revenir à l’historique des appels"
   },
-  "local_volume_label": "Volume local",
   "logging_in": "Connexion…",
   "login_auth_links": "<0>Créer un compte</0> Or <2>Accès invité</2>",
   "login_title": "Connexion",
@@ -131,7 +128,6 @@
   "unmute_microphone_button_label": "Allumer le microphone",
   "version": "Version : {{version}}",
   "video_tile": {
-    "presenter_label": "{{displayName}} est à l’écran",
     "sfu_participant_local": "Vous"
   },
   "waiting_for_participants": "En attente d’autres participants…"

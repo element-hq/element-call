@@ -24,8 +24,6 @@
     "password": "Parola",
     "settings": "Ayarlar"
   },
-  "exit_fullscreen_button_label": "Tam ekranı terk et",
-  "fullscreen_button_label": "Tam ekran",
   "join_existing_call_modal": {
     "text": "Bu arama zaten var, katılmak ister misiniz?",
     "title": "Mevcut aramaya katıl?"
@@ -33,7 +31,6 @@
   "lobby": {
     "join_button": "Aramaya katıl"
   },
-  "local_volume_label": "Yerel ses seviyesi",
   "logging_in": "Giriliyor…",
   "login_auth_links": "<0>Hesap oluştur</0> yahut <2>Konuk olarak gir</2>",
   "login_title": "Gir",

@@ -29,10 +29,8 @@
     "settings": "Nastavení",
     "username": "Uživatelské jméno"
   },
-  "exit_fullscreen_button_label": "Ukončit režim celé obrazovky",
   "full_screen_view_description": "<0>Odeslání ladících záznamů nám pomůže diagnostikovat problém.</0>",
   "full_screen_view_h1": "<0>Oops, něco se pokazilo.</0>",
-  "fullscreen_button_label": "Zvětšit na celou obrazovku",
   "header_label": "Domov Element Call",
   "join_existing_call_modal": {
     "join_button": "Ano, připojit se",
@@ -43,7 +41,6 @@
   "lobby": {
     "join_button": "Připojit se k hovoru"
   },
-  "local_volume_label": "Lokální hlasitost",
   "logging_in": "Přihlašování se…",
   "login_auth_links": "<0>Vytvořit účet</0> Or <2>Jako host</2>",
   "login_title": "Přihlášení",
