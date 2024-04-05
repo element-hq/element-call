@@ -20,10 +20,11 @@ import { MediaDevice, useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 
 /**
- * If there already is this many participants in the call, we automatically mute
- * the user
+ * If there already are this many participants in the call, we automatically mute
+ * the user.
  */
-const MUTE_PARTICIPANT_COUNT = 8;
+// TODO set back to 8. for demo purposes we use 1 here.
+export const MUTE_PARTICIPANT_COUNT = 1;
 
 interface DeviceAvailable {
   enabled: boolean;
@@ -51,26 +52,27 @@ function useMuteState(
   device: MediaDevice,
   enabledByDefault: () => boolean,
 ): MuteState {
-  const [enabled, setEnabled] = useReactiveState<boolean>(
-    (prev) => device.available.length > 0 && (prev ?? enabledByDefault()),
+  const [enabled, setEnabled] = useReactiveState<boolean | undefined>(
+    (prev) =>
+      device.available.length > 0 ? prev ?? enabledByDefault() : undefined,
     [device],
   );
   return useMemo(
     () =>
       device.available.length === 0
         ? deviceUnavailable
-        : { enabled, setEnabled },
+        : {
+            enabled: enabled ?? false,
+            setEnabled: setEnabled as Dispatch<SetStateAction<boolean>>,
+          },
     [device, enabled, setEnabled],
   );
 }
 
-export function useMuteStates(participantCount: number): MuteStates {
+export function useMuteStates(): MuteStates {
   const devices = useMediaDevices();
 
-  const audio = useMuteState(
-    devices.audioInput,
-    () => participantCount <= MUTE_PARTICIPANT_COUNT,
-  );
+  const audio = useMuteState(devices.audioInput, () => true);
   const video = useMuteState(devices.videoInput, () => true);
 
   return useMemo(() => ({ audio, video }), [audio, video]);

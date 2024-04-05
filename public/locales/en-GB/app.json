@@ -81,8 +81,10 @@
   "layout_grid_label": "Grid",
   "layout_spotlight_label": "Spotlight",
   "lobby": {
+    "ask_to_join": "Ask to join call",
     "join_button": "Join call",
-    "leave_button": "Back to recents"
+    "leave_button": "Back to recents",
+    "waiting_for_invite": "Request sent"
   },
   "log_in": "Log In",
   "logging_in": "Logging in…",

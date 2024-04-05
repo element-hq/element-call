@@ -57,6 +57,7 @@ export function GroupCallLoader({
   switch (groupCallState.kind) {
     case "loaded":
     case "waitForInvite":
+    case "canKnock":
       return <>{children(groupCallState)}</>;
     case "loading":
       return (

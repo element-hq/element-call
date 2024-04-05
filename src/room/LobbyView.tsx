@@ -21,8 +21,8 @@ import { Button, Link } from "@vector-im/compound-web";
 import classNames from "classnames";
 import { useHistory } from "react-router-dom";
 
-import styles from "./LobbyView.module.css";
 import inCallStyles from "./InCallView.module.css";
+import styles from "./LobbyView.module.css";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
@@ -43,10 +43,12 @@ interface Props {
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
   onEnter: () => void;
+  enterLabel?: JSX.Element;
   confineToRoom: boolean;
   hideHeader: boolean;
   participantCount: number;
   onShareClick: (() => void) | null;
+  waitingForInvite?: boolean;
 }
 
 export const LobbyView: FC<Props> = ({
@@ -54,10 +56,12 @@ export const LobbyView: FC<Props> = ({
   matrixInfo,
   muteStates,
   onEnter,
+  enterLabel,
   confineToRoom,
   hideHeader,
   participantCount,
   onShareClick,
+  waitingForInvite,
 }) => {
   const { t } = useTranslation();
   useLocationNavigation();
@@ -117,12 +121,18 @@ export const LobbyView: FC<Props> = ({
         <div className={styles.content}>
           <VideoPreview matrixInfo={matrixInfo} muteStates={muteStates}>
             <Button
-              className={styles.join}
-              size="lg"
-              onClick={onEnter}
+              className={classNames(
+                "cpd-theme-dark",
+                styles.join,
+                waitingForInvite ? styles.wait : "",
+              )}
+              size={waitingForInvite ? "sm" : "lg"}
+              onClick={() => {
+                if (!waitingForInvite) onEnter();
+              }}
               data-testid="lobby_joinCall"
             >
-              {t("lobby.join_button")}
+              {enterLabel ?? t("lobby.join_button")}
             </Button>
           </VideoPreview>
           {!recentsButtonInFooter && recentsButton}

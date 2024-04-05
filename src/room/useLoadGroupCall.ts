@@ -46,11 +46,18 @@ export type GroupCallWaitForInvite = {
   roomSummary: RoomSummary;
 };
 
+export type GroupCallCanKnock = {
+  kind: "canKnock";
+  roomSummary: RoomSummary;
+  knock: () => void;
+};
+
 export type GroupCallStatus =
   | GroupCallLoaded
   | GroupCallLoadFailed
   | GroupCallLoading
-  | GroupCallWaitForInvite;
+  | GroupCallWaitForInvite
+  | GroupCallCanKnock;
 export interface GroupCallLoadState {
   error?: Error | KnockRejectError;
   groupCall?: GroupCall;
@@ -73,7 +80,7 @@ export interface RoomSummary {
   join_rule?: JoinRule.Knock | JoinRule.Public; // Added by MSC2403
   room_type?: RoomType;
   membership?: Membership;
-  is_encrypted: boolean;
+  "im.nheko.summary.encryption"?: boolean;
 }
 
 export const useLoadGroupCall = (
@@ -110,10 +117,11 @@ export const useLoadGroupCall = (
     const getRoomByKnocking = async (
       roomId: string,
       viaServers: string[],
+      onKnockSent: () => void,
     ): Promise<Room> => {
       let joinedRoom: Room | null = null;
       await client.knockRoom(roomId);
-
+      onKnockSent();
       const invitePromise = new Promise<void>((resolve, reject) => {
         client.on(
           RoomEvent.MyMembership,
@@ -168,8 +176,12 @@ export const useLoadGroupCall = (
             "Room not found. The widget-api did not pass over the relevant room events/information.",
           );
 
-        // if the room does not exist we first search for it with viaServers
-        const roomSummary = await client.getRoomSummary(roomId, viaServers);
+        // If the room does not exist we first search for it with viaServers
+        // We need to cast it to our own RoomSummary interface since we use the im.nheko.summary.encryption field.
+        const roomSummary = (await client.getRoomSummary(
+          roomId,
+          viaServers,
+        )) as unknown as RoomSummary;
         if (room?.getMyMembership() === KnownMembership.Ban) {
           throw new BannedError();
         } else {
@@ -178,8 +190,24 @@ export const useLoadGroupCall = (
               viaServers,
             });
           } else if (roomSummary.join_rule === JoinRule.Knock) {
-            setState({ kind: "waitForInvite", roomSummary });
-            room = await getRoomByKnocking(roomSummary.room_id, viaServers);
+            let knock: () => void = () => {};
+            const userPressedAskToJoinPromise: Promise<void> = new Promise(
+              (resolve) => {
+                if (roomSummary.membership !== KnownMembership.Knock) {
+                  knock = resolve;
+                } else {
+                  // resolve immediately if the user already knocked
+                  resolve();
+                }
+              },
+            );
+            setState({ kind: "canKnock", roomSummary, knock });
+            await userPressedAskToJoinPromise;
+            room = await getRoomByKnocking(
+              roomSummary.room_id,
+              viaServers,
+              () => setState({ kind: "waitForInvite", roomSummary }),
+            );
           } else {
             throw new Error(
               `Room ${roomSummary.room_id} is not joinable. This likely means, that the conference owner has changed the room settings to private.`,

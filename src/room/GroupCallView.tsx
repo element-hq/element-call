@@ -37,7 +37,7 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../media-utils";
 import { ActiveCall } from "./InCallView";
-import { MuteStates, useMuteStates } from "./MuteStates";
+import { MUTE_PARTICIPANT_COUNT, MuteStates } from "./MuteStates";
 import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
@@ -64,6 +64,7 @@ interface Props {
   skipLobby: boolean;
   hideHeader: boolean;
   rtcSession: MatrixRTCSession;
+  muteStates: MuteStates;
 }
 
 export const GroupCallView: FC<Props> = ({
@@ -74,9 +75,22 @@ export const GroupCallView: FC<Props> = ({
   skipLobby,
   hideHeader,
   rtcSession,
+  muteStates,
 }) => {
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
+
+  // The mute state reactively gets updated once the participant count reaches the threshold.
+  // The user then still is able to unmute again.
+  // The more common case is that the user is muted from the start (participant count is already over the threshold).
+  const [autoMuteHappened, setAutoMuteHappened] = useState(false);
+  useEffect(() => {
+    if (autoMuteHappened) return;
+    if (memberships.length >= MUTE_PARTICIPANT_COUNT) {
+      muteStates.audio.setEnabled?.(false);
+      setAutoMuteHappened(true);
+    }
+  }, [autoMuteHappened, memberships, muteStates.audio]);
 
   useEffect(() => {
     window.rtcSession = rtcSession;
@@ -122,7 +136,6 @@ export const GroupCallView: FC<Props> = ({
   const latestDevices = useRef<MediaDevices>();
   latestDevices.current = deviceContext;
 
-  const muteStates = useMuteStates(memberships.length);
   const latestMuteStates = useRef<MuteStates>();
   latestMuteStates.current = muteStates;
 
