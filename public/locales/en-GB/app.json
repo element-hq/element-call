@@ -156,8 +156,5 @@
     "sfu_participant_local": "You",
     "volume": "Volume"
   },
-  "wait_for_invite": {
-    "wait_message": "Waiting for the meeting host to let you in."
-  },
   "waiting_for_participants": "Waiting for other participants…"
 }
