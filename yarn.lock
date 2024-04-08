@@ -1690,7 +1690,7 @@
     "@floating-ui/core" "^1.6.0"
     "@floating-ui/utils" "^0.2.1"
 
-"@floating-ui/dom@^1.6.1":
+"@floating-ui/dom@1.6.3", "@floating-ui/dom@^1.6.1":
   version "1.6.3"
   resolved "https://registry.yarnpkg.com/@floating-ui/dom/-/dom-1.6.3.tgz#954e46c1dd3ad48e49db9ada7218b0985cee75ef"
   integrity sha512-RnDthu3mzPlQ31Ss/BTwQ1zjzIhr3lk1gZB1OC56h/1vEtaXkESrOqL5fQVMfXpwGtRwX+YsZBdyHtJMQnkArw==
@@ -1841,7 +1841,17 @@
   resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.4.0.tgz#08d6c5e20cf7e4cc02fd181c4b0c225cd31dbb60"
   integrity sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==
 
-"@livekit/components-core@0.9.1", "@livekit/components-core@^0.9.0":
+"@livekit/components-core@0.9.3":
+  version "0.9.3"
+  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.9.3.tgz#327980a784a9e62cff100915f6f952714f499860"
+  integrity sha512-RUhKw/eg2frnOHq6Xurfg4HqawmdpC/o8Dkp+J6PgnieA6mSQOOez7mUdPNqsAybnLujjJvVJ735sZJRqTb1Sg==
+  dependencies:
+    "@floating-ui/dom" "1.6.3"
+    email-regex "5.0.0"
+    loglevel "1.9.1"
+    rxjs "7.8.1"
+
+"@livekit/components-core@^0.9.0":
   version "0.9.1"
   resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.9.1.tgz#f06a45e7d490b48b5404374a8a13469a9ad5cf99"
   integrity sha512-zD0TsiT+uW09GrHrsqEz9kzJ+raSXmu2YYgWrq5OEA7pO6ZbB8aGk2tPJthVTUwySOzW4rE7rNusOVEFvMkvxA==
@@ -1852,14 +1862,14 @@
     rxjs "7.8.1"
 
 "@livekit/components-react@^2.0.0":
-  version "2.0.3"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.0.3.tgz#f1fb97ed53b5eda42cacf21b70ca2fa167aebb67"
-  integrity sha512-ejwoCbeHk94TolGlFmua6cRVmIdSCx5VKeviYoajnNcOJn1qw5u09JVU6bR24MCLYVvuxGZK5aHua1BvnW5Ryw==
+  version "2.0.6"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.0.6.tgz#c4ff790180f86f6a3cfc341fe5c0b93bac8bf92b"
+  integrity sha512-L0iaIPasPJLftI6FBcWcGicmGpw5LKKFvMV6GSyuv0q8oYrmUYoLLQdGmw7eW4q+7bQFAcFHeD9BzMXdprzCgw==
   dependencies:
-    "@livekit/components-core" "0.9.1"
+    "@livekit/components-core" "0.9.3"
     "@react-hook/latest" "1.0.3"
     clsx "2.1.0"
-    usehooks-ts "2.14.0"
+    usehooks-ts "2.16.0"
 
 "@livekit/protocol@1.10.4":
   version "1.10.4"
@@ -8575,10 +8585,10 @@ use-sync-external-store@^1.0.0:
   resolved "https://registry.yarnpkg.com/use-sync-external-store/-/use-sync-external-store-1.2.0.tgz#7dbefd6ef3fe4e767a0cf5d7287aacfb5846928a"
   integrity sha512-eEgnFxGQ1Ife9bzYs6VLi8/4X6CObHMw9Qr9tPY43iKwsPw8xE8+EFsf/2cFZ5S3esXgpWgtSCtLNS41F+sKPA==
 
-usehooks-ts@2.14.0:
-  version "2.14.0"
-  resolved "https://registry.yarnpkg.com/usehooks-ts/-/usehooks-ts-2.14.0.tgz#8c38fdb9133a7278f88ff8c762695ccaec4abfb8"
-  integrity sha512-jnhrjTRJoJS7cFxz63tRYc5mzTKf/h+Ii8P0PDHymT9qDe4ZA2/gzDRmDR4WGausg5X8wMIdghwi3BBCN9JKow==
+usehooks-ts@2.16.0:
+  version "2.16.0"
+  resolved "https://registry.yarnpkg.com/usehooks-ts/-/usehooks-ts-2.16.0.tgz#31deaa2f1147f65666aae925bd890b54e63b0d3f"
+  integrity sha512-bez95WqYujxp6hFdM/CpRDiVPirZPxlMzOH2QB8yopoKQMXpscyZoxOjpEdaxvV+CAWUDSM62cWnqHE0E/MZ7w==
   dependencies:
     lodash.debounce "^4.0.8"
 
