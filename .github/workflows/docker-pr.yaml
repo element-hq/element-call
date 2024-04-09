@@ -1,0 +1,58 @@
+name: Docker PR Preview
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+    branches-ignore:
+      - "main"
+      - "livekit"
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' && github.event.label.name == 'docker build' }}
+    runs-on: ubuntu-latest
+    permissions:
+      deployments: write
+    environment: Netlify
+    steps:
+      - name: 📥 Download artifact
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ secrets.ELEMENT_BOT_TOKEN }}
+          run_id: ${{ github.event.workflow_run.id }}
+          name: build
+          path: dist
+
+      - name: Log in to container registry
+        uses: docker/login-action@5f4866a30a54f16a52d2ecb4a3898e9e424939cf
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@c314eea2b27e3cb3c7d7be0618510234d8f6178e
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=short,event=branch
+            type=raw,value=lpr_${{ github.event.pull_request.number }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@f8bc7f46003ef0cf98b715743d86c2f1ccd01436
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
