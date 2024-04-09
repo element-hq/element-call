@@ -28,10 +28,6 @@ jobs:
           name: build
           path: dist
       
-      - name: Get current time
-        id: current-time
-        run: echo "unix_time=$(date +'%s')" >> $GITHUB_OUTPUT
-
       - name: Log in to container registry
         uses: docker/login-action@5f4866a30a54f16a52d2ecb4a3898e9e424939cf
         with:
