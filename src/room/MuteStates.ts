@@ -24,7 +24,7 @@ import { useReactiveState } from "../useReactiveState";
  * the user.
  */
 // TODO set back to 8. for demo purposes we use 1 here.
-export const MUTE_PARTICIPANT_COUNT = 1;
+export const MUTE_PARTICIPANT_COUNT = 8;
 
 interface DeviceAvailable {
   enabled: boolean;
