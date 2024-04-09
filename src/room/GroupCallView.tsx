@@ -291,7 +291,12 @@ export const GroupCallView: FC<Props> = ({
 
   const { t } = useTranslation();
 
-  if (e2eeSystem.kind === E2eeType.NONE) {
+  if (e2eeSystem.kind === E2eeType.NONE && !widget) {
+    // the url wants encryption, but we don't have a encryption system. (e.g. when joining a call without password)
+    // TODO: we need to figure out what we do with encryption goning forward.
+    // In the SPA a room is unencrypted but uses a shared secret for the call (since we distribute via url that works)
+    // In embedded mode unencrypted rooms would make most sense to also call unencrypted.
+    // A call where one person joins with the spa and another person with the widget would be a problem.
     return (
       <ErrorView
         error={
