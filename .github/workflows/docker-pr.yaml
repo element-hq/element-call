@@ -10,14 +10,20 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  DO_DOCKER_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
 
 jobs:
   build_element_call:
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
+    if: ${{ env.DO_DOCKER_BUILD }}
     uses: ./.github/workflows/build_resuable.yaml
+    secrets:
+      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+      SENTRY_URL: ${{ secrets.SENTRY_URL }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
   build_docker:
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
+    if: ${{ env.DO_DOCKER_BUILD }}
     needs: build_element_call
     runs-on: ubuntu-latest
     permissions:
@@ -29,9 +35,7 @@ jobs:
       - name: 📥 Download artifact
         uses: actions/download-artifact@v4
         with:
-          github-token: ${{ secrets.ELEMENT_BOT_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
-          name: build
+          name: build-output
           path: dist
 
       - name: Log in to container registry
@@ -48,7 +52,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=sha,format=short,event=branch
-            type=raw,value=pr_${{ github.event.workflow_run.pull_requests[0].number }}
+            type=raw,value=pr_${{ github.event.pull_request.number }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb
