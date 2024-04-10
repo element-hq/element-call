@@ -1,7 +1,16 @@
 name: Build resuable
 on:
   workflow_call:
-
+    secrets:
+      SENTRY_ORG:
+        required: true    
+      SENTRY_PROJECT:
+        required: true    
+      SENTRY_URL:
+        required: true    
+      SENTRY_AUTH_TOKEN:
+        required: true    
+    
 jobs:
   build_resuable:
     name: Build Element Call
