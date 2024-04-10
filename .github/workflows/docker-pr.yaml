@@ -30,7 +30,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.ELEMENT_BOT_TOKEN }}
-          run_id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event.workflow_run.id }}
           name: build
           path: dist
 
