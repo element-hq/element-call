@@ -18,6 +18,7 @@ jobs:
 
   build_docker:
     if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
+    needs: build_element_call
     runs-on: ubuntu-latest
     permissions:
       deployments: write
