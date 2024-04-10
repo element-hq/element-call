@@ -3,13 +3,13 @@ on:
   workflow_call:
     secrets:
       SENTRY_ORG:
-        required: true    
+        required: true
       SENTRY_PROJECT:
-        required: true    
+        required: true
       SENTRY_URL:
-        required: true    
+        required: true
       SENTRY_AUTH_TOKEN:
-        required: true    
+        required: true
 
 jobs:
   build_resuable:
