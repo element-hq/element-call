@@ -30,7 +30,8 @@ jobs:
     needs: build_element_call
     runs-on: ubuntu-latest
     permissions:
-      deployments: write
+      contents: write # required to upload release asset
+      packages: write
     steps:
       - name: Check it out
         uses: actions/checkout@v4
