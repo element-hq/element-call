@@ -10,11 +10,14 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
-  DO_DOCKER_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
+  # due to https://github.com/actions/runner/issues/2372
+  # and not wanting to workaround like https://stackoverflow.com/questions/73797254/environment-variables-in-github-actions/74217028#74217028
+  # we disable for now a gloabl env variable since env is not available in job.if
+  # DO_DOCKER_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
 
 jobs:
   build_element_call:
-    if: ${{ env.DO_DOCKER_BUILD }}
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
     uses: ./.github/workflows/build_resuable.yaml
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
@@ -23,7 +26,7 @@ jobs:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
   build_docker:
-    if: ${{ env.DO_DOCKER_BUILD }}
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
     needs: build_element_call
     runs-on: ubuntu-latest
     permissions:
