@@ -1,21 +1,23 @@
 name: Docker PR Preview
 
 on:
-  workflow_run:
-    workflows: ["Build"]
+  pull_request:
     types:
-      - completed
-    branches-ignore:
-      - "main"
-      - "livekit"
+      - synchronize
+      - opened
+      - labeled
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
+  build_element_call:
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
+    uses: ./.github/workflows/build_resuable.yaml
+
   build_docker:
-    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'docker build') }}
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
     runs-on: ubuntu-latest
     permissions:
       deployments: write
@@ -42,7 +44,7 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=sha,format=short,event=branch
-            type=raw,value=lpr_${{ github.event.pull_request.number }}
+            type=raw,value=pr_${{ github.event.workflow_run.pull_requests[0].number }}
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@d70bba72b1f3fd22344832f00baa16ece964efeb
