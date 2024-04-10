@@ -23,6 +23,9 @@ jobs:
     permissions:
       deployments: write
     steps:
+      - name: Check it out
+        uses: actions/checkout@v4
+
       - name: 📥 Download artifact
         uses: actions/download-artifact@v4
         with:
