@@ -1,6 +1,10 @@
 name: Build
 on:
-  pull_request: {}
+  pull_request:
+    types:
+      - synchronize
+      - opened
+      - labeled
   push:
     branches: [livekit, full-mesh]
 jobs:
