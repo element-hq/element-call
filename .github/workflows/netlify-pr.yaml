@@ -13,7 +13,7 @@ jobs:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' }}
     env:
       PR_NUMBER: ${{ github.event.workflow_run.pull_requests[0].number }}
-      PR_FULL_NAME: ${{ github.event.workflow_run.pull_requests[0].head.repo.full_name }}
+      PR_HEAD_FULL_NAME: ${{ github.event.workflow_run.head_repository.full_name }}
       PR_HEAD_REF: ${{ github.event.workflow_run.pull_requests[0].head.ref }}
       PR_HEAD_SHA: ${{ github.event.workflow_run.pull_requests[0].head.sha }}
     runs-on: ubuntu-latest
@@ -50,7 +50,7 @@ jobs:
         run: curl -s https://raw.githubusercontent.com/element-hq/element-call/main/config/netlify_redirects > webapp/_redirects
 
       - name: Add config file
-        run: curl -s "https://raw.githubusercontent.com/${{ env.PR_FULL_NAME }}/${{ env.PR_HEAD_REF }}/config/element_io_preview.json" > webapp/config.json
+        run: curl -s "https://raw.githubusercontent.com/${{ env.PR_HEAD_FULL_NAME }}/${{ env.PR_HEAD_REF }}/config/element_io_preview.json" > webapp/config.json
 
       - name: ☁️ Deploy to Netlify
         id: netlify
