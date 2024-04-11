@@ -24,8 +24,7 @@ import { Heading, Link, Text } from "@vector-im/compound-web";
 import {
   useLoadGroupCall,
   GroupCallStatus,
-  KnockRejectError,
-  BannedError,
+  CustomMessage,
 } from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 
@@ -69,8 +68,8 @@ export function GroupCallLoader({
       if ((groupCallState.error as MatrixError).errcode === "M_NOT_FOUND") {
         return (
           <FullScreenView>
-            <Heading>{t("group_call_loader_failed_heading")}</Heading>
-            <Text>{t("group_call_loader_failed_text")}</Text>
+            <Heading>{t("group_call_loader.failed_heading")}</Heading>
+            <Text>{t("group_call_loader.failed_text")}</Text>
             {/* XXX: A 'create it for me' button would be the obvious UX here. Two screens already have
             dupes of this flow, let's make a common component and put it here. */}
             <Link href="/" onClick={onHomeClick}>
@@ -78,21 +77,11 @@ export function GroupCallLoader({
             </Link>
           </FullScreenView>
         );
-      } else if (groupCallState.error instanceof KnockRejectError) {
+      } else if (groupCallState.error instanceof CustomMessage) {
         return (
           <FullScreenView>
-            <Heading>{t("group_call_loader_rejected_heading")}</Heading>
+            <Heading>{groupCallState.error.messageTitle}</Heading>
             <Text>{groupCallState.error.message}</Text>
-            <Link href="/" onClick={onHomeClick}>
-              {t("common.home")}
-            </Link>
-          </FullScreenView>
-        );
-      } else if (groupCallState.error instanceof BannedError) {
-        return (
-          <FullScreenView>
-            <Heading>{t("group_call_loader_banned_heading")}</Heading>
-            <Text>{t("group_call_loader_banned_message")}</Text>
             <Link href="/" onClick={onHomeClick}>
               {t("common.home")}
             </Link>

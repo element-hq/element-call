@@ -24,7 +24,6 @@ import { KnownMembership, Membership, RoomType } from "matrix-js-sdk/src/types";
 import { JoinRule } from "matrix-js-sdk";
 import { useTranslation } from "react-i18next";
 
-import type { GroupCall } from "matrix-js-sdk/src/webrtc/groupCall";
 import { widget } from "../widget";
 
 export type GroupCallLoaded = {
@@ -58,13 +57,14 @@ export type GroupCallStatus =
   | GroupCallLoading
   | GroupCallWaitForInvite
   | GroupCallCanKnock;
-export interface GroupCallLoadState {
-  error?: Error | KnockRejectError;
-  groupCall?: GroupCall;
-}
 
-export class KnockRejectError extends Error {}
-export class BannedError extends Error {}
+export class CustomMessage extends Error {
+  messageTitle: string;
+  constructor(messageTitle: string, message: string) {
+    super(message);
+    this.messageTitle = messageTitle;
+  }
+}
 
 // RoomSummary from the js-sdk (this is not public so we copy it here)
 export interface RoomSummary {
@@ -90,6 +90,19 @@ export const useLoadGroupCall = (
 ): GroupCallStatus => {
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
   const { t } = useTranslation();
+
+  const BannedError = new CustomMessage(
+    t("group_call_loader.banned_heading"),
+    t("group_call_loader.banned_body"), //"You got benned from the room.",
+  );
+  const KnockRejectError = new CustomMessage(
+    t("group_call_loader.knock_reject_heading"),
+    t("group_call_loader.knock_reject_body"), //"The room members declined your request to join.",
+  );
+  const RemoveNoticeError = new CustomMessage(
+    t("group_call_loader.call_ended_heading"),
+    t("group_call_loader.call_ended_body"), //You got removed from the call
+  );
 
   useEffect(() => {
     const getRoomByAlias = async (alias: string): Promise<Room> => {
@@ -132,16 +145,8 @@ export const useLoadGroupCall = (
               logger.log("Auto-joined %s", room.roomId);
               resolve();
             }
-            if (
-              membership === KnownMembership.Ban ||
-              membership === KnownMembership.Leave
-            ) {
-              // also resolve in case of rejection
-              // we will check if joining worked in the next step
-              reject(
-                new KnockRejectError(t("group_call_loader_reject_message")),
-              );
-            }
+            if (membership === KnownMembership.Ban) reject(BannedError);
+            if (membership === KnownMembership.Leave) reject(KnockRejectError);
           },
         );
       });
@@ -183,7 +188,7 @@ export const useLoadGroupCall = (
           viaServers,
         )) as unknown as RoomSummary;
         if (room?.getMyMembership() === KnownMembership.Ban) {
-          throw new BannedError();
+          throw BannedError;
         } else {
           if (roomSummary.join_rule === JoinRule.Public) {
             room = await client.joinRoom(roomSummary.room_id, {
@@ -250,15 +255,24 @@ export const useLoadGroupCall = (
       }
     };
 
+    const observeMyMembership = async () => {
+      await new Promise((_, reject) => {
+        client.on(RoomEvent.MyMembership, async (_, membership) => {
+          if (membership === KnownMembership.Leave) reject(RemoveNoticeError);
+          if (membership === KnownMembership.Ban) reject(BannedError);
+        });
+      });
+    };
+
     if (state.kind === "loading") {
       logger.log("Start loading group call");
       waitForClientSyncing()
         .then(fetchOrCreateGroupCall)
         .then((rtcSession) => setState({ kind: "loaded", rtcSession }))
+        .then(observeMyMembership)
         .catch((error) => setState({ kind: "failed", error }));
     }
   }, [client, roomIdOrAlias, state, t, viaServers]);
 
-  // state === undefined is used to make sure we only run the effect once. But outside the hook it is equivalent to "loading".
   return state;
 };
