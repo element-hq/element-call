@@ -1,4 +1,6 @@
 name: Docker PR Preview
+# Note pushing docker images is not possible from a public forked repo (see: Can't push to ghcr on a pull request, https://github.com/docker/build-push-action/issues/870)
+# Hence, this workflow is limited to PRs from element-hq/element-call
 
 on:
   pull_request:
@@ -14,10 +16,11 @@ env:
   # and not wanting to workaround like https://stackoverflow.com/questions/73797254/environment-variables-in-github-actions/74217028#74217028
   # we disable for now a gloabl env variable since env is not available in job.if
   # DO_DOCKER_BUILD: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
+  # NOT_FROM_FORK: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
 
 jobs:
   build_element_call:
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') && github.event.pull_request.head.repo.full_name == github.repository }}
     uses: ./.github/workflows/build_resuable.yaml
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
@@ -26,7 +29,7 @@ jobs:
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
 
   build_docker:
-    if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') }}
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') && github.event.pull_request.head.repo.full_name == github.repository }}
     needs: build_element_call
     runs-on: ubuntu-latest
     permissions:
