@@ -14,12 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
+import { EventType } from "matrix-js-sdk/src/@types/event";
 import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
 import { SyncState } from "matrix-js-sdk/src/sync";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { RoomEvent, type Room } from "matrix-js-sdk/src/models/room";
+import { RoomEvent, Room } from "matrix-js-sdk/src/models/room";
 import { KnownMembership, Membership, RoomType } from "matrix-js-sdk/src/types";
 import { JoinRule } from "matrix-js-sdk";
 import { useTranslation } from "react-i18next";
@@ -59,10 +60,12 @@ export type GroupCallStatus =
   | GroupCallCanKnock;
 
 export class CustomMessage extends Error {
-  messageTitle: string;
-  constructor(messageTitle: string, message: string) {
-    super(message);
-    this.messageTitle = messageTitle;
+  public messageBody: string;
+  public reason?: string;
+  constructor(messageTitle: string, messageBody: string, reason?: string) {
+    super(messageTitle);
+    this.messageBody = messageBody;
+    this.reason = reason;
   }
 }
 
@@ -89,20 +92,32 @@ export const useLoadGroupCall = (
   viaServers: string[],
 ): GroupCallStatus => {
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
+  const activeRoom = useRef<Room>();
   const { t } = useTranslation();
 
-  const BannedError = new CustomMessage(
-    t("group_call_loader.banned_heading"),
-    t("group_call_loader.banned_body"), //"You got benned from the room.",
-  );
-  const KnockRejectError = new CustomMessage(
-    t("group_call_loader.knock_reject_heading"),
-    t("group_call_loader.knock_reject_body"), //"The room members declined your request to join.",
-  );
-  const RemoveNoticeError = new CustomMessage(
-    t("group_call_loader.call_ended_heading"),
-    t("group_call_loader.call_ended_body"), //You got removed from the call
-  );
+  const BannedError = () =>
+    new CustomMessage(
+      t("group_call_loader.banned_heading"),
+      t("group_call_loader.banned_body"),
+      leaveReason(),
+    );
+  const KnockRejectError = () =>
+    new CustomMessage(
+      t("group_call_loader.knock_reject_heading"),
+      t("group_call_loader.knock_reject_body"),
+      leaveReason(),
+    );
+  const RemoveNoticeError = () =>
+    new CustomMessage(
+      t("group_call_loader.call_ended_heading"),
+      t("group_call_loader.call_ended_body"),
+      leaveReason(),
+    );
+
+  const leaveReason = (): string =>
+    activeRoom.current?.currentState
+      .getStateEvents(EventType.RoomMember, activeRoom.current?.myUserId)
+      ?.getContent().reason;
 
   useEffect(() => {
     const getRoomByAlias = async (alias: string): Promise<Room> => {
@@ -145,8 +160,9 @@ export const useLoadGroupCall = (
               logger.log("Auto-joined %s", room.roomId);
               resolve();
             }
-            if (membership === KnownMembership.Ban) reject(BannedError);
-            if (membership === KnownMembership.Leave) reject(KnockRejectError);
+            if (membership === KnownMembership.Ban) reject(BannedError());
+            if (membership === KnownMembership.Leave)
+              reject(KnockRejectError());
           },
         );
       });
@@ -188,7 +204,7 @@ export const useLoadGroupCall = (
           viaServers,
         )) as unknown as RoomSummary;
         if (room?.getMyMembership() === KnownMembership.Ban) {
-          throw BannedError;
+          throw BannedError();
         } else {
           if (roomSummary.join_rule === JoinRule.Public) {
             room = await client.joinRoom(roomSummary.room_id, {
@@ -231,6 +247,7 @@ export const useLoadGroupCall = (
 
     const fetchOrCreateGroupCall = async (): Promise<MatrixRTCSession> => {
       const room = await fetchOrCreateRoom();
+      activeRoom.current = room;
       logger.debug(`Fetched / joined room ${roomIdOrAlias}`);
 
       const rtcSession = client.matrixRTC.getRoomSession(room);
@@ -258,8 +275,8 @@ export const useLoadGroupCall = (
     const observeMyMembership = async () => {
       await new Promise((_, reject) => {
         client.on(RoomEvent.MyMembership, async (_, membership) => {
-          if (membership === KnownMembership.Leave) reject(RemoveNoticeError);
-          if (membership === KnownMembership.Ban) reject(BannedError);
+          if (membership === KnownMembership.Leave) reject(RemoveNoticeError());
+          if (membership === KnownMembership.Ban) reject(BannedError());
         });
       });
     };

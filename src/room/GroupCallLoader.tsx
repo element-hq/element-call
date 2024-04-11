@@ -80,8 +80,14 @@ export function GroupCallLoader({
       } else if (groupCallState.error instanceof CustomMessage) {
         return (
           <FullScreenView>
-            <Heading>{groupCallState.error.messageTitle}</Heading>
-            <Text>{groupCallState.error.message}</Text>
+            <Heading>{groupCallState.error.message}</Heading>
+            <Text>{groupCallState.error.messageBody}</Text>
+            {groupCallState.error.reason && (
+              <>
+                Reason:
+                <Text size="sm">"{groupCallState.error.reason}"</Text>
+              </>
+            )}
             <Link href="/" onClick={onHomeClick}>
               {t("common.home")}
             </Link>
