@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 import { EventType } from "matrix-js-sdk/src/@types/event";
 import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
@@ -62,7 +62,11 @@ export type GroupCallStatus =
 export class CustomMessage extends Error {
   public messageBody: string;
   public reason?: string;
-  constructor(messageTitle: string, messageBody: string, reason?: string) {
+  public constructor(
+    messageTitle: string,
+    messageBody: string,
+    reason?: string,
+  ) {
     super(messageTitle);
     this.messageBody = messageBody;
     this.reason = reason;
@@ -95,24 +99,33 @@ export const useLoadGroupCall = (
   const activeRoom = useRef<Room>();
   const { t } = useTranslation();
 
-  const BannedError = () =>
-    new CustomMessage(
-      t("group_call_loader.banned_heading"),
-      t("group_call_loader.banned_body"),
-      leaveReason(),
-    );
-  const KnockRejectError = () =>
-    new CustomMessage(
-      t("group_call_loader.knock_reject_heading"),
-      t("group_call_loader.knock_reject_body"),
-      leaveReason(),
-    );
-  const RemoveNoticeError = () =>
-    new CustomMessage(
-      t("group_call_loader.call_ended_heading"),
-      t("group_call_loader.call_ended_body"),
-      leaveReason(),
-    );
+  const bannedError = useCallback(
+    (): CustomMessage =>
+      new CustomMessage(
+        t("group_call_loader.banned_heading"),
+        t("group_call_loader.banned_body"),
+        leaveReason(),
+      ),
+    [t],
+  );
+  const knockRejectError = useCallback(
+    (): CustomMessage =>
+      new CustomMessage(
+        t("group_call_loader.knock_reject_heading"),
+        t("group_call_loader.knock_reject_body"),
+        leaveReason(),
+      ),
+    [t],
+  );
+  const removeNoticeError = useCallback(
+    (): CustomMessage =>
+      new CustomMessage(
+        t("group_call_loader.call_ended_heading"),
+        t("group_call_loader.call_ended_body"),
+        leaveReason(),
+      ),
+    [t],
+  );
 
   const leaveReason = (): string =>
     activeRoom.current?.currentState
@@ -162,9 +175,9 @@ export const useLoadGroupCall = (
               logger.log("Auto-joined %s", room.roomId);
               resolve();
             }
-            if (membership === KnownMembership.Ban) reject(BannedError());
+            if (membership === KnownMembership.Ban) reject(bannedError());
             if (membership === KnownMembership.Leave)
-              reject(KnockRejectError());
+              reject(knockRejectError());
           },
         );
       });
@@ -209,7 +222,7 @@ export const useLoadGroupCall = (
         )) as unknown as RoomSummary;
 
         if (room?.getMyMembership() === KnownMembership.Ban) {
-          throw BannedError();
+          throw bannedError();
         } else {
           if (roomSummary.join_rule === JoinRule.Public) {
             room = await client.joinRoom(roomSummary.room_id, {
@@ -277,11 +290,11 @@ export const useLoadGroupCall = (
       }
     };
 
-    const observeMyMembership = async () => {
+    const observeMyMembership = async (): Promise<void> => {
       await new Promise((_, reject) => {
         client.on(RoomEvent.MyMembership, async (_, membership) => {
-          if (membership === KnownMembership.Leave) reject(RemoveNoticeError());
-          if (membership === KnownMembership.Ban) reject(BannedError());
+          if (membership === KnownMembership.Leave) reject(removeNoticeError());
+          if (membership === KnownMembership.Ban) reject(bannedError());
         });
       });
     };
@@ -294,7 +307,16 @@ export const useLoadGroupCall = (
         .then(observeMyMembership)
         .catch((error) => setState({ kind: "failed", error }));
     }
-  }, [client, roomIdOrAlias, state, t, viaServers]);
+  }, [
+    bannedError,
+    client,
+    knockRejectError,
+    removeNoticeError,
+    roomIdOrAlias,
+    state,
+    t,
+    viaServers,
+  ]);
 
   return state;
 };
