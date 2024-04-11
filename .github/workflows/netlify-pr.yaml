@@ -16,7 +16,7 @@ jobs:
       SENTRY_URL: ${{ secrets.SENTRY_URL }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
   deploy:
-    if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
+    needs: build_element_call
     runs-on: ubuntu-latest
     permissions:
       deployments: write
