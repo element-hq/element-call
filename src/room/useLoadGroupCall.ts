@@ -154,6 +154,8 @@ export const useLoadGroupCall = (
         client.on(
           RoomEvent.MyMembership,
           async (room, membership, prevMembership) => {
+            if (roomId !== room.roomId) return;
+            activeRoom.current = room;
             if (membership === KnownMembership.Invite) {
               await client.joinRoom(room.roomId, { viaServers });
               joinedRoom = room;
@@ -179,6 +181,7 @@ export const useLoadGroupCall = (
         const alias = roomIdOrAlias;
         // The call uses a room alias
         room = await getRoomByAlias(alias);
+        activeRoom.current = room;
       } else {
         // The call uses a room_id
         const roomId = roomIdOrAlias;
@@ -187,6 +190,7 @@ export const useLoadGroupCall = (
         //  - in widget mode
         //  - in SPA mode if the user already joined the room
         room = client.getRoom(roomId);
+        activeRoom.current = room ?? undefined;
         if (room?.getMyMembership() === KnownMembership.Join) {
           // room already joined so we are done here already.
           return room!;
@@ -203,6 +207,7 @@ export const useLoadGroupCall = (
           roomId,
           viaServers,
         )) as unknown as RoomSummary;
+
         if (room?.getMyMembership() === KnownMembership.Ban) {
           throw BannedError();
         } else {
