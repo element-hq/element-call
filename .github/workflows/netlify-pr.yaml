@@ -58,9 +58,6 @@ jobs:
         with:
           publish-dir: webapp
           deploy-message: "Deploy from GitHub Actions"
-          # These don't work because we're in workflow_run
-          enable-pull-request-comment: false
-          enable-commit-comment: false
           alias: pr${{ steps.prdetails.outputs.pr_id }}
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
