@@ -37,10 +37,11 @@ jobs:
             Exercise caution. Use test accounts.
 
       - name: 📥 Download artifact
+        # Download the artifact from the triggering workflow
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.ELEMENT_BOT_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event.workflow.id }}
           name: build-output
           path: webapp
 
