@@ -82,7 +82,12 @@ export const LoginPage: FC = () => {
     },
     [login, location, history, homeserver, setClient],
   );
-
+  // we need to limit the length of the homserver name to not cover the whole loginview input with the string.
+  let shortendHomeserverName = Config.defaultServerName()?.slice(0, 25);
+  shortendHomeserverName =
+    shortendHomeserverName?.length !== Config.defaultServerName()?.length
+      ? shortendHomeserverName + "..."
+      : shortendHomeserverName;
   return (
     <>
       <div className={styles.container}>
@@ -102,7 +107,7 @@ export const LoginPage: FC = () => {
                   autoCorrect="off"
                   autoCapitalize="none"
                   prefix="@"
-                  suffix={`:${Config.defaultServerName()}`}
+                  suffix={`:${shortendHomeserverName}`}
                   data-testid="login_username"
                 />
               </FieldRow>
