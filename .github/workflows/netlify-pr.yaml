@@ -1,13 +1,20 @@
 name: Netlify PR Preview
 on:
-  workflow_run:
-    workflows: ["Build"]
+  pull_request:
     types:
-      - completed
-    branches-ignore:
-      - "main"
-      - "livekit"
+      - synchronize
+      - opened
+      - labeled
+
 jobs:
+  build_element_call:
+    if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') && github.event.pull_request.head.repo.full_name == github.repository }}
+    uses: ./.github/workflows/build_resuable.yaml
+    secrets:
+      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+      SENTRY_URL: ${{ secrets.SENTRY_URL }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
   deploy:
     if: github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request'
     runs-on: ubuntu-latest
@@ -33,13 +40,10 @@ jobs:
           owner: ${{ github.event.workflow_run.head_repository.owner.login }}
           branch: ${{ github.event.workflow_run.head_branch }}
 
-      # There's a 'download artifact' action, but it hasn't been updated for the workflow_run action
-      # (https://github.com/actions/download-artifact/issues/60) so instead we get this mess:
       - name: 📥 Download artifact
-        uses: dawidd6/action-download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          run_id: ${{ github.event.workflow_run.id }}
-          name: build
+          name: build-output
           path: webapp
 
       - name: Add redirects file
