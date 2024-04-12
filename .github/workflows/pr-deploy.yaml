@@ -9,7 +9,7 @@ jobs:
   prdetails:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' }}
     runs-on: ubuntu-latest
-    outputs:
+  outputs:
       pr_number: ${{ steps.prdetails.outputs.pr_id }}
       pr_data_json: ${{ steps.prdetails.outputs.data }}
     steps:
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PR_NUMBER: ${{ needs.prdetails.outputs.pr_number }}
-      PR_HEAD_REF: ${{ fromJSON(needs.prdetails.outputs.data).head.ref }}
-      PR_HEAD_SHA: ${{ fromJSON(needs.prdetails.outputs.data).head.sha }}
+      PR_HEAD_REF: ${{ fromJSON(needs.prdetails.outputs.data).head.ref) }}
+      PR_HEAD_SHA: ${{ fromJSON(needs.prdetails.outputs.data).head.sha) }}
     steps:
       - run: echo "$PR_NUMBER $PR_HEAD_REF $PR_HEAD_SHA"
