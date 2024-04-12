@@ -28,6 +28,13 @@ import * as Sentry from "@sentry/react";
 
 import { SFUConfig, sfuConfigEquals } from "./openIDSFU";
 
+declare global {
+   interface Window {
+     peerConnectionTimeout?: number;
+     websocketTimeout?: number;
+   }
+ }
+
 /*
  * Additional values for states that a call can be in, beyond what livekit
  * provides in ConnectionState. Also reconnects the call if the SFU Config
@@ -124,7 +131,10 @@ async function connectAndPublish(
   micTrack: LocalTrack | undefined,
   screenshareTracks: MediaStreamTrack[],
 ): Promise<void> {
-  await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt);
+  await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt, {
+     peerConnectionTimeout: window.peerConnectionTimeout,
+     websocketTimeout: window.websocketTimeout,
+   });  
 
   if (micTrack) {
     logger.info(`Publishing precreated mic track`);
