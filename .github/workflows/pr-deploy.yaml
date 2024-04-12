@@ -48,7 +48,6 @@ jobs:
     if: ${{ needs.prdetails.outputs.pr_data_json && contains(fromJSON(needs.prdetails.outputs.pr_data_json).labels.*.name, 'docker build') }}
     uses: ./.github/workflows/docker.yaml
     with:
-      pr_number: ${{ needs.prdetails.outputs.pr_number }}
       docker_tags: |
         type=sha,format=short,event=branch
         type=raw,value=pr_${{ needs.prdetails.outputs.pr_number }}
