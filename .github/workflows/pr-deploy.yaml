@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       PR_NUMBER: ${{ needs.prdetails.outputs.pr_number }}
-      PR_HEAD_REF: ${{ fromJSON(needs.prdetails.outputs.data).head.ref }}
-      PR_HEAD_SHA: ${{ fromJSON(needs.prdetails.outputs.data).head.sha }}
+      PR_HEAD_REF: ${{ fromJSON(needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.ref }}
+      PR_HEAD_SHA: ${{ fromJSON(needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.sha }}
     steps:
       - run: echo "$PR_NUMBER $PR_HEAD_REF $PR_HEAD_SHA"
