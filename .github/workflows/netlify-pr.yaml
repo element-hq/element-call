@@ -16,14 +16,11 @@ jobs:
     environment: Netlify
     steps:
       - id: prdetails
-          uses: matrix-org/pr-details-action@v1.3
-          continue-on-error: true
-          with:
-            owner: ${{ github.event.workflow_run.head_repository.owner.login }}
-            branch: ${{ github.event.workflow_run.head_branch }}            
-
-
-steps.prdetails.outputs.data.head.ref
+        uses: matrix-org/pr-details-action@v1.3
+        continue-on-error: true
+        with:
+          owner: ${{ github.event.workflow_run.head_repository.owner.login }}
+          branch: ${{ github.event.workflow_run.head_branch }}            
 
       - run: ${{ tojson(github.event) }}
         shell: cat {0}
