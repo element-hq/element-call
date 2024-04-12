@@ -18,6 +18,19 @@ jobs:
       deployments: write
     environment: Netlify
     steps:
+      - name: "Get PR information"
+        uses: potiuk/get-workflow-origin@v1_3
+        id: pr-info
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          sourceRunId: ${{ github.event.workflow_run.id }}
+
+      - name: Update env.PR_NUMBER if empty
+        run: |
+          if [ -z "$PR_NUMBER" ]; then
+            echo "PR_NUMBER=${{ steps.source-run-info.outputs.pullRequestNumber }}" >> $GITHUB_ENV
+          fi
+
       - run: ${{ tojson(github.event) }}
         shell: cat {0}
 
