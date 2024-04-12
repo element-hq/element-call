@@ -4,12 +4,16 @@ on:
     inputs:
       pr_number:
         required: true
+        type: number
       pr_head_full_name:
         required: true
+        type: string
       pr_head_ref:
         required: true
+        type: string
       deployment_ref:
         required: true
+        type: string
     secrets:
       ELEMENT_BOT_TOKEN:
         required: true
