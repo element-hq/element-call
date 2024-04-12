@@ -9,16 +9,16 @@ jobs:
   prdetails:
     if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' }}
     runs-on: ubuntu-latest
-  outputs:
+    outputs:
       pr_number: ${{ steps.prdetails.outputs.pr_id }}
       pr_data_json: ${{ steps.prdetails.outputs.data }}
-  steps:
-    - id: prdetails
-      uses: matrix-org/pr-details-action@v1.3
-      continue-on-error: true
-      with:
-        owner: ${{ github.event.workflow_run.head_repository.owner.login }}
-        branch: ${{ github.event.workflow_run.head_branch }}
+    steps:
+      - id: prdetails
+        uses: matrix-org/pr-details-action@v1.3
+        continue-on-error: true
+        with:
+          owner: ${{ github.event.workflow_run.head_repository.owner.login }}
+          branch: ${{ github.event.workflow_run.head_branch }}
 
   debug:
     needs: prdetails
