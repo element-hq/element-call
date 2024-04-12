@@ -4,9 +4,6 @@ on:
     workflows: ["Build"]
     types:
       - completed
-    branches-ignore:
-      - "main"
-      - "livekit"
 
 jobs:
   deploy:
