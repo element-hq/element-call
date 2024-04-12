@@ -25,6 +25,9 @@ jobs:
       - run: ${{ tojson(github.event) }}
         shell: cat {0}
 
+      - run: ${{ tojson(steps.prdetails.outputs.data) }}
+        shell: cat {0}
+
       - name: 📝 Create Deployment
         uses: bobheadxi/deployments@v1
         id: deployment
