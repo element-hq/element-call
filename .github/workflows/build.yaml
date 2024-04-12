@@ -15,6 +15,13 @@ jobs:
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
       SENTRY_URL: ${{ secrets.SENTRY_URL }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+  
+  debug_it:
+    needs: build_element_call
+    runs-on: ubuntu-latest
+    steps:
+      - run: ${{ tojson(github.event) }}
+        shell: cat {0}
   # build:
   #   name: Build
   #   runs-on: ubuntu-latest
