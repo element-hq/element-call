@@ -21,7 +21,7 @@ env:
 jobs:
   build_element_call:
     if: ${{ contains(github.event.pull_request.labels.*.name, 'docker build') && github.event.pull_request.head.repo.full_name == github.repository }}
-    uses: ./.github/workflows/build_resuable.yaml
+    uses: ./.github/workflows/element-call.yaml
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
