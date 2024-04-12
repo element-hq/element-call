@@ -1,0 +1,31 @@
+name: PR Preview Deployments
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+
+jobs:
+  prdetails:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' }}
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.prdetails.outputs.pr_id }}
+      pr_data_json: ${{ steps.prdetails.outputs.data }}
+    steps:
+      - id: prdetails
+        uses: matrix-org/pr-details-action@v1.3
+        continue-on-error: true
+        with:
+          owner: ${{ github.event.workflow_run.head_repository.owner.login }}
+          branch: ${{ github.event.workflow_run.head_branch }}
+
+  debug:
+    needs: prdetails
+    runs-on: ubuntu-latest
+    env:
+      PR_NUMBER: ${{ needs.prdetails.outputs.pr_number }}
+      PR_HEAD_REF: ${{ fromJSON(needs.prdetails.outputs.data).head.ref }}
+      PR_HEAD_SHA: ${{ fromJSON(needs.prdetails.outputs.data).head.sha }}
+    steps:
+      - run: echo "$PR_NUMBER $PR_HEAD_REF $PR_HEAD_SHA"
