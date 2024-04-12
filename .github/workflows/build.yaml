@@ -9,7 +9,7 @@ on:
     branches: [livekit, full-mesh]
 jobs:
   build_element_call:
-    uses: ./.github/workflows/build_resuable.yaml
+    uses: ./.github/workflows/element-call.yaml
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
