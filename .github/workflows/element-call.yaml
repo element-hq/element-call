@@ -1,6 +1,10 @@
 name: Element Call - Build
 on:
   workflow_call:
+    inputs:
+      vite_app_version:
+        required: true
+        type: string
     secrets:
       SENTRY_ORG:
         required: true
@@ -31,7 +35,7 @@ jobs:
           SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
           SENTRY_URL: ${{ secrets.SENTRY_URL }}
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          VITE_APP_VERSION: ${{ github.sha }}
+          VITE_APP_VERSION: ${{ inputs.vite_app_version }}
           NODE_OPTIONS: "--max-old-space-size=4096"
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
