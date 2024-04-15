@@ -16,7 +16,7 @@ on:
 jobs:
   build_element_call:
     uses: ./.github/workflows/element-call.yaml
-    inputs:
+    with:
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
