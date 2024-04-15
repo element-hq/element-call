@@ -12,6 +12,7 @@ env:
 
 jobs:
   build_and_deploy:
+    name: Build & publish docker
     runs-on: ubuntu-latest
     permissions:
       contents: write # required to upload release asset
