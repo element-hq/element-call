@@ -223,7 +223,7 @@ export class CallConnectDurationTracker {
   public track(options = { log: false }): void {
     const now = Date.now();
     const totalDuration = now - this.connectStart;
-    const websockedDuration = this.websocketConnected - this.connectStart;
+    const websocketDuration = this.websocketConnected - this.connectStart;
     const peerConnectionDuration = now - this.websocketConnected;
     PosthogAnalytics.instance.trackEvent<CallConnectDuration>({
       eventName: "CallConnectDuration",
