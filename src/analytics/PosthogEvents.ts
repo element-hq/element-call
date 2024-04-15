@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import { DisconnectReason } from "livekit-client";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import {
   IPosthogEvent,
@@ -199,5 +200,40 @@ export class CallDisconnectedEventTracker {
       eventName: "CallDisconnected",
       reason,
     });
+  }
+}
+
+interface CallConnectDuration extends IPosthogEvent {
+  eventName: "CallConnectDuration";
+  totalDuration: number;
+  websockedDuration: number;
+  peerConnectionDuration: number;
+}
+
+export class CallConnectDurationTracker {
+  private connectStart = 0;
+  private websocketConnected = 0;
+  public cacheConnectStart(): void {
+    this.connectStart = Date.now();
+  }
+  public cacheWsConnect(): void {
+    this.websocketConnected = Date.now();
+  }
+
+  public track(options = { log: false }): void {
+    const now = Date.now();
+    const totalDuration = now - this.connectStart;
+    const websockedDuration = this.websocketConnected - this.connectStart;
+    const peerConnectionDuration = now - this.websocketConnected;
+    PosthogAnalytics.instance.trackEvent<CallConnectDuration>({
+      eventName: "CallConnectDuration",
+      totalDuration,
+      websockedDuration: this.websocketConnected - this.connectStart,
+      peerConnectionDuration: Date.now() - this.websocketConnected,
+    });
+    if (options.log)
+      logger.log(
+        `Time to connect:\ntotal: ${totalDuration}ms\npeerConnection: ${websockedDuration}ms\nwebsocket: ${peerConnectionDuration}ms`,
+      );
   }
 }
