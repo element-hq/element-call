@@ -17,11 +17,15 @@ limitations under the License.
 import { useState, useEffect, useRef, useCallback } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 import { EventType } from "matrix-js-sdk/src/@types/event";
-import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
+import {
+  ClientEvent,
+  MatrixClient,
+  RoomSummary,
+} from "matrix-js-sdk/src/client";
 import { SyncState } from "matrix-js-sdk/src/sync";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { RoomEvent, Room } from "matrix-js-sdk/src/models/room";
-import { KnownMembership, Membership, RoomType } from "matrix-js-sdk/src/types";
+import { KnownMembership } from "matrix-js-sdk/src/types";
 import { JoinRule } from "matrix-js-sdk";
 import { useTranslation } from "react-i18next";
 
@@ -71,23 +75,6 @@ export class CustomMessage extends Error {
     this.messageBody = messageBody;
     this.reason = reason;
   }
-}
-
-// RoomSummary from the js-sdk (this is not public so we copy it here)
-export interface RoomSummary {
-  room_id: string;
-  name?: string;
-  avatar_url?: string;
-  topic?: string;
-  canonical_alias?: string;
-  aliases?: string[];
-  world_readable: boolean;
-  guest_can_join: boolean;
-  num_joined_members: number;
-  join_rule?: JoinRule.Knock | JoinRule.Public; // Added by MSC2403
-  room_type?: RoomType;
-  membership?: Membership;
-  "im.nheko.summary.encryption"?: boolean;
 }
 
 export const useLoadGroupCall = (
@@ -215,12 +202,7 @@ export const useLoadGroupCall = (
           );
 
         // If the room does not exist we first search for it with viaServers
-        // We need to cast it to our own RoomSummary interface since we use the im.nheko.summary.encryption field.
-        const roomSummary = (await client.getRoomSummary(
-          roomId,
-          viaServers,
-        )) as unknown as RoomSummary;
-
+        const roomSummary = await client.getRoomSummary(roomId, viaServers);
         if (room?.getMyMembership() === KnownMembership.Ban) {
           throw bannedError();
         } else {

@@ -122,7 +122,7 @@ export const RoomPage: FC = () => {
                 userId: client!.getUserId() ?? "",
                 displayName: userDisplayName ?? "",
                 avatarUrl: avatarUrl ?? "",
-                roomAlias: groupCallState.roomSummary.canonical_alias ?? "",
+                roomAlias: null,
                 roomId: groupCallState.roomSummary.room_id,
                 roomName: groupCallState.roomSummary.name ?? "",
                 roomAvatar: groupCallState.roomSummary.avatar_url ?? null,
