@@ -228,7 +228,7 @@ export class CallConnectDurationTracker {
     PosthogAnalytics.instance.trackEvent<CallConnectDuration>({
       eventName: "CallConnectDuration",
       totalDuration,
-      websockedDuration: this.websocketConnected - this.connectStart,
+      websocketDuration: this.websocketConnected - this.connectStart,
       peerConnectionDuration: Date.now() - this.websocketConnected,
     });
     if (options.log)
