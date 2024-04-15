@@ -6,13 +6,13 @@ on:
       - opened
       - labeled
     paths-ignore:
-      - '.github/**'
-      - 'docs/**'
+      - ".github/**"
+      - "docs/**"
   push:
     branches: [livekit, full-mesh]
     paths-ignore:
-      - '.github/**'
-      - 'docs/**'
+      - ".github/**"
+      - "docs/**"
 jobs:
   build_element_call:
     uses: ./.github/workflows/element-call.yaml
@@ -21,4 +21,3 @@ jobs:
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
       SENTRY_URL: ${{ secrets.SENTRY_URL }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-
