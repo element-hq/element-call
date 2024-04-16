@@ -206,7 +206,7 @@ export class CallDisconnectedEventTracker {
 interface CallConnectDuration extends IPosthogEvent {
   eventName: "CallConnectDuration";
   totalDuration: number;
-  websockedDuration: number;
+  websocketDuration: number;
   peerConnectionDuration: number;
 }
 
@@ -228,12 +228,12 @@ export class CallConnectDurationTracker {
     PosthogAnalytics.instance.trackEvent<CallConnectDuration>({
       eventName: "CallConnectDuration",
       totalDuration,
-      websocketDuration: this.websocketConnected - this.connectStart,
-      peerConnectionDuration: Date.now() - this.websocketConnected,
+      websocketDuration,
+      peerConnectionDuration,
     });
     if (options.log)
       logger.log(
-        `Time to connect:\ntotal: ${totalDuration}ms\npeerConnection: ${websockedDuration}ms\nwebsocket: ${peerConnectionDuration}ms`,
+        `Time to connect:\ntotal: ${totalDuration}ms\npeerConnection: ${websocketDuration}ms\nwebsocket: ${peerConnectionDuration}ms`,
       );
   }
 }
