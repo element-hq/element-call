@@ -144,6 +144,8 @@ async function connectAndPublish(
     websocketTimeout: window.websocketTimeout ?? 45000,
   });
 
+  // remove listener in case the connect promise rejects before `SignalConnected` is emitted.
+  livekitRoom.off(RoomEvent.SignalConnected, tracker.cacheWsConnect);
   tracker.track({ log: true });
 
   if (micTrack) {
