@@ -135,7 +135,7 @@ async function connectAndPublish(
   const tracker = PosthogAnalytics.instance.eventCallConnectDuration;
   // Track call connect duration
   tracker.cacheConnectStart();
-  livekitRoom.once(RoomEvent.SignalConnected, () => tracker.cacheWsConnect());
+  livekitRoom.once(RoomEvent.SignalConnected, tracker.cacheWsConnect);
 
   await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt, {
     // Due to stability issues on Firefox we are testing the effect of different
