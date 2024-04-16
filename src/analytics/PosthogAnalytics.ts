@@ -31,6 +31,7 @@ import {
   UndecryptableToDeviceEventTracker,
   QualitySurveyEventTracker,
   CallDisconnectedEventTracker,
+  CallConnectDurationTracker,
 } from "./PosthogEvents";
 import { Config } from "../config/Config";
 import { getUrlParams } from "../UrlParams";
@@ -444,4 +445,5 @@ export class PosthogAnalytics {
   public eventUndecryptableToDevice = new UndecryptableToDeviceEventTracker();
   public eventQualitySurvey = new QualitySurveyEventTracker();
   public eventCallDisconnected = new CallDisconnectedEventTracker();
+  public eventCallConnectDuration = new CallConnectDurationTracker();
 }
