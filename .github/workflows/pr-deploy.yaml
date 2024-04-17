@@ -36,8 +36,11 @@ jobs:
       NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
 
   docker:
-    needs: prdetails
     if: ${{ needs.prdetails.outputs.pr_data_json && contains(fromJSON(needs.prdetails.outputs.pr_data_json).labels.*.name, 'docker build') }}
+    needs: prdetails
+    permissions:
+      contents: write
+      packages: write
     uses: ./.github/workflows/docker.yaml
     with:
       docker_tags: |
