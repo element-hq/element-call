@@ -22,6 +22,8 @@ jobs:
 
   netlify:
     needs: prdetails
+    permissions:
+      deployments: write
     uses: ./.github/workflows/netlify.yaml
     with:
       pr_number: ${{ needs.prdetails.outputs.pr_number }}
