@@ -87,7 +87,7 @@ export const RoomPage: FC = () => {
   }, [optInAnalytics, setOptInAnalytics]);
 
   const groupCallView = useCallback(
-    (groupCallState: GroupCallStatus) => {
+    (groupCallState: GroupCallStatus): JSX.Element => {
       switch (groupCallState.kind) {
         case "loaded":
           return (
@@ -106,9 +106,9 @@ export const RoomPage: FC = () => {
         case "canKnock": {
           const knock =
             groupCallState.kind === "canKnock" ? groupCallState.knock : null;
-          const label =
+          const label: string | JSX.Element =
             groupCallState.kind === "canKnock" ? (
-              <>{t("lobby.ask_to_join")}</>
+              t("lobby.ask_to_join")
             ) : (
               <>
                 {t("lobby.waiting_for_invite")}
@@ -139,12 +139,14 @@ export const RoomPage: FC = () => {
               waitingForInvite={groupCallState.kind === "waitForInvite"}
               confineToRoom={confineToRoom}
               hideHeader={hideHeader}
-              participantCount={0}
+              participantCount={null}
               muteStates={muteStates}
               onShareClick={null}
             />
           );
         }
+        default:
+          return <> </>;
       }
     },
     [

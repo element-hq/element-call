@@ -24,9 +24,17 @@ limitations under the License.
   overflow: hidden;
   height: 100%;
 }
+
 .wait {
-  color: black !important;
-  background-color: rgba(255, 255, 255, 0.67) !important;
+  color: var(--cpd-color-text-primary) !important;
+  background-color: var(--cpd-color-bg-canvas-default) !important;
+  /* relative colors are only supported on chromium based browsers */
+  background-color: rgb(
+    from var(--cpd-color-bg-canvas-default) r g b / 0.5
+  ) !important;
+}
+.wait > svg {
+  color: var(--cpd-color-theme-primary) !important;
 }
 
 @media (max-width: 500px) {

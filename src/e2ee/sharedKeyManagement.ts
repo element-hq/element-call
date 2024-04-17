@@ -79,25 +79,25 @@ export function useRoomEncryptionSystem(roomId: string): EncryptionSystem {
   // (and we still need to take the value it returns because
   // the effect won't run in time for it to save to localstorage in
   // time for us to read it out again).
-  const [urlRoomId, passwordFormUrl] = useKeyFromUrl();
+  const [urlRoomId, passwordFromUrl] = useKeyFromUrl();
   const storedPassword = useInternalRoomSharedKey(roomId);
   const room = client?.getRoom(roomId);
-  const e2eeSystem = useMemo(() => {
-    if (!room) return { kind: E2eeType.NONE } as Unencrypted;
+  const e2eeSystem = <EncryptionSystem>useMemo(() => {
+    if (!room) return { kind: E2eeType.NONE };
     if (storedPassword)
       return {
         kind: E2eeType.SHARED_KEY,
         secret: storedPassword,
-      } as SharedSecret;
+      };
     if (urlRoomId === roomId)
       return {
         kind: E2eeType.SHARED_KEY,
-        secret: passwordFormUrl,
-      } as SharedSecret;
+        secret: passwordFromUrl,
+      };
     if (room.hasEncryptionStateEvent()) {
-      return { kind: E2eeType.PER_PARTICIPANT } as PerParticipantE2EE;
+      return { kind: E2eeType.PER_PARTICIPANT };
     }
-    return { kind: E2eeType.NONE } as EncryptionSystem;
-  }, [passwordFormUrl, room, roomId, storedPassword, urlRoomId]);
+    return { kind: E2eeType.NONE };
+  }, [passwordFromUrl, room, roomId, storedPassword, urlRoomId]);
   return e2eeSystem;
 }

@@ -23,7 +23,6 @@ import { useReactiveState } from "../useReactiveState";
  * If there already are this many participants in the call, we automatically mute
  * the user.
  */
-// TODO set back to 8. for demo purposes we use 1 here.
 export const MUTE_PARTICIPANT_COUNT = 8;
 
 interface DeviceAvailable {

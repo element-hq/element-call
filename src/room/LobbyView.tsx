@@ -43,10 +43,10 @@ interface Props {
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
   onEnter: () => void;
-  enterLabel?: JSX.Element;
+  enterLabel?: JSX.Element | string;
   confineToRoom: boolean;
   hideHeader: boolean;
-  participantCount: number;
+  participantCount: number | null;
   onShareClick: (() => void) | null;
   waitingForInvite?: boolean;
 }
@@ -121,11 +121,9 @@ export const LobbyView: FC<Props> = ({
         <div className={styles.content}>
           <VideoPreview matrixInfo={matrixInfo} muteStates={muteStates}>
             <Button
-              className={classNames(
-                "cpd-theme-dark",
-                styles.join,
-                waitingForInvite ? styles.wait : "",
-              )}
+              className={classNames(styles.join, {
+                [styles.wait]: waitingForInvite,
+              })}
               size={waitingForInvite ? "sm" : "lg"}
               onClick={() => {
                 if (!waitingForInvite) onEnter();

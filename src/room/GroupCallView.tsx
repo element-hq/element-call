@@ -83,12 +83,12 @@ export const GroupCallView: FC<Props> = ({
   // The mute state reactively gets updated once the participant count reaches the threshold.
   // The user then still is able to unmute again.
   // The more common case is that the user is muted from the start (participant count is already over the threshold).
-  const [autoMuteHappened, setAutoMuteHappened] = useState(false);
+  const autoMuteHappened = useRef(false);
   useEffect(() => {
-    if (autoMuteHappened) return;
+    if (autoMuteHappened.current) return;
     if (memberships.length >= MUTE_PARTICIPANT_COUNT) {
       muteStates.audio.setEnabled?.(false);
-      setAutoMuteHappened(true);
+      autoMuteHappened.current = true;
     }
   }, [autoMuteHappened, memberships, muteStates.audio]);
 
@@ -293,7 +293,7 @@ export const GroupCallView: FC<Props> = ({
 
   if (e2eeSystem.kind === E2eeType.NONE && !widget) {
     // the url wants encryption, but we don't have a encryption system. (e.g. when joining a call without password)
-    // TODO: we need to figure out what we do with encryption goning forward.
+    // TODO: we need to figure out what we do with encryption going forward.
     // In the SPA a room is unencrypted but uses a shared secret for the call (since we distribute via url that works)
     // In embedded mode unencrypted rooms would make most sense to also call unencrypted.
     // A call where one person joins with the spa and another person with the widget would be a problem.
@@ -301,7 +301,7 @@ export const GroupCallView: FC<Props> = ({
       <ErrorView
         error={
           new Error(
-            "No E2EE key or other encryption system provided: Element call calls are always encrypted, please make sure the URL you're using to join this call has been retrieved using the in-app button.",
+            `No E2EE key or other encryption system provided: ${import.meta.env.VITE_PRODUCT_NAME || "Element Call"} calls are always encrypted. Please make sure the URL you're using to join this call has been retrieved using the in-app button.`,
           )
         }
       />

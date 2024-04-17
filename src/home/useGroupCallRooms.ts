@@ -93,7 +93,7 @@ const roomIsJoinable = (room: Room): boolean => {
   return joinRule === JoinRule.Knock || joinRule === JoinRule.Public;
 };
 
-const roomIsJoinedWithCall = (room: Room): boolean => {
+const roomHasCallMembershipEvents = (room: Room): boolean => {
   const roomStateEvents = room
     .getLiveTimeline()
     .getState(EventTimeline.FORWARDS)?.events;
@@ -108,13 +108,13 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
 
   useEffect(() => {
     function updateRooms(): void {
+      // We want to show all rooms that historically had a call and which we are (can become) part of.
       const rooms = client
         .getRooms()
-        .filter(roomIsJoinedWithCall)
+        .filter(roomHasCallMembershipEvents)
         .filter(roomIsJoinable);
       const sortedRooms = sortRooms(client, rooms);
       const items = sortedRooms.map((room) => {
-        // const groupCall = client.getGroupCallForRoom(room.roomId)!;
         const session = client.matrixRTC.getRoomSession(room);
         session.memberships;
         return {

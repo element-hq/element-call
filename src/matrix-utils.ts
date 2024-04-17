@@ -29,12 +29,7 @@ import { secureRandomBase64Url } from "matrix-js-sdk/src/randomstring";
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import IndexedDBWorker from "./IndexedDBWorker?worker";
-import {
-  getUrlParams,
-  PASSWORD_STRING,
-  PER_PARTICIPANT_STRING,
-  VIA_SERVERS_STRING,
-} from "./UrlParams";
+import { generateUrlSearchParams, getUrlParams } from "./UrlParams";
 import { loadOlm } from "./olm";
 import { Config } from "./config/Config";
 import { E2eeType } from "./e2ee/e2eeType";
@@ -339,8 +334,6 @@ export async function createRoom(
 
   const result = await createPromise;
 
-  logger.log(`Creating group call in ${result.room_id}`);
-
   let password;
   if (e2ee == E2eeType.SHARED_KEY) {
     password = secureRandomBase64Url(16);
@@ -383,33 +376,10 @@ export function getRelativeRoomUrl(
   roomName?: string,
   viaServers?: string[],
 ): string {
-  // The password shouldn't need URL encoding here (we generate URL-safe ones) but encode
-  // it in case it came from another client that generated a non url-safe one
-  const encryptionPart = ((): string => {
-    switch (encryptionSystem?.kind) {
-      case E2eeType.SHARED_KEY: {
-        const encodedPassword = encodeURIComponent(encryptionSystem.secret);
-        if (encodedPassword !== encryptionSystem.secret) {
-          logger.info(
-            "Encoded call password used non URL-safe chars: buggy client?",
-          );
-        }
-        return "&" + PASSWORD_STRING + encodedPassword;
-      }
-      case E2eeType.PER_PARTICIPANT:
-        return "&" + PER_PARTICIPANT_STRING + "true";
-      case E2eeType.NONE:
-        return "";
-    }
-  })();
-
-  const roomIdPart = `roomId=${roomId}`;
-  const viaServersPart = viaServers
-    ? viaServers.map((s) => "&" + VIA_SERVERS_STRING + s).join("")
+  const roomPart = roomName
+    ? "/" + roomAliasLocalpartFromRoomName(roomName)
     : "";
-  return `/room/#${
-    roomName ? "/" + roomAliasLocalpartFromRoomName(roomName) : ""
-  }?${roomIdPart}${encryptionPart}${viaServersPart}`;
+  return `/room/#${roomPart}?${generateUrlSearchParams(roomId, encryptionSystem, viaServers).toString()}`;
 }
 
 export function getAvatarUrl(

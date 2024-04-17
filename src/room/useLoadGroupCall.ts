@@ -63,9 +63,21 @@ export type GroupCallStatus =
   | GroupCallWaitForInvite
   | GroupCallCanKnock;
 
-export class CustomMessage extends Error {
+export class CallTerminatedMessage extends Error {
+  /**
+   * @param messageBody The message explaining the kind of termination (kick, ban, knock reject, etc.) (translated)
+   */
   public messageBody: string;
+  /**
+   * @param reason The user provided reason for the termination (kick/ban)
+   */
   public reason?: string;
+  /**
+   *
+   * @param messageTitle The title of the call ended screen message (translated)
+   * @param messageBody The message explaining the kind of termination (kick, ban, knock reject, etc.) (translated)
+   * @param reason The user provided reason for the termination (kick/ban)
+   */
   public constructor(
     messageTitle: string,
     messageBody: string,
@@ -87,8 +99,8 @@ export const useLoadGroupCall = (
   const { t } = useTranslation();
 
   const bannedError = useCallback(
-    (): CustomMessage =>
-      new CustomMessage(
+    (): CallTerminatedMessage =>
+      new CallTerminatedMessage(
         t("group_call_loader.banned_heading"),
         t("group_call_loader.banned_body"),
         leaveReason(),
@@ -96,8 +108,8 @@ export const useLoadGroupCall = (
     [t],
   );
   const knockRejectError = useCallback(
-    (): CustomMessage =>
-      new CustomMessage(
+    (): CallTerminatedMessage =>
+      new CallTerminatedMessage(
         t("group_call_loader.knock_reject_heading"),
         t("group_call_loader.knock_reject_body"),
         leaveReason(),
@@ -105,8 +117,8 @@ export const useLoadGroupCall = (
     [t],
   );
   const removeNoticeError = useCallback(
-    (): CustomMessage =>
-      new CustomMessage(
+    (): CallTerminatedMessage =>
+      new CallTerminatedMessage(
         t("group_call_loader.call_ended_heading"),
         t("group_call_loader.call_ended_body"),
         leaveReason(),
@@ -148,7 +160,7 @@ export const useLoadGroupCall = (
       onKnockSent: () => void,
     ): Promise<Room> => {
       let joinedRoom: Room | null = null;
-      await client.knockRoom(roomId);
+      await client.knockRoom(roomId, { viaServers });
       onKnockSent();
       const invitePromise = new Promise<void>((resolve, reject) => {
         client.on(

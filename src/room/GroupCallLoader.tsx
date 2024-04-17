@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ReactNode, useCallback } from "react";
+import { useCallback } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 import { MatrixError } from "matrix-js-sdk";
@@ -24,7 +24,7 @@ import { Heading, Link, Text } from "@vector-im/compound-web";
 import {
   useLoadGroupCall,
   GroupCallStatus,
-  CustomMessage,
+  CallTerminatedMessage,
 } from "./useLoadGroupCall";
 import { ErrorView, FullScreenView } from "../FullScreenView";
 
@@ -32,7 +32,7 @@ interface Props {
   client: MatrixClient;
   roomIdOrAlias: string;
   viaServers: string[];
-  children: (groupCallState: GroupCallStatus) => ReactNode;
+  children: (groupCallState: GroupCallStatus) => JSX.Element;
 }
 
 export function GroupCallLoader({
@@ -57,7 +57,7 @@ export function GroupCallLoader({
     case "loaded":
     case "waitForInvite":
     case "canKnock":
-      return <>{children(groupCallState)}</>;
+      return children(groupCallState);
     case "loading":
       return (
         <FullScreenView>
@@ -77,14 +77,14 @@ export function GroupCallLoader({
             </Link>
           </FullScreenView>
         );
-      } else if (groupCallState.error instanceof CustomMessage) {
+      } else if (groupCallState.error instanceof CallTerminatedMessage) {
         return (
           <FullScreenView>
             <Heading>{groupCallState.error.message}</Heading>
             <Text>{groupCallState.error.messageBody}</Text>
             {groupCallState.error.reason && (
               <>
-                Reason:
+                {t("group_call_loader.reason")}:
                 <Text size="sm">"{groupCallState.error.reason}"</Text>
               </>
             )}
