@@ -56,6 +56,9 @@ jobs:
           path: "./element-call-*.tar.gz"
   publish_docker:
     needs: publish_tarball
+    permissions:
+      contents: write
+      packages: write
     uses: ./.github/workflows/docker.yaml
     with:
       docker_tags: |
