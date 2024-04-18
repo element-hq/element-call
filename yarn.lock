@@ -1718,10 +1718,20 @@
   resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.4.0.tgz#08d6c5e20cf7e4cc02fd181c4b0c225cd31dbb60"
   integrity sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==
 
-"@livekit/components-core@0.9.3", "@livekit/components-core@^0.9.0":
+"@livekit/components-core@0.9.3":
   version "0.9.3"
   resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.9.3.tgz#327980a784a9e62cff100915f6f952714f499860"
   integrity sha512-RUhKw/eg2frnOHq6Xurfg4HqawmdpC/o8Dkp+J6PgnieA6mSQOOez7mUdPNqsAybnLujjJvVJ735sZJRqTb1Sg==
+  dependencies:
+    "@floating-ui/dom" "1.6.3"
+    email-regex "5.0.0"
+    loglevel "1.9.1"
+    rxjs "7.8.1"
+
+"@livekit/components-core@^0.10.0":
+  version "0.10.0"
+  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.10.0.tgz#dfd1ccf72518d89bba2d9d10fadbbf2dd47ed321"
+  integrity sha512-TSsIG2BRLABT5FP+5sueZgkByGYyFhv3UTb8fneWchvQRBHtiU9s4FF8SIoAw9z3znhwp1tKaJyuIyKp7k0Juw==
   dependencies:
     "@floating-ui/dom" "1.6.3"
     email-regex "5.0.0"
