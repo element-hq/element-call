@@ -1,11 +1,11 @@
-name: Run jest tests
+name: Run unit tests
 on:
   pull_request: {}
   push:
     branches: [livekit, full-mesh]
 jobs:
-  jest:
-    name: Run jest tests
+  vitest:
+    name: Run vitest tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -16,9 +16,9 @@ jobs:
           cache: "yarn"
       - name: Install dependencies
         run: "yarn install"
-      - name: Jest
+      - name: Vitest
         run: "yarn run test"
       - name: Upload to codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           flags: unittests

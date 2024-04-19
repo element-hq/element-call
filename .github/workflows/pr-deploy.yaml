@@ -1,0 +1,48 @@
+name: PR Preview Deployments
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+
+jobs:
+  prdetails:
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'pull_request' }}
+    runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.prdetails.outputs.pr_id }}
+      pr_data_json: ${{ steps.prdetails.outputs.data }}
+    steps:
+      - id: prdetails
+        uses: matrix-org/pr-details-action@v1.3
+        continue-on-error: true
+        with:
+          owner: ${{ github.event.workflow_run.head_repository.owner.login }}
+          branch: ${{ github.event.workflow_run.head_branch }}
+
+  netlify:
+    needs: prdetails
+    permissions:
+      deployments: write
+    uses: ./.github/workflows/netlify.yaml
+    with:
+      pr_number: ${{ needs.prdetails.outputs.pr_number }}
+      pr_head_full_name: ${{ github.event.workflow_run.head_repository.full_name }}
+      pr_head_ref: ${{ needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.ref }}
+      deployment_ref: ${{ needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.sha || github.ref || github.head_ref }}
+    secrets:
+      ELEMENT_BOT_TOKEN: ${{ secrets.ELEMENT_BOT_TOKEN }}
+      NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+
+  docker:
+    if: ${{ needs.prdetails.outputs.pr_data_json && contains(fromJSON(needs.prdetails.outputs.pr_data_json).labels.*.name, 'docker build') }}
+    needs: prdetails
+    permissions:
+      contents: write
+      packages: write
+    uses: ./.github/workflows/docker.yaml
+    with:
+      docker_tags: |
+        type=sha,format=short,event=branch
+        type=raw,value=pr_${{ needs.prdetails.outputs.pr_number }}
