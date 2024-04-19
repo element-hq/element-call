@@ -61,7 +61,9 @@ async function doConnect(
   // doesn't publish it until you unmute. We want to publish it from the start so we're
   // always capturing audio: it helps keep bluetooth headsets in the right mode and
   // mobile browsers to know we're doing a call.
-  if (livekitRoom!.localParticipant.getTrack(Track.Source.Microphone)) {
+  if (
+    livekitRoom!.localParticipant.getTrackPublication(Track.Source.Microphone)
+  ) {
     logger.warn(
       "Pre-creating audio track but participant already appears to have an microphone track: this shouldn't happen!",
     );
@@ -90,7 +92,9 @@ async function doConnect(
   if (!audioEnabled) await preCreatedAudioTrack?.mute();
 
   // check again having awaited for the track to create
-  if (livekitRoom!.localParticipant.getTrack(Track.Source.Microphone)) {
+  if (
+        livekitRoom!.localParticipant.getTrackPublication(Track.Source.Microphone)
+  ) {
     logger.warn(
       "Pre-created audio track but participant already appears to have an microphone track: this shouldn't happen!",
     );
@@ -174,7 +178,7 @@ export function useECConnectionState(
 
   const doFocusSwitch = useCallback(async (): Promise<void> => {
     const screenshareTracks: MediaStreamTrack[] = [];
-    for (const t of livekitRoom!.localParticipant.videoTracks.values()) {
+    for (const t of livekitRoom!.localParticipant.videoTrackPublications.values()) {
       if (t.track && t.source == Track.Source.ScreenShare) {
         const newTrack = t.track.mediaStreamTrack.clone();
         newTrack.enabled = true;
