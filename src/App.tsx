@@ -72,7 +72,9 @@ export const App: FC<AppProps> = ({ history }) => {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     Initializer.init()?.then(() => {
+      if (loaded) return;
       setLoaded(true);
+      widget?.api.sendContentLoaded();
     });
   });
 

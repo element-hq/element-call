@@ -32,8 +32,6 @@
     "username": "نام کاربری",
     "video": "ویدیو"
   },
-  "exit_fullscreen_button_label": "خروج از حالت تمام صفحه",
-  "fullscreen_button_label": "تمام صحفه",
   "header_label": "خانهٔ تماس المنت",
   "join_existing_call_modal": {
     "join_button": "بله، به تماس بپیوندید",
@@ -44,7 +42,6 @@
   "lobby": {
     "join_button": "پیوستن به تماس"
   },
-  "local_volume_label": "حجم داخلی",
   "logging_in": "ورود…",
   "login_auth_links": "<0>ساخت حساب کاربری</0> Or <2>دسترسی به عنوان میهمان</2>",
   "login_title": "ورود",

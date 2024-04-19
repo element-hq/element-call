@@ -59,4 +59,5 @@ export const defaultLiveKitOptions: RoomOptions = {
   stopLocalTrackOnUnpublish: true,
   reconnectPolicy: new DefaultReconnectPolicy(),
   disconnectOnPageLeave: true,
+  webAudioMix: false,
 };

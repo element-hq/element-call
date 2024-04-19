@@ -51,10 +51,8 @@
     "video": "视频"
   },
   "disconnected_banner": "与服务器的连接中断。",
-  "exit_fullscreen_button_label": "退出全屏",
   "full_screen_view_description": "<0>提交日志以帮助我们修复问题。</0>",
   "full_screen_view_h1": "<0>哎哟，出问题了。</0>",
-  "fullscreen_button_label": "全屏",
   "group_call_loader_failed_heading": "未找到通话",
   "group_call_loader_failed_text": "现在，通话是端对端加密的，需要从主页创建。这有助于确保每个人都使用相同的加密密钥。",
   "hangup_button_label": "通话结束",
@@ -70,7 +68,6 @@
     "join_button": "加入通话",
     "leave_button": "返回最近通话"
   },
-  "local_volume_label": "本地音量",
   "logging_in": "登录中……",
   "login_auth_links": "<0>创建账户</0> Or <2>以访客身份继续</2>",
   "login_title": "登录",
@@ -128,7 +125,6 @@
   "unmute_microphone_button_label": "取消麦克风静音",
   "version": "版本：{{version}}",
   "video_tile": {
-    "presenter_label": "{{displayName}}正在展示",
     "sfu_participant_local": "你"
   },
   "waiting_for_participants": "等待其他参与者……"

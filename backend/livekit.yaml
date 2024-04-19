@@ -22,5 +22,3 @@ turn:
   external_tls: true
 keys:
   devkey: secret
-signal_relay:
-  enabled: true
