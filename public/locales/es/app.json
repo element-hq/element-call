@@ -34,10 +34,8 @@
     "settings": "Ajustes",
     "username": "Nombre de usuario"
   },
-  "exit_fullscreen_button_label": "Salir de pantalla completa",
   "full_screen_view_description": "<0>Subir los registros de depuración nos ayudará a encontrar el problema.</0>",
   "full_screen_view_h1": "<0>Ups, algo ha salido mal.</0>",
-  "fullscreen_button_label": "Pantalla completa",
   "header_label": "Inicio de Element Call",
   "join_existing_call_modal": {
     "join_button": "Si, unirse a la llamada",
@@ -48,7 +46,6 @@
   "lobby": {
     "join_button": "Unirse a la llamada"
   },
-  "local_volume_label": "Volumen local",
   "logging_in": "Iniciando sesión…",
   "login_auth_links": "<0>Crear una cuenta</0> o <2>Acceder como invitado</2>",
   "login_title": "Iniciar sesión",
@@ -95,8 +92,5 @@
   "unauthenticated_view_eula_caption": "Al hacer clic en \"Comenzar\", aceptas nuestro <2>Contrato de Licencia de Usuario Final (CLUF)</2>",
   "unauthenticated_view_login_button": "Iniciar sesión en tu cuenta",
   "version": "Versión: {{version}}",
-  "video_tile": {
-    "presenter_label": "{{displayName}} está presentando"
-  },
   "waiting_for_participants": "Esperando a los otros participantes…"
 }

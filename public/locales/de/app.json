@@ -56,10 +56,8 @@
     "video": "Video"
   },
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
-  "exit_fullscreen_button_label": "Vollbildmodus verlassen",
   "full_screen_view_description": "<0>Übermittelte Problemberichte helfen uns, Fehler zu beheben.</0>",
   "full_screen_view_h1": "<0>Hoppla, etwas ist schiefgelaufen.</0>",
-  "fullscreen_button_label": "Vollbild",
   "group_call_loader_failed_heading": "Anruf nicht gefunden",
   "group_call_loader_failed_text": "Anrufe sind nun Ende-zu-Ende-verschlüsselt und müssen auf der Startseite erstellt werden. Damit stellen wir sicher, dass alle denselben Schlüssel verwenden.",
   "hangup_button_label": "Anruf beenden",
@@ -80,7 +78,6 @@
     "join_button": "Anruf beitreten",
     "leave_button": "Zurück zu kürzlichen Anrufen"
   },
-  "local_volume_label": "Lokale Lautstärke",
   "log_in": "Anmelden",
   "logging_in": "Anmelden …",
   "login_auth_links": "<0>Konto erstellen</0> Oder <2>Als Gast betreten</2>",
@@ -141,7 +138,6 @@
   "unmute_microphone_button_label": "Mikrofon aktivieren",
   "version": "Version: {{version}}",
   "video_tile": {
-    "presenter_label": "{{displayName}} präsentiert",
     "sfu_participant_local": "Du"
   },
   "waiting_for_participants": "Warte auf weitere Teilnehmer …"

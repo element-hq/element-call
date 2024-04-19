@@ -27,6 +27,14 @@ import { logger } from "matrix-js-sdk/src/logger";
 import * as Sentry from "@sentry/react";
 
 import { SFUConfig, sfuConfigEquals } from "./openIDSFU";
+import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
+
+declare global {
+  interface Window {
+    peerConnectionTimeout?: number;
+    websocketTimeout?: number;
+  }
+}
 
 /*
  * Additional values for states that a call can be in, beyond what livekit
@@ -124,7 +132,21 @@ async function connectAndPublish(
   micTrack: LocalTrack | undefined,
   screenshareTracks: MediaStreamTrack[],
 ): Promise<void> {
-  await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt);
+  const tracker = PosthogAnalytics.instance.eventCallConnectDuration;
+  // Track call connect duration
+  tracker.cacheConnectStart();
+  livekitRoom.once(RoomEvent.SignalConnected, tracker.cacheWsConnect);
+
+  await livekitRoom!.connect(sfuConfig!.url, sfuConfig!.jwt, {
+    // Due to stability issues on Firefox we are testing the effect of different
+    // timeouts, and allow these values to be set through the console
+    peerConnectionTimeout: window.peerConnectionTimeout ?? 45000,
+    websocketTimeout: window.websocketTimeout ?? 45000,
+  });
+
+  // remove listener in case the connect promise rejects before `SignalConnected` is emitted.
+  livekitRoom.off(RoomEvent.SignalConnected, tracker.cacheWsConnect);
+  tracker.track({ log: true });
 
   if (micTrack) {
     logger.info(`Publishing precreated mic track`);

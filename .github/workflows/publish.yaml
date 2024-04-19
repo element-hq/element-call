@@ -3,17 +3,32 @@ name: Build & publish images to the package registry for tags
 on:
   release:
     types: [published]
-  push:
+  workflow_run:
+    workflows: ["Build"]
     branches: [livekit]
+    types:
+      - completed
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  build:
-    name: Build & publish
+  build_element_call:
+    if: ${{ github.event.workflow_run.event == 'release' }}
+    uses: ./.github/workflows/element-call.yaml
+    with:
+      vite_app_version: ${{ github.event.release.tag_name || github.sha }}
+    secrets:
+      SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+      SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+      SENTRY_URL: ${{ secrets.SENTRY_URL }}
+      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+  publish_tarball:
+    name: Publish tarball
     runs-on: ubuntu-latest
+    outputs:
+      unix_time: ${{steps.current-time.outputs.unix_time}}
     permissions:
       contents: write # required to upload release asset
       packages: write
@@ -21,64 +36,33 @@ jobs:
       - name: Get current time
         id: current-time
         run: echo "unix_time=$(date +'%s')" >> $GITHUB_OUTPUT
-
-      - name: Check it out
-        uses: actions/checkout@v4
-
-      - name: Log in to container registry
-        uses: docker/login-action@83a00bc1ab5ded6580f31df1c49e6aaa932d840d
+      - name: 📥 Download artifact
+        uses: actions/download-artifact@v4
         with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Yarn cache
-        uses: actions/setup-node@v4
-        with:
-          cache: "yarn"
-      - name: Install dependencies
-        run: "yarn install"
-      - name: Build
-        run: "yarn run build"
-        env:
-          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
-          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
-          SENTRY_URL: ${{ secrets.SENTRY_URL }}
-          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
-          VITE_APP_VERSION: ${{ github.event.release.tag_name || github.sha }}
-
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+          name: build-output
+          path: dist
       - name: Create Tarball
         env:
           TARBALL_VERSION: ${{ github.event.release.tag_name || github.sha }}
         run: |
           tar --numeric-owner --transform "s/dist/element-call-${TARBALL_VERSION}/" -cvzf element-call-${TARBALL_VERSION}.tar.gz dist
-
       - name: Upload
-        uses: actions/upload-artifact@ef09cdac3e2d3e60d8ccadda691f4f1cec5035cb
+        uses: actions/upload-artifact@b06cde36fc32a3ee94080e87258567f73f921537
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           path: "./element-call-*.tar.gz"
-
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@8e5442c4ef9f78752691e2d8f8d19755c6f78e81
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          tags: |
-            type=sha,format=short,event=branch
-            type=semver,pattern=v{{version}}
-            type=raw,value=latest-ci,enable={{is_default_branch}}
-            type=raw,value=latest-ci_${{steps.current-time.outputs.unix_time}},enable={{is_default_branch}}
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@edfb0fe6204400c56fbfd3feba3fe9ad1adfa345
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@4976231911ebf5f32aad765192d35f942aa48cb8
-        with:
-          context: .
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+  publish_docker:
+    needs: publish_tarball
+    permissions:
+      contents: write
+      packages: write
+    uses: ./.github/workflows/docker.yaml
+    with:
+      docker_tags: |
+        type=sha,format=short,event=branch
+        type=semver,pattern=v{{version}}
+        type=raw,value=latest-ci,enable={{is_default_branch}}
+        type=raw,value=latest-ci_${{needs.publish_tarball.outputs.unix_time}},enable={{is_default_branch}}

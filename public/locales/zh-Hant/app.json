@@ -53,10 +53,8 @@
     "video": "視訊"
   },
   "disconnected_banner": "到伺服器的連線已遺失。",
-  "exit_fullscreen_button_label": "退出全螢幕",
   "full_screen_view_description": "<0>送出除錯紀錄，可幫助我們修正問題。</0>",
   "full_screen_view_h1": "<0>喔喔，有些地方怪怪的。</0>",
-  "fullscreen_button_label": "全螢幕",
   "group_call_loader_failed_heading": "找不到通話",
   "group_call_loader_failed_text": "通話現在是端對端加密的，必須從首頁建立。這有助於確保每個人都使用相同的加密金鑰。",
   "hangup_button_label": "結束通話",
@@ -77,7 +75,6 @@
     "join_button": "加入通話",
     "leave_button": "回到最近的通話"
   },
-  "local_volume_label": "您的音量",
   "logging_in": "登入中…",
   "login_auth_links": "<0>建立帳號</0> 或<2>以訪客身份登入</2>",
   "login_title": "登入",
@@ -135,7 +132,6 @@
   "unmute_microphone_button_label": "將麥克風取消靜音",
   "version": "版本： {{version}}",
   "video_tile": {
-    "presenter_label": "{{displayName}} 正在展示",
     "sfu_participant_local": "您"
   },
   "waiting_for_participants": "等待其他參加者…"

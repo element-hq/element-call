@@ -53,10 +53,8 @@
     "video": "Відео"
   },
   "disconnected_banner": "Втрачено зв'язок з сервером.",
-  "exit_fullscreen_button_label": "Вийти з повноекранного режиму",
   "full_screen_view_description": "<0>Надсилання журналів налагодження допоможе нам виявити проблему.</0>",
   "full_screen_view_h1": "<0>Йой, щось пішло не за планом.</0>",
-  "fullscreen_button_label": "Повноекранний режим",
   "group_call_loader_failed_heading": "Виклик не знайдено",
   "group_call_loader_failed_text": "Відтепер виклики захищено наскрізним шифруванням, і їх потрібно створювати з домашньої сторінки. Це допомагає переконатися, що всі користувачі використовують один і той самий ключ шифрування.",
   "hangup_button_label": "Завершити виклик",
@@ -77,7 +75,6 @@
     "join_button": "Приєднатися до виклику",
     "leave_button": "Повернутися до недавніх"
   },
-  "local_volume_label": "Локальна гучність",
   "logging_in": "Вхід…",
   "login_auth_links": "<0>Створити обліковий запис</0> або <2>Отримати доступ як гість</2>",
   "login_title": "Увійти",
@@ -135,7 +132,6 @@
   "unmute_microphone_button_label": "Увімкнути мікрофон",
   "version": "Версія: {{version}}",
   "video_tile": {
-    "presenter_label": "{{displayName}} представляє",
     "sfu_participant_local": "Ви"
   },
   "waiting_for_participants": "Очікування на інших учасників…"
