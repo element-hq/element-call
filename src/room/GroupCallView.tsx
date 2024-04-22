@@ -29,7 +29,7 @@ import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { widget, ElementWidgetActions, JoinCallData } from "../widget";
-import { ErrorView, FullScreenView } from "../FullScreenView";
+import { FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { MatrixInfo } from "./VideoPreview";
 import { CallEndedView } from "./CallEndedView";
@@ -291,23 +291,8 @@ export const GroupCallView: FC<Props> = ({
 
   const { t } = useTranslation();
 
-  if (e2eeSystem.kind === E2eeType.NONE && !widget) {
-    // the url wants encryption, but we don't have a encryption system. (e.g. when joining a call without password)
-    // TODO: we need to figure out what we do with encryption going forward.
-    // In the SPA a room is unencrypted but uses a shared secret for the call (since we distribute via url that works)
-    // In embedded mode unencrypted rooms would make most sense to also call unencrypted.
-    // A call where one person joins with the spa and another person with the widget would be a problem.
-    return (
-      <ErrorView
-        error={
-          new Error(
-            `No E2EE key or other encryption system provided: ${import.meta.env.VITE_PRODUCT_NAME || "Element Call"} calls are always encrypted. Please make sure the URL you're using to join this call has been retrieved using the in-app button.`,
-          )
-        }
-      />
-    );
-  } else if (!isE2EESupportedBrowser()) {
-    // and we have a encryption system.
+  if (!isE2EESupportedBrowser() && e2eeSystem.kind !== E2eeType.NONE) {
+    // If we have a encryption system but the browser does not support it.
     return (
       <FullScreenView>
         <Heading>{t("browser_media_e2ee_unsupported_heading")}</Heading>
