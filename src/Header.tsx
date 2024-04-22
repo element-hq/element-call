@@ -158,9 +158,7 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
             aria-label={t("header_participants_label")}
           />
           <Text as="span" size="sm" weight="medium">
-            {participantCount
-              ? t("participant_count", { count: participantCount })
-              : t("participant_count_unkonwn")}
+            {t("participant_count", { count: participantCount ?? 0 })}
           </Text>
         </div>
       )}

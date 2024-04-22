@@ -102,7 +102,6 @@
   "mute_microphone_button_label": "Mute microphone",
   "participant_count_one": "{{count, number}}",
   "participant_count_other": "{{count, number}}",
-  "participant_count_unkonwn": "unknown",
   "rageshake_button_error_caption": "Retry sending logs",
   "rageshake_request_modal": {
     "body": "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.",
