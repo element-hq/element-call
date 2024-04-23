@@ -5,6 +5,10 @@ on:
       docker_tags:
         required: true
         type: string
+      artifact_run_id:
+        required: false
+        type: string
+        default: ${{ github.run_id }}
 
 env:
   REGISTRY: ghcr.io
@@ -25,7 +29,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id || github.run_id }}
+          run-id: ${{ inputs.artifact_run_id }}
           name: build-output
           path: dist
 

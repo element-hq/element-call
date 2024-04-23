@@ -26,6 +26,7 @@ jobs:
       deployments: write
     uses: ./.github/workflows/netlify.yaml
     with:
+      artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       pr_number: ${{ needs.prdetails.outputs.pr_number }}
       pr_head_full_name: ${{ github.event.workflow_run.head_repository.full_name }}
       pr_head_ref: ${{ needs.prdetails.outputs.pr_data_json && fromJSON(needs.prdetails.outputs.pr_data_json).head.ref }}
@@ -43,6 +44,7 @@ jobs:
       packages: write
     uses: ./.github/workflows/docker.yaml
     with:
+      artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       docker_tags: |
         type=sha,format=short,event=branch
         type=raw,value=pr_${{ needs.prdetails.outputs.pr_number }}
