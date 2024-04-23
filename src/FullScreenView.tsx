@@ -58,6 +58,7 @@ interface ErrorViewProps {
 
 export const ErrorView: FC<ErrorViewProps> = ({ error }) => {
   const location = useLocation();
+  const { confineToRoom } = useUrlParams();
   const { t } = useTranslation();
 
   useEffect(() => {
@@ -78,25 +79,26 @@ export const ErrorView: FC<ErrorViewProps> = ({ error }) => {
           : error.message}
       </p>
       <RageshakeButton description={`***Error View***: ${error.message}`} />
-      {location.pathname === "/" ? (
-        <Button
-          size="lg"
-          variant="default"
-          className={styles.homeLink}
-          onPress={onReload}
-        >
-          {t("return_home_button")}
-        </Button>
-      ) : (
-        <LinkButton
-          size="lg"
-          variant="default"
-          className={styles.homeLink}
-          to="/"
-        >
-          {t("return_home_button")}
-        </LinkButton>
-      )}
+      {!confineToRoom &&
+        (location.pathname === "/" ? (
+          <Button
+            size="lg"
+            variant="default"
+            className={styles.homeLink}
+            onPress={onReload}
+          >
+            {t("return_home_button")}
+          </Button>
+        ) : (
+          <LinkButton
+            size="lg"
+            variant="default"
+            className={styles.homeLink}
+            to="/"
+          >
+            {t("return_home_button")}
+          </LinkButton>
+        ))}
     </FullScreenView>
   );
 };

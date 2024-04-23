@@ -117,7 +117,7 @@ interface RoomHeaderInfoProps {
   name: string;
   avatarUrl: string | null;
   encrypted: boolean;
-  participantCount: number;
+  participantCount: number | null;
 }
 
 export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
@@ -150,7 +150,7 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
         </Heading>
         <EncryptionLock encrypted={encrypted} />
       </div>
-      {participantCount > 0 && (
+      {(participantCount ?? 0) > 0 && (
         <div className={styles.participantsLine}>
           <UserProfileIcon
             width={20}
@@ -158,7 +158,7 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
             aria-label={t("header_participants_label")}
           />
           <Text as="span" size="sm" weight="medium">
-            {t("participant_count", { count: participantCount })}
+            {t("participant_count", { count: participantCount ?? 0 })}
           </Text>
         </div>
       )}

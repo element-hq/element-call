@@ -15,12 +15,11 @@ limitations under the License.
 */
 
 import { useEffect, useMemo } from "react";
-import { Room } from "matrix-js-sdk";
 
 import { setLocalStorageItem, useLocalStorage } from "../useLocalStorage";
-import { useClient } from "../ClientContext";
 import { UrlParams, getUrlParams, useUrlParams } from "../UrlParams";
-import { widget } from "../widget";
+import { E2eeType } from "./e2eeType";
+import { useClient } from "../ClientContext";
 
 export function saveKeyForRoom(roomId: string, password: string): void {
   setLocalStorageItem(getRoomSharedKeyLocalStorageKey(roomId), password);
@@ -68,30 +67,37 @@ const useKeyFromUrl = (): [string, string] | [undefined, undefined] => {
     : [undefined, undefined];
 };
 
-export const useRoomSharedKey = (roomId: string): string | undefined => {
+export type Unencrypted = { kind: E2eeType.NONE };
+export type SharedSecret = { kind: E2eeType.SHARED_KEY; secret: string };
+export type PerParticipantE2EE = { kind: E2eeType.PER_PARTICIPANT };
+export type EncryptionSystem = Unencrypted | SharedSecret | PerParticipantE2EE;
+
+export function useRoomEncryptionSystem(roomId: string): EncryptionSystem {
+  const { client } = useClient();
+
   // make sure we've extracted the key from the URL first
   // (and we still need to take the value it returns because
   // the effect won't run in time for it to save to localstorage in
   // time for us to read it out again).
-  const [urlRoomId, passwordFormUrl] = useKeyFromUrl();
-
+  const [urlRoomId, passwordFromUrl] = useKeyFromUrl();
   const storedPassword = useInternalRoomSharedKey(roomId);
-
-  if (storedPassword) return storedPassword;
-  if (urlRoomId === roomId) return passwordFormUrl;
-  return undefined;
-};
-
-export const useIsRoomE2EE = (roomId: string): boolean | null => {
-  const { client } = useClient();
-  const room = useMemo(() => client?.getRoom(roomId), [roomId, client]);
-
-  return useMemo(() => !room || isRoomE2EE(room), [room]);
-};
-
-export function isRoomE2EE(room: Room): boolean {
-  // For now, rooms in widget mode are never considered encrypted.
-  // In the future, when widget mode gains encryption support, then perhaps we
-  // should inspect the e2eEnabled URL parameter here?
-  return widget === null && !room.getCanonicalAlias();
+  const room = client?.getRoom(roomId);
+  const e2eeSystem = <EncryptionSystem>useMemo(() => {
+    if (!room) return { kind: E2eeType.NONE };
+    if (storedPassword)
+      return {
+        kind: E2eeType.SHARED_KEY,
+        secret: storedPassword,
+      };
+    if (urlRoomId === roomId)
+      return {
+        kind: E2eeType.SHARED_KEY,
+        secret: passwordFromUrl,
+      };
+    if (room.hasEncryptionStateEvent()) {
+      return { kind: E2eeType.PER_PARTICIPANT };
+    }
+    return { kind: E2eeType.NONE };
+  }, [passwordFromUrl, room, roomId, storedPassword, urlRoomId]);
+  return e2eeSystem;
 }
