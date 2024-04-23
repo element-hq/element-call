@@ -58,6 +58,7 @@ jobs:
           path: "./element-call-*.tar.gz"
   publish_docker:
     needs: publish_tarball
+    if: always()
     permissions:
       contents: write
       packages: write
