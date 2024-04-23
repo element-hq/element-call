@@ -21,8 +21,8 @@ import { Button, Link } from "@vector-im/compound-web";
 import classNames from "classnames";
 import { useHistory } from "react-router-dom";
 
-import styles from "./LobbyView.module.css";
 import inCallStyles from "./InCallView.module.css";
+import styles from "./LobbyView.module.css";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { useLocationNavigation } from "../useLocationNavigation";
 import { MatrixInfo, VideoPreview } from "./VideoPreview";
@@ -36,16 +36,19 @@ import {
 } from "../button/Button";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useMediaQuery } from "../useMediaQuery";
+import { E2eeType } from "../e2ee/e2eeType";
 
 interface Props {
   client: MatrixClient;
   matrixInfo: MatrixInfo;
   muteStates: MuteStates;
   onEnter: () => void;
+  enterLabel?: JSX.Element | string;
   confineToRoom: boolean;
   hideHeader: boolean;
-  participantCount: number;
+  participantCount: number | null;
   onShareClick: (() => void) | null;
+  waitingForInvite?: boolean;
 }
 
 export const LobbyView: FC<Props> = ({
@@ -53,10 +56,12 @@ export const LobbyView: FC<Props> = ({
   matrixInfo,
   muteStates,
   onEnter,
+  enterLabel,
   confineToRoom,
   hideHeader,
   participantCount,
   onShareClick,
+  waitingForInvite,
 }) => {
   const { t } = useTranslation();
   useLocationNavigation();
@@ -104,7 +109,7 @@ export const LobbyView: FC<Props> = ({
                 id={matrixInfo.roomId}
                 name={matrixInfo.roomName}
                 avatarUrl={matrixInfo.roomAvatar}
-                encrypted={matrixInfo.roomEncrypted}
+                encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
                 participantCount={participantCount}
               />
             </LeftNav>
@@ -116,12 +121,16 @@ export const LobbyView: FC<Props> = ({
         <div className={styles.content}>
           <VideoPreview matrixInfo={matrixInfo} muteStates={muteStates}>
             <Button
-              className={styles.join}
-              size="lg"
-              onClick={onEnter}
+              className={classNames(styles.join, {
+                [styles.wait]: waitingForInvite,
+              })}
+              size={waitingForInvite ? "sm" : "lg"}
+              onClick={() => {
+                if (!waitingForInvite) onEnter();
+              }}
               data-testid="lobby_joinCall"
             >
-              {t("lobby.join_button")}
+              {enterLabel ?? t("lobby.join_button")}
             </Button>
           </VideoPreview>
           {!recentsButtonInFooter && recentsButton}
