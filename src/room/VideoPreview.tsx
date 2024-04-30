@@ -68,8 +68,8 @@ export const VideoPreview: FC<Props> = ({
     deviceId: devices.audioInput.selectedId,
   };
 
-  const deviceConfig = useMemo(() => {
-    return {
+  const tracks = usePreviewTracks(
+    {
       // The only reason we request audio here is to get the audio permission
       // request over with at the same time. But changing the audio settings
       // shouldn't cause this hook to recreate the track, which is why we
@@ -80,15 +80,13 @@ export const VideoPreview: FC<Props> = ({
       video: muteStates.video.enabled && {
         deviceId: devices.videoInput.selectedId,
       },
-    };
-  }, [devices.videoInput.selectedId, muteStates.video.enabled]);
-
-  const tracks = usePreviewTracks(deviceConfig, (error) => {
-    logger.error("Error while creating preview Tracks:", error);
-    muteStates.audio.setEnabled?.(false);
-    muteStates.video.setEnabled?.(false);
-  });
-
+    },
+    (error) => {
+      logger.error("Error while creating preview Tracks:", error);
+      muteStates.audio.setEnabled?.(false);
+      muteStates.video.setEnabled?.(false);
+    },
+  );
   const videoTrack = useMemo(
     () =>
       tracks?.find((t) => t.kind === Track.Kind.Video) as
