@@ -1,5 +1,4 @@
 port: 7880
-environment: dev
 bind_addresses:
   - "0.0.0.0"
 rtc:
