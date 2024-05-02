@@ -126,9 +126,9 @@ export type GridMode = "grid" | "spotlight";
 export type WindowMode = "normal" | "full screen" | "pip";
 
 /**
- * Sorting bins defining the order in which media tiles appear in the grid.
+ * Sorting bins defining the order in which media tiles appear in the layout.
  */
-enum GridBin {
+enum SortingBin {
   SelfStart,
   Presenters,
   Speakers,
@@ -235,74 +235,76 @@ export class CallViewModel extends ViewModel {
 
   // Lists of participants to "hold" on display, even if LiveKit claims that
   // they've left
-  private readonly remoteParticipantHolds = zip(
-    this.connectionState,
-    this.rawRemoteParticipants.pipe(sample(this.connectionState)),
-    (s, ps) => {
-      // Whenever we switch focuses, we should retain all the previous
-      // participants for at least POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS ms to
-      // give their clients time to switch over and avoid jarring layout shifts
-      if (s === ECAddonConnectionState.ECSwitchingFocus) {
-        return concat(
-          // Hold these participants
-          of({ hold: ps }),
-          // Wait for time to pass and the connection state to have changed
-          Promise.all([
-            new Promise<void>((resolve) =>
-              setTimeout(resolve, POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
-            ),
-            new Promise<void>((resolve) => {
-              const subscription = this.connectionState
-                .pipe(this.scope.bind())
-                .subscribe((s) => {
-                  if (s !== ECAddonConnectionState.ECSwitchingFocus) {
-                    resolve();
-                    subscription.unsubscribe();
-                  }
-                });
-            }),
-            // Then unhold them
-          ]).then(() => Promise.resolve({ unhold: ps })),
-        );
-      } else {
-        return EMPTY;
-      }
-    },
-  ).pipe(
-    mergeAll(),
-    // Aggregate the hold instructions into a single list showing which
-    // participants are being held
-    scan(
-      (holds, instruction) =>
-        "hold" in instruction
-          ? [instruction.hold, ...holds]
-          : holds.filter((h) => h !== instruction.unhold),
-      [] as RemoteParticipant[][],
-    ),
-    startWith([]),
-  );
+  private readonly remoteParticipantHolds: Observable<RemoteParticipant[][]> =
+    zip(
+      this.connectionState,
+      this.rawRemoteParticipants.pipe(sample(this.connectionState)),
+      (s, ps) => {
+        // Whenever we switch focuses, we should retain all the previous
+        // participants for at least POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS ms to
+        // give their clients time to switch over and avoid jarring layout shifts
+        if (s === ECAddonConnectionState.ECSwitchingFocus) {
+          return concat(
+            // Hold these participants
+            of({ hold: ps }),
+            // Wait for time to pass and the connection state to have changed
+            Promise.all([
+              new Promise<void>((resolve) =>
+                setTimeout(resolve, POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
+              ),
+              new Promise<void>((resolve) => {
+                const subscription = this.connectionState
+                  .pipe(this.scope.bind())
+                  .subscribe((s) => {
+                    if (s !== ECAddonConnectionState.ECSwitchingFocus) {
+                      resolve();
+                      subscription.unsubscribe();
+                    }
+                  });
+              }),
+              // Then unhold them
+            ]).then(() => Promise.resolve({ unhold: ps })),
+          );
+        } else {
+          return EMPTY;
+        }
+      },
+    ).pipe(
+      mergeAll(),
+      // Aggregate the hold instructions into a single list showing which
+      // participants are being held
+      scan(
+        (holds, instruction) =>
+          "hold" in instruction
+            ? [instruction.hold, ...holds]
+            : holds.filter((h) => h !== instruction.unhold),
+        [] as RemoteParticipant[][],
+      ),
+      startWith([]),
+    );
 
-  private readonly remoteParticipants = combineLatest(
-    [this.rawRemoteParticipants, this.remoteParticipantHolds],
-    (raw, holds) => {
-      const result = [...raw];
-      const resultIds = new Set(result.map((p) => p.identity));
+  private readonly remoteParticipants: Observable<RemoteParticipant[]> =
+    combineLatest(
+      [this.rawRemoteParticipants, this.remoteParticipantHolds],
+      (raw, holds) => {
+        const result = [...raw];
+        const resultIds = new Set(result.map((p) => p.identity));
 
-      // Incorporate the held participants into the list
-      for (const hold of holds) {
-        for (const p of hold) {
-          if (!resultIds.has(p.identity)) {
-            result.push(p);
-            resultIds.add(p.identity);
+        // Incorporate the held participants into the list
+        for (const hold of holds) {
+          for (const p of hold) {
+            if (!resultIds.has(p.identity)) {
+              result.push(p);
+              resultIds.add(p.identity);
+            }
           }
         }
-      }
 
-      return result;
-    },
-  );
+        return result;
+      },
+    );
 
-  private readonly mediaItems = state(
+  private readonly mediaItems: StateObservable<MediaItem[]> = state(
     combineLatest([
       this.remoteParticipants,
       observeParticipantMedia(this.livekitRoom.localParticipant),
@@ -362,63 +364,59 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  private readonly userMedia = this.mediaItems.pipe(
+  private readonly userMedia: Observable<UserMedia[]> = this.mediaItems.pipe(
     map((ms) => ms.filter((m): m is UserMedia => m instanceof UserMedia)),
   );
 
-  private readonly screenShares = this.mediaItems.pipe(
-    map((ms) => ms.filter((m): m is ScreenShare => m instanceof ScreenShare)),
-  );
+  private readonly screenShares: Observable<ScreenShare[]> =
+    this.mediaItems.pipe(
+      map((ms) => ms.filter((m): m is ScreenShare => m instanceof ScreenShare)),
+    );
 
-  private readonly spotlightSpeaker = this.userMedia.pipe(
-    switchMap((ms) =>
-      ms.length === 0
-        ? of([])
-        : combineLatest(
-            ms.map((m) => m.vm.speaking.pipe(map((s) => [m, s] as const))),
-          ),
-    ),
-    scan<(readonly [UserMedia, boolean])[], UserMedia | null, null>(
-      (prev, ms) =>
-        // Decide who to spotlight:
-        // If the previous speaker is still speaking, stick with them rather
-        // than switching eagerly to someone else
-        ms.find(([m, s]) => m === prev && s)?.[0] ??
-        // Otherwise, select anyone who is speaking
-        ms.find(([, s]) => s)?.[0] ??
-        // Otherwise, stick with the person who was last speaking
-        prev ??
-        // Otherwise, spotlight the local user
-        ms.find(([m]) => m.vm.local)?.[0] ??
+  private readonly spotlightSpeaker: Observable<UserMedia | null> =
+    this.userMedia.pipe(
+      switchMap((ms) =>
+        ms.length === 0
+          ? of([])
+          : combineLatest(
+              ms.map((m) => m.vm.speaking.pipe(map((s) => [m, s] as const))),
+            ),
+      ),
+      scan<(readonly [UserMedia, boolean])[], UserMedia | null, null>(
+        (prev, ms) =>
+          // Decide who to spotlight:
+          // If the previous speaker is still speaking, stick with them rather
+          // than switching eagerly to someone else
+          ms.find(([m, s]) => m === prev && s)?.[0] ??
+          // Otherwise, select anyone who is speaking
+          ms.find(([, s]) => s)?.[0] ??
+          // Otherwise, stick with the person who was last speaking
+          prev ??
+          // Otherwise, spotlight the local user
+          ms.find(([m]) => m.vm.local)?.[0] ??
+          null,
         null,
-      null,
-    ),
-    distinctUntilChanged(),
-    throttleTime(800, undefined, { leading: true, trailing: true }),
-  );
+      ),
+      distinctUntilChanged(),
+      throttleTime(800, undefined, { leading: true, trailing: true }),
+    );
 
-  private readonly grid = this.userMedia.pipe(
+  private readonly grid: Observable<UserMediaViewModel[]> = this.userMedia.pipe(
     switchMap((ms) => {
       const bins = ms.map((m) =>
         combineLatest(
           [m.speaker, m.presenter, m.vm.audioEnabled, m.vm.videoEnabled],
-          (speaker, presenter, audio, video) =>
-            [
-              m,
-              m.vm.local
-                ? GridBin.SelfStart
-                : presenter
-                  ? GridBin.Presenters
-                  : speaker
-                    ? GridBin.Speakers
-                    : video
-                      ? audio
-                        ? GridBin.VideoAndAudio
-                        : GridBin.Video
-                      : audio
-                        ? GridBin.Audio
-                        : GridBin.NoMedia,
-            ] as const,
+          (speaker, presenter, audio, video) => {
+            let bin: SortingBin;
+            if (m.vm.local) bin = SortingBin.SelfStart;
+            else if (presenter) bin = SortingBin.Presenters;
+            else if (speaker) bin = SortingBin.Speakers;
+            else if (video)
+              bin = audio ? SortingBin.VideoAndAudio : SortingBin.Video;
+            else bin = audio ? SortingBin.Audio : SortingBin.NoMedia;
+
+            return [m, bin] as const;
+          },
         ),
       );
       // Sort the media by bin order and generate a tile for each one
@@ -430,7 +428,7 @@ export class CallViewModel extends ViewModel {
     }),
   );
 
-  private readonly spotlight = combineLatest(
+  private readonly spotlight: Observable<MediaViewModel[]> = combineLatest(
     [this.screenShares, this.spotlightSpeaker],
     (screenShares, spotlightSpeaker): MediaViewModel[] =>
       screenShares.length > 0
@@ -439,6 +437,10 @@ export class CallViewModel extends ViewModel {
           ? []
           : [spotlightSpeaker.vm],
   );
+
+  // TODO: Make this react to changes in window dimensions and screen
+  // orientation
+  private readonly windowMode = of<WindowMode>("normal");
 
   private readonly _gridMode = new BehaviorSubject<GridMode>("grid");
   /**
@@ -449,10 +451,6 @@ export class CallViewModel extends ViewModel {
   public setGridMode(value: GridMode): void {
     this._gridMode.next(value);
   }
-
-  // TODO: Make this react to changes in window dimensions and screen
-  // orientation
-  private readonly windowMode = of<WindowMode>("normal");
 
   public readonly layout: StateObservable<Layout> = state(
     combineLatest([this._gridMode, this.windowMode], (gridMode, windowMode) => {
@@ -492,90 +490,91 @@ export class CallViewModel extends ViewModel {
    */
   // TODO: Get rid of this field, replacing it with the 'layout' field above
   // which keeps more details of the layout order internal to the view model
-  public readonly tiles = state(
-    combineLatest([
-      this.remoteParticipants,
-      observeParticipantMedia(this.livekitRoom.localParticipant),
-    ]).pipe(
-      scan((ts, [remoteParticipants, { participant: localParticipant }]) => {
-        const ps = [localParticipant, ...remoteParticipants];
-        const tilesById = new Map(ts.map((t) => [t.id, t]));
-        const now = Date.now();
-        let allGhosts = true;
+  public readonly tiles: StateObservable<TileDescriptor<MediaViewModel>[]> =
+    state(
+      combineLatest([
+        this.remoteParticipants,
+        observeParticipantMedia(this.livekitRoom.localParticipant),
+      ]).pipe(
+        scan((ts, [remoteParticipants, { participant: localParticipant }]) => {
+          const ps = [localParticipant, ...remoteParticipants];
+          const tilesById = new Map(ts.map((t) => [t.id, t]));
+          const now = Date.now();
+          let allGhosts = true;
 
-        const newTiles = ps.flatMap((p) => {
-          const userMediaId = p.identity;
-          const member = findMatrixMember(this.matrixRoom, userMediaId);
-          allGhosts &&= member === undefined;
-          const spokeRecently =
-            p.lastSpokeAt !== undefined && now - +p.lastSpokeAt <= 10000;
+          const newTiles = ps.flatMap((p) => {
+            const userMediaId = p.identity;
+            const member = findMatrixMember(this.matrixRoom, userMediaId);
+            allGhosts &&= member === undefined;
+            const spokeRecently =
+              p.lastSpokeAt !== undefined && now - +p.lastSpokeAt <= 10000;
 
-          // We always start with a local participant with the empty string as
-          // their ID before we're connected, this is fine and we'll be in
-          // "all ghosts" mode.
-          if (userMediaId !== "" && member === undefined) {
-            logger.warn(
-              `Ruh, roh! No matrix member found for SFU participant '${userMediaId}': creating g-g-g-ghost!`,
-            );
-          }
-
-          const userMediaVm =
-            tilesById.get(userMediaId)?.data ??
-            new UserMediaViewModel(userMediaId, member, p, this.encrypted);
-          tilesById.delete(userMediaId);
-
-          const userMediaTile: TileDescriptor<MediaViewModel> = {
-            id: userMediaId,
-            focused: false,
-            isPresenter: p.isScreenShareEnabled,
-            isSpeaker: (p.isSpeaking || spokeRecently) && !p.isLocal,
-            hasVideo: p.isCameraEnabled,
-            local: p.isLocal,
-            largeBaseSize: false,
-            data: userMediaVm,
-          };
-
-          if (p.isScreenShareEnabled) {
-            const screenShareId = `${userMediaId}:screen-share`;
-            const screenShareVm =
-              tilesById.get(screenShareId)?.data ??
-              new ScreenShareViewModel(
-                screenShareId,
-                member,
-                p,
-                this.encrypted,
+            // We always start with a local participant with the empty string as
+            // their ID before we're connected, this is fine and we'll be in
+            // "all ghosts" mode.
+            if (userMediaId !== "" && member === undefined) {
+              logger.warn(
+                `Ruh, roh! No matrix member found for SFU participant '${userMediaId}': creating g-g-g-ghost!`,
               );
-            tilesById.delete(screenShareId);
+            }
 
-            const screenShareTile: TileDescriptor<MediaViewModel> = {
-              id: screenShareId,
-              focused: true,
-              isPresenter: false,
-              isSpeaker: false,
-              hasVideo: true,
+            const userMediaVm =
+              tilesById.get(userMediaId)?.data ??
+              new UserMediaViewModel(userMediaId, member, p, this.encrypted);
+            tilesById.delete(userMediaId);
+
+            const userMediaTile: TileDescriptor<MediaViewModel> = {
+              id: userMediaId,
+              focused: false,
+              isPresenter: p.isScreenShareEnabled,
+              isSpeaker: (p.isSpeaking || spokeRecently) && !p.isLocal,
+              hasVideo: p.isCameraEnabled,
               local: p.isLocal,
-              largeBaseSize: true,
-              placeNear: userMediaId,
-              data: screenShareVm,
+              largeBaseSize: false,
+              data: userMediaVm,
             };
-            return [userMediaTile, screenShareTile];
-          } else {
-            return [userMediaTile];
-          }
-        });
 
-        // Any tiles left in the map are unused and should be destroyed
-        for (const t of tilesById.values()) t.data.destroy();
+            if (p.isScreenShareEnabled) {
+              const screenShareId = `${userMediaId}:screen-share`;
+              const screenShareVm =
+                tilesById.get(screenShareId)?.data ??
+                new ScreenShareViewModel(
+                  screenShareId,
+                  member,
+                  p,
+                  this.encrypted,
+                );
+              tilesById.delete(screenShareId);
 
-        // If every item is a ghost, that probably means we're still connecting
-        // and shouldn't bother showing anything yet
-        return allGhosts ? [] : newTiles;
-      }, [] as TileDescriptor<MediaViewModel>[]),
-      finalizeValue((ts) => {
-        for (const t of ts) t.data.destroy();
-      }),
-    ),
-  );
+              const screenShareTile: TileDescriptor<MediaViewModel> = {
+                id: screenShareId,
+                focused: true,
+                isPresenter: false,
+                isSpeaker: false,
+                hasVideo: true,
+                local: p.isLocal,
+                largeBaseSize: true,
+                placeNear: userMediaId,
+                data: screenShareVm,
+              };
+              return [userMediaTile, screenShareTile];
+            } else {
+              return [userMediaTile];
+            }
+          });
+
+          // Any tiles left in the map are unused and should be destroyed
+          for (const t of tilesById.values()) t.data.destroy();
+
+          // If every item is a ghost, that probably means we're still connecting
+          // and shouldn't bother showing anything yet
+          return allGhosts ? [] : newTiles;
+        }, [] as TileDescriptor<MediaViewModel>[]),
+        finalizeValue((ts) => {
+          for (const t of ts) t.data.destroy();
+        }),
+      ),
+    );
 
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room
