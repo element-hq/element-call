@@ -68,7 +68,8 @@ export const VideoPreview: FC<Props> = ({
     deviceId: devices.audioInput.selectedId,
   };
 
-  const localTrackOptions = useMemo(() => ({
+  const localTrackOptions = useMemo(
+    () => ({
       // The only reason we request audio here is to get the audio permission
       // request over with at the same time. But changing the audio settings
       // shouldn't cause this hook to recreate the track, which is why we
@@ -79,8 +80,9 @@ export const VideoPreview: FC<Props> = ({
       video: muteStates.video.enabled && {
         deviceId: devices.videoInput.selectedId,
       },
-    };
-  }, [devices.videoInput.selectedId, muteStates.video.enabled]);
+    }),
+    [devices.videoInput.selectedId, muteStates.video.enabled],
+  );
 
   const onError = useCallback(
     (error: Error) => {
