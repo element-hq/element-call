@@ -68,8 +68,7 @@ export const VideoPreview: FC<Props> = ({
     deviceId: devices.audioInput.selectedId,
   };
 
-  const localTrackOptions = useMemo(() => {
-    return {
+  const localTrackOptions = useMemo(() => ({
       // The only reason we request audio here is to get the audio permission
       // request over with at the same time. But changing the audio settings
       // shouldn't cause this hook to recreate the track, which is why we
