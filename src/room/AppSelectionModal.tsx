@@ -21,13 +21,14 @@ import PopOutIcon from "@vector-im/compound-design-tokens/icons/pop-out.svg?reac
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { Modal } from "../Modal";
-import { useIsRoomE2EE, useRoomSharedKey } from "../e2ee/sharedKeyManagement";
+import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { getAbsoluteRoomUrl } from "../matrix-utils";
 import styles from "./AppSelectionModal.module.css";
 import { editFragmentQuery } from "../UrlParams";
+import { E2eeType } from "../e2ee/e2eeType";
 
 interface Props {
-  roomId: string | null;
+  roomId: string;
 }
 
 export const AppSelectionModal: FC<Props> = ({ roomId }) => {
@@ -42,10 +43,9 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
     },
     [setOpen],
   );
+  const e2eeSystem = useRoomEncryptionSystem(roomId);
 
-  const roomSharedKey = useRoomSharedKey(roomId ?? "");
-  const roomIsEncrypted = useIsRoomE2EE(roomId ?? "");
-  if (roomIsEncrypted && roomSharedKey === undefined) {
+  if (e2eeSystem.kind === E2eeType.NONE) {
     logger.error(
       "Generating app redirect URL for encrypted room but don't have key available!",
     );
@@ -60,7 +60,7 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
     const url = new URL(
       roomId === null
         ? window.location.href
-        : getAbsoluteRoomUrl(roomId, undefined, roomSharedKey ?? undefined),
+        : getAbsoluteRoomUrl(roomId, e2eeSystem),
     );
     // Edit the URL to prevent the app selection prompt from appearing a second
     // time within the app, and to keep the user confined to the current room
@@ -73,7 +73,7 @@ export const AppSelectionModal: FC<Props> = ({ roomId }) => {
     const result = new URL("io.element.call:/");
     result.searchParams.set("url", url.toString());
     return result.toString();
-  }, [roomId, roomSharedKey]);
+  }, [e2eeSystem, roomId]);
 
   return (
     <Modal

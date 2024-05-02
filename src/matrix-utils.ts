@@ -19,25 +19,25 @@ import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
 import { LocalStorageCryptoStore } from "matrix-js-sdk/src/crypto/store/localStorage-crypto-store";
 import { MemoryCryptoStore } from "matrix-js-sdk/src/crypto/store/memory-crypto-store";
-import { createClient, ICreateClientOpts } from "matrix-js-sdk/src/matrix";
+import {
+  createClient,
+  ICreateClientOpts,
+  Preset,
+  Visibility,
+} from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
-import { Visibility, Preset } from "matrix-js-sdk/src/@types/partials";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 import { logger } from "matrix-js-sdk/src/logger";
-import {
-  GroupCallIntent,
-  GroupCallType,
-} from "matrix-js-sdk/src/webrtc/groupCall";
 import { secureRandomBase64Url } from "matrix-js-sdk/src/randomstring";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import IndexedDBWorker from "./IndexedDBWorker?worker";
-import { getUrlParams, PASSWORD_STRING } from "./UrlParams";
+import { generateUrlSearchParams, getUrlParams } from "./UrlParams";
 import { loadOlm } from "./olm";
 import { Config } from "./config/Config";
 import { E2eeType } from "./e2ee/e2eeType";
-import { saveKeyForRoom } from "./e2ee/sharedKeyManagement";
+import { EncryptionSystem, saveKeyForRoom } from "./e2ee/sharedKeyManagement";
 
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
@@ -338,16 +338,6 @@ export async function createRoom(
 
   const result = await createPromise;
 
-  logger.log(`Creating group call in ${result.room_id}`);
-
-  await client.createGroupCall(
-    result.room_id,
-    GroupCallType.Video,
-    false,
-    GroupCallIntent.Room,
-    true,
-  );
-
   let password;
   if (e2ee == E2eeType.SHARED_KEY) {
     password = secureRandomBase64Url(16);
@@ -365,39 +355,35 @@ export async function createRoom(
  * Returns an absolute URL to that will load Element Call with the given room
  * @param roomId ID of the room
  * @param roomName Name of the room
- * @param password e2e key for the room
+ * @param encryptionSystem what encryption (or EncryptionSystem.Unencrypted) the room uses
  */
 export function getAbsoluteRoomUrl(
   roomId: string,
+  encryptionSystem: EncryptionSystem,
   roomName?: string,
-  password?: string,
+  viaServers?: string[],
 ): string {
   return `${window.location.protocol}//${
     window.location.host
-  }${getRelativeRoomUrl(roomId, roomName, password)}`;
+  }${getRelativeRoomUrl(roomId, encryptionSystem, roomName, viaServers)}`;
 }
 
 /**
  * Returns a relative URL to that will load Element Call with the given room
  * @param roomId ID of the room
  * @param roomName Name of the room
- * @param password e2e key for the room
+ * @param encryptionSystem what encryption (or EncryptionSystem.Unencrypted) the room uses
  */
 export function getRelativeRoomUrl(
   roomId: string,
+  encryptionSystem: EncryptionSystem,
   roomName?: string,
-  password?: string,
+  viaServers?: string[],
 ): string {
-  // The password shouldn't need URL encoding here (we generate URL-safe ones) but encode
-  // it in case it came from another client that generated a non url-safe one
-  const encodedPassword = password ? encodeURIComponent(password) : undefined;
-  if (password && encodedPassword !== password) {
-    logger.info("Encoded call password used non URL-safe chars: buggy client?");
-  }
-
-  return `/room/#${
-    roomName ? "/" + roomAliasLocalpartFromRoomName(roomName) : ""
-  }?roomId=${roomId}${password ? "&" + PASSWORD_STRING + encodedPassword : ""}`;
+  const roomPart = roomName
+    ? "/" + roomAliasLocalpartFromRoomName(roomName)
+    : "";
+  return `/room/#${roomPart}?${generateUrlSearchParams(roomId, encryptionSystem, viaServers).toString()}`;
 }
 
 export function getAvatarUrl(

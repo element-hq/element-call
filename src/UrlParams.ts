@@ -16,10 +16,11 @@ limitations under the License.
 
 import { useMemo } from "react";
 import { useLocation } from "react-router-dom";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { Config } from "./config/Config";
-
-export const PASSWORD_STRING = "password=";
+import { EncryptionSystem } from "./e2ee/sharedKeyManagement";
+import { E2eeType } from "./e2ee/e2eeType";
 
 interface RoomIdentifier {
   roomAlias: string | null;
@@ -328,3 +329,32 @@ export const useRoomIdentifier = (): RoomIdentifier => {
     [pathname, search, hash],
   );
 };
+
+export function generateUrlSearchParams(
+  roomId: string,
+  encryptionSystem: EncryptionSystem,
+  viaServers?: string[],
+): URLSearchParams {
+  const params = new URLSearchParams();
+  // The password shouldn't need URL encoding here (we generate URL-safe ones) but encode
+  // it in case it came from another client that generated a non url-safe one
+  switch (encryptionSystem?.kind) {
+    case E2eeType.SHARED_KEY: {
+      const encodedPassword = encodeURIComponent(encryptionSystem.secret);
+      if (encodedPassword !== encryptionSystem.secret) {
+        logger.info(
+          "Encoded call password used non URL-safe chars: buggy client?",
+        );
+      }
+      params.set("password", encodedPassword);
+      break;
+    }
+    case E2eeType.PER_PARTICIPANT:
+      params.set("perParticipantE2EE", "true");
+      break;
+  }
+  params.set("roomId", roomId);
+  viaServers?.forEach((s) => params.set("viaServers", s));
+
+  return params;
+}

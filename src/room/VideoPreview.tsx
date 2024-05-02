@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useEffect, useMemo, useRef, FC, ReactNode } from "react";
+import { useEffect, useMemo, useRef, FC, ReactNode, useCallback } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { usePreviewTracks } from "@livekit/components-react";
@@ -32,6 +32,7 @@ import styles from "./VideoPreview.module.css";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { MuteStates } from "./MuteStates";
 import { useMediaQuery } from "../useMediaQuery";
+import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 
 export type MatrixInfo = {
   userId: string;
@@ -41,7 +42,7 @@ export type MatrixInfo = {
   roomName: string;
   roomAlias: string | null;
   roomAvatar: string | null;
-  roomEncrypted: boolean;
+  e2eeSystem: EncryptionSystem;
 };
 
 interface Props {
@@ -67,8 +68,8 @@ export const VideoPreview: FC<Props> = ({
     deviceId: devices.audioInput.selectedId,
   };
 
-  const tracks = usePreviewTracks(
-    {
+  const localTrackOptions = useMemo(
+    () => ({
       // The only reason we request audio here is to get the audio permission
       // request over with at the same time. But changing the audio settings
       // shouldn't cause this hook to recreate the track, which is why we
@@ -79,13 +80,21 @@ export const VideoPreview: FC<Props> = ({
       video: muteStates.video.enabled && {
         deviceId: devices.videoInput.selectedId,
       },
-    },
-    (error) => {
+    }),
+    [devices.videoInput.selectedId, muteStates.video.enabled],
+  );
+
+  const onError = useCallback(
+    (error: Error) => {
       logger.error("Error while creating preview Tracks:", error);
       muteStates.audio.setEnabled?.(false);
       muteStates.video.setEnabled?.(false);
     },
+    [muteStates.audio, muteStates.video],
   );
+
+  const tracks = usePreviewTracks(localTrackOptions, onError);
+
   const videoTrack = useMemo(
     () =>
       tracks?.find((t) => t.kind === Track.Kind.Video) as

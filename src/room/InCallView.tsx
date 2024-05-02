@@ -63,7 +63,7 @@ import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
-import { E2EEConfig, useLiveKit } from "../livekit/useLiveKit";
+import { useLiveKit } from "../livekit/useLiveKit";
 import { useFullscreen } from "./useFullscreen";
 import { useLayoutStates } from "../video-grid/Layout";
 import { useWakeLock } from "../useWakeLock";
@@ -76,13 +76,15 @@ import { ECConnectionState } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
 import { useCallViewModel } from "../state/CallViewModel";
 import { subscribe } from "../state/subscribe";
+import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { E2eeType } from "../e2ee/e2eeType";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 export interface ActiveCallProps
   extends Omit<InCallViewProps, "livekitRoom" | "connState"> {
-  e2eeConfig: E2EEConfig;
+  e2eeSystem: EncryptionSystem;
 }
 
 export const ActiveCall: FC<ActiveCallProps> = (props) => {
@@ -91,7 +93,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     props.rtcSession,
     props.muteStates,
     sfuConfig,
-    props.e2eeConfig,
+    props.e2eeSystem,
   );
 
   useEffect(() => {
@@ -238,7 +240,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
     const vm = useCallViewModel(
       rtcSession.room,
       livekitRoom,
-      matrixInfo.roomEncrypted,
+      matrixInfo.e2eeSystem.kind !== E2eeType.NONE,
       connState,
     );
     const items = useStateObservable(vm.tiles);
@@ -432,7 +434,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
                 id={matrixInfo.roomId}
                 name={matrixInfo.roomName}
                 avatarUrl={matrixInfo.roomAvatar}
-                encrypted={matrixInfo.roomEncrypted}
+                encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
                 participantCount={participantCount}
               />
             </LeftNav>

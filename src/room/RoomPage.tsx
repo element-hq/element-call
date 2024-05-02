@@ -15,8 +15,9 @@ limitations under the License.
 */
 
 import { FC, useEffect, useState, useCallback, ReactNode } from "react";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { logger } from "matrix-js-sdk/src/logger";
+import { useTranslation } from "react-i18next";
+import CheckIcon from "@vector-im/compound-design-tokens/icons/check.svg?react";
 
 import { useClientLegacy } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";
@@ -30,6 +31,11 @@ import { HomePage } from "../home/HomePage";
 import { platform } from "../Platform";
 import { AppSelectionModal } from "./AppSelectionModal";
 import { widget } from "../widget";
+import { GroupCallStatus } from "./useLoadGroupCall";
+import { LobbyView } from "./LobbyView";
+import { E2eeType } from "../e2ee/e2eeType";
+import { useProfile } from "../profile/useProfile";
+import { useMuteStates } from "./MuteStates";
 
 export const RoomPage: FC = () => {
   const {
@@ -40,7 +46,7 @@ export const RoomPage: FC = () => {
     displayName,
     skipLobby,
   } = useUrlParams();
-
+  const { t } = useTranslation();
   const { roomAlias, roomId, viaServers } = useRoomIdentifier();
 
   const roomIdOrAlias = roomId ?? roomAlias;
@@ -48,17 +54,14 @@ export const RoomPage: FC = () => {
     logger.error("No room specified");
   }
 
-  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const { registerPasswordlessUser } = useRegisterPasswordlessUser();
   const [isRegistering, setIsRegistering] = useState(false);
 
-  useEffect(() => {
-    // During the beta, opt into analytics by default
-    if (optInAnalytics === null && setOptInAnalytics) setOptInAnalytics(true);
-  }, [optInAnalytics, setOptInAnalytics]);
-
   const { loading, authenticated, client, error, passwordlessUser } =
     useClientLegacy();
+  const { avatarUrl, displayName: userDisplayName } = useProfile(client);
+
+  const muteStates = useMuteStates();
 
   useEffect(() => {
     // If we've finished loading, are not already authed and we've been given a display name as
@@ -77,19 +80,87 @@ export const RoomPage: FC = () => {
     registerPasswordlessUser,
   ]);
 
+  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
+  useEffect(() => {
+    // During the beta, opt into analytics by default
+    if (optInAnalytics === null && setOptInAnalytics) setOptInAnalytics(true);
+  }, [optInAnalytics, setOptInAnalytics]);
+
   const groupCallView = useCallback(
-    (rtcSession: MatrixRTCSession) => (
-      <GroupCallView
-        client={client!}
-        rtcSession={rtcSession}
-        isPasswordlessUser={passwordlessUser}
-        confineToRoom={confineToRoom}
-        preload={preload}
-        skipLobby={skipLobby}
-        hideHeader={hideHeader}
-      />
-    ),
-    [client, passwordlessUser, confineToRoom, preload, hideHeader, skipLobby],
+    (groupCallState: GroupCallStatus): JSX.Element => {
+      switch (groupCallState.kind) {
+        case "loaded":
+          return (
+            <GroupCallView
+              client={client!}
+              rtcSession={groupCallState.rtcSession}
+              isPasswordlessUser={passwordlessUser}
+              confineToRoom={confineToRoom}
+              preload={preload}
+              skipLobby={skipLobby}
+              hideHeader={hideHeader}
+              muteStates={muteStates}
+            />
+          );
+        case "waitForInvite":
+        case "canKnock": {
+          const knock =
+            groupCallState.kind === "canKnock" ? groupCallState.knock : null;
+          const label: string | JSX.Element =
+            groupCallState.kind === "canKnock" ? (
+              t("lobby.ask_to_join")
+            ) : (
+              <>
+                {t("lobby.waiting_for_invite")}
+                <CheckIcon />
+              </>
+            );
+          return (
+            <LobbyView
+              client={client!}
+              matrixInfo={{
+                userId: client!.getUserId() ?? "",
+                displayName: userDisplayName ?? "",
+                avatarUrl: avatarUrl ?? "",
+                roomAlias: null,
+                roomId: groupCallState.roomSummary.room_id,
+                roomName: groupCallState.roomSummary.name ?? "",
+                roomAvatar: groupCallState.roomSummary.avatar_url ?? null,
+                e2eeSystem: {
+                  kind: groupCallState.roomSummary[
+                    "im.nheko.summary.encryption"
+                  ]
+                    ? E2eeType.PER_PARTICIPANT
+                    : E2eeType.NONE,
+                },
+              }}
+              onEnter={(): void => knock?.()}
+              enterLabel={label}
+              waitingForInvite={groupCallState.kind === "waitForInvite"}
+              confineToRoom={confineToRoom}
+              hideHeader={hideHeader}
+              participantCount={null}
+              muteStates={muteStates}
+              onShareClick={null}
+            />
+          );
+        }
+        default:
+          return <> </>;
+      }
+    },
+    [
+      client,
+      passwordlessUser,
+      confineToRoom,
+      preload,
+      skipLobby,
+      hideHeader,
+      muteStates,
+      t,
+      userDisplayName,
+      avatarUrl,
+    ],
   );
 
   let content: ReactNode;
@@ -118,9 +189,9 @@ export const RoomPage: FC = () => {
     <>
       {content}
       {/* On Android and iOS, show a prompt to launch the mobile app. */}
-      {appPrompt && (platform === "android" || platform === "ios") && (
-        <AppSelectionModal roomId={roomId} />
-      )}
+      {appPrompt &&
+        (platform === "android" || platform === "ios") &&
+        roomId && <AppSelectionModal roomId={roomId} />}
     </>
   );
 };

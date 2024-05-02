@@ -17,7 +17,10 @@ limitations under the License.
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
-import { Room, isE2EESupported } from "livekit-client";
+import {
+  Room,
+  isE2EESupported as isE2EESupportedBrowser,
+} from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { JoinRule } from "matrix-js-sdk/src/matrix";
@@ -26,7 +29,7 @@ import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import { widget, ElementWidgetActions, JoinCallData } from "../widget";
-import { ErrorView, FullScreenView } from "../FullScreenView";
+import { FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { MatrixInfo } from "./VideoPreview";
 import { CallEndedView } from "./CallEndedView";
@@ -34,17 +37,16 @@ import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../media-utils";
 import { ActiveCall } from "./InCallView";
-import { MuteStates, useMuteStates } from "./MuteStates";
+import { MUTE_PARTICIPANT_COUNT, MuteStates } from "./MuteStates";
 import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
-import { useIsRoomE2EE, useRoomSharedKey } from "../e2ee/sharedKeyManagement";
+import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
 import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
-import { E2EEConfig } from "../livekit/useLiveKit";
 import { useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
 
@@ -62,6 +64,7 @@ interface Props {
   skipLobby: boolean;
   hideHeader: boolean;
   rtcSession: MatrixRTCSession;
+  muteStates: MuteStates;
 }
 
 export const GroupCallView: FC<Props> = ({
@@ -72,9 +75,22 @@ export const GroupCallView: FC<Props> = ({
   skipLobby,
   hideHeader,
   rtcSession,
+  muteStates,
 }) => {
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
+
+  // The mute state reactively gets updated once the participant count reaches the threshold.
+  // The user then still is able to unmute again.
+  // The more common case is that the user is muted from the start (participant count is already over the threshold).
+  const autoMuteHappened = useRef(false);
+  useEffect(() => {
+    if (autoMuteHappened.current) return;
+    if (memberships.length >= MUTE_PARTICIPANT_COUNT) {
+      muteStates.audio.setEnabled?.(false);
+      autoMuteHappened.current = true;
+    }
+  }, [autoMuteHappened, memberships, muteStates.audio]);
 
   useEffect(() => {
     window.rtcSession = rtcSession;
@@ -86,10 +102,8 @@ export const GroupCallView: FC<Props> = ({
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(rtcSession.room);
   const roomAvatar = useRoomAvatar(rtcSession.room);
-  const e2eeSharedKey = useRoomSharedKey(rtcSession.room.roomId);
   const { perParticipantE2EE, returnToLobby } = useUrlParams();
-  const roomEncrypted =
-    useIsRoomE2EE(rtcSession.room.roomId) || perParticipantE2EE;
+  const e2eeSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
 
   const matrixInfo = useMemo((): MatrixInfo => {
     return {
@@ -100,16 +114,16 @@ export const GroupCallView: FC<Props> = ({
       roomName,
       roomAlias: rtcSession.room.getCanonicalAlias(),
       roomAvatar,
-      roomEncrypted,
+      e2eeSystem,
     };
   }, [
+    client,
     displayName,
     avatarUrl,
-    rtcSession,
+    rtcSession.room,
     roomName,
     roomAvatar,
-    roomEncrypted,
-    client,
+    e2eeSystem,
   ]);
 
   // Count each member only once, regardless of how many devices they use
@@ -122,19 +136,8 @@ export const GroupCallView: FC<Props> = ({
   const latestDevices = useRef<MediaDevices>();
   latestDevices.current = deviceContext;
 
-  const muteStates = useMuteStates(memberships.length);
   const latestMuteStates = useRef<MuteStates>();
   latestMuteStates.current = muteStates;
-
-  const e2eeConfig = useMemo((): E2EEConfig => {
-    if (perParticipantE2EE) {
-      return { mode: E2eeType.PER_PARTICIPANT };
-    } else if (e2eeSharedKey) {
-      return { mode: E2eeType.SHARED_KEY, sharedKey: e2eeSharedKey };
-    } else {
-      return { mode: E2eeType.NONE };
-    }
-  }, [perParticipantE2EE, e2eeSharedKey]);
 
   useEffect(() => {
     const defaultDeviceSetup = async (
@@ -288,17 +291,8 @@ export const GroupCallView: FC<Props> = ({
 
   const { t } = useTranslation();
 
-  if (roomEncrypted && !perParticipantE2EE && !e2eeSharedKey) {
-    return (
-      <ErrorView
-        error={
-          new Error(
-            "No E2EE key provided: please make sure the URL you're using to join this call has been retrieved using the in-app button.",
-          )
-        }
-      />
-    );
-  } else if (!isE2EESupported() && roomEncrypted) {
+  if (!isE2EESupportedBrowser() && e2eeSystem.kind !== E2eeType.NONE) {
+    // If we have a encryption system but the browser does not support it.
     return (
       <FullScreenView>
         <Heading>{t("browser_media_e2ee_unsupported_heading")}</Heading>
@@ -345,7 +339,7 @@ export const GroupCallView: FC<Props> = ({
           onLeave={onLeave}
           hideHeader={hideHeader}
           muteStates={muteStates}
-          e2eeConfig={e2eeConfig}
+          e2eeSystem={e2eeSystem}
           //otelGroupCallMembership={otelGroupCallMembership}
           onShareClick={onShareClick}
         />

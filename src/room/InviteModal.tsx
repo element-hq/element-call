@@ -25,8 +25,8 @@ import useClipboard from "react-use-clipboard";
 import { Modal } from "../Modal";
 import { getAbsoluteRoomUrl } from "../matrix-utils";
 import styles from "./InviteModal.module.css";
-import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
 import { Toast } from "../Toast";
+import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 
 interface Props {
   room: Room;
@@ -36,11 +36,11 @@ interface Props {
 
 export const InviteModal: FC<Props> = ({ room, open, onDismiss }) => {
   const { t } = useTranslation();
-  const roomSharedKey = useRoomSharedKey(room.roomId);
+  const e2eeSystem = useRoomEncryptionSystem(room.roomId);
+
   const url = useMemo(
-    () =>
-      getAbsoluteRoomUrl(room.roomId, room.name, roomSharedKey ?? undefined),
-    [room, roomSharedKey],
+    () => getAbsoluteRoomUrl(room.roomId, e2eeSystem, room.name),
+    [e2eeSystem, room.name, room.roomId],
   );
   const [, setCopied] = useClipboard(url);
   const [toastOpen, setToastOpen] = useState(false);

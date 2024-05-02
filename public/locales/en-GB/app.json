@@ -60,8 +60,17 @@
   "disconnected_banner": "Connectivity to the server has been lost.",
   "full_screen_view_description": "<0>Submitting debug logs will help us track down the problem.</0>",
   "full_screen_view_h1": "<0>Oops, something's gone wrong.</0>",
-  "group_call_loader_failed_heading": "Call not found",
-  "group_call_loader_failed_text": "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.",
+  "group_call_loader": {
+    "banned_body": "You have been banned from the room.",
+    "banned_heading": "Banned",
+    "call_ended_body": "You have been removed from the call.",
+    "call_ended_heading": "Call ended",
+    "failed_heading": "Call not found",
+    "failed_text": "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.",
+    "knock_reject_body": "The room members declined your request to join.",
+    "knock_reject_heading": "Not allowed to join",
+    "reason": "Reason"
+  },
   "hangup_button_label": "End call",
   "header_label": "Element Call Home",
   "header_participants_label": "Participants",
@@ -77,8 +86,10 @@
   "layout_grid_label": "Grid",
   "layout_spotlight_label": "Spotlight",
   "lobby": {
+    "ask_to_join": "Ask to join call",
     "join_button": "Join call",
-    "leave_button": "Back to recents"
+    "leave_button": "Back to recents",
+    "waiting_for_invite": "Request sent"
   },
   "log_in": "Log In",
   "logging_in": "Logging in…",
