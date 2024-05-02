@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { TileDescriptor } from "../../src/state/CallViewModel";
-import { Tile, reorderTiles } from "../../src/video-grid/VideoGrid";
+import { Tile, reorderTiles } from "../../src/grid/LegacyGrid";
 
 const alice: Tile<unknown> = {
   key: "alice",

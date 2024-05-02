@@ -44,7 +44,7 @@ export const useReactiveState = <T>(
   if (
     prevDeps.current === undefined ||
     deps.length !== prevDeps.current.length ||
-    deps.some((d, i) => d !== prevDeps.current![i])
+    deps.some((d, i) => !Object.is(d, prevDeps.current![i]))
   ) {
     state.current = updateFn(state.current);
   }

@@ -1,5 +1,5 @@
 /*
-Copyright 2021 New Vector Ltd
+Copyright 2021-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ limitations under the License.
   flex-direction: column;
   height: 100%;
   width: 100%;
+  overflow-y: auto;
 }
 
 .controlsOverlay {
@@ -46,16 +47,28 @@ limitations under the License.
   margin-bottom: 0;
 }
 
+.header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0) 0%,
+    var(--cpd-color-bg-canvas-default) 100%
+  );
+}
+
 .footer {
   position: sticky;
   inset-block-end: 0;
+  z-index: 1;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   grid-template-areas: "logo buttons layout";
   align-items: center;
   gap: var(--cpd-space-3x);
   padding-block: var(--cpd-space-4x);
-  padding-inline: var(--inline-content-inset);
+  margin-inline: var(--inline-content-inset);
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
@@ -108,4 +121,24 @@ limitations under the License.
 
 .footerHidden {
   display: none;
+}
+
+.fixedGrid {
+  position: absolute;
+  inline-size: calc(100% - 2 * var(--inline-content-inset));
+  align-self: center;
+  /* Disable pointer events so the overlay doesn't block interaction with
+  elements behind it */
+  pointer-events: none;
+}
+
+.fixedGrid > :not(:first-child) {
+  pointer-events: initial;
+}
+
+.scrollingGrid {
+  position: relative;
+  flex-grow: 1;
+  inline-size: calc(100% - 2 * var(--inline-content-inset));
+  align-self: center;
 }
