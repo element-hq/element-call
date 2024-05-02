@@ -1,0 +1,153 @@
+/*
+Copyright 2024 New Vector Ltd
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+.tile {
+  position: absolute;
+  top: 0;
+  --border-width: var(--cpd-space-3x);
+}
+
+.tile.maximised {
+  position: relative;
+  flex-grow: 1;
+  --border-width: 0px;
+}
+
+.border {
+  box-sizing: border-box;
+  block-size: 100%;
+  inline-size: 100%;
+}
+
+.tile.maximised .border {
+  display: contents;
+}
+
+.contents {
+  display: flex;
+  border-radius: var(--cpd-space-6x);
+  contain: strict;
+  overflow: auto;
+  scrollbar-width: none;
+  scroll-snap-type: inline mandatory;
+  scroll-snap-stop: always;
+  /* It would be nice to use smooth scrolling here, but Firefox has a bug where
+  it will not re-snap if the snapping point changes while it's smoothly
+  animating to another snapping point.
+  scroll-behavior: smooth; */
+}
+
+.tile.maximised .contents {
+  border-radius: 0;
+}
+
+.item {
+  height: 100%;
+  flex-basis: 100%;
+  flex-shrink: 0;
+  --media-view-fg-inset: 10px;
+}
+
+.item.snap {
+  scroll-snap-align: start;
+}
+
+.advance {
+  appearance: none;
+  cursor: pointer;
+  opacity: 0;
+  padding: calc(var(--cpd-space-3x) - var(--cpd-border-width-1));
+  border: var(--cpd-border-width-1) solid
+    var(--cpd-color-border-interactive-secondary);
+  border-radius: var(--cpd-radius-pill-effect);
+  background: var(--cpd-color-alpha-gray-1400);
+  box-shadow: var(--small-drop-shadow);
+  transition-duration: 0.1s;
+  transition-property: opacity, background-color, border-color;
+  position: absolute;
+  z-index: 1;
+  /* Center the button vertically on the tile */
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.advance > svg {
+  display: block;
+  color: var(--cpd-color-icon-on-solid-primary);
+}
+
+@media (hover) {
+  .advance:hover {
+    border-color: var(--cpd-color-bg-action-primary-hovered);
+    background: var(--cpd-color-bg-action-primary-hovered);
+  }
+}
+
+.advance:active {
+  border-color: var(--cpd-color-bg-action-primary-pressed);
+  background: var(--cpd-color-bg-action-primary-pressed);
+}
+
+.back {
+  inset-inline-start: var(--cpd-space-1x);
+}
+
+.next {
+  inset-inline-end: var(--cpd-space-1x);
+}
+
+.fullScreen {
+  appearance: none;
+  cursor: pointer;
+  opacity: 0;
+  padding: var(--cpd-space-2x);
+  border: none;
+  border-radius: var(--cpd-radius-pill-effect);
+  background: var(--cpd-color-alpha-gray-1400);
+  box-shadow: var(--small-drop-shadow);
+  transition-duration: 0.1s;
+  transition-property: opacity, background-color;
+  position: absolute;
+  z-index: 1;
+  --inset: calc(var(--border-width) + 6px);
+  inset-block-end: var(--inset);
+  inset-inline-end: var(--inset);
+}
+
+.fullScreen > svg {
+  display: block;
+  color: var(--cpd-color-icon-on-solid-primary);
+}
+
+@media (hover) {
+  .fullScreen:hover {
+    background: var(--cpd-color-bg-action-primary-hovered);
+  }
+}
+
+.fullScreen:active {
+  background: var(--cpd-color-bg-action-primary-pressed);
+}
+
+@media (hover) {
+  .tile:hover > button {
+    opacity: 1;
+  }
+}
+
+.tile:has(:focus-visible) > button {
+  opacity: 1;
+}

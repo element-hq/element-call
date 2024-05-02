@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import classNames from "classnames";
-import { FC, HTMLAttributes, ReactNode } from "react";
+import { FC, HTMLAttributes, ReactNode, forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@vector-im/compound-web";
@@ -32,13 +32,21 @@ interface HeaderProps extends HTMLAttributes<HTMLElement> {
   className?: string;
 }
 
-export const Header: FC<HeaderProps> = ({ children, className, ...rest }) => {
-  return (
-    <header className={classNames(styles.header, className)} {...rest}>
-      {children}
-    </header>
-  );
-};
+export const Header = forwardRef<HTMLElement, HeaderProps>(
+  ({ children, className, ...rest }, ref) => {
+    return (
+      <header
+        ref={ref}
+        className={classNames(styles.header, className)}
+        {...rest}
+      >
+        {children}
+      </header>
+    );
+  },
+);
+
+Header.displayName = "Header";
 
 interface LeftNavProps extends HTMLAttributes<HTMLElement> {
   children: ReactNode;
