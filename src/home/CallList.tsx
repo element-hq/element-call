@@ -26,7 +26,7 @@ import styles from "./CallList.module.css";
 import { getAbsoluteRoomUrl, getRelativeRoomUrl } from "../matrix-utils";
 import { Body } from "../typography/Typography";
 import { GroupCallRoom } from "./useGroupCallRooms";
-import { useRoomSharedKey } from "../e2ee/sharedKeyManagement";
+import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 
 interface CallListProps {
   rooms: GroupCallRoom[];
@@ -66,16 +66,11 @@ interface CallTileProps {
 }
 
 const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room }) => {
-  const roomSharedKey = useRoomSharedKey(room.roomId);
-
+  const roomEncryptionSystem = useRoomEncryptionSystem(room.roomId);
   return (
     <div className={styles.callTile}>
       <Link
-        to={getRelativeRoomUrl(
-          room.roomId,
-          room.name,
-          roomSharedKey ?? undefined,
-        )}
+        to={getRelativeRoomUrl(room.roomId, roomEncryptionSystem, room.name)}
         className={styles.callTileLink}
       >
         <Avatar id={room.roomId} name={name} size={Size.LG} src={avatarUrl} />
@@ -89,11 +84,8 @@ const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room }) => {
       <CopyButton
         className={styles.copyButton}
         variant="icon"
-        value={getAbsoluteRoomUrl(
-          room.roomId,
-          room.name,
-          roomSharedKey ?? undefined,
-        )}
+        // Todo add the viaServers to the created link
+        value={getAbsoluteRoomUrl(room.roomId, roomEncryptionSystem, room.name)}
       />
     </div>
   );

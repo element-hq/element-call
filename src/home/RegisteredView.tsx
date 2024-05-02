@@ -78,12 +78,14 @@ export const RegisteredView: FC<Props> = ({ client }) => {
           roomName,
           E2eeType.SHARED_KEY,
         );
+        if (!createRoomResult.password)
+          throw new Error("Failed to create room with shared secret");
 
         history.push(
           getRelativeRoomUrl(
             createRoomResult.roomId,
+            { kind: E2eeType.SHARED_KEY, secret: createRoomResult.password },
             roomName,
-            createRoomResult.password,
           ),
         );
       }

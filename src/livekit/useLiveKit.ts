@@ -41,11 +41,7 @@ import {
 } from "./useECConnectionState";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
 import { E2eeType } from "../e2ee/e2eeType";
-
-export type E2EEConfig = {
-  mode: E2eeType;
-  sharedKey?: string;
-};
+import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
@@ -56,41 +52,35 @@ export function useLiveKit(
   rtcSession: MatrixRTCSession,
   muteStates: MuteStates,
   sfuConfig: SFUConfig | undefined,
-  e2eeConfig: E2EEConfig,
+  e2eeSystem: EncryptionSystem,
 ): UseLivekitResult {
   const e2eeOptions = useMemo((): E2EEOptions | undefined => {
-    if (e2eeConfig.mode === E2eeType.NONE) return undefined;
+    if (e2eeSystem.kind === E2eeType.NONE) return undefined;
 
-    if (e2eeConfig.mode === E2eeType.PER_PARTICIPANT) {
+    if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
       return {
         keyProvider: new MatrixKeyProvider(),
         worker: new E2EEWorker(),
       };
-    } else if (
-      e2eeConfig.mode === E2eeType.SHARED_KEY &&
-      e2eeConfig.sharedKey
-    ) {
+    } else if (e2eeSystem.kind === E2eeType.SHARED_KEY && e2eeSystem.secret) {
       return {
         keyProvider: new ExternalE2EEKeyProvider(),
         worker: new E2EEWorker(),
       };
     }
-  }, [e2eeConfig]);
+  }, [e2eeSystem]);
 
   useEffect(() => {
-    if (e2eeConfig.mode === E2eeType.NONE || !e2eeOptions) return;
+    if (e2eeSystem.kind === E2eeType.NONE || !e2eeOptions) return;
 
-    if (e2eeConfig.mode === E2eeType.PER_PARTICIPANT) {
+    if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
       (e2eeOptions.keyProvider as MatrixKeyProvider).setRTCSession(rtcSession);
-    } else if (
-      e2eeConfig.mode === E2eeType.SHARED_KEY &&
-      e2eeConfig.sharedKey
-    ) {
+    } else if (e2eeSystem.kind === E2eeType.SHARED_KEY && e2eeSystem.secret) {
       (e2eeOptions.keyProvider as ExternalE2EEKeyProvider).setKey(
-        e2eeConfig.sharedKey,
+        e2eeSystem.secret,
       );
     }
-  }, [e2eeOptions, e2eeConfig, rtcSession]);
+  }, [e2eeOptions, e2eeSystem, rtcSession]);
 
   const initialMuteStates = useRef<MuteStates>(muteStates);
   const devices = useMediaDevices();
@@ -131,9 +121,9 @@ export function useLiveKit(
   // useEffect() with an argument that references itself, if E2EE is enabled
   const room = useMemo(() => {
     const r = new Room(roomOptions);
-    r.setE2EEEnabled(e2eeConfig.mode !== E2eeType.NONE);
+    r.setE2EEEnabled(e2eeSystem.kind !== E2eeType.NONE);
     return r;
-  }, [roomOptions, e2eeConfig]);
+  }, [roomOptions, e2eeSystem]);
 
   const connectionState = useECConnectionState(
     {

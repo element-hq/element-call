@@ -15,7 +15,7 @@ env:
 
 jobs:
   build_element_call:
-    if: ${{ github.event.workflow_run.event == 'release' }}
+    if: ${{ github.event_name == 'release' }}
     uses: ./.github/workflows/element-call.yaml
     with:
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
@@ -25,6 +25,8 @@ jobs:
       SENTRY_URL: ${{ secrets.SENTRY_URL }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
   publish_tarball:
+    needs: build_element_call
+    if: always()
     name: Publish tarball
     runs-on: ubuntu-latest
     outputs:
@@ -40,7 +42,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ github.event.workflow_run.id || github.run_id }}
           name: build-output
           path: dist
       - name: Create Tarball
@@ -49,13 +51,14 @@ jobs:
         run: |
           tar --numeric-owner --transform "s/dist/element-call-${TARBALL_VERSION}/" -cvzf element-call-${TARBALL_VERSION}.tar.gz dist
       - name: Upload
-        uses: actions/upload-artifact@b06cde36fc32a3ee94080e87258567f73f921537
+        uses: actions/upload-artifact@552bf3722c16e81001aea7db72d8cedf64eb5f68
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
           path: "./element-call-*.tar.gz"
   publish_docker:
     needs: publish_tarball
+    if: always()
     permissions:
       contents: write
       packages: write

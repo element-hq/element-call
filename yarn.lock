@@ -1120,9 +1120,9 @@
     to-fast-properties "^2.0.0"
 
 "@bufbuild/protobuf@^1.7.2":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.8.0.tgz#1c8651ea34adb8019b483e09de02aeeb1cd57d79"
-  integrity sha512-qR9FwI8QKIveDnUYutvfzbC21UZJJryYrLuZGjeZ/VGz+vXelUkK+xgkOHsvPEdYEdxtgUUq4313N8QtOehJ1Q==
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.9.0.tgz#fffac3183059a41ceef5311e07e3724d426a95c4"
+  integrity sha512-W7gp8Q/v1NlCZLsv8pQ3Y0uCu/SHgXOVFK+eUluUKWXmsb6VHkpNx0apdOWWcDbB9sJoKeP8uPrjmehJz6xETQ==
 
 "@csstools/cascade-layer-name-parser@^1.0.8":
   version "1.0.8"
@@ -1718,17 +1718,7 @@
   resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.4.0.tgz#08d6c5e20cf7e4cc02fd181c4b0c225cd31dbb60"
   integrity sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==
 
-"@livekit/components-core@0.9.3":
-  version "0.9.3"
-  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.9.3.tgz#327980a784a9e62cff100915f6f952714f499860"
-  integrity sha512-RUhKw/eg2frnOHq6Xurfg4HqawmdpC/o8Dkp+J6PgnieA6mSQOOez7mUdPNqsAybnLujjJvVJ735sZJRqTb1Sg==
-  dependencies:
-    "@floating-ui/dom" "1.6.3"
-    email-regex "5.0.0"
-    loglevel "1.9.1"
-    rxjs "7.8.1"
-
-"@livekit/components-core@^0.10.0":
+"@livekit/components-core@0.10.0", "@livekit/components-core@^0.10.0":
   version "0.10.0"
   resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.10.0.tgz#dfd1ccf72518d89bba2d9d10fadbbf2dd47ed321"
   integrity sha512-TSsIG2BRLABT5FP+5sueZgkByGYyFhv3UTb8fneWchvQRBHtiU9s4FF8SIoAw9z3znhwp1tKaJyuIyKp7k0Juw==
@@ -1739,11 +1729,11 @@
     rxjs "7.8.1"
 
 "@livekit/components-react@^2.0.0":
-  version "2.0.6"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.0.6.tgz#c4ff790180f86f6a3cfc341fe5c0b93bac8bf92b"
-  integrity sha512-L0iaIPasPJLftI6FBcWcGicmGpw5LKKFvMV6GSyuv0q8oYrmUYoLLQdGmw7eW4q+7bQFAcFHeD9BzMXdprzCgw==
+  version "2.2.0"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.2.0.tgz#a2c9a1568055cf07d4784b98336f28d574638bf8"
+  integrity sha512-TDa2YNBphkdf2dz85pEZs1UBl8wD/LHFeYupNoTqjtlLVlTXpr09Buv3/eegQFJhXoDSK6fAYqKZ4U/oYydv/w==
   dependencies:
-    "@livekit/components-core" "0.9.3"
+    "@livekit/components-core" "0.10.0"
     "@react-hook/latest" "1.0.3"
     clsx "2.1.0"
     usehooks-ts "2.16.0"
@@ -1755,10 +1745,10 @@
   dependencies:
     "@bufbuild/protobuf" "^1.7.2"
 
-"@matrix-org/matrix-sdk-crypto-wasm@^4.6.0":
-  version "4.6.0"
-  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-4.6.0.tgz#35224214c7638abbe2bc91fb4fa4fb022a1a2bf0"
-  integrity sha512-v9PFWzSTWMlZKbyk3PPsZjUtOEQ7FIz5USD3lFRUWiS4pv0FOKR125VOUnR5Z/kAty57JXCHDAexCln3zE2Fww==
+"@matrix-org/matrix-sdk-crypto-wasm@^4.9.0":
+  version "4.9.0"
+  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-4.9.0.tgz#9dfed83e33f760650596c4e5c520e5e4c53355d2"
+  integrity sha512-/bgA4QfE7qkK6GFr9hnhjAvRSebGrmEJxukU0ukbudZcYvbzymoBBM8j3HeULXZT8kbw8WH6z63txYTMCBSDOA==
 
 "@matrix-org/olm@https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.14.tgz":
   version "3.2.14"
@@ -3289,9 +3279,9 @@
   integrity sha512-Klz949h02Gz2uZCMGwDUSDS1YBlTdDDgbWHi+81l29tQALUtvz4rAYi5uoVhE5Lagoq6DeqAUlbrHvW/mXDgdQ==
 
 "@types/node@*", "@types/node@^20.0.0":
-  version "20.12.6"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.12.6.tgz#72d068870518d7da1d97b49db401e2d6a1805294"
-  integrity sha512-3KurE8taB8GCvZBPngVbp0lk5CKi8M9f9k1rsADh0Evdz5SzJ+Q+Hx9uHoFGsLnLnd1xmkDQr2hVhlA0Mn0lKQ==
+  version "20.12.7"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-20.12.7.tgz#04080362fa3dd6c5822061aa3124f5c152cff384"
+  integrity sha512-wq0cICSkRLVaf3UGLMGItu/PtdY7oaXaI/RVU+xliKVOtRna3PRY57ZDfztpDL0n11vfymMUnXv8QwYCO7L1wg==
   dependencies:
     undici-types "~5.26.4"
 
@@ -6164,9 +6154,9 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^2.0.2:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.1.0.tgz#3c4f2754eb38933a6d232fe35717bfe3a378bdcf"
-  integrity sha512-nJwfRKw1Pafd2napk66l30dlBjsv1VZ+na3mzNezcAFAYT2lQ4Gch57TdbMBDYo+QfrZ98s+kuZzsFhBwM5rqw==
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.1.1.tgz#c3e1cc2f11727b7a760c801ba98a97585dda031f"
+  integrity sha512-ffnXHQt210GPJ9sR846o7g0lCg/3TJqZxdu55mzQFS1YXGgn9PYKGzcAhKtuOsQ0NEkkn1zKQ0ABHBt7iADiqg==
   dependencies:
     "@livekit/protocol" "1.13.0"
     events "^3.3.0"
@@ -6308,13 +6298,13 @@ matrix-events-sdk@0.0.1:
   resolved "https://registry.yarnpkg.com/matrix-events-sdk/-/matrix-events-sdk-0.0.1.tgz#c8c38911e2cb29023b0bbac8d6f32e0de2c957dd"
   integrity sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#d55c6a36df539f6adacc335efe5b9be27c9cee4a":
-  version "31.4.0"
-  uid d55c6a36df539f6adacc335efe5b9be27c9cee4a
-  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/d55c6a36df539f6adacc335efe5b9be27c9cee4a"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#e874468ba3e84819cf4b342d2e66af67ab4cf804":
+  version "32.0.0"
+  uid e874468ba3e84819cf4b342d2e66af67ab4cf804
+  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/e874468ba3e84819cf4b342d2e66af67ab4cf804"
   dependencies:
     "@babel/runtime" "^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm" "^4.6.0"
+    "@matrix-org/matrix-sdk-crypto-wasm" "^4.9.0"
     another-json "^0.2.0"
     bs58 "^5.0.0"
     content-type "^1.0.4"
