@@ -19,9 +19,13 @@ import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import { IndexedDBCryptoStore } from "matrix-js-sdk/src/crypto/store/indexeddb-crypto-store";
 import { LocalStorageCryptoStore } from "matrix-js-sdk/src/crypto/store/localStorage-crypto-store";
 import { MemoryCryptoStore } from "matrix-js-sdk/src/crypto/store/memory-crypto-store";
-import { createClient, ICreateClientOpts } from "matrix-js-sdk/src/matrix";
+import {
+  createClient,
+  ICreateClientOpts,
+  Preset,
+  Visibility,
+} from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
-import { Visibility, Preset } from "matrix-js-sdk/src/@types/partials";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 import { logger } from "matrix-js-sdk/src/logger";
 import { secureRandomBase64Url } from "matrix-js-sdk/src/randomstring";
