@@ -88,35 +88,27 @@ export interface TileDescriptor<T> {
   data: T;
 }
 
-/**
- * A media tile within the call interface.
- */
-export interface Tile<T> {
-  id: string;
-  data: T;
-}
-
 export interface GridLayout {
   type: "grid";
-  spotlight?: Tile<MediaViewModel[]>;
-  grid: Tile<UserMediaViewModel>[];
+  spotlight?: MediaViewModel[];
+  grid: UserMediaViewModel[];
 }
 
 export interface SpotlightLayout {
   type: "spotlight";
-  spotlight: Tile<MediaViewModel[]>;
-  grid: Tile<UserMediaViewModel>[];
+  spotlight: MediaViewModel[];
+  grid: UserMediaViewModel[];
 }
 
 export interface FullScreenLayout {
   type: "full screen";
-  spotlight: Tile<MediaViewModel[]>;
-  pip?: Tile<UserMediaViewModel>;
+  spotlight: MediaViewModel[];
+  pip?: UserMediaViewModel;
 }
 
 export interface PipLayout {
   type: "pip";
-  spotlight: Tile<MediaViewModel>;
+  spotlight: MediaViewModel[];
 }
 
 /**
@@ -380,9 +372,11 @@ export class CallViewModel extends ViewModel {
 
   private readonly spotlightSpeaker = this.userMedia.pipe(
     switchMap((ms) =>
-      combineLatest(
-        ms.map((m) => m.vm.speaking.pipe(map((s) => [m, s] as const))),
-      ),
+      ms.length === 0
+        ? of([])
+        : combineLatest(
+            ms.map((m) => m.vm.speaking.pipe(map((s) => [m, s] as const))),
+          ),
     ),
     scan<(readonly [UserMedia, boolean])[], UserMedia | null, null>(
       (prev, ms) =>
@@ -428,31 +422,32 @@ export class CallViewModel extends ViewModel {
         ),
       );
       // Sort the media by bin order and generate a tile for each one
-      return combineLatest(bins, (...bins) =>
-        bins
-          .sort(([, bin1], [, bin2]) => bin1 - bin2)
-          .map(([m]) => ({ id: m.id, data: m.vm })),
-      );
+      return bins.length === 0
+        ? of([])
+        : combineLatest(bins, (...bins) =>
+            bins.sort(([, bin1], [, bin2]) => bin1 - bin2).map(([m]) => m.vm),
+          );
     }),
   );
 
   private readonly spotlight = combineLatest(
     [this.screenShares, this.spotlightSpeaker],
-    (screenShares, spotlightSpeaker): Tile<MediaViewModel[]> => ({
-      id: "spotlight",
-      data:
-        screenShares.length > 0
-          ? screenShares.map((m) => m.vm)
-          : spotlightSpeaker === null
-            ? []
-            : [spotlightSpeaker.vm],
-    }),
+    (screenShares, spotlightSpeaker): MediaViewModel[] =>
+      screenShares.length > 0
+        ? screenShares.map((m) => m.vm)
+        : spotlightSpeaker === null
+          ? []
+          : [spotlightSpeaker.vm],
   );
 
-  private readonly gridMode = new BehaviorSubject<GridMode>("grid");
+  private readonly _gridMode = new BehaviorSubject<GridMode>("grid");
+  /**
+   * The layout mode of the media tile grid.
+   */
+  public readonly gridMode = state(this._gridMode);
 
   public setGridMode(value: GridMode): void {
-    this.gridMode.next(value);
+    this._gridMode.next(value);
   }
 
   // TODO: Make this react to changes in window dimensions and screen
@@ -460,7 +455,7 @@ export class CallViewModel extends ViewModel {
   private readonly windowMode = of<WindowMode>("normal");
 
   public readonly layout: StateObservable<Layout> = state(
-    combineLatest([this.gridMode, this.windowMode], (gridMode, windowMode) => {
+    combineLatest([this._gridMode, this.windowMode], (gridMode, windowMode) => {
       switch (windowMode) {
         case "full screen":
           throw new Error("unimplemented");
