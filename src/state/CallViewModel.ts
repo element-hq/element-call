@@ -167,9 +167,12 @@ class UserMedia {
       audit((s) =>
         merge(
           timer(s ? 1000 : 10000),
+          // If the speaking flag resets to its original value during this time,
+          // end the silencing window to stick with that original value
           this.vm.speaking.pipe(filter((s1) => s1 !== s)),
         ),
       ),
+      startWith(false),
       distinctUntilChanged(),
       this.scope.bind(),
       // Make this Observable hot so that the timers don't reset when you
