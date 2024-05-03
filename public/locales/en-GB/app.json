@@ -65,8 +65,8 @@
     "banned_heading": "Banned",
     "call_ended_body": "You have been removed from the call.",
     "call_ended_heading": "Call ended",
-    "failed_heading": "Call not found",
-    "failed_text": "Calls are now end-to-end encrypted and need to be created from the home page. This helps make sure everyone's using the same encryption key.",
+    "failed_heading": "Failed to join",
+    "failed_text": "Call not found or is not accessible.",
     "knock_reject_body": "The room members declined your request to join.",
     "knock_reject_heading": "Not allowed to join",
     "reason": "Reason"
