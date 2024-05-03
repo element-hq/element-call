@@ -1738,10 +1738,10 @@
     clsx "2.1.0"
     usehooks-ts "2.16.0"
 
-"@livekit/protocol@1.13.0":
-  version "1.13.0"
-  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.13.0.tgz#8fed7b6658a0a51af908f9fe0133e4be12016788"
-  integrity sha512-M3U36VgRfb0VutWG6pnozXusL+mkYstbCctTLUyCIyye36Ztv1wA9zYpyYvz7VnsgmCn+g/g0eB2rnAkTVwcnA==
+"@livekit/protocol@1.15.0":
+  version "1.15.0"
+  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.15.0.tgz#04f1adccd93b37fb9f7798f641aac5655aff61dd"
+  integrity sha512-KVjM1odPzEWkXB4QQyz2qfiecHo74wLeb8YDhaX/cNnxUk0H1L35H0gVgLA8Y6fXkF3ayOHQnXO9V3GzulMyXw==
   dependencies:
     "@bufbuild/protobuf" "^1.7.2"
 
@@ -6154,11 +6154,11 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^2.0.2:
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.1.1.tgz#c3e1cc2f11727b7a760c801ba98a97585dda031f"
-  integrity sha512-ffnXHQt210GPJ9sR846o7g0lCg/3TJqZxdu55mzQFS1YXGgn9PYKGzcAhKtuOsQ0NEkkn1zKQ0ABHBt7iADiqg==
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.1.2.tgz#0232bbf274dc0aece511ac54958baaf1f2ad0e6d"
+  integrity sha512-tgWIcfKCy7FuUhc29cVSHFFricccJpWeyaxKsKZEbrCIJW/6QzPm44IqojRMv9S6AHAGIAbL5vkWD36gpmPxGA==
   dependencies:
-    "@livekit/protocol" "1.13.0"
+    "@livekit/protocol" "1.15.0"
     events "^3.3.0"
     loglevel "^1.8.0"
     sdp-transform "^2.14.1"
