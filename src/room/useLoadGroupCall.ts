@@ -168,7 +168,10 @@ export const useLoadGroupCall = (
           async (room, membership, prevMembership) => {
             if (roomId !== room.roomId) return;
             activeRoom.current = room;
-            if (membership === KnownMembership.Invite) {
+            if (
+              membership === KnownMembership.Invite &&
+              prevMembership === KnownMembership.Knock
+            ) {
               await client.joinRoom(room.roomId, { viaServers });
               joinedRoom = room;
               logger.log("Auto-joined %s", room.roomId);
