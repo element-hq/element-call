@@ -55,7 +55,9 @@ export interface ConfigOptions {
 
   // Describes the LiveKit configuration to be used.
   livekit?: {
-    // The link to the service that returns a livekit url and token to use it
+    // The link to the service that returns a livekit url and token to use it.
+    // This is a fallback link in case the homeserver in use does not advertise
+    // a livekit service url in the client well-known.
     livekit_service_url: string;
   };
 

@@ -103,7 +103,9 @@ service for development. These use a test 'secret' published in this
 repository, so this must be used only for local development and
 **_never be exposed to the public Internet._**
 
-To use it, add SFU parameter in your local config `./public/config.json`:
+To use it, add a SFU parameter in your local config `./public/config.json`:
+(Be aware, that this is only the fallback livekit SFU. If the homeserver
+advertises one in the client well-known, this will not be used.)
 
 ```json
 "livekit": {

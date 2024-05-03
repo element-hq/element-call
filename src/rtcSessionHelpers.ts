@@ -15,29 +15,110 @@ limitations under the License.
 */
 
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { AutoDiscovery, Room, RoomMember } from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { LivekitFocus } from "./livekit/LivekitFocus";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, WidgetHelpers, widget } from "./widget";
 
-function makeFocus(livekitAlias: string): LivekitFocus {
-  const urlFromConf = Config.get().livekit!.livekit_service_url;
-  if (!urlFromConf) {
-    throw new Error("No livekit_service_url is configured!");
-  }
+const LIVEKIT_SERVICE_URL_WK_KEY = "livekit_service_url";
 
-  return {
-    type: "livekit",
-    livekit_service_url: urlFromConf,
-    livekit_alias: livekitAlias,
-  };
+// This caches the homeserver domains per homeserver.
+const livekitServiceUrlCache = new Map<string, string | undefined>();
+
+const getDomain = (member: RoomMember): string => member.userId.split(":")[1];
+
+async function fetchAndCacheLivekitServiceUrl(
+  homeserverDomain: string,
+): Promise<string | undefined> {
+  const guestDomain = livekitServiceUrlCache.get(homeserverDomain);
+  if (guestDomain) return guestDomain;
+  let fetchedGuestDomain = (
+    await AutoDiscovery.getRawClientConfig(homeserverDomain)
+  )[LIVEKIT_SERVICE_URL_WK_KEY] as string | undefined;
+  // hack for now since we don't have a well known yet.
+  if (homeserverDomain === "call-unstable.ems.host")
+    fetchedGuestDomain = "call-unstable.ems.host";
+  // also store undefined so we don't refetch each time.
+  livekitServiceUrlCache.set(homeserverDomain, fetchedGuestDomain);
+  return fetchedGuestDomain;
 }
 
-export function enterRTCSession(
+async function makeFocus(
+  livekitAlias: string,
+  room: Room,
+): Promise<LivekitFocus> {
+  logger.log("Trying to make a new Focus (sfu) for room: ", room.roomId);
+  const focusFromUrl = (url: string): LivekitFocus => ({
+    type: "livekit",
+    livekit_service_url: url,
+    livekit_alias: livekitAlias,
+  });
+  // prioritize the client well known over the configured sfu.
+  const wellKnownSfuUrl =
+    room.client.getClientWellKnown()?.[LIVEKIT_SERVICE_URL_WK_KEY];
+
+  const urlFromConf =
+    wellKnownSfuUrl ?? Config.get().livekit!.livekit_service_url;
+
+  if (urlFromConf) {
+    logger.log(
+      "Using livekit SFU url from",
+      wellKnownSfuUrl ? "well known." : "config.",
+      "\n url: ",
+      urlFromConf,
+    );
+    return focusFromUrl(urlFromConf);
+  }
+
+  // Temporary convert to set to remove duplicates
+  const memberDomains = Array.from(new Set(room.getMembers().map(getDomain)));
+
+  interface SfuInfo {
+    domain: string;
+    url: string;
+  }
+  interface MaybeSfuInfo {
+    domain: string;
+    url: string | undefined;
+  }
+
+  const possibleLivekitServiceUrl = await Promise.all(
+    memberDomains.map(async (domain: string) => ({
+      domain,
+      url: await fetchAndCacheLivekitServiceUrl(domain),
+    })),
+  );
+  const isValidSfuInfo = (s: MaybeSfuInfo): s is SfuInfo => !!s.url;
+  // TODO this is a placeholder that sorts alphabetically.
+  // In the future we want to use this, to allow smart SFU selection (based on ping, load endpoints, etc.)
+  const betterSFU = (a: SfuInfo, b: SfuInfo): number =>
+    a.domain < b.domain ? -1 : 1;
+  const sfuFormOtherUsers = possibleLivekitServiceUrl
+    .filter(isValidSfuInfo)
+    .sort(betterSFU)[0];
+
+  if (!sfuFormOtherUsers) {
+    throw new Error(
+      "No livekit_service_url is configured or can be loaded from other users homeservers!",
+    );
+  } else {
+    logger.log(
+      "Using livekit SFU url from another users homeserver: ",
+      sfuFormOtherUsers.domain,
+      "\n url: ",
+      sfuFormOtherUsers.url,
+    );
+  }
+  return focusFromUrl(sfuFormOtherUsers.url);
+}
+
+export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   encryptMedia: boolean,
-): void {
+): Promise<void> {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 
@@ -48,7 +129,10 @@ export function enterRTCSession(
   // right now we assume everything is a room-scoped call
   const livekitAlias = rtcSession.room.roomId;
 
-  rtcSession.joinRoomSession([makeFocus(livekitAlias)], encryptMedia);
+  rtcSession.joinRoomSession(
+    [await makeFocus(livekitAlias, rtcSession.room)],
+    encryptMedia,
+  );
 }
 
 const widgetPostHangupProcedure = async (
