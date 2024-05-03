@@ -203,7 +203,8 @@ export const useLoadGroupCall = (
         //  - in SPA mode if the user already joined the room
         room = client.getRoom(roomId);
         activeRoom.current = room ?? undefined;
-        if (room?.getMyMembership() === KnownMembership.Join) {
+        const membership = room?.getMyMembership();
+        if (membership === KnownMembership.Join) {
           // room already joined so we are done here already.
           return room!;
         }
@@ -215,8 +216,12 @@ export const useLoadGroupCall = (
 
         // If the room does not exist we first search for it with viaServers
         const roomSummary = await client.getRoomSummary(roomId, viaServers);
-        if (room?.getMyMembership() === KnownMembership.Ban) {
+        if (membership === KnownMembership.Ban) {
           throw bannedError();
+        } else if (membership === KnownMembership.Invite) {
+          room = await client.joinRoom(roomId, {
+            viaServers,
+          });
         } else {
           if (roomSummary.join_rule === JoinRule.Public) {
             room = await client.joinRoom(roomSummary.room_id, {
