@@ -63,6 +63,7 @@ experimental_features:
 
 MSC3266 allows to request a room summary of rooms you are not joined. 
 The summary contains the room join rules. We need that to decide if the user gets prompted with the option to knock ("ask to join"), a cannot join error or the join view.
+
 ## Translation
 
 If you'd like to help translate Element Call, head over to [Localazy](https://localazy.com/p/element-call). You're also encouraged to join the [Element Translators](https://matrix.to/#/#translators:element.io) space to discuss and coordinate translation efforts.
