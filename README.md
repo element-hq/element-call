@@ -61,7 +61,7 @@ experimental_features:
     msc3266_enabled: true
 ```
 
-MSC3266 allows to request a room summary of rooms you are not joined. 
+MSC3266 allows to request a room summary of rooms you are not joined.
 The summary contains the room join rules. We need that to decide if the user gets prompted with the option to knock ("ask to join"), a cannot join error or the join view.
 
 ## Translation
