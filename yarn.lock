@@ -1120,9 +1120,9 @@
     to-fast-properties "^2.0.0"
 
 "@bufbuild/protobuf@^1.7.2":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.8.0.tgz#1c8651ea34adb8019b483e09de02aeeb1cd57d79"
-  integrity sha512-qR9FwI8QKIveDnUYutvfzbC21UZJJryYrLuZGjeZ/VGz+vXelUkK+xgkOHsvPEdYEdxtgUUq4313N8QtOehJ1Q==
+  version "1.9.0"
+  resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.9.0.tgz#fffac3183059a41ceef5311e07e3724d426a95c4"
+  integrity sha512-W7gp8Q/v1NlCZLsv8pQ3Y0uCu/SHgXOVFK+eUluUKWXmsb6VHkpNx0apdOWWcDbB9sJoKeP8uPrjmehJz6xETQ==
 
 "@csstools/cascade-layer-name-parser@^1.0.8":
   version "1.0.8"
@@ -1561,11 +1561,11 @@
   integrity sha512-Ys+3g2TaW7gADOJzPt83SJtCDhMjndcDMFVQ/Tj9iA1BfJzFKD9mAUXT3OenpuPHbI6P/myECxRJrofUsDx/5g==
 
 "@floating-ui/core@^1.0.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@floating-ui/core/-/core-1.6.0.tgz#fa41b87812a16bf123122bf945946bae3fdf7fc1"
-  integrity sha512-PcF++MykgmTj3CIyOQbKA/hDzOAiqI3mhuoN44WRCopIs1sgoDoU4oty4Jtqaj/y3oDU6fnVSm4QG0a3t5i0+g==
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@floating-ui/core/-/core-1.6.1.tgz#a4e6fef1b069cda533cbc7a4998c083a37f37573"
+  integrity sha512-42UH54oPZHPdRHdw6BgoBD6cg/eVTmVrFcgeRDM3jbO7uxSoipVcmcIGFcA5jmOHO5apcyvBhkSKES3fQJnu7A==
   dependencies:
-    "@floating-ui/utils" "^0.2.1"
+    "@floating-ui/utils" "^0.2.0"
 
 "@floating-ui/dom@1.6.3", "@floating-ui/dom@^1.6.1":
   version "1.6.3"
@@ -1582,10 +1582,10 @@
   dependencies:
     "@floating-ui/dom" "^1.6.1"
 
-"@floating-ui/utils@^0.2.0", "@floating-ui/utils@^0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.1.tgz#16308cea045f0fc777b6ff20a9f25474dd8293d2"
-  integrity sha512-9TANp6GPoMtYzQdt54kfAyMmz1+osLlXdg2ENroU7zzrtflTLrrC/lgrIfaSe+Wu0b89GKccT7vxXA0MoAIO+Q==
+"@floating-ui/utils@^0.2.0":
+  version "0.2.2"
+  resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.2.tgz#d8bae93ac8b815b2bd7a98078cf91e2724ef11e5"
+  integrity sha512-J4yDIIthosAsRZ5CPYP/jQvUAQtlZTTD/4suA08/FEnlxqW3sKS9iAhgsa9VYLZ6vDHn/ixJgIqRQPotoBjxIw==
 
 "@formatjs/ecma402-abstract@1.11.4":
   version "1.11.4"
@@ -1729,19 +1729,19 @@
     rxjs "7.8.1"
 
 "@livekit/components-react@^2.0.0":
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.2.0.tgz#a2c9a1568055cf07d4784b98336f28d574638bf8"
-  integrity sha512-TDa2YNBphkdf2dz85pEZs1UBl8wD/LHFeYupNoTqjtlLVlTXpr09Buv3/eegQFJhXoDSK6fAYqKZ4U/oYydv/w==
+  version "2.2.1"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.2.1.tgz#0171f87a05630e99030a3abb1aa0ee4f0dec3713"
+  integrity sha512-iE8PPZsz5HO83n9Obc4A1oNlDGdBNrTQWESlW1M1ZF+/gk3Sbpkaozp/3yuqz+tDwKuH3MPJON2C5BT5tlBfqg==
   dependencies:
     "@livekit/components-core" "0.10.0"
     "@react-hook/latest" "1.0.3"
     clsx "2.1.0"
     usehooks-ts "2.16.0"
 
-"@livekit/protocol@1.13.0":
-  version "1.13.0"
-  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.13.0.tgz#8fed7b6658a0a51af908f9fe0133e4be12016788"
-  integrity sha512-M3U36VgRfb0VutWG6pnozXusL+mkYstbCctTLUyCIyye36Ztv1wA9zYpyYvz7VnsgmCn+g/g0eB2rnAkTVwcnA==
+"@livekit/protocol@1.15.0":
+  version "1.15.0"
+  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.15.0.tgz#04f1adccd93b37fb9f7798f641aac5655aff61dd"
+  integrity sha512-KVjM1odPzEWkXB4QQyz2qfiecHo74wLeb8YDhaX/cNnxUk0H1L35H0gVgLA8Y6fXkF3ayOHQnXO9V3GzulMyXw==
   dependencies:
     "@bufbuild/protobuf" "^1.7.2"
 
@@ -6154,11 +6154,11 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^2.0.2:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.1.0.tgz#3c4f2754eb38933a6d232fe35717bfe3a378bdcf"
-  integrity sha512-nJwfRKw1Pafd2napk66l30dlBjsv1VZ+na3mzNezcAFAYT2lQ4Gch57TdbMBDYo+QfrZ98s+kuZzsFhBwM5rqw==
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.1.2.tgz#0232bbf274dc0aece511ac54958baaf1f2ad0e6d"
+  integrity sha512-tgWIcfKCy7FuUhc29cVSHFFricccJpWeyaxKsKZEbrCIJW/6QzPm44IqojRMv9S6AHAGIAbL5vkWD36gpmPxGA==
   dependencies:
-    "@livekit/protocol" "1.13.0"
+    "@livekit/protocol" "1.15.0"
     events "^3.3.0"
     loglevel "^1.8.0"
     sdp-transform "^2.14.1"
