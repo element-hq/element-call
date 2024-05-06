@@ -14,6 +14,10 @@ on:
       deployment_ref:
         required: true
         type: string
+      artifact_run_id:
+        required: false
+        type: string
+        default: ${{ github.run_id }}
     secrets:
       ELEMENT_BOT_TOKEN:
         required: true
@@ -45,7 +49,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           github-token: ${{ secrets.ELEMENT_BOT_TOKEN }}
-          run-id: ${{ github.event.workflow_run.id }}
+          run-id: ${{ inputs.artifact_run_id }}
           name: build-output
           path: webapp
 
