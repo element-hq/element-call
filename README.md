@@ -54,6 +54,16 @@ Therefore, to use a self-hosted homeserver, this is recommended to be a new serv
 
 There are currently two different config files. `.env` holds variables that are used at build time, while `public/config.json` holds variables that are used at runtime. Documentation and default values for `public/config.json` can be found in [ConfigOptions.ts](src/config/ConfigOptions.ts).
 
+If you're using [Synapse](https://github.com/element-hq/synapse/), you'll need to additionally add the following to `homeserver.yaml` or Element Call won't work:
+
+```
+experimental_features:
+    msc3266_enabled: true
+```
+
+MSC3266 allows to request a room summary of rooms you are not joined.
+The summary contains the room join rules. We need that to decide if the user gets prompted with the option to knock ("ask to join"), a cannot join error or the join view.
+
 ## Translation
 
 If you'd like to help translate Element Call, head over to [Localazy](https://localazy.com/p/element-call). You're also encouraged to join the [Element Translators](https://matrix.to/#/#translators:element.io) space to discuss and coordinate translation efforts.
