@@ -64,6 +64,7 @@ jobs:
       packages: write
     uses: ./.github/workflows/docker.yaml
     with:
+      artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       docker_tags: |
         type=sha,format=short,event=branch
         type=semver,pattern=v{{version}}
