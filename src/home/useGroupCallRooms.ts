@@ -89,18 +89,44 @@ const roomIsJoinable = (room: Room): boolean => {
     return false;
   }
   // otherwise we can always join rooms because we will automatically decide if we want to use perParticipant or password
-  const joinRule = room.getJoinRule();
-  return joinRule === JoinRule.Knock || joinRule === JoinRule.Public;
+  switch (room.getJoinRule()) {
+    case JoinRule.Public:
+      return true;
+    case JoinRule.Knock:
+      switch (room.getMyMembership()) {
+        case KnownMembership.Join:
+        case KnownMembership.Knock:
+          return true;
+        case KnownMembership.Invite:
+          return (
+            room
+              .getLiveTimeline()
+              .getState(EventTimeline.FORWARDS)
+              ?.getStateEvents(EventType.RoomMember, room.myUserId)
+              ?.getPrevContent().membership === JoinRule.Knock
+          );
+        default:
+          return false;
+      }
+    // TODO: check JoinRule.Restricted and return true if join condition is satisfied
+    default:
+      return room.getMyMembership() === KnownMembership.Join;
+  }
 };
 
 const roomHasCallMembershipEvents = (room: Room): boolean => {
-  const roomStateEvents = room
-    .getLiveTimeline()
-    .getState(EventTimeline.FORWARDS)?.events;
-  return (
-    room.getMyMembership() === KnownMembership.Join &&
-    !!roomStateEvents?.get(EventType.GroupCallMemberPrefix)
-  );
+  switch (room.getMyMembership()) {
+    case KnownMembership.Join:
+      return !!room
+        .getLiveTimeline()
+        .getState(EventTimeline.FORWARDS)
+        ?.events?.get(EventType.GroupCallMemberPrefix);
+    case KnownMembership.Knock:
+      // Assume that a room you've knocked on is able to hold calls
+      return true;
+    default:
+      return false;
+  }
 };
 
 export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
