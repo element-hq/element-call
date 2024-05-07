@@ -48,7 +48,7 @@ jobs:
           tags: ${{ inputs.docker_tags}}
 
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@a530e948adbeb357dbca95a7f8845d385edf4438
+        uses: docker/setup-buildx-action@be3701b2116d2f723573ca9e8cdb4ca85d3cdaf0
 
       - name: Build and push Docker image
         uses: docker/build-push-action@729f7f49266dec5e72fe7339273d3f7e65abacd7
