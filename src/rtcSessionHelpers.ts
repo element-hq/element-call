@@ -15,104 +15,78 @@ limitations under the License.
 */
 
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { AutoDiscovery, Room, RoomMember } from "matrix-js-sdk";
+import { AutoDiscovery, RoomMember } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
-import { LivekitFocus } from "./livekit/LivekitFocus";
+import {
+  LivekitFocusActive,
+  LivekitFocus,
+  LivekitFocusConfig,
+  isLivekitFocus,
+} from "./livekit/LivekitFocus";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, WidgetHelpers, widget } from "./widget";
 
-const LIVEKIT_SERVICE_URL_WK_KEY = "livekit_service_url";
+const LIVEKIT_FOCUS_WK_KEY = "livekit_focus";
 
-// This caches the homeserver domains per homeserver.
-const livekitServiceUrlCache = new Map<string, string | undefined>();
-
-const getDomain = (member: RoomMember): string => member.userId.split(":")[1];
-
-async function fetchAndCacheLivekitServiceUrl(
-  homeserverDomain: string,
-): Promise<string | undefined> {
-  const guestDomain = livekitServiceUrlCache.get(homeserverDomain);
-  if (guestDomain) return guestDomain;
-  let fetchedGuestDomain = (
-    await AutoDiscovery.getRawClientConfig(homeserverDomain)
-  )[LIVEKIT_SERVICE_URL_WK_KEY] as string | undefined;
-  // hack for now since we don't have a well known yet.
-  if (homeserverDomain === "call-unstable.ems.host")
-    fetchedGuestDomain = "call-unstable.ems.host";
-  // also store undefined so we don't refetch each time.
-  livekitServiceUrlCache.set(homeserverDomain, fetchedGuestDomain);
-  return fetchedGuestDomain;
+export function makeActiveFocus(): LivekitFocusActive {
+  return {
+    type: "livekit",
+    selection: "oldest_membership",
+  };
 }
 
-async function makeFocus(
+async function makePreferredFoci(
+  rtcSession: MatrixRTCSession,
   livekitAlias: string,
-  room: Room,
-): Promise<LivekitFocus> {
-  logger.log("Trying to make a new Focus (sfu) for room: ", room.roomId);
-  const focusFromUrl = (url: string): LivekitFocus => ({
-    type: "livekit",
-    livekit_service_url: url,
-    livekit_alias: livekitAlias,
-  });
-  // prioritize the client well known over the configured sfu.
-  const wellKnownSfuUrl =
-    room.client.getClientWellKnown()?.[LIVEKIT_SERVICE_URL_WK_KEY];
+): Promise<LivekitFocus[]> {
+  logger.log("Start building foci_preferred list: ", rtcSession.room.roomId);
 
-  const urlFromConf =
-    wellKnownSfuUrl ?? Config.get().livekit!.livekit_service_url;
+  const preferredFoci: LivekitFocus[] = [];
 
+  // Make the foci from the running rtc session the highest priority one
+  // This minimizes how often we need to switch foci during a call.
+  const focusFromMatrixRTC = rtcSession
+    .getOldestMembership()
+    ?.getPreferredFoci()[0];
+  if (focusFromMatrixRTC && isLivekitFocus(focusFromMatrixRTC)) {
+    logger.log("Adding livekit focus from oldest member: ", focusFromMatrixRTC);
+    preferredFoci.push(focusFromMatrixRTC);
+  }
+
+  // Prioritize the client well known over the configured sfu.
+  const wellKnownFocus =
+    rtcSession.room.client.getClientWellKnown()?.[LIVEKIT_FOCUS_WK_KEY];
+  if (wellKnownFocus) {
+    logger.log("Adding livekit focus from well known: ", wellKnownFocus);
+    preferredFoci.push(wellKnownFocus);
+  }
+
+  const urlFromConf = Config.get().livekit!.livekit_service_url;
   if (urlFromConf) {
-    logger.log(
-      "Using livekit SFU url from",
-      wellKnownSfuUrl ? "well known." : "config.",
-      "\n url: ",
-      urlFromConf,
-    );
-    return focusFromUrl(urlFromConf);
+    logger.log("Adding livekit focus from config: ", urlFromConf);
+    preferredFoci.push({
+      type: "livekit",
+      livekit_service_url: urlFromConf,
+      livekit_alias: livekitAlias,
+    });
   }
 
-  // Temporary convert to set to remove duplicates
-  const memberDomains = Array.from(new Set(room.getMembers().map(getDomain)));
-
-  interface SfuInfo {
-    domain: string;
-    url: string;
-  }
-  interface MaybeSfuInfo {
-    domain: string;
-    url: string | undefined;
-  }
-
-  const possibleLivekitServiceUrl = await Promise.all(
-    memberDomains.map(async (domain: string) => ({
-      domain,
-      url: await fetchAndCacheLivekitServiceUrl(domain),
-    })),
-  );
-  const isValidSfuInfo = (s: MaybeSfuInfo): s is SfuInfo => !!s.url;
-  // TODO this is a placeholder that sorts alphabetically.
-  // In the future we want to use this, to allow smart SFU selection (based on ping, load endpoints, etc.)
-  const betterSFU = (a: SfuInfo, b: SfuInfo): number =>
-    a.domain < b.domain ? -1 : 1;
-  const sfuFormOtherUsers = possibleLivekitServiceUrl
-    .filter(isValidSfuInfo)
-    .sort(betterSFU)[0];
-
-  if (!sfuFormOtherUsers) {
+  if (preferredFoci.length === 0)
     throw new Error(
-      "No livekit_service_url is configured or can be loaded from other users homeservers!",
+      `No livekit_service_url is configured so we could not create a focus
+    currently we skip computing a focus based on other users in the room.`,
     );
-  } else {
-    logger.log(
-      "Using livekit SFU url from another users homeserver: ",
-      sfuFormOtherUsers.domain,
-      "\n url: ",
-      sfuFormOtherUsers.url,
-    );
-  }
-  return focusFromUrl(sfuFormOtherUsers.url);
+
+  // Currently we skip computing a focus based on other users in the room.
+  const focusOtherMembers = await focusFromOtherMembers(
+    rtcSession,
+    livekitAlias,
+  );
+  if (focusOtherMembers) preferredFoci.push(focusOtherMembers);
+
+  return preferredFoci;
 }
 
 export async function enterRTCSession(
@@ -130,7 +104,8 @@ export async function enterRTCSession(
   const livekitAlias = rtcSession.room.roomId;
 
   rtcSession.joinRoomSession(
-    [await makeFocus(livekitAlias, rtcSession.room)],
+    makeActiveFocus(),
+    await makePreferredFoci(rtcSession, livekitAlias),
     encryptMedia,
   );
 }
@@ -157,4 +132,71 @@ export async function leaveRTCSession(
   if (widget) {
     await widgetPostHangupProcedure(widget);
   }
+}
+
+// Query focus from other room members
+
+// This caches the homeserver domains per homeserver.
+const livekitFocusCache = new Map<string, LivekitFocusConfig | undefined>();
+
+// helper to fetch the domain from a member
+const getDomain = (member: RoomMember): string => member.userId.split(":")[1];
+
+async function fetchAndCacheLivekitFocus(
+  homeserverDomain: string,
+): Promise<LivekitFocusConfig | undefined> {
+  const cachedHomeserverFocus = livekitFocusCache.get(homeserverDomain);
+  if (cachedHomeserverFocus) return cachedHomeserverFocus;
+
+  const fetchedHomeserverFocus = (
+    await AutoDiscovery.getRawClientConfig(homeserverDomain)
+  )[LIVEKIT_FOCUS_WK_KEY] as LivekitFocusConfig | undefined;
+  // also store undefined so we don't refetch each time.
+  livekitFocusCache.set(homeserverDomain, fetchedHomeserverFocus);
+  return fetchedHomeserverFocus;
+}
+
+async function focusFromOtherMembers(
+  rtcSession: MatrixRTCSession,
+  livekitAlias: string,
+  skip?: boolean,
+): Promise<LivekitFocus> {
+  if (skip) throw Error("skipping");
+  // Temporary convert to set to remove duplicates
+  const memberDomains = Array.from(
+    new Set(rtcSession.room.getMembers().map(getDomain)),
+  );
+
+  const possibleLivekitFocus = new Map(
+    await Promise.all(
+      memberDomains.map(
+        async (domain: string) =>
+          [domain, await fetchAndCacheLivekitFocus(domain)] as [
+            string,
+            LivekitFocusConfig | undefined,
+          ],
+      ),
+    ),
+  );
+
+  const validFocus = (
+    s: [string, LivekitFocusConfig | undefined],
+  ): s is [string, LivekitFocusConfig] => !!s[1];
+
+  // TODO this is a placeholder that sorts alphabetically.
+  // In the future we want to use this, to allow smart SFU selection (based on ping, load endpoints, etc.)
+  const betterSFU = (
+    a: [string, LivekitFocusConfig],
+    b: [string, LivekitFocusConfig],
+  ): number => (a[0] < b[0] ? -1 : 1);
+
+  const [domain, config] = Array.from(possibleLivekitFocus.entries())
+    .filter(validFocus)
+    .sort(betterSFU)[0];
+  if (!config) {
+    throw new Error("No focus can be loaded from other users home-servers!");
+  } else {
+    logger.log("Using livekit Focus: ", config, `\nfrom homeserver: ${domain}`);
+  }
+  return { ...config, livekit_alias: livekitAlias };
 }

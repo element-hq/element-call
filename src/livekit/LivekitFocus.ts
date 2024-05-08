@@ -21,3 +21,27 @@ export interface LivekitFocus extends Focus {
   livekit_service_url: string;
   livekit_alias: string;
 }
+
+export interface LivekitFocusConfig extends Focus {
+  type: "livekit";
+  livekit_service_url: string;
+}
+
+export interface LivekitFocusActive extends Focus {
+  type: "livekit";
+  selection: "oldest_membership";
+}
+
+export function isLivekitFocus(object: Focus): object is LivekitFocus {
+  return (
+    object.type === "livekit" &&
+    "livekit_service_url" in object &&
+    "livekit_alias" in object
+  );
+}
+
+export function isLivekitFocusConfig(
+  object: Focus,
+): object is LivekitFocusConfig {
+  return object.type === "livekit" && "livekit_service_url" in object;
+}
