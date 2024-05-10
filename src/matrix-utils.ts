@@ -55,7 +55,10 @@ const SYNC_STORE_NAME = "element-call-sync";
 // (It's a good opportunity to make the database names consistent.)
 const CRYPTO_STORE_NAME = "element-call-crypto";
 
-function waitForSync(client: MatrixClient): Promise<void> {
+async function waitForSync(client: MatrixClient): Promise<void> {
+  // If there is a saved sync, wait for it to be restored before the first real sync,
+  // as the saved sync may be missing some state
+  let waitForSavedSync = !!(await client.store.getSavedSyncToken());
   return new Promise<void>((resolve, reject) => {
     const onSync = (
       state: SyncState,
@@ -63,8 +66,12 @@ function waitForSync(client: MatrixClient): Promise<void> {
       data?: ISyncStateData,
     ): void => {
       if (state === "PREPARED") {
-        client.removeListener(ClientEvent.Sync, onSync);
-        resolve();
+        if (waitForSavedSync) {
+          waitForSavedSync = false;
+        } else {
+          client.removeListener(ClientEvent.Sync, onSync);
+          resolve();
+        }
       } else if (state === "ERROR") {
         client.removeListener(ClientEvent.Sync, onSync);
         reject(data?.error);
@@ -190,8 +197,11 @@ export async function initClient(
 
   await client.initCrypto();
   client.setGlobalErrorOnUnknownDevices(false);
+  // Apply listener before starting the client.
+  // Otherwise, the first sync could resolve before the listener gets applied.
+  const syncPromise = waitForSync(client);
   await client.startClient();
-  await waitForSync(client);
+  await syncPromise;
 
   return client;
 }
