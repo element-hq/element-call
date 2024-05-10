@@ -34,7 +34,7 @@ jobs:
           path: dist
 
       - name: Log in to container registry
-        uses: docker/login-action@d910b140723c904c9e74efef5dc6af05d5143104
+        uses: docker/login-action@7840e6ddd4a9223910798f6a315544257fccd96e
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
