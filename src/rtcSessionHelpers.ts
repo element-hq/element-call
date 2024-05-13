@@ -17,6 +17,7 @@ limitations under the License.
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { AutoDiscovery, RoomMember } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/src/logger";
+import { Focus } from "matrix-js-sdk/src/matrixrtc/focus";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import {
@@ -24,11 +25,12 @@ import {
   LivekitFocus,
   LivekitFocusConfig,
   isLivekitFocus,
+  isLivekitFocusConfig,
 } from "./livekit/LivekitFocus";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, WidgetHelpers, widget } from "./widget";
 
-const LIVEKIT_FOCUS_WK_KEY = "livekit_focus";
+const FOCI_WK_KEY = "matrix_rtc_foci";
 
 export function makeActiveFocus(): LivekitFocusActive {
   return {
@@ -56,11 +58,16 @@ async function makePreferredFoci(
   }
 
   // Prioritize the client well known over the configured sfu.
-  const wellKnownFocus =
-    rtcSession.room.client.getClientWellKnown()?.[LIVEKIT_FOCUS_WK_KEY];
-  if (wellKnownFocus) {
-    logger.log("Adding livekit focus from well known: ", wellKnownFocus);
-    preferredFoci.push(wellKnownFocus);
+  const wellKnownFoci = rtcSession.room.client.getClientWellKnown()?.[
+    FOCI_WK_KEY
+  ] as Focus[];
+  if (wellKnownFoci.length > 0) {
+    logger.log("Adding livekit focus from well known: ", wellKnownFoci);
+    preferredFoci.push(
+      ...wellKnownFoci
+        .filter(isLivekitFocusConfig)
+        .map((f) => ({ ...f, livekit_alias: livekitAlias })),
+    );
   }
 
   const urlFromConf = Config.get().livekit!.livekit_service_url;
@@ -150,7 +157,7 @@ async function fetchAndCacheLivekitFocus(
 
   const fetchedHomeserverFocus = (
     await AutoDiscovery.getRawClientConfig(homeserverDomain)
-  )[LIVEKIT_FOCUS_WK_KEY] as LivekitFocusConfig | undefined;
+  )[FOCI_WK_KEY] as LivekitFocusConfig | undefined;
   // also store undefined so we don't refetch each time.
   livekitFocusCache.set(homeserverDomain, fetchedHomeserverFocus);
   return fetchedHomeserverFocus;
