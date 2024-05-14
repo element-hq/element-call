@@ -64,6 +64,28 @@ experimental_features:
 MSC3266 allows to request a room summary of rooms you are not joined.
 The summary contains the room join rules. We need that to decide if the user gets prompted with the option to knock ("ask to join"), a cannot join error or the join view.
 
+Element call requires a livekit SFU behind a livekit jwt service so work. The url to the livekit jwt service can either be configured in the config of element call (fallback/legacy configuration) or be configured by your homeserver via the `.well-known`.
+This is the recommended method.
+
+The configuration is a list of Foci configs:
+
+```json
+"matrix_rtc_foci": [
+    {
+        "type":"livekit",
+        "livekit_service_url":"https://someurl.com"
+    },
+     {
+        "type":"livekit",
+        "livekit_service_url":"https://livekit2.com"
+    },
+    {
+        "type":"another_foci",
+        "props_for_another_foci":"val"
+    },
+]
+```
+
 ## Translation
 
 If you'd like to help translate Element Call, head over to [Localazy](https://localazy.com/p/element-call). You're also encouraged to join the [Element Translators](https://matrix.to/#/#translators:element.io) space to discuss and coordinate translation efforts.
