@@ -72,12 +72,13 @@ async function makePreferredFoci(
 
   const urlFromConf = Config.get().livekit!.livekit_service_url;
   if (urlFromConf) {
-    logger.log("Adding livekit focus from config: ", urlFromConf);
-    preferredFoci.push({
+    const focusFormConf = {
       type: "livekit",
       livekit_service_url: urlFromConf,
       livekit_alias: livekitAlias,
-    });
+    } as LivekitFocus;
+    logger.log("Adding livekit focus from config: ", focusFormConf);
+    preferredFoci.push(focusFormConf);
   }
 
   if (preferredFoci.length === 0)
@@ -86,14 +87,14 @@ async function makePreferredFoci(
     currently we skip computing a focus based on other users in the room.`,
     );
 
+  return preferredFoci;
+
   // Currently we skip computing a focus based on other users in the room.
   const focusOtherMembers = await focusFromOtherMembers(
     rtcSession,
     livekitAlias,
   );
   if (focusOtherMembers) preferredFoci.push(focusOtherMembers);
-
-  return preferredFoci;
 }
 
 export async function enterRTCSession(
