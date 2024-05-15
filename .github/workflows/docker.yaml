@@ -51,7 +51,7 @@ jobs:
         uses: docker/setup-buildx-action@be3701b2116d2f723573ca9e8cdb4ca85d3cdaf0
 
       - name: Build and push Docker image
-        uses: docker/build-push-action@6003d3266a923de06063d23a19bd1c719af997c0
+        uses: docker/build-push-action@df19a799eba09c72273c5a94c70800e243e76ebc
         with:
           context: .
           platforms: linux/amd64,linux/arm64
