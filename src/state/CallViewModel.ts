@@ -61,9 +61,11 @@ import {
 } from "../livekit/useECConnectionState";
 import { usePrevious } from "../usePrevious";
 import {
+  LocalUserMediaViewModel,
   MediaViewModel,
-  UserMediaViewModel,
+  RemoteUserMediaViewModel,
   ScreenShareViewModel,
+  UserMediaViewModel,
 } from "./MediaViewModel";
 import { finalizeValue } from "../observable-utils";
 import { ObservableScope } from "./ObservableScope";
@@ -151,7 +153,10 @@ class UserMedia {
     participant: LocalParticipant | RemoteParticipant,
     callEncrypted: boolean,
   ) {
-    this.vm = new UserMediaViewModel(id, member, participant, callEncrypted);
+    this.vm =
+      participant instanceof LocalParticipant
+        ? new LocalUserMediaViewModel(id, member, participant, callEncrypted)
+        : new RemoteUserMediaViewModel(id, member, participant, callEncrypted);
 
     this.speaker = this.vm.speaking.pipeState(
       // Require 1 s of continuous speaking to become a speaker, and 60 s of
@@ -520,7 +525,19 @@ export class CallViewModel extends ViewModel {
 
             const userMediaVm =
               tilesById.get(userMediaId)?.data ??
-              new UserMediaViewModel(userMediaId, member, p, this.encrypted);
+              (p instanceof LocalParticipant
+                ? new LocalUserMediaViewModel(
+                    userMediaId,
+                    member,
+                    p,
+                    this.encrypted,
+                  )
+                : new RemoteUserMediaViewModel(
+                    userMediaId,
+                    member,
+                    p,
+                    this.encrypted,
+                  ));
             tilesById.delete(userMediaId);
 
             const userMediaTile: TileDescriptor<MediaViewModel> = {
