@@ -131,14 +131,14 @@ export type WindowMode = "normal" | "full screen" | "pip";
  * Sorting bins defining the order in which media tiles appear in the layout.
  */
 enum SortingBin {
-  SelfStart,
+  SelfAlwaysShown,
   Presenters,
   Speakers,
   VideoAndAudio,
   Video,
   Audio,
   NoMedia,
-  SelfEnd,
+  SelfNotAlwaysShown,
 }
 
 class UserMedia {
@@ -410,10 +410,21 @@ export class CallViewModel extends ViewModel {
     switchMap((ms) => {
       const bins = ms.map((m) =>
         combineLatest(
-          [m.speaker, m.presenter, m.vm.audioEnabled, m.vm.videoEnabled],
-          (speaker, presenter, audio, video) => {
+          [
+            m.speaker,
+            m.presenter,
+            m.vm.audioEnabled,
+            m.vm.videoEnabled,
+            m.vm instanceof LocalUserMediaViewModel
+              ? m.vm.alwaysShow
+              : of(false),
+          ],
+          (speaker, presenter, audio, video, alwaysShow) => {
             let bin: SortingBin;
-            if (m.vm.local) bin = SortingBin.SelfStart;
+            if (m.vm.local)
+              bin = alwaysShow
+                ? SortingBin.SelfAlwaysShown
+                : SortingBin.SelfNotAlwaysShown;
             else if (presenter) bin = SortingBin.Presenters;
             else if (speaker) bin = SortingBin.Speakers;
             else if (video)
