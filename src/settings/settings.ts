@@ -88,3 +88,5 @@ export const videoInput = new Setting<string | undefined>(
   "video-input",
   undefined,
 );
+
+export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);

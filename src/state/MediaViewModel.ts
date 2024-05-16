@@ -49,6 +49,7 @@ import { useEffect } from "react";
 
 import { ViewModel } from "./ViewModel";
 import { useReactiveState } from "../useReactiveState";
+import { alwaysShowSelf } from "../settings/settings";
 
 export interface NameData {
   /**
@@ -236,6 +237,13 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
       }),
     ),
   );
+
+  /**
+   * Whether to show this tile in a highly visible location near the start of
+   * the grid.
+   */
+  public readonly alwaysShow = alwaysShowSelf.value;
+  public readonly setAlwaysShow = alwaysShowSelf.setValue;
 
   public constructor(
     id: string,
