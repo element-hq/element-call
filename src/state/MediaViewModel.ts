@@ -21,7 +21,6 @@ import {
   observeParticipantEvents,
   observeParticipantMedia,
 } from "@livekit/components-core";
-import { StateObservable, state } from "@react-rxjs/core";
 import {
   LocalParticipant,
   LocalTrack,
@@ -35,12 +34,14 @@ import {
 import { RoomMember, RoomMemberEvent } from "matrix-js-sdk/src/matrix";
 import {
   BehaviorSubject,
+  Observable,
   combineLatest,
   distinctUntilChanged,
   distinctUntilKeyChanged,
   fromEvent,
   map,
   of,
+  shareReplay,
   startWith,
   switchMap,
 } from "rxjs";
@@ -92,16 +93,15 @@ export function useNameData(vm: MediaViewModel): NameData {
 function observeTrackReference(
   participant: Participant,
   source: Track.Source,
-): StateObservable<TrackReferenceOrPlaceholder> {
-  return state(
-    observeParticipantMedia(participant).pipe(
-      map(() => ({
-        participant,
-        publication: participant.getTrackPublication(source),
-        source,
-      })),
-      distinctUntilKeyChanged("publication"),
-    ),
+): Observable<TrackReferenceOrPlaceholder> {
+  return observeParticipantMedia(participant).pipe(
+    map(() => ({
+      participant,
+      publication: participant.getTrackPublication(source),
+      source,
+    })),
+    distinctUntilKeyChanged("publication"),
+    shareReplay(1),
   );
 }
 
@@ -113,11 +113,11 @@ abstract class BaseMediaViewModel extends ViewModel {
   /**
    * The LiveKit video track for this media.
    */
-  public readonly video: StateObservable<TrackReferenceOrPlaceholder>;
+  public readonly video: Observable<TrackReferenceOrPlaceholder>;
   /**
    * Whether there should be a warning that this media is unencrypted.
    */
-  public readonly unencryptedWarning: StateObservable<boolean>;
+  public readonly unencryptedWarning: Observable<boolean>;
 
   public constructor(
     /**
@@ -138,15 +138,13 @@ abstract class BaseMediaViewModel extends ViewModel {
     super();
     const audio = observeTrackReference(participant, audioSource);
     this.video = observeTrackReference(participant, videoSource);
-    this.unencryptedWarning = state(
-      combineLatest(
-        [audio, this.video],
-        (a, v) =>
-          callEncrypted &&
-          (a.publication?.isEncrypted === false ||
-            v.publication?.isEncrypted === false),
-      ).pipe(distinctUntilChanged()),
-    );
+    this.unencryptedWarning = combineLatest(
+      [audio, this.video],
+      (a, v) =>
+        callEncrypted &&
+        (a.publication?.isEncrypted === false ||
+          v.publication?.isEncrypted === false),
+    ).pipe(distinctUntilChanged(), shareReplay(1));
   }
 }
 
@@ -165,27 +163,28 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   /**
    * Whether the participant is speaking.
    */
-  public readonly speaking = state(
-    observeParticipantEvents(
-      this.participant,
-      ParticipantEvent.IsSpeakingChanged,
-    ).pipe(map((p) => p.isSpeaking)),
+  public readonly speaking = observeParticipantEvents(
+    this.participant,
+    ParticipantEvent.IsSpeakingChanged,
+  ).pipe(
+    map((p) => p.isSpeaking),
+    shareReplay(1),
   );
 
   /**
    * Whether this participant is sending audio (i.e. is unmuted on their side).
    */
-  public readonly audioEnabled: StateObservable<boolean>;
+  public readonly audioEnabled: Observable<boolean>;
   /**
    * Whether this participant is sending video.
    */
-  public readonly videoEnabled: StateObservable<boolean>;
+  public readonly videoEnabled: Observable<boolean>;
 
   private readonly _cropVideo = new BehaviorSubject(true);
   /**
    * Whether the tile video should be contained inside the tile or be cropped to fit.
    */
-  public readonly cropVideo = state(this._cropVideo);
+  public readonly cropVideo: Observable<boolean> = this._cropVideo;
 
   public constructor(
     id: string,
@@ -202,12 +201,12 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       Track.Source.Camera,
     );
 
-    const media = observeParticipantMedia(participant);
-    this.audioEnabled = state(
-      media.pipe(map((m) => m.microphoneTrack?.isMuted === false)),
+    const media = observeParticipantMedia(participant).pipe(shareReplay(1));
+    this.audioEnabled = media.pipe(
+      map((m) => m.microphoneTrack?.isMuted === false),
     );
-    this.videoEnabled = state(
-      media.pipe(map((m) => m.cameraTrack?.isMuted === false)),
+    this.videoEnabled = media.pipe(
+      map((m) => m.cameraTrack?.isMuted === false),
     );
   }
 
@@ -223,19 +222,18 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
   /**
    * Whether the video should be mirrored.
    */
-  public readonly mirror = state(
-    this.video.pipe(
-      switchMap((v) => {
-        const track = v.publication?.track;
-        if (!(track instanceof LocalTrack)) return of(false);
-        // Watch for track restarts, because they indicate a camera switch
-        return fromEvent(track, TrackEvent.Restarted).pipe(
-          startWith(null),
-          // Mirror only front-facing cameras (those that face the user)
-          map(() => facingModeFromLocalTrack(track).facingMode === "user"),
-        );
-      }),
-    ),
+  public readonly mirror = this.video.pipe(
+    switchMap((v) => {
+      const track = v.publication?.track;
+      if (!(track instanceof LocalTrack)) return of(false);
+      // Watch for track restarts, because they indicate a camera switch
+      return fromEvent(track, TrackEvent.Restarted).pipe(
+        startWith(null),
+        // Mirror only front-facing cameras (those that face the user)
+        map(() => facingModeFromLocalTrack(track).facingMode === "user"),
+      );
+    }),
+    shareReplay(1),
   );
 
   /**
@@ -263,14 +261,14 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
   /**
    * Whether we've disabled this participant's audio.
    */
-  public readonly locallyMuted = state(this._locallyMuted);
+  public readonly locallyMuted: Observable<boolean> = this._locallyMuted;
 
   private readonly _localVolume = new BehaviorSubject(1);
   /**
    * The volume to which we've set this participant's audio, as a scalar
    * multiplier.
    */
-  public readonly localVolume = state(this._localVolume);
+  public readonly localVolume: Observable<number> = this._localVolume;
 
   public constructor(
     id: string,
