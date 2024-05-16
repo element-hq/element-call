@@ -37,8 +37,9 @@ import { MediaView } from "./MediaView";
 import styles from "./SpotlightTile.module.css";
 import { subscribe } from "../state/subscribe";
 import {
+  LocalUserMediaViewModel,
   MediaViewModel,
-  UserMediaViewModel,
+  RemoteUserMediaViewModel,
   useNameData,
 } from "../state/MediaViewModel";
 import { useInitial } from "../useInitial";
@@ -48,11 +49,11 @@ import { useReactiveState } from "../useReactiveState";
 import { useLatest } from "../useLatest";
 
 // Screen share video is always enabled
-const screenShareVideoEnabled = state(of(true));
+const videoEnabledDefault = state(of(true));
 // Never mirror screen share video
-const screenShareMirror = state(of(false));
+const mirrorDefault = state(of(false));
 // Never crop screen share video
-const screenShareCropVideo = state(of(false));
+const cropVideoDefault = state(of(false));
 
 interface SpotlightItemProps {
   vm: MediaViewModel;
@@ -72,15 +73,19 @@ const SpotlightItem = subscribe<SpotlightItemProps, HTMLDivElement>(
     const { displayName, nameTag } = useNameData(vm);
     const video = useStateObservable(vm.video);
     const videoEnabled = useStateObservable(
-      vm instanceof UserMediaViewModel
+      vm instanceof LocalUserMediaViewModel ||
+        vm instanceof RemoteUserMediaViewModel
         ? vm.videoEnabled
-        : screenShareVideoEnabled,
+        : videoEnabledDefault,
     );
     const mirror = useStateObservable(
-      vm instanceof UserMediaViewModel ? vm.mirror : screenShareMirror,
+      vm instanceof LocalUserMediaViewModel ? vm.mirror : mirrorDefault,
     );
     const cropVideo = useStateObservable(
-      vm instanceof UserMediaViewModel ? vm.cropVideo : screenShareCropVideo,
+      vm instanceof LocalUserMediaViewModel ||
+        vm instanceof RemoteUserMediaViewModel
+        ? vm.cropVideo
+        : cropVideoDefault,
     );
     const unencryptedWarning = useStateObservable(vm.unencryptedWarning);
 
