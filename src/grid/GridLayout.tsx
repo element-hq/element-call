@@ -15,21 +15,15 @@ limitations under the License.
 */
 
 import { CSSProperties, forwardRef, useMemo } from "react";
-import { BehaviorSubject, Observable, distinctUntilChanged } from "rxjs";
+import { distinctUntilChanged } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 
 import { GridLayout as GridLayoutModel } from "../state/CallViewModel";
-import { MediaViewModel } from "../state/MediaViewModel";
-import { LayoutSystem, Slot } from "./Grid";
+import { Slot } from "./Grid";
 import styles from "./GridLayout.module.css";
 import { useReactiveState } from "../useReactiveState";
-import { Alignment } from "../room/InCallView";
 import { useInitial } from "../useInitial";
-
-export interface Bounds {
-  width: number;
-  height: number;
-}
+import { CallLayout } from "./CallLayout";
 
 interface GridCSSProperties extends CSSProperties {
   "--gap": string;
@@ -37,19 +31,14 @@ interface GridCSSProperties extends CSSProperties {
   "--height": string;
 }
 
-interface GridLayoutSystems {
-  scrolling: LayoutSystem<GridLayoutModel, MediaViewModel, HTMLDivElement>;
-  fixed: LayoutSystem<GridLayoutModel, MediaViewModel[], HTMLDivElement>;
-}
-
 const slotMinHeight = 130;
 const slotMaxAspectRatio = 17 / 9;
 const slotMinAspectRatio = 4 / 3;
 
-export const gridLayoutSystems = (
-  minBounds: Observable<Bounds>,
-  floatingAlignment: BehaviorSubject<Alignment>,
-): GridLayoutSystems => ({
+export const makeGridLayout: CallLayout<GridLayoutModel> = ({
+  minBounds,
+  floatingAlignment,
+}) => ({
   // The "fixed" (non-scrolling) part of the layout is where the spotlight tile
   // lives
   fixed: {

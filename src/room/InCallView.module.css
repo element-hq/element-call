@@ -125,7 +125,7 @@ limitations under the License.
 
 .fixedGrid {
   position: absolute;
-  inline-size: calc(100% - 2 * var(--inline-content-inset));
+  inline-size: 100%;
   align-self: center;
   /* Disable pointer events so the overlay doesn't block interaction with
   elements behind it */
@@ -139,6 +139,6 @@ limitations under the License.
 .scrollingGrid {
   position: relative;
   flex-grow: 1;
-  inline-size: calc(100% - 2 * var(--inline-content-inset));
+  inline-size: 100%;
   align-self: center;
 }

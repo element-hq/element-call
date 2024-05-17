@@ -71,6 +71,7 @@ interface MediaTileProps
   vm: MediaViewModel;
   videoEnabled: boolean;
   videoFit: "contain" | "cover";
+  mirror: boolean;
   nameTagLeadingIcon?: ReactNode;
   primaryButton: ReactNode;
   secondaryButton?: ReactNode;
@@ -87,7 +88,6 @@ const MediaTile = forwardRef<HTMLDivElement, MediaTileProps>(
         className={classNames(className, styles.tile)}
         data-maximised={maximised}
         video={video}
-        mirror={false}
         member={vm.member}
         unencryptedWarning={unencryptedWarning}
         {...props}
@@ -100,6 +100,7 @@ MediaTile.displayName = "MediaTile";
 
 interface UserMediaTileProps extends TileProps {
   vm: UserMediaViewModel;
+  mirror: boolean;
   showSpeakingIndicators: boolean;
   menuStart?: ReactNode;
   menuEnd?: ReactNode;
@@ -202,7 +203,7 @@ interface LocalUserMediaTileProps extends TileProps {
 }
 
 const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
-  ({ vm, onOpenProfile, className, ...props }, ref) => {
+  ({ vm, onOpenProfile, ...props }, ref) => {
     const { t } = useTranslation();
     const mirror = useObservableEagerState(vm.mirror);
     const alwaysShow = useObservableEagerState(vm.alwaysShow);
@@ -220,6 +221,7 @@ const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
       <UserMediaTile
         ref={ref}
         vm={vm}
+        mirror={mirror}
         menuStart={
           <ToggleMenuItem
             Icon={VisibilityOnIcon}
@@ -236,7 +238,6 @@ const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
             onSelect={onOpenProfile}
           />
         }
-        className={classNames(className, { [styles.mirror]: mirror })}
         {...props}
       />
     );
@@ -270,6 +271,7 @@ const RemoteUserMediaTile = forwardRef<
     <UserMediaTile
       ref={ref}
       vm={vm}
+      mirror={false}
       menuStart={
         <>
           <ToggleMenuItem
@@ -321,7 +323,9 @@ const ScreenShareTile = forwardRef<HTMLDivElement, ScreenShareTileProps>(
       <MediaTile
         ref={ref}
         vm={vm}
+        videoEnabled
         videoFit="contain"
+        mirror={false}
         primaryButton={
           !vm.local && (
             <button
@@ -336,7 +340,6 @@ const ScreenShareTile = forwardRef<HTMLDivElement, ScreenShareTileProps>(
             </button>
           )
         }
-        videoEnabled
         {...props}
       />
     );
