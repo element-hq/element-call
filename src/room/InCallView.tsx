@@ -35,7 +35,7 @@ import {
 import useMeasure from "react-use-measure";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, map } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 
@@ -73,17 +73,20 @@ import { ECConnectionState } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
 import {
   GridMode,
+  Layout,
   TileDescriptor,
   useCallViewModel,
 } from "../state/CallViewModel";
 import { Grid, TileProps } from "../grid/Grid";
 import { MediaViewModel } from "../state/MediaViewModel";
-import { gridLayoutSystems } from "../grid/GridLayout";
 import { useObservable } from "../state/useObservable";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
 import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
+import { makeGridLayout } from "../grid/GridLayout";
+import { makeSpotlightLayout } from "../grid/SpotlightLayout";
+import { CallLayout } from "../grid/CallLayout";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -302,6 +305,7 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const [headerRef, headerBounds] = useMeasure();
   const [footerRef, footerBounds] = useMeasure();
+
   const gridBounds = useMemo(
     () => ({
       width: footerBounds.width,
@@ -315,11 +319,29 @@ export const InCallView: FC<InCallViewProps> = ({
     ],
   );
   const gridBoundsObservable = useObservable(gridBounds);
+
   const floatingAlignment = useInitial(
     () => new BehaviorSubject(defaultAlignment),
   );
-  const { fixed, scrolling } = useInitial(() =>
-    gridLayoutSystems(gridBoundsObservable, floatingAlignment),
+
+  const layoutSystem = useObservableEagerState(
+    useInitial(() =>
+      vm.layout.pipe(
+        map((l) => {
+          let makeLayout: CallLayout<Layout>;
+          if (l.type === "grid" && l.grid.length !== 2)
+            makeLayout = makeGridLayout as CallLayout<Layout>;
+          else if (l.type === "spotlight")
+            makeLayout = makeSpotlightLayout as CallLayout<Layout>;
+          else return null; // Not yet implemented
+
+          return makeLayout({
+            minBounds: gridBoundsObservable,
+            floatingAlignment,
+          });
+        }),
+      ),
+    ),
   );
 
   const setGridMode = useCallback(
@@ -423,31 +445,9 @@ export const InCallView: FC<InCallViewProps> = ({
       );
     }
 
-    // The only new layout we've implemented so far is grid layout for non-1:1
-    // calls. All other layouts use the legacy grid system for now.
-    if (
-      legacyLayout === "grid" &&
-      layout.type === "grid" &&
-      !(layout.grid.length === 2 && layout.spotlight === undefined)
-    ) {
-      return (
-        <>
-          <Grid
-            className={styles.scrollingGrid}
-            model={layout}
-            system={scrolling}
-            Tile={GridTileView}
-          />
-          <Grid
-            className={styles.fixedGrid}
-            style={{ insetBlockStart: headerBounds.bottom }}
-            model={layout}
-            system={fixed}
-            Tile={SpotlightTileView}
-          />
-        </>
-      );
-    } else {
+    if (layoutSystem === null) {
+      // This new layout doesn't yet have an implemented layout system, so fall
+      // back to the legacy grid system
       return (
         <LegacyGrid
           items={items}
@@ -455,6 +455,24 @@ export const InCallView: FC<InCallViewProps> = ({
           disableAnimations={prefersReducedMotion}
           Tile={GridTileView}
         />
+      );
+    } else {
+      return (
+        <>
+          <Grid
+            className={styles.scrollingGrid}
+            model={layout}
+            system={layoutSystem.scrolling}
+            Tile={GridTileView}
+          />
+          <Grid
+            className={styles.fixedGrid}
+            style={{ insetBlockStart: headerBounds.bottom }}
+            model={layout}
+            system={layoutSystem.fixed}
+            Tile={SpotlightTileView}
+          />
+        </>
       );
     }
   };
