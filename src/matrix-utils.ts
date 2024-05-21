@@ -56,8 +56,11 @@ const SYNC_STORE_NAME = "element-call-sync";
 const CRYPTO_STORE_NAME = "element-call-crypto";
 
 async function waitForSync(client: MatrixClient): Promise<void> {
-  // If there is a saved sync, wait for it to be restored before the first real sync,
-  // as the saved sync may be missing some state
+  // If there is a saved sync, the client will fire an additional sync event
+  // for restoring it before it runs the first network sync.
+  // However, the sync we want to wait for is the network sync,
+  // as the saved sync may be missing some state.
+  // Thus, don't resolve on the first sync when we know it's for the saved sync.
   let waitForSavedSync = !!(await client.store.getSavedSyncToken());
   return new Promise<void>((resolve, reject) => {
     const onSync = (
@@ -197,8 +200,11 @@ export async function initClient(
 
   await client.initCrypto();
   client.setGlobalErrorOnUnknownDevices(false);
-  // Apply listener before starting the client.
-  // Otherwise, the first sync could resolve before the listener gets applied.
+  // Once startClient is called, syncs are run asynchronously.
+  // Also, sync completion is communicated only via events.
+  // So, apply the event listener *before* starting the client.
+  // Otherwise, a sync may complete before the listener gets applied,
+  // and we will miss it.
   const syncPromise = waitForSync(client);
   await client.startClient();
   await syncPromise;
