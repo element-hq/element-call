@@ -91,6 +91,28 @@ export const Slot: FC<SlotProps> = ({ tile, style, className, ...props }) => (
   />
 );
 
+interface Offset {
+  x: number;
+  y: number;
+}
+
+/**
+ * Gets the offset of one element relative to an ancestor.
+ */
+function offset(element: HTMLElement, relativeTo: Element): Offset {
+  if (
+    !(element.offsetParent instanceof HTMLElement) ||
+    element.offsetParent === relativeTo
+  ) {
+    return { x: element.offsetLeft, y: element.offsetTop };
+  } else {
+    const o = offset(element.offsetParent, relativeTo);
+    o.x += element.offsetLeft;
+    o.y += element.offsetTop;
+    return o;
+  }
+}
+
 export interface LayoutProps<Model, R extends HTMLElement> {
   ref: LegacyRef<R>;
   model: Model;
@@ -228,24 +250,23 @@ export function Grid<
   const slotRects = useMemo(() => {
     const rects = new Map<string, Rect>();
 
-    if (layoutRoot !== null) {
+    if (gridRoot !== null && layoutRoot !== null) {
       const slots = layoutRoot.getElementsByClassName(
         styles.slot,
       ) as HTMLCollectionOf<HTMLElement>;
       for (const slot of slots)
         rects.set(slot.getAttribute("data-tile")!, {
-          x: slot.offsetLeft,
-          y: slot.offsetTop,
+          ...offset(slot, gridRoot),
           width: slot.offsetWidth,
           height: slot.offsetHeight,
         });
     }
 
     return rects;
-    // The rects may change due to the grid being resized or rerendered, but
+    // The rects may change due to the grid updating to a new generation, but
     // eslint can't statically verify this
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [layoutRoot, generation]);
+  }, [gridRoot, layoutRoot, generation]);
 
   const tileModels = useMemo(
     () => getTileModels(model),
