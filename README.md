@@ -70,7 +70,7 @@ This is the recommended method.
 The configuration is a list of Foci configs:
 
 ```json
-"org.matrix.matrix_rtc_foci": [
+"org.matrix.rtc_foci": [
     {
         "type":"livekit",
         "livekit_service_url":"https://someurl.com"
