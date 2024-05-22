@@ -55,7 +55,13 @@ const SYNC_STORE_NAME = "element-call-sync";
 // (It's a good opportunity to make the database names consistent.)
 const CRYPTO_STORE_NAME = "element-call-crypto";
 
-function waitForSync(client: MatrixClient): Promise<void> {
+async function waitForSync(client: MatrixClient): Promise<void> {
+  // If there is a saved sync, the client will fire an additional sync event
+  // for restoring it before it runs the first network sync.
+  // However, the sync we want to wait for is the network sync,
+  // as the saved sync may be missing some state.
+  // Thus, don't resolve on the first sync when we know it's for the saved sync.
+  let waitForSavedSync = !!(await client.store.getSavedSyncToken());
   return new Promise<void>((resolve, reject) => {
     const onSync = (
       state: SyncState,
@@ -63,8 +69,12 @@ function waitForSync(client: MatrixClient): Promise<void> {
       data?: ISyncStateData,
     ): void => {
       if (state === "PREPARED") {
-        client.removeListener(ClientEvent.Sync, onSync);
-        resolve();
+        if (waitForSavedSync) {
+          waitForSavedSync = false;
+        } else {
+          client.removeListener(ClientEvent.Sync, onSync);
+          resolve();
+        }
       } else if (state === "ERROR") {
         client.removeListener(ClientEvent.Sync, onSync);
         reject(data?.error);
@@ -190,8 +200,14 @@ export async function initClient(
 
   await client.initCrypto();
   client.setGlobalErrorOnUnknownDevices(false);
+  // Once startClient is called, syncs are run asynchronously.
+  // Also, sync completion is communicated only via events.
+  // So, apply the event listener *before* starting the client.
+  // Otherwise, a sync may complete before the listener gets applied,
+  // and we will miss it.
+  const syncPromise = waitForSync(client);
   await client.startClient();
-  await waitForSync(client);
+  await syncPromise;
 
   return client;
 }
