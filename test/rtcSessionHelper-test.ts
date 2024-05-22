@@ -35,7 +35,10 @@ test("initBeforeReact sets font family from URL param", async () => {
     livekit_service_url: "http://my-well-known-service-url2.com",
   };
   const clientWellKnown = {
-    matrix_rtc_foci: [focusConfigFromWellKnown, focusConfigFromWellKnown2],
+    "org.matrix.matrix_rtc_foci": [
+      focusConfigFromWellKnown,
+      focusConfigFromWellKnown2,
+    ],
   };
 
   vi.spyOn(Config, "get").mockReturnValue({
@@ -59,7 +62,7 @@ test("initBeforeReact sets font family from URL param", async () => {
 
   expect(mockedSession.joinRoomSession).toHaveBeenLastCalledWith(
     {
-      selection: "oldest_membership",
+      focus_selection: "oldest_membership",
       type: "livekit",
     },
     [
@@ -84,6 +87,6 @@ test("initBeforeReact sets font family from URL param", async () => {
         type: "livekit",
       },
     ],
-    false,
+    { manageMediaKeys: false },
   );
 });

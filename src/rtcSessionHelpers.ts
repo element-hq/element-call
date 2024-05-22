@@ -18,24 +18,24 @@ import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { AutoDiscovery, RoomMember } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/src/logger";
 import { Focus } from "matrix-js-sdk/src/matrixrtc/focus";
-
-import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import {
-  LivekitFocusActive,
   LivekitFocus,
+  LivekitFocusActive,
   LivekitFocusConfig,
   isLivekitFocus,
   isLivekitFocusConfig,
-} from "./livekit/LivekitFocus";
+} from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
+
+import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, WidgetHelpers, widget } from "./widget";
 
-const FOCI_WK_KEY = "matrix_rtc_foci";
+const FOCI_WK_KEY = "org.matrix.matrix_rtc_foci";
 
 export function makeActiveFocus(): LivekitFocusActive {
   return {
     type: "livekit",
-    selection: "oldest_membership",
+    focus_selection: "oldest_membership",
   };
 }
 
@@ -114,7 +114,7 @@ export async function enterRTCSession(
   rtcSession.joinRoomSession(
     makeActiveFocus(),
     await makePreferredFoci(rtcSession, livekitAlias),
-    encryptMedia,
+    { manageMediaKeys: encryptMedia },
   );
 }
 
