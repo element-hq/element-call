@@ -40,7 +40,7 @@ import { widget } from "./widget";
 import { useTheme } from "./useTheme";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
-WebConsole.enable({ show: false });
+WebConsole.enable({ show: true });
 
 interface SimpleProviderProps {
   children: JSX.Element;
