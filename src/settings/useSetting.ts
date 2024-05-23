@@ -103,4 +103,4 @@ export const useAudioOutput = (): Setting<string | undefined> =>
 export const useVideoInput = (): Setting<string | undefined> =>
   useSetting<string | undefined>("video-input", undefined);
 export const useShowInlineWebConsole = (): Setting<boolean> =>
-  useSetting<boolean>("show-web-console", false);
+  useSetting<boolean>("show-web-console", true);
