@@ -18,8 +18,8 @@ import { IOpenIDToken, MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { useEffect, useState } from "react";
+import { LivekitFocus } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 
-import { LivekitFocus } from "./LivekitFocus";
 import { useActiveLivekitFocus } from "../room/useActiveFocus";
 
 export interface SFUConfig {

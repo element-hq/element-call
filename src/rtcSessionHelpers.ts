@@ -70,7 +70,7 @@ async function makePreferredFoci(
     );
   }
 
-  const urlFromConf = Config.get().livekit!.livekit_service_url;
+  const urlFromConf = Config.get().livekit?.livekit_service_url;
   if (urlFromConf) {
     const focusFormConf = {
       type: "livekit",

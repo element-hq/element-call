@@ -206,7 +206,7 @@ export async function initClient(
   // Otherwise, a sync may complete before the listener gets applied,
   // and we will miss it.
   const syncPromise = waitForSync(client);
-  await client.startClient();
+  await client.startClient({ clientWellKnownPollPeriod: 60 * 10 });
   await syncPromise;
 
   return client;

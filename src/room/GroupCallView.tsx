@@ -196,7 +196,7 @@ export const GroupCallView: FC<Props> = ({
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
         defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
-        enterRTCSession(rtcSession, perParticipantE2EE);
+        await enterRTCSession(rtcSession, perParticipantE2EE);
         await widget!.api.transport.reply(ev.detail, {});
       };
       widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
@@ -318,7 +318,7 @@ export const GroupCallView: FC<Props> = ({
         client={client}
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={(): void => enterRTCSession(rtcSession, perParticipantE2EE)}
+        onEnter={() => enterRTCSession(rtcSession, perParticipantE2EE)}
         confineToRoom={confineToRoom}
         hideHeader={hideHeader}
         participantCount={participantCount}
