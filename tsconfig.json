@@ -22,6 +22,9 @@
       "livekit-client/dist/src/room/Room": [
         "./node_modules/livekit-client/dist/src/room/Room.d.ts"
       ],
+      "livekit-client/dist/src/room/track/TrackPublication": [
+        "./node_modules/livekit-client/dist/src/room/track/TrackPublication.d.ts"
+      ],
       "livekit-client/dist/src/room/participant/Participant": [
         "./node_modules/livekit-client/dist/src/room/participant/Participant.d.ts"
       ],
