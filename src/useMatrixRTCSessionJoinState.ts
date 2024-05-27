@@ -26,14 +26,17 @@ export function useMatrixRTCSessionJoinState(
 ): boolean {
   const [isJoined, setJoined] = useState(rtcSession.isJoined());
 
-  const onJoinStateChanged = useCallback(() => {
-    logger.info(
-      `Session in room ${rtcSession.room.roomId} changed to ${
-        rtcSession.isJoined() ? "joined" : "left"
-      }`,
-    );
-    setJoined(rtcSession.isJoined());
-  }, [rtcSession]);
+  const onJoinStateChanged = useCallback(
+    (isJoined: boolean) => {
+      logger.info(
+        `Session in room ${rtcSession.room.roomId} changed to ${
+          isJoined ? "joined" : "left"
+        }`,
+      );
+      setJoined(isJoined);
+    },
+    [rtcSession],
+  );
 
   useEffect(() => {
     rtcSession.on(MatrixRTCSessionEvent.JoinStateChanged, onJoinStateChanged);

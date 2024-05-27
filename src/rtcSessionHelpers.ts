@@ -112,8 +112,8 @@ export async function enterRTCSession(
   const livekitAlias = rtcSession.room.roomId;
 
   rtcSession.joinRoomSession(
-    makeActiveFocus(),
     await makePreferredFoci(rtcSession, livekitAlias),
+    makeActiveFocus(),
     { manageMediaKeys: encryptMedia },
   );
 }
