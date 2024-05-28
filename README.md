@@ -72,16 +72,16 @@ The configuration is a list of Foci configs:
 ```json
 "org.matrix.rtc_foci": [
     {
-        "type":"livekit",
-        "livekit_service_url":"https://someurl.com"
+        "type": "livekit",
+        "livekit_service_url": "https://someurl.com"
     },
      {
-        "type":"livekit",
-        "livekit_service_url":"https://livekit2.com"
+        "type": "livekit",
+        "livekit_service_url": "https://livekit2.com"
     },
     {
-        "type":"another_foci",
-        "props_for_another_foci":"val"
+        "type": "another_foci",
+        "props_for_another_foci": "val"
     },
 ]
 ```
