@@ -16,6 +16,7 @@ limitations under the License.
 
 import {
   ComponentProps,
+  RefAttributes,
   forwardRef,
   useCallback,
   useEffect,
@@ -28,17 +29,20 @@ import CollapseIcon from "@vector-im/compound-design-tokens/icons/collapse.svg?r
 import ChevronLeftIcon from "@vector-im/compound-design-tokens/icons/chevron-left.svg?react";
 import ChevronRightIcon from "@vector-im/compound-design-tokens/icons/chevron-right.svg?react";
 import { animated } from "@react-spring/web";
-import { Observable, map, of } from "rxjs";
+import { Observable, map } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
+import { TrackReferenceOrPlaceholder } from "@livekit/components-core";
+import { RoomMember } from "matrix-js-sdk";
 
 import { MediaView } from "./MediaView";
 import styles from "./SpotlightTile.module.css";
 import {
   LocalUserMediaViewModel,
   MediaViewModel,
-  RemoteUserMediaViewModel,
+  ScreenShareViewModel,
+  UserMediaViewModel,
   useNameData,
 } from "../state/MediaViewModel";
 import { useInitial } from "../useInitial";
@@ -47,12 +51,63 @@ import { useObservableRef } from "../state/useObservable";
 import { useReactiveState } from "../useReactiveState";
 import { useLatest } from "../useLatest";
 
-// Screen share video is always enabled
-const videoEnabledDefault = of(true);
-// Never mirror screen share video
-const mirrorDefault = of(false);
-// Never crop screen share video
-const cropVideoDefault = of(false);
+interface SpotlightItemBaseProps {
+  className?: string;
+  "data-id": string;
+  targetWidth: number;
+  targetHeight: number;
+  video: TrackReferenceOrPlaceholder;
+  member: RoomMember | undefined;
+  unencryptedWarning: boolean;
+  nameTag: string;
+  displayName: string;
+}
+
+interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
+  videoEnabled: boolean;
+  videoFit: "contain" | "cover";
+}
+
+interface SpotlightLocalUserMediaItemProps
+  extends SpotlightUserMediaItemBaseProps {
+  vm: LocalUserMediaViewModel;
+}
+
+const SpotlightLocalUserMediaItem = forwardRef<
+  HTMLDivElement,
+  SpotlightLocalUserMediaItemProps
+>(({ vm, ...props }, ref) => {
+  const mirror = useObservableEagerState(vm.mirror);
+  return <MediaView ref={ref} mirror={mirror} {...props} />;
+});
+
+SpotlightLocalUserMediaItem.displayName = "SpotlightLocalUserMediaItem";
+
+interface SpotlightUserMediaItemProps extends SpotlightItemBaseProps {
+  vm: UserMediaViewModel;
+}
+
+const SpotlightUserMediaItem = forwardRef<
+  HTMLDivElement,
+  SpotlightUserMediaItemProps
+>(({ vm, ...props }, ref) => {
+  const videoEnabled = useObservableEagerState(vm.videoEnabled);
+  const cropVideo = useObservableEagerState(vm.cropVideo);
+
+  const baseProps: SpotlightUserMediaItemBaseProps = {
+    videoEnabled,
+    videoFit: cropVideo ? "cover" : "contain",
+    ...props,
+  };
+
+  return vm instanceof LocalUserMediaViewModel ? (
+    <SpotlightLocalUserMediaItem ref={ref} vm={vm} {...baseProps} />
+  ) : (
+    <MediaView mirror={false} {...baseProps} />
+  );
+});
+
+SpotlightUserMediaItem.displayName = "SpotlightUserMediaItem";
 
 interface SpotlightItemProps {
   vm: MediaViewModel;
@@ -71,21 +126,6 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
     const ref = useMergedRefs(ourRef, theirRef);
     const { displayName, nameTag } = useNameData(vm);
     const video = useObservableEagerState(vm.video);
-    const videoEnabled = useObservableEagerState(
-      vm instanceof LocalUserMediaViewModel ||
-        vm instanceof RemoteUserMediaViewModel
-        ? vm.videoEnabled
-        : videoEnabledDefault,
-    );
-    const mirror = useObservableEagerState(
-      vm instanceof LocalUserMediaViewModel ? vm.mirror : mirrorDefault,
-    );
-    const cropVideo = useObservableEagerState(
-      vm instanceof LocalUserMediaViewModel ||
-        vm instanceof RemoteUserMediaViewModel
-        ? vm.cropVideo
-        : cropVideoDefault,
-    );
     const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning);
 
     // Hook this item up to the intersection observer
@@ -103,22 +143,28 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
       };
     }, [intersectionObserver]);
 
-    return (
+    const baseProps: SpotlightItemBaseProps & RefAttributes<HTMLDivElement> = {
+      ref,
+      "data-id": vm.id,
+      className: classNames(styles.item, { [styles.snap]: snap }),
+      targetWidth,
+      targetHeight,
+      video,
+      member: vm.member,
+      unencryptedWarning,
+      nameTag,
+      displayName,
+    };
+
+    return vm instanceof ScreenShareViewModel ? (
       <MediaView
-        ref={ref}
-        data-id={vm.id}
-        className={classNames(styles.item, { [styles.snap]: snap })}
-        targetWidth={targetWidth}
-        targetHeight={targetHeight}
-        video={video}
-        videoFit={cropVideo ? "cover" : "contain"}
-        mirror={mirror}
-        member={vm.member}
-        videoEnabled={videoEnabled}
-        unencryptedWarning={unencryptedWarning}
-        nameTag={nameTag}
-        displayName={displayName}
+        videoEnabled
+        videoFit="contain"
+        mirror={false}
+        {...baseProps}
       />
+    ) : (
+      <SpotlightUserMediaItem vm={vm} {...baseProps} />
     );
   },
 );
