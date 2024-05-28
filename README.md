@@ -64,7 +64,7 @@ experimental_features:
 MSC3266 allows to request a room summary of rooms you are not joined.
 The summary contains the room join rules. We need that to decide if the user gets prompted with the option to knock ("ask to join"), a cannot join error or the join view.
 
-Element call requires a livekit SFU behind a livekit jwt service so work. The url to the livekit jwt service can either be configured in the config of element call (fallback/legacy configuration) or be configured by your homeserver via the `.well-known`.
+Element call requires a livekit SFU behind a livekit jwt service to work. The url to the livekit jwt service can either be configured in the config of element call (fallback/legacy configuration) or be configured by your homeserver via the `.well-known`.
 This is the recommended method.
 
 The configuration is a list of Foci configs:
