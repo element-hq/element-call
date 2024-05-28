@@ -3,7 +3,7 @@
 [![Chat](https://img.shields.io/matrix/webrtc:matrix.org)](https://matrix.to/#/#webrtc:matrix.org)
 [![Localazy](https://img.shields.io/endpoint?url=https%3A%2F%2Fconnect.localazy.com%2Fstatus%2Felement-call%2Fdata%3Fcontent%3Dall%26title%3Dlocalazy%26logo%3Dtrue)](https://localazy.com/p/element-call)
 
-Group calls with WebRTC that leverage [Matrix](https://matrix.org) and an open-source WebRTC toolkit from [LiveKit](https://livekit.io/).
+Group calls with WebRTC that leverage [Matrix](https://matrix.org) and an open-source WebRTC toolkit from [LiveKit](https://Livekit.io/).
 
 For prior version of the Element Call that relied solely on full-mesh logic, check [`full-mesh`](https://github.com/element-hq/element-call/tree/full-mesh) branch.
 
@@ -64,7 +64,7 @@ experimental_features:
 MSC3266 allows to request a room summary of rooms you are not joined.
 The summary contains the room join rules. We need that to decide if the user gets prompted with the option to knock ("ask to join"), a cannot join error or the join view.
 
-Element call requires a livekit SFU behind a livekit jwt service to work. The url to the livekit jwt service can either be configured in the config of element call (fallback/legacy configuration) or be configured by your homeserver via the `.well-known`.
+Element Call requires a Livekit SFU behind a Livekit jwt service to work. The url to the Livekit jwt service can either be configured in the config of Element Call (fallback/legacy configuration) or be configured by your homeserver via the `.well-known`.
 This is the recommended method.
 
 The configuration is a list of Foci configs:
@@ -126,12 +126,12 @@ repository, so this must be used only for local development and
 **_never be exposed to the public Internet._**
 
 To use it, add a SFU parameter in your local config `./public/config.json`:
-(Be aware, that this is only the fallback livekit SFU. If the homeserver
+(Be aware, that this is only the fallback Livekit SFU. If the homeserver
 advertises one in the client well-known, this will not be used.)
 
 ```json
-"livekit": {
-  "livekit_service_url": "http://localhost:8881"
+"Livekit": {
+  "Livekit_service_url": "http://localhost:8881"
 },
 ```
 
