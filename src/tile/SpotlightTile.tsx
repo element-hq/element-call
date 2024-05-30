@@ -178,6 +178,7 @@ interface Props {
   onToggleFullscreen: () => void;
   targetWidth: number;
   targetHeight: number;
+  showIndicators: boolean;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
 }
@@ -191,6 +192,7 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
       onToggleFullscreen,
       targetWidth,
       targetHeight,
+      showIndicators,
       className,
       style,
     },
@@ -307,6 +309,15 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
             <ChevronRightIcon aria-hidden width={24} height={24} />
           </button>
         )}
+        <div
+          className={classNames(styles.indicators, {
+            [styles.show]: showIndicators && vms.length > 1,
+          })}
+        >
+          {vms.map((vm) => (
+            <div className={styles.item} data-visible={vm.id === visibleId} />
+          ))}
+        </div>
       </animated.div>
     );
   },

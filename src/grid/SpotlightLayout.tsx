@@ -14,76 +14,113 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { CSSProperties, forwardRef } from "react";
+import { CSSProperties, forwardRef, useMemo } from "react";
 import { useObservableEagerState } from "observable-hooks";
+import classNames from "classnames";
 
-import { CallLayout } from "./CallLayout";
+import { CallLayout, GridTileModel, TileModel } from "./CallLayout";
 import { SpotlightLayout as SpotlightLayoutModel } from "../state/CallViewModel";
-import { useReactiveState } from "../useReactiveState";
 import styles from "./SpotlightLayout.module.css";
-import { Slot } from "./Grid";
+import { useReactiveState } from "../useReactiveState";
 
 interface GridCSSProperties extends CSSProperties {
   "--grid-columns": number;
 }
 
-const getGridColumns = (gridLength: number): number =>
-  gridLength > 20 ? 2 : 1;
+interface Layout {
+  orientation: "portrait" | "landscape";
+  gridColumns: number;
+}
+
+function getLayout(gridLength: number, width: number): Layout {
+  const orientation = width < 800 ? "portrait" : "landscape";
+  return {
+    orientation,
+    gridColumns:
+      orientation === "portrait"
+        ? Math.floor(width / 190)
+        : gridLength > 20
+          ? 2
+          : 1,
+  };
+}
 
 export const makeSpotlightLayout: CallLayout<SpotlightLayoutModel> = ({
   minBounds,
 }) => ({
-  fixed: {
-    tiles: (model) => new Map([["spotlight", model.spotlight]]),
-    Layout: forwardRef(function SpotlightLayoutFixed({ model }, ref) {
-      const { width, height } = useObservableEagerState(minBounds);
-      const gridColumns = getGridColumns(model.grid.length);
-      const [generation] = useReactiveState<number>(
-        (prev) => (prev === undefined ? 0 : prev + 1),
-        [model.grid.length, width, height],
-      );
+  fixed: forwardRef(function SpotlightLayoutFixed({ model, Slot }, ref) {
+    const { width, height } = useObservableEagerState(minBounds);
+    const layout = getLayout(model.grid.length, width);
+    const tileModel: TileModel = useMemo(
+      () => ({
+        type: "spotlight",
+        vms: model.spotlight,
+        maximised: layout.orientation === "portrait",
+      }),
+      [model.spotlight, layout.orientation],
+    );
+    const [generation] = useReactiveState<number>(
+      (prev) => (prev === undefined ? 0 : prev + 1),
+      [model.grid.length, width, height],
+    );
 
-      return (
-        <div
-          ref={ref}
-          data-generation={generation}
-          className={styles.fixed}
-          style={{ "--grid-columns": gridColumns, height } as GridCSSProperties}
-        >
-          <div className={styles.spotlight}>
-            <Slot className={styles.slot} tile="spotlight" />
-          </div>
-          <div className={styles.grid} />
+    return (
+      <div
+        ref={ref}
+        data-generation={generation}
+        data-orientation={layout.orientation}
+        className={classNames(styles.layer, styles.fixed)}
+        style={
+          { "--grid-columns": layout.gridColumns, height } as GridCSSProperties
+        }
+      >
+        <div className={styles.spotlight}>
+          <Slot className={styles.slot} id="spotlight" model={tileModel} />
         </div>
-      );
-    }),
-  },
+        <div className={styles.grid} />
+      </div>
+    );
+  }),
 
-  scrolling: {
-    tiles: (model) => new Map(model.grid.map((tile) => [tile.id, tile])),
-    Layout: forwardRef(function SpotlightLayoutScrolling({ model }, ref) {
-      const { width, height } = useObservableEagerState(minBounds);
-      const gridColumns = getGridColumns(model.grid.length);
-      const [generation] = useReactiveState<number>(
-        (prev) => (prev === undefined ? 0 : prev + 1),
-        [model.grid, width, height],
-      );
+  scrolling: forwardRef(function SpotlightLayoutScrolling(
+    { model, Slot },
+    ref,
+  ) {
+    const { width, height } = useObservableEagerState(minBounds);
+    const layout = getLayout(model.grid.length, width);
+    const tileModels: GridTileModel[] = useMemo(
+      () => model.grid.map((vm) => ({ type: "grid", vm })),
+      [model.grid],
+    );
+    const [generation] = useReactiveState<number>(
+      (prev) => (prev === undefined ? 0 : prev + 1),
+      [model.spotlight.length, model.grid, width, height],
+    );
 
-      return (
+    return (
+      <div
+        ref={ref}
+        data-generation={generation}
+        data-orientation={layout.orientation}
+        className={classNames(styles.layer, styles.scrolling)}
+        style={{ "--grid-columns": layout.gridColumns } as GridCSSProperties}
+      >
         <div
-          ref={ref}
-          data-generation={generation}
-          className={styles.scrolling}
-          style={{ "--grid-columns": gridColumns } as GridCSSProperties}
-        >
-          <div className={styles.spotlight} />
-          <div className={styles.grid}>
-            {model.grid.map((tile) => (
-              <Slot key={tile.id} className={styles.slot} tile={tile.id} />
-            ))}
-          </div>
+          className={classNames(styles.spotlight, {
+            [styles.withIndicators]: model.spotlight.length > 1,
+          })}
+        />
+        <div className={styles.grid}>
+          {tileModels.map((m) => (
+            <Slot
+              key={m.vm.id}
+              className={styles.slot}
+              id={m.vm.id}
+              model={m}
+            />
+          ))}
         </div>
-      );
-    }),
-  },
+      </div>
+    );
+  }),
 });

@@ -25,6 +25,7 @@ import { ConnectionState, Room, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import {
   FC,
+  PropsWithoutRef,
   forwardRef,
   useCallback,
   useEffect,
@@ -86,7 +87,7 @@ import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
 import { makeSpotlightLayout } from "../grid/SpotlightLayout";
-import { CallLayout } from "../grid/CallLayout";
+import { CallLayout, GridTileModel, TileModel } from "../grid/CallLayout";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -329,7 +330,10 @@ export const InCallView: FC<InCallViewProps> = ({
       vm.layout.pipe(
         map((l) => {
           let makeLayout: CallLayout<Layout>;
-          if (l.type === "grid" && l.grid.length !== 2)
+          if (
+            l.type === "grid" &&
+            !(l.grid.length === 2 && l.spotlight === undefined)
+          )
             makeLayout = makeGridLayout as CallLayout<Layout>;
           else if (l.type === "spotlight")
             makeLayout = makeSpotlightLayout as CallLayout<Layout>;
@@ -352,59 +356,79 @@ export const InCallView: FC<InCallViewProps> = ({
     [setLegacyLayout, vm],
   );
 
-  const showSpeakingIndicators =
+  const showSpotlightIndicators = useObservable(layout.type === "spotlight");
+  const showSpeakingIndicators = useObservable(
     layout.type === "spotlight" ||
-    (layout.type === "grid" && layout.grid.length > 2);
-
-  const SpotlightTileView = useMemo(
-    () =>
-      forwardRef<HTMLDivElement, TileProps<MediaViewModel[], HTMLDivElement>>(
-        function SpotlightTileView(
-          { className, style, targetWidth, targetHeight, model },
-          ref,
-        ) {
-          return (
-            <SpotlightTile
-              ref={ref}
-              vms={model}
-              maximised={false}
-              fullscreen={false}
-              onToggleFullscreen={toggleSpotlightFullscreen}
-              targetWidth={targetWidth}
-              targetHeight={targetHeight}
-              className={className}
-              style={style}
-            />
-          );
-        },
-      ),
-    [toggleSpotlightFullscreen],
+      (layout.type === "grid" && layout.grid.length > 2),
   );
-  const GridTileView = useMemo(
+
+  const Tile = useMemo(
     () =>
-      forwardRef<HTMLDivElement, TileProps<MediaViewModel, HTMLDivElement>>(
-        function GridTileView(
-          { className, style, targetWidth, targetHeight, model },
-          ref,
-        ) {
-          return (
-            <GridTile
-              ref={ref}
-              vm={model}
-              maximised={false}
-              fullscreen={false}
-              onToggleFullscreen={toggleFullscreen}
-              onOpenProfile={openProfile}
-              targetWidth={targetWidth}
-              targetHeight={targetHeight}
-              className={className}
-              style={style}
-              showSpeakingIndicators={showSpeakingIndicators}
-            />
-          );
-        },
-      ),
-    [toggleFullscreen, openProfile, showSpeakingIndicators],
+      forwardRef<
+        HTMLDivElement,
+        PropsWithoutRef<TileProps<TileModel, HTMLDivElement>>
+      >(function Tile(
+        { className, style, targetWidth, targetHeight, model },
+        ref,
+      ) {
+        const showSpeakingIndicatorsValue = useObservableEagerState(
+          showSpeakingIndicators,
+        );
+        const showSpotlightIndicatorsValue = useObservableEagerState(
+          showSpotlightIndicators,
+        );
+
+        return model.type === "grid" ? (
+          <GridTile
+            ref={ref}
+            vm={model.vm}
+            maximised={false}
+            fullscreen={false}
+            onToggleFullscreen={toggleFullscreen}
+            onOpenProfile={openProfile}
+            targetWidth={targetWidth}
+            targetHeight={targetHeight}
+            className={classNames(className, styles.tile)}
+            style={style}
+            showSpeakingIndicators={showSpeakingIndicatorsValue}
+          />
+        ) : (
+          <SpotlightTile
+            ref={ref}
+            vms={model.vms}
+            maximised={model.maximised}
+            fullscreen={false}
+            onToggleFullscreen={toggleSpotlightFullscreen}
+            targetWidth={targetWidth}
+            targetHeight={targetHeight}
+            showIndicators={showSpotlightIndicatorsValue}
+            className={classNames(className, styles.tile)}
+            style={style}
+          />
+        );
+      }),
+    [
+      toggleFullscreen,
+      toggleSpotlightFullscreen,
+      openProfile,
+      showSpeakingIndicators,
+      showSpotlightIndicators,
+    ],
+  );
+
+  const LegacyTile = useMemo(
+    () =>
+      forwardRef<
+        HTMLDivElement,
+        PropsWithoutRef<TileProps<MediaViewModel, HTMLDivElement>>
+      >(function LegacyTile({ model: legacyModel, ...props }, ref) {
+        const model: GridTileModel = useMemo(
+          () => ({ type: "grid", vm: legacyModel }),
+          [legacyModel],
+        );
+        return <Tile ref={ref} model={model} {...props} />;
+      }),
+    [Tile],
   );
 
   const renderContent = (): JSX.Element => {
@@ -421,17 +445,20 @@ export const InCallView: FC<InCallViewProps> = ({
       if (maximisedParticipant.id === "spotlight") {
         return (
           <SpotlightTile
+            className={classNames(styles.tile, styles.maximised)}
             vms={layout.spotlight!}
-            maximised={true}
+            maximised
             fullscreen={fullscreen}
             onToggleFullscreen={toggleSpotlightFullscreen}
             targetWidth={gridBounds.height}
             targetHeight={gridBounds.width}
+            showIndicators={false}
           />
         );
       }
       return (
         <GridTile
+          className={classNames(styles.tile, styles.maximised)}
           vm={maximisedParticipant.data}
           maximised={true}
           fullscreen={fullscreen}
@@ -453,7 +480,7 @@ export const InCallView: FC<InCallViewProps> = ({
           items={items}
           layout={legacyLayout}
           disableAnimations={prefersReducedMotion}
-          Tile={GridTileView}
+          Tile={LegacyTile}
         />
       );
     } else {
@@ -462,15 +489,15 @@ export const InCallView: FC<InCallViewProps> = ({
           <Grid
             className={styles.scrollingGrid}
             model={layout}
-            system={layoutSystem.scrolling}
-            Tile={GridTileView}
+            Layout={layoutSystem.scrolling}
+            Tile={Tile}
           />
           <Grid
             className={styles.fixedGrid}
             style={{ insetBlockStart: headerBounds.bottom }}
             model={layout}
-            system={layoutSystem.fixed}
-            Tile={SpotlightTileView}
+            Layout={layoutSystem.fixed}
+            Tile={Tile}
           />
         </>
       );
