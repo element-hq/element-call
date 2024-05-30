@@ -42,6 +42,7 @@ import { useMergedRefs } from "../useMergedRefs";
 import { TileWrapper } from "./TileWrapper";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { TileSpringUpdate } from "./LegacyGrid";
+import { useInitial } from "../useInitial";
 
 interface Rect {
   x: number;
@@ -50,10 +51,13 @@ interface Rect {
   height: number;
 }
 
-interface Tile<Model> extends Rect {
+interface Tile<Model> {
   id: string;
   model: Model;
+  onDrag: DragCallback | undefined;
 }
+
+type PlacedTile<Model> = Tile<Model> & Rect;
 
 interface TileSpring {
   opacity: number;
@@ -73,23 +77,13 @@ interface DragState {
   cursorY: number;
 }
 
-interface SlotProps extends ComponentProps<"div"> {
-  tile: string;
+interface SlotProps<Model> extends Omit<ComponentProps<"div">, "onDrag"> {
+  id: string;
+  model: Model;
+  onDrag?: DragCallback;
   style?: CSSProperties;
   className?: string;
 }
-
-/**
- * An invisible "slot" for a tile to go in.
- */
-export const Slot: FC<SlotProps> = ({ tile, style, className, ...props }) => (
-  <div
-    className={classNames(className, styles.slot)}
-    data-tile={tile}
-    style={style}
-    {...props}
-  />
-);
 
 interface Offset {
   x: number;
@@ -113,9 +107,13 @@ function offset(element: HTMLElement, relativeTo: Element): Offset {
   }
 }
 
-export interface LayoutProps<Model, R extends HTMLElement> {
+export interface LayoutProps<LayoutModel, TileModel, R extends HTMLElement> {
   ref: LegacyRef<R>;
-  model: Model;
+  model: LayoutModel;
+  /**
+   * Component creating an invisible "slot" for a tile to go in.
+   */
+  Slot: ComponentType<SlotProps<TileModel>>;
 }
 
 export interface TileProps<Model, R extends HTMLElement> {
@@ -152,25 +150,7 @@ interface Drag {
   yRatio: number;
 }
 
-type DragCallback = (drag: Drag) => void;
-
-export interface LayoutSystem<LayoutModel, TileModel, R extends HTMLElement> {
-  /**
-   * Defines the ID and model of each tile present in the layout.
-   */
-  tiles: (model: LayoutModel) => Map<string, TileModel>;
-  /**
-   * A component which creates an invisible layout grid of "slots" for tiles to
-   * go in. The root element must have a data-generation attribute which
-   * increments whenever the layout may have changed.
-   */
-  Layout: ComponentType<LayoutProps<LayoutModel, R>>;
-  /**
-   * Gets a drag callback for the tile with the given ID. If this is not
-   * provided or it returns null, the tile is not draggable.
-   */
-  onDrag?: (model: LayoutModel, tile: string) => DragCallback | null;
-}
+export type DragCallback = (drag: Drag) => void;
 
 interface Props<
   LayoutModel,
@@ -183,9 +163,11 @@ interface Props<
    */
   model: LayoutModel;
   /**
-   * The system by which to arrange the layout and respond to interactions.
+   * A component which creates an invisible layout grid of "slots" for tiles to
+   * go in. The root element must have a data-generation attribute which
+   * increments whenever the layout may have changed.
    */
-  system: LayoutSystem<LayoutModel, TileModel, LayoutRef>;
+  Layout: ComponentType<LayoutProps<LayoutModel, TileModel, LayoutRef>>;
   /**
    * The component used to render each tile in the layout.
    */
@@ -204,7 +186,7 @@ export function Grid<
   TileRef extends HTMLElement,
 >({
   model,
-  system: { tiles: getTileModels, Layout, onDrag },
+  Layout,
   Tile,
   className,
   style,
@@ -223,7 +205,30 @@ export function Grid<
 
   const [layoutRoot, setLayoutRoot] = useState<HTMLElement | null>(null);
   const [generation, setGeneration] = useState<number | null>(null);
+  const tiles = useInitial(() => new Map<string, Tile<TileModel>>());
   const prefersReducedMotion = usePrefersReducedMotion();
+
+  const Slot: FC<SlotProps<TileModel>> = useMemo(
+    () =>
+      function Slot({ id, model, onDrag, style, className, ...props }) {
+        const ref = useRef<HTMLDivElement | null>(null);
+        useEffect(() => {
+          tiles.set(id, { id, model, onDrag });
+          return (): void => void tiles.delete(id);
+        }, [id, model, onDrag]);
+
+        return (
+          <div
+            ref={ref}
+            className={classNames(className, styles.slot)}
+            data-id={id}
+            style={style}
+            {...props}
+          />
+        );
+      },
+    [tiles],
+  );
 
   const layoutRef = useCallback(
     (e: HTMLElement | null) => {
@@ -247,62 +252,45 @@ export function Grid<
     }
   }, [layoutRoot, setGeneration]);
 
-  const slotRects = useMemo(() => {
-    const rects = new Map<string, Rect>();
+  // Combine the tile definitions and slots together to create placed tiles
+  const placedTiles = useMemo(() => {
+    const result: PlacedTile<TileModel>[] = [];
 
     if (gridRoot !== null && layoutRoot !== null) {
       const slots = layoutRoot.getElementsByClassName(
         styles.slot,
       ) as HTMLCollectionOf<HTMLElement>;
-      for (const slot of slots)
-        rects.set(slot.getAttribute("data-tile")!, {
+      for (const slot of slots) {
+        const id = slot.getAttribute("data-id")!;
+        result.push({
+          ...tiles.get(id)!,
           ...offset(slot, gridRoot),
           width: slot.offsetWidth,
           height: slot.offsetHeight,
         });
+      }
     }
 
-    return rects;
+    return result;
     // The rects may change due to the grid updating to a new generation, but
     // eslint can't statically verify this
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gridRoot, layoutRoot, generation]);
-
-  const tileModels = useMemo(
-    () => getTileModels(model),
-    [getTileModels, model],
-  );
-
-  // Combine the tile models and slots together to create placed tiles
-  const tiles = useMemo<Tile<TileModel>[]>(() => {
-    const items: Tile<TileModel>[] = [];
-    for (const [id, model] of tileModels) {
-      const rect = slotRects.get(id);
-      if (rect !== undefined) items.push({ id, model, ...rect });
-    }
-    return items;
-  }, [slotRects, tileModels]);
-
-  const dragCallbacks = useMemo(
-    () =>
-      new Map(
-        (function* (): Iterable<[string, DragCallback | null]> {
-          if (onDrag !== undefined)
-            for (const id of tileModels.keys()) yield [id, onDrag(model, id)];
-        })(),
-      ),
-    [onDrag, tileModels, model],
-  );
+  }, [gridRoot, layoutRoot, tiles, generation]);
 
   // Drag state is stored in a ref rather than component state, because we use
   // react-spring's imperative API during gestures to improve responsiveness
   const dragState = useRef<DragState | null>(null);
 
   const [tileTransitions, springRef] = useTransition(
-    tiles,
+    placedTiles,
     () => ({
       key: ({ id }: Tile<TileModel>): string => id,
-      from: ({ x, y, width, height }: Tile<TileModel>): TileSpringUpdate => ({
+      from: ({
+        x,
+        y,
+        width,
+        height,
+      }: PlacedTile<TileModel>): TileSpringUpdate => ({
         opacity: 0,
         scale: 0,
         zIndex: 1,
@@ -319,7 +307,7 @@ export function Grid<
         y,
         width,
         height,
-      }: Tile<TileModel>): TileSpringUpdate | null =>
+      }: PlacedTile<TileModel>): TileSpringUpdate | null =>
         id === dragState.current?.tileId
           ? null
           : {
@@ -334,7 +322,7 @@ export function Grid<
     }),
     // react-spring's types are bugged and can't infer the spring type
   ) as unknown as [
-    TransitionFn<Tile<TileModel>, TileSpring>,
+    TransitionFn<PlacedTile<TileModel>, TileSpring>,
     SpringRef<TileSpring>,
   ];
 
@@ -342,14 +330,14 @@ export function Grid<
   // firing animations manually whenever the tiles array updates
   useEffect(() => {
     springRef.start();
-  }, [tiles, springRef]);
+  }, [placedTiles, springRef]);
 
   const animateDraggedTile = (
     endOfGesture: boolean,
     callback: DragCallback,
   ): void => {
     const { tileId, tileX, tileY } = dragState.current!;
-    const tile = tiles.find((t) => t.id === tileId)!;
+    const tile = placedTiles.find((t) => t.id === tileId)!;
 
     springRef.current
       .find((c) => (c.item as Tile<TileModel>).id === tileId)
@@ -416,7 +404,7 @@ export function Grid<
       const tileController = springRef.current.find(
         (c) => (c.item as Tile<TileModel>).id === tileId,
       )!;
-      const callback = dragCallbacks.get(tileController.item.id);
+      const callback = tiles.get(tileController.item.id)!.onDrag;
 
       if (callback != null) {
         if (dragState.current === null) {
@@ -456,7 +444,7 @@ export function Grid<
       if (dragState.current !== null) {
         dragState.current.tileY += dy;
         dragState.current.cursorY += dy;
-        animateDraggedTile(false, onDrag!(model, dragState.current.tileId)!);
+        animateDraggedTile(false, tiles.get(dragState.current.tileId)!.onDrag!);
       }
     },
     { target: gridRoot ?? undefined },
@@ -468,12 +456,12 @@ export function Grid<
       className={classNames(className, styles.grid)}
       style={style}
     >
-      <Layout ref={layoutRef} model={model} />
-      {tileTransitions((spring, { id, model, width, height }) => (
+      <Layout ref={layoutRef} model={model} Slot={Slot} />
+      {tileTransitions((spring, { id, model, onDrag, width, height }) => (
         <TileWrapper
           key={id}
           id={id}
-          onDrag={dragCallbacks.get(id) ? onTileDragRef : null}
+          onDrag={onDrag ? onTileDragRef : null}
           targetWidth={width}
           targetHeight={height}
           model={model}

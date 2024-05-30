@@ -142,3 +142,13 @@ limitations under the License.
   inline-size: 100%;
   align-self: center;
 }
+
+.tile {
+  position: absolute;
+  inset-block-start: 0;
+}
+
+.tile.maximised {
+  position: relative;
+  flex-grow: 1;
+}

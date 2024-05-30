@@ -15,9 +15,10 @@ limitations under the License.
 */
 
 import { BehaviorSubject, Observable } from "rxjs";
+import { ComponentType } from "react";
 
 import { MediaViewModel } from "../state/MediaViewModel";
-import { LayoutSystem } from "./Grid";
+import { LayoutProps } from "./Grid";
 import { Alignment } from "../room/InCallView";
 
 export interface Bounds {
@@ -36,15 +37,28 @@ export interface CallLayoutInputs {
   floatingAlignment: BehaviorSubject<Alignment>;
 }
 
+export interface GridTileModel {
+  type: "grid";
+  vm: MediaViewModel;
+}
+
+export interface SpotlightTileModel {
+  type: "spotlight";
+  vms: MediaViewModel[];
+  maximised: boolean;
+}
+
+export type TileModel = GridTileModel | SpotlightTileModel;
+
 export interface CallLayoutOutputs<Model> {
   /**
    * The visually fixed (non-scrolling) layer of the layout.
    */
-  fixed: LayoutSystem<Model, MediaViewModel[], HTMLDivElement>;
+  fixed: ComponentType<LayoutProps<Model, TileModel, HTMLDivElement>>;
   /**
    * The layer of the layout that can overflow and be scrolled.
    */
-  scrolling: LayoutSystem<Model, MediaViewModel, HTMLDivElement>;
+  scrolling: ComponentType<LayoutProps<Model, TileModel, HTMLDivElement>>;
 }
 
 /**
