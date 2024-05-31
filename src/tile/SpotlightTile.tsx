@@ -204,8 +204,9 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
     const [visibleId, setVisibleId] = useState(vms[0].id);
     const latestVms = useLatest(vms);
     const latestVisibleId = useLatest(visibleId);
-    const canGoBack = visibleId !== vms[0].id;
-    const canGoToNext = visibleId !== vms[vms.length - 1].id;
+    const visibleIndex = vms.findIndex((vm) => vm.id === visibleId);
+    const canGoBack = visibleIndex > 0;
+    const canGoToNext = visibleIndex !== -1 && visibleIndex < vms.length - 1;
 
     // To keep track of which item is visible, we need an intersection observer
     // hooked up to the root element and the items. Because the items will run
