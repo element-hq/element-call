@@ -109,6 +109,7 @@ limitations under the License.
 
 .participantsLine {
   grid-area: participants;
+  color: var(--cpd-color-text-secondary);
   display: flex;
   align-items: center;
   gap: var(--cpd-space-1-5x);
