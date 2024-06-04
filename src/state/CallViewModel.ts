@@ -376,9 +376,9 @@ export class CallViewModel extends ViewModel {
       shareReplay(1),
     );
 
-  private readonly hasScreenShares: Observable<boolean> =
+  private readonly hasRemoteScreenShares: Observable<boolean> =
     this.screenShares.pipe(
-      map((ms) => ms.length > 0),
+      map((ms) => ms.find((m) => !m.vm.local) !== undefined),
       distinctUntilChanged(),
     );
 
@@ -474,7 +474,7 @@ export class CallViewModel extends ViewModel {
     this.gridModeUserSelection,
     // If the user hasn't selected spotlight and somebody starts screen sharing,
     // automatically switch to spotlight mode and reset when screen sharing ends
-    this.hasScreenShares.pipe(
+    this.hasRemoteScreenShares.pipe(
       withLatestFrom(this.gridModeUserSelection.pipe(startWith(null))),
       concatMap(([hasScreenShares, userSelection]) =>
         userSelection === "spotlight"
