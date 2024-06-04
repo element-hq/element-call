@@ -97,7 +97,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   );
 
   useEffect(() => {
-    return () => {
+    return (): void => {
       livekitRoom?.disconnect();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -220,7 +220,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
           onSpotlightLayout,
         );
 
-        return () => {
+        return (): void => {
           widget!.lazyActions.off(
             ElementWidgetActions.TileLayout,
             onTileLayout,

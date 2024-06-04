@@ -33,6 +33,7 @@ import {
   VideoGridProps as Props,
   TileSpring,
   ChildrenProperties,
+  TileSpringUpdate,
 } from "./VideoGrid";
 import { useReactiveState } from "../useReactiveState";
 import { useMergedRefs } from "../useMergedRefs";
@@ -110,7 +111,7 @@ export function NewVideoGrid<T>({
       });
 
       observer.observe(slotsRoot, { attributes: true });
-      return () => observer.disconnect();
+      return (): void => observer.disconnect();
     }
   }, [slotsRoot, setRenderedGeneration]);
 
@@ -174,8 +175,8 @@ export function NewVideoGrid<T>({
   const [tileTransitions, springRef] = useTransition(
     tiles,
     () => ({
-      key: ({ item }: Tile<T>) => item.id,
-      from: ({ x, y, width, height }: Tile<T>) => ({
+      key: ({ item }: Tile<T>): string => item.id,
+      from: ({ x, y, width, height }: Tile<T>): TileSpringUpdate => ({
         opacity: 0,
         scale: 0,
         shadow: 0,
@@ -188,7 +189,13 @@ export function NewVideoGrid<T>({
         immediate: disableAnimations,
       }),
       enter: { opacity: 1, scale: 1, immediate: disableAnimations },
-      update: ({ item, x, y, width, height }: Tile<T>) =>
+      update: ({
+        item,
+        x,
+        y,
+        width,
+        height,
+      }: Tile<T>): TileSpringUpdate | null =>
         item.id === dragState.current?.tileId
           ? null
           : {
@@ -230,7 +237,7 @@ export function NewVideoGrid<T>({
                 disableAnimations || ((key): boolean => key === "zIndex"),
               // Allow the tile's position to settle before pushing its
               // z-index back down
-              delay: (key) => (key === "zIndex" ? 500 : 0),
+              delay: (key): number => (key === "zIndex" ? 500 : 0),
             }
           : {
               scale: 1.1,

@@ -32,7 +32,7 @@ export const useLocalStorage = (
 
   useEffect(() => {
     localStorageBus.on(key, setValue);
-    return () => {
+    return (): void => {
       localStorageBus.off(key, setValue);
     };
   }, [key, setValue]);

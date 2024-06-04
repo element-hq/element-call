@@ -47,7 +47,7 @@ export function useWakeLock(): void {
       onVisiblityChange();
       document.addEventListener("visiblitychange", onVisiblityChange);
 
-      return () => {
+      return (): void => {
         mounted = false;
         if (lock !== null)
           lock

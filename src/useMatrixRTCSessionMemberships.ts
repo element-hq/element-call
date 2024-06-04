@@ -40,7 +40,7 @@ export function useMatrixRTCSessionMemberships(
       onMembershipsChanged,
     );
 
-    return () => {
+    return (): void => {
       rtcSession.off(
         MatrixRTCSessionEvent.MembershipsChanged,
         onMembershipsChanged,
