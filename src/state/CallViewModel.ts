@@ -45,7 +45,6 @@ import {
   scan,
   shareReplay,
   startWith,
-  switchAll,
   switchMap,
   throttleTime,
   timer,
@@ -488,39 +487,43 @@ export class CallViewModel extends ViewModel {
     this.gridModeUserSelection.next(value);
   }
 
-  public readonly layout: Observable<Layout> = combineLatest(
-    [this.gridMode, this.windowMode],
-    (gridMode, windowMode) => {
+  public readonly layout: Observable<Layout> = this.windowMode.pipe(
+    switchMap((windowMode) => {
       switch (windowMode) {
         case "full screen":
           throw new Error("unimplemented");
         case "pip":
           throw new Error("unimplemented");
-        case "normal": {
-          switch (gridMode) {
-            case "grid":
-              return combineLatest(
-                [this.grid, this.spotlight, this.screenShares],
-                (grid, spotlight, screenShares): Layout => ({
-                  type: "grid",
-                  spotlight: screenShares.length > 0 ? spotlight : undefined,
-                  grid,
-                }),
-              );
-            case "spotlight":
-              return combineLatest(
-                [this.grid, this.spotlight],
-                (grid, spotlight): Layout => ({
-                  type: "spotlight",
-                  spotlight,
-                  grid,
-                }),
-              );
-          }
-        }
+        case "normal":
+          return this.gridMode.pipe(
+            switchMap((gridMode) => {
+              switch (gridMode) {
+                case "grid":
+                  return combineLatest(
+                    [this.grid, this.spotlight, this.screenShares],
+                    (grid, spotlight, screenShares): Layout => ({
+                      type: "grid",
+                      spotlight:
+                        screenShares.length > 0 ? spotlight : undefined,
+                      grid,
+                    }),
+                  );
+                case "spotlight":
+                  return combineLatest(
+                    [this.grid, this.spotlight],
+                    (grid, spotlight): Layout => ({
+                      type: "spotlight",
+                      spotlight,
+                      grid,
+                    }),
+                  );
+              }
+            }),
+          );
       }
-    },
-  ).pipe(switchAll(), shareReplay(1));
+    }),
+    shareReplay(1),
+  );
 
   /**
    * The media tiles to be displayed in the call view.
