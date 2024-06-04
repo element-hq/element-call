@@ -318,7 +318,7 @@ export const GroupCallView: FC<Props> = ({
         client={client}
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={() => enterRTCSession(rtcSession, perParticipantE2EE)}
+        onEnter={() => void enterRTCSession(rtcSession, perParticipantE2EE)}
         confineToRoom={confineToRoom}
         hideHeader={hideHeader}
         participantCount={participantCount}
