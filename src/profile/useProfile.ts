@@ -82,7 +82,7 @@ export function useProfile(client: MatrixClient | undefined): UseProfile {
       user?.on(UserEvent.AvatarUrl, onChangeUser);
     }
 
-    return () => {
+    return (): void => {
       if (user) {
         user.removeListener(UserEvent.DisplayName, onChangeUser);
         user.removeListener(UserEvent.AvatarUrl, onChangeUser);

@@ -110,7 +110,7 @@ export const VideoPreview: FC<Props> = ({
     if (videoEl.current) {
       videoTrack?.attach(videoEl.current);
     }
-    return () => {
+    return (): void => {
       videoTrack?.detach();
     };
   }, [videoTrack]);

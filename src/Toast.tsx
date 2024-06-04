@@ -76,7 +76,7 @@ export const Toast: FC<Props> = ({
   useEffect(() => {
     if (open && autoDismiss !== undefined) {
       const timeout = setTimeout(onDismiss, autoDismiss);
-      return () => clearTimeout(timeout);
+      return (): void => clearTimeout(timeout);
     }
   }, [open, autoDismiss, onDismiss]);
 

@@ -317,7 +317,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       initClientState.client.on(ClientEvent.Sync, onSync);
     }
 
-    return () => {
+    return (): void => {
       if (initClientState.client) {
         initClientState.client.removeListener(ClientEvent.Sync, onSync);
       }
