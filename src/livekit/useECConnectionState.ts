@@ -192,7 +192,7 @@ export function useECConnectionState(
       livekitRoom.on(RoomEvent.ConnectionStateChanged, onConnStateChanged);
     }
 
-    return () => {
+    return (): void => {
       if (oldRoom)
         oldRoom.off(RoomEvent.ConnectionStateChanged, onConnStateChanged);
     };

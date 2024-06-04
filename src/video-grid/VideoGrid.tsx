@@ -77,6 +77,13 @@ export interface TileSpring {
   height: number;
 }
 
+export interface TileSpringUpdate extends Partial<TileSpring> {
+  from?: Partial<TileSpring>;
+  reset?: boolean;
+  immediate?: boolean | ((key: string) => boolean);
+  delay?: (key: string) => number;
+}
+
 type LayoutDirection = "vertical" | "horizontal";
 
 export function useVideoGridLayout(hasScreenshareFeeds: boolean): {
@@ -120,7 +127,7 @@ function useIsMounted(): MutableRefObject<boolean> {
   useEffect(() => {
     isMountedRef.current = true;
 
-    return () => {
+    return (): void => {
       isMountedRef.current = false;
     };
   }, []);
@@ -1026,7 +1033,7 @@ export function VideoGrid<T>({
       const oneOnOneLayout =
         tiles.length === 2 && !tiles.some((t) => t.focused);
 
-      return (tileIndex: number) => {
+      return (tileIndex: number): TileSpringUpdate => {
         const tile = tiles[tileIndex];
         const tilePosition = tilePositions[tile.order];
         const draggingTile = draggingTileRef.current;
@@ -1045,7 +1052,7 @@ export function VideoGrid<T>({
             zIndex: 2,
             shadow: 15,
             shadowSpread: 0,
-            immediate: (key: string) =>
+            immediate: (key: string): boolean =>
               disableAnimations ||
               key === "zIndex" ||
               key === "x" ||
@@ -1112,14 +1119,14 @@ export function VideoGrid<T>({
             shadowSpread: oneOnOneLayout && tile.item.local ? 1 : 0,
             from,
             reset,
-            immediate: (key: string) =>
+            immediate: (key: string): boolean =>
               disableAnimations ||
               key === "zIndex" ||
               key === "shadow" ||
               key === "shadowSpread",
             // If we just stopped dragging a tile, give it time for the
             // animation to settle before pushing its z-index back down
-            delay: (key: string) => (key === "zIndex" ? 500 : 0),
+            delay: (key: string): number => (key === "zIndex" ? 500 : 0),
           };
         }
       };

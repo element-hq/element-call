@@ -334,7 +334,7 @@ export function useRageshakeRequestModal(
 
     client.on(ClientEvent.Event, onEvent);
 
-    return () => {
+    return (): void => {
       client.removeListener(ClientEvent.Event, onEvent);
     };
   }, [setOpen, roomId, client]);

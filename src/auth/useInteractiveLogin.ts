@@ -16,7 +16,11 @@ limitations under the License.
 
 import { useCallback } from "react";
 import { InteractiveAuth } from "matrix-js-sdk/src/interactive-auth";
-import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
+import {
+  createClient,
+  LoginResponse,
+  MatrixClient,
+} from "matrix-js-sdk/src/matrix";
 
 import { initClient } from "../matrix-utils";
 import { Session } from "../ClientContext";
@@ -37,7 +41,7 @@ export function useInteractiveLogin(): (
 
     const interactiveAuth = new InteractiveAuth({
       matrixClient: authClient,
-      doRequest: () =>
+      doRequest: (): Promise<LoginResponse> =>
         authClient.login("m.login.password", {
           identifier: {
             type: "m.id.user",

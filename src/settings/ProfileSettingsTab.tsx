@@ -47,7 +47,7 @@ export const ProfileSettingsTab: FC<Props> = ({ client }) => {
   useEffect(() => {
     const form = formRef.current!;
     // Auto-save when the user dismisses this component
-    return () => {
+    return (): void => {
       if (formChanged.current) {
         const data = new FormData(form);
         const displayNameDataEntry = data.get("displayName");

@@ -33,7 +33,7 @@ export function useEventTarget<T extends Event>(
   useEffect(() => {
     if (target) {
       target.addEventListener(eventType, listener as EventListener, options);
-      return () =>
+      return (): void =>
         target.removeEventListener(
           eventType,
           listener as EventListener,
@@ -55,7 +55,7 @@ export function useTypedEventEmitter<
 ): void {
   useEffect(() => {
     emitter.on(eventType, listener);
-    return () => {
+    return (): void => {
       emitter.off(eventType, listener);
     };
   }, [emitter, eventType, listener]);
@@ -72,7 +72,7 @@ export function useEventEmitterThree<
 ): void {
   useEffect(() => {
     emitter.on(eventType, listener);
-    return () => {
+    return (): void => {
       emitter.off(eventType, listener);
     };
   }, [emitter, eventType, listener]);

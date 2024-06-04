@@ -16,7 +16,11 @@ limitations under the License.
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { InteractiveAuth } from "matrix-js-sdk/src/interactive-auth";
-import { createClient, MatrixClient } from "matrix-js-sdk/src/matrix";
+import {
+  createClient,
+  MatrixClient,
+  RegisterResponse,
+} from "matrix-js-sdk/src/matrix";
 
 import { initClient } from "../matrix-utils";
 import { Session } from "../ClientContext";
@@ -69,7 +73,7 @@ export const useInteractiveRegistration = (): {
     ): Promise<[MatrixClient, Session]> => {
       const interactiveAuth = new InteractiveAuth({
         matrixClient: authClient.current!,
-        doRequest: (auth) =>
+        doRequest: (auth): Promise<RegisterResponse> =>
           authClient.current!.registerRequest({
             username,
             password,
