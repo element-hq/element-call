@@ -85,13 +85,13 @@ limitations under the License.
 
 @media (min-height: 400px) {
   .footer {
-    padding-block: var(--cpd-space-10x);
+    padding-block: var(--cpd-space-8x);
   }
 }
 
 @media (min-height: 800px) {
   .footer {
-    padding-block: var(--cpd-space-15x);
+    padding-block: var(--cpd-space-10x);
   }
 }
 
