@@ -1784,13 +1784,6 @@
   dependencies:
     "@opentelemetry/api" "^1.0.0"
 
-"@opentelemetry/api-logs@0.49.1":
-  version "0.49.1"
-  resolved "https://registry.yarnpkg.com/@opentelemetry/api-logs/-/api-logs-0.49.1.tgz#51a66ed5eb5eeeafffbd36c1713aa91cbfdd5259"
-  integrity sha512-kaNl/T7WzyMUQHQlVq7q0oV4Kev6+0xFwqzofryC66jgGMacd0QH5TwfpbUwSTby+SdAdprAe5UKMvBw4tKS5Q==
-  dependencies:
-    "@opentelemetry/api" "^1.0.0"
-
 "@opentelemetry/api-logs@0.51.0":
   version "0.51.0"
   resolved "https://registry.yarnpkg.com/@opentelemetry/api-logs/-/api-logs-0.51.0.tgz#71f296661d2215167c748ca044ff184a65d9426b"
@@ -1862,26 +1855,14 @@
     "@opentelemetry/sdk-trace-web" "^1.15.0"
     "@opentelemetry/semantic-conventions" "^1.22.0"
 
-"@opentelemetry/instrumentation-user-interaction@^0.36.0":
-  version "0.36.0"
-  resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation-user-interaction/-/instrumentation-user-interaction-0.36.0.tgz#b68b71e109161984bf9f3c661489b22a1594e4f4"
-  integrity sha512-1KrZWUY5Z6dX8Z1nzmf1pZ7+WI8rBs2mPqJRUnela8fH+PbST0vqcw2XDxJ6DQdWXn5UFCbAECvyJ1JfiSn9AA==
+"@opentelemetry/instrumentation-user-interaction@^0.38.0":
+  version "0.38.0"
+  resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation-user-interaction/-/instrumentation-user-interaction-0.38.0.tgz#fc3dd51c39ccd0e853df8a75881b2dc4193df687"
+  integrity sha512-/UZT7zZUpi3WavRW6GmxKSa3d3PQ1ApM9nG9PKq95d4w/zhXBaYiqGT/wzcyXefW4TL2oAq4sjJvt1rZpOlImA==
   dependencies:
     "@opentelemetry/core" "^1.8.0"
-    "@opentelemetry/instrumentation" "^0.49.1"
+    "@opentelemetry/instrumentation" "^0.51.0"
     "@opentelemetry/sdk-trace-web" "^1.8.0"
-
-"@opentelemetry/instrumentation@^0.49.1":
-  version "0.49.1"
-  resolved "https://registry.yarnpkg.com/@opentelemetry/instrumentation/-/instrumentation-0.49.1.tgz#1b95e5f9448a96e7af97e03846772829439a9a91"
-  integrity sha512-0DLtWtaIppuNNRRllSD4bjU8ZIiLp1cDXvJEbp752/Zf+y3gaLNaoGRGIlX4UHhcsrmtL+P2qxi3Hodi8VuKiQ==
-  dependencies:
-    "@opentelemetry/api-logs" "0.49.1"
-    "@types/shimmer" "^1.0.2"
-    import-in-the-middle "1.7.1"
-    require-in-the-middle "^7.1.1"
-    semver "^7.5.2"
-    shimmer "^1.2.1"
 
 "@opentelemetry/instrumentation@^0.51.0":
   version "0.51.0"
