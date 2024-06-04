@@ -50,7 +50,7 @@ export function usePageUnload(callback: () => void): void {
     // @ts-ignore
     window.addEventListener("beforeunload", onBeforeUnload);
 
-    return () => {
+    return (): void => {
       window.removeEventListener("pagehide", onBeforeUnload);
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore

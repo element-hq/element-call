@@ -59,7 +59,7 @@ function useObservableState<T>(
     // observable state doesn't run in SSR
     if (typeof window === "undefined" || !observable) return;
     const subscription = observable.subscribe(setState);
-    return () => subscription.unsubscribe();
+    return (): void => subscription.unsubscribe();
   }, [observable]);
   return state;
 }

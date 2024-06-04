@@ -38,7 +38,7 @@ export function useMatrixRTCSessionJoinState(
   useEffect(() => {
     rtcSession.on(MatrixRTCSessionEvent.JoinStateChanged, onJoinStateChanged);
 
-    return () => {
+    return (): void => {
       rtcSession.off(
         MatrixRTCSessionEvent.JoinStateChanged,
         onJoinStateChanged,

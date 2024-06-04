@@ -94,7 +94,7 @@ export const GroupCallView: FC<Props> = ({
 
   useEffect(() => {
     window.rtcSession = rtcSession;
-    return () => {
+    return (): void => {
       delete window.rtcSession;
     };
   }, [rtcSession]);
@@ -200,7 +200,7 @@ export const GroupCallView: FC<Props> = ({
         await widget!.api.transport.reply(ev.detail, {});
       };
       widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
-      return () => {
+      return (): void => {
         widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
     } else if (widget && !preload && skipLobby) {
@@ -255,7 +255,7 @@ export const GroupCallView: FC<Props> = ({
         await leaveRTCSession(rtcSession);
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
-      return () => {
+      return (): void => {
         widget!.lazyActions.off(ElementWidgetActions.HangupCall, onHangup);
       };
     }

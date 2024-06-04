@@ -34,7 +34,7 @@ export function useLocationNavigation(enabled = false): void {
       });
     }
 
-    return () => {
+    return (): void => {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       if (unblock) {

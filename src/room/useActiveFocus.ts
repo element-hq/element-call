@@ -64,7 +64,7 @@ export function useActiveFocus(
       onMembershipsChanged,
     );
 
-    return () => {
+    return (): void => {
       rtcSession.off(
         MatrixRTCSessionEvent.MembershipsChanged,
         onMembershipsChanged,
