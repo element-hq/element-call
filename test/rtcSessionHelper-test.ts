@@ -35,7 +35,7 @@ test("initBeforeReact sets font family from URL param", async () => {
     livekit_service_url: "http://my-well-known-service-url2.com",
   };
   const clientWellKnown = {
-    "org.matrix.rtc_foci": [
+    "org.matrix.msc4143.rtc_foci": [
       focusConfigFromWellKnown,
       focusConfigFromWellKnown2,
     ],

@@ -27,7 +27,7 @@ import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, WidgetHelpers, widget } from "./widget";
 
-const FOCI_WK_KEY = "org.matrix.rtc_foci";
+const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
 export function makeActiveFocus(): LivekitFocusActive {
   return {
