@@ -41,7 +41,6 @@ import styles from "./Grid.module.css";
 import { useMergedRefs } from "../useMergedRefs";
 import { TileWrapper } from "./TileWrapper";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
-import { TileSpringUpdate } from "./LegacyGrid";
 import { useInitial } from "../useInitial";
 
 interface Rect {
@@ -67,6 +66,13 @@ interface TileSpring {
   y: number;
   width: number;
   height: number;
+}
+
+interface TileSpringUpdate extends Partial<TileSpring> {
+  from?: Partial<TileSpring>;
+  reset?: boolean;
+  immediate?: boolean | ((key: string) => boolean);
+  delay?: (key: string) => number;
 }
 
 interface DragState {
