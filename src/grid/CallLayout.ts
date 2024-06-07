@@ -17,7 +17,7 @@ limitations under the License.
 import { BehaviorSubject, Observable } from "rxjs";
 import { ComponentType } from "react";
 
-import { MediaViewModel } from "../state/MediaViewModel";
+import { MediaViewModel, UserMediaViewModel } from "../state/MediaViewModel";
 import { LayoutProps } from "./Grid";
 
 export interface Bounds {
@@ -53,7 +53,7 @@ export interface CallLayoutInputs {
 
 export interface GridTileModel {
   type: "grid";
-  vm: MediaViewModel;
+  vm: UserMediaViewModel;
 }
 
 export interface SpotlightTileModel {

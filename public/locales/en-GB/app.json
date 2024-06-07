@@ -162,6 +162,5 @@
     "mute_for_me": "Mute for me",
     "sfu_participant_local": "You",
     "volume": "Volume"
-  },
-  "waiting_for_participants": "Waiting for other participants…"
+  }
 }
