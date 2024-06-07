@@ -14,48 +14,43 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.fixed,
-.scrolling {
+.layer {
   margin-inline: var(--inline-content-inset);
   block-size: 100%;
+  display: grid;
+  place-items: center;
 }
 
-.scrolling {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  align-content: center;
-  gap: var(--gap);
-}
-
-.scrolling > .slot {
-  width: var(--width);
-  height: var(--height);
-}
-
-.fixed {
+.container {
   position: relative;
 }
 
-.fixed > .slot {
+.local {
+  position: absolute;
+  inline-size: 180px;
+  block-size: 135px;
+  inset: var(--cpd-space-4x);
+}
+
+.spotlight {
   position: absolute;
   inline-size: 404px;
   block-size: 233px;
   inset: -12px;
 }
 
-.fixed > .slot[data-block-alignment="start"] {
+.slot[data-block-alignment="start"] {
   inset-block-end: unset;
 }
 
-.fixed > .slot[data-block-alignment="end"] {
+.slot[data-block-alignment="end"] {
   inset-block-start: unset;
 }
 
-.fixed > .slot[data-inline-alignment="start"] {
+.slot[data-inline-alignment="start"] {
   inset-inline-end: unset;
 }
 
-.fixed > .slot[data-inline-alignment="end"] {
+.slot[data-inline-alignment="end"] {
   inset-inline-start: unset;
 }
