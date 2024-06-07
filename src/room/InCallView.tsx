@@ -330,10 +330,7 @@ export const InCallView: FC<InCallViewProps> = ({
       vm.layout.pipe(
         map((l) => {
           let makeLayout: CallLayout<Layout>;
-          if (
-            l.type === "grid" &&
-            !(l.grid.length === 2 && l.spotlight === undefined)
-          )
+          if (l.type === "grid")
             makeLayout = makeGridLayout as CallLayout<Layout>;
           else if (l.type === "spotlight")
             makeLayout = makeSpotlightLayout as CallLayout<Layout>;
