@@ -504,7 +504,9 @@ export class CallViewModel extends ViewModel {
                     (grid, spotlight, screenShares): Layout => ({
                       type: "grid",
                       spotlight:
-                        screenShares.length > 0 ? spotlight : undefined,
+                        screenShares.length > 0 || grid.length > 20
+                          ? spotlight
+                          : undefined,
                       grid,
                     }),
                   );
