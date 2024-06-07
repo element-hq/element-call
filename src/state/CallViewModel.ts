@@ -102,6 +102,13 @@ export interface SpotlightLayout {
   grid: UserMediaViewModel[];
 }
 
+export interface OneOnOneLayout {
+  type: "one-on-one";
+  spotlight?: ScreenShareViewModel[];
+  local: LocalUserMediaViewModel;
+  remote: RemoteUserMediaViewModel;
+}
+
 export interface FullScreenLayout {
   type: "full screen";
   spotlight: MediaViewModel[];
@@ -120,6 +127,7 @@ export interface PipLayout {
 export type Layout =
   | GridLayout
   | SpotlightLayout
+  | OneOnOneLayout
   | FullScreenLayout
   | PipLayout;
 
@@ -501,14 +509,27 @@ export class CallViewModel extends ViewModel {
                 case "grid":
                   return combineLatest(
                     [this.grid, this.spotlight, this.screenShares],
-                    (grid, spotlight, screenShares): Layout => ({
-                      type: "grid",
-                      spotlight:
-                        screenShares.length > 0 || grid.length > 20
-                          ? spotlight
-                          : undefined,
-                      grid,
-                    }),
+                    (grid, spotlight, screenShares): Layout =>
+                      grid.length == 2
+                        ? {
+                            type: "one-on-one",
+                            spotlight:
+                              screenShares.length > 0 ? spotlight : undefined,
+                            local: grid.find(
+                              (vm) => vm.local,
+                            ) as LocalUserMediaViewModel,
+                            remote: grid.find(
+                              (vm) => !vm.local,
+                            ) as RemoteUserMediaViewModel,
+                          }
+                        : {
+                            type: "grid",
+                            spotlight:
+                              screenShares.length > 0 || grid.length > 20
+                                ? spotlight
+                                : undefined,
+                            grid,
+                          },
                   );
                 case "spotlight":
                   return combineLatest(
