@@ -87,16 +87,16 @@ import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
 import { makeSpotlightLayout } from "../grid/SpotlightLayout";
-import { CallLayout, GridTileModel, TileModel } from "../grid/CallLayout";
+import {
+  CallLayout,
+  GridTileModel,
+  TileModel,
+  defaultPipAlignment,
+  defaultSpotlightAlignment,
+} from "../grid/CallLayout";
+import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
-
-export interface Alignment {
-  inline: "start" | "end";
-  block: "start" | "end";
-}
-
-const defaultAlignment: Alignment = { inline: "end", block: "end" };
 
 const dummySpotlightItem = {
   id: "spotlight",
@@ -321,8 +321,11 @@ export const InCallView: FC<InCallViewProps> = ({
   );
   const gridBoundsObservable = useObservable(gridBounds);
 
-  const floatingAlignment = useInitial(
-    () => new BehaviorSubject(defaultAlignment),
+  const spotlightAlignment = useInitial(
+    () => new BehaviorSubject(defaultSpotlightAlignment),
+  );
+  const pipAlignment = useInitial(
+    () => new BehaviorSubject(defaultPipAlignment),
   );
 
   const layoutSystem = useObservableEagerState(
@@ -334,11 +337,14 @@ export const InCallView: FC<InCallViewProps> = ({
             makeLayout = makeGridLayout as CallLayout<Layout>;
           else if (l.type === "spotlight")
             makeLayout = makeSpotlightLayout as CallLayout<Layout>;
+          else if (l.type === "one-on-one")
+            makeLayout = makeOneOnOneLayout as CallLayout<Layout>;
           else return null; // Not yet implemented
 
           return makeLayout({
             minBounds: gridBoundsObservable,
-            floatingAlignment,
+            spotlightAlignment,
+            pipAlignment,
           });
         }),
       ),
@@ -491,7 +497,10 @@ export const InCallView: FC<InCallViewProps> = ({
           />
           <Grid
             className={styles.fixedGrid}
-            style={{ insetBlockStart: headerBounds.bottom }}
+            style={{
+              insetBlockStart: headerBounds.bottom,
+              height: gridBounds.height,
+            }}
             model={layout}
             Layout={layoutSystem.fixed}
             Tile={Tile}
