@@ -207,7 +207,8 @@ function findMatrixMember(
   room: MatrixRoom,
   id: string,
 ): RoomMember | undefined {
-  if (!id) return undefined;
+  if (id === "local")
+    return room.getMember(room.client.getUserId()!) ?? undefined;
 
   const parts = id.split(":");
   // must be at least 3 parts because we know the first part is a userId which must necessarily contain a colon
@@ -307,23 +308,16 @@ export class CallViewModel extends ViewModel {
   ]).pipe(
     scan(
       (prevItems, [remoteParticipants, { participant: localParticipant }]) => {
-        let allGhosts = true;
-
         const newItems = new Map(
           function* (this: CallViewModel): Iterable<[string, MediaItem]> {
             for (const p of [localParticipant, ...remoteParticipants]) {
-              const member = findMatrixMember(this.matrixRoom, p.identity);
-              allGhosts &&= member === undefined;
-              // We always start with a local participant with the empty string as
-              // their ID before we're connected, this is fine and we'll be in
-              // "all ghosts" mode.
-              if (p.identity !== "" && member === undefined) {
+              const userMediaId = p === localParticipant ? "local" : p.identity;
+              const member = findMatrixMember(this.matrixRoom, userMediaId);
+              if (member === undefined)
                 logger.warn(
                   `Ruh, roh! No matrix member found for SFU participant '${p.identity}': creating g-g-g-ghost!`,
                 );
-              }
 
-              const userMediaId = p.identity;
               yield [
                 userMediaId,
                 prevItems.get(userMediaId) ??
@@ -343,10 +337,7 @@ export class CallViewModel extends ViewModel {
         );
 
         for (const [id, t] of prevItems) if (!newItems.has(id)) t.destroy();
-
-        // If every item is a ghost, that probably means we're still connecting
-        // and shouldn't bother showing anything yet
-        return allGhosts ? new Map() : newItems;
+        return newItems;
       },
       new Map<string, MediaItem>(),
     ),
