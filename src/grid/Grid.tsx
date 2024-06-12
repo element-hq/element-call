@@ -268,12 +268,13 @@ export function Grid<
       ) as HTMLCollectionOf<HTMLElement>;
       for (const slot of slots) {
         const id = slot.getAttribute("data-id")!;
-        result.push({
-          ...tiles.get(id)!,
-          ...offset(slot, gridRoot),
-          width: slot.offsetWidth,
-          height: slot.offsetHeight,
-        });
+        if (slot.offsetWidth > 0 && slot.offsetHeight > 0)
+          result.push({
+            ...tiles.get(id)!,
+            ...offset(slot, gridRoot),
+            width: slot.offsetWidth,
+            height: slot.offsetHeight,
+          });
       }
     }
 
