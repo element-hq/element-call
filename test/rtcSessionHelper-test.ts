@@ -19,7 +19,7 @@ import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { enterRTCSession } from "../src/rtcSessionHelpers";
 import { Config } from "../src/config/Config";
 
-test("initBeforeReact sets font family from URL param", async () => {
+test("It joins the correct Session", async () => {
   const focusFromOlderMembership = {
     type: "livekit",
     livekit_service_url: "http://my-oldest-member-service-url.com",
@@ -53,6 +53,7 @@ test("initBeforeReact sets font family from URL param", async () => {
       },
     },
     memberships: [],
+    getFocusInUse: vi.fn().mockReturnValue(focusFromOlderMembership),
     getOldestMembership: vi.fn().mockReturnValue({
       getPreferredFoci: vi.fn().mockReturnValue([focusFromOlderMembership]),
     }),
@@ -61,10 +62,6 @@ test("initBeforeReact sets font family from URL param", async () => {
   await enterRTCSession(mockedSession, false);
 
   expect(mockedSession.joinRoomSession).toHaveBeenLastCalledWith(
-    {
-      focus_selection: "oldest_membership",
-      type: "livekit",
-    },
     [
       {
         livekit_alias: "my-oldest-member-service-alias",
@@ -87,6 +84,10 @@ test("initBeforeReact sets font family from URL param", async () => {
         type: "livekit",
       },
     ],
+    {
+      focus_selection: "oldest_membership",
+      type: "livekit",
+    },
     { manageMediaKeys: false },
   );
 });
