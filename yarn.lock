@@ -1738,10 +1738,10 @@
   dependencies:
     "@bufbuild/protobuf" "^1.7.2"
 
-"@matrix-org/matrix-sdk-crypto-wasm@^4.9.0":
-  version "4.9.0"
-  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-4.9.0.tgz#9dfed83e33f760650596c4e5c520e5e4c53355d2"
-  integrity sha512-/bgA4QfE7qkK6GFr9hnhjAvRSebGrmEJxukU0ukbudZcYvbzymoBBM8j3HeULXZT8kbw8WH6z63txYTMCBSDOA==
+"@matrix-org/matrix-sdk-crypto-wasm@^5.0.0":
+  version "5.0.0"
+  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-5.0.0.tgz#f45a7bccaad218c05bcf9e7c8ca783c9d9a07af4"
+  integrity sha512-37ASjCKSTU5ycGfkP+LUXG4Ok6OAf6vE+1qU6uwWhe6FwadCS3vVWzJYd/3d9BQFwsx4GhFTIAXrW4iLG85rmQ==
 
 "@matrix-org/olm@https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.14.tgz":
   version "3.2.14"
@@ -6340,13 +6340,12 @@ matrix-events-sdk@0.0.1:
   resolved "https://registry.yarnpkg.com/matrix-events-sdk/-/matrix-events-sdk-0.0.1.tgz#c8c38911e2cb29023b0bbac8d6f32e0de2c957dd"
   integrity sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==
 
-"matrix-js-sdk@github:matrix-org/matrix-js-sdk#e874468ba3e84819cf4b342d2e66af67ab4cf804":
-  version "32.0.0"
-  uid e874468ba3e84819cf4b342d2e66af67ab4cf804
-  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/e874468ba3e84819cf4b342d2e66af67ab4cf804"
+"matrix-js-sdk@github:matrix-org/matrix-js-sdk#d754392410a23526ce65fd2fd6b04bfac989b666":
+  version "33.0.0"
+  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/d754392410a23526ce65fd2fd6b04bfac989b666"
   dependencies:
     "@babel/runtime" "^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm" "^4.9.0"
+    "@matrix-org/matrix-sdk-crypto-wasm" "^5.0.0"
     another-json "^0.2.0"
     bs58 "^5.0.0"
     content-type "^1.0.4"
@@ -6358,7 +6357,7 @@ matrix-events-sdk@0.0.1:
     p-retry "4"
     sdp-transform "^2.14.1"
     unhomoglyph "^1.0.6"
-    uuid "9"
+    uuid "10"
 
 matrix-widget-api@^1.3.1, matrix-widget-api@^1.6.0:
   version "1.6.0"
@@ -8526,6 +8525,11 @@ util-deprecate@^1.0.1, util-deprecate@^1.0.2, util-deprecate@~1.0.1:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/util-deprecate/-/util-deprecate-1.0.2.tgz#450d4dc9fa70de732762fbd2d4a28981419a0ccf"
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
+
+uuid@10:
+  version "10.0.0"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-10.0.0.tgz#5a95aa454e6e002725c79055fd42aaba30ca6294"
+  integrity sha512-8XkAphELsDnEGrDxUOHB3RGvXz6TeuYSGEZBOjtTtPm2lwhGBjLgOzLHB63IUWfBpNucQjND6d3AOudO+H3RWQ==
 
 uuid@9:
   version "9.0.1"
