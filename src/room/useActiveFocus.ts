@@ -21,33 +21,28 @@ import {
 import { useCallback, useEffect, useState } from "react";
 import { deepCompare } from "matrix-js-sdk/src/utils";
 import { logger } from "matrix-js-sdk/src/logger";
-
-import { LivekitFocus } from "../livekit/LivekitFocus";
-
-function getActiveFocus(
-  rtcSession: MatrixRTCSession,
-): LivekitFocus | undefined {
-  const oldestMembership = rtcSession.getOldestMembership();
-  const focus = oldestMembership?.getActiveFoci()[0] as LivekitFocus;
-
-  return focus;
-}
+import {
+  LivekitFocus,
+  isLivekitFocus,
+} from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 
 /**
  * Gets the currently active (livekit) focus for a MatrixRTC session
  * This logic is specific to livekit foci where the whole call must use one
  * and the same focus.
  */
-export function useActiveFocus(
+export function useActiveLivekitFocus(
   rtcSession: MatrixRTCSession,
 ): LivekitFocus | undefined {
-  const [activeFocus, setActiveFocus] = useState(() =>
-    getActiveFocus(rtcSession),
-  );
+  const [activeFocus, setActiveFocus] = useState(() => {
+    const f = rtcSession.getActiveFocus();
+    // Only handle foci with type="livekit" for now.
+    return !!f && isLivekitFocus(f) ? f : undefined;
+  });
 
   const onMembershipsChanged = useCallback(() => {
-    const newActiveFocus = getActiveFocus(rtcSession);
-
+    const newActiveFocus = rtcSession.getActiveFocus();
+    if (!!newActiveFocus && !isLivekitFocus(newActiveFocus)) return;
     if (!deepCompare(activeFocus, newActiveFocus)) {
       const oldestMembership = rtcSession.getOldestMembership();
       logger.warn(

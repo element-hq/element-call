@@ -77,8 +77,6 @@ export const widget = ((): WidgetHelpers | null => {
       logger.info("Widget API is available");
       const api = new WidgetApi(widgetId, parentOrigin);
       api.requestCapability(MatrixCapabilities.AlwaysOnScreen);
-      api.requestCapabilityToSendEvent(EventType.CallEncryptionKeysPrefix);
-      api.requestCapabilityToReceiveEvent(EventType.CallEncryptionKeysPrefix);
 
       // Set up the lazy action emitter, but only for select actions that we
       // intend for the app to handle
@@ -116,9 +114,15 @@ export const widget = ((): WidgetHelpers | null => {
       if (!baseUrl) throw new Error("Base URL must be supplied");
 
       // These are all the event types the app uses
-      const sendRecvEvent = ["org.matrix.rageshake_request"];
+      const sendRecvEvent = [
+        "org.matrix.rageshake_request",
+        EventType.CallEncryptionKeysPrefix,
+      ];
       const sendState = [
-        { eventType: EventType.GroupCallMemberPrefix, stateKey: userId },
+        {
+          eventType: EventType.GroupCallMemberPrefix,
+          stateKey: userId, // TODO: based on if we use the new format we want the key to be: `_${userId}_${deviceId}`
+        },
       ];
       const receiveState = [
         { eventType: EventType.RoomMember },
@@ -167,7 +171,7 @@ export const widget = ((): WidgetHelpers | null => {
           // wait for the config file to be ready (we load very early on so it might not
           // be otherwise)
           await Config.init();
-          await client.startClient();
+          await client.startClient({ clientWellKnownPollPeriod: 60 * 10 });
           resolve(client);
         })();
       });

@@ -64,6 +64,28 @@ experimental_features:
 MSC3266 allows to request a room summary of rooms you are not joined.
 The summary contains the room join rules. We need that to decide if the user gets prompted with the option to knock ("ask to join"), a cannot join error or the join view.
 
+Element Call requires a Livekit SFU behind a Livekit jwt service to work. The url to the Livekit jwt service can either be configured in the config of Element Call (fallback/legacy configuration) or be configured by your homeserver via the `.well-known`.
+This is the recommended method.
+
+The configuration is a list of Foci configs:
+
+```json
+"org.matrix.msc4143.rtc_foci": [
+    {
+        "type": "livekit",
+        "livekit_service_url": "https://someurl.com"
+    },
+     {
+        "type": "livekit",
+        "livekit_service_url": "https://livekit2.com"
+    },
+    {
+        "type": "another_foci",
+        "props_for_another_foci": "val"
+    },
+]
+```
+
 ## Translation
 
 If you'd like to help translate Element Call, head over to [Localazy](https://localazy.com/p/element-call). You're also encouraged to join the [Element Translators](https://matrix.to/#/#translators:element.io) space to discuss and coordinate translation efforts.
@@ -103,7 +125,9 @@ service for development. These use a test 'secret' published in this
 repository, so this must be used only for local development and
 **_never be exposed to the public Internet._**
 
-To use it, add SFU parameter in your local config `./public/config.json`:
+To use it, add a SFU parameter in your local config `./public/config.json`:
+(Be aware, that this is only the fallback Livekit SFU. If the homeserver
+advertises one in the client well-known, this will not be used.)
 
 ```json
 "livekit": {
