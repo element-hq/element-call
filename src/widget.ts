@@ -119,7 +119,10 @@ export const widget = ((): WidgetHelpers | null => {
         EventType.CallEncryptionKeysPrefix,
       ];
       const sendState = [
-        { eventType: EventType.GroupCallMemberPrefix, stateKey: userId },
+        {
+          eventType: EventType.GroupCallMemberPrefix,
+          stateKey: userId, // TODO: based on if we use the new format we want the key to be: `_${userId}_${deviceId}`
+        },
       ];
       const receiveState = [
         { eventType: EventType.RoomMember },
