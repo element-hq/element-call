@@ -25,7 +25,11 @@ import {
   useMemo,
 } from "react";
 import { useHistory } from "react-router-dom";
-import { ClientEvent, MatrixClient } from "matrix-js-sdk/src/client";
+import {
+  ClientEvent,
+  ICreateClientOpts,
+  MatrixClient,
+} from "matrix-js-sdk/src/client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
@@ -360,13 +364,13 @@ async function loadClient(): Promise<InitResult | null> {
 
       /* eslint-disable camelcase */
       const { user_id, device_id, access_token, passwordlessUser } = session;
-      const initClientParams = {
+      const initClientParams: ICreateClientOpts = {
         baseUrl: Config.defaultHomeserverUrl()!,
         accessToken: access_token,
         userId: user_id,
         deviceId: device_id,
         fallbackICEServerAllowed: fallbackICEServerAllowed,
-        livekitServiceURL: Config.get().livekit!.livekit_service_url,
+        livekitServiceURL: Config.get().livekit?.livekit_service_url,
       };
 
       try {

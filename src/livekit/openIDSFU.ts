@@ -18,9 +18,9 @@ import { IOpenIDToken, MatrixClient } from "matrix-js-sdk";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { useEffect, useState } from "react";
+import { LivekitFocus } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 
-import { LivekitFocus } from "./LivekitFocus";
-import { useActiveFocus } from "../room/useActiveFocus";
+import { useActiveLivekitFocus } from "../room/useActiveFocus";
 
 export interface SFUConfig {
   url: string;
@@ -46,7 +46,7 @@ export function useOpenIDSFU(
 ): SFUConfig | undefined {
   const [sfuConfig, setSFUConfig] = useState<SFUConfig | undefined>(undefined);
 
-  const activeFocus = useActiveFocus(rtcSession);
+  const activeFocus = useActiveLivekitFocus(rtcSession);
 
   useEffect(() => {
     (async (): Promise<void> => {

@@ -217,8 +217,6 @@ export const useLoadGroupCall = (
             "Room not found. The widget-api did not pass over the relevant room events/information.",
           );
 
-        // If the room does not exist we first search for it with viaServers
-        const roomSummary = await client.getRoomSummary(roomId, viaServers);
         if (membership === KnownMembership.Ban) {
           throw bannedError();
         } else if (membership === KnownMembership.Invite) {
@@ -226,6 +224,8 @@ export const useLoadGroupCall = (
             viaServers,
           });
         } else {
+          // If the room does not exist we first search for it with viaServers
+          const roomSummary = await client.getRoomSummary(roomId, viaServers);
           if (roomSummary.join_rule === JoinRule.Public) {
             room = await client.joinRoom(roomSummary.room_id, {
               viaServers,

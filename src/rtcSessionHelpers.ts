@@ -15,29 +15,90 @@ limitations under the License.
 */
 
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { logger } from "matrix-js-sdk/src/logger";
+import {
+  LivekitFocus,
+  LivekitFocusActive,
+  isLivekitFocus,
+  isLivekitFocusConfig,
+} from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
-import { LivekitFocus } from "./livekit/LivekitFocus";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, WidgetHelpers, widget } from "./widget";
 
-function makeFocus(livekitAlias: string): LivekitFocus {
-  const urlFromConf = Config.get().livekit!.livekit_service_url;
-  if (!urlFromConf) {
-    throw new Error("No livekit_service_url is configured!");
-  }
+const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
+export function makeActiveFocus(): LivekitFocusActive {
   return {
     type: "livekit",
-    livekit_service_url: urlFromConf,
-    livekit_alias: livekitAlias,
+    focus_selection: "oldest_membership",
   };
 }
 
-export function enterRTCSession(
+async function makePreferredLivekitFoci(
+  rtcSession: MatrixRTCSession,
+  livekitAlias: string,
+): Promise<LivekitFocus[]> {
+  logger.log("Start building foci_preferred list: ", rtcSession.room.roomId);
+
+  const preferredFoci: LivekitFocus[] = [];
+
+  // Make the Focus from the running rtc session the highest priority one
+  // This minimizes how often we need to switch foci during a call.
+  const focusInUse = rtcSession.getFocusInUse();
+  if (focusInUse && isLivekitFocus(focusInUse)) {
+    logger.log("Adding livekit focus from oldest member: ", focusInUse);
+    preferredFoci.push(focusInUse);
+  }
+
+  // Prioritize the client well known over the configured sfu.
+  const wellKnownFoci =
+    rtcSession.room.client.getClientWellKnown()?.[FOCI_WK_KEY];
+  if (Array.isArray(wellKnownFoci)) {
+    preferredFoci.push(
+      ...wellKnownFoci
+        .filter((f) => !!f)
+        .filter(isLivekitFocusConfig)
+        .map((wellKnownFocus) => {
+          logger.log("Adding livekit focus from well known: ", wellKnownFocus);
+          return { ...wellKnownFocus, livekit_alias: livekitAlias };
+        }),
+    );
+  }
+
+  const urlFromConf = Config.get().livekit?.livekit_service_url;
+  if (urlFromConf) {
+    const focusFormConf: LivekitFocus = {
+      type: "livekit",
+      livekit_service_url: urlFromConf,
+      livekit_alias: livekitAlias,
+    };
+    logger.log("Adding livekit focus from config: ", focusFormConf);
+    preferredFoci.push(focusFormConf);
+  }
+
+  if (preferredFoci.length === 0)
+    throw new Error(
+      `No livekit_service_url is configured so we could not create a focus.
+    Currently we skip computing a focus based on other users in the room.`,
+    );
+
+  return preferredFoci;
+
+  // TODO: we want to do something like this:
+  //
+  // const focusOtherMembers = await focusFromOtherMembers(
+  //   rtcSession,
+  //   livekitAlias,
+  // );
+  // if (focusOtherMembers) preferredFoci.push(focusOtherMembers);
+}
+
+export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   encryptMedia: boolean,
-): void {
+): Promise<void> {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 
@@ -47,8 +108,11 @@ export function enterRTCSession(
 
   // right now we assume everything is a room-scoped call
   const livekitAlias = rtcSession.room.roomId;
-
-  rtcSession.joinRoomSession([makeFocus(livekitAlias)], encryptMedia);
+  rtcSession.joinRoomSession(
+    await makePreferredLivekitFoci(rtcSession, livekitAlias),
+    makeActiveFocus(),
+    { manageMediaKeys: encryptMedia },
+  );
 }
 
 const widgetPostHangupProcedure = async (

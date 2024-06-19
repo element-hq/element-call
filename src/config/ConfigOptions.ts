@@ -55,7 +55,12 @@ export interface ConfigOptions {
 
   // Describes the LiveKit configuration to be used.
   livekit?: {
-    // The link to the service that returns a livekit url and token to use it
+    // The link to the service that returns a livekit url and token to use it.
+    // This is a fallback link in case the homeserver in use does not advertise
+    // a livekit service url in the client well-known.
+    // The well known needs to be formatted like so:
+    // {"type":"livekit", "livekit_service_url":"https://livekit.example.com"}
+    // and stored under the key: "livekit_focus"
     livekit_service_url: string;
   };
 
