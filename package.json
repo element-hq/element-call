@@ -47,7 +47,7 @@
     "@react-stately/select": "^3.1.3",
     "@react-stately/tooltip": "^3.0.5",
     "@react-stately/tree": "^3.2.0",
-    "@sentry/react": "^7.0.0",
+    "@sentry/react": "^8.0.0",
     "@sentry/tracing": "^7.0.0",
     "@types/lodash": "^4.14.199",
     "@use-gesture/react": "^10.2.11",
