@@ -30,6 +30,7 @@ import MicOffIcon from "@vector-im/compound-design-tokens/icons/mic-off.svg?reac
 import OverflowHorizontalIcon from "@vector-im/compound-design-tokens/icons/overflow-horizontal.svg?react";
 import VolumeOnIcon from "@vector-im/compound-design-tokens/icons/volume-on.svg?react";
 import VolumeOffIcon from "@vector-im/compound-design-tokens/icons/volume-off.svg?react";
+import VisibilityOnIcon from "@vector-im/compound-design-tokens/icons/visibility-on.svg?react";
 import UserProfileIcon from "@vector-im/compound-design-tokens/icons/user-profile.svg?react";
 import ExpandIcon from "@vector-im/compound-design-tokens/icons/expand.svg?react";
 import CollapseIcon from "@vector-im/compound-design-tokens/icons/collapse.svg?react";
@@ -52,6 +53,7 @@ import {
 } from "../state/MediaViewModel";
 import { Slider } from "../Slider";
 import { MediaView } from "./MediaView";
+import { useLatest } from "../useLatest";
 
 interface TileProps {
   className?: string;
@@ -203,12 +205,31 @@ const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
   ({ vm, onOpenProfile, className, ...props }, ref) => {
     const { t } = useTranslation();
     const mirror = useObservableEagerState(vm.mirror);
+    const alwaysShow = useObservableEagerState(vm.alwaysShow);
+    const latestAlwaysShow = useLatest(alwaysShow);
+    const onSelectAlwaysShow = useCallback(
+      (e: Event) => e.preventDefault(),
+      [],
+    );
+    const onChangeAlwaysShow = useCallback(
+      () => vm.setAlwaysShow(!latestAlwaysShow.current),
+      [vm, latestAlwaysShow],
+    );
 
     return (
       <UserMediaTile
         ref={ref}
         vm={vm}
         menuStart={
+          <ToggleMenuItem
+            Icon={VisibilityOnIcon}
+            label={t("video_tile.always_show")}
+            checked={alwaysShow}
+            onChange={onChangeAlwaysShow}
+            onSelect={onSelectAlwaysShow}
+          />
+        }
+        menuEnd={
           <MenuItem
             Icon={UserProfileIcon}
             label={t("common.profile")}
