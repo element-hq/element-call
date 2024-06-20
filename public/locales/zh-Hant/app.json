@@ -55,8 +55,6 @@
   "disconnected_banner": "到伺服器的連線已遺失。",
   "full_screen_view_description": "<0>送出除錯紀錄，可幫助我們修正問題。</0>",
   "full_screen_view_h1": "<0>喔喔，有些地方怪怪的。</0>",
-  "group_call_loader_failed_heading": "找不到通話",
-  "group_call_loader_failed_text": "通話現在是端對端加密的，必須從首頁建立。這有助於確保每個人都使用相同的加密金鑰。",
   "hangup_button_label": "結束通話",
   "header_label": "Element Call 首頁",
   "header_participants_label": "參與者",
