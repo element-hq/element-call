@@ -55,8 +55,6 @@
   "disconnected_banner": "Utracono połączenie z serwerem.",
   "full_screen_view_description": "<0>Wysłanie dzienników debuggowania pomoże nam ustalić przyczynę problemu.</0>",
   "full_screen_view_h1": "<0>Ojej, coś poszło nie tak.</0>",
-  "group_call_loader_failed_heading": "Nie znaleziono połączenia",
-  "group_call_loader_failed_text": "Połączenia są teraz szyfrowane end-to-end i muszą zostać utworzone ze strony głównej. Pomaga to upewnić się, że każdy korzysta z tego samego klucza szyfrującego.",
   "hangup_button_label": "Zakończ połączenie",
   "header_label": "Strona główna Element Call",
   "header_participants_label": "Uczestnicy",
