@@ -27,8 +27,8 @@ export function useWakeLock(): void {
       let lock: WakeLockSentinel | null = null;
 
       // The lock is automatically released whenever the window goes invisible,
-      // so we need to reacquire it on visiblity changes
-      const onVisiblityChange = async (): Promise<void> => {
+      // so we need to reacquire it on visibility changes
+      const onVisibilityChange = async (): Promise<void> => {
         if (document.visibilityState === "visible") {
           try {
             lock = await navigator.wakeLock.request("screen");
@@ -44,8 +44,8 @@ export function useWakeLock(): void {
         }
       };
 
-      onVisiblityChange();
-      document.addEventListener("visiblitychange", onVisiblityChange);
+      onVisibilityChange();
+      document.addEventListener("visibilitychange", onVisibilityChange);
 
       return (): void => {
         mounted = false;
@@ -53,7 +53,7 @@ export function useWakeLock(): void {
           lock
             .release()
             .catch((e) => logger.warn("Can't release wake lock", e));
-        document.removeEventListener("visiblitychange", onVisiblityChange);
+        document.removeEventListener("visibilitychange", onVisibilityChange);
       };
     }
   }, []);
