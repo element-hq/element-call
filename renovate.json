@@ -3,9 +3,36 @@
   "extends": ["config:base"],
   "packageRules": [
     {
-      "description": "Disable renoavte for packages we want to monitor ourselves",
-      "matchPackagePatterns": ["matrix-js-sdk"],
+      "extends": ["group:allNonMajor", "schedule:weekly"]
+    },
+    {
+      "description": "Disable Renovate for packages we want to monitor ourselves",
+      "groupName": "manually updated packages",
+      "matchPackageNames": ["matrix-js-sdk"],
       "enabled": false
+    },
+    {
+      "groupName": "matrix-widget-api",
+      "matchPackageNames": ["matrix-widget-api"]
+    },
+    {
+      "groupName": "Compound",
+      "matchPackagePrefixes": ["@vector-im/compound-"],
+      "schedule": "before 5am on Tuesday and Friday"
+    },
+    {
+      "groupName": "LiveKit client",
+      "matchPackageNames": ["livekit-client"]
+    },
+    {
+      "groupName": "LiveKit components",
+      "matchPackagePrefixes": ["@livekit/components-"]
+    },
+    {
+      "groupName": "Vaul",
+      "matchPackageNames": ["vaul"],
+      "extends": ["schedule:monthly"],
+      "prHeader": "Please review modals on mobile for visual regressions."
     }
   ],
   "semanticCommits": "disabled",
