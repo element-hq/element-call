@@ -6258,9 +6258,9 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^2.0.2:
-  version "2.3.0"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.3.0.tgz#6005373ae5bc9078926fabd187f54b3261d95a55"
-  integrity sha512-lkd1COr8OVm+xVLZdiQaHiUWP4iK7T1+bJKvdXaMvDTcnV+nraxwEmLCCEqJSm7Pa75BLjqWV5m8rbZ6niZz/g==
+  version "2.3.1"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.3.1.tgz#f8d1bef551904156873bdf3b551f460b1c6fd78b"
+  integrity sha512-Tg4n5c1fuMSXATechRwV2Q4nv70xkJSktQrBggyyh+X8a6xwUYJ9jVgxUW4ys8oARbBTUvoz4bg3UUf3gpKZDA==
   dependencies:
     "@livekit/protocol" "1.16.0"
     events "^3.3.0"
