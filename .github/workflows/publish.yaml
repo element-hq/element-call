@@ -39,7 +39,7 @@ jobs:
         id: current-time
         run: echo "unix_time=$(date +'%s')" >> $GITHUB_OUTPUT
       - name: 📥 Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id || github.run_id }}
@@ -51,7 +51,7 @@ jobs:
         run: |
           tar --numeric-owner --transform "s/dist/element-call-${TARBALL_VERSION}/" -cvzf element-call-${TARBALL_VERSION}.tar.gz dist
       - name: Upload
-        uses: actions/upload-artifact@552bf3722c16e81001aea7db72d8cedf64eb5f68
+        uses: actions/upload-artifact@65462800fd760344b1a7b4382951275a0abb4808 # v4.3.3
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:

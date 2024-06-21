@@ -14,9 +14,9 @@ jobs:
 
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
       - name: Upload
-        uses: localazy/upload@v1
+        uses: localazy/upload@27e6b5c0fddf4551596b42226b1c24124335d24a # v1
         with:
           write_key: ${{ secrets.LOCALAZY_WRITE_KEY }}
