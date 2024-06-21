@@ -23,10 +23,10 @@ jobs:
       packages: write
     steps:
       - name: Check it out
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
       - name: 📥 Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ inputs.artifact_run_id }}
