@@ -14,7 +14,7 @@ jobs:
       pr_data_json: ${{ steps.prdetails.outputs.data }}
     steps:
       - id: prdetails
-        uses: matrix-org/pr-details-action@v1.3
+        uses: matrix-org/pr-details-action@15bde5285d7850ba276cc3bd8a03733e3f24622a # v1.3
         continue-on-error: true
         with:
           owner: ${{ github.event.workflow_run.head_repository.owner.login }}

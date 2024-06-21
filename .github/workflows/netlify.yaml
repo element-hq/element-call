@@ -34,7 +34,7 @@ jobs:
     environment: Netlify
     steps:
       - name: 📝 Create Deployment
-        uses: bobheadxi/deployments@v1
+        uses: bobheadxi/deployments@648679e8e4915b27893bd7dbc35cb504dc915bc8 # v1
         id: deployment
         with:
           step: start
@@ -46,7 +46,7 @@ jobs:
             Exercise caution. Use test accounts.
 
       - name: 📥 Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4
         with:
           github-token: ${{ secrets.ELEMENT_BOT_TOKEN }}
           run-id: ${{ inputs.artifact_run_id }}
@@ -62,7 +62,7 @@ jobs:
 
       - name: ☁️ Deploy to Netlify
         id: netlify
-        uses: nwtgck/actions-netlify@v3.0
+        uses: nwtgck/actions-netlify@4cbaf4c08f1a7bfa537d6113472ef4424e4eb654 # v3.0
         with:
           publish-dir: webapp
           deploy-message: "Deploy from GitHub Actions"
@@ -73,7 +73,7 @@ jobs:
         timeout-minutes: 1
 
       - name: 🚦 Update deployment status
-        uses: bobheadxi/deployments@v1
+        uses: bobheadxi/deployments@648679e8e4915b27893bd7dbc35cb504dc915bc8 # v1
         if: always()
         with:
           step: finish

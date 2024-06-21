@@ -39,7 +39,7 @@ jobs:
         id: current-time
         run: echo "unix_time=$(date +'%s')" >> $GITHUB_OUTPUT
       - name: 📥 Download artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@65a9edc5881444af0b9093a5e628f2fe47ea3b2e # v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ github.event.workflow_run.id || github.run_id }}
