@@ -242,17 +242,21 @@ export const useLoadGroupCall = (
             );
           }
           if (
-            roomSummary?.join_rule === JoinRule.Public ||
-            roomSummary === undefined
+            roomSummary === undefined ||
+            roomSummary.join_rule === JoinRule.Public
           ) {
             room = await client.joinRoom(roomId, {
               viaServers,
             });
           } else if (roomSummary.join_rule === JoinRule.Knock) {
+            // bind room summary in this scope so we have it stored in a binding of type `RoomSummary`
+            // instead of `RoomSummary | undefined`. Because we use it in a promise the linter does not accept
+            // the type check from the if condition above.
+            const _roomSummary = roomSummary;
             let knock: () => void = () => {};
             const userPressedAskToJoinPromise: Promise<void> = new Promise(
               (resolve) => {
-                if (roomSummary.membership !== KnownMembership.Knock) {
+                if (_roomSummary.membership !== KnownMembership.Knock) {
                   knock = resolve;
                 } else {
                   // resolve immediately if the user already knocked
@@ -260,12 +264,13 @@ export const useLoadGroupCall = (
                 }
               },
             );
-            setState({ kind: "canKnock", roomSummary, knock });
+            setState({ kind: "canKnock", roomSummary: _roomSummary, knock });
             await userPressedAskToJoinPromise;
             room = await getRoomByKnocking(
               roomSummary.room_id,
               viaServers,
-              () => setState({ kind: "waitForInvite", roomSummary }),
+              () =>
+                setState({ kind: "waitForInvite", roomSummary: _roomSummary }),
             );
           } else {
             throw new Error(
