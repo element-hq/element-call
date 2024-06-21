@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { BrowserTracing } from "@sentry/browser";
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
@@ -160,10 +159,7 @@ export class Initializer {
           dsn: Config.get().sentry?.DSN,
           environment: Config.get().sentry?.environment,
           integrations: [
-            new BrowserTracing({
-              routingInstrumentation:
-                Sentry.reactRouterV5Instrumentation(history),
-            }),
+            Sentry.reactRouterV5BrowserTracingIntegration({ history }),
           ],
           tracesSampleRate: 1.0,
         });
