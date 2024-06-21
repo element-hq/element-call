@@ -13,9 +13,9 @@ jobs:
 
     steps:
       - name: Checkout the code
-        uses: actions/checkout@v4
+        uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332 # v4
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@60edb5dd545a775178f52524783378180af0d1f8 # v4
         with:
           cache: "yarn"
 
@@ -26,7 +26,7 @@ jobs:
         run: "rm -R public/locales"
 
       - name: Download translation files
-        uses: localazy/download@v1.1.0
+        uses: localazy/download@0a79880fb66150601e3b43606fab69c88123c087 # v1.1.0
         with:
           groups: "-p includeSourceLang:true"
 
@@ -38,7 +38,7 @@ jobs:
 
       - name: Create Pull Request
         id: cpr
-        uses: peter-evans/create-pull-request@v6.0.5
+        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6.1.0
         with:
           token: ${{ secrets.ELEMENT_BOT_TOKEN }}
           branch: actions/localazy-download
