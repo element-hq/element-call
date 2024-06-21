@@ -79,7 +79,7 @@
     "sdp-transform": "^2.14.1",
     "tinyqueue": "^2.0.3",
     "unique-names-generator": "^4.6.0",
-    "uuid": "9",
+    "uuid": "10",
     "vaul": "^0.9.0"
   },
   "devDependencies": {
@@ -100,7 +100,7 @@
     "@types/react-router-dom": "^5.3.3",
     "@types/request": "^2.48.8",
     "@types/sdp-transform": "^2.4.5",
-    "@types/uuid": "9",
+    "@types/uuid": "10",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "babel-loader": "^9.0.0",
