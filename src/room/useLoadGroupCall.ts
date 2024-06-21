@@ -225,9 +225,27 @@ export const useLoadGroupCall = (
           });
         } else {
           // If the room does not exist we first search for it with viaServers
-          const roomSummary = await client.getRoomSummary(roomId, viaServers);
-          if (roomSummary.join_rule === JoinRule.Public) {
-            room = await client.joinRoom(roomSummary.room_id, {
+          let roomSummary: RoomSummary | undefined = undefined;
+          try {
+            roomSummary = await client.getRoomSummary(roomId, viaServers);
+          } catch (error) {
+            // If the room summary endpoint is not supported we let it be undefined and treat this case like
+            // `JoinRule.Public`.
+            // This is how the logic was done before: "we expect any room id passed to EC
+            // to be for a public call" Which is definitely not ideal but worth a try if fetching
+            // the summary crashes.
+            logger.error(
+              `Could not load room summary to decide whether we want to join or knock.
+              EC will fallback to join as if this would be a public room.
+              Reach out to your homeserver admin to ask them about supporting the \`/summary\` endpoint (im.nheko.summary):`,
+              error,
+            );
+          }
+          if (
+            roomSummary?.join_rule === JoinRule.Public ||
+            roomSummary === undefined
+          ) {
+            room = await client.joinRoom(roomId, {
               viaServers,
             });
           } else if (roomSummary.join_rule === JoinRule.Knock) {
