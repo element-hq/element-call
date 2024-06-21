@@ -59,7 +59,7 @@
     "classnames": "^2.3.1",
     "events": "^3.3.0",
     "i18next": "^23.0.0",
-    "i18next-browser-languagedetector": "^7.0.0",
+    "i18next-browser-languagedetector": "^8.0.0",
     "i18next-http-backend": "^2.0.0",
     "livekit-client": "^2.0.2",
     "lodash": "^4.17.21",
