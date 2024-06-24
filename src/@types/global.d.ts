@@ -28,12 +28,6 @@ declare global {
     OLM_OPTIONS: Record<string, string>;
   }
 
-  // TypeScript doesn't know about the experimental setSinkId method, so we
-  // declare it ourselves
-  interface MediaElement extends HTMLVideoElement {
-    setSinkId: (id: string) => void;
-  }
-
   interface HTMLElement {
     // Safari only supports this prefixed, so tell the type system about it
     webkitRequestFullscreen: () => void;
