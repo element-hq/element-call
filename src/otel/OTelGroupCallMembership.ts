@@ -40,7 +40,6 @@ import {
   SummaryStatsReport,
   CallFeedReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
-import { setSpan } from "@opentelemetry/api/build/esm/trace/context-utils";
 
 import { ElementCallOpenTelemetry } from "./otel";
 import { ObjectFlattener } from "./ObjectFlattener";
@@ -446,7 +445,7 @@ export class OTelGroupCallMembership {
     const type = OTelStatsReportType.SummaryReport;
     const data = ObjectFlattener.flattenSummaryStatsReportObject(statsReport);
     if (this.statsReportSpan.span === undefined && this.callMembershipSpan) {
-      const ctx = setSpan(
+      const ctx = opentelemetry.trace.setSpan(
         opentelemetry.context.active(),
         this.callMembershipSpan,
       );
