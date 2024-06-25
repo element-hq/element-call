@@ -225,16 +225,38 @@ export const useLoadGroupCall = (
           });
         } else {
           // If the room does not exist we first search for it with viaServers
-          const roomSummary = await client.getRoomSummary(roomId, viaServers);
-          if (roomSummary.join_rule === JoinRule.Public) {
-            room = await client.joinRoom(roomSummary.room_id, {
+          let roomSummary: RoomSummary | undefined = undefined;
+          try {
+            roomSummary = await client.getRoomSummary(roomId, viaServers);
+          } catch (error) {
+            // If the room summary endpoint is not supported we let it be undefined and treat this case like
+            // `JoinRule.Public`.
+            // This is how the logic was done before: "we expect any room id passed to EC
+            // to be for a public call" Which is definitely not ideal but worth a try if fetching
+            // the summary crashes.
+            logger.warn(
+              `Could not load room summary to decide whether we want to join or knock.
+              EC will fallback to join as if this would be a public room.
+              Reach out to your homeserver admin to ask them about supporting the \`/summary\` endpoint (im.nheko.summary):`,
+              error,
+            );
+          }
+          if (
+            roomSummary === undefined ||
+            roomSummary.join_rule === JoinRule.Public
+          ) {
+            room = await client.joinRoom(roomId, {
               viaServers,
             });
           } else if (roomSummary.join_rule === JoinRule.Knock) {
+            // bind room summary in this scope so we have it stored in a binding of type `RoomSummary`
+            // instead of `RoomSummary | undefined`. Because we use it in a promise the linter does not accept
+            // the type check from the if condition above.
+            const _roomSummary = roomSummary;
             let knock: () => void = () => {};
             const userPressedAskToJoinPromise: Promise<void> = new Promise(
               (resolve) => {
-                if (roomSummary.membership !== KnownMembership.Knock) {
+                if (_roomSummary.membership !== KnownMembership.Knock) {
                   knock = resolve;
                 } else {
                   // resolve immediately if the user already knocked
@@ -242,12 +264,13 @@ export const useLoadGroupCall = (
                 }
               },
             );
-            setState({ kind: "canKnock", roomSummary, knock });
+            setState({ kind: "canKnock", roomSummary: _roomSummary, knock });
             await userPressedAskToJoinPromise;
             room = await getRoomByKnocking(
               roomSummary.room_id,
               viaServers,
-              () => setState({ kind: "waitForInvite", roomSummary }),
+              () =>
+                setState({ kind: "waitForInvite", roomSummary: _roomSummary }),
             );
           } else {
             throw new Error(
