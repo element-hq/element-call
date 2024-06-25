@@ -234,7 +234,7 @@ export const useLoadGroupCall = (
             // This is how the logic was done before: "we expect any room id passed to EC
             // to be for a public call" Which is definitely not ideal but worth a try if fetching
             // the summary crashes.
-            logger.error(
+            logger.warn(
               `Could not load room summary to decide whether we want to join or knock.
               EC will fallback to join as if this would be a public room.
               Reach out to your homeserver admin to ask them about supporting the \`/summary\` endpoint (im.nheko.summary):`,
