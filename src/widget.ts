@@ -125,6 +125,7 @@ export const widget = ((): WidgetHelpers | null => {
         },
       ];
       const receiveState = [
+        { eventType: EventType.RoomCreate },
         { eventType: EventType.RoomMember },
         { eventType: EventType.RoomEncryption },
         { eventType: EventType.GroupCallMemberPrefix },
