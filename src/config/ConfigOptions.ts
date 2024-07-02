@@ -74,8 +74,9 @@ export interface ConfigOptions {
     feature_group_calls_without_video_and_audio?: boolean;
     /**
      * Send device-specific call session membership state events
-     * instead of the legacy user-specific call membership state events,
-     * but not in rooms that contain active calls with legacy state events.
+     * instead of the legacy user-specific call membership state events.
+     * This setting has not effect when the user joins an active call with legacy state events.
+     * For compatibility Element Call will always join running legacy calls with legacy state events.```
      */
     feature_use_device_session_member_events?: boolean;
   };
