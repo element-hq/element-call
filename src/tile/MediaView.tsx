@@ -42,7 +42,6 @@ interface Props extends ComponentProps<typeof animated.div> {
   nameTag: string;
   displayName: string;
   primaryButton?: ReactNode;
-  secondaryButton?: ReactNode;
 }
 
 export const MediaView = forwardRef<HTMLDivElement, Props>(
@@ -62,7 +61,6 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       nameTag,
       displayName,
       primaryButton,
-      secondaryButton,
       ...props
     },
     ref,
@@ -120,7 +118,6 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
             )}
           </div>
           {primaryButton}
-          {secondaryButton}
         </div>
       </animated.div>
     );

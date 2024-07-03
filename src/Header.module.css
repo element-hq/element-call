@@ -22,7 +22,6 @@ limitations under the License.
   user-select: none;
   flex-shrink: 0;
   padding-inline: var(--inline-content-inset);
-  padding-block-end: var(--cpd-space-4x);
 }
 
 .nav {

@@ -18,20 +18,12 @@ limitations under the License.
   margin-inline: var(--inline-content-inset);
   min-block-size: 0;
   block-size: 50vh;
-}
-
-.preview.content {
-  margin-inline: 0;
-}
-
-.content {
+  border-radius: var(--cpd-space-4x);
   position: relative;
-  block-size: 100%;
-  inline-size: 100%;
   overflow: hidden;
 }
 
-.content video {
+.preview > video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -69,12 +61,20 @@ limitations under the License.
   );
 }
 
-.preview.content .buttonBar {
-  padding-inline: var(--inline-content-inset);
+@media (min-aspect-ratio: 1 / 1) {
+  .preview > video {
+    aspect-ratio: 16 / 9;
+  }
 }
 
-@media (min-aspect-ratio: 1 / 1) {
-  .preview video {
-    aspect-ratio: 16 / 9;
+@media (max-width: 550px) {
+  .preview {
+    margin-inline: 0;
+    border-radius: 0;
+    block-size: 100%;
+  }
+
+  .buttonBar {
+    padding-inline: var(--inline-content-inset);
   }
 }

@@ -14,50 +14,32 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { CSSProperties, forwardRef, useMemo } from "react";
+import { forwardRef, useMemo } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
 import { CallLayout, GridTileModel, TileModel } from "./CallLayout";
-import { SpotlightLayout as SpotlightLayoutModel } from "../state/CallViewModel";
-import styles from "./SpotlightLayout.module.css";
+import { SpotlightLandscapeLayout as SpotlightLandscapeLayoutModel } from "../state/CallViewModel";
+import styles from "./SpotlightLandscapeLayout.module.css";
 import { useReactiveState } from "../useReactiveState";
 
-interface GridCSSProperties extends CSSProperties {
-  "--grid-columns": number;
-}
+export const makeSpotlightLandscapeLayout: CallLayout<
+  SpotlightLandscapeLayoutModel
+> = ({ minBounds }) => ({
+  scrollingOnTop: false,
 
-interface Layout {
-  orientation: "portrait" | "landscape";
-  gridColumns: number;
-}
-
-function getLayout(gridLength: number, width: number): Layout {
-  const orientation = width < 800 ? "portrait" : "landscape";
-  return {
-    orientation,
-    gridColumns:
-      orientation === "portrait"
-        ? Math.floor(width / 190)
-        : gridLength > 20
-          ? 2
-          : 1,
-  };
-}
-
-export const makeSpotlightLayout: CallLayout<SpotlightLayoutModel> = ({
-  minBounds,
-}) => ({
-  fixed: forwardRef(function SpotlightLayoutFixed({ model, Slot }, ref) {
+  fixed: forwardRef(function SpotlightLandscapeLayoutFixed(
+    { model, Slot },
+    ref,
+  ) {
     const { width, height } = useObservableEagerState(minBounds);
-    const layout = getLayout(model.grid.length, width);
     const tileModel: TileModel = useMemo(
       () => ({
         type: "spotlight",
         vms: model.spotlight,
-        maximised: layout.orientation === "portrait",
+        maximised: false,
       }),
-      [model.spotlight, layout.orientation],
+      [model.spotlight],
     );
     const [generation] = useReactiveState<number>(
       (prev) => (prev === undefined ? 0 : prev + 1),
@@ -65,13 +47,7 @@ export const makeSpotlightLayout: CallLayout<SpotlightLayoutModel> = ({
     );
 
     return (
-      <div
-        ref={ref}
-        data-generation={generation}
-        data-orientation={layout.orientation}
-        className={styles.layer}
-        style={{ "--grid-columns": layout.gridColumns } as GridCSSProperties}
-      >
+      <div ref={ref} data-generation={generation} className={styles.layer}>
         <div className={styles.spotlight}>
           <Slot className={styles.slot} id="spotlight" model={tileModel} />
         </div>
@@ -80,12 +56,11 @@ export const makeSpotlightLayout: CallLayout<SpotlightLayoutModel> = ({
     );
   }),
 
-  scrolling: forwardRef(function SpotlightLayoutScrolling(
+  scrolling: forwardRef(function SpotlightLandscapeLayoutScrolling(
     { model, Slot },
     ref,
   ) {
     const { width, height } = useObservableEagerState(minBounds);
-    const layout = getLayout(model.grid.length, width);
     const tileModels: GridTileModel[] = useMemo(
       () => model.grid.map((vm) => ({ type: "grid", vm })),
       [model.grid],
@@ -96,13 +71,7 @@ export const makeSpotlightLayout: CallLayout<SpotlightLayoutModel> = ({
     );
 
     return (
-      <div
-        ref={ref}
-        data-generation={generation}
-        data-orientation={layout.orientation}
-        className={styles.layer}
-        style={{ "--grid-columns": layout.gridColumns } as GridCSSProperties}
-      >
+      <div ref={ref} data-generation={generation} className={styles.layer}>
         <div
           className={classNames(styles.spotlight, {
             [styles.withIndicators]: model.spotlight.length > 1,

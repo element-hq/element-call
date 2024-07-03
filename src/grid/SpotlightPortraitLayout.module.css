@@ -17,38 +17,40 @@ limitations under the License.
 .layer {
   block-size: 100%;
   display: grid;
-  place-items: center;
-}
-
-.container {
-  position: relative;
-}
-
-.local {
-  position: absolute;
-  inline-size: 180px;
-  block-size: 135px;
-  inset: var(--cpd-space-4x);
+  --gap: 20px;
+  gap: var(--gap);
+  margin-inline: 0;
+  display: block;
 }
 
 .spotlight {
-  position: absolute;
-  inline-size: 404px;
-  block-size: 233px;
+  container: spotlight / size;
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  aspect-ratio: 16 / 9;
+  margin-block-end: var(--cpd-space-4x);
 }
 
-.slot[data-block-alignment="start"] {
-  inset-block-end: unset;
+.spotlight.withIndicators {
+  margin-block-end: calc(2 * var(--cpd-space-4x) + 2px);
 }
 
-.slot[data-block-alignment="end"] {
-  inset-block-start: unset;
+.spotlight > .slot {
+  inline-size: 100%;
+  block-size: 100%;
 }
 
-.slot[data-inline-alignment="start"] {
-  inset-inline-end: unset;
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--grid-gap);
+  justify-content: center;
+  align-content: start;
+  padding-inline: var(--grid-gap);
 }
 
-.slot[data-inline-alignment="end"] {
-  inset-inline-start: unset;
+.grid > .slot {
+  inline-size: var(--grid-tile-width);
+  block-size: var(--grid-tile-height);
 }

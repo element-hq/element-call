@@ -94,7 +94,7 @@ unconditionally select the container so we can use cqmin units */
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: 1fr auto;
-  grid-template-areas: ". button2" "nameTag button1";
+  grid-template-areas: ". ." "nameTag button";
   gap: var(--cpd-space-1x);
   place-items: start;
 }
@@ -175,9 +175,5 @@ unconditionally select the container so we can use cqmin units */
 }
 
 .fg > button:first-of-type {
-  grid-area: button1;
-}
-
-.fg > button:nth-of-type(2) {
-  grid-area: button2;
+  grid-area: button;
 }

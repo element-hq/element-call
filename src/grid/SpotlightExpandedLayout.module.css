@@ -16,39 +16,32 @@ limitations under the License.
 
 .layer {
   block-size: 100%;
-  display: grid;
-  place-items: center;
 }
 
-.container {
-  position: relative;
+.spotlight {
+  block-size: 100%;
+  inline-size: 100%;
 }
 
-.local {
+.pip {
   position: absolute;
   inline-size: 180px;
   block-size: 135px;
   inset: var(--cpd-space-4x);
 }
 
-.spotlight {
-  position: absolute;
-  inline-size: 404px;
-  block-size: 233px;
-}
-
-.slot[data-block-alignment="start"] {
+.pip[data-block-alignment="start"] {
   inset-block-end: unset;
 }
 
-.slot[data-block-alignment="end"] {
+.pip[data-block-alignment="end"] {
   inset-block-start: unset;
 }
 
-.slot[data-inline-alignment="start"] {
+.pip[data-inline-alignment="start"] {
   inset-inline-end: unset;
 }
 
-.slot[data-inline-alignment="end"] {
+.pip[data-inline-alignment="end"] {
   inset-inline-start: unset;
 }

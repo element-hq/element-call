@@ -15,28 +15,11 @@ limitations under the License.
 */
 
 .tile {
-  --border-width: var(--cpd-space-3x);
-}
-
-.tile.maximised {
-  --border-width: 0px;
-}
-
-.border {
-  box-sizing: border-box;
-  block-size: 100%;
-  inline-size: 100%;
-}
-
-.tile.maximised .border {
-  display: contents;
-}
-
-.contents {
   display: flex;
   border-radius: var(--cpd-space-6x);
   contain: strict;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
   scrollbar-width: none;
   scroll-snap-type: inline mandatory;
   scroll-snap-stop: always;
@@ -46,18 +29,18 @@ limitations under the License.
   scroll-behavior: smooth; */
 }
 
-.tile.maximised .contents {
+.tile.maximised {
   border-radius: 0;
 }
 
-.contents > .item {
+.item {
   height: 100%;
   flex-basis: 100%;
   flex-shrink: 0;
   --media-view-fg-inset: 10px;
 }
 
-.contents > .item.snap {
+.item.snap {
   scroll-snap-align: start;
 }
 
@@ -105,7 +88,7 @@ limitations under the License.
   inset-inline-end: var(--cpd-space-1x);
 }
 
-.fullScreen {
+.expand {
   appearance: none;
   cursor: pointer;
   opacity: 0;
@@ -118,23 +101,23 @@ limitations under the License.
   transition-property: opacity, background-color;
   position: absolute;
   z-index: 1;
-  --inset: calc(var(--border-width) + 6px);
+  --inset: 6px;
   inset-block-end: var(--inset);
   inset-inline-end: var(--inset);
 }
 
-.fullScreen > svg {
+.expand > svg {
   display: block;
   color: var(--cpd-color-icon-on-solid-primary);
 }
 
 @media (hover) {
-  .fullScreen:hover {
+  .expand:hover {
     background: var(--cpd-color-bg-action-primary-hovered);
   }
 }
 
-.fullScreen:active {
+.expand:active {
   background: var(--cpd-color-bg-action-primary-pressed);
 }
 

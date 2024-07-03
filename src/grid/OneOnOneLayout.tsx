@@ -19,63 +19,19 @@ import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
 import { OneOnOneLayout as OneOnOneLayoutModel } from "../state/CallViewModel";
-import {
-  CallLayout,
-  GridTileModel,
-  SpotlightTileModel,
-  arrangeTiles,
-} from "./CallLayout";
+import { CallLayout, GridTileModel, arrangeTiles } from "./CallLayout";
 import { useReactiveState } from "../useReactiveState";
 import styles from "./OneOnOneLayout.module.css";
 import { DragCallback } from "./Grid";
 
 export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
   minBounds,
-  spotlightAlignment,
   pipAlignment,
 }) => ({
-  fixed: forwardRef(function OneOnOneLayoutFixed({ model, Slot }, ref) {
-    const { width, height } = useObservableEagerState(minBounds);
-    const spotlightAlignmentValue = useObservableEagerState(spotlightAlignment);
+  scrollingOnTop: false,
 
-    const [generation] = useReactiveState<number>(
-      (prev) => (prev === undefined ? 0 : prev + 1),
-      [width, height, model.spotlight === undefined, spotlightAlignmentValue],
-    );
-
-    const spotlightTileModel: SpotlightTileModel | undefined = useMemo(
-      () =>
-        model.spotlight && {
-          type: "spotlight",
-          vms: model.spotlight,
-          maximised: false,
-        },
-      [model.spotlight],
-    );
-
-    const onDragSpotlight: DragCallback = useCallback(
-      ({ xRatio, yRatio }) =>
-        spotlightAlignment.next({
-          block: yRatio < 0.5 ? "start" : "end",
-          inline: xRatio < 0.5 ? "start" : "end",
-        }),
-      [],
-    );
-
-    return (
-      <div ref={ref} data-generation={generation} className={styles.layer}>
-        {spotlightTileModel && (
-          <Slot
-            className={classNames(styles.slot, styles.spotlight)}
-            id="spotlight"
-            model={spotlightTileModel}
-            onDrag={onDragSpotlight}
-            data-block-alignment={spotlightAlignmentValue.block}
-            data-inline-alignment={spotlightAlignmentValue.inline}
-          />
-        )}
-      </div>
-    );
+  fixed: forwardRef(function OneOnOneLayoutFixed(_props, ref) {
+    return <div ref={ref} data-generation={0} />;
   }),
 
   scrolling: forwardRef(function OneOnOneLayoutScrolling({ model, Slot }, ref) {

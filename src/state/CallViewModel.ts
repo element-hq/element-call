@@ -34,9 +34,9 @@ import {
   audit,
   combineLatest,
   concat,
-  concatMap,
   distinctUntilChanged,
   filter,
+  fromEvent,
   map,
   merge,
   mergeAll,
@@ -44,11 +44,11 @@ import {
   sample,
   scan,
   shareReplay,
+  skip,
   startWith,
   switchMap,
   throttleTime,
   timer,
-  withLatestFrom,
   zip,
 } from "rxjs";
 import { logger } from "matrix-js-sdk/src/logger";
@@ -67,7 +67,7 @@ import {
   ScreenShareViewModel,
   UserMediaViewModel,
 } from "./MediaViewModel";
-import { finalizeValue } from "../observable-utils";
+import { accumulate, finalizeValue } from "../observable-utils";
 import { ObservableScope } from "./ObservableScope";
 
 // How long we wait after a focus switch before showing the real participant
@@ -80,23 +80,28 @@ export interface GridLayout {
   grid: UserMediaViewModel[];
 }
 
-export interface SpotlightLayout {
-  type: "spotlight";
+export interface SpotlightLandscapeLayout {
+  type: "spotlight landscape";
   spotlight: MediaViewModel[];
   grid: UserMediaViewModel[];
 }
 
-export interface OneOnOneLayout {
-  type: "one-on-one";
-  spotlight?: ScreenShareViewModel[];
-  local: LocalUserMediaViewModel;
-  remote: RemoteUserMediaViewModel;
+export interface SpotlightPortraitLayout {
+  type: "spotlight portrait";
+  spotlight: MediaViewModel[];
+  grid: UserMediaViewModel[];
 }
 
-export interface FullScreenLayout {
-  type: "full screen";
+export interface SpotlightExpandedLayout {
+  type: "spotlight expanded";
   spotlight: MediaViewModel[];
   pip?: UserMediaViewModel;
+}
+
+export interface OneOnOneLayout {
+  type: "one-on-one";
+  local: LocalUserMediaViewModel;
+  remote: RemoteUserMediaViewModel;
 }
 
 export interface PipLayout {
@@ -110,14 +115,15 @@ export interface PipLayout {
  */
 export type Layout =
   | GridLayout
-  | SpotlightLayout
+  | SpotlightLandscapeLayout
+  | SpotlightPortraitLayout
+  | SpotlightExpandedLayout
   | OneOnOneLayout
-  | FullScreenLayout
   | PipLayout;
 
 export type GridMode = "grid" | "spotlight";
 
-export type WindowMode = "normal" | "full screen" | "pip";
+export type WindowMode = "normal" | "narrow" | "flat" | "pip";
 
 /**
  * Sorting bins defining the order in which media tiles appear in the layout.
@@ -269,16 +275,13 @@ export class CallViewModel extends ViewModel {
       },
     ).pipe(
       mergeAll(),
-      // Aggregate the hold instructions into a single list showing which
+      // Accumulate the hold instructions into a single list showing which
       // participants are being held
-      scan(
-        (holds, instruction) =>
-          "hold" in instruction
-            ? [instruction.hold, ...holds]
-            : holds.filter((h) => h !== instruction.unhold),
-        [] as RemoteParticipant[][],
+      accumulate([] as RemoteParticipant[][], (holds, instruction) =>
+        "hold" in instruction
+          ? [instruction.hold, ...holds]
+          : holds.filter((h) => h !== instruction.unhold),
       ),
-      startWith([]),
     );
 
   private readonly remoteParticipants: Observable<RemoteParticipant[]> =
@@ -352,6 +355,11 @@ export class CallViewModel extends ViewModel {
     map((ms) => ms.filter((m): m is UserMedia => m instanceof UserMedia)),
   );
 
+  private readonly localUserMedia: Observable<LocalUserMediaViewModel> =
+    this.mediaItems.pipe(
+      map((ms) => ms.find((m) => m.vm.local)!.vm as LocalUserMediaViewModel),
+    );
+
   private readonly screenShares: Observable<ScreenShare[]> =
     this.mediaItems.pipe(
       map((ms) => ms.filter((m): m is ScreenShare => m instanceof ScreenShare)),
@@ -364,7 +372,7 @@ export class CallViewModel extends ViewModel {
       distinctUntilChanged(),
     );
 
-  private readonly spotlightSpeaker: Observable<UserMedia | null> =
+  private readonly spotlightSpeaker: Observable<UserMediaViewModel> =
     this.userMedia.pipe(
       switchMap((ms) =>
         ms.length === 0
@@ -373,7 +381,7 @@ export class CallViewModel extends ViewModel {
               ms.map((m) => m.vm.speaking.pipe(map((s) => [m, s] as const))),
             ),
       ),
-      scan<(readonly [UserMedia, boolean])[], UserMedia | null, null>(
+      scan<(readonly [UserMedia, boolean])[], UserMedia, null>(
         (prev, ms) =>
           // Decide who to spotlight:
           // If the previous speaker (not the local user) is still speaking,
@@ -386,11 +394,11 @@ export class CallViewModel extends ViewModel {
           // Otherwise, stick with the person who was last speaking
           prev ??
           // Otherwise, spotlight the local user
-          ms.find(([m]) => m.vm.local)?.[0] ??
-          null,
+          ms.find(([m]) => m.vm.local)![0],
         null,
       ),
       distinctUntilChanged(),
+      map((speaker) => speaker.vm),
       shareReplay(1),
       throttleTime(1600, undefined, { leading: true, trailing: true }),
     );
@@ -433,38 +441,91 @@ export class CallViewModel extends ViewModel {
     }),
   );
 
-  private readonly spotlight: Observable<MediaViewModel[]> = combineLatest(
-    [this.screenShares, this.spotlightSpeaker],
-    (screenShares, spotlightSpeaker): MediaViewModel[] =>
+  private readonly spotlightAndPip: Observable<
+    [Observable<MediaViewModel[]>, Observable<UserMediaViewModel | null>]
+  > = this.screenShares.pipe(
+    map((screenShares) =>
       screenShares.length > 0
-        ? screenShares.map((m) => m.vm)
-        : spotlightSpeaker === null
-          ? []
-          : [spotlightSpeaker.vm],
+        ? ([of(screenShares.map((m) => m.vm)), this.spotlightSpeaker] as const)
+        : ([
+            this.spotlightSpeaker.pipe(map((speaker) => [speaker!])),
+            this.localUserMedia.pipe(
+              switchMap((vm) =>
+                vm.alwaysShow.pipe(
+                  map((alwaysShow) => (alwaysShow ? vm : null)),
+                ),
+              ),
+            ),
+          ] as const),
+    ),
   );
 
-  // TODO: Make this react to changes in window dimensions and screen
-  // orientation
-  private readonly windowMode = of<WindowMode>("normal");
+  private readonly spotlight: Observable<MediaViewModel[]> =
+    this.spotlightAndPip.pipe(
+      switchMap(([spotlight]) => spotlight),
+      shareReplay(1),
+    );
+
+  private readonly pip: Observable<UserMediaViewModel | null> =
+    this.spotlightAndPip.pipe(switchMap(([, pip]) => pip));
+
+  /**
+   * The general shape of the window.
+   */
+  public readonly windowMode: Observable<WindowMode> = fromEvent(
+    window,
+    "resize",
+  ).pipe(
+    startWith(null),
+    map(() => {
+      const height = window.innerHeight;
+      const width = window.innerWidth;
+      if (height <= 400 && width <= 340) return "pip";
+      if (width <= 660) return "narrow";
+      if (height <= 660) return "flat";
+      return "normal";
+    }),
+    distinctUntilChanged(),
+    shareReplay(1),
+  );
+
+  private readonly spotlightExpandedToggle = new Subject<void>();
+  public readonly spotlightExpanded: Observable<boolean> =
+    this.spotlightExpandedToggle.pipe(
+      accumulate(false, (expanded) => !expanded),
+      shareReplay(1),
+    );
+
+  public toggleSpotlightExpanded(): void {
+    this.spotlightExpandedToggle.next();
+  }
 
   private readonly gridModeUserSelection = new Subject<GridMode>();
   /**
    * The layout mode of the media tile grid.
    */
-  public readonly gridMode: Observable<GridMode> = merge(
-    // Always honor a manual user selection
-    this.gridModeUserSelection,
+  public readonly gridMode: Observable<GridMode> =
     // If the user hasn't selected spotlight and somebody starts screen sharing,
     // automatically switch to spotlight mode and reset when screen sharing ends
-    this.hasRemoteScreenShares.pipe(
-      withLatestFrom(this.gridModeUserSelection.pipe(startWith(null))),
-      concatMap(([hasScreenShares, userSelection]) =>
-        userSelection === "spotlight"
+    this.gridModeUserSelection.pipe(
+      startWith(null),
+      switchMap((userSelection) =>
+        (userSelection === "spotlight"
           ? EMPTY
-          : of<GridMode>(hasScreenShares ? "spotlight" : "grid"),
+          : combineLatest([this.hasRemoteScreenShares, this.windowMode]).pipe(
+              skip(userSelection === null ? 0 : 1),
+              map(
+                ([hasScreenShares, windowMode]): GridMode =>
+                  hasScreenShares || windowMode === "flat"
+                    ? "spotlight"
+                    : "grid",
+              ),
+            )
+        ).pipe(startWith(userSelection ?? "grid")),
       ),
-    ),
-  ).pipe(distinctUntilChanged(), shareReplay(1));
+      distinctUntilChanged(),
+      shareReplay(1),
+    );
 
   public setGridMode(value: GridMode): void {
     this.gridModeUserSelection.next(value);
@@ -472,11 +533,24 @@ export class CallViewModel extends ViewModel {
 
   public readonly layout: Observable<Layout> = this.windowMode.pipe(
     switchMap((windowMode) => {
+      const spotlightLandscapeLayout = combineLatest(
+        [this.grid, this.spotlight],
+        (grid, spotlight): Layout => ({
+          type: "spotlight landscape",
+          spotlight,
+          grid,
+        }),
+      );
+      const spotlightExpandedLayout = combineLatest(
+        [this.spotlight, this.pip],
+        (spotlight, pip): Layout => ({
+          type: "spotlight expanded",
+          spotlight,
+          pip: pip ?? undefined,
+        }),
+      );
+
       switch (windowMode) {
-        case "full screen":
-          throw new Error("unimplemented");
-        case "pip":
-          throw new Error("unimplemented");
         case "normal":
           return this.gridMode.pipe(
             switchMap((gridMode) => {
@@ -485,11 +559,9 @@ export class CallViewModel extends ViewModel {
                   return combineLatest(
                     [this.grid, this.spotlight, this.screenShares],
                     (grid, spotlight, screenShares): Layout =>
-                      grid.length == 2
+                      grid.length == 2 && screenShares.length === 0
                         ? {
                             type: "one-on-one",
-                            spotlight:
-                              screenShares.length > 0 ? spotlight : undefined,
                             local: grid.find(
                               (vm) => vm.local,
                             ) as LocalUserMediaViewModel,
@@ -507,19 +579,56 @@ export class CallViewModel extends ViewModel {
                           },
                   );
                 case "spotlight":
-                  return combineLatest(
-                    [this.grid, this.spotlight],
-                    (grid, spotlight): Layout => ({
-                      type: "spotlight",
-                      spotlight,
-                      grid,
-                    }),
+                  return this.spotlightExpanded.pipe(
+                    switchMap((expanded) =>
+                      expanded
+                        ? spotlightExpandedLayout
+                        : spotlightLandscapeLayout,
+                    ),
                   );
               }
             }),
           );
+        case "narrow":
+          return combineLatest(
+            [this.grid, this.spotlight],
+            (grid, spotlight): Layout => ({
+              type: "spotlight portrait",
+              spotlight,
+              grid,
+            }),
+          );
+        case "flat":
+          return this.gridMode.pipe(
+            switchMap((gridMode) => {
+              switch (gridMode) {
+                case "grid":
+                  // Yes, grid mode actually gets you a "spotlight" layout in
+                  // this window mode.
+                  return spotlightLandscapeLayout;
+                case "spotlight":
+                  return spotlightExpandedLayout;
+              }
+            }),
+          );
+        case "pip":
+          return this.spotlight.pipe(
+            map((spotlight): Layout => ({ type: "pip", spotlight })),
+          );
       }
     }),
+    shareReplay(1),
+  );
+
+  public showSpotlightIndicators: Observable<boolean> = this.layout.pipe(
+    map((l) => l.type !== "grid"),
+    distinctUntilChanged(),
+    shareReplay(1),
+  );
+
+  public showSpeakingIndicators: Observable<boolean> = this.layout.pipe(
+    map((l) => l.type !== "one-on-one" && l.type !== "spotlight expanded"),
+    distinctUntilChanged(),
     shareReplay(1),
   );
 
