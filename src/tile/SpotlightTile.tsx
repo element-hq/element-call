@@ -23,7 +23,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { Glass } from "@vector-im/compound-web";
 import ExpandIcon from "@vector-im/compound-design-tokens/icons/expand.svg?react";
 import CollapseIcon from "@vector-im/compound-design-tokens/icons/collapse.svg?react";
 import ChevronLeftIcon from "@vector-im/compound-design-tokens/icons/chevron-left.svg?react";
@@ -174,8 +173,8 @@ SpotlightItem.displayName = "SpotlightItem";
 interface Props {
   vms: MediaViewModel[];
   maximised: boolean;
-  fullscreen: boolean;
-  onToggleFullscreen: () => void;
+  expanded: boolean;
+  onToggleExpanded: (() => void) | null;
   targetWidth: number;
   targetHeight: number;
   showIndicators: boolean;
@@ -188,8 +187,8 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
     {
       vms,
       maximised,
-      fullscreen,
-      onToggleFullscreen,
+      expanded,
+      onToggleExpanded,
       targetWidth,
       targetHeight,
       showIndicators,
@@ -254,9 +253,8 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
         setScrollToId(vms[visibleIndex + 1].id);
     }, [latestVisibleId, latestVms, setScrollToId]);
 
-    const FullScreenIcon = fullscreen ? CollapseIcon : ExpandIcon;
+    const ToggleExpandIcon = expanded ? CollapseIcon : ExpandIcon;
 
-    // We need a wrapper element because Glass doesn't provide an animated.div
     return (
       <animated.div
         ref={ref}
@@ -274,33 +272,29 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
             <ChevronLeftIcon aria-hidden width={24} height={24} />
           </button>
         )}
-        <Glass className={styles.border}>
-          {/* Similarly we need a wrapper element here because Glass expects a
-        single child */}
-          <div className={styles.contents}>
-            {vms.map((vm) => (
-              <SpotlightItem
-                key={vm.id}
-                vm={vm}
-                targetWidth={targetWidth}
-                targetHeight={targetHeight}
-                intersectionObserver={intersectionObserver}
-                snap={scrollToId === null || scrollToId === vm.id}
-              />
-            ))}
-          </div>
-        </Glass>
-        <button
-          className={classNames(styles.fullScreen)}
-          aria-label={
-            fullscreen
-              ? t("video_tile.full_screen")
-              : t("video_tile.exit_full_screen")
-          }
-          onClick={onToggleFullscreen}
-        >
-          <FullScreenIcon aria-hidden width={20} height={20} />
-        </button>
+        {vms.map((vm) => (
+          <SpotlightItem
+            key={vm.id}
+            vm={vm}
+            targetWidth={targetWidth}
+            targetHeight={targetHeight}
+            intersectionObserver={intersectionObserver}
+            snap={scrollToId === null || scrollToId === vm.id}
+          />
+        ))}
+        {onToggleExpanded && (
+          <button
+            className={classNames(styles.expand)}
+            aria-label={
+              expanded
+                ? t("video_tile.full_screen")
+                : t("video_tile.exit_full_screen")
+            }
+            onClick={onToggleExpanded}
+          >
+            <ToggleExpandIcon aria-hidden width={20} height={20} />
+          </button>
+        )}
         {canGoToNext && (
           <button
             className={classNames(styles.advance, styles.next)}
@@ -310,15 +304,17 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
             <ChevronRightIcon aria-hidden width={24} height={24} />
           </button>
         )}
-        <div
-          className={classNames(styles.indicators, {
-            [styles.show]: showIndicators && vms.length > 1,
-          })}
-        >
-          {vms.map((vm) => (
-            <div className={styles.item} data-visible={vm.id === visibleId} />
-          ))}
-        </div>
+        {!expanded && (
+          <div
+            className={classNames(styles.indicators, {
+              [styles.show]: showIndicators && vms.length > 1,
+            })}
+          >
+            {vms.map((vm) => (
+              <div className={styles.item} data-visible={vm.id === visibleId} />
+            ))}
+          </div>
+        )}
       </animated.div>
     );
   },

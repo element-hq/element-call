@@ -35,7 +35,7 @@ import {
 import useMeasure from "react-use-measure";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
-import { BehaviorSubject, map } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 
 import LogoMark from "../icons/LogoMark.svg?react";
@@ -59,7 +59,6 @@ import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { useLiveKit } from "../livekit/useLiveKit";
-import { useFullscreen } from "./useFullscreen";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { MuteStates } from "./MuteStates";
@@ -76,14 +75,16 @@ import { SpotlightTile } from "../tile/SpotlightTile";
 import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
-import { makeSpotlightLayout } from "../grid/SpotlightLayout";
 import {
-  CallLayout,
+  CallLayoutOutputs,
   TileModel,
   defaultPipAlignment,
   defaultSpotlightAlignment,
 } from "../grid/CallLayout";
 import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
+import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
+import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
+import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -194,24 +195,9 @@ export const InCallView: FC<InCallViewProps> = ({
     matrixInfo.e2eeSystem.kind !== E2eeType.NONE,
     connState,
   );
+  const windowMode = useObservableEagerState(vm.windowMode);
   const layout = useObservableEagerState(vm.layout);
   const gridMode = useObservableEagerState(vm.gridMode);
-  const hasSpotlight = layout.spotlight !== undefined;
-  const fullscreenItems = useMemo(
-    () => (hasSpotlight ? ["spotlight"] : []),
-    [hasSpotlight],
-  );
-  const { fullscreenItem, toggleFullscreen, exitFullscreen } =
-    useFullscreen(fullscreenItems);
-  const toggleSpotlightFullscreen = useCallback(
-    () => toggleFullscreen("spotlight"),
-    [toggleFullscreen],
-  );
-
-  // The maximised participant: either the participant that the user has
-  // manually put in fullscreen, or (TODO) the spotlight if the window is too
-  // small to show everyone
-  const maximisedParticipant = fullscreenItem;
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
@@ -235,14 +221,18 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const gridBounds = useMemo(
     () => ({
-      width: footerBounds.width,
-      height: bounds.height - headerBounds.height - footerBounds.height,
+      width: bounds.width,
+      height:
+        bounds.height -
+        headerBounds.height -
+        (windowMode === "flat" ? 0 : footerBounds.height),
     }),
     [
-      footerBounds.width,
+      bounds.width,
       bounds.height,
       headerBounds.height,
       footerBounds.height,
+      windowMode,
     ],
   );
   const gridBoundsObservable = useObservable(gridBounds);
@@ -252,29 +242,6 @@ export const InCallView: FC<InCallViewProps> = ({
   );
   const pipAlignment = useInitial(
     () => new BehaviorSubject(defaultPipAlignment),
-  );
-
-  const layoutSystem = useObservableEagerState(
-    useInitial(() =>
-      vm.layout.pipe(
-        map((l) => {
-          let makeLayout: CallLayout<Layout>;
-          if (l.type === "grid")
-            makeLayout = makeGridLayout as CallLayout<Layout>;
-          else if (l.type === "spotlight")
-            makeLayout = makeSpotlightLayout as CallLayout<Layout>;
-          else if (l.type === "one-on-one")
-            makeLayout = makeOneOnOneLayout as CallLayout<Layout>;
-          else throw new Error(`Unimplemented layout: ${l.type}`);
-
-          return makeLayout({
-            minBounds: gridBoundsObservable,
-            spotlightAlignment,
-            pipAlignment,
-          });
-        }),
-      ),
-    ),
   );
 
   const setGridMode = useCallback(
@@ -318,10 +285,9 @@ export const InCallView: FC<InCallViewProps> = ({
     }
   }, [setGridMode]);
 
-  const showSpotlightIndicators = useObservable(layout.type === "spotlight");
-  const showSpeakingIndicators = useObservable(
-    layout.type === "spotlight" ||
-      (layout.type === "grid" && layout.grid.length > 2),
+  const toggleSpotlightExpanded = useCallback(
+    () => vm.toggleSpotlightExpanded(),
+    [vm],
   );
 
   const Tile = useMemo(
@@ -333,20 +299,18 @@ export const InCallView: FC<InCallViewProps> = ({
         { className, style, targetWidth, targetHeight, model },
         ref,
       ) {
+        const spotlightExpanded = useObservableEagerState(vm.spotlightExpanded);
         const showSpeakingIndicatorsValue = useObservableEagerState(
-          showSpeakingIndicators,
+          vm.showSpeakingIndicators,
         );
         const showSpotlightIndicatorsValue = useObservableEagerState(
-          showSpotlightIndicators,
+          vm.showSpotlightIndicators,
         );
 
         return model.type === "grid" ? (
           <GridTile
             ref={ref}
             vm={model.vm}
-            maximised={false}
-            fullscreen={false}
-            onToggleFullscreen={toggleFullscreen}
             onOpenProfile={openProfile}
             targetWidth={targetWidth}
             targetHeight={targetHeight}
@@ -359,8 +323,8 @@ export const InCallView: FC<InCallViewProps> = ({
             ref={ref}
             vms={model.vms}
             maximised={model.maximised}
-            fullscreen={false}
-            onToggleFullscreen={toggleSpotlightFullscreen}
+            expanded={spotlightExpanded}
+            onToggleExpanded={toggleSpotlightExpanded}
             targetWidth={targetWidth}
             targetHeight={targetHeight}
             showIndicators={showSpotlightIndicatorsValue}
@@ -369,52 +333,74 @@ export const InCallView: FC<InCallViewProps> = ({
           />
         );
       }),
-    [
-      toggleFullscreen,
-      toggleSpotlightFullscreen,
-      openProfile,
-      showSpeakingIndicators,
-      showSpotlightIndicators,
-    ],
+    [vm, toggleSpotlightExpanded, openProfile],
   );
 
+  const layouts = useMemo(() => {
+    const inputs = {
+      minBounds: gridBoundsObservable,
+      spotlightAlignment,
+      pipAlignment,
+    };
+    return {
+      grid: makeGridLayout(inputs),
+      "spotlight landscape": makeSpotlightLandscapeLayout(inputs),
+      "spotlight portrait": makeSpotlightPortraitLayout(inputs),
+      "spotlight expanded": makeSpotlightExpandedLayout(inputs),
+      "one-on-one": makeOneOnOneLayout(inputs),
+    };
+  }, [gridBoundsObservable, spotlightAlignment, pipAlignment]);
+
   const renderContent = (): JSX.Element => {
-    if (maximisedParticipant !== null) {
-      const fullscreen = maximisedParticipant === fullscreenItem;
-      if (maximisedParticipant === "spotlight") {
-        return (
-          <SpotlightTile
-            className={classNames(styles.tile, styles.maximised)}
-            vms={layout.spotlight!}
-            maximised
-            fullscreen={fullscreen}
-            onToggleFullscreen={toggleSpotlightFullscreen}
-            targetWidth={gridBounds.height}
-            targetHeight={gridBounds.width}
-            showIndicators={false}
-          />
-        );
-      }
+    if (layout.type === "pip") {
+      return (
+        <SpotlightTile
+          className={classNames(styles.tile, styles.maximised)}
+          vms={layout.spotlight!}
+          maximised
+          expanded
+          onToggleExpanded={null}
+          targetWidth={gridBounds.height}
+          targetHeight={gridBounds.width}
+          showIndicators={false}
+        />
+      );
     }
 
-    return (
+    const layers = layouts[layout.type] as CallLayoutOutputs<Layout>;
+    const fixedGrid = (
+      <Grid
+        key="fixed"
+        className={styles.fixedGrid}
+        style={{
+          insetBlockStart: headerBounds.bottom,
+          height: gridBounds.height,
+        }}
+        model={layout}
+        Layout={layers.fixed}
+        Tile={Tile}
+      />
+    );
+    const scrollingGrid = (
+      <Grid
+        key="scrolling"
+        className={styles.scrollingGrid}
+        model={layout}
+        Layout={layers.scrolling}
+        Tile={Tile}
+      />
+    );
+    // The grid tiles go *under* the spotlight in the portrait layout, but
+    // *over* the spotlight in the expanded layout
+    return layout.type === "spotlight expanded" ? (
       <>
-        <Grid
-          className={styles.scrollingGrid}
-          model={layout}
-          Layout={layoutSystem.scrolling}
-          Tile={Tile}
-        />
-        <Grid
-          className={styles.fixedGrid}
-          style={{
-            insetBlockStart: headerBounds.bottom,
-            height: gridBounds.height,
-          }}
-          model={layout}
-          Layout={layoutSystem.fixed}
-          Tile={Tile}
-        />
+        {fixedGrid}
+        {scrollingGrid}
+      </>
+    ) : (
+      <>
+        {scrollingGrid}
+        {fixedGrid}
       </>
     );
   };
@@ -424,14 +410,13 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   const toggleScreensharing = useCallback(async () => {
-    exitFullscreen();
     await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, {
       audio: true,
       selfBrowserSurface: "include",
       surfaceSwitching: "include",
       systemAudio: "include",
     });
-  }, [localParticipant, isScreenShareEnabled, exitFullscreen]);
+  }, [localParticipant, isScreenShareEnabled]);
 
   let footer: JSX.Element | null;
 
@@ -484,11 +469,10 @@ export const InCallView: FC<InCallViewProps> = ({
       <div
         ref={footerRef}
         className={classNames(
-          showControls
-            ? styles.footer
-            : hideHeader
-              ? [styles.footer, styles.footerHidden]
-              : [styles.footer, styles.footerThin],
+          styles.footer,
+          !showControls &&
+            (hideHeader ? styles.footerHidden : styles.footerThin),
+          { [styles.overlay]: windowMode === "flat" },
         )}
       >
         {!mobile && !hideHeader && (
@@ -515,7 +499,7 @@ export const InCallView: FC<InCallViewProps> = ({
 
   return (
     <div className={styles.inRoom} ref={containerRef}>
-      {!hideHeader && maximisedParticipant === null && (
+      {!hideHeader && windowMode !== "pip" && windowMode !== "flat" && (
         <Header className={styles.header} ref={headerRef}>
           <LeftNav>
             <RoomHeaderInfo
