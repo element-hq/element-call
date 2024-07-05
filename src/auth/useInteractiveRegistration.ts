@@ -22,7 +22,7 @@ import {
   RegisterResponse,
 } from "matrix-js-sdk/src/matrix";
 
-import { initClient } from "../matrix-utils";
+import { initClient } from "../utils/matrix";
 import { Session } from "../ClientContext";
 import { Config } from "../config/Config";
 import { widget } from "../widget";

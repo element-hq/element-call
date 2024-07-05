@@ -71,7 +71,7 @@ import {
   ScreenShareViewModel,
   UserMediaViewModel,
 } from "./MediaViewModel";
-import { accumulate, finalizeValue } from "../observable-utils";
+import { accumulate, finalizeValue } from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
 import { duplicateTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";

@@ -22,7 +22,7 @@ import {
   MatrixClient,
 } from "matrix-js-sdk/src/matrix";
 
-import { initClient } from "../matrix-utils";
+import { initClient } from "../utils/matrix";
 import { Session } from "../ClientContext";
 
 export function useInteractiveLogin(): (
