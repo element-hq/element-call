@@ -16,9 +16,10 @@ limitations under the License.
 
 import { vi } from "vitest";
 import { screen, render } from "@testing-library/react";
-import { Toast } from "../src/Toast";
 import userEvent from "@testing-library/user-event";
-import { withFakeTimers } from "./utils";
+
+import { Toast } from "../src/Toast";
+import { withFakeTimers } from "./utils/test";
 
 test("Toast renders", () => {
   render(

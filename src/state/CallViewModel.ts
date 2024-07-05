@@ -67,7 +67,7 @@ import {
   ScreenShareViewModel,
   UserMediaViewModel,
 } from "./MediaViewModel";
-import { accumulate, finalizeValue } from "../observable-utils";
+import { accumulate, finalizeValue } from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
 
 // How long we wait after a focus switch before showing the real participant

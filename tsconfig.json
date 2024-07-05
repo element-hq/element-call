@@ -48,8 +48,6 @@
     "./node_modules/matrix-js-sdk/src/@types/*.d.ts",
     "./node_modules/vitest/globals.d.ts",
     "./src/**/*.ts",
-    "./src/**/*.tsx",
-    "./test/**/*.ts",
-    "./test/**/*.tsx"
+    "./src/**/*.tsx"
   ]
 }

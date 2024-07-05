@@ -32,12 +32,12 @@ import { secureRandomBase64Url } from "matrix-js-sdk/src/randomstring";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
-import IndexedDBWorker from "./IndexedDBWorker?worker";
-import { generateUrlSearchParams, getUrlParams } from "./UrlParams";
-import { loadOlm } from "./olm";
-import { Config } from "./config/Config";
-import { E2eeType } from "./e2ee/e2eeType";
-import { EncryptionSystem, saveKeyForRoom } from "./e2ee/sharedKeyManagement";
+import IndexedDBWorker from "../IndexedDBWorker?worker";
+import { generateUrlSearchParams, getUrlParams } from "../UrlParams";
+import { loadOlm } from "../olm";
+import { Config } from "../config/Config";
+import { E2eeType } from "../e2ee/e2eeType";
+import { EncryptionSystem, saveKeyForRoom } from "../e2ee/sharedKeyManagement";
 
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";
