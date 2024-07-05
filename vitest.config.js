@@ -15,8 +15,8 @@ export default defineConfig((configEnv) =>
         },
         include: ["test/**/*-test.[jt]s?(x)"],
         coverage: {
-          reporter: ["text", "html"],
-          exclude: ["node_modules/"],
+          reporter: ["html", "json"],
+          include: ["src/"],
         },
       },
     }),

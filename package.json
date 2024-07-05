@@ -15,7 +15,7 @@
     "i18n": "node_modules/i18next-parser/bin/cli.js",
     "i18n:check": "node_modules/i18next-parser/bin/cli.js --fail-on-warnings --fail-on-update",
     "test": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest --coverage",
     "backend": "docker-compose -f backend-docker-compose.yml up"
   },
   "dependencies": {
@@ -104,6 +104,7 @@
     "@types/uuid": "10",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
+    "@vitest/coverage-v8": "^2.0.5",
     "babel-loader": "^9.0.0",
     "babel-plugin-transform-vite-meta-env": "^1.0.3",
     "eslint": "^8.14.0",
