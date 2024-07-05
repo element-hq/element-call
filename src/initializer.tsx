@@ -32,8 +32,6 @@ enum LoadState {
 }
 
 class DependencyLoadStates {
-  // TODO: decide where olm should be initialized (see TODO comment below)
-  // olm: LoadState = LoadState.None;
   public config: LoadState = LoadState.None;
   public sentry: LoadState = LoadState.None;
   public openTelemetry: LoadState = LoadState.None;
@@ -128,18 +126,6 @@ export class Initializer {
   private loadStates = new DependencyLoadStates();
 
   private initStep(resolve: (value: void | PromiseLike<void>) => void): void {
-    // TODO: Olm is initialized with the client currently (see `initClient()` and `olm.ts`)
-    // we need to decide if we want to init it here or keep it in initClient
-    // if (this.loadStates.olm === LoadState.None) {
-    //   this.loadStates.olm = LoadState.Loading;
-    //   // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
-    //   window.OLM_OPTIONS = {};
-    //   Olm.init({ locateFile: () => olmWasmPath }).then(() => {
-    //     this.loadStates.olm = LoadState.Loaded;
-    //     this.initStep(resolve);
-    //   });
-    // }
-
     // config
     if (this.loadStates.config === LoadState.None) {
       this.loadStates.config = LoadState.Loading;
