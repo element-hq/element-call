@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { vi, Mocked } from "vitest";
+import { vi, Mocked, test, expect } from "vitest";
 import { RoomState } from "matrix-js-sdk/src/models/room-state";
 
 import { PosthogAnalytics } from "../../src/analytics/PosthogAnalytics";
