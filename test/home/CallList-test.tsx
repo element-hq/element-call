@@ -24,11 +24,9 @@ import { ClientProvider } from "../../src/ClientContext";
 describe("CallList", () => {
   const renderComponent = (rooms: GroupCallRoom[]): RenderResult => {
     return render(
-      <ClientProvider>
-        <MemoryRouter>
-          <CallList client={{} as MatrixClient} rooms={rooms} />
-        </MemoryRouter>
-      </ClientProvider>,
+      <MemoryRouter>
+        <CallList client={{} as MatrixClient} rooms={rooms} />
+      </MemoryRouter>,
     );
   };
 

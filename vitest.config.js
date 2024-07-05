@@ -14,6 +14,8 @@ export default defineConfig((configEnv) =>
           },
         },
         include: ["test/**/*-test.[jt]s?(x)"],
+        isolate: false,
+        setupFiles: ["test/setup.ts"],
         coverage: {
           reporter: ["html", "json"],
           include: ["src/"],
