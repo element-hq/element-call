@@ -20,6 +20,7 @@ import {
   ByteSentStatsReport,
   ConnectionStatsReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
+import { describe, expect, it } from "vitest";
 
 import { ObjectFlattener } from "../../src/otel/ObjectFlattener";
 

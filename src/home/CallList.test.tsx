@@ -17,6 +17,7 @@ limitations under the License.
 import { render, RenderResult } from "@testing-library/react";
 import { MatrixClient } from "matrix-js-sdk";
 import { MemoryRouter } from "react-router-dom";
+import { describe, expect, it } from "vitest";
 
 import { CallList } from "../../src/home/CallList";
 import { GroupCallRoom } from "../../src/home/useGroupCallRooms";

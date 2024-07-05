@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { expect, test, vi } from "vitest";
 
 import { enterRTCSession } from "../src/rtcSessionHelpers";
 import { Config } from "../src/config/Config";

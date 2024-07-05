@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { vi } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
 
 import { getRoomIdentifierFromUrl } from "../src/UrlParams";
 import { Config } from "../src/config/Config";

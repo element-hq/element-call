@@ -14,9 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { cleanup } from "@testing-library/react";
 import i18n from "i18next";
 import posthog from "posthog-js";
 import { initReactI18next } from "react-i18next";
+import { afterEach } from "vitest";
 
 // Bare-minimum i18n config
 i18n.use(initReactI18next).init({
@@ -28,3 +30,5 @@ i18n.use(initReactI18next).init({
 });
 
 posthog.opt_out_capturing();
+
+afterEach(cleanup);
