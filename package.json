@@ -126,6 +126,6 @@
     "vite": "^5.0.0",
     "vite-plugin-html-template": "^1.1.0",
     "vite-plugin-svgr": "^4.0.0",
-    "vitest": "^1.2.2"
+    "vitest": "^2.0.0"
   }
 }
