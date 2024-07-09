@@ -16,7 +16,6 @@ limitations under the License.
 
 import { useEffect, useMemo, useRef, FC, ReactNode, useCallback } from "react";
 import useMeasure from "react-use-measure";
-import { ResizeObserver } from "@juggle/resize-observer";
 import { usePreviewTracks } from "@livekit/components-react";
 import { LocalVideoTrack, Track } from "livekit-client";
 import classNames from "classnames";
@@ -51,7 +50,7 @@ export const VideoPreview: FC<Props> = ({
   muteStates,
   children,
 }) => {
-  const [previewRef, previewBounds] = useMeasure({ polyfill: ResizeObserver });
+  const [previewRef, previewBounds] = useMeasure();
 
   const devices = useMediaDevices();
 
