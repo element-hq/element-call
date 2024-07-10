@@ -265,7 +265,7 @@ export class PosthogAnalytics {
         this.posthog.identify(analyticsID);
       } else {
         logger.info(
-          "No analyticsID is availble. Should not try to setup posthog",
+          "No analyticsID is available. Should not try to setup posthog",
         );
       }
     }
@@ -333,7 +333,9 @@ export class PosthogAnalytics {
   }
 
   public onLoginStatusChanged(): void {
-    this.maybeIdentifyUser();
+    this.maybeIdentifyUser().catch(() =>
+      logger.log("Could not identify user on login status change"),
+    );
   }
 
   private updateSuperProperties(): void {
@@ -382,20 +384,27 @@ export class PosthogAnalytics {
     }
   }
 
-  public async trackEvent<E extends IPosthogEvent>(
+  public trackEvent<E extends IPosthogEvent>(
     { eventName, ...properties }: E,
     options?: CaptureOptions,
-  ): Promise<void> {
+  ): void {
+    const doCapture = (): void => {
+      if (
+        this.anonymity == Anonymity.Disabled ||
+        this.anonymity == Anonymity.Anonymous
+      )
+        return;
+      this.capture(eventName, properties, options);
+    };
+
     if (this.identificationPromise) {
-      // only make calls to posthog after the identificaion is done
-      await this.identificationPromise;
+      // only make calls to posthog after the identification is done
+      this.identificationPromise.then(doCapture).catch((e) => {
+        logger.error("Failed to identify user for tracking", e);
+      });
+    } else {
+      doCapture();
     }
-    if (
-      this.anonymity == Anonymity.Disabled ||
-      this.anonymity == Anonymity.Anonymous
-    )
-      return;
-    this.capture(eventName, properties, options);
   }
 
   private startListeningToSettingsChanges(): void {
@@ -409,7 +418,9 @@ export class PosthogAnalytics {
     // won't be called (i.e. this.anonymity will be left as the default, until the setting changes)
     optInAnalytics.value.subscribe((optIn) => {
       this.setAnonymity(optIn ? Anonymity.Pseudonymous : Anonymity.Disabled);
-      this.maybeIdentifyUser();
+      this.maybeIdentifyUser().catch(() =>
+        logger.log("Could not identify user"),
+      );
     });
   }
 

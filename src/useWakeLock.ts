@@ -28,19 +28,22 @@ export function useWakeLock(): void {
 
       // The lock is automatically released whenever the window goes invisible,
       // so we need to reacquire it on visibility changes
-      const onVisibilityChange = async (): Promise<void> => {
+      const onVisibilityChange = (): void => {
         if (document.visibilityState === "visible") {
-          try {
-            lock = await navigator.wakeLock.request("screen");
-            // Handle the edge case where this component unmounts before the
-            // promise resolves
-            if (!mounted)
-              lock
-                .release()
-                .catch((e) => logger.warn("Can't release wake lock", e));
-          } catch (e) {
-            logger.warn("Can't acquire wake lock", e);
-          }
+          navigator.wakeLock
+            .request("screen")
+            .then((newLock) => {
+              lock = newLock;
+              // Handle the edge case where this component unmounts before the
+              // promise resolves
+              if (!mounted)
+                lock
+                  .release()
+                  .catch((e) => logger.warn("Can't release wake lock", e));
+            })
+            .catch((e) => {
+              logger.warn("Can't acquire wake lock", e);
+            });
         }
       };
 

@@ -138,13 +138,17 @@ class IndexedDBLogStore {
     this.id = "instance-" + randomString(16);
 
     loggerInstance.on(ConsoleLoggerEvent.Log, this.onLoggerLog);
-    window.addEventListener("beforeunload", this.flush);
+    window.addEventListener("beforeunload", () => {
+      this.flush().catch((e) =>
+        logger.error("Failed to flush logs before unload", e),
+      );
+    });
   }
 
   /**
    * @return {Promise} Resolves when the store is ready.
    */
-  public connect(): Promise<void> {
+  public async connect(): Promise<void> {
     const req = this.indexedDB.open("logs");
     return new Promise((resolve, reject) => {
       req.onsuccess = (): void => {
@@ -200,16 +204,10 @@ class IndexedDBLogStore {
   // Throttled function to flush logs. We use throttle rather
   // than debounce as we want logs to be written regularly, otherwise
   // if there's a constant stream of logging, we'd never write anything.
-  private throttledFlush = throttle(
-    () => {
-      this.flush();
-    },
-    MAX_FLUSH_INTERVAL_MS,
-    {
-      leading: false,
-      trailing: true,
-    },
-  );
+  private throttledFlush = throttle(() => this.flush, MAX_FLUSH_INTERVAL_MS, {
+    leading: false,
+    trailing: true,
+  });
 
   /**
    * Flush logs to disk.
@@ -230,7 +228,7 @@ class IndexedDBLogStore {
    *
    * @return {Promise} Resolved when the logs have been flushed.
    */
-  public flush = (): Promise<void> => {
+  public flush = async (): Promise<void> => {
     // check if a flush() operation is ongoing
     if (this.flushPromise) {
       if (this.flushAgainPromise) {
@@ -239,7 +237,7 @@ class IndexedDBLogStore {
       }
       // queue up a flush to occur immediately after the pending one completes.
       this.flushAgainPromise = this.flushPromise
-        .then(() => {
+        .then(async () => {
           return this.flush();
         })
         .then(() => {
@@ -296,7 +294,7 @@ class IndexedDBLogStore {
 
     // Returns: a string representing the concatenated logs for this ID.
     // Stops adding log fragments when the size exceeds maxSize
-    function fetchLogs(id: string, maxSize: number): Promise<string> {
+    async function fetchLogs(id: string, maxSize: number): Promise<string> {
       const objectStore = db!
         .transaction("logs", "readonly")
         .objectStore("logs");
@@ -326,7 +324,7 @@ class IndexedDBLogStore {
     }
 
     // Returns: A sorted array of log IDs. (newest first)
-    function fetchLogIds(): Promise<string[]> {
+    async function fetchLogIds(): Promise<string[]> {
       // To gather all the log IDs, query for all records in logslastmod.
       const o = db!
         .transaction("logslastmod", "readonly")
@@ -346,7 +344,7 @@ class IndexedDBLogStore {
       });
     }
 
-    function deleteLogs(id: number): Promise<void> {
+    async function deleteLogs(id: number): Promise<void> {
       return new Promise<void>((resolve, reject) => {
         const txn = db!.transaction(["logs", "logslastmod"], "readwrite");
         const o = txn.objectStore("logs");
@@ -404,7 +402,7 @@ class IndexedDBLogStore {
       logger.log("Removing logs: ", removeLogIds);
       // Don't await this because it's non-fatal if we can't clean up
       // logs.
-      Promise.all(removeLogIds.map((id) => deleteLogs(id))).then(
+      Promise.all(removeLogIds.map(async (id) => deleteLogs(id))).then(
         () => {
           logger.log(`Removed ${removeLogIds.length} old logs.`);
         },
@@ -442,7 +440,7 @@ class IndexedDBLogStore {
  * @return {Promise<T[]>} Resolves to an array of whatever you returned from
  * resultMapper.
  */
-function selectQuery<T>(
+async function selectQuery<T>(
   store: IDBObjectStore,
   keyRange: IDBKeyRange | undefined,
   resultMapper: (cursor: IDBCursorWithValue) => T,
@@ -471,7 +469,7 @@ declare global {
   // eslint-disable-next-line no-var, camelcase
   var mx_rage_logger: ConsoleLogger;
   // eslint-disable-next-line no-var, camelcase
-  var mx_rage_initStoragePromise: Promise<void>;
+  var mx_rage_initStoragePromise: Promise<void> | undefined;
 }
 
 /**
@@ -481,7 +479,7 @@ declare global {
  * be set up immediately for the logs.
  * @return {Promise} Resolves when set up.
  */
-export function init(): Promise<void> {
+export async function init(): Promise<void> {
   global.mx_rage_logger = new ConsoleLogger();
   setLogExtension(global.mx_rage_logger.log);
 
@@ -493,7 +491,7 @@ export function init(): Promise<void> {
  * then this no-ops.
  * @return {Promise} Resolves when complete.
  */
-function tryInitStorage(): Promise<void> {
+async function tryInitStorage(): Promise<void> {
   if (global.mx_rage_initStoragePromise) {
     return global.mx_rage_initStoragePromise;
   }

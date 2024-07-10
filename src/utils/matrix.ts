@@ -270,11 +270,17 @@ export async function createRoom(
 
   // Wait for the room to arrive
   await new Promise<void>((resolve, reject) => {
-    const onRoom = async (room: Room): Promise<void> => {
-      if (room.roomId === (await createPromise).room_id) {
-        resolve();
-        cleanUp();
-      }
+    const onRoom = (room: Room): void => {
+      createPromise
+        .then((result) => {
+          if (room.roomId === result.room_id) {
+            resolve();
+            cleanUp();
+          }
+        })
+        .catch((e) => {
+          logger.error("Failed to wait for the room to arrive", e);
+        });
     };
     createPromise.catch((e) => {
       reject(e);

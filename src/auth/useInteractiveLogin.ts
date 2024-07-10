@@ -49,7 +49,7 @@ export function useInteractiveLogin(
 
       const interactiveAuth = new InteractiveAuth({
         matrixClient: authClient,
-        doRequest: (): Promise<LoginResponse> =>
+        doRequest: async (): Promise<LoginResponse> =>
           authClient.login("m.login.password", {
             identifier: {
               type: "m.id.user",
@@ -58,7 +58,7 @@ export function useInteractiveLogin(
             password,
           }),
         stateUpdated: (): void => {},
-        requestEmailToken: (): Promise<{ sid: string }> => {
+        requestEmailToken: async (): Promise<{ sid: string }> => {
           return Promise.resolve({ sid: "" });
         },
       });

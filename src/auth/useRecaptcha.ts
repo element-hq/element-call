@@ -72,7 +72,7 @@ export function useRecaptcha(sitekey?: string): {
     }
   }, [recaptchaId, sitekey]);
 
-  const execute = useCallback((): Promise<string> => {
+  const execute = useCallback(async (): Promise<string> => {
     if (!sitekey) {
       return Promise.resolve("");
     }
@@ -104,7 +104,12 @@ export function useRecaptcha(sitekey?: string): {
         },
       };
 
-      window.grecaptcha.execute();
+      window.grecaptcha.execute().then(
+        () => {}, // noop
+        (e) => {
+          logger.error("Recaptcha execution failed", e);
+        },
+      );
 
       const iframe = document.querySelector<HTMLIFrameElement>(
         'iframe[src*="recaptcha/api2/bframe"]',

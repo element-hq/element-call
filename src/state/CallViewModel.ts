@@ -288,7 +288,7 @@ export class CallViewModel extends ViewModel {
                   });
               }),
               // Then unhold them
-            ]).then(() => Promise.resolve({ unhold: ps })),
+            ]).then(() => ({ unhold: ps })),
           );
         } else {
           return EMPTY;

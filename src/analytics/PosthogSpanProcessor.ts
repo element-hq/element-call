@@ -43,16 +43,20 @@ export class PosthogSpanProcessor implements SpanProcessor {
 
   public onStart(span: Span): void {
     // Hack: Yield to allow attributes to be set before processing
-    Promise.resolve().then(() => {
-      switch (span.name) {
-        case "matrix.groupCallMembership":
-          this.onGroupCallMembershipStart(span);
-          return;
-        case "matrix.groupCallMembership.summaryReport":
-          this.onSummaryReportStart(span);
-          return;
-      }
-    });
+    Promise.resolve()
+      .then(() => {
+        switch (span.name) {
+          case "matrix.groupCallMembership":
+            this.onGroupCallMembershipStart(span);
+            return;
+          case "matrix.groupCallMembership.summaryReport":
+            this.onSummaryReportStart(span);
+            return;
+        }
+      })
+      .catch((e) => {
+        // noop
+      });
   }
 
   public onEnd(span: ReadableSpan): void {
@@ -157,7 +161,8 @@ export class PosthogSpanProcessor implements SpanProcessor {
   /**
    * Shutdown the processor.
    */
-  public shutdown(): Promise<void> {
-    return Promise.resolve();
+  // eslint-disable-next-line @typescript-eslint/require-await
+  public async shutdown(): Promise<void> {
+    return;
   }
 }
