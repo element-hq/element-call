@@ -185,13 +185,15 @@ export const GroupCallView: FC<Props> = ({
     if (widget && preload && skipLobby) {
       // In preload mode without lobby we wait for a join action before entering
       const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
-        defaultDeviceSetup(ev.detail.data as unknown as JoinCallData).catch(
-          (e) => {
+        defaultDeviceSetup(ev.detail.data as unknown as JoinCallData)
+          .catch((e) => {
             logger.error("Error setting up default devices", e);
-          },
-        );
-        enterRTCSession(rtcSession, perParticipantE2EE);
-        widget!.api.transport.reply(ev.detail, {});
+          })
+          .then(async () => enterRTCSession(rtcSession, perParticipantE2EE))
+          .then(() => widget!.api.transport.reply(ev.detail, {}))
+          .catch((e) => {
+            logger.error("Error entering RTC session", e);
+          });
       };
       widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
       return (): void => {
@@ -199,10 +201,14 @@ export const GroupCallView: FC<Props> = ({
       };
     } else if (widget && !preload && skipLobby) {
       // No lobby and no preload: we enter the rtc session right away
-      defaultDeviceSetup({ audioInput: null, videoInput: null }).catch((e) => {
-        logger.error("Error setting up default devices", e);
-      });
-      enterRTCSession(rtcSession, perParticipantE2EE);
+      defaultDeviceSetup({ audioInput: null, videoInput: null })
+        .catch((e) => {
+          logger.error("Error setting up default devices", e);
+        })
+        .then(async () => enterRTCSession(rtcSession, perParticipantE2EE))
+        .catch((e) => {
+          logger.error("Error entering RTC session", e);
+        });
     }
   }, [rtcSession, preload, skipLobby, perParticipantE2EE]);
 
@@ -266,7 +272,9 @@ export const GroupCallView: FC<Props> = ({
   const onReconnect = useCallback(() => {
     setLeft(false);
     setLeaveError(undefined);
-    enterRTCSession(rtcSession, perParticipantE2EE);
+    enterRTCSession(rtcSession, perParticipantE2EE).catch((e) => {
+      logger.error("Error re-entering RTC session on reconnect", e);
+    });
   }, [rtcSession, perParticipantE2EE]);
 
   const joinRule = useJoinRule(rtcSession.room);
