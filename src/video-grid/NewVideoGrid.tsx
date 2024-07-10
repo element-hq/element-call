@@ -27,6 +27,7 @@ import {
 } from "react";
 import useMeasure from "react-use-measure";
 import { zip } from "lodash";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import styles from "./NewVideoGrid.module.css";
 import {
@@ -214,7 +215,9 @@ export function NewVideoGrid<T>({
   // Because we're using react-spring in imperative mode, we're responsible for
   // firing animations manually whenever the tiles array updates
   useEffect(() => {
-    springRef.start();
+    Promise.all(springRef.start()).catch((e) => {
+      logger.warn("Failed to start tile animations", e);
+    });
   }, [tiles, springRef]);
 
   const animateDraggedTile = (endOfGesture: boolean): void => {
@@ -250,7 +253,10 @@ export function NewVideoGrid<T>({
                 ((key): boolean =>
                   key === "zIndex" || key === "x" || key === "y"),
             },
-      );
+      )
+      .catch((e) => {
+        logger.warn("Failed to animate dragged tile", e);
+      });
 
     const overTile = tiles.find(
       (t) =>

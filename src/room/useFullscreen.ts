@@ -28,7 +28,9 @@ const isFullscreen = (): boolean =>
 
 function enterFullscreen(): void {
   if (document.body.requestFullscreen) {
-    document.body.requestFullscreen();
+    document.body.requestFullscreen().catch((e) => {
+      logger.error("Failed to enter fullscreen", e);
+    });
   } else if (document.body.webkitRequestFullscreen) {
     document.body.webkitRequestFullscreen();
   } else {
@@ -38,7 +40,9 @@ function enterFullscreen(): void {
 
 function exitFullscreen(): void {
   if (document.exitFullscreen) {
-    document.exitFullscreen();
+    document.exitFullscreen().catch((e) => {
+      logger.error("Failed to exit fullscreen", e);
+    });
   } else if (document.webkitExitFullscreen) {
     document.webkitExitFullscreen();
   } else {

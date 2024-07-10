@@ -19,6 +19,7 @@ import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
 import * as Sentry from "@sentry/react";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
@@ -84,6 +85,9 @@ export class Initializer {
           order: ["urlFragment", "navigator"],
           caches: [],
         },
+      })
+      .catch((e) => {
+        logger.error("Failed to initialize i18n", e);
       });
 
     // Custom Themeing
@@ -143,10 +147,14 @@ export class Initializer {
     // config
     if (this.loadStates.config === LoadState.None) {
       this.loadStates.config = LoadState.Loading;
-      Config.init().then(() => {
-        this.loadStates.config = LoadState.Loaded;
-        this.initStep(resolve);
-      });
+      Config.init()
+        .then(() => {
+          this.loadStates.config = LoadState.Loaded;
+          this.initStep(resolve);
+        })
+        .catch((e) => {
+          logger.error("Failed to load config", e);
+        });
     }
 
     //sentry (only initialize after the config is ready)

@@ -30,17 +30,21 @@ export class Config {
     return this.internalInstance.config;
   }
 
-  public static init(): Promise<void> {
+  public static async init(): Promise<void> {
     if (Config.internalInstance?.initPromise) {
       return Config.internalInstance.initPromise;
     }
     Config.internalInstance = new Config();
-    Config.internalInstance.initPromise = new Promise<void>((resolve) => {
-      downloadConfig("../config.json").then((config) => {
-        Config.internalInstance.config = { ...DEFAULT_CONFIG, ...config };
-        resolve();
-      });
-    });
+    Config.internalInstance.initPromise = new Promise<void>(
+      (resolve, reject) => {
+        downloadConfig("../config.json")
+          .then((config) => {
+            Config.internalInstance.config = { ...DEFAULT_CONFIG, ...config };
+            resolve();
+          })
+          .catch(reject);
+      },
+    );
     return Config.internalInstance.initPromise;
   }
 

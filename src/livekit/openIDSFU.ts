@@ -54,7 +54,9 @@ export function useOpenIDSFU(
         ? await getSFUConfigWithOpenID(client, activeFocus)
         : undefined;
       setSFUConfig(sfuConfig);
-    })();
+    })().catch((e) => {
+      logger.error("Failed to get SFU config", e);
+    });
   }, [client, activeFocus]);
 
   return sfuConfig;

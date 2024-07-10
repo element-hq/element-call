@@ -21,6 +21,7 @@ import {
   MatrixClient,
   RegisterResponse,
 } from "matrix-js-sdk/src/matrix";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { initClient } from "../matrix-utils";
 import { Session } from "../ClientContext";
@@ -73,7 +74,7 @@ export const useInteractiveRegistration = (): {
     ): Promise<[MatrixClient, Session]> => {
       const interactiveAuth = new InteractiveAuth({
         matrixClient: authClient.current!,
-        doRequest: (auth): Promise<RegisterResponse> =>
+        doRequest: async (auth): Promise<RegisterResponse> =>
           authClient.current!.registerRequest({
             username,
             password,
@@ -85,17 +86,25 @@ export const useInteractiveRegistration = (): {
           }
 
           if (nextStage === "m.login.terms") {
-            interactiveAuth.submitAuthDict({
-              type: "m.login.terms",
-            });
+            interactiveAuth
+              .submitAuthDict({
+                type: "m.login.terms",
+              })
+              .catch((e) => {
+                logger.error(e);
+              });
           } else if (nextStage === "m.login.recaptcha") {
-            interactiveAuth.submitAuthDict({
-              type: "m.login.recaptcha",
-              response: recaptchaResponse,
-            });
+            interactiveAuth
+              .submitAuthDict({
+                type: "m.login.recaptcha",
+                response: recaptchaResponse,
+              })
+              .catch((e) => {
+                logger.error(e);
+              });
           }
         },
-        requestEmailToken: (): Promise<{ sid: string }> => {
+        requestEmailToken: async (): Promise<{ sid: string }> => {
           return Promise.resolve({ sid: "dummy" });
         },
       });

@@ -76,9 +76,11 @@ export function useLiveKit(
     if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {
       (e2eeOptions.keyProvider as MatrixKeyProvider).setRTCSession(rtcSession);
     } else if (e2eeSystem.kind === E2eeType.SHARED_KEY && e2eeSystem.secret) {
-      (e2eeOptions.keyProvider as ExternalE2EEKeyProvider).setKey(
-        e2eeSystem.secret,
-      );
+      (e2eeOptions.keyProvider as ExternalE2EEKeyProvider)
+        .setKey(e2eeSystem.secret)
+        .catch((e) => {
+          logger.error("Failed to set shared key for E2EE", e);
+        });
     }
   }, [e2eeOptions, e2eeSystem, rtcSession]);
 
@@ -121,7 +123,9 @@ export function useLiveKit(
   // useEffect() with an argument that references itself, if E2EE is enabled
   const room = useMemo(() => {
     const r = new Room(roomOptions);
-    r.setE2EEEnabled(e2eeSystem.kind !== E2eeType.NONE);
+    r.setE2EEEnabled(e2eeSystem.kind !== E2eeType.NONE).catch((e) => {
+      logger.error("Failed to set E2EE enabled on room", e);
+    });
     return r;
   }, [roomOptions, e2eeSystem]);
 
@@ -226,7 +230,7 @@ export function useLiveKit(
               // itself we need might need to update the mute state right away.
               // This async recursion makes sure that setCamera/MicrophoneEnabled is
               // called as little times as possible.
-              syncMuteState(iterCount + 1, type);
+              await syncMuteState(iterCount + 1, type);
             } else {
               throw new Error(
                 "track with new mute state could not be published",
@@ -235,7 +239,7 @@ export function useLiveKit(
           } catch (e) {
             if ((e as DOMException).name === "NotAllowedError") {
               logger.error(
-                "Fatal errror while syncing mute state: resetting",
+                "Fatal error while syncing mute state: resetting",
                 e,
               );
               if (type === MuteDevice.Microphone) {
@@ -250,14 +254,25 @@ export function useLiveKit(
                 "Failed to sync audio mute state with LiveKit (will retry to sync in 1s):",
                 e,
               );
-              setTimeout(() => syncMuteState(iterCount + 1, type), 1000);
+              setTimeout(() => {
+                syncMuteState(iterCount + 1, type).catch((e) => {
+                  logger.error(
+                    `Failed to sync ${MuteDevice[type]} mute state with LiveKit iterCount=${iterCount + 1}`,
+                    e,
+                  );
+                });
+              }, 1000);
             }
           }
         }
       };
 
-      syncMuteState(0, MuteDevice.Microphone);
-      syncMuteState(0, MuteDevice.Camera);
+      syncMuteState(0, MuteDevice.Microphone).catch((e) => {
+        logger.error("Failed to sync audio mute state with LiveKit", e);
+      });
+      syncMuteState(0, MuteDevice.Camera).catch((e) => {
+        logger.error("Failed to sync video mute state with LiveKit", e);
+      });
     }
   }, [room, muteStates, connectionState]);
 
@@ -304,7 +319,10 @@ export function useLiveKit(
             // the deviceId hasn't changed (was & still is default).
             room.localParticipant
               .getTrackPublication(Track.Source.Microphone)
-              ?.audioTrack?.restartTrack();
+              ?.audioTrack?.restartTrack()
+              .catch((e) => {
+                logger.error(`Failed to restart audio device track`, e);
+              });
           }
         } else {
           if (id !== undefined && room.getActiveDevice(kind) !== id) {

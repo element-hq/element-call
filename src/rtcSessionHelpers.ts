@@ -128,13 +128,13 @@ const widgetPostHangupProcedure = async (
   // we need to wait until the callEnded event is tracked on posthog.
   // Otherwise the iFrame gets killed before the callEnded event got tracked.
   await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
-  widget.api.setAlwaysOnScreen(false);
+  await widget.api.setAlwaysOnScreen(false);
   PosthogAnalytics.instance.logout();
 
   // We send the hangup event after the memberships have been updated
   // calling leaveRTCSession.
   // We need to wait because this makes the client hosting this widget killing the IFrame.
-  widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+  await widget.api.transport.send(ElementWidgetActions.HangupCall, {});
 };
 
 export async function leaveRTCSession(

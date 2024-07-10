@@ -17,6 +17,7 @@ limitations under the License.
 import { FC, useCallback } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { Button } from "../button";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
@@ -51,6 +52,8 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
         sendLogs,
         rageshakeRequestId,
         roomId,
+      }).catch((e) => {
+        logger.error("Failed to send feedback rageshake", e);
       });
 
       if (roomId && sendLogs) {

@@ -25,5 +25,5 @@ let olmLoaded: Promise<void> | null = null;
 /**
  * Loads Olm, if not already loaded.
  */
-export const loadOlm = (): Promise<void> =>
+export const loadOlm = async (): Promise<void> =>
   (olmLoaded ??= Olm.init({ locateFile: () => olmWasmPath }));

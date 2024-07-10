@@ -1324,7 +1324,9 @@ export function VideoGrid<T>({
       draggingTileRef.current = null;
     }
 
-    api.start(animate(newTiles));
+    Promise.all(api.start(animate(newTiles))).catch((e) => {
+      logger.error("Failed to start animations", e);
+    });
   };
 
   const onTileDragRef = useRef(onTileDrag);

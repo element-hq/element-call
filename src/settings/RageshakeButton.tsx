@@ -16,6 +16,7 @@ limitations under the License.
 
 import { useTranslation } from "react-i18next";
 import { FC, useCallback } from "react";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { Button } from "../button";
 import { Config } from "../config/Config";
@@ -34,6 +35,8 @@ export const RageshakeButton: FC<Props> = ({ description }) => {
     submitRageshake({
       description,
       sendLogs: true,
+    }).catch((e) => {
+      logger.error("Failed to send rageshake", e);
     });
   }, [submitRageshake, description]);
 

@@ -298,10 +298,14 @@ export function useRageshakeRequest(): (
 
   const sendRageshakeRequest = useCallback(
     (roomId: string, rageshakeRequestId: string) => {
-      // @ts-expect-error - org.matrix.rageshake_request is not part of `keyof TimelineEvents` but it is okay to sent a custom event.
-      client!.sendEvent(roomId, "org.matrix.rageshake_request", {
-        request_id: rageshakeRequestId,
-      });
+      client!
+        // @ts-expect-error - org.matrix.rageshake_request is not part of `keyof TimelineEvents` but it is okay to sent a custom event.
+        .sendEvent(roomId, "org.matrix.rageshake_request", {
+          request_id: rageshakeRequestId,
+        })
+        .catch((e) => {
+          logger.error("Failed to send org.matrix.rageshake_request event", e);
+        });
     },
     [client],
   );

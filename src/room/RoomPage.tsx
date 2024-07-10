@@ -70,6 +70,8 @@ export const RoomPage: FC = () => {
       setIsRegistering(true);
       registerPasswordlessUser(displayName).finally(() => {
         setIsRegistering(false);
+      }).catch((e) => {
+        logger.error("Failed to register passwordless user", e);
       });
     }
   }, [

@@ -48,6 +48,12 @@ module.exports = {
       },
     ],
     "react/display-name": "error",
+    // Encourage proper usage of Promises:
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-misused-promises": "error",
+    "@typescript-eslint/promise-function-async": "error",
+    "@typescript-eslint/require-await": "error",
+    "@typescript-eslint/await-thenable": "error",
   },
   settings: {
     react: {

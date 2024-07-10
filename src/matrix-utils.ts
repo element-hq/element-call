@@ -231,7 +231,7 @@ function fullAliasFromRoomName(roomName: string, client: MatrixClient): string {
  * @param client A matrix client object
  */
 export function sanitiseRoomNameInput(input: string): string {
-  // check to see if the user has enetered a fully qualified room
+  // check to see if the user has entered a fully qualified room
   // alias. If so, turn it into just the localpart because that's what
   // we use
   const parts = input.split(":", 2);
@@ -335,11 +335,17 @@ export async function createRoom(
 
   // Wait for the room to arrive
   await new Promise<void>((resolve, reject) => {
-    const onRoom = async (room: Room): Promise<void> => {
-      if (room.roomId === (await createPromise).room_id) {
-        resolve();
-        cleanUp();
-      }
+    const onRoom = (room: Room): void => {
+      createPromise
+        .then((result) => {
+          if (room.roomId === result.room_id) {
+            resolve();
+            cleanUp();
+          }
+        })
+        .catch((e) => {
+          logger.error("Failed to wait for the room to arrive", e);
+        });
     };
     createPromise.catch((e) => {
       reject(e);

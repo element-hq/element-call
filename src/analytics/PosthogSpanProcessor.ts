@@ -52,7 +52,9 @@ export class PosthogSpanProcessor implements SpanProcessor {
           this.onSummaryReportStart(span);
           return;
       }
-    });
+    }).catch((e) => {
+      // noop
+      });
   }
 
   public onEnd(span: ReadableSpan): void {
@@ -157,7 +159,8 @@ export class PosthogSpanProcessor implements SpanProcessor {
   /**
    * Shutdown the processor.
    */
-  public shutdown(): Promise<void> {
-    return Promise.resolve();
+  // eslint-disable-next-line @typescript-eslint/require-await
+  public async shutdown(): Promise<void> {
+    return;
   }
 }

@@ -20,11 +20,11 @@ limitations under the License.
  * @param devices The list of devices to search
  * @returns A matching media device or undefined if no matching device was found
  */
-export async function findDeviceByName(
+export function findDeviceByName(
   deviceName: string,
   kind: MediaDeviceKind,
   devices: MediaDeviceInfo[],
-): Promise<string | undefined> {
+): string | undefined {
   const deviceInfo = devices.find(
     (d) => d.kind === kind && d.label === deviceName,
   );

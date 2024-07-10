@@ -39,6 +39,7 @@ import useMeasure from "react-use-measure";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
 import { useStateObservable } from "@react-rxjs/core";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -98,7 +99,9 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   useEffect(() => {
     return (): void => {
-      livekitRoom?.disconnect();
+      livekitRoom?.disconnect().catch((e) => {
+        logger.error("Failed to disconnect from livekit room", e);
+      });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -193,12 +196,16 @@ export const InCallView: FC<InCallViewProps> = subscribe(
     );
 
     useEffect(() => {
-      widget?.api.transport.send(
-        layout === "grid"
-          ? ElementWidgetActions.TileLayout
-          : ElementWidgetActions.SpotlightLayout,
-        {},
-      );
+      widget?.api.transport
+        .send(
+          layout === "grid"
+            ? ElementWidgetActions.TileLayout
+            : ElementWidgetActions.SpotlightLayout,
+          {},
+        )
+        .catch((e) => {
+          logger.error("Failed to send layout change to widget API", e);
+        });
     }, [layout]);
 
     useEffect(() => {

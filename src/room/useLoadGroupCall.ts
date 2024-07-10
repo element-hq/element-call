@@ -95,6 +95,7 @@ export const useLoadGroupCall = (
   viaServers: string[],
 ): GroupCallStatus => {
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
+  const [loadInProgress, setLoadInProgress] = useState(false);
   const activeRoom = useRef<Room>();
   const { t } = useTranslation();
 
@@ -165,17 +166,21 @@ export const useLoadGroupCall = (
       const invitePromise = new Promise<void>((resolve, reject) => {
         client.on(
           RoomEvent.MyMembership,
-          async (room, membership, prevMembership) => {
+          (room, membership, prevMembership): void => {
             if (roomId !== room.roomId) return;
             activeRoom.current = room;
             if (
               membership === KnownMembership.Invite &&
               prevMembership === KnownMembership.Knock
             ) {
-              await client.joinRoom(room.roomId, { viaServers });
-              joinedRoom = room;
-              logger.log("Auto-joined %s", room.roomId);
-              resolve();
+              client
+                .joinRoom(room.roomId, { viaServers })
+                .then((room) => {
+                  joinedRoom = room;
+                  logger.log("Auto-joined %s", room.roomId);
+                  resolve();
+                })
+                .catch((e) => reject(e));
             }
             if (membership === KnownMembership.Ban) reject(bannedError());
             if (membership === KnownMembership.Leave)
@@ -317,15 +322,19 @@ export const useLoadGroupCall = (
 
     const observeMyMembership = async (): Promise<void> => {
       await new Promise((_, reject) => {
-        client.on(RoomEvent.MyMembership, async (_, membership) => {
+        client.on(RoomEvent.MyMembership, (_, membership) => {
           if (membership === KnownMembership.Leave) reject(removeNoticeError());
           if (membership === KnownMembership.Ban) reject(bannedError());
         });
       });
     };
 
-    if (state.kind === "loading") {
+    logger.log(
+      `useLoadGroupCall() state.kind=${state.kind} loadInProgress=${loadInProgress}`,
+    );
+    if (state.kind === "loading" && !loadInProgress) {
       logger.log("Start loading group call");
+      setLoadInProgress(true);
       waitForClientSyncing()
         .then(fetchOrCreateGroupCall)
         .then((rtcSession) => setState({ kind: "loaded", rtcSession }))
@@ -341,6 +350,7 @@ export const useLoadGroupCall = (
     state,
     t,
     viaServers,
+    loadInProgress,
   ]);
 
   return state;

@@ -17,6 +17,7 @@ limitations under the License.
 import { FC, useCallback, useEffect, useMemo, useRef } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { useProfile } from "../profile/useProfile";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
@@ -70,6 +71,8 @@ export const ProfileSettingsTab: FC<Props> = ({ client }) => {
           // @ts-ignore
           avatar: avatar && avatarSize > 0 ? avatar : undefined,
           removeAvatar: removeAvatar.current && (!avatar || avatarSize === 0),
+        }).catch((e) => {
+          logger.error("Failed to save profile", e);
         });
       }
     };

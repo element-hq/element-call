@@ -268,7 +268,7 @@ export class PosthogAnalytics {
         this.posthog.identify(analyticsID);
       } else {
         logger.info(
-          "No analyticsID is availble. Should not try to setup posthog",
+          "No analyticsID is available. Should not try to setup posthog",
         );
       }
     }
@@ -360,9 +360,7 @@ export class PosthogAnalytics {
     return this.eventSignup.getSignupEndTime() > new Date(0);
   }
 
-  private async updateAnonymityAndIdentifyUser(
-    pseudonymousOptIn: boolean,
-  ): Promise<void> {
+  private updateAnonymityAndIdentifyUser(pseudonymousOptIn: boolean): void {
     // Update this.anonymity based on the user's analytics opt-in settings
     const anonymity = pseudonymousOptIn
       ? Anonymity.Pseudonymous
@@ -383,31 +381,42 @@ export class PosthogAnalytics {
       this.identificationPromise = this.identifyUser(
         PosthogAnalytics.getRandomAnalyticsId,
       );
-      await this.identificationPromise;
-      if (this.userRegisteredInThisSession()) {
-        this.eventSignup.track();
-      }
-    }
-
-    if (anonymity !== Anonymity.Disabled) {
+      this.identificationPromise
+        .then(() => {
+          if (this.userRegisteredInThisSession()) {
+            this.eventSignup.track();
+          }
+          this.updateSuperProperties();
+        })
+        .catch((e) => {
+          logger.error("Failed to identify user for tracking", e);
+        });
+    } else if (anonymity !== Anonymity.Disabled) {
       this.updateSuperProperties();
     }
   }
 
-  public async trackEvent<E extends IPosthogEvent>(
+  public trackEvent<E extends IPosthogEvent>(
     { eventName, ...properties }: E,
     options?: CaptureOptions,
-  ): Promise<void> {
+  ): void {
+    const doCapture = (): void => {
+      if (
+        this.anonymity == Anonymity.Disabled ||
+        this.anonymity == Anonymity.Anonymous
+      )
+        return;
+      this.capture(eventName, properties, options);
+    };
+
     if (this.identificationPromise) {
-      // only make calls to posthog after the identificaion is done
-      await this.identificationPromise;
+      // only make calls to posthog after the identification is done
+      this.identificationPromise.then(doCapture).catch((e) => {
+        logger.error("Failed to identify user for tracking", e);
+      });
+    } else {
+      doCapture();
     }
-    if (
-      this.anonymity == Anonymity.Disabled ||
-      this.anonymity == Anonymity.Anonymous
-    )
-      return;
-    this.capture(eventName, properties, options);
   }
 
   private startListeningToSettingsChanges(): void {

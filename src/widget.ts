@@ -170,17 +170,15 @@ export const widget = ((): WidgetHelpers | null => {
         false,
       );
 
-      const clientPromise = new Promise<MatrixClient>((resolve) => {
-        (async (): Promise<void> => {
-          // wait for the config file to be ready (we load very early on so it might not
-          // be otherwise)
-          await Config.init();
-          await client.startClient({ clientWellKnownPollPeriod: 60 * 10 });
-          resolve(client);
-        })();
-      });
+      const clientPromise = async (): Promise<MatrixClient> => {
+        // wait for the config file to be ready (we load very early on so it might not
+        // be otherwise)
+        await Config.init();
+        await client.startClient({ clientWellKnownPollPeriod: 60 * 10 });
+        return client;
+      };
 
-      return { api, lazyActions, client: clientPromise };
+      return { api, lazyActions, client: clientPromise() };
     } else {
       logger.info("No widget API available");
       return null;
