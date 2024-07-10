@@ -36,6 +36,7 @@ export function makeActiveFocus(): LivekitFocusActive {
   };
 }
 
+// eslint-disable-next-line @typescript-eslint/require-await
 async function makePreferredLivekitFoci(
   rtcSession: MatrixRTCSession,
   livekitAlias: string,
