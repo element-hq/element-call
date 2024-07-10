@@ -168,11 +168,7 @@ export const GroupCallView: FC<Props> = ({
       if (videoInput === null) {
         latestMuteStates.current!.video.setEnabled?.(false);
       } else {
-        const deviceId = findDeviceByName(
-          videoInput,
-          "videoinput",
-          devices,
-        );
+        const deviceId = findDeviceByName(videoInput, "videoinput", devices);
         if (!deviceId) {
           logger.warn("Unknown video input: " + videoInput);
           latestMuteStates.current!.video.setEnabled?.(false);

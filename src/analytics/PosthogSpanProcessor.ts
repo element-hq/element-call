@@ -43,17 +43,19 @@ export class PosthogSpanProcessor implements SpanProcessor {
 
   public onStart(span: Span): void {
     // Hack: Yield to allow attributes to be set before processing
-    Promise.resolve().then(() => {
-      switch (span.name) {
-        case "matrix.groupCallMembership":
-          this.onGroupCallMembershipStart(span);
-          return;
-        case "matrix.groupCallMembership.summaryReport":
-          this.onSummaryReportStart(span);
-          return;
-      }
-    }).catch((e) => {
-      // noop
+    Promise.resolve()
+      .then(() => {
+        switch (span.name) {
+          case "matrix.groupCallMembership":
+            this.onGroupCallMembershipStart(span);
+            return;
+          case "matrix.groupCallMembership.summaryReport":
+            this.onSummaryReportStart(span);
+            return;
+        }
+      })
+      .catch((e) => {
+        // noop
       });
   }
 
