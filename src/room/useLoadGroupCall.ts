@@ -95,7 +95,6 @@ export const useLoadGroupCall = (
   viaServers: string[],
 ): GroupCallStatus => {
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
-  const [loadInProgress, setLoadInProgress] = useState(false);
   const activeRoom = useRef<Room>();
   const { t } = useTranslation();
 
@@ -329,12 +328,8 @@ export const useLoadGroupCall = (
       });
     };
 
-    logger.log(
-      `useLoadGroupCall() state.kind=${state.kind} loadInProgress=${loadInProgress}`,
-    );
-    if (state.kind === "loading" && !loadInProgress) {
+    if (state.kind === "loading") {
       logger.log("Start loading group call");
-      setLoadInProgress(true);
       waitForClientSyncing()
         .then(fetchOrCreateGroupCall)
         .then((rtcSession) => setState({ kind: "loaded", rtcSession }))
@@ -350,7 +345,6 @@ export const useLoadGroupCall = (
     state,
     t,
     viaServers,
-    loadInProgress,
   ]);
 
   return state;
