@@ -80,17 +80,14 @@ export const GroupCallView: FC<Props> = ({
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
 
-  // The mute state reactively gets updated once the participant count reaches the threshold.
-  // The user then still is able to unmute again.
-  // The more common case is that the user is muted from the start (participant count is already over the threshold).
-  const autoMuteHappened = useRef(false);
-  useEffect(() => {
-    if (autoMuteHappened.current) return;
-    if (memberships.length >= MUTE_PARTICIPANT_COUNT) {
+  // this should be useEffectEvent (only available in experimental versions)
+  const participantMuteOnce = useCallback(() => {
+    if (memberships.length >= MUTE_PARTICIPANT_COUNT)
       muteStates.audio.setEnabled?.(false);
-      autoMuteHappened.current = true;
-    }
-  }, [autoMuteHappened, memberships, muteStates.audio]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => participantMuteOnce(), [participantMuteOnce]);
 
   useEffect(() => {
     window.rtcSession = rtcSession;
