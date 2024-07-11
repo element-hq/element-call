@@ -1888,12 +1888,11 @@
     rxjs "7.8.1"
 
 "@livekit/components-react@^2.0.0":
-  version "2.3.5"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.3.5.tgz#346216f2316f5372f3cd1ba38a55607f3f01ad1b"
-  integrity sha512-2QQCNYq+ak4/hHut/HNs08QY2Fi4bsabLrGGPz/OqNRG84znpWweAhpEgJv/uRpCw7sD5haag1SKuH63p2PbDA==
+  version "2.3.6"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.3.6.tgz#3cedbc9ed64d81c3f79986022eadc7787aa6e7c3"
+  integrity sha512-dmNKlXMbSxNfErX8m/tFPmKq/KP1wv83AWaTpEtu064EfsCEpBbWm/X/X4ps8pWkH1zfej2/Svhcp+tbXe9DBQ==
   dependencies:
     "@livekit/components-core" "0.10.5"
-    "@react-hook/latest" "1.0.3"
     clsx "2.1.1"
     usehooks-ts "3.1.0"
 
@@ -2859,11 +2858,6 @@
     "@react-aria/interactions" "^3.9.1"
     "@react-aria/utils" "^3.13.1"
     clsx "^1.1.1"
-
-"@react-hook/latest@1.0.3":
-  version "1.0.3"
-  resolved "https://registry.yarnpkg.com/@react-hook/latest/-/latest-1.0.3.tgz#c2d1d0b0af8b69ec6e2b3a2412ba0768ac82db80"
-  integrity sha512-dy6duzl+JnAZcDbNTfmaP3xHiKtbXYOaz3G51MGVljh548Y8MWzTr+PHLOfvpypEVW9zwvl+VyKjbWKEVbV1Rg==
 
 "@react-rxjs/core@^0.10.7":
   version "0.10.7"
