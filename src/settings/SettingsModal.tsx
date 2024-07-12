@@ -44,8 +44,8 @@ import {
   useSetting,
   optInAnalytics as optInAnalyticsSetting,
   developerSettingsTab as developerSettingsTabSetting,
-  isFirefox,
 } from "./settings";
+import { isFirefox } from "../Platform";
 
 type SettingsTab =
   | "audio"

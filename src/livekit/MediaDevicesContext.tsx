@@ -33,8 +33,8 @@ import {
   audioInput as audioInputSetting,
   audioOutput as audioOutputSetting,
   videoInput as videoInputSetting,
-  isFirefox,
 } from "../settings/settings";
+import { isFirefox } from "../Platform";
 
 export interface MediaDevice {
   available: MediaDeviceInfo[];
