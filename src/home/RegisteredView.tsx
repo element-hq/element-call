@@ -38,9 +38,12 @@ import { UserMenuContainer } from "../UserMenuContainer";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { Caption } from "../typography/Typography";
 import { Form } from "../form/Form";
-import { useOptInAnalytics } from "../settings/useSetting";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { E2eeType } from "../e2ee/e2eeType";
+import {
+  useSetting,
+  optInAnalytics as optInAnalyticsSetting,
+} from "../settings/settings";
 
 interface Props {
   client: MatrixClient;
@@ -49,7 +52,7 @@ interface Props {
 export const RegisteredView: FC<Props> = ({ client }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
-  const [optInAnalytics] = useOptInAnalytics();
+  const [optInAnalytics] = useSetting(optInAnalyticsSetting);
   const history = useHistory();
   const { t } = useTranslation();
   const [joinExistingCallModalOpen, setJoinExistingCallModalOpen] =

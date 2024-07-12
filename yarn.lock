@@ -7104,6 +7104,11 @@ object.values@^1.1.7:
     define-properties "^1.2.0"
     es-abstract "^1.22.1"
 
+observable-hooks@^4.2.3:
+  version "4.2.3"
+  resolved "https://registry.yarnpkg.com/observable-hooks/-/observable-hooks-4.2.3.tgz#69e3353caafd7887ad9030bd440b053304e8d2d1"
+  integrity sha512-d6fYTIU+9sg1V+CT0GhgoE/ntjIqcy9DGaYGE6ELGVP4ojaWIEsaLvL/05hLOM+AL7aySN4DCTLvj6dDF9T8XA==
+
 oidc-client-ts@^3.0.1:
   version "3.0.1"
   resolved "https://registry.yarnpkg.com/oidc-client-ts/-/oidc-client-ts-3.0.1.tgz#be264fb87c89f74f73863646431c32cd06f5ceb7"
