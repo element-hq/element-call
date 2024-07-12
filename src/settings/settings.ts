@@ -56,12 +56,6 @@ export function useSetting<T>(setting: Setting<T>): [T, (value: T) => void] {
   return [useObservableEagerState(setting.value), setting.setValue];
 }
 
-// TODO: This doesn't belong here
-export const isFirefox = (): boolean => {
-  const { userAgent } = navigator;
-  return userAgent.includes("Firefox");
-};
-
 // null = undecided
 export const optInAnalytics = new Setting<boolean | null>(
   "opt-in-analytics",
@@ -74,9 +68,7 @@ export const useOptInAnalytics = (): [
   ((value: boolean | null) => void) | null,
 ] => {
   const setting = useSetting(optInAnalytics);
-  if (PosthogAnalytics.instance.isEnabled()) return setting;
-
-  return [false, null];
+  return PosthogAnalytics.instance.isEnabled() ? setting : [false, null];
 };
 
 export const developerSettingsTab = new Setting(
