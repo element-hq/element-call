@@ -1,5 +1,5 @@
 /*
-Copyright 2022 - 2023 New Vector Ltd
+Copyright 2022 - 2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,6 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ResizeObserver } from "@juggle/resize-observer";
 import {
   RoomAudioRenderer,
   RoomContext,
@@ -26,19 +25,19 @@ import { ConnectionState, Room, Track } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import {
   FC,
-  ReactNode,
-  Ref,
+  forwardRef,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
-import { useTranslation } from "react-i18next";
 import useMeasure from "react-use-measure";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
-import { useStateObservable } from "@react-rxjs/core";
+import { state, useStateObservable } from "@react-rxjs/core";
+import { BehaviorSubject } from "rxjs";
+import { useTranslation } from "react-i18next";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -51,21 +50,19 @@ import {
   SettingsButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import { useVideoGridLayout, VideoGrid } from "../video-grid/VideoGrid";
+import { LegacyGrid, useLegacyGridLayout } from "../grid/LegacyGrid";
 import { useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
 import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { ElementWidgetActions, widget } from "../widget";
 import styles from "./InCallView.module.css";
-import { VideoTile } from "../video-grid/VideoTile";
-import { NewVideoGrid } from "../video-grid/NewVideoGrid";
+import { GridTile } from "../tile/GridTile";
 import { OTelGroupCallMembership } from "../otel/OTelGroupCallMembership";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useRageshakeRequestModal } from "../settings/submit-rageshake";
 import { RageshakeRequestModal } from "./RageshakeRequestModal";
 import { useLiveKit } from "../livekit/useLiveKit";
 import { useFullscreen } from "./useFullscreen";
-import { useLayoutStates } from "../video-grid/Layout";
 import { useWakeLock } from "../useWakeLock";
 import { useMergedRefs } from "../useMergedRefs";
 import { MuteStates } from "./MuteStates";
@@ -74,13 +71,33 @@ import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
 import { ECConnectionState } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
-import { useCallViewModel } from "../state/CallViewModel";
+import {
+  GridMode,
+  TileDescriptor,
+  useCallViewModel,
+} from "../state/CallViewModel";
 import { subscribe } from "../state/subscribe";
+import { Grid, TileProps } from "../grid/Grid";
+import { MediaViewModel } from "../state/MediaViewModel";
+import { gridLayoutSystems } from "../grid/GridLayout";
+import { useObservable } from "../state/useObservable";
+import { useInitial } from "../useInitial";
+import { SpotlightTile } from "../tile/SpotlightTile";
 import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
-const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+
+export interface Alignment {
+  inline: "start" | "end";
+  block: "start" | "end";
+}
+
+const defaultAlignment: Alignment = { inline: "end", block: "end" };
+
+const dummySpotlightItem = {
+  id: "spotlight",
+} as TileDescriptor<MediaViewModel>;
 
 export interface ActiveCallProps
   extends Omit<InCallViewProps, "livekitRoom" | "connState"> {
@@ -153,7 +170,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
     }, [connState, onLeave]);
 
     const containerRef1 = useRef<HTMLDivElement | null>(null);
-    const [containerRef2, bounds] = useMeasure({ polyfill: ResizeObserver });
+    const [containerRef2, bounds] = useMeasure();
     const boundsValid = bounds.height > 0;
     // Merge the refs so they can attach to the same element
     const containerRef = useMergedRefs(containerRef1, containerRef2);
@@ -164,9 +181,8 @@ export const InCallView: FC<InCallViewProps> = subscribe(
         room: livekitRoom,
       },
     );
-    const { layout, setLayout } = useVideoGridLayout(
-      screenSharingTracks.length > 0,
-    );
+    const { layout: legacyLayout, setLayout: setLegacyLayout } =
+      useLegacyGridLayout(screenSharingTracks.length > 0);
 
     const { hideScreensharing, showControls } = useUrlParams();
 
@@ -194,23 +210,23 @@ export const InCallView: FC<InCallViewProps> = subscribe(
 
     useEffect(() => {
       widget?.api.transport.send(
-        layout === "grid"
+        legacyLayout === "grid"
           ? ElementWidgetActions.TileLayout
           : ElementWidgetActions.SpotlightLayout,
         {},
       );
-    }, [layout]);
+    }, [legacyLayout]);
 
     useEffect(() => {
       if (widget) {
         const onTileLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
-          setLayout("grid");
+          setLegacyLayout("grid");
           widget!.api.transport.reply(ev.detail, {});
         };
         const onSpotlightLayout = (
           ev: CustomEvent<IWidgetApiRequest>,
         ): void => {
-          setLayout("spotlight");
+          setLegacyLayout("spotlight");
           widget!.api.transport.reply(ev.detail, {});
         };
 
@@ -231,7 +247,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
           );
         };
       }
-    }, [setLayout]);
+    }, [setLegacyLayout]);
 
     const mobile = boundsValid && bounds.width <= 660;
     const reducedControls = boundsValid && bounds.width <= 340;
@@ -244,8 +260,21 @@ export const InCallView: FC<InCallViewProps> = subscribe(
       connState,
     );
     const items = useStateObservable(vm.tiles);
+    const layout = useStateObservable(vm.layout);
+    const hasSpotlight = layout.spotlight !== undefined;
+    // Hack: We insert a dummy "spotlight" tile into the tiles we pass to
+    // useFullscreen so that we can control the fullscreen state of the
+    // spotlight tile in the new layouts with this same hook.
+    const fullscreenItems = useMemo(
+      () => (hasSpotlight ? [...items, dummySpotlightItem] : items),
+      [items, hasSpotlight],
+    );
     const { fullscreenItem, toggleFullscreen, exitFullscreen } =
-      useFullscreen(items);
+      useFullscreen(fullscreenItems);
+    const toggleSpotlightFullscreen = useCallback(
+      () => toggleFullscreen("spotlight"),
+      [toggleFullscreen],
+    );
 
     // The maximised participant: either the participant that the user has
     // manually put in fullscreen, or the focused (active) participant if the
@@ -259,65 +288,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
       [fullscreenItem, noControls, items],
     );
 
-    const Grid =
-      items.length > 12 && layout === "grid" ? NewVideoGrid : VideoGrid;
-
     const prefersReducedMotion = usePrefersReducedMotion();
-
-    // This state is lifted out of NewVideoGrid so that layout states can be
-    // restored after a layout switch or upon exiting fullscreen
-    const layoutStates = useLayoutStates();
-
-    const renderContent = (): JSX.Element => {
-      if (items.length === 0) {
-        return (
-          <div className={styles.centerMessage}>
-            <p>{t("waiting_for_participants")}</p>
-          </div>
-        );
-      }
-      if (maximisedParticipant) {
-        return (
-          <VideoTile
-            vm={maximisedParticipant.data}
-            maximised={true}
-            fullscreen={maximisedParticipant === fullscreenItem}
-            onToggleFullscreen={toggleFullscreen}
-            targetHeight={bounds.height}
-            targetWidth={bounds.width}
-            key={maximisedParticipant.id}
-            showSpeakingIndicator={false}
-            onOpenProfile={openProfile}
-          />
-        );
-      }
-
-      return (
-        <Grid
-          items={items}
-          layout={layout}
-          disableAnimations={prefersReducedMotion || isSafari}
-          layoutStates={layoutStates}
-        >
-          {({ data: vm, ...props }): ReactNode => (
-            <VideoTile
-              vm={vm}
-              maximised={false}
-              fullscreen={false}
-              onToggleFullscreen={toggleFullscreen}
-              showSpeakingIndicator={items.length > 2}
-              onOpenProfile={openProfile}
-              {...props}
-              ref={props.ref as Ref<HTMLDivElement>}
-            />
-          )}
-        </Grid>
-      );
-    };
-
-    const rageshakeRequestModalProps = useRageshakeRequestModal(
-      rtcSession.room.roomId,
-    );
 
     const [settingsModalOpen, setSettingsModalOpen] = useState(false);
     const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
@@ -335,6 +306,169 @@ export const InCallView: FC<InCallViewProps> = subscribe(
       setSettingsTab("profile");
       setSettingsModalOpen(true);
     }, [setSettingsTab, setSettingsModalOpen]);
+
+    const [headerRef, headerBounds] = useMeasure();
+    const [footerRef, footerBounds] = useMeasure();
+    const gridBounds = useMemo(
+      () => ({
+        width: footerBounds.width,
+        height: bounds.height - headerBounds.height - footerBounds.height,
+      }),
+      [
+        footerBounds.width,
+        bounds.height,
+        headerBounds.height,
+        footerBounds.height,
+      ],
+    );
+    const gridBoundsObservable = useObservable(gridBounds);
+    const floatingAlignment = useInitial(
+      () => new BehaviorSubject(defaultAlignment),
+    );
+    const { fixed, scrolling } = useInitial(() =>
+      gridLayoutSystems(state(gridBoundsObservable), floatingAlignment),
+    );
+
+    const setGridMode = useCallback(
+      (mode: GridMode) => {
+        setLegacyLayout(mode);
+        vm.setGridMode(mode);
+      },
+      [setLegacyLayout, vm],
+    );
+
+    const showSpeakingIndicators =
+      layout.type === "spotlight" ||
+      (layout.type === "grid" && layout.grid.length > 2);
+
+    const SpotlightTileView = useMemo(
+      () =>
+        forwardRef<HTMLDivElement, TileProps<MediaViewModel[], HTMLDivElement>>(
+          function SpotlightTileView(
+            { className, style, targetWidth, targetHeight, model },
+            ref,
+          ) {
+            return (
+              <SpotlightTile
+                ref={ref}
+                vms={model}
+                maximised={false}
+                fullscreen={false}
+                onToggleFullscreen={toggleSpotlightFullscreen}
+                targetWidth={targetWidth}
+                targetHeight={targetHeight}
+                className={className}
+                style={style}
+              />
+            );
+          },
+        ),
+      [toggleSpotlightFullscreen],
+    );
+    const GridTileView = useMemo(
+      () =>
+        forwardRef<HTMLDivElement, TileProps<MediaViewModel, HTMLDivElement>>(
+          function GridTileView(
+            { className, style, targetWidth, targetHeight, model },
+            ref,
+          ) {
+            return (
+              <GridTile
+                ref={ref}
+                vm={model}
+                maximised={false}
+                fullscreen={false}
+                onToggleFullscreen={toggleFullscreen}
+                onOpenProfile={openProfile}
+                targetWidth={targetWidth}
+                targetHeight={targetHeight}
+                className={className}
+                style={style}
+                showSpeakingIndicator={showSpeakingIndicators}
+              />
+            );
+          },
+        ),
+      [toggleFullscreen, openProfile, showSpeakingIndicators],
+    );
+
+    const renderContent = (): JSX.Element => {
+      if (items.length === 0) {
+        return (
+          <div className={styles.centerMessage}>
+            <p>{t("waiting_for_participants")}</p>
+          </div>
+        );
+      }
+
+      if (maximisedParticipant !== null) {
+        const fullscreen = maximisedParticipant === fullscreenItem;
+        if (maximisedParticipant.id === "spotlight") {
+          return (
+            <SpotlightTile
+              vms={layout.spotlight!}
+              maximised={true}
+              fullscreen={fullscreen}
+              onToggleFullscreen={toggleSpotlightFullscreen}
+              targetWidth={gridBounds.height}
+              targetHeight={gridBounds.width}
+            />
+          );
+        }
+        return (
+          <GridTile
+            vm={maximisedParticipant.data}
+            maximised={true}
+            fullscreen={fullscreen}
+            onToggleFullscreen={toggleFullscreen}
+            targetHeight={gridBounds.height}
+            targetWidth={gridBounds.width}
+            key={maximisedParticipant.id}
+            showSpeakingIndicator={false}
+            onOpenProfile={openProfile}
+          />
+        );
+      }
+
+      // The only new layout we've implemented so far is grid layout for non-1:1
+      // calls. All other layouts use the legacy grid system for now.
+      if (
+        legacyLayout === "grid" &&
+        layout.type === "grid" &&
+        !(layout.grid.length === 2 && layout.spotlight === undefined)
+      ) {
+        return (
+          <>
+            <Grid
+              className={styles.scrollingGrid}
+              model={layout}
+              system={scrolling}
+              Tile={GridTileView}
+            />
+            <Grid
+              className={styles.fixedGrid}
+              style={{ insetBlockStart: headerBounds.bottom }}
+              model={layout}
+              system={fixed}
+              Tile={SpotlightTileView}
+            />
+          </>
+        );
+      } else {
+        return (
+          <LegacyGrid
+            items={items}
+            layout={legacyLayout}
+            disableAnimations={prefersReducedMotion}
+            Tile={GridTileView}
+          />
+        );
+      }
+    };
+
+    const rageshakeRequestModalProps = useRageshakeRequestModal(
+      rtcSession.room.roomId,
+    );
 
     const toggleScreensharing = useCallback(async () => {
       exitFullscreen();
@@ -395,6 +529,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
       );
       footer = (
         <div
+          ref={footerRef}
           className={classNames(
             showControls
               ? styles.footer
@@ -417,8 +552,8 @@ export const InCallView: FC<InCallViewProps> = subscribe(
           {!mobile && !hideHeader && showControls && (
             <LayoutToggle
               className={styles.layout}
-              layout={layout}
-              setLayout={setLayout}
+              layout={legacyLayout}
+              setLayout={setGridMode}
             />
           )}
         </div>
@@ -428,7 +563,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
     return (
       <div className={styles.inRoom} ref={containerRef}>
         {!hideHeader && maximisedParticipant === null && (
-          <Header>
+          <Header className={styles.header} ref={headerRef}>
             <LeftNav>
               <RoomHeaderInfo
                 id={matrixInfo.roomId}
@@ -445,11 +580,9 @@ export const InCallView: FC<InCallViewProps> = subscribe(
             </RightNav>
           </Header>
         )}
-        <div className={styles.controlsOverlay}>
-          <RoomAudioRenderer />
-          {renderContent()}
-          {footer}
-        </div>
+        <RoomAudioRenderer />
+        {renderContent()}
+        {footer}
         {!noControls && (
           <RageshakeRequestModal {...rageshakeRequestModalProps} />
         )}

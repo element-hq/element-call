@@ -1,5 +1,5 @@
 /*
-Copyright 2023 New Vector Ltd
+Copyright 2023-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,83 +14,76 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { memo, ReactNode, RefObject, useRef } from "react";
+import { ComponentType, memo, RefObject, useRef } from "react";
 import { EventTypes, Handler, useDrag } from "@use-gesture/react";
-import { SpringValue, to } from "@react-spring/web";
+import { SpringValue } from "@react-spring/web";
+import classNames from "classnames";
 
-import { ChildrenProperties } from "./VideoGrid";
+import { TileProps } from "./Grid";
+import styles from "./TileWrapper.module.css";
 
-interface Props<T> {
+interface Props<M, R extends HTMLElement> {
   id: string;
-  onDragRef: RefObject<
+  onDrag: RefObject<
     (
       tileId: string,
       state: Parameters<Handler<"drag", EventTypes["drag"]>>[0],
     ) => void
-  >;
+  > | null;
   targetWidth: number;
   targetHeight: number;
-  data: T;
+  model: M;
+  Tile: ComponentType<TileProps<M, R>>;
   opacity: SpringValue<number>;
   scale: SpringValue<number>;
-  shadow: SpringValue<number>;
-  shadowSpread: SpringValue<number>;
   zIndex: SpringValue<number>;
   x: SpringValue<number>;
   y: SpringValue<number>;
   width: SpringValue<number>;
   height: SpringValue<number>;
-  children: (props: ChildrenProperties<T>) => ReactNode;
 }
 
 const TileWrapper_ = memo(
-  <T,>({
+  <M, R extends HTMLElement>({
     id,
-    onDragRef,
+    onDrag,
     targetWidth,
     targetHeight,
-    data,
+    model,
+    Tile,
     opacity,
     scale,
-    shadow,
-    shadowSpread,
     zIndex,
     x,
     y,
     width,
     height,
-    children,
-  }: Props<T>) => {
-    const ref = useRef<HTMLElement | null>(null);
+  }: Props<M, R>) => {
+    const ref = useRef<R | null>(null);
 
-    useDrag((state) => onDragRef?.current!(id, state), {
+    useDrag((state) => onDrag?.current!(id, state), {
       target: ref,
       filterTaps: true,
       preventScroll: true,
     });
 
     return (
-      <>
-        {children({
-          ref,
-          style: {
-            opacity,
-            scale,
-            zIndex,
-            x,
-            y,
-            width,
-            height,
-            boxShadow: to(
-              [shadow, shadowSpread],
-              (s, ss) => `rgba(0, 0, 0, 0.5) 0px ${s}px ${2 * s}px ${ss}px`,
-            ),
-          },
-          targetWidth,
-          targetHeight,
-          data,
-        })}
-      </>
+      <Tile
+        ref={ref}
+        className={classNames(styles.tile, { [styles.draggable]: onDrag })}
+        style={{
+          opacity,
+          scale,
+          zIndex,
+          x,
+          y,
+          width,
+          height,
+        }}
+        targetWidth={targetWidth}
+        targetHeight={targetHeight}
+        model={model}
+      />
     );
   },
 );
@@ -104,4 +97,6 @@ TileWrapper_.displayName = "TileWrapper";
 // We pretend this component is a simple function rather than a
 // NamedExoticComponent, because that's the only way we can fit in a type
 // parameter
-export const TileWrapper = TileWrapper_ as <T>(props: Props<T>) => JSX.Element;
+export const TileWrapper = TileWrapper_ as <M, R extends HTMLElement>(
+  props: Props<M, R>,
+) => JSX.Element;
