@@ -1,5 +1,5 @@
 /*
-Copyright 2022 - 2023 New Vector Ltd
+Copyright 2022 - 2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -266,7 +266,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
     // useFullscreen so that we can control the fullscreen state of the
     // spotlight tile in the new layouts with this same hook.
     const fullscreenItems = useMemo(
-      () => [...items, ...(hasSpotlight ? [dummySpotlightItem] : [])],
+      () => (hasSpotlight ? [...items, dummySpotlightItem] : items),
       [items, hasSpotlight],
     );
     const { fullscreenItem, toggleFullscreen, exitFullscreen } =
