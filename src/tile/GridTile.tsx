@@ -1,5 +1,5 @@
 /*
-Copyright 2022-2023 New Vector Ltd
+Copyright 2022-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,29 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import {
-  ComponentProps,
-  ForwardedRef,
-  ReactNode,
-  forwardRef,
-  useCallback,
-  useEffect,
-  useState,
-} from "react";
+import { ComponentProps, forwardRef, useCallback, useState } from "react";
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
-import {
-  TrackReferenceOrPlaceholder,
-  VideoTrack,
-} from "@livekit/components-react";
-import {
-  RoomMember,
-  RoomMemberEvent,
-} from "matrix-js-sdk/src/models/room-member";
 import MicOnSolidIcon from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg?react";
 import MicOffSolidIcon from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg?react";
-import ErrorIcon from "@vector-im/compound-design-tokens/icons/error.svg?react";
 import MicOffIcon from "@vector-im/compound-design-tokens/icons/mic-off.svg?react";
 import OverflowHorizontalIcon from "@vector-im/compound-design-tokens/icons/overflow-horizontal.svg?react";
 import VolumeOnIcon from "@vector-im/compound-design-tokens/icons/volume-on.svg?react";
@@ -45,8 +28,6 @@ import UserProfileIcon from "@vector-im/compound-design-tokens/icons/user-profil
 import ExpandIcon from "@vector-im/compound-design-tokens/icons/expand.svg?react";
 import CollapseIcon from "@vector-im/compound-design-tokens/icons/collapse.svg?react";
 import {
-  Text,
-  Tooltip,
   ContextMenu,
   MenuItem,
   ToggleMenuItem,
@@ -54,120 +35,16 @@ import {
 } from "@vector-im/compound-web";
 import { useStateObservable } from "@react-rxjs/core";
 
-import { Avatar } from "../Avatar";
-import styles from "./VideoTile.module.css";
-import { useReactiveState } from "../useReactiveState";
+import styles from "./GridTile.module.css";
 import {
   ScreenShareViewModel,
   MediaViewModel,
   UserMediaViewModel,
+  useNameData,
 } from "../state/MediaViewModel";
 import { subscribe } from "../state/subscribe";
-import { useMergedRefs } from "../useMergedRefs";
 import { Slider } from "../Slider";
-
-interface TileProps {
-  tileRef?: ForwardedRef<HTMLDivElement>;
-  className?: string;
-  style?: ComponentProps<typeof animated.div>["style"];
-  targetWidth: number;
-  targetHeight: number;
-  video: TrackReferenceOrPlaceholder;
-  member: RoomMember | undefined;
-  videoEnabled: boolean;
-  maximised: boolean;
-  unencryptedWarning: boolean;
-  nameTagLeadingIcon?: ReactNode;
-  nameTag: string;
-  displayName: string;
-  primaryButton: ReactNode;
-  secondaryButton?: ReactNode;
-  [k: string]: unknown;
-}
-
-const Tile = forwardRef<HTMLDivElement, TileProps>(
-  (
-    {
-      tileRef = null,
-      className,
-      style,
-      targetWidth,
-      targetHeight,
-      video,
-      member,
-      videoEnabled,
-      maximised,
-      unencryptedWarning,
-      nameTagLeadingIcon,
-      nameTag,
-      displayName,
-      primaryButton,
-      secondaryButton,
-      ...props
-    },
-    ref,
-  ) => {
-    const { t } = useTranslation();
-    const mergedRef = useMergedRefs(tileRef, ref);
-
-    return (
-      <animated.div
-        className={classNames(styles.videoTile, className, {
-          [styles.maximised]: maximised,
-          [styles.videoMuted]: !videoEnabled,
-        })}
-        style={style}
-        ref={mergedRef}
-        data-testid="videoTile"
-        {...props}
-      >
-        <div className={styles.bg}>
-          <Avatar
-            id={member?.userId ?? displayName}
-            name={displayName}
-            size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
-            src={member?.getMxcAvatarUrl()}
-            className={styles.avatar}
-          />
-          {video.publication !== undefined && (
-            <VideoTrack
-              trackRef={video}
-              // There's no reason for this to be focusable
-              tabIndex={-1}
-              disablePictureInPicture
-            />
-          )}
-        </div>
-        <div className={styles.fg}>
-          <div className={styles.nameTag}>
-            {nameTagLeadingIcon}
-            <Text as="span" size="sm" weight="medium" className={styles.name}>
-              {nameTag}
-            </Text>
-            {unencryptedWarning && (
-              <Tooltip
-                label={t("common.unencrypted")}
-                side="bottom"
-                isTriggerInteractive={false}
-              >
-                <ErrorIcon
-                  width={20}
-                  height={20}
-                  aria-label={t("common.unencrypted")}
-                  className={styles.errorIcon}
-                />
-              </Tooltip>
-            )}
-          </div>
-          {primaryButton}
-          {secondaryButton}
-        </div>
-      </animated.div>
-    );
-  },
-);
-
-Tile.displayName = "Tile";
+import { MediaView } from "./MediaView";
 
 interface UserMediaTileProps {
   vm: UserMediaViewModel;
@@ -175,8 +52,6 @@ interface UserMediaTileProps {
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
-  nameTag: string;
-  displayName: string;
   maximised: boolean;
   onOpenProfile: () => void;
   showSpeakingIndicator: boolean;
@@ -190,8 +65,6 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
       style,
       targetWidth,
       targetHeight,
-      nameTag,
-      displayName,
       maximised,
       onOpenProfile,
       showSpeakingIndicator,
@@ -199,6 +72,7 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
     ref,
   ) => {
     const { t } = useTranslation();
+    const { displayName, nameTag } = useNameData(vm);
     const video = useStateObservable(vm.video);
     const audioEnabled = useStateObservable(vm.audioEnabled);
     const videoEnabled = useStateObservable(vm.videoEnabled);
@@ -273,20 +147,20 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
     );
 
     const tile = (
-      <Tile
-        tileRef={ref}
-        className={classNames(className, {
-          [styles.mirror]: mirror,
+      <MediaView
+        ref={ref}
+        className={classNames(className, styles.tile, {
           [styles.speaking]: showSpeakingIndicator && speaking,
-          [styles.cropVideo]: cropVideo,
         })}
+        data-maximised={maximised}
         style={style}
         targetWidth={targetWidth}
         targetHeight={targetHeight}
         video={video}
+        videoFit={cropVideo ? "cover" : "contain"}
+        mirror={mirror}
         member={vm.member}
         videoEnabled={videoEnabled}
-        maximised={maximised}
         unencryptedWarning={unencryptedWarning}
         nameTagLeadingIcon={
           <MicIcon
@@ -334,8 +208,6 @@ interface ScreenShareTileProps {
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
-  nameTag: string;
-  displayName: string;
   maximised: boolean;
   fullscreen: boolean;
   onToggleFullscreen: (itemId: string) => void;
@@ -349,8 +221,6 @@ const ScreenShareTile = subscribe<ScreenShareTileProps, HTMLDivElement>(
       style,
       targetWidth,
       targetHeight,
-      nameTag,
-      displayName,
       maximised,
       fullscreen,
       onToggleFullscreen,
@@ -358,6 +228,7 @@ const ScreenShareTile = subscribe<ScreenShareTileProps, HTMLDivElement>(
     ref,
   ) => {
     const { t } = useTranslation();
+    const { displayName, nameTag } = useNameData(vm);
     const video = useStateObservable(vm.video);
     const unencryptedWarning = useStateObservable(vm.unencryptedWarning);
     const onClickFullScreen = useCallback(
@@ -368,16 +239,20 @@ const ScreenShareTile = subscribe<ScreenShareTileProps, HTMLDivElement>(
     const FullScreenIcon = fullscreen ? CollapseIcon : ExpandIcon;
 
     return (
-      <Tile
+      <MediaView
         ref={ref}
-        className={classNames(className, styles.screenshare)}
+        className={classNames(className, styles.tile, {
+          [styles.maximised]: maximised,
+        })}
+        data-maximised={maximised}
         style={style}
         targetWidth={targetWidth}
         targetHeight={targetHeight}
         video={video}
+        videoFit="contain"
+        mirror={false}
         member={vm.member}
-        videoEnabled={true}
-        maximised={maximised}
+        videoEnabled
         unencryptedWarning={unencryptedWarning}
         nameTag={nameTag}
         displayName={displayName}
@@ -415,7 +290,7 @@ interface Props {
   showSpeakingIndicator: boolean;
 }
 
-export const VideoTile = forwardRef<HTMLDivElement, Props>(
+export const GridTile = forwardRef<HTMLDivElement, Props>(
   (
     {
       vm,
@@ -431,30 +306,6 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
     },
     ref,
   ) => {
-    const { t } = useTranslation();
-
-    // Handle display name changes.
-    // TODO: Move this into the view model
-    const [displayName, setDisplayName] = useReactiveState(
-      () => vm.member?.rawDisplayName ?? "[👻]",
-      [vm.member],
-    );
-    useEffect(() => {
-      if (vm.member) {
-        const updateName = (): void => {
-          setDisplayName(vm.member!.rawDisplayName);
-        };
-
-        vm.member!.on(RoomMemberEvent.Name, updateName);
-        return (): void => {
-          vm.member!.removeListener(RoomMemberEvent.Name, updateName);
-        };
-      }
-    }, [vm.member, setDisplayName]);
-    const nameTag = vm.local
-      ? t("video_tile.sfu_participant_local")
-      : displayName;
-
     if (vm instanceof UserMediaViewModel) {
       return (
         <UserMediaTile
@@ -464,8 +315,6 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           vm={vm}
           targetWidth={targetWidth}
           targetHeight={targetHeight}
-          nameTag={nameTag}
-          displayName={displayName}
           maximised={maximised}
           onOpenProfile={onOpenProfile}
           showSpeakingIndicator={showSpeakingIndicator}
@@ -480,8 +329,6 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           vm={vm}
           targetWidth={targetWidth}
           targetHeight={targetHeight}
-          nameTag={nameTag}
-          displayName={displayName}
           maximised={maximised}
           fullscreen={fullscreen}
           onToggleFullscreen={onToggleFullscreen}
@@ -491,4 +338,4 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
   },
 );
 
-VideoTile.displayName = "VideoTile";
+GridTile.displayName = "GridTile";

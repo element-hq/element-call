@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ limitations under the License.
   user-select: none;
   flex-shrink: 0;
   padding-inline: var(--inline-content-inset);
+  padding-block-end: var(--cpd-space-4x);
 }
 
 .nav {

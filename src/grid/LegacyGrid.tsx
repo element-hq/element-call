@@ -1,5 +1,5 @@
 /*
-Copyright 2022-2023 New Vector Ltd
+Copyright 2022-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@ limitations under the License.
 
 import {
   ComponentProps,
+  ComponentType,
   MutableRefObject,
   ReactNode,
   Ref,
@@ -40,11 +41,11 @@ import useMeasure from "react-use-measure";
 import { ResizeObserver as JuggleResizeObserver } from "@juggle/resize-observer";
 import { logger } from "matrix-js-sdk/src/logger";
 
-import styles from "./VideoGrid.module.css";
+import styles from "./LegacyGrid.module.css";
 import { Layout } from "../room/LayoutToggle";
 import { TileWrapper } from "./TileWrapper";
-import { LayoutStatesMap } from "./Layout";
 import { TileDescriptor } from "../state/CallViewModel";
+import { TileProps } from "./Grid";
 
 interface TilePosition {
   x: number;
@@ -86,7 +87,7 @@ export interface TileSpringUpdate extends Partial<TileSpring> {
 
 type LayoutDirection = "vertical" | "horizontal";
 
-export function useVideoGridLayout(hasScreenshareFeeds: boolean): {
+export function useLegacyGridLayout(hasScreenshareFeeds: boolean): {
   layout: Layout;
   setLayout: (layout: Layout) => void;
 } {
@@ -838,20 +839,19 @@ export interface ChildrenProperties<T> {
   data: T;
 }
 
-export interface VideoGridProps<T> {
+export interface LegacyGridProps<T, R extends HTMLElement> {
   items: TileDescriptor<T>[];
   layout: Layout;
   disableAnimations: boolean;
-  layoutStates: LayoutStatesMap;
-  children: (props: ChildrenProperties<T>) => ReactNode;
+  Tile: ComponentType<TileProps<T, R>>;
 }
 
-export function VideoGrid<T>({
+export function LegacyGrid<T, R extends HTMLElement>({
   items,
   layout,
   disableAnimations,
-  children,
-}: VideoGridProps<T>): ReactNode {
+  Tile,
+}: LegacyGridProps<T, R>): ReactNode {
   // Place the PiP in the bottom right corner by default
   const [pipXRatio, setPipXRatio] = useState(1);
   const [pipYRatio, setPipYRatio] = useState(1);
@@ -1378,7 +1378,7 @@ export function VideoGrid<T>({
   );
 
   return (
-    <div className={styles.videoGrid} ref={gridRef} {...bindGrid()}>
+    <div className={styles.grid} ref={gridRef} {...bindGrid()}>
       {springs.map((spring, i) => {
         const tile = tiles[i];
         const tilePosition = tilePositions[tile.order];
@@ -1387,20 +1387,19 @@ export function VideoGrid<T>({
           <TileWrapper
             key={tile.key}
             id={tile.key}
-            onDragRef={onTileDragRef}
+            onDrag={onTileDragRef}
             targetWidth={tilePosition.width}
             targetHeight={tilePosition.height}
-            data={tile.item.data}
+            model={tile.item.data}
+            Tile={Tile}
             {...spring}
-          >
-            {children as (props: ChildrenProperties<unknown>) => ReactNode}
-          </TileWrapper>
+          />
         );
       })}
     </div>
   );
 }
 
-VideoGrid.defaultProps = {
+LegacyGrid.defaultProps = {
   layout: "grid",
 };

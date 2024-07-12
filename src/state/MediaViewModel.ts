@@ -32,7 +32,7 @@ import {
   TrackEvent,
   facingModeFromLocalTrack,
 } from "livekit-client";
-import { RoomMember } from "matrix-js-sdk/src/matrix";
+import { RoomMember, RoomMemberEvent } from "matrix-js-sdk/src/matrix";
 import {
   BehaviorSubject,
   combineLatest,
@@ -44,8 +44,49 @@ import {
   startWith,
   switchMap,
 } from "rxjs";
+import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
 
 import { ViewModel } from "./ViewModel";
+import { useReactiveState } from "../useReactiveState";
+
+export interface NameData {
+  /**
+   * The display name of the participant.
+   */
+  displayName: string;
+  /**
+   * The text to be shown on the participant's name tag.
+   */
+  nameTag: string;
+}
+
+// TODO: Move this naming logic into the view model
+export function useNameData(vm: MediaViewModel): NameData {
+  const { t } = useTranslation();
+
+  const [displayName, setDisplayName] = useReactiveState(
+    () => vm.member?.rawDisplayName ?? "[👻]",
+    [vm.member],
+  );
+  useEffect(() => {
+    if (vm.member) {
+      const updateName = (): void => {
+        setDisplayName(vm.member!.rawDisplayName);
+      };
+
+      vm.member!.on(RoomMemberEvent.Name, updateName);
+      return (): void => {
+        vm.member!.removeListener(RoomMemberEvent.Name, updateName);
+      };
+    }
+  }, [vm.member, setDisplayName]);
+  const nameTag = vm.local
+    ? t("video_tile.sfu_participant_local")
+    : displayName;
+
+  return { displayName, nameTag };
+}
 
 function observeTrackReference(
   participant: Participant,
@@ -78,8 +119,9 @@ abstract class BaseMediaViewModel extends ViewModel {
   public readonly unencryptedWarning: StateObservable<boolean>;
 
   public constructor(
-    // TODO: This is only needed for full screen toggling and can be removed as
-    // soon as that code is moved into the view models
+    /**
+     * An opaque identifier for this media.
+     */
     public readonly id: string,
     /**
      * The Matrix room member to which this media belongs.

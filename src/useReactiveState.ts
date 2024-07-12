@@ -1,5 +1,5 @@
 /*
-Copyright 2023 New Vector Ltd
+Copyright 2023-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -44,7 +44,8 @@ export const useReactiveState = <T>(
   if (
     prevDeps.current === undefined ||
     deps.length !== prevDeps.current.length ||
-    deps.some((d, i) => d !== prevDeps.current![i])
+    // Deps might be NaN, so we compare with Object.is rather than ===
+    deps.some((d, i) => !Object.is(d, prevDeps.current![i]))
   ) {
     state.current = updateFn(state.current);
   }
