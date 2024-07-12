@@ -29,11 +29,12 @@ import { Observable } from "rxjs";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import {
-  isFirefox,
-  useAudioInput,
-  useAudioOutput,
-  useVideoInput,
-} from "../settings/useSetting";
+  useSetting,
+  audioInput as audioInputSetting,
+  audioOutput as audioOutputSetting,
+  videoInput as videoInputSetting,
+} from "../settings/settings";
+import { isFirefox } from "../Platform";
 
 export interface MediaDevice {
   available: MediaDeviceInfo[];
@@ -145,43 +146,36 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   // for ouput devices because the selector wont be shown on FF.
   const useOutputNames = usingNames && !isFirefox();
 
-  const [audioInputSetting, setAudioInputSetting] = useAudioInput();
-  const [audioOutputSetting, setAudioOutputSetting] = useAudioOutput();
-  const [videoInputSetting, setVideoInputSetting] = useVideoInput();
+  const [storedAudioInput, setStoredAudioInput] = useSetting(audioInputSetting);
+  const [storedAudioOutput, setStoredAudioOutput] =
+    useSetting(audioOutputSetting);
+  const [storedVideoInput, setStoredVideoInput] = useSetting(videoInputSetting);
 
-  const audioInput = useMediaDevice(
-    "audioinput",
-    audioInputSetting,
-    usingNames,
-  );
+  const audioInput = useMediaDevice("audioinput", storedAudioInput, usingNames);
   const audioOutput = useMediaDevice(
     "audiooutput",
-    audioOutputSetting,
+    storedAudioOutput,
     useOutputNames,
     alwaysUseDefaultAudio,
   );
-  const videoInput = useMediaDevice(
-    "videoinput",
-    videoInputSetting,
-    usingNames,
-  );
+  const videoInput = useMediaDevice("videoinput", storedVideoInput, usingNames);
 
   useEffect(() => {
     if (audioInput.selectedId !== undefined)
-      setAudioInputSetting(audioInput.selectedId);
-  }, [setAudioInputSetting, audioInput.selectedId]);
+      setStoredAudioInput(audioInput.selectedId);
+  }, [setStoredAudioInput, audioInput.selectedId]);
 
   useEffect(() => {
     // Skip setting state for ff output. Redundent since it is set to always return 'undefined'
     // but makes it clear while debugging that this is not happening on FF. + perf ;)
     if (audioOutput.selectedId !== undefined && !isFirefox())
-      setAudioOutputSetting(audioOutput.selectedId);
-  }, [setAudioOutputSetting, audioOutput.selectedId]);
+      setStoredAudioOutput(audioOutput.selectedId);
+  }, [setStoredAudioOutput, audioOutput.selectedId]);
 
   useEffect(() => {
     if (videoInput.selectedId !== undefined)
-      setVideoInputSetting(videoInput.selectedId);
-  }, [setVideoInputSetting, videoInput.selectedId]);
+      setStoredVideoInput(videoInput.selectedId);
+  }, [setStoredVideoInput, videoInput.selectedId]);
 
   const startUsingDeviceNames = useCallback(
     () => setNumCallersUsingNames((n) => n + 1),
