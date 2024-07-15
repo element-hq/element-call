@@ -20,6 +20,7 @@ import {
   VideoSource,
   observeParticipantEvents,
   observeParticipantMedia,
+  roomEventSelector,
 } from "@livekit/components-core";
 import {
   LocalParticipant,
@@ -30,20 +31,26 @@ import {
   Track,
   TrackEvent,
   facingModeFromLocalTrack,
+  Room as LivekitRoom,
+  RoomEvent as LivekitRoomEvent,
 } from "livekit-client";
 import { RoomMember, RoomMemberEvent } from "matrix-js-sdk/src/matrix";
 import {
   BehaviorSubject,
   Observable,
   combineLatest,
+  debounceTime,
   distinctUntilChanged,
   distinctUntilKeyChanged,
+  filter,
   fromEvent,
   map,
+  merge,
   of,
   shareReplay,
   startWith,
   switchMap,
+  throttleTime,
 } from "rxjs";
 import { useEffect } from "react";
 import { CallMembership } from "matrix-js-sdk/src/matrixrtc";
@@ -89,6 +96,29 @@ function observeTrackReference(
   );
 }
 
+function encryptionErrorObservable(
+  room: LivekitRoom,
+  participant: Participant,
+): Observable<[Error | undefined]> {
+  const roomEvents = roomEventSelector(
+    room,
+    LivekitRoomEvent.EncryptionError,
+  ).pipe(
+    filter(([err, participantIdentity]) => {
+      return participantIdentity == participant.identity;
+    }),
+    throttleTime(1000), // Throttle to avoid spamming the UI
+  );
+
+  return merge(
+    roomEvents,
+    roomEvents.pipe(
+      debounceTime(3000), // Wait 3 seconds before clearing the error, toast style
+      map(() => [undefined]),
+    ),
+  ).pipe(map(([x]) => [x as Error]));
+}
+
 abstract class BaseMediaViewModel extends ViewModel {
   /**
    * Whether the media belongs to the local user.
@@ -105,6 +135,8 @@ abstract class BaseMediaViewModel extends ViewModel {
    * Whether there should be a warning that this media is unencrypted.
    */
   public readonly unencryptedWarning: Observable<boolean>;
+
+  public readonly lastEncryptionError: Observable<Error | undefined>;
 
   public constructor(
     /**
@@ -124,6 +156,7 @@ abstract class BaseMediaViewModel extends ViewModel {
     callEncrypted: boolean,
     audioSource: AudioSource,
     videoSource: VideoSource,
+    livekitRoom: LivekitRoom,
   ) {
     super();
     if (participant) {
@@ -136,9 +169,14 @@ abstract class BaseMediaViewModel extends ViewModel {
           (a.publication?.isEncrypted === false ||
             v?.publication?.isEncrypted === false),
       ).pipe(distinctUntilChanged(), shareReplay(1));
+      this.lastEncryptionError = encryptionErrorObservable(livekitRoom, participant).pipe(
+        map(([error]) => error as Error),
+        startWith(undefined),
+      );
     } else {
       this.video = of(undefined);
       this.unencryptedWarning = of(false);
+      this.lastEncryptionError = of(undefined);
     }
   }
 }
@@ -181,6 +219,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant | undefined,
     callEncrypted: boolean,
+    livekitRoom: LivekitRoom,
   ) {
     super(
       id,
@@ -189,6 +228,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       callEncrypted,
       Track.Source.Microphone,
       Track.Source.Camera,
+      livekitRoom,
     );
 
     if (participant) {
@@ -309,6 +349,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
     callEncrypted: boolean,
+    livekitRoom: LivekitRoom,
   ) {
     super(
       id,
@@ -317,6 +358,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
       callEncrypted,
       Track.Source.ScreenShareAudio,
       Track.Source.ScreenShare,
+      livekitRoom,
     );
   }
 }

@@ -60,7 +60,7 @@
     "i18next": "^23.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-http-backend": "^2.0.0",
-    "livekit-client": "^2.0.2",
+    "livekit-client": "github:hughns/client-sdk-js#4c7c7e72c3a980347a0bacf479b4c0ba39f8b19d",
     "lodash": "^4.17.21",
     "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#0fe53876ec555482bbeb086fd4dec8de7b2e21eb",
     "matrix-widget-api": "^1.8.2",

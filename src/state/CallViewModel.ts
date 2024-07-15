@@ -241,8 +241,15 @@ class ScreenShare {
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
     callEncrypted: boolean,
+    livekitRoom: LivekitRoom,
   ) {
-    this.vm = new ScreenShareViewModel(id, member, participant, callEncrypted);
+    this.vm = new ScreenShareViewModel(
+      id,
+      member,
+      participant,
+      callEncrypted,
+      livekitRoom,
+    );
   }
 
   public destroy(): void {
@@ -437,6 +444,7 @@ export class CallViewModel extends ViewModel {
                           member,
                           p,
                           this.encrypted,
+                          this.livekitRoom,
                         ),
                     ];
                   }

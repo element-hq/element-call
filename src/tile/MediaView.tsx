@@ -17,7 +17,7 @@ limitations under the License.
 import { TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
 import { RoomMember } from "matrix-js-sdk/src/matrix";
-import { ComponentProps, ReactNode, forwardRef } from "react";
+import { ComponentProps, ReactNode, forwardRef, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
@@ -41,6 +41,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   primaryButton?: ReactNode;
+  lastEncryptionError?: Error;
 }
 
 export const MediaView = forwardRef<HTMLDivElement, Props>(
@@ -59,11 +60,17 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       nameTagLeadingIcon,
       displayName,
       primaryButton,
+      lastEncryptionError,
       ...props
     },
     ref,
   ) => {
     const { t } = useTranslation();
+
+    const statusText = useMemo<string | undefined>(
+      () => lastEncryptionError?.message,
+      [lastEncryptionError],
+    );
 
     return (
       <animated.div
@@ -95,6 +102,11 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           ) : null}
         </div>
         <div className={styles.fg}>
+          {statusText ? (
+            <div className={styles.status}>
+              <span>{statusText}</span>
+            </div>
+          ) : null}
           {!video ? (
             <div className={styles.status}>
               <span>{t("no_media_available")}</span>
