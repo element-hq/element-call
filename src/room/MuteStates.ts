@@ -14,10 +14,12 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { Dispatch, SetStateAction, useMemo } from "react";
+import { Dispatch, SetStateAction, useEffect, useMemo } from "react";
+import { IWidgetApiRequest } from "matrix-widget-api";
 
 import { MediaDevice, useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
+import { ElementWidgetActions, widget } from "../widget";
 
 /**
  * If there already are this many participants in the call, we automatically mute
@@ -73,6 +75,53 @@ export function useMuteStates(): MuteStates {
 
   const audio = useMuteState(devices.audioInput, () => true);
   const video = useMuteState(devices.videoInput, () => true);
+
+  useEffect(() => {
+    widget?.api.transport.send(ElementWidgetActions.DeviceMute, {
+      audio_enabled: audio.enabled,
+      video_enabled: video.enabled,
+    });
+  }, [audio, video]);
+
+  useEffect(() => {
+    if (widget) {
+      const onMuteStateChangeRequest = (
+        ev: CustomEvent<IWidgetApiRequest>,
+      ): void => {
+        const newState = {
+          audio_enabled: audio.enabled,
+          video_enabled: video.enabled,
+        };
+        if (
+          ev.detail.data.audio_enabled != null &&
+          typeof ev.detail.data.audio_enabled === "boolean"
+        ) {
+          audio.setEnabled?.(ev.detail.data.audio_enabled);
+          newState.audio_enabled = ev.detail.data.audio_enabled;
+        }
+        if (
+          ev.detail.data.video_enabled != null &&
+          typeof ev.detail.data.video_enabled === "boolean"
+        ) {
+          video.setEnabled?.(ev.detail.data.video_enabled);
+          newState.video_enabled = ev.detail.data.video_enabled;
+        }
+        widget!.api.transport.reply(ev.detail, newState);
+      };
+
+      widget.lazyActions.on(
+        ElementWidgetActions.DeviceMute,
+        onMuteStateChangeRequest,
+      );
+
+      return (): void => {
+        widget!.lazyActions.off(
+          ElementWidgetActions.DeviceMute,
+          onMuteStateChangeRequest,
+        );
+      };
+    }
+  }, [audio, video]);
 
   return useMemo(() => ({ audio, video }), [audio, video]);
 }

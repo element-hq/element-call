@@ -46,6 +46,19 @@ export enum ElementWidgetActions {
   // host -> Element Call telling EC to stop screen sharing, or that
   // the user cancelled when selecting a source after a ScreenshareRequest
   ScreenshareStop = "io.element.screenshare_stop",
+  // This can be sent as form or to widget
+  // fromWidget: updates the client about the current device mute state
+  // toWidget: the client requests a specific device mute configuration
+  // (the reply will always be the resulting configuration)
+  // (it is possible to sent an empty configuration
+  // -> this will allow the client to only get the current state)
+  //
+  // The data of the widget action request and the response are:
+  // {
+  //   audio_enabled?: boolean,
+  //   video_enabled?: boolean
+  // }
+  DeviceMute = "io.element.device_mute",
 }
 
 export interface JoinCallData {
@@ -88,6 +101,7 @@ export const widget = ((): WidgetHelpers | null => {
         ElementWidgetActions.SpotlightLayout,
         ElementWidgetActions.ScreenshareStart,
         ElementWidgetActions.ScreenshareStop,
+        ElementWidgetActions.DeviceMute,
       ].forEach((action) => {
         api.on(`action:${action}`, (ev: CustomEvent<IWidgetApiRequest>) => {
           ev.preventDefault();
