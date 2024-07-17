@@ -28,14 +28,13 @@ import CollapseIcon from "@vector-im/compound-design-tokens/icons/collapse.svg?r
 import ChevronLeftIcon from "@vector-im/compound-design-tokens/icons/chevron-left.svg?react";
 import ChevronRightIcon from "@vector-im/compound-design-tokens/icons/chevron-right.svg?react";
 import { animated } from "@react-spring/web";
-import { state, useStateObservable } from "@react-rxjs/core";
 import { Observable, map, of } from "rxjs";
+import { useObservableEagerState } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 
 import { MediaView } from "./MediaView";
 import styles from "./SpotlightTile.module.css";
-import { subscribe } from "../state/subscribe";
 import {
   LocalUserMediaViewModel,
   MediaViewModel,
@@ -49,11 +48,11 @@ import { useReactiveState } from "../useReactiveState";
 import { useLatest } from "../useLatest";
 
 // Screen share video is always enabled
-const videoEnabledDefault = state(of(true));
+const videoEnabledDefault = of(true);
 // Never mirror screen share video
-const mirrorDefault = state(of(false));
+const mirrorDefault = of(false);
 // Never crop screen share video
-const cropVideoDefault = state(of(false));
+const cropVideoDefault = of(false);
 
 interface SpotlightItemProps {
   vm: MediaViewModel;
@@ -66,28 +65,28 @@ interface SpotlightItemProps {
   snap: boolean;
 }
 
-const SpotlightItem = subscribe<SpotlightItemProps, HTMLDivElement>(
+const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
   ({ vm, targetWidth, targetHeight, intersectionObserver, snap }, theirRef) => {
     const ourRef = useRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
     const { displayName, nameTag } = useNameData(vm);
-    const video = useStateObservable(vm.video);
-    const videoEnabled = useStateObservable(
+    const video = useObservableEagerState(vm.video);
+    const videoEnabled = useObservableEagerState(
       vm instanceof LocalUserMediaViewModel ||
         vm instanceof RemoteUserMediaViewModel
         ? vm.videoEnabled
         : videoEnabledDefault,
     );
-    const mirror = useStateObservable(
+    const mirror = useObservableEagerState(
       vm instanceof LocalUserMediaViewModel ? vm.mirror : mirrorDefault,
     );
-    const cropVideo = useStateObservable(
+    const cropVideo = useObservableEagerState(
       vm instanceof LocalUserMediaViewModel ||
         vm instanceof RemoteUserMediaViewModel
         ? vm.cropVideo
         : cropVideoDefault,
     );
-    const unencryptedWarning = useStateObservable(vm.unencryptedWarning);
+    const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning);
 
     // Hook this item up to the intersection observer
     useEffect(() => {
@@ -123,6 +122,8 @@ const SpotlightItem = subscribe<SpotlightItemProps, HTMLDivElement>(
     );
   },
 );
+
+SpotlightItem.displayName = "SpotlightItem";
 
 interface Props {
   vms: MediaViewModel[];
