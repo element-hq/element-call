@@ -132,7 +132,7 @@
     "developer_settings_label": "Developer Settings",
     "developer_settings_label_description": "Expose developer settings in the settings window.",
     "developer_tab_title": "Developer",
-    "duplicate_tiles_label": "Number of duplicate tiles",
+    "duplicate_tiles_label": "Number of additional tile copies per participant",
     "feedback_tab_body": "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
     "feedback_tab_description_label": "Your feedback",
     "feedback_tab_h4": "Submit feedback",
