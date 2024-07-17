@@ -131,13 +131,37 @@ export type WindowMode = "normal" | "full screen" | "pip";
  * Sorting bins defining the order in which media tiles appear in the layout.
  */
 enum SortingBin {
+  /**
+   * Yourself, when the "always show self" option is on.
+   */
   SelfAlwaysShown,
+  /**
+   * Participants that are sharing their screen.
+   */
   Presenters,
+  /**
+   * Participants that have been speaking recently.
+   */
   Speakers,
+  /**
+   * Participants with both video and audio.
+   */
   VideoAndAudio,
+  /**
+   * Participants with video but no audio.
+   */
   Video,
+  /**
+   * Participants with audio but no video.
+   */
   Audio,
+  /**
+   * Participants not sharing any media.
+   */
   NoMedia,
+  /**
+   * Yourself, when the "always show self" option is off.
+   */
   SelfNotAlwaysShown,
 }
 
