@@ -254,7 +254,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
       () =>
         fullscreenItem ??
         (noControls
-          ? items.find((item) => item.isSpeaker) ?? items.at(0) ?? null
+          ? (items.find((item) => item.isSpeaker) ?? items.at(0) ?? null)
           : null),
       [fullscreenItem, noControls, items],
     );
