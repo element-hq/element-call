@@ -14,16 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { CSSProperties, useMemo } from "react";
-import { StateObservable, state, useStateObservable } from "@react-rxjs/core";
-import { BehaviorSubject, distinctUntilChanged } from "rxjs";
+import { CSSProperties, forwardRef, useMemo } from "react";
+import { BehaviorSubject, Observable, distinctUntilChanged } from "rxjs";
+import { useObservableEagerState } from "observable-hooks";
 
 import { GridLayout as GridLayoutModel } from "../state/CallViewModel";
 import { MediaViewModel } from "../state/MediaViewModel";
 import { LayoutSystem, Slot } from "./Grid";
 import styles from "./GridLayout.module.css";
 import { useReactiveState } from "../useReactiveState";
-import { subscribe } from "../state/subscribe";
 import { Alignment } from "../room/InCallView";
 import { useInitial } from "../useInitial";
 
@@ -48,7 +47,7 @@ const slotMaxAspectRatio = 17 / 9;
 const slotMinAspectRatio = 4 / 3;
 
 export const gridLayoutSystems = (
-  minBounds: StateObservable<Bounds>,
+  minBounds: Observable<Bounds>,
   floatingAlignment: BehaviorSubject<Alignment>,
 ): GridLayoutSystems => ({
   // The "fixed" (non-scrolling) part of the layout is where the spotlight tile
@@ -58,15 +57,13 @@ export const gridLayoutSystems = (
       new Map(
         model.spotlight === undefined ? [] : [["spotlight", model.spotlight]],
       ),
-    Layout: subscribe(function GridLayoutFixed({ model }, ref) {
-      const { width, height } = useStateObservable(minBounds);
-      const alignment = useStateObservable(
-        useInitial<StateObservable<Alignment>>(() =>
-          state(
-            floatingAlignment.pipe(
-              distinctUntilChanged(
-                (a1, a2) => a1.block === a2.block && a1.inline === a2.inline,
-              ),
+    Layout: forwardRef(function GridLayoutFixed({ model }, ref) {
+      const { width, height } = useObservableEagerState(minBounds);
+      const alignment = useObservableEagerState(
+        useInitial(() =>
+          floatingAlignment.pipe(
+            distinctUntilChanged(
+              (a1, a2) => a1.block === a2.block && a1.inline === a2.inline,
             ),
           ),
         ),
@@ -106,8 +103,8 @@ export const gridLayoutSystems = (
   // The scrolling part of the layout is where all the grid tiles live
   scrolling: {
     tiles: (model) => new Map(model.grid.map((tile) => [tile.id, tile])),
-    Layout: subscribe(function GridLayout({ model }, ref) {
-      const { width, height: minHeight } = useStateObservable(minBounds);
+    Layout: forwardRef(function GridLayout({ model }, ref) {
+      const { width, height: minHeight } = useObservableEagerState(minBounds);
 
       // The goal here is to determine the grid size and padding that maximizes
       // use of screen space for n tiles without making those tiles too small or
