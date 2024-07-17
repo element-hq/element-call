@@ -5,5 +5,8 @@
       "server_name": "call.ems.host"
     }
   },
+  "livekit": {
+    "livekit_service_url": "http://localhost:7881"
+  },
   "eula": "https://static.element.io/legal/online-EULA.pdf"
 }
