@@ -67,6 +67,7 @@ import {
 } from "./MediaViewModel";
 import { finalizeValue } from "../observable-utils";
 import { ObservableScope } from "./ObservableScope";
+import { duplicateTiles } from "../settings/settings";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -308,11 +309,16 @@ export class CallViewModel extends ViewModel {
     combineLatest([
       this.remoteParticipants,
       observeParticipantMedia(this.livekitRoom.localParticipant),
+      duplicateTiles.value,
     ]).pipe(
       scan(
         (
           prevItems,
-          [remoteParticipants, { participant: localParticipant }],
+          [
+            remoteParticipants,
+            { participant: localParticipant },
+            duplicateTiles,
+          ],
         ) => {
           let allGhosts = true;
 
@@ -330,20 +336,29 @@ export class CallViewModel extends ViewModel {
                   );
                 }
 
-                const userMediaId = p.identity;
-                yield [
-                  userMediaId,
-                  prevItems.get(userMediaId) ??
-                    new UserMedia(userMediaId, member, p, this.encrypted),
-                ];
-
-                if (p.isScreenShareEnabled) {
-                  const screenShareId = `${userMediaId}:screen-share`;
+                // Create as many tiles for this participant as called for by
+                // the duplicateTiles option
+                for (let i = 0; i < 1 + duplicateTiles; i++) {
+                  const userMediaId = `${p.identity}:${i}`;
                   yield [
-                    screenShareId,
-                    prevItems.get(screenShareId) ??
-                      new ScreenShare(screenShareId, member, p, this.encrypted),
+                    userMediaId,
+                    prevItems.get(userMediaId) ??
+                      new UserMedia(userMediaId, member, p, this.encrypted),
                   ];
+
+                  if (p.isScreenShareEnabled) {
+                    const screenShareId = `${userMediaId}:screen-share`;
+                    yield [
+                      screenShareId,
+                      prevItems.get(screenShareId) ??
+                        new ScreenShare(
+                          screenShareId,
+                          member,
+                          p,
+                          this.encrypted,
+                        ),
+                    ];
+                  }
                 }
               }
             }.bind(this)(),
