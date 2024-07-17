@@ -386,7 +386,7 @@ export class CallViewModel extends ViewModel {
         },
         new Map<string, MediaItem>(),
       ),
-      map((ms) => [...ms.values()]),
+      map((mediaItems) => [...mediaItems.values()]),
       finalizeValue((ts) => {
         for (const t of ts) t.destroy();
       }),
@@ -394,35 +394,41 @@ export class CallViewModel extends ViewModel {
   );
 
   private readonly userMedia: Observable<UserMedia[]> = this.mediaItems.pipe(
-    map((ms) => ms.filter((m): m is UserMedia => m instanceof UserMedia)),
+    map((mediaItems) =>
+      mediaItems.filter((m): m is UserMedia => m instanceof UserMedia),
+    ),
   );
 
   private readonly screenShares: Observable<ScreenShare[]> =
     this.mediaItems.pipe(
-      map((ms) => ms.filter((m): m is ScreenShare => m instanceof ScreenShare)),
+      map((mediaItems) =>
+        mediaItems.filter((m): m is ScreenShare => m instanceof ScreenShare),
+      ),
     );
 
   private readonly spotlightSpeaker: Observable<UserMedia | null> =
     this.userMedia.pipe(
-      switchMap((ms) =>
-        ms.length === 0
+      switchMap((mediaItems) =>
+        mediaItems.length === 0
           ? of([])
           : combineLatest(
-              ms.map((m) => m.vm.speaking.pipe(map((s) => [m, s] as const))),
+              mediaItems.map((m) =>
+                m.vm.speaking.pipe(map((s) => [m, s] as const)),
+              ),
             ),
       ),
       scan<(readonly [UserMedia, boolean])[], UserMedia | null, null>(
-        (prev, ms) =>
+        (prev, mediaItems) =>
           // Decide who to spotlight:
           // If the previous speaker is still speaking, stick with them rather
           // than switching eagerly to someone else
-          ms.find(([m, s]) => m === prev && s)?.[0] ??
+          mediaItems.find(([m, s]) => m === prev && s)?.[0] ??
           // Otherwise, select anyone who is speaking
-          ms.find(([, s]) => s)?.[0] ??
+          mediaItems.find(([, s]) => s)?.[0] ??
           // Otherwise, stick with the person who was last speaking
           prev ??
           // Otherwise, spotlight the local user
-          ms.find(([m]) => m.vm.local)?.[0] ??
+          mediaItems.find(([m]) => m.vm.local)?.[0] ??
           null,
         null,
       ),
@@ -431,8 +437,8 @@ export class CallViewModel extends ViewModel {
     );
 
   private readonly grid: Observable<UserMediaViewModel[]> = this.userMedia.pipe(
-    switchMap((ms) => {
-      const bins = ms.map((m) =>
+    switchMap((mediaItems) => {
+      const bins = mediaItems.map((m) =>
         combineLatest(
           [
             m.speaker,
