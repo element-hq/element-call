@@ -54,11 +54,11 @@ export const ProfileSettingsTab: FC<Props> = ({ client }) => {
         const avatar = data.get("avatar");
 
         const avatarSize =
-          typeof avatar == "string" ? avatar.length : avatar?.size ?? 0;
+          typeof avatar == "string" ? avatar.length : (avatar?.size ?? 0);
         const displayName =
           typeof displayNameDataEntry == "string"
             ? displayNameDataEntry
-            : displayNameDataEntry?.name ?? null;
+            : (displayNameDataEntry?.name ?? null);
 
         if (!displayName) {
           return;

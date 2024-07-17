@@ -65,7 +65,7 @@ export function useFullscreen<T>(items: TileDescriptor<T>[]): {
       (prevItem) =>
         prevItem == null
           ? null
-          : items.find((i) => i.id === prevItem.id) ?? null,
+          : (items.find((i) => i.id === prevItem.id) ?? null),
       [items],
     );
 
@@ -79,7 +79,7 @@ export function useFullscreen<T>(items: TileDescriptor<T>[]): {
     (itemId: string) => {
       setFullscreenItem(
         latestFullscreenItem.current === null
-          ? latestItems.current.find((i) => i.id === itemId) ?? null
+          ? (latestItems.current.find((i) => i.id === itemId) ?? null)
           : null,
       );
     },
