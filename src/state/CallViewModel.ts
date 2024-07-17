@@ -377,7 +377,7 @@ export class CallViewModel extends ViewModel {
 
   private readonly hasRemoteScreenShares: Observable<boolean> =
     this.screenShares.pipe(
-      map((ms) => ms.find((m) => !m.vm.local) !== undefined),
+      map((ms) => ms.some((m) => !m.vm.local)),
       distinctUntilChanged(),
     );
 
