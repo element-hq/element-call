@@ -46,12 +46,13 @@ export enum ElementWidgetActions {
   // host -> Element Call telling EC to stop screen sharing, or that
   // the user cancelled when selecting a source after a ScreenshareRequest
   ScreenshareStop = "io.element.screenshare_stop",
-  // This can be sent as form or to widget
+  // This can be sent as from or to widget
   // fromWidget: updates the client about the current device mute state
   // toWidget: the client requests a specific device mute configuration
-  // (the reply will always be the resulting configuration)
-  // (it is possible to sent an empty configuration
-  // -> this will allow the client to only get the current state)
+  //   The reply will always be the resulting configuration
+  //   It is possible to sent an empty configuration or only a change for audio or video.
+  //   An undefined field means that EC will not keep the mute state as is.
+  //   -> this will allow the client to only get the current state
   //
   // The data of the widget action request and the response are:
   // {
