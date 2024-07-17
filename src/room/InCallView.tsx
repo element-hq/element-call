@@ -238,7 +238,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
     const noControls = reducedControls && bounds.height <= 400;
 
     const vm = useCallViewModel(
-      rtcSession.room,
+      rtcSession,
       livekitRoom,
       matrixInfo.e2eeSystem.kind !== E2eeType.NONE,
       connState,

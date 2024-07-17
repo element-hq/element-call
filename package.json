@@ -23,6 +23,7 @@
     "@livekit/components-core": "^0.10.0",
     "@livekit/components-react": "^2.0.0",
     "@matrix-org/olm": "https://gitlab.matrix.org/api/v4/projects/27/packages/npm/@matrix-org/olm/-/@matrix-org/olm-3.2.14.tgz",
+    "@nkzw/use-relative-time": "^1.1.0",
     "@opentelemetry/api": "^1.4.0",
     "@opentelemetry/context-zone": "^1.9.1",
     "@opentelemetry/exporter-jaeger": "^1.9.1",

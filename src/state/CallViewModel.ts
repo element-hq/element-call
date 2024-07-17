@@ -52,6 +52,8 @@ import {
 } from "rxjs";
 import { StateObservable, state } from "@react-rxjs/core";
 import { logger } from "matrix-js-sdk/src/logger";
+import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { CallMembership } from "matrix-js-sdk/src/matrixrtc/CallMembership";
 
 import { ViewModel } from "./ViewModel";
 import { useObservable } from "./useObservable";
@@ -64,6 +66,7 @@ import {
   MediaViewModel,
   UserMediaViewModel,
   ScreenShareViewModel,
+  MembershipOnlyViewModel,
 } from "./MediaViewModel";
 import { finalizeValue } from "../observable-utils";
 import { ObservableScope } from "./ObservableScope";
@@ -204,25 +207,45 @@ class ScreenShare {
   }
 }
 
-type MediaItem = UserMedia | ScreenShare;
+class MembershipOnly {
+  public readonly vm: MembershipOnlyViewModel;
 
-function findMatrixMember(
-  room: MatrixRoom,
-  id: string,
-): RoomMember | undefined {
+  public constructor(member: RoomMember) {
+    this.vm = new MembershipOnlyViewModel(member);
+  }
+
+  public destroy(): void {
+    this.vm.destroy();
+  }
+}
+
+type MediaItem = UserMedia | ScreenShare | MembershipOnly;
+
+function matrixUserIdFromParticipantId(id: string): string | undefined {
   if (!id) return undefined;
-
   const parts = id.split(":");
   // must be at least 3 parts because we know the first part is a userId which must necessarily contain a colon
   if (parts.length < 3) {
     logger.warn(
-      "Livekit participants ID doesn't look like a userId:deviceId combination",
+      `Livekit participants ID doesn't look like a userId:deviceId combination: ${id}`,
     );
     return undefined;
   }
 
   parts.pop();
   const userId = parts.join(":");
+  return userId;
+}
+
+function findMatrixMember(
+  room: MatrixRoom,
+  id: string,
+): RoomMember | undefined {
+  const userId = matrixUserIdFromParticipantId(id);
+
+  if (!userId) {
+    return undefined;
+  }
 
   return room.getMember(userId) ?? undefined;
 }
@@ -303,6 +326,24 @@ export class CallViewModel extends ViewModel {
         return result;
       },
     );
+
+  private readonly membershipsWithoutParticipant = combineLatest([
+    of(this.rtcSession.memberships),
+    this.remoteParticipants,
+    of(this.livekitRoom.localParticipant),
+  ]).pipe(
+    scan((prev, [memberships, remoteParticipants, localParticipant]) => {
+      const participantIds = new Set(
+        remoteParticipants.map((p) =>
+          matrixUserIdFromParticipantId(p.identity),
+        ),
+      );
+      participantIds.add(
+        matrixUserIdFromParticipantId(localParticipant.identity),
+      );
+      return memberships.filter((m) => !participantIds.has(m.sender ?? ""));
+    }, [] as CallMembership[]),
+  );
 
   private readonly mediaItems: StateObservable<MediaItem[]> = state(
     combineLatest([
@@ -495,90 +536,136 @@ export class CallViewModel extends ViewModel {
       combineLatest([
         this.remoteParticipants,
         observeParticipantMedia(this.livekitRoom.localParticipant),
+        this.membershipsWithoutParticipant,
       ]).pipe(
-        scan((ts, [remoteParticipants, { participant: localParticipant }]) => {
-          const ps = [localParticipant, ...remoteParticipants];
-          const tilesById = new Map(ts.map((t) => [t.id, t]));
-          const now = Date.now();
-          let allGhosts = true;
+        scan(
+          (
+            ts,
+            [
+              remoteParticipants,
+              { participant: localParticipant },
+              membershipsWithoutParticipant,
+            ],
+          ) => {
+            const ps = [
+              localParticipant,
+              ...remoteParticipants,
+              ...membershipsWithoutParticipant,
+            ];
+            const tilesById = new Map(ts.map((t) => [t.id, t]));
+            const now = Date.now();
+            let allGhosts = true;
 
-          const newTiles = ps.flatMap((p) => {
-            const userMediaId = p.identity;
-            const member = findMatrixMember(this.matrixRoom, userMediaId);
-            allGhosts &&= member === undefined;
-            const spokeRecently =
-              p.lastSpokeAt !== undefined && now - +p.lastSpokeAt <= 10000;
+            const newTiles = ps.flatMap((p) => {
+              if (p instanceof CallMembership) {
+                const userId = p.sender ?? "";
+                const member = this.matrixRoom.getMember(userId);
+                if (!member) {
+                  logger.warn(
+                    `Ruh, roh! No matrix member found for call membership '${userId}': ignoring`,
+                  );
+                  return [];
+                }
+                const membershipOnlyVm =
+                  tilesById.get(userId)?.data ??
+                  new MembershipOnlyViewModel(member);
+                tilesById.delete(userId);
 
-            // We always start with a local participant with the empty string as
-            // their ID before we're connected, this is fine and we'll be in
-            // "all ghosts" mode.
-            if (userMediaId !== "" && member === undefined) {
-              logger.warn(
-                `Ruh, roh! No matrix member found for SFU participant '${userMediaId}': creating g-g-g-ghost!`,
-              );
-            }
+                const membershipOnlyTile: TileDescriptor<MediaViewModel> = {
+                  id: userId,
+                  focused: false,
+                  isPresenter: false,
+                  isSpeaker: false,
+                  hasVideo: false,
+                  local: false,
+                  largeBaseSize: false,
+                  data: membershipOnlyVm,
+                };
+                return [membershipOnlyTile];
+              }
 
-            const userMediaVm =
-              tilesById.get(userMediaId)?.data ??
-              new UserMediaViewModel(userMediaId, member, p, this.encrypted);
-            tilesById.delete(userMediaId);
+              const userMediaId = p.identity;
+              const member = findMatrixMember(this.matrixRoom, userMediaId);
+              allGhosts &&= member === undefined;
+              const spokeRecently =
+                p.lastSpokeAt !== undefined && now - +p.lastSpokeAt <= 10000;
 
-            const userMediaTile: TileDescriptor<MediaViewModel> = {
-              id: userMediaId,
-              focused: false,
-              isPresenter: p.isScreenShareEnabled,
-              isSpeaker: (p.isSpeaking || spokeRecently) && !p.isLocal,
-              hasVideo: p.isCameraEnabled,
-              local: p.isLocal,
-              largeBaseSize: false,
-              data: userMediaVm,
-            };
-
-            if (p.isScreenShareEnabled) {
-              const screenShareId = `${userMediaId}:screen-share`;
-              const screenShareVm =
-                tilesById.get(screenShareId)?.data ??
-                new ScreenShareViewModel(
-                  screenShareId,
-                  member,
-                  p,
-                  this.encrypted,
+              // We always start with a local participant with the empty string as
+              // their ID before we're connected, this is fine and we'll be in
+              // "all ghosts" mode.
+              if (userMediaId !== "" && member === undefined) {
+                logger.warn(
+                  `Ruh, roh! No matrix member found for SFU participant '${userMediaId}': creating g-g-g-ghost!`,
                 );
-              tilesById.delete(screenShareId);
+              }
 
-              const screenShareTile: TileDescriptor<MediaViewModel> = {
-                id: screenShareId,
-                focused: true,
-                isPresenter: false,
-                isSpeaker: false,
-                hasVideo: true,
+              const userMediaVm =
+                tilesById.get(userMediaId)?.data ??
+                new UserMediaViewModel(userMediaId, member, p, this.encrypted);
+              tilesById.delete(userMediaId);
+
+              const userMediaTile: TileDescriptor<MediaViewModel> = {
+                id: userMediaId,
+                focused: false,
+                isPresenter: p.isScreenShareEnabled,
+                isSpeaker: (p.isSpeaking || spokeRecently) && !p.isLocal,
+                hasVideo: p.isCameraEnabled,
                 local: p.isLocal,
-                largeBaseSize: true,
-                placeNear: userMediaId,
-                data: screenShareVm,
+                largeBaseSize: false,
+                data: userMediaVm,
               };
-              return [userMediaTile, screenShareTile];
-            } else {
-              return [userMediaTile];
-            }
-          });
 
-          // Any tiles left in the map are unused and should be destroyed
-          for (const t of tilesById.values()) t.data.destroy();
+              if (p.isScreenShareEnabled) {
+                const screenShareId = `${userMediaId}:screen-share`;
+                const screenShareVm =
+                  tilesById.get(screenShareId)?.data ??
+                  new ScreenShareViewModel(
+                    screenShareId,
+                    member,
+                    p,
+                    this.encrypted,
+                  );
+                tilesById.delete(screenShareId);
 
-          // If every item is a ghost, that probably means we're still connecting
-          // and shouldn't bother showing anything yet
-          return allGhosts ? [] : newTiles;
-        }, [] as TileDescriptor<MediaViewModel>[]),
+                const screenShareTile: TileDescriptor<MediaViewModel> = {
+                  id: screenShareId,
+                  focused: true,
+                  isPresenter: false,
+                  isSpeaker: false,
+                  hasVideo: true,
+                  local: p.isLocal,
+                  largeBaseSize: true,
+                  placeNear: userMediaId,
+                  data: screenShareVm,
+                };
+                return [userMediaTile, screenShareTile];
+              } else {
+                return [userMediaTile];
+              }
+            });
+
+            // Any tiles left in the map are unused and should be destroyed
+            for (const t of tilesById.values()) t.data.destroy();
+
+            // If every item is a ghost, that probably means we're still connecting
+            // and shouldn't bother showing anything yet
+            return allGhosts ? [] : newTiles;
+          },
+          [] as TileDescriptor<MediaViewModel>[],
+        ),
         finalizeValue((ts) => {
           for (const t of ts) t.data.destroy();
         }),
       ),
     );
 
+  private get matrixRoom(): MatrixRoom {
+    return this.rtcSession.room;
+  }
+
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room
-    private readonly matrixRoom: MatrixRoom,
+    private readonly rtcSession: MatrixRTCSession,
     private readonly livekitRoom: LivekitRoom,
     private readonly encrypted: boolean,
     private readonly connectionState: Observable<ECConnectionState>,
@@ -588,25 +675,25 @@ export class CallViewModel extends ViewModel {
 }
 
 export function useCallViewModel(
-  matrixRoom: MatrixRoom,
+  rtcSession: MatrixRTCSession,
   livekitRoom: LivekitRoom,
   encrypted: boolean,
   connectionState: ECConnectionState,
 ): CallViewModel {
-  const prevMatrixRoom = usePrevious(matrixRoom);
+  const prevRTCSession = usePrevious(rtcSession);
   const prevLivekitRoom = usePrevious(livekitRoom);
   const prevEncrypted = usePrevious(encrypted);
   const connectionStateObservable = useObservable(connectionState);
 
   const vm = useRef<CallViewModel>();
   if (
-    matrixRoom !== prevMatrixRoom ||
+    rtcSession !== prevRTCSession ||
     livekitRoom !== prevLivekitRoom ||
     encrypted !== prevEncrypted
   ) {
     vm.current?.destroy();
     vm.current = new CallViewModel(
-      matrixRoom,
+      rtcSession,
       livekitRoom,
       encrypted,
       connectionStateObservable,
