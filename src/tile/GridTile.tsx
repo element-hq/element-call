@@ -14,7 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ComponentProps, forwardRef, useCallback, useState } from "react";
+import {
+  ComponentProps,
+  ReactNode,
+  forwardRef,
+  useCallback,
+  useState,
+} from "react";
 import { animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
@@ -24,6 +30,7 @@ import MicOffIcon from "@vector-im/compound-design-tokens/icons/mic-off.svg?reac
 import OverflowHorizontalIcon from "@vector-im/compound-design-tokens/icons/overflow-horizontal.svg?react";
 import VolumeOnIcon from "@vector-im/compound-design-tokens/icons/volume-on.svg?react";
 import VolumeOffIcon from "@vector-im/compound-design-tokens/icons/volume-off.svg?react";
+import VisibilityOnIcon from "@vector-im/compound-design-tokens/icons/visibility-on.svg?react";
 import UserProfileIcon from "@vector-im/compound-design-tokens/icons/user-profile.svg?react";
 import ExpandIcon from "@vector-im/compound-design-tokens/icons/expand.svg?react";
 import CollapseIcon from "@vector-im/compound-design-tokens/icons/collapse.svg?react";
@@ -33,7 +40,7 @@ import {
   ToggleMenuItem,
   Menu,
 } from "@vector-im/compound-web";
-import { useStateObservable } from "@react-rxjs/core";
+import { useObservableEagerState } from "observable-hooks";
 
 import styles from "./GridTile.module.css";
 import {
@@ -41,71 +48,93 @@ import {
   MediaViewModel,
   UserMediaViewModel,
   useNameData,
+  LocalUserMediaViewModel,
+  RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
-import { subscribe } from "../state/subscribe";
 import { Slider } from "../Slider";
 import { MediaView } from "./MediaView";
+import { useLatest } from "../useLatest";
 
-interface UserMediaTileProps {
-  vm: UserMediaViewModel;
+interface TileProps {
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
   maximised: boolean;
-  onOpenProfile: () => void;
-  showSpeakingIndicator: boolean;
+  displayName: string;
+  nameTag: string;
 }
 
-const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
+interface MediaTileProps
+  extends TileProps,
+    Omit<ComponentProps<typeof animated.div>, "className"> {
+  vm: MediaViewModel;
+  videoEnabled: boolean;
+  videoFit: "contain" | "cover";
+  nameTagLeadingIcon?: ReactNode;
+  primaryButton: ReactNode;
+  secondaryButton?: ReactNode;
+}
+
+const MediaTile = forwardRef<HTMLDivElement, MediaTileProps>(
+  ({ vm, className, maximised, ...props }, ref) => {
+    const video = useObservableEagerState(vm.video);
+    const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning);
+
+    return (
+      <MediaView
+        ref={ref}
+        className={classNames(className, styles.tile)}
+        data-maximised={maximised}
+        video={video}
+        mirror={false}
+        member={vm.member}
+        unencryptedWarning={unencryptedWarning}
+        {...props}
+      />
+    );
+  },
+);
+
+MediaTile.displayName = "MediaTile";
+
+interface UserMediaTileProps extends TileProps {
+  vm: UserMediaViewModel;
+  showSpeakingIndicators: boolean;
+  menuStart?: ReactNode;
+  menuEnd?: ReactNode;
+}
+
+const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
   (
     {
       vm,
+      showSpeakingIndicators,
+      menuStart,
+      menuEnd,
       className,
-      style,
-      targetWidth,
-      targetHeight,
-      maximised,
-      onOpenProfile,
-      showSpeakingIndicator,
+      nameTag,
+      ...props
     },
     ref,
   ) => {
     const { t } = useTranslation();
-    const { displayName, nameTag } = useNameData(vm);
-    const video = useStateObservable(vm.video);
-    const audioEnabled = useStateObservable(vm.audioEnabled);
-    const videoEnabled = useStateObservable(vm.videoEnabled);
-    const unencryptedWarning = useStateObservable(vm.unencryptedWarning);
-    const mirror = useStateObservable(vm.mirror);
-    const speaking = useStateObservable(vm.speaking);
-    const locallyMuted = useStateObservable(vm.locallyMuted);
-    const cropVideo = useStateObservable(vm.cropVideo);
-    const localVolume = useStateObservable(vm.localVolume);
-    const onChangeMute = useCallback(() => vm.toggleLocallyMuted(), [vm]);
+    const audioEnabled = useObservableEagerState(vm.audioEnabled);
+    const videoEnabled = useObservableEagerState(vm.videoEnabled);
+    const speaking = useObservableEagerState(vm.speaking);
+    const cropVideo = useObservableEagerState(vm.cropVideo);
     const onChangeFitContain = useCallback(() => vm.toggleFitContain(), [vm]);
-    const onSelectMute = useCallback((e: Event) => e.preventDefault(), []);
     const onSelectFitContain = useCallback(
       (e: Event) => e.preventDefault(),
       [],
     );
 
-    const onChangeLocalVolume = useCallback(
-      (v: number) => vm.setLocalVolume(v),
-      [vm],
-    );
-
     const MicIcon = audioEnabled ? MicOnSolidIcon : MicOffSolidIcon;
-    const VolumeIcon = locallyMuted ? VolumeOffIcon : VolumeOnIcon;
 
     const [menuOpen, setMenuOpen] = useState(false);
-    const menu = vm.local ? (
+    const menu = (
       <>
-        <MenuItem
-          Icon={UserProfileIcon}
-          label={t("common.profile")}
-          onSelect={onOpenProfile}
-        />
+        {menuStart}
         <ToggleMenuItem
           Icon={ExpandIcon}
           label={t("video_tile.change_fit_contain")}
@@ -113,55 +142,19 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
           onChange={onChangeFitContain}
           onSelect={onSelectFitContain}
         />
-      </>
-    ) : (
-      <>
-        <ToggleMenuItem
-          Icon={MicOffIcon}
-          label={t("video_tile.mute_for_me")}
-          checked={locallyMuted}
-          onChange={onChangeMute}
-          onSelect={onSelectMute}
-        />
-        <ToggleMenuItem
-          Icon={ExpandIcon}
-          label={t("video_tile.change_fit_contain")}
-          checked={cropVideo}
-          onChange={onChangeFitContain}
-          onSelect={onSelectFitContain}
-        />
-        {/* TODO: Figure out how to make this slider keyboard accessible */}
-        <MenuItem as="div" Icon={VolumeIcon} label={null} onSelect={null}>
-          <Slider
-            className={styles.volumeSlider}
-            label={t("video_tile.volume")}
-            value={localVolume}
-            onValueChange={onChangeLocalVolume}
-            min={0.1}
-            max={1}
-            step={0.01}
-            disabled={locallyMuted}
-          />
-        </MenuItem>
+        {menuEnd}
       </>
     );
 
     const tile = (
-      <MediaView
+      <MediaTile
         ref={ref}
-        className={classNames(className, styles.tile, {
-          [styles.speaking]: showSpeakingIndicator && speaking,
-        })}
-        data-maximised={maximised}
-        style={style}
-        targetWidth={targetWidth}
-        targetHeight={targetHeight}
-        video={video}
-        videoFit={cropVideo ? "cover" : "contain"}
-        mirror={mirror}
-        member={vm.member}
+        vm={vm}
         videoEnabled={videoEnabled}
-        unencryptedWarning={unencryptedWarning}
+        videoFit={cropVideo ? "cover" : "contain"}
+        className={classNames(className, {
+          [styles.speaking]: showSpeakingIndicators && speaking,
+        })}
         nameTagLeadingIcon={
           <MicIcon
             width={20}
@@ -172,7 +165,6 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
           />
         }
         nameTag={nameTag}
-        displayName={displayName}
         primaryButton={
           <Menu
             open={menuOpen}
@@ -189,6 +181,7 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
             {menu}
           </Menu>
         }
+        {...props}
       />
     );
 
@@ -202,35 +195,121 @@ const UserMediaTile = subscribe<UserMediaTileProps, HTMLDivElement>(
 
 UserMediaTile.displayName = "UserMediaTile";
 
-interface ScreenShareTileProps {
+interface LocalUserMediaTileProps extends TileProps {
+  vm: LocalUserMediaViewModel;
+  onOpenProfile: () => void;
+  showSpeakingIndicators: boolean;
+}
+
+const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
+  ({ vm, onOpenProfile, className, ...props }, ref) => {
+    const { t } = useTranslation();
+    const mirror = useObservableEagerState(vm.mirror);
+    const alwaysShow = useObservableEagerState(vm.alwaysShow);
+    const latestAlwaysShow = useLatest(alwaysShow);
+    const onSelectAlwaysShow = useCallback(
+      (e: Event) => e.preventDefault(),
+      [],
+    );
+    const onChangeAlwaysShow = useCallback(
+      () => vm.setAlwaysShow(!latestAlwaysShow.current),
+      [vm, latestAlwaysShow],
+    );
+
+    return (
+      <UserMediaTile
+        ref={ref}
+        vm={vm}
+        menuStart={
+          <ToggleMenuItem
+            Icon={VisibilityOnIcon}
+            label={t("video_tile.always_show")}
+            checked={alwaysShow}
+            onChange={onChangeAlwaysShow}
+            onSelect={onSelectAlwaysShow}
+          />
+        }
+        menuEnd={
+          <MenuItem
+            Icon={UserProfileIcon}
+            label={t("common.profile")}
+            onSelect={onOpenProfile}
+          />
+        }
+        className={classNames(className, { [styles.mirror]: mirror })}
+        {...props}
+      />
+    );
+  },
+);
+
+LocalUserMediaTile.displayName = "LocalUserMediaTile";
+
+interface RemoteUserMediaTileProps extends TileProps {
+  vm: RemoteUserMediaViewModel;
+  showSpeakingIndicators: boolean;
+}
+
+const RemoteUserMediaTile = forwardRef<
+  HTMLDivElement,
+  RemoteUserMediaTileProps
+>(({ vm, ...props }, ref) => {
+  const { t } = useTranslation();
+  const locallyMuted = useObservableEagerState(vm.locallyMuted);
+  const localVolume = useObservableEagerState(vm.localVolume);
+  const onChangeMute = useCallback(() => vm.toggleLocallyMuted(), [vm]);
+  const onSelectMute = useCallback((e: Event) => e.preventDefault(), []);
+  const onChangeLocalVolume = useCallback(
+    (v: number) => vm.setLocalVolume(v),
+    [vm],
+  );
+
+  const VolumeIcon = locallyMuted ? VolumeOffIcon : VolumeOnIcon;
+
+  return (
+    <UserMediaTile
+      ref={ref}
+      vm={vm}
+      menuStart={
+        <>
+          <ToggleMenuItem
+            Icon={MicOffIcon}
+            label={t("video_tile.mute_for_me")}
+            checked={locallyMuted}
+            onChange={onChangeMute}
+            onSelect={onSelectMute}
+          />
+          {/* TODO: Figure out how to make this slider keyboard accessible */}
+          <MenuItem as="div" Icon={VolumeIcon} label={null} onSelect={null}>
+            <Slider
+              className={styles.volumeSlider}
+              label={t("video_tile.volume")}
+              value={localVolume}
+              onValueChange={onChangeLocalVolume}
+              min={0.1}
+              max={1}
+              step={0.01}
+              disabled={locallyMuted}
+            />
+          </MenuItem>
+        </>
+      }
+      {...props}
+    />
+  );
+});
+
+RemoteUserMediaTile.displayName = "RemoteUserMediaTile";
+
+interface ScreenShareTileProps extends TileProps {
   vm: ScreenShareViewModel;
-  className?: string;
-  style?: ComponentProps<typeof animated.div>["style"];
-  targetWidth: number;
-  targetHeight: number;
-  maximised: boolean;
   fullscreen: boolean;
   onToggleFullscreen: (itemId: string) => void;
 }
 
-const ScreenShareTile = subscribe<ScreenShareTileProps, HTMLDivElement>(
-  (
-    {
-      vm,
-      className,
-      style,
-      targetWidth,
-      targetHeight,
-      maximised,
-      fullscreen,
-      onToggleFullscreen,
-    },
-    ref,
-  ) => {
+const ScreenShareTile = forwardRef<HTMLDivElement, ScreenShareTileProps>(
+  ({ vm, fullscreen, onToggleFullscreen, ...props }, ref) => {
     const { t } = useTranslation();
-    const { displayName, nameTag } = useNameData(vm);
-    const video = useStateObservable(vm.video);
-    const unencryptedWarning = useStateObservable(vm.unencryptedWarning);
     const onClickFullScreen = useCallback(
       () => onToggleFullscreen(vm.id),
       [onToggleFullscreen, vm],
@@ -239,23 +318,10 @@ const ScreenShareTile = subscribe<ScreenShareTileProps, HTMLDivElement>(
     const FullScreenIcon = fullscreen ? CollapseIcon : ExpandIcon;
 
     return (
-      <MediaView
+      <MediaTile
         ref={ref}
-        className={classNames(className, styles.tile, {
-          [styles.maximised]: maximised,
-        })}
-        data-maximised={maximised}
-        style={style}
-        targetWidth={targetWidth}
-        targetHeight={targetHeight}
-        video={video}
+        vm={vm}
         videoFit="contain"
-        mirror={false}
-        member={vm.member}
-        videoEnabled
-        unencryptedWarning={unencryptedWarning}
-        nameTag={nameTag}
-        displayName={displayName}
         primaryButton={
           !vm.local && (
             <button
@@ -270,6 +336,8 @@ const ScreenShareTile = subscribe<ScreenShareTileProps, HTMLDivElement>(
             </button>
           )
         }
+        videoEnabled
+        {...props}
       />
     );
   },
@@ -277,7 +345,7 @@ const ScreenShareTile = subscribe<ScreenShareTileProps, HTMLDivElement>(
 
 ScreenShareTile.displayName = "ScreenShareTile";
 
-interface Props {
+interface GridTileProps {
   vm: MediaViewModel;
   maximised: boolean;
   fullscreen: boolean;
@@ -287,51 +355,34 @@ interface Props {
   targetHeight: number;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
-  showSpeakingIndicator: boolean;
+  showSpeakingIndicators: boolean;
 }
 
-export const GridTile = forwardRef<HTMLDivElement, Props>(
-  (
-    {
-      vm,
-      maximised,
-      fullscreen,
-      onToggleFullscreen,
-      onOpenProfile,
-      className,
-      style,
-      targetWidth,
-      targetHeight,
-      showSpeakingIndicator,
-    },
-    ref,
-  ) => {
-    if (vm instanceof UserMediaViewModel) {
+export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
+  ({ vm, fullscreen, onToggleFullscreen, onOpenProfile, ...props }, ref) => {
+    const nameData = useNameData(vm);
+
+    if (vm instanceof LocalUserMediaViewModel) {
       return (
-        <UserMediaTile
+        <LocalUserMediaTile
           ref={ref}
-          className={className}
-          style={style}
           vm={vm}
-          targetWidth={targetWidth}
-          targetHeight={targetHeight}
-          maximised={maximised}
           onOpenProfile={onOpenProfile}
-          showSpeakingIndicator={showSpeakingIndicator}
+          {...props}
+          {...nameData}
         />
       );
+    } else if (vm instanceof RemoteUserMediaViewModel) {
+      return <RemoteUserMediaTile ref={ref} vm={vm} {...props} {...nameData} />;
     } else {
       return (
         <ScreenShareTile
           ref={ref}
-          className={className}
-          style={style}
           vm={vm}
-          targetWidth={targetWidth}
-          targetHeight={targetHeight}
-          maximised={maximised}
           fullscreen={fullscreen}
           onToggleFullscreen={onToggleFullscreen}
+          {...props}
+          {...nameData}
         />
       );
     }

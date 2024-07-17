@@ -384,7 +384,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
                 targetHeight={targetHeight}
                 className={className}
                 style={style}
-                showSpeakingIndicator={showSpeakingIndicators}
+                showSpeakingIndicators={showSpeakingIndicators}
               />
             );
           },
@@ -424,7 +424,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
             targetHeight={gridBounds.height}
             targetWidth={gridBounds.width}
             key={maximisedParticipant.id}
-            showSpeakingIndicator={false}
+            showSpeakingIndicators={false}
             onOpenProfile={openProfile}
           />
         );

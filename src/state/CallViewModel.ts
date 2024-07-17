@@ -61,9 +61,11 @@ import {
 } from "../livekit/useECConnectionState";
 import { usePrevious } from "../usePrevious";
 import {
+  LocalUserMediaViewModel,
   MediaViewModel,
-  UserMediaViewModel,
+  RemoteUserMediaViewModel,
   ScreenShareViewModel,
+  UserMediaViewModel,
 } from "./MediaViewModel";
 import { finalizeValue } from "../observable-utils";
 import { ObservableScope } from "./ObservableScope";
@@ -130,14 +132,38 @@ export type WindowMode = "normal" | "full screen" | "pip";
  * Sorting bins defining the order in which media tiles appear in the layout.
  */
 enum SortingBin {
-  SelfStart,
+  /**
+   * Yourself, when the "always show self" option is on.
+   */
+  SelfAlwaysShown,
+  /**
+   * Participants that are sharing their screen.
+   */
   Presenters,
+  /**
+   * Participants that have been speaking recently.
+   */
   Speakers,
+  /**
+   * Participants with both video and audio.
+   */
   VideoAndAudio,
+  /**
+   * Participants with video but no audio.
+   */
   Video,
+  /**
+   * Participants with audio but no video.
+   */
   Audio,
+  /**
+   * Participants not sharing any media.
+   */
   NoMedia,
-  SelfEnd,
+  /**
+   * Yourself, when the "always show self" option is off.
+   */
+  SelfNotAlwaysShown,
 }
 
 class UserMedia {
@@ -152,7 +178,10 @@ class UserMedia {
     participant: LocalParticipant | RemoteParticipant,
     callEncrypted: boolean,
   ) {
-    this.vm = new UserMediaViewModel(id, member, participant, callEncrypted);
+    this.vm =
+      participant instanceof LocalParticipant
+        ? new LocalUserMediaViewModel(id, member, participant, callEncrypted)
+        : new RemoteUserMediaViewModel(id, member, participant, callEncrypted);
 
     this.speaker = this.vm.speaking.pipeState(
       // Require 1 s of continuous speaking to become a speaker, and 60 s of
@@ -372,7 +401,7 @@ export class CallViewModel extends ViewModel {
         },
         new Map<string, MediaItem>(),
       ),
-      map((ms) => [...ms.values()]),
+      map((mediaItems) => [...mediaItems.values()]),
       finalizeValue((ts) => {
         for (const t of ts) t.destroy();
       }),
@@ -380,35 +409,41 @@ export class CallViewModel extends ViewModel {
   );
 
   private readonly userMedia: Observable<UserMedia[]> = this.mediaItems.pipe(
-    map((ms) => ms.filter((m): m is UserMedia => m instanceof UserMedia)),
+    map((mediaItems) =>
+      mediaItems.filter((m): m is UserMedia => m instanceof UserMedia),
+    ),
   );
 
   private readonly screenShares: Observable<ScreenShare[]> =
     this.mediaItems.pipe(
-      map((ms) => ms.filter((m): m is ScreenShare => m instanceof ScreenShare)),
+      map((mediaItems) =>
+        mediaItems.filter((m): m is ScreenShare => m instanceof ScreenShare),
+      ),
     );
 
   private readonly spotlightSpeaker: Observable<UserMedia | null> =
     this.userMedia.pipe(
-      switchMap((ms) =>
-        ms.length === 0
+      switchMap((mediaItems) =>
+        mediaItems.length === 0
           ? of([])
           : combineLatest(
-              ms.map((m) => m.vm.speaking.pipe(map((s) => [m, s] as const))),
+              mediaItems.map((m) =>
+                m.vm.speaking.pipe(map((s) => [m, s] as const)),
+              ),
             ),
       ),
       scan<(readonly [UserMedia, boolean])[], UserMedia | null, null>(
-        (prev, ms) =>
+        (prev, mediaItems) =>
           // Decide who to spotlight:
           // If the previous speaker is still speaking, stick with them rather
           // than switching eagerly to someone else
-          ms.find(([m, s]) => m === prev && s)?.[0] ??
+          mediaItems.find(([m, s]) => m === prev && s)?.[0] ??
           // Otherwise, select anyone who is speaking
-          ms.find(([, s]) => s)?.[0] ??
+          mediaItems.find(([, s]) => s)?.[0] ??
           // Otherwise, stick with the person who was last speaking
           prev ??
           // Otherwise, spotlight the local user
-          ms.find(([m]) => m.vm.local)?.[0] ??
+          mediaItems.find(([m]) => m.vm.local)?.[0] ??
           null,
         null,
       ),
@@ -417,13 +452,24 @@ export class CallViewModel extends ViewModel {
     );
 
   private readonly grid: Observable<UserMediaViewModel[]> = this.userMedia.pipe(
-    switchMap((ms) => {
-      const bins = ms.map((m) =>
+    switchMap((mediaItems) => {
+      const bins = mediaItems.map((m) =>
         combineLatest(
-          [m.speaker, m.presenter, m.vm.audioEnabled, m.vm.videoEnabled],
-          (speaker, presenter, audio, video) => {
+          [
+            m.speaker,
+            m.presenter,
+            m.vm.audioEnabled,
+            m.vm.videoEnabled,
+            m.vm instanceof LocalUserMediaViewModel
+              ? m.vm.alwaysShow
+              : of(false),
+          ],
+          (speaker, presenter, audio, video, alwaysShow) => {
             let bin: SortingBin;
-            if (m.vm.local) bin = SortingBin.SelfStart;
+            if (m.vm.local)
+              bin = alwaysShow
+                ? SortingBin.SelfAlwaysShown
+                : SortingBin.SelfNotAlwaysShown;
             else if (presenter) bin = SortingBin.Presenters;
             else if (speaker) bin = SortingBin.Speakers;
             else if (video)
@@ -535,7 +581,19 @@ export class CallViewModel extends ViewModel {
 
             const userMediaVm =
               tilesById.get(userMediaId)?.data ??
-              new UserMediaViewModel(userMediaId, member, p, this.encrypted);
+              (p instanceof LocalParticipant
+                ? new LocalUserMediaViewModel(
+                    userMediaId,
+                    member,
+                    p,
+                    this.encrypted,
+                  )
+                : new RemoteUserMediaViewModel(
+                    userMediaId,
+                    member,
+                    p,
+                    this.encrypted,
+                  ));
             tilesById.delete(userMediaId);
 
             const userMediaTile: TileDescriptor<MediaViewModel> = {
