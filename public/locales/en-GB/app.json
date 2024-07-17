@@ -156,6 +156,7 @@
   "unmute_microphone_button_label": "Unmute microphone",
   "version": "Version: {{version}}",
   "video_tile": {
+    "always_show": "Always show",
     "change_fit_contain": "Fit to frame",
     "exit_full_screen": "Exit full screen",
     "full_screen": "Full screen",

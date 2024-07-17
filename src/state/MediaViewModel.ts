@@ -49,6 +49,7 @@ import { useEffect } from "react";
 
 import { ViewModel } from "./ViewModel";
 import { useReactiveState } from "../useReactiveState";
+import { alwaysShowSelf } from "../settings/settings";
 
 export interface NameData {
   /**
@@ -153,29 +154,14 @@ abstract class BaseMediaViewModel extends ViewModel {
  * Some participant's media.
  */
 export type MediaViewModel = UserMediaViewModel | ScreenShareViewModel;
+export type UserMediaViewModel =
+  | LocalUserMediaViewModel
+  | RemoteUserMediaViewModel;
 
 /**
  * Some participant's user media.
  */
-export class UserMediaViewModel extends BaseMediaViewModel {
-  /**
-   * Whether the video should be mirrored.
-   */
-  public readonly mirror = state(
-    this.video.pipe(
-      switchMap((v) => {
-        const track = v.publication?.track;
-        if (!(track instanceof LocalTrack)) return of(false);
-        // Watch for track restarts, because they indicate a camera switch
-        return fromEvent(track, TrackEvent.Restarted).pipe(
-          startWith(null),
-          // Mirror only front-facing cameras (those that face the user)
-          map(() => facingModeFromLocalTrack(track).facingMode === "user"),
-        );
-      }),
-    ),
-  );
-
+abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   /**
    * Whether the participant is speaking.
    */
@@ -185,19 +171,6 @@ export class UserMediaViewModel extends BaseMediaViewModel {
       ParticipantEvent.IsSpeakingChanged,
     ).pipe(map((p) => p.isSpeaking)),
   );
-
-  private readonly _locallyMuted = new BehaviorSubject(false);
-  /**
-   * Whether we've disabled this participant's audio.
-   */
-  public readonly locallyMuted = state(this._locallyMuted);
-
-  private readonly _localVolume = new BehaviorSubject(1);
-  /**
-   * The volume to which we've set this participant's audio, as a scalar
-   * multiplier.
-   */
-  public readonly localVolume = state(this._localVolume);
 
   /**
    * Whether this participant is sending audio (i.e. is unmuted on their side).
@@ -236,24 +209,89 @@ export class UserMediaViewModel extends BaseMediaViewModel {
     this.videoEnabled = state(
       media.pipe(map((m) => m.cameraTrack?.isMuted === false)),
     );
-
-    // Sync the local mute state and volume with LiveKit
-    if (!this.local)
-      combineLatest([this._locallyMuted, this._localVolume], (muted, volume) =>
-        muted ? 0 : volume,
-      )
-        .pipe(this.scope.bind())
-        .subscribe((volume) => {
-          (this.participant as RemoteParticipant).setVolume(volume);
-        });
-  }
-
-  public toggleLocallyMuted(): void {
-    this._locallyMuted.next(!this._locallyMuted.value);
   }
 
   public toggleFitContain(): void {
     this._cropVideo.next(!this._cropVideo.value);
+  }
+}
+
+/**
+ * The local participant's user media.
+ */
+export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
+  /**
+   * Whether the video should be mirrored.
+   */
+  public readonly mirror = state(
+    this.video.pipe(
+      switchMap((v) => {
+        const track = v.publication?.track;
+        if (!(track instanceof LocalTrack)) return of(false);
+        // Watch for track restarts, because they indicate a camera switch
+        return fromEvent(track, TrackEvent.Restarted).pipe(
+          startWith(null),
+          // Mirror only front-facing cameras (those that face the user)
+          map(() => facingModeFromLocalTrack(track).facingMode === "user"),
+        );
+      }),
+    ),
+  );
+
+  /**
+   * Whether to show this tile in a highly visible location near the start of
+   * the grid.
+   */
+  public readonly alwaysShow = alwaysShowSelf.value;
+  public readonly setAlwaysShow = alwaysShowSelf.setValue;
+
+  public constructor(
+    id: string,
+    member: RoomMember | undefined,
+    participant: LocalParticipant,
+    callEncrypted: boolean,
+  ) {
+    super(id, member, participant, callEncrypted);
+  }
+}
+
+/**
+ * A remote participant's user media.
+ */
+export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
+  private readonly _locallyMuted = new BehaviorSubject(false);
+  /**
+   * Whether we've disabled this participant's audio.
+   */
+  public readonly locallyMuted = state(this._locallyMuted);
+
+  private readonly _localVolume = new BehaviorSubject(1);
+  /**
+   * The volume to which we've set this participant's audio, as a scalar
+   * multiplier.
+   */
+  public readonly localVolume = state(this._localVolume);
+
+  public constructor(
+    id: string,
+    member: RoomMember | undefined,
+    participant: RemoteParticipant,
+    callEncrypted: boolean,
+  ) {
+    super(id, member, participant, callEncrypted);
+
+    // Sync the local mute state and volume with LiveKit
+    combineLatest([this._locallyMuted, this._localVolume], (muted, volume) =>
+      muted ? 0 : volume,
+    )
+      .pipe(this.scope.bind())
+      .subscribe((volume) => {
+        (this.participant as RemoteParticipant).setVolume(volume);
+      });
+  }
+
+  public toggleLocallyMuted(): void {
+    this._locallyMuted.next(!this._locallyMuted.value);
   }
 
   public setLocalVolume(value: number): void {
