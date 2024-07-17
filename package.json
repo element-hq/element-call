@@ -64,7 +64,7 @@
     "i18next-http-backend": "^2.0.0",
     "livekit-client": "^2.0.2",
     "lodash": "^4.17.21",
-    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#238eea0ef5c82d0a11b8d5cc5c04104d6c94c4c1",
+    "matrix-js-sdk": "github:matrix-org/matrix-js-sdk#c795c7eb656f2f6136ac4c6b17015c0f000df9a6",
     "matrix-widget-api": "^1.3.1",
     "normalize.css": "^8.0.1",
     "pako": "^2.0.4",

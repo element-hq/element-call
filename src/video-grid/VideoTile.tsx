@@ -112,8 +112,27 @@ const Tile = forwardRef<HTMLDivElement, TileProps>(
     const { t } = useTranslation();
     const mergedRef = useMergedRefs(tileRef, ref);
 
+    const [lastActiveTime, setLastActiveTime] = useState(
+      member?.getLastTypingTime() ?? 0,
+    );
+    const [online, setOnline] = useState(member?.typing ?? false);
+
+    useEffect(() => {
+      const onTyping = (): void => {
+        setOnline(member?.typing ?? false);
+        setLastActiveTime(member?.getLastTypingTime() ?? 0);
+      };
+
+      member?.on(RoomMemberEvent.Typing, onTyping);
+
+      return (): void => {
+        member?.off(RoomMemberEvent.Typing, onTyping);
+      };
+    }, [member]);
+
     const joinedCallTime = member?.events.member?.getTs() ?? 0;
 
+    const lastActiveAgo = useRelativeTime(lastActiveTime ?? 0);
     const joinedCallAgo = useRelativeTime(joinedCallTime ?? 0);
 
     return (
@@ -145,11 +164,24 @@ const Tile = forwardRef<HTMLDivElement, TileProps>(
           )}
           {!video && member && joinedCallTime > 0 && (
             <div style={{ textAlign: "center" }}>
-              <span title={member.userId}>{nameTag}</span> joined the call{" "}
+              <span>
+                {nameTag} ({member.userId})
+              </span>{" "}
+              joined the call{" "}
               <span title={new Date(joinedCallTime).toLocaleString()}>
                 {joinedCallAgo}
               </span>{" "}
-              but is currently unreachable. Are they having connection problems?
+              but is currently unreachable.
+              {lastActiveTime > 0 && (
+                <span>
+                  They were last reachable{" "}
+                  <span title={new Date(lastActiveTime).toLocaleString()}>
+                    {lastActiveAgo}
+                  </span>
+                  .
+                </span>
+              )}{" "}
+              Are they having connection problems?
             </div>
           )}
         </div>
@@ -157,7 +189,11 @@ const Tile = forwardRef<HTMLDivElement, TileProps>(
           <div className={styles.nameTag}>
             {nameTagLeadingIcon}
             <Text as="span" size="sm" weight="medium" className={styles.name}>
-              <span title={member?.userId}>{nameTag}</span>{" "}
+              <span
+                title={`${member?.userId}${lastActiveTime > 0 ? ` last reachable ${online ? "now" : lastActiveAgo}` : ""}`}
+              >
+                {nameTag}
+              </span>{" "}
             </Text>
             {unencryptedWarning && (
               <Tooltip
