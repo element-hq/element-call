@@ -15,14 +15,10 @@ limitations under the License.
 */
 
 .tile {
-  position: absolute;
-  top: 0;
   --border-width: var(--cpd-space-3x);
 }
 
 .tile.maximised {
-  position: relative;
-  flex-grow: 1;
   --border-width: 0px;
 }
 
@@ -54,14 +50,14 @@ limitations under the License.
   border-radius: 0;
 }
 
-.item {
+.contents > .item {
   height: 100%;
   flex-basis: 100%;
   flex-shrink: 0;
   --media-view-fg-inset: 10px;
 }
 
-.item.snap {
+.contents > .item.snap {
   scroll-snap-align: start;
 }
 
@@ -150,4 +146,39 @@ limitations under the License.
 
 .tile:has(:focus-visible) > button {
   opacity: 1;
+}
+
+.indicators {
+  display: flex;
+  gap: var(--cpd-space-2x);
+  position: absolute;
+  inset-inline-start: 0;
+  inset-block-end: calc(-1 * var(--cpd-space-6x));
+  width: 100%;
+  justify-content: start;
+  transition: opacity ease 0.15s;
+  opacity: 0;
+}
+
+.indicators.show {
+  opacity: 1;
+}
+
+.maximised .indicators {
+  inset-block-end: calc(-1 * var(--cpd-space-4x) - 2px);
+  justify-content: center;
+}
+
+.indicators > .item {
+  inline-size: 32px;
+  block-size: 2px;
+  transition: background-color ease 0.15s;
+}
+
+.indicators > .item[data-visible="false"] {
+  background: var(--cpd-color-alpha-gray-600);
+}
+
+.indicators > .item[data-visible="true"] {
+  background: var(--cpd-color-gray-1400);
 }

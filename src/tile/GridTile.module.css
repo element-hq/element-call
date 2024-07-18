@@ -15,8 +15,6 @@ limitations under the License.
 */
 
 .tile {
-  position: absolute;
-  top: 0;
   --media-view-border-radius: var(--cpd-space-4x);
   transition: outline-color ease 0.15s;
   outline: var(--cpd-border-width-2) solid rgb(0 0 0 / 0);
@@ -62,8 +60,6 @@ borders don't support gradients */
 }
 
 .tile[data-maximised="true"] {
-  position: relative;
-  flex-grow: 1;
   --media-view-border-radius: 0;
   --media-view-fg-inset: 10px;
 }
