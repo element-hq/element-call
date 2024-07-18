@@ -58,6 +58,7 @@
     "buffer": "^6.0.3",
     "classnames": "^2.3.1",
     "events": "^3.3.0",
+    "f-twelve": "^2.3.4",
     "i18next": "^23.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-http-backend": "^2.0.0",
