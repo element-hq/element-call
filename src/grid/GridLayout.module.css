@@ -16,7 +16,6 @@ limitations under the License.
 
 .fixed,
 .scrolling {
-  margin-inline: var(--inline-content-inset);
   block-size: 100%;
 }
 
@@ -41,7 +40,7 @@ limitations under the License.
   position: absolute;
   inline-size: 404px;
   block-size: 233px;
-  inset: -12px;
+  inset: 0;
 }
 
 .fixed > .slot[data-block-alignment="start"] {

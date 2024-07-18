@@ -22,7 +22,7 @@ limitations under the License.
 
 /* Use a pseudo-element to create the expressive speaking border, since CSS
 borders don't support gradients */
-.tile[data-maximised="false"]::before {
+.tile::before {
   content: "";
   position: absolute;
   z-index: -1; /* Put it below the outline */
@@ -43,25 +43,20 @@ borders don't support gradients */
   background-blend-mode: overlay, normal;
 }
 
-.tile[data-maximised="false"].speaking {
+.tile.speaking {
   /* !important because speaking border should take priority over hover */
   outline: var(--cpd-border-width-1) solid var(--cpd-color-bg-canvas-default) !important;
 }
 
-.tile[data-maximised="false"].speaking::before {
+.tile.speaking::before {
   opacity: 1;
 }
 
 @media (hover: hover) {
-  .tile[data-maximised="false"]:hover {
+  .tile:hover {
     outline: var(--cpd-border-width-2) solid
       var(--cpd-color-border-interactive-hovered);
   }
-}
-
-.tile[data-maximised="true"] {
-  --media-view-border-radius: 0;
-  --media-view-fg-inset: 10px;
 }
 
 .muteIcon[data-muted="true"] {
