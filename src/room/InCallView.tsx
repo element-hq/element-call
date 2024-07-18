@@ -344,9 +344,9 @@ export const InCallView: FC<InCallViewProps> = ({
     };
     return {
       grid: makeGridLayout(inputs),
-      "spotlight landscape": makeSpotlightLandscapeLayout(inputs),
-      "spotlight portrait": makeSpotlightPortraitLayout(inputs),
-      "spotlight expanded": makeSpotlightExpandedLayout(inputs),
+      "spotlight-landscape": makeSpotlightLandscapeLayout(inputs),
+      "spotlight-portrait": makeSpotlightPortraitLayout(inputs),
+      "spotlight-expanded": makeSpotlightExpandedLayout(inputs),
       "one-on-one": makeOneOnOneLayout(inputs),
     };
   }, [gridBoundsObservable, spotlightAlignment, pipAlignment]);
@@ -392,7 +392,7 @@ export const InCallView: FC<InCallViewProps> = ({
     );
     // The grid tiles go *under* the spotlight in the portrait layout, but
     // *over* the spotlight in the expanded layout
-    return layout.type === "spotlight expanded" ? (
+    return layout.type === "spotlight-expanded" ? (
       <>
         {fixedGrid}
         {scrollingGrid}
