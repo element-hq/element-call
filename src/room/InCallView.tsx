@@ -18,10 +18,9 @@ import {
   RoomAudioRenderer,
   RoomContext,
   useLocalParticipant,
-  useTracks,
 } from "@livekit/components-react";
 import { usePreventScroll } from "@react-aria/overlays";
-import { ConnectionState, Room, Track } from "livekit-client";
+import { ConnectionState, Room } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import {
   FC,
@@ -38,7 +37,6 @@ import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
 import { BehaviorSubject, map } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
-import { useTranslation } from "react-i18next";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -51,10 +49,8 @@ import {
   SettingsButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import { LegacyGrid, useLegacyGridLayout } from "../grid/LegacyGrid";
 import { useUrlParams } from "../UrlParams";
 import { useCallViewKeyboardShortcuts } from "../useCallViewKeyboardShortcuts";
-import { usePrefersReducedMotion } from "../usePrefersReducedMotion";
 import { ElementWidgetActions, widget } from "../widget";
 import styles from "./InCallView.module.css";
 import { GridTile } from "../tile/GridTile";
@@ -72,14 +68,8 @@ import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
 import { ECConnectionState } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
-import {
-  GridMode,
-  Layout,
-  TileDescriptor,
-  useCallViewModel,
-} from "../state/CallViewModel";
+import { GridMode, Layout, useCallViewModel } from "../state/CallViewModel";
 import { Grid, TileProps } from "../grid/Grid";
-import { MediaViewModel } from "../state/MediaViewModel";
 import { useObservable } from "../state/useObservable";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
@@ -87,20 +77,15 @@ import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
 import { makeSpotlightLayout } from "../grid/SpotlightLayout";
-import { CallLayout, GridTileModel, TileModel } from "../grid/CallLayout";
+import {
+  CallLayout,
+  TileModel,
+  defaultPipAlignment,
+  defaultSpotlightAlignment,
+} from "../grid/CallLayout";
+import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
-
-export interface Alignment {
-  inline: "start" | "end";
-  block: "start" | "end";
-}
-
-const defaultAlignment: Alignment = { inline: "end", block: "end" };
-
-const dummySpotlightItem = {
-  id: "spotlight",
-} as TileDescriptor<MediaViewModel>;
 
 export interface ActiveCallProps
   extends Omit<InCallViewProps, "livekitRoom" | "connState"> {
@@ -155,11 +140,9 @@ export const InCallView: FC<InCallViewProps> = ({
   participantCount,
   onLeave,
   hideHeader,
-  otelGroupCallMembership,
   connState,
   onShareClick,
 }) => {
-  const { t } = useTranslation();
   usePreventScroll();
   useWakeLock();
 
@@ -176,15 +159,6 @@ export const InCallView: FC<InCallViewProps> = ({
   const boundsValid = bounds.height > 0;
   // Merge the refs so they can attach to the same element
   const containerRef = useMergedRefs(containerRef1, containerRef2);
-
-  const screenSharingTracks = useTracks(
-    [{ source: Track.Source.ScreenShare, withPlaceholder: false }],
-    {
-      room: livekitRoom,
-    },
-  );
-  const { layout: legacyLayout, setLayout: setLegacyLayout } =
-    useLegacyGridLayout(screenSharingTracks.length > 0);
 
   const { hideScreensharing, showControls } = useUrlParams();
 
@@ -210,42 +184,6 @@ export const InCallView: FC<InCallViewProps> = ({
     (muted) => muteStates.audio.setEnabled?.(!muted),
   );
 
-  useEffect(() => {
-    widget?.api.transport.send(
-      legacyLayout === "grid"
-        ? ElementWidgetActions.TileLayout
-        : ElementWidgetActions.SpotlightLayout,
-      {},
-    );
-  }, [legacyLayout]);
-
-  useEffect(() => {
-    if (widget) {
-      const onTileLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
-        setLegacyLayout("grid");
-        widget!.api.transport.reply(ev.detail, {});
-      };
-      const onSpotlightLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
-        setLegacyLayout("spotlight");
-        widget!.api.transport.reply(ev.detail, {});
-      };
-
-      widget.lazyActions.on(ElementWidgetActions.TileLayout, onTileLayout);
-      widget.lazyActions.on(
-        ElementWidgetActions.SpotlightLayout,
-        onSpotlightLayout,
-      );
-
-      return (): void => {
-        widget!.lazyActions.off(ElementWidgetActions.TileLayout, onTileLayout);
-        widget!.lazyActions.off(
-          ElementWidgetActions.SpotlightLayout,
-          onSpotlightLayout,
-        );
-      };
-    }
-  }, [setLegacyLayout]);
-
   const mobile = boundsValid && bounds.width <= 660;
   const reducedControls = boundsValid && bounds.width <= 340;
   const noControls = reducedControls && bounds.height <= 400;
@@ -256,15 +194,12 @@ export const InCallView: FC<InCallViewProps> = ({
     matrixInfo.e2eeSystem.kind !== E2eeType.NONE,
     connState,
   );
-  const items = useObservableEagerState(vm.tiles);
   const layout = useObservableEagerState(vm.layout);
+  const gridMode = useObservableEagerState(vm.gridMode);
   const hasSpotlight = layout.spotlight !== undefined;
-  // Hack: We insert a dummy "spotlight" tile into the tiles we pass to
-  // useFullscreen so that we can control the fullscreen state of the
-  // spotlight tile in the new layouts with this same hook.
   const fullscreenItems = useMemo(
-    () => (hasSpotlight ? [...items, dummySpotlightItem] : items),
-    [items, hasSpotlight],
+    () => (hasSpotlight ? ["spotlight"] : []),
+    [hasSpotlight],
   );
   const { fullscreenItem, toggleFullscreen, exitFullscreen } =
     useFullscreen(fullscreenItems);
@@ -274,18 +209,9 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   // The maximised participant: either the participant that the user has
-  // manually put in fullscreen, or the focused (active) participant if the
-  // window is too small to show everyone
-  const maximisedParticipant = useMemo(
-    () =>
-      fullscreenItem ??
-      (noControls
-        ? items.find((item) => item.isSpeaker) ?? items.at(0) ?? null
-        : null),
-    [fullscreenItem, noControls, items],
-  );
-
-  const prefersReducedMotion = usePrefersReducedMotion();
+  // manually put in fullscreen, or (TODO) the spotlight if the window is too
+  // small to show everyone
+  const maximisedParticipant = fullscreenItem;
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
@@ -321,8 +247,11 @@ export const InCallView: FC<InCallViewProps> = ({
   );
   const gridBoundsObservable = useObservable(gridBounds);
 
-  const floatingAlignment = useInitial(
-    () => new BehaviorSubject(defaultAlignment),
+  const spotlightAlignment = useInitial(
+    () => new BehaviorSubject(defaultSpotlightAlignment),
+  );
+  const pipAlignment = useInitial(
+    () => new BehaviorSubject(defaultPipAlignment),
   );
 
   const layoutSystem = useObservableEagerState(
@@ -330,18 +259,18 @@ export const InCallView: FC<InCallViewProps> = ({
       vm.layout.pipe(
         map((l) => {
           let makeLayout: CallLayout<Layout>;
-          if (
-            l.type === "grid" &&
-            !(l.grid.length === 2 && l.spotlight === undefined)
-          )
+          if (l.type === "grid")
             makeLayout = makeGridLayout as CallLayout<Layout>;
           else if (l.type === "spotlight")
             makeLayout = makeSpotlightLayout as CallLayout<Layout>;
-          else return null; // Not yet implemented
+          else if (l.type === "one-on-one")
+            makeLayout = makeOneOnOneLayout as CallLayout<Layout>;
+          else throw new Error(`Unimplemented layout: ${l.type}`);
 
           return makeLayout({
             minBounds: gridBoundsObservable,
-            floatingAlignment,
+            spotlightAlignment,
+            pipAlignment,
           });
         }),
       ),
@@ -349,12 +278,45 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   const setGridMode = useCallback(
-    (mode: GridMode) => {
-      setLegacyLayout(mode);
-      vm.setGridMode(mode);
-    },
-    [setLegacyLayout, vm],
+    (mode: GridMode) => vm.setGridMode(mode),
+    [vm],
   );
+
+  useEffect(() => {
+    widget?.api.transport.send(
+      gridMode === "grid"
+        ? ElementWidgetActions.TileLayout
+        : ElementWidgetActions.SpotlightLayout,
+      {},
+    );
+  }, [gridMode]);
+
+  useEffect(() => {
+    if (widget) {
+      const onTileLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
+        setGridMode("grid");
+        widget!.api.transport.reply(ev.detail, {});
+      };
+      const onSpotlightLayout = (ev: CustomEvent<IWidgetApiRequest>): void => {
+        setGridMode("spotlight");
+        widget!.api.transport.reply(ev.detail, {});
+      };
+
+      widget.lazyActions.on(ElementWidgetActions.TileLayout, onTileLayout);
+      widget.lazyActions.on(
+        ElementWidgetActions.SpotlightLayout,
+        onSpotlightLayout,
+      );
+
+      return (): void => {
+        widget!.lazyActions.off(ElementWidgetActions.TileLayout, onTileLayout);
+        widget!.lazyActions.off(
+          ElementWidgetActions.SpotlightLayout,
+          onSpotlightLayout,
+        );
+      };
+    }
+  }, [setGridMode]);
 
   const showSpotlightIndicators = useObservable(layout.type === "spotlight");
   const showSpeakingIndicators = useObservable(
@@ -416,33 +378,10 @@ export const InCallView: FC<InCallViewProps> = ({
     ],
   );
 
-  const LegacyTile = useMemo(
-    () =>
-      forwardRef<
-        HTMLDivElement,
-        PropsWithoutRef<TileProps<MediaViewModel, HTMLDivElement>>
-      >(function LegacyTile({ model: legacyModel, ...props }, ref) {
-        const model: GridTileModel = useMemo(
-          () => ({ type: "grid", vm: legacyModel }),
-          [legacyModel],
-        );
-        return <Tile ref={ref} model={model} {...props} />;
-      }),
-    [Tile],
-  );
-
   const renderContent = (): JSX.Element => {
-    if (items.length === 0) {
-      return (
-        <div className={styles.centerMessage}>
-          <p>{t("waiting_for_participants")}</p>
-        </div>
-      );
-    }
-
     if (maximisedParticipant !== null) {
       const fullscreen = maximisedParticipant === fullscreenItem;
-      if (maximisedParticipant.id === "spotlight") {
+      if (maximisedParticipant === "spotlight") {
         return (
           <SpotlightTile
             className={classNames(styles.tile, styles.maximised)}
@@ -456,52 +395,28 @@ export const InCallView: FC<InCallViewProps> = ({
           />
         );
       }
-      return (
-        <GridTile
-          className={classNames(styles.tile, styles.maximised)}
-          vm={maximisedParticipant.data}
-          maximised={true}
-          fullscreen={fullscreen}
-          onToggleFullscreen={toggleFullscreen}
-          targetHeight={gridBounds.height}
-          targetWidth={gridBounds.width}
-          key={maximisedParticipant.id}
-          showSpeakingIndicators={false}
-          onOpenProfile={openProfile}
-        />
-      );
     }
 
-    if (layoutSystem === null) {
-      // This new layout doesn't yet have an implemented layout system, so fall
-      // back to the legacy grid system
-      return (
-        <LegacyGrid
-          items={items}
-          layout={legacyLayout}
-          disableAnimations={prefersReducedMotion}
-          Tile={LegacyTile}
+    return (
+      <>
+        <Grid
+          className={styles.scrollingGrid}
+          model={layout}
+          Layout={layoutSystem.scrolling}
+          Tile={Tile}
         />
-      );
-    } else {
-      return (
-        <>
-          <Grid
-            className={styles.scrollingGrid}
-            model={layout}
-            Layout={layoutSystem.scrolling}
-            Tile={Tile}
-          />
-          <Grid
-            className={styles.fixedGrid}
-            style={{ insetBlockStart: headerBounds.bottom }}
-            model={layout}
-            Layout={layoutSystem.fixed}
-            Tile={Tile}
-          />
-        </>
-      );
-    }
+        <Grid
+          className={styles.fixedGrid}
+          style={{
+            insetBlockStart: headerBounds.bottom,
+            height: gridBounds.height,
+          }}
+          model={layout}
+          Layout={layoutSystem.fixed}
+          Tile={Tile}
+        />
+      </>
+    );
   };
 
   const rageshakeRequestModalProps = useRageshakeRequestModal(
@@ -590,7 +505,7 @@ export const InCallView: FC<InCallViewProps> = ({
         {!mobile && !hideHeader && showControls && (
           <LayoutToggle
             className={styles.layout}
-            layout={legacyLayout}
+            layout={gridMode}
             setLayout={setGridMode}
           />
         )}

@@ -82,22 +82,6 @@ const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 // entirely with the spotlight tile, if we workshop this further.
 const largeGridThreshold = 20;
 
-// Represents something that should get a tile on the layout,
-// ie. a user's video feed or a screen share feed.
-// TODO: This exposes too much information to the view layer, let's keep this
-// information internal to the view model and switch to using Tile<T> instead
-export interface TileDescriptor<T> {
-  id: string;
-  focused: boolean;
-  isPresenter: boolean;
-  isSpeaker: boolean;
-  hasVideo: boolean;
-  local: boolean;
-  largeBaseSize: boolean;
-  placeNear?: string;
-  data: T;
-}
-
 export interface GridLayout {
   type: "grid";
   spotlight?: MediaViewModel[];
@@ -108,6 +92,13 @@ export interface SpotlightLayout {
   type: "spotlight";
   spotlight: MediaViewModel[];
   grid: UserMediaViewModel[];
+}
+
+export interface OneOnOneLayout {
+  type: "one-on-one";
+  spotlight?: ScreenShareViewModel[];
+  local: LocalUserMediaViewModel;
+  remote: RemoteUserMediaViewModel;
 }
 
 export interface FullScreenLayout {
@@ -128,6 +119,7 @@ export interface PipLayout {
 export type Layout =
   | GridLayout
   | SpotlightLayout
+  | OneOnOneLayout
   | FullScreenLayout
   | PipLayout;
 
@@ -247,7 +239,8 @@ function findMatrixMember(
   room: MatrixRoom,
   id: string,
 ): RoomMember | undefined {
-  if (!id) return undefined;
+  if (id === "local")
+    return room.getMember(room.client.getUserId()!) ?? undefined;
 
   const parts = id.split(":");
   // must be at least 3 parts because we know the first part is a userId which must necessarily contain a colon
@@ -351,21 +344,15 @@ export class CallViewModel extends ViewModel {
         prevItems,
         [remoteParticipants, { participant: localParticipant }, duplicateTiles],
       ) => {
-        let allGhosts = true;
-
         const newItems = new Map(
           function* (this: CallViewModel): Iterable<[string, MediaItem]> {
             for (const p of [localParticipant, ...remoteParticipants]) {
-              const member = findMatrixMember(this.matrixRoom, p.identity);
-              allGhosts &&= member === undefined;
-              // We always start with a local participant with the empty string as
-              // their ID before we're connected, this is fine and we'll be in
-              // "all ghosts" mode.
-              if (p.identity !== "" && member === undefined) {
+              const userMediaId = p === localParticipant ? "local" : p.identity;
+              const member = findMatrixMember(this.matrixRoom, userMediaId);
+              if (member === undefined)
                 logger.warn(
                   `Ruh, roh! No matrix member found for SFU participant '${p.identity}': creating g-g-g-ghost!`,
                 );
-              }
 
               // Create as many tiles for this participant as called for by
               // the duplicateTiles option
@@ -390,9 +377,8 @@ export class CallViewModel extends ViewModel {
           }.bind(this)(),
         );
 
-        // If every item is a ghost, that probably means we're still connecting
-        // and shouldn't bother showing anything yet
-        return allGhosts ? new Map() : newItems;
+        for (const [id, t] of prevItems) if (!newItems.has(id)) t.destroy();
+        return newItems;
       },
       new Map<string, MediaItem>(),
     ),
@@ -545,15 +531,28 @@ export class CallViewModel extends ViewModel {
                 case "grid":
                   return combineLatest(
                     [this.grid, this.spotlight, this.screenShares],
-                    (grid, spotlight, screenShares): Layout => ({
-                      type: "grid",
-                      spotlight:
-                        screenShares.length > 0 ||
-                        grid.length > largeGridThreshold
-                          ? spotlight
-                          : undefined,
-                      grid,
-                    }),
+                    (grid, spotlight, screenShares): Layout =>
+                      grid.length == 2
+                        ? {
+                            type: "one-on-one",
+                            spotlight:
+                              screenShares.length > 0 ? spotlight : undefined,
+                            local: grid.find(
+                              (vm) => vm.local,
+                            ) as LocalUserMediaViewModel,
+                            remote: grid.find(
+                              (vm) => !vm.local,
+                            ) as RemoteUserMediaViewModel,
+                          }
+                        : {
+                            type: "grid",
+                            spotlight:
+                              screenShares.length > 0 ||
+                              grid.length > largeGridThreshold
+                                ? spotlight
+                                : undefined,
+                            grid,
+                          },
                   );
                 case "spotlight":
                   return combineLatest(
@@ -571,108 +570,6 @@ export class CallViewModel extends ViewModel {
     }),
     shareReplay(1),
   );
-
-  /**
-   * The media tiles to be displayed in the call view.
-   */
-  // TODO: Get rid of this field, replacing it with the 'layout' field above
-  // which keeps more details of the layout order internal to the view model
-  public readonly tiles: Observable<TileDescriptor<MediaViewModel>[]> =
-    combineLatest([
-      this.remoteParticipants,
-      observeParticipantMedia(this.livekitRoom.localParticipant),
-    ]).pipe(
-      scan((ts, [remoteParticipants, { participant: localParticipant }]) => {
-        const ps = [localParticipant, ...remoteParticipants];
-        const tilesById = new Map(ts.map((t) => [t.id, t]));
-        const now = Date.now();
-        let allGhosts = true;
-
-        const newTiles = ps.flatMap((p) => {
-          const userMediaId = p.identity;
-          const member = findMatrixMember(this.matrixRoom, userMediaId);
-          allGhosts &&= member === undefined;
-          const spokeRecently =
-            p.lastSpokeAt !== undefined && now - +p.lastSpokeAt <= 10000;
-
-          // We always start with a local participant with the empty string as
-          // their ID before we're connected, this is fine and we'll be in
-          // "all ghosts" mode.
-          if (userMediaId !== "" && member === undefined) {
-            logger.warn(
-              `Ruh, roh! No matrix member found for SFU participant '${userMediaId}': creating g-g-g-ghost!`,
-            );
-          }
-
-          const userMediaVm =
-            tilesById.get(userMediaId)?.data ??
-            (p instanceof LocalParticipant
-              ? new LocalUserMediaViewModel(
-                  userMediaId,
-                  member,
-                  p,
-                  this.encrypted,
-                )
-              : new RemoteUserMediaViewModel(
-                  userMediaId,
-                  member,
-                  p,
-                  this.encrypted,
-                ));
-          tilesById.delete(userMediaId);
-
-          const userMediaTile: TileDescriptor<MediaViewModel> = {
-            id: userMediaId,
-            focused: false,
-            isPresenter: p.isScreenShareEnabled,
-            isSpeaker: (p.isSpeaking || spokeRecently) && !p.isLocal,
-            hasVideo: p.isCameraEnabled,
-            local: p.isLocal,
-            largeBaseSize: false,
-            data: userMediaVm,
-          };
-
-          if (p.isScreenShareEnabled) {
-            const screenShareId = `${userMediaId}:screen-share`;
-            const screenShareVm =
-              tilesById.get(screenShareId)?.data ??
-              new ScreenShareViewModel(
-                screenShareId,
-                member,
-                p,
-                this.encrypted,
-              );
-            tilesById.delete(screenShareId);
-
-            const screenShareTile: TileDescriptor<MediaViewModel> = {
-              id: screenShareId,
-              focused: true,
-              isPresenter: false,
-              isSpeaker: false,
-              hasVideo: true,
-              local: p.isLocal,
-              largeBaseSize: true,
-              placeNear: userMediaId,
-              data: screenShareVm,
-            };
-            return [userMediaTile, screenShareTile];
-          } else {
-            return [userMediaTile];
-          }
-        });
-
-        // Any tiles left in the map are unused and should be destroyed
-        for (const t of tilesById.values()) t.data.destroy();
-
-        // If every item is a ghost, that probably means we're still connecting
-        // and shouldn't bother showing anything yet
-        return allGhosts ? [] : newTiles;
-      }, [] as TileDescriptor<MediaViewModel>[]),
-      finalizeValue((ts) => {
-        for (const t of ts) t.data.destroy();
-      }),
-      shareReplay(1),
-    );
 
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room

@@ -16,6 +16,7 @@ limitations under the License.
 
 .layer {
   margin-inline: var(--inline-content-inset);
+  block-size: 100%;
   display: grid;
   --grid-gap: 20px;
   gap: 30px;
@@ -28,10 +29,6 @@ limitations under the License.
         var(--grid-gap)
     );
   grid-template-rows: minmax(1fr, auto);
-}
-
-.scrolling {
-  block-size: 100%;
 }
 
 .spotlight {
