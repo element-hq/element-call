@@ -69,10 +69,18 @@ import {
 } from "./MediaViewModel";
 import { finalizeValue } from "../observable-utils";
 import { ObservableScope } from "./ObservableScope";
+import { duplicateTiles } from "../settings/settings";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
 const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
+
+// This is the number of participants that we think constitutes a "large" grid.
+// The hypothesis is that, after this many participants there's enough cognitive
+// load that it makes sense to show the speaker in an easy-to-locate spotlight
+// tile. We might change this to a scroll-based condition or do something else
+// entirely with the spotlight tile, if we workshop this further.
+const largeGridThreshold = 20;
 
 export interface GridLayout {
   type: "grid";
@@ -123,13 +131,37 @@ export type WindowMode = "normal" | "full screen" | "pip";
  * Sorting bins defining the order in which media tiles appear in the layout.
  */
 enum SortingBin {
+  /**
+   * Yourself, when the "always show self" option is on.
+   */
   SelfAlwaysShown,
+  /**
+   * Participants that are sharing their screen.
+   */
   Presenters,
+  /**
+   * Participants that have been speaking recently.
+   */
   Speakers,
+  /**
+   * Participants with both video and audio.
+   */
   VideoAndAudio,
+  /**
+   * Participants with video but no audio.
+   */
   Video,
+  /**
+   * Participants with audio but no video.
+   */
   Audio,
+  /**
+   * Participants not sharing any media.
+   */
   NoMedia,
+  /**
+   * Yourself, when the "always show self" option is off.
+   */
   SelfNotAlwaysShown,
 }
 
@@ -305,9 +337,13 @@ export class CallViewModel extends ViewModel {
   private readonly mediaItems: Observable<MediaItem[]> = combineLatest([
     this.remoteParticipants,
     observeParticipantMedia(this.livekitRoom.localParticipant),
+    duplicateTiles.value,
   ]).pipe(
     scan(
-      (prevItems, [remoteParticipants, { participant: localParticipant }]) => {
+      (
+        prevItems,
+        [remoteParticipants, { participant: localParticipant }, duplicateTiles],
+      ) => {
         const newItems = new Map(
           function* (this: CallViewModel): Iterable<[string, MediaItem]> {
             for (const p of [localParticipant, ...remoteParticipants]) {
@@ -318,19 +354,24 @@ export class CallViewModel extends ViewModel {
                   `Ruh, roh! No matrix member found for SFU participant '${p.identity}': creating g-g-g-ghost!`,
                 );
 
-              yield [
-                userMediaId,
-                prevItems.get(userMediaId) ??
-                  new UserMedia(userMediaId, member, p, this.encrypted),
-              ];
-
-              if (p.isScreenShareEnabled) {
-                const screenShareId = `${userMediaId}:screen-share`;
+              // Create as many tiles for this participant as called for by
+              // the duplicateTiles option
+              for (let i = 0; i < 1 + duplicateTiles; i++) {
+                const userMediaId = `${p.identity}:${i}`;
                 yield [
-                  screenShareId,
-                  prevItems.get(screenShareId) ??
-                    new ScreenShare(screenShareId, member, p, this.encrypted),
+                  userMediaId,
+                  prevItems.get(userMediaId) ??
+                    new UserMedia(userMediaId, member, p, this.encrypted),
                 ];
+
+                if (p.isScreenShareEnabled) {
+                  const screenShareId = `${userMediaId}:screen-share`;
+                  yield [
+                    screenShareId,
+                    prevItems.get(screenShareId) ??
+                      new ScreenShare(screenShareId, member, p, this.encrypted),
+                  ];
+                }
               }
             }
           }.bind(this)(),
@@ -341,7 +382,7 @@ export class CallViewModel extends ViewModel {
       },
       new Map<string, MediaItem>(),
     ),
-    map((ms) => [...ms.values()]),
+    map((mediaItems) => [...mediaItems.values()]),
     finalizeValue((ts) => {
       for (const t of ts) t.destroy();
     }),
@@ -349,44 +390,50 @@ export class CallViewModel extends ViewModel {
   );
 
   private readonly userMedia: Observable<UserMedia[]> = this.mediaItems.pipe(
-    map((ms) => ms.filter((m): m is UserMedia => m instanceof UserMedia)),
+    map((mediaItems) =>
+      mediaItems.filter((m): m is UserMedia => m instanceof UserMedia),
+    ),
   );
 
   private readonly screenShares: Observable<ScreenShare[]> =
     this.mediaItems.pipe(
-      map((ms) => ms.filter((m): m is ScreenShare => m instanceof ScreenShare)),
+      map((mediaItems) =>
+        mediaItems.filter((m): m is ScreenShare => m instanceof ScreenShare),
+      ),
       shareReplay(1),
     );
 
   private readonly hasRemoteScreenShares: Observable<boolean> =
     this.screenShares.pipe(
-      map((ms) => ms.find((m) => !m.vm.local) !== undefined),
+      map((ms) => ms.some((m) => !m.vm.local)),
       distinctUntilChanged(),
     );
 
   private readonly spotlightSpeaker: Observable<UserMedia | null> =
     this.userMedia.pipe(
-      switchMap((ms) =>
-        ms.length === 0
+      switchMap((mediaItems) =>
+        mediaItems.length === 0
           ? of([])
           : combineLatest(
-              ms.map((m) => m.vm.speaking.pipe(map((s) => [m, s] as const))),
+              mediaItems.map((m) =>
+                m.vm.speaking.pipe(map((s) => [m, s] as const)),
+              ),
             ),
       ),
       scan<(readonly [UserMedia, boolean])[], UserMedia | null, null>(
-        (prev, ms) =>
+        (prev, mediaItems) =>
           // Decide who to spotlight:
           // If the previous speaker (not the local user) is still speaking,
           // stick with them rather than switching eagerly to someone else
           (prev === null || prev.vm.local
             ? null
-            : ms.find(([m, s]) => m === prev && s)?.[0]) ??
+            : mediaItems.find(([m, s]) => m === prev && s)?.[0]) ??
           // Otherwise, select any remote user who is speaking
-          ms.find(([m, s]) => !m.vm.local && s)?.[0] ??
+          mediaItems.find(([m, s]) => !m.vm.local && s)?.[0] ??
           // Otherwise, stick with the person who was last speaking
           prev ??
           // Otherwise, spotlight the local user
-          ms.find(([m]) => m.vm.local)?.[0] ??
+          mediaItems.find(([m]) => m.vm.local)?.[0] ??
           null,
         null,
       ),
@@ -396,8 +443,8 @@ export class CallViewModel extends ViewModel {
     );
 
   private readonly grid: Observable<UserMediaViewModel[]> = this.userMedia.pipe(
-    switchMap((ms) => {
-      const bins = ms.map((m) =>
+    switchMap((mediaItems) => {
+      const bins = mediaItems.map((m) =>
         combineLatest(
           [
             m.speaker,
@@ -500,7 +547,8 @@ export class CallViewModel extends ViewModel {
                         : {
                             type: "grid",
                             spotlight:
-                              screenShares.length > 0 || grid.length > 20
+                              screenShares.length > 0 ||
+                              grid.length > largeGridThreshold
                                 ? spotlight
                                 : undefined,
                             grid,
