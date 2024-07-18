@@ -74,6 +74,13 @@ import { ObservableScope } from "./ObservableScope";
 // list again
 const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 
+// This is the number of participants that we think constitutes a "large" grid.
+// The hypothesis is that, after this many participants there's enough cognitive
+// load that it makes sense to show the speaker in an easy-to-locate spotlight
+// tile. We might change this to a scroll-based condition or do something else
+// entirely with the spotlight tile, if we workshop this further.
+const largeGridThreshold = 20;
+
 // Represents something that should get a tile on the layout,
 // ie. a user's video feed or a screen share feed.
 // TODO: This exposes too much information to the view layer, let's keep this
@@ -504,7 +511,8 @@ export class CallViewModel extends ViewModel {
                     (grid, spotlight, screenShares): Layout => ({
                       type: "grid",
                       spotlight:
-                        screenShares.length > 0 || grid.length > 20
+                        screenShares.length > 0 ||
+                        grid.length > largeGridThreshold
                           ? spotlight
                           : undefined,
                       grid,
