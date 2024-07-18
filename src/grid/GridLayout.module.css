@@ -14,6 +14,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+.fixed,
+.scrolling {
+  margin-inline: var(--inline-content-inset);
+}
+
 .scrolling {
   box-sizing: border-box;
   block-size: 100%;
@@ -22,12 +27,15 @@ limitations under the License.
   justify-content: center;
   align-content: center;
   gap: var(--gap);
-  box-sizing: border-box;
 }
 
 .scrolling > .slot {
   width: var(--width);
   height: var(--height);
+}
+
+.fixed {
+  position: relative;
 }
 
 .fixed > .slot {

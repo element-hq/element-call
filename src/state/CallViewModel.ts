@@ -28,12 +28,13 @@ import {
 import { Room as MatrixRoom, RoomMember } from "matrix-js-sdk/src/matrix";
 import { useEffect, useRef } from "react";
 import {
-  BehaviorSubject,
   EMPTY,
   Observable,
+  Subject,
   audit,
   combineLatest,
   concat,
+  concatMap,
   distinctUntilChanged,
   filter,
   map,
@@ -44,10 +45,10 @@ import {
   scan,
   shareReplay,
   startWith,
-  switchAll,
   switchMap,
   throttleTime,
   timer,
+  withLatestFrom,
   zip,
 } from "rxjs";
 import { logger } from "matrix-js-sdk/src/logger";
@@ -406,6 +407,13 @@ export class CallViewModel extends ViewModel {
       map((mediaItems) =>
         mediaItems.filter((m): m is ScreenShare => m instanceof ScreenShare),
       ),
+      shareReplay(1),
+    );
+
+  private readonly hasRemoteScreenShares: Observable<boolean> =
+    this.screenShares.pipe(
+      map((ms) => ms.some((m) => !m.vm.local)),
+      distinctUntilChanged(),
     );
 
   private readonly spotlightSpeaker: Observable<UserMedia | null> =
@@ -422,11 +430,13 @@ export class CallViewModel extends ViewModel {
       scan<(readonly [UserMedia, boolean])[], UserMedia | null, null>(
         (prev, mediaItems) =>
           // Decide who to spotlight:
-          // If the previous speaker is still speaking, stick with them rather
-          // than switching eagerly to someone else
-          mediaItems.find(([m, s]) => m === prev && s)?.[0] ??
-          // Otherwise, select anyone who is speaking
-          mediaItems.find(([, s]) => s)?.[0] ??
+          // If the previous speaker (not the local user) is still speaking,
+          // stick with them rather than switching eagerly to someone else
+          (prev === null || prev.vm.local
+            ? null
+            : mediaItems.find(([m, s]) => m === prev && s)?.[0]) ??
+          // Otherwise, select any remote user who is speaking
+          mediaItems.find(([m, s]) => !m.vm.local && s)?.[0] ??
           // Otherwise, stick with the person who was last speaking
           prev ??
           // Otherwise, spotlight the local user
@@ -435,7 +445,8 @@ export class CallViewModel extends ViewModel {
         null,
       ),
       distinctUntilChanged(),
-      throttleTime(800, undefined, { leading: true, trailing: true }),
+      shareReplay(1),
+      throttleTime(1600, undefined, { leading: true, trailing: true }),
     );
 
   private readonly grid: Observable<UserMediaViewModel[]> = this.userMedia.pipe(
@@ -490,49 +501,66 @@ export class CallViewModel extends ViewModel {
   // orientation
   private readonly windowMode = of<WindowMode>("normal");
 
-  private readonly _gridMode = new BehaviorSubject<GridMode>("grid");
+  private readonly gridModeUserSelection = new Subject<GridMode>();
   /**
    * The layout mode of the media tile grid.
    */
-  public readonly gridMode: Observable<GridMode> = this._gridMode;
+  public readonly gridMode: Observable<GridMode> = merge(
+    // Always honor a manual user selection
+    this.gridModeUserSelection,
+    // If the user hasn't selected spotlight and somebody starts screen sharing,
+    // automatically switch to spotlight mode and reset when screen sharing ends
+    this.hasRemoteScreenShares.pipe(
+      withLatestFrom(this.gridModeUserSelection.pipe(startWith(null))),
+      concatMap(([hasScreenShares, userSelection]) =>
+        userSelection === "spotlight"
+          ? EMPTY
+          : of<GridMode>(hasScreenShares ? "spotlight" : "grid"),
+      ),
+    ),
+  ).pipe(distinctUntilChanged(), shareReplay(1));
 
   public setGridMode(value: GridMode): void {
-    this._gridMode.next(value);
+    this.gridModeUserSelection.next(value);
   }
 
-  public readonly layout: Observable<Layout> = combineLatest(
-    [this._gridMode, this.windowMode],
-    (gridMode, windowMode) => {
+  public readonly layout: Observable<Layout> = this.windowMode.pipe(
+    switchMap((windowMode) => {
       switch (windowMode) {
         case "full screen":
           throw new Error("unimplemented");
         case "pip":
           throw new Error("unimplemented");
-        case "normal": {
-          switch (gridMode) {
-            case "grid":
-              return combineLatest(
-                [this.grid, this.spotlight, this.screenShares],
-                (grid, spotlight, screenShares): Layout => ({
-                  type: "grid",
-                  spotlight: screenShares.length > 0 ? spotlight : undefined,
-                  grid,
-                }),
-              );
-            case "spotlight":
-              return combineLatest(
-                [this.grid, this.spotlight],
-                (grid, spotlight): Layout => ({
-                  type: "spotlight",
-                  spotlight,
-                  grid,
-                }),
-              );
-          }
-        }
+        case "normal":
+          return this.gridMode.pipe(
+            switchMap((gridMode) => {
+              switch (gridMode) {
+                case "grid":
+                  return combineLatest(
+                    [this.grid, this.spotlight, this.screenShares],
+                    (grid, spotlight, screenShares): Layout => ({
+                      type: "grid",
+                      spotlight:
+                        screenShares.length > 0 ? spotlight : undefined,
+                      grid,
+                    }),
+                  );
+                case "spotlight":
+                  return combineLatest(
+                    [this.grid, this.spotlight],
+                    (grid, spotlight): Layout => ({
+                      type: "spotlight",
+                      spotlight,
+                      grid,
+                    }),
+                  );
+              }
+            }),
+          );
       }
-    },
-  ).pipe(switchAll(), shareReplay(1));
+    }),
+    shareReplay(1),
+  );
 
   /**
    * The media tiles to be displayed in the call view.
