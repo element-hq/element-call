@@ -89,19 +89,19 @@ export interface GridLayout {
 }
 
 export interface SpotlightLandscapeLayout {
-  type: "spotlight landscape";
+  type: "spotlight-landscape";
   spotlight: MediaViewModel[];
   grid: UserMediaViewModel[];
 }
 
 export interface SpotlightPortraitLayout {
-  type: "spotlight portrait";
+  type: "spotlight-portrait";
   spotlight: MediaViewModel[];
   grid: UserMediaViewModel[];
 }
 
 export interface SpotlightExpandedLayout {
-  type: "spotlight expanded";
+  type: "spotlight-expanded";
   spotlight: MediaViewModel[];
   pip?: UserMediaViewModel;
 }
@@ -583,7 +583,7 @@ export class CallViewModel extends ViewModel {
       const spotlightLandscapeLayout = combineLatest(
         [this.grid, this.spotlight],
         (grid, spotlight): Layout => ({
-          type: "spotlight landscape",
+          type: "spotlight-landscape",
           spotlight,
           grid,
         }),
@@ -591,7 +591,7 @@ export class CallViewModel extends ViewModel {
       const spotlightExpandedLayout = combineLatest(
         [this.spotlight, this.pip],
         (spotlight, pip): Layout => ({
-          type: "spotlight expanded",
+          type: "spotlight-expanded",
           spotlight,
           pip: pip ?? undefined,
         }),
@@ -641,7 +641,7 @@ export class CallViewModel extends ViewModel {
           return combineLatest(
             [this.grid, this.spotlight],
             (grid, spotlight): Layout => ({
-              type: "spotlight portrait",
+              type: "spotlight-portrait",
               spotlight,
               grid,
             }),
@@ -675,7 +675,7 @@ export class CallViewModel extends ViewModel {
   );
 
   public showSpeakingIndicators: Observable<boolean> = this.layout.pipe(
-    map((l) => l.type !== "one-on-one" && l.type !== "spotlight expanded"),
+    map((l) => l.type !== "one-on-one" && l.type !== "spotlight-expanded"),
     distinctUntilChanged(),
     shareReplay(1),
   );
