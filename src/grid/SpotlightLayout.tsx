@@ -69,10 +69,8 @@ export const makeSpotlightLayout: CallLayout<SpotlightLayoutModel> = ({
         ref={ref}
         data-generation={generation}
         data-orientation={layout.orientation}
-        className={classNames(styles.layer, styles.fixed)}
-        style={
-          { "--grid-columns": layout.gridColumns, height } as GridCSSProperties
-        }
+        className={styles.layer}
+        style={{ "--grid-columns": layout.gridColumns } as GridCSSProperties}
       >
         <div className={styles.spotlight}>
           <Slot className={styles.slot} id="spotlight" model={tileModel} />
@@ -102,7 +100,7 @@ export const makeSpotlightLayout: CallLayout<SpotlightLayoutModel> = ({
         ref={ref}
         data-generation={generation}
         data-orientation={layout.orientation}
-        className={classNames(styles.layer, styles.scrolling)}
+        className={styles.layer}
         style={{ "--grid-columns": layout.gridColumns } as GridCSSProperties}
       >
         <div
