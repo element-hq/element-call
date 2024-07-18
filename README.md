@@ -131,7 +131,7 @@ advertises one in the client well-known, this will not be used.)
 
 ```json
 "livekit": {
-  "livekit_service_url": "http://localhost:8881"
+  "livekit_service_url": "http://localhost:7881"
 },
 ```
 

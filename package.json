@@ -71,13 +71,13 @@
     "posthog-js": "^1.29.0",
     "react": "18",
     "react-dom": "18",
-    "react-i18next": "^14.0.0",
+    "react-i18next": "^15.0.0",
     "react-router-dom": "^5.2.0",
     "react-use-clipboard": "^1.0.7",
     "react-use-measure": "^2.1.1",
     "rxjs": "^7.8.1",
     "sdp-transform": "^2.14.1",
-    "tinyqueue": "^2.0.3",
+    "tinyqueue": "^3.0.0",
     "unique-names-generator": "^4.6.0",
     "uuid": "10",
     "vaul": "^0.9.0"
@@ -126,6 +126,6 @@
     "vite": "^5.0.0",
     "vite-plugin-html-template": "^1.1.0",
     "vite-plugin-svgr": "^4.0.0",
-    "vitest": "^1.2.2"
+    "vitest": "^2.0.0"
   }
 }
