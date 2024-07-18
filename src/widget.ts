@@ -118,13 +118,17 @@ export const widget = ((): WidgetHelpers | null => {
         "org.matrix.rageshake_request",
         EventType.CallEncryptionKeysPrefix,
       ];
+
       const sendState = [
-        {
-          eventType: EventType.GroupCallMemberPrefix,
-          stateKey: userId, // TODO: based on if we use the new format we want the key to be: `_${userId}_${deviceId}`
-        },
-      ];
+        userId, // legacy call membership events
+        `_${userId}_${deviceId}`, // session membership events
+        `${userId}_${deviceId}`, // MSC3779 session membership events
+      ].map((stateKey) => ({
+        eventType: EventType.GroupCallMemberPrefix,
+        stateKey,
+      }));
       const receiveState = [
+        { eventType: EventType.RoomCreate },
         { eventType: EventType.RoomMember },
         { eventType: EventType.RoomEncryption },
         { eventType: EventType.GroupCallMemberPrefix },

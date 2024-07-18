@@ -118,7 +118,7 @@ export function useProfile(client: MatrixClient | undefined): UseProfile {
             displayName,
             avatarUrl: removeAvatar
               ? undefined
-              : mxcAvatarUrl ?? prev.avatarUrl,
+              : (mxcAvatarUrl ?? prev.avatarUrl),
             loading: false,
             success: true,
           }));

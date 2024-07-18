@@ -63,7 +63,7 @@ export function useFullscreen(items: string[]): {
 } {
   const [fullscreenItem, setFullscreenItem] = useReactiveState<string | null>(
     (prevItem) =>
-      prevItem == null ? null : items.find((i) => i === prevItem) ?? null,
+      prevItem == null ? null : (items.find((i) => i === prevItem) ?? null),
     [items],
   );
 
@@ -77,7 +77,7 @@ export function useFullscreen(items: string[]): {
     (itemId: string) => {
       setFullscreenItem(
         latestFullscreenItem.current === null
-          ? latestItems.current.find((i) => i === itemId) ?? null
+          ? (latestItems.current.find((i) => i === itemId) ?? null)
           : null,
       );
     },

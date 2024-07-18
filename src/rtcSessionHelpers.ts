@@ -108,10 +108,17 @@ export async function enterRTCSession(
 
   // right now we assume everything is a room-scoped call
   const livekitAlias = rtcSession.room.roomId;
+  const useDeviceSessionMemberEvents =
+    Config.get().features?.feature_use_device_session_member_events;
   rtcSession.joinRoomSession(
     await makePreferredLivekitFoci(rtcSession, livekitAlias),
     makeActiveFocus(),
-    { manageMediaKeys: encryptMedia },
+    {
+      manageMediaKeys: encryptMedia,
+      ...(useDeviceSessionMemberEvents !== undefined && {
+        useLegacyMemberEvents: !useDeviceSessionMemberEvents,
+      }),
+    },
   );
 }
 
