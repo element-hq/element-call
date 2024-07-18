@@ -34,6 +34,11 @@ interface GridCSSProperties extends CSSProperties {
   "--grid-tile-height": string;
 }
 
+/**
+ * An implementation of the "spotlight portrait" layout, in which the spotlight
+ * tile is shown across the top of the screen, and the grid of participants
+ * scrolls behind it.
+ */
 export const makeSpotlightPortraitLayout: CallLayout<
   SpotlightPortraitLayoutModel
 > = ({ minBounds }) => ({

@@ -24,6 +24,10 @@ import { useReactiveState } from "../useReactiveState";
 import styles from "./OneOnOneLayout.module.css";
 import { DragCallback } from "./Grid";
 
+/**
+ * An implementation of the "one-on-one" layout, in which the remote participant
+ * is shown at maximum size, overlaid by a small view of the local participant.
+ */
 export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
   minBounds,
   pipAlignment,

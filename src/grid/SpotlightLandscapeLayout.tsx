@@ -23,6 +23,11 @@ import { SpotlightLandscapeLayout as SpotlightLandscapeLayoutModel } from "../st
 import styles from "./SpotlightLandscapeLayout.module.css";
 import { useReactiveState } from "../useReactiveState";
 
+/**
+ * An implementation of the "spotlight landscape" layout, in which the spotlight
+ * tile takes up most of the space on the left, and the grid of participants is
+ * shown as a scrolling rail on the right.
+ */
 export const makeSpotlightLandscapeLayout: CallLayout<
   SpotlightLandscapeLayoutModel
 > = ({ minBounds }) => ({
