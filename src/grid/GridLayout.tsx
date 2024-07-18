@@ -36,6 +36,10 @@ interface GridCSSProperties extends CSSProperties {
   "--height": string;
 }
 
+/**
+ * An implementation of the "grid" layout, in which all participants are shown
+ * together in a scrolling grid.
+ */
 export const makeGridLayout: CallLayout<GridLayoutModel> = ({
   minBounds,
   spotlightAlignment,
