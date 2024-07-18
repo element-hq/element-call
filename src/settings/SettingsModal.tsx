@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ChangeEvent, FC, Key, ReactNode } from "react";
+import { ChangeEvent, FC, Key, ReactNode, useCallback } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
@@ -44,6 +44,7 @@ import {
   useSetting,
   optInAnalytics as optInAnalyticsSetting,
   developerSettingsTab as developerSettingsTabSetting,
+  duplicateTiles as duplicateTilesSetting,
 } from "./settings";
 import { isFirefox } from "../Platform";
 
@@ -80,6 +81,7 @@ export const SettingsModal: FC<Props> = ({
   const [developerSettingsTab, setDeveloperSettingsTab] = useSetting(
     developerSettingsTabSetting,
   );
+  const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
 
   // Generate a `SelectInput` with a list of devices for a given device kind.
   const generateDeviceSelection = (
@@ -243,6 +245,20 @@ export const SettingsModal: FC<Props> = ({
             version: import.meta.env.VITE_APP_VERSION || "dev",
           })}
         </Body>
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="duplicateTiles"
+          type="number"
+          label={t("settings.duplicate_tiles_label")}
+          value={duplicateTiles.toString()}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setDuplicateTiles(event.target.valueAsNumber);
+            },
+            [setDuplicateTiles],
+          )}
+        />
       </FieldRow>
     </TabItem>
   );
