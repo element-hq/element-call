@@ -80,14 +80,12 @@ export const GroupCallView: FC<Props> = ({
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const isJoined = useMatrixRTCSessionJoinState(rtcSession);
 
-  // this should be useEffectEvent (only available in experimental versions)
-  const participantMuteOnce = useCallback(() => {
+  // This should use `useEffectEvent` (only available in experimental versions)
+  useEffect(() => {
     if (memberships.length >= MUTE_PARTICIPANT_COUNT)
       muteStates.audio.setEnabled?.(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  useEffect(() => participantMuteOnce(), [participantMuteOnce]);
 
   useEffect(() => {
     window.rtcSession = rtcSession;
