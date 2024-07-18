@@ -50,8 +50,9 @@ export enum ElementWidgetActions {
   // fromWidget: updates the client about the current device mute state
   // toWidget: the client requests a specific device mute configuration
   //   The reply will always be the resulting configuration
-  //   It is possible to sent an empty configuration or only a change for audio or video.
-  //   An undefined field means that EC will not keep the mute state as is.
+  //   It is possible to sent an empty configuration to retrieve the current values or
+  //   just one of the fields to update that particular value
+  //   An undefined field means that EC will keep the mute state as is.
   //   -> this will allow the client to only get the current state
   //
   // The data of the widget action request and the response are:
