@@ -36,10 +36,16 @@ interface GridCSSProperties extends CSSProperties {
   "--height": string;
 }
 
+/**
+ * An implementation of the "grid" layout, in which all participants are shown
+ * together in a scrolling grid.
+ */
 export const makeGridLayout: CallLayout<GridLayoutModel> = ({
   minBounds,
   spotlightAlignment,
 }) => ({
+  scrollingOnTop: false,
+
   // The "fixed" (non-scrolling) part of the layout is where the spotlight tile
   // lives
   fixed: forwardRef(function GridLayoutFixed({ model, Slot }, ref) {

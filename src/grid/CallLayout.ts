@@ -66,6 +66,10 @@ export type TileModel = GridTileModel | SpotlightTileModel;
 
 export interface CallLayoutOutputs<Model> {
   /**
+   * Whether the scrolling layer of the layout should appear on top.
+   */
+  scrollingOnTop: boolean;
+  /**
    * The visually fixed (non-scrolling) layer of the layout.
    */
   fixed: ComponentType<LayoutProps<Model, TileModel, HTMLDivElement>>;
@@ -122,7 +126,7 @@ export function arrangeTiles(
   );
   let rows = Math.ceil(tileCount / columns);
 
-  let tileWidth = (width - (columns - 1) * gap) / columns;
+  let tileWidth = (width - (columns + 1) * gap) / columns;
   let tileHeight = (minHeight - (rows - 1) * gap) / rows;
 
   // Impose a minimum width and height on the tiles
@@ -133,7 +137,7 @@ export function arrangeTiles(
     // c = (W + g) / (w + g).
     columns = Math.floor((width + gap) / (tileMinWidth + gap));
     rows = Math.ceil(tileCount / columns);
-    tileWidth = (width - (columns - 1) * gap) / columns;
+    tileWidth = (width - (columns + 1) * gap) / columns;
     tileHeight = (minHeight - (rows - 1) * gap) / rows;
   }
   if (tileHeight < tileMinHeight) tileHeight = tileMinHeight;

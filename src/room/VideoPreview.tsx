@@ -21,13 +21,11 @@ import { usePreviewTracks } from "@livekit/components-react";
 import { LocalVideoTrack, Track } from "livekit-client";
 import classNames from "classnames";
 import { logger } from "matrix-js-sdk/src/logger";
-import { Glass } from "@vector-im/compound-web";
 
 import { Avatar } from "../Avatar";
 import styles from "./VideoPreview.module.css";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { MuteStates } from "./MuteStates";
-import { useMediaQuery } from "../useMediaQuery";
 import { useInitial } from "../useInitial";
 import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 
@@ -116,8 +114,8 @@ export const VideoPreview: FC<Props> = ({
     };
   }, [videoTrack]);
 
-  const content = (
-    <>
+  return (
+    <div className={classNames(styles.preview)} ref={previewRef}>
       <video
         ref={videoEl}
         muted
@@ -137,21 +135,6 @@ export const VideoPreview: FC<Props> = ({
         </div>
       )}
       <div className={styles.buttonBar}>{children}</div>
-    </>
-  );
-
-  return useMediaQuery("(max-width: 550px)") ? (
-    <div
-      className={classNames(styles.preview, styles.content)}
-      ref={previewRef}
-    >
-      {content}
     </div>
-  ) : (
-    <Glass className={styles.preview}>
-      <div className={styles.content} ref={previewRef}>
-        {content}
-      </div>
-    </Glass>
   );
 };

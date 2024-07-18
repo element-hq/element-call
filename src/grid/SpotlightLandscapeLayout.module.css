@@ -1,0 +1,54 @@
+/*
+Copyright 2024 New Vector Ltd
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/
+
+.layer {
+  block-size: 100%;
+  display: grid;
+  --gap: 20px;
+  gap: var(--gap);
+  --grid-slot-width: 180px;
+  grid-template-columns: 1fr var(--grid-slot-width);
+  grid-template-rows: minmax(1fr, auto);
+  padding-inline: var(--gap);
+}
+
+.spotlight {
+  container: spotlight / size;
+  display: grid;
+  place-items: center;
+}
+
+/* CSS makes us put a condition here, even though all we want to do is
+unconditionally select the container so we can use cq units */
+@container spotlight (width > 0) {
+  .spotlight > .slot {
+    inline-size: min(100cqi, 100cqb * (17 / 9));
+    block-size: min(100cqb, 100cqi / (4 / 3));
+  }
+}
+
+.grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--gap);
+  justify-content: center;
+  align-content: center;
+}
+
+.grid > .slot {
+  inline-size: 180px;
+  block-size: 135px;
+}

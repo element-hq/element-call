@@ -68,7 +68,7 @@ limitations under the License.
   align-items: center;
   gap: var(--cpd-space-3x);
   padding-block: var(--cpd-space-4x);
-  margin-inline: var(--inline-content-inset);
+  padding-inline: var(--inline-content-inset);
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
@@ -123,17 +123,16 @@ limitations under the License.
   display: none;
 }
 
+.footer.overlay {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+}
+
 .fixedGrid {
   position: absolute;
   inline-size: 100%;
   align-self: center;
-  /* Disable pointer events so the overlay doesn't block interaction with
-  elements behind it */
-  pointer-events: none;
-}
-
-.fixedGrid > :not(:first-child) {
-  pointer-events: initial;
 }
 
 .scrollingGrid {
@@ -141,6 +140,18 @@ limitations under the License.
   flex-grow: 1;
   inline-size: 100%;
   align-self: center;
+}
+
+.fixedGrid,
+.scrollingGrid {
+  /* Disable pointer events so the overlay doesn't block interaction with
+  elements behind it */
+  pointer-events: none;
+}
+
+.fixedGrid > :not(:first-child),
+.scrollingGrid > :not(:first-child) {
+  pointer-events: initial;
 }
 
 .tile {

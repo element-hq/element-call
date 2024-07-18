@@ -18,46 +18,44 @@ import { CSSProperties, forwardRef, useMemo } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
-import { CallLayout, GridTileModel, TileModel } from "./CallLayout";
-import { SpotlightLayout as SpotlightLayoutModel } from "../state/CallViewModel";
-import styles from "./SpotlightLayout.module.css";
+import {
+  CallLayout,
+  GridTileModel,
+  TileModel,
+  arrangeTiles,
+} from "./CallLayout";
+import { SpotlightPortraitLayout as SpotlightPortraitLayoutModel } from "../state/CallViewModel";
+import styles from "./SpotlightPortraitLayout.module.css";
 import { useReactiveState } from "../useReactiveState";
 
 interface GridCSSProperties extends CSSProperties {
-  "--grid-columns": number;
+  "--grid-gap": string;
+  "--grid-tile-width": string;
+  "--grid-tile-height": string;
 }
 
-interface Layout {
-  orientation: "portrait" | "landscape";
-  gridColumns: number;
-}
+/**
+ * An implementation of the "spotlight portrait" layout, in which the spotlight
+ * tile is shown across the top of the screen, and the grid of participants
+ * scrolls behind it.
+ */
+export const makeSpotlightPortraitLayout: CallLayout<
+  SpotlightPortraitLayoutModel
+> = ({ minBounds }) => ({
+  scrollingOnTop: false,
 
-function getLayout(gridLength: number, width: number): Layout {
-  const orientation = width < 800 ? "portrait" : "landscape";
-  return {
-    orientation,
-    gridColumns:
-      orientation === "portrait"
-        ? Math.floor(width / 190)
-        : gridLength > 20
-          ? 2
-          : 1,
-  };
-}
-
-export const makeSpotlightLayout: CallLayout<SpotlightLayoutModel> = ({
-  minBounds,
-}) => ({
-  fixed: forwardRef(function SpotlightLayoutFixed({ model, Slot }, ref) {
+  fixed: forwardRef(function SpotlightPortraitLayoutFixed(
+    { model, Slot },
+    ref,
+  ) {
     const { width, height } = useObservableEagerState(minBounds);
-    const layout = getLayout(model.grid.length, width);
     const tileModel: TileModel = useMemo(
       () => ({
         type: "spotlight",
         vms: model.spotlight,
-        maximised: layout.orientation === "portrait",
+        maximised: true,
       }),
-      [model.spotlight, layout.orientation],
+      [model.spotlight],
     );
     const [generation] = useReactiveState<number>(
       (prev) => (prev === undefined ? 0 : prev + 1),
@@ -65,27 +63,24 @@ export const makeSpotlightLayout: CallLayout<SpotlightLayoutModel> = ({
     );
 
     return (
-      <div
-        ref={ref}
-        data-generation={generation}
-        data-orientation={layout.orientation}
-        className={styles.layer}
-        style={{ "--grid-columns": layout.gridColumns } as GridCSSProperties}
-      >
+      <div ref={ref} data-generation={generation} className={styles.layer}>
         <div className={styles.spotlight}>
           <Slot className={styles.slot} id="spotlight" model={tileModel} />
         </div>
-        <div className={styles.grid} />
       </div>
     );
   }),
 
-  scrolling: forwardRef(function SpotlightLayoutScrolling(
+  scrolling: forwardRef(function SpotlightPortraitLayoutScrolling(
     { model, Slot },
     ref,
   ) {
     const { width, height } = useObservableEagerState(minBounds);
-    const layout = getLayout(model.grid.length, width);
+    const { gap, tileWidth, tileHeight } = arrangeTiles(
+      width,
+      0,
+      model.grid.length,
+    );
     const tileModels: GridTileModel[] = useMemo(
       () => model.grid.map((vm) => ({ type: "grid", vm })),
       [model.grid],
@@ -99,9 +94,14 @@ export const makeSpotlightLayout: CallLayout<SpotlightLayoutModel> = ({
       <div
         ref={ref}
         data-generation={generation}
-        data-orientation={layout.orientation}
         className={styles.layer}
-        style={{ "--grid-columns": layout.gridColumns } as GridCSSProperties}
+        style={
+          {
+            "--grid-gap": `${gap}px`,
+            "--grid-tile-width": `${Math.floor(tileWidth)}px`,
+            "--grid-tile-height": `${Math.floor(tileHeight)}px`,
+          } as GridCSSProperties
+        }
       >
         <div
           className={classNames(styles.spotlight, {

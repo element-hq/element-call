@@ -57,7 +57,6 @@ interface TileProps {
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
-  maximised: boolean;
   displayName: string;
   nameTag: string;
   showSpeakingIndicators: boolean;
@@ -79,7 +78,6 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       menuEnd,
       className,
       nameTag,
-      maximised,
       ...props
     },
     ref,
@@ -151,7 +149,6 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
             {menu}
           </Menu>
         }
-        data-maximised={maximised}
         {...props}
       />
     );
@@ -273,9 +270,6 @@ RemoteUserMediaTile.displayName = "RemoteUserMediaTile";
 
 interface GridTileProps {
   vm: UserMediaViewModel;
-  maximised: boolean;
-  fullscreen: boolean;
-  onToggleFullscreen: (itemId: string) => void;
   onOpenProfile: () => void;
   targetWidth: number;
   targetHeight: number;
@@ -285,7 +279,7 @@ interface GridTileProps {
 }
 
 export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
-  ({ vm, fullscreen, onToggleFullscreen, onOpenProfile, ...props }, ref) => {
+  ({ vm, onOpenProfile, ...props }, ref) => {
     const nameData = useNameData(vm);
 
     if (vm instanceof LocalUserMediaViewModel) {
