@@ -110,7 +110,10 @@ abstract class BaseMediaViewModel extends ViewModel {
 /**
  * Some participant's media.
  */
-export type MediaViewModel = UserMediaViewModel | ScreenShareViewModel;
+export type MediaViewModel =
+  | UserMediaViewModel
+  | ScreenShareViewModel
+  | MembershipOnlyViewModel;
 
 /**
  * Some participant's user media.
@@ -237,5 +240,17 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
       Track.Source.ScreenShareAudio,
       Track.Source.ScreenShare,
     );
+  }
+}
+
+/**
+ * Placeholder for a call membership that does not have a LiveKit participant associated with it.
+ */
+export class MembershipOnlyViewModel extends ViewModel {
+  public id: string;
+  public local = false;
+  public constructor(public readonly member: RoomMember) {
+    super();
+    this.id = member.userId;
   }
 }

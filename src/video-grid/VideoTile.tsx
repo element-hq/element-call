@@ -53,6 +53,7 @@ import {
   Menu,
 } from "@vector-im/compound-web";
 import { useStateObservable } from "@react-rxjs/core";
+import useRelativeTime from "@nkzw/use-relative-time";
 
 import { Avatar } from "../Avatar";
 import styles from "./VideoTile.module.css";
@@ -61,6 +62,7 @@ import {
   ScreenShareViewModel,
   MediaViewModel,
   UserMediaViewModel,
+  MembershipOnlyViewModel,
 } from "../state/MediaViewModel";
 import { subscribe } from "../state/subscribe";
 import { useMergedRefs } from "../useMergedRefs";
@@ -72,7 +74,7 @@ interface TileProps {
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
-  video: TrackReferenceOrPlaceholder;
+  video?: TrackReferenceOrPlaceholder;
   member: RoomMember | undefined;
   videoEnabled: boolean;
   maximised: boolean;
@@ -110,6 +112,29 @@ const Tile = forwardRef<HTMLDivElement, TileProps>(
     const { t } = useTranslation();
     const mergedRef = useMergedRefs(tileRef, ref);
 
+    const [lastActiveTime, setLastActiveTime] = useState(
+      member?.getLastTypingTime() ?? 0,
+    );
+    const [online, setOnline] = useState(member?.typing ?? false);
+
+    useEffect(() => {
+      const onTyping = (): void => {
+        setOnline(member?.typing ?? false);
+        setLastActiveTime(member?.getLastTypingTime() ?? 0);
+      };
+
+      member?.on(RoomMemberEvent.Typing, onTyping);
+
+      return (): void => {
+        member?.off(RoomMemberEvent.Typing, onTyping);
+      };
+    }, [member]);
+
+    const joinedCallTime = member?.events.member?.getTs() ?? 0;
+
+    const lastActiveAgo = useRelativeTime(lastActiveTime ?? 0);
+    const joinedCallAgo = useRelativeTime(joinedCallTime ?? 0);
+
     return (
       <animated.div
         className={classNames(styles.videoTile, className, {
@@ -129,7 +154,7 @@ const Tile = forwardRef<HTMLDivElement, TileProps>(
             src={member?.getMxcAvatarUrl()}
             className={styles.avatar}
           />
-          {video.publication !== undefined && (
+          {video?.publication !== undefined && (
             <VideoTrack
               trackRef={video}
               // There's no reason for this to be focusable
@@ -137,12 +162,38 @@ const Tile = forwardRef<HTMLDivElement, TileProps>(
               disablePictureInPicture
             />
           )}
+          {!video && member && joinedCallTime > 0 && (
+            <div style={{ textAlign: "center" }}>
+              <span>
+                {nameTag} ({member.userId})
+              </span>{" "}
+              joined the call{" "}
+              <span title={new Date(joinedCallTime).toLocaleString()}>
+                {joinedCallAgo}
+              </span>{" "}
+              but is currently unreachable.
+              {lastActiveTime > 0 && (
+                <span>
+                  They were last reachable{" "}
+                  <span title={new Date(lastActiveTime).toLocaleString()}>
+                    {lastActiveAgo}
+                  </span>
+                  .
+                </span>
+              )}{" "}
+              Are they having connection problems?
+            </div>
+          )}
         </div>
         <div className={styles.fg}>
           <div className={styles.nameTag}>
             {nameTagLeadingIcon}
             <Text as="span" size="sm" weight="medium" className={styles.name}>
-              {nameTag}
+              <span
+                title={`${member?.userId}${lastActiveTime > 0 ? ` last reachable ${online ? "now" : lastActiveAgo}` : ""}`}
+              >
+                {nameTag}
+              </span>{" "}
             </Text>
             {unencryptedWarning && (
               <Tooltip
@@ -402,6 +453,75 @@ const ScreenShareTile = subscribe<ScreenShareTileProps, HTMLDivElement>(
 
 ScreenShareTile.displayName = "ScreenShareTile";
 
+interface MembershipOnlyTileProps {
+  vm: MembershipOnlyViewModel;
+  className?: string;
+  style?: ComponentProps<typeof animated.div>["style"];
+  targetWidth: number;
+  targetHeight: number;
+  nameTag: string;
+  displayName: string;
+  maximised: boolean;
+  fullscreen: boolean;
+  onToggleFullscreen: (itemId: string) => void;
+}
+
+const MembershipOnlyTile = subscribe<MembershipOnlyTileProps, HTMLDivElement>(
+  (
+    {
+      vm,
+      className,
+      style,
+      targetWidth,
+      targetHeight,
+      nameTag,
+      displayName,
+      maximised,
+      fullscreen,
+      onToggleFullscreen,
+    },
+    ref,
+  ) => {
+    const { t } = useTranslation();
+    const onClickFullScreen = useCallback(
+      () => onToggleFullscreen(vm.id),
+      [onToggleFullscreen, vm],
+    );
+
+    const FullScreenIcon = fullscreen ? CollapseIcon : ExpandIcon;
+
+    return (
+      <Tile
+        ref={ref}
+        className={classNames(className, styles.membershipOnly)}
+        style={style}
+        targetWidth={targetWidth}
+        targetHeight={targetHeight}
+        member={vm.member}
+        videoEnabled={true}
+        maximised={maximised}
+        unencryptedWarning={false}
+        nameTag={nameTag}
+        displayName={displayName}
+        primaryButton={
+          <button
+            aria-label={
+              fullscreen
+                ? t("video_tile.full_screen")
+                : t("video_tile.exit_full_screen")
+            }
+            onClick={onClickFullScreen}
+          >
+            <FullScreenIcon aria-hidden width={20} height={20} />
+          </button>
+        }
+      />
+    );
+  },
+);
+
+MembershipOnlyTile.displayName = "MembershipOnlyTile";
+
 interface Props {
   vm: MediaViewModel;
   maximised: boolean;
@@ -471,9 +591,25 @@ export const VideoTile = forwardRef<HTMLDivElement, Props>(
           showSpeakingIndicator={showSpeakingIndicator}
         />
       );
-    } else {
+    } else if (vm instanceof ScreenShareViewModel) {
       return (
         <ScreenShareTile
+          ref={ref}
+          className={className}
+          style={style}
+          vm={vm}
+          targetWidth={targetWidth}
+          targetHeight={targetHeight}
+          nameTag={nameTag}
+          displayName={displayName}
+          maximised={maximised}
+          fullscreen={fullscreen}
+          onToggleFullscreen={onToggleFullscreen}
+        />
+      );
+    } else if (vm instanceof MembershipOnlyViewModel) {
+      return (
+        <MembershipOnlyTile
           ref={ref}
           className={className}
           style={style}
