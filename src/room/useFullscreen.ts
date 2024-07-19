@@ -20,7 +20,6 @@ import { useCallback, useLayoutEffect, useRef } from "react";
 
 import { useReactiveState } from "../useReactiveState";
 import { useEventTarget } from "../useEvents";
-import { TileDescriptor } from "../state/CallViewModel";
 
 const isFullscreen = (): boolean =>
   Boolean(document.fullscreenElement) ||
@@ -55,31 +54,30 @@ function useFullscreenChange(onFullscreenChange: () => void): void {
  * Provides callbacks for controlling the full-screen view, which can hold one
  * item at a time.
  */
-export function useFullscreen<T>(items: TileDescriptor<T>[]): {
-  fullscreenItem: TileDescriptor<T> | null;
+// TODO: Simplify this. Nowadays we only allow the spotlight to be fullscreen,
+// so we don't need to bother with multiple items.
+export function useFullscreen(items: string[]): {
+  fullscreenItem: string | null;
   toggleFullscreen: (itemId: string) => void;
   exitFullscreen: () => void;
 } {
-  const [fullscreenItem, setFullscreenItem] =
-    useReactiveState<TileDescriptor<T> | null>(
-      (prevItem) =>
-        prevItem == null
-          ? null
-          : (items.find((i) => i.id === prevItem.id) ?? null),
-      [items],
-    );
+  const [fullscreenItem, setFullscreenItem] = useReactiveState<string | null>(
+    (prevItem) =>
+      prevItem == null ? null : (items.find((i) => i === prevItem) ?? null),
+    [items],
+  );
 
-  const latestItems = useRef<TileDescriptor<T>[]>(items);
+  const latestItems = useRef<string[]>(items);
   latestItems.current = items;
 
-  const latestFullscreenItem = useRef<TileDescriptor<T> | null>(fullscreenItem);
+  const latestFullscreenItem = useRef<string | null>(fullscreenItem);
   latestFullscreenItem.current = fullscreenItem;
 
   const toggleFullscreen = useCallback(
     (itemId: string) => {
       setFullscreenItem(
         latestFullscreenItem.current === null
-          ? (latestItems.current.find((i) => i.id === itemId) ?? null)
+          ? (latestItems.current.find((i) => i === itemId) ?? null)
           : null,
       );
     },

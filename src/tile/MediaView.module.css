@@ -1,5 +1,5 @@
 /*
-Copyright 2022-2023 New Vector Ltd
+Copyright 2022-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,63 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.videoTile {
-  position: absolute;
-  top: 0;
-  container-name: videoTile;
+.media {
+  container-name: mediaView;
   container-type: size;
-  border-radius: var(--cpd-space-4x);
-  transition: outline-color ease 0.15s;
-  outline: var(--cpd-border-width-2) solid rgb(0 0 0 / 0);
+  border-radius: var(--media-view-border-radius);
 }
 
-/* Use a pseudo-element to create the expressive speaking border, since CSS
-borders don't support gradients */
-.videoTile::before {
-  content: "";
-  position: absolute;
-  z-index: -1; /* Put it below the outline */
-  opacity: 0; /* Hidden unless speaking */
-  transition: opacity ease 0.15s;
-  inset: calc(-1 * var(--cpd-border-width-4));
-  border-radius: var(--cpd-space-5x);
-  background: linear-gradient(
-      119deg,
-      rgba(13, 92, 189, 0.7) 0%,
-      rgba(13, 189, 168, 0.7) 100%
-    ),
-    linear-gradient(
-      180deg,
-      rgba(13, 92, 189, 0.9) 0%,
-      rgba(13, 189, 168, 0.9) 100%
-    );
-  background-blend-mode: overlay, normal;
-}
-
-.videoTile.speaking {
-  /* !important because speaking border should take priority over hover */
-  outline: var(--cpd-border-width-1) solid var(--cpd-color-bg-canvas-default) !important;
-}
-
-.videoTile.speaking::before {
-  opacity: 1;
-}
-
-@media (hover: hover) {
-  .videoTile:hover {
-    outline: var(--cpd-border-width-2) solid
-      var(--cpd-color-border-interactive-hovered);
-  }
-}
-
-.videoTile.maximised {
-  position: relative;
-  border-radius: 0;
-  inline-size: 100%;
-  block-size: 100%;
-}
-
-.videoTile video {
+.media video {
   inline-size: 100%;
   block-size: 100%;
   object-fit: contain;
@@ -81,19 +31,19 @@ borders don't support gradients */
   transform: translate(0);
 }
 
-.videoTile.mirror video {
+.media.mirror video {
   transform: scaleX(-1);
 }
 
-.videoTile.screenshare video {
-  object-fit: contain;
-}
-
-.videoTile.cropVideo video {
+.media[data-video-fit="cover"] video {
   object-fit: cover;
 }
 
-.videoTile.videoMuted video {
+.media[data-video-fit="contain"] video {
+  object-fit: contain;
+}
+
+.media.videoMuted video {
   display: none;
 }
 
@@ -114,13 +64,13 @@ borders don't support gradients */
   pointer-events: none;
 }
 
-.videoTile.videoMuted .avatar {
+.media.videoMuted .avatar {
   display: initial;
 }
 
 /* CSS makes us put a condition here, even though all we want to do is
 unconditionally select the container so we can use cqmin units */
-@container videoTile (width > 0) {
+@container mediaView (width > 0) {
   .avatar {
     /* Half of the smallest dimension of the tile */
     inline-size: 50cqmin;
@@ -137,11 +87,14 @@ unconditionally select the container so we can use cqmin units */
 
 .fg {
   position: absolute;
-  inset: var(--cpd-space-1x);
+  inset: var(
+    --media-view-fg-inset,
+    calc(var(--media-view-border-radius) - var(--cpd-space-3x))
+  );
   display: grid;
   grid-template-columns: 1fr auto;
   grid-template-rows: 1fr auto;
-  grid-template-areas: ". button2" "nameTag button1";
+  grid-template-areas: ". ." "nameTag button";
   gap: var(--cpd-space-1x);
   place-items: start;
 }
@@ -165,14 +118,6 @@ unconditionally select the container so we can use cqmin units */
 .nameTag > svg,
 .nameTag > span {
   flex-shrink: 0;
-}
-
-.muteIcon[data-muted="true"] {
-  color: var(--cpd-color-icon-secondary);
-}
-
-.muteIcon[data-muted="false"] {
-  color: var(--cpd-color-icon-primary);
 }
 
 .nameTag > .name {
@@ -200,8 +145,7 @@ unconditionally select the container so we can use cqmin units */
   transition: opacity ease 0.15s;
 }
 
-.fg > button:focus-visible,
-.fg > :focus-visible ~ button,
+.fg:has(:focus-visible) > button,
 .fg > button[data-enabled="true"],
 .fg > button[data-state="open"] {
   opacity: 1;
@@ -231,13 +175,5 @@ unconditionally select the container so we can use cqmin units */
 }
 
 .fg > button:first-of-type {
-  grid-area: button1;
-}
-
-.fg > button:nth-of-type(2) {
-  grid-area: button2;
-}
-
-.volumeSlider {
-  width: 100%;
+  grid-area: button;
 }
