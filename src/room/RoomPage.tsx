@@ -26,7 +26,6 @@ import { GroupCallLoader } from "./GroupCallLoader";
 import { GroupCallView } from "./GroupCallView";
 import { useRoomIdentifier, useUrlParams } from "../UrlParams";
 import { useRegisterPasswordlessUser } from "../auth/useRegisterPasswordlessUser";
-import { useOptInAnalytics } from "../settings/useSetting";
 import { HomePage } from "../home/HomePage";
 import { platform } from "../Platform";
 import { AppSelectionModal } from "./AppSelectionModal";
@@ -36,6 +35,10 @@ import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useProfile } from "../profile/useProfile";
 import { useMuteStates } from "./MuteStates";
+import {
+  useSetting,
+  optInAnalytics as optInAnalyticsSetting,
+} from "../settings/settings";
 
 export const RoomPage: FC = () => {
   const {
@@ -80,7 +83,7 @@ export const RoomPage: FC = () => {
     registerPasswordlessUser,
   ]);
 
-  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
+  const [optInAnalytics, setOptInAnalytics] = useSetting(optInAnalyticsSetting);
   useEffect(() => {
     // During the beta, opt into analytics by default
     if (optInAnalytics === null && setOptInAnalytics) setOptInAnalytics(true);

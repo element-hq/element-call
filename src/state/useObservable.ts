@@ -14,8 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { useRef } from "react";
+import { Ref, useCallback, useRef } from "react";
 import { BehaviorSubject, Observable } from "rxjs";
+
+import { useInitial } from "../useInitial";
 
 /**
  * React hook that creates an Observable from a changing value. The Observable
@@ -27,4 +29,15 @@ export function useObservable<T>(value: T): Observable<T> {
   subject.current ??= new BehaviorSubject(value);
   if (value !== subject.current.value) subject.current.next(value);
   return subject.current;
+}
+
+/**
+ * React hook that creates a ref and an Observable that emits any values
+ * stored in the ref. The Observable replays the value currently stored in the
+ * ref upon subscription.
+ */
+export function useObservableRef<T>(initialValue: T): [Observable<T>, Ref<T>] {
+  const subject = useInitial(() => new BehaviorSubject(initialValue));
+  const ref = useCallback((value: T) => subject.next(value), [subject]);
+  return [subject, ref];
 }

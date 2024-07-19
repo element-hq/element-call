@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ChangeEvent, FC, Key, ReactNode } from "react";
+import { ChangeEvent, FC, Key, ReactNode, useCallback } from "react";
 import { Item } from "@react-stately/collections";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk";
@@ -29,12 +29,6 @@ import OverflowIcon from "../icons/Overflow.svg?react";
 import UserIcon from "../icons/User.svg?react";
 import FeedbackIcon from "../icons/Feedback.svg?react";
 import { SelectInput } from "../input/SelectInput";
-import {
-  useOptInAnalytics,
-  useDeveloperSettingsTab,
-  useShowConnectionStats,
-  isFirefox,
-} from "./useSetting";
 import { FieldRow, InputField } from "../input/Input";
 import { Body, Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
@@ -46,6 +40,13 @@ import {
   useMediaDeviceNames,
 } from "../livekit/MediaDevicesContext";
 import { widget } from "../widget";
+import {
+  useSetting,
+  optInAnalytics as optInAnalyticsSetting,
+  developerSettingsTab as developerSettingsTabSetting,
+  duplicateTiles as duplicateTilesSetting,
+} from "./settings";
+import { isFirefox } from "../Platform";
 
 type SettingsTab =
   | "audio"
@@ -76,11 +77,11 @@ export const SettingsModal: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
 
-  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
-  const [developerSettingsTab, setDeveloperSettingsTab] =
-    useDeveloperSettingsTab();
-  const [showConnectionStats, setShowConnectionStats] =
-    useShowConnectionStats();
+  const [optInAnalytics, setOptInAnalytics] = useSetting(optInAnalyticsSetting);
+  const [developerSettingsTab, setDeveloperSettingsTab] = useSetting(
+    developerSettingsTabSetting,
+  );
+  const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
 
   // Generate a `SelectInput` with a list of devices for a given device kind.
   const generateDeviceSelection = (
@@ -247,14 +248,16 @@ export const SettingsModal: FC<Props> = ({
       </FieldRow>
       <FieldRow>
         <InputField
-          id="showConnectionStats"
-          name="connection-stats"
-          label={t("settings.show_connection_stats_label")}
-          type="checkbox"
-          checked={showConnectionStats}
-          onChange={(e: ChangeEvent<HTMLInputElement>): void =>
-            setShowConnectionStats(e.target.checked)
-          }
+          id="duplicateTiles"
+          type="number"
+          label={t("settings.duplicate_tiles_label")}
+          value={duplicateTiles.toString()}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setDuplicateTiles(event.target.valueAsNumber);
+            },
+            [setDuplicateTiles],
+          )}
         />
       </FieldRow>
     </TabItem>

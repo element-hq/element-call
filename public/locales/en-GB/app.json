@@ -41,6 +41,7 @@
     "analytics": "Analytics",
     "audio": "Audio",
     "avatar": "Avatar",
+    "back": "Back",
     "camera": "Camera",
     "copied": "Copied!",
     "display_name": "Display name",
@@ -49,6 +50,7 @@
     "home": "Home",
     "loading": "Loading…",
     "microphone": "Microphone",
+    "next": "Next",
     "options": "Options",
     "password": "Password",
     "profile": "Profile",
@@ -130,6 +132,7 @@
     "developer_settings_label": "Developer Settings",
     "developer_settings_label_description": "Expose developer settings in the settings window.",
     "developer_tab_title": "Developer",
+    "duplicate_tiles_label": "Number of additional tile copies per participant",
     "feedback_tab_body": "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
     "feedback_tab_description_label": "Your feedback",
     "feedback_tab_h4": "Submit feedback",
@@ -138,7 +141,6 @@
     "feedback_tab_title": "Feedback",
     "more_tab_title": "More",
     "opt_in_description": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",
-    "show_connection_stats_label": "Show connection stats",
     "speaker_device_selection_label": "Speaker"
   },
   "star_rating_input_label_one": "{{count}} stars",
@@ -154,12 +156,12 @@
   "unmute_microphone_button_label": "Unmute microphone",
   "version": "Version: {{version}}",
   "video_tile": {
+    "always_show": "Always show",
     "change_fit_contain": "Fit to frame",
     "exit_full_screen": "Exit full screen",
     "full_screen": "Full screen",
     "mute_for_me": "Mute for me",
     "sfu_participant_local": "You",
     "volume": "Volume"
-  },
-  "waiting_for_participants": "Waiting for other participants…"
+  }
 }

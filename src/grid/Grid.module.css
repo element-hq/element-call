@@ -1,5 +1,5 @@
 /*
-Copyright 2023 New Vector Ltd
+Copyright 2023-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,15 +14,10 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.bigGrid {
-  display: grid;
-  grid-auto-rows: 130px;
-  gap: var(--cpd-space-2x);
+.grid {
+  contain: layout style;
 }
 
-@media (min-width: 800px) {
-  .bigGrid {
-    grid-auto-rows: 135px;
-    gap: var(--cpd-space-5x);
-  }
+.slot {
+  contain: strict;
 }
