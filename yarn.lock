@@ -3840,9 +3840,9 @@
     "@use-gesture/core" "10.3.1"
 
 "@vector-im/compound-design-tokens@^1.0.0":
-  version "1.6.0"
-  resolved "https://registry.yarnpkg.com/@vector-im/compound-design-tokens/-/compound-design-tokens-1.6.0.tgz#75e5059d3d87930a5fb5a31c6921ec10724c53da"
-  integrity sha512-67o1tF5ygp6axRbaaoUVAtgYS591BUV27d92L4dtexRvVvkRyGvdAk44MMWuyhHT/SYb6WFw5zxJbVDeS5WFPQ==
+  version "1.6.1"
+  resolved "https://registry.yarnpkg.com/@vector-im/compound-design-tokens/-/compound-design-tokens-1.6.1.tgz#3f1bb5b2b9f8aff10144aab19dfa11165c3c927b"
+  integrity sha512-u5xG/8AN7QkPPWhugj0ZrQtWsAjuKHzuOoP0s3bbDg7ZkKTE9l5tM29bdOHnSv9mEYKO+KVMMfsl0W1rlaTmAw==
 
 "@vector-im/compound-web@^3.0.0":
   version "3.3.1"
