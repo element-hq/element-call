@@ -59,7 +59,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
     );
     const [generation] = useReactiveState<number>(
       (prev) => (prev === undefined ? 0 : prev + 1),
-      [model.grid.length, width, height],
+      [model.grid.length, width, height, model.spotlight],
     );
 
     return (
