@@ -414,7 +414,7 @@ export const InCallView: FC<InCallViewProps> = subscribe(
             </div>
           )}
           {showControls && <div className={styles.buttons}>{buttons}</div>}
-          {!mobile && !hideHeader && showControls && (
+          {!mobile && showControls && (
             <LayoutToggle
               className={styles.layout}
               layout={layout}
