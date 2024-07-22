@@ -40,7 +40,7 @@ export const makeSpotlightExpandedLayout: CallLayout<
 
     const [generation] = useReactiveState<number>(
       (prev) => (prev === undefined ? 0 : prev + 1),
-      [width, height],
+      [width, height, model.spotlight],
     );
 
     const spotlightTileModel: SpotlightTileModel = useMemo(
