@@ -1,9 +1,9 @@
 {
   "compilerOptions": {
-    "target": "es2016",
+    "target": "es2022",
     "module": "es2020",
     "jsx": "react-jsx",
-    "lib": ["es2020", "dom", "dom.iterable"],
+    "lib": ["es2022", "dom", "dom.iterable"],
 
     // From Matrix-JS-SDK
     "strict": true,
@@ -15,6 +15,8 @@
     "moduleResolution": "bundler",
     "declaration": true,
     "resolveJsonModule": true,
+    // Workaround for https://github.com/microsoft/TypeScript/issues/55132
+    "useDefineForClassFields": false,
     "paths": {
       // These imports within @livekit/components-core and
       // @livekit/components-react are broken under the "bundler" module
