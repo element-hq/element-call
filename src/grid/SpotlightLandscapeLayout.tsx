@@ -21,7 +21,7 @@ import classNames from "classnames";
 import { CallLayout, GridTileModel, TileModel } from "./CallLayout";
 import { SpotlightLandscapeLayout as SpotlightLandscapeLayoutModel } from "../state/CallViewModel";
 import styles from "./SpotlightLandscapeLayout.module.css";
-import { useReactiveState } from "../useReactiveState";
+import { useLayout } from "./Grid";
 
 /**
  * An implementation of the "spotlight landscape" layout, in which the spotlight
@@ -37,7 +37,8 @@ export const makeSpotlightLandscapeLayout: CallLayout<
     { model, Slot },
     ref,
   ) {
-    const { width, height } = useObservableEagerState(minBounds);
+    useLayout();
+    useObservableEagerState(minBounds);
     const tileModel: TileModel = useMemo(
       () => ({
         type: "spotlight",
@@ -46,13 +47,9 @@ export const makeSpotlightLandscapeLayout: CallLayout<
       }),
       [model.spotlight],
     );
-    const [generation] = useReactiveState<number>(
-      (prev) => (prev === undefined ? 0 : prev + 1),
-      [model.grid.length, width, height, model.spotlight],
-    );
 
     return (
-      <div ref={ref} data-generation={generation} className={styles.layer}>
+      <div ref={ref} className={styles.layer}>
         <div className={styles.spotlight}>
           <Slot className={styles.slot} id="spotlight" model={tileModel} />
         </div>
@@ -65,18 +62,15 @@ export const makeSpotlightLandscapeLayout: CallLayout<
     { model, Slot },
     ref,
   ) {
-    const { width, height } = useObservableEagerState(minBounds);
+    useLayout();
+    useObservableEagerState(minBounds);
     const tileModels: GridTileModel[] = useMemo(
       () => model.grid.map((vm) => ({ type: "grid", vm })),
       [model.grid],
     );
-    const [generation] = useReactiveState<number>(
-      (prev) => (prev === undefined ? 0 : prev + 1),
-      [model.spotlight.length, model.grid, width, height],
-    );
 
     return (
-      <div ref={ref} data-generation={generation} className={styles.layer}>
+      <div ref={ref} className={styles.layer}>
         <div
           className={classNames(styles.spotlight, {
             [styles.withIndicators]: model.spotlight.length > 1,

@@ -20,7 +20,6 @@ import { useObservableEagerState } from "observable-hooks";
 
 import { GridLayout as GridLayoutModel } from "../state/CallViewModel";
 import styles from "./GridLayout.module.css";
-import { useReactiveState } from "../useReactiveState";
 import { useInitial } from "../useInitial";
 import {
   CallLayout,
@@ -28,7 +27,7 @@ import {
   TileModel,
   arrangeTiles,
 } from "./CallLayout";
-import { DragCallback } from "./Grid";
+import { DragCallback, useLayout } from "./Grid";
 
 interface GridCSSProperties extends CSSProperties {
   "--gap": string;
@@ -49,7 +48,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
   // The "fixed" (non-scrolling) part of the layout is where the spotlight tile
   // lives
   fixed: forwardRef(function GridLayoutFixed({ model, Slot }, ref) {
-    const { width, height } = useObservableEagerState(minBounds);
+    useLayout();
     const alignment = useObservableEagerState(
       useInitial(() =>
         spotlightAlignment.pipe(
@@ -68,10 +67,6 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
         },
       [model.spotlight],
     );
-    const [generation] = useReactiveState<number>(
-      (prev) => (prev === undefined ? 0 : prev + 1),
-      [model.spotlight === undefined, width, height, alignment],
-    );
 
     const onDragSpotlight: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>
@@ -83,7 +78,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
     );
 
     return (
-      <div ref={ref} className={styles.fixed} data-generation={generation}>
+      <div ref={ref} className={styles.fixed}>
         {tileModel && (
           <Slot
             className={styles.slot}
@@ -100,15 +95,11 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
 
   // The scrolling part of the layout is where all the grid tiles live
   scrolling: forwardRef(function GridLayout({ model, Slot }, ref) {
+    useLayout();
     const { width, height: minHeight } = useObservableEagerState(minBounds);
     const { gap, tileWidth, tileHeight } = useMemo(
       () => arrangeTiles(width, minHeight, model.grid.length),
       [width, minHeight, model.grid.length],
-    );
-
-    const [generation] = useReactiveState<number>(
-      (prev) => (prev === undefined ? 0 : prev + 1),
-      [model.grid, width, minHeight],
     );
 
     const tileModels: GridTileModel[] = useMemo(
@@ -119,7 +110,6 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
     return (
       <div
         ref={ref}
-        data-generation={generation}
         className={styles.scrolling}
         style={
           {
