@@ -26,7 +26,7 @@ import {
 } from "./CallLayout";
 import { SpotlightPortraitLayout as SpotlightPortraitLayoutModel } from "../state/CallViewModel";
 import styles from "./SpotlightPortraitLayout.module.css";
-import { useReactiveState } from "../useReactiveState";
+import { useLayout } from "./Grid";
 
 interface GridCSSProperties extends CSSProperties {
   "--grid-gap": string;
@@ -48,7 +48,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
     { model, Slot },
     ref,
   ) {
-    const { width, height } = useObservableEagerState(minBounds);
+    useLayout();
     const tileModel: TileModel = useMemo(
       () => ({
         type: "spotlight",
@@ -57,13 +57,9 @@ export const makeSpotlightPortraitLayout: CallLayout<
       }),
       [model.spotlight],
     );
-    const [generation] = useReactiveState<number>(
-      (prev) => (prev === undefined ? 0 : prev + 1),
-      [model.grid.length, width, height, model.spotlight],
-    );
 
     return (
-      <div ref={ref} data-generation={generation} className={styles.layer}>
+      <div ref={ref} className={styles.layer}>
         <div className={styles.spotlight}>
           <Slot className={styles.slot} id="spotlight" model={tileModel} />
         </div>
@@ -75,7 +71,8 @@ export const makeSpotlightPortraitLayout: CallLayout<
     { model, Slot },
     ref,
   ) {
-    const { width, height } = useObservableEagerState(minBounds);
+    useLayout();
+    const { width } = useObservableEagerState(minBounds);
     const { gap, tileWidth, tileHeight } = arrangeTiles(
       width,
       0,
@@ -85,15 +82,10 @@ export const makeSpotlightPortraitLayout: CallLayout<
       () => model.grid.map((vm) => ({ type: "grid", vm })),
       [model.grid],
     );
-    const [generation] = useReactiveState<number>(
-      (prev) => (prev === undefined ? 0 : prev + 1),
-      [model.spotlight.length, model.grid, width, height],
-    );
 
     return (
       <div
         ref={ref}
-        data-generation={generation}
         className={styles.layer}
         style={
           {

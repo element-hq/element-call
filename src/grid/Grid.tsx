@@ -25,10 +25,15 @@ import {
   CSSProperties,
   ComponentProps,
   ComponentType,
+  Dispatch,
   FC,
   LegacyRef,
   ReactNode,
-  useCallback,
+  SetStateAction,
+  createContext,
+  forwardRef,
+  memo,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -113,6 +118,27 @@ function offset(element: HTMLElement, relativeTo: Element): Offset {
   }
 }
 
+interface LayoutContext {
+  setGeneration: Dispatch<SetStateAction<number | null>>;
+}
+
+const LayoutContext = createContext<LayoutContext | null>(null);
+
+/**
+ * Enables Grid to react to layout changes. You must call this in your Layout
+ * component or else Grid will not be reactive.
+ */
+export function useLayout(): void {
+  const context = useContext(LayoutContext);
+  if (context === null)
+    throw new Error("useLayout called outside of a Grid layout component");
+
+  // On every render, tell Grid that the layout may have changed
+  useEffect(() =>
+    context.setGeneration((prev) => (prev === null ? 0 : prev + 1)),
+  );
+}
+
 export interface LayoutProps<LayoutModel, TileModel, R extends HTMLElement> {
   ref: LegacyRef<R>;
   model: LayoutModel;
@@ -157,6 +183,11 @@ interface Drag {
 }
 
 export type DragCallback = (drag: Drag) => void;
+
+interface LayoutMemoProps<LayoutModel, TileModel, R extends HTMLElement>
+  extends LayoutProps<LayoutModel, TileModel, R> {
+  Layout: ComponentType<LayoutProps<LayoutModel, TileModel, R>>;
+}
 
 interface Props<
   LayoutModel,
@@ -209,7 +240,7 @@ export function Grid<
   const [gridRoot, gridRef2] = useState<HTMLElement | null>(null);
   const gridRef = useMergedRefs<HTMLElement>(gridRef1, gridRef2);
 
-  const [layoutRoot, setLayoutRoot] = useState<HTMLElement | null>(null);
+  const [layoutRoot, layoutRef] = useState<HTMLElement | null>(null);
   const [generation, setGeneration] = useState<number | null>(null);
   const tiles = useInitial(() => new Map<string, Tile<TileModel>>());
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -236,27 +267,22 @@ export function Grid<
     [tiles],
   );
 
-  const layoutRef = useCallback(
-    (e: HTMLElement | null) => {
-      setLayoutRoot(e);
-      if (e !== null)
-        setGeneration(parseInt(e.getAttribute("data-generation")!));
-    },
-    [setLayoutRoot, setGeneration],
+  // We must memoize the Layout component to break the update loop where a
+  // render of Grid causes a re-render of Layout, which in turn re-renders Grid
+  const LayoutMemo = useMemo(
+    () =>
+      memo(
+        forwardRef<
+          LayoutRef,
+          LayoutMemoProps<LayoutModel, TileModel, LayoutRef>
+        >(function LayoutMemo({ Layout, ...props }, ref): ReactNode {
+          return <Layout {...props} ref={ref} />;
+        }),
+      ),
+    [],
   );
 
-  useEffect(() => {
-    if (layoutRoot !== null) {
-      const observer = new MutationObserver((mutations) => {
-        if (mutations.some((m) => m.type === "attributes")) {
-          setGeneration(parseInt(layoutRoot.getAttribute("data-generation")!));
-        }
-      });
-
-      observer.observe(layoutRoot, { attributes: true });
-      return (): void => observer.disconnect();
-    }
-  }, [layoutRoot, setGeneration]);
+  const context: LayoutContext = useMemo(() => ({ setGeneration }), []);
 
   // Combine the tile definitions and slots together to create placed tiles
   const placedTiles = useMemo(() => {
@@ -279,10 +305,10 @@ export function Grid<
     }
 
     return result;
-    // The rects may change due to the grid updating to a new generation, but
-    // eslint can't statically verify this
+    // The rects may change due to the grid resizing or updating to a new
+    // generation, but eslint can't statically verify this
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gridRoot, layoutRoot, tiles, generation]);
+  }, [gridRoot, layoutRoot, tiles, gridBounds, generation]);
 
   // Drag state is stored in a ref rather than component state, because we use
   // react-spring's imperative API during gestures to improve responsiveness
@@ -463,7 +489,9 @@ export function Grid<
       className={classNames(className, styles.grid)}
       style={style}
     >
-      <Layout ref={layoutRef} model={model} Slot={Slot} />
+      <LayoutContext.Provider value={context}>
+        <LayoutMemo ref={layoutRef} Layout={Layout} model={model} Slot={Slot} />
+      </LayoutContext.Provider>
       {tileTransitions((spring, { id, model, onDrag, width, height }) => (
         <TileWrapper
           key={id}

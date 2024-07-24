@@ -20,9 +20,8 @@ import classNames from "classnames";
 
 import { OneOnOneLayout as OneOnOneLayoutModel } from "../state/CallViewModel";
 import { CallLayout, GridTileModel, arrangeTiles } from "./CallLayout";
-import { useReactiveState } from "../useReactiveState";
 import styles from "./OneOnOneLayout.module.css";
-import { DragCallback } from "./Grid";
+import { DragCallback, useLayout } from "./Grid";
 
 /**
  * An implementation of the "one-on-one" layout, in which the remote participant
@@ -35,20 +34,17 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
   scrollingOnTop: false,
 
   fixed: forwardRef(function OneOnOneLayoutFixed(_props, ref) {
-    return <div ref={ref} data-generation={0} />;
+    useLayout();
+    return <div ref={ref} />;
   }),
 
   scrolling: forwardRef(function OneOnOneLayoutScrolling({ model, Slot }, ref) {
+    useLayout();
     const { width, height } = useObservableEagerState(minBounds);
     const pipAlignmentValue = useObservableEagerState(pipAlignment);
     const { tileWidth, tileHeight } = useMemo(
       () => arrangeTiles(width, height, 1),
       [width, height],
-    );
-
-    const [generation] = useReactiveState<number>(
-      (prev) => (prev === undefined ? 0 : prev + 1),
-      [width, height, pipAlignmentValue],
     );
 
     const remoteTileModel: GridTileModel = useMemo(
@@ -70,7 +66,7 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
     );
 
     return (
-      <div ref={ref} data-generation={generation} className={styles.layer}>
+      <div ref={ref} className={styles.layer}>
         <Slot
           id={remoteTileModel.vm.id}
           model={remoteTileModel}
