@@ -14,20 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { RefObject, useCallback, useRef } from "react";
+import { RefObject, useCallback, useMemo, useRef } from "react";
 
 import { useEventTarget } from "./useEvents";
 
 /**
  * Determines whether focus is in the same part of the tree as the given
- * element (specifically, if an ancestor or descendant of it is focused).
+ * element (specifically, if the element or an ancestor of it is focused).
  */
 const mayReceiveKeyEvents = (e: HTMLElement): boolean => {
   const focusedElement = document.activeElement;
-  return (
-    focusedElement !== null &&
-    (focusedElement.contains(e) || e.contains(focusedElement))
-  );
+  return focusedElement !== null && focusedElement.contains(e);
 };
 
 export function useCallViewKeyboardShortcuts(
@@ -50,12 +47,17 @@ export function useCallViewKeyboardShortcuts(
         if (!mayReceiveKeyEvents(focusElement.current)) return;
 
         if (event.key === "m") {
+          event.preventDefault();
           toggleMicrophoneMuted();
         } else if (event.key == "v") {
+          event.preventDefault();
           toggleLocalVideoMuted();
-        } else if (event.key === " " && !spacebarHeld.current) {
-          spacebarHeld.current = true;
-          setMicrophoneMuted(false);
+        } else if (event.key === " ") {
+          event.preventDefault();
+          if (!spacebarHeld.current) {
+            spacebarHeld.current = true;
+            setMicrophoneMuted(false);
+          }
         }
       },
       [
@@ -65,6 +67,10 @@ export function useCallViewKeyboardShortcuts(
         setMicrophoneMuted,
       ],
     ),
+    // Because this is set on the window, to prevent shortcuts from activating
+    // another event callback at the same time, we need to preventDefault
+    // *before* child elements receive the event by using capture mode
+    useMemo(() => ({ capture: true }), []),
   );
 
   useEventTarget(
