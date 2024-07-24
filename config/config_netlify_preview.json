@@ -8,6 +8,9 @@
   "livekit": {
     "livekit_service_url": "https://livekit-jwt.call.element.dev"
   },
+  "features": {
+     "feature_use_device_session_member_events": true
+  },
   "posthog": {
     "api_key": "phc_rXGHx9vDmyEvyRxPziYtdVIv0ahEv8A9uLWFcCi1WcU",
     "api_host": "https://posthog-element-call.element.io"

@@ -8,5 +8,8 @@
   "livekit": {
     "livekit_service_url": "http://localhost:7881"
   },
+  "features": {
+     "feature_use_device_session_member_events": true
+  },
   "eula": "https://static.element.io/legal/online-EULA.pdf"
 }
