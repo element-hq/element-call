@@ -46,6 +46,7 @@ import {
   shareReplay,
   skip,
   startWith,
+  switchAll,
   switchMap,
   throttleTime,
   timer,
@@ -74,6 +75,10 @@ import { duplicateTiles } from "../settings/settings";
 // How long we wait after a focus switch before showing the real participant
 // list again
 const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
+
+// This is the number of participants that we think constitutes a "small" call
+// on mobile. No spotlight tile should be shown below this threshold.
+const smallMobileCallThreshold = 3;
 
 export interface GridLayout {
   type: "grid";
@@ -638,7 +643,20 @@ export class CallViewModel extends ViewModel {
             }),
           );
         case "narrow":
-          return this.spotlightPortraitLayout;
+          return this.oneOnOne.pipe(
+            switchMap((oneOnOne) =>
+              oneOnOne
+                ? this.oneOnOneLayout
+                : combineLatest(
+                    [this.grid, this.spotlight],
+                    (grid, spotlight) =>
+                      grid.length > smallMobileCallThreshold ||
+                      spotlight.some((vm) => vm instanceof ScreenShareViewModel)
+                        ? this.spotlightPortraitLayout
+                        : this.gridLayout,
+                  ).pipe(switchAll()),
+            ),
+          );
         case "flat":
           return this.gridMode.pipe(
             switchMap((gridMode) => {
