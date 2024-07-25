@@ -561,76 +561,84 @@ export class CallViewModel extends ViewModel {
     this.gridModeUserSelection.next(value);
   }
 
+  private readonly oneOnOne: Observable<boolean> = combineLatest(
+    [this.grid, this.screenShares],
+    (grid, screenShares) =>
+      grid.length == 2 &&
+      // There might not be a remote tile if only the local user is in the call
+      // and they're using the duplicate tiles option
+      grid.some((vm) => !vm.local) &&
+      screenShares.length === 0,
+  );
+
+  private readonly gridLayout: Observable<Layout> = combineLatest(
+    [this.grid, this.spotlight],
+    (grid, spotlight) => ({
+      type: "grid",
+      spotlight: spotlight.some((vm) => vm instanceof ScreenShareViewModel)
+        ? spotlight
+        : undefined,
+      grid,
+    }),
+  );
+
+  private readonly spotlightLandscapeLayout: Observable<Layout> = combineLatest(
+    [this.grid, this.spotlight],
+    (grid, spotlight) => ({ type: "spotlight-landscape", spotlight, grid }),
+  );
+
+  private readonly spotlightPortraitLayout: Observable<Layout> = combineLatest(
+    [this.grid, this.spotlight],
+    (grid, spotlight) => ({ type: "spotlight-portrait", spotlight, grid }),
+  );
+
+  private readonly spotlightExpandedLayout: Observable<Layout> = combineLatest(
+    [this.spotlight, this.pip],
+    (spotlight, pip) => ({
+      type: "spotlight-expanded",
+      spotlight,
+      pip: pip ?? undefined,
+    }),
+  );
+
+  private readonly oneOnOneLayout: Observable<Layout> = this.grid.pipe(
+    map((grid) => ({
+      type: "one-on-one",
+      local: grid.find((vm) => vm.local) as LocalUserMediaViewModel,
+      remote: grid.find((vm) => !vm.local) as RemoteUserMediaViewModel,
+    })),
+  );
+
+  private readonly pipLayout: Observable<Layout> = this.spotlight.pipe(
+    map((spotlight): Layout => ({ type: "pip", spotlight })),
+  );
+
   public readonly layout: Observable<Layout> = this.windowMode.pipe(
     switchMap((windowMode) => {
-      const spotlightLandscapeLayout = combineLatest(
-        [this.grid, this.spotlight],
-        (grid, spotlight): Layout => ({
-          type: "spotlight-landscape",
-          spotlight,
-          grid,
-        }),
-      );
-      const spotlightExpandedLayout = combineLatest(
-        [this.spotlight, this.pip],
-        (spotlight, pip): Layout => ({
-          type: "spotlight-expanded",
-          spotlight,
-          pip: pip ?? undefined,
-        }),
-      );
-
       switch (windowMode) {
         case "normal":
           return this.gridMode.pipe(
             switchMap((gridMode) => {
               switch (gridMode) {
                 case "grid":
-                  return combineLatest(
-                    [this.grid, this.spotlight, this.screenShares],
-                    (grid, spotlight, screenShares): Layout =>
-                      grid.length == 2 &&
-                      // There might not be a remote tile if only the local user
-                      // is in the call and they're using the duplicate tiles
-                      // option
-                      grid.some((vm) => !vm.local) &&
-                      screenShares.length === 0
-                        ? {
-                            type: "one-on-one",
-                            local: grid.find(
-                              (vm) => vm.local,
-                            ) as LocalUserMediaViewModel,
-                            remote: grid.find(
-                              (vm) => !vm.local,
-                            ) as RemoteUserMediaViewModel,
-                          }
-                        : {
-                            type: "grid",
-                            spotlight:
-                              screenShares.length > 0 ? spotlight : undefined,
-                            grid,
-                          },
+                  return this.oneOnOne.pipe(
+                    switchMap((oneOnOne) =>
+                      oneOnOne ? this.oneOnOneLayout : this.gridLayout,
+                    ),
                   );
                 case "spotlight":
                   return this.spotlightExpanded.pipe(
                     switchMap((expanded) =>
                       expanded
-                        ? spotlightExpandedLayout
-                        : spotlightLandscapeLayout,
+                        ? this.spotlightExpandedLayout
+                        : this.spotlightLandscapeLayout,
                     ),
                   );
               }
             }),
           );
         case "narrow":
-          return combineLatest(
-            [this.grid, this.spotlight],
-            (grid, spotlight): Layout => ({
-              type: "spotlight-portrait",
-              spotlight,
-              grid,
-            }),
-          );
+          return this.spotlightPortraitLayout;
         case "flat":
           return this.gridMode.pipe(
             switchMap((gridMode) => {
@@ -638,16 +646,14 @@ export class CallViewModel extends ViewModel {
                 case "grid":
                   // Yes, grid mode actually gets you a "spotlight" layout in
                   // this window mode.
-                  return spotlightLandscapeLayout;
+                  return this.spotlightLandscapeLayout;
                 case "spotlight":
-                  return spotlightExpandedLayout;
+                  return this.spotlightExpandedLayout;
               }
             }),
           );
         case "pip":
-          return this.spotlight.pipe(
-            map((spotlight): Layout => ({ type: "pip", spotlight })),
-          );
+          return this.pipLayout;
       }
     }),
     shareReplay(1),
