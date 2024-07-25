@@ -22,7 +22,7 @@ import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
 import { Text, Tooltip } from "@vector-im/compound-web";
-import ErrorIcon from "@vector-im/compound-design-tokens/icons/error.svg?react";
+import { ErrorIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";

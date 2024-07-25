@@ -17,7 +17,7 @@ limitations under the License.
 import { ComponentPropsWithoutRef, FC } from "react";
 import { Button } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
-import UserAddIcon from "@vector-im/compound-design-tokens/icons/user-add.svg?react";
+import { UserAddIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 export const InviteButton: FC<
   Omit<ComponentPropsWithoutRef<"button">, "children">

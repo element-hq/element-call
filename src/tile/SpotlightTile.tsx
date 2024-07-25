@@ -23,10 +23,12 @@ import {
   useRef,
   useState,
 } from "react";
-import ExpandIcon from "@vector-im/compound-design-tokens/icons/expand.svg?react";
-import CollapseIcon from "@vector-im/compound-design-tokens/icons/collapse.svg?react";
-import ChevronLeftIcon from "@vector-im/compound-design-tokens/icons/chevron-left.svg?react";
-import ChevronRightIcon from "@vector-im/compound-design-tokens/icons/chevron-right.svg?react";
+import {
+  ExpandIcon,
+  CollapseIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 import { animated } from "@react-spring/web";
 import { Observable, map } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
