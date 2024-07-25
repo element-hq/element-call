@@ -21,7 +21,7 @@ import classNames from "classnames";
 import { CallLayout, GridTileModel, TileModel } from "./CallLayout";
 import { SpotlightLandscapeLayout as SpotlightLandscapeLayoutModel } from "../state/CallViewModel";
 import styles from "./SpotlightLandscapeLayout.module.css";
-import { useLayout } from "./Grid";
+import { useUpdateLayout } from "./Grid";
 
 /**
  * An implementation of the "spotlight landscape" layout, in which the spotlight
@@ -37,7 +37,7 @@ export const makeSpotlightLandscapeLayout: CallLayout<
     { model, Slot },
     ref,
   ) {
-    useLayout();
+    useUpdateLayout();
     useObservableEagerState(minBounds);
     const tileModel: TileModel = useMemo(
       () => ({
@@ -62,7 +62,7 @@ export const makeSpotlightLandscapeLayout: CallLayout<
     { model, Slot },
     ref,
   ) {
-    useLayout();
+    useUpdateLayout();
     useObservableEagerState(minBounds);
     const tileModels: GridTileModel[] = useMemo(
       () => model.grid.map((vm) => ({ type: "grid", vm })),

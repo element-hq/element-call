@@ -128,10 +128,10 @@ const LayoutContext = createContext<LayoutContext | null>(null);
  * Enables Grid to react to layout changes. You must call this in your Layout
  * component or else Grid will not be reactive.
  */
-export function useLayout(): void {
+export function useUpdateLayout(): void {
   const context = useContext(LayoutContext);
   if (context === null)
-    throw new Error("useLayout called outside of a Grid layout component");
+    throw new Error("useUpdateLayout called outside a Grid layout context");
 
   // On every render, tell Grid that the layout may have changed
   useEffect(() =>
@@ -240,7 +240,7 @@ export function Grid<
   const [gridRoot, gridRef2] = useState<HTMLElement | null>(null);
   const gridRef = useMergedRefs<HTMLElement>(gridRef1, gridRef2);
 
-  const [layoutRoot, layoutRef] = useState<HTMLElement | null>(null);
+  const [layoutRoot, setLayoutRoot] = useState<HTMLElement | null>(null);
   const [generation, setGeneration] = useState<number | null>(null);
   const tiles = useInitial(() => new Map<string, Tile<TileModel>>());
   const prefersReducedMotion = usePrefersReducedMotion();
@@ -490,7 +490,12 @@ export function Grid<
       style={style}
     >
       <LayoutContext.Provider value={context}>
-        <LayoutMemo ref={layoutRef} Layout={Layout} model={model} Slot={Slot} />
+        <LayoutMemo
+          ref={setLayoutRoot}
+          Layout={Layout}
+          model={model}
+          Slot={Slot}
+        />
       </LayoutContext.Provider>
       {tileTransitions((spring, { id, model, onDrag, width, height }) => (
         <TileWrapper
