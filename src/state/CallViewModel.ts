@@ -543,10 +543,6 @@ export class CallViewModel extends ViewModel {
       shareReplay(1),
     );
 
-  public toggleSpotlightExpanded(): void {
-    this.spotlightExpandedToggle.next();
-  }
-
   private readonly gridModeUserSelection = new Subject<GridMode>();
   /**
    * The layout mode of the media tile grid.
@@ -677,6 +673,25 @@ export class CallViewModel extends ViewModel {
   public showSpeakingIndicators: Observable<boolean> = this.layout.pipe(
     map((l) => l.type !== "one-on-one" && l.type !== "spotlight-expanded"),
     distinctUntilChanged(),
+    shareReplay(1),
+  );
+
+  // To work around https://github.com/crimx/observable-hooks/issues/131 we must
+  // wrap the emitted function here in a non-function wrapper type
+  public readonly toggleSpotlightExpanded: Observable<
+    readonly [(() => void) | null]
+  > = this.layout.pipe(
+    map(
+      (l) =>
+        l.type === "spotlight-landscape" || l.type === "spotlight-expanded",
+    ),
+    distinctUntilChanged(),
+    map(
+      (enabled) =>
+        [
+          enabled ? (): void => this.spotlightExpandedToggle.next() : null,
+        ] as const,
+    ),
     shareReplay(1),
   );
 
