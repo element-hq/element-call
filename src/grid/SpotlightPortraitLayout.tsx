@@ -75,7 +75,9 @@ export const makeSpotlightPortraitLayout: CallLayout<
     const { width } = useObservableEagerState(minBounds);
     const { gap, tileWidth, tileHeight } = arrangeTiles(
       width,
-      0,
+      // TODO: We pretend that the minimum height is the width, because the
+      // actual minimum height is difficult to calculate
+      width,
       model.grid.length,
     );
     const tileModels: GridTileModel[] = useMemo(
