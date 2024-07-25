@@ -36,3 +36,8 @@ if (/android/i.test(navigator.userAgent)) {
 } else {
   platform = "desktop";
 }
+
+export const isFirefox = (): boolean => {
+  const { userAgent } = navigator;
+  return userAgent.includes("Firefox");
+};

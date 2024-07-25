@@ -20,7 +20,6 @@ import { MatrixClient } from "matrix-js-sdk";
 import { Buffer } from "buffer";
 
 import { widget } from "../widget";
-import { getSetting, setSetting, getSettingKey } from "../settings/useSetting";
 import {
   CallEndedTracker,
   CallStartedTracker,
@@ -35,7 +34,7 @@ import {
 } from "./PosthogEvents";
 import { Config } from "../config/Config";
 import { getUrlParams } from "../UrlParams";
-import { localStorageBus } from "../useLocalStorage";
+import { optInAnalytics } from "../settings/settings";
 
 /* Posthog analytics tracking.
  *
@@ -131,7 +130,7 @@ export class PosthogAnalytics {
         const { analyticsID } = getUrlParams();
         // if the embedding platform (element web) already got approval to communicating with posthog
         // element call can also send events to posthog
-        setSetting("opt-in-analytics", Boolean(analyticsID));
+        optInAnalytics.setValue(Boolean(analyticsID));
       }
 
       this.posthog.init(posthogConfig.project_api_key, {
@@ -151,9 +150,7 @@ export class PosthogAnalytics {
       );
       this.enabled = false;
     }
-    this.startListeningToSettingsChanges();
-    const optInAnalytics = getSetting("opt-in-analytics", false);
-    this.updateAnonymityAndIdentifyUser(optInAnalytics);
+    this.startListeningToSettingsChanges(); // Triggers maybeIdentifyUser
   }
 
   private sanitizeProperties = (
@@ -336,8 +333,7 @@ export class PosthogAnalytics {
   }
 
   public onLoginStatusChanged(): void {
-    const optInAnalytics = getSetting("opt-in-analytics", false);
-    this.updateAnonymityAndIdentifyUser(optInAnalytics);
+    this.maybeIdentifyUser();
   }
 
   private updateSuperProperties(): void {
@@ -360,20 +356,12 @@ export class PosthogAnalytics {
     return this.eventSignup.getSignupEndTime() > new Date(0);
   }
 
-  private async updateAnonymityAndIdentifyUser(
-    pseudonymousOptIn: boolean,
-  ): Promise<void> {
-    // Update this.anonymity based on the user's analytics opt-in settings
-    const anonymity = pseudonymousOptIn
-      ? Anonymity.Pseudonymous
-      : Anonymity.Disabled;
-    this.setAnonymity(anonymity);
-
+  private async maybeIdentifyUser(): Promise<void> {
     // We may not yet have a Matrix client at this point, if not, bail. This should get
     // triggered again by onLoginStatusChanged once we do have a client.
     if (!window.matrixclient) return;
 
-    if (anonymity === Anonymity.Pseudonymous) {
+    if (this.anonymity === Anonymity.Pseudonymous) {
       this.setRegistrationType(
         window.matrixclient.isGuest() || window.passwordlessUser
           ? RegistrationType.Guest
@@ -389,7 +377,7 @@ export class PosthogAnalytics {
       }
     }
 
-    if (anonymity !== Anonymity.Disabled) {
+    if (this.anonymity !== Anonymity.Disabled) {
       this.updateSuperProperties();
     }
   }
@@ -419,8 +407,9 @@ export class PosthogAnalytics {
     //  * When the user changes their preferences on this device
     // Note that for new accounts, pseudonymousAnalyticsOptIn won't be set, so updateAnonymityFromSettings
     // won't be called (i.e. this.anonymity will be left as the default, until the setting changes)
-    localStorageBus.on(getSettingKey("opt-in-analytics"), (optInAnalytics) => {
-      this.updateAnonymityAndIdentifyUser(optInAnalytics);
+    optInAnalytics.value.subscribe((optIn) => {
+      this.setAnonymity(optIn ? Anonymity.Pseudonymous : Anonymity.Disabled);
+      this.maybeIdentifyUser();
     });
   }
 

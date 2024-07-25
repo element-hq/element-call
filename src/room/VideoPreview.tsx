@@ -1,5 +1,5 @@
 /*
-Copyright 2022 - 2023 New Vector Ltd
+Copyright 2022 - 2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,20 +18,15 @@ import { useEffect, useMemo, useRef, FC, ReactNode, useCallback } from "react";
 import useMeasure from "react-use-measure";
 import { ResizeObserver } from "@juggle/resize-observer";
 import { usePreviewTracks } from "@livekit/components-react";
-import {
-  CreateLocalTracksOptions,
-  LocalVideoTrack,
-  Track,
-} from "livekit-client";
+import { LocalVideoTrack, Track } from "livekit-client";
 import classNames from "classnames";
 import { logger } from "matrix-js-sdk/src/logger";
-import { Glass } from "@vector-im/compound-web";
 
 import { Avatar } from "../Avatar";
 import styles from "./VideoPreview.module.css";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { MuteStates } from "./MuteStates";
-import { useMediaQuery } from "../useMediaQuery";
+import { useInitial } from "../useInitial";
 import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 
 export type MatrixInfo = {
@@ -63,10 +58,10 @@ export const VideoPreview: FC<Props> = ({
   // Capture the audio options as they were when we first mounted, because
   // we're not doing anything with the audio anyway so we don't need to
   // re-open the devices when they change (see below).
-  const initialAudioOptions = useRef<CreateLocalTracksOptions["audio"]>();
-  initialAudioOptions.current ??= muteStates.audio.enabled && {
-    deviceId: devices.audioInput.selectedId,
-  };
+  const initialAudioOptions = useInitial(
+    () =>
+      muteStates.audio.enabled && { deviceId: devices.audioInput.selectedId },
+  );
 
   const localTrackOptions = useMemo(
     () => ({
@@ -76,12 +71,16 @@ export const VideoPreview: FC<Props> = ({
       // reference the initial values here.
       // We also pass in a clone because livekit mutates the object passed in,
       // which would cause the devices to be re-opened on the next render.
-      audio: Object.assign({}, initialAudioOptions.current),
+      audio: Object.assign({}, initialAudioOptions),
       video: muteStates.video.enabled && {
         deviceId: devices.videoInput.selectedId,
       },
     }),
-    [devices.videoInput.selectedId, muteStates.video.enabled],
+    [
+      initialAudioOptions,
+      devices.videoInput.selectedId,
+      muteStates.video.enabled,
+    ],
   );
 
   const onError = useCallback(
@@ -115,8 +114,8 @@ export const VideoPreview: FC<Props> = ({
     };
   }, [videoTrack]);
 
-  const content = (
-    <>
+  return (
+    <div className={classNames(styles.preview)} ref={previewRef}>
       <video
         ref={videoEl}
         muted
@@ -136,21 +135,6 @@ export const VideoPreview: FC<Props> = ({
         </div>
       )}
       <div className={styles.buttonBar}>{children}</div>
-    </>
-  );
-
-  return useMediaQuery("(max-width: 550px)") ? (
-    <div
-      className={classNames(styles.preview, styles.content)}
-      ref={previewRef}
-    >
-      {content}
     </div>
-  ) : (
-    <Glass className={styles.preview}>
-      <div className={styles.content} ref={previewRef}>
-        {content}
-      </div>
-    </Glass>
   );
 };
