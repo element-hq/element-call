@@ -441,7 +441,6 @@ export const InCallView: FC<InCallViewProps> = ({
         data-testid="incall_videomute"
       />,
     );
-
     if (!reducedControls) {
       if (canScreenshare && !hideScreensharing) {
         buttons.push(
@@ -486,7 +485,7 @@ export const InCallView: FC<InCallViewProps> = ({
           </div>
         )}
         {showControls && <div className={styles.buttons}>{buttons}</div>}
-        {!mobile && !hideHeader && showControls && (
+        {!mobile && showControls && (
           <LayoutToggle
             className={styles.layout}
             layout={gridMode}
