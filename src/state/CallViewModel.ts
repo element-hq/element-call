@@ -75,13 +75,6 @@ import { duplicateTiles } from "../settings/settings";
 // list again
 const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 
-// This is the number of participants that we think constitutes a "large" grid.
-// The hypothesis is that, after this many participants there's enough cognitive
-// load that it makes sense to show the speaker in an easy-to-locate spotlight
-// tile. We might change this to a scroll-based condition or do something else
-// entirely with the spotlight tile, if we workshop this further.
-const largeGridThreshold = 20;
-
 export interface GridLayout {
   type: "grid";
   spotlight?: MediaViewModel[];
@@ -619,10 +612,7 @@ export class CallViewModel extends ViewModel {
                         : {
                             type: "grid",
                             spotlight:
-                              screenShares.length > 0 ||
-                              grid.length > largeGridThreshold
-                                ? spotlight
-                                : undefined,
+                              screenShares.length > 0 ? spotlight : undefined,
                             grid,
                           },
                   );
