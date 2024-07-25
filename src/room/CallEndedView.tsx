@@ -51,11 +51,11 @@ export const CallEndedView: FC<Props> = ({
   const history = useHistory();
 
   const { displayName } = useProfile(client);
-  const [surveySubmitted, setSurverySubmitted] = useState(false);
+  const [surveySubmitted, setSurveySubmitted] = useState(false);
   const [starRating, setStarRating] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [submitDone, setSubmitDone] = useState(false);
-  const submitSurvery: FormEventHandler<HTMLFormElement> = useCallback(
+  const submitSurvey: FormEventHandler<HTMLFormElement> = useCallback(
     (e) => {
       e.preventDefault();
       const data = new FormData(e.target as HTMLFormElement);
@@ -75,7 +75,7 @@ export const CallEndedView: FC<Props> = ({
         setTimeout(() => {
           if (isPasswordlessUser) {
             // setting this renders the callEndedView with the invitation to create an account
-            setSurverySubmitted(true);
+            setSurveySubmitted(true);
           } else if (!confineToRoom) {
             // if the user already has an account immediately go back to the home screen
             history.push("/");
@@ -113,7 +113,7 @@ export const CallEndedView: FC<Props> = ({
           We'd love to hear your feedback so we can improve your experience.
         </p>
       </Trans>
-      <form onSubmit={submitSurvery}>
+      <form onSubmit={submitSurvey}>
         <FieldRow>
           <StarRatingInput starCount={5} onChange={setStarRating} required />
         </FieldRow>
