@@ -26,7 +26,7 @@ import {
 } from "./CallLayout";
 import { SpotlightPortraitLayout as SpotlightPortraitLayoutModel } from "../state/CallViewModel";
 import styles from "./SpotlightPortraitLayout.module.css";
-import { useLayout } from "./Grid";
+import { useUpdateLayout } from "./Grid";
 
 interface GridCSSProperties extends CSSProperties {
   "--grid-gap": string;
@@ -48,7 +48,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
     { model, Slot },
     ref,
   ) {
-    useLayout();
+    useUpdateLayout();
     const tileModel: TileModel = useMemo(
       () => ({
         type: "spotlight",
@@ -71,7 +71,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
     { model, Slot },
     ref,
   ) {
-    useLayout();
+    useUpdateLayout();
     const { width } = useObservableEagerState(minBounds);
     const { gap, tileWidth, tileHeight } = arrangeTiles(
       width,

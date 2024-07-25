@@ -27,7 +27,7 @@ import {
   TileModel,
   arrangeTiles,
 } from "./CallLayout";
-import { DragCallback, useLayout } from "./Grid";
+import { DragCallback, useUpdateLayout } from "./Grid";
 
 interface GridCSSProperties extends CSSProperties {
   "--gap": string;
@@ -48,7 +48,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
   // The "fixed" (non-scrolling) part of the layout is where the spotlight tile
   // lives
   fixed: forwardRef(function GridLayoutFixed({ model, Slot }, ref) {
-    useLayout();
+    useUpdateLayout();
     const alignment = useObservableEagerState(
       useInitial(() =>
         spotlightAlignment.pipe(
@@ -95,7 +95,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
 
   // The scrolling part of the layout is where all the grid tiles live
   scrolling: forwardRef(function GridLayout({ model, Slot }, ref) {
-    useLayout();
+    useUpdateLayout();
     const { width, height: minHeight } = useObservableEagerState(minBounds);
     const { gap, tileWidth, tileHeight } = useMemo(
       () => arrangeTiles(width, minHeight, model.grid.length),

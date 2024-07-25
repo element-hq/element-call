@@ -19,7 +19,7 @@ import { useObservableEagerState } from "observable-hooks";
 
 import { SpotlightExpandedLayout as SpotlightExpandedLayoutModel } from "../state/CallViewModel";
 import { CallLayout, GridTileModel, SpotlightTileModel } from "./CallLayout";
-import { DragCallback, useLayout } from "./Grid";
+import { DragCallback, useUpdateLayout } from "./Grid";
 import styles from "./SpotlightExpandedLayout.module.css";
 
 /**
@@ -35,7 +35,7 @@ export const makeSpotlightExpandedLayout: CallLayout<
     { model, Slot },
     ref,
   ) {
-    useLayout();
+    useUpdateLayout();
     const spotlightTileModel: SpotlightTileModel = useMemo(
       () => ({ type: "spotlight", vms: model.spotlight, maximised: true }),
       [model.spotlight],
@@ -56,7 +56,7 @@ export const makeSpotlightExpandedLayout: CallLayout<
     { model, Slot },
     ref,
   ) {
-    useLayout();
+    useUpdateLayout();
     const pipAlignmentValue = useObservableEagerState(pipAlignment);
 
     const pipTileModel: GridTileModel | undefined = useMemo(

@@ -21,7 +21,7 @@ import classNames from "classnames";
 import { OneOnOneLayout as OneOnOneLayoutModel } from "../state/CallViewModel";
 import { CallLayout, GridTileModel, arrangeTiles } from "./CallLayout";
 import styles from "./OneOnOneLayout.module.css";
-import { DragCallback, useLayout } from "./Grid";
+import { DragCallback, useUpdateLayout } from "./Grid";
 
 /**
  * An implementation of the "one-on-one" layout, in which the remote participant
@@ -34,12 +34,12 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
   scrollingOnTop: false,
 
   fixed: forwardRef(function OneOnOneLayoutFixed(_props, ref) {
-    useLayout();
+    useUpdateLayout();
     return <div ref={ref} />;
   }),
 
   scrolling: forwardRef(function OneOnOneLayoutScrolling({ model, Slot }, ref) {
-    useLayout();
+    useUpdateLayout();
     const { width, height } = useObservableEagerState(minBounds);
     const pipAlignmentValue = useObservableEagerState(pipAlignment);
     const { tileWidth, tileHeight } = useMemo(
