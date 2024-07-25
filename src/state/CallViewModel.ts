@@ -606,7 +606,12 @@ export class CallViewModel extends ViewModel {
                   return combineLatest(
                     [this.grid, this.spotlight, this.screenShares],
                     (grid, spotlight, screenShares): Layout =>
-                      grid.length == 2 && screenShares.length === 0
+                      grid.length == 2 &&
+                      // There might not be a remote tile if only the local user
+                      // is in the call and they're using the duplicate tiles
+                      // option
+                      grid.some((vm) => !vm.local) &&
+                      screenShares.length === 0
                         ? {
                             type: "one-on-one",
                             local: grid.find(
