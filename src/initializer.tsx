@@ -54,7 +54,7 @@ export class Initializer {
   public static initBeforeReact(): void {
     // this maybe also needs to return a promise in the future,
     // if we have to do async inits before showing the loading screen
-    // but this should be avioded if possible
+    // but this should be avoided if possible
 
     //i18n
     const languageDetector = new LanguageDetector();
@@ -118,7 +118,7 @@ export class Initializer {
     }
     Initializer.internalInstance = new Initializer();
     Initializer.internalInstance.initPromise = new Promise<void>((resolve) => {
-      // initStep calls itself recursivly until everything is initialized in the correct order.
+      // initStep calls itself recursively until everything is initialized in the correct order.
       // Then the promise gets resolved.
       Initializer.internalInstance.initStep(resolve);
     });

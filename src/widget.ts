@@ -120,8 +120,8 @@ export const widget = ((): WidgetHelpers | null => {
       ];
 
       const sendState = [
-        userId, // legacy call membership events
-        `_${userId}_${deviceId}`, // session membership events
+        userId, // Legacy call membership events
+        `_${userId}_${deviceId}`, // Session membership events
         `${userId}_${deviceId}`, // MSC3779 session membership events
       ].map((stateKey) => ({
         eventType: EventType.GroupCallMemberPrefix,
@@ -172,7 +172,7 @@ export const widget = ((): WidgetHelpers | null => {
 
       const clientPromise = new Promise<MatrixClient>((resolve) => {
         (async (): Promise<void> => {
-          // wait for the config file to be ready (we load very early on so it might not
+          // Wait for the config file to be ready (we load very early on so it might not
           // be otherwise)
           await Config.init();
           await client.startClient({ clientWellKnownPollPeriod: 60 * 10 });
