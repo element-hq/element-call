@@ -17,7 +17,7 @@ limitations under the License.
 import { FC, useEffect, useState, useCallback, ReactNode } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
-import CheckIcon from "@vector-im/compound-design-tokens/icons/check.svg?react";
+import { CheckIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { useClientLegacy } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";

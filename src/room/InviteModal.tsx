@@ -18,8 +18,10 @@ import { FC, MouseEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Room } from "matrix-js-sdk";
 import { Button, Text } from "@vector-im/compound-web";
-import LinkIcon from "@vector-im/compound-design-tokens/icons/link.svg?react";
-import CheckIcon from "@vector-im/compound-design-tokens/icons/check.svg?react";
+import {
+  LinkIcon,
+  CheckIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 import useClipboard from "react-use-clipboard";
 
 import { Modal } from "../Modal";
