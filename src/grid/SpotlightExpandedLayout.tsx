@@ -19,9 +19,8 @@ import { useObservableEagerState } from "observable-hooks";
 
 import { SpotlightExpandedLayout as SpotlightExpandedLayoutModel } from "../state/CallViewModel";
 import { CallLayout, GridTileModel, SpotlightTileModel } from "./CallLayout";
-import { DragCallback } from "./Grid";
+import { DragCallback, useUpdateLayout } from "./Grid";
 import styles from "./SpotlightExpandedLayout.module.css";
-import { useReactiveState } from "../useReactiveState";
 
 /**
  * An implementation of the "expanded spotlight" layout, in which the spotlight
@@ -29,27 +28,21 @@ import { useReactiveState } from "../useReactiveState";
  */
 export const makeSpotlightExpandedLayout: CallLayout<
   SpotlightExpandedLayoutModel
-> = ({ minBounds, pipAlignment }) => ({
+> = ({ pipAlignment }) => ({
   scrollingOnTop: true,
 
   fixed: forwardRef(function SpotlightExpandedLayoutFixed(
     { model, Slot },
     ref,
   ) {
-    const { width, height } = useObservableEagerState(minBounds);
-
-    const [generation] = useReactiveState<number>(
-      (prev) => (prev === undefined ? 0 : prev + 1),
-      [width, height, model.spotlight],
-    );
-
+    useUpdateLayout();
     const spotlightTileModel: SpotlightTileModel = useMemo(
       () => ({ type: "spotlight", vms: model.spotlight, maximised: true }),
       [model.spotlight],
     );
 
     return (
-      <div ref={ref} data-generation={generation} className={styles.layer}>
+      <div ref={ref} className={styles.layer}>
         <Slot
           className={styles.spotlight}
           id="spotlight"
@@ -63,13 +56,8 @@ export const makeSpotlightExpandedLayout: CallLayout<
     { model, Slot },
     ref,
   ) {
-    const { width, height } = useObservableEagerState(minBounds);
+    useUpdateLayout();
     const pipAlignmentValue = useObservableEagerState(pipAlignment);
-
-    const [generation] = useReactiveState<number>(
-      (prev) => (prev === undefined ? 0 : prev + 1),
-      [width, height, model.pip === undefined, pipAlignmentValue],
-    );
 
     const pipTileModel: GridTileModel | undefined = useMemo(
       () => model.pip && { type: "grid", vm: model.pip },
@@ -86,7 +74,7 @@ export const makeSpotlightExpandedLayout: CallLayout<
     );
 
     return (
-      <div ref={ref} data-generation={generation} className={styles.layer}>
+      <div ref={ref} className={styles.layer}>
         {pipTileModel && (
           <Slot
             className={styles.pip}
