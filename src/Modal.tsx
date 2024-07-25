@@ -27,7 +27,7 @@ import {
 } from "@radix-ui/react-dialog";
 import { Drawer } from "vaul";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import CloseIcon from "@vector-im/compound-design-tokens/icons/close.svg?react";
+import { CloseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
 import { Heading, Glass } from "@vector-im/compound-web";
 

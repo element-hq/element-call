@@ -20,14 +20,16 @@ import { useButton } from "@react-aria/button";
 import { mergeProps, useObjectRef } from "@react-aria/utils";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "@vector-im/compound-web";
-import MicOnSolidIcon from "@vector-im/compound-design-tokens/icons/mic-on-solid.svg?react";
-import MicOffSolidIcon from "@vector-im/compound-design-tokens/icons/mic-off-solid.svg?react";
-import VideoCallSolidIcon from "@vector-im/compound-design-tokens/icons/video-call-solid.svg?react";
-import VideoCallOffSolidIcon from "@vector-im/compound-design-tokens/icons/video-call-off-solid.svg?react";
-import EndCallIcon from "@vector-im/compound-design-tokens/icons/end-call.svg?react";
-import ShareScreenSolidIcon from "@vector-im/compound-design-tokens/icons/share-screen-solid.svg?react";
-import SettingsSolidIcon from "@vector-im/compound-design-tokens/icons/settings-solid.svg?react";
-import ChevronDownIcon from "@vector-im/compound-design-tokens/icons/chevron-down.svg?react";
+import {
+  MicOnSolidIcon,
+  MicOffSolidIcon,
+  VideoCallSolidIcon,
+  VideoCallOffSolidIcon,
+  EndCallIcon,
+  ShareScreenSolidIcon,
+  SettingsSolidIcon,
+  ChevronDownIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
 
@@ -149,7 +151,7 @@ export const MicButton: FC<{
   return (
     <Tooltip label={label}>
       <Button variant="toolbar" {...rest} on={muted}>
-        <Icon aria-label={label} />
+        <Icon aria-label={label} width={24} height={24} />
       </Button>
     </Tooltip>
   );
@@ -169,7 +171,7 @@ export const VideoButton: FC<{
   return (
     <Tooltip label={label}>
       <Button variant="toolbar" {...rest} on={muted}>
-        <Icon aria-label={label} />
+        <Icon aria-label={label} width={24} height={24} />
       </Button>
     </Tooltip>
   );
@@ -189,7 +191,7 @@ export const ScreenshareButton: FC<{
   return (
     <Tooltip label={label}>
       <Button variant="toolbar" {...rest} on={enabled}>
-        <ShareScreenSolidIcon aria-label={label} />
+        <ShareScreenSolidIcon aria-label={label} width={24} height={24} />
       </Button>
     </Tooltip>
   );
@@ -209,7 +211,11 @@ export const HangupButton: FC<{
         className={classNames(styles.hangupButton, className)}
         {...rest}
       >
-        <EndCallIcon aria-label={t("hangup_button_label")} />
+        <EndCallIcon
+          aria-label={t("hangup_button_label")}
+          width={24}
+          height={24}
+        />
       </Button>
     </Tooltip>
   );
@@ -225,7 +231,11 @@ export const SettingsButton: FC<{
   return (
     <Tooltip label={t("common.settings")}>
       <Button variant="toolbar" {...rest}>
-        <SettingsSolidIcon aria-label={t("common.settings")} />
+        <SettingsSolidIcon
+          aria-label={t("common.settings")}
+          width={24}
+          height={24}
+        />
       </Button>
     </Tooltip>
   );

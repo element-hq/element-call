@@ -17,8 +17,10 @@ limitations under the License.
 import { FC } from "react";
 import { Tooltip } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
-import LockSolidIcon from "@vector-im/compound-design-tokens/icons/lock-solid.svg?react";
-import LockOffIcon from "@vector-im/compound-design-tokens/icons/lock-off.svg?react";
+import {
+  LockSolidIcon,
+  LockOffIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./EncryptionLock.module.css";
 
