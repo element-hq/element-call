@@ -150,21 +150,13 @@ enum SortingBin {
    */
   Speakers,
   /**
-   * Participants with both video and audio.
-   */
-  VideoAndAudio,
-  /**
-   * Participants with video but no audio.
+   * Participants with video.
    */
   Video,
   /**
-   * Participants with audio but no video.
+   * Participants not sharing any video.
    */
-  Audio,
-  /**
-   * Participants not sharing any media.
-   */
-  NoMedia,
+  NoVideo,
   /**
    * Yourself, when the "always show self" option is off.
    */
@@ -457,13 +449,12 @@ export class CallViewModel extends ViewModel {
           [
             m.speaker,
             m.presenter,
-            m.vm.audioEnabled,
             m.vm.videoEnabled,
             m.vm instanceof LocalUserMediaViewModel
               ? m.vm.alwaysShow
               : of(false),
           ],
-          (speaker, presenter, audio, video, alwaysShow) => {
+          (speaker, presenter, video, alwaysShow) => {
             let bin: SortingBin;
             if (m.vm.local)
               bin = alwaysShow
@@ -471,9 +462,8 @@ export class CallViewModel extends ViewModel {
                 : SortingBin.SelfNotAlwaysShown;
             else if (presenter) bin = SortingBin.Presenters;
             else if (speaker) bin = SortingBin.Speakers;
-            else if (video)
-              bin = audio ? SortingBin.VideoAndAudio : SortingBin.Video;
-            else bin = audio ? SortingBin.Audio : SortingBin.NoMedia;
+            else if (video) bin = SortingBin.Video;
+            else bin = SortingBin.NoVideo;
 
             return [m, bin] as const;
           },
