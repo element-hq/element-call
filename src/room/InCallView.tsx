@@ -285,11 +285,6 @@ export const InCallView: FC<InCallViewProps> = ({
     }
   }, [setGridMode]);
 
-  const toggleSpotlightExpanded = useCallback(
-    () => vm.toggleSpotlightExpanded(),
-    [vm],
-  );
-
   const Tile = useMemo(
     () =>
       forwardRef<
@@ -300,6 +295,9 @@ export const InCallView: FC<InCallViewProps> = ({
         ref,
       ) {
         const spotlightExpanded = useObservableEagerState(vm.spotlightExpanded);
+        const [onToggleExpanded] = useObservableEagerState(
+          vm.toggleSpotlightExpanded,
+        );
         const showSpeakingIndicatorsValue = useObservableEagerState(
           vm.showSpeakingIndicators,
         );
@@ -324,7 +322,7 @@ export const InCallView: FC<InCallViewProps> = ({
             vms={model.vms}
             maximised={model.maximised}
             expanded={spotlightExpanded}
-            onToggleExpanded={toggleSpotlightExpanded}
+            onToggleExpanded={onToggleExpanded}
             targetWidth={targetWidth}
             targetHeight={targetHeight}
             showIndicators={showSpotlightIndicatorsValue}
@@ -333,7 +331,7 @@ export const InCallView: FC<InCallViewProps> = ({
           />
         );
       }),
-    [vm, toggleSpotlightExpanded, openProfile],
+    [vm, openProfile],
   );
 
   const layouts = useMemo(() => {
