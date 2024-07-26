@@ -93,7 +93,6 @@ export interface GridArrangement {
   columns: number;
 }
 
-const tileMinHeight = 130;
 const tileMaxAspectRatio = 17 / 9;
 const tileMinAspectRatio = 4 / 3;
 const tileMobileMinAspectRatio = 2 / 3;
@@ -110,11 +109,14 @@ export function arrangeTiles(
   // use of screen space for n tiles without making those tiles too small or
   // too cropped (having an extreme aspect ratio)
   const gap = width < 800 ? 16 : 20;
-  const tileMinWidth = width < 500 ? 150 : 180;
+  const area = width * minHeight;
+  // Magic numbers that make tiles scale up nicely as the window gets larger
+  const tileArea = Math.pow(Math.sqrt(area) / 8 + 125, 2);
+  const tilesPerPage = Math.min(tileCount, area / tileArea);
 
-  let columns = Math.min(
+  const columns = Math.min(
     // Don't create more columns than we have items for
-    tileCount,
+    tilesPerPage,
     // The ideal number of columns is given by a packing of equally-sized
     // squares into a grid.
     // width / column = height / row.
@@ -122,25 +124,17 @@ export function arrangeTiles(
     // ∴ columns = sqrt(width / height * number of squares).
     // Except we actually want 16:9-ish tiles rather than squares, so we
     // divide the width-to-height ratio by the target aspect ratio.
-    Math.ceil(Math.sqrt((width / minHeight / tileMaxAspectRatio) * tileCount)),
+    Math.round(
+      Math.sqrt((width / minHeight / tileMinAspectRatio) * tilesPerPage),
+    ),
   );
-  let rows = Math.ceil(tileCount / columns);
+  let rows = tilesPerPage / columns;
+  // If all the tiles could fit on one page, we want to ensure that they do by
+  // not leaving fractional rows hanging off the bottom
+  if (tilesPerPage === tileCount) rows = Math.ceil(rows);
 
   let tileWidth = (width - (columns + 1) * gap) / columns;
   let tileHeight = (minHeight - (rows - 1) * gap) / rows;
-
-  // Impose a minimum width and height on the tiles
-  if (tileWidth < tileMinWidth) {
-    // In this case we want the tile width to determine the number of columns,
-    // not the other way around. If we take the above equation for the tile
-    // width (w = (W - (c - 1) * g) / c) and solve for c, we get
-    // c = (W + g) / (w + g).
-    columns = Math.floor((width + gap) / (tileMinWidth + gap));
-    rows = Math.ceil(tileCount / columns);
-    tileWidth = (width - (columns + 1) * gap) / columns;
-    tileHeight = (minHeight - (rows - 1) * gap) / rows;
-  }
-  if (tileHeight < tileMinHeight) tileHeight = tileMinHeight;
 
   // Impose a minimum and maximum aspect ratio on the tiles
   const tileAspectRatio = tileWidth / tileHeight;
@@ -153,7 +147,6 @@ export function arrangeTiles(
     tileWidth = tileHeight * tileMaxAspectRatio;
   else if (tileAspectRatio < minAspectRatio)
     tileHeight = tileWidth / minAspectRatio;
-  // TODO: We might now be hitting the minimum height or width limit again
 
   return { tileWidth, tileHeight, gap, columns };
 }
