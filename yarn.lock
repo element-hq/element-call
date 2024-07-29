@@ -1730,13 +1730,13 @@
   dependencies:
     "@floating-ui/utils" "^0.2.5"
 
-"@floating-ui/dom@1.6.7":
-  version "1.6.7"
-  resolved "https://registry.yarnpkg.com/@floating-ui/dom/-/dom-1.6.7.tgz#85d22f731fcc5b209db504478fb1df5116a83015"
-  integrity sha512-wmVfPG5o2xnKDU4jx/m4w5qva9FWHcnZ8BvzEe90D/RpwsJaTAVYPEPdQ8sbr/N8zZTAHlZUTQdqg8ZUbzHmng==
+"@floating-ui/dom@1.6.8":
+  version "1.6.8"
+  resolved "https://registry.yarnpkg.com/@floating-ui/dom/-/dom-1.6.8.tgz#45e20532b6d8a061b356a4fb336022cf2609754d"
+  integrity sha512-kx62rP19VZ767Q653wsP1XZCGIirkE09E0QUGNYTM/ttbbQHqcGPdSfWFxUyyNLc/W6aoJRBajOSXhP6GXjC0Q==
   dependencies:
     "@floating-ui/core" "^1.6.0"
-    "@floating-ui/utils" "^0.2.4"
+    "@floating-ui/utils" "^0.2.5"
 
 "@floating-ui/dom@^1.0.0":
   version "1.6.5"
@@ -1896,21 +1896,21 @@
   resolved "https://registry.yarnpkg.com/@juggle/resize-observer/-/resize-observer-3.4.0.tgz#08d6c5e20cf7e4cc02fd181c4b0c225cd31dbb60"
   integrity sha512-dfLbk+PwWvFzSxwk3n5ySL0hfBog779o8h68wK/7/APo/7cgyWp5jcXockbxdk5kFRkbeXWm4Fbi9FrdN381sA==
 
-"@livekit/components-core@0.11.0", "@livekit/components-core@^0.11.0":
-  version "0.11.0"
-  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.11.0.tgz#1d29c545eca86f9cc90f6047f94943bd6b53dc8f"
-  integrity sha512-ujADJPjsfqNRl0aNZF+1AeO4nCXaIy1qPIOO6DiFqzgu+IT/q5iDP/zzIy8sVkJ4Xldx/04dk9lcWQwnJBeuYQ==
+"@livekit/components-core@0.11.1", "@livekit/components-core@^0.11.0":
+  version "0.11.1"
+  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.11.1.tgz#13d3acf1a6f876bb2d7065d4d50fe2258207836a"
+  integrity sha512-OVaRorlSzhXf9LON80+/fFAQFGyibixydKsg5F6WgPgjwcKefpECXZqnwNHZh/K3tA1+AD4Ci32t1EmESLLKXA==
   dependencies:
-    "@floating-ui/dom" "1.6.7"
+    "@floating-ui/dom" "1.6.8"
     loglevel "1.9.1"
     rxjs "7.8.1"
 
 "@livekit/components-react@^2.0.0":
-  version "2.4.0"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.4.0.tgz#f962a19930f55c890b7a1233e21985ee038cc74f"
-  integrity sha512-b7ggAZwKxT5qCR2+w8fEie2GWr00IXCygTqxfA7oieyxHwzs0iMXEv/AvfzAqsKp+U/v+nBIufgn1v+IPUrMuA==
+  version "2.4.1"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.4.1.tgz#b86ac641fe67e92af7f8e5809cf89bb108852ed4"
+  integrity sha512-LYNhQ2Ve0aOr28hgz2rhzi4mVBD1dX+vFMxAj1KjAs3ftiorINpqmPaPN2Cjl7qNwk67ZhiAJlWISQCvH8fh1w==
   dependencies:
-    "@livekit/components-core" "0.11.0"
+    "@livekit/components-core" "0.11.1"
     clsx "2.1.1"
     usehooks-ts "3.1.0"
 
