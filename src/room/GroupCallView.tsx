@@ -190,7 +190,7 @@ export const GroupCallView: FC<Props> = ({
       const onJoin = async (
         ev: CustomEvent<IWidgetApiRequest>,
       ): Promise<void> => {
-        defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
+        await defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
         await enterRTCSession(rtcSession, perParticipantE2EE);
         await widget!.api.transport.reply(ev.detail, {});
       };
@@ -199,9 +199,12 @@ export const GroupCallView: FC<Props> = ({
         widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
     } else if (widget && !preload && skipLobby) {
-      // No lobby and no preload: we enter the rtc session right away
-      defaultDeviceSetup({ audioInput: null, videoInput: null });
-      enterRTCSession(rtcSession, perParticipantE2EE);
+      const join = async (): Promise<void> => {
+        await defaultDeviceSetup({ audioInput: null, videoInput: null });
+        await enterRTCSession(rtcSession, perParticipantE2EE);
+      };
+      // No lobby and no preload: we enter the RTC Session right away.
+      join();
     }
   }, [rtcSession, preload, skipLobby, perParticipantE2EE]);
 
