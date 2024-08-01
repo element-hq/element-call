@@ -44,7 +44,7 @@ import {
   MediaViewModel,
   ScreenShareViewModel,
   UserMediaViewModel,
-  useNameData,
+  useDisplayName,
 } from "../state/MediaViewModel";
 import { useInitial } from "../useInitial";
 import { useMergedRefs } from "../useMergedRefs";
@@ -60,7 +60,6 @@ interface SpotlightItemBaseProps {
   video: TrackReferenceOrPlaceholder;
   member: RoomMember | undefined;
   unencryptedWarning: boolean;
-  nameTag: string;
   displayName: string;
 }
 
@@ -125,7 +124,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
   ({ vm, targetWidth, targetHeight, intersectionObserver, snap }, theirRef) => {
     const ourRef = useRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
-    const { displayName, nameTag } = useNameData(vm);
+    const displayName = useDisplayName(vm);
     const video = useObservableEagerState(vm.video);
     const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning);
 
@@ -153,7 +152,6 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
       video,
       member: vm.member,
       unencryptedWarning,
-      nameTag,
       displayName,
     };
 

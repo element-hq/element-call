@@ -46,7 +46,7 @@ import { useObservableEagerState } from "observable-hooks";
 import styles from "./GridTile.module.css";
 import {
   UserMediaViewModel,
-  useNameData,
+  useDisplayName,
   LocalUserMediaViewModel,
   RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
@@ -60,7 +60,6 @@ interface TileProps {
   targetWidth: number;
   targetHeight: number;
   displayName: string;
-  nameTag: string;
   showSpeakingIndicators: boolean;
 }
 
@@ -79,7 +78,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       menuStart,
       menuEnd,
       className,
-      nameTag,
+      displayName,
       ...props
     },
     ref,
@@ -134,12 +133,12 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
             className={styles.muteIcon}
           />
         }
-        nameTag={nameTag}
+        displayName={displayName}
         primaryButton={
           <Menu
             open={menuOpen}
             onOpenChange={setMenuOpen}
-            title={nameTag}
+            title={displayName}
             trigger={
               <button aria-label={t("common.options")}>
                 <OverflowHorizontalIcon aria-hidden width={20} height={20} />
@@ -156,7 +155,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     );
 
     return (
-      <ContextMenu title={nameTag} trigger={tile} hasAccessibleAlternative>
+      <ContextMenu title={displayName} trigger={tile} hasAccessibleAlternative>
         {menu}
       </ContextMenu>
     );
@@ -282,7 +281,7 @@ interface GridTileProps {
 
 export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
   ({ vm, onOpenProfile, ...props }, ref) => {
-    const nameData = useNameData(vm);
+    const displayName = useDisplayName(vm);
 
     if (vm instanceof LocalUserMediaViewModel) {
       return (
@@ -290,12 +289,19 @@ export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
           ref={ref}
           vm={vm}
           onOpenProfile={onOpenProfile}
+          displayName={displayName}
           {...props}
-          {...nameData}
         />
       );
     } else {
-      return <RemoteUserMediaTile ref={ref} vm={vm} {...props} {...nameData} />;
+      return (
+        <RemoteUserMediaTile
+          ref={ref}
+          vm={vm}
+          displayName={displayName}
+          {...props}
+        />
+      );
     }
   },
 );

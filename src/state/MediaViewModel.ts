@@ -45,28 +45,14 @@ import {
   startWith,
   switchMap,
 } from "rxjs";
-import { useTranslation } from "react-i18next";
 import { useEffect } from "react";
 
 import { ViewModel } from "./ViewModel";
 import { useReactiveState } from "../useReactiveState";
 import { alwaysShowSelf } from "../settings/settings";
 
-export interface NameData {
-  /**
-   * The display name of the participant.
-   */
-  displayName: string;
-  /**
-   * The text to be shown on the participant's name tag.
-   */
-  nameTag: string;
-}
-
 // TODO: Move this naming logic into the view model
-export function useNameData(vm: MediaViewModel): NameData {
-  const { t } = useTranslation();
-
+export function useDisplayName(vm: MediaViewModel): string {
   const [displayName, setDisplayName] = useReactiveState(
     () => vm.member?.rawDisplayName ?? "[👻]",
     [vm.member],
@@ -83,11 +69,8 @@ export function useNameData(vm: MediaViewModel): NameData {
       };
     }
   }, [vm.member, setDisplayName]);
-  const nameTag = vm.local
-    ? t("video_tile.sfu_participant_local")
-    : displayName;
 
-  return { displayName, nameTag };
+  return displayName;
 }
 
 function observeTrackReference(
