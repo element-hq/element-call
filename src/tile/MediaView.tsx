@@ -39,7 +39,6 @@ interface Props extends ComponentProps<typeof animated.div> {
   videoEnabled: boolean;
   unencryptedWarning: boolean;
   nameTagLeadingIcon?: ReactNode;
-  nameTag: string;
   displayName: string;
   primaryButton?: ReactNode;
 }
@@ -58,7 +57,6 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       videoEnabled,
       unencryptedWarning,
       nameTagLeadingIcon,
-      nameTag,
       displayName,
       primaryButton,
       ...props
@@ -100,7 +98,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           <div className={styles.nameTag}>
             {nameTagLeadingIcon}
             <Text as="span" size="sm" weight="medium" className={styles.name}>
-              {nameTag}
+              {displayName}
             </Text>
             {unencryptedWarning && (
               <Tooltip
