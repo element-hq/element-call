@@ -3,7 +3,10 @@
   "extends": ["config:base"],
   "packageRules": [
     {
-      "extends": ["group:allNonMajor", "schedule:weekly"]
+      "groupName": "all non-major dependencies",
+      "groupSlug": "all-minor-patch",
+      "matchUpdateTypes": ["minor", "patch"],
+      "extends": ["schedule:weekly"]
     },
     {
       "groupName": "GitHub Actions",
