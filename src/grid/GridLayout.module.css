@@ -40,7 +40,8 @@ limitations under the License.
   position: absolute;
   inline-size: 404px;
   block-size: 233px;
-  inset: 0;
+  inset-block: 0;
+  inset-inline: var(--cpd-space-3x);
 }
 
 .fixed > .slot[data-block-alignment="start"] {
