@@ -26,16 +26,9 @@ limitations under the License.
 
 .local {
   position: absolute;
-  inline-size: 135px;
-  block-size: 160px;
+  inline-size: 180px;
+  block-size: 135px;
   inset: var(--cpd-space-4x);
-}
-
-@media (min-width: 600px) {
-  .local {
-    inline-size: 170px;
-    block-size: 110px;
-  }
 }
 
 .spotlight {

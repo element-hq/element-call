@@ -6944,9 +6944,9 @@ object.values@^1.1.7:
     es-abstract "^1.22.1"
 
 observable-hooks@^4.2.3:
-  version "4.2.3"
-  resolved "https://registry.yarnpkg.com/observable-hooks/-/observable-hooks-4.2.3.tgz#69e3353caafd7887ad9030bd440b053304e8d2d1"
-  integrity sha512-d6fYTIU+9sg1V+CT0GhgoE/ntjIqcy9DGaYGE6ELGVP4ojaWIEsaLvL/05hLOM+AL7aySN4DCTLvj6dDF9T8XA==
+  version "4.2.4"
+  resolved "https://registry.yarnpkg.com/observable-hooks/-/observable-hooks-4.2.4.tgz#e1ee0f867e0f2216f79c1e13c58716fb50b410ec"
+  integrity sha512-FdTQgyw1h5bG/QHCBIqctdBSnv9VARJCEilgpV6L2qlw1yeLqFIwPm4U15dMtl5kDmNN0hSt+Nl6iYbLFwEcQA==
 
 oidc-client-ts@^3.0.1:
   version "3.0.1"

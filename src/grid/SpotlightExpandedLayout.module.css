@@ -25,9 +25,16 @@ limitations under the License.
 
 .pip {
   position: absolute;
-  inline-size: 180px;
-  block-size: 135px;
+  inline-size: 135px;
+  block-size: 160px;
   inset: var(--cpd-space-4x);
+}
+
+@media (min-width: 600px) {
+  .pip {
+    inline-size: 180px;
+    block-size: 135px;
+  }
 }
 
 .pip[data-block-alignment="start"] {

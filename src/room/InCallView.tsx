@@ -295,7 +295,7 @@ export const InCallView: FC<InCallViewProps> = ({
         ref,
       ) {
         const spotlightExpanded = useObservableEagerState(vm.spotlightExpanded);
-        const [onToggleExpanded] = useObservableEagerState(
+        const onToggleExpanded = useObservableEagerState(
           vm.toggleSpotlightExpanded,
         );
         const showSpeakingIndicatorsValue = useObservableEagerState(

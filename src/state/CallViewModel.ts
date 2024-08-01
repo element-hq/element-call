@@ -646,7 +646,9 @@ export class CallViewModel extends ViewModel {
           return this.oneOnOne.pipe(
             switchMap((oneOnOne) =>
               oneOnOne
-                ? this.oneOnOneLayout
+                ? // The expanded spotlight layout makes for a better one-on-one
+                  // experience in narrow windows
+                  this.spotlightExpandedLayout
                 : combineLatest(
                     [this.grid, this.spotlight],
                     (grid, spotlight) =>
@@ -689,24 +691,25 @@ export class CallViewModel extends ViewModel {
     shareReplay(1),
   );
 
-  // To work around https://github.com/crimx/observable-hooks/issues/131 we must
-  // wrap the emitted function here in a non-function wrapper type
-  public readonly toggleSpotlightExpanded: Observable<
-    readonly [(() => void) | null]
-  > = this.layout.pipe(
-    map(
-      (l) =>
-        l.type === "spotlight-landscape" || l.type === "spotlight-expanded",
-    ),
-    distinctUntilChanged(),
-    map(
-      (enabled) =>
-        [
-          enabled ? (): void => this.spotlightExpandedToggle.next() : null,
-        ] as const,
-    ),
-    shareReplay(1),
-  );
+  public readonly toggleSpotlightExpanded: Observable<(() => void) | null> =
+    this.windowMode.pipe(
+      switchMap((mode) =>
+        mode === "normal"
+          ? this.layout.pipe(
+              map(
+                (l) =>
+                  l.type === "spotlight-landscape" ||
+                  l.type === "spotlight-expanded",
+              ),
+            )
+          : of(false),
+      ),
+      distinctUntilChanged(),
+      map((enabled) =>
+        enabled ? (): void => this.spotlightExpandedToggle.next() : null,
+      ),
+      shareReplay(1),
+    );
 
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room
