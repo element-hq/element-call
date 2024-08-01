@@ -172,6 +172,8 @@ export const widget = ((): WidgetHelpers | null => {
           sendToDevice: sendRecvToDevice,
           receiveToDevice: sendRecvToDevice,
           turnServers: false,
+          sendDelayedEvents: true,
+          updateDelayedEvents: true,
         },
         roomId,
         {
