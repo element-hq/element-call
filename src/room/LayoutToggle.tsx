@@ -1,5 +1,5 @@
 /*
-Copyright 2023 New Vector Ltd
+Copyright 2023-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ChangeEvent, FC, useCallback, useId } from "react";
+import { ChangeEvent, FC, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "@vector-im/compound-web";
 import {
@@ -41,45 +41,28 @@ export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
     [setLayout],
   );
 
-  const spotlightId = useId();
-  const gridId = useId();
-
   return (
     <div className={classNames(styles.toggle, className)}>
-      <input
-        id={spotlightId}
-        type="radio"
-        name="layout"
-        value="spotlight"
-        checked={layout === "spotlight"}
-        onChange={onChange}
-      />
       <Tooltip label={t("layout_spotlight_label")}>
-        <label htmlFor={spotlightId}>
-          <SpotlightIcon
-            aria-label={t("layout_spotlight_label")}
-            width={24}
-            height={24}
-          />
-        </label>
+        <input
+          type="radio"
+          name="layout"
+          value="spotlight"
+          checked={layout === "spotlight"}
+          onChange={onChange}
+        />
       </Tooltip>
-      <input
-        id={gridId}
-        type="radio"
-        name="layout"
-        value="grid"
-        checked={layout === "grid"}
-        onChange={onChange}
-      />
+      <SpotlightIcon aria-hidden width={24} height={24} />
       <Tooltip label={t("layout_grid_label")}>
-        <label htmlFor={gridId}>
-          <GridIcon
-            aria-label={t("layout_grid_label")}
-            width={24}
-            height={24}
-          />
-        </label>
+        <input
+          type="radio"
+          name="layout"
+          value="grid"
+          checked={layout === "grid"}
+          onChange={onChange}
+        />
       </Tooltip>
+      <GridIcon aria-hidden width={24} height={24} />
     </div>
   );
 };

@@ -151,7 +151,7 @@ export const MicButton: FC<{
   return (
     <Tooltip label={label}>
       <Button variant="toolbar" {...rest} on={muted}>
-        <Icon aria-label={label} width={24} height={24} />
+        <Icon aria-hidden width={24} height={24} />
       </Button>
     </Tooltip>
   );
@@ -171,7 +171,7 @@ export const VideoButton: FC<{
   return (
     <Tooltip label={label}>
       <Button variant="toolbar" {...rest} on={muted}>
-        <Icon aria-label={label} width={24} height={24} />
+        <Icon aria-hidden width={24} height={24} />
       </Button>
     </Tooltip>
   );
@@ -191,7 +191,7 @@ export const ScreenshareButton: FC<{
   return (
     <Tooltip label={label}>
       <Button variant="toolbar" {...rest} on={enabled}>
-        <ShareScreenSolidIcon aria-label={label} width={24} height={24} />
+        <ShareScreenSolidIcon aria-hidden width={24} height={24} />
       </Button>
     </Tooltip>
   );
@@ -211,11 +211,7 @@ export const HangupButton: FC<{
         className={classNames(styles.hangupButton, className)}
         {...rest}
       >
-        <EndCallIcon
-          aria-label={t("hangup_button_label")}
-          width={24}
-          height={24}
-        />
+        <EndCallIcon aria-hidden width={24} height={24} />
       </Button>
     </Tooltip>
   );
@@ -231,11 +227,7 @@ export const SettingsButton: FC<{
   return (
     <Tooltip label={t("common.settings")}>
       <Button variant="toolbar" {...rest}>
-        <SettingsSolidIcon
-          aria-label={t("common.settings")}
-          width={24}
-          height={24}
-        />
+        <SettingsSolidIcon aria-hidden width={24} height={24} />
       </Button>
     </Tooltip>
   );
