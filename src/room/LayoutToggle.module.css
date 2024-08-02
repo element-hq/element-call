@@ -1,5 +1,5 @@
 /*
-Copyright 2023 New Vector Ltd
+Copyright 2023-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,22 +21,15 @@ limitations under the License.
   background: var(--cpd-color-bg-canvas-default);
   box-shadow: 0px 0px 40px 0px rgba(0, 0, 0, 0.5);
   display: flex;
+  position: relative;
 }
 
 .toggle input {
   appearance: none;
-  /*
-   * Safari puts a margin on these, which is not removed via appearance: none
-   * mobile safari also has them take up space in the DOM, so set width 0
-   */
+  /* Safari puts a margin on these, which is not removed via appearance: none */
   margin: 0;
-  width: 0;
-  outline: none !important;
-}
-
-.toggle label {
-  display: block;
-  padding: calc(2.5 * var(--cpd-space-1x));
+  block-size: var(--cpd-space-11x);
+  inline-size: var(--cpd-space-11x);
   cursor: pointer;
   border-radius: var(--cpd-radius-pill-effect);
   color: var(--cpd-color-icon-primary);
@@ -44,41 +37,52 @@ limitations under the License.
   box-shadow: var(--small-drop-shadow);
 }
 
+.toggle svg {
+  display: block;
+  position: absolute;
+  padding: calc(2.5 * var(--cpd-space-1x));
+  pointer-events: none;
+  color: var(--cpd-color-icon-primary);
+}
+
+.toggle svg:nth-child(2) {
+  inset-inline-start: 2px;
+}
+
+.toggle svg:nth-child(4) {
+  inset-inline-end: 2px;
+}
+
 @media (hover: hover) {
-  .toggle label:hover {
+  .toggle input:hover {
     background: var(--cpd-color-bg-action-secondary-hovered);
     box-shadow: none;
   }
 }
 
-.toggle label:active {
+.toggle input:active {
   background: var(--cpd-color-bg-action-secondary-hovered);
   box-shadow: none;
 }
 
-.toggle input:checked + label {
-  color: var(--cpd-color-icon-on-solid-primary);
+.toggle input:checked {
   background: var(--cpd-color-bg-action-primary-rest);
 }
 
+.toggle input:checked + svg {
+  color: var(--cpd-color-icon-on-solid-primary);
+}
+
 @media (hover: hover) {
-  .toggle input:checked + label:hover {
+  .toggle input:checked:hover {
     background: var(--cpd-color-bg-action-primary-hovered);
   }
 }
 
-.toggle input:checked + label:active {
+.toggle input:checked:active {
   background: var(--cpd-color-bg-action-primary-hovered);
 }
 
-.toggle label > svg {
-  display: block;
-}
-
-.toggle label:last-child {
-  margin-inline-start: 5px;
-}
-
-.toggle input:focus-visible + label {
-  outline: auto;
+.toggle input:first-child {
+  margin-inline-end: 5px;
 }

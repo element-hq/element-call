@@ -103,14 +103,14 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
             {unencryptedWarning && (
               <Tooltip
                 label={t("common.unencrypted")}
-                side="bottom"
+                placement="bottom"
                 isTriggerInteractive={false}
               >
                 <ErrorIcon
                   width={20}
                   height={20}
-                  aria-label={t("common.unencrypted")}
                   className={styles.errorIcon}
+                  aria-hidden
                 />
               </Tooltip>
             )}

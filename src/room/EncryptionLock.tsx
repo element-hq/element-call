@@ -1,5 +1,5 @@
 /*
-Copyright 2023 New Vector Ltd
+Copyright 2023-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -34,13 +34,13 @@ export const EncryptionLock: FC<Props> = ({ encrypted }) => {
   const label = encrypted ? t("common.encrypted") : t("common.unencrypted");
 
   return (
-    <Tooltip label={label} side="right" isTriggerInteractive={false}>
+    <Tooltip label={label} placement="right" isTriggerInteractive={false}>
       <Icon
         width={16}
         height={16}
         className={styles.lock}
         data-encrypted={encrypted}
-        aria-label={label}
+        aria-hidden
       />
     </Tooltip>
   );
