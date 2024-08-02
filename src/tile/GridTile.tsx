@@ -90,10 +90,12 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     const videoEnabled = useObservableEagerState(vm.videoEnabled);
     const speaking = useObservableEagerState(vm.speaking);
     const cropVideo = useObservableEagerState(vm.cropVideo);
-    const onChangeFitContain = useCallback(() => vm.toggleFitContain(), [vm]);
     const onSelectFitContain = useCallback(
-      (e: Event) => e.preventDefault(),
-      [],
+      (e: Event) => {
+        e.preventDefault();
+        vm.toggleFitContain();
+      },
+      [vm],
     );
 
     const MicIcon = audioEnabled ? MicOnSolidIcon : MicOffSolidIcon;
@@ -106,7 +108,6 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
           Icon={ExpandIcon}
           label={t("video_tile.change_fit_contain")}
           checked={cropVideo}
-          onChange={onChangeFitContain}
           onSelect={onSelectFitContain}
         />
         {menuEnd}
@@ -176,11 +177,10 @@ const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
     const alwaysShow = useObservableEagerState(vm.alwaysShow);
     const latestAlwaysShow = useLatest(alwaysShow);
     const onSelectAlwaysShow = useCallback(
-      (e: Event) => e.preventDefault(),
-      [],
-    );
-    const onChangeAlwaysShow = useCallback(
-      () => vm.setAlwaysShow(!latestAlwaysShow.current),
+      (e: Event) => {
+        e.preventDefault();
+        vm.setAlwaysShow(!latestAlwaysShow.current);
+      },
       [vm, latestAlwaysShow],
     );
 
@@ -194,7 +194,6 @@ const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
             Icon={VisibilityOnIcon}
             label={t("video_tile.always_show")}
             checked={alwaysShow}
-            onChange={onChangeAlwaysShow}
             onSelect={onSelectAlwaysShow}
           />
         }
@@ -224,8 +223,13 @@ const RemoteUserMediaTile = forwardRef<
   const { t } = useTranslation();
   const locallyMuted = useObservableEagerState(vm.locallyMuted);
   const localVolume = useObservableEagerState(vm.localVolume);
-  const onChangeMute = useCallback(() => vm.toggleLocallyMuted(), [vm]);
-  const onSelectMute = useCallback((e: Event) => e.preventDefault(), []);
+  const onSelectMute = useCallback(
+    (e: Event) => {
+      e.preventDefault();
+      vm.toggleLocallyMuted();
+    },
+    [vm],
+  );
   const onChangeLocalVolume = useCallback(
     (v: number) => vm.setLocalVolume(v),
     [vm],
@@ -244,7 +248,6 @@ const RemoteUserMediaTile = forwardRef<
             Icon={MicOffIcon}
             label={t("video_tile.mute_for_me")}
             checked={locallyMuted}
-            onChange={onChangeMute}
             onSelect={onSelectMute}
           />
           {/* TODO: Figure out how to make this slider keyboard accessible */}
