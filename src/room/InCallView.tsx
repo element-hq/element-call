@@ -496,24 +496,33 @@ export const InCallView: FC<InCallViewProps> = ({
 
   return (
     <div className={styles.inRoom} ref={containerRef}>
-      {!hideHeader && windowMode !== "pip" && windowMode !== "flat" && (
-        <Header className={styles.header} ref={headerRef}>
-          <LeftNav>
-            <RoomHeaderInfo
-              id={matrixInfo.roomId}
-              name={matrixInfo.roomName}
-              avatarUrl={matrixInfo.roomAvatar}
-              encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
-              participantCount={participantCount}
-            />
-          </LeftNav>
-          <RightNav>
-            {!reducedControls && showControls && onShareClick !== null && (
-              <InviteButton onClick={onShareClick} />
-            )}
-          </RightNav>
-        </Header>
-      )}
+      {windowMode !== "pip" &&
+        windowMode !== "flat" &&
+        (hideHeader ? (
+          // Cosmetic header to fill out space while still affecting the bounds
+          // of the grid
+          <div
+            className={classNames(styles.header, styles.filler)}
+            ref={headerRef}
+          />
+        ) : (
+          <Header className={styles.header} ref={headerRef}>
+            <LeftNav>
+              <RoomHeaderInfo
+                id={matrixInfo.roomId}
+                name={matrixInfo.roomName}
+                avatarUrl={matrixInfo.roomAvatar}
+                encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
+                participantCount={participantCount}
+              />
+            </LeftNav>
+            <RightNav>
+              {!reducedControls && showControls && onShareClick !== null && (
+                <InviteButton onClick={onShareClick} />
+              )}
+            </RightNav>
+          </Header>
+        ))}
       <RoomAudioRenderer />
       {renderContent()}
       {footer}
