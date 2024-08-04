@@ -67,7 +67,7 @@
     "normalize.css": "^8.0.1",
     "observable-hooks": "^4.2.3",
     "pako": "^2.0.4",
-    "postcss-preset-env": "^9.0.0",
+    "postcss-preset-env": "^10.0.0",
     "posthog-js": "^1.29.0",
     "react": "18",
     "react-dom": "18",
