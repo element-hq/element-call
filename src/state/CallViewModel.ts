@@ -52,6 +52,7 @@ import {
   zip,
 } from "rxjs";
 import { logger } from "matrix-js-sdk/src/logger";
+import { MatrixRTCSession, CallMembership } from "matrix-js-sdk/src/matrixrtc";
 
 import { ViewModel } from "./ViewModel";
 import { useObservable } from "./useObservable";
@@ -63,6 +64,7 @@ import { usePrevious } from "../usePrevious";
 import {
   LocalUserMediaViewModel,
   MediaViewModel,
+  MembershipOnlyViewModel,
   RemoteUserMediaViewModel,
   ScreenShareViewModel,
   UserMediaViewModel,
@@ -78,7 +80,7 @@ const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 export interface GridLayout {
   type: "grid";
   spotlight?: MediaViewModel[];
-  grid: UserMediaViewModel[];
+  grid: MediaViewModel[];
 }
 
 export interface SpotlightLandscapeLayout {
@@ -102,7 +104,7 @@ export interface SpotlightExpandedLayout {
 export interface OneOnOneLayout {
   type: "one-on-one";
   local: LocalUserMediaViewModel;
-  remote: RemoteUserMediaViewModel;
+  remote: UserMediaViewModel;
 }
 
 export interface PipLayout {
@@ -163,15 +165,35 @@ class UserMedia {
   public readonly presenter: Observable<boolean>;
 
   public constructor(
-    public readonly id: string,
+    id: string,
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
     callEncrypted: boolean,
+  );
+  public constructor(
+    id: string,
+    member: RoomMember | undefined,
+    callMembership: CallMembership,
+  );
+  public constructor(
+    public readonly id: string,
+    public readonly member: RoomMember | undefined,
+    participant: LocalParticipant | RemoteParticipant | CallMembership,
+    callEncrypted: boolean = false,
   ) {
-    this.vm =
-      participant instanceof LocalParticipant
-        ? new LocalUserMediaViewModel(id, member, participant, callEncrypted)
-        : new RemoteUserMediaViewModel(id, member, participant, callEncrypted);
+    if (participant instanceof CallMembership) {
+      this.vm = new MembershipOnlyViewModel(participant, member);
+    } else {
+      this.vm =
+        participant instanceof LocalParticipant
+          ? new LocalUserMediaViewModel(id, member, participant, callEncrypted)
+          : new RemoteUserMediaViewModel(
+              id,
+              member,
+              participant,
+              callEncrypted,
+            );
+    }
 
     this.speaker = this.vm.speaking.pipe(
       // Require 1 s of continuous speaking to become a speaker, and 60 s of
@@ -192,13 +214,17 @@ class UserMedia {
       shareReplay(1),
     );
 
-    this.presenter = observeParticipantEvents(
-      participant,
-      ParticipantEvent.TrackPublished,
-      ParticipantEvent.TrackUnpublished,
-      ParticipantEvent.LocalTrackPublished,
-      ParticipantEvent.LocalTrackUnpublished,
-    ).pipe(map((p) => p.isScreenShareEnabled));
+    if (participant instanceof CallMembership) {
+      this.presenter = of(false);
+    } else {
+      this.presenter = observeParticipantEvents(
+        participant,
+        ParticipantEvent.TrackPublished,
+        ParticipantEvent.TrackUnpublished,
+        ParticipantEvent.LocalTrackPublished,
+        ParticipantEvent.LocalTrackUnpublished,
+      ).pipe(map((p) => p.isScreenShareEnabled));
+    }
   }
 
   public destroy(): void {
@@ -226,6 +252,22 @@ class ScreenShare {
 
 type MediaItem = UserMedia | ScreenShare;
 
+function matrixUserIdFromParticipantId(id: string): string | undefined {
+  if (!id) return undefined;
+  const parts = id.split(":");
+  // must be at least 3 parts because we know the first part is a userId which must necessarily contain a colon
+  if (parts.length < 3) {
+    logger.warn(
+      `Livekit participants ID doesn't look like a userId:deviceId combination: ${id}`,
+    );
+    return undefined;
+  }
+
+  parts.pop();
+  const userId = parts.join(":");
+  return userId;
+}
+
 function findMatrixMember(
   room: MatrixRoom,
   id: string,
@@ -233,17 +275,11 @@ function findMatrixMember(
   if (id === "local")
     return room.getMember(room.client.getUserId()!) ?? undefined;
 
-  const parts = id.split(":");
-  // must be at least 3 parts because we know the first part is a userId which must necessarily contain a colon
-  if (parts.length < 3) {
-    logger.warn(
-      "Livekit participants ID doesn't look like a userId:deviceId combination",
-    );
+  const userId = matrixUserIdFromParticipantId(id);
+
+  if (!userId) {
     return undefined;
   }
-
-  parts.pop();
-  const userId = parts.join(":");
 
   return room.getMember(userId) ?? undefined;
 }
@@ -322,43 +358,88 @@ export class CallViewModel extends ViewModel {
       },
     );
 
+  private readonly membershipsWithoutParticipant = combineLatest([
+    of(this.rtcSession.memberships),
+    this.remoteParticipants,
+    of(this.livekitRoom.localParticipant),
+  ]).pipe(
+    scan((prev, [memberships, remoteParticipants, localParticipant]) => {
+      const participantIds = new Set(
+        remoteParticipants.map((p) =>
+          matrixUserIdFromParticipantId(p.identity),
+        ),
+      );
+      participantIds.add(
+        matrixUserIdFromParticipantId(localParticipant.identity),
+      );
+      return memberships.filter((m) => !participantIds.has(m.sender ?? ""));
+    }, [] as CallMembership[]),
+  );
+
   private readonly mediaItems: Observable<MediaItem[]> = combineLatest([
     this.remoteParticipants,
     observeParticipantMedia(this.livekitRoom.localParticipant),
     duplicateTiles.value,
+    this.membershipsWithoutParticipant,
   ]).pipe(
     scan(
       (
         prevItems,
-        [remoteParticipants, { participant: localParticipant }, duplicateTiles],
+        [
+          remoteParticipants,
+          { participant: localParticipant },
+          duplicateTiles,
+          membershipsWithoutParticipant,
+        ],
       ) => {
         const newItems = new Map(
           function* (this: CallViewModel): Iterable<[string, MediaItem]> {
-            for (const p of [localParticipant, ...remoteParticipants]) {
-              const userMediaId = p === localParticipant ? "local" : p.identity;
-              const member = findMatrixMember(this.matrixRoom, userMediaId);
-              if (member === undefined)
-                logger.warn(
-                  `Ruh, roh! No matrix member found for SFU participant '${p.identity}': creating g-g-g-ghost!`,
-                );
-
-              // Create as many tiles for this participant as called for by
-              // the duplicateTiles option
-              for (let i = 0; i < 1 + duplicateTiles; i++) {
-                const userMediaId = `${p.identity}:${i}`;
+            for (const p of [
+              localParticipant,
+              ...remoteParticipants,
+              ...membershipsWithoutParticipant,
+            ]) {
+              if (p instanceof CallMembership) {
+                const member =
+                  this.matrixRoom.getMember(p.sender!) ?? undefined;
                 yield [
-                  userMediaId,
-                  prevItems.get(userMediaId) ??
-                    new UserMedia(userMediaId, member, p, this.encrypted),
+                  p.sender!,
+                  prevItems.get(p.sender!) ??
+                    new UserMedia(p.sender!, member, p),
                 ];
+              } else {
+                const member = findMatrixMember(
+                  this.matrixRoom,
+                  p === localParticipant ? "local" : p.identity,
+                );
+                if (member === undefined)
+                  logger.warn(
+                    `Ruh, roh! No matrix member found for SFU participant '${p.identity}': creating g-g-g-ghost!`,
+                  );
 
-                if (p.isScreenShareEnabled) {
-                  const screenShareId = `${userMediaId}:screen-share`;
+                // Create as many tiles for this participant as called for by
+                // the duplicateTiles option
+                for (let i = 0; i < 1; i++) {
+                  const userMediaId = `${p.identity}:${i}`;
                   yield [
-                    screenShareId,
-                    prevItems.get(screenShareId) ??
-                      new ScreenShare(screenShareId, member, p, this.encrypted),
+                    userMediaId,
+                    prevItems.get(userMediaId) ??
+                      new UserMedia(userMediaId, member, p, this.encrypted),
                   ];
+
+                  if (p.isScreenShareEnabled) {
+                    const screenShareId = `${userMediaId}:screen-share`;
+                    yield [
+                      screenShareId,
+                      prevItems.get(screenShareId) ??
+                        new ScreenShare(
+                          screenShareId,
+                          member,
+                          p,
+                          this.encrypted,
+                        ),
+                    ];
+                  }
                 }
               }
             }
@@ -565,7 +646,7 @@ export class CallViewModel extends ViewModel {
     switchMap((windowMode) => {
       const spotlightLandscapeLayout = combineLatest(
         [this.grid, this.spotlight],
-        (grid, spotlight): Layout => ({
+        (grid, spotlight): SpotlightLandscapeLayout => ({
           type: "spotlight-landscape",
           spotlight,
           grid,
@@ -573,7 +654,7 @@ export class CallViewModel extends ViewModel {
       );
       const spotlightExpandedLayout = combineLatest(
         [this.spotlight, this.pip],
-        (spotlight, pip): Layout => ({
+        (spotlight, pip): SpotlightExpandedLayout => ({
           type: "spotlight-expanded",
           spotlight,
           pip: pip ?? undefined,
@@ -625,7 +706,7 @@ export class CallViewModel extends ViewModel {
         case "narrow":
           return combineLatest(
             [this.grid, this.spotlight],
-            (grid, spotlight): Layout => ({
+            (grid, spotlight): SpotlightPortraitLayout => ({
               type: "spotlight-portrait",
               spotlight,
               grid,
@@ -646,7 +727,7 @@ export class CallViewModel extends ViewModel {
           );
         case "pip":
           return this.spotlight.pipe(
-            map((spotlight): Layout => ({ type: "pip", spotlight })),
+            map((spotlight): PipLayout => ({ type: "pip", spotlight })),
           );
       }
     }),
@@ -684,9 +765,13 @@ export class CallViewModel extends ViewModel {
     shareReplay(1),
   );
 
+  private get matrixRoom(): MatrixRoom {
+    return this.rtcSession.room;
+  }
+
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room
-    private readonly matrixRoom: MatrixRoom,
+    private readonly rtcSession: MatrixRTCSession,
     private readonly livekitRoom: LivekitRoom,
     private readonly encrypted: boolean,
     private readonly connectionState: Observable<ECConnectionState>,
@@ -696,25 +781,25 @@ export class CallViewModel extends ViewModel {
 }
 
 export function useCallViewModel(
-  matrixRoom: MatrixRoom,
+  rtcSession: MatrixRTCSession,
   livekitRoom: LivekitRoom,
   encrypted: boolean,
   connectionState: ECConnectionState,
 ): CallViewModel {
-  const prevMatrixRoom = usePrevious(matrixRoom);
+  const prevRTCSession = usePrevious(rtcSession);
   const prevLivekitRoom = usePrevious(livekitRoom);
   const prevEncrypted = usePrevious(encrypted);
   const connectionStateObservable = useObservable(connectionState);
 
   const vm = useRef<CallViewModel>();
   if (
-    matrixRoom !== prevMatrixRoom ||
+    rtcSession !== prevRTCSession ||
     livekitRoom !== prevLivekitRoom ||
     encrypted !== prevEncrypted
   ) {
     vm.current?.destroy();
     vm.current = new CallViewModel(
-      matrixRoom,
+      rtcSession,
       livekitRoom,
       encrypted,
       connectionStateObservable,

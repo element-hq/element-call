@@ -49,6 +49,8 @@ import {
   useDisplayName,
   LocalUserMediaViewModel,
   RemoteUserMediaViewModel,
+  MembershipOnlyViewModel,
+  MediaViewModel,
 } from "../state/MediaViewModel";
 import { Slider } from "../Slider";
 import { MediaView } from "./MediaView";
@@ -272,8 +274,30 @@ const RemoteUserMediaTile = forwardRef<
 
 RemoteUserMediaTile.displayName = "RemoteUserMediaTile";
 
+interface MembershipOnlyTileProps extends TileProps {
+  vm: MembershipOnlyViewModel;
+}
+
+const MembershipOnlyTile = forwardRef<HTMLDivElement, MembershipOnlyTileProps>(
+  ({ vm, ...props }, ref) => {
+    return (
+      <MediaView
+        mirror={false}
+        ref={ref}
+        member={vm.member}
+        unencryptedWarning={false}
+        videoEnabled={false}
+        videoFit="contain"
+        {...props}
+      />
+    );
+  },
+);
+
+MembershipOnlyTile.displayName = "MembershipOnlyTile";
+
 interface GridTileProps {
-  vm: UserMediaViewModel;
+  vm: MediaViewModel;
   onOpenProfile: () => void;
   targetWidth: number;
   targetHeight: number;
@@ -296,15 +320,10 @@ export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
           {...props}
         />
       );
-    } else {
-      return (
-        <RemoteUserMediaTile
-          ref={ref}
-          vm={vm}
-          displayName={displayName}
-          {...props}
-        />
-      );
+    } else if (vm instanceof RemoteUserMediaViewModel) {
+      return <RemoteUserMediaTile ref={ref} vm={vm} displayName={displayName} {...props} />;
+    } else if (vm instanceof MembershipOnlyViewModel) {
+      return <MembershipOnlyTile ref={ref} vm={vm} displayName={displayName} {...props} />;
     }
   },
 );

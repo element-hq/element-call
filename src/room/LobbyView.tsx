@@ -20,6 +20,7 @@ import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Button, Link } from "@vector-im/compound-web";
 import classNames from "classnames";
 import { useHistory } from "react-router-dom";
+import { CallMembership } from "matrix-js-sdk/src/matrixrtc";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -46,7 +47,7 @@ interface Props {
   enterLabel?: JSX.Element | string;
   confineToRoom: boolean;
   hideHeader: boolean;
-  participantCount: number | null;
+  memberships: CallMembership[] | null;
   onShareClick: (() => void) | null;
   waitingForInvite?: boolean;
 }
@@ -59,7 +60,7 @@ export const LobbyView: FC<Props> = ({
   enterLabel,
   confineToRoom,
   hideHeader,
-  participantCount,
+  memberships,
   onShareClick,
   waitingForInvite,
 }) => {
@@ -110,7 +111,7 @@ export const LobbyView: FC<Props> = ({
                 name={matrixInfo.roomName}
                 avatarUrl={matrixInfo.roomAvatar}
                 encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
-                participantCount={participantCount}
+                memberships={memberships}
               />
             </LeftNav>
             <RightNav>

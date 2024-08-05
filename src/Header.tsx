@@ -15,11 +15,12 @@ limitations under the License.
 */
 
 import classNames from "classnames";
-import { FC, HTMLAttributes, ReactNode, forwardRef } from "react";
+import { FC, HTMLAttributes, ReactNode, forwardRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { Heading, Text } from "@vector-im/compound-web";
+import { Heading, Text, Tooltip } from "@vector-im/compound-web";
 import { UserProfileIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { CallMembership } from "matrix-js-sdk/src/matrixrtc";
 
 import styles from "./Header.module.css";
 import Logo from "./icons/Logo.svg?react";
@@ -125,7 +126,7 @@ interface RoomHeaderInfoProps {
   name: string;
   avatarUrl: string | null;
   encrypted: boolean;
-  participantCount: number | null;
+  memberships: CallMembership[] | null;
 }
 
 export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
@@ -133,10 +134,17 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
   name,
   avatarUrl,
   encrypted,
-  participantCount,
+  memberships,
 }) => {
   const { t } = useTranslation();
   const size = useMediaQuery("(max-width: 550px)") ? "sm" : "lg";
+
+  // Count each member only once, regardless of how many devices they use
+  const uniqueUsers = useMemo(
+    () =>
+      memberships ? new Set<string>(memberships.map((m) => m.sender!)) : null,
+    [memberships],
+  );
 
   return (
     <div className={styles.roomHeaderInfo} data-size={size}>
@@ -158,17 +166,21 @@ export const RoomHeaderInfo: FC<RoomHeaderInfoProps> = ({
         </Heading>
         <EncryptionLock encrypted={encrypted} />
       </div>
-      {(participantCount ?? 0) > 0 && (
-        <div className={styles.participantsLine}>
-          <UserProfileIcon
-            width={20}
-            height={20}
-            aria-label={t("header_participants_label")}
-          />
-          <Text as="span" size="sm" weight="medium">
-            {t("participant_count", { count: participantCount ?? 0 })}
-          </Text>
-        </div>
+      {uniqueUsers && uniqueUsers.size > 0 && (
+        <Tooltip
+          label={`${uniqueUsers.size} users with ${memberships?.length} devices:\n${[...uniqueUsers.values()].join(", ")}`}
+        >
+          <div className={styles.participantsLine}>
+            <UserProfileIcon
+              width={20}
+              height={20}
+              aria-label={t("header_participants_label")}
+            />
+            <Text as="span" size="sm" weight="medium">
+              {t("participant_count", { count: uniqueUsers.size })}
+            </Text>
+          </div>
+        </Tooltip>
       )}
     </div>
   );

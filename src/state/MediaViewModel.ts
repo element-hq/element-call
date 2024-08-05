@@ -46,6 +46,7 @@ import {
   switchMap,
 } from "rxjs";
 import { useEffect } from "react";
+import { CallMembership } from "matrix-js-sdk/src/matrixrtc";
 
 import { ViewModel } from "./ViewModel";
 import { useReactiveState } from "../useReactiveState";
@@ -92,11 +93,14 @@ abstract class BaseMediaViewModel extends ViewModel {
   /**
    * Whether the media belongs to the local user.
    */
-  public readonly local = this.participant.isLocal;
+  public get local(): boolean {
+    return this.participant?.isLocal ?? false;
+  }
+
   /**
    * The LiveKit video track for this media.
    */
-  public readonly video: Observable<TrackReferenceOrPlaceholder>;
+  public readonly video: Observable<TrackReferenceOrPlaceholder | undefined>;
   /**
    * Whether there should be a warning that this media is unencrypted.
    */
@@ -113,21 +117,29 @@ abstract class BaseMediaViewModel extends ViewModel {
     // TODO: Fully separate the data layer from the UI layer by keeping the
     // member object internal
     public readonly member: RoomMember | undefined,
-    protected readonly participant: LocalParticipant | RemoteParticipant,
+    protected readonly participant:
+      | LocalParticipant
+      | RemoteParticipant
+      | undefined,
     callEncrypted: boolean,
     audioSource: AudioSource,
     videoSource: VideoSource,
   ) {
     super();
-    const audio = observeTrackReference(participant, audioSource);
-    this.video = observeTrackReference(participant, videoSource);
-    this.unencryptedWarning = combineLatest(
-      [audio, this.video],
-      (a, v) =>
-        callEncrypted &&
-        (a.publication?.isEncrypted === false ||
-          v.publication?.isEncrypted === false),
-    ).pipe(distinctUntilChanged(), shareReplay(1));
+    if (participant) {
+      const audio = observeTrackReference(participant, audioSource);
+      this.video = observeTrackReference(participant, videoSource);
+      this.unencryptedWarning = combineLatest(
+        [audio, this.video],
+        (a, v) =>
+          callEncrypted &&
+          (a.publication?.isEncrypted === false ||
+            v?.publication?.isEncrypted === false),
+      ).pipe(distinctUntilChanged(), shareReplay(1));
+    } else {
+      this.video = of(undefined);
+      this.unencryptedWarning = of(false);
+    }
   }
 }
 
@@ -137,7 +149,8 @@ abstract class BaseMediaViewModel extends ViewModel {
 export type MediaViewModel = UserMediaViewModel | ScreenShareViewModel;
 export type UserMediaViewModel =
   | LocalUserMediaViewModel
-  | RemoteUserMediaViewModel;
+  | RemoteUserMediaViewModel
+  | MembershipOnlyViewModel;
 
 /**
  * Some participant's user media.
@@ -146,13 +159,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   /**
    * Whether the participant is speaking.
    */
-  public readonly speaking = observeParticipantEvents(
-    this.participant,
-    ParticipantEvent.IsSpeakingChanged,
-  ).pipe(
-    map((p) => p.isSpeaking),
-    shareReplay(1),
-  );
+  public readonly speaking: Observable<boolean>;
 
   /**
    * Whether this participant is sending audio (i.e. is unmuted on their side).
@@ -172,7 +179,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   public constructor(
     id: string,
     member: RoomMember | undefined,
-    participant: LocalParticipant | RemoteParticipant,
+    participant: LocalParticipant | RemoteParticipant | undefined,
     callEncrypted: boolean,
   ) {
     super(
@@ -184,13 +191,26 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       Track.Source.Camera,
     );
 
-    const media = observeParticipantMedia(participant).pipe(shareReplay(1));
-    this.audioEnabled = media.pipe(
-      map((m) => m.microphoneTrack?.isMuted === false),
-    );
-    this.videoEnabled = media.pipe(
-      map((m) => m.cameraTrack?.isMuted === false),
-    );
+    if (participant) {
+      this.speaking = observeParticipantEvents(
+        participant,
+        ParticipantEvent.IsSpeakingChanged,
+      ).pipe(
+        map((p) => p.isSpeaking),
+        shareReplay(1),
+      );
+      const media = observeParticipantMedia(participant).pipe(shareReplay(1));
+      this.audioEnabled = media.pipe(
+        map((m) => m.microphoneTrack?.isMuted === false),
+      );
+      this.videoEnabled = media.pipe(
+        map((m) => m.cameraTrack?.isMuted === false),
+      );
+    } else {
+      this.speaking = of(false);
+      this.audioEnabled = of(false);
+      this.videoEnabled = of(false);
+    }
   }
 
   public toggleFitContain(): void {
@@ -207,7 +227,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
    */
   public readonly mirror = this.video.pipe(
     switchMap((v) => {
-      const track = v.publication?.track;
+      const track = v?.publication?.track;
       if (!(track instanceof LocalTrack)) return of(false);
       // Watch for track restarts, because they indicate a camera switch
       return fromEvent(track, TrackEvent.Restarted).pipe(
@@ -297,6 +317,23 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
       callEncrypted,
       Track.Source.ScreenShareAudio,
       Track.Source.ScreenShare,
+    );
+  }
+}
+
+/**
+ * Placeholder for a call membership that does not have a LiveKit participant associated with it.
+ */
+export class MembershipOnlyViewModel extends BaseUserMediaViewModel {
+  public constructor(
+    public readonly callMembership: CallMembership,
+    member: RoomMember | undefined,
+  ) {
+    super(
+      callMembership.sender ?? callMembership.membershipID,
+      member,
+      undefined,
+      false,
     );
   }
 }

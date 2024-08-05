@@ -124,7 +124,6 @@ export interface InCallViewProps {
   rtcSession: MatrixRTCSession;
   livekitRoom: Room;
   muteStates: MuteStates;
-  participantCount: number;
   onLeave: (error?: Error) => void;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
@@ -138,7 +137,6 @@ export const InCallView: FC<InCallViewProps> = ({
   rtcSession,
   livekitRoom,
   muteStates,
-  participantCount,
   onLeave,
   hideHeader,
   connState,
@@ -190,7 +188,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const noControls = reducedControls && bounds.height <= 400;
 
   const vm = useCallViewModel(
-    rtcSession.room,
+    rtcSession,
     livekitRoom,
     matrixInfo.e2eeSystem.kind !== E2eeType.NONE,
     connState,
@@ -513,8 +511,8 @@ export const InCallView: FC<InCallViewProps> = ({
                 name={matrixInfo.roomName}
                 avatarUrl={matrixInfo.roomAvatar}
                 encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
-                participantCount={participantCount}
-              />
+                memberships={rtcSession.memberships}
+                />
             </LeftNav>
             <RightNav>
               {!reducedControls && showControls && onShareClick !== null && (

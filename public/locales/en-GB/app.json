@@ -102,6 +102,7 @@
   "microphone_off": "Microphone off",
   "microphone_on": "Microphone on",
   "mute_microphone_button_label": "Mute microphone",
+  "no_media_available": "No media available",
   "participant_count_one": "{{count, number}}",
   "participant_count_other": "{{count, number}}",
   "rageshake_button_error_caption": "Retry sending logs",
@@ -126,6 +127,7 @@
   "return_home_button": "Return to home screen",
   "room_auth_view_eula_caption": "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>",
   "room_auth_view_join_button": "Join call now",
+  "room_member_not_found": "Profile information for this participant is not available",
   "screenshare_button_label": "Share screen",
   "select_input_unset_button": "Select an option",
   "settings": {

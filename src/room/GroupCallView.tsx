@@ -121,12 +121,6 @@ export const GroupCallView: FC<Props> = ({
     e2eeSystem,
   ]);
 
-  // Count each member only once, regardless of how many devices they use
-  const participantCount = useMemo(
-    () => new Set<string>(memberships.map((m) => m.sender!)).size,
-    [memberships],
-  );
-
   const deviceContext = useMediaDevices();
   const latestDevices = useRef<MediaDevices>();
   latestDevices.current = deviceContext;
@@ -319,7 +313,7 @@ export const GroupCallView: FC<Props> = ({
         onEnter={() => void enterRTCSession(rtcSession, perParticipantE2EE)}
         confineToRoom={confineToRoom}
         hideHeader={hideHeader}
-        participantCount={participantCount}
+        memberships={memberships}
         onShareClick={onShareClick}
       />
     </>
@@ -333,7 +327,6 @@ export const GroupCallView: FC<Props> = ({
           client={client}
           matrixInfo={matrixInfo}
           rtcSession={rtcSession}
-          participantCount={participantCount}
           onLeave={onLeave}
           hideHeader={hideHeader}
           muteStates={muteStates}

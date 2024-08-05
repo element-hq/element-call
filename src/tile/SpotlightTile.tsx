@@ -57,7 +57,7 @@ interface SpotlightItemBaseProps {
   "data-id": string;
   targetWidth: number;
   targetHeight: number;
-  video: TrackReferenceOrPlaceholder;
+  video: TrackReferenceOrPlaceholder | undefined;
   member: RoomMember | undefined;
   unencryptedWarning: boolean;
   displayName: string;

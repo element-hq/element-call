@@ -53,7 +53,7 @@ export interface CallLayoutInputs {
 
 export interface GridTileModel {
   type: "grid";
-  vm: UserMediaViewModel;
+  vm: MediaViewModel;
 }
 
 export interface SpotlightTileModel {

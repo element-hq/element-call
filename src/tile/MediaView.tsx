@@ -32,7 +32,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
-  video: TrackReferenceOrPlaceholder;
+  video?: TrackReferenceOrPlaceholder;
   videoFit: "cover" | "contain";
   mirror: boolean;
   member: RoomMember | undefined;
@@ -85,21 +85,33 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
             src={member?.getMxcAvatarUrl()}
             className={styles.avatar}
           />
-          {video.publication !== undefined && (
+          {video?.publication ? (
             <VideoTrack
               trackRef={video}
               // There's no reason for this to be focusable
               tabIndex={-1}
               disablePictureInPicture
             />
-          )}
+          ) : null}
         </div>
         <div className={styles.fg}>
+          {!video ? (
+            <div className={styles.status}>
+              <span>{t("no_media_available")}</span>
+            </div>
+          ) : null}
+          {!member ? (
+            <div className={styles.status}>
+              <span>{t("room_member_not_found")}</span>
+            </div>
+          ) : null}
           <div className={styles.nameTag}>
             {nameTagLeadingIcon}
-            <Text as="span" size="sm" weight="medium" className={styles.name}>
-              {displayName}
-            </Text>
+            <Tooltip label={member?.userId ?? t("room_member_not_found")}>
+              <Text as="span" size="sm" weight="medium" className={styles.name}>
+                {displayName}
+              </Text>
+            </Tooltip>
             {unencryptedWarning && (
               <Tooltip
                 label={t("common.unencrypted")}

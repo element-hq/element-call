@@ -142,7 +142,7 @@ export const RoomPage: FC = () => {
               waitingForInvite={groupCallState.kind === "waitForInvite"}
               confineToRoom={confineToRoom}
               hideHeader={hideHeader}
-              participantCount={null}
+              memberships={null}
               muteStates={muteStates}
               onShareClick={null}
             />
