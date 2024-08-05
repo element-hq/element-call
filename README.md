@@ -143,7 +143,7 @@ yarn backend
 
 ### Add a new translation key
 
-To add a new translation key you follow the following steps:
+To add a new translation key you can do these steps:
 
 1. Add the new key entry to the code where the new key is used: `t("some_new_key")`
 1. Run `yarn i18n` to extract the new key and update the translation files. This will add a skeleton entry to the `public/locales/en-GB/app.json` file:
