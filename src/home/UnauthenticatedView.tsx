@@ -18,14 +18,13 @@ import { FC, useCallback, useState, FormEventHandler } from "react";
 import { useHistory } from "react-router-dom";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { Trans, useTranslation } from "react-i18next";
-import { Heading } from "@vector-im/compound-web";
+import { Button, Heading } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { useClient } from "../ClientContext";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { Button } from "../button";
 import {
   createRoom,
   getRelativeRoomUrl,

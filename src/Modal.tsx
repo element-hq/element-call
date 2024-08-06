@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import { FC, ReactNode, useCallback } from "react";
-import { AriaDialogProps } from "@react-types/dialog";
 import { useTranslation } from "react-i18next";
 import {
   Root as DialogRoot,
@@ -35,8 +34,7 @@ import styles from "./Modal.module.css";
 import overlayStyles from "./Overlay.module.css";
 import { useMediaQuery } from "./useMediaQuery";
 
-// TODO: Support tabs
-export interface Props extends AriaDialogProps {
+export interface Props {
   title: string;
   children: ReactNode;
   className?: string;
@@ -52,6 +50,11 @@ export interface Props extends AriaDialogProps {
    * will be non-dismissable.
    */
   onDismiss?: () => void;
+  /**
+   * Whether the modal content has tabs.
+   */
+  // TODO: Better tabs support
+  tabbed?: boolean;
 }
 
 /**
@@ -64,6 +67,7 @@ export const Modal: FC<Props> = ({
   className,
   open,
   onDismiss,
+  tabbed,
   ...rest
 }) => {
   const { t } = useTranslation();
@@ -92,6 +96,7 @@ export const Modal: FC<Props> = ({
               overlayStyles.overlay,
               styles.modal,
               styles.drawer,
+              { [styles.tabbed]: tabbed },
             )}
             {...rest}
           >
@@ -123,6 +128,7 @@ export const Modal: FC<Props> = ({
                 overlayStyles.animate,
                 styles.modal,
                 styles.dialog,
+                { [styles.tabbed]: tabbed },
               )}
             >
               <div className={styles.content}>

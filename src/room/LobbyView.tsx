@@ -17,7 +17,7 @@ limitations under the License.
 import { FC, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
-import { Button, Link } from "@vector-im/compound-web";
+import { Button } from "@vector-im/compound-web";
 import classNames from "classnames";
 import { useHistory } from "react-router-dom";
 
@@ -29,7 +29,7 @@ import { MatrixInfo, VideoPreview } from "./VideoPreview";
 import { MuteStates } from "./MuteStates";
 import { InviteButton } from "../button/InviteButton";
 import {
-  HangupButton,
+  EndCallButton,
   MicButton,
   SettingsButton,
   VideoButton,
@@ -37,6 +37,7 @@ import {
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useMediaQuery } from "../useMediaQuery";
 import { E2eeType } from "../e2ee/e2eeType";
+import { Link } from "../button/Link";
 
 interface Props {
   client: MatrixClient;
@@ -92,7 +93,7 @@ export const LobbyView: FC<Props> = ({
 
   const recentsButtonInFooter = useMediaQuery("(max-height: 500px)");
   const recentsButton = !confineToRoom && (
-    <Link className={styles.recents} href="#" onClick={onLeaveClick}>
+    <Link className={styles.recents} to="/">
       {t("lobby.leave_button")}
     </Link>
   );
@@ -140,16 +141,16 @@ export const LobbyView: FC<Props> = ({
           <div className={inCallStyles.buttons}>
             <MicButton
               muted={!muteStates.audio.enabled}
-              onPress={onAudioPress}
+              onClick={onAudioPress}
               disabled={muteStates.audio.setEnabled === null}
             />
             <VideoButton
               muted={!muteStates.video.enabled}
-              onPress={onVideoPress}
+              onClick={onVideoPress}
               disabled={muteStates.video.setEnabled === null}
             />
-            <SettingsButton onPress={openSettings} />
-            {!confineToRoom && <HangupButton onPress={onLeaveClick} />}
+            <SettingsButton onClick={openSettings} />
+            {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
           </div>
         </div>
       </div>

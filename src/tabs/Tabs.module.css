@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -21,60 +21,6 @@ limitations under the License.
 }
 
 .tabList {
-  display: flex;
-  list-style: none;
-  padding: 0;
-  margin: 0 auto 24px auto;
-  gap: 16px;
   overflow-y: auto;
   max-width: 100%;
-}
-
-.tab {
-  height: 32px;
-  box-sizing: border-box;
-  border-radius: 8px;
-  background-color: transparent;
-  display: flex;
-  align-items: center;
-  padding: 0 8px;
-  border: none;
-  cursor: pointer;
-  font-size: var(--font-size-body);
-}
-
-.tab > * {
-  color: var(--cpd-color-text-secondary);
-  margin: 0 8px 0 0;
-}
-
-.tab svg * {
-  fill: var(--cpd-color-text-secondary);
-}
-
-.tab > :last-child {
-  margin-right: 0;
-}
-
-.tab.selected {
-  background-color: var(--cpd-color-text-action-accent);
-}
-
-.tab.selected * {
-  color: var(--stopgap-color-on-solid-accent);
-}
-
-.tab.selected svg * {
-  fill: var(--stopgap-color-on-solid-accent);
-}
-
-.tab.disabled {
-}
-
-.tabPanel {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  padding: 0;
-  overflow-y: auto;
 }

@@ -18,17 +18,19 @@ import { FC, FormEventHandler, ReactNode, useCallback, useState } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { Trans, useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
+import { Button } from "@vector-im/compound-web";
 
 import styles from "./CallEndedView.module.css";
 import feedbackStyle from "../input/FeedbackInput.module.css";
-import { Button, LinkButton } from "../button";
 import { useProfile } from "../profile/useProfile";
-import { Body, Link, Headline } from "../typography/Typography";
+import { Body, Headline } from "../typography/Typography";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { FieldRow, InputField } from "../input/Input";
 import { StarRatingInput } from "../input/StarRatingInput";
 import { RageshakeButton } from "../settings/RageshakeButton";
+import { Link } from "../button/Link";
+import { LinkButton } from "../button";
 
 interface Props {
   client: MatrixClient;
@@ -95,12 +97,7 @@ export const CallEndedView: FC<Props> = ({
           calls
         </p>
       </Trans>
-      <LinkButton
-        className={styles.callEndedButton}
-        size="lg"
-        variant="default"
-        to="/register"
-      >
+      <LinkButton className={styles.callEndedButton} to="/register">
         {t("call_ended_view.create_account_button")}
       </LinkButton>
     </div>
@@ -136,8 +133,6 @@ export const CallEndedView: FC<Props> = ({
             <Button
               type="submit"
               className={styles.submitButton}
-              size="lg"
-              variant="default"
               data-testid="home_go"
             >
               {submitting ? t("submitting") : t("action.submit")}
@@ -159,7 +154,7 @@ export const CallEndedView: FC<Props> = ({
               </Trans>
             </Headline>
             <div className={styles.disconnectedButtons}>
-              <Button size="lg" variant="default" onClick={reconnect}>
+              <Button onClick={reconnect}>
                 {t("call_ended_view.reconnect_button")}
               </Button>
               <div className={styles.rageshakeButton}>
@@ -169,9 +164,7 @@ export const CallEndedView: FC<Props> = ({
           </main>
           {!confineToRoom && (
             <Body className={styles.footer}>
-              <Link color="primary" to="/">
-                {t("return_home_button")}
-              </Link>
+              <Link to="/"> {t("return_home_button")} </Link>
             </Body>
           )}
         </>
@@ -198,9 +191,7 @@ export const CallEndedView: FC<Props> = ({
           </main>
           {!confineToRoom && (
             <Body className={styles.footer}>
-              <Link color="primary" to="/">
-                {t("call_ended_view.not_now_button")}
-              </Link>
+              <Link to="/"> {t("call_ended_view.not_now_button")} </Link>
             </Body>
           )}
         </>

@@ -99,8 +99,9 @@ limitations under the License.
   border-radius: var(--cpd-radius-pill-effect);
   background: var(--cpd-color-alpha-gray-1400);
   box-shadow: var(--small-drop-shadow);
-  transition-duration: 0.1s;
-  transition-property: opacity, background-color;
+  transition:
+    opacity 0.15s,
+    background-color 0.1s;
   position: absolute;
   z-index: 1;
   --inset: 6px;
