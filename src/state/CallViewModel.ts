@@ -520,7 +520,7 @@ export class CallViewModel extends ViewModel {
       const height = window.innerHeight;
       const width = window.innerWidth;
       if (height <= 400 && width <= 340) return "pip";
-      if (width <= 660) return "narrow";
+      if (width <= 600) return "narrow";
       if (height <= 660) return "flat";
       return "normal";
     }),
