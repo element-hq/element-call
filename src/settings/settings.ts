@@ -78,6 +78,8 @@ export const developerSettingsTab = new Setting(
 
 export const duplicateTiles = new Setting("duplicate-tiles", 0);
 
+export const showDebugView = new Setting("show-debug-view", false);
+
 export const audioInput = new Setting<string | undefined>(
   "audio-input",
   undefined,
