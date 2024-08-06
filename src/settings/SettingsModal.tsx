@@ -254,7 +254,8 @@ export const SettingsModal: FC<Props> = ({
           value={duplicateTiles.toString()}
           onChange={useCallback(
             (event: ChangeEvent<HTMLInputElement>): void => {
-              setDuplicateTiles(event.target.valueAsNumber);
+              const value = event.target.valueAsNumber;
+              setDuplicateTiles(Number.isNaN(value) ? 0 : value);
             },
             [setDuplicateTiles],
           )}
