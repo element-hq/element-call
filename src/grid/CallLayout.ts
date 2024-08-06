@@ -95,7 +95,6 @@ export interface GridArrangement {
 
 const tileMaxAspectRatio = 17 / 9;
 const tileMinAspectRatio = 4 / 3;
-const tileMobileMinAspectRatio = 2 / 3;
 
 /**
  * Determine the ideal arrangement of tiles into a grid of a particular size.
@@ -138,15 +137,10 @@ export function arrangeTiles(
 
   // Impose a minimum and maximum aspect ratio on the tiles
   const tileAspectRatio = tileWidth / tileHeight;
-  // We enforce a different min aspect ratio in 1:1s on mobile
-  const minAspectRatio =
-    tileCount === 1 && width < 600
-      ? tileMobileMinAspectRatio
-      : tileMinAspectRatio;
   if (tileAspectRatio > tileMaxAspectRatio)
     tileWidth = tileHeight * tileMaxAspectRatio;
-  else if (tileAspectRatio < minAspectRatio)
-    tileHeight = tileWidth / minAspectRatio;
+  else if (tileAspectRatio < tileMinAspectRatio)
+    tileHeight = tileWidth / tileMinAspectRatio;
 
   return { tileWidth, tileHeight, gap, columns };
 }

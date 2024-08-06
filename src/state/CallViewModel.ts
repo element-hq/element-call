@@ -46,6 +46,7 @@ import {
   shareReplay,
   skip,
   startWith,
+  switchAll,
   switchMap,
   throttleTime,
   timer,
@@ -74,6 +75,10 @@ import { duplicateTiles } from "../settings/settings";
 // How long we wait after a focus switch before showing the real participant
 // list again
 const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
+
+// This is the number of participants that we think constitutes a "small" call
+// on mobile. No spotlight tile should be shown below this threshold.
+const smallMobileCallThreshold = 3;
 
 export interface GridLayout {
   type: "grid";
@@ -515,7 +520,7 @@ export class CallViewModel extends ViewModel {
       const height = window.innerHeight;
       const width = window.innerWidth;
       if (height <= 400 && width <= 340) return "pip";
-      if (width <= 660) return "narrow";
+      if (width <= 600) return "narrow";
       if (height <= 660) return "flat";
       return "normal";
     }),
@@ -561,75 +566,98 @@ export class CallViewModel extends ViewModel {
     this.gridModeUserSelection.next(value);
   }
 
+  private readonly oneOnOne: Observable<boolean> = combineLatest(
+    [this.grid, this.screenShares],
+    (grid, screenShares) =>
+      grid.length == 2 &&
+      // There might not be a remote tile if only the local user is in the call
+      // and they're using the duplicate tiles option
+      grid.some((vm) => !vm.local) &&
+      screenShares.length === 0,
+  );
+
+  private readonly gridLayout: Observable<Layout> = combineLatest(
+    [this.grid, this.spotlight],
+    (grid, spotlight) => ({
+      type: "grid",
+      spotlight: spotlight.some((vm) => vm instanceof ScreenShareViewModel)
+        ? spotlight
+        : undefined,
+      grid,
+    }),
+  );
+
+  private readonly spotlightLandscapeLayout: Observable<Layout> = combineLatest(
+    [this.grid, this.spotlight],
+    (grid, spotlight) => ({ type: "spotlight-landscape", spotlight, grid }),
+  );
+
+  private readonly spotlightPortraitLayout: Observable<Layout> = combineLatest(
+    [this.grid, this.spotlight],
+    (grid, spotlight) => ({ type: "spotlight-portrait", spotlight, grid }),
+  );
+
+  private readonly spotlightExpandedLayout: Observable<Layout> = combineLatest(
+    [this.spotlight, this.pip],
+    (spotlight, pip) => ({
+      type: "spotlight-expanded",
+      spotlight,
+      pip: pip ?? undefined,
+    }),
+  );
+
+  private readonly oneOnOneLayout: Observable<Layout> = this.grid.pipe(
+    map((grid) => ({
+      type: "one-on-one",
+      local: grid.find((vm) => vm.local) as LocalUserMediaViewModel,
+      remote: grid.find((vm) => !vm.local) as RemoteUserMediaViewModel,
+    })),
+  );
+
+  private readonly pipLayout: Observable<Layout> = this.spotlight.pipe(
+    map((spotlight): Layout => ({ type: "pip", spotlight })),
+  );
+
   public readonly layout: Observable<Layout> = this.windowMode.pipe(
     switchMap((windowMode) => {
-      const spotlightLandscapeLayout = combineLatest(
-        [this.grid, this.spotlight],
-        (grid, spotlight): Layout => ({
-          type: "spotlight-landscape",
-          spotlight,
-          grid,
-        }),
-      );
-      const spotlightExpandedLayout = combineLatest(
-        [this.spotlight, this.pip],
-        (spotlight, pip): Layout => ({
-          type: "spotlight-expanded",
-          spotlight,
-          pip: pip ?? undefined,
-        }),
-      );
-
       switch (windowMode) {
         case "normal":
           return this.gridMode.pipe(
             switchMap((gridMode) => {
               switch (gridMode) {
                 case "grid":
-                  return combineLatest(
-                    [this.grid, this.spotlight, this.screenShares],
-                    (grid, spotlight, screenShares): Layout =>
-                      grid.length == 2 &&
-                      // There might not be a remote tile if only the local user
-                      // is in the call and they're using the duplicate tiles
-                      // option
-                      grid.some((vm) => !vm.local) &&
-                      screenShares.length === 0
-                        ? {
-                            type: "one-on-one",
-                            local: grid.find(
-                              (vm) => vm.local,
-                            ) as LocalUserMediaViewModel,
-                            remote: grid.find(
-                              (vm) => !vm.local,
-                            ) as RemoteUserMediaViewModel,
-                          }
-                        : {
-                            type: "grid",
-                            spotlight:
-                              screenShares.length > 0 ? spotlight : undefined,
-                            grid,
-                          },
+                  return this.oneOnOne.pipe(
+                    switchMap((oneOnOne) =>
+                      oneOnOne ? this.oneOnOneLayout : this.gridLayout,
+                    ),
                   );
                 case "spotlight":
                   return this.spotlightExpanded.pipe(
                     switchMap((expanded) =>
                       expanded
-                        ? spotlightExpandedLayout
-                        : spotlightLandscapeLayout,
+                        ? this.spotlightExpandedLayout
+                        : this.spotlightLandscapeLayout,
                     ),
                   );
               }
             }),
           );
         case "narrow":
-          return combineLatest(
-            [this.grid, this.spotlight],
-            (grid, spotlight): Layout => ({
-              type: "spotlight-portrait",
-              spotlight,
-              grid,
-            }),
+          return this.oneOnOne.pipe(
+            switchMap((oneOnOne) =>
+              oneOnOne
+                ? // The expanded spotlight layout makes for a better one-on-one
+                  // experience in narrow windows
+                  this.spotlightExpandedLayout
+                : combineLatest(
+                    [this.grid, this.spotlight],
+                    (grid, spotlight) =>
+                      grid.length > smallMobileCallThreshold ||
+                      spotlight.some((vm) => vm instanceof ScreenShareViewModel)
+                        ? this.spotlightPortraitLayout
+                        : this.gridLayout,
+                  ).pipe(switchAll()),
+            ),
           );
         case "flat":
           return this.gridMode.pipe(
@@ -638,16 +666,14 @@ export class CallViewModel extends ViewModel {
                 case "grid":
                   // Yes, grid mode actually gets you a "spotlight" layout in
                   // this window mode.
-                  return spotlightLandscapeLayout;
+                  return this.spotlightLandscapeLayout;
                 case "spotlight":
-                  return spotlightExpandedLayout;
+                  return this.spotlightExpandedLayout;
               }
             }),
           );
         case "pip":
-          return this.spotlight.pipe(
-            map((spotlight): Layout => ({ type: "pip", spotlight })),
-          );
+          return this.pipLayout;
       }
     }),
     shareReplay(1),
@@ -665,24 +691,25 @@ export class CallViewModel extends ViewModel {
     shareReplay(1),
   );
 
-  // To work around https://github.com/crimx/observable-hooks/issues/131 we must
-  // wrap the emitted function here in a non-function wrapper type
-  public readonly toggleSpotlightExpanded: Observable<
-    readonly [(() => void) | null]
-  > = this.layout.pipe(
-    map(
-      (l) =>
-        l.type === "spotlight-landscape" || l.type === "spotlight-expanded",
-    ),
-    distinctUntilChanged(),
-    map(
-      (enabled) =>
-        [
-          enabled ? (): void => this.spotlightExpandedToggle.next() : null,
-        ] as const,
-    ),
-    shareReplay(1),
-  );
+  public readonly toggleSpotlightExpanded: Observable<(() => void) | null> =
+    this.windowMode.pipe(
+      switchMap((mode) =>
+        mode === "normal"
+          ? this.layout.pipe(
+              map(
+                (l) =>
+                  l.type === "spotlight-landscape" ||
+                  l.type === "spotlight-expanded",
+              ),
+            )
+          : of(false),
+      ),
+      distinctUntilChanged(),
+      map((enabled) =>
+        enabled ? (): void => this.spotlightExpandedToggle.next() : null,
+      ),
+      shareReplay(1),
+    );
 
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room
