@@ -488,11 +488,17 @@ export class CallViewModel extends ViewModel {
         ? ([of(screenShares.map((m) => m.vm)), this.spotlightSpeaker] as const)
         : ([
             this.spotlightSpeaker.pipe(map((speaker) => [speaker!])),
-            this.localUserMedia.pipe(
-              switchMap((vm) =>
-                vm.alwaysShow.pipe(
-                  map((alwaysShow) => (alwaysShow ? vm : null)),
-                ),
+            this.spotlightSpeaker.pipe(
+              switchMap((speaker) =>
+                speaker.local
+                  ? of(null)
+                  : this.localUserMedia.pipe(
+                      switchMap((vm) =>
+                        vm.alwaysShow.pipe(
+                          map((alwaysShow) => (alwaysShow ? vm : null)),
+                        ),
+                      ),
+                    ),
               ),
             ),
           ] as const),
