@@ -18,6 +18,7 @@ import {
   SettingsSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
+import RaiseHandIcon from "../icons/RaiseHand.svg?react";
 import styles from "./Button.module.css";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
@@ -85,6 +86,27 @@ export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
         iconOnly
         Icon={ShareScreenSolidIcon}
         kind={enabled ? "primary" : "secondary"}
+        {...props}
+      />
+    </Tooltip>
+  );
+};
+
+interface RaiseHandButtonProps extends ComponentPropsWithoutRef<"button"> {
+  raised: boolean;
+}
+export const RaiseHandButton: FC<RaiseHandButtonProps> = ({
+  raised,
+  ...props
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <Tooltip label={t("common.raise_hand")}>
+      <CpdButton
+        iconOnly
+        Icon={RaiseHandIcon}
+        kind={raised ? "primary" : "secondary"}
         {...props}
       />
     </Tooltip>

@@ -10,7 +10,14 @@ import {
   RoomContext,
   useLocalParticipant,
 } from "@livekit/components-react";
-import { ConnectionState, Room } from "livekit-client";
+import {
+  ConnectionState,
+  // eslint-disable-next-line camelcase
+  DataPacket_Kind,
+  Participant,
+  Room,
+  RoomEvent,
+} from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import {
   FC,
@@ -39,6 +46,7 @@ import {
   MicButton,
   VideoButton,
   ShareScreenButton,
+  RaiseHandButton,
   SettingsButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
@@ -78,6 +86,7 @@ import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
+import { RaisedHandsProvider, useRaisedHands } from "./useRaisedHands";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -130,12 +139,14 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   return (
     <RoomContext.Provider value={livekitRoom}>
-      <InCallView
-        {...props}
-        vm={vm}
-        livekitRoom={livekitRoom}
-        connState={connState}
-      />
+      <RaisedHandsProvider>
+        <InCallView
+          {...props}
+          vm={vm}
+          livekitRoom={livekitRoom}
+          connState={connState}
+        />
+      </RaisedHandsProvider>
     </RoomContext.Provider>
   );
 };
@@ -297,6 +308,34 @@ export const InCallView: FC<InCallViewProps> = ({
     (mode: GridMode) => vm.setGridMode(mode),
     [vm],
   );
+
+  const { raisedHands, setRaisedHands } = useRaisedHands();
+  const isHandRaised = raisedHands.includes(
+    localParticipant.identity.split(":")[0] +
+      ":" +
+      localParticipant.identity.split(":")[1],
+  );
+
+  useEffect(() => {
+    const handleDataReceived = (
+      payload: Uint8Array,
+      participant?: Participant,
+      // eslint-disable-next-line camelcase
+      kind?: DataPacket_Kind,
+    ): void => {
+      const decoder = new TextDecoder();
+      const strData = decoder.decode(payload);
+      // get json object from strData
+      const data = JSON.parse(strData);
+      setRaisedHands(data.raisedHands);
+    };
+
+    livekitRoom.on(RoomEvent.DataReceived, handleDataReceived);
+
+    return (): void => {
+      livekitRoom.off(RoomEvent.DataReceived, handleDataReceived);
+    };
+  }, [livekitRoom, setRaisedHands]);
 
   useEffect(() => {
     widget?.api.transport
@@ -479,6 +518,37 @@ export const InCallView: FC<InCallViewProps> = ({
       .catch(logger.error);
   }, [localParticipant, isScreenShareEnabled]);
 
+  const toggleRaisedHand = useCallback(() => {
+    // TODO: wtf
+    const userId =
+      localParticipant.identity.split(":")[0] +
+      ":" +
+      localParticipant.identity.split(":")[1];
+    const raisedHand = raisedHands.includes(userId);
+    let result = raisedHands;
+    if (raisedHand) {
+      result = raisedHands.filter((id) => id !== userId);
+    } else {
+      result = [...raisedHands, userId];
+    }
+    try {
+      const strData = JSON.stringify({
+        raisedHands: result,
+      });
+      const encoder = new TextEncoder();
+      const data = encoder.encode(strData);
+      livekitRoom.localParticipant.publishData(data, { reliable: true });
+      setRaisedHands(result);
+    } catch (e) {
+      logger.error(e);
+    }
+  }, [
+    livekitRoom.localParticipant,
+    localParticipant.identity,
+    raisedHands,
+    setRaisedHands,
+  ]);
+
   let footer: JSX.Element | null;
 
   if (noControls) {
@@ -513,7 +583,14 @@ export const InCallView: FC<InCallViewProps> = ({
           />,
         );
       }
-      buttons.push(<SettingsButton key="4" onClick={openSettings} />);
+      buttons.push(
+        <RaiseHandButton
+          key="4"
+          onClick={toggleRaisedHand}
+          raised={isHandRaised}
+        />,
+      );
+      buttons.push(<SettingsButton key="5" onClick={openSettings} />);
     }
 
     buttons.push(
