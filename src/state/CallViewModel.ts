@@ -526,8 +526,11 @@ export class CallViewModel extends ViewModel {
       const height = window.innerHeight;
       const width = window.innerWidth;
       if (height <= 400 && width <= 340) return "pip";
-      if (width <= 600) return "narrow";
+      // Our layouts for flat windows are better at adapting to a small width
+      // than our layouts for narrow windows are at adapting to a small height,
+      // so we give "flat" precedence here
       if (height <= 660) return "flat";
+      if (width <= 600) return "narrow";
       return "normal";
     }),
     distinctUntilChanged(),
