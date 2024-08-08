@@ -691,8 +691,27 @@ export class CallViewModel extends ViewModel {
     shareReplay(1),
   );
 
+  /**
+   * Determines whether video should be shown for a certain piece of media
+   * appearing in the grid.
+   */
+  public showGridVideo(vm: MediaViewModel): Observable<boolean> {
+    return this.layout.pipe(
+      map(
+        (l) =>
+          !(
+            (l.type === "spotlight-landscape" ||
+              l.type === "spotlight-portrait") &&
+            // This media is already visible in the spotlight; avoid duplication
+            l.spotlight.some((spotlightVm) => spotlightVm === vm)
+          ),
+      ),
+      distinctUntilChanged(),
+    );
+  }
+
   public showSpeakingIndicators: Observable<boolean> = this.layout.pipe(
-    map((l) => l.type !== "one-on-one" && l.type !== "spotlight-expanded"),
+    map((l) => l.type !== "one-on-one" && !l.type.startsWith("spotlight-")),
     distinctUntilChanged(),
     shareReplay(1),
   );

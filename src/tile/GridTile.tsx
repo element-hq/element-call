@@ -60,6 +60,7 @@ interface TileProps {
   targetWidth: number;
   targetHeight: number;
   displayName: string;
+  showVideo: boolean;
   showSpeakingIndicators: boolean;
 }
 
@@ -74,6 +75,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
   (
     {
       vm,
+      showVideo,
       showSpeakingIndicators,
       menuStart,
       menuEnd,
@@ -120,7 +122,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
         video={video}
         member={vm.member}
         unencryptedWarning={unencryptedWarning}
-        videoEnabled={videoEnabled}
+        videoEnabled={videoEnabled && showVideo}
         videoFit={cropVideo ? "cover" : "contain"}
         className={classNames(className, styles.tile, {
           [styles.speaking]: showSpeakingIndicators && speaking,
@@ -279,6 +281,7 @@ interface GridTileProps {
   targetHeight: number;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
+  showVideo: boolean;
   showSpeakingIndicators: boolean;
 }
 
