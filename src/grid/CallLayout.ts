@@ -113,7 +113,7 @@ export function arrangeTiles(
   const tileArea = Math.pow(Math.sqrt(area) / 8 + 125, 2);
   const tilesPerPage = Math.min(tileCount, area / tileArea);
 
-  const columns = Math.min(
+  let columns = Math.min(
     // Don't create more columns than we have items for
     tilesPerPage,
     // The ideal number of columns is given by a packing of equally-sized
@@ -130,7 +130,11 @@ export function arrangeTiles(
   let rows = tilesPerPage / columns;
   // If all the tiles could fit on one page, we want to ensure that they do by
   // not leaving fractional rows hanging off the bottom
-  if (tilesPerPage === tileCount) rows = Math.ceil(rows);
+  if (tilesPerPage === tileCount) {
+    rows = Math.ceil(rows);
+    // We may now be able to fit the tiles into fewer columns
+    columns = Math.ceil(tileCount / rows);
+  }
 
   let tileWidth = (width - (columns + 1) * gap) / columns;
   let tileHeight = (minHeight - (rows - 1) * gap) / rows;
