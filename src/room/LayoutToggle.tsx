@@ -14,7 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ChangeEvent, FC, useCallback } from "react";
+import { ChangeEvent, FC, TouchEvent, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "@vector-im/compound-web";
 import {
@@ -31,9 +31,15 @@ interface Props {
   layout: Layout;
   setLayout: (layout: Layout) => void;
   className?: string;
+  onTouchEnd?: (e: TouchEvent) => void;
 }
 
-export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
+export const LayoutToggle: FC<Props> = ({
+  layout,
+  setLayout,
+  className,
+  onTouchEnd,
+}) => {
   const { t } = useTranslation();
 
   const onChange = useCallback(
@@ -50,6 +56,7 @@ export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
           value="spotlight"
           checked={layout === "spotlight"}
           onChange={onChange}
+          onTouchEnd={onTouchEnd}
         />
       </Tooltip>
       <SpotlightIcon aria-hidden width={24} height={24} />
@@ -60,6 +67,7 @@ export const LayoutToggle: FC<Props> = ({ layout, setLayout, className }) => {
           value="grid"
           checked={layout === "grid"}
           onChange={onChange}
+          onTouchEnd={onTouchEnd}
         />
       </Tooltip>
       <GridIcon aria-hidden width={24} height={24} />

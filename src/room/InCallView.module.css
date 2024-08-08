@@ -22,31 +22,6 @@ limitations under the License.
   overflow-y: auto;
 }
 
-.controlsOverlay {
-  position: relative;
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: auto;
-  overflow-inline: hidden;
-  /* There used to be a contain: strict here, but due to some bugs in Firefox,
-  this was causing the Z-ordering of modals to glitch out. It can be added back
-  if those issues appear to be resolved. */
-}
-
-.centerMessage {
-  display: flex;
-  flex: 1;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-}
-
-.centerMessage p {
-  display: block;
-  margin-bottom: 0;
-}
-
 .header {
   position: sticky;
   flex-shrink: 0;
@@ -80,6 +55,24 @@ limitations under the License.
     rgba(0, 0, 0, 0) 0%,
     var(--cpd-color-bg-canvas-default) 100%
   );
+}
+
+.footer.overlay {
+  position: absolute;
+  inset-block-end: 0;
+  inset-inline: 0;
+  opacity: 1;
+  transition: opacity 0.15s;
+}
+
+.footer.overlay.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.footer.overlay:has(:focus-visible) {
+  opacity: 1;
+  pointer-events: initial;
 }
 
 .logo {
@@ -118,21 +111,6 @@ limitations under the License.
   .buttons {
     gap: var(--cpd-space-4x);
   }
-}
-
-.footerThin {
-  padding-top: var(--cpd-space-3x);
-  padding-bottom: var(--cpd-space-5x);
-}
-
-.footerHidden {
-  display: none;
-}
-
-.footer.overlay {
-  position: absolute;
-  inset-block-end: 0;
-  inset-inline: 0;
 }
 
 .fixedGrid {

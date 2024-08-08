@@ -24,7 +24,9 @@ import { ConnectionState, Room } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import {
   FC,
+  PointerEvent,
   PropsWithoutRef,
+  TouchEvent,
   forwardRef,
   useCallback,
   useEffect,
@@ -87,6 +89,8 @@ import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
+
+const maxTapDurationMs = 400;
 
 export interface ActiveCallProps
   extends Omit<InCallViewProps, "livekitRoom" | "connState"> {
@@ -198,6 +202,38 @@ export const InCallView: FC<InCallViewProps> = ({
   const windowMode = useObservableEagerState(vm.windowMode);
   const layout = useObservableEagerState(vm.layout);
   const gridMode = useObservableEagerState(vm.gridMode);
+  const showHeader = useObservableEagerState(vm.showHeader);
+  const showFooter = useObservableEagerState(vm.showFooter);
+
+  // Ideally we could detect taps by listening for click events and checking
+  // that the pointerType of the event is "touch", but this isn't yet supported
+  // in Safari: https://developer.mozilla.org/en-US/docs/Web/API/Element/click_event#browser_compatibility
+  // Instead we have to watch for sufficiently fast touch events.
+  const touchStart = useRef<number | null>(null);
+  const onTouchStart = useCallback(() => (touchStart.current = Date.now()), []);
+  const onTouchEnd = useCallback(() => {
+    const start = touchStart.current;
+    if (start !== null && Date.now() - start <= maxTapDurationMs)
+      vm.tapScreen();
+    touchStart.current = null;
+  }, [vm]);
+  const onTouchCancel = useCallback(() => (touchStart.current = null), []);
+
+  // We also need to tell the layout toggle to prevent touch events from
+  // bubbling up, or else the controls will be dismissed before a change event
+  // can be registered on the toggle
+  const onLayoutToggleTouchEnd = useCallback(
+    (e: TouchEvent) => e.stopPropagation(),
+    [],
+  );
+
+  const onPointerMove = useCallback(
+    (e: PointerEvent) => {
+      if (e.pointerType === "mouse") vm.hoverScreen();
+    },
+    [vm],
+  );
+  const onPointerOut = useCallback(() => vm.unhoverScreen(), [vm]);
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
@@ -465,12 +501,10 @@ export const InCallView: FC<InCallViewProps> = ({
     footer = (
       <div
         ref={footerRef}
-        className={classNames(
-          styles.footer,
-          !showControls &&
-            (hideHeader ? styles.footerHidden : styles.footerThin),
-          { [styles.overlay]: windowMode === "flat" },
-        )}
+        className={classNames(styles.footer, {
+          [styles.overlay]: windowMode === "flat",
+          [styles.hidden]: !showFooter || (!showControls && hideHeader),
+        })}
       >
         {!mobile && !hideHeader && (
           <div className={styles.logo}>
@@ -488,6 +522,7 @@ export const InCallView: FC<InCallViewProps> = ({
             className={styles.layout}
             layout={gridMode}
             setLayout={setGridMode}
+            onTouchEnd={onLayoutToggleTouchEnd}
           />
         )}
       </div>
@@ -495,9 +530,16 @@ export const InCallView: FC<InCallViewProps> = ({
   }
 
   return (
-    <div className={styles.inRoom} ref={containerRef}>
-      {windowMode !== "pip" &&
-        windowMode !== "flat" &&
+    <div
+      className={styles.inRoom}
+      ref={containerRef}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+      onTouchCancel={onTouchCancel}
+      onPointerMove={onPointerMove}
+      onPointerOut={onPointerOut}
+    >
+      {showHeader &&
         (hideHeader ? (
           // Cosmetic header to fill out space while still affecting the bounds
           // of the grid
