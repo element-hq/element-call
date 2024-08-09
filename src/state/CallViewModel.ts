@@ -41,6 +41,7 @@ import {
   merge,
   mergeAll,
   of,
+  race,
   sample,
   scan,
   shareReplay,
@@ -48,6 +49,8 @@ import {
   startWith,
   switchAll,
   switchMap,
+  switchScan,
+  take,
   throttleTime,
   timer,
   zip,
@@ -71,6 +74,7 @@ import {
 import { accumulate, finalizeValue } from "../observable-utils";
 import { ObservableScope } from "./ObservableScope";
 import { duplicateTiles } from "../settings/settings";
+import { isFirefox } from "../Platform";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -529,7 +533,7 @@ export class CallViewModel extends ViewModel {
       // Our layouts for flat windows are better at adapting to a small width
       // than our layouts for narrow windows are at adapting to a small height,
       // so we give "flat" precedence here
-      if (height <= 660) return "flat";
+      if (height <= 600) return "flat";
       if (width <= 600) return "narrow";
       return "normal";
     }),
@@ -738,6 +742,81 @@ export class CallViewModel extends ViewModel {
       ),
       shareReplay(1),
     );
+
+  private readonly screenTap = new Subject<void>();
+  private readonly screenHover = new Subject<void>();
+  private readonly screenUnhover = new Subject<void>();
+
+  /**
+   * Callback for when the user taps the call view.
+   */
+  public tapScreen(): void {
+    this.screenTap.next();
+  }
+
+  /**
+   * Callback for when the user hovers over the call view.
+   */
+  public hoverScreen(): void {
+    this.screenHover.next();
+  }
+
+  /**
+   * Callback for when the user stops hovering over the call view.
+   */
+  public unhoverScreen(): void {
+    this.screenUnhover.next();
+  }
+
+  public readonly showHeader: Observable<boolean> = this.windowMode.pipe(
+    map((mode) => mode !== "pip" && mode !== "flat"),
+    distinctUntilChanged(),
+    shareReplay(1),
+  );
+
+  public readonly showFooter = this.windowMode.pipe(
+    switchMap((mode) => {
+      switch (mode) {
+        case "pip":
+          return of(false);
+        case "normal":
+        case "narrow":
+          return of(true);
+        case "flat":
+          // Sadly Firefox has some layering glitches that prevent the footer
+          // from appearing properly. They happen less often if we never hide
+          // the footer.
+          if (isFirefox()) return of(true);
+          // Show/hide the footer in response to interactions
+          return merge(
+            this.screenTap.pipe(map(() => "tap" as const)),
+            this.screenHover.pipe(map(() => "hover" as const)),
+          ).pipe(
+            switchScan(
+              (state, interaction) =>
+                interaction === "tap"
+                  ? state
+                    ? // Toggle visibility on tap
+                      of(false)
+                    : // Hide after a timeout
+                      timer(6000).pipe(
+                        map(() => false),
+                        startWith(true),
+                      )
+                  : // Show on hover and hide after a timeout
+                    race(timer(3000), this.screenUnhover.pipe(take(1))).pipe(
+                      map(() => false),
+                      startWith(true),
+                    ),
+              false,
+            ),
+            startWith(false),
+          );
+      }
+    }),
+    distinctUntilChanged(),
+    shareReplay(1),
+  );
 
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room
