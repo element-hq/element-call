@@ -17,11 +17,11 @@ limitations under the License.
 import { TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
 import { RoomMember } from "matrix-js-sdk/src/matrix";
-import { ComponentProps, ReactNode, forwardRef } from "react";
+import { ComponentProps, ReactNode, forwardRef, useCallback, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
-import { Text, Tooltip } from "@vector-im/compound-web";
+import { Button, Text, Tooltip } from "@vector-im/compound-web";
 import { ErrorIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./MediaView.module.css";
@@ -41,6 +41,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   primaryButton?: ReactNode;
+  pippable: boolean
 }
 
 export const MediaView = forwardRef<HTMLDivElement, Props>(
@@ -59,11 +60,14 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       nameTagLeadingIcon,
       displayName,
       primaryButton,
+      pippable,
       ...props
     },
     ref,
   ) => {
     const { t } = useTranslation();
+    const videoRef = useRef<HTMLVideoElement | null>(null)
+    const onPipClick = useCallback(() => videoRef.current!.requestPictureInPicture(), [])
 
     return (
       <animated.div
@@ -87,10 +91,11 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           />
           {video.publication !== undefined && (
             <VideoTrack
+              ref={videoRef}
               trackRef={video}
               // There's no reason for this to be focusable
               tabIndex={-1}
-              disablePictureInPicture
+              // disablePictureInPicture
             />
           )}
         </div>
@@ -115,7 +120,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
               </Tooltip>
             )}
           </div>
-          {primaryButton}
+          {pippable ? <Button onClick={onPipClick}>Pip</Button> : primaryButton}
         </div>
       </animated.div>
     );
