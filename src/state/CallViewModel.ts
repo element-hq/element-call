@@ -425,20 +425,17 @@ export class CallViewModel extends ViewModel {
       scan<(readonly [UserMedia, boolean])[], UserMedia, null>(
         (prev, mediaItems) => {
           // Only remote users that are still in the call should be sticky
-          const stickyPrev =
-            prev === null || prev.vm.local
-              ? null
-              : mediaItems.find(([m]) => m === prev);
-          const stillSpeaking = stickyPrev?.[1];
+          const [stickyMedia, stickySpeaking] =
+            (!prev?.vm.local && mediaItems.find(([m]) => m === prev)) || [];
           // Decide who to spotlight:
           // If the previous speaker is still speaking, stick with them rather
           // than switching eagerly to someone else
-          return stillSpeaking
-            ? stickyPrev[0]
+          return stickySpeaking
+            ? stickyMedia!
             : // Otherwise, select any remote user who is speaking
               (mediaItems.find(([m, s]) => !m.vm.local && s)?.[0] ??
                 // Otherwise, stick with the person who was last speaking
-                stickyPrev?.[0] ??
+                stickyMedia ??
                 // Otherwise, spotlight an arbitrary remote user
                 mediaItems.find(([m]) => !m.vm.local)?.[0] ??
                 // Otherwise, spotlight the local user
