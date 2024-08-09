@@ -35,7 +35,7 @@ import {
 import useMeasure from "react-use-measure";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
-import { BehaviorSubject } from "rxjs";
+import { BehaviorSubject, of } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 
 import LogoMark from "../icons/LogoMark.svg?react";
@@ -298,6 +298,13 @@ export const InCallView: FC<InCallViewProps> = ({
         const onToggleExpanded = useObservableEagerState(
           vm.toggleSpotlightExpanded,
         );
+        const showVideo = useObservableEagerState(
+          useMemo(
+            () =>
+              model.type === "grid" ? vm.showGridVideo(model.vm) : of(true),
+            [model],
+          ),
+        );
         const showSpeakingIndicatorsValue = useObservableEagerState(
           vm.showSpeakingIndicators,
         );
@@ -314,6 +321,7 @@ export const InCallView: FC<InCallViewProps> = ({
             targetHeight={targetHeight}
             className={classNames(className, styles.tile)}
             style={style}
+            showVideo={showVideo}
             showSpeakingIndicators={showSpeakingIndicatorsValue}
           />
         ) : (
