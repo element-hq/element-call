@@ -533,7 +533,7 @@ export class CallViewModel extends ViewModel {
       // Our layouts for flat windows are better at adapting to a small width
       // than our layouts for narrow windows are at adapting to a small height,
       // so we give "flat" precedence here
-      if (height <= 660) return "flat";
+      if (height <= 600) return "flat";
       if (width <= 600) return "narrow";
       return "normal";
     }),
