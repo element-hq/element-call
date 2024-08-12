@@ -15,11 +15,14 @@ limitations under the License.
 */
 
 import { BaseKeyProvider, createKeyMaterialFromBuffer } from "livekit-client";
-import { logger } from "matrix-js-sdk/src/logger";
+import { encodeUnpaddedBase64 } from "matrix-js-sdk";
+import { logger as parentLogger } from "matrix-js-sdk/src/logger";
 import {
   MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+
+const logger = parentLogger.getChild("MatrixKeyProvider");
 
 export class MatrixKeyProvider extends BaseKeyProvider {
   private rtcSession?: MatrixRTCSession;
@@ -29,6 +32,9 @@ export class MatrixKeyProvider extends BaseKeyProvider {
   }
 
   public setRTCSession(rtcSession: MatrixRTCSession): void {
+    logger.debug(
+      `Setting new RTC session for key provider: this.rtcSession=${!!this.rtcSession}`,
+    );
     if (this.rtcSession) {
       this.rtcSession.off(
         MatrixRTCSessionEvent.EncryptionKeyChanged,
@@ -60,6 +66,10 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     encryptionKeyIndex: number,
     participantId: string,
   ): Promise<void> => {
+    logger.debug(
+      `Will send key to livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}: ${encodeUnpaddedBase64(encryptionKey)}`,
+    );
+
     this.onSetEncryptionKey(
       await createKeyMaterialFromBuffer(encryptionKey),
       participantId,
@@ -67,7 +77,7 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     );
 
     logger.debug(
-      `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
+      `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}: ${encodeUnpaddedBase64(encryptionKey)}`,
     );
   };
 }
