@@ -132,7 +132,13 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
               </Tooltip>
             )}
           </div>
-          {pippable ? <Button onClick={onPipClick}>Pip</Button> : primaryButton}
+          {pippable ? (
+            <Button onClick={onPipClick} id="pipButton">
+              Pip
+            </Button>
+          ) : (
+            primaryButton
+          )}
         </div>
       </animated.div>
     );
