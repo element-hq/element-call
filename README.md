@@ -22,7 +22,7 @@ yarn
 yarn build
 ```
 
-If all went well, you can now find the build output under `dist` as a series of static files. These can be hosted using any web server of your choice.
+If all went well, you can now find the build output under `dist` as a series of static files. These can be hosted using any web server that can be configured with custom routes (see below).
 
 You may also wish to add a configuration file (Element Call uses the domain it's hosted on as a Homeserver URL by default,
 but you can change this in the config file). This goes in `public/config.json` - you can use the sample as a starting point:
