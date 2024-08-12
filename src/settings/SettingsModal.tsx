@@ -30,7 +30,7 @@ import UserIcon from "../icons/User.svg?react";
 import FeedbackIcon from "../icons/Feedback.svg?react";
 import { SelectInput } from "../input/SelectInput";
 import { FieldRow, InputField } from "../input/Input";
-import { Body, Caption } from "../typography/Typography";
+import { Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
@@ -239,13 +239,21 @@ export const SettingsModal: FC<Props> = ({
         </>
       }
     >
-      <FieldRow>
-        <Body className={styles.fieldRowText}>
-          {t("version", {
-            version: import.meta.env.VITE_APP_VERSION || "dev",
-          })}
-        </Body>
-      </FieldRow>
+      <p>
+        {t("version", {
+          version: import.meta.env.VITE_APP_VERSION || "dev",
+        })}
+      </p>
+      <p>
+        {t("matrix_id", {
+          id: client.getUserId() || "unknown",
+        })}
+      </p>
+      <p>
+        {t("device_id", {
+          id: client.getDeviceId() || "unknown",
+        })}
+      </p>
       <FieldRow>
         <InputField
           id="duplicateTiles"
