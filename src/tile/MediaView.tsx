@@ -17,7 +17,13 @@ limitations under the License.
 import { TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
 import { RoomMember } from "matrix-js-sdk/src/matrix";
-import { ComponentProps, ReactNode, forwardRef, useCallback, useRef } from "react";
+import {
+  ComponentProps,
+  ReactNode,
+  forwardRef,
+  useCallback,
+  useRef,
+} from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
@@ -41,7 +47,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   primaryButton?: ReactNode;
-  pippable: boolean
+  pippable: boolean;
 }
 
 export const MediaView = forwardRef<HTMLDivElement, Props>(
@@ -66,8 +72,14 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
     ref,
   ) => {
     const { t } = useTranslation();
-    const videoRef = useRef<HTMLVideoElement | null>(null)
-    const onPipClick = useCallback(() => videoRef.current!.requestPictureInPicture(), [])
+    const videoRef = useRef<HTMLVideoElement | null>(null);
+    const onPipClick = useCallback(() => {
+      videoRef.current!.webkitSetPresentationMode(
+        videoRef.current!.webkitPresentationMode === "picture-in-picture"
+          ? "inline"
+          : "picture-in-picture",
+      );
+    }, []);
 
     return (
       <animated.div

@@ -61,7 +61,7 @@ interface SpotlightItemBaseProps {
   member: RoomMember | undefined;
   unencryptedWarning: boolean;
   displayName: string;
-  pippable: boolean
+  pippable: boolean;
 }
 
 interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
@@ -119,11 +119,14 @@ interface SpotlightItemProps {
    * Whether this item should act as a scroll snapping point.
    */
   snap: boolean;
-  pippable: boolean
+  pippable: boolean;
 }
 
 const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
-  ({ vm, targetWidth, targetHeight, intersectionObserver, snap, pippable }, theirRef) => {
+  (
+    { vm, targetWidth, targetHeight, intersectionObserver, snap, pippable },
+    theirRef,
+  ) => {
     const ourRef = useRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
     const displayName = useDisplayName(vm);
@@ -155,7 +158,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
       member: vm.member,
       unencryptedWarning,
       displayName,
-      pippable
+      pippable,
     };
 
     return vm instanceof ScreenShareViewModel ? (
@@ -277,7 +280,7 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
         )}
         {vms.map((vm, i) => (
           <SpotlightItem
-            key={i === 0 ? 'default' : vm.id}
+            key={i === 0 ? "default" : vm.id}
             pippable={i === 0}
             vm={vm}
             targetWidth={targetWidth}
