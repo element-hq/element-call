@@ -18,6 +18,7 @@ import {
   connectedParticipantsObserver,
   observeParticipantEvents,
   observeParticipantMedia,
+  TrackReferenceOrPlaceholder,
 } from "@livekit/components-core";
 import {
   Room as LivekitRoom,
@@ -75,6 +76,7 @@ import { accumulate, finalizeValue } from "../observable-utils";
 import { ObservableScope } from "./ObservableScope";
 import { duplicateTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";
+import { compatPip } from "../controls";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -119,6 +121,11 @@ export interface PipLayout {
   spotlight: MediaViewModel[];
 }
 
+export interface CompatPipLayout {
+  type: "compat-pip";
+  spotlight: TrackReferenceOrPlaceholder | null;
+}
+
 /**
  * A layout defining the media tiles present on screen and their visual
  * arrangement.
@@ -129,7 +136,8 @@ export type Layout =
   | SpotlightPortraitLayout
   | SpotlightExpandedLayout
   | OneOnOneLayout
-  | PipLayout;
+  | PipLayout
+  | CompatPipLayout;
 
 export type GridMode = "grid" | "spotlight";
 
@@ -449,6 +457,55 @@ export class CallViewModel extends ViewModel {
       throttleTime(1600, undefined, { leading: true, trailing: true }),
     );
 
+  private readonly compatPipSpotlight: Observable<TrackReferenceOrPlaceholder | null> =
+    this.userMedia.pipe(
+      switchMap((mediaItems) =>
+        mediaItems.length === 0
+          ? of([])
+          : combineLatest(
+              mediaItems.map((m) =>
+                combineLatest(
+                  [m.vm.videoEnabled, m.vm.speaking],
+                  (v, s) => [m, v, s] as const,
+                ),
+              ),
+            ),
+      ),
+      scan<(readonly [UserMedia, boolean, boolean])[], UserMedia | null, null>(
+        (prev, mediaItems) => {
+          // Only remote users that still have their video on should be sticky
+          const [stickyMedia, stickyVideoEnabled, stickySpeaking] =
+            (!prev?.vm.local && mediaItems.find(([m, v]) => m === prev && v)) ||
+            [];
+          // Decide who to spotlight:
+          // If the previous speaker is still speaking with their video on,
+          // stick with them rather than switching eagerly to someone else
+          return stickyVideoEnabled && stickySpeaking
+            ? stickyMedia!
+            : // Otherwise, select any remote user with video who is speaking
+              (mediaItems.find(([m, v, s]) => !m.vm.local && v && s)?.[0] ??
+                // Otherwise, stick with the person who was last speaking
+                stickyMedia ??
+                // Otherwise, select an arbitrary remote user with video
+                mediaItems.find(([m, v]) => !m.vm.local && v)?.[0] ??
+                // Otherwise, spotlight the local user if they have video
+                mediaItems.find(([m, v]) => m.vm.local && v)?.[0] ??
+                null);
+        },
+        null,
+      ),
+      distinctUntilChanged(),
+      switchMap(
+        (speaker) =>
+          speaker?.vm.video ??
+          this.screenShares.pipe(
+            switchMap((screenShares) => screenShares[0]?.vm.video ?? of(null)),
+          ),
+      ),
+      shareReplay(1),
+      throttleTime(1600, undefined, { leading: true, trailing: true }),
+    );
+
   private readonly grid: Observable<UserMediaViewModel[]> = this.userMedia.pipe(
     switchMap((mediaItems) => {
       const bins = mediaItems.map((m) =>
@@ -629,67 +686,81 @@ export class CallViewModel extends ViewModel {
   );
 
   private readonly pipLayout: Observable<Layout> = this.spotlight.pipe(
-    map((spotlight): Layout => ({ type: "pip", spotlight })),
+    map((spotlight) => ({ type: "pip", spotlight })),
   );
 
-  public readonly layout: Observable<Layout> = this.windowMode.pipe(
-    switchMap((windowMode) => {
-      switch (windowMode) {
-        case "normal":
-          return this.gridMode.pipe(
-            switchMap((gridMode) => {
-              switch (gridMode) {
-                case "grid":
+  private readonly compatPipLayout: Observable<Layout> =
+    this.compatPipSpotlight.pipe(
+      map((spotlight) => ({ type: "compat-pip", spotlight })),
+    );
+
+  public readonly layout: Observable<Layout> = compatPip.pipe(
+    startWith(false),
+    switchMap((compatPip) =>
+      compatPip
+        ? this.compatPipLayout
+        : this.windowMode.pipe(
+            switchMap((windowMode) => {
+              switch (windowMode) {
+                case "normal":
+                  return this.gridMode.pipe(
+                    switchMap((gridMode) => {
+                      switch (gridMode) {
+                        case "grid":
+                          return this.oneOnOne.pipe(
+                            switchMap((oneOnOne) =>
+                              oneOnOne ? this.oneOnOneLayout : this.gridLayout,
+                            ),
+                          );
+                        case "spotlight":
+                          return this.spotlightExpanded.pipe(
+                            switchMap((expanded) =>
+                              expanded
+                                ? this.spotlightExpandedLayout
+                                : this.spotlightLandscapeLayout,
+                            ),
+                          );
+                      }
+                    }),
+                  );
+                case "narrow":
                   return this.oneOnOne.pipe(
                     switchMap((oneOnOne) =>
-                      oneOnOne ? this.oneOnOneLayout : this.gridLayout,
+                      oneOnOne
+                        ? // The expanded spotlight layout makes for a better one-on-one
+                          // experience in narrow windows
+                          this.spotlightExpandedLayout
+                        : combineLatest(
+                            [this.grid, this.spotlight],
+                            (grid, spotlight) =>
+                              grid.length > smallMobileCallThreshold ||
+                              spotlight.some(
+                                (vm) => vm instanceof ScreenShareViewModel,
+                              )
+                                ? this.spotlightPortraitLayout
+                                : this.gridLayout,
+                          ).pipe(switchAll()),
                     ),
                   );
-                case "spotlight":
-                  return this.spotlightExpanded.pipe(
-                    switchMap((expanded) =>
-                      expanded
-                        ? this.spotlightExpandedLayout
-                        : this.spotlightLandscapeLayout,
-                    ),
+                case "flat":
+                  return this.gridMode.pipe(
+                    switchMap((gridMode) => {
+                      switch (gridMode) {
+                        case "grid":
+                          // Yes, grid mode actually gets you a "spotlight" layout in
+                          // this window mode.
+                          return this.spotlightLandscapeLayout;
+                        case "spotlight":
+                          return this.spotlightExpandedLayout;
+                      }
+                    }),
                   );
+                case "pip":
+                  return this.pipLayout;
               }
             }),
-          );
-        case "narrow":
-          return this.oneOnOne.pipe(
-            switchMap((oneOnOne) =>
-              oneOnOne
-                ? // The expanded spotlight layout makes for a better one-on-one
-                  // experience in narrow windows
-                  this.spotlightExpandedLayout
-                : combineLatest(
-                    [this.grid, this.spotlight],
-                    (grid, spotlight) =>
-                      grid.length > smallMobileCallThreshold ||
-                      spotlight.some((vm) => vm instanceof ScreenShareViewModel)
-                        ? this.spotlightPortraitLayout
-                        : this.gridLayout,
-                  ).pipe(switchAll()),
-            ),
-          );
-        case "flat":
-          return this.gridMode.pipe(
-            switchMap((gridMode) => {
-              switch (gridMode) {
-                case "grid":
-                  // Yes, grid mode actually gets you a "spotlight" layout in
-                  // this window mode.
-                  return this.spotlightLandscapeLayout;
-                case "spotlight":
-                  return this.spotlightExpandedLayout;
-              }
-            }),
-          );
-        case "pip":
-          return this.pipLayout;
-      }
-    }),
+          ),
+    ),
     shareReplay(1),
   );
 

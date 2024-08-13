@@ -87,6 +87,7 @@ import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
+import { CompatPip } from "./CompatPip";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -405,6 +406,15 @@ export const InCallView: FC<InCallViewProps> = ({
           targetWidth={gridBounds.height}
           targetHeight={gridBounds.width}
           showIndicators={false}
+        />
+      );
+    }
+
+    if (layout.type === "compat-pip") {
+      return (
+        <CompatPip
+          className={classNames(styles.tile, styles.maximised)}
+          video={layout.spotlight}
         />
       );
     }

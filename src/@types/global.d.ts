@@ -15,6 +15,9 @@ limitations under the License.
 */
 
 import "matrix-js-sdk/src/@types/global";
+import { Controls } from "../controls";
+
+type VideoPresentationMode = "inline" | "picture-in-picture" | "fullscreen";
 
 declare global {
   interface Document {
@@ -26,10 +29,15 @@ declare global {
   interface Window {
     // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
     OLM_OPTIONS: Record<string, string>;
+    controls: Controls;
   }
 
   interface HTMLElement {
     // Safari only supports this prefixed, so tell the type system about it
     webkitRequestFullscreen: () => void;
+  }
+
+  interface HTMLVideoElement {
+    webkitSetPresentationMode: (mode: VideoPresentationMode) => void;
   }
 }
