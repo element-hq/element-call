@@ -71,7 +71,7 @@ export const CompatPip: FC<Props> = ({ className, video }) => {
       <video
         ref={placeholderRef}
         className={classNames(className, { [styles.hidden]: !showPlaceholder })}
-        src="/public/speaker-without-video.webm"
+        src="/speaker-without-video.webm"
         playsInline
         onLoadedMetadata={onPlaceholderLoaded}
       />
