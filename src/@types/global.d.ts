@@ -38,6 +38,7 @@ declare global {
   }
 
   interface HTMLVideoElement {
+    readonly webkitPresentationMode: VideoPresentationMode;
     webkitSetPresentationMode: (mode: VideoPresentationMode) => void;
   }
 }

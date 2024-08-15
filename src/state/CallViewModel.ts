@@ -76,7 +76,7 @@ import { accumulate, finalizeValue } from "../observable-utils";
 import { ObservableScope } from "./ObservableScope";
 import { duplicateTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";
-import { compatPip } from "../controls";
+import { compatPipEnable } from "../controls";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -694,8 +694,18 @@ export class CallViewModel extends ViewModel {
       map((spotlight) => ({ type: "compat-pip", spotlight })),
     );
 
-  public readonly layout: Observable<Layout> = compatPip.pipe(
-    startWith(false),
+  private readonly compatPipDisable = new Subject<void>();
+
+  public disableCompatPip(): void {
+    this.compatPipDisable.next();
+  }
+
+  private readonly compatPipEnabled: Observable<boolean> = merge(
+    compatPipEnable.pipe(map(() => true)),
+    this.compatPipDisable.pipe(map(() => false)),
+  ).pipe(startWith(false));
+
+  public readonly layout: Observable<Layout> = this.compatPipEnabled.pipe(
     switchMap((compatPip) =>
       compatPip
         ? this.compatPipLayout

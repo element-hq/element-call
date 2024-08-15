@@ -24,9 +24,10 @@ import styles from "./CompatPip.module.css";
 interface Props {
   className?: string;
   video: TrackReferenceOrPlaceholder | null;
+  onExit: () => void;
 }
 
-export const CompatPip: FC<Props> = ({ className, video }) => {
+export const CompatPip: FC<Props> = ({ className, video, onExit }) => {
   const showPlaceholder = video?.publication === undefined;
   const placeholderRef = useRef<HTMLVideoElement | null>(null);
   const trackRef = useRef<HTMLVideoElement | null>(null);
@@ -34,23 +35,44 @@ export const CompatPip: FC<Props> = ({ className, video }) => {
   const trackLoaded = useRef<TrackReferenceOrPlaceholder | null>(null);
 
   const update = useCallback(() => {
-    if (showPlaceholder) {
-      if (placeholderLoaded.current)
-        placeholderRef.current!.webkitSetPresentationMode("picture-in-picture");
-    } else {
-      if (trackLoaded.current)
-        trackRef.current!.webkitSetPresentationMode("picture-in-picture");
-    }
+    if (!placeholderLoaded.current) return;
+    if (!showPlaceholder && trackLoaded.current)
+      trackRef.current!.webkitSetPresentationMode("picture-in-picture");
+    else
+      placeholderRef.current!.webkitSetPresentationMode("picture-in-picture");
   }, [showPlaceholder]);
 
   useEffect(() => {
     trackLoaded.current = null;
-  }, [video]);
-  useEffect(() => update(), [update]);
+    update();
+  }, [video, update]);
+
   useEffect(() => {
     const placeholder = placeholderRef.current!;
     const track = trackRef.current!;
+
+    const onPlaceholderModeChange = (): void => {
+      if (placeholder.webkitPresentationMode === "inline") onExit();
+    };
+    const onTrackModeChange = (): void => {
+      if (track.webkitPresentationMode === "inline") onExit();
+    };
+
+    placeholder.addEventListener(
+      "webkitpresentationmodechange",
+      onPlaceholderModeChange,
+    );
+    track.addEventListener("webkitpresentationmodechange", onTrackModeChange);
+
     return (): void => {
+      placeholder.removeEventListener(
+        "webkitpresentationmodechange",
+        onPlaceholderModeChange,
+      );
+      track.removeEventListener(
+        "webkitpresentationmodechange",
+        onTrackModeChange,
+      );
       placeholder.webkitSetPresentationMode("inline");
       track.webkitSetPresentationMode("inline");
     };
@@ -61,10 +83,18 @@ export const CompatPip: FC<Props> = ({ className, video }) => {
     update();
   }, [update]);
 
+  const onPlaceholderPlay = useCallback(() => {
+    placeholderRef.current!.pause();
+  }, []);
+
   const onTrackLoaded = useCallback(() => {
     trackLoaded.current = video;
     update();
   }, [video, update]);
+
+  const onTrackPause = useCallback(() => {
+    trackRef.current!.play();
+  }, []);
 
   return (
     <>
@@ -72,8 +102,10 @@ export const CompatPip: FC<Props> = ({ className, video }) => {
         ref={placeholderRef}
         className={classNames(className, { [styles.hidden]: !showPlaceholder })}
         src="/speaker-without-video.webm"
+        controls={false}
         playsInline
         onLoadedMetadata={onPlaceholderLoaded}
+        onPlay={onPlaceholderPlay}
       />
       {!showPlaceholder && (
         <VideoTrack
@@ -83,6 +115,7 @@ export const CompatPip: FC<Props> = ({ className, video }) => {
           // There's no reason for this to be focusable
           tabIndex={-1}
           onLoadedMetadata={onTrackLoaded}
+          onPause={onTrackPause}
         />
       )}
     </>

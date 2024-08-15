@@ -18,16 +18,14 @@ import { Subject } from "rxjs";
 
 export interface Controls {
   enableCompatPip: () => void;
-  disableCompatPip: () => void;
 }
 
-export const compatPip = new Subject<boolean>();
+export const compatPipEnable = new Subject<void>();
 
 window.controls = {
   enableCompatPip(): void {
-    compatPip.next(true);
-  },
-  disableCompatPip(): void {
-    compatPip.next(false);
+    if (!compatPipEnable.observed)
+      throw new Error("The call is not yet running");
+    compatPipEnable.next();
   },
 };

@@ -236,6 +236,8 @@ export const InCallView: FC<InCallViewProps> = ({
   );
   const onPointerOut = useCallback(() => vm.unhoverScreen(), [vm]);
 
+  const disableCompatPip = useCallback(() => vm.disableCompatPip(), [vm]);
+
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
 
@@ -415,6 +417,7 @@ export const InCallView: FC<InCallViewProps> = ({
         <CompatPip
           className={classNames(styles.tile, styles.maximised)}
           video={layout.spotlight}
+          onExit={disableCompatPip}
         />
       );
     }
