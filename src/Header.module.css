@@ -90,6 +90,7 @@ limitations under the License.
 .nameLine {
   grid-area: name;
   flex-grow: 1;
+  min-width: 0;
   display: flex;
   align-items: center;
   gap: var(--cpd-space-1x);
@@ -97,8 +98,6 @@ limitations under the License.
 
 .nameLine > h1 {
   margin: 0;
-  /* XXX I can't actually get this ellipsis overflow to trigger, because
-  constraint propagation in a nested flexbox layout is a massive pain */
   overflow: hidden;
   text-overflow: ellipsis;
 }
