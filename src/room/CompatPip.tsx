@@ -40,24 +40,24 @@ export const CompatPip: FC<Props> = ({ className, video, onExit }) => {
       console.log(
         "robin debug: showing speaker track",
         trackRef.current!.webkitPresentationMode,
-        placeholderRef.current!.webkitPresentationMode,
+        placeholderRef.current?.webkitPresentationMode,
       );
       trackRef.current!.webkitSetPresentationMode("picture-in-picture");
       console.log(
         "robin debug: speaker track shown",
         trackRef.current!.webkitPresentationMode,
-        placeholderRef.current!.webkitPresentationMode,
+        placeholderRef.current?.webkitPresentationMode,
       );
     } else {
       console.log(
         `robin debug: ${!showPlaceholder && "speaker available but "}showing placeholder`,
-        trackRef.current!.webkitPresentationMode,
+        trackRef.current?.webkitPresentationMode,
         placeholderRef.current!.webkitPresentationMode,
       );
       placeholderRef.current!.webkitSetPresentationMode("picture-in-picture");
       console.log(
         `robin debug: placeholder shown`,
-        trackRef.current!.webkitPresentationMode,
+        trackRef.current?.webkitPresentationMode,
         placeholderRef.current!.webkitPresentationMode,
       );
     }
