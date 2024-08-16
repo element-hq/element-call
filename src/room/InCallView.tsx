@@ -236,7 +236,10 @@ export const InCallView: FC<InCallViewProps> = ({
   );
   const onPointerOut = useCallback(() => vm.unhoverScreen(), [vm]);
 
-  const disableCompatPip = useCallback(() => vm.disableCompatPip(), [vm]);
+  const disableCompatPip = useCallback(() => {
+    console.log("robin debug: exiting pip");
+    vm.disableCompatPip();
+  }, [vm]);
 
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);

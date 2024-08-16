@@ -36,10 +36,31 @@ export const CompatPip: FC<Props> = ({ className, video, onExit }) => {
 
   const update = useCallback(() => {
     if (!placeholderLoaded.current) return;
-    if (!showPlaceholder && trackLoaded.current)
+    if (!showPlaceholder && trackLoaded.current) {
+      console.log(
+        "robin debug: showing speaker track",
+        trackRef.current!.webkitPresentationMode,
+        placeholderRef.current!.webkitPresentationMode,
+      );
       trackRef.current!.webkitSetPresentationMode("picture-in-picture");
-    else
+      console.log(
+        "robin debug: speaker track shown",
+        trackRef.current!.webkitPresentationMode,
+        placeholderRef.current!.webkitPresentationMode,
+      );
+    } else {
+      console.log(
+        `robin debug: ${!showPlaceholder && "speaker available but "}showing placeholder`,
+        trackRef.current!.webkitPresentationMode,
+        placeholderRef.current!.webkitPresentationMode,
+      );
       placeholderRef.current!.webkitSetPresentationMode("picture-in-picture");
+      console.log(
+        `robin debug: placeholder shown`,
+        trackRef.current!.webkitPresentationMode,
+        placeholderRef.current!.webkitPresentationMode,
+      );
+    }
   }, [showPlaceholder]);
 
   useEffect(() => {
@@ -80,6 +101,7 @@ export const CompatPip: FC<Props> = ({ className, video, onExit }) => {
 
   const onPlaceholderLoaded = useCallback(() => {
     placeholderLoaded.current = true;
+    console.log("robin debug: placeholder loaded");
     update();
   }, [update]);
 
@@ -89,6 +111,7 @@ export const CompatPip: FC<Props> = ({ className, video, onExit }) => {
 
   const onTrackLoaded = useCallback(() => {
     trackLoaded.current = video;
+    console.log("robin debug: speaker loaded");
     update();
   }, [video, update]);
 
