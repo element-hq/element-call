@@ -59,18 +59,18 @@ export const CompatPip: FC<Props> = ({ className, video, onExit }) => {
     };
 
     placeholder.addEventListener(
-      "webkitpresentationmodechange",
+      "webkitpresentationmodechanged",
       onPlaceholderModeChange,
     );
-    track.addEventListener("webkitpresentationmodechange", onTrackModeChange);
+    track.addEventListener("webkitpresentationmodechanged", onTrackModeChange);
 
     return (): void => {
       placeholder.removeEventListener(
-        "webkitpresentationmodechange",
+        "webkitpresentationmodechanged",
         onPlaceholderModeChange,
       );
       track.removeEventListener(
-        "webkitpresentationmodechange",
+        "webkitpresentationmodechanged",
         onTrackModeChange,
       );
       placeholder.webkitSetPresentationMode("inline");
