@@ -18,6 +18,7 @@ import { IndexedDBStore } from "matrix-js-sdk/src/store/indexeddb";
 import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import {
   createClient,
+  EventType,
   ICreateClientOpts,
   Preset,
   Visibility,
@@ -217,7 +218,7 @@ export function sanitiseRoomNameInput(input: string): string {
 interface CreateRoomResult {
   roomId: string;
   alias?: string;
-  password?: string;
+  encryptionSystem: EncryptionSystem;
 }
 
 /**
@@ -264,6 +265,18 @@ export async function createRoom(
         [client.getUserId()!]: 100,
       },
     },
+    initial_state:
+      e2ee === E2eeType.PER_PARTICIPANT
+        ? [
+            {
+              type: EventType.RoomEncryption,
+              state_key: "",
+              content: {
+                algorithm: "m.megolm.v1.aes-sha2",
+              },
+            },
+          ]
+        : undefined,
   });
 
   // Wait for the room to arrive
@@ -287,16 +300,22 @@ export async function createRoom(
 
   const result = await createPromise;
 
-  let password;
+  let encryptionSystem: EncryptionSystem;
   if (e2ee == E2eeType.SHARED_KEY) {
-    password = secureRandomBase64Url(16);
+    const password = secureRandomBase64Url(16);
     saveKeyForRoom(result.room_id, password);
+    encryptionSystem = {
+      kind: E2eeType.SHARED_KEY,
+      secret: password,
+    };
+  } else {
+    encryptionSystem = { kind: e2ee };
   }
 
   return {
     roomId: result.room_id,
     alias: e2ee ? undefined : fullAliasFromRoomName(name, client),
-    password,
+    encryptionSystem,
   };
 }
 

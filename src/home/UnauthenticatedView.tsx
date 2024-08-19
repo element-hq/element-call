@@ -18,7 +18,7 @@ import { FC, useCallback, useState, FormEventHandler } from "react";
 import { useHistory } from "react-router-dom";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { Trans, useTranslation } from "react-i18next";
-import { Button, Heading } from "@vector-im/compound-web";
+import { Button, Dropdown, Heading } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { useClient } from "../ClientContext";
@@ -44,6 +44,18 @@ import { Config } from "../config/Config";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useOptInAnalytics } from "../settings/settings";
 
+const encryptionOptions = {
+  shared: {
+    label: "Shared key",
+    e2eeType: E2eeType.SHARED_KEY,
+  },
+  sender: {
+    label: "Per-participant key",
+    e2eeType: E2eeType.PER_PARTICIPANT,
+  },
+  none: { label: "None", e2eeType: E2eeType.NONE },
+};
+
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
   const [loading, setLoading] = useState(false);
@@ -51,6 +63,9 @@ export const UnauthenticatedView: FC = () => {
   const [optInAnalytics] = useOptInAnalytics();
   const { recaptchaKey, register } = useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
+
+  const [encryption, setEncryption] =
+    useState<keyof typeof encryptionOptions>("shared");
 
   const [joinExistingCallModalOpen, setJoinExistingCallModalOpen] =
     useState(false);
@@ -82,13 +97,16 @@ export const UnauthenticatedView: FC = () => {
           true,
         );
 
-        let createRoomResult;
+        let roomId;
+        let encryptionSystem;
         try {
-          createRoomResult = await createRoom(
+          const res = await createRoom(
             client,
             roomName,
-            E2eeType.SHARED_KEY,
+            encryptionOptions[encryption].e2eeType,
           );
+          roomId = res.roomId;
+          encryptionSystem = res.encryptionSystem;
         } catch (error) {
           if (!setClient) {
             throw error;
@@ -115,17 +133,11 @@ export const UnauthenticatedView: FC = () => {
         if (!setClient) {
           throw new Error("setClient is undefined");
         }
-        if (!createRoomResult.password)
-          throw new Error("Failed to create room with shared secret");
+        // if (!createRoomResult.password)
+        //   throw new Error("Failed to create room with shared secret");
 
         setClient({ client, session });
-        history.push(
-          getRelativeRoomUrl(
-            createRoomResult.roomId,
-            { kind: E2eeType.SHARED_KEY, secret: createRoomResult.password },
-            roomName,
-          ),
-        );
+        history.push(getRelativeRoomUrl(roomId, encryptionSystem, roomName));
       }
 
       submit().catch((error) => {
@@ -142,6 +154,7 @@ export const UnauthenticatedView: FC = () => {
       history,
       setJoinExistingCallModalOpen,
       setClient,
+      encryption,
     ],
   );
 
@@ -204,6 +217,20 @@ export const UnauthenticatedView: FC = () => {
                 <ErrorMessage error={error} />
               </FieldRow>
             )}
+            <Dropdown
+              label="Encryption"
+              defaultValue={encryption}
+              onValueChange={(x) =>
+                setEncryption(x as keyof typeof encryptionOptions)
+              }
+              values={Object.keys(encryptionOptions).map((value) => [
+                value,
+                encryptionOptions[value as keyof typeof encryptionOptions]
+                  .label,
+              ])}
+              placeholder=""
+            />
+
             <Button
               type="submit"
               size="lg"
