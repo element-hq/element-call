@@ -241,7 +241,13 @@ export const SettingsModal: FC<Props> = ({
     >
       <p>
         {t("version", {
+          productName: import.meta.env.VITE_PRODUCT_NAME || "Element Call",
           version: import.meta.env.VITE_APP_VERSION || "dev",
+        })}
+      </p>
+      <p>
+        {t("crypto_version", {
+          version: client.getCrypto()?.getVersion() || "unknown",
         })}
       </p>
       <p>
