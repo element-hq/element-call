@@ -18,7 +18,7 @@ import { useState, useCallback, FormEvent, FormEventHandler, FC } from "react";
 import { useHistory } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
-import { Heading } from "@vector-im/compound-web";
+import { Dropdown, Heading } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
 import { Button } from "@vector-im/compound-web";
 
@@ -45,6 +45,17 @@ import { useOptInAnalytics } from "../settings/settings";
 interface Props {
   client: MatrixClient;
 }
+const encryptionOptions = {
+  shared: {
+    label: "Shared key",
+    e2eeType: E2eeType.SHARED_KEY,
+  },
+  sender: {
+    label: "Per-participant key",
+    e2eeType: E2eeType.PER_PARTICIPANT,
+  },
+  none: { label: "None", e2eeType: E2eeType.NONE },
+};
 
 export const RegisteredView: FC<Props> = ({ client }) => {
   const [loading, setLoading] = useState(false);
@@ -58,6 +69,9 @@ export const RegisteredView: FC<Props> = ({ client }) => {
     () => setJoinExistingCallModalOpen(false),
     [setJoinExistingCallModalOpen],
   );
+
+  const [encryption, setEncryption] =
+    useState<keyof typeof encryptionOptions>("shared");
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
     (e: FormEvent) => {
@@ -73,21 +87,13 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         setError(undefined);
         setLoading(true);
 
-        const createRoomResult = await createRoom(
+        const { roomId, encryptionSystem } = await createRoom(
           client,
           roomName,
-          E2eeType.SHARED_KEY,
+          encryptionOptions[encryption].e2eeType,
         );
-        if (!createRoomResult.password)
-          throw new Error("Failed to create room with shared secret");
 
-        history.push(
-          getRelativeRoomUrl(
-            createRoomResult.roomId,
-            { kind: E2eeType.SHARED_KEY, secret: createRoomResult.password },
-            roomName,
-          ),
-        );
+        history.push(getRelativeRoomUrl(roomId, encryptionSystem, roomName));
       }
 
       submit().catch((error) => {
@@ -103,7 +109,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         }
       });
     },
-    [client, history, setJoinExistingCallModalOpen],
+    [client, history, setJoinExistingCallModalOpen, encryption],
   );
 
   const recentRooms = useGroupCallRooms(client);
@@ -142,6 +148,19 @@ export const RegisteredView: FC<Props> = ({ client }) => {
                 data-testid="home_callName"
               />
 
+              <Dropdown
+                label="Encryption"
+                defaultValue={encryption}
+                onValueChange={(x) =>
+                  setEncryption(x as keyof typeof encryptionOptions)
+                }
+                values={Object.keys(encryptionOptions).map((value) => [
+                  value,
+                  encryptionOptions[value as keyof typeof encryptionOptions]
+                    .label,
+                ])}
+                placeholder=""
+              />
               <Button
                 type="submit"
                 size="lg"
