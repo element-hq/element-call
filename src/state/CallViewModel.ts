@@ -26,7 +26,6 @@ import {
   RemoteParticipant,
 } from "livekit-client";
 import { Room as MatrixRoom, RoomMember } from "matrix-js-sdk/src/matrix";
-import { useEffect, useRef } from "react";
 import {
   EMPTY,
   Observable,
@@ -57,12 +56,10 @@ import {
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { ViewModel } from "./ViewModel";
-import { useObservable } from "./useObservable";
 import {
   ECAddonConnectionState,
   ECConnectionState,
 } from "../livekit/useECConnectionState";
-import { usePrevious } from "../usePrevious";
 import {
   LocalUserMediaViewModel,
   MediaViewModel,
@@ -818,35 +815,4 @@ export class CallViewModel extends ViewModel {
   ) {
     super();
   }
-}
-
-export function useCallViewModel(
-  matrixRoom: MatrixRoom,
-  livekitRoom: LivekitRoom,
-  encrypted: boolean,
-  connectionState: ECConnectionState,
-): CallViewModel {
-  const prevMatrixRoom = usePrevious(matrixRoom);
-  const prevLivekitRoom = usePrevious(livekitRoom);
-  const prevEncrypted = usePrevious(encrypted);
-  const connectionStateObservable = useObservable(connectionState);
-
-  const vm = useRef<CallViewModel>();
-  if (
-    matrixRoom !== prevMatrixRoom ||
-    livekitRoom !== prevLivekitRoom ||
-    encrypted !== prevEncrypted
-  ) {
-    vm.current?.destroy();
-    vm.current = new CallViewModel(
-      matrixRoom,
-      livekitRoom,
-      encrypted,
-      connectionStateObservable,
-    );
-  }
-
-  useEffect(() => vm.current?.destroy(), []);
-
-  return vm.current!;
 }
