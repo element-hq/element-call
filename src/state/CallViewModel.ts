@@ -71,6 +71,7 @@ import { accumulate, finalizeValue } from "../observable-utils";
 import { ObservableScope } from "./ObservableScope";
 import { duplicateTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";
+import { pipDisable, pipEnable } from "../controls";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -512,10 +513,12 @@ export class CallViewModel extends ViewModel {
   private readonly pip: Observable<UserMediaViewModel | null> =
     this.spotlightAndPip.pipe(switchMap(([, pip]) => pip));
 
-  /**
-   * The general shape of the window.
-   */
-  public readonly windowMode: Observable<WindowMode> = fromEvent(
+  private readonly pipEnabled: Observable<boolean> = merge(
+    pipEnable.pipe(map(() => true)),
+    pipDisable.pipe(map(() => false)),
+  ).pipe(startWith(false));
+
+  private readonly naturalWindowMode: Observable<WindowMode> = fromEvent(
     window,
     "resize",
   ).pipe(
@@ -532,6 +535,13 @@ export class CallViewModel extends ViewModel {
       return "normal";
     }),
     this.scope.state(),
+  );
+
+  /**
+   * The general shape of the window.
+   */
+  public readonly windowMode: Observable<WindowMode> = this.pipEnabled.pipe(
+    switchMap((pip) => (pip ? of<WindowMode>("pip") : this.naturalWindowMode)),
   );
 
   private readonly spotlightExpandedToggle = new Subject<void>();

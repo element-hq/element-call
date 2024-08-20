@@ -15,6 +15,7 @@ limitations under the License.
 */
 
 import "matrix-js-sdk/src/@types/global";
+import { Controls } from "../controls";
 
 declare global {
   interface Document {
@@ -26,6 +27,7 @@ declare global {
   interface Window {
     // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
     OLM_OPTIONS: Record<string, string>;
+    controls: Controls;
   }
 
   interface HTMLElement {
