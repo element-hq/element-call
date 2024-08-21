@@ -120,6 +120,7 @@
     "global-jsdom": "^24.0.0",
     "i18next-parser": "^9.0.0",
     "jsdom": "^25.0.0",
+    "knip": "^5.27.2",
     "prettier": "^3.0.0",
     "sass": "^1.42.1",
     "typescript": "^5.1.6",
