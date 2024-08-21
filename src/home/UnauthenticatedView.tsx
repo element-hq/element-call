@@ -43,16 +43,13 @@ import { generateRandomName } from "../auth/generateRandomName";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { Config } from "../config/Config";
 import { E2eeType } from "../e2ee/e2eeType";
-import {
-  useSetting,
-  optInAnalytics as optInAnalyticsSetting,
-} from "../settings/settings";
+import { useOptInAnalytics } from "../settings/settings";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
-  const [optInAnalytics] = useSetting(optInAnalyticsSetting);
+  const [optInAnalytics] = useOptInAnalytics();
   const { recaptchaKey, register } = useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 

@@ -48,6 +48,8 @@
   "ignoreDeps": [
     "@react-aria/button",
     "@react-aria/focus",
+    "@react-aria/interactions",
+    "@react-aria/listbox",
     "@react-aria/menu",
     "@react-aria/overlays",
     "@react-aria/select",
@@ -55,9 +57,16 @@
     "@react-aria/tooltip",
     "@react-aria/utils",
     "@react-stately/collections",
+    "@react-stately/list",
+    "@react-stately/menu",
     "@react-stately/select",
+    "@react-stately/tabs",
     "@react-stately/tooltip",
     "@react-stately/tree",
-    "@react-types/dialog"
+    "@react-types/dialog",
+    "@react-types/menu",
+    "@react-types/overlays",
+    "@react-types/shared",
+    "@react-types/tabs"
   ]
 }
