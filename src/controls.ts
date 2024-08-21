@@ -17,6 +17,7 @@ limitations under the License.
 import { Subject } from "rxjs";
 
 export interface Controls {
+  canEnterPip: () => boolean;
   enablePip: () => void;
   disablePip: () => void;
 }
@@ -25,6 +26,9 @@ export const pipEnable = new Subject<void>();
 export const pipDisable = new Subject<void>();
 
 window.controls = {
+  canEnterPip(): boolean {
+    return pipEnable.observed;
+  },
   enablePip(): void {
     if (!pipEnable.observed) throw new Error("No call is running");
     pipEnable.next();
