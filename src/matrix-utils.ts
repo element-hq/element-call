@@ -34,7 +34,6 @@ import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import IndexedDBWorker from "./IndexedDBWorker?worker";
 import { generateUrlSearchParams, getUrlParams } from "./UrlParams";
-import { loadOlm } from "./olm";
 import { Config } from "./config/Config";
 import { E2eeType } from "./e2ee/e2eeType";
 import { EncryptionSystem, saveKeyForRoom } from "./e2ee/sharedKeyManagement";
@@ -97,8 +96,6 @@ export async function initClient(
   clientOptions: ICreateClientOpts,
   restore: boolean,
 ): Promise<MatrixClient> {
-  await loadOlm();
-
   let indexedDB: IDBFactory | undefined;
   try {
     indexedDB = window.indexedDB;
@@ -198,7 +195,7 @@ export async function initClient(
     await client.store.startup();
   }
 
-  await client.initCrypto();
+  await client.initRustCrypto();
   client.setGlobalErrorOnUnknownDevices(false);
   // Once startClient is called, syncs are run asynchronously.
   // Also, sync completion is communicated only via events.

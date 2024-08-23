@@ -23,11 +23,6 @@ declare global {
     webkitFullscreenElement: HTMLElement | null;
   }
 
-  interface Window {
-    // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
-    OLM_OPTIONS: Record<string, string>;
-  }
-
   interface HTMLElement {
     // Safari only supports this prefixed, so tell the type system about it
     webkitRequestFullscreen: () => void;
