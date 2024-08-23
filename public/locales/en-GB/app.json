@@ -59,6 +59,7 @@
     "username": "Username",
     "video": "Video"
   },
+  "crypto_version": "Crypto version: {{version}}",
   "device_id": "Device ID: {{id}}",
   "disconnected_banner": "Connectivity to the server has been lost.",
   "full_screen_view_description": "<0>Submitting debug logs will help us track down the problem.</0>",
@@ -156,7 +157,7 @@
   "unauthenticated_view_eula_caption": "By clicking \"Go\", you agree to our <2>End User Licensing Agreement (EULA)</2>",
   "unauthenticated_view_login_button": "Login to your account",
   "unmute_microphone_button_label": "Unmute microphone",
-  "version": "Version: {{version}}",
+  "version": "{{productName}} version: {{version}}",
   "video_tile": {
     "always_show": "Always show",
     "change_fit_contain": "Fit to frame",
