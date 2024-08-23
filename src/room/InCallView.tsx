@@ -93,7 +93,7 @@ const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 const maxTapDurationMs = 400;
 
 export interface ActiveCallProps
-  extends Omit<InCallViewProps, "livekitRoom" | "connState"> {
+  extends Omit<InCallViewProps, "vm" | "livekitRoom" | "connState"> {
   e2eeSystem: EncryptionSystem;
 }
 
