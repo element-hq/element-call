@@ -25,8 +25,6 @@ declare global {
   }
 
   interface Window {
-    // TODO: https://gitlab.matrix.org/matrix-org/olm/-/issues/10
-    OLM_OPTIONS: Record<string, string>;
     controls: Controls;
   }
 
