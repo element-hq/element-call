@@ -272,16 +272,18 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
             <ChevronLeftIcon aria-hidden width={24} height={24} />
           </button>
         )}
-        {vms.map((vm) => (
-          <SpotlightItem
-            key={vm.id}
-            vm={vm}
-            targetWidth={targetWidth}
-            targetHeight={targetHeight}
-            intersectionObserver={intersectionObserver}
-            snap={scrollToId === null || scrollToId === vm.id}
-          />
-        ))}
+        <div className={styles.contents}>
+          {vms.map((vm) => (
+            <SpotlightItem
+              key={vm.id}
+              vm={vm}
+              targetWidth={targetWidth}
+              targetHeight={targetHeight}
+              intersectionObserver={intersectionObserver}
+              snap={scrollToId === null || scrollToId === vm.id}
+            />
+          ))}
+        </div>
         {onToggleExpanded && (
           <button
             className={classNames(styles.expand)}
@@ -311,7 +313,11 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
             })}
           >
             {vms.map((vm) => (
-              <div className={styles.item} data-visible={vm.id === visibleId} />
+              <div
+                key={vm.id}
+                className={styles.item}
+                data-visible={vm.id === visibleId}
+              />
             ))}
           </div>
         )}

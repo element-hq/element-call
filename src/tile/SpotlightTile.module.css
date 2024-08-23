@@ -14,7 +14,9 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-.tile {
+.contents {
+  block-size: 100%;
+  inline-size: 100%;
   display: flex;
   border-radius: var(--cpd-space-6x);
   contain: strict;
@@ -29,7 +31,7 @@ limitations under the License.
   scroll-behavior: smooth; */
 }
 
-.tile.maximised {
+.tile.maximised .contents {
   border-radius: 0;
 }
 
@@ -153,7 +155,7 @@ limitations under the License.
 }
 
 .indicators > .item {
-  inline-size: 32px;
+  flex-basis: 32px;
   block-size: 2px;
   transition: background-color ease 0.15s;
 }
