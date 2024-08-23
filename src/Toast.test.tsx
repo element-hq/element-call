@@ -37,6 +37,7 @@ test("Toast renders", () => {
       Hello world!
     </Toast>,
   );
+  screen.debug()
   expect(screen.getByRole("dialog")).toMatchSnapshot();
 });
 
@@ -47,6 +48,7 @@ test("Toast dismisses when clicked", async () => {
       Hello world!
     </Toast>,
   );
+  screen.debug()
   await userEvent.click(screen.getByRole("dialog"));
   expect(onDismiss).toHaveBeenCalled();
 });
