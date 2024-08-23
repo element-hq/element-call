@@ -117,6 +117,7 @@
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^4.5.0",
     "eslint-plugin-unicorn": "^55.0.0",
+    "global-jsdom": "^24.0.0",
     "i18next-parser": "^9.0.0",
     "jsdom": "^24.0.0",
     "prettier": "^3.0.0",

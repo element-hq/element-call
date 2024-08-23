@@ -14,6 +14,7 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import 'global-jsdom/register'
 import { cleanup } from "@testing-library/react";
 import i18n from "i18next";
 import posthog from "posthog-js";
