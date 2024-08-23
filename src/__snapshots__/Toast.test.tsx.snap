@@ -1,7 +1,7 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`Toast renders 1`] = `
-<button
+<div
   aria-labelledby="radix-:r4:"
   class="overlay animate toast"
   data-state="open"
@@ -9,7 +9,6 @@ exports[`Toast renders 1`] = `
   role="dialog"
   style="pointer-events: auto;"
   tabindex="-1"
-  type="button"
 >
   <h3
     class="_typography_yh5dq_162 _font-body-sm-semibold_yh5dq_45"
@@ -17,5 +16,5 @@ exports[`Toast renders 1`] = `
   >
     Hello world!
   </h3>
-</button>
+</div>
 `;

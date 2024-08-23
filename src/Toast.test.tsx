@@ -41,7 +41,8 @@ test("Toast renders", () => {
   expect(screen.getByRole("dialog")).toMatchSnapshot();
 });
 
-test("Toast dismisses when clicked", async () => {
+test("Toast dismisses when background is clicked", async () => {
+  const user = userEvent.setup()
   const onDismiss = vi.fn();
   render(
     <Toast open={true} onDismiss={onDismiss}>
@@ -49,9 +50,21 @@ test("Toast dismisses when clicked", async () => {
     </Toast>,
   );
   screen.debug()
-  await userEvent.click(screen.getByRole("dialog"));
+  await user.click(screen.getByRole("dialog").previousSibling! as Element);
   expect(onDismiss).toHaveBeenCalled();
 });
+
+test("Toast dismisses when Esc is pressed", async () => {
+  const user = userEvent.setup()
+  const onDismiss = vi.fn();
+  render(
+    <Toast open={true} onDismiss={onDismiss}>
+      Hello world!
+    </Toast>,
+  );
+  await user.keyboard('[Escape]')
+  expect(onDismiss).toHaveBeenCalled();
+})
 
 test("Toast dismisses itself after the specified timeout", async () => {
   withFakeTimers(() => {
