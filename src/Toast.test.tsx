@@ -15,11 +15,15 @@ limitations under the License.
 */
 
 import { expect, test, vi } from "vitest";
-import { screen, render } from "@testing-library/react";
+import { screen, render, configure } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { Toast } from "../src/Toast";
 import { withFakeTimers } from "./utils/test";
+
+configure({
+  defaultHidden: true
+})
 
 test("Toast renders", () => {
   render(
