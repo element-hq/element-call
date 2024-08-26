@@ -87,7 +87,7 @@ export const Toast: FC<Props> = ({
           className={classNames(overlayStyles.bg, overlayStyles.animate)}
         />
         <DialogContent aria-describedby={undefined} asChild>
-          <div
+          <DialogClose
             className={classNames(
               overlayStyles.overlay,
               overlayStyles.animate,
@@ -100,7 +100,7 @@ export const Toast: FC<Props> = ({
               </Text>
             </DialogTitle>
             {Icon && <Icon width={20} height={20} aria-hidden />}
-          </div>
+          </DialogClose>
         </DialogContent>
       </DialogPortal>
     </DialogRoot>
