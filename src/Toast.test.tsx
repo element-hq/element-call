@@ -57,19 +57,6 @@ describe("Toast", () => {
     unmount();
   });
 
-  test("dismisses when Esc is pressed", async () => {
-    const user = userEvent.setup();
-    const onDismiss = vi.fn();
-    const { debug } = render(
-      <Toast open={true} onDismiss={onDismiss}>
-        Hello world!
-      </Toast>,
-    );
-    debug();
-    await user.keyboard("[Escape]");
-    expect(onDismiss).toHaveBeenCalled();
-  });
-
   test("dismisses itself after the specified timeout", () => {
     withFakeTimers(() => {
       const onDismiss = vi.fn();
@@ -81,5 +68,18 @@ describe("Toast", () => {
       vi.advanceTimersByTime(2000);
       expect(onDismiss).toHaveBeenCalled();
     });
+  });
+
+  test("dismisses when Esc is pressed", async () => {
+    const user = userEvent.setup();
+    const onDismiss = vi.fn();
+    const { debug } = render(
+      <Toast open={true} onDismiss={onDismiss}>
+        Hello world!
+      </Toast>,
+    );
+    debug();
+    await user.keyboard("[Escape]");
+    expect(onDismiss).toHaveBeenCalled();
   });
 });
