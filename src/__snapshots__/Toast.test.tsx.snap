@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Toast renders 1`] = `
+exports[`Toast > renders 1`] = `
 <div
   aria-labelledby="radix-:r4:"
   class="overlay animate toast"

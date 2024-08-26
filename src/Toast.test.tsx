@@ -14,8 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { expect, test, vi } from "vitest";
-import { screen, render, configure } from "@testing-library/react";
+import { describe, expect, test, vi } from "vitest";
+import { render, configure } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { Toast } from "../src/Toast";
@@ -25,56 +25,58 @@ configure({
   defaultHidden: true,
 });
 
-test("Toast renders", () => {
-  render(
-    <Toast open={false} onDismiss={() => {}}>
-      Hello world!
-    </Toast>,
-  );
-  expect(screen.queryByRole("dialog")).toBe(null);
-  render(
-    <Toast open={true} onDismiss={() => {}}>
-      Hello world!
-    </Toast>,
-  );
-  screen.debug();
-  expect(screen.getByRole("dialog")).toMatchSnapshot();
-});
-
-test("Toast dismisses when background is clicked", async () => {
-  const user = userEvent.setup();
-  const onDismiss = vi.fn();
-  render(
-    <Toast open={true} onDismiss={onDismiss}>
-      Hello world!
-    </Toast>,
-  );
-  screen.debug();
-  await user.click(screen.getByRole("dialog").previousSibling! as Element);
-  expect(onDismiss).toHaveBeenCalled();
-});
-
-test("Toast dismisses when Esc is pressed", async () => {
-  const user = userEvent.setup();
-  const onDismiss = vi.fn();
-  render(
-    <Toast open={true} onDismiss={onDismiss}>
-      Hello world!
-    </Toast>,
-  );
-  await user.keyboard("[Escape]");
-  expect(onDismiss).toHaveBeenCalled();
-});
-
-test("Toast dismisses itself after the specified timeout", async () => {
-  withFakeTimers(() => {
-    const onDismiss = vi.fn();
-    render(
-      <Toast open={true} onDismiss={onDismiss} autoDismiss={2000}>
+describe("Toast", () => {
+  test("renders", () => {
+    const { queryByRole } = render(
+      <Toast open={false} onDismiss={() => {}}>
         Hello world!
       </Toast>,
     );
-    vi.advanceTimersByTime(2000);
+    expect(queryByRole("dialog")).not.toBeInTheDocument();
+
+    const { getByRole } = render(
+      <Toast open={true} onDismiss={() => {}}>
+        Hello world!
+      </Toast>,
+    );
+    expect(getByRole("dialog")).toMatchSnapshot();
+  });
+
+  test("dismisses when background is clicked", async () => {
+    const user = userEvent.setup();
+    const onDismiss = vi.fn();
+    const { getByRole } = render(
+      <Toast open={true} onDismiss={onDismiss}>
+        Hello world!
+      </Toast>,
+    );
+    const background = getByRole("dialog").previousSibling! as Element;
+    await user.click(background);
     expect(onDismiss).toHaveBeenCalled();
+  });
+
+  test("dismisses when Esc is pressed", async () => {
+    const user = userEvent.setup();
+    const onDismiss = vi.fn();
+    render(
+      <Toast open={true} onDismiss={onDismiss}>
+        Hello world!
+      </Toast>,
+    );
+    await user.keyboard("[Escape]");
+    expect(onDismiss).toHaveBeenCalled();
+  });
+
+  test("dismisses itself after the specified timeout", () => {
+    withFakeTimers(() => {
+      const onDismiss = vi.fn();
+      render(
+        <Toast open={true} onDismiss={onDismiss} autoDismiss={2000}>
+          Hello world!
+        </Toast>,
+      );
+      vi.advanceTimersByTime(2000);
+      expect(onDismiss).toHaveBeenCalled();
+    });
   });
 });
