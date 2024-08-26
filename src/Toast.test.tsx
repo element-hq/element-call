@@ -22,8 +22,8 @@ import { Toast } from "../src/Toast";
 import { withFakeTimers } from "./utils/test";
 
 configure({
-  defaultHidden: true
-})
+  defaultHidden: true,
+});
 
 test("Toast renders", () => {
   render(
@@ -37,34 +37,34 @@ test("Toast renders", () => {
       Hello world!
     </Toast>,
   );
-  screen.debug()
+  screen.debug();
   expect(screen.getByRole("dialog")).toMatchSnapshot();
 });
 
 test("Toast dismisses when background is clicked", async () => {
-  const user = userEvent.setup()
+  const user = userEvent.setup();
   const onDismiss = vi.fn();
   render(
     <Toast open={true} onDismiss={onDismiss}>
       Hello world!
     </Toast>,
   );
-  screen.debug()
+  screen.debug();
   await user.click(screen.getByRole("dialog").previousSibling! as Element);
   expect(onDismiss).toHaveBeenCalled();
 });
 
 test("Toast dismisses when Esc is pressed", async () => {
-  const user = userEvent.setup()
+  const user = userEvent.setup();
   const onDismiss = vi.fn();
   render(
     <Toast open={true} onDismiss={onDismiss}>
       Hello world!
     </Toast>,
   );
-  await user.keyboard('[Escape]')
+  await user.keyboard("[Escape]");
   expect(onDismiss).toHaveBeenCalled();
-})
+});
 
 test("Toast dismisses itself after the specified timeout", async () => {
   withFakeTimers(() => {
