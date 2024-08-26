@@ -15,6 +15,8 @@ limitations under the License.
 */
 
 import "global-jsdom/register";
+import "@testing-library/jest-dom/vitest";
+
 import { cleanup } from "@testing-library/react";
 import i18n from "i18next";
 import posthog from "posthog-js";
