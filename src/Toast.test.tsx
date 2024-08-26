@@ -34,18 +34,19 @@ describe("Toast", () => {
     );
     expect(queryByRole("dialog")).not.toBeInTheDocument();
 
-    const { getByRole } = render(
+    const { unmount, getByRole } = render(
       <Toast open={true} onDismiss={() => {}}>
         Hello world!
       </Toast>,
     );
     expect(getByRole("dialog")).toMatchSnapshot();
+    unmount();
   });
 
   test("dismisses when background is clicked", async () => {
     const user = userEvent.setup();
     const onDismiss = vi.fn();
-    const { getByRole } = render(
+    const { getByRole, unmount } = render(
       <Toast open={true} onDismiss={onDismiss}>
         Hello world!
       </Toast>,
@@ -53,6 +54,7 @@ describe("Toast", () => {
     const background = getByRole("dialog").previousSibling! as Element;
     await user.click(background);
     expect(onDismiss).toHaveBeenCalled();
+    unmount();
   });
 
   test("dismisses when Esc is pressed", async () => {
