@@ -3472,7 +3472,7 @@
   resolved "https://registry.yarnpkg.com/@types/events/-/events-3.0.3.tgz#a8ef894305af28d1fc6d2dfdfc98e899591ea529"
   integrity sha512-trOc4AAUThEz9hapPtSd7wf5tiQKvTtu5b371UxXdTuqzIh0ArcRspRP0i0Viu+LXstIQ1z96t1nsPxT9ol01g==
 
-"@types/grecaptcha@^3.0.4":
+"@types/grecaptcha@^3.0.9":
   version "3.0.9"
   resolved "https://registry.yarnpkg.com/@types/grecaptcha/-/grecaptcha-3.0.9.tgz#9f3b07ec06c8fff221aa6fc124fe5b8a0e2c3349"
   integrity sha512-fFxMtjAvXXMYTzDFK5NpcVB7WHnrHVLl00QzEGpuFxSAC789io6M+vjcn+g5FTEamIJtJr/IHkCDsqvJxeWDyw==
