@@ -117,7 +117,7 @@ export const RoomAuthView: FC = () => {
             Not registered yet?{" "}
             <Link
               color="primary"
-              to={{ pathname: "/login", state: { from: location } }}
+              to={{ pathname: "/register", state: { from: location } }}
             >
               Create an account
             </Link>
