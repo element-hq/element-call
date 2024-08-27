@@ -14,15 +14,16 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { vi, Mocked } from "vitest";
+import { vi, Mocked, test, expect } from "vitest";
 import { RoomState } from "matrix-js-sdk/src/models/room-state";
+
 import { PosthogAnalytics } from "../../src/analytics/PosthogAnalytics";
 import { checkForParallelCalls } from "../../src/room/checkForParallelCalls";
-import { withFakeTimers } from "../utils";
+import { withFakeTimers } from "../utils/test";
 
 const withMockedPosthog = (
   continuation: (posthog: Mocked<PosthogAnalytics>) => void,
-) => {
+): void => {
   const posthog = vi.mocked({
     trackEvent: vi.fn(),
   } as unknown as PosthogAnalytics);
@@ -40,7 +41,7 @@ const mockRoomState = (
   groupCallMemberContents: Record<string, unknown>[],
 ): RoomState => {
   const stateEvents = groupCallMemberContents.map((content) => ({
-    getContent: () => content,
+    getContent: (): Record<string, unknown> => content,
   }));
   return { getStateEvents: () => stateEvents } as unknown as RoomState;
 };

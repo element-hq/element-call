@@ -6,17 +6,17 @@ export default defineConfig((configEnv) =>
     viteConfig(configEnv),
     defineConfig({
       test: {
-        globals: true,
         environment: "jsdom",
         css: {
           modules: {
             classNameStrategy: "non-scoped",
           },
         },
-        include: ["test/**/*-test.[jt]s?(x)"],
+        isolate: false,
+        setupFiles: ["src/vitest.setup.ts"],
         coverage: {
-          reporter: ["text", "html"],
-          exclude: ["node_modules/"],
+          reporter: ["html", "json"],
+          include: ["src/"],
         },
       },
     }),

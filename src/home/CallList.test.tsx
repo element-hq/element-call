@@ -15,20 +15,19 @@ limitations under the License.
 */
 
 import { render, RenderResult } from "@testing-library/react";
-import { CallList } from "../../src/home/CallList";
 import { MatrixClient } from "matrix-js-sdk";
-import { GroupCallRoom } from "../../src/home/useGroupCallRooms";
 import { MemoryRouter } from "react-router-dom";
-import { ClientProvider } from "../../src/ClientContext";
+import { describe, expect, it } from "vitest";
+
+import { CallList } from "../../src/home/CallList";
+import { GroupCallRoom } from "../../src/home/useGroupCallRooms";
 
 describe("CallList", () => {
   const renderComponent = (rooms: GroupCallRoom[]): RenderResult => {
     return render(
-      <ClientProvider>
-        <MemoryRouter>
-          <CallList client={{} as MatrixClient} rooms={rooms} />
-        </MemoryRouter>
-      </ClientProvider>,
+      <MemoryRouter>
+        <CallList client={{} as MatrixClient} rooms={rooms} />
+      </MemoryRouter>,
     );
   };
 

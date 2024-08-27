@@ -44,6 +44,18 @@ export class Config {
     return Config.internalInstance.initPromise;
   }
 
+  /**
+   * This is a alternative initializer that does not load anything
+   * from a hosted config file but instead just initializes the conifg using the
+   * default config.
+   *
+   * It is supposed to only be used in tests. (It is executed in `vite.setup.js`)
+   */
+  public static initDefault(): void {
+    Config.internalInstance = new Config();
+    Config.internalInstance.config = { ...DEFAULT_CONFIG };
+  }
+
   // Convenience accessors
   public static defaultHomeserverUrl(): string | undefined {
     return (

@@ -200,7 +200,8 @@ export const widget = ((): WidgetHelpers | null => {
 
       return { api, lazyActions, client: clientPromise };
     } else {
-      logger.info("No widget API available");
+      if (import.meta.env.MODE !== "test")
+        logger.info("No widget API available");
       return null;
     }
   } catch (e) {

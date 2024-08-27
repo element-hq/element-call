@@ -15,7 +15,7 @@
     "i18n": "node_modules/i18next-parser/bin/cli.js",
     "i18n:check": "node_modules/i18next-parser/bin/cli.js --fail-on-warnings --fail-on-update",
     "test": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest --coverage",
     "backend": "docker-compose -f backend-docker-compose.yml up"
   },
   "dependencies": {
@@ -95,7 +95,7 @@
     "@types/content-type": "^1.1.5",
     "@types/dom-screen-wake-lock": "^1.0.1",
     "@types/dompurify": "^3.0.2",
-    "@types/grecaptcha": "^3.0.4",
+    "@types/grecaptcha": "^3.0.9",
     "@types/node": "^20.0.0",
     "@types/react-dom": "^18.3.0",
     "@types/react-router-dom": "^5.3.3",
@@ -104,6 +104,7 @@
     "@types/uuid": "10",
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
+    "@vitest/coverage-v8": "^2.0.5",
     "babel-loader": "^9.0.0",
     "babel-plugin-transform-vite-meta-env": "^1.0.3",
     "eslint": "^8.14.0",
@@ -116,6 +117,7 @@
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^4.5.0",
     "eslint-plugin-unicorn": "^55.0.0",
+    "global-jsdom": "^24.0.0",
     "i18next-parser": "^9.0.0",
     "jsdom": "^25.0.0",
     "prettier": "^3.0.0",

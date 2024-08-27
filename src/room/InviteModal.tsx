@@ -25,7 +25,7 @@ import {
 import useClipboard from "react-use-clipboard";
 
 import { Modal } from "../Modal";
-import { getAbsoluteRoomUrl } from "../matrix-utils";
+import { getAbsoluteRoomUrl } from "../utils/matrix";
 import styles from "./InviteModal.module.css";
 import { Toast } from "../Toast";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
