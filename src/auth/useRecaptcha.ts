@@ -23,7 +23,6 @@ import { translatedError } from "../TranslatedError";
 declare global {
   interface Window {
     mxOnRecaptchaLoaded: () => void;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     grecaptcha: ReCaptchaV2.ReCaptcha;
   }
 }
