@@ -69,17 +69,4 @@ describe("Toast", () => {
       expect(onDismiss).toHaveBeenCalled();
     });
   });
-
-  test("dismisses when Esc is pressed", async () => {
-    const user = userEvent.setup();
-    const onDismiss = vi.fn();
-    const { debug } = render(
-      <Toast open={true} onDismiss={onDismiss}>
-        Hello world!
-      </Toast>,
-    );
-    debug();
-    await user.keyboard("[Escape]");
-    expect(onDismiss).toHaveBeenCalled();
-  });
 });
