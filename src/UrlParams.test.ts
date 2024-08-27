@@ -14,23 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { beforeAll, describe, expect, it, vi } from "vitest";
+import { describe, expect, it } from "vitest";
 
 import { getRoomIdentifierFromUrl } from "../src/UrlParams";
-import { Config } from "../src/config/Config";
 
 const ROOM_NAME = "roomNameHere";
 const ROOM_ID = "!d45f138fsd";
 const ORIGIN = "https://call.element.io";
-const HOMESERVER = "call.ems.host";
+const HOMESERVER = "localhost";
 
-vi.mock("../src/config/Config");
+// vi.mock("../src/config/Config");
 
 describe("UrlParams", () => {
-  beforeAll(() => {
-    vi.mocked(Config.defaultServerName).mockReturnValue("call.ems.host");
-  });
-
   describe("handles URL with /room/", () => {
     it("and nothing else", () => {
       expect(

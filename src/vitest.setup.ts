@@ -17,11 +17,11 @@ limitations under the License.
 import "global-jsdom/register";
 import "@testing-library/jest-dom/vitest";
 
-import { cleanup } from "@testing-library/react";
 import i18n from "i18next";
 import posthog from "posthog-js";
 import { initReactI18next } from "react-i18next";
-import { afterEach } from "vitest";
+
+import { Config } from "./config/Config";
 
 // Bare-minimum i18n config
 i18n.use(initReactI18next).init({
@@ -32,6 +32,5 @@ i18n.use(initReactI18next).init({
   },
 });
 
+Config.initDefault();
 posthog.opt_out_capturing();
-
-afterEach(cleanup);

@@ -48,19 +48,22 @@ const TestComponent: FC<TestComponentProps> = ({
 test("spacebar unmutes", async () => {
   const user = userEvent.setup();
   let muted = true;
-  render(<TestComponent setMicrophoneMuted={(m) => (muted = m)} />);
+  const { unmount } = render(
+    <TestComponent setMicrophoneMuted={(m) => (muted = m)} />,
+  );
 
   await user.keyboard("[Space>]");
   expect(muted).toBe(false);
   await user.keyboard("[/Space]");
   expect(muted).toBe(true);
+  unmount();
 });
 
 test("spacebar prioritizes pressing a button", async () => {
   const user = userEvent.setup();
   const setMuted = vi.fn();
   const onClick = vi.fn();
-  render(
+  const { unmount } = render(
     <TestComponent setMicrophoneMuted={setMuted} onButtonClick={onClick} />,
   );
 
@@ -68,6 +71,7 @@ test("spacebar prioritizes pressing a button", async () => {
   await user.keyboard("[Space]");
   expect(setMuted).not.toBeCalled();
   expect(onClick).toBeCalled();
+  unmount();
 });
 
 test("unmuting happens in place of the default action", async () => {
@@ -77,7 +81,7 @@ test("unmuting happens in place of the default action", async () => {
   // scrolling the page. But to test that here in JSDOM, we need some kind of
   // container element that can be interactive and receive focus / keydown
   // events. <video> is kind of a weird choice, but it'll do the job.
-  render(
+  const { unmount } = render(
     <video
       tabIndex={0}
       onKeyDown={(e) => defaultPrevented(e.isDefaultPrevented())}
@@ -89,4 +93,5 @@ test("unmuting happens in place of the default action", async () => {
   await user.tab(); // Focus the <video>
   await user.keyboard("[Space]");
   expect(defaultPrevented).toBeCalledWith(true);
+  unmount();
 });

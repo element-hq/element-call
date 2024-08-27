@@ -44,6 +44,11 @@ export class Config {
     return Config.internalInstance.initPromise;
   }
 
+  public static initDefault(): void {
+    Config.internalInstance = new Config();
+    Config.internalInstance.config = { ...DEFAULT_CONFIG };
+  }
+
   // Convenience accessors
   public static defaultHomeserverUrl(): string | undefined {
     return (

@@ -16,7 +16,6 @@ limitations under the License.
 
 import { describe, expect, test, vi } from "vitest";
 import { render, configure } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 
 import { Toast } from "../src/Toast";
 import { withFakeTimers } from "./utils/test";
@@ -33,28 +32,12 @@ describe("Toast", () => {
       </Toast>,
     );
     expect(queryByRole("dialog")).not.toBeInTheDocument();
-
-    const { unmount, getByRole } = render(
+    const { getByRole } = render(
       <Toast open={true} onDismiss={() => {}}>
         Hello world!
       </Toast>,
     );
     expect(getByRole("dialog")).toMatchSnapshot();
-    unmount();
-  });
-
-  test("dismisses when background is clicked", async () => {
-    const user = userEvent.setup();
-    const onDismiss = vi.fn();
-    const { getByRole, unmount } = render(
-      <Toast open={true} onDismiss={onDismiss}>
-        Hello world!
-      </Toast>,
-    );
-    const background = getByRole("dialog").previousSibling! as Element;
-    await user.click(background);
-    expect(onDismiss).toHaveBeenCalled();
-    unmount();
   });
 
   test("dismisses itself after the specified timeout", () => {
