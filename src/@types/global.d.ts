@@ -15,12 +15,17 @@ limitations under the License.
 */
 
 import "matrix-js-sdk/src/@types/global";
+import { Controls } from "../controls";
 
 declare global {
   interface Document {
     // Safari only supports this prefixed, so tell the type system about it
     webkitExitFullscreen: () => void;
     webkitFullscreenElement: HTMLElement | null;
+  }
+
+  interface Window {
+    controls: Controls;
   }
 
   interface HTMLElement {
