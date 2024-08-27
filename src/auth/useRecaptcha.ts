@@ -13,7 +13,7 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
+import "grecaptcha";
 import { useEffect, useCallback, useRef, useState } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
@@ -24,7 +24,7 @@ declare global {
   interface Window {
     mxOnRecaptchaLoaded: () => void;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    grecaptcha: any;
+    grecaptcha: ReCaptchaV2.ReCaptcha;
   }
 }
 

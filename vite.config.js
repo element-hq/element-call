@@ -61,6 +61,7 @@ export default defineConfig(({ mode }) => {
       port: 3000,
     },
     build: {
+      rollupOptions: { external: "grecaptcha" },
       sourcemap: true,
     },
     plugins,
