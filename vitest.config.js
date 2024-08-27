@@ -6,6 +6,7 @@ export default defineConfig((configEnv) =>
     viteConfig(configEnv),
     defineConfig({
       test: {
+        globals: true,
         environment: "jsdom",
         css: {
           modules: {

@@ -44,7 +44,8 @@
     // "noUncheckedIndexedAccess": true,
     // "noUnusedParameters": true,
 
-    "plugins": [{ "name": "typescript-eslint-language-service" }]
+    "plugins": [{ "name": "typescript-eslint-language-service" }],
+    "types": ["vitest/globals"]
   },
   "include": [
     "./node_modules/matrix-js-sdk/src/@types/*.d.ts",
