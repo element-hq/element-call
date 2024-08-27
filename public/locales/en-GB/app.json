@@ -144,6 +144,7 @@
     "feedback_tab_title": "Feedback",
     "more_tab_title": "More",
     "opt_in_description": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",
+    "show_debug_view": "",
     "speaker_device_selection_label": "Speaker"
   },
   "star_rating_input_label_one": "{{count}} stars",

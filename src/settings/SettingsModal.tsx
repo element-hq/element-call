@@ -45,6 +45,7 @@ import {
   optInAnalytics as optInAnalyticsSetting,
   developerSettingsTab as developerSettingsTabSetting,
   duplicateTiles as duplicateTilesSetting,
+  showDebugView as showDebugViewSetting,
 } from "./settings";
 import { isFirefox } from "../Platform";
 
@@ -82,6 +83,8 @@ export const SettingsModal: FC<Props> = ({
     developerSettingsTabSetting,
   );
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
+
+  const [showDebugView, setShowDebugView] = useSetting(showDebugViewSetting);
 
   // Generate a `SelectInput` with a list of devices for a given device kind.
   const generateDeviceSelection = (
@@ -272,6 +275,20 @@ export const SettingsModal: FC<Props> = ({
               setDuplicateTiles(Number.isNaN(value) ? 0 : value);
             },
             [setDuplicateTiles],
+          )}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="showDebugView"
+          type="checkbox"
+          label={t("settings.show_debug_view")}
+          checked={showDebugView}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setShowDebugView(event.target.checked);
+            },
+            [setShowDebugView],
           )}
         />
       </FieldRow>

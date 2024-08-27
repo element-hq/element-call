@@ -87,6 +87,11 @@ import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
+import { DebugView } from "../debug/DebugView";
+import {
+  useSetting,
+  showDebugView as showDebugViewSetting,
+} from "../settings/settings";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -558,54 +563,62 @@ export const InCallView: FC<InCallViewProps> = ({
     );
   }
 
+  const [showDebugView] = useSetting(showDebugViewSetting);
+
   return (
-    <div
-      className={styles.inRoom}
-      ref={containerRef}
-      onTouchStart={onTouchStart}
-      onTouchEnd={onTouchEnd}
-      onTouchCancel={onTouchCancel}
-      onPointerMove={onPointerMove}
-      onPointerOut={onPointerOut}
-    >
-      {showHeader &&
-        (hideHeader ? (
-          // Cosmetic header to fill out space while still affecting the bounds
-          // of the grid
-          <div
-            className={classNames(styles.header, styles.filler)}
-            ref={headerRef}
-          />
-        ) : (
-          <Header className={styles.header} ref={headerRef}>
-            <LeftNav>
-              <RoomHeaderInfo
-                id={matrixInfo.roomId}
-                name={matrixInfo.roomName}
-                avatarUrl={matrixInfo.roomAvatar}
-                encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
-                participantCount={participantCount}
-              />
-            </LeftNav>
-            <RightNav>
-              {!reducedControls && showControls && onShareClick !== null && (
-                <InviteButton onClick={onShareClick} />
-              )}
-            </RightNav>
-          </Header>
-        ))}
-      <RoomAudioRenderer />
-      {renderContent()}
-      {footer}
-      {!noControls && <RageshakeRequestModal {...rageshakeRequestModalProps} />}
-      <SettingsModal
-        client={client}
-        roomId={rtcSession.room.roomId}
-        open={settingsModalOpen}
-        onDismiss={closeSettings}
-        tab={settingsTab}
-        onTabChange={setSettingsTab}
-      />
+    <div className={styles.debugViewContainer}>
+      {showDebugView && <DebugView rtcSession={rtcSession} client={client} />}
+
+      <div
+        className={styles.inRoom}
+        ref={containerRef}
+        onTouchStart={onTouchStart}
+        onTouchEnd={onTouchEnd}
+        onTouchCancel={onTouchCancel}
+        onPointerMove={onPointerMove}
+        onPointerOut={onPointerOut}
+      >
+        {showHeader &&
+          (hideHeader ? (
+            // Cosmetic header to fill out space while still affecting the bounds
+            // of the grid
+            <div
+              className={classNames(styles.header, styles.filler)}
+              ref={headerRef}
+            />
+          ) : (
+            <Header className={styles.header} ref={headerRef}>
+              <LeftNav>
+                <RoomHeaderInfo
+                  id={matrixInfo.roomId}
+                  name={matrixInfo.roomName}
+                  avatarUrl={matrixInfo.roomAvatar}
+                  encrypted={matrixInfo.e2eeSystem.kind !== E2eeType.NONE}
+                  participantCount={participantCount}
+                />
+              </LeftNav>
+              <RightNav>
+                {!reducedControls && showControls && onShareClick !== null && (
+                  <InviteButton onClick={onShareClick} />
+                )}
+              </RightNav>
+            </Header>
+          ))}
+        <RoomAudioRenderer />
+        {renderContent()}
+        {footer}
+        {!noControls && (
+          <RageshakeRequestModal {...rageshakeRequestModalProps} />
+        )}
+        <SettingsModal
+          client={client}
+          roomId={rtcSession.room.roomId}
+          open={settingsModalOpen}
+          onDismiss={closeSettings}
+          tab={settingsTab}
+          onTabChange={setSettingsTab}
+        />{" "}
+      </div>
     </div>
   );
 };

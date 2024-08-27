@@ -235,7 +235,7 @@ export function useLiveKit(
           } catch (e) {
             if ((e as DOMException).name === "NotAllowedError") {
               logger.error(
-                "Fatal errror while syncing mute state: resetting",
+                "Fatal error while syncing mute state: resetting",
                 e,
               );
               if (type === MuteDevice.Microphone) {

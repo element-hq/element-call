@@ -143,7 +143,7 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
 
   // On FF we dont need to query the names
   // (call enumerateDevices + create meadia stream to trigger permissions)
-  // for ouput devices because the selector wont be shown on FF.
+  // for output devices because the selector wont be shown on FF.
   const useOutputNames = usingNames && !isFirefox();
 
   const [storedAudioInput, setStoredAudioInput] = useSetting(audioInputSetting);
@@ -166,8 +166,8 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   }, [setStoredAudioInput, audioInput.selectedId]);
 
   useEffect(() => {
-    // Skip setting state for ff output. Redundent since it is set to always return 'undefined'
-    // but makes it clear while debugging that this is not happening on FF. + perf ;)
+    // Skip setting state for ff output. Redundant since it is set to always return 'undefined'
+    // but makes it clear while debugging that this is not happening on FF. (+ perf)
     if (audioOutput.selectedId !== undefined && !isFirefox())
       setStoredAudioOutput(audioOutput.selectedId);
   }, [setStoredAudioOutput, audioOutput.selectedId]);
