@@ -31,7 +31,7 @@ describe("Toast", () => {
         Hello world!
       </Toast>,
     );
-    expect(queryByRole("dialog")).not.toBeInTheDocument();
+    expect(queryByRole("dialog")).toBe(null);
     const { getByRole } = render(
       <Toast open={true} onDismiss={() => {}}>
         Hello world!

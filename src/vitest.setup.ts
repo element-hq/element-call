@@ -15,7 +15,6 @@ limitations under the License.
 */
 
 import "global-jsdom/register";
-import "@testing-library/jest-dom/vitest";
 
 import i18n from "i18next";
 import posthog from "posthog-js";
