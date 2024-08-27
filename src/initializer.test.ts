@@ -14,6 +14,8 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
+import { expect, test } from "vitest";
+
 import { Initializer } from "../src/initializer";
 
 test("initBeforeReact sets font family from URL param", () => {

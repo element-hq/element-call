@@ -26,7 +26,7 @@ import {
   getRelativeRoomUrl,
   roomAliasLocalpartFromRoomName,
   sanitiseRoomNameInput,
-} from "../matrix-utils";
+} from "../utils/matrix";
 import { useGroupCallRooms } from "./useGroupCallRooms";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import commonStyles from "./common.module.css";

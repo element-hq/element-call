@@ -2,7 +2,6 @@
 
 exports[`Toast renders 1`] = `
 <button
-  aria-describedby="radix-:r5:"
   aria-labelledby="radix-:r4:"
   class="overlay animate toast"
   data-state="open"

@@ -16,7 +16,7 @@ limitations under the License.
 
 import { render } from "@testing-library/react";
 import { FC, useRef } from "react";
-import { test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { Button } from "@vector-im/compound-web";
 import userEvent from "@testing-library/user-event";
 

@@ -144,7 +144,7 @@ export class PosthogAnalytics {
         advanced_disable_decide: true,
       });
       this.enabled = true;
-    } else {
+    } else if (import.meta.env.MODE !== "test") {
       logger.info(
         "Posthog is not enabled because there is no api key or no host given in the config",
       );

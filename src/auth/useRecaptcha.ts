@@ -13,17 +13,17 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
+// import "@types/grecaptcha";
 import { useEffect, useCallback, useRef, useState } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { translatedError } from "../TranslatedError";
-
 declare global {
   interface Window {
     mxOnRecaptchaLoaded: () => void;
+    // grecaptcha: any;
   }
 }
 

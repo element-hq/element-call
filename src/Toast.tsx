@@ -86,7 +86,7 @@ export const Toast: FC<Props> = ({
         <DialogOverlay
           className={classNames(overlayStyles.bg, overlayStyles.animate)}
         />
-        <DialogContent asChild>
+        <DialogContent aria-describedby={undefined} asChild>
           <DialogClose
             className={classNames(
               overlayStyles.overlay,

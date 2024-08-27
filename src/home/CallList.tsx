@@ -23,7 +23,7 @@ import { FC } from "react";
 import { CopyButton } from "../button";
 import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
-import { getAbsoluteRoomUrl, getRelativeRoomUrl } from "../matrix-utils";
+import { getAbsoluteRoomUrl, getRelativeRoomUrl } from "../utils/matrix";
 import { Body } from "../typography/Typography";
 import { GroupCallRoom } from "./useGroupCallRooms";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";

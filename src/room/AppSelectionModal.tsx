@@ -22,7 +22,7 @@ import { logger } from "matrix-js-sdk/src/logger";
 
 import { Modal } from "../Modal";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
-import { getAbsoluteRoomUrl } from "../matrix-utils";
+import { getAbsoluteRoomUrl } from "../utils/matrix";
 import styles from "./AppSelectionModal.module.css";
 import { editFragmentQuery } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";

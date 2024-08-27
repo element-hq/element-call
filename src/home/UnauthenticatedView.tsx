@@ -31,7 +31,7 @@ import {
   getRelativeRoomUrl,
   roomAliasLocalpartFromRoomName,
   sanitiseRoomNameInput,
-} from "../matrix-utils";
+} from "../utils/matrix";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { useRecaptcha } from "../auth/useRecaptcha";

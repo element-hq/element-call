@@ -39,7 +39,7 @@ import {
   CryptoStoreIntegrityError,
   fallbackICEServerAllowed,
   initClient,
-} from "./matrix-utils";
+} from "./utils/matrix";
 import { widget } from "./widget";
 import {
   PosthogAnalytics,
