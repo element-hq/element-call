@@ -19,6 +19,8 @@ import "global-jsdom/register";
 import i18n from "i18next";
 import posthog from "posthog-js";
 import { initReactI18next } from "react-i18next";
+import { afterEach } from "vitest";
+import { cleanup } from "@testing-library/react";
 
 import { Config } from "./config/Config";
 
@@ -33,3 +35,5 @@ i18n.use(initReactI18next).init({
 
 Config.initDefault();
 posthog.opt_out_capturing();
+
+afterEach(() => cleanup());
