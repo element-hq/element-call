@@ -69,7 +69,7 @@ import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
 import { ECConnectionState } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
-import { GridMode, Layout, useCallViewModel } from "../state/CallViewModel";
+import { CallViewModel, GridMode, Layout } from "../state/CallViewModel";
 import { Grid, TileProps } from "../grid/Grid";
 import { useObservable } from "../state/useObservable";
 import { useInitial } from "../useInitial";
@@ -93,7 +93,7 @@ const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 const maxTapDurationMs = 400;
 
 export interface ActiveCallProps
-  extends Omit<InCallViewProps, "livekitRoom" | "connState"> {
+  extends Omit<InCallViewProps, "vm" | "livekitRoom" | "connState"> {
   e2eeSystem: EncryptionSystem;
 }
 
@@ -105,6 +105,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     sfuConfig,
     props.e2eeSystem,
   );
+  const connStateObservable = useObservable(connState);
+  const [vm, setVm] = useState<CallViewModel | null>(null);
 
   useEffect(() => {
     return (): void => {
@@ -113,17 +115,41 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!livekitRoom) return null;
+  useEffect(() => {
+    if (livekitRoom !== undefined) {
+      const vm = new CallViewModel(
+        props.rtcSession.room,
+        livekitRoom,
+        props.e2eeSystem.kind !== E2eeType.NONE,
+        connStateObservable,
+      );
+      setVm(vm);
+      return (): void => vm.destroy();
+    }
+  }, [
+    props.rtcSession.room,
+    livekitRoom,
+    props.e2eeSystem.kind,
+    connStateObservable,
+  ]);
+
+  if (livekitRoom === undefined || vm === null) return null;
 
   return (
     <RoomContext.Provider value={livekitRoom}>
-      <InCallView {...props} livekitRoom={livekitRoom} connState={connState} />
+      <InCallView
+        {...props}
+        vm={vm}
+        livekitRoom={livekitRoom}
+        connState={connState}
+      />
     </RoomContext.Provider>
   );
 };
 
 export interface InCallViewProps {
   client: MatrixClient;
+  vm: CallViewModel;
   matrixInfo: MatrixInfo;
   rtcSession: MatrixRTCSession;
   livekitRoom: Room;
@@ -138,6 +164,7 @@ export interface InCallViewProps {
 
 export const InCallView: FC<InCallViewProps> = ({
   client,
+  vm,
   matrixInfo,
   rtcSession,
   livekitRoom,
@@ -193,12 +220,6 @@ export const InCallView: FC<InCallViewProps> = ({
   const reducedControls = boundsValid && bounds.width <= 340;
   const noControls = reducedControls && bounds.height <= 400;
 
-  const vm = useCallViewModel(
-    rtcSession.room,
-    livekitRoom,
-    matrixInfo.e2eeSystem.kind !== E2eeType.NONE,
-    connState,
-  );
   const windowMode = useObservableEagerState(vm.windowMode);
   const layout = useObservableEagerState(vm.layout);
   const gridMode = useObservableEagerState(vm.gridMode);

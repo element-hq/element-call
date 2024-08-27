@@ -58,6 +58,10 @@ limitations under the License.
   );
 }
 
+.footer.hidden {
+  display: none;
+}
+
 .footer.overlay {
   position: absolute;
   inset-block-end: 0;
@@ -67,6 +71,7 @@ limitations under the License.
 }
 
 .footer.overlay.hidden {
+  display: grid;
   opacity: 0;
   pointer-events: none;
 }
