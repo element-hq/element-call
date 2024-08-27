@@ -23,8 +23,6 @@ const ROOM_ID = "!d45f138fsd";
 const ORIGIN = "https://call.element.io";
 const HOMESERVER = "localhost";
 
-// vi.mock("../src/config/Config");
-
 describe("UrlParams", () => {
   describe("handles URL with /room/", () => {
     it("and nothing else", () => {

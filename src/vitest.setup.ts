@@ -36,4 +36,4 @@ i18n.use(initReactI18next).init({
 Config.initDefault();
 posthog.opt_out_capturing();
 
-afterEach(() => cleanup());
+afterEach(cleanup);
