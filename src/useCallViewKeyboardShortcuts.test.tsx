@@ -22,6 +22,12 @@ import userEvent from "@testing-library/user-event";
 
 import { useCallViewKeyboardShortcuts } from "../src/useCallViewKeyboardShortcuts";
 
+// Test Explanation:
+// - The main objective is to test `useCallViewKeyboardShortcuts`.
+//   The TestComponent just wraps a button around that hook.
+// - We need to set userEvent to the `{document = window.document}` since we are testing the
+// `useCallViewKeyboardShortcuts` hook here. Which is listening to window.
+
 interface TestComponentProps {
   setMicrophoneMuted: (muted: boolean) => void;
   onButtonClick?: () => void;
@@ -40,24 +46,33 @@ const TestComponent: FC<TestComponentProps> = ({
   );
   return (
     <div ref={ref}>
-      <Button onClick={onButtonClick}>I'm a button</Button>
+      <Button onClick={onButtonClick}>TEST</Button>
     </div>
   );
 };
 
 test("spacebar unmutes", async () => {
-  const user = userEvent.setup();
+  const user = userEvent.setup({ document: window.document });
   let muted = true;
-  render(<TestComponent setMicrophoneMuted={(m) => (muted = m)} />);
+  render(
+    <TestComponent
+      onButtonClick={() => (muted = false)}
+      setMicrophoneMuted={(m) => {
+        muted = m;
+      }}
+    />,
+  );
 
   await user.keyboard("[Space>]");
   expect(muted).toBe(false);
   await user.keyboard("[/Space]");
+
   expect(muted).toBe(true);
 });
 
 test("spacebar prioritizes pressing a button", async () => {
-  const user = userEvent.setup();
+  const user = userEvent.setup({ document: window.document });
+
   const setMuted = vi.fn();
   const onClick = vi.fn();
   render(
@@ -71,7 +86,7 @@ test("spacebar prioritizes pressing a button", async () => {
 });
 
 test("unmuting happens in place of the default action", async () => {
-  const user = userEvent.setup();
+  const user = userEvent.setup({ document: window.document });
   const defaultPrevented = vi.fn();
   // In the real application, we mostly just want the spacebar shortcut to avoid
   // scrolling the page. But to test that here in JSDOM, we need some kind of
