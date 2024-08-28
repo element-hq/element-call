@@ -32,9 +32,9 @@ limitations under the License.
   inline-size: var(--cpd-space-11x);
   cursor: pointer;
   border-radius: var(--cpd-radius-pill-effect);
-  color: var(--cpd-color-icon-primary);
   background: var(--cpd-color-bg-action-secondary-rest);
   box-shadow: var(--small-drop-shadow);
+  transition: background-color 0.1s;
 }
 
 .toggle svg {
@@ -43,6 +43,7 @@ limitations under the License.
   padding: calc(2.5 * var(--cpd-space-1x));
   pointer-events: none;
   color: var(--cpd-color-icon-primary);
+  transition: color 0.1s;
 }
 
 .toggle svg:nth-child(2) {
@@ -61,7 +62,7 @@ limitations under the License.
 }
 
 .toggle input:active {
-  background: var(--cpd-color-bg-action-secondary-hovered);
+  background: var(--cpd-color-bg-action-secondary-pressed);
   box-shadow: none;
 }
 
@@ -80,7 +81,7 @@ limitations under the License.
 }
 
 .toggle input:checked:active {
-  background: var(--cpd-color-bg-action-primary-hovered);
+  background: var(--cpd-color-bg-action-primary-pressed);
 }
 
 .toggle input:first-child {
