@@ -20,9 +20,12 @@ limitations under the License.
    Therefore we define a unicode-range to load which excludes the glyphs
    (to avoid having to maintain a fork of Inter). */
 
-@import "normalize.css/normalize.css";
-@import "@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css";
-@import "@vector-im/compound-web/dist/style.css";
+@layer normalize, compound-legacy, compound;
+
+@import url("normalize.css/normalize.css") layer(normalize);
+@import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css")
+layer(compound);
+@import url("@vector-im/compound-web/dist/style.css") layer(compound.components);
 
 :root {
   --font-scale: 1;
@@ -195,87 +198,89 @@ body[data-platform="desktop"] {
   --cpd-font-family-sans: "Inter", sans-serif;
 }
 
-h1,
-h2,
-h3,
-h4,
-h5,
-h6,
-p,
-a {
-  margin-top: 0;
-}
+@layer compound-legacy {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  p,
+  a {
+    margin-top: 0;
+  }
 
-/* Headline Semi Bold */
-h1 {
-  font-weight: 600;
-  font-size: var(--font-size-headline);
-}
+  /* Headline Semi Bold */
+  h1 {
+    font-weight: 600;
+    font-size: var(--font-size-headline);
+  }
 
-/* Title */
-h2 {
-  font-weight: 600;
-  font-size: var(--font-size-title);
-}
+  /* Title */
+  h2 {
+    font-weight: 600;
+    font-size: var(--font-size-title);
+  }
 
-/* Subtitle */
-h3 {
-  font-weight: 600;
-  font-size: var(--font-size-subtitle);
-}
+  /* Subtitle */
+  h3 {
+    font-weight: 600;
+    font-size: var(--font-size-subtitle);
+  }
 
-/* Body Semi Bold */
-h4 {
-  font-weight: 600;
-  font-size: var(--font-size-body);
-}
+  /* Body Semi Bold */
+  h4 {
+    font-weight: 600;
+    font-size: var(--font-size-body);
+  }
 
-h1,
-h2,
-h3 {
-  line-height: 1.2;
-}
+  h1,
+  h2,
+  h3 {
+    line-height: 1.2;
+  }
 
-/* Body */
-p {
-  font-size: var(--font-size-body);
-  line-height: var(--font-size-title);
-}
+  /* Body */
+  p {
+    font-size: var(--font-size-body);
+    line-height: var(--font-size-title);
+  }
 
-a {
-  color: var(--cpd-color-text-action-accent);
-  text-decoration: none;
-}
+  a {
+    color: var(--cpd-color-text-action-accent);
+    text-decoration: none;
+  }
 
-a:hover,
-a:active {
-  opacity: 0.8;
-}
+  a:hover,
+  a:active {
+    opacity: 0.8;
+  }
 
-hr {
-  width: calc(100% - 24px);
-  border: none;
-  border-top: 1px solid var(--cpd-color-border-interactive-secondary);
-  color: var(--cpd-color-border-interactive-secondary);
-  overflow: visible;
-  text-align: center;
-  height: 5px;
-  font-weight: 600;
-  font-size: var(--font-size-body);
-  line-height: 24px;
-  margin: 0 12px;
-}
+  hr {
+    width: calc(100% - 24px);
+    border: none;
+    border-top: 1px solid var(--cpd-color-border-interactive-secondary);
+    color: var(--cpd-color-border-interactive-secondary);
+    overflow: visible;
+    text-align: center;
+    height: 5px;
+    font-weight: 600;
+    font-size: var(--font-size-body);
+    line-height: 24px;
+    margin: 0 12px;
+  }
 
-summary {
-  font-size: var(--font-size-body);
-}
+  summary {
+    font-size: var(--font-size-body);
+  }
 
-details > :not(summary) {
-  margin-left: var(--font-size-body);
-}
+  details > :not(summary) {
+    margin-left: var(--font-size-body);
+  }
 
-details[open] > summary {
-  margin-bottom: var(--font-size-body);
+  details[open] > summary {
+    margin-bottom: var(--font-size-body);
+  }
 }
 
 #root > [data-overlay-container] {

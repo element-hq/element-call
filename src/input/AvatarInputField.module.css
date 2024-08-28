@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -15,45 +15,30 @@ limitations under the License.
 */
 
 .avatarInputField {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-
-.avatarContainer {
   position: relative;
   margin-bottom: 8px;
 }
 
+.avatar {
+  display: block;
+}
+
 .fileInput {
-  width: 0.1px;
-  height: 0.1px;
-  opacity: 0;
-  overflow: hidden;
+  display: none;
+}
+
+.edit {
+  border-radius: var(--cpd-radius-pill-effect);
+  padding: 2px;
+  background: var(--cpd-color-bg-canvas-default);
   position: absolute;
-  z-index: -1;
+  inset-block-end: -2px;
+  inset-inline-end: -2px;
 }
 
-.fileInput:focus + .fileInputButton {
-  outline: auto;
-}
-
-.fileInputButton {
-  position: absolute;
-  bottom: 11px;
-  right: -4px;
-  background-color: var(--cpd-color-subtle-primary);
-  width: 20px;
-  height: 20px;
-  border-radius: 10px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  cursor: pointer;
-}
-
-.removeButton {
-  color: var(--cpd-color-text-action-accent);
-  font-size: var(--font-size-caption);
-  padding: 6px 0;
+.edit button {
+  min-block-size: 0;
+  block-size: var(--cpd-space-7x);
+  inline-size: var(--cpd-space-7x);
+  padding: var(--cpd-space-1x);
 }

@@ -42,8 +42,7 @@ limitations under the License.
   align-items: center;
 }
 
-.avatar,
-.copyButtonSpacer {
+.avatar {
   flex-shrink: 0;
 }
 
@@ -62,18 +61,6 @@ limitations under the License.
 
 .facePile {
   margin-top: 8px;
-}
-
-.copyButtonSpacer,
-.copyButton {
-  width: 16px;
-  height: 16px;
-}
-
-.copyButton {
-  position: absolute;
-  top: 12px;
-  right: 12px;
 }
 
 .callList {

@@ -28,9 +28,9 @@ import { captureException } from "@sentry/react";
 import { sleep } from "matrix-js-sdk/src/utils";
 import { Trans, useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/src/logger";
+import { Button } from "@vector-im/compound-web";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { Button } from "../button";
 import { useClientLegacy } from "../ClientContext";
 import { useInteractiveRegistration } from "./useInteractiveRegistration";
 import styles from "./LoginPage.module.css";

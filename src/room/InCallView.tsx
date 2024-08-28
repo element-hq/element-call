@@ -19,7 +19,6 @@ import {
   RoomContext,
   useLocalParticipant,
 } from "@livekit/components-react";
-import { usePreventScroll } from "@react-aria/overlays";
 import { ConnectionState, Room } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import {
@@ -44,10 +43,10 @@ import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
-  HangupButton,
+  EndCallButton,
   MicButton,
   VideoButton,
-  ScreenshareButton,
+  ShareScreenButton,
   SettingsButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
@@ -175,7 +174,6 @@ export const InCallView: FC<InCallViewProps> = ({
   connState,
   onShareClick,
 }) => {
-  usePreventScroll();
   useWakeLock();
 
   useEffect(() => {
@@ -492,14 +490,14 @@ export const InCallView: FC<InCallViewProps> = ({
       <MicButton
         key="1"
         muted={!muteStates.audio.enabled}
-        onPress={toggleMicrophone}
+        onClick={toggleMicrophone}
         disabled={muteStates.audio.setEnabled === null}
         data-testid="incall_mute"
       />,
       <VideoButton
         key="2"
         muted={!muteStates.video.enabled}
-        onPress={toggleCamera}
+        onClick={toggleCamera}
         disabled={muteStates.video.setEnabled === null}
         data-testid="incall_videomute"
       />,
@@ -507,21 +505,21 @@ export const InCallView: FC<InCallViewProps> = ({
     if (!reducedControls) {
       if (canScreenshare && !hideScreensharing) {
         buttons.push(
-          <ScreenshareButton
+          <ShareScreenButton
             key="3"
             enabled={isScreenShareEnabled}
-            onPress={toggleScreensharing}
+            onClick={toggleScreensharing}
             data-testid="incall_screenshare"
           />,
         );
       }
-      buttons.push(<SettingsButton key="4" onPress={openSettings} />);
+      buttons.push(<SettingsButton key="4" onClick={openSettings} />);
     }
 
     buttons.push(
-      <HangupButton
+      <EndCallButton
         key="6"
-        onPress={function (): void {
+        onClick={function (): void {
           onLeave();
         }}
         data-testid="incall_leave"

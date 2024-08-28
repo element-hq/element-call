@@ -20,9 +20,10 @@ import classNames from "classnames";
 import { Trans, useTranslation } from "react-i18next";
 import * as Sentry from "@sentry/react";
 import { logger } from "matrix-js-sdk/src/logger";
+import { Button } from "@vector-im/compound-web";
 
 import { Header, HeaderLogo, LeftNav, RightNav } from "./Header";
-import { LinkButton, Button } from "./button";
+import { LinkButton } from "./button";
 import styles from "./FullScreenView.module.css";
 import { TranslatedError } from "./TranslatedError";
 import { Config } from "./config/Config";
@@ -81,21 +82,11 @@ export const ErrorView: FC<ErrorViewProps> = ({ error }) => {
       <RageshakeButton description={`***Error View***: ${error.message}`} />
       {!confineToRoom &&
         (location.pathname === "/" ? (
-          <Button
-            size="lg"
-            variant="default"
-            className={styles.homeLink}
-            onPress={onReload}
-          >
+          <Button className={styles.homeLink} onClick={onReload}>
             {t("return_home_button")}
           </Button>
         ) : (
-          <LinkButton
-            size="lg"
-            variant="default"
-            className={styles.homeLink}
-            to="/"
-          >
+          <LinkButton className={styles.homeLink} to="/">
             {t("return_home_button")}
           </LinkButton>
         ))}
@@ -122,12 +113,7 @@ export const CrashView: FC = () => {
       )}
 
       <RageshakeButton description="***Soft Crash***" />
-      <Button
-        size="lg"
-        variant="default"
-        className={styles.wideButton}
-        onPress={onReload}
-      >
+      <Button className={styles.wideButton} onClick={onReload}>
         {t("return_home_button")}
       </Button>
     </FullScreenView>

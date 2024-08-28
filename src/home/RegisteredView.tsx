@@ -20,6 +20,7 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 import { Heading } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
+import { Button } from "@vector-im/compound-web";
 
 import {
   createRoom,
@@ -32,7 +33,6 @@ import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import commonStyles from "./common.module.css";
 import styles from "./RegisteredView.module.css";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { Button } from "../button";
 import { CallList } from "./CallList";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
