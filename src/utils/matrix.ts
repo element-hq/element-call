@@ -246,38 +246,6 @@ export function sanitiseRoomNameInput(input: string): string {
   return input;
 }
 
-/**
- * XXX: What is this trying to do? It looks like it's getting the localpart from
- * a room alias, but why is it splitting on hyphens and then putting spaces in??
- * @param roomId
- * @returns
- */
-export function roomNameFromRoomId(roomId: string): string {
-  return roomId
-    .match(/([^:]+):.*$/)![1]
-    .substring(1)
-    .split("-")
-    .map((part) =>
-      part.length > 0 ? part.charAt(0).toUpperCase() + part.slice(1) : part,
-    )
-    .join(" ")
-    .toLowerCase();
-}
-
-export function isLocalRoomId(roomId: string, client: MatrixClient): boolean {
-  if (!roomId) {
-    return false;
-  }
-
-  const parts = roomId.match(/[^:]+:(.*)$/)!;
-
-  if (parts.length < 2) {
-    return false;
-  }
-
-  return parts[1] === client.getDomain();
-}
-
 interface CreateRoomResult {
   roomId: string;
   alias?: string;

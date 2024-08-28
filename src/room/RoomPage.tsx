@@ -35,10 +35,7 @@ import { LobbyView } from "./LobbyView";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useProfile } from "../profile/useProfile";
 import { useMuteStates } from "./MuteStates";
-import {
-  useSetting,
-  optInAnalytics as optInAnalyticsSetting,
-} from "../settings/settings";
+import { useOptInAnalytics } from "../settings/settings";
 
 export const RoomPage: FC = () => {
   const {
@@ -83,7 +80,7 @@ export const RoomPage: FC = () => {
     registerPasswordlessUser,
   ]);
 
-  const [optInAnalytics, setOptInAnalytics] = useSetting(optInAnalyticsSetting);
+  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   useEffect(() => {
     // During the beta, opt into analytics by default
     if (optInAnalytics === null && setOptInAnalytics) setOptInAnalytics(true);

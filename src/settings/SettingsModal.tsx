@@ -42,9 +42,9 @@ import {
 import { widget } from "../widget";
 import {
   useSetting,
-  optInAnalytics as optInAnalyticsSetting,
   developerSettingsTab as developerSettingsTabSetting,
   duplicateTiles as duplicateTilesSetting,
+  useOptInAnalytics,
 } from "./settings";
 import { isFirefox } from "../Platform";
 
@@ -77,7 +77,7 @@ export const SettingsModal: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
 
-  const [optInAnalytics, setOptInAnalytics] = useSetting(optInAnalyticsSetting);
+  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const [developerSettingsTab, setDeveloperSettingsTab] = useSetting(
     developerSettingsTabSetting,
   );
