@@ -16,7 +16,7 @@ limitations under the License.
 
 import posthog, { CaptureOptions, PostHog, Properties } from "posthog-js";
 import { logger } from "matrix-js-sdk/src/logger";
-import { MatrixClient } from "matrix-js-sdk";
+import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Buffer } from "buffer";
 
 import { widget } from "../widget";

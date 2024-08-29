@@ -26,7 +26,7 @@ import { SyncState } from "matrix-js-sdk/src/sync";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { RoomEvent, Room } from "matrix-js-sdk/src/models/room";
 import { KnownMembership } from "matrix-js-sdk/src/types";
-import { JoinRule } from "matrix-js-sdk";
+import { JoinRule } from "matrix-js-sdk/src/matrix";
 import { useTranslation } from "react-i18next";
 
 import { widget } from "../widget";
