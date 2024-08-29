@@ -33,13 +33,10 @@ import {
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
+import { MatrixError } from "matrix-js-sdk";
 
 import { ErrorView } from "./FullScreenView";
-import {
-  CryptoStoreIntegrityError,
-  fallbackICEServerAllowed,
-  initClient,
-} from "./utils/matrix";
+import { fallbackICEServerAllowed, initClient } from "./utils/matrix";
 import { widget } from "./widget";
 import {
   PosthogAnalytics,
@@ -380,16 +377,15 @@ async function loadClient(): Promise<InitResult | null> {
           passwordlessUser,
         };
       } catch (err) {
-        if (err instanceof CryptoStoreIntegrityError) {
+        if (err instanceof MatrixError && err.errcode === "M_UNKNOWN_TOKEN") {
           // We can't use this session anymore, so let's log it out
           try {
             const client = await initClient(initClientParams, false); // Don't need the crypto store just to log out)
             await client.logout(true);
           } catch (err) {
             logger.warn(
-              "The previous session was lost, and we couldn't log it out, " +
-                err +
-                "either",
+              "The previous session was unable to login, and we couldn't log it out: " +
+                err,
             );
           }
         }
