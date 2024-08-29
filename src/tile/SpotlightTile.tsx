@@ -35,7 +35,7 @@ import { useObservableEagerState } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { TrackReferenceOrPlaceholder } from "@livekit/components-core";
-import { RoomMember } from "matrix-js-sdk";
+import { RoomMember } from "matrix-js-sdk/src/matrix";
 
 import { MediaView } from "./MediaView";
 import styles from "./SpotlightTile.module.css";
