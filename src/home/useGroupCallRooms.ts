@@ -18,7 +18,7 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { Room, RoomEvent } from "matrix-js-sdk/src/models/room";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useState, useEffect } from "react";
-import { EventTimeline, EventType, JoinRule } from "matrix-js-sdk";
+import { EventTimeline, EventType, JoinRule } from "matrix-js-sdk/src/matrix";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { MatrixRTCSessionManagerEvents } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSessionManager";
 import { KnownMembership } from "matrix-js-sdk/src/types";

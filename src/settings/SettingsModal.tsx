@@ -16,7 +16,7 @@ limitations under the License.
 
 import { ChangeEvent, FC, ReactNode, useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { MatrixClient } from "matrix-js-sdk";
+import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Dropdown } from "@vector-im/compound-web";
 
 import { Modal } from "../Modal";
