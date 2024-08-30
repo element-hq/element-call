@@ -33,7 +33,7 @@ import {
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
-import { MatrixError } from "matrix-js-sdk";
+import { MatrixError } from "matrix-js-sdk/src/matrix";
 
 import { ErrorView } from "./FullScreenView";
 import { fallbackICEServerAllowed, initClient } from "./utils/matrix";
