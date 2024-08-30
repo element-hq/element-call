@@ -142,8 +142,6 @@ export async function initClient(
   // Start client store.
   // Note: The `client.store` is used to store things like sync results. It's independent of
   // the cryptostore, and uses a separate indexeddb database.
-
-  // start the client store (totally independent to the crypto store)
   try {
     await client.store.startup();
   } catch (error) {
