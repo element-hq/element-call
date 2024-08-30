@@ -139,7 +139,23 @@ export async function initClient(
     client.clearStores();
   }
 
+  // Start client store.
+  // Note: The `client.store` is used to store things like sync results. It's independent of
+  // the cryptostore, and uses a separate indexeddb database.
+  try {
+    await client.store.startup();
+  } catch (error) {
+    logger.error(
+      "Error starting matrix client indexDB store. Falling back to memory store.",
+      error,
+    );
+    client.store = new MemoryStore({ localStorage });
+    await client.store.startup();
+  }
+
+  // Also creates and starts any crypto related stores.
   await client.initRustCrypto();
+
   client.setGlobalErrorOnUnknownDevices(false);
   // Once startClient is called, syncs are run asynchronously.
   // Also, sync completion is communicated only via events.
