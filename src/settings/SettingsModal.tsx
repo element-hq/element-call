@@ -165,6 +165,7 @@ export const SettingsModal: FC<Props> = ({
         <h4>{t("settings.developer_tab_title")}</h4>
         <p>
           {t("version", {
+            productName: import.meta.env.VITE_PRODUCT_NAME || "Element Call",
             version: import.meta.env.VITE_APP_VERSION || "dev",
           })}
         </p>
