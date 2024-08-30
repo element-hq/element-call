@@ -25,7 +25,7 @@ import { useCallViewKeyboardShortcuts } from "../src/useCallViewKeyboardShortcut
 // Test Explanation:
 // - The main objective is to test `useCallViewKeyboardShortcuts`.
 //   The TestComponent just wraps a button around that hook.
-// - We need to set userEvent to the `{document = window.document}` since we are testing the
+// - We need to set `userEvent` to the `{document = window.document}` since we are testing the
 // `useCallViewKeyboardShortcuts` hook here. Which is listening to window.
 
 interface TestComponentProps {
