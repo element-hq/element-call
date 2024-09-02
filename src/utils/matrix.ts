@@ -71,10 +71,12 @@ async function waitForSync(client: MatrixClient): Promise<void> {
 
 /**
  * Initialises and returns a new standalone Matrix Client.
- * If false is passed for the 'restore' parameter, corresponding crypto
- * data is cleared before the client initialization.
+ * This can only be called safely if no other client is running
+ * otherwise rust crypto will throw since it is not ready to initialize a new session.
+ * If another client is running make sure `.logout()` is called before executing this function.
  * @param clientOptions Object of options passed through to the client
- * @param restore Whether the session is being restored from storage
+ * @param restore If the rust crypto should be reset before the cient initialization or
+ * if the initialization should try to restore the crypto state from the indexDB.
  * @returns The MatrixClient instance
  */
 export async function initClient(
@@ -130,13 +132,12 @@ export async function initClient(
     fallbackICEServerAllowed: fallbackICEServerAllowed,
   });
 
-  // In case of registering a new matrix account caused by broken store state. This is particularly needed for:
+  // In case of logging in a new matrix account but there is still crypto local store. This is needed for:
   // - We lost the auth tokens and cannot restore the client resulting in registering a new user.
-  // - Need to make sure any possible leftover crypto store gets cleared.
+  // - We start the sign in flow but are registered with a guest user. (It should additionally log out the guest before)
   // - A new account is created because of missing LocalStorage: "matrix-auth-store", but the crypto IndexDB is still available.
-  //   This would result in conflicting crypto store userId vs matrixClient userId. Caused by EC 0.6.1
   if (!restore) {
-    client.clearStores();
+    await client.clearStores();
   }
 
   // Start client store.
@@ -154,7 +155,14 @@ export async function initClient(
   }
 
   // Also creates and starts any crypto related stores.
-  await client.initRustCrypto();
+  try {
+    await client.initRustCrypto();
+  } catch (err) {
+    logger.warn(
+      err,
+      "Make sure to clear client stores before initializing the rust crypto.",
+    );
+  }
 
   client.setGlobalErrorOnUnknownDevices(false);
   // Once startClient is called, syncs are run asynchronously.

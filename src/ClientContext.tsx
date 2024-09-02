@@ -379,19 +379,15 @@ async function loadClient(): Promise<InitResult | null> {
       } catch (err) {
         if (err instanceof MatrixError && err.errcode === "M_UNKNOWN_TOKEN") {
           // We can't use this session anymore, so let's log it out
-          try {
-            const client = await initClient(initClientParams, false); // Don't need the crypto store just to log out)
-            await client.logout(true);
-          } catch (err) {
-            logger.warn(
-              "The previous session was unable to login, and we couldn't log it out: " +
-                err,
-            );
-          }
+          logger.log(
+            "The session from local store is invalid; continuing without a client",
+          );
+          clearSession();
+          // returning null = "no client` pls register" (undefined = "loading" which is the current value when reaching this line)
+          return null;
         }
         throw err;
       }
-      /* eslint-enable camelcase */
     } catch (err) {
       clearSession();
       throw err;
