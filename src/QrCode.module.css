@@ -17,4 +17,5 @@ limitations under the License.
 .qrCode img {
   max-width: 100%;
   image-rendering: pixelated;
+  border-radius: var(--cpd-space-4x);
 }
