@@ -28,7 +28,7 @@ describe("QrCode", () => {
     const { container, findByRole } = render(
       <QrCode data="foo" className="bar" />,
     );
-    await findByRole("img") as HTMLImageElement;
+    (await findByRole("img")) as HTMLImageElement;
     expect(container.firstChild).toMatchSnapshot();
   });
 });
