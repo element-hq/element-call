@@ -16,8 +16,8 @@ limitations under the License.
 
 import { useTranslation } from "react-i18next";
 import { FC, useCallback } from "react";
+import { Button } from "@vector-im/compound-web";
 
-import { Button } from "../button";
 import { Config } from "../config/Config";
 import styles from "./RageshakeButton.module.css";
 import { useSubmitRageshake } from "./submit-rageshake";
@@ -52,9 +52,7 @@ export const RageshakeButton: FC<Props> = ({ description }) => {
 
     logsComponent = (
       <Button
-        size="lg"
-        variant="default"
-        onPress={sendDebugLogs}
+        onClick={sendDebugLogs}
         className={styles.wideButton}
         disabled={sending}
       >

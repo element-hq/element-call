@@ -17,7 +17,7 @@ limitations under the License.
 import { useCallback } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
-import { MatrixError } from "matrix-js-sdk";
+import { MatrixError } from "matrix-js-sdk/src/matrix";
 import { useHistory } from "react-router-dom";
 import { Heading, Link, Text } from "@vector-im/compound-web";
 

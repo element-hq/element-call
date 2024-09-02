@@ -134,6 +134,10 @@ body[data-platform="ios"] .drawer {
   padding-block: var(--cpd-space-9x) var(--cpd-space-10x);
 }
 
+.modal.tabbed .body {
+  padding-block-start: 0;
+}
+
 .handle {
   content: "";
   position: absolute;

@@ -22,7 +22,6 @@ import {
   useLocation,
 } from "react-router-dom";
 import * as Sentry from "@sentry/react";
-import { OverlayProvider } from "@react-aria/overlays";
 import { History } from "history";
 import { TooltipProvider } from "@vector-im/compound-web";
 
@@ -92,23 +91,21 @@ export const App: FC<AppProps> = ({ history }) => {
                 <ClientProvider>
                   <MediaDevicesProvider>
                     <Sentry.ErrorBoundary fallback={errorPage}>
-                      <OverlayProvider>
-                        <DisconnectedBanner />
-                        <Switch>
-                          <SentryRoute exact path="/">
-                            <HomePage />
-                          </SentryRoute>
-                          <SentryRoute exact path="/login">
-                            <LoginPage />
-                          </SentryRoute>
-                          <SentryRoute exact path="/register">
-                            <RegisterPage />
-                          </SentryRoute>
-                          <SentryRoute path="*">
-                            <RoomPage />
-                          </SentryRoute>
-                        </Switch>
-                      </OverlayProvider>
+                      <DisconnectedBanner />
+                      <Switch>
+                        <SentryRoute exact path="/">
+                          <HomePage />
+                        </SentryRoute>
+                        <SentryRoute exact path="/login">
+                          <LoginPage />
+                        </SentryRoute>
+                        <SentryRoute exact path="/register">
+                          <RegisterPage />
+                        </SentryRoute>
+                        <SentryRoute path="*">
+                          <RoomPage />
+                        </SentryRoute>
+                      </Switch>
                     </Sentry.ErrorBoundary>
                   </MediaDevicesProvider>
                 </ClientProvider>

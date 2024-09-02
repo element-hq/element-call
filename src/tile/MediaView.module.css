@@ -142,7 +142,9 @@ unconditionally select the container so we can use cqmin units */
   box-shadow: var(--small-drop-shadow);
   cursor: pointer;
   opacity: 0;
-  transition: opacity ease 0.15s;
+  transition:
+    opacity 0.15s,
+    background-color 0.1s;
 }
 
 .fg:has(:focus-visible) > button,

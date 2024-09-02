@@ -44,20 +44,5 @@
       "prHeader": "Please review modals on mobile for visual regressions."
     }
   ],
-  "semanticCommits": "disabled",
-  "ignoreDeps": [
-    "@react-aria/button",
-    "@react-aria/focus",
-    "@react-aria/menu",
-    "@react-aria/overlays",
-    "@react-aria/select",
-    "@react-aria/tabs",
-    "@react-aria/tooltip",
-    "@react-aria/utils",
-    "@react-stately/collections",
-    "@react-stately/select",
-    "@react-stately/tooltip",
-    "@react-stately/tree",
-    "@react-types/dialog"
-  ]
+  "semanticCommits": "disabled"
 }

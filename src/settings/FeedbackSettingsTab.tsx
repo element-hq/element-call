@@ -17,12 +17,11 @@ limitations under the License.
 import { FC, useCallback } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
+import { Button } from "@vector-im/compound-web";
 
-import { Button } from "../button";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake, useRageshakeRequest } from "./submit-rageshake";
 import { Body } from "../typography/Typography";
-import styles from "../input/SelectInput.module.css";
 import feedbackStyles from "../input/FeedbackInput.module.css";
 
 interface Props {
@@ -62,7 +61,7 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
 
   return (
     <div>
-      <h4 className={styles.label}>{t("settings.feedback_tab_h4")}</h4>
+      <h4>{t("settings.feedback_tab_h4")}</h4>
       <Body>{t("settings.feedback_tab_body")}</Body>
       <form onSubmit={onSubmitFeedback}>
         <FieldRow>

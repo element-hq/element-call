@@ -14,19 +14,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { PressEvent } from "@react-types/shared";
 import { useTranslation } from "react-i18next";
-import { FC } from "react";
+import { FC, MouseEvent } from "react";
+import { Button } from "@vector-im/compound-web";
 
 import { Modal } from "../Modal";
-import { Button } from "../button";
 import { FieldRow } from "../input/Input";
 import styles from "./JoinExistingCallModal.module.css";
 
 interface Props {
   open: boolean;
   onDismiss: () => void;
-  onJoin: (e: PressEvent) => void;
+  onJoin: (e: MouseEvent) => void;
 }
 
 export const JoinExistingCallModal: FC<Props> = ({
@@ -44,8 +43,8 @@ export const JoinExistingCallModal: FC<Props> = ({
     >
       <p>{t("join_existing_call_modal.text")}</p>
       <FieldRow rightAlign className={styles.buttons}>
-        <Button onPress={onDismiss}>{t("action.no")}</Button>
-        <Button onPress={onJoin} data-testid="home_joinExistingRoom">
+        <Button onClick={onDismiss}>{t("action.no")}</Button>
+        <Button onClick={onJoin} data-testid="home_joinExistingRoom">
           {t("join_existing_call_modal.join_button")}
         </Button>
       </FieldRow>
