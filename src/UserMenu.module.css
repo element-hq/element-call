@@ -21,6 +21,14 @@ limitations under the License.
   flex-shrink: 0;
 }
 
+.userButton {
+  appearance: none;
+  background: none;
+  border: none;
+  margin: 0;
+  cursor: pointer;
+}
+
 .userButton svg * {
   fill: var(--cpd-color-icon-primary);
 }

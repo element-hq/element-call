@@ -16,7 +16,7 @@ limitations under the License.
 
 import { FC, MouseEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Room } from "matrix-js-sdk";
+import { Room } from "matrix-js-sdk/src/matrix";
 import { Button, Text } from "@vector-im/compound-web";
 import {
   LinkIcon,

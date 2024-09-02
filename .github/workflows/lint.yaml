@@ -23,3 +23,5 @@ jobs:
         run: "yarn run lint:eslint"
       - name: Type check
         run: "yarn run lint:types"
+      - name: Dead code analysis
+        run: "yarn run lint:knip"

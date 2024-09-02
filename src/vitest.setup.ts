@@ -13,13 +13,12 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 */
-
 import "global-jsdom/register";
-
+import globalJsdom from "global-jsdom";
 import i18n from "i18next";
 import posthog from "posthog-js";
 import { initReactI18next } from "react-i18next";
-import { afterEach } from "vitest";
+import { afterEach, beforeEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 
 import { Config } from "./config/Config";
@@ -36,4 +35,12 @@ i18n.use(initReactI18next).init({
 Config.initDefault();
 posthog.opt_out_capturing();
 
-afterEach(cleanup);
+// We need to cleanup the global jsDom
+// Otherwise we will run into issues with async input test overlapping and throwing.
+
+let cleanupJsDom: { (): void };
+beforeEach(() => (cleanupJsDom = globalJsdom()));
+afterEach(() => {
+  cleanupJsDom();
+  cleanup();
+});

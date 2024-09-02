@@ -20,6 +20,7 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 import { Heading } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
+import { Button } from "@vector-im/compound-web";
 
 import {
   createRoom,
@@ -32,7 +33,6 @@ import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import commonStyles from "./common.module.css";
 import styles from "./RegisteredView.module.css";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { Button } from "../button";
 import { CallList } from "./CallList";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
@@ -40,10 +40,7 @@ import { Caption } from "../typography/Typography";
 import { Form } from "../form/Form";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { E2eeType } from "../e2ee/e2eeType";
-import {
-  useSetting,
-  optInAnalytics as optInAnalyticsSetting,
-} from "../settings/settings";
+import { useOptInAnalytics } from "../settings/settings";
 
 interface Props {
   client: MatrixClient;
@@ -52,7 +49,7 @@ interface Props {
 export const RegisteredView: FC<Props> = ({ client }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
-  const [optInAnalytics] = useSetting(optInAnalyticsSetting);
+  const [optInAnalytics] = useOptInAnalytics();
   const history = useHistory();
   const { t } = useTranslation();
   const [joinExistingCallModalOpen, setJoinExistingCallModalOpen] =

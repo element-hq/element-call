@@ -16,9 +16,9 @@ limitations under the License.
 
 import { FC, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { Button } from "@vector-im/compound-web";
 
 import { Modal, Props as ModalProps } from "../Modal";
-import { Button } from "../button";
 import { FieldRow, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake } from "../settings/submit-rageshake";
 import { Body } from "../typography/Typography";
@@ -52,7 +52,7 @@ export const RageshakeRequestModal: FC<Props> = ({
       <Body>{t("rageshake_request_modal.body")}</Body>
       <FieldRow>
         <Button
-          onPress={(): void =>
+          onClick={(): void =>
             void submitRageshake({
               sendLogs: true,
               rageshakeRequestId,
