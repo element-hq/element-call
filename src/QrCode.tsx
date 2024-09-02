@@ -30,25 +30,28 @@ export const QrCode: FC<Props> = ({ data, className }) => {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {
-    let isCancelled = false; 
+    let isCancelled = false;
 
-    toDataURL(data, { errorCorrectionLevel: "L" }).then((url) => {
-      if (!isCancelled) {
-        setUrl(url);
-      }
-    }).catch((reason) => {
-      if (!isCancelled) {
-        setUrl(null);
-      }
-    });
+    toDataURL(data, { errorCorrectionLevel: "L" })
+      .then((url) => {
+        if (!isCancelled) {
+          setUrl(url);
+        }
+      })
+      .catch((reason) => {
+        if (!isCancelled) {
+          setUrl(null);
+        }
+      });
 
-    return (): void => { isCancelled = true; };
+    return (): void => {
+      isCancelled = true;
+    };
   }, [data]);
 
   return (
     <div className={classNames(styles.qrCode, className)}>
-        {url && <img src={url} alt={t("qr_code")} />}
+      {url && <img src={url} alt={t("qr_code")} />}
     </div>
-);
+  );
 };
-
