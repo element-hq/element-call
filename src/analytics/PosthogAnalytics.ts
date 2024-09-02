@@ -196,7 +196,7 @@ export class PosthogAnalytics {
       callBackend: "livekit",
       cryptoVersion: widget
         ? undefined
-        : window.matrixclient.getCrypto()?.getVersion(),
+        : window.matrixclient?.getCrypto()?.getVersion(),
     };
   }
 
