@@ -46,8 +46,13 @@ export const RegisterPage: FC = () => {
   const { t } = useTranslation();
   usePageTitle(t("action.register"));
 
-  const { loading, authenticated, passwordlessUser, client, setClient } =
-    useClientLegacy();
+  const {
+    loading,
+    authenticated,
+    passwordlessUser: previousClientPasswordlessUser,
+    client: previousClient,
+    setClient,
+  } = useClientLegacy();
 
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
   const history = useHistory();
@@ -56,7 +61,7 @@ export const RegisterPage: FC = () => {
   const [error, setError] = useState<Error>();
   const [password, setPassword] = useState("");
   const [passwordConfirmation, setPasswordConfirmation] = useState("");
-  const { recaptchaKey, register } = useInteractiveRegistration(client);
+  const { recaptchaKey, register } = useInteractiveRegistration(previousClient);
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 
   const onSubmitRegisterForm = useCallback(
@@ -78,12 +83,16 @@ export const RegisterPage: FC = () => {
           password,
           userName,
           recaptchaResponse,
-          passwordlessUser,
+          false,
         );
 
-        if (client && client?.groupCallEventHandler && passwordlessUser) {
+        if (
+          previousClient &&
+          previousClient?.groupCallEventHandler &&
+          previousClientPasswordlessUser
+        ) {
           // Migrate the user's rooms
-          for (const groupCall of client.groupCallEventHandler.groupCalls.values()) {
+          for (const groupCall of previousClient.groupCallEventHandler.groupCalls.values()) {
             const roomId = groupCall.room.roomId;
 
             try {
@@ -130,10 +139,10 @@ export const RegisterPage: FC = () => {
       register,
       location,
       history,
-      passwordlessUser,
+      previousClientPasswordlessUser,
       reset,
       execute,
-      client,
+      previousClient,
       setClient,
     ],
   );
@@ -149,10 +158,21 @@ export const RegisterPage: FC = () => {
   }, [password, passwordConfirmation, t]);
 
   useEffect(() => {
-    if (!loading && authenticated && !passwordlessUser && !registering) {
+    if (
+      !loading &&
+      authenticated &&
+      !previousClientPasswordlessUser &&
+      !registering
+    ) {
       history.push("/");
     }
-  }, [loading, history, authenticated, passwordlessUser, registering]);
+  }, [
+    loading,
+    history,
+    authenticated,
+    previousClientPasswordlessUser,
+    registering,
+  ]);
 
   if (loading) {
     return <LoadingView />;
