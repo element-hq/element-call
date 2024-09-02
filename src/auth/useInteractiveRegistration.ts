@@ -27,7 +27,9 @@ import { Session } from "../ClientContext";
 import { Config } from "../config/Config";
 import { widget } from "../widget";
 
-export const useInteractiveRegistration = (): {
+export const useInteractiveRegistration = (
+  oldClient?: MatrixClient,
+): {
   privacyPolicyUrl?: string;
   recaptchaKey?: string;
   register: (
@@ -105,7 +107,7 @@ export const useInteractiveRegistration = (): {
       /* eslint-disable camelcase,@typescript-eslint/no-explicit-any */
       const { user_id, access_token, device_id } =
         (await interactiveAuth.attemptAuth()) as any;
-
+      await oldClient?.logout(true);
       const client = await initClient(
         {
           baseUrl: Config.defaultHomeserverUrl()!,
@@ -136,7 +138,7 @@ export const useInteractiveRegistration = (): {
 
       return [client, session];
     },
-    [],
+    [oldClient],
   );
 
   return { privacyPolicyUrl, recaptchaKey, register };
