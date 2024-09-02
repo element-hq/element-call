@@ -29,6 +29,7 @@ import { getAbsoluteRoomUrl } from "../utils/matrix";
 import styles from "./InviteModal.module.css";
 import { Toast } from "../Toast";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { QrCode } from "../QrCode";
 
 interface Props {
   room: Room;
@@ -61,6 +62,7 @@ export const InviteModal: FC<Props> = ({ room, open, onDismiss }) => {
   return (
     <>
       <Modal title={t("invite_modal.title")} open={open} onDismiss={onDismiss}>
+        <QrCode className={styles.qrCode} data={url} />
         <Text className={styles.url} size="sm" weight="semibold">
           {url}
         </Text>
