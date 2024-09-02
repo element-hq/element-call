@@ -32,8 +32,8 @@ export const LoginPage: FC = () => {
   const { t } = useTranslation();
   usePageTitle(t("login_title"));
 
-  const { setClient } = useClient();
-  const login = useInteractiveLogin();
+  const { client, setClient } = useClient();
+  const login = useInteractiveLogin(client);
   const homeserver = Config.defaultHomeserverUrl(); // TODO: Make this configurable
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
