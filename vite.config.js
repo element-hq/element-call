@@ -76,7 +76,6 @@ export default defineConfig(({ mode }) => {
         "react-dom",
         "matrix-js-sdk",
         "react-use-measure",
-        "@juggle/resize-observer",
         // These packages modify the document based on some module-level global
         // state, and don't play nicely with duplicate copies of themselves
         // https://github.com/radix-ui/primitives/issues/1241#issuecomment-1847837850
