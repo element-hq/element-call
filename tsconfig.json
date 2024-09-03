@@ -17,6 +17,7 @@
     "resolveJsonModule": true,
     // Workaround for https://github.com/microsoft/TypeScript/issues/55132
     "useDefineForClassFields": false,
+    "allowImportingTsExtensions": true,
     "paths": {
       // These imports within @livekit/components-core and
       // @livekit/components-react are broken under the "bundler" module
