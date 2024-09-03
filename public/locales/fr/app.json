@@ -52,8 +52,6 @@
   "disconnected_banner": "La connexion avec le serveur a été perdue.",
   "full_screen_view_description": "<0>Soumettre les journaux de débogage nous aidera à déterminer le problème.</0>",
   "full_screen_view_h1": "<0>Oups, quelque chose s’est mal passé.</0>",
-  "group_call_loader_failed_heading": "Appel non trouvé",
-  "group_call_loader_failed_text": "Les appels sont maintenant chiffrés de bout-en-bout et doivent être créés depuis la page d’accueil. Cela permet d’être sûr que tout le monde utilise la même clé de chiffrement.",
   "hangup_button_label": "Terminer l’appel",
   "header_label": "Accueil Element Call",
   "invite_modal": {
