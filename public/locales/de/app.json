@@ -58,8 +58,6 @@
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
   "full_screen_view_description": "<0>Übermittelte Problemberichte helfen uns, Fehler zu beheben.</0>",
   "full_screen_view_h1": "<0>Hoppla, etwas ist schiefgelaufen.</0>",
-  "group_call_loader_failed_heading": "Anruf nicht gefunden",
-  "group_call_loader_failed_text": "Anrufe sind nun Ende-zu-Ende-verschlüsselt und müssen auf der Startseite erstellt werden. Damit stellen wir sicher, dass alle denselben Schlüssel verwenden.",
   "hangup_button_label": "Anruf beenden",
   "header_label": "Element Call-Startseite",
   "header_participants_label": "Teilnehmende",

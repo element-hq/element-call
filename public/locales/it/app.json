@@ -50,8 +50,6 @@
   "disconnected_banner": "La connessione al server è stata persa.",
   "full_screen_view_description": "<0>L'invio di registri di debug ci aiuterà ad individuare il problema.</0>",
   "full_screen_view_h1": "<0>Ops, qualcosa è andato storto.</0>",
-  "group_call_loader_failed_heading": "Chiamata non trovata",
-  "group_call_loader_failed_text": "Le chiamate ora sono cifrate end-to-end e devono essere create dalla pagina principale. Ciò assicura che chiunque usi la stessa chiave di crittografia.",
   "hangup_button_label": "Termina chiamata",
   "header_label": "Inizio di Element Call",
   "header_participants_label": "Partecipanti",

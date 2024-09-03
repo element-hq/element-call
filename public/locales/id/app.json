@@ -52,8 +52,6 @@
   "disconnected_banner": "Koneksi ke server telah hilang.",
   "full_screen_view_description": "<0>Mengirim catatan pengawakutuan akan membantu kami melacak masalahnya.</0>",
   "full_screen_view_h1": "<0>Aduh, ada yang salah.</0>",
-  "group_call_loader_failed_heading": "Panggilan tidak ditemukan",
-  "group_call_loader_failed_text": "Panggilan sekarang terenkripsi secara ujung ke ujung dan harus dibuat dari laman beranda. Ini memastikan bahwa semuanya menggunakan kunci enkripsi yang sama.",
   "hangup_button_label": "Akhiri panggilan",
   "header_label": "Beranda Element Call",
   "header_participants_label": "Peserta",

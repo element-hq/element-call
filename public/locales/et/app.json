@@ -54,8 +54,6 @@
   "disconnected_banner": "Võrguühendus serveriga on katkenud.",
   "full_screen_view_description": "<0>Kui saadad meile vealogid, siis on lihtsam vea põhjust otsida.</0>",
   "full_screen_view_h1": "<0>Ohoo, midagi on nüüd katki.</0>",
-  "group_call_loader_failed_heading": "Kõnet ei leidu",
-  "group_call_loader_failed_text": "Kõned on nüüd läbivalt krüptitud ning need pead looma kodulehelt. Sellega tagad, et kõik kasutavad samu krüptovõtmeid.",
   "hangup_button_label": "Lõpeta kõne",
   "header_participants_label": "Osalejad",
   "invite_modal": {
