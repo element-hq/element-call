@@ -1,0 +1,13 @@
+# Don't post comments on PRs; they're noisy and the same information can be
+# gotten through the checks section at the bottom of the PR anyways
+comment: false
+coverage:
+  status:
+    project:
+      default:
+        # Track the impact of changes on overall coverage without blocking PRs
+        informational: true
+    patch:
+      default:
+        # Expect 80% coverage on all lines that a PR touches
+        target: 80%

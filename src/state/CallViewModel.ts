@@ -26,7 +26,6 @@ import {
   RemoteParticipant,
 } from "livekit-client";
 import { Room as MatrixRoom, RoomMember } from "matrix-js-sdk/src/matrix";
-import { useEffect, useRef } from "react";
 import {
   EMPTY,
   Observable,
@@ -44,7 +43,6 @@ import {
   race,
   sample,
   scan,
-  shareReplay,
   skip,
   startWith,
   switchAll,
@@ -58,12 +56,10 @@ import {
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { ViewModel } from "./ViewModel";
-import { useObservable } from "./useObservable";
 import {
   ECAddonConnectionState,
   ECConnectionState,
 } from "../livekit/useECConnectionState";
-import { usePrevious } from "../usePrevious";
 import {
   LocalUserMediaViewModel,
   MediaViewModel,
@@ -71,10 +67,11 @@ import {
   ScreenShareViewModel,
   UserMediaViewModel,
 } from "./MediaViewModel";
-import { accumulate, finalizeValue } from "../observable-utils";
+import { accumulate, finalizeValue } from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
 import { duplicateTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";
+import { setPipEnabled } from "../controls";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -194,11 +191,9 @@ class UserMedia {
         ),
       ),
       startWith(false),
-      distinctUntilChanged(),
-      this.scope.bind(),
       // Make this Observable hot so that the timers don't reset when you
       // resubscribe
-      shareReplay(1),
+      this.scope.state(),
     );
 
     this.presenter = observeParticipantEvents(
@@ -261,7 +256,7 @@ function findMatrixMember(
 export class CallViewModel extends ViewModel {
   private readonly rawRemoteParticipants = connectedParticipantsObserver(
     this.livekitRoom,
-  ).pipe(shareReplay(1));
+  ).pipe(this.scope.state());
 
   // Lists of participants to "hold" on display, even if LiveKit claims that
   // they've left
@@ -383,7 +378,7 @@ export class CallViewModel extends ViewModel {
     finalizeValue((ts) => {
       for (const t of ts) t.destroy();
     }),
-    shareReplay(1),
+    this.scope.state(),
   );
 
   private readonly userMedia: Observable<UserMedia[]> = this.mediaItems.pipe(
@@ -402,7 +397,7 @@ export class CallViewModel extends ViewModel {
       map((mediaItems) =>
         mediaItems.filter((m): m is ScreenShare => m instanceof ScreenShare),
       ),
-      shareReplay(1),
+      this.scope.state(),
     );
 
   private readonly hasRemoteScreenShares: Observable<boolean> =
@@ -443,9 +438,8 @@ export class CallViewModel extends ViewModel {
         },
         null,
       ),
-      distinctUntilChanged(),
       map((speaker) => speaker.vm),
-      shareReplay(1),
+      this.scope.state(),
       throttleTime(1600, undefined, { leading: true, trailing: true }),
     );
 
@@ -513,16 +507,17 @@ export class CallViewModel extends ViewModel {
   private readonly spotlight: Observable<MediaViewModel[]> =
     this.spotlightAndPip.pipe(
       switchMap(([spotlight]) => spotlight),
-      shareReplay(1),
+      this.scope.state(),
     );
 
   private readonly pip: Observable<UserMediaViewModel | null> =
     this.spotlightAndPip.pipe(switchMap(([, pip]) => pip));
 
-  /**
-   * The general shape of the window.
-   */
-  public readonly windowMode: Observable<WindowMode> = fromEvent(
+  private readonly pipEnabled: Observable<boolean> = setPipEnabled.pipe(
+    startWith(false),
+  );
+
+  private readonly naturalWindowMode: Observable<WindowMode> = fromEvent(
     window,
     "resize",
   ).pipe(
@@ -538,15 +533,21 @@ export class CallViewModel extends ViewModel {
       if (width <= 600) return "narrow";
       return "normal";
     }),
-    distinctUntilChanged(),
-    shareReplay(1),
+    this.scope.state(),
+  );
+
+  /**
+   * The general shape of the window.
+   */
+  public readonly windowMode: Observable<WindowMode> = this.pipEnabled.pipe(
+    switchMap((pip) => (pip ? of<WindowMode>("pip") : this.naturalWindowMode)),
   );
 
   private readonly spotlightExpandedToggle = new Subject<void>();
   public readonly spotlightExpanded: Observable<boolean> =
     this.spotlightExpandedToggle.pipe(
       accumulate(false, (expanded) => !expanded),
-      shareReplay(1),
+      this.scope.state(),
     );
 
   private readonly gridModeUserSelection = new Subject<GridMode>();
@@ -572,8 +573,7 @@ export class CallViewModel extends ViewModel {
             )
         ).pipe(startWith(userSelection ?? "grid")),
       ),
-      distinctUntilChanged(),
-      shareReplay(1),
+      this.scope.state(),
     );
 
   public setGridMode(value: GridMode): void {
@@ -629,7 +629,7 @@ export class CallViewModel extends ViewModel {
   );
 
   private readonly pipLayout: Observable<Layout> = this.spotlight.pipe(
-    map((spotlight): Layout => ({ type: "pip", spotlight })),
+    map((spotlight) => ({ type: "pip", spotlight })),
   );
 
   public readonly layout: Observable<Layout> = this.windowMode.pipe(
@@ -690,13 +690,12 @@ export class CallViewModel extends ViewModel {
           return this.pipLayout;
       }
     }),
-    shareReplay(1),
+    this.scope.state(),
   );
 
   public showSpotlightIndicators: Observable<boolean> = this.layout.pipe(
     map((l) => l.type !== "grid"),
-    distinctUntilChanged(),
-    shareReplay(1),
+    this.scope.state(),
   );
 
   /**
@@ -720,8 +719,7 @@ export class CallViewModel extends ViewModel {
 
   public showSpeakingIndicators: Observable<boolean> = this.layout.pipe(
     map((l) => l.type !== "one-on-one" && !l.type.startsWith("spotlight-")),
-    distinctUntilChanged(),
-    shareReplay(1),
+    this.scope.state(),
   );
 
   public readonly toggleSpotlightExpanded: Observable<(() => void) | null> =
@@ -741,7 +739,7 @@ export class CallViewModel extends ViewModel {
       map((enabled) =>
         enabled ? (): void => this.spotlightExpandedToggle.next() : null,
       ),
-      shareReplay(1),
+      this.scope.state(),
     );
 
   private readonly screenTap = new Subject<void>();
@@ -771,8 +769,7 @@ export class CallViewModel extends ViewModel {
 
   public readonly showHeader: Observable<boolean> = this.windowMode.pipe(
     map((mode) => mode !== "pip" && mode !== "flat"),
-    distinctUntilChanged(),
-    shareReplay(1),
+    this.scope.state(),
   );
 
   public readonly showFooter = this.windowMode.pipe(
@@ -815,8 +812,7 @@ export class CallViewModel extends ViewModel {
           );
       }
     }),
-    distinctUntilChanged(),
-    shareReplay(1),
+    this.scope.state(),
   );
 
   public constructor(
@@ -828,35 +824,4 @@ export class CallViewModel extends ViewModel {
   ) {
     super();
   }
-}
-
-export function useCallViewModel(
-  matrixRoom: MatrixRoom,
-  livekitRoom: LivekitRoom,
-  encrypted: boolean,
-  connectionState: ECConnectionState,
-): CallViewModel {
-  const prevMatrixRoom = usePrevious(matrixRoom);
-  const prevLivekitRoom = usePrevious(livekitRoom);
-  const prevEncrypted = usePrevious(encrypted);
-  const connectionStateObservable = useObservable(connectionState);
-
-  const vm = useRef<CallViewModel>();
-  if (
-    matrixRoom !== prevMatrixRoom ||
-    livekitRoom !== prevLivekitRoom ||
-    encrypted !== prevEncrypted
-  ) {
-    vm.current?.destroy();
-    vm.current = new CallViewModel(
-      matrixRoom,
-      livekitRoom,
-      encrypted,
-      connectionStateObservable,
-    );
-  }
-
-  useEffect(() => vm.current?.destroy(), []);
-
-  return vm.current!;
 }

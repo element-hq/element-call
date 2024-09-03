@@ -16,7 +16,7 @@ limitations under the License.
 
 import { FC, MouseEvent, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Room } from "matrix-js-sdk";
+import { Room } from "matrix-js-sdk/src/matrix";
 import { Button, Text } from "@vector-im/compound-web";
 import {
   LinkIcon,
@@ -25,10 +25,11 @@ import {
 import useClipboard from "react-use-clipboard";
 
 import { Modal } from "../Modal";
-import { getAbsoluteRoomUrl } from "../matrix-utils";
+import { getAbsoluteRoomUrl } from "../utils/matrix";
 import styles from "./InviteModal.module.css";
 import { Toast } from "../Toast";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { QrCode } from "../QrCode";
 
 interface Props {
   room: Room;
@@ -61,6 +62,7 @@ export const InviteModal: FC<Props> = ({ room, open, onDismiss }) => {
   return (
     <>
       <Modal title={t("invite_modal.title")} open={open} onDismiss={onDismiss}>
+        <QrCode className={styles.qrCode} data={url} />
         <Text className={styles.url} size="sm" weight="semibold">
           {url}
         </Text>

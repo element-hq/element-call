@@ -24,3 +24,12 @@ limitations under the License.
 .button {
   width: 100%;
 }
+
+.qrCode {
+  display: flex;
+  justify-content: center;
+}
+
+.qrCode img {
+  margin-block-end: var(--cpd-space-8x);
+}

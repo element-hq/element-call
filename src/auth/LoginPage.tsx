@@ -17,11 +17,11 @@ limitations under the License.
 import { FC, FormEvent, useCallback, useRef, useState } from "react";
 import { useHistory, useLocation, Link } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
+import { Button } from "@vector-im/compound-web";
 
 import Logo from "../icons/LogoLarge.svg?react";
 import { useClient } from "../ClientContext";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { Button } from "../button";
 import styles from "./LoginPage.module.css";
 import { useInteractiveLogin } from "./useInteractiveLogin";
 import { usePageTitle } from "../usePageTitle";
@@ -32,8 +32,8 @@ export const LoginPage: FC = () => {
   const { t } = useTranslation();
   usePageTitle(t("login_title"));
 
-  const { setClient } = useClient();
-  const login = useInteractiveLogin();
+  const { client, setClient } = useClient();
+  const login = useInteractiveLogin(client);
   const homeserver = Config.defaultHomeserverUrl(); // TODO: Make this configurable
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);

@@ -85,7 +85,9 @@ export function useSubmitRageshake(): {
         try {
           // MDN claims broad support across browsers
           touchInput = String(window.matchMedia("(pointer: coarse)").matches);
-        } catch (e) {}
+        } catch (e) {
+          logger.warn("Could not get coarse pointer for rageshake submit.", e);
+        }
 
         let description = opts.rageshakeRequestId
           ? `Rageshake ${opts.rageshakeRequestId}`
@@ -216,7 +218,9 @@ export function useSubmitRageshake(): {
               "storageManager_persisted",
               String(await navigator.storage.persisted()),
             );
-          } catch (e) {}
+          } catch (e) {
+            logger.warn("coulr not get navigator peristed storage", e);
+          }
         } else if (document.hasStorageAccess) {
           // Safari
           try {
@@ -224,7 +228,9 @@ export function useSubmitRageshake(): {
               "storageManager_persisted",
               String(await document.hasStorageAccess()),
             );
-          } catch (e) {}
+          } catch (e) {
+            logger.warn("could not get storage access", e);
+          }
         }
 
         if (navigator.storage && navigator.storage.estimate) {
@@ -244,7 +250,9 @@ export function useSubmitRageshake(): {
                 );
               });
             }
-          } catch (e) {}
+          } catch (e) {
+            logger.warn("could not obatain storage estimate", e);
+          }
         }
 
         if (opts.sendLogs) {

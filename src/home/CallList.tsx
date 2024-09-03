@@ -1,5 +1,5 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2024 New Vector Ltd
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -20,10 +20,9 @@ import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room } from "matrix-js-sdk/src/models/room";
 import { FC } from "react";
 
-import { CopyButton } from "../button";
 import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
-import { getAbsoluteRoomUrl, getRelativeRoomUrl } from "../matrix-utils";
+import { getRelativeRoomUrl } from "../utils/matrix";
 import { Body } from "../typography/Typography";
 import { GroupCallRoom } from "./useGroupCallRooms";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
@@ -81,12 +80,6 @@ const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room }) => {
         </div>
         <div className={styles.copyButtonSpacer} />
       </Link>
-      <CopyButton
-        className={styles.copyButton}
-        variant="icon"
-        // Todo add the viaServers to the created link
-        value={getAbsoluteRoomUrl(room.roomId, roomEncryptionSystem, room.name)}
-      />
     </div>
   );
 };

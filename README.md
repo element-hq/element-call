@@ -141,6 +141,10 @@ Run backend components:
 yarn backend
 ```
 
+### Test Coverage
+
+<img src="https://codecov.io/github/element-hq/element-call/graphs/tree.svg?token=O6CFVKK6I1"></img>
+
 ### Add a new translation key
 
 To add a new translation key you can do these steps:

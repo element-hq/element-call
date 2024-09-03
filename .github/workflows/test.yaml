@@ -18,8 +18,11 @@ jobs:
       - name: Install dependencies
         run: "yarn install"
       - name: Vitest
-        run: "yarn run test"
+        run: "yarn run test:coverage"
       - name: Upload to codecov
         uses: codecov/codecov-action@e28ff129e5465c2c0dcc6f003fc735cb6ae0c673 # v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           flags: unittests
+          fail_ci_if_error: true

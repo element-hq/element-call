@@ -14,21 +14,14 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { ChangeEvent, FC, Key, ReactNode, useCallback } from "react";
-import { Item } from "@react-stately/collections";
+import { ChangeEvent, FC, ReactNode, useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { MatrixClient } from "matrix-js-sdk";
+import { MatrixClient } from "matrix-js-sdk/src/matrix";
+import { Dropdown } from "@vector-im/compound-web";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
-import { TabContainer, TabItem } from "../tabs/Tabs";
-import AudioIcon from "../icons/Audio.svg?react";
-import VideoIcon from "../icons/Video.svg?react";
-import DeveloperIcon from "../icons/Developer.svg?react";
-import OverflowIcon from "../icons/Overflow.svg?react";
-import UserIcon from "../icons/User.svg?react";
-import FeedbackIcon from "../icons/Feedback.svg?react";
-import { SelectInput } from "../input/SelectInput";
+import { Tab, TabContainer } from "../tabs/Tabs";
 import { FieldRow, InputField } from "../input/Input";
 import { Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
@@ -42,9 +35,9 @@ import {
 import { widget } from "../widget";
 import {
   useSetting,
-  optInAnalytics as optInAnalyticsSetting,
   developerSettingsTab as developerSettingsTabSetting,
   duplicateTiles as duplicateTilesSetting,
+  useOptInAnalytics,
 } from "./settings";
 import { isFirefox } from "../Platform";
 
@@ -77,7 +70,7 @@ export const SettingsModal: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
 
-  const [optInAnalytics, setOptInAnalytics] = useSetting(optInAnalyticsSetting);
+  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
   const [developerSettingsTab, setDeveloperSettingsTab] = useSetting(
     developerSettingsTabSetting,
   );
@@ -90,24 +83,30 @@ export const SettingsModal: FC<Props> = ({
   ): ReactNode => {
     if (devices.available.length == 0) return null;
 
+    const values = devices.available.map(
+      ({ deviceId, label }, index) =>
+        [
+          deviceId,
+          !!label && label.trim().length > 0
+            ? label
+            : `${caption} ${index + 1}`,
+        ] as [string, string],
+    );
+
     return (
-      <SelectInput
+      <Dropdown
         label={caption}
-        selectedKey={
+        defaultValue={
           devices.selectedId === "" || !devices.selectedId
             ? "default"
             : devices.selectedId
         }
-        onSelectionChange={(id): void => devices.select(id.toString())}
-      >
-        {devices.available.map(({ deviceId, label }, index) => (
-          <Item key={deviceId}>
-            {!!label && label.trim().length > 0
-              ? label
-              : `${caption} ${index + 1}`}
-          </Item>
-        ))}
-      </SelectInput>
+        onValueChange={(id): void => devices.select(id)}
+        values={values}
+        // XXX This is unused because we set a defaultValue. The component
+        // shouldn't require this prop.
+        placeholder=""
+      />
     );
   };
 
@@ -125,158 +124,123 @@ export const SettingsModal: FC<Props> = ({
   const devices = useMediaDevices();
   useMediaDeviceNames(devices, open);
 
-  const audioTab = (
-    <TabItem
-      key="audio"
-      title={
-        <>
-          <AudioIcon width={16} height={16} />
-          <span className={styles.tabLabel}>{t("common.audio")}</span>
-        </>
-      }
-    >
-      {generateDeviceSelection(devices.audioInput, t("common.microphone"))}
-      {!isFirefox() &&
-        generateDeviceSelection(
-          devices.audioOutput,
-          t("settings.speaker_device_selection_label"),
-        )}
-    </TabItem>
-  );
-
-  const videoTab = (
-    <TabItem
-      key="video"
-      title={
-        <>
-          <VideoIcon width={16} height={16} />
-          <span>{t("common.video")}</span>
-        </>
-      }
-    >
-      {generateDeviceSelection(devices.videoInput, t("common.camera"))}
-    </TabItem>
-  );
-
-  const profileTab = (
-    <TabItem
-      key="profile"
-      title={
-        <>
-          <UserIcon width={15} height={15} />
-          <span>{t("common.profile")}</span>
-        </>
-      }
-    >
-      <ProfileSettingsTab client={client} />
-    </TabItem>
-  );
-
-  const feedbackTab = (
-    <TabItem
-      key="feedback"
-      title={
-        <>
-          <FeedbackIcon width={16} height={16} />
-          <span>{t("settings.feedback_tab_title")}</span>
-        </>
-      }
-    >
-      <FeedbackSettingsTab roomId={roomId} />
-    </TabItem>
-  );
-
-  const moreTab = (
-    <TabItem
-      key="more"
-      title={
-        <>
-          <OverflowIcon width={16} height={16} />
-          <span>{t("settings.more_tab_title")}</span>
-        </>
-      }
-    >
-      <h4>{t("settings.developer_tab_title")}</h4>
-      <p>
-        {t("version", {
-          version: import.meta.env.VITE_APP_VERSION || "dev",
-        })}
-      </p>
-      <FieldRow>
-        <InputField
-          id="developerSettingsTab"
-          type="checkbox"
-          checked={developerSettingsTab}
-          label={t("settings.developer_settings_label")}
-          description={t("settings.developer_settings_label_description")}
-          onChange={(event: ChangeEvent<HTMLInputElement>): void =>
-            setDeveloperSettingsTab(event.target.checked)
-          }
-        />
-      </FieldRow>
-      <h4>{t("common.analytics")}</h4>
-      <FieldRow>
-        <InputField
-          id="optInAnalytics"
-          type="checkbox"
-          checked={optInAnalytics ?? undefined}
-          description={optInDescription}
-          onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-            setOptInAnalytics?.(event.target.checked);
-          }}
-        />
-      </FieldRow>
-    </TabItem>
-  );
-
-  const developerTab = (
-    <TabItem
-      key="developer"
-      title={
-        <>
-          <DeveloperIcon width={16} height={16} />
-          <span>{t("settings.developer_tab_title")}</span>
-        </>
-      }
-    >
-      <p>
-        {t("version", {
-          productName: import.meta.env.VITE_PRODUCT_NAME || "Element Call",
-          version: import.meta.env.VITE_APP_VERSION || "dev",
-        })}
-      </p>
-      <p>
-        {t("crypto_version", {
-          version: client.getCrypto()?.getVersion() || "unknown",
-        })}
-      </p>
-      <p>
-        {t("matrix_id", {
-          id: client.getUserId() || "unknown",
-        })}
-      </p>
-      <p>
-        {t("device_id", {
-          id: client.getDeviceId() || "unknown",
-        })}
-      </p>
-      <FieldRow>
-        <InputField
-          id="duplicateTiles"
-          type="number"
-          label={t("settings.duplicate_tiles_label")}
-          value={duplicateTiles.toString()}
-          onChange={useCallback(
-            (event: ChangeEvent<HTMLInputElement>): void => {
-              const value = event.target.valueAsNumber;
-              setDuplicateTiles(Number.isNaN(value) ? 0 : value);
-            },
-            [setDuplicateTiles],
+  const audioTab: Tab<SettingsTab> = {
+    key: "audio",
+    name: t("common.audio"),
+    content: (
+      <>
+        {generateDeviceSelection(devices.audioInput, t("common.microphone"))}
+        {!isFirefox() &&
+          generateDeviceSelection(
+            devices.audioOutput,
+            t("settings.speaker_device_selection_label"),
           )}
-        />
-      </FieldRow>
-    </TabItem>
-  );
+      </>
+    ),
+  };
+
+  const videoTab: Tab<SettingsTab> = {
+    key: "video",
+    name: t("common.video"),
+    content: generateDeviceSelection(devices.videoInput, t("common.camera")),
+  };
+
+  const profileTab: Tab<SettingsTab> = {
+    key: "profile",
+    name: t("common.profile"),
+    content: <ProfileSettingsTab client={client} />,
+  };
+
+  const feedbackTab: Tab<SettingsTab> = {
+    key: "feedback",
+    name: t("settings.feedback_tab_title"),
+    content: <FeedbackSettingsTab roomId={roomId} />,
+  };
+
+  const moreTab: Tab<SettingsTab> = {
+    key: "more",
+    name: t("settings.more_tab_title"),
+    content: (
+      <>
+        <h4>{t("settings.developer_tab_title")}</h4>
+        <p>
+          {t("version", {
+            productName: import.meta.env.VITE_PRODUCT_NAME || "Element Call",
+            version: import.meta.env.VITE_APP_VERSION || "dev",
+          })}
+        </p>
+        <FieldRow>
+          <InputField
+            id="developerSettingsTab"
+            type="checkbox"
+            checked={developerSettingsTab}
+            label={t("settings.developer_settings_label")}
+            description={t("settings.developer_settings_label_description")}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
+              setDeveloperSettingsTab(event.target.checked)
+            }
+          />
+        </FieldRow>
+        <h4>{t("common.analytics")}</h4>
+        <FieldRow>
+          <InputField
+            id="optInAnalytics"
+            type="checkbox"
+            checked={optInAnalytics ?? undefined}
+            description={optInDescription}
+            onChange={(event: ChangeEvent<HTMLInputElement>): void => {
+              setOptInAnalytics?.(event.target.checked);
+            }}
+          />
+        </FieldRow>
+      </>
+    ),
+  };
+
+  const developerTab: Tab<SettingsTab> = {
+    key: "developer",
+    name: t("settings.developer_tab_title"),
+    content: (
+      <>
+        <p>
+          {t("version", {
+            productName: import.meta.env.VITE_PRODUCT_NAME || "Element Call",
+            version: import.meta.env.VITE_APP_VERSION || "dev",
+          })}
+        </p>
+        <p>
+          {t("crypto_version", {
+            version: client.getCrypto()?.getVersion() || "unknown",
+          })}
+        </p>
+        <p>
+          {t("matrix_id", {
+            id: client.getUserId() || "unknown",
+          })}
+        </p>
+        <p>
+          {t("device_id", {
+            id: client.getDeviceId() || "unknown",
+          })}
+        </p>
+        <FieldRow>
+          <InputField
+            id="duplicateTiles"
+            type="number"
+            label={t("settings.duplicate_tiles_label")}
+            value={duplicateTiles.toString()}
+            onChange={useCallback(
+              (event: ChangeEvent<HTMLInputElement>): void => {
+                const value = event.target.valueAsNumber;
+                setDuplicateTiles(Number.isNaN(value) ? 0 : value);
+              },
+              [setDuplicateTiles],
+            )}
+          />
+        </FieldRow>
+      </>
+    ),
+  };
 
   const tabs = [audioTab, videoTab];
   if (widget === null) tabs.push(profileTab);
@@ -289,14 +253,14 @@ export const SettingsModal: FC<Props> = ({
       className={styles.settingsModal}
       open={open}
       onDismiss={onDismiss}
+      tabbed
     >
       <TabContainer
-        onSelectionChange={onTabChange as (tab: Key) => void}
-        selectedKey={tab}
-        className={styles.tabContainer}
-      >
-        {tabs}
-      </TabContainer>
+        label={t("common.settings")}
+        tab={tab}
+        onTabChange={onTabChange}
+        tabs={tabs}
+      />
     </Modal>
   );
 };

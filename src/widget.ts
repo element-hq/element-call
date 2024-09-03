@@ -31,21 +31,6 @@ export enum ElementWidgetActions {
   HangupCall = "im.vector.hangup",
   TileLayout = "io.element.tile_layout",
   SpotlightLayout = "io.element.spotlight_layout",
-
-  // Element Call -> host requesting to start a screenshare
-  // (ie. expects a ScreenshareStart once the user has picked a source)
-  // Element Call -> host requesting to start a screenshare
-  // (ie. expects a ScreenshareStart once the user has picked a source)
-  // replies with { pending } where pending is true if the host has asked
-  // the user to choose a window and false if not (ie. if the host isn't
-  // running within Electron)
-  ScreenshareRequest = "io.element.screenshare_request",
-  // host -> Element Call telling EC to start screen sharing with
-  // the given source
-  ScreenshareStart = "io.element.screenshare_start",
-  // host -> Element Call telling EC to stop screen sharing, or that
-  // the user cancelled when selecting a source after a ScreenshareRequest
-  ScreenshareStop = "io.element.screenshare_stop",
   // This can be sent as from or to widget
   // fromWidget: updates the client about the current device mute state
   // toWidget: the client requests a specific device mute configuration
@@ -66,10 +51,6 @@ export enum ElementWidgetActions {
 export interface JoinCallData {
   audioInput: string | null;
   videoInput: string | null;
-}
-
-export interface ScreenshareStartData {
-  desktopCapturerSourceId: string;
 }
 
 export interface WidgetHelpers {
@@ -101,8 +82,6 @@ export const widget = ((): WidgetHelpers | null => {
         ElementWidgetActions.HangupCall,
         ElementWidgetActions.TileLayout,
         ElementWidgetActions.SpotlightLayout,
-        ElementWidgetActions.ScreenshareStart,
-        ElementWidgetActions.ScreenshareStop,
         ElementWidgetActions.DeviceMute,
       ].forEach((action) => {
         api.on(`action:${action}`, (ev: CustomEvent<IWidgetApiRequest>) => {
@@ -200,7 +179,8 @@ export const widget = ((): WidgetHelpers | null => {
 
       return { api, lazyActions, client: clientPromise };
     } else {
-      logger.info("No widget API available");
+      if (import.meta.env.MODE !== "test")
+        logger.info("No widget API available");
       return null;
     }
   } catch (e) {

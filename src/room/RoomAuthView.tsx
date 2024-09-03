@@ -18,9 +18,9 @@ import { FC, useCallback, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/src/logger";
+import { Button } from "@vector-im/compound-web";
 
 import styles from "./RoomAuthView.module.css";
-import { Button } from "../button";
 import { Body, Caption, Link, Headline } from "../typography/Typography";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
@@ -117,7 +117,7 @@ export const RoomAuthView: FC = () => {
             Not registered yet?{" "}
             <Link
               color="primary"
-              to={{ pathname: "/login", state: { from: location } }}
+              to={{ pathname: "/register", state: { from: location } }}
             >
               Create an account
             </Link>
