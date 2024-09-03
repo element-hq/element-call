@@ -36,7 +36,6 @@ export function makeActiveFocus(): LivekitFocusActive {
   };
 }
 
-// eslint-disable-next-line @typescript-eslint/require-await
 async function makePreferredLivekitFoci(
   rtcSession: MatrixRTCSession,
   livekitAlias: string,
@@ -84,8 +83,7 @@ async function makePreferredLivekitFoci(
       `No livekit_service_url is configured so we could not create a focus.
     Currently we skip computing a focus based on other users in the room.`,
     );
-
-  return preferredFoci;
+  return Promise.resolve(preferredFoci);
 
   // TODO: we want to do something like this:
   //

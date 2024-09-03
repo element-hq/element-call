@@ -161,8 +161,7 @@ export class PosthogSpanProcessor implements SpanProcessor {
   /**
    * Shutdown the processor.
    */
-  // eslint-disable-next-line @typescript-eslint/require-await
   public async shutdown(): Promise<void> {
-    return;
+    return Promise.resolve();
   }
 }

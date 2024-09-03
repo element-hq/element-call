@@ -35,14 +35,10 @@ export class Config {
       return Config.internalInstance.initPromise;
     }
     Config.internalInstance = new Config();
-    Config.internalInstance.initPromise = new Promise<void>(
-      (resolve, reject) => {
-        downloadConfig("../config.json")
-          .then((config) => {
-            Config.internalInstance.config = { ...DEFAULT_CONFIG, ...config };
-            resolve();
-          })
-          .catch(reject);
+
+    Config.internalInstance.initPromise = downloadConfig("../config.json").then(
+      (config) => {
+        Config.internalInstance.config = { ...DEFAULT_CONFIG, ...config };
       },
     );
     return Config.internalInstance.initPromise;
