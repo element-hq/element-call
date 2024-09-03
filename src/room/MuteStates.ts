@@ -22,6 +22,7 @@ import {
   useMemo,
 } from "react";
 import { IWidgetApiRequest } from "matrix-widget-api";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { MediaDevice, useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
@@ -83,10 +84,14 @@ export function useMuteStates(): MuteStates {
   const video = useMuteState(devices.videoInput, () => true);
 
   useEffect(() => {
-    widget?.api.transport.send(ElementWidgetActions.DeviceMute, {
-      audio_enabled: audio.enabled,
-      video_enabled: video.enabled,
-    });
+    widget?.api.transport
+      .send(ElementWidgetActions.DeviceMute, {
+        audio_enabled: audio.enabled,
+        video_enabled: video.enabled,
+      })
+      .catch((e) =>
+        logger.warn("Could not send DeviceMute action to widget", e),
+      );
   }, [audio, video]);
 
   const onMuteStateChangeRequest = useCallback(

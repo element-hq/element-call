@@ -362,7 +362,7 @@ export function Grid<
   // Because we're using react-spring in imperative mode, we're responsible for
   // firing animations manually whenever the tiles array updates
   useEffect(() => {
-    springRef.start();
+    void springRef.start();
   }, [placedTiles, springRef]);
 
   const animateDraggedTile = (
@@ -372,7 +372,7 @@ export function Grid<
     const { tileId, tileX, tileY } = dragState.current!;
     const tile = placedTiles.find((t) => t.id === tileId)!;
 
-    springRef.current
+    void springRef.current
       .find((c) => (c.item as Tile<TileModel>).id === tileId)
       ?.start(
         endOfGesture

@@ -20,17 +20,21 @@ import posthog from "posthog-js";
 import { initReactI18next } from "react-i18next";
 import { afterEach, beforeEach } from "vitest";
 import { cleanup } from "@testing-library/react";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { Config } from "./config/Config";
 
 // Bare-minimum i18n config
-i18n.use(initReactI18next).init({
-  lng: "en-GB",
-  fallbackLng: "en-GB",
-  interpolation: {
-    escapeValue: false, // React has built-in XSS protections
-  },
-});
+i18n
+  .use(initReactI18next)
+  .init({
+    lng: "en-GB",
+    fallbackLng: "en-GB",
+    interpolation: {
+      escapeValue: false, // React has built-in XSS protections
+    },
+  })
+  .catch((e) => logger.warn("Failed to init i18n for testing", e));
 
 Config.initDefault();
 posthog.opt_out_capturing();
