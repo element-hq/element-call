@@ -74,7 +74,7 @@ export class ObjectFlattener {
   }
 
   public static flattenObjectRecursive(
-    obj: Object,
+    obj: object,
     flatObject: Attributes,
     prefix: string,
     depth: number,
