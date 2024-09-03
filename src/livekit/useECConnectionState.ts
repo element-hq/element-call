@@ -115,6 +115,7 @@ async function doConnect(
     await connectAndPublish(livekitRoom, sfuConfig, preCreatedAudioTrack, []);
   } catch (e) {
     preCreatedAudioTrack?.stop();
+    logger.warn("Stopped precreated audio tracks.", e);
   }
 }
 

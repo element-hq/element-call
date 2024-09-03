@@ -15,7 +15,7 @@ limitations under the License.
 */
 
 import { Span } from "@opentelemetry/api";
-import { MatrixCall } from "matrix-js-sdk";
+import { MatrixCall } from "matrix-js-sdk/src/matrix";
 import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
 import {
   TransceiverStats,

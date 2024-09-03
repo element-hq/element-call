@@ -14,21 +14,17 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { FC, ReactNode, useCallback, useMemo } from "react";
-import { Item } from "@react-stately/collections";
+import { FC, useMemo, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { Menu, MenuItem } from "@vector-im/compound-web";
 
-import { Button, LinkButton } from "./button";
-import { PopoverMenuTrigger } from "./popover/PopoverMenu";
-import { Menu } from "./Menu";
-import { TooltipTrigger } from "./Tooltip";
+import { LinkButton } from "./button";
 import { Avatar, Size } from "./Avatar";
 import UserIcon from "./icons/User.svg?react";
 import SettingsIcon from "./icons/Settings.svg?react";
 import LoginIcon from "./icons/Login.svg?react";
 import LogoutIcon from "./icons/Logout.svg?react";
-import { Body } from "./typography/Typography";
 import styles from "./UserMenu.module.css";
 
 interface Props {
@@ -91,7 +87,7 @@ export const UserMenu: FC<Props> = ({
     return arr;
   }, [isAuthenticated, isPasswordlessUser, displayName, preventNavigation, t]);
 
-  const tooltip = useCallback(() => t("common.profile"), [t]);
+  const [open, setOpen] = useState(false);
 
   if (!isAuthenticated) {
     return (
@@ -102,10 +98,15 @@ export const UserMenu: FC<Props> = ({
   }
 
   return (
-    <PopoverMenuTrigger placement="bottom right">
-      <TooltipTrigger tooltip={tooltip} placement="bottom left">
-        <Button
-          variant="icon"
+    <Menu
+      title={t("a11y.user_menu")}
+      showTitle={false}
+      align="end"
+      open={open}
+      onOpenChange={setOpen}
+      trigger={
+        <button
+          aria-label={t("common.profile")}
           className={styles.userButton}
           data-testid="usermenu_open"
         >
@@ -119,26 +120,18 @@ export const UserMenu: FC<Props> = ({
           ) : (
             <UserIcon />
           )}
-        </Button>
-      </TooltipTrigger>
-      {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (props: any): ReactNode => (
-          <Menu {...props} label={t("a11y.user_menu")} onAction={onAction}>
-            {items.map(({ key, icon: Icon, label, dataTestid }) => (
-              <Item key={key} textValue={label}>
-                <Icon
-                  width={24}
-                  height={24}
-                  className={styles.menuIcon}
-                  data-testid={dataTestid}
-                />
-                <Body overflowEllipsis>{label}</Body>
-              </Item>
-            ))}
-          </Menu>
-        )
+        </button>
       }
-    </PopoverMenuTrigger>
+    >
+      {items.map(({ key, icon: Icon, label, dataTestid }) => (
+        <MenuItem
+          key={key}
+          Icon={Icon}
+          label={label}
+          data-test-id={dataTestid}
+          onSelect={() => onAction(key)}
+        />
+      ))}
+    </Menu>
   );
 };

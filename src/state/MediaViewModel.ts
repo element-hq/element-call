@@ -36,12 +36,10 @@ import {
   BehaviorSubject,
   Observable,
   combineLatest,
-  distinctUntilChanged,
   distinctUntilKeyChanged,
   fromEvent,
   map,
   of,
-  shareReplay,
   startWith,
   switchMap,
 } from "rxjs";
@@ -84,7 +82,6 @@ function observeTrackReference(
       source,
     })),
     distinctUntilKeyChanged("publication"),
-    shareReplay(1),
   );
 }
 
@@ -119,15 +116,19 @@ abstract class BaseMediaViewModel extends ViewModel {
     videoSource: VideoSource,
   ) {
     super();
-    const audio = observeTrackReference(participant, audioSource);
-    this.video = observeTrackReference(participant, videoSource);
+    const audio = observeTrackReference(participant, audioSource).pipe(
+      this.scope.state(),
+    );
+    this.video = observeTrackReference(participant, videoSource).pipe(
+      this.scope.state(),
+    );
     this.unencryptedWarning = combineLatest(
       [audio, this.video],
       (a, v) =>
         callEncrypted &&
         (a.publication?.isEncrypted === false ||
           v.publication?.isEncrypted === false),
-    ).pipe(distinctUntilChanged(), shareReplay(1));
+    ).pipe(this.scope.state());
   }
 }
 
@@ -151,7 +152,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     ParticipantEvent.IsSpeakingChanged,
   ).pipe(
     map((p) => p.isSpeaking),
-    shareReplay(1),
+    this.scope.state(),
   );
 
   /**
@@ -184,7 +185,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       Track.Source.Camera,
     );
 
-    const media = observeParticipantMedia(participant).pipe(shareReplay(1));
+    const media = observeParticipantMedia(participant).pipe(this.scope.state());
     this.audioEnabled = media.pipe(
       map((m) => m.microphoneTrack?.isMuted === false),
     );
@@ -216,7 +217,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
         map(() => facingModeFromLocalTrack(track).facingMode === "user"),
       );
     }),
-    shareReplay(1),
+    this.scope.state(),
   );
 
   /**

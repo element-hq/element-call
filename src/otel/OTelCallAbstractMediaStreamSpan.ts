@@ -67,7 +67,7 @@ export abstract class OTelCallAbstractMediaStreamSpan {
     });
   }
 
-  public abstract update(data: Object): void;
+  public abstract update(data: object): void;
 
   public end(): void {
     this.trackSpans.forEach((tSpan) => {

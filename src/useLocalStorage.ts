@@ -50,9 +50,6 @@ export const useLocalStorage = (
   ];
 };
 
-export const getLocalStorageItem = (key: string): LocalStorageItem =>
-  localStorage.getItem(key);
-
 export const setLocalStorageItem = (key: string, value: string): void => {
   localStorage.setItem(key, value);
   localStorageBus.emit(key, value);

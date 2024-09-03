@@ -42,9 +42,8 @@ limitations under the License.
 }
 
 .callEndedButton {
+  margin: auto;
   margin-top: 54px;
-  margin-left: 30px;
-  margin-right: 30px !important;
 }
 
 .submitButton {

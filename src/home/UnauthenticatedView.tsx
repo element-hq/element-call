@@ -18,20 +18,19 @@ import { FC, useCallback, useState, FormEventHandler } from "react";
 import { useHistory } from "react-router-dom";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { Trans, useTranslation } from "react-i18next";
-import { Heading } from "@vector-im/compound-web";
+import { Button, Heading } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { useClient } from "../ClientContext";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { UserMenuContainer } from "../UserMenuContainer";
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
-import { Button } from "../button";
 import {
   createRoom,
   getRelativeRoomUrl,
   roomAliasLocalpartFromRoomName,
   sanitiseRoomNameInput,
-} from "../matrix-utils";
+} from "../utils/matrix";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { useRecaptcha } from "../auth/useRecaptcha";
@@ -43,16 +42,13 @@ import { generateRandomName } from "../auth/generateRandomName";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { Config } from "../config/Config";
 import { E2eeType } from "../e2ee/e2eeType";
-import {
-  useSetting,
-  optInAnalytics as optInAnalyticsSetting,
-} from "../settings/settings";
+import { useOptInAnalytics } from "../settings/settings";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
-  const [optInAnalytics] = useSetting(optInAnalyticsSetting);
+  const [optInAnalytics] = useOptInAnalytics();
   const { recaptchaKey, register } = useInteractiveRegistration();
   const { execute, reset, recaptchaId } = useRecaptcha(recaptchaKey);
 

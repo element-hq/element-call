@@ -19,7 +19,6 @@ import {
   RoomContext,
   useLocalParticipant,
 } from "@livekit/components-react";
-import { usePreventScroll } from "@react-aria/overlays";
 import { ConnectionState, Room } from "livekit-client";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import {
@@ -44,10 +43,10 @@ import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
-  HangupButton,
+  EndCallButton,
   MicButton,
   VideoButton,
-  ScreenshareButton,
+  ShareScreenButton,
   SettingsButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
@@ -69,7 +68,7 @@ import { InviteButton } from "../button/InviteButton";
 import { LayoutToggle } from "./LayoutToggle";
 import { ECConnectionState } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
-import { GridMode, Layout, useCallViewModel } from "../state/CallViewModel";
+import { CallViewModel, GridMode, Layout } from "../state/CallViewModel";
 import { Grid, TileProps } from "../grid/Grid";
 import { useObservable } from "../state/useObservable";
 import { useInitial } from "../useInitial";
@@ -93,7 +92,7 @@ const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 const maxTapDurationMs = 400;
 
 export interface ActiveCallProps
-  extends Omit<InCallViewProps, "livekitRoom" | "connState"> {
+  extends Omit<InCallViewProps, "vm" | "livekitRoom" | "connState"> {
   e2eeSystem: EncryptionSystem;
 }
 
@@ -105,6 +104,8 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     sfuConfig,
     props.e2eeSystem,
   );
+  const connStateObservable = useObservable(connState);
+  const [vm, setVm] = useState<CallViewModel | null>(null);
 
   useEffect(() => {
     return (): void => {
@@ -113,17 +114,41 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!livekitRoom) return null;
+  useEffect(() => {
+    if (livekitRoom !== undefined) {
+      const vm = new CallViewModel(
+        props.rtcSession.room,
+        livekitRoom,
+        props.e2eeSystem.kind !== E2eeType.NONE,
+        connStateObservable,
+      );
+      setVm(vm);
+      return (): void => vm.destroy();
+    }
+  }, [
+    props.rtcSession.room,
+    livekitRoom,
+    props.e2eeSystem.kind,
+    connStateObservable,
+  ]);
+
+  if (livekitRoom === undefined || vm === null) return null;
 
   return (
     <RoomContext.Provider value={livekitRoom}>
-      <InCallView {...props} livekitRoom={livekitRoom} connState={connState} />
+      <InCallView
+        {...props}
+        vm={vm}
+        livekitRoom={livekitRoom}
+        connState={connState}
+      />
     </RoomContext.Provider>
   );
 };
 
 export interface InCallViewProps {
   client: MatrixClient;
+  vm: CallViewModel;
   matrixInfo: MatrixInfo;
   rtcSession: MatrixRTCSession;
   livekitRoom: Room;
@@ -138,6 +163,7 @@ export interface InCallViewProps {
 
 export const InCallView: FC<InCallViewProps> = ({
   client,
+  vm,
   matrixInfo,
   rtcSession,
   livekitRoom,
@@ -148,7 +174,6 @@ export const InCallView: FC<InCallViewProps> = ({
   connState,
   onShareClick,
 }) => {
-  usePreventScroll();
   useWakeLock();
 
   useEffect(() => {
@@ -193,12 +218,6 @@ export const InCallView: FC<InCallViewProps> = ({
   const reducedControls = boundsValid && bounds.width <= 340;
   const noControls = reducedControls && bounds.height <= 400;
 
-  const vm = useCallViewModel(
-    rtcSession.room,
-    livekitRoom,
-    matrixInfo.e2eeSystem.kind !== E2eeType.NONE,
-    connState,
-  );
   const windowMode = useObservableEagerState(vm.windowMode);
   const layout = useObservableEagerState(vm.layout);
   const gridMode = useObservableEagerState(vm.gridMode);
@@ -471,14 +490,14 @@ export const InCallView: FC<InCallViewProps> = ({
       <MicButton
         key="1"
         muted={!muteStates.audio.enabled}
-        onPress={toggleMicrophone}
+        onClick={toggleMicrophone}
         disabled={muteStates.audio.setEnabled === null}
         data-testid="incall_mute"
       />,
       <VideoButton
         key="2"
         muted={!muteStates.video.enabled}
-        onPress={toggleCamera}
+        onClick={toggleCamera}
         disabled={muteStates.video.setEnabled === null}
         data-testid="incall_videomute"
       />,
@@ -486,21 +505,21 @@ export const InCallView: FC<InCallViewProps> = ({
     if (!reducedControls) {
       if (canScreenshare && !hideScreensharing) {
         buttons.push(
-          <ScreenshareButton
+          <ShareScreenButton
             key="3"
             enabled={isScreenShareEnabled}
-            onPress={toggleScreensharing}
+            onClick={toggleScreensharing}
             data-testid="incall_screenshare"
           />,
         );
       }
-      buttons.push(<SettingsButton key="4" onPress={openSettings} />);
+      buttons.push(<SettingsButton key="4" onClick={openSettings} />);
     }
 
     buttons.push(
-      <HangupButton
+      <EndCallButton
         key="6"
-        onPress={function (): void {
+        onClick={function (): void {
           onLeave();
         }}
         data-testid="incall_leave"

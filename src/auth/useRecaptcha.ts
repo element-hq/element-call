@@ -20,7 +20,6 @@ import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { translatedError } from "../TranslatedError";
-
 declare global {
   interface Window {
     mxOnRecaptchaLoaded: () => void;

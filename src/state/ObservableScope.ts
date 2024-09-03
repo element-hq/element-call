@@ -14,7 +14,15 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { MonoTypeOperatorFunction, Subject, takeUntil } from "rxjs";
+import {
+  distinctUntilChanged,
+  Observable,
+  shareReplay,
+  Subject,
+  takeUntil,
+} from "rxjs";
+
+type MonoTypeOperator = <T>(o: Observable<T>) => Observable<T>;
 
 /**
  * A scope which limits the execution lifetime of its bound Observables.
@@ -22,12 +30,26 @@ import { MonoTypeOperatorFunction, Subject, takeUntil } from "rxjs";
 export class ObservableScope {
   private readonly ended = new Subject<void>();
 
+  private readonly bindImpl: MonoTypeOperator = takeUntil(this.ended);
+
   /**
    * Binds an Observable to this scope, so that it completes when the scope
    * ends.
    */
-  public bind<T>(): MonoTypeOperatorFunction<T> {
-    return takeUntil(this.ended);
+  public bind(): MonoTypeOperator {
+    return this.bindImpl;
+  }
+
+  private readonly stateImpl: MonoTypeOperator = (o) =>
+    o.pipe(this.bind(), distinctUntilChanged(), shareReplay(1));
+
+  /**
+   * Transforms an Observable into a hot state Observable which replays its
+   * latest value upon subscription, skips updates with identical values, and
+   * is bound to this scope.
+   */
+  public state(): MonoTypeOperator {
+    return this.stateImpl;
   }
 
   /**

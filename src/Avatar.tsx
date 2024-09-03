@@ -17,7 +17,7 @@ limitations under the License.
 import { useMemo, FC } from "react";
 import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
 
-import { getAvatarUrl } from "./matrix-utils";
+import { getAvatarUrl } from "./utils/matrix";
 import { useClient } from "./ClientContext";
 
 export enum Size {

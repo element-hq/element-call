@@ -18,7 +18,7 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { Room, RoomEvent } from "matrix-js-sdk/src/models/room";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { useState, useEffect } from "react";
-import { EventTimeline, EventType, JoinRule } from "matrix-js-sdk";
+import { EventTimeline, EventType, JoinRule } from "matrix-js-sdk/src/matrix";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { MatrixRTCSessionManagerEvents } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSessionManager";
 import { KnownMembership } from "matrix-js-sdk/src/types";
@@ -134,7 +134,7 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
 
   useEffect(() => {
     function updateRooms(): void {
-      // We want to show all rooms that historically had a call and which we are (can become) part of.
+      // We want to show all rooms that historically had a call and which we are (or can become) part of.
       const rooms = client
         .getRooms()
         .filter(roomHasCallMembershipEvents)
@@ -142,7 +142,6 @@ export function useGroupCallRooms(client: MatrixClient): GroupCallRoom[] {
       const sortedRooms = sortRooms(client, rooms);
       const items = sortedRooms.map((room) => {
         const session = client.matrixRTC.getRoomSession(room);
-        session.memberships;
         return {
           roomAlias: room.getCanonicalAlias() ?? undefined,
           roomName: room.name,

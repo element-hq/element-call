@@ -72,7 +72,7 @@ export class PosthogSpanProcessor implements SpanProcessor {
     try {
       return JSON.parse(data);
     } catch (e) {
-      logger.warn("Invalid prev call data", data);
+      logger.warn("Invalid prev call data", data, "error:", e);
       return null;
     }
   }

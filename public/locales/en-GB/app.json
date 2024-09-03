@@ -4,8 +4,8 @@
   },
   "action": {
     "close": "Close",
-    "copy": "Copy",
     "copy_link": "Copy link",
+    "edit": "Edit",
     "go": "Go",
     "invite": "Invite",
     "no": "No",
@@ -13,7 +13,8 @@
     "remove": "Remove",
     "sign_in": "Sign in",
     "sign_out": "Sign out",
-    "submit": "Submit"
+    "submit": "Submit",
+    "upload_file": "Upload file"
   },
   "analytics_notice": "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.",
   "app_selection_modal": {
@@ -43,7 +44,6 @@
     "avatar": "Avatar",
     "back": "Back",
     "camera": "Camera",
-    "copied": "Copied!",
     "display_name": "Display name",
     "encrypted": "Encrypted",
     "error": "Error",
@@ -107,6 +107,7 @@
   "mute_microphone_button_label": "Mute microphone",
   "participant_count_one": "{{count, number}}",
   "participant_count_other": "{{count, number}}",
+  "qr_code": "QR Code",
   "rageshake_button_error_caption": "Retry sending logs",
   "rageshake_request_modal": {
     "body": "Another user on this call is having an issue. In order to better diagnose these issues we'd like to collect a debug log.",
@@ -130,7 +131,6 @@
   "room_auth_view_eula_caption": "By clicking \"Join call now\", you agree to our <2>End User Licensing Agreement (EULA)</2>",
   "room_auth_view_join_button": "Join call now",
   "screenshare_button_label": "Share screen",
-  "select_input_unset_button": "Select an option",
   "settings": {
     "developer_settings_label": "Developer Settings",
     "developer_settings_label_description": "Expose developer settings in the settings window.",

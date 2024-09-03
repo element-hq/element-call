@@ -20,7 +20,7 @@ import {
   MatrixClient,
   MatrixEvent,
   RoomMember,
-} from "matrix-js-sdk";
+} from "matrix-js-sdk/src/matrix";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
   CallError,
