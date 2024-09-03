@@ -505,7 +505,9 @@ function tryInitStorage(): Promise<void> {
   let indexedDB;
   try {
     indexedDB = window.indexedDB;
-  } catch (e) {}
+  } catch (e) {
+    logger.warn("Could not get indexDB from window.", e);
+  }
 
   if (indexedDB) {
     global.mx_rage_store = new IndexedDBLogStore(

@@ -30,7 +30,10 @@ export class Setting<T> {
       try {
         initialValue = JSON.parse(storedValue);
       } catch (e) {
-        logger.warn(`Invalid value stored for setting ${key}: ${storedValue}`);
+        logger.warn(
+          `Invalid value stored for setting ${key}: ${storedValue}.`,
+          e,
+        );
       }
     }
 
