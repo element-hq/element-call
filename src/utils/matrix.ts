@@ -87,7 +87,9 @@ export async function initClient(
   let indexedDB: IDBFactory | undefined;
   try {
     indexedDB = window.indexedDB;
-  } catch (e) {}
+  } catch (e) {
+    logger.warn("Could not get indexDB from window.", e);
+  }
 
   // options we always pass to the client (stuff that we need in order to work)
   const baseOpts = {

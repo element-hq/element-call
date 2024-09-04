@@ -53,8 +53,6 @@
   "disconnected_banner": "Spojenie so serverom sa stratilo.",
   "full_screen_view_description": "<0>Odoslanie záznamov ladenia nám pomôže nájsť problém.</0>",
   "full_screen_view_h1": "<0>Hups, niečo sa pokazilo.</0>",
-  "group_call_loader_failed_heading": "Hovor nebol nájdený",
-  "group_call_loader_failed_text": "Hovory sú teraz end-to-end šifrované a je potrebné ich vytvoriť z domovskej stránky. To pomáha zabezpečiť, aby všetci používali rovnaký šifrovací kľúč.",
   "hangup_button_label": "Ukončiť hovor",
   "header_label": "Domov Element Call",
   "header_participants_label": "Účastníci",

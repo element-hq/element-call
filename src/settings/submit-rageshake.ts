@@ -18,9 +18,13 @@ import { ComponentProps, useCallback, useEffect, useState } from "react";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
 import pako from "pako";
-import { MatrixEvent } from "matrix-js-sdk/src/models/event";
-import { ClientEvent } from "matrix-js-sdk/src/client";
 import { logger } from "matrix-js-sdk/src/logger";
+import {
+  ClientEvent,
+  Crypto,
+  MatrixClient,
+  MatrixEvent,
+} from "matrix-js-sdk/src/matrix";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
@@ -34,6 +38,84 @@ const gzip = (text: string): Blob => {
   // compress
   return new Blob([pako.gzip(buf)]);
 };
+
+/**
+ * Collects crypto related information.
+ */
+async function collectCryptoInfo(
+  cryptoApi: Crypto.CryptoApi,
+  body: FormData,
+): Promise<void> {
+  body.append("crypto_version", cryptoApi.getVersion());
+
+  const ownDeviceKeys = await cryptoApi.getOwnDeviceKeys();
+  const keys = [
+    `curve25519:${ownDeviceKeys.curve25519}`,
+    `ed25519:${ownDeviceKeys.ed25519}`,
+  ];
+
+  body.append("device_keys", keys.join(", "));
+
+  // add cross-signing status information
+  const crossSigningStatus = await cryptoApi.getCrossSigningStatus();
+
+  body.append(
+    "cross_signing_ready",
+    String(await cryptoApi.isCrossSigningReady()),
+  );
+  body.append(
+    "cross_signing_key",
+    (await cryptoApi.getCrossSigningKeyId()) ?? "n/a",
+  );
+  body.append(
+    "cross_signing_privkey_in_secret_storage",
+    String(crossSigningStatus.privateKeysInSecretStorage),
+  );
+
+  body.append(
+    "cross_signing_master_privkey_cached",
+    String(crossSigningStatus.privateKeysCachedLocally.masterKey),
+  );
+  body.append(
+    "cross_signing_self_signing_privkey_cached",
+    String(crossSigningStatus.privateKeysCachedLocally.selfSigningKey),
+  );
+  body.append(
+    "cross_signing_user_signing_privkey_cached",
+    String(crossSigningStatus.privateKeysCachedLocally.userSigningKey),
+  );
+}
+
+/**
+ * Collects information about secret storage and backup.
+ */
+async function collectRecoveryInfo(
+  client: MatrixClient,
+  cryptoApi: Crypto.CryptoApi,
+  body: FormData,
+): Promise<void> {
+  const secretStorage = client.secretStorage;
+  body.append(
+    "secret_storage_ready",
+    String(await cryptoApi.isSecretStorageReady()),
+  );
+  body.append(
+    "secret_storage_key_in_account",
+    String(await secretStorage.hasKey()),
+  );
+
+  body.append(
+    "session_backup_key_in_secret_storage",
+    String(!!(await client.isKeyBackupKeyStored())),
+  );
+  const sessionBackupKeyFromCache =
+    await cryptoApi.getSessionBackupPrivateKey();
+  body.append("session_backup_key_cached", String(!!sessionBackupKeyFromCache));
+  body.append(
+    "session_backup_key_well_formed",
+    String(sessionBackupKeyFromCache instanceof Uint8Array),
+  );
+}
 
 interface RageShakeSubmitOptions {
   sendLogs: boolean;
@@ -85,7 +167,9 @@ export function useSubmitRageshake(): {
         try {
           // MDN claims broad support across browsers
           touchInput = String(window.matchMedia("(pointer: coarse)").matches);
-        } catch (e) {}
+        } catch (e) {
+          logger.warn("Could not get coarse pointer for rageshake submit.", e);
+        }
 
         let description = opts.rageshakeRequestId
           ? `Rageshake ${opts.rageshakeRequestId}`
@@ -118,90 +202,10 @@ export function useSubmitRageshake(): {
             body.append("room_id", opts.roomId);
           }
 
-          if (client.isCryptoEnabled()) {
-            const keys = [`ed25519:${client.getDeviceEd25519Key()}`];
-            if (client.getDeviceCurve25519Key) {
-              keys.push(`curve25519:${client.getDeviceCurve25519Key()}`);
-            }
-            body.append("device_keys", keys.join(", "));
-            body.append("cross_signing_key", client.getCrossSigningId()!);
-
-            // add cross-signing status information
-            const crossSigning = client.crypto!.crossSigningInfo;
-            const secretStorage = client.crypto!.secretStorage;
-
-            body.append(
-              "cross_signing_ready",
-              String(await client.isCrossSigningReady()),
-            );
-            body.append(
-              "cross_signing_supported_by_hs",
-              String(
-                await client.doesServerSupportUnstableFeature(
-                  "org.matrix.e2e_cross_signing",
-                ),
-              ),
-            );
-            body.append("cross_signing_key", crossSigning.getId()!);
-            body.append(
-              "cross_signing_privkey_in_secret_storage",
-              String(
-                !!(await crossSigning.isStoredInSecretStorage(secretStorage)),
-              ),
-            );
-
-            const pkCache = client.getCrossSigningCacheCallbacks();
-            body.append(
-              "cross_signing_master_privkey_cached",
-              String(
-                !!(
-                  pkCache?.getCrossSigningKeyCache &&
-                  (await pkCache.getCrossSigningKeyCache("master"))
-                ),
-              ),
-            );
-            body.append(
-              "cross_signing_self_signing_privkey_cached",
-              String(
-                !!(
-                  pkCache?.getCrossSigningKeyCache &&
-                  (await pkCache.getCrossSigningKeyCache("self_signing"))
-                ),
-              ),
-            );
-            body.append(
-              "cross_signing_user_signing_privkey_cached",
-              String(
-                !!(
-                  pkCache?.getCrossSigningKeyCache &&
-                  (await pkCache.getCrossSigningKeyCache("user_signing"))
-                ),
-              ),
-            );
-
-            body.append(
-              "secret_storage_ready",
-              String(await client.isSecretStorageReady()),
-            );
-            body.append(
-              "secret_storage_key_in_account",
-              String(!!(await secretStorage.hasKey())),
-            );
-
-            body.append(
-              "session_backup_key_in_secret_storage",
-              String(!!(await client.isKeyBackupKeyStored())),
-            );
-            const sessionBackupKeyFromCache =
-              await client.crypto!.getSessionBackupPrivateKey();
-            body.append(
-              "session_backup_key_cached",
-              String(!!sessionBackupKeyFromCache),
-            );
-            body.append(
-              "session_backup_key_well_formed",
-              String(sessionBackupKeyFromCache instanceof Uint8Array),
-            );
+          const crypto = client.getCrypto();
+          if (crypto) {
+            await collectCryptoInfo(crypto, body);
+            await collectRecoveryInfo(client, crypto, body);
           }
         }
 
@@ -216,7 +220,9 @@ export function useSubmitRageshake(): {
               "storageManager_persisted",
               String(await navigator.storage.persisted()),
             );
-          } catch (e) {}
+          } catch (e) {
+            logger.warn("coulr not get navigator peristed storage", e);
+          }
         } else if (document.hasStorageAccess) {
           // Safari
           try {
@@ -224,7 +230,9 @@ export function useSubmitRageshake(): {
               "storageManager_persisted",
               String(await document.hasStorageAccess()),
             );
-          } catch (e) {}
+          } catch (e) {
+            logger.warn("could not get storage access", e);
+          }
         }
 
         if (navigator.storage && navigator.storage.estimate) {
@@ -244,7 +252,9 @@ export function useSubmitRageshake(): {
                 );
               });
             }
-          } catch (e) {}
+          } catch (e) {
+            logger.warn("could not obatain storage estimate", e);
+          }
         }
 
         if (opts.sendLogs) {
