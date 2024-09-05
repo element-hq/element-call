@@ -25,8 +25,6 @@ import { useCallViewKeyboardShortcuts } from "../src/useCallViewKeyboardShortcut
 // Test Explanation:
 // - The main objective is to test `useCallViewKeyboardShortcuts`.
 //   The TestComponent just wraps a button around that hook.
-// - We need to set `userEvent` to the `{document = window.document}` since we are testing the
-// `useCallViewKeyboardShortcuts` hook here. Which is listening to window.
 
 interface TestComponentProps {
   setMicrophoneMuted: (muted: boolean) => void;
@@ -52,7 +50,7 @@ const TestComponent: FC<TestComponentProps> = ({
 };
 
 test("spacebar unmutes", async () => {
-  const user = userEvent.setup({ document: window.document });
+  const user = userEvent.setup();
   let muted = true;
   render(
     <TestComponent
@@ -71,7 +69,7 @@ test("spacebar unmutes", async () => {
 });
 
 test("spacebar prioritizes pressing a button", async () => {
-  const user = userEvent.setup({ document: window.document });
+  const user = userEvent.setup();
 
   const setMuted = vi.fn();
   const onClick = vi.fn();
@@ -86,7 +84,7 @@ test("spacebar prioritizes pressing a button", async () => {
 });
 
 test("unmuting happens in place of the default action", async () => {
-  const user = userEvent.setup({ document: window.document });
+  const user = userEvent.setup();
   const defaultPrevented = vi.fn();
   // In the real application, we mostly just want the spacebar shortcut to avoid
   // scrolling the page. But to test that here in JSDOM, we need some kind of
