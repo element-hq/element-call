@@ -14,26 +14,31 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-import { expect, test } from "vitest";
 import { render, screen } from "@testing-library/react";
+import { expect, test, vi } from "vitest";
+import { Room } from "matrix-js-sdk/src/matrix";
 import { axe } from "vitest-axe";
-import { TooltipProvider } from "@vector-im/compound-web";
+import { BrowserRouter } from "react-router-dom";
+import userEvent from "@testing-library/user-event";
 
-import { RoomHeaderInfo } from "./Header";
+import { InviteModal } from "./InviteModal";
 
-test("RoomHeaderInfo is accessible", async () => {
+// Used by copy-to-clipboard
+window.prompt = (): null => null;
+
+test("InviteModal is accessible", async () => {
+  const user = userEvent.setup();
+  const room = {
+    roomId: "!a:example.org",
+    name: "Mission Control",
+  } as unknown as Room;
+  const onDismiss = vi.fn();
   const { container } = render(
-    <TooltipProvider>
-      <RoomHeaderInfo
-        id="!a:example.org"
-        name="Mission Control"
-        avatarUrl=""
-        encrypted
-        participantCount={11}
-      />
-    </TooltipProvider>,
+    <InviteModal room={room} open={true} onDismiss={onDismiss} />,
+    { wrapper: BrowserRouter },
   );
+
   expect(await axe(container)).toHaveNoViolations();
-  // Check that the room name acts as a heading
-  screen.getByRole("heading", { name: "Mission Control" });
+  await user.click(screen.getByRole("button", { name: "action.copy_link" }));
+  expect(onDismiss).toBeCalled();
 });
