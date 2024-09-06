@@ -16,6 +16,13 @@ limitations under the License.
 import { map } from "rxjs";
 import { RunHelpers, TestScheduler } from "rxjs/testing";
 import { expect, vi } from "vitest";
+import { RoomMember } from "matrix-js-sdk/src/matrix";
+import { LocalParticipant, RemoteParticipant } from "livekit-client";
+
+import {
+  LocalUserMediaViewModel,
+  RemoteUserMediaViewModel,
+} from "../state/MediaViewModel";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -57,4 +64,68 @@ export function withTestScheduler(
       },
     }),
   );
+}
+
+export async function withLocalMedia(
+  continuation: (vm: LocalUserMediaViewModel) => Promise<void>,
+): Promise<void> {
+  const member = {} as unknown as RoomMember;
+  const vm = new LocalUserMediaViewModel(
+    "a",
+    member,
+    {} as Partial<LocalParticipant> as LocalParticipant,
+    true,
+  );
+  try {
+    await continuation(vm);
+  } finally {
+    vm.destroy();
+  }
+}
+
+export async function withRemoteMedia(
+  member: Partial<RoomMember>,
+  participant: Partial<RemoteParticipant>,
+  continuation: (vm: RemoteUserMediaViewModel) => Promise<void>,
+): Promise<void> {
+  const vm = new RemoteUserMediaViewModel(
+    "a",
+    {
+      on() {
+        return this;
+      },
+      off() {
+        return this;
+      },
+      addListener() {
+        return this;
+      },
+      removeListener() {
+        return this;
+      },
+      ...member,
+    } as RoomMember,
+    {
+      setVolume() {},
+      on() {
+        return this;
+      },
+      off() {
+        return this;
+      },
+      addListener() {
+        return this;
+      },
+      removeListener() {
+        return this;
+      },
+      ...participant,
+    } as RemoteParticipant,
+    true,
+  );
+  try {
+    await continuation(vm);
+  } finally {
+    vm.destroy();
+  }
 }
