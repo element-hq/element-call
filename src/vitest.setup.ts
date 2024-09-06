@@ -37,3 +37,11 @@ Config.initDefault();
 posthog.opt_out_capturing();
 
 afterEach(cleanup);
+
+// Used by a lot of components
+window.matchMedia = global.matchMedia = (): MediaQueryList =>
+  ({
+    matches: false,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }) as Partial<MediaQueryList> as MediaQueryList;

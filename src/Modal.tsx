@@ -98,6 +98,7 @@ export const Modal: FC<Props> = ({
               styles.drawer,
               { [styles.tabbed]: tabbed },
             )}
+            aria-describedby={undefined}
             {...rest}
           >
             <div className={styles.content}>
@@ -120,7 +121,7 @@ export const Modal: FC<Props> = ({
           <DialogOverlay
             className={classNames(overlayStyles.bg, overlayStyles.animate)}
           />
-          <DialogContent asChild {...rest}>
+          <DialogContent asChild aria-describedby={undefined} {...rest}>
             <Glass
               className={classNames(
                 className,
