@@ -10,14 +10,11 @@ import {
   RoomContext,
   useLocalParticipant,
 } from "@livekit/components-react";
+import { ConnectionState, Room } from "livekit-client";
 import {
-  ConnectionState,
-  // eslint-disable-next-line camelcase
-  DataPacket_Kind,
-  Participant,
-  Room,
-  RoomEvent,
-} from "livekit-client";
+  MatrixEvent,
+  RoomEvent as MatrixRoomEvent,
+} from "matrix-js-sdk/src/matrix";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import {
   FC,
@@ -37,6 +34,8 @@ import classNames from "classnames";
 import { BehaviorSubject, of } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/src/logger";
+import { EventType, RelationType } from "matrix-js-sdk/src/matrix";
+import { ReactionEventContent } from "matrix-js-sdk/src/types";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -87,6 +86,7 @@ import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
 import { RaisedHandsProvider, useRaisedHands } from "./useRaisedHands";
+import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -309,33 +309,36 @@ export const InCallView: FC<InCallViewProps> = ({
     [vm],
   );
 
+  const memberships = useMatrixRTCSessionMemberships(rtcSession);
   const { raisedHands, setRaisedHands } = useRaisedHands();
-  const isHandRaised = raisedHands.includes(
-    localParticipant.identity.split(":")[0] +
-      ":" +
-      localParticipant.identity.split(":")[1],
-  );
+  const [reactionId, setReactionId] = useState<string | null>(null);
+  const [username, localpart] = localParticipant.identity.split(":");
+  const userId = `${username}:${localpart}`;
+  const isHandRaised = raisedHands.includes(userId);
 
   useEffect(() => {
-    const handleDataReceived = (
-      payload: Uint8Array,
-      participant?: Participant,
-      // eslint-disable-next-line camelcase
-      kind?: DataPacket_Kind,
-    ): void => {
-      const decoder = new TextDecoder();
-      const strData = decoder.decode(payload);
-      // get json object from strData
-      const data = JSON.parse(strData);
-      setRaisedHands(data.raisedHands);
+    const handleReactionEvent = (event: MatrixEvent): void => {
+      if (event.getType() === EventType.Reaction) {
+        // TODO: check if target of reaction is a call membership event
+        const content = event.getContent() as ReactionEventContent;
+        if (content?.["m.relates_to"].key === "🖐️") {
+          setRaisedHands([...raisedHands, event.getSender()!]);
+        }
+      }
+      if (event.getType() === EventType.RoomRedaction) {
+        // TODO: check target of redaction event
+        setRaisedHands(raisedHands.filter((id) => id !== event.getSender()));
+      }
     };
 
-    livekitRoom.on(RoomEvent.DataReceived, handleDataReceived);
+    client.on(MatrixRoomEvent.Timeline, handleReactionEvent);
+    client.on(MatrixRoomEvent.Redaction, handleReactionEvent);
 
     return (): void => {
-      livekitRoom.off(RoomEvent.DataReceived, handleDataReceived);
+      client.on(MatrixRoomEvent.Timeline, handleReactionEvent);
+      client.off(MatrixRoomEvent.Redaction, handleReactionEvent);
     };
-  }, [livekitRoom, setRaisedHands]);
+  }, [client, raisedHands, setRaisedHands]);
 
   useEffect(() => {
     widget?.api.transport
@@ -518,35 +521,54 @@ export const InCallView: FC<InCallViewProps> = ({
       .catch(logger.error);
   }, [localParticipant, isScreenShareEnabled]);
 
-  const toggleRaisedHand = useCallback(() => {
-    // TODO: wtf
-    const userId =
-      localParticipant.identity.split(":")[0] +
-      ":" +
-      localParticipant.identity.split(":")[1];
-    const raisedHand = raisedHands.includes(userId);
-    let result = raisedHands;
-    if (raisedHand) {
-      result = raisedHands.filter((id) => id !== userId);
-    } else {
-      result = [...raisedHands, userId];
-    }
+  const toggleRaisedHand = useCallback(async () => {
     try {
-      const strData = JSON.stringify({
-        raisedHands: result,
-      });
-      const encoder = new TextEncoder();
-      const data = encoder.encode(strData);
-      livekitRoom.localParticipant.publishData(data, { reliable: true });
-      setRaisedHands(result);
+      if (isHandRaised) {
+        try {
+          if (reactionId) {
+            await client.redactEvent(rtcSession.room.roomId, reactionId);
+            setReactionId(null);
+            setRaisedHands(raisedHands.filter((id) => id !== userId));
+            logger.debug("Redacted reaction event");
+          }
+        } catch (e) {
+          logger.error("Failed to redact reaction event", e);
+        }
+      } else {
+        const m = memberships.filter((m) => m.sender === userId);
+        const eventId = m[0].eventId!;
+        try {
+          const reaction = await client.sendEvent(
+            rtcSession.room.roomId,
+            EventType.Reaction,
+            {
+              "m.relates_to": {
+                rel_type: RelationType.Annotation,
+                event_id: eventId,
+                key: "🖐️",
+              },
+            },
+          );
+          setReactionId(reaction.event_id);
+          setRaisedHands([...raisedHands, userId]);
+          logger.debug("Sent reaction event", reaction.event_id);
+        } catch (e) {
+          logger.error("Failed to send reaction event", e);
+        }
+      }
     } catch (e) {
       logger.error(e);
     }
   }, [
-    livekitRoom.localParticipant,
-    localParticipant.identity,
+    client,
+    isHandRaised,
+    memberships,
     raisedHands,
+    reactionId,
+    rtcSession.room.roomId,
     setRaisedHands,
+    setReactionId,
+    userId,
   ]);
 
   let footer: JSX.Element | null;
