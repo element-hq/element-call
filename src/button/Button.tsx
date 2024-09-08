@@ -18,7 +18,6 @@ import {
   SettingsSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
-import RaiseHandIcon from "../icons/RaiseHand.svg?react";
 import styles from "./Button.module.css";
 
 interface MicButtonProps extends ComponentPropsWithoutRef<"button"> {
@@ -104,11 +103,23 @@ export const RaiseHandButton: FC<RaiseHandButtonProps> = ({
   return (
     <Tooltip label={t("common.raise_hand")}>
       <CpdButton
-        iconOnly
-        Icon={RaiseHandIcon}
         kind={raised ? "primary" : "secondary"}
         {...props}
-      />
+        style={{ paddingLeft: 8, paddingRight: 8 }}
+      >
+        <p
+          role="img"
+          aria-label="raised hand"
+          style={{
+            width: "30px",
+            height: "0px",
+            display: "inline-block",
+            fontSize: "22px",
+          }}
+        >
+          ✋
+        </p>
+      </CpdButton>
     </Tooltip>
   );
 };

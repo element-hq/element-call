@@ -16,7 +16,6 @@ import { Text, Tooltip } from "@vector-im/compound-web";
 import { ErrorIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./MediaView.module.css";
-import RaiseHandIcon from "../icons/RaiseHand.svg?react";
 import { Avatar } from "../Avatar";
 
 interface Props extends ComponentProps<typeof animated.div> {
@@ -91,7 +90,18 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
         <div className={styles.fg}>
           {raisedHand && (
             <div className={styles.raisedHand}>
-              <RaiseHandIcon width={22} height={22} />
+              <p
+                role="img"
+                aria-label="raised hand"
+                style={{
+                  width: "22px",
+                  height: "0px",
+                  display: "inline-block",
+                  fontSize: "22px",
+                }}
+              >
+                ✋
+              </p>
             </div>
           )}
           <div className={styles.nameTag}>
