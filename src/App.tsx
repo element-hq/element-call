@@ -77,9 +77,7 @@ export const App: FC<AppProps> = ({ history }) => {
         setLoaded(true);
         await widget?.api.sendContentLoaded();
       })
-      .catch((e) => {
-        logger.error(e);
-      });
+      .catch(logger.error);
   });
 
   const errorPage = <CrashView />;

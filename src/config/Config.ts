@@ -22,7 +22,7 @@ import {
 } from "./ConfigOptions";
 
 export class Config {
-  private static internalInstance: Config;
+  private static internalInstance: Config | undefined;
 
   public static get(): ConfigOptions {
     if (!this.internalInstance?.config)
@@ -31,22 +31,22 @@ export class Config {
   }
 
   public static async init(): Promise<void> {
-    if (Config.internalInstance?.initPromise) {
-      return Config.internalInstance.initPromise;
-    }
-    Config.internalInstance = new Config();
+    if (!Config.internalInstance?.initPromise) {
+      const internalInstance = new Config();
+      Config.internalInstance = internalInstance;
 
-    Config.internalInstance.initPromise = downloadConfig("../config.json").then(
-      (config) => {
-        Config.internalInstance.config = { ...DEFAULT_CONFIG, ...config };
-      },
-    );
+      Config.internalInstance.initPromise = downloadConfig(
+        "../config.json",
+      ).then((config) => {
+        internalInstance.config = { ...DEFAULT_CONFIG, ...config };
+      });
+    }
     return Config.internalInstance.initPromise;
   }
 
   /**
    * This is a alternative initializer that does not load anything
-   * from a hosted config file but instead just initializes the conifg using the
+   * from a hosted config file but instead just initializes the config using the
    * default config.
    *
    * It is supposed to only be used in tests. (It is executed in `vite.setup.js`)

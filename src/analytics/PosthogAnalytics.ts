@@ -399,7 +399,7 @@ export class PosthogAnalytics {
 
     if (this.identificationPromise) {
       // only make calls to posthog after the identification is done
-      this.identificationPromise.then(doCapture).catch((e) => {
+      this.identificationPromise.then(doCapture, (e) => {
         logger.error("Failed to identify user for tracking", e);
       });
     } else {

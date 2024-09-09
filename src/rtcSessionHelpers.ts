@@ -127,8 +127,13 @@ const widgetPostHangupProcedure = async (
   // we need to wait until the callEnded event is tracked on posthog.
   // Otherwise the iFrame gets killed before the callEnded event got tracked.
   await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
-  await widget.api.setAlwaysOnScreen(false);
   PosthogAnalytics.instance.logout();
+
+  try {
+    await widget.api.setAlwaysOnScreen(false);
+  } catch (e) {
+    logger.error("Failed to set call widget `alwaysOnScreen` to false", e);
+  }
 
   // We send the hangup event after the memberships have been updated
   // calling leaveRTCSession.

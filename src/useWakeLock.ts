@@ -30,9 +30,8 @@ export function useWakeLock(): void {
       // so we need to reacquire it on visibility changes
       const onVisibilityChange = (): void => {
         if (document.visibilityState === "visible") {
-          navigator.wakeLock
-            .request("screen")
-            .then((newLock) => {
+          navigator.wakeLock.request("screen").then(
+            (newLock) => {
               lock = newLock;
               // Handle the edge case where this component unmounts before the
               // promise resolves
@@ -40,10 +39,11 @@ export function useWakeLock(): void {
                 lock
                   .release()
                   .catch((e) => logger.warn("Can't release wake lock", e));
-            })
-            .catch((e) => {
+            },
+            (e) => {
               logger.warn("Can't acquire wake lock", e);
-            });
+            },
+          );
         }
       };
 

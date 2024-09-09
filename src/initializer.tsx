@@ -133,14 +133,15 @@ export class Initializer {
     // config
     if (this.loadStates.config === LoadState.None) {
       this.loadStates.config = LoadState.Loading;
-      Config.init()
-        .then(() => {
+      Config.init().then(
+        () => {
           this.loadStates.config = LoadState.Loaded;
           this.initStep(resolve);
-        })
-        .catch((e) => {
+        },
+        (e) => {
           logger.error("Failed to load config", e);
-        });
+        },
+      );
     }
 
     //sentry (only initialize after the config is ready)

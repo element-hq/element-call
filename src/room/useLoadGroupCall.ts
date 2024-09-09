@@ -159,10 +159,9 @@ export const useLoadGroupCall = (
       viaServers: string[],
       onKnockSent: () => void,
     ): Promise<Room> => {
-      let joinedRoom: Room | null = null;
       await client.knockRoom(roomId, { viaServers });
       onKnockSent();
-      const invitePromise = new Promise<void>((resolve, reject) => {
+      return await new Promise<Room>((resolve, reject) => {
         client.on(
           RoomEvent.MyMembership,
           (room, membership, prevMembership): void => {
@@ -172,14 +171,10 @@ export const useLoadGroupCall = (
               membership === KnownMembership.Invite &&
               prevMembership === KnownMembership.Knock
             ) {
-              client
-                .joinRoom(room.roomId, { viaServers })
-                .then((room) => {
-                  joinedRoom = room;
-                  logger.log("Auto-joined %s", room.roomId);
-                  resolve();
-                })
-                .catch((e) => reject(e));
+              client.joinRoom(room.roomId, { viaServers }).then((room) => {
+                logger.log("Auto-joined %s", room.roomId);
+                resolve(room);
+              }, reject);
             }
             if (membership === KnownMembership.Ban) reject(bannedError());
             if (membership === KnownMembership.Leave)
@@ -187,11 +182,6 @@ export const useLoadGroupCall = (
           },
         );
       });
-      await invitePromise;
-      if (!joinedRoom) {
-        throw new Error("Failed to join room after knocking.");
-      }
-      return joinedRoom;
     };
 
     const fetchOrCreateRoom = async (): Promise<Room> => {

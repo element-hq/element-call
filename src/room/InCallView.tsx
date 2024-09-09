@@ -478,12 +478,14 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   const toggleScreensharing = useCallback(() => {
-    void localParticipant.setScreenShareEnabled(!isScreenShareEnabled, {
-      audio: true,
-      selfBrowserSurface: "include",
-      surfaceSwitching: "include",
-      systemAudio: "include",
-    });
+    localParticipant
+      .setScreenShareEnabled(!isScreenShareEnabled, {
+        audio: true,
+        selfBrowserSurface: "include",
+        surfaceSwitching: "include",
+        systemAudio: "include",
+      })
+      .catch(logger.error);
   }, [localParticipant, isScreenShareEnabled]);
 
   let footer: JSX.Element | null;

@@ -236,13 +236,9 @@ class IndexedDBLogStore {
         return this.flushAgainPromise;
       }
       // queue up a flush to occur immediately after the pending one completes.
-      this.flushAgainPromise = this.flushPromise
-        .then(async () => {
-          return this.flush();
-        })
-        .then(() => {
-          this.flushAgainPromise = undefined;
-        });
+      this.flushAgainPromise = this.flushPromise.then(this.flush).then(() => {
+        this.flushAgainPromise = undefined;
+      });
       return this.flushAgainPromise;
     }
     // there is no flush promise or there was but it has finished, so do

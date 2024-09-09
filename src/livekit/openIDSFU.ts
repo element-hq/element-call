@@ -49,14 +49,18 @@ export function useOpenIDSFU(
   const activeFocus = useActiveLivekitFocus(rtcSession);
 
   useEffect(() => {
-    (async (): Promise<void> => {
-      const sfuConfig = activeFocus
-        ? await getSFUConfigWithOpenID(client, activeFocus)
-        : undefined;
-      setSFUConfig(sfuConfig);
-    })().catch((e) => {
-      logger.error("Failed to get SFU config", e);
-    });
+    if (activeFocus) {
+      getSFUConfigWithOpenID(client, activeFocus).then(
+        (sfuConfig) => {
+          setSFUConfig(sfuConfig);
+        },
+        (e) => {
+          logger.error("Failed to get SFU config", e);
+        },
+      );
+    } else {
+      setSFUConfig(undefined);
+    }
   }, [client, activeFocus]);
 
   return sfuConfig;

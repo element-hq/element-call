@@ -41,6 +41,7 @@ import {
 } from "react";
 import useMeasure from "react-use-measure";
 import classNames from "classnames";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import styles from "./Grid.module.css";
 import { useMergedRefs } from "../useMergedRefs";
@@ -362,7 +363,7 @@ export function Grid<
   // Because we're using react-spring in imperative mode, we're responsible for
   // firing animations manually whenever the tiles array updates
   useEffect(() => {
-    void springRef.start();
+    springRef.start().forEach((p) => void p.catch(logger.error));
   }, [placedTiles, springRef]);
 
   const animateDraggedTile = (
@@ -372,7 +373,7 @@ export function Grid<
     const { tileId, tileX, tileY } = dragState.current!;
     const tile = placedTiles.find((t) => t.id === tileId)!;
 
-    void springRef.current
+    springRef.current
       .find((c) => (c.item as Tile<TileModel>).id === tileId)
       ?.start(
         endOfGesture
@@ -399,7 +400,8 @@ export function Grid<
                 ((key): boolean =>
                   key === "zIndex" || key === "x" || key === "y"),
             },
-      );
+      )
+      .catch(logger.error);
 
     if (endOfGesture)
       callback({

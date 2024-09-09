@@ -106,9 +106,8 @@ export const useInteractiveRegistration = (
               });
           }
         },
-        requestEmailToken: async (): Promise<{ sid: string }> => {
-          return Promise.resolve({ sid: "dummy" });
-        },
+        requestEmailToken: async (): Promise<{ sid: string }> =>
+          Promise.resolve({ sid: "dummy" }),
       });
 
       // XXX: This claims to return an IAuthData which contains none of these
