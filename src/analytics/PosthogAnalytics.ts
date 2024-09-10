@@ -1,17 +1,8 @@
 /*
-Copyright 2022 The New Vector Ltd
+Copyright 2022-2024 New Vector Ltd.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+SPDX-License-Identifier: AGPL-3.0-only
+Please see LICENSE in the repository root for full details.
 */
 
 import posthog, { CaptureOptions, PostHog, Properties } from "posthog-js";
@@ -265,7 +256,7 @@ export class PosthogAnalytics {
         this.posthog.identify(analyticsID);
       } else {
         logger.info(
-          "No analyticsID is availble. Should not try to setup posthog",
+          "No analyticsID is available. Should not try to setup posthog",
         );
       }
     }
@@ -333,7 +324,9 @@ export class PosthogAnalytics {
   }
 
   public onLoginStatusChanged(): void {
-    this.maybeIdentifyUser();
+    this.maybeIdentifyUser().catch(() =>
+      logger.log("Could not identify user on login status change"),
+    );
   }
 
   private updateSuperProperties(): void {
@@ -382,20 +375,27 @@ export class PosthogAnalytics {
     }
   }
 
-  public async trackEvent<E extends IPosthogEvent>(
+  public trackEvent<E extends IPosthogEvent>(
     { eventName, ...properties }: E,
     options?: CaptureOptions,
-  ): Promise<void> {
+  ): void {
+    const doCapture = (): void => {
+      if (
+        this.anonymity == Anonymity.Disabled ||
+        this.anonymity == Anonymity.Anonymous
+      )
+        return;
+      this.capture(eventName, properties, options);
+    };
+
     if (this.identificationPromise) {
-      // only make calls to posthog after the identificaion is done
-      await this.identificationPromise;
+      // only make calls to posthog after the identification is done
+      this.identificationPromise.then(doCapture, (e) => {
+        logger.error("Failed to identify user for tracking", e);
+      });
+    } else {
+      doCapture();
     }
-    if (
-      this.anonymity == Anonymity.Disabled ||
-      this.anonymity == Anonymity.Anonymous
-    )
-      return;
-    this.capture(eventName, properties, options);
   }
 
   private startListeningToSettingsChanges(): void {
@@ -409,7 +409,9 @@ export class PosthogAnalytics {
     // won't be called (i.e. this.anonymity will be left as the default, until the setting changes)
     optInAnalytics.value.subscribe((optIn) => {
       this.setAnonymity(optIn ? Anonymity.Pseudonymous : Anonymity.Disabled);
-      this.maybeIdentifyUser();
+      this.maybeIdentifyUser().catch(() =>
+        logger.log("Could not identify user"),
+      );
     });
   }
 

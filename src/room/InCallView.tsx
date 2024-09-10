@@ -1,17 +1,8 @@
 /*
-Copyright 2022 - 2024 New Vector Ltd
+Copyright 2022-2024 New Vector Ltd.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+SPDX-License-Identifier: AGPL-3.0-only
+Please see LICENSE in the repository root for full details.
 */
 
 import {
@@ -38,6 +29,7 @@ import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
 import { BehaviorSubject, of } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -109,7 +101,9 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   useEffect(() => {
     return (): void => {
-      livekitRoom?.disconnect();
+      livekitRoom?.disconnect().catch((e) => {
+        logger.error("Failed to disconnect from livekit room", e);
+      });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -305,12 +299,16 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   useEffect(() => {
-    widget?.api.transport.send(
-      gridMode === "grid"
-        ? ElementWidgetActions.TileLayout
-        : ElementWidgetActions.SpotlightLayout,
-      {},
-    );
+    widget?.api.transport
+      .send(
+        gridMode === "grid"
+          ? ElementWidgetActions.TileLayout
+          : ElementWidgetActions.SpotlightLayout,
+        {},
+      )
+      .catch((e) => {
+        logger.error("Failed to send layout change to widget API", e);
+      });
   }, [gridMode]);
 
   useEffect(() => {
@@ -470,13 +468,15 @@ export const InCallView: FC<InCallViewProps> = ({
     rtcSession.room.roomId,
   );
 
-  const toggleScreensharing = useCallback(async () => {
-    await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, {
-      audio: true,
-      selfBrowserSurface: "include",
-      surfaceSwitching: "include",
-      systemAudio: "include",
-    });
+  const toggleScreensharing = useCallback(() => {
+    localParticipant
+      .setScreenShareEnabled(!isScreenShareEnabled, {
+        audio: true,
+        selfBrowserSurface: "include",
+        surfaceSwitching: "include",
+        systemAudio: "include",
+      })
+      .catch(logger.error);
   }, [localParticipant, isScreenShareEnabled]);
 
   let footer: JSX.Element | null;
