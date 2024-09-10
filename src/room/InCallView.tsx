@@ -320,17 +320,19 @@ export const InCallView: FC<InCallViewProps> = ({
     const getLastReactionEvent = async (
       eventId: string,
     ): Promise<MatrixEvent | undefined> => {
-      const rels = await client.relations(
-        rtcSession.room.roomId,
-        eventId,
-        RelationType.Annotation,
-        EventType.Reaction,
-        {
-          limit: 1,
-        },
-      );
-
-      return rels.events.length > 0 ? rels.events[0] : undefined;
+      return client
+        .relations(
+          rtcSession.room.roomId,
+          eventId,
+          RelationType.Annotation,
+          EventType.Reaction,
+          {
+            limit: 1,
+          },
+        )
+        .then((rels) => {
+          return rels.events.length > 0 ? rels.events[0] : undefined;
+        });
     };
 
     const fetchReactions = async (): Promise<void> => {
@@ -347,7 +349,7 @@ export const InCallView: FC<InCallViewProps> = ({
       setRaisedHands(newRaisedHands);
     };
 
-    fetchReactions();
+    void fetchReactions();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -556,43 +558,39 @@ export const InCallView: FC<InCallViewProps> = ({
       .catch(logger.error);
   }, [localParticipant, isScreenShareEnabled]);
 
-  const toggleRaisedHand = useCallback(async () => {
-    try {
-      if (isHandRaised) {
-        try {
-          if (reactionId) {
-            await client.redactEvent(rtcSession.room.roomId, reactionId);
+  const toggleRaisedHand = useCallback(() => {
+    if (isHandRaised) {
+      if (reactionId) {
+        client
+          .redactEvent(rtcSession.room.roomId, reactionId)
+          .then(() => {
             setReactionId(null);
             setRaisedHands(raisedHands.filter((id) => id !== userId));
             logger.debug("Redacted reaction event");
-          }
-        } catch (e) {
-          logger.error("Failed to redact reaction event", e);
-        }
-      } else {
-        const m = memberships.filter((m) => m.sender === userId);
-        const eventId = m[0].eventId!;
-        try {
-          const reaction = await client.sendEvent(
-            rtcSession.room.roomId,
-            EventType.Reaction,
-            {
-              "m.relates_to": {
-                rel_type: RelationType.Annotation,
-                event_id: eventId,
-                key: "🖐️",
-              },
-            },
-          );
+          })
+          .catch((e) => {
+            logger.error("Failed to redact reaction event", e);
+          });
+      }
+    } else {
+      const m = memberships.filter((m) => m.sender === userId);
+      const eventId = m[0].eventId!;
+      client
+        .sendEvent(rtcSession.room.roomId, EventType.Reaction, {
+          "m.relates_to": {
+            rel_type: RelationType.Annotation,
+            event_id: eventId,
+            key: "🖐️",
+          },
+        })
+        .then((reaction) => {
           setReactionId(reaction.event_id);
           setRaisedHands([...raisedHands, userId]);
           logger.debug("Sent reaction event", reaction.event_id);
-        } catch (e) {
+        })
+        .catch((e) => {
           logger.error("Failed to send reaction event", e);
-        }
-      }
-    } catch (e) {
-      logger.error(e);
+        });
     }
   }, [
     client,
