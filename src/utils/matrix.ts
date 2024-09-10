@@ -1,17 +1,8 @@
 /*
-Copyright 2022-2023 New Vector Ltd
+Copyright 2022-2024 New Vector Ltd.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+SPDX-License-Identifier: AGPL-3.0-only
+Please see LICENSE in the repository root for full details.
 */
 
 import { IndexedDBStore } from "matrix-js-sdk/src/store/indexeddb";
@@ -269,17 +260,25 @@ export async function createRoom(
   });
 
   // Wait for the room to arrive
-  await new Promise<void>((resolve, reject) => {
-    const onRoom = async (room: Room): Promise<void> => {
-      if (room.roomId === (await createPromise).room_id) {
-        resolve();
-        cleanUp();
-      }
-    };
+  const roomId = await new Promise<string>((resolve, reject) => {
     createPromise.catch((e) => {
       reject(e);
       cleanUp();
     });
+
+    const onRoom = (room: Room): void => {
+      createPromise.then(
+        (result) => {
+          if (room.roomId === result.room_id) {
+            resolve(room.roomId);
+            cleanUp();
+          }
+        },
+        (e) => {
+          logger.error("Failed to wait for the room to arrive", e);
+        },
+      );
+    };
 
     const cleanUp = (): void => {
       client.off(ClientEvent.Room, onRoom);
@@ -287,16 +286,14 @@ export async function createRoom(
     client.on(ClientEvent.Room, onRoom);
   });
 
-  const result = await createPromise;
-
-  let password;
+  let password: string | undefined;
   if (e2ee == E2eeType.SHARED_KEY) {
     password = secureRandomBase64Url(16);
-    saveKeyForRoom(result.room_id, password);
+    saveKeyForRoom(roomId, password);
   }
 
   return {
-    roomId: result.room_id,
+    roomId,
     alias: e2ee ? undefined : fullAliasFromRoomName(name, client),
     password,
   };

@@ -1,17 +1,8 @@
 /*
-Copyright 2023 New Vector Ltd
+Copyright 2023, 2024 New Vector Ltd.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+SPDX-License-Identifier: AGPL-3.0-only
+Please see LICENSE in the repository root for full details.
 */
 
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
@@ -83,8 +74,7 @@ async function makePreferredLivekitFoci(
       `No livekit_service_url is configured so we could not create a focus.
     Currently we skip computing a focus based on other users in the room.`,
     );
-
-  return preferredFoci;
+  return Promise.resolve(preferredFoci);
 
   // TODO: we want to do something like this:
   //
@@ -128,13 +118,18 @@ const widgetPostHangupProcedure = async (
   // we need to wait until the callEnded event is tracked on posthog.
   // Otherwise the iFrame gets killed before the callEnded event got tracked.
   await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
-  widget.api.setAlwaysOnScreen(false);
   PosthogAnalytics.instance.logout();
+
+  try {
+    await widget.api.setAlwaysOnScreen(false);
+  } catch (e) {
+    logger.error("Failed to set call widget `alwaysOnScreen` to false", e);
+  }
 
   // We send the hangup event after the memberships have been updated
   // calling leaveRTCSession.
   // We need to wait because this makes the client hosting this widget killing the IFrame.
-  widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+  await widget.api.transport.send(ElementWidgetActions.HangupCall, {});
 };
 
 export async function leaveRTCSession(

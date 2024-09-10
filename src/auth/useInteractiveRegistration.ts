@@ -1,17 +1,8 @@
 /*
-Copyright 2022 New Vector Ltd
+Copyright 2022-2024 New Vector Ltd.
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
-
-    http://www.apache.org/licenses/LICENSE-2.0
-
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
+SPDX-License-Identifier: AGPL-3.0-only
+Please see LICENSE in the repository root for full details.
 */
 
 import { useState, useEffect, useCallback, useRef } from "react";
@@ -21,6 +12,7 @@ import {
   MatrixClient,
   RegisterResponse,
 } from "matrix-js-sdk/src/matrix";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { initClient } from "../utils/matrix";
 import { Session } from "../ClientContext";
@@ -75,7 +67,7 @@ export const useInteractiveRegistration = (
     ): Promise<[MatrixClient, Session]> => {
       const interactiveAuth = new InteractiveAuth({
         matrixClient: authClient.current!,
-        doRequest: (auth): Promise<RegisterResponse> =>
+        doRequest: async (auth): Promise<RegisterResponse> =>
           authClient.current!.registerRequest({
             username,
             password,
@@ -87,19 +79,26 @@ export const useInteractiveRegistration = (
           }
 
           if (nextStage === "m.login.terms") {
-            interactiveAuth.submitAuthDict({
-              type: "m.login.terms",
-            });
+            interactiveAuth
+              .submitAuthDict({
+                type: "m.login.terms",
+              })
+              .catch((e) => {
+                logger.error(e);
+              });
           } else if (nextStage === "m.login.recaptcha") {
-            interactiveAuth.submitAuthDict({
-              type: "m.login.recaptcha",
-              response: recaptchaResponse,
-            });
+            interactiveAuth
+              .submitAuthDict({
+                type: "m.login.recaptcha",
+                response: recaptchaResponse,
+              })
+              .catch((e) => {
+                logger.error(e);
+              });
           }
         },
-        requestEmailToken: (): Promise<{ sid: string }> => {
-          return Promise.resolve({ sid: "dummy" });
-        },
+        requestEmailToken: async (): Promise<{ sid: string }> =>
+          Promise.resolve({ sid: "dummy" }),
       });
 
       // XXX: This claims to return an IAuthData which contains none of these
