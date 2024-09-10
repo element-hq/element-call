@@ -9,7 +9,10 @@ import { Link } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room } from "matrix-js-sdk/src/models/room";
-import { FC } from "react";
+import { FC, useCallback, MouseEvent } from "react";
+import { t } from "i18next";
+import { IconButton } from "@vector-im/compound-web";
+import { DeleteIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
@@ -55,8 +58,16 @@ interface CallTileProps {
   client: MatrixClient;
 }
 
-const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room }) => {
+const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room, client }) => {
   const roomEncryptionSystem = useRoomEncryptionSystem(room.roomId);
+  const onRemove = useCallback(
+    (e: MouseEvent) => {
+      e.stopPropagation();
+      e.preventDefault();
+      void client.leave(room.roomId);
+    },
+    [room, client],
+  );
   return (
     <div className={styles.callTile}>
       <Link
@@ -69,7 +80,9 @@ const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room }) => {
             {name}
           </Body>
         </div>
-        <div className={styles.copyButtonSpacer} />
+        <IconButton onClick={onRemove} aria-label={t("action.remove")}>
+          <DeleteIcon />
+        </IconButton>
       </Link>
     </div>
   );
