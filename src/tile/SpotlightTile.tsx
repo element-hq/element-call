@@ -61,6 +61,7 @@ interface SpotlightItemBaseProps {
   member: RoomMember | undefined;
   unencryptedWarning: boolean;
   displayName: string;
+  "aria-hidden"?: boolean;
 }
 
 interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
@@ -118,10 +119,21 @@ interface SpotlightItemProps {
    * Whether this item should act as a scroll snapping point.
    */
   snap: boolean;
+  "aria-hidden"?: boolean;
 }
 
 const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
-  ({ vm, targetWidth, targetHeight, intersectionObserver, snap }, theirRef) => {
+  (
+    {
+      vm,
+      targetWidth,
+      targetHeight,
+      intersectionObserver,
+      snap,
+      "aria-hidden": ariaHidden,
+    },
+    theirRef,
+  ) => {
     const ourRef = useRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
     const displayName = useDisplayName(vm);
@@ -153,6 +165,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
       member: vm.member,
       unencryptedWarning,
       displayName,
+      "aria-hidden": ariaHidden,
     };
 
     return vm instanceof ScreenShareViewModel ? (
@@ -280,7 +293,12 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
               targetWidth={targetWidth}
               targetHeight={targetHeight}
               intersectionObserver={intersectionObserver}
+              // This is how we get the container to scroll to the right media
+              // when the previous/next buttons are clicked: we temporarily
+              // remove all scroll snap points except for just the one media
+              // that we want to bring into view
               snap={scrollToId === null || scrollToId === vm.id}
+              aria-hidden={(scrollToId ?? visibleId) !== vm.id}
             />
           ))}
         </div>
@@ -288,9 +306,7 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
           <button
             className={classNames(styles.expand)}
             aria-label={
-              expanded
-                ? t("video_tile.full_screen")
-                : t("video_tile.exit_full_screen")
+              expanded ? t("video_tile.collapse") : t("video_tile.expand")
             }
             onClick={onToggleExpanded}
           >

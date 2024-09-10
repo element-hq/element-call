@@ -81,14 +81,14 @@ test("toggle fit/contain for a participant's video", async () => {
 });
 
 test("local media remembers whether it should always be shown", async () => {
-  await withLocalMedia(async (vm) =>
+  await withLocalMedia({}, async (vm) =>
     withTestScheduler(({ expectObservable, schedule }) => {
       schedule("-a|", { a: () => vm.setAlwaysShow(false) });
       expectObservable(vm.alwaysShow).toBe("ab", { a: true, b: false });
     }),
   );
   // Next local media should start out *not* always shown
-  await withLocalMedia(async (vm) =>
+  await withLocalMedia({}, async (vm) =>
     withTestScheduler(({ expectObservable, schedule }) => {
       schedule("-a|", { a: () => vm.setAlwaysShow(true) });
       expectObservable(vm.alwaysShow).toBe("ab", { a: false, b: true });
