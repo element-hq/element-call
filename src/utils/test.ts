@@ -17,7 +17,12 @@ import { map } from "rxjs";
 import { RunHelpers, TestScheduler } from "rxjs/testing";
 import { expect, vi } from "vitest";
 import { RoomMember } from "matrix-js-sdk/src/matrix";
-import { LocalParticipant, RemoteParticipant } from "livekit-client";
+import {
+  LocalParticipant,
+  LocalTrackPublication,
+  RemoteParticipant,
+  RemoteTrackPublication,
+} from "livekit-client";
 
 import {
   LocalUserMediaViewModel,
@@ -66,14 +71,47 @@ export function withTestScheduler(
   );
 }
 
+function mockMember(member: Partial<RoomMember>): RoomMember {
+  return {
+    on() {
+      return this;
+    },
+    off() {
+      return this;
+    },
+    addListener() {
+      return this;
+    },
+    removeListener() {
+      return this;
+    },
+    ...member,
+  } as RoomMember;
+}
+
 export async function withLocalMedia(
+  member: Partial<RoomMember>,
   continuation: (vm: LocalUserMediaViewModel) => Promise<void>,
 ): Promise<void> {
-  const member = {} as unknown as RoomMember;
   const vm = new LocalUserMediaViewModel(
-    "a",
-    member,
-    {} as Partial<LocalParticipant> as LocalParticipant,
+    "local",
+    mockMember(member),
+    {
+      getTrackPublication: () =>
+        ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
+      on() {
+        return this as LocalParticipant;
+      },
+      off() {
+        return this as LocalParticipant;
+      },
+      addListener() {
+        return this as LocalParticipant;
+      },
+      removeListener() {
+        return this as LocalParticipant;
+      },
+    } as Partial<LocalParticipant> as LocalParticipant,
     true,
   );
   try {
@@ -89,24 +127,12 @@ export async function withRemoteMedia(
   continuation: (vm: RemoteUserMediaViewModel) => Promise<void>,
 ): Promise<void> {
   const vm = new RemoteUserMediaViewModel(
-    "a",
-    {
-      on() {
-        return this;
-      },
-      off() {
-        return this;
-      },
-      addListener() {
-        return this;
-      },
-      removeListener() {
-        return this;
-      },
-      ...member,
-    } as RoomMember,
+    "remote",
+    mockMember(member),
     {
       setVolume() {},
+      getTrackPublication: () =>
+        ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
       on() {
         return this;
       },

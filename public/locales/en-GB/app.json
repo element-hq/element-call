@@ -161,8 +161,8 @@
   "video_tile": {
     "always_show": "Always show",
     "change_fit_contain": "Fit to frame",
-    "exit_full_screen": "Exit full screen",
-    "full_screen": "Full screen",
+    "collapse": "Collapse",
+    "expand": "Expand",
     "mute_for_me": "Mute for me",
     "volume": "Volume"
   }
