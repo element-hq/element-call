@@ -317,6 +317,41 @@ export const InCallView: FC<InCallViewProps> = ({
   const isHandRaised = raisedHands.includes(userId);
 
   useEffect(() => {
+    const getLastReactionEvent = async (
+      eventId: string,
+    ): Promise<MatrixEvent | undefined> => {
+      const rels = await client.relations(
+        rtcSession.room.roomId,
+        eventId,
+        RelationType.Annotation,
+        EventType.Reaction,
+        {
+          limit: 1,
+        },
+      );
+
+      return rels.events.length > 0 ? rels.events[0] : undefined;
+    };
+
+    const fetchReactions = async (): Promise<void> => {
+      const newRaisedHands = [...raisedHands];
+      for (const m of memberships) {
+        const reaction = await getLastReactionEvent(m.eventId!);
+        if (reaction && reaction.getType() === EventType.Reaction) {
+          const content = reaction.getContent() as ReactionEventContent;
+          if (content?.["m.relates_to"].key === "🖐️") {
+            newRaisedHands.push(m.sender!);
+          }
+        }
+      }
+      setRaisedHands(newRaisedHands);
+    };
+
+    fetchReactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     const handleReactionEvent = (event: MatrixEvent): void => {
       if (event.getType() === EventType.Reaction) {
         // TODO: check if target of reaction is a call membership event
