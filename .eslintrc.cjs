@@ -39,6 +39,12 @@ module.exports = {
     // We should use the js-sdk logger, never console directly.
     "no-console": ["error"],
     "react/display-name": "error",
+    // Encourage proper usage of Promises:
+    "@typescript-eslint/no-floating-promises": "error",
+    "@typescript-eslint/no-misused-promises": "error",
+    "@typescript-eslint/promise-function-async": "error",
+    "@typescript-eslint/require-await": "error",
+    "@typescript-eslint/await-thenable": "error",
   },
   settings: {
     react: {

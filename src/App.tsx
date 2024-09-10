@@ -15,6 +15,7 @@ import {
 import * as Sentry from "@sentry/react";
 import { History } from "history";
 import { TooltipProvider } from "@vector-im/compound-web";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";
@@ -61,11 +62,13 @@ interface AppProps {
 export const App: FC<AppProps> = ({ history }) => {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
-    Initializer.init()?.then(() => {
-      if (loaded) return;
-      setLoaded(true);
-      widget?.api.sendContentLoaded();
-    });
+    Initializer.init()
+      ?.then(async () => {
+        if (loaded) return;
+        setLoaded(true);
+        await widget?.api.sendContentLoaded();
+      })
+      .catch(logger.error);
   });
 
   const errorPage = <CrashView />;

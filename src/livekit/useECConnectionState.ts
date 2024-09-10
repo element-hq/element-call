@@ -36,7 +36,7 @@ export enum ECAddonConnectionState {
   // We are switching from one focus to another (or between livekit room aliases on the same focus)
   ECSwitchingFocus = "ec_switching_focus",
   // The call has just been initialised and is waiting for credentials to arrive before attempting
-  // to connect. This distinguishes from the 'Disconected' state which is now just for when livekit
+  // to connect. This distinguishes from the 'Disconnected' state which is now just for when livekit
   // gives up on connectivity and we consider the call to have failed.
   ECWaiting = "ec_waiting",
 }
@@ -151,9 +151,13 @@ async function connectAndPublish(
     `Publishing ${screenshareTracks.length} precreated screenshare tracks`,
   );
   for (const st of screenshareTracks) {
-    livekitRoom.localParticipant.publishTrack(st, {
-      source: Track.Source.ScreenShare,
-    });
+    livekitRoom.localParticipant
+      .publishTrack(st, {
+        source: Track.Source.ScreenShare,
+      })
+      .catch((e) => {
+        logger.error("Failed to publish screenshare track", e);
+      });
   }
 }
 
@@ -231,7 +235,9 @@ export function useECConnectionState(
         `SFU config changed! URL was ${currentSFUConfig.current?.url} now ${sfuConfig?.url}`,
       );
 
-      doFocusSwitch();
+      doFocusSwitch().catch((e) => {
+        logger.error("Failed to switch focus", e);
+      });
     } else if (
       !sfuConfigValid(currentSFUConfig.current) &&
       sfuConfigValid(sfuConfig)
@@ -248,7 +254,11 @@ export function useECConnectionState(
         sfuConfig!,
         initialAudioEnabled,
         initialAudioOptions,
-      ).finally(() => setIsInDoConnect(false));
+      )
+        .catch((e) => {
+          logger.error("Failed to connect to SFU", e);
+        })
+        .finally(() => setIsInDoConnect(false));
     }
 
     currentSFUConfig.current = Object.assign({}, sfuConfig);

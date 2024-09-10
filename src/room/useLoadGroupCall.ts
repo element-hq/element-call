@@ -150,23 +150,22 @@ export const useLoadGroupCall = (
       viaServers: string[],
       onKnockSent: () => void,
     ): Promise<Room> => {
-      let joinedRoom: Room | null = null;
       await client.knockRoom(roomId, { viaServers });
       onKnockSent();
-      const invitePromise = new Promise<void>((resolve, reject) => {
+      return await new Promise<Room>((resolve, reject) => {
         client.on(
           RoomEvent.MyMembership,
-          async (room, membership, prevMembership) => {
+          (room, membership, prevMembership): void => {
             if (roomId !== room.roomId) return;
             activeRoom.current = room;
             if (
               membership === KnownMembership.Invite &&
               prevMembership === KnownMembership.Knock
             ) {
-              await client.joinRoom(room.roomId, { viaServers });
-              joinedRoom = room;
-              logger.log("Auto-joined %s", room.roomId);
-              resolve();
+              client.joinRoom(room.roomId, { viaServers }).then((room) => {
+                logger.log("Auto-joined %s", room.roomId);
+                resolve(room);
+              }, reject);
             }
             if (membership === KnownMembership.Ban) reject(bannedError());
             if (membership === KnownMembership.Leave)
@@ -174,11 +173,6 @@ export const useLoadGroupCall = (
           },
         );
       });
-      await invitePromise;
-      if (!joinedRoom) {
-        throw new Error("Failed to join room after knocking.");
-      }
-      return joinedRoom;
     };
 
     const fetchOrCreateRoom = async (): Promise<Room> => {
@@ -308,7 +302,7 @@ export const useLoadGroupCall = (
 
     const observeMyMembership = async (): Promise<void> => {
       await new Promise((_, reject) => {
-        client.on(RoomEvent.MyMembership, async (_, membership) => {
+        client.on(RoomEvent.MyMembership, (_, membership) => {
           if (membership === KnownMembership.Leave) reject(removeNoticeError());
           if (membership === KnownMembership.Ban) reject(bannedError());
         });

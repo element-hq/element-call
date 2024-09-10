@@ -59,9 +59,13 @@ export const RoomPage: FC = () => {
     // a URL param, automatically register a passwordless user
     if (!loading && !authenticated && displayName && !widget) {
       setIsRegistering(true);
-      registerPasswordlessUser(displayName).finally(() => {
-        setIsRegistering(false);
-      });
+      registerPasswordlessUser(displayName)
+        .catch((e) => {
+          logger.error("Failed to register passwordless user", e);
+        })
+        .finally(() => {
+          setIsRegistering(false);
+        });
     }
   }, [
     loading,

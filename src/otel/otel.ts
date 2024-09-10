@@ -90,7 +90,9 @@ export class ElementCallOpenTelemetry {
 
   public dispose(): void {
     opentelemetry.trace.disable();
-    this._provider?.shutdown();
+    this._provider?.shutdown().catch((e) => {
+      logger.error("Failed to shutdown OpenTelemetry", e);
+    });
   }
 
   public get isOtlpEnabled(): boolean {

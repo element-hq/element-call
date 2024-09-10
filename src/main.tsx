@@ -25,7 +25,10 @@ import { App } from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
 
-initRageshake();
+initRageshake().catch((e) => {
+  logger.error("Failed to initialize rageshake", e);
+});
+
 setLogLevel("debug");
 setLKLogExtension(global.mx_rage_logger.log);
 
