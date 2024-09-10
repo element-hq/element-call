@@ -16,6 +16,7 @@ export default defineConfig((configEnv) =>
         coverage: {
           reporter: ["html", "json"],
           include: ["src/"],
+          exclude: ["src/**/*.{d,test}.{ts,tsx}", "src/utils/test.ts"],
         },
       },
     }),
