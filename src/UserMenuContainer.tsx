@@ -31,7 +31,7 @@ export const UserMenuContainer: FC<Props> = ({ preventNavigation = false }) => {
   const [settingsTab, setSettingsTab] = useState(defaultSettingsTab);
 
   const onAction = useCallback(
-    async (value: string) => {
+    (value: string) => {
       switch (value) {
         case "user":
           setSettingsTab("profile");

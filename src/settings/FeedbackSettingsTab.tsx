@@ -9,6 +9,7 @@ import { FC, useCallback } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
 import { Button } from "@vector-im/compound-web";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake, useRageshakeRequest } from "./submit-rageshake";
@@ -41,6 +42,8 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
         sendLogs,
         rageshakeRequestId,
         roomId,
+      }).catch((e) => {
+        logger.error("Failed to send feedback rageshake", e);
       });
 
       if (roomId && sendLogs) {

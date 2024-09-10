@@ -11,11 +11,11 @@ Please see LICENSE in the repository root for full details.
  * @param devices The list of devices to search
  * @returns A matching media device or undefined if no matching device was found
  */
-export async function findDeviceByName(
+export function findDeviceByName(
   deviceName: string,
   kind: MediaDeviceKind,
   devices: MediaDeviceInfo[],
-): Promise<string | undefined> {
+): string | undefined {
   const deviceInfo = devices.find(
     (d) => d.kind === kind && d.label === deviceName,
   );
