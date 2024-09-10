@@ -12,7 +12,7 @@ import { Room } from "matrix-js-sdk/src/models/room";
 import { FC, useCallback, MouseEvent } from "react";
 import { t } from "i18next";
 import { IconButton } from "@vector-im/compound-web";
-import { DeleteIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import { CloseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
@@ -81,7 +81,7 @@ const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room, client }) => {
           </Body>
         </div>
         <IconButton onClick={onRemove} aria-label={t("action.remove")}>
-          <DeleteIcon />
+          <CloseIcon />
         </IconButton>
       </Link>
     </div>
