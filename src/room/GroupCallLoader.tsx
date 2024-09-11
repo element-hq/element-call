@@ -5,13 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { useCallback } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 import { MatrixError } from "matrix-js-sdk/src/matrix";
-import { useHistory } from "react-router-dom";
-import { Heading, Link, Text } from "@vector-im/compound-web";
+import { Heading, Text } from "@vector-im/compound-web";
 
+import { Link } from "../button/Link";
 import {
   useLoadGroupCall,
   GroupCallStatus,
@@ -35,15 +34,6 @@ export function GroupCallLoader({
   const { t } = useTranslation();
   const groupCallState = useLoadGroupCall(client, roomIdOrAlias, viaServers);
 
-  const history = useHistory();
-  const onHomeClick = useCallback(
-    (ev: React.MouseEvent) => {
-      ev.preventDefault();
-      history.push("/");
-    },
-    [history],
-  );
-
   switch (groupCallState.kind) {
     case "loaded":
     case "waitForInvite":
@@ -63,9 +53,7 @@ export function GroupCallLoader({
             <Text>{t("group_call_loader.failed_text")}</Text>
             {/* XXX: A 'create it for me' button would be the obvious UX here. Two screens already have
             dupes of this flow, let's make a common component and put it here. */}
-            <Link href="/" onClick={onHomeClick}>
-              {t("common.home")}
-            </Link>
+            <Link to="/">{t("common.home")}</Link>
           </FullScreenView>
         );
       } else if (groupCallState.error instanceof CallTerminatedMessage) {
@@ -79,9 +67,7 @@ export function GroupCallLoader({
                 <Text size="sm">"{groupCallState.error.reason}"</Text>
               </>
             )}
-            <Link href="/" onClick={onHomeClick}>
-              {t("common.home")}
-            </Link>
+            <Link to="/">{t("common.home")}</Link>
           </FullScreenView>
         );
       } else {
