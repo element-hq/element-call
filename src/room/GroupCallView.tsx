@@ -85,6 +85,14 @@ export const GroupCallView: FC<Props> = ({
     };
   }, [rtcSession]);
 
+  useEffect(() => {
+    // Sanity check the room object
+    if (client.getRoom(rtcSession.room.roomId) !== rtcSession.room)
+      logger.warn(
+        `We've ended up with multiple rooms for the same ID (${rtcSession.room.roomId}). This indicates a bug in the group call loading code, and may lead to incomplete room state.`,
+      );
+  }, [client, rtcSession.room]);
+
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(rtcSession.room);
   const roomAvatar = useRoomAvatar(rtcSession.room);

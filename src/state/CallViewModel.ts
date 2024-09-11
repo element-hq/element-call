@@ -16,7 +16,11 @@ import {
   ParticipantEvent,
   RemoteParticipant,
 } from "livekit-client";
-import { Room as MatrixRoom, RoomMember } from "matrix-js-sdk/src/matrix";
+import {
+  Room as MatrixRoom,
+  RoomMember,
+  RoomStateEvent,
+} from "matrix-js-sdk/src/matrix";
 import {
   EMPTY,
   Observable,
@@ -341,6 +345,8 @@ export class CallViewModel extends ViewModel {
     this.remoteParticipants,
     observeParticipantMedia(this.livekitRoom.localParticipant),
     duplicateTiles.value,
+    // Also react to changes in the list of members
+    fromEvent(this.matrixRoom, RoomStateEvent.Update).pipe(startWith(null)),
   ]).pipe(
     scan(
       (
