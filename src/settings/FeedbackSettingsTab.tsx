@@ -66,9 +66,7 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
             disabled={sending || sent}
           />
         </FieldRow>
-        {sent ? (
-          <Body> {t("settings.feedback_tab_thank_you")}</Body>
-        ) : (
+        {!sent && (
           <FieldRow>
             <InputField
               id="sendLogs"
@@ -77,16 +75,15 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
               type="checkbox"
               defaultChecked
             />
-            {error && (
-              <FieldRow>
-                <ErrorMessage error={error} />
-              </FieldRow>
-            )}
             <Button type="submit" disabled={sending}>
               {sending ? t("submitting") : t("action.submit")}
             </Button>
           </FieldRow>
         )}
+        <FieldRow>
+          {error && <ErrorMessage error={error} />}
+          {sent && <Body> {t("settings.feedback_tab_thank_you")}</Body>}
+        </FieldRow>
       </form>
     </div>
   );
