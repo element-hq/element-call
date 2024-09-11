@@ -168,11 +168,24 @@ class UserMedia {
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
     callEncrypted: boolean,
+    livekitRoom: LivekitRoom,
   ) {
     this.vm =
       participant instanceof LocalParticipant
-        ? new LocalUserMediaViewModel(id, member, participant, callEncrypted)
-        : new RemoteUserMediaViewModel(id, member, participant, callEncrypted);
+        ? new LocalUserMediaViewModel(
+            id,
+            member,
+            participant,
+            callEncrypted,
+            livekitRoom,
+          )
+        : new RemoteUserMediaViewModel(
+            id,
+            member,
+            participant,
+            callEncrypted,
+            livekitRoom,
+          );
 
     this.speaker = this.vm.speaking.pipe(
       // Require 1 s of continuous speaking to become a speaker, and 60 s of
@@ -214,8 +227,15 @@ class ScreenShare {
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
     callEncrypted: boolean,
+    liveKitRoom: LivekitRoom,
   ) {
-    this.vm = new ScreenShareViewModel(id, member, participant, callEncrypted);
+    this.vm = new ScreenShareViewModel(
+      id,
+      member,
+      participant,
+      callEncrypted,
+      liveKitRoom,
+    );
   }
 
   public destroy(): void {
@@ -350,7 +370,13 @@ export class CallViewModel extends ViewModel {
                 yield [
                   userMediaId,
                   prevItems.get(userMediaId) ??
-                    new UserMedia(userMediaId, member, p, this.encrypted),
+                    new UserMedia(
+                      userMediaId,
+                      member,
+                      p,
+                      this.encrypted,
+                      this.livekitRoom,
+                    ),
                 ];
 
                 if (p.isScreenShareEnabled) {
@@ -358,7 +384,13 @@ export class CallViewModel extends ViewModel {
                   yield [
                     screenShareId,
                     prevItems.get(screenShareId) ??
-                      new ScreenShare(screenShareId, member, p, this.encrypted),
+                      new ScreenShare(
+                        screenShareId,
+                        member,
+                        p,
+                        this.encrypted,
+                        this.livekitRoom,
+                      ),
                   ];
                 }
               }

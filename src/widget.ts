@@ -130,6 +130,7 @@ export const widget = ((): WidgetHelpers | null => {
         EventType.CallSDPStreamMetadataChanged,
         EventType.CallSDPStreamMetadataChangedPrefix,
         EventType.CallReplaces,
+        EventType.CallEncryptionKeysPrefix,
       ];
 
       const client = createRoomWidgetClient(
