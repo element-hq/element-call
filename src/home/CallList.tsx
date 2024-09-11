@@ -10,11 +10,11 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room } from "matrix-js-sdk/src/models/room";
 import { FC } from "react";
+import { Text } from "@vector-im/compound-web";
 
 import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
 import { getRelativeRoomUrl } from "../utils/matrix";
-import { Body } from "../typography/Typography";
 import { GroupCallRoom } from "./useGroupCallRooms";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 
@@ -65,9 +65,9 @@ const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room }) => {
       >
         <Avatar id={room.roomId} name={name} size={Size.LG} src={avatarUrl} />
         <div className={styles.callInfo}>
-          <Body overflowEllipsis fontWeight="semiBold">
+          <Text weight="semibold" className={styles.callName}>
             {name}
-          </Body>
+          </Text>
         </div>
         <div className={styles.copyButtonSpacer} />
       </Link>

@@ -9,7 +9,7 @@ import { FC, useCallback, useState, FormEventHandler } from "react";
 import { useHistory } from "react-router-dom";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { Trans, useTranslation } from "react-i18next";
-import { Button, Heading } from "@vector-im/compound-web";
+import { Button, Heading, Text } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { useClient } from "../ClientContext";
@@ -25,7 +25,6 @@ import {
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
 import { JoinExistingCallModal } from "./JoinExistingCallModal";
 import { useRecaptcha } from "../auth/useRecaptcha";
-import { Body, Caption, Link } from "../typography/Typography";
 import { Form } from "../form/Form";
 import styles from "./UnauthenticatedView.module.css";
 import commonStyles from "./common.module.css";
@@ -34,6 +33,7 @@ import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { Config } from "../config/Config";
 import { E2eeType } from "../e2ee/e2eeType";
 import { useOptInAnalytics } from "../settings/settings";
+import { ExternalLink, Link } from "../button/Link";
 
 export const UnauthenticatedView: FC = () => {
   const { setClient } = useClient();
@@ -178,18 +178,18 @@ export const UnauthenticatedView: FC = () => {
               />
             </FieldRow>
             {optInAnalytics === null && (
-              <Caption className={styles.notice}>
+              <Text size="sm" className={styles.notice}>
                 <AnalyticsNotice />
-              </Caption>
+              </Text>
             )}
-            <Caption className={styles.notice}>
+            <Text size="sm" className={styles.notice}>
               <Trans i18nKey="unauthenticated_view_eula_caption">
                 By clicking "Go", you agree to our{" "}
-                <Link href={Config.get().eula}>
+                <ExternalLink href={Config.get().eula}>
                   End User Licensing Agreement (EULA)
-                </Link>
+                </ExternalLink>
               </Trans>
-            </Caption>
+            </Text>
             {error && (
               <FieldRow>
                 <ErrorMessage error={error} />
@@ -207,19 +207,19 @@ export const UnauthenticatedView: FC = () => {
           </Form>
         </main>
         <footer className={styles.footer}>
-          <Body className={styles.mobileLoginLink}>
-            <Link color="primary" to="/login" data-testid="home_login">
+          <Text className={styles.mobileLoginLink}>
+            <Link to="/login" data-testid="home_login">
               {t("unauthenticated_view_login_button")}
             </Link>
-          </Body>
-          <Body>
+          </Text>
+          <Text>
             <Trans i18nKey="unauthenticated_view_body">
               Not registered yet?{" "}
-              <Link color="primary" to="/register" data-testid="home_register">
+              <Link to="/register" data-testid="home_register">
                 Create an account
               </Link>
             </Trans>
-          </Body>
+          </Text>
         </footer>
       </div>
       {onFinished && (

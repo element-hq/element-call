@@ -15,10 +15,16 @@ import {
 import { Link as CpdLink } from "@vector-im/compound-web";
 import { useHistory } from "react-router-dom";
 import { createPath, LocationDescriptor, Path } from "history";
+import classNames from "classnames";
+
+import { useLatest } from "../useLatest";
+import styles from "./Link.module.css";
 
 export function useLink(
   to: LocationDescriptor,
+  state?: unknown,
 ): [Path, (e: MouseEvent) => void] {
+  const latestState = useLatest(state);
   const history = useHistory();
   const path = useMemo(
     () => (typeof to === "string" ? to : createPath(to)),
@@ -27,9 +33,9 @@ export function useLink(
   const onClick = useCallback(
     (e: MouseEvent) => {
       e.preventDefault();
-      history.push(to);
+      history.push(to, latestState.current);
     },
-    [history, to],
+    [history, to, latestState],
   );
 
   return [path, onClick];
@@ -38,15 +44,32 @@ export function useLink(
 type Props = Omit<
   ComponentPropsWithoutRef<typeof CpdLink>,
   "href" | "onClick"
-> & { to: LocationDescriptor };
+> & { to: LocationDescriptor; state?: unknown };
 
 /**
  * A version of Compound's link component that integrates with our router setup.
  */
 export const Link = forwardRef<HTMLAnchorElement, Props>(function Link(
-  { to, ...props },
+  { to, state, ...props },
   ref,
 ) {
-  const [path, onClick] = useLink(to);
+  const [path, onClick] = useLink(to, state);
   return <CpdLink ref={ref} {...props} href={path} onClick={onClick} />;
+});
+
+export const ExternalLink = forwardRef<
+  HTMLAnchorElement,
+  ComponentPropsWithoutRef<"a">
+>(function ExternalLink({ className, children, ...props }, ref) {
+  return (
+    <a
+      ref={ref}
+      className={classNames(className, styles.external)}
+      target="_blank"
+      rel="noreferrer noopener"
+      {...props}
+    >
+      {children}
+    </a>
+  );
 });
