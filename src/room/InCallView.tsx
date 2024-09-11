@@ -29,6 +29,7 @@ import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
 import { BehaviorSubject, of } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -100,7 +101,9 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   useEffect(() => {
     return (): void => {
-      livekitRoom?.disconnect();
+      livekitRoom?.disconnect().catch((e) => {
+        logger.error("Failed to disconnect from livekit room", e);
+      });
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -296,12 +299,16 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   useEffect(() => {
-    widget?.api.transport.send(
-      gridMode === "grid"
-        ? ElementWidgetActions.TileLayout
-        : ElementWidgetActions.SpotlightLayout,
-      {},
-    );
+    widget?.api.transport
+      .send(
+        gridMode === "grid"
+          ? ElementWidgetActions.TileLayout
+          : ElementWidgetActions.SpotlightLayout,
+        {},
+      )
+      .catch((e) => {
+        logger.error("Failed to send layout change to widget API", e);
+      });
   }, [gridMode]);
 
   useEffect(() => {
@@ -461,13 +468,15 @@ export const InCallView: FC<InCallViewProps> = ({
     rtcSession.room.roomId,
   );
 
-  const toggleScreensharing = useCallback(async () => {
-    await localParticipant.setScreenShareEnabled(!isScreenShareEnabled, {
-      audio: true,
-      selfBrowserSurface: "include",
-      surfaceSwitching: "include",
-      systemAudio: "include",
-    });
+  const toggleScreensharing = useCallback(() => {
+    localParticipant
+      .setScreenShareEnabled(!isScreenShareEnabled, {
+        audio: true,
+        selfBrowserSurface: "include",
+        surfaceSwitching: "include",
+        systemAudio: "include",
+      })
+      .catch(logger.error);
   }, [localParticipant, isScreenShareEnabled]);
 
   let footer: JSX.Element | null;

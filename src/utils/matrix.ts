@@ -273,17 +273,25 @@ export async function createRoom(
   });
 
   // Wait for the room to arrive
-  await new Promise<void>((resolve, reject) => {
-    const onRoom = async (room: Room): Promise<void> => {
-      if (room.roomId === (await createPromise).room_id) {
-        resolve();
-        cleanUp();
-      }
-    };
+  const roomId = await new Promise<string>((resolve, reject) => {
     createPromise.catch((e) => {
       reject(e);
       cleanUp();
     });
+
+    const onRoom = (room: Room): void => {
+      createPromise.then(
+        (result) => {
+          if (room.roomId === result.room_id) {
+            resolve(room.roomId);
+            cleanUp();
+          }
+        },
+        (e) => {
+          logger.error("Failed to wait for the room to arrive", e);
+        },
+      );
+    };
 
     const cleanUp = (): void => {
       client.off(ClientEvent.Room, onRoom);
@@ -306,7 +314,7 @@ export async function createRoom(
   }
 
   return {
-    roomId: result.room_id,
+    roomId,
     alias: e2ee ? undefined : fullAliasFromRoomName(name, client),
     encryptionSystem,
   };

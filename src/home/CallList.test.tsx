@@ -22,7 +22,7 @@ describe("CallList", () => {
     );
   };
 
-  it("should show room", async () => {
+  it("should show room", () => {
     const rooms = [
       {
         roomName: "Room #1",

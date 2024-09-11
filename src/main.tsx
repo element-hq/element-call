@@ -25,7 +25,9 @@ import { App } from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
 
-initRageshake();
+initRageshake().catch((e) => {
+  logger.error("Failed to initialize rageshake", e);
+});
 setLKLogLevel("debug");
 setLKLogExtension((level, msg, context) => {
   // we pass a synthetic logger name of "livekit" to the rageshake to make it easier to read

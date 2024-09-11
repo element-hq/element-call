@@ -46,19 +46,25 @@ export class MatrixKeyProvider extends BaseKeyProvider {
     }
   }
 
-  private onEncryptionKeyChanged = async (
+  private onEncryptionKeyChanged = (
     encryptionKey: Uint8Array,
     encryptionKeyIndex: number,
     participantId: string,
-  ): Promise<void> => {
-    this.onSetEncryptionKey(
-      await createKeyMaterialFromBuffer(encryptionKey),
-      participantId,
-      encryptionKeyIndex,
-    );
+  ): void => {
+    createKeyMaterialFromBuffer(encryptionKey).then(
+      (keyMaterial) => {
+        this.onSetEncryptionKey(keyMaterial, participantId, encryptionKeyIndex);
 
-    logger.debug(
-      `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
+        logger.debug(
+          `Sent new key to livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
+        );
+      },
+      (e) => {
+        logger.error(
+          `Failed to create key material from buffer for livekit room=${this.rtcSession?.room.roomId} participantId=${participantId} encryptionKeyIndex=${encryptionKeyIndex}`,
+          e,
+        );
+      },
     );
   };
 }

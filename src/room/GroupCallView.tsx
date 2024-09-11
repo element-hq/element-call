@@ -138,11 +138,7 @@ export const GroupCallView: FC<Props> = ({
       if (audioInput === null) {
         latestMuteStates.current!.audio.setEnabled?.(false);
       } else {
-        const deviceId = await findDeviceByName(
-          audioInput,
-          "audioinput",
-          devices,
-        );
+        const deviceId = findDeviceByName(audioInput, "audioinput", devices);
         if (!deviceId) {
           logger.warn("Unknown audio input: " + audioInput);
           latestMuteStates.current!.audio.setEnabled?.(false);
@@ -158,11 +154,7 @@ export const GroupCallView: FC<Props> = ({
       if (videoInput === null) {
         latestMuteStates.current!.video.setEnabled?.(false);
       } else {
-        const deviceId = await findDeviceByName(
-          videoInput,
-          "videoinput",
-          devices,
-        );
+        const deviceId = findDeviceByName(videoInput, "videoinput", devices);
         if (!deviceId) {
           logger.warn("Unknown video input: " + videoInput);
           latestMuteStates.current!.video.setEnabled?.(false);
@@ -178,24 +170,27 @@ export const GroupCallView: FC<Props> = ({
 
     if (widget && preload && skipLobby) {
       // In preload mode without lobby we wait for a join action before entering
-      const onJoin = async (
-        ev: CustomEvent<IWidgetApiRequest>,
-      ): Promise<void> => {
-        await defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
-        await enterRTCSession(rtcSession, e2eeSystem.kind);
-        await widget!.api.transport.reply(ev.detail, {});
+      const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
+        (async (): Promise<void> => {
+          await defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
+          await enterRTCSession(rtcSession, e2eeSystem.kind);
+          widget!.api.transport.reply(ev.detail, {});
+        })().catch((e) => {
+          logger.error("Error joining RTC session", e);
+        });
       };
       widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
       return (): void => {
         widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
       };
     } else if (widget && !preload && skipLobby) {
-      const join = async (): Promise<void> => {
+      // No lobby and no preload: we enter the rtc session right away
+      (async (): Promise<void> => {
         await defaultDeviceSetup({ audioInput: null, videoInput: null });
         await enterRTCSession(rtcSession, e2eeSystem.kind);
-      };
-      // No lobby and no preload: we enter the RTC Session right away.
-      join();
+      })().catch((e) => {
+        logger.error("Error joining RTC session", e);
+      });
     }
   }, [rtcSession, preload, skipLobby, e2eeSystem]);
 
@@ -204,7 +199,7 @@ export const GroupCallView: FC<Props> = ({
   const history = useHistory();
 
   const onLeave = useCallback(
-    async (leaveError?: Error) => {
+    (leaveError?: Error): void => {
       setLeaveError(leaveError);
       setLeft(true);
 
@@ -220,15 +215,19 @@ export const GroupCallView: FC<Props> = ({
       );
 
       // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
-      await leaveRTCSession(rtcSession);
-
-      if (
-        !isPasswordlessUser &&
-        !confineToRoom &&
-        !PosthogAnalytics.instance.isEnabled()
-      ) {
-        history.push("/");
-      }
+      leaveRTCSession(rtcSession)
+        .then(() => {
+          if (
+            !isPasswordlessUser &&
+            !confineToRoom &&
+            !PosthogAnalytics.instance.isEnabled()
+          ) {
+            history.push("/");
+          }
+        })
+        .catch((e) => {
+          logger.error("Error leaving RTC session", e);
+        });
     },
     [rtcSession, isPasswordlessUser, confineToRoom, history, matrixInfo],
   );
@@ -236,14 +235,16 @@ export const GroupCallView: FC<Props> = ({
   useEffect(() => {
     if (widget && isJoined) {
       // set widget to sticky once joined.
-      widget!.api.setAlwaysOnScreen(true);
+      widget!.api.setAlwaysOnScreen(true).catch((e) => {
+        logger.error("Error calling setAlwaysOnScreen(true)", e);
+      });
 
-      const onHangup = async (
-        ev: CustomEvent<IWidgetApiRequest>,
-      ): Promise<void> => {
+      const onHangup = (ev: CustomEvent<IWidgetApiRequest>): void => {
         widget!.api.transport.reply(ev.detail, {});
         // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
-        await leaveRTCSession(rtcSession);
+        leaveRTCSession(rtcSession).catch((e) => {
+          logger.error("Failed to leave RTC session", e);
+        });
       };
       widget.lazyActions.once(ElementWidgetActions.HangupCall, onHangup);
       return (): void => {
@@ -255,7 +256,9 @@ export const GroupCallView: FC<Props> = ({
   const onReconnect = useCallback(() => {
     setLeft(false);
     setLeaveError(undefined);
-    enterRTCSession(rtcSession, e2eeSystem.kind);
+    enterRTCSession(rtcSession, e2eeSystem.kind).catch((e) => {
+      logger.error("Error re-entering RTC session on reconnect", e);
+    });
   }, [rtcSession, e2eeSystem]);
 
   const joinRule = useJoinRule(rtcSession.room);
