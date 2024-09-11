@@ -7,12 +7,13 @@ Please see LICENSE in the repository root for full details.
 import { map } from "rxjs";
 import { RunHelpers, TestScheduler } from "rxjs/testing";
 import { expect, vi } from "vitest";
-import { RoomMember } from "matrix-js-sdk/src/matrix";
+import { RoomMember, Room as MatrixRoom } from "matrix-js-sdk/src/matrix";
 import {
   LocalParticipant,
   LocalTrackPublication,
   RemoteParticipant,
   RemoteTrackPublication,
+  Room as LivekitRoom,
 } from "livekit-client";
 
 import {
@@ -62,7 +63,7 @@ export function withTestScheduler(
   );
 }
 
-function mockMember(member: Partial<RoomMember>): RoomMember {
+export function mockMember(member: Partial<RoomMember>): RoomMember {
   return {
     on() {
       return this;
@@ -80,6 +81,65 @@ function mockMember(member: Partial<RoomMember>): RoomMember {
   } as RoomMember;
 }
 
+export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
+  return {
+    on() {
+      return this as MatrixRoom;
+    },
+    off() {
+      return this as MatrixRoom;
+    },
+    addEventListener() {
+      return this as MatrixRoom;
+    },
+    removeEventListener() {
+      return this as MatrixRoom;
+    },
+    ...room,
+  } as Partial<MatrixRoom> as MatrixRoom;
+}
+
+export function mockLivekitRoom(room: Partial<LivekitRoom>): LivekitRoom {
+  return {
+    on() {
+      return this as LivekitRoom;
+    },
+    off() {
+      return this as LivekitRoom;
+    },
+    addEventListener() {
+      return this as LivekitRoom;
+    },
+    removeEventListener() {
+      return this as LivekitRoom;
+    },
+    ...room,
+  } as Partial<LivekitRoom> as LivekitRoom;
+}
+
+export function mockLocalParticipant(
+  participant: Partial<LocalParticipant>,
+): LocalParticipant {
+  return {
+    isLocal: true,
+    getTrackPublication: () =>
+      ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
+    on() {
+      return this as LocalParticipant;
+    },
+    off() {
+      return this as LocalParticipant;
+    },
+    addListener() {
+      return this as LocalParticipant;
+    },
+    removeListener() {
+      return this as LocalParticipant;
+    },
+    ...participant,
+  } as Partial<LocalParticipant> as LocalParticipant;
+}
+
 export async function withLocalMedia(
   member: Partial<RoomMember>,
   continuation: (vm: LocalUserMediaViewModel) => void | Promise<void>,
@@ -87,22 +147,7 @@ export async function withLocalMedia(
   const vm = new LocalUserMediaViewModel(
     "local",
     mockMember(member),
-    {
-      getTrackPublication: () =>
-        ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
-      on() {
-        return this as LocalParticipant;
-      },
-      off() {
-        return this as LocalParticipant;
-      },
-      addListener() {
-        return this as LocalParticipant;
-      },
-      removeListener() {
-        return this as LocalParticipant;
-      },
-    } as Partial<LocalParticipant> as LocalParticipant,
+    mockLocalParticipant({}),
     true,
   );
   try {
@@ -110,6 +155,30 @@ export async function withLocalMedia(
   } finally {
     vm.destroy();
   }
+}
+
+export function mockRemoteParticipant(
+  participant: Partial<RemoteParticipant>,
+): RemoteParticipant {
+  return {
+    isLocal: false,
+    setVolume() {},
+    getTrackPublication: () =>
+      ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
+    on() {
+      return this;
+    },
+    off() {
+      return this;
+    },
+    addListener() {
+      return this;
+    },
+    removeListener() {
+      return this;
+    },
+    ...participant,
+  } as RemoteParticipant;
 }
 
 export async function withRemoteMedia(
@@ -120,24 +189,7 @@ export async function withRemoteMedia(
   const vm = new RemoteUserMediaViewModel(
     "remote",
     mockMember(member),
-    {
-      setVolume() {},
-      getTrackPublication: () =>
-        ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
-      on() {
-        return this;
-      },
-      off() {
-        return this;
-      },
-      addListener() {
-        return this;
-      },
-      removeListener() {
-        return this;
-      },
-      ...participant,
-    } as RemoteParticipant,
+    mockRemoteParticipant(participant),
     true,
   );
   try {
