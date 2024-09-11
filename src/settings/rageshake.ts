@@ -29,9 +29,9 @@ Please see LICENSE in the repository root for full details.
 
 import EventEmitter from "events";
 import { throttle } from "lodash";
-import { logger } from "matrix-js-sdk/src/logger";
+import { Logger, logger } from "matrix-js-sdk/src/logger";
 import { randomString } from "matrix-js-sdk/src/randomstring";
-import { LoggingMethod } from "loglevel";
+import loglevel, { LoggingMethod } from "loglevel";
 
 // the length of log data we keep in indexeddb (and include in the reports)
 const MAX_LOG_SIZE = 1024 * 1024 * 5; // 5 MB
@@ -473,7 +473,12 @@ declare global {
  */
 export function init(): Promise<void> {
   global.mx_rage_logger = new ConsoleLogger();
-  setLogExtension(global.mx_rage_logger.log);
+  setLogExtension(logger, global.mx_rage_logger.log);
+  // these are the child/prefixed loggers we want to capture from js-sdk
+  // there doesn't seem to be an easy way to capture all children
+  ["MatrixRTCSession", "MatrixRTCSessionManager"].forEach((loggerName) => {
+    setLogExtension(logger.getChild(loggerName), global.mx_rage_logger.log);
+  });
 
   return tryInitStorage();
 }
@@ -586,10 +591,14 @@ type LogLevelString = keyof typeof LogLevel;
  * took loglevel's example honouring log levels). Adds a loglevel logging extension
  * in the recommended way.
  */
-export function setLogExtension(extension: LogExtensionFunc): void {
-  const originalFactory = logger.methodFactory;
+function setLogExtension(
+  _loggerToExtend: Logger,
+  extension: LogExtensionFunc,
+): void {
+  const loggerToExtend = _loggerToExtend as unknown as loglevel.Logger;
+  const originalFactory = loggerToExtend.methodFactory;
 
-  logger.methodFactory = function (
+  loggerToExtend.methodFactory = function (
     methodName,
     configLevel,
     loggerName,
@@ -600,11 +609,14 @@ export function setLogExtension(extension: LogExtensionFunc): void {
     const needLog = logLevel >= configLevel && logLevel < LogLevel.silent;
 
     return (...args) => {
+      // we don't send the logger name to the raw method as some of them are already outputting the prefix
       rawMethod.apply(this, args);
       if (needLog) {
-        extension(logLevel, ...args);
+        // we prefix the logger name to the extension
+        // this makes sure that the rageshake contains the logger name
+        extension(logLevel, loggerName?.toString(), ...args);
       }
     };
   };
-  logger.setLevel(logger.getLevel()); // Be sure to call setLevel method in order to apply plugin
+  loggerToExtend.setLevel(loggerToExtend.getLevel()); // Be sure to call setLevel method in order to apply plugin
 }
