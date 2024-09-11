@@ -270,10 +270,16 @@ export function useSubmitRageshake(): {
           );
         }
 
-        await fetch(Config.get().rageshake!.submit_url, {
+        const res = await fetch(Config.get().rageshake!.submit_url, {
           method: "POST",
           body,
         });
+
+        if (res.status !== 200) {
+          throw new Error(
+            `Failed to submit feedback: receive HTTP ${res.status} ${res.statusText}`,
+          );
+        }
 
         setState({ sending: false, sent: true, error: undefined });
       } catch (error) {
