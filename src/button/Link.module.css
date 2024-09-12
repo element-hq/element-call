@@ -1,0 +1,13 @@
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only
+Please see LICENSE in the repository root for full details.
+*/
+
+.external {
+  /* By default links will be blue/purple (or whatever the user agent does), but
+  in our designs we generally want external links to be the same color as the
+  surrounding text */
+  color: inherit;
+}

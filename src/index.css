@@ -237,16 +237,6 @@ body[data-platform="desktop"] {
     line-height: var(--font-size-title);
   }
 
-  a {
-    color: var(--cpd-color-text-action-accent);
-    text-decoration: none;
-  }
-
-  a:hover,
-  a:active {
-    opacity: 0.8;
-  }
-
   hr {
     width: calc(100% - 24px);
     border: none;
