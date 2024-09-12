@@ -48,6 +48,7 @@ type Props = Omit<
 
 /**
  * A version of Compound's link component that integrates with our router setup.
+ * This is only for app-internal links.
  */
 export const Link = forwardRef<HTMLAnchorElement, Props>(function Link(
   { to, state, ...props },
@@ -57,6 +58,10 @@ export const Link = forwardRef<HTMLAnchorElement, Props>(function Link(
   return <CpdLink ref={ref} {...props} href={path} onClick={onClick} />;
 });
 
+/**
+ * A link to an external web page, made to fit into blocks of text more subtly
+ * than the normal Compound link component.
+ */
 export const ExternalLink = forwardRef<
   HTMLAnchorElement,
   ComponentPropsWithoutRef<"a">
