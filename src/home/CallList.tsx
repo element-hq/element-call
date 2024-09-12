@@ -10,7 +10,7 @@ import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room } from "matrix-js-sdk/src/models/room";
 import { FC, useCallback, MouseEvent, useState } from "react";
-import { t } from "i18next";
+import { useTranslation } from "react-i18next";
 import { IconButton } from "@vector-im/compound-web";
 import { CloseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
@@ -60,6 +60,7 @@ interface CallTileProps {
 }
 
 const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room, client }) => {
+  const { t } = useTranslation();
   const roomEncryptionSystem = useRoomEncryptionSystem(room.roomId);
   const [isLeaving, setIsLeaving] = useState(false);
 
