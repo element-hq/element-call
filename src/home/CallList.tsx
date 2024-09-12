@@ -9,10 +9,11 @@ import { Link } from "react-router-dom";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room } from "matrix-js-sdk/src/models/room";
-import { FC, useCallback, MouseEvent } from "react";
+import { FC, useCallback, MouseEvent, useState } from "react";
 import { t } from "i18next";
 import { IconButton } from "@vector-im/compound-web";
 import { CloseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import classNames from "classnames";
 
 import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
@@ -60,30 +61,50 @@ interface CallTileProps {
 
 const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room, client }) => {
   const roomEncryptionSystem = useRoomEncryptionSystem(room.roomId);
+  const [isLeaving, setIsLeaving] = useState(false);
+
   const onRemove = useCallback(
     (e: MouseEvent) => {
       e.stopPropagation();
       e.preventDefault();
-      void client.leave(room.roomId);
+      setIsLeaving(true);
+      client.leave(room.roomId).catch(() => setIsLeaving(false));
     },
     [room, client],
   );
+
+  const body = (
+    <>
+      <Avatar id={room.roomId} name={name} size={Size.LG} src={avatarUrl} />
+      <div className={styles.callInfo}>
+        <Body overflowEllipsis fontWeight="semiBold">
+          {name}
+        </Body>
+      </div>
+      <IconButton
+        onClick={onRemove}
+        disabled={isLeaving}
+        aria-label={t("action.remove")}
+      >
+        <CloseIcon />
+      </IconButton>
+    </>
+  );
+
   return (
     <div className={styles.callTile}>
-      <Link
-        to={getRelativeRoomUrl(room.roomId, roomEncryptionSystem, room.name)}
-        className={styles.callTileLink}
-      >
-        <Avatar id={room.roomId} name={name} size={Size.LG} src={avatarUrl} />
-        <div className={styles.callInfo}>
-          <Body overflowEllipsis fontWeight="semiBold">
-            {name}
-          </Body>
-        </div>
-        <IconButton onClick={onRemove} aria-label={t("action.remove")}>
-          <CloseIcon />
-        </IconButton>
-      </Link>
+      {isLeaving ? (
+        <span className={classNames(styles.callTileLink, styles.disabled)}>
+          {body}
+        </span>
+      ) : (
+        <Link
+          to={getRelativeRoomUrl(room.roomId, roomEncryptionSystem, room.name)}
+          className={styles.callTileLink}
+        >
+          {body}
+        </Link>
+      )}
     </div>
   );
 };

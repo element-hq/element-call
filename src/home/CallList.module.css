@@ -64,3 +64,8 @@ Please see LICENSE in the repository root for full details.
   justify-content: center;
   margin-bottom: 24px;
 }
+
+.disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
