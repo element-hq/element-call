@@ -8,12 +8,11 @@ Please see LICENSE in the repository root for full details.
 import { FC, useCallback } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
-import { Button } from "@vector-im/compound-web";
+import { Button, Text } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake, useRageshakeRequest } from "./submit-rageshake";
-import { Body } from "../typography/Typography";
 import feedbackStyles from "../input/FeedbackInput.module.css";
 
 interface Props {
@@ -56,7 +55,7 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
   return (
     <div>
       <h4>{t("settings.feedback_tab_h4")}</h4>
-      <Body>{t("settings.feedback_tab_body")}</Body>
+      <Text>{t("settings.feedback_tab_body")}</Text>
       <form onSubmit={onSubmitFeedback}>
         <FieldRow>
           <InputField
@@ -85,7 +84,7 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
         )}
         <FieldRow>
           {error && <ErrorMessage error={error} />}
-          {sent && <Body> {t("settings.feedback_tab_thank_you")}</Body>}
+          {sent && <Text>{t("settings.feedback_tab_thank_you")}</Text>}
         </FieldRow>
       </form>
     </div>
