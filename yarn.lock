@@ -1889,10 +1889,10 @@
   dependencies:
     "@bufbuild/protobuf" "^1.7.2"
 
-"@matrix-org/matrix-sdk-crypto-wasm@^7.0.0":
-  version "7.0.0"
-  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-7.0.0.tgz#8d6abdb9ded8656cc9e2a7909913a34bf3fc9b3a"
-  integrity sha512-MOencXiW/gI5MuTtCNsuojjwT5DXCrjMqv9xOslJC9h2tPdLFFFMGr58dY5Lis4DRd9MRWcgrGowUIHOqieWTA==
+"@matrix-org/matrix-sdk-crypto-wasm@^8.0.0":
+  version "8.0.0"
+  resolved "https://registry.npmjs.org/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-8.0.0.tgz"
+  integrity sha512-s0q3O2dK8b6hOJ+SZFz+s/IiMabmVsNue6r17sTwbrRD8liBkCrpjYnxoMYvtC01GggJ9TZLQbeqpt8hQSPHAg==
 
 "@matrix-org/olm@3.2.15":
   version "3.2.15"
@@ -5954,7 +5954,7 @@ matrix-js-sdk@matrix-org/matrix-js-sdk#94fb839140964a967b0f37c1205b037732e0f3d0:
   resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/94fb839140964a967b0f37c1205b037732e0f3d0"
   dependencies:
     "@babel/runtime" "^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm" "^7.0.0"
+    "@matrix-org/matrix-sdk-crypto-wasm" "^8.0.0"
     "@matrix-org/olm" "3.2.15"
     another-json "^0.2.0"
     bs58 "^6.0.0"
