@@ -19,7 +19,7 @@ import { captureException } from "@sentry/react";
 import { sleep } from "matrix-js-sdk/src/utils";
 import { Trans, useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/src/logger";
-import { Button } from "@vector-im/compound-web";
+import { Button, Text } from "@vector-im/compound-web";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { useClientLegacy } from "../ClientContext";
@@ -28,10 +28,10 @@ import styles from "./LoginPage.module.css";
 import Logo from "../icons/LogoLarge.svg?react";
 import { LoadingView } from "../FullScreenView";
 import { useRecaptcha } from "./useRecaptcha";
-import { Caption, Link } from "../typography/Typography";
 import { usePageTitle } from "../usePageTitle";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { Config } from "../config/Config";
+import { ExternalLink, Link } from "../button/Link";
 
 export const RegisterPage: FC = () => {
   const { t } = useTranslation();
@@ -201,24 +201,24 @@ export const RegisterPage: FC = () => {
                   data-testid="register_confirm_password"
                 />
               </FieldRow>
-              <Caption>
+              <Text size="sm">
                 <Trans i18nKey="recaptcha_caption">
                   This site is protected by ReCAPTCHA and the Google{" "}
-                  <Link href="https://www.google.com/policies/privacy/">
+                  <ExternalLink href="https://www.google.com/policies/privacy/">
                     Privacy Policy
-                  </Link>{" "}
+                  </ExternalLink>{" "}
                   and{" "}
-                  <Link href="https://policies.google.com/terms">
+                  <ExternalLink href="https://policies.google.com/terms">
                     Terms of Service
-                  </Link>{" "}
+                  </ExternalLink>{" "}
                   apply.
                   <br />
                   By clicking "Register", you agree to our{" "}
-                  <Link href={Config.get().eula}>
+                  <ExternalLink href={Config.get().eula}>
                     End User Licensing Agreement (EULA)
-                  </Link>
+                  </ExternalLink>
                 </Trans>
-              </Caption>
+              </Text>
               {error && (
                 <FieldRow>
                   <ErrorMessage error={error} />
