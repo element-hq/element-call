@@ -11,14 +11,13 @@ import { RoomMember } from "matrix-js-sdk/src/models/room-member";
 import { Room } from "matrix-js-sdk/src/models/room";
 import { FC, useCallback, MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { IconButton } from "@vector-im/compound-web";
+import { IconButton, Text } from "@vector-im/compound-web";
 import { CloseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import classNames from "classnames";
 
 import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
 import { getRelativeRoomUrl } from "../utils/matrix";
-import { Body } from "../typography/Typography";
 import { GroupCallRoom } from "./useGroupCallRooms";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 
@@ -78,9 +77,9 @@ const CallTile: FC<CallTileProps> = ({ name, avatarUrl, room, client }) => {
     <>
       <Avatar id={room.roomId} name={name} size={Size.LG} src={avatarUrl} />
       <div className={styles.callInfo}>
-        <Body overflowEllipsis fontWeight="semiBold">
+        <Text weight="semibold" className={styles.callName}>
           {name}
-        </Body>
+        </Text>
       </div>
       <IconButton
         onClick={onRemove}

@@ -15,7 +15,7 @@ import {
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { JoinRule } from "matrix-js-sdk/src/matrix";
-import { Heading, Link, Text } from "@vector-im/compound-web";
+import { Heading, Text } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
@@ -40,6 +40,7 @@ import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
 import { useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
+import { Link } from "../button/Link";
 
 declare global {
   interface Window {
@@ -84,6 +85,14 @@ export const GroupCallView: FC<Props> = ({
       delete window.rtcSession;
     };
   }, [rtcSession]);
+
+  useEffect(() => {
+    // Sanity check the room object
+    if (client.getRoom(rtcSession.room.roomId) !== rtcSession.room)
+      logger.warn(
+        `We've ended up with multiple rooms for the same ID (${rtcSession.room.roomId}). This indicates a bug in the group call loading code, and may lead to incomplete room state.`,
+      );
+  }, [client, rtcSession.room]);
 
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(rtcSession.room);
@@ -273,14 +282,6 @@ export const GroupCallView: FC<Props> = ({
   );
   const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
 
-  const onHomeClick = useCallback(
-    (ev: React.MouseEvent) => {
-      ev.preventDefault();
-      history.push("/");
-    },
-    [history],
-  );
-
   const { t } = useTranslation();
 
   if (!isE2EESupportedBrowser() && e2eeSystem.kind !== E2eeType.NONE) {
@@ -289,9 +290,7 @@ export const GroupCallView: FC<Props> = ({
       <FullScreenView>
         <Heading>{t("browser_media_e2ee_unsupported_heading")}</Heading>
         <Text>{t("browser_media_e2ee_unsupported")}</Text>
-        <Link href="/" onClick={onHomeClick}>
-          {t("common.home")}
-        </Link>
+        <Link to="/">{t("common.home")}</Link>
       </FullScreenView>
     );
   }

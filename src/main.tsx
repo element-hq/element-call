@@ -18,7 +18,7 @@ import "./index.css";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
   setLogExtension as setLKLogExtension,
-  setLogLevel,
+  setLogLevel as setLKLogLevel,
 } from "livekit-client";
 
 import { App } from "./App";
@@ -28,9 +28,11 @@ import { Initializer } from "./initializer";
 initRageshake().catch((e) => {
   logger.error("Failed to initialize rageshake", e);
 });
-
-setLogLevel("debug");
-setLKLogExtension(global.mx_rage_logger.log);
+setLKLogLevel("debug");
+setLKLogExtension((level, msg, context) => {
+  // we pass a synthetic logger name of "livekit" to the rageshake to make it easier to read
+  global.mx_rage_logger.log(level, "livekit", msg, context);
+});
 
 logger.info(`Element Call ${import.meta.env.VITE_APP_VERSION || "dev"}`);
 

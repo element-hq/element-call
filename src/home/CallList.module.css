@@ -50,6 +50,12 @@ Please see LICENSE in the repository root for full details.
   margin-bottom: 0;
 }
 
+.callName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .facePile {
   margin-top: 8px;
 }

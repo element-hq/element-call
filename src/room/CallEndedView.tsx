@@ -9,12 +9,11 @@ import { FC, FormEventHandler, ReactNode, useCallback, useState } from "react";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import { Trans, useTranslation } from "react-i18next";
 import { useHistory } from "react-router-dom";
-import { Button } from "@vector-im/compound-web";
+import { Button, Heading, Text } from "@vector-im/compound-web";
 
 import styles from "./CallEndedView.module.css";
 import feedbackStyle from "../input/FeedbackInput.module.css";
 import { useProfile } from "../profile/useProfile";
-import { Body, Headline } from "../typography/Typography";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { FieldRow, InputField } from "../input/Input";
@@ -139,11 +138,11 @@ export const CallEndedView: FC<Props> = ({
       return (
         <>
           <main className={styles.main}>
-            <Headline className={styles.headline}>
+            <Heading size="xl" weight="semibold" className={styles.headline}>
               <Trans i18nKey="call_ended_view.body">
                 You were disconnected from the call
               </Trans>
-            </Headline>
+            </Heading>
             <div className={styles.disconnectedButtons}>
               <Button onClick={reconnect}>
                 {t("call_ended_view.reconnect_button")}
@@ -154,9 +153,9 @@ export const CallEndedView: FC<Props> = ({
             </div>
           </main>
           {!confineToRoom && (
-            <Body className={styles.footer}>
+            <Text className={styles.footer}>
               <Link to="/"> {t("return_home_button")} </Link>
-            </Body>
+            </Text>
           )}
         </>
       );
@@ -164,7 +163,7 @@ export const CallEndedView: FC<Props> = ({
       return (
         <>
           <main className={styles.main}>
-            <Headline className={styles.headline}>
+            <Heading size="xl" weight="semibold" className={styles.headline}>
               {surveySubmitted
                 ? t("call_ended_view.headline", {
                     displayName,
@@ -174,16 +173,16 @@ export const CallEndedView: FC<Props> = ({
                   }) +
                   "\n" +
                   t("call_ended_view.survey_prompt")}
-            </Headline>
+            </Heading>
             {(!surveySubmitted || confineToRoom) &&
             PosthogAnalytics.instance.isEnabled()
               ? qualitySurveyDialog
               : createAccountDialog}
           </main>
           {!confineToRoom && (
-            <Body className={styles.footer}>
+            <Text className={styles.footer}>
               <Link to="/"> {t("call_ended_view.not_now_button")} </Link>
-            </Body>
+            </Text>
           )}
         </>
       );

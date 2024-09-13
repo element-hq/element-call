@@ -8,13 +8,12 @@ Please see LICENSE in the repository root for full details.
 import { ChangeEvent, FC, ReactNode, useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
-import { Dropdown } from "@vector-im/compound-web";
+import { Dropdown, Text } from "@vector-im/compound-web";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
 import { Tab, TabContainer } from "../tabs/Tabs";
 import { FieldRow, InputField } from "../input/Input";
-import { Caption } from "../typography/Typography";
 import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
@@ -102,14 +101,14 @@ export const SettingsModal: FC<Props> = ({
   };
 
   const optInDescription = (
-    <Caption>
+    <Text size="sm">
       <Trans i18nKey="settings.opt_in_description">
         <AnalyticsNotice />
         <br />
         You may withdraw consent by unchecking this box. If you are currently in
         a call, this setting will take effect at the end of the call.
       </Trans>
-    </Caption>
+    </Text>
   );
 
   const devices = useMediaDevices();
