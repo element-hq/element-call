@@ -54,22 +54,24 @@ export type GroupCallStatus =
   | GroupCallWaitForInvite
   | GroupCallCanKnock;
 
-const MAX_RETRIES_FOR_INVITE_JOIN_FAILURE = 3;
+const MAX_ATTEMPTS_FOR_INVITE_JOIN_FAILURE = 3;
+const DELAY_MS_FOR_INVITE_JOIN_FAILURE = 3000;
 
 /**
  * Join a room, and retry on M_FORBIDDEN error in order to work
  * around a potential race when joining rooms over federation.
  *
- * Will retry up to `MAX_RETRIES_FOR_INVITE_JOIN_FAILURE` times.
+ * Will wait up to to `DELAY_MS_FOR_INVITE_JOIN_FAILURE` per attempt.
+ * Will try up to `MAX_ATTEMPTS_FOR_INVITE_JOIN_FAILURE` times.
  *
  * @see https://github.com/element-hq/element-call/issues/2634
  * @param client The matrix client
- * @param retries Number of attempts made.
+ * @param attempt Number of attempts made.
  * @param params Parameters to pass to client.joinRoom
  */
 async function joinRoomAfterInvite(
   client: MatrixClient,
-  retries = 0,
+  attempt = 0,
   ...params: Parameters<MatrixClient["joinRoom"]>
 ): ReturnType<MatrixClient["joinRoom"]> {
   try {
@@ -78,11 +80,11 @@ async function joinRoomAfterInvite(
     if (
       ex instanceof MatrixError &&
       ex.errcode === "M_FORBIDDEN" &&
-      retries < MAX_RETRIES_FOR_INVITE_JOIN_FAILURE
+      attempt < MAX_ATTEMPTS_FOR_INVITE_JOIN_FAILURE
     ) {
       // If we were invited and got a M_FORBIDDEN, it's highly likely the server hasn't caught up yet.
-      await new Promise((r) => setTimeout(r, 5000));
-      return joinRoomAfterInvite(client, retries + 1, ...params);
+      await new Promise((r) => setTimeout(r, DELAY_MS_FOR_INVITE_JOIN_FAILURE));
+      return joinRoomAfterInvite(client, attempt + 1, ...params);
     }
     throw ex;
   }
