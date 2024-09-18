@@ -97,7 +97,7 @@ export const GroupCallView: FC<Props> = ({
   const { displayName, avatarUrl } = useProfile(client);
   const roomName = useRoomName(rtcSession.room);
   const roomAvatar = useRoomAvatar(rtcSession.room);
-  const { returnToLobby } = useUrlParams();
+  const { perParticipantE2EE, returnToLobby } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
 
   const matrixInfo = useMemo((): MatrixInfo => {
@@ -182,7 +182,7 @@ export const GroupCallView: FC<Props> = ({
       const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
         (async (): Promise<void> => {
           await defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
-          await enterRTCSession(rtcSession, e2eeSystem.kind);
+          await enterRTCSession(rtcSession, perParticipantE2EE);
           widget!.api.transport.reply(ev.detail, {});
         })().catch((e) => {
           logger.error("Error joining RTC session", e);
@@ -196,12 +196,12 @@ export const GroupCallView: FC<Props> = ({
       // No lobby and no preload: we enter the rtc session right away
       (async (): Promise<void> => {
         await defaultDeviceSetup({ audioInput: null, videoInput: null });
-        await enterRTCSession(rtcSession, e2eeSystem.kind);
+        await enterRTCSession(rtcSession, perParticipantE2EE);
       })().catch((e) => {
         logger.error("Error joining RTC session", e);
       });
     }
-  }, [rtcSession, preload, skipLobby, e2eeSystem]);
+  }, [rtcSession, preload, skipLobby, perParticipantE2EE]);
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
@@ -219,7 +219,6 @@ export const GroupCallView: FC<Props> = ({
         rtcSession.room.roomId,
         rtcSession.memberships.length,
         sendInstantly,
-        e2eeSystem.kind,
         rtcSession,
       );
 
@@ -238,7 +237,7 @@ export const GroupCallView: FC<Props> = ({
           logger.error("Error leaving RTC session", e);
         });
     },
-    [rtcSession, isPasswordlessUser, confineToRoom, history, e2eeSystem],
+    [rtcSession, isPasswordlessUser, confineToRoom, history],
   );
 
   useEffect(() => {
@@ -265,10 +264,10 @@ export const GroupCallView: FC<Props> = ({
   const onReconnect = useCallback(() => {
     setLeft(false);
     setLeaveError(undefined);
-    enterRTCSession(rtcSession, e2eeSystem.kind).catch((e) => {
+    enterRTCSession(rtcSession, perParticipantE2EE).catch((e) => {
       logger.error("Error re-entering RTC session on reconnect", e);
     });
-  }, [rtcSession, e2eeSystem]);
+  }, [rtcSession, perParticipantE2EE]);
 
   const joinRule = useJoinRule(rtcSession.room);
 
@@ -311,7 +310,7 @@ export const GroupCallView: FC<Props> = ({
         client={client}
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={() => void enterRTCSession(rtcSession, e2eeSystem.kind)}
+        onEnter={() => void enterRTCSession(rtcSession, perParticipantE2EE)}
         confineToRoom={confineToRoom}
         hideHeader={hideHeader}
         participantCount={participantCount}

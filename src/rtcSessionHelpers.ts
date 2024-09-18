@@ -17,7 +17,6 @@ import {
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, WidgetHelpers, widget } from "./widget";
-import { E2eeType } from "./e2ee/e2eeType";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -88,13 +87,10 @@ async function makePreferredLivekitFoci(
 
 export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
-  e2eeType: E2eeType,
+  encryptMedia: boolean,
 ): Promise<void> {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
-  PosthogAnalytics.instance.eventCallStarted.track(
-    rtcSession.room.roomId,
-    e2eeType,
-  );
+  PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
 
   // This must be called before we start trying to join the call, as we need to
   // have started tracking by the time calls start getting created.
@@ -108,7 +104,7 @@ export async function enterRTCSession(
     await makePreferredLivekitFoci(rtcSession, livekitAlias),
     makeActiveFocus(),
     {
-      manageMediaKeys: e2eeType === E2eeType.PER_PARTICIPANT,
+      manageMediaKeys: encryptMedia,
       ...(useDeviceSessionMemberEvents !== undefined && {
         useLegacyMemberEvents: !useDeviceSessionMemberEvents,
       }),

@@ -10,7 +10,6 @@ import { expect, test, vi } from "vitest";
 
 import { enterRTCSession } from "../src/rtcSessionHelpers";
 import { Config } from "../src/config/Config";
-import { E2eeType } from "./e2ee/e2eeType";
 
 test("It joins the correct Session", async () => {
   const focusFromOlderMembership = {
@@ -52,7 +51,7 @@ test("It joins the correct Session", async () => {
     }),
     joinRoomSession: vi.fn(),
   }) as unknown as MatrixRTCSession;
-  await enterRTCSession(mockedSession, E2eeType.SHARED_KEY);
+  await enterRTCSession(mockedSession, false);
 
   expect(mockedSession.joinRoomSession).toHaveBeenLastCalledWith(
     [
