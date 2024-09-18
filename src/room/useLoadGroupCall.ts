@@ -17,7 +17,7 @@ import { SyncState } from "matrix-js-sdk/src/sync";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { RoomEvent, Room } from "matrix-js-sdk/src/models/room";
 import { KnownMembership } from "matrix-js-sdk/src/types";
-import { JoinRule } from "matrix-js-sdk/src/matrix";
+import { JoinRule, MatrixError } from "matrix-js-sdk/src/matrix";
 import { useTranslation } from "react-i18next";
 
 import { widget } from "../widget";
@@ -53,6 +53,40 @@ export type GroupCallStatus =
   | GroupCallLoading
   | GroupCallWaitForInvite
   | GroupCallCanKnock;
+
+const MAX_RETRIES_FOR_INVITE_JOIN_FAILURE = 3;
+
+/**
+ * Join a room, and retry on M_FORBIDDEN error in order to work
+ * around a potential race when joining rooms over federation.
+ *
+ * Will retry up to `MAX_RETRIES_FOR_INVITE_JOIN_FAILURE` times.
+ *
+ * @see https://github.com/element-hq/element-call/issues/2634
+ * @param client The matrix client
+ * @param retries Number of attempts made.
+ * @param params Parameters to pass to client.joinRoom
+ */
+async function joinRoomAfterInvite(
+  client: MatrixClient,
+  retries = 0,
+  ...params: Parameters<MatrixClient["joinRoom"]>
+): ReturnType<MatrixClient["joinRoom"]> {
+  try {
+    return await client.joinRoom(...params);
+  } catch (ex) {
+    if (
+      ex instanceof MatrixError &&
+      ex.errcode === "M_FORBIDDEN" &&
+      retries < MAX_RETRIES_FOR_INVITE_JOIN_FAILURE
+    ) {
+      // If we were invited and got a M_FORBIDDEN, it's highly likely the server hasn't caught up yet.
+      await new Promise((r) => setTimeout(r, 5000));
+      return joinRoomAfterInvite(client, retries + 1, ...params);
+    }
+    throw ex;
+  }
+}
 
 export class CallTerminatedMessage extends Error {
   /**
@@ -162,10 +196,13 @@ export const useLoadGroupCall = (
               membership === KnownMembership.Invite &&
               prevMembership === KnownMembership.Knock
             ) {
-              client.joinRoom(room.roomId, { viaServers }).then((room) => {
-                logger.log("Auto-joined %s", room.roomId);
-                resolve(room);
-              }, reject);
+              joinRoomAfterInvite(client, 0, room.roomId, { viaServers }).then(
+                (room) => {
+                  logger.log("Auto-joined %s", room.roomId);
+                  resolve(room);
+                },
+                reject,
+              );
             }
             if (membership === KnownMembership.Ban) reject(bannedError());
             if (membership === KnownMembership.Leave)
