@@ -1752,15 +1752,7 @@
   dependencies:
     "@floating-ui/utils" "^0.2.8"
 
-"@floating-ui/dom@1.6.8":
-  version "1.6.8"
-  resolved "https://registry.yarnpkg.com/@floating-ui/dom/-/dom-1.6.8.tgz#45e20532b6d8a061b356a4fb336022cf2609754d"
-  integrity sha512-kx62rP19VZ767Q653wsP1XZCGIirkE09E0QUGNYTM/ttbbQHqcGPdSfWFxUyyNLc/W6aoJRBajOSXhP6GXjC0Q==
-  dependencies:
-    "@floating-ui/core" "^1.6.0"
-    "@floating-ui/utils" "^0.2.5"
-
-"@floating-ui/dom@^1.0.0":
+"@floating-ui/dom@1.6.11", "@floating-ui/dom@^1.0.0":
   version "1.6.11"
   resolved "https://registry.yarnpkg.com/@floating-ui/dom/-/dom-1.6.11.tgz#8631857838d34ee5712339eb7cbdfb8ad34da723"
   integrity sha512-qkMCxSR24v2vGkhYDo/UzxfJN3D4syqSjyuTFz6C7XcpU1pASPRieNI0Kj5VP3/503mOfYiGY891ugBX1GlABQ==
@@ -1783,11 +1775,6 @@
     "@floating-ui/react-dom" "^2.1.2"
     "@floating-ui/utils" "^0.2.8"
     tabbable "^6.0.0"
-
-"@floating-ui/utils@^0.2.5":
-  version "0.2.7"
-  resolved "https://registry.yarnpkg.com/@floating-ui/utils/-/utils-0.2.7.tgz#d0ece53ce99ab5a8e37ebdfe5e32452a2bfc073e"
-  integrity sha512-X8R8Oj771YRl/w+c1HqAC1szL8zWQRwFvgDwT129k9ACdBoud/+/rX9V0qiMl6LWUdP9voC2nDVZYPMQQsb6eA==
 
 "@floating-ui/utils@^0.2.8":
   version "0.2.8"
@@ -1869,21 +1856,21 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@livekit/components-core@0.11.4", "@livekit/components-core@^0.11.0":
-  version "0.11.4"
-  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.11.4.tgz#33248bb750d6e2492cca919a2409d511ae0a73f0"
-  integrity sha512-8Dr/9WCEov5AW42KrTnLTuoEIK1yWHcdvvJl8znxx59uUVlE8o6IvsFnofNlfRJ2fCADSnw0K2yEpLQjwLel2Q==
+"@livekit/components-core@0.11.5", "@livekit/components-core@^0.11.0":
+  version "0.11.5"
+  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.11.5.tgz#6c61910f6cecd51a88a195ccbd9300832fdf1c22"
+  integrity sha512-aaWPQJEfbY5tUND+diB7sW/6dRWN/H9lwqVy7L3nt15MszN1lX7ZlM9gA4ODquv+wUyFhxYfjRm7jVuV/g234g==
   dependencies:
-    "@floating-ui/dom" "1.6.8"
+    "@floating-ui/dom" "1.6.11"
     loglevel "1.9.1"
     rxjs "7.8.1"
 
 "@livekit/components-react@^2.0.0":
-  version "2.5.3"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.5.3.tgz#49b53207ba5f25c738e21713d454c99a0c59f07f"
-  integrity sha512-RKqi2KDltsqTdw5xx0ahEfHtuFvQoTjmJ/M1pukqU7Eczcuwga4AuEESxWkq6ct7Zenabru4eYjFbScc60L3og==
+  version "2.5.4"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.5.4.tgz#43181f3a7718f58e4a77b0fdd45d96e99777ffa4"
+  integrity sha512-uog/fZMOABFNX2HS8R4zYr2F+m14vS4mifAnRWDux+4wjMvBminX57pRqf/YN9wHc0cmiPlq0Nd8JLWnqJd2fg==
   dependencies:
-    "@livekit/components-core" "0.11.4"
+    "@livekit/components-core" "0.11.5"
     clsx "2.1.1"
     usehooks-ts "3.1.0"
 
