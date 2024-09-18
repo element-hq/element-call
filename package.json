@@ -83,7 +83,7 @@
     "livekit-client": "^2.0.2",
     "lodash": "^4.17.21",
     "loglevel": "^1.9.1",
-    "matrix-js-sdk": "matrix-org/matrix-js-sdk#94fb839140964a967b0f37c1205b037732e0f3d0",
+    "matrix-js-sdk": "matrix-org/matrix-js-sdk#414ac9d8cc28330718236b90ad67a1507e146932",
     "matrix-widget-api": "^1.8.2",
     "normalize.css": "^8.0.1",
     "observable-hooks": "^4.2.3",
@@ -109,5 +109,8 @@
     "vite-plugin-html-template": "^1.1.0",
     "vite-plugin-svgr": "^4.0.0",
     "vitest": "^2.0.0"
+  },
+  "resolutions": {
+    "strip-ansi": "6.0.1"
   }
 }
