@@ -109,5 +109,8 @@
     "vite-plugin-html-template": "^1.1.0",
     "vite-plugin-svgr": "^4.0.0",
     "vitest": "^2.0.0"
+  },
+  "resolutions": {
+    "strip-ansi": "6.0.1"
   }
 }
