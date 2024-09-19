@@ -16,7 +16,7 @@
     "submit": "Submit",
     "upload_file": "Upload file"
   },
-  "analytics_notice": "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <5>Cookie Policy</5>.",
+  "analytics_notice": "By participating in this beta, you consent to the collection of anonymous data, which we use to improve the product. You can find more information about which data we track in our <2>Privacy Policy</2> and our <6>Cookie Policy</6>.",
   "app_selection_modal": {
     "continue_in_browser": "Continue in browser",
     "open_in_app": "Open in the app",
