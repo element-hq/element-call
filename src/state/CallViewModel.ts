@@ -30,13 +30,13 @@ import {
   concat,
   distinctUntilChanged,
   filter,
+  forkJoin,
   fromEvent,
   map,
   merge,
-  mergeAll,
+  mergeMap,
   of,
   race,
-  sample,
   scan,
   skip,
   startWith,
@@ -46,7 +46,7 @@ import {
   take,
   throttleTime,
   timer,
-  zip,
+  withLatestFrom,
 } from "rxjs";
 import { logger } from "matrix-js-sdk/src/logger";
 
@@ -169,10 +169,19 @@ class UserMedia {
     participant: LocalParticipant | RemoteParticipant,
     callEncrypted: boolean,
   ) {
-    this.vm =
-      participant instanceof LocalParticipant
-        ? new LocalUserMediaViewModel(id, member, participant, callEncrypted)
-        : new RemoteUserMediaViewModel(id, member, participant, callEncrypted);
+    this.vm = participant.isLocal
+      ? new LocalUserMediaViewModel(
+          id,
+          member,
+          participant as LocalParticipant,
+          callEncrypted,
+        )
+      : new RemoteUserMediaViewModel(
+          id,
+          member,
+          participant as RemoteParticipant,
+          callEncrypted,
+        );
 
     this.speaker = this.vm.speaking.pipe(
       // Require 1 s of continuous speaking to become a speaker, and 60 s of
@@ -186,6 +195,7 @@ class UserMedia {
         ),
       ),
       startWith(false),
+      distinctUntilChanged(),
       // Make this Observable hot so that the timers don't reset when you
       // resubscribe
       this.scope.state(),
@@ -256,10 +266,9 @@ export class CallViewModel extends ViewModel {
   // Lists of participants to "hold" on display, even if LiveKit claims that
   // they've left
   private readonly remoteParticipantHolds: Observable<RemoteParticipant[][]> =
-    zip(
-      this.connectionState,
-      this.rawRemoteParticipants.pipe(sample(this.connectionState)),
-      (s, ps) => {
+    this.connectionState.pipe(
+      withLatestFrom(this.rawRemoteParticipants),
+      mergeMap(([s, ps]) => {
         // Whenever we switch focuses, we should retain all the previous
         // participants for at least POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS ms to
         // give their clients time to switch over and avoid jarring layout shifts
@@ -268,29 +277,19 @@ export class CallViewModel extends ViewModel {
             // Hold these participants
             of({ hold: ps }),
             // Wait for time to pass and the connection state to have changed
-            Promise.all([
-              new Promise<void>((resolve) =>
-                setTimeout(resolve, POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
+            forkJoin([
+              timer(POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS),
+              this.connectionState.pipe(
+                filter((s) => s !== ECAddonConnectionState.ECSwitchingFocus),
+                take(1),
               ),
-              new Promise<void>((resolve) => {
-                const subscription = this.connectionState
-                  .pipe(this.scope.bind())
-                  .subscribe((s) => {
-                    if (s !== ECAddonConnectionState.ECSwitchingFocus) {
-                      resolve();
-                      subscription.unsubscribe();
-                    }
-                  });
-              }),
               // Then unhold them
-            ]).then(() => ({ unhold: ps })),
+            ]).pipe(map(() => ({ unhold: ps }))),
           );
         } else {
           return EMPTY;
         }
-      },
-    ).pipe(
-      mergeAll(),
+      }),
       // Accumulate the hold instructions into a single list showing which
       // participants are being held
       accumulate([] as RemoteParticipant[][], (holds, instruction) =>

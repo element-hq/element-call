@@ -4,13 +4,14 @@ Copyright 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
+
 import "global-jsdom/register";
-import globalJsdom from "global-jsdom";
 import i18n from "i18next";
 import posthog from "posthog-js";
 import { initReactI18next } from "react-i18next";
-import { afterEach, beforeEach } from "vitest";
+import { afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
+import "vitest-axe/extend-expect";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { Config } from "./config/Config";
@@ -30,12 +31,12 @@ i18n
 Config.initDefault();
 posthog.opt_out_capturing();
 
-// We need to cleanup the global jsDom
-// Otherwise we will run into issues with async input test overlapping and throwing.
+afterEach(cleanup);
 
-let cleanupJsDom: { (): void };
-beforeEach(() => (cleanupJsDom = globalJsdom()));
-afterEach(() => {
-  cleanupJsDom();
-  cleanup();
-});
+// Used by a lot of components
+window.matchMedia = global.matchMedia = (): MediaQueryList =>
+  ({
+    matches: false,
+    addEventListener: () => {},
+    removeEventListener: () => {},
+  }) as Partial<MediaQueryList> as MediaQueryList;
