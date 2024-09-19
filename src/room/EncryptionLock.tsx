@@ -31,7 +31,6 @@ export const EncryptionLock: FC<Props> = ({ encrypted }) => {
         height={16}
         className={styles.lock}
         data-encrypted={encrypted}
-        aria-hidden
       />
     </Tooltip>
   );

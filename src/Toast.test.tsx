@@ -6,19 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { describe, expect, test, vi } from "vitest";
-import { render, configure } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 import { Toast } from "../src/Toast";
 import { withFakeTimers } from "./utils/test";
 
-configure({
-  defaultHidden: true,
-});
-
-// Test Explanation:
-// This test the toast. We need to use { document: window.document } because the toast listens
-// for user input on `window`.
 describe("Toast", () => {
   test("renders", () => {
     const { queryByRole } = render(
@@ -36,7 +29,7 @@ describe("Toast", () => {
   });
 
   test("dismisses when Esc is pressed", async () => {
-    const user = userEvent.setup({ document: window.document });
+    const user = userEvent.setup();
     const onDismiss = vi.fn();
     render(
       <Toast open={true} onDismiss={onDismiss}>
@@ -50,7 +43,7 @@ describe("Toast", () => {
   test("dismisses when background is clicked", async () => {
     const user = userEvent.setup();
     const onDismiss = vi.fn();
-    const { getByRole, unmount } = render(
+    const { getByRole } = render(
       <Toast open={true} onDismiss={onDismiss}>
         Hello world!
       </Toast>,
@@ -58,7 +51,6 @@ describe("Toast", () => {
     const background = getByRole("dialog").previousSibling! as Element;
     await user.click(background);
     expect(onDismiss).toHaveBeenCalled();
-    unmount();
   });
 
   test("dismisses itself after the specified timeout", () => {

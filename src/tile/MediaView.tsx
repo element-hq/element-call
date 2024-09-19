@@ -101,7 +101,6 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
                   width={20}
                   height={20}
                   className={styles.errorIcon}
-                  aria-hidden
                 />
               </Tooltip>
             )}

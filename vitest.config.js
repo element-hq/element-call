@@ -12,11 +12,11 @@ export default defineConfig((configEnv) =>
             classNameStrategy: "non-scoped",
           },
         },
-        isolate: false,
         setupFiles: ["src/vitest.setup.ts"],
         coverage: {
           reporter: ["html", "json"],
           include: ["src/"],
+          exclude: ["src/**/*.{d,test}.{ts,tsx}", "src/utils/test.ts"],
         },
       },
     }),
