@@ -15,7 +15,7 @@
     "sign_out": "Déconnexion",
     "submit": "Envoyer"
   },
-  "analytics_notice": "En participant à cette beta, vous consentez à la collecte de données anonymes, qui seront utilisées pour améliorer le produit. Vous trouverez plus d’informations sur les données collectées dans notre <2>Politique de vie privée</2> et notre <5>Politique de cookies</5>.",
+  "analytics_notice": "En participant à cette beta, vous consentez à la collecte de données anonymes, qui seront utilisées pour améliorer le produit. Vous trouverez plus d’informations sur les données collectées dans notre <2>Politique de vie privée</2> et notre <6>Politique de cookies</6>.",
   "app_selection_modal": {
     "continue_in_browser": "Continuer dans le navigateur",
     "open_in_app": "Ouvrir dans l’application",
