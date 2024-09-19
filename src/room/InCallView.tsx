@@ -85,8 +85,8 @@ import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
-import { RaisedHandsProvider, useRaisedHands } from "./useRaisedHands";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
+import { useReactions } from "../useReactions";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -139,14 +139,12 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   return (
     <RoomContext.Provider value={livekitRoom}>
-      <RaisedHandsProvider>
-        <InCallView
-          {...props}
-          vm={vm}
-          livekitRoom={livekitRoom}
-          connState={connState}
-        />
-      </RaisedHandsProvider>
+      <InCallView
+        {...props}
+        vm={vm}
+        livekitRoom={livekitRoom}
+        connState={connState}
+      />
     </RoomContext.Provider>
   );
 };
@@ -179,6 +177,8 @@ export const InCallView: FC<InCallViewProps> = ({
   connState,
   onShareClick,
 }) => {
+  const { supportsReactions } = useReactions();
+
   useWakeLock();
 
   useEffect(() => {
@@ -310,10 +310,9 @@ export const InCallView: FC<InCallViewProps> = ({
   );
 
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
-  const { raisedHands, setRaisedHands } = useRaisedHands();
+  const { raisedHands, setRaisedHands } = useReactions();
   const [reactionId, setReactionId] = useState<string | null>(null);
-  const [username, localpart] = localParticipant.identity.split(":");
-  const userId = `${username}:${localpart}`;
+  const userId = client.getUserId()!;
   const isHandRaised = raisedHands.includes(userId);
 
   useEffect(() => {
@@ -638,13 +637,15 @@ export const InCallView: FC<InCallViewProps> = ({
           />,
         );
       }
-      buttons.push(
-        <RaiseHandButton
-          key="4"
-          onClick={toggleRaisedHand}
-          raised={isHandRaised}
-        />,
-      );
+      if (supportsReactions) {
+        buttons.push(
+          <RaiseHandButton
+            key="4"
+            onClick={toggleRaisedHand}
+            raised={isHandRaised}
+          />,
+        );
+      }
       buttons.push(<SettingsButton key="5" onClick={openSettings} />);
     }
 

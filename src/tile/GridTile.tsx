@@ -44,7 +44,7 @@ import {
 import { Slider } from "../Slider";
 import { MediaView } from "./MediaView";
 import { useLatest } from "../useLatest";
-import { useRaisedHands } from "../room/useRaisedHands";
+import { useReactions } from "../useReactions";
 
 interface TileProps {
   className?: string;
@@ -91,7 +91,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       },
       [vm],
     );
-    const { raisedHands } = useRaisedHands();
+    const { raisedHands } = useReactions();
     const raisedHand = raisedHands.includes(vm.member?.userId ?? "");
 
     const MicIcon = audioEnabled ? MicOnSolidIcon : MicOffSolidIcon;
