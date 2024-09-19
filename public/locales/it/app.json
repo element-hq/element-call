@@ -14,7 +14,7 @@
     "sign_out": "Disconnetti",
     "submit": "Invia"
   },
-  "analytics_notice": "Partecipando a questa beta, acconsenti alla raccolta di dati anonimi che usiamo per migliorare il prodotto. Puoi trovare più informazioni su quali dati monitoriamo nella nostra <2>informativa sulla privacy</2> e nell'<5>informativa sui cookie</5>.",
+  "analytics_notice": "Partecipando a questa beta, acconsenti alla raccolta di dati anonimi che usiamo per migliorare il prodotto. Puoi trovare più informazioni su quali dati monitoriamo nella nostra <2>informativa sulla privacy</2> e nell'<6>informativa sui cookie</6>.",
   "app_selection_modal": {
     "continue_in_browser": "Continua nel browser",
     "open_in_app": "Apri nell'app",

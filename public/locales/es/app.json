@@ -12,7 +12,7 @@
     "sign_out": "Cerrar sesión",
     "submit": "Enviar"
   },
-  "analytics_notice": "Al participar en esta beta, consientes a la recogida de datos anónimos, los cuales usaremos para mejorar el producto. Puedes encontrar más información sobre que datos recogemos en nuestra <2>Política de privacidad</2> y en nuestra <5>Política sobre Cookies</5>.",
+  "analytics_notice": "Al participar en esta beta, consientes a la recogida de datos anónimos, los cuales usaremos para mejorar el producto. Puedes encontrar más información sobre que datos recogemos en nuestra <2>Política de privacidad</2> y en nuestra <6>Política sobre Cookies</6>.",
   "call_ended_view": {
     "create_account_button": "Crear cuenta",
     "create_account_prompt": "<0>¿Por qué no mantienes tu cuenta estableciendo una contraseña?</0><1>Podrás mantener tu nombre y establecer un avatar para usarlo en futuras llamadas</1>",
