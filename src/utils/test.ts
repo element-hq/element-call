@@ -87,6 +87,9 @@ function mockEmitter<T>(): EmitterMock<T> {
   };
 }
 
+// Maybe it'd be good to move this to matrix-js-sdk? Our testing needs are
+// rather simple, but if one util to mock a member is good enough for us, maybe
+// it's useful for matrix-js-sdk consumers in general.
 export function mockMember(member: Partial<RoomMember>): RoomMember {
   return { ...mockEmitter(), ...member } as RoomMember;
 }
