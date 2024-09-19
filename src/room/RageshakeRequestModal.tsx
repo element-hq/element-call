@@ -7,12 +7,11 @@ Please see LICENSE in the repository root for full details.
 
 import { FC, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Button } from "@vector-im/compound-web";
+import { Button, Text } from "@vector-im/compound-web";
 
 import { Modal, Props as ModalProps } from "../Modal";
 import { FieldRow, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake } from "../settings/submit-rageshake";
-import { Body } from "../typography/Typography";
 
 interface Props extends Omit<ModalProps, "title" | "children"> {
   rageshakeRequestId: string;
@@ -40,7 +39,7 @@ export const RageshakeRequestModal: FC<Props> = ({
       open={open}
       onDismiss={onDismiss}
     >
-      <Body>{t("rageshake_request_modal.body")}</Body>
+      <Text>{t("rageshake_request_modal.body")}</Text>
       <FieldRow>
         <Button
           onClick={(): void =>
