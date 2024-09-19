@@ -64,15 +64,6 @@ Please see LICENSE in the repository root for full details.
   flex-direction: column;
   justify-content: flex-end;
   align-items: center;
-}
-
-.authLinks {
   margin-bottom: 100px;
   font-size: var(--font-size-body);
-}
-
-.authLinks a {
-  color: var(--cpd-color-text-action-accent);
-  text-decoration: none;
-  font-weight: normal;
 }
