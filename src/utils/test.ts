@@ -63,58 +63,40 @@ export function withTestScheduler(
   );
 }
 
-export function mockMember(member: Partial<RoomMember>): RoomMember {
+interface EmitterMock<T> {
+  on: () => T;
+  off: () => T;
+  addListener: () => T;
+  removeListener: () => T;
+}
+
+function mockEmitter<T>(): EmitterMock<T> {
   return {
-    on() {
-      return this;
+    on(): T {
+      return this as T;
     },
-    off() {
-      return this;
+    off(): T {
+      return this as T;
     },
-    addListener() {
-      return this;
+    addListener(): T {
+      return this as T;
     },
-    removeListener() {
-      return this;
+    removeListener(): T {
+      return this as T;
     },
-    ...member,
-  } as RoomMember;
+  };
+}
+
+export function mockMember(member: Partial<RoomMember>): RoomMember {
+  return { ...mockEmitter(), ...member } as RoomMember;
 }
 
 export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
-  return {
-    on() {
-      return this as MatrixRoom;
-    },
-    off() {
-      return this as MatrixRoom;
-    },
-    addEventListener() {
-      return this as MatrixRoom;
-    },
-    removeEventListener() {
-      return this as MatrixRoom;
-    },
-    ...room,
-  } as Partial<MatrixRoom> as MatrixRoom;
+  return { ...mockEmitter(), ...room } as Partial<MatrixRoom> as MatrixRoom;
 }
 
 export function mockLivekitRoom(room: Partial<LivekitRoom>): LivekitRoom {
-  return {
-    on() {
-      return this as LivekitRoom;
-    },
-    off() {
-      return this as LivekitRoom;
-    },
-    addEventListener() {
-      return this as LivekitRoom;
-    },
-    removeEventListener() {
-      return this as LivekitRoom;
-    },
-    ...room,
-  } as Partial<LivekitRoom> as LivekitRoom;
+  return { ...mockEmitter(), ...room } as Partial<LivekitRoom> as LivekitRoom;
 }
 
 export function mockLocalParticipant(
@@ -124,18 +106,7 @@ export function mockLocalParticipant(
     isLocal: true,
     getTrackPublication: () =>
       ({}) as Partial<LocalTrackPublication> as LocalTrackPublication,
-    on() {
-      return this as LocalParticipant;
-    },
-    off() {
-      return this as LocalParticipant;
-    },
-    addListener() {
-      return this as LocalParticipant;
-    },
-    removeListener() {
-      return this as LocalParticipant;
-    },
+    ...mockEmitter(),
     ...participant,
   } as Partial<LocalParticipant> as LocalParticipant;
 }
@@ -165,18 +136,7 @@ export function mockRemoteParticipant(
     setVolume() {},
     getTrackPublication: () =>
       ({}) as Partial<RemoteTrackPublication> as RemoteTrackPublication,
-    on() {
-      return this;
-    },
-    off() {
-      return this;
-    },
-    addListener() {
-      return this;
-    },
-    removeListener() {
-      return this;
-    },
+    ...mockEmitter(),
     ...participant,
   } as RemoteParticipant;
 }
