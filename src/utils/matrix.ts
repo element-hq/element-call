@@ -210,7 +210,7 @@ export function sanitiseRoomNameInput(input: string): string {
 interface CreateRoomResult {
   roomId: string;
   alias?: string;
-  encryptionSystem: EncryptionSystem;
+  password?: string;
 }
 
 /**
@@ -286,25 +286,16 @@ export async function createRoom(
     client.on(ClientEvent.Room, onRoom);
   });
 
-  let encryptionSystem: EncryptionSystem;
-
+  let password: string | undefined;
   if (e2ee == E2eeType.SHARED_KEY) {
-    const password = secureRandomBase64Url(16);
+    password = secureRandomBase64Url(16);
     saveKeyForRoom(roomId, password);
-    encryptionSystem = {
-      kind: E2eeType.SHARED_KEY,
-      secret: password,
-    };
-  } else {
-    encryptionSystem = {
-      kind: e2ee,
-    };
   }
 
   return {
     roomId,
     alias: e2ee ? undefined : fullAliasFromRoomName(name, client),
-    encryptionSystem,
+    password,
   };
 }
 

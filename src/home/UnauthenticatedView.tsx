@@ -106,14 +106,14 @@ export const UnauthenticatedView: FC = () => {
         if (!setClient) {
           throw new Error("setClient is undefined");
         }
-        if (createRoomResult.encryptionSystem.kind !== E2eeType.SHARED_KEY)
+        if (!createRoomResult.password)
           throw new Error("Failed to create room with shared secret");
 
         setClient({ client, session });
         history.push(
           getRelativeRoomUrl(
             createRoomResult.roomId,
-            createRoomResult.encryptionSystem,
+            { kind: E2eeType.SHARED_KEY, secret: createRoomResult.password },
             roomName,
           ),
         );
