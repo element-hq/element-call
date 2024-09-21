@@ -478,18 +478,16 @@ export async function init(): Promise<void> {
 
   // intercept console logging so that we can get matrix_sdk logs:
   // this is nasty, but no logging hooks are provided
-  (
-    ["trace", "debug", "info", "warn", "error"] as (
-      | "trace"
-      | "debug"
-      | "info"
-      | "warn"
-      | "error"
-    )[]
-  ).forEach((level) => {
-    if (!window.console[level]) return;
-    const prefix = `${level.toUpperCase()} matrix_sdk`;
+  [
+    "trace" as const,
+    "debug" as const,
+    "info" as const,
+    "warn" as const,
+    "error" as const,
+  ].forEach((level) => {
     const originalMethod = window.console[level];
+    if (!originalMethod) return;
+    const prefix = `${level.toUpperCase()} matrix_sdk`;
     window.console[level] = (...args): void => {
       originalMethod(...args);
       if (typeof args[0] === "string" && args[0].startsWith(prefix)) {
