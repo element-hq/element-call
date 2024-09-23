@@ -70,7 +70,6 @@ import { E2eeType } from "../e2ee/e2eeType";
 import { makeGridLayout } from "../grid/GridLayout";
 import {
   CallLayoutOutputs,
-  TileModel,
   defaultPipAlignment,
   defaultSpotlightAlignment,
 } from "../grid/CallLayout";
@@ -78,6 +77,7 @@ import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
+import { GridTileViewModel, TileViewModel } from "../state/TileViewModel";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -342,7 +342,7 @@ export const InCallView: FC<InCallViewProps> = ({
     () =>
       forwardRef<
         HTMLDivElement,
-        PropsWithoutRef<TileProps<TileModel, HTMLDivElement>>
+        PropsWithoutRef<TileProps<TileViewModel, HTMLDivElement>>
       >(function Tile(
         { className, style, targetWidth, targetHeight, model },
         ref,
@@ -354,7 +354,7 @@ export const InCallView: FC<InCallViewProps> = ({
         const showVideo = useObservableEagerState(
           useMemo(
             () =>
-              model.type === "grid" ? vm.showGridVideo(model.vm) : of(true),
+              model instanceof GridTileViewModel ? vm.showGridVideo(model.media) : of(true),
             [model],
           ),
         );
@@ -365,10 +365,10 @@ export const InCallView: FC<InCallViewProps> = ({
           vm.showSpotlightIndicators,
         );
 
-        return model.type === "grid" ? (
+        return model instanceof GridTileViewModel ? (
           <GridTile
             ref={ref}
-            vm={model.vm}
+            vm={model}
             onOpenProfile={openProfile}
             targetWidth={targetWidth}
             targetHeight={targetHeight}
@@ -380,8 +380,7 @@ export const InCallView: FC<InCallViewProps> = ({
         ) : (
           <SpotlightTile
             ref={ref}
-            vms={model.vms}
-            maximised={model.maximised}
+            vm={model}
             expanded={spotlightExpanded}
             onToggleExpanded={onToggleExpanded}
             targetWidth={targetWidth}

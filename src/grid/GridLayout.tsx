@@ -14,8 +14,6 @@ import styles from "./GridLayout.module.css";
 import { useInitial } from "../useInitial";
 import {
   CallLayout,
-  GridTileModel,
-  TileModel,
   arrangeTiles,
 } from "./CallLayout";
 import { DragCallback, useUpdateLayout } from "./Grid";
@@ -49,15 +47,6 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
         ),
       ),
     );
-    const tileModel: TileModel | undefined = useMemo(
-      () =>
-        model.spotlight && {
-          type: "spotlight",
-          vms: model.spotlight,
-          maximised: false,
-        },
-      [model.spotlight],
-    );
 
     const onDragSpotlight: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>
@@ -70,11 +59,11 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
 
     return (
       <div ref={ref} className={styles.fixed}>
-        {tileModel && (
+        {model.spotlight && (
           <Slot
             className={styles.slot}
             id="spotlight"
-            model={tileModel}
+            model={model.spotlight}
             onDrag={onDragSpotlight}
             data-block-alignment={alignment.block}
             data-inline-alignment={alignment.inline}
@@ -93,11 +82,6 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
       [width, minHeight, model.grid.length],
     );
 
-    const tileModels: GridTileModel[] = useMemo(
-      () => model.grid.map((vm) => ({ type: "grid", vm })),
-      [model.grid],
-    );
-
     return (
       <div
         ref={ref}
@@ -111,8 +95,8 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
           } as GridCSSProperties
         }
       >
-        {tileModels.map((m) => (
-          <Slot key={m.vm.id} className={styles.slot} id={m.vm.id} model={m} />
+        {model.grid.map((m) => (
+          <Slot key={m.media.id} className={styles.slot} id={m.media.id} model={m} />
         ))}
       </div>
     );

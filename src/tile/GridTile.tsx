@@ -10,6 +10,8 @@ import {
   ReactNode,
   forwardRef,
   useCallback,
+  useEffect,
+  useRef,
   useState,
 } from "react";
 import { animated } from "@react-spring/web";
@@ -44,6 +46,8 @@ import {
 import { Slider } from "../Slider";
 import { MediaView } from "./MediaView";
 import { useLatest } from "../useLatest";
+import { GridTileViewModel } from "../state/TileViewModel";
+import { useMergedRefs } from "../useMergedRefs";
 
 interface TileProps {
   className?: string;
@@ -266,7 +270,7 @@ const RemoteUserMediaTile = forwardRef<
 RemoteUserMediaTile.displayName = "RemoteUserMediaTile";
 
 interface GridTileProps {
-  vm: UserMediaViewModel;
+  vm: GridTileViewModel;
   onOpenProfile: () => void;
   targetWidth: number;
   targetHeight: number;
@@ -277,14 +281,26 @@ interface GridTileProps {
 }
 
 export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
-  ({ vm, onOpenProfile, ...props }, ref) => {
-    const displayName = useDisplayName(vm);
+  ({ vm, onOpenProfile, ...props }, theirRef) => {
+    const ourRef = useRef<HTMLDivElement | null>(null)
+    const ref = useMergedRefs(ourRef, theirRef)
+    const displayName = useDisplayName(vm.media);
+    useEffect(() => {
+      const io = new IntersectionObserver(
+        (entries) => {
+          vm.setVisible(entries.some(e => e.isIntersecting))
+        },
+        { threshold: 1 },
+      )
+      io.observe(ourRef.current!)
+      return (): void => io.disconnect()
+    }, [vm])
 
-    if (vm instanceof LocalUserMediaViewModel) {
+    if (vm.media instanceof LocalUserMediaViewModel) {
       return (
         <LocalUserMediaTile
           ref={ref}
-          vm={vm}
+          vm={vm.media}
           onOpenProfile={onOpenProfile}
           displayName={displayName}
           {...props}
@@ -294,7 +310,7 @@ export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
       return (
         <RemoteUserMediaTile
           ref={ref}
-          vm={vm}
+          vm={vm.media}
           displayName={displayName}
           {...props}
         />
