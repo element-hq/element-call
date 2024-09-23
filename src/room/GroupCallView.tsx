@@ -219,6 +219,7 @@ export const GroupCallView: FC<Props> = ({
         rtcSession.room.roomId,
         rtcSession.memberships.length,
         sendInstantly,
+        rtcSession,
       );
 
       // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
