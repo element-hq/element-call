@@ -64,6 +64,7 @@ interface PlatformProperties {
   appVersion: string;
   matrixBackend: "embedded" | "jssdk";
   callBackend: "livekit" | "full-mesh";
+  cryptoVersion?: string;
 }
 
 interface PosthogSettings {
@@ -184,6 +185,9 @@ export class PosthogAnalytics {
       appVersion,
       matrixBackend: widget ? "embedded" : "jssdk",
       callBackend: "livekit",
+      cryptoVersion: widget
+        ? undefined
+        : window.matrixclient?.getCrypto()?.getVersion(),
     };
   }
 
