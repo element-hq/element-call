@@ -490,7 +490,10 @@ export async function init(): Promise<void> {
     const prefix = `${level.toUpperCase()} matrix_sdk`;
     window.console[level] = (...args): void => {
       originalMethod(...args);
+      // args for calls from the matrix-sdk-crypto-wasm look like:
+      // ["DEBUG matrix_sdk_indexeddb::crypto_store: IndexedDbCryptoStore: opening main store matrix-js-sdk::matrix-sdk-crypto\n    at /home/runner/.cargo/git/checkouts/matrix-rust-sdk-1f4927f82a3d27bb/07aa6d7/crates/matrix-sdk-indexeddb/src/crypto_store/mod.rs:267"]
       if (typeof args[0] === "string" && args[0].startsWith(prefix)) {
+        // we pass all the args on to the logger in case there are more sent in future
         global.mx_rage_logger.log(LogLevel[level], "matrix_sdk", ...args);
       }
     };
