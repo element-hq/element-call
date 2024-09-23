@@ -41,7 +41,9 @@ export class MatrixKeyProvider extends BaseKeyProvider {
       encryptionKeys,
     ] of this.rtcSession.getEncryptionKeys()) {
       for (const [index, encryptionKey] of encryptionKeys.entries()) {
-        this.onEncryptionKeyChanged(encryptionKey, index, participant);
+        if (encryptionKey) {
+          this.onEncryptionKeyChanged(encryptionKey, index, participant);
+        }
       }
     }
   }
