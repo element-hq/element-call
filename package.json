@@ -41,6 +41,7 @@
     "@sentry/vite-plugin": "^2.0.0",
     "@testing-library/dom": "^10.1.0",
     "@testing-library/react": "^16.0.0",
+    "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^14.5.1",
     "@types/content-type": "^1.1.5",
     "@types/grecaptcha": "^3.0.9",
