@@ -27,84 +27,40 @@ vi.mock("./UrlParams", () => ({
 describe("useTheme", () => {
   let originalClassList: DOMTokenList;
   beforeEach(() => {
-    // Save the original classList so we can restore it later
+    // Save the original classList to setup spies
     originalClassList = document.body.classList;
 
-    vi.spyOn(document.body.classList, "add").mockImplementation(vi.fn());
-    vi.spyOn(document.body.classList, "remove").mockImplementation(vi.fn());
-    vi.spyOn(document.body.classList, "item").mockImplementation(() => null);
+    vi.spyOn(originalClassList, "add");
+    vi.spyOn(originalClassList, "remove");
+    vi.spyOn(originalClassList, "item").mockReturnValue(null);
   });
 
   afterEach(() => {
     vi.clearAllMocks();
   });
 
-  test("should apply dark theme by default when no theme is specified", () => {
-    // Mock useUrlParams to return no theme
-    (useUrlParams as Mock).mockReturnValue({ theme: null });
+  describe.each([
+    { setTheme: null, add: ["cpd-theme-dark"] },
+    { setTheme: "light", add: ["cpd-theme-light"] },
+    { setTheme: "dark-high-contrast", add: ["cpd-theme-dark-hc"] },
+    { setTheme: "light-high-contrast", add: ["cpd-theme-light-hc"] },
+  ])("apply procedure", ({ setTheme, add }) => {
+    test(`should apply ${add[0]} theme when ${setTheme} theme is specified`, () => {
+      (useUrlParams as Mock).mockReturnValue({ theme: setTheme });
 
-    renderHook(() => useTheme());
+      renderHook(() => useTheme());
 
-    expect(originalClassList.remove).toHaveBeenCalledWith(
-      "cpd-theme-light",
-      "cpd-theme-dark",
-      "cpd-theme-light-hc",
-      "cpd-theme-dark-hc",
-    );
-    expect(originalClassList.add).toHaveBeenCalledWith("cpd-theme-dark");
-  });
-
-  test("should apply light theme when theme is set to light", () => {
-    // Mock useUrlParams to return light theme
-    (useUrlParams as Mock).mockReturnValue({ theme: "light" });
-
-    renderHook(() => useTheme());
-
-    expect(originalClassList.remove).toHaveBeenCalledWith(
-      "cpd-theme-light",
-      "cpd-theme-dark",
-      "cpd-theme-light-hc",
-      "cpd-theme-dark-hc",
-    );
-    expect(originalClassList.add).toHaveBeenCalledWith("cpd-theme-light");
-  });
-
-  test("should apply dark-high-contrast theme when theme is set to dark-high-contrast", () => {
-    // Mock useUrlParams to return dark-high-contrast theme
-    (useUrlParams as Mock).mockReturnValue({
-      theme: "dark-high-contrast",
+      expect(originalClassList.remove).toHaveBeenCalledWith(
+        "cpd-theme-light",
+        "cpd-theme-dark",
+        "cpd-theme-light-hc",
+        "cpd-theme-dark-hc",
+      );
+      expect(originalClassList.add).toHaveBeenCalledWith(...add);
     });
-
-    renderHook(() => useTheme());
-
-    expect(originalClassList.remove).toHaveBeenCalledWith(
-      "cpd-theme-light",
-      "cpd-theme-dark",
-      "cpd-theme-light-hc",
-      "cpd-theme-dark-hc",
-    );
-    expect(originalClassList.add).toHaveBeenCalledWith("cpd-theme-dark-hc");
-  });
-
-  test("should apply light-high-contrast theme when theme is set to light-high-contrast", () => {
-    // Mock useUrlParams to return light-high-contrast theme
-    (useUrlParams as Mock).mockReturnValue({
-      theme: "light-high-contrast",
-    });
-
-    renderHook(() => useTheme());
-
-    expect(originalClassList.remove).toHaveBeenCalledWith(
-      "cpd-theme-light",
-      "cpd-theme-dark",
-      "cpd-theme-light-hc",
-      "cpd-theme-dark-hc",
-    );
-    expect(originalClassList.add).toHaveBeenCalledWith("cpd-theme-light-hc");
   });
 
   test("should not reapply the same theme if it hasn't changed", () => {
-    // Mock useUrlParams to return dark theme initially
     (useUrlParams as Mock).mockReturnValue({ theme: "dark" });
     // Simulate a previous theme
     originalClassList.item = vi.fn().mockReturnValue("cpd-theme-dark");
