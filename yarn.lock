@@ -1164,7 +1164,7 @@
   resolved "https://registry.yarnpkg.com/@bcoe/v8-coverage/-/v8-coverage-0.2.3.tgz#75a2e8b51cb758a7553d6804a5932d7aace75c39"
   integrity sha512-0hYQ8SB4Db5zvZB4axdMHGwEaQjkZzFjQiN9LVYvIFB2nSUHW9tYpxWriPrWDASIxiaXax83REcLxuSdnGPZtw==
 
-"@bufbuild/protobuf@^1.7.2":
+"@bufbuild/protobuf@^1.10.0":
   version "1.10.0"
   resolved "https://registry.yarnpkg.com/@bufbuild/protobuf/-/protobuf-1.10.0.tgz#1a67ac889c2d464a3492b3e54c38f80517963b16"
   integrity sha512-QDdVFLoN93Zjg36NoQPZfsVH9tZew7wKDKyV5qRdj8ntT4wQCOradQjRaTdwMhWUYsgKsvCINKKm87FdEk96Ag==
@@ -1874,12 +1874,12 @@
     clsx "2.1.1"
     usehooks-ts "3.1.0"
 
-"@livekit/protocol@1.20.1":
-  version "1.20.1"
-  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.20.1.tgz#05706d6e077771e7ee512c47fcdc58fd5be8b539"
-  integrity sha512-TgyuwOx+XJn9inEYT9OKfFNs9YIPS4BdLa4pF5FDf9MhWRnahKwPe7jxr/+sVdWxYbZmy9hRrH58jSAFu0ONHw==
+"@livekit/protocol@1.22.0":
+  version "1.22.0"
+  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.22.0.tgz#344d5eeeb24916fc4cbe1afba638471b77dfc6e5"
+  integrity sha512-KYOfVAz38YFRsmEzeDgzoaHZJhMZEkeZQlzr9xIjczWR9SeEaYNU6+IDcZRlrYcpWl6Almgt/OhXcQn+nkrDGw==
   dependencies:
-    "@bufbuild/protobuf" "^1.7.2"
+    "@bufbuild/protobuf" "^1.10.0"
 
 "@matrix-org/matrix-sdk-crypto-wasm@^8.0.0":
   version "8.0.0"
@@ -5806,11 +5806,11 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^2.0.2:
-  version "2.5.2"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.5.2.tgz#3c8fcc67a0eb4a990822603e3f016d18b400a1a1"
-  integrity sha512-rzWFH02UznHxpnbj+WEEoHxL1ZSo9BdFK+7ltSZWniTt2llnNckdqeXNsjkBH6k+C9agHTF4XikmxKcpWa4YrQ==
+  version "2.5.4"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.5.4.tgz#5d209e7e4478f8a424df2ef985426d3d73198130"
+  integrity sha512-ZL1Twbzscvhji7Sor+JIkIV4V7jSbX/IvBvfxeOuRzovIiM0v9IUCMINUR98mPZ7kHNFuiKB3w14afYa4UjkPg==
   dependencies:
-    "@livekit/protocol" "1.20.1"
+    "@livekit/protocol" "1.22.0"
     events "^3.3.0"
     loglevel "^1.8.0"
     sdp-transform "^2.14.1"
