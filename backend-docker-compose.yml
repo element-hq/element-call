@@ -27,11 +27,15 @@ services:
     image: livekit/livekit-server:latest
     command: --dev --config /etc/livekit.yaml
     restart: unless-stopped
-    ports:
-      - "7880:7880"
-      - "7881:7881"
-      - "7882:7882"
-      - "50100-50200:50100-50200"
+    # The SFU seems to work far more reliably when we let it share the host
+    # network rather than opening specific ports (but why?? we're not missing
+    # any…)
+    network_mode: host
+    # ports:
+    #   - "7880:7880"
+    #   - "7881:7881"
+    #   - "7882:7882"
+    #   - "50100-50200:50100-50200"
     volumes:
       - ./backend/livekit.yaml:/etc/livekit.yaml
     networks:
