@@ -7,12 +7,16 @@ services:
   auth-service:
     image: ghcr.io/element-hq/lk-jwt-service:latest-ci
     hostname: auth-server
-    ports:
-      - 8881:8080
+    # Use host network in case the configured homeserver runs on localhost
+    network_mode: host
     environment:
+      - LK_JWT_PORT=8881
       - LIVEKIT_URL=ws://localhost:7880
       - LIVEKIT_KEY=devkey
       - LIVEKIT_SECRET=secret
+      # If the configured homeserver runs on localhost, it'll probably be using
+      # a self-signed certificate
+      - LIVEKIT_INSECURE_SKIP_VERIFY_TLS=YES_I_KNOW_WHAT_I_AM_DOING
     deploy:
       restart_policy:
         condition: on-failure
@@ -23,11 +27,15 @@ services:
     image: livekit/livekit-server:latest
     command: --dev --config /etc/livekit.yaml
     restart: unless-stopped
-    ports:
-      - "7880:7880"
-      - "7881:7881"
-      - "7882:7882"
-      - "50100-50200:50100-50200"
+    # The SFU seems to work far more reliably when we let it share the host
+    # network rather than opening specific ports (but why?? we're not missing
+    # any…)
+    network_mode: host
+    # ports:
+    #   - "7880:7880/tcp"
+    #   - "7881:7881/tcp"
+    #   - "7882:7882/tcp"
+    #   - "50100-50200:50100-50200/upd"
     volumes:
       - ./backend/livekit.yaml:/etc/livekit.yaml
     networks:
