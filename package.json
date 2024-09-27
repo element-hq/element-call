@@ -73,7 +73,7 @@
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^4.5.0",
     "eslint-plugin-unicorn": "^55.0.0",
-    "global-jsdom": "^24.0.0",
+    "global-jsdom": "^25.0.0",
     "history": "^4.0.0",
     "i18next": "^23.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
