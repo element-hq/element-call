@@ -3093,9 +3093,9 @@
   integrity sha512-PtQMG7kDzwtjw/fLKD63uWP5rJ8cgWc/aXarfEzxYUf9ceWxBajnYOBI2jDqtE3WIUe9uTVBzNEvmOBG/VIgTA==
 
 "@vector-im/compound-web@^6.0.0":
-  version "6.2.0"
-  resolved "https://registry.yarnpkg.com/@vector-im/compound-web/-/compound-web-6.2.0.tgz#ae38f04be524b87b2b655858e603f60677d9a973"
-  integrity sha512-oRoRDyKzlgPwjhZcn/Ll9zTccr/61ky3g7JUfQtvbe03H2Gyd887J8KJ/Q6RuUvVyUYTjHh2yi+eKp3UK1ylCw==
+  version "6.2.1"
+  resolved "https://registry.yarnpkg.com/@vector-im/compound-web/-/compound-web-6.2.1.tgz#dc1fd1a0a5845d3216d55fc65800b30f287e6071"
+  integrity sha512-jTjqPRxrh7MAX3eymaa1o4ws+0LtHNT0EPILMutwAN/hkB/UqmkKtv5+xD2JdXoP2CxeAQxzu8F0kmzTEE2adQ==
   dependencies:
     "@floating-ui/react" "^0.26.9"
     "@radix-ui/react-context-menu" "^2.1.5"
