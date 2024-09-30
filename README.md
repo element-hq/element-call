@@ -44,7 +44,7 @@ server {
 }
 ```
 
-By default, the app expects you to have a Matrix homeserver (such as [Synapse](https://matrix-org.github.io/synapse/latest/setup/installation.html)) installed locally and running on port 8008. If you wish to use a homeserver on a different URL or one that is hosted on a different server, you can add a config file as above, and include the homeserver URL that you'd like to use.
+By default, the app expects you to have a Matrix homeserver (such as [Synapse](https://element-hq.github.io/synapse/latest/setup/installation.html)) installed locally and running on port 8008. If you wish to use a homeserver on a different URL or one that is hosted on a different server, you can add a config file as above, and include the homeserver URL that you'd like to use.
 
 Element Call requires a homeserver with registration enabled without any 3pid or token requirements, if you want it to be used by unregistered users. Furthermore, it is not recommended to use it with an existing homeserver where user accounts have joined normal rooms, as it may not be able to handle those yet and it may behave unreliably.
 
