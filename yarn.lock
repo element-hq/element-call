@@ -1809,21 +1809,21 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@livekit/components-core@0.11.8", "@livekit/components-core@^0.11.0":
-  version "0.11.8"
-  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.11.8.tgz#abe508fa7930dc0e4efa37443526ed3a9f514a02"
-  integrity sha512-VfnCRFZxTRt0pjtmLDUdOccbV+auUx/0wjjdv9q5Ubi9fiLHj+QaxQ64nG4040Ib9Ihsev6A02iybSEGqRBEZw==
+"@livekit/components-core@0.11.9", "@livekit/components-core@^0.11.0":
+  version "0.11.9"
+  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.11.9.tgz#d52e871313c599a84a29cec62826ec3f4eae4b66"
+  integrity sha512-LPE1BZ+YTaqsVqGy/GAlpiO5rEI8XpEaf1TQcGdZN1BCBas9hTHt7/aHMbHQJ0K5xuAFQx8is6dFe451T4qXIQ==
   dependencies:
     "@floating-ui/dom" "1.6.11"
     loglevel "1.9.1"
     rxjs "7.8.1"
 
 "@livekit/components-react@^2.0.0":
-  version "2.6.4"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.6.4.tgz#7e94ed914971274a7218cdf62cac4e5089f3823d"
-  integrity sha512-DwR05R9JBKXvEPGhBFsqTQ7ev8cJHEL4U2fkatf7cyb2SkJkEkF6axDf3xHsSGjgUEUnDPvbSpntsj/ZDRWPEQ==
+  version "2.6.5"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.6.5.tgz#c6ff2785a68b8392150946324796b1ee9857f525"
+  integrity sha512-G3BpBlKy+lWTV9MH3/oBTBC17Z8CWqZ9GnjcG/xmYI0IvqmY89tVWph7cj2Bq0taniA+mD3U9EMPr68fOb1m1g==
   dependencies:
-    "@livekit/components-core" "0.11.8"
+    "@livekit/components-core" "0.11.9"
     clsx "2.1.1"
     usehooks-ts "3.1.0"
 
