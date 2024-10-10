@@ -14,6 +14,14 @@ import { KeyProviderEvent } from "livekit-client";
 
 import { MatrixKeyProvider } from "./matrixKeyProvider";
 
+function mockRTCSession(): MatrixRTCSession {
+  return {
+    on: vi.fn(),
+    off: vi.fn(),
+    reemitEncryptionKeys: vi.fn(),
+  } as unknown as MatrixRTCSession;
+}
+
 describe("matrixKeyProvider", () => {
   test("initializes", () => {
     const keyProvider = new MatrixKeyProvider();
@@ -23,11 +31,7 @@ describe("matrixKeyProvider", () => {
   test("listens for key requests and emits existing keys", () => {
     const keyProvider = new MatrixKeyProvider();
 
-    const session: MatrixRTCSession = {
-      on: vi.fn(),
-      off: vi.fn(),
-      getEncryptionKeys: vi.fn().mockReturnValue([]),
-    } as unknown as MatrixRTCSession;
+    const session = mockRTCSession();
 
     keyProvider.setRTCSession(session);
 
@@ -41,17 +45,8 @@ describe("matrixKeyProvider", () => {
   test("stops listening when session changes", () => {
     const keyProvider = new MatrixKeyProvider();
 
-    const session1: MatrixRTCSession = {
-      on: vi.fn(),
-      off: vi.fn(),
-      getEncryptionKeys: vi.fn().mockReturnValue([]),
-    } as unknown as MatrixRTCSession;
-
-    const session2: MatrixRTCSession = {
-      on: vi.fn(),
-      off: vi.fn(),
-      getEncryptionKeys: vi.fn().mockReturnValue([]),
-    } as unknown as MatrixRTCSession;
+    const session1 = mockRTCSession();
+    const session2 = mockRTCSession();
 
     keyProvider.setRTCSession(session1);
     expect(session1.off).not.toHaveBeenCalled();
@@ -64,53 +59,14 @@ describe("matrixKeyProvider", () => {
   });
 
   test("emits existing keys", async () => {
-    vi.useFakeTimers();
-    try {
-      const keyProvider = new MatrixKeyProvider();
-      const setKeyListener = vi.fn();
-      keyProvider.on(KeyProviderEvent.SetKey, setKeyListener);
+    const keyProvider = new MatrixKeyProvider();
+    const setKeyListener = vi.fn();
+    keyProvider.on(KeyProviderEvent.SetKey, setKeyListener);
 
-      const session: MatrixRTCSession = {
-        on: vi.fn(),
-        off: vi.fn(),
-        room: {
-          roomId: "mockRoomId",
-        },
-        getEncryptionKeys: vi
-          .fn()
-          .mockReturnValue(
-            new Array([
-              "mockParticipantId",
-              [
-                new TextEncoder().encode("key0"),
-                new TextEncoder().encode("key1"),
-              ],
-            ]),
-          ),
-      } as unknown as MatrixRTCSession;
+    const session = mockRTCSession();
 
-      keyProvider.setRTCSession(session);
+    keyProvider.setRTCSession(session);
 
-      expect(session.getEncryptionKeys).toHaveBeenCalled();
-
-      await vi.runAllTimersAsync();
-      expect(setKeyListener).toHaveBeenCalledTimes(2);
-      expect(setKeyListener).toHaveBeenCalledWith(
-        expect.objectContaining({
-          key: expect.any(CryptoKey),
-          participantIdentity: "mockParticipantId",
-          keyIndex: 0,
-        }),
-      );
-      expect(setKeyListener).toHaveBeenCalledWith(
-        expect.objectContaining({
-          key: expect.any(CryptoKey),
-          participantIdentity: "mockParticipantId",
-          keyIndex: 1,
-        }),
-      );
-    } finally {
-      vi.useRealTimers();
-    }
+    expect(session.reemitEncryptionKeys).toHaveBeenCalled();
   });
 });
