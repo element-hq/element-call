@@ -12,10 +12,7 @@ import { useObservableEagerState } from "observable-hooks";
 import { GridLayout as GridLayoutModel } from "../state/CallViewModel";
 import styles from "./GridLayout.module.css";
 import { useInitial } from "../useInitial";
-import {
-  CallLayout,
-  arrangeTiles,
-} from "./CallLayout";
+import { CallLayout, arrangeTiles } from "./CallLayout";
 import { DragCallback, useUpdateLayout } from "./Grid";
 
 interface GridCSSProperties extends CSSProperties {

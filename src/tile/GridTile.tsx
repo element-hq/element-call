@@ -279,21 +279,21 @@ interface GridTileProps {
 
 export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
   ({ vm, onOpenProfile, ...props }, theirRef) => {
-    const ourRef = useRef<HTMLDivElement | null>(null)
-    const ref = useMergedRefs(ourRef, theirRef)
-    const media = useObservableEagerState(vm.media)
-    const visible = useObservableEagerState(vm.visible)
+    const ourRef = useRef<HTMLDivElement | null>(null);
+    const ref = useMergedRefs(ourRef, theirRef);
+    const media = useObservableEagerState(vm.media);
+    const visible = useObservableEagerState(vm.visible);
     const displayName = useDisplayName(media, visible);
     useEffect(() => {
       const io = new IntersectionObserver(
         (entries) => {
-          vm.setVisible(entries.some(e => e.isIntersecting))
+          vm.setVisible(entries.some((e) => e.isIntersecting));
         },
         { threshold: 1 },
-      )
-      io.observe(ourRef.current!)
-      return (): void => io.disconnect()
-    }, [vm])
+      );
+      io.observe(ourRef.current!);
+      return (): void => io.disconnect();
+    }, [vm]);
 
     if (media instanceof LocalUserMediaViewModel) {
       return (

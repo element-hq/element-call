@@ -87,7 +87,8 @@ const SpotlightUserMediaItem = forwardRef<
   const videoEnabled = useObservableEagerState(vm.videoEnabled);
   const cropVideo = useObservableEagerState(vm.cropVideo);
 
-  const baseProps: SpotlightUserMediaItemBaseProps & RefAttributes<HTMLDivElement> = {
+  const baseProps: SpotlightUserMediaItemBaseProps &
+    RefAttributes<HTMLDivElement> = {
     ref,
     videoEnabled,
     videoFit: cropVideo ? "cover" : "contain",
@@ -177,7 +178,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
 SpotlightItem.displayName = "SpotlightItem";
 
 interface Props {
-  vm: SpotlightTileViewModel
+  vm: SpotlightTileViewModel;
   expanded: boolean;
   onToggleExpanded: (() => void) | null;
   targetWidth: number;
@@ -204,8 +205,8 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
     const { t } = useTranslation();
     const [root, ourRef] = useObservableRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
-    const maximised = useObservableEagerState(vm.maximised)
-    const media = useObservableEagerState(vm.media)
+    const maximised = useObservableEagerState(vm.maximised);
+    const media = useObservableEagerState(vm.media);
     const [visibleId, setVisibleId] = useState(media[0].id);
     const latestMedia = useLatest(media);
     const latestVisibleId = useLatest(visibleId);
@@ -236,7 +237,9 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
 
     const [scrollToId, setScrollToId] = useReactiveState<string | null>(
       (prev) =>
-        prev == null || prev === visibleId || media.every((vm) => vm.id !== prev)
+        prev == null ||
+        prev === visibleId ||
+        media.every((vm) => vm.id !== prev)
           ? null
           : prev,
       [visibleId],

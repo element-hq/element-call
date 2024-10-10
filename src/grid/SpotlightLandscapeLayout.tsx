@@ -34,7 +34,11 @@ export const makeSpotlightLandscapeLayout: CallLayout<
     return (
       <div ref={ref} className={styles.layer}>
         <div className={styles.spotlight}>
-          <Slot className={styles.slot} id="spotlight" model={model.spotlight} />
+          <Slot
+            className={styles.slot}
+            id="spotlight"
+            model={model.spotlight}
+          />
         </div>
         <div className={styles.grid} />
       </div>
@@ -47,7 +51,8 @@ export const makeSpotlightLandscapeLayout: CallLayout<
   ) {
     useUpdateLayout();
     useObservableEagerState(minBounds);
-    const withIndicators = useObservableEagerState(model.spotlight.media).length > 1
+    const withIndicators =
+      useObservableEagerState(model.spotlight.media).length > 1;
 
     return (
       <div ref={ref} className={styles.layer}>

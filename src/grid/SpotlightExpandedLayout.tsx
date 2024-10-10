@@ -9,7 +9,7 @@ import { forwardRef, useCallback } from "react";
 import { useObservableEagerState } from "observable-hooks";
 
 import { SpotlightExpandedLayout as SpotlightExpandedLayoutModel } from "../state/CallViewModel";
-import { CallLayout, } from "./CallLayout";
+import { CallLayout } from "./CallLayout";
 import { DragCallback, useUpdateLayout } from "./Grid";
 import styles from "./SpotlightExpandedLayout.module.css";
 

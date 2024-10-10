@@ -5,35 +5,31 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { BehaviorSubject, Observable, of } from "rxjs";
+import { BehaviorSubject, Observable } from "rxjs";
 
 import { ViewModel } from "./ViewModel";
 import { MediaViewModel, UserMediaViewModel } from "./MediaViewModel";
 
-let nextId = 0
+let nextId = 0;
 function createId(): string {
-  const id = (nextId++).toString()
-  console.log('creating id', id)
-  return id
+  return (nextId++).toString();
 }
 
 export class GridTileViewModel extends ViewModel {
-  public readonly id = createId()
+  public readonly id = createId();
 
-  private readonly visible_ = new BehaviorSubject(false)
+  private readonly visible_ = new BehaviorSubject(false);
   /**
    * Whether the tile is visible within the current viewport.
    */
-  public readonly visible: Observable<boolean> = this.visible_
+  public readonly visible: Observable<boolean> = this.visible_;
 
   public setVisible(value: boolean): void {
-    this.visible_.next(value)
+    this.visible_.next(value);
   }
 
-  public constructor(
-    public readonly media: Observable<UserMediaViewModel>,
-  ) {
-    super()
+  public constructor(public readonly media: Observable<UserMediaViewModel>) {
+    super();
   }
 }
 
@@ -42,8 +38,8 @@ export class SpotlightTileViewModel extends ViewModel {
     public readonly media: Observable<MediaViewModel[]>,
     public readonly maximised: Observable<boolean>,
   ) {
-    super()
+    super();
   }
 }
 
-export type TileViewModel = GridTileViewModel | SpotlightTileViewModel
+export type TileViewModel = GridTileViewModel | SpotlightTileViewModel;

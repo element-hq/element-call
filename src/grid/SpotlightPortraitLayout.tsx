@@ -9,7 +9,7 @@ import { CSSProperties, forwardRef } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
-import { CallLayout, arrangeTiles, } from "./CallLayout";
+import { CallLayout, arrangeTiles } from "./CallLayout";
 import { SpotlightPortraitLayout as SpotlightPortraitLayoutModel } from "../state/CallViewModel";
 import styles from "./SpotlightPortraitLayout.module.css";
 import { useUpdateLayout } from "./Grid";
@@ -39,7 +39,11 @@ export const makeSpotlightPortraitLayout: CallLayout<
     return (
       <div ref={ref} className={styles.layer}>
         <div className={styles.spotlight}>
-          <Slot className={styles.slot} id="spotlight" model={model.spotlight} />
+          <Slot
+            className={styles.slot}
+            id="spotlight"
+            model={model.spotlight}
+          />
         </div>
       </div>
     );
@@ -58,7 +62,8 @@ export const makeSpotlightPortraitLayout: CallLayout<
       width,
       model.grid.length,
     );
-    const withIndicators = useObservableEagerState(model.spotlight.media).length > 1
+    const withIndicators =
+      useObservableEagerState(model.spotlight.media).length > 1;
 
     return (
       <div
