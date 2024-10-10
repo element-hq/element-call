@@ -87,14 +87,15 @@ const SpotlightUserMediaItem = forwardRef<
   const videoEnabled = useObservableEagerState(vm.videoEnabled);
   const cropVideo = useObservableEagerState(vm.cropVideo);
 
-  const baseProps: SpotlightUserMediaItemBaseProps = {
+  const baseProps: SpotlightUserMediaItemBaseProps & RefAttributes<HTMLDivElement> = {
+    ref,
     videoEnabled,
     videoFit: cropVideo ? "cover" : "contain",
     ...props,
   };
 
   return vm instanceof LocalUserMediaViewModel ? (
-    <SpotlightLocalUserMediaItem ref={ref} vm={vm} {...baseProps} />
+    <SpotlightLocalUserMediaItem vm={vm} {...baseProps} />
   ) : (
     <MediaView mirror={false} {...baseProps} />
   );
@@ -177,7 +178,6 @@ SpotlightItem.displayName = "SpotlightItem";
 
 interface Props {
   vm: SpotlightTileViewModel
-  maximised: boolean;
   expanded: boolean;
   onToggleExpanded: (() => void) | null;
   targetWidth: number;
@@ -205,7 +205,7 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
     const [root, ourRef] = useObservableRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
     const maximised = useObservableEagerState(vm.maximised)
-    const media = vm.media
+    const media = useObservableEagerState(vm.media)
     const [visibleId, setVisibleId] = useState(media[0].id);
     const latestMedia = useLatest(media);
     const latestVisibleId = useLatest(visibleId);

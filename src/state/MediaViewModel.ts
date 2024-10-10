@@ -41,7 +41,7 @@ import { useReactiveState } from "../useReactiveState";
 import { alwaysShowSelf } from "../settings/settings";
 
 // TODO: Move this naming logic into the view model
-export function useDisplayName(vm: MediaViewModel): string {
+export function useDisplayName(vm: MediaViewModel, visible: boolean): string {
   const [displayName, setDisplayName] = useReactiveState(
     () => vm.member?.rawDisplayName ?? "[👻]",
     [vm.member],
@@ -59,7 +59,7 @@ export function useDisplayName(vm: MediaViewModel): string {
     }
   }, [vm.member, setDisplayName]);
 
-  return displayName;
+  return visible ? `${displayName} visible` : displayName;
 }
 
 function observeTrackReference(

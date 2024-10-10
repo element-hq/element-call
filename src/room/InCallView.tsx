@@ -351,13 +351,6 @@ export const InCallView: FC<InCallViewProps> = ({
         const onToggleExpanded = useObservableEagerState(
           vm.toggleSpotlightExpanded,
         );
-        const showVideo = useObservableEagerState(
-          useMemo(
-            () =>
-              model instanceof GridTileViewModel ? vm.showGridVideo(model.media) : of(true),
-            [model],
-          ),
-        );
         const showSpeakingIndicatorsValue = useObservableEagerState(
           vm.showSpeakingIndicators,
         );
@@ -374,7 +367,6 @@ export const InCallView: FC<InCallViewProps> = ({
             targetHeight={targetHeight}
             className={classNames(className, styles.tile)}
             style={style}
-            showVideo={showVideo}
             showSpeakingIndicators={showSpeakingIndicatorsValue}
           />
         ) : (
@@ -414,8 +406,7 @@ export const InCallView: FC<InCallViewProps> = ({
       return (
         <SpotlightTile
           className={classNames(styles.tile, styles.maximised)}
-          vms={layout.spotlight!}
-          maximised
+          vm={layout.spotlight!}
           expanded
           onToggleExpanded={null}
           targetWidth={gridBounds.height}

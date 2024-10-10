@@ -55,7 +55,6 @@ interface TileProps {
   targetWidth: number;
   targetHeight: number;
   displayName: string;
-  showVideo: boolean;
   showSpeakingIndicators: boolean;
 }
 
@@ -70,7 +69,6 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
   (
     {
       vm,
-      showVideo,
       showSpeakingIndicators,
       menuStart,
       menuEnd,
@@ -117,7 +115,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
         video={video}
         member={vm.member}
         unencryptedWarning={unencryptedWarning}
-        videoEnabled={videoEnabled && showVideo}
+        videoEnabled={videoEnabled}
         videoFit={cropVideo ? "cover" : "contain"}
         className={classNames(className, styles.tile, {
           [styles.speaking]: showSpeakingIndicators && speaking,
@@ -276,7 +274,6 @@ interface GridTileProps {
   targetHeight: number;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
-  showVideo: boolean;
   showSpeakingIndicators: boolean;
 }
 
@@ -284,7 +281,9 @@ export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
   ({ vm, onOpenProfile, ...props }, theirRef) => {
     const ourRef = useRef<HTMLDivElement | null>(null)
     const ref = useMergedRefs(ourRef, theirRef)
-    const displayName = useDisplayName(vm.media);
+    const media = useObservableEagerState(vm.media)
+    const visible = useObservableEagerState(vm.visible)
+    const displayName = useDisplayName(media, visible);
     useEffect(() => {
       const io = new IntersectionObserver(
         (entries) => {
@@ -296,11 +295,11 @@ export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
       return (): void => io.disconnect()
     }, [vm])
 
-    if (vm.media instanceof LocalUserMediaViewModel) {
+    if (media instanceof LocalUserMediaViewModel) {
       return (
         <LocalUserMediaTile
           ref={ref}
-          vm={vm.media}
+          vm={media}
           onOpenProfile={onOpenProfile}
           displayName={displayName}
           {...props}
@@ -310,7 +309,7 @@ export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
       return (
         <RemoteUserMediaTile
           ref={ref}
-          vm={vm.media}
+          vm={media}
           displayName={displayName}
           {...props}
         />

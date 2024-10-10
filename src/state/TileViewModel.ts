@@ -10,7 +10,16 @@ import { BehaviorSubject, Observable, of } from "rxjs";
 import { ViewModel } from "./ViewModel";
 import { MediaViewModel, UserMediaViewModel } from "./MediaViewModel";
 
+let nextId = 0
+function createId(): string {
+  const id = (nextId++).toString()
+  console.log('creating id', id)
+  return id
+}
+
 export class GridTileViewModel extends ViewModel {
+  public readonly id = createId()
+
   private readonly visible_ = new BehaviorSubject(false)
   /**
    * Whether the tile is visible within the current viewport.
@@ -22,7 +31,7 @@ export class GridTileViewModel extends ViewModel {
   }
 
   public constructor(
-    public readonly media: UserMediaViewModel,
+    public readonly media: Observable<UserMediaViewModel>,
   ) {
     super()
   }
@@ -30,7 +39,7 @@ export class GridTileViewModel extends ViewModel {
 
 export class SpotlightTileViewModel extends ViewModel {
   public constructor(
-    public readonly media: MediaViewModel[],
+    public readonly media: Observable<MediaViewModel[]>,
     // TODO: Remove the default value
     public readonly maximised: Observable<boolean> = of(false),
   ) {

@@ -96,7 +96,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
         }
       >
         {model.grid.map((m) => (
-          <Slot key={m.media.id} className={styles.slot} id={m.media.id} model={m} />
+          <Slot key={m.id} className={styles.slot} id={m.id} model={m} />
         ))}
       </div>
     );
