@@ -27,7 +27,7 @@ import {
 import useMeasure from "react-use-measure";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
-import { BehaviorSubject, of } from "rxjs";
+import { BehaviorSubject } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/src/logger";
 
@@ -406,7 +406,7 @@ export const InCallView: FC<InCallViewProps> = ({
       return (
         <SpotlightTile
           className={classNames(styles.tile, styles.maximised)}
-          vm={layout.spotlight!}
+          vm={layout.spotlight}
           expanded
           onToggleExpanded={null}
           targetWidth={gridBounds.height}

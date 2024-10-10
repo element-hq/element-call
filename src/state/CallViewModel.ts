@@ -323,10 +323,6 @@ function childVms<In, Out extends ViewModel>(factory: (input: In) => Iterable<[s
   )
 }
 
-function getSpotlight(layout: Layout): SpotlightTileViewModel | undefined {
-  return 'spotlight' in layout ? layout.spotlight : undefined
-}
-
 function getGrid(layout: Layout): GridTileViewModel[] {
   switch (layout.type) {
     case "grid":
@@ -656,12 +652,8 @@ export class CallViewModel extends ViewModel {
     [this.grid, this.spotlight],
     (grid, spotlight) => ({
       type: "grid",
-      spotlight,
-      // spotlight: spotlight.some((vm) => vm instanceof ScreenShareViewModel)
-      //   ? spotlight
-      //   : undefined,
-      // TODO give the same treatment to other layouts
-      grid: grid.length === 1 ? grid : grid.filter(vm => !spotlight.includes(vm)),
+      spotlight: spotlight.some(vm => vm instanceof ScreenShareViewModel) ? spotlight : undefined,
+      grid,
     }),
   );
 
@@ -698,7 +690,6 @@ export class CallViewModel extends ViewModel {
 
   private readonly layoutMedia: Observable<LayoutMedia> = this.windowMode.pipe(
     switchMap((windowMode) => {
-      return this.gridLayout
       switch (windowMode) {
         case "normal":
           return this.gridMode.pipe(
@@ -773,110 +764,140 @@ export class CallViewModel extends ViewModel {
 
   public readonly layout: Observable<Layout> = this.layoutMedia.pipe(
     switchScan<LayoutMedia, [Layout | null, [BehaviorSubject<MediaViewModel[]>, BehaviorSubject<boolean>, SpotlightTileViewModel] | undefined, Map<UserMediaViewModel, GridTileViewModel>, Map<GridTileViewModel, BehaviorSubject<UserMediaViewModel>>, Map<GridTileViewModel, boolean>], Observable<[Layout, [BehaviorSubject<MediaViewModel[]>, BehaviorSubject<boolean>, SpotlightTileViewModel] | undefined, Map<UserMediaViewModel, GridTileViewModel>, Map<GridTileViewModel, BehaviorSubject<UserMediaViewModel>>, Map<GridTileViewModel, boolean>]>>(([prevLayout, prevSpotlight, prevGrid, gridMedia, tilesVisible], media) => {
-      let prevSpotlightMedia: MediaViewModel[] | undefined
       let nextSpotlight: [BehaviorSubject<MediaViewModel[]>, BehaviorSubject<boolean>, SpotlightTileViewModel] | undefined
-      const addedTiles = new Set<GridTileViewModel>()
-      const removedTiles = new Set(prevGrid.values())
-      const nextGrid = new Map<UserMediaViewModel, GridTileViewModel>()
-      if (media.type === 'grid') {
-        if (media.spotlight === undefined) {
-          prevSpotlightMedia = undefined
-          nextSpotlight = undefined
-        } else if (prevSpotlight === undefined) {
-          prevSpotlightMedia = undefined
-          const spotlightMedia = new BehaviorSubject(media.spotlight)
-          const spotlightMaximised = new BehaviorSubject(false)
+      function registerSpotlight(spotlight: MediaViewModel[], maximised: boolean): void {
+        if (prevSpotlight === undefined) {
+          const spotlightMedia = new BehaviorSubject(spotlight)
+          const spotlightMaximised = new BehaviorSubject(maximised)
           nextSpotlight = [spotlightMedia, spotlightMaximised, new SpotlightTileViewModel(spotlightMedia, spotlightMaximised)]
         } else {
           const [spotlightMedia, spotlightMaximised] = prevSpotlight
-          prevSpotlightMedia = spotlightMedia.value
-          spotlightMedia.next(media.spotlight)
-          spotlightMaximised.next(false)
+          spotlightMedia.next(spotlight)
+          spotlightMaximised.next(maximised)
           nextSpotlight = prevSpotlight
         }
-        let swapInstruction: [UserMediaViewModel, GridTileViewModel] | null = null
-        if (prevSpotlightMedia !== undefined && prevSpotlightMedia.length === 1 && 'speaking' in prevSpotlightMedia[0]
-          && nextSpotlight !== undefined && nextSpotlight[0].value.length === 1 && 'speaking' in nextSpotlight[0].value[0]) {
-          const prevSpeaker = prevSpotlightMedia[0]
-          const nextSpeaker = nextSpotlight[0].value[0]
-          const speakerTile = prevGrid.get(nextSpeaker)
-          if (speakerTile !== undefined && !media.grid.includes(nextSpeaker) && !prevGrid.has(prevSpeaker)) swapInstruction = [prevSpeaker, speakerTile]
-        }
-        for (const mediaVm of media.grid) {
-          if (mediaVm === swapInstruction?.[0]) {
-            const nextSpeaker = gridMedia.get(swapInstruction[1])!.value
-            prevGrid = new Map([...prevGrid.entries()].map((data) => data[0] === nextSpeaker ? [mediaVm, data[1]] : data))
-            gridMedia.get(swapInstruction[1])!.next(mediaVm)
-            nextGrid.set(mediaVm, swapInstruction[1])
-            removedTiles.delete(swapInstruction[1])
+      }
+      function unregisterSpotlight(): void {
+        if (prevSpotlight !== undefined) prevSpotlight[2].destroy()
+      }
+      function registerGridTile(mediaVm: UserMediaViewModel): void {
+          const tileVm = prevGrid.get(mediaVm)
+          if (tileVm === undefined) {
+            const subject = new BehaviorSubject(mediaVm)
+            const tileVm = new GridTileViewModel(subject)
+            gridMedia.set(tileVm, subject)
+            nextGrid.set(mediaVm, tileVm)
+            addedTiles.add(tileVm)
           } else {
-            const tileVm = prevGrid.get(mediaVm)
-            if (tileVm === undefined) {
-              const subject = new BehaviorSubject(mediaVm)
-              const tileVm = new GridTileViewModel(subject)
-              gridMedia.set(tileVm, subject)
-              nextGrid.set(mediaVm, tileVm)
-              addedTiles.add(tileVm)
-            } else {
-              nextGrid.set(mediaVm, tileVm)
-              removedTiles.delete(tileVm)
+            nextGrid.set(mediaVm, tileVm)
+            removedTiles.delete(tileVm)
+          }
+      }
+      const addedTiles = new Set<GridTileViewModel>()
+      const removedTiles = new Set(prevGrid.values())
+      const nextGrid = new Map<UserMediaViewModel, GridTileViewModel>()
+      let result: Layout
+      switch (media.type) {
+        case "grid":
+        case "spotlight-landscape":
+        case "spotlight-portrait": {
+          const prevSpotlightMedia = prevSpotlight?.[0].value
+          if (media.spotlight === undefined) unregisterSpotlight()
+          else registerSpotlight(media.spotlight, media.type === 'spotlight-portrait')
+          let swapInstruction: [UserMediaViewModel, GridTileViewModel] | null = null
+          if (prevSpotlightMedia !== undefined && prevSpotlightMedia.length === 1 && 'speaking' in prevSpotlightMedia[0]
+            && nextSpotlight !== undefined && nextSpotlight[0].value.length === 1 && 'speaking' in nextSpotlight[0].value[0]) {
+            const prevSpeaker = prevSpotlightMedia[0]
+            const nextSpeaker = nextSpotlight[0].value[0]
+            const speakerTile = prevGrid.get(nextSpeaker)
+            if (speakerTile !== undefined) swapInstruction = [prevSpeaker, speakerTile]
+          }
+          for (const mediaVm of media.grid) {
+            if (mediaVm === swapInstruction?.[0]) {
+              const nextSpeaker = gridMedia.get(swapInstruction[1])!.value
+              prevGrid = new Map([...prevGrid.entries()].map((data) => data[0] === nextSpeaker ? [mediaVm, data[1]] : data))
+              gridMedia.get(swapInstruction[1])!.next(mediaVm)
+              nextGrid.set(mediaVm, swapInstruction[1])
+              removedTiles.delete(swapInstruction[1])
+            } else if (media.grid.length <= 1 || !media.spotlight?.includes(mediaVm)) {
+              registerGridTile(mediaVm)
             }
           }
-        }
-      } else {
-        throw new Error('TODO')
-      }
-
-      let result: Layout
-      if (media.type === 'grid') {
-        if (prevLayout === null) {
-          result = {
-            type: media.type,
-            spotlight: nextSpotlight?.[2],
-            grid: media.grid.map(mediaVm => nextGrid.get(mediaVm)!),
-          }
-        } else {
-          const prevGridArray = [...prevGrid.values()]
-          const toGoOffScreen = prevGridArray.filter((tile) => {
-            const tileMedia = gridMedia.get(tile)!.value
-            return !removedTiles.has(tile) && tilesVisible.get(tile) && !tilesVisible.get(prevGridArray[media.grid.findIndex(m => m === tileMedia)])
-          })
-          const toGoOffScreenSet = new Set(toGoOffScreen)
-          const grid = prevGridArray.map(tile => removedTiles.has(tile) || toGoOffScreenSet.has(tile) ? null : tile)
-          for (let i = 0; i < grid.length; i++) {
-            const tile = grid[i]
-            if (tile !== null && !tilesVisible.get(tile)) {
+          if (prevLayout === null) {
+            result = {
+              type: media.type,
+              spotlight: nextSpotlight?.[2],
+              grid: [...nextGrid.values()],
+            } as Layout
+          } else {
+            const nextGridArray = [...nextGrid.keys()]
+            const prevGridArray = [...prevGrid.values()]
+            const toGoOffScreen = prevGridArray.filter((tile) => {
               const tileMedia = gridMedia.get(tile)!.value
-              if (tilesVisible.get(prevGridArray[media.grid.findIndex(m => m === tileMedia)])) {
-                const toIndex = grid.findIndex(t => t === null)
-                if (toIndex === -1) throw new Error('toIndex -1')
-                grid[toIndex] = tile
-                grid[i] = null
+              return !removedTiles.has(tile) && tilesVisible.get(tile) && !tilesVisible.get(prevGridArray[nextGridArray.findIndex(m => m === tileMedia)])
+            })
+            const toGoOffScreenSet = new Set(toGoOffScreen)
+            const grid = prevGridArray.map(tile => removedTiles.has(tile) || toGoOffScreenSet.has(tile) ? null : tile)
+            for (let i = 0; i < grid.length; i++) {
+              const tile = grid[i]
+              if (tile !== null && !tilesVisible.get(tile)) {
+                const tileMedia = gridMedia.get(tile)!.value
+                if (tilesVisible.get(prevGridArray[nextGridArray.findIndex(m => m === tileMedia)])) {
+                  const toIndex = grid.findIndex(t => t === null)
+                  if (toIndex === -1) throw new Error('toIndex -1')
+                  grid[toIndex] = tile
+                  grid[i] = null
+                }
               }
             }
-          }
-          for (const m of media.grid) {
-            if (!prevGrid.has(m)) {
-              // This is a newly added tile
-              const toIndex = grid.findIndex(t => t === null)
-              if (toIndex === -1) grid.push(nextGrid.get(m)!)
-              else grid[toIndex] = nextGrid.get(m)!
+            for (const m of nextGridArray) {
+              if (!prevGrid.has(m)) {
+                // This is a newly added tile
+                const toIndex = grid.findIndex(t => t === null)
+                if (toIndex === -1) grid.push(nextGrid.get(m)!)
+                else grid[toIndex] = nextGrid.get(m)!
+              }
             }
-          }
-          for (const tile of toGoOffScreen) {
-            const toIndex = grid.findIndex(t => t === null)
-            if (toIndex === -1) grid.push(tile)
-            else grid[toIndex] = tile
-          }
+            for (const tile of toGoOffScreen) {
+              const toIndex = grid.findIndex(t => t === null)
+              if (toIndex === -1) grid.push(tile)
+              else grid[toIndex] = tile
+            }
 
+            result = {
+              type: media.type,
+              spotlight: nextSpotlight?.[2],
+              grid: grid.filter(t => t !== null),
+            } as Layout
+          }
+          break
+        }
+        case "spotlight-expanded":
+          registerSpotlight(media.spotlight, true)
+          if (media.pip !== undefined) registerGridTile(media.pip)
           result = {
             type: media.type,
-            spotlight: nextSpotlight?.[2],
-            grid: grid.filter(t => t !== null),
+            spotlight: nextSpotlight![2],
+            pip: nextGrid.values().next().value,
           }
-        }
-      } else {
-        throw new Error('unimplemented')
+          break
+        case "one-on-one":
+          unregisterSpotlight()
+          registerGridTile(media.local)
+          registerGridTile(media.remote)
+          result = {
+            type: media.type,
+            local: nextGrid.get(media.local)!,
+            remote: nextGrid.get(media.remote)!,
+          }
+          break
+        case "pip":
+          registerSpotlight(media.spotlight, true)
+          result = {
+            type: media.type,
+            spotlight: nextSpotlight![2],
+          }
+          break
       }
 
       for (const tileVm of removedTiles) {
@@ -885,9 +906,8 @@ export class CallViewModel extends ViewModel {
       }
       const gridArray = [...nextGrid.values()]
       const realNextGrid = new Map(getGrid(result).map(x => [gridMedia.get(x)!.value, x]))
-      return combineLatest(gridArray.map(tileVm => tileVm.visible), (...visibilities) =>
-        [result, nextSpotlight, realNextGrid, gridMedia, new Map(zip(gridArray, visibilities) as [GridTileViewModel, boolean][])]
-      )
+      const visibilities = gridArray.length === 0 ? of([]) : combineLatest(gridArray.map(tileVm => tileVm.visible))
+      return visibilities.pipe(map(visibilities => [result, nextSpotlight, realNextGrid, gridMedia, new Map(zip(gridArray, visibilities) as [GridTileViewModel, boolean][])]))
     }, [null, undefined, new Map(), new Map(), new Map()]),
     map(([layout]) => layout),
     this.scope.state(),

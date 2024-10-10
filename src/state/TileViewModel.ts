@@ -40,8 +40,7 @@ export class GridTileViewModel extends ViewModel {
 export class SpotlightTileViewModel extends ViewModel {
   public constructor(
     public readonly media: Observable<MediaViewModel[]>,
-    // TODO: Remove the default value
-    public readonly maximised: Observable<boolean> = of(false),
+    public readonly maximised: Observable<boolean>,
   ) {
     super()
   }

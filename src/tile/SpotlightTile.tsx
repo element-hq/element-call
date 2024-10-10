@@ -129,7 +129,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
   ) => {
     const ourRef = useRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
-    const displayName = useDisplayName(vm);
+    const displayName = useDisplayName(vm, false);
     const video = useObservableEagerState(vm.video);
     const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning);
 
