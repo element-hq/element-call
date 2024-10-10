@@ -58,7 +58,7 @@ describe("matrixKeyProvider", () => {
     );
   });
 
-  test("emits existing keys", async () => {
+  test("emits existing keys", () => {
     const keyProvider = new MatrixKeyProvider();
     const setKeyListener = vi.fn();
     keyProvider.on(KeyProviderEvent.SetKey, setKeyListener);
