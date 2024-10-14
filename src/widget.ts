@@ -103,6 +103,8 @@ export const widget = ((): WidgetHelpers | null => {
       const sendRecvEvent = [
         "org.matrix.rageshake_request",
         EventType.CallEncryptionKeysPrefix,
+        EventType.Reaction,
+        EventType.RoomRedaction,
       ];
 
       const sendState = [
