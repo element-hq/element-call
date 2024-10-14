@@ -9,6 +9,7 @@ import {
   connectedParticipantsObserver,
   observeParticipantEvents,
   observeParticipantMedia,
+  ParticipantMedia,
 } from "@livekit/components-core";
 import {
   Room as LivekitRoom,
@@ -22,6 +23,7 @@ import {
   RoomStateEvent,
 } from "matrix-js-sdk/src/matrix";
 import {
+  BehaviorSubject,
   EMPTY,
   Observable,
   Subject,
@@ -48,6 +50,7 @@ import {
   timer,
   withLatestFrom,
 } from "rxjs";
+import { zip } from "lodash";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { ViewModel } from "./ViewModel";
@@ -63,10 +66,10 @@ import {
   UserMediaViewModel,
 } from "./MediaViewModel";
 import { accumulate, finalizeValue } from "../utils/observable";
-import { ObservableScope } from "./ObservableScope";
 import { duplicateTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled } from "../controls";
+import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -76,39 +79,82 @@ const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 // on mobile. No spotlight tile should be shown below this threshold.
 const smallMobileCallThreshold = 3;
 
-export interface GridLayout {
+export interface GridLayoutMedia {
   type: "grid";
   spotlight?: MediaViewModel[];
   grid: UserMediaViewModel[];
 }
 
-export interface SpotlightLandscapeLayout {
+export interface SpotlightLandscapeLayoutMedia {
   type: "spotlight-landscape";
   spotlight: MediaViewModel[];
   grid: UserMediaViewModel[];
 }
 
-export interface SpotlightPortraitLayout {
+export interface SpotlightPortraitLayoutMedia {
   type: "spotlight-portrait";
   spotlight: MediaViewModel[];
   grid: UserMediaViewModel[];
 }
 
-export interface SpotlightExpandedLayout {
+export interface SpotlightExpandedLayoutMedia {
   type: "spotlight-expanded";
   spotlight: MediaViewModel[];
   pip?: UserMediaViewModel;
 }
 
+export interface OneOnOneLayoutMedia {
+  type: "one-on-one";
+  local: UserMediaViewModel;
+  remote: UserMediaViewModel;
+}
+
+export interface PipLayoutMedia {
+  type: "pip";
+  spotlight: MediaViewModel[];
+}
+
+export type LayoutMedia =
+  | GridLayoutMedia
+  | SpotlightLandscapeLayoutMedia
+  | SpotlightPortraitLayoutMedia
+  | SpotlightExpandedLayoutMedia
+  | OneOnOneLayoutMedia
+  | PipLayoutMedia;
+
+export interface GridLayout {
+  type: "grid";
+  spotlight?: SpotlightTileViewModel;
+  grid: GridTileViewModel[];
+}
+
+export interface SpotlightLandscapeLayout {
+  type: "spotlight-landscape";
+  spotlight: SpotlightTileViewModel;
+  grid: GridTileViewModel[];
+}
+
+export interface SpotlightPortraitLayout {
+  type: "spotlight-portrait";
+  spotlight: SpotlightTileViewModel;
+  grid: GridTileViewModel[];
+}
+
+export interface SpotlightExpandedLayout {
+  type: "spotlight-expanded";
+  spotlight: SpotlightTileViewModel;
+  pip?: GridTileViewModel;
+}
+
 export interface OneOnOneLayout {
   type: "one-on-one";
-  local: LocalUserMediaViewModel;
-  remote: RemoteUserMediaViewModel;
+  local: GridTileViewModel;
+  remote: GridTileViewModel;
 }
 
 export interface PipLayout {
   type: "pip";
-  spotlight: MediaViewModel[];
+  spotlight: SpotlightTileViewModel;
 }
 
 /**
@@ -157,8 +203,21 @@ enum SortingBin {
   SelfNotAlwaysShown,
 }
 
-class UserMedia {
-  private readonly scope = new ObservableScope();
+interface LayoutScanState {
+  layout: Layout | null;
+  spotlight:
+    | [
+        BehaviorSubject<MediaViewModel[]>,
+        BehaviorSubject<boolean>,
+        SpotlightTileViewModel,
+      ]
+    | undefined;
+  grid: Map<UserMediaViewModel, GridTileViewModel>;
+  gridMedia: Map<GridTileViewModel, BehaviorSubject<UserMediaViewModel>>;
+  tilesVisible: Map<GridTileViewModel, boolean>;
+}
+
+class UserMedia extends ViewModel {
   public readonly vm: UserMediaViewModel;
   public readonly speaker: Observable<boolean>;
   public readonly presenter: Observable<boolean>;
@@ -169,6 +228,7 @@ class UserMedia {
     participant: LocalParticipant | RemoteParticipant,
     callEncrypted: boolean,
   ) {
+    super();
     this.vm = participant.isLocal
       ? new LocalUserMediaViewModel(
           id,
@@ -211,12 +271,12 @@ class UserMedia {
   }
 
   public destroy(): void {
-    this.scope.end();
+    super.destroy();
     this.vm.destroy();
   }
 }
 
-class ScreenShare {
+class ScreenShare extends ViewModel {
   public readonly vm: ScreenShareViewModel;
 
   public constructor(
@@ -225,10 +285,12 @@ class ScreenShare {
     participant: LocalParticipant | RemoteParticipant,
     callEncrypted: boolean,
   ) {
+    super();
     this.vm = new ScreenShareViewModel(id, member, participant, callEncrypted);
   }
 
   public destroy(): void {
+    super.destroy();
     this.vm.destroy();
   }
 }
@@ -255,6 +317,53 @@ function findMatrixMember(
   const userId = parts.join(":");
 
   return room.getMember(userId) ?? undefined;
+}
+
+function* mapIter<A, B>(as: Iterable<A>, project: (a: A) => B): Iterable<B> {
+  for (const a of as) yield project(a);
+}
+
+function childVms<In, Out extends ViewModel>(
+  factory: (input: In) => Iterable<[string, () => Out]>,
+): (input: Observable<In>) => Observable<Out[]> {
+  return (input) =>
+    input.pipe(
+      scan(
+        (prevVms, input) => {
+          const prevVmsMap = new Map(prevVms);
+          const newVms = [
+            ...mapIter(
+              factory(input),
+              ([id, createVm]) =>
+                [id, prevVmsMap.get(id) ?? createVm()] as [string, Out],
+            ),
+          ];
+          const newVmsMap = new Map(newVms);
+          for (const [id, vm] of prevVms) if (!newVmsMap.has(id)) vm.destroy();
+          return newVms;
+        },
+        [] as [string, Out][],
+      ),
+      map((vms) => vms.map(([, vm]) => vm)),
+      finalizeValue((ts) => {
+        for (const t of ts) t.destroy();
+      }),
+    );
+}
+
+function getGrid(layout: Layout): GridTileViewModel[] {
+  switch (layout.type) {
+    case "grid":
+    case "spotlight-landscape":
+    case "spotlight-portrait":
+      return layout.grid;
+    case "spotlight-expanded":
+      return layout.pip === undefined ? [] : [layout.pip];
+    case "one-on-one":
+      return [layout.local, layout.remote];
+    case "pip":
+      return [];
+  }
 }
 
 // TODO: Move wayyyy more business logic from the call and lobby views into here
@@ -327,53 +436,50 @@ export class CallViewModel extends ViewModel {
     // Also react to changes in the list of members
     fromEvent(this.matrixRoom, RoomStateEvent.Update).pipe(startWith(null)),
   ]).pipe(
-    scan(
-      (
-        prevItems,
-        [remoteParticipants, { participant: localParticipant }, duplicateTiles],
-      ) => {
-        const newItems = new Map(
-          function* (this: CallViewModel): Iterable<[string, MediaItem]> {
-            for (const p of [localParticipant, ...remoteParticipants]) {
-              const userMediaId = p === localParticipant ? "local" : p.identity;
-              const member = findMatrixMember(this.matrixRoom, userMediaId);
-              if (member === undefined)
-                logger.warn(
-                  `Ruh, roh! No matrix member found for SFU participant '${p.identity}': creating g-g-g-ghost!`,
-                );
+    childVms(
+      function* (
+        this: CallViewModel,
+        [
+          remoteParticipants,
+          { participant: localParticipant },
+          duplicateTiles,
+        ]: [
+          RemoteParticipant[],
+          ParticipantMedia<LocalParticipant>,
+          number,
+          unknown,
+        ],
+      ): Iterable<[string, () => MediaItem]> {
+        for (const p of [localParticipant, ...remoteParticipants]) {
+          const userMediaId = p === localParticipant ? "local" : p.identity;
+          const member = findMatrixMember(this.matrixRoom, userMediaId);
+          if (member === undefined)
+            logger.warn(
+              `Ruh, roh! No matrix member found for SFU participant '${p.identity}': creating g-g-g-ghost!`,
+            );
 
-              // Create as many tiles for this participant as called for by
-              // the duplicateTiles option
-              for (let i = 0; i < 1 + duplicateTiles; i++) {
-                const userMediaId = `${p.identity}:${i}`;
-                yield [
-                  userMediaId,
-                  prevItems.get(userMediaId) ??
-                    new UserMedia(userMediaId, member, p, this.encrypted),
-                ];
+          // Create as many tiles for this participant as called for by
+          // the duplicateTiles option
+          for (let i = 0; i < 1 + duplicateTiles; i++) {
+            const userMediaId = `${p.identity}:${i}`;
+            yield [
+              userMediaId,
+              (): MediaItem =>
+                new UserMedia(userMediaId, member, p, this.encrypted),
+            ];
 
-                if (p.isScreenShareEnabled) {
-                  const screenShareId = `${userMediaId}:screen-share`;
-                  yield [
-                    screenShareId,
-                    prevItems.get(screenShareId) ??
-                      new ScreenShare(screenShareId, member, p, this.encrypted),
-                  ];
-                }
-              }
+            if (p.isScreenShareEnabled) {
+              const screenShareId = `${userMediaId}:screen-share`;
+              yield [
+                screenShareId,
+                (): MediaItem =>
+                  new ScreenShare(screenShareId, member, p, this.encrypted),
+              ];
             }
-          }.bind(this)(),
-        );
-
-        for (const [id, t] of prevItems) if (!newItems.has(id)) t.destroy();
-        return newItems;
-      },
-      new Map<string, MediaItem>(),
+          }
+        }
+      }.bind(this),
     ),
-    map((mediaItems) => [...mediaItems.values()]),
-    finalizeValue((ts) => {
-      for (const t of ts) t.destroy();
-    }),
     this.scope.state(),
   );
 
@@ -586,7 +692,7 @@ export class CallViewModel extends ViewModel {
       screenShares.length === 0,
   );
 
-  private readonly gridLayout: Observable<Layout> = combineLatest(
+  private readonly gridLayout: Observable<LayoutMedia> = combineLatest(
     [this.grid, this.spotlight],
     (grid, spotlight) => ({
       type: "grid",
@@ -597,38 +703,41 @@ export class CallViewModel extends ViewModel {
     }),
   );
 
-  private readonly spotlightLandscapeLayout: Observable<Layout> = combineLatest(
-    [this.grid, this.spotlight],
-    (grid, spotlight) => ({ type: "spotlight-landscape", spotlight, grid }),
-  );
+  private readonly spotlightLandscapeLayout: Observable<LayoutMedia> =
+    combineLatest([this.grid, this.spotlight], (grid, spotlight) => ({
+      type: "spotlight-landscape",
+      spotlight,
+      grid,
+    }));
 
-  private readonly spotlightPortraitLayout: Observable<Layout> = combineLatest(
-    [this.grid, this.spotlight],
-    (grid, spotlight) => ({ type: "spotlight-portrait", spotlight, grid }),
-  );
+  private readonly spotlightPortraitLayout: Observable<LayoutMedia> =
+    combineLatest([this.grid, this.spotlight], (grid, spotlight) => ({
+      type: "spotlight-portrait",
+      spotlight,
+      grid,
+    }));
 
-  private readonly spotlightExpandedLayout: Observable<Layout> = combineLatest(
-    [this.spotlight, this.pip],
-    (spotlight, pip) => ({
+  private readonly spotlightExpandedLayout: Observable<LayoutMedia> =
+    combineLatest([this.spotlight, this.pip], (spotlight, pip) => ({
       type: "spotlight-expanded",
       spotlight,
       pip: pip ?? undefined,
-    }),
-  );
+    }));
 
-  private readonly oneOnOneLayout: Observable<Layout> = this.grid.pipe(
-    map((grid) => ({
-      type: "one-on-one",
-      local: grid.find((vm) => vm.local) as LocalUserMediaViewModel,
-      remote: grid.find((vm) => !vm.local) as RemoteUserMediaViewModel,
-    })),
-  );
+  private readonly oneOnOneLayout: Observable<LayoutMedia> =
+    this.mediaItems.pipe(
+      map((grid) => ({
+        type: "one-on-one",
+        local: grid.find((vm) => vm.vm.local)!.vm as LocalUserMediaViewModel,
+        remote: grid.find((vm) => !vm.vm.local)!.vm as RemoteUserMediaViewModel,
+      })),
+    );
 
-  private readonly pipLayout: Observable<Layout> = this.spotlight.pipe(
+  private readonly pipLayout: Observable<LayoutMedia> = this.spotlight.pipe(
     map((spotlight) => ({ type: "pip", spotlight })),
   );
 
-  public readonly layout: Observable<Layout> = this.windowMode.pipe(
+  private readonly layoutMedia: Observable<LayoutMedia> = this.windowMode.pipe(
     switchMap((windowMode) => {
       switch (windowMode) {
         case "normal":
@@ -689,29 +798,262 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
+  // We have the array of media items, and the array of tiles, along with
+  // whether those tiles are on screen. If the tile matching a media item is on
+  // screen, but now it's requested to go to a spot occupied by a tile that is
+  // off screen, then set it aside in the "to-go-off-screen" pile.
+  // If the tile matching a media item is off screen, but now it's requested to
+  // go to a spot occupied by a tile that is on screen, then move it up into the
+  // first unoccupied space (after clearing away to-go-off-screen tiles). Finally,
+  // take all the to-go-off-screen tiles and move them into the new gaps off screen.
+  // To summarize, this process takes the media items and the previous output as
+  // input, constructs tile view models for the tiles that don't exist yet, oh also
+  // it takes the on-screen flags as input — and then it outputs the new arrangement
+  // of tiles.
+
+  public readonly layout: Observable<Layout> = this.layoutMedia.pipe(
+    switchScan<
+      LayoutMedia,
+      LayoutScanState,
+      Observable<LayoutScanState & { layout: Layout }>
+    >(
+      (
+        {
+          layout: prevLayout,
+          spotlight: prevSpotlight,
+          grid: prevGrid,
+          gridMedia,
+          tilesVisible,
+        },
+        media,
+      ) => {
+        let nextSpotlight:
+          | [
+              BehaviorSubject<MediaViewModel[]>,
+              BehaviorSubject<boolean>,
+              SpotlightTileViewModel,
+            ]
+          | undefined;
+        function registerSpotlight(
+          spotlight: MediaViewModel[],
+          maximised: boolean,
+        ): void {
+          if (prevSpotlight === undefined) {
+            const spotlightMedia = new BehaviorSubject(spotlight);
+            const spotlightMaximised = new BehaviorSubject(maximised);
+            nextSpotlight = [
+              spotlightMedia,
+              spotlightMaximised,
+              new SpotlightTileViewModel(spotlightMedia, spotlightMaximised),
+            ];
+          } else {
+            const [spotlightMedia, spotlightMaximised] = prevSpotlight;
+            spotlightMedia.next(spotlight);
+            spotlightMaximised.next(maximised);
+            nextSpotlight = prevSpotlight;
+          }
+        }
+        function unregisterSpotlight(): void {
+          if (prevSpotlight !== undefined) prevSpotlight[2].destroy();
+        }
+        function registerGridTile(mediaVm: UserMediaViewModel): void {
+          const tileVm = prevGrid.get(mediaVm);
+          if (tileVm === undefined) {
+            const subject = new BehaviorSubject(mediaVm);
+            const tileVm = new GridTileViewModel(subject);
+            gridMedia.set(tileVm, subject);
+            nextGrid.set(mediaVm, tileVm);
+            addedTiles.add(tileVm);
+          } else {
+            nextGrid.set(mediaVm, tileVm);
+            removedTiles.delete(tileVm);
+          }
+        }
+        const addedTiles = new Set<GridTileViewModel>();
+        const removedTiles = new Set(prevGrid.values());
+        const nextGrid = new Map<UserMediaViewModel, GridTileViewModel>();
+        let result: Layout;
+        switch (media.type) {
+          case "grid":
+          case "spotlight-landscape":
+          case "spotlight-portrait": {
+            const prevSpotlightMedia = prevSpotlight?.[0].value;
+            if (media.spotlight === undefined) unregisterSpotlight();
+            else
+              registerSpotlight(
+                media.spotlight,
+                media.type === "spotlight-portrait",
+              );
+            let swapInstruction:
+              | [UserMediaViewModel, GridTileViewModel]
+              | null = null;
+            if (
+              prevSpotlightMedia !== undefined &&
+              prevSpotlightMedia.length === 1 &&
+              "speaking" in prevSpotlightMedia[0] &&
+              nextSpotlight !== undefined &&
+              nextSpotlight[0].value.length === 1 &&
+              "speaking" in nextSpotlight[0].value[0]
+            ) {
+              const prevSpeaker = prevSpotlightMedia[0];
+              const nextSpeaker = nextSpotlight[0].value[0];
+              const speakerTile = prevGrid.get(nextSpeaker);
+              if (speakerTile !== undefined)
+                swapInstruction = [prevSpeaker, speakerTile];
+            }
+            for (const mediaVm of media.grid) {
+              if (mediaVm === swapInstruction?.[0]) {
+                const nextSpeaker = gridMedia.get(swapInstruction[1])!.value;
+                prevGrid = new Map(
+                  [...prevGrid.entries()].map((data) =>
+                    data[0] === nextSpeaker ? [mediaVm, data[1]] : data,
+                  ),
+                );
+                gridMedia.get(swapInstruction[1])!.next(mediaVm);
+                nextGrid.set(mediaVm, swapInstruction[1]);
+                removedTiles.delete(swapInstruction[1]);
+              } else if (
+                media.grid.length <= 1 ||
+                !media.spotlight?.includes(mediaVm)
+              ) {
+                registerGridTile(mediaVm);
+              }
+            }
+            if (prevLayout === null) {
+              result = {
+                type: media.type,
+                spotlight: nextSpotlight?.[2],
+                grid: [...nextGrid.values()],
+              } as Layout;
+            } else {
+              const nextGridArray = [...nextGrid.keys()];
+              const prevGridArray = [...prevGrid.values()];
+              const toGoOffScreen = prevGridArray.filter((tile) => {
+                const tileMedia = gridMedia.get(tile)!.value;
+                return (
+                  !removedTiles.has(tile) &&
+                  tilesVisible.get(tile) &&
+                  !tilesVisible.get(
+                    prevGridArray[
+                      nextGridArray.findIndex((m) => m === tileMedia)
+                    ],
+                  )
+                );
+              });
+              const toGoOffScreenSet = new Set(toGoOffScreen);
+              const grid = prevGridArray.map((tile) =>
+                removedTiles.has(tile) || toGoOffScreenSet.has(tile)
+                  ? null
+                  : tile,
+              );
+              for (let i = 0; i < grid.length; i++) {
+                const tile = grid[i];
+                if (tile !== null && !tilesVisible.get(tile)) {
+                  const tileMedia = gridMedia.get(tile)!.value;
+                  if (
+                    tilesVisible.get(
+                      prevGridArray[
+                        nextGridArray.findIndex((m) => m === tileMedia)
+                      ],
+                    )
+                  ) {
+                    const toIndex = grid.findIndex((t) => t === null);
+                    if (toIndex === -1) throw new Error("toIndex -1");
+                    grid[toIndex] = tile;
+                    grid[i] = null;
+                  }
+                }
+              }
+              for (const m of nextGridArray) {
+                if (!prevGrid.has(m)) {
+                  // This is a newly added tile
+                  const toIndex = grid.findIndex((t) => t === null);
+                  if (toIndex === -1) grid.push(nextGrid.get(m)!);
+                  else grid[toIndex] = nextGrid.get(m)!;
+                }
+              }
+              for (const tile of toGoOffScreen) {
+                const toIndex = grid.findIndex((t) => t === null);
+                if (toIndex === -1) grid.push(tile);
+                else grid[toIndex] = tile;
+              }
+
+              result = {
+                type: media.type,
+                spotlight: nextSpotlight?.[2],
+                grid: grid.filter((t) => t !== null),
+              } as Layout;
+            }
+            break;
+          }
+          case "spotlight-expanded":
+            registerSpotlight(media.spotlight, true);
+            if (media.pip !== undefined) registerGridTile(media.pip);
+            result = {
+              type: media.type,
+              spotlight: nextSpotlight![2],
+              pip: nextGrid.values().next().value,
+            };
+            break;
+          case "one-on-one":
+            unregisterSpotlight();
+            registerGridTile(media.local);
+            registerGridTile(media.remote);
+            result = {
+              type: media.type,
+              local: nextGrid.get(media.local)!,
+              remote: nextGrid.get(media.remote)!,
+            };
+            break;
+          case "pip":
+            registerSpotlight(media.spotlight, true);
+            result = {
+              type: media.type,
+              spotlight: nextSpotlight![2],
+            };
+            break;
+        }
+
+        for (const tileVm of removedTiles) {
+          gridMedia.delete(tileVm);
+          tileVm.destroy();
+        }
+        const gridArray = [...nextGrid.values()];
+        const realNextGrid = new Map(
+          getGrid(result).map((x) => [gridMedia.get(x)!.value, x]),
+        );
+        const visibilities =
+          gridArray.length === 0
+            ? of([])
+            : combineLatest(gridArray.map((tileVm) => tileVm.visible));
+        return visibilities.pipe(
+          map((visibilities) => ({
+            layout: result,
+            spotlight: nextSpotlight,
+            grid: realNextGrid,
+            gridMedia,
+            tilesVisible: new Map(
+              zip(gridArray, visibilities) as [GridTileViewModel, boolean][],
+            ),
+          })),
+        );
+      },
+      {
+        layout: null,
+        spotlight: undefined,
+        grid: new Map(),
+        gridMedia: new Map(),
+        tilesVisible: new Map(),
+      },
+    ),
+    map(({ layout }) => layout),
+    this.scope.state(),
+  );
+
   public showSpotlightIndicators: Observable<boolean> = this.layout.pipe(
     map((l) => l.type !== "grid"),
     this.scope.state(),
   );
-
-  /**
-   * Determines whether video should be shown for a certain piece of media
-   * appearing in the grid.
-   */
-  public showGridVideo(vm: MediaViewModel): Observable<boolean> {
-    return this.layout.pipe(
-      map(
-        (l) =>
-          !(
-            (l.type === "spotlight-landscape" ||
-              l.type === "spotlight-portrait") &&
-            // This media is already visible in the spotlight; avoid duplication
-            l.spotlight.some((spotlightVm) => spotlightVm === vm)
-          ),
-      ),
-      distinctUntilChanged(),
-    );
-  }
 
   public showSpeakingIndicators: Observable<boolean> = this.layout.pipe(
     map((l) => l.type !== "one-on-one" && !l.type.startsWith("spotlight-")),
