@@ -10,7 +10,7 @@ import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
 import { OneOnOneLayout as OneOnOneLayoutModel } from "../state/CallViewModel";
-import { CallLayout, GridTileModel, arrangeTiles } from "./CallLayout";
+import { CallLayout, arrangeTiles } from "./CallLayout";
 import styles from "./OneOnOneLayout.module.css";
 import { DragCallback, useUpdateLayout } from "./Grid";
 
@@ -38,15 +38,6 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
       [width, height],
     );
 
-    const remoteTileModel: GridTileModel = useMemo(
-      () => ({ type: "grid", vm: model.remote }),
-      [model.remote],
-    );
-    const localTileModel: GridTileModel = useMemo(
-      () => ({ type: "grid", vm: model.local }),
-      [model.local],
-    );
-
     const onDragLocalTile: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>
         pipAlignment.next({
@@ -59,15 +50,15 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
     return (
       <div ref={ref} className={styles.layer}>
         <Slot
-          id={remoteTileModel.vm.id}
-          model={remoteTileModel}
+          id={model.remote.id}
+          model={model.remote}
           className={styles.container}
           style={{ width: tileWidth, height: tileHeight }}
         >
           <Slot
             className={classNames(styles.slot, styles.local)}
-            id={localTileModel.vm.id}
-            model={localTileModel}
+            id={model.local.id}
+            model={model.local}
             onDrag={onDragLocalTile}
             data-block-alignment={pipAlignmentValue.block}
             data-inline-alignment={pipAlignmentValue.inline}

@@ -5,11 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { forwardRef, useCallback, useMemo } from "react";
+import { forwardRef, useCallback } from "react";
 import { useObservableEagerState } from "observable-hooks";
 
 import { SpotlightExpandedLayout as SpotlightExpandedLayoutModel } from "../state/CallViewModel";
-import { CallLayout, GridTileModel, SpotlightTileModel } from "./CallLayout";
+import { CallLayout } from "./CallLayout";
 import { DragCallback, useUpdateLayout } from "./Grid";
 import styles from "./SpotlightExpandedLayout.module.css";
 
@@ -27,17 +27,13 @@ export const makeSpotlightExpandedLayout: CallLayout<
     ref,
   ) {
     useUpdateLayout();
-    const spotlightTileModel: SpotlightTileModel = useMemo(
-      () => ({ type: "spotlight", vms: model.spotlight, maximised: true }),
-      [model.spotlight],
-    );
 
     return (
       <div ref={ref} className={styles.layer}>
         <Slot
           className={styles.spotlight}
           id="spotlight"
-          model={spotlightTileModel}
+          model={model.spotlight}
         />
       </div>
     );
@@ -50,11 +46,6 @@ export const makeSpotlightExpandedLayout: CallLayout<
     useUpdateLayout();
     const pipAlignmentValue = useObservableEagerState(pipAlignment);
 
-    const pipTileModel: GridTileModel | undefined = useMemo(
-      () => model.pip && { type: "grid", vm: model.pip },
-      [model.pip],
-    );
-
     const onDragPip: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>
         pipAlignment.next({
@@ -66,11 +57,11 @@ export const makeSpotlightExpandedLayout: CallLayout<
 
     return (
       <div ref={ref} className={styles.layer}>
-        {pipTileModel && (
+        {model.pip && (
           <Slot
             className={styles.pip}
-            id="pip"
-            model={pipTileModel}
+            id={model.pip.id}
+            model={model.pip}
             onDrag={onDragPip}
             data-block-alignment={pipAlignmentValue.block}
             data-inline-alignment={pipAlignmentValue.inline}
