@@ -72,7 +72,7 @@
     "eslint-plugin-matrix-org": "^1.2.1",
     "eslint-plugin-react": "^7.29.4",
     "eslint-plugin-react-hooks": "^5.0.0",
-    "eslint-plugin-unicorn": "^55.0.0",
+    "eslint-plugin-unicorn": "^56.0.0",
     "global-jsdom": "^25.0.0",
     "history": "^4.0.0",
     "i18next": "^23.0.0",
