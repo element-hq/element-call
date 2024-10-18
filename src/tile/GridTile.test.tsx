@@ -9,9 +9,17 @@ import { RemoteTrackPublication } from "livekit-client";
 import { test, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
+import { of } from "rxjs";
 
 import { GridTile } from "./GridTile";
 import { withRemoteMedia } from "../utils/test";
+import { GridTileViewModel } from "../state/TileViewModel";
+
+global.IntersectionObserver = class MockIntersectionObserver {
+  public observe(): void {}
+  public unobserve(): void {}
+  public disconnect(): void {}
+} as unknown as typeof IntersectionObserver;
 
 test("GridTile is accessible", async () => {
   await withRemoteMedia(
@@ -27,11 +35,10 @@ test("GridTile is accessible", async () => {
     async (vm) => {
       const { container } = render(
         <GridTile
-          vm={vm}
+          vm={new GridTileViewModel(of(vm))}
           onOpenProfile={() => {}}
           targetWidth={300}
           targetHeight={200}
-          showVideo
           showSpeakingIndicators
         />,
       );

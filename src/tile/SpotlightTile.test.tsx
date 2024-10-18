@@ -9,9 +9,11 @@ import { test, expect, vi } from "vitest";
 import { isInaccessible, render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import userEvent from "@testing-library/user-event";
+import { of } from "rxjs";
 
 import { SpotlightTile } from "./SpotlightTile";
 import { withLocalMedia, withRemoteMedia } from "../utils/test";
+import { SpotlightTileViewModel } from "../state/TileViewModel";
 
 global.IntersectionObserver = class MockIntersectionObserver {
   public observe(): void {}
@@ -36,10 +38,9 @@ test("SpotlightTile is accessible", async () => {
           const toggleExpanded = vi.fn();
           const { container } = render(
             <SpotlightTile
-              vms={[vm1, vm2]}
+              vm={new SpotlightTileViewModel(of([vm1, vm2]), of(false))}
               targetWidth={300}
               targetHeight={200}
-              maximised={false}
               expanded={false}
               onToggleExpanded={toggleExpanded}
               showIndicators
