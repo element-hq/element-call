@@ -28,6 +28,7 @@ import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
+import { ReactionsProvider } from "./useReactions";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -82,27 +83,29 @@ export const App: FC<AppProps> = ({ history }) => {
           <TooltipProvider>
             {loaded ? (
               <Suspense fallback={null}>
-                <ClientProvider>
-                  <MediaDevicesProvider>
-                    <Sentry.ErrorBoundary fallback={errorPage}>
-                      <DisconnectedBanner />
-                      <Switch>
-                        <SentryRoute exact path="/">
-                          <HomePage />
-                        </SentryRoute>
-                        <SentryRoute exact path="/login">
-                          <LoginPage />
-                        </SentryRoute>
-                        <SentryRoute exact path="/register">
-                          <RegisterPage />
-                        </SentryRoute>
-                        <SentryRoute path="*">
-                          <RoomPage />
-                        </SentryRoute>
-                      </Switch>
-                    </Sentry.ErrorBoundary>
-                  </MediaDevicesProvider>
-                </ClientProvider>
+                <ReactionsProvider>
+                  <ClientProvider>
+                    <MediaDevicesProvider>
+                      <Sentry.ErrorBoundary fallback={errorPage}>
+                        <DisconnectedBanner />
+                        <Switch>
+                          <SentryRoute exact path="/">
+                            <HomePage />
+                          </SentryRoute>
+                          <SentryRoute exact path="/login">
+                            <LoginPage />
+                          </SentryRoute>
+                          <SentryRoute exact path="/register">
+                            <RegisterPage />
+                          </SentryRoute>
+                          <SentryRoute path="*">
+                            <RoomPage />
+                          </SentryRoute>
+                        </Switch>
+                      </Sentry.ErrorBoundary>
+                    </MediaDevicesProvider>
+                  </ClientProvider>
+                </ReactionsProvider>
               </Suspense>
             ) : (
               <LoadingView />

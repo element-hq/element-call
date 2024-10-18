@@ -90,6 +90,22 @@ unconditionally select the container so we can use cqmin units */
   place-items: start;
 }
 
+.raisedHand {
+  margin: var(--cpd-space-2x);
+  padding: var(--cpd-space-2x);
+  padding-block: var(--cpd-space-2x);
+  color: var(--cpd-color-icon-secondary);
+  background-color: var(--cpd-color-icon-secondary);
+  display: flex;
+  align-items: center;
+  border-radius: var(--cpd-radius-pill-effect);
+  user-select: none;
+  overflow: hidden;
+  box-shadow: var(--small-drop-shadow);
+  box-sizing: border-box;
+  max-inline-size: 100%;
+}
+
 .nameTag {
   grid-area: nameTag;
   padding: var(--cpd-space-1x);
