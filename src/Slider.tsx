@@ -16,6 +16,7 @@ interface Props {
   label: string;
   value: number;
   onValueChange: (value: number) => void;
+  onValueCommit?: (value: number) => void;
   min: number;
   max: number;
   step: number;
@@ -30,6 +31,7 @@ export const Slider: FC<Props> = ({
   label,
   value,
   onValueChange: onValueChangeProp,
+  onValueCommit: onValueCommitProp,
   min,
   max,
   step,
@@ -39,12 +41,17 @@ export const Slider: FC<Props> = ({
     ([v]: number[]) => onValueChangeProp(v),
     [onValueChangeProp],
   );
+  const onValueCommit = useCallback(
+    ([v]: number[]) => onValueCommitProp?.(v),
+    [onValueCommitProp],
+  );
 
   return (
     <Root
       className={classNames(className, styles.slider)}
       value={[value]}
       onValueChange={onValueChange}
+      onValueCommit={onValueCommit}
       min={min}
       max={max}
       step={step}
