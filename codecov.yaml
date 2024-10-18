@@ -1,6 +1,10 @@
 # Don't post comments on PRs; they're noisy and the same information can be
 # gotten through the checks section at the bottom of the PR anyways
 comment: false
+github_checks:
+  # Don't mark up the diffs on PRs with warnings about untested lines; we're not
+  # aiming for 100% test coverage and they just get in the way of reviewing
+  annotations: false
 coverage:
   status:
     project:
