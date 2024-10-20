@@ -63,7 +63,7 @@
     "@vitest/coverage-v8": "^2.0.5",
     "babel-plugin-transform-vite-meta-env": "^1.0.3",
     "classnames": "^2.3.1",
-    "eslint": "^8.14.0",
+    "eslint": "^9.0.0",
     "eslint-config-google": "^0.14.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-deprecate": "^0.8.2",
