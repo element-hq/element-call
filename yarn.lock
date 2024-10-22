@@ -1695,21 +1695,21 @@
     "@jridgewell/resolve-uri" "^3.1.0"
     "@jridgewell/sourcemap-codec" "^1.4.14"
 
-"@livekit/components-core@0.11.9", "@livekit/components-core@^0.11.0":
-  version "0.11.9"
-  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.11.9.tgz#d52e871313c599a84a29cec62826ec3f4eae4b66"
-  integrity sha512-LPE1BZ+YTaqsVqGy/GAlpiO5rEI8XpEaf1TQcGdZN1BCBas9hTHt7/aHMbHQJ0K5xuAFQx8is6dFe451T4qXIQ==
+"@livekit/components-core@0.11.10", "@livekit/components-core@^0.11.0":
+  version "0.11.10"
+  resolved "https://registry.yarnpkg.com/@livekit/components-core/-/components-core-0.11.10.tgz#136de5f7df487c984b95cd23d15d271708b30de8"
+  integrity sha512-PvFlKq1W64b9GfFjG7L4/o7ulAl5yFFpDTvG+JHQiXkaPaecMPt/qPbs6zdvUlC7om1TGMuW/pIN7o585Xz9Fg==
   dependencies:
     "@floating-ui/dom" "1.6.11"
     loglevel "1.9.1"
     rxjs "7.8.1"
 
 "@livekit/components-react@^2.0.0":
-  version "2.6.5"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.6.5.tgz#c6ff2785a68b8392150946324796b1ee9857f525"
-  integrity sha512-G3BpBlKy+lWTV9MH3/oBTBC17Z8CWqZ9GnjcG/xmYI0IvqmY89tVWph7cj2Bq0taniA+mD3U9EMPr68fOb1m1g==
+  version "2.6.7"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.6.7.tgz#12faa30eed232e5cbec6bcb33b7ce449566241af"
+  integrity sha512-z8dgrBrRXIe7oagwFyjehdwL/4zpySJyPdAjeMDXZVbTXYNAugb3a88Ws9yQz4PZFECLkIPXJCN3C3YR+bgh5Q==
   dependencies:
-    "@livekit/components-core" "0.11.9"
+    "@livekit/components-core" "0.11.10"
     clsx "2.1.1"
     usehooks-ts "3.1.0"
 
@@ -7769,7 +7769,7 @@ tsconfig-paths@^3.15.0:
     minimist "^1.2.6"
     strip-bom "^3.0.0"
 
-tslib@2.7.0, tslib@^2.0.0, tslib@^2.1.0:
+tslib@2.7.0, tslib@^2.0.0:
   version "2.7.0"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.7.0.tgz#d9b40c5c40ab59e8738f297df3087bf1a2690c01"
   integrity sha512-gLXCKdN1/j47AiHiOkJN69hJmcbGTHI0ImLmbYLHykhgeN0jVGola9yVjFgzCUklsZQMW55o+dW7IXv3RCXDzA==
@@ -7778,6 +7778,11 @@ tslib@^2.0.3:
   version "2.6.2"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.6.2.tgz#703ac29425e7b37cd6fd456e92404d46d1f3e4ae"
   integrity sha512-AEYxH93jGFPn/a2iVAwW87VuUIkR1FVUKB77NwMF7nBTDkDrrT/Hpt/IrCJ0QXhW27jTBDcf5ZY7w6RiqTMw2Q==
+
+tslib@^2.1.0:
+  version "2.8.0"
+  resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.8.0.tgz#d124c86c3c05a40a91e6fdea4021bd31d377971b"
+  integrity sha512-jWVzBLplnCmoaTr13V9dYbiQ99wvZRd0vNWaDRg+aVYRcjDF3nDksxFDE/+fkXnKhpnUUkmx5pK/v8mCtLVqZA==
 
 type-check@^0.4.0, type-check@~0.4.0:
   version "0.4.0"
