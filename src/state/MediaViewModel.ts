@@ -248,22 +248,28 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     this.localVolumeAdjustment,
     this.localVolumeCommit.pipe(map(() => "commit" as const)),
   ).pipe(
-    accumulate(
-      { muted: false, volume: 1, committedVolume: 1 },
-      (state, event) =>
-        event === "toggle mute"
-          ? { ...state, muted: !state.muted }
-          : event === "commit"
-            ? { ...state, committedVolume: state.volume }
-            : // Volume adjustment
-              event === 0
-              ? // Dragging the slider to zero should have the same effect as
-                // muting: reset the volume to the committed volume, as if it were
-                // never dragged
-                { ...state, muted: true, volume: state.committedVolume }
-              : { ...state, muted: false, volume: event },
-    ),
-    map(({ muted, volume }) => (muted ? 0 : volume)),
+    accumulate({ volume: 1, committedVolume: 1 }, (state, event) => {
+      switch (event) {
+        case "toggle mute":
+          return {
+            ...state,
+            volume: state.volume === 0 ? state.committedVolume : 0,
+          };
+        case "commit":
+          // Dragging the slider to zero should have the same effect as
+          // muting: keep the original committed volume, as if it were never
+          // dragged
+          return {
+            ...state,
+            committedVolume:
+              state.volume === 0 ? state.committedVolume : state.volume,
+          };
+        default:
+          // Volume adjustment
+          return { ...state, volume: event };
+      }
+    }),
+    map(({ volume }) => volume),
     this.scope.state(),
   );
 
