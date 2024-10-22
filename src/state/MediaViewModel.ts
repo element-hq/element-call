@@ -26,10 +26,12 @@ import { RoomMember, RoomMemberEvent } from "matrix-js-sdk/src/matrix";
 import {
   BehaviorSubject,
   Observable,
+  Subject,
   combineLatest,
   distinctUntilKeyChanged,
   fromEvent,
   map,
+  merge,
   of,
   startWith,
   switchMap,
@@ -39,6 +41,7 @@ import { useEffect } from "react";
 import { ViewModel } from "./ViewModel";
 import { useReactiveState } from "../useReactiveState";
 import { alwaysShowSelf } from "../settings/settings";
+import { accumulate } from "../utils/observable";
 
 // TODO: Move this naming logic into the view model
 export function useDisplayName(vm: MediaViewModel): string {
@@ -232,18 +235,51 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
  * A remote participant's user media.
  */
 export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
-  private readonly _locallyMuted = new BehaviorSubject(false);
-  /**
-   * Whether we've disabled this participant's audio.
-   */
-  public readonly locallyMuted: Observable<boolean> = this._locallyMuted;
+  private readonly locallyMutedToggle = new Subject<void>();
+  private readonly localVolumeAdjustment = new Subject<number>();
+  private readonly localVolumeCommit = new Subject<void>();
 
-  private readonly _localVolume = new BehaviorSubject(1);
   /**
-   * The volume to which we've set this participant's audio, as a scalar
+   * The volume to which this participant's audio is set, as a scalar
    * multiplier.
    */
-  public readonly localVolume: Observable<number> = this._localVolume;
+  public readonly localVolume: Observable<number> = merge(
+    this.locallyMutedToggle.pipe(map(() => "toggle mute" as const)),
+    this.localVolumeAdjustment,
+    this.localVolumeCommit.pipe(map(() => "commit" as const)),
+  ).pipe(
+    accumulate({ volume: 1, committedVolume: 1 }, (state, event) => {
+      switch (event) {
+        case "toggle mute":
+          return {
+            ...state,
+            volume: state.volume === 0 ? state.committedVolume : 0,
+          };
+        case "commit":
+          // Dragging the slider to zero should have the same effect as
+          // muting: keep the original committed volume, as if it were never
+          // dragged
+          return {
+            ...state,
+            committedVolume:
+              state.volume === 0 ? state.committedVolume : state.volume,
+          };
+        default:
+          // Volume adjustment
+          return { ...state, volume: event };
+      }
+    }),
+    map(({ volume }) => volume),
+    this.scope.state(),
+  );
+
+  /**
+   * Whether this participant's audio is disabled.
+   */
+  public readonly locallyMuted: Observable<boolean> = this.localVolume.pipe(
+    map((volume) => volume === 0),
+    this.scope.state(),
+  );
 
   public constructor(
     id: string,
@@ -253,22 +289,24 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
   ) {
     super(id, member, participant, callEncrypted);
 
-    // Sync the local mute state and volume with LiveKit
-    combineLatest([this._locallyMuted, this._localVolume], (muted, volume) =>
-      muted ? 0 : volume,
-    )
+    // Sync the local volume with LiveKit
+    this.localVolume
       .pipe(this.scope.bind())
-      .subscribe((volume) => {
-        (this.participant as RemoteParticipant).setVolume(volume);
-      });
+      .subscribe((volume) =>
+        (this.participant as RemoteParticipant).setVolume(volume),
+      );
   }
 
   public toggleLocallyMuted(): void {
-    this._locallyMuted.next(!this._locallyMuted.value);
+    this.locallyMutedToggle.next();
   }
 
   public setLocalVolume(value: number): void {
-    this._localVolume.next(value);
+    this.localVolumeAdjustment.next(value);
+  }
+
+  public commitLocalVolume(): void {
+    this.localVolumeCommit.next();
   }
 }
 
