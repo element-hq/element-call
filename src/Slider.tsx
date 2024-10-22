@@ -16,6 +16,12 @@ interface Props {
   label: string;
   value: number;
   onValueChange: (value: number) => void;
+  /**
+   * Event handler called when the value changes at the end of an interaction.
+   * Useful when you only need to capture a final value to update a backend
+   * service, or when you want to remember the last value that the user
+   * "committed" to.
+   */
   onValueCommit?: (value: number) => void;
   min: number;
   max: number;
