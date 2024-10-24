@@ -10,6 +10,7 @@ import { expect, test, vi } from "vitest";
 
 import { enterRTCSession } from "../src/rtcSessionHelpers";
 import { Config } from "../src/config/Config";
+import { DEFAULT_CONFIG } from "./config/ConfigOptions";
 
 test("It joins the correct Session", async () => {
   const focusFromOlderMembership = {
@@ -34,8 +35,8 @@ test("It joins the correct Session", async () => {
   };
 
   vi.spyOn(Config, "get").mockReturnValue({
+    ...DEFAULT_CONFIG,
     livekit: { livekit_service_url: "http://my-default-service-url.com" },
-    eula: "",
   });
   const mockedSession = vi.mocked({
     room: {
