@@ -335,8 +335,8 @@ export class CallViewModel extends ViewModel {
         const newItems = new Map(
           function* (this: CallViewModel): Iterable<[string, MediaItem]> {
             for (const p of [localParticipant, ...remoteParticipants]) {
-              const userMediaId = p === localParticipant ? "local" : p.identity;
-              const member = findMatrixMember(this.matrixRoom, userMediaId);
+              const id = p === localParticipant ? "local" : p.identity;
+              const member = findMatrixMember(this.matrixRoom, id);
               if (member === undefined)
                 logger.warn(
                   `Ruh, roh! No matrix member found for SFU participant '${p.identity}': creating g-g-g-ghost!`,
@@ -345,7 +345,7 @@ export class CallViewModel extends ViewModel {
               // Create as many tiles for this participant as called for by
               // the duplicateTiles option
               for (let i = 0; i < 1 + duplicateTiles; i++) {
-                const userMediaId = `${p.identity}:${i}`;
+                const userMediaId = `${id}:${i}`;
                 yield [
                   userMediaId,
                   prevItems.get(userMediaId) ??
