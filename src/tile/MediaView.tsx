@@ -32,6 +32,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   primaryButton?: ReactNode;
+  raisedHand: boolean;
 }
 
 export const MediaView = forwardRef<HTMLDivElement, Props>(
@@ -50,6 +51,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       nameTagLeadingIcon,
       displayName,
       primaryButton,
+      raisedHand,
       ...props
     },
     ref,
@@ -86,6 +88,22 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           )}
         </div>
         <div className={styles.fg}>
+          {raisedHand && (
+            <div className={styles.raisedHand}>
+              <p
+                role="img"
+                aria-label="raised hand"
+                style={{
+                  width: "22px",
+                  height: "0px",
+                  display: "inline-block",
+                  fontSize: "22px",
+                }}
+              >
+                ✋
+              </p>
+            </div>
+          )}
           <div className={styles.nameTag}>
             {nameTagLeadingIcon}
             <Text as="span" size="sm" weight="medium" className={styles.name}>

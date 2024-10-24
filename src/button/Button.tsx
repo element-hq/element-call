@@ -91,6 +91,39 @@ export const ShareScreenButton: FC<ShareScreenButtonProps> = ({
   );
 };
 
+interface RaiseHandButtonProps extends ComponentPropsWithoutRef<"button"> {
+  raised: boolean;
+}
+export const RaiseHandButton: FC<RaiseHandButtonProps> = ({
+  raised,
+  ...props
+}) => {
+  const { t } = useTranslation();
+
+  return (
+    <Tooltip label={t("common.raise_hand")}>
+      <CpdButton
+        kind={raised ? "primary" : "secondary"}
+        {...props}
+        style={{ paddingLeft: 8, paddingRight: 8 }}
+      >
+        <p
+          role="img"
+          aria-label="raised hand"
+          style={{
+            width: "30px",
+            height: "0px",
+            display: "inline-block",
+            fontSize: "22px",
+          }}
+        >
+          ✋
+        </p>
+      </CpdButton>
+    </Tooltip>
+  );
+};
+
 export const EndCallButton: FC<ComponentPropsWithoutRef<"button">> = ({
   className,
   ...props

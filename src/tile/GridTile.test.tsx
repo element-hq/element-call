@@ -12,6 +12,7 @@ import { axe } from "vitest-axe";
 
 import { GridTile } from "./GridTile";
 import { withRemoteMedia } from "../utils/test";
+import { ReactionsProvider } from "../useReactions";
 
 test("GridTile is accessible", async () => {
   await withRemoteMedia(
@@ -26,14 +27,16 @@ test("GridTile is accessible", async () => {
     },
     async (vm) => {
       const { container } = render(
-        <GridTile
-          vm={vm}
-          onOpenProfile={() => {}}
-          targetWidth={300}
-          targetHeight={200}
-          showVideo
-          showSpeakingIndicators
-        />,
+        <ReactionsProvider>
+          <GridTile
+            vm={vm}
+            onOpenProfile={() => {}}
+            targetWidth={300}
+            targetHeight={200}
+            showVideo
+            showSpeakingIndicators
+          />
+        </ReactionsProvider>,
       );
       expect(await axe(container)).toHaveNoViolations();
       // Name should be visible

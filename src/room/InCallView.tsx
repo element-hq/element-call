@@ -11,6 +11,10 @@ import {
   useLocalParticipant,
 } from "@livekit/components-react";
 import { ConnectionState, Room } from "livekit-client";
+import {
+  MatrixEvent,
+  RoomEvent as MatrixRoomEvent,
+} from "matrix-js-sdk/src/matrix";
 import { MatrixClient } from "matrix-js-sdk/src/client";
 import {
   FC,
@@ -30,6 +34,8 @@ import classNames from "classnames";
 import { BehaviorSubject, of } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/src/logger";
+import { EventType, RelationType } from "matrix-js-sdk/src/matrix";
+import { ReactionEventContent } from "matrix-js-sdk/src/types";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
@@ -39,6 +45,7 @@ import {
   MicButton,
   VideoButton,
   ShareScreenButton,
+  RaiseHandButton,
   SettingsButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
@@ -78,6 +85,8 @@ import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
+import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
+import { useReactions } from "../useReactions";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -168,6 +177,8 @@ export const InCallView: FC<InCallViewProps> = ({
   connState,
   onShareClick,
 }) => {
+  const { supportsReactions } = useReactions();
+
   useWakeLock();
 
   useEffect(() => {
@@ -297,6 +308,73 @@ export const InCallView: FC<InCallViewProps> = ({
     (mode: GridMode) => vm.setGridMode(mode),
     [vm],
   );
+
+  const memberships = useMatrixRTCSessionMemberships(rtcSession);
+  const { raisedHands, setRaisedHands } = useReactions();
+  const [reactionId, setReactionId] = useState<string | null>(null);
+  const userId = client.getUserId()!;
+  const isHandRaised = raisedHands.includes(userId);
+
+  useEffect(() => {
+    const getLastReactionEvent = async (
+      eventId: string,
+    ): Promise<MatrixEvent | undefined> => {
+      return client
+        .relations(
+          rtcSession.room.roomId,
+          eventId,
+          RelationType.Annotation,
+          EventType.Reaction,
+          {
+            limit: 1,
+          },
+        )
+        .then((rels) => {
+          return rels.events.length > 0 ? rels.events[0] : undefined;
+        });
+    };
+
+    const fetchReactions = async (): Promise<void> => {
+      const newRaisedHands = [...raisedHands];
+      for (const m of memberships) {
+        const reaction = await getLastReactionEvent(m.eventId!);
+        if (reaction && reaction.getType() === EventType.Reaction) {
+          const content = reaction.getContent() as ReactionEventContent;
+          if (content?.["m.relates_to"].key === "🖐️") {
+            newRaisedHands.push(m.sender!);
+          }
+        }
+      }
+      setRaisedHands(newRaisedHands);
+    };
+
+    void fetchReactions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const handleReactionEvent = (event: MatrixEvent): void => {
+      if (event.getType() === EventType.Reaction) {
+        // TODO: check if target of reaction is a call membership event
+        const content = event.getContent() as ReactionEventContent;
+        if (content?.["m.relates_to"].key === "🖐️") {
+          setRaisedHands([...raisedHands, event.getSender()!]);
+        }
+      }
+      if (event.getType() === EventType.RoomRedaction) {
+        // TODO: check target of redaction event
+        setRaisedHands(raisedHands.filter((id) => id !== event.getSender()));
+      }
+    };
+
+    client.on(MatrixRoomEvent.Timeline, handleReactionEvent);
+    client.on(MatrixRoomEvent.Redaction, handleReactionEvent);
+
+    return (): void => {
+      client.on(MatrixRoomEvent.Timeline, handleReactionEvent);
+      client.off(MatrixRoomEvent.Redaction, handleReactionEvent);
+    };
+  }, [client, raisedHands, setRaisedHands]);
 
   useEffect(() => {
     widget?.api.transport
@@ -479,6 +557,52 @@ export const InCallView: FC<InCallViewProps> = ({
       .catch(logger.error);
   }, [localParticipant, isScreenShareEnabled]);
 
+  const toggleRaisedHand = useCallback(() => {
+    if (isHandRaised) {
+      if (reactionId) {
+        client
+          .redactEvent(rtcSession.room.roomId, reactionId)
+          .then(() => {
+            setReactionId(null);
+            setRaisedHands(raisedHands.filter((id) => id !== userId));
+            logger.debug("Redacted reaction event");
+          })
+          .catch((e) => {
+            logger.error("Failed to redact reaction event", e);
+          });
+      }
+    } else {
+      const m = memberships.filter((m) => m.sender === userId);
+      const eventId = m[0].eventId!;
+      client
+        .sendEvent(rtcSession.room.roomId, EventType.Reaction, {
+          "m.relates_to": {
+            rel_type: RelationType.Annotation,
+            event_id: eventId,
+            key: "🖐️",
+          },
+        })
+        .then((reaction) => {
+          setReactionId(reaction.event_id);
+          setRaisedHands([...raisedHands, userId]);
+          logger.debug("Sent reaction event", reaction.event_id);
+        })
+        .catch((e) => {
+          logger.error("Failed to send reaction event", e);
+        });
+    }
+  }, [
+    client,
+    isHandRaised,
+    memberships,
+    raisedHands,
+    reactionId,
+    rtcSession.room.roomId,
+    setRaisedHands,
+    setReactionId,
+    userId,
+  ]);
+
   let footer: JSX.Element | null;
 
   if (noControls) {
@@ -513,7 +637,16 @@ export const InCallView: FC<InCallViewProps> = ({
           />,
         );
       }
-      buttons.push(<SettingsButton key="4" onClick={openSettings} />);
+      if (supportsReactions) {
+        buttons.push(
+          <RaiseHandButton
+            key="4"
+            onClick={toggleRaisedHand}
+            raised={isHandRaised}
+          />,
+        );
+      }
+      buttons.push(<SettingsButton key="5" onClick={openSettings} />);
     }
 
     buttons.push(

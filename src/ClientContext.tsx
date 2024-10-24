@@ -25,6 +25,7 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 import { MatrixError } from "matrix-js-sdk/src/matrix";
+import { WidgetApi } from "matrix-widget-api";
 
 import { ErrorView } from "./FullScreenView";
 import { fallbackICEServerAllowed, initClient } from "./utils/matrix";
@@ -36,6 +37,7 @@ import {
 import { translatedError } from "./TranslatedError";
 import { useEventTarget } from "./useEvents";
 import { Config } from "./config/Config";
+import { useReactions } from "./useReactions";
 
 declare global {
   interface Window {
@@ -144,6 +146,7 @@ interface Props {
 }
 
 export const ClientProvider: FC<Props> = ({ children }) => {
+  const { setSupportsReactions } = useReactions();
   const history = useHistory();
 
   // null = signed out, undefined = loading
@@ -188,11 +191,11 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       saveSession({ ...session, passwordlessUser: false });
 
       setInitClientState({
-        client: initClientState.client,
+        ...initClientState,
         passwordlessUser: false,
       });
     },
-    [initClientState?.client],
+    [initClientState],
   );
 
   const setClient = useCallback(
@@ -206,6 +209,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       if (clientParams) {
         saveSession(clientParams.session);
         setInitClientState({
+          widgetApi: null,
           client: clientParams.client,
           passwordlessUser: clientParams.session.passwordlessUser,
         });
@@ -309,12 +313,40 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       initClientState.client.on(ClientEvent.Sync, onSync);
     }
 
+    if (initClientState.widgetApi) {
+      let supportsReactions = true;
+
+      const reactSend = initClientState.widgetApi.hasCapability(
+        "org.matrix.msc2762.send.event:m.reaction",
+      );
+      const redactSend = initClientState.widgetApi.hasCapability(
+        "org.matrix.msc2762.send.event:m.room.redaction",
+      );
+      const reactRcv = initClientState.widgetApi.hasCapability(
+        "org.matrix.msc2762.receive.event:m.reaction",
+      );
+      const redactRcv = initClientState.widgetApi.hasCapability(
+        "org.matrix.msc2762.receive.event:m.room.redaction",
+      );
+
+      if (!reactSend || !reactRcv || !redactSend || !redactRcv) {
+        supportsReactions = false;
+      }
+
+      setSupportsReactions(supportsReactions);
+      if (!supportsReactions) {
+        logger.warn("Widget does not support reactions");
+      } else {
+        logger.warn("Widget does support reactions");
+      }
+    }
+
     return (): void => {
       if (initClientState.client) {
         initClientState.client.removeListener(ClientEvent.Sync, onSync);
       }
     };
-  }, [initClientState, onSync]);
+  }, [initClientState, onSync, setSupportsReactions]);
 
   if (alreadyOpenedErr) {
     return <ErrorView error={alreadyOpenedErr} />;
@@ -326,6 +358,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 };
 
 type InitResult = {
+  widgetApi: WidgetApi | null;
   client: MatrixClient;
   passwordlessUser: boolean;
 };
@@ -336,6 +369,7 @@ async function loadClient(): Promise<InitResult | null> {
     logger.log("Using a matryoshka client");
     const client = await widget.client;
     return {
+      widgetApi: widget.api,
       client,
       passwordlessUser: false,
     };
@@ -364,6 +398,7 @@ async function loadClient(): Promise<InitResult | null> {
       try {
         const client = await initClient(initClientParams, true);
         return {
+          widgetApi: null,
           client,
           passwordlessUser,
         };
