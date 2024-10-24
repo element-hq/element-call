@@ -199,7 +199,7 @@ test("participants are retained during a focus switch", () => {
             a: {
               type: "grid",
               spotlight: undefined,
-              grid: [":0", `${aliceId}:0`, `${bobId}:0`],
+              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
             },
           },
         );
@@ -243,12 +243,12 @@ test("screen sharing activates spotlight layout", () => {
             a: {
               type: "grid",
               spotlight: undefined,
-              grid: [":0", `${aliceId}:0`, `${bobId}:0`],
+              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
             },
             b: {
               type: "spotlight-landscape",
               spotlight: [`${aliceId}:0:screen-share`],
-              grid: [":0", `${aliceId}:0`, `${bobId}:0`],
+              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
             },
             c: {
               type: "spotlight-landscape",
@@ -256,17 +256,17 @@ test("screen sharing activates spotlight layout", () => {
                 `${aliceId}:0:screen-share`,
                 `${bobId}:0:screen-share`,
               ],
-              grid: [":0", `${aliceId}:0`, `${bobId}:0`],
+              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
             },
             d: {
               type: "spotlight-landscape",
               spotlight: [`${bobId}:0:screen-share`],
-              grid: [":0", `${aliceId}:0`, `${bobId}:0`],
+              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
             },
             e: {
               type: "spotlight-landscape",
               spotlight: [`${aliceId}:0`],
-              grid: [":0", `${aliceId}:0`, `${bobId}:0`],
+              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
             },
           },
         );
