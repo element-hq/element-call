@@ -5,16 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { CSSProperties, forwardRef, useMemo } from "react";
+import { CSSProperties, forwardRef } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
-import {
-  CallLayout,
-  GridTileModel,
-  TileModel,
-  arrangeTiles,
-} from "./CallLayout";
+import { CallLayout, arrangeTiles } from "./CallLayout";
 import { SpotlightPortraitLayout as SpotlightPortraitLayoutModel } from "../state/CallViewModel";
 import styles from "./SpotlightPortraitLayout.module.css";
 import { useUpdateLayout } from "./Grid";
@@ -40,19 +35,15 @@ export const makeSpotlightPortraitLayout: CallLayout<
     ref,
   ) {
     useUpdateLayout();
-    const tileModel: TileModel = useMemo(
-      () => ({
-        type: "spotlight",
-        vms: model.spotlight,
-        maximised: true,
-      }),
-      [model.spotlight],
-    );
 
     return (
       <div ref={ref} className={styles.layer}>
         <div className={styles.spotlight}>
-          <Slot className={styles.slot} id="spotlight" model={tileModel} />
+          <Slot
+            className={styles.slot}
+            id="spotlight"
+            model={model.spotlight}
+          />
         </div>
       </div>
     );
@@ -71,10 +62,8 @@ export const makeSpotlightPortraitLayout: CallLayout<
       width,
       model.grid.length,
     );
-    const tileModels: GridTileModel[] = useMemo(
-      () => model.grid.map((vm) => ({ type: "grid", vm })),
-      [model.grid],
-    );
+    const withIndicators =
+      useObservableEagerState(model.spotlight.media).length > 1;
 
     return (
       <div
@@ -90,17 +79,12 @@ export const makeSpotlightPortraitLayout: CallLayout<
       >
         <div
           className={classNames(styles.spotlight, {
-            [styles.withIndicators]: model.spotlight.length > 1,
+            [styles.withIndicators]: withIndicators,
           })}
         />
         <div className={styles.grid}>
-          {tileModels.map((m) => (
-            <Slot
-              key={m.vm.id}
-              className={styles.slot}
-              id={m.vm.id}
-              model={m}
-            />
+          {model.grid.map((m) => (
+            <Slot key={m.id} className={styles.slot} id={m.id} model={m} />
           ))}
         </div>
       </div>
