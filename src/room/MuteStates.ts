@@ -18,6 +18,7 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { MediaDevice, useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import { ElementWidgetActions, widget } from "../widget";
+import { Config } from "../config/Config";
 
 /**
  * If there already are this many participants in the call, we automatically mute
@@ -71,8 +72,14 @@ function useMuteState(
 export function useMuteStates(): MuteStates {
   const devices = useMediaDevices();
 
-  const audio = useMuteState(devices.audioInput, () => true);
-  const video = useMuteState(devices.videoInput, () => true);
+  const audio = useMuteState(
+    devices.audioInput,
+    () => Config.get().media_devices.enable_audio,
+  );
+  const video = useMuteState(
+    devices.videoInput,
+    () => Config.get().media_devices.enable_video,
+  );
 
   useEffect(() => {
     widget?.api.transport

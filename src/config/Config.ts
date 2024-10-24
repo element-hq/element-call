@@ -5,6 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
+import { merge } from "lodash";
+
 import { getUrlParams } from "../UrlParams";
 import {
   DEFAULT_CONFIG,
@@ -15,7 +17,7 @@ import {
 export class Config {
   private static internalInstance: Config | undefined;
 
-  public static get(): ConfigOptions {
+  public static get(): ResolvedConfigOptions {
     if (!this.internalInstance?.config)
       throw new Error("Config instance read before config got initialized");
     return this.internalInstance.config;
@@ -29,7 +31,7 @@ export class Config {
       Config.internalInstance.initPromise = downloadConfig(
         "../config.json",
       ).then((config) => {
-        internalInstance.config = { ...DEFAULT_CONFIG, ...config };
+        internalInstance.config = merge({}, DEFAULT_CONFIG, config);
       });
     }
     return Config.internalInstance.initPromise;
