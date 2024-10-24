@@ -175,11 +175,31 @@ export class TileStoreBuilder {
       ) {
         const prev = this.prevGridByMedia.get(this.spotlight.media[0]);
         if (prev !== undefined) {
-          const [entry] = prev;
-          // Do the media swap
-          entry.media = media;
-          this.prevGridByMedia.delete(this.spotlight.media[0]);
-          this.prevGridByMedia.set(media, prev);
+          const [entry, prevIndex] = prev;
+          const previouslyVisible = this.visibleTiles.has(entry.vm);
+          const nowVisible = this.visibleTiles.has(
+            this.prevGrid[this.numGridEntries]?.vm,
+          );
+
+          // If it doesn't need to move between the visible/invisible sections of
+          // the grid, then we can keep it where it was and swap the media
+          if (previouslyVisible === nowVisible) {
+            this.stationaryGridEntries[prevIndex] = entry;
+            // Do the media swap
+            entry.media = media;
+            this.prevGridByMedia.delete(this.spotlight.media[0]);
+            this.prevGridByMedia.set(media, prev);
+          } else {
+            // Create a new tile; this will cause a layout shift but I'm not
+            // sure there's any other straightforward option in this case
+            (nowVisible
+              ? this.visibleGridEntries
+              : this.invisibleGridEntries
+            ).push(new GridTileData(media));
+          }
+
+          this.numGridEntries++;
+          return;
         }
       }
     }
