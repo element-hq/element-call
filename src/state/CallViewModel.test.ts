@@ -9,6 +9,7 @@ import { test, vi, onTestFinished } from "vitest";
 import {
   combineLatest,
   debounceTime,
+  distinctUntilChanged,
   map,
   Observable,
   of,
@@ -22,6 +23,7 @@ import {
   RemoteParticipant,
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
+import { isEqual } from "lodash";
 
 import { CallViewModel, Layout } from "./CallViewModel";
 import {
@@ -61,12 +63,7 @@ const bobSharingScreen = mockRemoteParticipant({
 });
 const daveParticipant = mockRemoteParticipant({ identity: daveId });
 
-const members = new Map([
-  [alice.userId, alice],
-  [bob.userId, bob],
-  [carol.userId, carol],
-  [dave.userId, dave],
-]);
+const members = new Map([alice, bob, carol, dave].map((p) => [p.userId, p]));
 
 export interface GridLayoutSummary {
   type: "grid";
@@ -168,6 +165,7 @@ function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
     // care about the most recent value for each time step, so discard these
     // extra values.
     debounceTime(0),
+    distinctUntilChanged(isEqual),
   );
 }
 
@@ -224,7 +222,7 @@ test("participants are retained during a focus switch", () => {
     // Start switching focus on frame 1 and reconnect on frame 3
     const connMarbles = "cs-c";
     // The visible participants should remain the same throughout the switch
-    const laytMarbles = "aaaa 2997ms a";
+    const laytMarbles = "a";
 
     withCallViewModel(
       cold(partMarbles, {
@@ -319,20 +317,18 @@ test("screen sharing activates spotlight layout", () => {
   });
 });
 
-test("spotlight speakers swap places", () => {
+test("participants stay in the same order unless to appear/disappear", () => {
   withTestScheduler(({ cold, schedule, expectObservable }) => {
-    // Go immediately into spotlight mode for the test
-    const modeMarbles = "s";
+    const initMarbles = "a";
     // First Bob speaks, then Dave, then Alice
-    const aSpkMarbles = "n- 1998ms - 1998ms y";
-    const bSpkMarbles = "ny 1998ms n";
-    const dSpkMarbles = "n- 1998ms y 1998ms n";
-    // Alice should start in the spotlight, then Bob, then Dave, then Alice
-    // again. However, the positions of Dave and Bob in the grid should be
-    // reversed by the end because they've been swapped in and out of the
-    // spotlight.
-    const laytMarbles =
-      "aa 1598ms b 399ms b 1199ms c 798ms c 800ms d 57199ms d 1998ms d";
+    const aSpkMarbles = "n- 1998ms - 1999ms y";
+    const bSpkMarbles = "ny 1998ms n 1999ms ";
+    const dSpkMarbles = "n- 1998ms y 1999ms n";
+    // Nothing should change when Bob speaks, because Bob is already on screen.
+    // When Dave speaks he should switch with Alice because she's the one who
+    // hasn't spoken at all. Then when Alice speaks, she should return to her
+    // place at the top.
+    const laytMarbles = "a 1999ms b 1999ms a 57999ms c 1999ms a";
 
     withCallViewModel(
       of([aliceParticipant, bobParticipant, daveParticipant]),
@@ -343,7 +339,65 @@ test("spotlight speakers swap places", () => {
         [daveParticipant, cold(dSpkMarbles, { y: true, n: false })],
       ]),
       (vm) => {
-        schedule(modeMarbles, { s: () => vm.setGridMode("spotlight") });
+        schedule(initMarbles, {
+          a: () => {
+            // We imagine that only three tiles (the first three) will be visible
+            // on screen at a time
+            vm.layout.subscribe((layout) => {
+              if (layout.type === "grid") {
+                for (let i = 0; i < layout.grid.length; i++)
+                  layout.grid[i].setVisible(i < 3);
+              }
+            });
+          },
+        });
+
+        expectObservable(summarizeLayout(vm.layout)).toBe(laytMarbles, {
+          a: {
+            type: "grid",
+            spotlight: undefined,
+            grid: [":0", `${aliceId}:0`, `${bobId}:0`, `${daveId}:0`],
+          },
+          b: {
+            type: "grid",
+            spotlight: undefined,
+            grid: [":0", `${daveId}:0`, `${bobId}:0`, `${aliceId}:0`],
+          },
+          c: {
+            type: "grid",
+            spotlight: undefined,
+            grid: [":0", `${aliceId}:0`, `${daveId}:0`, `${bobId}:0`],
+          },
+        });
+      },
+    );
+  });
+});
+
+test("spotlight speakers swap places", () => {
+  withTestScheduler(({ cold, schedule, expectObservable }) => {
+    // Go immediately into spotlight mode for the test
+    const initMarbles = "s";
+    // First Bob speaks, then Dave, then Alice
+    const aSpkMarbles = "n--y";
+    const bSpkMarbles = "nyn";
+    const dSpkMarbles = "n-yn";
+    // Alice should start in the spotlight, then Bob, then Dave, then Alice
+    // again. However, the positions of Dave and Bob in the grid should be
+    // reversed by the end because they've been swapped in and out of the
+    // spotlight.
+    const laytMarbles = "abcd";
+
+    withCallViewModel(
+      of([aliceParticipant, bobParticipant, daveParticipant]),
+      of(ConnectionState.Connected),
+      new Map([
+        [aliceParticipant, cold(aSpkMarbles, { y: true, n: false })],
+        [bobParticipant, cold(bSpkMarbles, { y: true, n: false })],
+        [daveParticipant, cold(dSpkMarbles, { y: true, n: false })],
+      ]),
+      (vm) => {
+        schedule(initMarbles, { s: () => vm.setGridMode("spotlight") });
 
         expectObservable(summarizeLayout(vm.layout)).toBe(laytMarbles, {
           a: {
