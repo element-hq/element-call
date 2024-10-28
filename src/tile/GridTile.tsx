@@ -160,7 +160,7 @@ UserMediaTile.displayName = "UserMediaTile";
 
 interface LocalUserMediaTileProps extends TileProps {
   vm: LocalUserMediaViewModel;
-  onOpenProfile: () => void;
+  onOpenProfile: (() => void) | null;
 }
 
 const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
@@ -191,11 +191,13 @@ const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
           />
         }
         menuEnd={
-          <MenuItem
-            Icon={UserProfileIcon}
-            label={t("common.profile")}
-            onSelect={onOpenProfile}
-          />
+          onOpenProfile && (
+            <MenuItem
+              Icon={UserProfileIcon}
+              label={t("common.profile")}
+              onSelect={onOpenProfile}
+            />
+          )
         }
         {...props}
       />
@@ -268,7 +270,7 @@ RemoteUserMediaTile.displayName = "RemoteUserMediaTile";
 
 interface GridTileProps {
   vm: UserMediaViewModel;
-  onOpenProfile: () => void;
+  onOpenProfile: (() => void) | null;
   targetWidth: number;
   targetHeight: number;
   className?: string;
