@@ -221,6 +221,9 @@ test("screen sharing activates spotlight layout", () => {
     // sharing, then return to grid, then manually go into spotlight, and
     // remain in spotlight until we manually go back to grid
     const laytMarbles = "ab(cc)(dd)ae(bb)(ee)a 59979ms a";
+    // Speaking indicators should always be shown except for when the active
+    // speaker is present in the spotlight
+    const showMarbles = "y----------ny---n---y";
 
     withCallViewModel(
       helpers,
@@ -270,6 +273,10 @@ test("screen sharing activates spotlight layout", () => {
             },
           },
         );
+        expectObservable(vm.showSpeakingIndicators).toBe(showMarbles, {
+          y: true,
+          n: false,
+        });
       },
     );
   });

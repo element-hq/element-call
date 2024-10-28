@@ -714,7 +714,21 @@ export class CallViewModel extends ViewModel {
   }
 
   public showSpeakingIndicators: Observable<boolean> = this.layout.pipe(
-    map((l) => l.type !== "one-on-one" && !l.type.startsWith("spotlight-")),
+    map((l) => {
+      switch (l.type) {
+        case "spotlight-landscape":
+        case "spotlight-portrait":
+          // If the spotlight is showing the active speaker, we can do without
+          // speaking indicators as they're a redundant visual cue. But if
+          // screen sharing feeds are in the spotlight we still need them.
+          return l.spotlight[0] instanceof ScreenShareViewModel;
+        case "spotlight-expanded":
+        case "one-on-one":
+          return false;
+        default:
+          return true;
+      }
+    }),
     this.scope.state(),
   );
 
