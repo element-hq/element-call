@@ -97,7 +97,11 @@ function useMediaDevice(
     }
 
     return {
-      available: available ?? [],
+      available: available
+        ? // Sometimes browsers (particularly Firefox) can return multiple
+          // device entries for the exact same device ID; deduplicate them
+          [...new Map(available.map((d) => [d.deviceId, d])).values()]
+        : [],
       selectedId: alwaysDefault ? undefined : devId,
       select,
     };
