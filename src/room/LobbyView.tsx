@@ -5,12 +5,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useCallback, useState } from "react";
+import { FC, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Button } from "@vector-im/compound-web";
 import classNames from "classnames";
 import { useHistory } from "react-router-dom";
+import { logger } from "matrix-js-sdk/src/logger";
+import { usePreviewTracks } from "@livekit/components-react";
+import { LocalVideoTrack, Track } from "livekit-client";
+import { useObservable } from "observable-hooks";
+import { map } from "rxjs";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -23,12 +28,16 @@ import {
   EndCallButton,
   MicButton,
   SettingsButton,
+  SwitchCameraButton,
   VideoButton,
 } from "../button/Button";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
 import { useMediaQuery } from "../useMediaQuery";
 import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
+import { useMediaDevices } from "../livekit/MediaDevicesContext";
+import { useInitial } from "../useInitial";
+import { useSwitchCamera } from "./useSwitchCamera";
 
 interface Props {
   client: MatrixClient;
@@ -89,6 +98,61 @@ export const LobbyView: FC<Props> = ({
     </Link>
   );
 
+  const devices = useMediaDevices();
+
+  // Capture the audio options as they were when we first mounted, because
+  // we're not doing anything with the audio anyway so we don't need to
+  // re-open the devices when they change (see below).
+  const initialAudioOptions = useInitial(
+    () =>
+      muteStates.audio.enabled && { deviceId: devices.audioInput.selectedId },
+  );
+
+  const localTrackOptions = useMemo(
+    () => ({
+      // The only reason we request audio here is to get the audio permission
+      // request over with at the same time. But changing the audio settings
+      // shouldn't cause this hook to recreate the track, which is why we
+      // reference the initial values here.
+      // We also pass in a clone because livekit mutates the object passed in,
+      // which would cause the devices to be re-opened on the next render.
+      audio: Object.assign({}, initialAudioOptions),
+      video: muteStates.video.enabled && {
+        deviceId: devices.videoInput.selectedId,
+      },
+    }),
+    [
+      initialAudioOptions,
+      devices.videoInput.selectedId,
+      muteStates.video.enabled,
+    ],
+  );
+
+  const onError = useCallback(
+    (error: Error) => {
+      logger.error("Error while creating preview Tracks:", error);
+      muteStates.audio.setEnabled?.(false);
+      muteStates.video.setEnabled?.(false);
+    },
+    [muteStates.audio, muteStates.video],
+  );
+
+  const tracks = usePreviewTracks(localTrackOptions, onError);
+
+  const videoTrack = useMemo(
+    () =>
+      (tracks?.find((t) => t.kind === Track.Kind.Video) ??
+        null) as LocalVideoTrack | null,
+    [tracks],
+  );
+
+  const switchCamera = useSwitchCamera(
+    useObservable(
+      (inputs) => inputs.pipe(map(([video]) => video)),
+      [videoTrack],
+    ),
+  );
+
   // TODO: Unify this component with InCallView, so we can get slick joining
   // animations and don't have to feel bad about reusing its CSS
   return (
@@ -111,7 +175,11 @@ export const LobbyView: FC<Props> = ({
           </Header>
         )}
         <div className={styles.content}>
-          <VideoPreview matrixInfo={matrixInfo} muteStates={muteStates}>
+          <VideoPreview
+            matrixInfo={matrixInfo}
+            muteStates={muteStates}
+            videoTrack={videoTrack}
+          >
             <Button
               className={classNames(styles.join, {
                 [styles.wait]: waitingForInvite,
@@ -140,6 +208,7 @@ export const LobbyView: FC<Props> = ({
               onClick={onVideoPress}
               disabled={muteStates.video.setEnabled === null}
             />
+            {switchCamera && <SwitchCameraButton onClick={switchCamera} />}
             <SettingsButton onClick={openSettings} />
             {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
           </div>

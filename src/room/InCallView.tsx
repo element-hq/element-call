@@ -40,6 +40,7 @@ import {
   VideoButton,
   ShareScreenButton,
   SettingsButton,
+  SwitchCameraButton,
 } from "../button";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { useUrlParams } from "../UrlParams";
@@ -78,6 +79,7 @@ import { makeOneOnOneLayout } from "../grid/OneOnOneLayout";
 import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
+import { useSwitchCamera } from "./useSwitchCamera";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -217,6 +219,7 @@ export const InCallView: FC<InCallViewProps> = ({
   const gridMode = useObservableEagerState(vm.gridMode);
   const showHeader = useObservableEagerState(vm.showHeader);
   const showFooter = useObservableEagerState(vm.showFooter);
+  const switchCamera = useSwitchCamera(vm.localVideo);
 
   // Ideally we could detect taps by listening for click events and checking
   // that the pointerType of the event is "touch", but this isn't yet supported
@@ -488,14 +491,14 @@ export const InCallView: FC<InCallViewProps> = ({
 
     buttons.push(
       <MicButton
-        key="1"
+        key="audio"
         muted={!muteStates.audio.enabled}
         onClick={toggleMicrophone}
         disabled={muteStates.audio.setEnabled === null}
         data-testid="incall_mute"
       />,
       <VideoButton
-        key="2"
+        key="video"
         muted={!muteStates.video.enabled}
         onClick={toggleCamera}
         disabled={muteStates.video.setEnabled === null}
@@ -503,22 +506,26 @@ export const InCallView: FC<InCallViewProps> = ({
       />,
     );
     if (!reducedControls) {
+      if (switchCamera !== null)
+        buttons.push(
+          <SwitchCameraButton key="switch_camera" onClick={switchCamera} />,
+        );
       if (canScreenshare && !hideScreensharing) {
         buttons.push(
           <ShareScreenButton
-            key="3"
+            key="share_screen"
             enabled={isScreenShareEnabled}
             onClick={toggleScreensharing}
             data-testid="incall_screenshare"
           />,
         );
       }
-      buttons.push(<SettingsButton key="4" onClick={openSettings} />);
+      buttons.push(<SettingsButton key="settings" onClick={openSettings} />);
     }
 
     buttons.push(
       <EndCallButton
-        key="6"
+        key="end_call"
         onClick={function (): void {
           onLeave();
         }}

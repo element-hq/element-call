@@ -65,7 +65,7 @@ export function useDisplayName(vm: MediaViewModel): string {
   return displayName;
 }
 
-function observeTrackReference(
+export function observeTrackReference(
   participant: Participant,
   source: Track.Source,
 ): Observable<TrackReferenceOrPlaceholder> {
