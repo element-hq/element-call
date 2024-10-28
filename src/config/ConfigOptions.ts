@@ -77,6 +77,17 @@ export interface ConfigOptions {
    * A link to the end-user license agreement (EULA)
    */
   eula: string;
+
+  media_devices?: {
+    /**
+     * Defines whether participants should start with audio enabled by default.
+     */
+    enable_audio?: boolean;
+    /**
+     * Defines whether participants should start with video enabled by default.
+     */
+    enable_video?: boolean;
+  };
 }
 
 // Overrides members from ConfigOptions that are always provided by the
@@ -88,6 +99,10 @@ export interface ResolvedConfigOptions extends ConfigOptions {
       server_name: string;
     };
   };
+  media_devices: {
+    enable_audio: boolean;
+    enable_video: boolean;
+  };
 }
 
 export const DEFAULT_CONFIG: ResolvedConfigOptions = {
@@ -98,4 +113,8 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
     },
   },
   eula: "https://static.element.io/legal/online-EULA.pdf",
+  media_devices: {
+    enable_audio: true,
+    enable_video: true,
+  },
 };
