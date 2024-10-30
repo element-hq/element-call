@@ -64,7 +64,7 @@ export const RoomAuthView: FC = () => {
       <div className={styles.container}>
         <main className={styles.main}>
           <Heading size="xl" weight="semibold" className={styles.headline}>
-            {t("lobby.join_button")}
+            {t("lobby.join_as_guest")}
           </Heading>
           <Form className={styles.form} onSubmit={onSubmit}>
             <FieldRow>
@@ -98,7 +98,9 @@ export const RoomAuthView: FC = () => {
               disabled={loading}
               data-testid="joincall_joincall"
             >
-              {loading ? t("common.loading") : t("room_auth_view_join_button")}
+              {loading
+                ? t("common.loading")
+                : t("room_auth_view_continue_button")}
             </Button>
             <div id={recaptchaId} />
           </Form>
