@@ -88,6 +88,14 @@ export interface ConfigOptions {
      */
     enable_video?: boolean;
   };
+
+  /**
+   * Whether upon entering a room, the user should be prompted to launch the
+   * native mobile app. (Affects only Android and iOS.)
+   *
+   * Note that this can additionally be disabled by the app's URL parameters.
+   */
+  app_prompt?: boolean;
 }
 
 // Overrides members from ConfigOptions that are always provided by the
@@ -103,6 +111,7 @@ export interface ResolvedConfigOptions extends ConfigOptions {
     enable_audio: boolean;
     enable_video: boolean;
   };
+  app_prompt: boolean;
 }
 
 export const DEFAULT_CONFIG: ResolvedConfigOptions = {
@@ -117,4 +126,5 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
     enable_audio: true,
     enable_video: true,
   },
+  app_prompt: true,
 };
