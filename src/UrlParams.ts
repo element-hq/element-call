@@ -43,6 +43,8 @@ export interface UrlParams {
   /**
    * Whether upon entering a room, the user should be prompted to launch the
    * native mobile app. (Affects only Android and iOS.)
+   *
+   * The app prompt must also be enabled in the config for this to take effect.
    */
   appPrompt: boolean;
   /**

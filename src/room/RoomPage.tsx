@@ -27,6 +27,7 @@ import { E2eeType } from "../e2ee/e2eeType";
 import { useProfile } from "../profile/useProfile";
 import { useMuteStates } from "./MuteStates";
 import { useOptInAnalytics } from "../settings/settings";
+import { Config } from "../config/Config";
 
 export const RoomPage: FC = () => {
   const {
@@ -185,6 +186,7 @@ export const RoomPage: FC = () => {
       {content}
       {/* On Android and iOS, show a prompt to launch the mobile app. */}
       {appPrompt &&
+        Config.get().app_prompt &&
         (platform === "android" || platform === "ios") &&
         roomId && <AppSelectionModal roomId={roomId} />}
     </>
