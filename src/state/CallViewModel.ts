@@ -722,7 +722,11 @@ export class CallViewModel extends ViewModel {
           // speaking indicators as they're a redundant visual cue. But if
           // screen sharing feeds are in the spotlight we still need them.
           return l.spotlight[0] instanceof ScreenShareViewModel;
+        // In expanded spotlight layout, the active speaker is always shown in
+        // the picture-in-picture tile so there is no need for speaking
+        // indicators
         case "spotlight-expanded":
+        // In one-on-one layout there's no question as to who is speaking
         case "one-on-one":
           return false;
         default:
