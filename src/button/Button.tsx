@@ -16,6 +16,7 @@ import {
   EndCallIcon,
   ShareScreenSolidIcon,
   SettingsSolidIcon,
+  SwitchCameraSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./Button.module.css";
@@ -60,6 +61,23 @@ export const VideoButton: FC<VideoButtonProps> = ({ muted, ...props }) => {
         iconOnly
         Icon={Icon}
         kind={muted ? "primary" : "secondary"}
+        {...props}
+      />
+    </Tooltip>
+  );
+};
+
+export const SwitchCameraButton: FC<ComponentPropsWithoutRef<"button">> = (
+  props,
+) => {
+  const { t } = useTranslation();
+
+  return (
+    <Tooltip label={t("switch_camera")}>
+      <CpdButton
+        iconOnly
+        Icon={SwitchCameraSolidIcon}
+        kind="secondary"
         {...props}
       />
     </Tooltip>

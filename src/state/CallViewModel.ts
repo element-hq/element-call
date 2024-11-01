@@ -13,8 +13,10 @@ import {
 import {
   Room as LivekitRoom,
   LocalParticipant,
+  LocalVideoTrack,
   ParticipantEvent,
   RemoteParticipant,
+  Track,
 } from "livekit-client";
 import {
   Room as MatrixRoom,
@@ -58,6 +60,7 @@ import {
 import {
   LocalUserMediaViewModel,
   MediaViewModel,
+  observeTrackReference,
   RemoteUserMediaViewModel,
   ScreenShareViewModel,
   UserMediaViewModel,
@@ -259,6 +262,17 @@ function findMatrixMember(
 
 // TODO: Move wayyyy more business logic from the call and lobby views into here
 export class CallViewModel extends ViewModel {
+  public readonly localVideo: Observable<LocalVideoTrack | null> =
+    observeTrackReference(
+      this.livekitRoom.localParticipant,
+      Track.Source.Camera,
+    ).pipe(
+      map((trackRef) => {
+        const track = trackRef.publication?.track;
+        return track instanceof LocalVideoTrack ? track : null;
+      }),
+    );
+
   private readonly rawRemoteParticipants = connectedParticipantsObserver(
     this.livekitRoom,
   ).pipe(this.scope.state());
