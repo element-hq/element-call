@@ -19,8 +19,11 @@ Please see LICENSE in the repository root for full details.
   height: 100%;
   object-fit: cover;
   background-color: black;
-  transform: scaleX(-1);
   background-color: var(--cpd-color-bg-subtle-primary);
+}
+
+video.mirror {
+  transform: scaleX(-1);
 }
 
 .avatarContainer {

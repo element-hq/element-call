@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { useEffect, useRef, FC, ReactNode } from "react";
 import useMeasure from "react-use-measure";
-import { LocalVideoTrack } from "livekit-client";
+import { facingModeFromLocalTrack, LocalVideoTrack } from "livekit-client";
 import classNames from "classnames";
 
 import { Avatar } from "../Avatar";
@@ -56,6 +56,12 @@ export const VideoPreview: FC<Props> = ({
   return (
     <div className={classNames(styles.preview)} ref={previewRef}>
       <video
+        className={
+          videoTrack &&
+          facingModeFromLocalTrack(videoTrack).facingMode === "user"
+            ? styles.mirror
+            : undefined
+        }
         ref={videoEl}
         muted
         playsInline
