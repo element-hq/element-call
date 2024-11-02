@@ -263,10 +263,17 @@ export const InCallView: FC<InCallViewProps> = ({
     [setSettingsModalOpen],
   );
 
-  const openProfile = useCallback(() => {
-    setSettingsTab("profile");
-    setSettingsModalOpen(true);
-  }, [setSettingsTab, setSettingsModalOpen]);
+  const openProfile = useMemo(
+    () =>
+      // Profile settings are unavailable in widget mode
+      widget === null
+        ? (): void => {
+            setSettingsTab("profile");
+            setSettingsModalOpen(true);
+          }
+        : null,
+    [setSettingsTab, setSettingsModalOpen],
+  );
 
   const [headerRef, headerBounds] = useMeasure();
   const [footerRef, footerBounds] = useMeasure();
