@@ -121,6 +121,9 @@ export const DEFAULT_CONFIG: ResolvedConfigOptions = {
       server_name: "localhost",
     },
   },
+  features: {
+    feature_use_device_session_member_events: true,
+  },
   eula: "https://static.element.io/legal/online-EULA.pdf",
   media_devices: {
     enable_audio: true,
