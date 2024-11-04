@@ -21,8 +21,8 @@ trusted_key_servers:
   - server_name: "matrix.org"
 
 experimental_features:
-    # MSC3266: Room summary API. Used for knocking over federation
-    msc3266_enabled: true
+  # MSC3266: Room summary API. Used for knocking over federation
+  msc3266_enabled: true
 
 # The maximum allowed duration by which sent events can be delayed, as
 # per MSC4140. Must be a positive value if set.  Defaults to no
