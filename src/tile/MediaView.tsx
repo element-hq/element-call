@@ -17,6 +17,8 @@ import { ErrorIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
+import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
+import { showHandRaisedTimer, useSetting } from "../settings/settings";
 
 interface Props extends ComponentProps<typeof animated.div> {
   className?: string;
@@ -32,6 +34,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   primaryButton?: ReactNode;
+  raisedHandTime?: Date;
 }
 
 export const MediaView = forwardRef<HTMLDivElement, Props>(
@@ -50,11 +53,15 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       nameTagLeadingIcon,
       displayName,
       primaryButton,
+      raisedHandTime,
       ...props
     },
     ref,
   ) => {
     const { t } = useTranslation();
+    const [handRaiseTimerVisible] = useSetting(showHandRaisedTimer);
+
+    const avatarSize = Math.round(Math.min(targetWidth, targetHeight) / 2);
 
     return (
       <animated.div
@@ -72,7 +79,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           <Avatar
             id={member?.userId ?? displayName}
             name={displayName}
-            size={Math.round(Math.min(targetWidth, targetHeight) / 2)}
+            size={avatarSize}
             src={member?.getMxcAvatarUrl()}
             className={styles.avatar}
           />
@@ -86,6 +93,11 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           )}
         </div>
         <div className={styles.fg}>
+          <RaisedHandIndicator
+            raisedHandTime={raisedHandTime}
+            minature={avatarSize < 96}
+            showTimer={handRaiseTimerVisible}
+          />
           <div className={styles.nameTag}>
             {nameTagLeadingIcon}
             <Text as="span" size="sm" weight="medium" className={styles.name}>

@@ -12,7 +12,7 @@ Please see LICENSE in the repository root for full details.
 
 .dialog {
   box-sizing: border-box;
-  inline-size: 520px;
+  inline-size: 580px;
   max-inline-size: 90%;
   max-block-size: 600px;
 }

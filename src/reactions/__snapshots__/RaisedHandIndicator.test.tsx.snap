@@ -1,0 +1,61 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`RaisedHandIndicator > renders a smaller indicator when minature is specified 1`] = `
+<div
+  class="raisedHandWidget"
+>
+  <div
+    class="raisedHand"
+  >
+    <span
+      aria-label="raised hand"
+      role="img"
+    >
+      ✋
+    </span>
+  </div>
+  <p>
+    00:01
+  </p>
+</div>
+`;
+
+exports[`RaisedHandIndicator > renders an indicator when a hand has been raised 1`] = `
+<div
+  class="raisedHandWidget raisedHandWidgetLarge"
+>
+  <div
+    class="raisedHand raisedHandLarge"
+  >
+    <span
+      aria-label="raised hand"
+      role="img"
+    >
+      ✋
+    </span>
+  </div>
+  <p>
+    00:01
+  </p>
+</div>
+`;
+
+exports[`RaisedHandIndicator > renders an indicator when a hand has been raised with the expected time 1`] = `
+<div
+  class="raisedHandWidget raisedHandWidgetLarge"
+>
+  <div
+    class="raisedHand raisedHandLarge"
+  >
+    <span
+      aria-label="raised hand"
+      role="img"
+    >
+      ✋
+    </span>
+  </div>
+  <p>
+    01:01
+  </p>
+</div>
+`;

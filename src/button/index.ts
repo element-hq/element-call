@@ -7,3 +7,4 @@ Please see LICENSE in the repository root for full details.
 
 export * from "./Button";
 export * from "./LinkButton";
+export * from "./RaisedHandToggleButton";

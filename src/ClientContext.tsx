@@ -25,6 +25,7 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
 import { MatrixError } from "matrix-js-sdk/src/matrix";
+import { WidgetApi } from "matrix-widget-api";
 
 import { ErrorView } from "./FullScreenView";
 import { fallbackICEServerAllowed, initClient } from "./utils/matrix";
@@ -52,6 +53,9 @@ export type ValidClientState = {
   // 'Disconnected' rather than 'connected' because it tracks specifically
   // whether the client is supposed to be connected but is not
   disconnected: boolean;
+  supportedFeatures: {
+    reactions: boolean;
+  };
   setClient: (params?: SetClientParams) => void;
 };
 
@@ -188,11 +192,11 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       saveSession({ ...session, passwordlessUser: false });
 
       setInitClientState({
-        client: initClientState.client,
+        ...initClientState,
         passwordlessUser: false,
       });
     },
-    [initClientState?.client],
+    [initClientState],
   );
 
   const setClient = useCallback(
@@ -206,6 +210,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       if (clientParams) {
         saveSession(clientParams.session);
         setInitClientState({
+          widgetApi: null,
           client: clientParams.client,
           passwordlessUser: clientParams.session.passwordlessUser,
         });
@@ -254,6 +259,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   );
 
   const [isDisconnected, setIsDisconnected] = useState(false);
+  const [supportsReactions, setSupportsReactions] = useState(false);
 
   const state: ClientState | undefined = useMemo(() => {
     if (alreadyOpenedErr) {
@@ -277,6 +283,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       authenticated,
       setClient,
       disconnected: isDisconnected,
+      supportedFeatures: {
+        reactions: supportsReactions,
+      },
     };
   }, [
     alreadyOpenedErr,
@@ -285,6 +294,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     logout,
     setClient,
     isDisconnected,
+    supportsReactions,
   ]);
 
   const onSync = useCallback(
@@ -309,6 +319,30 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       initClientState.client.on(ClientEvent.Sync, onSync);
     }
 
+    if (initClientState.widgetApi) {
+      const reactSend = initClientState.widgetApi.hasCapability(
+        "org.matrix.msc2762.send.event:m.reaction",
+      );
+      const redactSend = initClientState.widgetApi.hasCapability(
+        "org.matrix.msc2762.send.event:m.room.redaction",
+      );
+      const reactRcv = initClientState.widgetApi.hasCapability(
+        "org.matrix.msc2762.receive.event:m.reaction",
+      );
+      const redactRcv = initClientState.widgetApi.hasCapability(
+        "org.matrix.msc2762.receive.event:m.room.redaction",
+      );
+
+      if (!reactSend || !reactRcv || !redactSend || !redactRcv) {
+        logger.warn("Widget does not support reactions");
+        setSupportsReactions(false);
+      } else {
+        setSupportsReactions(true);
+      }
+    } else {
+      setSupportsReactions(true);
+    }
+
     return (): void => {
       if (initClientState.client) {
         initClientState.client.removeListener(ClientEvent.Sync, onSync);
@@ -326,6 +360,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 };
 
 type InitResult = {
+  widgetApi: WidgetApi | null;
   client: MatrixClient;
   passwordlessUser: boolean;
 };
@@ -336,6 +371,7 @@ async function loadClient(): Promise<InitResult | null> {
     logger.log("Using a matryoshka client");
     const client = await widget.client;
     return {
+      widgetApi: widget.api,
       client,
       passwordlessUser: false,
     };
@@ -364,6 +400,7 @@ async function loadClient(): Promise<InitResult | null> {
       try {
         const client = await initClient(initClientParams, true);
         return {
+          widgetApi: null,
           client,
           passwordlessUser,
         };

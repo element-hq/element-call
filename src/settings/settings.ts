@@ -85,4 +85,9 @@ export const videoInput = new Setting<string | undefined>(
   undefined,
 );
 
+export const showHandRaisedTimer = new Setting<boolean>(
+  "hand-raised-show-timer",
+  false,
+);
+
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);

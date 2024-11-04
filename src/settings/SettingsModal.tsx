@@ -30,11 +30,13 @@ import {
   useOptInAnalytics,
 } from "./settings";
 import { isFirefox } from "../Platform";
+import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 
 type SettingsTab =
   | "audio"
   | "video"
   | "profile"
+  | "preferences"
   | "feedback"
   | "more"
   | "developer";
@@ -133,6 +135,12 @@ export const SettingsModal: FC<Props> = ({
     key: "video",
     name: t("common.video"),
     content: generateDeviceSelection(devices.videoInput, t("common.camera")),
+  };
+
+  const preferencesTab: Tab<SettingsTab> = {
+    key: "preferences",
+    name: t("common.preferences"),
+    content: <PreferencesSettingsTab />,
   };
 
   const profileTab: Tab<SettingsTab> = {
@@ -234,7 +242,7 @@ export const SettingsModal: FC<Props> = ({
 
   const tabs = [audioTab, videoTab];
   if (widget === null) tabs.push(profileTab);
-  tabs.push(feedbackTab, moreTab);
+  tabs.push(preferencesTab, feedbackTab, moreTab);
   if (developerSettingsTab) tabs.push(developerTab);
 
   return (
