@@ -1,12 +1,12 @@
 {
   "default_server_config": {
     "m.homeserver": {
-      "base_url": "https://call.ems.host",
-      "server_name": "call.ems.host"
+      "base_url": "http://synapse.localhost:8008",
+      "server_name": "synapse.localhost"
     }
   },
   "livekit": {
-    "livekit_service_url": "http://localhost:7881"
+    "livekit_service_url": "http://localhost:8080"
   },
   "features": {
     "feature_use_device_session_member_events": true
