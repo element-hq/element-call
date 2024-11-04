@@ -20,6 +20,7 @@ import {
   LocalUserMediaViewModel,
   RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
+import { E2eeType } from "../e2ee/e2eeType";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -122,7 +123,9 @@ export async function withLocalMedia(
     "local",
     mockMember(member),
     mockLocalParticipant({}),
-    true,
+    {
+      kind: E2eeType.PER_PARTICIPANT,
+    },
   );
   try {
     await continuation(vm);
@@ -153,7 +156,9 @@ export async function withRemoteMedia(
     "remote",
     mockMember(member),
     mockRemoteParticipant(participant),
-    true,
+    {
+      kind: E2eeType.PER_PARTICIPANT,
+    },
   );
   try {
     await continuation(vm);

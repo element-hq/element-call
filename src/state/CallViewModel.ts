@@ -70,6 +70,7 @@ import { ObservableScope } from "./ObservableScope";
 import { duplicateTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled } from "../controls";
+import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -170,20 +171,20 @@ class UserMedia {
     public readonly id: string,
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
-    callEncrypted: boolean,
+    encryptionSystem: EncryptionSystem,
   ) {
     this.vm = participant.isLocal
       ? new LocalUserMediaViewModel(
           id,
           member,
           participant as LocalParticipant,
-          callEncrypted,
+          encryptionSystem,
         )
       : new RemoteUserMediaViewModel(
           id,
           member,
           participant as RemoteParticipant,
-          callEncrypted,
+          encryptionSystem,
         );
 
     this.speaker = this.vm.speaking.pipe(
@@ -226,9 +227,14 @@ class ScreenShare {
     id: string,
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
-    callEncrypted: boolean,
+    encryptionSystem: EncryptionSystem,
   ) {
-    this.vm = new ScreenShareViewModel(id, member, participant, callEncrypted);
+    this.vm = new ScreenShareViewModel(
+      id,
+      member,
+      participant,
+      encryptionSystem,
+    );
   }
 
   public destroy(): void {
@@ -363,7 +369,12 @@ export class CallViewModel extends ViewModel {
                 yield [
                   userMediaId,
                   prevItems.get(userMediaId) ??
-                    new UserMedia(userMediaId, member, p, this.encrypted),
+                    new UserMedia(
+                      userMediaId,
+                      member,
+                      p,
+                      this.encryptionSystem,
+                    ),
                 ];
 
                 if (p.isScreenShareEnabled) {
@@ -371,7 +382,12 @@ export class CallViewModel extends ViewModel {
                   yield [
                     screenShareId,
                     prevItems.get(screenShareId) ??
-                      new ScreenShare(screenShareId, member, p, this.encrypted),
+                      new ScreenShare(
+                        screenShareId,
+                        member,
+                        p,
+                        this.encryptionSystem,
+                      ),
                   ];
                 }
               }
@@ -829,7 +845,7 @@ export class CallViewModel extends ViewModel {
     // A call is permanently tied to a single Matrix room and LiveKit room
     private readonly matrixRoom: MatrixRoom,
     private readonly livekitRoom: LivekitRoom,
-    private readonly encrypted: boolean,
+    private readonly encryptionSystem: EncryptionSystem,
     private readonly connectionState: Observable<ECConnectionState>,
   ) {
     super();

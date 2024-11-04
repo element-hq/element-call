@@ -42,6 +42,8 @@ import { ViewModel } from "./ViewModel";
 import { useReactiveState } from "../useReactiveState";
 import { alwaysShowSelf } from "../settings/settings";
 import { accumulate } from "../utils/observable";
+import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { E2eeType } from "../e2ee/e2eeType";
 
 // TODO: Move this naming logic into the view model
 export function useDisplayName(vm: MediaViewModel): string {
@@ -105,7 +107,7 @@ abstract class BaseMediaViewModel extends ViewModel {
     // member object internal
     public readonly member: RoomMember | undefined,
     protected readonly participant: LocalParticipant | RemoteParticipant,
-    callEncrypted: boolean,
+    encryptionSystem: EncryptionSystem,
     audioSource: AudioSource,
     videoSource: VideoSource,
   ) {
@@ -119,7 +121,7 @@ abstract class BaseMediaViewModel extends ViewModel {
     this.unencryptedWarning = combineLatest(
       [audio, this.video],
       (a, v) =>
-        callEncrypted &&
+        encryptionSystem.kind !== E2eeType.NONE &&
         (a.publication?.isEncrypted === false ||
           v.publication?.isEncrypted === false),
     ).pipe(this.scope.state());
@@ -168,13 +170,13 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     id: string,
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
-    callEncrypted: boolean,
+    encryptionSystem: EncryptionSystem,
   ) {
     super(
       id,
       member,
       participant,
-      callEncrypted,
+      encryptionSystem,
       Track.Source.Microphone,
       Track.Source.Camera,
     );
@@ -225,9 +227,9 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     id: string,
     member: RoomMember | undefined,
     participant: LocalParticipant,
-    callEncrypted: boolean,
+    encryptionSystem: EncryptionSystem,
   ) {
-    super(id, member, participant, callEncrypted);
+    super(id, member, participant, encryptionSystem);
   }
 }
 
@@ -285,9 +287,9 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     id: string,
     member: RoomMember | undefined,
     participant: RemoteParticipant,
-    callEncrypted: boolean,
+    encryptionSystem: EncryptionSystem,
   ) {
-    super(id, member, participant, callEncrypted);
+    super(id, member, participant, encryptionSystem);
 
     // Sync the local volume with LiveKit
     this.localVolume
@@ -318,13 +320,13 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
     id: string,
     member: RoomMember | undefined,
     participant: LocalParticipant | RemoteParticipant,
-    callEncrypted: boolean,
+    encryptionSystem: EncryptionSystem,
   ) {
     super(
       id,
       member,
       participant,
-      callEncrypted,
+      encryptionSystem,
       Track.Source.ScreenShareAudio,
       Track.Source.ScreenShare,
     );

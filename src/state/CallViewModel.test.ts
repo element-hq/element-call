@@ -29,6 +29,7 @@ import {
   ECAddonConnectionState,
   ECConnectionState,
 } from "../livekit/useECConnectionState";
+import { E2eeType } from "../e2ee/e2eeType";
 
 vi.mock("@livekit/components-core");
 
@@ -158,7 +159,9 @@ function withCallViewModel(
       getMember: (userId) => members.get(userId) ?? null,
     }),
     mockLivekitRoom({ localParticipant }),
-    true,
+    {
+      kind: E2eeType.PER_PARTICIPANT,
+    },
     connectionState,
   );
 

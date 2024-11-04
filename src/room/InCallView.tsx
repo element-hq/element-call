@@ -115,7 +115,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       const vm = new CallViewModel(
         props.rtcSession.room,
         livekitRoom,
-        props.e2eeSystem.kind !== E2eeType.NONE,
+        props.e2eeSystem,
         connStateObservable,
       );
       setVm(vm);
@@ -124,7 +124,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   }, [
     props.rtcSession.room,
     livekitRoom,
-    props.e2eeSystem.kind,
+    props.e2eeSystem,
     connStateObservable,
   ]);
 
