@@ -724,9 +724,9 @@ export class CallViewModel extends ViewModel {
           return l.spotlight[0] instanceof ScreenShareViewModel;
         // In expanded spotlight layout, the active speaker is always shown in
         // the picture-in-picture tile so there is no need for speaking
-        // indicators
+        // indicators. And in one-on-one layout there's no question as to who is
+        // speaking.
         case "spotlight-expanded":
-        // In one-on-one layout there's no question as to who is speaking
         case "one-on-one":
           return false;
         default:
