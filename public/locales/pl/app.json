@@ -4,7 +4,6 @@
   },
   "action": {
     "close": "Zamknij",
-    "copy": "Kopiuj",
     "copy_link": "Kopiuj link",
     "go": "Przejdź",
     "invite": "Zaproś",
@@ -15,7 +14,7 @@
     "sign_out": "Wyloguj się",
     "submit": "Wyślij"
   },
-  "analytics_notice": "Uczestnicząc w tej becie, upoważniasz nas do zbierania anonimowych danych, które wykorzystamy do ulepszenia produktu. Dowiedz się więcej na temat danych, które zbieramy w naszej <2>Polityce prywatności</2> i <6>Polityce ciasteczek</6>.",
+  "analytics_notice": "Uczestnicząc w tej becie, upoważniasz nas do zbierania anonimowych danych, które wykorzystamy do ulepszenia produktu. Dowiedz się więcej na temat danych, które zbieramy w naszej <2>Polityce prywatności</2> i <5>Polityce ciasteczek</5>.",
   "app_selection_modal": {
     "continue_in_browser": "Kontynuuj w przeglądarce",
     "open_in_app": "Otwórz w aplikacji",
@@ -39,7 +38,6 @@
     "audio": "Dźwięk",
     "avatar": "Awatar",
     "camera": "Kamera",
-    "copied": "Skopiowano!",
     "display_name": "Nazwa wyświetlana",
     "encrypted": "Szyfrowane",
     "home": "Strona domowa",
@@ -99,9 +97,7 @@
   "register_confirm_password_label": "Potwierdź hasło",
   "return_home_button": "Powróć do strony głównej",
   "room_auth_view_eula_caption": "Klikając \"Dołącz teraz do rozmowy\", zgadzasz się na naszą <2>Umowę licencyjną (EULA)</2>",
-  "room_auth_view_join_button": "Dołącz do połączenia teraz",
   "screenshare_button_label": "Udostępnij ekran",
-  "select_input_unset_button": "Wybierz opcję",
   "settings": {
     "developer_settings_label": "Opcje programisty",
     "developer_settings_label_description": "Wyświetl opcje programisty w oknie ustawień.",
@@ -114,7 +110,6 @@
     "feedback_tab_title": "Opinia użytkownika",
     "more_tab_title": "Więcej",
     "opt_in_description": "<0></0><1></1>Możesz wycofać swoją zgodę poprzez odznaczenie tego pola. Jeśli już jesteś w trakcie rozmowy, opcja zostanie zastosowana po jej zakończeniu.",
-    "show_connection_stats_label": "Pokaż statystyki połączenia",
     "speaker_device_selection_label": "Głośnik"
   },
   "star_rating_input_label_one": "{{count}} gwiazdki",
@@ -128,9 +123,5 @@
   "unauthenticated_view_eula_caption": "Klikając \"Przejdź\", zgadzasz się na naszą <2>Umowę licencyjną (EULA)</2>",
   "unauthenticated_view_login_button": "Zaloguj się do swojego konta",
   "unmute_microphone_button_label": "Odcisz mikrofon",
-  "version": "Wersja: {{version}}",
-  "video_tile": {
-    "sfu_participant_local": "Ty"
-  },
-  "waiting_for_participants": "Oczekiwanie na pozostałych uczestników…"
+  "version": "Wersja: {{version}}"
 }

@@ -16,7 +16,6 @@
   "common": {
     "audio": "Ses",
     "camera": "Kamera",
-    "copied": "Kopyalandı",
     "display_name": "Ekran adı",
     "home": "Ev",
     "loading": "Yükleniyor…",
@@ -49,9 +48,7 @@
   "register_auth_links": "<0>Mevcut hesabınız mı var?</0><1><0>Gir</0> yahut <2>Konuk girişi</2></1>",
   "register_confirm_password_label": "Parolayı tekrar edin",
   "return_home_button": "Ev ekranına geri dön",
-  "room_auth_view_join_button": "Aramaya katıl",
   "screenshare_button_label": "Ekran paylaş",
-  "select_input_unset_button": "Bir seçenek seç",
   "settings": {
     "developer_tab_title": "Geliştirici",
     "feedback_tab_h4": "Geri bildirim ver",

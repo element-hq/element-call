@@ -4,7 +4,6 @@
   },
   "action": {
     "close": "Fermer",
-    "copy": "Copier",
     "copy_link": "Copier le lien",
     "go": "Commencer",
     "invite": "Inviter",
@@ -15,7 +14,7 @@
     "sign_out": "Déconnexion",
     "submit": "Envoyer"
   },
-  "analytics_notice": "En participant à cette beta, vous consentez à la collecte de données anonymes, qui seront utilisées pour améliorer le produit. Vous trouverez plus d’informations sur les données collectées dans notre <2>Politique de vie privée</2> et notre <6>Politique de cookies</6>.",
+  "analytics_notice": "En participant à cette beta, vous consentez à la collecte de données anonymes, qui seront utilisées pour améliorer le produit. Vous trouverez plus d’informations sur les données collectées dans notre <2>Politique de vie privée</2> et notre <5>Politique de cookies</5>.",
   "app_selection_modal": {
     "continue_in_browser": "Continuer dans le navigateur",
     "open_in_app": "Ouvrir dans l’application",
@@ -37,7 +36,6 @@
   "call_name": "Nom de l’appel",
   "common": {
     "camera": "Caméra",
-    "copied": "Copié !",
     "display_name": "Nom d’affichage",
     "encrypted": "Chiffré",
     "home": "Accueil",
@@ -95,9 +93,7 @@
   "register_confirm_password_label": "Confirmer le mot de passe",
   "return_home_button": "Retour à l’accueil",
   "room_auth_view_eula_caption": "En cliquant sur « Rejoindre l’appel maintenant », vous acceptez notre <2>Contrat de Licence Utilisateur Final (CLUF)</2>",
-  "room_auth_view_join_button": "Rejoindre l’appel maintenant",
   "screenshare_button_label": "Partage d’écran",
-  "select_input_unset_button": "Sélectionnez une option",
   "settings": {
     "developer_settings_label": "Paramètres développeurs",
     "developer_settings_label_description": "Affiche les paramètres développeurs dans la fenêtre des paramètres.",
@@ -110,7 +106,6 @@
     "feedback_tab_title": "Commentaires",
     "more_tab_title": "Plus",
     "opt_in_description": "<0></0><1></1>Vous pouvez retirer votre consentement en décochant cette case. Si vous êtes actuellement en communication, ce paramètre prendra effet à la fin de l’appel.",
-    "show_connection_stats_label": "Afficher les statistiques de la connexion",
     "speaker_device_selection_label": "Intervenant"
   },
   "star_rating_input_label_one": "{{count}} favori",
@@ -124,9 +119,5 @@
   "unauthenticated_view_eula_caption": "En cliquant sur « Commencer », vous acceptez notre <2>Contrat de Licence Utilisateur Final (CLUF)</2>",
   "unauthenticated_view_login_button": "Connectez vous à votre compte",
   "unmute_microphone_button_label": "Allumer le microphone",
-  "version": "Version : {{version}}",
-  "video_tile": {
-    "sfu_participant_local": "Vous"
-  },
-  "waiting_for_participants": "En attente d’autres participants…"
+  "version": "Version : {{version}}"
 }

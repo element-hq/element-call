@@ -4,7 +4,6 @@
   },
   "action": {
     "close": "Chiudi",
-    "copy": "Copia",
     "copy_link": "Copia collegamento",
     "go": "Vai",
     "invite": "Invita",
@@ -14,7 +13,7 @@
     "sign_out": "Disconnetti",
     "submit": "Invia"
   },
-  "analytics_notice": "Partecipando a questa beta, acconsenti alla raccolta di dati anonimi che usiamo per migliorare il prodotto. Puoi trovare più informazioni su quali dati monitoriamo nella nostra <2>informativa sulla privacy</2> e nell'<6>informativa sui cookie</6>.",
+  "analytics_notice": "Partecipando a questa beta, acconsenti alla raccolta di dati anonimi che usiamo per migliorare il prodotto. Puoi trovare più informazioni su quali dati monitoriamo nella nostra <2>informativa sulla privacy</2> e nell'<5>informativa sui cookie</5>.",
   "app_selection_modal": {
     "continue_in_browser": "Continua nel browser",
     "open_in_app": "Apri nell'app",
@@ -36,7 +35,6 @@
   "call_name": "Nome della chiamata",
   "common": {
     "camera": "Fotocamera",
-    "copied": "Copiato!",
     "display_name": "Il tuo nome",
     "encrypted": "Cifrata",
     "home": "Pagina iniziale",
@@ -94,9 +92,7 @@
   "register_confirm_password_label": "Conferma password",
   "return_home_button": "Torna alla schermata di iniziale",
   "room_auth_view_eula_caption": "Cliccando \"Entra in chiamata ora\", accetti il nostro <2>accordo di licenza con l'utente finale (EULA)</2>",
-  "room_auth_view_join_button": "Entra in chiamata ora",
   "screenshare_button_label": "Condividi schermo",
-  "select_input_unset_button": "Seleziona un'opzione",
   "settings": {
     "developer_settings_label": "Impostazioni per sviluppatori",
     "developer_settings_label_description": "Mostra le impostazioni per sviluppatori nella finestra delle impostazioni.",
@@ -108,7 +104,6 @@
     "feedback_tab_thank_you": "Grazie, abbiamo ricevuto il tuo commento!",
     "more_tab_title": "Altro",
     "opt_in_description": "<0></0><1></1>Puoi revocare il consenso deselezionando questa casella. Se attualmente sei in una chiamata, avrà effetto al termine di essa.",
-    "show_connection_stats_label": "Mostra statistiche connessione",
     "speaker_device_selection_label": "Altoparlante"
   },
   "star_rating_input_label_one": "{{count}} stelle",
@@ -122,9 +117,5 @@
   "unauthenticated_view_eula_caption": "Cliccando \"Vai\", accetti il nostro <2>accordo di licenza con l'utente finale (EULA)</2>",
   "unauthenticated_view_login_button": "Accedi al tuo profilo",
   "unmute_microphone_button_label": "Riaccendi il microfono",
-  "version": "Versione: {{version}}",
-  "video_tile": {
-    "sfu_participant_local": "Tu"
-  },
-  "waiting_for_participants": "In attesa di altri partecipanti…"
+  "version": "Versione: {{version}}"
 }

@@ -4,7 +4,6 @@
   },
   "action": {
     "close": "Zavřít",
-    "copy": "Kopírovat",
     "go": "Pokračovat",
     "no": "Ne",
     "register": "Registrace",
@@ -19,7 +18,6 @@
   },
   "common": {
     "camera": "Kamera",
-    "copied": "Zkopírováno!",
     "display_name": "Zobrazované jméno",
     "home": "Domov",
     "loading": "Načítání…",
@@ -60,9 +58,7 @@
   "register_auth_links": "<0>Už máte účet?</0><1><0>Přihlásit se</0> Or <2>Jako host</2></1>",
   "register_confirm_password_label": "Potvrdit heslo",
   "return_home_button": "Vrátit se na domácí obrazovku",
-  "room_auth_view_join_button": "Připojit se k hovoru",
   "screenshare_button_label": "Sdílet obrazovku",
-  "select_input_unset_button": "Vyberte možnost",
   "settings": {
     "developer_settings_label": "Vývojářské nastavení",
     "developer_settings_label_description": "Zobrazit vývojářské nastavení.",
@@ -74,6 +70,5 @@
   },
   "unauthenticated_view_body": "Nejste registrovaní? <2>Vytvořit účet</2>",
   "unauthenticated_view_login_button": "Přihlásit se ke svému účtu",
-  "version": "Verze: {{version}}",
-  "waiting_for_participants": "Čekání na další účastníky…"
+  "version": "Verze: {{version}}"
 }
