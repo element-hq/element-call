@@ -81,6 +81,9 @@ test("It joins the correct Session", async () => {
       focus_selection: "oldest_membership",
       type: "livekit",
     },
-    { manageMediaKeys: false },
+    {
+      manageMediaKeys: false,
+      useLegacyMemberEvents: false,
+    },
   );
 });
