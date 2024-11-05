@@ -4,7 +4,6 @@
   },
   "action": {
     "close": "Sulge",
-    "copy": "Kopeeri",
     "copy_link": "Kopeeri link",
     "go": "Jätka",
     "invite": "Kutsu",
@@ -15,7 +14,7 @@
     "sign_out": "Logi välja",
     "submit": "Saada"
   },
-  "analytics_notice": "Nõustudes selle beetaversiooni kasutamisega sa nõustud ka toote arendamiseks kasutatavate anonüümsete andmete kogumisega. Täpsemat teavet kogutavate andmete kohta leiad meie <2>Privaatsuspoliitikast</2> ja meie <6>Küpsiste kasutamise reeglitest</6>.",
+  "analytics_notice": "Nõustudes selle beetaversiooni kasutamisega sa nõustud ka toote arendamiseks kasutatavate anonüümsete andmete kogumisega. Täpsemat teavet kogutavate andmete kohta leiad meie <2>Privaatsuspoliitikast</2> ja meie <5>Küpsiste kasutamise reeglitest</5>.",
   "app_selection_modal": {
     "continue_in_browser": "Jätka veebibrauseris",
     "open_in_app": "Ava rakenduses",
@@ -39,7 +38,6 @@
     "audio": "Heli",
     "avatar": "Tunnuspilt",
     "camera": "Kaamera",
-    "copied": "Kopeeritud!",
     "display_name": "Kuvatav nimi",
     "encrypted": "Krüptitud",
     "home": "Avavaatesse",
@@ -97,9 +95,7 @@
   "register_confirm_password_label": "Kinnita salasõna",
   "return_home_button": "Tagasi avalehele",
   "room_auth_view_eula_caption": "Klõpsides „Liitu kõnega kohe“, nõustud sa meie <2>Lõppkasutaja litsentsilepinguga (EULA)</2>",
-  "room_auth_view_join_button": "Liitu kõnega kohe",
   "screenshare_button_label": "Jaga ekraani",
-  "select_input_unset_button": "Vali oma eelistus",
   "settings": {
     "developer_settings_label": "Arendaja seadistused",
     "developer_settings_label_description": "Näita seadistuste aknas arendajale vajalikke seadeid.",
@@ -112,7 +108,6 @@
     "feedback_tab_title": "Tagasiside",
     "more_tab_title": "Rohkem",
     "opt_in_description": "<0></0><1></1>Sa võid selle valiku eelmaldamisega alati oma nõusoleku tagasi võtta. Kui sul parasjagu on kõne pooleli, siis seadistuste muudatus jõustub pärast kõne lõppu.",
-    "show_connection_stats_label": "Näita ühenduse statistikat",
     "speaker_device_selection_label": "Kõlar"
   },
   "star_rating_input_label_one": "{{count}} tärni",
@@ -126,9 +121,5 @@
   "unauthenticated_view_eula_caption": "Klõpsides „Jätka“, nõustud sa meie <2>Lõppkasutaja litsentsilepinguga (EULA)</2>",
   "unauthenticated_view_login_button": "Logi oma kontosse sisse",
   "unmute_microphone_button_label": "Lülita mikrofon sisse",
-  "version": "Versioon: {{version}}",
-  "video_tile": {
-    "sfu_participant_local": "Sina"
-  },
-  "waiting_for_participants": "Ootame teiste osalejate lisandumist…"
+  "version": "Versioon: {{version}}"
 }

@@ -4,7 +4,6 @@
   },
   "action": {
     "close": "Aizvērt",
-    "copy": "Ievietot starpliktuvē",
     "go": "Aiziet",
     "no": "Nē",
     "register": "Reģistrēties",
@@ -13,7 +12,7 @@
     "sign_out": "Atteikties",
     "submit": "Iesniegt"
   },
-  "analytics_notice": "Piedalīšanās šajā beta apliecina piekrišanu anonīmu datu ievākšanai, ko mēs izmantojam, lai uzlabotu izstrādājumu. Vairāk informācijas par datiem, ko mēs ievācam, var atrast mūsu <2>privātuma nosacījumos</2> un <6>sīkdatņu nosacījumos</6>.",
+  "analytics_notice": "Piedalīšanās šajā beta apliecina piekrišanu anonīmu datu ievākšanai, ko mēs izmantojam, lai uzlabotu izstrādājumu. Vairāk informācijas par datiem, ko mēs ievācam, var atrast mūsu <2>privātuma nosacījumos</2> un <5>sīkdatņu nosacījumos</5>.",
   "call_ended_view": {
     "body": "Tu tiki atvienots no zvana",
     "create_account_button": "Izveidot kontu",
@@ -29,7 +28,6 @@
     "audio": "Skaņa",
     "avatar": "Attēls",
     "camera": "Kamera",
-    "copied": "Ievietots starpliktuvē.",
     "display_name": "Attēlojamais vārds",
     "home": "Sākums",
     "loading": "Lādējas…",
@@ -75,9 +73,7 @@
   "register_confirm_password_label": "Apstiprināt paroli",
   "return_home_button": "Atgriezties sākuma ekrānā",
   "room_auth_view_eula_caption": "Klikšķināšana uz \"Pievienoties zvanam tagad\" apliecina piekrišanu mūsu <2>galalietotāja licencēšanas nolīgumam (GLLN)</2>",
-  "room_auth_view_join_button": "Pievienoties zvanam tagad",
   "screenshare_button_label": "Kopīgot ekrānu",
-  "select_input_unset_button": "Atlasīt iespēju",
   "settings": {
     "developer_settings_label": "Izstrādātāja iestatījumi",
     "developer_settings_label_description": "Izstādīt izstrādātāja iestatījumus iestatījumu logā.",
@@ -90,7 +86,6 @@
     "feedback_tab_title": "Atsauksmes",
     "more_tab_title": "Vairāk",
     "opt_in_description": "<0></0><1></1>Savu piekrišanu var atsaukt ar atzīmes noņemšanu no šīs rūtiņas. Ja pašreiz atrodies zvanā, šis iestatījums stāsies spēkā zvana beigās.",
-    "show_connection_stats_label": "Rādīt savienojuma apkopojumu",
     "speaker_device_selection_label": "Runātājs"
   },
   "star_rating_input_label_one": "{{count}} zvaigzne",
@@ -99,6 +94,5 @@
   "unauthenticated_view_body": "Vēl neesi reģistrējies? <2>Izveidot kontu</2>",
   "unauthenticated_view_eula_caption": "Klikšķināšana uz \"Aiziet\" apliecina piekrišanu mūsu <2>galalietotāja licencēšanas nolīgumam (GLLN)</2>",
   "unauthenticated_view_login_button": "Pieteikties kontā",
-  "version": "Versija: {{version}}",
-  "waiting_for_participants": "Gaida citus dalībniekus…"
+  "version": "Versija: {{version}}"
 }

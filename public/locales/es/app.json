@@ -4,7 +4,6 @@
   },
   "action": {
     "close": "Cerrar",
-    "copy": "Copiar",
     "go": "Comenzar",
     "register": "Registrarse",
     "remove": "Eliminar",
@@ -12,7 +11,7 @@
     "sign_out": "Cerrar sesión",
     "submit": "Enviar"
   },
-  "analytics_notice": "Al participar en esta beta, consientes a la recogida de datos anónimos, los cuales usaremos para mejorar el producto. Puedes encontrar más información sobre que datos recogemos en nuestra <2>Política de privacidad</2> y en nuestra <6>Política sobre Cookies</6>.",
+  "analytics_notice": "Al participar en esta beta, consientes a la recogida de datos anónimos, los cuales usaremos para mejorar el producto. Puedes encontrar más información sobre que datos recogemos en nuestra <2>Política de privacidad</2> y en nuestra <5>Política sobre Cookies</5>.",
   "call_ended_view": {
     "create_account_button": "Crear cuenta",
     "create_account_prompt": "<0>¿Por qué no mantienes tu cuenta estableciendo una contraseña?</0><1>Podrás mantener tu nombre y establecer un avatar para usarlo en futuras llamadas</1>",
@@ -24,7 +23,6 @@
   },
   "common": {
     "camera": "Cámara",
-    "copied": "¡Copiado!",
     "display_name": "Nombre a mostrar",
     "home": "Inicio",
     "loading": "Cargando…",
@@ -67,9 +65,7 @@
   "register_confirm_password_label": "Confirmar contraseña",
   "return_home_button": "Volver a la pantalla de inicio",
   "room_auth_view_eula_caption": "Al hacer clic en \"Unirse a la llamada ahora\", aceptas nuestro <2>Contrato de Licencia de Usuario Final (CLUF)</2>",
-  "room_auth_view_join_button": "Unirse a la llamada ahora",
   "screenshare_button_label": "Compartir pantalla",
-  "select_input_unset_button": "Selecciona una opción",
   "settings": {
     "developer_settings_label": "Ajustes de desarrollador",
     "developer_settings_label_description": "Muestra los ajustes de desarrollador en la ventana de ajustes.",
@@ -82,7 +78,6 @@
     "feedback_tab_title": "Danos tu opinión",
     "more_tab_title": "Más",
     "opt_in_description": "<0></0><1></1>Puedes retirar tu consentimiento desmarcando esta casilla. Si estás en una llamada, este ajuste se aplicará al final de esta.",
-    "show_connection_stats_label": "Mostrar estadísticas de conexión",
     "speaker_device_selection_label": "Altavoz"
   },
   "star_rating_input_label_one": "{{count}} estrella",
@@ -91,6 +86,5 @@
   "unauthenticated_view_body": "¿No estás registrado todavía? <2>Crear una cuenta</2>",
   "unauthenticated_view_eula_caption": "Al hacer clic en \"Comenzar\", aceptas nuestro <2>Contrato de Licencia de Usuario Final (CLUF)</2>",
   "unauthenticated_view_login_button": "Iniciar sesión en tu cuenta",
-  "version": "Versión: {{version}}",
-  "waiting_for_participants": "Esperando a los otros participantes…"
+  "version": "Versión: {{version}}"
 }

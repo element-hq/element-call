@@ -1,7 +1,6 @@
 {
   "action": {
     "close": "Đóng",
-    "copy": "Sao chép",
     "no": "Không",
     "register": "Đăng ký",
     "sign_in": "Đăng nhập",
@@ -19,7 +18,6 @@
     "audio": "Âm thanh",
     "avatar": "Ảnh đại diện",
     "camera": "Máy quay",
-    "copied": "Đã sao chép!",
     "display_name": "Tên hiển thị",
     "loading": "Đang tải…",
     "microphone": "Micrô",
@@ -55,7 +53,6 @@
   },
   "register_auth_links": "<0>Đã có tài khoản?</0><1><0>Đăng nhập</0> Hay <2>Tham gia dưới tên Khách</2></1>",
   "register_confirm_password_label": "Xác nhận mật khẩu",
-  "room_auth_view_join_button": "Tham gia cuộc gọi",
   "screenshare_button_label": "Chia sẻ màn hình",
   "settings": {
     "developer_settings_label": "Cài đặt phát triển",
@@ -70,6 +67,5 @@
   "submitting": "Đang gửi…",
   "unauthenticated_view_body": "Chưa đăng ký? <2>Tạo tài khoản</2>",
   "unauthenticated_view_login_button": "Đăng nhập vào tài khoản của bạn",
-  "version": "Phiên bản: {{version}}",
-  "waiting_for_participants": "Đang đợi những người khác…"
+  "version": "Phiên bản: {{version}}"
 }

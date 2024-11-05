@@ -4,7 +4,6 @@
   },
   "action": {
     "close": "关闭",
-    "copy": "复制",
     "go": "开始",
     "no": "否",
     "register": "注册",
@@ -13,7 +12,7 @@
     "sign_out": "登出",
     "submit": "提交"
   },
-  "analytics_notice": "参与测试即表示您同意我们收集匿名数据，用于改进产品。您可以在我们的<2>隐私政策</2>和<6>Cookie政策</6>中找到有关我们跟踪哪些数据以及更多信息。",
+  "analytics_notice": "参与测试即表示您同意我们收集匿名数据，用于改进产品。您可以在我们的<2>隐私政策</2>和<5>Cookie政策</5>中找到有关我们跟踪哪些数据以及更多信息。",
   "app_selection_modal": {
     "continue_in_browser": "在浏览器中继续",
     "open_in_app": "在应用中打开",
@@ -37,7 +36,6 @@
     "audio": "音频",
     "avatar": "头像",
     "camera": "摄像头",
-    "copied": "已复制！",
     "display_name": "显示名称",
     "encrypted": "已加密",
     "home": "主页",
@@ -92,9 +90,7 @@
   "register_confirm_password_label": "确认密码",
   "return_home_button": "返回主页",
   "room_auth_view_eula_caption": "点击 \"加入通话\"，即表示您同意我们的<2>最终用户许可协议 (EULA)</2>",
-  "room_auth_view_join_button": "现在加入通话",
   "screenshare_button_label": "屏幕共享",
-  "select_input_unset_button": "选择一个选项",
   "settings": {
     "developer_settings_label": "开发者设置",
     "developer_settings_label_description": "在设置中显示开发者设置。",
@@ -107,7 +103,6 @@
     "feedback_tab_title": "反馈",
     "more_tab_title": "更多",
     "opt_in_description": "<0></0><1></1>您可以取消选中复选框来撤回同意。如果正在通话中，此设置将在通话结束时生效。",
-    "show_connection_stats_label": "显示连接统计信息",
     "speaker_device_selection_label": "发言人"
   },
   "star_rating_input_label_one": "{{count}} 个星",
@@ -121,9 +116,5 @@
   "unauthenticated_view_eula_caption": "点击 \"开始\"，即表示您同意我们的<2>最终用户许可协议 (EULA)</2>",
   "unauthenticated_view_login_button": "登录你的账户",
   "unmute_microphone_button_label": "取消麦克风静音",
-  "version": "版本：{{version}}",
-  "video_tile": {
-    "sfu_participant_local": "你"
-  },
-  "waiting_for_participants": "等待其他参与者……"
+  "version": "版本：{{version}}"
 }
