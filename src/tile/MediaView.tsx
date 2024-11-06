@@ -72,11 +72,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       <animated.div
         className={classNames(styles.media, className, {
           [styles.mirror]: mirror,
-          [styles.videoMuted]:
-            !videoEnabled ||
-            ![EncryptionStatus.Connecting, EncryptionStatus.Okay].includes(
-              encryptionStatus,
-            ),
+          [styles.videoMuted]: !videoEnabled,
         })}
         style={style}
         ref={ref}
