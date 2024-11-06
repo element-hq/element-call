@@ -36,7 +36,7 @@ services:
       - 7882:7882/tcp
       - 50100-50200:50100-50200/udp
     volumes:
-      - ./backend/dev_livekit.yaml:/etc/livekit.yaml
+      - ./backend/dev_livekit.yaml:/etc/livekit.yaml:Z
     networks:
       - ecbackend
 
