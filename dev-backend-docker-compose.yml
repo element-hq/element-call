@@ -18,7 +18,7 @@ services:
         condition: on-failure
     ports:
       # HOST_PORT:CONTAINER_PORT
-      - 8080:8080
+      - 8009:8080
     networks:
       - ecbackend
 
