@@ -9,11 +9,19 @@ import { RemoteTrackPublication } from "livekit-client";
 import { test, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
+import { of } from "rxjs";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import { GridTile } from "./GridTile";
 import { withRemoteMedia } from "../utils/test";
+import { GridTileViewModel } from "../state/TileViewModel";
 import { ReactionsProvider } from "../useReactions";
+
+global.IntersectionObserver = class MockIntersectionObserver {
+  public observe(): void {}
+  public unobserve(): void {}
+  public disconnect(): void {}
+} as unknown as typeof IntersectionObserver;
 
 test("GridTile is accessible", async () => {
   await withRemoteMedia(
@@ -42,11 +50,10 @@ test("GridTile is accessible", async () => {
       const { container } = render(
         <ReactionsProvider rtcSession={fakeRtcSession}>
           <GridTile
-            vm={vm}
+            vm={new GridTileViewModel(of(vm))}
             onOpenProfile={() => {}}
             targetWidth={300}
             targetHeight={200}
-            showVideo
             showSpeakingIndicators
           />
         </ReactionsProvider>,

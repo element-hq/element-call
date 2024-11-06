@@ -24,6 +24,7 @@ import {
   createContext,
   forwardRef,
   memo,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -33,6 +34,8 @@ import {
 import useMeasure from "react-use-measure";
 import classNames from "classnames";
 import { logger } from "matrix-js-sdk/src/logger";
+import { useObservableEagerState } from "observable-hooks";
+import { fromEvent, map, startWith } from "rxjs";
 
 import styles from "./Grid.module.css";
 import { useMergedRefs } from "../useMergedRefs";
@@ -51,6 +54,7 @@ interface Tile<Model> {
   id: string;
   model: Model;
   onDrag: DragCallback | undefined;
+  setVisible: (visible: boolean) => void;
 }
 
 type PlacedTile<Model> = Tile<Model> & Rect;
@@ -84,6 +88,7 @@ interface SlotProps<Model> extends Omit<ComponentProps<"div">, "onDrag"> {
   id: string;
   model: Model;
   onDrag?: DragCallback;
+  onVisibilityChange?: (visible: boolean) => void;
   style?: CSSProperties;
   className?: string;
 }
@@ -130,6 +135,11 @@ export function useUpdateLayout(): void {
     context.setGeneration((prev) => (prev === null ? 0 : prev + 1)),
   );
 }
+
+const windowHeightObservable = fromEvent(window, "resize").pipe(
+  startWith(null),
+  map(() => window.innerHeight),
+);
 
 export interface LayoutProps<LayoutModel, TileModel, R extends HTMLElement> {
   ref: LegacyRef<R>;
@@ -232,6 +242,7 @@ export function Grid<
   const [gridRoot, gridRef2] = useState<HTMLElement | null>(null);
   const gridRef = useMergedRefs<HTMLElement>(gridRef1, gridRef2);
 
+  const windowHeight = useObservableEagerState(windowHeightObservable);
   const [layoutRoot, setLayoutRoot] = useState<HTMLElement | null>(null);
   const [generation, setGeneration] = useState<number | null>(null);
   const tiles = useInitial(() => new Map<string, Tile<TileModel>>());
@@ -239,12 +250,34 @@ export function Grid<
 
   const Slot: FC<SlotProps<TileModel>> = useMemo(
     () =>
-      function Slot({ id, model, onDrag, style, className, ...props }) {
+      function Slot({
+        id,
+        model,
+        onDrag,
+        onVisibilityChange,
+        style,
+        className,
+        ...props
+      }) {
         const ref = useRef<HTMLDivElement | null>(null);
+        const prevVisible = useRef<boolean | null>(null);
+        const setVisible = useCallback(
+          (visible: boolean) => {
+            if (
+              onVisibilityChange !== undefined &&
+              visible !== prevVisible.current
+            ) {
+              onVisibilityChange(visible);
+              prevVisible.current = visible;
+            }
+          },
+          [onVisibilityChange],
+        );
+
         useEffect(() => {
-          tiles.set(id, { id, model, onDrag });
+          tiles.set(id, { id, model, onDrag, setVisible });
           return (): void => void tiles.delete(id);
-        }, [id, model, onDrag]);
+        }, [id, model, onDrag, setVisible]);
 
         return (
           <div
@@ -301,6 +334,17 @@ export function Grid<
     // generation, but eslint can't statically verify this
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [gridRoot, layoutRoot, tiles, gridBounds, generation]);
+
+  // The height of the portion of the grid visible at any given time
+  const visibleHeight = useMemo(
+    () => Math.min(gridBounds.bottom, windowHeight) - gridBounds.top,
+    [gridBounds, windowHeight],
+  );
+
+  useEffect(() => {
+    for (const tile of placedTiles)
+      tile.setVisible(tile.y + tile.height <= visibleHeight);
+  }, [placedTiles, visibleHeight]);
 
   // Drag state is stored in a ref rather than component state, because we use
   // react-spring's imperative API during gestures to improve responsiveness

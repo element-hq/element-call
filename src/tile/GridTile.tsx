@@ -10,6 +10,7 @@ import {
   ReactNode,
   forwardRef,
   useCallback,
+  useRef,
   useState,
 } from "react";
 import { animated } from "@react-spring/web";
@@ -44,6 +45,8 @@ import {
 import { Slider } from "../Slider";
 import { MediaView } from "./MediaView";
 import { useLatest } from "../useLatest";
+import { GridTileViewModel } from "../state/TileViewModel";
+import { useMergedRefs } from "../useMergedRefs";
 import { useReactions } from "../useReactions";
 
 interface TileProps {
@@ -52,7 +55,6 @@ interface TileProps {
   targetWidth: number;
   targetHeight: number;
   displayName: string;
-  showVideo: boolean;
   showSpeakingIndicators: boolean;
 }
 
@@ -67,7 +69,6 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
   (
     {
       vm,
-      showVideo,
       showSpeakingIndicators,
       menuStart,
       menuEnd,
@@ -119,7 +120,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
         video={video}
         member={vm.member}
         unencryptedWarning={unencryptedWarning}
-        videoEnabled={videoEnabled && showVideo}
+        videoEnabled={videoEnabled}
         videoFit={cropVideo ? "cover" : "contain"}
         className={classNames(className, styles.tile, {
           [styles.speaking]: showSpeaking,
@@ -277,25 +278,27 @@ const RemoteUserMediaTile = forwardRef<
 RemoteUserMediaTile.displayName = "RemoteUserMediaTile";
 
 interface GridTileProps {
-  vm: UserMediaViewModel;
+  vm: GridTileViewModel;
   onOpenProfile: (() => void) | null;
   targetWidth: number;
   targetHeight: number;
   className?: string;
   style?: ComponentProps<typeof animated.div>["style"];
-  showVideo: boolean;
   showSpeakingIndicators: boolean;
 }
 
 export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
-  ({ vm, onOpenProfile, ...props }, ref) => {
-    const displayName = useDisplayName(vm);
+  ({ vm, onOpenProfile, ...props }, theirRef) => {
+    const ourRef = useRef<HTMLDivElement | null>(null);
+    const ref = useMergedRefs(ourRef, theirRef);
+    const media = useObservableEagerState(vm.media);
+    const displayName = useDisplayName(media);
 
-    if (vm instanceof LocalUserMediaViewModel) {
+    if (media instanceof LocalUserMediaViewModel) {
       return (
         <LocalUserMediaTile
           ref={ref}
-          vm={vm}
+          vm={media}
           onOpenProfile={onOpenProfile}
           displayName={displayName}
           {...props}
@@ -305,7 +308,7 @@ export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
       return (
         <RemoteUserMediaTile
           ref={ref}
-          vm={vm}
+          vm={media}
           displayName={displayName}
           {...props}
         />

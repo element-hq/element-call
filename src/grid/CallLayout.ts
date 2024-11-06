@@ -8,8 +8,8 @@ Please see LICENSE in the repository root for full details.
 import { BehaviorSubject, Observable } from "rxjs";
 import { ComponentType } from "react";
 
-import { MediaViewModel, UserMediaViewModel } from "../state/MediaViewModel";
 import { LayoutProps } from "./Grid";
+import { TileViewModel } from "../state/TileViewModel";
 
 export interface Bounds {
   width: number;
@@ -42,19 +42,6 @@ export interface CallLayoutInputs {
   pipAlignment: BehaviorSubject<Alignment>;
 }
 
-export interface GridTileModel {
-  type: "grid";
-  vm: UserMediaViewModel;
-}
-
-export interface SpotlightTileModel {
-  type: "spotlight";
-  vms: MediaViewModel[];
-  maximised: boolean;
-}
-
-export type TileModel = GridTileModel | SpotlightTileModel;
-
 export interface CallLayoutOutputs<Model> {
   /**
    * Whether the scrolling layer of the layout should appear on top.
@@ -63,11 +50,11 @@ export interface CallLayoutOutputs<Model> {
   /**
    * The visually fixed (non-scrolling) layer of the layout.
    */
-  fixed: ComponentType<LayoutProps<Model, TileModel, HTMLDivElement>>;
+  fixed: ComponentType<LayoutProps<Model, TileViewModel, HTMLDivElement>>;
   /**
    * The layer of the layout that can overflow and be scrolled.
    */
-  scrolling: ComponentType<LayoutProps<Model, TileModel, HTMLDivElement>>;
+  scrolling: ComponentType<LayoutProps<Model, TileViewModel, HTMLDivElement>>;
 }
 
 /**
