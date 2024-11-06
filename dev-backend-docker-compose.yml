@@ -56,6 +56,12 @@ services:
     image: docker.io/matrixdotorg/synapse:latest
     environment:
       - SYNAPSE_CONFIG_PATH=/data/cfg/homeserver.yaml
+      # Needed for rootless podman-compose such that the uid/gid mapping does
+      # fit local user uid. If the container runs as root (uid 0) it is fine as
+      # it actually maps to your non-root user on the host (e.g. 1000).
+      # Otherwise uid mapping will not match your non-root user.
+      - UID=0
+      - GID=0
     volumes:
       - ./backend/synapse_tmp:/data
       - ./backend/dev_homeserver.yaml:/data/cfg/homeserver.yaml
