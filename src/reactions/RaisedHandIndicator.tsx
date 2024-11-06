@@ -27,12 +27,12 @@ const durationFormatter = new DurationFormat(undefined, {
 
 export function RaisedHandIndicator({
   raisedHandTime,
-  minature,
+  miniature,
   showTimer,
   onClick,
 }: {
   raisedHandTime?: Date;
-  minature?: boolean;
+  miniature?: boolean;
   showTimer?: boolean;
   onClick?: () => void;
 }): ReactNode {
@@ -78,12 +78,12 @@ export function RaisedHandIndicator({
   const content = (
     <div
       className={classNames(styles.raisedHandWidget, {
-        [styles.raisedHandWidgetLarge]: !minature,
+        [styles.raisedHandWidgetLarge]: !miniature,
       })}
     >
       <div
         className={classNames(styles.raisedHand, {
-          [styles.raisedHandLarge]: !minature,
+          [styles.raisedHandLarge]: !miniature,
         })}
       >
         <span role="img" aria-label="raised hand">

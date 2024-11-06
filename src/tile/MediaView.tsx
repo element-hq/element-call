@@ -114,7 +114,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           )}
           <RaisedHandIndicator
             raisedHandTime={raisedHandTime}
-            minature={avatarSize < 96}
+            miniature={avatarSize < 96}
             showTimer={handRaiseTimerVisible}
             onClick={raisedHandOnClick}
           />

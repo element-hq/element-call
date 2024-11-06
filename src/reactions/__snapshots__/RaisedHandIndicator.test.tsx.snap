@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`RaisedHandIndicator > renders a smaller indicator when minature is specified 1`] = `
+exports[`RaisedHandIndicator > renders a smaller indicator when miniature is specified 1`] = `
 <div
   class="raisedHandWidget"
 >

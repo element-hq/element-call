@@ -33,10 +33,10 @@ describe("RaisedHandIndicator", () => {
     );
     expect(container.firstChild).toMatchSnapshot();
   });
-  test("renders a smaller indicator when minature is specified", () => {
+  test("renders a smaller indicator when miniature is specified", () => {
     const dateTime = new Date();
     const { container } = render(
-      <RaisedHandIndicator raisedHandTime={dateTime} minature showTimer />,
+      <RaisedHandIndicator raisedHandTime={dateTime} miniature showTimer />,
     );
     expect(container.firstChild).toMatchSnapshot();
   });
