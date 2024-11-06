@@ -28,7 +28,7 @@ You may also wish to add a configuration file (Element Call uses the domain it's
 but you can change this in the config file). This goes in `public/config.json` - you can use the sample as a starting point:
 
 ```
-cp config/config.sample.json public/config.json
+cp config/config.devenv.json public/config.json
 # edit public/config.json
 ```
 
@@ -58,14 +58,24 @@ If you're using [Synapse](https://github.com/element-hq/synapse/), you'll need t
 
 ```
 experimental_features:
+    # MSC3266: Room summary API. Used for knocking over federation
     msc3266_enabled: true
+
+# The maximum allowed duration by which sent events can be delayed, as
+# per MSC4140.
+max_event_delay_duration: 24h
+
+rc_message:
+  # This needs to match at least the heart-beat frequency plus a bit of headroom
+  # Currently the heart-beat is every 5 seconds which translates into a rate of 0.2s
+  per_second: 0.5
+  burst_count: 30
 ```
 
 MSC3266 allows to request a room summary of rooms you are not joined.
 The summary contains the room join rules. We need that to decide if the user gets prompted with the option to knock ("ask to join"), a cannot join error or the join view.
 
-Element Call requires a Livekit SFU behind a Livekit jwt service to work. The url to the Livekit jwt service can either be configured in the config of Element Call (fallback/legacy configuration) or be configured by your homeserver via the `.well-known`.
-This is the recommended method.
+Element Call requires a Livekit SFU behind a [Livekit JWT service](https://github.com/element-hq/lk-jwt-service) to work. The url to the Livekit JWT service can either be configured in the config of Element Call (fallback/legacy configuration) or be configured by your homeserver via the `.well-known/matrix/client`. This is the recommended method.
 
 The configuration is a list of Foci configs:
 
@@ -112,6 +122,14 @@ yarn
 yarn link matrix-js-sdk
 ```
 
+To use it, create a local config by, e.g., `cp ./config/config.sample.json
+./public/config.json` and adapt it if necessary. The sample config should work
+with the backend development environment as outlined in the next section out of
+box.
+
+(Be aware, that this is only the fallback Livekit SFU. If the homeserver
+advertises one in the client well-known, this will not be used.)
+
 You're now ready to launch the development server:
 
 ```
@@ -120,25 +138,24 @@ yarn dev
 
 ### Backend
 
-A docker compose file is provided to start a LiveKit server and auth
-service for development. These use a test 'secret' published in this
-repository, so this must be used only for local development and
-**_never be exposed to the public Internet._**
+A docker compose file `dev-backend-docker-compose.yml` is provided to start the
+whole stack of components which is required for a local development environment:
+- Minimum Synapse Setup (servername: synapse.localhost)
+- LiveKit JWT Service (Note requires Federation API and hence a TLS reverse proxy)
+- Minimum TLS reverse proxy (servername: synapse.localhost) Note certificates
+  are valid for at least 10 years from now
+- Minimum LiveKit SFU Setup using dev defaults for config
+- Redis db for completness 
 
-To use it, add a SFU parameter in your local config `./public/config.json`:
-(Be aware, that this is only the fallback Livekit SFU. If the homeserver
-advertises one in the client well-known, this will not be used.)
-
-```json
-"livekit": {
-  "livekit_service_url": "http://localhost:7881"
-},
-```
+These use a test 'secret' published in this repository, so this must be used
+only for local development and **_never be exposed to the public Internet._**
 
 Run backend components:
 
 ```
 yarn backend
+# or  for podman-compose
+# podman-compose -f dev-backend-docker-compose.yml up
 ```
 
 ### Test Coverage
