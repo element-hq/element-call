@@ -17,7 +17,7 @@
     "i18n:check": "i18next --fail-on-warnings --fail-on-update",
     "test": "vitest",
     "test:coverage": "vitest --coverage",
-    "backend": "docker-compose -f backend-docker-compose.yml up"
+    "backend": "docker-compose -f dev-backend-docker-compose.yml up"
   },
   "devDependencies": {
     "@babel/core": "^7.16.5",
