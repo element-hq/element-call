@@ -1,4 +1,6 @@
 server_name: "synapse.localhost"
+public_baseurl: http://synapse.localhost:8008/
+
 pid_file: /data/homeserver.pid
 
 listeners:
