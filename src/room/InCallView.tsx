@@ -28,8 +28,8 @@ import {
 import useMeasure from "react-use-measure";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import classNames from "classnames";
-import { BehaviorSubject } from "rxjs";
-import { useObservableEagerState } from "observable-hooks";
+import { BehaviorSubject, map } from "rxjs";
+import { useObservable, useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import LogoMark from "../icons/LogoMark.svg?react";
@@ -65,7 +65,6 @@ import { ECConnectionState } from "../livekit/useECConnectionState";
 import { useOpenIDSFU } from "../livekit/openIDSFU";
 import { CallViewModel, GridMode, Layout } from "../state/CallViewModel";
 import { Grid, TileProps } from "../grid/Grid";
-import { useObservable } from "../state/useObservable";
 import { useInitial } from "../useInitial";
 import { SpotlightTile } from "../tile/SpotlightTile";
 import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
@@ -103,7 +102,10 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
     sfuConfig,
     props.e2eeSystem,
   );
-  const connStateObservable = useObservable(connState);
+  const connStateObservable = useObservable(
+    (inputs) => inputs.pipe(map(([connState]) => connState)),
+    [connState],
+  );
   const [vm, setVm] = useState<CallViewModel | null>(null);
 
   useEffect(() => {
@@ -308,7 +310,10 @@ export const InCallView: FC<InCallViewProps> = ({
       windowMode,
     ],
   );
-  const gridBoundsObservable = useObservable(gridBounds);
+  const gridBoundsObservable = useObservable(
+    (inputs) => inputs.pipe(map(([gridBounds]) => gridBounds)),
+    [gridBounds],
+  );
 
   const spotlightAlignment = useInitial(
     () => new BehaviorSubject(defaultSpotlightAlignment),

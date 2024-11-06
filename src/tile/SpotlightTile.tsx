@@ -22,7 +22,7 @@ import {
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { animated } from "@react-spring/web";
 import { Observable, map } from "rxjs";
-import { useObservableEagerState } from "observable-hooks";
+import { useObservableEagerState, useObservableRef } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { TrackReferenceOrPlaceholder } from "@livekit/components-core";
@@ -39,7 +39,6 @@ import {
 } from "../state/MediaViewModel";
 import { useInitial } from "../useInitial";
 import { useMergedRefs } from "../useMergedRefs";
-import { useObservableRef } from "../state/useObservable";
 import { useReactiveState } from "../useReactiveState";
 import { useLatest } from "../useLatest";
 import { SpotlightTileViewModel } from "../state/TileViewModel";
@@ -203,7 +202,7 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
     theirRef,
   ) => {
     const { t } = useTranslation();
-    const [root, ourRef] = useObservableRef<HTMLDivElement | null>(null);
+    const [ourRef, root] = useObservableRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
     const maximised = useObservableEagerState(vm.maximised);
     const media = useObservableEagerState(vm.media);
