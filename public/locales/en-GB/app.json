@@ -64,6 +64,12 @@
   "crypto_version": "Crypto version: {{version}}",
   "device_id": "Device ID: {{id}}",
   "disconnected_banner": "Connectivity to the server has been lost.",
+  "e2ee_encryption_status": {
+    "connecting": "Connecting...",
+    "key_invalid": "The end-to-end encrypted media key for this person is invalid",
+    "key_missing": "You haven't received the current end-to-end encrypted media key for this person yet",
+    "password_invalid": "This person is using a different password so you won't be able to communicate with them"
+  },
   "full_screen_view_description": "<0>Submitting debug logs will help us track down the problem.</0>",
   "full_screen_view_h1": "<0>Oops, something's gone wrong.</0>",
   "group_call_loader": {

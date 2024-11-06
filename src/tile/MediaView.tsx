@@ -17,6 +17,7 @@ import { ErrorIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
+import { EncryptionStatus } from "../state/MediaViewModel";
 import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
 import { showHandRaisedTimer, useSetting } from "../settings/settings";
 
@@ -31,6 +32,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   member: RoomMember | undefined;
   videoEnabled: boolean;
   unencryptedWarning: boolean;
+  encryptionStatus: EncryptionStatus;
   nameTagLeadingIcon?: ReactNode;
   displayName: string;
   primaryButton?: ReactNode;
@@ -54,6 +56,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       nameTagLeadingIcon,
       displayName,
       primaryButton,
+      encryptionStatus,
       raisedHandTime,
       raisedHandOnClick,
       ...props
@@ -69,7 +72,11 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       <animated.div
         className={classNames(styles.media, className, {
           [styles.mirror]: mirror,
-          [styles.videoMuted]: !videoEnabled,
+          [styles.videoMuted]:
+            !videoEnabled ||
+            ![EncryptionStatus.Connecting, EncryptionStatus.Okay].includes(
+              encryptionStatus,
+            ),
         })}
         style={style}
         ref={ref}
@@ -95,6 +102,20 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           )}
         </div>
         <div className={styles.fg}>
+          {encryptionStatus !== EncryptionStatus.Okay && (
+            <div className={styles.status}>
+              <Text as="span" size="sm" weight="medium" className={styles.name}>
+                {encryptionStatus === EncryptionStatus.Connecting &&
+                  t("e2ee_encryption_status.connecting")}
+                {encryptionStatus === EncryptionStatus.KeyMissing &&
+                  t("e2ee_encryption_status.key_missing")}
+                {encryptionStatus === EncryptionStatus.KeyInvalid &&
+                  t("e2ee_encryption_status.key_invalid")}
+                {encryptionStatus === EncryptionStatus.PasswordInvalid &&
+                  t("e2ee_encryption_status.password_invalid")}
+              </Text>
+            </div>
+          )}
           <RaisedHandIndicator
             raisedHandTime={raisedHandTime}
             minature={avatarSize < 96}

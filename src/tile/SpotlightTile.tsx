@@ -31,6 +31,7 @@ import { RoomMember } from "matrix-js-sdk/src/matrix";
 import { MediaView } from "./MediaView";
 import styles from "./SpotlightTile.module.css";
 import {
+  EncryptionStatus,
   LocalUserMediaViewModel,
   MediaViewModel,
   ScreenShareViewModel,
@@ -51,6 +52,7 @@ interface SpotlightItemBaseProps {
   video: TrackReferenceOrPlaceholder;
   member: RoomMember | undefined;
   unencryptedWarning: boolean;
+  encryptionStatus: EncryptionStatus;
   displayName: string;
   "aria-hidden"?: boolean;
 }
@@ -132,6 +134,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
     const displayName = useDisplayName(vm);
     const video = useObservableEagerState(vm.video);
     const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning);
+    const encryptionStatus = useObservableEagerState(vm.encryptionStatus);
 
     // Hook this item up to the intersection observer
     useEffect(() => {
@@ -158,6 +161,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
       member: vm.member,
       unencryptedWarning,
       displayName,
+      encryptionStatus,
       "aria-hidden": ariaHidden,
     };
 
