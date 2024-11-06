@@ -92,7 +92,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       },
       [vm],
     );
-    const { raisedHands } = useReactions();
+    const { raisedHands, lowerHand } = useReactions();
 
     const MicIcon = audioEnabled ? MicOnSolidIcon : MicOffSolidIcon;
 
@@ -111,6 +111,8 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     );
 
     const handRaised: Date | undefined = raisedHands[vm.member?.userId ?? ""];
+    const raisedHandOnClick =
+      vm.local && handRaised ? (): void => void lowerHand() : undefined;
 
     const showSpeaking = showSpeakingIndicators && speaking;
 
@@ -153,6 +155,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
           </Menu>
         }
         raisedHandTime={handRaised}
+        raisedHandOnClick={raisedHandOnClick}
         {...props}
       />
     );

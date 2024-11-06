@@ -35,6 +35,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   displayName: string;
   primaryButton?: ReactNode;
   raisedHandTime?: Date;
+  raisedHandOnClick?: () => void;
 }
 
 export const MediaView = forwardRef<HTMLDivElement, Props>(
@@ -54,6 +55,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       displayName,
       primaryButton,
       raisedHandTime,
+      raisedHandOnClick,
       ...props
     },
     ref,
@@ -97,6 +99,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
             raisedHandTime={raisedHandTime}
             minature={avatarSize < 96}
             showTimer={handRaiseTimerVisible}
+            onClick={raisedHandOnClick}
           />
           <div className={styles.nameTag}>
             {nameTagLeadingIcon}

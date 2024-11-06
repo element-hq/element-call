@@ -45,7 +45,7 @@ const membership: Record<string, string> = {
 };
 
 const TestComponent: FC = () => {
-  const { raisedHands, myReactionId } = useReactions();
+  const { raisedHands } = useReactions();
   return (
     <div>
       <ul>
@@ -56,7 +56,6 @@ const TestComponent: FC = () => {
           </li>
         ))}
       </ul>
-      <p>{myReactionId ? "Local reaction" : "No local reaction"}</p>
     </div>
   );
 };
@@ -171,15 +170,6 @@ describe("useReactions", () => {
       <TestComponentWrapper rtcSession={rtcSession} />,
     );
     expect(queryByRole("list")?.children).to.have.lengthOf(0);
-  });
-  test("handles own raised hand", async () => {
-    const room = new MockRoom();
-    const rtcSession = new MockRTCSession(room);
-    const { queryByText } = render(
-      <TestComponentWrapper rtcSession={rtcSession} />,
-    );
-    await act(() => room.testSendReaction(memberEventAlice));
-    expect(queryByText("Local reaction")).toBeTruthy();
   });
   test("handles incoming raised hand", async () => {
     const room = new MockRoom();

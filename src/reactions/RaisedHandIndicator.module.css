@@ -5,6 +5,11 @@
   color: var(--cpd-color-icon-secondary);
 }
 
+.button {
+  display: contents;
+  background: none;
+}
+
 .raisedHandWidget > p {
   padding: none;
   margin-top: auto;
@@ -42,11 +47,11 @@
   height: var(--cpd-space-6x);
   display: inline-block;
   text-align: center;
-  font-size: 16px;
+  font-size: 1.3em;
 }
 
 .raisedHandLarge > span {
   width: var(--cpd-space-8x);
   height: var(--cpd-space-8x);
-  font-size: 22px;
+  font-size: 1.9em;
 }

@@ -62,7 +62,7 @@ export function RaiseHandToggleButton({
   client,
   rtcSession,
 }: RaisedHandToggleButtonProps): ReactNode {
-  const { raisedHands, myReactionId } = useReactions();
+  const { raisedHands, lowerHand } = useReactions();
   const [busy, setBusy] = useState(false);
   const userId = client.getUserId()!;
   const isHandRaised = !!raisedHands[userId];
@@ -71,16 +71,9 @@ export function RaiseHandToggleButton({
   const toggleRaisedHand = useCallback(() => {
     const raiseHand = async (): Promise<void> => {
       if (isHandRaised) {
-        if (!myReactionId) {
-          logger.warn(`Hand raised but no reaction event to redact!`);
-          return;
-        }
         try {
           setBusy(true);
-          await client.redactEvent(rtcSession.room.roomId, myReactionId);
-          logger.debug("Redacted raise hand event");
-        } catch (ex) {
-          logger.error("Failed to redact reaction event", myReactionId, ex);
+          await lowerHand();
         } finally {
           setBusy(false);
         }
@@ -118,9 +111,9 @@ export function RaiseHandToggleButton({
     client,
     isHandRaised,
     memberships,
-    myReactionId,
     rtcSession.room.roomId,
     userId,
+    lowerHand,
   ]);
 
   return (

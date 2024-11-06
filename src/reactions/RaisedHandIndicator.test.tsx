@@ -40,4 +40,16 @@ describe("RaisedHandIndicator", () => {
     );
     expect(container.firstChild).toMatchSnapshot();
   });
+  test("can be clicked", () => {
+    const dateTime = new Date();
+    let wasClicked = false;
+    const { getByRole } = render(
+      <RaisedHandIndicator
+        raisedHandTime={dateTime}
+        onClick={() => (wasClicked = true)}
+      />,
+    );
+    getByRole("button").click();
+    expect(wasClicked).toBe(true);
+  });
 });
