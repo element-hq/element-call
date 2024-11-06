@@ -184,12 +184,13 @@ yarn dev
 
 A docker compose file `dev-backend-docker-compose.yml` is provided to start the
 whole stack of components which is required for a local development environment:
+
 - Minimum Synapse Setup (servername: synapse.localhost)
 - LiveKit JWT Service (Note requires Federation API and hence a TLS reverse proxy)
 - Minimum TLS reverse proxy (servername: synapse.localhost) Note certificates
   are valid for at least 10 years from now
 - Minimum LiveKit SFU Setup using dev defaults for config
-- Redis db for completness 
+- Redis db for completness
 
 These use a test 'secret' published in this repository, so this must be used
 only for local development and **_never be exposed to the public Internet._**
@@ -222,13 +223,14 @@ To add a new translation key you can do these steps:
    ```
 1. Update the skeleton entry in the `public/locales/en-GB/app.json` file with
    the English translation:
+
 ```jsonc
    {
        ...
        "some_new_key": "Some new key",
        ...
    }
-   ```
+```
 
 ## Documentation
 
