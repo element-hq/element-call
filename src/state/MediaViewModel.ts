@@ -245,7 +245,10 @@ abstract class BaseMediaViewModel extends ViewModel {
         encryptionSystem.kind !== E2eeType.NONE &&
         (a.publication?.isEncrypted === false ||
           v.publication?.isEncrypted === false),
-    ).pipe(distinctUntilChanged(), shareReplay(1));
+    ).pipe(
+      distinctUntilChanged(),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    );
 
     if (participant.isLocal || encryptionSystem.kind === E2eeType.NONE) {
       this.encryptionStatus = of(EncryptionStatus.Okay).pipe(

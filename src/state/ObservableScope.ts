@@ -32,7 +32,11 @@ export class ObservableScope {
   }
 
   private readonly stateImpl: MonoTypeOperator = (o) =>
-    o.pipe(this.bind(), distinctUntilChanged(), shareReplay(1));
+    o.pipe(
+      this.bind(),
+      distinctUntilChanged(),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    );
 
   /**
    * Transforms an Observable into a hot state Observable which replays its

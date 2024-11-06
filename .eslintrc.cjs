@@ -8,12 +8,13 @@ Please see LICENSE in the repository root for full details.
 `;
 
 module.exports = {
-  plugins: ["matrix-org"],
+  plugins: ["matrix-org", "rxjs"],
   extends: [
     "plugin:matrix-org/react",
     "plugin:matrix-org/a11y",
     "plugin:matrix-org/typescript",
     "prettier",
+    "plugin:rxjs/recommended",
   ],
   parserOptions: {
     ecmaVersion: "latest",
