@@ -39,7 +39,7 @@ export function ReactionsAudioRenderer(): ReactNode {
         void audioElement.play();
       }
     }
-  }, [audioElements, shouldPlay, reactions]);
+  }, [audioElements, shouldPlay, reactions, effectSoundVolume]);
 
   // Do not render any audio elements if playback is disabled. Will save
   // audio file fetches.
