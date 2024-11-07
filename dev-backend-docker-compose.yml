@@ -73,9 +73,9 @@ services:
     hostname: synapse.localhost
     image: nginx:latest
     volumes:
-      - ./backend/tls_localhost_nginx.conf:/etc/nginx/conf.d/default.conf
-      - ./backend/tls_localhost_key.pem:/root/ssl/key.pem
-      - ./backend/tls_localhost_cert.pem:/root/ssl/cert.pem
+      - ./backend/tls_localhost_nginx.conf:/etc/nginx/conf.d/default.conf:Z
+      - ./backend/tls_localhost_key.pem:/root/ssl/key.pem:Z
+      - ./backend/tls_localhost_cert.pem:/root/ssl/cert.pem:Z
     ports:
       # HOST_PORT:CONTAINER_PORT
       - "8008:80"
