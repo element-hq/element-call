@@ -16,3 +16,20 @@ Please see LICENSE in the repository root for full details.
 .fieldRowText {
   margin-bottom: 0;
 }
+
+.volumeSlider {
+  margin-top: var(--cpd-space-2x);
+}
+
+.volumeSlider > label {
+  margin-bottom: var(--cpd-space-1x);
+  display: block;
+}
+
+.volumeSlider > span {
+  max-width: 20em;
+}
+
+.volumeSlider > p {
+  color: var(--cpd-color-text-secondary);
+}

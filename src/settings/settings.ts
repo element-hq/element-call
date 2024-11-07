@@ -100,4 +100,6 @@ export const playReactionsSound = new Setting<boolean>(
   true,
 );
 
+export const effectSoundVolume = new Setting<number>("effects-sound-volume", 1);
+
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
