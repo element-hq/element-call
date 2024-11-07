@@ -63,8 +63,8 @@ services:
       - UID=0
       - GID=0
     volumes:
-      - ./backend/synapse_tmp:/data
-      - ./backend/dev_homeserver.yaml:/data/cfg/homeserver.yaml
+      - ./backend/synapse_tmp:/data:Z
+      - ./backend/dev_homeserver.yaml:/data/cfg/homeserver.yaml:Z
     networks:
       - ecbackend
 
