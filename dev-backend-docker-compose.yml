@@ -47,7 +47,7 @@ services:
       # HOST_PORT:CONTAINER_PORT
       - 6379:6379
     volumes:
-      - ./backend/redis.conf:/etc/redis.conf
+      - ./backend/redis.conf:/etc/redis.conf:Z
     networks:
       - ecbackend
 
