@@ -1,0 +1,86 @@
+networks:
+  ecbackend:
+
+services:
+  auth-service:
+    image: ghcr.io/element-hq/lk-jwt-service:latest-ci
+    hostname: auth-server
+    environment:
+      - LK_JWT_PORT=8080
+      - LIVEKIT_URL=ws://localhost:7880
+      - LIVEKIT_KEY=devkey
+      - LIVEKIT_SECRET=secret
+      # If the configured homeserver runs on localhost, it'll probably be using
+      # a self-signed certificate
+      - LIVEKIT_INSECURE_SKIP_VERIFY_TLS=YES_I_KNOW_WHAT_I_AM_DOING
+    deploy:
+      restart_policy:
+        condition: on-failure
+    ports:
+      # HOST_PORT:CONTAINER_PORT
+      - 8009:8080
+    networks:
+      - ecbackend
+
+  livekit:
+    image: livekit/livekit-server:latest
+    command: --dev --config /etc/livekit.yaml
+    restart: unless-stopped
+    # The SFU seems to work far more reliably when we let it share the host
+    # network rather than opening specific ports (but why?? we're not missing
+    # any…)
+    ports:
+      # HOST_PORT:CONTAINER_PORT
+      - 7880:7880/tcp
+      - 7881:7881/tcp
+      - 7882:7882/tcp
+      - 50100-50200:50100-50200/udp
+    volumes:
+      - ./backend/dev_livekit.yaml:/etc/livekit.yaml:Z
+    networks:
+      - ecbackend
+
+  redis:
+    image: redis:6-alpine
+    command: redis-server /etc/redis.conf
+    ports:
+      # HOST_PORT:CONTAINER_PORT
+      - 6379:6379
+    volumes:
+      - ./backend/redis.conf:/etc/redis.conf:Z
+    networks:
+      - ecbackend
+
+  synapse:
+    hostname: homeserver
+    image: docker.io/matrixdotorg/synapse:latest
+    environment:
+      - SYNAPSE_CONFIG_PATH=/data/cfg/homeserver.yaml
+      # Needed for rootless podman-compose such that the uid/gid mapping does
+      # fit local user uid. If the container runs as root (uid 0) it is fine as
+      # it actually maps to your non-root user on the host (e.g. 1000).
+      # Otherwise uid mapping will not match your non-root user.
+      - UID=0
+      - GID=0
+    volumes:
+      - ./backend/synapse_tmp:/data:Z
+      - ./backend/dev_homeserver.yaml:/data/cfg/homeserver.yaml:Z
+    networks:
+      - ecbackend
+
+  nginx:
+    #  openssl req -x509 -nodes -days 3650 -newkey rsa:2048 -keyout tls_localhost_key.pem -out tls_localhost_cert.pem -subj "/C=GB/ST=London/L=London/O=Alros/OU=IT Department/CN=localhost"
+    hostname: synapse.localhost
+    image: nginx:latest
+    volumes:
+      - ./backend/tls_localhost_nginx.conf:/etc/nginx/conf.d/default.conf:Z
+      - ./backend/tls_localhost_key.pem:/root/ssl/key.pem:Z
+      - ./backend/tls_localhost_cert.pem:/root/ssl/cert.pem:Z
+    ports:
+      # HOST_PORT:CONTAINER_PORT
+      - "8008:80"
+      - "4443:443"
+    depends_on:
+      - synapse
+    networks:
+      - ecbackend
