@@ -66,6 +66,7 @@ video.mirror {
     margin-inline: 0;
     border-radius: 0;
     block-size: 100%;
+    width: 100%;
   }
 
   .buttonBar {
