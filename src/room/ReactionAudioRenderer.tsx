@@ -10,7 +10,7 @@ import { ReactNode, useEffect, useRef } from "react";
 import { useReactions } from "../useReactions";
 import {
   playReactionsSound,
-  effectSoundVolume as effectSoundVolumeSetting,
+  soundEffectVolumeSetting as effectSoundVolumeSetting,
   useSetting,
 } from "../settings/settings";
 import { GenericReaction, ReactionSet } from "../reactions";

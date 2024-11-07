@@ -28,7 +28,7 @@ import {
   developerSettingsTab as developerSettingsTabSetting,
   duplicateTiles as duplicateTilesSetting,
   useOptInAnalytics,
-  effectSoundVolume,
+  soundEffectVolumeSetting,
 } from "./settings";
 import { isFirefox } from "../Platform";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
@@ -118,7 +118,7 @@ export const SettingsModal: FC<Props> = ({
   const devices = useMediaDevices();
   useMediaDeviceNames(devices, open);
 
-  const [soundVolume, setSoundVolume] = useSetting(effectSoundVolume);
+  const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
