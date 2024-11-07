@@ -13,7 +13,7 @@ import { useEventTarget } from "./useEvents";
  * React hook that tracks whether the given media query matches.
  */
 export function useMediaQuery(query: string): boolean {
-  const mediaQuery = useMemo(() => matchMedia(query), [query]);
+  const mediaQuery = useMemo(() => window.matchMedia(query), [query]);
 
   const [numChanges, setNumChanges] = useState(0);
   useEventTarget(

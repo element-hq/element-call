@@ -1,0 +1,75 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`the content is rendered when the modal is open 1`] = `
+<div
+  aria-labelledby="radix-:r4:"
+  class="overlay animate modal dialog _glass_1x9g9_17"
+  data-state="open"
+  id="radix-:r3:"
+  role="dialog"
+  style="pointer-events: auto;"
+  tabindex="-1"
+>
+  <div
+    class="content"
+  >
+    <div
+      class="header"
+    >
+      <h2
+        class="_typography_yh5dq_162 _font-heading-md-semibold_yh5dq_121"
+        id="radix-:r4:"
+      >
+        My modal
+      </h2>
+    </div>
+    <div
+      class="body"
+    >
+      <p>
+        This is the content.
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`the modal renders as a drawer in mobile viewports 1`] = `
+<div
+  aria-labelledby="radix-:ra:"
+  class="overlay modal drawer"
+  data-state="open"
+  id="radix-:r9:"
+  role="dialog"
+  style="pointer-events: auto;"
+  tabindex="-1"
+  vaul-drawer=""
+  vaul-drawer-direction="bottom"
+  vaul-drawer-visible="true"
+>
+  <div
+    class="content"
+  >
+    <div
+      class="header"
+    >
+      <div
+        class="handle"
+      />
+      <h2
+        id="radix-:ra:"
+        style="position: absolute; border: 0px; width: 1px; height: 1px; padding: 0px; margin: -1px; overflow: hidden; clip: rect(0px, 0px, 0px, 0px); white-space: nowrap; word-wrap: normal;"
+      >
+        My modal
+      </h2>
+    </div>
+    <div
+      class="body"
+    >
+      <p>
+        This is the content.
+      </p>
+    </div>
+  </div>
+</div>
+`;

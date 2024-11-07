@@ -89,6 +89,7 @@ export const Modal: FC<Props> = ({
               styles.drawer,
               { [styles.tabbed]: tabbed },
             )}
+            role="dialog"
             // Suppress the warning about there being no description; the modal
             // has an accessible title
             aria-describedby={undefined}
@@ -114,9 +115,14 @@ export const Modal: FC<Props> = ({
           <DialogOverlay
             className={classNames(overlayStyles.bg, overlayStyles.animate)}
           />
-          {/* Suppress the warning about there being no description; the modal
-          has an accessible title */}
-          <DialogContent asChild aria-describedby={undefined} {...rest}>
+          <DialogContent
+            asChild
+            // Suppress the warning about there being no description; the modal
+            // has an accessible title
+            aria-describedby={undefined}
+            role="dialog"
+            {...rest}
+          >
             <Glass
               className={classNames(
                 className,
