@@ -85,6 +85,10 @@ const POST_FOCUS_PARTICIPANT_UPDATE_DELAY_MS = 3000;
 // on mobile. No spotlight tile should be shown below this threshold.
 const smallMobileCallThreshold = 3;
 
+// How long the footer should be shown for when hovering over or interacting
+// with the interface
+const showFooterMs = 4000;
+
 export interface GridLayoutMedia {
   type: "grid";
   spotlight?: MediaViewModel[];
@@ -902,6 +906,7 @@ export class CallViewModel extends ViewModel {
     );
 
   private readonly screenTap = new Subject<void>();
+  private readonly controlsTap = new Subject<void>();
   private readonly screenHover = new Subject<void>();
   private readonly screenUnhover = new Subject<void>();
 
@@ -910,6 +915,13 @@ export class CallViewModel extends ViewModel {
    */
   public tapScreen(): void {
     this.screenTap.next();
+  }
+
+  /**
+   * Callback for when the user taps the call's controls.
+   */
+  public tapControls(): void {
+    this.controlsTap.next();
   }
 
   /**
@@ -946,27 +958,38 @@ export class CallViewModel extends ViewModel {
           if (isFirefox()) return of(true);
           // Show/hide the footer in response to interactions
           return merge(
-            this.screenTap.pipe(map(() => "tap" as const)),
+            this.screenTap.pipe(map(() => "tap screen" as const)),
+            this.controlsTap.pipe(map(() => "tap controls" as const)),
             this.screenHover.pipe(map(() => "hover" as const)),
           ).pipe(
-            switchScan(
-              (state, interaction) =>
-                interaction === "tap"
-                  ? state
+            switchScan((state, interaction) => {
+              switch (interaction) {
+                case "tap screen":
+                  return state
                     ? // Toggle visibility on tap
                       of(false)
                     : // Hide after a timeout
-                      timer(6000).pipe(
+                      timer(showFooterMs).pipe(
                         map(() => false),
                         startWith(true),
-                      )
-                  : // Show on hover and hide after a timeout
-                    race(timer(3000), this.screenUnhover.pipe(take(1))).pipe(
-                      map(() => false),
-                      startWith(true),
-                    ),
-              false,
-            ),
+                      );
+                case "tap controls":
+                  // The user is interacting with things, so reset the timeout
+                  return timer(showFooterMs).pipe(
+                    map(() => false),
+                    startWith(true),
+                  );
+                case "hover":
+                  // Show on hover and hide after a timeout
+                  return race(
+                    timer(showFooterMs),
+                    this.screenUnhover.pipe(take(1)),
+                  ).pipe(
+                    map(() => false),
+                    startWith(true),
+                  );
+              }
+            }, false),
             startWith(false),
           );
       }
