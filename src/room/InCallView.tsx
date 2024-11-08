@@ -266,12 +266,22 @@ export const InCallView: FC<InCallViewProps> = ({
   }, [vm]);
   const onTouchCancel = useCallback(() => (touchStart.current = null), []);
 
-  // We also need to tell the layout toggle to prevent touch events from
-  // bubbling up, or else the controls will be dismissed before a change event
-  // can be registered on the toggle
-  const onLayoutToggleTouchEnd = useCallback(
-    (e: TouchEvent) => e.stopPropagation(),
-    [],
+  // We also need to tell the footer controls to prevent touch events from
+  // bubbling up, or else the footer will be dismissed before a click/change
+  // event can be registered on the control
+  const onControlsTouchEnd = useCallback(
+    (e: TouchEvent) => {
+      // Somehow applying pointer-events: none to the controls when the footer
+      // is hidden is not enough to stop clicks from happening as the footer
+      // becomes visible, so we check manually whether the footer is shown
+      if (showFooter) {
+        e.stopPropagation();
+        vm.tapControls();
+      } else {
+        e.preventDefault();
+      }
+    },
+    [vm, showFooter],
   );
 
   const onPointerMove = useCallback(
@@ -539,6 +549,7 @@ export const InCallView: FC<InCallViewProps> = ({
       key="audio"
       muted={!muteStates.audio.enabled}
       onClick={toggleMicrophone}
+      onTouchEnd={onControlsTouchEnd}
       disabled={muteStates.audio.setEnabled === null}
       data-testid="incall_mute"
     />,
@@ -546,6 +557,7 @@ export const InCallView: FC<InCallViewProps> = ({
       key="video"
       muted={!muteStates.video.enabled}
       onClick={toggleCamera}
+      onTouchEnd={onControlsTouchEnd}
       disabled={muteStates.video.setEnabled === null}
       data-testid="incall_videomute"
     />,
@@ -556,6 +568,7 @@ export const InCallView: FC<InCallViewProps> = ({
         key="switch_camera"
         className={styles.switchCamera}
         onClick={switchCamera}
+        onTouchEnd={onControlsTouchEnd}
       />,
     );
   if (canScreenshare && !hideScreensharing) {
@@ -565,6 +578,7 @@ export const InCallView: FC<InCallViewProps> = ({
         className={styles.shareScreen}
         enabled={isScreenShareEnabled}
         onClick={toggleScreensharing}
+        onTouchEnd={onControlsTouchEnd}
         data-testid="incall_screenshare"
       />,
     );
@@ -576,11 +590,18 @@ export const InCallView: FC<InCallViewProps> = ({
         className={styles.raiseHand}
         client={client}
         rtcSession={rtcSession}
+        onTouchEnd={onControlsTouchEnd}
       />,
     );
   }
   if (layout.type !== "pip")
-    buttons.push(<SettingsButton key="settings" onClick={openSettings} />);
+    buttons.push(
+      <SettingsButton
+        key="settings"
+        onClick={openSettings}
+        onTouchEnd={onControlsTouchEnd}
+      />,
+    );
 
   buttons.push(
     <EndCallButton
@@ -588,6 +609,7 @@ export const InCallView: FC<InCallViewProps> = ({
       onClick={function (): void {
         onLeave();
       }}
+      onTouchEnd={onControlsTouchEnd}
       data-testid="incall_leave"
     />,
   );
@@ -615,7 +637,7 @@ export const InCallView: FC<InCallViewProps> = ({
           className={styles.layout}
           layout={gridMode}
           setLayout={setGridMode}
-          onTouchEnd={onLayoutToggleTouchEnd}
+          onTouchEnd={onControlsTouchEnd}
         />
       )}
     </div>
