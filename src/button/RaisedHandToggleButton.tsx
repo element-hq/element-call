@@ -53,7 +53,8 @@ const InnerButton: FC<InnerButtonProps> = ({ raised, ...props }) => {
   );
 };
 
-interface RaisedHandToggleButtonProps {
+interface RaisedHandToggleButtonProps
+  extends ComponentPropsWithoutRef<"button"> {
   rtcSession: MatrixRTCSession;
   client: MatrixClient;
 }
@@ -61,6 +62,7 @@ interface RaisedHandToggleButtonProps {
 export function RaiseHandToggleButton({
   client,
   rtcSession,
+  ...props
 }: RaisedHandToggleButtonProps): ReactNode {
   const { raisedHands, lowerHand } = useReactions();
   const [busy, setBusy] = useState(false);
@@ -121,6 +123,7 @@ export function RaiseHandToggleButton({
       disabled={busy}
       onClick={toggleRaisedHand}
       raised={isHandRaised}
+      {...props}
     />
   );
 }
