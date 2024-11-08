@@ -4,11 +4,17 @@
   },
   "action": {
     "close": "Schließen",
+    "close_search": "Suche beenden",
     "copy_link": "Link kopieren",
     "edit": "Bearbeiten",
     "go": "Los geht’s",
     "invite": "Einladen",
+    "lower_hand": "Handmeldung zurücknehmen",
     "no": "Nein",
+    "open_search": "Suchen",
+    "pick_reaction": "Reaktion auswählen",
+    "raise_hand": "Handmeldung",
+    "raise_hand_or_send_reaction": "Handmeldung oder Reaktion senden",
     "register": "Registrieren",
     "remove": "Entfernen",
     "sign_in": "Anmelden",
@@ -55,8 +61,10 @@
     "password": "Passwort",
     "preferences": "Einstellungen",
     "profile": "Profil",
-    "raise_hand": "Hand heben",
+    "reaction": "Reaktion",
+    "search": "Suche",
     "settings": "Einstellungen",
+    "something_went_wrong": "Etwas ist schief gelaufen",
     "unencrypted": "Nicht verschlüsselt",
     "username": "Benutzername",
     "video": "Video"
@@ -64,12 +72,6 @@
   "crypto_version": "Krypto-Version:{{version}}",
   "device_id": "Geräte-ID: {{id}}",
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
-  "e2ee_encryption_status": {
-    "connecting": "Verbinden...",
-    "key_invalid": "Der Medien-Krypto-Schlüssel für diese Person ist ungültig",
-    "key_missing": "Aktueller Medien-Krypto-Schlüssel für diese Person noch nicht erhalten",
-    "password_invalid": "Diese Person verwendet ein anderes Passwort, sodass Sie nicht mit ihr kommunizieren können"
-  },
   "full_screen_view_description": "<0>Übermittelte Problemberichte helfen uns, Fehler zu beheben.</0>",
   "full_screen_view_h1": "<0>Hoppla, etwas ist schiefgelaufen.</0>",
   "group_call_loader": {
@@ -126,6 +128,7 @@
   "rageshake_sending": "Senden …",
   "rageshake_sending_logs": "Sende Debug-Protokolle …",
   "rageshake_sent": "Danke!",
+  "reaction_search": "Reaktionen suchen...",
   "recaptcha_caption": "Diese Seite wird durch reCAPTCHA geschützt und es gelten Googles <2>Datenschutzerklärung</2> und <6>Nutzungsbedingungen</6>. <9></9>Mit einem Klick auf „Registrieren“ akzeptierst du unseren <2>Endbenutzer-Lizenzvertrag (EULA)</2>",
   "recaptcha_dismissed": "Recaptcha abgelehnt",
   "recaptcha_not_loaded": "Recaptcha nicht geladen",
@@ -141,6 +144,10 @@
   "room_auth_view_eula_caption": "Mit einem Klick auf „Weiter“ akzeptierst du unseren <2>Endbenutzer-Lizenzvertrag (EULA)</2>",
   "screenshare_button_label": "Bildschirm teilen",
   "settings": {
+    "audio_tab": {
+      "effect_volume_description": "Passen Sie die Lautstärke an, mit der Reaktionen und Handmeldung abgespielt werden",
+      "effect_volume_label": "Lautstärke der Soundeffekte"
+    },
     "developer_settings_label": "Entwicklereinstellungen",
     "developer_settings_label_description": "Zeige die Entwicklereinstellungen im Einstellungsfenster.",
     "developer_tab_title": "Entwickler",
@@ -153,10 +160,17 @@
     "feedback_tab_title": "Rückmeldung",
     "more_tab_title": "Mehr",
     "opt_in_description": "<0></0><1></1>Du kannst deine Zustimmung durch Abwählen dieses Kästchens zurückziehen. Falls du dich aktuell in einem Anruf befindest, wird diese Einstellung nach dem Ende des Anrufs wirksam.",
+    "preferences_tab": {
+      "reactions_play_sound_description": "Einen Soundeffekt abspielen, wenn jemand eine Reaktion sendet",
+      "reactions_play_sound_label": "Reaktionstöne abspielen",
+      "reactions_show_description": "Reaktionen anzeigen",
+      "reactions_show_label": "Zeige eine Animation, wenn jemand eine Reaktion sendet.",
+      "reactions_title": "Reaktionen"
+    },
     "preferences_tab_body": "Hier können zusätzliche Optionen für individuelle Anforderungen eingestellt werden",
     "preferences_tab_h4": "Einstellungen",
-    "preferences_tab_show_hand_raised_timer_description": "Einen Timer anzeigen, wenn ein Teilnehmer seine Hand hebt",
-    "preferences_tab_show_hand_raised_timer_label": "Dauer des Handhebens anzeigen",
+    "preferences_tab_show_hand_raised_timer_description": "Einen Timer zur Handmeldung anzeigen",
+    "preferences_tab_show_hand_raised_timer_label": "Dauer der Handmeldung anzeigen",
     "speaker_device_selection_label": "Lautsprecher"
   },
   "star_rating_input_label_one": "{{count}} Stern",
