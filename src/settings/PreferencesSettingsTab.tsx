@@ -1,17 +1,19 @@
 /*
-Copyright 2022-2024 New Vector Ltd.
+Copyright 2024 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ChangeEvent, FC, useCallback } from "react";
+import { ChangeEvent, FC } from "react";
 import { useTranslation } from "react-i18next";
 import { Text } from "@vector-im/compound-web";
 
 import { FieldRow, InputField } from "../input/Input";
 import {
   showHandRaisedTimer as showHandRaisedTimerSetting,
+  showReactions as showReactionsSetting,
+  playReactionsSound as playReactionsSoundSetting,
   useSetting,
 } from "./settings";
 
@@ -21,12 +23,18 @@ export const PreferencesSettingsTab: FC = () => {
     showHandRaisedTimerSetting,
   );
 
-  const onChangeSetting = useCallback(
-    (e: ChangeEvent<HTMLInputElement>) => {
-      setShowHandRaisedTimer(e.target.checked);
-    },
-    [setShowHandRaisedTimer],
+  const [showReactions, setShowReactions] = useSetting(showReactionsSetting);
+
+  const [playReactionsSound, setPlayReactionSound] = useSetting(
+    playReactionsSoundSetting,
   );
+
+  const onChangeSetting = (
+    e: ChangeEvent<HTMLInputElement>,
+    fn: (value: boolean) => void,
+  ): void => {
+    fn(e.target.checked);
+  };
 
   return (
     <div>
@@ -41,7 +49,30 @@ export const PreferencesSettingsTab: FC = () => {
           )}
           type="checkbox"
           checked={showHandRaisedTimer}
-          onChange={onChangeSetting}
+          onChange={(e) => onChangeSetting(e, setShowHandRaisedTimer)}
+        />
+      </FieldRow>
+      <h5>{t("settings.preferences_tab.reactions_title")}</h5>
+      <FieldRow>
+        <InputField
+          id="showReactions"
+          label={t("settings.preferences_tab.reactions_show_label")}
+          description={t("settings.preferences_tab.reactions_show_description")}
+          type="checkbox"
+          checked={showReactions}
+          onChange={(e) => onChangeSetting(e, setShowReactions)}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="playReactionSound"
+          label={t("settings.preferences_tab.reactions_play_sound_label")}
+          description={t(
+            "settings.preferences_tab.reactions_play_sound_description",
+          )}
+          type="checkbox"
+          checked={playReactionsSound}
+          onChange={(e) => onChangeSetting(e, setPlayReactionSound)}
         />
       </FieldRow>
     </div>

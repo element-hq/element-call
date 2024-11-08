@@ -2,13 +2,13 @@
 
 exports[`RaisedHandIndicator > renders a smaller indicator when miniature is specified 1`] = `
 <div
-  class="raisedHandWidget"
+  class="reactionIndicatorWidget"
 >
   <div
-    class="raisedHand"
+    class="reaction"
   >
     <span
-      aria-label="raised hand"
+      aria-label="common.reaction"
       role="img"
     >
       ✋
@@ -22,13 +22,13 @@ exports[`RaisedHandIndicator > renders a smaller indicator when miniature is spe
 
 exports[`RaisedHandIndicator > renders an indicator when a hand has been raised 1`] = `
 <div
-  class="raisedHandWidget raisedHandWidgetLarge"
+  class="reactionIndicatorWidget reactionIndicatorWidgetLarge"
 >
   <div
-    class="raisedHand raisedHandLarge"
+    class="reaction reactionLarge"
   >
     <span
-      aria-label="raised hand"
+      aria-label="common.reaction"
       role="img"
     >
       ✋
@@ -42,13 +42,13 @@ exports[`RaisedHandIndicator > renders an indicator when a hand has been raised 
 
 exports[`RaisedHandIndicator > renders an indicator when a hand has been raised with the expected time 1`] = `
 <div
-  class="raisedHandWidget raisedHandWidgetLarge"
+  class="reactionIndicatorWidget reactionIndicatorWidgetLarge"
 >
   <div
-    class="raisedHand raisedHandLarge"
+    class="reaction reactionLarge"
   >
     <span
-      aria-label="raised hand"
+      aria-label="common.reaction"
       role="img"
     >
       ✋

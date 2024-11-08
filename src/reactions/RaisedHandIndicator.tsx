@@ -12,11 +12,10 @@ import {
   useEffect,
   useState,
 } from "react";
-import classNames from "classnames";
-import "@formatjs/intl-durationformat/polyfill";
 import { DurationFormat } from "@formatjs/intl-durationformat";
+import { useTranslation } from "react-i18next";
 
-import styles from "./RaisedHandIndicator.module.css";
+import { ReactionIndicator } from "./ReactionIndicator";
 
 const durationFormatter = new DurationFormat(undefined, {
   minutesDisplay: "always",
@@ -36,6 +35,7 @@ export function RaisedHandIndicator({
   showTimer?: boolean;
   onClick?: () => void;
 }): ReactNode {
+  const { t } = useTranslation();
   const [raisedHandDuration, setRaisedHandDuration] = useState("");
 
   const clickCallback = useCallback<MouseEventHandler<HTMLButtonElement>>(
@@ -76,29 +76,19 @@ export function RaisedHandIndicator({
   }
 
   const content = (
-    <div
-      className={classNames(styles.raisedHandWidget, {
-        [styles.raisedHandWidgetLarge]: !miniature,
-      })}
-    >
-      <div
-        className={classNames(styles.raisedHand, {
-          [styles.raisedHandLarge]: !miniature,
-        })}
-      >
-        <span role="img" aria-label="raised hand">
-          ✋
-        </span>
-      </div>
+    <ReactionIndicator emoji="✋" miniature={miniature}>
       {showTimer && <p>{raisedHandDuration}</p>}
-    </div>
+    </ReactionIndicator>
   );
 
   if (onClick) {
     return (
       <button
-        aria-label="lower raised hand"
-        className={styles.button}
+        aria-label={t("action.lower_hand")}
+        style={{
+          display: "contents",
+          background: "none",
+        }}
         onClick={clickCallback}
       >
         {content}
