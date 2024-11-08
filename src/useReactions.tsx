@@ -182,7 +182,7 @@ export const ReactionsProvider = ({
 
   // This effect handles any *live* reaction/redactions in the room.
   useEffect(() => {
-    const reactionTimeouts = new Set<NodeJS.Timeout>();
+    const reactionTimeouts = new Set<number>();
     const handleReactionEvent = (event: MatrixEvent): void => {
       if (event.isSending()) {
         // Skip any events that are still sending.
@@ -245,7 +245,7 @@ export const ReactionsProvider = ({
             // We've still got a reaction from this user, ignore it to prevent spamming
             return reactions;
           }
-          const timeout = setTimeout(() => {
+          const timeout = window.setTimeout(() => {
             // Clear the reaction after some time.
             setReactions(({ [sender]: _unused, ...remaining }) => remaining);
             reactionTimeouts.delete(timeout);
