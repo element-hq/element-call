@@ -144,6 +144,10 @@
   "room_auth_view_eula_caption": "By clicking \"Continue\", you agree to our <2>End User Licensing Agreement (EULA)</2>",
   "screenshare_button_label": "Share screen",
   "settings": {
+    "audio_tab": {
+      "effect_volume_description": "Adjust the volume at which reactions and hand raised effects play",
+      "effect_volume_label": "Sound effect volume"
+    },
     "developer_settings_label": "Developer Settings",
     "developer_settings_label_description": "Expose developer settings in the settings window.",
     "developer_tab_title": "Developer",

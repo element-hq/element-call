@@ -8,12 +8,17 @@ Please see LICENSE in the repository root for full details.
 import { ReactNode, useEffect, useRef } from "react";
 
 import { useReactions } from "../useReactions";
-import { playReactionsSound, useSetting } from "../settings/settings";
+import {
+  playReactionsSound,
+  soundEffectVolumeSetting as effectSoundVolumeSetting,
+  useSetting,
+} from "../settings/settings";
 import { GenericReaction, ReactionSet } from "../reactions";
 
 export function ReactionsAudioRenderer(): ReactNode {
   const { reactions } = useReactions();
   const [shouldPlay] = useSetting(playReactionsSound);
+  const [effectSoundVolume] = useSetting(effectSoundVolumeSetting);
   const audioElements = useRef<Record<string, HTMLAudioElement | null>>({});
 
   useEffect(() => {
@@ -30,10 +35,11 @@ export function ReactionsAudioRenderer(): ReactNode {
       const audioElement =
         audioElements.current[reactionName] ?? audioElements.current.generic;
       if (audioElement?.paused) {
+        audioElement.volume = effectSoundVolume;
         void audioElement.play();
       }
     }
-  }, [audioElements, shouldPlay, reactions]);
+  }, [audioElements, shouldPlay, reactions, effectSoundVolume]);
 
   // Do not render any audio elements if playback is disabled. Will save
   // audio file fetches.

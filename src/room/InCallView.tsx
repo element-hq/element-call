@@ -85,7 +85,11 @@ import handSoundOgg from "../sound/raise_hand.ogg?url";
 import handSoundMp3 from "../sound/raise_hand.mp3?url";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { useSwitchCamera } from "./useSwitchCamera";
-import { showReactions, useSetting } from "../settings/settings";
+import {
+  soundEffectVolumeSetting,
+  showReactions,
+  useSetting,
+} from "../settings/settings";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -182,6 +186,7 @@ export const InCallView: FC<InCallViewProps> = ({
   onShareClick,
 }) => {
   const [shouldShowReactions] = useSetting(showReactions);
+  const [soundEffectVolume] = useSetting(soundEffectVolumeSetting);
   const { supportsReactions, raisedHands, reactions } = useReactions();
   const raisedHandCount = useMemo(
     () => Object.keys(raisedHands).length,
@@ -344,11 +349,17 @@ export const InCallView: FC<InCallViewProps> = ({
       return;
     }
     if (previousRaisedHandCount < raisedHandCount) {
+      handRaisePlayer.current.volume = soundEffectVolume;
       handRaisePlayer.current.play().catch((ex) => {
         logger.warn("Failed to play raise hand sound", ex);
       });
     }
-  }, [raisedHandCount, handRaisePlayer, previousRaisedHandCount]);
+  }, [
+    raisedHandCount,
+    handRaisePlayer,
+    previousRaisedHandCount,
+    soundEffectVolume,
+  ]);
 
   useEffect(() => {
     widget?.api.transport

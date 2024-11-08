@@ -17,7 +17,10 @@ import {
 } from "../utils/testReactions";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { GenericReaction, ReactionSet } from "../reactions";
-import { playReactionsSound } from "../settings/settings";
+import {
+  playReactionsSound,
+  soundEffectVolumeSetting,
+} from "../settings/settings";
 
 const memberUserIdAlice = "@alice:example.org";
 const memberUserIdBob = "@bob:example.org";
@@ -49,6 +52,7 @@ function TestComponent({
 const originalPlayFn = window.HTMLMediaElement.prototype.play;
 afterAll(() => {
   playReactionsSound.setValue(playReactionsSound.defaultValue);
+  soundEffectVolumeSetting.setValue(soundEffectVolumeSetting.defaultValue);
   window.HTMLMediaElement.prototype.play = originalPlayFn;
 });
 
@@ -123,6 +127,28 @@ test("will play the generic audio sound when there is soundless reaction", () =>
   });
   expect(audioIsPlaying).toHaveLength(1);
   expect(audioIsPlaying[0]).toContain(GenericReaction.sound?.ogg);
+});
+
+test("will play an audio sound with the correct volume", () => {
+  playReactionsSound.setValue(true);
+  soundEffectVolumeSetting.setValue(0.5);
+  const room = new MockRoom(memberUserIdAlice);
+  const rtcSession = new MockRTCSession(room, membership);
+  const { getByTestId } = render(<TestComponent rtcSession={rtcSession} />);
+
+  // Find the first reaction with a sound effect
+  const chosenReaction = ReactionSet.find((r) => !!r.sound);
+  if (!chosenReaction) {
+    throw Error(
+      "No reactions have sounds configured, this test cannot succeed",
+    );
+  }
+  act(() => {
+    room.testSendReaction(memberEventAlice, chosenReaction, membership);
+  });
+  expect((getByTestId(chosenReaction.name) as HTMLAudioElement).volume).toEqual(
+    0.5,
+  );
 });
 
 test("will play multiple audio sounds when there are multiple different reactions", () => {

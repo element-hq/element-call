@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { ChangeEvent, FC, ReactNode, useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
-import { Dropdown, Text } from "@vector-im/compound-web";
+import { Dropdown, Separator, Text } from "@vector-im/compound-web";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -28,9 +28,11 @@ import {
   developerSettingsTab as developerSettingsTabSetting,
   duplicateTiles as duplicateTilesSetting,
   useOptInAnalytics,
+  soundEffectVolumeSetting,
 } from "./settings";
 import { isFirefox } from "../Platform";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
+import { Slider } from "../Slider";
 
 type SettingsTab =
   | "audio"
@@ -116,6 +118,8 @@ export const SettingsModal: FC<Props> = ({
   const devices = useMediaDevices();
   useMediaDeviceNames(devices, open);
 
+  const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
+
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
     name: t("common.audio"),
@@ -127,6 +131,19 @@ export const SettingsModal: FC<Props> = ({
             devices.audioOutput,
             t("settings.speaker_device_selection_label"),
           )}
+        <Separator />
+        <div className={styles.volumeSlider}>
+          <label>{t("settings.audio_tab.effect_volume_label")}</label>
+          <p>{t("settings.audio_tab.effect_volume_description")}</p>
+          <Slider
+            label={t("video_tile.volume")}
+            value={soundVolume}
+            onValueChange={setSoundVolume}
+            min={0}
+            max={1}
+            step={0.01}
+          />
+        </div>
       </>
     ),
   };
