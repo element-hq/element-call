@@ -36,12 +36,14 @@ Please see LICENSE in the repository root for full details.
   inset-block-end: 0;
   z-index: 1;
   display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  grid-template-areas: "logo buttons layout";
+  grid-template-columns: minmax(0, var(--inline-content-inset)) 1fr auto 1fr minmax(
+      0,
+      var(--inline-content-inset)
+    );
+  grid-template-areas: ". logo buttons layout .";
   align-items: center;
   gap: var(--cpd-space-3x);
-  padding-block: var(--cpd-space-4x);
-  padding-inline: var(--inline-content-inset);
+  padding-block: var(--cpd-space-10x);
   background: linear-gradient(
     180deg,
     rgba(0, 0, 0, 0) 0%,
@@ -83,6 +85,7 @@ Please see LICENSE in the repository root for full details.
 
 .buttons {
   grid-area: buttons;
+  justify-self: center;
   display: flex;
   gap: var(--cpd-space-3x);
 }
@@ -92,15 +95,49 @@ Please see LICENSE in the repository root for full details.
   justify-self: end;
 }
 
-@media (min-height: 400px) {
+@media (max-width: 660px) {
   .footer {
-    padding-block: var(--cpd-space-8x);
+    grid-template-areas: ". buttons buttons buttons .";
+  }
+
+  .logo {
+    display: none;
+  }
+
+  .layout {
+    display: none !important;
   }
 }
 
-@media (min-height: 800px) {
+@media (max-width: 370px) {
+  .raiseHand {
+    display: none;
+  }
+}
+
+@media (max-width: 340px) {
+  .invite,
+  .switchCamera,
+  .shareScreen {
+    display: none;
+  }
+
+  @media (max-height: 400px) {
+    .footer {
+      display: none;
+    }
+  }
+}
+
+@media (max-height: 400px) {
   .footer {
-    padding-block: var(--cpd-space-10x);
+    padding-block: var(--cpd-space-4x);
+  }
+}
+
+@media (max-height: 800px) {
+  .footer {
+    padding-block: var(--cpd-space-8x);
   }
 }
 

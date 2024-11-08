@@ -213,7 +213,6 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure();
-  const boundsValid = bounds.height > 0;
   // Merge the refs so they can attach to the same element
   const containerRef = useMergedRefs(containerRef1, containerRef2);
 
@@ -240,10 +239,6 @@ export const InCallView: FC<InCallViewProps> = ({
     toggleCamera,
     (muted) => muteStates.audio.setEnabled?.(!muted),
   );
-
-  const mobile = boundsValid && bounds.width <= 660;
-  const reducedControls = boundsValid && bounds.width <= 340;
-  const noControls = reducedControls && bounds.height <= 400;
 
   const windowMode = useObservableEagerState(vm.windowMode);
   const layout = useObservableEagerState(vm.layout);
@@ -526,95 +521,94 @@ export const InCallView: FC<InCallViewProps> = ({
       .catch(logger.error);
   }, [localParticipant, isScreenShareEnabled]);
 
-  let footer: JSX.Element | null;
+  const buttons: JSX.Element[] = [];
 
-  if (noControls) {
-    footer = null;
-  } else {
-    const buttons: JSX.Element[] = [];
-
+  buttons.push(
+    <MicButton
+      key="audio"
+      muted={!muteStates.audio.enabled}
+      onClick={toggleMicrophone}
+      disabled={muteStates.audio.setEnabled === null}
+      data-testid="incall_mute"
+    />,
+    <VideoButton
+      key="video"
+      muted={!muteStates.video.enabled}
+      onClick={toggleCamera}
+      disabled={muteStates.video.setEnabled === null}
+      data-testid="incall_videomute"
+    />,
+  );
+  if (switchCamera !== null)
     buttons.push(
-      <MicButton
-        key="audio"
-        muted={!muteStates.audio.enabled}
-        onClick={toggleMicrophone}
-        disabled={muteStates.audio.setEnabled === null}
-        data-testid="incall_mute"
-      />,
-      <VideoButton
-        key="video"
-        muted={!muteStates.video.enabled}
-        onClick={toggleCamera}
-        disabled={muteStates.video.setEnabled === null}
-        data-testid="incall_videomute"
+      <SwitchCameraButton
+        key="switch_camera"
+        className={styles.switchCamera}
+        onClick={switchCamera}
       />,
     );
-    if (!reducedControls) {
-      if (switchCamera !== null)
-        buttons.push(
-          <SwitchCameraButton key="switch_camera" onClick={switchCamera} />,
-        );
-      if (canScreenshare && !hideScreensharing) {
-        buttons.push(
-          <ShareScreenButton
-            key="share_screen"
-            enabled={isScreenShareEnabled}
-            onClick={toggleScreensharing}
-            data-testid="incall_screenshare"
-          />,
-        );
-      }
-      if (supportsReactions) {
-        buttons.push(
-          <ReactionToggleButton
-            client={client}
-            rtcSession={rtcSession}
-            key="4"
-          />,
-        );
-      }
-      buttons.push(<SettingsButton key="settings" onClick={openSettings} />);
-    }
-
+  if (canScreenshare && !hideScreensharing) {
     buttons.push(
-      <EndCallButton
-        key="end_call"
-        onClick={function (): void {
-          onLeave();
-        }}
-        data-testid="incall_leave"
+      <ShareScreenButton
+        key="share_screen"
+        className={styles.shareScreen}
+        enabled={isScreenShareEnabled}
+        onClick={toggleScreensharing}
+        data-testid="incall_screenshare"
       />,
-    );
-    footer = (
-      <div
-        ref={footerRef}
-        className={classNames(styles.footer, {
-          [styles.overlay]: windowMode === "flat",
-          [styles.hidden]: !showFooter || (!showControls && hideHeader),
-        })}
-      >
-        {!mobile && !hideHeader && (
-          <div className={styles.logo}>
-            <LogoMark width={24} height={24} aria-hidden />
-            <LogoType
-              width={80}
-              height={11}
-              aria-label={import.meta.env.VITE_PRODUCT_NAME || "Element Call"}
-            />
-          </div>
-        )}
-        {showControls && <div className={styles.buttons}>{buttons}</div>}
-        {!mobile && showControls && (
-          <LayoutToggle
-            className={styles.layout}
-            layout={gridMode}
-            setLayout={setGridMode}
-            onTouchEnd={onLayoutToggleTouchEnd}
-          />
-        )}
-      </div>
     );
   }
+  if (supportsReactions) {
+    buttons.push(
+      <ReactionToggleButton
+        key="raise_hand"
+        className={styles.raiseHand}
+        client={client}
+        rtcSession={rtcSession}
+      />,
+    );
+  }
+  if (layout.type !== "pip")
+    buttons.push(<SettingsButton key="settings" onClick={openSettings} />);
+
+  buttons.push(
+    <EndCallButton
+      key="end_call"
+      onClick={function (): void {
+        onLeave();
+      }}
+      data-testid="incall_leave"
+    />,
+  );
+  const footer = (
+    <div
+      ref={footerRef}
+      className={classNames(styles.footer, {
+        [styles.overlay]: windowMode === "flat",
+        [styles.hidden]: !showFooter || (!showControls && hideHeader),
+      })}
+    >
+      {!hideHeader && (
+        <div className={styles.logo}>
+          <LogoMark width={24} height={24} aria-hidden />
+          <LogoType
+            width={80}
+            height={11}
+            aria-label={import.meta.env.VITE_PRODUCT_NAME || "Element Call"}
+          />
+        </div>
+      )}
+      {showControls && <div className={styles.buttons}>{buttons}</div>}
+      {showControls && (
+        <LayoutToggle
+          className={styles.layout}
+          layout={gridMode}
+          setLayout={setGridMode}
+          onTouchEnd={onLayoutToggleTouchEnd}
+        />
+      )}
+    </div>
+  );
 
   return (
     <div
@@ -646,8 +640,11 @@ export const InCallView: FC<InCallViewProps> = ({
               />
             </LeftNav>
             <RightNav>
-              {!reducedControls && showControls && onShareClick !== null && (
-                <InviteButton onClick={onShareClick} />
+              {showControls && onShareClick !== null && (
+                <InviteButton
+                  className={styles.invite}
+                  onClick={onShareClick}
+                />
               )}
             </RightNav>
           </Header>
@@ -669,15 +666,19 @@ export const InCallView: FC<InCallViewProps> = ({
         </span>
       ))}
       {footer}
-      {!noControls && <RageshakeRequestModal {...rageshakeRequestModalProps} />}
-      <SettingsModal
-        client={client}
-        roomId={rtcSession.room.roomId}
-        open={settingsModalOpen}
-        onDismiss={closeSettings}
-        tab={settingsTab}
-        onTabChange={setSettingsTab}
-      />
+      {layout.type !== "pip" && (
+        <>
+          <RageshakeRequestModal {...rageshakeRequestModalProps} />
+          <SettingsModal
+            client={client}
+            roomId={rtcSession.room.roomId}
+            open={settingsModalOpen}
+            onDismiss={closeSettings}
+            tab={settingsTab}
+            onTabChange={setSettingsTab}
+          />
+        </>
+      )}
     </div>
   );
 };

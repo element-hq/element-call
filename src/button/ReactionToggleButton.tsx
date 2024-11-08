@@ -211,7 +211,7 @@ export function ReactionPopupMenu({
   );
 }
 
-interface ReactionToggleButtonProps {
+interface ReactionToggleButtonProps extends ComponentPropsWithoutRef<"button"> {
   rtcSession: MatrixRTCSession;
   client: MatrixClient;
 }
@@ -219,6 +219,7 @@ interface ReactionToggleButtonProps {
 export function ReactionToggleButton({
   client,
   rtcSession,
+  ...props
 }: ReactionToggleButtonProps): ReactNode {
   const { t } = useTranslation();
   const { raisedHands, lowerHand, reactions } = useReactions();
@@ -327,6 +328,7 @@ export function ReactionToggleButton({
         onClick={() => setShowReactionsMenu((show) => !show)}
         raised={isHandRaised}
         open={showReactionsMenu}
+        {...props}
       />
       <Modal
         open={showReactionsMenu}
