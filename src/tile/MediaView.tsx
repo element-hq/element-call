@@ -98,7 +98,8 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           )}
         </div>
         <div className={styles.fg}>
-          {encryptionStatus !== EncryptionStatus.Okay && (
+          {/* TODO: Bring this back once encryption status is less broken */}
+          {/*encryptionStatus !== EncryptionStatus.Okay && (
             <div className={styles.status}>
               <Text as="span" size="sm" weight="medium" className={styles.name}>
                 {encryptionStatus === EncryptionStatus.Connecting &&
@@ -111,7 +112,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
                   t("e2ee_encryption_status.password_invalid")}
               </Text>
             </div>
-          )}
+          )*/}
           <RaisedHandIndicator
             raisedHandTime={raisedHandTime}
             miniature={avatarSize < 96}
