@@ -48,6 +48,7 @@ import { useLatest } from "../useLatest";
 import { GridTileViewModel } from "../state/TileViewModel";
 import { useMergedRefs } from "../useMergedRefs";
 import { useReactions } from "../useReactions";
+import { ReactionOption } from "../reactions";
 
 interface TileProps {
   className?: string;
@@ -93,7 +94,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       },
       [vm],
     );
-    const { raisedHands, lowerHand } = useReactions();
+    const { raisedHands, lowerHand, reactions } = useReactions();
 
     const MicIcon = audioEnabled ? MicOnSolidIcon : MicOffSolidIcon;
 
@@ -112,6 +113,8 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     );
 
     const handRaised: Date | undefined = raisedHands[vm.member?.userId ?? ""];
+    const currentReaction: ReactionOption | undefined =
+      reactions[vm.member?.userId ?? ""];
     const raisedHandOnClick =
       vm.local && handRaised ? (): void => void lowerHand() : undefined;
 
@@ -157,6 +160,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
           </Menu>
         }
         raisedHandTime={handRaised}
+        currentReaction={currentReaction}
         raisedHandOnClick={raisedHandOnClick}
         {...props}
       />

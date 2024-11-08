@@ -26,10 +26,19 @@ import { logger } from "matrix-js-sdk/src/logger";
 
 import { useMatrixRTCSessionMemberships } from "./useMatrixRTCSessionMemberships";
 import { useClientState } from "./ClientContext";
+import {
+  ECallReactionEventContent,
+  ElementCallReactionEventType,
+  GenericReaction,
+  ReactionOption,
+  ReactionSet,
+} from "./reactions";
+import { useLatest } from "./useLatest";
 
 interface ReactionsContextType {
   raisedHands: Record<string, Date>;
   supportsReactions: boolean;
+  reactions: Record<string, ReactionOption>;
   lowerHand: () => Promise<void>;
 }
 
@@ -51,6 +60,8 @@ interface RaisedHandInfo {
    */
   time: Date;
 }
+
+const REACTION_ACTIVE_TIME_MS = 3000;
 
 export const useReactions = (): ReactionsContextType => {
   const context = useContext(ReactionsContext);
@@ -79,6 +90,10 @@ export const ReactionsProvider = ({
     clientState?.state === "valid" && clientState.supportedFeatures.reactions;
   const room = rtcSession.room;
   const myUserId = room.client.getUserId();
+
+  const [reactions, setReactions] = useState<Record<string, ReactionOption>>(
+    {},
+  );
 
   // Reduce the data down for the consumers.
   const resultRaisedHands = useMemo(
@@ -162,8 +177,12 @@ export const ReactionsProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [room, memberships, myUserId, addRaisedHand, removeRaisedHand]);
 
+  const latestMemberships = useLatest(memberships);
+  const latestRaisedHands = useLatest(raisedHands);
+
   // This effect handles any *live* reaction/redactions in the room.
   useEffect(() => {
+    const reactionTimeouts = new Set<NodeJS.Timeout>();
     const handleReactionEvent = (event: MatrixEvent): void => {
       if (event.isSending()) {
         // Skip any events that are still sending.
@@ -177,14 +196,74 @@ export const ReactionsProvider = ({
         return;
       }
 
-      if (event.getType() === EventType.Reaction) {
+      if (event.getType() === ElementCallReactionEventType) {
+        const content: ECallReactionEventContent = event.getContent();
+
+        const membershipEventId = content?.["m.relates_to"]?.event_id;
+        // Check to see if this reaction was made to a membership event (and the
+        // sender of the reaction matches the membership)
+        if (
+          !latestMemberships.current.some(
+            (e) => e.eventId === membershipEventId && e.sender === sender,
+          )
+        ) {
+          logger.warn(
+            `Reaction target was not a membership event for ${sender}, ignoring`,
+          );
+          return;
+        }
+
+        if (!content.emoji) {
+          logger.warn(`Reaction had no emoji from ${reactionEventId}`);
+          return;
+        }
+
+        const segment = new Intl.Segmenter(undefined, {
+          granularity: "grapheme",
+        })
+          .segment(content.emoji)
+          [Symbol.iterator]();
+        const emoji = segment.next().value?.segment;
+
+        if (!emoji) {
+          logger.warn(
+            `Reaction had no emoji from ${reactionEventId} after splitting`,
+          );
+          return;
+        }
+
+        // One of our custom reactions
+        const reaction = {
+          ...GenericReaction,
+          emoji,
+          // If we don't find a reaction, we can fallback to the generic sound.
+          ...ReactionSet.find((r) => r.name === content.name),
+        };
+
+        setReactions((reactions) => {
+          if (reactions[sender]) {
+            // We've still got a reaction from this user, ignore it to prevent spamming
+            return reactions;
+          }
+          const timeout = setTimeout(() => {
+            // Clear the reaction after some time.
+            setReactions(({ [sender]: _unused, ...remaining }) => remaining);
+            reactionTimeouts.delete(timeout);
+          }, REACTION_ACTIVE_TIME_MS);
+          reactionTimeouts.add(timeout);
+          return {
+            ...reactions,
+            [sender]: reaction,
+          };
+        });
+      } else if (event.getType() === EventType.Reaction) {
         const content = event.getContent() as ReactionEventContent;
         const membershipEventId = content["m.relates_to"].event_id;
 
         // Check to see if this reaction was made to a membership event (and the
         // sender of the reaction matches the membership)
         if (
-          !memberships.some(
+          !latestMemberships.current.some(
             (e) => e.eventId === membershipEventId && e.sender === sender,
           )
         ) {
@@ -203,7 +282,7 @@ export const ReactionsProvider = ({
         }
       } else if (event.getType() === EventType.RoomRedaction) {
         const targetEvent = event.event.redacts;
-        const targetUser = Object.entries(raisedHands).find(
+        const targetUser = Object.entries(latestRaisedHands.current).find(
           ([_u, r]) => r.reactionEventId === targetEvent,
         )?.[0];
         if (!targetUser) {
@@ -225,16 +304,20 @@ export const ReactionsProvider = ({
       room.off(MatrixRoomEvent.Timeline, handleReactionEvent);
       room.off(MatrixRoomEvent.Redaction, handleReactionEvent);
       room.off(MatrixRoomEvent.LocalEchoUpdated, handleReactionEvent);
+      reactionTimeouts.forEach((t) => clearTimeout(t));
+      // If we're clearing timeouts, we also clear all reactions.
+      setReactions({});
     };
-  }, [room, addRaisedHand, removeRaisedHand, memberships, raisedHands]);
+  }, [
+    room,
+    addRaisedHand,
+    removeRaisedHand,
+    latestMemberships,
+    latestRaisedHands,
+  ]);
 
   const lowerHand = useCallback(async () => {
-    if (
-      !myUserId ||
-      clientState?.state !== "valid" ||
-      !clientState.authenticated ||
-      !raisedHands[myUserId]
-    ) {
+    if (!myUserId || !raisedHands[myUserId]) {
       return;
     }
     const myReactionId = raisedHands[myUserId].reactionEventId;
@@ -243,21 +326,19 @@ export const ReactionsProvider = ({
       return;
     }
     try {
-      await clientState.authenticated.client.redactEvent(
-        rtcSession.room.roomId,
-        myReactionId,
-      );
+      await room.client.redactEvent(rtcSession.room.roomId, myReactionId);
       logger.debug("Redacted raise hand event");
     } catch (ex) {
       logger.error("Failed to redact reaction event", myReactionId, ex);
     }
-  }, [myUserId, raisedHands, clientState, rtcSession]);
+  }, [myUserId, raisedHands, rtcSession, room]);
 
   return (
     <ReactionsContext.Provider
       value={{
         raisedHands: resultRaisedHands,
         supportsReactions,
+        reactions,
         lowerHand,
       }}
     >

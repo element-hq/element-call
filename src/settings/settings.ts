@@ -12,7 +12,10 @@ import { useObservableEagerState } from "observable-hooks";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 
 export class Setting<T> {
-  public constructor(key: string, defaultValue: T) {
+  public constructor(
+    key: string,
+    public readonly defaultValue: T,
+  ) {
     this.key = `matrix-setting-${key}`;
 
     const storedValue = localStorage.getItem(this.key);
@@ -88,6 +91,13 @@ export const videoInput = new Setting<string | undefined>(
 export const showHandRaisedTimer = new Setting<boolean>(
   "hand-raised-show-timer",
   false,
+);
+
+export const showReactions = new Setting<boolean>("reactions-show", true);
+
+export const playReactionsSound = new Setting<boolean>(
+  "reactions-play-sound",
+  true,
 );
 
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);

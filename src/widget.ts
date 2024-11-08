@@ -15,6 +15,7 @@ import type { IWidgetApiRequest } from "matrix-widget-api";
 import { LazyEventEmitter } from "./LazyEventEmitter";
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
+import { ElementCallReactionEventType } from "./reactions";
 
 // Subset of the actions in matrix-react-sdk
 export enum ElementWidgetActions {
@@ -105,6 +106,7 @@ export const widget = ((): WidgetHelpers | null => {
         EventType.CallEncryptionKeysPrefix,
         EventType.Reaction,
         EventType.RoomRedaction,
+        ElementCallReactionEventType,
       ];
 
       const sendState = [
