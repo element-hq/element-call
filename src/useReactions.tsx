@@ -10,6 +10,7 @@ import {
   MatrixEvent,
   RelationType,
   RoomEvent as MatrixRoomEvent,
+  MatrixEventEvent,
 } from "matrix-js-sdk/src/matrix";
 import { ReactionEventContent } from "matrix-js-sdk/src/types";
 import {
@@ -184,19 +185,21 @@ export const ReactionsProvider = ({
   useEffect(() => {
     const reactionTimeouts = new Set<number>();
     const handleReactionEvent = (event: MatrixEvent): void => {
-      if (event.isSending()) {
-        // Skip any events that are still sending.
-        return;
-      }
+      // Decrypted events might come from a different room
+      if (event.getRoomId() !== room.roomId) return;
+      // Skip any events that are still sending.
+      if (event.isSending()) return;
 
       const sender = event.getSender();
       const reactionEventId = event.getId();
-      if (!sender || !reactionEventId) {
-        // Skip any event without a sender or event ID.
-        return;
-      }
+      // Skip any event without a sender or event ID.
+      if (!sender || !reactionEventId) return;
 
       if (event.getType() === ElementCallReactionEventType) {
+        room.client
+          .decryptEventIfNeeded(event)
+          .catch((e) => logger.warn(`Failed to decrypt ${event.getId()}`, e));
+        if (event.isBeingDecrypted() || event.isDecryptionFailure()) return;
         const content: ECallReactionEventContent = event.getContent();
 
         const membershipEventId = content?.["m.relates_to"]?.event_id;
@@ -295,6 +298,7 @@ export const ReactionsProvider = ({
 
     room.on(MatrixRoomEvent.Timeline, handleReactionEvent);
     room.on(MatrixRoomEvent.Redaction, handleReactionEvent);
+    room.client.on(MatrixEventEvent.Decrypted, handleReactionEvent);
 
     // We listen for a local echo to get the real event ID, as timeline events
     // may still be sending.
@@ -303,6 +307,7 @@ export const ReactionsProvider = ({
     return (): void => {
       room.off(MatrixRoomEvent.Timeline, handleReactionEvent);
       room.off(MatrixRoomEvent.Redaction, handleReactionEvent);
+      room.client.off(MatrixEventEvent.Decrypted, handleReactionEvent);
       room.off(MatrixRoomEvent.LocalEchoUpdated, handleReactionEvent);
       reactionTimeouts.forEach((t) => clearTimeout(t));
       // If we're clearing timeouts, we also clear all reactions.

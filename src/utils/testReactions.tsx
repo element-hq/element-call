@@ -138,6 +138,13 @@ export class MockRoom extends EventEmitter {
         this.testRedactedEvents.push(props);
         return Promise.resolve({ event_id: randomUUID() });
       },
+      decryptEventIfNeeded: async () => {},
+      on() {
+        return this;
+      },
+      off() {
+        return this;
+      },
     } as unknown as MatrixClient;
   }
 
