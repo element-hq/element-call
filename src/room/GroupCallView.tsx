@@ -178,29 +178,33 @@ export const GroupCallView: FC<Props> = ({
     };
 
     if (skipLobby) {
-      if (widget && preload) {
-        // In preload mode without lobby we wait for a join action before entering
-        const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
+      if (widget) {
+        if (preload) {
+          // In preload mode without lobby we wait for a join action before entering
+          const onJoin = (ev: CustomEvent<IWidgetApiRequest>): void => {
+            (async (): Promise<void> => {
+              await defaultDeviceSetup(
+                ev.detail.data as unknown as JoinCallData,
+              );
+              await enterRTCSession(rtcSession, perParticipantE2EE);
+              widget!.api.transport.reply(ev.detail, {});
+            })().catch((e) => {
+              logger.error("Error joining RTC session", e);
+            });
+          };
+          widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
+          return (): void => {
+            widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
+          };
+        } else {
+          // No lobby and no preload: we enter the rtc session right away
           (async (): Promise<void> => {
-            await defaultDeviceSetup(ev.detail.data as unknown as JoinCallData);
+            await defaultDeviceSetup({ audioInput: null, videoInput: null });
             await enterRTCSession(rtcSession, perParticipantE2EE);
-            widget!.api.transport.reply(ev.detail, {});
           })().catch((e) => {
             logger.error("Error joining RTC session", e);
           });
-        };
-        widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
-        return (): void => {
-          widget!.lazyActions.off(ElementWidgetActions.JoinCall, onJoin);
-        };
-      } else if (widget && !preload) {
-        // No lobby and no preload: we enter the rtc session right away
-        (async (): Promise<void> => {
-          await defaultDeviceSetup({ audioInput: null, videoInput: null });
-          await enterRTCSession(rtcSession, perParticipantE2EE);
-        })().catch((e) => {
-          logger.error("Error joining RTC session", e);
-        });
+        }
       } else {
         void enterRTCSession(rtcSession, perParticipantE2EE);
       }
