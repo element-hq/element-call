@@ -94,8 +94,6 @@ Please see LICENSE in the repository root for full details.
   justify-self: end;
 }
 
-
-
 @media (max-width: 370px) {
   .raiseHand {
     display: none;

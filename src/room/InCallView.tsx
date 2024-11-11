@@ -85,10 +85,7 @@ import handSoundOgg from "../sound/raise_hand.ogg?url";
 import handSoundMp3 from "../sound/raise_hand.mp3?url";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { useSwitchCamera } from "./useSwitchCamera";
-import {
-  soundEffectVolumeSetting,
-  useSetting,
-} from "../settings/settings";
+import { soundEffectVolumeSetting, useSetting } from "../settings/settings";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
