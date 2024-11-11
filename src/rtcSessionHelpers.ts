@@ -98,8 +98,9 @@ export async function enterRTCSession(
 
   // right now we assume everything is a room-scoped call
   const livekitAlias = rtcSession.room.roomId;
+  const { features, matrix_rtc_session: matrixRtcSessionConfig } = Config.get();
   const useDeviceSessionMemberEvents =
-    Config.get().features?.feature_use_device_session_member_events;
+    features?.feature_use_device_session_member_events;
   rtcSession.joinRoomSession(
     await makePreferredLivekitFoci(rtcSession, livekitAlias),
     makeActiveFocus(),
@@ -108,6 +109,11 @@ export async function enterRTCSession(
       ...(useDeviceSessionMemberEvents !== undefined && {
         useLegacyMemberEvents: !useDeviceSessionMemberEvents,
       }),
+      membershipServerSideExpiryTimeout:
+        matrixRtcSessionConfig?.membership_server_side_expiry_timeout,
+      membershipKeepAlivePeriod:
+        matrixRtcSessionConfig?.membership_keep_alive_period,
+      makeKeyDelay: matrixRtcSessionConfig?.key_rotation_on_leave_delay,
     },
   );
 }

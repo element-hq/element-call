@@ -96,6 +96,30 @@ export interface ConfigOptions {
    * Note that this can additionally be disabled by the app's URL parameters.
    */
   app_prompt?: boolean;
+
+  /**
+   * These are low level options that are used to configure the MatrixRTC session.
+   * Take care when changing these options.
+   */
+  matrix_rtc_session?: {
+    /**
+     * How long (in milliseconds) to wait before rotating end-to-end media encryption keys
+     * when someone leaves a call.
+     */
+    key_rotation_on_leave_delay?: number;
+
+    /**
+     * How often (in milliseconds) keep-alive messages should be sent to the server for
+     * the MatrixRTC membership event.
+     */
+    membership_keep_alive_period?: number;
+
+    /**
+     * How long (in milliseconds) after the last keep-alive the server should expire the
+     * MatrixRTC membership event.
+     */
+    membership_server_side_expiry_timeout?: number;
+  };
 }
 
 // Overrides members from ConfigOptions that are always provided by the
