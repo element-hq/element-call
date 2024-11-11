@@ -59,7 +59,7 @@
     "@typescript-eslint/parser": "^8.0.0",
     "@use-gesture/react": "^10.2.11",
     "@vector-im/compound-design-tokens": "^1.9.1",
-    "@vector-im/compound-web": "element-hq/compound-web#46cf2d94d9c9b6d25e80ef0e785f3a929ed040ea",
+    "@vector-im/compound-web": "^7.2.0",
     "@vitejs/plugin-basic-ssl": "^1.0.1",
     "@vitejs/plugin-react": "^4.0.1",
     "@vitest/coverage-v8": "^2.0.5",

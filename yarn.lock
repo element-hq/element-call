@@ -3114,9 +3114,10 @@
   resolved "https://registry.yarnpkg.com/@vector-im/compound-design-tokens/-/compound-design-tokens-1.9.1.tgz#644dc7ca5ca251fd476af2a7c075e9d740c08871"
   integrity sha512-zjI+PhoNLNrJrLU8whEGjzCuxdqIz6tM0ARYBMS8AG1vC+NlGak6Y21TWnzHT3VINNhnF+PiQ9lFWsU65GydOg==
 
-"@vector-im/compound-web@element-hq/compound-web#46cf2d94d9c9b6d25e80ef0e785f3a929ed040ea":
-  version "7.1.0"
-  resolved "https://codeload.github.com/element-hq/compound-web/tar.gz/46cf2d94d9c9b6d25e80ef0e785f3a929ed040ea"
+"@vector-im/compound-web@^7.2.0":
+  version "7.2.0"
+  resolved "https://registry.yarnpkg.com/@vector-im/compound-web/-/compound-web-7.2.0.tgz#0ec4a598e5755cc4b3e83fbc232a4986a12bf808"
+  integrity sha512-wOT2kSo936FSBG1CsZ1vmHLwTTWBq9OBBfq76sM95rUawRSQCCWnjFMLTiacRvxBHucZaSNsfhpJH3oZcrOexw==
   dependencies:
     "@floating-ui/react" "^0.26.24"
     "@radix-ui/react-context-menu" "^2.2.1"
@@ -6018,7 +6019,7 @@ matrix-js-sdk@matrix-org/matrix-js-sdk#fcb69b16ad8d170c67ea844f83543d467bbd7707:
     unhomoglyph "^1.0.6"
     uuid "11"
 
-matrix-widget-api@^1.10.0, matrix-widget-api@^1.8.2:
+matrix-widget-api@^1.8.2:
   version "1.10.0"
   resolved "https://registry.yarnpkg.com/matrix-widget-api/-/matrix-widget-api-1.10.0.tgz#d31ea073a5871a1fb1a511ef900b0c125a37bf55"
   integrity sha512-rkAJ29briYV7TJnfBVLVSKtpeBrBju15JZFSDP6wj8YdbCu1bdmlplJayQ+vYaw1x4fzI49Q+Nz3E85s46sRDw==
