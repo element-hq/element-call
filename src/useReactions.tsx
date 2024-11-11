@@ -62,7 +62,7 @@ interface RaisedHandInfo {
   time: Date;
 }
 
-const REACTION_ACTIVE_TIME_MS = 90000;
+const REACTION_ACTIVE_TIME_MS = 3000;
 
 export const useReactions = (): ReactionsContextType => {
   const context = useContext(ReactionsContext);
