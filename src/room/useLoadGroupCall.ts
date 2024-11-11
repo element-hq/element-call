@@ -117,8 +117,8 @@ export class CallTerminatedMessage extends Error {
 }
 
 export const useLoadGroupCall = (
-  client: MatrixClient,
-  roomIdOrAlias: string,
+  client: MatrixClient | undefined,
+  roomIdOrAlias: string | null,
   viaServers: string[],
 ): GroupCallStatus => {
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
@@ -159,6 +159,9 @@ export const useLoadGroupCall = (
       ?.getContent().reason;
 
   useEffect(() => {
+    if (!client || !roomIdOrAlias) {
+      return;
+    }
     const getRoomByAlias = async (alias: string): Promise<Room> => {
       // We lowercase the localpart when we create the room, so we must lowercase
       // it here too (we just do the whole alias). We can't do the same to room IDs

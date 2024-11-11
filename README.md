@@ -106,7 +106,7 @@ rc_message:
 
 MSC3266 allows to request a room summary of rooms you are not joined. The
 summary contains the room join rules. We need that to decide if the user gets
-prompted with the option to knock ("ask to join"), a cannot join error or the
+prompted with the option to knock ("Request to join call"), a cannot join error or the
 join view.
 
 Element Call requires a Livekit SFU alongside a [Livekit JWT
