@@ -1,0 +1,54 @@
+.container {
+  position: absolute;
+  display: inline;
+  z-index: 2;
+  pointer-events: none;
+  width: 100vw;
+  height: 100vh;
+  left: 0;
+  top: 0;
+}
+
+.reaction {
+  font-size: 32pt;
+  /* Reactions are "active" for 3 seconds (as per REACTION_ACTIVE_TIME_MS), give a bit more time for it to fade out. */
+  animation-duration: 4s;
+  animation-name: reaction-up;
+  width: fit-content;
+  position: relative;
+  top: 80vh;
+}
+
+@keyframes reaction-up {
+  from {
+    opacity: 1;
+    translate: 0 0;
+    scale: 200%;
+    top: 80vh;
+  }
+
+  to {
+    top: 0;
+    opacity: 0;
+    scale: 100%;
+  }
+}
+
+@media (prefers-reduced-motion) {
+  @keyframes reaction-up-reduced {
+    from {
+      opacity: 1;
+    }
+
+    to {
+      opacity: 0;
+    }
+  }
+
+  .reaction {
+    font-size: 48pt;
+    animation-name: reaction-up-reduced;
+    top: calc(-50vh + (48pt / 2));
+    left: calc(50vw - (48pt / 2)) !important;
+  }
+}

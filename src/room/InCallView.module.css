@@ -94,19 +94,7 @@ Please see LICENSE in the repository root for full details.
   justify-self: end;
 }
 
-@media (max-width: 660px) {
-  .footer {
-    grid-template-areas: ". buttons buttons buttons .";
-  }
 
-  .logo {
-    display: none;
-  }
-
-  .layout {
-    display: none !important;
-  }
-}
 
 @media (max-width: 370px) {
   .raiseHand {
@@ -179,49 +167,4 @@ Please see LICENSE in the repository root for full details.
 .tile.maximised {
   position: relative;
   flex-grow: 1;
-}
-
-.floatingReaction {
-  position: relative;
-  display: inline;
-  z-index: 2;
-  font-size: 32pt;
-  /* Reactions are "active" for 3 seconds (as per REACTION_ACTIVE_TIME_MS), give a bit more time for it to fade out. */
-  animation-duration: 4s;
-  animation-name: reaction-up;
-  width: fit-content;
-  pointer-events: none;
-}
-
-@keyframes reaction-up {
-  from {
-    opacity: 1;
-    translate: 100vw 0;
-    scale: 200%;
-  }
-
-  to {
-    opacity: 0;
-    translate: 100vw -100vh;
-    scale: 100%;
-  }
-}
-
-@media (prefers-reduced-motion) {
-  @keyframes reaction-up-reduced {
-    from {
-      opacity: 1;
-    }
-
-    to {
-      opacity: 0;
-    }
-  }
-
-  .floatingReaction {
-    font-size: 48pt;
-    animation-name: reaction-up-reduced;
-    top: calc(-50vh + (48pt / 2));
-    left: calc(50vw - (48pt / 2)) !important;
-  }
 }

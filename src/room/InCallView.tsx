@@ -87,9 +87,9 @@ import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { useSwitchCamera } from "./useSwitchCamera";
 import {
   soundEffectVolumeSetting,
-  showReactions,
   useSetting,
 } from "../settings/settings";
+import { ReactionsOverlay } from "./ReactionsOverlay";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -185,26 +185,13 @@ export const InCallView: FC<InCallViewProps> = ({
   connState,
   onShareClick,
 }) => {
-  const [shouldShowReactions] = useSetting(showReactions);
   const [soundEffectVolume] = useSetting(soundEffectVolumeSetting);
-  const { supportsReactions, raisedHands, reactions } = useReactions();
+  const { supportsReactions, raisedHands } = useReactions();
   const raisedHandCount = useMemo(
     () => Object.keys(raisedHands).length,
     [raisedHands],
   );
   const previousRaisedHandCount = useDeferredValue(raisedHandCount);
-
-  const reactionsIcons = useMemo(
-    () =>
-      shouldShowReactions
-        ? Object.entries(reactions).map(([sender, { emoji }]) => ({
-            sender,
-            emoji,
-            startX: -Math.ceil(Math.random() * 50) - 25,
-          }))
-        : [],
-    [shouldShowReactions, reactions],
-  );
 
   useWakeLock();
 
@@ -689,15 +676,7 @@ export const InCallView: FC<InCallViewProps> = ({
         <source src={handSoundMp3} type="audio/mpeg" />
       </audio>
       <ReactionsAudioRenderer />
-      {reactionsIcons.map(({ sender, emoji, startX }) => (
-        <span
-          style={{ left: `${startX}vw` }}
-          className={styles.floatingReaction}
-          key={sender}
-        >
-          {emoji}
-        </span>
-      ))}
+      <ReactionsOverlay />
       {footer}
       {layout.type !== "pip" && (
         <>
