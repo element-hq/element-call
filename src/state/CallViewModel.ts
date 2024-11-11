@@ -672,16 +672,6 @@ export class CallViewModel extends ViewModel {
     this.gridModeUserSelection.next(value);
   }
 
-  private readonly oneOnOne: Observable<boolean> = combineLatest(
-    [this.grid, this.screenShares],
-    (grid, screenShares) =>
-      grid.length == 2 &&
-      // There might not be a remote tile if only the local user is in the call
-      // and they're using the duplicate tiles option
-      grid.some((vm) => !vm.local) &&
-      screenShares.length === 0,
-  );
-
   private readonly gridLayout: Observable<LayoutMedia> = combineLatest(
     [this.grid, this.spotlight],
     (grid, spotlight) => ({
@@ -714,13 +704,22 @@ export class CallViewModel extends ViewModel {
       pip: pip ?? undefined,
     }));
 
-  private readonly oneOnOneLayout: Observable<LayoutMedia> =
+  private readonly oneOnOneLayout: Observable<LayoutMedia | null> =
     this.mediaItems.pipe(
-      map((grid) => ({
-        type: "one-on-one",
-        local: grid.find((vm) => vm.vm.local)!.vm as LocalUserMediaViewModel,
-        remote: grid.find((vm) => !vm.vm.local)!.vm as RemoteUserMediaViewModel,
-      })),
+      map((mediaItems) => {
+        if (mediaItems.length !== 2) return null;
+        const local = mediaItems.find((vm) => vm.vm.local)!
+          .vm as LocalUserMediaViewModel;
+        const remote = mediaItems.find((vm) => !vm.vm.local)?.vm as
+          | RemoteUserMediaViewModel
+          | undefined;
+        // There might not be a remote tile if there are screen shares, or if
+        // only the local user is in the call and they're using the duplicate
+        // tiles option
+        if (remote === undefined) return null;
+
+        return { type: "one-on-one", local, remote };
+      }),
     );
 
   private readonly pipLayout: Observable<LayoutMedia> = this.spotlight.pipe(
@@ -738,9 +737,9 @@ export class CallViewModel extends ViewModel {
             switchMap((gridMode) => {
               switch (gridMode) {
                 case "grid":
-                  return this.oneOnOne.pipe(
+                  return this.oneOnOneLayout.pipe(
                     switchMap((oneOnOne) =>
-                      oneOnOne ? this.oneOnOneLayout : this.gridLayout,
+                      oneOnOne === null ? this.gridLayout : of(oneOnOne),
                     ),
                   );
                 case "spotlight":
@@ -755,20 +754,20 @@ export class CallViewModel extends ViewModel {
             }),
           );
         case "narrow":
-          return this.oneOnOne.pipe(
+          return this.oneOnOneLayout.pipe(
             switchMap((oneOnOne) =>
-              oneOnOne
-                ? // The expanded spotlight layout makes for a better one-on-one
-                  // experience in narrow windows
-                  this.spotlightExpandedLayout
-                : combineLatest(
+              oneOnOne === null
+                ? combineLatest(
                     [this.grid, this.spotlight],
                     (grid, spotlight) =>
                       grid.length > smallMobileCallThreshold ||
                       spotlight.some((vm) => vm instanceof ScreenShareViewModel)
                         ? this.spotlightPortraitLayout
                         : this.gridLayout,
-                  ).pipe(switchAll()),
+                  ).pipe(switchAll())
+                : // The expanded spotlight layout makes for a better one-on-one
+                  // experience in narrow windows
+                  this.spotlightExpandedLayout,
             ),
           );
         case "flat":
