@@ -46,6 +46,16 @@
   border-radius: var(--cpd-radius-pill-effect);
 }
 
+@media (max-width: 800px) {
+  .reactionButton {
+    padding: 1em;
+    font-size: 1em;
+    width: 1em;
+    height: 1em;
+    min-block-size: unset;
+  }
+}
+
 .verticalSeperator {
   background-color: var(--cpd-color-gray-800);
   width: 1px;
