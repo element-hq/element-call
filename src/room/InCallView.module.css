@@ -94,6 +94,20 @@ Please see LICENSE in the repository root for full details.
   justify-self: end;
 }
 
+@media (max-width: 660px) {
+  .footer {
+    grid-template-areas: ". buttons buttons buttons .";
+  }
+
+  .logo {
+    display: none;
+  }
+
+  .layout {
+    display: none !important;
+  }
+}
+
 @media (max-width: 370px) {
   .raiseHand {
     display: none;
