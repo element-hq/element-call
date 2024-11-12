@@ -195,11 +195,12 @@ export const ReactionsProvider = ({
       // Skip any event without a sender or event ID.
       if (!sender || !reactionEventId) return;
 
+      room.client
+        .decryptEventIfNeeded(event)
+        .catch((e) => logger.warn(`Failed to decrypt ${event.getId()}`, e));
+      if (event.isBeingDecrypted() || event.isDecryptionFailure()) return;
+
       if (event.getType() === ElementCallReactionEventType) {
-        room.client
-          .decryptEventIfNeeded(event)
-          .catch((e) => logger.warn(`Failed to decrypt ${event.getId()}`, e));
-        if (event.isBeingDecrypted() || event.isDecryptionFailure()) return;
         const content: ECallReactionEventContent = event.getContent();
 
         const membershipEventId = content?.["m.relates_to"]?.event_id;
