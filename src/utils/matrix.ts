@@ -123,6 +123,7 @@ export async function initClient(
     localTimeoutMs: 5000,
     useE2eForGroupCall: e2eEnabled,
     fallbackICEServerAllowed: fallbackICEServerAllowed,
+    store: new MemoryStore(),
   });
 
   // In case of logging in a new matrix account but there is still crypto local store. This is needed for:
