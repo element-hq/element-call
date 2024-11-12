@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { FC, useCallback } from "react";
 import { Root, Track, Range, Thumb } from "@radix-ui/react-slider";
 import classNames from "classnames";
+import { Tooltip } from "@vector-im/compound-web";
 
 import styles from "./Slider.module.css";
 
@@ -66,7 +67,10 @@ export const Slider: FC<Props> = ({
       <Track className={styles.track}>
         <Range className={styles.highlight} />
       </Track>
-      <Thumb className={styles.handle} aria-label={label} />
+      {/* Note: This is expected not to be visible on mobile.*/}
+      <Tooltip placement="top" label={Math.round(value * 100).toString() + "%"}>
+        <Thumb className={styles.handle} aria-label={label} />
+      </Tooltip>
     </Root>
   );
 };
