@@ -81,8 +81,8 @@
     "call_ended_heading": "Anruf beendet",
     "failed_heading": "Beitreten fehlgeschlagen",
     "failed_text": "Anruf nicht gefunden oder Beitritt nicht erlaubt",
-    "knock_reject_body": "Die Mitglieder des Raums haben Deine Beitrittsanfrage abgelehnt.",
-    "knock_reject_heading": "Beitritt nicht erlaubt",
+    "knock_reject_body": "Die Teilnahmeanfrage wurde abgelehnt.",
+    "knock_reject_heading": "Zugriff verweigert",
     "reason": "Grund"
   },
   "hangup_button_label": "Anruf beenden",
@@ -100,11 +100,11 @@
   "layout_grid_label": "Raster",
   "layout_spotlight_label": "Fokus",
   "lobby": {
-    "ask_to_join": "Beitritt anfragen",
+    "ask_to_join": "Teilnahmeanfrage senden",
     "join_as_guest": "Als Gast beitreten",
     "join_button": "Anruf beitreten",
     "leave_button": "Zurück zu kürzlichen Anrufen",
-    "waiting_for_invite": "Anfrage gesendet"
+    "waiting_for_invite": "Anfrage gesendet! Warten auf Teilnahmefreigabe …"
   },
   "log_in": "Anmelden",
   "logging_in": "Anmelden …",
