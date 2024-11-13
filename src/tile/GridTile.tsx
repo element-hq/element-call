@@ -26,6 +26,7 @@ import {
   VisibilityOnIcon,
   UserProfileIcon,
   ExpandIcon,
+  VolumeOffSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import {
   ContextMenu,
@@ -62,6 +63,7 @@ interface TileProps {
 interface UserMediaTileProps extends TileProps {
   vm: UserMediaViewModel;
   mirror: boolean;
+  locallyMuted: boolean;
   menuStart?: ReactNode;
   menuEnd?: ReactNode;
 }
@@ -71,6 +73,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     {
       vm,
       showSpeakingIndicators,
+      locallyMuted,
       menuStart,
       menuEnd,
       className,
@@ -96,7 +99,16 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     );
     const { raisedHands, lowerHand, reactions } = useReactions();
 
-    const MicIcon = audioEnabled ? MicOnSolidIcon : MicOffSolidIcon;
+    const AudioIcon = locallyMuted
+      ? VolumeOffSolidIcon
+      : audioEnabled
+        ? MicOnSolidIcon
+        : MicOffSolidIcon;
+    const audioIconLabel = locallyMuted
+      ? t("video_tile.muted_for_me")
+      : audioEnabled
+        ? t("microphone_on")
+        : t("microphone_off");
 
     const [menuOpen, setMenuOpen] = useState(false);
     const menu = (
@@ -134,11 +146,11 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
           [styles.handRaised]: !showSpeaking && !!handRaised,
         })}
         nameTagLeadingIcon={
-          <MicIcon
+          <AudioIcon
             width={20}
             height={20}
-            aria-label={audioEnabled ? t("microphone_on") : t("microphone_off")}
-            data-muted={!audioEnabled}
+            aria-label={audioIconLabel}
+            data-muted={locallyMuted || !audioEnabled}
             className={styles.muteIcon}
           />
         }
@@ -199,6 +211,7 @@ const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
       <UserMediaTile
         ref={ref}
         vm={vm}
+        locallyMuted={false}
         mirror={mirror}
         menuStart={
           <ToggleMenuItem
@@ -255,6 +268,7 @@ const RemoteUserMediaTile = forwardRef<
     <UserMediaTile
       ref={ref}
       vm={vm}
+      locallyMuted={locallyMuted}
       mirror={false}
       menuStart={
         <>
