@@ -20,8 +20,6 @@ import {
   setLogExtension as setLKLogExtension,
   setLogLevel as setLKLogLevel,
 } from "livekit-client";
-import "@formatjs/intl-segmenter/polyfill";
-import "@formatjs/intl-durationformat/polyfill";
 
 import { App } from "./App";
 import { init as initRageshake } from "./settings/rageshake";
@@ -57,12 +55,17 @@ if (fatalError !== null) {
   throw fatalError; // Stop the app early
 }
 
-Initializer.initBeforeReact();
+Initializer.initBeforeReact()
+  .then(() => {
+    const history = createBrowserHistory();
 
-const history = createBrowserHistory();
-
-root.render(
-  <StrictMode>
-    <App history={history} />
-  </StrictMode>,
-);
+    root.render(
+      <StrictMode>
+        <App history={history} />
+      </StrictMode>,
+    );
+  })
+  .catch((e) => {
+    logger.error("Failed to initialize app", e);
+    root.render(e.message);
+  });

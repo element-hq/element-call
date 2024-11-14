@@ -11,6 +11,8 @@ import LanguageDetector from "i18next-browser-languagedetector";
 import Backend from "i18next-http-backend";
 import * as Sentry from "@sentry/react";
 import { logger } from "matrix-js-sdk/src/logger";
+import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmenter/should-polyfill";
+import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill";
 
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
@@ -41,10 +43,17 @@ export class Initializer {
     return Initializer.internalInstance?.isInitialized;
   }
 
-  public static initBeforeReact(): void {
-    // this maybe also needs to return a promise in the future,
-    // if we have to do async inits before showing the loading screen
-    // but this should be avoided if possible
+  public static async initBeforeReact(): Promise<void> {
+    const polyfills: Promise<unknown>[] = [];
+    if (shouldPolyfillSegmenter()) {
+      polyfills.push(import("@formatjs/intl-segmenter/polyfill-force"));
+    }
+
+    if (shouldPolyfillDurationFormat()) {
+      polyfills.push(import("@formatjs/intl-durationformat/polyfill-force"));
+    }
+
+    await Promise.all(polyfills);
 
     //i18n
     const languageDetector = new LanguageDetector();
@@ -54,7 +63,7 @@ export class Initializer {
       lookup: () => getUrlParams().lang ?? undefined,
     });
 
-    i18n
+    await i18n
       .use(Backend)
       .use(languageDetector)
       .use(initReactI18next)
@@ -74,9 +83,6 @@ export class Initializer {
           order: ["urlFragment", "navigator"],
           caches: [],
         },
-      })
-      .catch((e) => {
-        logger.error("Failed to initialize i18n", e);
       });
 
     // Custom Themeing

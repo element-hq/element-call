@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import "matrix-js-sdk/src/@types/global";
+import type { DurationFormat as PolyfillDurationFormat } from "@formatjs/intl-durationformat";
 import { Controls } from "../controls";
 
 declare global {
@@ -22,5 +23,10 @@ declare global {
   interface HTMLElement {
     // Safari only supports this prefixed, so tell the type system about it
     webkitRequestFullscreen: () => void;
+  }
+
+  namespace Intl {
+    // Add DurationFormat as part of the Intl namespace because we polyfill it
+    const DurationFormat: typeof PolyfillDurationFormat;
   }
 }

@@ -9,9 +9,9 @@ import { expect, test } from "vitest";
 
 import { Initializer } from "../src/initializer";
 
-test("initBeforeReact sets font family from URL param", () => {
+test("initBeforeReact sets font family from URL param", async () => {
   window.location.hash = "#?font=DejaVu Sans";
-  Initializer.initBeforeReact();
+  await Initializer.initBeforeReact();
   expect(
     getComputedStyle(document.documentElement).getPropertyValue(
       "--font-family",
@@ -19,9 +19,9 @@ test("initBeforeReact sets font family from URL param", () => {
   ).toBe('"DejaVu Sans"');
 });
 
-test("initBeforeReact sets font scale from URL param", () => {
+test("initBeforeReact sets font scale from URL param", async () => {
   window.location.hash = "#?fontScale=1.2";
-  Initializer.initBeforeReact();
+  await Initializer.initBeforeReact();
   expect(
     getComputedStyle(document.documentElement).getPropertyValue("--font-scale"),
   ).toBe("1.2");
