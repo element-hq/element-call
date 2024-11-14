@@ -115,7 +115,7 @@
   "matrix_id": "Matrix-ID: {{id}}",
   "microphone_off": "Mikrofon aus",
   "microphone_on": "Mikrofon an",
-  "mute_microphone_button_label": "Mikrofon deaktivieren",
+  "mute_microphone_button_label": "Mikrofon stumm schalten",
   "participant_count_one": "{{count, number}}",
   "participant_count_other": "{{count, number}}",
   "qr_code": "QR-Code",
@@ -184,14 +184,15 @@
   "unauthenticated_view_body": "Noch nicht registriert? <2>Konto erstellen</2>",
   "unauthenticated_view_eula_caption": "Mit einem Klick auf „Los geht’s“ akzeptierst du unseren <2>Endbenutzer-Lizenzvertrag (EULA)</2>",
   "unauthenticated_view_login_button": "Melde dich mit deinem Konto an",
-  "unmute_microphone_button_label": "Mikrofon aktivieren",
+  "unmute_microphone_button_label": "Mikrofon einschalten",
   "version": "{{productName}} Version: {{version}}",
   "video_tile": {
     "always_show": "Immer anzeigen",
     "change_fit_contain": "An Fenster anpassen",
     "collapse": "Minimieren",
     "expand": "Erweitern",
-    "mute_for_me": "Für mich stummschalten",
+    "mute_for_me": "Für mich stumm schalten",
+    "muted_for_me": "Für mich stumm geschaltet",
     "volume": "Lautstärke"
   }
 }
