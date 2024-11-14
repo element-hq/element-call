@@ -5,13 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-/* Inter unexpectedly contains various codepoints which collide with emoji, even
-   when variation-16 is applied to request the emoji variant.  From eyeballing
-   the emoji picker, these are: 20e3, 23cf, 24c2, 25a0-25c1, 2665, 2764, 2b06, 2b1c.
-   Therefore we define a unicode-range to load which excludes the glyphs
-   (to avoid having to maintain a fork of Inter). */
-
 @layer normalize, compound-legacy, compound;
+
+@import url("@fontsource/inter/400.css");
+@import url("@fontsource/inter/500.css");
+@import url("@fontsource/inter/600.css");
+@import url("@fontsource/inter/700.css");
+@import url("@fontsource/inconsolata/400.css");
+@import url("@fontsource/inconsolata/700.css");
 
 @import url("normalize.css/normalize.css") layer(normalize);
 @import url("@vector-im/compound-design-tokens/assets/web/css/compound-design-tokens.css")
@@ -50,94 +51,6 @@ layer(compound);
   --cpd-color-border-accent: var(--cpd-color-green-1100);
   --stopgap-color-on-solid-accent: var(--cpd-color-text-primary);
   --stopgap-background-85: rgba(16, 19, 23, 0.85);
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-  unicode-range: var(--inter-unicode-range);
-  src:
-    url("/fonts/Inter/Inter-Regular.woff2") format("woff2"),
-    url("/fonts/Inter/Inter-Regular.woff") format("woff");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: italic;
-  font-weight: 400;
-  font-display: swap;
-  unicode-range: var(--inter-unicode-range);
-  src:
-    url("/fonts/Inter/Inter-Italic.woff2") format("woff2"),
-    url("/fonts/Inter/Inter-Italic.woff") format("woff");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 500;
-  font-display: swap;
-  unicode-range: var(--inter-unicode-range);
-  src:
-    url("/fonts/Inter/Inter-Medium.woff2") format("woff2"),
-    url("/fonts/Inter/Inter-Medium.woff") format("woff");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: italic;
-  font-weight: 500;
-  font-display: swap;
-  unicode-range: var(--inter-unicode-range);
-  src:
-    url("/fonts/Inter/Inter-MediumItalic.woff2") format("woff2"),
-    url("/fonts/Inter/Inter-MediumItalic.woff") format("woff");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  unicode-range: var(--inter-unicode-range);
-  src:
-    url("/fonts/Inter/Inter-SemiBold.woff2") format("woff2"),
-    url("/fonts/Inter/Inter-SemiBold.woff") format("woff");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: italic;
-  font-weight: 600;
-  font-display: swap;
-  unicode-range: var(--inter-unicode-range);
-  src:
-    url("/fonts/Inter/Inter-SemiBoldItalic.woff2") format("woff2"),
-    url("/fonts/Inter/Inter-SemiBoldItalic.woff") format("woff");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  unicode-range: var(--inter-unicode-range);
-  src:
-    url("/fonts/Inter/Inter-Bold.woff2") format("woff2"),
-    url("/fonts/Inter/Inter-Bold.woff") format("woff");
-}
-
-@font-face {
-  font-family: "Inter";
-  font-style: italic;
-  font-weight: 700;
-  font-display: swap;
-  unicode-range: var(--inter-unicode-range);
-  src:
-    url("/fonts/Inter/Inter-BoldItalic.woff2") format("woff2"),
-    url("/fonts/Inter/Inter-BoldItalic.woff") format("woff");
 }
 
 body {
@@ -183,10 +96,6 @@ body[data-platform="android"] {
 
 body[data-platform="ios"] {
   --cpd-font-family-sans: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
-}
-
-body[data-platform="desktop"] {
-  --cpd-font-family-sans: "Inter", sans-serif;
 }
 
 @layer compound-legacy {
