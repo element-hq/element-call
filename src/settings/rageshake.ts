@@ -28,7 +28,7 @@ Please see LICENSE in the repository root for full details.
 //    purge on startup to prevent logs from accumulating.
 
 import EventEmitter from "events";
-import { throttle } from "lodash";
+import { throttle } from "lodash-es";
 import { Logger, logger } from "matrix-js-sdk/src/logger";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import loglevel, { LoggingMethod } from "loglevel";

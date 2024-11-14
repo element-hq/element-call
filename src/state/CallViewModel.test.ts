@@ -23,7 +23,7 @@ import {
   RemoteParticipant,
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
-import { isEqual } from "lodash";
+import { isEqual } from "lodash-es";
 
 import { CallViewModel, Layout } from "./CallViewModel";
 import {
