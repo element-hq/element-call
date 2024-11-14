@@ -16,7 +16,7 @@ import { cleanup } from "@testing-library/react";
 import "vitest-axe/extend-expect";
 import { logger } from "matrix-js-sdk/src/logger";
 
-import EN_GB from "../public/locales/en-GB/app.json";
+import EN_GB from "../locales/en-GB/app.json";
 import { Config } from "./config/Config";
 
 // Bare-minimum i18n config

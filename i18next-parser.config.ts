@@ -22,7 +22,7 @@ export default {
     ],
   },
   locales: ["en-GB"],
-  output: "public/locales/$LOCALE/$NAMESPACE.json",
+  output: "locales/$LOCALE/$NAMESPACE.json",
   input: ["src/**/*.{ts,tsx}"],
   sort: true,
 };

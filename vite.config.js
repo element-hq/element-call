@@ -60,6 +60,25 @@ export default defineConfig(({ mode }) => {
     },
     build: {
       sourcemap: true,
+      rollupOptions: {
+        output: {
+          assetFileNames: ({ originalFileNames }) => {
+            if (originalFileNames) {
+              for (const name of originalFileNames) {
+                // Custom asset name for locales to include the locale code in the filename
+                const match = name.match(/locales\/([^/]+)\/(.+)\.json$/);
+                if (match) {
+                  const [, locale, filename] = match;
+                  return `assets/${locale}-${filename}-[hash].json`;
+                }
+              }
+            }
+
+            // Default naming fallback
+            return "assets/[name]-[hash][extname]";
+          },
+        },
+      },
     },
     plugins,
     resolve: {
