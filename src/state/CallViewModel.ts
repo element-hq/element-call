@@ -672,7 +672,7 @@ export class CallViewModel extends ViewModel {
     this.gridModeUserSelection.next(value);
   }
 
-  private readonly gridLayout: Observable<LayoutMedia> = combineLatest(
+  private readonly gridLayoutMedia: Observable<GridLayoutMedia> = combineLatest(
     [this.grid, this.spotlight],
     (grid, spotlight) => ({
       type: "grid",
@@ -683,28 +683,28 @@ export class CallViewModel extends ViewModel {
     }),
   );
 
-  private readonly spotlightLandscapeLayout: Observable<LayoutMedia> =
+  private readonly spotlightLandscapeLayoutMedia: Observable<SpotlightLandscapeLayoutMedia> =
     combineLatest([this.grid, this.spotlight], (grid, spotlight) => ({
       type: "spotlight-landscape",
       spotlight,
       grid,
     }));
 
-  private readonly spotlightPortraitLayout: Observable<LayoutMedia> =
+  private readonly spotlightPortraitLayoutMedia: Observable<SpotlightPortraitLayoutMedia> =
     combineLatest([this.grid, this.spotlight], (grid, spotlight) => ({
       type: "spotlight-portrait",
       spotlight,
       grid,
     }));
 
-  private readonly spotlightExpandedLayout: Observable<LayoutMedia> =
+  private readonly spotlightExpandedLayoutMedia: Observable<SpotlightExpandedLayoutMedia> =
     combineLatest([this.spotlight, this.pip], (spotlight, pip) => ({
       type: "spotlight-expanded",
       spotlight,
       pip: pip ?? undefined,
     }));
 
-  private readonly oneOnOneLayout: Observable<LayoutMedia | null> =
+  private readonly oneOnOneLayoutMedia: Observable<OneOnOneLayoutMedia | null> =
     this.mediaItems.pipe(
       map((mediaItems) => {
         if (mediaItems.length !== 2) return null;
@@ -722,9 +722,8 @@ export class CallViewModel extends ViewModel {
       }),
     );
 
-  private readonly pipLayout: Observable<LayoutMedia> = this.spotlight.pipe(
-    map((spotlight) => ({ type: "pip", spotlight })),
-  );
+  private readonly pipLayoutMedia: Observable<LayoutMedia> =
+    this.spotlight.pipe(map((spotlight) => ({ type: "pip", spotlight })));
 
   /**
    * The media to be used to produce a layout.
@@ -737,24 +736,24 @@ export class CallViewModel extends ViewModel {
             switchMap((gridMode) => {
               switch (gridMode) {
                 case "grid":
-                  return this.oneOnOneLayout.pipe(
+                  return this.oneOnOneLayoutMedia.pipe(
                     switchMap((oneOnOne) =>
-                      oneOnOne === null ? this.gridLayout : of(oneOnOne),
+                      oneOnOne === null ? this.gridLayoutMedia : of(oneOnOne),
                     ),
                   );
                 case "spotlight":
                   return this.spotlightExpanded.pipe(
                     switchMap((expanded) =>
                       expanded
-                        ? this.spotlightExpandedLayout
-                        : this.spotlightLandscapeLayout,
+                        ? this.spotlightExpandedLayoutMedia
+                        : this.spotlightLandscapeLayoutMedia,
                     ),
                   );
               }
             }),
           );
         case "narrow":
-          return this.oneOnOneLayout.pipe(
+          return this.oneOnOneLayoutMedia.pipe(
             switchMap((oneOnOne) =>
               oneOnOne === null
                 ? combineLatest(
@@ -762,12 +761,12 @@ export class CallViewModel extends ViewModel {
                     (grid, spotlight) =>
                       grid.length > smallMobileCallThreshold ||
                       spotlight.some((vm) => vm instanceof ScreenShareViewModel)
-                        ? this.spotlightPortraitLayout
-                        : this.gridLayout,
+                        ? this.spotlightPortraitLayoutMedia
+                        : this.gridLayoutMedia,
                   ).pipe(switchAll())
                 : // The expanded spotlight layout makes for a better one-on-one
                   // experience in narrow windows
-                  this.spotlightExpandedLayout,
+                  this.spotlightExpandedLayoutMedia,
             ),
           );
         case "flat":
@@ -777,14 +776,14 @@ export class CallViewModel extends ViewModel {
                 case "grid":
                   // Yes, grid mode actually gets you a "spotlight" layout in
                   // this window mode.
-                  return this.spotlightLandscapeLayout;
+                  return this.spotlightLandscapeLayoutMedia;
                 case "spotlight":
-                  return this.spotlightExpandedLayout;
+                  return this.spotlightExpandedLayoutMedia;
               }
             }),
           );
         case "pip":
-          return this.pipLayout;
+          return this.pipLayoutMedia;
       }
     }),
     this.scope.state(),
