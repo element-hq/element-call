@@ -6,9 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { ComponentProps, useCallback, useEffect, useState } from "react";
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import pako from "pako";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
   ClientEvent,
@@ -23,11 +20,14 @@ import { Config } from "../config/Config";
 import { ElementCallOpenTelemetry } from "../otel/otel";
 import { RageshakeRequestModal } from "../room/RageshakeRequestModal";
 
-const gzip = (text: string): Blob => {
+const gzip = async (text: string): Promise<Blob> => {
+  // pako is relatively large (200KB), so we only import it when needed
+  const { gzip: pakoGzip } = await import("pako");
+
   // encode as UTF-8
   const buf = new TextEncoder().encode(text);
   // compress
-  return new Blob([pako.gzip(buf)]);
+  return new Blob([pakoGzip(buf)]);
 };
 
 /**
@@ -253,12 +253,14 @@ export function useSubmitRageshake(): {
           const logs = await getLogsForReport();
 
           for (const entry of logs) {
-            body.append("compressed-log", gzip(entry.lines), entry.id);
+            body.append("compressed-log", await gzip(entry.lines), entry.id);
           }
 
           body.append(
             "file",
-            gzip(ElementCallOpenTelemetry.instance.rageshakeProcessor!.dump()),
+            await gzip(
+              ElementCallOpenTelemetry.instance.rageshakeProcessor!.dump(),
+            ),
             "traces.json.gz",
           );
         }
