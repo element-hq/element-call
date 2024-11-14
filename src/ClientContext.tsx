@@ -16,19 +16,13 @@ import {
   useMemo,
 } from "react";
 import { useHistory } from "react-router-dom";
-import {
-  ClientEvent,
-  ICreateClientOpts,
-  MatrixClient,
-} from "matrix-js-sdk/src/client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
 import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
-import { MatrixError } from "matrix-js-sdk/src/matrix";
-import { WidgetApi } from "matrix-widget-api";
+import { ClientEvent, type MatrixClient } from "matrix-js-sdk/src/client";
 
+import type { WidgetApi } from "matrix-widget-api";
 import { ErrorView } from "./FullScreenView";
-import { fallbackICEServerAllowed, initClient } from "./utils/matrix";
 import { widget } from "./widget";
 import {
   PosthogAnalytics,
@@ -36,7 +30,6 @@ import {
 } from "./analytics/PosthogAnalytics";
 import { translatedError } from "./TranslatedError";
 import { useEventTarget } from "./useEvents";
-import { Config } from "./config/Config";
 
 declare global {
   interface Window {
@@ -359,7 +352,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   );
 };
 
-type InitResult = {
+export type InitResult = {
   widgetApi: WidgetApi | null;
   client: MatrixClient;
   passwordlessUser: boolean;
@@ -376,50 +369,8 @@ async function loadClient(): Promise<InitResult | null> {
       passwordlessUser: false,
     };
   } else {
-    // We're running as a standalone application
-    try {
-      const session = loadSession();
-      if (!session) {
-        logger.log("No session stored; continuing without a client");
-        return null;
-      }
-
-      logger.log("Using a standalone client");
-
-      /* eslint-disable camelcase */
-      const { user_id, device_id, access_token, passwordlessUser } = session;
-      const initClientParams: ICreateClientOpts = {
-        baseUrl: Config.defaultHomeserverUrl()!,
-        accessToken: access_token,
-        userId: user_id,
-        deviceId: device_id,
-        fallbackICEServerAllowed: fallbackICEServerAllowed,
-        livekitServiceURL: Config.get().livekit?.livekit_service_url,
-      };
-
-      try {
-        const client = await initClient(initClientParams, true);
-        return {
-          widgetApi: null,
-          client,
-          passwordlessUser,
-        };
-      } catch (err) {
-        if (err instanceof MatrixError && err.errcode === "M_UNKNOWN_TOKEN") {
-          // We can't use this session anymore, so let's log it out
-          logger.log(
-            "The session from local store is invalid; continuing without a client",
-          );
-          clearSession();
-          // returning null = "no client` pls register" (undefined = "loading" which is the current value when reaching this line)
-          return null;
-        }
-        throw err;
-      }
-    } catch (err) {
-      clearSession();
-      throw err;
-    }
+    const { initSPA } = await import("./utils/spa");
+    return initSPA(loadSession, clearSession);
   }
 }
 
