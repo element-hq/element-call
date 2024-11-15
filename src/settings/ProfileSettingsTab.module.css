@@ -8,7 +8,8 @@ Please see LICENSE in the repository root for full details.
 .content {
   width: 100%;
   max-width: 350px;
-  align-self: center;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .avatarFieldRow {

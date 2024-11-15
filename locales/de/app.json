@@ -163,8 +163,8 @@
     "preferences_tab": {
       "reactions_play_sound_description": "Einen Soundeffekt abspielen, wenn jemand eine Reaktion sendet",
       "reactions_play_sound_label": "Reaktionstöne abspielen",
-      "reactions_show_description": "Reaktionen anzeigen",
-      "reactions_show_label": "Zeige eine Animation, wenn jemand eine Reaktion sendet.",
+      "reactions_show_description": "Zeige eine Animation, wenn jemand eine Reaktion sendet.",
+      "reactions_show_label": "Reaktionen anzeigen",
       "reactions_title": "Reaktionen"
     },
     "preferences_tab_body": "Hier können zusätzliche Optionen für individuelle Anforderungen eingestellt werden",

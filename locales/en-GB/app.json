@@ -163,8 +163,8 @@
     "preferences_tab": {
       "reactions_play_sound_description": "Play a sound effect when anyone sends a reaction into a call.",
       "reactions_play_sound_label": "Play reaction sounds",
-      "reactions_show_description": "Show reactions",
-      "reactions_show_label": "Show an animation when anyone sends a reaction.",
+      "reactions_show_description": "Show an animation when anyone sends a reaction.",
+      "reactions_show_label": "Show reactions",
       "reactions_title": "Reactions"
     },
     "preferences_tab_body": "Here you can configure extra options for an improved experience",
