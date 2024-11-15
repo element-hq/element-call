@@ -6,6 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 .modal {
+  --inset-inline: 520px;
   display: flex;
   flex-direction: column;
 }
@@ -35,7 +36,7 @@ Please see LICENSE in the repository root for full details.
 .drawer {
   background: var(--cpd-color-bg-canvas-default);
   inset-block-end: 0;
-  inset-inline: max(0px, calc((100% - 520px) / 2));
+  inset-inline: max(0px, calc((100% - var(--inset-inline)) / 2));
   max-block-size: 90%;
   border-start-start-radius: var(--border-radius);
   border-start-end-radius: var(--border-radius);

@@ -5,24 +5,16 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
+import { Button as CpdButton, Tooltip, Alert } from "@vector-im/compound-web";
 import {
-  Button as CpdButton,
-  Tooltip,
-  Search,
-  Form,
-  Alert,
-} from "@vector-im/compound-web";
-import {
-  SearchIcon,
-  CloseIcon,
   RaisedHandSolidIcon,
   ReactionIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import {
-  ChangeEventHandler,
   ComponentPropsWithoutRef,
   FC,
-  KeyboardEventHandler,
   ReactNode,
   useCallback,
   useEffect,
@@ -84,43 +76,11 @@ export function ReactionPopupMenu({
   canReact: boolean;
 }): ReactNode {
   const { t } = useTranslation();
-  const [searchText, setSearchText] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
-  const onSearch = useCallback<ChangeEventHandler<HTMLInputElement>>((ev) => {
-    ev.preventDefault();
-    setSearchText(ev.target.value.trim().toLocaleLowerCase());
-  }, []);
+  const [isFullyExpanded, setExpanded] = useState(false);
 
   const filteredReactionSet = useMemo(
-    () =>
-      ReactionSet.filter(
-        (reaction) =>
-          !isSearching ||
-          (!!searchText &&
-            (reaction.name.startsWith(searchText) ||
-              reaction.alias?.some((a) => a.startsWith(searchText)))),
-      ).slice(0, 6),
-    [searchText, isSearching],
-  );
-
-  const onSearchKeyDown = useCallback<KeyboardEventHandler<never>>(
-    (ev) => {
-      if (ev.key === "Enter") {
-        ev.preventDefault();
-        if (!canReact) {
-          return;
-        }
-        if (filteredReactionSet.length !== 1) {
-          return;
-        }
-        sendReaction(filteredReactionSet[0]);
-        setIsSearching(false);
-      } else if (ev.key === "Escape") {
-        ev.preventDefault();
-        setIsSearching(false);
-      }
-    },
-    [sendReaction, filteredReactionSet, canReact, setIsSearching],
+    () => (isFullyExpanded ? ReactionSet : ReactionSet.slice(0, 5)),
+    [isFullyExpanded],
   );
   const label = isHandRaised ? t("action.lower_hand") : t("action.raise_hand");
   return (
@@ -148,35 +108,15 @@ export function ReactionPopupMenu({
           </Tooltip>
         </section>
         <div className={styles.verticalSeperator} />
-        <section>
-          {isSearching ? (
-            <>
-              <Form.Root className={styles.searchForm}>
-                <Search
-                  required
-                  value={searchText}
-                  name="reactionSearch"
-                  placeholder={t("reaction_search")}
-                  onChange={onSearch}
-                  onKeyDown={onSearchKeyDown}
-                  // This is a reasonable use of autofocus, we are focusing when
-                  // the search button is clicked (which matches the Element Web reaction picker)
-                  // eslint-disable-next-line jsx-a11y/no-autofocus
-                  autoFocus
-                />
-                <CpdButton
-                  Icon={CloseIcon}
-                  aria-label={t("action.close_search")}
-                  size="sm"
-                  kind="destructive"
-                  onClick={() => setIsSearching(false)}
-                />
-              </Form.Root>
-            </>
-          ) : null}
-          <menu className={styles.reactionsMenu}>
+        <section className={styles.reactionsMenuSection}>
+          <menu
+            className={classNames(
+              isFullyExpanded && styles.reactionsMenuExpanded,
+              styles.reactionsMenu,
+            )}
+          >
             {filteredReactionSet.map((reaction) => (
-              <li className={styles.reactionPopupMenuItem} key={reaction.name}>
+              <li key={reaction.name}>
                 <Tooltip label={reaction.name}>
                   <CpdButton
                     kind="secondary"
@@ -191,21 +131,23 @@ export function ReactionPopupMenu({
             ))}
           </menu>
         </section>
-        {!isSearching ? (
-          <section style={{ marginLeft: "var(--cpd-separator-spacing)" }}>
-            <li key="search" className={styles.reactionPopupMenuItem}>
-              <Tooltip label={t("common.search")}>
-                <CpdButton
-                  iconOnly
-                  aria-label={t("action.open_search")}
-                  Icon={SearchIcon}
-                  kind="tertiary"
-                  onClick={() => setIsSearching(true)}
-                />
-              </Tooltip>
-            </li>
-          </section>
-        ) : null}
+        <section style={{ marginLeft: "var(--cpd-separator-spacing)" }}>
+          <Tooltip
+            label={
+              isFullyExpanded ? t("action.show_less") : t("action.show_more")
+            }
+          >
+            <CpdButton
+              iconOnly
+              aria-label={
+                isFullyExpanded ? t("action.show_less") : t("action.show_more")
+              }
+              Icon={isFullyExpanded ? ChevronUpIcon : ChevronDownIcon}
+              kind="tertiary"
+              onClick={() => setExpanded(!isFullyExpanded)}
+            />
+          </Tooltip>
+        </section>
       </div>
     </>
   );
@@ -335,12 +277,13 @@ export function ReactionToggleButton({
         title={t("action.pick_reaction")}
         hideHeader
         classNameModal={styles.reactionPopupMenuModal}
+        className={styles.reactionPopupMenuRoot}
         onDismiss={() => setShowReactionsMenu(false)}
       >
         <ReactionPopupMenu
           errorText={errorText}
           isHandRaised={isHandRaised}
-          canReact={canReact}
+          canReact={!busy && canReact}
           sendReaction={(reaction) => void sendRelation(reaction)}
           toggleRaisedHand={toggleRaisedHand}
         />

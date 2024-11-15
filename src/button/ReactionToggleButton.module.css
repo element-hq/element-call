@@ -3,76 +3,97 @@
 }
 
 .reactionPopupMenu {
+  --reaction-button-padding: 10px;
+  --reaction-button-fontsize: 20px;
+  --reaction-button-gap: var(--cpd-separator-spacing);
   display: flex;
+  width: fit-content;
 }
 
-.reactionPopupMenuModal {
-  width: fit-content !important;
-  top: 82vh !important;
+@media (max-width: 420px) {
+  .reactionPopupMenu {
+    --reaction-button-padding: 8px;
+    --reaction-button-fontsize: 16px;
+    --reaction-button-gap: 6px;
+  }
 }
 
-.reactionPopupMenuModal > div > div {
-  padding-inline: var(--cpd-space-6x) !important;
-  padding-block: var(--cpd-space-6x) var(--cpd-space-8x) !important;
+div.reactionPopupMenuRoot.reactionPopupMenuModal {
+  --overlay-top: 82vh;
+  width: fit-content;
 }
 
-.reactionPopupMenu menu {
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--cpd-separator-spacing);
+div.reactionPopupMenuRoot {
+  /* Center the drawer */
+  --inset-inline: 30em;
+}
+
+.reactionPopupMenuRoot > div {
+  width: fit-content;
+  max-width: 100vw;
+}
+
+div.reactionPopupMenuRoot.reactionPopupMenuModal > div > div {
+  padding-inline: var(--cpd-space-6x);
+  padding-block: var(--cpd-space-6x);
 }
 
 .reactionPopupMenu section {
   height: fit-content;
-  margin-top: auto;
-  margin-bottom: auto;
+  flex: 1;
+  max-width: fit-content;
 }
 
-.reactionPopupMenuItem {
-  list-style: none;
+.reactionPopupMenu section.reactionsMenuSection {
+  margin: auto 0;
+  flex: auto;
 }
 
 .reactionsMenu {
-  min-height: 3em;
+  margin: 0;
+  padding: 0;
+  flex-grow: 1;
+  gap: var(--reaction-button-gap);
+  /* Height of 3 rows plus padding. */
+  max-height: calc(
+    ((var(--reaction-button-fontsize) + var(--cpd-separator-spacing)) * 2) * 3
+  );
+  max-width: calc(
+    ((var(--reaction-button-fontsize) + var(--cpd-separator-spacing)) * 2) * 5
+  );
+  overflow-x: hidden;
+  overflow-y: auto;
+  list-style: none;
+  flex-wrap: wrap;
+  display: flex;
+  flex-wrap: wrap;
+  flex-direction: row;
+  justify-content: start;
+  align-items: auto;
+  align-content: start;
+  width: fit-content;
+}
+
+.reactionsMenu > * {
+  flex: 0 0 auto;
 }
 
 .reactionButton {
-  padding: 1em;
-  font-size: 1.6em;
-  width: 1.4em;
-  height: 1.4em;
+  padding: var(--reaction-button-padding);
   border-radius: var(--cpd-radius-pill-effect);
-}
-
-@media (max-width: 800px) {
-  .reactionButton {
-    padding: 1em;
-    font-size: 1em;
-    width: 1em;
-    height: 1em;
-    min-block-size: unset;
-  }
+  font-size: var(--reaction-button-fontsize);
+  min-block-size: unset;
+  border: none;
+  aspect-ratio: 1 / 1;
+  height: 100%;
 }
 
 .verticalSeperator {
   background-color: var(--cpd-color-gray-800);
-  width: 1px;
+  width: 2px;
   height: auto;
   margin-left: var(--cpd-separator-spacing);
   margin-right: var(--cpd-separator-spacing);
-}
-
-.searchForm {
-  display: flex;
-  flex-direction: row;
-  gap: var(--cpd-separator-spacing);
-  margin-bottom: var(--cpd-space-3x);
-}
-
-.searchForm > label {
-  flex: auto;
 }
 
 .alert {

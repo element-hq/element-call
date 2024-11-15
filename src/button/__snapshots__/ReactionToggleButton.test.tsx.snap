@@ -10,7 +10,7 @@ exports[`Can close search 1`] = `
     aria-expanded="true"
     aria-haspopup="true"
     aria-label="action.raise_hand_or_send_reaction"
-    aria-labelledby=":rec:"
+    aria-labelledby=":r9l:"
     class="_button_i91xf_17 _has-icon_i91xf_66 _icon-only_i91xf_59"
     data-kind="primary"
     data-size="lg"
@@ -36,16 +36,19 @@ exports[`Can close search 1`] = `
 </div>
 `;
 
-exports[`Can close search with the escape key 1`] = `
-<div>
+exports[`Can fully expand emoji picker 1`] = `
+<div
+  aria-hidden="true"
+  data-aria-hidden="true"
+>
   <button
     aria-disabled="false"
-    aria-expanded="false"
+    aria-expanded="true"
     aria-haspopup="true"
     aria-label="action.raise_hand_or_send_reaction"
-    aria-labelledby=":rhh:"
+    aria-labelledby=":r6c:"
     class="_button_i91xf_17 _has-icon_i91xf_66 _icon-only_i91xf_59"
-    data-kind="secondary"
+    data-kind="primary"
     data-size="lg"
     role="button"
     tabindex="0"
@@ -76,7 +79,7 @@ exports[`Can lower hand 1`] = `
     aria-expanded="false"
     aria-haspopup="true"
     aria-label="action.raise_hand_or_send_reaction"
-    aria-labelledby=":r3i:"
+    aria-labelledby=":r36:"
     class="_button_i91xf_17 raisedButton _has-icon_i91xf_66 _icon-only_i91xf_59"
     data-kind="primary"
     data-size="lg"
@@ -142,81 +145,9 @@ exports[`Can raise hand 1`] = `
     aria-expanded="false"
     aria-haspopup="true"
     aria-label="action.raise_hand_or_send_reaction"
-    aria-labelledby=":r1p:"
+    aria-labelledby=":r1j:"
     class="_button_i91xf_17 _has-icon_i91xf_66 _icon-only_i91xf_59"
     data-kind="secondary"
-    data-size="lg"
-    role="button"
-    tabindex="0"
-  >
-    <svg
-      aria-hidden="true"
-      fill="currentColor"
-      height="24"
-      viewBox="0 0 24 24"
-      width="24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M15.536 15.536a1 1 0 0 0-1.415-1.415 2.987 2.987 0 0 1-2.12.879 2.988 2.988 0 0 1-2.122-.879 1 1 0 1 0-1.414 1.415A4.987 4.987 0 0 0 12 17c1.38 0 2.632-.56 3.536-1.464ZM10 10.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm5.5 1.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
-      />
-      <path
-        d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10Zm-2 0a8 8 0 1 0-16 0 8 8 0 0 0 16 0Z"
-      />
-    </svg>
-  </button>
-</div>
-`;
-
-exports[`Can search for and send emoji 1`] = `
-<div
-  aria-hidden="true"
-  data-aria-hidden="true"
->
-  <button
-    aria-disabled="false"
-    aria-expanded="true"
-    aria-haspopup="true"
-    aria-label="action.raise_hand_or_send_reaction"
-    aria-labelledby=":r74:"
-    class="_button_i91xf_17 _has-icon_i91xf_66 _icon-only_i91xf_59"
-    data-kind="primary"
-    data-size="lg"
-    role="button"
-    tabindex="0"
-  >
-    <svg
-      aria-hidden="true"
-      fill="currentColor"
-      height="24"
-      viewBox="0 0 24 24"
-      width="24"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M15.536 15.536a1 1 0 0 0-1.415-1.415 2.987 2.987 0 0 1-2.12.879 2.988 2.988 0 0 1-2.122-.879 1 1 0 1 0-1.414 1.415A4.987 4.987 0 0 0 12 17c1.38 0 2.632-.56 3.536-1.464ZM10 10.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm5.5 1.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
-      />
-      <path
-        d="M22 12c0 5.523-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2s10 4.477 10 10Zm-2 0a8 8 0 1 0-16 0 8 8 0 0 0 16 0Z"
-      />
-    </svg>
-  </button>
-</div>
-`;
-
-exports[`Can search for and send emoji with the keyboard 1`] = `
-<div
-  aria-hidden="true"
-  data-aria-hidden="true"
->
-  <button
-    aria-disabled="false"
-    aria-expanded="true"
-    aria-haspopup="true"
-    aria-label="action.raise_hand_or_send_reaction"
-    aria-labelledby=":ra3:"
-    class="_button_i91xf_17 _has-icon_i91xf_66 _icon-only_i91xf_59"
-    data-kind="primary"
     data-size="lg"
     role="button"
     tabindex="0"
