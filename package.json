@@ -84,7 +84,6 @@
     "history": "^4.0.0",
     "i18next": "^23.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
-    "i18next-http-backend": "^2.0.0",
     "i18next-parser": "^9.0.0",
     "jsdom": "^25.0.0",
     "knip": "^5.27.2",

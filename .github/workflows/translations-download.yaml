@@ -24,7 +24,7 @@ jobs:
         run: "yarn install --frozen-lockfile"
 
       - name: Prune i18n
-        run: "rm -R public/locales"
+        run: "rm -R locales"
 
       - name: Download translation files
         uses: localazy/download@0a79880fb66150601e3b43606fab69c88123c087 # v1.1.0
@@ -32,7 +32,7 @@ jobs:
           groups: "-p includeSourceLang:true"
 
       - name: Fix the owner of the downloaded files
-        run: "sudo chown runner:docker -R public/locales"
+        run: "sudo chown runner:docker -R locales"
 
       - name: Prettier
         run: yarn prettier:format
