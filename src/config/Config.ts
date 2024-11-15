@@ -28,11 +28,11 @@ export class Config {
       const internalInstance = new Config();
       Config.internalInstance = internalInstance;
 
-      Config.internalInstance.initPromise = downloadConfig(
-        "../config.json",
-      ).then((config) => {
-        internalInstance.config = merge({}, DEFAULT_CONFIG, config);
-      });
+      Config.internalInstance.initPromise = downloadConfig("/config.json").then(
+        (config) => {
+          internalInstance.config = merge({}, DEFAULT_CONFIG, config);
+        },
+      );
     }
     return Config.internalInstance.initPromise;
   }
@@ -74,11 +74,7 @@ async function downloadConfig(
   configJsonFilename: string,
 ): Promise<ConfigOptions> {
   const url = new URL(configJsonFilename, window.location.href);
-  url.searchParams.set("cachebuster", Date.now().toString());
-  const res = await fetch(url, {
-    cache: "no-cache",
-    method: "GET",
-  });
+  const res = await fetch(url);
 
   if (!res.ok || res.status === 404 || res.status === 0) {
     // Lack of a config isn't an error, we should just use the defaults.
