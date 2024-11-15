@@ -1,19 +1,25 @@
 .reactionIndicatorWidget {
   display: flex;
-  background-color: var(--cpd-color-bg-subtle-primary);
+  /* background-color: var(--cpd-color-bg-subtle-primary); */
   border-radius: var(--cpd-radius-pill-effect);
-  color: var(--cpd-color-icon-secondary);
+  box-shadow: 0 0 var(--cpd-space-2x) #00000040;
+  background: "ffffff40";
+  backdrop-filter: blur(10px);
+  outline: var(--cpd-border-width-1) solid var(--cpd-color-alpha-gray-400);
+  outline-offset: calc(-1 * var(--cpd-border-width-1));
 }
 
 .reactionIndicatorWidget > p {
   padding: none;
   margin-top: auto;
   margin-bottom: auto;
-  width: 4em;
+  width: 3em;
 }
 
 .reactionIndicatorWidgetLarge > p {
   padding: var(--cpd-space-2x);
+  padding-right: var(--cpd-space-4x);
+  padding-left: 0;
 }
 
 .reactionLarge {
@@ -25,13 +31,13 @@
 .reaction {
   margin: var(--cpd-space-1x);
   color: var(--cpd-color-icon-secondary);
-  background-color: var(--cpd-color-icon-secondary);
+  /* background-color: var(--cpd-color-icon-secondary); */
   display: flex;
   align-items: center;
   border-radius: var(--cpd-radius-pill-effect);
   user-select: none;
   overflow: hidden;
-  box-shadow: var(--small-drop-shadow);
+  /* box-shadow: var(--small-drop-shadow); */
   box-sizing: border-box;
   max-inline-size: 100%;
   max-width: fit-content;

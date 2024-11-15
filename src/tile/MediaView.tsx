@@ -102,7 +102,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           )}
         </div>
         <div className={styles.fg}>
-          <div style={{ display: "flex" }}>
+          <div style={{ display: "flex", gap: "var(--cpd-space-1x)" }}>
             <RaisedHandIndicator
               raisedHandTime={raisedHandTime}
               miniature={avatarSize < 96}
