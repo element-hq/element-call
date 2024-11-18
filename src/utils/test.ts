@@ -4,7 +4,7 @@ Copyright 2023, 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
-import { map, Observable, of } from "rxjs";
+import { map, Observable, of, SchedulerLike } from "rxjs";
 import { RunHelpers, TestScheduler } from "rxjs/testing";
 import { expect, vi } from "vitest";
 import { RoomMember, Room as MatrixRoom } from "matrix-js-sdk/src/matrix";
@@ -39,15 +39,23 @@ export interface OurRunHelpers extends RunHelpers {
   schedule: (marbles: string, actions: Record<string, () => void>) => void;
 }
 
+interface TestRunnerGlobal {
+  rxjsTestScheduler?: SchedulerLike;
+}
+
 /**
  * Run Observables with a scheduler that virtualizes time, for testing purposes.
  */
 export function withTestScheduler(
   continuation: (helpers: OurRunHelpers) => void,
 ): void {
-  new TestScheduler((actual, expected) => {
+  const scheduler = new TestScheduler((actual, expected) => {
     expect(actual).deep.equals(expected);
-  }).run((helpers) =>
+  });
+  // we set the test scheduler as a global so that you can watch it in a debugger
+  // and get the frame number. e.g. `rxjsTestScheduler?.now()`
+  (global as unknown as TestRunnerGlobal).rxjsTestScheduler = scheduler;
+  scheduler.run((helpers) =>
     continuation({
       ...helpers,
       schedule(marbles, actions) {
