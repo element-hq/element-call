@@ -1,6 +1,6 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:base"],
+  "extends": ["config:recommended"],
   "packageRules": [
     {
       "groupName": "all non-major dependencies",
@@ -26,8 +26,8 @@
     },
     {
       "groupName": "Compound",
-      "matchPackagePrefixes": ["@vector-im/compound-"],
-      "schedule": "before 5am on Tuesday and Friday"
+      "schedule": "before 5am on Tuesday and Friday",
+      "matchPackageNames": ["@vector-im/compound-{/,}**"]
     },
     {
       "groupName": "LiveKit client",
@@ -35,7 +35,7 @@
     },
     {
       "groupName": "LiveKit components",
-      "matchPackagePrefixes": ["@livekit/components-"]
+      "matchPackageNames": ["@livekit/components-{/,}**"]
     },
     {
       "groupName": "Vaul",
