@@ -8,9 +8,9 @@ Please see LICENSE in the repository root for full details.
 import { Button as CpdButton, Tooltip, Alert } from "@vector-im/compound-web";
 import {
   RaisedHandSolidIcon,
-  ReactionIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  ReactionSolidIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import {
   ComponentPropsWithoutRef,
@@ -47,15 +47,14 @@ const InnerButton: FC<InnerButtonProps> = ({ raised, open, ...props }) => {
   const { t } = useTranslation();
 
   return (
-    <Tooltip label={t("action.raise_hand_or_send_reaction")}>
+    <Tooltip label={t("common.reactions")}>
       <CpdButton
         className={classNames(raised && styles.raisedButton)}
         aria-expanded={open}
         aria-haspopup
-        aria-label={t("action.raise_hand_or_send_reaction")}
         kind={raised || open ? "primary" : "secondary"}
         iconOnly
-        Icon={raised ? RaisedHandSolidIcon : ReactionIcon}
+        Icon={raised ? RaisedHandSolidIcon : ReactionSolidIcon}
         {...props}
       />
     </Tooltip>
