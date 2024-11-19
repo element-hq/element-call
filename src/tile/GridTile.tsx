@@ -97,7 +97,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
       },
       [vm],
     );
-    const { raisedHands, lowerHand, reactions } = useReactions();
+    const { raisedHands, toggleRaisedHand, reactions } = useReactions();
 
     const AudioIcon = locallyMuted
       ? VolumeOffSolidIcon
@@ -127,8 +127,9 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     const handRaised: Date | undefined = raisedHands[vm.member?.userId ?? ""];
     const currentReaction: ReactionOption | undefined =
       reactions[vm.member?.userId ?? ""];
-    const raisedHandOnClick =
-      vm.local && handRaised ? (): void => void lowerHand() : undefined;
+    const raisedHandOnClick = vm.local
+      ? (): void => void toggleRaisedHand()
+      : undefined;
 
     const showSpeaking = showSpeakingIndicators && speaking;
 

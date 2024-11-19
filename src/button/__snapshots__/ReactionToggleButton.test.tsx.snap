@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Can close search 1`] = `
+exports[`Can close reaction dialog 1`] = `
 <div
   aria-hidden="true"
   data-aria-hidden="true"
