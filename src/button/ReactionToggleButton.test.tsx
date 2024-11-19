@@ -53,7 +53,7 @@ test("Can open menu", async () => {
   const { getByLabelText, container } = render(
     <TestComponent rtcSession={rtcSession} room={room} />,
   );
-  await user.click(getByLabelText("action.raise_hand_or_send_reaction"));
+  await user.click(getByLabelText("common.reactions"));
   expect(container).toMatchSnapshot();
 });
 
@@ -64,7 +64,7 @@ test("Can raise hand", async () => {
   const { getByLabelText, container } = render(
     <TestComponent rtcSession={rtcSession} room={room} />,
   );
-  await user.click(getByLabelText("action.raise_hand_or_send_reaction"));
+  await user.click(getByLabelText("common.reactions"));
   await user.click(getByLabelText("action.raise_hand"));
   expect(room.testSentEvents).toEqual([
     [
@@ -90,7 +90,7 @@ test("Can lower hand", async () => {
     <TestComponent rtcSession={rtcSession} room={room} />,
   );
   const reactionEvent = room.testSendHandRaise(memberEventAlice, membership);
-  await user.click(getByLabelText("action.raise_hand_or_send_reaction"));
+  await user.click(getByLabelText("common.reactions"));
   await user.click(getByLabelText("action.lower_hand"));
   expect(room.testRedactedEvents).toEqual([[undefined, reactionEvent]]);
   expect(container).toMatchSnapshot();
@@ -103,7 +103,7 @@ test("Can react with emoji", async () => {
   const { getByLabelText, getByText } = render(
     <TestComponent rtcSession={rtcSession} room={room} />,
   );
-  await user.click(getByLabelText("action.raise_hand_or_send_reaction"));
+  await user.click(getByLabelText("common.reactions"));
   await user.click(getByText("🐶"));
   expect(room.testSentEvents).toEqual([
     [
@@ -128,7 +128,7 @@ test("Can fully expand emoji picker", async () => {
   const { getByText, container, getByLabelText } = render(
     <TestComponent rtcSession={rtcSession} room={room} />,
   );
-  await user.click(getByLabelText("action.raise_hand_or_send_reaction"));
+  await user.click(getByLabelText("common.reactions"));
   await user.click(getByLabelText("action.show_more"));
   expect(container).toMatchSnapshot();
   await user.click(getByText("🦗"));
@@ -156,7 +156,7 @@ test("Can close search", async () => {
   const { getByLabelText, container } = render(
     <TestComponent rtcSession={rtcSession} room={room} />,
   );
-  await user.click(getByLabelText("action.raise_hand_or_send_reaction"));
+  await user.click(getByLabelText("common.reactions"));
   await user.click(getByLabelText("action.show_more"));
   await user.click(getByLabelText("action.show_less"));
   expect(container).toMatchSnapshot();
