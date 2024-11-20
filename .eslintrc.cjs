@@ -37,6 +37,7 @@ module.exports = {
     "@typescript-eslint/promise-function-async": "error",
     "@typescript-eslint/require-await": "error",
     "@typescript-eslint/await-thenable": "error",
+    "rxjs/no-exposed-subjects": "error",
   },
   settings: {
     react: {
