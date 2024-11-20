@@ -260,7 +260,6 @@ class UserMedia {
         ),
       ),
       startWith(false),
-      distinctUntilChanged(),
       // Make this Observable hot so that the timers don't reset when you
       // resubscribe
       this.scope.state(),
