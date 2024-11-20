@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useCallback, useMemo, useState } from "react";
+import { FC, useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Button } from "@vector-im/compound-web";
@@ -16,6 +16,7 @@ import { usePreviewTracks } from "@livekit/components-react";
 import { LocalVideoTrack, Track } from "livekit-client";
 import { useObservable } from "observable-hooks";
 import { map } from "rxjs";
+import { BackgroundBlur } from "@livekit/track-processors";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -32,12 +33,14 @@ import {
   VideoButton,
 } from "../button/Button";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
+import { backgroundBlur as backgroundBlurSettings } from "../settings/settings";
 import { useMediaQuery } from "../useMediaQuery";
 import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useInitial } from "../useInitial";
-import { useSwitchCamera } from "./useSwitchCamera";
+import { useSwitchCamera as useShowSwitchCamera } from "./useSwitchCamera";
+import { useSetting } from "../settings/settings";
 
 interface Props {
   client: MatrixClient;
@@ -108,6 +111,9 @@ export const LobbyView: FC<Props> = ({
       muteStates.audio.enabled && { deviceId: devices.audioInput.selectedId },
   );
 
+  // eslint-disable-next-line new-cap
+  const blur = useMemo(() => BackgroundBlur(15), []);
+
   const localTrackOptions = useMemo(
     () => ({
       // The only reason we request audio here is to get the audio permission
@@ -119,12 +125,15 @@ export const LobbyView: FC<Props> = ({
       audio: Object.assign({}, initialAudioOptions),
       video: muteStates.video.enabled && {
         deviceId: devices.videoInput.selectedId,
+        // It should be possible to set a processor here:
+        // processor: blur,
+        // This causes a crash currently hence we do the effect below...
       },
     }),
     [
       initialAudioOptions,
-      devices.videoInput.selectedId,
       muteStates.video.enabled,
+      devices.videoInput.selectedId,
     ],
   );
 
@@ -146,7 +155,21 @@ export const LobbyView: FC<Props> = ({
     [tracks],
   );
 
-  const switchCamera = useSwitchCamera(
+  const [showBackgroundBlur] = useSetting(backgroundBlurSettings);
+
+  useEffect(() => {
+    const updateBlur = async (showBlur: boolean): Promise<void> => {
+      if (showBlur && !videoTrack?.getProcessor()) {
+        // eslint-disable-next-line new-cap
+        await videoTrack?.setProcessor(blur);
+      } else {
+        await videoTrack?.stopProcessor();
+      }
+    };
+    if (videoTrack) void updateBlur(showBackgroundBlur);
+  }, [videoTrack, showBackgroundBlur, blur]);
+
+  const showSwitchCamera = useShowSwitchCamera(
     useObservable(
       (inputs) => inputs.pipe(map(([video]) => video)),
       [videoTrack],
@@ -208,7 +231,9 @@ export const LobbyView: FC<Props> = ({
               onClick={onVideoPress}
               disabled={muteStates.video.setEnabled === null}
             />
-            {switchCamera && <SwitchCameraButton onClick={switchCamera} />}
+            {showSwitchCamera && (
+              <SwitchCameraButton onClick={showSwitchCamera} />
+            )}
             <SettingsButton onClick={openSettings} />
             {!confineToRoom && <EndCallButton onClick={onLeaveClick} />}
           </div>

@@ -9,7 +9,9 @@ import {
   ConnectionState,
   E2EEOptions,
   ExternalE2EEKeyProvider,
+  LocalTrackPublication,
   Room,
+  RoomEvent,
   RoomOptions,
   Track,
 } from "livekit-client";
@@ -17,6 +19,7 @@ import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { BackgroundBlur } from "@livekit/track-processors";
 
 import { defaultLiveKitOptions } from "./options";
 import { SFUConfig } from "./openIDSFU";
@@ -26,6 +29,7 @@ import {
   MediaDevices,
   useMediaDevices,
 } from "./MediaDevicesContext";
+import { backgroundBlur as backgroundBlurSettings } from "../settings/settings";
 import {
   ECConnectionState,
   useECConnectionState,
@@ -33,6 +37,7 @@ import {
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
 import { E2eeType } from "../e2ee/e2eeType";
 import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { useSetting } from "../settings/settings";
 
 interface UseLivekitResult {
   livekitRoom?: Room;
@@ -78,13 +83,16 @@ export function useLiveKit(
   const initialMuteStates = useRef<MuteStates>(muteStates);
   const devices = useMediaDevices();
   const initialDevices = useRef<MediaDevices>(devices);
-
+  // eslint-disable-next-line new-cap
+  const blur = useMemo(() => BackgroundBlur(15), []);
   const roomOptions = useMemo(
     (): RoomOptions => ({
       ...defaultLiveKitOptions,
       videoCaptureDefaults: {
         ...defaultLiveKitOptions.videoCaptureDefaults,
         deviceId: initialDevices.current.videoInput.selectedId,
+        // eslint-disable-next-line new-cap
+        processor: BackgroundBlur(15),
       },
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
@@ -128,6 +136,51 @@ export function useLiveKit(
     room,
     sfuConfig,
   );
+
+  const [showBackgroundBlur] = useSetting(backgroundBlurSettings);
+  const videoTrackPromise = useRef<
+    undefined | Promise<LocalTrackPublication | undefined>
+  >(undefined);
+
+  useEffect(() => {
+    if (!room || videoTrackPromise.current) return;
+    const update = async (): Promise<void> => {
+      let publishCallback: undefined | ((track: LocalTrackPublication) => void);
+      videoTrackPromise.current = new Promise<
+        LocalTrackPublication | undefined
+      >((resolve) => {
+        const videoTrack = Array.from(
+          room.localParticipant.videoTrackPublications.values(),
+        ).find((v) => v.source === Track.Source.Camera);
+        if (videoTrack) {
+          resolve(videoTrack);
+        }
+        publishCallback = (videoTrack: LocalTrackPublication): void => {
+          if (videoTrack.source === Track.Source.Camera) {
+            resolve(videoTrack);
+          }
+        };
+        room.on(RoomEvent.LocalTrackPublished, publishCallback);
+      });
+
+      const videoTrack = await videoTrackPromise.current;
+
+      if (publishCallback)
+        room.off(RoomEvent.LocalTrackPublished, publishCallback);
+
+      if (videoTrack !== undefined) {
+        if (showBackgroundBlur) {
+          logger.info("Blur: set blur");
+
+          void videoTrack.track?.setProcessor(blur);
+        } else {
+          void videoTrack.track?.stopProcessor();
+        }
+      }
+      videoTrackPromise.current = undefined;
+    };
+    void update();
+  }, [blur, room, showBackgroundBlur]);
 
   useEffect(() => {
     // Sync the requested mute states with LiveKit's mute states. We do it this

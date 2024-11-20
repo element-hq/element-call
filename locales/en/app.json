@@ -150,6 +150,9 @@
       "effect_volume_description": "Volume for sound effects such as: joining or leaving a call, and reactions.",
       "effect_volume_label": "Sound effect volume"
     },
+    "background_blur_header": "Background",
+    "background_blur_label": "Enable background blurring",
+    "blur_not_supported_by_browser": "",
     "developer_settings_label": "Developer Settings",
     "developer_settings_label_description": "Expose developer settings in the settings window.",
     "developer_tab_title": "Developer",
@@ -172,7 +175,8 @@
     "preferences_tab_h4": "Preferences",
     "preferences_tab_show_hand_raised_timer_description": "Show a timer when a participant raises their hand",
     "preferences_tab_show_hand_raised_timer_label": "Show hand raise duration",
-    "speaker_device_selection_label": "Speaker"
+    "speaker_device_selection_label": "Speaker",
+    "video_tab_activate_background_blur": "Turn on background blur on your webcam video"
   },
   "star_rating_input_label_one": "{{count}} star",
   "star_rating_input_label_other": "{{count}} stars",
