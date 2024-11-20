@@ -112,7 +112,16 @@ export const LobbyView: FC<Props> = ({
   );
 
   // eslint-disable-next-line new-cap
-  const blur = useMemo(() => BackgroundBlur(15), []);
+  const blur = useMemo(() => {
+    let b = undefined;
+    try {
+      // eslint-disable-next-line new-cap
+      b = BackgroundBlur(15);
+    } catch (e) {
+      logger.error("disable background blur", e);
+    }
+    return b;
+  }, []);
 
   const localTrackOptions = useMemo(
     () => ({
@@ -158,6 +167,8 @@ export const LobbyView: FC<Props> = ({
   const [showBackgroundBlur] = useSetting(backgroundBlurSettings);
 
   useEffect(() => {
+    // Fon't even try if we cannot blur on this platform
+    if (!blur) return;
     const updateBlur = async (showBlur: boolean): Promise<void> => {
       if (showBlur && !videoTrack?.getProcessor()) {
         // eslint-disable-next-line new-cap

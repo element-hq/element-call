@@ -14,6 +14,8 @@ import {
   Text,
   Tooltip,
 } from "@vector-im/compound-web";
+import { BackgroundBlur } from "@livekit/track-processors";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -79,7 +81,18 @@ export const SettingsModal: FC<Props> = ({
   // Generate a `Checkbox` input to turn blur on or off.
   const BlurCheckbox: React.FC = (): ReactNode => {
     const [blur, setBlur] = useSetting(backgroundBlurSetting);
-    return (
+    let canBlur = true;
+    try {
+      // eslint-disable-next-line new-cap
+      BackgroundBlur(15);
+    } catch (e) {
+      logger.debug(
+        "Cannot blur, so we do not show the option in settings. error: ",
+        e,
+      );
+      canBlur = false;
+    }
+    return canBlur ? (
       <>
         <h4>{t("settings.background_blur_header")}</h4>
         <FieldRow>
@@ -100,7 +113,7 @@ export const SettingsModal: FC<Props> = ({
           </Tooltip>
         </FieldRow>
       </>
-    );
+    ) : null;
   };
 
   const optInDescription = (

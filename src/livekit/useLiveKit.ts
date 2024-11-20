@@ -83,8 +83,16 @@ export function useLiveKit(
   const initialMuteStates = useRef<MuteStates>(muteStates);
   const devices = useMediaDevices();
   const initialDevices = useRef<MediaDevices>(devices);
-  // eslint-disable-next-line new-cap
-  const blur = useMemo(() => BackgroundBlur(15), []);
+  const blur = useMemo(() => {
+    let b = undefined;
+    try {
+      // eslint-disable-next-line new-cap
+      b = BackgroundBlur(15);
+    } catch (e) {
+      logger.error("disable background blur", e);
+    }
+    return b;
+  }, []);
   const roomOptions = useMemo(
     (): RoomOptions => ({
       ...defaultLiveKitOptions,
@@ -92,7 +100,7 @@ export function useLiveKit(
         ...defaultLiveKitOptions.videoCaptureDefaults,
         deviceId: initialDevices.current.videoInput.selectedId,
         // eslint-disable-next-line new-cap
-        processor: BackgroundBlur(15),
+        processor: blur,
       },
       audioCaptureDefaults: {
         ...defaultLiveKitOptions.audioCaptureDefaults,
@@ -103,7 +111,7 @@ export function useLiveKit(
       },
       e2ee: e2eeOptions,
     }),
-    [e2eeOptions],
+    [blur, e2eeOptions],
   );
 
   // Store if audio/video are currently updating. If to prohibit unnecessary calls
@@ -143,6 +151,8 @@ export function useLiveKit(
   >(undefined);
 
   useEffect(() => {
+    // Fon't even try if we cannot blur on this platform
+    if (!blur) return;
     if (!room || videoTrackPromise.current) return;
     const update = async (): Promise<void> => {
       let publishCallback: undefined | ((track: LocalTrackPublication) => void);
