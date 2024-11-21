@@ -229,7 +229,7 @@ function withCallViewModel(
 }
 
 test("participants are retained during a focus switch", () => {
-  withTestScheduler(({ cold, expectObservable }) => {
+  withTestScheduler(({ hot, expectObservable }) => {
     // Participants disappear on frame 2 and come back on frame 3
     const participantInputMarbles = "a-ba";
     // Start switching focus on frame 1 and reconnect on frame 3
@@ -238,11 +238,11 @@ test("participants are retained during a focus switch", () => {
     const expectedLayoutMarbles = "  a";
 
     withCallViewModel(
-      cold(participantInputMarbles, {
+      hot(participantInputMarbles, {
         a: [aliceParticipant, bobParticipant],
         b: [],
       }),
-      cold(connectionInputMarbles, {
+      hot(connectionInputMarbles, {
         c: ConnectionState.Connected,
         s: ECAddonConnectionState.ECSwitchingFocus,
       }),
@@ -264,7 +264,7 @@ test("participants are retained during a focus switch", () => {
 });
 
 test("screen sharing activates spotlight layout", () => {
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ hot, schedule, expectObservable }) => {
     // Start with no screen shares, then have Alice and Bob share their screens,
     // then return to no screen shares, then have just Alice share for a bit
     const participantInputMarbles = "    abcda-ba";
@@ -277,7 +277,7 @@ test("screen sharing activates spotlight layout", () => {
     const expectedLayoutMarbles = "      abcdaefeg";
     const expectedShowSpeakingMarbles = "y----nyny";
     withCallViewModel(
-      cold(participantInputMarbles, {
+      hot(participantInputMarbles, {
         a: [aliceParticipant, bobParticipant],
         b: [aliceSharingScreen, bobParticipant],
         c: [aliceSharingScreen, bobSharingScreen],
@@ -347,7 +347,7 @@ test("screen sharing activates spotlight layout", () => {
 });
 
 test("participants stay in the same order unless to appear/disappear", () => {
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ hot, schedule, expectObservable }) => {
     const modeInputMarbles = "     a";
     // First Bob speaks, then Dave, then Alice
     const aSpeakingInputMarbles = "n- 1998ms - 1999ms y";
@@ -363,9 +363,9 @@ test("participants stay in the same order unless to appear/disappear", () => {
       of([aliceParticipant, bobParticipant, daveParticipant]),
       of(ConnectionState.Connected),
       new Map([
-        [aliceParticipant, cold(aSpeakingInputMarbles, { y: true, n: false })],
-        [bobParticipant, cold(bSpeakingInputMarbles, { y: true, n: false })],
-        [daveParticipant, cold(dSpeakingInputMarbles, { y: true, n: false })],
+        [aliceParticipant, hot(aSpeakingInputMarbles, { y: true, n: false })],
+        [bobParticipant, hot(bSpeakingInputMarbles, { y: true, n: false })],
+        [daveParticipant, hot(dSpeakingInputMarbles, { y: true, n: false })],
       ]),
       (vm) => {
         schedule(modeInputMarbles, {
