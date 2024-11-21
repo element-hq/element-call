@@ -85,19 +85,21 @@ function useMediaDevice(
     [kind, requestPermissions],
   );
   const available = useObservableState(deviceObserver, []);
-  const [selectedId, select] = useSetting(setting);
+  const [preferredId, select] = useSetting(setting);
 
   return useMemo(() => {
-    let devId: string | undefined = undefined;
+    let selectedId: string | undefined = undefined;
     if (!alwaysDefault && available) {
-      // If the selected device is available, use it. Or if every available
+      // If the preferred device is available, use it. Or if every available
       // device ID is falsy, the browser is probably just being paranoid about
-      // fingerprinting and we should still try using the selected device.
-      // Otherwise, fall back to the first available device.
-      devId =
-        available.some((d) => d.deviceId === selectedId) ||
+      // fingerprinting and we should still try using the preferred device.
+      // Worst case it is not available and the browser will gracefully fall
+      // back to some other device for us when requesting the media stream.
+      // Otherwise, select the first available device.
+      selectedId =
+        available.some((d) => d.deviceId === preferredId) ||
         available.every((d) => d.deviceId === "")
-          ? selectedId
+          ? preferredId
           : available.at(0)?.deviceId;
     }
 
@@ -107,10 +109,10 @@ function useMediaDevice(
           // device entries for the exact same device ID; deduplicate them
           [...new Map(available.map((d) => [d.deviceId, d])).values()]
         : [],
-      selectedId: devId,
+      selectedId,
       select,
     };
-  }, [available, selectedId, select, alwaysDefault]);
+  }, [available, preferredId, select, alwaysDefault]);
 }
 
 const deviceStub: MediaDevice = {
