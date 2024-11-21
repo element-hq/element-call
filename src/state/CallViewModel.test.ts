@@ -30,7 +30,7 @@ import {
   mockLivekitRoom,
   mockLocalParticipant,
   mockMatrixRoom,
-  mockMember,
+  mockMatrixRoomMember,
   mockRemoteParticipant,
   withTestScheduler,
 } from "../utils/test";
@@ -42,10 +42,10 @@ import { E2eeType } from "../e2ee/e2eeType";
 
 vi.mock("@livekit/components-core");
 
-const alice = mockMember({ userId: "@alice:example.org" });
-const bob = mockMember({ userId: "@bob:example.org" });
-const carol = mockMember({ userId: "@carol:example.org" });
-const dave = mockMember({ userId: "@dave:example.org" });
+const alice = mockMatrixRoomMember({ userId: "@alice:example.org" });
+const bob = mockMatrixRoomMember({ userId: "@bob:example.org" });
+const carol = mockMatrixRoomMember({ userId: "@carol:example.org" });
+const dave = mockMatrixRoomMember({ userId: "@dave:example.org" });
 
 const aliceId = `${alice.userId}:AAAA`;
 const bobId = `${bob.userId}:BBBB`;
