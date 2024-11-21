@@ -29,7 +29,6 @@ import {
   useOptInAnalytics,
   soundEffectVolumeSetting,
 } from "./settings";
-import { isFirefox } from "../Platform";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
 import { DeviceSelection } from "./DeviceSelection";
@@ -96,12 +95,10 @@ export const SettingsModal: FC<Props> = ({
             devices={devices.audioInput}
             caption={t("common.microphone")}
           />
-          {!isFirefox() && (
-            <DeviceSelection
-              devices={devices.audioOutput}
-              caption={t("settings.speaker_device_selection_label")}
-            />
-          )}
+          <DeviceSelection
+            devices={devices.audioOutput}
+            caption={t("settings.speaker_device_selection_label")}
+          />
           <div className={styles.volumeSlider}>
             <label>{t("settings.audio_tab.effect_volume_label")}</label>
             <p>{t("settings.audio_tab.effect_volume_description")}</p>

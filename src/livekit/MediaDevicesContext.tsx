@@ -26,7 +26,6 @@ import {
   videoInput as videoInputSetting,
   Setting,
 } from "../settings/settings";
-import { isFirefox } from "../Platform";
 
 export interface MediaDevice {
   available: MediaDeviceInfo[];
@@ -61,7 +60,6 @@ function useMediaDevice(
   kind: MediaDeviceKind,
   setting: Setting<string | undefined>,
   usingNames: boolean,
-  alwaysDefault: boolean = false,
 ): MediaDevice {
   // Make sure we don't needlessly reset to a device observer without names,
   // once permissions are already given
@@ -89,7 +87,7 @@ function useMediaDevice(
 
   return useMemo(() => {
     let selectedId: string | undefined = undefined;
-    if (!alwaysDefault && available) {
+    if (available) {
       // If the preferred device is available, use it. Or if every available
       // device ID is falsy, the browser is probably just being paranoid about
       // fingerprinting and we should still try using the preferred device.
@@ -112,7 +110,7 @@ function useMediaDevice(
       selectedId,
       select,
     };
-  }, [available, preferredId, select, alwaysDefault]);
+  }, [available, preferredId, select]);
 }
 
 const deviceStub: MediaDevice = {
@@ -139,15 +137,6 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   const [numCallersUsingNames, setNumCallersUsingNames] = useState(0);
   const usingNames = numCallersUsingNames > 0;
 
-  // Setting the audio device to something other than 'undefined' breaks echo-cancellation
-  // and even can introduce multiple different output devices for one call.
-  const alwaysUseDefaultAudio = isFirefox();
-
-  // On FF we dont need to query the names
-  // (call enumerateDevices + create meadia stream to trigger permissions)
-  // for ouput devices because the selector wont be shown on FF.
-  const useOutputNames = usingNames && !isFirefox();
-
   const audioInput = useMediaDevice(
     "audioinput",
     audioInputSetting,
@@ -156,8 +145,7 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   const audioOutput = useMediaDevice(
     "audiooutput",
     audioOutputSetting,
-    useOutputNames,
-    alwaysUseDefaultAudio,
+    usingNames,
   );
   const videoInput = useMediaDevice(
     "videoinput",
