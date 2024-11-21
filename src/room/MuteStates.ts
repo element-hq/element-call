@@ -54,12 +54,12 @@ function useMuteState(
 ): MuteState {
   const [enabled, setEnabled] = useReactiveState<boolean | undefined>(
     (prev) =>
-      device.available.length > 0 ? (prev ?? enabledByDefault()) : undefined,
+      device.available.size > 0 ? (prev ?? enabledByDefault()) : undefined,
     [device],
   );
   return useMemo(
     () =>
-      device.available.length === 0
+      device.available.size === 0
         ? deviceUnavailable
         : {
             enabled: enabled ?? false,

@@ -13,16 +13,23 @@ import {
   RadioControl,
   Separator,
 } from "@vector-im/compound-web";
+import { useTranslation } from "react-i18next";
 
 import { MediaDevice } from "../livekit/MediaDevicesContext";
 import styles from "./DeviceSelection.module.css";
 
 interface Props {
   devices: MediaDevice;
-  caption: string;
+  title: string;
+  numberedLabel: (number: number) => string;
 }
 
-export const DeviceSelection: FC<Props> = ({ devices, caption }) => {
+export const DeviceSelection: FC<Props> = ({
+  devices,
+  title,
+  numberedLabel,
+}) => {
+  const { t } = useTranslation();
   const groupId = useId();
   const onChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +38,7 @@ export const DeviceSelection: FC<Props> = ({ devices, caption }) => {
     [devices],
   );
 
-  if (devices.available.length == 0) return null;
+  if (devices.available.size == 0) return null;
 
   return (
     <div className={styles.selection}>
@@ -42,26 +49,28 @@ export const DeviceSelection: FC<Props> = ({ devices, caption }) => {
         as="h4"
         className={styles.title}
       >
-        {caption}
+        {title}
       </Heading>
       <Separator className={styles.separator} />
       <div className={styles.options}>
-        {devices.available.map(({ deviceId, label }, index) => (
+        {[...devices.available].map(([id, label]) => (
           <InlineField
-            key={deviceId}
+            key={id}
             name={groupId}
             control={
               <RadioControl
-                checked={deviceId === devices.selectedId}
+                checked={id === devices.selectedId}
                 onChange={onChange}
-                value={deviceId}
+                value={id}
               />
             }
           >
             <Label>
-              {!!label && label.trim().length > 0
-                ? label
-                : `${caption} ${index + 1}`}
+              {label.type === "name"
+                ? label.name
+                : label.type === "number"
+                  ? numberedLabel(label.number)
+                  : t("settings.devices.default")}
             </Label>
           </InlineField>
         ))}

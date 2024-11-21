@@ -16,7 +16,8 @@ import {
   useState,
 } from "react";
 import { createMediaDeviceObserver } from "@livekit/components-core";
-import { Observable } from "rxjs";
+import { startWith } from "rxjs";
+import { useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import {
@@ -27,9 +28,24 @@ import {
   Setting,
 } from "../settings/settings";
 
+export type DeviceLabel =
+  | { type: "name"; name: string }
+  | { type: "number"; number: number }
+  | { type: "default" };
+
 export interface MediaDevice {
-  available: MediaDeviceInfo[];
+  /**
+   * A map from available device IDs to labels.
+   */
+  available: Map<string, DeviceLabel>;
   selectedId: string | undefined;
+  /**
+   * The group ID of the selected device.
+   */
+  // This is exposed sort of ad-hoc because it's only needed for knowing when to
+  // restart the tracks of default input devices, and ideally this behavior
+  // would be encapsulated somehow…
+  selectedGroupId: string | undefined;
   select: (deviceId: string) => void;
 }
 
@@ -39,21 +55,6 @@ export interface MediaDevices {
   videoInput: MediaDevice;
   startUsingDeviceNames: () => void;
   stopUsingDeviceNames: () => void;
-}
-
-// Cargo-culted from @livekit/components-react
-function useObservableState<T>(
-  observable: Observable<T> | undefined,
-  startWith: T,
-): T {
-  const [state, setState] = useState<T>(startWith);
-  useEffect(() => {
-    // observable state doesn't run in SSR
-    if (typeof window === "undefined" || !observable) return;
-    const subscription = observable.subscribe(setState);
-    return (): void => subscription.unsubscribe();
-  }, [observable]);
-  return state;
 }
 
 function useMediaDevice(
@@ -79,43 +80,73 @@ function useMediaDevice(
         kind,
         () => logger.error("Error creating MediaDeviceObserver"),
         requestPermissions,
-      ),
+      ).pipe(startWith([])),
     [kind, requestPermissions],
   );
-  const available = useObservableState(deviceObserver, []);
-  const [preferredId, select] = useSetting(setting);
+  const availableRaw = useObservableEagerState(deviceObserver);
+  const available = useMemo(() => {
+    // Sometimes browsers (particularly Firefox) can return multiple device
+    // entries for the exact same device ID; using a map deduplicates them
+    let available = new Map<string, DeviceLabel>(
+      availableRaw.map((d, i) => [
+        d.deviceId,
+        d.label
+          ? { type: "name", name: d.label }
+          : { type: "number", number: i + 1 },
+      ]),
+    );
+    // Create a virtual default audio output for browsers that don't have one.
+    // Its device ID must be the empty string because that's what setSinkId
+    // recognizes.
+    if (
+      kind === "audiooutput" &&
+      available.size &&
+      !available.has("") &&
+      !available.has("default")
+    )
+      available = new Map([["", { type: "default" }], ...available]);
+    // Note: creating virtual default input devices would be another problem
+    // entirely, because requesting a media stream from deviceId "" won't
+    // automatically track the default device.
+    return available;
+  }, [kind, availableRaw]);
 
-  return useMemo(() => {
-    let selectedId: string | undefined = undefined;
-    if (available) {
+  const [preferredId, select] = useSetting(setting);
+  const selectedId = useMemo(() => {
+    if (available.size) {
       // If the preferred device is available, use it. Or if every available
       // device ID is falsy, the browser is probably just being paranoid about
       // fingerprinting and we should still try using the preferred device.
       // Worst case it is not available and the browser will gracefully fall
       // back to some other device for us when requesting the media stream.
       // Otherwise, select the first available device.
-      selectedId =
-        available.some((d) => d.deviceId === preferredId) ||
-        available.every((d) => d.deviceId === "")
-          ? preferredId
-          : available.at(0)?.deviceId;
+      return (preferredId !== undefined && available.has(preferredId)) ||
+        (available.size === 1 && available.has(""))
+        ? preferredId
+        : available.keys().next().value;
     }
+    return undefined;
+  }, [available, preferredId]);
+  const selectedGroupId = useMemo(
+    () => availableRaw.find((d) => d.deviceId === selectedId)?.groupId,
+    [availableRaw, selectedId],
+  );
 
-    return {
-      available: available
-        ? // Sometimes browsers (particularly Firefox) can return multiple
-          // device entries for the exact same device ID; deduplicate them
-          [...new Map(available.map((d) => [d.deviceId, d])).values()]
-        : [],
+  return useMemo(
+    () => ({
+      available,
       selectedId,
+      selectedGroupId,
       select,
-    };
-  }, [available, preferredId, select]);
+    }),
+    [available, selectedId, selectedGroupId, select],
+  );
 }
 
 const deviceStub: MediaDevice = {
-  available: [],
+  available: new Map(),
   selectedId: undefined,
+  selectedGroupId: undefined,
   select: () => {},
 };
 const devicesStub: MediaDevices = {
