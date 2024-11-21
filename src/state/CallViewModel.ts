@@ -341,12 +341,16 @@ export class CallViewModel extends ViewModel {
       }),
     );
 
-  private readonly rawRemoteParticipants = connectedParticipantsObserver(
-    this.livekitRoom,
-  ).pipe(this.scope.state());
+  /**
+   * The raw list of RemoteParticipants as reported by LiveKit
+   */
+  private readonly rawRemoteParticipants: Observable<RemoteParticipant[]> =
+    connectedParticipantsObserver(this.livekitRoom).pipe(this.scope.state());
 
-  // Lists of participants to "hold" on display, even if LiveKit claims that
-  // they've left
+  /**
+   * Lists of RemoteParticipants to "hold" on display, even if LiveKit claims that
+   * they've left
+   */
   private readonly remoteParticipantHolds: Observable<RemoteParticipant[][]> =
     this.connectionState.pipe(
       withLatestFrom(this.rawRemoteParticipants),
@@ -381,6 +385,9 @@ export class CallViewModel extends ViewModel {
       ),
     );
 
+  /**
+   * The RemoteParticipants including those that are being "held" on the screen
+   */
   private readonly remoteParticipants: Observable<RemoteParticipant[]> =
     combineLatest(
       [this.rawRemoteParticipants, this.remoteParticipantHolds],
@@ -402,6 +409,9 @@ export class CallViewModel extends ViewModel {
       },
     );
 
+  /**
+   * List of MediaItems that we want to display
+   */
   private readonly mediaItems: Observable<MediaItem[]> = combineLatest([
     this.remoteParticipants,
     observeParticipantMedia(this.livekitRoom.localParticipant),
@@ -471,6 +481,9 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
+  /**
+   * List of MediaItems that we want to display, that are of type UserMedia
+   */
   private readonly userMedia: Observable<UserMedia[]> = this.mediaItems.pipe(
     map((mediaItems) =>
       mediaItems.filter((m): m is UserMedia => m instanceof UserMedia),
@@ -482,6 +495,9 @@ export class CallViewModel extends ViewModel {
       map((ms) => ms.find((m) => m.vm.local)!.vm as LocalUserMediaViewModel),
     );
 
+  /**
+   * List of MediaItems that we want to display, that are of type ScreenShare
+   */
   private readonly screenShares: Observable<ScreenShare[]> =
     this.mediaItems.pipe(
       map((mediaItems) =>
@@ -940,7 +956,7 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
-  public readonly showFooter = this.windowMode.pipe(
+  public readonly showFooter: Observable<boolean> = this.windowMode.pipe(
     switchMap((mode) => {
       switch (mode) {
         case "pip":
