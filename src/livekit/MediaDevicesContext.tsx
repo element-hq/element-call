@@ -24,6 +24,7 @@ import {
   audioInput as audioInputSetting,
   audioOutput as audioOutputSetting,
   videoInput as videoInputSetting,
+  Setting,
 } from "../settings/settings";
 import { isFirefox } from "../Platform";
 
@@ -58,7 +59,7 @@ function useObservableState<T>(
 
 function useMediaDevice(
   kind: MediaDeviceKind,
-  fallbackDevice: string | undefined,
+  setting: Setting<string | undefined>,
   usingNames: boolean,
   alwaysDefault: boolean = false,
 ): MediaDevice {
@@ -84,15 +85,21 @@ function useMediaDevice(
     [kind, requestPermissions],
   );
   const available = useObservableState(deviceObserver, []);
-  const [selectedId, select] = useState(fallbackDevice);
+  const [preferredId, select] = useSetting(setting);
 
   return useMemo(() => {
-    let devId;
-    if (available) {
-      devId = available.some((d) => d.deviceId === selectedId)
-        ? selectedId
-        : available.some((d) => d.deviceId === fallbackDevice)
-          ? fallbackDevice
+    let selectedId: string | undefined = undefined;
+    if (!alwaysDefault && available) {
+      // If the preferred device is available, use it. Or if every available
+      // device ID is falsy, the browser is probably just being paranoid about
+      // fingerprinting and we should still try using the preferred device.
+      // Worst case it is not available and the browser will gracefully fall
+      // back to some other device for us when requesting the media stream.
+      // Otherwise, select the first available device.
+      selectedId =
+        available.some((d) => d.deviceId === preferredId) ||
+        available.every((d) => d.deviceId === "")
+          ? preferredId
           : available.at(0)?.deviceId;
     }
 
@@ -102,10 +109,10 @@ function useMediaDevice(
           // device entries for the exact same device ID; deduplicate them
           [...new Map(available.map((d) => [d.deviceId, d])).values()]
         : [],
-      selectedId: alwaysDefault ? undefined : devId,
+      selectedId,
       select,
     };
-  }, [available, selectedId, fallbackDevice, select, alwaysDefault]);
+  }, [available, preferredId, select, alwaysDefault]);
 }
 
 const deviceStub: MediaDevice = {
@@ -141,36 +148,22 @@ export const MediaDevicesProvider: FC<Props> = ({ children }) => {
   // for ouput devices because the selector wont be shown on FF.
   const useOutputNames = usingNames && !isFirefox();
 
-  const [storedAudioInput, setStoredAudioInput] = useSetting(audioInputSetting);
-  const [storedAudioOutput, setStoredAudioOutput] =
-    useSetting(audioOutputSetting);
-  const [storedVideoInput, setStoredVideoInput] = useSetting(videoInputSetting);
-
-  const audioInput = useMediaDevice("audioinput", storedAudioInput, usingNames);
+  const audioInput = useMediaDevice(
+    "audioinput",
+    audioInputSetting,
+    usingNames,
+  );
   const audioOutput = useMediaDevice(
     "audiooutput",
-    storedAudioOutput,
+    audioOutputSetting,
     useOutputNames,
     alwaysUseDefaultAudio,
   );
-  const videoInput = useMediaDevice("videoinput", storedVideoInput, usingNames);
-
-  useEffect(() => {
-    if (audioInput.selectedId !== undefined)
-      setStoredAudioInput(audioInput.selectedId);
-  }, [setStoredAudioInput, audioInput.selectedId]);
-
-  useEffect(() => {
-    // Skip setting state for ff output. Redundent since it is set to always return 'undefined'
-    // but makes it clear while debugging that this is not happening on FF. + perf ;)
-    if (audioOutput.selectedId !== undefined && !isFirefox())
-      setStoredAudioOutput(audioOutput.selectedId);
-  }, [setStoredAudioOutput, audioOutput.selectedId]);
-
-  useEffect(() => {
-    if (videoInput.selectedId !== undefined)
-      setStoredVideoInput(videoInput.selectedId);
-  }, [setStoredVideoInput, videoInput.selectedId]);
+  const videoInput = useMediaDevice(
+    "videoinput",
+    videoInputSetting,
+    usingNames,
+  );
 
   const startUsingDeviceNames = useCallback(
     () => setNumCallersUsingNames((n) => n + 1),

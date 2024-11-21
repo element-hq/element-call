@@ -20,7 +20,6 @@ import {
   TrackEvent,
 } from "livekit-client";
 import { useObservable, useObservableEagerState } from "observable-hooks";
-import { useEffect } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
@@ -35,6 +34,7 @@ export function useSwitchCamera(
   video: Observable<LocalVideoTrack | null>,
 ): (() => void) | null {
   const mediaDevices = useMediaDevices();
+  const setVideoInput = useLatest(mediaDevices.videoInput.select);
 
   // Produce an observable like the input 'video' observable, except make it
   // emit whenever the track is muted or the device changes
@@ -75,6 +75,12 @@ export function useSwitchCamera(
                   .restartTrack({
                     facingMode: facingMode === "user" ? "environment" : "user",
                   })
+                  .then(() => {
+                    // Inform the MediaDeviceContext which camera was chosen
+                    const deviceId =
+                      track.mediaStreamTrack.getSettings().deviceId;
+                    if (deviceId !== undefined) setVideoInput.current(deviceId);
+                  })
                   .catch((e) =>
                     logger.error("Failed to switch camera", facingMode, e),
                   );
@@ -82,17 +88,6 @@ export function useSwitchCamera(
           ),
     [videoTrack],
   );
-
-  const setVideoInput = useLatest(mediaDevices.videoInput.select);
-  useEffect(() => {
-    // Watch for device changes due to switching the camera and feed them back
-    // into the MediaDeviceContext
-    const subscription = videoTrack.subscribe((track) => {
-      const deviceId = track?.mediaStreamTrack.getSettings().deviceId;
-      if (deviceId !== undefined) setVideoInput.current(deviceId);
-    });
-    return (): void => subscription.unsubscribe();
-  }, [videoTrack, setVideoInput]);
 
   return useObservableEagerState(switchCamera);
 }
