@@ -73,7 +73,9 @@ export const GenericReaction: ReactionOption = {
   },
 };
 
-// The first 6 reactions are always visible.
+export const ReactionsRowSize = 5;
+
+// The first {ReactionsRowSize} reactions are always visible.
 export const ReactionSet: ReactionOption[] = [
   {
     emoji: "👍",

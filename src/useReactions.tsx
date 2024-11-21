@@ -40,7 +40,8 @@ interface ReactionsContextType {
   raisedHands: Record<string, Date>;
   supportsReactions: boolean;
   reactions: Record<string, ReactionOption>;
-  lowerHand: () => Promise<void>;
+  toggleRaisedHand: () => Promise<void>;
+  sendReaction: (reaction: ReactionOption) => Promise<void>;
 }
 
 const ReactionsContext = createContext<ReactionsContextType | undefined>(
@@ -104,7 +105,6 @@ export const ReactionsProvider = ({
       ),
     [raisedHands],
   );
-
   const addRaisedHand = useCallback((userId: string, info: RaisedHandInfo) => {
     setRaisedHands((prevRaisedHands) => ({
       ...prevRaisedHands,
@@ -180,6 +180,11 @@ export const ReactionsProvider = ({
 
   const latestMemberships = useLatest(memberships);
   const latestRaisedHands = useLatest(raisedHands);
+
+  const myMembership = useMemo(
+    () => memberships.find((m) => m.sender === myUserId)?.eventId,
+    [memberships, myUserId],
+  );
 
   // This effect handles any *live* reaction/redactions in the room.
   useEffect(() => {
@@ -322,22 +327,67 @@ export const ReactionsProvider = ({
     latestRaisedHands,
   ]);
 
-  const lowerHand = useCallback(async () => {
-    if (!myUserId || !raisedHands[myUserId]) {
+  const toggleRaisedHand = useCallback(async () => {
+    if (!myUserId) {
       return;
     }
-    const myReactionId = raisedHands[myUserId].reactionEventId;
+    const myReactionId = raisedHands[myUserId]?.reactionEventId;
+
     if (!myReactionId) {
-      logger.warn(`Hand raised but no reaction event to redact!`);
-      return;
+      try {
+        if (!myMembership) {
+          throw new Error("Cannot find own membership event");
+        }
+        const reaction = await room.client.sendEvent(
+          rtcSession.room.roomId,
+          EventType.Reaction,
+          {
+            "m.relates_to": {
+              rel_type: RelationType.Annotation,
+              event_id: myMembership,
+              key: "🖐️",
+            },
+          },
+        );
+        logger.debug("Sent raise hand event", reaction.event_id);
+      } catch (ex) {
+        logger.error("Failed to send raised hand", ex);
+      }
+    } else {
+      try {
+        await room.client.redactEvent(rtcSession.room.roomId, myReactionId);
+        logger.debug("Redacted raise hand event");
+      } catch (ex) {
+        logger.error("Failed to redact reaction event", myReactionId, ex);
+        throw ex;
+      }
     }
-    try {
-      await room.client.redactEvent(rtcSession.room.roomId, myReactionId);
-      logger.debug("Redacted raise hand event");
-    } catch (ex) {
-      logger.error("Failed to redact reaction event", myReactionId, ex);
-    }
-  }, [myUserId, raisedHands, rtcSession, room]);
+  }, [myMembership, myUserId, raisedHands, rtcSession, room]);
+
+  const sendReaction = useCallback(
+    async (reaction: ReactionOption) => {
+      if (!myUserId || reactions[myUserId]) {
+        // We're still reacting
+        return;
+      }
+      if (!myMembership) {
+        throw new Error("Cannot find own membership event");
+      }
+      await room.client.sendEvent(
+        rtcSession.room.roomId,
+        ElementCallReactionEventType,
+        {
+          "m.relates_to": {
+            rel_type: RelationType.Reference,
+            event_id: myMembership,
+          },
+          emoji: reaction.emoji,
+          name: reaction.name,
+        },
+      );
+    },
+    [myMembership, reactions, room, myUserId, rtcSession],
+  );
 
   return (
     <ReactionsContext.Provider
@@ -345,7 +395,8 @@ export const ReactionsProvider = ({
         raisedHands: resultRaisedHands,
         supportsReactions,
         reactions,
-        lowerHand,
+        toggleRaisedHand,
+        sendReaction,
       }}
     >
       {children}

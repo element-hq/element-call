@@ -99,7 +99,7 @@ function mockEmitter<T>(): EmitterMock<T> {
 // Maybe it'd be good to move this to matrix-js-sdk? Our testing needs are
 // rather simple, but if one util to mock a member is good enough for us, maybe
 // it's useful for matrix-js-sdk consumers in general.
-export function mockMember(member: Partial<RoomMember>): RoomMember {
+export function mockMatrixRoomMember(member: Partial<RoomMember>): RoomMember {
   return { ...mockEmitter(), ...member } as RoomMember;
 }
 
@@ -149,7 +149,7 @@ export async function withLocalMedia(
   const localParticipant = mockLocalParticipant({});
   const vm = new LocalUserMediaViewModel(
     "local",
-    mockMember(member),
+    mockMatrixRoomMember(member),
     localParticipant,
     {
       kind: E2eeType.PER_PARTICIPANT,
@@ -184,7 +184,7 @@ export async function withRemoteMedia(
   const remoteParticipant = mockRemoteParticipant(participant);
   const vm = new RemoteUserMediaViewModel(
     "remote",
-    mockMember(member),
+    mockMatrixRoomMember(member),
     remoteParticipant,
     {
       kind: E2eeType.PER_PARTICIPANT,

@@ -12,19 +12,24 @@ import { Button } from "@vector-im/compound-web";
 import userEvent from "@testing-library/user-event";
 
 import { useCallViewKeyboardShortcuts } from "../src/useCallViewKeyboardShortcuts";
+import { ReactionOption, ReactionSet, ReactionsRowSize } from "./reactions";
 
 // Test Explanation:
 // - The main objective is to test `useCallViewKeyboardShortcuts`.
 //   The TestComponent just wraps a button around that hook.
 
 interface TestComponentProps {
-  setMicrophoneMuted: (muted: boolean) => void;
+  setMicrophoneMuted?: (muted: boolean) => void;
   onButtonClick?: () => void;
+  sendReaction?: () => void;
+  toggleHandRaised?: () => void;
 }
 
 const TestComponent: FC<TestComponentProps> = ({
-  setMicrophoneMuted,
+  setMicrophoneMuted = (): void => {},
   onButtonClick = (): void => {},
+  sendReaction = (reaction: ReactionOption): void => {},
+  toggleHandRaised = (): void => {},
 }) => {
   const ref = useRef<HTMLDivElement | null>(null);
   useCallViewKeyboardShortcuts(
@@ -32,6 +37,8 @@ const TestComponent: FC<TestComponentProps> = ({
     () => {},
     () => {},
     setMicrophoneMuted,
+    sendReaction,
+    toggleHandRaised,
   );
   return (
     <div ref={ref}>
@@ -72,6 +79,28 @@ test("spacebar prioritizes pressing a button", async () => {
   await user.keyboard("[Space]");
   expect(setMuted).not.toBeCalled();
   expect(onClick).toBeCalled();
+});
+
+test("reactions can be sent via keyboard presses", async () => {
+  const user = userEvent.setup();
+
+  const sendReaction = vi.fn();
+  render(<TestComponent sendReaction={sendReaction} />);
+
+  for (let index = 1; index <= ReactionsRowSize; index++) {
+    await user.keyboard(index.toString());
+    expect(sendReaction).toHaveBeenNthCalledWith(index, ReactionSet[index - 1]);
+  }
+});
+
+test("raised hand can be sent via keyboard presses", async () => {
+  const user = userEvent.setup();
+
+  const toggleHandRaised = vi.fn();
+  render(<TestComponent toggleHandRaised={toggleHandRaised} />);
+  await user.keyboard("h");
+
+  expect(toggleHandRaised).toHaveBeenCalledOnce();
 });
 
 test("unmuting happens in place of the default action", async () => {
