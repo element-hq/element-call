@@ -1,0 +1,18 @@
+.selection {
+  gap: 0;
+}
+
+.title {
+  color: var(--cpd-color-text-secondary);
+  margin-block: var(--cpd-space-3x) 0;
+}
+
+.separator {
+  margin-block: 6px var(--cpd-space-4x);
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cpd-space-4x);
+}

@@ -5,10 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ChangeEvent, FC, ReactNode, useCallback } from "react";
+import { ChangeEvent, FC, useCallback } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
-import { Dropdown, Separator, Text } from "@vector-im/compound-web";
+import { Root as Form, Text } from "@vector-im/compound-web";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -19,7 +19,6 @@ import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 import {
   useMediaDevices,
-  MediaDevice,
   useMediaDeviceNames,
 } from "../livekit/MediaDevicesContext";
 import { widget } from "../widget";
@@ -33,6 +32,7 @@ import {
 import { isFirefox } from "../Platform";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
+import { DeviceSelection } from "./DeviceSelection";
 
 type SettingsTab =
   | "audio"
@@ -70,40 +70,6 @@ export const SettingsModal: FC<Props> = ({
   );
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
 
-  // Generate a `SelectInput` with a list of devices for a given device kind.
-  const generateDeviceSelection = (
-    devices: MediaDevice,
-    caption: string,
-  ): ReactNode => {
-    if (devices.available.length == 0) return null;
-
-    const values = devices.available.map(
-      ({ deviceId, label }, index) =>
-        [
-          deviceId,
-          !!label && label.trim().length > 0
-            ? label
-            : `${caption} ${index + 1}`,
-        ] as [string, string],
-    );
-
-    return (
-      <Dropdown
-        label={caption}
-        defaultValue={
-          devices.selectedId === "" || !devices.selectedId
-            ? "default"
-            : devices.selectedId
-        }
-        onValueChange={(id): void => devices.select(id)}
-        values={values}
-        // XXX This is unused because we set a defaultValue. The component
-        // shouldn't require this prop.
-        placeholder=""
-      />
-    );
-  };
-
   const optInDescription = (
     <Text size="sm">
       <Trans i18nKey="settings.opt_in_description">
@@ -125,25 +91,30 @@ export const SettingsModal: FC<Props> = ({
     name: t("common.audio"),
     content: (
       <>
-        {generateDeviceSelection(devices.audioInput, t("common.microphone"))}
-        {!isFirefox() &&
-          generateDeviceSelection(
-            devices.audioOutput,
-            t("settings.speaker_device_selection_label"),
-          )}
-        <Separator />
-        <div className={styles.volumeSlider}>
-          <label>{t("settings.audio_tab.effect_volume_label")}</label>
-          <p>{t("settings.audio_tab.effect_volume_description")}</p>
-          <Slider
-            label={t("video_tile.volume")}
-            value={soundVolume}
-            onValueChange={setSoundVolume}
-            min={0}
-            max={1}
-            step={0.01}
+        <Form>
+          <DeviceSelection
+            devices={devices.audioInput}
+            caption={t("common.microphone")}
           />
-        </div>
+          {!isFirefox() && (
+            <DeviceSelection
+              devices={devices.audioOutput}
+              caption={t("settings.speaker_device_selection_label")}
+            />
+          )}
+          <div className={styles.volumeSlider}>
+            <label>{t("settings.audio_tab.effect_volume_label")}</label>
+            <p>{t("settings.audio_tab.effect_volume_description")}</p>
+            <Slider
+              label={t("video_tile.volume")}
+              value={soundVolume}
+              onValueChange={setSoundVolume}
+              min={0}
+              max={1}
+              step={0.01}
+            />
+          </div>
+        </Form>
       </>
     ),
   };
@@ -151,7 +122,14 @@ export const SettingsModal: FC<Props> = ({
   const videoTab: Tab<SettingsTab> = {
     key: "video",
     name: t("common.video"),
-    content: generateDeviceSelection(devices.videoInput, t("common.camera")),
+    content: (
+      <Form>
+        <DeviceSelection
+          devices={devices.videoInput}
+          caption={t("common.camera")}
+        />
+      </Form>
+    ),
   };
 
   const preferencesTab: Tab<SettingsTab> = {
