@@ -93,6 +93,16 @@ test("reactions can be sent via keyboard presses", async () => {
   }
 });
 
+test("reaction is not sent when modifier key is held", async () => {
+  const user = userEvent.setup();
+
+  const sendReaction = vi.fn();
+  render(<TestComponent sendReaction={sendReaction} />);
+
+  await user.keyboard("{Meta>}1{/Meta}");
+  expect(sendReaction).not.toHaveBeenCalled();
+});
+
 test("raised hand can be sent via keyboard presses", async () => {
   const user = userEvent.setup();
 

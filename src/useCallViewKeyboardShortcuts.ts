@@ -43,6 +43,8 @@ export function useCallViewKeyboardShortcuts(
       (event: KeyboardEvent) => {
         if (focusElement.current === null) return;
         if (!mayReceiveKeyEvents(focusElement.current)) return;
+        if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+          return;
 
         if (event.key === "m") {
           event.preventDefault();
