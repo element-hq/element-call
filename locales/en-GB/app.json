@@ -171,7 +171,7 @@
     "preferences_tab_show_hand_raised_timer_label": "Show hand raise duration",
     "speaker_device_selection_label": "Speaker"
   },
-  "star_rating_input_label_one": "{{count}} stars",
+  "star_rating_input_label_one": "{{count}} star",
   "star_rating_input_label_other": "{{count}} stars",
   "start_new_call": "Start new call",
   "start_video_button_label": "Start video",
