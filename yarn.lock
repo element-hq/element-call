@@ -1801,9 +1801,9 @@
     rxjs "7.8.1"
 
 "@livekit/components-react@^2.0.0":
-  version "2.6.8"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.6.8.tgz#faa60410aef0f5d426afcc6f9b577686983c6b7b"
-  integrity sha512-G6P+mrOyBiAnHjbmBTG28CxA6AT7wXT6/5dqu7M7uZAlvOCDKhPjhOs65awDQvaFlTxd/JlND75fa9d+oSbvIA==
+  version "2.6.9"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.6.9.tgz#2ff4691dc2cae6ed4c4b2e586a255d00e494bf9c"
+  integrity sha512-j43i/Dm8dlI2jxv5wv0s+69QPVqVEjg0y2tyznfs/7RDcaIZsIIzNijPu1kLditerzvzQdRsOgFQ3UWONcTkGA==
   dependencies:
     "@livekit/components-core" "0.11.10"
     clsx "2.1.1"
