@@ -82,6 +82,10 @@ export default defineConfig(({ mode }) => {
             // Default naming fallback
             return "assets/[name]-[hash][extname]";
           },
+          manualChunks: {
+            // we should be able to remove this one https://github.com/matrix-org/matrix-rust-sdk-crypto-wasm/pull/167 lands
+            "matrix-sdk-crypto-wasm": ["@matrix-org/matrix-sdk-crypto-wasm"],
+          },
         },
       },
     },
