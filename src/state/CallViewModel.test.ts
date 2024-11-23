@@ -20,6 +20,7 @@ import {
   ConnectionState,
   LocalParticipant,
   Participant,
+  ParticipantEvent,
   RemoteParticipant,
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
@@ -188,11 +189,15 @@ function withCallViewModel(
     );
   const eventsSpy = vi
     .spyOn(ComponentsCore, "observeParticipantEvents")
-    .mockImplementation((p) =>
-      (speaking.get(p) ?? of(false)).pipe(
-        map((s) => ({ ...p, isSpeaking: s }) as Participant),
-      ),
-    );
+    .mockImplementation((p, ...eventTypes) => {
+      if (eventTypes.includes(ParticipantEvent.IsSpeakingChanged)) {
+        return (speaking.get(p) ?? of(false)).pipe(
+          map((s) => ({ ...p, isSpeaking: s }) as Participant),
+        );
+      } else {
+        return of(p);
+      }
+    });
 
   const roomEventSelectorSpy = vi
     .spyOn(ComponentsCore, "roomEventSelector")
@@ -407,7 +412,7 @@ test("participants stay in the same order unless to appear/disappear", () => {
 });
 
 test("spotlight speakers swap places", () => {
-  withTestScheduler(({ cold, schedule, expectObservable }) => {
+  withTestScheduler(({ hot, schedule, expectObservable }) => {
     // Go immediately into spotlight mode for the test
     const modeInputMarbles = "     s";
     // First Bob speaks, then Dave, then Alice
@@ -424,9 +429,9 @@ test("spotlight speakers swap places", () => {
       of([aliceParticipant, bobParticipant, daveParticipant]),
       of(ConnectionState.Connected),
       new Map([
-        [aliceParticipant, cold(aSpeakingInputMarbles, { y: true, n: false })],
-        [bobParticipant, cold(bSpeakingInputMarbles, { y: true, n: false })],
-        [daveParticipant, cold(dSpeakingInputMarbles, { y: true, n: false })],
+        [aliceParticipant, hot(aSpeakingInputMarbles, { y: true, n: false })],
+        [bobParticipant, hot(bSpeakingInputMarbles, { y: true, n: false })],
+        [daveParticipant, hot(dSpeakingInputMarbles, { y: true, n: false })],
       ]),
       (vm) => {
         schedule(modeInputMarbles, { s: () => vm.setGridMode("spotlight") });
