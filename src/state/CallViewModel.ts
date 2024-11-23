@@ -27,7 +27,6 @@ import {
   EMPTY,
   Observable,
   Subject,
-  audit,
   combineLatest,
   concat,
   distinctUntilChanged,
@@ -76,6 +75,7 @@ import { spotlightExpandedLayout } from "./SpotlightExpandedLayout";
 import { oneOnOneLayout } from "./OneOnOneLayout";
 import { pipLayout } from "./PipLayout";
 import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { observeSpeaker } from "./observeSpeaker";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -248,22 +248,7 @@ class UserMedia {
           livekitRoom,
         );
 
-    this.speaker = this.vm.speaking.pipe(
-      // Require 1 s of continuous speaking to become a speaker, and 60 s of
-      // continuous silence to stop being considered a speaker
-      audit((s) =>
-        merge(
-          timer(s ? 1000 : 60000),
-          // If the speaking flag resets to its original value during this time,
-          // end the silencing window to stick with that original value
-          this.vm.speaking.pipe(filter((s1) => s1 !== s)),
-        ),
-      ),
-      startWith(false),
-      // Make this Observable hot so that the timers don't reset when you
-      // resubscribe
-      this.scope.state(),
-    );
+    this.speaker = observeSpeaker(this.vm.speaking).pipe(this.scope.state());
 
     this.presenter = observeParticipantEvents(
       participant,
