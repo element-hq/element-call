@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, expect, it } from "vitest";
 
-import { getRoomIdentifierFromUrl } from "../src/UrlParams";
+import { getRoomIdentifierFromUrl, getUrlParams } from "../src/UrlParams";
 
 const ROOM_NAME = "roomNameHere";
 const ROOM_ID = "!d45f138fsd";
@@ -85,5 +85,19 @@ describe("UrlParams", () => {
       getRoomIdentifierFromUrl("", `/room/${ROOM_NAME}:${HOMESERVER}`, "")
         .roomAlias,
     ).toBeFalsy();
+  });
+
+  describe("preload", () => {
+    it("defaults to false", () => {
+      expect(getUrlParams().preload).toBe(false);
+    });
+
+    it("ignored in SPA mode", () => {
+      expect(getUrlParams("?preload=true").preload).toBe(false);
+    });
+
+    it("respected in widget mode", () => {
+      expect(getUrlParams("?preload=true&widgetId=12345").preload).toBe(true);
+    });
   });
 });

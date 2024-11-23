@@ -211,8 +211,11 @@ export const getUrlParams = (
 
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
 
+  const widgetId = parser.getParam("widgetId");
+  const isWidget = !!widgetId;
+
   return {
-    widgetId: parser.getParam("widgetId"),
+    widgetId,
     parentUrl: parser.getParam("parentUrl"),
 
     // NB. we don't validate roomId here as we do in getRoomIdentifierFromUrl:
@@ -224,7 +227,7 @@ export const getUrlParams = (
     confineToRoom:
       parser.getFlagParam("confineToRoom") || parser.getFlagParam("embed"),
     appPrompt: parser.getFlagParam("appPrompt", true),
-    preload: parser.getFlagParam("preload"),
+    preload: isWidget ? parser.getFlagParam("preload") : false,
     hideHeader: parser.getFlagParam("hideHeader"),
     showControls: parser.getFlagParam("showControls", true),
     hideScreensharing: parser.getFlagParam("hideScreensharing"),
