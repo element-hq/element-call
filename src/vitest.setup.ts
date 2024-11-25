@@ -15,6 +15,7 @@ import { afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import "vitest-axe/extend-expect";
 import { logger } from "matrix-js-sdk/src/logger";
+import "@testing-library/jest-dom/vitest";
 
 import EN_GB from "../locales/en-GB/app.json";
 import { Config } from "./config/Config";

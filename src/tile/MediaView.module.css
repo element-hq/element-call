@@ -34,10 +34,6 @@ Please see LICENSE in the repository root for full details.
   object-fit: contain;
 }
 
-.media.videoMuted video {
-  display: none;
-}
-
 .bg {
   background-color: var(--cpd-color-bg-subtle-secondary);
   inline-size: 100%;
@@ -47,16 +43,11 @@ Please see LICENSE in the repository root for full details.
 }
 
 .avatar {
-  display: none;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-}
-
-.media.videoMuted .avatar {
-  display: initial;
 }
 
 /* CSS makes us put a condition here, even though all we want to do is

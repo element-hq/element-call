@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { useMemo, FC } from "react";
+import { useMemo, FC, CSSProperties } from "react";
 import { Avatar as CompoundAvatar } from "@vector-im/compound-web";
 
 import { getAvatarUrl } from "./utils/matrix";
@@ -33,6 +33,7 @@ interface Props {
   className?: string;
   src?: string;
   size?: Size | number;
+  style?: CSSProperties;
 }
 
 export const Avatar: FC<Props> = ({
@@ -41,6 +42,8 @@ export const Avatar: FC<Props> = ({
   name,
   src,
   size = Size.MD,
+  style,
+  ...props
 }) => {
   const { client } = useClient();
 
@@ -64,6 +67,8 @@ export const Avatar: FC<Props> = ({
       name={name}
       size={`${sizePx}px`}
       src={resolvedSrc}
+      style={style}
+      {...props}
     />
   );
 };
