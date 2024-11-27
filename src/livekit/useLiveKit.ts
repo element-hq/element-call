@@ -151,7 +151,7 @@ export function useLiveKit(
   >(undefined);
 
   useEffect(() => {
-    // Fon't even try if we cannot blur on this platform
+    // Don't even try if we cannot blur on this platform
     if (!blur) return;
     if (!room || videoTrackPromise.current) return;
     const update = async (): Promise<void> => {
@@ -178,7 +178,10 @@ export function useLiveKit(
       if (publishCallback)
         room.off(RoomEvent.LocalTrackPublished, publishCallback);
 
-      if (videoTrack !== undefined) {
+      if (
+        videoTrack !== undefined &&
+        videoTrack.track?.getProcessor() === undefined
+      ) {
         if (showBackgroundBlur) {
           logger.info("Blur: set blur");
 
