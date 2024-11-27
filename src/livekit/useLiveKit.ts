@@ -87,7 +87,7 @@ export function useLiveKit(
     let b = undefined;
     try {
       // eslint-disable-next-line new-cap
-      b = BackgroundBlur(15);
+      b = BackgroundBlur(15, { delegate: "GPU" });
     } catch (e) {
       logger.error("disable background blur", e);
     }
@@ -178,15 +178,17 @@ export function useLiveKit(
       if (publishCallback)
         room.off(RoomEvent.LocalTrackPublished, publishCallback);
 
-      if (
-        videoTrack !== undefined &&
-        videoTrack.track?.getProcessor() === undefined
-      ) {
-        if (showBackgroundBlur) {
+      if (videoTrack !== undefined) {
+        if (
+          showBackgroundBlur &&
+          videoTrack.track?.getProcessor()?.name !== "background-blur"
+        ) {
           logger.info("Blur: set blur");
 
           void videoTrack.track?.setProcessor(blur);
-        } else {
+        } else if (
+          videoTrack.track?.getProcessor()?.name === "background-blur"
+        ) {
           void videoTrack.track?.stopProcessor();
         }
       }
