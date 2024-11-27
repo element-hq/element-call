@@ -91,29 +91,27 @@ export const SettingsModal: FC<Props> = ({
         e,
       );
       canBlur = false;
+      setBlur(false);
     }
-    return canBlur ? (
+    return (
       <>
         <h4>{t("settings.background_blur_header")}</h4>
+
         <FieldRow>
-          <Tooltip
-            label={
-              isFirefox() ? t("settings.blur_not_supported_by_browser") : ""
+          <InputField
+            id="activateBackgroundBlur"
+            label={t("settings.background_blur_label")}
+            description={
+              canBlur ? "" : t("settings.blur_not_supported_by_browser")
             }
-          >
-            <InputField
-              id="activateBackgroundBlur"
-              label={t("settings.background_blur_label")}
-              description={t("settings.video_tab_activate_background_blur")}
-              type="checkbox"
-              checked={blur}
-              onChange={(b): void => setBlur(b.target.checked)}
-              disabled={isFirefox()}
-            />
-          </Tooltip>
+            type="checkbox"
+            checked={blur}
+            onChange={(b): void => setBlur(b.target.checked)}
+            disabled={!canBlur}
+          />
         </FieldRow>
       </>
-    ) : null;
+    );
   };
 
   const optInDescription = (
