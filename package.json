@@ -124,6 +124,7 @@
     "strip-ansi": "6.0.1"
   },
   "dependencies": {
-    "@livekit/track-processors": "^0.3.2"
+    "@livekit/track-processors": "^0.3.2",
+    "@types/dom-mediacapture-transform": "^0.1.10"
   }
 }
