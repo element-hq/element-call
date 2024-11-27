@@ -31,6 +31,7 @@
     "@formatjs/intl-segmenter": "^11.7.3",
     "@livekit/components-core": "^0.11.0",
     "@livekit/components-react": "^2.0.0",
+    "@livekit/track-processors": "^0.3.2",
     "@opentelemetry/api": "^1.4.0",
     "@opentelemetry/core": "^1.25.1",
     "@opentelemetry/exporter-trace-otlp-http": "^0.55.0",
@@ -50,6 +51,7 @@
     "@testing-library/react-hooks": "^8.0.1",
     "@testing-library/user-event": "^14.5.1",
     "@types/content-type": "^1.1.5",
+    "@types/dom-mediacapture-transform": "^0.1.10",
     "@types/grecaptcha": "^3.0.9",
     "@types/jsdom": "^21.1.7",
     "@types/lodash-es": "^4.17.12",
@@ -122,9 +124,5 @@
   },
   "resolutions": {
     "strip-ansi": "6.0.1"
-  },
-  "dependencies": {
-    "@livekit/track-processors": "^0.3.2",
-    "@types/dom-mediacapture-transform": "^0.1.10"
   }
 }
