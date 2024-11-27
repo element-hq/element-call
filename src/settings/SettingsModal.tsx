@@ -8,12 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { ChangeEvent, FC, ReactNode, useCallback, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
-import {
-  Root as Form,
-  Separator,
-  Text,
-  Tooltip,
-} from "@vector-im/compound-web";
+import { Root as Form, Separator, Text } from "@vector-im/compound-web";
 import { BackgroundBlur } from "@livekit/track-processors";
 import { logger } from "matrix-js-sdk/src/logger";
 
