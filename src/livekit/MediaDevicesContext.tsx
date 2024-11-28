@@ -128,7 +128,7 @@ const devicesStub: MediaDevices = {
   stopUsingDeviceNames: () => {},
 };
 
-const MediaDevicesContext = createContext<MediaDevices>(devicesStub);
+export const MediaDevicesContext = createContext<MediaDevices>(devicesStub);
 
 interface Props {
   children: JSX.Element;

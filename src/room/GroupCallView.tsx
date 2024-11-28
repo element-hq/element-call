@@ -131,48 +131,46 @@ export const GroupCallView: FC<Props> = ({
   const latestDevices = useRef<MediaDevices>();
   latestDevices.current = deviceContext;
 
+  // TODO: why do we use a ref here instead of using muteStates directly?
   const latestMuteStates = useRef<MuteStates>();
   latestMuteStates.current = muteStates;
 
   useEffect(() => {
-    const defaultDeviceSetup = async (
-      requestedDeviceData: JoinCallData,
-    ): Promise<void> => {
+    const defaultDeviceSetup = async ({
+      audioInput,
+      videoInput,
+    }: JoinCallData): Promise<void> => {
       // XXX: I think this is broken currently - LiveKit *won't* request
       // permissions and give you device names unless you specify a kind, but
       // here we want all kinds of devices. This needs a fix in livekit-client
       // for the following name-matching logic to do anything useful.
       const devices = await Room.getLocalDevices(undefined, true);
-      const { audioInput, videoInput } = requestedDeviceData;
-      if (audioInput === null) {
-        latestMuteStates.current!.audio.setEnabled?.(false);
-      } else {
+
+      if (audioInput) {
         const deviceId = findDeviceByName(audioInput, "audioinput", devices);
         if (!deviceId) {
           logger.warn("Unknown audio input: " + audioInput);
+          // override the default mute state
           latestMuteStates.current!.audio.setEnabled?.(false);
         } else {
           logger.debug(
             `Found audio input ID ${deviceId} for name ${audioInput}`,
           );
           latestDevices.current!.audioInput.select(deviceId);
-          latestMuteStates.current!.audio.setEnabled?.(true);
         }
       }
 
-      if (videoInput === null) {
-        latestMuteStates.current!.video.setEnabled?.(false);
-      } else {
+      if (videoInput) {
         const deviceId = findDeviceByName(videoInput, "videoinput", devices);
         if (!deviceId) {
           logger.warn("Unknown video input: " + videoInput);
+          // override the default mute state
           latestMuteStates.current!.video.setEnabled?.(false);
         } else {
           logger.debug(
             `Found video input ID ${deviceId} for name ${videoInput}`,
           );
           latestDevices.current!.videoInput.select(deviceId);
-          latestMuteStates.current!.video.setEnabled?.(true);
         }
       }
     };
@@ -199,7 +197,6 @@ export const GroupCallView: FC<Props> = ({
         } else {
           // No lobby and no preload: we enter the rtc session right away
           (async (): Promise<void> => {
-            await defaultDeviceSetup({ audioInput: null, videoInput: null });
             await enterRTCSession(rtcSession, perParticipantE2EE);
           })().catch((e) => {
             logger.error("Error joining RTC session", e);

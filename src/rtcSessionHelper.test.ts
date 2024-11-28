@@ -9,8 +9,7 @@ import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { expect, test, vi } from "vitest";
 
 import { enterRTCSession } from "../src/rtcSessionHelpers";
-import { Config } from "../src/config/Config";
-import { DEFAULT_CONFIG } from "./config/ConfigOptions";
+import { mockConfig } from "./utils/test";
 
 test("It joins the correct Session", async () => {
   const focusFromOlderMembership = {
@@ -34,8 +33,7 @@ test("It joins the correct Session", async () => {
     ],
   };
 
-  vi.spyOn(Config, "get").mockReturnValue({
-    ...DEFAULT_CONFIG,
+  mockConfig({
     livekit: { livekit_service_url: "http://my-default-service-url.com" },
   });
   const mockedSession = vi.mocked({
