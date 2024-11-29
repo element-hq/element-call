@@ -6111,9 +6111,9 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^2.5.7:
-  version "2.6.3"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.6.3.tgz#0c7e16bcd8b30f61e867ba287257b60db69c7801"
-  integrity sha512-sUFjdERYdazGmYUCkxV46qKrL8Pg4Aw+9fs/DxV0EC/YtVd7zQh2QObip7IkyT8Ipj4gXhH8CkSinisZ1KpsJQ==
+  version "2.7.0"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.7.0.tgz#d7a80aff4ad335dd093b0c90d0d715466539651a"
+  integrity sha512-4vjfSReFNAUD+2oLUz9qFRWztJaI/+AexpOmCgizNsPYpvvqgAvEGxapnhuAug9uP7JVYaKPXaTCq90MWZoDHg==
   dependencies:
     "@livekit/mutex" "1.0.0"
     "@livekit/protocol" "1.24.0"
@@ -7619,9 +7619,9 @@ scheduler@^0.23.2:
     loose-envify "^1.1.0"
 
 sdp-transform@^2.14.1:
-  version "2.14.2"
-  resolved "https://registry.yarnpkg.com/sdp-transform/-/sdp-transform-2.14.2.tgz#d2cee6a1f7abe44e6332ac6cbb94e8600f32d813"
-  integrity sha512-icY6jVao7MfKCieyo1AyxFYm1baiM+fA00qW/KrNNVlkxHAd34riEKuEkUe4bBb3gJwLJZM+xT60Yj1QL8rHiA==
+  version "2.15.0"
+  resolved "https://registry.yarnpkg.com/sdp-transform/-/sdp-transform-2.15.0.tgz#79d37a2481916f36a0534e07b32ceaa87f71df42"
+  integrity sha512-KrOH82c/W+GYQ0LHqtr3caRpM3ITglq3ljGUIb8LTki7ByacJZ9z+piSGiwZDsRyhQbYBOBJgr2k6X4BZXi3Kw==
 
 sdp@^3.2.0:
   version "3.2.0"
