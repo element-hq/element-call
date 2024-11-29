@@ -939,10 +939,10 @@
   dependencies:
     regenerator-runtime "^0.14.0"
 
-"@babel/runtime@^7.12.5":
-  version "7.25.6"
-  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.25.6.tgz#9afc3289f7184d8d7f98b099884c26317b9264d2"
-  integrity sha512-VBj9MYyDb9tuLq7yzqjgzt6Q+IBQLrGZfdjOekyEirZPHxXWoTSGUTMrpsfi58Up73d13NfYLv8HT9vmznjzhQ==
+"@babel/runtime@^7.12.5", "@babel/runtime@^7.23.2", "@babel/runtime@^7.25.0", "@babel/runtime@^7.8.4":
+  version "7.26.0"
+  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.26.0.tgz#8600c2f595f277c60815256418b85356a65173c1"
+  integrity sha512-FDSOghenHTiToteC/QRlv2q3DhPZ/oOXTBoirfWNx1Cx3TMVcGWQtMMmQcSvb/JjpNeGzx8Pq/b4fKEJuWm1sw==
   dependencies:
     regenerator-runtime "^0.14.0"
 
@@ -952,13 +952,6 @@
   integrity sha512-EXpLCrk55f+cYqmHsSR+yD/0gAIMxxA9QK9lnQWzhMCvt+YmoBN7Zx94s++Kv0+unHk39vxNO8t+CMA2WSS3wA==
   dependencies:
     regenerator-runtime "^0.13.4"
-
-"@babel/runtime@^7.23.2", "@babel/runtime@^7.25.0", "@babel/runtime@^7.8.4":
-  version "7.26.0"
-  resolved "https://registry.yarnpkg.com/@babel/runtime/-/runtime-7.26.0.tgz#8600c2f595f277c60815256418b85356a65173c1"
-  integrity sha512-FDSOghenHTiToteC/QRlv2q3DhPZ/oOXTBoirfWNx1Cx3TMVcGWQtMMmQcSvb/JjpNeGzx8Pq/b4fKEJuWm1sw==
-  dependencies:
-    regenerator-runtime "^0.14.0"
 
 "@babel/template@^7.25.9":
   version "7.25.9"
@@ -1827,9 +1820,9 @@
     "@bufbuild/protobuf" "^1.10.0"
 
 "@matrix-org/matrix-sdk-crypto-wasm@^9.0.0":
-  version "9.0.0"
-  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-9.0.0.tgz#293fe8fcb9bc4d577c5f6cf2cbffa151c6e11329"
-  integrity sha512-dz4dkYXj6BeOQuw52XQj8dMuhi85pSFhfFeFlNRAO7JdRPhE9CHBrfK8knkZV5Zux5vvf3Ub4E7myoLeJgZoEw==
+  version "9.1.0"
+  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-9.1.0.tgz#f889653eb4fafaad2a963654d586bd34de62acd5"
+  integrity sha512-CtPoNcoRW6ehwxpRQAksG3tR+NJ7k4DV02nMFYTDwQtie1V4R8OTY77BjEIs97NOblhtS26jU8m1lWsOBEz0Og==
 
 "@matrix-org/olm@3.2.15":
   version "3.2.15"
@@ -6164,12 +6157,7 @@ loglevel@1.9.1:
   resolved "https://registry.yarnpkg.com/loglevel/-/loglevel-1.9.1.tgz#d63976ac9bcd03c7c873116d41c2a85bafff1be7"
   integrity sha512-hP3I3kCrDIMuRwAwHltphhDM1r8i55H33GgqjXbrisuJhF4kRhW1dNuxsRklp4bXl8DSdLaNLuiL4A/LWRfxvg==
 
-loglevel@^1.7.1:
-  version "1.8.1"
-  resolved "https://registry.yarnpkg.com/loglevel/-/loglevel-1.8.1.tgz#5c621f83d5b48c54ae93b6156353f555963377b4"
-  integrity sha512-tCRIJM51SHjAayKwC+QAg8hT8vg6z7GSgLJKGvzuPb1Wc+hLzqtuVLxp6/HzSPOozuK+8ErAhy7U/sVzw8Dgfg==
-
-loglevel@^1.8.0, loglevel@^1.9.1:
+loglevel@^1.7.1, loglevel@^1.8.0, loglevel@^1.9.1:
   version "1.9.2"
   resolved "https://registry.yarnpkg.com/loglevel/-/loglevel-1.9.2.tgz#c2e028d6c757720107df4e64508530db6621ba08"
   integrity sha512-HgMmCqIJSAKqo68l0rS2AanEWfkxaZ5wNiEFb5ggm08lDs9Xl2KxBlX3PTcaD2chBM1gXAYf491/M2Rv8Jwayg==
@@ -6260,7 +6248,7 @@ matrix-events-sdk@0.0.1:
 
 matrix-js-sdk@matrix-org/matrix-js-sdk#develop:
   version "34.12.0"
-  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/8fc77c595aa651db9f402df798b868ed076590e3"
+  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/edac6a9983bd604c17535a9ae673dc979c7b61c4"
   dependencies:
     "@babel/runtime" "^7.12.5"
     "@matrix-org/matrix-sdk-crypto-wasm" "^9.0.0"
@@ -6514,9 +6502,9 @@ observable-hooks@^4.2.3:
   integrity sha512-FdTQgyw1h5bG/QHCBIqctdBSnv9VARJCEilgpV6L2qlw1yeLqFIwPm4U15dMtl5kDmNN0hSt+Nl6iYbLFwEcQA==
 
 oidc-client-ts@^3.0.1:
-  version "3.0.1"
-  resolved "https://registry.yarnpkg.com/oidc-client-ts/-/oidc-client-ts-3.0.1.tgz#be264fb87c89f74f73863646431c32cd06f5ceb7"
-  integrity sha512-xX8unZNtmtw3sOz4FPSqDhkLFnxCDsdo2qhFEH2opgWnF/iXMFoYdBQzkwCxAZVgt3FT3DnuBY3k80EZHT0RYg==
+  version "3.1.0"
+  resolved "https://registry.yarnpkg.com/oidc-client-ts/-/oidc-client-ts-3.1.0.tgz#28d3254951a1c64cc9780042c61492a71b2240dd"
+  integrity sha512-IDopEXjiwjkmJLYZo6BTlvwOtnlSniWZkKZoXforC/oLZHC9wkIxd25Kwtmo5yKFMMVcsp3JY6bhcNJqdYk8+g==
   dependencies:
     jwt-decode "^4.0.0"
 
@@ -8407,9 +8395,9 @@ util-deprecate@^1.0.1, util-deprecate@^1.0.2, util-deprecate@~1.0.1:
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
 
 uuid@11:
-  version "11.0.2"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.0.2.tgz#a8d68ba7347d051e7ea716cc8dcbbab634d66875"
-  integrity sha512-14FfcOJmqdjbBPdDjFQyk/SdT4NySW4eM0zcG+HqbHP5jzuH56xO3J1DGhgs/cEMCfwYi3HQI1gnTO62iaG+tQ==
+  version "11.0.3"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.0.3.tgz#248451cac9d1a4a4128033e765d137e2b2c49a3d"
+  integrity sha512-d0z310fCWv5dJwnX1Y/MncBAqGMKEzlBb1AOf7z9K8ALnd0utBX/msg/fA0+sbyN1ihbMsLhrBlnl1ak7Wa0rg==
 
 validate-npm-package-license@^3.0.1:
   version "3.0.4"
