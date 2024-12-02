@@ -19,7 +19,7 @@ import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/src/logger";
 import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { BackgroundBlur } from "@livekit/track-processors";
+import { BackgroundBlur as backgroundBlur } from "@livekit/track-processors";
 
 import { defaultLiveKitOptions } from "./options";
 import { SFUConfig } from "./openIDSFU";
@@ -86,8 +86,7 @@ export function useLiveKit(
   const blur = useMemo(() => {
     let b = undefined;
     try {
-      // eslint-disable-next-line new-cap
-      b = BackgroundBlur(15, { delegate: "GPU" });
+      b = backgroundBlur(15, { delegate: "GPU" });
     } catch (e) {
       logger.error("disable background blur", e);
     }
@@ -99,7 +98,6 @@ export function useLiveKit(
       videoCaptureDefaults: {
         ...defaultLiveKitOptions.videoCaptureDefaults,
         deviceId: initialDevices.current.videoInput.selectedId,
-        // eslint-disable-next-line new-cap
         processor: blur,
       },
       audioCaptureDefaults: {

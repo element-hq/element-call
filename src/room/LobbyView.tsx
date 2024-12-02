@@ -16,7 +16,7 @@ import { usePreviewTracks } from "@livekit/components-react";
 import { LocalVideoTrack, Track } from "livekit-client";
 import { useObservable } from "observable-hooks";
 import { map } from "rxjs";
-import { BackgroundBlur } from "@livekit/track-processors";
+import { BackgroundBlur as backgroundBlur } from "@livekit/track-processors";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -115,8 +115,7 @@ export const LobbyView: FC<Props> = ({
   const blur = useMemo(() => {
     let b = undefined;
     try {
-      // eslint-disable-next-line new-cap
-      b = BackgroundBlur(15, { delegate: "GPU" });
+      b = backgroundBlur(15, { delegate: "GPU" });
     } catch (e) {
       logger.error(
         "disable background blur because its not supported by the platform.",
@@ -138,14 +137,14 @@ export const LobbyView: FC<Props> = ({
       video: muteStates.video.enabled && {
         deviceId: devices.videoInput.selectedId,
         // It should be possible to set a processor here:
-        // processor: blur,
-        // This causes a crash currently hence we do the effect below...
+        processor: blur,
       },
     }),
     [
       initialAudioOptions,
       muteStates.video.enabled,
       devices.videoInput.selectedId,
+      blur,
     ],
   );
 
@@ -174,7 +173,6 @@ export const LobbyView: FC<Props> = ({
     if (!blur) return;
     const updateBlur = async (showBlur: boolean): Promise<void> => {
       if (showBlur && !videoTrack?.getProcessor()) {
-        // eslint-disable-next-line new-cap
         await videoTrack?.setProcessor(blur);
       } else {
         await videoTrack?.stopProcessor();
