@@ -118,7 +118,10 @@ export const LobbyView: FC<Props> = ({
       // eslint-disable-next-line new-cap
       b = BackgroundBlur(15, { delegate: "GPU" });
     } catch (e) {
-      logger.error("disable background blur", e);
+      logger.error(
+        "disable background blur because its not supported by the platform.",
+        e,
+      );
     }
     return b;
   }, []);
