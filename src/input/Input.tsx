@@ -73,6 +73,7 @@ interface InputFieldProps {
   defaultValue?: string;
   placeholder?: string;
   defaultChecked?: boolean;
+  min?: number;
   onChange?: (event: ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -91,6 +92,7 @@ export const InputField = forwardRef<
       suffix,
       description,
       disabled,
+      min,
       ...rest
     },
     ref,
@@ -127,6 +129,7 @@ export const InputField = forwardRef<
             checked={checked}
             disabled={disabled}
             aria-describedby={descriptionId}
+            min={min}
             {...rest}
           />
         )}

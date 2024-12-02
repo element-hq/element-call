@@ -227,9 +227,13 @@ export const SettingsModal: FC<Props> = ({
             type="number"
             label={t("developer_mode.duplicate_tiles_label")}
             value={duplicateTiles.toString()}
+            min={0}
             onChange={useCallback(
               (event: ChangeEvent<HTMLInputElement>): void => {
                 const value = event.target.valueAsNumber;
+                if (value < 0) {
+                  return;
+                }
                 setDuplicateTiles(Number.isNaN(value) ? 0 : value);
               },
               [setDuplicateTiles],
