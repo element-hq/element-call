@@ -68,8 +68,12 @@
     "username": "Benutzername",
     "video": "Video"
   },
-  "crypto_version": "Krypto-Version:{{version}}",
-  "device_id": "Geräte-ID: {{id}}",
+  "developer_mode": {
+    "crypto_version": "Krypto-Version:{{version}}",
+    "device_id": "Geräte-ID: {{id}}",
+    "duplicate_tiles_label": "Anzahl zusätzlicher Kachelkopien pro Teilnehmer",
+    "matrix_id": "Matrix-ID: {{id}}"
+  },
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
   "full_screen_view_description": "<0>Übermittelte Problemberichte helfen uns, Fehler zu beheben.</0>",
   "full_screen_view_h1": "<0>Hoppla, etwas ist schiefgelaufen.</0>",
@@ -111,7 +115,6 @@
   "login_auth_links_prompt": "Noch nicht registriert?",
   "login_subheading": "Weiter zu Element",
   "login_title": "Anmelden",
-  "matrix_id": "Matrix-ID: {{id}}",
   "microphone_off": "Mikrofon aus",
   "microphone_on": "Mikrofon an",
   "mute_microphone_button_label": "Mikrofon stumm schalten",
@@ -149,7 +152,6 @@
     "developer_settings_label": "Entwicklereinstellungen",
     "developer_settings_label_description": "Zeige die Entwicklereinstellungen im Einstellungsfenster.",
     "developer_tab_title": "Entwickler",
-    "duplicate_tiles_label": "Anzahl zusätzlicher Kachelkopien pro Teilnehmer",
     "feedback_tab_body": "Falls du auf Probleme stößt oder einfach nur eine Rückmeldung geben möchtest, sende uns bitte eine kurze Beschreibung.",
     "feedback_tab_description_label": "Deine Rückmeldung",
     "feedback_tab_h4": "Rückmeldung geben",

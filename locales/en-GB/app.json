@@ -68,8 +68,13 @@
     "username": "Username",
     "video": "Video"
   },
-  "crypto_version": "Crypto version: {{version}}",
-  "device_id": "Device ID: {{id}}",
+  "developer_mode": {
+    "crypto_version": "Crypto version: {{version}}",
+    "device_id": "Device ID: {{id}}",
+    "duplicate_tiles_label": "Number of additional tile copies per participant",
+    "hostname": "Hostname: {{hostname}}",
+    "matrix_id": "Matrix ID: {{id}}"
+  },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "full_screen_view_description": "<0>Submitting debug logs will help us track down the problem.</0>",
   "full_screen_view_h1": "<0>Oops, something's gone wrong.</0>",
@@ -111,7 +116,6 @@
   "login_auth_links_prompt": "Not registered yet?",
   "login_subheading": "To continue to Element",
   "login_title": "Login",
-  "matrix_id": "Matrix ID: {{id}}",
   "microphone_off": "Microphone off",
   "microphone_on": "Microphone on",
   "mute_microphone_button_label": "Mute microphone",
@@ -149,7 +153,6 @@
     "developer_settings_label": "Developer Settings",
     "developer_settings_label_description": "Expose developer settings in the settings window.",
     "developer_tab_title": "Developer",
-    "duplicate_tiles_label": "Number of additional tile copies per participant",
     "feedback_tab_body": "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
     "feedback_tab_description_label": "Your feedback",
     "feedback_tab_h4": "Submit feedback",

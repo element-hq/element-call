@@ -196,23 +196,28 @@ export const SettingsModal: FC<Props> = ({
     content: (
       <>
         <p>
+          {t("developer_mode.hostname", {
+            hostname: window.location.hostname || "unknown",
+          })}
+        </p>
+        <p>
           {t("version", {
             productName: import.meta.env.VITE_PRODUCT_NAME || "Element Call",
             version: import.meta.env.VITE_APP_VERSION || "dev",
           })}
         </p>
         <p>
-          {t("crypto_version", {
+          {t("developer_mode.crypto_version", {
             version: client.getCrypto()?.getVersion() || "unknown",
           })}
         </p>
         <p>
-          {t("matrix_id", {
+          {t("developer_mode.matrix_id", {
             id: client.getUserId() || "unknown",
           })}
         </p>
         <p>
-          {t("device_id", {
+          {t("developer_mode.device_id", {
             id: client.getDeviceId() || "unknown",
           })}
         </p>
@@ -220,7 +225,7 @@ export const SettingsModal: FC<Props> = ({
           <InputField
             id="duplicateTiles"
             type="number"
-            label={t("settings.duplicate_tiles_label")}
+            label={t("developer_mode.duplicate_tiles_label")}
             value={duplicateTiles.toString()}
             onChange={useCallback(
               (event: ChangeEvent<HTMLInputElement>): void => {
