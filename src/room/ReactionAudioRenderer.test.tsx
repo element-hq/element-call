@@ -21,6 +21,7 @@ import {
   playReactionsSound,
   soundEffectVolumeSetting,
 } from "../settings/settings";
+import { mockMediaPlay } from "../utils/test";
 
 const memberUserIdAlice = "@alice:example.org";
 const memberUserIdBob = "@bob:example.org";
@@ -80,11 +81,7 @@ test("loads no audio elements when disabled in settings", () => {
 });
 
 test("will play an audio sound when there is a reaction", () => {
-  const audioIsPlaying: string[] = [];
-  window.HTMLMediaElement.prototype.play = async function (): Promise<void> {
-    audioIsPlaying.push((this.children[0] as HTMLSourceElement).src);
-    return Promise.resolve();
-  };
+  const audioIsPlaying: string[] = mockMediaPlay();
   playReactionsSound.setValue(true);
   const room = new MockRoom(memberUserIdAlice);
   const rtcSession = new MockRTCSession(room, membership);
@@ -105,11 +102,7 @@ test("will play an audio sound when there is a reaction", () => {
 });
 
 test("will play the generic audio sound when there is soundless reaction", () => {
-  const audioIsPlaying: string[] = [];
-  window.HTMLMediaElement.prototype.play = async function (): Promise<void> {
-    audioIsPlaying.push((this.children[0] as HTMLSourceElement).src);
-    return Promise.resolve();
-  };
+  const audioIsPlaying: string[] = mockMediaPlay();
   playReactionsSound.setValue(true);
   const room = new MockRoom(memberUserIdAlice);
   const rtcSession = new MockRTCSession(room, membership);
@@ -152,11 +145,7 @@ test("will play an audio sound with the correct volume", () => {
 });
 
 test("will play multiple audio sounds when there are multiple different reactions", () => {
-  const audioIsPlaying: string[] = [];
-  window.HTMLMediaElement.prototype.play = async function (): Promise<void> {
-    audioIsPlaying.push((this.children[0] as HTMLSourceElement).src);
-    return Promise.resolve();
-  };
+  const audioIsPlaying: string[] = mockMediaPlay();
   playReactionsSound.setValue(true);
 
   const room = new MockRoom(memberUserIdAlice);

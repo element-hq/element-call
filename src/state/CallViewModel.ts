@@ -475,6 +475,19 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
+  public readonly memberChanges = this.userMedia
+    .pipe(map((mediaItems) => mediaItems.map((m) => m.id)))
+    .pipe(
+      scan<string[], { ids: string[]; joined: string[]; left: string[] }>(
+        (prev, ids) => {
+          const left = prev.ids.filter((id) => !ids.includes(id));
+          const joined = ids.filter((id) => !prev.ids.includes(id));
+          return { ids, joined, left };
+        },
+        { ids: [], joined: [], left: [] },
+      ),
+    );
+
   private readonly localUserMedia: Observable<LocalUserMediaViewModel> =
     this.mediaItems.pipe(
       map((ms) => ms.find((m) => m.vm.local)!.vm as LocalUserMediaViewModel),

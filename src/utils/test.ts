@@ -14,7 +14,9 @@ import {
   RemoteParticipant,
   RemoteTrackPublication,
   Room as LivekitRoom,
+  RoomEvent,
 } from "livekit-client";
+import { EventEmitter } from "stream";
 
 import {
   LocalUserMediaViewModel,
@@ -107,6 +109,33 @@ export function mockMatrixRoomMember(member: Partial<RoomMember>): RoomMember {
 
 export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
   return { ...mockEmitter(), ...room } as Partial<MatrixRoom> as MatrixRoom;
+}
+
+/**
+ * A mock of a Livekit Room that can emit events.
+ */
+export class EmittableMockLivekitRoom extends EventEmitter {
+  public localParticipant?: LocalParticipant;
+  public remoteParticipants: Map<string, RemoteParticipant>;
+
+  public constructor(room: {
+    localParticipant?: LocalParticipant;
+    remoteParticipants: Map<string, RemoteParticipant>;
+  }) {
+    super();
+    this.localParticipant = room.localParticipant;
+    this.remoteParticipants = room.remoteParticipants ?? new Map();
+  }
+
+  public addParticipant(remoteParticipant: RemoteParticipant): void {
+    this.remoteParticipants.set(remoteParticipant.identity, remoteParticipant);
+    this.emit(RoomEvent.ParticipantConnected, remoteParticipant);
+  }
+
+  public removeParticipant(remoteParticipant: RemoteParticipant): void {
+    this.remoteParticipants.delete(remoteParticipant.identity);
+    this.emit(RoomEvent.ParticipantDisconnected, remoteParticipant);
+  }
 }
 
 export function mockLivekitRoom(
@@ -205,4 +234,13 @@ export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
     ...DEFAULT_CONFIG,
     ...config,
   });
+}
+
+export function mockMediaPlay(): string[] {
+  const audioIsPlaying: string[] = [];
+  window.HTMLMediaElement.prototype.play = async function (): Promise<void> {
+    audioIsPlaying.push((this.children[0] as HTMLSourceElement).src);
+    return Promise.resolve();
+  };
+  return audioIsPlaying;
 }
