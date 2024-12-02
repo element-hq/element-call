@@ -136,14 +136,13 @@ export const LobbyView: FC<Props> = ({
       video: muteStates.video.enabled && {
         deviceId: devices.videoInput.selectedId,
         // It should be possible to set a processor here:
-        processor: blur,
+        // processor: blur,
       },
     }),
     [
       initialAudioOptions,
       muteStates.video.enabled,
       devices.videoInput.selectedId,
-      blur,
     ],
   );
 
