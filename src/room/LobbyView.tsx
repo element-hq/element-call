@@ -111,7 +111,6 @@ export const LobbyView: FC<Props> = ({
       muteStates.audio.enabled && { deviceId: devices.audioInput.selectedId },
   );
 
-  // eslint-disable-next-line new-cap
   const blur = useMemo(() => {
     let b = undefined;
     try {

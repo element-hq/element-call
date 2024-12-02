@@ -9,7 +9,7 @@ import { ChangeEvent, FC, ReactNode, useCallback, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Root as Form, Separator, Text } from "@vector-im/compound-web";
-import { BackgroundBlur } from "@livekit/track-processors";
+import { BackgroundBlur as backgroundBlur } from "@livekit/track-processors";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { Modal } from "../Modal";
@@ -78,8 +78,7 @@ export const SettingsModal: FC<Props> = ({
     const [blur, setBlur] = useSetting(backgroundBlurSetting);
     let canBlur = true;
     try {
-      // eslint-disable-next-line new-cap
-      BackgroundBlur(15);
+      backgroundBlur(15);
     } catch (e) {
       logger.debug(
         "Cannot blur, so we do not show the option in settings. error: ",
