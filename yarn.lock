@@ -3307,12 +3307,10 @@
   dependencies:
     "@use-gesture/core" "10.3.1"
 
-"@vector-im/compound-design-tokens@^1.9.1":
-  version "1.9.2"
-  resolved "https://registry.yarnpkg.com/@vector-im/compound-design-tokens/-/compound-design-tokens-1.9.2.tgz#0b76e5475da3bc36443f7dc87951b937b5013d6f"
-  integrity sha512-gQmK4dHR2iws3ZskDv8Il6A4/rvQV7TPSmEOXLsahDhBTInWqexXeQnNRSt9Z5DsLPrkxL3/KoCt9lfYu/yiag==
-  dependencies:
-    prettier "^3.3.3"
+"@vector-im/compound-design-tokens@^2.0.0":
+  version "2.1.1"
+  resolved "https://registry.yarnpkg.com/@vector-im/compound-design-tokens/-/compound-design-tokens-2.1.1.tgz#d6175a99fe4b97688464126f255386990f3048d6"
+  integrity sha512-QnUi2K14D9KTXxcLQKUU3V75cforZLMwhaaJDNftT8F5mG86950hAM+qhgDNEpEU+pkTffQj0/g/5859YmqWzQ==
 
 "@vector-im/compound-web@^7.2.0":
   version "7.4.0"
@@ -7007,7 +7005,7 @@ prelude-ls@^1.2.1:
   resolved "https://registry.yarnpkg.com/prelude-ls/-/prelude-ls-1.2.1.tgz#debc6489d7a6e6b0e7611888cec880337d316396"
   integrity sha512-vkcDPrRZo1QZLbn5RLGPpg/WmIQ65qoWWhcGKf/b5eplkkarX0m9z8ppCat4mlOqUsWpyNuYgO3VRyrYHSzX5g==
 
-prettier@^3.0.0, prettier@^3.3.3:
+prettier@^3.0.0:
   version "3.4.1"
   resolved "https://registry.yarnpkg.com/prettier/-/prettier-3.4.1.tgz#e211d451d6452db0a291672ca9154bc8c2579f7b"
   integrity sha512-G+YdqtITVZmOJje6QkXQWzl3fSfMxFwm1tjTyo9exhkmWSqC4Yhd1+lug++IlR2mvRVAxEDDWYkQdeSztajqgg==

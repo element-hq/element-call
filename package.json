@@ -63,7 +63,7 @@
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",
     "@use-gesture/react": "^10.2.11",
-    "@vector-im/compound-design-tokens": "^1.9.1",
+    "@vector-im/compound-design-tokens": "^2.0.0",
     "@vector-im/compound-web": "^7.2.0",
     "@vitejs/plugin-basic-ssl": "^1.0.1",
     "@vitejs/plugin-react": "^4.0.1",
