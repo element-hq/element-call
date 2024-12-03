@@ -92,7 +92,7 @@ work:
 experimental_features:
     # MSC3266: Room summary API. Used for knocking over federation
     msc3266_enabled: true
-    # MSC4422 needed for syncv2 state_after. This allow clients to 
+    # MSC4222 needed for syncv2 state_after. This allow clients to 
     # correctly track the state of the room.
     msc4222_enabled: true
 
@@ -112,7 +112,7 @@ summary contains the room join rules. We need that to decide if the user gets
 prompted with the option to knock ("Request to join call"), a cannot join error or the
 join view.
 
-MSC4422 allow clients to opt-in to a change of the sync v2 API that allows them
+MSC4222 allow clients to opt-in to a change of the sync v2 API that allows them
 to correctly track the state of the room. This is required by Element Call to
 track room state reliably.
 
