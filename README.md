@@ -92,7 +92,7 @@ work:
 experimental_features:
     # MSC3266: Room summary API. Used for knocking over federation
     msc3266_enabled: true
-    # MSC4222 needed for syncv2 state_after. This allow clients to 
+    # MSC4222 needed for syncv2 state_after. This allow clients to
     # correctly track the state of the room.
     msc4222_enabled: true
 
