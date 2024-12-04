@@ -220,7 +220,7 @@ To add a new translation key you can do these steps:
 
 1. Add the new key entry to the code where the new key is used: `t("some_new_key")`
 1. Run `yarn i18n` to extract the new key and update the translation files. This
-   will add a skeleton entry to the `locales/en-GB/app.json` file:
+   will add a skeleton entry to the `locales/en/app.json` file:
    ```jsonc
    {
        ...
@@ -228,7 +228,7 @@ To add a new translation key you can do these steps:
        ...
    }
    ```
-1. Update the skeleton entry in the `locales/en-GB/app.json` file with
+1. Update the skeleton entry in the `locales/en/app.json` file with
    the English translation:
 
 ```jsonc
