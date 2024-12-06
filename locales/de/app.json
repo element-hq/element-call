@@ -69,9 +69,10 @@
     "video": "Video"
   },
   "developer_mode": {
-    "crypto_version": "Krypto-Version:{{version}}",
+    "crypto_version": "Krypto-Version: {{version}}",
     "device_id": "Geräte-ID: {{id}}",
     "duplicate_tiles_label": "Anzahl zusätzlicher Kachelkopien pro Teilnehmer",
+    "hostname": "Hostname: {{hostname}}",
     "matrix_id": "Matrix-ID: {{id}}"
   },
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
@@ -193,6 +194,7 @@
     "expand": "Erweitern",
     "mute_for_me": "Für mich stumm schalten",
     "muted_for_me": "Für mich stumm geschaltet",
-    "volume": "Lautstärke"
+    "volume": "Lautstärke",
+    "waiting_for_media": "Warten auf Medien..."
   }
 }
