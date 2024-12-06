@@ -13,10 +13,13 @@ import classNames from "classnames";
 import { useHistory } from "react-router-dom";
 import { logger } from "matrix-js-sdk/src/logger";
 import { usePreviewTracks } from "@livekit/components-react";
-import { LocalVideoTrack, Track } from "livekit-client";
+import {
+  CreateLocalTracksOptions,
+  LocalVideoTrack,
+  Track,
+} from "livekit-client";
 import { useObservable } from "observable-hooks";
 import { map } from "rxjs";
-import { BackgroundBlur as backgroundBlur } from "@livekit/track-processors";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
@@ -33,14 +36,16 @@ import {
   VideoButton,
 } from "../button/Button";
 import { SettingsModal, defaultSettingsTab } from "../settings/SettingsModal";
-import { backgroundBlur as backgroundBlurSettings } from "../settings/settings";
 import { useMediaQuery } from "../useMediaQuery";
 import { E2eeType } from "../e2ee/e2eeType";
 import { Link } from "../button/Link";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useInitial } from "../useInitial";
 import { useSwitchCamera as useShowSwitchCamera } from "./useSwitchCamera";
-import { useSetting } from "../settings/settings";
+import {
+  useTrackProcessor,
+  useTrackProcessorSync,
+} from "../livekit/TrackProcessorContext";
 
 interface Props {
   client: MatrixClient;
@@ -111,20 +116,10 @@ export const LobbyView: FC<Props> = ({
       muteStates.audio.enabled && { deviceId: devices.audioInput.selectedId },
   );
 
-  const blur = useMemo(() => {
-    let b = undefined;
-    try {
-      b = backgroundBlur(15, { delegate: "GPU" });
-    } catch (e) {
-      logger.error(
-        "disable background blur because its not supported by the platform.",
-        e,
-      );
-    }
-    return b;
-  }, []);
+  const { processor } = useTrackProcessor() || {};
 
-  const localTrackOptions = useMemo(
+  const initialProcessor = useInitial(() => processor);
+  const localTrackOptions = useMemo<CreateLocalTracksOptions>(
     () => ({
       // The only reason we request audio here is to get the audio permission
       // request over with at the same time. But changing the audio settings
@@ -135,14 +130,14 @@ export const LobbyView: FC<Props> = ({
       audio: Object.assign({}, initialAudioOptions),
       video: muteStates.video.enabled && {
         deviceId: devices.videoInput.selectedId,
-        // It should be possible to set a processor here:
-        // processor: blur,
+        processor: initialProcessor,
       },
     }),
     [
       initialAudioOptions,
       muteStates.video.enabled,
       devices.videoInput.selectedId,
+      initialProcessor,
     ],
   );
 
@@ -157,28 +152,11 @@ export const LobbyView: FC<Props> = ({
 
   const tracks = usePreviewTracks(localTrackOptions, onError);
 
-  const videoTrack = useMemo(
-    () =>
-      (tracks?.find((t) => t.kind === Track.Kind.Video) ??
-        null) as LocalVideoTrack | null,
-    [tracks],
-  );
-
-  const [showBackgroundBlur] = useSetting(backgroundBlurSettings);
-
-  useEffect(() => {
-    // Fon't even try if we cannot blur on this platform
-    if (!blur) return;
-    const updateBlur = async (showBlur: boolean): Promise<void> => {
-      if (showBlur && !videoTrack?.getProcessor()) {
-        await videoTrack?.setProcessor(blur);
-      } else {
-        await videoTrack?.stopProcessor();
-      }
-    };
-    if (videoTrack) void updateBlur(showBackgroundBlur);
-  }, [videoTrack, showBackgroundBlur, blur]);
-
+  const videoTrack = useMemo(() => {
+    const track = tracks?.find((t) => t.kind === Track.Kind.Video);
+    return track as LocalVideoTrack | null;
+  }, [tracks]);
+  useTrackProcessorSync(videoTrack);
   const showSwitchCamera = useShowSwitchCamera(
     useObservable(
       (inputs) => inputs.pipe(map(([video]) => video)),

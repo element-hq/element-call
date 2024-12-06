@@ -28,6 +28,7 @@ import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
+import { ProcessorProvider } from "./livekit/TrackProcessorContext";
 
 const SentryRoute = Sentry.withSentryRouting(Route);
 
@@ -82,27 +83,25 @@ export const App: FC<AppProps> = ({ history }) => {
           <TooltipProvider>
             {loaded ? (
               <Suspense fallback={null}>
-                <ClientProvider>
-                  <MediaDevicesProvider>
-                    <Sentry.ErrorBoundary fallback={errorPage}>
-                      <DisconnectedBanner />
-                      <Switch>
-                        <SentryRoute exact path="/">
-                          <HomePage />
-                        </SentryRoute>
-                        <SentryRoute exact path="/login">
-                          <LoginPage />
-                        </SentryRoute>
-                        <SentryRoute exact path="/register">
-                          <RegisterPage />
-                        </SentryRoute>
-                        <SentryRoute path="*">
-                          <RoomPage />
-                        </SentryRoute>
-                      </Switch>
-                    </Sentry.ErrorBoundary>
-                  </MediaDevicesProvider>
-                </ClientProvider>
+                <Providers>
+                  <Sentry.ErrorBoundary fallback={errorPage}>
+                    <DisconnectedBanner />
+                    <Switch>
+                      <SentryRoute exact path="/">
+                        <HomePage />
+                      </SentryRoute>
+                      <SentryRoute exact path="/login">
+                        <LoginPage />
+                      </SentryRoute>
+                      <SentryRoute exact path="/register">
+                        <RegisterPage />
+                      </SentryRoute>
+                      <SentryRoute path="*">
+                        <RoomPage />
+                      </SentryRoute>
+                    </Switch>
+                  </Sentry.ErrorBoundary>
+                </Providers>
               </Suspense>
             ) : (
               <LoadingView />
@@ -111,5 +110,18 @@ export const App: FC<AppProps> = ({ history }) => {
         </ThemeProvider>
       </BackgroundProvider>
     </Router>
+  );
+};
+
+const Providers: FC<{
+  children: JSX.Element;
+}> = ({ children }) => {
+  // We use this to stack all used providers to not make the App component to verbose
+  return (
+    <ClientProvider>
+      <MediaDevicesProvider>
+        <ProcessorProvider>{children}</ProcessorProvider>
+      </MediaDevicesProvider>
+    </ClientProvider>
   );
 };
