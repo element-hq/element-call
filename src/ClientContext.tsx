@@ -48,6 +48,7 @@ export type ValidClientState = {
   disconnected: boolean;
   supportedFeatures: {
     reactions: boolean;
+    thumbnails: boolean;
   };
   setClient: (params?: SetClientParams) => void;
 };
@@ -70,6 +71,8 @@ export type SetClientParams = {
 };
 
 const ClientContext = createContext<ClientState | undefined>(undefined);
+
+export const ClientContextProvider = ClientContext.Provider;
 
 export const useClientState = (): ClientState | undefined =>
   useContext(ClientContext);
@@ -253,6 +256,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
 
   const [isDisconnected, setIsDisconnected] = useState(false);
   const [supportsReactions, setSupportsReactions] = useState(false);
+  const [supportsThumbnails, setSupportsThumbnails] = useState(false);
 
   const state: ClientState | undefined = useMemo(() => {
     if (alreadyOpenedErr) {
@@ -278,6 +282,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       disconnected: isDisconnected,
       supportedFeatures: {
         reactions: supportsReactions,
+        thumbnails: supportsThumbnails,
       },
     };
   }, [
@@ -288,6 +293,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     setClient,
     isDisconnected,
     supportsReactions,
+    supportsThumbnails,
   ]);
 
   const onSync = useCallback(
@@ -313,6 +319,8 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     }
 
     if (initClientState.widgetApi) {
+      // There is currently no widget API for authenticated media thumbnails.
+      setSupportsThumbnails(false);
       const reactSend = initClientState.widgetApi.hasCapability(
         "org.matrix.msc2762.send.event:m.reaction",
       );
@@ -334,6 +342,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
       }
     } else {
       setSupportsReactions(true);
+      setSupportsThumbnails(true);
     }
 
     return (): void => {

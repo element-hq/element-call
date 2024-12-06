@@ -333,15 +333,3 @@ export function getRelativeRoomUrl(
     : "";
   return `/room/#${roomPart}?${generateUrlSearchParams(roomId, encryptionSystem, viaServers).toString()}`;
 }
-
-export function getAvatarUrl(
-  client: MatrixClient,
-  mxcUrl: string,
-  avatarSize = 96,
-): string {
-  const width = Math.floor(avatarSize * window.devicePixelRatio);
-  const height = Math.floor(avatarSize * window.devicePixelRatio);
-  // scale is more suitable for larger sizes
-  const resizeMethod = avatarSize <= 96 ? "crop" : "scale";
-  return mxcUrl && client.mxcUrlToHttp(mxcUrl, width, height, resizeMethod)!;
-}
