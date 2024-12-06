@@ -124,7 +124,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
   useEffect(() => {
     if (livekitRoom !== undefined) {
       const vm = new CallViewModel(
-        props.rtcSession.room,
+        props.rtcSession,
         livekitRoom,
         props.e2eeSystem,
         connStateObservable,
@@ -132,12 +132,7 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
       setVm(vm);
       return (): void => vm.destroy();
     }
-  }, [
-    props.rtcSession.room,
-    livekitRoom,
-    props.e2eeSystem,
-    connStateObservable,
-  ]);
+  }, [props.rtcSession, livekitRoom, props.e2eeSystem, connStateObservable]);
 
   if (livekitRoom === undefined || vm === null) return null;
 

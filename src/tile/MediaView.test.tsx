@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, it, test } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { TooltipProvider } from "@vector-im/compound-web";
@@ -42,6 +42,7 @@ describe("MediaView", () => {
     unencryptedWarning: false,
     video: trackReference,
     member: undefined,
+    localParticipant: false,
   };
 
   test("is accessible", async () => {
@@ -56,6 +57,25 @@ describe("MediaView", () => {
       expect(screen.queryAllByRole("img", { name: "some name" }).length).toBe(
         0,
       );
+    });
+  });
+
+  describe("with no participant", () => {
+    it("shows avatar for local user", () => {
+      render(
+        <MediaView {...baseProps} video={undefined} localParticipant={true} />,
+      );
+      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
+      expect(screen.queryAllByText("video_tile.waiting_for_media").length).toBe(
+        0,
+      );
+    });
+    it("shows avatar and label for remote user", () => {
+      render(
+        <MediaView {...baseProps} video={undefined} localParticipant={false} />,
+      );
+      expect(screen.getByRole("img", { name: "some name" })).toBeVisible();
+      expect(screen.getByText("video_tile.waiting_for_media")).toBeVisible();
     });
   });
 

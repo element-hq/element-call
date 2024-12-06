@@ -49,12 +49,13 @@ interface SpotlightItemBaseProps {
   "data-id": string;
   targetWidth: number;
   targetHeight: number;
-  video: TrackReferenceOrPlaceholder;
+  video: TrackReferenceOrPlaceholder | undefined;
   member: RoomMember | undefined;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;
   displayName: string;
   "aria-hidden"?: boolean;
+  localParticipant: boolean;
 }
 
 interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
@@ -163,6 +164,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
       displayName,
       encryptionStatus,
       "aria-hidden": ariaHidden,
+      localParticipant: vm.local,
     };
 
     return vm instanceof ScreenShareViewModel ? (
@@ -210,7 +212,9 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
     const ref = useMergedRefs(ourRef, theirRef);
     const maximised = useObservableEagerState(vm.maximised);
     const media = useObservableEagerState(vm.media);
-    const [visibleId, setVisibleId] = useState(media[0].id);
+    const [visibleId, setVisibleId] = useState<string | undefined>(
+      media[0]?.id,
+    );
     const latestMedia = useLatest(media);
     const latestVisibleId = useLatest(visibleId);
     const visibleIndex = media.findIndex((vm) => vm.id === visibleId);

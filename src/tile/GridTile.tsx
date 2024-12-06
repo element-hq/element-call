@@ -175,6 +175,7 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
         raisedHandTime={handRaised}
         currentReaction={currentReaction}
         raisedHandOnClick={raisedHandOnClick}
+        localParticipant={vm.local}
         {...props}
       />
     );

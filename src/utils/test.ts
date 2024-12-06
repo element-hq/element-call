@@ -7,7 +7,20 @@ Please see LICENSE in the repository root for full details.
 import { map, Observable, of, SchedulerLike } from "rxjs";
 import { RunHelpers, TestScheduler } from "rxjs/testing";
 import { expect, vi } from "vitest";
-import { RoomMember, Room as MatrixRoom } from "matrix-js-sdk/src/matrix";
+import {
+  RoomMember,
+  Room as MatrixRoom,
+  MatrixEvent,
+  Room,
+  TypedEventEmitter,
+} from "matrix-js-sdk/src/matrix";
+import {
+  CallMembership,
+  Focus,
+  MatrixRTCSessionEvent,
+  MatrixRTCSessionEventHandlerMap,
+  SessionMembershipData,
+} from "matrix-js-sdk/src/matrixrtc";
 import {
   LocalParticipant,
   LocalTrackPublication,
@@ -100,11 +113,40 @@ function mockEmitter<T>(): EmitterMock<T> {
   };
 }
 
+export function mockRtcMembership(
+  user: string | RoomMember,
+  deviceId: string,
+  callId = "",
+  fociPreferred: Focus[] = [],
+  focusActive: Focus = { type: "oldest_membership" },
+  membership: Partial<SessionMembershipData> = {},
+): CallMembership {
+  const data: SessionMembershipData = {
+    application: "m.call",
+    call_id: callId,
+    device_id: deviceId,
+    foci_preferred: fociPreferred,
+    focus_active: focusActive,
+    ...membership,
+  };
+  const event = new MatrixEvent({
+    sender: typeof user === "string" ? user : user.userId,
+  });
+  return new CallMembership(event, data);
+}
+
 // Maybe it'd be good to move this to matrix-js-sdk? Our testing needs are
 // rather simple, but if one util to mock a member is good enough for us, maybe
 // it's useful for matrix-js-sdk consumers in general.
-export function mockMatrixRoomMember(member: Partial<RoomMember>): RoomMember {
-  return { ...mockEmitter(), ...member } as RoomMember;
+export function mockMatrixRoomMember(
+  rtcMembership: CallMembership,
+  member: Partial<RoomMember> = {},
+): RoomMember {
+  return {
+    ...mockEmitter(),
+    userId: rtcMembership.sender,
+    ...member,
+  } as RoomMember;
 }
 
 export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
@@ -174,14 +216,15 @@ export function mockLocalParticipant(
 }
 
 export async function withLocalMedia(
-  member: Partial<RoomMember>,
+  localRtcMember: CallMembership,
+  roomMember: Partial<RoomMember>,
   continuation: (vm: LocalUserMediaViewModel) => void | Promise<void>,
 ): Promise<void> {
   const localParticipant = mockLocalParticipant({});
   const vm = new LocalUserMediaViewModel(
     "local",
-    mockMatrixRoomMember(member),
-    localParticipant,
+    mockMatrixRoomMember(localRtcMember, roomMember),
+    of(localParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
@@ -208,15 +251,16 @@ export function mockRemoteParticipant(
 }
 
 export async function withRemoteMedia(
-  member: Partial<RoomMember>,
+  localRtcMember: CallMembership,
+  roomMember: Partial<RoomMember>,
   participant: Partial<RemoteParticipant>,
   continuation: (vm: RemoteUserMediaViewModel) => void | Promise<void>,
 ): Promise<void> {
   const remoteParticipant = mockRemoteParticipant(participant);
   const vm = new RemoteUserMediaViewModel(
     "remote",
-    mockMatrixRoomMember(member),
-    remoteParticipant,
+    mockMatrixRoomMember(localRtcMember, roomMember),
+    of(remoteParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
@@ -243,4 +287,31 @@ export function mockMediaPlay(): string[] {
     return Promise.resolve();
   };
   return audioIsPlaying;
+}
+
+export class MockRTCSession extends TypedEventEmitter<
+  MatrixRTCSessionEvent,
+  MatrixRTCSessionEventHandlerMap
+> {
+  public constructor(
+    public readonly room: Room,
+    private localMembership: CallMembership,
+    public memberships: CallMembership[] = [],
+  ) {
+    super();
+  }
+
+  public withMemberships(
+    rtcMembers: Observable<Partial<CallMembership>[]>,
+  ): MockRTCSession {
+    rtcMembers.subscribe((m) => {
+      const old = this.memberships;
+      // always prepend the local participant
+      const updated = [this.localMembership, ...(m as CallMembership[])];
+      this.memberships = updated;
+      this.emit(MatrixRTCSessionEvent.MembershipsChanged, old, updated);
+    });
+
+    return this;
+  }
 }

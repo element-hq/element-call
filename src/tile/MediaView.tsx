@@ -28,7 +28,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
-  video: TrackReferenceOrPlaceholder;
+  video: TrackReferenceOrPlaceholder | undefined;
   videoFit: "cover" | "contain";
   mirror: boolean;
   member: RoomMember | undefined;
@@ -41,6 +41,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   raisedHandTime?: Date;
   currentReaction?: ReactionOption;
   raisedHandOnClick?: () => void;
+  localParticipant: boolean;
 }
 
 export const MediaView = forwardRef<HTMLDivElement, Props>(
@@ -63,6 +64,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       raisedHandTime,
       currentReaction,
       raisedHandOnClick,
+      localParticipant,
       ...props
     },
     ref,
@@ -90,21 +92,21 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
             size={avatarSize}
             src={member?.getMxcAvatarUrl()}
             className={styles.avatar}
-            style={{ display: videoEnabled ? "none" : "initial" }}
+            style={{ display: video && videoEnabled ? "none" : "initial" }}
           />
-          {video.publication !== undefined && (
+          {video?.publication !== undefined && (
             <VideoTrack
               trackRef={video}
               // There's no reason for this to be focusable
               tabIndex={-1}
               disablePictureInPicture
-              style={{ display: videoEnabled ? "block" : "none" }}
+              style={{ display: video && videoEnabled ? "block" : "none" }}
               data-testid="video"
             />
           )}
         </div>
         <div className={styles.fg}>
-          <div style={{ display: "flex", gap: "var(--cpd-space-1x)" }}>
+          <div className={styles.reactions}>
             <RaisedHandIndicator
               raisedHandTime={raisedHandTime}
               miniature={avatarSize < 96}
@@ -118,6 +120,11 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
               />
             )}
           </div>
+          {!video && !localParticipant && (
+            <div className={styles.status}>
+              {t("video_tile.waiting_for_media")}
+            </div>
+          )}
           {/* TODO: Bring this back once encryption status is less broken */}
           {/*encryptionStatus !== EncryptionStatus.Okay && (
             <div className={styles.status}>

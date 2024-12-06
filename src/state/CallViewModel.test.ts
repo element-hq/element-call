@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { test, vi, onTestFinished } from "vitest";
+import { test, vi, onTestFinished, it } from "vitest";
 import {
   combineLatest,
   debounceTime,
@@ -25,6 +25,7 @@ import {
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
 import { isEqual } from "lodash-es";
+import { CallMembership, MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 
 import { CallViewModel, Layout } from "./CallViewModel";
 import {
@@ -34,6 +35,8 @@ import {
   mockMatrixRoomMember,
   mockRemoteParticipant,
   withTestScheduler,
+  mockRtcMembership,
+  MockRTCSession,
 } from "../utils/test";
 import {
   ECAddonConnectionState,
@@ -43,14 +46,19 @@ import { E2eeType } from "../e2ee/e2eeType";
 
 vi.mock("@livekit/components-core");
 
-const alice = mockMatrixRoomMember({ userId: "@alice:example.org" });
-const bob = mockMatrixRoomMember({ userId: "@bob:example.org" });
-const carol = mockMatrixRoomMember({ userId: "@carol:example.org" });
-const dave = mockMatrixRoomMember({ userId: "@dave:example.org" });
+const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
+const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
+const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
+const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
 
-const aliceId = `${alice.userId}:AAAA`;
-const bobId = `${bob.userId}:BBBB`;
-const daveId = `${dave.userId}:DDDD`;
+const alice = mockMatrixRoomMember(aliceRtcMember);
+const bob = mockMatrixRoomMember(bobRtcMember);
+const carol = mockMatrixRoomMember(localRtcMember);
+const dave = mockMatrixRoomMember(daveRtcMember);
+
+const aliceId = `${alice.userId}:${aliceRtcMember.deviceId}`;
+const bobId = `${bob.userId}:${bobRtcMember.deviceId}`;
+const daveId = `${dave.userId}:${daveRtcMember.deviceId}`;
 
 const localParticipant = mockLocalParticipant({ identity: "" });
 const aliceParticipant = mockRemoteParticipant({ identity: aliceId });
@@ -65,7 +73,9 @@ const bobSharingScreen = mockRemoteParticipant({
 });
 const daveParticipant = mockRemoteParticipant({ identity: daveId });
 
-const members = new Map([alice, bob, carol, dave].map((p) => [p.userId, p]));
+const roomMembers = new Map(
+  [alice, bob, carol, dave].map((p) => [p.userId, p]),
+);
 
 export interface GridLayoutSummary {
   type: "grid";
@@ -173,10 +183,23 @@ function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
 
 function withCallViewModel(
   remoteParticipants: Observable<RemoteParticipant[]>,
+  rtcMembers: Observable<Partial<CallMembership>[]>,
   connectionState: Observable<ECConnectionState>,
   speaking: Map<Participant, Observable<boolean>>,
   continuation: (vm: CallViewModel) => void,
 ): void {
+  const room = mockMatrixRoom({
+    client: {
+      getUserId: () => localRtcMember.sender,
+      getDeviceId: () => localRtcMember.deviceId,
+    } as Partial<MatrixClient> as MatrixClient,
+    getMember: (userId) => roomMembers.get(userId) ?? null,
+  });
+  const rtcSession = new MockRTCSession(
+    room,
+    localRtcMember,
+    [],
+  ).withMemberships(rtcMembers);
   const participantsSpy = vi
     .spyOn(ComponentsCore, "connectedParticipantsObserver")
     .mockReturnValue(remoteParticipants);
@@ -209,12 +232,7 @@ function withCallViewModel(
   );
 
   const vm = new CallViewModel(
-    mockMatrixRoom({
-      client: {
-        getUserId: () => "@carol:example.org",
-      } as Partial<MatrixClient> as MatrixClient,
-      getMember: (userId) => members.get(userId) ?? null,
-    }),
+    rtcSession as unknown as MatrixRTCSession,
     liveKitRoom,
     {
       kind: E2eeType.PER_PARTICIPANT,
@@ -247,6 +265,7 @@ test("participants are retained during a focus switch", () => {
         a: [aliceParticipant, bobParticipant],
         b: [],
       }),
+      of([aliceRtcMember, bobRtcMember]),
       hot(connectionInputMarbles, {
         c: ConnectionState.Connected,
         s: ECAddonConnectionState.ECSwitchingFocus,
@@ -288,6 +307,7 @@ test("screen sharing activates spotlight layout", () => {
         c: [aliceSharingScreen, bobSharingScreen],
         d: [aliceParticipant, bobSharingScreen],
       }),
+      of([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
       (vm) => {
@@ -356,7 +376,7 @@ test("participants stay in the same order unless to appear/disappear", () => {
     const modeInputMarbles = "     a";
     // First Bob speaks, then Dave, then Alice
     const aSpeakingInputMarbles = "n- 1998ms - 1999ms y";
-    const bSpeakingInputMarbles = "ny 1998ms n 1999ms ";
+    const bSpeakingInputMarbles = "ny 1998ms n 1999ms -";
     const dSpeakingInputMarbles = "n- 1998ms y 1999ms n";
     // Nothing should change when Bob speaks, because Bob is already on screen.
     // When Dave speaks he should switch with Alice because she's the one who
@@ -366,6 +386,7 @@ test("participants stay in the same order unless to appear/disappear", () => {
 
     withCallViewModel(
       of([aliceParticipant, bobParticipant, daveParticipant]),
+      of([aliceRtcMember, bobRtcMember, daveRtcMember]),
       of(ConnectionState.Connected),
       new Map([
         [aliceParticipant, hot(aSpeakingInputMarbles, { y: true, n: false })],
@@ -427,6 +448,7 @@ test("spotlight speakers swap places", () => {
 
     withCallViewModel(
       of([aliceParticipant, bobParticipant, daveParticipant]),
+      of([aliceRtcMember, bobRtcMember, daveRtcMember]),
       of(ConnectionState.Connected),
       new Map([
         [aliceParticipant, hot(aSpeakingInputMarbles, { y: true, n: false })],
@@ -475,6 +497,7 @@ test("layout enters picture-in-picture mode when requested", () => {
 
     withCallViewModel(
       of([aliceParticipant, bobParticipant]),
+      of([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
       (vm) => {
@@ -515,6 +538,7 @@ test("spotlight remembers whether it's expanded", () => {
 
     withCallViewModel(
       of([aliceParticipant, bobParticipant]),
+      of([aliceRtcMember, bobRtcMember]),
       of(ConnectionState.Connected),
       new Map(),
       (vm) => {
@@ -552,6 +576,107 @@ test("spotlight remembers whether it's expanded", () => {
               type: "grid",
               spotlight: undefined,
               grid: ["local:0", `${bobId}:0`, `${aliceId}:0`],
+            },
+          },
+        );
+      },
+    );
+  });
+});
+
+test("participants must have a MatrixRTCSession to be visible", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    // iterate through a number of combinations of participants and MatrixRTC memberships
+    // Bob never has an MatrixRTC membership
+    const scenarioInputMarbles = " abcdec";
+    // Bob should never be visible
+    const expectedLayoutMarbles = "a-bc-b";
+
+    withCallViewModel(
+      hot(scenarioInputMarbles, {
+        a: [],
+        b: [bobParticipant],
+        c: [aliceParticipant, bobParticipant],
+        d: [aliceParticipant, daveParticipant, bobParticipant],
+        e: [aliceParticipant, daveParticipant, bobSharingScreen],
+      }),
+      hot(scenarioInputMarbles, {
+        a: [],
+        b: [],
+        c: [aliceRtcMember],
+        d: [aliceRtcMember, daveRtcMember],
+        e: [aliceRtcMember, daveRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm) => {
+        vm.setGridMode("grid");
+        expectObservable(summarizeLayout(vm.layout)).toBe(
+          expectedLayoutMarbles,
+          {
+            a: {
+              type: "grid",
+              spotlight: undefined,
+              grid: ["local:0"],
+            },
+            b: {
+              type: "one-on-one",
+              local: "local:0",
+              remote: `${aliceId}:0`,
+            },
+            c: {
+              type: "grid",
+              spotlight: undefined,
+              grid: ["local:0", `${aliceId}:0`, `${daveId}:0`],
+            },
+          },
+        );
+      },
+    );
+  });
+});
+
+it("should show at least one tile per MatrixRTCSession", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    // iterate through some combinations of MatrixRTC memberships
+    const scenarioInputMarbles = " abcd";
+    // There should always be one tile for each MatrixRTCSession
+    const expectedLayoutMarbles = "abcd";
+
+    withCallViewModel(
+      of([]),
+      hot(scenarioInputMarbles, {
+        a: [],
+        b: [aliceRtcMember],
+        c: [aliceRtcMember, daveRtcMember],
+        d: [daveRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm) => {
+        vm.setGridMode("grid");
+        expectObservable(summarizeLayout(vm.layout)).toBe(
+          expectedLayoutMarbles,
+          {
+            a: {
+              type: "grid",
+              spotlight: undefined,
+              grid: ["local:0"],
+            },
+            b: {
+              type: "one-on-one",
+              local: "local:0",
+              remote: `${aliceId}:0`,
+            },
+            c: {
+              type: "grid",
+              spotlight: undefined,
+              grid: ["local:0", `${aliceId}:0`, `${daveId}:0`],
+            },
+            d: {
+              type: "one-on-one",
+              local: "local:0",
+              remote: `${daveId}:0`,
             },
           },
         );
