@@ -1840,6 +1840,11 @@
   resolved "https://registry.yarnpkg.com/@mediapipe/tasks-vision/-/tasks-vision-0.10.9.tgz#fbd669f50ac2e888b2c64c9c9863927c111da02f"
   integrity sha512-/gFguyJm1ng4Qr7VVH2vKO+zZcQd8wc3YafUfvBuYFX0Y5+CvrV+VNPEVkl5W/gUZF5KNKNZAiaHPULGPCIjyQ==
 
+"@mediapipe/tasks-vision@^0.10.18":
+  version "0.10.18"
+  resolved "https://registry.yarnpkg.com/@mediapipe/tasks-vision/-/tasks-vision-0.10.18.tgz#9ea0f0bf7506378c55ee661fa70aa0910f21f9b5"
+  integrity sha512-NRIlyqhGUz1Jdgcs6YybwPRhLK6dgeGAqAMXepIczEQ7FmA/0ouFtgMO1g9SPf/HaDSO8pNVdP54dAb9s9wj/Q==
+
 "@nodelib/fs.scandir@2.1.5":
   version "2.1.5"
   resolved "https://registry.yarnpkg.com/@nodelib/fs.scandir/-/fs.scandir-2.1.5.tgz#7619c2eb21b25483f6d167548b4cfd5a7488c3d5"

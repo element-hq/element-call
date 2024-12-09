@@ -5,11 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  BackgroundBlur as backgroundBlur,
-  BackgroundOptions,
-  ProcessorWrapper,
-} from "@livekit/track-processors";
+import { BackgroundOptions, ProcessorWrapper } from "@livekit/track-processors";
 import {
   createContext,
   FC,
@@ -26,6 +22,7 @@ import {
   backgroundBlur as backgroundBlurSettings,
   useSetting,
 } from "../settings/settings";
+import { BlurBackgroundTransformer } from "./BlurBackgroundTransformer";
 
 type ProcessorState = {
   supported: boolean | undefined;
@@ -87,7 +84,12 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
   useEffect(() => {
     if (!shouldCheckSupport) return;
     try {
-      if (!blur.current) blur.current = backgroundBlur(15, { delegate: "GPU" });
+      if (!blur.current) {
+        blur.current = new ProcessorWrapper(
+          new BlurBackgroundTransformer({ blurRadius: 15 }),
+          "background-blur",
+        );
+      }
       setProcessorState({
         checkSupported,
         supported: true,
