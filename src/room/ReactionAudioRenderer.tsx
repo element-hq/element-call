@@ -5,70 +5,67 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useDeferredValue, useEffect, useState } from "react";
 
 import { useReactions } from "../useReactions";
-import {
-  playReactionsSound,
-  soundEffectVolumeSetting as effectSoundVolumeSetting,
-  useSetting,
-} from "../settings/settings";
+import { playReactionsSound, useSetting } from "../settings/settings";
 import { GenericReaction, ReactionSet } from "../reactions";
+import { useAudioContext } from "../useAudioContext";
+import { prefetchSounds } from "../soundUtils";
+import { useLatest } from "../useLatest";
+
+const soundMap = Object.fromEntries([
+  ...ReactionSet.filter((v) => v.sound !== undefined).map((v) => [
+    v.name,
+    v.sound!,
+  ]),
+  [GenericReaction.name, GenericReaction.sound],
+]);
 
 export function ReactionsAudioRenderer(): ReactNode {
   const { reactions } = useReactions();
   const [shouldPlay] = useSetting(playReactionsSound);
-  const [effectSoundVolume] = useSetting(effectSoundVolumeSetting);
-  const audioElements = useRef<Record<string, HTMLAudioElement | null>>({});
+  const [soundCache, setSoundCache] = useState<ReturnType<
+    typeof prefetchSounds
+  > | null>(null);
+  const audioEngineCtx = useAudioContext({
+    sounds: soundCache,
+    latencyHint: "interactive",
+  });
+  const audioEngineRef = useLatest(audioEngineCtx);
+  const oldReactions = useDeferredValue(reactions);
 
   useEffect(() => {
-    if (!audioElements.current) {
+    if (!shouldPlay || soundCache) {
       return;
     }
+    // This is fine even if we load the component multiple times,
+    // as the browser's cache should ensure once the media is loaded
+    // once that future fetches come via the cache.
+    setSoundCache(prefetchSounds(soundMap));
+  }, [soundCache, shouldPlay]);
 
-    if (!shouldPlay) {
+  useEffect(() => {
+    if (!shouldPlay || !audioEngineRef.current) {
       return;
     }
+    const oldReactionSet = new Set(
+      Object.values(oldReactions).map((r) => r.name),
+    );
     for (const reactionName of new Set(
       Object.values(reactions).map((r) => r.name),
     )) {
-      const audioElement =
-        audioElements.current[reactionName] ?? audioElements.current.generic;
-      if (audioElement?.paused) {
-        audioElement.volume = effectSoundVolume;
-        void audioElement.play();
+      if (oldReactionSet.has(reactionName)) {
+        // Don't replay old reactions
+        return;
+      }
+      if (soundMap[reactionName]) {
+        audioEngineRef.current.playSound(reactionName);
+      } else {
+        // Fallback sounds.
+        audioEngineRef.current.playSound("generic");
       }
     }
-  }, [audioElements, shouldPlay, reactions, effectSoundVolume]);
-
-  // Do not render any audio elements if playback is disabled. Will save
-  // audio file fetches.
-  if (!shouldPlay) {
-    return null;
-  }
-
-  // NOTE: We load all audio elements ahead of time to allow the cache
-  // to be populated, rather than risk a cache miss and have the audio
-  // be delayed.
-  return (
-    <>
-      {[GenericReaction, ...ReactionSet].map(
-        (r) =>
-          r.sound && (
-            <audio
-              ref={(el) => (audioElements.current[r.name] = el)}
-              data-testid={r.name}
-              key={r.name}
-              preload="auto"
-              hidden
-            >
-              <source src={r.sound.ogg} type="audio/ogg; codecs=vorbis" />
-              {r.sound.mp3 ? (
-                <source src={r.sound.mp3} type="audio/mpeg" />
-              ) : null}
-            </audio>
-          ),
-      )}
-    </>
-  );
+  }, [audioEngineRef, shouldPlay, oldReactions, reactions]);
+  return null;
 }

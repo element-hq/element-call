@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ChangeEvent, FC, useCallback } from "react";
+import { ChangeEvent, FC, useCallback, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Root as Form, Text } from "@vector-im/compound-web";
@@ -83,8 +83,8 @@ export const SettingsModal: FC<Props> = ({
 
   const devices = useMediaDevices();
   useMediaDeviceNames(devices, open);
-
   const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
+  const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
@@ -107,8 +107,9 @@ export const SettingsModal: FC<Props> = ({
             <p>{t("settings.audio_tab.effect_volume_description")}</p>
             <Slider
               label={t("video_tile.volume")}
-              value={soundVolume}
-              onValueChange={setSoundVolume}
+              value={soundVolumeRaw}
+              onValueChange={setSoundVolumeRaw}
+              onValueCommit={setSoundVolume}
               min={0}
               max={1}
               step={0.01}

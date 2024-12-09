@@ -16,6 +16,9 @@ interface Props {
   className?: string;
   label: string;
   value: number;
+  /**
+   * Event handler called when the value changes during an interaction.
+   */
   onValueChange: (value: number) => void;
   /**
    * Event handler called when the value changes at the end of an interaction.

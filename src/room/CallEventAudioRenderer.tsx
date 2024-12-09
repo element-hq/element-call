@@ -5,47 +5,76 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ReactNode, useEffect, useRef } from "react";
-import { filter } from "rxjs";
+import { ReactNode, useDeferredValue, useEffect, useMemo } from "react";
+import { filter, interval, throttle } from "rxjs";
 
-import {
-  soundEffectVolumeSetting as effectSoundVolumeSetting,
-  useSetting,
-} from "../settings/settings";
 import { CallViewModel } from "../state/CallViewModel";
-import enterCallSoundMp3 from "../sound/join_call.mp3";
-import enterCallSoundOgg from "../sound/join_call.ogg";
+import joinCallSoundMp3 from "../sound/join_call.mp3";
+import joinCallSoundOgg from "../sound/join_call.ogg";
 import leftCallSoundMp3 from "../sound/left_call.mp3";
 import leftCallSoundOgg from "../sound/left_call.ogg";
+import handSoundOgg from "../sound/raise_hand.ogg?url";
+import handSoundMp3 from "../sound/raise_hand.mp3?url";
+import { useAudioContext } from "../useAudioContext";
+import { prefetchSounds } from "../soundUtils";
+import { useReactions } from "../useReactions";
+import { useLatest } from "../useLatest";
 
 // Do not play any sounds if the participant count has exceeded this
 // number.
 export const MAX_PARTICIPANT_COUNT_FOR_SOUND = 8;
-export const CONCURRENT_AUDIO_CHANNELS = 2;
+export const THROTTLE_SOUND_EFFECT_MS = 500;
+
+const sounds = prefetchSounds({
+  join: {
+    mp3: joinCallSoundMp3,
+    ogg: joinCallSoundOgg,
+  },
+  left: {
+    mp3: leftCallSoundMp3,
+    ogg: leftCallSoundOgg,
+  },
+  raiseHand: {
+    mp3: handSoundMp3,
+    ogg: handSoundOgg,
+  },
+});
 
 export function CallEventAudioRenderer({
   vm,
 }: {
   vm: CallViewModel;
 }): ReactNode {
-  const [effectSoundVolume] = useSetting(effectSoundVolumeSetting);
-  const callEntered = useRef<(HTMLAudioElement | null)[]>([]);
-  const callLeft = useRef<(HTMLAudioElement | null)[]>([]);
+  const audioEngineCtx = useAudioContext({
+    sounds,
+    latencyHint: "interactive",
+  });
+  const audioEngineRef = useLatest(audioEngineCtx);
+
+  const { raisedHands } = useReactions();
+  const raisedHandCount = useMemo(
+    () => Object.keys(raisedHands).length,
+    [raisedHands],
+  );
+  const previousRaisedHandCount = useDeferredValue(raisedHandCount);
 
   useEffect(() => {
-    if (effectSoundVolume === 0) {
-      return;
+    if (audioEngineRef.current && previousRaisedHandCount < raisedHandCount) {
+      audioEngineRef.current.playSound("raiseHand");
     }
+  }, [audioEngineRef, previousRaisedHandCount, raisedHandCount]);
+
+  useEffect(() => {
     const joinSub = vm.memberChanges
       .pipe(
         filter(
           ({ joined, ids }) =>
             ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && joined.length > 0,
         ),
+        throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
       )
-      .subscribe(({ joined }) => {
-        const availablePlayer = callEntered.current.find((v) => v?.paused);
-        void availablePlayer?.play();
+      .subscribe(() => {
+        audioEngineRef.current?.playSound("join");
       });
 
     const leftSub = vm.memberChanges
@@ -54,64 +83,17 @@ export function CallEventAudioRenderer({
           ({ ids, left }) =>
             ids.length <= MAX_PARTICIPANT_COUNT_FOR_SOUND && left.length > 0,
         ),
+        throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
       )
       .subscribe(() => {
-        const availablePlayer = callLeft.current.find((v) => v?.paused);
-        void availablePlayer?.play();
+        audioEngineRef.current?.playSound("left");
       });
 
     return (): void => {
       joinSub.unsubscribe();
       leftSub.unsubscribe();
     };
-  }, [effectSoundVolume, callEntered, callLeft, vm]);
+  }, [audioEngineRef, vm]);
 
-  // Set volume.
-  useEffect(() => {
-    callEntered.current.forEach((a) => {
-      if (a) {
-        a.volume = effectSoundVolume;
-      }
-    });
-    callLeft.current.forEach((a) => {
-      if (a) {
-        a.volume = effectSoundVolume;
-      }
-    });
-  }, [callEntered, callLeft, effectSoundVolume]);
-
-  // Do not render any audio elements if playback is disabled. Will save
-  // audio file fetches.
-  if (effectSoundVolume === 0) {
-    return null;
-  }
-
-  return (
-    // Will play as soon as it's mounted, which is what we want as this will
-    // play when the call is entered.
-    <>
-      {Array.from({ length: CONCURRENT_AUDIO_CHANNELS }).map((_, index) => (
-        <audio
-          key={index}
-          ref={(r) => (callEntered.current[index] = r)}
-          preload="auto"
-          hidden
-        >
-          <source src={enterCallSoundOgg} type="audio/ogg; codecs=vorbis" />
-          <source src={enterCallSoundMp3} type="audio/mpeg" />
-        </audio>
-      ))}
-      {Array.from({ length: CONCURRENT_AUDIO_CHANNELS }).map((_, index) => (
-        <audio
-          key={index}
-          ref={(r) => (callLeft.current[index] = r)}
-          preload="auto"
-          hidden
-        >
-          <source src={leftCallSoundOgg} type="audio/ogg; codecs=vorbis" />
-          <source src={leftCallSoundMp3} type="audio/mpeg" />
-        </audio>
-      ))}
-    </>
-  );
+  return <></>;
 }

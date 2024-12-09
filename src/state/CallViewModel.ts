@@ -335,7 +335,7 @@ function findMatrixRoomMember(
   // must be at least 3 parts because we know the first part is a userId which must necessarily contain a colon
   if (parts.length < 3) {
     logger.warn(
-      "Livekit participants ID doesn't look like a userId:deviceId combination",
+      `Livekit participants ID (${id}) doesn't look like a userId:deviceId combination`,
     );
     return undefined;
   }

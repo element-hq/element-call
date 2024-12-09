@@ -19,7 +19,6 @@ import {
   TouchEvent,
   forwardRef,
   useCallback,
-  useDeferredValue,
   useEffect,
   useMemo,
   useRef,
@@ -81,11 +80,8 @@ import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
 import { GridTileViewModel, TileViewModel } from "../state/TileViewModel";
 import { ReactionsProvider, useReactions } from "../useReactions";
-import handSoundOgg from "../sound/raise_hand.ogg?url";
-import handSoundMp3 from "../sound/raise_hand.mp3?url";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { useSwitchCamera } from "./useSwitchCamera";
-import { soundEffectVolumeSetting, useSetting } from "../settings/settings";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
 
@@ -178,14 +174,7 @@ export const InCallView: FC<InCallViewProps> = ({
   connState,
   onShareClick,
 }) => {
-  const [soundEffectVolume] = useSetting(soundEffectVolumeSetting);
-  const { supportsReactions, raisedHands, sendReaction, toggleRaisedHand } =
-    useReactions();
-  const raisedHandCount = useMemo(
-    () => Object.keys(raisedHands).length,
-    [raisedHands],
-  );
-  const previousRaisedHandCount = useDeferredValue(raisedHandCount);
+  const { supportsReactions, sendReaction, toggleRaisedHand } = useReactions();
 
   useWakeLock();
 
@@ -334,25 +323,6 @@ export const InCallView: FC<InCallViewProps> = ({
     (mode: GridMode) => vm.setGridMode(mode),
     [vm],
   );
-
-  // Play a sound when the raised hand count increases.
-  const handRaisePlayer = useRef<HTMLAudioElement>(null);
-  useEffect(() => {
-    if (!handRaisePlayer.current) {
-      return;
-    }
-    if (previousRaisedHandCount < raisedHandCount) {
-      handRaisePlayer.current.volume = soundEffectVolume;
-      handRaisePlayer.current.play().catch((ex) => {
-        logger.warn("Failed to play raise hand sound", ex);
-      });
-    }
-  }, [
-    raisedHandCount,
-    handRaisePlayer,
-    previousRaisedHandCount,
-    soundEffectVolume,
-  ]);
 
   useEffect(() => {
     widget?.api.transport
@@ -667,10 +637,6 @@ export const InCallView: FC<InCallViewProps> = ({
       <RoomAudioRenderer />
       {renderContent()}
       <CallEventAudioRenderer vm={vm} />
-      <audio ref={handRaisePlayer} preload="auto" hidden>
-        <source src={handSoundOgg} type="audio/ogg; codecs=vorbis" />
-        <source src={handSoundMp3} type="audio/mpeg" />
-      </audio>
       <ReactionsAudioRenderer />
       <ReactionsOverlay />
       {footer}

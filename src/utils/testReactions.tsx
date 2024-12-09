@@ -32,7 +32,7 @@ export const TestReactionsWrapper = ({
   rtcSession,
   children,
 }: PropsWithChildren<{
-  rtcSession: MockRTCSession;
+  rtcSession: MockRTCSession | MatrixRTCSession;
 }>): ReactNode => {
   return (
     <ReactionsProvider rtcSession={rtcSession as unknown as MatrixRTCSession}>
@@ -202,5 +202,13 @@ export class MockRoom extends EventEmitter {
       timeline: new EventTimeline(new EventTimelineSet(undefined)),
     });
     return evt.getId()!;
+  }
+
+  public getMember(): void {
+    return;
+  }
+
+  public testGetAsMatrixRoom(): Room {
+    return this as unknown as Room;
   }
 }

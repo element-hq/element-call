@@ -6,25 +6,30 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { render } from "@testing-library/react";
-import { beforeEach, expect, test } from "vitest";
+import {
+  afterAll,
+  beforeEach,
+  expect,
+  MockedFunction,
+  test,
+  vitest,
+} from "vitest";
 import { MatrixClient } from "matrix-js-sdk/src/client";
-import { ConnectionState, Room } from "livekit-client";
+import { ConnectionState } from "livekit-client";
 import { BehaviorSubject, of } from "rxjs";
 import { afterEach } from "node:test";
-import { act } from "react";
+import { act, ReactNode } from "react";
 import {
   CallMembership,
   type MatrixRTCSession,
 } from "matrix-js-sdk/src/matrixrtc";
+import { RoomMember } from "matrix-js-sdk/src/matrix";
 
-import { soundEffectVolumeSetting } from "../settings/settings";
 import {
-  EmittableMockLivekitRoom,
   mockLivekitRoom,
   mockLocalParticipant,
   mockMatrixRoom,
   mockMatrixRoomMember,
-  mockMediaPlay,
   mockRemoteParticipant,
   mockRtcMembership,
   MockRTCSession,
@@ -35,37 +40,69 @@ import {
   CallEventAudioRenderer,
   MAX_PARTICIPANT_COUNT_FOR_SOUND,
 } from "./CallEventAudioRenderer";
+import { useAudioContext } from "../useAudioContext";
+import { TestReactionsWrapper } from "../utils/testReactions";
+import { prefetchSounds } from "../soundUtils";
 
 const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
 const local = mockMatrixRoomMember(localRtcMember);
 const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
 const alice = mockMatrixRoomMember(aliceRtcMember);
 const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
-const bob = mockMatrixRoomMember(bobRtcMember);
 const localParticipant = mockLocalParticipant({ identity: "" });
 const aliceId = `${alice.userId}:${aliceRtcMember.deviceId}`;
-const bobId = `${bob.userId}:${bobRtcMember.deviceId}`;
 const aliceParticipant = mockRemoteParticipant({ identity: aliceId });
-const bobParticipant = mockRemoteParticipant({ identity: bobId });
 
-const originalPlayFn = window.HTMLMediaElement.prototype.play;
-
-const enterSound = "http://localhost:3000/src/sound/join_call.ogg";
-const leaveSound = "http://localhost:3000/src/sound/left_call.ogg";
-
-beforeEach(() => {
-  soundEffectVolumeSetting.setValue(soundEffectVolumeSetting.defaultValue);
-});
+vitest.mock("../useAudioContext");
+vitest.mock("../soundUtils");
 
 afterEach(() => {
-  window.HTMLMediaElement.prototype.play = originalPlayFn;
+  vitest.resetAllMocks();
 });
 
-test("plays a sound when entering a call", () => {
-  const audioIsPlaying: string[] = mockMediaPlay();
-  const matrixRoomMembers = new Map(
-    [local, alice, bob].map((p) => [p.userId, p]),
+afterAll(() => {
+  vitest.restoreAllMocks();
+});
+
+let playSound: MockedFunction<
+  NonNullable<ReturnType<typeof useAudioContext>>["playSound"]
+>;
+
+beforeEach(() => {
+  (prefetchSounds as MockedFunction<typeof prefetchSounds>).mockResolvedValue({
+    sound: new ArrayBuffer(0),
+  });
+  playSound = vitest.fn();
+  (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
+    playSound,
+  });
+});
+
+function TestComponent({
+  rtcSession,
+  vm,
+}: {
+  rtcSession: MockRTCSession;
+  vm: CallViewModel;
+}): ReactNode {
+  return (
+    <TestReactionsWrapper
+      rtcSession={rtcSession as unknown as MatrixRTCSession}
+    >
+      <CallEventAudioRenderer vm={vm} />
+    </TestReactionsWrapper>
   );
+}
+
+function getMockEnv(
+  members: RoomMember[],
+  initialRemoteRtcMemberships: CallMembership[] = [aliceRtcMember],
+): {
+  vm: CallViewModel;
+  session: MockRTCSession;
+  remoteRtcMemberships: BehaviorSubject<CallMembership[]>;
+} {
+  const matrixRoomMembers = new Map(members.map((p) => [p.userId, p]));
   const remoteParticipants = of([aliceParticipant]);
   const liveKitRoom = mockLivekitRoom(
     { localParticipant },
@@ -75,221 +112,90 @@ test("plays a sound when entering a call", () => {
     client: {
       getUserId: () => localRtcMember.sender,
       getDeviceId: () => localRtcMember.deviceId,
+      on: vitest.fn(),
+      off: vitest.fn(),
     } as Partial<MatrixClient> as MatrixClient,
     getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
   });
 
-  const session = new MockRTCSession(matrixRoom, localRtcMember, [
-    aliceRtcMember,
-  ]) as unknown as MatrixRTCSession;
-
-  const vm = new CallViewModel(
-    session,
-    liveKitRoom,
-    {
-      kind: E2eeType.PER_PARTICIPANT,
-    },
-    of(ConnectionState.Connected),
+  const remoteRtcMemberships = new BehaviorSubject<CallMembership[]>(
+    initialRemoteRtcMemberships,
   );
 
-  render(<CallEventAudioRenderer vm={vm} />);
-  expect(audioIsPlaying).toEqual([
-    // Joining the call
-    enterSound,
-  ]);
-});
-
-test("plays no sound when muted", () => {
-  soundEffectVolumeSetting.setValue(0);
-  const audioIsPlaying: string[] = mockMediaPlay();
-  const matrixRoomMembers = new Map(
-    [local, alice, bob].map((p) => [p.userId, p]),
-  );
-  const remoteParticipants = of([aliceParticipant, bobParticipant]);
-  const liveKitRoom = mockLivekitRoom(
-    { localParticipant },
-    { remoteParticipants },
-  );
-
-  const matrixRoom = mockMatrixRoom({
-    client: {
-      getUserId: () => localRtcMember.sender,
-      getDeviceId: () => localRtcMember.deviceId,
-    } as Partial<MatrixClient> as MatrixClient,
-    getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
-  });
-
-  const session = new MockRTCSession(matrixRoom, localRtcMember, [
-    aliceRtcMember,
-  ]) as unknown as MatrixRTCSession;
-
-  const vm = new CallViewModel(
-    session,
-    liveKitRoom,
-    {
-      kind: E2eeType.PER_PARTICIPANT,
-    },
-    of(ConnectionState.Connected),
-  );
-
-  render(<CallEventAudioRenderer vm={vm} />);
-  // Play a sound when joining a call.
-  expect(audioIsPlaying).toHaveLength(0);
-});
-
-test("plays a sound when a user joins", () => {
-  const audioIsPlaying: string[] = mockMediaPlay();
-  const matrixRoomMembers = new Map([local, alice].map((p) => [p.userId, p]));
-  const remoteParticipants = new Map(
-    [aliceParticipant].map((p) => [p.identity, p]),
-  );
-  const liveKitRoom = new EmittableMockLivekitRoom({
-    localParticipant,
-    remoteParticipants,
-  });
-
-  const matrixRoom = mockMatrixRoom({
-    client: {
-      getUserId: () => localRtcMember.sender,
-      getDeviceId: () => localRtcMember.deviceId,
-    } as Partial<MatrixClient> as MatrixClient,
-    getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
-  });
-
-  const remoteRtcMemberships = new BehaviorSubject<CallMembership[]>([
-    aliceRtcMember,
-  ]);
-  // we give Bob an RTC session now, but no participant yet
   const session = new MockRTCSession(
     matrixRoom,
     localRtcMember,
-  ).withMemberships(
-    remoteRtcMemberships.asObservable(),
-  ) as unknown as MatrixRTCSession;
+  ).withMemberships(remoteRtcMemberships);
 
   const vm = new CallViewModel(
-    session,
-    liveKitRoom as unknown as Room,
+    session as unknown as MatrixRTCSession,
+    liveKitRoom,
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
     of(ConnectionState.Connected),
   );
-  render(<CallEventAudioRenderer vm={vm} />);
+  return { vm, session, remoteRtcMemberships };
+}
+
+/**
+ * We don't want to play a sound when loading the call state
+ * because typically this occurs in two stages. We first join
+ * the call as a local participant and *then* the remote
+ * participants join from our perspective. We don't want to make
+ * a noise every time.
+ */
+test("plays one sound when entering a call", () => {
+  const { session, vm, remoteRtcMemberships } = getMockEnv([local, alice]);
+  render(<TestComponent rtcSession={session} vm={vm} />);
+  // Joining a call usually means remote participants are added later.
+  act(() => {
+    remoteRtcMemberships.next([aliceRtcMember, bobRtcMember]);
+  });
+  expect(playSound).toHaveBeenCalledOnce();
+});
+
+// TODO: Same test?
+test("plays a sound when a user joins", () => {
+  const { session, vm, remoteRtcMemberships } = getMockEnv([local, alice]);
+  render(<TestComponent rtcSession={session} vm={vm} />);
 
   act(() => {
     remoteRtcMemberships.next([aliceRtcMember, bobRtcMember]);
   });
   // Play a sound when joining a call.
-  expect(audioIsPlaying).toEqual([
-    // Joining the call
-    enterSound,
-    // Bob joins
-    enterSound,
-  ]);
+  expect(playSound).toBeCalledWith("join");
 });
 
 test("plays a sound when a user leaves", () => {
-  const audioIsPlaying: string[] = mockMediaPlay();
-  const matrixRoomMembers = new Map([local, alice].map((p) => [p.userId, p]));
-  const remoteParticipants = new Map(
-    [aliceParticipant].map((p) => [p.identity, p]),
-  );
-  const liveKitRoom = new EmittableMockLivekitRoom({
-    localParticipant,
-    remoteParticipants,
-  });
-
-  const matrixRoom = mockMatrixRoom({
-    client: {
-      getUserId: () => localRtcMember.sender,
-      getDeviceId: () => localRtcMember.deviceId,
-    } as Partial<MatrixClient> as MatrixClient,
-    getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
-  });
-
-  const remoteRtcMemberships = new BehaviorSubject<CallMembership[]>([
-    aliceRtcMember,
-  ]);
-
-  const session = new MockRTCSession(
-    matrixRoom,
-    localRtcMember,
-  ).withMemberships(remoteRtcMemberships) as unknown as MatrixRTCSession;
-
-  const vm = new CallViewModel(
-    session,
-    liveKitRoom as unknown as Room,
-    {
-      kind: E2eeType.PER_PARTICIPANT,
-    },
-    of(ConnectionState.Connected),
-  );
-  render(<CallEventAudioRenderer vm={vm} />);
+  const { session, vm, remoteRtcMemberships } = getMockEnv([local, alice]);
+  render(<TestComponent rtcSession={session} vm={vm} />);
 
   act(() => {
     remoteRtcMemberships.next([]);
   });
-  expect(audioIsPlaying).toEqual([
-    // Joining the call
-    enterSound,
-    // Alice leaves
-    leaveSound,
-  ]);
+  expect(playSound).toBeCalledWith("left");
 });
 
-test("plays no sound when the session member count is larger than the max, until decreased", () => {
-  const audioIsPlaying: string[] = mockMediaPlay();
-  const matrixRoomMembers = new Map([local, alice].map((p) => [p.userId, p]));
-  const remoteParticipants = new Map(
-    [aliceParticipant].map((p) => [p.identity, p]),
-  );
-
+test("plays no sound when the participant list is more than the maximum size", () => {
   const mockRtcMemberships: CallMembership[] = [];
-
   for (let i = 0; i < MAX_PARTICIPANT_COUNT_FOR_SOUND; i++) {
     mockRtcMemberships.push(
       mockRtcMembership(`@user${i}:example.org`, `DEVICE${i}`),
     );
   }
 
-  const remoteRtcMemberships = new BehaviorSubject<CallMembership[]>(
+  const { session, vm, remoteRtcMemberships } = getMockEnv(
+    [local, alice],
     mockRtcMemberships,
   );
 
-  const liveKitRoom = new EmittableMockLivekitRoom({
-    localParticipant,
-    remoteParticipants,
-  });
-
-  const matrixRoom = mockMatrixRoom({
-    client: {
-      getUserId: () => localRtcMember.sender,
-      getDeviceId: () => localRtcMember.deviceId,
-    } as Partial<MatrixClient> as MatrixClient,
-    getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
-  });
-
-  const session = new MockRTCSession(
-    matrixRoom,
-    localRtcMember,
-  ).withMemberships(remoteRtcMemberships) as unknown as MatrixRTCSession;
-
-  const vm = new CallViewModel(
-    session,
-    liveKitRoom as unknown as Room,
-    {
-      kind: E2eeType.PER_PARTICIPANT,
-    },
-    of(ConnectionState.Connected),
-  );
-  render(<CallEventAudioRenderer vm={vm} />);
-  expect(audioIsPlaying).toEqual([]);
-  // When the count drops to the max we should play the leave sound
+  render(<TestComponent rtcSession={session} vm={vm} />);
+  expect(playSound).not.toBeCalled();
   act(() => {
     remoteRtcMemberships.next(
       mockRtcMemberships.slice(0, MAX_PARTICIPANT_COUNT_FOR_SOUND - 1),
     );
   });
-  expect(audioIsPlaying).toEqual([leaveSound]);
+  expect(playSound).toBeCalledWith("left");
 });

@@ -147,7 +147,6 @@
   "screenshare_button_label": "Bildschirm teilen",
   "settings": {
     "audio_tab": {
-      "effect_volume_description": "Lautstärke anpassen, mit der Reaktionen und Handmeldungen abgespielt werden",
       "effect_volume_label": "Lautstärke der Soundeffekte"
     },
     "developer_settings_label": "Entwicklereinstellungen",

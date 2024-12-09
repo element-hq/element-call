@@ -115,12 +115,12 @@ function useMediaDevice(
   }, [available, preferredId, select, alwaysDefault]);
 }
 
-const deviceStub: MediaDevice = {
+export const deviceStub: MediaDevice = {
   available: [],
   selectedId: undefined,
   select: () => {},
 };
-const devicesStub: MediaDevices = {
+export const devicesStub: MediaDevices = {
   audioInput: deviceStub,
   audioOutput: deviceStub,
   videoInput: deviceStub,
