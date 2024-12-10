@@ -38,7 +38,7 @@ export function useActiveLivekitFocus(
       const oldestMembership = rtcSession.getOldestMembership();
       logger.warn(
         `Got new active focus from membership: ${oldestMembership?.sender}/${oldestMembership?.deviceId}.
-        Updating focus (focus switch) from ${activeFocus} to ${newActiveFocus}`,
+        Updating focus (focus switch) from ${JSON.stringify(activeFocus)} to ${JSON.stringify(newActiveFocus)}`,
       );
       setActiveFocus(newActiveFocus);
     }
