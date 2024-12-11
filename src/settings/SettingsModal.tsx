@@ -27,7 +27,7 @@ import {
 import { widget } from "../widget";
 import {
   useSetting,
-  developerSettingsTab as developerSettingsTabSetting,
+  developerSettingsTab,
   backgroundBlur as backgroundBlurSetting,
   soundEffectVolumeSetting,
 } from "./settings";
@@ -102,7 +102,7 @@ export const SettingsModal: FC<Props> = ({
   const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
   const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
 
-  const [showDeveloperSettingsTab] = useSetting(developerSettingsTabSetting);
+  const [showDeveloperSettingsTab] = useSetting(developerSettingsTab);
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
