@@ -12,6 +12,7 @@ import { FieldRow, InputField } from "../input/Input";
 import {
   useSetting,
   duplicateTiles as duplicateTilesSetting,
+  debugTileLayout as debugTileLayoutSetting,
 } from "./settings";
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 
@@ -22,6 +23,9 @@ interface Props {
 export const DeveloperSettingsTab: FC<Props> = ({ client }) => {
   const { t } = useTranslation();
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
+  const [debugTileLayout, setDebugTileLayout] = useSetting(
+    debugTileLayoutSetting,
+  );
 
   return (
     <>
@@ -68,6 +72,17 @@ export const DeveloperSettingsTab: FC<Props> = ({ client }) => {
             },
             [setDuplicateTiles],
           )}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="debugTileLayout"
+          type="checkbox"
+          checked={debugTileLayout}
+          label={t("developer_mode.debug_tile_layout_label")}
+          onChange={(event: ChangeEvent<HTMLInputElement>): void =>
+            setDebugTileLayout(event.target.checked)
+          }
         />
       </FieldRow>
     </>

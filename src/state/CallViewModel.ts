@@ -891,10 +891,9 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
-  /**
-   * The layout of tiles in the call interface.
-   */
-  public readonly layout: Observable<Layout> = this.layoutMedia.pipe(
+  public readonly layoutInternals: Observable<
+    LayoutScanState & { layout: Layout }
+  > = this.layoutMedia.pipe(
     // Each layout will produce a set of tiles, and these tiles have an
     // observable indicating whether they're visible. We loop this information
     // back into the layout process by using switchScan.
@@ -949,9 +948,25 @@ export class CallViewModel extends ViewModel {
         visibleTiles: new Set(),
       },
     ),
+    this.scope.state(),
+  );
+
+  /**
+   * The layout of tiles in the call interface.
+   */
+  public readonly layout: Observable<Layout> = this.layoutInternals.pipe(
     map(({ layout }) => layout),
     this.scope.state(),
   );
+
+  /**
+   * The current generation of the tile store, exposed for debugging purposes.
+   */
+  public readonly tileStoreGeneration: Observable<number> =
+    this.layoutInternals.pipe(
+      map(({ tiles }) => tiles.generation),
+      this.scope.state(),
+    );
 
   public showSpotlightIndicators: Observable<boolean> = this.layout.pipe(
     map((l) => l.type !== "grid"),

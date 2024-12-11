@@ -70,6 +70,7 @@
   },
   "developer_mode": {
     "crypto_version": "Crypto version: {{version}}",
+    "debug_tile_layout_label": "Debug tile layout",
     "device_id": "Device ID: {{id}}",
     "duplicate_tiles_label": "Number of additional tile copies per participant",
     "hostname": "Hostname: {{hostname}}",

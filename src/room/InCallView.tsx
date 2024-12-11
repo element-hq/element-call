@@ -88,6 +88,10 @@ import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { useSwitchCamera } from "./useSwitchCamera";
 import { ReactionsOverlay } from "./ReactionsOverlay";
 import { CallEventAudioRenderer } from "./CallEventAudioRenderer";
+import {
+  debugTileLayout as debugTileLayoutSetting,
+  useSetting,
+} from "../settings/settings";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -223,6 +227,8 @@ export const InCallView: FC<InCallViewProps> = ({
 
   const windowMode = useObservableEagerState(vm.windowMode);
   const layout = useObservableEagerState(vm.layout);
+  const tileStoreGeneration = useObservableEagerState(vm.tileStoreGeneration);
+  const [debugTileLayout] = useSetting(debugTileLayoutSetting);
   const gridMode = useObservableEagerState(vm.gridMode);
   const showHeader = useObservableEagerState(vm.showHeader);
   const showFooter = useObservableEagerState(vm.showFooter);
@@ -585,6 +591,10 @@ export const InCallView: FC<InCallViewProps> = ({
             height={11}
             aria-label={import.meta.env.VITE_PRODUCT_NAME || "Element Call"}
           />
+          {/* Don't mind this odd placement, it's just a little debug label */}
+          {debugTileLayout
+            ? `Tiles generation: ${tileStoreGeneration}`
+            : undefined}
         </div>
       )}
       {showControls && <div className={styles.buttons}>{buttons}</div>}

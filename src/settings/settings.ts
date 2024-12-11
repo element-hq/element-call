@@ -75,6 +75,8 @@ export const developerSettingsTab = new Setting(
 
 export const duplicateTiles = new Setting("duplicate-tiles", 0);
 
+export const debugTileLayout = new Setting("debug-tile-layout", false);
+
 export const audioInput = new Setting<string | undefined>(
   "audio-input",
   undefined,
