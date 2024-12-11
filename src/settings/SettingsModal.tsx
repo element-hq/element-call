@@ -23,7 +23,7 @@ import { widget } from "../widget";
 import {
   useSetting,
   soundEffectVolumeSetting,
-  developerSettingsTab,
+  developerMode,
 } from "./settings";
 import { isFirefox } from "../Platform";
 import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
@@ -66,7 +66,7 @@ export const SettingsModal: FC<Props> = ({
   const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
   const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
 
-  const [showDeveloperSettingsTab] = useSetting(developerSettingsTab);
+  const [showDeveloperSettingsTab] = useSetting(developerMode);
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",

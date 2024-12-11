@@ -68,10 +68,7 @@ export const useOptInAnalytics = (): [
   return PosthogAnalytics.instance.isEnabled() ? setting : [false, null];
 };
 
-export const developerSettingsTab = new Setting(
-  "developer-settings-tab",
-  false,
-);
+export const developerMode = new Setting("developer-settings-tab", false);
 
 export const duplicateTiles = new Setting("duplicate-tiles", 0);
 
