@@ -212,11 +212,12 @@ export const getUrlParams = (
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
 
   const widgetId = parser.getParam("widgetId");
-  const isWidget = !!widgetId;
+  const parentUrl = parser.getParam("parentUrl");
+  const isWidget = !!widgetId && !!parentUrl;
 
   return {
     widgetId,
-    parentUrl: parser.getParam("parentUrl"),
+    parentUrl,
 
     // NB. we don't validate roomId here as we do in getRoomIdentifierFromUrl:
     // what would we do if it were invalid? If the widget API says that's what

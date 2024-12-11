@@ -97,7 +97,11 @@ describe("UrlParams", () => {
     });
 
     it("respected in widget mode", () => {
-      expect(getUrlParams("?preload=true&widgetId=12345").preload).toBe(true);
+      expect(
+        getUrlParams(
+          "?preload=true&widgetId=12345&parentUrl=https%3A%2F%2Flocalhost%2Ffoo",
+        ).preload,
+      ).toBe(true);
     });
   });
 
