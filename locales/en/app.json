@@ -147,7 +147,7 @@
   "screenshare_button_label": "Share screen",
   "settings": {
     "audio_tab": {
-      "effect_volume_description": "Volume for sound effects such as: joining or leaving a call, and reactions.",
+      "effect_volume_description": "Adjust the volume at which reactions and hand raised effects play.",
       "effect_volume_label": "Sound effect volume"
     },
     "developer_settings_label": "Developer Settings",
@@ -168,9 +168,9 @@
       "reactions_show_label": "Show reactions",
       "reactions_title": "Reactions"
     },
-    "preferences_tab_body": "Here you can configure extra options for an improved experience",
+    "preferences_tab_body": "Here you can configure extra options for an improved experience.",
     "preferences_tab_h4": "Preferences",
-    "preferences_tab_show_hand_raised_timer_description": "Show a timer when a participant raises their hand",
+    "preferences_tab_show_hand_raised_timer_description": "Show a timer when a participant raises their hand.",
     "preferences_tab_show_hand_raised_timer_label": "Show hand raise duration",
     "speaker_device_selection_label": "Speaker"
   },
