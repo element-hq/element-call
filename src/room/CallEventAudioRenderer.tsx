@@ -5,10 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ReactNode, useDeferredValue, useEffect, useMemo } from "react";
+import { type ReactNode, useDeferredValue, useEffect, useMemo } from "react";
 import { filter, interval, throttle } from "rxjs";
 
-import { CallViewModel } from "../state/CallViewModel";
+import { type CallViewModel } from "../state/CallViewModel";
 import joinCallSoundMp3 from "../sound/join_call.mp3";
 import joinCallSoundOgg from "../sound/join_call.ogg";
 import leftCallSoundMp3 from "../sound/left_call.mp3";

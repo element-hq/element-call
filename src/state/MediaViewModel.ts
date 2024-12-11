@@ -6,30 +6,30 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  AudioSource,
-  TrackReferenceOrPlaceholder,
-  VideoSource,
+  type AudioSource,
+  type TrackReferenceOrPlaceholder,
+  type VideoSource,
   observeParticipantEvents,
   observeParticipantMedia,
   roomEventSelector,
 } from "@livekit/components-core";
 import {
-  LocalParticipant,
+  type LocalParticipant,
   LocalTrack,
-  Participant,
+  type Participant,
   ParticipantEvent,
-  RemoteParticipant,
+  type RemoteParticipant,
   Track,
   TrackEvent,
   facingModeFromLocalTrack,
-  Room as LivekitRoom,
+  type Room as LivekitRoom,
   RoomEvent as LivekitRoomEvent,
   RemoteTrack,
 } from "livekit-client";
-import { RoomMember, RoomMemberEvent } from "matrix-js-sdk/src/matrix";
+import { type RoomMember, RoomMemberEvent } from "matrix-js-sdk/src/matrix";
 import {
   BehaviorSubject,
-  Observable,
+  type Observable,
   Subject,
   combineLatest,
   distinctUntilKeyChanged,
@@ -49,7 +49,7 @@ import { ViewModel } from "./ViewModel";
 import { useReactiveState } from "../useReactiveState";
 import { alwaysShowSelf } from "../settings/settings";
 import { accumulate } from "../utils/observable";
-import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 
 // TODO: Move this naming logic into the view model

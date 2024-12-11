@@ -10,7 +10,7 @@ import { useLocation } from "react-router-dom";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { Config } from "./config/Config";
-import { EncryptionSystem } from "./e2ee/sharedKeyManagement";
+import { type EncryptionSystem } from "./e2ee/sharedKeyManagement";
 import { E2eeType } from "./e2ee/e2eeType";
 
 interface RoomIdentifier {
@@ -212,11 +212,12 @@ export const getUrlParams = (
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
 
   const widgetId = parser.getParam("widgetId");
-  const isWidget = !!widgetId;
+  const parentUrl = parser.getParam("parentUrl");
+  const isWidget = !!widgetId && !!parentUrl;
 
   return {
     widgetId,
-    parentUrl: parser.getParam("parentUrl"),
+    parentUrl,
 
     // NB. we don't validate roomId here as we do in getRoomIdentifierFromUrl:
     // what would we do if it were invalid? If the widget API says that's what
@@ -232,10 +233,10 @@ export const getUrlParams = (
     showControls: parser.getFlagParam("showControls", true),
     hideScreensharing: parser.getFlagParam("hideScreensharing"),
     e2eEnabled: parser.getFlagParam("enableE2EE", true),
-    userId: parser.getParam("userId"),
+    userId: isWidget ? parser.getParam("userId") : null,
     displayName: parser.getParam("displayName"),
-    deviceId: parser.getParam("deviceId"),
-    baseUrl: parser.getParam("baseUrl"),
+    deviceId: isWidget ? parser.getParam("deviceId") : null,
+    baseUrl: isWidget ? parser.getParam("baseUrl") : null,
     lang: parser.getParam("lang"),
     fonts: parser.getAllParams("font"),
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
@@ -243,10 +244,10 @@ export const getUrlParams = (
     allowIceFallback: parser.getFlagParam("allowIceFallback"),
     perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
     skipLobby: parser.getFlagParam("skipLobby"),
-    returnToLobby: parser.getFlagParam("returnToLobby"),
+    returnToLobby: isWidget ? parser.getFlagParam("returnToLobby") : true,
     theme: parser.getParam("theme"),
-    viaServers: parser.getParam("viaServers"),
-    homeserver: parser.getParam("homeserver"),
+    viaServers: !isWidget ? parser.getParam("viaServers") : null,
+    homeserver: !isWidget ? parser.getParam("homeserver") : null,
   };
 };
 

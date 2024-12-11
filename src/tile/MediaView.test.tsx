@@ -10,8 +10,8 @@ import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { TooltipProvider } from "@vector-im/compound-web";
 import {
-  TrackReference,
-  TrackReferencePlaceholder,
+  type TrackReference,
+  type TrackReferencePlaceholder,
 } from "@livekit/components-core";
 import { Track, TrackPublication } from "livekit-client";
 import { type ComponentProps } from "react";

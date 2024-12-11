@@ -7,33 +7,33 @@ Please see LICENSE in the repository root for full details.
 
 import {
   ConnectionState,
-  E2EEOptions,
+  type E2EEOptions,
   ExternalE2EEKeyProvider,
-  LocalVideoTrack,
+  type LocalVideoTrack,
   Room,
-  RoomOptions,
+  type RoomOptions,
   Track,
 } from "livekit-client";
 import { useEffect, useMemo, useRef } from "react";
 import E2EEWorker from "livekit-client/e2ee-worker?worker";
 import { logger } from "matrix-js-sdk/src/logger";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import { defaultLiveKitOptions } from "./options";
-import { SFUConfig } from "./openIDSFU";
-import { MuteStates } from "../room/MuteStates";
+import { type SFUConfig } from "./openIDSFU";
+import { type MuteStates } from "../room/MuteStates";
 import {
-  MediaDevice,
-  MediaDevices,
+  type MediaDevice,
+  type MediaDevices,
   useMediaDevices,
 } from "./MediaDevicesContext";
 import {
-  ECConnectionState,
+  type ECConnectionState,
   useECConnectionState,
 } from "./useECConnectionState";
 import { MatrixKeyProvider } from "../e2ee/matrixKeyProvider";
 import { E2eeType } from "../e2ee/e2eeType";
-import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import {
   useTrackProcessor,
   useTrackProcessorSync,

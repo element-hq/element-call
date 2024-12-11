@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ComponentPropsWithoutRef, FC } from "react";
+import { type ComponentPropsWithoutRef, type FC } from "react";
 import { Button } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
 import { UserAddIcon } from "@vector-im/compound-design-tokens/assets/web/icons";

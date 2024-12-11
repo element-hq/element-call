@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import "matrix-js-sdk/src/@types/global";
 import type { DurationFormat as PolyfillDurationFormat } from "@formatjs/intl-durationformat";
-import { Controls } from "../controls";
+import { type Controls } from "../controls";
 
 declare global {
   interface Document {

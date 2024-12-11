@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import classNames from "classnames";
-import { FormEventHandler, forwardRef, ReactNode } from "react";
+import { type FormEventHandler, forwardRef, type ReactNode } from "react";
 
 import styles from "./Form.module.css";
 

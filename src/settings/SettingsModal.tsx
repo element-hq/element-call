@@ -6,22 +6,18 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ChangeEvent,
-  FC,
-  ReactNode,
-  useCallback,
+  type FC,
+  type ReactNode,
   useEffect,
   useState,
 } from "react";
-import { Trans, useTranslation } from "react-i18next";
-import { MatrixClient } from "matrix-js-sdk/src/matrix";
-import { Root as Form, Separator, Text } from "@vector-im/compound-web";
+import { useTranslation } from "react-i18next";
+import { type MatrixClient } from "matrix-js-sdk/src/matrix";
+import { Root as Form, Separator } from "@vector-im/compound-web";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
-import { Tab, TabContainer } from "../tabs/Tabs";
-import { FieldRow, InputField } from "../input/Input";
-import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
+import { type Tab, TabContainer } from "../tabs/Tabs";
 import { ProfileSettingsTab } from "./ProfileSettingsTab";
 import { FeedbackSettingsTab } from "./FeedbackSettingsTab";
 import {
@@ -32,9 +28,7 @@ import { widget } from "../widget";
 import {
   useSetting,
   developerSettingsTab as developerSettingsTabSetting,
-  duplicateTiles as duplicateTilesSetting,
   backgroundBlur as backgroundBlurSetting,
-  useOptInAnalytics,
   soundEffectVolumeSetting,
 } from "./settings";
 import { isFirefox } from "../Platform";
@@ -42,6 +36,8 @@ import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
 import { DeviceSelection } from "./DeviceSelection";
 import { useTrackProcessor } from "../livekit/TrackProcessorContext";
+import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
+import { FieldRow, InputField } from "../input/Input";
 
 type SettingsTab =
   | "audio"
@@ -73,12 +69,6 @@ export const SettingsModal: FC<Props> = ({
 }) => {
   const { t } = useTranslation();
 
-  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
-  const [developerSettingsTab, setDeveloperSettingsTab] = useSetting(
-    developerSettingsTabSetting,
-  );
-  const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
-
   // Generate a `Checkbox` input to turn blur on or off.
   const BlurCheckbox: React.FC = (): ReactNode => {
     const { supported, checkSupported } = useTrackProcessor() || {};
@@ -107,21 +97,12 @@ export const SettingsModal: FC<Props> = ({
     );
   };
 
-  const optInDescription = (
-    <Text size="sm">
-      <Trans i18nKey="settings.opt_in_description">
-        <AnalyticsNotice />
-        <br />
-        You may withdraw consent by unchecking this box. If you are currently in
-        a call, this setting will take effect at the end of the call.
-      </Trans>
-    </Text>
-  );
-
   const devices = useMediaDevices();
   useMediaDeviceNames(devices, open);
   const [soundVolume, setSoundVolume] = useSetting(soundEffectVolumeSetting);
   const [soundVolumeRaw, setSoundVolumeRaw] = useState(soundVolume);
+
+  const [showDeveloperSettingsTab] = useSetting(developerSettingsTabSetting);
 
   const audioTab: Tab<SettingsTab> = {
     key: "audio",
@@ -192,104 +173,16 @@ export const SettingsModal: FC<Props> = ({
     content: <FeedbackSettingsTab roomId={roomId} />,
   };
 
-  const moreTab: Tab<SettingsTab> = {
-    key: "more",
-    name: t("settings.more_tab_title"),
-    content: (
-      <>
-        <h4>{t("settings.developer_tab_title")}</h4>
-        <p>
-          {t("version", {
-            productName: import.meta.env.VITE_PRODUCT_NAME || "Element Call",
-            version: import.meta.env.VITE_APP_VERSION || "dev",
-          })}
-        </p>
-        <FieldRow>
-          <InputField
-            id="developerSettingsTab"
-            type="checkbox"
-            checked={developerSettingsTab}
-            label={t("settings.developer_settings_label")}
-            description={t("settings.developer_settings_label_description")}
-            onChange={(event: ChangeEvent<HTMLInputElement>): void =>
-              setDeveloperSettingsTab(event.target.checked)
-            }
-          />
-        </FieldRow>
-        <h4>{t("common.analytics")}</h4>
-        <FieldRow>
-          <InputField
-            id="optInAnalytics"
-            type="checkbox"
-            checked={optInAnalytics ?? undefined}
-            description={optInDescription}
-            onChange={(event: ChangeEvent<HTMLInputElement>): void => {
-              setOptInAnalytics?.(event.target.checked);
-            }}
-          />
-        </FieldRow>
-      </>
-    ),
-  };
-
   const developerTab: Tab<SettingsTab> = {
     key: "developer",
     name: t("settings.developer_tab_title"),
-    content: (
-      <>
-        <p>
-          {t("developer_mode.hostname", {
-            hostname: window.location.hostname || "unknown",
-          })}
-        </p>
-        <p>
-          {t("version", {
-            productName: import.meta.env.VITE_PRODUCT_NAME || "Element Call",
-            version: import.meta.env.VITE_APP_VERSION || "dev",
-          })}
-        </p>
-        <p>
-          {t("developer_mode.crypto_version", {
-            version: client.getCrypto()?.getVersion() || "unknown",
-          })}
-        </p>
-        <p>
-          {t("developer_mode.matrix_id", {
-            id: client.getUserId() || "unknown",
-          })}
-        </p>
-        <p>
-          {t("developer_mode.device_id", {
-            id: client.getDeviceId() || "unknown",
-          })}
-        </p>
-        <FieldRow>
-          <InputField
-            id="duplicateTiles"
-            type="number"
-            label={t("developer_mode.duplicate_tiles_label")}
-            value={duplicateTiles.toString()}
-            min={0}
-            onChange={useCallback(
-              (event: ChangeEvent<HTMLInputElement>): void => {
-                const value = event.target.valueAsNumber;
-                if (value < 0) {
-                  return;
-                }
-                setDuplicateTiles(Number.isNaN(value) ? 0 : value);
-              },
-              [setDuplicateTiles],
-            )}
-          />
-        </FieldRow>
-      </>
-    ),
+    content: <DeveloperSettingsTab client={client} />,
   };
 
   const tabs = [audioTab, videoTab];
   if (widget === null) tabs.push(profileTab);
-  tabs.push(preferencesTab, feedbackTab, moreTab);
-  if (developerSettingsTab) tabs.push(developerTab);
+  tabs.push(preferencesTab, feedbackTab);
+  if (showDeveloperSettingsTab) tabs.push(developerTab);
 
   return (
     <Modal

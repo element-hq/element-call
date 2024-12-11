@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { render } from "@testing-library/react";
-import { act, FC } from "react";
+import { act, type FC } from "react";
 import { describe, expect, test } from "vitest";
 import { RoomEvent } from "matrix-js-sdk/src/matrix";
 

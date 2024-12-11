@@ -5,10 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { TrackReferenceOrPlaceholder } from "@livekit/components-core";
+import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
-import { RoomMember } from "matrix-js-sdk/src/matrix";
-import { ComponentProps, ReactNode, forwardRef } from "react";
+import { type RoomMember } from "matrix-js-sdk/src/matrix";
+import { type ComponentProps, type ReactNode, forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
@@ -17,10 +17,10 @@ import { ErrorIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
-import { EncryptionStatus } from "../state/MediaViewModel";
+import { type EncryptionStatus } from "../state/MediaViewModel";
 import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
 import { showHandRaisedTimer, useSetting } from "../settings/settings";
-import { ReactionOption } from "../reactions";
+import { type ReactionOption } from "../reactions";
 import { ReactionIndicator } from "../reactions/ReactionIndicator";
 
 interface Props extends ComponentProps<typeof animated.div> {

@@ -9,14 +9,14 @@ import {
   fromEvent,
   map,
   merge,
-  Observable,
+  type Observable,
   of,
   startWith,
   switchMap,
 } from "rxjs";
 import {
   facingModeFromLocalTrack,
-  LocalVideoTrack,
+  type LocalVideoTrack,
   TrackEvent,
 } from "livekit-client";
 import { useObservable, useObservableEagerState } from "observable-hooks";

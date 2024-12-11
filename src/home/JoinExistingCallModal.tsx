@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useTranslation } from "react-i18next";
-import { FC, MouseEvent } from "react";
+import { type FC, type MouseEvent } from "react";
 import { Button } from "@vector-im/compound-web";
 
 import { Modal } from "../Modal";

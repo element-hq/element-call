@@ -5,31 +5,41 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  type FC,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useHistory } from "react-router-dom";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
 import {
   Room,
   isE2EESupported as isE2EESupportedBrowser,
 } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { JoinRule } from "matrix-js-sdk/src/matrix";
 import { Heading, Text } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
-import { widget, ElementWidgetActions, JoinCallData } from "../widget";
+import { widget, ElementWidgetActions, type JoinCallData } from "../widget";
 import { FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
-import { MatrixInfo } from "./VideoPreview";
+import { type MatrixInfo } from "./VideoPreview";
 import { CallEndedView } from "./CallEndedView";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../utils/media";
 import { ActiveCall } from "./InCallView";
-import { MUTE_PARTICIPANT_COUNT, MuteStates } from "./MuteStates";
-import { useMediaDevices, MediaDevices } from "../livekit/MediaDevicesContext";
+import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
+import {
+  useMediaDevices,
+  type MediaDevices,
+} from "../livekit/MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";

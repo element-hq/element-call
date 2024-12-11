@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { render } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { act, ReactNode } from "react";
+import { act, type ReactNode } from "react";
 import { afterEach } from "node:test";
 
 import {

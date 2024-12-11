@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { MutableRefObject, RefCallback, useCallback } from "react";
+import { type MutableRefObject, type RefCallback, useCallback } from "react";
 
 /**
  * Combines multiple refs into one, useful for attaching multiple refs to the

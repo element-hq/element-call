@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { expect, test, vitest } from "vitest";
-import { FC } from "react";
+import { type FC } from "react";
 import { render } from "@testing-library/react";
 import { afterEach } from "node:test";
 import userEvent from "@testing-library/user-event";

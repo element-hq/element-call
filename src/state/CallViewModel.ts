@@ -11,18 +11,21 @@ import {
   observeParticipantMedia,
 } from "@livekit/components-core";
 import {
-  Room as LivekitRoom,
-  LocalParticipant,
+  type Room as LivekitRoom,
+  type LocalParticipant,
   LocalVideoTrack,
   ParticipantEvent,
-  RemoteParticipant,
+  type RemoteParticipant,
   Track,
 } from "livekit-client";
-import { Room as MatrixRoom, RoomMember } from "matrix-js-sdk/src/matrix";
+import {
+  type Room as MatrixRoom,
+  type RoomMember,
+} from "matrix-js-sdk/src/matrix";
 import {
   BehaviorSubject,
   EMPTY,
-  Observable,
+  type Observable,
   Subject,
   combineLatest,
   concat,
@@ -47,35 +50,38 @@ import {
 } from "rxjs";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
-  MatrixRTCSession,
+  type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/src/matrixrtc";
 
 import { ViewModel } from "./ViewModel";
 import {
   ECAddonConnectionState,
-  ECConnectionState,
+  type ECConnectionState,
 } from "../livekit/useECConnectionState";
 import {
   LocalUserMediaViewModel,
-  MediaViewModel,
+  type MediaViewModel,
   observeTrackReference,
   RemoteUserMediaViewModel,
   ScreenShareViewModel,
-  UserMediaViewModel,
+  type UserMediaViewModel,
 } from "./MediaViewModel";
 import { accumulate, finalizeValue } from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
 import { duplicateTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled } from "../controls";
-import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";
+import {
+  type GridTileViewModel,
+  type SpotlightTileViewModel,
+} from "./TileViewModel";
 import { TileStore } from "./TileStore";
 import { gridLikeLayout } from "./GridLikeLayout";
 import { spotlightExpandedLayout } from "./SpotlightExpandedLayout";
 import { oneOnOneLayout } from "./OneOnOneLayout";
 import { pipLayout } from "./PipLayout";
-import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { observeSpeaker } from "./observeSpeaker";
 
 // How long we wait after a focus switch before showing the real participant
@@ -885,10 +891,9 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
-  /**
-   * The layout of tiles in the call interface.
-   */
-  public readonly layout: Observable<Layout> = this.layoutMedia.pipe(
+  public readonly layoutInternals: Observable<
+    LayoutScanState & { layout: Layout }
+  > = this.layoutMedia.pipe(
     // Each layout will produce a set of tiles, and these tiles have an
     // observable indicating whether they're visible. We loop this information
     // back into the layout process by using switchScan.
@@ -943,9 +948,25 @@ export class CallViewModel extends ViewModel {
         visibleTiles: new Set(),
       },
     ),
+    this.scope.state(),
+  );
+
+  /**
+   * The layout of tiles in the call interface.
+   */
+  public readonly layout: Observable<Layout> = this.layoutInternals.pipe(
     map(({ layout }) => layout),
     this.scope.state(),
   );
+
+  /**
+   * The current generation of the tile store, exposed for debugging purposes.
+   */
+  public readonly tileStoreGeneration: Observable<number> =
+    this.layoutInternals.pipe(
+      map(({ tiles }) => tiles.generation),
+      this.scope.state(),
+    );
 
   public showSpotlightIndicators: Observable<boolean> = this.layout.pipe(
     map((l) => l.type !== "grid"),

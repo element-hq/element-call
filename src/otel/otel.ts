@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { SimpleSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
-import opentelemetry, { Tracer } from "@opentelemetry/api";
+import opentelemetry, { type Tracer } from "@opentelemetry/api";
 import { Resource } from "@opentelemetry/resources";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
 import { logger } from "matrix-js-sdk/src/logger";

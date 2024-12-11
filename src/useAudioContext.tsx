@@ -13,7 +13,7 @@ import {
   useSetting,
 } from "./settings/settings";
 import { useMediaDevices } from "./livekit/MediaDevicesContext";
-import { PrefetchedSounds } from "./soundUtils";
+import { type PrefetchedSounds } from "./soundUtils";
 
 /**
  * Play a sound though a given AudioContext. Will take

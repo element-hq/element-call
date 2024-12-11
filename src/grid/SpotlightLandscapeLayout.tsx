@@ -9,8 +9,8 @@ import { forwardRef } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
-import { CallLayout } from "./CallLayout";
-import { SpotlightLandscapeLayout as SpotlightLandscapeLayoutModel } from "../state/CallViewModel";
+import { type CallLayout } from "./CallLayout";
+import { type SpotlightLandscapeLayout as SpotlightLandscapeLayoutModel } from "../state/CallViewModel";
 import styles from "./SpotlightLandscapeLayout.module.css";
 import { useUpdateLayout } from "./Grid";
 

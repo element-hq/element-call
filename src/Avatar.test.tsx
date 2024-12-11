@@ -7,8 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { afterEach, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { MatrixClient } from "matrix-js-sdk/src/client";
-import { FC, PropsWithChildren } from "react";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type FC, type PropsWithChildren } from "react";
 
 import { ClientContextProvider } from "./ClientContext";
 import { Avatar } from "./Avatar";

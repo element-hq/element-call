@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  FC,
+  type FC,
   createContext,
   useCallback,
   useContext,
@@ -16,7 +16,7 @@ import {
   useState,
 } from "react";
 import { createMediaDeviceObserver } from "@livekit/components-core";
-import { Observable } from "rxjs";
+import { type Observable } from "rxjs";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import {
@@ -24,7 +24,7 @@ import {
   audioInput as audioInputSetting,
   audioOutput as audioOutputSetting,
   videoInput as videoInputSetting,
-  Setting,
+  type Setting,
 } from "../settings/settings";
 import { isFirefox } from "../Platform";
 

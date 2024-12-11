@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { EventType } from "matrix-js-sdk/src/@types/event";
-import { RoomState } from "matrix-js-sdk/src/models/room-state";
+import { type RoomState } from "matrix-js-sdk/src/models/room-state";
 
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 

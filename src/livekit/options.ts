@@ -8,10 +8,10 @@ Please see LICENSE in the repository root for full details.
 import {
   AudioPresets,
   DefaultReconnectPolicy,
-  RoomOptions,
+  type RoomOptions,
   ScreenSharePresets,
-  TrackPublishDefaults,
-  VideoPreset,
+  type TrackPublishDefaults,
+  type VideoPreset,
   VideoPresets,
 } from "livekit-client";
 

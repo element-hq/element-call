@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { RefObject, useRef } from "react";
+import { type RefObject, useRef } from "react";
 
 export interface LatestRef<T> extends RefObject<T> {
   current: T;

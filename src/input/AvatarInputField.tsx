@@ -6,13 +6,13 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  AllHTMLAttributes,
+  type AllHTMLAttributes,
   useEffect,
   useCallback,
   useState,
-  ChangeEvent,
+  type ChangeEvent,
   useRef,
-  FC,
+  type FC,
 } from "react";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";

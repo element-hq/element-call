@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { expect, test } from "vitest";
 import { render } from "@testing-library/react";
-import { ReactNode, useState } from "react";
+import { type ReactNode, useState } from "react";
 import { afterEach } from "node:test";
 import userEvent from "@testing-library/user-event";
 

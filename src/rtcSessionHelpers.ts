@@ -5,18 +5,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
-  LivekitFocus,
-  LivekitFocusActive,
+  type LivekitFocus,
+  type LivekitFocusActive,
   isLivekitFocus,
   isLivekitFocusConfig,
 } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
-import { ElementWidgetActions, WidgetHelpers, widget } from "./widget";
+import { ElementWidgetActions, type WidgetHelpers, widget } from "./widget";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 

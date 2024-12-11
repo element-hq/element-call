@@ -5,12 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { RemoteTrackPublication } from "livekit-client";
+import { type RemoteTrackPublication } from "livekit-client";
 import { test, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { axe } from "vitest-axe";
 import { of } from "rxjs";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 
 import { GridTile } from "./GridTile";
 import { mockRtcMembership, withRemoteMedia } from "../utils/test";

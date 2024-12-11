@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { RelationType } from "matrix-js-sdk/src/types";
+import { type RelationType } from "matrix-js-sdk/src/types";
 
 import catSoundOgg from "../sound/reactions/cat.ogg?url";
 import catSoundMp3 from "../sound/reactions/cat.mp3?url";

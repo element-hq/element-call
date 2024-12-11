@@ -70,6 +70,7 @@
   },
   "developer_mode": {
     "crypto_version": "Crypto version: {{version}}",
+    "debug_tile_layout_label": "Debug tile layout",
     "device_id": "Device ID: {{id}}",
     "duplicate_tiles_label": "Number of additional tile copies per participant",
     "hostname": "Hostname: {{hostname}}",
@@ -147,14 +148,12 @@
   "screenshare_button_label": "Share screen",
   "settings": {
     "audio_tab": {
-      "effect_volume_description": "Volume for sound effects such as: joining or leaving a call, and reactions.",
+      "effect_volume_description": "Adjust the volume at which reactions and hand raised effects play.",
       "effect_volume_label": "Sound effect volume"
     },
     "background_blur_header": "Background",
     "background_blur_label": "Blur the background of the video",
     "blur_not_supported_by_browser": "(Background blur is not supported by this device)",
-    "developer_settings_label": "Developer Settings",
-    "developer_settings_label_description": "Expose developer settings in the settings window.",
     "developer_tab_title": "Developer",
     "feedback_tab_body": "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
     "feedback_tab_description_label": "Your feedback",
@@ -162,17 +161,16 @@
     "feedback_tab_send_logs_label": "Include debug logs",
     "feedback_tab_thank_you": "Thanks, we received your feedback!",
     "feedback_tab_title": "Feedback",
-    "more_tab_title": "More",
     "opt_in_description": "<0></0><1></1>You may withdraw consent by unchecking this box. If you are currently in a call, this setting will take effect at the end of the call.",
     "preferences_tab": {
+      "developer_mode_label": "Developer mode",
+      "developer_mode_label_description": "Enable developer mode and show developer settings tab.",
       "reactions_play_sound_description": "Play a sound effect when anyone sends a reaction into a call.",
       "reactions_play_sound_label": "Play reaction sounds",
       "reactions_show_description": "Show an animation when anyone sends a reaction.",
-      "reactions_show_label": "Show reactions",
-      "reactions_title": "Reactions"
+      "reactions_show_label": "Show reactions"
     },
-    "preferences_tab_body": "Here you can configure extra options for an improved experience",
-    "preferences_tab_h4": "Preferences",
+    "preferences_tab_body": "Here you can configure extra options for an improved experience.",
     "preferences_tab_show_hand_raised_timer_description": "Show a timer when a participant raises their hand",
     "preferences_tab_show_hand_raised_timer_label": "Show hand raise duration",
     "speaker_device_selection_label": "Speaker"

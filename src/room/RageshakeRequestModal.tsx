@@ -5,11 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useEffect } from "react";
+import { type FC, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, Text } from "@vector-im/compound-web";
 
-import { Modal, Props as ModalProps } from "../Modal";
+import { Modal, type Props as ModalProps } from "../Modal";
 import { FieldRow, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake } from "../settings/submit-rageshake";
 

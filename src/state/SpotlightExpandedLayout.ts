@@ -6,11 +6,11 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  SpotlightExpandedLayout,
-  SpotlightExpandedLayoutMedia,
+  type SpotlightExpandedLayout,
+  type SpotlightExpandedLayoutMedia,
 } from "./CallViewModel";
-import { TileStore } from "./TileStore";
-import { GridTileViewModel } from "./TileViewModel";
+import { type TileStore } from "./TileStore";
+import { type GridTileViewModel } from "./TileViewModel";
 
 /**
  * Produces an expanded spotlight layout with the given media.

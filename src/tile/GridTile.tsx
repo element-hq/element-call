@@ -6,14 +6,14 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ComponentProps,
-  ReactNode,
+  type ComponentProps,
+  type ReactNode,
   forwardRef,
   useCallback,
   useRef,
   useState,
 } from "react";
-import { animated } from "@react-spring/web";
+import { type animated } from "@react-spring/web";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import {
@@ -38,18 +38,18 @@ import { useObservableEagerState } from "observable-hooks";
 
 import styles from "./GridTile.module.css";
 import {
-  UserMediaViewModel,
+  type UserMediaViewModel,
   useDisplayName,
   LocalUserMediaViewModel,
-  RemoteUserMediaViewModel,
+  type RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
 import { Slider } from "../Slider";
 import { MediaView } from "./MediaView";
 import { useLatest } from "../useLatest";
-import { GridTileViewModel } from "../state/TileViewModel";
+import { type GridTileViewModel } from "../state/TileViewModel";
 import { useMergedRefs } from "../useMergedRefs";
 import { useReactions } from "../useReactions";
-import { ReactionOption } from "../reactions";
+import { type ReactionOption } from "../reactions";
 
 interface TileProps {
   className?: string;

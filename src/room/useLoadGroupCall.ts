@@ -10,12 +10,12 @@ import { logger } from "matrix-js-sdk/src/logger";
 import { EventType } from "matrix-js-sdk/src/@types/event";
 import {
   ClientEvent,
-  MatrixClient,
-  RoomSummary,
+  type MatrixClient,
+  type RoomSummary,
 } from "matrix-js-sdk/src/client";
 import { SyncState } from "matrix-js-sdk/src/sync";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { RoomEvent, Room } from "matrix-js-sdk/src/models/room";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { RoomEvent, type Room } from "matrix-js-sdk/src/models/room";
 import { KnownMembership } from "matrix-js-sdk/src/types";
 import { JoinRule, MatrixError } from "matrix-js-sdk/src/matrix";
 import { useTranslation } from "react-i18next";

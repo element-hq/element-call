@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { Key, ReactNode, useId } from "react";
+import { type Key, type ReactNode, useId } from "react";
 import { NavBar, NavItem } from "@vector-im/compound-web";
 
 import styles from "./Tabs.module.css";

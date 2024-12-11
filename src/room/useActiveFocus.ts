@@ -6,14 +6,14 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  MatrixRTCSession,
+  type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { useCallback, useEffect, useState } from "react";
 import { deepCompare } from "matrix-js-sdk/src/utils";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
-  LivekitFocus,
+  type LivekitFocus,
   isLivekitFocus,
 } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 
@@ -38,7 +38,7 @@ export function useActiveLivekitFocus(
       const oldestMembership = rtcSession.getOldestMembership();
       logger.warn(
         `Got new active focus from membership: ${oldestMembership?.sender}/${oldestMembership?.deviceId}.
-        Updating focus (focus switch) from ${activeFocus} to ${newActiveFocus}`,
+        Updating focus (focus switch) from ${JSON.stringify(activeFocus)} to ${JSON.stringify(newActiveFocus)}`,
       );
       setActiveFocus(newActiveFocus);
     }

@@ -5,11 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { BehaviorSubject, Observable } from "rxjs";
-import { ComponentType } from "react";
+import { type BehaviorSubject, type Observable } from "rxjs";
+import { type ComponentType } from "react";
 
-import { LayoutProps } from "./Grid";
-import { TileViewModel } from "../state/TileViewModel";
+import { type LayoutProps } from "./Grid";
+import { type TileViewModel } from "../state/TileViewModel";
 
 export interface Bounds {
   width: number;

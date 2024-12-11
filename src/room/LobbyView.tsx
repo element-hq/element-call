@@ -5,17 +5,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useCallback, useMemo, useState } from "react";
+import { type FC, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Button } from "@vector-im/compound-web";
 import classNames from "classnames";
 import { useHistory } from "react-router-dom";
 import { logger } from "matrix-js-sdk/src/logger";
 import { usePreviewTracks } from "@livekit/components-react";
 import {
-  CreateLocalTracksOptions,
-  LocalVideoTrack,
+  type CreateLocalTracksOptions,
+  type LocalVideoTrack,
   Track,
 } from "livekit-client";
 import { useObservable } from "observable-hooks";
@@ -25,8 +25,8 @@ import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
 import { useLocationNavigation } from "../useLocationNavigation";
-import { MatrixInfo, VideoPreview } from "./VideoPreview";
-import { MuteStates } from "./MuteStates";
+import { type MatrixInfo, VideoPreview } from "./VideoPreview";
+import { type MuteStates } from "./MuteStates";
 import { InviteButton } from "../button/InviteButton";
 import {
   EndCallButton,

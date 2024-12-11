@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, ReactNode, useCallback, useEffect } from "react";
+import { type FC, type ReactNode, useCallback, useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import classNames from "classnames";
 import { Trans, useTranslation } from "react-i18next";

@@ -5,11 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { IOpenIDToken, MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type IOpenIDToken, type MatrixClient } from "matrix-js-sdk/src/matrix";
 import { logger } from "matrix-js-sdk/src/logger";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { useEffect, useState } from "react";
-import { LivekitFocus } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
+import { type LivekitFocus } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 
 import { useActiveLivekitFocus } from "../room/useActiveFocus";
 

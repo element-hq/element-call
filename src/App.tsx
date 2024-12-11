@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, Suspense, useEffect, useState } from "react";
+import { type FC, Suspense, useEffect, useState } from "react";
 import {
   BrowserRouter as Router,
   Switch,
@@ -13,7 +13,7 @@ import {
   useLocation,
 } from "react-router-dom";
 import * as Sentry from "@sentry/react";
-import { History } from "history";
+import { type History } from "history";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
 

@@ -6,11 +6,11 @@ Please see LICENSE in the repository root for full details.
 */
 
 import classNames from "classnames";
-import { FC, HTMLAttributes, ReactNode } from "react";
+import { type FC, type HTMLAttributes, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import styles from "./DisconnectedBanner.module.css";
-import { ValidClientState, useClientState } from "./ClientContext";
+import { type ValidClientState, useClientState } from "./ClientContext";
 
 interface Props extends HTMLAttributes<HTMLElement> {
   children?: ReactNode;

@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useTranslation } from "react-i18next";
-import { FC, useCallback } from "react";
+import { type FC, useCallback } from "react";
 import { Button } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
 

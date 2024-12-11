@@ -5,12 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { DisconnectReason } from "livekit-client";
+import { type DisconnectReason } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 
 import {
-  IPosthogEvent,
+  type IPosthogEvent,
   PosthogAnalytics,
   RegistrationType,
 } from "./PosthogAnalytics";

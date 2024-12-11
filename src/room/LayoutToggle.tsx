@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ChangeEvent, FC, TouchEvent, useCallback } from "react";
+import { type ChangeEvent, type FC, type TouchEvent, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { Tooltip } from "@vector-im/compound-web";
 import {

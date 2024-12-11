@@ -4,7 +4,7 @@ Copyright 2022-2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
-import { ComponentPropsWithoutRef, FC } from "react";
+import { type ComponentPropsWithoutRef, type FC } from "react";
 import classNames from "classnames";
 import { useTranslation } from "react-i18next";
 import { Button as CpdButton, Tooltip } from "@vector-im/compound-web";
