@@ -9,13 +9,13 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { InteractiveAuth } from "matrix-js-sdk/src/interactive-auth";
 import {
   createClient,
-  MatrixClient,
-  RegisterResponse,
+  type MatrixClient,
+  type RegisterResponse,
 } from "matrix-js-sdk/src/matrix";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { initClient } from "../utils/matrix";
-import { Session } from "../ClientContext";
+import { type Session } from "../ClientContext";
 import { Config } from "../config/Config";
 import { widget } from "../widget";
 

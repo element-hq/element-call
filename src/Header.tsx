@@ -6,7 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import classNames from "classnames";
-import { FC, HTMLAttributes, ReactNode, forwardRef } from "react";
+import {
+  type FC,
+  type HTMLAttributes,
+  type ReactNode,
+  forwardRef,
+} from "react";
 import { Link } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Heading, Text } from "@vector-im/compound-web";

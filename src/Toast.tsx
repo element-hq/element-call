@@ -6,9 +6,9 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ComponentType,
-  FC,
-  SVGAttributes,
+  type ComponentType,
+  type FC,
+  type SVGAttributes,
   useCallback,
   useEffect,
 } from "react";

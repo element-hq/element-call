@@ -5,9 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { OneOnOneLayout, OneOnOneLayoutMedia } from "./CallViewModel";
-import { TileStore } from "./TileStore";
-import { GridTileViewModel } from "./TileViewModel";
+import { type OneOnOneLayout, type OneOnOneLayoutMedia } from "./CallViewModel";
+import { type TileStore } from "./TileStore";
+import { type GridTileViewModel } from "./TileViewModel";
 
 /**
  * Produces a one-on-one layout with the given media.

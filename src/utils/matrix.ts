@@ -9,12 +9,12 @@ import { IndexedDBStore } from "matrix-js-sdk/src/store/indexeddb";
 import { MemoryStore } from "matrix-js-sdk/src/store/memory";
 import {
   createClient,
-  ICreateClientOpts,
+  type ICreateClientOpts,
   Preset,
   Visibility,
 } from "matrix-js-sdk/src/matrix";
 import { ClientEvent } from "matrix-js-sdk/src/client";
-import { ISyncStateData, SyncState } from "matrix-js-sdk/src/sync";
+import { type ISyncStateData, type SyncState } from "matrix-js-sdk/src/sync";
 import { logger } from "matrix-js-sdk/src/logger";
 import { secureRandomBase64Url } from "matrix-js-sdk/src/randomstring";
 
@@ -24,7 +24,10 @@ import IndexedDBWorker from "../IndexedDBWorker?worker";
 import { generateUrlSearchParams, getUrlParams } from "../UrlParams";
 import { Config } from "../config/Config";
 import { E2eeType } from "../e2ee/e2eeType";
-import { EncryptionSystem, saveKeyForRoom } from "../e2ee/sharedKeyManagement";
+import {
+  type EncryptionSystem,
+  saveKeyForRoom,
+} from "../e2ee/sharedKeyManagement";
 
 export const fallbackICEServerAllowed =
   import.meta.env.VITE_FALLBACK_STUN_ALLOWED === "true";

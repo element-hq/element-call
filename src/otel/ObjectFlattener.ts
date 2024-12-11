@@ -4,13 +4,13 @@ Copyright 2023, 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
-import { Attributes } from "@opentelemetry/api";
-import { VoipEvent } from "matrix-js-sdk/src/webrtc/call";
-import { GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
+import { type Attributes } from "@opentelemetry/api";
+import { type VoipEvent } from "matrix-js-sdk/src/webrtc/call";
+import { type GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
 import {
-  ByteSentStatsReport,
-  ConnectionStatsReport,
-  SummaryStatsReport,
+  type ByteSentStatsReport,
+  type ConnectionStatsReport,
+  type SummaryStatsReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 export class ObjectFlattener {

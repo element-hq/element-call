@@ -5,9 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { PipLayout, PipLayoutMedia } from "./CallViewModel";
-import { TileStore } from "./TileStore";
-import { GridTileViewModel } from "./TileViewModel";
+import { type PipLayout, type PipLayoutMedia } from "./CallViewModel";
+import { type TileStore } from "./TileStore";
+import { type GridTileViewModel } from "./TileViewModel";
 
 /**
  * Produces a picture-in-picture layout with the given media.

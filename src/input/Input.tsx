@@ -6,11 +6,11 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ChangeEvent,
-  FC,
-  ForwardedRef,
+  type ChangeEvent,
+  type FC,
+  type ForwardedRef,
   forwardRef,
-  ReactNode,
+  type ReactNode,
   useId,
 } from "react";
 import classNames from "classnames";

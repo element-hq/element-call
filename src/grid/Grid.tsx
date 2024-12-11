@@ -6,21 +6,21 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  SpringRef,
-  TransitionFn,
-  animated,
+  type SpringRef,
+  type TransitionFn,
+  type animated,
   useTransition,
 } from "@react-spring/web";
-import { EventTypes, Handler, useScroll } from "@use-gesture/react";
+import { type EventTypes, type Handler, useScroll } from "@use-gesture/react";
 import {
-  CSSProperties,
-  ComponentProps,
-  ComponentType,
-  Dispatch,
-  FC,
-  LegacyRef,
-  ReactNode,
-  SetStateAction,
+  type CSSProperties,
+  type ComponentProps,
+  type ComponentType,
+  type Dispatch,
+  type FC,
+  type LegacyRef,
+  type ReactNode,
+  type SetStateAction,
   createContext,
   forwardRef,
   memo,

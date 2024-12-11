@@ -11,18 +11,21 @@ import {
   observeParticipantMedia,
 } from "@livekit/components-core";
 import {
-  Room as LivekitRoom,
-  LocalParticipant,
+  type Room as LivekitRoom,
+  type LocalParticipant,
   LocalVideoTrack,
   ParticipantEvent,
-  RemoteParticipant,
+  type RemoteParticipant,
   Track,
 } from "livekit-client";
-import { Room as MatrixRoom, RoomMember } from "matrix-js-sdk/src/matrix";
+import {
+  type Room as MatrixRoom,
+  type RoomMember,
+} from "matrix-js-sdk/src/matrix";
 import {
   BehaviorSubject,
   EMPTY,
-  Observable,
+  type Observable,
   Subject,
   combineLatest,
   concat,
@@ -47,35 +50,38 @@ import {
 } from "rxjs";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
-  MatrixRTCSession,
+  type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/src/matrixrtc";
 
 import { ViewModel } from "./ViewModel";
 import {
   ECAddonConnectionState,
-  ECConnectionState,
+  type ECConnectionState,
 } from "../livekit/useECConnectionState";
 import {
   LocalUserMediaViewModel,
-  MediaViewModel,
+  type MediaViewModel,
   observeTrackReference,
   RemoteUserMediaViewModel,
   ScreenShareViewModel,
-  UserMediaViewModel,
+  type UserMediaViewModel,
 } from "./MediaViewModel";
 import { accumulate, finalizeValue } from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
 import { duplicateTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled } from "../controls";
-import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";
+import {
+  type GridTileViewModel,
+  type SpotlightTileViewModel,
+} from "./TileViewModel";
 import { TileStore } from "./TileStore";
 import { gridLikeLayout } from "./GridLikeLayout";
 import { spotlightExpandedLayout } from "./SpotlightExpandedLayout";
 import { oneOnOneLayout } from "./OneOnOneLayout";
 import { pipLayout } from "./PipLayout";
-import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { observeSpeaker } from "./observeSpeaker";
 
 // How long we wait after a focus switch before showing the real participant

@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { BehaviorSubject } from "rxjs";
 
-import { MediaViewModel, UserMediaViewModel } from "./MediaViewModel";
+import { type MediaViewModel, type UserMediaViewModel } from "./MediaViewModel";
 import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";
 import { fillGaps } from "../utils/iter";
 

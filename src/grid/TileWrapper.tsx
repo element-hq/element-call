@@ -5,12 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ComponentType, memo, RefObject, useRef } from "react";
-import { EventTypes, Handler, useDrag } from "@use-gesture/react";
-import { SpringValue } from "@react-spring/web";
+import { type ComponentType, memo, type RefObject, useRef } from "react";
+import { type EventTypes, type Handler, useDrag } from "@use-gesture/react";
+import { type SpringValue } from "@react-spring/web";
 import classNames from "classnames";
 
-import { TileProps } from "./Grid";
+import { type TileProps } from "./Grid";
 import styles from "./TileWrapper.module.css";
 
 interface Props<M, R extends HTMLElement> {

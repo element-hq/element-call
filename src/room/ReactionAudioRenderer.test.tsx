@@ -12,11 +12,11 @@ import {
   expect,
   test,
   vitest,
-  MockedFunction,
-  Mock,
+  type MockedFunction,
+  type Mock,
 } from "vitest";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { act, ReactNode } from "react";
+import { act, type ReactNode } from "react";
 import { afterEach } from "node:test";
 
 import {

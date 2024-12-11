@@ -5,31 +5,35 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import opentelemetry, { Span, Attributes, Context } from "@opentelemetry/api";
+import opentelemetry, {
+  type Span,
+  type Attributes,
+  type Context,
+} from "@opentelemetry/api";
 import {
-  GroupCall,
-  MatrixClient,
-  MatrixEvent,
-  RoomMember,
+  type GroupCall,
+  type MatrixClient,
+  type MatrixEvent,
+  type RoomMember,
 } from "matrix-js-sdk/src/matrix";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
-  CallError,
-  CallState,
-  MatrixCall,
-  VoipEvent,
+  type CallError,
+  type CallState,
+  type MatrixCall,
+  type VoipEvent,
 } from "matrix-js-sdk/src/webrtc/call";
 import {
-  CallsByUserAndDevice,
-  GroupCallError,
+  type CallsByUserAndDevice,
+  type GroupCallError,
   GroupCallEvent,
-  GroupCallStatsReport,
+  type GroupCallStatsReport,
 } from "matrix-js-sdk/src/webrtc/groupCall";
 import {
-  ConnectionStatsReport,
-  ByteSentStatsReport,
-  SummaryStatsReport,
-  CallFeedReport,
+  type ConnectionStatsReport,
+  type ByteSentStatsReport,
+  type SummaryStatsReport,
+  type CallFeedReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
 import { ElementCallOpenTelemetry } from "./otel";

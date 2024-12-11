@@ -5,11 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useEffect, useState, ReactNode, useRef } from "react";
+import { type FC, useEffect, useState, type ReactNode, useRef } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
 import { CheckIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
-import { MatrixError } from "matrix-js-sdk/src/http-api";
+import { type MatrixError } from "matrix-js-sdk/src/http-api";
 import { Heading, Text } from "@vector-im/compound-web";
 
 import { useClientLegacy } from "../ClientContext";

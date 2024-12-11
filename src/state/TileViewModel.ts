@@ -5,10 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { BehaviorSubject, Observable } from "rxjs";
+import { BehaviorSubject, type Observable } from "rxjs";
 
 import { ViewModel } from "./ViewModel";
-import { MediaViewModel, UserMediaViewModel } from "./MediaViewModel";
+import { type MediaViewModel, type UserMediaViewModel } from "./MediaViewModel";
 
 let nextId = 0;
 function createId(): string {

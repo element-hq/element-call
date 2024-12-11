@@ -5,15 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { CSSProperties, forwardRef, useCallback, useMemo } from "react";
+import { type CSSProperties, forwardRef, useCallback, useMemo } from "react";
 import { distinctUntilChanged } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 
-import { GridLayout as GridLayoutModel } from "../state/CallViewModel";
+import { type GridLayout as GridLayoutModel } from "../state/CallViewModel";
 import styles from "./GridLayout.module.css";
 import { useInitial } from "../useInitial";
-import { CallLayout, arrangeTiles } from "./CallLayout";
-import { DragCallback, useUpdateLayout } from "./Grid";
+import { type CallLayout, arrangeTiles } from "./CallLayout";
+import { type DragCallback, useUpdateLayout } from "./Grid";
 
 interface GridCSSProperties extends CSSProperties {
   "--gap": string;

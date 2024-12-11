@@ -6,8 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ElementCallReactionEventType,
-  ECallReactionEventContent,
+  type ElementCallReactionEventType,
+  type ECallReactionEventContent,
 } from "../reactions";
 
 // Extend Matrix JS SDK types via Typescript declaration merging to support unspecced event fields and types

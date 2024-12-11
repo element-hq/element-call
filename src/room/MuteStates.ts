@@ -6,16 +6,19 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  Dispatch,
-  SetStateAction,
+  type Dispatch,
+  type SetStateAction,
   useCallback,
   useEffect,
   useMemo,
 } from "react";
-import { IWidgetApiRequest } from "matrix-widget-api";
+import { type IWidgetApiRequest } from "matrix-widget-api";
 import { logger } from "matrix-js-sdk/src/logger";
 
-import { MediaDevice, useMediaDevices } from "../livekit/MediaDevicesContext";
+import {
+  type MediaDevice,
+  useMediaDevices,
+} from "../livekit/MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import { ElementWidgetActions, widget } from "../widget";
 import { Config } from "../config/Config";

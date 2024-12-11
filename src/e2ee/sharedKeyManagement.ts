@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { useEffect, useMemo } from "react";
 
 import { setLocalStorageItem, useLocalStorage } from "../useLocalStorage";
-import { UrlParams, getUrlParams, useUrlParams } from "../UrlParams";
+import { type UrlParams, getUrlParams, useUrlParams } from "../UrlParams";
 import { E2eeType } from "./e2eeType";
 import { useClient } from "../ClientContext";
 

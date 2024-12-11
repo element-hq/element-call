@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ChangeEvent, FC, useCallback, useId } from "react";
+import { type ChangeEvent, type FC, useCallback, useId } from "react";
 import {
   Heading,
   InlineField,
@@ -14,7 +14,7 @@ import {
   Separator,
 } from "@vector-im/compound-web";
 
-import { MediaDevice } from "../livekit/MediaDevicesContext";
+import { type MediaDevice } from "../livekit/MediaDevicesContext";
 import styles from "./DeviceSelection.module.css";
 
 interface Props {

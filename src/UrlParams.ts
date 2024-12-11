@@ -10,7 +10,7 @@ import { useLocation } from "react-router-dom";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { Config } from "./config/Config";
-import { EncryptionSystem } from "./e2ee/sharedKeyManagement";
+import { type EncryptionSystem } from "./e2ee/sharedKeyManagement";
 import { E2eeType } from "./e2ee/e2eeType";
 
 interface RoomIdentifier {

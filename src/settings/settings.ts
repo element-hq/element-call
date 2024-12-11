@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { logger } from "matrix-js-sdk/src/logger";
-import { BehaviorSubject, Observable } from "rxjs";
+import { BehaviorSubject, type Observable } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";

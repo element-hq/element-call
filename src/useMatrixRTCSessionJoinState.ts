@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { logger } from "matrix-js-sdk/src/logger";
 import {
-  MatrixRTCSession,
+  type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { useCallback, useEffect, useState } from "react";

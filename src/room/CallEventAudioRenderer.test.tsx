@@ -10,20 +10,20 @@ import {
   afterAll,
   beforeEach,
   expect,
-  MockedFunction,
+  type MockedFunction,
   test,
   vitest,
 } from "vitest";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { ConnectionState } from "livekit-client";
 import { BehaviorSubject, of } from "rxjs";
 import { afterEach } from "node:test";
-import { act, ReactNode } from "react";
+import { act, type ReactNode } from "react";
 import {
-  CallMembership,
+  type CallMembership,
   type MatrixRTCSession,
 } from "matrix-js-sdk/src/matrixrtc";
-import { RoomMember } from "matrix-js-sdk/src/matrix";
+import { type RoomMember } from "matrix-js-sdk/src/matrix";
 
 import {
   mockLivekitRoom,

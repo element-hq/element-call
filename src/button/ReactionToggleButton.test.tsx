@@ -9,7 +9,7 @@ import { render } from "@testing-library/react";
 import { expect, test } from "vitest";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { userEvent } from "@testing-library/user-event";
-import { ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import {
   MockRoom,

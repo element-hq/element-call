@@ -5,27 +5,27 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { PropsWithChildren, ReactNode } from "react";
+import { type PropsWithChildren, type ReactNode } from "react";
 import { randomUUID } from "crypto";
 import EventEmitter from "events";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { EventType, RoomEvent, RelationType } from "matrix-js-sdk/src/matrix";
 import {
   MatrixEvent,
   EventTimeline,
   EventTimelineSet,
-  Room,
+  type Room,
 } from "matrix-js-sdk/src/matrix";
 import {
-  MatrixRTCSession,
+  type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/src/matrixrtc";
 
 import { ReactionsProvider } from "../useReactions";
 import {
-  ECallReactionEventContent,
+  type ECallReactionEventContent,
   ElementCallReactionEventType,
-  ReactionOption,
+  type ReactionOption,
 } from "../reactions";
 
 export const TestReactionsWrapper = ({

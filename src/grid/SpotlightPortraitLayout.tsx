@@ -5,12 +5,12 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { CSSProperties, forwardRef } from "react";
+import { type CSSProperties, forwardRef } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
-import { CallLayout, arrangeTiles } from "./CallLayout";
-import { SpotlightPortraitLayout as SpotlightPortraitLayoutModel } from "../state/CallViewModel";
+import { type CallLayout, arrangeTiles } from "./CallLayout";
+import { type SpotlightPortraitLayout as SpotlightPortraitLayoutModel } from "../state/CallViewModel";
 import styles from "./SpotlightPortraitLayout.module.css";
 import { useUpdateLayout } from "./Grid";
 

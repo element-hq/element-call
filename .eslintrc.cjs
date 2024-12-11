@@ -37,6 +37,12 @@ module.exports = {
     "@typescript-eslint/promise-function-async": "error",
     "@typescript-eslint/require-await": "error",
     "@typescript-eslint/await-thenable": "error",
+    // To help ensure that we get proper vite/rollup lazy loading (e.g. for matrix-js-sdk):
+    "@typescript-eslint/consistent-type-imports": [
+      "error",
+      { fixStyle: "inline-type-imports" },
+    ],
+    // To encourage good usage of RxJS:
     "rxjs/no-exposed-subjects": "error",
   },
   settings: {

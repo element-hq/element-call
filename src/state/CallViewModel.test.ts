@@ -11,23 +11,26 @@ import {
   debounceTime,
   distinctUntilChanged,
   map,
-  Observable,
+  type Observable,
   of,
   switchMap,
 } from "rxjs";
-import { MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type MatrixClient } from "matrix-js-sdk/src/matrix";
 import {
   ConnectionState,
-  LocalParticipant,
-  Participant,
+  type LocalParticipant,
+  type Participant,
   ParticipantEvent,
-  RemoteParticipant,
+  type RemoteParticipant,
 } from "livekit-client";
 import * as ComponentsCore from "@livekit/components-core";
 import { isEqual } from "lodash-es";
-import { CallMembership, MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
+import {
+  type CallMembership,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/src/matrixrtc";
 
-import { CallViewModel, Layout } from "./CallViewModel";
+import { CallViewModel, type Layout } from "./CallViewModel";
 import {
   mockLivekitRoom,
   mockLocalParticipant,
@@ -40,7 +43,7 @@ import {
 } from "../utils/test";
 import {
   ECAddonConnectionState,
-  ECConnectionState,
+  type ECConnectionState,
 } from "../livekit/useECConnectionState";
 import { E2eeType } from "../e2ee/e2eeType";
 

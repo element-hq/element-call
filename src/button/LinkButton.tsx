@@ -5,9 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ComponentPropsWithoutRef, forwardRef } from "react";
+import { type ComponentPropsWithoutRef, forwardRef } from "react";
 import { Button } from "@vector-im/compound-web";
-import { LocationDescriptor } from "history";
+import { type LocationDescriptor } from "history";
 
 import { useLink } from "./Link";
 

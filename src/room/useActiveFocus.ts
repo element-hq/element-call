@@ -6,14 +6,14 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  MatrixRTCSession,
+  type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { useCallback, useEffect, useState } from "react";
 import { deepCompare } from "matrix-js-sdk/src/utils";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
-  LivekitFocus,
+  type LivekitFocus,
   isLivekitFocus,
 } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 

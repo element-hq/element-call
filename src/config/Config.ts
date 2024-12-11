@@ -10,8 +10,8 @@ import { merge } from "lodash-es";
 import { getUrlParams } from "../UrlParams";
 import {
   DEFAULT_CONFIG,
-  ConfigOptions,
-  ResolvedConfigOptions,
+  type ConfigOptions,
+  type ResolvedConfigOptions,
 } from "./ConfigOptions";
 
 export class Config {

@@ -6,15 +6,15 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import React, { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 import { beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import { useMuteStates } from "./MuteStates";
 import {
-  MediaDevice,
-  MediaDevices,
+  type MediaDevice,
+  type MediaDevices,
   MediaDevicesContext,
 } from "../livekit/MediaDevicesContext";
 import { mockConfig } from "../utils/test";

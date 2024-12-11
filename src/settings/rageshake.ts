@@ -29,9 +29,11 @@ Please see LICENSE in the repository root for full details.
 
 import EventEmitter from "events";
 import { throttle } from "lodash-es";
-import { Logger, logger } from "matrix-js-sdk/src/logger";
+import { type Logger, logger } from "matrix-js-sdk/src/logger";
 import { randomString } from "matrix-js-sdk/src/randomstring";
-import loglevel, { LoggingMethod } from "loglevel";
+import { type LoggingMethod } from "loglevel";
+
+import type loglevel from "loglevel";
 
 // the length of log data we keep in indexeddb (and include in the reports)
 const MAX_LOG_SIZE = 1024 * 1024 * 5; // 5 MB

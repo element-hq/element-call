@@ -9,12 +9,12 @@ import { useCallback } from "react";
 import { InteractiveAuth } from "matrix-js-sdk/src/interactive-auth";
 import {
   createClient,
-  LoginResponse,
-  MatrixClient,
+  type LoginResponse,
+  type MatrixClient,
 } from "matrix-js-sdk/src/matrix";
 
 import { initClient } from "../utils/matrix";
-import { Session } from "../ClientContext";
+import { type Session } from "../ClientContext";
 /**
  * This provides the login method to login using user credentials.
  * @param oldClient If there is an already authenticated client it should be passed to this hook

@@ -6,9 +6,9 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  SpanProcessor,
-  ReadableSpan,
-  Span,
+  type SpanProcessor,
+  type ReadableSpan,
+  type Span,
 } from "@opentelemetry/sdk-trace-base";
 import { hrTimeToMilliseconds } from "@opentelemetry/core";
 import { logger } from "matrix-js-sdk/src/logger";

@@ -4,29 +4,29 @@ Copyright 2023, 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
-import { map, Observable, of, SchedulerLike } from "rxjs";
-import { RunHelpers, TestScheduler } from "rxjs/testing";
+import { map, type Observable, of, type SchedulerLike } from "rxjs";
+import { type RunHelpers, TestScheduler } from "rxjs/testing";
 import { expect, vi } from "vitest";
 import {
-  RoomMember,
-  Room as MatrixRoom,
+  type RoomMember,
+  type Room as MatrixRoom,
   MatrixEvent,
-  Room,
+  type Room,
   TypedEventEmitter,
 } from "matrix-js-sdk/src/matrix";
 import {
   CallMembership,
-  Focus,
+  type Focus,
   MatrixRTCSessionEvent,
-  MatrixRTCSessionEventHandlerMap,
-  SessionMembershipData,
+  type MatrixRTCSessionEventHandlerMap,
+  type SessionMembershipData,
 } from "matrix-js-sdk/src/matrixrtc";
 import {
-  LocalParticipant,
-  LocalTrackPublication,
-  RemoteParticipant,
-  RemoteTrackPublication,
-  Room as LivekitRoom,
+  type LocalParticipant,
+  type LocalTrackPublication,
+  type RemoteParticipant,
+  type RemoteTrackPublication,
+  type Room as LivekitRoom,
 } from "livekit-client";
 
 import {
@@ -34,7 +34,10 @@ import {
   RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
 import { E2eeType } from "../e2ee/e2eeType";
-import { DEFAULT_CONFIG, ResolvedConfigOptions } from "../config/ConfigOptions";
+import {
+  DEFAULT_CONFIG,
+  type ResolvedConfigOptions,
+} from "../config/ConfigOptions";
 import { Config } from "../config/Config";
 
 export function withFakeTimers(continuation: () => void): void {

@@ -6,10 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { Link } from "react-router-dom";
-import { MatrixClient } from "matrix-js-sdk/src/client";
-import { RoomMember } from "matrix-js-sdk/src/models/room-member";
-import { Room } from "matrix-js-sdk/src/models/room";
-import { FC, useCallback, MouseEvent, useState } from "react";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type RoomMember } from "matrix-js-sdk/src/models/room-member";
+import { type Room } from "matrix-js-sdk/src/models/room";
+import { type FC, useCallback, type MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { IconButton, Text } from "@vector-im/compound-web";
 import { CloseIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
@@ -18,7 +18,7 @@ import classNames from "classnames";
 import { Avatar, Size } from "../Avatar";
 import styles from "./CallList.module.css";
 import { getRelativeRoomUrl } from "../utils/matrix";
-import { GroupCallRoom } from "./useGroupCallRooms";
+import { type GroupCallRoom } from "./useGroupCallRooms";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 
 interface CallListProps {

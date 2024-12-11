@@ -6,15 +6,15 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ComponentPropsWithoutRef,
+  type ComponentPropsWithoutRef,
   forwardRef,
-  MouseEvent,
+  type MouseEvent,
   useCallback,
   useMemo,
 } from "react";
 import { Link as CpdLink } from "@vector-im/compound-web";
 import { useHistory } from "react-router-dom";
-import { createPath, LocationDescriptor, Path } from "history";
+import { createPath, type LocationDescriptor, type Path } from "history";
 import classNames from "classnames";
 
 import { useLatest } from "../useLatest";
