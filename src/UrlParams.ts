@@ -232,10 +232,10 @@ export const getUrlParams = (
     showControls: parser.getFlagParam("showControls", true),
     hideScreensharing: parser.getFlagParam("hideScreensharing"),
     e2eEnabled: parser.getFlagParam("enableE2EE", true),
-    userId: parser.getParam("userId"),
+    userId: isWidget ? parser.getParam("userId") : null,
     displayName: parser.getParam("displayName"),
-    deviceId: parser.getParam("deviceId"),
-    baseUrl: parser.getParam("baseUrl"),
+    deviceId: isWidget ? parser.getParam("deviceId") : null,
+    baseUrl: isWidget ? parser.getParam("baseUrl") : null,
     lang: parser.getParam("lang"),
     fonts: parser.getAllParams("font"),
     fontScale: Number.isNaN(fontScale) ? null : fontScale,
@@ -243,10 +243,10 @@ export const getUrlParams = (
     allowIceFallback: parser.getFlagParam("allowIceFallback"),
     perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
     skipLobby: parser.getFlagParam("skipLobby"),
-    returnToLobby: parser.getFlagParam("returnToLobby"),
+    returnToLobby: isWidget ? parser.getFlagParam("returnToLobby") : true,
     theme: parser.getParam("theme"),
-    viaServers: parser.getParam("viaServers"),
-    homeserver: parser.getParam("homeserver"),
+    viaServers: !isWidget ? parser.getParam("viaServers") : null,
+    homeserver: !isWidget ? parser.getParam("homeserver") : null,
   };
 };
 
