@@ -1954,10 +1954,10 @@
   resolved "https://registry.yarnpkg.com/@livekit/mutex/-/mutex-1.0.0.tgz#9493102d92ff75dfb0445eccc46c7c7ac189d385"
   integrity sha512-aiUhoThBNF9UyGTxEURFzJLhhPLIVTnQiEVMjRhPnfHNKLfo2JY9xovHKIus7B78UD5hsP6DlgpmAsjrz4U0Iw==
 
-"@livekit/protocol@1.24.0":
-  version "1.24.0"
-  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.24.0.tgz#b23acab25c11027bf26c1b42f9b782682f2da585"
-  integrity sha512-9dCsqnkMn7lvbI4NGh18zhLDsrXyUcpS++TEFgEk5Xv1WM3R2kT3EzqgL1P/mr3jaabM6rJ8wZA/KJLuQNpF5w==
+"@livekit/protocol@1.29.4":
+  version "1.29.4"
+  resolved "https://registry.yarnpkg.com/@livekit/protocol/-/protocol-1.29.4.tgz#346906d080bc8207a80570b45db91153a495e0dc"
+  integrity sha512-dsqxvABHilrMA0BU5m1w8cMWSVeDjV2ZUIUDClNQZju3c30DLMfEYDHU5nmXDfaaHjNIgoRbYR7upJMozG8JJg==
   dependencies:
     "@bufbuild/protobuf" "^1.10.0"
 
@@ -6351,12 +6351,12 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^2.5.7:
-  version "2.7.0"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.7.0.tgz#d7a80aff4ad335dd093b0c90d0d715466539651a"
-  integrity sha512-4vjfSReFNAUD+2oLUz9qFRWztJaI/+AexpOmCgizNsPYpvvqgAvEGxapnhuAug9uP7JVYaKPXaTCq90MWZoDHg==
+  version "2.7.5"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.7.5.tgz#2c8e5956c1fda5844799f5a864ac87c803ca1a43"
+  integrity sha512-sPhHYwXvG75y1LDC50dDC9k6Z49L2vc/HcMRhzhi7yBca6ofPEebpB0bmPOry4ovrnFA+a8TL1pFR2mko1/clw==
   dependencies:
     "@livekit/mutex" "1.0.0"
-    "@livekit/protocol" "1.24.0"
+    "@livekit/protocol" "1.29.4"
     events "^3.3.0"
     loglevel "^1.8.0"
     sdp-transform "^2.14.1"
