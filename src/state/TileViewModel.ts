@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { BehaviorSubject, type Observable } from "rxjs";
+import { type Observable } from "rxjs";
 
 import { ViewModel } from "./ViewModel";
 import { type MediaViewModel, type UserMediaViewModel } from "./MediaViewModel";
@@ -17,14 +17,6 @@ function createId(): string {
 
 export class GridTileViewModel extends ViewModel {
   public readonly id = createId();
-
-  private readonly visible_ = new BehaviorSubject(false);
-  /**
-   * Whether the tile is visible within the current viewport.
-   */
-  public readonly visible: Observable<boolean> = this.visible_;
-
-  public setVisible = (value: boolean): void => this.visible_.next(value);
 
   public constructor(public readonly media: Observable<UserMediaViewModel>) {
     super();

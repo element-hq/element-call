@@ -402,10 +402,7 @@ test("participants stay in the same order unless to appear/disappear", () => {
             // We imagine that only three tiles (the first three) will be visible
             // on screen at a time
             vm.layout.subscribe((layout) => {
-              if (layout.type === "grid") {
-                for (let i = 0; i < layout.grid.length; i++)
-                  layout.grid[i].setVisible(i < 3);
-              }
+              if (layout.type === "grid") layout.setVisibleTiles(3);
             });
           },
         });

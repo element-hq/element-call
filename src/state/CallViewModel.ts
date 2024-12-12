@@ -143,18 +143,21 @@ export interface GridLayout {
   type: "grid";
   spotlight?: SpotlightTileViewModel;
   grid: GridTileViewModel[];
+  setVisibleTiles: (value: number) => void;
 }
 
 export interface SpotlightLandscapeLayout {
   type: "spotlight-landscape";
   spotlight: SpotlightTileViewModel;
   grid: GridTileViewModel[];
+  setVisibleTiles: (value: number) => void;
 }
 
 export interface SpotlightPortraitLayout {
   type: "spotlight-portrait";
   spotlight: SpotlightTileViewModel;
   grid: GridTileViewModel[];
+  setVisibleTiles: (value: number) => void;
 }
 
 export interface SpotlightExpandedLayout {
@@ -223,7 +226,6 @@ enum SortingBin {
 interface LayoutScanState {
   layout: Layout | null;
   tiles: TileStore;
-  visibleTiles: Set<GridTileViewModel>;
 }
 
 class UserMedia {
@@ -891,62 +893,53 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
+  // There is a cyclical dependency here: the layout algorithms want to know
+  // which tiles are on screen, but to know which tiles are on screen we have to
+  // first render a layout. To deal with this we assume initially that no tiles
+  // are visible, and loop the data back into the layouts with a Subject.
+  private readonly visibleTiles = new Subject<number>();
+  private readonly setVisibleTiles = (value: number): void =>
+    this.visibleTiles.next(value);
+
   public readonly layoutInternals: Observable<
     LayoutScanState & { layout: Layout }
-  > = this.layoutMedia.pipe(
-    // Each layout will produce a set of tiles, and these tiles have an
-    // observable indicating whether they're visible. We loop this information
-    // back into the layout process by using switchScan.
-    switchScan<
-      LayoutMedia,
-      LayoutScanState,
-      Observable<LayoutScanState & { layout: Layout }>
+  > = combineLatest([
+    this.layoutMedia,
+    this.visibleTiles.pipe(startWith(0), distinctUntilChanged()),
+  ]).pipe(
+    scan<
+      [LayoutMedia, number],
+      LayoutScanState & { layout: Layout },
+      LayoutScanState
     >(
-      ({ tiles: prevTiles, visibleTiles }, media) => {
+      ({ tiles: prevTiles }, [media, visibleTiles]) => {
         let layout: Layout;
         let newTiles: TileStore;
         switch (media.type) {
           case "grid":
           case "spotlight-landscape":
           case "spotlight-portrait":
-            [layout, newTiles] = gridLikeLayout(media, visibleTiles, prevTiles);
-            break;
-          case "spotlight-expanded":
-            [layout, newTiles] = spotlightExpandedLayout(
+            [layout, newTiles] = gridLikeLayout(
               media,
               visibleTiles,
+              this.setVisibleTiles,
               prevTiles,
             );
             break;
+          case "spotlight-expanded":
+            [layout, newTiles] = spotlightExpandedLayout(media, prevTiles);
+            break;
           case "one-on-one":
-            [layout, newTiles] = oneOnOneLayout(media, visibleTiles, prevTiles);
+            [layout, newTiles] = oneOnOneLayout(media, prevTiles);
             break;
           case "pip":
-            [layout, newTiles] = pipLayout(media, visibleTiles, prevTiles);
+            [layout, newTiles] = pipLayout(media, prevTiles);
             break;
         }
 
-        // Take all of the 'visible' observables and combine them into one big
-        // observable array
-        const visibilities =
-          newTiles.gridTiles.length === 0
-            ? of([])
-            : combineLatest(newTiles.gridTiles.map((tile) => tile.visible));
-        return visibilities.pipe(
-          map((visibilities) => ({
-            layout: layout,
-            tiles: newTiles,
-            visibleTiles: new Set(
-              newTiles.gridTiles.filter((_tile, i) => visibilities[i]),
-            ),
-          })),
-        );
+        return { layout, tiles: newTiles };
       },
-      {
-        layout: null,
-        tiles: TileStore.empty(),
-        visibleTiles: new Set(),
-      },
+      { layout: null, tiles: TileStore.empty() },
     ),
     this.scope.state(),
   );

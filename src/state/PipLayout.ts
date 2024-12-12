@@ -7,17 +7,15 @@ Please see LICENSE in the repository root for full details.
 
 import { type PipLayout, type PipLayoutMedia } from "./CallViewModel";
 import { type TileStore } from "./TileStore";
-import { type GridTileViewModel } from "./TileViewModel";
 
 /**
  * Produces a picture-in-picture layout with the given media.
  */
 export function pipLayout(
   media: PipLayoutMedia,
-  visibleTiles: Set<GridTileViewModel>,
   prevTiles: TileStore,
 ): [PipLayout, TileStore] {
-  const update = prevTiles.from(visibleTiles);
+  const update = prevTiles.from(0);
   update.registerSpotlight(media.spotlight, true);
   const tiles = update.build();
   return [
