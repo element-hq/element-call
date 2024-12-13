@@ -5,10 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { BackgroundOptions, ProcessorWrapper } from "@livekit/track-processors";
+import {
+  type BackgroundOptions,
+  ProcessorWrapper,
+} from "@livekit/track-processors";
 import {
   createContext,
-  FC,
+  type FC,
   useCallback,
   useContext,
   useEffect,
@@ -16,7 +19,7 @@ import {
   useState,
 } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
-import { LocalVideoTrack } from "livekit-client";
+import { type LocalVideoTrack } from "livekit-client";
 
 import {
   backgroundBlur as backgroundBlurSettings,
@@ -45,11 +48,12 @@ export const useTrackProcessorSync = (
 ): void => {
   const { processor } = useTrackProcessor() || {};
   useEffect(() => {
-    if (processor && !videoTrack?.getProcessor()) {
-      void videoTrack?.setProcessor(processor);
+    if (!videoTrack) return;
+    if (processor && !videoTrack.getProcessor()) {
+      void videoTrack.setProcessor(processor);
     }
-    if (!processor && videoTrack?.getProcessor()) {
-      void videoTrack?.stopProcessor();
+    if (!processor && videoTrack.getProcessor()) {
+      void videoTrack.stopProcessor();
     }
   }, [processor, videoTrack]);
 };
