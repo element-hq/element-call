@@ -31,7 +31,7 @@ import {
 export type DeviceLabel =
   | { type: "name"; name: string }
   | { type: "number"; number: number }
-  | { type: "default" };
+  | { type: "default"; name: string | null };
 
 export interface MediaDevice {
   /**
@@ -104,7 +104,10 @@ function useMediaDevice(
       !available.has("") &&
       !available.has("default")
     )
-      available = new Map([["", { type: "default" }], ...available]);
+      available = new Map([
+        ["", { type: "default", name: availableRaw[0]?.label || null }],
+        ...available,
+      ]);
     // Note: creating virtual default input devices would be another problem
     // entirely, because requesting a media stream from deviceId "" won't
     // automatically track the default device.

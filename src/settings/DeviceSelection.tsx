@@ -5,7 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ChangeEvent, type FC, useCallback, useId } from "react";
+import {
+  type ChangeEvent,
+  type FC,
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useId,
+} from "react";
 import {
   Heading,
   InlineField,
@@ -13,7 +20,7 @@ import {
   RadioControl,
   Separator,
 } from "@vector-im/compound-web";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 
 import { type MediaDevice } from "../livekit/MediaDevicesContext";
 import styles from "./DeviceSelection.module.css";
@@ -53,27 +60,49 @@ export const DeviceSelection: FC<Props> = ({
       </Heading>
       <Separator className={styles.separator} />
       <div className={styles.options}>
-        {[...devices.available].map(([id, label]) => (
-          <InlineField
-            key={id}
-            name={groupId}
-            control={
-              <RadioControl
-                checked={id === devices.selectedId}
-                onChange={onChange}
-                value={id}
-              />
-            }
-          >
-            <Label>
-              {label.type === "name"
-                ? label.name
-                : label.type === "number"
-                  ? numberedLabel(label.number)
-                  : t("settings.devices.default")}
-            </Label>
-          </InlineField>
-        ))}
+        {[...devices.available].map(([id, label]) => {
+          let labelText: ReactNode;
+          switch (label.type) {
+            case "name":
+              labelText = label.name;
+              break;
+            case "number":
+              labelText = numberedLabel(label.number);
+              break;
+            case "default":
+              labelText =
+                label.name === null ? (
+                  t("settings.devices.default")
+                ) : (
+                  <Trans
+                    i18nKey="settings.devices.default_named"
+                    name={label.name}
+                  >
+                    Default{" "}
+                    <span className={styles.secondary}>
+                      ({{ name: label.name } as unknown as ReactElement})
+                    </span>
+                  </Trans>
+                );
+              break;
+          }
+
+          return (
+            <InlineField
+              key={id}
+              name={groupId}
+              control={
+                <RadioControl
+                  checked={id === devices.selectedId}
+                  onChange={onChange}
+                  value={id}
+                />
+              }
+            >
+              <Label>{labelText}</Label>
+            </InlineField>
+          );
+        })}
       </div>
     </div>
   );

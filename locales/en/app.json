@@ -155,6 +155,7 @@
       "camera": "Camera",
       "camera_numbered": "Camera {{n}}",
       "default": "Default",
+      "default_named": "Default <2>({{name}})</2>",
       "microphone": "Microphone",
       "microphone_numbered": "Microphone {{n}}",
       "speaker": "Speaker",
