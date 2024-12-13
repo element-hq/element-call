@@ -6,25 +6,24 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  SpringRef,
-  TransitionFn,
-  animated,
+  type SpringRef,
+  type TransitionFn,
+  type animated,
   useTransition,
 } from "@react-spring/web";
-import { EventTypes, Handler, useScroll } from "@use-gesture/react";
+import { type EventTypes, type Handler, useScroll } from "@use-gesture/react";
 import {
-  CSSProperties,
-  ComponentProps,
-  ComponentType,
-  Dispatch,
-  FC,
-  LegacyRef,
-  ReactNode,
-  SetStateAction,
+  type CSSProperties,
+  type ComponentProps,
+  type ComponentType,
+  type Dispatch,
+  type FC,
+  type LegacyRef,
+  type ReactNode,
+  type SetStateAction,
   createContext,
   forwardRef,
   memo,
-  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -54,7 +53,6 @@ interface Tile<Model> {
   id: string;
   model: Model;
   onDrag: DragCallback | undefined;
-  setVisible: (visible: boolean) => void;
 }
 
 type PlacedTile<Model> = Tile<Model> & Rect;
@@ -88,7 +86,6 @@ interface SlotProps<Model> extends Omit<ComponentProps<"div">, "onDrag"> {
   id: string;
   model: Model;
   onDrag?: DragCallback;
-  onVisibilityChange?: (visible: boolean) => void;
   style?: CSSProperties;
   className?: string;
 }
@@ -115,24 +112,47 @@ function offset(element: HTMLElement, relativeTo: Element): Offset {
   }
 }
 
+export type VisibleTilesCallback = (visibleTiles: number) => void;
+
 interface LayoutContext {
   setGeneration: Dispatch<SetStateAction<number | null>>;
+  setVisibleTilesCallback: Dispatch<
+    SetStateAction<VisibleTilesCallback | null>
+  >;
 }
 
 const LayoutContext = createContext<LayoutContext | null>(null);
+
+function useLayoutContext(): LayoutContext {
+  const context = useContext(LayoutContext);
+  if (context === null)
+    throw new Error("useUpdateLayout called outside a Grid layout context");
+  return context;
+}
 
 /**
  * Enables Grid to react to layout changes. You must call this in your Layout
  * component or else Grid will not be reactive.
  */
 export function useUpdateLayout(): void {
-  const context = useContext(LayoutContext);
-  if (context === null)
-    throw new Error("useUpdateLayout called outside a Grid layout context");
-
+  const { setGeneration } = useLayoutContext();
   // On every render, tell Grid that the layout may have changed
-  useEffect(() =>
-    context.setGeneration((prev) => (prev === null ? 0 : prev + 1)),
+  useEffect(() => setGeneration((prev) => (prev === null ? 0 : prev + 1)));
+}
+
+/**
+ * Asks Grid to call a callback whenever the number of visible tiles may have
+ * changed.
+ */
+export function useVisibleTiles(callback: VisibleTilesCallback): void {
+  const { setVisibleTilesCallback } = useLayoutContext();
+  useEffect(
+    () => setVisibleTilesCallback(() => callback),
+    [callback, setVisibleTilesCallback],
+  );
+  useEffect(
+    () => (): void => setVisibleTilesCallback(null),
+    [setVisibleTilesCallback],
   );
 }
 
@@ -245,39 +265,20 @@ export function Grid<
   const windowHeight = useObservableEagerState(windowHeightObservable);
   const [layoutRoot, setLayoutRoot] = useState<HTMLElement | null>(null);
   const [generation, setGeneration] = useState<number | null>(null);
+  const [visibleTilesCallback, setVisibleTilesCallback] =
+    useState<VisibleTilesCallback | null>(null);
   const tiles = useInitial(() => new Map<string, Tile<TileModel>>());
   const prefersReducedMotion = usePrefersReducedMotion();
 
   const Slot: FC<SlotProps<TileModel>> = useMemo(
     () =>
-      function Slot({
-        id,
-        model,
-        onDrag,
-        onVisibilityChange,
-        style,
-        className,
-        ...props
-      }) {
+      function Slot({ id, model, onDrag, style, className, ...props }) {
         const ref = useRef<HTMLDivElement | null>(null);
-        const prevVisible = useRef<boolean | null>(null);
-        const setVisible = useCallback(
-          (visible: boolean) => {
-            if (
-              onVisibilityChange !== undefined &&
-              visible !== prevVisible.current
-            ) {
-              onVisibilityChange(visible);
-              prevVisible.current = visible;
-            }
-          },
-          [onVisibilityChange],
-        );
 
         useEffect(() => {
-          tiles.set(id, { id, model, onDrag, setVisible });
+          tiles.set(id, { id, model, onDrag });
           return (): void => void tiles.delete(id);
-        }, [id, model, onDrag, setVisible]);
+        }, [id, model, onDrag]);
 
         return (
           <div
@@ -307,7 +308,10 @@ export function Grid<
     [],
   );
 
-  const context: LayoutContext = useMemo(() => ({ setGeneration }), []);
+  const context: LayoutContext = useMemo(
+    () => ({ setGeneration, setVisibleTilesCallback }),
+    [setVisibleTilesCallback],
+  );
 
   // Combine the tile definitions and slots together to create placed tiles
   const placedTiles = useMemo(() => {
@@ -342,9 +346,11 @@ export function Grid<
   );
 
   useEffect(() => {
-    for (const tile of placedTiles)
-      tile.setVisible(tile.y + tile.height <= visibleHeight);
-  }, [placedTiles, visibleHeight]);
+    visibleTilesCallback?.(
+      placedTiles.filter((tile) => tile.y + tile.height <= visibleHeight)
+        .length,
+    );
+  }, [placedTiles, visibleTilesCallback, visibleHeight]);
 
   // Drag state is stored in a ref rather than component state, because we use
   // react-spring's imperative API during gestures to improve responsiveness

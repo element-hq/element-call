@@ -5,18 +5,18 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
-  LivekitFocus,
-  LivekitFocusActive,
+  type LivekitFocus,
+  type LivekitFocusActive,
   isLivekitFocus,
   isLivekitFocusConfig,
 } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
-import { ElementWidgetActions, WidgetHelpers, widget } from "./widget";
+import { ElementWidgetActions, type WidgetHelpers, widget } from "./widget";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -120,6 +120,7 @@ export async function enterRTCSession(
 
 const widgetPostHangupProcedure = async (
   widget: WidgetHelpers,
+  promiseBeforeHangup?: Promise<unknown>,
 ): Promise<void> => {
   // we need to wait until the callEnded event is tracked on posthog.
   // Otherwise the iFrame gets killed before the callEnded event got tracked.
@@ -132,6 +133,8 @@ const widgetPostHangupProcedure = async (
     logger.error("Failed to set call widget `alwaysOnScreen` to false", e);
   }
 
+  // Wait for any last bits before hanging up.
+  await promiseBeforeHangup;
   // We send the hangup event after the memberships have been updated
   // calling leaveRTCSession.
   // We need to wait because this makes the client hosting this widget killing the IFrame.
@@ -140,9 +143,12 @@ const widgetPostHangupProcedure = async (
 
 export async function leaveRTCSession(
   rtcSession: MatrixRTCSession,
+  promiseBeforeHangup?: Promise<unknown>,
 ): Promise<void> {
   await rtcSession.leaveRoomSession();
   if (widget) {
-    await widgetPostHangupProcedure(widget);
+    await widgetPostHangupProcedure(widget, promiseBeforeHangup);
+  } else {
+    await promiseBeforeHangup;
   }
 }

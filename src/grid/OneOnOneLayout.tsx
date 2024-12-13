@@ -9,10 +9,10 @@ import { forwardRef, useCallback, useMemo } from "react";
 import { useObservableEagerState } from "observable-hooks";
 import classNames from "classnames";
 
-import { OneOnOneLayout as OneOnOneLayoutModel } from "../state/CallViewModel";
-import { CallLayout, arrangeTiles } from "./CallLayout";
+import { type OneOnOneLayout as OneOnOneLayoutModel } from "../state/CallViewModel";
+import { type CallLayout, arrangeTiles } from "./CallLayout";
 import styles from "./OneOnOneLayout.module.css";
-import { DragCallback, useUpdateLayout } from "./Grid";
+import { type DragCallback, useUpdateLayout } from "./Grid";
 
 /**
  * An implementation of the "one-on-one" layout, in which the remote participant
@@ -52,7 +52,6 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
         <Slot
           id={model.remote.id}
           model={model.remote}
-          onVisibilityChange={model.remote.setVisible}
           className={styles.container}
           style={{ width: tileWidth, height: tileHeight }}
         >
@@ -61,7 +60,6 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
             id={model.local.id}
             model={model.local}
             onDrag={onDragLocalTile}
-            onVisibilityChange={model.local.setVisible}
             data-block-alignment={pipAlignmentValue.block}
             data-inline-alignment={pipAlignmentValue.inline}
           />

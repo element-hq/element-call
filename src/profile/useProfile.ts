@@ -5,10 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { MatrixClient } from "matrix-js-sdk/src/client";
-import { MatrixEvent } from "matrix-js-sdk/src/models/event";
-import { User, UserEvent } from "matrix-js-sdk/src/models/user";
-import { FileType } from "matrix-js-sdk/src/http-api";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixEvent } from "matrix-js-sdk/src/models/event";
+import { type User, UserEvent } from "matrix-js-sdk/src/models/user";
+import { type FileType } from "matrix-js-sdk/src/http-api";
 import { useState, useCallback, useEffect } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 

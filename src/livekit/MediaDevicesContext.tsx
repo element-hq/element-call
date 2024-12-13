@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  FC,
+  type FC,
   createContext,
   useCallback,
   useContext,
@@ -25,7 +25,7 @@ import {
   audioInput as audioInputSetting,
   audioOutput as audioOutputSetting,
   videoInput as videoInputSetting,
-  Setting,
+  type Setting,
 } from "../settings/settings";
 
 export type DeviceLabel =
@@ -143,13 +143,13 @@ function useMediaDevice(
   );
 }
 
-const deviceStub: MediaDevice = {
+export const deviceStub: MediaDevice = {
   available: new Map(),
   selectedId: undefined,
   selectedGroupId: undefined,
   select: () => {},
 };
-const devicesStub: MediaDevices = {
+export const devicesStub: MediaDevices = {
   audioInput: deviceStub,
   audioOutput: deviceStub,
   videoInput: deviceStub,
@@ -157,7 +157,7 @@ const devicesStub: MediaDevices = {
   stopUsingDeviceNames: () => {},
 };
 
-const MediaDevicesContext = createContext<MediaDevices>(devicesStub);
+export const MediaDevicesContext = createContext<MediaDevices>(devicesStub);
 
 interface Props {
   children: JSX.Element;

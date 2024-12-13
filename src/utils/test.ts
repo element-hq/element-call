@@ -4,16 +4,29 @@ Copyright 2023, 2024 New Vector Ltd.
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
-import { map, Observable, of, SchedulerLike } from "rxjs";
-import { RunHelpers, TestScheduler } from "rxjs/testing";
-import { expect, vi } from "vitest";
-import { RoomMember, Room as MatrixRoom } from "matrix-js-sdk/src/matrix";
+import { map, type Observable, of, type SchedulerLike } from "rxjs";
+import { type RunHelpers, TestScheduler } from "rxjs/testing";
+import { expect, vi, vitest } from "vitest";
 import {
-  LocalParticipant,
-  LocalTrackPublication,
-  RemoteParticipant,
-  RemoteTrackPublication,
-  Room as LivekitRoom,
+  type RoomMember,
+  type Room as MatrixRoom,
+  MatrixEvent,
+  type Room,
+  TypedEventEmitter,
+} from "matrix-js-sdk/src/matrix";
+import {
+  CallMembership,
+  type Focus,
+  MatrixRTCSessionEvent,
+  type MatrixRTCSessionEventHandlerMap,
+  type SessionMembershipData,
+} from "matrix-js-sdk/src/matrixrtc";
+import {
+  type LocalParticipant,
+  type LocalTrackPublication,
+  type RemoteParticipant,
+  type RemoteTrackPublication,
+  type Room as LivekitRoom,
 } from "livekit-client";
 
 import {
@@ -21,6 +34,11 @@ import {
   RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
 import { E2eeType } from "../e2ee/e2eeType";
+import {
+  DEFAULT_CONFIG,
+  type ResolvedConfigOptions,
+} from "../config/ConfigOptions";
+import { Config } from "../config/Config";
 
 export function withFakeTimers(continuation: () => void): void {
   vi.useFakeTimers();
@@ -96,11 +114,40 @@ function mockEmitter<T>(): EmitterMock<T> {
   };
 }
 
+export function mockRtcMembership(
+  user: string | RoomMember,
+  deviceId: string,
+  callId = "",
+  fociPreferred: Focus[] = [],
+  focusActive: Focus = { type: "oldest_membership" },
+  membership: Partial<SessionMembershipData> = {},
+): CallMembership {
+  const data: SessionMembershipData = {
+    application: "m.call",
+    call_id: callId,
+    device_id: deviceId,
+    foci_preferred: fociPreferred,
+    focus_active: focusActive,
+    ...membership,
+  };
+  const event = new MatrixEvent({
+    sender: typeof user === "string" ? user : user.userId,
+  });
+  return new CallMembership(event, data);
+}
+
 // Maybe it'd be good to move this to matrix-js-sdk? Our testing needs are
 // rather simple, but if one util to mock a member is good enough for us, maybe
 // it's useful for matrix-js-sdk consumers in general.
-export function mockMatrixRoomMember(member: Partial<RoomMember>): RoomMember {
-  return { ...mockEmitter(), ...member } as RoomMember;
+export function mockMatrixRoomMember(
+  rtcMembership: CallMembership,
+  member: Partial<RoomMember> = {},
+): RoomMember {
+  return {
+    ...mockEmitter(),
+    userId: rtcMembership.sender,
+    ...member,
+  } as RoomMember;
 }
 
 export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
@@ -143,14 +190,15 @@ export function mockLocalParticipant(
 }
 
 export async function withLocalMedia(
-  member: Partial<RoomMember>,
+  localRtcMember: CallMembership,
+  roomMember: Partial<RoomMember>,
   continuation: (vm: LocalUserMediaViewModel) => void | Promise<void>,
 ): Promise<void> {
   const localParticipant = mockLocalParticipant({});
   const vm = new LocalUserMediaViewModel(
     "local",
-    mockMatrixRoomMember(member),
-    localParticipant,
+    mockMatrixRoomMember(localRtcMember, roomMember),
+    of(localParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
@@ -177,15 +225,16 @@ export function mockRemoteParticipant(
 }
 
 export async function withRemoteMedia(
-  member: Partial<RoomMember>,
+  localRtcMember: CallMembership,
+  roomMember: Partial<RoomMember>,
   participant: Partial<RemoteParticipant>,
   continuation: (vm: RemoteUserMediaViewModel) => void | Promise<void>,
 ): Promise<void> {
   const remoteParticipant = mockRemoteParticipant(participant);
   const vm = new RemoteUserMediaViewModel(
     "remote",
-    mockMatrixRoomMember(member),
-    remoteParticipant,
+    mockMatrixRoomMember(localRtcMember, roomMember),
+    of(remoteParticipant),
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
@@ -195,5 +244,49 @@ export async function withRemoteMedia(
     await continuation(vm);
   } finally {
     vm.destroy();
+  }
+}
+
+export function mockConfig(config: Partial<ResolvedConfigOptions> = {}): void {
+  vi.spyOn(Config, "get").mockReturnValue({
+    ...DEFAULT_CONFIG,
+    ...config,
+  });
+}
+
+export class MockRTCSession extends TypedEventEmitter<
+  MatrixRTCSessionEvent,
+  MatrixRTCSessionEventHandlerMap
+> {
+  public readonly statistics = {
+    counters: {},
+  };
+
+  public leaveRoomSession = vitest.fn().mockResolvedValue(undefined);
+
+  public constructor(
+    public readonly room: Room,
+    private localMembership: CallMembership,
+    public memberships: CallMembership[] = [],
+  ) {
+    super();
+  }
+
+  public isJoined(): true {
+    return true;
+  }
+
+  public withMemberships(
+    rtcMembers: Observable<Partial<CallMembership>[]>,
+  ): MockRTCSession {
+    rtcMembers.subscribe((m) => {
+      const old = this.memberships;
+      // always prepend the local participant
+      const updated = [this.localMembership, ...(m as CallMembership[])];
+      this.memberships = updated;
+      this.emit(MatrixRTCSessionEvent.MembershipsChanged, old, updated);
+    });
+
+    return this;
   }
 }

@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { render, screen } from "@testing-library/react";
 import { expect, test, vi } from "vitest";
-import { Room } from "matrix-js-sdk/src/matrix";
+import { type Room } from "matrix-js-sdk/src/matrix";
 import { axe } from "vitest-axe";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";

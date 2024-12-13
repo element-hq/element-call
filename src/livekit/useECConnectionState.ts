@@ -6,10 +6,10 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  AudioCaptureOptions,
+  type AudioCaptureOptions,
   ConnectionState,
-  LocalTrack,
-  Room,
+  type LocalTrack,
+  type Room,
   RoomEvent,
   Track,
 } from "livekit-client";
@@ -17,7 +17,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 import * as Sentry from "@sentry/react";
 
-import { SFUConfig, sfuConfigEquals } from "./openIDSFU";
+import { type SFUConfig, sfuConfigEquals } from "./openIDSFU";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 
 declare global {

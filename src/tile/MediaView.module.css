@@ -15,7 +15,7 @@ Please see LICENSE in the repository root for full details.
   inline-size: 100%;
   block-size: 100%;
   object-fit: contain;
-  background-color: var(--cpd-color-bg-subtle-primary);
+  background-color: var(--video-tile-background);
   /* This transform is a no-op, but it forces Firefox to use a different
   rendering path, one that actually clips the corners of <video> elements into
   the intended rounded shape. We can remove this if Firefox stops being broken. */
@@ -34,12 +34,8 @@ Please see LICENSE in the repository root for full details.
   object-fit: contain;
 }
 
-.media.videoMuted video {
-  display: none;
-}
-
 .bg {
-  background-color: var(--cpd-color-bg-subtle-secondary);
+  background-color: var(--video-tile-background);
   inline-size: 100%;
   block-size: 100%;
   border-radius: inherit;
@@ -47,16 +43,11 @@ Please see LICENSE in the repository root for full details.
 }
 
 .avatar {
-  display: none;
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
-}
-
-.media.videoMuted .avatar {
-  display: initial;
 }
 
 /* CSS makes us put a condition here, even though all we want to do is
@@ -83,9 +74,9 @@ unconditionally select the container so we can use cqmin units */
     calc(var(--media-view-border-radius) - var(--cpd-space-3x))
   );
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 30px 1fr 30px;
   grid-template-rows: 1fr auto;
-  grid-template-areas: "status status" "nameTag button";
+  grid-template-areas: "reactions status ." "nameTag nameTag button";
   gap: var(--cpd-space-1x);
   place-items: start;
 }
@@ -110,8 +101,8 @@ unconditionally select the container so we can use cqmin units */
   grid-area: status;
   justify-self: center;
   align-self: start;
-  padding: var(--cpd-space-1x);
-  padding-block: var(--cpd-space-1x);
+  padding: var(--cpd-space-2x);
+  padding-block: var(--cpd-space-2x);
   color: var(--cpd-color-text-primary);
   background-color: var(--cpd-color-bg-canvas-default);
   display: flex;
@@ -123,6 +114,12 @@ unconditionally select the container so we can use cqmin units */
   box-sizing: border-box;
   max-inline-size: 100%;
   text-align: center;
+}
+
+.reactions {
+  grid-area: reactions;
+  display: flex;
+  gap: var(--cpd-space-1x);
 }
 
 .nameTag > svg,

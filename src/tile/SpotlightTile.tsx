@@ -6,8 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ComponentProps,
-  RefAttributes,
+  type ComponentProps,
+  type RefAttributes,
   forwardRef,
   useCallback,
   useEffect,
@@ -21,40 +21,41 @@ import {
   ChevronRightIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { animated } from "@react-spring/web";
-import { Observable, map } from "rxjs";
+import { type Observable, map } from "rxjs";
 import { useObservableEagerState, useObservableRef } from "observable-hooks";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
-import { TrackReferenceOrPlaceholder } from "@livekit/components-core";
-import { RoomMember } from "matrix-js-sdk/src/matrix";
+import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
+import { type RoomMember } from "matrix-js-sdk/src/matrix";
 
 import { MediaView } from "./MediaView";
 import styles from "./SpotlightTile.module.css";
 import {
-  EncryptionStatus,
+  type EncryptionStatus,
   LocalUserMediaViewModel,
-  MediaViewModel,
+  type MediaViewModel,
   ScreenShareViewModel,
-  UserMediaViewModel,
+  type UserMediaViewModel,
   useDisplayName,
 } from "../state/MediaViewModel";
 import { useInitial } from "../useInitial";
 import { useMergedRefs } from "../useMergedRefs";
 import { useReactiveState } from "../useReactiveState";
 import { useLatest } from "../useLatest";
-import { SpotlightTileViewModel } from "../state/TileViewModel";
+import { type SpotlightTileViewModel } from "../state/TileViewModel";
 
 interface SpotlightItemBaseProps {
   className?: string;
   "data-id": string;
   targetWidth: number;
   targetHeight: number;
-  video: TrackReferenceOrPlaceholder;
+  video: TrackReferenceOrPlaceholder | undefined;
   member: RoomMember | undefined;
   unencryptedWarning: boolean;
   encryptionStatus: EncryptionStatus;
   displayName: string;
   "aria-hidden"?: boolean;
+  localParticipant: boolean;
 }
 
 interface SpotlightUserMediaItemBaseProps extends SpotlightItemBaseProps {
@@ -163,6 +164,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
       displayName,
       encryptionStatus,
       "aria-hidden": ariaHidden,
+      localParticipant: vm.local,
     };
 
     return vm instanceof ScreenShareViewModel ? (
@@ -210,7 +212,9 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
     const ref = useMergedRefs(ourRef, theirRef);
     const maximised = useObservableEagerState(vm.maximised);
     const media = useObservableEagerState(vm.media);
-    const [visibleId, setVisibleId] = useState(media[0].id);
+    const [visibleId, setVisibleId] = useState<string | undefined>(
+      media[0]?.id,
+    );
     const latestMedia = useLatest(media);
     const latestVisibleId = useLatest(visibleId);
     const visibleIndex = media.findIndex((vm) => vm.id === visibleId);

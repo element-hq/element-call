@@ -6,8 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  MouseEventHandler,
-  ReactNode,
+  type MouseEventHandler,
+  type ReactNode,
   useCallback,
   useEffect,
   useState,

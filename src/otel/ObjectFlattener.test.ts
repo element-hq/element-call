@@ -5,11 +5,11 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
+import { type GroupCallStatsReport } from "matrix-js-sdk/src/webrtc/groupCall";
 import {
-  AudioConcealment,
-  ByteSentStatsReport,
-  ConnectionStatsReport,
+  type AudioConcealment,
+  type ByteSentStatsReport,
+  type ConnectionStatsReport,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 import { describe, expect, it } from "vitest";
 

@@ -6,19 +6,23 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  Dispatch,
-  SetStateAction,
+  type Dispatch,
+  type SetStateAction,
   useCallback,
   useEffect,
   useMemo,
 } from "react";
-import { IWidgetApiRequest } from "matrix-widget-api";
+import { type IWidgetApiRequest } from "matrix-widget-api";
 import { logger } from "matrix-js-sdk/src/logger";
 
-import { MediaDevice, useMediaDevices } from "../livekit/MediaDevicesContext";
+import {
+  type MediaDevice,
+  useMediaDevices,
+} from "../livekit/MediaDevicesContext";
 import { useReactiveState } from "../useReactiveState";
 import { ElementWidgetActions, widget } from "../widget";
 import { Config } from "../config/Config";
+import { useUrlParams } from "../UrlParams";
 
 /**
  * If there already are this many participants in the call, we automatically mute
@@ -72,13 +76,14 @@ function useMuteState(
 export function useMuteStates(): MuteStates {
   const devices = useMediaDevices();
 
-  const audio = useMuteState(
-    devices.audioInput,
-    () => Config.get().media_devices.enable_audio,
-  );
+  const { skipLobby } = useUrlParams();
+
+  const audio = useMuteState(devices.audioInput, () => {
+    return Config.get().media_devices.enable_audio && !skipLobby;
+  });
   const video = useMuteState(
     devices.videoInput,
-    () => Config.get().media_devices.enable_video,
+    () => Config.get().media_devices.enable_video && !skipLobby,
   );
 
   useEffect(() => {

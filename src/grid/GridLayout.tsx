@@ -5,15 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { CSSProperties, forwardRef, useCallback, useMemo } from "react";
+import { type CSSProperties, forwardRef, useCallback, useMemo } from "react";
 import { distinctUntilChanged } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 
-import { GridLayout as GridLayoutModel } from "../state/CallViewModel";
+import { type GridLayout as GridLayoutModel } from "../state/CallViewModel";
 import styles from "./GridLayout.module.css";
 import { useInitial } from "../useInitial";
-import { CallLayout, arrangeTiles } from "./CallLayout";
-import { DragCallback, useUpdateLayout } from "./Grid";
+import { type CallLayout, arrangeTiles } from "./CallLayout";
+import { type DragCallback, useUpdateLayout, useVisibleTiles } from "./Grid";
 
 interface GridCSSProperties extends CSSProperties {
   "--gap": string;
@@ -73,6 +73,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
   // The scrolling part of the layout is where all the grid tiles live
   scrolling: forwardRef(function GridLayout({ model, Slot }, ref) {
     useUpdateLayout();
+    useVisibleTiles(model.setVisibleTiles);
     const { width, height: minHeight } = useObservableEagerState(minBounds);
     const { gap, tileWidth, tileHeight } = useMemo(
       () => arrangeTiles(width, minHeight, model.grid.length),
@@ -93,13 +94,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
         }
       >
         {model.grid.map((m) => (
-          <Slot
-            key={m.id}
-            className={styles.slot}
-            id={m.id}
-            model={m}
-            onVisibilityChange={m.setVisible}
-          />
+          <Slot key={m.id} className={styles.slot} id={m.id} model={m} />
         ))}
       </div>
     );

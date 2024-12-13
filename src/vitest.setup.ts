@@ -15,21 +15,22 @@ import { afterEach } from "vitest";
 import { cleanup } from "@testing-library/react";
 import "vitest-axe/extend-expect";
 import { logger } from "matrix-js-sdk/src/logger";
+import "@testing-library/jest-dom/vitest";
 
-import EN_GB from "../locales/en-GB/app.json";
+import EN from "../locales/en/app.json";
 import { Config } from "./config/Config";
 
 // Bare-minimum i18n config
 i18n
   .use(initReactI18next)
   .init({
-    lng: "en-GB",
-    fallbackLng: "en-GB",
-    supportedLngs: ["en-GB"],
+    lng: "en",
+    fallbackLng: "en",
+    supportedLngs: ["en"],
     // We embed the translations, so that it never needs to fetch
     resources: {
-      "en-GB": {
-        app: EN_GB,
+      en: {
+        app: EN,
       },
     },
     interpolation: {

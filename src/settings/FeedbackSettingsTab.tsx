@@ -5,15 +5,17 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useCallback } from "react";
+import { type ChangeEvent, type FC, useCallback } from "react";
 import { randomString } from "matrix-js-sdk/src/randomstring";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { Button, Text } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { FieldRow, InputField, ErrorMessage } from "../input/Input";
 import { useSubmitRageshake, useRageshakeRequest } from "./submit-rageshake";
 import feedbackStyles from "../input/FeedbackInput.module.css";
+import { AnalyticsNotice } from "../analytics/AnalyticsNotice";
+import { useOptInAnalytics } from "./settings";
 
 interface Props {
   roomId?: string;
@@ -52,8 +54,32 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
     [submitRageshake, roomId, sendRageshakeRequest],
   );
 
+  const [optInAnalytics, setOptInAnalytics] = useOptInAnalytics();
+  const optInDescription = (
+    <Text size="sm">
+      <Trans i18nKey="settings.opt_in_description">
+        <AnalyticsNotice />
+        <br />
+        You may withdraw consent by unchecking this box. If you are currently in
+        a call, this setting will take effect at the end of the call.
+      </Trans>
+    </Text>
+  );
+
   return (
     <div>
+      <h4>{t("common.analytics")}</h4>
+      <FieldRow>
+        <InputField
+          id="optInAnalytics"
+          type="checkbox"
+          checked={optInAnalytics ?? undefined}
+          description={optInDescription}
+          onChange={(event: ChangeEvent<HTMLInputElement>): void => {
+            setOptInAnalytics?.(event.target.checked);
+          }}
+        />
+      </FieldRow>
       <h4>{t("settings.feedback_tab_h4")}</h4>
       <Text>{t("settings.feedback_tab_body")}</Text>
       <form onSubmit={onSubmitFeedback}>

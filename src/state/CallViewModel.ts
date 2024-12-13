@@ -11,23 +11,22 @@ import {
   observeParticipantMedia,
 } from "@livekit/components-core";
 import {
-  Room as LivekitRoom,
-  LocalParticipant,
+  type Room as LivekitRoom,
+  type LocalParticipant,
   LocalVideoTrack,
   ParticipantEvent,
-  RemoteParticipant,
+  type RemoteParticipant,
   Track,
 } from "livekit-client";
 import {
-  Room as MatrixRoom,
-  RoomMember,
-  RoomStateEvent,
+  type Room as MatrixRoom,
+  type RoomMember,
 } from "matrix-js-sdk/src/matrix";
 import {
+  BehaviorSubject,
   EMPTY,
-  Observable,
+  type Observable,
   Subject,
-  audit,
   combineLatest,
   concat,
   distinctUntilChanged,
@@ -50,32 +49,40 @@ import {
   withLatestFrom,
 } from "rxjs";
 import { logger } from "matrix-js-sdk/src/logger";
+import {
+  type MatrixRTCSession,
+  MatrixRTCSessionEvent,
+} from "matrix-js-sdk/src/matrixrtc";
 
 import { ViewModel } from "./ViewModel";
 import {
   ECAddonConnectionState,
-  ECConnectionState,
+  type ECConnectionState,
 } from "../livekit/useECConnectionState";
 import {
   LocalUserMediaViewModel,
-  MediaViewModel,
+  type MediaViewModel,
   observeTrackReference,
   RemoteUserMediaViewModel,
   ScreenShareViewModel,
-  UserMediaViewModel,
+  type UserMediaViewModel,
 } from "./MediaViewModel";
 import { accumulate, finalizeValue } from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
-import { duplicateTiles } from "../settings/settings";
+import { duplicateTiles, showNonMemberTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled } from "../controls";
-import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";
+import {
+  type GridTileViewModel,
+  type SpotlightTileViewModel,
+} from "./TileViewModel";
 import { TileStore } from "./TileStore";
 import { gridLikeLayout } from "./GridLikeLayout";
 import { spotlightExpandedLayout } from "./SpotlightExpandedLayout";
 import { oneOnOneLayout } from "./OneOnOneLayout";
 import { pipLayout } from "./PipLayout";
-import { EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
+import { observeSpeaker } from "./observeSpeaker";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -136,18 +143,21 @@ export interface GridLayout {
   type: "grid";
   spotlight?: SpotlightTileViewModel;
   grid: GridTileViewModel[];
+  setVisibleTiles: (value: number) => void;
 }
 
 export interface SpotlightLandscapeLayout {
   type: "spotlight-landscape";
   spotlight: SpotlightTileViewModel;
   grid: GridTileViewModel[];
+  setVisibleTiles: (value: number) => void;
 }
 
 export interface SpotlightPortraitLayout {
   type: "spotlight-portrait";
   spotlight: SpotlightTileViewModel;
   grid: GridTileViewModel[];
+  setVisibleTiles: (value: number) => void;
 }
 
 export interface SpotlightExpandedLayout {
@@ -216,62 +226,72 @@ enum SortingBin {
 interface LayoutScanState {
   layout: Layout | null;
   tiles: TileStore;
-  visibleTiles: Set<GridTileViewModel>;
 }
 
 class UserMedia {
   private readonly scope = new ObservableScope();
   public readonly vm: UserMediaViewModel;
+  private readonly participant: BehaviorSubject<
+    LocalParticipant | RemoteParticipant | undefined
+  >;
+
   public readonly speaker: Observable<boolean>;
   public readonly presenter: Observable<boolean>;
-
   public constructor(
     public readonly id: string,
     member: RoomMember | undefined,
-    participant: LocalParticipant | RemoteParticipant,
+    participant: LocalParticipant | RemoteParticipant | undefined,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
   ) {
-    this.vm = participant.isLocal
-      ? new LocalUserMediaViewModel(
-          id,
-          member,
-          participant as LocalParticipant,
-          encryptionSystem,
-          livekitRoom,
-        )
-      : new RemoteUserMediaViewModel(
-          id,
-          member,
-          participant as RemoteParticipant,
-          encryptionSystem,
-          livekitRoom,
-        );
+    this.participant = new BehaviorSubject(participant);
 
-    this.speaker = this.vm.speaking.pipe(
-      // Require 1 s of continuous speaking to become a speaker, and 60 s of
-      // continuous silence to stop being considered a speaker
-      audit((s) =>
-        merge(
-          timer(s ? 1000 : 60000),
-          // If the speaking flag resets to its original value during this time,
-          // end the silencing window to stick with that original value
-          this.vm.speaking.pipe(filter((s1) => s1 !== s)),
-        ),
+    if (participant?.isLocal) {
+      this.vm = new LocalUserMediaViewModel(
+        this.id,
+        member,
+        this.participant.asObservable() as Observable<LocalParticipant>,
+        encryptionSystem,
+        livekitRoom,
+      );
+    } else {
+      this.vm = new RemoteUserMediaViewModel(
+        id,
+        member,
+        this.participant.asObservable() as Observable<
+          RemoteParticipant | undefined
+        >,
+        encryptionSystem,
+        livekitRoom,
+      );
+    }
+
+    this.speaker = observeSpeaker(this.vm.speaking).pipe(this.scope.state());
+
+    this.presenter = this.participant.pipe(
+      switchMap(
+        (p) =>
+          (p &&
+            observeParticipantEvents(
+              p,
+              ParticipantEvent.TrackPublished,
+              ParticipantEvent.TrackUnpublished,
+              ParticipantEvent.LocalTrackPublished,
+              ParticipantEvent.LocalTrackUnpublished,
+            ).pipe(map((p) => p.isScreenShareEnabled))) ??
+          of(false),
       ),
-      startWith(false),
-      // Make this Observable hot so that the timers don't reset when you
-      // resubscribe
       this.scope.state(),
     );
+  }
 
-    this.presenter = observeParticipantEvents(
-      participant,
-      ParticipantEvent.TrackPublished,
-      ParticipantEvent.TrackUnpublished,
-      ParticipantEvent.LocalTrackPublished,
-      ParticipantEvent.LocalTrackUnpublished,
-    ).pipe(map((p) => p.isScreenShareEnabled));
+  public updateParticipant(
+    newParticipant: LocalParticipant | RemoteParticipant | undefined,
+  ): void {
+    if (this.participant.value !== newParticipant) {
+      // Update the BehaviourSubject in the UserMedia.
+      this.participant.next(newParticipant);
+    }
   }
 
   public destroy(): void {
@@ -282,6 +302,9 @@ class UserMedia {
 
 class ScreenShare {
   public readonly vm: ScreenShareViewModel;
+  private readonly participant: BehaviorSubject<
+    LocalParticipant | RemoteParticipant
+  >;
 
   public constructor(
     id: string,
@@ -290,12 +313,15 @@ class ScreenShare {
     encryptionSystem: EncryptionSystem,
     liveKitRoom: LivekitRoom,
   ) {
+    this.participant = new BehaviorSubject(participant);
+
     this.vm = new ScreenShareViewModel(
       id,
       member,
-      participant,
+      this.participant.asObservable(),
       encryptionSystem,
       liveKitRoom,
+      participant.isLocal,
     );
   }
 
@@ -317,7 +343,7 @@ function findMatrixRoomMember(
   // must be at least 3 parts because we know the first part is a userId which must necessarily contain a colon
   if (parts.length < 3) {
     logger.warn(
-      "Livekit participants ID doesn't look like a userId:deviceId combination",
+      `Livekit participants ID (${id}) doesn't look like a userId:deviceId combination`,
     );
     return undefined;
   }
@@ -332,11 +358,11 @@ function findMatrixRoomMember(
 export class CallViewModel extends ViewModel {
   public readonly localVideo: Observable<LocalVideoTrack | null> =
     observeTrackReference(
-      this.livekitRoom.localParticipant,
+      of(this.livekitRoom.localParticipant),
       Track.Source.Camera,
     ).pipe(
       map((trackRef) => {
-        const track = trackRef.publication?.track;
+        const track = trackRef?.publication?.track;
         return track instanceof LocalVideoTrack ? track : null;
       }),
     );
@@ -416,49 +442,97 @@ export class CallViewModel extends ViewModel {
     this.remoteParticipants,
     observeParticipantMedia(this.livekitRoom.localParticipant),
     duplicateTiles.value,
-    // Also react to changes in the list of members
-    fromEvent(this.matrixRoom, RoomStateEvent.Update).pipe(startWith(null)),
+    // Also react to changes in the MatrixRTC session list.
+    // The session list will also be update if a room membership changes.
+    // No additional RoomState event listener needs to be set up.
+    fromEvent(
+      this.matrixRTCSession,
+      MatrixRTCSessionEvent.MembershipsChanged,
+    ).pipe(startWith(null)),
+    showNonMemberTiles.value,
   ]).pipe(
     scan(
       (
         prevItems,
-        [remoteParticipants, { participant: localParticipant }, duplicateTiles],
+        [
+          remoteParticipants,
+          { participant: localParticipant },
+          duplicateTiles,
+          _membershipsChanged,
+          showNonMemberTiles,
+        ],
       ) => {
         const newItems = new Map(
           function* (this: CallViewModel): Iterable<[string, MediaItem]> {
-            for (const p of [localParticipant, ...remoteParticipants]) {
-              const id = p === localParticipant ? "local" : p.identity;
-              const member = findMatrixRoomMember(this.matrixRoom, id);
-              if (member === undefined)
-                logger.warn(
-                  `Ruh, roh! No matrix member found for SFU participant '${p.identity}': creating g-g-g-ghost!`,
-                );
+            // m.rtc.members are the basis for calculating what is visible in the call
+            for (const rtcMember of this.matrixRTCSession.memberships) {
+              const room = this.matrixRTCSession.room;
+              // WARN! This is not exactly the sender but the user defined in the state key.
+              // This will be available once we change to the new "member as object" format in the MatrixRTC object.
+              let livekitParticipantId =
+                rtcMember.sender + ":" + rtcMember.deviceId;
 
-              // Create as many tiles for this participant as called for by
-              // the duplicateTiles option
+              let participant:
+                | LocalParticipant
+                | RemoteParticipant
+                | undefined = undefined;
+              if (
+                rtcMember.sender === room.client.getUserId()! &&
+                rtcMember.deviceId === room.client.getDeviceId()
+              ) {
+                livekitParticipantId = "local";
+                participant = localParticipant;
+              } else {
+                participant = remoteParticipants.find(
+                  (p) => p.identity === livekitParticipantId,
+                );
+              }
+
+              const member = findMatrixRoomMember(room, livekitParticipantId);
+              if (!member) {
+                logger.error(
+                  "Could not find member for media id: ",
+                  livekitParticipantId,
+                );
+              }
               for (let i = 0; i < 1 + duplicateTiles; i++) {
-                const userMediaId = `${id}:${i}`;
+                const indexedMediaId = `${livekitParticipantId}:${i}`;
+                let prevMedia = prevItems.get(indexedMediaId);
+                if (prevMedia && prevMedia instanceof UserMedia) {
+                  prevMedia.updateParticipant(participant);
+                  if (prevMedia.vm.member === undefined) {
+                    // We have a previous media created because of the `debugShowNonMember` flag.
+                    // In this case we actually replace the media item.
+                    // This "hack" never occurs if we do not use the `debugShowNonMember` debugging
+                    // option and if we always find a room member for each rtc member (which also
+                    // only fails if we have a fundamental problem)
+                    prevMedia = undefined;
+                  }
+                }
                 yield [
-                  userMediaId,
-                  prevItems.get(userMediaId) ??
+                  indexedMediaId,
+                  // We create UserMedia with or without a participant.
+                  // This will be the initial value of a BehaviourSubject.
+                  // Once a participant appears we will update the BehaviourSubject. (see above)
+                  prevMedia ??
                     new UserMedia(
-                      userMediaId,
+                      indexedMediaId,
                       member,
-                      p,
+                      participant,
                       this.encryptionSystem,
                       this.livekitRoom,
                     ),
                 ];
 
-                if (p.isScreenShareEnabled) {
-                  const screenShareId = `${userMediaId}:screen-share`;
+                if (participant?.isScreenShareEnabled) {
+                  const screenShareId = `${indexedMediaId}:screen-share`;
                   yield [
                     screenShareId,
                     prevItems.get(screenShareId) ??
                       new ScreenShare(
                         screenShareId,
                         member,
-                        p,
+                        participant,
                         this.encryptionSystem,
                         this.livekitRoom,
                       ),
@@ -469,8 +543,55 @@ export class CallViewModel extends ViewModel {
           }.bind(this)(),
         );
 
-        for (const [id, t] of prevItems) if (!newItems.has(id)) t.destroy();
-        return newItems;
+        // Generate non member items (items without a corresponding MatrixRTC member)
+        // Those items should not be rendered, they are participants in LiveKit that do not have a corresponding
+        // MatrixRTC members. This cannot be any good:
+        //  - A malicious user impersonates someone
+        //  - Someone injects abusive content
+        //  - The user cannot have encryption keys so it makes no sense to participate
+        // We can only trust users that have a MatrixRTC member event.
+        //
+        // This is still available as a debug option. This can be useful
+        //  - If one wants to test scalability using the LiveKit CLI.
+        //  - If an experimental project does not yet do the MatrixRTC bits.
+        //  - If someone wants to debug if the LiveKit connection works but MatrixRTC room state failed to arrive.
+        const newNonMemberItems = showNonMemberTiles
+          ? new Map(
+              function* (this: CallViewModel): Iterable<[string, MediaItem]> {
+                for (const participant of remoteParticipants) {
+                  for (let i = 0; i < 1 + duplicateTiles; i++) {
+                    const maybeNonMemberParticipantId =
+                      participant.identity + ":" + i;
+                    if (!newItems.has(maybeNonMemberParticipantId)) {
+                      const nonMemberId = maybeNonMemberParticipantId;
+                      yield [
+                        nonMemberId,
+                        prevItems.get(nonMemberId) ??
+                          new UserMedia(
+                            nonMemberId,
+                            undefined,
+                            participant,
+                            this.encryptionSystem,
+                            this.livekitRoom,
+                          ),
+                      ];
+                    }
+                  }
+                }
+              }.bind(this)(),
+            )
+          : new Map();
+        if (newNonMemberItems.size > 0) {
+          logger.debug("Added NonMember items: ", newNonMemberItems);
+        }
+
+        const combinedNew = new Map([
+          ...newNonMemberItems.entries(),
+          ...newItems.entries(),
+        ]);
+
+        for (const [id, t] of prevItems) if (!combinedNew.has(id)) t.destroy();
+        return combinedNew;
       },
       new Map<string, MediaItem>(),
     ),
@@ -490,9 +611,17 @@ export class CallViewModel extends ViewModel {
     ),
   );
 
-  private readonly localUserMedia: Observable<LocalUserMediaViewModel> =
-    this.mediaItems.pipe(
-      map((ms) => ms.find((m) => m.vm.local)!.vm as LocalUserMediaViewModel),
+  public readonly memberChanges = this.userMedia
+    .pipe(map((mediaItems) => mediaItems.map((m) => m.id)))
+    .pipe(
+      scan<string[], { ids: string[]; joined: string[]; left: string[] }>(
+        (prev, ids) => {
+          const left = prev.ids.filter((id) => !ids.includes(id));
+          const joined = ids.filter((id) => !prev.ids.includes(id));
+          return { ids, joined, left };
+        },
+        { ids: [], joined: [], left: [] },
+      ),
     );
 
   /**
@@ -506,7 +635,7 @@ export class CallViewModel extends ViewModel {
       this.scope.state(),
     );
 
-  private readonly spotlightSpeaker: Observable<UserMediaViewModel> =
+  private readonly spotlightSpeaker: Observable<UserMediaViewModel | null> =
     this.userMedia.pipe(
       switchMap((mediaItems) =>
         mediaItems.length === 0
@@ -517,7 +646,7 @@ export class CallViewModel extends ViewModel {
               ),
             ),
       ),
-      scan<(readonly [UserMedia, boolean])[], UserMedia, null>(
+      scan<(readonly [UserMedia, boolean])[], UserMedia | undefined, null>(
         (prev, mediaItems) => {
           // Only remote users that are still in the call should be sticky
           const [stickyMedia, stickySpeaking] =
@@ -534,11 +663,11 @@ export class CallViewModel extends ViewModel {
                 // Otherwise, spotlight an arbitrary remote user
                 mediaItems.find(([m]) => !m.vm.local)?.[0] ??
                 // Otherwise, spotlight the local user
-                mediaItems.find(([m]) => m.vm.local)![0]);
+                mediaItems.find(([m]) => m.vm.local)?.[0]);
         },
         null,
       ),
-      map((speaker) => speaker.vm),
+      map((speaker) => speaker?.vm ?? null),
       this.scope.state(),
     );
 
@@ -578,36 +707,56 @@ export class CallViewModel extends ViewModel {
     }),
   );
 
-  private readonly spotlightAndPip: Observable<
-    [Observable<MediaViewModel[]>, Observable<UserMediaViewModel | null>]
-  > = this.screenShares.pipe(
-    map((screenShares) =>
-      screenShares.length > 0
-        ? ([of(screenShares.map((m) => m.vm)), this.spotlightSpeaker] as const)
-        : ([
-            this.spotlightSpeaker.pipe(map((speaker) => [speaker!])),
-            this.spotlightSpeaker.pipe(
-              switchMap((speaker) =>
-                speaker.local
-                  ? of(null)
-                  : this.localUserMedia.pipe(
-                      switchMap((vm) =>
-                        vm.alwaysShow.pipe(
-                          map((alwaysShow) => (alwaysShow ? vm : null)),
-                        ),
-                      ),
-                    ),
-              ),
-            ),
-          ] as const),
-    ),
-  );
-
   private readonly spotlight: Observable<MediaViewModel[]> =
-    this.spotlightAndPip.pipe(
-      switchMap(([spotlight]) => spotlight),
+    this.screenShares.pipe(
+      switchMap((screenShares) => {
+        if (screenShares.length > 0) {
+          return of(screenShares.map((m) => m.vm));
+        }
+
+        return this.spotlightSpeaker.pipe(
+          map((speaker) => (speaker ? [speaker] : [])),
+        );
+      }),
       this.scope.state(),
     );
+
+  private readonly pip: Observable<UserMediaViewModel | null> = combineLatest([
+    this.screenShares,
+    this.spotlightSpeaker,
+    this.mediaItems,
+  ]).pipe(
+    switchMap(([screenShares, spotlight, mediaItems]) => {
+      if (screenShares.length > 0) {
+        return this.spotlightSpeaker;
+      }
+      if (!spotlight || spotlight.local) {
+        return of(null);
+      }
+
+      const localUserMedia = mediaItems.find(
+        (m) => m.vm instanceof LocalUserMediaViewModel,
+      ) as UserMedia | undefined;
+
+      const localUserMediaViewModel = localUserMedia?.vm as
+        | LocalUserMediaViewModel
+        | undefined;
+
+      if (!localUserMediaViewModel) {
+        return of(null);
+      }
+      return localUserMediaViewModel.alwaysShow.pipe(
+        map((alwaysShow) => {
+          if (alwaysShow) {
+            return localUserMediaViewModel;
+          }
+
+          return null;
+        }),
+      );
+    }),
+    this.scope.state(),
+  );
 
   private readonly hasRemoteScreenShares: Observable<boolean> =
     this.spotlight.pipe(
@@ -616,9 +765,6 @@ export class CallViewModel extends ViewModel {
       ),
       distinctUntilChanged(),
     );
-
-  private readonly pip: Observable<UserMediaViewModel | null> =
-    this.spotlightAndPip.pipe(switchMap(([, pip]) => pip));
 
   private readonly pipEnabled: Observable<boolean> = setPipEnabled.pipe(
     startWith(false),
@@ -723,15 +869,16 @@ export class CallViewModel extends ViewModel {
     this.mediaItems.pipe(
       map((mediaItems) => {
         if (mediaItems.length !== 2) return null;
-        const local = mediaItems.find((vm) => vm.vm.local)!
-          .vm as LocalUserMediaViewModel;
+        const local = mediaItems.find((vm) => vm.vm.local)?.vm as
+          | LocalUserMediaViewModel
+          | undefined;
         const remote = mediaItems.find((vm) => !vm.vm.local)?.vm as
           | RemoteUserMediaViewModel
           | undefined;
         // There might not be a remote tile if there are screen shares, or if
         // only the local user is in the call and they're using the duplicate
         // tiles option
-        if (remote === undefined) return null;
+        if (!remote || !local) return null;
 
         return { type: "one-on-one", local, remote };
       }),
@@ -804,67 +951,73 @@ export class CallViewModel extends ViewModel {
     this.scope.state(),
   );
 
-  /**
-   * The layout of tiles in the call interface.
-   */
-  public readonly layout: Observable<Layout> = this.layoutMedia.pipe(
-    // Each layout will produce a set of tiles, and these tiles have an
-    // observable indicating whether they're visible. We loop this information
-    // back into the layout process by using switchScan.
-    switchScan<
-      LayoutMedia,
-      LayoutScanState,
-      Observable<LayoutScanState & { layout: Layout }>
+  // There is a cyclical dependency here: the layout algorithms want to know
+  // which tiles are on screen, but to know which tiles are on screen we have to
+  // first render a layout. To deal with this we assume initially that no tiles
+  // are visible, and loop the data back into the layouts with a Subject.
+  private readonly visibleTiles = new Subject<number>();
+  private readonly setVisibleTiles = (value: number): void =>
+    this.visibleTiles.next(value);
+
+  public readonly layoutInternals: Observable<
+    LayoutScanState & { layout: Layout }
+  > = combineLatest([
+    this.layoutMedia,
+    this.visibleTiles.pipe(startWith(0), distinctUntilChanged()),
+  ]).pipe(
+    scan<
+      [LayoutMedia, number],
+      LayoutScanState & { layout: Layout },
+      LayoutScanState
     >(
-      ({ tiles: prevTiles, visibleTiles }, media) => {
+      ({ tiles: prevTiles }, [media, visibleTiles]) => {
         let layout: Layout;
         let newTiles: TileStore;
         switch (media.type) {
           case "grid":
           case "spotlight-landscape":
           case "spotlight-portrait":
-            [layout, newTiles] = gridLikeLayout(media, visibleTiles, prevTiles);
-            break;
-          case "spotlight-expanded":
-            [layout, newTiles] = spotlightExpandedLayout(
+            [layout, newTiles] = gridLikeLayout(
               media,
               visibleTiles,
+              this.setVisibleTiles,
               prevTiles,
             );
             break;
+          case "spotlight-expanded":
+            [layout, newTiles] = spotlightExpandedLayout(media, prevTiles);
+            break;
           case "one-on-one":
-            [layout, newTiles] = oneOnOneLayout(media, visibleTiles, prevTiles);
+            [layout, newTiles] = oneOnOneLayout(media, prevTiles);
             break;
           case "pip":
-            [layout, newTiles] = pipLayout(media, visibleTiles, prevTiles);
+            [layout, newTiles] = pipLayout(media, prevTiles);
             break;
         }
 
-        // Take all of the 'visible' observables and combine them into one big
-        // observable array
-        const visibilities =
-          newTiles.gridTiles.length === 0
-            ? of([])
-            : combineLatest(newTiles.gridTiles.map((tile) => tile.visible));
-        return visibilities.pipe(
-          map((visibilities) => ({
-            layout: layout,
-            tiles: newTiles,
-            visibleTiles: new Set(
-              newTiles.gridTiles.filter((_tile, i) => visibilities[i]),
-            ),
-          })),
-        );
+        return { layout, tiles: newTiles };
       },
-      {
-        layout: null,
-        tiles: TileStore.empty(),
-        visibleTiles: new Set(),
-      },
+      { layout: null, tiles: TileStore.empty() },
     ),
+    this.scope.state(),
+  );
+
+  /**
+   * The layout of tiles in the call interface.
+   */
+  public readonly layout: Observable<Layout> = this.layoutInternals.pipe(
     map(({ layout }) => layout),
     this.scope.state(),
   );
+
+  /**
+   * The current generation of the tile store, exposed for debugging purposes.
+   */
+  public readonly tileStoreGeneration: Observable<number> =
+    this.layoutInternals.pipe(
+      map(({ tiles }) => tiles.generation),
+      this.scope.state(),
+    );
 
   public showSpotlightIndicators: Observable<boolean> = this.layout.pipe(
     map((l) => l.type !== "grid"),
@@ -1012,7 +1165,7 @@ export class CallViewModel extends ViewModel {
 
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room
-    private readonly matrixRoom: MatrixRoom,
+    private readonly matrixRTCSession: MatrixRTCSession,
     private readonly livekitRoom: LivekitRoom,
     private readonly encryptionSystem: EncryptionSystem,
     private readonly connectionState: Observable<ECConnectionState>,

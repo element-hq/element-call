@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useCallback } from "react";
-import { Room } from "matrix-js-sdk/src/models/room";
+import { type Room } from "matrix-js-sdk/src/models/room";
 
 import { useRoomState } from "./useRoomState";
 

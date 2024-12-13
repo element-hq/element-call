@@ -24,7 +24,7 @@ import { platform } from "./Platform";
 
 // This generates a map of locale names to their URL (based on import.meta.url), which looks like this:
 // {
-//   "../locales/en-GB/app.json": "/whatever/assets/root/locales/en-aabbcc.json",
+//   "../locales/en/app.json": "/whatever/assets/root/locales/en-aabbcc.json",
 //   ...
 // }
 const locales = import.meta.glob<string>("../locales/*/*.json", {
@@ -41,7 +41,7 @@ const getLocaleUrl = (
 const supportedLngs = [
   ...new Set(
     Object.keys(locales).map((url) => {
-      // The URLs are of the form ../locales/en-GB/app.json
+      // The URLs are of the form ../locales/en/app.json
       // This extracts the language code from the URL
       const lang = url.match(/\/([^/]+)\/[^/]+\.json$/)?.[1];
       if (!lang) {
@@ -133,7 +133,7 @@ export class Initializer {
       .use(languageDetector)
       .use(initReactI18next)
       .init({
-        fallbackLng: "en-GB",
+        fallbackLng: "en",
         defaultNS: "app",
         keySeparator: ".",
         nsSeparator: false,

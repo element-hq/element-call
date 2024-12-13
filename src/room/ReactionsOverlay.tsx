@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ReactNode, useMemo } from "react";
+import { type ReactNode, useMemo } from "react";
 
 import { useReactions } from "../useReactions";
 import {

@@ -5,10 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { TrackReferenceOrPlaceholder } from "@livekit/components-core";
+import { type TrackReferenceOrPlaceholder } from "@livekit/components-core";
 import { animated } from "@react-spring/web";
-import { RoomMember } from "matrix-js-sdk/src/matrix";
-import { ComponentProps, ReactNode, forwardRef } from "react";
+import { type RoomMember } from "matrix-js-sdk/src/matrix";
+import { type ComponentProps, type ReactNode, forwardRef } from "react";
 import { useTranslation } from "react-i18next";
 import classNames from "classnames";
 import { VideoTrack } from "@livekit/components-react";
@@ -17,10 +17,10 @@ import { ErrorIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import styles from "./MediaView.module.css";
 import { Avatar } from "../Avatar";
-import { EncryptionStatus } from "../state/MediaViewModel";
+import { type EncryptionStatus } from "../state/MediaViewModel";
 import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
 import { showHandRaisedTimer, useSetting } from "../settings/settings";
-import { ReactionOption } from "../reactions";
+import { type ReactionOption } from "../reactions";
 import { ReactionIndicator } from "../reactions/ReactionIndicator";
 
 interface Props extends ComponentProps<typeof animated.div> {
@@ -28,7 +28,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   style?: ComponentProps<typeof animated.div>["style"];
   targetWidth: number;
   targetHeight: number;
-  video: TrackReferenceOrPlaceholder;
+  video: TrackReferenceOrPlaceholder | undefined;
   videoFit: "cover" | "contain";
   mirror: boolean;
   member: RoomMember | undefined;
@@ -41,6 +41,7 @@ interface Props extends ComponentProps<typeof animated.div> {
   raisedHandTime?: Date;
   currentReaction?: ReactionOption;
   raisedHandOnClick?: () => void;
+  localParticipant: boolean;
 }
 
 export const MediaView = forwardRef<HTMLDivElement, Props>(
@@ -63,6 +64,7 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       raisedHandTime,
       currentReaction,
       raisedHandOnClick,
+      localParticipant,
       ...props
     },
     ref,
@@ -76,7 +78,6 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       <animated.div
         className={classNames(styles.media, className, {
           [styles.mirror]: mirror,
-          [styles.videoMuted]: !videoEnabled,
         })}
         style={style}
         ref={ref}
@@ -91,18 +92,21 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
             size={avatarSize}
             src={member?.getMxcAvatarUrl()}
             className={styles.avatar}
+            style={{ display: video && videoEnabled ? "none" : "initial" }}
           />
-          {video.publication !== undefined && (
+          {video?.publication !== undefined && (
             <VideoTrack
               trackRef={video}
               // There's no reason for this to be focusable
               tabIndex={-1}
               disablePictureInPicture
+              style={{ display: video && videoEnabled ? "block" : "none" }}
+              data-testid="video"
             />
           )}
         </div>
         <div className={styles.fg}>
-          <div style={{ display: "flex", gap: "var(--cpd-space-1x)" }}>
+          <div className={styles.reactions}>
             <RaisedHandIndicator
               raisedHandTime={raisedHandTime}
               miniature={avatarSize < 96}
@@ -116,6 +120,11 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
               />
             )}
           </div>
+          {!video && !localParticipant && (
+            <div className={styles.status}>
+              {t("video_tile.waiting_for_media")}
+            </div>
+          )}
           {/* TODO: Bring this back once encryption status is less broken */}
           {/*encryptionStatus !== EncryptionStatus.Okay && (
             <div className={styles.status}>
@@ -133,7 +142,13 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
           )*/}
           <div className={styles.nameTag}>
             {nameTagLeadingIcon}
-            <Text as="span" size="sm" weight="medium" className={styles.name}>
+            <Text
+              as="span"
+              size="sm"
+              weight="medium"
+              className={styles.name}
+              data-testid="name_tag"
+            >
               {displayName}
             </Text>
             {unencryptedWarning && (
@@ -146,6 +161,8 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
                   width={20}
                   height={20}
                   className={styles.errorIcon}
+                  role="img"
+                  aria-label={t("common.unencrypted")}
                 />
               </Tooltip>
             )}

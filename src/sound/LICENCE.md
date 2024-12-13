@@ -19,4 +19,6 @@ The following sound effects have been originally created by Element.
 - `end_talk`
 - `start_talk_local`
 - `start_talk_remote`
+- `join_call`
+- `end_call`
 - `reactions/rock`

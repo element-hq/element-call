@@ -68,8 +68,13 @@
     "username": "Benutzername",
     "video": "Video"
   },
-  "crypto_version": "Krypto-Version:{{version}}",
-  "device_id": "Geräte-ID: {{id}}",
+  "developer_mode": {
+    "crypto_version": "Krypto-Version: {{version}}",
+    "device_id": "Geräte-ID: {{id}}",
+    "duplicate_tiles_label": "Anzahl zusätzlicher Kachelkopien pro Teilnehmer",
+    "hostname": "Hostname: {{hostname}}",
+    "matrix_id": "Matrix-ID: {{id}}"
+  },
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
   "full_screen_view_description": "<0>Übermittelte Problemberichte helfen uns, Fehler zu beheben.</0>",
   "full_screen_view_h1": "<0>Hoppla, etwas ist schiefgelaufen.</0>",
@@ -111,7 +116,6 @@
   "login_auth_links_prompt": "Noch nicht registriert?",
   "login_subheading": "Weiter zu Element",
   "login_title": "Anmelden",
-  "matrix_id": "Matrix-ID: {{id}}",
   "microphone_off": "Mikrofon aus",
   "microphone_on": "Mikrofon an",
   "mute_microphone_button_label": "Mikrofon stumm schalten",
@@ -143,13 +147,11 @@
   "screenshare_button_label": "Bildschirm teilen",
   "settings": {
     "audio_tab": {
-      "effect_volume_description": "Lautstärke anpassen, mit der Reaktionen und Handmeldungen abgespielt werden",
       "effect_volume_label": "Lautstärke der Soundeffekte"
     },
     "developer_settings_label": "Entwicklereinstellungen",
     "developer_settings_label_description": "Zeige die Entwicklereinstellungen im Einstellungsfenster.",
     "developer_tab_title": "Entwickler",
-    "duplicate_tiles_label": "Anzahl zusätzlicher Kachelkopien pro Teilnehmer",
     "feedback_tab_body": "Falls du auf Probleme stößt oder einfach nur eine Rückmeldung geben möchtest, sende uns bitte eine kurze Beschreibung.",
     "feedback_tab_description_label": "Deine Rückmeldung",
     "feedback_tab_h4": "Rückmeldung geben",
@@ -159,16 +161,16 @@
     "more_tab_title": "Mehr",
     "opt_in_description": "<0></0><1></1>Du kannst deine Zustimmung durch Abwählen dieses Kästchens zurückziehen. Falls du dich aktuell in einem Anruf befindest, wird diese Einstellung nach dem Ende des Anrufs wirksam.",
     "preferences_tab": {
+      "introduction": "Hier können zusätzliche Optionen für individuelle Anforderungen eingestellt werden",
       "reactions_play_sound_description": "Einen Soundeffekt abspielen, wenn jemand eine Reaktion sendet",
       "reactions_play_sound_label": "Reaktionstöne abspielen",
       "reactions_show_description": "Zeige eine Animation, wenn jemand eine Reaktion sendet.",
       "reactions_show_label": "Reaktionen anzeigen",
-      "reactions_title": "Reaktionen"
+      "reactions_title": "Reaktionen",
+      "show_hand_raised_timer_description": "Einen Timer zur Handmeldung anzeigen",
+      "show_hand_raised_timer_label": "Dauer der Handmeldung anzeigen"
     },
-    "preferences_tab_body": "Hier können zusätzliche Optionen für individuelle Anforderungen eingestellt werden",
     "preferences_tab_h4": "Einstellungen",
-    "preferences_tab_show_hand_raised_timer_description": "Einen Timer zur Handmeldung anzeigen",
-    "preferences_tab_show_hand_raised_timer_label": "Dauer der Handmeldung anzeigen",
     "speaker_device_selection_label": "Lautsprecher"
   },
   "star_rating_input_label_one": "{{count}} Stern",
@@ -191,6 +193,7 @@
     "expand": "Erweitern",
     "mute_for_me": "Für mich stumm schalten",
     "muted_for_me": "Für mich stumm geschaltet",
-    "volume": "Lautstärke"
+    "volume": "Lautstärke",
+    "waiting_for_media": "Warten auf Medien..."
   }
 }

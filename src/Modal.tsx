@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, ReactNode, useCallback } from "react";
+import { type FC, type ReactNode, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Root as DialogRoot,

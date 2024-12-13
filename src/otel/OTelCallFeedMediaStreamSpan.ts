@@ -5,13 +5,13 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { Span } from "@opentelemetry/api";
+import { type Span } from "@opentelemetry/api";
 import {
-  CallFeedStats,
-  TrackStats,
+  type CallFeedStats,
+  type TrackStats,
 } from "matrix-js-sdk/src/webrtc/stats/statsReport";
 
-import { ElementCallOpenTelemetry } from "./otel";
+import { type ElementCallOpenTelemetry } from "./otel";
 import { OTelCallAbstractMediaStreamSpan } from "./OTelCallAbstractMediaStreamSpan";
 
 export class OTelCallFeedMediaStreamSpan extends OTelCallAbstractMediaStreamSpan {

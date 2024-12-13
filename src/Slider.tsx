@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useCallback } from "react";
+import { type FC, useCallback } from "react";
 import { Root, Track, Range, Thumb } from "@radix-ui/react-slider";
 import classNames from "classnames";
 import { Tooltip } from "@vector-im/compound-web";
@@ -16,6 +16,9 @@ interface Props {
   className?: string;
   label: string;
   value: number;
+  /**
+   * Event handler called when the value changes during an interaction.
+   */
   onValueChange: (value: number) => void;
   /**
    * Event handler called when the value changes at the end of an interaction.

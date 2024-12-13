@@ -7,31 +7,31 @@ Please see LICENSE in the repository root for full details.
 
 import {
   EventType,
-  MatrixEvent,
+  type MatrixEvent,
   RelationType,
   RoomEvent as MatrixRoomEvent,
   MatrixEventEvent,
 } from "matrix-js-sdk/src/matrix";
-import { ReactionEventContent } from "matrix-js-sdk/src/types";
+import { type ReactionEventContent } from "matrix-js-sdk/src/types";
 import {
   createContext,
   useContext,
   useState,
-  ReactNode,
+  type ReactNode,
   useCallback,
   useEffect,
   useMemo,
 } from "react";
-import { MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { logger } from "matrix-js-sdk/src/logger";
 
 import { useMatrixRTCSessionMemberships } from "./useMatrixRTCSessionMemberships";
 import { useClientState } from "./ClientContext";
 import {
-  ECallReactionEventContent,
+  type ECallReactionEventContent,
   ElementCallReactionEventType,
   GenericReaction,
-  ReactionOption,
+  type ReactionOption,
   ReactionSet,
 } from "./reactions";
 import { useLatest } from "./useLatest";

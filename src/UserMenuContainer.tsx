@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useCallback, useState } from "react";
+import { type FC, useCallback, useState } from "react";
 import { useHistory, useLocation } from "react-router-dom";
 
 import { useClientLegacy } from "./ClientContext";

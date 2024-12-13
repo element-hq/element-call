@@ -47,6 +47,11 @@ layer(compound);
   --background-gradient: url("graphics/backgroundGradient.svg");
 }
 
+:root,
+[class*="cpd-theme-"] {
+  --video-tile-background: var(--cpd-color-bg-subtle-secondary);
+}
+
 .cpd-theme-dark {
   --cpd-color-border-accent: var(--cpd-color-green-1100);
   --stopgap-color-on-solid-accent: var(--cpd-color-text-primary);

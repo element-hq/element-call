@@ -92,6 +92,9 @@ work:
 experimental_features:
     # MSC3266: Room summary API. Used for knocking over federation
     msc3266_enabled: true
+    # MSC4222 needed for syncv2 state_after. This allow clients to
+    # correctly track the state of the room.
+    msc4222_enabled: true
 
 # The maximum allowed duration by which sent events can be delayed, as
 # per MSC4140.
@@ -108,6 +111,10 @@ MSC3266 allows to request a room summary of rooms you are not joined. The
 summary contains the room join rules. We need that to decide if the user gets
 prompted with the option to knock ("Request to join call"), a cannot join error or the
 join view.
+
+MSC4222 allow clients to opt-in to a change of the sync v2 API that allows them
+to correctly track the state of the room. This is required by Element Call to
+track room state reliably.
 
 Element Call requires a Livekit SFU alongside a [Livekit JWT
 service](https://github.com/element-hq/lk-jwt-service) to work. The url to the
@@ -213,7 +220,7 @@ To add a new translation key you can do these steps:
 
 1. Add the new key entry to the code where the new key is used: `t("some_new_key")`
 1. Run `yarn i18n` to extract the new key and update the translation files. This
-   will add a skeleton entry to the `locales/en-GB/app.json` file:
+   will add a skeleton entry to the `locales/en/app.json` file:
    ```jsonc
    {
        ...
@@ -221,7 +228,7 @@ To add a new translation key you can do these steps:
        ...
    }
    ```
-1. Update the skeleton entry in the `locales/en-GB/app.json` file with
+1. Update the skeleton entry in the `locales/en/app.json` file with
    the English translation:
 
 ```jsonc

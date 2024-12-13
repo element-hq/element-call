@@ -36,10 +36,9 @@ Please see LICENSE in the repository root for full details.
   inset-block-end: 0;
   z-index: 1;
   display: grid;
-  grid-template-columns: minmax(0, var(--inline-content-inset)) 1fr auto 1fr minmax(
-      0,
-      var(--inline-content-inset)
-    );
+  grid-template-columns:
+    minmax(0, var(--inline-content-inset))
+    1fr auto 1fr minmax(0, var(--inline-content-inset));
   grid-template-areas: ". logo buttons layout .";
   align-items: center;
   gap: var(--cpd-space-3x);

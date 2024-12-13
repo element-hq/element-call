@@ -5,20 +5,20 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { ComponentProps, useCallback, useEffect, useState } from "react";
+import { type ComponentProps, useCallback, useEffect, useState } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
   ClientEvent,
-  Crypto,
-  MatrixClient,
-  MatrixEvent,
+  type Crypto,
+  type MatrixClient,
+  type MatrixEvent,
 } from "matrix-js-sdk/src/matrix";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
 import { Config } from "../config/Config";
 import { ElementCallOpenTelemetry } from "../otel/otel";
-import { RageshakeRequestModal } from "../room/RageshakeRequestModal";
+import { type RageshakeRequestModal } from "../room/RageshakeRequestModal";
 
 const gzip = async (text: string): Promise<Blob> => {
   // pako is relatively large (200KB), so we only import it when needed

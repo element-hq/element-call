@@ -5,8 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { FC, useCallback, useEffect, useMemo, useRef } from "react";
-import { MatrixClient } from "matrix-js-sdk/src/client";
+import { type FC, useCallback, useEffect, useMemo, useRef } from "react";
+import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/src/logger";
 

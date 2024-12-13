@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useTranslation } from "react-i18next";
-import { FC } from "react";
+import { type FC } from "react";
 
 import { useClientState } from "../ClientContext";
 import { ErrorView, LoadingView } from "../FullScreenView";

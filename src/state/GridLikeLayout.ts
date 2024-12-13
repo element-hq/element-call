@@ -5,9 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { Layout, LayoutMedia } from "./CallViewModel";
-import { TileStore } from "./TileStore";
-import { GridTileViewModel } from "./TileViewModel";
+import { type Layout, type LayoutMedia } from "./CallViewModel";
+import { type TileStore } from "./TileStore";
 
 export type GridLikeLayoutType =
   | "grid"
@@ -20,7 +19,8 @@ export type GridLikeLayoutType =
  */
 export function gridLikeLayout(
   media: LayoutMedia & { type: GridLikeLayoutType },
-  visibleTiles: Set<GridTileViewModel>,
+  visibleTiles: number,
+  setVisibleTiles: (value: number) => void,
   prevTiles: TileStore,
 ): [Layout & { type: GridLikeLayoutType }, TileStore] {
   const update = prevTiles.from(visibleTiles);
@@ -37,6 +37,7 @@ export function gridLikeLayout(
       type: media.type,
       spotlight: tiles.spotlightTile,
       grid: tiles.gridTiles,
+      setVisibleTiles,
     } as Layout & { type: GridLikeLayoutType },
     tiles,
   ];

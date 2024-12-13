@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   distinctUntilChanged,
-  Observable,
+  type Observable,
   shareReplay,
   Subject,
   takeUntil,

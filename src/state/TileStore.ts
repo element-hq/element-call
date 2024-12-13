@@ -6,10 +6,19 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { BehaviorSubject } from "rxjs";
+import { logger } from "matrix-js-sdk/src/logger";
 
-import { MediaViewModel, UserMediaViewModel } from "./MediaViewModel";
+import { type MediaViewModel, type UserMediaViewModel } from "./MediaViewModel";
 import { GridTileViewModel, SpotlightTileViewModel } from "./TileViewModel";
 import { fillGaps } from "../utils/iter";
+import { debugTileLayout } from "../settings/settings";
+
+function debugEntries(entries: GridTileData[]): string[] {
+  return entries.map((e) => e.media.member?.rawDisplayName ?? "[👻]");
+}
+
+let DEBUG_ENABLED = false;
+debugTileLayout.value.subscribe((value) => (DEBUG_ENABLED = value));
 
 class SpotlightTileData {
   private readonly media_: BehaviorSubject<MediaViewModel[]>;
@@ -69,6 +78,10 @@ export class TileStore {
   private constructor(
     private readonly spotlight: SpotlightTileData | null,
     private readonly grid: GridTileData[],
+    /**
+     * A number incremented on each update, just for debugging purposes.
+     */
+    public readonly generation: number,
   ) {}
 
   public readonly spotlightTile = this.spotlight?.vm;
@@ -81,19 +94,20 @@ export class TileStore {
    * Creates an an empty collection of tiles.
    */
   public static empty(): TileStore {
-    return new TileStore(null, []);
+    return new TileStore(null, [], 0);
   }
 
   /**
    * Creates a builder which can be used to update the collection, passing
    * ownership of the tiles to the updated collection.
    */
-  public from(visibleTiles: Set<GridTileViewModel>): TileStoreBuilder {
+  public from(visibleTiles: number): TileStoreBuilder {
     return new TileStoreBuilder(
       this.spotlight,
       this.grid,
-      (spotlight, grid) => new TileStore(spotlight, grid),
+      (spotlight, grid) => new TileStore(spotlight, grid, this.generation + 1),
       visibleTiles,
+      this.generation,
     );
   }
 }
@@ -132,7 +146,11 @@ export class TileStoreBuilder {
       spotlight: SpotlightTileData | null,
       grid: GridTileData[],
     ) => TileStore,
-    private readonly visibleTiles: Set<GridTileViewModel>,
+    private readonly visibleTiles: number,
+    /**
+     * A number incremented on each update, just for debugging purposes.
+     */
+    private readonly generation: number,
   ) {}
 
   /**
@@ -140,6 +158,11 @@ export class TileStoreBuilder {
    * will be no spotlight tile.
    */
   public registerSpotlight(media: MediaViewModel[], maximised: boolean): void {
+    if (DEBUG_ENABLED)
+      logger.debug(
+        `[TileStore, ${this.generation}] register spotlight: ${media.map((m) => m.member?.rawDisplayName ?? "[👻]")}`,
+      );
+
     if (this.spotlight !== null) throw new Error("Spotlight already set");
     if (this.numGridEntries > 0)
       throw new Error("Spotlight must be registered before grid tiles");
@@ -159,6 +182,11 @@ export class TileStoreBuilder {
    * media, then that media will have no grid tile.
    */
   public registerGridTile(media: UserMediaViewModel): void {
+    if (DEBUG_ENABLED)
+      logger.debug(
+        `[TileStore, ${this.generation}] register grid tile: ${media.member?.rawDisplayName ?? "[👻]"}`,
+      );
+
     if (this.spotlight !== null) {
       // We actually *don't* want spotlight speakers to appear in both the
       // spotlight and the grid, so they're filtered out here
@@ -176,10 +204,8 @@ export class TileStoreBuilder {
         const prev = this.prevGridByMedia.get(this.spotlight.media[0]);
         if (prev !== undefined) {
           const [entry, prevIndex] = prev;
-          const previouslyVisible = this.visibleTiles.has(entry.vm);
-          const nowVisible = this.visibleTiles.has(
-            this.prevGrid[this.numGridEntries]?.vm,
-          );
+          const previouslyVisible = prevIndex < this.visibleTiles;
+          const nowVisible = this.numGridEntries < this.visibleTiles;
 
           // If it doesn't need to move between the visible/invisible sections of
           // the grid, then we can keep it where it was and swap the media
@@ -208,17 +234,15 @@ export class TileStoreBuilder {
     const prev = this.prevGridByMedia.get(media);
     if (prev === undefined) {
       // Create a new tile
-      (this.visibleTiles.has(this.prevGrid[this.numGridEntries]?.vm)
+      (this.numGridEntries < this.visibleTiles
         ? this.visibleGridEntries
         : this.invisibleGridEntries
       ).push(new GridTileData(media));
     } else {
       // Reuse the existing tile
       const [entry, prevIndex] = prev;
-      const previouslyVisible = this.visibleTiles.has(entry.vm);
-      const nowVisible = this.visibleTiles.has(
-        this.prevGrid[this.numGridEntries]?.vm,
-      );
+      const previouslyVisible = prevIndex < this.visibleTiles;
+      const nowVisible = this.numGridEntries < this.visibleTiles;
       // If it doesn't need to move between the visible/invisible sections of
       // the grid, then we can keep it exactly where it was previously
       if (previouslyVisible === nowVisible)
@@ -246,6 +270,20 @@ export class TileStoreBuilder {
         ...this.invisibleGridEntries,
       ]),
     ];
+    if (DEBUG_ENABLED) {
+      logger.debug(
+        `[TileStore, ${this.generation}] stationary: ${debugEntries(this.stationaryGridEntries)}`,
+      );
+      logger.debug(
+        `[TileStore, ${this.generation}] visible: ${debugEntries(this.visibleGridEntries)}`,
+      );
+      logger.debug(
+        `[TileStore, ${this.generation}] invisible: ${debugEntries(this.invisibleGridEntries)}`,
+      );
+      logger.debug(
+        `[TileStore, ${this.generation}] result: ${debugEntries(grid)}`,
+      );
+    }
 
     // Destroy unused tiles
     if (this.spotlight === null && this.prevSpotlight !== null)

@@ -6,9 +6,9 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  DependencyList,
-  Dispatch,
-  SetStateAction,
+  type DependencyList,
+  type Dispatch,
+  type SetStateAction,
   useCallback,
   useRef,
   useState,

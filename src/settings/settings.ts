@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { logger } from "matrix-js-sdk/src/logger";
-import { BehaviorSubject, Observable } from "rxjs";
+import { BehaviorSubject, type Observable } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
@@ -68,12 +68,15 @@ export const useOptInAnalytics = (): [
   return PosthogAnalytics.instance.isEnabled() ? setting : [false, null];
 };
 
-export const developerSettingsTab = new Setting(
-  "developer-settings-tab",
-  false,
-);
+export const developerMode = new Setting("developer-settings-tab", false);
 
 export const duplicateTiles = new Setting("duplicate-tiles", 0);
+
+export const showNonMemberTiles = new Setting<boolean>(
+  "show-non-member-tiles",
+  false,
+);
+export const debugTileLayout = new Setting("debug-tile-layout", false);
 
 export const audioInput = new Setting<string | undefined>(
   "audio-input",

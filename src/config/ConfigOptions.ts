@@ -51,7 +51,7 @@ export interface ConfigOptions {
     // a livekit service url in the client well-known.
     // The well known needs to be formatted like so:
     // {"type":"livekit", "livekit_service_url":"https://livekit.example.com"}
-    // and stored under the key: "livekit_focus"
+    // and stored under the key: "org.matrix.msc4143.rtc_foci"
     livekit_service_url: string;
   };
 

@@ -17,5 +17,9 @@
   },
   "rageshake": {
     "submit_url": "https://element.io/bugreports/submit"
+  },
+  "sentry": {
+    "environment": "netlify-pr-preview",
+    "DSN": "https://b1e328d49be3402ba96101338989fb35@sentry.tools.element.io/41"
   }
 }

@@ -25,230 +25,38 @@ There are two formats for Element Call urls.
   ```
 
   With this format the livekit alias that will be used is the `<room_name>`.
-  All ppl connecting to this url will end up in the same unencrypted room.
+  All people connecting to this URL will end up in the same unencrypted room.
   This does not scale, is super unsecure
-  (ppl could end up in the same room by accident) and it also is not really
+  (people could end up in the same room by accident) and it also is not really
   possible to support encryption.
-  The url parameters are spit into two categories: **general** and **widget related**.
 
-## Widget related params
+## Parameters
 
-**widgetId**
-The id used by the widget. The presence of this parameter implies that element
-call will not connect to a homeserver directly and instead tries to establish
-postMessage communication via the `parentUrl`.
-
-```ts
-widgetId: string | null;
-```
-
-**parentUrl**
-The url used to send widget action postMessages. This should be the domain of
-the client or the webview the widget is hosted in. (in case the widget is not
-in an Iframe but in a dedicated webview we send the postMessages same webview
-the widget lives in. Filtering is done in the widget so it ignores the messages
-it receives from itself)
-
-```ts
-parentUrl: string | null;
-```
-
-**userId**
-The user's ID (only used in matryoshka mode).
-
-```ts
-userId: string | null;
-```
-
-**deviceId**
-The device's ID (only used in matryoshka mode).
-
-```ts
-deviceId: string | null;
-```
-
-**baseUrl**
-The base URL of the homeserver to use for media lookups in matryoshka mode.
-
-```ts
-baseUrl: string | null;
-```
-
-### General url parameters
-
-**roomId**
-Anything about what room we're pointed to should be from useRoomIdentifier which
-parses the path and resolves alias with respect to the default server name, however
-roomId is an exception as we need the room ID in embedded (matroyska) mode, and not
-the room alias (or even the via params because we are not trying to join it). This
-is also not validated, where it is in useRoomIdentifier().
-
-```ts
-roomId: string | null;
-```
-
-**confineToRoom**
-Whether the app should keep the user confined to the current call/room.
-
-```ts
-confineToRoom: boolean; (default: false)
-```
-
-**appPrompt**
-Whether upon entering a room, the user should be prompted to launch the
-native mobile app. (Affects only Android and iOS.)
-
-The app prompt must also be enabled in the config for this to take effect.
-
-```ts
-appPrompt: boolean; (default: true)
-```
-
-**preload**
-Whether the app should pause before joining the call until it sees an
-io.element.join widget action, allowing it to be preloaded.
-
-```ts
-preload: boolean; (default: false)
-```
-
-**hideHeader**
-Whether to hide the room header when in a call.
-
-```ts
-hideHeader: boolean; (default: false)
-```
-
-**showControls**
-Whether to show the buttons to mute, screen-share, invite, hangup are shown
-when in a call.
-
-```ts
-showControls: boolean; (default: true)
-```
-
-**hideScreensharing**
-Whether to hide the screen-sharing button.
-
-```ts
-hideScreensharing: boolean; (default: false)
-```
-
-**enableE2EE** (Deprecated)
-Whether to use end-to-end encryption. This is a legacy flag for the full mesh branch.
-It is not used on the livekit branch and has no impact there!
-
-```ts
-enableE2EE: boolean; (default: true)
-```
-
-**perParticipantE2EE**
-Whether to use per participant encryption.
-Keys will be exchanged over encrypted matrix room messages.
-
-```ts
-perParticipantE2EE: boolean; (default: false)
-```
-
-**password**
-E2EE password when using a shared secret.
-(For individual sender keys in embedded mode this is not required.)
-
-```ts
-password: string | null;
-```
-
-**displayName**
-The display name to use for auto-registration.
-
-```ts
-displayName: string | null;
-```
-
-**lang**
-The BCP 47 code of the language the app should use.
-
-```ts
-lang: string | null;
-```
-
-**fonts**
-The font/fonts which the interface should use.
-There can be multiple font url parameters: `?font=font-one&font=font-two...`
-
-```ts
-font: string;
-font: string;
-...
-```
-
-**fontScale**
-The factor by which to scale the interface's font size.
-
-```ts
-fontScale: number | null;
-```
-
-**analyticsID**
-The Posthog analytics ID. It is only available if the user has given consent for
-sharing telemetry in element web.
-
-```ts
-analyticsID: string | null;
-```
-
-**allowIceFallback**
-Whether the app is allowed to use fallback STUN servers for ICE in case the
-user's homeserver doesn't provide any.
-
-```ts
-allowIceFallback: boolean; (default: false)
-```
-
-**skipLobby**
-Setting this flag skips the lobby and brings you in the call directly.
-In the widget this can be combined with preload to pass the device settings
-with the join widget action.
-
-```ts
-skipLobby: boolean; (default: false)
-```
-
-**returnToLobby**
-Setting this flag makes element call show the lobby in widget mode after leaving
-a call.
-This is useful for video rooms.
-If set to false, the widget will show a blank page after leaving the call.
-
-```ts
-returnToLobby: boolean; (default: false)
-```
-
-**theme**
-The theme to use for element call.
-can be "light", "dark", "light-high-contrast" or "dark-high-contrast".
-If not set element call will use the dark theme.
-
-```ts
-theme: string | null;
-```
-
-**viaServers**
-This defines the homeserver that is going to be used when joining a room.
-It has to be set to a non default value for links to rooms
-that are not on the default homeserver,
-that is in use for the current user.
-
-```ts
-viaServers: string; (default: undefined)
-```
-
-**homeserver**
-This defines the homeserver that is going to be used when registering
-a new (guest) user.
-This can be user to configure a non default guest user server when
-creating a spa link.
-
-```ts
-homeserver: string; (default: undefined)
-```
+| Name                      | Values                                                                                               | Required for widget     | Required for SPA        | Description                                                                                                                                                                                                                                                                                                                                                                                         |
+| ------------------------- | ---------------------------------------------------------------------------------------------------- | ----------------------- | ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `allowIceFallback`        | `true` or `false`                                                                                    | No, defaults to `false` | No, defaults to `false` | Allows use of fallback STUN servers for ICE if the user's homeserver doesn’t provide any.                                                                                                                                                                                                                                                                                                           |
+| `analyticsID`             | Posthog analytics ID                                                                                 | No                      | No                      | Available only with user's consent for sharing telemetry in Element Web.                                                                                                                                                                                                                                                                                                                            |
+| `appPrompt`               | `true` or `false`                                                                                    | No, defaults to `true`  | No, defaults to `true`  | Prompts the user to launch the native mobile app upon entering a room, applicable only on Android and iOS, and must be enabled in config.                                                                                                                                                                                                                                                           |
+| `baseUrl`                 |                                                                                                      | Yes                     | Not applicable          | The base URL of the homeserver to use for media lookups.                                                                                                                                                                                                                                                                                                                                            |
+| `confineToRoom`           | `true` or `false`                                                                                    | No, defaults to `false` | No, defaults to `false` | Keeps the user confined to the current call/room.                                                                                                                                                                                                                                                                                                                                                   |
+| `deviceId`                | Matrix device ID                                                                                     | Yes                     | Not applicable          | The Matrix device ID for the widget host.                                                                                                                                                                                                                                                                                                                                                           |
+| `displayName`             |                                                                                                      | No                      | No                      | Display name used for auto-registration.                                                                                                                                                                                                                                                                                                                                                            |
+| `enableE2EE` (deprecated) | `true` or `false`                                                                                    | No, defaults to `true`  | No, defaults to `true`  | Legacy flag to enable end-to-end encryption, not used in the `livekit` branch.                                                                                                                                                                                                                                                                                                                      |
+| `fontScale`               | A decimal number such as `0.9`                                                                       | No, defaults to `1.0`   | No, defaults to `1.0`   | Factor by which to scale the interface's font size.                                                                                                                                                                                                                                                                                                                                                 |
+| `fonts`                   |                                                                                                      | No                      | No                      | Defines the font(s) used by the interface. Multiple font parameters can be specified: `?font=font-one&font=font-two...`.                                                                                                                                                                                                                                                                            |
+| `hideHeader`              | `true` or `false`                                                                                    | No, defaults to `false` | No, defaults to `false` | Hides the room header when in a call.                                                                                                                                                                                                                                                                                                                                                               |
+| `hideScreensharing`       | `true` or `false`                                                                                    | No, defaults to `false` | No, defaults to `false` | Hides the screen-sharing button.                                                                                                                                                                                                                                                                                                                                                                    |
+| `homeserver`              |                                                                                                      | Not applicable          | No                      | Homeserver for registering a new (guest) user, configures non-default guest user server when creating a spa link.                                                                                                                                                                                                                                                                                   |
+| `lang`                    | [BCP 47](https://www.rfc-editor.org/info/bcp47) code                                                 | No                      | No                      | The language the app should use.                                                                                                                                                                                                                                                                                                                                                                    |
+| `parentUrl`               |                                                                                                      | Yes                     | Not applicable          | The url used to send widget action postMessages. This should be the domain of the client or the webview the widget is hosted in. (in case the widget is not in an Iframe but in a dedicated webview we send the postMessages same WebView the widget lives in. Filtering is done in the widget so it ignores the messages it receives from itself)                                                  |
+| `password`                |                                                                                                      | No                      | No                      | E2EE password when using a shared secret. (For individual sender keys in embedded mode this is not required.)                                                                                                                                                                                                                                                                                       |
+| `perParticipantE2EE`      | `true` or `false`                                                                                    | No, defaults to `false` | No, defaults to `false` | Enables per participant encryption with Keys exchanged over encrypted matrix room messages.                                                                                                                                                                                                                                                                                                         |
+| `preload`                 | `true` or `false`                                                                                    | No, defaults to `false` | Not applicable          | Pauses app before joining a call until an `io.element.join` widget action is seen, allowing preloading.                                                                                                                                                                                                                                                                                             |
+| `returnToLobby`           | `true` or `false`                                                                                    | No, defaults to `false` | Not applicable          | Displays the lobby in widget mode after leaving a call; shows a blank page if set to `false`. Useful for video rooms.                                                                                                                                                                                                                                                                               |
+| `roomId`                  | [Matrix Room ID](https://spec.matrix.org/v1.12/appendices/#room-ids)                                 | Yes                     | No                      | Anything about what room we're pointed to should be from useRoomIdentifier which parses the path and resolves alias with respect to the default server name, however roomId is an exception as we need the room ID in embedded widget mode, and not the room alias (or even the via params because we are not trying to join it). This is also not validated, where it is in `useRoomIdentifier()`. |
+| `showControls`            | `true` or `false`                                                                                    | No, defaults to `true`  | No, defaults to `true`  | Displays controls like mute, screen-share, invite, and hangup buttons during a call.                                                                                                                                                                                                                                                                                                                |
+| `skipLobby`               | `true` or `false`                                                                                    | No, defaults to `false` | No, defaults to `false` | Skips the lobby to join a call directly, can be combined with preload in widget. When `true` the audio and video inputs will be muted by default. (This means there currently is no way to start without muted video if one wants to skip the lobby. Also not in widget mode.)                                                                                                                      |
+| `theme`                   | One of: `light`, `dark`, `light-high-contrast`, `dark-high-contrast`                                 | No, defaults to `dark`  | No, defaults to `dark`  | UI theme to use.                                                                                                                                                                                                                                                                                                                                                                                    |
+| `userId`                  | [Matrix User Identifier](https://spec.matrix.org/v1.12/appendices/#user-identifiers)                 | Yes                     | Not applicable          | The Matrix user ID.                                                                                                                                                                                                                                                                                                                                                                                 |
+| `viaServers`              | Comma separated list of [Matrix Server Names](https://spec.matrix.org/v1.12/appendices/#server-name) | Not applicable          | No                      | Homeserver for joining a room, non-empty value required for rooms not on the user’s default homeserver.                                                                                                                                                                                                                                                                                             |
+| `widgetId`                | [MSC2774](https://github.com/matrix-org/matrix-spec-proposals/pull/2774) format widget ID            | Yes                     | Not applicable          | The id used by the widget. The presence of this parameter implies that element call will not connect to a homeserver directly and instead tries to establish postMessage communication via the `parentUrl`.                                                                                                                                                                                         |

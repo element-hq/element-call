@@ -5,10 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { RefObject, useCallback, useMemo, useRef } from "react";
+import { type RefObject, useCallback, useMemo, useRef } from "react";
 
 import { useEventTarget } from "./useEvents";
-import { ReactionOption, ReactionSet, ReactionsRowSize } from "./reactions";
+import {
+  type ReactionOption,
+  ReactionSet,
+  ReactionsRowSize,
+} from "./reactions";
 
 /**
  * Determines whether focus is in the same part of the tree as the given
@@ -43,6 +47,8 @@ export function useCallViewKeyboardShortcuts(
       (event: KeyboardEvent) => {
         if (focusElement.current === null) return;
         if (!mayReceiveKeyEvents(focusElement.current)) return;
+        if (event.altKey || event.ctrlKey || event.metaKey || event.shiftKey)
+          return;
 
         if (event.key === "m") {
           event.preventDefault();

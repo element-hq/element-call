@@ -6,13 +6,17 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { render } from "@testing-library/react";
-import { FC, useRef } from "react";
+import { type FC, useRef } from "react";
 import { expect, test, vi } from "vitest";
 import { Button } from "@vector-im/compound-web";
 import userEvent from "@testing-library/user-event";
 
 import { useCallViewKeyboardShortcuts } from "../src/useCallViewKeyboardShortcuts";
-import { ReactionOption, ReactionSet, ReactionsRowSize } from "./reactions";
+import {
+  type ReactionOption,
+  ReactionSet,
+  ReactionsRowSize,
+} from "./reactions";
 
 // Test Explanation:
 // - The main objective is to test `useCallViewKeyboardShortcuts`.
@@ -91,6 +95,16 @@ test("reactions can be sent via keyboard presses", async () => {
     await user.keyboard(index.toString());
     expect(sendReaction).toHaveBeenNthCalledWith(index, ReactionSet[index - 1]);
   }
+});
+
+test("reaction is not sent when modifier key is held", async () => {
+  const user = userEvent.setup();
+
+  const sendReaction = vi.fn();
+  render(<TestComponent sendReaction={sendReaction} />);
+
+  await user.keyboard("{Meta>}1{/Meta}");
+  expect(sendReaction).not.toHaveBeenCalled();
 });
 
 test("raised hand can be sent via keyboard presses", async () => {

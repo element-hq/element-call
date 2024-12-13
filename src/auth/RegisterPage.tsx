@@ -6,9 +6,9 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  ChangeEvent,
-  FC,
-  FormEvent,
+  type ChangeEvent,
+  type FC,
+  type FormEvent,
   useCallback,
   useEffect,
   useRef,

@@ -5,8 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { vi, Mocked, test, expect } from "vitest";
-import { RoomState } from "matrix-js-sdk/src/models/room-state";
+import { vi, type Mocked, test, expect } from "vitest";
+import { type RoomState } from "matrix-js-sdk/src/models/room-state";
 
 import { PosthogAnalytics } from "../../src/analytics/PosthogAnalytics";
 import { checkForParallelCalls } from "../../src/room/checkForParallelCalls";

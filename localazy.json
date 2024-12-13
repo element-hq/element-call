@@ -7,13 +7,13 @@
     "features": ["plural_postfix_us", "filter_untranslated"],
     "files": [
       {
-        "pattern": "locales/en-GB/*.json",
+        "pattern": "locales/en/*.json",
         "lang": "inherited"
       },
       {
         "group": "existing",
         "pattern": "locales/*/*.json",
-        "excludes": ["locales/en-GB/*.json"],
+        "excludes": ["locales/en/*.json"],
         "lang": "${autodetectLang}"
       }
     ]
@@ -25,9 +25,6 @@
         "output": "locales/${langLsrDash}/${file}"
       }
     ],
-    "includeSourceLang": "${includeSourceLang|false}",
-    "langAliases": {
-      "en": "en_GB"
-    }
+    "includeSourceLang": "${includeSourceLang|false}"
   }
 }
