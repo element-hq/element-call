@@ -162,14 +162,14 @@
     "preferences_tab": {
       "developer_mode_label": "Developer mode",
       "developer_mode_label_description": "Enable developer mode and show developer settings tab.",
+      "introduction": "Here you can configure extra options for an improved experience.",
       "reactions_play_sound_description": "Play a sound effect when anyone sends a reaction into a call.",
       "reactions_play_sound_label": "Play reaction sounds",
       "reactions_show_description": "Show an animation when anyone sends a reaction.",
-      "reactions_show_label": "Show reactions"
+      "reactions_show_label": "Show reactions",
+      "show_hand_raised_timer_description": "Show a timer when a participant raises their hand",
+      "show_hand_raised_timer_label": "Show hand raise duration"
     },
-    "preferences_tab_body": "Here you can configure extra options for an improved experience.",
-    "preferences_tab_show_hand_raised_timer_description": "Show a timer when a participant raises their hand",
-    "preferences_tab_show_hand_raised_timer_label": "Show hand raise duration",
     "speaker_device_selection_label": "Speaker"
   },
   "star_rating_input_label_one": "{{count}} star",

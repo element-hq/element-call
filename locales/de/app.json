@@ -161,16 +161,16 @@
     "more_tab_title": "Mehr",
     "opt_in_description": "<0></0><1></1>Du kannst deine Zustimmung durch Abwählen dieses Kästchens zurückziehen. Falls du dich aktuell in einem Anruf befindest, wird diese Einstellung nach dem Ende des Anrufs wirksam.",
     "preferences_tab": {
+      "introduction": "Hier können zusätzliche Optionen für individuelle Anforderungen eingestellt werden",
       "reactions_play_sound_description": "Einen Soundeffekt abspielen, wenn jemand eine Reaktion sendet",
       "reactions_play_sound_label": "Reaktionstöne abspielen",
       "reactions_show_description": "Zeige eine Animation, wenn jemand eine Reaktion sendet.",
       "reactions_show_label": "Reaktionen anzeigen",
-      "reactions_title": "Reaktionen"
+      "reactions_title": "Reaktionen",
+      "show_hand_raised_timer_description": "Einen Timer zur Handmeldung anzeigen",
+      "show_hand_raised_timer_label": "Dauer der Handmeldung anzeigen"
     },
-    "preferences_tab_body": "Hier können zusätzliche Optionen für individuelle Anforderungen eingestellt werden",
     "preferences_tab_h4": "Einstellungen",
-    "preferences_tab_show_hand_raised_timer_description": "Einen Timer zur Handmeldung anzeigen",
-    "preferences_tab_show_hand_raised_timer_label": "Dauer der Handmeldung anzeigen",
     "speaker_device_selection_label": "Lautsprecher"
   },
   "star_rating_input_label_one": "{{count}} Stern",
