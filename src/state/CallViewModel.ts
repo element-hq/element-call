@@ -69,7 +69,7 @@ import {
 } from "./MediaViewModel";
 import { accumulate, finalizeValue } from "../utils/observable";
 import { ObservableScope } from "./ObservableScope";
-import { duplicateTiles } from "../settings/settings";
+import { duplicateTiles, showNonMemberTiles } from "../settings/settings";
 import { isFirefox } from "../Platform";
 import { setPipEnabled } from "../controls";
 import {
@@ -449,6 +449,7 @@ export class CallViewModel extends ViewModel {
       this.matrixRTCSession,
       MatrixRTCSessionEvent.MembershipsChanged,
     ).pipe(startWith(null)),
+    showNonMemberTiles.value,
   ]).pipe(
     scan(
       (
@@ -458,6 +459,7 @@ export class CallViewModel extends ViewModel {
           { participant: localParticipant },
           duplicateTiles,
           _membershipsChanged,
+          showNonMemberTiles,
         ],
       ) => {
         const newItems = new Map(
@@ -495,9 +497,17 @@ export class CallViewModel extends ViewModel {
               }
               for (let i = 0; i < 1 + duplicateTiles; i++) {
                 const indexedMediaId = `${livekitParticipantId}:${i}`;
-                const prevMedia = prevItems.get(indexedMediaId);
+                let prevMedia = prevItems.get(indexedMediaId);
                 if (prevMedia && prevMedia instanceof UserMedia) {
                   prevMedia.updateParticipant(participant);
+                  if (prevMedia.vm.member === undefined) {
+                    // We have a previous media created because of the `debugShowNonMember` flag.
+                    // In this case we actually replace the media item.
+                    // This "hack" never occurs if we do not use the `debugShowNonMember` debugging
+                    // option and if we always find a room member for each rtc member (which also
+                    // only fails if we have a fundamental problem)
+                    prevMedia = undefined;
+                  }
                 }
                 yield [
                   indexedMediaId,
@@ -533,7 +543,55 @@ export class CallViewModel extends ViewModel {
           }.bind(this)(),
         );
 
-        return newItems;
+        // Generate non member items (items without a corresponding MatrixRTC member)
+        // Those items should not be rendered, they are participants in LiveKit that do not have a corresponding
+        // MatrixRTC members. This cannot be any good:
+        //  - A malicious user impersonates someone
+        //  - Someone injects abusive content
+        //  - The user cannot have encryption keys so it makes no sense to participate
+        // We can only trust users that have a MatrixRTC member event.
+        //
+        // This is still available as a debug option. This can be useful
+        //  - If one wants to test scalability using the LiveKit CLI.
+        //  - If an experimental project does not yet do the MatrixRTC bits.
+        //  - If someone wants to debug if the LiveKit connection works but MatrixRTC room state failed to arrive.
+        const newNonMemberItems = showNonMemberTiles
+          ? new Map(
+              function* (this: CallViewModel): Iterable<[string, MediaItem]> {
+                for (const participant of remoteParticipants) {
+                  for (let i = 0; i < 1 + duplicateTiles; i++) {
+                    const maybeNonMemberParticipantId =
+                      participant.identity + ":" + i;
+                    if (!newItems.has(maybeNonMemberParticipantId)) {
+                      const nonMemberId = maybeNonMemberParticipantId;
+                      yield [
+                        nonMemberId,
+                        prevItems.get(nonMemberId) ??
+                          new UserMedia(
+                            nonMemberId,
+                            undefined,
+                            participant,
+                            this.encryptionSystem,
+                            this.livekitRoom,
+                          ),
+                      ];
+                    }
+                  }
+                }
+              }.bind(this)(),
+            )
+          : new Map();
+        if (newNonMemberItems.size > 0) {
+          logger.debug("Added NonMember items: ", newNonMemberItems);
+        }
+
+        const combinedNew = new Map([
+          ...newNonMemberItems.entries(),
+          ...newItems.entries(),
+        ]);
+
+        for (const [id, t] of prevItems) if (!combinedNew.has(id)) t.destroy();
+        return combinedNew;
       },
       new Map<string, MediaItem>(),
     ),

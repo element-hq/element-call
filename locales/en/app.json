@@ -74,7 +74,8 @@
     "device_id": "Device ID: {{id}}",
     "duplicate_tiles_label": "Number of additional tile copies per participant",
     "hostname": "Hostname: {{hostname}}",
-    "matrix_id": "Matrix ID: {{id}}"
+    "matrix_id": "Matrix ID: {{id}}",
+    "show_non_member_tiles": "Show tiles for non-member media"
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "full_screen_view_description": "<0>Submitting debug logs will help us track down the problem.</0>",
