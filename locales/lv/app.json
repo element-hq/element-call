@@ -75,8 +75,6 @@
   "room_auth_view_eula_caption": "Klikšķināšana uz \"Pievienoties zvanam tagad\" apliecina piekrišanu mūsu <2>galalietotāja licencēšanas nolīgumam (GLLN)</2>",
   "screenshare_button_label": "Kopīgot ekrānu",
   "settings": {
-    "developer_settings_label": "Izstrādātāja iestatījumi",
-    "developer_settings_label_description": "Izstādīt izstrādātāja iestatījumus iestatījumu logā.",
     "developer_tab_title": "Izstrādātājs",
     "feedback_tab_body": "Ja tiek piedzīvoti sarežģījumi vai vienkārši ir vēlme sniegt kādu atsauksmi, lūgums zemāk nosūtīt mums īsu aprakstu.",
     "feedback_tab_description_label": "Tava atsauksme",
@@ -84,7 +82,6 @@
     "feedback_tab_send_logs_label": "Iekļaut atkļūdošanas žurnāla ierakstus",
     "feedback_tab_thank_you": "Paldies, mēs saņēmām atsauksmi!",
     "feedback_tab_title": "Atsauksmes",
-    "more_tab_title": "Vairāk",
     "opt_in_description": "<0></0><1></1>Savu piekrišanu var atsaukt ar atzīmes noņemšanu no šīs rūtiņas. Ja pašreiz atrodies zvanā, šis iestatījums stāsies spēkā zvana beigās.",
     "speaker_device_selection_label": "Runātājs"
   },

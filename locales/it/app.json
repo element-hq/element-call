@@ -94,15 +94,12 @@
   "room_auth_view_eula_caption": "Cliccando \"Entra in chiamata ora\", accetti il nostro <2>accordo di licenza con l'utente finale (EULA)</2>",
   "screenshare_button_label": "Condividi schermo",
   "settings": {
-    "developer_settings_label": "Impostazioni per sviluppatori",
-    "developer_settings_label_description": "Mostra le impostazioni per sviluppatori nella finestra delle impostazioni.",
     "developer_tab_title": "Sviluppatore",
     "feedback_tab_body": "Se stai riscontrando problemi o semplicemente vuoi dare un'opinione, inviaci una breve descrizione qua sotto.",
     "feedback_tab_description_label": "Il tuo commento",
     "feedback_tab_h4": "Invia commento",
     "feedback_tab_send_logs_label": "Includi registri di debug",
     "feedback_tab_thank_you": "Grazie, abbiamo ricevuto il tuo commento!",
-    "more_tab_title": "Altro",
     "opt_in_description": "<0></0><1></1>Puoi revocare il consenso deselezionando questa casella. Se attualmente sei in una chiamata, avrà effetto al termine di essa.",
     "speaker_device_selection_label": "Altoparlante"
   },

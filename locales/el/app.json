@@ -67,8 +67,6 @@
   "return_home_button": "Επιστροφή στην αρχική οθόνη",
   "screenshare_button_label": "Κοινή χρήση οθόνης",
   "settings": {
-    "developer_settings_label": "Ρυθμίσεις προγραμματιστή",
-    "developer_settings_label_description": "Εμφάνιση ρυθμίσεων προγραμματιστή στο παράθυρο ρυθμίσεων.",
     "developer_tab_title": "Προγραμματιστής",
     "feedback_tab_body": "Εάν αντιμετωπίζετε προβλήματα ή απλά θέλετε να μας δώσετε κάποια σχόλια, παρακαλούμε στείλτε μας μια σύντομη περιγραφή παρακάτω.",
     "feedback_tab_description_label": "Τα σχόλιά σας",
@@ -76,7 +74,6 @@
     "feedback_tab_send_logs_label": "Να συμπεριληφθούν αρχεία καταγραφής",
     "feedback_tab_thank_you": "Ευχαριστούμε, λάβαμε τα σχόλιά σας!",
     "feedback_tab_title": "Ανατροφοδότηση",
-    "more_tab_title": "Περισσότερα",
     "opt_in_description": "<0></0><1></1>Μπορείτε να ανακαλέσετε τη συγκατάθεσή σας αποεπιλέγοντας αυτό το πλαίσιο. Εάν βρίσκεστε σε κλήση, η ρύθμιση αυτή θα τεθεί σε ισχύ στο τέλος της.",
     "speaker_device_selection_label": "Ηχείο"
   },

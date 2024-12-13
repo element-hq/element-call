@@ -60,12 +60,9 @@
   "return_home_button": "Vrátit se na domácí obrazovku",
   "screenshare_button_label": "Sdílet obrazovku",
   "settings": {
-    "developer_settings_label": "Vývojářské nastavení",
-    "developer_settings_label_description": "Zobrazit vývojářské nastavení.",
     "developer_tab_title": "Vývojář",
     "feedback_tab_h4": "Dát feedback",
     "feedback_tab_send_logs_label": "Zahrnout ladící záznamy",
-    "more_tab_title": "Více",
     "speaker_device_selection_label": "Reproduktor"
   },
   "unauthenticated_view_body": "Nejste registrovaní? <2>Vytvořit účet</2>",

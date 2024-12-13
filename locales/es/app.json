@@ -67,8 +67,6 @@
   "room_auth_view_eula_caption": "Al hacer clic en \"Unirse a la llamada ahora\", aceptas nuestro <2>Contrato de Licencia de Usuario Final (CLUF)</2>",
   "screenshare_button_label": "Compartir pantalla",
   "settings": {
-    "developer_settings_label": "Ajustes de desarrollador",
-    "developer_settings_label_description": "Muestra los ajustes de desarrollador en la ventana de ajustes.",
     "developer_tab_title": "Desarrollador",
     "feedback_tab_body": "Si tienes algún problema o simplemente quieres darnos tu opinión, por favor envíanos una breve descripción.",
     "feedback_tab_description_label": "Tus comentarios",
@@ -76,7 +74,6 @@
     "feedback_tab_send_logs_label": "Incluir registros de depuración",
     "feedback_tab_thank_you": "¡Gracias, hemos recibido tus comentarios!",
     "feedback_tab_title": "Danos tu opinión",
-    "more_tab_title": "Más",
     "opt_in_description": "<0></0><1></1>Puedes retirar tu consentimiento desmarcando esta casilla. Si estás en una llamada, este ajuste se aplicará al final de esta.",
     "speaker_device_selection_label": "Altavoz"
   },
