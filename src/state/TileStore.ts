@@ -101,7 +101,7 @@ export class TileStore {
    * Creates a builder which can be used to update the collection, passing
    * ownership of the tiles to the updated collection.
    */
-  public from(visibleTiles: Set<GridTileViewModel>): TileStoreBuilder {
+  public from(visibleTiles: number): TileStoreBuilder {
     return new TileStoreBuilder(
       this.spotlight,
       this.grid,
@@ -146,7 +146,7 @@ export class TileStoreBuilder {
       spotlight: SpotlightTileData | null,
       grid: GridTileData[],
     ) => TileStore,
-    private readonly visibleTiles: Set<GridTileViewModel>,
+    private readonly visibleTiles: number,
     /**
      * A number incremented on each update, just for debugging purposes.
      */
@@ -204,10 +204,8 @@ export class TileStoreBuilder {
         const prev = this.prevGridByMedia.get(this.spotlight.media[0]);
         if (prev !== undefined) {
           const [entry, prevIndex] = prev;
-          const previouslyVisible = this.visibleTiles.has(entry.vm);
-          const nowVisible = this.visibleTiles.has(
-            this.prevGrid[this.numGridEntries]?.vm,
-          );
+          const previouslyVisible = prevIndex < this.visibleTiles;
+          const nowVisible = this.numGridEntries < this.visibleTiles;
 
           // If it doesn't need to move between the visible/invisible sections of
           // the grid, then we can keep it where it was and swap the media
@@ -236,17 +234,15 @@ export class TileStoreBuilder {
     const prev = this.prevGridByMedia.get(media);
     if (prev === undefined) {
       // Create a new tile
-      (this.visibleTiles.has(this.prevGrid[this.numGridEntries]?.vm)
+      (this.numGridEntries < this.visibleTiles
         ? this.visibleGridEntries
         : this.invisibleGridEntries
       ).push(new GridTileData(media));
     } else {
       // Reuse the existing tile
       const [entry, prevIndex] = prev;
-      const previouslyVisible = this.visibleTiles.has(entry.vm);
-      const nowVisible = this.visibleTiles.has(
-        this.prevGrid[this.numGridEntries]?.vm,
-      );
+      const previouslyVisible = prevIndex < this.visibleTiles;
+      const nowVisible = this.numGridEntries < this.visibleTiles;
       // If it doesn't need to move between the visible/invisible sections of
       // the grid, then we can keep it exactly where it was previously
       if (previouslyVisible === nowVisible)

@@ -52,7 +52,6 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
         <Slot
           id={model.remote.id}
           model={model.remote}
-          onVisibilityChange={model.remote.setVisible}
           className={styles.container}
           style={{ width: tileWidth, height: tileHeight }}
         >
@@ -61,7 +60,6 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
             id={model.local.id}
             model={model.local}
             onDrag={onDragLocalTile}
-            onVisibilityChange={model.local.setVisible}
             data-block-alignment={pipAlignmentValue.block}
             data-inline-alignment={pipAlignmentValue.inline}
           />
