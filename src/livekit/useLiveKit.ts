@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import {
   ConnectionState,
-  type E2EEOptions,
+  type E2EEManagerOptions,
   ExternalE2EEKeyProvider,
   type LocalVideoTrack,
   Room,
@@ -51,7 +51,7 @@ export function useLiveKit(
   sfuConfig: SFUConfig | undefined,
   e2eeSystem: EncryptionSystem,
 ): UseLivekitResult {
-  const e2eeOptions = useMemo((): E2EEOptions | undefined => {
+  const e2eeOptions = useMemo((): E2EEManagerOptions | undefined => {
     if (e2eeSystem.kind === E2eeType.NONE) return undefined;
 
     if (e2eeSystem.kind === E2eeType.PER_PARTICIPANT) {

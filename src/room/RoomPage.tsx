@@ -98,6 +98,7 @@ export const RoomPage: FC = () => {
       case "loaded":
         return (
           <GroupCallView
+            widget={widget}
             client={client!}
             rtcSession={groupCallState.rtcSession}
             isPasswordlessUser={passwordlessUser}

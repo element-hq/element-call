@@ -60,10 +60,10 @@ export function ReactionsAudioRenderer(): ReactNode {
         return;
       }
       if (soundMap[reactionName]) {
-        audioEngineRef.current.playSound(reactionName);
+        void audioEngineRef.current.playSound(reactionName);
       } else {
         // Fallback sounds.
-        audioEngineRef.current.playSound("generic");
+        void audioEngineRef.current.playSound("generic");
       }
     }
   }, [audioEngineRef, shouldPlay, oldReactions, reactions]);

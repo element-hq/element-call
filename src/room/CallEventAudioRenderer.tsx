@@ -25,7 +25,7 @@ import { useLatest } from "../useLatest";
 export const MAX_PARTICIPANT_COUNT_FOR_SOUND = 8;
 export const THROTTLE_SOUND_EFFECT_MS = 500;
 
-const sounds = prefetchSounds({
+export const callEventAudioSounds = prefetchSounds({
   join: {
     mp3: joinCallSoundMp3,
     ogg: joinCallSoundOgg,
@@ -46,7 +46,7 @@ export function CallEventAudioRenderer({
   vm: CallViewModel;
 }): ReactNode {
   const audioEngineCtx = useAudioContext({
-    sounds,
+    sounds: callEventAudioSounds,
     latencyHint: "interactive",
   });
   const audioEngineRef = useLatest(audioEngineCtx);
@@ -60,7 +60,7 @@ export function CallEventAudioRenderer({
 
   useEffect(() => {
     if (audioEngineRef.current && previousRaisedHandCount < raisedHandCount) {
-      audioEngineRef.current.playSound("raiseHand");
+      void audioEngineRef.current.playSound("raiseHand");
     }
   }, [audioEngineRef, previousRaisedHandCount, raisedHandCount]);
 
@@ -74,7 +74,7 @@ export function CallEventAudioRenderer({
         throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
       )
       .subscribe(() => {
-        audioEngineRef.current?.playSound("join");
+        void audioEngineRef.current?.playSound("join");
       });
 
     const leftSub = vm.memberChanges
@@ -86,7 +86,7 @@ export function CallEventAudioRenderer({
         throttle(() => interval(THROTTLE_SOUND_EFFECT_MS)),
       )
       .subscribe(() => {
-        audioEngineRef.current?.playSound("left");
+        void audioEngineRef.current?.playSound("left");
       });
 
     return (): void => {

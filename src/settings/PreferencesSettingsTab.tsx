@@ -14,7 +14,7 @@ import {
   showHandRaisedTimer as showHandRaisedTimerSetting,
   showReactions as showReactionsSetting,
   playReactionsSound as playReactionsSoundSetting,
-  developerSettingsTab as developerSettingsTabSetting,
+  developerMode as developerModeSetting,
   useSetting,
 } from "./settings";
 
@@ -37,9 +37,7 @@ export const PreferencesSettingsTab: FC = () => {
     fn(e.target.checked);
   };
 
-  const [developerSettingsTab, setDeveloperSettingsTab] = useSetting(
-    developerSettingsTabSetting,
-  );
+  const [developerMode, setDeveloperMode] = useSetting(developerModeSetting);
 
   return (
     <div>
@@ -82,13 +80,13 @@ export const PreferencesSettingsTab: FC = () => {
         <InputField
           id="developerSettingsTab"
           type="checkbox"
-          checked={developerSettingsTab}
+          checked={developerMode}
           label={t("settings.preferences_tab.developer_mode_label")}
           description={t(
             "settings.preferences_tab.developer_mode_label_description",
           )}
           onChange={(event: ChangeEvent<HTMLInputElement>): void =>
-            setDeveloperSettingsTab(event.target.checked)
+            setDeveloperMode(event.target.checked)
           }
         />
       </FieldRow>
