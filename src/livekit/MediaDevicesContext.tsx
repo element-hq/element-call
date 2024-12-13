@@ -16,7 +16,7 @@ import {
   useState,
 } from "react";
 import { createMediaDeviceObserver } from "@livekit/components-core";
-import { startWith } from "rxjs";
+import { map, startWith } from "rxjs";
 import { useObservableEagerState } from "observable-hooks";
 import { logger } from "matrix-js-sdk/src/logger";
 
@@ -83,36 +83,43 @@ function useMediaDevice(
       ).pipe(startWith([])),
     [kind, requestPermissions],
   );
-  const availableRaw = useObservableEagerState(deviceObserver);
-  const available = useMemo(() => {
-    // Sometimes browsers (particularly Firefox) can return multiple device
-    // entries for the exact same device ID; using a map deduplicates them
-    let available = new Map<string, DeviceLabel>(
-      availableRaw.map((d, i) => [
-        d.deviceId,
-        d.label
-          ? { type: "name", name: d.label }
-          : { type: "number", number: i + 1 },
-      ]),
-    );
-    // Create a virtual default audio output for browsers that don't have one.
-    // Its device ID must be the empty string because that's what setSinkId
-    // recognizes.
-    if (
-      kind === "audiooutput" &&
-      available.size &&
-      !available.has("") &&
-      !available.has("default")
-    )
-      available = new Map([
-        ["", { type: "default", name: availableRaw[0]?.label || null }],
-        ...available,
-      ]);
-    // Note: creating virtual default input devices would be another problem
-    // entirely, because requesting a media stream from deviceId "" won't
-    // automatically track the default device.
-    return available;
-  }, [kind, availableRaw]);
+  const available = useObservableEagerState(
+    useMemo(
+      () =>
+        deviceObserver.pipe(
+          map((availableRaw) => {
+            // Sometimes browsers (particularly Firefox) can return multiple device
+            // entries for the exact same device ID; using a map deduplicates them
+            let available = new Map<string, DeviceLabel>(
+              availableRaw.map((d, i) => [
+                d.deviceId,
+                d.label
+                  ? { type: "name", name: d.label }
+                  : { type: "number", number: i + 1 },
+              ]),
+            );
+            // Create a virtual default audio output for browsers that don't have one.
+            // Its device ID must be the empty string because that's what setSinkId
+            // recognizes.
+            if (
+              kind === "audiooutput" &&
+              available.size &&
+              !available.has("") &&
+              !available.has("default")
+            )
+              available = new Map([
+                ["", { type: "default", name: availableRaw[0]?.label || null }],
+                ...available,
+              ]);
+            // Note: creating virtual default input devices would be another problem
+            // entirely, because requesting a media stream from deviceId "" won't
+            // automatically track the default device.
+            return available;
+          }),
+        ),
+      [kind, deviceObserver],
+    ),
+  );
 
   const [preferredId, select] = useSetting(setting);
   const selectedId = useMemo(() => {
@@ -130,9 +137,17 @@ function useMediaDevice(
     }
     return undefined;
   }, [available, preferredId]);
-  const selectedGroupId = useMemo(
-    () => availableRaw.find((d) => d.deviceId === selectedId)?.groupId,
-    [availableRaw, selectedId],
+  const selectedGroupId = useObservableEagerState(
+    useMemo(
+      () =>
+        deviceObserver.pipe(
+          map(
+            (availableRaw) =>
+              availableRaw.find((d) => d.deviceId === selectedId)?.groupId,
+          ),
+        ),
+      [deviceObserver, selectedId],
+    ),
   );
 
   return useMemo(
