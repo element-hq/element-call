@@ -5,7 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ChangeEvent, type FC, useCallback, useId } from "react";
+import {
+  type ChangeEvent,
+  type FC,
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useId,
+} from "react";
 import {
   Heading,
   InlineField,
@@ -13,16 +20,23 @@ import {
   RadioControl,
   Separator,
 } from "@vector-im/compound-web";
+import { Trans, useTranslation } from "react-i18next";
 
 import { type MediaDevice } from "../livekit/MediaDevicesContext";
 import styles from "./DeviceSelection.module.css";
 
 interface Props {
   devices: MediaDevice;
-  caption: string;
+  title: string;
+  numberedLabel: (number: number) => string;
 }
 
-export const DeviceSelection: FC<Props> = ({ devices, caption }) => {
+export const DeviceSelection: FC<Props> = ({
+  devices,
+  title,
+  numberedLabel,
+}) => {
+  const { t } = useTranslation();
   const groupId = useId();
   const onChange = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +45,7 @@ export const DeviceSelection: FC<Props> = ({ devices, caption }) => {
     [devices],
   );
 
-  if (devices.available.length == 0) return null;
+  if (devices.available.size == 0) return null;
 
   return (
     <div className={styles.selection}>
@@ -42,29 +56,53 @@ export const DeviceSelection: FC<Props> = ({ devices, caption }) => {
         as="h4"
         className={styles.title}
       >
-        {caption}
+        {title}
       </Heading>
       <Separator className={styles.separator} />
       <div className={styles.options}>
-        {devices.available.map(({ deviceId, label }, index) => (
-          <InlineField
-            key={deviceId}
-            name={groupId}
-            control={
-              <RadioControl
-                checked={deviceId === devices.selectedId}
-                onChange={onChange}
-                value={deviceId}
-              />
-            }
-          >
-            <Label>
-              {!!label && label.trim().length > 0
-                ? label
-                : `${caption} ${index + 1}`}
-            </Label>
-          </InlineField>
-        ))}
+        {[...devices.available].map(([id, label]) => {
+          let labelText: ReactNode;
+          switch (label.type) {
+            case "name":
+              labelText = label.name;
+              break;
+            case "number":
+              labelText = numberedLabel(label.number);
+              break;
+            case "default":
+              labelText =
+                label.name === null ? (
+                  t("settings.devices.default")
+                ) : (
+                  <Trans
+                    i18nKey="settings.devices.default_named"
+                    name={label.name}
+                  >
+                    Default{" "}
+                    <span className={styles.secondary}>
+                      ({{ name: label.name } as unknown as ReactElement})
+                    </span>
+                  </Trans>
+                );
+              break;
+          }
+
+          return (
+            <InlineField
+              key={id}
+              name={groupId}
+              control={
+                <RadioControl
+                  checked={id === devices.selectedId}
+                  onChange={onChange}
+                  value={id}
+                />
+              }
+            >
+              <Label>{labelText}</Label>
+            </InlineField>
+          );
+        })}
       </div>
     </div>
   );

@@ -48,13 +48,11 @@
     "audio": "Audio",
     "avatar": "Avatar",
     "back": "Back",
-    "camera": "Camera",
     "display_name": "Display name",
     "encrypted": "Encrypted",
     "error": "Error",
     "home": "Home",
     "loading": "Loading…",
-    "microphone": "Microphone",
     "next": "Next",
     "options": "Options",
     "password": "Password",
@@ -153,6 +151,16 @@
       "effect_volume_label": "Sound effect volume"
     },
     "developer_tab_title": "Developer",
+    "devices": {
+      "camera": "Camera",
+      "camera_numbered": "Camera {{n}}",
+      "default": "Default",
+      "default_named": "Default <2>({{name}})</2>",
+      "microphone": "Microphone",
+      "microphone_numbered": "Microphone {{n}}",
+      "speaker": "Speaker",
+      "speaker_numbered": "Speaker {{n}}"
+    },
     "feedback_tab_body": "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
     "feedback_tab_description_label": "Your feedback",
     "feedback_tab_h4": "Submit feedback",
@@ -170,8 +178,7 @@
       "reactions_show_label": "Show reactions",
       "show_hand_raised_timer_description": "Show a timer when a participant raises their hand",
       "show_hand_raised_timer_label": "Show hand raise duration"
-    },
-    "speaker_device_selection_label": "Speaker"
+    }
   },
   "star_rating_input_label_one": "{{count}} star",
   "star_rating_input_label_other": "{{count}} stars",

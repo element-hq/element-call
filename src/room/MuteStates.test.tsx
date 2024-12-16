@@ -12,6 +12,7 @@ import { MemoryRouter } from "react-router-dom";
 
 import { useMuteStates } from "./MuteStates";
 import {
+  type DeviceLabel,
   type MediaDevice,
   type MediaDevices,
   MediaDevicesContext,
@@ -62,10 +63,11 @@ const mockCamera: MediaDeviceInfo = {
   },
 };
 
-function mockDevices(available: MediaDeviceInfo[]): MediaDevice {
+function mockDevices(available: Map<string, DeviceLabel>): MediaDevice {
   return {
     available,
     selectedId: "",
+    selectedGroupId: "",
     select: (): void => {},
   };
 }
@@ -82,9 +84,17 @@ function mockMediaDevices(
   } = { microphone: true, speaker: true, camera: true },
 ): MediaDevices {
   return {
-    audioInput: mockDevices(microphone ? [mockMicrophone] : []),
-    audioOutput: mockDevices(speaker ? [mockSpeaker] : []),
-    videoInput: mockDevices(camera ? [mockCamera] : []),
+    audioInput: mockDevices(
+      microphone
+        ? new Map([[mockMicrophone.deviceId, mockMicrophone]])
+        : new Map(),
+    ),
+    audioOutput: mockDevices(
+      speaker ? new Map([[mockSpeaker.deviceId, mockSpeaker]]) : new Map(),
+    ),
+    videoInput: mockDevices(
+      camera ? new Map([[mockCamera.deviceId, mockCamera]]) : new Map(),
+    ),
     startUsingDeviceNames: (): void => {},
     stopUsingDeviceNames: (): void => {},
   };

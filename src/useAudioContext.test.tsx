@@ -101,7 +101,8 @@ test("will use the correct device", () => {
         audioInput: deviceStub,
         audioOutput: {
           selectedId: "chosen-device",
-          available: [],
+          selectedGroupId: "",
+          available: new Map(),
           select: () => {},
         },
         videoInput: deviceStub,
