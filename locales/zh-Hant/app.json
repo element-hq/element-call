@@ -99,8 +99,6 @@
   "room_auth_view_eula_caption": "點擊「立刻加入通話」即表示您同意我們的<2>終端使用者授權協議 (EULA)</2>",
   "screenshare_button_label": "分享畫面",
   "settings": {
-    "developer_settings_label": "開發者設定",
-    "developer_settings_label_description": "在設定視窗中顯示開發者設定。",
     "developer_tab_title": "開發者",
     "feedback_tab_body": "若您遇到問題或只是想提供一些回饋，請在下方傳送簡短說明給我們。",
     "feedback_tab_description_label": "您的回饋",
@@ -108,7 +106,6 @@
     "feedback_tab_send_logs_label": "包含除錯紀錄",
     "feedback_tab_thank_you": "感謝，我們已經收到您的回饋了！",
     "feedback_tab_title": "回饋",
-    "more_tab_title": "更多",
     "opt_in_description": "<0></0><1></1>您可以透過取消核取此方塊來撤回同意。若您目前正在通話中，此設定將在通話結束時生效。",
     "speaker_device_selection_label": "發言者"
   },

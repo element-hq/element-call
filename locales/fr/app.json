@@ -95,8 +95,6 @@
   "room_auth_view_eula_caption": "En cliquant sur « Rejoindre l’appel maintenant », vous acceptez notre <2>Contrat de Licence Utilisateur Final (CLUF)</2>",
   "screenshare_button_label": "Partage d’écran",
   "settings": {
-    "developer_settings_label": "Paramètres développeurs",
-    "developer_settings_label_description": "Affiche les paramètres développeurs dans la fenêtre des paramètres.",
     "developer_tab_title": "Développeur",
     "feedback_tab_body": "Si vous rencontrez des problèmes, ou vous voulez simplement faire un commentaire, faites-en une courte description ci-dessous.",
     "feedback_tab_description_label": "Votre commentaire",
@@ -104,7 +102,6 @@
     "feedback_tab_send_logs_label": "Inclure les journaux de débogage",
     "feedback_tab_thank_you": "Merci, nous avons reçu vos commentaires !",
     "feedback_tab_title": "Commentaires",
-    "more_tab_title": "Plus",
     "opt_in_description": "<0></0><1></1>Vous pouvez retirer votre consentement en décochant cette case. Si vous êtes actuellement en communication, ce paramètre prendra effet à la fin de l’appel.",
     "speaker_device_selection_label": "Intervenant"
   },

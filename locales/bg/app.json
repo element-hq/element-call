@@ -62,7 +62,6 @@
     "developer_tab_title": "Разработчик",
     "feedback_tab_h4": "Изпрати обратна връзка",
     "feedback_tab_send_logs_label": "Включи debug логове",
-    "more_tab_title": "Още",
     "speaker_device_selection_label": "Говорител"
   },
   "unauthenticated_view_body": "Все още не сте регистрирани? <2>Създайте акаунт</2>",

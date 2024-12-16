@@ -52,8 +52,7 @@
   "settings": {
     "developer_tab_title": "Geliştirici",
     "feedback_tab_h4": "Geri bildirim ver",
-    "feedback_tab_send_logs_label": "Hata ayıklama kütüğünü dahil et",
-    "more_tab_title": "Daha"
+    "feedback_tab_send_logs_label": "Hata ayıklama kütüğünü dahil et"
   },
   "unauthenticated_view_body": "Kaydolmadınız mı? <2>Hesap açın</2>",
   "unauthenticated_view_login_button": "Hesabınıza girin"
