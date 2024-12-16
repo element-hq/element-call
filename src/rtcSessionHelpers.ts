@@ -44,9 +44,8 @@ async function makePreferredLivekitFoci(
   }
 
   // Prioritize the client well known over the configured sfu.
-  const wellKnownFoci = (
-    await rtcSession.room.client.waitForClientWellKnown()
-  )?.[FOCI_WK_KEY];
+  const wellKnownFoci =
+    rtcSession.room.client.getClientWellKnown()?.[FOCI_WK_KEY];
   if (Array.isArray(wellKnownFoci)) {
     preferredFoci.push(
       ...wellKnownFoci

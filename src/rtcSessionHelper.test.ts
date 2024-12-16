@@ -40,7 +40,7 @@ test("It joins the correct Session", async () => {
     room: {
       roomId: "roomId",
       client: {
-        waitForClientWellKnown: vi.fn().mockResolvedValue(clientWellKnown),
+        getClientWellKnown: vi.fn().mockReturnValue(clientWellKnown),
       },
     },
     memberships: [],
