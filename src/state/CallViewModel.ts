@@ -83,6 +83,7 @@ import { oneOnOneLayout } from "./OneOnOneLayout";
 import { pipLayout } from "./PipLayout";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { observeSpeaker } from "./observeSpeaker";
+import { shallowEquals } from "../utils/array";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -705,6 +706,8 @@ export class CallViewModel extends ViewModel {
             bins.sort(([, bin1], [, bin2]) => bin1 - bin2).map(([m]) => m.vm),
           );
     }),
+    distinctUntilChanged(shallowEquals),
+    this.scope.state(),
   );
 
   private readonly spotlight: Observable<MediaViewModel[]> =
@@ -718,6 +721,7 @@ export class CallViewModel extends ViewModel {
           map((speaker) => (speaker ? [speaker] : [])),
         );
       }),
+      distinctUntilChanged(shallowEquals),
       this.scope.state(),
     );
 
