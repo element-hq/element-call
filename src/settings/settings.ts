@@ -31,17 +31,17 @@ export class Setting<T> {
       }
     }
 
-    this._value = new BehaviorSubject(initialValue);
-    this.value = this._value;
+    this._value$ = new BehaviorSubject(initialValue);
+    this.value$ = this._value$;
   }
 
   private readonly key: string;
 
-  private readonly _value: BehaviorSubject<T>;
-  public readonly value: Observable<T>;
+  private readonly _value$: BehaviorSubject<T>;
+  public readonly value$: Observable<T>;
 
   public readonly setValue = (value: T): void => {
-    this._value.next(value);
+    this._value$.next(value);
     localStorage.setItem(this.key, JSON.stringify(value));
   };
 }
@@ -50,7 +50,7 @@ export class Setting<T> {
  * React hook that returns a settings's current value and a setter.
  */
 export function useSetting<T>(setting: Setting<T>): [T, (value: T) => void] {
-  return [useObservableEagerState(setting.value), setting.setValue];
+  return [useObservableEagerState(setting.value$), setting.setValue];
 }
 
 // null = undecided

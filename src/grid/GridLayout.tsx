@@ -26,8 +26,8 @@ interface GridCSSProperties extends CSSProperties {
  * together in a scrolling grid.
  */
 export const makeGridLayout: CallLayout<GridLayoutModel> = ({
-  minBounds,
-  spotlightAlignment,
+  minBounds$,
+  spotlightAlignment$,
 }) => ({
   scrollingOnTop: false,
 
@@ -37,7 +37,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
     useUpdateLayout();
     const alignment = useObservableEagerState(
       useInitial(() =>
-        spotlightAlignment.pipe(
+        spotlightAlignment$.pipe(
           distinctUntilChanged(
             (a1, a2) => a1.block === a2.block && a1.inline === a2.inline,
           ),
@@ -47,7 +47,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
 
     const onDragSpotlight: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>
-        spotlightAlignment.next({
+        spotlightAlignment$.next({
           block: yRatio < 0.5 ? "start" : "end",
           inline: xRatio < 0.5 ? "start" : "end",
         }),
@@ -74,7 +74,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
   scrolling: forwardRef(function GridLayout({ model, Slot }, ref) {
     useUpdateLayout();
     useVisibleTiles(model.setVisibleTiles);
-    const { width, height: minHeight } = useObservableEagerState(minBounds);
+    const { width, height: minHeight } = useObservableEagerState(minBounds$);
     const { gap, tileWidth, tileHeight } = useMemo(
       () => arrangeTiles(width, minHeight, model.grid.length),
       [width, minHeight, model.grid.length],

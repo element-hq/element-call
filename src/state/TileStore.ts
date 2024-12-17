@@ -18,31 +18,31 @@ function debugEntries(entries: GridTileData[]): string[] {
 }
 
 let DEBUG_ENABLED = false;
-debugTileLayout.value.subscribe((value) => (DEBUG_ENABLED = value));
+debugTileLayout.value$.subscribe((value) => (DEBUG_ENABLED = value));
 
 class SpotlightTileData {
-  private readonly media_: BehaviorSubject<MediaViewModel[]>;
+  private readonly media$: BehaviorSubject<MediaViewModel[]>;
   public get media(): MediaViewModel[] {
-    return this.media_.value;
+    return this.media$.value;
   }
   public set media(value: MediaViewModel[]) {
-    this.media_.next(value);
+    this.media$.next(value);
   }
 
-  private readonly maximised_: BehaviorSubject<boolean>;
+  private readonly maximised$: BehaviorSubject<boolean>;
   public get maximised(): boolean {
-    return this.maximised_.value;
+    return this.maximised$.value;
   }
   public set maximised(value: boolean) {
-    this.maximised_.next(value);
+    this.maximised$.next(value);
   }
 
   public readonly vm: SpotlightTileViewModel;
 
   public constructor(media: MediaViewModel[], maximised: boolean) {
-    this.media_ = new BehaviorSubject(media);
-    this.maximised_ = new BehaviorSubject(maximised);
-    this.vm = new SpotlightTileViewModel(this.media_, this.maximised_);
+    this.media$ = new BehaviorSubject(media);
+    this.maximised$ = new BehaviorSubject(maximised);
+    this.vm = new SpotlightTileViewModel(this.media$, this.maximised$);
   }
 
   public destroy(): void {
@@ -51,19 +51,19 @@ class SpotlightTileData {
 }
 
 class GridTileData {
-  private readonly media_: BehaviorSubject<UserMediaViewModel>;
+  private readonly media$: BehaviorSubject<UserMediaViewModel>;
   public get media(): UserMediaViewModel {
-    return this.media_.value;
+    return this.media$.value;
   }
   public set media(value: UserMediaViewModel) {
-    this.media_.next(value);
+    this.media$.next(value);
   }
 
   public readonly vm: GridTileViewModel;
 
   public constructor(media: UserMediaViewModel) {
-    this.media_ = new BehaviorSubject(media);
-    this.vm = new GridTileViewModel(this.media_);
+    this.media$ = new BehaviorSubject(media);
+    this.vm = new GridTileViewModel(this.media$);
   }
 
   public destroy(): void {
@@ -123,7 +123,10 @@ export class TileStoreBuilder {
     "speaking" in this.prevSpotlight.media[0] &&
     this.prevSpotlight.media[0];
 
-  private readonly prevGridByMedia = new Map(
+  private readonly prevGridByMedia: Map<
+    MediaViewModel,
+    [GridTileData, number]
+  > = new Map(
     this.prevGrid.map((entry, i) => [entry.media, [entry, i]] as const),
   );
 

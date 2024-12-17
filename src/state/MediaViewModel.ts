@@ -74,11 +74,11 @@ export function useDisplayName(vm: MediaViewModel): string {
   return displayName;
 }
 
-export function observeTrackReference(
-  participant: Observable<Participant | undefined>,
+export function observeTrackReference$(
+  participant$: Observable<Participant | undefined>,
   source: Track.Source,
 ): Observable<TrackReferenceOrPlaceholder | undefined> {
-  return participant.pipe(
+  return participant$.pipe(
     switchMap((p) => {
       if (p) {
         return observeParticipantMedia(p).pipe(
@@ -96,7 +96,7 @@ export function observeTrackReference(
   );
 }
 
-function observeRemoteTrackReceivingOkay(
+function observeRemoteTrackReceivingOkay$(
   participant: Participant,
   source: Track.Source,
 ): Observable<boolean | undefined> {
@@ -111,7 +111,7 @@ function observeRemoteTrackReceivingOkay(
   };
 
   return combineLatest([
-    observeTrackReference(of(participant), source),
+    observeTrackReference$(of(participant), source),
     interval(1000).pipe(startWith(0)),
   ]).pipe(
     switchMap(async ([trackReference]) => {
@@ -168,7 +168,7 @@ function observeRemoteTrackReceivingOkay(
   );
 }
 
-function encryptionErrorObservable(
+function encryptionErrorObservable$(
   room: LivekitRoom,
   participant: Participant,
   encryptionSystem: EncryptionSystem,
@@ -209,13 +209,13 @@ abstract class BaseMediaViewModel extends ViewModel {
   /**
    * The LiveKit video track for this media.
    */
-  public readonly video: Observable<TrackReferenceOrPlaceholder | undefined>;
+  public readonly video$: Observable<TrackReferenceOrPlaceholder | undefined>;
   /**
    * Whether there should be a warning that this media is unencrypted.
    */
-  public readonly unencryptedWarning: Observable<boolean>;
+  public readonly unencryptedWarning$: Observable<boolean>;
 
-  public readonly encryptionStatus: Observable<EncryptionStatus>;
+  public readonly encryptionStatus$: Observable<EncryptionStatus>;
 
   /**
    * Whether this media corresponds to the local participant.
@@ -235,7 +235,7 @@ abstract class BaseMediaViewModel extends ViewModel {
     public readonly member: RoomMember | undefined,
     // We don't necessarily have a participant if a user connects via MatrixRTC but not (yet) through
     // livekit.
-    protected readonly participant: Observable<
+    protected readonly participant$: Observable<
       LocalParticipant | RemoteParticipant | undefined
     >,
 
@@ -245,21 +245,21 @@ abstract class BaseMediaViewModel extends ViewModel {
     livekitRoom: LivekitRoom,
   ) {
     super();
-    const audio = observeTrackReference(participant, audioSource).pipe(
+    const audio$ = observeTrackReference$(participant$, audioSource).pipe(
       this.scope.state(),
     );
-    this.video = observeTrackReference(participant, videoSource).pipe(
+    this.video$ = observeTrackReference$(participant$, videoSource).pipe(
       this.scope.state(),
     );
-    this.unencryptedWarning = combineLatest(
-      [audio, this.video],
+    this.unencryptedWarning$ = combineLatest(
+      [audio$, this.video$],
       (a, v) =>
         encryptionSystem.kind !== E2eeType.NONE &&
         (a?.publication?.isEncrypted === false ||
           v?.publication?.isEncrypted === false),
     ).pipe(this.scope.state());
 
-    this.encryptionStatus = this.participant.pipe(
+    this.encryptionStatus$ = this.participant$.pipe(
       switchMap((participant): Observable<EncryptionStatus> => {
         if (!participant) {
           return of(EncryptionStatus.Connecting);
@@ -270,20 +270,20 @@ abstract class BaseMediaViewModel extends ViewModel {
           return of(EncryptionStatus.Okay);
         } else if (encryptionSystem.kind === E2eeType.PER_PARTICIPANT) {
           return combineLatest([
-            encryptionErrorObservable(
+            encryptionErrorObservable$(
               livekitRoom,
               participant,
               encryptionSystem,
               "MissingKey",
             ),
-            encryptionErrorObservable(
+            encryptionErrorObservable$(
               livekitRoom,
               participant,
               encryptionSystem,
               "InvalidKey",
             ),
-            observeRemoteTrackReceivingOkay(participant, audioSource),
-            observeRemoteTrackReceivingOkay(participant, videoSource),
+            observeRemoteTrackReceivingOkay$(participant, audioSource),
+            observeRemoteTrackReceivingOkay$(participant, videoSource),
           ]).pipe(
             map(([keyMissing, keyInvalid, audioOkay, videoOkay]) => {
               if (keyMissing) return EncryptionStatus.KeyMissing;
@@ -296,14 +296,14 @@ abstract class BaseMediaViewModel extends ViewModel {
           );
         } else {
           return combineLatest([
-            encryptionErrorObservable(
+            encryptionErrorObservable$(
               livekitRoom,
               participant,
               encryptionSystem,
               "InvalidKey",
             ),
-            observeRemoteTrackReceivingOkay(participant, audioSource),
-            observeRemoteTrackReceivingOkay(participant, videoSource),
+            observeRemoteTrackReceivingOkay$(participant, audioSource),
+            observeRemoteTrackReceivingOkay$(participant, videoSource),
           ]).pipe(
             map(
               ([keyInvalid, audioOkay, videoOkay]):
@@ -339,7 +339,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   /**
    * Whether the participant is speaking.
    */
-  public readonly speaking = this.participant.pipe(
+  public readonly speaking$ = this.participant$.pipe(
     switchMap((p) =>
       p
         ? observeParticipantEvents(p, ParticipantEvent.IsSpeakingChanged).pipe(
@@ -353,49 +353,49 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   /**
    * Whether this participant is sending audio (i.e. is unmuted on their side).
    */
-  public readonly audioEnabled: Observable<boolean>;
+  public readonly audioEnabled$: Observable<boolean>;
   /**
    * Whether this participant is sending video.
    */
-  public readonly videoEnabled: Observable<boolean>;
+  public readonly videoEnabled$: Observable<boolean>;
 
-  private readonly _cropVideo = new BehaviorSubject(true);
+  private readonly _cropVideo$ = new BehaviorSubject(true);
   /**
    * Whether the tile video should be contained inside the tile or be cropped to fit.
    */
-  public readonly cropVideo: Observable<boolean> = this._cropVideo;
+  public readonly cropVideo$: Observable<boolean> = this._cropVideo$;
 
   public constructor(
     id: string,
     member: RoomMember | undefined,
-    participant: Observable<LocalParticipant | RemoteParticipant | undefined>,
+    participant$: Observable<LocalParticipant | RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
   ) {
     super(
       id,
       member,
-      participant,
+      participant$,
       encryptionSystem,
       Track.Source.Microphone,
       Track.Source.Camera,
       livekitRoom,
     );
 
-    const media = participant.pipe(
+    const media$ = participant$.pipe(
       switchMap((p) => (p && observeParticipantMedia(p)) ?? of(undefined)),
       this.scope.state(),
     );
-    this.audioEnabled = media.pipe(
+    this.audioEnabled$ = media$.pipe(
       map((m) => m?.microphoneTrack?.isMuted === false),
     );
-    this.videoEnabled = media.pipe(
+    this.videoEnabled$ = media$.pipe(
       map((m) => m?.cameraTrack?.isMuted === false),
     );
   }
 
   public toggleFitContain(): void {
-    this._cropVideo.next(!this._cropVideo.value);
+    this._cropVideo$.next(!this._cropVideo$.value);
   }
 
   public get local(): boolean {
@@ -410,7 +410,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
   /**
    * Whether the video should be mirrored.
    */
-  public readonly mirror = this.video.pipe(
+  public readonly mirror$ = this.video$.pipe(
     switchMap((v) => {
       const track = v?.publication?.track;
       if (!(track instanceof LocalTrack)) return of(false);
@@ -428,17 +428,17 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
    * Whether to show this tile in a highly visible location near the start of
    * the grid.
    */
-  public readonly alwaysShow = alwaysShowSelf.value;
+  public readonly alwaysShow$ = alwaysShowSelf.value$;
   public readonly setAlwaysShow = alwaysShowSelf.setValue;
 
   public constructor(
     id: string,
     member: RoomMember | undefined,
-    participant: Observable<LocalParticipant | undefined>,
+    participant$: Observable<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
   ) {
-    super(id, member, participant, encryptionSystem, livekitRoom);
+    super(id, member, participant$, encryptionSystem, livekitRoom);
   }
 }
 
@@ -446,18 +446,18 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
  * A remote participant's user media.
  */
 export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
-  private readonly locallyMutedToggle = new Subject<void>();
-  private readonly localVolumeAdjustment = new Subject<number>();
-  private readonly localVolumeCommit = new Subject<void>();
+  private readonly locallyMutedToggle$ = new Subject<void>();
+  private readonly localVolumeAdjustment$ = new Subject<number>();
+  private readonly localVolumeCommit$ = new Subject<void>();
 
   /**
    * The volume to which this participant's audio is set, as a scalar
    * multiplier.
    */
-  public readonly localVolume: Observable<number> = merge(
-    this.locallyMutedToggle.pipe(map(() => "toggle mute" as const)),
-    this.localVolumeAdjustment,
-    this.localVolumeCommit.pipe(map(() => "commit" as const)),
+  public readonly localVolume$: Observable<number> = merge(
+    this.locallyMutedToggle$.pipe(map(() => "toggle mute" as const)),
+    this.localVolumeAdjustment$,
+    this.localVolumeCommit$.pipe(map(() => "commit" as const)),
   ).pipe(
     accumulate({ volume: 1, committedVolume: 1 }, (state, event) => {
       switch (event) {
@@ -487,7 +487,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
   /**
    * Whether this participant's audio is disabled.
    */
-  public readonly locallyMuted: Observable<boolean> = this.localVolume.pipe(
+  public readonly locallyMuted$: Observable<boolean> = this.localVolume$.pipe(
     map((volume) => volume === 0),
     this.scope.state(),
   );
@@ -495,29 +495,29 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
   public constructor(
     id: string,
     member: RoomMember | undefined,
-    participant: Observable<RemoteParticipant | undefined>,
+    participant$: Observable<RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
   ) {
-    super(id, member, participant, encryptionSystem, livekitRoom);
+    super(id, member, participant$, encryptionSystem, livekitRoom);
 
     // Sync the local volume with LiveKit
     combineLatest([
-      participant,
-      this.localVolume.pipe(this.scope.bind()),
+      participant$,
+      this.localVolume$.pipe(this.scope.bind()),
     ]).subscribe(([p, volume]) => p && p.setVolume(volume));
   }
 
   public toggleLocallyMuted(): void {
-    this.locallyMutedToggle.next();
+    this.locallyMutedToggle$.next();
   }
 
   public setLocalVolume(value: number): void {
-    this.localVolumeAdjustment.next(value);
+    this.localVolumeAdjustment$.next(value);
   }
 
   public commitLocalVolume(): void {
-    this.localVolumeCommit.next();
+    this.localVolumeCommit$.next();
   }
 }
 
@@ -528,7 +528,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
   public constructor(
     id: string,
     member: RoomMember | undefined,
-    participant: Observable<LocalParticipant | RemoteParticipant>,
+    participant$: Observable<LocalParticipant | RemoteParticipant>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
     public readonly local: boolean,
@@ -536,7 +536,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
     super(
       id,
       member,
-      participant,
+      participant$,
       encryptionSystem,
       Track.Source.ScreenShareAudio,
       Track.Source.ScreenShare,

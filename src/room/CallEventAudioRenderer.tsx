@@ -65,7 +65,7 @@ export function CallEventAudioRenderer({
   }, [audioEngineRef, previousRaisedHandCount, raisedHandCount]);
 
   useEffect(() => {
-    const joinSub = vm.memberChanges
+    const joinSub = vm.memberChanges$
       .pipe(
         filter(
           ({ joined, ids }) =>
@@ -77,7 +77,7 @@ export function CallEventAudioRenderer({
         void audioEngineRef.current?.playSound("join");
       });
 
-    const leftSub = vm.memberChanges
+    const leftSub = vm.memberChanges$
       .pipe(
         filter(
           ({ ids, left }) =>

@@ -18,15 +18,15 @@ function createId(): string {
 export class GridTileViewModel extends ViewModel {
   public readonly id = createId();
 
-  public constructor(public readonly media: Observable<UserMediaViewModel>) {
+  public constructor(public readonly media$: Observable<UserMediaViewModel>) {
     super();
   }
 }
 
 export class SpotlightTileViewModel extends ViewModel {
   public constructor(
-    public readonly media: Observable<MediaViewModel[]>,
-    public readonly maximised: Observable<boolean>,
+    public readonly media$: Observable<MediaViewModel[]>,
+    public readonly maximised$: Observable<boolean>,
   ) {
     super();
   }

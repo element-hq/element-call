@@ -27,7 +27,7 @@ interface GridCSSProperties extends CSSProperties {
  */
 export const makeSpotlightPortraitLayout: CallLayout<
   SpotlightPortraitLayoutModel
-> = ({ minBounds }) => ({
+> = ({ minBounds$ }) => ({
   scrollingOnTop: false,
 
   fixed: forwardRef(function SpotlightPortraitLayoutFixed(
@@ -55,7 +55,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
   ) {
     useUpdateLayout();
     useVisibleTiles(model.setVisibleTiles);
-    const { width } = useObservableEagerState(minBounds);
+    const { width } = useObservableEagerState(minBounds$);
     const { gap, tileWidth, tileHeight } = arrangeTiles(
       width,
       // TODO: We pretend that the minimum height is the width, because the
@@ -64,7 +64,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
       model.grid.length,
     );
     const withIndicators =
-      useObservableEagerState(model.spotlight.media).length > 1;
+      useObservableEagerState(model.spotlight.media$).length > 1;
 
     return (
       <div

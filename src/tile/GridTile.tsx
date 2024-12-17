@@ -83,13 +83,13 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     ref,
   ) => {
     const { t } = useTranslation();
-    const video = useObservableEagerState(vm.video);
-    const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning);
-    const encryptionStatus = useObservableEagerState(vm.encryptionStatus);
-    const audioEnabled = useObservableEagerState(vm.audioEnabled);
-    const videoEnabled = useObservableEagerState(vm.videoEnabled);
-    const speaking = useObservableEagerState(vm.speaking);
-    const cropVideo = useObservableEagerState(vm.cropVideo);
+    const video = useObservableEagerState(vm.video$);
+    const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning$);
+    const encryptionStatus = useObservableEagerState(vm.encryptionStatus$);
+    const audioEnabled = useObservableEagerState(vm.audioEnabled$);
+    const videoEnabled = useObservableEagerState(vm.videoEnabled$);
+    const speaking = useObservableEagerState(vm.speaking$);
+    const cropVideo = useObservableEagerState(vm.cropVideo$);
     const onSelectFitContain = useCallback(
       (e: Event) => {
         e.preventDefault();
@@ -198,8 +198,8 @@ interface LocalUserMediaTileProps extends TileProps {
 const LocalUserMediaTile = forwardRef<HTMLDivElement, LocalUserMediaTileProps>(
   ({ vm, onOpenProfile, ...props }, ref) => {
     const { t } = useTranslation();
-    const mirror = useObservableEagerState(vm.mirror);
-    const alwaysShow = useObservableEagerState(vm.alwaysShow);
+    const mirror = useObservableEagerState(vm.mirror$);
+    const alwaysShow = useObservableEagerState(vm.alwaysShow$);
     const latestAlwaysShow = useLatest(alwaysShow);
     const onSelectAlwaysShow = useCallback(
       (e: Event) => {
@@ -249,8 +249,8 @@ const RemoteUserMediaTile = forwardRef<
   RemoteUserMediaTileProps
 >(({ vm, ...props }, ref) => {
   const { t } = useTranslation();
-  const locallyMuted = useObservableEagerState(vm.locallyMuted);
-  const localVolume = useObservableEagerState(vm.localVolume);
+  const locallyMuted = useObservableEagerState(vm.locallyMuted$);
+  const localVolume = useObservableEagerState(vm.localVolume$);
   const onSelectMute = useCallback(
     (e: Event) => {
       e.preventDefault();
@@ -316,7 +316,7 @@ export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
   ({ vm, onOpenProfile, ...props }, theirRef) => {
     const ourRef = useRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
-    const media = useObservableEagerState(vm.media);
+    const media = useObservableEagerState(vm.media$);
     const displayName = useDisplayName(media);
 
     if (media instanceof LocalUserMediaViewModel) {

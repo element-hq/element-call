@@ -156,7 +156,7 @@ export function useVisibleTiles(callback: VisibleTilesCallback): void {
   );
 }
 
-const windowHeightObservable = fromEvent(window, "resize").pipe(
+const windowHeightObservable$ = fromEvent(window, "resize").pipe(
   startWith(null),
   map(() => window.innerHeight),
 );
@@ -262,7 +262,7 @@ export function Grid<
   const [gridRoot, gridRef2] = useState<HTMLElement | null>(null);
   const gridRef = useMergedRefs<HTMLElement>(gridRef1, gridRef2);
 
-  const windowHeight = useObservableEagerState(windowHeightObservable);
+  const windowHeight = useObservableEagerState(windowHeightObservable$);
   const [layoutRoot, setLayoutRoot] = useState<HTMLElement | null>(null);
   const [generation, setGeneration] = useState<number | null>(null);
   const [visibleTilesCallback, setVisibleTilesCallback] =

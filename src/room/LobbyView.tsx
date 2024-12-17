@@ -148,7 +148,7 @@ export const LobbyView: FC<Props> = ({
 
   const switchCamera = useSwitchCamera(
     useObservable(
-      (inputs) => inputs.pipe(map(([video]) => video)),
+      (inputs$) => inputs$.pipe(map(([video]) => video)),
       [videoTrack],
     ),
   );

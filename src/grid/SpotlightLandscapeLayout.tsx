@@ -21,7 +21,7 @@ import { useUpdateLayout, useVisibleTiles } from "./Grid";
  */
 export const makeSpotlightLandscapeLayout: CallLayout<
   SpotlightLandscapeLayoutModel
-> = ({ minBounds }) => ({
+> = ({ minBounds$ }) => ({
   scrollingOnTop: false,
 
   fixed: forwardRef(function SpotlightLandscapeLayoutFixed(
@@ -29,7 +29,7 @@ export const makeSpotlightLandscapeLayout: CallLayout<
     ref,
   ) {
     useUpdateLayout();
-    useObservableEagerState(minBounds);
+    useObservableEagerState(minBounds$);
 
     return (
       <div ref={ref} className={styles.layer}>
@@ -51,9 +51,9 @@ export const makeSpotlightLandscapeLayout: CallLayout<
   ) {
     useUpdateLayout();
     useVisibleTiles(model.setVisibleTiles);
-    useObservableEagerState(minBounds);
+    useObservableEagerState(minBounds$);
     const withIndicators =
-      useObservableEagerState(model.spotlight.media).length > 1;
+      useObservableEagerState(model.spotlight.media$).length > 1;
 
     return (
       <div ref={ref} className={styles.layer}>

@@ -15,10 +15,10 @@ const nothing = Symbol("nothing");
  * callback will not be invoked.
  */
 export function finalizeValue<T>(callback: (finalValue: T) => void) {
-  return (source: Observable<T>): Observable<T> =>
+  return (source$: Observable<T>): Observable<T> =>
     defer(() => {
       let finalValue: T | typeof nothing = nothing;
-      return source.pipe(
+      return source$.pipe(
         tap((value) => (finalValue = value)),
         finalize(() => {
           if (finalValue !== nothing) callback(finalValue);
@@ -35,6 +35,6 @@ export function accumulate<State, Event>(
   initial: State,
   update: (state: State, event: Event) => State,
 ) {
-  return (events: Observable<Event>): Observable<State> =>
-    events.pipe(scan(update, initial), startWith(initial));
+  return (events$: Observable<Event>): Observable<State> =>
+    events$.pipe(scan(update, initial), startWith(initial));
 }

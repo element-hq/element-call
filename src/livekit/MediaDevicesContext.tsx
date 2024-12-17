@@ -74,7 +74,7 @@ function useMediaDevice(
   // useMediaDevices provides no way to request device names.
   // Tragically, the only way to get device names out of LiveKit is to specify a
   // kind, which then results in multiple permissions requests.
-  const deviceObserver = useMemo(
+  const deviceObserver$ = useMemo(
     () =>
       createMediaDeviceObserver(
         kind,
@@ -86,7 +86,7 @@ function useMediaDevice(
   const available = useObservableEagerState(
     useMemo(
       () =>
-        deviceObserver.pipe(
+        deviceObserver$.pipe(
           map((availableRaw) => {
             // Sometimes browsers (particularly Firefox) can return multiple device
             // entries for the exact same device ID; using a map deduplicates them
@@ -117,7 +117,7 @@ function useMediaDevice(
             return available;
           }),
         ),
-      [kind, deviceObserver],
+      [kind, deviceObserver$],
     ),
   );
 
@@ -140,13 +140,13 @@ function useMediaDevice(
   const selectedGroupId = useObservableEagerState(
     useMemo(
       () =>
-        deviceObserver.pipe(
+        deviceObserver$.pipe(
           map(
             (availableRaw) =>
               availableRaw.find((d) => d.deviceId === selectedId)?.groupId,
           ),
         ),
-      [deviceObserver, selectedId],
+      [deviceObserver$, selectedId],
     ),
   );
 

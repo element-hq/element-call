@@ -72,7 +72,7 @@ const SpotlightLocalUserMediaItem = forwardRef<
   HTMLDivElement,
   SpotlightLocalUserMediaItemProps
 >(({ vm, ...props }, ref) => {
-  const mirror = useObservableEagerState(vm.mirror);
+  const mirror = useObservableEagerState(vm.mirror$);
   return <MediaView ref={ref} mirror={mirror} {...props} />;
 });
 
@@ -86,8 +86,8 @@ const SpotlightUserMediaItem = forwardRef<
   HTMLDivElement,
   SpotlightUserMediaItemProps
 >(({ vm, ...props }, ref) => {
-  const videoEnabled = useObservableEagerState(vm.videoEnabled);
-  const cropVideo = useObservableEagerState(vm.cropVideo);
+  const videoEnabled = useObservableEagerState(vm.videoEnabled$);
+  const cropVideo = useObservableEagerState(vm.cropVideo$);
 
   const baseProps: SpotlightUserMediaItemBaseProps &
     RefAttributes<HTMLDivElement> = {
@@ -110,7 +110,7 @@ interface SpotlightItemProps {
   vm: MediaViewModel;
   targetWidth: number;
   targetHeight: number;
-  intersectionObserver: Observable<IntersectionObserver>;
+  intersectionObserver$: Observable<IntersectionObserver>;
   /**
    * Whether this item should act as a scroll snapping point.
    */
@@ -124,7 +124,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
       vm,
       targetWidth,
       targetHeight,
-      intersectionObserver,
+      intersectionObserver$,
       snap,
       "aria-hidden": ariaHidden,
     },
@@ -133,15 +133,15 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
     const ourRef = useRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
     const displayName = useDisplayName(vm);
-    const video = useObservableEagerState(vm.video);
-    const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning);
-    const encryptionStatus = useObservableEagerState(vm.encryptionStatus);
+    const video = useObservableEagerState(vm.video$);
+    const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning$);
+    const encryptionStatus = useObservableEagerState(vm.encryptionStatus$);
 
     // Hook this item up to the intersection observer
     useEffect(() => {
       const element = ourRef.current!;
       let prevIo: IntersectionObserver | null = null;
-      const subscription = intersectionObserver.subscribe((io) => {
+      const subscription = intersectionObserver$.subscribe((io) => {
         prevIo?.unobserve(element);
         io.observe(element);
         prevIo = io;
@@ -150,7 +150,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
         subscription.unsubscribe();
         prevIo?.unobserve(element);
       };
-    }, [intersectionObserver]);
+    }, [intersectionObserver$]);
 
     const baseProps: SpotlightItemBaseProps & RefAttributes<HTMLDivElement> = {
       ref,
@@ -208,10 +208,10 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
     theirRef,
   ) => {
     const { t } = useTranslation();
-    const [ourRef, root] = useObservableRef<HTMLDivElement | null>(null);
+    const [ourRef, root$] = useObservableRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
-    const maximised = useObservableEagerState(vm.maximised);
-    const media = useObservableEagerState(vm.media);
+    const maximised = useObservableEagerState(vm.maximised$);
+    const media = useObservableEagerState(vm.media$);
     const [visibleId, setVisibleId] = useState<string | undefined>(
       media[0]?.id,
     );
@@ -225,9 +225,9 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
     // hooked up to the root element and the items. Because the items will run
     // their effects before their parent does, we need to do this dance with an
     // Observable to actually give them the intersection observer.
-    const intersectionObserver = useInitial<Observable<IntersectionObserver>>(
+    const intersectionObserver$ = useInitial<Observable<IntersectionObserver>>(
       () =>
-        root.pipe(
+        root$.pipe(
           map(
             (r) =>
               new IntersectionObserver(
@@ -295,7 +295,7 @@ export const SpotlightTile = forwardRef<HTMLDivElement, Props>(
               vm={vm}
               targetWidth={targetWidth}
               targetHeight={targetHeight}
-              intersectionObserver={intersectionObserver}
+              intersectionObserver$={intersectionObserver$}
               // This is how we get the container to scroll to the right media
               // when the previous/next buttons are clicked: we temporarily
               // remove all scroll snap points except for just the one media

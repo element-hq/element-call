@@ -19,8 +19,8 @@ import { type DragCallback, useUpdateLayout } from "./Grid";
  * is shown at maximum size, overlaid by a small view of the local participant.
  */
 export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
-  minBounds,
-  pipAlignment,
+  minBounds$,
+  pipAlignment$,
 }) => ({
   scrollingOnTop: false,
 
@@ -31,8 +31,8 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
 
   scrolling: forwardRef(function OneOnOneLayoutScrolling({ model, Slot }, ref) {
     useUpdateLayout();
-    const { width, height } = useObservableEagerState(minBounds);
-    const pipAlignmentValue = useObservableEagerState(pipAlignment);
+    const { width, height } = useObservableEagerState(minBounds$);
+    const pipAlignmentValue = useObservableEagerState(pipAlignment$);
     const { tileWidth, tileHeight } = useMemo(
       () => arrangeTiles(width, height, 1),
       [width, height],
@@ -40,7 +40,7 @@ export const makeOneOnOneLayout: CallLayout<OneOnOneLayoutModel> = ({
 
     const onDragLocalTile: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>
-        pipAlignment.next({
+        pipAlignment$.next({
           block: yRatio < 0.5 ? "start" : "end",
           inline: xRatio < 0.5 ? "start" : "end",
         }),
