@@ -13,11 +13,11 @@ import {
   type MockedFunction,
   test,
   vitest,
+  afterEach,
 } from "vitest";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { ConnectionState } from "livekit-client";
 import { BehaviorSubject, of } from "rxjs";
-import { afterEach } from "node:test";
 import { act, type ReactNode } from "react";
 import {
   type CallMembership,
