@@ -13,6 +13,7 @@ import {
   isLivekitFocus,
   isLivekitFocusConfig,
 } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
+import { AutoDiscovery } from "matrix-js-sdk/src/autodiscovery";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
@@ -43,19 +44,28 @@ async function makePreferredLivekitFoci(
     preferredFoci.push(focusInUse);
   }
 
-  // Prioritize the client well known over the configured sfu.
-  const wellKnownFoci =
-    rtcSession.room.client.getClientWellKnown()?.[FOCI_WK_KEY];
-  if (Array.isArray(wellKnownFoci)) {
-    preferredFoci.push(
-      ...wellKnownFoci
-        .filter((f) => !!f)
-        .filter(isLivekitFocusConfig)
-        .map((wellKnownFocus) => {
-          logger.log("Adding livekit focus from well known: ", wellKnownFocus);
-          return { ...wellKnownFocus, livekit_alias: livekitAlias };
-        }),
-    );
+  // Prioritize the .well-known/matrix/client, if available, over the configured SFU
+  const domain = rtcSession.room.client.getDomain();
+  if (domain) {
+    // we use AutoDiscovery instead of relying on the MatrixClient having already
+    // been fully configured and started
+    const wellKnownFoci = (await AutoDiscovery.getRawClientConfig(domain))?.[
+      FOCI_WK_KEY
+    ];
+    if (Array.isArray(wellKnownFoci)) {
+      preferredFoci.push(
+        ...wellKnownFoci
+          .filter((f) => !!f)
+          .filter(isLivekitFocusConfig)
+          .map((wellKnownFocus) => {
+            logger.log(
+              "Adding livekit focus from well known: ",
+              wellKnownFocus,
+            );
+            return { ...wellKnownFocus, livekit_alias: livekitAlias };
+          }),
+      );
+    }
   }
 
   const urlFromConf = Config.get().livekit?.livekit_service_url;

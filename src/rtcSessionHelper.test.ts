@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { expect, test, vi } from "vitest";
+import { AutoDiscovery } from "matrix-js-sdk/src/autodiscovery";
 
 import { enterRTCSession } from "../src/rtcSessionHelpers";
 import { mockConfig } from "./utils/test";
@@ -36,11 +37,21 @@ test("It joins the correct Session", async () => {
   mockConfig({
     livekit: { livekit_service_url: "http://my-default-service-url.com" },
   });
+
+  vi.spyOn(AutoDiscovery, "getRawClientConfig").mockImplementation(
+    async (domain) => {
+      if (domain === "example.org") {
+        return Promise.resolve(clientWellKnown);
+      }
+      return Promise.resolve({});
+    },
+  );
+
   const mockedSession = vi.mocked({
     room: {
       roomId: "roomId",
       client: {
-        getClientWellKnown: vi.fn().mockReturnValue(clientWellKnown),
+        getDomain: vi.fn().mockReturnValue("example.org"),
       },
     },
     memberships: [],
