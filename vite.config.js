@@ -109,5 +109,12 @@ export default defineConfig(({ mode }) => {
         "@radix-ui/react-dismissable-layer",
       ],
     },
+    // Vite is using esbuild in development mode, which doesn't work with the wasm loader
+    // in matrix-sdk-crypto-wasm, so we need to exclude it here. This doesn't affect the
+    // production build (which uses rollup) which still works as expected.
+    // https://vite.dev/guide/why.html#why-not-bundle-with-esbuild
+    optimizeDeps: {
+      exclude: ["@matrix-org/matrix-sdk-crypto-wasm"],
+    },
   };
 });
