@@ -12,7 +12,7 @@ import classNames from "classnames";
 import { type CallLayout } from "./CallLayout";
 import { type SpotlightLandscapeLayout as SpotlightLandscapeLayoutModel } from "../state/CallViewModel";
 import styles from "./SpotlightLandscapeLayout.module.css";
-import { useUpdateLayout } from "./Grid";
+import { useUpdateLayout, useVisibleTiles } from "./Grid";
 
 /**
  * An implementation of the "spotlight landscape" layout, in which the spotlight
@@ -21,7 +21,7 @@ import { useUpdateLayout } from "./Grid";
  */
 export const makeSpotlightLandscapeLayout: CallLayout<
   SpotlightLandscapeLayoutModel
-> = ({ minBounds }) => ({
+> = ({ minBounds$ }) => ({
   scrollingOnTop: false,
 
   fixed: forwardRef(function SpotlightLandscapeLayoutFixed(
@@ -29,7 +29,7 @@ export const makeSpotlightLandscapeLayout: CallLayout<
     ref,
   ) {
     useUpdateLayout();
-    useObservableEagerState(minBounds);
+    useObservableEagerState(minBounds$);
 
     return (
       <div ref={ref} className={styles.layer}>
@@ -50,9 +50,10 @@ export const makeSpotlightLandscapeLayout: CallLayout<
     ref,
   ) {
     useUpdateLayout();
-    useObservableEagerState(minBounds);
+    useVisibleTiles(model.setVisibleTiles);
+    useObservableEagerState(minBounds$);
     const withIndicators =
-      useObservableEagerState(model.spotlight.media).length > 1;
+      useObservableEagerState(model.spotlight.media$).length > 1;
 
     return (
       <div ref={ref} className={styles.layer}>
@@ -63,13 +64,7 @@ export const makeSpotlightLandscapeLayout: CallLayout<
         />
         <div className={styles.grid}>
           {model.grid.map((m) => (
-            <Slot
-              key={m.id}
-              className={styles.slot}
-              id={m.id}
-              model={m}
-              onVisibilityChange={m.setVisible}
-            />
+            <Slot key={m.id} className={styles.slot} id={m.id} model={m} />
           ))}
         </div>
       </div>

@@ -19,9 +19,9 @@ type MonoTypeOperator = <T>(o: Observable<T>) => Observable<T>;
  * A scope which limits the execution lifetime of its bound Observables.
  */
 export class ObservableScope {
-  private readonly ended = new Subject<void>();
+  private readonly ended$ = new Subject<void>();
 
-  private readonly bindImpl: MonoTypeOperator = takeUntil(this.ended);
+  private readonly bindImpl: MonoTypeOperator = takeUntil(this.ended$);
 
   /**
    * Binds an Observable to this scope, so that it completes when the scope
@@ -31,8 +31,8 @@ export class ObservableScope {
     return this.bindImpl;
   }
 
-  private readonly stateImpl: MonoTypeOperator = (o) =>
-    o.pipe(
+  private readonly stateImpl: MonoTypeOperator = (o$) =>
+    o$.pipe(
       this.bind(),
       distinctUntilChanged(),
       shareReplay({ bufferSize: 1, refCount: false }),
@@ -51,7 +51,7 @@ export class ObservableScope {
    * Ends the scope, causing any bound Observables to complete.
    */
   public end(): void {
-    this.ended.next();
-    this.ended.complete();
+    this.ended$.next();
+    this.ended$.complete();
   }
 }

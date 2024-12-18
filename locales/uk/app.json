@@ -99,8 +99,6 @@
   "room_auth_view_eula_caption": "Натискаючи \"Приєднатися до виклику зараз\", ви погоджуєтеся з нашою <2>Ліцензійною угодою з кінцевим користувачем (EULA)</2>",
   "screenshare_button_label": "Поділитися екраном",
   "settings": {
-    "developer_settings_label": "Налаштування розробника",
-    "developer_settings_label_description": "Відкрийте налаштування розробника у вікні налаштувань.",
     "developer_tab_title": "Розробнику",
     "feedback_tab_body": "Якщо у вас виникли проблеми або ви просто хочете залишити відгук, надішліть нам короткий опис нижче.",
     "feedback_tab_description_label": "Ваш відгук",
@@ -108,7 +106,6 @@
     "feedback_tab_send_logs_label": "Долучити журнали налагодження",
     "feedback_tab_thank_you": "Дякуємо, ми отримали ваш відгук!",
     "feedback_tab_title": "Відгук",
-    "more_tab_title": "Докладніше",
     "opt_in_description": "<0></0><1></1>Ви можете відкликати згоду, прибравши цей прапорець. Якщо ви зараз розмовляєте, це налаштування застосується після завершення виклику.",
     "speaker_device_selection_label": "Динамік"
   },

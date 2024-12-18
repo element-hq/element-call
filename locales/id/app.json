@@ -96,8 +96,6 @@
   "room_auth_view_eula_caption": "Dengan mengeklik \"Bergabung ke panggilan sekarang\", Anda menyetujui <2>Perjanjian Lisensi Pengguna Akhir (EULA)</2> kami",
   "screenshare_button_label": "Bagikan layar",
   "settings": {
-    "developer_settings_label": "Pengaturan Pengembang",
-    "developer_settings_label_description": "Ekspos pengaturan pengembang dalam jendela pengaturan.",
     "developer_tab_title": "Pengembang",
     "feedback_tab_body": "Jika Anda mengalami masalah atau hanya ingin memberikan masukan, silakan kirimkan kami deskripsi pendek di bawah.",
     "feedback_tab_description_label": "Masukan Anda",
@@ -105,7 +103,6 @@
     "feedback_tab_send_logs_label": "Termasuk catatan pengawakutuan",
     "feedback_tab_thank_you": "Terima kasih, kami telah menerima masukan Anda!",
     "feedback_tab_title": "Masukan",
-    "more_tab_title": "Lainnya",
     "opt_in_description": "<0></0><1></1>Anda dapat mengurungkan kembali izin dengan mencentang kotak ini. Jika Anda saat ini dalam panggilan, pengaturan ini akan diterapkan di akhir panggilan.",
     "speaker_device_selection_label": "Pembicara"
   },

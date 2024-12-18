@@ -49,7 +49,7 @@ test("control a participant's volume", async () => {
           expect(setVolumeSpy).toHaveBeenLastCalledWith(0.8);
         },
       });
-      expectObservable(vm.localVolume).toBe("ab(cd)(ef)g", {
+      expectObservable(vm.localVolume$).toBe("ab(cd)(ef)g", {
         a: 1,
         b: 0,
         c: 0.6,
@@ -69,7 +69,7 @@ test("toggle fit/contain for a participant's video", async () => {
         a: () => vm.toggleFitContain(),
         b: () => vm.toggleFitContain(),
       });
-      expectObservable(vm.cropVideo).toBe("abc", {
+      expectObservable(vm.cropVideo$).toBe("abc", {
         a: true,
         b: false,
         c: true,
@@ -82,7 +82,7 @@ test("local media remembers whether it should always be shown", async () => {
   await withLocalMedia(rtcMembership, {}, (vm) =>
     withTestScheduler(({ expectObservable, schedule }) => {
       schedule("-a|", { a: () => vm.setAlwaysShow(false) });
-      expectObservable(vm.alwaysShow).toBe("ab", { a: true, b: false });
+      expectObservable(vm.alwaysShow$).toBe("ab", { a: true, b: false });
     }),
   );
   // Next local media should start out *not* always shown
@@ -93,7 +93,7 @@ test("local media remembers whether it should always be shown", async () => {
     (vm) =>
       withTestScheduler(({ expectObservable, schedule }) => {
         schedule("-a|", { a: () => vm.setAlwaysShow(true) });
-        expectObservable(vm.alwaysShow).toBe("ab", { a: false, b: true });
+        expectObservable(vm.alwaysShow$).toBe("ab", { a: false, b: true });
       }),
   );
 });

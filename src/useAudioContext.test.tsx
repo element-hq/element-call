@@ -5,10 +5,9 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { expect, test, vitest } from "vitest";
+import { expect, test, vitest, afterEach } from "vitest";
 import { type FC } from "react";
 import { render } from "@testing-library/react";
-import { afterEach } from "node:test";
 import userEvent from "@testing-library/user-event";
 
 import { deviceStub, MediaDevicesContext } from "./livekit/MediaDevicesContext";
@@ -101,7 +100,8 @@ test("will use the correct device", () => {
         audioInput: deviceStub,
         audioOutput: {
           selectedId: "chosen-device",
-          available: [],
+          selectedGroupId: "",
+          available: new Map(),
           select: () => {},
         },
         videoInput: deviceStub,

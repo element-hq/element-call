@@ -6,10 +6,9 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { render } from "@testing-library/react";
-import { expect, test } from "vitest";
+import { expect, test, afterEach } from "vitest";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { act, type ReactNode } from "react";
-import { afterEach } from "node:test";
 
 import {
   MockRoom,

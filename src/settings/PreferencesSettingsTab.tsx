@@ -41,13 +41,13 @@ export const PreferencesSettingsTab: FC = () => {
 
   return (
     <div>
-      <Text>{t("settings.preferences_tab_body")}</Text>
+      <Text>{t("settings.preferences_tab.introduction")}</Text>
       <FieldRow>
         <InputField
           id="showHandRaisedTimer"
-          label={t("settings.preferences_tab_show_hand_raised_timer_label")}
+          label={t("settings.preferences_tab.show_hand_raised_timer_label")}
           description={t(
-            "settings.preferences_tab_show_hand_raised_timer_description",
+            "settings.preferences_tab.show_hand_raised_timer_description",
           )}
           type="checkbox"
           checked={showHandRaisedTimer}

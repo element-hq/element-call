@@ -97,8 +97,6 @@
   "room_auth_view_eula_caption": "Klõpsides „Liitu kõnega kohe“, nõustud sa meie <2>Lõppkasutaja litsentsilepinguga (EULA)</2>",
   "screenshare_button_label": "Jaga ekraani",
   "settings": {
-    "developer_settings_label": "Arendaja seadistused",
-    "developer_settings_label_description": "Näita seadistuste aknas arendajale vajalikke seadeid.",
     "developer_tab_title": "Arendaja",
     "feedback_tab_body": "Kui selle rakenduse kasutamisel tekib sul probleeme või lihtsalt soovid oma arvamust avaldada, siis palun täida alljärgnev lühike kirjeldus.",
     "feedback_tab_description_label": "Sinu tagasiside",
@@ -106,7 +104,6 @@
     "feedback_tab_send_logs_label": "Lisa veatuvastuslogid",
     "feedback_tab_thank_you": "Tänud, me oleme sinu tagasiside kätte saanud!",
     "feedback_tab_title": "Tagasiside",
-    "more_tab_title": "Rohkem",
     "opt_in_description": "<0></0><1></1>Sa võid selle valiku eelmaldamisega alati oma nõusoleku tagasi võtta. Kui sul parasjagu on kõne pooleli, siis seadistuste muudatus jõustub pärast kõne lõppu.",
     "speaker_device_selection_label": "Kõlar"
   },

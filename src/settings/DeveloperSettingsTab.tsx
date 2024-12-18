@@ -13,6 +13,7 @@ import {
   useSetting,
   duplicateTiles as duplicateTilesSetting,
   debugTileLayout as debugTileLayoutSetting,
+  showNonMemberTiles as showNonMemberTilesSetting,
 } from "./settings";
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 
@@ -25,6 +26,9 @@ export const DeveloperSettingsTab: FC<Props> = ({ client }) => {
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
   const [debugTileLayout, setDebugTileLayout] = useSetting(
     debugTileLayoutSetting,
+  );
+  const [showNonMemberTiles, setShowNonMemberTiles] = useSetting(
+    showNonMemberTilesSetting,
   );
 
   return (
@@ -83,6 +87,20 @@ export const DeveloperSettingsTab: FC<Props> = ({ client }) => {
           onChange={(event: ChangeEvent<HTMLInputElement>): void =>
             setDebugTileLayout(event.target.checked)
           }
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="showNonMemberTiles"
+          type="checkbox"
+          label={t("developer_mode.show_non_member_tiles")}
+          checked={!!showNonMemberTiles}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setShowNonMemberTiles(event.target.checked);
+            },
+            [setShowNonMemberTiles],
+          )}
         />
       </FieldRow>
     </>

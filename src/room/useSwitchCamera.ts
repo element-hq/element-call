@@ -31,17 +31,17 @@ import { useLatest } from "../useLatest";
  * producing a callback if so.
  */
 export function useSwitchCamera(
-  video: Observable<LocalVideoTrack | null>,
+  video$: Observable<LocalVideoTrack | null>,
 ): (() => void) | null {
   const mediaDevices = useMediaDevices();
   const setVideoInput = useLatest(mediaDevices.videoInput.select);
 
   // Produce an observable like the input 'video' observable, except make it
   // emit whenever the track is muted or the device changes
-  const videoTrack: Observable<LocalVideoTrack | null> = useObservable(
-    (inputs) =>
-      inputs.pipe(
-        switchMap(([video]) => video),
+  const videoTrack$: Observable<LocalVideoTrack | null> = useObservable(
+    (inputs$) =>
+      inputs$.pipe(
+        switchMap(([video$]) => video$),
         switchMap((video) => {
           if (video === null) return of(null);
           return merge(
@@ -53,15 +53,15 @@ export function useSwitchCamera(
           );
         }),
       ),
-    [video],
+    [video$],
   );
 
-  const switchCamera: Observable<(() => void) | null> = useObservable(
-    (inputs) =>
+  const switchCamera$: Observable<(() => void) | null> = useObservable(
+    (inputs$) =>
       platform === "desktop"
         ? of(null)
-        : inputs.pipe(
-            switchMap(([track]) => track),
+        : inputs$.pipe(
+            switchMap(([track$]) => track$),
             map((track) => {
               if (track === null) return null;
               const facingMode = facingModeFromLocalTrack(track).facingMode;
@@ -86,8 +86,8 @@ export function useSwitchCamera(
                   );
             }),
           ),
-    [videoTrack],
+    [videoTrack$],
   );
 
-  return useObservableEagerState(switchCamera);
+  return useObservableEagerState(switchCamera$);
 }

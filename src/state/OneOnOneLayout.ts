@@ -7,17 +7,15 @@ Please see LICENSE in the repository root for full details.
 
 import { type OneOnOneLayout, type OneOnOneLayoutMedia } from "./CallViewModel";
 import { type TileStore } from "./TileStore";
-import { type GridTileViewModel } from "./TileViewModel";
 
 /**
  * Produces a one-on-one layout with the given media.
  */
 export function oneOnOneLayout(
   media: OneOnOneLayoutMedia,
-  visibleTiles: Set<GridTileViewModel>,
   prevTiles: TileStore,
 ): [OneOnOneLayout, TileStore] {
-  const update = prevTiles.from(visibleTiles);
+  const update = prevTiles.from(2);
   update.registerGridTile(media.local);
   update.registerGridTile(media.remote);
   const tiles = update.build();

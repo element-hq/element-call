@@ -13,18 +13,18 @@ export interface Controls {
   disablePip: () => void;
 }
 
-export const setPipEnabled = new Subject<boolean>();
+export const setPipEnabled$ = new Subject<boolean>();
 
 window.controls = {
   canEnterPip(): boolean {
-    return setPipEnabled.observed;
+    return setPipEnabled$.observed;
   },
   enablePip(): void {
-    if (!setPipEnabled.observed) throw new Error("No call is running");
-    setPipEnabled.next(true);
+    if (!setPipEnabled$.observed) throw new Error("No call is running");
+    setPipEnabled$.next(true);
   },
   disablePip(): void {
-    if (!setPipEnabled.observed) throw new Error("No call is running");
-    setPipEnabled.next(false);
+    if (!setPipEnabled$.observed) throw new Error("No call is running");
+    setPipEnabled$.next(false);
   },
 };

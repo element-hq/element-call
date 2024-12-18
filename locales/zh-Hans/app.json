@@ -92,8 +92,6 @@
   "room_auth_view_eula_caption": "点击 \"加入通话\"，即表示您同意我们的<2>最终用户许可协议 (EULA)</2>",
   "screenshare_button_label": "屏幕共享",
   "settings": {
-    "developer_settings_label": "开发者设置",
-    "developer_settings_label_description": "在设置中显示开发者设置。",
     "developer_tab_title": "开发者",
     "feedback_tab_body": "如果遇到问题或想提供一些反馈意见，请在下面向我们发送简短描述。",
     "feedback_tab_description_label": "您的反馈",
@@ -101,7 +99,6 @@
     "feedback_tab_send_logs_label": "包含调试日志",
     "feedback_tab_thank_you": "谢谢，我们收到了反馈！",
     "feedback_tab_title": "反馈",
-    "more_tab_title": "更多",
     "opt_in_description": "<0></0><1></1>您可以取消选中复选框来撤回同意。如果正在通话中，此设置将在通话结束时生效。",
     "speaker_device_selection_label": "发言人"
   },

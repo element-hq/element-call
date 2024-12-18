@@ -13,11 +13,11 @@ import {
   type MockedFunction,
   test,
   vitest,
+  afterEach,
 } from "vitest";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { ConnectionState } from "livekit-client";
 import { BehaviorSubject, of } from "rxjs";
-import { afterEach } from "node:test";
 import { act, type ReactNode } from "react";
 import {
   type CallMembership,
@@ -100,13 +100,13 @@ function getMockEnv(
 ): {
   vm: CallViewModel;
   session: MockRTCSession;
-  remoteRtcMemberships: BehaviorSubject<CallMembership[]>;
+  remoteRtcMemberships$: BehaviorSubject<CallMembership[]>;
 } {
   const matrixRoomMembers = new Map(members.map((p) => [p.userId, p]));
-  const remoteParticipants = of([aliceParticipant]);
+  const remoteParticipants$ = of([aliceParticipant]);
   const liveKitRoom = mockLivekitRoom(
     { localParticipant },
-    { remoteParticipants },
+    { remoteParticipants$ },
   );
   const matrixRoom = mockMatrixRoom({
     client: {
@@ -118,14 +118,14 @@ function getMockEnv(
     getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
   });
 
-  const remoteRtcMemberships = new BehaviorSubject<CallMembership[]>(
+  const remoteRtcMemberships$ = new BehaviorSubject<CallMembership[]>(
     initialRemoteRtcMemberships,
   );
 
   const session = new MockRTCSession(
     matrixRoom,
     localRtcMember,
-  ).withMemberships(remoteRtcMemberships);
+  ).withMemberships(remoteRtcMemberships$);
 
   const vm = new CallViewModel(
     session as unknown as MatrixRTCSession,
@@ -135,7 +135,7 @@ function getMockEnv(
     },
     of(ConnectionState.Connected),
   );
-  return { vm, session, remoteRtcMemberships };
+  return { vm, session, remoteRtcMemberships$ };
 }
 
 /**
@@ -146,33 +146,33 @@ function getMockEnv(
  * a noise every time.
  */
 test("plays one sound when entering a call", () => {
-  const { session, vm, remoteRtcMemberships } = getMockEnv([local, alice]);
+  const { session, vm, remoteRtcMemberships$ } = getMockEnv([local, alice]);
   render(<TestComponent rtcSession={session} vm={vm} />);
   // Joining a call usually means remote participants are added later.
   act(() => {
-    remoteRtcMemberships.next([aliceRtcMember, bobRtcMember]);
+    remoteRtcMemberships$.next([aliceRtcMember, bobRtcMember]);
   });
   expect(playSound).toHaveBeenCalledOnce();
 });
 
 // TODO: Same test?
 test("plays a sound when a user joins", () => {
-  const { session, vm, remoteRtcMemberships } = getMockEnv([local, alice]);
+  const { session, vm, remoteRtcMemberships$ } = getMockEnv([local, alice]);
   render(<TestComponent rtcSession={session} vm={vm} />);
 
   act(() => {
-    remoteRtcMemberships.next([aliceRtcMember, bobRtcMember]);
+    remoteRtcMemberships$.next([aliceRtcMember, bobRtcMember]);
   });
   // Play a sound when joining a call.
   expect(playSound).toBeCalledWith("join");
 });
 
 test("plays a sound when a user leaves", () => {
-  const { session, vm, remoteRtcMemberships } = getMockEnv([local, alice]);
+  const { session, vm, remoteRtcMemberships$ } = getMockEnv([local, alice]);
   render(<TestComponent rtcSession={session} vm={vm} />);
 
   act(() => {
-    remoteRtcMemberships.next([]);
+    remoteRtcMemberships$.next([]);
   });
   expect(playSound).toBeCalledWith("left");
 });
@@ -185,7 +185,7 @@ test("plays no sound when the participant list is more than the maximum size", (
     );
   }
 
-  const { session, vm, remoteRtcMemberships } = getMockEnv(
+  const { session, vm, remoteRtcMemberships$ } = getMockEnv(
     [local, alice],
     mockRtcMemberships,
   );
@@ -193,7 +193,7 @@ test("plays no sound when the participant list is more than the maximum size", (
   render(<TestComponent rtcSession={session} vm={vm} />);
   expect(playSound).not.toBeCalled();
   act(() => {
-    remoteRtcMemberships.next(
+    remoteRtcMemberships$.next(
       mockRtcMemberships.slice(0, MAX_PARTICIPANT_COUNT_FOR_SOUND - 1),
     );
   });

@@ -310,18 +310,14 @@ export function useLiveKit(
             room.localParticipant.audioTrackPublications.values(),
           ).find((d) => d.source === Track.Source.Microphone)?.track;
 
-          const defaultDevice = device.available.find(
-            (d) => d.deviceId === "default",
-          );
           if (
-            defaultDevice &&
             activeMicTrack &&
             // only restart if the stream is still running: LiveKit will detect
             // when a track stops & restart appropriately, so this is not our job.
             // Plus, we need to avoid restarting again if the track is already in
             // the process of being restarted.
             activeMicTrack.mediaStreamTrack.readyState !== "ended" &&
-            defaultDevice.groupId !==
+            device.selectedGroupId !==
               activeMicTrack.mediaStreamTrack.getSettings().groupId
           ) {
             // It's different, so restart the track, ie. cause Livekit to do another

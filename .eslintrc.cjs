@@ -44,6 +44,7 @@ module.exports = {
     ],
     // To encourage good usage of RxJS:
     "rxjs/no-exposed-subjects": "error",
+    "rxjs/finnish": "error",
   },
   settings: {
     react: {

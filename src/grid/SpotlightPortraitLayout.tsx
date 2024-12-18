@@ -12,7 +12,7 @@ import classNames from "classnames";
 import { type CallLayout, arrangeTiles } from "./CallLayout";
 import { type SpotlightPortraitLayout as SpotlightPortraitLayoutModel } from "../state/CallViewModel";
 import styles from "./SpotlightPortraitLayout.module.css";
-import { useUpdateLayout } from "./Grid";
+import { useUpdateLayout, useVisibleTiles } from "./Grid";
 
 interface GridCSSProperties extends CSSProperties {
   "--grid-gap": string;
@@ -27,7 +27,7 @@ interface GridCSSProperties extends CSSProperties {
  */
 export const makeSpotlightPortraitLayout: CallLayout<
   SpotlightPortraitLayoutModel
-> = ({ minBounds }) => ({
+> = ({ minBounds$ }) => ({
   scrollingOnTop: false,
 
   fixed: forwardRef(function SpotlightPortraitLayoutFixed(
@@ -54,7 +54,8 @@ export const makeSpotlightPortraitLayout: CallLayout<
     ref,
   ) {
     useUpdateLayout();
-    const { width } = useObservableEagerState(minBounds);
+    useVisibleTiles(model.setVisibleTiles);
+    const { width } = useObservableEagerState(minBounds$);
     const { gap, tileWidth, tileHeight } = arrangeTiles(
       width,
       // TODO: We pretend that the minimum height is the width, because the
@@ -63,7 +64,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
       model.grid.length,
     );
     const withIndicators =
-      useObservableEagerState(model.spotlight.media).length > 1;
+      useObservableEagerState(model.spotlight.media$).length > 1;
 
     return (
       <div
@@ -84,13 +85,7 @@ export const makeSpotlightPortraitLayout: CallLayout<
         />
         <div className={styles.grid}>
           {model.grid.map((m) => (
-            <Slot
-              key={m.id}
-              className={styles.slot}
-              id={m.id}
-              model={m}
-              onVisibilityChange={m.setVisible}
-            />
+            <Slot key={m.id} className={styles.slot} id={m.id} model={m} />
           ))}
         </div>
       </div>

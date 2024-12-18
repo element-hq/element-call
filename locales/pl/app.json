@@ -99,8 +99,6 @@
   "room_auth_view_eula_caption": "Klikając \"Dołącz teraz do rozmowy\", zgadzasz się na naszą <2>Umowę licencyjną (EULA)</2>",
   "screenshare_button_label": "Udostępnij ekran",
   "settings": {
-    "developer_settings_label": "Opcje programisty",
-    "developer_settings_label_description": "Wyświetl opcje programisty w oknie ustawień.",
     "developer_tab_title": "Programista",
     "feedback_tab_body": "Jeśli posiadasz problemy lub chciałbyś zgłosić swoją opinię, wyślij nam krótki opis.",
     "feedback_tab_description_label": "Twoje opinie",
@@ -108,7 +106,6 @@
     "feedback_tab_send_logs_label": "Dołącz dzienniki debugowania",
     "feedback_tab_thank_you": "Dziękujemy, otrzymaliśmy Twoją opinię!",
     "feedback_tab_title": "Opinia użytkownika",
-    "more_tab_title": "Więcej",
     "opt_in_description": "<0></0><1></1>Możesz wycofać swoją zgodę poprzez odznaczenie tego pola. Jeśli już jesteś w trakcie rozmowy, opcja zostanie zastosowana po jej zakończeniu.",
     "speaker_device_selection_label": "Głośnik"
   },

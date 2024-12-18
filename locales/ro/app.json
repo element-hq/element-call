@@ -148,8 +148,6 @@
       "effect_volume_description": "Reglați volumul la care reacționează reacțiile și efectele ridicate de mână",
       "effect_volume_label": "Volumul efectului sonor"
     },
-    "developer_settings_label": "Setări pentru dezvoltatori",
-    "developer_settings_label_description": "Expuneți setările dezvoltatorului în fereastra de setări.",
     "developer_tab_title": "dezvoltator",
     "feedback_tab_body": "Dacă întâmpinați probleme sau pur și simplu doriți să oferiți feedback, vă rugăm să ne trimiteți o scurtă descriere mai jos.",
     "feedback_tab_description_label": "Feedback-ul tău",
@@ -157,19 +155,13 @@
     "feedback_tab_send_logs_label": "Includeți jurnale de depanare",
     "feedback_tab_thank_you": "Vă mulțumim, am primit feedback-ul dvs.!",
     "feedback_tab_title": "Feedback",
-    "more_tab_title": "Mai mult",
     "opt_in_description": "<0></0><1></1>Puteți retrage consimțământul debifând această casetă. Dacă sunteți în prezent la un apel, această setare va intra în vigoare la sfârșitul apelului.",
     "preferences_tab": {
       "reactions_play_sound_description": "Redați un efect sonor atunci când cineva trimite o reacție la un apel.",
       "reactions_play_sound_label": "Redați sunete de reacție",
       "reactions_show_description": "Afișați o animație atunci când cineva trimite o reacție.",
-      "reactions_show_label": "Afișați reacțiile",
-      "reactions_title": "Reacții"
+      "reactions_show_label": "Afișați reacțiile"
     },
-    "preferences_tab_body": "Aici puteți configura opțiuni suplimentare pentru o experiență îmbunătățită",
-    "preferences_tab_h4": "preferinte",
-    "preferences_tab_show_hand_raised_timer_description": "Afișați un cronometru atunci când un participant ridică mâna",
-    "preferences_tab_show_hand_raised_timer_label": "Afișați durata ridicării mâinii",
     "speaker_device_selection_label": "vorbitor"
   },
   "start_new_call": "Începe un nou apel",

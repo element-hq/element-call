@@ -48,13 +48,11 @@
     "audio": "Audio",
     "avatar": "Avatar",
     "back": "Back",
-    "camera": "Camera",
     "display_name": "Display name",
     "encrypted": "Encrypted",
     "error": "Error",
     "home": "Home",
     "loading": "Loading…",
-    "microphone": "Microphone",
     "next": "Next",
     "options": "Options",
     "password": "Password",
@@ -74,7 +72,8 @@
     "device_id": "Device ID: {{id}}",
     "duplicate_tiles_label": "Number of additional tile copies per participant",
     "hostname": "Hostname: {{hostname}}",
-    "matrix_id": "Matrix ID: {{id}}"
+    "matrix_id": "Matrix ID: {{id}}",
+    "show_non_member_tiles": "Show tiles for non-member media"
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "full_screen_view_description": "<0>Submitting debug logs will help us track down the problem.</0>",
@@ -155,6 +154,16 @@
     "background_blur_label": "Blur the background of the video",
     "blur_not_supported_by_browser": "(Background blur is not supported by this device)",
     "developer_tab_title": "Developer",
+    "devices": {
+      "camera": "Camera",
+      "camera_numbered": "Camera {{n}}",
+      "default": "Default",
+      "default_named": "Default <2>({{name}})</2>",
+      "microphone": "Microphone",
+      "microphone_numbered": "Microphone {{n}}",
+      "speaker": "Speaker",
+      "speaker_numbered": "Speaker {{n}}"
+    },
     "feedback_tab_body": "If you are experiencing issues or simply would like to provide some feedback, please send us a short description below.",
     "feedback_tab_description_label": "Your feedback",
     "feedback_tab_h4": "Submit feedback",
@@ -165,15 +174,14 @@
     "preferences_tab": {
       "developer_mode_label": "Developer mode",
       "developer_mode_label_description": "Enable developer mode and show developer settings tab.",
+      "introduction": "Here you can configure extra options for an improved experience.",
       "reactions_play_sound_description": "Play a sound effect when anyone sends a reaction into a call.",
       "reactions_play_sound_label": "Play reaction sounds",
       "reactions_show_description": "Show an animation when anyone sends a reaction.",
-      "reactions_show_label": "Show reactions"
-    },
-    "preferences_tab_body": "Here you can configure extra options for an improved experience.",
-    "preferences_tab_show_hand_raised_timer_description": "Show a timer when a participant raises their hand",
-    "preferences_tab_show_hand_raised_timer_label": "Show hand raise duration",
-    "speaker_device_selection_label": "Speaker"
+      "reactions_show_label": "Show reactions",
+      "show_hand_raised_timer_description": "Show a timer when a participant raises their hand",
+      "show_hand_raised_timer_label": "Show hand raise duration"
+    }
   },
   "star_rating_input_label_one": "{{count}} star",
   "star_rating_input_label_other": "{{count}} stars",

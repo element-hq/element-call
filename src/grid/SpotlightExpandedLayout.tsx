@@ -19,7 +19,7 @@ import styles from "./SpotlightExpandedLayout.module.css";
  */
 export const makeSpotlightExpandedLayout: CallLayout<
   SpotlightExpandedLayoutModel
-> = ({ pipAlignment }) => ({
+> = ({ pipAlignment$ }) => ({
   scrollingOnTop: true,
 
   fixed: forwardRef(function SpotlightExpandedLayoutFixed(
@@ -44,11 +44,11 @@ export const makeSpotlightExpandedLayout: CallLayout<
     ref,
   ) {
     useUpdateLayout();
-    const pipAlignmentValue = useObservableEagerState(pipAlignment);
+    const pipAlignmentValue = useObservableEagerState(pipAlignment$);
 
     const onDragPip: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>
-        pipAlignment.next({
+        pipAlignment$.next({
           block: yRatio < 0.5 ? "start" : "end",
           inline: xRatio < 0.5 ? "start" : "end",
         }),
@@ -63,7 +63,6 @@ export const makeSpotlightExpandedLayout: CallLayout<
             id={model.pip.id}
             model={model.pip}
             onDrag={onDragPip}
-            onVisibilityChange={model.pip.setVisible}
             data-block-alignment={pipAlignmentValue.block}
             data-inline-alignment={pipAlignmentValue.inline}
           />

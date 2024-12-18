@@ -159,7 +159,7 @@ export const LobbyView: FC<Props> = ({
   useTrackProcessorSync(videoTrack);
   const showSwitchCamera = useShowSwitchCamera(
     useObservable(
-      (inputs) => inputs.pipe(map(([video]) => video)),
+      (inputs$) => inputs$.pipe(map(([video]) => video)),
       [videoTrack],
     ),
   );

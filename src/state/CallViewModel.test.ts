@@ -46,6 +46,7 @@ import {
   type ECConnectionState,
 } from "../livekit/useECConnectionState";
 import { E2eeType } from "../e2ee/e2eeType";
+import { showNonMemberTiles } from "../settings/settings";
 
 vi.mock("@livekit/components-core");
 
@@ -123,15 +124,15 @@ export type LayoutSummary =
   | OneOnOneLayoutSummary
   | PipLayoutSummary;
 
-function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
-  return l.pipe(
+function summarizeLayout$(l$: Observable<Layout>): Observable<LayoutSummary> {
+  return l$.pipe(
     switchMap((l) => {
       switch (l.type) {
         case "grid":
           return combineLatest(
             [
-              l.spotlight?.media ?? of(undefined),
-              ...l.grid.map((vm) => vm.media),
+              l.spotlight?.media$ ?? of(undefined),
+              ...l.grid.map((vm) => vm.media$),
             ],
             (spotlight, ...grid) => ({
               type: l.type,
@@ -142,7 +143,7 @@ function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
         case "spotlight-landscape":
         case "spotlight-portrait":
           return combineLatest(
-            [l.spotlight.media, ...l.grid.map((vm) => vm.media)],
+            [l.spotlight.media$, ...l.grid.map((vm) => vm.media$)],
             (spotlight, ...grid) => ({
               type: l.type,
               spotlight: spotlight.map((vm) => vm.id),
@@ -151,7 +152,7 @@ function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
           );
         case "spotlight-expanded":
           return combineLatest(
-            [l.spotlight.media, l.pip?.media ?? of(undefined)],
+            [l.spotlight.media$, l.pip?.media$ ?? of(undefined)],
             (spotlight, pip) => ({
               type: l.type,
               spotlight: spotlight.map((vm) => vm.id),
@@ -160,7 +161,7 @@ function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
           );
         case "one-on-one":
           return combineLatest(
-            [l.local.media, l.remote.media],
+            [l.local.media$, l.remote.media$],
             (local, remote) => ({
               type: l.type,
               local: local.id,
@@ -168,7 +169,7 @@ function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
             }),
           );
         case "pip":
-          return l.spotlight.media.pipe(
+          return l.spotlight.media$.pipe(
             map((spotlight) => ({
               type: l.type,
               spotlight: spotlight.map((vm) => vm.id),
@@ -185,9 +186,9 @@ function summarizeLayout(l: Observable<Layout>): Observable<LayoutSummary> {
 }
 
 function withCallViewModel(
-  remoteParticipants: Observable<RemoteParticipant[]>,
-  rtcMembers: Observable<Partial<CallMembership>[]>,
-  connectionState: Observable<ECConnectionState>,
+  remoteParticipants$: Observable<RemoteParticipant[]>,
+  rtcMembers$: Observable<Partial<CallMembership>[]>,
+  connectionState$: Observable<ECConnectionState>,
   speaking: Map<Participant, Observable<boolean>>,
   continuation: (vm: CallViewModel) => void,
 ): void {
@@ -202,10 +203,10 @@ function withCallViewModel(
     room,
     localRtcMember,
     [],
-  ).withMemberships(rtcMembers);
+  ).withMemberships(rtcMembers$);
   const participantsSpy = vi
     .spyOn(ComponentsCore, "connectedParticipantsObserver")
-    .mockReturnValue(remoteParticipants);
+    .mockReturnValue(remoteParticipants$);
   const mediaSpy = vi
     .spyOn(ComponentsCore, "observeParticipantMedia")
     .mockImplementation((p) =>
@@ -231,7 +232,7 @@ function withCallViewModel(
 
   const liveKitRoom = mockLivekitRoom(
     { localParticipant },
-    { remoteParticipants },
+    { remoteParticipants$ },
   );
 
   const vm = new CallViewModel(
@@ -240,7 +241,7 @@ function withCallViewModel(
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
-    connectionState,
+    connectionState$,
   );
 
   onTestFinished(() => {
@@ -275,7 +276,7 @@ test("participants are retained during a focus switch", () => {
       }),
       new Map(),
       (vm) => {
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -319,7 +320,7 @@ test("screen sharing activates spotlight layout", () => {
           g: () => vm.setGridMode("grid"),
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -362,7 +363,7 @@ test("screen sharing activates spotlight layout", () => {
             },
           },
         );
-        expectObservable(vm.showSpeakingIndicators).toBe(
+        expectObservable(vm.showSpeakingIndicators$).toBe(
           expectedShowSpeakingMarbles,
           {
             y: true,
@@ -376,16 +377,16 @@ test("screen sharing activates spotlight layout", () => {
 
 test("participants stay in the same order unless to appear/disappear", () => {
   withTestScheduler(({ hot, schedule, expectObservable }) => {
-    const modeInputMarbles = "     a";
+    const visibilityInputMarbles = "a";
     // First Bob speaks, then Dave, then Alice
-    const aSpeakingInputMarbles = "n- 1998ms - 1999ms y";
-    const bSpeakingInputMarbles = "ny 1998ms n 1999ms -";
-    const dSpeakingInputMarbles = "n- 1998ms y 1999ms n";
+    const aSpeakingInputMarbles = " n- 1998ms - 1999ms y";
+    const bSpeakingInputMarbles = " ny 1998ms n 1999ms -";
+    const dSpeakingInputMarbles = " n- 1998ms y 1999ms n";
     // Nothing should change when Bob speaks, because Bob is already on screen.
     // When Dave speaks he should switch with Alice because she's the one who
     // hasn't spoken at all. Then when Alice speaks, she should return to her
     // place at the top.
-    const expectedLayoutMarbles = "a  1999ms b 1999ms a 57999ms c 1999ms a";
+    const expectedLayoutMarbles = " a  1999ms b 1999ms a 57999ms c 1999ms a";
 
     withCallViewModel(
       of([aliceParticipant, bobParticipant, daveParticipant]),
@@ -397,20 +398,17 @@ test("participants stay in the same order unless to appear/disappear", () => {
         [daveParticipant, hot(dSpeakingInputMarbles, { y: true, n: false })],
       ]),
       (vm) => {
-        schedule(modeInputMarbles, {
+        schedule(visibilityInputMarbles, {
           a: () => {
             // We imagine that only three tiles (the first three) will be visible
             // on screen at a time
-            vm.layout.subscribe((layout) => {
-              if (layout.type === "grid") {
-                for (let i = 0; i < layout.grid.length; i++)
-                  layout.grid[i].setVisible(i < 3);
-              }
+            vm.layout$.subscribe((layout) => {
+              if (layout.type === "grid") layout.setVisibleTiles(3);
             });
           },
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -427,6 +425,56 @@ test("participants stay in the same order unless to appear/disappear", () => {
               type: "grid",
               spotlight: undefined,
               grid: ["local:0", `${aliceId}:0`, `${daveId}:0`, `${bobId}:0`],
+            },
+          },
+        );
+      },
+    );
+  });
+});
+
+test("participants adjust order when space becomes constrained", () => {
+  withTestScheduler(({ hot, schedule, expectObservable }) => {
+    // Start with all tiles on screen then shrink to 3
+    const visibilityInputMarbles = "a-b";
+    // Bob and Dave speak
+    const bSpeakingInputMarbles = " ny";
+    const dSpeakingInputMarbles = " ny";
+    // Nothing should change when Bob or Dave initially speak, because they are
+    // on screen. When the screen becomes smaller Alice should move off screen
+    // to make way for the speakers (specifically, she should swap with Dave).
+    const expectedLayoutMarbles = " a-b";
+
+    withCallViewModel(
+      of([aliceParticipant, bobParticipant, daveParticipant]),
+      of([aliceRtcMember, bobRtcMember, daveRtcMember]),
+      of(ConnectionState.Connected),
+      new Map([
+        [bobParticipant, hot(bSpeakingInputMarbles, { y: true, n: false })],
+        [daveParticipant, hot(dSpeakingInputMarbles, { y: true, n: false })],
+      ]),
+      (vm) => {
+        let setVisibleTiles: ((value: number) => void) | null = null;
+        vm.layout$.subscribe((layout) => {
+          if (layout.type === "grid") setVisibleTiles = layout.setVisibleTiles;
+        });
+        schedule(visibilityInputMarbles, {
+          a: () => setVisibleTiles!(Infinity),
+          b: () => setVisibleTiles!(3),
+        });
+
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
+          expectedLayoutMarbles,
+          {
+            a: {
+              type: "grid",
+              spotlight: undefined,
+              grid: ["local:0", `${aliceId}:0`, `${bobId}:0`, `${daveId}:0`],
+            },
+            b: {
+              type: "grid",
+              spotlight: undefined,
+              grid: ["local:0", `${daveId}:0`, `${bobId}:0`, `${aliceId}:0`],
             },
           },
         );
@@ -461,7 +509,7 @@ test("spotlight speakers swap places", () => {
       (vm) => {
         schedule(modeInputMarbles, { s: () => vm.setGridMode("spotlight") });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -509,7 +557,7 @@ test("layout enters picture-in-picture mode when requested", () => {
           d: () => window.controls.disablePip(),
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -552,12 +600,12 @@ test("spotlight remembers whether it's expanded", () => {
         schedule(expandInputMarbles, {
           a: () => {
             let toggle: () => void;
-            vm.toggleSpotlightExpanded.subscribe((val) => (toggle = val!));
+            vm.toggleSpotlightExpanded$.subscribe((val) => (toggle = val!));
             toggle!();
           },
         });
 
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -614,7 +662,7 @@ test("participants must have a MatrixRTCSession to be visible", () => {
       new Map(),
       (vm) => {
         vm.setGridMode("grid");
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {
@@ -639,6 +687,53 @@ test("participants must have a MatrixRTCSession to be visible", () => {
   });
 });
 
+test("shows participants without MatrixRTCSession when enabled in settings", () => {
+  try {
+    // enable the setting:
+    showNonMemberTiles.setValue(true);
+    withTestScheduler(({ hot, expectObservable }) => {
+      const scenarioInputMarbles = " abc";
+      const expectedLayoutMarbles = "abc";
+
+      withCallViewModel(
+        hot(scenarioInputMarbles, {
+          a: [],
+          b: [aliceParticipant],
+          c: [aliceParticipant, bobParticipant],
+        }),
+        of([]), // No one joins the MatrixRTC session
+        of(ConnectionState.Connected),
+        new Map(),
+        (vm) => {
+          vm.setGridMode("grid");
+          expectObservable(summarizeLayout$(vm.layout$)).toBe(
+            expectedLayoutMarbles,
+            {
+              a: {
+                type: "grid",
+                spotlight: undefined,
+                grid: ["local:0"],
+              },
+              b: {
+                type: "one-on-one",
+                local: "local:0",
+                remote: `${aliceId}:0`,
+              },
+              c: {
+                type: "grid",
+                spotlight: undefined,
+                grid: ["local:0", `${aliceId}:0`, `${bobId}:0`],
+              },
+            },
+          );
+        },
+      );
+    });
+  } finally {
+    showNonMemberTiles.setValue(showNonMemberTiles.defaultValue);
+  }
+});
+
 it("should show at least one tile per MatrixRTCSession", () => {
   withTestScheduler(({ hot, expectObservable }) => {
     // iterate through some combinations of MatrixRTC memberships
@@ -658,7 +753,7 @@ it("should show at least one tile per MatrixRTCSession", () => {
       new Map(),
       (vm) => {
         vm.setGridMode("grid");
-        expectObservable(summarizeLayout(vm.layout)).toBe(
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
           expectedLayoutMarbles,
           {
             a: {

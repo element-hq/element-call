@@ -13,7 +13,7 @@ import { type GridLayout as GridLayoutModel } from "../state/CallViewModel";
 import styles from "./GridLayout.module.css";
 import { useInitial } from "../useInitial";
 import { type CallLayout, arrangeTiles } from "./CallLayout";
-import { type DragCallback, useUpdateLayout } from "./Grid";
+import { type DragCallback, useUpdateLayout, useVisibleTiles } from "./Grid";
 
 interface GridCSSProperties extends CSSProperties {
   "--gap": string;
@@ -26,8 +26,8 @@ interface GridCSSProperties extends CSSProperties {
  * together in a scrolling grid.
  */
 export const makeGridLayout: CallLayout<GridLayoutModel> = ({
-  minBounds,
-  spotlightAlignment,
+  minBounds$,
+  spotlightAlignment$,
 }) => ({
   scrollingOnTop: false,
 
@@ -37,7 +37,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
     useUpdateLayout();
     const alignment = useObservableEagerState(
       useInitial(() =>
-        spotlightAlignment.pipe(
+        spotlightAlignment$.pipe(
           distinctUntilChanged(
             (a1, a2) => a1.block === a2.block && a1.inline === a2.inline,
           ),
@@ -47,7 +47,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
 
     const onDragSpotlight: DragCallback = useCallback(
       ({ xRatio, yRatio }) =>
-        spotlightAlignment.next({
+        spotlightAlignment$.next({
           block: yRatio < 0.5 ? "start" : "end",
           inline: xRatio < 0.5 ? "start" : "end",
         }),
@@ -73,7 +73,8 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
   // The scrolling part of the layout is where all the grid tiles live
   scrolling: forwardRef(function GridLayout({ model, Slot }, ref) {
     useUpdateLayout();
-    const { width, height: minHeight } = useObservableEagerState(minBounds);
+    useVisibleTiles(model.setVisibleTiles);
+    const { width, height: minHeight } = useObservableEagerState(minBounds$);
     const { gap, tileWidth, tileHeight } = useMemo(
       () => arrangeTiles(width, minHeight, model.grid.length),
       [width, minHeight, model.grid.length],
@@ -93,13 +94,7 @@ export const makeGridLayout: CallLayout<GridLayoutModel> = ({
         }
       >
         {model.grid.map((m) => (
-          <Slot
-            key={m.id}
-            className={styles.slot}
-            id={m.id}
-            model={m}
-            onVisibilityChange={m.setVisible}
-          />
+          <Slot key={m.id} className={styles.slot} id={m.id} model={m} />
         ))}
       </div>
     );

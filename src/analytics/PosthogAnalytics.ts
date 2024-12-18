@@ -415,7 +415,7 @@ export class PosthogAnalytics {
     //  * When the user changes their preferences on this device
     // Note that for new accounts, pseudonymousAnalyticsOptIn won't be set, so updateAnonymityFromSettings
     // won't be called (i.e. this.anonymity will be left as the default, until the setting changes)
-    optInAnalytics.value.subscribe((optIn) => {
+    optInAnalytics.value$.subscribe((optIn) => {
       this.setAnonymity(optIn ? Anonymity.Pseudonymous : Anonymity.Disabled);
       this.maybeIdentifyUser().catch(() =>
         logger.log("Could not identify user"),

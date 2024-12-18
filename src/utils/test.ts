@@ -77,14 +77,14 @@ export function withTestScheduler(
     continuation({
       ...helpers,
       schedule(marbles, actions) {
-        const actionsObservable = helpers
+        const actionsObservable$ = helpers
           .cold(marbles)
           .pipe(map((value) => actions[value]()));
         const results = Object.fromEntries(
           Object.keys(actions).map((value) => [value, undefined] as const),
         );
         // Run the actions and verify that none of them error
-        helpers.expectObservable(actionsObservable).toBe(marbles, results);
+        helpers.expectObservable(actionsObservable$).toBe(marbles, results);
       },
     }),
   );
@@ -157,16 +157,16 @@ export function mockMatrixRoom(room: Partial<MatrixRoom>): MatrixRoom {
 export function mockLivekitRoom(
   room: Partial<LivekitRoom>,
   {
-    remoteParticipants,
-  }: { remoteParticipants?: Observable<RemoteParticipant[]> } = {},
+    remoteParticipants$,
+  }: { remoteParticipants$?: Observable<RemoteParticipant[]> } = {},
 ): LivekitRoom {
   const livekitRoom = {
     ...mockEmitter(),
     ...room,
   } as Partial<LivekitRoom> as LivekitRoom;
-  if (remoteParticipants) {
+  if (remoteParticipants$) {
     livekitRoom.remoteParticipants = new Map();
-    remoteParticipants.subscribe((newRemoteParticipants) => {
+    remoteParticipants$.subscribe((newRemoteParticipants) => {
       livekitRoom.remoteParticipants.clear();
       newRemoteParticipants.forEach((p) => {
         livekitRoom.remoteParticipants.set(p.identity, p);
@@ -238,7 +238,7 @@ export async function withRemoteMedia(
     {
       kind: E2eeType.PER_PARTICIPANT,
     },
-    mockLivekitRoom({}, { remoteParticipants: of([remoteParticipant]) }),
+    mockLivekitRoom({}, { remoteParticipants$: of([remoteParticipant]) }),
   );
   try {
     await continuation(vm);
@@ -277,9 +277,9 @@ export class MockRTCSession extends TypedEventEmitter<
   }
 
   public withMemberships(
-    rtcMembers: Observable<Partial<CallMembership>[]>,
+    rtcMembers$: Observable<Partial<CallMembership>[]>,
   ): MockRTCSession {
-    rtcMembers.subscribe((m) => {
+    rtcMembers$.subscribe((m) => {
       const old = this.memberships;
       // always prepend the local participant
       const updated = [this.localMembership, ...(m as CallMembership[])];

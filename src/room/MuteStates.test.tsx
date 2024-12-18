@@ -6,13 +6,13 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import React, { type ReactNode } from "react";
-import { beforeEach } from "vitest";
+import { type ReactNode } from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 
 import { useMuteStates } from "./MuteStates";
 import {
+  type DeviceLabel,
   type MediaDevice,
   type MediaDevices,
   MediaDevicesContext,
@@ -63,10 +63,11 @@ const mockCamera: MediaDeviceInfo = {
   },
 };
 
-function mockDevices(available: MediaDeviceInfo[]): MediaDevice {
+function mockDevices(available: Map<string, DeviceLabel>): MediaDevice {
   return {
     available,
     selectedId: "",
+    selectedGroupId: "",
     select: (): void => {},
   };
 }
@@ -83,25 +84,29 @@ function mockMediaDevices(
   } = { microphone: true, speaker: true, camera: true },
 ): MediaDevices {
   return {
-    audioInput: mockDevices(microphone ? [mockMicrophone] : []),
-    audioOutput: mockDevices(speaker ? [mockSpeaker] : []),
-    videoInput: mockDevices(camera ? [mockCamera] : []),
+    audioInput: mockDevices(
+      microphone
+        ? new Map([[mockMicrophone.deviceId, mockMicrophone]])
+        : new Map(),
+    ),
+    audioOutput: mockDevices(
+      speaker ? new Map([[mockSpeaker.deviceId, mockSpeaker]]) : new Map(),
+    ),
+    videoInput: mockDevices(
+      camera ? new Map([[mockCamera.deviceId, mockCamera]]) : new Map(),
+    ),
     startUsingDeviceNames: (): void => {},
     stopUsingDeviceNames: (): void => {},
   };
 }
 
 describe("useMuteStates", () => {
-  beforeEach(() => {
-    vi.spyOn(React, "useContext").mockReturnValue({});
-  });
-
   afterEach(() => {
-    vi.restoreAllMocks();
+    vi.clearAllMocks();
   });
 
   afterAll(() => {
-    vi.clearAllMocks();
+    vi.resetAllMocks();
   });
 
   it("disabled when no input devices", () => {

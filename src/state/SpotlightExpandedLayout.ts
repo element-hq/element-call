@@ -10,17 +10,15 @@ import {
   type SpotlightExpandedLayoutMedia,
 } from "./CallViewModel";
 import { type TileStore } from "./TileStore";
-import { type GridTileViewModel } from "./TileViewModel";
 
 /**
  * Produces an expanded spotlight layout with the given media.
  */
 export function spotlightExpandedLayout(
   media: SpotlightExpandedLayoutMedia,
-  visibleTiles: Set<GridTileViewModel>,
   prevTiles: TileStore,
 ): [SpotlightExpandedLayout, TileStore] {
-  const update = prevTiles.from(visibleTiles);
+  const update = prevTiles.from(1);
   update.registerSpotlight(media.spotlight, true);
   if (media.pip !== undefined) update.registerGridTile(media.pip);
   const tiles = update.build();

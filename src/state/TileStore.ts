@@ -18,31 +18,31 @@ function debugEntries(entries: GridTileData[]): string[] {
 }
 
 let DEBUG_ENABLED = false;
-debugTileLayout.value.subscribe((value) => (DEBUG_ENABLED = value));
+debugTileLayout.value$.subscribe((value) => (DEBUG_ENABLED = value));
 
 class SpotlightTileData {
-  private readonly media_: BehaviorSubject<MediaViewModel[]>;
+  private readonly media$: BehaviorSubject<MediaViewModel[]>;
   public get media(): MediaViewModel[] {
-    return this.media_.value;
+    return this.media$.value;
   }
   public set media(value: MediaViewModel[]) {
-    this.media_.next(value);
+    this.media$.next(value);
   }
 
-  private readonly maximised_: BehaviorSubject<boolean>;
+  private readonly maximised$: BehaviorSubject<boolean>;
   public get maximised(): boolean {
-    return this.maximised_.value;
+    return this.maximised$.value;
   }
   public set maximised(value: boolean) {
-    this.maximised_.next(value);
+    this.maximised$.next(value);
   }
 
   public readonly vm: SpotlightTileViewModel;
 
   public constructor(media: MediaViewModel[], maximised: boolean) {
-    this.media_ = new BehaviorSubject(media);
-    this.maximised_ = new BehaviorSubject(maximised);
-    this.vm = new SpotlightTileViewModel(this.media_, this.maximised_);
+    this.media$ = new BehaviorSubject(media);
+    this.maximised$ = new BehaviorSubject(maximised);
+    this.vm = new SpotlightTileViewModel(this.media$, this.maximised$);
   }
 
   public destroy(): void {
@@ -51,19 +51,19 @@ class SpotlightTileData {
 }
 
 class GridTileData {
-  private readonly media_: BehaviorSubject<UserMediaViewModel>;
+  private readonly media$: BehaviorSubject<UserMediaViewModel>;
   public get media(): UserMediaViewModel {
-    return this.media_.value;
+    return this.media$.value;
   }
   public set media(value: UserMediaViewModel) {
-    this.media_.next(value);
+    this.media$.next(value);
   }
 
   public readonly vm: GridTileViewModel;
 
   public constructor(media: UserMediaViewModel) {
-    this.media_ = new BehaviorSubject(media);
-    this.vm = new GridTileViewModel(this.media_);
+    this.media$ = new BehaviorSubject(media);
+    this.vm = new GridTileViewModel(this.media$);
   }
 
   public destroy(): void {
@@ -101,7 +101,7 @@ export class TileStore {
    * Creates a builder which can be used to update the collection, passing
    * ownership of the tiles to the updated collection.
    */
-  public from(visibleTiles: Set<GridTileViewModel>): TileStoreBuilder {
+  public from(visibleTiles: number): TileStoreBuilder {
     return new TileStoreBuilder(
       this.spotlight,
       this.grid,
@@ -123,7 +123,10 @@ export class TileStoreBuilder {
     "speaking" in this.prevSpotlight.media[0] &&
     this.prevSpotlight.media[0];
 
-  private readonly prevGridByMedia = new Map(
+  private readonly prevGridByMedia: Map<
+    MediaViewModel,
+    [GridTileData, number]
+  > = new Map(
     this.prevGrid.map((entry, i) => [entry.media, [entry, i]] as const),
   );
 
@@ -146,7 +149,7 @@ export class TileStoreBuilder {
       spotlight: SpotlightTileData | null,
       grid: GridTileData[],
     ) => TileStore,
-    private readonly visibleTiles: Set<GridTileViewModel>,
+    private readonly visibleTiles: number,
     /**
      * A number incremented on each update, just for debugging purposes.
      */
@@ -204,10 +207,8 @@ export class TileStoreBuilder {
         const prev = this.prevGridByMedia.get(this.spotlight.media[0]);
         if (prev !== undefined) {
           const [entry, prevIndex] = prev;
-          const previouslyVisible = this.visibleTiles.has(entry.vm);
-          const nowVisible = this.visibleTiles.has(
-            this.prevGrid[this.numGridEntries]?.vm,
-          );
+          const previouslyVisible = prevIndex < this.visibleTiles;
+          const nowVisible = this.numGridEntries < this.visibleTiles;
 
           // If it doesn't need to move between the visible/invisible sections of
           // the grid, then we can keep it where it was and swap the media
@@ -236,17 +237,15 @@ export class TileStoreBuilder {
     const prev = this.prevGridByMedia.get(media);
     if (prev === undefined) {
       // Create a new tile
-      (this.visibleTiles.has(this.prevGrid[this.numGridEntries]?.vm)
+      (this.numGridEntries < this.visibleTiles
         ? this.visibleGridEntries
         : this.invisibleGridEntries
       ).push(new GridTileData(media));
     } else {
       // Reuse the existing tile
       const [entry, prevIndex] = prev;
-      const previouslyVisible = this.visibleTiles.has(entry.vm);
-      const nowVisible = this.visibleTiles.has(
-        this.prevGrid[this.numGridEntries]?.vm,
-      );
+      const previouslyVisible = prevIndex < this.visibleTiles;
+      const nowVisible = this.numGridEntries < this.visibleTiles;
       // If it doesn't need to move between the visible/invisible sections of
       // the grid, then we can keep it exactly where it was previously
       if (previouslyVisible === nowVisible)

@@ -31,15 +31,15 @@ export interface CallLayoutInputs {
   /**
    * The minimum bounds of the layout area.
    */
-  minBounds: Observable<Bounds>;
+  minBounds$: Observable<Bounds>;
   /**
    * The alignment of the floating spotlight tile, if present.
    */
-  spotlightAlignment: BehaviorSubject<Alignment>;
+  spotlightAlignment$: BehaviorSubject<Alignment>;
   /**
    * The alignment of the small picture-in-picture tile, if present.
    */
-  pipAlignment: BehaviorSubject<Alignment>;
+  pipAlignment$: BehaviorSubject<Alignment>;
 }
 
 export interface CallLayoutOutputs<Model> {
