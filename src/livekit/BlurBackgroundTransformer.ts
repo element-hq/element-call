@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import {
   BackgroundTransformer,
   VideoTransformer,
-  VideoTransformerInitOptions,
+  type VideoTransformerInitOptions,
 } from "@livekit/track-processors";
 import { ImageSegmenter } from "@mediapipe/tasks-vision";
 
