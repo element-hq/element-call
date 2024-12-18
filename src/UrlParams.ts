@@ -19,6 +19,12 @@ interface RoomIdentifier {
   viaServers: string[];
 }
 
+export enum UserIntent {
+  StartNewCall = "start_call",
+  JoinExistingCall = "join_existing",
+  Unknown = "unknown",
+}
+
 // If you need to add a new flag to this interface, prefer a name that describes
 // a specific behavior (such as 'confineToRoom'), rather than one that describes
 // the situations that call for this behavior ('isEmbedded'). This makes it
@@ -142,6 +148,13 @@ export interface UrlParams {
    * creating a spa link.
    */
   homeserver: string | null;
+
+  /**
+   * The user's intent with respect to the call.
+   * e.g. if they clicked a Start Call button, this would be `start_call`.
+   * If it was a Join Call button, it would be `join_existing`.
+   */
+  intent: string | null;
 }
 
 // This is here as a stopgap, but what would be far nicer is a function that
@@ -211,6 +224,10 @@ export const getUrlParams = (
 
   const fontScale = parseFloat(parser.getParam("fontScale") ?? "");
 
+  let intent = parser.getParam("intent");
+  if (!intent || !Object.values(UserIntent).includes(intent as UserIntent)) {
+    intent = UserIntent.Unknown;
+  }
   const widgetId = parser.getParam("widgetId");
   const parentUrl = parser.getParam("parentUrl");
   const isWidget = !!widgetId && !!parentUrl;
@@ -243,11 +260,15 @@ export const getUrlParams = (
     analyticsID: parser.getParam("analyticsID"),
     allowIceFallback: parser.getFlagParam("allowIceFallback"),
     perParticipantE2EE: parser.getFlagParam("perParticipantE2EE"),
-    skipLobby: parser.getFlagParam("skipLobby"),
+    skipLobby: parser.getFlagParam(
+      "skipLobby",
+      isWidget && intent === UserIntent.StartNewCall,
+    ),
     returnToLobby: isWidget ? parser.getFlagParam("returnToLobby") : true,
     theme: parser.getParam("theme"),
     viaServers: !isWidget ? parser.getParam("viaServers") : null,
     homeserver: !isWidget ? parser.getParam("homeserver") : null,
+    intent,
   };
 };
 
