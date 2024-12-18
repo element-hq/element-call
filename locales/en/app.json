@@ -195,6 +195,7 @@
   "version": "{{productName}} version: {{version}}",
   "video_tile": {
     "always_show": "Always show",
+    "camera_starting": "Video loading...",
     "change_fit_contain": "Fit to frame",
     "collapse": "Collapse",
     "expand": "Expand",

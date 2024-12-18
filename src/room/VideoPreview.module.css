@@ -25,6 +25,17 @@ video.mirror {
   transform: scaleX(-1);
 }
 
+.preview .cameraStarting {
+  position: absolute;
+  top: var(--cpd-space-10x);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  color: var(--cpd-color-text-secondary);
+}
+
 .avatarContainer {
   position: absolute;
   top: 0;
