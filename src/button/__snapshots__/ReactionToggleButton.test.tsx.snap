@@ -9,7 +9,7 @@ exports[`Can close reaction dialog 1`] = `
     aria-disabled="false"
     aria-expanded="true"
     aria-haspopup="true"
-    aria-labelledby=":r9l:"
+    aria-labelledby=":rav:"
     class="_button_i91xf_17 _has-icon_i91xf_66 _icon-only_i91xf_59"
     data-kind="primary"
     data-size="lg"
@@ -43,7 +43,7 @@ exports[`Can fully expand emoji picker 1`] = `
     aria-disabled="false"
     aria-expanded="true"
     aria-haspopup="true"
-    aria-labelledby=":r6c:"
+    aria-labelledby=":r7m:"
     class="_button_i91xf_17 _has-icon_i91xf_66 _icon-only_i91xf_59"
     data-kind="primary"
     data-size="lg"
@@ -75,8 +75,8 @@ exports[`Can lower hand 1`] = `
     aria-expanded="false"
     aria-haspopup="true"
     aria-labelledby=":r36:"
-    class="_button_i91xf_17 raisedButton _has-icon_i91xf_66 _icon-only_i91xf_59"
-    data-kind="primary"
+    class="_button_i91xf_17 _has-icon_i91xf_66 _icon-only_i91xf_59"
+    data-kind="secondary"
     data-size="lg"
     role="button"
     tabindex="0"
@@ -90,7 +90,9 @@ exports[`Can lower hand 1`] = `
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
-        d="M11 3a1 1 0 1 1 2 0v8.5a.5.5 0 0 0 1 0V4a1 1 0 1 1 2 0v10.2l3.284-2.597a1.081 1.081 0 0 1 1.47 1.577c-.613.673-1.214 1.367-1.818 2.064-1.267 1.463-2.541 2.934-3.944 4.235A6 6 0 0 1 5 15V7a1 1 0 0 1 2 0v5.5a.5.5 0 0 0 1 0V4a1 1 0 0 1 2 0v7.5a.5.5 0 0 0 1 0V3Z"
+        clip-rule="evenodd"
+        d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Zm3.536-6.464a1 1 0 0 0-1.415-1.415A2.988 2.988 0 0 1 12 15a2.988 2.988 0 0 1-2.121-.879 1 1 0 1 0-1.414 1.415A4.987 4.987 0 0 0 12 17c1.38 0 2.632-.56 3.536-1.464ZM10 10.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm5.5 1.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
+        fill-rule="evenodd"
       />
     </svg>
   </button>
@@ -138,8 +140,8 @@ exports[`Can raise hand 1`] = `
     aria-expanded="false"
     aria-haspopup="true"
     aria-labelledby=":r1j:"
-    class="_button_i91xf_17 _has-icon_i91xf_66 _icon-only_i91xf_59"
-    data-kind="secondary"
+    class="_button_i91xf_17 raisedButton _has-icon_i91xf_66 _icon-only_i91xf_59"
+    data-kind="primary"
     data-size="lg"
     role="button"
     tabindex="0"
@@ -153,9 +155,7 @@ exports[`Can raise hand 1`] = `
       xmlns="http://www.w3.org/2000/svg"
     >
       <path
-        clip-rule="evenodd"
-        d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10Zm3.536-6.464a1 1 0 0 0-1.415-1.415A2.988 2.988 0 0 1 12 15a2.988 2.988 0 0 1-2.121-.879 1 1 0 1 0-1.414 1.415A4.987 4.987 0 0 0 12 17c1.38 0 2.632-.56 3.536-1.464ZM10 10.5a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Zm5.5 1.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z"
-        fill-rule="evenodd"
+        d="M11 3a1 1 0 1 1 2 0v8.5a.5.5 0 0 0 1 0V4a1 1 0 1 1 2 0v10.2l3.284-2.597a1.081 1.081 0 0 1 1.47 1.577c-.613.673-1.214 1.367-1.818 2.064-1.267 1.463-2.541 2.934-3.944 4.235A6 6 0 0 1 5 15V7a1 1 0 0 1 2 0v5.5a.5.5 0 0 0 1 0V4a1 1 0 0 1 2 0v7.5a.5.5 0 0 0 1 0V3Z"
       />
     </svg>
   </button>

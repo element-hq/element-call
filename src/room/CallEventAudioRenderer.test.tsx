@@ -15,43 +15,23 @@ import {
   vitest,
   afterEach,
 } from "vitest";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
-import { ConnectionState } from "livekit-client";
-import { BehaviorSubject, of } from "rxjs";
-import { act, type ReactNode } from "react";
-import {
-  type CallMembership,
-  type MatrixRTCSession,
-} from "matrix-js-sdk/src/matrixrtc";
-import { type RoomMember } from "matrix-js-sdk/src/matrix";
+import { act } from "react";
+import { type CallMembership } from "matrix-js-sdk/src/matrixrtc";
 
-import {
-  mockLivekitRoom,
-  mockLocalParticipant,
-  mockMatrixRoom,
-  mockMatrixRoomMember,
-  mockRemoteParticipant,
-  mockRtcMembership,
-  MockRTCSession,
-} from "../utils/test";
-import { E2eeType } from "../e2ee/e2eeType";
-import { CallViewModel } from "../state/CallViewModel";
+import { mockRtcMembership } from "../utils/test";
 import {
   CallEventAudioRenderer,
   MAX_PARTICIPANT_COUNT_FOR_SOUND,
 } from "./CallEventAudioRenderer";
 import { useAudioContext } from "../useAudioContext";
-import { TestReactionsWrapper } from "../utils/testReactions";
 import { prefetchSounds } from "../soundUtils";
-
-const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
-const local = mockMatrixRoomMember(localRtcMember);
-const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
-const alice = mockMatrixRoomMember(aliceRtcMember);
-const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
-const localParticipant = mockLocalParticipant({ identity: "" });
-const aliceId = `${alice.userId}:${aliceRtcMember.deviceId}`;
-const aliceParticipant = mockRemoteParticipant({ identity: aliceId });
+import { getBasicCallViewModelEnvironment } from "../utils/test-viewmodel";
+import {
+  alice,
+  aliceRtcMember,
+  bobRtcMember,
+  local,
+} from "../utils/test-fixtures";
 
 vitest.mock("../useAudioContext");
 vitest.mock("../soundUtils");
@@ -78,66 +58,6 @@ beforeEach(() => {
   });
 });
 
-function TestComponent({
-  rtcSession,
-  vm,
-}: {
-  rtcSession: MockRTCSession;
-  vm: CallViewModel;
-}): ReactNode {
-  return (
-    <TestReactionsWrapper
-      rtcSession={rtcSession as unknown as MatrixRTCSession}
-    >
-      <CallEventAudioRenderer vm={vm} />
-    </TestReactionsWrapper>
-  );
-}
-
-function getMockEnv(
-  members: RoomMember[],
-  initialRemoteRtcMemberships: CallMembership[] = [aliceRtcMember],
-): {
-  vm: CallViewModel;
-  session: MockRTCSession;
-  remoteRtcMemberships$: BehaviorSubject<CallMembership[]>;
-} {
-  const matrixRoomMembers = new Map(members.map((p) => [p.userId, p]));
-  const remoteParticipants$ = of([aliceParticipant]);
-  const liveKitRoom = mockLivekitRoom(
-    { localParticipant },
-    { remoteParticipants$ },
-  );
-  const matrixRoom = mockMatrixRoom({
-    client: {
-      getUserId: () => localRtcMember.sender,
-      getDeviceId: () => localRtcMember.deviceId,
-      on: vitest.fn(),
-      off: vitest.fn(),
-    } as Partial<MatrixClient> as MatrixClient,
-    getMember: (userId) => matrixRoomMembers.get(userId) ?? null,
-  });
-
-  const remoteRtcMemberships$ = new BehaviorSubject<CallMembership[]>(
-    initialRemoteRtcMemberships,
-  );
-
-  const session = new MockRTCSession(
-    matrixRoom,
-    localRtcMember,
-  ).withMemberships(remoteRtcMemberships$);
-
-  const vm = new CallViewModel(
-    session as unknown as MatrixRTCSession,
-    liveKitRoom,
-    {
-      kind: E2eeType.PER_PARTICIPANT,
-    },
-    of(ConnectionState.Connected),
-  );
-  return { vm, session, remoteRtcMemberships$ };
-}
-
 /**
  * We don't want to play a sound when loading the call state
  * because typically this occurs in two stages. We first join
@@ -146,8 +66,12 @@ function getMockEnv(
  * a noise every time.
  */
 test("plays one sound when entering a call", () => {
-  const { session, vm, remoteRtcMemberships$ } = getMockEnv([local, alice]);
-  render(<TestComponent rtcSession={session} vm={vm} />);
+  const { vm, remoteRtcMemberships$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
+  render(<CallEventAudioRenderer vm={vm} />);
+
   // Joining a call usually means remote participants are added later.
   act(() => {
     remoteRtcMemberships$.next([aliceRtcMember, bobRtcMember]);
@@ -155,10 +79,12 @@ test("plays one sound when entering a call", () => {
   expect(playSound).toHaveBeenCalledOnce();
 });
 
-// TODO: Same test?
 test("plays a sound when a user joins", () => {
-  const { session, vm, remoteRtcMemberships$ } = getMockEnv([local, alice]);
-  render(<TestComponent rtcSession={session} vm={vm} />);
+  const { vm, remoteRtcMemberships$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
+  render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
     remoteRtcMemberships$.next([aliceRtcMember, bobRtcMember]);
@@ -168,8 +94,11 @@ test("plays a sound when a user joins", () => {
 });
 
 test("plays a sound when a user leaves", () => {
-  const { session, vm, remoteRtcMemberships$ } = getMockEnv([local, alice]);
-  render(<TestComponent rtcSession={session} vm={vm} />);
+  const { vm, remoteRtcMemberships$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
+  render(<CallEventAudioRenderer vm={vm} />);
 
   act(() => {
     remoteRtcMemberships$.next([]);
@@ -185,12 +114,12 @@ test("plays no sound when the participant list is more than the maximum size", (
     );
   }
 
-  const { session, vm, remoteRtcMemberships$ } = getMockEnv(
+  const { vm, remoteRtcMemberships$ } = getBasicCallViewModelEnvironment(
     [local, alice],
     mockRtcMemberships,
   );
 
-  render(<TestComponent rtcSession={session} vm={vm} />);
+  render(<CallEventAudioRenderer vm={vm} />);
   expect(playSound).not.toBeCalled();
   act(() => {
     remoteRtcMemberships$.next(
@@ -198,4 +127,57 @@ test("plays no sound when the participant list is more than the maximum size", (
     );
   });
   expect(playSound).toBeCalledWith("left");
+});
+
+test("plays one sound when a hand is raised", () => {
+  const { vm, handRaisedSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
+  render(<CallEventAudioRenderer vm={vm} />);
+
+  act(() => {
+    handRaisedSubject$.next({
+      [bobRtcMember.callId]: {
+        time: new Date(),
+        membershipEventId: "",
+        reactionEventId: "",
+      },
+    });
+  });
+  expect(playSound).toBeCalledWith("raiseHand");
+});
+
+test("should not play a sound when a hand raise is retracted", () => {
+  const { vm, handRaisedSubject$ } = getBasicCallViewModelEnvironment([
+    local,
+    alice,
+  ]);
+  render(<CallEventAudioRenderer vm={vm} />);
+
+  act(() => {
+    handRaisedSubject$.next({
+      ["foo"]: {
+        time: new Date(),
+        membershipEventId: "",
+        reactionEventId: "",
+      },
+      ["bar"]: {
+        time: new Date(),
+        membershipEventId: "",
+        reactionEventId: "",
+      },
+    });
+  });
+  expect(playSound).toHaveBeenCalledTimes(2);
+  act(() => {
+    handRaisedSubject$.next({
+      ["foo"]: {
+        time: new Date(),
+        membershipEventId: "",
+        reactionEventId: "",
+      },
+    });
+  });
+  expect(playSound).toHaveBeenCalledTimes(2);
 });

@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ReactNode, useDeferredValue, useEffect, useMemo } from "react";
+import { type ReactNode, useEffect } from "react";
 import { filter, interval, throttle } from "rxjs";
 
 import { type CallViewModel } from "../state/CallViewModel";
@@ -19,7 +19,6 @@ import screenShareStartedOgg from "../sound/screen_share_started.ogg";
 import screenShareStartedMp3 from "../sound/screen_share_started.mp3";
 import { useAudioContext } from "../useAudioContext";
 import { prefetchSounds } from "../soundUtils";
-import { useReactions } from "../useReactions";
 import { useLatest } from "../useLatest";
 
 // Do not play any sounds if the participant count has exceeded this
@@ -57,19 +56,6 @@ export function CallEventAudioRenderer({
   });
   const audioEngineRef = useLatest(audioEngineCtx);
 
-  const { raisedHands } = useReactions();
-  const raisedHandCount = useMemo(
-    () => Object.keys(raisedHands).length,
-    [raisedHands],
-  );
-  const previousRaisedHandCount = useDeferredValue(raisedHandCount);
-
-  useEffect(() => {
-    if (audioEngineRef.current && previousRaisedHandCount < raisedHandCount) {
-      void audioEngineRef.current.playSound("raiseHand");
-    }
-  }, [audioEngineRef, previousRaisedHandCount, raisedHandCount]);
-
   useEffect(() => {
     const joinSub = vm.memberChanges$
       .pipe(
@@ -95,6 +81,10 @@ export function CallEventAudioRenderer({
         void audioEngineRef.current?.playSound("left");
       });
 
+    const handRaisedSub = vm.newHandRaised$.subscribe(() => {
+      void audioEngineRef.current?.playSound("raiseHand");
+    });
+
     const screenshareSub = vm.newScreenShare$.subscribe(() => {
       void audioEngineRef.current?.playSound("screenshareStarted");
     });
@@ -102,6 +92,7 @@ export function CallEventAudioRenderer({
     return (): void => {
       joinSub.unsubscribe();
       leftSub.unsubscribe();
+      handRaisedSub.unsubscribe();
       screenshareSub.unsubscribe();
     };
   }, [audioEngineRef, vm]);

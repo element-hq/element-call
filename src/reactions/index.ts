@@ -181,3 +181,23 @@ export const ReactionSet: ReactionOption[] = [
     },
   },
 ];
+
+export interface RaisedHandInfo {
+  /**
+   * Call membership event that was reacted to.
+   */
+  membershipEventId: string;
+  /**
+   * Event ID of the reaction itself.
+   */
+  reactionEventId: string;
+  /**
+   * The time when the reaction was raised.
+   */
+  time: Date;
+}
+
+export interface ReactionInfo {
+  expireAfter: Date;
+  reactionOption: ReactionOption;
+}

@@ -14,6 +14,7 @@ import { JoinRule, type RoomState } from "matrix-js-sdk/src/matrix";
 import { Router } from "react-router-dom";
 import { createBrowserHistory } from "history";
 import userEvent from "@testing-library/user-event";
+import { type RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
 
 import { type MuteStates } from "./MuteStates";
 import { prefetchSounds } from "../soundUtils";
@@ -85,6 +86,12 @@ function createGroupCallView(widget: WidgetHelpers | null): {
     getRoom: (rId) => (rId === roomId ? room : null),
   } as Partial<MatrixClient> as MatrixClient;
   const room = mockMatrixRoom({
+    relations: {
+      getChildEventsForEvent: () =>
+        vitest.mocked({
+          getRelations: () => [],
+        }),
+    } as unknown as RelationsContainer,
     client,
     roomId,
     getMember: (userId) => roomMembers.get(userId) ?? null,

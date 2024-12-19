@@ -24,8 +24,10 @@ import {
 import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/src/logger";
 import classNames from "classnames";
+import { useObservableState } from "observable-hooks";
+import { map } from "rxjs";
 
-import { useReactions } from "../useReactions";
+import { useReactionsSender } from "../reactions/useReactionsSender";
 import styles from "./ReactionToggleButton.module.css";
 import {
   type ReactionOption,
@@ -33,6 +35,7 @@ import {
   ReactionsRowSize,
 } from "../reactions";
 import { Modal } from "../Modal";
+import { type CallViewModel } from "../state/CallViewModel";
 
 interface InnerButtonProps extends ComponentPropsWithoutRef<"button"> {
   raised: boolean;
@@ -162,22 +165,27 @@ export function ReactionPopupMenu({
 }
 
 interface ReactionToggleButtonProps extends ComponentPropsWithoutRef<"button"> {
-  userId: string;
+  identifier: string;
+  vm: CallViewModel;
 }
 
 export function ReactionToggleButton({
-  userId,
+  identifier,
+  vm,
   ...props
 }: ReactionToggleButtonProps): ReactNode {
   const { t } = useTranslation();
-  const { raisedHands, toggleRaisedHand, sendReaction, reactions } =
-    useReactions();
+  const { toggleRaisedHand, sendReaction } = useReactionsSender();
   const [busy, setBusy] = useState(false);
   const [showReactionsMenu, setShowReactionsMenu] = useState(false);
   const [errorText, setErrorText] = useState<string>();
 
-  const isHandRaised = !!raisedHands[userId];
-  const canReact = !reactions[userId];
+  const isHandRaised = useObservableState(
+    vm.handsRaised$.pipe(map((v) => !!v[identifier])),
+  );
+  const canReact = useObservableState(
+    vm.reactions$.pipe(map((v) => !v[identifier])),
+  );
 
   useEffect(() => {
     // Clear whenever the reactions menu state changes.
@@ -223,7 +231,7 @@ export function ReactionToggleButton({
       <InnerButton
         disabled={busy}
         onClick={() => setShowReactionsMenu((show) => !show)}
-        raised={isHandRaised}
+        raised={!!isHandRaised}
         open={showReactionsMenu}
         {...props}
       />
@@ -237,8 +245,8 @@ export function ReactionToggleButton({
       >
         <ReactionPopupMenu
           errorText={errorText}
-          isHandRaised={isHandRaised}
-          canReact={!busy && canReact}
+          isHandRaised={!!isHandRaised}
+          canReact={!busy && !!canReact}
           sendReaction={(reaction) => void sendRelation(reaction)}
           toggleRaisedHand={wrappedToggleRaisedHand}
         />

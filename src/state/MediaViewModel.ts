@@ -51,6 +51,7 @@ import { alwaysShowSelf } from "../settings/settings";
 import { accumulate } from "../utils/observable";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
+import { type ReactionOption } from "../reactions";
 
 // TODO: Move this naming logic into the view model
 export function useDisplayName(vm: MediaViewModel): string {
@@ -371,6 +372,8 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     participant$: Observable<LocalParticipant | RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    public readonly handRaised$: Observable<Date | null>,
+    public readonly reaction$: Observable<ReactionOption | null>,
   ) {
     super(
       id,
@@ -437,8 +440,18 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    handRaised$: Observable<Date | null>,
+    reaction$: Observable<ReactionOption | null>,
   ) {
-    super(id, member, participant$, encryptionSystem, livekitRoom);
+    super(
+      id,
+      member,
+      participant$,
+      encryptionSystem,
+      livekitRoom,
+      handRaised$,
+      reaction$,
+    );
   }
 }
 
@@ -498,8 +511,18 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    handRaised$: Observable<Date | null>,
+    reaction$: Observable<ReactionOption | null>,
   ) {
-    super(id, member, participant$, encryptionSystem, livekitRoom);
+    super(
+      id,
+      member,
+      participant$,
+      encryptionSystem,
+      livekitRoom,
+      handRaised$,
+      reaction$,
+    );
 
     // Sync the local volume with LiveKit
     combineLatest([
