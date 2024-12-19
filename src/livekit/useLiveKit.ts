@@ -134,8 +134,14 @@ export function useLiveKit(
       Array.from(room.localParticipant.videoTrackPublications.values()).find(
         (v) => v.source === Track.Source.Camera,
       )?.track as LocalVideoTrack | null,
-    [room.localParticipant.videoTrackPublications],
+    [
+      room.localParticipant.videoTrackPublications,
+      // We need to update on map changes
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      room.localParticipant.videoTrackPublications.keys(),
+    ],
   );
+
   useTrackProcessorSync(videoTrack);
 
   const connectionState = useECConnectionState(
