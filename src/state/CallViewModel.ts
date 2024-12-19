@@ -1170,6 +1170,21 @@ export class CallViewModel extends ViewModel {
     }),
     this.scope.state(),
   );
+  /**
+   * Emits an event every time a new screenshare is started in
+   * the call.
+   */
+  public readonly newScreenShare$ = this.screenShares$.pipe(
+    map((v) => v.length),
+    scan(
+      (acc, newValue) => ({
+        value: newValue,
+        playSounds: newValue > acc.value,
+      }),
+      { value: 0, playSounds: false },
+    ),
+    filter((v) => v.playSounds),
+  );
 
   public constructor(
     // A call is permanently tied to a single Matrix room and LiveKit room

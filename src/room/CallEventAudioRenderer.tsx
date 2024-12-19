@@ -13,8 +13,10 @@ import joinCallSoundMp3 from "../sound/join_call.mp3";
 import joinCallSoundOgg from "../sound/join_call.ogg";
 import leftCallSoundMp3 from "../sound/left_call.mp3";
 import leftCallSoundOgg from "../sound/left_call.ogg";
-import handSoundOgg from "../sound/raise_hand.ogg?url";
-import handSoundMp3 from "../sound/raise_hand.mp3?url";
+import handSoundOgg from "../sound/raise_hand.ogg";
+import handSoundMp3 from "../sound/raise_hand.mp3";
+import screenShareStartedOgg from "../sound/screen_share_started.ogg";
+import screenShareStartedMp3 from "../sound/screen_share_started.mp3";
 import { useAudioContext } from "../useAudioContext";
 import { prefetchSounds } from "../soundUtils";
 import { useReactions } from "../useReactions";
@@ -37,6 +39,10 @@ export const callEventAudioSounds = prefetchSounds({
   raiseHand: {
     mp3: handSoundMp3,
     ogg: handSoundOgg,
+  },
+  screenshareStarted: {
+    mp3: screenShareStartedMp3,
+    ogg: screenShareStartedOgg,
   },
 });
 
@@ -89,9 +95,14 @@ export function CallEventAudioRenderer({
         void audioEngineRef.current?.playSound("left");
       });
 
+    const screenshareSub = vm.newScreenShare$.subscribe(() => {
+      void audioEngineRef.current?.playSound("screenshareStarted");
+    });
+
     return (): void => {
       joinSub.unsubscribe();
       leftSub.unsubscribe();
+      screenshareSub.unsubscribe();
     };
   }, [audioEngineRef, vm]);
 
