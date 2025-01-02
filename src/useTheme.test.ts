@@ -16,11 +16,11 @@ import {
   vi,
 } from "vitest";
 import EventEmitter from "events";
+import { WidgetApiToWidgetAction } from "matrix-widget-api";
 
 import { useTheme } from "./useTheme";
 import { getUrlParams } from "./UrlParams";
 import { widget } from "./widget";
-import { WidgetApiToWidgetAction } from "matrix-widget-api";
 
 vi.mock("./UrlParams", () => ({ getUrlParams: vi.fn() }));
 vi.mock("./widget", () => ({
