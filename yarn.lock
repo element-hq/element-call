@@ -1941,9 +1941,9 @@
     rxjs "7.8.1"
 
 "@livekit/components-react@^2.0.0":
-  version "2.6.9"
-  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.6.9.tgz#2ff4691dc2cae6ed4c4b2e586a255d00e494bf9c"
-  integrity sha512-j43i/Dm8dlI2jxv5wv0s+69QPVqVEjg0y2tyznfs/7RDcaIZsIIzNijPu1kLditerzvzQdRsOgFQ3UWONcTkGA==
+  version "2.6.10"
+  resolved "https://registry.yarnpkg.com/@livekit/components-react/-/components-react-2.6.10.tgz#949d6e65e8507e2d8a4c75bf190adf56f6358175"
+  integrity sha512-aR8rqCIEvT3QYHuVEm67THRmNd9x25FTmU3Phi928FhzQJXDBO0N1/5d6qEE/wuDOgXMOoBgA98qsdYDIi2f+g==
   dependencies:
     "@livekit/components-core" "0.11.10"
     clsx "2.1.1"
