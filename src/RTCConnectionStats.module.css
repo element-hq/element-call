@@ -1,0 +1,20 @@
+/*
+Copyright 2024 New Vector Ltd.
+
+SPDX-License-Identifier: AGPL-3.0-only
+Please see LICENSE in the repository root for full details.
+*/
+
+.modal pre {
+  font-size: var(--font-size-micro);
+}
+
+.statsPill {
+  border-radius: var(--media-view-border-radius);
+  grid-area: none;
+  position: absolute;
+  top: 0;
+  left: 0;
+  flex-direction: column;
+  align-items: flex-start;
+}

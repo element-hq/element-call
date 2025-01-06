@@ -86,6 +86,12 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
     const video = useObservableEagerState(vm.video$);
     const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning$);
     const encryptionStatus = useObservableEagerState(vm.encryptionStatus$);
+    const audioStreamStats = useObservableEagerState<
+      RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
+    >(vm.audioStreamStats$);
+    const videoStreamStats = useObservableEagerState<
+      RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
+    >(vm.videoStreamStats$);
     const audioEnabled = useObservableEagerState(vm.audioEnabled$);
     const videoEnabled = useObservableEagerState(vm.videoEnabled$);
     const speaking = useObservableEagerState(vm.speaking$);
@@ -174,6 +180,8 @@ const UserMediaTile = forwardRef<HTMLDivElement, UserMediaTileProps>(
         currentReaction={reaction ?? undefined}
         raisedHandOnClick={raisedHandOnClick}
         localParticipant={vm.local}
+        audioStreamStats={audioStreamStats}
+        videoStreamStats={videoStreamStats}
         {...props}
       />
     );
