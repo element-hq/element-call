@@ -33,7 +33,7 @@ export const sizes = new Map([
   [Size.XL, 90],
 ]);
 
-interface Props {
+export interface Props {
   id: string;
   name: string;
   className?: string;

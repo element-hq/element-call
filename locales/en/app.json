@@ -73,6 +73,7 @@
     "duplicate_tiles_label": "Number of additional tile copies per participant",
     "hostname": "Hostname: {{hostname}}",
     "matrix_id": "Matrix ID: {{id}}",
+    "show_connection_stats": "Show connection statistics",
     "show_non_member_tiles": "Show tiles for non-member media"
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
@@ -198,6 +199,7 @@
   "version": "{{productName}} version: {{version}}",
   "video_tile": {
     "always_show": "Always show",
+    "camera_starting": "Video loading...",
     "change_fit_contain": "Fit to frame",
     "collapse": "Collapse",
     "expand": "Expand",

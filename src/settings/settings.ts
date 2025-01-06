@@ -78,6 +78,11 @@ export const showNonMemberTiles = new Setting<boolean>(
 );
 export const debugTileLayout = new Setting("debug-tile-layout", false);
 
+export const showConnectionStats = new Setting<boolean>(
+  "show-connection-stats",
+  false,
+);
+
 export const audioInput = new Setting<string | undefined>(
   "audio-input",
   undefined,

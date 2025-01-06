@@ -83,7 +83,10 @@ import { makeSpotlightExpandedLayout } from "../grid/SpotlightExpandedLayout";
 import { makeSpotlightLandscapeLayout } from "../grid/SpotlightLandscapeLayout";
 import { makeSpotlightPortraitLayout } from "../grid/SpotlightPortraitLayout";
 import { GridTileViewModel, type TileViewModel } from "../state/TileViewModel";
-import { ReactionsProvider, useReactions } from "../useReactions";
+import {
+  ReactionsSenderProvider,
+  useReactionsSender,
+} from "../reactions/useReactionsSender";
 import { ReactionsAudioRenderer } from "./ReactionAudioRenderer";
 import { useSwitchCamera } from "./useSwitchCamera";
 import { ReactionsOverlay } from "./ReactionsOverlay";
@@ -92,6 +95,7 @@ import {
   debugTileLayout as debugTileLayoutSetting,
   useSetting,
 } from "../settings/settings";
+import { ReactionsReader } from "../reactions/ReactionsReader";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -127,14 +131,20 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   useEffect(() => {
     if (livekitRoom !== undefined) {
+      const reactionsReader = new ReactionsReader(props.rtcSession);
       const vm = new CallViewModel(
         props.rtcSession,
         livekitRoom,
         props.e2eeSystem,
         connStateObservable$,
+        reactionsReader.raisedHands$,
+        reactionsReader.reactions$,
       );
       setVm(vm);
-      return (): void => vm.destroy();
+      return (): void => {
+        vm.destroy();
+        reactionsReader.destroy();
+      };
     }
   }, [props.rtcSession, livekitRoom, props.e2eeSystem, connStateObservable$]);
 
@@ -142,14 +152,14 @@ export const ActiveCall: FC<ActiveCallProps> = (props) => {
 
   return (
     <RoomContext.Provider value={livekitRoom}>
-      <ReactionsProvider rtcSession={props.rtcSession}>
+      <ReactionsSenderProvider vm={vm} rtcSession={props.rtcSession}>
         <InCallView
           {...props}
           vm={vm}
           livekitRoom={livekitRoom}
           connState={connState}
         />
-      </ReactionsProvider>
+      </ReactionsSenderProvider>
     </RoomContext.Provider>
   );
 };
@@ -182,7 +192,8 @@ export const InCallView: FC<InCallViewProps> = ({
   connState,
   onShareClick,
 }) => {
-  const { supportsReactions, sendReaction, toggleRaisedHand } = useReactions();
+  const { supportsReactions, sendReaction, toggleRaisedHand } =
+    useReactionsSender();
 
   useWakeLock();
 
@@ -551,9 +562,10 @@ export const InCallView: FC<InCallViewProps> = ({
   if (supportsReactions) {
     buttons.push(
       <ReactionToggleButton
+        vm={vm}
         key="raise_hand"
         className={styles.raiseHand}
-        userId={client.getUserId()!}
+        identifier={`${client.getUserId()}:${client.getDeviceId()}`}
         onTouchEnd={onControlsTouchEnd}
       />,
     );
@@ -653,8 +665,8 @@ export const InCallView: FC<InCallViewProps> = ({
       <RoomAudioRenderer />
       {renderContent()}
       <CallEventAudioRenderer vm={vm} />
-      <ReactionsAudioRenderer />
-      <ReactionsOverlay />
+      <ReactionsAudioRenderer vm={vm} />
+      <ReactionsOverlay vm={vm} />
       {footer}
       {layout.type !== "pip" && (
         <>
