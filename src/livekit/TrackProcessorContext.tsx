@@ -6,8 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import {
-  BackgroundBlur as backgroundBlur,
-  type ProcessorWrapper,
+  ProcessorWrapper,
   type BackgroundOptions,
 } from "@livekit/track-processors";
 import {
@@ -26,6 +25,7 @@ import {
   backgroundBlur as backgroundBlurSettings,
   useSetting,
 } from "../settings/settings";
+import { BlurBackgroundTransformer } from "./BlurBackgroundTransformer";
 
 type ProcessorState = {
   supported: boolean | undefined;
@@ -89,15 +89,10 @@ export const ProcessorProvider: FC<Props> = ({ children }) => {
     if (!shouldCheckSupport) return;
     try {
       if (!blur.current) {
-        // TODO: move to our own local version of the transformer.
-        // Currently this is broken: error when trying to pipe IndexSizeError: Failed to construct 'ImageData': The source width is zero or not a number.
-        // blur.current = new ProcessorWrapper(
-        //   new BlurBackgroundTransformer({}),
-        //   "background-blur",
-        // );
-
-        // eslint-disable-next-line new-cap
-        blur.current = backgroundBlur();
+        blur.current = new ProcessorWrapper(
+          new BlurBackgroundTransformer({}),
+          "background-blur",
+        );
       }
       setProcessorState({
         checkSupported,
