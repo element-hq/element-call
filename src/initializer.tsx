@@ -5,6 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
+import React from "react";
 import i18n, {
   type BackendModule,
   type ReadCallback,
@@ -16,6 +17,12 @@ import * as Sentry from "@sentry/react";
 import { logger } from "matrix-js-sdk/src/logger";
 import { shouldPolyfill as shouldPolyfillSegmenter } from "@formatjs/intl-segmenter/should-polyfill";
 import { shouldPolyfill as shouldPolyfillDurationFormat } from "@formatjs/intl-durationformat/should-polyfill";
+import {
+  useLocation,
+  useNavigationType,
+  createRoutesFromChildren,
+  matchRoutes,
+} from "react-router-dom";
 
 import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
@@ -217,7 +224,13 @@ export class Initializer {
           dsn: Config.get().sentry?.DSN,
           environment: Config.get().sentry?.environment,
           integrations: [
-            Sentry.reactRouterV5BrowserTracingIntegration({ history }),
+            Sentry.reactRouterV6BrowserTracingIntegration({
+              useEffect: React.useEffect,
+              useLocation,
+              useNavigationType,
+              createRoutesFromChildren,
+              matchRoutes,
+            }),
           ],
           tracesSampleRate: 1.0,
         });

@@ -82,7 +82,7 @@ export const UserMenu: FC<Props> = ({
 
   if (!isAuthenticated) {
     return (
-      <LinkButton to={{ pathname: "/login", state: { from: location } }}>
+      <LinkButton to={{ pathname: "/login" }} state={{ from: location }}>
         {t("log_in")}
       </LinkButton>
     );

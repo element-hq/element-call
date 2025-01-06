@@ -14,7 +14,7 @@ import {
   useRef,
   useState,
 } from "react";
-import { useHistory, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { captureException } from "@sentry/react";
 import { sleep } from "matrix-js-sdk/src/utils";
 import { Trans, useTranslation } from "react-i18next";
@@ -41,7 +41,7 @@ export const RegisterPage: FC = () => {
     useClientLegacy();
 
   const confirmPasswordRef = useRef<HTMLInputElement>(null);
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
   const [registering, setRegistering] = useState(false);
   const [error, setError] = useState<Error>();
@@ -106,9 +106,9 @@ export const RegisterPage: FC = () => {
           if (location.state?.from) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            history.push(location.state?.from);
+            navigate(location.state?.from);
           } else {
-            history.push("/");
+            navigate("/");
           }
         })
         .catch((error) => {
@@ -120,7 +120,7 @@ export const RegisterPage: FC = () => {
     [
       register,
       location,
-      history,
+      navigate,
       passwordlessUser,
       reset,
       execute,
@@ -141,9 +141,9 @@ export const RegisterPage: FC = () => {
 
   useEffect(() => {
     if (!loading && authenticated && !passwordlessUser && !registering) {
-      history.push("/");
+      navigate("/");
     }
-  }, [loading, history, authenticated, passwordlessUser, registering]);
+  }, [loading, navigate, authenticated, passwordlessUser, registering]);
 
   if (loading) {
     return <LoadingView />;
