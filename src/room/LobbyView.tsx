@@ -10,17 +10,16 @@ import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Button } from "@vector-im/compound-web";
 import classNames from "classnames";
-import { useHistory } from "react-router-dom";
 import { logger } from "matrix-js-sdk/src/logger";
 import { usePreviewTracks } from "@livekit/components-react";
 import { type LocalVideoTrack, Track } from "livekit-client";
 import { useObservable } from "observable-hooks";
 import { map } from "rxjs";
+import { useNavigate } from "react-router-dom";
 
 import inCallStyles from "./InCallView.module.css";
 import styles from "./LobbyView.module.css";
 import { Header, LeftNav, RightNav, RoomHeaderInfo } from "../Header";
-import { useLocationNavigation } from "../useLocationNavigation";
 import { type MatrixInfo, VideoPreview } from "./VideoPreview";
 import { type MuteStates } from "./MuteStates";
 import { InviteButton } from "../button/InviteButton";
@@ -65,7 +64,6 @@ export const LobbyView: FC<Props> = ({
   waitingForInvite,
 }) => {
   const { t } = useTranslation();
-  useLocationNavigation();
 
   const onAudioPress = useCallback(
     () => muteStates.audio.setEnabled?.((e) => !e),
@@ -88,8 +86,8 @@ export const LobbyView: FC<Props> = ({
     [setSettingsModalOpen],
   );
 
-  const history = useHistory();
-  const onLeaveClick = useCallback(() => history.push("/"), [history]);
+  const navigate = useNavigate();
+  const onLeaveClick = useCallback(() => navigate("/"), [navigate]);
 
   const recentsButtonInFooter = useMediaQuery("(max-height: 500px)");
   const recentsButton = !confineToRoom && (

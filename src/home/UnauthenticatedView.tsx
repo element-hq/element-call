@@ -6,11 +6,11 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, useCallback, useState, type FormEventHandler } from "react";
-import { useHistory } from "react-router-dom";
 import { randomString } from "matrix-js-sdk/src/randomstring";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, Heading, Text } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
+import { useNavigate } from "react-router-dom";
 
 import { useClient } from "../ClientContext";
 import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
@@ -50,7 +50,7 @@ export const UnauthenticatedView: FC = () => {
     [setJoinExistingCallModalOpen],
   );
   const [onFinished, setOnFinished] = useState<() => void>();
-  const history = useHistory();
+  const navigate = useNavigate();
   const { t } = useTranslation();
 
   const onSubmit: FormEventHandler<HTMLFormElement> = useCallback(
@@ -91,7 +91,7 @@ export const UnauthenticatedView: FC = () => {
             setOnFinished(() => {
               setClient({ client, session });
               const aliasLocalpart = roomAliasLocalpartFromRoomName(roomName);
-              history.push(`/${aliasLocalpart}`);
+              navigate(`/${aliasLocalpart}`);
             });
 
             setLoading(false);
@@ -110,7 +110,7 @@ export const UnauthenticatedView: FC = () => {
           throw new Error("Failed to create room with shared secret");
 
         setClient({ client, session });
-        history.push(
+        navigate(
           getRelativeRoomUrl(
             createRoomResult.roomId,
             { kind: E2eeType.SHARED_KEY, secret: createRoomResult.password },
@@ -130,7 +130,7 @@ export const UnauthenticatedView: FC = () => {
       register,
       reset,
       execute,
-      history,
+      navigate,
       setJoinExistingCallModalOpen,
       setClient,
     ],

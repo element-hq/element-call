@@ -6,14 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, Suspense, useEffect, useState } from "react";
-import {
-  BrowserRouter as Router,
-  Switch,
-  Route,
-  useLocation,
-} from "react-router-dom";
+import { BrowserRouter, Route, useLocation, Routes } from "react-router-dom";
 import * as Sentry from "@sentry/react";
-import { type History } from "history";
 import { TooltipProvider } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
 
@@ -29,7 +23,7 @@ import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
 
-const SentryRoute = Sentry.withSentryRouting(Route);
+const SentryRoute = Sentry.withSentryReactRouterV6Routing(Route);
 
 interface SimpleProviderProps {
   children: JSX.Element;
@@ -55,11 +49,7 @@ const ThemeProvider: FC<SimpleProviderProps> = ({ children }) => {
   return children;
 };
 
-interface AppProps {
-  history: History;
-}
-
-export const App: FC<AppProps> = ({ history }) => {
+export const App: FC = () => {
   const [loaded, setLoaded] = useState(false);
   useEffect(() => {
     Initializer.init()
@@ -76,7 +66,7 @@ export const App: FC<AppProps> = ({ history }) => {
   return (
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
-    <Router history={history}>
+    <BrowserRouter>
       <BackgroundProvider>
         <ThemeProvider>
           <TooltipProvider>
@@ -86,20 +76,15 @@ export const App: FC<AppProps> = ({ history }) => {
                   <MediaDevicesProvider>
                     <Sentry.ErrorBoundary fallback={errorPage}>
                       <DisconnectedBanner />
-                      <Switch>
-                        <SentryRoute exact path="/">
-                          <HomePage />
-                        </SentryRoute>
-                        <SentryRoute exact path="/login">
-                          <LoginPage />
-                        </SentryRoute>
-                        <SentryRoute exact path="/register">
-                          <RegisterPage />
-                        </SentryRoute>
-                        <SentryRoute path="*">
-                          <RoomPage />
-                        </SentryRoute>
-                      </Switch>
+                      <Routes>
+                        <SentryRoute path="/" element={<HomePage />} />
+                        <SentryRoute path="/login" element={<LoginPage />} />
+                        <SentryRoute
+                          path="/register"
+                          element={<RegisterPage />}
+                        />
+                        <SentryRoute path="*" element={<RoomPage />} />
+                      </Routes>
                     </Sentry.ErrorBoundary>
                   </MediaDevicesProvider>
                 </ClientProvider>
@@ -110,6 +95,6 @@ export const App: FC<AppProps> = ({ history }) => {
           </TooltipProvider>
         </ThemeProvider>
       </BackgroundProvider>
-    </Router>
+    </BrowserRouter>
   );
 };

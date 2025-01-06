@@ -13,7 +13,6 @@ import {
   useRef,
   useState,
 } from "react";
-import { useHistory } from "react-router-dom";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import {
   Room,
@@ -24,6 +23,7 @@ import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSess
 import { JoinRule } from "matrix-js-sdk/src/matrix";
 import { Heading, Text } from "@vector-im/compound-web";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router-dom";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -234,7 +234,7 @@ export const GroupCallView: FC<Props> = ({
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
-  const history = useHistory();
+  const navigate = useNavigate();
 
   const onLeave = useCallback(
     (leaveError?: Error): void => {
@@ -263,7 +263,7 @@ export const GroupCallView: FC<Props> = ({
             !confineToRoom &&
             !PosthogAnalytics.instance.isEnabled()
           ) {
-            history.push("/");
+            navigate("/");
           }
         })
         .catch((e) => {
@@ -276,7 +276,7 @@ export const GroupCallView: FC<Props> = ({
       isPasswordlessUser,
       confineToRoom,
       leaveSoundContext,
-      history,
+      navigate,
     ],
   );
 
