@@ -29,6 +29,8 @@ export default {
     // element call side.
     "@types/dom-mediacapture-transform",
     "matrix-widget-api",
+    // we bundle files from this and lazy load them:
+    "@mediapipe/tasks-vision",
   ],
   ignoreExportsUsedInFile: true,
 } satisfies KnipConfig;
