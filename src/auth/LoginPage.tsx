@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, type FormEvent, useCallback, useRef, useState } from "react";
-import { useHistory, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { Button } from "@vector-im/compound-web";
 
@@ -29,7 +29,7 @@ export const LoginPage: FC = () => {
   const homeserver = Config.defaultHomeserverUrl(); // TODO: Make this configurable
   const usernameRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
-  const history = useHistory();
+  const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<Error>();
@@ -61,9 +61,9 @@ export const LoginPage: FC = () => {
           if (locationState && locationState.from) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            history.push(locationState.from);
+            navigate(locationState.from);
           } else {
-            history.push("/");
+            navigate("/");
           }
           PosthogAnalytics.instance.eventLogin.track();
         })
@@ -72,7 +72,7 @@ export const LoginPage: FC = () => {
           setLoading(false);
         });
     },
-    [login, location, history, homeserver, setClient],
+    [login, location, navigate, homeserver, setClient],
   );
   // we need to limit the length of the homserver name to not cover the whole loginview input with the string.
   let shortendHomeserverName = Config.defaultServerName()?.slice(0, 25);

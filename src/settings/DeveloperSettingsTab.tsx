@@ -14,6 +14,7 @@ import {
   duplicateTiles as duplicateTilesSetting,
   debugTileLayout as debugTileLayoutSetting,
   showNonMemberTiles as showNonMemberTilesSetting,
+  showConnectionStats as showConnectionStatsSetting,
 } from "./settings";
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 
@@ -29,6 +30,10 @@ export const DeveloperSettingsTab: FC<Props> = ({ client }) => {
   );
   const [showNonMemberTiles, setShowNonMemberTiles] = useSetting(
     showNonMemberTilesSetting,
+  );
+
+  const [showConnectionStats, setShowConnectionStats] = useSetting(
+    showConnectionStatsSetting,
   );
 
   return (
@@ -100,6 +105,20 @@ export const DeveloperSettingsTab: FC<Props> = ({ client }) => {
               setShowNonMemberTiles(event.target.checked);
             },
             [setShowNonMemberTiles],
+          )}
+        />
+      </FieldRow>
+      <FieldRow>
+        <InputField
+          id="showConnectionStats"
+          type="checkbox"
+          label={t("developer_mode.show_connection_stats")}
+          checked={!!showConnectionStats}
+          onChange={useCallback(
+            (event: ChangeEvent<HTMLInputElement>): void => {
+              setShowConnectionStats(event.target.checked);
+            },
+            [setShowConnectionStats],
           )}
         />
       </FieldRow>

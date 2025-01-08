@@ -15,7 +15,7 @@ import {
   useRef,
   useMemo,
 } from "react";
-import { useHistory } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { logger } from "matrix-js-sdk/src/logger";
 import { useTranslation } from "react-i18next";
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/src/sync";
@@ -144,7 +144,7 @@ interface Props {
 }
 
 export const ClientProvider: FC<Props> = ({ children }) => {
-  const history = useHistory();
+  const navigate = useNavigate();
 
   // null = signed out, undefined = loading
   const [initClientState, setInitClientState] = useState<
@@ -228,9 +228,9 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     await client.clearStores();
     clearSession();
     setInitClientState(null);
-    history.push("/");
+    navigate("/");
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
-  }, [history, initClientState?.client]);
+  }, [navigate, initClientState?.client]);
 
   const { t } = useTranslation();
 

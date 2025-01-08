@@ -13,7 +13,6 @@ import "matrix-js-sdk/src/browser-index";
 
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
-import { createBrowserHistory } from "history";
 import "./index.css";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
@@ -57,11 +56,9 @@ if (fatalError !== null) {
 
 Initializer.initBeforeReact()
   .then(() => {
-    const history = createBrowserHistory();
-
     root.render(
       <StrictMode>
-        <App history={history} />
+        <App />
       </StrictMode>,
     );
   })

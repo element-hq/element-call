@@ -7,6 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { test, vi, onTestFinished, it } from "vitest";
 import {
+  BehaviorSubject,
   combineLatest,
   debounceTime,
   distinctUntilChanged,
@@ -46,6 +47,7 @@ import {
   type ECConnectionState,
 } from "../livekit/useECConnectionState";
 import { E2eeType } from "../e2ee/e2eeType";
+import type { RaisedHandInfo } from "../reactions";
 import { showNonMemberTiles } from "../settings/settings";
 
 vi.mock("@livekit/components-core");
@@ -190,7 +192,10 @@ function withCallViewModel(
   rtcMembers$: Observable<Partial<CallMembership>[]>,
   connectionState$: Observable<ECConnectionState>,
   speaking: Map<Participant, Observable<boolean>>,
-  continuation: (vm: CallViewModel) => void,
+  continuation: (
+    vm: CallViewModel,
+    subjects: { raisedHands$: BehaviorSubject<Record<string, RaisedHandInfo>> },
+  ) => void,
 ): void {
   const room = mockMatrixRoom({
     client: {
@@ -235,6 +240,8 @@ function withCallViewModel(
     { remoteParticipants$ },
   );
 
+  const raisedHands$ = new BehaviorSubject<Record<string, RaisedHandInfo>>({});
+
   const vm = new CallViewModel(
     rtcSession as unknown as MatrixRTCSession,
     liveKitRoom,
@@ -242,6 +249,8 @@ function withCallViewModel(
       kind: E2eeType.PER_PARTICIPANT,
     },
     connectionState$,
+    raisedHands$,
+    new BehaviorSubject({}),
   );
 
   onTestFinished(() => {
@@ -252,7 +261,7 @@ function withCallViewModel(
     roomEventSelectorSpy!.mockRestore();
   });
 
-  continuation(vm);
+  continuation(vm, { raisedHands$: raisedHands$ });
 }
 
 test("participants are retained during a focus switch", () => {
@@ -775,6 +784,65 @@ it("should show at least one tile per MatrixRTCSession", () => {
               type: "one-on-one",
               local: "local:0",
               remote: `${daveId}:0`,
+            },
+          },
+        );
+      },
+    );
+  });
+});
+
+it("should rank raised hands above video feeds and below speakers and presenters", () => {
+  withTestScheduler(({ schedule, expectObservable }) => {
+    // There should always be one tile for each MatrixRTCSession
+    const expectedLayoutMarbles = "ab";
+
+    withCallViewModel(
+      of([aliceParticipant, bobParticipant]),
+      of([aliceRtcMember, bobRtcMember]),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm, { raisedHands$ }) => {
+        schedule("ab", {
+          a: () => {
+            // We imagine that only two tiles (the first two) will be visible on screen at a time
+            vm.layout$.subscribe((layout) => {
+              if (layout.type === "grid") {
+                layout.setVisibleTiles(2);
+              }
+            });
+          },
+          b: () => {
+            raisedHands$.next({
+              [`${bobRtcMember.sender}:${bobRtcMember.deviceId}`]: {
+                time: new Date(),
+                reactionEventId: "",
+                membershipEventId: "",
+              },
+            });
+          },
+        });
+        expectObservable(summarizeLayout$(vm.layout$)).toBe(
+          expectedLayoutMarbles,
+          {
+            a: {
+              type: "grid",
+              spotlight: undefined,
+              grid: [
+                "local:0",
+                "@alice:example.org:AAAA:0",
+                "@bob:example.org:BBBB:0",
+              ],
+            },
+            b: {
+              type: "grid",
+              spotlight: undefined,
+              grid: [
+                "local:0",
+                // Bob shifts up!
+                "@bob:example.org:BBBB:0",
+                "@alice:example.org:AAAA:0",
+              ],
             },
           },
         );

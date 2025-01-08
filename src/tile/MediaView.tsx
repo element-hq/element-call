@@ -22,6 +22,7 @@ import { RaisedHandIndicator } from "../reactions/RaisedHandIndicator";
 import { showHandRaisedTimer, useSetting } from "../settings/settings";
 import { type ReactionOption } from "../reactions";
 import { ReactionIndicator } from "../reactions/ReactionIndicator";
+import { RTCConnectionStats } from "../RTCConnectionStats";
 
 interface Props extends ComponentProps<typeof animated.div> {
   className?: string;
@@ -42,6 +43,8 @@ interface Props extends ComponentProps<typeof animated.div> {
   currentReaction?: ReactionOption;
   raisedHandOnClick?: () => void;
   localParticipant: boolean;
+  audioStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
+  videoStreamStats?: RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats;
 }
 
 export const MediaView = forwardRef<HTMLDivElement, Props>(
@@ -65,6 +68,8 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
       currentReaction,
       raisedHandOnClick,
       localParticipant,
+      audioStreamStats,
+      videoStreamStats,
       ...props
     },
     ref,
@@ -124,6 +129,12 @@ export const MediaView = forwardRef<HTMLDivElement, Props>(
             <div className={styles.status}>
               {t("video_tile.waiting_for_media")}
             </div>
+          )}
+          {(audioStreamStats || videoStreamStats) && (
+            <RTCConnectionStats
+              audio={audioStreamStats}
+              video={videoStreamStats}
+            />
           )}
           {/* TODO: Bring this back once encryption status is less broken */}
           {/*encryptionStatus !== EncryptionStatus.Okay && (

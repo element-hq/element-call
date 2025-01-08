@@ -7,7 +7,7 @@ Please see LICENSE in the repository root for full details.
 
 import { useEffect } from "react";
 
-export function usePageTitle(title: string): void {
+export function usePageTitle(title?: string): void {
   useEffect(() => {
     const productName = import.meta.env.VITE_PRODUCT_NAME || "Element Call";
     document.title = title ? `${productName} | ${title}` : productName;

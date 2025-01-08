@@ -25,6 +25,8 @@ import deerSoundOgg from "../sound/reactions/deer.ogg?url";
 import deerSoundMp3 from "../sound/reactions/deer.mp3?url";
 import rockSoundOgg from "../sound/reactions/rock.ogg?url";
 import rockSoundMp3 from "../sound/reactions/rock.mp3?url";
+import waveSoundOgg from "../sound/reactions/wave.ogg?url";
+import waveSoundMp3 from "../sound/reactions/wave.mp3?url";
 
 export const ElementCallReactionEventType = "io.element.call.reaction";
 
@@ -180,4 +182,33 @@ export const ReactionSet: ReactionOption[] = [
       mp3: rockSoundMp3,
     },
   },
+  {
+    emoji: "👋",
+    name: "wave",
+    alias: ["hand", "waving"],
+    sound: {
+      ogg: waveSoundOgg,
+      mp3: waveSoundMp3,
+    },
+  },
 ];
+
+export interface RaisedHandInfo {
+  /**
+   * Call membership event that was reacted to.
+   */
+  membershipEventId: string;
+  /**
+   * Event ID of the reaction itself.
+   */
+  reactionEventId: string;
+  /**
+   * The time when the reaction was raised.
+   */
+  time: Date;
+}
+
+export interface ReactionInfo {
+  expireAfter: Date;
+  reactionOption: ReactionOption;
+}

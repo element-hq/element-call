@@ -47,10 +47,11 @@ import { useEffect } from "react";
 
 import { ViewModel } from "./ViewModel";
 import { useReactiveState } from "../useReactiveState";
-import { alwaysShowSelf } from "../settings/settings";
+import { alwaysShowSelf, showConnectionStats } from "../settings/settings";
 import { accumulate } from "../utils/observable";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
+import { type ReactionOption } from "../reactions";
 
 // TODO: Move this naming logic into the view model
 export function useDisplayName(vm: MediaViewModel): string {
@@ -96,6 +97,60 @@ export function observeTrackReference$(
   );
 }
 
+export function observeRtpStreamStats$(
+  participant: Participant,
+  source: Track.Source,
+  type: "inbound-rtp" | "outbound-rtp",
+): Observable<
+  RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
+> {
+  return combineLatest([
+    observeTrackReference$(of(participant), source),
+    interval(1000).pipe(startWith(0)),
+  ]).pipe(
+    switchMap(async ([trackReference]) => {
+      const track = trackReference?.publication?.track;
+      if (
+        !track ||
+        !(track instanceof RemoteTrack || track instanceof LocalTrack)
+      ) {
+        return undefined;
+      }
+      const report = await track.getRTCStatsReport();
+      if (!report) {
+        return undefined;
+      }
+
+      for (const v of report.values()) {
+        if (v.type === type) {
+          return v;
+        }
+      }
+
+      return undefined;
+    }),
+    startWith(undefined),
+  );
+}
+
+export function observeInboundRtpStreamStats$(
+  participant: Participant,
+  source: Track.Source,
+): Observable<RTCInboundRtpStreamStats | undefined> {
+  return observeRtpStreamStats$(participant, source, "inbound-rtp").pipe(
+    map((x) => x as RTCInboundRtpStreamStats | undefined),
+  );
+}
+
+export function observeOutboundRtpStreamStats$(
+  participant: Participant,
+  source: Track.Source,
+): Observable<RTCOutboundRtpStreamStats | undefined> {
+  return observeRtpStreamStats$(participant, source, "outbound-rtp").pipe(
+    map((x) => x as RTCOutboundRtpStreamStats | undefined),
+  );
+}
+
 function observeRemoteTrackReceivingOkay$(
   participant: Participant,
   source: Track.Source,
@@ -110,33 +165,15 @@ function observeRemoteTrackReceivingOkay$(
     framesReceived: undefined,
   };
 
-  return combineLatest([
-    observeTrackReference$(of(participant), source),
-    interval(1000).pipe(startWith(0)),
-  ]).pipe(
-    switchMap(async ([trackReference]) => {
-      const track = trackReference?.publication?.track;
-      if (!track || !(track instanceof RemoteTrack)) {
-        return undefined;
-      }
-      const report = await track.getRTCStatsReport();
-      if (!report) {
-        return undefined;
-      }
-
-      for (const v of report.values()) {
-        if (v.type === "inbound-rtp") {
-          const { framesDecoded, framesDropped, framesReceived } =
-            v as RTCInboundRtpStreamStats;
-          return {
-            framesDecoded,
-            framesDropped,
-            framesReceived,
-          };
-        }
-      }
-
-      return undefined;
+  return observeInboundRtpStreamStats$(participant, source).pipe(
+    map((stats) => {
+      if (!stats) return undefined;
+      const { framesDecoded, framesDropped, framesReceived } = stats;
+      return {
+        framesDecoded,
+        framesDropped,
+        framesReceived,
+      };
     }),
     filter((newStats) => !!newStats),
     map((newStats): boolean | undefined => {
@@ -371,6 +408,8 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     participant$: Observable<LocalParticipant | RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    public readonly handRaised$: Observable<Date | null>,
+    public readonly reaction$: Observable<ReactionOption | null>,
   ) {
     super(
       id,
@@ -401,6 +440,13 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
   public get local(): boolean {
     return this instanceof LocalUserMediaViewModel;
   }
+
+  public abstract get audioStreamStats$(): Observable<
+    RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
+  >;
+  public abstract get videoStreamStats$(): Observable<
+    RTCInboundRtpStreamStats | RTCOutboundRtpStreamStats | undefined
+  >;
 }
 
 /**
@@ -437,9 +483,39 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    handRaised$: Observable<Date | null>,
+    reaction$: Observable<ReactionOption | null>,
   ) {
-    super(id, member, participant$, encryptionSystem, livekitRoom);
+    super(
+      id,
+      member,
+      participant$,
+      encryptionSystem,
+      livekitRoom,
+      handRaised$,
+      reaction$,
+    );
   }
+
+  public audioStreamStats$ = combineLatest([
+    this.participant$,
+    showConnectionStats.value$,
+  ]).pipe(
+    switchMap(([p, showConnectionStats]) => {
+      if (!p || !showConnectionStats) return of(undefined);
+      return observeOutboundRtpStreamStats$(p, Track.Source.Microphone);
+    }),
+  );
+
+  public videoStreamStats$ = combineLatest([
+    this.participant$,
+    showConnectionStats.value$,
+  ]).pipe(
+    switchMap(([p, showConnectionStats]) => {
+      if (!p || !showConnectionStats) return of(undefined);
+      return observeOutboundRtpStreamStats$(p, Track.Source.Camera);
+    }),
+  );
 }
 
 /**
@@ -498,8 +574,18 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    handRaised$: Observable<Date | null>,
+    reaction$: Observable<ReactionOption | null>,
   ) {
-    super(id, member, participant$, encryptionSystem, livekitRoom);
+    super(
+      id,
+      member,
+      participant$,
+      encryptionSystem,
+      livekitRoom,
+      handRaised$,
+      reaction$,
+    );
 
     // Sync the local volume with LiveKit
     combineLatest([
@@ -519,6 +605,26 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
   public commitLocalVolume(): void {
     this.localVolumeCommit$.next();
   }
+
+  public audioStreamStats$ = combineLatest([
+    this.participant$,
+    showConnectionStats.value$,
+  ]).pipe(
+    switchMap(([p, showConnectionStats]) => {
+      if (!p || !showConnectionStats) return of(undefined);
+      return observeInboundRtpStreamStats$(p, Track.Source.Microphone);
+    }),
+  );
+
+  public videoStreamStats$ = combineLatest([
+    this.participant$,
+    showConnectionStats.value$,
+  ]).pipe(
+    switchMap(([p, showConnectionStats]) => {
+      if (!p || !showConnectionStats) return of(undefined);
+      return observeInboundRtpStreamStats$(p, Track.Source.Camera);
+    }),
+  );
 }
 
 /**

@@ -5,14 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ReactNode, useDeferredValue, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useState } from "react";
 
-import { useReactions } from "../useReactions";
 import { playReactionsSound, useSetting } from "../settings/settings";
 import { GenericReaction, ReactionSet } from "../reactions";
 import { useAudioContext } from "../useAudioContext";
 import { prefetchSounds } from "../soundUtils";
 import { useLatest } from "../useLatest";
+import { type CallViewModel } from "../state/CallViewModel";
 
 const soundMap = Object.fromEntries([
   ...ReactionSet.filter((v) => v.sound !== undefined).map((v) => [
@@ -22,8 +22,11 @@ const soundMap = Object.fromEntries([
   [GenericReaction.name, GenericReaction.sound],
 ]);
 
-export function ReactionsAudioRenderer(): ReactNode {
-  const { reactions } = useReactions();
+export function ReactionsAudioRenderer({
+  vm,
+}: {
+  vm: CallViewModel;
+}): ReactNode {
   const [shouldPlay] = useSetting(playReactionsSound);
   const [soundCache, setSoundCache] = useState<ReturnType<
     typeof prefetchSounds
@@ -33,7 +36,6 @@ export function ReactionsAudioRenderer(): ReactNode {
     latencyHint: "interactive",
   });
   const audioEngineRef = useLatest(audioEngineCtx);
-  const oldReactions = useDeferredValue(reactions);
 
   useEffect(() => {
     if (!shouldPlay || soundCache) {
@@ -46,26 +48,19 @@ export function ReactionsAudioRenderer(): ReactNode {
   }, [soundCache, shouldPlay]);
 
   useEffect(() => {
-    if (!shouldPlay || !audioEngineRef.current) {
-      return;
-    }
-    const oldReactionSet = new Set(
-      Object.values(oldReactions).map((r) => r.name),
-    );
-    for (const reactionName of new Set(
-      Object.values(reactions).map((r) => r.name),
-    )) {
-      if (oldReactionSet.has(reactionName)) {
-        // Don't replay old reactions
-        return;
+    const sub = vm.audibleReactions$.subscribe((newReactions) => {
+      for (const reactionName of newReactions) {
+        if (soundMap[reactionName]) {
+          void audioEngineRef.current?.playSound(reactionName);
+        } else {
+          // Fallback sounds.
+          void audioEngineRef.current?.playSound("generic");
+        }
       }
-      if (soundMap[reactionName]) {
-        void audioEngineRef.current.playSound(reactionName);
-      } else {
-        // Fallback sounds.
-        void audioEngineRef.current.playSound("generic");
-      }
-    }
-  }, [audioEngineRef, shouldPlay, oldReactions, reactions]);
+    });
+    return (): void => {
+      sub.unsubscribe();
+    };
+  }, [vm, audioEngineRef]);
   return null;
 }
