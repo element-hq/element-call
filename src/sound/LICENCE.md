@@ -22,3 +22,4 @@ The following sound effects have been originally created by Element.
 - `join_call`
 - `end_call`
 - `reactions/rock`
+- `reactions/wave`
