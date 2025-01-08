@@ -91,7 +91,9 @@ export const UnauthenticatedView: FC = () => {
             setOnFinished(() => {
               setClient({ client, session });
               const aliasLocalpart = roomAliasLocalpartFromRoomName(roomName);
-              navigate(`/${aliasLocalpart}`);
+              navigate(`/${aliasLocalpart}`)?.catch((error) => {
+                logger.error("Failed to navigate to alias localpart", error);
+              });
             });
 
             setLoading(false);
@@ -110,7 +112,7 @@ export const UnauthenticatedView: FC = () => {
           throw new Error("Failed to create room with shared secret");
 
         setClient({ client, session });
-        navigate(
+        await navigate(
           getRelativeRoomUrl(
             createRoomResult.roomId,
             { kind: E2eeType.SHARED_KEY, secret: createRoomResult.password },

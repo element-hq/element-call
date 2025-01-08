@@ -48,7 +48,7 @@ export const LoginPage: FC = () => {
       }
 
       login(homeserver, usernameRef.current.value, passwordRef.current.value)
-        .then(([client, session]) => {
+        .then(async ([client, session]) => {
           if (!setClient) {
             return;
           }
@@ -61,9 +61,9 @@ export const LoginPage: FC = () => {
           if (locationState && locationState.from) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            navigate(locationState.from);
+            await navigate(locationState.from);
           } else {
-            navigate("/");
+            await navigate("/");
           }
           PosthogAnalytics.instance.eventLogin.track();
         })

@@ -228,7 +228,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     await client.clearStores();
     clearSession();
     setInitClientState(null);
-    navigate("/");
+    await navigate("/");
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
   }, [navigate, initClientState?.client]);
 

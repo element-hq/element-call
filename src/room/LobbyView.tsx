@@ -89,7 +89,11 @@ export const LobbyView: FC<Props> = ({
   );
 
   const navigate = useNavigate();
-  const onLeaveClick = useCallback(() => navigate("/"), [navigate]);
+  const onLeaveClick = useCallback(() => {
+    navigate("/")?.catch((error) => {
+      logger.error("Failed to navigate to /", error);
+    });
+  }, [navigate]);
 
   const recentsButtonInFooter = useMediaQuery("(max-height: 500px)");
   const recentsButton = !confineToRoom && (

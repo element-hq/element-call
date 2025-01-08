@@ -77,7 +77,7 @@ export const RegisteredView: FC<Props> = ({ client }) => {
         if (!createRoomResult.password)
           throw new Error("Failed to create room with shared secret");
 
-        navigate(
+        await navigate(
           getRelativeRoomUrl(
             createRoomResult.roomId,
             { kind: E2eeType.SHARED_KEY, secret: createRoomResult.password },
@@ -106,7 +106,9 @@ export const RegisteredView: FC<Props> = ({ client }) => {
 
   const [existingAlias, setExistingAlias] = useState<string>();
   const onJoinExistingRoom = useCallback(() => {
-    navigate(`/${existingAlias}`);
+    navigate(`/${existingAlias}`)?.catch((error) => {
+      logger.error("Failed to navigate to existing alias", error);
+    });
   }, [navigate, existingAlias]);
 
   return (

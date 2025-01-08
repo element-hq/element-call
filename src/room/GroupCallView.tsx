@@ -259,13 +259,13 @@ export const GroupCallView: FC<Props> = ({
         sendInstantly && audioPromise ? audioPromise : undefined,
       )
         // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
-        .then(() => {
+        .then(async () => {
           if (
             !isPasswordlessUser &&
             !confineToRoom &&
             !PosthogAnalytics.instance.isEnabled()
           ) {
-            navigate("/");
+            await navigate("/");
           }
         })
         .catch((e) => {

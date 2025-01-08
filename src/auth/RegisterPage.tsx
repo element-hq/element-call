@@ -100,15 +100,15 @@ export const RegisterPage: FC = () => {
       };
 
       submit()
-        .then(() => {
+        .then(async () => {
           // eslint-disable-next-line @typescript-eslint/ban-ts-comment
           // @ts-ignore
           if (location.state?.from) {
             // eslint-disable-next-line @typescript-eslint/ban-ts-comment
             // @ts-ignore
-            navigate(location.state?.from);
+            await navigate(location.state?.from);
           } else {
-            navigate("/");
+            await navigate("/");
           }
         })
         .catch((error) => {
@@ -141,7 +141,9 @@ export const RegisterPage: FC = () => {
 
   useEffect(() => {
     if (!loading && authenticated && !passwordlessUser && !registering) {
-      navigate("/");
+      navigate("/")?.catch((error) => {
+        logger.error("Failed to navigate to /", error);
+      });
     }
   }, [loading, navigate, authenticated, passwordlessUser, registering]);
 

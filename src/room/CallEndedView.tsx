@@ -16,6 +16,7 @@ import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, Heading, Text } from "@vector-im/compound-web";
 import { useNavigate } from "react-router-dom";
+import { logger } from "matrix-js-sdk/src/logger";
 
 import styles from "./CallEndedView.module.css";
 import feedbackStyle from "../input/FeedbackInput.module.css";
@@ -76,7 +77,9 @@ export const CallEndedView: FC<Props> = ({
             setSurveySubmitted(true);
           } else if (!confineToRoom) {
             // if the user already has an account immediately go back to the home screen
-            navigate("/");
+            navigate("/")?.catch((error) => {
+              logger.error("Failed to navigate to /", error);
+            });
           }
         }, 1000);
       }, 1000);
