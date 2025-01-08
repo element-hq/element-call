@@ -1839,10 +1839,10 @@
   dependencies:
     "@bufbuild/protobuf" "^1.10.0"
 
-"@livekit/track-processors@^0.3.2":
-  version "0.3.2"
-  resolved "https://registry.yarnpkg.com/@livekit/track-processors/-/track-processors-0.3.2.tgz#eaff6a48b556c25e85f5dd2c4daf6dcf1bc3b143"
-  integrity sha512-4JUCzb7yIKoVsTo8J6FTzLZJHcI6DihfX/pGRDg0SOGaxprcDPrt8jaDBBTsnGBSXHeMxl2ugN+xQjdCWzLKEA==
+"@livekit/track-processors@^0.3.3":
+  version "0.3.3"
+  resolved "https://registry.yarnpkg.com/@livekit/track-processors/-/track-processors-0.3.3.tgz#c44ec54229bf21ccb404b96c43702bc263c4f05d"
+  integrity sha512-C5mBWe34ie0pfhCf9zAD65D26ZytzW/xGrj8Zc1BGh5kLISFDVQlefO78LZWw9K5saTamk60O4fzSCKqWMPMLA==
   dependencies:
     "@mediapipe/holistic" "0.5.1675471629"
     "@mediapipe/tasks-vision" "0.10.9"

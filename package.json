@@ -31,7 +31,7 @@
     "@formatjs/intl-segmenter": "^11.7.3",
     "@livekit/components-core": "^0.11.0",
     "@livekit/components-react": "^2.0.0",
-    "@livekit/track-processors": "^0.3.2",
+    "@livekit/track-processors": "^0.3.3",
     "@mediapipe/tasks-vision": "^0.10.18",
     "@opentelemetry/api": "^1.4.0",
     "@opentelemetry/core": "^1.25.1",
