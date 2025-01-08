@@ -45,6 +45,7 @@ import {
   useTrackProcessor,
   useTrackProcessorSync,
 } from "../livekit/TrackProcessorContext";
+import { usePageTitle } from "../usePageTitle";
 
 interface Props {
   client: MatrixClient;
@@ -72,6 +73,7 @@ export const LobbyView: FC<Props> = ({
   waitingForInvite,
 }) => {
   const { t } = useTranslation();
+  usePageTitle(matrixInfo.roomName);
 
   const onAudioPress = useCallback(
     () => muteStates.audio.setEnabled?.((e) => !e),
