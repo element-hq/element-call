@@ -5,17 +5,46 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { useLayoutEffect, useRef } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { WidgetApiToWidgetAction } from "matrix-widget-api";
+import { type IThemeChangeActionRequest } from "matrix-widget-api/lib/interfaces/ThemeChangeAction";
 
-import { useUrlParams } from "./UrlParams";
+import { getUrlParams } from "./UrlParams";
+import { widget } from "./widget";
 
 export const useTheme = (): void => {
-  const { theme: themeName } = useUrlParams();
+  const [requestedTheme, setRequestedTheme] = useState(
+    () => getUrlParams().theme,
+  );
   const previousTheme = useRef<string | null>(document.body.classList.item(0));
+
+  useEffect(() => {
+    if (widget) {
+      const onThemeChange = (
+        ev: CustomEvent<IThemeChangeActionRequest>,
+      ): void => {
+        ev.preventDefault();
+        if ("name" in ev.detail.data && typeof ev.detail.data.name === "string")
+          setRequestedTheme(ev.detail.data.name);
+        widget!.api.transport.reply(ev.detail, {});
+      };
+
+      widget.lazyActions.on(WidgetApiToWidgetAction.ThemeChange, onThemeChange);
+      return (): void => {
+        widget!.lazyActions.off(
+          WidgetApiToWidgetAction.ThemeChange,
+          onThemeChange,
+        );
+      };
+    }
+  }, []);
+
   useLayoutEffect(() => {
-    // If the url does not contain a theme props we default to "dark".
-    const theme = themeName?.includes("light") ? "light" : "dark";
-    const themeHighContrast = themeName?.includes("high-contrast") ? "-hc" : "";
+    // If no theme has been explicitly requested we default to dark
+    const theme = requestedTheme?.includes("light") ? "light" : "dark";
+    const themeHighContrast = requestedTheme?.includes("high-contrast")
+      ? "-hc"
+      : "";
     const themeString = "cpd-theme-" + theme + themeHighContrast;
     if (themeString !== previousTheme.current) {
       document.body.classList.remove(
@@ -28,5 +57,5 @@ export const useTheme = (): void => {
       previousTheme.current = themeString;
     }
     document.body.classList.remove("no-theme");
-  }, [previousTheme, themeName]);
+  }, [previousTheme, requestedTheme]);
 };

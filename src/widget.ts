@@ -8,7 +8,11 @@ Please see LICENSE in the repository root for full details.
 import { logger } from "matrix-js-sdk/src/logger";
 import { EventType } from "matrix-js-sdk/src/@types/event";
 import { createRoomWidgetClient } from "matrix-js-sdk/src/matrix";
-import { WidgetApi, MatrixCapabilities } from "matrix-widget-api";
+import {
+  WidgetApi,
+  MatrixCapabilities,
+  WidgetApiToWidgetAction,
+} from "matrix-widget-api";
 
 import type { MatrixClient } from "matrix-js-sdk/src/client";
 import type { IWidgetApiRequest } from "matrix-widget-api";
@@ -70,6 +74,7 @@ export const widget = ((): WidgetHelpers | null => {
       // intend for the app to handle
       const lazyActions = new LazyEventEmitter();
       [
+        WidgetApiToWidgetAction.ThemeChange,
         ElementWidgetActions.JoinCall,
         ElementWidgetActions.HangupCall,
         ElementWidgetActions.TileLayout,
