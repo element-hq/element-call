@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { renderHook } from "@testing-library/react";
+import { act, renderHook } from "@testing-library/react";
 import {
   afterEach,
   beforeEach,
@@ -39,6 +39,7 @@ describe("useTheme", () => {
     vi.spyOn(originalClassList, "add");
     vi.spyOn(originalClassList, "remove");
     vi.spyOn(originalClassList, "item").mockReturnValue(null);
+    (getUrlParams as Mock).mockReturnValue({ theme: "dark" });
   });
 
   afterEach(() => {
@@ -67,7 +68,6 @@ describe("useTheme", () => {
   });
 
   test("should not reapply the same theme if it hasn't changed", () => {
-    (getUrlParams as Mock).mockReturnValue({ theme: "dark" });
     // Simulate a previous theme
     originalClassList.item = vi.fn().mockReturnValue("cpd-theme-dark");
 
@@ -82,15 +82,17 @@ describe("useTheme", () => {
     expect(originalClassList.add).not.toHaveBeenCalled();
   });
 
-  test("theme changes in response to widget actions", () => {
+  test("theme changes in response to widget actions", async () => {
     renderHook(() => useTheme());
 
     expect(originalClassList.add).toHaveBeenCalledWith("cpd-theme-dark");
-    widget!.lazyActions.emit(
-      WidgetApiToWidgetAction.ThemeChange,
-      new CustomEvent(WidgetApiToWidgetAction.ThemeChange, {
-        detail: { data: { name: "light" } },
-      }),
+    await act(() =>
+      widget!.lazyActions.emit(
+        WidgetApiToWidgetAction.ThemeChange,
+        new CustomEvent(WidgetApiToWidgetAction.ThemeChange, {
+          detail: { data: { name: "light" } },
+        }),
+      ),
     );
     expect(originalClassList.remove).toHaveBeenCalledWith(
       "cpd-theme-light",
