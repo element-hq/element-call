@@ -224,7 +224,7 @@ export class Initializer {
           dsn: Config.get().sentry?.DSN,
           environment: Config.get().sentry?.environment,
           integrations: [
-            Sentry.reactRouterV6BrowserTracingIntegration({
+            Sentry.reactRouterV7BrowserTracingIntegration({
               useEffect: React.useEffect,
               useLocation,
               useNavigationType,

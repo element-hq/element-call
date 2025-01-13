@@ -23,7 +23,7 @@ import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
 
-const SentryRoute = Sentry.withSentryReactRouterV6Routing(Route);
+const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
 interface SimpleProviderProps {
   children: JSX.Element;
