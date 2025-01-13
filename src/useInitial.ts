@@ -11,7 +11,8 @@ import { useRef } from "react";
  * React hook that returns the value given on the initial render.
  */
 export function useInitial<T>(getValue: () => T): T {
-  const ref = useRef<{ value: T }>();
+  const ref = useRef<{ value: T }>(undefined);
+  // only evaluate `getValue` if the ref is undefined
   ref.current ??= { value: getValue() };
   return ref.current.value;
 }

@@ -122,7 +122,7 @@ export const useLoadGroupCall = (
   viaServers: string[],
 ): GroupCallStatus => {
   const [state, setState] = useState<GroupCallStatus>({ kind: "loading" });
-  const activeRoom = useRef<Room>();
+  const activeRoom = useRef<Room | undefined>(undefined);
   const { t } = useTranslation();
 
   const bannedError = useCallback(

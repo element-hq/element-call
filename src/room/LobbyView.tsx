@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useCallback, useMemo, useState } from "react";
+import { type FC, useCallback, useMemo, useState, type JSX } from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Button } from "@vector-im/compound-web";

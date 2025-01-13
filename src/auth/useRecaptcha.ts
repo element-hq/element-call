@@ -32,7 +32,7 @@ export function useRecaptcha(sitekey?: string): {
 } {
   const { t } = useTranslation();
   const [recaptchaId] = useState(() => randomString(16));
-  const promiseRef = useRef<RecaptchaPromiseRef>();
+  const promiseRef = useRef<RecaptchaPromiseRef | undefined>(undefined);
 
   useEffect(() => {
     if (!sitekey) return;

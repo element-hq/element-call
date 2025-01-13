@@ -12,6 +12,7 @@ import {
   type ReactNode,
   useCallback,
   useMemo,
+  type JSX,
 } from "react";
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { logger } from "matrix-js-sdk/src/logger";

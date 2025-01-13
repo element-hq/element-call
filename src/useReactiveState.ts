@@ -23,9 +23,9 @@ export const useReactiveState = <T>(
   updateFn: (prevState?: T) => T,
   deps: DependencyList,
 ): [T, Dispatch<SetStateAction<T>>] => {
-  const state = useRef<T>();
+  const state = useRef<T | undefined>(undefined);
   if (state.current === undefined) state.current = updateFn();
-  const prevDeps = useRef<DependencyList>();
+  const prevDeps = useRef<DependencyList | undefined>(undefined);
 
   // Since we store the state in a ref, we use this counter to force an update
   // when someone calls setState

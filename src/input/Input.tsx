@@ -12,6 +12,7 @@ import {
   forwardRef,
   type ReactNode,
   useId,
+  type JSX,
 } from "react";
 import classNames from "classnames";
 

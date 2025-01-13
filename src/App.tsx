@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, Suspense, useEffect, useState } from "react";
+import { type FC, type JSX, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Route, useLocation, Routes } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { TooltipProvider } from "@vector-im/compound-web";

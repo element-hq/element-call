@@ -39,7 +39,7 @@ export const useInteractiveRegistration = (
     undefined,
   );
 
-  const authClient = useRef<MatrixClient>();
+  const authClient = useRef<MatrixClient | undefined>(undefined);
   if (!authClient.current) {
     authClient.current = createClient({
       baseUrl: Config.defaultHomeserverUrl()!,

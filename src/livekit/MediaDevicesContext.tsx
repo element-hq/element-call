@@ -14,6 +14,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type JSX,
 } from "react";
 import { createMediaDeviceObserver } from "@livekit/components-core";
 import { map, startWith } from "rxjs";

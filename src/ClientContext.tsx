@@ -14,6 +14,7 @@ import {
   useContext,
   useRef,
   useMemo,
+  type JSX,
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { logger } from "matrix-js-sdk/src/logger";

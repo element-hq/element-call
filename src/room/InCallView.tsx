@@ -23,6 +23,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type JSX,
 } from "react";
 import useMeasure from "react-use-measure";
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
