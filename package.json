@@ -81,7 +81,7 @@
     "eslint-plugin-react-hooks": "^5.0.0",
     "eslint-plugin-rxjs": "^5.0.3",
     "eslint-plugin-unicorn": "^56.0.0",
-    "global-jsdom": "^25.0.0",
+    "global-jsdom": "^26.0.0",
     "i18next": "^24.0.0",
     "i18next-browser-languagedetector": "^8.0.0",
     "i18next-parser": "^9.1.0",
