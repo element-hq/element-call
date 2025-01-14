@@ -26,7 +26,7 @@ import {
   RoomEvent as LivekitRoomEvent,
   RemoteTrack,
 } from "livekit-client";
-import { type RoomMember, RoomMemberEvent } from "matrix-js-sdk/src/matrix";
+import { type RoomMember } from "matrix-js-sdk/src/matrix";
 import {
   BehaviorSubject,
   type Observable,
@@ -43,37 +43,14 @@ import {
   switchMap,
   throttleTime,
 } from "rxjs";
-import { useEffect } from "react";
 
 import { ViewModel } from "./ViewModel";
-import { useReactiveState } from "../useReactiveState";
-import { alwaysShowSelf, showConnectionStats } from "../settings/settings";
+import { alwaysShowSelf } from "../settings/settings";
+import { showConnectionStats } from "../settings/settings";
 import { accumulate } from "../utils/observable";
 import { type EncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { E2eeType } from "../e2ee/e2eeType";
 import { type ReactionOption } from "../reactions";
-
-// TODO: Move this naming logic into the view model
-export function useDisplayName(vm: MediaViewModel): string {
-  const [displayName, setDisplayName] = useReactiveState(
-    () => vm.member?.rawDisplayName ?? "[👻]",
-    [vm.member],
-  );
-  useEffect(() => {
-    if (vm.member) {
-      const updateName = (): void => {
-        setDisplayName(vm.member!.rawDisplayName);
-      };
-
-      vm.member!.on(RoomMemberEvent.Name, updateName);
-      return (): void => {
-        vm.member!.removeListener(RoomMemberEvent.Name, updateName);
-      };
-    }
-  }, [vm.member, setDisplayName]);
-
-  return displayName;
-}
 
 export function observeTrackReference$(
   participant$: Observable<Participant | undefined>,
@@ -280,6 +257,7 @@ abstract class BaseMediaViewModel extends ViewModel {
     audioSource: AudioSource,
     videoSource: VideoSource,
     livekitRoom: LivekitRoom,
+    public readonly displayname$: Observable<string>,
   ) {
     super();
     const audio$ = observeTrackReference$(participant$, audioSource).pipe(
@@ -408,6 +386,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
     participant$: Observable<LocalParticipant | RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    displayname$: Observable<string>,
     public readonly handRaised$: Observable<Date | null>,
     public readonly reaction$: Observable<ReactionOption | null>,
   ) {
@@ -419,6 +398,7 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
       Track.Source.Microphone,
       Track.Source.Camera,
       livekitRoom,
+      displayname$,
     );
 
     const media$ = participant$.pipe(
@@ -450,6 +430,8 @@ abstract class BaseUserMediaViewModel extends BaseMediaViewModel {
 }
 
 /**
+        },
+        },
  * The local participant's user media.
  */
 export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
@@ -483,6 +465,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<LocalParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    displayname$: Observable<string>,
     handRaised$: Observable<Date | null>,
     reaction$: Observable<ReactionOption | null>,
   ) {
@@ -492,6 +475,7 @@ export class LocalUserMediaViewModel extends BaseUserMediaViewModel {
       participant$,
       encryptionSystem,
       livekitRoom,
+      displayname$,
       handRaised$,
       reaction$,
     );
@@ -574,6 +558,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
     participant$: Observable<RemoteParticipant | undefined>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    displayname$: Observable<string>,
     handRaised$: Observable<Date | null>,
     reaction$: Observable<ReactionOption | null>,
   ) {
@@ -583,6 +568,7 @@ export class RemoteUserMediaViewModel extends BaseUserMediaViewModel {
       participant$,
       encryptionSystem,
       livekitRoom,
+      displayname$,
       handRaised$,
       reaction$,
     );
@@ -637,6 +623,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
     participant$: Observable<LocalParticipant | RemoteParticipant>,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    displayname$: Observable<string>,
     public readonly local: boolean,
   ) {
     super(
@@ -647,6 +634,7 @@ export class ScreenShareViewModel extends BaseMediaViewModel {
       Track.Source.ScreenShareAudio,
       Track.Source.ScreenShare,
       livekitRoom,
+      displayname$,
     );
   }
 }

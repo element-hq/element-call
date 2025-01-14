@@ -36,7 +36,6 @@ import {
   type MediaViewModel,
   ScreenShareViewModel,
   type UserMediaViewModel,
-  useDisplayName,
 } from "../state/MediaViewModel";
 import { useInitial } from "../useInitial";
 import { useMergedRefs } from "../useMergedRefs";
@@ -132,7 +131,7 @@ const SpotlightItem = forwardRef<HTMLDivElement, SpotlightItemProps>(
   ) => {
     const ourRef = useRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
-    const displayName = useDisplayName(vm);
+    const displayName = useObservableEagerState(vm.displayname$);
     const video = useObservableEagerState(vm.video$);
     const unencryptedWarning = useObservableEagerState(vm.unencryptedWarning$);
     const encryptionStatus = useObservableEagerState(vm.encryptionStatus$);

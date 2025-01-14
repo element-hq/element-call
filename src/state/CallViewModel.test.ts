@@ -14,6 +14,7 @@ import {
   map,
   type Observable,
   of,
+  skip,
   switchMap,
 } from "rxjs";
 import { type MatrixClient } from "matrix-js-sdk/src/matrix";
@@ -49,25 +50,39 @@ import {
 import { E2eeType } from "../e2ee/e2eeType";
 import type { RaisedHandInfo } from "../reactions";
 import { showNonMemberTiles } from "../settings/settings";
+import {
+  alice,
+  aliceDoppelganger,
+  aliceDoppelgangerId,
+  aliceDoppelgangerRtcMember,
+  aliceId,
+  aliceParticipant,
+  aliceRtcMember,
+  bob,
+  bobId,
+  bobRtcMember,
+  bobZeroWidthSpace,
+  bobZeroWidthSpaceId,
+  bobZeroWidthSpaceRtcMember,
+  daveRTL,
+  daveRTLId,
+  daveRTLRtcMember,
+  local,
+  localId,
+  localRtcMember,
+} from "../utils/test-fixtures";
 
 vi.mock("@livekit/components-core");
 
-const localRtcMember = mockRtcMembership("@carol:example.org", "CCCC");
-const aliceRtcMember = mockRtcMembership("@alice:example.org", "AAAA");
-const bobRtcMember = mockRtcMembership("@bob:example.org", "BBBB");
 const daveRtcMember = mockRtcMembership("@dave:example.org", "DDDD");
 
-const alice = mockMatrixRoomMember(aliceRtcMember);
-const bob = mockMatrixRoomMember(bobRtcMember);
-const carol = mockMatrixRoomMember(localRtcMember);
-const dave = mockMatrixRoomMember(daveRtcMember);
+const carol = local;
+const carolId = localId;
+const dave = mockMatrixRoomMember(daveRtcMember, { rawDisplayName: "Dave" });
 
-const aliceId = `${alice.userId}:${aliceRtcMember.deviceId}`;
-const bobId = `${bob.userId}:${bobRtcMember.deviceId}`;
 const daveId = `${dave.userId}:${daveRtcMember.deviceId}`;
 
 const localParticipant = mockLocalParticipant({ identity: "" });
-const aliceParticipant = mockRemoteParticipant({ identity: aliceId });
 const aliceSharingScreen = mockRemoteParticipant({
   identity: aliceId,
   isScreenShareEnabled: true,
@@ -80,7 +95,9 @@ const bobSharingScreen = mockRemoteParticipant({
 const daveParticipant = mockRemoteParticipant({ identity: daveId });
 
 const roomMembers = new Map(
-  [alice, bob, carol, dave].map((p) => [p.userId, p]),
+  [alice, aliceDoppelganger, bob, bobZeroWidthSpace, carol, dave, daveRTL].map(
+    (p) => [p.userId, p],
+  ),
 );
 
 export interface GridLayoutSummary {
@@ -785,6 +802,127 @@ it("should show at least one tile per MatrixRTCSession", () => {
               local: "local:0",
               remote: `${daveId}:0`,
             },
+          },
+        );
+      },
+    );
+  });
+});
+
+test("should disambiguate users with the same displayname", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    const scenarioInputMarbles = "abcde";
+    const expectedLayoutMarbles = "abcde";
+
+    withCallViewModel(
+      of([]),
+      hot(scenarioInputMarbles, {
+        a: [],
+        b: [aliceRtcMember],
+        c: [aliceRtcMember, aliceDoppelgangerRtcMember],
+        d: [aliceRtcMember, aliceDoppelgangerRtcMember, bobRtcMember],
+        e: [aliceDoppelgangerRtcMember, bobRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm) => {
+        // Skip the null state.
+        expectObservable(vm.memberDisplaynames$.pipe(skip(1))).toBe(
+          expectedLayoutMarbles,
+          {
+            // Carol has no displayname - So userId is used.
+            a: new Map([[carolId, carol.userId]]),
+            b: new Map([
+              [carolId, carol.userId],
+              [aliceId, alice.rawDisplayName],
+            ]),
+            // The second alice joins.
+            c: new Map([
+              [carolId, carol.userId],
+              [aliceId, "Alice (@alice:example.org)"],
+              [aliceDoppelgangerId, "Alice (@alice2:example.org)"],
+            ]),
+            // Bob also joins
+            d: new Map([
+              [carolId, carol.userId],
+              [aliceId, "Alice (@alice:example.org)"],
+              [aliceDoppelgangerId, "Alice (@alice2:example.org)"],
+              [bobId, bob.rawDisplayName],
+            ]),
+            // Alice leaves, and the displayname should reset.
+            e: new Map([
+              [carolId, carol.userId],
+              [aliceDoppelgangerId, "Alice"],
+              [bobId, bob.rawDisplayName],
+            ]),
+          },
+        );
+      },
+    );
+  });
+});
+
+test("should disambiguate users with invisible characters", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    const scenarioInputMarbles = "ab";
+    const expectedLayoutMarbles = "ab";
+
+    withCallViewModel(
+      of([]),
+      hot(scenarioInputMarbles, {
+        a: [],
+        b: [bobRtcMember, bobZeroWidthSpaceRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm) => {
+        // Skip the null state.
+        expectObservable(vm.memberDisplaynames$.pipe(skip(1))).toBe(
+          expectedLayoutMarbles,
+          {
+            // Carol has no displayname - So userId is used.
+            a: new Map([[carolId, carol.userId]]),
+            // Both Bobs join, and should handle zero width hacks.
+            b: new Map([
+              [carolId, carol.userId],
+              [bobId, `Bob (${bob.userId})`],
+              [bobZeroWidthSpaceId, `Bob (${bobZeroWidthSpace.userId})`],
+            ]),
+          },
+        );
+      },
+    );
+  });
+});
+
+test("should strip RTL characters from displayname", () => {
+  withTestScheduler(({ hot, expectObservable }) => {
+    const scenarioInputMarbles = "ab";
+    const expectedLayoutMarbles = "ab";
+
+    withCallViewModel(
+      of([]),
+      hot(scenarioInputMarbles, {
+        a: [],
+        b: [daveRtcMember, daveRTLRtcMember],
+      }),
+      of(ConnectionState.Connected),
+      new Map(),
+      (vm) => {
+        // Skip the null state.
+        expectObservable(vm.memberDisplaynames$.pipe(skip(1))).toBe(
+          expectedLayoutMarbles,
+          {
+            // Carol has no displayname - So userId is used.
+            a: new Map([[carolId, carol.userId]]),
+            // Both Dave's join. Since after stripping
+            b: new Map([
+              [carolId, carol.userId],
+              // Not disambiguated
+              [daveId, "Dave"],
+              // This one is, since it's using RTL.
+              [daveRTLId, `evaD (${daveRTL.userId})`],
+            ]),
           },
         );
       },

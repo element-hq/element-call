@@ -39,7 +39,6 @@ import { useObservableEagerState, useObservableState } from "observable-hooks";
 import styles from "./GridTile.module.css";
 import {
   type UserMediaViewModel,
-  useDisplayName,
   LocalUserMediaViewModel,
   type RemoteUserMediaViewModel,
 } from "../state/MediaViewModel";
@@ -323,7 +322,7 @@ export const GridTile = forwardRef<HTMLDivElement, GridTileProps>(
     const ourRef = useRef<HTMLDivElement | null>(null);
     const ref = useMergedRefs(ourRef, theirRef);
     const media = useObservableEagerState(vm.media$);
-    const displayName = useDisplayName(media);
+    const displayName = useObservableEagerState(media.displayname$);
 
     if (media instanceof LocalUserMediaViewModel) {
       return (

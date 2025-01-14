@@ -1,5 +1,5 @@
 /*
-Copyright 2023, 2024 New Vector Ltd.
+Copyright 2023, 2024, 2025 New Vector Ltd.
 
 SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
@@ -19,7 +19,8 @@ import {
   Track,
 } from "livekit-client";
 import {
-  type Room as MatrixRoom,
+  RoomStateEvent,
+  type Room,
   type RoomMember,
 } from "matrix-js-sdk/src/matrix";
 import {
@@ -50,6 +51,7 @@ import {
 } from "rxjs";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
+  type CallMembership,
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/src/matrixrtc";
@@ -94,6 +96,7 @@ import {
 } from "../reactions";
 import { observeSpeaker$ } from "./observeSpeaker";
 import { shallowEquals } from "../utils/array";
+import { calculateDisplayName, shouldDisambiguate } from "../utils/displayname";
 
 // How long we wait after a focus switch before showing the real participant
 // list again
@@ -258,6 +261,7 @@ class UserMedia {
     participant: LocalParticipant | RemoteParticipant | undefined,
     encryptionSystem: EncryptionSystem,
     livekitRoom: LivekitRoom,
+    displayname$: Observable<string>,
     handRaised$: Observable<Date | null>,
     reaction$: Observable<ReactionOption | null>,
   ) {
@@ -270,6 +274,7 @@ class UserMedia {
         this.participant$.asObservable() as Observable<LocalParticipant>,
         encryptionSystem,
         livekitRoom,
+        displayname$,
         handRaised$,
         reaction$,
       );
@@ -282,6 +287,7 @@ class UserMedia {
         >,
         encryptionSystem,
         livekitRoom,
+        displayname$,
         handRaised$,
         reaction$,
       );
@@ -333,6 +339,7 @@ class ScreenShare {
     participant: LocalParticipant | RemoteParticipant,
     encryptionSystem: EncryptionSystem,
     liveKitRoom: LivekitRoom,
+    displayname$: Observable<string>,
   ) {
     this.participant$ = new BehaviorSubject(participant);
 
@@ -342,6 +349,7 @@ class ScreenShare {
       this.participant$.asObservable(),
       encryptionSystem,
       liveKitRoom,
+      displayname$,
       participant.isLocal,
     );
   }
@@ -353,26 +361,26 @@ class ScreenShare {
 
 type MediaItem = UserMedia | ScreenShare;
 
-function findMatrixRoomMember(
-  room: MatrixRoom,
-  id: string,
-): RoomMember | undefined {
-  if (id === "local")
-    return room.getMember(room.client.getUserId()!) ?? undefined;
+function getRoomMemberFromRtcMember(
+  rtcMember: CallMembership,
+  room: Room,
+): { id: string; member: RoomMember | undefined } {
+  // WARN! This is not exactly the sender but the user defined in the state key.
+  // This will be available once we change to the new "member as object" format in the MatrixRTC object.
+  let id = rtcMember.sender + ":" + rtcMember.deviceId;
 
-  const parts = id.split(":");
-  // must be at least 3 parts because we know the first part is a userId which must necessarily contain a colon
-  if (parts.length < 3) {
-    logger.warn(
-      `Livekit participants ID (${id}) doesn't look like a userId:deviceId combination`,
-    );
-    return undefined;
+  if (!rtcMember.sender) {
+    return { id, member: undefined };
+  }
+  if (
+    rtcMember.sender === room.client.getUserId() &&
+    rtcMember.deviceId === room.client.getDeviceId()
+  ) {
+    id = "local";
   }
 
-  parts.pop();
-  const userId = parts.join(":");
-
-  return room.getMember(userId) ?? undefined;
+  const member = room.getMember(rtcMember.sender) ?? undefined;
+  return { id, member };
 }
 
 // TODO: Move wayyyy more business logic from the call and lobby views into here
@@ -457,6 +465,40 @@ export class CallViewModel extends ViewModel {
     );
 
   /**
+   * Displaynames for each member of the call. This will disambiguate
+   * any displaynames that clashes with another member. Only members
+   * joined to the call are considered here.
+   */
+  public readonly memberDisplaynames$ = merge(
+    // Handle call membership changes.
+    fromEvent(this.matrixRTCSession, MatrixRTCSessionEvent.MembershipsChanged),
+    // Handle room membership changes (and displayname updates)
+    fromEvent(this.matrixRTCSession.room, RoomStateEvent.Members),
+  ).pipe(
+    startWith(null),
+    map(() => {
+      const displaynameMap = new Map<string, string>();
+      const { room, memberships } = this.matrixRTCSession;
+
+      // We only consider RTC members for disambiguation as they are the only visible members.
+      for (const rtcMember of memberships) {
+        const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
+        const { member } = getRoomMemberFromRtcMember(rtcMember, room);
+        if (!member) {
+          logger.error("Could not find member for media id:", matrixIdentifier);
+          continue;
+        }
+        const disambiguate = shouldDisambiguate(member, memberships, room);
+        displaynameMap.set(
+          matrixIdentifier,
+          calculateDisplayName(member, disambiguate),
+        );
+      }
+      return displaynameMap;
+    }),
+  );
+
+  /**
    * List of MediaItems that we want to display
    */
   private readonly mediaItems$: Observable<MediaItem[]> = combineLatest([
@@ -485,25 +527,18 @@ export class CallViewModel extends ViewModel {
       ) => {
         const newItems = new Map(
           function* (this: CallViewModel): Iterable<[string, MediaItem]> {
+            const room = this.matrixRTCSession.room;
             // m.rtc.members are the basis for calculating what is visible in the call
             for (const rtcMember of this.matrixRTCSession.memberships) {
-              const room = this.matrixRTCSession.room;
-              // WARN! This is not exactly the sender but the user defined in the state key.
-              // This will be available once we change to the new "member as object" format in the MatrixRTC object.
-              let livekitParticipantId =
-                rtcMember.sender + ":" + rtcMember.deviceId;
-
+              const { member, id: livekitParticipantId } =
+                getRoomMemberFromRtcMember(rtcMember, room);
               const matrixIdentifier = `${rtcMember.sender}:${rtcMember.deviceId}`;
 
               let participant:
                 | LocalParticipant
                 | RemoteParticipant
                 | undefined = undefined;
-              if (
-                rtcMember.sender === room.client.getUserId()! &&
-                rtcMember.deviceId === room.client.getDeviceId()
-              ) {
-                livekitParticipantId = "local";
+              if (livekitParticipantId === "local") {
                 participant = localParticipant;
               } else {
                 participant = remoteParticipants.find(
@@ -511,7 +546,6 @@ export class CallViewModel extends ViewModel {
                 );
               }
 
-              const member = findMatrixRoomMember(room, livekitParticipantId);
               if (!member) {
                 logger.error(
                   "Could not find member for media id: ",
@@ -544,6 +578,9 @@ export class CallViewModel extends ViewModel {
                       participant,
                       this.encryptionSystem,
                       this.livekitRoom,
+                      this.memberDisplaynames$.pipe(
+                        map((m) => m.get(matrixIdentifier) ?? "[👻]"),
+                      ),
                       this.handsRaised$.pipe(
                         map((v) => v[matrixIdentifier]?.time ?? null),
                       ),
@@ -564,6 +601,9 @@ export class CallViewModel extends ViewModel {
                         participant,
                         this.encryptionSystem,
                         this.livekitRoom,
+                        this.memberDisplaynames$.pipe(
+                          map((m) => m.get(livekitParticipantId) ?? "[👻]"),
+                        ),
                       ),
                   ];
                 }
@@ -602,6 +642,9 @@ export class CallViewModel extends ViewModel {
                             participant,
                             this.encryptionSystem,
                             this.livekitRoom,
+                            this.memberDisplaynames$.pipe(
+                              map((m) => m.get(participant.identity) ?? "[👻]"),
+                            ),
                             of(null),
                             of(null),
                           ),
