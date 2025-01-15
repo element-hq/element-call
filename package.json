@@ -43,7 +43,7 @@
     "@radix-ui/react-visually-hidden": "^1.0.3",
     "@react-spring/web": "^9.4.4",
     "@sentry/react": "^8.0.0",
-    "@sentry/vite-plugin": "^2.0.0",
+    "@sentry/vite-plugin": "^3.0.0",
     "@stylistic/eslint-plugin": "^2.12.1",
     "@testing-library/dom": "^10.1.0",
     "@testing-library/jest-dom": "^6.6.3",
