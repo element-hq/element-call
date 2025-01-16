@@ -91,7 +91,7 @@ export class PosthogAnalytics {
    * 1. Declare a type for the event, extending IPosthogEvent.
    */
 
-  private static ANALYTICS_EVENT_TYPE = "im.vector.analytics";
+  private static ANALYTICS_EVENT_TYPE = "im.vector.analytics" as const;
 
   // set true during the constructor if posthog config is present, otherwise false
   private static internalInstance: PosthogAnalytics | null = null;
@@ -272,14 +272,14 @@ export class PosthogAnalytics {
 
   private async getAnalyticsId(): Promise<string | null> {
     const client: MatrixClient = window.matrixclient;
-    let accountAnalyticsId;
+    let accountAnalyticsId: string | null;
     if (widget) {
       accountAnalyticsId = getUrlParams().analyticsID;
     } else {
       const accountData = await client.getAccountDataFromServer(
         PosthogAnalytics.ANALYTICS_EVENT_TYPE,
       );
-      accountAnalyticsId = accountData?.id;
+      accountAnalyticsId = accountData?.id ?? null;
     }
     if (accountAnalyticsId) {
       // we dont just use the element web analytics ID because that would allow to associate

@@ -15,4 +15,12 @@ declare module "matrix-js-sdk/src/types" {
   export interface TimelineEvents {
     [ElementCallReactionEventType]: ECallReactionEventContent;
   }
+
+  export interface AccountDataEvents {
+    // Analytics account data event
+    "im.vector.analytics": {
+      id: string;
+      pseudonymousAnalyticsOptIn?: boolean;
+    };
+  }
 }

@@ -1887,10 +1887,10 @@
   dependencies:
     "@bufbuild/protobuf" "^1.10.0"
 
-"@matrix-org/matrix-sdk-crypto-wasm@^12.0.0":
-  version "12.0.0"
-  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-12.0.0.tgz#e3a5150ccbb21d5e98ee3882e7057b9f17fb962a"
-  integrity sha512-nkkXAxUIk9UTso4TbU6Bgqsv/rJShXQXRx0ti/W+AWXHJ2HoH4sL5LsXkc7a8yYGn8tyXqxGPsYA1UeHqLwm0Q==
+"@matrix-org/matrix-sdk-crypto-wasm@^12.1.0":
+  version "12.1.0"
+  resolved "https://registry.yarnpkg.com/@matrix-org/matrix-sdk-crypto-wasm/-/matrix-sdk-crypto-wasm-12.1.0.tgz#2aef64eab2d30c0a1ace9c0fe876f53aa2949f14"
+  integrity sha512-NhJFu/8FOGjnW7mDssRUzaMSwXrYOcCqgAjZyAw9KQ9unNADKEi7KoIKe7GtrG2PWtm36y2bUf+hB8vhSY6Wdw==
 
 "@matrix-org/olm@3.2.15":
   version "3.2.15"
@@ -6532,11 +6532,11 @@ matrix-events-sdk@0.0.1:
   integrity sha512-1QEOsXO+bhyCroIe2/A5OwaxHvBm7EsSQ46DEDn8RBIfQwN5HWBpFvyWWR4QY0KHPPnnJdI99wgRiAl7Ad5qaA==
 
 matrix-js-sdk@matrix-org/matrix-js-sdk#develop:
-  version "34.13.0"
-  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/e4182eb75227c283a18704727021e99ced72868d"
+  version "35.1.0"
+  resolved "https://codeload.github.com/matrix-org/matrix-js-sdk/tar.gz/9134471dc72a14b29eb207f1c5ef207521f40bd3"
   dependencies:
     "@babel/runtime" "^7.12.5"
-    "@matrix-org/matrix-sdk-crypto-wasm" "^12.0.0"
+    "@matrix-org/matrix-sdk-crypto-wasm" "^12.1.0"
     "@matrix-org/olm" "3.2.15"
     another-json "^0.2.0"
     bs58 "^6.0.0"
@@ -8757,9 +8757,9 @@ util-deprecate@^1.0.1, util-deprecate@^1.0.2, util-deprecate@~1.0.1:
   integrity sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==
 
 uuid@11:
-  version "11.0.3"
-  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.0.3.tgz#248451cac9d1a4a4128033e765d137e2b2c49a3d"
-  integrity sha512-d0z310fCWv5dJwnX1Y/MncBAqGMKEzlBb1AOf7z9K8ALnd0utBX/msg/fA0+sbyN1ihbMsLhrBlnl1ak7Wa0rg==
+  version "11.0.5"
+  resolved "https://registry.yarnpkg.com/uuid/-/uuid-11.0.5.tgz#07b46bdfa6310c92c3fb3953a8720f170427fc62"
+  integrity sha512-508e6IcKLrhxKdBbcA2b4KQZlLVp2+J5UwQ6F7Drckkc5N9ZJwFa4TgWtsww9UG8fGHbm6gbV19TdM5pQ4GaIA==
 
 validate-npm-package-license@^3.0.1:
   version "3.0.4"
