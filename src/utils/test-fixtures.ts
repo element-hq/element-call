@@ -56,6 +56,6 @@ export const bobZeroWidthSpaceId = `${bobZeroWidthSpace.userId}:${bobZeroWidthSp
 
 export const daveRTLRtcMember = mockRtcMembership("@dave2:example.org", "DDDD");
 export const daveRTL = mockMatrixRoomMember(daveRTLRtcMember, {
-  rawDisplayName: "\u200fevaD",
+  rawDisplayName: "\u202eevaD",
 });
 export const daveRTLId = `${daveRTL.userId}:${daveRTLRtcMember.deviceId}`;

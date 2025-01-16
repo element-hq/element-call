@@ -97,21 +97,25 @@ describe("calculateDisplayName", () => {
   test.for<[{ rawDisplayName?: string; userId: string }, boolean, string]>([
     [alice, false, alice.rawDisplayName],
     [alice, true, `${alice.rawDisplayName} (${alice.userId})`],
-    [alice, false, alice.rawDisplayName],
+    // Empty strings and zero width strings that are effectively empty are resolved as userIds
     [{ rawDisplayName: "", userId: alice.userId }, false, alice.userId],
-    [
-      { rawDisplayName: alice.userId, userId: alice.userId },
-      false,
-      alice.userId,
-    ],
-    [bobZeroWidthSpace, false, "Bob"],
     [
       { rawDisplayName: "\u200b\u200b\u200b", userId: alice.userId },
       false,
       alice.userId,
     ],
-    [daveRTL, false, "evaD"],
-    [daveRTL, true, `evaD (${daveRTL.userId})`],
+    [
+      { rawDisplayName: alice.userId, userId: alice.userId },
+      false,
+      alice.userId,
+    ],
+    // Zero width strings are kept intact
+    [bobZeroWidthSpace, false, bobZeroWidthSpace.rawDisplayName],
+    // Directional characters are stripped.
+    [daveRTL, false, daveRTL.rawDisplayName.slice(1)],
+    [daveRTL, true, `${daveRTL.rawDisplayName.slice(1)} (${daveRTL.userId})`],
+    // Ensure we do NOT unhomoglyth
+    [{ ...alice, rawDisplayName: "alice m" }, false, "alice m"],
   ])("correctly calculates displayname", ([member, disambiguate, result]) =>
     expect(calculateDisplayName(member, disambiguate)).toEqual(result),
   );

@@ -886,7 +886,10 @@ test("should disambiguate users with invisible characters", () => {
             b: new Map([
               [carolId, carol.userId],
               [bobId, `Bob (${bob.userId})`],
-              [bobZeroWidthSpaceId, `Bob (${bobZeroWidthSpace.userId})`],
+              [
+                bobZeroWidthSpaceId,
+                `${bobZeroWidthSpace.rawDisplayName} (${bobZeroWidthSpace.userId})`,
+              ],
             ]),
           },
         );

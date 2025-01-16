@@ -45,7 +45,11 @@ export function shouldDisambiguate(
       // NOTE: We *should* have a room member for everyone.
       .filter((m) => !!m)
       .filter((m) => m.userId !== userId)
-      .some((m) => calculateDisplayName(m, false) === strippedDisplayName)
+      .some(
+        (m) =>
+          removeHiddenChars(calculateDisplayName(m, false)) ===
+          strippedDisplayName,
+      )
   );
 }
 
@@ -56,9 +60,7 @@ export function calculateDisplayName(
   const { rawDisplayName: displayName, userId } = member;
   if (!displayName || displayName === userId) return userId;
 
-  const resultDisplayname = removeDirectionOverrideChars(
-    removeHiddenChars(displayName),
-  );
+  const resultDisplayname = removeDirectionOverrideChars(displayName);
 
   if (disambiguate) return resultDisplayname + " (" + userId + ")";
 
