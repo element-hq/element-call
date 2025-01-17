@@ -36,7 +36,9 @@
     "username": "Имя пользователя",
     "video": "Видео"
   },
-  "full_screen_view_description": "<0>Отправка журналов поможет нам найти и устранить проблему.</0>",
+  "error": {
+    "generic_description": "Отправка журналов поможет нам найти и устранить проблему."
+  },
   "full_screen_view_h1": "<0>Упс, что-то пошло не так.</0>",
   "header_label": "Главная Element Call",
   "join_existing_call_modal": {

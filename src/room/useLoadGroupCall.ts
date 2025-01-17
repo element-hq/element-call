@@ -5,7 +5,14 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  type ComponentType,
+  type SVGAttributes,
+} from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 import { EventType } from "matrix-js-sdk/src/@types/event";
 import {
@@ -19,6 +26,11 @@ import { RoomEvent, type Room } from "matrix-js-sdk/src/models/room";
 import { KnownMembership } from "matrix-js-sdk/src/types";
 import { JoinRule, MatrixError } from "matrix-js-sdk/src/matrix";
 import { useTranslation } from "react-i18next";
+import {
+  AdminIcon,
+  CloseIcon,
+  EndCallIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { widget } from "../widget";
 
@@ -92,27 +104,25 @@ async function joinRoomAfterInvite(
 
 export class CallTerminatedMessage extends Error {
   /**
-   * @param messageBody The message explaining the kind of termination (kick, ban, knock reject, etc.) (translated)
-   */
-  public messageBody: string;
-  /**
-   * @param reason The user provided reason for the termination (kick/ban)
-   */
-  public reason?: string;
-  /**
-   *
    * @param messageTitle The title of the call ended screen message (translated)
-   * @param messageBody The message explaining the kind of termination (kick, ban, knock reject, etc.) (translated)
-   * @param reason The user provided reason for the termination (kick/ban)
    */
   public constructor(
+    /**
+     * The icon to display with the message.
+     */
+    public readonly icon: ComponentType<SVGAttributes<SVGElement>>,
     messageTitle: string,
-    messageBody: string,
-    reason?: string,
+    /**
+     * The message explaining the kind of termination (kick, ban, knock reject,
+     * etc.) (translated)
+     */
+    public readonly messageBody: string,
+    /**
+     * The user-provided reason for the termination (kick/ban)
+     */
+    public readonly reason?: string,
   ) {
     super(messageTitle);
-    this.messageBody = messageBody;
-    this.reason = reason;
   }
 }
 
@@ -128,6 +138,7 @@ export const useLoadGroupCall = (
   const bannedError = useCallback(
     (): CallTerminatedMessage =>
       new CallTerminatedMessage(
+        AdminIcon,
         t("group_call_loader.banned_heading"),
         t("group_call_loader.banned_body"),
         leaveReason(),
@@ -137,6 +148,7 @@ export const useLoadGroupCall = (
   const knockRejectError = useCallback(
     (): CallTerminatedMessage =>
       new CallTerminatedMessage(
+        CloseIcon,
         t("group_call_loader.knock_reject_heading"),
         t("group_call_loader.knock_reject_body"),
         leaveReason(),
@@ -146,6 +158,7 @@ export const useLoadGroupCall = (
   const removeNoticeError = useCallback(
     (): CallTerminatedMessage =>
       new CallTerminatedMessage(
+        EndCallIcon,
         t("group_call_loader.call_ended_heading"),
         t("group_call_loader.call_ended_body"),
         leaveReason(),

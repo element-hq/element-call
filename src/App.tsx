@@ -16,7 +16,7 @@ import { LoginPage } from "./auth/LoginPage";
 import { RegisterPage } from "./auth/RegisterPage";
 import { RoomPage } from "./room/RoomPage";
 import { ClientProvider } from "./ClientContext";
-import { CrashView, LoadingView } from "./FullScreenView";
+import { ErrorPage, LoadingPage } from "./FullScreenView";
 import { DisconnectedBanner } from "./DisconnectedBanner";
 import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
@@ -61,8 +61,6 @@ export const App: FC = () => {
       .catch(logger.error);
   });
 
-  const errorPage = <CrashView />;
-
   return (
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore
@@ -74,7 +72,7 @@ export const App: FC = () => {
               <Suspense fallback={null}>
                 <ClientProvider>
                   <MediaDevicesProvider>
-                    <Sentry.ErrorBoundary fallback={errorPage}>
+                    <Sentry.ErrorBoundary fallback={ErrorPage}>
                       <DisconnectedBanner />
                       <Routes>
                         <SentryRoute path="/" element={<HomePage />} />
@@ -90,7 +88,7 @@ export const App: FC = () => {
                 </ClientProvider>
               </Suspense>
             ) : (
-              <LoadingView />
+              <LoadingPage />
             )}
           </TooltipProvider>
         </ThemeProvider>

@@ -23,7 +23,6 @@
   },
   "browser_media_e2ee_unsupported": "Twoja przeglądarka nie wspiera szyfrowania end-to-end. Wspierane przeglądarki to Chrome, Safari, Firefox >=117",
   "call_ended_view": {
-    "body": "Rozłączono Cię z połączenia",
     "create_account_button": "Utwórz konto",
     "create_account_prompt": "<0>Może zechcesz ustawić hasło, aby zachować swoje konto?</0><1>Będziesz w stanie utrzymać swoją nazwę i ustawić awatar do wyświetlania podczas połączeń w przyszłości</1>",
     "feedback_done": "<0>Dziękujemy za Twoją opinię!</0>",
@@ -51,7 +50,10 @@
     "video": "Wideo"
   },
   "disconnected_banner": "Utracono połączenie z serwerem.",
-  "full_screen_view_description": "<0>Wysłanie dzienników debuggowania pomoże nam ustalić przyczynę problemu.</0>",
+  "error": {
+    "connection_lost_description": "Rozłączono Cię z połączenia",
+    "generic_description": "Wysłanie dzienników debuggowania pomoże nam ustalić przyczynę problemu."
+  },
   "full_screen_view_h1": "<0>Ojej, coś poszło nie tak.</0>",
   "hangup_button_label": "Zakończ połączenie",
   "header_label": "Strona główna Element Call",

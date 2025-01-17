@@ -9,7 +9,7 @@ import { useTranslation } from "react-i18next";
 import { type FC } from "react";
 
 import { useClientState } from "../ClientContext";
-import { ErrorView, LoadingView } from "../FullScreenView";
+import { ErrorPage, LoadingPage } from "../FullScreenView";
 import { UnauthenticatedView } from "./UnauthenticatedView";
 import { RegisteredView } from "./RegisteredView";
 import { usePageTitle } from "../usePageTitle";
@@ -21,9 +21,9 @@ export const HomePage: FC = () => {
   const clientState = useClientState();
 
   if (!clientState) {
-    return <LoadingView />;
+    return <LoadingPage />;
   } else if (clientState.state === "error") {
-    return <ErrorView error={clientState.error} />;
+    return <ErrorPage error={clientState.error} />;
   } else {
     return clientState.authenticated ? (
       <RegisteredView client={clientState.authenticated.client} />

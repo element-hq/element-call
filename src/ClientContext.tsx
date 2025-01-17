@@ -18,19 +18,18 @@ import {
 } from "react";
 import { useNavigate } from "react-router-dom";
 import { logger } from "matrix-js-sdk/src/logger";
-import { useTranslation } from "react-i18next";
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/src/sync";
 import { ClientEvent, type MatrixClient } from "matrix-js-sdk/src/client";
 
 import type { WidgetApi } from "matrix-widget-api";
-import { ErrorView } from "./FullScreenView";
+import { ErrorPage } from "./FullScreenView";
 import { widget } from "./widget";
 import {
   PosthogAnalytics,
   RegistrationType,
 } from "./analytics/PosthogAnalytics";
-import { translatedError } from "./TranslatedError";
 import { useEventTarget } from "./useEvents";
+import { OpenElsewhereError } from "./RichError";
 
 declare global {
   interface Window {
@@ -233,8 +232,6 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
   }, [navigate, initClientState?.client]);
 
-  const { t } = useTranslation();
-
   // To protect against multiple sessions writing to the same storage
   // simultaneously, we send a broadcast message that shuts down all other
   // running instances of the app. This isn't necessary if the app is running in
@@ -251,8 +248,8 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     "message",
     useCallback(() => {
       initClientState?.client.stopClient();
-      setAlreadyOpenedErr(translatedError("application_opened_another_tab", t));
-    }, [initClientState?.client, setAlreadyOpenedErr, t]),
+      setAlreadyOpenedErr(new OpenElsewhereError());
+    }, [initClientState?.client, setAlreadyOpenedErr]),
   );
 
   const [isDisconnected, setIsDisconnected] = useState(false);
@@ -354,7 +351,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   }, [initClientState, onSync]);
 
   if (alreadyOpenedErr) {
-    return <ErrorView error={alreadyOpenedErr} />;
+    return <ErrorPage error={alreadyOpenedErr} />;
   }
 
   return (

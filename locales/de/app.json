@@ -32,7 +32,6 @@
   "browser_media_e2ee_unsupported": "Dein Webbrowser unterstützt keine Medien-Ende-zu-Ende-Verschlüsselung. Unterstützte Browser sind Chrome, Safari, Firefox >=117",
   "browser_media_e2ee_unsupported_heading": "Inkompatibler Browser",
   "call_ended_view": {
-    "body": "Deine Verbindung wurde getrennt",
     "create_account_button": "Konto erstellen",
     "create_account_prompt": "<0>Warum vergibst du nicht abschließend ein Passwort, um dein Konto zu erhalten?</0><1>Du kannst deinen Namen behalten und ein Profilbild für zukünftige Anrufe festlegen.</1>",
     "feedback_done": "<0>Danke für deine Rückmeldung!</0>",
@@ -76,7 +75,10 @@
     "matrix_id": "Matrix-ID: {{id}}"
   },
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
-  "full_screen_view_description": "<0>Übermittelte Problemberichte helfen uns, Fehler zu beheben.</0>",
+  "error": {
+    "connection_lost_description": "Deine Verbindung wurde getrennt",
+    "generic_description": "Übermittelte Problemberichte helfen uns, Fehler zu beheben."
+  },
   "full_screen_view_h1": "<0>Hoppla, etwas ist schiefgelaufen.</0>",
   "group_call_loader": {
     "banned_body": "Du wurdest aus dem Raum verbannt.",

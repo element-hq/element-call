@@ -28,7 +28,9 @@
     "username": "ユーザー名",
     "video": "ビデオ"
   },
-  "full_screen_view_h1": "<0>何かがうまく行きませんでした。</0>",
+  "error": {
+    "generic_description": "何かがうまく行きませんでした。"
+  },
   "header_label": "Element Call ホーム",
   "join_existing_call_modal": {
     "join_button": "はい、通話に参加",

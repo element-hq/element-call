@@ -23,7 +23,6 @@
   },
   "browser_media_e2ee_unsupported": "Peramban web Anda tidak mendukung enkripsi media ujung ke ujung. Peramban yang didukung adalah Chrome, Safari, dan Firefox >=117",
   "call_ended_view": {
-    "body": "Anda terputus dari panggilan",
     "create_account_button": "Buat akun",
     "create_account_prompt": "<0>Kenapa tidak selesaikan dengan mengatur sebuah kata sandi untuk menjaga akun Anda?</0><1>Anda akan dapat tetap menggunakan nama Anda dan atur sebuah avatar untuk digunakan dalam panggilan di masa mendatang</1>",
     "feedback_done": "<0>Terima kasih atas masukan Anda!</0>",
@@ -48,7 +47,10 @@
     "username": "Nama pengguna"
   },
   "disconnected_banner": "Koneksi ke server telah hilang.",
-  "full_screen_view_description": "<0>Mengirim catatan pengawakutuan akan membantu kami melacak masalahnya.</0>",
+  "error": {
+    "connection_lost_description": "Anda terputus dari panggilan",
+    "generic_description": "Mengirim catatan pengawakutuan akan membantu kami melacak masalahnya."
+  },
   "full_screen_view_h1": "<0>Aduh, ada yang salah.</0>",
   "hangup_button_label": "Akhiri panggilan",
   "header_label": "Beranda Element Call",

@@ -23,7 +23,6 @@
   },
   "browser_media_e2ee_unsupported": "Votre navigateur web ne prend pas en charge le chiffrement de bout-en-bout des médias. Les navigateurs pris en charge sont Chrome, Safari, Firefox >= 117",
   "call_ended_view": {
-    "body": "Vous avez été déconnecté de l’appel",
     "create_account_button": "Créer un compte",
     "create_account_prompt": "<0>Pourquoi ne pas créer un mot de passe pour conserver votre compte ?</0><1>Vous pourrez garder votre nom et définir un avatar pour vos futurs appels</1>",
     "feedback_done": "<0>Merci pour votre commentaire !</0>",
@@ -48,7 +47,10 @@
     "video": "Vidéo"
   },
   "disconnected_banner": "La connexion avec le serveur a été perdue.",
-  "full_screen_view_description": "<0>Soumettre les journaux de débogage nous aidera à déterminer le problème.</0>",
+  "error": {
+    "connection_lost_description": "Vous avez été déconnecté de l’appel",
+    "generic_description": "Soumettre les journaux de débogage nous aidera à déterminer le problème."
+  },
   "full_screen_view_h1": "<0>Oups, quelque chose s’est mal passé.</0>",
   "hangup_button_label": "Terminer l’appel",
   "header_label": "Accueil Element Call",

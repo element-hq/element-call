@@ -15,6 +15,7 @@ import {
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, Heading, Text } from "@vector-im/compound-web";
+import { OfflineIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useNavigate } from "react-router-dom";
 import { logger } from "matrix-js-sdk/src/logger";
 
@@ -25,9 +26,9 @@ import { Header, HeaderLogo, LeftNav, RightNav } from "../Header";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { FieldRow, InputField } from "../input/Input";
 import { StarRatingInput } from "../input/StarRatingInput";
-import { RageshakeButton } from "../settings/RageshakeButton";
 import { Link } from "../button/Link";
 import { LinkButton } from "../button";
+import { ErrorView } from "../ErrorView";
 
 interface Props {
   client: MatrixClient;
@@ -147,25 +148,17 @@ export const CallEndedView: FC<Props> = ({
       return (
         <>
           <main className={styles.main}>
-            <Heading size="xl" weight="semibold" className={styles.headline}>
-              <Trans i18nKey="call_ended_view.body">
-                You were disconnected from the call
-              </Trans>
-            </Heading>
-            <div className={styles.disconnectedButtons}>
+            <ErrorView
+              Icon={OfflineIcon}
+              title={t("error.connection_lost")}
+              rageshake
+            >
+              <p>{t("error.connection_lost_description")}</p>
               <Button onClick={reconnect}>
                 {t("call_ended_view.reconnect_button")}
               </Button>
-              <div className={styles.rageshakeButton}>
-                <RageshakeButton description="***Call disconnected***" />
-              </div>
-            </div>
+            </ErrorView>
           </main>
-          {!confineToRoom && (
-            <Text className={styles.footer}>
-              <Link to="/"> {t("return_home_button")} </Link>
-            </Text>
-          )}
         </>
       );
     } else {

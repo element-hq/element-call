@@ -27,7 +27,9 @@
     "username": "Tên người dùng",
     "video": "Truyền hình"
   },
-  "full_screen_view_description": "<0>Gửi nhật ký gỡ lỗi sẽ giúp chúng tôi theo dõi vấn đề.</0>",
+  "error": {
+    "generic_description": "Gửi nhật ký gỡ lỗi sẽ giúp chúng tôi theo dõi vấn đề."
+  },
   "full_screen_view_h1": "<0>Ối, có cái gì đó sai.</0>",
   "join_existing_call_modal": {
     "join_button": "Vâng, tham gia cuộc gọi",

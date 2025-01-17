@@ -26,7 +26,7 @@ import { useClientLegacy } from "../ClientContext";
 import { useInteractiveRegistration } from "./useInteractiveRegistration";
 import styles from "./LoginPage.module.css";
 import Logo from "../icons/LogoLarge.svg?react";
-import { LoadingView } from "../FullScreenView";
+import { LoadingPage } from "../FullScreenView";
 import { useRecaptcha } from "./useRecaptcha";
 import { usePageTitle } from "../usePageTitle";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
@@ -148,7 +148,7 @@ export const RegisterPage: FC = () => {
   }, [loading, navigate, authenticated, passwordlessUser, registering]);
 
   if (loading) {
-    return <LoadingView />;
+    return <LoadingPage />;
   } else {
     PosthogAnalytics.instance.eventSignup.cacheSignupStart(new Date());
   }

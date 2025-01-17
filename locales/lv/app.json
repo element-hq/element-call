@@ -14,7 +14,6 @@
   },
   "analytics_notice": "Piedalīšanās šajā beta apliecina piekrišanu anonīmu datu ievākšanai, ko mēs izmantojam, lai uzlabotu izstrādājumu. Vairāk informācijas par datiem, ko mēs ievācam, var atrast mūsu <2>privātuma nosacījumos</2> un <5>sīkdatņu nosacījumos</5>.",
   "call_ended_view": {
-    "body": "Tu tiki atvienots no zvana",
     "create_account_button": "Izveidot kontu",
     "create_account_prompt": "<0>Kādēļ nepabeigt ar paroles iestatīšanu, lai paturētu savu kontu?</0><1>Būs iespējams paturēt savu vārdu un iestatīt attēlu izmantošanai turpmākajos zvanos</1>",
     "feedback_done": "<0>Paldies par atsauksmi!</0>",
@@ -38,7 +37,10 @@
     "username": "Lietotājvārds"
   },
   "disconnected_banner": "Ir zaudēts savienojums ar serveri.",
-  "full_screen_view_description": "<0>Atkļūdošanas žurnāla ierakstu iesūtīšana palīdzēs mums atklāt nepilnību.</0>",
+  "error": {
+    "connection_lost_description": "Tu tiki atvienots no zvana",
+    "generic_description": "Atkļūdošanas žurnāla ierakstu iesūtīšana palīdzēs mums atklāt nepilnību."
+  },
   "full_screen_view_h1": "<0>Ak vai, kaut kas nogāja greizi!</0>",
   "header_label": "Element Call sākums",
   "join_existing_call_modal": {

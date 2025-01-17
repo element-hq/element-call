@@ -21,7 +21,7 @@ import {
 import { logger } from "matrix-js-sdk/src/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { JoinRule } from "matrix-js-sdk/src/matrix";
-import { Heading, Text } from "@vector-im/compound-web";
+import { WebBrowserIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 
@@ -54,11 +54,11 @@ import { useJoinRule } from "./useJoinRule";
 import { InviteModal } from "./InviteModal";
 import { useUrlParams } from "../UrlParams";
 import { E2eeType } from "../e2ee/e2eeType";
-import { Link } from "../button/Link";
 import { useAudioContext } from "../useAudioContext";
 import { callEventAudioSounds } from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
+import { ErrorView } from "../ErrorView";
 
 declare global {
   interface Window {
@@ -331,9 +331,9 @@ export const GroupCallView: FC<Props> = ({
     // If we have a encryption system but the browser does not support it.
     return (
       <FullScreenView>
-        <Heading>{t("browser_media_e2ee_unsupported_heading")}</Heading>
-        <Text>{t("browser_media_e2ee_unsupported")}</Text>
-        <Link to="/">{t("common.home")}</Link>
+        <ErrorView Icon={WebBrowserIcon} title={t("error.e2ee_unsupported")}>
+          <p>{t("error.e2ee_unsupported_description")}</p>
+        </ErrorView>
       </FullScreenView>
     );
   }

@@ -32,7 +32,9 @@
     "settings": "Ajustes",
     "username": "Nombre de usuario"
   },
-  "full_screen_view_description": "<0>Subir los registros de depuración nos ayudará a encontrar el problema.</0>",
+  "error": {
+    "generic_description": "Subir los registros de depuración nos ayudará a encontrar el problema."
+  },
   "full_screen_view_h1": "<0>Ups, algo ha salido mal.</0>",
   "header_label": "Inicio de Element Call",
   "join_existing_call_modal": {

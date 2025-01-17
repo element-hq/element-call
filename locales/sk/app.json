@@ -23,7 +23,6 @@
   },
   "browser_media_e2ee_unsupported": "Váš webový prehliadač nepodporuje end-to-end šifrovanie médií. Podporované prehliadače sú Chrome, Safari, Firefox >=117",
   "call_ended_view": {
-    "body": "Boli ste odpojení z hovoru",
     "create_account_button": "Vytvoriť účet",
     "create_account_prompt": "<0>Prečo neskončiť nastavením hesla, aby ste si zachovali svoj účet? </0><1>Budete si môcť ponechať svoje meno a nastaviť obrázok, ktorý sa bude používať pri budúcich hovoroch</1>",
     "feedback_done": "<0> Ďakujeme za vašu spätnú väzbu!</0>",
@@ -49,7 +48,10 @@
     "username": "Meno používateľa"
   },
   "disconnected_banner": "Spojenie so serverom sa stratilo.",
-  "full_screen_view_description": "<0>Odoslanie záznamov ladenia nám pomôže nájsť problém.</0>",
+  "error": {
+    "connection_lost_description": "Boli ste odpojení z hovoru",
+    "generic_description": "Odoslanie záznamov ladenia nám pomôže nájsť problém."
+  },
   "full_screen_view_h1": "<0>Hups, niečo sa pokazilo.</0>",
   "hangup_button_label": "Ukončiť hovor",
   "header_label": "Domov Element Call",

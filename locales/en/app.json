@@ -28,11 +28,7 @@
     "text": "Ready to join?",
     "title": "Select app"
   },
-  "application_opened_another_tab": "This application has been opened in another tab.",
-  "browser_media_e2ee_unsupported": "Your web browser does not support media end-to-end encryption. Supported Browsers are Chrome, Safari, Firefox >=117",
-  "browser_media_e2ee_unsupported_heading": "Incompatible Browser",
   "call_ended_view": {
-    "body": "You were disconnected from the call",
     "create_account_button": "Create account",
     "create_account_prompt": "<0>Why not finish by setting up a password to keep your account?</0><1>You'll be able to keep your name and set an avatar for use on future calls</1>",
     "feedback_done": "<0>Thanks for your feedback!</0>",
@@ -50,7 +46,6 @@
     "back": "Back",
     "display_name": "Display name",
     "encrypted": "Encrypted",
-    "error": "Error",
     "home": "Home",
     "loading": "Loading…",
     "next": "Next",
@@ -61,7 +56,6 @@
     "reaction": "Reaction",
     "reactions": "Reactions",
     "settings": "Settings",
-    "something_went_wrong": "Something went wrong",
     "unencrypted": "Not encrypted",
     "username": "Username",
     "video": "Video"
@@ -77,18 +71,26 @@
     "show_non_member_tiles": "Show tiles for non-member media"
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
-  "full_screen_view_description": "<0>Submitting debug logs will help us track down the problem.</0>",
-  "full_screen_view_h1": "<0>Oops, something's gone wrong.</0>",
+  "error": {
+    "call_not_found": "Call not found",
+    "call_not_found_description": "<0>That link doesn't appear to belong to any existing call. Check that you have the right link, or <1>create a new one</1>.</0>",
+    "connection_lost": "Connection lost",
+    "connection_lost_description": "You were disconnected from the call.",
+    "e2ee_unsupported": "Incompatible browser",
+    "e2ee_unsupported_description": "Your web browser does not support encrypted calls. Supported browsers include Chrome, Safari, and Firefox 117+.",
+    "generic": "Something went wrong",
+    "generic_description": "Submitting debug logs will help us track down the problem.",
+    "open_elsewhere": "Opened in another tab",
+    "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page."
+  },
   "group_call_loader": {
     "banned_body": "You have been banned from the room.",
     "banned_heading": "Banned",
     "call_ended_body": "You have been removed from the call.",
     "call_ended_heading": "Call ended",
-    "failed_heading": "Failed to join",
-    "failed_text": "Call not found or is not accessible.",
     "knock_reject_body": "Your request to join was declined.",
     "knock_reject_heading": "Access denied",
-    "reason": "Reason"
+    "reason": "Reason: {{reason}}"
   },
   "hangup_button_label": "End call",
   "header_label": "Element Call Home",

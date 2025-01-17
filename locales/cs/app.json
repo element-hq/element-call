@@ -27,7 +27,9 @@
     "settings": "Nastavení",
     "username": "Uživatelské jméno"
   },
-  "full_screen_view_description": "<0>Odeslání ladících záznamů nám pomůže diagnostikovat problém.</0>",
+  "error": {
+    "generic_description": "Odeslání ladících záznamů nám pomůže diagnostikovat problém."
+  },
   "full_screen_view_h1": "<0>Oops, něco se pokazilo.</0>",
   "header_label": "Domov Element Call",
   "join_existing_call_modal": {

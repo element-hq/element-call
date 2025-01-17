@@ -23,7 +23,6 @@
   },
   "browser_media_e2ee_unsupported": "Sinu veebibrauser ei toeta meedia läbivat krüptimist. Toetatud brauserid on Chrome, Chromium, Safari ja Firefox >=117",
   "call_ended_view": {
-    "body": "Sinu ühendus kõnega katkes",
     "create_account_button": "Loo konto",
     "create_account_prompt": "<0>Kas soovid salasõna seadistada ja sellega oma kasutajakonto alles jätta?</0><1>Nii saad säilitada oma nime ja määrata profiilipildi, mida saad kasutada tulevastes kõnedes</1>",
     "feedback_done": "<0>Täname Sind tagasiside eest!</0>",
@@ -50,7 +49,10 @@
     "username": "Kasutajanimi"
   },
   "disconnected_banner": "Võrguühendus serveriga on katkenud.",
-  "full_screen_view_description": "<0>Kui saadad meile vealogid, siis on lihtsam vea põhjust otsida.</0>",
+  "error": {
+    "connection_lost_description": "Sinu ühendus kõnega katkes",
+    "generic_description": "Kui saadad meile vealogid, siis on lihtsam vea põhjust otsida."
+  },
   "full_screen_view_h1": "<0>Ohoo, midagi on nüüd katki.</0>",
   "hangup_button_label": "Lõpeta kõne",
   "header_participants_label": "Osalejad",

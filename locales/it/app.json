@@ -22,7 +22,6 @@
   },
   "browser_media_e2ee_unsupported": "Il tuo browser non supporta la crittografia end-to-end dei media. I browser supportati sono Chrome, Safari, Firefox >=117",
   "call_ended_view": {
-    "body": "Sei stato disconnesso dalla chiamata",
     "create_account_button": "Crea profilo",
     "create_account_prompt": "<0>Ti va di terminare impostando una password per mantenere il profilo?</0><1>Potrai mantenere il tuo nome e impostare un avatar da usare in chiamate future</1>",
     "feedback_done": "<0>Grazie per la tua opinione!</0>",
@@ -46,7 +45,10 @@
     "username": "Nome utente"
   },
   "disconnected_banner": "La connessione al server è stata persa.",
-  "full_screen_view_description": "<0>L'invio di registri di debug ci aiuterà ad individuare il problema.</0>",
+  "error": {
+    "connection_lost_description": "Sei stato disconnesso dalla chiamata",
+    "generic_description": "L'invio di registri di debug ci aiuterà ad individuare il problema."
+  },
   "full_screen_view_h1": "<0>Ops, qualcosa è andato storto.</0>",
   "hangup_button_label": "Termina chiamata",
   "header_label": "Inizio di Element Call",

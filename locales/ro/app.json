@@ -32,7 +32,6 @@
   "browser_media_e2ee_unsupported": "Browserul dvs. web nu acceptă criptarea media end-to-end. Browserele acceptate sunt Chrome, Safari, Firefox > = 117",
   "browser_media_e2ee_unsupported_heading": "Browser incompatibil",
   "call_ended_view": {
-    "body": "Ai fost deconectat de la apel",
     "create_account_button": "Creează cont",
     "create_account_prompt": "<0>De ce să nu terminați prin configurarea unei parole pentru a vă păstra contul? </0><1>Veți putea să vă păstrați numele și să setați un avatar pentru a fi utilizat la apelurile viitoare </1>",
     "feedback_done": "<0>Vă mulțumim pentru feedback! </0>",
@@ -76,7 +75,10 @@
     "matrix_id": "ID-ul matricei: {{id}}"
   },
   "disconnected_banner": "Conectivitatea la server a fost pierdută.",
-  "full_screen_view_description": "<0>Trimiterea jurnalelor de depanare ne va ajuta să urmărim problema. </0>",
+  "error": {
+    "connection_lost_description": "Ai fost deconectat de la apel",
+    "generic_description": "Trimiterea jurnalelor de depanare ne va ajuta să urmărim problema."
+  },
   "full_screen_view_h1": "<0>Hopa, ceva nu a mers bine. </0>",
   "group_call_loader": {
     "banned_body": "Ai fost interzis să ieși din cameră.",

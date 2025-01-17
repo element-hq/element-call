@@ -9,6 +9,9 @@ import type { DefaultNamespace, ParseKeys, TFunction, TOptions } from "i18next";
 
 /**
  * An error with messages in both English and the user's preferred language.
+ * Use this for errors that need to be displayed inline within another
+ * component. For errors that could be given their own screen, prefer
+ * {@link RichError}.
  */
 // Abstract to force consumers to use the function below rather than calling the
 // constructor directly
