@@ -46,7 +46,6 @@ import {
 } from "../livekit/MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
-import { useMatrixRTCSessionJoinState } from "../useMatrixRTCSessionJoinState";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
 import { useRoomAvatar } from "./useRoomAvatar";
 import { useRoomName } from "./useRoomName";
@@ -74,6 +73,7 @@ interface Props {
   skipLobby: boolean;
   hideHeader: boolean;
   rtcSession: MatrixRTCSession;
+  isJoined: boolean;
   muteStates: MuteStates;
   widget: WidgetHelpers | null;
 }
@@ -86,11 +86,11 @@ export const GroupCallView: FC<Props> = ({
   skipLobby,
   hideHeader,
   rtcSession,
+  isJoined,
   muteStates,
   widget,
 }) => {
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
-  const isJoined = useMatrixRTCSessionJoinState(rtcSession);
   const leaveSoundContext = useLatest(
     useAudioContext({
       sounds: callEventAudioSounds,

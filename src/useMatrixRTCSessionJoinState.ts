@@ -10,35 +10,33 @@ import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
 } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 export function useMatrixRTCSessionJoinState(
-  rtcSession: MatrixRTCSession,
+  rtcSession: MatrixRTCSession | undefined,
 ): boolean {
-  const [isJoined, setJoined] = useState(rtcSession.isJoined());
-
-  const onJoinStateChanged = useCallback(
-    (isJoined: boolean) => {
-      logger.info(
-        `Session in room ${rtcSession.room.roomId} changed to ${
-          isJoined ? "joined" : "left"
-        }`,
-      );
-      setJoined(isJoined);
-    },
-    [rtcSession],
-  );
+  const [, setNumUpdates] = useState(0);
 
   useEffect(() => {
-    rtcSession.on(MatrixRTCSessionEvent.JoinStateChanged, onJoinStateChanged);
+    if (rtcSession !== undefined) {
+      const onJoinStateChanged = (isJoined: boolean): void => {
+        logger.info(
+          `Session in room ${rtcSession.room.roomId} changed to ${
+            isJoined ? "joined" : "left"
+          }`,
+        );
+        setNumUpdates((n) => n + 1); // Force an update
+      };
+      rtcSession.on(MatrixRTCSessionEvent.JoinStateChanged, onJoinStateChanged);
 
-    return (): void => {
-      rtcSession.off(
-        MatrixRTCSessionEvent.JoinStateChanged,
-        onJoinStateChanged,
-      );
-    };
-  }, [rtcSession, onJoinStateChanged]);
+      return (): void => {
+        rtcSession.off(
+          MatrixRTCSessionEvent.JoinStateChanged,
+          onJoinStateChanged,
+        );
+      };
+    }
+  }, [rtcSession]);
 
-  return isJoined;
+  return rtcSession?.isJoined() ?? false;
 }

@@ -74,17 +74,17 @@ function useMuteState(
   );
 }
 
-export function useMuteStates(): MuteStates {
+export function useMuteStates(isJoined: boolean): MuteStates {
   const devices = useMediaDevices();
 
   const { skipLobby } = useUrlParams();
 
   const audio = useMuteState(devices.audioInput, () => {
-    return Config.get().media_devices.enable_audio && !skipLobby;
+    return Config.get().media_devices.enable_audio && !skipLobby && !isJoined;
   });
   const video = useMuteState(
     devices.videoInput,
-    () => Config.get().media_devices.enable_video && !skipLobby,
+    () => Config.get().media_devices.enable_video && !skipLobby && !isJoined,
   );
 
   useEffect(() => {

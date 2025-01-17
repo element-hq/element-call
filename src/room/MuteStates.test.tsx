@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
-import { type FC, useCallback, useState, type ReactNode } from "react";
+import { type FC, useCallback, useState } from "react";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
@@ -20,8 +20,12 @@ import {
 } from "../livekit/MediaDevicesContext";
 import { mockConfig } from "../utils/test";
 
-function TestComponent(): ReactNode {
-  const muteStates = useMuteStates();
+interface TestComponentProps {
+  isJoined?: boolean;
+}
+
+const TestComponent: FC<TestComponentProps> = ({ isJoined = false }) => {
+  const muteStates = useMuteStates(isJoined);
   const onToggleAudio = useCallback(
     () => muteStates.audio.setEnabled?.(!muteStates.audio.enabled),
     [muteStates],
@@ -37,7 +41,7 @@ function TestComponent(): ReactNode {
       </div>
     </div>
   );
-}
+};
 
 const mockMicrophone: MediaDeviceInfo = {
   deviceId: "",
@@ -134,7 +138,7 @@ describe("useMuteStates", () => {
     expect(screen.getByTestId("video-enabled").textContent).toBe("false");
   });
 
-  it("should be enabled by default", () => {
+  it("enables devices by default in the lobby", () => {
     mockConfig();
 
     render(
@@ -146,6 +150,22 @@ describe("useMuteStates", () => {
     );
     expect(screen.getByTestId("audio-enabled").textContent).toBe("true");
     expect(screen.getByTestId("video-enabled").textContent).toBe("true");
+  });
+
+  it("disables devices by default in the call", () => {
+    // Disabling new devices in the call ensures that connecting a webcam
+    // mid-call won't cause it to suddenly be enabled without user input
+    mockConfig();
+
+    render(
+      <MemoryRouter>
+        <MediaDevicesContext.Provider value={mockMediaDevices()}>
+          <TestComponent isJoined />
+        </MediaDevicesContext.Provider>
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("audio-enabled").textContent).toBe("false");
+    expect(screen.getByTestId("video-enabled").textContent).toBe("false");
   });
 
   it("uses defaults from config", () => {

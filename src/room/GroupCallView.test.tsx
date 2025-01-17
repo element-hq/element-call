@@ -118,6 +118,7 @@ function createGroupCallView(widget: WidgetHelpers | null): {
         skipLobby={false}
         hideHeader={true}
         rtcSession={rtcSession as unknown as MatrixRTCSession}
+        isJoined
         muteStates={muteState}
         widget={widget}
       />
