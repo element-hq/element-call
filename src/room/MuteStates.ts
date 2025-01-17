@@ -57,8 +57,9 @@ function useMuteState(
   enabledByDefault: () => boolean,
 ): MuteState {
   const [enabled, setEnabled] = useReactiveState<boolean | undefined>(
+    // Determine the default value once devices are actually connected
     (prev) =>
-      device.available.size > 0 ? (prev ?? enabledByDefault()) : undefined,
+      prev ?? (device.available.size > 0 ? enabledByDefault() : undefined),
     [device],
   );
   return useMemo(
