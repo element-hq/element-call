@@ -60,6 +60,7 @@ export const ReactionsSenderProvider = ({
   const room = rtcSession.room;
   const myUserId = room.client.getUserId();
   const myDeviceId = room.client.getDeviceId();
+  const myMembershipIdentifier = `${myUserId}:${myDeviceId}`;
 
   const myMembershipEvent = useMemo(
     () =>
@@ -68,12 +69,6 @@ export const ReactionsSenderProvider = ({
       )?.eventId,
     [memberships, myUserId, myDeviceId],
   );
-  const myMembershipIdentifier = useMemo(() => {
-    const membership = memberships.find((m) => m.sender === myUserId);
-    return membership
-      ? `${membership.sender}:${membership.deviceId}`
-      : undefined;
-  }, [memberships, myUserId]);
 
   const reactions = useObservableEagerState(vm.reactions$);
   const myReaction = useMemo(
