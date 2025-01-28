@@ -44,7 +44,7 @@
     "@react-spring/web": "^9.4.4",
     "@sentry/react": "^8.0.0",
     "@sentry/vite-plugin": "^3.0.0",
-    "@stylistic/eslint-plugin": "^2.12.1",
+    "@stylistic/eslint-plugin": "^3.0.0",
     "@testing-library/dom": "^10.1.0",
     "@testing-library/jest-dom": "^6.6.3",
     "@testing-library/react": "^16.0.0",
