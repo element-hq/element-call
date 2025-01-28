@@ -24,3 +24,24 @@ jobs:
       SENTRY_URL: ${{ secrets.SENTRY_URL }}
       SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
       CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  deploy_develop:
+    # Deploy livekit branch to call.element.dev after build completes
+    if: github.ref == 'refs/heads/livekit'
+    needs: build_element_call
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to call.element.dev
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.DEVELOP_DEPLOYMENT_TOKEN }}
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+                owner: 'element-hq',
+                repo: 'element-call-webapp-deployments',
+                workflow_id: 'deploy.yml',
+                ref: 'main',
+                inputs: {
+                  target: 'call.element.dev',
+                  version: '${{ github.sha }}'
+                }
+            })
