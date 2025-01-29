@@ -1,18 +1,22 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
+  "extends": [
+    "config:recommended",
+    "schedule:monthly",
+    ":enableVulnerabilityAlertsWithLabel(security)"
+  ],
+  "addLabels": ["dependencies"],
+  "minimumReleaseAge": "5 days",
   "packageRules": [
     {
       "groupName": "all non-major dependencies",
       "groupSlug": "all-minor-patch",
-      "matchUpdateTypes": ["minor", "patch"],
-      "extends": ["schedule:weekly"]
+      "matchUpdateTypes": ["minor", "patch"]
     },
     {
       "groupName": "GitHub Actions",
       "matchDepTypes": ["action"],
-      "pinDigests": true,
-      "extends": ["schedule:monthly"]
+      "pinDigests": true
     },
     {
       "description": "Disable Renovate for packages we want to monitor ourselves",
@@ -22,28 +26,35 @@
     },
     {
       "groupName": "matrix-widget-api",
-      "matchDepNames": ["matrix-widget-api"]
+      "matchDepNames": ["matrix-widget-api"],
+      "schedule": ["weekly"]
     },
     {
       "groupName": "Compound",
-      "schedule": "before 5am on Tuesday and Friday",
-      "matchPackageNames": ["@vector-im/compound-{/,}**"]
+      "matchPackageNames": ["@vector-im/compound-{/,}**"],
+      "schedule": ["weekly"]
     },
     {
       "groupName": "LiveKit client",
-      "matchDepNames": ["livekit-client"]
+      "matchDepNames": ["livekit-client"],
+      "schedule": ["weekly"]
     },
     {
       "groupName": "LiveKit components",
-      "matchPackageNames": ["@livekit/components-{/,}**"]
+      "matchPackageNames": ["@livekit/components-{/,}**"],
+      "schedule": ["weekly"]
     },
     {
       "groupName": "Vaul",
       "matchDepNames": ["vaul"],
-      "extends": ["schedule:monthly"],
       "prHeader": "Please review modals on mobile for visual regressions."
     }
   ],
   "semanticCommits": "disabled",
-  "ignoreDeps": ["posthog-js"]
+  "ignoreDeps": ["posthog-js"],
+  "vulnerabilityAlerts": {
+    "schedule": ["at any time"],
+    "prHourlyLimit": 0,
+    "minimumReleaseAge": null
+  }
 }
