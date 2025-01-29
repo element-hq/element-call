@@ -27,22 +27,22 @@
     {
       "groupName": "matrix-widget-api",
       "matchDepNames": ["matrix-widget-api"],
-      "schedule": ["weekly"]
+      "extends": ["schedule:weekly"]
     },
     {
       "groupName": "Compound",
       "matchPackageNames": ["@vector-im/compound-{/,}**"],
-      "schedule": ["weekly"]
+      "extends": ["schedule:weekly"]
     },
     {
       "groupName": "LiveKit client",
       "matchDepNames": ["livekit-client"],
-      "schedule": ["weekly"]
+      "extends": ["schedule:weekly"]
     },
     {
       "groupName": "LiveKit components",
       "matchPackageNames": ["@livekit/components-{/,}**"],
-      "schedule": ["weekly"]
+      "extends": ["schedule:weekly"]
     },
     {
       "groupName": "Vaul",
