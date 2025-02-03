@@ -1,4 +1,4 @@
-name: Build & publish images to the package registry for tags
+name: Build & publish images to the package registry for releases
 
 on:
   release:
@@ -16,7 +16,7 @@ env:
 jobs:
   build_element_call:
     if: ${{ github.event_name == 'release' }}
-    uses: ./.github/workflows/element-call.yaml
+    uses: ./.github/workflows/lib/build-element-call.yaml
     with:
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
     secrets:
@@ -62,7 +62,7 @@ jobs:
     permissions:
       contents: write
       packages: write
-    uses: ./.github/workflows/docker.yaml
+    uses: ./.github/workflows/lib/build-and-publish-docker.yaml
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       docker_tags: |

@@ -1,4 +1,4 @@
-name: PR Preview Deployments
+name: Deploy previews for PRs
 on:
   workflow_run:
     workflows: ["Build"]
@@ -24,7 +24,7 @@ jobs:
     needs: prdetails
     permissions:
       deployments: write
-    uses: ./.github/workflows/netlify.yaml
+    uses: ./.github/workflows/lib/deploy-to-netlify.yaml
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       pr_number: ${{ needs.prdetails.outputs.pr_number }}
@@ -42,7 +42,7 @@ jobs:
     permissions:
       contents: write
       packages: write
-    uses: ./.github/workflows/docker.yaml
+    uses: ./.github/workflows/lib/build-and-publish-docker.yaml
     with:
       artifact_run_id: ${{ github.event.workflow_run.id || github.run_id }}
       docker_tags: |
