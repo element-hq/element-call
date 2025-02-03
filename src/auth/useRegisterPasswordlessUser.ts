@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useCallback } from "react";
-import { randomString } from "matrix-js-sdk/src/randomstring";
+import { secureRandomString } from "matrix-js-sdk/src/randomstring";
 
 import { useClient } from "../ClientContext";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";
@@ -42,7 +42,7 @@ export function useRegisterPasswordlessUser(): UseRegisterPasswordlessUserType {
         const userName = generateRandomName();
         const [client, session] = await register(
           userName,
-          randomString(16),
+          secureRandomString(16),
           displayName,
           recaptchaResponse,
           true,

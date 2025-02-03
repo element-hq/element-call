@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type ChangeEvent, type FC, useCallback } from "react";
-import { randomString } from "matrix-js-sdk/src/randomstring";
+import { secureRandomString } from "matrix-js-sdk/src/randomstring";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, Text } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
@@ -36,7 +36,7 @@ export const FeedbackSettingsTab: FC<Props> = ({ roomId }) => {
       const description =
         typeof descriptionData === "string" ? descriptionData : "";
       const sendLogs = Boolean(data.get("sendLogs"));
-      const rageshakeRequestId = randomString(16);
+      const rageshakeRequestId = secureRandomString(16);
 
       submitRageshake({
         description,

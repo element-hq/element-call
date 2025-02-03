@@ -30,7 +30,7 @@ Please see LICENSE in the repository root for full details.
 import EventEmitter from "events";
 import { throttle } from "lodash-es";
 import { type Logger, logger } from "matrix-js-sdk/src/logger";
-import { randomString } from "matrix-js-sdk/src/randomstring";
+import { secureRandomString } from "matrix-js-sdk/src/randomstring";
 import { type LoggingMethod } from "loglevel";
 
 import type loglevel from "loglevel";
@@ -128,7 +128,7 @@ class IndexedDBLogStore {
     private indexedDB: IDBFactory,
     private loggerInstance: ConsoleLogger,
   ) {
-    this.id = "instance-" + randomString(16);
+    this.id = "instance-" + secureRandomString(16);
 
     loggerInstance.on(ConsoleLoggerEvent.Log, this.onLoggerLog);
     window.addEventListener("beforeunload", () => {

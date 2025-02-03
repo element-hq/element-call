@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, useCallback, useState, type FormEventHandler } from "react";
-import { randomString } from "matrix-js-sdk/src/randomstring";
+import { secureRandomString } from "matrix-js-sdk/src/randomstring";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, Heading, Text } from "@vector-im/compound-web";
 import { logger } from "matrix-js-sdk/src/logger";
@@ -67,7 +67,7 @@ export const UnauthenticatedView: FC = () => {
         const userName = generateRandomName();
         const [client, session] = await register(
           userName,
-          randomString(16),
+          secureRandomString(16),
           displayName,
           recaptchaResponse,
           true,
