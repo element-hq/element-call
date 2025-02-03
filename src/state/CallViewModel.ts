@@ -602,7 +602,7 @@ export class CallViewModel extends ViewModel {
                         this.encryptionSystem,
                         this.livekitRoom,
                         this.memberDisplaynames$.pipe(
-                          map((m) => m.get(livekitParticipantId) ?? "[👻]"),
+                          map((m) => m.get(matrixIdentifier) ?? "[👻]"),
                         ),
                       ),
                   ];
