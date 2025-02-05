@@ -14,7 +14,7 @@ jobs:
           cache: "yarn"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: "yarn install"
+        run: "yarn install --frozen-lockfile"
       - name: Prettier
         run: "yarn run prettier:check"
       - name: i18n

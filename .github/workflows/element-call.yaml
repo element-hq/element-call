@@ -30,7 +30,7 @@ jobs:
           cache: "yarn"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: "yarn install"
+        run: "yarn install --frozen-lockfile"
       - name: Build
         run: "yarn run build"
         env:
