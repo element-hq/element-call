@@ -6,7 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { defineConfig, loadEnv } from "vite";
-import { compression } from "vite-plugin-compression2";
 import svgrPlugin from "vite-plugin-svgr";
 import htmlTemplate from "vite-plugin-html-template";
 import { codecovVitePlugin } from "@codecov/vite-plugin";
@@ -38,10 +37,6 @@ export default defineConfig(({ mode }) => {
       enableBundleAnalysis: process.env.CODECOV_TOKEN !== undefined,
       bundleName: "element-call",
       uploadToken: process.env.CODECOV_TOKEN,
-    }),
-
-    compression({
-      exclude: [/config.json/],
     }),
   ];
 
