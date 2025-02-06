@@ -1,4 +1,4 @@
-name: Element Call - Build
+name: Build Element Call
 on:
   workflow_call:
     inputs:

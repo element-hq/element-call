@@ -1,4 +1,4 @@
-name: Netlify - Deploy
+name: Deploy to Netlify
 on:
   workflow_call:
     inputs:

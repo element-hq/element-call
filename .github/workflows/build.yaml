@@ -17,7 +17,7 @@ on:
       - "docs/**"
 jobs:
   build_element_call:
-    uses: ./.github/workflows/element-call.yaml
+    uses: ./.github/workflows/lib/build-element-call.yaml
     with:
       vite_app_version: ${{ github.event.release.tag_name || github.sha }}
     secrets:
