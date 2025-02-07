@@ -3,11 +3,6 @@ name: Build & publish images to the package registry for releases
 on:
   release:
     types: [published]
-  workflow_run:
-    workflows: ["Build"]
-    branches: [livekit]
-    types:
-      - completed
 
 env:
   REGISTRY: ghcr.io
@@ -68,5 +63,3 @@ jobs:
       docker_tags: |
         type=sha,format=short,event=branch
         type=semver,pattern=v{{version}}
-        type=raw,value=latest-ci,enable={{is_default_branch}}
-        type=raw,value=latest-ci_${{needs.publish_tarball.outputs.unix_time}},enable={{is_default_branch}}

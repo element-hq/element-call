@@ -47,3 +47,17 @@ jobs:
                   version: '${{ github.sha }}'
                 }
             })
+  docker_for_develop:
+    # Build docker and publish docker for livekit branch after build completes
+    if: github.ref == 'refs/heads/livekit'
+    needs: build_element_call
+    permissions:
+      contents: write
+      packages: write
+    uses: ./.github/workflows/build-and-publish-docker.yaml
+    with:
+      artifact_run_id: ${{ github.run_id }}
+      docker_tags: |
+        type=sha,format=short,event=branch
+        type=raw,value=latest-ci
+        type=raw,value=latest-ci_{{date 'X' }}
