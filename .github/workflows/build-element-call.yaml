@@ -7,13 +7,13 @@ on:
         type: string
     secrets:
       SENTRY_ORG:
-        required: true
+        required: false
       SENTRY_PROJECT:
-        required: true
+        required: false
       SENTRY_URL:
-        required: true
+        required: false
       SENTRY_AUTH_TOKEN:
-        required: true
+        required: false
       CODECOV_TOKEN:
         required: false
 
