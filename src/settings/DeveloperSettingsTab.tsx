@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only
 Please see LICENSE in the repository root for full details.
 */
 
-import { type ChangeEvent, type FC, useCallback } from "react";
+import { type ChangeEvent, type FC, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { FieldRow, InputField } from "../input/Input";
@@ -17,12 +17,14 @@ import {
   showConnectionStats as showConnectionStatsSetting,
 } from "./settings";
 import type { MatrixClient } from "matrix-js-sdk/src/client";
-
+import type { Room as LivekitRoom } from "livekit-client";
+import styles from "./DeveloperSettingsTab.module.css";
 interface Props {
   client: MatrixClient;
+  livekitRoom?: LivekitRoom;
 }
 
-export const DeveloperSettingsTab: FC<Props> = ({ client }) => {
+export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
   const { t } = useTranslation();
   const [duplicateTiles, setDuplicateTiles] = useSetting(duplicateTilesSetting);
   const [debugTileLayout, setDebugTileLayout] = useSetting(
@@ -35,6 +37,16 @@ export const DeveloperSettingsTab: FC<Props> = ({ client }) => {
   const [showConnectionStats, setShowConnectionStats] = useSetting(
     showConnectionStatsSetting,
   );
+
+  const sfuUrl = useMemo((): URL | null => {
+    if (livekitRoom?.engine.client.ws?.url) {
+      // strip the URL params
+      const url = new URL(livekitRoom.engine.client.ws.url);
+      url.search = "";
+      return url;
+    }
+    return null;
+  }, [livekitRoom]);
 
   return (
     <>
@@ -122,6 +134,22 @@ export const DeveloperSettingsTab: FC<Props> = ({ client }) => {
           )}
         />
       </FieldRow>
+      {livekitRoom ? (
+        <>
+          <p>
+            {t("developer_mode.livekit_sfu", {
+              url: sfuUrl?.href || "unknown",
+            })}
+          </p>
+          <p>{t("developer_mode.livekit_server_info")}</p>
+          <pre className={styles.pre}>
+            {livekitRoom.serverInfo
+              ? JSON.stringify(livekitRoom.serverInfo, null, 2)
+              : "undefined"}
+            {livekitRoom.metadata}
+          </pre>
+        </>
+      ) : null}
     </>
   );
 };

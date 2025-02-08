@@ -679,6 +679,7 @@ export const InCallView: FC<InCallViewProps> = ({
             onDismiss={closeSettings}
             tab={settingsTab}
             onTabChange={setSettingsTab}
+            livekitRoom={livekitRoom}
           />
         </>
       )}

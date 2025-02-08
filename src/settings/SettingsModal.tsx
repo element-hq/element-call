@@ -29,6 +29,7 @@ import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
 import { DeviceSelection } from "./DeviceSelection";
 import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
+import { Room as LivekitRoom } from "livekit-client";
 
 type SettingsTab =
   | "audio"
@@ -46,6 +47,7 @@ interface Props {
   onTabChange: (tab: SettingsTab) => void;
   client: MatrixClient;
   roomId?: string;
+  livekitRoom?: LivekitRoom;
 }
 
 export const defaultSettingsTab: SettingsTab = "audio";
@@ -57,6 +59,7 @@ export const SettingsModal: FC<Props> = ({
   onTabChange,
   client,
   roomId,
+  livekitRoom,
 }) => {
   const { t } = useTranslation();
 
@@ -138,7 +141,7 @@ export const SettingsModal: FC<Props> = ({
   const developerTab: Tab<SettingsTab> = {
     key: "developer",
     name: t("settings.developer_tab_title"),
-    content: <DeveloperSettingsTab client={client} />,
+    content: <DeveloperSettingsTab client={client} livekitRoom={livekitRoom} />,
   };
 
   const tabs = [audioTab, videoTab];
