@@ -9,6 +9,7 @@ import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Root as Form } from "@vector-im/compound-web";
+import { type Room as LivekitRoom } from "livekit-client";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -29,7 +30,6 @@ import { PreferencesSettingsTab } from "./PreferencesSettingsTab";
 import { Slider } from "../Slider";
 import { DeviceSelection } from "./DeviceSelection";
 import { DeveloperSettingsTab } from "./DeveloperSettingsTab";
-import { Room as LivekitRoom } from "livekit-client";
 
 type SettingsTab =
   | "audio"
