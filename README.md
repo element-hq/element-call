@@ -57,6 +57,57 @@ server {
 }
 ```
 
+Sample Caddyfile:
+
+```
+mydomain.com {
+        import logging
+        import errors
+        import server_add
+
+        header /.well-known/matrix/* Content-Type application/json
+        header /.well-known/matrix/* Access-Control-Allow-Origin *
+
+        respond /.well-known/matrix/server {"m.server":"mydomain.com:443"}
+        respond /.well-known/matrix/client {"m.homeserver":{"base_url":"https://mydomain.com"},"org.matrix.msc3575.proxy":{"url":"https://mydomain.com/sliding-sync"},"org.matrix.msc4143.rtc_foci":{"type":"livekit","livekit_service_url":"https://livekit-jwt.mydomain.com"}}
+        respond /.well-known/element/element.json {"call":{"widget_url":"https://call.mydomain.com"}}
+
+        handle /_matrix/client/unstable/org.matrix.msc3575/sync* {
+        reverse_proxy unix//var/run/synapse/main_public.sock
+
+        }
+        reverse_proxy /_matrix/* unix//var/run/synapse/main_public.sock
+        reverse_proxy /_synapse/client/* unix//var/run/synapse/main_public.sock
+        reverse_proxy /_synapse/admin/* unix//var/run/synapse/main_public.sock
+
+        handle_path /sliding-sync/* {
+                reverse_proxy unix//var/run/synapse/main_public.sock
+
+        }
+
+    }
+
+call.mydomain.com {
+        import logging
+        import server_add
+        root * /opt/element-call/dist # the config.json file must be in this directory
+        file_server
+        try_files {path} /index.html
+}
+
+livekit.mydomain.com {
+        import logging
+        import server_add
+        reverse_proxy IP_OF_LIVEKIT:7880
+}
+
+livekit-jwt.mydomain.com {
+        import logging
+        import server_add
+        reverse_proxy IP_OF_LK_JWT:8080
+}
+```
+
 By default, the app expects you to have a Matrix homeserver (such as
 [Synapse](https://element-hq.github.io/synapse/latest/setup/installation.html))
 installed locally and running on port 8008. If you wish to use a homeserver on a
