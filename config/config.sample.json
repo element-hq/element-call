@@ -1,12 +1,24 @@
 {
-  "default_server_config": {
-    "m.homeserver": {
-      "base_url": "http://synapse.localhost:8008",
-      "server_name": "synapse.localhost"
+  "default_server_config":{
+    "m.homeserver":{
+      "base_url":"https://mydomain.com",
+      "server_name":"mydomain.com"
     }
   },
-  "features": {
-    "feature_use_device_session_member_events": true
+  "livekit": {
+    "livekit_service_url":"https://livekit-jwt.mydomain.com"
   },
-  "eula": "https://static.element.io/legal/online-EULA.pdf"
+  "element_call": {
+     "url": "https://call.mydomain.com",
+     "participant_limit": 8,
+     "brand": "Element Call",
+     "use_exclusively": true
+    },
+  "features":{
+    "feature_video_rooms": true,
+    "feature_new_room_decoration_ui": true,
+    "feature_group_calls": true,
+    "feature_element_call_video_rooms": true,
+    "feature_use_device_session_member_events":true
+  }
 }
