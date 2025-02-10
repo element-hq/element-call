@@ -66,6 +66,8 @@
     "device_id": "Device ID: {{id}}",
     "duplicate_tiles_label": "Number of additional tile copies per participant",
     "hostname": "Hostname: {{hostname}}",
+    "livekit_server_info": "LiveKit Server Info",
+    "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix ID: {{id}}",
     "show_connection_stats": "Show connection statistics",
     "show_non_member_tiles": "Show tiles for non-member media"

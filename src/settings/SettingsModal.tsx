@@ -9,6 +9,7 @@ import { type FC, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Root as Form } from "@vector-im/compound-web";
+import { type Room as LivekitRoom } from "livekit-client";
 
 import { Modal } from "../Modal";
 import styles from "./SettingsModal.module.css";
@@ -46,6 +47,7 @@ interface Props {
   onTabChange: (tab: SettingsTab) => void;
   client: MatrixClient;
   roomId?: string;
+  livekitRoom?: LivekitRoom;
 }
 
 export const defaultSettingsTab: SettingsTab = "audio";
@@ -57,6 +59,7 @@ export const SettingsModal: FC<Props> = ({
   onTabChange,
   client,
   roomId,
+  livekitRoom,
 }) => {
   const { t } = useTranslation();
 
@@ -138,7 +141,7 @@ export const SettingsModal: FC<Props> = ({
   const developerTab: Tab<SettingsTab> = {
     key: "developer",
     name: t("settings.developer_tab_title"),
-    content: <DeveloperSettingsTab client={client} />,
+    content: <DeveloperSettingsTab client={client} livekitRoom={livekitRoom} />,
   };
 
   const tabs = [audioTab, videoTab];
