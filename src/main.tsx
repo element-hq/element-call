@@ -23,6 +23,7 @@ import {
 import { App } from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
+import "@matrix-org/matrix-sdk-crypto-wasm";
 
 initRageshake().catch((e) => {
   logger.error("Failed to initialize rageshake", e);

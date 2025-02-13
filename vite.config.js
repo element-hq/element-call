@@ -7,7 +7,6 @@ Please see LICENSE in the repository root for full details.
 
 import { defineConfig, loadEnv } from "vite";
 import svgrPlugin from "vite-plugin-svgr";
-import htmlTemplate from "vite-plugin-html-template";
 import { codecovVitePlugin } from "@codecov/vite-plugin";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import react from "@vitejs/plugin-react";
@@ -25,11 +24,6 @@ export default defineConfig(({ mode }) => {
         // This enables ref forwarding on SVGR components, which is needed, for
         // example, to make tooltips on icons work
         ref: true,
-      },
-    }),
-    htmlTemplate.default({
-      data: {
-        title: env.VITE_PRODUCT_NAME || "Element Call",
       },
     }),
 
@@ -56,6 +50,7 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
+    base: './',
     server: {
       port: 3000,
     },
