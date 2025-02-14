@@ -83,5 +83,3 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: platforms/android/publish_android_package.sh -s
-
-
