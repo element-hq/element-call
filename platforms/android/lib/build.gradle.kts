@@ -33,7 +33,7 @@ publishing {
             // `githubPackagesUsername` and `githubPackagesPassword` Gradle properties or alternatively
             // as `ORG_GRADLE_PROJECT_githubPackagesUsername` and `ORG_GRADLE_PROJECT_githubPackagesPassword`
             // environment variables
-            if (!providers.gradleProperty("githubPackagesUsername").isPresent) {
+            if (providers.gradleProperty("githubPackagesUsername").isPresent) {
                 credentials(PasswordCredentials::class)
             } else {
                 // Assune we're in CI and try getting the GH env vars
