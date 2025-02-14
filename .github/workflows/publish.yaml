@@ -63,3 +63,22 @@ jobs:
       docker_tags: |
         type=sha,format=short,event=branch
         type=semver,pattern=v{{version}}
+  publish_android:
+    needs: build_element_call
+    if: always()
+    name: Publish Android AAR
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Download artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id || github.run_id }}
+          name: build-output
+          path: dist
+      - name: Publish AAR to GH gradle registry
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: platforms/android/publish_android_package.sh -s
+
+
