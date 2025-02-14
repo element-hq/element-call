@@ -55,7 +55,10 @@ else
 	copy_assets
 fi
 
+# Exit with an error if the gradle publishing fails
+set -e
 echo "Publishing the Android project"
-./gradlew publishAllPublicationsToGithubPackagesRepository
+
+./gradlew publishAllPublicationsToGithubPackagesRepository --no-daemon
 
 popd  > /dev/null
