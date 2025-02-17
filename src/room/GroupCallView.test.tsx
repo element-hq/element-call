@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { beforeEach, expect, type MockedFunction, test, vitest } from "vitest";
-import { render } from "@testing-library/react";
+import { render, waitFor } from "@testing-library/react";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 import { of } from "rxjs";
@@ -20,6 +20,7 @@ import { prefetchSounds } from "../soundUtils";
 import { useAudioContext } from "../useAudioContext";
 import { ActiveCall } from "./InCallView";
 import {
+  flushPromises,
   mockMatrixRoom,
   mockMatrixRoomMember,
   mockRtcMembership,
@@ -51,13 +52,13 @@ const carol = mockMatrixRoomMember(localRtcMember);
 const roomMembers = new Map([carol].map((p) => [p.userId, p]));
 
 const roomId = "!foo:bar";
-const soundPromise = Promise.resolve(true);
 
 beforeEach(() => {
+  vitest.clearAllMocks();
   (prefetchSounds as MockedFunction<typeof prefetchSounds>).mockResolvedValue({
     sound: new ArrayBuffer(0),
   });
-  playSound = vitest.fn().mockReturnValue(soundPromise);
+  playSound = vitest.fn();
   (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
     playSound,
   });
@@ -136,8 +137,15 @@ test("will play a leave sound asynchronously in SPA mode", async () => {
   const leaveButton = getByText("Leave");
   await user.click(leaveButton);
   expect(playSound).toHaveBeenCalledWith("left");
-  expect(leaveRTCSession).toHaveBeenCalledWith(rtcSession, undefined);
+  expect(leaveRTCSession).toHaveBeenCalledWith(
+    rtcSession,
+    "user",
+    expect.any(Promise),
+  );
   expect(rtcSession.leaveRoomSession).toHaveBeenCalledOnce();
+  // Ensure that the playSound promise resolves within this test to avoid
+  // impacting the results of other tests
+  await waitFor(() => expect(leaveRTCSession).toHaveResolved());
 });
 
 test("will play a leave sound synchronously in widget mode", async () => {
@@ -148,12 +156,31 @@ test("will play a leave sound synchronously in widget mode", async () => {
     } as Partial<WidgetHelpers["api"]>,
     lazyActions: new LazyEventEmitter(),
   };
+  let resolvePlaySound: () => void;
+  playSound = vitest
+    .fn()
+    .mockReturnValue(
+      new Promise<void>((resolve) => (resolvePlaySound = resolve)),
+    );
+  (useAudioContext as MockedFunction<typeof useAudioContext>).mockReturnValue({
+    playSound,
+  });
+
   const { getByText, rtcSession } = createGroupCallView(
     widget as WidgetHelpers,
   );
   const leaveButton = getByText("Leave");
   await user.click(leaveButton);
+  await flushPromises();
+  expect(leaveRTCSession).not.toHaveResolved();
+  resolvePlaySound!();
+  await flushPromises();
+
   expect(playSound).toHaveBeenCalledWith("left");
-  expect(leaveRTCSession).toHaveBeenCalledWith(rtcSession, soundPromise);
+  expect(leaveRTCSession).toHaveBeenCalledWith(
+    rtcSession,
+    "user",
+    expect.any(Promise),
+  );
   expect(rtcSession.leaveRoomSession).toHaveBeenCalledOnce();
 });

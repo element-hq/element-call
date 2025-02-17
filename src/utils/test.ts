@@ -50,6 +50,10 @@ export function withFakeTimers(continuation: () => void): void {
   }
 }
 
+export async function flushPromises(): Promise<void> {
+  await new Promise<void>((resolve) => window.setTimeout(resolve));
+}
+
 export interface OurRunHelpers extends RunHelpers {
   /**
    * Schedules a sequence of actions to happen, as described by a marble
