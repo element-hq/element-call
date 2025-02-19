@@ -15,10 +15,6 @@
      "use_exclusively": true
     },
   "features":{
-    "feature_video_rooms": true,
-    "feature_new_room_decoration_ui": true,
-    "feature_group_calls": true,
-    "feature_element_call_video_rooms": true,
     "feature_use_device_session_member_events":true
   }
 }
