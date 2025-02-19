@@ -79,7 +79,11 @@ const Backend = {
         },
       });
 
-      if (!response.ok) {
+      // fetch will always return ok === false for file:// URLs
+      if (
+        !response.ok &&
+        (!response.url || !response.url.startsWith("file:"))
+      ) {
         throw Error(`Failed to fetch ${url}`);
       }
 

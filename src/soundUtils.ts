@@ -49,7 +49,11 @@ export async function prefetchSounds<S extends string>(
       const response = await fetch(
         preferredFormat === "ogg" ? ogg : (mp3 ?? ogg),
       );
-      if (!response.ok) {
+      // fetch will always return ok === false for file:// URLs
+      if (
+        !response.ok &&
+        (!response.url || !response.url.startsWith("file:"))
+      ) {
         // If the sound doesn't load, it's not the end of the world. We won't play
         // the sound when requested, but it's better than failing the whole application.
         logger.warn(`Could not load sound ${name}, response was not okay`);
