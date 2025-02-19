@@ -8,12 +8,6 @@
   "livekit": {
     "livekit_service_url":"https://livekit-jwt.mydomain.com"
   },
-  "element_call": {
-     "url": "https://call.mydomain.com",
-     "participant_limit": 8,
-     "brand": "Element Call",
-     "use_exclusively": true
-    },
   "features":{
     "feature_use_device_session_member_events":true
   }
