@@ -31,6 +31,7 @@
     "@formatjs/intl-segmenter": "^11.7.3",
     "@livekit/components-core": "^0.12.0",
     "@livekit/components-react": "^2.0.0",
+    "@livekit/protocol": "^1.33.0",
     "@opentelemetry/api": "^1.4.0",
     "@opentelemetry/core": "^1.25.1",
     "@opentelemetry/exporter-trace-otlp-http": "^0.57.0",
