@@ -13,7 +13,8 @@ import {
   type TrackReference,
   type TrackReferencePlaceholder,
 } from "@livekit/components-core";
-import { Track, TrackPublication } from "livekit-client";
+import { LocalTrackPublication, Track } from "livekit-client";
+import { TrackInfo } from "@livekit/protocol";
 import { type ComponentProps } from "react";
 
 import { MediaView } from "./MediaView";
@@ -28,7 +29,10 @@ describe("MediaView", () => {
   };
   const trackReference: TrackReference = {
     ...trackReferencePlaceholder,
-    publication: new TrackPublication(Track.Kind.Video, "id", "name"),
+    publication: new LocalTrackPublication(
+      Track.Kind.Video,
+      new TrackInfo({ sid: "id", name: "name" }),
+    ),
   };
 
   const baseProps: ComponentProps<typeof MediaView> = {
