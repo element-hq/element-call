@@ -30,10 +30,14 @@ export const FullScreenView: FC<FullScreenViewProps> = ({
   const { hideHeader } = useUrlParams();
   return (
     <div className={classNames(styles.page, className)}>
-      <Header>
-        <LeftNav>{!hideHeader && <HeaderLogo />}</LeftNav>
-        <RightNav />
-      </Header>
+      {!hideHeader && (
+        <Header>
+          <LeftNav>
+            <HeaderLogo />
+          </LeftNav>
+          <RightNav />
+        </Header>
+      )}
       <div className={styles.container}>
         <div className={styles.content}>{children}</div>
       </div>
