@@ -246,17 +246,23 @@ export const GroupCallView: FC<Props> = ({
       const sendInstantly = !!widget;
       setLeaveError(leaveError);
       setLeft(true);
-      PosthogAnalytics.instance.eventCallEnded.track(
-        rtcSession.room.roomId,
-        rtcSession.memberships.length,
-        sendInstantly,
-        rtcSession,
-      );
+      // we need to wait until the callEnded event is tracked on posthog.
+      // Otherwise the iFrame gets killed before the callEnded event got tracked.
+      const posthogRequest = new Promise((resolve) => {
+        PosthogAnalytics.instance.eventCallEnded.track(
+          rtcSession.room.roomId,
+          rtcSession.memberships.length,
+          sendInstantly,
+          rtcSession,
+        );
+        window.setTimeout(resolve, 10);
+      });
 
       leaveRTCSession(
         rtcSession,
+        leaveError === undefined ? "user" : "error",
         // Wait for the sound in widget mode (it's not long)
-        sendInstantly && audioPromise ? audioPromise : undefined,
+        Promise.all([audioPromise, posthogRequest]),
       )
         // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
         .then(async () => {
@@ -292,7 +298,7 @@ export const GroupCallView: FC<Props> = ({
       const onHangup = (ev: CustomEvent<IWidgetApiRequest>): void => {
         widget.api.transport.reply(ev.detail, {});
         // Only sends matrix leave event. The Livekit session will disconnect once the ActiveCall-view unmounts.
-        leaveRTCSession(rtcSession).catch((e) => {
+        leaveRTCSession(rtcSession, "user").catch((e) => {
           logger.error("Failed to leave RTC session", e);
         });
       };

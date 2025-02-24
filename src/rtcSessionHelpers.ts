@@ -130,13 +130,9 @@ export async function enterRTCSession(
 
 const widgetPostHangupProcedure = async (
   widget: WidgetHelpers,
+  cause: "user" | "error",
   promiseBeforeHangup?: Promise<unknown>,
 ): Promise<void> => {
-  // we need to wait until the callEnded event is tracked on posthog.
-  // Otherwise the iFrame gets killed before the callEnded event got tracked.
-  await new Promise((resolve) => window.setTimeout(resolve, 10)); // 10ms
-  PosthogAnalytics.instance.logout();
-
   try {
     await widget.api.setAlwaysOnScreen(false);
   } catch (e) {
@@ -148,16 +144,32 @@ const widgetPostHangupProcedure = async (
   // We send the hangup event after the memberships have been updated
   // calling leaveRTCSession.
   // We need to wait because this makes the client hosting this widget killing the IFrame.
-  await widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+  try {
+    await widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+  } catch (e) {
+    logger.error("Failed to send hangup action", e);
+  }
+  // On a normal user hangup we can shut down and close the widget. But if an
+  // error occurs we should keep the widget open until the user reads it.
+  if (cause === "user") {
+    try {
+      await widget.api.transport.send(ElementWidgetActions.Close, {});
+    } catch (e) {
+      logger.error("Failed to send close action", e);
+    }
+    widget.api.transport.stop();
+    PosthogAnalytics.instance.logout();
+  }
 };
 
 export async function leaveRTCSession(
   rtcSession: MatrixRTCSession,
+  cause: "user" | "error",
   promiseBeforeHangup?: Promise<unknown>,
 ): Promise<void> {
   await rtcSession.leaveRoomSession();
   if (widget) {
-    await widgetPostHangupProcedure(widget, promiseBeforeHangup);
+    await widgetPostHangupProcedure(widget, cause, promiseBeforeHangup);
   } else {
     await promiseBeforeHangup;
   }

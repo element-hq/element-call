@@ -21,10 +21,11 @@ import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { ElementCallReactionEventType } from "./reactions";
 
-// Subset of the actions in matrix-react-sdk
+// Subset of the actions in element-web
 export enum ElementWidgetActions {
   JoinCall = "io.element.join",
   HangupCall = "im.vector.hangup",
+  Close = "io.element.close",
   TileLayout = "io.element.tile_layout",
   SpotlightLayout = "io.element.spotlight_layout",
   // This can be sent as from or to widget
