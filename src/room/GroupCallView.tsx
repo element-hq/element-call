@@ -5,7 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, useCallback, useEffect, useMemo, useState } from "react";
+import {
+  type FC,
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import {
   Room,
@@ -14,9 +22,14 @@ import {
 import { logger } from "matrix-js-sdk/src/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { JoinRule } from "matrix-js-sdk/src/matrix";
-import { WebBrowserIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import {
+  OfflineIcon,
+  WebBrowserIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
+import { ErrorBoundary } from "@sentry/react";
+import { Button } from "@vector-im/compound-web";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -24,14 +37,14 @@ import {
   type JoinCallData,
   type WidgetHelpers,
 } from "../widget";
-import { FullScreenView } from "../FullScreenView";
+import { ErrorPage, FullScreenView } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { type MatrixInfo } from "./VideoPreview";
 import { CallEndedView } from "./CallEndedView";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../utils/media";
-import { ActiveCall } from "./InCallView";
+import { ActiveCall, ConnectionLostError } from "./InCallView";
 import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
@@ -53,6 +66,11 @@ declare global {
   interface Window {
     rtcSession?: MatrixRTCSession;
   }
+}
+
+interface GroupCallErrorPageProps {
+  error: Error | unknown;
+  resetError: () => void;
 }
 
 interface Props {
@@ -229,16 +247,14 @@ export const GroupCallView: FC<Props> = ({
   ]);
 
   const [left, setLeft] = useState(false);
-  const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
   const navigate = useNavigate();
 
   const onLeave = useCallback(
-    (leaveError?: Error): void => {
+    (cause: "user" | "error" = "user"): void => {
       const audioPromise = leaveSoundContext.current?.playSound("left");
       // In embedded/widget mode the iFrame will be killed right after the call ended prohibiting the posthog event from getting sent,
       // therefore we want the event to be sent instantly without getting queued/batched.
       const sendInstantly = !!widget;
-      setLeaveError(leaveError);
       setLeft(true);
       // we need to wait until the callEnded event is tracked on posthog.
       // Otherwise the iFrame gets killed before the callEnded event got tracked.
@@ -254,7 +270,7 @@ export const GroupCallView: FC<Props> = ({
 
       leaveRTCSession(
         rtcSession,
-        leaveError === undefined ? "user" : "error",
+        cause,
         // Wait for the sound in widget mode (it's not long)
         Promise.all([audioPromise, posthogRequest]),
       )
@@ -303,14 +319,6 @@ export const GroupCallView: FC<Props> = ({
     }
   }, [widget, isJoined, rtcSession]);
 
-  const onReconnect = useCallback(() => {
-    setLeft(false);
-    setLeaveError(undefined);
-    enterRTCSession(rtcSession, perParticipantE2EE).catch((e) => {
-      logger.error("Error re-entering RTC session on reconnect", e);
-    });
-  }, [rtcSession, perParticipantE2EE]);
-
   const joinRule = useJoinRule(rtcSession.room);
 
   const [shareModalOpen, setInviteModalOpen] = useState(false);
@@ -326,6 +334,43 @@ export const GroupCallView: FC<Props> = ({
   const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
 
   const { t } = useTranslation();
+
+  const errorPage = useMemo(() => {
+    function GroupCallErrorPage({
+      error,
+      resetError,
+    }: GroupCallErrorPageProps): ReactElement {
+      useEffect(() => {
+        if (rtcSession.isJoined()) onLeave("error");
+      }, [error]);
+
+      const onReconnect = useCallback(() => {
+        setLeft(false);
+        resetError();
+        enterRTCSession(rtcSession, perParticipantE2EE).catch((e) => {
+          logger.error("Error re-entering RTC session on reconnect", e);
+        });
+      }, [resetError]);
+
+      return error instanceof ConnectionLostError ? (
+        <FullScreenView>
+          <ErrorView
+            Icon={OfflineIcon}
+            title={t("error.connection_lost")}
+            rageshake
+          >
+            <p>{t("error.connection_lost_description")}</p>
+            <Button onClick={onReconnect}>
+              {t("call_ended_view.reconnect_button")}
+            </Button>
+          </ErrorView>
+        </FullScreenView>
+      ) : (
+        <ErrorPage error={error} />
+      );
+    }
+    return GroupCallErrorPage;
+  }, [onLeave, rtcSession, perParticipantE2EE, t]);
 
   if (!isE2EESupportedBrowser() && e2eeSystem.kind !== E2eeType.NONE) {
     // If we have a encryption system but the browser does not support it.
@@ -361,8 +406,9 @@ export const GroupCallView: FC<Props> = ({
     </>
   );
 
+  let body: ReactNode;
   if (isJoined) {
-    return (
+    body = (
       <>
         {shareModal}
         <ActiveCall
@@ -390,36 +436,32 @@ export const GroupCallView: FC<Props> = ({
     // submitting anything.
     if (
       isPasswordlessUser ||
-      (PosthogAnalytics.instance.isEnabled() && widget === null) ||
-      leaveError
+      (PosthogAnalytics.instance.isEnabled() && widget === null)
     ) {
-      return (
-        <>
-          <CallEndedView
-            endedCallId={rtcSession.room.roomId}
-            client={client}
-            isPasswordlessUser={isPasswordlessUser}
-            confineToRoom={confineToRoom}
-            leaveError={leaveError}
-            reconnect={onReconnect}
-          />
-          ;
-        </>
+      body = (
+        <CallEndedView
+          endedCallId={rtcSession.room.roomId}
+          client={client}
+          isPasswordlessUser={isPasswordlessUser}
+          confineToRoom={confineToRoom}
+        />
       );
     } else {
       // If the user is a regular user, we'll have sent them back to the homepage,
       // so just sit here & do nothing: otherwise we would (briefly) mount the
       // LobbyView again which would open capture devices again.
-      return null;
+      body = null;
     }
   } else if (left && widget !== null) {
     // Left in widget mode:
     if (!returnToLobby) {
-      return null;
+      body = null;
     }
   } else if (preload || skipLobby) {
-    return null;
+    body = null;
+  } else {
+    body = lobbyView;
   }
 
-  return lobbyView;
+  return <ErrorBoundary fallback={errorPage}>{body}</ErrorBoundary>;
 };

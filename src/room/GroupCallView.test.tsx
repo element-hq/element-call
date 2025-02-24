@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { beforeEach, expect, type MockedFunction, test, vitest } from "vitest";
-import { render, waitFor } from "@testing-library/react";
+import { render, waitFor, screen } from "@testing-library/react";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 import { of } from "rxjs";
@@ -14,6 +14,7 @@ import { JoinRule, type RoomState } from "matrix-js-sdk/src/matrix";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import { type RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
+import { useState } from "react";
 
 import { type MuteStates } from "./MuteStates";
 import { prefetchSounds } from "../soundUtils";
@@ -183,4 +184,29 @@ test("will play a leave sound synchronously in widget mode", async () => {
     expect.any(Promise),
   );
   expect(rtcSession.leaveRoomSession).toHaveBeenCalledOnce();
+});
+
+test("GroupCallView leaves the session when an error occurs", async () => {
+  (ActiveCall as MockedFunction<typeof ActiveCall>).mockImplementation(() => {
+    const [error, setError] = useState<Error | null>(null);
+    if (error !== null) throw error;
+    return (
+      <div>
+        <button onClick={() => setError(new Error())}>Panic!</button>
+      </div>
+    );
+  });
+  const user = userEvent.setup();
+  const { rtcSession } = createGroupCallView(null);
+  await user.click(screen.getByRole("button", { name: "Panic!" }));
+  screen.getByText("error.generic");
+  expect(leaveRTCSession).toHaveBeenCalledWith(
+    rtcSession,
+    "error",
+    expect.any(Promise),
+  );
+  expect(rtcSession.leaveRoomSession).toHaveBeenCalledOnce();
+  // Ensure that the playSound promise resolves within this test to avoid
+  // impacting the results of other tests
+  await waitFor(() => expect(leaveRTCSession).toHaveResolved());
 });

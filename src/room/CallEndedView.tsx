@@ -5,17 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type FC,
-  type FormEventHandler,
-  type ReactNode,
-  useCallback,
-  useState,
-} from "react";
+import { type FC, type FormEventHandler, useCallback, useState } from "react";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { Trans, useTranslation } from "react-i18next";
 import { Button, Heading, Text } from "@vector-im/compound-web";
-import { OfflineIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 import { useNavigate } from "react-router-dom";
 import { logger } from "matrix-js-sdk/src/logger";
 
@@ -28,15 +21,12 @@ import { FieldRow, InputField } from "../input/Input";
 import { StarRatingInput } from "../input/StarRatingInput";
 import { Link } from "../button/Link";
 import { LinkButton } from "../button";
-import { ErrorView } from "../ErrorView";
 
 interface Props {
   client: MatrixClient;
   isPasswordlessUser: boolean;
   confineToRoom: boolean;
   endedCallId: string;
-  leaveError?: Error;
-  reconnect: () => void;
 }
 
 export const CallEndedView: FC<Props> = ({
@@ -44,8 +34,6 @@ export const CallEndedView: FC<Props> = ({
   isPasswordlessUser,
   confineToRoom,
   endedCallId,
-  leaveError,
-  reconnect,
 }) => {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -143,61 +131,32 @@ export const CallEndedView: FC<Props> = ({
     </div>
   );
 
-  const renderBody = (): ReactNode => {
-    if (leaveError) {
-      return (
-        <>
-          <main className={styles.main}>
-            <ErrorView
-              Icon={OfflineIcon}
-              title={t("error.connection_lost")}
-              rageshake
-            >
-              <p>{t("error.connection_lost_description")}</p>
-              <Button onClick={reconnect}>
-                {t("call_ended_view.reconnect_button")}
-              </Button>
-            </ErrorView>
-          </main>
-        </>
-      );
-    } else {
-      return (
-        <>
-          <main className={styles.main}>
-            <Heading size="xl" weight="semibold" className={styles.headline}>
-              {surveySubmitted
-                ? t("call_ended_view.headline", {
-                    displayName,
-                  })
-                : t("call_ended_view.headline", {
-                    displayName,
-                  }) +
-                  "\n" +
-                  t("call_ended_view.survey_prompt")}
-            </Heading>
-            {(!surveySubmitted || confineToRoom) &&
-            PosthogAnalytics.instance.isEnabled()
-              ? qualitySurveyDialog
-              : createAccountDialog}
-          </main>
-          {!confineToRoom && (
-            <Text className={styles.footer}>
-              <Link to="/"> {t("call_ended_view.not_now_button")} </Link>
-            </Text>
-          )}
-        </>
-      );
-    }
-  };
-
   return (
     <>
       <Header>
         <LeftNav>{!confineToRoom && <HeaderLogo />}</LeftNav>
         <RightNav />
       </Header>
-      <div className={styles.container}>{renderBody()}</div>
+      <div className={styles.container}>
+        <main className={styles.main}>
+          <Heading size="xl" weight="semibold" className={styles.headline}>
+            {surveySubmitted
+              ? t("call_ended_view.headline", { displayName })
+              : t("call_ended_view.headline", { displayName }) +
+                "\n" +
+                t("call_ended_view.survey_prompt")}
+          </Heading>
+          {(!surveySubmitted || confineToRoom) &&
+          PosthogAnalytics.instance.isEnabled()
+            ? qualitySurveyDialog
+            : createAccountDialog}
+        </main>
+        {!confineToRoom && (
+          <Text className={styles.footer}>
+            <Link to="/"> {t("call_ended_view.not_now_button")} </Link>
+          </Text>
+        )}
+      </div>
     </>
   );
 };
