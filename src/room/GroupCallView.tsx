@@ -5,14 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import {
-  type FC,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type FC, useCallback, useEffect, useMemo, useState } from "react";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import {
   Room,
@@ -40,10 +33,7 @@ import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../utils/media";
 import { ActiveCall } from "./InCallView";
 import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
-import {
-  useMediaDevices,
-  type MediaDevices,
-} from "../livekit/MediaDevicesContext";
+import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
 import { enterRTCSession, leaveRTCSession } from "../rtcSessionHelpers";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";
@@ -154,12 +144,8 @@ export const GroupCallView: FC<Props> = ({
   );
 
   const deviceContext = useMediaDevices();
-  const latestDevices = useRef<MediaDevices | undefined>(undefined);
-  latestDevices.current = deviceContext;
-
-  // TODO: why do we use a ref here instead of using muteStates directly?
-  const latestMuteStates = useRef<MuteStates | undefined>(undefined);
-  latestMuteStates.current = muteStates;
+  const latestDevices = useLatest(deviceContext);
+  const latestMuteStates = useLatest(muteStates);
 
   useEffect(() => {
     const defaultDeviceSetup = async ({
@@ -232,7 +218,15 @@ export const GroupCallView: FC<Props> = ({
         void enterRTCSession(rtcSession, perParticipantE2EE);
       }
     }
-  }, [widget, rtcSession, preload, skipLobby, perParticipantE2EE]);
+  }, [
+    widget,
+    rtcSession,
+    preload,
+    skipLobby,
+    perParticipantE2EE,
+    latestDevices,
+    latestMuteStates,
+  ]);
 
   const [left, setLeft] = useState(false);
   const [leaveError, setLeaveError] = useState<Error | undefined>(undefined);
