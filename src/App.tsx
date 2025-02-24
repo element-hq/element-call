@@ -22,6 +22,7 @@ import { Initializer } from "./initializer";
 import { MediaDevicesProvider } from "./livekit/MediaDevicesContext";
 import { widget } from "./widget";
 import { useTheme } from "./useTheme";
+import { RageshakeButton } from "./settings/RageshakeButton";
 
 const SentryRoute = Sentry.withSentryReactRouterV7Routing(Route);
 
@@ -70,6 +71,7 @@ export const App: FC = () => {
           <TooltipProvider>
             {loaded ? (
               <Suspense fallback={null}>
+                <RageshakeButton description='Logs for Robin' />
                 <ClientProvider>
                   <MediaDevicesProvider>
                     <Sentry.ErrorBoundary fallback={ErrorPage}>
