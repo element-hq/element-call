@@ -144,11 +144,19 @@ const widgetPostHangupProcedure = async (
   // We send the hangup event after the memberships have been updated
   // calling leaveRTCSession.
   // We need to wait because this makes the client hosting this widget killing the IFrame.
-  await widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+  try {
+    await widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+  } catch (e) {
+    logger.error("Failed to send hangup action", e);
+  }
   // On a normal user hangup we can shut down and close the widget. But if an
   // error occurs we should keep the widget open until the user reads it.
   if (cause === "user") {
-    await widget.api.transport.send(ElementWidgetActions.Close, {});
+    try {
+      await widget.api.transport.send(ElementWidgetActions.Close, {});
+    } catch (e) {
+      logger.error("Failed to send close action", e);
+    }
     widget.api.transport.stop();
     PosthogAnalytics.instance.logout();
   }
