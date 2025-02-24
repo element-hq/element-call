@@ -6165,9 +6165,9 @@ lines-and-columns@^1.1.6:
   integrity sha512-7ylylesZQ/PV29jhEDl3Ufjo6ZX7gCqJr5F7PKrqc93v7fzSymt1BpwEU8nAUXs8qzzvqhbjhK5QZg6Mt/HkBg==
 
 livekit-client@^2.5.7:
-  version "2.9.2"
-  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.9.2.tgz#22ee83fcc73a0cb71511b00a8cb35625e64a3f62"
-  integrity sha512-CEURRYoVvJGBAlY0UJAGx5mpC/jE90rw2mor6eYYyu2LLNflh03Rfy+mV5o2CS1xNJD7LS+PTH0sk0ZvxXC22g==
+  version "2.9.3"
+  resolved "https://registry.yarnpkg.com/livekit-client/-/livekit-client-2.9.3.tgz#1f0e494561ba8790d214047d413e37db3aebdf16"
+  integrity sha512-mDLgenjmGI3ga1qXsuonw8cTpQMUTm6T8tmjB/O+uzjsjI9UP0ebzjgrcOBn+IamjbulIdWWvtrt5A/6ftuH5A==
   dependencies:
     "@livekit/mutex" "1.1.1"
     "@livekit/protocol" "1.33.0"
@@ -7626,10 +7626,17 @@ rxjs-report-usage@^1.0.4:
     glob "~7.2.0"
     prompts "~2.4.2"
 
-rxjs@7.8.1, rxjs@^7.5.2, rxjs@^7.8.1:
+rxjs@7.8.1, rxjs@^7.8.1:
   version "7.8.1"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.8.1.tgz#6f6f3d99ea8044291efd92e7c7fcf562c4057543"
   integrity sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==
+  dependencies:
+    tslib "^2.1.0"
+
+rxjs@^7.5.2:
+  version "7.8.2"
+  resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.8.2.tgz#955bc473ed8af11a002a2be52071bf475638607b"
+  integrity sha512-dhKf903U/PQZY6boNNtAGdWbG85WAbjT/1xYoZIC7FAY0yWapOBQVsVrDl58W86//e1VpMNBtRV4MaXfdMySFA==
   dependencies:
     tslib "^2.1.0"
 
