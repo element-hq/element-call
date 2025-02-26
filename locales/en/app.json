@@ -85,7 +85,8 @@
     "insufficient_capacity": "Insufficient capacity",
     "insufficient_capacity_description": "The server has reached its maximum capacity and you cannot join the call at this time. Try again later, or contact your server admin if the problem persists.",
     "open_elsewhere": "Opened in another tab",
-    "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page."
+    "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page.",
+    "unexpected_ec_error": "An unexpected error occurred (<0>Error Code:</0> <1>{{ errorCode }}</1>). Please contact your server administrator."
   },
   "group_call_loader": {
     "banned_body": "You have been banned from the room.",

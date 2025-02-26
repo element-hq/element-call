@@ -16,8 +16,8 @@ import {
 } from "react";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import {
-  Room,
   isE2EESupported as isE2EESupportedBrowser,
+  Room,
 } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
@@ -62,6 +62,7 @@ import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
 import { ErrorView } from "../ErrorView";
 import { ConnectionLostError, ElementCallError } from "../utils/ec-errors.ts";
+import { ElementCallRichError } from "../RichError.tsx";
 
 declare global {
   interface Window {
@@ -166,6 +167,22 @@ export const GroupCallView: FC<Props> = ({
   const latestDevices = useLatest(deviceContext);
   const latestMuteStates = useLatest(muteStates);
 
+  const enterRTCSessionOrError = async (
+    rtcSession: MatrixRTCSession,
+    perParticipantE2EE: boolean,
+  ): Promise<void> => {
+    try {
+      await enterRTCSession(rtcSession, perParticipantE2EE);
+    } catch (e) {
+      if (e instanceof ElementCallError) {
+        // e.code === ErrorCode.MISSING_LIVE_KIT_SERVICE_URL)
+        setEnterRTCError(e);
+      } else {
+        logger.error(`Unknown Error while entering RTC session`, e);
+      }
+    }
+  };
+
   useEffect(() => {
     const defaultDeviceSetup = async ({
       audioInput,
@@ -215,7 +232,7 @@ export const GroupCallView: FC<Props> = ({
               await defaultDeviceSetup(
                 ev.detail.data as unknown as JoinCallData,
               );
-              await enterRTCSession(rtcSession, perParticipantE2EE);
+              await enterRTCSessionOrError(rtcSession, perParticipantE2EE);
               widget.api.transport.reply(ev.detail, {});
             })().catch((e) => {
               logger.error("Error joining RTC session", e);
@@ -228,13 +245,13 @@ export const GroupCallView: FC<Props> = ({
         } else {
           // No lobby and no preload: we enter the rtc session right away
           (async (): Promise<void> => {
-            await enterRTCSession(rtcSession, perParticipantE2EE);
+            await enterRTCSessionOrError(rtcSession, perParticipantE2EE);
           })().catch((e) => {
             logger.error("Error joining RTC session", e);
           });
         }
       } else {
-        void enterRTCSession(rtcSession, perParticipantE2EE);
+        void enterRTCSessionOrError(rtcSession, perParticipantE2EE);
       }
     }
   }, [
@@ -248,6 +265,9 @@ export const GroupCallView: FC<Props> = ({
   ]);
 
   const [left, setLeft] = useState(false);
+  const [enterRTCError, setEnterRTCError] = useState<ElementCallError | null>(
+    null,
+  );
   const navigate = useNavigate();
 
   const onLeave = useCallback(
@@ -348,8 +368,8 @@ export const GroupCallView: FC<Props> = ({
       const onReconnect = useCallback(() => {
         setLeft(false);
         resetError();
-        enterRTCSession(rtcSession, perParticipantE2EE).catch((e) => {
-          logger.error("Error re-entering RTC session on reconnect", e);
+        enterRTCSessionOrError(rtcSession, perParticipantE2EE).catch((e) => {
+          logger.error("Error re-entering RTC session", e);
         });
       }, [resetError]);
 
@@ -398,7 +418,9 @@ export const GroupCallView: FC<Props> = ({
         client={client}
         matrixInfo={matrixInfo}
         muteStates={muteStates}
-        onEnter={() => void enterRTCSession(rtcSession, perParticipantE2EE)}
+        onEnter={() =>
+          void enterRTCSessionOrError(rtcSession, perParticipantE2EE)
+        }
         confineToRoom={confineToRoom}
         hideHeader={hideHeader}
         participantCount={participantCount}
@@ -408,7 +430,14 @@ export const GroupCallView: FC<Props> = ({
   );
 
   let body: ReactNode;
-  if (isJoined) {
+  if (enterRTCError) {
+    // If an ElementCallError was recorded, then create a component that will fail to render and throw
+    // an ElementCallRichError error. This will then be handled by the ErrorBoundary component.
+    const ErrorComponent = (): ReactNode => {
+      throw new ElementCallRichError(enterRTCError);
+    };
+    body = <ErrorComponent />;
+  } else if (isJoined) {
     body = (
       <>
         {shareModal}

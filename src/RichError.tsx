@@ -6,13 +6,14 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, type ReactNode } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import {
   HostIcon,
   PopOutIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { ErrorView } from "./ErrorView";
+import { type ElementCallError, type ErrorCode } from "./utils/ec-errors.ts";
 
 /**
  * An error consisting of a terse message to be logged to the console and a
@@ -63,5 +64,35 @@ const InsufficientCapacity: FC = () => {
 export class InsufficientCapacityError extends RichError {
   public constructor() {
     super("Insufficient server capacity", <InsufficientCapacity />);
+  }
+}
+
+type ECErrorProps = {
+  errorCode: ErrorCode;
+};
+
+const GenericECError: FC<{ errorCode: ErrorCode }> = ({
+  errorCode,
+}: ECErrorProps) => {
+  const { t } = useTranslation();
+
+  return (
+    <ErrorView Icon={HostIcon} title={t("error.generic")}>
+      <p>
+        <Trans
+          i18nKey="error.unexpected_ec_error"
+          components={[<b />, <code />]}
+          values={{ errorCode }}
+        />
+      </p>
+    </ErrorView>
+  );
+};
+
+export class ElementCallRichError extends RichError {
+  public ecError: ElementCallError;
+  public constructor(ecError: ElementCallError) {
+    super(ecError.message, <GenericECError errorCode={ecError.code} />);
+    this.ecError = ecError;
   }
 }
