@@ -83,7 +83,7 @@
     "generic": "Something went wrong",
     "generic_description": "Submitting debug logs will help us track down the problem.",
     "insufficient_capacity": "Insufficient capacity",
-    "insufficient_capacity_description": "The server has reached its maximum capacity and you cannot join calls at this time. Try again later, or contact your server admin if the problem persists.",
+    "insufficient_capacity_description": "The server has reached its maximum capacity and you cannot join the call at this time. Try again later, or contact your server admin if the problem persists.",
     "open_elsewhere": "Opened in another tab",
     "open_elsewhere_description": "{{brand}} has been opened in another tab. If that doesn't sound right, try reloading the page."
   },
