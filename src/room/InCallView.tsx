@@ -102,6 +102,8 @@ const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
 const maxTapDurationMs = 400;
 
+export class ConnectionLostError extends Error {}
+
 export interface ActiveCallProps
   extends Omit<InCallViewProps, "vm" | "livekitRoom" | "connState"> {
   e2eeSystem: EncryptionSystem;
@@ -173,7 +175,8 @@ export interface InCallViewProps {
   livekitRoom: Room;
   muteStates: MuteStates;
   participantCount: number;
-  onLeave: (error?: Error) => void;
+  /** Function to call when the user explicitly ends the call */
+  onLeave: () => void;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
   connState: ECConnectionState;
@@ -198,13 +201,10 @@ export const InCallView: FC<InCallViewProps> = ({
 
   useWakeLock();
 
-  useEffect(() => {
-    if (connState === ConnectionState.Disconnected) {
-      // annoyingly we don't get the disconnection reason this way,
-      // only by listening for the emitted event
-      onLeave(new Error("Disconnected from call server"));
-    }
-  }, [connState, onLeave]);
+  // annoyingly we don't get the disconnection reason this way,
+  // only by listening for the emitted event
+  if (connState === ConnectionState.Disconnected)
+    throw new ConnectionLostError();
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure();
