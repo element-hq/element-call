@@ -97,12 +97,11 @@ import {
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
+import { ConnectionLostError } from "../utils/ec-errors.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
 const maxTapDurationMs = 400;
-
-export class ConnectionLostError extends Error {}
 
 export interface ActiveCallProps
   extends Omit<InCallViewProps, "vm" | "livekitRoom" | "connState"> {

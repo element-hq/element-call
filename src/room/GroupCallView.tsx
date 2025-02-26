@@ -44,7 +44,7 @@ import { CallEndedView } from "./CallEndedView";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
 import { useProfile } from "../profile/useProfile";
 import { findDeviceByName } from "../utils/media";
-import { ActiveCall, ConnectionLostError } from "./InCallView";
+import { ActiveCall } from "./InCallView";
 import { MUTE_PARTICIPANT_COUNT, type MuteStates } from "./MuteStates";
 import { useMediaDevices } from "../livekit/MediaDevicesContext";
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";
@@ -61,6 +61,7 @@ import { callEventAudioSounds } from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
 import { ErrorView } from "../ErrorView";
+import { ConnectionLostError, ElementCallError } from "../utils/ec-errors.ts";
 
 declare global {
   interface Window {
