@@ -142,6 +142,8 @@ async function connectAndPublish(
   } catch (e) {
     // LiveKit uses 503 to indicate that the server has hit its track limits
     // or equivalently, 429 in LiveKit Cloud
+    // For reference, the 503 response is generated at: https://github.com/livekit/livekit/blob/fcb05e97c5a31812ecf0ca6f7efa57c485cea9fb/pkg/service/rtcservice.go#L171
+
     if (e instanceof ConnectionError && (e.status === 503 || e.status === 429))
       throw new InsufficientCapacityError();
     throw e;
