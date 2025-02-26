@@ -7,7 +7,10 @@ Please see LICENSE in the repository root for full details.
 
 import { type FC, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
-import { PopOutIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
+import {
+  HostIcon,
+  PopOutIcon,
+} from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import { ErrorView } from "./ErrorView";
 
@@ -44,5 +47,21 @@ const OpenElsewhere: FC = () => {
 export class OpenElsewhereError extends RichError {
   public constructor() {
     super("App opened in another tab", <OpenElsewhere />);
+  }
+}
+
+const InsufficientCapacity: FC = () => {
+  const { t } = useTranslation();
+
+  return (
+    <ErrorView Icon={HostIcon} title={t("error.insufficient_capacity")}>
+      <p>{t("error.insufficient_capacity_description")}</p>
+    </ErrorView>
+  );
+};
+
+export class InsufficientCapacityError extends RichError {
+  public constructor() {
+    super("Insufficient server capacity", <InsufficientCapacity />);
   }
 }
