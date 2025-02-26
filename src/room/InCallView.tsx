@@ -175,6 +175,7 @@ export interface InCallViewProps {
   livekitRoom: Room;
   muteStates: MuteStates;
   participantCount: number;
+  /** Function to call when the user explicitly ends the call */
   onLeave: () => void;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
