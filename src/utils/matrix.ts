@@ -160,7 +160,6 @@ export async function initClient(
     );
   }
 
-  client.setGlobalErrorOnUnknownDevices(false);
   // Once startClient is called, syncs are run asynchronously.
   // Also, sync completion is communicated only via events.
   // So, apply the event listener *before* starting the client.

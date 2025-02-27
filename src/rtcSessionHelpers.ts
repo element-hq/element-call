@@ -96,6 +96,7 @@ async function makePreferredLivekitFoci(
 export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   encryptMedia: boolean,
+  useNewMembershipManager = true,
 ): Promise<void> {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
@@ -113,6 +114,7 @@ export async function enterRTCSession(
     await makePreferredLivekitFoci(rtcSession, livekitAlias),
     makeActiveFocus(),
     {
+      useNewMembershipManager,
       manageMediaKeys: encryptMedia,
       ...(useDeviceSessionMemberEvents !== undefined && {
         useLegacyMemberEvents: !useDeviceSessionMemberEvents,
