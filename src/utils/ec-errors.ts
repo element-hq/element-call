@@ -53,7 +53,8 @@ export class MatrixRTCFocusMissingError extends ElementCallError {
       ErrorCode.MISSING_MATRIX_RTC_FOCUS,
       ErrorCategory.CONFIGURATION_ISSUE,
       t("error.matrix_rtc_focus_missing", {
-        brand: domain,
+        domain,
+        brand: import.meta.env.VITE_PRODUCT_NAME || "Element Call",
         errorCode: ErrorCode.MISSING_MATRIX_RTC_FOCUS,
       }),
     );
