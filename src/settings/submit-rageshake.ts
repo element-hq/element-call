@@ -9,10 +9,10 @@ import { type ComponentProps, useCallback, useEffect, useState } from "react";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
   ClientEvent,
-  type Crypto,
   type MatrixClient,
   type MatrixEvent,
 } from "matrix-js-sdk/src/matrix";
+import { type CryptoApi } from "matrix-js-sdk/src/crypto-api";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";
@@ -34,7 +34,7 @@ const gzip = async (text: string): Promise<Blob> => {
  * Collects crypto related information.
  */
 async function collectCryptoInfo(
-  cryptoApi: Crypto.CryptoApi,
+  cryptoApi: CryptoApi,
   body: FormData,
 ): Promise<void> {
   body.append("crypto_version", cryptoApi.getVersion());
@@ -82,7 +82,7 @@ async function collectCryptoInfo(
  */
 async function collectRecoveryInfo(
   client: MatrixClient,
-  cryptoApi: Crypto.CryptoApi,
+  cryptoApi: CryptoApi,
   body: FormData,
 ): Promise<void> {
   const secretStorage = client.secretStorage;
