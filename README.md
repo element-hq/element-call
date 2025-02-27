@@ -33,7 +33,7 @@ If all went well, you can now find the build output under `dist` as a series of
 static files. These can be hosted using any web server that can be configured
 with custom routes (see below).
 
-You also need to add a configuration file which goes in `public/config.json` - 
+You also need to add a configuration file which goes in `public/config.json` -
 you can use the sample as a starting point:
 
 ```sh
