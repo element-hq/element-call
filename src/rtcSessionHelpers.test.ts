@@ -156,7 +156,7 @@ test("It fails with configuration error if no live kit url config is set in fall
   }) as unknown as MatrixRTCSession;
 
   await expect(enterRTCSession(mockedSession, false)).rejects.toThrowError(
-    expect.objectContaining({ code: ErrorCode.MISSING_LIVE_KIT_SERVICE_URL }),
+    expect.objectContaining({ code: ErrorCode.MISSING_MATRIX_RTC_FOCUS }),
   );
 });
 

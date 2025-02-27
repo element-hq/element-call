@@ -74,6 +74,7 @@
   },
   "disconnected_banner": "Connectivity to the server has been lost.",
   "error": {
+    "call_is_not_supported": "Call is not supported",
     "call_not_found": "Call not found",
     "call_not_found_description": "<0>That link doesn't appear to belong to any existing call. Check that you have the right link, or <1>create a new one</1>.</0>",
     "connection_lost": "Connection lost",
@@ -82,6 +83,7 @@
     "e2ee_unsupported_description": "Your web browser does not support encrypted calls. Supported browsers include Chrome, Safari, and Firefox 117+.",
     "generic": "Something went wrong",
     "generic_description": "Submitting debug logs will help us track down the problem.",
+    "matrix_rtc_focus_missing": "The server is not configured to work with \"{{brand}}\". Please contact your server admin (Error Code: {{ errorCode }}).",
     "insufficient_capacity": "Insufficient capacity",
     "insufficient_capacity_description": "The server has reached its maximum capacity and you cannot join the call at this time. Try again later, or contact your server admin if the problem persists.",
     "open_elsewhere": "Opened in another tab",

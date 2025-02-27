@@ -5,15 +5,17 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type ReactNode } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import {
+  ErrorIcon,
   HostIcon,
+  OfflineIcon,
   PopOutIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
+import type { ComponentType, FC, ReactNode, SVGAttributes } from "react";
 import { ErrorView } from "./ErrorView";
-import { type ElementCallError, type ErrorCode } from "./utils/ec-errors.ts";
+import { type ElementCallError, ErrorCategory } from "./utils/ec-errors.ts";
 
 /**
  * An error consisting of a terse message to be logged to the console and a
@@ -68,22 +70,41 @@ export class InsufficientCapacityError extends RichError {
 }
 
 type ECErrorProps = {
-  errorCode: ErrorCode;
+  error: ElementCallError;
 };
 
-const GenericECError: FC<{ errorCode: ErrorCode }> = ({
-  errorCode,
+const GenericECError: FC<{ error: ElementCallError }> = ({
+  error,
 }: ECErrorProps) => {
   const { t } = useTranslation();
 
+  let title: string;
+  let icon: ComponentType<SVGAttributes<SVGElement>>;
+  switch (error.category) {
+    case ErrorCategory.CONFIGURATION_ISSUE:
+      title = t("error.call_is_not_supported");
+      icon = HostIcon;
+      break;
+    case ErrorCategory.NETWORK_CONNECTIVITY:
+      title = t("error.connection_lost");
+      icon = OfflineIcon;
+      break;
+    default:
+      title = t("error.generic");
+      icon = ErrorIcon;
+  }
   return (
-    <ErrorView Icon={HostIcon} title={t("error.generic")}>
+    <ErrorView Icon={icon} title={title}>
       <p>
-        <Trans
-          i18nKey="error.unexpected_ec_error"
-          components={[<b />, <code />]}
-          values={{ errorCode }}
-        />
+        {error.localisedMessage ? (
+          error.localisedMessage
+        ) : (
+          <Trans
+            i18nKey="error.unexpected_ec_error"
+            components={[<b />, <code />]}
+            values={{ errorCode: error.code }}
+          />
+        )}
       </p>
     </ErrorView>
   );
@@ -92,7 +113,7 @@ const GenericECError: FC<{ errorCode: ErrorCode }> = ({
 export class ElementCallRichError extends RichError {
   public ecError: ElementCallError;
   public constructor(ecError: ElementCallError) {
-    super(ecError.message, <GenericECError errorCode={ecError.code} />);
+    super(ecError.message, <GenericECError error={ecError} />);
     this.ecError = ecError;
   }
 }

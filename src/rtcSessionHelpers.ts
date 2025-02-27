@@ -18,7 +18,7 @@ import { AutoDiscovery } from "matrix-js-sdk/src/autodiscovery";
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
-import { ElementCallError, ErrorCode } from "./utils/ec-errors.ts";
+import { MatrixRTCFocusMissingError } from "./utils/ec-errors.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -81,11 +81,7 @@ async function makePreferredLivekitFoci(
   }
 
   if (preferredFoci.length === 0)
-    throw new ElementCallError(
-      `No livekit_service_url is configured so we could not create a focus.
-    Currently we skip computing a focus based on other users in the room.`,
-      ErrorCode.MISSING_LIVE_KIT_SERVICE_URL,
-    );
+    throw new MatrixRTCFocusMissingError(domain ?? "");
   return Promise.resolve(preferredFoci);
 
   // TODO: we want to do something like this:
