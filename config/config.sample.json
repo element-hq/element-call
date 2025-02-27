@@ -1,15 +1,15 @@
 {
-  "default_server_config":{
-    "m.homeserver":{
-      "base_url":"https://mydomain.com",
-      "server_name":"mydomain.com"
+  "default_server_config": {
+    "m.homeserver": {
+      "base_url": "https://mydomain.com",
+      "server_name": "mydomain.com"
     }
   },
   "livekit": {
-    "livekit_service_url":"https://livekit-jwt.mydomain.com"
+    "livekit_service_url": "https://livekit-jwt.mydomain.com"
   },
-  "features":{
-    "feature_use_device_session_member_events":true
+  "features": {
+    "feature_use_device_session_member_events": true
   },
   "eula": "https://static.element.io/legal/online-EULA.pdf"
 }
