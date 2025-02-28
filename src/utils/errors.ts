@@ -13,13 +13,14 @@ export enum ErrorCode {
    */
   MISSING_MATRIX_RTC_FOCUS = "MISSING_MATRIX_RTC_FOCUS",
   CONNECTION_LOST_ERROR = "CONNECTION_LOST_ERROR",
-  // UNKNOWN_ERROR = "UNKNOWN_ERROR",
+  UNKNOWN_ERROR = "UNKNOWN_ERROR",
 }
 
 export enum ErrorCategory {
   /** Calling is not supported, server misconfigured (JWT service missing, no MSC support ...)*/
   CONFIGURATION_ISSUE = "CONFIGURATION_ISSUE",
   NETWORK_CONNECTIVITY = "NETWORK_CONNECTIVITY",
+  UNKNOWN = "UNKNOWN",
   // SYSTEM_FAILURE / FEDERATION_FAILURE ..
 }
 
@@ -37,7 +38,7 @@ export class ElementCallError extends Error {
     category: ErrorCategory,
     localisedMessage?: string,
   ) {
-    super();
+    super(name);
     this.localisedMessage = localisedMessage;
     this.category = category;
     this.code = code;

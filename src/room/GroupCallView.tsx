@@ -61,7 +61,12 @@ import { callEventAudioSounds } from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
 import { ErrorView } from "../ErrorView";
-import { ConnectionLostError, ElementCallError } from "../utils/errors.ts";
+import {
+  ConnectionLostError,
+  ElementCallError,
+  ErrorCategory,
+  ErrorCode,
+} from "../utils/errors.ts";
 import { ElementCallRichError } from "../RichError.tsx";
 
 declare global {
@@ -179,6 +184,12 @@ export const GroupCallView: FC<Props> = ({
         setEnterRTCError(e);
       } else {
         logger.error(`Unknown Error while entering RTC session`, e);
+        const error = new ElementCallError(
+          e.message,
+          ErrorCode.UNKNOWN_ERROR,
+          ErrorCategory.UNKNOWN,
+        );
+        setEnterRTCError(error);
       }
     }
   };
