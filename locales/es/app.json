@@ -22,20 +22,14 @@
     "survey_prompt": "¿Cómo ha ido?"
   },
   "common": {
-    "camera": "Cámara",
     "display_name": "Nombre a mostrar",
     "home": "Inicio",
     "loading": "Cargando…",
-    "microphone": "Micrófono",
     "password": "Contraseña",
     "profile": "Perfil",
     "settings": "Ajustes",
     "username": "Nombre de usuario"
   },
-  "error": {
-    "generic_description": "Subir los registros de depuración nos ayudará a encontrar el problema."
-  },
-  "full_screen_view_h1": "<0>Ups, algo ha salido mal.</0>",
   "header_label": "Inicio de Element Call",
   "join_existing_call_modal": {
     "join_button": "Si, unirse a la llamada",
@@ -76,8 +70,7 @@
     "feedback_tab_send_logs_label": "Incluir registros de depuración",
     "feedback_tab_thank_you": "¡Gracias, hemos recibido tus comentarios!",
     "feedback_tab_title": "Danos tu opinión",
-    "opt_in_description": "<0></0><1></1>Puedes retirar tu consentimiento desmarcando esta casilla. Si estás en una llamada, este ajuste se aplicará al final de esta.",
-    "speaker_device_selection_label": "Altavoz"
+    "opt_in_description": "<0></0><1></1>Puedes retirar tu consentimiento desmarcando esta casilla. Si estás en una llamada, este ajuste se aplicará al final de esta."
   },
   "star_rating_input_label_one": "{{count}} estrella",
   "star_rating_input_label_other": "{{count}} estrellas",

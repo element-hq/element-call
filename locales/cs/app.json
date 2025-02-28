@@ -17,20 +17,14 @@
     "not_now_button": "Teď ne, vrátit se na domovskou obrazovku"
   },
   "common": {
-    "camera": "Kamera",
     "display_name": "Zobrazované jméno",
     "home": "Domov",
     "loading": "Načítání…",
-    "microphone": "Mikrofon",
     "password": "Heslo",
     "profile": "Profil",
     "settings": "Nastavení",
     "username": "Uživatelské jméno"
   },
-  "error": {
-    "generic_description": "Odeslání ladících záznamů nám pomůže diagnostikovat problém."
-  },
-  "full_screen_view_h1": "<0>Oops, něco se pokazilo.</0>",
   "header_label": "Domov Element Call",
   "join_existing_call_modal": {
     "join_button": "Ano, připojit se",
@@ -64,8 +58,7 @@
   "settings": {
     "developer_tab_title": "Vývojář",
     "feedback_tab_h4": "Dát feedback",
-    "feedback_tab_send_logs_label": "Zahrnout ladící záznamy",
-    "speaker_device_selection_label": "Reproduktor"
+    "feedback_tab_send_logs_label": "Zahrnout ladící záznamy"
   },
   "unauthenticated_view_body": "Nejste registrovaní? <2>Vytvořit účet</2>",
   "unauthenticated_view_login_button": "Přihlásit se ke svému účtu",

@@ -21,7 +21,6 @@
     "text": "Ste pripravení sa pridať?",
     "title": "Vybrať aplikáciu"
   },
-  "browser_media_e2ee_unsupported": "Váš webový prehliadač nepodporuje end-to-end šifrovanie médií. Podporované prehliadače sú Chrome, Safari, Firefox >=117",
   "call_ended_view": {
     "create_account_button": "Vytvoriť účet",
     "create_account_prompt": "<0>Prečo neskončiť nastavením hesla, aby ste si zachovali svoj účet? </0><1>Budete si môcť ponechať svoje meno a nastaviť obrázok, ktorý sa bude používať pri budúcich hovoroch</1>",
@@ -35,12 +34,10 @@
   "call_name": "Názov hovoru",
   "common": {
     "avatar": "Obrázok",
-    "camera": "Kamera",
     "display_name": "Zobrazované meno",
     "encrypted": "Šifrované",
     "home": "Domov",
     "loading": "Načítanie…",
-    "microphone": "Mikrofón",
     "password": "Heslo",
     "profile": "Profil",
     "settings": "Nastavenia",
@@ -48,11 +45,6 @@
     "username": "Meno používateľa"
   },
   "disconnected_banner": "Spojenie so serverom sa stratilo.",
-  "error": {
-    "connection_lost_description": "Boli ste odpojení z hovoru",
-    "generic_description": "Odoslanie záznamov ladenia nám pomôže nájsť problém."
-  },
-  "full_screen_view_h1": "<0>Hups, niečo sa pokazilo.</0>",
   "hangup_button_label": "Ukončiť hovor",
   "header_label": "Domov Element Call",
   "header_participants_label": "Účastníci",
@@ -106,8 +98,7 @@
     "feedback_tab_send_logs_label": "Zahrnúť záznamy o ladení",
     "feedback_tab_thank_you": "Ďakujeme, dostali sme vašu spätnú väzbu!",
     "feedback_tab_title": "Spätná väzba",
-    "opt_in_description": "<0></0><1></1>Súhlas môžete odvolať zrušením označenia tohto políčka. Ak práve prebieha hovor, toto nastavenie nadobudne platnosť po skončení hovoru.",
-    "speaker_device_selection_label": "Reproduktor"
+    "opt_in_description": "<0></0><1></1>Súhlas môžete odvolať zrušením označenia tohto políčka. Ak práve prebieha hovor, toto nastavenie nadobudne platnosť po skončení hovoru."
   },
   "star_rating_input_label_one": "{{count}} hviezdička",
   "star_rating_input_label_other": "{{count}} hviezdičiek",
