@@ -22,7 +22,7 @@ development version continuously deployed to
 Until prebuilt tarballs are available, you'll need to build Element Call from
 source. First, clone and install the package:
 
-```
+```sh
 git clone https://github.com/element-hq/element-call.git
 cd element-call
 yarn
@@ -33,21 +33,22 @@ If all went well, you can now find the build output under `dist` as a series of
 static files. These can be hosted using any web server that can be configured
 with custom routes (see below).
 
-You may also wish to add a configuration file (Element Call uses the domain it's
-hosted on as a Homeserver URL by default, but you can change this in the config
-file). This goes in `public/config.json` - you can use the sample as a starting
-point:
+You also need to add a configuration file which goes in `public/config.json` -
+you can use the sample as a starting point:
 
-```
+```sh
 cp config/config.sample.json public/config.json
 # edit public/config.json
 ```
+
+The sample needs editing to contain the homeserver and LiveKit backend that you
+are using.
 
 Because Element Call uses client-side routing, your server must be able to route
 any requests to non-existing paths back to `/index.html`. For example, in Nginx
 you can achieve this with the `try_files` directive:
 
-```
+```jsonc
 server {
     ...
     location / {
@@ -56,12 +57,6 @@ server {
     }
 }
 ```
-
-By default, the app expects you to have a Matrix homeserver (such as
-[Synapse](https://element-hq.github.io/synapse/latest/setup/installation.html))
-installed locally and running on port 8008. If you wish to use a homeserver on a
-different URL or one that is hosted on a different server, you can add a config
-file as above, and include the homeserver URL that you'd like to use.
 
 Element Call requires a homeserver with registration enabled without any 3pid or
 token requirements, if you want it to be used by unregistered users.
@@ -88,13 +83,13 @@ If you're using [Synapse](https://github.com/element-hq/synapse/), you'll need
 to additionally add the following to `homeserver.yaml` or Element Call won't
 work:
 
-```
+```yaml
 experimental_features:
-    # MSC3266: Room summary API. Used for knocking over federation
-    msc3266_enabled: true
-    # MSC4222 needed for syncv2 state_after. This allow clients to
-    # correctly track the state of the room.
-    msc4222_enabled: true
+  # MSC3266: Room summary API. Used for knocking over federation
+  msc3266_enabled: true
+  # MSC4222 needed for syncv2 state_after. This allow clients to
+  # correctly track the state of the room.
+  msc4222_enabled: true
 
 # The maximum allowed duration by which sent events can be delayed, as
 # per MSC4140.
@@ -152,30 +147,17 @@ discuss and coordinate translation efforts.
 
 ### Frontend
 
-Element Call is built against
-[matrix-js-sdk](https://github.com/matrix-org/matrix-js-sdk/pull/2553). To get
-started, clone, install, and link the package:
+To get started clone and set up this project:
 
-```
-git clone https://github.com/matrix-org/matrix-js-sdk.git
-cd matrix-js-sdk
-yarn
-yarn link
-```
-
-Next, we can set up this project:
-
-```
+```sh
 git clone https://github.com/element-hq/element-call.git
 cd element-call
 yarn
-yarn link matrix-js-sdk
 ```
 
-To use it, create a local config by, e.g., `cp ./config/config.devenv.json
-./public/config.json` and adapt it if necessary. The `config.devenv.json` config
-should work with the backend development environment as outlined in the next
-section out of box.
+To use it, create a local config by, e.g., `cp ./config/config.devenv.json ./public/config.json`
+and adapt it if necessary. The `config.devenv.json` config should work with the backend
+development environment as outlined in the next section out of box.
 
 (Be aware, that this `config.devenv.json` is exposing a deprecated fallback
 LiveKit config key. If the homeserver advertises SFU backend via
@@ -183,7 +165,7 @@ LiveKit config key. If the homeserver advertises SFU backend via
 
 You're now ready to launch the development server:
 
-```
+```sh
 yarn dev
 ```
 
@@ -192,19 +174,19 @@ yarn dev
 A docker compose file `dev-backend-docker-compose.yml` is provided to start the
 whole stack of components which is required for a local development environment:
 
-- Minimum Synapse Setup (servername: synapse.localhost)
+- Minimum Synapse Setup (servername: `synapse.localhost`)
 - LiveKit JWT Service (Note requires Federation API and hence a TLS reverse proxy)
-- Minimum TLS reverse proxy (servername: synapse.localhost) Note certificates
+- Minimum TLS reverse proxy (servername: `synapse.localhost`) Note certificates
   are valid for at least 10 years from now
 - Minimum LiveKit SFU Setup using dev defaults for config
-- Redis db for completness
+- Redis db for completeness
 
 These use a test 'secret' published in this repository, so this must be used
 only for local development and **_never be exposed to the public Internet._**
 
 Run backend components:
 
-```
+```sh
 yarn backend
 # or  for podman-compose
 # podman-compose -f dev-backend-docker-compose.yml up
@@ -221,6 +203,7 @@ To add a new translation key you can do these steps:
 1. Add the new key entry to the code where the new key is used: `t("some_new_key")`
 1. Run `yarn i18n` to extract the new key and update the translation files. This
    will add a skeleton entry to the `locales/en/app.json` file:
+
    ```jsonc
    {
        ...
@@ -228,6 +211,7 @@ To add a new translation key you can do these steps:
        ...
    }
    ```
+
 1. Update the skeleton entry in the `locales/en/app.json` file with
    the English translation:
 
