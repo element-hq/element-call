@@ -160,7 +160,7 @@ export const GroupCallView: FC<Props> = ({
   const roomName = useRoomName(room);
   const roomAvatar = useRoomAvatar(room);
   const { perParticipantE2EE, returnToLobby } = useUrlParams();
-  const e2eeSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
+  const e2eeSystem = useRoomEncryptionSystem(room.roomId);
   const [newMembershipManager] = useSetting(useNewMembershipManagerSetting);
 
   usePageTitle(roomName);
@@ -170,22 +170,13 @@ export const GroupCallView: FC<Props> = ({
       userId: client.getUserId()!,
       displayName: displayName!,
       avatarUrl: avatarUrl!,
-      roomId: rtcSession.room.roomId,
+      roomId: room.roomId,
       roomName,
       roomAlias: room.getCanonicalAlias(),
       roomAvatar,
       e2eeSystem,
     };
-  }, [
-    client,
-    displayName,
-    avatarUrl,
-    rtcSession.room.roomId,
-    roomName,
-    room,
-    roomAvatar,
-    e2eeSystem,
-  ]);
+  }, [client, displayName, avatarUrl, roomName, room, roomAvatar, e2eeSystem]);
 
   // Count each member only once, regardless of how many devices they use
   const participantCount = useMemo(
@@ -319,8 +310,7 @@ export const GroupCallView: FC<Props> = ({
   ]);
 
   const [left, setLeft] = useState(false);
-  const [error, setError] =
-    useState<ElementCallError | null>(null);
+  const [error, setError] = useState<ElementCallError | null>(null);
   const navigate = useNavigate();
 
   const onLeave = useCallback(
@@ -334,7 +324,7 @@ export const GroupCallView: FC<Props> = ({
       // Otherwise the iFrame gets killed before the callEnded event got tracked.
       const posthogRequest = new Promise((resolve) => {
         PosthogAnalytics.instance.eventCallEnded.track(
-          rtcSession.room.roomId,
+          room.roomId,
           rtcSession.memberships.length,
           sendInstantly,
           rtcSession,
@@ -363,11 +353,12 @@ export const GroupCallView: FC<Props> = ({
         });
     },
     [
+      leaveSoundContext,
       widget,
       rtcSession,
+      room.roomId,
       isPasswordlessUser,
       confineToRoom,
-      leaveSoundContext,
       navigate,
     ],
   );

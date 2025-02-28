@@ -143,7 +143,7 @@ export const DeveloperSettingsTab: FC<Props> = ({ client, livekitRoom }) => {
         <InputField
           id="useNewMembershipManager"
           type="checkbox"
-          label={t("developer_mode.use_NewMembershipmanager")}
+          label={t("developer_mode.use_new_membership_manager")}
           checked={!!useNewMembershipManager}
           onChange={useCallback(
             (event: ChangeEvent<HTMLInputElement>): void => {

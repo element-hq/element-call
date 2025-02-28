@@ -77,11 +77,6 @@ export class ConnectionLostError extends ElementCallError {
 
 export class RTCSessionError extends ElementCallError {
   public constructor(code: ErrorCode, message: string) {
-    super(
-      "RTCSession Error",
-      code,
-      ErrorCategory.RTC_SESSION_FAILIOUR,
-      message,
-    );
+    super("RTCSession Error", code, ErrorCategory.RTC_SESSION_FAILURE, message);
   }
 }
