@@ -8,16 +8,17 @@ Please see LICENSE in the repository root for full details.
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { logger } from "matrix-js-sdk/src/logger";
 import {
-  type LivekitFocus,
-  type LivekitFocusActive,
   isLivekitFocus,
   isLivekitFocusConfig,
+  type LivekitFocus,
+  type LivekitFocusActive,
 } from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
 import { AutoDiscovery } from "matrix-js-sdk/src/autodiscovery";
 
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
-import { ElementWidgetActions, type WidgetHelpers, widget } from "./widget";
+import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
+import { MatrixRTCFocusMissingError } from "./utils/errors.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -80,10 +81,7 @@ async function makePreferredLivekitFoci(
   }
 
   if (preferredFoci.length === 0)
-    throw new Error(
-      `No livekit_service_url is configured so we could not create a focus.
-    Currently we skip computing a focus based on other users in the room.`,
-    );
+    throw new MatrixRTCFocusMissingError(domain ?? "");
   return Promise.resolve(preferredFoci);
 
   // TODO: we want to do something like this:

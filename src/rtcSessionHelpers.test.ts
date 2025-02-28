@@ -13,6 +13,7 @@ import EventEmitter from "events";
 import { enterRTCSession, leaveRTCSession } from "../src/rtcSessionHelpers";
 import { mockConfig } from "./utils/test";
 import { ElementWidgetActions, widget } from "./widget";
+import { ErrorCode } from "./utils/errors.ts";
 
 const actualWidget = await vi.hoisted(async () => vi.importActual("./widget"));
 vi.mock("./widget", () => ({
@@ -136,4 +137,51 @@ test("leaveRTCSession doesn't close the widget on a fatal error", async () => {
     ElementWidgetActions.Close,
     expect.anything(),
   );
+});
+
+test("It fails with configuration error if no live kit url config is set in fallback", async () => {
+  mockConfig({});
+  vi.spyOn(AutoDiscovery, "getRawClientConfig").mockResolvedValue({});
+
+  const mockedSession = vi.mocked({
+    room: {
+      roomId: "roomId",
+      client: {
+        getDomain: vi.fn().mockReturnValue("example.org"),
+      },
+    },
+    memberships: [],
+    getFocusInUse: vi.fn(),
+    joinRoomSession: vi.fn(),
+  }) as unknown as MatrixRTCSession;
+
+  await expect(enterRTCSession(mockedSession, false)).rejects.toThrowError(
+    expect.objectContaining({ code: ErrorCode.MISSING_MATRIX_RTC_FOCUS }),
+  );
+});
+
+test("It should not fail with configuration error if homeserver config has livekit url but not fallback", async () => {
+  mockConfig({});
+  vi.spyOn(AutoDiscovery, "getRawClientConfig").mockResolvedValue({
+    "org.matrix.msc4143.rtc_foci": [
+      {
+        type: "livekit",
+        livekit_service_url: "http://my-well-known-service-url.com",
+      },
+    ],
+  });
+
+  const mockedSession = vi.mocked({
+    room: {
+      roomId: "roomId",
+      client: {
+        getDomain: vi.fn().mockReturnValue("example.org"),
+      },
+    },
+    memberships: [],
+    getFocusInUse: vi.fn(),
+    joinRoomSession: vi.fn(),
+  }) as unknown as MatrixRTCSession;
+
+  await enterRTCSession(mockedSession, false);
 });

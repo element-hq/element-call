@@ -5,14 +5,16 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type FC, type ReactNode } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import {
+  ErrorIcon,
   HostIcon,
   PopOutIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
+import type { ComponentType, FC, ReactNode, SVGAttributes } from "react";
 import { ErrorView } from "./ErrorView";
+import { type ElementCallError, ErrorCategory } from "./utils/errors.ts";
 
 /**
  * An error consisting of a terse message to be logged to the console and a
@@ -63,5 +65,48 @@ const InsufficientCapacity: FC = () => {
 export class InsufficientCapacityError extends RichError {
   public constructor() {
     super("Insufficient server capacity", <InsufficientCapacity />);
+  }
+}
+
+type ECErrorProps = {
+  error: ElementCallError;
+};
+
+const GenericECError: FC<{ error: ElementCallError }> = ({
+  error,
+}: ECErrorProps) => {
+  const { t } = useTranslation();
+
+  let title: string;
+  let icon: ComponentType<SVGAttributes<SVGElement>>;
+  switch (error.category) {
+    case ErrorCategory.CONFIGURATION_ISSUE:
+      title = t("error.call_is_not_supported");
+      icon = HostIcon;
+      break;
+    default:
+      title = t("error.generic");
+      icon = ErrorIcon;
+  }
+  return (
+    <ErrorView Icon={icon} title={title}>
+      <p>
+        {error.localisedMessage ?? (
+          <Trans
+            i18nKey="error.unexpected_ec_error"
+            components={[<b />, <code />]}
+            values={{ errorCode: error.code }}
+          />
+        )}
+      </p>
+    </ErrorView>
+  );
+};
+
+export class ElementCallRichError extends RichError {
+  public ecError: ElementCallError;
+  public constructor(ecError: ElementCallError) {
+    super(ecError.message, <GenericECError error={ecError} />);
+    this.ecError = ecError;
   }
 }
