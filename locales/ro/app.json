@@ -28,9 +28,6 @@
     "text": "Sunteți gata să vă alăturați?",
     "title": "Selectați aplicația"
   },
-  "application_opened_another_tab": "Această aplicație a fost deschisă într-o altă filă.",
-  "browser_media_e2ee_unsupported": "Browserul dvs. web nu acceptă criptarea media end-to-end. Browserele acceptate sunt Chrome, Safari, Firefox > = 117",
-  "browser_media_e2ee_unsupported_heading": "Browser incompatibil",
   "call_ended_view": {
     "create_account_button": "Creează cont",
     "create_account_prompt": "<0>De ce să nu terminați prin configurarea unei parole pentru a vă păstra contul? </0><1>Veți putea să vă păstrați numele și să setați un avatar pentru a fi utilizat la apelurile viitoare </1>",
@@ -47,13 +44,10 @@
     "audio": "Audio",
     "avatar": "avatar",
     "back": "Înapoi",
-    "camera": "Aparat foto",
     "display_name": "Nume afișat",
     "encrypted": "Criptat",
-    "error": "Eroare",
     "home": "Acasa",
     "loading": "Se încarcă...",
-    "microphone": "Microfon",
     "next": "Urmator\n",
     "options": "Opțiuni",
     "password": "Parolă",
@@ -62,7 +56,6 @@
     "reaction": "Reacție",
     "reactions": "Reacții",
     "settings": "Settings",
-    "something_went_wrong": "Ceva nu a mers bine",
     "unencrypted": "Nu este criptat",
     "username": "Nume utilizator",
     "video": "Videoclip"
@@ -75,18 +68,11 @@
     "matrix_id": "ID-ul matricei: {{id}}"
   },
   "disconnected_banner": "Conectivitatea la server a fost pierdută.",
-  "error": {
-    "connection_lost_description": "Ai fost deconectat de la apel",
-    "generic_description": "Trimiterea jurnalelor de depanare ne va ajuta să urmărim problema."
-  },
-  "full_screen_view_h1": "<0>Hopa, ceva nu a mers bine. </0>",
   "group_call_loader": {
     "banned_body": "Ai fost interzis să ieși din cameră.",
     "banned_heading": "Interzis",
     "call_ended_body": "Ați fost eliminat din apel.",
     "call_ended_heading": "Apel încheiat",
-    "failed_heading": "Nu s-a putut alătura",
-    "failed_text": "Apelul nu a fost găsit sau nu este accesibil.",
     "knock_reject_body": "Cererea dvs. de a vă alătura a fost respinsă.",
     "knock_reject_heading": "Acces refuzat",
     "reason": "Motivul"
@@ -163,8 +149,7 @@
       "reactions_play_sound_label": "Redați sunete de reacție",
       "reactions_show_description": "Afișați o animație atunci când cineva trimite o reacție.",
       "reactions_show_label": "Afișați reacțiile"
-    },
-    "speaker_device_selection_label": "vorbitor"
+    }
   },
   "start_new_call": "Începe un nou apel",
   "start_video_button_label": "Începeți videoclipul",

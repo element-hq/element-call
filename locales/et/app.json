@@ -21,7 +21,6 @@
     "text": "Oled valmis liituma?",
     "title": "Vali rakendus"
   },
-  "browser_media_e2ee_unsupported": "Sinu veebibrauser ei toeta meedia läbivat krüptimist. Toetatud brauserid on Chrome, Chromium, Safari ja Firefox >=117",
   "call_ended_view": {
     "create_account_button": "Loo konto",
     "create_account_prompt": "<0>Kas soovid salasõna seadistada ja sellega oma kasutajakonto alles jätta?</0><1>Nii saad säilitada oma nime ja määrata profiilipildi, mida saad kasutada tulevastes kõnedes</1>",
@@ -36,12 +35,10 @@
   "common": {
     "audio": "Heli",
     "avatar": "Tunnuspilt",
-    "camera": "Kaamera",
     "display_name": "Kuvatav nimi",
     "encrypted": "Krüptitud",
     "home": "Avavaatesse",
     "loading": "Laadimine …",
-    "microphone": "Mikrofon",
     "password": "Salasõna",
     "profile": "Profiil",
     "settings": "Seadistused",
@@ -49,11 +46,6 @@
     "username": "Kasutajanimi"
   },
   "disconnected_banner": "Võrguühendus serveriga on katkenud.",
-  "error": {
-    "connection_lost_description": "Sinu ühendus kõnega katkes",
-    "generic_description": "Kui saadad meile vealogid, siis on lihtsam vea põhjust otsida."
-  },
-  "full_screen_view_h1": "<0>Ohoo, midagi on nüüd katki.</0>",
   "hangup_button_label": "Lõpeta kõne",
   "header_participants_label": "Osalejad",
   "invite_modal": {
@@ -106,8 +98,7 @@
     "feedback_tab_send_logs_label": "Lisa veatuvastuslogid",
     "feedback_tab_thank_you": "Tänud, me oleme sinu tagasiside kätte saanud!",
     "feedback_tab_title": "Tagasiside",
-    "opt_in_description": "<0></0><1></1>Sa võid selle valiku eelmaldamisega alati oma nõusoleku tagasi võtta. Kui sul parasjagu on kõne pooleli, siis seadistuste muudatus jõustub pärast kõne lõppu.",
-    "speaker_device_selection_label": "Kõlar"
+    "opt_in_description": "<0></0><1></1>Sa võid selle valiku eelmaldamisega alati oma nõusoleku tagasi võtta. Kui sul parasjagu on kõne pooleli, siis seadistuste muudatus jõustub pärast kõne lõppu."
   },
   "star_rating_input_label_one": "{{count}} tärni",
   "star_rating_input_label_other": "{{count}} tärni",

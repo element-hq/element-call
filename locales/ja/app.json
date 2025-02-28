@@ -17,19 +17,14 @@
   "common": {
     "audio": "音声",
     "avatar": "アバター",
-    "camera": "カメラ",
     "display_name": "表示名",
     "home": "ホーム",
     "loading": "読み込んでいます…",
-    "microphone": "マイク",
     "password": "パスワード",
     "profile": "プロフィール",
     "settings": "設定",
     "username": "ユーザー名",
     "video": "ビデオ"
-  },
-  "error": {
-    "generic_description": "何かがうまく行きませんでした。"
   },
   "header_label": "Element Call ホーム",
   "join_existing_call_modal": {
@@ -61,8 +56,7 @@
   "settings": {
     "developer_tab_title": "開発者",
     "feedback_tab_h4": "フィードバックを送信",
-    "feedback_tab_send_logs_label": "デバッグログを含める",
-    "speaker_device_selection_label": "スピーカー"
+    "feedback_tab_send_logs_label": "デバッグログを含める"
   },
   "unauthenticated_view_body": "アカウントがありませんか？ <2>アカウントを作成</2>",
   "unauthenticated_view_login_button": "アカウントにログイン",

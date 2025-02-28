@@ -21,7 +21,6 @@
     "text": "Prêt à rejoindre ?",
     "title": "Choisissez l’application"
   },
-  "browser_media_e2ee_unsupported": "Votre navigateur web ne prend pas en charge le chiffrement de bout-en-bout des médias. Les navigateurs pris en charge sont Chrome, Safari, Firefox >= 117",
   "call_ended_view": {
     "create_account_button": "Créer un compte",
     "create_account_prompt": "<0>Pourquoi ne pas créer un mot de passe pour conserver votre compte ?</0><1>Vous pourrez garder votre nom et définir un avatar pour vos futurs appels</1>",
@@ -34,7 +33,6 @@
   },
   "call_name": "Nom de l’appel",
   "common": {
-    "camera": "Caméra",
     "display_name": "Nom d’affichage",
     "encrypted": "Chiffré",
     "home": "Accueil",
@@ -47,11 +45,6 @@
     "video": "Vidéo"
   },
   "disconnected_banner": "La connexion avec le serveur a été perdue.",
-  "error": {
-    "connection_lost_description": "Vous avez été déconnecté de l’appel",
-    "generic_description": "Soumettre les journaux de débogage nous aidera à déterminer le problème."
-  },
-  "full_screen_view_h1": "<0>Oups, quelque chose s’est mal passé.</0>",
   "hangup_button_label": "Terminer l’appel",
   "header_label": "Accueil Element Call",
   "invite_modal": {
@@ -104,8 +97,7 @@
     "feedback_tab_send_logs_label": "Inclure les journaux de débogage",
     "feedback_tab_thank_you": "Merci, nous avons reçu vos commentaires !",
     "feedback_tab_title": "Commentaires",
-    "opt_in_description": "<0></0><1></1>Vous pouvez retirer votre consentement en décochant cette case. Si vous êtes actuellement en communication, ce paramètre prendra effet à la fin de l’appel.",
-    "speaker_device_selection_label": "Intervenant"
+    "opt_in_description": "<0></0><1></1>Vous pouvez retirer votre consentement en décochant cette case. Si vous êtes actuellement en communication, ce paramètre prendra effet à la fin de l’appel."
   },
   "star_rating_input_label_one": "{{count}} favori",
   "star_rating_input_label_other": "{{count}} favoris",

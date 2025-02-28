@@ -28,9 +28,6 @@
     "text": "Bereit, beizutreten?",
     "title": "App auswählen"
   },
-  "application_opened_another_tab": "Diese Anwendung wurde in einem anderen Tab geöffnet.",
-  "browser_media_e2ee_unsupported": "Dein Webbrowser unterstützt keine Medien-Ende-zu-Ende-Verschlüsselung. Unterstützte Browser sind Chrome, Safari, Firefox >=117",
-  "browser_media_e2ee_unsupported_heading": "Inkompatibler Browser",
   "call_ended_view": {
     "create_account_button": "Konto erstellen",
     "create_account_prompt": "<0>Warum vergibst du nicht abschließend ein Passwort, um dein Konto zu erhalten?</0><1>Du kannst deinen Namen behalten und ein Profilbild für zukünftige Anrufe festlegen.</1>",
@@ -47,13 +44,10 @@
     "audio": "Audio",
     "avatar": "Profilbild",
     "back": "Zurück",
-    "camera": "Kamera",
     "display_name": "Anzeigename",
     "encrypted": "Verschlüsselt",
-    "error": "Fehler",
     "home": "Startseite",
     "loading": "Lade …",
-    "microphone": "Mikrofon",
     "next": "Weiter",
     "options": "Optionen",
     "password": "Passwort",
@@ -62,34 +56,48 @@
     "reaction": "Reaktion",
     "reactions": "Reaktionen",
     "settings": "Einstellungen",
-    "something_went_wrong": "Etwas ist schief gelaufen",
     "unencrypted": "Nicht verschlüsselt",
     "username": "Benutzername",
     "video": "Video"
   },
   "developer_mode": {
     "crypto_version": "Krypto-Version: {{version}}",
+    "debug_tile_layout_label": "Kachel-Layout debuggen",
     "device_id": "Geräte-ID: {{id}}",
     "duplicate_tiles_label": "Anzahl zusätzlicher Kachelkopien pro Teilnehmer",
     "hostname": "Hostname: {{hostname}}",
-    "matrix_id": "Matrix-ID: {{id}}"
+    "livekit_server_info": "LiveKit-Server Informationen",
+    "livekit_sfu": "LiveKit SFU: {{url}}",
+    "matrix_id": "Matrix-ID: {{id}}",
+    "show_connection_stats": "Verbindungsstatistiken anzeigen",
+    "show_non_member_tiles": "Kacheln für Nicht-Mitgliedermedien anzeigen"
   },
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
   "error": {
-    "connection_lost_description": "Deine Verbindung wurde getrennt",
-    "generic_description": "Übermittelte Problemberichte helfen uns, Fehler zu beheben."
+    "call_is_not_supported": "Anrufe werden nicht unterstützt",
+    "call_not_found": "Anruf nicht gefunden",
+    "call_not_found_description": "<0>Dieser Link scheint zu keinem bestehenden Anruf zu gehören. Vergewissern Sie sich, dass Sie den richtigen Link haben, oder <1> erstellen Sie einen neuen</1>. </0>",
+    "connection_lost": "Verbindung verloren",
+    "connection_lost_description": "Ihre Verbindung zum Anruf wurde unterbrochen.",
+    "e2ee_unsupported": "Inkompatibler Browser",
+    "e2ee_unsupported_description": "Ihr Webbrowser unterstützt keine verschlüsselten Anrufe. Zu den unterstützten Browsern gehören Chrome, Safari und Firefox 117+.",
+    "generic": "Etwas ist schief gelaufen",
+    "generic_description": "Durch das Senden von Debugprotokollen können wir das Problem leichter eingrenzen.",
+    "insufficient_capacity": "Unzureichende Kapazität",
+    "insufficient_capacity_description": "Der Server hat seine maximale Kapazität erreicht, daher ist ein Beitritt zum Anruf derzeit nicht möglich. Bitte später erneut versuchen oder den Serveradministrator kontaktieren, falls das Problem weiterhin besteht.",
+    "matrix_rtc_focus_missing": "Der Server ist nicht für die Verwendung mit {{brand}} konfiguriert. Bitte den Serveradministrator kontaktieren (Domain: {{domain}}, Fehlercode: {{ errorCode }}).",
+    "open_elsewhere": "In einem anderen Tab geöffnet",
+    "open_elsewhere_description": "{{brand}}wurde in einem anderen Tab geöffnet. Wenn das nicht richtig klingt, versuchen Sie, die Seite neu zu laden.",
+    "unexpected_ec_error": "Ein unerwarteter Fehler ist aufgetreten (<0>Fehlercode: </0> <1>{{ errorCode }}</1>). Bitte den Serveradministrator kontaktieren."
   },
-  "full_screen_view_h1": "<0>Hoppla, etwas ist schiefgelaufen.</0>",
   "group_call_loader": {
     "banned_body": "Du wurdest aus dem Raum verbannt.",
     "banned_heading": "Verbannt",
     "call_ended_body": "Du wurdest aus dem Anruf entfernt.",
     "call_ended_heading": "Anruf beendet",
-    "failed_heading": "Beitreten fehlgeschlagen",
-    "failed_text": "Anruf nicht gefunden oder Beitritt nicht erlaubt",
     "knock_reject_body": "Die Teilnahmeanfrage wurde abgelehnt.",
     "knock_reject_heading": "Zugriff verweigert",
-    "reason": "Grund"
+    "reason": "Grund: {{reason}}"
   },
   "hangup_button_label": "Anruf beenden",
   "header_label": "Element Call-Startseite",
@@ -149,10 +157,20 @@
   "screenshare_button_label": "Bildschirm teilen",
   "settings": {
     "audio_tab": {
-      "effect_volume_description": "Lautstärke anpassen, mit der Reaktionen und Handmeldungen abgespielt werden",
+      "effect_volume_description": "Lautstärke anpassen, mit der Reaktionen und Handmeldungen abgespielt werden.",
       "effect_volume_label": "Lautstärke der Soundeffekte"
     },
     "developer_tab_title": "Entwickler",
+    "devices": {
+      "camera": "Kamera",
+      "camera_numbered": "Kamera {{n}}",
+      "default": "Standard",
+      "default_named": "Standard<2> ({{name}} )</2>",
+      "microphone": "Mikrofon",
+      "microphone_numbered": "Mikrofon{{n}}",
+      "speaker": "Lautsprecher",
+      "speaker_numbered": "Lautsprecher{{n}}"
+    },
     "feedback_tab_body": "Falls du auf Probleme stößt oder einfach nur eine Rückmeldung geben möchtest, sende uns bitte eine kurze Beschreibung.",
     "feedback_tab_description_label": "Deine Rückmeldung",
     "feedback_tab_h4": "Rückmeldung geben",
@@ -161,12 +179,16 @@
     "feedback_tab_title": "Rückmeldung",
     "opt_in_description": "<0></0><1></1>Du kannst deine Zustimmung durch Abwählen dieses Kästchens zurückziehen. Falls du dich aktuell in einem Anruf befindest, wird diese Einstellung nach dem Ende des Anrufs wirksam.",
     "preferences_tab": {
-      "reactions_play_sound_description": "Einen Soundeffekt abspielen, wenn jemand eine Reaktion sendet",
+      "developer_mode_label": "Entwickler-Modus",
+      "developer_mode_label_description": "Aktivieren Sie den Entwicklermodus und zeigen Sie die Registerkarte mit den Entwicklereinstellungen an.",
+      "introduction": "Hier können zusätzliche Optionen für individuelle Anforderungen eingestellt werden.",
+      "reactions_play_sound_description": "Spielen Sie einen Soundeffekt ab, wenn jemand eine Reaktion auf einen Anruf sendet.",
       "reactions_play_sound_label": "Reaktionstöne abspielen",
       "reactions_show_description": "Zeige eine Animation, wenn jemand eine Reaktion sendet.",
-      "reactions_show_label": "Reaktionen anzeigen"
-    },
-    "speaker_device_selection_label": "Lautsprecher"
+      "reactions_show_label": "Reaktionen anzeigen",
+      "show_hand_raised_timer_description": "Einen Timer zur Handmeldung anzeigen",
+      "show_hand_raised_timer_label": "Dauer der Handmeldung anzeigen"
+    }
   },
   "star_rating_input_label_one": "{{count}} Stern",
   "star_rating_input_label_other": "{{count}} Sterne",
@@ -183,6 +205,7 @@
   "version": "{{productName}} Version: {{version}}",
   "video_tile": {
     "always_show": "Immer anzeigen",
+    "camera_starting": "Video wird geladen...",
     "change_fit_contain": "An Fenster anpassen",
     "collapse": "Minimieren",
     "expand": "Erweitern",
