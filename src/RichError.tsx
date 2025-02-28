@@ -9,7 +9,6 @@ import { Trans, useTranslation } from "react-i18next";
 import {
   ErrorIcon,
   HostIcon,
-  OfflineIcon,
   PopOutIcon,
 } from "@vector-im/compound-design-tokens/assets/web/icons";
 
@@ -84,10 +83,6 @@ const GenericECError: FC<{ error: ElementCallError }> = ({
     case ErrorCategory.CONFIGURATION_ISSUE:
       title = t("error.call_is_not_supported");
       icon = HostIcon;
-      break;
-    case ErrorCategory.NETWORK_CONNECTIVITY:
-      title = t("error.connection_lost");
-      icon = OfflineIcon;
       break;
     default:
       title = t("error.generic");
