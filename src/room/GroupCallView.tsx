@@ -69,6 +69,7 @@ import {
   ElementCallError,
   ErrorCategory,
   ErrorCode,
+  RTCSessionError
 } from "../utils/errors.ts";
 import { ElementCallRichError } from "../RichError.tsx";
 import {
@@ -137,8 +138,15 @@ export const GroupCallView: FC<Props> = ({
   useTypedEventEmitter(
     rtcSession,
     MatrixRTCSessionEvent.MembershipManagerError,
-    // TODO: make this set the error state so that we can render an error page.
-    (error) => logger.error(error),
+    (error) => {
+      setEnterRTCError(
+        new RTCSessionError(
+          ErrorCode.MEMBERSHIP_MANAGER_UNRECOVERABLE,
+          error.message ?? error,
+        ),
+      );
+      onLeave("error");
+    },
   );
   useEffect(() => {
     // Sanity check the room object
