@@ -22,7 +22,7 @@ export enum ErrorCategory {
   /** Calling is not supported, server misconfigured (JWT service missing, no MSC support ...)*/
   CONFIGURATION_ISSUE = "CONFIGURATION_ISSUE",
   NETWORK_CONNECTIVITY = "NETWORK_CONNECTIVITY",
-  RTC_SESSION_FAILIOUR = "RTC_SESSION_FAILIOUR",
+  RTC_SESSION_FAILURE = "RTC_SESSION_FAILURE",
   UNKNOWN = "UNKNOWN",
   // SYSTEM_FAILURE / FEDERATION_FAILURE ..
 }
