@@ -18,7 +18,7 @@ import { AutoDiscovery } from "matrix-js-sdk/src/autodiscovery";
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
-import { MatrixRTCFocusMissingError } from "./utils/ec-errors.ts";
+import { MatrixRTCFocusMissingError } from "./utils/errors.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 

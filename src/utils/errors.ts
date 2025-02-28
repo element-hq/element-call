@@ -17,7 +17,7 @@ export enum ErrorCode {
 }
 
 export enum ErrorCategory {
-  /** Calling is not supported, server miss-configured (JWT service missing, no MSC support ...)*/
+  /** Calling is not supported, server misconfigured (JWT service missing, no MSC support ...)*/
   CONFIGURATION_ISSUE = "CONFIGURATION_ISSUE",
   NETWORK_CONNECTIVITY = "NETWORK_CONNECTIVITY",
   // SYSTEM_FAILURE / FEDERATION_FAILURE ..

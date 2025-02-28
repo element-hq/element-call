@@ -15,7 +15,7 @@ import {
 
 import type { ComponentType, FC, ReactNode, SVGAttributes } from "react";
 import { ErrorView } from "./ErrorView";
-import { type ElementCallError, ErrorCategory } from "./utils/ec-errors.ts";
+import { type ElementCallError, ErrorCategory } from "./utils/errors.ts";
 
 /**
  * An error consisting of a terse message to be logged to the console and a
@@ -96,9 +96,7 @@ const GenericECError: FC<{ error: ElementCallError }> = ({
   return (
     <ErrorView Icon={icon} title={title}>
       <p>
-        {error.localisedMessage ? (
-          error.localisedMessage
-        ) : (
+        {error.localisedMessage ?? (
           <Trans
             i18nKey="error.unexpected_ec_error"
             components={[<b />, <code />]}

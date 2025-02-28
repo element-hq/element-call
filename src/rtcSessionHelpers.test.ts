@@ -13,7 +13,7 @@ import EventEmitter from "events";
 import { enterRTCSession, leaveRTCSession } from "../src/rtcSessionHelpers";
 import { mockConfig } from "./utils/test";
 import { ElementWidgetActions, widget } from "./widget";
-import { ErrorCode } from "./utils/ec-errors.ts";
+import { ErrorCode } from "./utils/errors.ts";
 
 const actualWidget = await vi.hoisted(async () => vi.importActual("./widget"));
 vi.mock("./widget", () => ({

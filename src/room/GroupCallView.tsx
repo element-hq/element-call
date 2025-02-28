@@ -61,7 +61,7 @@ import { callEventAudioSounds } from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
 import { ErrorView } from "../ErrorView";
-import { ConnectionLostError, ElementCallError } from "../utils/ec-errors.ts";
+import { ConnectionLostError, ElementCallError } from "../utils/errors.ts";
 import { ElementCallRichError } from "../RichError.tsx";
 
 declare global {

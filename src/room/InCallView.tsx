@@ -97,7 +97,7 @@ import {
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
-import { ConnectionLostError } from "../utils/ec-errors.ts";
+import { ConnectionLostError } from "../utils/errors.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
