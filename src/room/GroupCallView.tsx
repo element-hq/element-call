@@ -69,7 +69,7 @@ import {
   ElementCallError,
   ErrorCategory,
   ErrorCode,
-  RTCSessionError
+  RTCSessionError,
 } from "../utils/errors.ts";
 import { ElementCallRichError } from "../RichError.tsx";
 import {
@@ -139,13 +139,12 @@ export const GroupCallView: FC<Props> = ({
     rtcSession,
     MatrixRTCSessionEvent.MembershipManagerError,
     (error) => {
-      setEnterRTCError(
+      setUnrecoverableError(
         new RTCSessionError(
           ErrorCode.MEMBERSHIP_MANAGER_UNRECOVERABLE,
           error.message ?? error,
         ),
       );
-      onLeave("error");
     },
   );
   useEffect(() => {
@@ -214,7 +213,7 @@ export const GroupCallView: FC<Props> = ({
     } catch (e) {
       if (e instanceof ElementCallError) {
         // e.code === ErrorCode.MISSING_LIVE_KIT_SERVICE_URL)
-        setEnterRTCError(e);
+        setUnrecoverableError(e);
       } else {
         logger.error(`Unknown Error while entering RTC session`, e);
         const error = new ElementCallError(
@@ -222,7 +221,7 @@ export const GroupCallView: FC<Props> = ({
           ErrorCode.UNKNOWN_ERROR,
           ErrorCategory.UNKNOWN,
         );
-        setEnterRTCError(error);
+        setUnrecoverableError(error);
       }
     }
   };
@@ -322,9 +321,8 @@ export const GroupCallView: FC<Props> = ({
   ]);
 
   const [left, setLeft] = useState(false);
-  const [enterRTCError, setEnterRTCError] = useState<ElementCallError | null>(
-    null,
-  );
+  const [unrecoverableError, setUnrecoverableError] =
+    useState<ElementCallError | null>(null);
   const navigate = useNavigate();
 
   const onLeave = useCallback(
@@ -495,11 +493,11 @@ export const GroupCallView: FC<Props> = ({
   );
 
   let body: ReactNode;
-  if (enterRTCError) {
+  if (unrecoverableError) {
     // If an ElementCallError was recorded, then create a component that will fail to render and throw
     // an ElementCallRichError error. This will then be handled by the ErrorBoundary component.
     const ErrorComponent = (): ReactNode => {
-      throw new ElementCallRichError(enterRTCError);
+      throw new ElementCallRichError(unrecoverableError);
     };
     body = <ErrorComponent />;
   } else if (isJoined) {
