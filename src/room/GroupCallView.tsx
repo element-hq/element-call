@@ -185,7 +185,7 @@ export const GroupCallView: FC<Props> = ({
       } else {
         logger.error(`Unknown Error while entering RTC session`, e);
         const error = new ElementCallError(
-          e.message,
+          e instanceof Error ? e.message : "Unknown error",
           ErrorCode.UNKNOWN_ERROR,
           ErrorCategory.UNKNOWN,
         );
