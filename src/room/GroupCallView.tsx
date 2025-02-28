@@ -139,7 +139,7 @@ export const GroupCallView: FC<Props> = ({
     rtcSession,
     MatrixRTCSessionEvent.MembershipManagerError,
     (error) => {
-      setUnrecoverableError(
+      setError(
         new RTCSessionError(
           ErrorCode.MEMBERSHIP_MANAGER_UNRECOVERABLE,
           error.message ?? error,
@@ -211,7 +211,7 @@ export const GroupCallView: FC<Props> = ({
     } catch (e) {
       if (e instanceof ElementCallError) {
         // e.code === ErrorCode.MISSING_LIVE_KIT_SERVICE_URL)
-        setUnrecoverableError(e);
+        setError(e);
       } else {
         logger.error(`Unknown Error while entering RTC session`, e);
         const error = new ElementCallError(
@@ -219,7 +219,7 @@ export const GroupCallView: FC<Props> = ({
           ErrorCode.UNKNOWN_ERROR,
           ErrorCategory.UNKNOWN,
         );
-        setUnrecoverableError(error);
+        setError(error);
       }
     }
   };
@@ -319,7 +319,7 @@ export const GroupCallView: FC<Props> = ({
   ]);
 
   const [left, setLeft] = useState(false);
-  const [unrecoverableError, setUnrecoverableError] =
+  const [error, setError] =
     useState<ElementCallError | null>(null);
   const navigate = useNavigate();
 
@@ -491,11 +491,11 @@ export const GroupCallView: FC<Props> = ({
   );
 
   let body: ReactNode;
-  if (unrecoverableError) {
+  if (error) {
     // If an ElementCallError was recorded, then create a component that will fail to render and throw
     // an ElementCallRichError error. This will then be handled by the ErrorBoundary component.
     const ErrorComponent = (): ReactNode => {
-      throw new ElementCallRichError(unrecoverableError);
+      throw new ElementCallRichError(error);
     };
     body = <ErrorComponent />;
   } else if (isJoined) {
