@@ -67,6 +67,6 @@ test.each<[string, ConnectionError]>([
       </MemoryRouter>,
     );
     await user.click(screen.getByRole("button", { name: "Connect" }));
-    screen.getByText("error.insufficient_capacity");
+    screen.getByText("Insufficient capacity");
   },
 );
