@@ -30,7 +30,7 @@ i18n
     // We embed the translations, so that it never needs to fetch
     resources: {
       en: {
-        app: EN,
+        translation: EN,
       },
     },
     interpolation: {

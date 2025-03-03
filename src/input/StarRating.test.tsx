@@ -20,10 +20,6 @@ test("StarRatingInput is accessible", async () => {
   );
   expect(await axe(container)).toHaveNoViolations();
   // Change the rating to 4 stars
-  await user.click(
-    (
-      await screen.findAllByRole("radio", { name: "star_rating_input_label" })
-    )[3],
-  );
+  await user.click(await screen.findByLabelText("4 stars"));
   expect(onChange).toBeCalledWith(4);
 });
