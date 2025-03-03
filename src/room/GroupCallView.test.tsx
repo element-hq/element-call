@@ -199,7 +199,7 @@ test("GroupCallView leaves the session when an error occurs", async () => {
   const user = userEvent.setup();
   const { rtcSession } = createGroupCallView(null);
   await user.click(screen.getByRole("button", { name: "Panic!" }));
-  screen.getByText("error.generic");
+  screen.getByText("Something went wrong");
   expect(leaveRTCSession).toHaveBeenCalledWith(
     rtcSession,
     "error",

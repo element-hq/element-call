@@ -46,7 +46,7 @@ test("the modal can be closed by clicking the close button", async () => {
   }
   const user = userEvent.setup();
   const { queryByRole, getByRole } = render(<ModalFn />);
-  await user.click(getByRole("button", { name: "action.close" }));
+  await user.click(getByRole("button", { name: "Close" }));
   expect(queryByRole("dialog")).toBeNull();
 });
 
