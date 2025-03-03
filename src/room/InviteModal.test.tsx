@@ -30,6 +30,6 @@ test("InviteModal is accessible", async () => {
   );
 
   expect(await axe(container)).toHaveNoViolations();
-  await user.click(screen.getByRole("button", { name: "action.copy_link" }));
+  await user.click(screen.getByRole("button", { name: "Copy link" }));
   expect(onDismiss).toBeCalled();
 });
