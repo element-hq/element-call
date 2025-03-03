@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { defineConfig, loadEnv } from "vite";
+import { defineConfig, loadEnv, searchForWorkspaceRoot } from "vite";
 import svgrPlugin from "vite-plugin-svgr";
 import { createHtmlPlugin } from "vite-plugin-html";
 import { codecovVitePlugin } from "@codecov/vite-plugin";
@@ -67,6 +67,14 @@ export default defineConfig(({ mode, packageType }) => {
   return {
     server: {
       port: 3000,
+      fs: {
+        allow: [
+          // search up for workspace root
+          searchForWorkspaceRoot(process.cwd()),
+          // Allow fs access to local build of wasm
+          "../matrix-rust-sdk-crypto-wasm/pkg",
+        ],
+      },
     },
     build: {
       sourcemap: true,
