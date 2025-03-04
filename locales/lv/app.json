@@ -26,22 +26,15 @@
   "common": {
     "audio": "Skaņa",
     "avatar": "Attēls",
-    "camera": "Kamera",
     "display_name": "Attēlojamais vārds",
     "home": "Sākums",
     "loading": "Lādējas…",
-    "microphone": "Mikrofons",
     "password": "Parole",
     "profile": "Profils",
     "settings": "Iestatījumi",
     "username": "Lietotājvārds"
   },
   "disconnected_banner": "Ir zaudēts savienojums ar serveri.",
-  "error": {
-    "connection_lost_description": "Tu tiki atvienots no zvana",
-    "generic_description": "Atkļūdošanas žurnāla ierakstu iesūtīšana palīdzēs mums atklāt nepilnību."
-  },
-  "full_screen_view_h1": "<0>Ak vai, kaut kas nogāja greizi!</0>",
   "header_label": "Element Call sākums",
   "join_existing_call_modal": {
     "join_button": "Jā, pievienoties zvanam",
@@ -84,8 +77,7 @@
     "feedback_tab_send_logs_label": "Iekļaut atkļūdošanas žurnāla ierakstus",
     "feedback_tab_thank_you": "Paldies, mēs saņēmām atsauksmi!",
     "feedback_tab_title": "Atsauksmes",
-    "opt_in_description": "<0></0><1></1>Savu piekrišanu var atsaukt ar atzīmes noņemšanu no šīs rūtiņas. Ja pašreiz atrodies zvanā, šis iestatījums stāsies spēkā zvana beigās.",
-    "speaker_device_selection_label": "Runātājs"
+    "opt_in_description": "<0></0><1></1>Savu piekrišanu var atsaukt ar atzīmes noņemšanu no šīs rūtiņas. Ja pašreiz atrodies zvanā, šis iestatījums stāsies spēkā zvana beigās."
   },
   "star_rating_input_label_one": "{{count}} zvaigzne",
   "star_rating_input_label_other": "{{count}} zvaigznes",

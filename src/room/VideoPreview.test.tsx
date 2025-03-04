@@ -66,8 +66,6 @@ describe("VideoPreview", () => {
         children={<></>}
       />,
     );
-    expect(queryByRole("status")).toHaveTextContent(
-      "video_tile.camera_starting",
-    );
+    expect(queryByRole("status")).toHaveTextContent("Video loading...");
   });
 });

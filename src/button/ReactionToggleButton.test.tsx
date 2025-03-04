@@ -47,7 +47,7 @@ test("Can open menu", async () => {
   const { getByLabelText, container } = render(
     <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
-  await user.click(getByLabelText("common.reactions"));
+  await user.click(getByLabelText("Reactions"));
   expect(container).toMatchSnapshot();
 });
 
@@ -58,8 +58,8 @@ test("Can raise hand", async () => {
   const { getByLabelText, container } = render(
     <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
-  await user.click(getByLabelText("common.reactions"));
-  await user.click(getByLabelText("action.raise_hand"));
+  await user.click(getByLabelText("Reactions"));
+  await user.click(getByLabelText("Raise hand"));
   expect(rtcSession.room.client.sendEvent).toHaveBeenCalledWith(
     rtcSession.room.roomId,
     "m.reaction",
@@ -92,8 +92,8 @@ test("Can lower hand", async () => {
   const { getByLabelText, container } = render(
     <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
-  await user.click(getByLabelText("common.reactions"));
-  await user.click(getByLabelText("action.raise_hand"));
+  await user.click(getByLabelText("Reactions"));
+  await user.click(getByLabelText("Raise hand"));
   act(() => {
     handRaisedSubject$.next({
       [localIdent]: {
@@ -103,8 +103,8 @@ test("Can lower hand", async () => {
       },
     });
   });
-  await user.click(getByLabelText("common.reactions"));
-  await user.click(getByLabelText("action.lower_hand"));
+  await user.click(getByLabelText("Reactions"));
+  await user.click(getByLabelText("Lower hand"));
   expect(rtcSession.room.client.redactEvent).toHaveBeenCalledWith(
     rtcSession.room.roomId,
     reactionEventId,
@@ -122,7 +122,7 @@ test("Can react with emoji", async () => {
   const { getByLabelText, getByText } = render(
     <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
-  await user.click(getByLabelText("common.reactions"));
+  await user.click(getByLabelText("Reactions"));
   await user.click(getByText("🐶"));
   expect(rtcSession.room.client.sendEvent).toHaveBeenCalledWith(
     rtcSession.room.roomId,
@@ -144,8 +144,8 @@ test("Can fully expand emoji picker", async () => {
   const { getByLabelText, container, getByText } = render(
     <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
-  await user.click(getByLabelText("common.reactions"));
-  await user.click(getByLabelText("action.show_more"));
+  await user.click(getByLabelText("Reactions"));
+  await user.click(getByLabelText("Show more"));
   expect(container).toMatchSnapshot();
   await user.click(getByText("🦗"));
   expect(rtcSession.room.client.sendEvent).toHaveBeenCalledWith(
@@ -168,8 +168,8 @@ test("Can close reaction dialog", async () => {
   const { getByLabelText, container } = render(
     <TestComponent vm={vm} rtcSession={rtcSession} />,
   );
-  await user.click(getByLabelText("common.reactions"));
-  await user.click(getByLabelText("action.show_more"));
-  await user.click(getByLabelText("action.show_less"));
+  await user.click(getByLabelText("Reactions"));
+  await user.click(getByLabelText("Show more"));
+  await user.click(getByLabelText("Show less"));
   expect(container).toMatchSnapshot();
 });

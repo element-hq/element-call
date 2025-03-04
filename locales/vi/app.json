@@ -17,20 +17,14 @@
   "common": {
     "audio": "Âm thanh",
     "avatar": "Ảnh đại diện",
-    "camera": "Máy quay",
     "display_name": "Tên hiển thị",
     "loading": "Đang tải…",
-    "microphone": "Micrô",
     "password": "Mật khẩu",
     "profile": "Hồ sơ",
     "settings": "Cài đặt",
     "username": "Tên người dùng",
     "video": "Truyền hình"
   },
-  "error": {
-    "generic_description": "Gửi nhật ký gỡ lỗi sẽ giúp chúng tôi theo dõi vấn đề."
-  },
-  "full_screen_view_h1": "<0>Ối, có cái gì đó sai.</0>",
   "join_existing_call_modal": {
     "join_button": "Vâng, tham gia cuộc gọi",
     "text": "Cuộc gọi đã tồn tại, bạn có muốn tham gia không?",
@@ -62,8 +56,7 @@
     "feedback_tab_h4": "Gửi phản hồi",
     "feedback_tab_send_logs_label": "Kèm theo nhật ký gỡ lỗi",
     "feedback_tab_thank_you": "Cảm ơn, chúng tôi đã nhận được phản hồi!",
-    "feedback_tab_title": "Phản hồi",
-    "speaker_device_selection_label": "Loa"
+    "feedback_tab_title": "Phản hồi"
   },
   "submitting": "Đang gửi…",
   "unauthenticated_view_body": "Chưa đăng ký? <2>Tạo tài khoản</2>",

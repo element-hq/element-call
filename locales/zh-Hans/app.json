@@ -19,9 +19,7 @@
     "text": "准备好加入了吗？",
     "title": "选择应用程序"
   },
-  "browser_media_e2ee_unsupported": "您的浏览器不支持媒体端对端加密。支持的浏览器有 Chrome、Safari、Firefox >=117",
   "call_ended_view": {
-    "body": "通话已中断",
     "create_account_button": "创建账户",
     "create_account_prompt": "<0>为何不设置密码来保留你的账户？</0><1>保留昵称并设置头像，以便在未来的通话中使用。</1>",
     "feedback_done": "<0>感谢反馈！</0>",
@@ -35,12 +33,10 @@
   "common": {
     "audio": "音频",
     "avatar": "头像",
-    "camera": "摄像头",
     "display_name": "显示名称",
     "encrypted": "已加密",
     "home": "主页",
     "loading": "加载中……",
-    "microphone": "麦克风",
     "password": "密码",
     "profile": "个人信息",
     "settings": "设置",
@@ -49,8 +45,6 @@
     "video": "视频"
   },
   "disconnected_banner": "与服务器的连接中断。",
-  "full_screen_view_description": "<0>提交日志以帮助我们修复问题。</0>",
-  "full_screen_view_h1": "<0>哎哟，出问题了。</0>",
   "hangup_button_label": "通话结束",
   "header_label": "Element Call主页",
   "join_existing_call_modal": {
@@ -99,8 +93,7 @@
     "feedback_tab_send_logs_label": "包含调试日志",
     "feedback_tab_thank_you": "谢谢，我们收到了反馈！",
     "feedback_tab_title": "反馈",
-    "opt_in_description": "<0></0><1></1>您可以取消选中复选框来撤回同意。如果正在通话中，此设置将在通话结束时生效。",
-    "speaker_device_selection_label": "发言人"
+    "opt_in_description": "<0></0><1></1>您可以取消选中复选框来撤回同意。如果正在通话中，此设置将在通话结束时生效。"
   },
   "star_rating_input_label_one": "{{count}} 个星",
   "star_rating_input_label_other": "{{count}} 个星",

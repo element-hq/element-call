@@ -100,7 +100,8 @@ body[data-platform="android"] {
 }
 
 body[data-platform="ios"] {
-  --cpd-font-family-sans: -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
+  --cpd-font-family-sans:
+    -apple-system, BlinkMacSystemFont, "Inter", sans-serif;
 }
 
 @layer compound-legacy {

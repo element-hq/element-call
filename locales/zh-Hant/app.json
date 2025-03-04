@@ -21,9 +21,7 @@
     "text": "準備好加入了？",
     "title": "選取應用程式"
   },
-  "browser_media_e2ee_unsupported": "您的網路瀏覽器不支援媒體端到端加密。支援的瀏覽器包含了 Chrome、Safari、Firefox >=117",
   "call_ended_view": {
-    "body": "您已從通話斷線",
     "create_account_button": "建立帳號",
     "create_account_prompt": "<0>何不設定密碼以保留此帳號？</0><1>您可以保留暱稱並設定頭像，以便未來通話時使用</1>",
     "feedback_done": "<0>感謝您的回饋！</0>",
@@ -37,12 +35,10 @@
   "common": {
     "audio": "語音",
     "avatar": "大頭照",
-    "camera": "相機",
     "display_name": "顯示名稱",
     "encrypted": "已加密",
     "home": "首頁",
     "loading": "載入中…",
-    "microphone": "麥克風",
     "password": "密碼",
     "profile": "個人檔案",
     "settings": "設定",
@@ -51,8 +47,6 @@
     "video": "視訊"
   },
   "disconnected_banner": "到伺服器的連線已遺失。",
-  "full_screen_view_description": "<0>送出除錯紀錄，可幫助我們修正問題。</0>",
-  "full_screen_view_h1": "<0>喔喔，有些地方怪怪的。</0>",
   "hangup_button_label": "結束通話",
   "header_label": "Element Call 首頁",
   "header_participants_label": "參與者",
@@ -106,8 +100,7 @@
     "feedback_tab_send_logs_label": "包含除錯紀錄",
     "feedback_tab_thank_you": "感謝，我們已經收到您的回饋了！",
     "feedback_tab_title": "回饋",
-    "opt_in_description": "<0></0><1></1>您可以透過取消核取此方塊來撤回同意。若您目前正在通話中，此設定將在通話結束時生效。",
-    "speaker_device_selection_label": "發言者"
+    "opt_in_description": "<0></0><1></1>您可以透過取消核取此方塊來撤回同意。若您目前正在通話中，此設定將在通話結束時生效。"
   },
   "star_rating_input_label_one": "{{count}} 個星星",
   "star_rating_input_label_other": "{{count}} 個星星",
