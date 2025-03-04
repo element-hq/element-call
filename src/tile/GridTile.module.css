@@ -30,7 +30,8 @@ borders don't support gradients */
 }
 
 .tile.speaking::before {
-  background: linear-gradient(
+  background:
+    linear-gradient(
       119deg,
       rgba(13, 92, 189, 0.7) 0%,
       rgba(13, 189, 168, 0.7) 100%
@@ -49,7 +50,8 @@ borders don't support gradients */
 }
 
 .tile.handRaised::before {
-  background: linear-gradient(
+  background:
+    linear-gradient(
       119deg,
       var(--cpd-color-yellow-1200) 0%,
       var(--cpd-color-yellow-900) 100%
