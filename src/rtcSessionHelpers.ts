@@ -135,7 +135,20 @@ const widgetPostHangupProcedure = async (
   // We send the hangup event after the memberships have been updated
   // calling leaveRTCSession.
   // We need to wait because this makes the client hosting this widget killing the IFrame.
-  await widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+  try {
+    await widget.api.transport.send(ElementWidgetActions.HangupCall, {});
+  } catch (e) {
+    logger.error("Failed to send hangup action", e);
+  }
+  // To make the hangup procedure behave more similarly to what future versions
+  // of Element Call will do, we additionally send a close action (even though
+  // we're not yet employing the distinction between 'hangup' and 'close' to
+  // display error screens)
+  try {
+    await widget.api.transport.send(ElementWidgetActions.Close, {});
+  } catch (e) {
+    logger.error("Failed to send close action", e);
+  }
 };
 
 export async function leaveRTCSession(
