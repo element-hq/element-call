@@ -264,7 +264,7 @@ export const getUrlParams = (
       "skipLobby",
       isWidget && intent === UserIntent.StartNewCall,
     ),
-    returnToLobby: isWidget ? parser.getFlagParam("returnToLobby") : true,
+    returnToLobby: isWidget ? parser.getFlagParam("returnToLobby") : false,
     theme: parser.getParam("theme"),
     viaServers: !isWidget ? parser.getParam("viaServers") : null,
     homeserver: !isWidget ? parser.getParam("homeserver") : null,

@@ -19,6 +19,7 @@ import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
 import { MatrixRTCFocusMissingError } from "./utils/errors.ts";
+import { getUrlParams } from "./UrlParams.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -149,7 +150,7 @@ const widgetPostHangupProcedure = async (
   }
   // On a normal user hangup we can shut down and close the widget. But if an
   // error occurs we should keep the widget open until the user reads it.
-  if (cause === "user") {
+  if (cause === "user" && !getUrlParams().returnToLobby) {
     try {
       await widget.api.transport.send(ElementWidgetActions.Close, {});
     } catch (e) {
