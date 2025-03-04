@@ -13,6 +13,7 @@ export enum ErrorCode {
    */
   MISSING_MATRIX_RTC_FOCUS = "MISSING_MATRIX_RTC_FOCUS",
   CONNECTION_LOST_ERROR = "CONNECTION_LOST_ERROR",
+  E2EE_NOT_SUPPORTED = "E2EE_NOT_SUPPORTED",
   UNKNOWN_ERROR = "UNKNOWN_ERROR",
 }
 
@@ -20,6 +21,7 @@ export enum ErrorCategory {
   /** Calling is not supported, server misconfigured (JWT service missing, no MSC support ...)*/
   CONFIGURATION_ISSUE = "CONFIGURATION_ISSUE",
   NETWORK_CONNECTIVITY = "NETWORK_CONNECTIVITY",
+  CLIENT_CONFIGURATION = "CLIENT_CONFIGURATION",
   UNKNOWN = "UNKNOWN",
   // SYSTEM_FAILURE / FEDERATION_FAILURE ..
 }
@@ -66,9 +68,21 @@ export class MatrixRTCFocusMissingError extends ElementCallError {
 export class ConnectionLostError extends ElementCallError {
   public constructor() {
     super(
-      "Connection lost",
+      "ConnectionLostError",
       ErrorCode.CONNECTION_LOST_ERROR,
       ErrorCategory.NETWORK_CONNECTIVITY,
+      t("error.connection_lost_description"),
+    );
+  }
+}
+
+export class E2EENotSupportedError extends ElementCallError {
+  public constructor() {
+    super(
+      "E2EENotSupportedError",
+      ErrorCode.E2EE_NOT_SUPPORTED,
+      ErrorCategory.CLIENT_CONFIGURATION,
+      t("error.e2ee_unsupported_description"),
     );
   }
 }

@@ -97,7 +97,6 @@ import {
   useSetting,
 } from "../settings/settings";
 import { ReactionsReader } from "../reactions/ReactionsReader";
-import { ConnectionLostError } from "../utils/errors.ts";
 
 const canScreenshare = "getDisplayMedia" in (navigator.mediaDevices ?? {});
 
@@ -176,6 +175,8 @@ export interface InCallViewProps {
   participantCount: number;
   /** Function to call when the user explicitly ends the call */
   onLeave: () => void;
+  /** Callback for when the call is terminated due to connectivity issue */
+  onDisconnected: (() => void) | null;
   hideHeader: boolean;
   otelGroupCallMembership?: OTelGroupCallMembership;
   connState: ECConnectionState;
@@ -191,6 +192,7 @@ export const InCallView: FC<InCallViewProps> = ({
   muteStates,
   participantCount,
   onLeave,
+  onDisconnected,
   hideHeader,
   connState,
   onShareClick,
@@ -198,12 +200,13 @@ export const InCallView: FC<InCallViewProps> = ({
   const { supportsReactions, sendReaction, toggleRaisedHand } =
     useReactionsSender();
 
-  useWakeLock();
-
   // annoyingly we don't get the disconnection reason this way,
   // only by listening for the emitted event
-  if (connState === ConnectionState.Disconnected)
-    throw new ConnectionLostError();
+  if (connState === ConnectionState.Disconnected) {
+    onDisconnected?.();
+  }
+
+  useWakeLock();
 
   const containerRef1 = useRef<HTMLDivElement | null>(null);
   const [containerRef2, bounds] = useMeasure();

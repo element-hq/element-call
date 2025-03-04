@@ -5,16 +5,29 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { beforeEach, expect, type MockedFunction, test, vitest } from "vitest";
-import { render, waitFor, screen } from "@testing-library/react";
+import {
+  vi,
+  beforeEach,
+  expect,
+  type MockedFunction,
+  test,
+  vitest,
+  describe,
+} from "vitest";
+import { render, waitFor, screen, fireEvent } from "@testing-library/react";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc";
 import { of } from "rxjs";
-import { JoinRule, type RoomState } from "matrix-js-sdk/src/matrix";
+import {
+  AutoDiscovery,
+  JoinRule,
+  type RoomState,
+} from "matrix-js-sdk/src/matrix";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 import { type RelationsContainer } from "matrix-js-sdk/src/models/relations-container";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { TooltipProvider } from "@vector-im/compound-web";
 
 import { type MuteStates } from "./MuteStates";
 import { prefetchSounds } from "../soundUtils";
@@ -22,6 +35,7 @@ import { useAudioContext } from "../useAudioContext";
 import { ActiveCall } from "./InCallView";
 import {
   flushPromises,
+  mockConfig,
   mockMatrixRoom,
   mockMatrixRoomMember,
   mockRtcMembership,
@@ -31,6 +45,8 @@ import { GroupCallView } from "./GroupCallView";
 import { leaveRTCSession } from "../rtcSessionHelpers";
 import { type WidgetHelpers } from "../widget";
 import { LazyEventEmitter } from "../LazyEventEmitter";
+import { useCallErrorDisplay } from "../utils/useCallErrorDisplay.tsx";
+import { ConnectionLostError } from "../utils/errors.ts";
 
 vitest.mock("../soundUtils");
 vitest.mock("../useAudioContext");
@@ -198,6 +214,7 @@ test("GroupCallView leaves the session when an error occurs", async () => {
   });
   const user = userEvent.setup();
   const { rtcSession } = createGroupCallView(null);
+  rtcSession.withJoined();
   await user.click(screen.getByRole("button", { name: "Panic!" }));
   screen.getByText("Something went wrong");
   expect(leaveRTCSession).toHaveBeenCalledWith(
@@ -209,4 +226,172 @@ test("GroupCallView leaves the session when an error occurs", async () => {
   // Ensure that the playSound promise resolves within this test to avoid
   // impacting the results of other tests
   await waitFor(() => expect(leaveRTCSession).toHaveResolved());
+});
+
+describe("GroupCallView call error handling", () => {
+  function setup(): {
+    client: MatrixClient;
+    rtcSession: MatrixRTCSession;
+    muteState: MuteStates;
+  } {
+    const muteState = {
+      audio: { enabled: false },
+      video: { enabled: false },
+    } as MuteStates;
+
+    const client = {
+      getUser: () => null,
+      getUserId: () => localRtcMember.sender,
+      getDeviceId: () => localRtcMember.deviceId,
+      getRoom: (rId) => (rId === roomId ? room : null),
+      getDomain(): string | null {
+        return "example.org";
+      },
+    } as Partial<MatrixClient> as MatrixClient;
+
+    const room = mockMatrixRoom({
+      relations: {
+        getChildEventsForEvent: () =>
+          vitest.mocked({
+            getRelations: () => [],
+          }),
+      } as unknown as RelationsContainer,
+      client,
+      roomId,
+      getMember: (userId) => roomMembers.get(userId) ?? null,
+      getMxcAvatarUrl: () => null,
+      getCanonicalAlias: () => null,
+      currentState: {
+        getJoinRule: () => JoinRule.Invite,
+      } as Partial<RoomState> as RoomState,
+    });
+
+    const rtcSession = vi.mocked({
+      on: vi.fn(),
+      off: vi.fn(),
+      emit: vi.fn(),
+      room: room,
+      memberships: [],
+      getFocusInUse: vi.fn().mockReturnValue(undefined),
+      isJoined: vi.fn().mockReturnValue(false),
+      joinRoomSession: vi.fn().mockReturnValue(Promise.resolve()),
+    }) as unknown as MatrixRTCSession;
+
+    // if not VideoPreview fails to render due to [Error: This browser does not support ResizeObserver out of the box.]
+    global.ResizeObserver = class {
+      public observe(): void {}
+      public unobserve(): void {}
+      public disconnect(): void {}
+    };
+    window.ResizeObserver = global.ResizeObserver;
+
+    vi.stubGlobal("navigator", {
+      mediaDevices: {
+        getUserMedia: vi.fn().mockReturnValue(new Promise(() => {})),
+      },
+    });
+    return { client, rtcSession, muteState };
+  }
+
+  test("Missing RTC Focus error handling", async () => {
+    const { client, rtcSession, muteState } = setup();
+
+    const { asFragment } = render(
+      <TooltipProvider>
+        // router needed because GroupCallView uses useLocation()
+        <BrowserRouter>
+          <GroupCallView
+            client={client}
+            isPasswordlessUser={true}
+            confineToRoom={false}
+            preload={false}
+            skipLobby={false}
+            hideHeader={true}
+            rtcSession={rtcSession}
+            isJoined={false}
+            muteStates={muteState}
+            widget={null}
+          />
+        </BrowserRouter>
+      </TooltipProvider>,
+    );
+
+    // Ensure no focus config in well-known
+    vi.spyOn(AutoDiscovery, "getRawClientConfig").mockImplementation(
+      async (domain) => {
+        return Promise.resolve({});
+      },
+    );
+    // As well as no default
+    mockConfig({});
+
+    vi.spyOn(rtcSession, "getFocusInUse").mockReturnValue(undefined);
+    const joinButton = screen.getByTestId("lobby_joinCall");
+    expect(joinButton).toBeInTheDocument();
+
+    fireEvent.click(joinButton);
+
+    const element = await screen.findByText("Call is not supported"); // waits for the element
+    expect(element).toBeInTheDocument();
+
+    expect(screen.getByText(/Domain: example.org/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Error Code: MISSING_MATRIX_RTC_FOCUS/i),
+    ).toBeInTheDocument();
+
+    expect(asFragment()).toMatchSnapshot();
+  });
+
+  test("Connection Failed error", async () => {
+    const { client, rtcSession, muteState } = setup();
+    const user = userEvent.setup();
+    const reconnect = vi.fn();
+    (ActiveCall as MockedFunction<typeof ActiveCall>).mockImplementation(() => {
+      const { setCallErrorState } = useCallErrorDisplay();
+      useEffect(() => {
+        setTimeout(() => {
+          setCallErrorState({
+            cause: new ConnectionLostError(),
+            actions: [
+              {
+                labelKey: "call_ended_view.reconnect_button",
+                onClick: reconnect,
+              },
+            ],
+          });
+        });
+      }, [setCallErrorState]);
+      return <div>Active call</div>;
+    });
+
+    const { asFragment } = render(
+      <TooltipProvider>
+        // router needed because GroupCallView uses useLocation()
+        <BrowserRouter>
+          <GroupCallView
+            client={client}
+            isPasswordlessUser={true}
+            confineToRoom={false}
+            preload={false}
+            skipLobby={false}
+            hideHeader={true}
+            rtcSession={rtcSession}
+            isJoined={true}
+            muteStates={muteState}
+            widget={null}
+          />
+        </BrowserRouter>
+      </TooltipProvider>,
+    );
+
+    await screen.findByText("Connection lost"); // waits for the element
+    expect(
+      screen.getByText(/You were disconnected from the call./i),
+    ).toBeInTheDocument();
+
+    expect(asFragment()).toMatchSnapshot();
+
+    await user.click(screen.getByRole("button", { name: "Reconnect" }));
+    expect(reconnect).toHaveBeenCalledOnce();
+  });
 });

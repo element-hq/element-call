@@ -22,14 +22,8 @@ import {
 import { logger } from "matrix-js-sdk/src/logger";
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
 import { JoinRule } from "matrix-js-sdk/src/matrix";
-import {
-  OfflineIcon,
-  WebBrowserIcon,
-} from "@vector-im/compound-design-tokens/assets/web/icons";
-import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
 import { ErrorBoundary } from "@sentry/react";
-import { Button } from "@vector-im/compound-web";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
@@ -37,7 +31,7 @@ import {
   type JoinCallData,
   type WidgetHelpers,
 } from "../widget";
-import { ErrorPage, FullScreenView } from "../FullScreenView";
+import { ErrorPage } from "../FullScreenView";
 import { LobbyView } from "./LobbyView";
 import { type MatrixInfo } from "./VideoPreview";
 import { CallEndedView } from "./CallEndedView";
@@ -60,24 +54,23 @@ import { useAudioContext } from "../useAudioContext";
 import { callEventAudioSounds } from "./CallEventAudioRenderer";
 import { useLatest } from "../useLatest";
 import { usePageTitle } from "../usePageTitle";
-import { ErrorView } from "../ErrorView";
 import {
   ConnectionLostError,
+  E2EENotSupportedError,
   ElementCallError,
   ErrorCategory,
   ErrorCode,
 } from "../utils/errors.ts";
-import { ElementCallRichError } from "../RichError.tsx";
+import {
+  CallErrorStateProvider,
+  useCallErrorDisplay,
+} from "../utils/useCallErrorDisplay.tsx";
+import { CallErrorDisplay } from "../utils/CallErrorDisplay.tsx";
 
 declare global {
   interface Window {
     rtcSession?: MatrixRTCSession;
   }
-}
-
-interface GroupCallErrorPageProps {
-  error: Error | unknown;
-  resetError: () => void;
 }
 
 interface Props {
@@ -93,7 +86,16 @@ interface Props {
   widget: WidgetHelpers | null;
 }
 
-export const GroupCallView: FC<Props> = ({
+export const GroupCallView: FC<Props> = (pr) => {
+  return (
+    <CallErrorStateProvider>
+      <CallErrorDisplay />
+      <GroupCallViewInner {...pr} />
+    </CallErrorStateProvider>
+  );
+};
+
+const GroupCallViewInner: FC<Props> = ({
   client,
   isPasswordlessUser,
   confineToRoom,
@@ -106,6 +108,8 @@ export const GroupCallView: FC<Props> = ({
   widget,
 }) => {
   const memberships = useMatrixRTCSessionMemberships(rtcSession);
+  const { callErrorState, setCallErrorState } = useCallErrorDisplay();
+
   const leaveSoundContext = useLatest(
     useAudioContext({
       sounds: callEventAudioSounds,
@@ -172,27 +176,29 @@ export const GroupCallView: FC<Props> = ({
   const latestDevices = useLatest(deviceContext);
   const latestMuteStates = useLatest(muteStates);
 
-  const enterRTCSessionOrError = async (
-    rtcSession: MatrixRTCSession,
-    perParticipantE2EE: boolean,
-  ): Promise<void> => {
-    try {
-      await enterRTCSession(rtcSession, perParticipantE2EE);
-    } catch (e) {
-      if (e instanceof ElementCallError) {
-        // e.code === ErrorCode.MISSING_LIVE_KIT_SERVICE_URL)
-        setEnterRTCError(e);
-      } else {
-        logger.error(`Unknown Error while entering RTC session`, e);
-        const error = new ElementCallError(
-          e instanceof Error ? e.message : "Unknown error",
-          ErrorCode.UNKNOWN_ERROR,
-          ErrorCategory.UNKNOWN,
-        );
-        setEnterRTCError(error);
+  const enterRTCSessionOrError = useCallback(
+    async (
+      rtcSession: MatrixRTCSession,
+      perParticipantE2EE: boolean,
+    ): Promise<void> => {
+      try {
+        await enterRTCSession(rtcSession, perParticipantE2EE);
+      } catch (e) {
+        if (e instanceof ElementCallError) {
+          setCallErrorState({ cause: e });
+        } else {
+          // logger.error(`ABDE Unknown Error while entering RTC session`, e);
+          const error = new ElementCallError(
+            e instanceof Error ? e.message : "Unknown error",
+            ErrorCode.UNKNOWN_ERROR,
+            ErrorCategory.UNKNOWN,
+          );
+          setCallErrorState({ cause: error });
+        }
       }
-    }
-  };
+    },
+    [setCallErrorState],
+  );
 
   useEffect(() => {
     const defaultDeviceSetup = async ({
@@ -247,6 +253,16 @@ export const GroupCallView: FC<Props> = ({
               widget.api.transport.reply(ev.detail, {});
             })().catch((e) => {
               logger.error("Error joining RTC session", e);
+              setCallErrorState({
+                cause:
+                  e instanceof ElementCallError
+                    ? e
+                    : new ElementCallError(
+                        e.message,
+                        ErrorCode.UNKNOWN_ERROR,
+                        ErrorCategory.UNKNOWN,
+                      ),
+              });
             });
           };
           widget.lazyActions.on(ElementWidgetActions.JoinCall, onJoin);
@@ -255,11 +271,7 @@ export const GroupCallView: FC<Props> = ({
           };
         } else {
           // No lobby and no preload: we enter the rtc session right away
-          (async (): Promise<void> => {
-            await enterRTCSessionOrError(rtcSession, perParticipantE2EE);
-          })().catch((e) => {
-            logger.error("Error joining RTC session", e);
-          });
+          void enterRTCSessionOrError(rtcSession, perParticipantE2EE);
         }
       } else {
         void enterRTCSessionOrError(rtcSession, perParticipantE2EE);
@@ -273,12 +285,11 @@ export const GroupCallView: FC<Props> = ({
     perParticipantE2EE,
     latestDevices,
     latestMuteStates,
+    setCallErrorState,
+    enterRTCSessionOrError,
   ]);
 
   const [left, setLeft] = useState(false);
-  const [enterRTCError, setEnterRTCError] = useState<ElementCallError | null>(
-    null,
-  );
   const navigate = useNavigate();
 
   const onLeave = useCallback(
@@ -299,7 +310,6 @@ export const GroupCallView: FC<Props> = ({
         );
         window.setTimeout(resolve, 10);
       });
-
       leaveRTCSession(
         rtcSession,
         cause,
@@ -365,54 +375,36 @@ export const GroupCallView: FC<Props> = ({
   );
   const onShareClick = joinRule === JoinRule.Public ? onShareClickFn : null;
 
-  const { t } = useTranslation();
+  const onDisconnected = useCallback(() => {
+    if (rtcSession.isJoined()) onLeave("error");
 
-  const errorPage = useMemo(() => {
-    function GroupCallErrorPage({
-      error,
-      resetError,
-    }: GroupCallErrorPageProps): ReactElement {
-      useEffect(() => {
-        if (rtcSession.isJoined()) onLeave("error");
-      }, [error]);
+    const reconnect = async (): void => {
+      setLeft(false);
+      await enterRTCSessionOrError(rtcSession, perParticipantE2EE);
+    };
 
-      const onReconnect = useCallback(() => {
-        setLeft(false);
-        resetError();
-        enterRTCSessionOrError(rtcSession, perParticipantE2EE).catch((e) => {
-          logger.error("Error re-entering RTC session", e);
-        });
-      }, [resetError]);
-
-      return error instanceof ConnectionLostError ? (
-        <FullScreenView>
-          <ErrorView
-            Icon={OfflineIcon}
-            title={t("error.connection_lost")}
-            rageshake
-          >
-            <p>{t("error.connection_lost_description")}</p>
-            <Button onClick={onReconnect}>
-              {t("call_ended_view.reconnect_button")}
-            </Button>
-          </ErrorView>
-        </FullScreenView>
-      ) : (
-        <ErrorPage error={error} />
-      );
-    }
-    return GroupCallErrorPage;
-  }, [onLeave, rtcSession, perParticipantE2EE, t]);
+    setCallErrorState({
+      cause: new ConnectionLostError(),
+      actions: [
+        {
+          labelKey: "call_ended_view.reconnect_button",
+          onClick: reconnect,
+        },
+      ],
+    });
+  }, [
+    rtcSession,
+    setLeft,
+    enterRTCSessionOrError,
+    perParticipantE2EE,
+    onLeave,
+    setCallErrorState,
+  ]);
 
   if (!isE2EESupportedBrowser() && e2eeSystem.kind !== E2eeType.NONE) {
     // If we have a encryption system but the browser does not support it.
-    return (
-      <FullScreenView>
-        <ErrorView Icon={WebBrowserIcon} title={t("error.e2ee_unsupported")}>
-          <p>{t("error.e2ee_unsupported_description")}</p>
-        </ErrorView>
-      </FullScreenView>
-    );
+    setCallErrorState({ cause: new E2EENotSupportedError() });
+    return <></>;
   }
 
   const shareModal = (
@@ -441,13 +433,9 @@ export const GroupCallView: FC<Props> = ({
   );
 
   let body: ReactNode;
-  if (enterRTCError) {
-    // If an ElementCallError was recorded, then create a component that will fail to render and throw
-    // an ElementCallRichError error. This will then be handled by the ErrorBoundary component.
-    const ErrorComponent = (): ReactNode => {
-      throw new ElementCallRichError(enterRTCError);
-    };
-    body = <ErrorComponent />;
+  if (callErrorState) {
+    // There is an error, nothing to render
+    body = <></>;
   } else if (isJoined) {
     body = (
       <>
@@ -458,6 +446,7 @@ export const GroupCallView: FC<Props> = ({
           rtcSession={rtcSession as MatrixRTCSession}
           participantCount={participantCount}
           onLeave={onLeave}
+          onDisconnected={onDisconnected}
           hideHeader={hideHeader}
           muteStates={muteStates}
           e2eeSystem={e2eeSystem}
@@ -504,5 +493,11 @@ export const GroupCallView: FC<Props> = ({
     body = lobbyView;
   }
 
-  return <ErrorBoundary fallback={errorPage}>{body}</ErrorBoundary>;
+  const RenderErrorFallback = (error: Error | unknown): ReactElement => {
+    useEffect(() => {
+      if (rtcSession.isJoined()) onLeave("error");
+    }, []);
+    return <ErrorPage error={error} />;
+  };
+  return <ErrorBoundary fallback={RenderErrorFallback}>{body}</ErrorBoundary>;
 };

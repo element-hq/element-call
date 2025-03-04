@@ -274,7 +274,18 @@ export class MockRTCSession extends TypedEventEmitter<
     counters: {},
   };
 
-  public leaveRoomSession = vitest.fn().mockResolvedValue(undefined);
+  private _isJoined: boolean = false;
+
+  public leaveRoomSession = vitest.fn().mockImplementation(() => {
+    this._isJoined = false;
+  });
+
+  public joinRoomSession = vitest.fn().mockImplementation(() => {
+    if (this.isJoined()) {
+      return;
+    }
+    this._isJoined = true;
+  });
 
   public constructor(
     public readonly room: Room,
@@ -284,8 +295,8 @@ export class MockRTCSession extends TypedEventEmitter<
     super();
   }
 
-  public isJoined(): true {
-    return true;
+  public isJoined(): boolean {
+    return this._isJoined;
   }
 
   public withMemberships(
@@ -299,6 +310,11 @@ export class MockRTCSession extends TypedEventEmitter<
       this.emit(MatrixRTCSessionEvent.MembershipsChanged, old, updated);
     });
 
+    return this;
+  }
+
+  public withJoined(): MockRTCSession {
+    this._isJoined = true;
     return this;
   }
 }
