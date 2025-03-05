@@ -135,7 +135,8 @@ selection for **Matrix rooms 123 and 456**, which include users from different
 homeservers.  
 ![Element Call SFU selection over Matrix federation](./docs/SFU_selection.drawio.png)
 
-## Translation
+
+## 🌍 Translation
 
 If you'd like to help translate Element Call, head over to
 [Localazy](https://localazy.com/p/element-call). You're also encouraged to join
