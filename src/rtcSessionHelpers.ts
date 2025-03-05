@@ -17,6 +17,7 @@ import {
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, WidgetHelpers, widget } from "./widget";
+import { getUrlParams } from "./UrlParams";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -144,10 +145,12 @@ const widgetPostHangupProcedure = async (
   // of Element Call will do, we additionally send a close action (even though
   // we're not yet employing the distinction between 'hangup' and 'close' to
   // display error screens)
-  try {
-    await widget.api.transport.send(ElementWidgetActions.Close, {});
-  } catch (e) {
-    logger.error("Failed to send close action", e);
+  if (!getUrlParams().returnToLobby) {
+    try {
+      await widget.api.transport.send(ElementWidgetActions.Close, {});
+    } catch (e) {
+      logger.error("Failed to send close action", e);
+    }
   }
 };
 
