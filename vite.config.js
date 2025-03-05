@@ -29,7 +29,7 @@ export default defineConfig(({ mode }) => {
     }),
     htmlTemplate.default({
       data: {
-        title: env.VITE_PRODUCT_NAME || "Element Call",
+        brand: env.VITE_PRODUCT_NAME || "Element Call",
       },
     }),
 
