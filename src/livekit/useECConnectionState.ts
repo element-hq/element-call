@@ -20,7 +20,11 @@ import * as Sentry from "@sentry/react";
 
 import { type SFUConfig, sfuConfigEquals } from "./openIDSFU";
 import { PosthogAnalytics } from "../analytics/PosthogAnalytics";
-import { InsufficientCapacityError, RichError } from "../RichError";
+import {
+  ElementCallError,
+  InsufficientCapacityError,
+  UnknownCallError,
+} from "../utils/errors.ts";
 
 declare global {
   interface Window {
@@ -188,7 +192,7 @@ export function useECConnectionState(
 
   const [isSwitchingFocus, setSwitchingFocus] = useState(false);
   const [isInDoConnect, setIsInDoConnect] = useState(false);
-  const [error, setError] = useState<RichError | null>(null);
+  const [error, setError] = useState<ElementCallError | null>(null);
   if (error !== null) throw error;
 
   const onConnStateChanged = useCallback((state: ConnectionState) => {
@@ -271,9 +275,11 @@ export function useECConnectionState(
         initialAudioOptions,
       )
         .catch((e) => {
-          if (e instanceof RichError)
+          if (e instanceof ElementCallError) {
             setError(e); // Bubble up any error screens to React
-          else logger.error("Failed to connect to SFU", e);
+          } else if (e instanceof Error) {
+            setError(new UnknownCallError(e));
+          } else logger.error("Failed to connect to SFU", e);
         })
         .finally(() => setIsInDoConnect(false));
     }
