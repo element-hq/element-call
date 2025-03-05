@@ -9,17 +9,28 @@
 The world's first 🌐 decentralized and 🤝 federated video conferencing solution
 powered by **the Matrix protocol**.
 
+
+## 📌 Overview
+
+**Element Call** is a native Matrix video conferencing application developed by
+[Element](https://element.io/), designed for **secure**, **scalable**,
+**privacy-respecting**, and **decentralized** video and voice calls over the
+Matrix protocol. Built on **MatrixRTC**
+([MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143)), it
+utilizes
+**[MSC4195](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)**
+with **[LiveKit](https://livekit.io/)** as its backend.
+
 ![A demo of Element Call with six people](demo.jpg)
 
-To try it out, visit our hosted version at
-[call.element.io](https://call.element.io). You can also find the latest
-development version continuously deployed to
+You can find the latest development version continuously deployed to
 [call.element.dev](https://call.element.dev/).
 
-## Host it yourself
+> [!NOTE] 
+> For prior version of the Element Call that relied solely on full-mesh logic,
+check [`full-mesh`](https://github.com/element-hq/element-call/tree/full-mesh)
+branch.
 
-Until prebuilt tarballs are available, you'll need to build Element Call from
-source. First, clone and install the package:
 
 ```sh
 git clone https://github.com/element-hq/element-call.git
