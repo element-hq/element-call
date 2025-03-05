@@ -9,7 +9,6 @@
 The world's first 🌐 decentralized and 🤝 federated video conferencing solution
 powered by **the Matrix protocol**.
 
-
 ## 📌 Overview
 
 **Element Call** is a native Matrix video conferencing application developed by
@@ -26,38 +25,36 @@ with **[LiveKit](https://livekit.io/)** as its backend.
 You can find the latest development version continuously deployed to
 [call.element.dev](https://call.element.dev/).
 
-> [!NOTE] 
+> [!NOTE]
 > For prior version of the Element Call that relied solely on full-mesh logic,
-check [`full-mesh`](https://github.com/element-hq/element-call/tree/full-mesh)
-branch.
-
+> check [`full-mesh`](https://github.com/element-hq/element-call/tree/full-mesh)
+> branch.
 
 ## ✨ Key Features
 
 ✅ **Decentralized & Federated** – No central authority; works across Matrix
 homeservers.  
 ✅ **End-to-End Encrypted** – Secure and private calls.  
-✅ **Standalone & Widget Mode** – Use as an independent app or embed in Matrix 
+✅ **Standalone & Widget Mode** – Use as an independent app or embed in Matrix
 clients.  
 ✅ **WebRTC-based** – No additional software required.  
-✅ **Scalable with LiveKit** – Supports large meetings via SFU 
+✅ **Scalable with LiveKit** – Supports large meetings via SFU
 ([MSC4195: MatrixRTC using LiveKit backend](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)).  
 ✅ **Raise Hand** – Participants can signal when they want to speak, helping to
 organize the flow of the meeting.  
 ✅ **Emoji Reactions** – Users can react with emojis 👍️ 🎉 👏 🤘, adding
-engagement and interactivity to the conversation.  
-
+engagement and interactivity to the conversation.
 
 ## 🚀 Deployment Options
 
 Element Call can be packaged in two ways:
 
 **Full Package** – Supports both **Standalone** and **Widget** mode. Hosted as
-  a static web page and accessed via a URL when used as a widget.  
+a static web page and accessed via a URL when used as a widget.
 
 **Embedded Package** – Designed for **Widget mode** only. Bundled with a
-  messenger app for seamless integration. This is the recommended method for
-  embedding Element Call into a messenger app.
+messenger app for seamless integration. This is the recommended method for
+embedding Element Call into a messenger app.
 
 ### Standalone mode
 
@@ -66,7 +63,6 @@ Element Call can be packaged in two ways:
 In Standalone mode Element Call operates as an independent, full-featured video
 conferencing web application, allowing users to join or host calls without
 requiring a separate Matrix client.
-
 
 ### Widget mode embedded in Messenger Apps
 
@@ -82,12 +78,10 @@ and voice calls within Matrix rooms.
 > [!IMPORTANT]
 > Embedded packaging is recommended for Element Call in widget mode!
 
-
 ## 🛠️ Self-Hosting
 
 For operating and deploying Element Call on your own server, refer to the
 [**Self-Hosting Guide**](./docs/self-hosting.md).
-
 
 ## 🧭 MatrixRTC Backend Discovery and Selection
 
@@ -103,14 +97,16 @@ MatrixRTC backend (according to
 [MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143))
 is announced by the homeserver's `.well-known/matrix/client` file and discovered
 via the `org.matrix.msc4143.rtc_foci` key, e.g.:
-  ```json
-  "org.matrix.msc4143.rtc_foci": [
-      {
-          "type": "livekit",
-          "livekit_service_url": "https://someurl.com"
-      },
-  ]
-  ```
+
+```json
+"org.matrix.msc4143.rtc_foci": [
+    {
+        "type": "livekit",
+        "livekit_service_url": "https://someurl.com"
+    },
+]
+```
+
 where the format for MatrixRTC using LiveKit backend is defined in
 [MSC4195](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md).
 In the example above Matrix clients do discover a focus of type `livekit` which
@@ -135,14 +131,12 @@ selection for **Matrix rooms 123 and 456**, which include users from different
 homeservers.  
 ![Element Call SFU selection over Matrix federation](./docs/SFU_selection.drawio.png)
 
-
 ## 🌍 Translation
 
 If you'd like to help translate Element Call, head over to
 [Localazy](https://localazy.com/p/element-call). You're also encouraged to join
 the [Element Translators](https://matrix.to/#/#translators:element.io) space to
 discuss and coordinate translation efforts.
-
 
 ## 🛠️ Development
 
@@ -161,10 +155,10 @@ To use it, create a local config by, e.g.,
 The `config.devenv.json` config should work with the backend development
 environment as outlined in the next section out of box.
 
-> [!NOTE] 
+> [!NOTE]
 > Be aware, that this `config.devenv.json` is exposing a deprecated fallback
-LiveKit config key. If the homeserver advertises SFU backend via
-`.well-known/matrix/client` this has precedence.
+> LiveKit config key. If the homeserver advertises SFU backend via
+> `.well-known/matrix/client` this has precedence.
 
 You're now ready to launch the development server:
 
@@ -199,7 +193,6 @@ yarn backend
 
 <img src="https://codecov.io/github/element-hq/element-call/graphs/tree.svg?token=O6CFVKK6I1"></img>
 
-
 ### Add a new translation key
 
 To add a new translation key you can do these steps:
@@ -220,21 +213,19 @@ To add a new translation key you can do these steps:
 1. Update the skeleton entry in the `locales/en/app.json` file with the English
    translation:
 
-    ```jsonc
-    {
-        ...
-        "some_new_key": "Some new key",
-        ...
-    }
-    ```
-
+   ```jsonc
+   {
+       ...
+       "some_new_key": "Some new key",
+       ...
+   }
+   ```
 
 ## 📖 Documentation
 
 Usage and other technical details about the project can be found here:
 
 [**Docs**](./docs/README.md)
-
 
 ## 📝 Copyright & License
 
