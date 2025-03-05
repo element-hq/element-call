@@ -48,76 +48,40 @@ organize the flow of the meeting.
 engagement and interactivity to the conversation.  
 
 
-```sh
-cp config/config.sample.json public/config.json
-# edit public/config.json
-```
+## 🚀 Deployment Options
 
-The sample needs editing to contain the homeserver and LiveKit backend that you
-are using.
+Element Call can be packaged in two ways:
 
-Because Element Call uses client-side routing, your server must be able to route
-any requests to non-existing paths back to `/index.html`. For example, in Nginx
-you can achieve this with the `try_files` directive:
+**Full Package** – Supports both **Standalone** and **Widget** mode. Hosted as
+  a static web page and accessed via a URL when used as a widget.  
 
-```jsonc
-server {
-    ...
-    location / {
-        ...
-        try_files $uri /$uri /index.html;
-    }
-}
-```
+**Embedded Package** – Designed for **Widget mode** only. Bundled with a
+  messenger app for seamless integration. This is the recommended method for
+  embedding Element Call into a messenger app.
 
-Element Call requires a homeserver with registration enabled without any 3pid or
-token requirements, if you want it to be used by unregistered users.
-Furthermore, it is not recommended to use it with an existing homeserver where
-user accounts have joined normal rooms, as it may not be able to handle those
-yet and it may behave unreliably.
+### Standalone mode
 
-Therefore, to use a self-hosted homeserver, this is recommended to be a new
-server where any user account created has not joined any normal rooms anywhere
-in the Matrix federated network. The homeserver used can be setup to disable
-federation, so as to prevent spam registrations (if you keep registrations open)
-and to ensure Element Call continues to work in case any user decides to log in
-to their Element Call account using the standard Element app and joins normal
-rooms that Element Call cannot handle.
+![Element Call in Standalone Mode](./docs/element_call_standalone.drawio.png)
 
-## Configuration
+In Standalone mode Element Call operates as an independent, full-featured video
+conferencing web application, allowing users to join or host calls without
+requiring a separate Matrix client.
 
-There are currently two different config files. `.env` holds variables that are
-used at build time, while `public/config.json` holds variables that are used at
-runtime. Documentation and default values for `public/config.json` can be found
-in [ConfigOptions.ts](src/config/ConfigOptions.ts).
 
-If you're using [Synapse](https://github.com/element-hq/synapse/), you'll need
-to additionally add the following to `homeserver.yaml` or Element Call won't
-work:
+### Widget mode embedded in Messenger Apps
 
-```yaml
-experimental_features:
-  # MSC3266: Room summary API. Used for knocking over federation
-  msc3266_enabled: true
-  # MSC4222 needed for syncv2 state_after. This allow clients to
-  # correctly track the state of the room.
-  msc4222_enabled: true
+![Element Call in Widget Mode](./docs/element_call_widget.drawio.png)
 
-# The maximum allowed duration by which sent events can be delayed, as
-# per MSC4140.
-max_event_delay_duration: 24h
+Element Call can be embedded as a widget inside apps like
+[**Element Web**](https://github.com/element-hq/element-web) or **Element X
+([iOS](https://github.com/element-hq/element-x-ios),
+[Android](https://github.com/element-hq/element-x-android))**, bringing
+**MatrixRTC** capabilities to messenger apps for seamless decentralized video
+and voice calls within Matrix rooms.
 
-rc_message:
-  # This needs to match at least the heart-beat frequency plus a bit of headroom
-  # Currently the heart-beat is every 5 seconds which translates into a rate of 0.2s
-  per_second: 0.5
-  burst_count: 30
-```
+> [!IMPORTANT]
+> Embedded packaging is recommended for Element Call in widget mode!
 
-MSC3266 allows to request a room summary of rooms you are not joined. The
-summary contains the room join rules. We need that to decide if the user gets
-prompted with the option to knock ("Request to join call"), a cannot join error or the
-join view.
 
 MSC4222 allow clients to opt-in to a change of the sync v2 API that allows them
 to correctly track the state of the room. This is required by Element Call to
