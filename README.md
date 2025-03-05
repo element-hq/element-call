@@ -143,7 +143,8 @@ If you'd like to help translate Element Call, head over to
 the [Element Translators](https://matrix.to/#/#translators:element.io) space to
 discuss and coordinate translation efforts.
 
-## Development
+
+## 🛠️ Development
 
 ### Frontend
 
@@ -155,13 +156,15 @@ cd element-call
 yarn
 ```
 
-To use it, create a local config by, e.g., `cp ./config/config.devenv.json ./public/config.json`
-and adapt it if necessary. The `config.devenv.json` config should work with the backend
-development environment as outlined in the next section out of box.
+To use it, create a local config by, e.g.,
+`cp ./config/config.devenv.json ./public/config.json` and adapt it if necessary.
+The `config.devenv.json` config should work with the backend development
+environment as outlined in the next section out of box.
 
-(Be aware, that this `config.devenv.json` is exposing a deprecated fallback
+> [!NOTE] 
+> Be aware, that this `config.devenv.json` is exposing a deprecated fallback
 LiveKit config key. If the homeserver advertises SFU backend via
-`.well-known/matrix/client` this has precedence.)
+`.well-known/matrix/client` this has precedence.
 
 You're now ready to launch the development server:
 
@@ -196,11 +199,13 @@ yarn backend
 
 <img src="https://codecov.io/github/element-hq/element-call/graphs/tree.svg?token=O6CFVKK6I1"></img>
 
+
 ### Add a new translation key
 
 To add a new translation key you can do these steps:
 
-1. Add the new key entry to the code where the new key is used: `t("some_new_key")`
+1. Add the new key entry to the code where the new key is used:
+   `t("some_new_key")`
 1. Run `yarn i18n` to extract the new key and update the translation files. This
    will add a skeleton entry to the `locales/en/app.json` file:
 
@@ -212,18 +217,18 @@ To add a new translation key you can do these steps:
    }
    ```
 
-1. Update the skeleton entry in the `locales/en/app.json` file with
-   the English translation:
+1. Update the skeleton entry in the `locales/en/app.json` file with the English
+   translation:
 
-```jsonc
-   {
-       ...
-       "some_new_key": "Some new key",
-       ...
-   }
-```
+    ```jsonc
+    {
+        ...
+        "some_new_key": "Some new key",
+        ...
+    }
+    ```
 
-## Documentation
+
 
 Usage and other technical details about the project can be found here:
 
