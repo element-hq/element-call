@@ -124,6 +124,13 @@ export async function enterRTCSession(
       makeKeyDelay: matrixRtcSessionConfig?.key_rotation_on_leave_delay,
     },
   );
+  if (widget) {
+    try {
+      await widget.api.transport.send(ElementWidgetActions.JoinCall, {});
+    } catch (e) {
+      logger.error("Failed to send join action", e);
+    }
+  }
 }
 
 const widgetPostHangupProcedure = async (
