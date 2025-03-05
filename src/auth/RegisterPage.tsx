@@ -95,7 +95,7 @@ export const RegisterPage: FC = () => {
           }
         }
 
-        setClient?.({ client: newClient, session });
+        setClient?.(newClient, session);
         PosthogAnalytics.instance.eventSignup.cacheSignupEnd(new Date());
       };
 

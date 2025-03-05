@@ -50,7 +50,7 @@ export type ValidClientState = {
     reactions: boolean;
     thumbnails: boolean;
   };
-  setClient: (params?: SetClientParams) => void;
+  setClient: (client: MatrixClient, session: Session) => void;
 };
 
 export type AuthenticatedClient = {
@@ -65,11 +65,6 @@ export type ErrorState = {
   error: Error;
 };
 
-export type SetClientParams = {
-  client: MatrixClient;
-  session: Session;
-};
-
 const ClientContext = createContext<ClientState | undefined>(undefined);
 
 export const ClientContextProvider = ClientContext.Provider;
@@ -79,7 +74,7 @@ export const useClientState = (): ClientState | undefined =>
 
 export function useClient(): {
   client?: MatrixClient;
-  setClient?: (params?: SetClientParams) => void;
+  setClient?: (client: MatrixClient, session: Session) => void;
 } {
   let client;
   let setClient;
@@ -96,7 +91,7 @@ export function useClient(): {
 // Plain representation of the `ClientContext` as a helper for old components that expected an object with multiple fields.
 export function useClientLegacy(): {
   client?: MatrixClient;
-  setClient?: (params?: SetClientParams) => void;
+  setClient?: (client: MatrixClient, session: Session) => void;
   passwordlessUser: boolean;
   loading: boolean;
   authenticated: boolean;
@@ -160,7 +155,11 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     initializing.current = true;
 
     loadClient()
-      .then(setInitClientState)
+      .then((initResult) => {
+        setInitClientState(initResult);
+        if (PosthogAnalytics.instance.isEnabled())
+          PosthogAnalytics.instance.startListeningToSettingsChanges();
+      })
       .catch((err) => logger.error(err))
       .finally(() => (initializing.current = false));
   }, []);
@@ -196,24 +195,20 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   );
 
   const setClient = useCallback(
-    (clientParams?: SetClientParams) => {
+    (client: MatrixClient, session: Session) => {
       const oldClient = initClientState?.client;
-      const newClient = clientParams?.client;
-      if (oldClient && oldClient !== newClient) {
+      if (oldClient && oldClient !== client) {
         oldClient.stopClient();
       }
 
-      if (clientParams) {
-        saveSession(clientParams.session);
-        setInitClientState({
-          widgetApi: null,
-          client: clientParams.client,
-          passwordlessUser: clientParams.session.passwordlessUser,
-        });
-      } else {
-        clearSession();
-        setInitClientState(null);
-      }
+      saveSession(session);
+      setInitClientState({
+        widgetApi: null,
+        client,
+        passwordlessUser: session.passwordlessUser,
+      });
+      if (PosthogAnalytics.instance.isEnabled())
+        PosthogAnalytics.instance.startListeningToSettingsChanges();
     },
     [initClientState?.client],
   );
@@ -229,6 +224,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
     clearSession();
     setInitClientState(null);
     await navigate("/");
+    PosthogAnalytics.instance.logout();
     PosthogAnalytics.instance.setRegistrationType(RegistrationType.Guest);
   }, [navigate, initClientState?.client]);
 
