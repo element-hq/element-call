@@ -89,31 +89,51 @@ For operating and deploying Element Call on your own server, refer to the
 [**Self-Hosting Guide**](./docs/self-hosting.md).
 
 
+## 🧭 MatrixRTC Backend Discovery and Selection
 
-Element Call requires a Livekit SFU alongside a [Livekit JWT
-service](https://github.com/element-hq/lk-jwt-service) to work. The url to the
-Livekit JWT service can either be configured in the config of Element Call
-(fallback/legacy configuration) or be configured by your homeserver via the
-`.well-known/matrix/client`. This is the recommended method.
+For proper Element Call operation each site deployment needs a MatrixRTC backend
+setup as outlined in the [Self-Hosting](#self-hosting). A typical federated site
+deployment for three different sites A, B and C is depicted below.
 
-The configuration is a list of Foci configs:
+![Element Call federated setup](./docs/Federated_Setup.drawio.png)
 
-```json
-"org.matrix.msc4143.rtc_foci": [
-    {
-        "type": "livekit",
-        "livekit_service_url": "https://someurl.com"
-    },
-     {
-        "type": "livekit",
-        "livekit_service_url": "https://livekit2.com"
-    },
-    {
-        "type": "another_foci",
-        "props_for_another_foci": "val"
-    },
-]
-```
+### Backend Discovery
+
+MatrixRTC backend (according to
+[MSC4143](https://github.com/matrix-org/matrix-spec-proposals/pull/4143))
+is announced by the homeserver's `.well-known/matrix/client` file and discovered
+via the `org.matrix.msc4143.rtc_foci` key, e.g.:
+  ```json
+  "org.matrix.msc4143.rtc_foci": [
+      {
+          "type": "livekit",
+          "livekit_service_url": "https://someurl.com"
+      },
+  ]
+  ```
+where the format for MatrixRTC using LiveKit backend is defined in
+[MSC4195](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md).
+In the example above Matrix clients do discover a focus of type `livekit` which
+points them to a Matrix LiveKit JWT Auth Service via `livekit_service_url`.
+
+### Backend Selection
+
+- Each call participant proposes their discovered MatrixRTC backend from
+  `org.matrix.msc4143.rtc_foci` in their `org.matrix.msc3401.call.member` state event.
+- For **LiveKit** MatrixRTC backend
+  ([MSC4195](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)),
+  the **first participant who joined the call** defines via the `foci_preferred`
+  key in their `org.matrix.msc3401.call.member` which actual MatrixRTC backend
+  will be used for this call.
+- During the actual call join flow, the **LiveKit JWT Auth Service** provides
+  the client with the **LiveKit SFU WebSocket URL** and an **access JWT token**
+  in order to exchange media via WebRTC.
+
+The example below illustrates how backend selection works across **Matrix
+federation**, using the setup from sites A, B, and C. It demonstrates backend
+selection for **Matrix rooms 123 and 456**, which include users from different
+homeservers.  
+![Element Call SFU selection over Matrix federation](./docs/SFU_selection.drawio.png)
 
 ## Translation
 
