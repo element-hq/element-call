@@ -4,6 +4,7 @@ node_modules
 dist
 dist-ssr
 *.local
+*.bkp
 .idea/
 public/config.json
 backend/synapse_tmp/*
