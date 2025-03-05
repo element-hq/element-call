@@ -14,12 +14,11 @@ import {
 } from "livekit-client";
 import userEvent from "@testing-library/user-event";
 import { render, screen } from "@testing-library/react";
-import { ErrorBoundary } from "@sentry/react";
 import { MemoryRouter } from "react-router-dom";
 
-import { ErrorPage } from "../FullScreenView";
 import { useECConnectionState } from "./useECConnectionState";
 import { type SFUConfig } from "./openIDSFU";
+import { GroupCallErrorBoundary } from "../room/GroupCallErrorBoundary.tsx";
 
 test.each<[string, ConnectionError]>([
   [
@@ -61,9 +60,9 @@ test.each<[string, ConnectionError]>([
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <ErrorBoundary fallback={ErrorPage}>
+        <GroupCallErrorBoundary>
           <TestComponent />
-        </ErrorBoundary>
+        </GroupCallErrorBoundary>
       </MemoryRouter>,
     );
     await user.click(screen.getByRole("button", { name: "Connect" }));
