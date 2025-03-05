@@ -32,19 +32,21 @@ check [`full-mesh`](https://github.com/element-hq/element-call/tree/full-mesh)
 branch.
 
 
-```sh
-git clone https://github.com/element-hq/element-call.git
-cd element-call
-yarn
-yarn build
-```
+## ✨ Key Features
 
-If all went well, you can now find the build output under `dist` as a series of
-static files. These can be hosted using any web server that can be configured
-with custom routes (see below).
+✅ **Decentralized & Federated** – No central authority; works across Matrix
+homeservers.  
+✅ **End-to-End Encrypted** – Secure and private calls.  
+✅ **Standalone & Widget Mode** – Use as an independent app or embed in Matrix 
+clients.  
+✅ **WebRTC-based** – No additional software required.  
+✅ **Scalable with LiveKit** – Supports large meetings via SFU 
+([MSC4195: MatrixRTC using LiveKit backend](https://github.com/hughns/matrix-spec-proposals/blob/hughns/matrixrtc-livekit/proposals/4195-matrixrtc-livekit.md)).  
+✅ **Raise Hand** – Participants can signal when they want to speak, helping to
+organize the flow of the meeting.  
+✅ **Emoji Reactions** – Users can react with emojis 👍️ 🎉 👏 🤘, adding
+engagement and interactivity to the conversation.  
 
-You also need to add a configuration file which goes in `public/config.json` -
-you can use the sample as a starting point:
 
 ```sh
 cp config/config.sample.json public/config.json
