@@ -264,6 +264,8 @@ export const getUrlParams = (
       "skipLobby",
       isWidget && intent === UserIntent.StartNewCall,
     ),
+    // In SPA mode the user should always exit to the home screen when hanging
+    // up, rather than being sent back to the lobby
     returnToLobby: isWidget ? parser.getFlagParam("returnToLobby") : false,
     theme: parser.getParam("theme"),
     viaServers: !isWidget ? parser.getParam("viaServers") : null,
