@@ -110,8 +110,8 @@ describe("UrlParams", () => {
   });
 
   describe("returnToLobby", () => {
-    it("is true in SPA mode", () => {
-      expect(getUrlParams("?returnToLobby=false").returnToLobby).toBe(true);
+    it("is false in SPA mode", () => {
+      expect(getUrlParams("?returnToLobby=true").returnToLobby).toBe(false);
     });
 
     it("defaults to false in widget mode", () => {

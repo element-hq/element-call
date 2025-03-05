@@ -495,9 +495,7 @@ export const GroupCallView: FC<Props> = ({
     }
   } else if (left && widget !== null) {
     // Left in widget mode:
-    if (!returnToLobby) {
-      body = null;
-    }
+    body = returnToLobby ? lobbyView : null;
   } else if (preload || skipLobby) {
     body = null;
   } else {
