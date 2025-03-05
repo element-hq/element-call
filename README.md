@@ -4,12 +4,10 @@
 [![Localazy](https://img.shields.io/endpoint?url=https%3A%2F%2Fconnect.localazy.com%2Fstatus%2Felement-call%2Fdata%3Fcontent%3Dall%26title%3Dlocalazy%26logo%3Dtrue)](https://localazy.com/p/element-call)
 [![License](https://img.shields.io/github/license/element-hq/element-call)](LICENSE-AGPL-3.0)
 
-Group calls with WebRTC that leverage [Matrix](https://matrix.org) and an
-open-source WebRTC toolkit from [LiveKit](https://livekit.io/).
+[🎬 Live Demo 🎬](https://call.element.io)
 
-For prior version of the Element Call that relied solely on full-mesh logic,
-check [`full-mesh`](https://github.com/element-hq/element-call/tree/full-mesh)
-branch.
+The world's first 🌐 decentralized and 🤝 federated video conferencing solution
+powered by **the Matrix protocol**.
 
 ![A demo of Element Call with six people](demo.jpg)
 
