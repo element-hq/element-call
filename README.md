@@ -229,6 +229,7 @@ To add a new translation key you can do these steps:
     ```
 
 
+## 📖 Documentation
 
 Usage and other technical details about the project can be found here:
 
