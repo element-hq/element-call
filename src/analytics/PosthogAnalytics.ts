@@ -13,6 +13,7 @@ import posthog, {
 import { logger } from "matrix-js-sdk/src/logger";
 import { type MatrixClient } from "matrix-js-sdk/src/matrix";
 import { Buffer } from "buffer";
+import { type Subscription } from "rxjs";
 
 import { widget } from "../widget";
 import {
@@ -101,6 +102,7 @@ export class PosthogAnalytics {
   private anonymity = Anonymity.Disabled;
   private platformSuperProperties = {};
   private registrationType: RegistrationType = RegistrationType.Guest;
+  private optInListener: Subscription | null = null;
 
   public static hasInstance(): boolean {
     return Boolean(this.internalInstance);
@@ -146,7 +148,6 @@ export class PosthogAnalytics {
       );
       this.enabled = false;
     }
-    this.startListeningToSettingsChanges(); // Triggers maybeIdentifyUser
   }
 
   private sanitizeProperties = (
@@ -328,6 +329,8 @@ export class PosthogAnalytics {
     if (this.enabled) {
       this.posthog.reset();
     }
+    this.optInListener?.unsubscribe();
+    this.optInListener = null;
     this.setAnonymity(Anonymity.Disabled);
   }
 
@@ -406,7 +409,7 @@ export class PosthogAnalytics {
     }
   }
 
-  private startListeningToSettingsChanges(): void {
+  public startListeningToSettingsChanges(): void {
     // Listen to account data changes from sync so we can observe changes to relevant flags and update.
     // This is called -
     //  * On page load, when the account data is first received by sync
@@ -415,7 +418,7 @@ export class PosthogAnalytics {
     //  * When the user changes their preferences on this device
     // Note that for new accounts, pseudonymousAnalyticsOptIn won't be set, so updateAnonymityFromSettings
     // won't be called (i.e. this.anonymity will be left as the default, until the setting changes)
-    optInAnalytics.value$.subscribe((optIn) => {
+    this.optInListener ??= optInAnalytics.value$.subscribe((optIn) => {
       this.setAnonymity(optIn ? Anonymity.Pseudonymous : Anonymity.Disabled);
       this.maybeIdentifyUser().catch(() =>
         logger.log("Could not identify user"),
