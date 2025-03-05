@@ -83,9 +83,12 @@ and voice calls within Matrix rooms.
 > Embedded packaging is recommended for Element Call in widget mode!
 
 
-MSC4222 allow clients to opt-in to a change of the sync v2 API that allows them
-to correctly track the state of the room. This is required by Element Call to
-track room state reliably.
+## 🛠️ Self-Hosting
+
+For operating and deploying Element Call on your own server, refer to the
+[**Self-Hosting Guide**](./docs/self-hosting.md).
+
+
 
 Element Call requires a Livekit SFU alongside a [Livekit JWT
 service](https://github.com/element-hq/lk-jwt-service) to work. The url to the
