@@ -77,6 +77,7 @@ import {
   useSetting,
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
+import { CallMembership } from "matrix-js-sdk/src/matrixrtc/CallMembership.ts";
 
 declare global {
   interface Window {
@@ -180,7 +181,9 @@ export const GroupCallView: FC<Props> = ({
 
   // Count each member only once, regardless of how many devices they use
   const participantCount = useMemo(
-    () => new Set<string>(memberships.map((m) => m.sender!)).size,
+    // TODO REVERT THIS!!!
+    // It is debatable if the device count is better than the user count but this debate and change should be done in a separate PR.
+    () => new Set<CallMembership>(memberships).size,
     [memberships],
   );
 
