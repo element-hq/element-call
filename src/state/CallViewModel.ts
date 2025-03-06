@@ -40,6 +40,7 @@ import {
   of,
   race,
   scan,
+  share,
   skip,
   startWith,
   switchAll,
@@ -496,6 +497,8 @@ export class CallViewModel extends ViewModel {
       }
       return displaynameMap;
     }),
+    share(),
+    this.scope.state(),
   );
 
   /**
