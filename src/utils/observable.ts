@@ -5,7 +5,15 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type Observable, defer, finalize, scan, startWith, tap } from "rxjs";
+import {
+  BehaviorSubject,
+  type Observable,
+  defer,
+  finalize,
+  scan,
+  startWith,
+  tap,
+} from "rxjs";
 
 const nothing = Symbol("nothing");
 
@@ -37,4 +45,17 @@ export function accumulate<State, Event>(
 ) {
   return (events$: Observable<Event>): Observable<State> =>
     events$.pipe(scan(update, initial), startWith(initial));
+}
+
+/**
+ * A constructor that takes a source Observable and returns a BehaviorSubject.
+ * This makes sure we only subscribe to the source once. This is useful when using fromEvent.
+ */
+export function singleSubscriberSubject$<T>(
+  observable$: Observable<T>,
+  initial?: T,
+): BehaviorSubject<T | undefined> {
+  const subject$ = new BehaviorSubject(initial);
+  observable$.subscribe(subject$);
+  return subject$;
 }
