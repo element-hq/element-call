@@ -40,6 +40,7 @@ import {
   of,
   race,
   scan,
+  share,
   skip,
   startWith,
   switchAll,
@@ -464,6 +465,16 @@ export class CallViewModel extends ViewModel {
       },
     );
 
+  private readonly membershipsChanged$ = fromEvent(
+    this.matrixRTCSession,
+    MatrixRTCSessionEvent.MembershipsChanged,
+  ).pipe(share());
+
+  private readonly roomMembers$ = fromEvent(
+    this.matrixRTCSession.room,
+    RoomStateEvent.Members,
+  ).pipe(share());
+
   /**
    * Displaynames for each member of the call. This will disambiguate
    * any displaynames that clashes with another member. Only members
@@ -471,9 +482,9 @@ export class CallViewModel extends ViewModel {
    */
   public readonly memberDisplaynames$ = merge(
     // Handle call membership changes.
-    fromEvent(this.matrixRTCSession, MatrixRTCSessionEvent.MembershipsChanged),
+    this.membershipsChanged$,
     // Handle room membership changes (and displayname updates)
-    fromEvent(this.matrixRTCSession.room, RoomStateEvent.Members),
+    this.roomMembers$,
   ).pipe(
     startWith(null),
     map(() => {
@@ -496,6 +507,7 @@ export class CallViewModel extends ViewModel {
       }
       return displaynameMap;
     }),
+    this.scope.state(),
   );
 
   /**
@@ -508,10 +520,7 @@ export class CallViewModel extends ViewModel {
     // Also react to changes in the MatrixRTC session list.
     // The session list will also be update if a room membership changes.
     // No additional RoomState event listener needs to be set up.
-    fromEvent(
-      this.matrixRTCSession,
-      MatrixRTCSessionEvent.MembershipsChanged,
-    ).pipe(startWith(null)),
+    this.membershipsChanged$.pipe(startWith(null)),
     showNonMemberTiles.value$,
   ]).pipe(
     scan(
