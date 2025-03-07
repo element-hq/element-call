@@ -120,7 +120,10 @@ export const GroupCallErrorBoundary = ({
         <ErrorPage
           error={callError}
           resetError={resetError}
-          recoveryActionHandler={recoveryActionHandler}
+          recoveryActionHandler={(action: CallErrorRecoveryAction) => {
+            resetError();
+            recoveryActionHandler?.(action);
+          }}
         />
       );
     },
