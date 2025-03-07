@@ -40,7 +40,6 @@ import {
   of,
   race,
   scan,
-  share,
   skip,
   startWith,
   switchAll,
