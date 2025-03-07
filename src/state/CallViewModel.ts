@@ -497,7 +497,6 @@ export class CallViewModel extends ViewModel {
       }
       return displaynameMap;
     }),
-    share(),
     this.scope.state(),
   );
 
