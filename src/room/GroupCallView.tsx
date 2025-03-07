@@ -77,7 +77,6 @@ import {
   useSetting,
 } from "../settings/settings";
 import { useTypedEventEmitter } from "../useEvents";
-import { CallMembership } from "matrix-js-sdk/src/matrixrtc/CallMembership.ts";
 
 declare global {
   interface Window {
