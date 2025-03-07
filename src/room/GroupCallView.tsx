@@ -162,7 +162,7 @@ export const GroupCallView: FC<Props> = ({
   const roomAvatar = useRoomAvatar(room);
   const { perParticipantE2EE, returnToLobby } = useUrlParams();
   const e2eeSystem = useRoomEncryptionSystem(room.roomId);
-  const [newMembershipManager] = useSetting(useNewMembershipManagerSetting);
+  const [useNewMembershipManager] = useSetting(useNewMembershipManagerSetting);
 
   usePageTitle(roomName);
 
@@ -181,9 +181,7 @@ export const GroupCallView: FC<Props> = ({
 
   // Count each member only once, regardless of how many devices they use
   const participantCount = useMemo(
-    // TODO REVERT THIS!!!
-    // It is debatable if the device count is better than the user count but this debate and change should be done in a separate PR.
-    () => new Set<CallMembership>(memberships).size,
+    () => new Set<string>(memberships.map((m) => m.sender!)).size,
     [memberships],
   );
 
@@ -270,7 +268,7 @@ export const GroupCallView: FC<Props> = ({
               await enterRTCSessionOrError(
                 rtcSession,
                 perParticipantE2EE,
-                newMembershipManager,
+                useNewMembershipManager,
               );
               widget.api.transport.reply(ev.detail, {});
             })().catch((e) => {
@@ -287,7 +285,7 @@ export const GroupCallView: FC<Props> = ({
             await enterRTCSessionOrError(
               rtcSession,
               perParticipantE2EE,
-              newMembershipManager,
+              useNewMembershipManager,
             );
           })().catch((e) => {
             logger.error("Error joining RTC session", e);
@@ -297,7 +295,7 @@ export const GroupCallView: FC<Props> = ({
         void enterRTCSessionOrError(
           rtcSession,
           perParticipantE2EE,
-          newMembershipManager,
+          useNewMembershipManager,
         );
       }
     }
@@ -309,7 +307,7 @@ export const GroupCallView: FC<Props> = ({
     perParticipantE2EE,
     latestDevices,
     latestMuteStates,
-    newMembershipManager,
+    useNewMembershipManager,
   ]);
 
   const [left, setLeft] = useState(false);
@@ -418,7 +416,7 @@ export const GroupCallView: FC<Props> = ({
         enterRTCSessionOrError(
           rtcSession,
           perParticipantE2EE,
-          newMembershipManager,
+          useNewMembershipManager,
         ).catch((e) => {
           logger.error("Error re-entering RTC session on reconnect", e);
         });
@@ -442,7 +440,7 @@ export const GroupCallView: FC<Props> = ({
       );
     }
     return GroupCallErrorPage;
-  }, [t, rtcSession, onLeave, perParticipantE2EE, newMembershipManager]);
+  }, [t, rtcSession, onLeave, perParticipantE2EE, useNewMembershipManager]);
 
   if (!isE2EESupportedBrowser() && e2eeSystem.kind !== E2eeType.NONE) {
     // If we have a encryption system but the browser does not support it.
@@ -473,7 +471,7 @@ export const GroupCallView: FC<Props> = ({
           void enterRTCSessionOrError(
             rtcSession,
             perParticipantE2EE,
-            newMembershipManager,
+            useNewMembershipManager,
           )
         }
         confineToRoom={confineToRoom}
