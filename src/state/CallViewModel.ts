@@ -465,11 +465,21 @@ export class CallViewModel extends ViewModel {
       },
     );
 
+  /**
+   * Observable for changes to the MatrixRTCSession membership list.
+   *
+   * We do this to ensure that we only listen once to the event and then share internally.
+   */
   private readonly membershipsChanged$ = fromEvent(
     this.matrixRTCSession,
     MatrixRTCSessionEvent.MembershipsChanged,
   ).pipe(share());
 
+  /**
+   * Observable for changes to the Matrix Room member data.
+   *
+   * We do this to ensure that we only listen once to the event and then share internally.
+   */
   private readonly roomMembers$ = fromEvent(
     this.matrixRTCSession.room,
     RoomStateEvent.Members,
