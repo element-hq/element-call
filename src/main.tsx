@@ -24,8 +24,6 @@ import { App } from "./App";
 import { init as initRageshake } from "./settings/rageshake";
 import { Initializer } from "./initializer";
 
-window.setLKLogLevel = setLKLogLevel;
-
 initRageshake().catch((e) => {
   logger.error("Failed to initialize rageshake", e);
 });

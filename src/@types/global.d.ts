@@ -18,7 +18,6 @@ declare global {
 
   interface Window {
     controls: Controls;
-    setLKLogLevel: unknown;
   }
 
   interface HTMLElement {
