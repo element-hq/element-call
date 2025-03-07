@@ -7,7 +7,13 @@ Please see LICENSE in the repository root for full details.
 
 import { describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
-import { type ReactElement, type ReactNode } from "react";
+import {
+  type FC,
+  type ReactElement,
+  type ReactNode,
+  useCallback,
+  useState,
+} from "react";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 
@@ -129,6 +135,42 @@ test("should have a reconnect button for ConnectionLostError", async () => {
 
   expect(reconnectCallback).toHaveBeenCalledOnce();
   expect(reconnectCallback).toHaveBeenCalledWith("reconnect");
+});
+
+test("Action handling should reset error state", async () => {
+  const user = userEvent.setup();
+
+  const TestComponent: FC<{ fail: boolean }> = ({ fail }): ReactNode => {
+    if (fail) {
+      throw new ConnectionLostError();
+    }
+    return <div>HELLO</div>;
+  };
+
+  const WrapComponent = (): ReactNode => {
+    const [failState, setFailState] = useState(true);
+    const reconnectCallback = useCallback(() => {
+      setFailState(false);
+    }, [setFailState]);
+
+    return (
+      <BrowserRouter>
+        <GroupCallErrorBoundary recoveryActionHandler={reconnectCallback}>
+          <TestComponent fail={failState} />
+        </GroupCallErrorBoundary>
+      </BrowserRouter>
+    );
+  };
+
+  render(<WrapComponent />);
+
+  // Should fail first
+  await screen.findByText("Connection lost");
+
+  await user.click(screen.getByRole("button", { name: "Reconnect" }));
+
+  // reconnect should have reset the error, thus rendering should be ok
+  await screen.findByText("HELLO");
 });
 
 describe("Rageshake button", () => {
