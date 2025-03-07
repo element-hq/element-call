@@ -113,4 +113,8 @@ export const soundEffectVolumeSetting = new Setting<number>(
   0.5,
 );
 
+export const useNewMembershipManagerSetting = new Setting<boolean>(
+  "new-membership-manager",
+  true,
+);
 export const alwaysShowSelf = new Setting<boolean>("always-show-self", true);
