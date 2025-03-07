@@ -5,7 +5,8 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { describe, expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
+import * as jsUtils from "matrix-js-sdk/src/utils";
 
 import { calculateDisplayName, shouldDisambiguate } from "./displayname";
 import {
@@ -91,6 +92,16 @@ describe("shouldDisambiguate", () => {
       ).toEqual(true);
     },
   );
+  test("should only call removeHiddenChars once per input", () => {
+    const room = mockMatrixRoom({});
+    const spy = vi.spyOn(jsUtils, "removeHiddenChars");
+    shouldDisambiguate(alice, [], room);
+    expect(spy).toHaveBeenCalledTimes(1);
+    for (let i = 0; i < 10; i++) {
+      shouldDisambiguate(alice, [], room);
+    }
+    expect(spy).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("calculateDisplayName", () => {
