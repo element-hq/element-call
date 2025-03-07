@@ -31,7 +31,11 @@ const OpenElsewhere: FC = () => {
   const { t } = useTranslation();
 
   return (
-    <ErrorView Icon={PopOutIcon} title={t("error.open_elsewhere")}>
+    <ErrorView
+      widget={null}
+      Icon={PopOutIcon}
+      title={t("error.open_elsewhere")}
+    >
       <p>
         {t("error.open_elsewhere_description", {
           brand: import.meta.env.VITE_PRODUCT_NAME || "Element Call",

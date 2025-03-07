@@ -30,6 +30,7 @@ import {
   UnknownCallError,
 } from "../utils/errors.ts";
 import { mockConfig } from "../utils/test.ts";
+import { ElementWidgetActions, type WidgetHelpers } from "../widget.ts";
 
 test.each([
   {
@@ -202,4 +203,41 @@ describe("Rageshake button", () => {
       screen.queryByRole("button", { name: "Send debug logs" }),
     ).not.toBeInTheDocument();
   });
+});
+
+test("should have a close button in widget mode", async () => {
+  const error = new MatrixRTCFocusMissingError("example.com");
+  const TestComponent = (): ReactNode => {
+    throw error;
+  };
+
+  const mockWidget = {
+    api: {
+      transport: { send: vi.fn().mockResolvedValue(undefined), stop: vi.fn() },
+    },
+  } as unknown as WidgetHelpers;
+
+  const user = userEvent.setup();
+  const onErrorMock = vi.fn();
+  const { asFragment } = render(
+    <BrowserRouter>
+      <GroupCallErrorBoundary widget={mockWidget} onError={onErrorMock}>
+        <TestComponent />
+      </GroupCallErrorBoundary>
+    </BrowserRouter>,
+  );
+
+  await screen.findByText("Call is not supported");
+
+  await screen.findByRole("button", { name: "Close" });
+
+  expect(asFragment()).toMatchSnapshot();
+
+  await user.click(screen.getByRole("button", { name: "Close" }));
+
+  expect(mockWidget.api.transport.send).toHaveBeenCalledWith(
+    ElementWidgetActions.Close,
+    expect.anything(),
+  );
+  expect(mockWidget.api.transport.stop).toHaveBeenCalled();
 });
