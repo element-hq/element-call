@@ -496,6 +496,10 @@ export class CallViewModel extends ViewModel {
       }
       return displaynameMap;
     }),
+    // It turns out that doing the disambiguation above is rather expensive on Safari (10x slower
+    // than on Chrome/Firefox). This means it is important that we share() the result so that we
+    // don't do this work more times than we need to. This is achieve through the state() operator:
+    this.scope.state(),
   );
 
   /**
