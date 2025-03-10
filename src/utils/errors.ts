@@ -13,6 +13,7 @@ export enum ErrorCode {
    */
   MISSING_MATRIX_RTC_FOCUS = "MISSING_MATRIX_RTC_FOCUS",
   CONNECTION_LOST_ERROR = "CONNECTION_LOST_ERROR",
+  MEMBERSHIP_MANAGER_UNRECOVERABLE = "MEMBERSHIP_MANAGER_UNRECOVERABLE",
   UNKNOWN_ERROR = "UNKNOWN_ERROR",
 }
 
@@ -20,6 +21,7 @@ export enum ErrorCategory {
   /** Calling is not supported, server misconfigured (JWT service missing, no MSC support ...)*/
   CONFIGURATION_ISSUE = "CONFIGURATION_ISSUE",
   NETWORK_CONNECTIVITY = "NETWORK_CONNECTIVITY",
+  RTC_SESSION_FAILURE = "RTC_SESSION_FAILURE",
   UNKNOWN = "UNKNOWN",
   // SYSTEM_FAILURE / FEDERATION_FAILURE ..
 }
@@ -70,5 +72,11 @@ export class ConnectionLostError extends ElementCallError {
       ErrorCode.CONNECTION_LOST_ERROR,
       ErrorCategory.NETWORK_CONNECTIVITY,
     );
+  }
+}
+
+export class RTCSessionError extends ElementCallError {
+  public constructor(code: ErrorCode, message: string) {
+    super("RTCSession Error", code, ErrorCategory.RTC_SESSION_FAILURE, message);
   }
 }
