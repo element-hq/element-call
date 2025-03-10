@@ -17,7 +17,7 @@ export function isFailure(response: Response): boolean {
   }
 
   // fetch will return status === 0 for a success on a file:// URL, so we special case it
-  if (response.url?.startsWith("file:") && response.status === 0) {
+  if (response.url.startsWith("file:") && response.status === 0) {
     return false;
   }
 
