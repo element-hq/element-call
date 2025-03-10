@@ -7,11 +7,35 @@ Please see LICENSE in the repository root for full details.
 
 import {
   removeDirectionOverrideChars,
-  removeHiddenChars,
+  removeHiddenChars as removeHiddenCharsUncached,
 } from "matrix-js-sdk/src/utils";
 
 import type { Room } from "matrix-js-sdk/src/matrix";
 import type { CallMembership } from "matrix-js-sdk/src/matrixrtc";
+
+// Calling removeHiddenChars() can be slow on Safari, so we cache the results.
+// To illustrate a simple benchmark:
+// Chrome: 10,000 calls took 2.599ms
+// Safari: 10,000 calls took 242ms
+// See: https://github.com/element-hq/element-call/issues/3065
+
+const removeHiddenCharsCache = new Map<string, string>();
+
+/**
+ * Calls removeHiddenCharsUncached and caches the result
+ */
+function removeHiddenChars(str: string): string {
+  if (removeHiddenCharsCache.has(str)) {
+    return removeHiddenCharsCache.get(str)!;
+  }
+  const result = removeHiddenCharsUncached(str);
+  // this is naive but should be good enough for our purposes
+  if (removeHiddenCharsCache.size > 500) {
+    removeHiddenCharsCache.clear();
+  }
+  removeHiddenCharsCache.set(str, result);
+  return result;
+}
 
 // Borrowed from https://github.com/matrix-org/matrix-js-sdk/blob/f10deb5ef2e8f061ff005af0476034382ea128ca/src/models/room-member.ts#L409
 export function shouldDisambiguate(
