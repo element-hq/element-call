@@ -125,12 +125,6 @@ export interface ConfigOptions {
 // Overrides members from ConfigOptions that are always provided by the
 // default config and are therefore non-optional.
 export interface ResolvedConfigOptions extends ConfigOptions {
-  default_server_config: {
-    ["m.homeserver"]: {
-      base_url: string;
-      server_name: string;
-    };
-  };
   media_devices: {
     enable_audio: boolean;
     enable_video: boolean;
@@ -139,12 +133,6 @@ export interface ResolvedConfigOptions extends ConfigOptions {
 }
 
 export const DEFAULT_CONFIG: ResolvedConfigOptions = {
-  default_server_config: {
-    ["m.homeserver"]: {
-      base_url: "http://localhost:8008",
-      server_name: "localhost",
-    },
-  },
   features: {
     feature_use_device_session_member_events: true,
   },
