@@ -8,10 +8,10 @@ Please see LICENSE in the repository root for full details.
 import { describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import {
-  type FC,
   type ReactElement,
   type ReactNode,
   useCallback,
+  useEffect,
   useState,
 } from "react";
 import { BrowserRouter } from "react-router-dom";
@@ -27,6 +27,8 @@ import {
   UnknownCallError,
 } from "../utils/errors.ts";
 import { mockConfig } from "../utils/test.ts";
+import { useGroupCallErrorBoundary } from "./useCallErrorBoundary.ts";
+import { GroupCallErrorBoundaryContextProvider } from "./GroupCallErrorBoundaryContextProvider.tsx";
 
 test.each([
   {
@@ -209,4 +211,31 @@ describe("Rageshake button", () => {
       screen.queryByRole("button", { name: "Send debug logs" }),
     ).not.toBeInTheDocument();
   });
+});
+
+test("should show async error with useElementCallErrorContext", async () => {
+  // const error = new MatrixRTCFocusMissingError("example.com");
+  const TestComponent = (): ReactNode => {
+    const { showGroupCallErrorBoundary } = useGroupCallErrorBoundary();
+    useEffect(() => {
+      setTimeout(() => {
+        showGroupCallErrorBoundary(new ConnectionLostError());
+      });
+    }, [showGroupCallErrorBoundary]);
+
+    return <div>Hello</div>;
+  };
+
+  const onErrorMock = vi.fn();
+  render(
+    <BrowserRouter>
+      <GroupCallErrorBoundaryContextProvider>
+        <GroupCallErrorBoundary onError={onErrorMock}>
+          <TestComponent />
+        </GroupCallErrorBoundary>
+      </GroupCallErrorBoundaryContextProvider>
+    </BrowserRouter>,
+  );
+
+  await screen.findByText("Connection lost");
 });

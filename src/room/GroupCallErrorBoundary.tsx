@@ -105,6 +105,30 @@ interface BoundaryProps {
   onError?: (error: unknown) => void;
 }
 
+/**
+ * An ErrorBoundary component that handles ElementCalls errors that can occur during a group call.
+ * It is based on the sentry ErrorBoundary component, that will log the error to sentry.
+ *
+ * The error fallback will show an error page with:
+ * - a description of the error
+ * - a button to go back the home screen
+ * - optional call-to-action buttons (ex: reconnect for connection lost)
+ * - A rageshake button for unknown errors
+ *
+ * For async errors the `useCallErrorBoundary` hook should be used to show the error page
+ * ```
+ *   const { showGroupCallErrorBoundary } = useCallErrorBoundary();
+ *   ... some async code
+ *       catch(error) {
+ *        showGroupCallErrorBoundary(error);
+ *       }
+ *   ...
+ * ```
+ * @param recoveryActionHandler
+ * @param onError
+ * @param children
+ * @constructor
+ */
 export const GroupCallErrorBoundary = ({
   recoveryActionHandler,
   onError,
