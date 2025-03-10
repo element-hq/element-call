@@ -13,6 +13,7 @@ import {
   type ConfigOptions,
   type ResolvedConfigOptions,
 } from "./ConfigOptions";
+import { isFailure } from "../utils/fetch";
 
 export class Config {
   private static internalInstance: Config | undefined;
@@ -76,8 +77,7 @@ async function downloadConfig(
   const url = new URL(configJsonFilename, window.location.href);
   const response = await fetch(url);
 
-  // if we are running embedded on file:// origin then we can't trust the response status
-  if (!response.ok && (!response.url || !response.url.startsWith("file:"))) {
+  if (isFailure(response)) {
     // Lack of a config isn't an error, we should just use the defaults.
     // Also treat a blank config as no config, assuming the status code is 0, because we don't get 404s from file:
     // URIs so this is the only way we can not fail if the file doesn't exist when loading from a file:// URI.

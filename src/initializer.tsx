@@ -28,6 +28,7 @@ import { getUrlParams } from "./UrlParams";
 import { Config } from "./config/Config";
 import { ElementCallOpenTelemetry } from "./otel/otel";
 import { platform } from "./Platform";
+import { isFailure } from "./utils/fetch";
 
 // This generates a map of locale names to their URL (based on import.meta.url), which looks like this:
 // {
@@ -79,11 +80,7 @@ const Backend = {
         },
       });
 
-      // fetch will always return ok === false for file:// URLs
-      if (
-        !response.ok &&
-        (!response.url || !response.url.startsWith("file:"))
-      ) {
+      if (isFailure(response)) {
         throw Error(`Failed to fetch ${url}`);
       }
 
