@@ -57,6 +57,8 @@ import {
   UnknownCallError,
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
+import { GroupCallErrorBoundaryContextProvider } from "./GroupCallErrorBoundaryContextProvider.tsx";
+import { useGroupCallErrorBoundary } from "./useCallErrorBoundary.ts";
 
 declare global {
   interface Window {
@@ -77,7 +79,15 @@ interface Props {
   widget: WidgetHelpers | null;
 }
 
-export const GroupCallView: FC<Props> = ({
+export const GroupCallView: FC<Props> = (props) => {
+  return (
+    <GroupCallErrorBoundaryContextProvider>
+      <GroupCallViewInner {...props} />
+    </GroupCallErrorBoundaryContextProvider>
+  );
+};
+
+export const GroupCallViewInner: FC<Props> = ({
   client,
   isPasswordlessUser,
   confineToRoom,
@@ -156,25 +166,29 @@ export const GroupCallView: FC<Props> = ({
   const latestDevices = useLatest(deviceContext);
   const latestMuteStates = useLatest(muteStates);
 
-  const enterRTCSessionOrError = async (
-    rtcSession: MatrixRTCSession,
-    perParticipantE2EE: boolean,
-  ): Promise<void> => {
-    try {
-      await enterRTCSession(rtcSession, perParticipantE2EE);
-    } catch (e) {
-      if (e instanceof ElementCallError) {
-        // e.code === ErrorCode.MISSING_LIVE_KIT_SERVICE_URL)
-        setEnterRTCError(e);
-      } else {
-        logger.error(`Unknown Error while entering RTC session`, e);
-        const error = new UnknownCallError(
-          e instanceof Error ? e : new Error("Unknown error", { cause: e }),
-        );
-        setEnterRTCError(error);
+  const { showGroupCallErrorBoundary } = useGroupCallErrorBoundary();
+
+  const enterRTCSessionOrError = useCallback(
+    async (
+      rtcSession: MatrixRTCSession,
+      perParticipantE2EE: boolean,
+    ): Promise<void> => {
+      try {
+        await enterRTCSession(rtcSession, perParticipantE2EE);
+      } catch (e) {
+        if (e instanceof ElementCallError) {
+          showGroupCallErrorBoundary(e);
+        } else {
+          logger.error(`Unknown Error while entering RTC session`, e);
+          const error = new UnknownCallError(
+            e instanceof Error ? e : new Error("Unknown error", { cause: e }),
+          );
+          showGroupCallErrorBoundary(error);
+        }
       }
-    }
-  };
+    },
+    [showGroupCallErrorBoundary],
+  );
 
   useEffect(() => {
     const defaultDeviceSetup = async ({
@@ -255,12 +269,11 @@ export const GroupCallView: FC<Props> = ({
     perParticipantE2EE,
     latestDevices,
     latestMuteStates,
+    enterRTCSessionOrError,
   ]);
 
   const [left, setLeft] = useState(false);
-  const [enterRTCError, setEnterRTCError] = useState<ElementCallError | null>(
-    null,
-  );
+
   const navigate = useNavigate();
 
   const onLeave = useCallback(
@@ -378,14 +391,7 @@ export const GroupCallView: FC<Props> = ({
   );
 
   let body: ReactNode;
-  if (enterRTCError) {
-    // If an ElementCallError was recorded, then create a component that will fail to render and throw
-    // the error. This will then be handled by the ErrorBoundary component.
-    const ErrorComponent = (): ReactNode => {
-      throw enterRTCError;
-    };
-    body = <ErrorComponent />;
-  } else if (isJoined) {
+  if (isJoined) {
     body = (
       <>
         {shareModal}
