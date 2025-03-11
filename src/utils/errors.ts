@@ -16,6 +16,7 @@ export enum ErrorCode {
   /** LiveKit indicates that the server has hit its track limits */
   INSUFFICIENT_CAPACITY_ERROR = "INSUFFICIENT_CAPACITY_ERROR",
   E2EE_NOT_SUPPORTED = "E2EE_NOT_SUPPORTED",
+  OPEN_ID_ERROR = "OPEN_ID_ERROR",
   UNKNOWN_ERROR = "UNKNOWN_ERROR",
 }
 
@@ -41,7 +42,7 @@ export class ElementCallError extends Error {
     localisedTitle: string,
     code: ErrorCode,
     category: ErrorCategory,
-    localisedMessage: string,
+    localisedMessage?: string,
     cause?: Error,
   ) {
     super(localisedTitle, { cause });
@@ -99,6 +100,19 @@ export class UnknownCallError extends ElementCallError {
       ErrorCode.UNKNOWN_ERROR,
       ErrorCategory.UNKNOWN,
       error.message,
+      // Properly set it as a cause for a better reporting on sentry
+      error,
+    );
+  }
+}
+
+export class FailToGetOpenIdToken extends ElementCallError {
+  public constructor(error: Error) {
+    super(
+      t("error.generic"),
+      ErrorCode.OPEN_ID_ERROR,
+      ErrorCategory.CONFIGURATION_ISSUE,
+      undefined,
       // Properly set it as a cause for a better reporting on sentry
       error,
     );

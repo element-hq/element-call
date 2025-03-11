@@ -8,6 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { describe, expect, test, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import {
+  type FC,
   type ReactElement,
   type ReactNode,
   useCallback,
