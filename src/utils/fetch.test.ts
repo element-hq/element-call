@@ -11,11 +11,15 @@ import { isFailure } from "./fetch";
 
 describe("isFailure", () => {
   it("returns false for a successful response", () => {
-    expect(isFailure({ ok: true } as Response)).toBe(false);
+    expect(isFailure({ ok: true, url: "https://foo.com" } as Response)).toBe(
+      false,
+    );
   });
 
   it("returns true for a failed response", () => {
-    expect(isFailure({ ok: false } as Response)).toBe(true);
+    expect(isFailure({ ok: false, url: "https://foo.com" } as Response)).toBe(
+      true,
+    );
   });
 
   it("returns false for a file:// URL with status 0", () => {
