@@ -420,7 +420,7 @@ export const GroupCallView: FC<Props> = ({
     // If an ElementCallError was recorded, then create a component that will fail to render and throw
     // the error. This will then be handled by the ErrorBoundary component.
     const ErrorComponent = (): ReactNode => {
-      throw enterRTCError;
+      throw error;
     };
     body = <ErrorComponent />;
   } else if (isJoined) {
