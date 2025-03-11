@@ -18,8 +18,9 @@ import { AutoDiscovery } from "matrix-js-sdk/lib/autodiscovery";
 import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
-import { MatrixRTCFocusMissingError } from "./utils/errors.ts";
-import { getUrlParams } from "./UrlParams.ts";
+import { MatrixRTCFocusMissingError } from "./utils/errors";
+import { getUrlParams } from "./UrlParams";
+import { getJoinedNonFunctionalMembers } from "./utils/matrix";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -94,6 +95,12 @@ async function makePreferredLivekitFoci(
   // if (focusOtherMembers) preferredFoci.push(focusOtherMembers);
 }
 
+function getNotifyType(room: Room): CallNotifyType | undefined {
+  if (room.isCallRoom()) return undefined;
+  if (getJoinedNonFunctionalMembers(room).length === 2) return "ring";
+  return "notify";
+}
+
 export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   encryptMedia: boolean,
@@ -116,6 +123,7 @@ export async function enterRTCSession(
     await makePreferredLivekitFoci(rtcSession, livekitAlias),
     makeActiveFocus(),
     {
+      notifyType: getNotifyType(rtcSession.room),
       useNewMembershipManager,
       manageMediaKeys: encryptMedia,
       ...(useDeviceSessionMemberEvents !== undefined && {

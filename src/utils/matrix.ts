@@ -12,7 +12,10 @@ import {
   IndexedDBStore,
   MemoryStore,
   Preset,
+  type RoomMember,
+  UNSTABLE_ELEMENT_FUNCTIONAL_USERS,
   Visibility,
+  Direction,
 } from "matrix-js-sdk";
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
 import { logger } from "matrix-js-sdk/lib/logger";
@@ -334,6 +337,27 @@ export function getRelativeRoomUrl(
     ? "/" + roomAliasLocalpartFromRoomName(roomName)
     : "";
   return `/room/#${roomPart}?${generateUrlSearchParams(roomId, encryptionSystem, viaServers).toString()}`;
+}
+
+/**
+ * Returns all room members that are non-functional (all actual room members).
+ * A functional user is a user that is not a real user, but a bot, assistant, etc.
+ */
+export function getJoinedNonFunctionalMembers(room: Room): RoomMember[] {
+  const functionalUsersStateEvent = room
+    .getLiveTimeline()
+    .getState(Direction.Forward)
+    ?.getStateEvents(UNSTABLE_ELEMENT_FUNCTIONAL_USERS.name, "");
+
+  const functionalMembers = Array.isArray(
+    functionalUsersStateEvent?.getContent().service_members,
+  )
+    ? functionalUsersStateEvent.getContent().service_members
+    : [];
+
+  return room
+    .getJoinedMembers()
+    .filter((m) => !functionalMembers.includes(m.userId));
 }
 
 /**
