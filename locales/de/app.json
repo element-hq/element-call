@@ -70,7 +70,8 @@
     "livekit_sfu": "LiveKit SFU: {{url}}",
     "matrix_id": "Matrix-ID: {{id}}",
     "show_connection_stats": "Verbindungsstatistiken anzeigen",
-    "show_non_member_tiles": "Kacheln für Nicht-Mitgliedermedien anzeigen"
+    "show_non_member_tiles": "Kacheln für Nicht-Mitgliedermedien anzeigen",
+    "use_new_membership_manager": "Neuen MembershipManager verwenden"
   },
   "disconnected_banner": "Die Verbindung zum Server wurde getrennt.",
   "error": {
@@ -87,7 +88,7 @@
     "insufficient_capacity_description": "Der Server hat seine maximale Kapazität erreicht, daher ist ein Beitritt zum Anruf derzeit nicht möglich. Bitte später erneut versuchen oder den Serveradministrator kontaktieren, falls das Problem weiterhin besteht.",
     "matrix_rtc_focus_missing": "Der Server ist nicht für die Verwendung mit {{brand}} konfiguriert. Bitte den Serveradministrator kontaktieren (Domain: {{domain}}, Fehlercode: {{ errorCode }}).",
     "open_elsewhere": "In einem anderen Tab geöffnet",
-    "open_elsewhere_description": "{{brand}}wurde in einem anderen Tab geöffnet. Wenn das nicht richtig klingt, versuchen Sie, die Seite neu zu laden.",
+    "open_elsewhere_description": "{{brand}} wurde in einem anderen Tab geöffnet. Wenn das nicht richtig klingt, versuchen Sie, die Seite neu zu laden.",
     "unexpected_ec_error": "Ein unerwarteter Fehler ist aufgetreten (<0>Fehlercode: </0> <1>{{ errorCode }}</1>). Bitte den Serveradministrator kontaktieren."
   },
   "group_call_loader": {
