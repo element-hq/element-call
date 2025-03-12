@@ -16,8 +16,8 @@ env:
   # This is to help make sure that we notice if the packaging process has become
   # broken ahead of a release.
   DRY_RUN: ${{ github.event_name != 'release' }}
-  # We should only use the SHA case for a dry run
-  VERSION: ${{ github.event_name == 'release' && github.event.release.tag_name || github.sha }}
+  # We should only use the hard coded test value for a dry run
+  VERSION: ${{ github.event_name == 'release' && github.event.release.tag_name || 'v0.0.0-pre.0' }}
 
 jobs:
   build_element_call:
