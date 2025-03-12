@@ -10,6 +10,7 @@ import { PopOutIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
 
 import type { FC, ReactNode } from "react";
 import { ErrorView } from "./ErrorView";
+import { widget } from "./widget.ts";
 
 /**
  * An error consisting of a terse message to be logged to the console and a
@@ -32,7 +33,7 @@ const OpenElsewhere: FC = () => {
 
   return (
     <ErrorView
-      widget={null}
+      widget={widget}
       Icon={PopOutIcon}
       title={t("error.open_elsewhere")}
     >

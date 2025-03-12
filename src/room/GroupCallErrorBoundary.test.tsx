@@ -67,6 +67,7 @@ test.each([
         <GroupCallErrorBoundary
           onError={onErrorMock}
           recoveryActionHandler={vi.fn()}
+          widget={null}
         >
           <TestComponent />
         </GroupCallErrorBoundary>
@@ -95,6 +96,7 @@ test("should render the error page with link back to home", async () => {
       <GroupCallErrorBoundary
         onError={onErrorMock}
         recoveryActionHandler={vi.fn()}
+        widget={null}
       >
         <TestComponent />
       </GroupCallErrorBoundary>
@@ -139,7 +141,10 @@ test("ConnectionLostError: Action handling should reset error state", async () =
 
     return (
       <BrowserRouter>
-        <GroupCallErrorBoundary recoveryActionHandler={reconnectCallback}>
+        <GroupCallErrorBoundary
+          recoveryActionHandler={reconnectCallback}
+          widget={null}
+        >
           <TestComponent fail={failState} />
         </GroupCallErrorBoundary>
       </BrowserRouter>
@@ -181,6 +186,7 @@ describe("Rageshake button", () => {
         <GroupCallErrorBoundary
           onError={vi.fn()}
           recoveryActionHandler={vi.fn()}
+          widget={null}
         >
           <TestComponent />
         </GroupCallErrorBoundary>
@@ -221,7 +227,11 @@ test("should have a close button in widget mode", async () => {
   const onErrorMock = vi.fn();
   const { asFragment } = render(
     <BrowserRouter>
-      <GroupCallErrorBoundary widget={mockWidget} onError={onErrorMock}>
+      <GroupCallErrorBoundary
+        widget={mockWidget}
+        onError={onErrorMock}
+        recoveryActionHandler={vi.fn()}
+      >
         <TestComponent />
       </GroupCallErrorBoundary>
     </BrowserRouter>,
