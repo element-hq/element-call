@@ -106,7 +106,7 @@ interface BoundaryProps {
   children: ReactNode | (() => ReactNode);
   recoveryActionHandler: RecoveryActionHandler;
   onError?: (error: unknown) => void;
-  widget?: WidgetHelpers | null;
+  widget: WidgetHelpers | null;
 }
 
 export const GroupCallErrorBoundary = ({
