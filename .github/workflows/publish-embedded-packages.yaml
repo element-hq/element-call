@@ -191,7 +191,7 @@ jobs:
         with:
           repository: element-hq/element-call-swift
           path: element-call-swift
-          token: ${{ secrets.ELEMENT_BOT_TOKEN }}
+          token: ${{ secrets.SWIFT_RELEASE_TOKEN }}
 
       - name: Copy files
         run: rsync -a --delete --exclude .git element-call/embedded/ios/ element-call-swift
