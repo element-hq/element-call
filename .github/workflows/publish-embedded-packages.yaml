@@ -16,6 +16,8 @@ env:
   # This is to help make sure that we notice if the packaging process has become
   # broken ahead of a release.
   DRY_RUN: ${{ github.event_name != 'release' }}
+  # We should only use the SHA case for a dry run
+  VERSION: ${{ github.event_name == 'release' && github.event.release.tag_name || github.sha }}
 
 jobs:
   build_element_call:
@@ -33,7 +35,7 @@ jobs:
       contents: write # required to upload release asset
       packages: write
     env:
-      FILENAME_PREFIX: element-call-embedded-${{ github.event.release.tag_name }}
+      FILENAME_PREFIX: element-call-embedded-${{ github.event.release.tag_name || github.sha }} # Using ${{ env.VERSION }} doesn't work here
     steps:
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
@@ -83,7 +85,7 @@ jobs:
       - name: Publish npm
         working-directory: embedded/web
         run: |
-          npm version ${{ github.event.release.tag_name }} --no-git-tag-version
+          npm version ${{ env.VERSION }} --no-git-tag-version
           echo "NPM_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
           npm publish --provenance --access public ${{ env.DRY_RUN  && '--dry-run' || '' }}
         env:
@@ -127,11 +129,6 @@ jobs:
         with:
           distribution: "temurin"
           java-version: "17"
-
-      - name: Get version
-        run: |
-          VERSION=${{ github.event.release.tag_name }}
-          echo "VERSION=${VERSION:1}" >> $GITHUB_ENV
 
       - name: Publish AAR
         if: ${{ !env.DRY_RUN }}
@@ -180,11 +177,6 @@ jobs:
           run-id: ${{ github.event.workflow_run.id || github.run_id }}
           name: build-output-embedded
           path: element-call/embedded/ios/Sources/dist
-
-      - name: Get version
-        run: |
-          VERSION=${{ github.event.release.tag_name }}
-          echo "VERSION=${VERSION:1}" >> $GITHUB_ENV
 
       - name: Checkout element-call-swift
         uses: actions/checkout@v4
