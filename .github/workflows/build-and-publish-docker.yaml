@@ -30,7 +30,7 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           run-id: ${{ inputs.artifact_run_id }}
-          name: build-output
+          name: build-output-full
           path: dist
 
       - name: Log in to container registry
