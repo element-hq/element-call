@@ -38,7 +38,7 @@ export type RecoveryActionHandler = (action: CallErrorRecoveryAction) => void;
 
 interface ErrorPageProps {
   error: ElementCallError;
-  recoveryActionHandler?: RecoveryActionHandler;
+  recoveryActionHandler: RecoveryActionHandler;
   resetError: () => void;
 }
 
@@ -48,7 +48,6 @@ const ErrorPage: FC<ErrorPageProps> = ({
 }: ErrorPageProps): ReactElement => {
   const { t } = useTranslation();
 
-  // let title: string;
   let icon: ComponentType<SVGAttributes<SVGElement>>;
   switch (error.category) {
     case ErrorCategory.CONFIGURATION_ISSUE:
@@ -68,7 +67,7 @@ const ErrorPage: FC<ErrorPageProps> = ({
   if (error instanceof ConnectionLostError) {
     actions.push({
       label: t("call_ended_view.reconnect_button"),
-      onClick: () => recoveryActionHandler?.("reconnect"),
+      onClick: () => recoveryActionHandler("reconnect"),
     });
   }
 
@@ -101,7 +100,7 @@ const ErrorPage: FC<ErrorPageProps> = ({
 
 interface BoundaryProps {
   children: ReactNode | (() => ReactNode);
-  recoveryActionHandler?: RecoveryActionHandler;
+  recoveryActionHandler: RecoveryActionHandler;
   onError?: (error: unknown) => void;
 }
 
@@ -122,7 +121,7 @@ export const GroupCallErrorBoundary = ({
           resetError={resetError}
           recoveryActionHandler={(action: CallErrorRecoveryAction) => {
             resetError();
-            recoveryActionHandler?.(action);
+            recoveryActionHandler(action);
           }}
         />
       );
