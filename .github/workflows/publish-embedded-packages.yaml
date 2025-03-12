@@ -19,7 +19,6 @@ env:
 
 jobs:
   build_element_call:
-    if: ${{ github.event_name == 'release' }}
     uses: ./.github/workflows/build-element-call.yaml
     with:
       vite_app_version: embedded-${{ github.event.release.tag_name }}
