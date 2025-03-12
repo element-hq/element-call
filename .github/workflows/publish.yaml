@@ -1,20 +1,15 @@
-name: Build & publish images to the package registry for releases
+name: Build & publish full packages for releases
 
 on:
   release:
     types: [published]
 
-env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-
 jobs:
   build_element_call:
-    if: ${{ github.event_name == 'release' }}
     uses: ./.github/workflows/build-element-call.yaml
     with:
       package: full
-      vite_app_version: ${{ github.event.release.tag_name || github.sha }}
+      vite_app_version: ${{ github.event.release.tag_name }}
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
@@ -25,16 +20,11 @@ jobs:
     if: always()
     name: Publish tarball
     runs-on: ubuntu-latest
-    outputs:
-      unix_time: ${{steps.current-time.outputs.unix_time}}
     permissions:
       contents: write # required to upload release asset
       packages: write
     steps:
-      - name: Get current time
-        id: current-time
-        run: echo "unix_time=$(date +'%s')" >> $GITHUB_OUTPUT
-      - name: 📥 Download artifact
+      - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
@@ -43,18 +33,23 @@ jobs:
           path: dist
       - name: Create Tarball
         env:
-          TARBALL_VERSION: ${{ github.event.release.tag_name || github.sha }}
+          TARBALL_VERSION: ${{ github.event.release.tag_name }}
         run: |
           tar --numeric-owner --transform "s/dist/element-call-${TARBALL_VERSION}/" -cvzf element-call-${TARBALL_VERSION}.tar.gz dist
+          sha256sum element-call-${TARBALL_VERSION}.tar.gz | tee element-call-${TARBALL_VERSION}.tar.gz.sha256
       - name: Upload
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         env:
           GITHUB_TOKEN: ${{ github.token }}
         with:
-          path: "./element-call-*.tar.gz"
+          files: |
+            element-call-${{ github.event.release.tag_name }}.tar.gz
+            element-call-${{ github.event.release.tag_name }}.tar.gz.sha256
+
   publish_docker:
-    needs: publish_tarball
+    needs: build_element_call
     if: always()
+    name: Publish docker
     permissions:
       contents: write
       packages: write
@@ -64,3 +59,21 @@ jobs:
       docker_tags: |
         type=sha,format=short,event=branch
         type=semver,pattern=v{{version}}
+  add_docker_release_note:
+    needs: publish_docker
+    name: Add docker release note
+    runs-on: ubuntu-latest
+    steps:
+      - name: Add release note
+        uses: softprops/action-gh-release@v2
+        with:
+          append_body: true
+          body: |
+            ## Docker
+            Element Call is available as a Docker image from the [GitHub Container Registry](https://github.com/element-hq/element-call/pkgs/container/element-call).
+
+            The image provides a full build of Element Call that can be used both in standalone and as a widget.
+
+            ```
+            docker pull ghcr.io/element-hq/element-call:${{ github.event.release.tag_name }}
+            ```
