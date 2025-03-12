@@ -76,7 +76,7 @@ export interface ConfigOptions {
   /**
    * A link to the end-user license agreement (EULA)
    */
-  eula: string;
+  eula?: string;
 
   media_devices?: {
     /**
@@ -131,6 +131,7 @@ export interface ResolvedConfigOptions extends ConfigOptions {
       server_name: string;
     };
   };
+  eula: string;
   media_devices: {
     enable_audio: boolean;
     enable_video: boolean;
