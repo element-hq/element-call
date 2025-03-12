@@ -35,7 +35,7 @@ export class Config {
         window.location.pathname.endsWith("/room/") ||
         window.location.pathname.endsWith("/room")
       ) {
-        // it looks like we are running as an SPA so use the config at the root
+        // it looks like we are running in standalone mode so use the config at the root
         fetchTarget = new URL("/config.json", window.location.href).href;
       } else {
         // otherwise we are probably running as a widget so use the config in the same directory
