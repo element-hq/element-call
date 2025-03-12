@@ -1,0 +1,217 @@
+name: Build & publish embedded packages for releases
+
+on:
+  release:
+    types: [published]
+  pull_request:
+    types:
+      - synchronize
+      - opened
+      - labeled
+  push:
+    branches: [livekit]
+
+env:
+  # We perform a dry run for all events except releases.
+  # This is to help make sure that we notice if the packaging process has become
+  # broken ahead of a release.
+  DRY_RUN: ${{ github.event_name != 'release' }}
+  # We should only use the hard coded test value for a dry run
+  VERSION: ${{ github.event_name == 'release' && github.event.release.tag_name || 'v0.0.0-pre.0' }}
+
+jobs:
+  build_element_call:
+    uses: ./.github/workflows/build-element-call.yaml
+    with:
+      vite_app_version: embedded-${{ github.event.release.tag_name }}
+      package: embedded
+
+  publish_tarball:
+    needs: build_element_call
+    if: always()
+    name: Publish tarball
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # required to upload release asset
+      packages: write
+    env:
+      FILENAME_PREFIX: element-call-embedded-${{ github.event.release.tag_name || github.sha }} # Using ${{ env.VERSION }} doesn't work here
+    steps:
+      - name: 📥 Download built element-call artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id || github.run_id }}
+          name: build-output-embedded
+          path: ${{ env.FILENAME_PREFIX}}
+      - name: Create Tarball
+        run: tar --numeric-owner -cvzf ${{ env.FILENAME_PREFIX }}.tar.gz ${{ env.FILENAME_PREFIX }}
+      - name: Create Checksum
+        run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
+      - name: Upload
+        if: ${{ env.DRY_RUN == 'false' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ${{ env.FILENAME_PREFIX }}.tar.gz
+            ${{ env.FILENAME_PREFIX }}.sha256
+
+  publish_npm:
+    needs: build_element_call
+    if: always()
+    name: Publish NPM
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 📥 Download built element-call artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id || github.run_id }}
+          name: build-output-embedded
+          path: embedded/web/dist
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .node-version
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Publish npm
+        working-directory: embedded/web
+        run: |
+          npm version ${{ env.VERSION }} --no-git-tag-version
+          echo "NPM_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
+          npm publish --provenance --access public ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
+
+      - name: Add release note
+        if: ${{ env.DRY_RUN == 'false' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          append_body: true
+          body: |
+            ## NPM
+
+            This package provides an embedded build of Element Call that can be both used as a widget within another application.
+
+            ```
+            npm install @element-hq/element-call-embedded@${{ env.NPM_VERSION }}
+            ```
+
+  publish_android:
+    needs: build_element_call
+    if: always()
+    name: Publish Android AAR
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: 📥 Download built element-call artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id || github.run_id }}
+          name: build-output-embedded
+          path: embedded/android/lib/src/main/assets/element-call
+
+      - name: ☕️ Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: "temurin"
+          java-version: "17"
+
+      - name: Publish AAR
+        if: ${{ env.DRY_RUN == 'false' }}
+        # TODO: can we do some kind of dry run?
+        env:
+          EC_VERSION: ${{ env.VERSION }}
+          ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_RELEASE_USERNAME }}
+          ORG_GRADLE_PROJECT_mavenCentralPassword: ${{ secrets.MAVEN_RELEASE_PASSWORD }}
+          ORG_GRADLE_PROJECT_signingInMemoryKey: ${{ secrets.GPG_SIGNING_KEY }}
+          ORG_GRADLE_PROJECT_signingInMemoryKeyPassword: ${{ secrets.GPG_SIGNING_KEY_PASSWORD }}
+        run: embedded/android/publish_android_package.sh -s
+
+      - name: Add release note
+        if: ${{ env.DRY_RUN == 'false' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          append_body: true
+          body: |
+            ## Android AAR
+
+            This package provides an embedded build of Element Call that can be both used as a widget within another application.
+
+            ```
+            dependencies {
+              implementation 'io.element.call:element-call-embedded:${{ env.VERSION}}'
+            }
+            ```
+
+  publish_ios:
+    needs: build_element_call
+    if: always()
+    name: Publish SwiftPM Library
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          path: element-call
+
+      - name: 📥 Download built element-call artifact
+        uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id || github.run_id }}
+          name: build-output-embedded
+          path: element-call/embedded/ios/Sources/dist
+
+      - name: Checkout element-call-swift
+        uses: actions/checkout@v4
+        with:
+          repository: element-hq/element-call-swift
+          path: element-call-swift
+          token: ${{ secrets.SWIFT_RELEASE_TOKEN }}
+
+      - name: Copy files
+        run: rsync -a --delete --exclude .git element-call/embedded/ios/ element-call-swift
+
+      - name: Commit and tag
+        working-directory: element-call-swift
+        run: |
+          git config --global user.email "ci@element.io"
+          git config --global user.name "Element CI"
+          git add -A
+          git commit -am "Release ${{ env.VERSION }}"
+          git tag -a ${{ env.VERSION }} -m "${{ github.event.release.html_url }}"
+
+      - name: Push
+        working-directory: element-call-swift
+        run: |
+          git push --tags ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
+
+      - name: Add release note
+        if: ${{ env.DRY_RUN == 'false' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          append_body: true
+          body: |
+            ## SwiftPM
+
+            This package provides an embedded build of Element Call that can be both used as a widget within another application.
+
+            ```
+            .package(url: "https://github.com/element-hq/element-call-swift.git", from: "${{ env.VERSION }}")
+            ```

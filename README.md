@@ -52,9 +52,11 @@ Element Call can be packaged in two ways:
 **Full Package** – Supports both **Standalone** and **Widget** mode. Hosted as
 a static web page and accessed via a URL when used as a widget.
 
-**Embedded Package** – 🚧 **Coming [Soon](https://github.com/element-hq/element-call/issues/2994):** Designed for **Widget mode** only. Bundled with a
+**Embedded Package** – Designed for **Widget mode** only. Bundled with a
 messenger app for seamless integration. This is the recommended method for
 embedding Element Call into a messenger app.
+
+See the [here](./docs/embedded-standalone.md) for more information on the packages.
 
 ### Standalone mode
 
