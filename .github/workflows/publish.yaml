@@ -36,7 +36,7 @@ jobs:
           TARBALL_VERSION: ${{ github.event.release.tag_name }}
         run: |
           tar --numeric-owner --transform "s/dist/element-call-${TARBALL_VERSION}/" -cvzf element-call-${TARBALL_VERSION}.tar.gz dist
-          sha256sum element-call-${TARBALL_VERSION}.tar.gz > element-call-${TARBALL_VERSION}.tar.gz.sha256
+          sha256sum element-call-${TARBALL_VERSION}.tar.gz | tee element-call-${TARBALL_VERSION}.tar.gz.sha256
       - name: Upload
         uses: actions/upload-artifact@4cec3d8aa04e39d1a68397de0c4cd6fb9dce8ec1 # v4.6.1
         env:

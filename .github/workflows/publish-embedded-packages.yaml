@@ -45,7 +45,7 @@ jobs:
       - name: Create Tarball
         run: tar --numeric-owner -cvzf ${{ env.FILENAME_PREFIX }}.tar.gz ${{ env.FILENAME_PREFIX }}
       - name: Create Checksum
-        run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum > ${{ env.FILENAME_PREFIX }}.sha256
+        run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
       - name: Upload
         if: ${{ !env.DRY_RUN }}
         uses: softprops/action-gh-release@v2
