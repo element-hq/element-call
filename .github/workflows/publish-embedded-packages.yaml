@@ -198,10 +198,9 @@ jobs:
           git tag -a ${{ env.VERSION }} -m "${{ github.event.release.html_url }}"
 
       - name: Push
-        if: ${{ !env.DRY_RUN }}
         working-directory: element-call-swift
         run: |
-          git push --tags
+          git push --tags ${{ env.DRY_RUN  && '--dry-run' || '' }}
 
       - name: Add release note
         if: ${{ !env.DRY_RUN }}
