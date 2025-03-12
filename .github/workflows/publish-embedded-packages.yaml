@@ -3,6 +3,19 @@ name: Build & publish embedded packages for releases
 on:
   release:
     types: [published]
+  pull_request:
+    types:
+      - synchronize
+      - opened
+      - labeled
+  push:
+    branches: [livekit]
+
+env:
+  # We perform a dry run for all events except releases.
+  # This is to help make sure that we notice if the packaging process has become
+  # broken ahead of a release.
+  DRY_RUN: ${{ github.event_name != 'release' }}
 
 jobs:
   build_element_call:
@@ -35,8 +48,8 @@ jobs:
       - name: Create Checksum
         run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum > ${{ env.FILENAME_PREFIX }}.sha256
       - name: Upload
+        if: ${{ !env.DRY_RUN }}
         uses: softprops/action-gh-release@v2
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
             ${{ env.FILENAME_PREFIX }}.tar.gz
@@ -67,16 +80,18 @@ jobs:
         with:
           node-version-file: .node-version
           registry-url: "https://registry.npmjs.org"
+
       - name: Publish npm
         working-directory: embedded/web
         run: |
           npm version ${{ github.event.release.tag_name }} --no-git-tag-version
           echo "NPM_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
-          npm publish --provenance --access public
+          npm publish --provenance --access public ${{ env.DRY_RUN  && '--dry-run' || '' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
 
       - name: Add release note
+        if: ${{ !env.DRY_RUN }}
         uses: softprops/action-gh-release@v2
         with:
           append_body: true
@@ -120,6 +135,8 @@ jobs:
           echo "VERSION=${VERSION:1}" >> $GITHUB_ENV
 
       - name: Publish AAR
+        if: ${{ !env.DRY_RUN }}
+        # TODO: can we do some kind of dry run?
         env:
           EC_VERSION: ${{ env.VERSION }}
           ORG_GRADLE_PROJECT_mavenCentralUsername: ${{ secrets.MAVEN_RELEASE_USERNAME }}
@@ -129,6 +146,7 @@ jobs:
         run: embedded/android/publish_android_package.sh -s
 
       - name: Add release note
+        if: ${{ !env.DRY_RUN }}
         uses: softprops/action-gh-release@v2
         with:
           append_body: true
@@ -187,9 +205,15 @@ jobs:
           git add -A
           git commit -am "Release ${{ env.VERSION }}"
           git tag -a ${{ env.VERSION }} -m "${{ github.event.release.html_url }}"
+
+      - name: Push
+        if: ${{ !env.DRY_RUN }}
+        working-directory: element-call-swift
+        run: |
           git push --tags
 
       - name: Add release note
+        if: ${{ !env.DRY_RUN }}
         uses: softprops/action-gh-release@v2
         with:
           append_body: true
