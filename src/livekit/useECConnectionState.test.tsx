@@ -60,7 +60,7 @@ test.each<[string, ConnectionError]>([
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <GroupCallErrorBoundary recoveryActionHandler={vi.fn()}>
+        <GroupCallErrorBoundary recoveryActionHandler={vi.fn()} widget={null}>
           <TestComponent />
         </GroupCallErrorBoundary>
       </MemoryRouter>,
