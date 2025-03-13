@@ -14,7 +14,7 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { BehaviorSubject, of } from "rxjs";
 import { vitest } from "vitest";
-import { type RelationsContainer } from "matrix-js-sdk";
+import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import EventEmitter from "events";
 
 import { E2eeType } from "../e2ee/e2eeType";

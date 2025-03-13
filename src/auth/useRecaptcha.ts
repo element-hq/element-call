@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useEffect, useCallback, useRef, useState } from "react";
-import { secureRandomString } from "matrix-js-sdk";
+import { secureRandomString } from "matrix-js-sdk/lib/randomstring";
 import { useTranslation } from "react-i18next";
 import { logger } from "matrix-js-sdk/lib/logger";
 

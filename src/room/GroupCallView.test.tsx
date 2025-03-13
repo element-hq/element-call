@@ -13,7 +13,7 @@ import { of } from "rxjs";
 import { JoinRule, type RoomState } from "matrix-js-sdk";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
-import { type RelationsContainer } from "matrix-js-sdk";
+import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import { useState } from "react";
 
 import { type MuteStates } from "./MuteStates";

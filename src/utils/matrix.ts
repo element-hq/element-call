@@ -16,7 +16,7 @@ import {
 import { ClientEvent } from "matrix-js-sdk";
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
 import { logger } from "matrix-js-sdk/lib/logger";
-import { secureRandomBase64Url } from "matrix-js-sdk";
+import { secureRandomBase64Url } from "matrix-js-sdk/lib/randomstring";
 
 import type { MatrixClient, Room } from "matrix-js-sdk";
 import IndexedDBWorker from "../IndexedDBWorker?worker";
