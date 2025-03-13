@@ -351,7 +351,7 @@ export const ClientProvider: FC<Props> = ({ children }) => {
   }, [initClientState, onSync]);
 
   if (alreadyOpenedErr) {
-    return <ErrorPage error={alreadyOpenedErr} />;
+    return <ErrorPage widget={widget} error={alreadyOpenedErr} />;
   }
 
   return (

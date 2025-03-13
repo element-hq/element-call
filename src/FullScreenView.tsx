@@ -17,6 +17,7 @@ import styles from "./FullScreenView.module.css";
 import { useUrlParams } from "./UrlParams";
 import { RichError } from "./RichError";
 import { ErrorView } from "./ErrorView";
+import { type WidgetHelpers } from "./widget.ts";
 
 interface FullScreenViewProps {
   className?: string;
@@ -47,11 +48,12 @@ export const FullScreenView: FC<FullScreenViewProps> = ({
 
 interface ErrorPageProps {
   error: Error | unknown;
+  widget: WidgetHelpers | null;
 }
 
 // Due to this component being used as the crash fallback for Sentry, which has
 // weird type requirements, we can't just give this a type of FC<ErrorPageProps>
-export const ErrorPage = ({ error }: ErrorPageProps): ReactElement => {
+export const ErrorPage = ({ error, widget }: ErrorPageProps): ReactElement => {
   const { t } = useTranslation();
   useEffect(() => {
     logger.error(error);
@@ -63,7 +65,13 @@ export const ErrorPage = ({ error }: ErrorPageProps): ReactElement => {
       {error instanceof RichError ? (
         error.richMessage
       ) : (
-        <ErrorView Icon={ErrorIcon} title={t("error.generic")} rageshake fatal>
+        <ErrorView
+          widget={widget}
+          Icon={ErrorIcon}
+          title={t("error.generic")}
+          rageshake
+          fatal
+        >
           <p>{t("error.generic_description")}</p>
         </ErrorView>
       )}
