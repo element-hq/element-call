@@ -189,6 +189,45 @@ yarn backend
 # podman-compose -f dev-backend-docker-compose.yml up
 ```
 
+### Playwright tests
+
+Our Playwright tests run automatically as part of our CI along with our other tests,
+on every pull request.
+
+You may need to follow instructions to set up your development environment for running
+Playwright by following <https://playwright.dev/docs/browsers#install-browsers> and
+<https://playwright.dev/docs/browsers#install-system-dependencies>.
+
+However the Playwright tests are run, an element-call instance must be running on
+https://localhost:3000 (this is configured in `playwright.config.ts`) - this is what will
+be tested.
+
+The local backend environment should be running for the test to work:
+`yarn backend`
+
+There are a few different ways to run the tests yourself. The simplest is to run:
+
+```shell
+yarn run test:playwright
+```
+
+This will run the Playwright tests once, non-interactively.
+
+There is a more user-friendly way to run the tests in interactive mode:
+
+```shell
+yarn run test:playwright:open
+```
+
+The easiest way to develop new test is to use the codegen feature of Playwright:
+
+```shell
+npx playwright codegen
+```
+
+This will record your action and write the test code for you. Use the tool bar to test visibility, text content,
+clicking..
+
 ### Test Coverage
 
 <img src="https://codecov.io/github/element-hq/element-call/graphs/tree.svg?token=O6CFVKK6I1"></img>
