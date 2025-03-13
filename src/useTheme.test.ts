@@ -16,7 +16,7 @@ import {
   vi,
 } from "vitest";
 import EventEmitter from "events";
-import { WidgetApiToWidgetAction } from "matrix-widget-api";
+import { WidgetApiToWidgetAction } from "matrix-js-sdk/lib/matrix-widget-api";
 
 import { useTheme } from "./useTheme";
 import { getUrlParams } from "./UrlParams";

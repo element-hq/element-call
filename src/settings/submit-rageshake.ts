@@ -12,7 +12,7 @@ import {
   type MatrixClient,
   type MatrixEvent,
 } from "matrix-js-sdk";
-import { type CryptoApi } from "matrix-js-sdk/src/crypto-api";
+import { type CryptoApi } from "matrix-js-sdk/lib/crypto-api";
 
 import { getLogsForReport } from "./rageshake";
 import { useClient } from "../ClientContext";

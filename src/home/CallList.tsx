@@ -7,8 +7,8 @@ Please see LICENSE in the repository root for full details.
 
 import { Link } from "react-router-dom";
 import { type MatrixClient } from "matrix-js-sdk";
-import { type RoomMember } from "matrix-js-sdk/src/models/room-member";
-import { type Room } from "matrix-js-sdk/src/models/room";
+import { type RoomMember } from "matrix-js-sdk";
+import { type Room } from "matrix-js-sdk";
 import { type FC, useCallback, type MouseEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { IconButton, Text } from "@vector-im/compound-web";

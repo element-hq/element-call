@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useCallback } from "react";
-import { secureRandomString } from "matrix-js-sdk/src/randomstring";
+import { secureRandomString } from "matrix-js-sdk";
 
 import { useClient } from "../ClientContext";
 import { useInteractiveRegistration } from "../auth/useInteractiveRegistration";

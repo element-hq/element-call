@@ -12,7 +12,7 @@ import {
   useEffect,
   useMemo,
 } from "react";
-import { type IWidgetApiRequest } from "matrix-widget-api";
+import { type IWidgetApiRequest } from "matrix-js-sdk/lib/matrix-widget-api";
 import { logger } from "matrix-js-sdk/lib/logger";
 
 import {
