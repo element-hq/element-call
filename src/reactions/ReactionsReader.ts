@@ -12,7 +12,7 @@ import {
 } from "matrix-js-sdk/lib/matrixrtc";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { type MatrixEvent, MatrixEventEvent } from "matrix-js-sdk";
-import { type ReactionEventContent } from "matrix-js-sdk/src/types";
+import { type ReactionEventContent } from "matrix-js-sdk/lib/types";
 import {
   RelationType,
   EventType,

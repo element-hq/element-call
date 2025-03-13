@@ -125,7 +125,6 @@
     "vitest-axe": "^1.0.0-pre.3"
   },
   "resolutions": {
-    "@livekit/components-core/rxjs": "^7.8.1",
-    "matrix-widget-api": "1.11.0"
+    "@livekit/components-core/rxjs": "^7.8.1"
   }
 }

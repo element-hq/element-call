@@ -6,9 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type MatrixClient } from "matrix-js-sdk";
-import { type MatrixEvent } from "matrix-js-sdk/src/models/event";
-import { type User, UserEvent } from "matrix-js-sdk/src/models/user";
-import { type FileType } from "matrix-js-sdk/src/http-api";
+import {
+  type MatrixEvent,
+  type User,
+  UserEvent,
+  type FileType,
+} from "matrix-js-sdk";
 import { useState, useCallback, useEffect } from "react";
 import { logger } from "matrix-js-sdk/lib/logger";
 

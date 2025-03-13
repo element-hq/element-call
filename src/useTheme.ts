@@ -6,8 +6,8 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { WidgetApiToWidgetAction } from "matrix-widget-api";
-import { type IThemeChangeActionRequest } from "matrix-widget-api/lib/interfaces/ThemeChangeAction";
+import { WidgetApiToWidgetAction } from "matrix-js-sdk/lib/matrix-widget-api";
+import { type IThemeChangeActionRequest } from "matrix-js-sdk/lib/matrix-widget-api";
 
 import { getUrlParams } from "./UrlParams";
 import { widget } from "./widget";

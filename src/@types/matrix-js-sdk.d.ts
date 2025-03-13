@@ -11,7 +11,7 @@ import {
 } from "../reactions";
 
 // Extend Matrix JS SDK types via Typescript declaration merging to support unspecced event fields and types
-declare module "matrix-js-sdk/src/types" {
+declare module "matrix-js-sdk/lib/types" {
   export interface TimelineEvents {
     [ElementCallReactionEventType]: ECallReactionEventContent;
   }

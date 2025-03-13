@@ -30,7 +30,7 @@ Please see LICENSE in the repository root for full details.
 import EventEmitter from "events";
 import { throttle } from "lodash-es";
 import { type Logger, logger } from "matrix-js-sdk/lib/logger";
-import { secureRandomString } from "matrix-js-sdk/src/randomstring";
+import { secureRandomString } from "matrix-js-sdk";
 import { type LoggingMethod } from "loglevel";
 
 import type loglevel from "loglevel";

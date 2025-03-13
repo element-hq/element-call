@@ -14,14 +14,14 @@ import { mockMatrixRoom } from "./test";
 // Ideally these tests would be in ./displayname.test.ts but I can't figure out how to
 // just spy on the removeHiddenChars() function without impacting the other tests.
 // So, these tests are in this separate test file.
-vi.mock("matrix-js-sdk/src/utils");
+vi.mock("matrix-js-sdk/lib/utils");
 
 describe("shouldDisambiguate", () => {
   // eslint-disable-next-line @typescript-eslint/consistent-type-imports
-  let jsUtils: typeof import("matrix-js-sdk/src/utils");
+  let jsUtils: typeof import("matrix-js-sdk/lib/utils");
 
   beforeAll(async () => {
-    jsUtils = await import("matrix-js-sdk/src/utils");
+    jsUtils = await import("matrix-js-sdk/lib/utils");
     vi.spyOn(jsUtils, "removeHiddenChars").mockImplementation((str) => str);
   });
   afterEach(() => {

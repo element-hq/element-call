@@ -21,7 +21,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
 import { ClientEvent, type MatrixClient } from "matrix-js-sdk";
 
-import type { WidgetApi } from "matrix-widget-api";
+import type { WidgetApi } from "matrix-js-sdk/lib/matrix-widget-api";
 import { ErrorPage } from "./FullScreenView";
 import { widget } from "./widget";
 import {
