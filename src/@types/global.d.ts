@@ -5,7 +5,6 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import "matrix-js-sdk/lib/types";
 import { type setLogLevel as setLKLogLevel } from "livekit-client";
 
 import type { DurationFormat as PolyfillDurationFormat } from "@formatjs/intl-durationformat";

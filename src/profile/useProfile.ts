@@ -5,10 +5,10 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { type MatrixClient } from "matrix-js-sdk";
 import {
   type MatrixEvent,
   type User,
+  type MatrixClient,
   UserEvent,
   type FileType,
 } from "matrix-js-sdk";

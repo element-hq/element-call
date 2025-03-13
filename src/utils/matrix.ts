@@ -5,20 +5,19 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { IndexedDBStore } from "matrix-js-sdk";
-import { MemoryStore } from "matrix-js-sdk";
 import {
+  ClientEvent,
   createClient,
-  type ICreateClientOpts,
+  IndexedDBStore,
+  MemoryStore,
   Preset,
   Visibility,
 } from "matrix-js-sdk";
-import { ClientEvent } from "matrix-js-sdk";
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/lib/sync";
 import { logger } from "matrix-js-sdk/lib/logger";
 import { secureRandomBase64Url } from "matrix-js-sdk/lib/randomstring";
 
-import type { MatrixClient, Room } from "matrix-js-sdk";
+import type { ICreateClientOpts, MatrixClient, Room } from "matrix-js-sdk";
 import IndexedDBWorker from "../IndexedDBWorker?worker";
 import { generateUrlSearchParams, getUrlParams } from "../UrlParams";
 import { Config } from "../config/Config";

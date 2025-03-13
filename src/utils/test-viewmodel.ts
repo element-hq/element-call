@@ -6,8 +6,6 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { ConnectionState } from "livekit-client";
-import { type MatrixClient } from "matrix-js-sdk";
-import { type RoomMember } from "matrix-js-sdk";
 import {
   type CallMembership,
   type MatrixRTCSession,
@@ -17,6 +15,7 @@ import { vitest } from "vitest";
 import { type RelationsContainer } from "matrix-js-sdk/lib/models/relations-container";
 import EventEmitter from "events";
 
+import type { RoomMember, MatrixClient } from "matrix-js-sdk";
 import { E2eeType } from "../e2ee/e2eeType";
 import { CallViewModel } from "../state/CallViewModel";
 import { mockLivekitRoom, mockMatrixRoom, MockRTCSession } from "./test";

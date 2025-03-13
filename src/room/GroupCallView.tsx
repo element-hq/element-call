@@ -13,7 +13,7 @@ import {
   useMemo,
   useState,
 } from "react";
-import { type MatrixClient } from "matrix-js-sdk";
+import { type MatrixClient, JoinRule, type Room } from "matrix-js-sdk";
 import {
   Room as LivekitRoom,
   isE2EESupported as isE2EESupportedBrowser,
@@ -23,7 +23,6 @@ import {
   MatrixRTCSessionEvent,
   type MatrixRTCSession,
 } from "matrix-js-sdk/lib/matrixrtc";
-import { JoinRule, type Room } from "matrix-js-sdk";
 import { useNavigate } from "react-router-dom";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";

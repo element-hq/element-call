@@ -6,8 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { logger } from "matrix-js-sdk/lib/logger";
-import { EventType } from "matrix-js-sdk";
-import { createRoomWidgetClient } from "matrix-js-sdk";
+import { EventType, createRoomWidgetClient } from "matrix-js-sdk";
 import {
   WidgetApi,
   MatrixCapabilities,
