@@ -17,7 +17,7 @@ import {
   showConnectionStats as showConnectionStatsSetting,
   useNewMembershipManagerSetting,
 } from "./settings";
-import type { MatrixClient } from "matrix-js-sdk/src/client";
+import type { MatrixClient } from "matrix-js-sdk";
 import type { Room as LivekitRoom } from "livekit-client";
 import styles from "./DeveloperSettingsTab.module.css";
 interface Props {

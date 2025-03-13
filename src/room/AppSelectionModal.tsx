@@ -15,7 +15,7 @@ import {
 import { useTranslation } from "react-i18next";
 import { Button, Text } from "@vector-im/compound-web";
 import { PopOutIcon } from "@vector-im/compound-design-tokens/assets/web/icons";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { Modal } from "../Modal";
 import { useRoomEncryptionSystem } from "../e2ee/sharedKeyManagement";

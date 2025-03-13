@@ -11,7 +11,7 @@ import { WebTracerProvider } from "@opentelemetry/sdk-trace-web";
 import opentelemetry, { type Tracer } from "@opentelemetry/api";
 import { Resource } from "@opentelemetry/resources";
 import { SemanticResourceAttributes } from "@opentelemetry/semantic-conventions";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { PosthogSpanProcessor } from "../analytics/PosthogSpanProcessor";
 import { Config } from "../config/Config";

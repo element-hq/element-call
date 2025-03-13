@@ -8,14 +8,14 @@ Please see LICENSE in the repository root for full details.
 import {
   type MatrixRTCSession,
   MatrixRTCSessionEvent,
-} from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+} from "matrix-js-sdk/lib/matrixrtc";
 import { useCallback, useEffect, useState } from "react";
 import { deepCompare } from "matrix-js-sdk/src/utils";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type LivekitFocus,
   isLivekitFocus,
-} from "matrix-js-sdk/src/matrixrtc/LivekitFocus";
+} from "matrix-js-sdk/lib/matrixrtc";
 
 /**
  * Gets the currently active (livekit) focus for a MatrixRTC session

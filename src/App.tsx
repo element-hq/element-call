@@ -9,7 +9,7 @@ import { type FC, type JSX, Suspense, useEffect, useState } from "react";
 import { BrowserRouter, Route, useLocation, Routes } from "react-router-dom";
 import * as Sentry from "@sentry/react";
 import { TooltipProvider } from "@vector-im/compound-web";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { HomePage } from "./home/HomePage";
 import { LoginPage } from "./auth/LoginPage";

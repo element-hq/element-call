@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { render, type RenderResult } from "@testing-library/react";
-import { type MatrixClient } from "matrix-js-sdk/src/matrix";
+import { type MatrixClient } from "matrix-js-sdk";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it } from "vitest";
 

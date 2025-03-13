@@ -6,12 +6,12 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type ComponentProps, useCallback, useEffect, useState } from "react";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   ClientEvent,
   type MatrixClient,
   type MatrixEvent,
-} from "matrix-js-sdk/src/matrix";
+} from "matrix-js-sdk";
 import { type CryptoApi } from "matrix-js-sdk/src/crypto-api";
 
 import { getLogsForReport } from "./rageshake";

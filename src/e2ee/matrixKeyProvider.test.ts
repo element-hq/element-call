@@ -6,10 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { describe, expect, test, vi } from "vitest";
-import {
-  type MatrixRTCSession,
-  MatrixRTCSessionEvent,
-} from "matrix-js-sdk/src/matrixrtc";
+import { type MatrixRTCSession, MatrixRTCSessionEvent } from "matrix-js-sdk/lib/matrixrtc";
 import { KeyProviderEvent } from "livekit-client";
 
 import { MatrixKeyProvider } from "./matrixKeyProvider";

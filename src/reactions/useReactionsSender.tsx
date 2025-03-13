@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { EventType, RelationType } from "matrix-js-sdk/src/matrix";
+import { EventType, RelationType } from "matrix-js-sdk";
 import {
   createContext,
   useContext,
@@ -14,8 +14,8 @@ import {
   useMemo,
   type JSX,
 } from "react";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { logger } from "matrix-js-sdk/src/logger";
+import { type MatrixRTCSession } from "matrix-js-sdk/lib/matrixrtc";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { useObservableEagerState } from "observable-hooks";
 
 import { useMatrixRTCSessionMemberships } from "../useMatrixRTCSessionMemberships";

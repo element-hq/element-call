@@ -8,7 +8,7 @@ Please see LICENSE in the repository root for full details.
 import { useEffect, useCallback, useRef, useState } from "react";
 import { secureRandomString } from "matrix-js-sdk/src/randomstring";
 import { useTranslation } from "react-i18next";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { translatedError } from "../TranslatedError";
 declare global {

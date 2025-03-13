@@ -10,8 +10,8 @@ import posthog, {
   type PostHog,
   type Properties,
 } from "posthog-js";
-import { logger } from "matrix-js-sdk/src/logger";
-import { type MatrixClient } from "matrix-js-sdk/src/matrix";
+import { logger } from "matrix-js-sdk/lib/logger";
+import { type MatrixClient } from "matrix-js-sdk";
 import { Buffer } from "buffer";
 
 import { widget } from "../widget";

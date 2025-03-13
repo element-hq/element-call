@@ -15,8 +15,8 @@ import {
   type MatrixClient,
   type MatrixEvent,
   type RoomMember,
-} from "matrix-js-sdk/src/matrix";
-import { logger } from "matrix-js-sdk/src/logger";
+} from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   type CallError,
   type CallState,
