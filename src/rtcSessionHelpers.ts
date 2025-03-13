@@ -19,6 +19,7 @@ import { PosthogAnalytics } from "./analytics/PosthogAnalytics";
 import { Config } from "./config/Config";
 import { ElementWidgetActions, widget, type WidgetHelpers } from "./widget";
 import { MatrixRTCFocusMissingError } from "./utils/errors.ts";
+import { getUrlParams } from "./UrlParams.ts";
 
 const FOCI_WK_KEY = "org.matrix.msc4143.rtc_foci";
 
@@ -96,6 +97,7 @@ async function makePreferredLivekitFoci(
 export async function enterRTCSession(
   rtcSession: MatrixRTCSession,
   encryptMedia: boolean,
+  useNewMembershipManager = true,
 ): Promise<void> {
   PosthogAnalytics.instance.eventCallEnded.cacheStartCall(new Date());
   PosthogAnalytics.instance.eventCallStarted.track(rtcSession.room.roomId);
@@ -113,6 +115,7 @@ export async function enterRTCSession(
     await makePreferredLivekitFoci(rtcSession, livekitAlias),
     makeActiveFocus(),
     {
+      useNewMembershipManager,
       manageMediaKeys: encryptMedia,
       ...(useDeviceSessionMemberEvents !== undefined && {
         useLegacyMemberEvents: !useDeviceSessionMemberEvents,
@@ -124,6 +127,13 @@ export async function enterRTCSession(
       makeKeyDelay: matrixRtcSessionConfig?.key_rotation_on_leave_delay,
     },
   );
+  if (widget) {
+    try {
+      await widget.api.transport.send(ElementWidgetActions.JoinCall, {});
+    } catch (e) {
+      logger.error("Failed to send join action", e);
+    }
+  }
 }
 
 const widgetPostHangupProcedure = async (
@@ -149,7 +159,7 @@ const widgetPostHangupProcedure = async (
   }
   // On a normal user hangup we can shut down and close the widget. But if an
   // error occurs we should keep the widget open until the user reads it.
-  if (cause === "user") {
+  if (cause === "user" && !getUrlParams().returnToLobby) {
     try {
       await widget.api.transport.send(ElementWidgetActions.Close, {});
     } catch (e) {

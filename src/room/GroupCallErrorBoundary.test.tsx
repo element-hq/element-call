@@ -12,13 +12,15 @@ import {
   type ReactElement,
   type ReactNode,
   useCallback,
-  useEffect,
   useState,
 } from "react";
 import { BrowserRouter } from "react-router-dom";
 import userEvent from "@testing-library/user-event";
 
-import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
+import {
+  type CallErrorRecoveryAction,
+  GroupCallErrorBoundary,
+} from "./GroupCallErrorBoundary.tsx";
 import {
   ConnectionLostError,
   E2EENotSupportedError,
@@ -28,8 +30,7 @@ import {
   UnknownCallError,
 } from "../utils/errors.ts";
 import { mockConfig } from "../utils/test.ts";
-import { useGroupCallErrorBoundary } from "./useCallErrorBoundary.ts";
-import { GroupCallErrorBoundaryContextProvider } from "./GroupCallErrorBoundaryContextProvider.tsx";
+import { ElementWidgetActions, type WidgetHelpers } from "../widget.ts";
 
 test.each([
   {
@@ -63,7 +64,11 @@ test.each([
     const onErrorMock = vi.fn();
     const { asFragment } = render(
       <BrowserRouter>
-        <GroupCallErrorBoundary onError={onErrorMock}>
+        <GroupCallErrorBoundary
+          onError={onErrorMock}
+          recoveryActionHandler={vi.fn()}
+          widget={null}
+        >
           <TestComponent />
         </GroupCallErrorBoundary>
       </BrowserRouter>,
@@ -88,14 +93,18 @@ test("should render the error page with link back to home", async () => {
   const onErrorMock = vi.fn();
   const { asFragment } = render(
     <BrowserRouter>
-      <GroupCallErrorBoundary onError={onErrorMock}>
+      <GroupCallErrorBoundary
+        onError={onErrorMock}
+        recoveryActionHandler={vi.fn()}
+        widget={null}
+      >
         <TestComponent />
       </GroupCallErrorBoundary>
     </BrowserRouter>,
   );
 
   await screen.findByText("Call is not supported");
-  expect(screen.getByText(/Domain: example.com/i)).toBeInTheDocument();
+  expect(screen.getByText(/Domain: example\.com/i)).toBeInTheDocument();
   expect(
     screen.getByText(/Error Code: MISSING_MATRIX_RTC_FOCUS/i),
   ).toBeInTheDocument();
@@ -108,39 +117,7 @@ test("should render the error page with link back to home", async () => {
   expect(asFragment()).toMatchSnapshot();
 });
 
-test("should have a reconnect button for ConnectionLostError", async () => {
-  const user = userEvent.setup();
-
-  const reconnectCallback = vi.fn();
-
-  const TestComponent = (): ReactNode => {
-    throw new ConnectionLostError();
-  };
-
-  const { asFragment } = render(
-    <BrowserRouter>
-      <GroupCallErrorBoundary
-        onError={vi.fn()}
-        recoveryActionHandler={reconnectCallback}
-      >
-        <TestComponent />
-      </GroupCallErrorBoundary>
-    </BrowserRouter>,
-  );
-
-  await screen.findByText("Connection lost");
-  await screen.findByRole("button", { name: "Reconnect" });
-  await screen.findByRole("button", { name: "Return to home screen" });
-
-  expect(asFragment()).toMatchSnapshot();
-
-  await user.click(screen.getByRole("button", { name: "Reconnect" }));
-
-  expect(reconnectCallback).toHaveBeenCalledOnce();
-  expect(reconnectCallback).toHaveBeenCalledWith("reconnect");
-});
-
-test("Action handling should reset error state", async () => {
+test("ConnectionLostError: Action handling should reset error state", async () => {
   const user = userEvent.setup();
 
   const TestComponent: FC<{ fail: boolean }> = ({ fail }): ReactNode => {
@@ -150,30 +127,46 @@ test("Action handling should reset error state", async () => {
     return <div>HELLO</div>;
   };
 
+  const reconnectCallbackSpy = vi.fn();
+
   const WrapComponent = (): ReactNode => {
     const [failState, setFailState] = useState(true);
-    const reconnectCallback = useCallback(() => {
-      setFailState(false);
-    }, [setFailState]);
+    const reconnectCallback = useCallback(
+      (action: CallErrorRecoveryAction) => {
+        reconnectCallbackSpy(action);
+        setFailState(false);
+      },
+      [setFailState],
+    );
 
     return (
       <BrowserRouter>
-        <GroupCallErrorBoundary recoveryActionHandler={reconnectCallback}>
+        <GroupCallErrorBoundary
+          recoveryActionHandler={reconnectCallback}
+          widget={null}
+        >
           <TestComponent fail={failState} />
         </GroupCallErrorBoundary>
       </BrowserRouter>
     );
   };
 
-  render(<WrapComponent />);
+  const { asFragment } = render(<WrapComponent />);
 
   // Should fail first
   await screen.findByText("Connection lost");
+  await screen.findByRole("button", { name: "Reconnect" });
+  await screen.findByRole("button", { name: "Return to home screen" });
+
+  expect(asFragment()).toMatchSnapshot();
 
   await user.click(screen.getByRole("button", { name: "Reconnect" }));
 
   // reconnect should have reset the error, thus rendering should be ok
   await screen.findByText("HELLO");
+
+  expect(reconnectCallbackSpy).toHaveBeenCalledOnce();
+  expect(reconnectCallbackSpy).toHaveBeenCalledWith("reconnect");
 });
 
 describe("Rageshake button", () => {
@@ -190,7 +183,11 @@ describe("Rageshake button", () => {
 
     render(
       <BrowserRouter>
-        <GroupCallErrorBoundary onError={vi.fn()}>
+        <GroupCallErrorBoundary
+          onError={vi.fn()}
+          recoveryActionHandler={vi.fn()}
+          widget={null}
+        >
           <TestComponent />
         </GroupCallErrorBoundary>
       </BrowserRouter>,
@@ -214,29 +211,43 @@ describe("Rageshake button", () => {
   });
 });
 
-test("should show async error with useElementCallErrorContext", async () => {
-  // const error = new MatrixRTCFocusMissingError("example.com");
+test("should have a close button in widget mode", async () => {
+  const error = new MatrixRTCFocusMissingError("example.com");
   const TestComponent = (): ReactNode => {
-    const { showGroupCallErrorBoundary } = useGroupCallErrorBoundary();
-    useEffect(() => {
-      setTimeout(() => {
-        showGroupCallErrorBoundary(new ConnectionLostError());
-      });
-    }, [showGroupCallErrorBoundary]);
-
-    return <div>Hello</div>;
+    throw error;
   };
 
+  const mockWidget = {
+    api: {
+      transport: { send: vi.fn().mockResolvedValue(undefined), stop: vi.fn() },
+    },
+  } as unknown as WidgetHelpers;
+
+  const user = userEvent.setup();
   const onErrorMock = vi.fn();
-  render(
+  const { asFragment } = render(
     <BrowserRouter>
-      <GroupCallErrorBoundaryContextProvider>
-        <GroupCallErrorBoundary onError={onErrorMock}>
-          <TestComponent />
-        </GroupCallErrorBoundary>
-      </GroupCallErrorBoundaryContextProvider>
+      <GroupCallErrorBoundary
+        widget={mockWidget}
+        onError={onErrorMock}
+        recoveryActionHandler={vi.fn()}
+      >
+        <TestComponent />
+      </GroupCallErrorBoundary>
     </BrowserRouter>,
   );
 
-  await screen.findByText("Connection lost");
+  await screen.findByText("Call is not supported");
+
+  await screen.findByRole("button", { name: "Close" });
+
+  expect(asFragment()).toMatchSnapshot();
+
+  await user.click(screen.getByRole("button", { name: "Close" }));
+
+  expect(mockWidget.api.transport.send).toHaveBeenCalledWith(
+    ElementWidgetActions.Close,
+    expect.anything(),
+  );
+  expect(mockWidget.api.transport.stop).toHaveBeenCalled();
 });

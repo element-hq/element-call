@@ -31,6 +31,7 @@ import {
 } from "../utils/errors.ts";
 import { FullScreenView } from "../FullScreenView.tsx";
 import { ErrorView } from "../ErrorView.tsx";
+import { type WidgetHelpers } from "../widget.ts";
 
 export type CallErrorRecoveryAction = "reconnect"; // | "retry" ;
 
@@ -38,17 +39,18 @@ export type RecoveryActionHandler = (action: CallErrorRecoveryAction) => void;
 
 interface ErrorPageProps {
   error: ElementCallError;
-  recoveryActionHandler?: RecoveryActionHandler;
+  recoveryActionHandler: RecoveryActionHandler;
   resetError: () => void;
+  widget: WidgetHelpers | null;
 }
 
 const ErrorPage: FC<ErrorPageProps> = ({
   error,
   recoveryActionHandler,
+  widget,
 }: ErrorPageProps): ReactElement => {
   const { t } = useTranslation();
 
-  // let title: string;
   let icon: ComponentType<SVGAttributes<SVGElement>>;
   switch (error.category) {
     case ErrorCategory.CONFIGURATION_ISSUE:
@@ -68,7 +70,7 @@ const ErrorPage: FC<ErrorPageProps> = ({
   if (error instanceof ConnectionLostError) {
     actions.push({
       label: t("call_ended_view.reconnect_button"),
-      onClick: () => recoveryActionHandler?.("reconnect"),
+      onClick: () => recoveryActionHandler("reconnect"),
     });
   }
 
@@ -78,6 +80,7 @@ const ErrorPage: FC<ErrorPageProps> = ({
         Icon={icon}
         title={error.localisedTitle}
         rageshake={error.code == ErrorCode.UNKNOWN_ERROR}
+        widget={widget}
       >
         <p>
           {error.localisedMessage ?? (
@@ -101,38 +104,16 @@ const ErrorPage: FC<ErrorPageProps> = ({
 
 interface BoundaryProps {
   children: ReactNode | (() => ReactNode);
-  recoveryActionHandler?: RecoveryActionHandler;
+  recoveryActionHandler: RecoveryActionHandler;
   onError?: (error: unknown) => void;
+  widget: WidgetHelpers | null;
 }
 
-/**
- * An ErrorBoundary component that handles ElementCalls errors that can occur during a group call.
- * It is based on the sentry ErrorBoundary component, that will log the error to sentry.
- *
- * The error fallback will show an error page with:
- * - a description of the error
- * - a button to go back the home screen
- * - optional call-to-action buttons (ex: reconnect for connection lost)
- * - A rageshake button for unknown errors
- *
- * For async errors the `useCallErrorBoundary` hook should be used to show the error page
- * ```
- *   const { showGroupCallErrorBoundary } = useCallErrorBoundary();
- *   ... some async code
- *       catch(error) {
- *        showGroupCallErrorBoundary(error);
- *       }
- *   ...
- * ```
- * @param recoveryActionHandler
- * @param onError
- * @param children
- * @constructor
- */
 export const GroupCallErrorBoundary = ({
   recoveryActionHandler,
   onError,
   children,
+  widget,
 }: BoundaryProps): ReactElement => {
   const fallbackRenderer: FallbackRender = useCallback(
     ({ error, resetError }): ReactElement => {
@@ -142,16 +123,17 @@ export const GroupCallErrorBoundary = ({
           : new UnknownCallError(error instanceof Error ? error : new Error());
       return (
         <ErrorPage
+          widget={widget ?? null}
           error={callError}
           resetError={resetError}
           recoveryActionHandler={(action: CallErrorRecoveryAction) => {
             resetError();
-            recoveryActionHandler?.(action);
+            recoveryActionHandler(action);
           }}
         />
       );
     },
-    [recoveryActionHandler],
+    [recoveryActionHandler, widget],
   );
 
   return (

@@ -71,7 +71,7 @@ async function waitForSync(client: MatrixClient): Promise<void> {
  * otherwise rust crypto will throw since it is not ready to initialize a new session.
  * If another client is running make sure `.logout()` is called before executing this function.
  * @param clientOptions Object of options passed through to the client
- * @param restore If the rust crypto should be reset before the cient initialization or
+ * @param restore If the rust crypto should be reset before the client initialization or
  * if the initialization should try to restore the crypto state from the indexDB.
  * @returns The MatrixClient instance
  */
@@ -162,7 +162,6 @@ export async function initClient(
     );
   }
 
-  client.setGlobalErrorOnUnknownDevices(false);
   // Once startClient is called, syncs are run asynchronously.
   // Also, sync completion is communicated only via events.
   // So, apply the event listener *before* starting the client.

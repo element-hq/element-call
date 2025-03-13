@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { expect, test, vi } from "vitest";
+import { expect, onTestFinished, test, vi } from "vitest";
 import { AutoDiscovery } from "matrix-js-sdk/src/autodiscovery";
 import EventEmitter from "events";
 
@@ -15,11 +15,17 @@ import { mockConfig } from "./utils/test";
 import { ElementWidgetActions, widget } from "./widget";
 import { ErrorCode } from "./utils/errors.ts";
 
+const getUrlParams = vi.hoisted(() => vi.fn(() => ({})));
+vi.mock("./UrlParams", () => ({ getUrlParams }));
+
 const actualWidget = await vi.hoisted(async () => vi.importActual("./widget"));
 vi.mock("./widget", () => ({
   ...actualWidget,
   widget: {
-    api: { transport: { send: vi.fn(), reply: vi.fn(), stop: vi.fn() } },
+    api: {
+      setAlwaysOnScreen: (): void => {},
+      transport: { send: vi.fn(), reply: vi.fn(), stop: vi.fn() },
+    },
     lazyActions: new EventEmitter(),
   },
 }));
@@ -105,38 +111,50 @@ test("It joins the correct Session", async () => {
     {
       manageMediaKeys: false,
       useLegacyMemberEvents: false,
+      useNewMembershipManager: true,
     },
   );
 });
 
-test("leaveRTCSession closes the widget on a normal hangup", async () => {
+async function testLeaveRTCSession(
+  cause: "user" | "error",
+  expectClose: boolean,
+): Promise<void> {
   vi.clearAllMocks();
   const session = { leaveRoomSession: vi.fn() } as unknown as MatrixRTCSession;
-  await leaveRTCSession(session, "user");
+  await leaveRTCSession(session, cause);
   expect(session.leaveRoomSession).toHaveBeenCalled();
   expect(widget!.api.transport.send).toHaveBeenCalledWith(
     ElementWidgetActions.HangupCall,
     expect.anything(),
   );
-  expect(widget!.api.transport.send).toHaveBeenCalledWith(
-    ElementWidgetActions.Close,
-    expect.anything(),
-  );
+  if (expectClose) {
+    expect(widget!.api.transport.send).toHaveBeenCalledWith(
+      ElementWidgetActions.Close,
+      expect.anything(),
+    );
+    expect(widget!.api.transport.stop).toHaveBeenCalled();
+  } else {
+    expect(widget!.api.transport.send).not.toHaveBeenCalledWith(
+      ElementWidgetActions.Close,
+      expect.anything(),
+    );
+    expect(widget!.api.transport.stop).not.toHaveBeenCalled();
+  }
+}
+
+test("leaveRTCSession closes the widget on a normal hangup", async () => {
+  await testLeaveRTCSession("user", true);
 });
 
 test("leaveRTCSession doesn't close the widget on a fatal error", async () => {
-  vi.clearAllMocks();
-  const session = { leaveRoomSession: vi.fn() } as unknown as MatrixRTCSession;
-  await leaveRTCSession(session, "error");
-  expect(session.leaveRoomSession).toHaveBeenCalled();
-  expect(widget!.api.transport.send).toHaveBeenCalledWith(
-    ElementWidgetActions.HangupCall,
-    expect.anything(),
-  );
-  expect(widget!.api.transport.send).not.toHaveBeenCalledWith(
-    ElementWidgetActions.Close,
-    expect.anything(),
-  );
+  await testLeaveRTCSession("error", false);
+});
+
+test("leaveRTCSession doesn't close the widget when returning to lobby", async () => {
+  getUrlParams.mockReturnValue({ returnToLobby: true });
+  onTestFinished(() => void getUrlParams.mockReset());
+  await testLeaveRTCSession("user", false);
 });
 
 test("It fails with configuration error if no live kit url config is set in fallback", async () => {
