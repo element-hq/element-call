@@ -182,6 +182,7 @@ export const RoomPage: FC = () => {
               <ErrorView
                 Icon={UnknownSolidIcon}
                 title={t("error.call_not_found")}
+                widget={widget}
               >
                 <Trans i18nKey="error.call_not_found_description">
                   <p>
@@ -199,6 +200,7 @@ export const RoomPage: FC = () => {
               <ErrorView
                 Icon={groupCallState.error.icon}
                 title={groupCallState.error.message}
+                widget={widget}
               >
                 <p>{groupCallState.error.messageBody}</p>
                 {groupCallState.error.reason && (
@@ -212,7 +214,7 @@ export const RoomPage: FC = () => {
             </FullScreenView>
           );
         } else {
-          return <ErrorPage error={groupCallState.error} />;
+          return <ErrorPage widget={widget} error={groupCallState.error} />;
         }
       default:
         return <> </>;
@@ -223,7 +225,7 @@ export const RoomPage: FC = () => {
   if (loading || isRegistering) {
     content = <LoadingPage />;
   } else if (error) {
-    content = <ErrorPage error={error} />;
+    content = <ErrorPage widget={widget} error={error} />;
   } else if (!client) {
     content = <RoomAuthView />;
   } else if (!roomIdOrAlias) {
