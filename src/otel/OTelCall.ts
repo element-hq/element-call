@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type Span } from "@opentelemetry/api";
-import { type MatrixCall } from "matrix-js-sdk/src/matrix";
+import { type MatrixCall } from "matrix-js-sdk";
 import { CallEvent } from "matrix-js-sdk/src/webrtc/call";
 import {
   type TransceiverStats,

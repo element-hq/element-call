@@ -11,8 +11,8 @@ import {
   createClient,
   type MatrixClient,
   type RegisterResponse,
-} from "matrix-js-sdk/src/matrix";
-import { logger } from "matrix-js-sdk/src/logger";
+} from "matrix-js-sdk";
+import { logger } from "matrix-js-sdk/lib/logger";
 
 import { initClient } from "../utils/matrix";
 import { type Session } from "../ClientContext";

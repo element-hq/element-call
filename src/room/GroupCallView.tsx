@@ -13,17 +13,17 @@ import {
   useMemo,
   useState,
 } from "react";
-import { type MatrixClient } from "matrix-js-sdk/src/client";
+import { type MatrixClient } from "matrix-js-sdk";
 import {
   Room as LivekitRoom,
   isE2EESupported as isE2EESupportedBrowser,
 } from "livekit-client";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import {
   MatrixRTCSessionEvent,
   type MatrixRTCSession,
-} from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { JoinRule, type Room } from "matrix-js-sdk/src/matrix";
+} from "matrix-js-sdk/lib/matrixrtc";
+import { JoinRule, type Room } from "matrix-js-sdk";
 import { useNavigate } from "react-router-dom";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";

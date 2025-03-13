@@ -13,14 +13,14 @@ import {
   MatrixEvent,
   type Room,
   TypedEventEmitter,
-} from "matrix-js-sdk/src/matrix";
+} from "matrix-js-sdk";
 import {
   CallMembership,
   type Focus,
   MatrixRTCSessionEvent,
   type MatrixRTCSessionEventHandlerMap,
   type SessionMembershipData,
-} from "matrix-js-sdk/src/matrixrtc";
+} from "matrix-js-sdk/lib/matrixrtc";
 import {
   type LocalParticipant,
   type LocalTrackPublication,

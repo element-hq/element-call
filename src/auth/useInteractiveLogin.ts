@@ -11,7 +11,7 @@ import {
   createClient,
   type LoginResponse,
   type MatrixClient,
-} from "matrix-js-sdk/src/matrix";
+} from "matrix-js-sdk";
 
 import { initClient } from "../utils/matrix";
 import { type Session } from "../ClientContext";

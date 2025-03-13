@@ -15,7 +15,7 @@ import {
   Track,
 } from "livekit-client";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import * as Sentry from "@sentry/react";
 
 import { type SFUConfig, sfuConfigEquals } from "./openIDSFU";

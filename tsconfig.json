@@ -47,9 +47,5 @@
 
     "plugins": [{ "name": "typescript-eslint-language-service" }]
   },
-  "include": [
-    "./node_modules/matrix-js-sdk/src/@types/*.d.ts",
-    "./src/**/*.ts",
-    "./src/**/*.tsx"
-  ]
+  "include": ["./src/**/*.ts", "./src/**/*.tsx"]
 }

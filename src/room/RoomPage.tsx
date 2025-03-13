@@ -13,7 +13,7 @@ import {
   useRef,
   type JSX,
 } from "react";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { Trans, useTranslation } from "react-i18next";
 import {
   CheckIcon,

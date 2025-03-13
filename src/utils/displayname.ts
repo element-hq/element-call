@@ -10,8 +10,8 @@ import {
   removeHiddenChars as removeHiddenCharsUncached,
 } from "matrix-js-sdk/src/utils";
 
-import type { Room } from "matrix-js-sdk/src/matrix";
-import type { CallMembership } from "matrix-js-sdk/src/matrixrtc";
+import type { Room } from "matrix-js-sdk";
+import type { CallMembership } from "matrix-js-sdk/lib/matrixrtc";
 
 // Calling removeHiddenChars() can be slow on Safari, so we cache the results.
 // To illustrate a simple benchmark:

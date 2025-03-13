@@ -12,13 +12,13 @@ import {
   type ICreateClientOpts,
   Preset,
   Visibility,
-} from "matrix-js-sdk/src/matrix";
-import { ClientEvent } from "matrix-js-sdk/src/client";
+} from "matrix-js-sdk";
+import { ClientEvent } from "matrix-js-sdk";
 import { type ISyncStateData, type SyncState } from "matrix-js-sdk/src/sync";
-import { logger } from "matrix-js-sdk/src/logger";
+import { logger } from "matrix-js-sdk/lib/logger";
 import { secureRandomBase64Url } from "matrix-js-sdk/src/randomstring";
 
-import type { MatrixClient } from "matrix-js-sdk/src/client";
+import type { MatrixClient } from "matrix-js-sdk";
 import type { Room } from "matrix-js-sdk/src/models/room";
 import IndexedDBWorker from "../IndexedDBWorker?worker";
 import { generateUrlSearchParams, getUrlParams } from "../UrlParams";
