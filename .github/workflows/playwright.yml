@@ -20,6 +20,8 @@ jobs:
         run: |
           docker compose -f dev-backend-docker-compose.yml up -d
           docker ps
+      - name: Copy config file
+        run: cp config/config.devenv.json public/config.json
       - name: Run Playwright tests
         run: yarn playwright test
       - uses: actions/upload-artifact@v4
