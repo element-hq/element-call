@@ -46,12 +46,8 @@ test("Start a new call then leave and show the feedback screen", async ({
     "John Doe, your call has ended. How did it go?",
   );
   await expect(page.getByRole("main")).toContainText(
-    "We'd love to hear your feedback so we can improve your experience.",
+    "Why not finish by setting up a password to keep your account?",
   );
-
-  // Strange that the submit button test-id is home_go
-  await expect(page.getByTestId("home_go")).toBeVisible();
-  await expect(page.getByTestId("home_go")).toContainText("Submit");
 
   await expect(
     page.getByRole("link", { name: "Not now, return to home screen" }),

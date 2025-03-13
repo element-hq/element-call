@@ -228,6 +228,25 @@ npx playwright codegen
 This will record your action and write the test code for you. Use the tool bar to test visibility, text content,
 clicking..
 
+##### Investigate a failed test from the CI
+
+In the failed action page, click on the failed job, then scroll down to the `upload-artifact` step.
+You will find a link to download the zip report, as per:
+
+```
+Artifact playwright-report has been successfully uploaded! Final size is 1360358 bytes. Artifact ID is 2746265841
+Artifact download URL: https://github.com/element-hq/element-call/actions/runs/13837660687/artifacts/2746265841
+```
+
+Unzip the report then use this command to open the report in your browser:
+
+```shell
+npx playwright show-report ~/Downloads/playwright-report/
+```
+
+Under the failed test there is a small icon looking like "3 columns" (next to test name file name),
+click on it to see the live screenshots/console output.
+
 ### Test Coverage
 
 <img src="https://codecov.io/github/element-hq/element-call/graphs/tree.svg?token=O6CFVKK6I1"></img>
