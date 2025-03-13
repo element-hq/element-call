@@ -25,6 +25,11 @@
       "enabled": false
     },
     {
+      "groupName": "matrix-widget-api",
+      "matchDepNames": ["matrix-widget-api"],
+      "extends": ["schedule:weekly"]
+    },
+    {
       "groupName": "Compound",
       "matchPackageNames": ["@vector-im/compound-{/,}**"],
       "extends": ["schedule:weekly"]
