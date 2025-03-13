@@ -1,6 +1,9 @@
 import { KnipConfig } from "knip";
 
 export default {
+  vite: {
+    config: ["vite.config.js", "vite-embedded.config.js"],
+  },
   entry: ["src/main.tsx", "i18next-parser.config.ts"],
   ignoreBinaries: [
     // This is deprecated, so Knip doesn't actually recognize it as a globally

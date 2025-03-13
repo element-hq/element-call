@@ -9,7 +9,7 @@
     "strict": true,
     "noEmit": true,
     "noEmitOnError": true,
-    "experimentalDecorators": true,
+    "experimentalDecorators": false,
     "esModuleInterop": true,
     "noUnusedLocals": true,
     "moduleResolution": "bundler",

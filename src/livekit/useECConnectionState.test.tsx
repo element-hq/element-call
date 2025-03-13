@@ -6,7 +6,7 @@ Please see LICENSE in the repository root for full details.
 */
 
 import { type FC, useCallback, useState } from "react";
-import { test } from "vitest";
+import { test, vi } from "vitest";
 import {
   ConnectionError,
   ConnectionErrorReason,
@@ -60,7 +60,7 @@ test.each<[string, ConnectionError]>([
     const user = userEvent.setup();
     render(
       <MemoryRouter>
-        <GroupCallErrorBoundary>
+        <GroupCallErrorBoundary recoveryActionHandler={vi.fn()} widget={null}>
           <TestComponent />
         </GroupCallErrorBoundary>
       </MemoryRouter>,

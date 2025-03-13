@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`should have a reconnect button for ConnectionLostError 1`] = `
+exports[`ConnectionLostError: Action handling should reset error state 1`] = `
 <DocumentFragment>
   <div
     class="page"
@@ -150,7 +150,7 @@ exports[`should have a reconnect button for ConnectionLostError 1`] = `
 </DocumentFragment>
 `;
 
-exports[`should render the error page 1`] = `
+exports[`should have a close button in widget mode 1`] = `
 <DocumentFragment>
   <div
     class="page"
@@ -287,13 +287,13 @@ exports[`should render the error page 1`] = `
             The server is not configured to work with Element Call. Please contact your server admin (Domain: example.com, Error Code: MISSING_MATRIX_RTC_FOCUS).
           </p>
           <button
-            class="_button_i91xf_17 homeLink"
-            data-kind="tertiary"
+            class="_button_i91xf_17"
+            data-kind="primary"
             data-size="lg"
             role="button"
             tabindex="0"
           >
-            Return to home screen
+            Close
           </button>
         </div>
       </div>

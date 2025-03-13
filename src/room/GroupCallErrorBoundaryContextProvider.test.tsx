@@ -5,7 +5,7 @@ SPDX-License-Identifier: AGPL-3.0-only OR LicenseRef-Element-Commercial
 Please see LICENSE in the repository root for full details.
 */
 
-import { it } from "vitest";
+import { it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { type ReactElement, useCallback } from "react";
 import userEvent from "@testing-library/user-event";
@@ -37,7 +37,7 @@ it("should show async error", async () => {
   render(
     <BrowserRouter>
       <GroupCallErrorBoundaryContextProvider>
-        <GroupCallErrorBoundary>
+        <GroupCallErrorBoundary widget={null} recoveryActionHandler={vi.fn()}>
           <TestComponent />
         </GroupCallErrorBoundary>
       </GroupCallErrorBoundaryContextProvider>

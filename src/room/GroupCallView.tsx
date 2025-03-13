@@ -15,12 +15,16 @@ import {
 } from "react";
 import { type MatrixClient } from "matrix-js-sdk/src/client";
 import {
+  Room as LivekitRoom,
   isE2EESupported as isE2EESupportedBrowser,
-  Room,
 } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
-import { type MatrixRTCSession } from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
-import { JoinRule } from "matrix-js-sdk/src/matrix";
+
+import {
+  MatrixRTCSessionEvent,
+  type MatrixRTCSession,
+} from "matrix-js-sdk/src/matrixrtc/MatrixRTCSession";
+import { JoinRule, type Room } from "matrix-js-sdk/src/matrix";
 import { useNavigate } from "react-router-dom";
 
 import type { IWidgetApiRequest } from "matrix-widget-api";
@@ -54,9 +58,16 @@ import { usePageTitle } from "../usePageTitle";
 import {
   E2EENotSupportedError,
   ElementCallError,
+  ErrorCode,
+  RTCSessionError,
   UnknownCallError,
 } from "../utils/errors.ts";
 import { GroupCallErrorBoundary } from "./GroupCallErrorBoundary.tsx";
+import {
+  useNewMembershipManagerSetting as useNewMembershipManagerSetting,
+  useSetting,
+} from "../settings/settings";
+import { useTypedEventEmitter } from "../useEvents";
 import { GroupCallErrorBoundaryContextProvider } from "./GroupCallErrorBoundaryContextProvider.tsx";
 import { useGroupCallErrorBoundary } from "./useCallErrorBoundary.ts";
 
@@ -120,6 +131,20 @@ export const GroupCallViewInner: FC<Props> = ({
     };
   }, [rtcSession]);
 
+  const { showGroupCallErrorBoundary } = useGroupCallErrorBoundary();
+
+  useTypedEventEmitter(
+    rtcSession,
+    MatrixRTCSessionEvent.MembershipManagerError,
+    (error) => {
+      showGroupCallErrorBoundary(
+        new RTCSessionError(
+          ErrorCode.MEMBERSHIP_MANAGER_UNRECOVERABLE,
+          error.message ?? error,
+        ),
+      );
+    },
+  );
   useEffect(() => {
     // Sanity check the room object
     if (client.getRoom(rtcSession.room.roomId) !== rtcSession.room)
@@ -128,11 +153,14 @@ export const GroupCallViewInner: FC<Props> = ({
       );
   }, [client, rtcSession.room]);
 
+  const room = rtcSession.room as Room;
   const { displayName, avatarUrl } = useProfile(client);
-  const roomName = useRoomName(rtcSession.room);
-  const roomAvatar = useRoomAvatar(rtcSession.room);
+  const roomName = useRoomName(room);
+  const roomAvatar = useRoomAvatar(room);
   const { perParticipantE2EE, returnToLobby } = useUrlParams();
-  const e2eeSystem = useRoomEncryptionSystem(rtcSession.room.roomId);
+  const e2eeSystem = useRoomEncryptionSystem(room.roomId);
+  const [useNewMembershipManager] = useSetting(useNewMembershipManagerSetting);
+
   usePageTitle(roomName);
 
   const matrixInfo = useMemo((): MatrixInfo => {
@@ -140,21 +168,13 @@ export const GroupCallViewInner: FC<Props> = ({
       userId: client.getUserId()!,
       displayName: displayName!,
       avatarUrl: avatarUrl!,
-      roomId: rtcSession.room.roomId,
+      roomId: room.roomId,
       roomName,
-      roomAlias: rtcSession.room.getCanonicalAlias(),
+      roomAlias: room.getCanonicalAlias(),
       roomAvatar,
       e2eeSystem,
     };
-  }, [
-    client,
-    displayName,
-    avatarUrl,
-    rtcSession.room,
-    roomName,
-    roomAvatar,
-    e2eeSystem,
-  ]);
+  }, [client, displayName, avatarUrl, roomName, room, roomAvatar, e2eeSystem]);
 
   // Count each member only once, regardless of how many devices they use
   const participantCount = useMemo(
@@ -166,15 +186,18 @@ export const GroupCallViewInner: FC<Props> = ({
   const latestDevices = useLatest(deviceContext);
   const latestMuteStates = useLatest(muteStates);
 
-  const { showGroupCallErrorBoundary } = useGroupCallErrorBoundary();
-
   const enterRTCSessionOrError = useCallback(
     async (
       rtcSession: MatrixRTCSession,
       perParticipantE2EE: boolean,
+      newMembershipManager: boolean,
     ): Promise<void> => {
       try {
-        await enterRTCSession(rtcSession, perParticipantE2EE);
+        await enterRTCSession(
+          rtcSession,
+          perParticipantE2EE,
+          newMembershipManager,
+        );
       } catch (e) {
         if (e instanceof ElementCallError) {
           showGroupCallErrorBoundary(e);
@@ -199,7 +222,7 @@ export const GroupCallViewInner: FC<Props> = ({
       // permissions and give you device names unless you specify a kind, but
       // here we want all kinds of devices. This needs a fix in livekit-client
       // for the following name-matching logic to do anything useful.
-      const devices = await Room.getLocalDevices(undefined, true);
+      const devices = await LivekitRoom.getLocalDevices(undefined, true);
 
       if (audioInput) {
         const deviceId = findDeviceByName(audioInput, "audioinput", devices);
@@ -239,7 +262,11 @@ export const GroupCallViewInner: FC<Props> = ({
               await defaultDeviceSetup(
                 ev.detail.data as unknown as JoinCallData,
               );
-              await enterRTCSessionOrError(rtcSession, perParticipantE2EE);
+              await enterRTCSessionOrError(
+                rtcSession,
+                perParticipantE2EE,
+                useNewMembershipManager,
+              );
               widget.api.transport.reply(ev.detail, {});
             })().catch((e) => {
               logger.error("Error joining RTC session", e);
@@ -252,13 +279,21 @@ export const GroupCallViewInner: FC<Props> = ({
         } else {
           // No lobby and no preload: we enter the rtc session right away
           (async (): Promise<void> => {
-            await enterRTCSessionOrError(rtcSession, perParticipantE2EE);
+            await enterRTCSessionOrError(
+              rtcSession,
+              perParticipantE2EE,
+              useNewMembershipManager,
+            );
           })().catch((e) => {
             logger.error("Error joining RTC session", e);
           });
         }
       } else {
-        void enterRTCSessionOrError(rtcSession, perParticipantE2EE);
+        void enterRTCSessionOrError(
+          rtcSession,
+          perParticipantE2EE,
+          useNewMembershipManager,
+        );
       }
     }
   }, [
@@ -270,6 +305,7 @@ export const GroupCallViewInner: FC<Props> = ({
     latestDevices,
     latestMuteStates,
     enterRTCSessionOrError,
+    useNewMembershipManager,
   ]);
 
   const [left, setLeft] = useState(false);
@@ -287,7 +323,7 @@ export const GroupCallViewInner: FC<Props> = ({
       // Otherwise the iFrame gets killed before the callEnded event got tracked.
       const posthogRequest = new Promise((resolve) => {
         PosthogAnalytics.instance.eventCallEnded.track(
-          rtcSession.room.roomId,
+          room.roomId,
           rtcSession.memberships.length,
           sendInstantly,
           rtcSession,
@@ -316,11 +352,12 @@ export const GroupCallViewInner: FC<Props> = ({
         });
     },
     [
+      leaveSoundContext,
       widget,
       rtcSession,
+      room.roomId,
       isPasswordlessUser,
       confineToRoom,
-      leaveSoundContext,
       navigate,
     ],
   );
@@ -346,7 +383,7 @@ export const GroupCallViewInner: FC<Props> = ({
     }
   }, [widget, isJoined, rtcSession]);
 
-  const joinRule = useJoinRule(rtcSession.room);
+  const joinRule = useJoinRule(room);
 
   const [shareModalOpen, setInviteModalOpen] = useState(false);
   const onDismissInviteModal = useCallback(
@@ -367,7 +404,7 @@ export const GroupCallViewInner: FC<Props> = ({
 
   const shareModal = (
     <InviteModal
-      room={rtcSession.room}
+      room={room}
       open={shareModalOpen}
       onDismiss={onDismissInviteModal}
     />
@@ -380,7 +417,11 @@ export const GroupCallViewInner: FC<Props> = ({
         matrixInfo={matrixInfo}
         muteStates={muteStates}
         onEnter={() =>
-          void enterRTCSessionOrError(rtcSession, perParticipantE2EE)
+          void enterRTCSessionOrError(
+            rtcSession,
+            perParticipantE2EE,
+            useNewMembershipManager,
+          )
         }
         confineToRoom={confineToRoom}
         hideHeader={hideHeader}
@@ -438,9 +479,7 @@ export const GroupCallViewInner: FC<Props> = ({
     }
   } else if (left && widget !== null) {
     // Left in widget mode:
-    if (!returnToLobby) {
-      body = null;
-    }
+    body = returnToLobby ? lobbyView : null;
   } else if (preload || skipLobby) {
     body = null;
   } else {
@@ -449,10 +488,15 @@ export const GroupCallViewInner: FC<Props> = ({
 
   return (
     <GroupCallErrorBoundary
+      widget={widget}
       recoveryActionHandler={(action) => {
         if (action == "reconnect") {
           setLeft(false);
-          enterRTCSessionOrError(rtcSession, perParticipantE2EE).catch((e) => {
+          enterRTCSessionOrError(
+            rtcSession,
+            perParticipantE2EE,
+            useNewMembershipManager,
+          ).catch((e) => {
             logger.error("Error re-entering RTC session", e);
           });
         }
