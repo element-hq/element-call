@@ -16,6 +16,7 @@ import basicSsl from "@vitejs/plugin-basic-ssl";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode, packageType }) => {
   const env = loadEnv(mode, process.cwd());
+  process.env.VITE_PACKAGE = packageType ?? "full";
   const plugins = [
     react(),
     basicSsl(),
@@ -32,7 +33,7 @@ export default defineConfig(({ mode, packageType }) => {
       inject: {
         data: {
           brand: env.VITE_PRODUCT_NAME || "Element Call",
-          packageType: packageType ?? "full",
+          packageType: process.env.VITE_PACKAGE,
         },
       },
     }),

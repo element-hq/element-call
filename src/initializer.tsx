@@ -220,10 +220,22 @@ export class Initializer {
       this.loadStates.sentry === LoadState.None &&
       this.loadStates.config === LoadState.Loaded
     ) {
-      if (Config.get().sentry?.DSN && Config.get().sentry?.environment) {
+      let dsn: string | undefined;
+      let environment: string | undefined;
+      if (import.meta.env.VITE_PACKAGE === "embedded") {
+        // for the embedded package we always use the values from the URL as the widget host is responsible for analytics configuration
+        dsn = getUrlParams().sentryDsn ?? undefined;
+        environment = getUrlParams().sentryEnvironment ?? undefined;
+      }
+      if (import.meta.env.VITE_PACKAGE === "full") {
+        // in full package it is the server responsible for the analytics
+        dsn = Config.get().sentry?.DSN;
+        environment = Config.get().sentry?.environment;
+      }
+      if (dsn) {
         Sentry.init({
-          dsn: Config.get().sentry?.DSN,
-          environment: Config.get().sentry?.environment,
+          dsn,
+          environment,
           integrations: [
             Sentry.reactRouterV7BrowserTracingIntegration({
               useEffect: React.useEffect,
