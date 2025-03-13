@@ -38,6 +38,7 @@ export default defineConfig({
       use: {
         ...devices["Desktop Chrome"],
         permissions: ["microphone", "camera"],
+        ignoreHTTPSErrors: true,
         launchOptions: {
           args: [
             "--use-fake-ui-for-media-stream",
@@ -52,6 +53,7 @@ export default defineConfig({
       name: "firefox",
       use: {
         ...devices["Desktop Firefox"],
+        ignoreHTTPSErrors: true,
         launchOptions: {
           firefoxUserPrefs: {
             "permissions.default.microphone": 1,
@@ -70,5 +72,6 @@ export default defineConfig({
     command: "yarn dev",
     url: "https://localhost:3000",
     reuseExistingServer: !process.env.CI,
+    ignoreHTTPSErrors: true,
   },
 });
