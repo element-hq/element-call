@@ -34,7 +34,7 @@ import { logger } from "matrix-js-sdk/lib/logger";
 
 import LogoMark from "../icons/LogoMark.svg?react";
 import LogoType from "../icons/LogoType.svg?react";
-import type { IWidgetApiRequest } from "matrix-js-sdk/lib/matrix-widget-api";
+import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
   EndCallButton,
   MicButton,

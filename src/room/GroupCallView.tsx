@@ -26,7 +26,7 @@ import {
 import { JoinRule, type Room } from "matrix-js-sdk";
 import { useNavigate } from "react-router-dom";
 
-import type { IWidgetApiRequest } from "matrix-js-sdk/lib/matrix-widget-api";
+import type { IWidgetApiRequest } from "matrix-widget-api";
 import {
   ElementWidgetActions,
   type JoinCallData,
