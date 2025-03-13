@@ -66,9 +66,9 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  // webServer: {
-  //   command: 'yarn run backend',
-  //   url: 'http://synapse.localhost:8008',
-  //   reuseExistingServer: !process.env.CI,
-  // },
+  webServer: {
+    command: "yarn dev",
+    url: "https://localhost:3000",
+    reuseExistingServer: !process.env.CI,
+  },
 });
