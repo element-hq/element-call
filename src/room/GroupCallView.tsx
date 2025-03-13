@@ -479,6 +479,7 @@ export const GroupCallView: FC<Props> = ({
 
   return (
     <GroupCallErrorBoundary
+      widget={widget}
       recoveryActionHandler={(action) => {
         if (action == "reconnect") {
           setLeft(false);
