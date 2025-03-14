@@ -10,13 +10,15 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4
+      - name: Enable Corepack
+        run: corepack enable
       - name: Yarn cache
         uses: actions/setup-node@1d0ff469b7ec7b3cb9d8673fde0c81c44821de2a # v4
         with:
           cache: "yarn"
           node-version-file: ".node-version"
       - name: Install dependencies
-        run: "yarn install --frozen-lockfile"
+        run: "yarn install --immutable"
       - name: Vitest
         run: "yarn run test:coverage"
       - name: Upload to codecov
