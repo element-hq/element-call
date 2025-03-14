@@ -226,7 +226,7 @@ npx playwright codegen
 ```
 
 This will record your action and write the test code for you. Use the tool bar to test visibility, text content,
-clicking..
+clicking.
 
 ##### Investigate a failed test from the CI
 
