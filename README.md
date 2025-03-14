@@ -147,6 +147,7 @@ To get started clone and set up this project:
 ```sh
 git clone https://github.com/element-hq/element-call.git
 cd element-call
+corepack enable
 yarn
 ```
 
