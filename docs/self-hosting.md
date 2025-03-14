@@ -100,6 +100,7 @@ source. First, clone and install the package:
 ```sh
 git clone https://github.com/element-hq/element-call.git
 cd element-call
+corepack enable
 yarn
 yarn build
 ```
