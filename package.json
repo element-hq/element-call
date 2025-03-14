@@ -127,5 +127,6 @@
   "resolutions": {
     "@livekit/components-core/rxjs": "^7.8.1",
     "matrix-widget-api": "1.11.0"
-  }
+  },
+  "packageManager": "yarn@4.7.0"
 }

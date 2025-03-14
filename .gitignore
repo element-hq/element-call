@@ -10,3 +10,10 @@ public/config.json
 backend/synapse_tmp/*
 /coverage
 yarn-error.log
+/.pnp.*
+/.yarn/*
+!/.yarn/patches
+!/.yarn/plugins
+!/.yarn/releases
+!/.yarn/sdks
+!/.yarn/versions
