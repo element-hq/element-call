@@ -49,7 +49,7 @@ jobs:
       - name: Create Checksum
         run: find ${{ env.FILENAME_PREFIX }} -type f -print0 | sort -z | xargs -0 sha256sum | tee ${{ env.FILENAME_PREFIX }}.sha256
       - name: Upload
-        if: ${{ env.DRY_RUN == false }}
+        if: ${{ env.DRY_RUN == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           files: |
@@ -87,12 +87,12 @@ jobs:
         run: |
           npm version ${{ env.VERSION }} --no-git-tag-version
           echo "NPM_VERSION=$(jq '.version' --raw-output package.json)" >> "$GITHUB_ENV"
-          npm publish --provenance --access public ${{ env.DRY_RUN  && '--dry-run' || '' }}
+          npm publish --provenance --access public ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_RELEASE_TOKEN }}
 
       - name: Add release note
-        if: ${{ env.DRY_RUN == false }}
+        if: ${{ env.DRY_RUN == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           append_body: true
@@ -131,7 +131,7 @@ jobs:
           java-version: "17"
 
       - name: Publish AAR
-        if: ${{ env.DRY_RUN == false }}
+        if: ${{ env.DRY_RUN == 'false' }}
         # TODO: can we do some kind of dry run?
         env:
           EC_VERSION: ${{ env.VERSION }}
@@ -142,7 +142,7 @@ jobs:
         run: embedded/android/publish_android_package.sh -s
 
       - name: Add release note
-        if: ${{ env.DRY_RUN == false }}
+        if: ${{ env.DRY_RUN == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           append_body: true
@@ -200,10 +200,10 @@ jobs:
       - name: Push
         working-directory: element-call-swift
         run: |
-          git push --tags ${{ env.DRY_RUN  && '--dry-run' || '' }}
+          git push --tags ${{ env.DRY_RUN == 'true' && '--dry-run' || '' }}
 
       - name: Add release note
-        if: ${{ env.DRY_RUN == false }}
+        if: ${{ env.DRY_RUN == 'false' }}
         uses: softprops/action-gh-release@v2
         with:
           append_body: true
