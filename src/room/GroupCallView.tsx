@@ -19,7 +19,6 @@ import {
   isE2EESupported as isE2EESupportedBrowser,
 } from "livekit-client";
 import { logger } from "matrix-js-sdk/src/logger";
-
 import {
   MatrixRTCSessionEvent,
   type MatrixRTCSession,
