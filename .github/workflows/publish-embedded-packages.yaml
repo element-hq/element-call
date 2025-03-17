@@ -132,7 +132,7 @@ jobs:
 
       - name: Get artifact version
         run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
-  
+
       - name: Publish AAR
         if: ${{ env.DRY_RUN == 'false' }}
         # TODO: can we do some kind of dry run?
