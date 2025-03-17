@@ -23,7 +23,7 @@ jobs:
   build_element_call:
     uses: ./.github/workflows/build-element-call.yaml
     with:
-      vite_app_version: embedded-${{ github.event.release.tag_name }}
+      vite_app_version: embedded-${{ github.env.VERSION }}
       package: embedded
 
   publish_tarball:
@@ -35,7 +35,7 @@ jobs:
       contents: write # required to upload release asset
       packages: write
     env:
-      FILENAME_PREFIX: element-call-embedded-${{ github.event.release.tag_name || github.sha }} # Using ${{ env.VERSION }} doesn't work here
+      FILENAME_PREFIX: element-call-embedded-${{ github.env.VERSION }}
     steps:
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@fa0a91b85d4f404e444e00e005971372dc801d16 # v4

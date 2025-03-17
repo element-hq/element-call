@@ -4,12 +4,15 @@ on:
   release:
     types: [published]
 
+env:
+  VERSION: ${{ github.event.release.tag_name }}
+
 jobs:
   build_element_call:
     uses: ./.github/workflows/build-element-call.yaml
     with:
       package: full
-      vite_app_version: ${{ github.event.release.tag_name }}
+      vite_app_version: ${{ github.env.VERSION }}
     secrets:
       SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
       SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
@@ -24,7 +27,7 @@ jobs:
       contents: write # required to upload release asset
       packages: write
     env:
-      FILENAME_PREFIX: element-call-${{ github.event.release.tag_name }}
+      FILENAME_PREFIX: element-call-${{ github.env.VERSION }}
     steps:
       - name: 📥 Download built element-call artifact
         uses: actions/download-artifact@cc203385981b70ca67e1cc392babf9cc229d5806 # v4
@@ -62,6 +65,8 @@ jobs:
     name: Add docker release note
     runs-on: ubuntu-latest
     steps:
+      - name: Get artifact version
+        run: echo "ARTIFACT_VERSION=${VERSION:1}" >> "$GITHUB_ENV"
       - name: Add release note
         uses: softprops/action-gh-release@v2
         with:
@@ -73,5 +78,5 @@ jobs:
             The image provides a full build of Element Call that can be used both in standalone and as a widget (on a remote URL).
 
             ```
-            docker pull ghcr.io/element-hq/element-call:${{ github.event.release.tag_name }}
+            docker pull ghcr.io/element-hq/element-call:${{ env.ARTIFACT_VERSION }}
             ```
