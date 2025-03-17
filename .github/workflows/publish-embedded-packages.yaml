@@ -156,7 +156,7 @@ jobs:
 
             ```
             dependencies {
-              implementation 'io.element.call:element-call-embedded:${{ env.ARTIFACT_VERSION}}'
+              implementation 'io.element.android:element-call-embedded:${{ env.ARTIFACT_VERSION}}'
             }
             ```
 

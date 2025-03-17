@@ -18,7 +18,7 @@ repositories {
 }
 
 android {
-    namespace = "io.element.call"
+    namespace = "io.element.android"
 
     defaultConfig {
         compileSdk = 35
@@ -32,7 +32,7 @@ mavenPublishing {
     signAllPublications()
 
     val version = System.getenv("EC_VERSION")
-    coordinates("io.element.call", "element-call-embedded", version)
+    coordinates("io.element.android", "element-call-embedded", version)
     pom {
         name = "Embedded Element Call for Android"
         description.set("Android AAR package containing an embedded build of the Element Call widget.")
