@@ -67,10 +67,10 @@ jobs:
         with:
           append_body: true
           body: |
-            ## Docker
+            ## Docker full package
             Element Call is available as a Docker image from the [GitHub Container Registry](https://github.com/element-hq/element-call/pkgs/container/element-call).
 
-            The image provides a full build of Element Call that can be used both in standalone and as a widget.
+            The image provides a full build of Element Call that can be used both in standalone and as a widget (on a remote URL).
 
             ```
             docker pull ghcr.io/element-hq/element-call:${{ github.event.release.tag_name }}

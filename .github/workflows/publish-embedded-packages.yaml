@@ -97,9 +97,9 @@ jobs:
         with:
           append_body: true
           body: |
-            ## NPM
+            ## NPM embedded package
 
-            This package provides an embedded build of Element Call that can be both used as a widget within another application.
+            This package provides a version of Element Call that can be both used as an embedded widget within another application.
 
             ```
             npm install @element-hq/element-call-embedded@${{ env.NPM_VERSION }}
@@ -147,9 +147,9 @@ jobs:
         with:
           append_body: true
           body: |
-            ## Android AAR
+            ## Android AAR embedded package
 
-            This package provides an embedded build of Element Call that can be both used as a widget within another application.
+            This package provides a version of Element Call that can be both used as an embedded widget within another application.
 
             ```
             dependencies {
@@ -208,9 +208,9 @@ jobs:
         with:
           append_body: true
           body: |
-            ## SwiftPM
+            ## SwiftPM embedded package
 
-            This package provides an embedded build of Element Call that can be both used as a widget within another application.
+            This package provides a version of Element Call that can be both used as an embedded widget within another application.
 
             ```
             .package(url: "https://github.com/element-hq/element-call-swift.git", from: "${{ env.VERSION }}")
